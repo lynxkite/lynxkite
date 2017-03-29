@@ -255,7 +255,7 @@ object ProjectViewer {
     metadata: Map[String, String],
     isInternal: Boolean = false)(implicit epm: EntityProgressManager): FEAttribute = {
     val canBucket = Seq(typeOf[Double], typeOf[String]).exists(e.typeTag.tpe <:< _)
-    val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]])
+    val canFilter = Seq(typeOf[Double], typeOf[String], typeOf[Long], typeOf[Vector[Any]], typeOf[(Double, Double)])
       .exists(e.typeTag.tpe <:< _)
     FEAttribute(
       e.gUID.toString,
@@ -1223,9 +1223,10 @@ object DirectoryEntry {
 
   def fromPath(path: SymbolPath)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
     val entry = new DirectoryEntry(path)
+    val nonDirParent = entry.parents.find(_.hasCheckpoint)
     assert(
-      !entry.parents.exists(_.hasCheckpoint),
-      s"Cannot have entries inside projects or tables: $path")
+      nonDirParent.isEmpty,
+      s"Invalid path: $path. Parent ${nonDirParent.get} is not a directory.")
     if (entry.exists) {
       if (entry.isProject) {
         new ProjectFrame(entry.path)

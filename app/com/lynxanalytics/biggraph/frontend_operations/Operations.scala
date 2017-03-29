@@ -257,6 +257,15 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Discard segmentation links", new StructureOperation(_, _) with SegOp {
+    def segmentationParameters = List()
+    def enabled = isSegmentation
+    def apply(params: Map[String, String]) = {
+      val op = graph_operations.EmptyEdgeBundle()
+      seg.belongsTo = op(op.src, parent.vertexSet)(op.dst, seg.vertexSet).result.eb
+    }
+  })
+
   register("New vertex set", new StructureOperation(_, _) {
     def parameters = List(
       NonNegInt("size", "Vertex set size", default = 10))
@@ -957,14 +966,15 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("type", "Type", options = FEOption.list("Double", "String")))
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
+      val value = params("value")
       val res = {
         if (params("type") == "Double") {
-          project.edgeBundle.const(params("value").toDouble)
+          project.edgeBundle.const(value.toDouble)
         } else {
-          project.edgeBundle.const(params("value"))
+          project.edgeBundle.const(value)
         }
       }
-      project.edgeAttributes(params("name")) = res
+      project.newEdgeAttribute(params("name"), res, s"constant $value")
     }
   })
 
@@ -994,11 +1004,14 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     override def title = "Fill vertex attribute with constant default value"
     def apply(params: Map[String, String]) = {
       val attr = project.vertexAttributes(params("attr"))
+      val paramDef = params("def")
       val op: graph_operations.AddConstantAttribute[_] =
         graph_operations.AddConstantAttribute.doubleOrString(
-          isDouble = attr.is[Double], params("def"))
+          isDouble = attr.is[Double], paramDef)
       val default = op(op.vs, project.vertexSet).result
-      project.vertexAttributes(params("attr")) = unifyAttribute(attr, default.attr.entity)
+      project.newVertexAttribute(
+        params("attr"), unifyAttribute(attr, default.attr.entity),
+        project.viewer.getVertexAttributeNote(params("attr")) + s" (filled with default $paramDef)" + help)
     }
   })
 
@@ -1010,11 +1023,14 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       (edgeAttributes[String] ++ edgeAttributes[Double]).nonEmpty, "No edge attributes.")
     def apply(params: Map[String, String]) = {
       val attr = project.edgeAttributes(params("attr"))
+      val paramDef = params("def")
       val op: graph_operations.AddConstantAttribute[_] =
         graph_operations.AddConstantAttribute.doubleOrString(
-          isDouble = attr.is[Double], params("def"))
+          isDouble = attr.is[Double], paramDef)
       val default = op(op.vs, project.edgeBundle.idSet).result
-      project.edgeAttributes(params("attr")) = unifyAttribute(attr, default.attr.entity)
+      project.newEdgeAttribute(
+        params("attr"), unifyAttribute(attr, default.attr.entity),
+        project.viewer.getEdgeAttributeNote(params("attr")) + s" (filled with default $paramDef)" + help)
     }
   })
 
@@ -1033,7 +1049,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val attr2 = project.vertexAttributes(params("attr2"))
       assert(attr1.typeTag.tpe =:= attr2.typeTag.tpe,
         "The two attributes must have the same type.")
-      project.newVertexAttribute(name, unifyAttribute(attr1, attr2))
+      project.newVertexAttribute(name, unifyAttribute(attr1, attr2), s"primary: $attr1, secondary: $attr2" + help)
     }
   })
 
@@ -1051,7 +1067,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val attr2 = project.edgeAttributes(params("attr2"))
       assert(attr1.typeTag.tpe =:= attr2.typeTag.tpe,
         "The two attributes must have the same type.")
-      project.edgeAttributes(name) = unifyAttribute(attr1, attr2)
+      project.newEdgeAttribute(name, unifyAttribute(attr1, attr2), s"primary: $attr1, secondary: $attr2" + help)
     }
   })
 
@@ -1156,7 +1172,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.Embeddedness()
-      project.edgeAttributes(params("name")) = op(op.es, project.edgeBundle).result.embeddedness
+      project.newEdgeAttribute(params("name"), op(op.es, project.edgeBundle).result.embeddedness, help)
     }
   })
 
@@ -1167,7 +1183,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = hasEdgeBundle
     def apply(params: Map[String, String]) = {
       val op = graph_operations.ApproxEmbeddedness(params("bits").toInt)
-      project.edgeAttributes(params("name")) = op(op.es, project.edgeBundle).result.embeddedness
+      project.newEdgeAttribute(params("name"), op(op.es, project.edgeBundle).result.embeddedness, help)
     }
   })
 
@@ -1193,8 +1209,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
           dispersion, embeddedness)).result.attr.entity
       }
       // TODO: recursive dispersion
-      project.edgeAttributes(params("name")) = dispersion
-      project.edgeAttributes("normalized_" + params("name")) = normalizedDispersion
+      project.newEdgeAttribute(params("name"), dispersion, help)
+      project.newEdgeAttribute("normalized_" + params("name"), normalizedDispersion, help)
     }
   })
 
@@ -1434,13 +1450,15 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     def enabled = FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
     def apply(params: Map[String, String]) = {
       assert(params("output").nonEmpty, "Please set an attribute name.")
+      val paramX = params("x")
+      val paramY = params("y")
       val pos = {
         val op = graph_operations.JoinAttributes[Double, Double]()
-        val x = project.vertexAttributes(params("x")).runtimeSafeCast[Double]
-        val y = project.vertexAttributes(params("y")).runtimeSafeCast[Double]
+        val x = project.vertexAttributes(paramX).runtimeSafeCast[Double]
+        val y = project.vertexAttributes(paramY).runtimeSafeCast[Double]
         op(op.a, x)(op.b, y).result.attr
       }
-      project.vertexAttributes(params("output")) = pos
+      project.newVertexAttribute(params("output"), pos, s"($paramX, $paramY)" + help)
     }
   })
 
@@ -1542,7 +1560,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
           graph_operations.DeriveJS.deriveFromAttributes[Vector[Double]](
             expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
       }
-      project.edgeAttributes(params("output")) = result
+      project.newEdgeAttribute(params("output"), result, expr + help)
     }
   })
 
@@ -1565,7 +1583,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         case "double" =>
           graph_operations.DeriveJSScalar.deriveFromScalars[Double](expr, namedScalars)
       }
-      project.scalars(params("output")) = result.sc
+      project.newScalar(params("output"), result.sc, expr + help)
     }
   })
 
@@ -1662,6 +1680,83 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Train a decision tree classification model", new MachineLearningOperation(_, _) {
+    def parameters = List(
+      Param("name", "The name of the model"),
+      Choice("label", "Label", options = vertexAttributes[Double]),
+      Choice("features", "Features", options = vertexAttributes[Double], multipleChoice = true),
+      Choice("impurity", "Impurity", options = FEOption.list("entropy", "gini")),
+      NonNegInt("maxBins", "Maximum number of bins", default = 32),
+      NonNegInt("maxDepth", "Maximum depth of tree", default = 5),
+      NonNegDouble("minInfoGain", "Minimum information gain for splits", defaultValue = "0.0"),
+      NonNegInt("minInstancesPerNode", "Minimum size of children after splits", default = 1),
+      RandomSeed("seed", "Seed"))
+    def enabled =
+      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set the name of the model.")
+      assert(params("features").nonEmpty, "Please select at least one feature.")
+      val labelName = params("label")
+      val featureNames = params("features").split(",", -1).sorted
+      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
+      val features = featureNames.map {
+        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+      }
+      val model = {
+        val op = graph_operations.TrainDecisionTreeClassifier(
+          labelName = labelName,
+          featureNames = featureNames.toList,
+          impurity = params("impurity"),
+          maxBins = params("maxBins").toInt,
+          maxDepth = params("maxDepth").toInt,
+          minInfoGain = params("minInfoGain").toDouble,
+          minInstancesPerNode = params("minInstancesPerNode").toInt,
+          seed = params("seed").toInt)
+        op(op.label, label)(op.features, features).result.model
+      }
+      val name = params("name")
+      project.scalars(name) = model
+    }
+  })
+
+  register("Train a decision tree regression model", new MachineLearningOperation(_, _) {
+    def parameters = List(
+      Param("name", "The name of the model"),
+      Choice("label", "Label", options = vertexAttributes[Double]),
+      Choice("features", "Features", options = vertexAttributes[Double], multipleChoice = true),
+      NonNegInt("maxBins", "Maximum number of bins", default = 32),
+      NonNegInt("maxDepth", "Maximum depth of tree", default = 5),
+      NonNegDouble("minInfoGain", "Minimum information gain for splits", defaultValue = "0.0"),
+      NonNegInt("minInstancesPerNode", "Minimum size of children after splits", default = 1),
+      RandomSeed("seed", "Seed"))
+    def enabled =
+      FEStatus.assert(vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+    def apply(params: Map[String, String]) = {
+      assert(params("name").nonEmpty, "Please set the name of the model.")
+      assert(params("features").nonEmpty, "Please select at least one feature.")
+      val labelName = params("label")
+      val featureNames = params("features").split(",", -1).sorted
+      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
+      val features = featureNames.map {
+        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+      }
+      val model = {
+        val op = graph_operations.TrainDecisionTreeRegressor(
+          labelName = labelName,
+          featureNames = featureNames.toList,
+          impurity = "variance",
+          maxBins = params("maxBins").toInt,
+          maxDepth = params("maxDepth").toInt,
+          minInfoGain = params("minInfoGain").toDouble,
+          minInstancesPerNode = params("minInstancesPerNode").toInt,
+          seed = params("seed").toInt)
+        op(op.label, label)(op.features, features).result.model
+      }
+      val name = params("name")
+      project.scalars(name) = model
+    }
+  })
+
   register("Train a k-means clustering model", new MachineLearningOperation(_, _) {
     def parameters = List(
       Param("name", "The name of the model"),
@@ -1741,15 +1836,28 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       }
       import model.Implicits._
       val generatesProbability = modelValue.modelMeta.generatesProbability
+      val isBinary = modelValue.modelMeta.isBinary
       val op = graph_operations.ClassifyWithModel(features.size)
       val result = op(op.model, modelValue)(op.features, features).result
       val classifiedAttribute = result.classification
       project.newVertexAttribute(name, classifiedAttribute,
         s"classification according to ${modelName}")
       if (generatesProbability) {
-        val probability = result.probability
-        project.newVertexAttribute(name + "_probability", probability,
-          s"probability according to ${modelName}")
+        val certainty = result.probability
+        project.newVertexAttribute(name + "_certainty", certainty,
+          s"probability of predicted class according to ${modelName}")
+        if (isBinary) {
+          val probabilityOf0 = graph_operations.DeriveJS.deriveFromAttributes[Double](
+            "classification == 0 ? certainty : 1 - certainty",
+            Seq("certainty" -> certainty, "classification" -> classifiedAttribute),
+            project.vertexSet)
+          project.newVertexAttribute(name + "_probability_of_0", probabilityOf0,
+            s"probability of class 0 according to ${modelName}")
+          val probabilityOf1 = graph_operations.DeriveJS.deriveFromAttributes[Double](
+            "1 - probabilityOf0", Seq("probabilityOf0" -> probabilityOf0), project.vertexSet)
+          project.newVertexAttribute(name + "_probability_of_1", probabilityOf1,
+            s"probability of class 1 according to ${modelName}")
+        }
       }
     }
   })
@@ -2050,6 +2158,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       val oldEdges = project.edgeBundle
       val oldEAttrs = project.edgeAttributes.toMap
       val oldSegmentations = project.viewer.segmentationMap
+      val oldBelongsTo = if (project.isSegmentation) project.asSegmentation.belongsTo else null
       project.setVertexSet(m.segments, idAttr = "id")
       for ((name, segViewer) <- oldSegmentations) {
         val seg = project.segmentation(name)
@@ -2058,6 +2167,13 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         seg.belongsTo = op(
           op.srcMapping, m.belongsTo)(
             op.edges, seg.belongsTo).result.induced
+      }
+      if (project.isSegmentation) {
+        val seg = project.asSegmentation
+        val op = graph_operations.InducedEdgeBundle(induceSrc = false)
+        seg.belongsTo = op(
+          op.dstMapping, m.belongsTo)(
+            op.edges, oldBelongsTo).result.induced
       }
       for ((attr, choice) <- parseAggregateParams(params)) {
         val result = aggregateViaConnection(
@@ -2154,6 +2270,24 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Merge parallel segmentation links", new StructureOperation(_, _) with SegOp {
+    def segmentationParameters = List()
+    def enabled = isSegmentation
+    def apply(params: Map[String, String]) = {
+      val linksAsAttr = {
+        val op = graph_operations.EdgeBundleAsAttribute()
+        op(op.edges, seg.belongsTo).result.attr
+      }
+      val mergedResult = mergeEdges(linksAsAttr)
+      val newLinks = {
+        val op = graph_operations.PulledOverEdges()
+        op(op.originalEB, seg.belongsTo)(op.injection, mergedResult.representative)
+          .result.pulledEB
+      }
+      seg.belongsTo = newLinks
+    }
+  })
+
   register("Discard loop edges", new StructureOperation(_, _) {
     def parameters = List()
     def enabled = hasEdgeBundle
@@ -2230,6 +2364,32 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
         project.vertexSet, Seq(FEVertexAttributeFilter(guid, ">-1")), heavy = true)
       project.pullBack(vertexEmbedding)
 
+    }
+  })
+
+  register("Sample graph by random walks", new StructureOperation(_, _) {
+    def parameters = List(
+      NonNegInt("startPoints", "Number of start points", default = 1),
+      NonNegInt("walksFromOnePoint", "Number of walks from each start point", default = 10000),
+      Ratio("walkAbortionProbability", "Walk abortion probability", defaultValue = "0.15"),
+      Param("vertexAttrName", "Save vertex indices as", defaultValue = "first_reached"),
+      Param("edgeAttrName", "Save edge indices as", defaultValue = "firts_traversed"),
+      RandomSeed("seed", "Seed")
+    )
+    def enabled = hasVertexSet && hasEdgeBundle
+
+    def apply(params: Map[String, String]) = {
+      val output = {
+        val startPoints = params("startPoints").toInt
+        val walksFromOnePoint = params("walksFromOnePoint").toInt
+        val walkAbortionProbability = params("walkAbortionProbability").toDouble
+        val seed = params("seed").toInt
+        val op = graph_operations.RandomWalkSample(startPoints, walksFromOnePoint,
+          walkAbortionProbability, seed)
+        op(op.vs, project.vertexSet)(op.es, project.edgeBundle).result
+      }
+      project.newVertexAttribute(params("vertexAttrName"), output.vertexFirstVisited)
+      project.newEdgeAttribute(params("edgeAttrName"), output.edgeFirstTraversed)
     }
   })
 
@@ -2600,7 +2760,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       s"Copy edge attribute $from to $to"
     }
     def apply(params: Map[String, String]) = {
-      project.edgeAttributes(params("to")) = project.edgeAttributes(params("from"))
+      project.newEdgeAttribute(
+        params("to"), project.edgeAttributes(params("from")),
+        project.viewer.getEdgeAttributeNote(params("from")))
     }
   })
 
@@ -2650,7 +2812,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       s"Copy scalar $from to $to"
     }
     def apply(params: Map[String, String]) = {
-      project.scalars(params("to")) = project.scalars(params("from"))
+      project.newScalar(
+        params("to"), project.scalars(params("from")),
+        project.viewer.getScalarNote(params("from")))
     }
   })
 
@@ -3392,8 +3556,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       // In the future we may want a special kind for this so that users don't see JSON.
       Param("scalarName", "Name of new graph attribute"),
       Param("uiStatusJson", "UI status as JSON"))
-
     def enabled = FEStatus.enabled
+    override def summary(params: Map[String, String]) = {
+      val scalarName = params("scalarName")
+      s"Save visualization as $scalarName"
+    }
 
     def apply(params: Map[String, String]) = {
       import UIStatusSerialization._
@@ -3440,8 +3607,35 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  private def segmentationSizesProductSum(seg: SegmentationEditor, parent: ProjectEditor)(
+    implicit manager: MetaGraphManager): Scalar[_] = {
+    val size = aggregateViaConnection(
+      seg.belongsTo,
+      AttributeWithLocalAggregator(parent.vertexSet.idAttribute, "count")
+    )
+    val srcSize = graph_operations.VertexToEdgeAttribute.srcAttribute(size, seg.edgeBundle)
+    val dstSize = graph_operations.VertexToEdgeAttribute.dstAttribute(size, seg.edgeBundle)
+    val sizeProduct: Attribute[Double] = {
+      val op = graph_operations.DeriveJSDouble(
+        JavaScript("src_size * dst_size"),
+        Seq("src_size", "dst_size"))
+      op(
+        op.attrs,
+        graph_operations.VertexAttributeToJSValue.seq(srcSize, dstSize)).result.attr
+    }
+    aggregate(AttributeWithAggregator(sizeProduct, "sum"))
+  }
+
   register("Copy edges to base project", new StructureOperation(_, _) with SegOp {
     def segmentationParameters = List()
+    override def visibleScalars =
+      if (project.isSegmentation && project.edgeBundle != null) {
+        val scalar = segmentationSizesProductSum(seg, parent)
+        implicit val entityProgressManager = env.entityProgressManager
+        List(ProjectViewer.feScalar(scalar, "num_copied_edges", "", Map()))
+      } else {
+        List()
+      }
     def enabled = isSegmentation &&
       hasEdgeBundle &&
       FEStatus.assert(parent.edgeBundle == null, "There are already edges on base project")
@@ -3493,10 +3687,11 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
           params("test_set_ratio").toDouble, params("seed").toInt)
         op(op.vertices, source.vertexSet).result.role
       }
+      val testSetRatio = params("test_set_ratio").toDouble
       val parted = partitionVariable(source, roles)
 
-      project.newVertexAttribute(s"${sourceName}_test", parted.test)
-      project.newVertexAttribute(s"${sourceName}_train", parted.train)
+      project.newVertexAttribute(s"${sourceName}_test", parted.test, s"ratio: $testSetRatio" + help)
+      project.newVertexAttribute(s"${sourceName}_train", parted.train, s"ratio: ${1 - testSetRatio}" + help)
     }
     def partitionVariable[T](
       source: Attribute[T], roles: Attribute[String]): graph_operations.PartitionAttribute.Output[T] = {
@@ -3564,34 +3759,78 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
       Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
       Param("attribute", "Attribute from the Shapefile"),
+      Choice("ignoreUnsupportedShapes", "Ignore unsupported shape types",
+        options = FEOption.boolsDefaultFalse, mandatory = false),
       Param("output", "Output name"))
-    def enabled = FEStatus.assert(vertexAttributes.nonEmpty, "No vertex attributes")
-    import java.io.File
+    def enabled = FEStatus.assert(
+      vertexAttributes[(Double, Double)].nonEmpty, "No position vertex attributes.")
 
     def apply(params: Map[String, String]) = {
-      val shapeFilePath = params("shapefile")
-      assert(listShapefiles().exists(f => f.id == shapeFilePath),
-        "Shapefile deleted, please choose another.")
+      val shapeFilePath = getShapeFilePath(params)
       val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
-      val op = graph_operations.LookupRegion(shapeFilePath, params("attribute"))
+      val op = graph_operations.LookupRegion(
+        shapeFilePath,
+        params("attribute"),
+        params.getOrElse("ignoreUnsupportedShapes", "false").toBoolean)
       val result = op(op.coordinates, position).result
       project.newVertexAttribute(params("output"), result.attribute)
     }
+  })
 
-    private def metaDir = new File(env.metaGraphManager.repositoryPath).getParent
-    private val shapeDir = s"$metaDir/resources/shapefiles/"
+  register("Segment by geographical proximity", new StructureOperation(_, _) {
+    override def parameters = List(
+      Param("name", "Name"),
+      Choice("position", "Position", options = vertexAttributes[(Double, Double)]),
+      Choice("shapefile", "Shapefile", options = listShapefiles(), allowUnknownOption = true),
+      NonNegDouble("distance", "Distance", defaultValue = "0.0"),
+      Choice("ignoreUnsupportedShapes", "Ignore unsupported shape types",
+        options = FEOption.boolsDefaultFalse))
+    def enabled = FEStatus.assert(
+      vertexAttributes[(Double, Double)].nonEmpty, "No position vertex attributes.")
 
-    private def listShapefiles(): List[FEOption] = {
-      def lsR(f: File): Array[File] = {
-        val files = f.listFiles()
-        if (files == null)
-          return Array.empty
-        files.filter(_.getName.endsWith(".shp")) ++ files.filter(_.isDirectory).flatMap(lsR)
+    def apply(params: Map[String, String]) = {
+      import com.lynxanalytics.biggraph.graph_util.Shapefile
+      val shapeFilePath = getShapeFilePath(params)
+      val position = project.vertexAttributes(params("position")).runtimeSafeCast[(Double, Double)]
+      val shapefile = Shapefile(shapeFilePath)
+      val op = graph_operations.SegmentByGeographicalProximity(
+        shapeFilePath,
+        params("distance").toDouble,
+        shapefile.attrNames,
+        params("ignoreUnsupportedShapes").toBoolean)
+      val result = op(op.coordinates, position).result
+      val segmentation = project.segmentation(params("name"))
+      segmentation.setVertexSet(result.segments, idAttr = "id")
+      segmentation.notes = summary(params)
+      segmentation.belongsTo = result.belongsTo
+
+      for ((attrName, i) <- shapefile.attrNames.zipWithIndex) {
+        segmentation.newVertexAttribute(attrName, result.attributes(i))
       }
-      lsR(new File(shapeDir)).toList.map(f =>
-        FEOption(f.getPath, f.getPath.substring(shapeDir.length)))
+      shapefile.close()
     }
   })
+
+  private def getShapeFilePath(params: Map[String, String]): String = {
+    val shapeFilePath = params("shapefile")
+    assert(listShapefiles().exists(f => f.id == shapeFilePath),
+      "Shapefile deleted, please choose another.")
+    shapeFilePath
+  }
+
+  private def listShapefiles(): List[FEOption] = {
+    import java.io.File
+    def metaDir = new File(env.metaGraphManager.repositoryPath).getParent
+    val shapeDir = s"$metaDir/resources/shapefiles/"
+    def lsR(f: File): Array[File] = {
+      val files = f.listFiles()
+      if (files == null)
+        return Array.empty
+      files.filter(_.getName.endsWith(".shp")) ++ files.filter(_.isDirectory).flatMap(lsR)
+    }
+    lsR(new File(shapeDir)).toList.map(f =>
+      FEOption(f.getPath, f.getPath.substring(shapeDir.length)))
+  }
 
   def computeSegmentSizes(segmentation: SegmentationEditor): Attribute[Double] = {
     val op = graph_operations.OutDegree()

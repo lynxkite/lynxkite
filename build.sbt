@@ -48,11 +48,11 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "org.apache.spark" %% "spark-mllib" % sparkVersion.value % "provided",
   "org.apache.spark" %% "spark-hive" % sparkVersion.value % "provided",
-  // For accessing S3 fs from local instance
-  // The javax.servlet package is pulled by an other dependency but with
-  // different version, which caused build conflict.
-  "org.apache.hadoop" % "hadoop-aws" % "2.7.3" excludeAll ExclusionRule(organization = "javax.servlet"),
-// Provides HyperLogLogPlus counters. Must be the same version that is
+  // For accessing S3 fs from local instance.
+  "org.apache.hadoop" % "hadoop-aws" % "2.7.3" excludeAll(
+    // But we still want to take Hadoop from Spark.
+    ExclusionRule(organization = "org.apache.hadoop", name = "hadoop-common")),
+  // Provides HyperLogLogPlus counters. Must be the same version that is
   // used by Spark.
   "com.clearspring.analytics" % "stream" % "2.7.0",
   // JDBC drivers.
@@ -74,7 +74,7 @@ libraryDependencies ++= Seq(
   // This is a dependency of Spark. Needed here explicitly
   // so that SetupMetricsSingleton compiles.
   "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209",
-  //The Google Cloud Storage connector for Spark and Hive
+  // The Google Cloud Storage connector for Spark and Hive
   "com.google.cloud.bigdataoss" % "gcs-connector" % "1.5.2-hadoop2",
   "org.geotools" % "gt-shapefile" % "16.1")
 

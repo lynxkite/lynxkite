@@ -72,6 +72,12 @@ class LynxKite:
     self._certfile = certfile
     self._oauth_token = oauth_token
     self._session = None
+    self._operation_names = None
+
+  def operation_names(self):
+    if not self._operation_names:
+      self._operation_names = self._send('getOperationNames').names
+    return self._operation_names
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
@@ -354,6 +360,10 @@ class LynxKite:
       name = 'remote-api-upload'  # A hash will be added anyway.
     return self._post('/ajax/upload', files=dict(file=(name, data))).text
 
+  def clean_file_system(self):
+    """Deletes the data files which are not referenced anymore."""
+    self._send('cleanFileSystem')
+
 
 class Table:
 
@@ -369,6 +379,14 @@ class Table:
         name=name,
         writeACL=writeACL,
         readACL=readACL))
+
+  def compute(self):
+    '''Forces the computation of the table.'''
+    fake_project = self.lk.new_project()
+    fake_project.importVertices(**{
+        'id-attr': '',
+        'table': self.name})
+    fake_project.compute()
 
 
 class View:
@@ -611,6 +629,11 @@ class SubProject:
     self.project_checkpoint = project_checkpoint
     self.path = path
     self.lk = project_checkpoint.lk
+
+  def __dir__(self):
+    '''Create list of methods for tab-completion.'''
+    lk_ops = self.lk.operation_names()
+    return super().__dir__() + lk_ops
 
   def scalar(self, scalar):
     '''Fetches the value of a scalar. Returns either a double or a string.'''

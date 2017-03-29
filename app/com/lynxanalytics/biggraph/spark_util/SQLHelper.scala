@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.spark_util
 
 import com.lynxanalytics.biggraph.graph_api._
 
-import com.lynxanalytics.biggraph.table.TableRelation
+import com.lynxanalytics.biggraph.table.BaseRelation
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api.Scripting._
@@ -34,12 +34,7 @@ class SQLHelper(
     sqlContext: sql.SQLContext,
     sparkContext: spark.SparkContext,
     columnListSaver: Seq[(UUID, String)] => Unit)
-      extends TableRelation(table, sqlContext)(null) {
-
-    // TableScan
-    override def buildScan(): rdd.RDD[sql.Row] = buildScan(schema.fieldNames)
-
-    // PrunedScan
+      extends BaseRelation(table, sqlContext) {
     override def buildScan(requiredColumns: Array[String]): rdd.RDD[sql.Row] = {
       val guids = requiredColumns
         .toSeq
@@ -163,6 +158,11 @@ object SQLHelper {
       }
   }
 
+  def toSeqRDD(dataFrame: DataFrame): rdd.RDD[Seq[Any]] = {
+    val tupleColumnIdList = getTupleColumnIdList(dataFrame.schema)
+    dataFrame.rdd.map(processDataFrameRow(tupleColumnIdList))
+  }
+
   private def toNumberedLines(dataFrame: DataFrame, rc: RuntimeContext): AttributeRDD[Seq[Any]] = {
     val numRows = dataFrame.count()
     val maxRows = Limitations.maxImportedLines
@@ -172,11 +172,10 @@ object SQLHelper {
           s"Can't import $numRows lines as your licence only allows $maxRows.")
       }
     }
+    val seqRDD = toSeqRDD(dataFrame)
     val partitioner = rc.partitionerForNRows(numRows)
     import com.lynxanalytics.biggraph.spark_util.Implicits._
-    val rawLines = dataFrame.rdd.randomNumbered(partitioner)
-    val tupleColumnIdList = getTupleColumnIdList(dataFrame.schema)
-    rawLines.mapValues(processDataFrameRow(tupleColumnIdList))
+    seqRDD.randomNumbered(partitioner)
   }
 
   // Magic output for metagraph operations whose output is created

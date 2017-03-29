@@ -59,6 +59,7 @@ class EMRLib:
     self.ec2_key_name = ec2_key_name
     self.emr_client = boto3.client('emr', region_name=region)
     self.rds_client = boto3.client('rds', region_name=region)
+    self.s3_client = boto3.client('s3', region_name=region)
     _, self.ssh_tmp_hosts_file = tempfile.mkstemp()
 
   def wait_for_services(self, services):
@@ -148,13 +149,15 @@ class EMRLib:
         VisibleToAllUsers=True,
         ServiceRole="EMR_DefaultRole",
         Tags=[{
-              'Key': 'owner',
-              'Value': owner
-              },
-              {
-              'Key': 'expiry',
-              'Value': expiry
-              }])
+            'Key': 'owner',
+            'Value': owner
+        }, {
+            'Key': 'expiry',
+            'Value': expiry
+        }, {
+            'Key': 'name',
+            'Value': name
+        }])
     return EMRCluster(res['JobFlowId'], self)
 
   def create_or_connect_to_rds_instance(self, name):

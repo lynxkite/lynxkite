@@ -73,6 +73,16 @@ module.exports = function(fw) {
     return normalized(pos);
   }
 
+  // Compare the coordinates with given precision. The compared coordinates
+  // have to match on `precision` digits. For default we use 8 digits.
+  function checkGraphPositions(saved, graph, precision) {
+    precision = precision || 8;
+    for(var i = 0; i < saved.length; ++i) {
+      expect(saved[i].x).toBeCloseTo(graph[i].x, precision);
+      expect(saved[i].y).toBeCloseTo(graph[i].y, precision);
+    }
+  }
+
   var name = lib.left.vertexAttribute('name');
   var gender = lib.left.vertexAttribute('gender');
   var income = lib.left.vertexAttribute('income');
@@ -124,7 +134,7 @@ module.exports = function(fw) {
           { label: 'Eve' },
           { label: 'Bob' },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       gender.visualizeAs('icon');
@@ -135,7 +145,7 @@ module.exports = function(fw) {
           { icon: 'female' },
           { icon: 'male' },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       income.visualizeAs('color');
@@ -146,7 +156,7 @@ module.exports = function(fw) {
           { color: GRAY },
           { color: RED },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       age.visualizeAs('size');
@@ -157,7 +167,7 @@ module.exports = function(fw) {
           { size: '<15' },
           { size: '>15' },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       age.visualizeAs('opacity');
@@ -168,7 +178,7 @@ module.exports = function(fw) {
           { opacity: '<0.5' },
           { opacity: '1' },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       age.visualizeAs('label-size');
@@ -179,7 +189,7 @@ module.exports = function(fw) {
           { labelSize: '<15' },
           { labelSize: '>15' },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       age.visualizeAs('label-color');
@@ -190,7 +200,7 @@ module.exports = function(fw) {
           { labelColor: BLUE },
           { labelColor: RED },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       // There is no URL attribute in the example graph. Since we only check the "href"
@@ -203,7 +213,7 @@ module.exports = function(fw) {
           { image: 'Eve' },
           { image: 'Bob' },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       // Try removing some visualizations.
@@ -218,7 +228,7 @@ module.exports = function(fw) {
           { opacity: '1', labelSize: '15', labelColor: '', image: null },
           { opacity: '1', labelSize: '15', labelColor: '', image: null },
           ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       // Edge attributes.
@@ -231,7 +241,7 @@ module.exports = function(fw) {
           { width: '>6' },
           { width: '>6' },
         ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       weight.visualizeAs('edge-color');
@@ -243,7 +253,7 @@ module.exports = function(fw) {
           { color: 'rgb(161, 53, 125)' },
           { color: RED },
         ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       comment.visualizeAs('edge-label');
@@ -255,7 +265,7 @@ module.exports = function(fw) {
           { label: 'Bob envies Adam' },
           { label: 'Bob loves Eve' },
         ]);
-        expect(positions(graph)).toEqual(savedPositions);
+        checkGraphPositions(positions(graph), savedPositions);
       });
 
       // Location attributes.
@@ -501,11 +511,11 @@ module.exports = function(fw) {
       lib.navigateToProject('test-example'); // Restore state.
     });
 
-  var saveVisualizationOpen = lib.left.side.$('#save-visualization-dialog #text-dialog-open');
-  var saveVisualizationEntry = lib.left.side.$('#save-visualization-dialog #dialogInput');
-  var saveVisualizationOk = lib.left.side.$('#save-visualization-dialog #text-dialog-ok');
-  var pickButton = lib.left.side.element(by.id('pick-and-next-button'));
-  var centerCount = lib.left.side.element(by.id('pick-center-count'));
+  var saveVisualizationOpen = lib.left.side.$('#setting-save-visualization');
+  var saveVisualizationEntry = $('#save-visualization-name');
+  var centersToken = lib.left.side.$('#setting-centers');
+  var pickButton = $('#pick-and-next-button');
+  var centerCount = $('#pick-center-count');
 
   fw.transitionTest(
     'test-example project with example graph',
@@ -514,6 +524,7 @@ module.exports = function(fw) {
       addConcurMatcher();
       lib.left.toggleSampledVisualization();
       // Set centers count to a non-default value.
+      centersToken.click();
       centerCount.clear();
       centerCount.sendKeys('2');
       pickButton.click();
@@ -521,16 +532,17 @@ module.exports = function(fw) {
       name.visualizeAs('label');
       // Save the visualization with the name 'my visualization'
       saveVisualizationOpen.click();
-      saveVisualizationEntry.clear();
       saveVisualizationEntry.sendKeys('my visualization');
-      saveVisualizationOk.click();
+      saveVisualizationEntry.submit();
       // Close and reopen the project.
       lib.left.close();
       lib.splash.openProject('test-example');
       // Try loading the visualization and check if centers count is correctly updated.
       lib.left.toggleSampledVisualization();
+      centersToken.click();
       expect(centerCount.getAttribute('value')).toBe('1');
       lib.left.scalar('my-visualization').clickMenu('load-visualization');
+      centersToken.click();
       expect(centerCount.getAttribute('value')).toBe('2');
       // Check if the visualization is really loaded and not just the parameters.
       lib.visualization.graphData().then(function(graph) {
