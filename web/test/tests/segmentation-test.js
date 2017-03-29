@@ -7,20 +7,11 @@ var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   fw.transitionTest(
-    'test-example workspace with example graph',
+    'test-example workspace with example graph state selected',
     'segmentation by double created',
     function() {
-      var exampleGraphOp = lib.workspace.getBox(0);
-      var params = {
-        'attr': 'income',
-        'interval_size': '10',
-      };
-      lib.workspace.addBox('Segment by double attribute', 100, 200);
-      var segmentOp = lib.workspace.getBox(1);
-      lib.workspace.connectBoxes(
-          exampleGraphOp, 'project',
-          segmentOp, 'project');
-      lib.workspace.editBox(segmentOp, params);
+      lib.workspace.addBox({ id: 'segment-op', name: 'segment by double attribute', x: 100, y: 200,
+                             after: 'eg0', params: { attr: 'income', interval_size: '10'} });
     },
     function() {
     });
@@ -29,7 +20,6 @@ module.exports = function(fw) {
     'segmentation by double created',
     'segmentation opens',
     function() {
-      lib.workspace.selectOutput(lib.workspace.getBox(1), 'project');
       lib.left.openSegmentation('bucketing');
     },
     function() {
@@ -40,17 +30,13 @@ module.exports = function(fw) {
     'segmentation opens',
     'sub-segmentation can be created and opened',
     function() {
-      var segmentOp1 = lib.workspace.getBox(1);
-      lib.workspace.addBox('Copy graph into a segmentation', 100, 300);
-      var segmentOp2 = lib.workspace.getBox(2);
-      lib.workspace.connectBoxes(
-          segmentOp1, 'project',
-          segmentOp2, 'project');
-      lib.workspace.editBox(segmentOp2, {
-          'apply_to_project': '|bucketing',
-          'name': 'copy',
-      });
-      lib.workspace.selectOutput(segmentOp2, 'project');
+      let params = {
+        apply_to_project: '|bucketing',
+        name: 'copy'
+      };
+      lib.workspace.addBox({ id: 'copy', name: 'copy graph into a segmentation', x: 100, y: 300,
+                             after: 'segment-op', params: params });
+      lib.workspace.selectOutput('copy');
       lib.left.openSegmentation('bucketing');
       lib.right.openSegmentation('copy');
     },
@@ -76,36 +62,20 @@ module.exports = function(fw) {
     'closing sub-segmentation on the RHS reopens its grandparent',
     'discard segmentation works',
     function() {
-      var segmentOp2 = lib.workspace.getBox(2);
-      lib.workspace.addBox('Discard segmentation', 100, 400);
-      var discardOp = lib.workspace.getBox(3);
-      lib.workspace.connectBoxes(
-          segmentOp2, 'project',
-          discardOp, 'project');
-      lib.workspace.editBox(discardOp, {
-          'name': 'bucketing',
-      });
-      lib.workspace.selectOutput(discardOp, 'project');
+      lib.workspace.addBox({ id: 'discard-segment', name: 'discard segmentation', x: 100, y: 400,
+                             after: 'copy', params: { name: 'bucketing' } });
+      lib.workspace.selectOutput('discard-segment');
     },
     function() {
       expect(lib.left.segmentation('bucketing').isPresent()).toBe(false);
     });
 
   fw.transitionTest(
-    'test-example workspace with example graph',
+    'test-example workspace with example graph state selected',
     'segmentation size reporting - non empty segments',
     function() {
-      var params = {
-        'name': 'self',
-      };
-      var exampleGraphOp = lib.workspace.getBox(0);
-      lib.workspace.addBox('Copy graph into a segmentation', 100, 200);
-      var segmentOp = lib.workspace.getBox(1);
-      lib.workspace.connectBoxes(
-          exampleGraphOp, 'project',
-          segmentOp, 'project');
-      lib.workspace.editBox(segmentOp, params);
-      lib.workspace.selectOutput(segmentOp, 'project');
+      lib.workspace.addBox({ id: 'copy', name: 'copy graph into a segmentation', x: 100, y: 200,
+                             after: 'eg0', params: { name: 'self' } });
       lib.left.openSegmentation('self');
     },
     function() {
@@ -118,17 +88,8 @@ module.exports = function(fw) {
     'segmentation size reporting - non empty segments',
     'segmentation size reporting - has empty segments',
     function() {
-      var params = {
-        'filterva_income': '*',
-      };
-      var segmentOp = lib.workspace.getBox(1);
-      lib.workspace.addBox('Filter by attributes', 100, 300);
-      var filterOp = lib.workspace.getBox(2);
-      lib.workspace.connectBoxes(
-          segmentOp, 'project',
-          filterOp, 'project');
-      lib.workspace.editBox(filterOp, params);
-      lib.workspace.selectOutput(filterOp, 'project');
+      lib.workspace.addBox({ id: 'filter-op', name: 'filter by attributes', x: 100, y: 300,
+                             after: 'copy', params: { 'filterva_income': '*' } });
       lib.left.openSegmentation('self');
     },
     function() {
