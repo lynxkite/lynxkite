@@ -8,93 +8,114 @@ import scala.reflect.Manifest
 
 class ScalaScriptTest extends FunSuite {
 
-  def hello(): Unit = {
-    class EvilRun extends Runnable {
-      override def run(): Unit = {
-        val name = Thread.currentThread.getName
-        val id = Thread.currentThread.getId.toString
-        println("Evil " + name + " " + id)
-      }
+  def worksUnlessRestricted(code: String): String = {
+    val result = ScalaScript.run(code, restricted = false)
+    intercept[AccessControlException] {
+      ScalaScript.run(code, restricted = true)
     }
-    val r = new EvilRun()
-    val t = new java.lang.Thread(r)
-    t.start()
-  }
-
-  def expect[T <: AnyRef](f: => Any)(implicit manifest: Manifest[T]): Unit = {
-    val e = intercept[T] {
-      f
-    }
-    println(e.asInstanceOf[Throwable].getMessage)
-  }
-  ignore("Can't do infinite loop") {
-    expect[java.util.concurrent.TimeoutException] {
-      ScalaScript.run(
-        """
-        Thread.sleep(10000L);
-      """)
-    }
-  }
-
-  ignore("Simple arithmetic works") {
-    assert(ScalaScript.run("5 * 5 + 1") == "26")
+    result
   }
 
   /*
-  test("Security manager disables file access") {
-    val testFile: URL = getClass.getResource("/graph_api/permission_check.txt")
-    assert(scala.io.Source.fromFile(testFile.getFile).mkString
-      == "This file is used to check the security manager implementation.\n")
-    val path = testFile.getPath
-    intercept[AccessControlException] {
-      ScalaScript.run(s"""scala.io.Source.fromFile("${path}").mkString""")
+  test("Can't do infinite loop, even when non-restricted") {
+    val code =
+      """
+        Thread.sleep(15000L)
+      """
+    intercept[java.util.concurrent.TimeoutException] {
+      ScalaScript.run(code, restricted = false)
+    }
+    intercept[java.util.concurrent.TimeoutException] {
+      ScalaScript.run(code, restricted = true)
     }
   }
+
+  test("Simple arithmetic works") {
+    val code = "5 * 5 + 1"
+    assert(ScalaScript.run(code, restricted = false) == "26")
+    assert(ScalaScript.run(code, restricted = true) == "26")
+  }
+
+  test("Security manager disables file access") {
+    val testFile: URL = getClass.getResource("/graph_api/permission_check.txt")
+    val contents = "This file is used to check the security manager implementation.\n"
+    assert(scala.io.Source.fromFile(testFile.getFile).mkString == contents)
+    val path = testFile.getPath
+    val code = s"""scala.io.Source.fromFile("${path}").mkString"""
+    assert(worksUnlessRestricted(code) == contents)
+
+  }
+
   test("Can't replace the security manager") {
-    expect[AccessControlException] {
-      ScalaScript.run(s"""System.setSecurityManager(null)""")
-    }
+    val code = s"""System.setSecurityManager(null)"""
+    worksUnlessRestricted(code)
   }
 
   test("Can't tamper with our security manager") {
-    ScalaScript.run(
+    val code =
       """
-        val s = System.getSecurityManager.asInstanceOf[com.lynxanalytics.biggraph.ScalaScriptSecurityManager]
-        s.disableCurrentThread
-      """)
+val s = System.getSecurityManager.asInstanceOf[com.lynxanalytics.biggraph.ScalaScriptSecurityManager]
+s.disableCurrentThread
+      """
+    worksUnlessRestricted(code)
   }
 
-  test("Can create a class") {
-    ScalaScript.run(
+  test("Can do some non-trivial, innocent computation") {
+    val code =
       """
            class C {
-             def run(): Unit = {
-               val name = Thread.currentThread.getName
-               val id = Thread.currentThread.getId.toString
-               println("Evil " + name + " " + id)
+             def compute(): Long = {
+               val id = Thread.currentThread.getId
+               val timestamp = com.lynxanalytics.biggraph.graph_util.Timestamp.toString.toLong
+val timestamp = 10000000000L
+               id + timestamp
              }
            }
-             val r = new C()
-             r.run()
-             """)
+           //val r = new C()
+           //r.compute()
+           1213344L
+      """
+    val ts = com.lynxanalytics.biggraph.graph_util.Timestamp.toString.toLong
+    val result = worksUnlessRestricted(code)
+    assert(result.toLong >= ts)
   }
-*/
+
   test("Can't create a new thread") {
-    //    expect[java.util.concurrent.ExecutionException] {
-    ScalaScript.run(
-      s"""
+    val code =
+      """
            class EvilRun extends Runnable {
              override def run(): Unit = {
-               val name = Thread.currentThread.getName
-               val id = Thread.currentThread.getId.toString
-               println("Evil " + name + " " + id)
              }
            }
              val r = new EvilRun()
              val t = new java.lang.Thread(r)
              t.start()
 
-           """)
-    //    }
+      """
+    worksUnlessRestricted(code)
+  }
+  */
+
+  ignore("haha") {
+    val code = "com.lynxanalytics.biggraph.graph_util.Timestamp.toString"
+    println(ScalaScript.run(code, restricted = true, dump = true))
+  }
+
+  test("Can do some non-trivial, innocent computation") {
+    val code =
+      """
+           class C {
+             def compute(): Long = {
+             val id = 0L
+           //    val id = Thread.currentThread.getId
+           //    val timestamp = com.lynxanalytics.biggraph.graph_util.Timestamp.toString.toLong
+val timestamp = 10000000000L
+               id + timestamp
+             }
+           }
+           val r = new C()
+           r.compute()
+      """
+    ScalaScript.run(code, restricted = true, dump = true)
   }
 }
