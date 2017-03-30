@@ -196,12 +196,6 @@ object RemoteAPIServer extends JsonServer {
   def exportViewToJdbc = jsonFuturePost(c.exportViewToJdbc)
   private def createView[T <: ViewRecipe: json.Writes: json.Reads] =
     jsonPost[T, CheckpointResponse](c.createView)
-  def createViewJdbc = createView[JdbcImportRequest]
-  def createViewHive = createView[HiveImportRequest]
-  def createViewCSV = createView[CSVImportRequest]
-  def createViewParquet = createView[ParquetImportRequest]
-  def createViewORC = createView[ORCImportRequest]
-  def createViewJson = createView[JsonImportRequest]
   def changeACL = jsonPost(c.changeACL)
   def globalSQL = createView[GlobalSQLRequest]
   def isComputed = jsonPost(c.isComputed)

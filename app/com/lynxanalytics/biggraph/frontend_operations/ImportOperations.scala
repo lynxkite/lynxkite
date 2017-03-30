@@ -45,7 +45,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("limit", "Limit"),
       Code("sql", "SQL"),
       TableParam("imported_table", "Table GUID"))
-    def getDataFrame(context: spark.sql.SQLContext) = {
+    def getRawDataFrame(context: spark.sql.SQLContext) = {
       val errorHandling = params("error_handling")
       val infer = params("infer") == "yes"
       val columns = params("columns")
@@ -70,10 +70,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val hadoopFile = graph_util.HadoopFile(params("filename"))
       hadoopFile.assertReadAllowedFrom(user)
       FileImportValidator.checkFileHasContents(hadoopFile)
-      val df = readerWithSchema.load(hadoopFile.resolvedName)
-      val sql = params("sql")
-      if (sql.isEmpty) df
-      else DataManager.sql(context, sql, List("this" -> df))
+      readerWithSchema.load(hadoopFile.resolvedName)
     }
   })
 
@@ -90,7 +87,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("connection_properties", "Connection properties"),
       Code("sql", "SQL"),
       TableParam("imported_table", "Table GUID"))
-    def getDataFrame(context: spark.sql.SQLContext) = {
+    def getRawDataFrame(context: spark.sql.SQLContext) = {
       JDBCUtil.read(
         context,
         params("jdbc_url"),
@@ -104,6 +101,41 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             s"Invalid connection property definition: ${params("connection_properties")}")
           e.take(eq) -> e.drop(eq + 1)
         }.toMap)
+    }
+  })
+
+  abstract class FileWithSchema(context: Context) extends ImportOperation(context) {
+    val format: String
+    lazy val parameters = List(
+      FileParam("filename", "File"),
+      Param("imported_columns", "Columns to import"),
+      Param("limit", "Limit"),
+      Code("sql", "SQL"),
+      TableParam("imported_table", "Table GUID"))
+    def getRawDataFrame(context: spark.sql.SQLContext) = {
+      val hadoopFile = graph_util.HadoopFile(params("filename"))
+      hadoopFile.assertReadAllowedFrom(user)
+      FileImportValidator.checkFileHasContents(hadoopFile)
+      context.read.format(format).load(hadoopFile.resolvedName)
+    }
+  }
+
+  register("Import Parquet")(new FileWithSchema(_) { val format = "parquet" })
+  register("Import ORC")(new FileWithSchema(_) { val format = "orc" })
+  register("Import JSON")(new FileWithSchema(_) { val format = "json" })
+
+  register("Import from Hive")(new ImportOperation(_) {
+    lazy val parameters = List(
+      FileParam("hive_table", "Hive table"),
+      Param("imported_columns", "Columns to import"),
+      Param("limit", "Limit"),
+      Code("sql", "SQL"),
+      TableParam("imported_table", "Table GUID"))
+    def getRawDataFrame(context: spark.sql.SQLContext) = {
+      assert(
+        DataManager.hiveConfigured,
+        "Hive is not configured for this LynxKite instance. Contact your system administrator.")
+      context.table(params("hive_table"))
     }
   })
 }
