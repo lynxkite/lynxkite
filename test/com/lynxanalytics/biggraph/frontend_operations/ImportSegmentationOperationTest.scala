@@ -17,6 +17,7 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
     val sql = cleanDataManager.newSQLContext
     val dataFrame = sql.createDataFrame(rows).toDF("base_name", "seg_name", "base_id")
     val table = graph_operations.ImportDataFrame.run(dataFrame)
+    // Abuse CSV import to load arbitrary table.
     box("Import CSV", Map("imported_table" -> table.gUID.toString))
   }
 
