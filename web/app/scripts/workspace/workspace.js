@@ -99,7 +99,7 @@ angular.module('biggraph')
           this.saveWorkspace();
         },
 
-        getSelectedBoxes: function(){
+        selectBoxesInSelectionBox: function(){
           var boxes = this.boxes();
           for (i = 0; i < boxes.length; i++) {
             var box = boxes[i];
