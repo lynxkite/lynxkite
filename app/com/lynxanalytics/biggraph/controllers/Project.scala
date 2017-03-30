@@ -966,7 +966,8 @@ class ViewFrame(path: SymbolPath)(
 
 class SnapshotFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
-  set(rootDir / "objectType", "snapshot")
+
+  def initialize() = set(rootDir / "objectType", "snapshot")
 
   def setState[T: json.Writes](obj: T) = details = TypedJson.createFromWriter(obj).as[json.JsObject]
 
@@ -1216,6 +1217,11 @@ class DirectoryEntry(val path: SymbolPath)(
     val res = new ViewFrame(path)
     res.initializeFromCheckpoint(checkpoint)
     res
+  }
+
+  def asSnapshotFrame: SnapshotFrame = {
+    assert(isInstanceOf[SnapshotFrame], s"Entry '$path' is not a snapshot.")
+    asInstanceOf[SnapshotFrame]
   }
 }
 
