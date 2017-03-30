@@ -34,7 +34,7 @@ object OperationParams {
         val unknown = givenValues -- possibleValues
         assert(
           unknown.isEmpty,
-          s"Unknown option: ${unknown.mkString(", ")}" +
+          s"Unknown option for $id: ${unknown.mkString(", ")}" +
             s" (Possibilities: ${possibleValues.mkString(", ")})")
       }
     }
