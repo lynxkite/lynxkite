@@ -252,8 +252,8 @@ sealed trait ProjectViewer {
   }
 
   def implicitTableNames: Iterable[String]
-  def allRelativeTablePaths: Seq[RelativeTablePath] = {
-    val localTables = implicitTableNames.toSeq.map(name => RelativeTablePath(Seq(name)))
+  def allRelativeTablePaths: Seq[SymbolPath] = {
+    val localTables = implicitTableNames.toSeq.map(name => SymbolPath(name))
     val childTables = sortedSegmentations.flatMap(segmentation =>
       segmentation.allRelativeTablePaths.map(
         childPath => segmentation.segmentationName /: childPath))
@@ -261,6 +261,11 @@ sealed trait ProjectViewer {
   }
 }
 object ProjectViewer {
+  val VertexTableName = "vertices"
+  val EdgeTableName = "edges"
+  val EdgeAttributeTableName = "edge_attributes"
+  val BelongsToTableName = "belongs_to"
+
   def feTypeName[T](typeTag: TypeTag[T]): String = {
     typeTag.tpe.toString
       .replace("com.lynxanalytics.biggraph.graph_api.", "")
@@ -332,11 +337,11 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
   protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] = None
 
   def implicitTableNames =
-    Option(edgeBundle).map(_ => Table.EdgeTableName) ++
-      Option(edgeBundle).map(_ => Table.EdgeAttributeTableName) ++
-      Option(vertexSet).map(_ => Table.VertexTableName)
+    Option(edgeBundle).map(_ => ProjectViewer.EdgeTableName) ++
+      Option(edgeBundle).map(_ => ProjectViewer.EdgeAttributeTableName) ++
+      Option(vertexSet).map(_ => ProjectViewer.VertexTableName)
 
-  def allAbsoluteTablePaths: Seq[AbsoluteTablePath] = allRelativeTablePaths.map(_.toAbsolute(Nil))
+  def allAbsoluteTablePaths: Seq[SymbolPath] = allRelativeTablePaths
 
   def viewRecipe = rootState.viewRecipe.map(TypedJson.read[ViewRecipe])
 }
@@ -398,10 +403,10 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   }
 
   def implicitTableNames =
-    Option(belongsTo).map(_ => Table.BelongsToTableName) ++
-      Option(edgeBundle).map(_ => Table.EdgeTableName) ++
-      Option(edgeBundle).map(_ => Table.EdgeAttributeTableName) ++
-      Option(vertexSet).map(_ => Table.VertexTableName)
+    Option(belongsTo).map(_ => ProjectViewer.BelongsToTableName) ++
+      Option(edgeBundle).map(_ => ProjectViewer.EdgeTableName) ++
+      Option(edgeBundle).map(_ => ProjectViewer.EdgeAttributeTableName) ++
+      Option(vertexSet).map(_ => ProjectViewer.VertexTableName)
 }
 
 // The CheckpointRepository's job is to persist project states to checkpoints.
@@ -965,23 +970,6 @@ object SubProject {
   }
 }
 
-class TableFrame(path: SymbolPath)(
-    implicit manager: MetaGraphManager) extends ObjectFrame(path) {
-  def initializeFromTable(table: Table, notes: String): Unit = manager.synchronized {
-    initializeFromCheckpoint(table.saveAsCheckpoint(notes))
-  }
-  def initializeFromCheckpoint(cp: String): Unit = manager.synchronized {
-    // Marking this as a table.
-    set(rootDir / "objectType", "table")
-    checkpoint = cp
-  }
-
-  def setImportConfig(obj: json.JsObject) = details = obj
-
-  override def copy(to: DirectoryEntry): TableFrame = super.copy(to).asTableFrame
-  def table: Table = Table(GlobalTablePath(checkpoint, name, Seq(Table.VertexTableName)))
-}
-
 class ViewFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
   def initializeFromConfig[T <: ViewRecipe: json.Writes](
@@ -1174,8 +1162,7 @@ class DirectoryEntry(val path: SymbolPath)(
   def parents: Iterable[Directory] = parent ++ parent.toSeq.flatMap(_.parents)
 
   def hasCheckpoint = manager.tagExists(rootDir / "checkpoint")
-  def isTable = get(rootDir / "objectType", "") == "table"
-  def isProject = hasCheckpoint && !isTable && !isView && !isWorkspace
+  def isProject = hasCheckpoint && !isView && !isWorkspace
   def isDirectory = exists && !hasCheckpoint
   def isView = get(rootDir / "objectType", "") == "view"
   def isWorkspace = get(rootDir / "objectType", "") == "workspace"
@@ -1205,23 +1192,6 @@ class DirectoryEntry(val path: SymbolPath)(
   def asNewWorkspaceFrame(checkpoint: String): WorkspaceFrame = {
     val res = asNewWorkspaceFrame()
     res.setCheckpoint(checkpoint)
-    res
-  }
-
-  def asTableFrame: TableFrame = {
-    assert(isInstanceOf[TableFrame], s"Entry '$path' is not a table.")
-    asInstanceOf[TableFrame]
-  }
-  def asNewTableFrame(table: Table, notes: String): TableFrame = {
-    assert(!exists, s"Entry '$path' already exists.")
-    val res = new TableFrame(path)
-    res.initializeFromTable(table, notes)
-    res
-  }
-  def asNewTableFrame(checkpoint: String): TableFrame = {
-    assert(!exists, s"Entry '$path' already exists.")
-    val res = new TableFrame(path)
-    res.initializeFromCheckpoint(checkpoint)
     res
   }
 
@@ -1279,8 +1249,6 @@ object DirectoryEntry {
     if (entry.exists) {
       if (entry.isProject) {
         new ProjectFrame(entry.path)
-      } else if (entry.isTable) {
-        new TableFrame(entry.path)
       } else if (entry.isView) {
         new ViewFrame(entry.path)
       } else if (entry.isWorkspace) {

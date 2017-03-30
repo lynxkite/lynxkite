@@ -30,7 +30,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   def getOutputIDs(ws: String) = {
     val allIds = get(ws).outputs
     allIds.map {
-      case BoxOutputInfo(bo, id, _) => (bo, id)
+      case BoxOutputInfo(bo, id, _, _) => (bo, id)
     }.toMap
   }
   def getOutput(id: String) =
