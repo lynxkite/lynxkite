@@ -20,7 +20,7 @@ class ScalaScriptTest extends FunSuite {
     result
   }
 
-  ignore("Can't do infinite loop, even when non-restricted") {
+  test("Can't do infinite loop, even when non-restricted") {
     val code =
       """
         Thread.sleep(15000L)

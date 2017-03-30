@@ -1,7 +1,10 @@
 // The base classes and mechanisms for frontend operations.
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.{ ScalaScript, SparkFreeEnvironment, graph_operations, serving }
+import com.lynxanalytics.biggraph.ScalaScript
+import com.lynxanalytics.biggraph.SparkFreeEnvironment
+import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.graph_api._
 import play.api.libs.json
 
