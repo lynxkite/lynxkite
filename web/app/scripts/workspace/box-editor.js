@@ -12,14 +12,16 @@ angular.module('biggraph')
       },
       link: function(scope) {
         scope.$watch(
-            'workspace.selectedBoxId',
+            'workspace.selectedBoxIds',
             function() {
               if (!scope.workspace) {
                 return;
               }
               // Make a copy of the parameter values.
               scope.paramValues = Object.assign(
-                  {}, scope.workspace.selectedBox().instance.parameters);
+                  {}, new Map(scope.workspace.selectedBoxes().map(function(box){
+                    return [box.instance.id, box.instance.parameters];
+                  })));
               scope.loadBoxMeta();
             });
         // The metadata (param definition list) of the current box
@@ -42,32 +44,33 @@ angular.module('biggraph')
         scope.paramValues = {};
 
         scope.loadBoxMeta = function() {
-          if (!scope.workspace || !scope.workspace.selectedBoxId) {
+          if (!scope.workspace || !scope.workspace.selectedBoxIds) {
             return;
           }
           // The below magic makes sure that the response
           // to the result of the latest getOperationMetaRequest
           // will be passed to scope.newOpSelected().
           var currentRequest;
-          scope.lastRequest = currentRequest = util
-            .nocache(
-              '/ajax/getOperationMeta',
-              {
+          var success = function(boxMeta) {
+            if (scope.lastRequest === currentRequest) {
+              scope.newOpSelected(boxMeta);
+            }
+          };
+          var error = function(){
+            if (scope.lastRequest === currentRequest) {
+              scope.newOpSelected(undefined);
+            }
+          };
+          for (var i = 0; i < scope.workspace.selectedBoxIds.length; i ++){
+            scope.lastRequest = currentRequest = util
+              .nocache(
+                '/ajax/getOperationMeta',
+                {
                   workspace: scope.workspace.name,
-                  box: scope.workspace.selectedBoxId,
-              })
-            .then(
-              function success(boxMeta) {
-                if (scope.lastRequest === currentRequest) {
-                  scope.newOpSelected(boxMeta);
-                }
-              },
-              function error() {
-                if (scope.lastRequest === currentRequest) {
-                  scope.newOpSelected(undefined);
-                }
-              });
-        };
+                  box: scope.workspace.selectedBoxIds[i],
+                })
+                .then(success,error);
+          }};
 
         // Invoked when the user selects a new operation and its
         // metadata is successfully downloaded.

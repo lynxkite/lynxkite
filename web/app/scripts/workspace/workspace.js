@@ -95,12 +95,20 @@ angular.module('biggraph')
         },
 
         selectBox: function(boxId) {
-          this.selectedBoxId = boxId;
+          this.selectedBoxIds.push(boxId);
         },
 
-        selectedBox: function() {
-          if (this.selectedBoxId) {
-            return this.wrapper.boxMap[this.selectedBoxId];
+        // selectedBox: function() {
+        //   if (this.selectedBoxId) {
+        //     return this.wrapper.boxMap[this.selectedBoxId];
+        //   } else {
+        //     return undefined;
+        //   }
+        // },
+
+        selectedBoxes: function() {
+          if (this.selectedBoxIds) {
+            return this.selectedBoxIds.map(function(id){return this.wrapper.boxMap[id];});
           } else {
             return undefined;
           }
@@ -113,7 +121,7 @@ angular.module('biggraph')
 
         selectBoxesInSelectionBox: function(){
           var boxes = this.boxes();
-          for (i = 0; i < boxes.length; i++) {
+          for (var i = 0; i < boxes.length; i++) {
             var box = boxes[i];
             // console.log(box);
             if(this.inSelectionBox(box)){
@@ -127,14 +135,6 @@ angular.module('biggraph')
           var sb = this.selectionBox;
           return(sb.leftX < box.instance.x && box.instance.x < sb.leftX + sb.width &&
             sb.upperY < box.instance.y && box.instance.y < sb.upperY + sb.height);
-        },
-
-        selectedBoxes: function() {
-          if (this.selectedBoxIds) {
-            return this.selectedBoxIds.map(function(id){return this.wrapper.boxMap[id];});
-          } else {
-            return undefined;
-          }
         },
 
         selectState: function(boxID, outputID) {
