@@ -92,7 +92,6 @@ case class Workspace(
       state.kind match {
         case BoxOutputKind.Project => projectProgress(state.project)
         case BoxOutputKind.Table => List(entityProgressManager.computeProgress(state.table))
-        case _ => List()
       }
     }
     BoxOutputProgress(
