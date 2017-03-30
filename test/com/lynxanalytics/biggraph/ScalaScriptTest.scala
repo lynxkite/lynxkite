@@ -1,4 +1,4 @@
-package com.lynxanalytics.biggraph
+package com.lynxanalytics.second
 
 import org.scalatest.FunSuite
 import java.security.AccessControlException
@@ -6,10 +6,10 @@ import java.security.AccessControlException
 class ScalaScriptTest extends FunSuite {
 
   def worksUnlessRestricted(code: String): String = {
-    val result = ScalaScript.run(code, restricted = false)
     intercept[AccessControlException] {
       ScalaScript.run(code, restricted = true)
     }
+    val result = ScalaScript.run(code, restricted = false)
     result
   }
 
@@ -57,7 +57,7 @@ class ScalaScriptTest extends FunSuite {
   test("Can't tamper with our security manager") {
     val code =
       """
-val s = System.getSecurityManager.asInstanceOf[com.lynxanalytics.biggraph.ScalaScriptSecurityManager]
+val s = System.getSecurityManager.asInstanceOf[com.lynxanalytics.second.ScalaScriptSecurityManager]
 s.disableCurrentThread
       """
     worksUnlessRestricted(code)

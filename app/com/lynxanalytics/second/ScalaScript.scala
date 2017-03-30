@@ -1,22 +1,23 @@
-package com.lynxanalytics.biggraph
+package com.lynxanalytics.second
 
 import java.security.Permission
 import javax.script._
 
 import com.lynxanalytics.biggraph.graph_api.{ SafeFuture, ThreadUtil }
-
+import java.lang.Thread.currentThread
 import scala.concurrent.duration.Duration
 import scala.tools.nsc.interpreter.IMain
 
 class ScalaScriptSecurityManager extends SecurityManager {
   // These are temporary debug tools
   private val logs = scala.collection.mutable.Queue[String]()
-  private def log(entries: String*): Unit = {
+
+  def log(entries: String*): Unit = synchronized {
     val head = Seq[String](Thread.currentThread.getName, Thread.currentThread.getId.toString)
     val entry = (head ++ entries).mkString(" ")
     logs += entry
   }
-  def dump(pattern: String = ""): Unit = {
+  def dump(pattern: String = ""): Unit = synchronized {
     logs.filter(_.contains(pattern)).foreach(println)
   }
 
@@ -27,18 +28,19 @@ class ScalaScriptSecurityManager extends SecurityManager {
   // as long as this security manager is not garbage collected
   // because of the reference.
   def disableCurrentThread(): Unit = synchronized {
+    log("DISABLED")
     if (restrictedThread != null) {
       throw new java.security.AccessControlException(s"RestrictedThreadID access")
     }
     restrictedThread = Thread.currentThread
   }
 
-  private def inRestrictedThread = {
-    (restrictedThread) != null && (restrictedThread eq Thread.currentThread)
+  private def inRestrictedThread = synchronized {
+    (restrictedThread) != null && (restrictedThread eq currentThread)
   }
 
   // Restricted threads cannot create other threads
-  override def getThreadGroup: ThreadGroup = synchronized {
+  override def getThreadGroup: ThreadGroup = {
     log("getThreadGroup called")
     if (inRestrictedThread) {
       throw new java.security.AccessControlException("Access error: GET_THREAD_GROUP")
@@ -47,12 +49,28 @@ class ScalaScriptSecurityManager extends SecurityManager {
     }
   }
   // Other permissions seem to be handled properly by the default SecurityManager
-  override def checkPermission(permission: Permission): Unit = synchronized {
+  override def checkPermission(permission: Permission): Unit = {
     log("checkPermisson: ", permission.toString)
-    if (inRestrictedThread) {
+    if (inRestrictedThread && !permission.toString.contains(".sbt")) {
       super.checkPermission(permission)
     }
   }
+
+  override def checkPackageAccess(s: String): Unit = {
+    super.checkPackageAccess(s)
+    log("checkingPackageAccess: ", s)
+    if (inRestrictedThread) {
+      if (s.startsWith("com.lynxanalytics")) {
+        throw new java.security.AccessControlException("Illegal package access")
+      }
+    }
+  }
+
+  override def checkPackageDefinition(s: String): Unit = {
+    log("checkingPackageDefinition: ", s)
+    super.checkPackageDefinition(s)
+  }
+
 }
 
 object ScalaScript {
@@ -78,11 +96,11 @@ object ScalaScript {
   }
 
   def run_inner(code: String, restricted: Boolean, dump: Boolean): String = {
+    val compiledCode = engine.compile(code)
     val sm = new ScalaScriptSecurityManager
     assert(System.getSecurityManager == null)
     System.setSecurityManager(sm)
     val result = try {
-      val compiledCode = engine.compile(code)
       SafeFuture {
         if (restricted) {
           sm.disableCurrentThread()
