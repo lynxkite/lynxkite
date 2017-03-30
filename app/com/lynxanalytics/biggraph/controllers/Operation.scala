@@ -142,7 +142,6 @@ object Operation {
 
       // TODO: Operations using these must be rewritten with multiple inputs as part of #5724.
       def accessibleTableOptions: List[FEOption] = ???
-      def readableProjectCheckpoints: List[FEOption] = ???
     }
   }
 }
