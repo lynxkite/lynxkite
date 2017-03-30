@@ -1,7 +1,6 @@
 // The base classes and mechanisms for frontend operations.
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.ScalaScript
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.serving
@@ -190,7 +189,7 @@ trait BasicOperation extends Operation {
   // Parameters without default values:
   protected val parametricValues = context.box.parametricParameters.map {
     case (name, value) =>
-      val result = ScalaScript.run(value)
+      val result = com.lynxanalytics.second.ScalaScript.run(value)
       name -> result
   }
   protected val paramValues = context.box.parameters ++ parametricValues
