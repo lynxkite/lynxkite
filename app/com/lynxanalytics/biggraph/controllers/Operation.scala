@@ -30,7 +30,7 @@ object FEOperationParameterMeta {
     "tag-list", // A variation of "multipleChoice" with a more concise, horizontal design.
     "code", // JavaScript code
     "model", // A special kind to set model parameters.
-    "table", // A table.
+    "imported-table", // A table importing button.
     "segmentation") // One of the segmentations of the current project.
 }
 
