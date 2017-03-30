@@ -1248,6 +1248,16 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
+  register("Load snapshot", StructureOperations)(new ProjectOutputOperation(_) {
+    lazy val parameters = List(Param("path", "Path"))
+    def enabled = FEStatus.enabled
+    def apply() = {
+      val snapshot = DirectoryEntry.fromName(paramValues("path")).asSnapshotFrame
+      val bo = TypedJson.read[BoxOutputState](snapshot.details.get)
+      project.state = bo.project.state
+    }
+  })
+
   register("Hash vertex attribute", ImportOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true),
