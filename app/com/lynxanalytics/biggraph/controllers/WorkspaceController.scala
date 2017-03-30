@@ -10,15 +10,14 @@ import com.lynxanalytics.biggraph.serving
 import play.api.libs.json
 
 case class GetWorkspaceRequest(name: String)
-case class BoxOutputIDPair(boxOutput: BoxOutput, id: String)
-case class GetWorkspaceResponse(workspace: Workspace, outputs: List[BoxOutputIDPair])
+case class BoxOutputInfo(boxOutput: BoxOutput, stateID: String, success: FEStatus)
+case class GetWorkspaceResponse(workspace: Workspace, outputs: List[BoxOutputInfo])
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetOutputRequest(id: String)
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class GetOutputResponse(kind: String, project: Option[FEProject] = None, success: FEStatus)
 case class GetStatusRequest(stateIDs: List[String])
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
-case class Status(progress: Progress, success: FEStatus)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 
@@ -62,8 +61,11 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         calculatedStates(id) = boxOutputState
       }
     }
-    val stateIDs = statesWithId.mapValues(_._2).toList.map((BoxOutputIDPair.apply _).tupled)
-    GetWorkspaceResponse(workspace, stateIDs)
+    val stateInfo = statesWithId.toList.map {
+      case (boxOutput, (boxOutputState, stateID)) =>
+        BoxOutputInfo(boxOutput, stateID, boxOutputState.success)
+    }
+    GetWorkspaceResponse(workspace, stateInfo)
   }
 
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
@@ -89,28 +91,26 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
   }
 
-  def getStatus(user: serving.User, request: GetStatusRequest): Map[String, Status] = {
+  def getProgress(user: serving.User, request: GetStatusRequest): Map[String, Option[Progress]] = {
     val states = request.stateIDs.map(stateID => stateID -> getOutput(user, stateID)).toMap
     states.map {
       case (stateID, state) =>
         if (state.success.enabled) {
           state.kind match {
-            case BoxOutputKind.Project => stateID -> (state.project.state.progress, state.success)
+            case BoxOutputKind.Project => stateID -> Some(state.project.state.progress)
             case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }
         } else {
-          stateID -> (List(), state.success)
+          stateID -> None
         }
-    }.mapValues {
-      case (progressList, success) =>
-        val progress = Progress(
-          computed = progressList.count(_ == 1.0),
-          inProgress = progressList.count(x => x < 1.0 && x > 0.0),
-          notYetStarted = progressList.count(_ == 0.0),
-          failed = progressList.count(_ < 0.0)
-        )
-        Status(progress, success)
-    }.view.force
+    }.mapValues(option => option.map(
+      progressList => Progress(
+        computed = progressList.count(_ == 1.0),
+        inProgress = progressList.count(x => x < 1.0 && x > 0.0),
+        notYetStarted = progressList.count(_ == 0.0),
+        failed = progressList.count(_ < 0.0)
+      ))
+    ).view.force
   }
 
   def setWorkspace(
@@ -140,7 +140,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 object WorkspaceControllerJsonFormatters {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fFEStatus
   import WorkspaceJsonFormatters._
-  implicit val fBoxOutputIDPair = json.Json.format[BoxOutputIDPair]
+  implicit val fBoxOutputInfo = json.Json.format[BoxOutputInfo]
   implicit val fProgress = json.Json.format[Progress]
-  implicit val fStatus = json.Json.format[Status]
 }

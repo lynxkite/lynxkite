@@ -40,7 +40,7 @@ case class Workspace(
           val meta = ops.getBoxMetadata(box.operationID)
           meta.outputs.map {
             o =>
-              o.ofBox(box) -> BoxOutputState(o.kind, json.Json.toJson(0).as[json.JsNumber],
+              o.ofBox(box) -> BoxOutputState(o.kind, None,
                 FEStatus.disabled("Can not compute state due to circular dependencies."))
           }
         }
@@ -54,7 +54,7 @@ case class Workspace(
 
     def errorOutputs(msg: String): Map[BoxOutput, BoxOutputState] = {
       meta.outputs.map {
-        o => o.ofBox(box) -> BoxOutputState(o.kind, null, FEStatus.disabled(msg))
+        o => o.ofBox(box) -> BoxOutputState(o.kind, None, FEStatus.disabled(msg))
       }.toMap
     }
 
@@ -204,7 +204,7 @@ object BoxOutputKind {
 
 case class BoxOutputState(
     kind: String,
-    state: json.JsValue,
+    state: Option[json.JsValue],
     success: FEStatus = FEStatus.enabled) {
   BoxOutputKind.assertKind(kind)
   def isError = !success.enabled
@@ -212,8 +212,9 @@ case class BoxOutputState(
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(isProject, s"Tried to access '$kind' as 'project'.")
     assert(success.enabled, success.disabledReason)
+    assert(state.nonEmpty, "State is empty.")
     import CheckpointRepository.fCommonProjectState
-    val p = state.as[CommonProjectState]
+    val p = state.map(_.as[CommonProjectState]).get
     val rps = RootProjectState.emptyState.copy(state = p)
     new RootProjectEditor(rps)
   }

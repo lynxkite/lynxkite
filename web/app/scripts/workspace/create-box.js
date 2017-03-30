@@ -47,8 +47,7 @@ angular.module('biggraph').factory('createBox', function() {
         inProgress: false,
         progressColor: undefined,
         error: '',
-        updateStatus: function(status) {
-          var progress = status.progress;
+        updateProgress: function(progress) {
           var all = 0;
           for (var p in progress) {
             if (progress.hasOwnProperty(p)) {
@@ -62,12 +61,6 @@ angular.module('biggraph').factory('createBox', function() {
           } else {
             this.clearProgress();
           }
-
-          if (status.success.enabled) {
-            this.error = '';
-          } else {
-            this.error = status.success.disabledReason;
-          }
         },
 
         clearProgress: function() {
@@ -75,10 +68,12 @@ angular.module('biggraph').factory('createBox', function() {
           this.progressColor = undefined;
         },
 
-        clearStatus: function() {
-          this.clearProgress();
-          this.error = '';
-        }
+        setHealth: function(success) {
+          if (!success.enabled) {
+            this.error = success.disabledReason;
+          }
+        },
+
       };
     }
 
