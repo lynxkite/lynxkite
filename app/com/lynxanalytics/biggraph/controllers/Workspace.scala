@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
+import com.lynxanalytics.biggraph.graph_api.FromJson
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 case class Workspace(
@@ -228,6 +229,9 @@ case class BoxOutputState(
     val rps = RootProjectState.emptyState.copy(state = p)
     new RootProjectEditor(rps)
   }
+}
+object BoxOutputState extends FromJson[BoxOutputState] {
+  override def fromJson(j: JsValue): BoxOutputState = json.Json.fromJson(j)(WorkspaceJsonFormatters.fBoxOutputState).get
 }
 
 case class BoxOutputProgress(boxOutput: BoxOutput, progress: Progress, success: FEStatus)
