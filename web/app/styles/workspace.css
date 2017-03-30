@@ -30,7 +30,6 @@ div#right-panel {
 }
 .operation-selector {
   margin-left: -35px;
-  z-index: 2;
   float: left;
 }
 workspace-drawing-board > svg {

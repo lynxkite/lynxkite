@@ -10,14 +10,15 @@ import com.lynxanalytics.biggraph.serving
 import play.api.libs.json
 
 case class GetWorkspaceRequest(name: String)
-case class BoxOutputInfo(boxOutput: BoxOutput, stateID: String, success: FEStatus)
+case class BoxOutputInfo(boxOutput: BoxOutput, stateID: String, success: FEStatus, kind: String)
 case class GetWorkspaceResponse(workspace: Workspace, outputs: List[BoxOutputInfo])
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetOutputRequest(id: String)
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class GetOutputResponse(kind: String, project: Option[FEProject] = None, success: FEStatus)
-case class GetStatusRequest(stateIDs: List[String])
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
+case class GetStatusRequest(stateIDs: List[String])
+case class GetProjectOutputRequest(id: String, path: String)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 
@@ -63,7 +64,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
     val stateInfo = statesWithId.toList.map {
       case (boxOutput, (boxOutputState, stateID)) =>
-        BoxOutputInfo(boxOutput, stateID, boxOutputState.success)
+        BoxOutputInfo(boxOutput, stateID, boxOutputState.success, boxOutputState.kind)
     }
     GetWorkspaceResponse(workspace, stateInfo)
   }
@@ -88,6 +89,23 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     } match {
       case None => throw new AssertionError(s"BoxOutputState state identified by $stateID not found")
       case Some(state: BoxOutputState) => state
+    }
+  }
+
+  def getProjectOutput(
+    user: serving.User, request: GetProjectOutputRequest): FEProject = {
+    calculatedStates.synchronized {
+      calculatedStates.get(request.id)
+    } match {
+      case None => throw new AssertionError(s"BoxOutputState state identified by ${request.id} not found")
+      case Some(state: BoxOutputState) =>
+        state.kind match {
+          case BoxOutputKind.Project =>
+            val pathSeq = SubProject.splitPipedPath(request.path)
+              .filter(_ != "")
+            val viewer = state.project.viewer.offspringViewer(pathSeq)
+            viewer.toFE(request.path)
+        }
     }
   }
 
