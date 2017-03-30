@@ -26,6 +26,23 @@
       ng-if="param.kind === 'code'"
       ng-model="output[param.id]"
       ng-disabled="!editable"></div>
+    <div
+        ui-ace="{
+        mode: 'plain_text',
+        showGutter: false,
+        rendererOptions: {
+          fontSize: '16px'
+        },
+        advanced: {
+          behavioursEnabled: false,
+          useWorker: false
+        },
+        onLoad: onLoad,
+      }"
+        class="form-control operation-attribute-entry"
+        ng-if="param.kind === 'multiline-string'"
+        ng-model="output[param.id]"
+        ng-disabled="!editable"></div>
     <file-parameter ng-if="param.kind === 'file'"
         editable="editable"
         model="output[param.id]"
