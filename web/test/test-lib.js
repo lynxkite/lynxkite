@@ -175,7 +175,7 @@ Workspace.prototype = {
     button.click();
   },
 
-  addBox: function(boxData, dontSelect) {
+  addBox: function(boxData) {
     var id = boxData.id;
     var after = boxData.after;
     var inputs = boxData.inputs;
@@ -195,9 +195,7 @@ Workspace.prototype = {
     if (params) {
       this.editBox(id, params);
     }
-    if (!dontSelect) {
-      this.selectOutput(id);
-    }
+    this.selectOutput(id);
   },
 
   selectBox(boxID) {
@@ -226,12 +224,20 @@ Workspace.prototype = {
 
   getInputPlug: function(boxID, plugID) {
     let box = this.getBox(boxID);
-    return plugID ? box.$('#inputs #' + plugID + ' circle') : box.$$('#inputs circle').get(0);
+    if (plugID) {
+      return box.$('#inputs #' + plugID + ' circle');
+    } else {
+      return box.$$('#inputs circle').get(0);
+    }
   },
 
   getOutputPlug: function(boxID, plugID) {
     let box = this.getBox(boxID);
-    return plugID ? box.$('#outputs #' + plugID + ' circle') : box.$$('#outputs circle').get(0);
+    if (plugID) {
+      return box.$('#outputs #' + plugID + ' circle');
+    } else {
+      return box.$$('#outputs circle').get(0);
+    }
   },
 
   selectOutput: function(boxID, plugID) {
