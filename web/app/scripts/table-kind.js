@@ -11,7 +11,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
     },
     templateUrl: 'table-kind.html',
     link: function(scope) {
-      scope.createSnapshot = function() {
+      scope.importBox = function() {
         scope.disabled = true;
         scope.error = undefined;
         var box = angular.copy(scope.box.instance);

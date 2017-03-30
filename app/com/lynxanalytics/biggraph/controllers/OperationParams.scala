@@ -43,7 +43,7 @@ object OperationParams {
   case class ImportedTableParam(
       id: String,
       title: String) extends OperationParameterMeta {
-    val kind = "table"
+    val kind = "imported-table"
     val options = List()
     val multipleChoice = false
     val defaultValue = ""
