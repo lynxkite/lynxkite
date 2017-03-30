@@ -310,12 +310,6 @@ object FrontendJson {
   implicit val wSQLColumn = json.Json.writes[SQLColumn]
   implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
   implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
-  implicit val fCSVImportRequest = json.Json.format[CSVImportRequest]
-  implicit val fJdbcImportRequest = json.Json.format[JdbcImportRequest]
-  implicit val fParquetImportRequest = json.Json.format[ParquetImportRequest]
-  implicit val fORCImportRequest = json.Json.format[ORCImportRequest]
-  implicit val fJsonImportRequest = json.Json.format[JsonImportRequest]
-  implicit val fHiveImportRequest = json.Json.format[HiveImportRequest]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
@@ -427,12 +421,6 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
   def importBox = jsonFuturePost(sqlController.importBox)
-  def createViewCSV = jsonPost(sqlController.createViewCSV)
-  def createViewJdbc = jsonPost(sqlController.createViewJdbc)
-  def createViewParquet = jsonPost(sqlController.createViewParquet)
-  def createViewORC = jsonPost(sqlController.createViewORC)
-  def createViewJson = jsonPost(sqlController.createViewJson)
-  def createViewHive = jsonPost(sqlController.createViewHive)
   def createViewDFSpec = jsonPost(sqlController.createViewDFSpec)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)

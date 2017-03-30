@@ -142,7 +142,6 @@ object Operation {
               .filter(_ != ""))
 
       // TODO: Operations using these must be rewritten with multiple inputs as part of #5724.
-      def accessibleTableOptions: List[FEOption] = ???
       def readableProjectCheckpoints: List[FEOption] = ???
     }
   }
@@ -342,5 +341,21 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
   override def apply(): Unit = ???
 
   // Called by /ajax/importBox to create the table that is passed in "imported_table".
-  def getDataFrame(context: spark.sql.SQLContext): spark.sql.DataFrame
+  def getDataFrame(context: spark.sql.SQLContext): spark.sql.DataFrame = {
+    val importedColumns = splitParam("imported_columns")
+    val limit = params("limit")
+    val query = params("sql")
+    val raw = getRawDataFrame(context)
+    val partial = if (importedColumns.isEmpty) raw else {
+      val columns = importedColumns.map(spark.sql.functions.column(_))
+      raw.select(columns: _*)
+    }
+    val limited = if (limit.isEmpty) partial else partial.limit(limit.toInt)
+    val queried = if (query.isEmpty) limited else {
+      DataManager.sql(context, query, List("this" -> limited))
+    }
+    queried
+  }
+
+  def getRawDataFrame(context: spark.sql.SQLContext): spark.sql.DataFrame
 }

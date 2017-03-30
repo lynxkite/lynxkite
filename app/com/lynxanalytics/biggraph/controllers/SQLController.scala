@@ -146,209 +146,11 @@ object SQLCreateViewRequest extends FromJson[SQLCreateViewRequest] {
   override def fromJson(j: JsValue): SQLCreateViewRequest = json.Json.fromJson(j).get
 }
 
-trait GenericImportRequest extends ViewRecipe with FrameSettings {
-  val table: String
-  val privacy: String
-  val overwrite: Boolean
-  override val name: String = table
-  // Empty list means all columns.
-  val columnsToImport: List[String]
-  val limit: Option[Int]
-  protected def dataFrame(user: serving.User, context: SQLContext)(
-    implicit dataManager: DataManager): spark.sql.DataFrame
-  def notes: String
-
-  private def restrictedDataFrame(
-    user: serving.User,
-    context: SQLContext)(implicit dataManager: DataManager): spark.sql.DataFrame =
-    restrictToColumns(dataFrame(user, context), columnsToImport)
-
-  def defaultContext()(implicit dataManager: DataManager): SQLContext =
-    dataManager.masterSQLContext
-
-  private def restrictToColumns(
-    full: spark.sql.DataFrame, columnsToImport: Seq[String]): spark.sql.DataFrame = {
-    if (columnsToImport.nonEmpty) {
-      val columns = columnsToImport.map(spark.sql.functions.column(_))
-      full.select(columns: _*)
-    } else full
-  }
-
-  override def createDataFrame(
-    user: serving.User, context: SQLContext)(
-      implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame = {
-    val df = restrictedDataFrame(user, context)
-    limit.map(df.limit(_)).getOrElse(df)
-  }
-}
-
-case class CSVImportRequest(
-    table: String,
-    privacy: String,
-    files: String,
-    // Name of columns. Empty list means to take column names from the first line of the file.
-    columnNames: List[String],
-    delimiter: String,
-    // One of: PERMISSIVE, DROPMALFORMED or FAILFAST
-    mode: String,
-    infer: Boolean,
-    overwrite: Boolean,
-    columnsToImport: List[String],
-    limit: Option[Int]) extends GenericImportRequest {
-  assert(CSVImportRequest.ValidModes.contains(mode), s"Unrecognized CSV mode: $mode")
-  assert(!infer || columnNames.isEmpty, "List of columns cannot be set when using type inference.")
-
-  def dataFrame(user: serving.User, context: SQLContext)(
-    implicit dataManager: DataManager): spark.sql.DataFrame = {
-    val reader = context
-      .read
-      .format("com.databricks.spark.csv")
-      .option("mode", mode)
-      .option("delimiter", delimiter)
-      .option("inferSchema", if (infer) "true" else "false")
-      // We don't want to skip lines starting with #
-      .option("comment", null)
-
-    val readerWithSchema = if (columnNames.nonEmpty) {
-      reader.schema(SQLController.stringOnlySchema(columnNames))
-    } else {
-      // Read column names from header.
-      reader.option("header", "true")
-    }
-    val hadoopFile = HadoopFile(files)
-    hadoopFile.assertReadAllowedFrom(user)
-    FileImportValidator.checkFileHasContents(hadoopFile)
-    // TODO: #2889 (special characters in S3 passwords).
-    readerWithSchema.load(hadoopFile.resolvedName)
-  }
-
-  def notes = s"Imported from CSV files ${files}."
-}
-object CSVImportRequest extends FromJson[CSVImportRequest] {
-  val ValidModes = Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST")
-  import com.lynxanalytics.biggraph.serving.FrontendJson.fCSVImportRequest
-  override def fromJson(j: JsValue): CSVImportRequest = json.Json.fromJson(j).get
-}
-
 object FileImportValidator {
   def checkFileHasContents(hadoopFile: HadoopFile): Unit = {
     assert(hadoopFile.list.map(f => f.getContentSummary.getSpaceConsumed).sum > 0,
       s"No data was found at '${hadoopFile.symbolicName}' (no or empty files).")
   }
-}
-
-case class JdbcImportRequest(
-    table: String,
-    privacy: String,
-    jdbcUrl: String,
-    jdbcTable: String,
-    keyColumn: Option[String] = None,
-    numPartitions: Option[Int] = None,
-    predicates: Option[List[String]] = None,
-    overwrite: Boolean,
-    columnsToImport: List[String],
-    limit: Option[Int],
-    properties: Option[Map[String, String]] = None) extends GenericImportRequest {
-
-  def dataFrame(user: serving.User, context: SQLContext)(
-    implicit dataManager: DataManager): spark.sql.DataFrame = {
-    JDBCUtil.read(
-      context,
-      jdbcUrl,
-      jdbcTable,
-      keyColumn.getOrElse(""),
-      numPartitions.getOrElse(0),
-      predicates.getOrElse(List()),
-      properties.getOrElse(Map()))
-  }
-
-  def notes: String = {
-    val uri = new java.net.URI(jdbcUrl.drop("jdbc:".size))
-    val urlSafePart = s"${uri.getScheme()}://${uri.getAuthority()}${uri.getPath()}"
-    s"Imported from table ${jdbcTable} at ${urlSafePart}."
-  }
-}
-
-object JdbcImportRequest extends FromJson[JdbcImportRequest] {
-  import com.lynxanalytics.biggraph.serving.FrontendJson.fJdbcImportRequest
-  override def fromJson(j: JsValue): JdbcImportRequest = json.Json.fromJson(j).get
-}
-
-trait FilesWithSchemaImportRequest extends GenericImportRequest {
-  val files: String
-  val format: String
-  def dataFrame(user: serving.User, context: SQLContext)(
-    implicit dataManager: DataManager): spark.sql.DataFrame = {
-    val hadoopFile = HadoopFile(files)
-    hadoopFile.assertReadAllowedFrom(user)
-    FileImportValidator.checkFileHasContents(hadoopFile)
-    context.read.format(format).load(hadoopFile.resolvedName)
-  }
-
-  def notes = s"Imported from ${format} files ${files}."
-}
-
-case class ParquetImportRequest(
-    table: String,
-    privacy: String,
-    files: String,
-    overwrite: Boolean,
-    columnsToImport: List[String],
-    limit: Option[Int]) extends FilesWithSchemaImportRequest {
-  val format = "parquet"
-}
-
-object ParquetImportRequest extends FromJson[ParquetImportRequest] {
-  import com.lynxanalytics.biggraph.serving.FrontendJson.fParquetImportRequest
-  override def fromJson(j: JsValue): ParquetImportRequest = json.Json.fromJson(j).get
-}
-
-case class ORCImportRequest(
-    table: String,
-    privacy: String,
-    files: String,
-    overwrite: Boolean,
-    columnsToImport: List[String],
-    limit: Option[Int]) extends FilesWithSchemaImportRequest {
-  val format = "orc"
-}
-
-object ORCImportRequest extends FromJson[ORCImportRequest] {
-  import com.lynxanalytics.biggraph.serving.FrontendJson.fORCImportRequest
-  override def fromJson(j: JsValue): ORCImportRequest = json.Json.fromJson(j).get
-}
-
-case class JsonImportRequest(
-    table: String,
-    privacy: String,
-    files: String,
-    overwrite: Boolean,
-    columnsToImport: List[String],
-    limit: Option[Int]) extends FilesWithSchemaImportRequest {
-  val format = "json"
-}
-
-object JsonImportRequest extends FromJson[JsonImportRequest] {
-  import com.lynxanalytics.biggraph.serving.FrontendJson.fJsonImportRequest
-  override def fromJson(j: JsValue): JsonImportRequest = json.Json.fromJson(j).get
-}
-
-case class HiveImportRequest(
-    table: String,
-    privacy: String,
-    hiveTable: String,
-    overwrite: Boolean,
-    columnsToImport: List[String],
-    limit: Option[Int]) extends GenericImportRequest {
-
-  def dataFrame(user: serving.User, context: SQLContext)(
-    implicit dataManager: DataManager): spark.sql.DataFrame = {
-    assert(
-      dataManager.hiveConfigured,
-      "Hive is not configured for this Kite instance. Contact your system administrator.")
-    context.table(hiveTable)
-  }
-  def notes = s"Imported from Hive table ${hiveTable}."
 }
 
 // path denotes a directory entry (table/view/project/directory), or a
@@ -368,11 +170,6 @@ case class TableBrowserNode(
   columnType: String = "")
 case class TableBrowserNodeResponse(list: Seq[TableBrowserNode])
 
-object HiveImportRequest extends FromJson[HiveImportRequest] {
-  import com.lynxanalytics.biggraph.serving.FrontendJson.fHiveImportRequest
-  override def fromJson(j: JsValue): HiveImportRequest = json.Json.fromJson(j).get
-}
-
 class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager: DataManager = env.dataManager
@@ -380,16 +177,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   // API is not Future-based, so we need to block some threads. This also avoids #2906.
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
-
-  def doImport[T <: GenericImportRequest: json.Writes](user: serving.User, request: T): FEOption =
-    SQLController.saveTable(
-      request.createDataFrame(user, request.defaultContext()),
-      request.notes,
-      user,
-      request.table,
-      request.privacy,
-      request.overwrite,
-      importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
 
   def saveView[T <: ViewRecipe with FrameSettings: json.Writes](
     user: serving.User, recipe: T): FEOption = {
@@ -409,12 +196,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     table.gUID.toString
   }
 
-  def createViewCSV(user: serving.User, request: CSVImportRequest) = saveView(user, request)
-  def createViewJdbc(user: serving.User, request: JdbcImportRequest) = saveView(user, request)
-  def createViewParquet(user: serving.User, request: ParquetImportRequest) = saveView(user, request)
-  def createViewORC(user: serving.User, request: ORCImportRequest) = saveView(user, request)
-  def createViewJson(user: serving.User, request: JsonImportRequest) = saveView(user, request)
-  def createViewHive(user: serving.User, request: HiveImportRequest) = saveView(user, request)
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
 
   // Return list of nodes for the table browser. The nodes can be:
