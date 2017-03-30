@@ -2652,30 +2652,20 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Import project as segmentation", ImportOperations, new ProjectTransformation(_) {
-    lazy val parameters = List(
-      Choice(
-        "them",
-        "Other project's name",
-        options = project.readableProjectCheckpoints,
-        allowUnknownOption = true))
-    def enabled = project.hasVertexSet
-    override def summary = {
-      val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(params("them"))
-      s"Import $title as segmentation"
-    }
-    def apply() = {
-      val themId = params("them")
-      val (cp, title, _) = getAndCheckProjectCheckpoint(themId)
-      val baseName = SymbolPath.parse(title).last.name
-      val them = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
-      assert(them.vertexSet != null, s"No vertex set in $them")
-      val segmentation = project.segmentation(baseName)
-      segmentation.state = them.state
-      val op = graph_operations.EmptyEdgeBundle()
-      segmentation.belongsTo = op(op.src, project.vertexSet)(op.dst, them.vertexSet).result.eb
-    }
-  })
+  register("Import project as segmentation", StructureOperations, "project", "segmentation")(
+    new ProjectOutputOperation(_) {
+      override lazy val project = projectInput("project")
+      lazy val them = projectInput("segmentation")
+      lazy val parameters = List(
+        Param("name", "Segmentation's name", defaultValue = "segmentation"))
+      def enabled = project.hasVertexSet && them.hasVertexSet
+      def apply() = {
+        val segmentation = project.segmentation(params("name"))
+        segmentation.state = them.state
+        val op = graph_operations.EmptyEdgeBundle()
+        segmentation.belongsTo = op(op.src, project.vertexSet)(op.dst, them.vertexSet).result.eb
+      }
+    })
 
   register("Import segmentation links", ImportOperations, new ProjectTransformation(_) with SegOp {
     def segmentationParameters = List(
@@ -2801,9 +2791,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       def enabled =
         project.assertSegmentation &&
           FEStatus.assert(
-            project.vertexAttrList[String].nonEmpty, "No string vertex attributes in this segmentation") &&
+            project.vertexAttrList[String].nonEmpty,
+            "No string vertex attributes in this segmentation.") &&
             FEStatus.assert(
-              parent.vertexAttributeNames[String].nonEmpty, "No string vertex attributes in base project")
+              parent.vertexAttributeNames[String].nonEmpty,
+              "No string vertex attributes in base project.")
       def apply() = {
         val baseIdAttr = parent.vertexAttributes(params("base_id_attr")).runtimeSafeCast[String]
         val segIdAttr = project.vertexAttributes(params("seg_id_attr")).runtimeSafeCast[String]
@@ -2812,36 +2804,21 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
-  register("Copy scalar from other project", StructureOperations, new ProjectTransformation(_) {
-    lazy val parameters = List(
-      Choice(
-        "sourceProject",
-        "Other project's name",
-        options = project.readableProjectCheckpoints,
-        allowUnknownOption = true),
-      Param("sourceScalarName", "Name of the scalar in the other project"),
-      Param("destScalarName", "Name for the scalar in this project"))
-
-    def apply() = {
-      // parsing scalar path "seg1|seg2|...|segn|scalar"
-      val origPath = params("sourceScalarName")
-      val pathAndName = origPath.split('|')
-      val path = pathAndName.dropRight(1) // list of segmentation names
-      val origName = pathAndName.last // name of the original scalar
-      val newName = params("destScalarName")
-      val scalarName = if (newName.isEmpty) origName else newName
-      assert(!project.scalarNames.contains(scalarName), s"Conflicting scalar name '$scalarName'.")
-      val sourceProject = params("sourceProject")
-      val (cp, title, _) = getAndCheckProjectCheckpoint(sourceProject)
-      val otherViewer = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
-      val other = otherViewer.offspringViewer(path)
-      assert(other.scalarNames.contains(origName), s"No '$origPath' in project '$title'.")
-      // copying scalar
-      project.scalars(scalarName) = other.scalars(origName)
-    }
-
-    def enabled = FEStatus.enabled
-  })
+  register("Copy scalar from other project", StructureOperations, "project", "scalar")(
+    new ProjectOutputOperation(_) {
+      override lazy val project = projectInput("project")
+      lazy val them = projectInput("scalar")
+      lazy val parameters = List(
+        Choice("scalar", "Name of the scalar to copy", options = them.scalarList),
+        Param("save_as", "Save as"))
+      def enabled = FEStatus.assert(them.scalarNames.nonEmpty, "No scalars found.")
+      def apply() = {
+        val origName = params("scalar")
+        val newName = params("save_as")
+        val scalarName = if (newName.isEmpty) origName else newName
+        project.scalars(scalarName) = them.scalars(origName)
+      }
+    })
 
   register("Union with another project", StructureOperations, "a", "b")(new ProjectOutputOperation(_) {
     override lazy val project = projectInput("a")
