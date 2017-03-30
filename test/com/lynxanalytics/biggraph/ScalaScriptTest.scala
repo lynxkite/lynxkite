@@ -1,10 +1,7 @@
 package com.lynxanalytics.biggraph
 
 import org.scalatest.FunSuite
-import java.net.URL
 import java.security.AccessControlException
-
-import scala.reflect.Manifest
 
 class ScalaScriptTest extends FunSuite {
 
@@ -16,8 +13,14 @@ class ScalaScriptTest extends FunSuite {
     result
   }
 
-  /*
-  test("Can't do infinite loop, even when non-restricted") {
+  def worksEvenAsRestricted(code: String): String = {
+    val result = ScalaScript.run(code, restricted = false)
+    ScalaScript.run(code, restricted = true)
+    // The results may not be identical, but we won't check this
+    result
+  }
+
+  ignore("Can't do infinite loop, even when non-restricted") {
     val code =
       """
         Thread.sleep(15000L)
@@ -32,12 +35,12 @@ class ScalaScriptTest extends FunSuite {
 
   test("Simple arithmetic works") {
     val code = "5 * 5 + 1"
-    assert(ScalaScript.run(code, restricted = false) == "26")
-    assert(ScalaScript.run(code, restricted = true) == "26")
+
+    assert(worksEvenAsRestricted(code) == "26")
   }
 
   test("Security manager disables file access") {
-    val testFile: URL = getClass.getResource("/graph_api/permission_check.txt")
+    val testFile = getClass.getResource("/graph_api/permission_check.txt")
     val contents = "This file is used to check the security manager implementation.\n"
     assert(scala.io.Source.fromFile(testFile.getFile).mkString == contents)
     val path = testFile.getPath
@@ -47,7 +50,7 @@ class ScalaScriptTest extends FunSuite {
   }
 
   test("Can't replace the security manager") {
-    val code = s"""System.setSecurityManager(null)"""
+    val code = "System.setSecurityManager(null)"
     worksUnlessRestricted(code)
   }
 
@@ -60,26 +63,25 @@ s.disableCurrentThread
     worksUnlessRestricted(code)
   }
 
+  // This fails, probably, because we cannot create classes in restricted mode :(
   test("Can do some non-trivial, innocent computation") {
     val code =
       """
            class C {
-             def compute(): Long = {
-               val id = Thread.currentThread.getId
-               val timestamp = com.lynxanalytics.biggraph.graph_util.Timestamp.toString.toLong
-val timestamp = 10000000000L
-               id + timestamp
+             def compute(): String = {
+                "Hello"
              }
            }
-           //val r = new C()
-           //r.compute()
-           1213344L
+           val r = new C()
+           r.compute()
       """
-    val ts = com.lynxanalytics.biggraph.graph_util.Timestamp.toString.toLong
-    val result = worksUnlessRestricted(code)
-    assert(result.toLong >= ts)
+    val result = worksEvenAsRestricted(code)
+    assert(result == "Hello")
   }
 
+  // This passes, but not because we can't create a thread, but because
+  // we cannot create classes. If we hack restricted mode so that
+  // it allows class creation, this still passes.
   test("Can't create a new thread") {
     val code =
       """
@@ -94,28 +96,12 @@ val timestamp = 10000000000L
       """
     worksUnlessRestricted(code)
   }
-  */
 
-  ignore("haha") {
+  // This fails because even in restricted more we can access Timestamp!
+  test("Can't access biggraph classes") {
     val code = "com.lynxanalytics.biggraph.graph_util.Timestamp.toString"
-    println(ScalaScript.run(code, restricted = true, dump = true))
-  }
-
-  test("Can do some non-trivial, innocent computation") {
-    val code =
-      """
-           class C {
-             def compute(): Long = {
-             val id = 0L
-           //    val id = Thread.currentThread.getId
-           //    val timestamp = com.lynxanalytics.biggraph.graph_util.Timestamp.toString.toLong
-val timestamp = 10000000000L
-               id + timestamp
-             }
-           }
-           val r = new C()
-           r.compute()
-      """
-    ScalaScript.run(code, restricted = true, dump = true)
+    val ts = com.lynxanalytics.biggraph.graph_util.Timestamp.toString
+    val result = worksUnlessRestricted(code)
+    assert(ts.toLong <= result.toLong)
   }
 }

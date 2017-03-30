@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph
 
-import java.security.{ AccessControlContext, AccessController, Permission }
+import java.security.Permission
 import javax.script._
 
 import com.lynxanalytics.biggraph.graph_api.{ SafeFuture, ThreadUtil }
@@ -11,7 +11,7 @@ import scala.tools.nsc.interpreter.IMain
 class ScalaScriptSecurityManager extends SecurityManager {
   // These are temporary debug tools
   private val logs = scala.collection.mutable.Queue[String]()
-  private def makeLog(entries: String*): Unit = {
+  private def log(entries: String*): Unit = {
     val head = Seq[String](Thread.currentThread.getName, Thread.currentThread.getId.toString)
     val entry = (head ++ entries).mkString(" ")
     logs += entry
@@ -20,40 +20,26 @@ class ScalaScriptSecurityManager extends SecurityManager {
     logs.filter(_.contains(pattern)).foreach(println)
   }
 
-  private val ImpossibleID: Long = -1L
-  private var restrictedThreadID: Long = ImpossibleID
-
-  private def inRestrictedThread = {
-    restrictedThreadID == Thread.currentThread.getId
-  }
-
-  //  private def logWrapper[T](f: => T): T = {
-  //    val ret = try {
-  //      f
-  //    } catch {
-  //      case x: Throwable =>
-  //        makeLog("THROWS: ", x.getMessage)
-  //        throw x
-  //    }
-  //    ret
-  //  }
-
+  private var restrictedThread: java.lang.Thread = null
   // This can only be done once during the lifetime of
-  // this object
+  // this object.
+  // Once this is done, the Thread cannot be garbage collected
+  // as long as this security manager is not garbage collected
+  // because of the reference.
   def disableCurrentThread(): Unit = synchronized {
-    if (restrictedThreadID != ImpossibleID) {
+    if (restrictedThread != null) {
       throw new java.security.AccessControlException(s"RestrictedThreadID access")
     }
-    restrictedThreadID = Thread.currentThread.getId
+    restrictedThread = Thread.currentThread
   }
 
-  override def checkCreateClassLoader(): Unit = synchronized {
-    makeLog("checkCreateClassLoader")
+  private def inRestrictedThread = {
+    (restrictedThread) != null && (restrictedThread eq Thread.currentThread)
   }
 
   // Restricted threads cannot create other threads
   override def getThreadGroup: ThreadGroup = synchronized {
-    makeLog("getThreadGroup called")
+    log("getThreadGroup called")
     if (inRestrictedThread) {
       throw new java.security.AccessControlException("Access error: GET_THREAD_GROUP")
     } else {
@@ -62,19 +48,11 @@ class ScalaScriptSecurityManager extends SecurityManager {
   }
   // Other permissions seem to be handled properly by the default SecurityManager
   override def checkPermission(permission: Permission): Unit = synchronized {
-    makeLog("checkPermisson: ", permission.toString)
-    try {
-      if (inRestrictedThread &&
-        !permission.toString.contains(".sbt")) {
-        super.checkPermission(permission)
-      }
-    } catch {
-      case x: Throwable =>
-        makeLog("FAILED")
-        throw x
+    log("checkPermisson: ", permission.toString)
+    if (inRestrictedThread) {
+      super.checkPermission(permission)
     }
   }
-
 }
 
 object ScalaScript {
@@ -87,29 +65,25 @@ object ScalaScript {
   settings.usejavacp.value = true
   settings.embeddedDefaults[ScalaScriptSecurityManager]
 
-  def run(code: String, restricted: Boolean = false, dump: Boolean = false): String = {
+  def run(code: String, restricted: Boolean = true, dump: Boolean = false): String = {
     // IMAIN.compile changes the class loader and does not restore it.
     // https://issues.scala-lang.org/browse/SI-8521
     val cl = Thread.currentThread().getContextClassLoader
-    println(cl)
     val result = try {
-      run_inner(code, restricted, dump, cl)
+      run_inner(code, restricted, dump)
     } finally {
       Thread.currentThread().setContextClassLoader(cl)
     }
     result
   }
 
-  def run_inner(code: String, restricted: Boolean, dump: Boolean, cl: ClassLoader): String = {
+  def run_inner(code: String, restricted: Boolean, dump: Boolean): String = {
     val sm = new ScalaScriptSecurityManager
     assert(System.getSecurityManager == null)
     System.setSecurityManager(sm)
     val result = try {
       val compiledCode = engine.compile(code)
       SafeFuture {
-        val cl = Thread.currentThread().getContextClassLoader
-        println(cl)
-        Thread.currentThread().setContextClassLoader(cl)
         if (restricted) {
           sm.disableCurrentThread()
         }
