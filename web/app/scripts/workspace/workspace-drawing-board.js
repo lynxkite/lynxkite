@@ -36,14 +36,13 @@ angular.module('biggraph')
             var logicalPos = getLogicalPosition(event);
             scope.workspace.selectionBox.endX = logicalPos.x;
             scope.workspace.selectionBox.endY = logicalPos.y;
-            scope.workspace.getSelectedBoxes();
+            scope.workspace.updateSelectionBox();
+            scope.workspace.selectBoxesInSelectionBox();
           }
           mouseX = event.offsetX;
           mouseY = event.offsetY;
           scope.workspace.onMouseMove(getLogicalPosition(event));
         };
-
-        scope.Math = window.Math;
 
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
@@ -77,6 +76,7 @@ angular.module('biggraph')
             scope.workspace.selectionBox.endY = logicalPos.y;
             scope.workspace.selectionBox.startX = logicalPos.x;
             scope.workspace.selectionBox.startY = logicalPos.y;
+            scope.workspace.updateSelectionBox();
           }
         };
 

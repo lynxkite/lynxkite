@@ -48,7 +48,19 @@ angular.module('biggraph')
           startX: undefined,
           startY: undefined,
           endX: undefined,
-          endY: undefined
+          endY: undefined,
+          // The parameters below are calculated from the above ones by this.updateSelectionBox.
+          leftX: undefined,
+          upperY: undefined,
+          width: undefined,
+          height: undefined
+        },
+
+        updateSelectionBox: function(){
+          this.selectionBox.leftX = Math.min(this.selectionBox.startX, this.selectionBox.endX);
+          this.selectionBox.upperY = Math.min(this.selectionBox.startY, this.selectionBox.endY);
+          this.selectionBox.width = Math.abs(this.selectionBox.endX - this.selectionBox.startX);
+          this.selectionBox.height = Math.abs(this.selectionBox.endY - this.selectionBox.startY);
         },
 
         loadWorkspace: function() {
@@ -113,11 +125,8 @@ angular.module('biggraph')
 
         inSelectionBox: function(box){
           var sb = this.selectionBox;
-          return(
-            ((box.instance.x < sb.endX && sb.startX < box.instance.x) ||
-            (box.instance.x < sb.startX && sb.endX < box.instance.x)) &&
-            ((box.instance.y < sb.endY && sb.startY < box.instance.y) ||
-            (box.instance.y < sb.startY && sb.endY < box.instance.y)));
+          return(sb.leftX < box.instance.x && box.instance.x < sb.leftX + sb.width &&
+            sb.upperY < box.instance.y && box.instance.y < sb.upperY + sb.height);
         },
 
         selectedBoxes: function() {
