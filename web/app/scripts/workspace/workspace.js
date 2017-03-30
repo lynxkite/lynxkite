@@ -63,6 +63,8 @@ angular.module('biggraph')
           this.selectionBox.height = Math.abs(this.selectionBox.endY - this.selectionBox.startY);
         },
 
+        selectedBoxIds: [],
+
         loadWorkspace: function() {
           var that = this;
           util.nocache(
@@ -114,8 +116,10 @@ angular.module('biggraph')
           }
         },
 
-        updateSelectedBox: function(paramValues) {
-          this.wrapper.setBoxParams(this.selectedBoxId, paramValues);
+        updateSelectedBoxes: function(paramValues) {
+          this.selectedBoxIds.map(function(id) {
+            this.wrapper.setBoxParams(id, paramValues[id]);
+          });
           this.saveWorkspace();
         },
 
