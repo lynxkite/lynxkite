@@ -33,7 +33,7 @@
 
       <rect
           class="box-main"
-          ng-class="{ 'selected-box': box.instance.id == workspace.selectedBoxId }"
+          ng-class="{ 'selected-box': workspace.selectedBoxIds.includes(box.instance.id) }"
           ng-attr-width="{{box.width}}"
           ng-attr-height="{{box.height}}">
       </rect>
