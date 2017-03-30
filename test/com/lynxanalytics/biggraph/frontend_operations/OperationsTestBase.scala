@@ -78,4 +78,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     val guid = concurrent.Await.result(guidFuture, concurrent.duration.Duration.Inf)
     box(operationID, parameters + ("imported_table" -> guid))
   }
+
+  def importCSV(filename: String): TestBox =
+    importBox("Import CSV", Map("filename" -> ("OPERATIONSTEST$/" + filename)))
 }

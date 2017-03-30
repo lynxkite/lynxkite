@@ -4,7 +4,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class DiscardLoopEdgesOperationTest extends OperationsTestBase {
   test("Discard loop edges") {
-    val imported = importBox("Import CSV", Map("filename" -> "OPERATIONSTEST$/loop-edges.csv"))
+    val imported = importCSV("loop-edges.csv")
       .box("Import vertices and edges from a single table", Map(
         "src" -> "src",
         "dst" -> "dst"))
