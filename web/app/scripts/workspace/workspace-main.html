@@ -5,16 +5,16 @@
     <div class="btn-group pull-right">
       <button class="btn btn-default"
            id="select-mode-on"
-           onclick="window.localStorage.setItem('grab_or_select', 'select')"
-           tooltip="Select&nbsp;boxes&nbsp;on&nbsp;click"
+           onclick="window.localStorage.setItem('drag_mode', 'select')"
+           tooltip="Select&nbsp;boxes&nbsp;on&nbsp;drag"
            tooltip-append-to-body="true"
            tooltip-placement="bottom">
         <i class="fa fa-mouse-pointer"></i>
       </button>
       <button class="btn btn-default"
            id="grab-mode-on"
-           onclick="window.localStorage.setItem('grab_or_select', 'grab')"
-           tooltip="Grab&nbsp;workspace&nbsp;on&nbsp;click"
+           onclick="window.localStorage.setItem('drag_mode', 'pan')"
+           tooltip="Pan&nbsp;workspace&nbsp;on&nbsp;drag"
            tooltip-append-to-body="true"
            tooltip-placement="bottom">
         <i class="fa fa-hand-rock-o"></i>

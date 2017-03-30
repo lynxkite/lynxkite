@@ -51,7 +51,7 @@ angular.module('biggraph')
         };
 
         scope.onMouseUp = function(event) {
-          if(window.localStorage.getItem('grab_or_select') === 'grab'){
+          if(window.localStorage.getItem('drag_mode') === 'pan'){
             workspaceDrag = false;
             element[0].style.cursor = '';
             scope.workspace.onMouseUp(getLogicalPosition(event));
@@ -63,7 +63,7 @@ angular.module('biggraph')
         };
 
         scope.onMouseDown = function(event) {
-          if(window.localStorage.getItem('grab_or_select') === 'grab'){
+          if(window.localStorage.getItem('drag_mode') === 'pan'){
             event.preventDefault();
             workspaceDrag = true;
             setGrabCursor(element[0]);
