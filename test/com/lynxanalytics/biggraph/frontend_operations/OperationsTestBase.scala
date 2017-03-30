@@ -50,8 +50,9 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     }
 
     def box(operationID: String,
-            parameters: Map[String, String] = Map()): TestBox = {
-      TestBox(operationID, parameters, Seq(this))
+            parameters: Map[String, String] = Map(),
+            otherInputs: Seq[TestBox] = Seq()): TestBox = {
+      TestBox(operationID, parameters, this +: otherInputs)
     }
   }
 
