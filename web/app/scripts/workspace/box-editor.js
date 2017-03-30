@@ -51,7 +51,7 @@ angular.module('biggraph')
           // to the result of the latest getOperationMetaRequest
           // will be passed to scope.newOpSelected().
           var currentRequest;
-          var success = function(boxMeta) {
+          var success = function(boxId, boxMeta) {
             if (scope.lastRequest === currentRequest) {
               scope.newOpSelected(boxMeta);
             }
@@ -69,12 +69,12 @@ angular.module('biggraph')
                   workspace: scope.workspace.name,
                   box: scope.workspace.selectedBoxIds[i],
                 })
-                .then(success,error);
+                .then(success.bind(null,scope.workspace.selectedBoxIds[i]),error);
           }};
 
         // Invoked when the user selects a new operation and its
         // metadata is successfully downloaded.
-        scope.newOpSelected = function(boxMeta) {
+        scope.newOpSelected = function(boxId, boxMeta) {
             scope.boxMeta = boxMeta;
             if (!scope.boxMeta) {
               return;
@@ -83,20 +83,20 @@ angular.module('biggraph')
             // Populate parameter values.
             for (var i = 0; i < boxMeta.parameters.length; ++i) {
               var p = boxMeta.parameters[i];
-              if (scope.paramValues[p.id] !== undefined) {
+              if (scope.paramValues[boxId][p.id] !== undefined) {
                 // Parameter is set externally.
               } else if (p.options.length === 0) {
-                scope.paramValues[p.id] = p.defaultValue;
+                scope.paramValues[boxId][p.id] = p.defaultValue;
               } else if (p.multipleChoice) {
-                scope.paramValues[p.id] = '';
+                scope.paramValues[boxId][p.id] = '';
               } else {
-                scope.paramValues[p.id] = p.options[0].id;
+                scope.paramValues[boxId][p.id] = p.options[0].id;
               }
             }
         };
 
         scope.apply = function() {
-          scope.workspace.updateSelectedBox(scope.paramValues);
+          scope.workspace.updateSelectedBoxes(scope.paramValues);
         };
       },
     };
