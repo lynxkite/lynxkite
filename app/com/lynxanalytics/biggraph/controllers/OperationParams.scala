@@ -40,7 +40,7 @@ object OperationParams {
     }
   }
 
-  case class TableParam(
+  case class ImportedTableParam(
       id: String,
       title: String) extends OperationParameterMeta {
     val kind = "table"
