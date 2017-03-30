@@ -121,37 +121,42 @@ angular.module('biggraph').factory('createWorkspace', function(createBox) {
         return true;
       },
 
-      assignStateIDsToPlugs: function(plugsAndIDs) {
+      assignStateInfoToPlugs: function(stateInfo) {
         this.knownStateIDs = [];
         this.stateID2Plug = {};
-        for (var i = 0; i < plugsAndIDs.length; i++) {
-          var item = plugsAndIDs[i];
+        for (var i = 0; i < stateInfo.length; i++) {
+          var item = stateInfo[i];
           var boxOutput = item.boxOutput;
-          var stateID = item.id;
+          var stateID = item.stateID;
           this.knownStateIDs.push(stateID);
           var box = this.boxMap[boxOutput.boxID];
           var plug = box.outputMap[boxOutput.id];
           plug.stateID = stateID;
+          plug.setHealth(item.success);
           this.stateID2Plug[stateID] = plug;
         }
       },
 
-      updateStatus: function(statusMap) {
-        for (var stateID in statusMap) {
-          if (statusMap.hasOwnProperty(stateID)) {
-            var plug = this.stateID2Plug[stateID];
-            if (plug) {
-              plug.updateStatus(statusMap[stateID]);
+      updateProgress: function(progressMap) {
+        for (var stateID in progressMap) {
+          if (progressMap.hasOwnProperty(stateID)) {
+            var progress = progressMap[stateID];
+            // failed states has 'undefined' as progress
+            if (progress) {
+              var plug = this.stateID2Plug[stateID];
+              if (plug) {
+                plug.updateProgress(progress);
+              }
             }
           }
         }
       },
 
-      clearStatus: function() {
+      clearProgress: function() {
         for (var i = 0; i < this.boxes.length; i++) {
           var box = this.boxes[i];
           for (var j = 0; j < box.outputs.length; j++) {
-            box.outputs[j].clearStatus();
+            box.outputs[j].clearProgress();
           }
         }
       },

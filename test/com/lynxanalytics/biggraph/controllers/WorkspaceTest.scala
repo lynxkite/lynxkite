@@ -29,7 +29,9 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     controller.getOperationMeta(user, GetOperationMetaRequest(ws, box))
   def getOutputIDs(ws: String) = {
     val allIds = get(ws).outputs
-    allIds.map(BoxOutputIDPair.unapply).map(_.get).toMap
+    allIds.map {
+      case BoxOutputInfo(bo, id, _) => (bo, id)
+    }.toMap
   }
   def getOutput(id: String) =
     controller.getOutput(user, GetOutputRequest(id))
@@ -179,9 +181,9 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       set("test-workspace", ws)
       val stateIDs = getOutputIDs("test-workspace")
       val prStateID = stateIDs(prOutput)
-      val progressBeforePR = controller.getStatus(user,
+      val progressBeforePR = controller.getProgress(user,
         GetStatusRequest(List(prStateID))
-      )(prStateID).progress
+      )(prStateID).get
       assert(progressBeforePR.inProgress == 0)
       assert(progressBeforePR.computed + progressBeforePR.inProgress
         + progressBeforePR.notYetStarted + progressBeforePR.failed > 0)
@@ -190,9 +192,9 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       // trigger PR computation
       ws.state(user, ops, pr.output("project")).project.vertexAttributes(pagerankParams("name"))
         .rdd.values.collect
-      val progressAfterPR = controller.getStatus(user,
+      val progressAfterPR = controller.getProgress(user,
         GetStatusRequest(List(prStateID))
-      )(prStateID).progress
+      )(prStateID).get
       val computedAfterPR = progressAfterPR.computed
       assert(computedAfterPR > computedBeforePR)
     }
@@ -208,11 +210,10 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       set("test-workspace", ws)
       val stateIDs = getOutputIDs("test-workspace")
       val prStateID = stateIDs(prOutput)
-      val progress = controller.getStatus(user,
+      val progress = controller.getProgress(user,
         GetStatusRequest(List(prStateID))
-      )(prStateID).progress
-      assert(progress.computed + progress.inProgress + progress.notYetStarted +
-        progress.failed == 0)
+      )(prStateID)
+      assert(progress.isEmpty)
     }
   }
 

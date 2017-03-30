@@ -292,8 +292,8 @@ object FrontendJson {
   implicit val wGetOutputResponse = json.Json.writes[GetOutputResponse]
   implicit val rGetOperationMetaRequest = json.Json.reads[GetOperationMetaRequest]
   implicit val rGetStatusRequest = json.Json.reads[GetStatusRequest]
-  implicit val wMapStringStatus = new Writes[Map[String, Status]] {
-    override def writes(o: Map[String, Status]): JsValue = json.Json.toJson(o)
+  implicit val wMapStringProgress = new Writes[Map[String, Option[Progress]]] {
+    override def writes(o: Map[String, Option[Progress]]): JsValue = json.Json.toJson(o)
   }
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
   implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
@@ -414,7 +414,7 @@ object ProductionJsonServer extends JsonServer {
   def createWorkspace = jsonPost(workspaceController.createWorkspace)
   def getWorkspace = jsonGet(workspaceController.getWorkspace)
   def getOutput = jsonGet(workspaceController.getOutput)
-  def getStatus = jsonGet(workspaceController.getStatus)
+  def getProgress = jsonGet(workspaceController.getProgress)
   def getOperationMeta = jsonGet(workspaceController.getOperationMeta)
   def setWorkspace = jsonPost(workspaceController.setWorkspace)
   def boxCatalog = jsonGet(workspaceController.boxCatalog)

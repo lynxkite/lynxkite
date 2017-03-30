@@ -279,7 +279,7 @@ abstract class ProjectOutputOperation(
   protected def makeOutput(project: ProjectEditor): Map[BoxOutput, BoxOutputState] = {
     import CheckpointRepository._ // For JSON formatters.
     val output = BoxOutputState(
-      "project", json.Json.toJson(project.rootState.state).as[json.JsObject])
+      "project", Some(json.Json.toJson(project.rootState.state).as[json.JsObject]))
     Map(context.meta.outputs(0).ofBox(context.box) -> output)
   }
 
