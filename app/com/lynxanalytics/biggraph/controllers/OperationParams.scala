@@ -34,17 +34,17 @@ object OperationParams {
         val unknown = givenValues -- possibleValues
         assert(
           unknown.isEmpty,
-          s"Unknown option: ${unknown.mkString(", ")}" +
+          s"Unknown option for $id: ${unknown.mkString(", ")}" +
             s" (Possibilities: ${possibleValues.mkString(", ")})")
       }
     }
   }
 
-  case class TableParam(
+  case class ImportedTableParam(
       id: String,
-      title: String,
-      options: List[FEOption]) extends OperationParameterMeta {
-    val kind = "table"
+      title: String) extends OperationParameterMeta {
+    val kind = "imported-table"
+    val options = List()
     val multipleChoice = false
     val defaultValue = ""
     def validate(value: String): Unit = {}
@@ -60,7 +60,7 @@ object OperationParams {
     def validate(value: String): Unit = {}
   }
 
-  case class File(id: String, title: String) extends OperationParameterMeta {
+  case class FileParam(id: String, title: String) extends OperationParameterMeta {
     val kind = "file"
     val multipleChoice = false
     val defaultValue = ""
@@ -103,10 +103,12 @@ object OperationParams {
   case class Code(
       id: String,
       title: String,
+      language: String,
       defaultValue: String = "") extends OperationParameterMeta {
     val kind = "code"
     val options = List()
     val multipleChoice = false
+    override val payload = Some(json.Json.obj("language" -> language))
     def validate(value: String): Unit = {}
   }
 

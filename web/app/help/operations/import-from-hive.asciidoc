@@ -1,0 +1,11 @@
+### Import from Hive
+
+
+Import an https://hive.apache.org/[Apache Hive] table directly to LynxKite.
+
+====
+[[table-name]] Hive table::
+The name of the Hive table to import.
+
+include::{g}[tag=import-box]
+====

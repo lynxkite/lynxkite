@@ -267,11 +267,23 @@ include::grow-segmentation.asciidoc[]
 
 include::hash-vertex-attribute.asciidoc[]
 
+include::import-csv.asciidoc[]
+
 include::import-edge-attributes.asciidoc[]
 
 include::import-edges-for-existing-vertices.asciidoc[]
 
+include::import-from-hive.asciidoc[]
+
+include::import-jdbc.asciidoc[]
+
+include::import-json.asciidoc[]
+
 include::import-metagraph.asciidoc[]
+
+include::import-orc.asciidoc[]
+
+include::import-parquet.asciidoc[]
 
 include::import-project-as-segmentation.asciidoc[]
 
