@@ -11,7 +11,7 @@
         ng-disabled="!editable">
     <div
       ui-ace="{
-        mode: 'javascript',
+        mode: '{{ param.payload.language }}',
         showGutter: false,
         rendererOptions: {
           fontSize: '16px'

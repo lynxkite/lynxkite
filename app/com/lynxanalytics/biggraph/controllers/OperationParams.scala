@@ -103,10 +103,12 @@ object OperationParams {
   case class Code(
       id: String,
       title: String,
+      language: String,
       defaultValue: String = "") extends OperationParameterMeta {
     val kind = "code"
     val options = List()
     val multipleChoice = false
+    override val payload = Some(json.Json.obj("language" -> language))
     def validate(value: String): Unit = {}
   }
 

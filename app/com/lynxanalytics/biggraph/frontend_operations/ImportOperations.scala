@@ -43,7 +43,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("infer", "Infer types", options = FEOption.noyes),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
-      Code("sql", "SQL"),
+      Code("sql", "SQL", language = "sql"),
       ImportedTableParam("imported_table", "Table GUID"))
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       val errorHandling = params("error_handling")
@@ -85,7 +85,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
       Param("connection_properties", "Connection properties"),
-      Code("sql", "SQL"),
+      Code("sql", "SQL", language = "sql"),
       ImportedTableParam("imported_table", "Table GUID"))
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       JDBCUtil.read(
@@ -110,7 +110,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       FileParam("filename", "File"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
-      Code("sql", "SQL"),
+      Code("sql", "SQL", language = "sql"),
       ImportedTableParam("imported_table", "Table GUID"))
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       val hadoopFile = graph_util.HadoopFile(params("filename"))
@@ -129,7 +129,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       FileParam("hive_table", "Hive table"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
-      Code("sql", "SQL"),
+      Code("sql", "SQL", language = "sql"),
       ImportedTableParam("imported_table", "Table GUID"))
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       assert(
