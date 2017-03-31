@@ -19,6 +19,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     data.map { case l: List[DynamicValue] => l.map { dv => dv.string } }
   }
 
+  // TODO: Depends on #5875.
+  /*
   test("global sql on vertices") {
     val globalProjectframe = DirectoryEntry.fromName("Test_Dir/Test_Project").asNewProjectFrame()
     run("Create example graph", on = "Test_Dir/Test_Project")
@@ -43,7 +45,10 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     val resultStrings = SQLResultToStrings(result.data)
     assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
+  */
 
+  // TODO: Depends on #5811.
+  /*
   test("sql on vertices") {
     run("Create example graph")
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
@@ -112,6 +117,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     connection.close()
     assert(results.sorted == Seq("Adam;20.3", "Eve;18.2", "Isolated Joe;2.0"))
   }
+  */
 
   /*
   def importCSV(file: String, columns: List[String], infer: Boolean, limit: Option[Int] = None): Unit = {
@@ -495,7 +501,10 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       (47.5269674, 19.0323968)))
     graph_util.HadoopFile(exportPath).delete
   }
+  */
 
+  // TODO: Depends on #5875.
+  /*
   test("export global sql to view + query it again") {
     val cols = List(
       SQLColumn("vertexId", "String"),
@@ -547,6 +556,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   }
   */
 
+  // TODO: Depends on #5811.
+  /*
   test("list project tables") {
     createProject(name = "example1")
     createDirectory(name = "dir")
@@ -639,4 +650,5 @@ class SQLControllerTest extends BigGraphControllerTestBase {
       TableBrowserNodeRequest(path = "table1"),
       idTypeOverride = "Long")
   }
+  */
 }
