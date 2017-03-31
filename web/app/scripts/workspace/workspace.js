@@ -176,23 +176,31 @@ angular.module('biggraph')
 
         onMouseMove: function(mouseLogical) {
           this.mouseLogical = mouseLogical;
-          if (event.buttons === 1 && this.movedBox) {
-            this.movedBox.onMouseMove(this.mouseLogical);
+          if (event.buttons === 1 && this.movedBoxes) {
+            console.log(this.movedBoxes.length);
+            for(i = 0; i < this.movedBoxes.length; i++){
+              console.log('aaaaaaaaaaa');
+              this.movedBoxes[i].onMouseMove(this.mouseLogical);
+            }
           }
         },
 
         onMouseUp: function() {
-          if (this.movedBox && this.movedBox.isMoved) {
-            this.saveWorkspace();
+          if(this.movedBoxes){
+            for(i = 0; i < this.movedBoxes.length; i++){
+              if (this.movedBoxes[i].isMoved) {
+                this.saveWorkspace();
+              }
+            }
           }
-          this.movedBox = undefined;
+          this.movedBoxes = undefined;
           this.pulledPlug = undefined;
         },
 
         onMouseDownOnBox: function(box, mouseLogical) {
           this.selectBox(box.instance.id);
-          this.movedBox = box;
-          this.movedBox.onMouseDown(mouseLogical);
+          this.movedBoxes = [box];
+          this.movedBoxes[0].onMouseDown(mouseLogical);
         },
 
         onMouseDownOnPlug: function(plug, event) {
