@@ -91,9 +91,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       calculatedStates.get(request.id).get
     }
     val snapshot = new SnapshotFrame(SymbolPath(request.name))
-    snapshot.initialize()
     import WorkspaceJsonFormatters.fBoxOutputState
-    snapshot.setState(calculatedState)
+    snapshot.initialize(calculatedState)
   }
 
   def getProgress(
