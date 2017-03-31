@@ -5,9 +5,7 @@ import com.lynxanalytics.biggraph.graph_api.Edge
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class ExportImportOperationTest extends OperationsTestBase {
-  test("This compiles and fails") {
-    assert(false)
-  }
+  // TODO: Depends on #5870.
   /*
   test("Imports from implicit tables") {
     val project2 = clone(project)
