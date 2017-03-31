@@ -125,6 +125,7 @@ angular.module('biggraph')
 
         selectBoxesInSelectionBox: function(){
           var boxes = this.boxes();
+          this.selectedBoxIds = [];
           for (var i = 0; i < boxes.length; i++) {
             var box = boxes[i];
             // console.log(box);
