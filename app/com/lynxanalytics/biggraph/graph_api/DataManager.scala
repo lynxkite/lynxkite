@@ -53,7 +53,6 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
   private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
   lazy val masterSQLContext = sparkSession.sqlContext
-  lazy val hiveConfigured = (getClass.getResource("/hive-site.xml") != null)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
@@ -477,4 +476,5 @@ object DataManager {
     log.info(s"Executing query: $query")
     ctx.sql(query)
   }
+  lazy val hiveConfigured = (getClass.getResource("/hive-site.xml") != null)
 }

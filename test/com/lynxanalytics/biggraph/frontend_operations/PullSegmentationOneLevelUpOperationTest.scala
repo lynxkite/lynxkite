@@ -4,30 +4,24 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class CopySegmentationOneLevelUpOperationTest extends OperationsTestBase {
-
-  test("Compiles and fails") {
-    assert(false)
-  }
-
-  /*
   test("Pull segmentation one level up") {
-    run("Import vertices", Map(
-      "table" -> importCSV("OPERATIONSTEST$/copy-segmentation-one-level-up-vertices.csv"),
-      "id_attr" -> "id"))
-    run("Import segmentation", Map(
-      "table" -> importCSV("OPERATIONSTEST$/copy-segmentation-one-level-up-connections.csv"),
-      "name" -> "segmentation1",
-      "base_id_attr" -> "num",
-      "base_id_column" -> "base_num",
-      "seg_id_column" -> "seg_num"))
-    run("Import segmentation", Map(
-      "table" -> importCSV("OPERATIONSTEST$/copy-segmentation-one-level-up-connections.csv"),
-      "name" -> "segmentation2",
-      "base_id_attr" -> "seg_num",
-      "base_id_column" -> "base_num",
-      "seg_id_column" -> "seg_num",
-      "apply_to_project" -> "|segmentation1"))
-    run("Pull segmentation one level up", Map("apply_to_project" -> "|segmentation1|segmentation2"))
+    val vertices = importCSV("copy-segmentation-one-level-up-vertices.csv")
+    val connections = importCSV("copy-segmentation-one-level-up-connections.csv")
+    val project = vertices.box("Import vertices")
+      .box("Import segmentation", Map(
+        "name" -> "segmentation1",
+        "base_id_attr" -> "num",
+        "base_id_column" -> "base_num",
+        "seg_id_column" -> "seg_num"), Seq(connections))
+      .box("Import segmentation", Map(
+        "name" -> "segmentation2",
+        "base_id_attr" -> "seg_num",
+        "base_id_column" -> "base_num",
+        "seg_id_column" -> "seg_num",
+        "apply_to_project" -> "|segmentation1"), Seq(connections))
+      .box("Pull segmentation one level up", Map(
+        "apply_to_project" -> "|segmentation1|segmentation2"))
+      .project
 
     val segmentation1 = project.segmentation("segmentation1")
     val segmentation2 = segmentation1.segmentation("segmentation2")
@@ -43,5 +37,4 @@ class CopySegmentationOneLevelUpOperationTest extends OperationsTestBase {
       .sorted
     assert(segmentSizes == Seq(1, 2, 3, 3, 3))
   }
-  */
 }

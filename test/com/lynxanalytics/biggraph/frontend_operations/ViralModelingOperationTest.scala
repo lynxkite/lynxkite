@@ -7,19 +7,13 @@ class ViralModelingOperationTest extends OperationsTestBase {
   def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
     attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
 
-  test("Compiles and fails") {
-    assert(false)
-  }
-  /*
   test("Viral modeling segment logic") {
-    val project = box("Import vertices", Map(
-      "table" -> importCSV("OPERATIONSTEST$/viral-vertices-1.csv"),
-      "id_attr" -> "internalID"))
+    val project = importCSV("viral-vertices-1.csv")
+      .box("Import vertices")
       .box("Import edges for existing vertices", Map(
-        "table" -> importCSV("OPERATIONSTEST$/viral-edges-1.csv"),
         "attr" -> "id",
         "src" -> "src",
-        "dst" -> "dst"))
+        "dst" -> "dst"), Seq(importCSV("viral-edges-1.csv")))
       .box("Find maximal cliques", Map(
         "name" -> "cliques",
         "bothdir" -> "false",
@@ -49,5 +43,4 @@ class ViralModelingOperationTest extends OperationsTestBase {
     assert(project.scalars("viral num coverage initial").value == 5)
     assert(project.scalars("viral num coverage after iteration 1").value == 6)
   }
-  */
 }
