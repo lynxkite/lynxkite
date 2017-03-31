@@ -17,15 +17,14 @@ angular.module('biggraph').factory('boxWrapper', function() {
 
     // An input or output connection point of a box.
     function plugWrapper(plug, index, direction) {
-      var plugRadius = 8;
+      var radius = 8;
 
       var len = metadata[direction].length;
       var x;
       if (len <= 1) {
         x = width / 2;
       } else {
-        var r = plugRadius;
-        x = (width - r) / len * index + r;
+        x = index * (width - radius * 2) / (len - 1) + radius;
       }
       var y = direction === 'outputs' ? height + 15 : -15;
 
@@ -39,7 +38,7 @@ angular.module('biggraph').factory('boxWrapper', function() {
         boxInstance: instance,
         data: plug,
         direction: direction,
-        radius: plugRadius,
+        radius: radius,
         x: function() { return x + instance.x; },
         y: function() { return y + instance.y; },
         posTransform: 'translate(' + x + ', ' + y + ')',
