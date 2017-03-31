@@ -214,7 +214,7 @@ case class BoxOutputState(
     assert(success.enabled, success.disabledReason)
     assert(state.nonEmpty, "State is empty.")
     import CheckpointRepository.fCommonProjectState
-    val p = state.map(_.as[CommonProjectState]).get
+    val p = state.get.as[CommonProjectState]
     val rps = RootProjectState.emptyState.copy(state = p)
     new RootProjectEditor(rps)
   }

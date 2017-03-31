@@ -13,9 +13,7 @@ case class GetWorkspaceRequest(name: String)
 case class BoxOutputInfo(boxOutput: BoxOutput, stateID: String, success: FEStatus, kind: String)
 case class GetWorkspaceResponse(workspace: Workspace, outputs: List[BoxOutputInfo])
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
-case class GetOutputRequest(id: String)
 case class GetOperationMetaRequest(workspace: String, box: String)
-case class GetOutputResponse(kind: String, project: Option[FEProject] = None, success: FEStatus)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
 case class GetStatusRequest(stateIDs: List[String])
 case class GetProjectOutputRequest(id: String, path: String)
@@ -72,17 +70,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
   val calculatedStates = new HashMap[String, BoxOutputState]()
 
-  def getOutput(user: serving.User, request: GetOutputRequest): GetOutputResponse = {
-    val state = getOutput(user, request.id)
-    state.kind match {
-      case BoxOutputKind.Project =>
-        val project = if (state.success.enabled) {
-          Some(state.project.viewer.toFE(""))
-        } else None
-        GetOutputResponse(state.kind, project = project, success = state.success)
-    }
-  }
-
   private def getOutput(user: serving.User, stateID: String): BoxOutputState = {
     calculatedStates.synchronized {
       calculatedStates.get(stateID)
@@ -94,18 +81,12 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def getProjectOutput(
     user: serving.User, request: GetProjectOutputRequest): FEProject = {
-    calculatedStates.synchronized {
-      calculatedStates.get(request.id)
-    } match {
-      case None => throw new AssertionError(s"BoxOutputState state identified by ${request.id} not found")
-      case Some(state: BoxOutputState) =>
-        state.kind match {
-          case BoxOutputKind.Project =>
-            val pathSeq = SubProject.splitPipedPath(request.path)
-              .filter(_ != "")
-            val viewer = state.project.viewer.offspringViewer(pathSeq)
-            viewer.toFE(request.path)
-        }
+    val state = getOutput(user, request.id)
+    state.kind match {
+      case BoxOutputKind.Project =>
+        val pathSeq = SubProject.splitPipedPath(request.path).filter(_ != "")
+        val viewer = state.project.viewer.offspringViewer(pathSeq)
+        viewer.toFE(request.path)
     }
   }
 
