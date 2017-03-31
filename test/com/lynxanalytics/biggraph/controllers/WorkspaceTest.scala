@@ -33,8 +33,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       case BoxOutputInfo(bo, id, _, _) => (bo, id)
     }.toMap
   }
-  def getOutput(id: String) =
-    controller.getOutput(user, GetOutputRequest(id))
+  def getProjectOutput(id: String) =
+    controller.getProjectOutput(user, GetProjectOutputRequest(id, ""))
   import WorkspaceJsonFormatters._
   import CheckpointRepository._
   def print[T: json.Writes](t: T): Unit = {
@@ -93,9 +93,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val ws = Workspace(List(eg))
       set("test-workspace", ws)
       val id = getOutputIDs("test-workspace")(eg.output("project"))
-      val o = getOutput(id)
-      assert(o.kind == "project")
-      val income = o.project.get.vertexAttributes.find(_.title == "income").get
+      val o = getProjectOutput(id)
+      val income = o.vertexAttributes.find(_.title == "income").get
       assert(income.metadata("icon") == "money_bag")
     }
   }
@@ -228,17 +227,15 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         Map("project" -> BoxOutput("pr2", "project")))
       val badBoxes = List(pr1, pr2, pr3)
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
-      val ws = Workspace(eg :: badBoxes)
-      set("test-workspace", ws)
-      val outputIds = getOutputIDs("test-workspace")
-      val outputs = for {
-        (boxOutput, id) <- outputIds
-        state = controller.getOutput(user, GetOutputRequest(id))
-      } yield (boxOutput, state)
+      set("test-workspace", Workspace(eg :: badBoxes))
+      val outputInfo = get("test-workspace").outputs
+      val outputs = outputInfo.map(BoxOutputInfo.unapply).map(_.get).map {
+        case (boxOutput, _, success, _) => (boxOutput, success)
+      }.toMap
       for (box <- badBoxes) {
-        assert(!outputs(box.output("project")).success.enabled)
+        assert(!outputs(box.output("project")).enabled)
       }
-      assert(outputs(eg.output("project")).success.enabled)
+      assert(outputs(eg.output("project")).enabled)
     }
   }
 }
