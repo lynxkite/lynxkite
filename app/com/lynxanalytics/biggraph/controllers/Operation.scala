@@ -28,8 +28,7 @@ object FEOperationParameterMeta {
     "choice", // A drop down box.
     "file", // Simple textbox with file upload button.
     "tag-list", // A variation of "multipleChoice" with a more concise, horizontal design.
-    "code", // JavaScript code
-    "multiline-string", // A textbox allowing multiline text.
+    "code", // An editor with a language option for highlights.
     "model", // A special kind to set model parameters.
     "imported-table", // A table importing button.
     "segmentation") // One of the segmentations of the current project.

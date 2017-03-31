@@ -112,16 +112,6 @@ object OperationParams {
     def validate(value: String): Unit = {}
   }
 
-  case class MultilineString(
-      id: String,
-      title: String,
-      defaultValue: String = "") extends OperationParameterMeta {
-    val kind = "multiline-string"
-    val options = List()
-    val multipleChoice = false
-    def validate(value: String): Unit = {}
-  }
-
   // A random number to be used as default value for random seed parameters.
   case class RandomSeed(id: String, title: String) extends OperationParameterMeta {
     val defaultValue = util.Random.nextInt.toString

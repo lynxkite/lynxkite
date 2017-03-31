@@ -21,7 +21,7 @@ class NoInputOutputOperations(env: SparkFreeEnvironment) extends OperationRegist
 
   register("Add comment", BoxDecorators)(new DecoratorOperation(_) {
     def parameters = List(
-      MultilineString("comment", "Comment")
+      Code("comment", "Comment", language = "plain_text")
     )
     def apply() = {}
     def enabled = FEStatus.enabled
