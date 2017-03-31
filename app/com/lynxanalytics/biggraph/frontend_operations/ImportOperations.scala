@@ -76,12 +76,11 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import JDBC")(new ImportOperation(_) {
     lazy val parameters = List(
-      Param("table", "File"),
       Param("jdbc_url", "JDBC URL"),
       Param("jdbc_table", "JDBC table"),
       Param("key_column", "Key column"),
       NonNegInt("num_partitions", "Number of partitions", default = 0),
-      Param("predicates", "Predicates"),
+      Param("partition_predicates", "Partition predicates"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
       Param("connection_properties", "Connection properties"),
@@ -94,7 +93,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         params("jdbc_table"),
         params("key_column"),
         params("num_partitions").toInt,
-        splitParam("predicates").toList,
+        splitParam("partition_predicates").toList,
         splitParam("connection_properties").map { e =>
           val eq = e.indexOf("=")
           assert(eq != -1,
