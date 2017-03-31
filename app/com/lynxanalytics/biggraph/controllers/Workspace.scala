@@ -230,9 +230,6 @@ case class BoxOutputState(
     new RootProjectEditor(rps)
   }
 }
-object BoxOutputState extends FromJson[BoxOutputState] {
-  override def fromJson(j: JsValue): BoxOutputState = json.Json.fromJson(j)(WorkspaceJsonFormatters.fBoxOutputState).get
-}
 
 case class BoxOutputProgress(boxOutput: BoxOutput, progress: Progress, success: FEStatus)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
