@@ -8,6 +8,7 @@ import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.graph_operations
 
 import play.api.libs.json
+import org.apache.spark
 
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
@@ -30,7 +31,7 @@ object FEOperationParameterMeta {
     "code", // JavaScript code
     "multiline-string", // A textbox allowing multiline text.
     "model", // A special kind to set model parameters.
-    "table", // A table.
+    "imported-table", // A table importing button.
     "segmentation") // One of the segmentations of the current project.
 }
 
@@ -142,7 +143,6 @@ object Operation {
               .filter(_ != ""))
 
       // TODO: Operations using these must be rewritten with multiple inputs as part of #5724.
-      def accessibleTableOptions: List[FEOption] = ???
       def readableProjectCheckpoints: List[FEOption] = ???
     }
   }
@@ -181,7 +181,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   }
 }
 
-// A base class with some conveniences for working with projects.
+// A base class with some conveniences for working with projects and tables.
 trait BasicOperation extends Operation {
   implicit val manager = context.manager
   protected val user = context.user
@@ -249,6 +249,14 @@ trait BasicOperation extends Operation {
     context.inputs(input).project.offspringEditor(segPath.tail)
   }
 
+  protected def tableInput(input: String): Table = {
+    context.inputs(input).table
+  }
+
+  protected def columnList(table: Table): List[FEOption] = {
+    table.schema.fieldNames.toList.map(n => FEOption(n, n))
+  }
+
   protected def reservedParameter(reserved: String): Unit = {
     assert(
       parameters.find(_.id == reserved).isEmpty, s"$id: '$reserved' is a reserved parameter name.")
@@ -265,21 +273,24 @@ trait BasicOperation extends Operation {
         context.inputs(input.id).project.segmentationsRecursively)
     } ++ parameters
   }
+
+  protected def splitParam(param: String): Seq[String] = {
+    val p = params(param)
+    if (p.isEmpty) Seq()
+    else p.split(",", -1).map(_.trim)
+  }
 }
 
 // A ProjectOutputOperation is an operation that has 1 project-typed output.
 abstract class ProjectOutputOperation(
     protected val context: Operation.Context) extends BasicOperation {
   assert(
-    context.meta.outputs == List(TypedConnection("project", "project")),
+    context.meta.outputs == List(TypedConnection("project", BoxOutputKind.Project)),
     s"A ProjectOperation must output a project. $context")
   protected lazy val project: ProjectEditor = new RootProjectEditor(RootProjectState.emptyState)
 
   protected def makeOutput(project: ProjectEditor): Map[BoxOutput, BoxOutputState] = {
-    import CheckpointRepository._ // For JSON formatters.
-    val output = BoxOutputState(
-      "project", json.Json.toJson(project.rootState.state).as[json.JsObject])
-    Map(context.meta.outputs(0).ofBox(context.box) -> output)
+    Map(context.meta.outputs(0).ofBox(context.box) -> BoxOutputState.from(project))
   }
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
@@ -293,7 +304,7 @@ abstract class ProjectOutputOperation(
 abstract class ProjectTransformation(
     context: Operation.Context) extends ProjectOutputOperation(context) {
   assert(
-    context.meta.inputs == List(TypedConnection("project", "project")),
+    context.meta.inputs == List(TypedConnection("project", BoxOutputKind.Project)),
     s"A ProjectTransformation must input a single project. $context")
   override lazy val project = projectInput("project")
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
@@ -317,7 +328,53 @@ abstract class DecoratorOperation(
     context.meta.outputs == List(),
     s"A DecoratorOperation must not have an output. $context")
   protected lazy val project: ProjectEditor = new RootProjectEditor(RootProjectState.emptyState)
+
   override def getOutputs() = {
     Map[BoxOutput, BoxOutputState]()
   }
+}
+
+abstract class TableOutputOperation(
+    protected val context: Operation.Context) extends BasicOperation {
+  assert(
+    context.meta.outputs == List(TypedConnection("table", BoxOutputKind.Table)),
+    s"A TableOutputOperation must output a table. $context")
+
+  protected def makeOutput(t: Table): Map[BoxOutput, BoxOutputState] = {
+    Map(context.meta.outputs(0).ofBox(context.box) -> BoxOutputState.from(t))
+  }
+}
+
+abstract class ImportOperation(context: Operation.Context) extends TableOutputOperation(context) {
+  import MetaGraphManager.StringAsUUID
+  protected def tableFromParam(name: String): Table = manager.table(params(name).asUUID)
+
+  override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+    validateParameters(params)
+    assert(params("imported_table").nonEmpty, "You have to import the data first.")
+    makeOutput(tableFromParam("imported_table"))
+  }
+
+  def enabled = FEStatus.enabled // Useful default.
+
+  override def apply(): Unit = ???
+
+  // Called by /ajax/importBox to create the table that is passed in "imported_table".
+  def getDataFrame(context: spark.sql.SQLContext): spark.sql.DataFrame = {
+    val importedColumns = splitParam("imported_columns")
+    val limit = params("limit")
+    val query = params("sql")
+    val raw = getRawDataFrame(context)
+    val partial = if (importedColumns.isEmpty) raw else {
+      val columns = importedColumns.map(spark.sql.functions.column(_))
+      raw.select(columns: _*)
+    }
+    val limited = if (limit.isEmpty) partial else partial.limit(limit.toInt)
+    val queried = if (query.isEmpty) limited else {
+      DataManager.sql(context, query, List("this" -> limited))
+    }
+    queried
+  }
+
+  def getRawDataFrame(context: spark.sql.SQLContext): spark.sql.DataFrame
 }

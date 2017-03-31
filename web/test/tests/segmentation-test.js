@@ -36,7 +36,6 @@ module.exports = function(fw) {
       };
       lib.workspace.addBox({ id: 'copy', name: 'copy graph into a segmentation', x: 100, y: 300,
                              after: 'segment-op', params: params });
-      lib.workspace.selectOutput('copy');
       lib.left.openSegmentation('bucketing');
       lib.right.openSegmentation('copy');
     },
@@ -64,7 +63,6 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox({ id: 'discard-segment', name: 'discard segmentation', x: 100, y: 400,
                              after: 'copy', params: { name: 'bucketing' } });
-      lib.workspace.selectOutput('discard-segment');
     },
     function() {
       expect(lib.left.segmentation('bucketing').isPresent()).toBe(false);
