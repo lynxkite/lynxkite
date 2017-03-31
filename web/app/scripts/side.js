@@ -465,7 +465,6 @@ angular.module('biggraph')
         });
     };
 
-
     Side.prototype.rename = function(kind, oldName, newName) {
       if (oldName === newName) { return; }
       this.applyOp('Rename-' + kind, { from: oldName, to: newName });
