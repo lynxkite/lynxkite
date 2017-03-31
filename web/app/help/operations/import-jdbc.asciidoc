@@ -1,0 +1,51 @@
+### Import JDBC
+
+
+JDBC is used to connect to relational databases such as MySQL. See <<jdbc-details>> for setup steps
+required for connecting to a database.
+
+====
+[[jdbc_url]] JDBC URL::
+The connection URL for the database. This typically includes the username and password. The exact
+syntax entirely depends on the database type. Please consult the documentation of the database.
+
+[[jdbc_table]] Table::
+The name of the database table to import.
++
+All identifiers have to be properly quoted according to the SQL syntax of the source database.
++
+The following formats may work depending on the type of the source database:
++
+* `TABLE_NAME`
+* `SCHEMA_NAME.TABLE_NAME`
+* `(SELECT * FROM TABLE_NAME) TABLE_ALIAS`
+
+[[key_column]] Key column::
+This column is used to partition the SQL query. The range from `min(key)` to `max(key)`
+will be split into a sub-range for each Spark worker, so they can each query a part of the data in
+parallel.
++
+Pick a column that is uniformly distributed. Numerical identifiers will give the best performance.
+String (`VARCHAR`) columns are also supported but only work well if they mostly contain letters of
+the English alphabet and numbers.
++
+If the partitioning column is left empty, only a fraction of the cluster resources will be used.
++
+The column name has to be properly quoted according to the SQL syntax of the source database.
+
+[[num_partitions]] Number of partitions::
+LynxKite will perform this many SQL queries in parallel to get the data. Leave at zero to let
+LynxKite automatically decide. Set a specific value if the database cannot support that many
+queries.
+
+[[partition_predicates]] Partition predicates::
+This advanced option provides even greater control over the partitioning. It is an alternative
+option to specifying the key column. Here you can specify a comma-separated list of `WHERE` clauses,
+which will be used as the partitions.
++
+For example you could provide `AGE < 30, AGE >= 30 AND AGE < 60, AGE >= 60` as the list of
+predicates. It would result in three partitions, each querying a different piece of the data, as
+specified.
+
+include::{g}[tag=import-box]
+====
