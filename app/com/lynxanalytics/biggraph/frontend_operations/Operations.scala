@@ -1369,7 +1369,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
-      Code("expr", "Value", defaultValue = "1 + 1"))
+      Code("expr", "Value", defaultValue = "1 + 1", language = "javascript"))
     def enabled = project.hasVertexSet
     override def summary = {
       val name = params("output")
@@ -1407,7 +1407,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
-      Code("expr", "Value", defaultValue = "1 + 1"))
+      Code("expr", "Value", defaultValue = "1 + 1", language = "javascript"))
     def enabled = project.hasEdgeBundle
     override def summary = {
       val name = params("output")
@@ -1458,7 +1458,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     lazy val parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.list("double", "string")),
-      Code("expr", "Value", defaultValue = "1 + 1"))
+      Code("expr", "Value", defaultValue = "1 + 1", language = "javascript"))
     def enabled = FEStatus.enabled
     override def summary = {
       val name = params("output")
@@ -3476,7 +3476,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Create segmentation from SQL", StructureOperations, new ProjectTransformation(_) with SegOp {
     override lazy val parameters = List(
       Param("name", "Name"),
-      Code("sql", "SQL", defaultValue = "select * from vertices"))
+      Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql"))
     def segmentationParameters = List()
     def enabled = FEStatus.assert(true, "")
 
