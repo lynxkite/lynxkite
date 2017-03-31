@@ -123,6 +123,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     }
   }
 
+  /*
   test("2-input operation") {
     using("test-workspace") {
       assert(get("test-workspace").boxes.isEmpty)
@@ -158,6 +159,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(project.edgeBundle.countScalar.value == 2)
     }
   }
+  */
 
   test("progress success") {
     using("test-workspace") {
