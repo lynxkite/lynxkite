@@ -63,7 +63,7 @@ s.disableCurrentThread
     worksUnlessRestricted(code)
   }
 
-  // This fails, probably, because we cannot create classes in restricted mode :(
+  // This fails, because we cannot create classes in restricted mode :(
   test("Can do some non-trivial, innocent computation") {
     val code =
       """
@@ -81,7 +81,8 @@ s.disableCurrentThread
 
   // This passes, but not because we can't create a thread, but because
   // we cannot create classes. If we hack restricted mode so that
-  // it allows class creation, this still passes.
+  // it allows class creation, this still passes, because we can
+  // prevent spawning a new thread.
   test("Can't create a new thread") {
     val code =
       """
@@ -97,7 +98,6 @@ s.disableCurrentThread
     worksUnlessRestricted(code)
   }
 
-  // This fails because even in restricted more we can access Timestamp!
   test("Can't access biggraph classes") {
     val code = "com.lynxanalytics.biggraph.graph_util.Timestamp.toString"
     val ts = com.lynxanalytics.biggraph.graph_util.Timestamp.toString
