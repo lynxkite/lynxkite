@@ -2429,9 +2429,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Rename edge attribute $from to $to"
     }
     def apply() = {
-      assert(!project.edgeAttributes.contains(params("after")),
-        s"""An edge-attribute named '${params("after")}' already exists,
-            please discard it or choose another name""")
       project.edgeAttributes(params("after")) = project.edgeAttributes(params("before"))
       project.edgeAttributes(params("before")) = null
     }
@@ -2448,9 +2445,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Rename vertex attribute $before to $after"
     }
     def apply() = {
-      assert(!project.vertexAttributes.contains(params("after")),
-        s"""A vertex-attribute named '${params("after")}' already exists,
-            please discard it or choose another name""")
       assert(params("after").nonEmpty, "Please set the new attribute name.")
       project.newVertexAttribute(
         params("after"), project.vertexAttributes(params("before")),
@@ -2470,10 +2464,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Rename segmentation $from to $to"
     }
     def apply() = {
-      assert(
-        !project.segmentationNames.contains(params("after")),
-        s"""A segmentation named '${params("after")}' already exists,
-            please discard it or choose another name""")
       project.segmentation(params("after")).segmentationState =
         project.existingSegmentation(params("before")).segmentationState
       project.deleteSegmentation(params("before"))
@@ -2491,9 +2481,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Rename scalar $from to $to"
     }
     def apply() = {
-      assert(!project.scalars.contains(params("after")),
-        s"""A scalar named '${params("after")}' already exists,
-            please discard it or choose another name""")
       project.scalars(params("after")) = project.scalars(params("before"))
       project.scalars(params("before")) = null
     }
@@ -2938,9 +2925,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         project.newVertexAttribute(name, attr) // Clear notes.
       }
       val idAttr = params("id_attr")
-      assert(
-        !project.vertexAttributes.contains(idAttr),
-        s"The project already contains a field called '$idAttr'. Please pick a different name.")
       project.newVertexAttribute(idAttr, project.vertexSet.idAttribute)
       project.edgeBundle = newEdgeBundle
       project.edgeAttributes = newEdgeAttributes
