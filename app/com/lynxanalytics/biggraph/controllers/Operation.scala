@@ -334,9 +334,9 @@ abstract class ProjectTransformation(
   override lazy val project = projectInput("project")
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)
-    val before = project.viewer
+    val before = project.rootEditor.viewer
     apply()
-    updateDeltas(project, before)
+    updateDeltas(project.rootEditor, before)
     makeOutput(project)
   }
 }
