@@ -11,17 +11,18 @@ angular.module('biggraph')
         workspace: '='
       },
       link: function(scope) {
-        scope.$watch('workspace.$resolved', function() {
-          scope.createSnapshot = function(saveAsName) {
-            scope.saving = true;
-            util.post('/ajax/createSnapshot', {
-              name: saveAsName,
-              id: scope.workspace.selectedStateId
-            }).finally(function() {
-              scope.saving = false;
-            });
-          };
-        });
+
+        scope.saveAsName  = 'snapshot: ' + scope.workspace.name;
+
+        scope.createSnapshot = function(saveAsName) {
+          scope.saving = true;
+          util.post('/ajax/createSnapshot', {
+            name: saveAsName,
+            id: scope.workspace.selectedStateId
+          }).finally(function() {
+            scope.saving = false;
+          });
+        };
       },
     };
 });
