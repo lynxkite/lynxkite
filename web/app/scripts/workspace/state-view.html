@@ -1,7 +1,7 @@
 <div class="btn-group pull-left" ng-if="workspace.selectedStateKind === 'project'">
     <label class="btn btn-default save-as-snapshot-box"
            ng-click="createSnapshot(saveAsName)"
-           tooltip="Click the icon to snapshot state as {{saveAsName}}"
+           tooltip="Click to snapshot state as {{saveAsName}}"
            tooltip-append-to-body="true"
            tooltip-placement="bottom">
         <form ng-submit="createSnapshot(saveAsName)" style="display: inline;">
@@ -11,7 +11,7 @@
         <i class="glyphicon glyphicon-camera"></i>
     </label>
 </div>
-<project-state-view 
+<project-state-view
     state-id="workspace.selectedStateId"
     ng-if="workspace.selectedStateKind === 'project'">
 </project-state-view>
