@@ -3,7 +3,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.graph_operations
 
@@ -152,7 +152,7 @@ trait OperationRegistry {
   def registerOp(
     id: String,
     category: Operation.Category,
-    inputs: List[TypedConnection],
+    inputs: List[String],
     outputs: List[TypedConnection],
     factory: Operation.Factory): Unit = {
     // TODO: Register category somewhere.
@@ -249,6 +249,35 @@ trait BasicOperation extends Operation {
     context.inputs(input).table
   }
 
+  protected def tableLikeInput(input: String) = new TableLikeInput(input)
+
+  class TableLikeInput(name: String) {
+    val input = context.inputs(name)
+    def asProject = {
+      input.kind match {
+        case BoxOutputKind.Project =>
+          projectInput(name)
+        case BoxOutputKind.Table =>
+          import graph_util.Scripting._
+          val t = tableInput(name).toAttributes
+          val project = new RootProjectEditor(RootProjectState.emptyState)
+          project.vertexSet = t.ids
+          project.vertexAttributes = t.columns.mapValues(_.entity)
+          project
+      }
+    }
+
+    def asTable = {
+      input.kind match {
+        case BoxOutputKind.Project =>
+          val p = projectInput(name)
+          ??? // TODO: Do it with AttributesToTable.
+        case BoxOutputKind.Table =>
+          tableInput(name)
+      }
+    }
+  }
+
   protected def columnList(table: Table): List[FEOption] = {
     table.schema.fieldNames.toList.map(n => FEOption(n, n))
   }
@@ -261,12 +290,12 @@ trait BasicOperation extends Operation {
   protected def allParameters: List[OperationParameterMeta] = {
     // "apply_to_*" is used to pick the base project or segmentation to apply the operation to.
     // An "apply_to_*" parameter is added for each project input.
-    context.meta.inputs.filter(_.kind == BoxOutputKind.Project).map { input =>
-      val param = "apply_to_" + input.id
+    context.inputs.filter(_._2.kind == BoxOutputKind.Project).keys.toList.sorted.map { input =>
+      val param = "apply_to_" + input
       reservedParameter(param)
       OperationParams.SegmentationParam(
-        param, s"Apply to (${input.id})",
-        context.inputs(input.id).project.segmentationsRecursively)
+        param, s"Apply to ($input})",
+        context.inputs(input).project.segmentationsRecursively)
     } ++ parameters
   }
 
@@ -300,7 +329,7 @@ abstract class ProjectOutputOperation(
 abstract class ProjectTransformation(
     context: Operation.Context) extends ProjectOutputOperation(context) {
   assert(
-    context.meta.inputs == List(TypedConnection("project", BoxOutputKind.Project)),
+    context.meta.inputs == List("project"),
     s"A ProjectTransformation must input a single project. $context")
   override lazy val project = projectInput("project")
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
