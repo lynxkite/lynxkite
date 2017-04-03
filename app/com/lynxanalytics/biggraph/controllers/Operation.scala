@@ -184,7 +184,7 @@ trait BasicOperation extends Operation {
   // Parameters without default values:
   protected val parametricValues = context.box.parametricParameters.map {
     case (name, value) =>
-      val result = com.lynxanalytics.second.ScalaScript.run(value)
+      val result = com.lynxanalytics.sandbox.ScalaScript.run(value)
       name -> result
   }
   protected val paramValues = context.box.parameters ++ parametricValues

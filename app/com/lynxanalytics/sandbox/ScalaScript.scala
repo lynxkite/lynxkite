@@ -1,4 +1,4 @@
-package com.lynxanalytics.second
+package com.lynxanalytics.sandbox
 
 import java.security.Permission
 import javax.script._
@@ -60,7 +60,7 @@ class ScalaScriptSecurityManager extends SecurityManager {
     super.checkPackageAccess(s)
     log("checkingPackageAccess: ", s)
     if (inRestrictedThread) {
-      if (s.startsWith("com.lynxanalytics")) {
+      if (s.startsWith("com.lynxanalytics.biggraph")) {
         throw new java.security.AccessControlException("Illegal package access")
       }
     }

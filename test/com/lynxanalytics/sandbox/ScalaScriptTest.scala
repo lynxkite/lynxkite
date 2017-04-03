@@ -1,4 +1,4 @@
-package com.lynxanalytics.second
+package com.lynxanalytics.sandbox
 
 import org.scalatest.FunSuite
 import java.security.AccessControlException
@@ -20,6 +20,7 @@ class ScalaScriptTest extends FunSuite {
     result
   }
 
+  /*
   test("Can't do infinite loop, even when non-restricted") {
     val code =
       """
@@ -57,14 +58,16 @@ class ScalaScriptTest extends FunSuite {
   test("Can't tamper with our security manager") {
     val code =
       """
-val s = System.getSecurityManager.asInstanceOf[com.lynxanalytics.second.ScalaScriptSecurityManager]
+val s = System.getSecurityManager.asInstanceOf[com.lynxanalytics.sandbox.ScalaScriptSecurityManager]
 s.disableCurrentThread
       """
     worksUnlessRestricted(code)
   }
-
+*/
   // This fails, because we cannot create classes in restricted mode :(
   test("Can do some non-trivial, innocent computation") {
+    println("Sleeping")
+    println("Staring")
     val code =
       """
            class C {
