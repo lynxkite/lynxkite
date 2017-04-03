@@ -972,6 +972,23 @@ class SnapshotFrame(path: SymbolPath)(
     details = json.Json.toJson(state).as[JsObject]
   }
 
+  override def toListElementFE()(implicit epm: EntityProgressManager) = {
+    try {
+      FEProjectListElement(
+        name = name,
+        objectType = objectType,
+        details = details)
+    } catch {
+      case ex: Throwable =>
+        log.warn(s"Could not list $name:", ex)
+        FEProjectListElement(
+          name = name,
+          objectType = objectType,
+          error = Some(ex.getMessage)
+        )
+    }
+  }
+
   override def isDirectory: Boolean = false
 }
 
