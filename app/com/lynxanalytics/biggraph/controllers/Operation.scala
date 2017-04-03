@@ -294,7 +294,7 @@ trait BasicOperation extends Operation {
       val param = "apply_to_" + input
       reservedParameter(param)
       OperationParams.SegmentationParam(
-        param, s"Apply to ($input})",
+        param, s"Apply to ($input)",
         context.inputs(input).project.segmentationsRecursively)
     } ++ parameters
   }
