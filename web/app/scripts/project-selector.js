@@ -245,7 +245,9 @@ angular.module('biggraph').directive('projectSelector',
             scope.startTableImport();
             $timeout(function () {
               $anchorScroll('import-table');
-              scope.$broadcast('fill import from config', config, name, type);
+              scope.fullName = name.split('/');
+              scope.relativeName = scope.fullName[scope.fullName.length-1];
+              scope.$broadcast('fill import from config', config, scope.relativeName, type);
             });
           }
         },
