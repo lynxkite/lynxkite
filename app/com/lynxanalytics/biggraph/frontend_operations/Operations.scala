@@ -359,16 +359,14 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Take segmentation as base project", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List(
-      Choice("segmentation", "Segmentation to be set as base project", options = project.segmentationList)
-    )
-    def enabled = project.hasSegmentation
-    def apply() = {
-      val segmentation = project.segmentation(params("segmentation"))
-      project.state = segmentation.state
-    }
-  })
+  register("Take segmentation as base project", StructureOperations,
+    new ProjectTransformation(_) with SegOp {
+      def segmentationParameters = List()
+      def enabled = FEStatus.enabled
+      def apply() = {
+        project.rootEditor.state = project.state
+      }
+    })
 
   register("Take edges as vertices", StructureOperations, new ProjectTransformation(_) {
     def parameters = List()
