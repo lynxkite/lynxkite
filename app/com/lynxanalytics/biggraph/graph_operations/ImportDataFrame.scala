@@ -15,18 +15,28 @@ object ImportDataFrame extends OpFromJson {
     None,
     (j \ "timestamp").as[String])
 
-  def apply(inputFrame: DataFrame) =
-    new ImportDataFrame(
-      inputFrame.schema,
-      Some(inputFrame),
-      Timestamp.toString)
+  def apply(df: DataFrame) = {
+    // Make every column nullable. Nullability is not stored in Parquet.
+    val schema = types.StructType(df.schema.map(_.copy(nullable = true)))
+    new ImportDataFrame(schema, Some(df), Timestamp.toString)
+  }
+
+  def run(df: DataFrame)(implicit mm: MetaGraphManager): Table = {
+    import Scripting._
+    ImportDataFrame(df)().result.t
+  }
+
+  class Output(schema: types.StructType)(
+      implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val t = table(schema)
+  }
 }
 
 class ImportDataFrame private (
   val schema: types.StructType,
   inputFrame: Option[DataFrame],
   val timestamp: String)
-    extends TypedMetaGraphOp[NoInput, SQLHelper.DataFrameOutput] {
+    extends TypedMetaGraphOp[NoInput, ImportDataFrame.Output] {
 
   for (df <- inputFrame) {
     // If the DataFrame is backed by LynxKite operations, we need to trigger these now. Triggering
@@ -40,27 +50,26 @@ class ImportDataFrame private (
         (otherOp.schema == schema) && (otherOp.timestamp == timestamp)
       case _ => false
     }
-
   override lazy val hashCode = gUID.hashCode
-
   override val isHeavy = true
-  override val hasCustomSaving = true // Single-pass import.
   @transient override lazy val inputs = new NoInput()
-
   def outputMeta(instance: MetaGraphOperationInstance) =
-    new SQLHelper.DataFrameOutput(schema)(instance)
+    new ImportDataFrame.Output(schema)(instance)
   override def toJson = Json.obj(
     "schema" -> schema.prettyJson,
     "timestamp" -> timestamp)
 
   def execute(inputDatas: DataSet,
-              o: SQLHelper.DataFrameOutput,
+              o: ImportDataFrame.Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    assert(
-      inputFrame.nonEmpty,
-      "Import failed or imported data have been lost (if this table was successfully imported" +
-        " before then contact your system administrator)")
-    o.populateOutput(rc, schema, inputFrame.get)
+    inputFrame match {
+      case None =>
+        throw new AssertionError(
+          "Import failed or imported data have been lost (if this table was successfully imported" +
+            " before then contact your system administrator)")
+      case Some(df) =>
+        output(o.t, df)
+    }
   }
 }

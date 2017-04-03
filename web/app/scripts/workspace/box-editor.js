@@ -46,7 +46,8 @@ angular.module('biggraph')
           if (!scope.workspace || !scope.workspace.selectedBoxId) {
             return;
           }
-          // The below magic makes sure that the response
+          var box = scope.workspace.selectedBox();
+          // Checking currentRequest makes sure that the response
           // to the result of the latest getOperationMetaRequest
           // will be passed to scope.newOpSelected().
           var currentRequest;
@@ -60,7 +61,7 @@ angular.module('biggraph')
             .then(
               function success(boxMeta) {
                 if (scope.lastRequest === currentRequest) {
-                  scope.newOpSelected(boxMeta);
+                  scope.newOpSelected(box, boxMeta);
                 }
               },
               function error() {
@@ -72,9 +73,10 @@ angular.module('biggraph')
 
         // Invoked when the user selects a new operation and its
         // metadata is successfully downloaded.
-        scope.newOpSelected = function(boxMeta) {
+        scope.newOpSelected = function(box, boxMeta) {
+            scope.box = box;
             scope.boxMeta = boxMeta;
-            if (!scope.boxMeta) {
+            if (!box) {
               return;
             }
 

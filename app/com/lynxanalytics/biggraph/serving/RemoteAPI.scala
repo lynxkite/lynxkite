@@ -16,7 +16,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving.FrontendJson._
-import com.lynxanalytics.biggraph.table.TableImport
 import org.apache.spark.sql.types.StructType
 
 object RemoteAPIProtocol {
@@ -57,7 +56,8 @@ object RemoteAPIProtocol {
         implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
       val dfs = checkpoints.flatMap {
         case (name, cp) =>
-          getDFsOfViewer(user, context, /* RemoteAPIController.getViewer(cp) */ ???, name)
+          ???
+        // getDFsOfViewer(user, context, /* RemoteAPIController.getViewer(cp) */ ???, name)
       }
       DataManager.sql(context, query, dfs.toList)
     }
@@ -80,7 +80,6 @@ object RemoteAPIProtocol {
         s => getDFsOfViewer(
           user, sqlContext, s.project.viewer, fullPrefix + s.box + "|" + s.output))
     }
-    */
 
     // Lists all the DataFrames in the project/table/view given by the viewer.
     private def getDFsOfViewer(
@@ -99,6 +98,7 @@ object RemoteAPIProtocol {
       val recipeDFs = viewer.viewRecipe.map(prefix -> _.createDataFrame(user, sqlContext))
       tableDFs ++ recipeDFs
     }
+    */
   }
 
   case class CheckpointRequest(checkpoint: String)
@@ -110,7 +110,6 @@ object RemoteAPIProtocol {
   case class DirectoryEntryResult(
     exists: Boolean,
     isView: Boolean,
-    isTable: Boolean,
     isProject: Boolean,
     isDirectory: Boolean,
     isWorkspace: Boolean,
@@ -184,12 +183,10 @@ object RemoteAPIServer extends JsonServer {
   def newWorkspace = jsonPost(c.newWorkspace)
   def loadWorkspace = jsonPost(c.loadWorkspace)
   def removeName = jsonPost(c.removeName)
-  def loadTable = jsonPost(c.loadTable)
   def loadView = jsonPost(c.loadView)
   def runOperation = jsonPost(c.runOperation)
   def getOperationNames = jsonPost(c.getOperationNames)
   def saveWorkspace = jsonPost(c.saveWorkspace)
-  def saveTable = jsonPost(c.saveTable)
   def saveView = jsonPost(c.saveView)
   def takeFromView = jsonFuturePost(c.takeFromView)
   def exportViewToCSV = jsonFuturePost(c.exportViewToCSV)
@@ -197,15 +194,8 @@ object RemoteAPIServer extends JsonServer {
   def exportViewToORC = jsonFuturePost(c.exportViewToORC)
   def exportViewToParquet = jsonFuturePost(c.exportViewToParquet)
   def exportViewToJdbc = jsonFuturePost(c.exportViewToJdbc)
-  def exportViewToTable = jsonFuturePost(c.exportViewToTable)
   private def createView[T <: ViewRecipe: json.Writes: json.Reads] =
     jsonPost[T, CheckpointResponse](c.createView)
-  def createViewJdbc = createView[JdbcImportRequest]
-  def createViewHive = createView[HiveImportRequest]
-  def createViewCSV = createView[CSVImportRequest]
-  def createViewParquet = createView[ParquetImportRequest]
-  def createViewORC = createView[ORCImportRequest]
-  def createViewJson = createView[JsonImportRequest]
   def changeACL = jsonPost(c.changeACL)
   def globalSQL = createView[GlobalSQLRequest]
   def isComputed = jsonPost(c.isComputed)
@@ -221,7 +211,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
   val ops = new frontend_operations.Operations(env)
-  val sqlController = new SQLController(env)
+  val sqlController = new SQLController(env, ops)
   val bigGraphController = new BigGraphController(env)
   val graphDrawingController = new GraphDrawingController(env)
 
@@ -250,7 +240,6 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     DirectoryEntryResult(
       exists = entry.exists,
       isView = entry.isView,
-      isTable = entry.isTable,
       isProject = entry.isProject,
       isDirectory = entry.isDirectory,
       isWorkspace = entry.isWorkspace,
@@ -286,10 +275,6 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     loadObject(user, request, _.isWorkspace)
   }
 
-  def loadTable(user: User, request: LoadNameRequest): CheckpointResponse = {
-    loadObject(user, request, _.isTable)
-  }
-
   def loadView(user: User, request: LoadNameRequest): CheckpointResponse = {
     loadObject(user, request, _.isView)
   }
@@ -321,10 +306,6 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   def saveWorkspace(user: User, request: SaveCheckpointRequest): CheckpointResponse = {
     saveFrame(user, request, _.asNewWorkspaceFrame(_))
-  }
-
-  def saveTable(user: User, request: SaveCheckpointRequest): CheckpointResponse = {
-    saveFrame(user, request, _.asNewTableFrame(_))
   }
 
   def saveView(user: User, request: SaveCheckpointRequest): CheckpointResponse = {
@@ -536,12 +517,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   def exportViewToTable(
-    user: User, request: ExportViewToTableRequest): Future[CheckpointResponse] = dataManager.async {
-    val df = viewToDF(user, request.checkpoint)
-    val table = TableImport.importDataFrameAsync(df)
-    val cp = table.saveAsCheckpoint("Created from a view via the Remote API.")
-    CheckpointResponse(cp)
-  }
+    user: User, request: ExportViewToTableRequest): Future[CheckpointResponse] = ???
 
   private def isComputed(entity: TypedEntity[_]): Boolean = {
     val progress = dataManager.computeProgress(entity)
