@@ -20,7 +20,6 @@ class ScalaScriptTest extends FunSuite {
     result
   }
 
-  /*
   test("Can't do infinite loop, even when non-restricted") {
     val code =
       """
@@ -63,11 +62,8 @@ s.disableCurrentThread
       """
     worksUnlessRestricted(code)
   }
-*/
   // This fails, because we cannot create classes in restricted mode :(
   test("Can do some non-trivial, innocent computation") {
-    println("Sleeping")
-    println("Staring")
     val code =
       """
            class C {
