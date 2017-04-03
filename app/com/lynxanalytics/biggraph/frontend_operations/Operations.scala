@@ -389,6 +389,28 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
+  register("Take segmentation links as base project", StructureOperations,
+    new ProjectTransformation(_) with SegOp {
+      def segmentationParameters = List()
+      def enabled = FEStatus.enabled
+      def apply() = {
+        val root = project.rootEditor
+        val baseAttrs = parent.vertexAttributes.toMap
+        val segAttrs = project.vertexAttributes.toMap
+        val belongsTo = seg.belongsTo
+        root.scalars = Map()
+        root.vertexSet = belongsTo.idSet
+        for ((name, attr) <- baseAttrs) {
+          root.newVertexAttribute(
+            "base_" + name, graph_operations.VertexToEdgeAttribute.srcAttribute(attr, belongsTo))
+        }
+        for ((name, attr) <- segAttrs) {
+          root.newVertexAttribute(
+            "segment_" + name, graph_operations.VertexToEdgeAttribute.dstAttribute(attr, belongsTo))
+        }
+      }
+    })
+
   register("Check cliques", UtilityOperations, new ProjectTransformation(_) with SegOp {
     def segmentationParameters = List(
       Param("selected", "Segment IDs to check", defaultValue = "<All>"),
