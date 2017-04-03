@@ -54,14 +54,6 @@ class ScalaScriptTest extends FunSuite {
     worksUnlessRestricted(code)
   }
 
-  test("Can't tamper with our security manager") {
-    val code =
-      """
-val s = System.getSecurityManager.asInstanceOf[com.lynxanalytics.sandbox.ScalaScriptSecurityManager]
-s.disableCurrentThread
-      """
-    worksUnlessRestricted(code)
-  }
   // This fails, because we cannot create classes in restricted mode :(
   test("Can do some non-trivial, innocent computation") {
     val code =
