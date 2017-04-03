@@ -26,7 +26,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
         input => input.projectRec(boxes)
       )
       val name = s"${operationID} ${boxes.length}"
-      val inputIds = meta.inputs.map(_.id)
+      val inputIds = meta.inputs
       assert(inputNames.size == inputIds.size, s"for $name")
       val inputBoxOutputs = inputIds.zip(inputNames).zip(inputs).map {
         case ((inputId, inputName), inputBox) =>
