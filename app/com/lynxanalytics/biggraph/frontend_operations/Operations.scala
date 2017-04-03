@@ -373,10 +373,19 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = project.hasEdgeBundle
     def apply() = {
       val edgeBundle = project.edgeBundle
-      val edgeAttr = project.edgeAttributes.toMap
+      val vertexAttrs = project.vertexAttributes.toMap
+      val edgeAttrs = project.edgeAttributes.toMap
       project.scalars = Map()
       project.vertexSet = edgeBundle.idSet
-      project.vertexAttributes = edgeAttr
+      for ((name, attr) <- vertexAttrs) {
+        project.newVertexAttribute(
+          "src_" + name, graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle))
+        project.newVertexAttribute(
+          "dst_" + name, graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle))
+      }
+      for ((name, attr) <- edgeAttrs) {
+        project.newVertexAttribute("edge_" + name, attr)
+      }
     }
   })
 
