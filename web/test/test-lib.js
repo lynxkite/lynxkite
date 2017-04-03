@@ -175,18 +175,35 @@ Workspace.prototype = {
     button.click();
   },
 
-  addBox: function(name, x, y) {
-    var op = this.openOperation(name);
-    testLib.simulateDragAndDrop(op, this.board, x, y);
+  addBox: function(boxData) {
+    var id = boxData.id;
+    var after = boxData.after;
+    var inputs = boxData.inputs;
+    var params = boxData.params;
+    var op = this.openOperation(boxData.name);
+    testLib.simulateDragAndDrop(op, this.board, boxData.x, boxData.y, {id: id});
     this.closeOperationSelector();
+    if (after) {
+      this.connectBoxes(after, 'project', id, 'project');
+    }
+    if (inputs) {
+      for (var i = 0; i < inputs.length; ++i) {
+        var input = inputs[i];
+        this.connectBoxes(input.boxID, input.srcPlugID, id, input.dstPlugID);
+      }
+    }
+    if (params) {
+      this.editBox(id, params);
+    }
+    this.selectOutput(id);
   },
 
-  selectBox(box) {
-    box.$('rect').click();
+  selectBox(boxID) {
+    this.getBox(boxID).$('rect').click();
   },
 
-  editBox: function(box, params) {
-    this.selectBox(box);
+  editBox: function(boxID, params) {
+    this.selectBox(boxID);
     this.populateOperation(params);
     this.submitOperation();
   },
@@ -201,21 +218,35 @@ Workspace.prototype = {
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
-  getBox(boxId) {
-    return this.board.$$('.box').get(boxId);
+  getBox(boxID) {
+    return this.board.$('.box#' + boxID);
   },
 
-  getInputPlug: function(box, plugId) {
-    return box.$('#inputs #' + plugId + ' circle');
+  getInputPlug: function(boxID, plugID) {
+    let box = this.getBox(boxID);
+    if (plugID) {
+      return box.$('#inputs #' + plugID + ' circle');
+    } else {
+      return box.$$('#inputs circle').get(0);
+    }
   },
 
-  getOutputPlug: function(box, plugId) {
-    return box.$('#outputs #' + plugId + ' circle');
+  getOutputPlug: function(boxID, plugID) {
+    let box = this.getBox(boxID);
+    if (plugID) {
+      return box.$('#outputs #' + plugID + ' circle');
+    } else {
+      return box.$$('#outputs circle').get(0);
+    }
   },
 
-  connectBoxes: function(box1, output1, box2, input2) {
-    var src = this.getOutputPlug(box1, output1);
-    var dst = this.getInputPlug(box2, input2);
+  selectOutput: function(boxID, plugID) {
+    this.getOutputPlug(boxID, plugID).click();
+  },
+
+  connectBoxes: function(srcBoxID, srcPlugID, dstBoxID, dstPlugID) {
+    var src = this.getOutputPlug(srcBoxID, srcPlugID);
+    var dst = this.getInputPlug(dstBoxID, dstPlugID);
     expect(src.isDisplayed()).toBe(true);
     expect(dst.isDisplayed()).toBe(true);
     browser.actions()
@@ -230,10 +261,17 @@ Workspace.prototype = {
 
 function Side(direction) {
   this.direction = direction;
-  this.side = element(by.css('project-state-view'));
+  this.side = $('project-state-view #side-' + direction);
 }
 
 Side.prototype = {
+  expectCurrentProjectIs: function(name) {
+    expect(this.side.$('.project-name').getText()).toBe(name);
+  },
+
+  close: function() {
+    this.side.$('#close-project').click();
+  },
 
   evaluate: function(expr) {
     return this.side.evaluate(expr);
@@ -968,7 +1006,9 @@ var lastDownloadList;
 
 testLib = {
   theRandomPattern: randomPattern(),
-  state: new Side(),
+  state: new Side('left'),
+  left: new Side('left'),
+  right: new Side('right'),
   workspace: new Workspace(),
   visualization: visualization,
   splash: splash,
@@ -1253,9 +1293,9 @@ testLib = {
   // Because of https://github.com/angular/protractor/issues/3289, we cannot use protractor
   // to generate and send drag-and-drop events to the page. This function can be used to
   // achieve that.
-  simulateDragAndDrop: function(srcSelector, dstSelector, dstX, dstY) {
+  simulateDragAndDrop: function(srcSelector, dstSelector, dstX, dstY, dataTransferOverrides) {
 
-    function simulateDragAndDropInBrowser(src, dst, dstX, dstY) {
+    function simulateDragAndDropInBrowser(src, dst, dstX, dstY, dataTransferOverrides) {
       function createEvent(type) {
         var event = new CustomEvent('CustomEvent');
         event.initCustomEvent(type, true, true, null);
@@ -1273,6 +1313,11 @@ testLib = {
 
       var dragStartEvent = createEvent('dragstart');
       src.dispatchEvent(dragStartEvent);
+      for (var key in dataTransferOverrides) {
+        if (dataTransferOverrides.hasOwnProperty(key)) {
+          dragStartEvent.dataTransfer.setData(key, dataTransferOverrides[key]);
+        }
+      }
 
       var dropEvent = createEvent('drop');
       dropEvent.offsetX = dstX;
@@ -1287,10 +1332,12 @@ testLib = {
     }
 
     browser.executeScript(
-        simulateDragAndDropInBrowser,
-        srcSelector.getWebElement(),
-        dstSelector.getWebElement(),
-        dstX, dstY);
+      simulateDragAndDropInBrowser,
+      srcSelector.getWebElement(),
+      dstSelector.getWebElement(),
+      dstX, dstY,
+      dataTransferOverrides
+    );
   },
 
 };

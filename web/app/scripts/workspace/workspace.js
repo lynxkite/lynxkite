@@ -106,9 +106,11 @@ angular.module('biggraph')
             .then(
               function success(response) {
                 that.selectedStateId = response.id;
+                that.selectedStateKind = response.kind;
               },
               function error() {
                 that.selectedStateId = undefined;
+                that.selectedStateKind = undefined;
               });
         },
 
@@ -162,8 +164,9 @@ angular.module('biggraph')
           }
         },
 
-        addBox: function(operationId, pos) {
-          this.wrapper.addBox(operationId, pos.x, pos.y);
+        // boxID should be used for test-purposes only
+        addBox: function(operationId, pos, boxID) {
+          this.wrapper.addBox(operationId, pos.x, pos.y, boxID);
           this.saveWorkspace();
         },
 

@@ -1,5 +1,5 @@
 <!-- This has to be inside a <form class="form-horizontal">. -->
-<div class="form-group" ng-repeat="param in params">
+<div class="form-group" ng-repeat="param in meta.parameters">
   <label for="{{param.id}}" class="col-sm-4 control-label">
     {{param.title}}
     <help-popup href="{{box.meta.operationID + '-' + param.id}}"></help-popup>
@@ -12,7 +12,7 @@
         ng-disabled="!editable">
     <div
       ui-ace="{
-        mode: 'javascript',
+        mode: '{{ param.payload.language }}',
         showGutter: false,
         rendererOptions: {
           fontSize: '16px'
@@ -40,10 +40,10 @@
         class="operation-attribute-entry">
     </model-parameter>
     <table-kind
-      ng-if="param.kind === 'table'"
-      editable="editable"
-      model="output[param.id]"
-      tables="param.options"
+      ng-if="param.kind === 'imported-table'"
+      box="box"
+      params="output"
+      snapshot="output[param.id]"
       file-uploads="fileUploads.count"
       class="operation-attribute-entry">
     </table-kind>

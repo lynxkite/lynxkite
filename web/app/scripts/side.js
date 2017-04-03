@@ -5,7 +5,7 @@ angular.module('biggraph')
   .factory('side', function (util, $rootScope, getCenter) {
     function defaultSideState() {
       return {
-        projectName: undefined,
+        projectPath: undefined,
         filters: {
           edge: {},
           vertex: {},
@@ -33,7 +33,7 @@ angular.module('biggraph')
       };
     }
 
-    function Side(sides, direction) {
+    function Side(sides, direction, stateId) {
       // The list of all sides.
       this.sides = sides;
       // Left or right?
@@ -43,13 +43,9 @@ angular.module('biggraph')
       // Everything needed for a view (state included).
       // Use this for rendering graph view instead of using state directly.
       this.viewData = {};
-      // The /ajax/project Ajax response.
+      // The /ajax/getProjectOutput Ajax response.
       this.project = undefined;
-      // Data that is not persisted at all.
-      this.unsaved = {
-        showSelector: false,
-        workflowEditor: { enabled: false },
-      };
+      this.stateId = stateId;
     }
 
     Side.prototype.sections = ['scalar', 'vertex-attribute', 'edge-attribute', 'segmentation'];
@@ -93,7 +89,7 @@ angular.module('biggraph')
     Side.prototype.columnWidth = function() {
       var count = 0;
       for (var i = 0 ; i < this.sides.length; ++i) {
-        if (this.sides[i].state.projectName || this.sides[i].unsaved.showSelector) {
+        if (this.sides[i].state.projectPath !== undefined) {
           count += 1;
         }
       }
@@ -304,18 +300,18 @@ angular.module('biggraph')
     };
 
     Side.prototype.shortName = function() {
-      if (this.state.projectName === undefined) {
+      if (this.state.projectPath === undefined) {
         return undefined;
       }
-      var path = util.projectPath(this.state.projectName);
-      var last = path[path.length - 1];
-      var directories = last.split('/');
-      return directories[directories.length - 1];
+      var path = util.projectPath(this.state.projectPath);
+      return path[path.length - 1];
     };
     Side.prototype.parentProjects = function() {
-      var path = util.projectPath(this.state.projectName);
-      path.pop();  // Discard project name.
-      return path;
+      if (this.state.projectPath === undefined) {
+        return undefined;
+      }
+      var path = util.projectPath(this.state.projectPath);
+      return path.slice(0, -1);  // Discard own name.
     };
     Side.prototype.isSegmentation = function() {
       return this.parentProjects().length !== 0;
@@ -325,24 +321,10 @@ angular.module('biggraph')
     };
 
     // Side.reload makes an unconditional, uncached Ajax request.
-    // This is called when the project name changes, or when the project
-    // itself is expected to change. (Such as after an operation.)
+    // This is called when the projectPath was changed.
     Side.prototype.reload = function() {
-      if (this.state.projectName) {
-        var newProject = this.load();  // The old project is used to look for segmentations.
-        for (var i = 0; i < this.sides.length; ++i) {
-          var side = this.sides[i];
-          if (side === this) { continue; }
-          // If this project is open on the other side, update that instance too.
-          if (side.state.projectName === this.state.projectName) {
-            side.project = newProject;
-          }
-          // If a segmentation or parent is open, reload it as well.
-          if (side.isSegmentationOf(this) || this.isSegmentationOf(side)) {
-            side.project = side.load();
-          }
-        }
-        this.project = newProject;
+      if (this.state.projectPath !== undefined) {
+        this.project = this.load();
       } else {
         this.state = defaultSideState();
         this.project = undefined;
@@ -354,7 +336,7 @@ angular.module('biggraph')
     Side.prototype.reloadAllProjects = function() {
       for (var i = 0; i < this.sides.length; ++i) {
         var side = this.sides[i];
-        if (side.state.projectName) {
+        if (side.state.projectPath !== undefined) {
           side.project = side.load();
         } else {
           side.project = undefined;
@@ -364,7 +346,12 @@ angular.module('biggraph')
     };
 
     Side.prototype.load = function() {
-      return util.nocache('/ajax/project', { name: this.state.projectName });
+      return util.nocache(
+          '/ajax/getProjectOutput',
+          {
+              path: this.state.projectPath,
+              id: this.stateId,
+          });
     };
 
     Side.prototype.loaded = function() {
@@ -373,7 +360,7 @@ angular.module('biggraph')
 
     Side.prototype.reportLoadingError = function() {
       return util.reportRequestError(
-          this.project, 'Could not load project: ' + this.state.projectName);
+          this.project, 'Could not load project: ' + this.state.projectPath);
     };
 
     Side.prototype.toggleAttributeTitle = function(setting, value) {
@@ -417,21 +404,22 @@ angular.module('biggraph')
     };
 
     Side.prototype.closeInternal = function() {
-      this.state.projectName = undefined;
-      this.unsaved.showSelector = false;
+      this.state.projectPath = undefined;
+      this.reload();
     };
 
     Side.prototype.close = function() {
       if (this.direction === 'right' &&
           this.parentProjects().length >= 2 &&
-          this.parentProject() === this.sides[0].state.projectName) {
+          this.parentProject() === this.sides[0].state.projectPath) {
         // If this project was:
         // 1. open on the right hand side
         // 2. was a segmentation of a segmentation
         // 3. it's parent was open on the left hand side
         // Then move its parent to the right hand side, and open its
         // grandparent on the left hand side.
-        this.state.projectName = this.sides[0].parentProject();
+        this.state.projectPath = this.sides[0].parentProject();
+        this.reload();
         this.swapWithSide(this.sides[0]);
       } else if (this.direction === 'left' && this.sides[1].state.projectName) {
         // If this project was on the left and there is something on the right,
@@ -464,37 +452,6 @@ angular.module('biggraph')
           to: newName,
         }).then(function() {
           that.state.projectName = newName;
-        });
-    };
-
-    Side.prototype.undo = function() {
-      var that = this;
-      util.post('/ajax/undoProject',
-        {
-          project: this.state.projectName,
-        }).then(function() {
-          that.reload();
-        });
-    };
-    Side.prototype.redo = function() {
-      var that = this;
-      util.post('/ajax/redoProject',
-        {
-          project: this.state.projectName,
-        }).then(function() {
-          that.reload();
-        });
-    };
-
-    // Returns a promise.
-    Side.prototype.applyOp = function(op, params) {
-      var that = this;
-      return util.post('/ajax/projectOp',
-        {
-          project: this.state.projectName,
-          op: { id: op, parameters: params },
-        }).then(function() {
-          that.reload();
         });
     };
 
@@ -659,10 +616,11 @@ angular.module('biggraph')
 
     Side.prototype.swapWithSide = function(otherSide) {
       var tmp;
+
       tmp = this.project; this.project = otherSide.project; otherSide.project = tmp;
       tmp = this.state; this.state = otherSide.state; otherSide.state = tmp;
       tmp = this.viewData; this.viewData = otherSide.viewData; otherSide.viewData = tmp;
-      tmp = this.unsaved; this.unsaved = otherSide.unsaved; otherSide.unsaved = tmp;
+      tmp = this.scalars; this.scalars = otherSide.scalars; otherSide.scalars = tmp;
     };
 
     Side.prototype.openSegmentation = function(seg) {
@@ -672,8 +630,10 @@ angular.module('biggraph')
         this.sides[0].closeInternal();
         this.sides[0].swapWithSide(this);
       }
+
       // Segmentations always open on the right.
-      this.sides[1].state.projectName = seg.fullName;
+      this.sides[1].state.projectPath = seg.fullName;
+      this.sides[1].reload();
       this.sides[1].state.graphMode = undefined;
     };
 

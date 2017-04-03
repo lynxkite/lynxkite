@@ -2,19 +2,16 @@
 
 module.exports = function() {};
 
-/*
+
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   fw.transitionTest(
-    'test-example project with example graph',
+    'test-example workspace with example graph state selected',
     'segmentation by double created',
     function() {
-      var params = {
-        'attr': 'income',
-        'interval_size': '10',
-      };
-      lib.left.runOperation('Segment by double attribute', params);
+      lib.workspace.addBox({ id: 'segment-op', name: 'segment by double attribute', x: 100, y: 200,
+                             after: 'eg0', params: { attr: 'income', interval_size: '10'} });
     },
     function() {
     });
@@ -33,11 +30,20 @@ module.exports = function(fw) {
     'segmentation opens',
     'sub-segmentation can be created and opened',
     function() {
-      lib.right.runOperation('Copy graph into a segmentation', {'name': 'copy'});
+      let params = {
+        apply_to_project: '|bucketing',
+        name: 'copy'
+      };
+      lib.workspace.addBox({ id: 'copy', name: 'copy graph into a segmentation', x: 100, y: 300,
+                             after: 'segment-op', params: params });
+      lib.left.openSegmentation('bucketing');
       lib.right.openSegmentation('copy');
     },
     function() {
-      lib.right.expectCurrentProjectIs('test-example|bucketing|copy');
+      expect(lib.left.segmentCount()).toEqual(2);
+      expect(lib.right.segmentCount()).toEqual(2);
+      lib.left.expectCurrentProjectIs('State » bucketing');
+      lib.right.expectCurrentProjectIs('State » bucketing » copy');
     });
 
   fw.transitionTest(
@@ -47,29 +53,27 @@ module.exports = function(fw) {
       lib.right.close();
     },
     function() {
-      lib.left.expectCurrentProjectIs('test-example');
-      lib.right.expectCurrentProjectIs('test-example|bucketing');
+      lib.left.expectCurrentProjectIs('State');
+      lib.right.expectCurrentProjectIs('State » bucketing');
     });
 
   fw.transitionTest(
     'closing sub-segmentation on the RHS reopens its grandparent',
     'discard segmentation works',
     function() {
-      lib.left.runOperation('Discard segmentation', { name: 'bucketing' });
+      lib.workspace.addBox({ id: 'discard-segment', name: 'discard segmentation', x: 100, y: 400,
+                             after: 'copy', params: { name: 'bucketing' } });
     },
     function() {
-      lib.left.expectCurrentProjectIs('test-example');
-      lib.right.expectCurrentProjectIsError();
+      expect(lib.left.segmentation('bucketing').isPresent()).toBe(false);
     });
 
   fw.transitionTest(
-    'test-example project with example graph',
+    'test-example workspace with example graph state selected',
     'segmentation size reporting - non empty segments',
     function() {
-      var params = {
-        'name': 'self',
-      };
-      lib.left.runOperation('Copy graph into a segmentation', params);
+      lib.workspace.addBox({ id: 'copy', name: 'copy graph into a segmentation', x: 100, y: 200,
+                             after: 'eg0', params: { name: 'self' } });
       lib.left.openSegmentation('self');
     },
     function() {
@@ -82,10 +86,9 @@ module.exports = function(fw) {
     'segmentation size reporting - non empty segments',
     'segmentation size reporting - has empty segments',
     function() {
-      var params = {
-        'filterva_income': '*',
-      };
-      lib.left.runOperation('Filter by attributes', params);
+      lib.workspace.addBox({ id: 'filter-op', name: 'filter by attributes', x: 100, y: 300,
+                             after: 'copy', params: { 'filterva_income': '*' } });
+      lib.left.openSegmentation('self');
     },
     function() {
       expect(lib.right.getValue('segment-count')).toBe(4);
@@ -94,4 +97,4 @@ module.exports = function(fw) {
       expect(lib.right.getValue('non-empty-segment-count')).toBe(2);
     });
 };
-*/
+
