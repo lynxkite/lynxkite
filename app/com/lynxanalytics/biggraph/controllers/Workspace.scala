@@ -204,7 +204,8 @@ case class BoxMetadata(
 object BoxOutputKind {
   val Project = "project"
   val Table = "table"
-  val validKinds = Set(Project, Table)
+  val ExportResult = "exportResult"
+  val validKinds = Set(Project, Table, ExportResult)
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
 }
@@ -218,6 +219,10 @@ object BoxOutputState {
 
   def from(table: graph_api.Table): BoxOutputState = {
     BoxOutputState(BoxOutputKind.Table, json.Json.obj("guid" -> table.gUID))
+  }
+
+  def from(exportResult: graph_api.Scalar[ExportResult]): BoxOutputState = {
+    BoxOutputState(BoxOutputKind.ExportResult, json.Json.obj("guid" -> exportResult.gUID))
   }
 }
 
