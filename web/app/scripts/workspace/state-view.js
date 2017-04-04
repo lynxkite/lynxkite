@@ -12,8 +12,6 @@ angular.module('biggraph')
       },
       link: function(scope) {
 
-        scope.saveAsName  = 'snapshot: ' + scope.workspace.name;
-
         scope.createSnapshot = function(saveAsName) {
           scope.saving = true;
           util.post('/ajax/createSnapshot', {

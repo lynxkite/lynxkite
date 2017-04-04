@@ -5,8 +5,10 @@
            tooltip-append-to-body="true"
            tooltip-placement="bottom">
         <form ng-submit="createSnapshot(saveAsName)" style="display: inline;">
-            <input class="form-control save-as" ng-disabled="saving"
-                   ng-model="saveAsName" ng-click="$event.stopPropagation()">
+            <input class="form-control save-as"
+                   ng-disabled="saving"
+                   ng-model="saveAsName"
+                   ng-click="$event.stopPropagation()">
         </form>
         <i class="glyphicon glyphicon-camera"></i>
     </label>
