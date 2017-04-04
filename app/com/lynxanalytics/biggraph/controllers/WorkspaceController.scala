@@ -90,7 +90,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val calculatedState = calculatedStates.synchronized {
       calculatedStates.get(request.id).get
     }
-    val snapshot = new SnapshotFrame(SymbolPath(request.name))
+    val snapshot = new SnapshotFrame(SymbolPath.parse(request.name))
     snapshot.initialize(calculatedState)
   }
 
