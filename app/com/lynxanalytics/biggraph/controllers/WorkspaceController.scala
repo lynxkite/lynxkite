@@ -91,7 +91,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       calculatedStates.get(request.id).get
     }
     val snapshot = new SnapshotFrame(SymbolPath(request.name))
-    import WorkspaceJsonFormatters.fBoxOutputState
     snapshot.initialize(calculatedState)
   }
 

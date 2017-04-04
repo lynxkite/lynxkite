@@ -967,8 +967,9 @@ class ViewFrame(path: SymbolPath)(
 class SnapshotFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
 
-  def initialize[T: json.Writes](state: T) = {
+  def initialize(state: BoxOutputState) = {
     set(rootDir / "objectType", "snapshot")
+    import WorkspaceJsonFormatters.fBoxOutputState
     details = json.Json.toJson(state).as[JsObject]
   }
 
@@ -987,6 +988,11 @@ class SnapshotFrame(path: SymbolPath)(
           error = Some(ex.getMessage)
         )
     }
+  }
+
+  def getState(): BoxOutputState = {
+    import WorkspaceJsonFormatters.fBoxOutputState
+    details.get.as[BoxOutputState]
   }
 
   override def isDirectory: Boolean = false
