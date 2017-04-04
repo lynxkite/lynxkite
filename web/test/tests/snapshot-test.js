@@ -5,18 +5,38 @@ module.exports = function() {};
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
-  fw.statePreservingTest(
+
+  var snapshotName = 'This is a snapshot.';
+
+  fw.transitionTest(
     'test-example workspace with example graph state selected',
     'snapshot-created',
     function() {
       var inputBox = $$('.save-as-snapshot-box input');
       var inputButton = $$('.save-as-snapshot-box .glyphicon-camera');
 
-      var name = 'This is a snapshot.';
-      inputBox.sendKeys(lib.selectAllKey + name);
+      inputBox.sendKeys(lib.selectAllKey + snapshotName);
       inputButton.click();
       lib.workspace.close();
-
-      lib.splash.expectSnapshotListed(name);
+    },
+    function() {
+      lib.splash.expectSnapshotListed(snapshotName);
     });
+
+  fw.transitionTest(
+    'snapshot-created',
+    'snapshot-loaded-in-new-workspace',
+    function() {
+      lib.splash.openNewWorkspace('test-load-snapshot');
+      lib.workspace.addBox('load snapshot', 100, 100);
+      var loadSnapshot = lib.workspace.getBox(0);
+      lib.workspace.editBox(loadSnapshot, {path: snapshotName});
+      lib.workspace.getOutputPlug(loadSnapshot, 'project').click();
+    },
+    function() {
+      expect(lib.state.vertexCount()).toEqual(4);
+      expect(lib.state.edgeCount()).toEqual(4);
+      expect(lib.state.attributeCount()).toEqual(8);
+    });
+
 };
