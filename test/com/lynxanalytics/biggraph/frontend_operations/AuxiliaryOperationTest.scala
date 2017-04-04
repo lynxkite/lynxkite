@@ -38,5 +38,18 @@ class AuxiliaryOperationTest extends OperationsTestBase {
     assert(resultIfNoParams == resultIfYesParams)
   }
 
+  test("Parametric parameters work") {
+    val sum = box("Create example graph")
+      .box("Add constant vertex attribute",
+        Map("name" -> "const55", "type" -> "Double"),
+        Seq(),
+        Map("value" -> "(1 to 10).sum"))
+      .project
+      .vertexAttributes("const55")
+      .rdd
+      .asInstanceOf[com.lynxanalytics.biggraph.graph_api.AttributeRDD[Double]]
+      .values.sum
+    assert(sum == 55 * 4)
+  }
 }
 
