@@ -1253,9 +1253,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = FEStatus.enabled
     def apply() = {
       val snapshot = DirectoryEntry.fromName(paramValues("path")).asSnapshotFrame
-      import WorkspaceJsonFormatters.fBoxOutputState
-      val bo = snapshot.details.get.as[BoxOutputState]
-      project.state = bo.project.state
+      project.state = snapshot.getState.project.state
     }
   })
 
