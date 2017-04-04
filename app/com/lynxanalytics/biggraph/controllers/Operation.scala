@@ -356,3 +356,32 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
 
   def getRawDataFrame(context: spark.sql.SQLContext): spark.sql.DataFrame
 }
+
+// An ExportOperation takes a Table as input and returns an ExportResult as output.
+abstract class ExportOperation(protected val context: Operation.Context) extends BasicOperation {
+  assert(
+    context.meta.inputs == List(TypedConnection("table", BoxOutputKind.Table)),
+    s"An ExportOperation must input a table. $context")
+  assert(
+    context.meta.outputs == List(TypedConnection("result", BoxOutputKind.ExportResult)),
+    s"An ExportOperation must output an ExportResult. $context"
+  )
+
+  protected def makeOutput(exportResult: Scalar[ExportResult]): Map[BoxOutput, BoxOutputState] = {
+    Map(context.meta.outputs(0).ofBox(context.box) -> BoxOutputState.from(exportResult))
+  }
+
+  override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+    validateParameters(params)
+    makeOutput(exportResultFromParam(params("export_result")))
+  }
+
+  protected def exportResultFromParam(name: String): Scalar[ExportResult] = {
+    import MetaGraphManager.StringAsUUID
+    manager.scalarOf[ExportResult](params("export_result").asUUID)
+  }
+
+  def enabled = FEStatus.enabled
+}
+
+case class ExportResult(numberOfRow: Long)
