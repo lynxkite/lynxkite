@@ -46,7 +46,6 @@ class ScalaScriptTest extends FunSuite {
     val path = testFile.getPath
     val code = s"""scala.io.Source.fromFile("${path}").mkString"""
     assert(worksUnlessRestricted(code) == contents)
-
   }
 
   test("Can't replace the security manager") {
@@ -54,31 +53,26 @@ class ScalaScriptTest extends FunSuite {
     worksUnlessRestricted(code)
   }
 
-  // This fails, because we cannot create classes in restricted mode :(
   test("Can do some non-trivial, innocent computation") {
     val code =
       """
-           class C {
+           class C(val str: String) {
              def compute(): String = {
-                "Hello"
+                str + "lo"
              }
            }
-           val r = new C()
+           val r = new C("hel")
            r.compute()
       """
-    val result = worksEvenAsRestricted(code)
-    assert(result == "Hello")
+    assert(worksEvenAsRestricted(code) == "hello")
   }
 
-  // This passes, but not because we can't create a thread, but because
-  // we cannot create classes. If we hack restricted mode so that
-  // it allows class creation, this still passes, because we can
-  // prevent spawning a new thread.
   test("Can't create a new thread") {
     val code =
       """
            class EvilRun extends Runnable {
              override def run(): Unit = {
+             // We could do anything here
              }
            }
              val r = new EvilRun()
