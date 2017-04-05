@@ -147,8 +147,11 @@ Workspace.prototype = {
   },
 
   openOperation: function(name) {
+    console.log(name);
     this.selector.element(by.id('operation-search')).click();
+    console.log(name);
     this.selector.element(by.id('filter')).sendKeys(name, K.ENTER);
+    console.log(name);
     return this.selector.$$('operation-selector-entry').get(0);
   },
 
@@ -176,6 +179,7 @@ Workspace.prototype = {
   },
 
   addBox: function(name, x, y) {
+    console.log(name);
     var op = this.openOperation(name);
     testLib.simulateDragAndDrop(op, this.board, x, y);
     this.closeOperationSelector();
