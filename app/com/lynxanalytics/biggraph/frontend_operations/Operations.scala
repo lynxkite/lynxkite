@@ -2366,7 +2366,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No edge attributes")
     override def summary = {
       val names = params("name").replace(",", ", ")
-      s"Discard edge attributes: $names"
+      s"Discard edge attributes $names"
     }
     def apply() = {
       for (param <- splitParam("name")) {
@@ -2381,7 +2381,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
     override def summary = {
       val names = params("name").replace(",", ", ")
-      s"Discard vertex attributes: $names"
+      s"Discard vertex attributes $names"
     }
     def apply() = {
       for (param <- splitParam("name")) {
@@ -2396,7 +2396,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = FEStatus.assert(project.segmentationList.nonEmpty, "No segmentations")
     override def summary = {
       val name = params("name")
-      s"Discard segmentation: $name"
+      s"Discard segmentation $name"
     }
     def apply() = {
       project.deleteSegmentation(params("name"))
@@ -2409,7 +2409,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = FEStatus.assert(project.scalarList.nonEmpty, "No scalars")
     override def summary = {
       val names = params("name").replace(",", ", ")
-      s"Discard scalars: $names"
+      s"Discard scalars $names"
     }
     def apply() = {
       for (param <- splitParam("name")) {
