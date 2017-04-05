@@ -2,12 +2,13 @@ package com.lynxanalytics.biggraph.frontend_operations
 
 import org.scalatest.FunSuite
 
+import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 import com.lynxanalytics.biggraph.graph_util.Timestamp
-import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.serving
 
 trait OperationsTestBase extends FunSuite with TestGraphOp {
   val res = getClass.getResource("/controllers/OperationsTest/").toString
@@ -27,7 +28,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
         input => input.projectRec(boxes)
       )
       val name = s"${operationID} ${boxes.length}"
-      val inputIds = meta.inputs.map(_.id)
+      val inputIds = meta.inputs
       assert(inputNames.size == inputIds.size, s"for $name")
       val inputBoxOutputs = inputIds.zip(inputNames).zip(inputs).map {
         case ((inputId, inputName), inputBox) =>
@@ -85,4 +86,13 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
 
   def importCSV(filename: String): TestBox =
     importBox("Import CSV", Map("filename" -> ("OPERATIONSTEST$/" + filename)))
+
+  def importSeq[T <: Product: reflect.runtime.universe.TypeTag](
+    columns: Seq[String], rows: Seq[T]): TestBox = {
+    val sql = dataManager.newSQLContext
+    val df = sql.createDataFrame(rows).toDF(columns: _*)
+    val table = graph_operations.ImportDataFrame.run(df)
+    // Abuse CSV import to load arbitrary table.
+    box("Import CSV", Map("imported_table" -> table.gUID.toString))
+  }
 }
