@@ -43,9 +43,9 @@ case class Workspace(
         }.toMap
       }
 
-      val unconnecteds = meta.inputs.filterNot(conn => box.inputs.contains(conn.id))
+      val unconnecteds = meta.inputs.filterNot(conn => box.inputs.contains(conn))
       if (unconnecteds.nonEmpty) {
-        val list = unconnecteds.map(_.id).mkString(", ")
+        val list = unconnecteds.mkString(", ")
         states ++ errorOutputs(s"Input $list is not connected.")
       } else {
         val updatedStates = box.inputs.values.foldLeft(states) {
@@ -136,7 +136,7 @@ case class Workspace(
     val box = findBox(boxID)
     val meta = ops.getBoxMetadata(box.operationID)
     for (i <- meta.inputs) {
-      assert(box.inputs.contains(i.id), s"Input ${i.id} is not connected.")
+      assert(box.inputs.contains(i), s"Input $i is not connected.")
     }
     val states = box.inputs.values.foldLeft(Map[BoxOutput, BoxOutputState]()) {
       (states, output) => calculate(user, ops, output, states)
@@ -199,7 +199,7 @@ case class BoxOutput(
 case class BoxMetadata(
   categoryID: String,
   operationID: String,
-  inputs: List[TypedConnection],
+  inputs: List[String],
   outputs: List[TypedConnection])
 
 object BoxOutputKind {
