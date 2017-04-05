@@ -67,7 +67,8 @@ class ScalaScriptSecurityManager extends SecurityManager {
     super.checkPackageAccess(s) // This must be the first thing to do!
     if (shouldCheck.value &&
       (s.contains("com.lynxanalytics.biggraph") ||
-        s.contains("org.apache.spark"))) {
+        s.contains("org.apache.spark") ||
+        s.contains("scala.reflect"))) {
       throw new java.security.AccessControlException("Illegal package access")
     }
   }
