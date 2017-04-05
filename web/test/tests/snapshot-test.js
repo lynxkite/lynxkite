@@ -28,10 +28,9 @@ module.exports = function(fw) {
     'snapshot-loaded-in-new-workspace',
     function() {
       lib.splash.openNewWorkspace('test-load-snapshot');
-      lib.workspace.addBox('load snapshot', 100, 100);
-      var loadSnapshot = lib.workspace.getBox(0);
-      lib.workspace.editBox(loadSnapshot, {path: snapshotName});
-      lib.workspace.getOutputPlug(loadSnapshot, 'project').click();
+      lib.workspace.addBox({id: 'sb0', name: 'load snapshot',
+                            params: {path: snapshotName},
+                            x: 100, y: 100});
     },
     function() {
       expect(lib.state.vertexCount()).toEqual(4);
