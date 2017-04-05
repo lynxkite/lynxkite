@@ -147,11 +147,8 @@ Workspace.prototype = {
   },
 
   openOperation: function(name) {
-    console.log(name);
     this.selector.element(by.id('operation-search')).click();
-    console.log(name);
     this.selector.element(by.id('filter')).sendKeys(name, K.ENTER);
-    console.log(name);
     return this.selector.$$('operation-selector-entry').get(0);
   },
 
