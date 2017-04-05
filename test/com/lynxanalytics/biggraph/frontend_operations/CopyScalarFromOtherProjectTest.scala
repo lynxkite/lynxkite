@@ -4,116 +4,81 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class CopyScalarFromOtherProjectTest extends OperationsTestBase {
-  test("This compiles and fails") {
-    assert(false)
-  }
-  /*
-  test("Take scalar from other project with wrong source name") {
-    run("Create example graph")
-    val other = clone(project)
-    run("Rename scalar", Map("from" -> "greeting", "to" -> "farewell"))
-    val ex = intercept[java.lang.AssertionError] {
-      run(
-        "Copy scalar from other project",
-        Map(
-          "sourceProject" -> s"!checkpoint(${other.checkpoint.get},ExampleGraph2)",
-          "sourceScalarName" -> "greeting",
-          "destScalarName" -> "doesntmatter"))
-    }
-    assert(ex.getMessage.contains(
-      "No 'greeting' in project 'ExampleGraph2'."))
-  }
-
-  test("Take scalar from other project with conflicting name") {
-    run("Create example graph")
-    val other = clone(project)
-    val ex = intercept[java.lang.AssertionError] {
-      run(
-        "Copy scalar from other project",
-        Map(
-          "sourceProject" -> s"!checkpoint(${other.checkpoint.get},ExampleGraph3)",
-          "sourceScalarName" -> "greeting",
-          "destScalarName" -> ""))
-    }
-    assert(ex.getMessage.contains(
-      "Conflicting scalar name 'greeting'."))
-  }
-
   test("Take scalar from other project scalar value ok") {
-    run("Create example graph")
-    val other = clone(project)
-    run("Derive scalar", Map(
-      "output" -> "scalar_val",
-      "type" -> "double",
-      "expr" -> "42.0"))
-    run(
-      "Copy scalar from other project",
-      Map(
-        "sourceProject" -> s"!checkpoint(${other.checkpoint.get},ExampleGraph4)",
-        "sourceScalarName" -> "scalar_val",
-        "destScalarName" -> "my_scalar"))
+    val other = box("Create example graph")
+      .box("Derive scalar", Map(
+        "output" -> "scalar_val",
+        "type" -> "double",
+        "expr" -> "42.0"))
+    val project = box("Create example graph")
+      .box("Copy scalar from other project", Map(
+        "scalar" -> "scalar_val",
+        "save_as" -> "my_scalar"), Seq(other))
+      .project
 
     assert(project.scalars("my_scalar").value == 42.0)
   }
 
   test("Take scalar from segmentation") {
-    run("Create example graph")
-    val other = clone(project)
-    run("Add random vertex attribute", Map(
-      "dist" -> "Standard Normal",
-      "name" -> "rnd",
-      "seed" -> "1474343267"))
-    run("Segment by double attribute", Map(
-      "attr" -> "rnd",
-      "interval_size" -> "0.1",
-      "name" -> "seg", "overlap" -> "no"))
-    run("Derive scalar", Map(
-      "output" -> "scalar_val",
-      "type" -> "string",
-      "expr" -> "'myvalue'"))
-    run(
-      "Copy scalar from other project",
-      Map(
-        "sourceProject" -> s"!checkpoint(${other.checkpoint.get},Project2)",
-        "sourceScalarName" -> "seg|scalar_val",
-        "destScalarName" -> "my_scalar_2"))
+    val other = box("Create example graph")
+      .box("Add random vertex attribute", Map(
+        "dist" -> "Standard Normal",
+        "name" -> "rnd",
+        "seed" -> "1474343267"))
+      .box("Segment by double attribute", Map(
+        "attr" -> "rnd",
+        "interval_size" -> "0.1",
+        "name" -> "seg",
+        "overlap" -> "no"))
+      .box("Derive scalar", Map(
+        "apply_to_project" -> "|seg",
+        "output" -> "scalar_val",
+        "type" -> "string",
+        "expr" -> "'myvalue'"))
+    val project = box("Create example graph")
+      .box("Copy scalar from other project", Map(
+        "apply_to_scalar" -> "|seg",
+        "scalar" -> "scalar_val",
+        "save_as" -> "my_scalar_2"), Seq(other))
+      .project
 
     assert(project.scalars("my_scalar_2").value == "myvalue")
   }
 
   test("Take scalar from segmentation of segmentation") {
-    run("Create example graph")
-    val other = clone(project)
-    run("Add random vertex attribute", Map(
-      "dist" -> "Standard Normal",
-      "name" -> "rnd",
-      "seed" -> "1474343267"))
-    run("Segment by double attribute", Map(
-      "attr" -> "rnd",
-      "interval_size" -> "0.1",
-      "name" -> "seg",
-      "overlap" -> "no"))
-    run("Add random vertex attribute", Map(
-      "dist" -> "Standard Normal",
-      "name" -> "rnd2",
-      "seed" -> "1474343267") /*, on = other.segmentation("seg") */ )
-    run("Segment by double attribute", Map(
-      "attr" -> "rnd2",
-      "interval_size" -> "0.1",
-      "name" -> "seg2",
-      "overlap" -> "no") /*, on = other.segmentation("seg")*/ )
-    run("Derive scalar", Map(
-      "output" -> "deep_scalar",
-      "type" -> "string",
-      "expr" -> "'deep value'") /*, on = other.segmentation("seg").segmentation("seg2") */ )
-    run(
-      "Copy scalar from other project",
-      Map(
-        "sourceProject" -> s"!checkpoint(${other.checkpoint.get},Project3)",
-        "sourceScalarName" -> "seg|seg2|deep_scalar",
-        "destScalarName" -> "my_scalar_3"))
+    val other = box("Create example graph")
+      .box("Add random vertex attribute", Map(
+        "dist" -> "Standard Normal",
+        "name" -> "rnd",
+        "seed" -> "1474343267"))
+      .box("Segment by double attribute", Map(
+        "attr" -> "rnd",
+        "interval_size" -> "0.1",
+        "name" -> "seg",
+        "overlap" -> "no"))
+      .box("Add random vertex attribute", Map(
+        "apply_to_project" -> "|seg",
+        "dist" -> "Standard Normal",
+        "name" -> "rnd2",
+        "seed" -> "1474343267"))
+      .box("Segment by double attribute", Map(
+        "apply_to_project" -> "|seg",
+        "attr" -> "rnd2",
+        "interval_size" -> "0.1",
+        "name" -> "seg2",
+        "overlap" -> "no"))
+      .box("Derive scalar", Map(
+        "apply_to_project" -> "|seg|seg2",
+        "output" -> "deep_scalar",
+        "type" -> "string",
+        "expr" -> "'deep value'"))
+    val project = box("Create example graph")
+      .box("Copy scalar from other project", Map(
+        "apply_to_scalar" -> s"|seg|seg2",
+        "scalar" -> "deep_scalar",
+        "save_as" -> "my_scalar_3"), Seq(other))
+      .project
 
     assert(project.scalars("my_scalar_3").value == "deep value")
   }
-*/
 }

@@ -11,6 +11,7 @@ import scala.concurrent.Future
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
 import com.lynxanalytics.biggraph.protection.Limitations
@@ -310,12 +311,6 @@ object FrontendJson {
   implicit val wSQLColumn = json.Json.writes[SQLColumn]
   implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
   implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
-  implicit val fCSVImportRequest = json.Json.format[CSVImportRequest]
-  implicit val fJdbcImportRequest = json.Json.format[JdbcImportRequest]
-  implicit val fParquetImportRequest = json.Json.format[ParquetImportRequest]
-  implicit val fORCImportRequest = json.Json.format[ORCImportRequest]
-  implicit val fJsonImportRequest = json.Json.format[JsonImportRequest]
-  implicit val fHiveImportRequest = json.Json.format[HiveImportRequest]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
@@ -418,7 +413,7 @@ object ProductionJsonServer extends JsonServer {
   def setWorkspace = jsonPost(workspaceController.setWorkspace)
   def boxCatalog = jsonGet(workspaceController.boxCatalog)
 
-  val sqlController = new SQLController(BigGraphProductionEnvironment)
+  val sqlController = new SQLController(BigGraphProductionEnvironment, workspaceController.ops)
   def getTableBrowserNodes = jsonFuture(sqlController.getTableBrowserNodes)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
   def exportSQLQueryToTable = jsonFuturePost(sqlController.exportSQLQueryToTable)
@@ -427,18 +422,7 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)
   def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
-  def importCSV = jsonPost(sqlController.importCSV)
-  def importJdbc = jsonPost(sqlController.importJdbc)
-  def importParquet = jsonPost(sqlController.importParquet)
-  def importORC = jsonPost(sqlController.importORC)
-  def importJson = jsonPost(sqlController.importJson)
-  def importHive = jsonPost(sqlController.importHive)
-  def createViewCSV = jsonPost(sqlController.createViewCSV)
-  def createViewJdbc = jsonPost(sqlController.createViewJdbc)
-  def createViewParquet = jsonPost(sqlController.createViewParquet)
-  def createViewORC = jsonPost(sqlController.createViewORC)
-  def createViewJson = jsonPost(sqlController.createViewJson)
-  def createViewHive = jsonPost(sqlController.createViewHive)
+  def importBox = jsonFuturePost(sqlController.importBox)
   def createViewDFSpec = jsonPost(sqlController.createViewDFSpec)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)

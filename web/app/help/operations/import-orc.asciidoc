@@ -1,0 +1,11 @@
+### Import ORC
+
+https://orc.apache.org/[Apache ORC] is a columnar data storage format.
+
+====
+[[filename]] File::
+The distributed file-system path of the file. See <<prefixed-paths>> for more details on specifying
+paths.
+
+include::{g}[tag=import-box]
+====
