@@ -26,7 +26,7 @@ class TestLynxTableFileTask(unittest.TestCase):
     raw_path = resolved_path[len('file:'):]
     files = os.listdir(raw_path)
     num_files = len(list(filter(lambda file: file.endswith('.snappy.parquet'), files)))
-    assert(num_files == num_partitions)
+    self.assertEqual(num_files, num_partitions)
     # Clean up, if everything was okay
     shutil.rmtree(raw_path)
 
