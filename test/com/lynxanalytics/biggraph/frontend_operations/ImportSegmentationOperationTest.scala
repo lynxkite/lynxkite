@@ -8,17 +8,12 @@ import com.lynxanalytics.biggraph.graph_operations
 class ImportSegmentationOperationTest extends OperationsTestBase {
 
   def getTable = {
-    val rows = Seq(
+    importSeq(Seq("base_name", "seg_name", "base_id"), Seq(
       ("Adam", "Good", 0L),
       ("Eve", "Naughty", 1L),
       ("Bob", "Good", 2L),
       ("Isolated Joe", "Naughty", 3L),
-      ("Isolated Joe", "Retired", 3L))
-    val sql = cleanDataManager.newSQLContext
-    val dataFrame = sql.createDataFrame(rows).toDF("base_name", "seg_name", "base_id")
-    val table = graph_operations.ImportDataFrame.run(dataFrame)
-    // Abuse CSV import to load arbitrary table.
-    box("Import CSV", Map("imported_table" -> table.gUID.toString))
+      ("Isolated Joe", "Retired", 3L)))
   }
 
   test("Import segmentation for example graph") {

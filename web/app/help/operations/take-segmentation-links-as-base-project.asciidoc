@@ -1,0 +1,5 @@
+### Take segmentation links as base project
+
+Replaces the current project with the links from its base to the selected segmentation, represented
+as vertices. The vertices will have `base_` and `segment_` prefixed attributes generated for the
+attributes on the base project and the segmentation respectively.
