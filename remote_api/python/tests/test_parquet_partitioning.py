@@ -15,7 +15,7 @@ class TestParquetPartitioning(unittest.TestCase):
 
     size = 1000
     p.newVertexSet(size=size)
-    sql = 'SELECT ordinal from `p` GROUP BY ordinal'
+    sql = 'SELECT ordinal from `p`'
     view = lk.sql(sql, p=p)
 
     data_path = "DATA$/" + path
@@ -41,7 +41,7 @@ class TestParquetPartitioning(unittest.TestCase):
     shutil.rmtree(raw_path)
 
   def test_parquet_partitioning(self):
-    self.do_test_parquet_partitioning(200)
+    self.do_test_parquet_partitioning(1)
     self.do_test_parquet_partitioning(150)
 
 if __name__ == '__main__':

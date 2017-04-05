@@ -483,7 +483,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val viewDF = viewToDF(user, checkpoint)
     val df =
       if (shufflePartitions.isEmpty) viewDF
-      else viewDF.coalesce(shufflePartitions.get)
+      else viewDF.repartition(shufflePartitions.get)
     for (sp <- shufflePartitions) {
       df.sqlContext.setConf("spark.sql.shuffle.partitions", sp.toString)
     }
