@@ -39,7 +39,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
 
       _lookupArrowEndpoint: function(list, id) {
         for (var i = 0; i < list.length; ++i) {
-          if (list[i].data.id === id) {
+          if (list[i].id === id) {
             return list[i];
           }
         }
@@ -82,9 +82,10 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         this._buildArrows();
       },
 
-      addBox: function(operationId, x, y) {
+      // boxID should be used for  test-purposes only
+      addBox: function(operationId, x, y, boxId) {
         var cnt = this.boxes.length;
-        var boxId = operationId.replace(/ /g, '-') + cnt;
+        boxId = boxId || operationId.replace(/ /g, '-') + cnt;
 
         this.state.boxes.push(
             {
@@ -109,9 +110,9 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         var dst = plugs.inputs;
 
         // Mutate raw workflow:
-        dst.boxInstance.inputs[dst.data.id] = {
+        dst.boxInstance.inputs[dst.id] = {
           boxID: src.boxId,
-          id: src.data.id
+          id: src.id
         };
         // Rebuild API objects based on raw workflow:
         this._build();
