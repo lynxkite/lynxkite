@@ -64,11 +64,11 @@ class ScalaScriptSecurityManager extends SecurityManager {
   }
 
   override def checkPackageAccess(s: String): Unit = {
-    super.checkPackageAccess(s)
-    if (shouldCheck.value) {
-      if (s.startsWith("com.lynxanalytics.biggraph")) {
-        throw new java.security.AccessControlException("Illegal package access")
-      }
+    super.checkPackageAccess(s) // This must be the first thing to do!
+    if (shouldCheck.value &&
+      (s.contains("com.lynxanalytics.biggraph") ||
+        s.contains("org.apache.spark"))) {
+      throw new java.security.AccessControlException("Illegal package access")
     }
   }
 }
