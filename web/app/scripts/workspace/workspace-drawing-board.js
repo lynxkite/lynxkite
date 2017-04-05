@@ -54,7 +54,7 @@ angular.module('biggraph')
           mouseX = event.offsetX;
           mouseY = event.offsetY;
         };
-        
+
         scope.workspaceTransform = function() {
           var z = zoomToScale(workspaceZoom);
           return 'translate(' + workspaceX + ', ' + workspaceY + ') scale(' + z + ')';
