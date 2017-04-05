@@ -384,4 +384,4 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
   def enabled = FEStatus.enabled
 }
 
-case class ExportResult(numberOfRow: Long)
+case class ExportResult(numberOfRow: Long, format: String, path: String)
