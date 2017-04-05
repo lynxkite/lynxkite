@@ -1544,7 +1544,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     override def summary = {
       val method = params("method").capitalize
       val label = params("label")
-      s"build a model using $method for $label"
+      s"Build a $method model for $label"
     }
     def apply() = {
       assert(params("name").nonEmpty, "Please set the name of the model.")
