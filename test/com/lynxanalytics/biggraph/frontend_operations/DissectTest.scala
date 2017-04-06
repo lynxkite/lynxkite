@@ -21,9 +21,12 @@ class DissectTest extends OperationsTestBase {
     val base = box("Create enhanced example graph")
     val originalEdgeID = base.project.edgeBundle.idSet
     val originalEdgeAttributes = base.project.edgeAttributes
+    val originalVertexAttributes = base.project.vertexAttributes
     val project = base.box("Take edges as vertices").project
     assert(project.vertexSet == originalEdgeID)
-    assert(project.vertexAttributes == originalEdgeAttributes)
+    assert(project.vertexAttributes.keySet
+      == originalEdgeAttributes.keySet.map("edge_" + _)
+      ++ originalVertexAttributes.keySet.flatMap { k => Set("src_" + k, "dst_" + k) })
     assert(project.scalars.keys == Set("vertex_count", "!vertex_count_delta"))
     assert(project.scalars("vertex_count").value == 19)
     assert(project.edgeBundle == null)
