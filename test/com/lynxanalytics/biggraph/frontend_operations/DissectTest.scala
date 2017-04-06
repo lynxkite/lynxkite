@@ -9,7 +9,7 @@ class DissectTest extends OperationsTestBase {
     val base = box("Create example graph")
       .box("Segment by string attribute", Map("name" -> "gender", "attr" -> "gender"))
     val stateOfTheSegmentation = base.project.state.segmentations("gender").state
-    val project = base.box("Take segmentation as base project", Map("segmentation" -> "gender")).project
+    val project = base.box("Take segmentation as base project", Map("apply_to_project" -> "|gender")).project
     // The vertex_count_delta is updated after each operation so the project's state has now a
     // vertex_count_delta while the stateOfSegmentation does not.
     val projectStateWithoutVertexCountDelta = project.state.copy(
