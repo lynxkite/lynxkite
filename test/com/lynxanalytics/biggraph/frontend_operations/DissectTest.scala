@@ -9,7 +9,7 @@ class DissectTest extends OperationsTestBase {
     val base = box("Create example graph")
       .box("Segment by string attribute", Map("name" -> "gender", "attr" -> "gender"))
     val stateOfTheSegmentation = base.project.state.segmentations("gender").state
-    val project = base.box("Take segmentation as base project", Map("segmentation" -> "gender")).project
+    val project = base.box("Take segmentation as base project", Map("apply_to_project" -> "|gender")).project
     // The vertex_count_delta is updated after each operation so the project's state has now a
     // vertex_count_delta while the stateOfSegmentation does not.
     val projectStateWithoutVertexCountDelta = project.state.copy(
@@ -21,9 +21,12 @@ class DissectTest extends OperationsTestBase {
     val base = box("Create enhanced example graph")
     val originalEdgeID = base.project.edgeBundle.idSet
     val originalEdgeAttributes = base.project.edgeAttributes
+    val originalVertexAttributes = base.project.vertexAttributes
     val project = base.box("Take edges as vertices").project
     assert(project.vertexSet == originalEdgeID)
-    assert(project.vertexAttributes == originalEdgeAttributes)
+    assert(project.vertexAttributes.keySet
+      == originalEdgeAttributes.keySet.map("edge_" + _)
+      ++ originalVertexAttributes.keySet.flatMap { k => Set("src_" + k, "dst_" + k) })
     assert(project.scalars.keys == Set("vertex_count", "!vertex_count_delta"))
     assert(project.scalars("vertex_count").value == 19)
     assert(project.edgeBundle == null)

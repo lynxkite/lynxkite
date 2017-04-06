@@ -80,8 +80,8 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     box(operationID, parameters + ("imported_table" -> guid))
   }
 
-  def importCSV(filename: String): TestBox =
-    importBox("Import CSV", Map("filename" -> ("OPERATIONSTEST$/" + filename)))
+  def importCSV(filename: String, options: Map[String, String] = Map()): TestBox =
+    importBox("Import CSV", options + ("filename" -> ("OPERATIONSTEST$/" + filename)))
 
   def importSeq[T <: Product: reflect.runtime.universe.TypeTag](
     columns: Seq[String], rows: Seq[T]): TestBox = {
