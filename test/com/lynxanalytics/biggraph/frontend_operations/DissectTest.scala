@@ -27,6 +27,9 @@ class DissectTest extends OperationsTestBase {
     assert(project.vertexAttributes.keySet
       == originalEdgeAttributes.keySet.map("edge_" + _)
       ++ originalVertexAttributes.keySet.flatMap { k => Set("src_" + k, "dst_" + k) })
+    for ((name, attr) <- originalEdgeAttributes) {
+      assert(project.vertexAttributes("edge_" + name) == attr)
+    }
     assert(project.scalars.keys == Set("vertex_count", "!vertex_count_delta"))
     assert(project.scalars("vertex_count").value == 19)
     assert(project.edgeBundle == null)
