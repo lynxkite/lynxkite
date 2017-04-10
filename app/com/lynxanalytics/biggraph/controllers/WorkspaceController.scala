@@ -114,8 +114,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def boxCatalog(user: serving.User, request: serving.Empty): BoxCatalogResponse = {
-    val boxmeta = ops.getBoxMetadata("Compute clustering coefficient")
-    println(ops.opForBox(user, new Box("", boxmeta.operationID, Map(), 0, 0, Map()), Map()).summary)
     BoxCatalogResponse(ops.operationIds.toList.map(ops.getBoxMetadata(_)))
   }
 
