@@ -28,25 +28,22 @@ case class Workspace(
 
   def allStates(user: serving.User, ops: OperationRepository): Map[BoxOutput, BoxOutputState] = {
     val dependencies = discoverDependencies
-    val statesWithoutCircularDependency = dependencies.topologicalOrder.
-      foldLeft(Map[BoxOutput, BoxOutputState]()) {
+    val statesWithoutCircularDependency = dependencies.topologicalOrder
+      .foldLeft(Map[BoxOutput, BoxOutputState]()) {
         (states, box) =>
           val newOutputStates = outputStatesOfBox(user, ops, box, states)
           newOutputStates ++ states
       }
-    val statesWithCircularDependency = dependencies.withCircularDependency.flatMap {
-      box =>
-        {
-          val meta = ops.getBoxMetadata(box.operationID)
-          meta.outputs.map {
-            o =>
-              o.ofBox(box) ->
-                BoxOutputState(o.kind,
-                  None,
-                  FEStatus.disabled("Can not compute state due to circular dependencies.")
-                )
-          }
-        }
+    val statesWithCircularDependency = dependencies.withCircularDependency.flatMap { box =>
+      val meta = ops.getBoxMetadata(box.operationID)
+      meta.outputs.map { o =>
+        o.ofBox(box) ->
+          BoxOutputState(
+            o.kind,
+            None,
+            FEStatus.disabled("Can not compute state due to circular dependencies.")
+          )
+      }
     }.toMap
     statesWithoutCircularDependency ++ statesWithCircularDependency
   }
@@ -93,12 +90,8 @@ case class Workspace(
   // Tries to determine a topological order among boxes. All boxes with a circular dependency and
   // ones that depend on another with a circular dependency are returned unordered.
   private def discoverDependencies: Dependencies = {
-    val inDegrees: List[(Box, Int)] = boxes.map(box => box -> box.inputs.size)
     val outEdges: Map[Box, Set[Box]] = {
-      val edges = boxes.flatMap(dst => for {
-        input <- dst.inputs
-        src = findBox(input._2.boxID)
-      } yield (src, dst))
+      val edges = boxes.flatMap(dst => dst.inputs.map(input => findBox(input._2.boxID) -> dst))
       edges.groupBy(_._1).mapValues(_.map(_._2).toSet)
     }
 
@@ -118,13 +111,15 @@ case class Workspace(
           )
         } else {
           val dependants = outEdges.getOrElse(nextBox, Set())
-          val updatedInDegrees = for {
-            (box, degree) <- remainingBoxInDegrees if box != nextBox
-          } yield (box, if (dependants contains box) degree - 1 else degree)
+          val updatedInDegrees = remainingBoxInDegrees.withFilter(_._1 != nextBox)
+            .map { case (box, degree) =>
+              (box, if (dependants.contains(box)) degree - 1 else degree)
+            }.map(identity)
           discover(nextBox :: reversedTopologicalOrder, updatedInDegrees)
         }
       }
 
+    val inDegrees: List[(Box, Int)] = boxes.map(box => box -> box.inputs.size)
     discover(List(), inDegrees)
   }
 
@@ -213,12 +208,12 @@ case class BoxOutputState(
     state: Option[json.JsValue],
     success: FEStatus = FEStatus.enabled) {
   BoxOutputKind.assertKind(kind)
+  assert(success.enabled ^ state.isEmpty, "State should be present iff computation was successful")
   def isError = !success.enabled
   def isProject = kind == BoxOutputKind.Project
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(isProject, s"Tried to access '$kind' as 'project'.")
     assert(success.enabled, success.disabledReason)
-    assert(state.nonEmpty, "State is empty.")
     import CheckpointRepository.fCommonProjectState
     val p = state.get.as[CommonProjectState]
     val rps = RootProjectState.emptyState.copy(state = p)
