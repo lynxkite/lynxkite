@@ -28,46 +28,49 @@ case class Workspace(
 
   def allStates(user: serving.User, ops: OperationRepository): Map[BoxOutput, BoxOutputState] = {
     val dependencies = discoverDependencies
-    val reachableStates = dependencies.topologicalOrder.
+    val statesWithoutCircularDependency = dependencies.topologicalOrder.
       foldLeft(Map[BoxOutput, BoxOutputState]()) {
         (states, box) =>
           val newOutputStates = outputStatesOfBox(user, ops, box, states)
           newOutputStates ++ states
       }
-    val unreachableStates = dependencies.withCircularDependency.flatMap {
+    val statesWithCircularDependency = dependencies.withCircularDependency.flatMap {
       box =>
         {
           val meta = ops.getBoxMetadata(box.operationID)
           meta.outputs.map {
             o =>
-              o.ofBox(box) -> BoxOutputState(o.kind, None,
-                FEStatus.disabled("Can not compute state due to circular dependencies."))
+              o.ofBox(box) ->
+                BoxOutputState(o.kind,
+                  None,
+                  FEStatus.disabled("Can not compute state due to circular dependencies.")
+                )
           }
         }
     }.toMap
-    reachableStates ++ unreachableStates
+    statesWithoutCircularDependency ++ statesWithCircularDependency
   }
 
   private def outputStatesOfBox(user: serving.User, ops: OperationRepository, box: Box,
                                 inputStates: Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
     val meta = ops.getBoxMetadata(box.operationID)
 
-    def errorOutputs(msg: String): Map[BoxOutput, BoxOutputState] = {
+    def allOutputsWithError(msg: String): Map[BoxOutput, BoxOutputState] = {
       meta.outputs.map {
         o => o.ofBox(box) -> BoxOutputState(o.kind, None, FEStatus.disabled(msg))
       }.toMap
     }
 
-    val unconnecteds = meta.inputs.filterNot(conn => box.inputs.contains(conn.id))
-    if (unconnecteds.nonEmpty) {
-      val list = unconnecteds.map(_.id).mkString(", ")
-      errorOutputs(s"Input $list is not connected.")
+    val unconnectedInputs = meta.inputs.filterNot(conn => box.inputs.contains(conn.id))
+    if (unconnectedInputs.nonEmpty) {
+      val list = unconnectedInputs.map(_.id).mkString(", ")
+      allOutputsWithError(s"Input $list is not connected.")
     } else {
       val inputs = box.inputs.map { case (id, output) => id -> inputStates(output) }
-      val errors = inputs.filter(_._2.isError)
-      if (errors.nonEmpty) {
-        val list = errors.keys.mkString(", ")
-        errorOutputs(s"Input $list has an error.")
+      val inputErrors = inputs.filter(_._2.isError)
+      if (inputErrors.nonEmpty) {
+        val list = inputErrors.keys.mkString(", ")
+        allOutputsWithError(s"Input $list has an error.")
       } else {
         val outputStates = try {
           box.execute(user, inputs, ops)
@@ -78,7 +81,7 @@ case class Workspace(
               case ae: AssertionError => ae.getMessage
               case _ => ex.toString
             }
-            errorOutputs(msg)
+            allOutputsWithError(msg)
         }
         outputStates
       }
@@ -87,39 +90,42 @@ case class Workspace(
 
   case class Dependencies(topologicalOrder: List[Box], withCircularDependency: List[Box])
 
+  // Tries to determine a topological order among boxes. All boxes with a circular dependency and
+  // ones that depend on another with a circular dependency are returned unordered.
   private def discoverDependencies: Dependencies = {
-    val inDegrees = scala.collection.mutable.Map() ++= boxes.map(box => box -> box.inputs.size)
-    val outEdgeList: Map[Box, List[Box]] = {
+    val inDegrees: List[(Box, Int)] = boxes.map(box => box -> box.inputs.size)
+    val outEdges: Map[Box, Set[Box]] = {
       val edges = boxes.flatMap(dst => for {
         input <- dst.inputs
         src = findBox(input._2.boxID)
       } yield (src, dst))
-      edges.groupBy(_._1).mapValues(_.map(_._2))
+      edges.groupBy(_._1).mapValues(_.map(_._2).toSet)
     }
 
+    // Determines the topological order by selecting a node without in-edges, removing the node and
+    // its connections and calling itself on the remaining graph.
     @tailrec
-    def discover(reversedTopologicalOrder: List[Box]): Dependencies =
-      if (inDegrees.isEmpty) {
+    def discover(reversedTopologicalOrder: List[Box],
+                 remainingBoxInDegrees: List[(Box, Int)]): Dependencies =
+      if (remainingBoxInDegrees.isEmpty) {
         Dependencies(reversedTopologicalOrder.reverse, List())
       } else {
-        val (box, lowestDegree) = inDegrees.minBy(_._2)
+        val (nextBox, lowestDegree) = remainingBoxInDegrees.minBy(_._2)
         if (lowestDegree > 0) {
           Dependencies(
             topologicalOrder = reversedTopologicalOrder.reverse,
-            withCircularDependency = inDegrees.keys.toList
+            withCircularDependency = remainingBoxInDegrees.map(_._1)
           )
         } else {
-          if (outEdgeList.contains(box)) {
-            for (dst <- outEdgeList(box)) {
-              inDegrees(dst) -= 1
-            }
-          }
-          inDegrees.remove(box)
-          discover(box :: reversedTopologicalOrder)
+          val dependants = outEdges.getOrElse(nextBox, Set())
+          val updatedInDegrees = for {
+            (box, degree) <- remainingBoxInDegrees if box != nextBox
+          } yield (box, if (dependants contains box) degree - 1 else degree)
+          discover(nextBox :: reversedTopologicalOrder, updatedInDegrees)
         }
       }
 
-    discover(List())
+    discover(List(), inDegrees)
   }
 
   def state(

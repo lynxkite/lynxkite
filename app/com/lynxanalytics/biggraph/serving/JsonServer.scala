@@ -289,10 +289,8 @@ object FrontendJson {
   implicit val wGetWorkspaceResponse = json.Json.writes[GetWorkspaceResponse]
   implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
   implicit val rGetOperationMetaRequest = json.Json.reads[GetOperationMetaRequest]
-  implicit val rGetStatusRequest = json.Json.reads[GetStatusRequest]
-  implicit val wMapStringProgress = new Writes[Map[String, Option[Progress]]] {
-    override def writes(o: Map[String, Option[Progress]]): JsValue = json.Json.toJson(o)
-  }
+  implicit val rGetProgressRequest = json.Json.reads[GetProgressRequest]
+  implicit val rGetProgressResponse = json.Json.writes[GetProgressResponse]
   implicit val rGetProjectOutputRequest = json.Json.reads[GetProjectOutputRequest]
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
   implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
