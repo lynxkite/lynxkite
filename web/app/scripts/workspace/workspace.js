@@ -88,6 +88,18 @@ angular.module('biggraph')
         },
 
         updateSelectedBox: function(paramValues) {
+          var that = this;
+          var operationId = this.wrapper.boxMap[that.selectedBoxId].metadata.operationID;
+          util.nocache(
+            '/ajax/getSummary',
+            {
+                operationId: operationId,
+                parameters: paramValues,
+            })
+          .then(
+            function success(response) {
+                that.wrapper.setBoxSummary(operationId, response.summary);
+            });
           this.wrapper.setBoxParams(this.selectedBoxId, paramValues);
           this.saveWorkspace();
         },
