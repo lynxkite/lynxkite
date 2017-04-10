@@ -511,7 +511,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
           weights, filteredEdgeSetIDs).value.toMap
         val counts = mutable.Map[(Int, Int), Double]().withDefaultValue(0.0)
         for ((id, coord) <- idToCoordMapping) {
-          counts(coord) += weightMap(id)
+          counts(coord) += weightMap.getOrElse(id, 0.0)
         }
         counts
           .toMap
