@@ -61,9 +61,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def getSummary(
     user: serving.User, request: GetSummaryRequest): GetSummaryResponse = {
-    println(request.operationId)
-    println(request.parameters)
-    GetSummaryResponse("Best summary ever.")
+    val boxmeta = ops.getBoxMetadata(request.operationId)
+    GetSummaryResponse(
+      ops.opForBox(user, new Box("", boxmeta.operationID, request.parameters, 0, 0, Map()), Map()).summary)
   }
 
   def getOutputID(
