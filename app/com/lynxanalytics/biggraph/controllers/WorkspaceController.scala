@@ -10,6 +10,8 @@ import com.lynxanalytics.biggraph.serving
 
 case class GetWorkspaceRequest(name: String)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
+case class GetSummaryRequest(operationId: String, parameters: Map[String, String])
+case class GetSummaryResponse(summary: String)
 case class GetOutputIDRequest(workspace: String, output: BoxOutput)
 case class GetProjectOutputRequest(id: String, path: String)
 case class GetProgressRequest(workspace: String, output: BoxOutput)
@@ -56,6 +58,13 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
   val calculatedStates = new HashMap[String, BoxOutputState]()
+
+  def getSummary(
+    user: serving.User, request: GetSummaryRequest): GetSummaryResponse = {
+    println(request.operationId)
+    println(request.parameters)
+    GetSummaryResponse("Best summary ever.")
+  }
 
   def getOutputID(
     user: serving.User, request: GetOutputIDRequest): GetOutputIDResponse = {
