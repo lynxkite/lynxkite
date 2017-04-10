@@ -94,7 +94,6 @@ case class LogisticRegressionModelTrainer(
     val featuresDF = Model.toDF(sqlContext, inputs.vertices.rdd, rddArray)
     val labeledFeaturesDF = featuresDF.join(labelDF, "id")
     assert(!labeledFeaturesDF.rdd.isEmpty, "Training is not possible with empty data set.")
-
     // Train a logistic regression model. The model chooses a threshold with minimal
     // F-score. Feature scaling is set to be true by default.
     val logisticRegression = new ml.classification.LogisticRegression()

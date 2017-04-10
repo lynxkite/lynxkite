@@ -149,13 +149,15 @@ class EMRLib:
         VisibleToAllUsers=True,
         ServiceRole="EMR_DefaultRole",
         Tags=[{
-              'Key': 'owner',
-              'Value': owner
-              },
-              {
-              'Key': 'expiry',
-              'Value': expiry
-              }])
+            'Key': 'owner',
+            'Value': owner
+        }, {
+            'Key': 'expiry',
+            'Value': expiry
+        }, {
+            'Key': 'name',
+            'Value': name
+        }])
     return EMRCluster(res['JobFlowId'], self)
 
   def create_or_connect_to_rds_instance(self, name):
