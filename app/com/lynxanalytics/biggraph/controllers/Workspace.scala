@@ -92,6 +92,8 @@ case class Workspace(
       state.kind match {
         case BoxOutputKind.Project => projectProgress(state.project)
         case BoxOutputKind.Table => List(entityProgressManager.computeProgress(state.table))
+        case BoxOutputKind.ExportResult => List(entityProgressManager.computeProgress(
+          state.exportresult))
       }
     }
     BoxOutputProgress(
@@ -236,6 +238,7 @@ case class BoxOutputState(
 
   def isProject = kind == BoxOutputKind.Project
   def isTable = kind == BoxOutputKind.Table
+  def isExportResult = kind == BoxOutputKind.ExportResult
 
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(isProject, s"Tried to access '$kind' as 'project'.")
@@ -252,9 +255,17 @@ case class BoxOutputState(
     import graph_api.MetaGraphManager.StringAsUUID
     manager.table((state \ "guid").as[String].asUUID)
   }
+
+  def exportresult(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[ExportResult] = {
+    assert(isExportResult, s"Tried to access '$kind' as 'exportResult.")
+    assert(success.enabled, success.disabledReason)
+    import graph_api.MetaGraphManager.StringAsUUID
+    manager.scalarOf[ExportResult]((state \ "guid").as[String].asUUID)
+  }
 }
 
 case class BoxOutputProgress(boxOutput: BoxOutput, progress: Progress, success: FEStatus)
+
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
 object Progress {
   val Empty = Progress(0, 0, 0, 0)

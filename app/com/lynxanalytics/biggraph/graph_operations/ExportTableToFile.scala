@@ -2,7 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.controllers.ExportResult
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.{HadoopFile, Timestamp}
+import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, Timestamp }
 
 object ExportTableToFile {
   class Input extends MagicInputSignature {
@@ -20,29 +20,28 @@ object ExportTableToFile {
       HadoopFile(path)
     }
   }
-
-  def run(format: String, path: String) = {}
 }
 
 import ExportTableToFile._
 abstract class ExportTableToFile extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input()
 
-  def outputMeta(instance: MetaGraphOperationInstance) =
-    new Output()(instance, inputs)
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 }
 
 object ExportTableToFlatFile extends OpFromJson {
   def fromJson(j: JsValue) = ExportTableToFlatFile(
     (j \ "path").as[String], (j \ "header").as[Boolean],
-    (j \ "delimiter").as[String], (j \ "quote").as[String])
+    (j \ "delimiter").as[String], (j \ "quote").as[String],
+    (j \ "version").as[Int])
 }
 
 case class ExportTableToFlatFile(path: String, header: Boolean,
-                                 delimiter: String, quote: String) extends ExportTableToFile {
+                                 delimiter: String, quote: String, version: Int)
+    extends ExportTableToFile {
   override def toJson = Json.obj(
     "path" -> path, "header" -> header,
-    "delimiter" -> delimiter, "quote" -> quote)
+    "delimiter" -> delimiter, "quote" -> quote, "version" -> version)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -55,9 +54,8 @@ case class ExportTableToFlatFile(path: String, header: Boolean,
     val options = Map(
       "delimiter" -> delimiter,
       "quote" -> quote,
-      "nullvalue" -> "",
+      "nullValue" -> "",
       "header" -> (if (header) "true" else "false"))
-    )
     df.write.format("csv").options(options).save(file.resolvedName)
     val numberOfRows = df.count
     val exportResult = ExportResult(numberOfRows, "csv", file.resolvedName)
@@ -65,11 +63,17 @@ case class ExportTableToFlatFile(path: String, header: Boolean,
   }
 }
 
-case class ExportTableToStructuredFile(path: String, format: String)
-  extends ExportTableToFile {
+object ExportTableToStructuredFile extends OpFromJson {
+  def fromJson(j: JsValue) = ExportTableToStructuredFile(
+    (j \ "path").as[String], (j \ "format").as[String],
+    (j \ "version").as[Int])
+}
+
+case class ExportTableToStructuredFile(path: String, format: String, version: Int)
+    extends ExportTableToFile {
 
   override def toJson = Json.obj(
-    "path" -> path, "format" -> format)
+    "path" -> path, "format" -> format, "version" -> version)
 
   def execute(inputDatas: DataSet,
               o: Output,

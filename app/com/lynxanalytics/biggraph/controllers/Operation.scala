@@ -3,10 +3,9 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, Timestamp }
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.graph_operations
-
 import play.api.libs.json
 import org.apache.spark
 
@@ -367,18 +366,31 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
     s"An ExportOperation must output an ExportResult. $context"
   )
 
+  protected lazy val table = tableInput("table")
+
+  protected var exportResultGUID: String = ""
+
   protected def makeOutput(exportResult: Scalar[ExportResult]): Map[BoxOutput, BoxOutputState] = {
     Map(context.meta.outputs(0).ofBox(context.box) -> BoxOutputState.from(exportResult))
   }
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)
-    makeOutput(exportResultFromParam(params("export_result")))
+    assertWriteAllowed(params("path"))
+    apply()
+    makeOutput(exportResultFromGUID())
   }
 
-  protected def exportResultFromParam(name: String): Scalar[ExportResult] = {
+  protected def exportResultFromGUID(): Scalar[ExportResult] = {
     import MetaGraphManager.StringAsUUID
-    manager.scalarOf[ExportResult](params("export_result").asUUID)
+    manager.scalarOf[ExportResult](exportResultGUID.asUUID)
+  }
+
+  private def assertWriteAllowed(path: String) = {
+    if (path != "<download>") {
+      val file = HadoopFile(path)
+      file.assertWriteAllowedFrom(context.user)
+    }
   }
 
   def enabled = FEStatus.enabled

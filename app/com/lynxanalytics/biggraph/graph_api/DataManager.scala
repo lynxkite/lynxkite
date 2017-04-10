@@ -34,7 +34,7 @@ trait EntityProgressManager {
   // 0 means it is not computed.
   // 1 means it is computed.
   // Anything in between indicates that the computation is in progress.
-  // -1.0 indicates that an error has occured during computation.
+  // -1.0 indicates that an error has occurred during computation.
   // These constants need to be kept in sync with the ones in:
   // /web/app/script/util.js
   def computeProgress(entity: MetaGraphEntity): Double
