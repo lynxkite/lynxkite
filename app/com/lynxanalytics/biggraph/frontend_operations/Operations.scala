@@ -725,6 +725,47 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     }
   })
 
+  register("Segment by vector attribute", new CreateSegmentationOperation(_, _) {
+    def vectorAttributes =
+      vertexAttributes[Vector[Double]] ++
+        vertexAttributes[Vector[String]] ++
+        vertexAttributes[Vector[Long]]
+    def parameters = List(
+      Param("name", "Segmentation name"),
+      Choice("attr", "Attribute", options = vectorAttributes))
+    def enabled = FEStatus.assert(vectorAttributes.nonEmpty, "No suitable vector vertex attributes.")
+    override def summary(params: Map[String, String]) = {
+      val attrName = params("attr")
+      s"Segmentation by $attrName"
+    }
+
+    def apply(params: Map[String, String]) = {
+      import SerializableType.Implicits._
+      val attrName = params("attr")
+      val attr = project.vertexAttributes(attrName)
+      val bucketing = {
+        val tt = attr.typeTag
+        tt match {
+          case _ if tt == scala.reflect.runtime.universe.typeTag[Vector[Double]] =>
+            val op = graph_operations.SegmentByVectorAttribute[Double]()(SerializableType.double)
+            op(op.attr, attr.runtimeSafeCast[Vector[Double]]).result
+          case _ if tt == scala.reflect.runtime.universe.typeTag[Vector[String]] =>
+            val op = graph_operations.SegmentByVectorAttribute[String]()(SerializableType.string)
+            op(op.attr, attr.runtimeSafeCast[Vector[String]]).result
+          case _ if tt == scala.reflect.runtime.universe.typeTag[Vector[Long]] =>
+            val op = graph_operations.SegmentByVectorAttribute[Long]()(SerializableType.long)
+            op(op.attr, attr.runtimeSafeCast[Vector[Long]]).result
+        }
+      }
+      val segmentation = project.segmentation(params("name"))
+      segmentation.setVertexSet(bucketing.segments, idAttr = "id")
+      segmentation.notes = summary(params)
+      segmentation.belongsTo = bucketing.belongsTo
+      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
+      segmentation.newVertexAttribute(attrName, bucketing.label)
+    }
+  })
+
   register("Segment by interval", new CreateSegmentationOperation(_, _) {
     def parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
