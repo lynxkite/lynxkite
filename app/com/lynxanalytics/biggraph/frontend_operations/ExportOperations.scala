@@ -22,7 +22,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import Operation.Implicits._
 
   private val tableConnection = TypedConnection("table", BoxOutputKind.Table)
-  private val exportResultConnection = TypedConnection("export_result", BoxOutputKind.ExportResult)
+  private val exportResultConnection = TypedConnection("result", BoxOutputKind.ExportResult)
   val ExportOperations = Category("Export operations", "blue", icon = "folder-open")
 
   def register(id: String)(factory: Context => ExportOperation): Unit = {
@@ -33,23 +33,23 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import org.apache.spark
 
   register("Export to CSV")(new ExportOperation(_) {
-    lazy val parameters = List(???)
-    def apply() = ???
-  })
+    lazy val parameters = List(
+      Param("path", "Path", defaultValue = "<download>"),
+      Param("delimiter", "Delimiter", defaultValue = ","),
+      Param("quote", "Quote", defaultValue = ""),
+      Choice("header", "Strip header", FEOption.list("no", "yes")),
+      NonNegInt("version", "Version", default = 0)
+    )
 
-  register("Export to Parquet")(new ExportOperation(_) {
-    lazy val parameters = List(???)
-    def apply() = ???
-  })
-
-  register("Export to JSON")(new ExportOperation(_) {
-    lazy val parameters = List(???)
-    def apply() = ???
-  })
-
-  register("Export to ORC")(new ExportOperation(_) {
-    lazy val parameters = List(???)
-    def apply() = ???
+    def apply() = {
+      val header = if (params("header") == "no") true else false
+      val op = graph_operations.ExportTableToFlatFile(
+        params("path"), header,
+        params("delimiter"), params("quote"),
+        params("version").toInt
+      )
+      exportResultGUID = op(op.t, table).result.exportResult.gUID.toString
+    }
   })
 }
 
