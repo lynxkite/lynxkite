@@ -15,7 +15,8 @@ case class GetWorkspaceResponse(workspace: Workspace, outputs: List[BoxOutputInf
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
-case class GetStatusRequest(stateIDs: List[String])
+case class GetProgressRequest(stateIDs: List[String])
+case class GetProgressResponse(progress: Map[String, Option[Progress]])
 case class GetProjectOutputRequest(id: String, path: String)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
@@ -90,9 +91,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
   }
 
-  def getProgress(user: serving.User, request: GetStatusRequest): Map[String, Option[Progress]] = {
+  def getProgress(user: serving.User, request: GetProgressRequest): GetProgressResponse = {
     val states = request.stateIDs.map(stateID => stateID -> getOutput(user, stateID)).toMap
-    states.map {
+    val progress = states.map {
       case (stateID, state) =>
         if (state.success.enabled) {
           state.kind match {
@@ -110,6 +111,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         failed = progressList.count(_ < 0.0)
       ))
     ).view.force
+    GetProgressResponse(progress)
   }
 
   def setWorkspace(

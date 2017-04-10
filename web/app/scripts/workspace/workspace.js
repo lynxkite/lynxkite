@@ -165,8 +165,9 @@ angular.module('biggraph')
             util.nocache('/ajax/getProgress', {
               stateIDs: wrapperBefore.knownStateIDs,
             }).then(
-              function success(progressMap) {
+              function success(response) {
                 if (that.wrapper && that.wrapper === wrapperBefore) {
+                  var progressMap = response.progress;
                   that.wrapper.updateProgress(progressMap);
                 }
               },
@@ -179,7 +180,7 @@ angular.module('biggraph')
           this.stopProgressUpdate();
           progressUpdater = $interval(function() {
             function errorHandler(error) {
-              util.error('Couldn\'t get status information.', error);
+              util.error('Couldn\'t get progress information.', error);
               that.stopProgressUpdate();
               that.wrapper.clearProgress();
             }
