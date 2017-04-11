@@ -78,6 +78,10 @@ angular.module('biggraph').factory('boxWrapper', function() {
       outputs.push(plug);
       outputMap[plug.id] = plug;
     }
+    var isCommentBox = metadata.operationID === 'Add comment';
+    var comment = instance.parameters.comment;
+    var commentLines = comment ? comment.split('\n') : [];
+
     return {
       metadata: metadata,
       instance: instance,
@@ -86,6 +90,8 @@ angular.module('biggraph').factory('boxWrapper', function() {
       outputMap: outputMap,
       width: width,
       height: height,
+      isCommentBox: isCommentBox,
+      commentLines: commentLines,
       isMoved: false,
       mainPosTransform: function() {
         return 'translate(' + this.instance.x + ', ' + this.instance.y + ')';
