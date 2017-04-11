@@ -31,8 +31,7 @@ object TypedJson {
       }
     } catch {
       // Include more details in the exception.
-      case e: Throwable =>
-        throw new Exception(s"Failed to read $j", e)
+      case e: Throwable => throw new Exception(s"Failed to read $j", e)
     }
   }
 
