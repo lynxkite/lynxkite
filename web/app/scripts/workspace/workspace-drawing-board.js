@@ -50,26 +50,29 @@ angular.module('biggraph')
         };
 
         scope.onMouseUp = function(event) {
-          if(window.localStorage.getItem('drag_mode') === 'pan'){
+          var dragMode = window.localStorage.getItem('drag_mode');
+          if(dragMode === 'pan'){
             workspaceDrag = false;
             element[0].style.cursor = '';
             scope.workspace.onMouseUp(getLogicalPosition(event));
           }
-          else{
+          else if (dragMode === 'select'){
             selectBoxes = false;
             scope.workspace.onMouseUp(getLogicalPosition(event));
           }
         };
 
         scope.onMouseDown = function(event) {
-          if(window.localStorage.getItem('drag_mode') === 'pan'){
+          var dragMode = window.localStorage.getItem('drag_mode');
+          if(dragMode === 'pan'){
             event.preventDefault();
             workspaceDrag = true;
             setGrabCursor(element[0]);
             mouseX = event.offsetX;
             mouseY = event.offsetY;
-          } else {
+          } else if(dragMode === 'select'){
             event.preventDefault();
+            scope.workspace.selectedBoxIds = [];
             selectBoxes = true;
             var logicalPos = getLogicalPosition(event);
             scope.workspace.selectionBox.endX = logicalPos.x;

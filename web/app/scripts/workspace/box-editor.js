@@ -12,14 +12,14 @@ angular.module('biggraph')
       },
       link: function(scope) {
         scope.$watch(
-            'workspace.selectedBoxId',
+            'workspace.selectedBoxIds[0]',
             function() {
-              if (!scope.workspace) {
+              if (!scope.workspaceselectedBoxIds) {
                 return;
               }
               // Make a copy of the parameter values.
               scope.paramValues = Object.assign(
-                  {}, scope.workspace.selectedBox().instance.parameters);
+                  {}, scope.workspace.selectedBoxes()[0].instance.parameters);
               scope.loadBoxMeta();
             });
         // The metadata (param definition list) of the current box
@@ -42,10 +42,10 @@ angular.module('biggraph')
         scope.paramValues = {};
 
         scope.loadBoxMeta = function() {
-          if (!scope.workspace || !scope.workspace.selectedBoxId) {
+          if (!scope.workspace || !scope.workspace.selectedBoxIds[0]) {
             return;
           }
-          var box = scope.workspace.selectedBox();
+          var box = scope.workspace.selectedBoxes()[0];
           // Checking currentRequest makes sure that the response
           // to the result of the latest getOperationMetaRequest
           // will be passed to scope.newOpSelected().
@@ -55,7 +55,7 @@ angular.module('biggraph')
               '/ajax/getOperationMeta',
               {
                   workspace: scope.workspace.name,
-                  box: scope.workspace.selectedBoxId,
+                  box: scope.workspace.selectedBoxIds[0],
               })
             .then(
               function success(boxMeta) {
