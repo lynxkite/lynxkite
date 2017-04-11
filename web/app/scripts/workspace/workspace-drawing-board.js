@@ -15,6 +15,7 @@ angular.module('biggraph')
       link: function(scope, element) {
         var workspaceDrag = false;
         var selectBoxes = false;
+        var moveSelectionBox = false;
         var workspaceX = 0;
         var workspaceY = 0;
         var workspaceZoom = 0;
@@ -39,6 +40,13 @@ angular.module('biggraph')
             scope.workspace.updateSelectionBox();
             scope.workspace.selectBoxesInSelectionBox();
           }
+          if (moveSelectionBox) {
+            scope.workspace.selectionBox.startX += event.offsetX - mouseX;
+            scope.workspace.selectionBox.endX += event.offsetX - mouseX;
+            scope.workspace.selectionBox.startY += event.offsetY - mouseY;
+            scope.workspace.selectionBox.endY += event.offsetY - mouseY;
+            scope.workspace.updateSelectionBox();
+          }
           mouseX = event.offsetX;
           mouseY = event.offsetY;
           scope.workspace.onMouseMove(getLogicalPosition(event));
@@ -46,6 +54,7 @@ angular.module('biggraph')
 
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
+          scope.workspace.removeSelectionBox();
           scope.workspace.onMouseDownOnBox(box, getLogicalPosition(event));
         };
 
@@ -58,35 +67,48 @@ angular.module('biggraph')
           }
           else if (dragMode === 'select'){
             selectBoxes = false;
+            moveSelectionBox = false;
             scope.workspace.onMouseUp(getLogicalPosition(event));
           }
         };
 
         scope.onMouseDown = function(event) {
           var dragMode = window.localStorage.getItem('drag_mode');
+          event.preventDefault();
           if(dragMode === 'pan'){
-            event.preventDefault();
             workspaceDrag = true;
             setGrabCursor(element[0]);
             mouseX = event.offsetX;
             mouseY = event.offsetY;
           } else if(dragMode === 'select'){
-            event.preventDefault();
-            scope.workspace.selectedBoxIds = [];
-            selectBoxes = true;
             var logicalPos = getLogicalPosition(event);
-            scope.workspace.selectionBox.endX = logicalPos.x;
-            scope.workspace.selectionBox.endY = logicalPos.y;
-            scope.workspace.selectionBox.startX = logicalPos.x;
-            scope.workspace.selectionBox.startY = logicalPos.y;
-            scope.workspace.updateSelectionBox();
+            if(inSelectionBox(logicalPos)){
+              moveSelectionBox = true;
+              scope.workspace.movedBoxes = scope.workspace.selectedBoxes();
+              scope.workspace.movedBoxes.map(function(box) {
+                box.onMouseDown(logicalPos);});
+            } else {
+              scope.workspace.selectedBoxIds = [];
+              selectBoxes = true;
+              scope.workspace.selectionBox.endX = logicalPos.x;
+              scope.workspace.selectionBox.endY = logicalPos.y;
+              scope.workspace.selectionBox.startX = logicalPos.x;
+              scope.workspace.selectionBox.startY = logicalPos.y;
+              scope.workspace.updateSelectionBox();
           }
+        }
         };
 
         scope.workspaceTransform = function() {
           var z = zoomToScale(workspaceZoom);
           return 'translate(' + workspaceX + ', ' + workspaceY + ') scale(' + z + ')';
         };
+
+        function inSelectionBox(position) {
+          var sb = scope.workspace.selectionBox;
+          return(sb.leftX < position.x && position.x < sb.leftX + sb.width &&
+            sb.upperY < position.y && position.y < sb.upperY + sb.height);
+        }
 
         function setGrabCursor(e) {
           // Trying to assign an invalid cursor will silently fail. Try to find a supported value.
