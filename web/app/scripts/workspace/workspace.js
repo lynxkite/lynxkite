@@ -63,6 +63,14 @@ angular.module('biggraph')
           this.selectionBox.height = Math.abs(this.selectionBox.endY - this.selectionBox.startY);
         },
 
+        removeSelectionBox: function(){
+          this.selectionBox.startX = undefined;
+          this.selectionBox.endX = undefined;
+          this.selectionBox.startY = undefined;
+          this.selectionBox.endY = undefined;
+          this.updateSelectionBox();
+        },
+
         selectedBoxIds: [],
 
         loadWorkspace: function() {
