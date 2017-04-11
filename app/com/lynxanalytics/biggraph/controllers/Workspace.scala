@@ -43,9 +43,9 @@ case class Workspace(
         }.toMap
       }
 
-      val unconnecteds = meta.inputs.filterNot(conn => box.inputs.contains(conn.id))
+      val unconnecteds = meta.inputs.filterNot(conn => box.inputs.contains(conn))
       if (unconnecteds.nonEmpty) {
-        val list = unconnecteds.map(_.id).mkString(", ")
+        val list = unconnecteds.mkString(", ")
         states ++ errorOutputs(s"Input $list is not connected.")
       } else {
         val updatedStates = box.inputs.values.foldLeft(states) {
@@ -81,26 +81,32 @@ case class Workspace(
     connection: BoxOutput)(implicit entityProgressManager: graph_api.EntityProgressManager,
                            manager: graph_api.MetaGraphManager): List[BoxOutputProgress] = {
     val states = calculate(user, ops, connection, Map())
-    states.toList.map((calculatedStateProgress _).tupled)
+    states.toList.map { case (o, s) => calculatedStateProgress(o, s) }
   }
 
   private def calculatedStateProgress(
     boxOutput: BoxOutput,
     state: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
-                           manager: graph_api.MetaGraphManager): BoxOutputProgress =
-    state.kind match {
-      case BoxOutputKind.Project => projectProgress(boxOutput, state)
-      case _ =>
-        log.error(s"Unknown BoxOutputState kind: ${state.kind}")
-        BoxOutputProgress(boxOutput, Progress.Empty, FEStatus.disabled("Unknown kind"))
+                           manager: graph_api.MetaGraphManager): BoxOutputProgress = {
+    val progressList: List[Double] = if (!state.success.enabled) List() else {
+      state.kind match {
+        case BoxOutputKind.Project => projectProgress(state.project)
+        case BoxOutputKind.Table => List(entityProgressManager.computeProgress(state.table))
+      }
     }
+    BoxOutputProgress(
+      boxOutput,
+      Progress(
+        computed = progressList.count(_ == 1.0),
+        inProgress = progressList.count(x => x < 1.0 && x > 0.0),
+        notYetStarted = progressList.count(_ == 0.0),
+        failed = progressList.count(_ < 0.0)),
+      state.success)
+  }
 
   private def projectProgress(
-    boxOutput: BoxOutput,
-    state: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
-                           manager: graph_api.MetaGraphManager): BoxOutputProgress = {
-    assert(state.kind == BoxOutputKind.Project,
-      s"Can't compute projectProgress for kind ${state.kind}")
+    project: ProjectEditor)(implicit entityProgressManager: graph_api.EntityProgressManager,
+                            manager: graph_api.MetaGraphManager): List[Double] = {
 
     def commonProjectStateProgress(state: CommonProjectState): List[Double] = {
       val allEntities = state.vertexSetGUID.map(manager.vertexSet).toList ++
@@ -122,18 +128,7 @@ case class Workspace(
       belongsToProgress ++ segmentationProgress
     }
 
-    val progress = if (state.success.enabled) {
-      val progressList = commonProjectStateProgress(state.project.rootState.state)
-      Progress(
-        computed = progressList.count(_ == 1.0),
-        inProgress = progressList.count(x => x < 1.0 && x > 0.0),
-        notYetStarted = progressList.count(_ == 0.0),
-        failed = progressList.count(_ < 0.0)
-      )
-    } else {
-      Progress.Empty
-    }
-    BoxOutputProgress(boxOutput, progress, state.success)
+    commonProjectStateProgress(project.rootState.state)
   }
 
   def getOperation(
@@ -141,7 +136,7 @@ case class Workspace(
     val box = findBox(boxID)
     val meta = ops.getBoxMetadata(box.operationID)
     for (i <- meta.inputs) {
-      assert(box.inputs.contains(i.id), s"Input ${i.id} is not connected.")
+      assert(box.inputs.contains(i), s"Input $i is not connected.")
     }
     val states = box.inputs.values.foldLeft(Map[BoxOutput, BoxOutputState]()) {
       (states, output) => calculate(user, ops, output, states)
@@ -203,14 +198,27 @@ case class BoxOutput(
 case class BoxMetadata(
   categoryID: String,
   operationID: String,
-  inputs: List[TypedConnection],
+  inputs: List[String],
   outputs: List[TypedConnection])
 
 object BoxOutputKind {
   val Project = "project"
-  val validKinds = Set(Project) // More kinds to come.
+  val Table = "table"
+  val validKinds = Set(Project, Table)
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
+}
+
+object BoxOutputState {
+  // Cannot call these "apply" due to the JSON formatter macros.
+  def from(project: ProjectEditor): BoxOutputState = {
+    import CheckpointRepository._ // For JSON formatters.
+    BoxOutputState(BoxOutputKind.Project, json.Json.toJson(project.rootState.state))
+  }
+
+  def from(table: graph_api.Table): BoxOutputState = {
+    BoxOutputState(BoxOutputKind.Table, json.Json.obj("guid" -> table.gUID))
+  }
 }
 
 case class BoxOutputState(
@@ -218,8 +226,12 @@ case class BoxOutputState(
     state: json.JsValue,
     success: FEStatus = FEStatus.enabled) {
   BoxOutputKind.assertKind(kind)
+
   def isError = !success.enabled
+
   def isProject = kind == BoxOutputKind.Project
+  def isTable = kind == BoxOutputKind.Table
+
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(isProject, s"Tried to access '$kind' as 'project'.")
     assert(success.enabled, success.disabledReason)
@@ -227,6 +239,13 @@ case class BoxOutputState(
     val p = state.as[CommonProjectState]
     val rps = RootProjectState.emptyState.copy(state = p)
     new RootProjectEditor(rps)
+  }
+
+  def table(implicit manager: graph_api.MetaGraphManager): graph_api.Table = {
+    assert(isTable, s"Tried to access '$kind' as 'table'.")
+    assert(success.enabled, success.disabledReason)
+    import graph_api.MetaGraphManager.StringAsUUID
+    manager.table((state \ "guid").as[String].asUUID)
   }
 }
 

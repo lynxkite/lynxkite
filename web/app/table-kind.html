@@ -1,22 +1,5 @@
-<table style="width: 100%;" class="table-selector" ng-hide="wizard.visible">
-  <tr>
-    <td style="width: 100%;">
-      <select
-         ng-disabled="!editable"
-         id="table-name"
-         class="form-control"
-         ng-model="selected"
-         ng-options="option.id as option.title for option in tables"></select>
-    </td>
-    <td>
-      <span class="clicky glyphicon glyphicon-import" id="import-new-table-button"
-            ng-show="editable" tooltip="Import new table" ng-click="openWizard()"></span>
-    </td>
-  </tr>
-</table>
-<import-wizard
-  id="import-wizard"
-  current-directory="currentDirectory"
-  ng-if="wizard.visible"
-  on-cancel="closeWizard()"
-  table-imported="wizard.tableImported">
+{{ snapshot }}
+<span class="error">{{ error }}</span>
+<button ng-click="importBox()" drop-tooltip="Run import" ng-disabled="disabled">
+  <i class="glyphicon glyphicon-play"></i>
+</button>

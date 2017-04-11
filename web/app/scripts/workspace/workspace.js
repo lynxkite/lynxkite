@@ -167,7 +167,7 @@ angular.module('biggraph')
         selectPlug: function(plug) {
           this.selectedPlug = plug;
           if (plug.direction === 'outputs') {
-            this.selectState(plug.boxId, plug.data.id);
+            this.selectState(plug.boxId, plug.id);
             this.startProgressUpdate();
           } else {
             this.selectedState = undefined;
@@ -237,7 +237,7 @@ angular.module('biggraph')
               workspace: this.name,
               output: {
                 boxID: plugBefore.boxId,
-                id: plugBefore.data.id
+                id: plugBefore.id
               }
             }).then(
               function success(response) {

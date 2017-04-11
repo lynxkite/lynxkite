@@ -5,7 +5,13 @@
 angular.module('biggraph').directive('operationParameters', function(util) {
   return {
     restrict: 'E',
-    scope: { params: '=', output: '=', busy: '=?', editable: '=' },
+    scope: {
+      box: '=',
+      meta: '=',
+      output: '=',
+      busy: '=?',
+      editable: '=',
+    },
     templateUrl: 'operation-parameters.html',
     link: function(scope) {
       scope.fileUploads = { count: 0 };
@@ -16,8 +22,8 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       // Translate between arrays and comma-separated strings for multiselects.
       scope.multiOutput = {};
       util.deepWatch(scope, 'output', function(output) {
-        for (var i = 0; i < scope.params.length; ++i) {
-          var param = scope.params[i];
+        for (var i = 0; i < scope.meta.parameters.length; ++i) {
+          var param = scope.meta.parameters[i];
           if (param.options.length > 0 && param.multipleChoice) {
             var flat = output[param.id];
             if (flat !== undefined && flat.length > 0) {
@@ -30,8 +36,8 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       });
 
       util.deepWatch(scope, 'multiOutput', function(multiOutput) {
-        for (var i = 0; i < scope.params.length; ++i) {
-          var param = scope.params[i];
+        for (var i = 0; i < scope.meta.parameters.length; ++i) {
+          var param = scope.meta.parameters[i];
           if (param.options.length > 0 && param.multipleChoice) {
             scope.output[param.id] = (multiOutput[param.id] || []).join(',');
           }
