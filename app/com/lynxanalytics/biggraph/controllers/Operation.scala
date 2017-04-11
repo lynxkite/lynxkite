@@ -30,6 +30,7 @@ object FEOperationParameterMeta {
     "code", // JavaScript code
     "model", // A special kind to set model parameters.
     "imported-table", // A table importing button.
+    "exported-table", // A table exporting button.
     "segmentation") // One of the segmentations of the current project.
 }
 
