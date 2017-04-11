@@ -110,7 +110,8 @@ angular.module('biggraph')
 
         selectedBoxes: function() {
           if (this.selectedBoxIds) {
-            return this.selectedBoxIds.map(function(id){return this.wrapper.boxMap[id];});
+            var workspaceWrapper = this.wrapper;
+            return this.selectedBoxIds.map(function(id){return workspaceWrapper.boxMap[id];});
           } else {
             return undefined;
           }
@@ -128,9 +129,7 @@ angular.module('biggraph')
           this.selectedBoxIds = [];
           for (var i = 0; i < boxes.length; i++) {
             var box = boxes[i];
-            // console.log(box);
             if(this.inSelectionBox(box)){
-              console.log(boxes[i].instance.x);
               this.selectedBoxIds.push(box.instance.id);
             }
           }
@@ -138,8 +137,10 @@ angular.module('biggraph')
 
         inSelectionBox: function(box){
           var sb = this.selectionBox;
-          return(sb.leftX < box.instance.x && box.instance.x < sb.leftX + sb.width &&
-            sb.upperY < box.instance.y && box.instance.y < sb.upperY + sb.height);
+          return(sb.leftX < box.instance.x + box.width &&
+            box.instance.x < sb.leftX + sb.width &&
+            sb.upperY < box.instance.y + box.height &&
+            box.instance.y < sb.upperY + sb.height);
         },
 
         selectState: function(boxID, outputID) {
@@ -177,9 +178,7 @@ angular.module('biggraph')
         onMouseMove: function(mouseLogical) {
           this.mouseLogical = mouseLogical;
           if (event.buttons === 1 && this.movedBoxes) {
-            console.log(this.movedBoxes.length);
             for(i = 0; i < this.movedBoxes.length; i++){
-              console.log('aaaaaaaaaaa');
               this.movedBoxes[i].onMouseMove(this.mouseLogical);
             }
           }
@@ -198,6 +197,7 @@ angular.module('biggraph')
         },
 
         onMouseDownOnBox: function(box, mouseLogical) {
+          this.selectedBoxIds = [];
           this.selectBox(box.instance.id);
           this.movedBoxes = [box];
           this.movedBoxes[0].onMouseDown(mouseLogical);
