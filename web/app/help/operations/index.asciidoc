@@ -297,6 +297,8 @@ include::import-vertices.asciidoc[]
 
 include::link-project-and-segmentation-by-fingerprint.asciidoc[]
 
+include::load-snapshot.asciidoc[]
+
 include::lookup-region.asciidoc[]
 
 include::merge-parallel-edges-by-attribute.asciidoc[]
@@ -372,6 +374,8 @@ include::split-vertices.asciidoc[]
 include::take-edges-as-vertices.asciidoc[]
 
 include::take-segmentation-as-base-project.asciidoc[]
+
+include::take-segmentation-links-as-base-project.asciidoc[]
 
 include::train-a-kmeans-clustering-model.asciidoc[]
 
