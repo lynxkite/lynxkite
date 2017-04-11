@@ -44,15 +44,13 @@ angular.module('biggraph')
           if (workspaceDrag) {
             workspaceX += event.offsetX - mouseX;
             workspaceY += event.offsetY - mouseY;
-          }
-          if (selectBoxes) {
+          } else if (selectBoxes) {
             var logicalPos = getLogicalPosition(event);
             scope.workspace.selectionBox.endX = logicalPos.x;
             scope.workspace.selectionBox.endY = logicalPos.y;
             scope.workspace.updateSelectionBox();
             scope.workspace.selectBoxesInSelectionBox();
-          }
-          if (moveSelectionBox) {
+          } else if (moveSelectionBox) {
             scope.workspace.selectionBox.startX += event.offsetX - mouseX;
             scope.workspace.selectionBox.endX += event.offsetX - mouseX;
             scope.workspace.selectionBox.startY += event.offsetY - mouseY;
