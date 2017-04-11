@@ -316,21 +316,32 @@ abstract class ProjectTransformation(
 }
 
 // A DecoratorOperation is an operation that has no input or output and is outside of the
-// Metagraph. Even if such an operation has a non-trivial apply() function when registered, it
-// won't be called by the getOutputs() method.
+// Metagraph.
 abstract class DecoratorOperation(
-    protected val context: Operation.Context) extends BasicOperation {
+    protected val context: Operation.Context) extends Operation {
   assert(
     context.meta.inputs == List(),
     s"A DecoratorOperation must not have an input. $context")
   assert(
     context.meta.outputs == List(),
     s"A DecoratorOperation must not have an output. $context")
-  protected lazy val project: ProjectEditor = new RootProjectEditor(RootProjectState.emptyState)
 
-  override def getOutputs() = {
-    Map[BoxOutput, BoxOutputState]()
-  }
+  protected def parameters: List[OperationParameterMeta]
+
+  protected val id = context.meta.operationID
+  val title = id
+  def summary = title
+  def toFE: FEOperationMeta = FEOperationMeta(
+    id,
+    title,
+    parameters.map { param => param.toFE },
+    List(),
+    context.meta.categoryID,
+    enabled)
+
+  def getOutputs() = Map()
+
+  def enabled = FEStatus.enabled
 }
 
 abstract class TableOutputOperation(
