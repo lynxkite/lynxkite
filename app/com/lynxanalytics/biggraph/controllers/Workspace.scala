@@ -112,8 +112,8 @@ case class Workspace(
         } else {
           val dependants = outEdges.getOrElse(nextBox, Set())
           val updatedInDegrees = remainingBoxInDegrees.withFilter(_._1 != nextBox)
-            .map { case (box, degree) =>
-              (box, if (dependants.contains(box)) degree - 1 else degree)
+            .map {
+              case (box, degree) => (box, if (dependants.contains(box)) degree - 1 else degree)
             }.map(identity)
           discover(nextBox :: reversedTopologicalOrder, updatedInDegrees)
         }

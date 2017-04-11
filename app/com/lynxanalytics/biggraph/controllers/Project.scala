@@ -58,28 +58,15 @@ object MetadataNames {
 
 // Captures the part of the state that is common for segmentations and root projects.
 case class CommonProjectState(
-    vertexSetGUID: Option[UUID],
-    vertexAttributeGUIDs: Map[String, UUID],
-    edgeBundleGUID: Option[UUID],
-    edgeAttributeGUIDs: Map[String, UUID],
-    scalarGUIDs: Map[String, UUID],
-    segmentations: Map[String, SegmentationState],
-    notes: String,
-    elementNotes: Option[Map[String, String]], // Option for compatibility.
-    elementMetadata: Option[Map[String, Map[String, String]]] // Option for compatibility.
-    ) {
-  def progress(implicit entityProgressManager: EntityProgressManager,
-               manager: MetaGraphManager): List[Double] = {
-    val allEntities = vertexSetGUID.map(manager.vertexSet).toList ++
-      edgeBundleGUID.map(manager.edgeBundle).toList ++
-      scalarGUIDs.values.map(manager.scalar) ++
-      vertexAttributeGUIDs.values.map(manager.attribute) ++
-      edgeAttributeGUIDs.values.map(manager.attribute)
-
-    val segmentationProgress = segmentations.values.flatMap(_.progress)
-    allEntities.map(entityProgressManager.computeProgress) ++ segmentationProgress
-  }
-}
+  vertexSetGUID: Option[UUID],
+  vertexAttributeGUIDs: Map[String, UUID],
+  edgeBundleGUID: Option[UUID],
+  edgeAttributeGUIDs: Map[String, UUID],
+  scalarGUIDs: Map[String, UUID],
+  segmentations: Map[String, SegmentationState],
+  notes: String,
+  elementNotes: Option[Map[String, String]], // Option for compatibility.
+  elementMetadata: Option[Map[String, Map[String, String]]]) // Option for compatibility.
 object CommonProjectState {
   val emptyState = CommonProjectState(
     None, Map(), None, Map(), Map(), Map(), "", Some(Map()), Some(Map()))
@@ -103,18 +90,8 @@ object RootProjectState {
 
 // Complete state of segmentation.
 case class SegmentationState(
-    state: CommonProjectState,
-    belongsToGUID: Option[UUID]) {
-  def progress(implicit entityProgressManager: EntityProgressManager,
-               manager: MetaGraphManager): List[Double] = {
-    val segmentationProgress = state.progress
-    val belongsToProgress = belongsToGUID.map(belongsToGUID => {
-      val belongsTo = manager.edgeBundle(belongsToGUID)
-      entityProgressManager.computeProgress(belongsTo)
-    }).toList
-    belongsToProgress ++ segmentationProgress
-  }
-}
+  state: CommonProjectState,
+  belongsToGUID: Option[UUID])
 object SegmentationState {
   val emptyState = SegmentationState(CommonProjectState.emptyState, None)
 }
@@ -151,6 +128,30 @@ sealed trait ProjectViewer {
     scalars.collect {
       case (k, v) if v.is[model.Model] => k -> v.runtimeSafeCast[model.Model].modelMeta
     }
+  }
+
+  def getProgress()(implicit entityProgressManager: EntityProgressManager): List[Double] = {
+    def commonProjectStateProgress(state: CommonProjectState): List[Double] = {
+      val allEntities = state.vertexSetGUID.map(manager.vertexSet).toList ++
+        state.edgeBundleGUID.map(manager.edgeBundle).toList ++
+        state.scalarGUIDs.values.map(manager.scalar) ++
+        state.vertexAttributeGUIDs.values.map(manager.attribute) ++
+        state.edgeAttributeGUIDs.values.map(manager.attribute)
+
+      val segmentationProgress = state.segmentations.values.flatMap(segmentationStateProgress)
+      allEntities.map(entityProgressManager.computeProgress) ++ segmentationProgress
+    }
+
+    def segmentationStateProgress(state: SegmentationState): List[Double] = {
+      val segmentationProgress = commonProjectStateProgress(state.state)
+      val belongsToProgress = state.belongsToGUID.map(belongsToGUID => {
+        val belongsTo = manager.edgeBundle(belongsToGUID)
+        entityProgressManager.computeProgress(belongsTo)
+      }).toList
+      belongsToProgress ++ segmentationProgress
+    }
+
+    commonProjectStateProgress(state)
   }
 
   lazy val segmentationMap: Map[String, SegmentationViewer] =

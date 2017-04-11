@@ -97,7 +97,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       case (stateID, state) =>
         if (state.success.enabled) {
           state.kind match {
-            case BoxOutputKind.Project => stateID -> Some(state.project.state.progress)
+            case BoxOutputKind.Project => stateID -> Option(state.project.viewer.getProgress)
             case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }
         } else {
