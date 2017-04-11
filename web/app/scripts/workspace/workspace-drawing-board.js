@@ -27,6 +27,18 @@ angular.module('biggraph')
             x: (event.offsetX - workspaceX) / zoomToScale(workspaceZoom),
             y: (event.offsetY - workspaceY) / zoomToScale(workspaceZoom) };
         }
+        function actualDragMode(event) {
+          var dragMode = window.localStorage.getItem('drag_mode');
+          if((dragMode === 'pan' && event.shiftKey)||
+            (dragMode === 'select' && !event.shiftKey)){
+              return 'select';
+            }
+          else if ((dragMode === 'pan' && !event.shiftKey)||
+            (dragMode === 'select' && event.shiftKey)){
+              return 'pan';
+            }
+        }
+
         scope.onMouseMove = function(event) {
           event.preventDefault();
           if (workspaceDrag) {
@@ -59,21 +71,15 @@ angular.module('biggraph')
         };
 
         scope.onMouseUp = function(event) {
-          var dragMode = window.localStorage.getItem('drag_mode');
-          if(dragMode === 'pan'){
-            workspaceDrag = false;
-            element[0].style.cursor = '';
-            scope.workspace.onMouseUp(getLogicalPosition(event));
-          }
-          else if (dragMode === 'select'){
-            selectBoxes = false;
-            moveSelectionBox = false;
-            scope.workspace.onMouseUp(getLogicalPosition(event));
-          }
+          element[0].style.cursor = '';
+          workspaceDrag = false;
+          selectBoxes = false;
+          moveSelectionBox = false;
+          scope.workspace.onMouseUp(getLogicalPosition(event));
         };
 
         scope.onMouseDown = function(event) {
-          var dragMode = window.localStorage.getItem('drag_mode');
+          var dragMode = actualDragMode(event);
           event.preventDefault();
           if(dragMode === 'pan'){
             workspaceDrag = true;
