@@ -79,11 +79,8 @@ angular.module('biggraph').factory('boxWrapper', function() {
       outputMap[plug.data.id] = plug;
     }
     var isCommentBox = metadata.operationID === 'Add comment';
-    var commentLines = (function CreateCommentLinesArray(){
-      var comment = instance.parameters.comment;
-      var commLines = comment ? comment.split('\n') : [];
-      return commLines;
-    })();
+    var comment = instance.parameters.comment;
+    var commentLines = comment ? comment.split('\n') : [];
 
     return {
       metadata: metadata,
