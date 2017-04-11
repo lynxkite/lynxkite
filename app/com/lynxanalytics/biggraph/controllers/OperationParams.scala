@@ -50,6 +50,16 @@ object OperationParams {
     def validate(value: String): Unit = {}
   }
 
+  case class ExportedTableParam(
+      id: String,
+      title: String) extends OperationParameterMeta {
+    val kind = "exported-table"
+    val options = List()
+    val multipleChoice = false
+    val defaultValue = ""
+    def validate(value: String): Unit = {}
+  }
+
   case class TagList(
       id: String,
       title: String,
