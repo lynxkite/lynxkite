@@ -964,6 +964,40 @@ class ViewFrame(path: SymbolPath)(
   def getRecipe: ViewRecipe = viewer.viewRecipe.get
 }
 
+class SnapshotFrame(path: SymbolPath)(
+    implicit manager: MetaGraphManager) extends ObjectFrame(path) {
+
+  def initialize(state: BoxOutputState) = {
+    set(rootDir / "objectType", "snapshot")
+    import WorkspaceJsonFormatters.fBoxOutputState
+    details = json.Json.toJson(state).as[JsObject]
+  }
+
+  override def toListElementFE()(implicit epm: EntityProgressManager) = {
+    try {
+      FEProjectListElement(
+        name = name,
+        objectType = objectType,
+        details = details)
+    } catch {
+      case ex: Throwable =>
+        log.warn(s"Could not list $name:", ex)
+        FEProjectListElement(
+          name = name,
+          objectType = objectType,
+          error = Some(ex.getMessage)
+        )
+    }
+  }
+
+  def getState(): BoxOutputState = {
+    import WorkspaceJsonFormatters.fBoxOutputState
+    details.get.as[BoxOutputState]
+  }
+
+  override def isDirectory: Boolean = false
+}
+
 class WorkspaceFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ProjectFrame(path) {
   override def initialize(): Unit = manager.synchronized {
@@ -1139,10 +1173,13 @@ class DirectoryEntry(val path: SymbolPath)(
   def parents: Iterable[Directory] = parent ++ parent.toSeq.flatMap(_.parents)
 
   def hasCheckpoint = manager.tagExists(rootDir / "checkpoint")
+  def hasObjectType = manager.tagExists(rootDir / "objectType")
+  def isTable = get(rootDir / "objectType", "") == "table"
   def isProject = hasCheckpoint && !isView && !isWorkspace
-  def isDirectory = exists && !hasCheckpoint
+  def isDirectory = exists && !hasCheckpoint && !hasObjectType
   def isView = get(rootDir / "objectType", "") == "view"
   def isWorkspace = get(rootDir / "objectType", "") == "workspace"
+  def isSnapshot = get(rootDir / "objectType", "") == "snapshot"
 
   def asProjectFrame: ProjectFrame = {
     assert(isInstanceOf[ProjectFrame], s"Entry '$path' is not a project.")
@@ -1205,6 +1242,11 @@ class DirectoryEntry(val path: SymbolPath)(
     res.initializeFromCheckpoint(checkpoint)
     res
   }
+
+  def asSnapshotFrame: SnapshotFrame = {
+    assert(isInstanceOf[SnapshotFrame], s"Entry '$path' is not a snapshot.")
+    asInstanceOf[SnapshotFrame]
+  }
 }
 
 object DirectoryEntry {
@@ -1230,6 +1272,8 @@ object DirectoryEntry {
         new ViewFrame(entry.path)
       } else if (entry.isWorkspace) {
         new WorkspaceFrame(entry.path)
+      } else if (entry.isSnapshot) {
+        new SnapshotFrame(entry.path)
       } else {
         new Directory(entry.path)
       }

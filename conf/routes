@@ -15,6 +15,7 @@ POST /ajax/createWorkspace com.lynxanalytics.biggraph.serving.ProductionJsonServ
 POST /ajax/setWorkspace com.lynxanalytics.biggraph.serving.ProductionJsonServer.setWorkspace
 GET /ajax/getWorkspace com.lynxanalytics.biggraph.serving.ProductionJsonServer.getWorkspace
 GET /ajax/getOutputID com.lynxanalytics.biggraph.serving.ProductionJsonServer.getOutputID
+POST /ajax/createSnapshot com.lynxanalytics.biggraph.serving.ProductionJsonServer.createSnapshot
 GET /ajax/getProjectOutput com.lynxanalytics.biggraph.serving.ProductionJsonServer.getProjectOutput
 GET /ajax/getProgress com.lynxanalytics.biggraph.serving.ProductionJsonServer.getProgress
 GET /ajax/getOperationMeta com.lynxanalytics.biggraph.serving.ProductionJsonServer.getOperationMeta
@@ -34,18 +35,7 @@ POST /ajax/exportSQLQueryToParquet com.lynxanalytics.biggraph.serving.Production
 POST /ajax/exportSQLQueryToORC     com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToORC
 POST /ajax/exportSQLQueryToJdbc    com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToJdbc
 POST /ajax/createViewDFSpec    com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewDFSpec
-POST /ajax/importCSV         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importCSV
-POST /ajax/importJdbc        com.lynxanalytics.biggraph.serving.ProductionJsonServer.importJdbc
-POST /ajax/importParquet     com.lynxanalytics.biggraph.serving.ProductionJsonServer.importParquet
-POST /ajax/importORC         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importORC
-POST /ajax/importJson        com.lynxanalytics.biggraph.serving.ProductionJsonServer.importJson
-POST /ajax/importHive         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importHive
-POST /ajax/createViewCSV         com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewCSV
-POST /ajax/createViewJdbc        com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewJdbc
-POST /ajax/createViewParquet     com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewParquet
-POST /ajax/createViewORC         com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewORC
-POST /ajax/createViewJson        com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewJson
-POST /ajax/createViewHive        com.lynxanalytics.biggraph.serving.ProductionJsonServer.createViewHive
+POST /ajax/importBox         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importBox
 
 GET  /ajax/demoModeStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.demoModeStatus
 GET  /ajax/enterDemoMode     com.lynxanalytics.biggraph.serving.ProductionJsonServer.enterDemoMode
@@ -98,12 +88,6 @@ POST /remote/saveWorkspace com.lynxanalytics.biggraph.serving.RemoteAPIServer.sa
 POST /remote/globalSQL com.lynxanalytics.biggraph.serving.RemoteAPIServer.globalSQL
 POST /remote/isComputed com.lynxanalytics.biggraph.serving.RemoteAPIServer.isComputed
 POST /remote/computeWorkspace com.lynxanalytics.biggraph.serving.RemoteAPIServer.computeWorkspace
-POST /remote/createViewJdbc com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewJdbc
-POST /remote/createViewHive com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewHive
-POST /remote/createViewCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewCSV
-POST /remote/createViewParquet com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewParquet
-POST /remote/createViewORC com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewORC
-POST /remote/createViewJson com.lynxanalytics.biggraph.serving.RemoteAPIServer.createViewJson
 POST /remote/takeFromView com.lynxanalytics.biggraph.serving.RemoteAPIServer.takeFromView
 POST /remote/exportViewToCSV com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToCSV
 POST /remote/exportViewToJson com.lynxanalytics.biggraph.serving.RemoteAPIServer.exportViewToJson

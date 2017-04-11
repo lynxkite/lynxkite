@@ -3,27 +3,22 @@ package com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class MergeParallelEdgesOperationTest extends OperationsTestBase {
-
-  test("Compiles and fails") {
-    assert(false)
-  }
-
-  /*
   def load(filename: String) = {
-    run("Import vertices and edges from a single table", Map(
-      "table" -> importCSV("OPERATIONSTEST$/" + filename),
-      "src" -> "src",
-      "dst" -> "dst"))
+    importCSV(filename)
+      .box("Import vertices and edges from a single table", Map(
+        "src" -> "src",
+        "dst" -> "dst"))
   }
 
   test("merge parallel edges by attribute works for String") {
-    load("merge-parallel-edges.csv")
-    run("Merge parallel edges by attribute", Map(
-      "key" -> "call",
-      "aggregate_src" -> "",
-      "aggregate_dst" -> "",
-      "aggregate_call" -> ""
-    ))
+    val project = load("merge-parallel-edges.csv")
+      .box("Merge parallel edges by attribute", Map(
+        "key" -> "call",
+        "aggregate_src" -> "",
+        "aggregate_dst" -> "",
+        "aggregate_call" -> ""
+      ))
+      .project
     val call = project.edgeAttributes("call").runtimeSafeCast[String]
     assert(call.rdd.values.collect.toSeq.sorted == Seq(
       "Monday", // Mary->John, Wednesday
@@ -38,14 +33,12 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
   }
 
   test("merge parallel edges by attribute works for Double") {
-    load("merge-parallel-edges-double.csv")
-    run("Convert edge attribute to double", Map("attr" -> "call"))
-    run("Merge parallel edges by attribute", Map(
-      "key" -> "call",
-      "aggregate_src" -> "",
-      "aggregate_dst" -> "",
-      "aggregate_call" -> ""
-    ))
+    val project = load("merge-parallel-edges-double.csv")
+      .box("Convert edge attribute to double", Map("attr" -> "call"))
+      .box("Merge parallel edges by attribute", Map(
+        "key" -> "call"
+      ))
+      .project
     val call = project.edgeAttributes("call").runtimeSafeCast[Double]
     assert(call.rdd.values.collect.toSeq.sorted == Seq(
       1.0, // Mary->John, 1.0
@@ -60,30 +53,29 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
   }
 
   test("Merge parallel edges works") {
-    load("merge-parallel-edges.csv")
-    run("Merge parallel edges", Map(
-      "aggregate_src" -> "",
-      "aggregate_dst" -> "",
-      "aggregate_call" -> "count"
-    ))
+    val project = load("merge-parallel-edges.csv")
+      .box("Merge parallel edges", Map(
+        "aggregate_call" -> "count"
+      ))
+      .project
     val call = project.edgeAttributes("call_count").runtimeSafeCast[Double]
     assert(call.rdd.values.collect.toSeq.sorted == Seq(3.0, 5.0))
   }
 
   test("Merge parallel edges with undefined values keeps the defined values") {
-    load("merge-parallel-edges-double.csv")
-    run("Convert edge attribute to double", Map("attr" -> "call"))
-    run("Derive edge attribute", Map(
-      "output" -> "call",
-      "type" -> "double",
-      "expr" -> "call == 6.0 ? call : undefined"))
-    run("Merge parallel edges", Map(
-      "aggregate_src" -> "most_common",
-      "aggregate_dst" -> "most_common",
-      "aggregate_call" -> "max"
-    ))
+    val project = load("merge-parallel-edges-double.csv")
+      .box("Convert edge attribute to double", Map("attr" -> "call"))
+      .box("Derive edge attribute", Map(
+        "output" -> "call",
+        "type" -> "double",
+        "expr" -> "call == 6.0 ? call : undefined"))
+      .box("Merge parallel edges", Map(
+        "aggregate_src" -> "most_common",
+        "aggregate_dst" -> "most_common",
+        "aggregate_call" -> "max"
+      ))
+      .project
     val call = project.edgeAttributes("call_max").runtimeSafeCast[Double]
     assert(call.rdd.values.collect.toSeq.sorted == Seq(6.0))
   }
-  */
 }
