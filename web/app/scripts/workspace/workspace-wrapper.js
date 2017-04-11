@@ -32,6 +32,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
           var operationId = rawBox.operationID;
           var boxId = rawBox.id;
           box = boxWrapper(boxCatalogMap[operationId], rawBox);
+          box.summary = box.metadata.operationID;
           this.boxes[i] = box;
           this.boxMap[boxId] = box;
         }
@@ -141,6 +142,15 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
       setBoxParams: function(boxId, paramValues) {
         this.boxMap[boxId].instance.parameters =
             Object.assign({}, paramValues);
+      },
+
+      setBoxSummary: function(boxId, summary) {
+        window.box = this.boxMap[boxId];
+        console.log('moof');
+        console.log(summary);
+        this.boxMap[boxId].summary = summary;
+        /*this.boxMap[boxId].instance.parameters =
+            Object.assign({}, paramValues);*/
       },
 
     };

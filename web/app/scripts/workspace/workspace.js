@@ -52,6 +52,9 @@ angular.module('biggraph')
                 name: this.name
               })
               .then(function(state) {
+                console.log('thisisthestate');
+                console.log(state);
+                console.log('\n');
                 that.backendState = state;
                 // User edits will be applied to a deep copy of
                 // the original backend state. This way watchers
@@ -98,7 +101,7 @@ angular.module('biggraph')
             })
           .then(
             function success(response) {
-                that.wrapper.setBoxSummary(operationId, response.summary);
+                that.wrapper.setBoxSummary(that.selectedBoxId, response.summary);
             });
           this.wrapper.setBoxParams(this.selectedBoxId, paramValues);
           this.saveWorkspace();
