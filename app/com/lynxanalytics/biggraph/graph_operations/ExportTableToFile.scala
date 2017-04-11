@@ -1,6 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import com.lynxanalytics.biggraph.controllers.ExportResult
+import com.lynxanalytics.biggraph.controllers.FileMetaData
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, Timestamp }
 
@@ -10,7 +10,7 @@ object ExportTableToFile {
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
-    val exportResult = scalar[ExportResult]
+    val exportResult = scalar[FileMetaData]
   }
 
   def getFile(format: String, path: String)(implicit dataManager: DataManager) = {
@@ -58,7 +58,7 @@ case class ExportTableToFlatFile(path: String, header: Boolean,
       "header" -> (if (header) "true" else "false"))
     df.write.format("csv").options(options).save(file.resolvedName)
     val numberOfRows = df.count
-    val exportResult = ExportResult(numberOfRows, "csv", file.resolvedName)
+    val exportResult = FileMetaData(numberOfRows, "csv", file.resolvedName)
     output(o.exportResult, exportResult)
   }
 }
@@ -85,7 +85,7 @@ case class ExportTableToStructuredFile(path: String, format: String, version: In
     val df = inputs.t.df
     df.write.format(format).save(file.resolvedName)
     val numberOfRows = df.count
-    val exportResult = ExportResult(numberOfRows, format, file.resolvedName)
+    val exportResult = FileMetaData(numberOfRows, format, file.resolvedName)
     output(o.exportResult, exportResult)
   }
 }

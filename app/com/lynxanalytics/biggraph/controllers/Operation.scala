@@ -370,7 +370,7 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
 
   protected var exportResultGUID: String = ""
 
-  protected def makeOutput(exportResult: Scalar[ExportResult]): Map[BoxOutput, BoxOutputState] = {
+  protected def makeOutput(exportResult: Scalar[FileMetaData]): Map[BoxOutput, BoxOutputState] = {
     Map(context.meta.outputs(0).ofBox(context.box) -> BoxOutputState.from(exportResult))
   }
 
@@ -381,9 +381,9 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
     makeOutput(exportResultFromGUID())
   }
 
-  protected def exportResultFromGUID(): Scalar[ExportResult] = {
+  protected def exportResultFromGUID(): Scalar[FileMetaData] = {
     import MetaGraphManager.StringAsUUID
-    manager.scalarOf[ExportResult](exportResultGUID.asUUID)
+    manager.scalarOf[FileMetaData](exportResultGUID.asUUID)
   }
 
   private def assertWriteAllowed(path: String) = {
@@ -396,4 +396,4 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
   def enabled = FEStatus.enabled
 }
 
-case class ExportResult(numberOfRow: Long, format: String, path: String)
+case class FileMetaData(numberOfRow: Long, format: String, path: String)
