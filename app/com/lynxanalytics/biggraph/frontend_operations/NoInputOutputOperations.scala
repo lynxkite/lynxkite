@@ -23,8 +23,6 @@ class NoInputOutputOperations(env: SparkFreeEnvironment) extends OperationRegist
     def parameters = List(
       Code("comment", "Comment", language = "plain_text")
     )
-    def apply() = {}
-    def enabled = FEStatus.enabled
   })
 }
 
