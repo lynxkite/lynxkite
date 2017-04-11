@@ -28,7 +28,7 @@ angular.module('biggraph')
             y: (event.offsetY - workspaceY) / zoomToScale(workspaceZoom) };
         }
         function actualDragMode(event) {
-          var dragMode = window.localStorage.getItem('drag_mode');
+          var dragMode = (window.localStorage.getItem('drag_mode') || 'pan');
           if((dragMode === 'pan' && event.shiftKey)||
             (dragMode === 'select' && !event.shiftKey)){
               return 'select';
