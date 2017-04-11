@@ -100,14 +100,6 @@ angular.module('biggraph')
           this.selectedBoxIds.push(boxId);
         },
 
-        // selectedBox: function() {
-        //   if (this.selectedBoxId) {
-        //     return this.wrapper.boxMap[this.selectedBoxId];
-        //   } else {
-        //     return undefined;
-        //   }
-        // },
-
         selectedBoxes: function() {
           if (this.selectedBoxIds) {
             var workspaceWrapper = this.wrapper;
@@ -117,10 +109,8 @@ angular.module('biggraph')
           }
         },
 
-        updateSelectedBoxes: function(paramValues) {
-          this.selectedBoxIds.map(function(id) {
-            this.wrapper.setBoxParams(id, paramValues[id]);
-          });
+        updateSelectedBox: function(paramValues) {
+          this.wrapper.setBoxParams(this.selectedBoxIds[0], paramValues);
           this.saveWorkspace();
         },
 

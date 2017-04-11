@@ -12,9 +12,9 @@ angular.module('biggraph')
       },
       link: function(scope) {
         scope.$watch(
-            'workspace.selectedBoxIds[0]',
+            'workspace.selectedBoxIds',
             function() {
-              if (!scope.workspaceselectedBoxIds) {
+              if (!scope.workspace || !scope.workspace.selectedBoxes()[0]) {
                 return;
               }
               // Make a copy of the parameter values.
