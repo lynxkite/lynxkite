@@ -13,7 +13,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   def create(name: String) =
     controller.createWorkspace(user, CreateWorkspaceRequest(name, "private"))
-  def get(name: String): Workspace =
+  def get(name: String): GetWorkspaceResponse =
     controller.getWorkspace(user, GetWorkspaceRequest(name))
   def set(name: String, workspace: Workspace): Unit =
     controller.setWorkspace(user, SetWorkspaceRequest(name, workspace))
@@ -27,10 +27,16 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   }
   def getOpMeta(ws: String, box: String) =
     controller.getOperationMeta(user, GetOperationMetaRequest(ws, box))
-  def getOutputID(ws: String, box: String, output: String) =
-    controller.getOutputID(user, GetOutputIDRequest(ws, BoxOutput(box, output)))
-  def getProjectOutput(id: String, path: String = "") =
-    controller.getProjectOutput(user, GetProjectOutputRequest(id, path))
+
+  def getOutputIDs(ws: String) = {
+    val allIds = get(ws).outputs
+    allIds.map {
+      case BoxOutputInfo(bo, id, _, _) => (bo, id)
+    }.toMap
+  }
+  def getProjectOutput(id: String) =
+    controller.getProjectOutput(user, GetProjectOutputRequest(id, ""))
+
   import WorkspaceJsonFormatters._
   import CheckpointRepository._
   def print[T: json.Writes](t: T): Unit = {
@@ -45,7 +51,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val pr = Box("pr", "Compute PageRank", pagerankParams, 0, 20, Map("project" -> eg.output("project")))
     val ws = Workspace(List(eg, pr))
-    val project = ws.state(user, ops, pr.output("project")).project
+    val project = ws.allStates(user, ops)(pr.output("project")).project
     import graph_api.Scripting._
     assert(project.vertexAttributes("pagerank").rdd.values.collect.toSet == Set(
       1.4099834026132592, 1.4099834026132592, 0.9892062327983842, 0.19082696197509774))
@@ -57,7 +63,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       "merge", "Merge vertices by attribute", Map("key" -> "gender"), 0, 20,
       Map("project" -> eg.output("project")))
     val ws = Workspace(List(eg, merge))
-    val project = ws.state(user, ops, merge.output("project")).project
+    val project = ws.allStates(user, ops)(merge.output("project")).project
     import graph_api.Scripting._
     assert(project.scalars("!vertex_count_delta").value == -2)
   }
@@ -74,8 +80,9 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val pr1 = Box("pr1", "Compute PageRank", pagerankParams, 0, 20, Map())
     val pr2 = pr1.copy(id = "pr2", inputs = Map("project" -> pr1.output("project")))
     val ws = Workspace(List(pr1, pr2))
-    val p1 = ws.state(user, ops, pr1.output("project"))
-    val p2 = ws.state(user, ops, pr2.output("project"))
+    val allStates = ws.allStates(user, ops)
+    val p1 = allStates(pr1.output("project"))
+    val p2 = allStates(pr2.output("project"))
     val ex1 = intercept[AssertionError] { p1.project }
     val ex2 = intercept[AssertionError] { p2.project }
     assert(ex1.getMessage.contains("Input project is not connected."))
@@ -87,8 +94,9 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val ws = Workspace(List(eg))
       set("test-workspace", ws)
-      val p = getProjectOutput(getOutputID("test-workspace", "eg", "project").id)
-      val income = p.vertexAttributes.find(_.title == "income").get
+      val id = getOutputIDs("test-workspace")(eg.output("project"))
+      val o = getProjectOutput(id)
+      val income = o.vertexAttributes.find(_.title == "income").get
       assert(income.metadata("icon") == "money_bag")
     }
   }
@@ -149,7 +157,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(
         op.parameters.find(_.id == "src").get.options.map(_.id) ==
           Seq("!unset", "dst", "id", "ordinal", "src"))
-      val project = ws.state(user, ops, combine.output("project")).project
+      val project = ws.allStates(user, ops)(combine.output("project")).project
       import graph_api.Scripting._
       import graph_util.Scripting._
       assert(project.edgeBundle.countScalar.value == 2)
@@ -169,20 +177,23 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val prOutput = pr.output("project")
       val ws = Workspace(List(eg, cc, pr))
       set("test-workspace", ws)
+      val stateIDs = getOutputIDs("test-workspace")
+      val prStateID = stateIDs(prOutput)
       val progressBeforePR = controller.getProgress(user,
-        GetProgressRequest("test-workspace", prOutput)
-      ).progressList.find(_.boxOutput == prOutput).get
-      assert(progressBeforePR.success.enabled)
-      assert(progressBeforePR.progress.inProgress == 0)
-      val computedBeforePR = progressBeforePR.progress.computed
+        GetProgressRequest(List(prStateID))
+      ).progress(prStateID).get
+      assert(progressBeforePR.inProgress == 0)
+      assert(progressBeforePR.computed + progressBeforePR.inProgress
+        + progressBeforePR.notYetStarted + progressBeforePR.failed > 0)
+      val computedBeforePR = progressBeforePR.computed
       import graph_api.Scripting._
       // trigger PR computation
-      ws.state(user, ops, pr.output("project")).project.vertexAttributes(pagerankParams("name"))
+      ws.allStates(user, ops)(pr.output("project")).project.vertexAttributes(pagerankParams("name"))
         .rdd.values.collect
       val progressAfterPR = controller.getProgress(user,
-        GetProgressRequest("test-workspace", prOutput)
-      ).progressList.find(_.boxOutput == prOutput).get
-      val computedAfterPR = progressAfterPR.progress.computed
+        GetProgressRequest(List(prStateID))
+      ).progress(prStateID).get
+      val computedAfterPR = progressAfterPR.computed
       assert(computedAfterPR > computedBeforePR)
     }
   }
@@ -194,10 +205,35 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val prOutput = pr.output("project")
       val ws = Workspace(List(pr))
       set("test-workspace", ws)
+      val stateIDs = getOutputIDs("test-workspace")
+      val prStateID = stateIDs(prOutput)
       val progress = controller.getProgress(user,
-        GetProgressRequest("test-workspace", prOutput)
-      ).progressList.find(_.boxOutput == prOutput).get
-      assert(!progress.success.enabled)
+        GetProgressRequest(List(prStateID))
+      ).progress(prStateID)
+      assert(progress.isEmpty)
+    }
+  }
+
+  test("circular dependencies") {
+    using("test-workspace") {
+      assert(get("test-workspace").workspace.boxes.isEmpty)
+      val pr1 = Box("pr1", "Compute PageRank", pagerankParams, 0, 20,
+        Map("project" -> BoxOutput("pr2", "project")))
+      val pr2 = Box("pr2", "Compute PageRank", pagerankParams, 0, 20,
+        Map("project" -> BoxOutput("pr1", "project")))
+      val pr3 = Box("pr3", "Compute PageRank", pagerankParams, 0, 20,
+        Map("project" -> BoxOutput("pr2", "project")))
+      val badBoxes = List(pr1, pr2, pr3)
+      val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+      set("test-workspace", Workspace(eg :: badBoxes))
+      val outputInfo = get("test-workspace").outputs
+      val outputs = outputInfo.map(BoxOutputInfo.unapply).map(_.get).map {
+        case (boxOutput, _, success, _) => (boxOutput, success)
+      }.toMap
+      for (box <- badBoxes) {
+        assert(!outputs(box.output("project")).enabled)
+      }
+      assert(outputs(eg.output("project")).enabled)
     }
   }
 

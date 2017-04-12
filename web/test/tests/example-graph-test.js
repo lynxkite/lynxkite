@@ -51,7 +51,7 @@ module.exports = function(fw) {
       // progress is updated every 2 seconds, so we may need to wait
       browser.wait(() => outPlugReversedEdges.getAttribute('fill'), 1000 * 3);
       expect(outPlugFirstEG.getAttribute('fill')).not.toBeNull();
-      expect(outPlugSecondEG.getAttribute('fill')).toBeNull();
+      expect(outPlugSecondEG.getAttribute('fill')).not.toBeNull();
     });
 
 };
