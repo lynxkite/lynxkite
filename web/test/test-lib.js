@@ -168,13 +168,6 @@ Workspace.prototype = {
     }
   },
 
-  submitOperation: function() {
-    var button = this.boxEditor.$('.ok-button');
-    // Wait for uploads or whatever.
-    testLib.wait(protractor.ExpectedConditions.textToBePresentInElement(button, 'OK'));
-    button.click();
-  },
-
   addBox: function(boxData) {
     var id = boxData.id;
     var after = boxData.after;
@@ -205,7 +198,6 @@ Workspace.prototype = {
   editBox: function(boxID, params) {
     this.selectBox(boxID);
     this.populateOperation(params);
-    this.submitOperation();
   },
 
   expectSelectedBoxParameter: function(paramName, expectedValue) {
