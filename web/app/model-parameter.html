@@ -4,6 +4,7 @@
       ng-disabled="!editable"
       class="form-control"
       ng-model="activeModel"
+      ng-blur="onBlur()"
       ng-options="model as model.name for model in param.payload.models"></select>
 <div ng-if="activeModel">
   <div class="model-parameter">Bind the features of the model</div>
@@ -16,6 +17,7 @@
           ng-disabled="!editable"
           class="form-control"
           ng-model="binding[feature]"
+          ng-blur="onBlur()"
           ng-options="attr.id as attr.title for attr in param.payload.attrs">
         </select>
       </td>

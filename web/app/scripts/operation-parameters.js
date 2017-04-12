@@ -9,6 +9,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       box: '=',
       meta: '=',
       output: '=',
+      onBlur: '&',
       busy: '=?',
       editable: '=',
     },

@@ -8,6 +8,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
       params: '=',
       guid: '=',
       fileUploads: '=',
+      onBlur: '&',
     },
     templateUrl: 'table-kind.html',
     link: function(scope) {
@@ -18,6 +19,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
         box.parameters = scope.params;
         util.post('/ajax/importBox', box).then(function success(response) {
           scope.guid = response;
+          scope.onBlur();
         }, function error(error) {
           scope.error = error;
         }).finally(function() {
