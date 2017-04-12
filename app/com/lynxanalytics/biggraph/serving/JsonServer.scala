@@ -283,7 +283,8 @@ object FrontendJson {
   implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
 
   import WorkspaceJsonFormatters._
-  import WorkspaceControllerJsonFormatters._
+  implicit val fBoxOutputInfo = json.Json.format[BoxOutputInfo]
+  implicit val fProgress = json.Json.format[Progress]
   implicit val rGetWorkspaceRequest = json.Json.reads[GetWorkspaceRequest]
   implicit val wGetWorkspaceResponse = json.Json.writes[GetWorkspaceResponse]
   implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
