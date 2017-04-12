@@ -6,7 +6,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
     scope: {
       box: '=',
       params: '=',
-      snapshot: '=',
+      guid: '=',
       fileUploads: '=',
     },
     templateUrl: 'table-kind.html',
@@ -17,7 +17,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
         var box = angular.copy(scope.box.instance);
         box.parameters = scope.params;
         util.post('/ajax/importBox', box).then(function success(response) {
-          scope.snapshot = response;
+          scope.guid = response;
         }, function error(error) {
           scope.error = error;
         }).finally(function() {
