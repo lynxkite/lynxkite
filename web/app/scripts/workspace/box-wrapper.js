@@ -78,9 +78,15 @@ angular.module('biggraph').factory('boxWrapper', function() {
       outputs.push(plug);
       outputMap[plug.id] = plug;
     }
-    var isCommentBox = metadata.operationID === 'Add comment';
-    var comment = instance.parameters.comment;
-    var commentLines = comment ? comment.split('\n') : [];
+    function getCommentLines() {
+      var comment;
+      if (metadata.operationID === 'Add comment') {
+        comment = instance.parameters.comment;
+      } else if (metadata.operationID === 'Anchor') {
+        comment = instance.parameters.description;
+      }
+      return comment ? comment.split('\n') : [];
+    }
 
     return {
       metadata: metadata,
@@ -90,8 +96,7 @@ angular.module('biggraph').factory('boxWrapper', function() {
       outputMap: outputMap,
       width: width,
       height: height,
-      isCommentBox: isCommentBox,
-      commentLines: commentLines,
+      commentLines: getCommentLines(),
       isMoved: false,
       mainPosTransform: function() {
         return 'translate(' + this.instance.x + ', ' + this.instance.y + ')';
