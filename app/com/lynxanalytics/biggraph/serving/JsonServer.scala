@@ -11,13 +11,11 @@ import scala.concurrent.Future
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
-import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
 import org.apache.spark.sql.types.{ StructField, StructType }
-import play.api.libs.json.{ JsValue, Writes }
 
 abstract class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None

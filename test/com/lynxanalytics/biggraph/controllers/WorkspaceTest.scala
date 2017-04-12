@@ -161,7 +161,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(
         op.parameters.find(_.id == "src").get.options.map(_.id) ==
           Seq("!unset", "dst", "id", "ordinal", "src"))
-      val project = ws.state(user, ops, combine.output("project")).project
+      val project = ws.allStates(user, ops)(combine.output("project")).project
       import graph_api.Scripting._
       import graph_util.Scripting._
       assert(project.edgeBundle.countScalar.value == 2)

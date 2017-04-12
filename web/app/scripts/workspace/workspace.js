@@ -99,7 +99,6 @@ angular.module('biggraph')
 
         selectState: function(boxID, outputID) {
           var outPlug = this.wrapper.boxMap[boxID].outputMap[outputID];
-          console.log(outPlug.stateID);
           this.selectedStateId = outPlug.stateID;
           this.selectedStateKind = outPlug.kind;
         },
@@ -160,8 +159,8 @@ angular.module('biggraph')
         },
 
         getAndUpdateProgress: function(errorHandler) {
-          var that = this;
           var wrapperBefore = this.wrapper;
+          var that = this;
           if (wrapperBefore) {
             util.nocache('/ajax/getProgress', {
               stateIDs: wrapperBefore.knownStateIDs,
@@ -177,8 +176,8 @@ angular.module('biggraph')
         },
 
         startProgressUpdate: function() {
-          var that = this;
           this.stopProgressUpdate();
+          var that = this;
           progressUpdater = $interval(function() {
             function errorHandler(error) {
               util.error('Couldn\'t get progress information.', error);
