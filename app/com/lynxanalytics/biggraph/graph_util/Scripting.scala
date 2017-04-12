@@ -137,6 +137,14 @@ object Scripting {
       graph_operations.IntAttributeToDouble.run(self)
   }
 
+  implicit class RichContainedTable(
+    p: EntityContainer[Table])(implicit m: MetaGraphManager)
+      extends RichTable(p.entity)
+  implicit class RichTable(self: Table)(implicit manager: MetaGraphManager) {
+    def toAttributes =
+      graph_operations.TableToAttributes.run(self)
+  }
+
   // Take the union of edge bundles that are parallel, that is that are going between the same
   // two vertex sets.
   def parallelEdgeBundleUnion(

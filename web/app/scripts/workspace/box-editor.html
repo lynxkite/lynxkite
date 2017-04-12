@@ -1,10 +1,10 @@
 <div class="box col-sm-11 {{color}}">
   <h1>
-    {{box.metadata.operationID}}
+    {{ boxMeta.operationID }}
   </h1>
 
   <!-- For documented operations. -->
-  <p help-id="{{box.metadata.operationID}}"
+  <p help-id="{{ boxMeta.operationID }}"
      remove-header="yes"
      scalars="scalars"
      class="description"></p>
@@ -14,7 +14,8 @@
   </p>
   <form ng-if="boxMeta.parameters" class="form-horizontal" ng-submit="apply()">
     <operation-parameters
-        params="boxMeta.parameters"
+        box="box"
+        meta="boxMeta"
         output="paramValues"
         editable="true">
     </operation-parameters>

@@ -2,7 +2,5 @@
 
 Takes a project and creates a new one where the vertices correspond to the original project's
 edges. All edge attributes in the original project are converted to vertex attributes in the new
-project. All vertex attributes, scalars and segmentations of the original project are lost.
-
-
-
+project with the `edge_` prefix. All vertex attributes are converted to two vertex attributes with
+`src_` and `dst_` prefixes. Scalars and segmentations of the original project are lost.

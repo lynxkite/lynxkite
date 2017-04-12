@@ -1,8 +1,4 @@
-// "Frontend" operations are all defined here.
-//
-// The code in this file defines the operation parameters to be offered on the UI,
-// and also takes care of parsing the parameters given by the user and creating
-// the "backend" operations and updating the projects.
+// Frontend operations for projects.
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
@@ -19,7 +15,9 @@ import com.lynxanalytics.biggraph.serving.FrontendJson
 import play.api.libs.json
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
-  override val operations = new ProjectOperations(env).operations.toMap
+  override val operations =
+    new ProjectOperations(env).operations.toMap ++
+      new ImportOperations(env).operations.toMap
 }
 
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
@@ -28,22 +26,21 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import Operation.Context
   import Operation.Implicits._
 
-  private val projectConnection = TypedConnection("project", "project")
+  private val projectInput = "project" // The default input name, just to avoid typos.
+  private val projectOutput = TypedConnection("project", BoxOutputKind.Project)
 
   def register(
     id: String,
     category: Category,
     factory: Context => ProjectTransformation): Unit = {
-    registerOp(id, category, List(projectConnection), List(projectConnection), factory)
+    registerOp(id, category, List(projectInput), List(projectOutput), factory)
   }
 
   def register(
     id: String,
     category: Category,
     inputProjects: String*)(factory: Context => Operation): Unit = {
-    registerOp(
-      id, category, inputProjects.toList.map(i => TypedConnection(i, "project")),
-      List(projectConnection), factory)
+    registerOp(id, category, inputProjects.toList, List(projectOutput), factory)
   }
 
   trait SegOp extends ProjectTransformation {
@@ -173,185 +170,173 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Import vertices", ImportOperations)(new ProjectOutputOperation(_) {
-    lazy val parameters = List(
-      TableParam(
-        "table",
-        "Table to import from",
-        project.accessibleTableOptions),
-      Param("id_attr", "Save internal ID as", defaultValue = "id"))
-    def enabled = FEStatus.enabled
-    def apply() = {
-      ???
-      /*
-      val table = Table(TablePath.parse(params("table")), project.viewer)
-      project.vertexSet = table.idSet
-      for ((name, attr) <- table.columns) {
-        project.newVertexAttribute(name, attr, "imported")
-      }
-      val idAttr = params("id_attr")
-      if (idAttr.nonEmpty) {
-        assert(
-          !project.vertexAttributes.contains(idAttr),
-          s"The input also contains a column called '$idAttr'. Please pick a different name.")
-        project.newVertexAttribute(idAttr, project.vertexSet.idAttribute, "internal")
-      }
-      */
-    }
-  })
-
-  register(
-    "Import edges for existing vertices", ImportOperations,
-    "project", "edges")(
-      new ProjectOutputOperation(_) {
-        override lazy val project = projectInput("project")
-        lazy val edges = projectInput("edges")
-        lazy val parameters = List(
-          Choice("attr", "Vertex ID attribute", options = FEOption.unset +: project.vertexAttrList),
-          Choice("src", "Source ID column", options = FEOption.unset +: edges.vertexAttrList),
-          Choice("dst", "Destination ID column", options = FEOption.unset +: edges.vertexAttrList))
-        def enabled =
-          FEStatus.assert(
-            project.vertexAttrList.nonEmpty, "No attributes on the project to use as id.") &&
-            FEStatus.assert(
-              edges.vertexAttrList.nonEmpty, "No attributes on the edges to use as id.")
-        def apply() = {
-          val src = params("src")
-          val dst = params("dst")
-          val id = params("attr")
-          assert(src != FEOption.unset.id, "The Source ID column parameter must be set.")
-          assert(dst != FEOption.unset.id, "The Destination ID column parameter must be set.")
-          assert(id != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
-          val idAttr = project.vertexAttributes(id)
-          val srcAttr = edges.vertexAttributes(src)
-          val dstAttr = edges.vertexAttributes(dst)
-          val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
-            idAttr, idAttr, srcAttr, dstAttr)
-          project.edgeBundle = imp.edges
-          for ((name, attr) <- edges.vertexAttributes) {
-            project.edgeAttributes(name) = attr.pullVia(imp.embedding)
-          }
-        }
-      })
-
-  register("Import vertices and edges from a single table", ImportOperations)(
-    new ProjectOutputOperation(_) {
+  registerOp(
+    "Import vertices", ImportOperations,
+    inputs = List("vertices"), outputs = List(projectOutput),
+    factory = new ProjectOutputOperation(_) {
+      lazy val vertices = tableLikeInput("vertices").asProject
       lazy val parameters = List(
-        TableParam(
-          "table",
-          "Table to import from",
-          project.accessibleTableOptions),
-        Param("src", "Source ID column"),
-        Param("dst", "Destination ID column"))
+        Param("id_attr", "Save internal ID as", defaultValue = ""))
+      def enabled = FEStatus.enabled
+      def apply() = {
+        project.vertexSet = vertices.vertexSet
+        for ((name, attr) <- vertices.vertexAttributes) {
+          project.newVertexAttribute(name, attr, "imported")
+        }
+        val idAttr = params("id_attr")
+        if (idAttr.nonEmpty) {
+          assert(
+            !project.vertexAttributes.contains(idAttr),
+            s"The input also contains a column called '$idAttr'. Please pick a different name.")
+          project.newVertexAttribute(idAttr, project.vertexSet.idAttribute, "internal")
+        }
+      }
+    })
+
+  registerOp(
+    "Import edges for existing vertices", ImportOperations,
+    inputs = List(projectInput, "edges"), outputs = List(projectOutput),
+    factory = new ProjectOutputOperation(_) {
+      override lazy val project = projectInput("project")
+      lazy val edges = tableLikeInput("edges").asProject
+      lazy val parameters = List(
+        Choice("attr", "Vertex ID attribute", options = FEOption.unset +: project.vertexAttrList),
+        Choice("src", "Source ID column", options = FEOption.unset +: edges.vertexAttrList),
+        Choice("dst", "Destination ID column", options = FEOption.unset +: edges.vertexAttrList))
+      def enabled =
+        FEStatus.assert(
+          project.vertexAttrList.nonEmpty, "No attributes on the project to use as id.") &&
+          FEStatus.assert(
+            edges.vertexAttrList.nonEmpty, "No attributes on the edges to use as id.")
+      def apply() = {
+        val src = params("src")
+        val dst = params("dst")
+        val id = params("attr")
+        assert(src != FEOption.unset.id, "The Source ID column parameter must be set.")
+        assert(dst != FEOption.unset.id, "The Destination ID column parameter must be set.")
+        assert(id != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
+        val idAttr = project.vertexAttributes(id)
+        val srcAttr = edges.vertexAttributes(src)
+        val dstAttr = edges.vertexAttributes(dst)
+        val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
+          idAttr, idAttr, srcAttr, dstAttr)
+        project.edgeBundle = imp.edges
+        for ((name, attr) <- edges.vertexAttributes) {
+          project.edgeAttributes(name) = attr.pullVia(imp.embedding)
+        }
+      }
+    })
+
+  registerOp(
+    "Import vertices and edges from a single table", ImportOperations,
+    inputs = List("edges"), outputs = List(projectOutput),
+    factory = new ProjectOutputOperation(_) {
+      lazy val edges = tableLikeInput("edges").asProject
+      lazy val parameters = List(
+        Choice("src", "Source ID column", options = FEOption.unset +: edges.vertexAttrList),
+        Choice("dst", "Destination ID column", options = FEOption.unset +: edges.vertexAttrList))
       def enabled = FEStatus.enabled
       def apply() = {
         val src = params("src")
         val dst = params("dst")
-        assert(src.nonEmpty, "The Source ID column parameter must be set.")
-        assert(dst.nonEmpty, "The Destination ID column parameter must be set.")
-        ???
-        /*
-        val table = Table(TablePath.parse(params("table")), project.viewer)
+        assert(src != FEOption.unset.id, "The Source ID column parameter must be set.")
+        assert(dst != FEOption.unset.id, "The Destination ID column parameter must be set.")
         val eg = {
           val op = graph_operations.VerticesToEdges()
-          op(op.srcAttr, table.column(src).runtimeSafeCast[String])(
-            op.dstAttr, table.column(dst).runtimeSafeCast[String]).result
+          op(op.srcAttr, edges.vertexAttributes(src).runtimeSafeCast[String])(
+            op.dstAttr, edges.vertexAttributes(dst).runtimeSafeCast[String]).result
         }
         project.setVertexSet(eg.vs, idAttr = "id")
         project.newVertexAttribute("stringID", eg.stringID)
         project.edgeBundle = eg.es
-        for ((name, attr) <- table.columns) {
+        for ((name, attr) <- edges.vertexAttributes) {
           project.edgeAttributes(name) = attr.pullVia(eg.embedding)
         }
-        */
       }
     })
 
-  register("Import vertex attributes", ImportOperations, new ProjectTransformation(_) {
-    lazy val parameters = List(
-      TableParam(
-        "table",
-        "Table to import from",
-        project.accessibleTableOptions),
-      Choice("id_attr", "Vertex attribute",
-        options = FEOption.unset +: project.vertexAttrList[String]),
-      Param("id_column", "ID column"),
-      Param("prefix", "Name prefix for the imported vertex attributes"),
-      Choice("unique_keys", "Assert unique vertex attribute values",
-        options = FEOption.bools))
-    def enabled =
-      project.hasVertexSet &&
-        FEStatus.assert(project.vertexAttrList[String].nonEmpty, "No vertex attributes to use as key.")
-    def apply() = {
-      ???
-      /*
-      val table = Table(TablePath.parse(params("table")), project.viewer)
-      val attrName = params("id_attr")
-      assert(attrName != FEOption.unset.id, "The Vertex attribute parameter must be set.")
-      val idAttr = project.vertexAttributes(attrName).runtimeSafeCast[String]
-      val idColumn = table.column(params("id_column")).runtimeSafeCast[String]
-      val projectAttrNames = project.vertexAttributeNames
-      val uniqueKeys = params.getOrElse("unique_keys", "true").toBoolean
-      val edges = if (uniqueKeys) {
-        val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
-        op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
-      } else {
-        val op = graph_operations.EdgesFromLookupAttributeMatches()
-        op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+  registerOp(
+    "Import vertex attributes", ImportOperations,
+    inputs = List(projectInput, "attributes"),
+    outputs = List(projectOutput),
+    factory = new ProjectOutputOperation(_) {
+      override lazy val project = projectInput("project")
+      lazy val attributes = tableLikeInput("attributes").asProject
+      lazy val parameters = List(
+        Choice("id_attr", "Vertex attribute",
+          options = FEOption.unset +: project.vertexAttrList[String]),
+        Choice("id_column", "ID column",
+          options = FEOption.unset +: attributes.vertexAttrList[String]),
+        Param("prefix", "Name prefix for the imported vertex attributes"),
+        Choice("unique_keys", "Assert unique vertex attribute values", options = FEOption.bools))
+      def enabled =
+        project.hasVertexSet &&
+          FEStatus.assert(project.vertexAttrList[String].nonEmpty, "No vertex attributes to use as key.")
+      def apply() = {
+        val idAttrName = params("id_attr")
+        val idColumnName = params("id_column")
+        assert(idAttrName != FEOption.unset.id, "The vertex attribute parameter must be set.")
+        assert(idColumnName != FEOption.unset.id, "The ID column parameter must be set.")
+        val idAttr = project.vertexAttributes(idAttrName).runtimeSafeCast[String]
+        val idColumn = attributes.vertexAttributes(idColumnName).runtimeSafeCast[String]
+        val projectAttrNames = project.vertexAttributeNames
+        val uniqueKeys = params.getOrElse("unique_keys", "true").toBoolean
+        val edges = if (uniqueKeys) {
+          val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
+          op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+        } else {
+          val op = graph_operations.EdgesFromLookupAttributeMatches()
+          op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+        }
+        val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+        for ((name, attr) <- attributes.vertexAttributes) {
+          assert(!projectAttrNames.contains(prefix + name),
+            s"Cannot import column `${prefix + name}`. Attribute already exists.")
+          project.newVertexAttribute(prefix + name, attr.pullVia(edges), "imported")
+        }
       }
-      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      for ((name, attr) <- table.columns) {
-        assert(!projectAttrNames.contains(prefix + name),
-          s"Cannot import column `${prefix + name}`. Attribute already exists.")
-        project.newVertexAttribute(prefix + name, attr.pullVia(edges), "imported")
-      }
-      */
-    }
-  })
+    })
 
-  register("Import edge attributes", ImportOperations, new ProjectTransformation(_) {
-    lazy val parameters = List(
-      TableParam(
-        "table",
-        "Table to import from",
-        project.accessibleTableOptions),
-      Choice("id_attr", "Edge attribute",
-        options = FEOption.unset +: project.edgeAttrList[String]),
-      Param("id_column", "ID column"),
-      Param("prefix", "Name prefix for the imported edge attributes"),
-      Choice("unique_keys", "Assert unique edge attribute values",
-        options = FEOption.bools))
-    def enabled =
-      project.hasEdgeBundle &&
-        FEStatus.assert(project.edgeAttrList[String].nonEmpty, "No edge attributes to use as key.")
-    def apply() = {
-      ???
-      /*
-      val table = Table(TablePath.parse(params("table")), project.viewer)
-      val columnName = params("id_column")
-      assert(columnName.nonEmpty, "The ID column parameter must be set.")
-      val attrName = params("id_attr")
-      assert(attrName != FEOption.unset.id, "The Edge attribute parameter must be set.")
-      val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
-      val idColumn = table.column(params("id_column")).runtimeSafeCast[String]
-      val projectAttrNames = project.edgeAttributeNames
-      val uniqueKeys = params.getOrElse("unique_keys", "true").toBoolean
-      val edges = if (uniqueKeys) {
-        val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
-        op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
-      } else {
-        val op = graph_operations.EdgesFromLookupAttributeMatches()
-        op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+  registerOp(
+    "Import edge attributes", ImportOperations,
+    inputs = List(projectInput, "attributes"),
+    outputs = List(projectOutput),
+    factory = new ProjectOutputOperation(_) {
+      override lazy val project = projectInput("project")
+      lazy val attributes = tableLikeInput("attributes").asProject
+      lazy val parameters = List(
+        Choice("id_attr", "Edge attribute",
+          options = FEOption.unset +: project.edgeAttrList[String]),
+        Choice("id_column", "ID column", options = FEOption.unset +: attributes.vertexAttrList),
+        Param("prefix", "Name prefix for the imported edge attributes"),
+        Choice("unique_keys", "Assert unique edge attribute values", options = FEOption.bools))
+      def enabled =
+        project.hasEdgeBundle &&
+          FEStatus.assert(project.edgeAttrList[String].nonEmpty, "No edge attributes to use as key.")
+      def apply() = {
+        val columnName = params("id_column")
+        assert(columnName != FEOption.unset.id, "The ID column parameter must be set.")
+        val attrName = params("id_attr")
+        assert(attrName != FEOption.unset.id, "The edge attribute parameter must be set.")
+        val idAttr = project.edgeAttributes(attrName).runtimeSafeCast[String]
+        val idColumn = attributes.vertexAttributes(columnName).runtimeSafeCast[String]
+        val projectAttrNames = project.edgeAttributeNames
+        val uniqueKeys = params.getOrElse("unique_keys", "true").toBoolean
+        val edges = if (uniqueKeys) {
+          val op = graph_operations.EdgesFromUniqueBipartiteAttributeMatches()
+          op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+        } else {
+          val op = graph_operations.EdgesFromLookupAttributeMatches()
+          op(op.fromAttr, idAttr)(op.toAttr, idColumn).result.edges
+        }
+        val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
+        for ((name, attr) <- attributes.vertexAttributes) {
+          assert(!projectAttrNames.contains(prefix + name),
+            s"Cannot import column `${prefix + name}`. Attribute already exists.")
+          project.newEdgeAttribute(prefix + name, attr.pullVia(edges), "imported")
+        }
       }
-      val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
-      for ((name, attr) <- table.columns) {
-        assert(!projectAttrNames.contains(prefix + name),
-          s"Cannot import column `${prefix + name}`. Attribute already exists.")
-        project.newEdgeAttribute(prefix + name, attr.pullVia(edges), "imported")
-      }
-      */
-    }
-  })
+    })
 
   register("Find maximal cliques", CreateSegmentationOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
@@ -374,28 +359,57 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Take segmentation as base project", StructureOperations, new ProjectTransformation(_) {
-    def parameters = List(
-      Choice("segmentation", "Segmentation to be set as base project", options = project.segmentationList)
-    )
-    def enabled = project.hasSegmentation
-    def apply() = {
-      val segmentation = project.segmentation(params("segmentation"))
-      project.state = segmentation.state
-    }
-  })
+  register("Take segmentation as base project", StructureOperations,
+    new ProjectTransformation(_) with SegOp {
+      def segmentationParameters = List()
+      def enabled = FEStatus.enabled
+      def apply() = {
+        project.rootEditor.state = project.state
+      }
+    })
 
   register("Take edges as vertices", StructureOperations, new ProjectTransformation(_) {
     def parameters = List()
     def enabled = project.hasEdgeBundle
     def apply() = {
       val edgeBundle = project.edgeBundle
-      val edgeAttr = project.edgeAttributes.toMap
+      val vertexAttrs = project.vertexAttributes.toMap
+      val edgeAttrs = project.edgeAttributes.toMap
       project.scalars = Map()
       project.vertexSet = edgeBundle.idSet
-      project.vertexAttributes = edgeAttr
+      for ((name, attr) <- vertexAttrs) {
+        project.newVertexAttribute(
+          "src_" + name, graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle))
+        project.newVertexAttribute(
+          "dst_" + name, graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle))
+      }
+      for ((name, attr) <- edgeAttrs) {
+        project.newVertexAttribute("edge_" + name, attr)
+      }
     }
   })
+
+  register("Take segmentation links as base project", StructureOperations,
+    new ProjectTransformation(_) with SegOp {
+      def segmentationParameters = List()
+      def enabled = FEStatus.enabled
+      def apply() = {
+        val root = project.rootEditor
+        val baseAttrs = parent.vertexAttributes.toMap
+        val segAttrs = project.vertexAttributes.toMap
+        val belongsTo = seg.belongsTo
+        root.scalars = Map()
+        root.vertexSet = belongsTo.idSet
+        for ((name, attr) <- baseAttrs) {
+          root.newVertexAttribute(
+            "base_" + name, graph_operations.VertexToEdgeAttribute.srcAttribute(attr, belongsTo))
+        }
+        for ((name, attr) <- segAttrs) {
+          root.newVertexAttribute(
+            "segment_" + name, graph_operations.VertexToEdgeAttribute.dstAttribute(attr, belongsTo))
+        }
+      }
+    })
 
   register("Check cliques", UtilityOperations, new ProjectTransformation(_) with SegOp {
     def segmentationParameters = List(
@@ -405,7 +419,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def apply() = {
       val selected =
         if (params("selected") == "<All>") None
-        else Some(params("selected").split(",", -1).map(_.toLong).toSet)
+        else Some(splitParam("selected").map(_.toLong).toSet)
       val op = graph_operations.CheckClique(selected, params("bothdir").toBoolean)
       val result = op(op.es, parent.edgeBundle)(op.belongsTo, seg.belongsTo).result
       parent.scalars("invalid_cliques") = result.invalid
@@ -740,7 +754,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
     def apply() = {
       val segmentations =
-        params("segmentations").split(",", -1).map(project.existingSegmentation(_))
+        splitParam("segmentations").map(project.existingSegmentation(_))
       assert(segmentations.size >= 2, "Please select at least 2 segmentations to combine.")
       val result = project.segmentation(params("name"))
       // Start by copying the first segmentation.
@@ -964,7 +978,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       def enabled = FEStatus.assert(
         project.vertexAttrList[Double].size >= 2, "Less than two vertex attributes.")
       def apply() = {
-        val featureNames = params("features").split(",", -1).sorted
+        val featureNames = splitParam("features").sorted
         assert(featureNames.size >= 2, "Please select at least two attributes.")
         val features = featureNames.map {
           name => project.vertexAttributes(name).runtimeSafeCast[Double]
@@ -1248,6 +1262,15 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
+  register("Load snapshot", StructureOperations)(new ProjectOutputOperation(_) {
+    lazy val parameters = List(Param("path", "Path"))
+    def enabled = FEStatus.enabled
+    def apply() = {
+      val snapshot = DirectoryEntry.fromName(paramValues("path")).asSnapshotFrame
+      project.state = snapshot.getState.project.state
+    }
+  })
+
   register("Hash vertex attribute", ImportOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true),
@@ -1263,7 +1286,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       assert(
         graph_operations.HashVertexAttribute.getSecret(salt).nonEmpty, "Please set a salt value.")
       val op = graph_operations.HashVertexAttribute(salt)
-      for (attribute <- params("attr").split(",", -1)) {
+      for (attribute <- splitParam("attr")) {
         val attr = project.vertexAttributes(attribute).asString
         project.newVertexAttribute(
           attribute, op(op.vs, project.vertexSet)(op.attr, attr).result.hashed, "hashed")
@@ -1289,7 +1312,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true))
       def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes.")
       def apply() = {
-        for (attr <- params("attr").split(",", -1)) {
+        for (attr <- splitParam("attr")) {
           project.vertexAttributes(attr) = project.vertexAttributes(attr).asString
         }
       }
@@ -1301,7 +1324,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         Choice("attr", "Edge attribute", options = project.edgeAttrList, multipleChoice = true))
       def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No edge attributes.")
       def apply() = {
-        for (attr <- params("attr").split(",", -1)) {
+        for (attr <- splitParam("attr")) {
           project.edgeAttributes(attr) = project.edgeAttributes(attr).asString
         }
       }
@@ -1317,7 +1340,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         Choice("attr", "Vertex attribute", options = eligible, multipleChoice = true))
       def enabled = FEStatus.assert(eligible.nonEmpty, "No eligible vertex attributes.")
       def apply() = {
-        for (name <- params("attr").split(",", -1)) {
+        for (name <- splitParam("attr")) {
           val attr = project.vertexAttributes(name)
           project.vertexAttributes(name) = toDouble(attr)
         }
@@ -1334,7 +1357,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         Choice("attr", "Edge attribute", options = eligible, multipleChoice = true))
       def enabled = FEStatus.assert(eligible.nonEmpty, "No eligible edge attributes.")
       def apply() = {
-        for (name <- params("attr").split(",", -1)) {
+        for (name <- splitParam("attr")) {
           val attr = project.edgeAttributes(name)
           project.edgeAttributes(name) = toDouble(attr)
         }
@@ -1379,7 +1402,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
-      Code("expr", "Value", defaultValue = "1 + 1"))
+      Code("expr", "Value", defaultValue = "1 + 1", language = "javascript"))
     def enabled = project.hasVertexSet
     override def summary = {
       val name = params("output")
@@ -1417,7 +1440,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
-      Code("expr", "Value", defaultValue = "1 + 1"))
+      Code("expr", "Value", defaultValue = "1 + 1", language = "javascript"))
     def enabled = project.hasEdgeBundle
     override def summary = {
       val name = params("output")
@@ -1468,7 +1491,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     lazy val parameters = List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.list("double", "string")),
-      Code("expr", "Value", defaultValue = "1 + 1"))
+      Code("expr", "Value", defaultValue = "1 + 1", language = "javascript"))
     def enabled = FEStatus.enabled
     override def summary = {
       val name = params("output")
@@ -1503,7 +1526,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
     def apply() = {
       assert(params("features").nonEmpty, "Please select at least one predictor.")
-      val featureNames = params("features").split(",", -1)
+      val featureNames = splitParam("features")
       val features = featureNames.map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -1535,7 +1558,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def apply() = {
       assert(params("name").nonEmpty, "Please set the name of the model.")
       assert(params("features").nonEmpty, "Please select at least one predictor.")
-      val featureNames = params("features").split(",", -1).sorted
+      val featureNames = splitParam("features").sorted
       val features = featureNames.map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -1563,7 +1586,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def apply() = {
       assert(params("name").nonEmpty, "Please set the name of the model.")
       assert(params("features").nonEmpty, "Please select at least one feature.")
-      val featureNames = params("features").split(",", -1).sorted
+      val featureNames = splitParam("features").sorted
       val features = featureNames.map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -1598,7 +1621,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def apply() = {
       assert(params("name").nonEmpty, "Please set the name of the model.")
       assert(params("features").nonEmpty, "Please select at least one predictor.")
-      val featureNames = params("features").split(",", -1).sorted
+      val featureNames = splitParam("features").sorted
       val features = featureNames.map {
         name => project.vertexAttributes(name).runtimeSafeCast[Double]
       }
@@ -2355,7 +2378,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Discard edge attributes: $names"
     }
     def apply() = {
-      for (param <- params("name").split(",", -1)) {
+      for (param <- splitParam("name")) {
         project.deleteEdgeAttribute(param)
       }
     }
@@ -2370,7 +2393,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Discard vertex attributes: $names"
     }
     def apply() = {
-      for (param <- params("name").split(",", -1)) {
+      for (param <- splitParam("name")) {
         project.deleteVertexAttribute(param)
       }
     }
@@ -2398,7 +2421,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Discard scalars: $names"
     }
     def apply() = {
-      for (param <- params("name").split(",", -1)) {
+      for (param <- splitParam("name")) {
         project.deleteScalar(param)
       }
     }
@@ -2415,9 +2438,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Rename edge attribute $from to $to"
     }
     def apply() = {
-      assert(!project.edgeAttributes.contains(params("after")),
-        s"""An edge-attribute named '${params("after")}' already exists,
-            please discard it or choose another name""")
       project.edgeAttributes(params("after")) = project.edgeAttributes(params("before"))
       project.edgeAttributes(params("before")) = null
     }
@@ -2434,9 +2454,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Rename vertex attribute $before to $after"
     }
     def apply() = {
-      assert(!project.vertexAttributes.contains(params("after")),
-        s"""A vertex-attribute named '${params("after")}' already exists,
-            please discard it or choose another name""")
       assert(params("after").nonEmpty, "Please set the new attribute name.")
       project.newVertexAttribute(
         params("after"), project.vertexAttributes(params("before")),
@@ -2456,10 +2473,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Rename segmentation $from to $to"
     }
     def apply() = {
-      assert(
-        !project.segmentationNames.contains(params("after")),
-        s"""A segmentation named '${params("after")}' already exists,
-            please discard it or choose another name""")
       project.segmentation(params("after")).segmentationState =
         project.existingSegmentation(params("before")).segmentationState
       project.deleteSegmentation(params("before"))
@@ -2477,9 +2490,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"Rename scalar $from to $to"
     }
     def apply() = {
-      assert(!project.scalars.contains(params("after")),
-        s"""A scalar named '${params("after")}' already exists,
-            please discard it or choose another name""")
       project.scalars(params("after")) = project.scalars(params("before"))
       project.scalars(params("before")) = null
     }
@@ -2652,140 +2662,141 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Import project as segmentation", ImportOperations, new ProjectTransformation(_) {
-    lazy val parameters = List(
-      Choice(
-        "them",
-        "Other project's name",
-        options = project.readableProjectCheckpoints,
-        allowUnknownOption = true))
-    def enabled = project.hasVertexSet
-    override def summary = {
-      val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(params("them"))
-      s"Import $title as segmentation"
-    }
-    def apply() = {
-      val themId = params("them")
-      val (cp, title, _) = getAndCheckProjectCheckpoint(themId)
-      val baseName = SymbolPath.parse(title).last.name
-      val them = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
-      assert(them.vertexSet != null, s"No vertex set in $them")
-      val segmentation = project.segmentation(baseName)
-      segmentation.state = them.state
-      val op = graph_operations.EmptyEdgeBundle()
-      segmentation.belongsTo = op(op.src, project.vertexSet)(op.dst, them.vertexSet).result.eb
-    }
-  })
-
-  register("Import segmentation links", ImportOperations, new ProjectTransformation(_) with SegOp {
-    def segmentationParameters = List(
-      TableParam(
-        "table",
-        "Table to import from",
-        project.accessibleTableOptions),
-      Choice(
-        "base_id_attr",
-        s"Identifying vertex attribute in base project",
-        options = FEOption.list(parent.vertexAttributeNames.toList)),
-      Param("base_id_column", s"Identifying column for base project"),
-      Choice(
-        "seg_id_attr",
-        s"Identifying vertex attribute in segmentation",
-        options = project.vertexAttrList),
-      Param("seg_id_column", s"Identifying column for segmentation"))
-    def enabled =
-      project.assertSegmentation &&
-        FEStatus.assert(
-          project.vertexAttrList.nonEmpty,
-          "No vertex attributes in this segmentation") &&
-          FEStatus.assert(
-            parent.vertexAttributeNames.nonEmpty,
-            "No vertex attributes in base project")
-    def apply() = {
-      ???
-      /*
-      val table = Table(TablePath.parse(params("table")), project.viewer)
-      val baseColumnName = params("base_id_column")
-      val segColumnName = params("seg_id_column")
-      val baseAttrName = params("base_id_attr")
-      val segAttrName = params("seg_id_attr")
-      assert(baseColumnName.nonEmpty,
-        "The identifying column parameter must be set for the base project.")
-      assert(segColumnName.nonEmpty,
-        "The identifying column parameter must be set for the segmentation.")
-      assert(baseAttrName != FEOption.unset.id,
-        "The base ID attribute parameter must be set.")
-      assert(segAttrName != FEOption.unset.id,
-        "The segmentation ID attribute parameter must be set.")
-      val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
-        parent.vertexAttributes(baseAttrName),
-        project.vertexAttributes(segAttrName),
-        table.column(baseColumnName),
-        table.column(segColumnName))
-      seg.belongsTo = imp.edges
-      */
-    }
-  })
-
-  register("Import segmentation", ImportOperations, new ProjectTransformation(_) {
-    lazy val parameters = List(
-      TableParam(
-        "table",
-        "Table to import from",
-        project.accessibleTableOptions),
-      Param("name", s"Name of new segmentation"),
-      Choice("base_id_attr", "Vertex ID attribute",
-        options = FEOption.unset +: project.vertexAttrList),
-      Param("base_id_column", "Vertex ID column"),
-      Param("seg_id_column", "Segment ID column"))
-    def enabled = FEStatus.assert(
-      project.vertexAttrList.nonEmpty, "No suitable vertex attributes")
-    def apply() = {
-      ???
-      /*
-      val table = Table(TablePath.parse(params("table")), project.viewer)
-      val baseColumnName = params("base_id_column")
-      val segColumnName = params("seg_id_column")
-      val baseAttrName = params("base_id_attr")
-      assert(baseColumnName.nonEmpty,
-        "The identifying column parameter must be set for the base project.")
-      assert(segColumnName.nonEmpty,
-        "The identifying column parameter must be set for the segmentation.")
-      assert(baseAttrName != FEOption.unset.id,
-        "The base ID attribute parameter must be set.")
-      val baseColumn = table.column(baseColumnName)
-      val segColumn = table.column(segColumnName)
-      val baseAttr = project.vertexAttributes(baseAttrName)
-      val segmentation = project.segmentation(params("name"))
-
-      val segAttr = typedImport(segmentation, baseColumn, segColumn, baseAttr)
-      segmentation.newVertexAttribute(segColumnName, segAttr)
-      */
-    }
-
-    def typedImport[A, B](
-      segmentation: SegmentationEditor,
-      baseColumn: Attribute[A], segColumn: Attribute[B], baseAttr: Attribute[_]): Attribute[B] = {
-      // Merge by segment ID to create the segments.
-      val merge = {
-        val op = graph_operations.MergeVertices[B]()
-        op(op.attr, segColumn).result
+  register("Import project as segmentation", StructureOperations, "project", "segmentation")(
+    new ProjectOutputOperation(_) {
+      override lazy val project = projectInput("project")
+      lazy val them = projectInput("segmentation")
+      lazy val parameters = List(
+        Param("name", "Segmentation's name", defaultValue = "segmentation"))
+      def enabled = project.hasVertexSet && them.hasVertexSet
+      def apply() = {
+        val segmentation = project.segmentation(params("name"))
+        segmentation.state = them.state
+        val op = graph_operations.EmptyEdgeBundle()
+        segmentation.belongsTo = op(op.src, project.vertexSet)(op.dst, them.vertexSet).result.eb
       }
-      segmentation.setVertexSet(merge.segments, idAttr = "id")
-      // Move segment ID to the segments.
-      val segAttr = aggregateViaConnection(
-        merge.belongsTo,
-        // Use scalable aggregator.
-        AttributeWithAggregator(segColumn, graph_operations.Aggregator.First[B]()))
-      implicit val ta = baseColumn.typeTag
-      implicit val tb = segColumn.typeTag
-      // Import belongs-to relationship as edges between the base and the segmentation.
-      val imp = graph_operations.ImportEdgesForExistingVertices.run(
-        baseAttr.runtimeSafeCast[A], segAttr, baseColumn, segColumn)
-      segmentation.belongsTo = imp.edges
-      segAttr
-    }
-  })
+    })
+
+  registerOp(
+    "Import segmentation links", ImportOperations,
+    inputs = List(projectInput, "links"), outputs = List(projectOutput),
+    factory = new ProjectOutputOperation(_) {
+      override lazy val project = projectInput("project")
+      lazy val links = tableLikeInput("links").asProject
+      def seg = project.asSegmentation
+      def parent = seg.parent
+      def segmentationParameters = List(
+        Choice(
+          "base_id_attr",
+          s"Identifying vertex attribute in base project",
+          options = FEOption.unset +: parent.vertexAttrList),
+        Choice(
+          "base_id_column",
+          s"Identifying column for base project",
+          options = FEOption.unset +: links.vertexAttrList),
+        Choice(
+          "seg_id_attr",
+          s"Identifying vertex attribute in segmentation",
+          options = FEOption.unset +: project.vertexAttrList),
+        Choice(
+          "seg_id_column",
+          s"Identifying column for segmentation",
+          options = FEOption.unset +: links.vertexAttrList))
+      lazy val parameters = {
+        // We cannot just mix in SegOp, because it extends ProjectTransformation.
+        if (project.isSegmentation) segmentationParameters
+        else List[OperationParameterMeta]()
+      }
+      def enabled =
+        project.assertSegmentation &&
+          FEStatus.assert(
+            project.vertexAttrList.nonEmpty,
+            "No vertex attributes in this segmentation") &&
+            FEStatus.assert(
+              parent.vertexAttributeNames.nonEmpty,
+              "No vertex attributes in base project")
+      def apply() = {
+        val baseColumnName = params("base_id_column")
+        val segColumnName = params("seg_id_column")
+        val baseAttrName = params("base_id_attr")
+        val segAttrName = params("seg_id_attr")
+        assert(baseColumnName != FEOption.unset.id,
+          "The identifying column parameter must be set for the base project.")
+        assert(segColumnName != FEOption.unset.id,
+          "The identifying column parameter must be set for the segmentation.")
+        assert(baseAttrName != FEOption.unset.id,
+          "The base ID attribute parameter must be set.")
+        assert(segAttrName != FEOption.unset.id,
+          "The segmentation ID attribute parameter must be set.")
+        val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
+          parent.vertexAttributes(baseAttrName),
+          project.vertexAttributes(segAttrName),
+          links.vertexAttributes(baseColumnName),
+          links.vertexAttributes(segColumnName))
+        seg.belongsTo = imp.edges
+      }
+    })
+
+  registerOp(
+    "Import segmentation", ImportOperations,
+    inputs = List(projectInput, "segmentation"),
+    outputs = List(projectOutput),
+    factory = new ProjectOutputOperation(_) {
+      override lazy val project = projectInput("project")
+      lazy val segTable = tableLikeInput("segmentation").asProject
+      lazy val parameters = List(
+        Param("name", s"Name of new segmentation"),
+        Choice("base_id_attr", "Vertex ID attribute",
+          options = FEOption.unset +: project.vertexAttrList),
+        Choice("base_id_column", "Vertex ID column",
+          options = FEOption.unset +: segTable.vertexAttrList),
+        Choice("seg_id_column", "Segment ID column",
+          options = FEOption.unset +: segTable.vertexAttrList))
+      def enabled = FEStatus.assert(
+        project.vertexAttrList.nonEmpty, "No suitable vertex attributes") &&
+        FEStatus.assert(segTable.vertexAttrList.nonEmpty, "No columns in table")
+      def apply() = {
+        val baseColumnName = params("base_id_column")
+        val segColumnName = params("seg_id_column")
+        val baseAttrName = params("base_id_attr")
+        assert(baseColumnName != FEOption.unset.id,
+          "The identifying column parameter must be set for the base project.")
+        assert(segColumnName != FEOption.unset.id,
+          "The identifying column parameter must be set for the segmentation.")
+        assert(baseAttrName != FEOption.unset.id,
+          "The base ID attribute parameter must be set.")
+        val baseColumn = segTable.vertexAttributes(baseColumnName)
+        val segColumn = segTable.vertexAttributes(segColumnName)
+        val baseAttr = project.vertexAttributes(baseAttrName)
+        val segmentation = project.segmentation(params("name"))
+
+        val segAttr = typedImport(segmentation, baseColumn, segColumn, baseAttr)
+        segmentation.newVertexAttribute(segColumnName, segAttr)
+      }
+
+      def typedImport[A, B](
+        segmentation: SegmentationEditor,
+        baseColumn: Attribute[A], segColumn: Attribute[B], baseAttr: Attribute[_]): Attribute[B] = {
+        // Merge by segment ID to create the segments.
+        val merge = {
+          val op = graph_operations.MergeVertices[B]()
+          op(op.attr, segColumn).result
+        }
+        segmentation.setVertexSet(merge.segments, idAttr = "id")
+        // Move segment ID to the segments.
+        val segAttr = aggregateViaConnection(
+          merge.belongsTo,
+          // Use scalable aggregator.
+          AttributeWithAggregator(segColumn, graph_operations.Aggregator.First[B]()))
+        implicit val ta = baseColumn.typeTag
+        implicit val tb = segColumn.typeTag
+        // Import belongs-to relationship as edges between the base and the segmentation.
+        val imp = graph_operations.ImportEdgesForExistingVertices.run(
+          baseAttr.runtimeSafeCast[A], segAttr, baseColumn, segColumn)
+        segmentation.belongsTo = imp.edges
+        segAttr
+      }
+    })
 
   register("Define segmentation links from matching attributes",
     StructureOperations, new ProjectTransformation(_) with SegOp {
@@ -2801,9 +2812,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       def enabled =
         project.assertSegmentation &&
           FEStatus.assert(
-            project.vertexAttrList[String].nonEmpty, "No string vertex attributes in this segmentation") &&
+            project.vertexAttrList[String].nonEmpty,
+            "No string vertex attributes in this segmentation.") &&
             FEStatus.assert(
-              parent.vertexAttributeNames[String].nonEmpty, "No string vertex attributes in base project")
+              parent.vertexAttributeNames[String].nonEmpty,
+              "No string vertex attributes in base project.")
       def apply() = {
         val baseIdAttr = parent.vertexAttributes(params("base_id_attr")).runtimeSafeCast[String]
         val segIdAttr = project.vertexAttributes(params("seg_id_attr")).runtimeSafeCast[String]
@@ -2812,36 +2825,21 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
-  register("Copy scalar from other project", StructureOperations, new ProjectTransformation(_) {
-    lazy val parameters = List(
-      Choice(
-        "sourceProject",
-        "Other project's name",
-        options = project.readableProjectCheckpoints,
-        allowUnknownOption = true),
-      Param("sourceScalarName", "Name of the scalar in the other project"),
-      Param("destScalarName", "Name for the scalar in this project"))
-
-    def apply() = {
-      // parsing scalar path "seg1|seg2|...|segn|scalar"
-      val origPath = params("sourceScalarName")
-      val pathAndName = origPath.split('|')
-      val path = pathAndName.dropRight(1) // list of segmentation names
-      val origName = pathAndName.last // name of the original scalar
-      val newName = params("destScalarName")
-      val scalarName = if (newName.isEmpty) origName else newName
-      assert(!project.scalarNames.contains(scalarName), s"Conflicting scalar name '$scalarName'.")
-      val sourceProject = params("sourceProject")
-      val (cp, title, _) = getAndCheckProjectCheckpoint(sourceProject)
-      val otherViewer = new RootProjectViewer(manager.checkpointRepo.readCheckpoint(cp))
-      val other = otherViewer.offspringViewer(path)
-      assert(other.scalarNames.contains(origName), s"No '$origPath' in project '$title'.")
-      // copying scalar
-      project.scalars(scalarName) = other.scalars(origName)
-    }
-
-    def enabled = FEStatus.enabled
-  })
+  register("Copy scalar from other project", StructureOperations, "project", "scalar")(
+    new ProjectOutputOperation(_) {
+      override lazy val project = projectInput("project")
+      lazy val them = projectInput("scalar")
+      lazy val parameters = List(
+        Choice("scalar", "Name of the scalar to copy", options = them.scalarList),
+        Param("save_as", "Save as"))
+      def enabled = FEStatus.assert(them.scalarNames.nonEmpty, "No scalars found.")
+      def apply() = {
+        val origName = params("scalar")
+        val newName = params("save_as")
+        val scalarName = if (newName.isEmpty) origName else newName
+        project.scalars(scalarName) = them.scalars(origName)
+      }
+    })
 
   register("Union with another project", StructureOperations, "a", "b")(new ProjectOutputOperation(_) {
     override lazy val project = projectInput("a")
@@ -2936,9 +2934,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         project.newVertexAttribute(name, attr) // Clear notes.
       }
       val idAttr = params("id_attr")
-      assert(
-        !project.vertexAttributes.contains(idAttr),
-        s"The project already contains a field called '$idAttr'. Please pick a different name.")
       project.newVertexAttribute(idAttr, project.vertexSet.idAttribute)
       project.edgeBundle = newEdgeBundle
       project.edgeAttributes = newEdgeAttributes
@@ -3473,7 +3468,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Create segmentation from SQL", StructureOperations, new ProjectTransformation(_) with SegOp {
     override lazy val parameters = List(
       Param("name", "Name"),
-      Code("sql", "SQL", defaultValue = "select * from vertices"))
+      Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql"))
     def segmentationParameters = List()
     def enabled = FEStatus.assert(true, "")
 
@@ -3544,7 +3539,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         val features: Seq[Attribute[Double]] =
           if (params("features") == FEOption.unset.id) Seq()
           else {
-            val featureNames = params("features").split(",", -1)
+            val featureNames = splitParam("features")
             featureNames.map(name => project.vertexAttributes(name).runtimeSafeCast[Double])
           }
         val prediction = {
@@ -3826,12 +3821,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     op.result.created
   }
 
-}
-
-object Operations {
-  def addNotesOperation(notes: String): FEOperationSpec = {
-    FEOperationSpec("Change project notes", Map("notes" -> notes))
-  }
 }
 
 object JSUtilities {

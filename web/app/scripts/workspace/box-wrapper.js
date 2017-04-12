@@ -16,16 +16,15 @@ angular.module('biggraph').factory('boxWrapper', function() {
     var height = 40;
 
     // An input or output connection point of a box.
-    function plugWrapper(plug, index, direction) {
-      var plugRadius = 8;
+    function plugWrapper(id, index, direction) {
+      var radius = 8;
 
       var len = metadata[direction].length;
       var x;
       if (len <= 1) {
         x = width / 2;
       } else {
-        var r = plugRadius;
-        x = (width - r) / len * index + r;
+        x = index * (width - radius * 2) / (len - 1) + radius;
       }
       var y = direction === 'outputs' ? height + 15 : -15;
 
@@ -37,9 +36,9 @@ angular.module('biggraph').factory('boxWrapper', function() {
       return {
         boxId: instance.id,
         boxInstance: instance,
-        data: plug,
+        id: id,
         direction: direction,
-        radius: plugRadius,
+        radius: radius,
         x: function() { return x + instance.x; },
         y: function() { return y + instance.y; },
         posTransform: 'translate(' + x + ', ' + y + ')',
@@ -84,9 +83,9 @@ angular.module('biggraph').factory('boxWrapper', function() {
       inputs.push(plugWrapper(metadata.inputs[i], i, 'inputs'));
     }
     for (i = 0; i < metadata.outputs.length; ++i) {
-      var plug = plugWrapper(metadata.outputs[i], i, 'outputs');
+      var plug = plugWrapper(metadata.outputs[i].id, i, 'outputs');
       outputs.push(plug);
-      outputMap[plug.data.id] = plug;
+      outputMap[plug.id] = plug;
     }
     return {
       metadata: metadata,

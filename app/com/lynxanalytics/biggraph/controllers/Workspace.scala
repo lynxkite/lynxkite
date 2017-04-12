@@ -58,9 +58,9 @@ case class Workspace(
       }.toMap
     }
 
-    val unconnectedInputs = meta.inputs.filterNot(conn => box.inputs.contains(conn.id))
+    val unconnectedInputs = meta.inputs.filterNot(conn => box.inputs.contains(conn))
     if (unconnectedInputs.nonEmpty) {
-      val list = unconnectedInputs.map(_.id).mkString(", ")
+      val list = unconnectedInputs.mkString(", ")
       allOutputsWithError(s"Input $list is not connected.")
     } else {
       val inputs = box.inputs.map { case (id, output) => id -> inputStates(output) }
@@ -123,17 +123,12 @@ case class Workspace(
     discover(List(), inDegrees)
   }
 
-  def state(
-    user: serving.User, ops: OperationRepository, connection: BoxOutput): BoxOutputState = {
-    allStates(user, ops)(connection)
-  }
-
   def getOperation(
     user: serving.User, ops: OperationRepository, boxID: String): Operation = {
     val box = findBox(boxID)
     val meta = ops.getBoxMetadata(box.operationID)
     for (i <- meta.inputs) {
-      assert(box.inputs.contains(i.id), s"Input ${i.id} is not connected.")
+      assert(box.inputs.contains(i), s"Input $i is not connected.")
     }
     val states = allStates(user, ops)
     val inputs = box.inputs.map { case (id, output) => id -> states(output) }
@@ -193,14 +188,27 @@ case class BoxOutput(
 case class BoxMetadata(
   categoryID: String,
   operationID: String,
-  inputs: List[TypedConnection],
+  inputs: List[String],
   outputs: List[TypedConnection])
 
 object BoxOutputKind {
   val Project = "project"
-  val validKinds = Set(Project) // More kinds to come.
+  val Table = "table"
+  val validKinds = Set(Project, Table)
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
+}
+
+object BoxOutputState {
+  // Cannot call these "apply" due to the JSON formatter macros.
+  def from(project: ProjectEditor): BoxOutputState = {
+    import CheckpointRepository._ // For JSON formatters.
+    BoxOutputState(BoxOutputKind.Project, Option(json.Json.toJson(project.rootState.state)))
+  }
+
+  def from(table: graph_api.Table): BoxOutputState = {
+    BoxOutputState(BoxOutputKind.Table, Option(json.Json.obj("guid" -> table.gUID)))
+  }
 }
 
 case class BoxOutputState(
@@ -209,8 +217,11 @@ case class BoxOutputState(
     success: FEStatus = FEStatus.enabled) {
   BoxOutputKind.assertKind(kind)
   assert(success.enabled ^ state.isEmpty, "State should be present iff computation was successful")
+
   def isError = !success.enabled
   def isProject = kind == BoxOutputKind.Project
+  def isTable = kind == BoxOutputKind.Table
+
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(isProject, s"Tried to access '$kind' as 'project'.")
     assert(success.enabled, success.disabledReason)
@@ -218,6 +229,13 @@ case class BoxOutputState(
     val p = state.get.as[CommonProjectState]
     val rps = RootProjectState.emptyState.copy(state = p)
     new RootProjectEditor(rps)
+  }
+
+  def table(implicit manager: graph_api.MetaGraphManager): graph_api.Table = {
+    assert(isTable, s"Tried to access '$kind' as 'table'.")
+    assert(success.enabled, success.disabledReason)
+    import graph_api.MetaGraphManager.StringAsUUID
+    manager.table((state.get \ "guid").as[String].asUUID)
   }
 }
 
