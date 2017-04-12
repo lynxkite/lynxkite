@@ -66,5 +66,9 @@
       model="multiOutput[param.id]"
       options="param.options"
       class="operation-attribute-entry"></tag-list>
+    <parameters-parameter
+      ng-if="param.kind === 'parameters'"
+      model="output[param.id]"
+      class="operation-attribute-entry"></parameters-parameter>
   </div>
 </div>
