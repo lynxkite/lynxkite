@@ -18,6 +18,21 @@ case class Workspace(
     boxMap(id)
   }
 
+  // Changes the workspace to enforce some invariants.
+  def repaired(ops: OperationRepository): Workspace = {
+    repairAnchor
+    // TODO: #5883 after #5834.
+  }
+
+  private def repairAnchor: Workspace = {
+    val (anchors, others) = boxes.partition(_.operationID == "Anchor")
+    anchors.size match {
+      case 1 => this
+      case 0 => Workspace(Workspace.anchorBox +: boxes)
+      case _ => Workspace(anchors.head +: others)
+    }
+  }
+
   def checkpoint(previous: String = null)(implicit manager: graph_api.MetaGraphManager): String = {
     manager.checkpointRepo.checkpointState(
       RootProjectState.emptyState.copy(checkpoint = None, workspace = Some(this)),

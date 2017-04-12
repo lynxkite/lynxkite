@@ -84,7 +84,6 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   test("getProjectOutput") {
     using("test-workspace") {
-      assert(get("test-workspace").boxes.isEmpty)
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val ws = Workspace(List(eg))
       set("test-workspace", ws)
@@ -96,7 +95,6 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   test("getOperationMeta") {
     using("test-workspace") {
-      assert(get("test-workspace").boxes.isEmpty)
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val cc = Box(
         "cc", "Find connected components", Map("name" -> "cc", "directions" -> "ignore directions"),
@@ -123,10 +121,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     }
   }
 
-  /*
   test("2-input operation") {
     using("test-workspace") {
-      assert(get("test-workspace").boxes.isEmpty)
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val blanks = Box("blanks", "Create vertices", Map("size" -> "2"), 0, 0, Map())
       val convert = Box(
@@ -159,11 +155,9 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(project.edgeBundle.countScalar.value == 2)
     }
   }
-  */
 
   test("progress success") {
     using("test-workspace") {
-      assert(get("test-workspace").boxes.isEmpty)
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val cc = Box(
         "cc", "Find connected components", Map("name" -> "cc", "directions" -> "ignore directions"),
@@ -195,7 +189,6 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   test("progress fails") {
     using("test-workspace") {
-      assert(get("test-workspace").boxes.isEmpty)
       // box with unconnected input
       val pr = Box("pr", "Compute PageRank", pagerankParams, 0, 20, Map())
       val prOutput = pr.output("project")
@@ -205,6 +198,21 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         GetProgressRequest("test-workspace", prOutput)
       ).progressList.find(_.boxOutput == prOutput).get
       assert(!progress.success.enabled)
+    }
+  }
+
+  test("anchor box") {
+    using("test-workspace") {
+      val anchorBox = Box("anchor", "Anchor", Map(), 0, 0, Map())
+      assert(get("test-workspace").boxes == List(anchorBox))
+      set("test-workspace", Workspace(List()))
+      assert(get("test-workspace").boxes == List(anchorBox))
+      val withDescription = Box("anchor", "Anchor", Map("description" -> "desc"), 0, 0, Map())
+      set("test-workspace", Workspace(List(withDescription)))
+      assert(get("test-workspace").boxes == List(withDescription))
+      val another = Box("anchor2", "Anchor", Map("description" -> "other"), 0, 0, Map())
+      set("test-workspace", Workspace(List(withDescription, another)))
+      assert(get("test-workspace").boxes == List(withDescription))
     }
   }
 }
