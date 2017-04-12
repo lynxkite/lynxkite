@@ -79,17 +79,20 @@ angular.module('biggraph')
           this.selectedBoxId = boxId;
         },
 
-        selectedBox: function() {
-          if (this.selectedBoxId) {
-            return this.wrapper.boxMap[this.selectedBoxId];
-          } else {
-            return undefined;
-          }
+        getBox: function(id) {
+          return this.wrapper.boxMap[id];
         },
 
-        updateSelectedBox: function(paramValues) {
-          this.wrapper.setBoxParams(this.selectedBoxId, paramValues);
-          this.saveWorkspace();
+        selectedBox: function() {
+          return this.getBox[this.selectedBoxId];
+        },
+
+        updateBox: function(id, paramValues) {
+          var box = this.getBox(id).instance;
+          if (!angular.equals(paramValues, box.parameters)) {
+            this.wrapper.setBoxParams(id, paramValues);
+            this.saveWorkspace();
+          }
         },
 
         selectState: function(boxID, outputID) {
