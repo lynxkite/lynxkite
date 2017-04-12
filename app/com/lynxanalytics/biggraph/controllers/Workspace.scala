@@ -25,11 +25,13 @@ case class Workspace(
   }
 
   private def repairAnchor: Workspace = {
-    val (anchors, others) = boxes.partition(_.operationID == "Anchor")
-    anchors.size match {
-      case 1 => this
-      case 0 => Workspace(Workspace.anchorBox +: boxes)
-      case _ => Workspace(anchors.head +: others)
+    val anchors = boxes.filter(_.operationID == "Anchor")
+    anchors match {
+      case List(box) =>
+        assert(box.id == "anchor", "The anchor box must have the 'anchor' ID.")
+        this
+      case Nil => Workspace(Workspace.anchorBox +: boxes)
+      case _ => throw new AssertionError(s"${anchors.size} anchors found.")
     }
   }
 
