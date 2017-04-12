@@ -151,7 +151,8 @@ case class Workspace(
 }
 
 object Workspace {
-  val empty = Workspace(List())
+  val anchorBox = Box("anchor", "Anchor", Map(), 0, 0, Map())
+  val empty = Workspace(List(anchorBox))
 }
 
 case class Box(
