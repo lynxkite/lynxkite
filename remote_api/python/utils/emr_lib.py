@@ -70,7 +70,15 @@ class EMRLib:
     while True:
       i = 0
       while i < len(services):
-        if services[i].is_ready():
+        service_ready = False
+        try:
+          service_ready = services[i].is_ready()
+        except botocore.exceptions.ClientError as e:
+          if e.response['Error']['Code'] == 'ThrottlingException':
+            time.sleep(60)
+          else:
+            raise e
+        if service_ready:
           print('{name!s} is ready, waiting for {n!s} more services to start...'.format(
               name=services[i],
               n=(len(services) - 1)
@@ -91,8 +99,10 @@ class EMRLib:
     for cluster in list['Clusters']:
       if cluster['Name'] == name:
         cluster_id = cluster['Id']
-        print('Reusing existing cluster: ' + cluster_id)
-        return EMRCluster(cluster_id, self)
+        instances = self.emr_client.list_instances(ClusterId=cluster_id)['Instances']
+        if len(instances) == instance_count:
+          print('Reusing existing cluster: ' + cluster_id)
+          return EMRCluster(cluster_id, self)
     print('Creating new cluster.')
     # We're passing these options to the namenode and to the hdfs datanodes so
     # that they will make their monitoring data accessible via the jmx interface.
