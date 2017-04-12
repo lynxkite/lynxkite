@@ -99,6 +99,7 @@ angular.module('biggraph')
 
         selectState: function(boxID, outputID) {
           var outPlug = this.wrapper.boxMap[boxID].outputMap[outputID];
+          console.log(outPlug.stateID);
           this.selectedStateId = outPlug.stateID;
           this.selectedStateKind = outPlug.kind;
         },
@@ -106,7 +107,7 @@ angular.module('biggraph')
         selectPlug: function(plug) {
           this.selectedPlug = plug;
           if (plug.direction === 'outputs') {
-            this.selectState(plug.boxId, plug.data.id);
+            this.selectState(plug.boxId, plug.id);
           } else {
             this.selectedState = undefined;
           }
