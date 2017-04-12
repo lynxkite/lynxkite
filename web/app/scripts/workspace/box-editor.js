@@ -3,7 +3,7 @@
 // Viewer and editor of a box instance.
 
 angular.module('biggraph')
- .directive('boxEditor', function(util) {
+ .directive('boxEditor', function($timeout, util) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/box-editor.html',
@@ -70,7 +70,7 @@ angular.module('biggraph')
             // We avoid replacing the objects if the data has not changed.
             // This is to avoid recreating the DOM for the parameters. (Which would lose the focus.)
             if (!angular.equals(box, scope.box)) {
-              scope.onBlur(); // Switching to a different box is also "blur".
+              onBlurNow(); // Switching to a different box is also "blur".
               scope.box = box;
             }
             if (!angular.equals(boxMeta, scope.boxMeta)) {
@@ -100,10 +100,16 @@ angular.module('biggraph')
             }
         };
 
-        scope.onBlur = function() {
+        function onBlurNow() {
           if (scope.box) {
             scope.workspace.updateBox(scope.box.instance.id, scope.paramValues);
           }
+        }
+
+        // Updates the workspace with the parameter changes after allowing for a digest loop to
+        // bubble them up from the directives.
+        scope.onBlur = function() {
+          $timeout(onBlurNow);
         };
       },
     };
