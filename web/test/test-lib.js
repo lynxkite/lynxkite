@@ -1,7 +1,6 @@
 'use strict';
 
 var testLib; // Forward declarations.
-var History; // Forward declarations.
 var TableBrowser; // Forward declarations.
 var request = require('request');
 var fs = require('fs');
@@ -277,10 +276,6 @@ Side.prototype = {
     return this.toolbox.$('div.category[tooltip="' + categoryTitle + '"]');
   },
 
-  getProjectHistory: function() {
-    return this.side.$('div.project.history');
-  },
-
   getValue: function(id) {
     var asStr = this.side.$('value#' + id + ' span.value').getText();
     return asStr.then(function(asS) { return parseInt(asS); });
@@ -349,19 +344,6 @@ Side.prototype = {
 
   populateOperationInput: function(parameterId, param) {
     this.toolbox.element(by.id(parameterId)).sendKeys(testLib.selectAllKey + param);
-  },
-
-  submitOperation: function(parentElement) {
-    var button = parentElement.$('.ok-button');
-    // Wait for uploads or whatever.
-    testLib.wait(protractor.ExpectedConditions.textToBePresentInElement(button, 'OK'));
-    button.click();
-  },
-
-  runOperation: function(name, params) {
-    this.openOperation(name);
-    this.populateOperation(this.toolbox, params);
-    this.submitOperation(this.toolbox);
   },
 
   expectOperationScalar: function(name, text) {
@@ -519,126 +501,6 @@ TableBrowser.prototype = {
   enterSearchQuery: function(query) {
     element(by.id('table-browser-search-box'))
         .sendKeys(testLib.selectAllKey + query);
-  },
-
-};
-
-function History(side) {
-  this.side = side;
-}
-
-History.prototype = {
-  open: function() {
-    this.side.side.$('.history-button').click();
-  },
-
-  close: function(discardChanges) {
-    if (discardChanges) {
-      testLib.expectDialogAndRespond(true);
-    }
-    this.side.side.element(by.id('close-history-button')).click();
-    if (discardChanges) {
-      testLib.checkAndCleanupDialogExpectation();
-    }
-  },
-
-  save: function(name) {
-    this.side.side.$('.save-history-button').click();
-    if (name !== undefined) {
-      var inputBox = this.side.side.$('.save-as-history-box input');
-      inputBox.sendKeys(testLib.selectAllKey + name);
-    }
-    this.side.side.$('.save-as-history-box .glyphicon-floppy-disk').click();
-  },
-
-  expectSaveable: function(saveable) {
-    expect(this.side.side.$('.save-history-button').isPresent()).toBe(saveable);
-  },
-
-  // Get an operation from the history. position is a zero-based index.
-  getOperation: function(position) {
-    var list = this.side.side.
-      $$('project-history div.list-group > li.history-operation-item');
-    return list.get(position);
-  },
-
-  // Beware, the category is left open, so calling this the second time for the same category
-  // does not work.
-  getOperationInCategoryByName: function(operation, tooltip, name) {
-    operation.$('operation-toolbox').$('div[drop-tooltip="' + tooltip + '"]').click();
-    var ops = operation.$('operation-toolbox').$$('div.operation');
-    return ops.filter(function(element) {
-        return element.getText().then(function(text) { return text === name; });
-      }).get(0);
-  },
-
-  getInsertMenu: function(position) {
-    var list = this.side.side.
-      $$('project-history div.list-group > li > project-history-adder');
-    return list.get(position);
-  },
-
-  getOperationName: function(position) {
-    return this.getOperation(position).$('h1').getText();
-  },
-
-  getOperationSegmentation: function(position) {
-    return this.getOperation(position).$('div.affected-segmentation').getText();
-  },
-
-  openDropdownMenu: function(operation) {
-    var menu = operation.$('.history-options');
-    menu.$('a.dropdown-toggle').click();
-    return menu;
-  },
-
-  clickDropDownMenuItem: function(position, itemId) {
-    var operation = this.getInsertMenu(position);
-    this.openDropdownMenu(operation).$('a#dropdown-menu-' + itemId).click();
-  },
-
-  selectOperation: function(op, name) {
-    op.element(by.id('operation-search')).click();
-    op.element(by.id('filter')).sendKeys(name, K.ENTER);
-  },
-
-  deleteOperation: function(position) {
-    this.getOperation(position).$('#operation-discard').click();
-  },
-
-  enterEditMode: function(op) {
-    op.$('#operation-edit').click();
-  },
-
-  discardEdits: function(op) {
-    op.$('#operation-discard-changes').click();
-  },
-
-  initInsertedOperation: function(newPos, name, params) {
-    var newOp = this.getOperation(newPos);
-    this.selectOperation(newOp, name);
-    this.side.populateOperation(newOp, params);
-    this.side.submitOperation(newOp);
-  },
-
-  insertOperationSimple: function(pos, name, params) {
-    this.getInsertMenu(pos).click();
-    this.initInsertedOperation(pos, name, params);
-  },
-
-  insertOperationForSegmentation: function(pos, name, params, segmentation) {
-    var menuItemId = 'add';
-    if (segmentation) {
-      menuItemId += '-for-' + segmentation;
-    }
-    this.clickDropDownMenuItem(pos, menuItemId);
-    this.initInsertedOperation(pos, name, params);
-  },
-
-  numOperations: function() {
-    return this.side.side.
-      $$('project-history div.list-group > li.history-operation-item').
-      count();
   },
 
 };
