@@ -20,6 +20,12 @@ case class Workspace(
     boxMap(id)
   }
 
+  def parametersMeta: List[FEOperationParameterMeta] = {
+    val anchor = findBox("anchor")
+    val parametersParamValue = anchor.parameters("parameters")
+    OperationParams.ParametersParam.parse(parametersParamValue)
+  }
+
   // Changes the workspace to enforce some invariants.
   def repaired(ops: OperationRepository): Workspace = {
     repairAnchor
