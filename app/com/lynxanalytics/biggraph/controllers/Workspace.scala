@@ -43,16 +43,16 @@ case class Workspace(
       previous).checkpoint.get
   }
 
-  def allStates(user: serving.User, ops: OperationRepository): Map[BoxOutput, BoxOutputState] = {
+  def allStates(ctx: WorkspaceExecutionContext): Map[BoxOutput, BoxOutputState] = {
     val dependencies = discoverDependencies
     val statesWithoutCircularDependency = dependencies.topologicalOrder
       .foldLeft(Map[BoxOutput, BoxOutputState]()) {
         (states, box) =>
-          val newOutputStates = outputStatesOfBox(user, ops, box, states)
+          val newOutputStates = outputStatesOfBox(ctx, box, states)
           newOutputStates ++ states
       }
     val statesWithCircularDependency = dependencies.withCircularDependency.flatMap { box =>
-      val meta = ops.getBoxMetadata(box.operationID)
+      val meta = ctx.ops.getBoxMetadata(box.operationID)
       meta.outputs.map { o =>
         o.ofBox(box) ->
           BoxOutputState(
@@ -65,9 +65,9 @@ case class Workspace(
     statesWithoutCircularDependency ++ statesWithCircularDependency
   }
 
-  private def outputStatesOfBox(user: serving.User, ops: OperationRepository, box: Box,
+  private def outputStatesOfBox(ctx: WorkspaceExecutionContext, box: Box,
                                 inputStates: Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
-    val meta = ops.getBoxMetadata(box.operationID)
+    val meta = ctx.ops.getBoxMetadata(box.operationID)
 
     def allOutputsWithError(msg: String): Map[BoxOutput, BoxOutputState] = {
       meta.outputs.map {
@@ -87,7 +87,7 @@ case class Workspace(
         allOutputsWithError(s"Input $list has an error.")
       } else {
         val outputStates = try {
-          box.execute(user, inputs, ops)
+          box.execute(ctx, inputs)
         } catch {
           case ex: Throwable =>
             log.error(s"Failed to execute $box:", ex)
@@ -141,21 +141,27 @@ case class Workspace(
   }
 
   def getOperation(
-    user: serving.User, ops: OperationRepository, boxID: String): Operation = {
+    ctx: WorkspaceExecutionContext, boxID: String): Operation = {
     val box = findBox(boxID)
-    val meta = ops.getBoxMetadata(box.operationID)
+    val meta = ctx.ops.getBoxMetadata(box.operationID)
     for (i <- meta.inputs) {
       assert(box.inputs.contains(i), s"Input $i is not connected.")
     }
-    val states = allStates(user, ops)
+    val states = allStates(ctx)
     val inputs = box.inputs.map { case (id, output) => id -> states(output) }
     assert(!inputs.exists(_._2.isError), {
       val errors = inputs.filter(_._2.isError).map(_._1).mkString(", ")
       s"Input $errors has an error."
     })
-    box.getOperation(user, inputs, ops)
+    box.getOperation(ctx, inputs)
   }
 }
+
+// Things that are outside of the workspace itself, but are relevant to executing it.
+case class WorkspaceExecutionContext(
+  user: serving.User,
+  ops: OperationRepository,
+  workspaceParameters: Map[String, String])
 
 object Workspace {
   val anchorBox = Box("anchor", "Anchor", Map(), 0, 0, Map())
@@ -173,20 +179,18 @@ case class Box(
   def output(id: String) = BoxOutput(this.id, id)
 
   def getOperation(
-    user: serving.User,
-    inputStates: Map[String, BoxOutputState],
-    ops: OperationRepository): Operation = {
+    ctx: WorkspaceExecutionContext,
+    inputStates: Map[String, BoxOutputState]): Operation = {
     assert(
       inputs.keys == inputStates.keys,
       s"Input mismatch: $inputStates does not match $inputs")
-    ops.opForBox(user, this, inputStates)
+    ctx.ops.opForBox(ctx.user, this, inputStates, ctx.workspaceParameters)
   }
 
   def execute(
-    user: serving.User,
-    inputStates: Map[String, BoxOutputState],
-    ops: OperationRepository): Map[BoxOutput, BoxOutputState] = {
-    val op = getOperation(user, inputStates, ops)
+    ctx: WorkspaceExecutionContext,
+    inputStates: Map[String, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
+    val op = getOperation(ctx, inputStates)
     val outputStates = op.getOutputs
     outputStates
   }
