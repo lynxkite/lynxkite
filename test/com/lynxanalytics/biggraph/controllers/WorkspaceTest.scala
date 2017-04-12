@@ -216,7 +216,6 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
 
   test("circular dependencies") {
     using("test-workspace") {
-      assert(get("test-workspace").workspace.boxes.isEmpty)
       val pr1 = Box("pr1", "Compute PageRank", pagerankParams, 0, 20,
         Map("project" -> BoxOutput("pr2", "project")))
       val pr2 = Box("pr2", "Compute PageRank", pagerankParams, 0, 20,
@@ -241,14 +240,14 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     using("test-workspace") {
       val anchorBox = Box("anchor", "Anchor", Map(), 0, 0, Map())
       // We have an anchor by default.
-      assert(get("test-workspace").boxes == List(anchorBox))
+      assert(get("test-workspace").workspace.boxes == List(anchorBox))
       // If we delete it it comes back.
       set("test-workspace", Workspace(List()))
-      assert(get("test-workspace").boxes == List(anchorBox))
+      assert(get("test-workspace").workspace.boxes == List(anchorBox))
       // We can set its properties though.
       val withDescription = Box("anchor", "Anchor", Map("description" -> "desc"), 10, 0, Map())
       set("test-workspace", Workspace(List(withDescription)))
-      assert(get("test-workspace").boxes == List(withDescription))
+      assert(get("test-workspace").workspace.boxes == List(withDescription))
       // We cannot have more than one.
       val another = Box("anchor2", "Anchor", Map("description" -> "other"), 0, 0, Map())
       val ex = intercept[AssertionError] {
