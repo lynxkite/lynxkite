@@ -101,6 +101,7 @@ object Operation {
     box: Box,
     meta: BoxMetadata,
     inputs: Map[String, BoxOutputState],
+    workspaceParameters: Map[String, String],
     manager: MetaGraphManager)
 
   // Turns an operation name into a valid HTML identifier.
@@ -170,9 +171,12 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 
   def operationIds = operations.keys.toSeq
 
-  def opForBox(user: serving.User, box: Box, inputs: Map[String, BoxOutputState]) = {
+  def opForBox(
+    user: serving.User, box: Box, inputs: Map[String, BoxOutputState],
+    workspaceParameters: Map[String, String]) = {
     val (meta, factory) = operations(box.operationID)
-    val context = Operation.Context(user, box, meta, inputs, env.metaGraphManager)
+    val context =
+      Operation.Context(user, box, meta, inputs, workspaceParameters, env.metaGraphManager)
     factory(context)
   }
 }

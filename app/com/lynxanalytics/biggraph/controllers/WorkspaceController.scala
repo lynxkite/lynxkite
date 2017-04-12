@@ -54,7 +54,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def getWorkspace(
     user: serving.User, request: GetWorkspaceRequest): GetWorkspaceResponse = {
     val workspace = getWorkspaceByName(user, request.name)
-    val states = workspace.allStates(user, ops)
+    val states = workspace.allStates(WorkspaceExecutionContext(user, ops, Map()))
     val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
     calculatedStates.synchronized {
       for ((_, (boxOutputState, id)) <- statesWithId) {
@@ -145,7 +145,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def getOperationMeta(user: serving.User, request: GetOperationMetaRequest): FEOperationMeta = {
     val ws = getWorkspaceByName(user, request.workspace)
-    val op = ws.getOperation(user, ops, request.box)
+    val op = ws.getOperation(WorkspaceExecutionContext(user, ops, Map()), request.box)
     op.toFE
   }
 }
