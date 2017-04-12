@@ -68,7 +68,10 @@ angular.module('biggraph')
           this.selection.endX = undefined;
           this.selection.startY = undefined;
           this.selection.endY = undefined;
-          this.updateSelection();
+          this.selection.leftX = undefined;
+          this.selection.upperY = undefined;
+          this.selection.width = undefined;
+          this.selection.length = undefined;
         },
 
         selectedBoxIds: [],
@@ -122,7 +125,7 @@ angular.module('biggraph')
           this.saveWorkspace();
         },
 
-        selectBoxesinSelection: function(){
+        selectBoxesInSelection: function(){
           var boxes = this.boxes();
           this.selectedBoxIds = [];
           for (var i = 0; i < boxes.length; i++) {
@@ -196,10 +199,17 @@ angular.module('biggraph')
         },
 
         onMouseDownOnBox: function(box, mouseLogical) {
-          this.selectedBoxIds = [];
-          this.selectBox(box.instance.id);
-          this.movedBoxes = [box];
-          this.movedBoxes[0].onMouseDown(mouseLogical);
+          var selectedBoxes = this.selectedBoxes();
+          if (selectedBoxes.indexOf(box) === -1) {
+            this.selectedBoxIds = [];
+            this.selectBox(box.instance.id);
+            this.movedBoxes = [box];
+            this.movedBoxes[0].onMouseDown(mouseLogical);
+          } else {
+            this.movedBoxes = selectedBoxes;
+            this.movedBoxes.map(function(b) {
+              b.onMouseDown(mouseLogical);});
+          }
         },
 
         onMouseDownOnPlug: function(plug, event) {

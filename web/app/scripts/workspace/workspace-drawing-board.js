@@ -47,7 +47,7 @@ angular.module('biggraph')
             scope.workspace.selection.endX = logicalPos.x;
             scope.workspace.selection.endY = logicalPos.y;
             scope.workspace.updateSelection();
-            scope.workspace.selectBoxesinSelection();
+            scope.workspace.selectBoxesInSelection();
           } else if (moveSelection) {
             scope.workspace.selection.startX += event.offsetX - mouseX;
             scope.workspace.selection.endX += event.offsetX - mouseX;
@@ -71,6 +71,7 @@ angular.module('biggraph')
           workspaceDrag = false;
           selectBoxes = false;
           moveSelection = false;
+          scope.workspace.removeSelection();
           scope.workspace.onMouseUp(getLogicalPosition(event));
         };
 
@@ -84,33 +85,20 @@ angular.module('biggraph')
             mouseY = event.offsetY;
           } else if(dragMode === 'select'){
             var logicalPos = getLogicalPosition(event);
-            if(inSelection(logicalPos)){
-              moveSelection = true;
-              scope.workspace.movedBoxes = scope.workspace.selectedBoxes();
-              scope.workspace.movedBoxes.map(function(box) {
-                box.onMouseDown(logicalPos);});
-            } else {
-              scope.workspace.selectedBoxIds = [];
-              selectBoxes = true;
-              scope.workspace.selection.endX = logicalPos.x;
-              scope.workspace.selection.endY = logicalPos.y;
-              scope.workspace.selection.startX = logicalPos.x;
-              scope.workspace.selection.startY = logicalPos.y;
-              scope.workspace.updateSelection();
+            selectBoxes = true;
+            scope.workspace.selectedBoxIds = [];
+            scope.workspace.selection.endX = logicalPos.x;
+            scope.workspace.selection.endY = logicalPos.y;
+            scope.workspace.selection.startX = logicalPos.x;
+            scope.workspace.selection.startY = logicalPos.y;
+            scope.workspace.updateSelection();
           }
-        }
         };
 
         scope.workspaceTransform = function() {
           var z = zoomToScale(workspaceZoom);
           return 'translate(' + workspaceX + ', ' + workspaceY + ') scale(' + z + ')';
         };
-
-        function inSelection(position) {
-          var sb = scope.workspace.selection;
-          return(sb.leftX < position.x && position.x < sb.leftX + sb.width &&
-            sb.upperY < position.y && position.y < sb.upperY + sb.height);
-        }
 
         function setGrabCursor(e) {
           // Trying to assign an invalid cursor will silently fail. Try to find a supported value.
