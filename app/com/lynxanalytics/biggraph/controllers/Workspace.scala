@@ -9,7 +9,7 @@ case class Workspace(
     boxes: List[Box]) {
   val boxMap = boxes.map(b => b.id -> b).toMap
   assert(boxMap.size == boxes.size, {
-    val dups = boxes.map(_.id).groupBy(identity).collect { case (id, ids) if ids.size > 1 => id }
+    val dups = boxes.groupBy(_.id).filter(_._2.size > 1).keys
     s"Duplicate box name: ${dups.mkString(", ")}"
   })
 
