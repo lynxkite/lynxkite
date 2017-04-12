@@ -44,31 +44,31 @@ angular.module('biggraph')
           return this.wrapper ? this.wrapper.arrows : [];
         },
 
-        selectionBox: {
+        selection: {
           startX: undefined,
           startY: undefined,
           endX: undefined,
           endY: undefined,
-          // The parameters below are calculated from the above ones by this.updateSelectionBox.
+          // The parameters below are calculated from the above ones by this.updateSelection.
           leftX: undefined,
           upperY: undefined,
           width: undefined,
           height: undefined
         },
 
-        updateSelectionBox: function(){
-          this.selectionBox.leftX = Math.min(this.selectionBox.startX, this.selectionBox.endX);
-          this.selectionBox.upperY = Math.min(this.selectionBox.startY, this.selectionBox.endY);
-          this.selectionBox.width = Math.abs(this.selectionBox.endX - this.selectionBox.startX);
-          this.selectionBox.height = Math.abs(this.selectionBox.endY - this.selectionBox.startY);
+        updateSelection: function(){
+          this.selection.leftX = Math.min(this.selection.startX, this.selection.endX);
+          this.selection.upperY = Math.min(this.selection.startY, this.selection.endY);
+          this.selection.width = Math.abs(this.selection.endX - this.selection.startX);
+          this.selection.height = Math.abs(this.selection.endY - this.selection.startY);
         },
 
-        removeSelectionBox: function(){
-          this.selectionBox.startX = undefined;
-          this.selectionBox.endX = undefined;
-          this.selectionBox.startY = undefined;
-          this.selectionBox.endY = undefined;
-          this.updateSelectionBox();
+        removeSelection: function(){
+          this.selection.startX = undefined;
+          this.selection.endX = undefined;
+          this.selection.startY = undefined;
+          this.selection.endY = undefined;
+          this.updateSelection();
         },
 
         selectedBoxIds: [],
@@ -122,19 +122,19 @@ angular.module('biggraph')
           this.saveWorkspace();
         },
 
-        selectBoxesInSelectionBox: function(){
+        selectBoxesinSelection: function(){
           var boxes = this.boxes();
           this.selectedBoxIds = [];
           for (var i = 0; i < boxes.length; i++) {
             var box = boxes[i];
-            if(this.inSelectionBox(box)){
+            if(this.inSelection(box)){
               this.selectedBoxIds.push(box.instance.id);
             }
           }
         },
 
-        inSelectionBox: function(box){
-          var sb = this.selectionBox;
+        inSelection: function(box){
+          var sb = this.selection;
           return(sb.leftX < box.instance.x + box.width &&
             box.instance.x < sb.leftX + sb.width &&
             sb.upperY < box.instance.y + box.height &&
@@ -187,6 +187,7 @@ angular.module('biggraph')
             for(i = 0; i < this.movedBoxes.length; i++){
               if (this.movedBoxes[i].isMoved) {
                 this.saveWorkspace();
+                break;
               }
             }
           }
