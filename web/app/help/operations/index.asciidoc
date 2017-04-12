@@ -127,6 +127,8 @@ include::aggregate-to-segmentation.asciidoc[]
 
 include::aggregate-vertex-attribute-globally.asciidoc[]
 
+include::anchor.asciidoc[]
+
 include::approximate-clustering-coefficient.asciidoc[]
 
 include::approximate-embeddedness.asciidoc[]
