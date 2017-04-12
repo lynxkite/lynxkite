@@ -7,7 +7,6 @@ import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
-import play.api.libs.json
 
 case class GetWorkspaceRequest(name: String)
 case class BoxOutputInfo(boxOutput: BoxOutput, stateID: String, success: FEStatus, kind: String)
@@ -98,7 +97,10 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       case (stateID, state) =>
         if (state.success.enabled) {
           state.kind match {
-            case BoxOutputKind.Project => stateID -> Option(state.project.viewer.getProgress)
+            case BoxOutputKind.Project => stateID -> Some(state.project.viewer.getProgress)
+            case BoxOutputKind.Table =>
+              val progress = entityProgressManager.computeProgress(state.table)
+              stateID -> Some(List(progress))
             case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }
         } else {
@@ -146,11 +148,4 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val op = ws.getOperation(user, ops, request.box)
     op.toFE
   }
-}
-
-object WorkspaceControllerJsonFormatters {
-  import com.lynxanalytics.biggraph.serving.FrontendJson.fFEStatus
-  import WorkspaceJsonFormatters._
-  implicit val fBoxOutputInfo = json.Json.format[BoxOutputInfo]
-  implicit val fProgress = json.Json.format[Progress]
 }

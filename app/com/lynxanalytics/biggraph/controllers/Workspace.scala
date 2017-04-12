@@ -203,11 +203,11 @@ object BoxOutputState {
   // Cannot call these "apply" due to the JSON formatter macros.
   def from(project: ProjectEditor): BoxOutputState = {
     import CheckpointRepository._ // For JSON formatters.
-    BoxOutputState(BoxOutputKind.Project, Option(json.Json.toJson(project.rootState.state)))
+    BoxOutputState(BoxOutputKind.Project, Some(json.Json.toJson(project.rootState.state)))
   }
 
   def from(table: graph_api.Table): BoxOutputState = {
-    BoxOutputState(BoxOutputKind.Table, Option(json.Json.obj("guid" -> table.gUID)))
+    BoxOutputState(BoxOutputKind.Table, Some(json.Json.obj("guid" -> table.gUID)))
   }
 }
 
