@@ -15,7 +15,7 @@ angular.module('biggraph')
       link: function(scope, element) {
         var workspaceDrag = false;
         var selectBoxes = false;
-        var moveSelectionBox = false;
+        var moveSelection = false;
         var workspaceX = 0;
         var workspaceY = 0;
         var workspaceZoom = 0;
@@ -29,14 +29,12 @@ angular.module('biggraph')
         }
         function actualDragMode(event) {
           var dragMode = (window.localStorage.getItem('drag_mode') || 'pan');
-          if((dragMode === 'pan' && event.shiftKey)||
-            (dragMode === 'select' && !event.shiftKey)){
-              return 'select';
-            }
-          else if ((dragMode === 'pan' && !event.shiftKey)||
-            (dragMode === 'select' && event.shiftKey)){
-              return 'pan';
-            }
+          //Shift chooses the opposite mode.
+          if (dragMode === 'select') {
+            return event.shiftKey ? 'pan' : 'select';
+          } else {
+            return event.shiftKey ? 'select' : 'pan';
+          }
         }
 
         scope.onMouseMove = function(event) {
@@ -46,16 +44,16 @@ angular.module('biggraph')
             workspaceY += event.offsetY - mouseY;
           } else if (selectBoxes) {
             var logicalPos = getLogicalPosition(event);
-            scope.workspace.selectionBox.endX = logicalPos.x;
-            scope.workspace.selectionBox.endY = logicalPos.y;
-            scope.workspace.updateSelectionBox();
-            scope.workspace.selectBoxesInSelectionBox();
-          } else if (moveSelectionBox) {
-            scope.workspace.selectionBox.startX += event.offsetX - mouseX;
-            scope.workspace.selectionBox.endX += event.offsetX - mouseX;
-            scope.workspace.selectionBox.startY += event.offsetY - mouseY;
-            scope.workspace.selectionBox.endY += event.offsetY - mouseY;
-            scope.workspace.updateSelectionBox();
+            scope.workspace.selection.endX = logicalPos.x;
+            scope.workspace.selection.endY = logicalPos.y;
+            scope.workspace.updateSelection();
+            scope.workspace.selectBoxesinSelection();
+          } else if (moveSelection) {
+            scope.workspace.selection.startX += event.offsetX - mouseX;
+            scope.workspace.selection.endX += event.offsetX - mouseX;
+            scope.workspace.selection.startY += event.offsetY - mouseY;
+            scope.workspace.selection.endY += event.offsetY - mouseY;
+            scope.workspace.updateSelection();
           }
           mouseX = event.offsetX;
           mouseY = event.offsetY;
@@ -64,7 +62,7 @@ angular.module('biggraph')
 
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
-          scope.workspace.removeSelectionBox();
+          scope.workspace.removeSelection();
           scope.workspace.onMouseDownOnBox(box, getLogicalPosition(event));
         };
 
@@ -72,7 +70,7 @@ angular.module('biggraph')
           element[0].style.cursor = '';
           workspaceDrag = false;
           selectBoxes = false;
-          moveSelectionBox = false;
+          moveSelection = false;
           scope.workspace.onMouseUp(getLogicalPosition(event));
         };
 
@@ -86,19 +84,19 @@ angular.module('biggraph')
             mouseY = event.offsetY;
           } else if(dragMode === 'select'){
             var logicalPos = getLogicalPosition(event);
-            if(inSelectionBox(logicalPos)){
-              moveSelectionBox = true;
+            if(inSelection(logicalPos)){
+              moveSelection = true;
               scope.workspace.movedBoxes = scope.workspace.selectedBoxes();
               scope.workspace.movedBoxes.map(function(box) {
                 box.onMouseDown(logicalPos);});
             } else {
               scope.workspace.selectedBoxIds = [];
               selectBoxes = true;
-              scope.workspace.selectionBox.endX = logicalPos.x;
-              scope.workspace.selectionBox.endY = logicalPos.y;
-              scope.workspace.selectionBox.startX = logicalPos.x;
-              scope.workspace.selectionBox.startY = logicalPos.y;
-              scope.workspace.updateSelectionBox();
+              scope.workspace.selection.endX = logicalPos.x;
+              scope.workspace.selection.endY = logicalPos.y;
+              scope.workspace.selection.startX = logicalPos.x;
+              scope.workspace.selection.startY = logicalPos.y;
+              scope.workspace.updateSelection();
           }
         }
         };
@@ -108,8 +106,8 @@ angular.module('biggraph')
           return 'translate(' + workspaceX + ', ' + workspaceY + ') scale(' + z + ')';
         };
 
-        function inSelectionBox(position) {
-          var sb = scope.workspace.selectionBox;
+        function inSelection(position) {
+          var sb = scope.workspace.selection;
           return(sb.leftX < position.x && position.x < sb.leftX + sb.width &&
             sb.upperY < position.y && position.y < sb.upperY + sb.height);
         }
