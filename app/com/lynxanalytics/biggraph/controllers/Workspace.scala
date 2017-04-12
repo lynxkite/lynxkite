@@ -216,7 +216,8 @@ case class BoxOutputState(
     state: Option[json.JsValue],
     success: FEStatus = FEStatus.enabled) {
   BoxOutputKind.assertKind(kind)
-  assert(success.enabled ^ state.isEmpty, "State should be present iff computation was successful")
+  assert(success.enabled ^ (state.isEmpty || state.get == null),
+    "State should be present iff computation was successful")
 
   def isError = !success.enabled
   def isProject = kind == BoxOutputKind.Project
