@@ -78,12 +78,12 @@ angular.module('biggraph')
         scope.onMouseDown = function(event) {
           var dragMode = actualDragMode(event);
           event.preventDefault();
-          if(dragMode === 'pan'){
+          if (dragMode === 'pan'){
             workspaceDrag = true;
             setGrabCursor(element[0]);
             mouseX = event.offsetX;
             mouseY = event.offsetY;
-          } else if(dragMode === 'select'){
+          } else if (dragMode === 'select'){
             var logicalPos = getLogicalPosition(event);
             selectBoxes = true;
             scope.workspace.selectedBoxIds = [];
