@@ -64,12 +64,14 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
             if (inputs.hasOwnProperty(inputName)) {
               var input = inputs[inputName];
               var src = this.boxMap[input.boxID];
-              var srcPlug = this._lookupArrowEndpoint(
-                src.outputs, input.id);
-              var dstPlug = this._lookupArrowEndpoint(
-                dst.inputs, inputName);
-              this.arrows.push(this._createArrow(
-                srcPlug, dstPlug));
+              if(src){
+                var srcPlug = this._lookupArrowEndpoint(
+                  src.outputs, input.id);
+                var dstPlug = this._lookupArrowEndpoint(
+                  dst.inputs, inputName);
+                this.arrows.push(this._createArrow(
+                  srcPlug, dstPlug));
+              }
             }
           }
         }
@@ -96,6 +98,15 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
               inputs: {},
               parameters: {}
             });
+        this._build();
+      },
+
+      deleteBox: function(boxId) {
+        var i = this.state.boxes.map(function(box) {
+          return box.id === boxId;
+        }).indexOf(true);
+
+        this.state.boxes.splice(i,1);
         this._build();
       },
 

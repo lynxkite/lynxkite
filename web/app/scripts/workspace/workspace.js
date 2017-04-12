@@ -237,6 +237,17 @@ angular.module('biggraph')
           this.saveWorkspace();
         },
 
+        deleteBox: function(boxId) {
+          this.wrapper.deleteBox(boxId);
+          this.saveWorkspace();
+        },
+
+        deleteSelectedBoxes: function() {
+          for(i = 0; i < this.selectedBoxIds.length; i++) {
+            this.deleteBox(this.selectedBoxIds[i]);
+          }
+        },
+
         getAndUpdateProgress: function(errorHandler) {
           var that = this;
           var workspaceBefore = this.wrapper;
