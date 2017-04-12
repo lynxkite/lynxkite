@@ -3,6 +3,8 @@ package com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class BigGraphControllerTest extends BigGraphControllerTestBase {
+  // TODO: Depends on #5874.
+  /*
   test("filtering by vertex attribute") {
     run("Create example graph")
     val filter = ProjectAttributeFilter("age", "<40")
@@ -45,17 +47,12 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
     assert(eattr[String]("comment") == Seq("Bob envies Adam", "Bob loves Eve"))
     assert(subProject.toFE.undoOp == "Filter weight >2")
   }
+  */
 
   def list(dir: String) = controller.projectList(user, ProjectListRequest(dir))
 
-  test("project list") {
-    val pl = list("")
-    assert(pl.objects.size == 1)
-    assert(pl.objects(0).name == "Test_Project")
-    assert(pl.objects(0).vertexCount.isEmpty)
-    assert(pl.objects(0).edgeCount.isEmpty)
-  }
-
+  // TODO: Depends on #5860.
+  /*
   test("project list with scalars") {
     run("Create example graph")
     controller.forkEntry(user, ForkEntryRequest(from = projectName, to = "new_project"))
@@ -71,6 +68,7 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
     controller.forkEntry(user, ForkEntryRequest(from = projectName, to = "forked"))
     assert(list("").objects.size == 2)
   }
+  */
 
   test("create directory") {
     controller.createDirectory(user, CreateDirectoryRequest(
@@ -80,13 +78,5 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
     assert(list("foo").directories == Seq("foo/bar"))
     controller.discardEntry(user, DiscardEntryRequest(name = "foo"))
     assert(list("").directories.isEmpty)
-  }
-
-  test("create directory inside project") {
-    run("Create example graph")
-    intercept[AssertionError] {
-      controller.createDirectory(user, CreateDirectoryRequest(
-        name = projectName + "/bar", privacy = "private"))
-    }
   }
 }

@@ -20,6 +20,7 @@ case class GetProgressResponse(progress: Map[String, Option[Progress]])
 case class GetProjectOutputRequest(id: String, path: String)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
+case class CreateSnapshotRequest(name: String, id: String)
 
 class WorkspaceController(env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -112,6 +113,15 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       ))
     ).view.force
     GetProgressResponse(progress)
+  }
+
+  def createSnapshot(
+    user: serving.User, request: CreateSnapshotRequest): Unit = {
+    val calculatedState = calculatedStates.synchronized {
+      calculatedStates(request.id)
+    }
+    val snapshot = new SnapshotFrame(SymbolPath.parse(request.name))
+    snapshot.initialize(calculatedState)
   }
 
   def setWorkspace(
