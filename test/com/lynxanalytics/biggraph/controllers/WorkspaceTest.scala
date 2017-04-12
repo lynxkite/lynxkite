@@ -204,15 +204,21 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   test("anchor box") {
     using("test-workspace") {
       val anchorBox = Box("anchor", "Anchor", Map(), 0, 0, Map())
+      // We have an anchor by default.
       assert(get("test-workspace").boxes == List(anchorBox))
+      // If we delete it it comes back.
       set("test-workspace", Workspace(List()))
       assert(get("test-workspace").boxes == List(anchorBox))
-      val withDescription = Box("anchor", "Anchor", Map("description" -> "desc"), 0, 0, Map())
+      // We can set its properties though.
+      val withDescription = Box("anchor", "Anchor", Map("description" -> "desc"), 10, 0, Map())
       set("test-workspace", Workspace(List(withDescription)))
       assert(get("test-workspace").boxes == List(withDescription))
+      // We cannot have more than one.
       val another = Box("anchor2", "Anchor", Map("description" -> "other"), 0, 0, Map())
-      set("test-workspace", Workspace(List(withDescription, another)))
-      assert(get("test-workspace").boxes == List(withDescription))
+      val ex = intercept[AssertionError] {
+        set("test-workspace", Workspace(List(withDescription, another)))
+      }
+      assert(ex.getMessage == "2 anchors found.")
     }
   }
 }
