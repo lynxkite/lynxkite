@@ -9,7 +9,6 @@
         class="form-control operation-attribute-entry"
         ng-model="output[param.id]"
         ng-submit="onBlur()"
-        ng-blur="onBlur()"
         ng-disabled="!editable">
     <div
       ui-ace="{
@@ -27,7 +26,6 @@
       class="form-control operation-attribute-entry"
       ng-if="param.kind === 'code'"
       ng-model="output[param.id]"
-      ng-blur="onBlur()"
       ng-disabled="!editable"></div>
     <file-parameter ng-if="param.kind === 'file'"
         editable="editable"

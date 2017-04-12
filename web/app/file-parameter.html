@@ -5,7 +5,6 @@
         ng-hide="uploading"
         class="form-control"
         ng-model="filename"
-        ng-blur="onBlur()"
         ng-disabled="!editable">
       <progressbar ng-show="uploading" value="progress">
         {{progress}}%
