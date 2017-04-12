@@ -24,16 +24,16 @@
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.model
+import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
-import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.{ AccessControl, User, Utils }
-
 import java.io.File
 import java.util.UUID
+
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.JsObject
@@ -128,6 +128,30 @@ sealed trait ProjectViewer {
     scalars.collect {
       case (k, v) if v.is[model.Model] => k -> v.runtimeSafeCast[model.Model].modelMeta
     }
+  }
+
+  def getProgress()(implicit entityProgressManager: EntityProgressManager): List[Double] = {
+    def commonProjectStateProgress(state: CommonProjectState): List[Double] = {
+      val allEntities = state.vertexSetGUID.map(manager.vertexSet).toList ++
+        state.edgeBundleGUID.map(manager.edgeBundle).toList ++
+        state.scalarGUIDs.values.map(manager.scalar) ++
+        state.vertexAttributeGUIDs.values.map(manager.attribute) ++
+        state.edgeAttributeGUIDs.values.map(manager.attribute)
+
+      val segmentationProgress = state.segmentations.values.flatMap(segmentationStateProgress)
+      allEntities.map(entityProgressManager.computeProgress) ++ segmentationProgress
+    }
+
+    def segmentationStateProgress(state: SegmentationState): List[Double] = {
+      val segmentationProgress = commonProjectStateProgress(state.state)
+      val belongsToProgress = state.belongsToGUID.map(belongsToGUID => {
+        val belongsTo = manager.edgeBundle(belongsToGUID)
+        entityProgressManager.computeProgress(belongsTo)
+      }).toList
+      belongsToProgress ++ segmentationProgress
+    }
+
+    commonProjectStateProgress(state)
   }
 
   lazy val segmentationMap: Map[String, SegmentationViewer] =
