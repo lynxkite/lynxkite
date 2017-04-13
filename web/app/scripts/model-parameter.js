@@ -8,7 +8,6 @@ angular.module('biggraph').directive('modelParameter', function(util) {
       param: '=', // Parameters of the available models.
       editable: '=', // Whether this input is editable.
       modelJson: '=', // Input/output: Model configuration in JSON.
-      onBlur: '&', // Function to call on "blur".
     },
     templateUrl: 'model-parameter.html',
     link: function(scope) {
