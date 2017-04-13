@@ -22,10 +22,12 @@
           <text x="10">{{ plug.id }}</text>
           <circle ng-attr-r="{{ plug.radius }}"
                 class="io-circle"
-                ng-class="{'in-progress': plug.inProgress, 'colored-output': plug.color}"
+                ng-class="{'in-progress': plug.inProgress,
+                          'colored-output': plug.progressColor || plug.error }"
+                ng-attr-fill="{{ plug.error ? 'red' : plug.progressColor }}"
+                ng-attr-drop-tooltip="{{ plug.error }}"
                 ng-mousedown="workspace.onMouseDownOnPlug(plug, $event)"
-                ng-mouseup="workspace.onMouseUpOnPlug(plug, $event)"
-                ng-attr-fill="{{ plug.color }}" >
+                ng-mouseup="workspace.onMouseUpOnPlug(plug, $event)">
           </circle>
         </g>
       </g>
@@ -40,7 +42,11 @@
       <text x="5" y="15">
         {{box.metadata.operationID}}
       </text>
-
+      <text x="5" y="50" ng-show="box.commentLines">
+        <tspan xml:space="preserve" font-family="monospace" x="5" dy="15"
+               ng-repeat="line in box.commentLines track by $index">{{line}}
+        </tspan>
+      </text>
     </g>
     <!-- end box -->
 
