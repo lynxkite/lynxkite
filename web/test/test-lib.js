@@ -165,6 +165,7 @@ Workspace.prototype = {
     for (var key in params) {
       testLib.setParameter(this.operationParameter(key), params[key]);
     }
+    $('#workspace-name').click(); // Make sure the parameters are not focused.
   },
 
   addBox: function(boxData) {
