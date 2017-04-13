@@ -84,11 +84,19 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         this._buildArrows();
       },
 
-      // boxID should be used for  test-purposes only
+      // boxID should be used for test-purposes only
       addBox: function(operationId, x, y, boxId) {
-        var cnt = this.boxes.length;
-        boxId = boxId || operationId.replace(/ /g, '-') + cnt;
-
+        var cnt;
+        if(this.state.boxes.length === 0){
+          cnt = 0;
+        } else {
+          var usedNumbers = this.state.boxes.map(function(box) {
+            var split = box.id.split('_');
+            return parseInt(split[split.length - 1]);
+          });
+          cnt = Math.max.apply(null, usedNumbers) + 1;
+        }
+        boxId = boxId || operationId.replace(/ /g, '-') + '_' + cnt;
         this.state.boxes.push(
             {
               id: boxId,
