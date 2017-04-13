@@ -21,12 +21,12 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import Operation.Context
   import Operation.Implicits._
 
-  private val tableConnection = TypedConnection("table", BoxOutputKind.Table)
+  private val tableInput = "table"
   private val exportResultConnection = TypedConnection("result", BoxOutputKind.ExportResult)
   val ExportOperations = Category("Export operations", "blue", icon = "folder-open")
 
   def register(id: String)(factory: Context => ExportOperation): Unit = {
-    registerOp(id, ExportOperations, List(tableConnection), List(exportResultConnection), factory)
+    registerOp(id, ExportOperations, List(tableInput), List(exportResultConnection), factory)
   }
 
   import OperationParams._
@@ -48,7 +48,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         params("delimiter"), params("quote"),
         params("version").toInt
       )
-      exportResultGUID = op(op.t, table).result.exportResult.gUID.toString
+      exportResult = Some(op(op.t, table).result.exportResult)
     }
   })
 }

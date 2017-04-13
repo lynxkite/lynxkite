@@ -390,8 +390,8 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
 // An ExportOperation takes a Table as input and returns an ExportResult as output.
 abstract class ExportOperation(protected val context: Operation.Context) extends BasicOperation {
   assert(
-    context.meta.inputs == List(TypedConnection("table", BoxOutputKind.Table)),
-    s"An ExportOperation must input a table. $context")
+    context.meta.inputs == List("table"),
+    s"An ExportOperation must input a single table. $context")
   assert(
     context.meta.outputs == List(TypedConnection("result", BoxOutputKind.ExportResult)),
     s"An ExportOperation must output an ExportResult. $context"
@@ -399,7 +399,10 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
 
   protected lazy val table = tableInput("table")
 
-  protected var exportResultGUID: String = ""
+  protected var _exportResult: Option[Scalar[FileMetaData]] = None
+  def exportResult = _exportResult
+  protected def exportResult_=(newExportResult: Option[Scalar[FileMetaData]]) =
+    _exportResult = newExportResult
 
   protected def makeOutput(exportResult: Scalar[FileMetaData]): Map[BoxOutput, BoxOutputState] = {
     Map(context.meta.outputs(0).ofBox(context.box) -> BoxOutputState.from(exportResult))
@@ -409,12 +412,7 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
     validateParameters(params)
     assertWriteAllowed(params("path"))
     apply()
-    makeOutput(exportResultFromGUID())
-  }
-
-  protected def exportResultFromGUID(): Scalar[FileMetaData] = {
-    import MetaGraphManager.StringAsUUID
-    manager.scalarOf[FileMetaData](exportResultGUID.asUUID)
+    makeOutput(exportResult.get)
   }
 
   private def assertWriteAllowed(path: String) = {

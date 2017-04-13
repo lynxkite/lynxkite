@@ -14,6 +14,8 @@ case class GetOutputIDRequest(workspace: String, output: BoxOutput)
 case class GetProjectOutputRequest(id: String, path: String)
 case class GetProgressRequest(workspace: String, output: BoxOutput)
 case class GetOperationMetaRequest(workspace: String, box: String)
+case class GetExternalFileOutputRequest(workspace: String, output: BoxOutput)
+case class GetExternalFileOutputResponse(scalar: FEScalar, computed: Boolean)
 case class GetOutputIDResponse(id: String, kind: String)
 case class GetProgressResponse(progressList: List[BoxOutputProgress])
 case class CreateWorkspaceRequest(name: String, privacy: String)
@@ -83,6 +85,16 @@ class WorkspaceController(env: SparkFreeEnvironment) {
             viewer.toFE(request.path)
         }
     }
+  }
+
+  def getExternalFiletOutput(
+    user: serving.User, request: GetExternalFileOutputRequest) = {
+    val ws = getWorkspaceByName(user, request.workspace)
+    val exportResult = ws.state(user, ops, request.output).exportresult
+    val fEExportResult = ProjectViewer.feScalar(exportResult, "file metadata", "", Map())
+    val progress = entityProgressManager.computeProgress(exportResult)
+    val computed = if (progress == 1.0) true else false
+    GetExternalFileOutputResponse(fEExportResult, computed)
   }
 
   def createSnapshot(
