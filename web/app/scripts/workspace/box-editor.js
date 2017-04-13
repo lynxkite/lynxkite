@@ -59,6 +59,7 @@ angular.module('biggraph')
               })
             .then(
               function success(boxMeta) {
+                boxMeta.id = boxMeta.id.replace(/ /g, '-');
                 if (scope.lastRequest === currentRequest) {
                   scope.newOpSelected(box, boxMeta);
                 }
