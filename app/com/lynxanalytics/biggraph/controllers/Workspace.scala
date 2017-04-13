@@ -20,11 +20,18 @@ case class Workspace(
     boxMap(id)
   }
 
-  def parametersMeta: List[FEOperationParameterMeta] = {
-    val anchor = findBox("anchor")
-    val parametersParamValue = anchor.parameters("parameters")
+  private def parametersMeta: List[FEOperationParameterMeta] = {
+    val anchor = boxMap.getOrElse("anchor", Workspace.anchorBox)
+    val parametersParamValue =
+      anchor.parameters.getOrElse("parameters", OperationParams.ParametersParam.defaultValue)
     OperationParams.ParametersParam.parse(parametersParamValue)
   }
+
+  private def defaultParameters: Map[String, String] =
+    parametersMeta.map(p => p.id -> p.defaultValue).toMap
+
+  private def fillDefaults(ctx: WorkspaceExecutionContext) =
+    ctx.copy(workspaceParameters = defaultParameters ++ ctx.workspaceParameters)
 
   // Changes the workspace to enforce some invariants.
   def repaired(ops: OperationRepository): Workspace = {
@@ -93,7 +100,7 @@ case class Workspace(
         allOutputsWithError(s"Input $list has an error.")
       } else {
         val outputStates = try {
-          box.execute(ctx, inputs)
+          box.execute(fillDefaults(ctx), inputs)
         } catch {
           case ex: Throwable =>
             log.error(s"Failed to execute $box:", ex)
@@ -159,7 +166,7 @@ case class Workspace(
       val errors = inputs.filter(_._2.isError).map(_._1).mkString(", ")
       s"Input $errors has an error."
     })
-    box.getOperation(ctx, inputs)
+    box.getOperation(fillDefaults(ctx), inputs)
   }
 }
 

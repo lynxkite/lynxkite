@@ -155,7 +155,7 @@ object OperationParams {
       id: String,
       title: String) extends OperationParameterMeta {
     val kind = "parameters"
-    val defaultValue = "[]"
+    val defaultValue = ParametersParam.defaultValue
     val multipleChoice = false
     val options = List()
     def validate(value: String): Unit = {
@@ -163,6 +163,7 @@ object OperationParams {
     }
   }
   object ParametersParam {
+    val defaultValue = "[]"
     def parse(value: String): List[FEOperationParameterMeta] = {
       import FrontendJson.fFEOperationParameterMeta
       json.Json.parse(value).as[List[FEOperationParameterMeta]]
