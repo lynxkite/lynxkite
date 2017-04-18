@@ -18,7 +18,7 @@ angular.module('biggraph')
                                });
         exportResult.then(
           function success(exportResult) {
-            scope.alreadyExported = exportResult.computeProgress;
+            scope.alreadyExported = (exportResult.computeProgress === 1.0) ? true : false;
 
             scope.prettifyCamelCase = function(camelCase) {
               // insert a space before all caps
@@ -33,7 +33,13 @@ angular.module('biggraph')
               (exportResult.computedValue) ? JSON.parse(exportResult.computedValue.string) : {};
 
             scope.export = function() {
-              util.lazyFetchScalarValue(exportResult, true);
+              var scalarValue = util.lazyFetchScalarValue(exportResult, true);
+
+              scalarValue.value.then(function(value) {
+                scope.alreadyExported = true;
+                scope.fileMetaData = JSON.parse(value.string);
+              });
+
             };
           });
       },
