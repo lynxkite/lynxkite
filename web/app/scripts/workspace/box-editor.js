@@ -30,7 +30,7 @@ angular.module('biggraph')
               if (!scope.workspace) {
                 return;
               }
-              scope.loadBoxMeta(scope.workspace.selectedBoxId);
+              scope.loadBoxMeta(scope.workspace.selectedBoxIds[0]);
             });
 
         scope.paramValues = {};
