@@ -4,7 +4,8 @@
   </h1>
 
   <!-- For documented operations. -->
-  <p help-id="{{ boxMeta.id }}"
+  <p ng-if="boxMeta.id"
+     help-id="{{ boxMeta.id }}"
      remove-header="yes"
      scalars="scalars"
      class="description"></p>
