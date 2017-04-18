@@ -12,6 +12,13 @@
 angular.module('biggraph')
   .controller('WorkspaceMainCtrl', function ($scope, $routeParams, util, workspace) {
 
+  $scope.dragMode = window.localStorage.getItem('drag_mode') || 'pan';
+  $scope.$watch(
+    'dragMode',
+    function(dragMode) {
+      window.localStorage.setItem('drag_mode', dragMode);
+    });
+
   $scope.boxCatalog = util.nocache('/ajax/boxCatalog');
   $scope.$watch(
     'boxCatalog.$resolved',
