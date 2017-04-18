@@ -5,11 +5,13 @@ import play.api.libs.json
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
+import scala.annotation.tailrec
+
 case class Workspace(
     boxes: List[Box]) {
   val boxMap = boxes.map(b => b.id -> b).toMap
   assert(boxMap.size == boxes.size, {
-    val dups = boxes.map(_.id).groupBy(identity).collect { case (id, ids) if ids.size > 1 => id }
+    val dups = boxes.groupBy(_.id).filter(_._2.size > 1).keys
     s"Duplicate box name: ${dups.mkString(", ")}"
   })
 
@@ -18,117 +20,124 @@ case class Workspace(
     boxMap(id)
   }
 
+  // Changes the workspace to enforce some invariants.
+  def repaired(ops: OperationRepository): Workspace = {
+    repairAnchor
+    // TODO: #5883 after #5834.
+  }
+
+  private def repairAnchor: Workspace = {
+    val anchors = boxes.filter(_.operationID == "Anchor")
+    anchors match {
+      case List(box) =>
+        assert(box.id == "anchor", "The anchor box must have the 'anchor' ID.")
+        this
+      case Nil => Workspace(Workspace.anchorBox +: boxes)
+      case _ => throw new AssertionError(s"${anchors.size} anchors found.")
+    }
+  }
+
   def checkpoint(previous: String = null)(implicit manager: graph_api.MetaGraphManager): String = {
     manager.checkpointRepo.checkpointState(
       RootProjectState.emptyState.copy(checkpoint = None, workspace = Some(this)),
       previous).checkpoint.get
   }
 
-  def state(
-    user: serving.User, ops: OperationRepository, connection: BoxOutput): BoxOutputState = {
-    calculate(user, ops, connection, Map())(connection)
-  }
-
-  // Calculates an output. Returns every state that had been calculated as a side-effect.
-  def calculate(
-    user: serving.User, ops: OperationRepository, connection: BoxOutput,
-    states: Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
-    if (states.contains(connection)) states else {
-      val box = findBox(connection.boxID)
+  def allStates(user: serving.User, ops: OperationRepository): Map[BoxOutput, BoxOutputState] = {
+    val dependencies = discoverDependencies
+    val statesWithoutCircularDependency = dependencies.topologicalOrder
+      .foldLeft(Map[BoxOutput, BoxOutputState]()) {
+        (states, box) =>
+          val newOutputStates = outputStatesOfBox(user, ops, box, states)
+          newOutputStates ++ states
+      }
+    val statesWithCircularDependency = dependencies.withCircularDependency.flatMap { box =>
       val meta = ops.getBoxMetadata(box.operationID)
-
-      def errorOutputs(msg: String): Map[BoxOutput, BoxOutputState] = {
-        meta.outputs.map {
-          o => o.ofBox(box) -> BoxOutputState(o.kind, null, FEStatus.disabled(msg))
-        }.toMap
+      meta.outputs.map { o =>
+        o.ofBox(box) ->
+          BoxOutputState(
+            o.kind,
+            None,
+            FEStatus.disabled("Can not compute state due to circular dependencies.")
+          )
       }
+    }.toMap
+    statesWithoutCircularDependency ++ statesWithCircularDependency
+  }
 
-      val unconnecteds = meta.inputs.filterNot(conn => box.inputs.contains(conn))
-      if (unconnecteds.nonEmpty) {
-        val list = unconnecteds.mkString(", ")
-        states ++ errorOutputs(s"Input $list is not connected.")
+  private def outputStatesOfBox(user: serving.User, ops: OperationRepository, box: Box,
+                                inputStates: Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
+    val meta = ops.getBoxMetadata(box.operationID)
+
+    def allOutputsWithError(msg: String): Map[BoxOutput, BoxOutputState] = {
+      meta.outputs.map {
+        o => o.ofBox(box) -> BoxOutputState(o.kind, None, FEStatus.disabled(msg))
+      }.toMap
+    }
+
+    val unconnectedInputs = meta.inputs.filterNot(conn => box.inputs.contains(conn))
+    if (unconnectedInputs.nonEmpty) {
+      val list = unconnectedInputs.mkString(", ")
+      allOutputsWithError(s"Input $list is not connected.")
+    } else {
+      val inputs = box.inputs.map { case (id, output) => id -> inputStates(output) }
+      val inputErrors = inputs.filter(_._2.isError)
+      if (inputErrors.nonEmpty) {
+        val list = inputErrors.keys.mkString(", ")
+        allOutputsWithError(s"Input $list has an error.")
       } else {
-        val updatedStates = box.inputs.values.foldLeft(states) {
-          (states, output) => calculate(user, ops, output, states)
+        val outputStates = try {
+          box.execute(user, inputs, ops)
+        } catch {
+          case ex: Throwable =>
+            log.error(s"Failed to execute $box:", ex)
+            val msg = ex match {
+              case ae: AssertionError => ae.getMessage
+              case _ => ex.toString
+            }
+            allOutputsWithError(msg)
         }
-        val inputs = box.inputs.map { case (id, output) => id -> updatedStates(output) }
-        val errors = inputs.filter(_._2.isError)
-        if (errors.nonEmpty) {
-          val list = errors.map(_._1).mkString(", ")
-          updatedStates ++ errorOutputs(s"Input $list has an error.")
+        outputStates
+      }
+    }
+  }
+
+  case class Dependencies(topologicalOrder: List[Box], withCircularDependency: List[Box])
+
+  // Tries to determine a topological order among boxes. All boxes with a circular dependency and
+  // ones that depend on another with a circular dependency are returned unordered.
+  private def discoverDependencies: Dependencies = {
+    val outEdges: Map[Box, Set[Box]] = {
+      val edges = boxes.flatMap(dst => dst.inputs.map(input => findBox(input._2.boxID) -> dst))
+      edges.groupBy(_._1).mapValues(_.map(_._2).toSet)
+    }
+
+    // Determines the topological order by selecting a node without in-edges, removing the node and
+    // its connections and calling itself on the remaining graph.
+    @tailrec
+    def discover(reversedTopologicalOrder: List[Box],
+                 remainingBoxInDegrees: List[(Box, Int)]): Dependencies =
+      if (remainingBoxInDegrees.isEmpty) {
+        Dependencies(reversedTopologicalOrder.reverse, List())
+      } else {
+        val (nextBox, lowestDegree) = remainingBoxInDegrees.minBy(_._2)
+        if (lowestDegree > 0) {
+          Dependencies(
+            topologicalOrder = reversedTopologicalOrder.reverse,
+            withCircularDependency = remainingBoxInDegrees.map(_._1)
+          )
         } else {
-          val outputStates = try {
-            box.execute(user, inputs, ops)
-          } catch {
-            case ex: Throwable =>
-              log.error(s"Failed to execute $box:", ex)
-              val msg = ex match {
-                case ae: AssertionError => ae.getMessage
-                case _ => ex.toString
-              }
-              errorOutputs(msg)
-          }
-          updatedStates ++ outputStates
+          val dependants = outEdges.getOrElse(nextBox, Set())
+          val updatedInDegrees = remainingBoxInDegrees.withFilter(_._1 != nextBox)
+            .map {
+              case (box, degree) => (box, if (dependants.contains(box)) degree - 1 else degree)
+            }.map(identity)
+          discover(nextBox :: reversedTopologicalOrder, updatedInDegrees)
         }
       }
-    }
-  }
 
-  // Calculates the progress of an output and all other outputs that had been calculated as a
-  // side-effect.
-  def progress(
-    user: serving.User, ops: OperationRepository,
-    connection: BoxOutput)(implicit entityProgressManager: graph_api.EntityProgressManager,
-                           manager: graph_api.MetaGraphManager): List[BoxOutputProgress] = {
-    val states = calculate(user, ops, connection, Map())
-    states.toList.map { case (o, s) => calculatedStateProgress(o, s) }
-  }
-
-  private def calculatedStateProgress(
-    boxOutput: BoxOutput,
-    state: BoxOutputState)(implicit entityProgressManager: graph_api.EntityProgressManager,
-                           manager: graph_api.MetaGraphManager): BoxOutputProgress = {
-    val progressList: List[Double] = if (!state.success.enabled) List() else {
-      state.kind match {
-        case BoxOutputKind.Project => projectProgress(state.project)
-        case BoxOutputKind.Table => List(entityProgressManager.computeProgress(state.table))
-      }
-    }
-    BoxOutputProgress(
-      boxOutput,
-      Progress(
-        computed = progressList.count(_ == 1.0),
-        inProgress = progressList.count(x => x < 1.0 && x > 0.0),
-        notYetStarted = progressList.count(_ == 0.0),
-        failed = progressList.count(_ < 0.0)),
-      state.success)
-  }
-
-  private def projectProgress(
-    project: ProjectEditor)(implicit entityProgressManager: graph_api.EntityProgressManager,
-                            manager: graph_api.MetaGraphManager): List[Double] = {
-
-    def commonProjectStateProgress(state: CommonProjectState): List[Double] = {
-      val allEntities = state.vertexSetGUID.map(manager.vertexSet).toList ++
-        state.edgeBundleGUID.map(manager.edgeBundle).toList ++
-        state.scalarGUIDs.values.map(manager.scalar) ++
-        state.vertexAttributeGUIDs.values.map(manager.attribute) ++
-        state.edgeAttributeGUIDs.values.map(manager.attribute)
-
-      val segmentationProgress = state.segmentations.values.flatMap(segmentationStateProgress)
-      allEntities.map(entityProgressManager.computeProgress) ++ segmentationProgress
-    }
-
-    def segmentationStateProgress(state: SegmentationState): List[Double] = {
-      val segmentationProgress = commonProjectStateProgress(state.state)
-      val belongsToProgress = state.belongsToGUID.map(belongsToGUID => {
-        val belongsTo = manager.edgeBundle(belongsToGUID)
-        entityProgressManager.computeProgress(belongsTo)
-      }).toList
-      belongsToProgress ++ segmentationProgress
-    }
-
-    commonProjectStateProgress(project.rootState.state)
+    val inDegrees: List[(Box, Int)] = boxes.map(box => box -> box.inputs.size)
+    discover(List(), inDegrees)
   }
 
   def getOperation(
@@ -138,9 +147,7 @@ case class Workspace(
     for (i <- meta.inputs) {
       assert(box.inputs.contains(i), s"Input $i is not connected.")
     }
-    val states = box.inputs.values.foldLeft(Map[BoxOutput, BoxOutputState]()) {
-      (states, output) => calculate(user, ops, output, states)
-    }
+    val states = allStates(user, ops)
     val inputs = box.inputs.map { case (id, output) => id -> states(output) }
     assert(!inputs.exists(_._2.isError), {
       val errors = inputs.filter(_._2.isError).map(_._1).mkString(", ")
@@ -151,7 +158,8 @@ case class Workspace(
 }
 
 object Workspace {
-  val empty = Workspace(List())
+  val anchorBox = Box("anchor", "Anchor", Map(), 0, 0, Map())
+  val empty = Workspace(List(anchorBox))
 }
 
 case class Box(
@@ -213,22 +221,23 @@ object BoxOutputState {
   // Cannot call these "apply" due to the JSON formatter macros.
   def from(project: ProjectEditor): BoxOutputState = {
     import CheckpointRepository._ // For JSON formatters.
-    BoxOutputState(BoxOutputKind.Project, json.Json.toJson(project.rootState.state))
+    BoxOutputState(BoxOutputKind.Project, Some(json.Json.toJson(project.rootState.state)))
   }
 
   def from(table: graph_api.Table): BoxOutputState = {
-    BoxOutputState(BoxOutputKind.Table, json.Json.obj("guid" -> table.gUID))
+    BoxOutputState(BoxOutputKind.Table, Some(json.Json.obj("guid" -> table.gUID)))
   }
 }
 
 case class BoxOutputState(
     kind: String,
-    state: json.JsValue,
+    state: Option[json.JsValue],
     success: FEStatus = FEStatus.enabled) {
   BoxOutputKind.assertKind(kind)
+  assert(success.enabled ^ (state.isEmpty || state.get == null),
+    "State should be present iff computation was successful")
 
   def isError = !success.enabled
-
   def isProject = kind == BoxOutputKind.Project
   def isTable = kind == BoxOutputKind.Table
 
@@ -236,7 +245,7 @@ case class BoxOutputState(
     assert(isProject, s"Tried to access '$kind' as 'project'.")
     assert(success.enabled, success.disabledReason)
     import CheckpointRepository.fCommonProjectState
-    val p = state.as[CommonProjectState]
+    val p = state.get.as[CommonProjectState]
     val rps = RootProjectState.emptyState.copy(state = p)
     new RootProjectEditor(rps)
   }
@@ -245,14 +254,8 @@ case class BoxOutputState(
     assert(isTable, s"Tried to access '$kind' as 'table'.")
     assert(success.enabled, success.disabledReason)
     import graph_api.MetaGraphManager.StringAsUUID
-    manager.table((state \ "guid").as[String].asUUID)
+    manager.table((state.get \ "guid").as[String].asUUID)
   }
-}
-
-case class BoxOutputProgress(boxOutput: BoxOutput, progress: Progress, success: FEStatus)
-case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
-object Progress {
-  val Empty = Progress(0, 0, 0, 0)
 }
 
 object WorkspaceJsonFormatters {
@@ -263,6 +266,4 @@ object WorkspaceJsonFormatters {
   implicit val fBox = json.Json.format[Box]
   implicit val fBoxMetadata = json.Json.format[BoxMetadata]
   implicit val fWorkspace = json.Json.format[Workspace]
-  implicit val fProgress = json.Json.format[Progress]
-  implicit val fBoxOutputProgress = json.Json.format[BoxOutputProgress]
 }
