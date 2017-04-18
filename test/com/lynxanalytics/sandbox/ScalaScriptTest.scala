@@ -5,38 +5,20 @@ import java.security.AccessControlException
 
 class ScalaScriptTest extends FunSuite {
 
-  def worksUnlessRestricted(code: String): String = {
-    intercept[AccessControlException] {
-      ScalaScript.run(code, restricted = true)
-    }
-    val result = ScalaScript.run(code, restricted = false)
-    result
-  }
-
-  def worksEvenAsRestricted(code: String): String = {
-    val result = ScalaScript.run(code, restricted = false)
-    ScalaScript.run(code, restricted = true)
-    // The results may not be identical, but we won't check this
-    result
-  }
-
-  test("Can't do infinite loop, even when non-restricted") {
+  test("Can't do infinite loop") {
     val code =
       """
         Thread.sleep(15000L)
       """
     intercept[java.util.concurrent.TimeoutException] {
-      ScalaScript.run(code, restricted = false)
-    }
-    intercept[java.util.concurrent.TimeoutException] {
-      ScalaScript.run(code, restricted = true)
+      ScalaScript.run(code)
     }
   }
 
   test("Simple arithmetic works") {
     val code = "5 * 5 + 1"
 
-    assert(worksEvenAsRestricted(code) == "26")
+    assert(ScalaScript.run(code) == "26")
   }
 
   test("Security manager disables file access") {
@@ -45,12 +27,27 @@ class ScalaScriptTest extends FunSuite {
     assert(scala.io.Source.fromFile(testFile.getFile).mkString == contents)
     val path = testFile.getPath
     val code = s"""scala.io.Source.fromFile("${path}").mkString"""
-    assert(worksUnlessRestricted(code) == contents)
+    intercept[AccessControlException] {
+      ScalaScript.run(code)
+    }
+  }
+
+  test("Security manager disables file access 2") {
+    val testFile = getClass.getResource("/graph_api/permission_check.txt")
+    val contents = "This file is used to check the security manager implementation.\n"
+    assert(scala.io.Source.fromFile(testFile.getFile).mkString == contents)
+    val path = testFile.getPath
+    val code = s"""scala.io.Source.fromFile("${path}").mkString"""
+    intercept[AccessControlException] {
+      ScalaScript.run(code)
+    }
   }
 
   test("Can't replace the security manager") {
     val code = "System.setSecurityManager(null)"
-    worksUnlessRestricted(code)
+    intercept[AccessControlException] {
+      ScalaScript.run(code)
+    }
   }
 
   test("Can do some non-trivial, innocent computation") {
@@ -64,7 +61,7 @@ class ScalaScriptTest extends FunSuite {
            val r = new C("hel")
            r.compute()
       """
-    assert(worksEvenAsRestricted(code) == "hello")
+    assert(ScalaScript.run(code) == "hello")
   }
 
   test("Can't create a new thread") {
@@ -80,13 +77,22 @@ class ScalaScriptTest extends FunSuite {
              t.start()
 
       """
-    worksUnlessRestricted(code)
+    intercept[AccessControlException] {
+      ScalaScript.run(code)
+    }
   }
 
   test("Can't access biggraph classes") {
     val code = "com.lynxanalytics.biggraph.graph_util.Timestamp.toString"
-    val ts = com.lynxanalytics.biggraph.graph_util.Timestamp.toString
-    val result = worksUnlessRestricted(code)
-    assert(ts.toLong <= result.toLong)
+    intercept[AccessControlException] {
+      ScalaScript.run(code)
+    }
+  }
+
+  test("Can't access biggraph classes 2") {
+    val code = "com.lynxanalytics.biggraph.graph_util.Timestamp.toString"
+    intercept[AccessControlException] {
+      ScalaScript.run(code)
+    }
   }
 }

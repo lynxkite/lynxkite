@@ -15,8 +15,8 @@ import scala.util.DynamicVariable
 class ScalaScriptSecurityManager extends SecurityManager {
 
   val shouldCheck = new DynamicVariable[Boolean](false)
-  def checkedRun[R](restricted: Boolean, op: => R): R = {
-    shouldCheck.withValue(restricted) {
+  def checkedRun[R](op: => R): R = {
+    shouldCheck.withValue(true) {
       op
     }
   }
@@ -54,7 +54,7 @@ class ScalaScriptSecurityManager extends SecurityManager {
             super.checkPermission(permission)
           }
         case p: FilePermission =>
-          if (!(p.getActions == "read" && p.getName.contains(".sbt"))) {
+          if (!(p.getActions == "read" && p.getName.contains(".sbt") && calledByClassLoader)) {
             super.checkPermission(permission)
           }
         case _ =>
@@ -81,33 +81,30 @@ object ScalaScript {
   private val executionContext =
     ThreadUtil.limitedExecutionContext("RestrictedScalaScript", numRestrictedThreads)
 
-  val restrictedSecurityManager = new ScalaScriptSecurityManager
+  private val restrictedSecurityManager = new ScalaScriptSecurityManager
+  System.setSecurityManager(restrictedSecurityManager)
   private val settings = engine.settings
   settings.usejavacp.value = true
   settings.embeddedDefaults[ScalaScriptSecurityManager]
 
-  def run(code: String, restricted: Boolean = true): String = {
+  def run(code: String): String = {
     // IMAIN.compile changes the class loader and does not restore it.
     // https://issues.scala-lang.org/browse/SI-8521
     val cl = Thread.currentThread().getContextClassLoader
     val result = try {
-      run_inner(code, restricted)
+      runInner(code)
     } finally {
       Thread.currentThread().setContextClassLoader(cl)
     }
     result
   }
 
-  def run_inner(code: String, restricted: Boolean): String = {
-    val compiledCode = engine.compile(code)
-    assert(System.getSecurityManager == null)
-    System.setSecurityManager(restrictedSecurityManager)
+  private def runInner(code: String): String = {
     val result = try {
+      val compiledCode = engine.compile(code)
       SafeFuture {
-        restrictedSecurityManager.checkedRun(restricted, compiledCode.eval()).toString
+        restrictedSecurityManager.checkedRun(compiledCode.eval()).toString
       }(executionContext).awaitResult(timeout)
-    } finally {
-      System.setSecurityManager(null)
     }
     result
   }
