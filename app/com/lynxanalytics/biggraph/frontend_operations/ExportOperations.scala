@@ -43,7 +43,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
     def apply() = {
       val header = if (params("header") == "no") true else false
-      val op = graph_operations.ExportTableToFlatFile(
+      val op = graph_operations.ExportTableToCSV(
         params("path"), header,
         params("delimiter"), params("quote"),
         params("version").toInt
