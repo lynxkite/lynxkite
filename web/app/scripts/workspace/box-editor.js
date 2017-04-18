@@ -14,8 +14,11 @@ angular.module('biggraph')
         scope.$watch(
             'workspace.selectedBoxIds[0]',
             function(boxId) {
-              scope.loadBoxMeta(boxId);
-            });
+              if (boxId){
+                scope.loadBoxMeta(boxId);
+              } else {
+                scope.box = undefined;
+              }});
         // The metadata (param definition list) of the current box
         // depends on the whole workspace. (Attributes added by
         // previous operations, state of apply_to_ parameters of

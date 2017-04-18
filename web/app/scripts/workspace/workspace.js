@@ -241,6 +241,7 @@ angular.module('biggraph')
           for(i = 0; i < this.selectedBoxIds.length; i++) {
             this.deleteBox(this.selectedBoxIds[i]);
           }
+          this.selectedBoxIds = [];
         },
 
         getAndUpdateProgress: function(errorHandler) {
