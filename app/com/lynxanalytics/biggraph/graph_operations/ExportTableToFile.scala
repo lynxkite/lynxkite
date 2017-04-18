@@ -29,15 +29,15 @@ abstract class ExportTableToFile extends TypedMetaGraphOp[Input, Output] {
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 }
 
-object ExportTableToFlatFile extends OpFromJson {
-  def fromJson(j: JsValue) = ExportTableToFlatFile(
+object ExportTableToCSV extends OpFromJson {
+  def fromJson(j: JsValue) = ExportTableToCSV(
     (j \ "path").as[String], (j \ "header").as[Boolean],
     (j \ "delimiter").as[String], (j \ "quote").as[String],
     (j \ "version").as[Int])
 }
 
-case class ExportTableToFlatFile(path: String, header: Boolean,
-                                 delimiter: String, quote: String, version: Int)
+case class ExportTableToCSV(path: String, header: Boolean,
+                            delimiter: String, quote: String, version: Int)
     extends ExportTableToFile {
   override def toJson = Json.obj(
     "path" -> path, "header" -> header,
