@@ -11,6 +11,8 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
       fileUploadCount: '=',
       // Enable/disable the control.
       editable: '=',
+      // Function to call on "blur".
+      onBlur: '&',
     },
     templateUrl: 'file-parameter.html',
     link: function(scope, element) {
@@ -35,6 +37,7 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
               scope.$apply(function() {
                 if (xhr.status === 200) {  // SUCCESS
                   scope.filename = xhr.responseText;
+                  scope.onBlur();
                 } else {
                   util.error('File upload failed.', { file: file });
                 }

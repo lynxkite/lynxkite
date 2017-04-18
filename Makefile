@@ -11,7 +11,7 @@ pip = .build/pip3-packages-installed
 all: backend
 
 .build/gulp-done: $(shell $(find) web/app) web/gulpfile.js web/package.json
-	cd web && LC_ALL=C yarn && gulp && cd - && touch $@
+	cd web && LC_ALL=C yarn --frozen-lockfile && gulp && cd - && touch $@
 .build/documentation-verified: $(shell $(find) app) .build/gulp-done
 	./tools/check_documentation.sh && touch $@
 $(pip): python_requirements.txt

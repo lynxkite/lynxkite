@@ -9,11 +9,13 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       box: '=',
       meta: '=',
       output: '=',
+      onBlur: '&',
       busy: '=?',
       editable: '=',
     },
     templateUrl: 'operation-parameters.html',
-    link: function(scope) {
+    link: function(scope, element) {
+      element.on('focusout', function() { scope.onBlur(); });
       scope.fileUploads = { count: 0 };
       scope.$watch('fileUploads.count', function(count) {
         scope.busy = count !== 0;
