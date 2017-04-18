@@ -11,6 +11,7 @@ angular.module('biggraph')
         workspace: '=',
       },
       link: function(scope) {
+        scope.boxMeta = { id: 'add-random-vertex-attribute' };
         scope.$watch(
             'workspace.selectedBoxId',
             function() {
@@ -20,6 +21,8 @@ angular.module('biggraph')
               // Make a copy of the parameter values.
               scope.paramValues = Object.assign(
                   {}, scope.workspace.selectedBox().instance.parameters);
+              // Temporary hack (until popups are implemented) to force refresh operation help.
+              scope.boxMeta = undefined;
               scope.loadBoxMeta();
             });
         // The metadata (param definition list) of the current box
