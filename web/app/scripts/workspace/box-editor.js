@@ -11,7 +11,6 @@ angular.module('biggraph')
         workspace: '=',
       },
       link: function(scope) {
-        scope.boxMeta = { id: 'add-random-vertex-attribute' };
         scope.$watch(
             'workspace.selectedBoxId',
             function() {
@@ -62,7 +61,6 @@ angular.module('biggraph')
               })
             .then(
               function success(boxMeta) {
-                boxMeta.id = boxMeta.id.replace(/ /g, '-');
                 if (scope.lastRequest === currentRequest) {
                   scope.newOpSelected(box, boxMeta);
                 }
@@ -78,6 +76,8 @@ angular.module('biggraph')
         // metadata is successfully downloaded.
         scope.newOpSelected = function(box, boxMeta) {
             scope.box = box;
+            boxMeta.title = boxMeta.id;
+            boxMeta.id = boxMeta.id.replace(/ /g, '-');
             scope.boxMeta = boxMeta;
             if (!box) {
               return;
