@@ -9,16 +9,19 @@ angular.module('biggraph').directive('tagList', function() {
       model: '=',
       options: '=',
       editable: '=',
+      onBlur: '&',
     },
     templateUrl: 'tag-list.html',
     link: function(scope) {
       scope.addTag = function(id) {
         scope.removeTag(id);
         scope.model.push(id);
+        scope.onBlur();
       };
       scope.removeTag = function(id) {
         if (scope.editable) {
           scope.model = scope.model.filter(function(x) { return x !== id; });
+          scope.onBlur();
         }
       };
       scope.getTags = function() {

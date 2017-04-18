@@ -79,20 +79,25 @@ angular.module('biggraph')
         loadWorkspace: function() {
           var that = this;
           util.nocache(
-              '/ajax/getWorkspace',
-              {
-                name: this.name
-              })
-              .then(function(state) {
-                that.backendState = state;
-                // User edits will be applied to a deep copy of
-                // the original backend state. This way watchers
-                // of backendState will only be notified once the
-                // backend is fully aware of the new state.
-                var stateCopy = angular.copy(state);
-                that.wrapper = workspaceWrapper(
-                  stateCopy, boxCatalogMap);
-              });
+            '/ajax/getWorkspace',
+            {
+              name: this.name
+            })
+            .then(function(response) {
+              var state = response.workspace;
+              that.backendState = state;
+              // User edits will be applied to a deep copy of
+              // the original backend state. This way watchers
+              // of backendState will only be notified once the
+              // backend is fully aware of the new state.
+              var stateCopy = angular.copy(state);
+              that.wrapper = workspaceWrapper(
+                stateCopy, boxCatalogMap);
+              that.wrapper.assignStateInfoToPlugs(response.outputs);
+            })
+            .then(function() {
+              that.startProgressUpdate();
+            });
         },
 
         saveWorkspace: function() {
@@ -120,9 +125,16 @@ angular.module('biggraph')
           }
         },
 
-        updateSelectedBox: function(paramValues) {
-          this.wrapper.setBoxParams(this.selectedBoxIds[0], paramValues);
-          this.saveWorkspace();
+        getBox: function(id) {
+          return this.wrapper.boxMap[id];
+        },
+
+        updateBox: function(id, paramValues) {
+          var box = this.getBox(id).instance;
+          if (!angular.equals(paramValues, box.parameters)) {
+            this.wrapper.setBoxParams(id, paramValues);
+            this.saveWorkspace();
+          }
         },
 
         selectBoxesInSelection: function(){
@@ -145,32 +157,15 @@ angular.module('biggraph')
         },
 
         selectState: function(boxID, outputID) {
-          var that = this;
-          util.nocache(
-            '/ajax/getOutputID',
-            {
-              workspace: this.name,
-              output: {
-                boxID: boxID,
-                id: outputID
-              }
-            })
-            .then(
-              function success(response) {
-                that.selectedStateId = response.id;
-                that.selectedStateKind = response.kind;
-              },
-              function error() {
-                that.selectedStateId = undefined;
-                that.selectedStateKind = undefined;
-              });
+          var outPlug = this.wrapper.boxMap[boxID].outputMap[outputID];
+          this.selectedStateId = outPlug.stateID;
+          this.selectedStateKind = outPlug.kind;
         },
 
         selectPlug: function(plug) {
           this.selectedPlug = plug;
           if (plug.direction === 'outputs') {
             this.selectState(plug.boxId, plug.id);
-            this.startProgressUpdate();
           } else {
             this.selectedState = undefined;
           }
@@ -238,21 +233,16 @@ angular.module('biggraph')
         },
 
         getAndUpdateProgress: function(errorHandler) {
+          var wrapperBefore = this.wrapper;
           var that = this;
-          var workspaceBefore = this.wrapper;
-          var plugBefore = this.selectedPlug;
-          if (workspaceBefore && plugBefore && plugBefore.direction === 'outputs') {
+          if (wrapperBefore) {
             util.nocache('/ajax/getProgress', {
-              workspace: this.name,
-              output: {
-                boxID: plugBefore.boxId,
-                id: plugBefore.id
-              }
+              stateIDs: wrapperBefore.knownStateIDs,
             }).then(
               function success(response) {
-                if (that.wrapper && that.wrapper === workspaceBefore &&
-                    that.selectedPlug && that.selectedPlug === plugBefore) {
-                  that.wrapper.updateProgress(response.progressList);
+                if (that.wrapper && that.wrapper === wrapperBefore) {
+                  var progressMap = response.progress;
+                  that.wrapper.updateProgress(progressMap);
                 }
               },
               errorHandler);
@@ -260,11 +250,11 @@ angular.module('biggraph')
         },
 
         startProgressUpdate: function() {
+          this.stopProgressUpdate();
           var that = this;
-          that.stopProgressUpdate();
           progressUpdater = $interval(function() {
             function errorHandler(error) {
-              util.error('Couldn\'t get progress information for selected state.', error);
+              util.error('Couldn\'t get progress information.', error);
               that.stopProgressUpdate();
               that.wrapper.clearProgress();
             }
@@ -279,6 +269,7 @@ angular.module('biggraph')
           }
         },
       };
+
       workspace.loadWorkspace();
       return workspace;
     };
