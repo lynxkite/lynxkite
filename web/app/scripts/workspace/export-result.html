@@ -5,7 +5,7 @@
             <td>{{ value }}</td>
         </tr>
     </table>
-    <button ng-click="export()" drop-tooltip="Run export">
+    <button ng-click="export()" drop-tooltip="Run export" ng-if="!alreadyExported">
         Export file <i class="glyphicon glyphicon-play"></i>
     </button>
 </div>
