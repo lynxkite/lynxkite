@@ -22,6 +22,7 @@ object TypeTagToFormat {
   implicit val formatUIAttributeFilter = json.Json.format[UIAttributeFilter]
   implicit val formatUICenterRequest = json.Json.format[UICenterRequest]
   implicit val formatUIStatus = json.Json.format[UIStatus]
+  implicit val formatFileMetaData = json.Json.format[FileMetaData]
 
   implicit object ToJsonFormat extends json.Format[ToJson] {
     def writes(t: ToJson): JsValue = {
@@ -147,6 +148,7 @@ object TypeTagToFormat {
       else if (TypeTagUtil.isType[DynamicValue](t)) implicitly[json.Format[DynamicValue]]
       else if (TypeTagUtil.isType[UIStatus](t)) implicitly[json.Format[UIStatus]]
       else if (TypeTagUtil.isType[Edge](t)) implicitly[json.Format[Edge]]
+      else if (TypeTagUtil.isType[FileMetaData](t)) implicitly[json.Format[FileMetaData]]
       else if (TypeTagUtil.isSubtypeOf[ToJson](t)) ToJsonFormat
       else if (TypeTagUtil.isOfKind1[Option](t)) {
         val innerType = TypeTagUtil.typeArgs(tag).head

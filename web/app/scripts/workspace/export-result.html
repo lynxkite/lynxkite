@@ -1,7 +1,11 @@
 <div>
+    <table ng-if="alreadyExported">
+        <tr ng-repeat="(stat, value) in fileMetaData">
+            <th> {{ prettifyCamelCase(stat) }} </th>
+            <td>{{ value }}</td>
+        </tr>
+    </table>
     <button ng-click="export()" drop-tooltip="Run export">
-        <i class="glyphicon glyphicon-play"></i>
+        Export file <i class="glyphicon glyphicon-play"></i>
     </button>
-    <span>BBB {{ exportResult }}</span>
-    <span>AAA {{ plug }}</span>
 </div>
