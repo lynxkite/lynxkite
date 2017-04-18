@@ -51,5 +51,47 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       exportResult = Some(op(op.t, table).result.exportResult)
     }
   })
+
+  register("Export to JSON")(new ExportOperation(_) {
+    lazy val parameters = List(
+      Param("path", "Path", defaultValue = "<download>"),
+      NonNegInt("version", "Version", default = 0)
+    )
+
+    def apply() = {
+      val op = graph_operations.ExportTableToStructuredFile(
+        params("path"), "json", params("version").toInt
+      )
+      exportResult = Some(op(op.t, table).result.exportResult)
+    }
+  })
+
+  register("Export to Parquet")(new ExportOperation(_) {
+    lazy val parameters = List(
+      Param("path", "Path", defaultValue = "<download>"),
+      NonNegInt("version", "Version", default = 0)
+    )
+
+    def apply() = {
+      val op = graph_operations.ExportTableToStructuredFile(
+        params("path"), "parquet", params("version").toInt
+      )
+      exportResult = Some(op(op.t, table).result.exportResult)
+    }
+  })
+
+  register("Export to ORC")(new ExportOperation(_) {
+    lazy val parameters = List(
+      Param("path", "Path", defaultValue = "<download>"),
+      NonNegInt("version", "Version", default = 0)
+    )
+
+    def apply() = {
+      val op = graph_operations.ExportTableToStructuredFile(
+        params("path"), "orc", params("version").toInt
+      )
+      exportResult = Some(op(op.t, table).result.exportResult)
+    }
+  })
 }
 
