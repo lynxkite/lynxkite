@@ -2,11 +2,10 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import play.api.libs.json
-import scala.reflect.runtime.universe._
 
+import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.controllers.UIStatus
-import com.lynxanalytics.biggraph.controllers.UIStatusSerialization
+import com.lynxanalytics.biggraph.controllers.{ FileMetaData, UIStatus, UIStatusSerialization }
 import com.lynxanalytics.biggraph.model
 
 // Dynamic values wrap various types into a combined type that we unwrap on FE side
@@ -62,6 +61,11 @@ object DynamicValue {
       import UIStatusSerialization._
       val uiStatus = value.asInstanceOf[UIStatus]
       DynamicValue(string = json.Json.prettyPrint(json.Json.toJson(uiStatus)))
+    }
+    else if (typeOf[T] =:= typeOf[FileMetaData]) value => {
+      implicit val fFileMetaData = json.Json.format[FileMetaData]
+      val fileMetaData = value.asInstanceOf[FileMetaData]
+      DynamicValue(string = json.Json.prettyPrint(json.Json.toJson(fileMetaData)))
     }
     else value =>
       DynamicValue(string = value.toString)

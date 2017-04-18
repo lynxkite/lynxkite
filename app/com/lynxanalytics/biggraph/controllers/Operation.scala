@@ -454,4 +454,4 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
   def enabled = FEStatus.enabled
 }
 
-case class FileMetaData(numberOfRow: Long, format: String, path: String)
+case class FileMetaData(numberOfRows: Long, format: String, path: String)

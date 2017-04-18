@@ -9,24 +9,31 @@ angular.module('biggraph')
       templateUrl: 'scripts/workspace/export-result.html',
       scope: {
         workspace: '=',
-        plug: '=',
       },
       link: function(scope) {
          var exportResult = util.nocache(
-                               'ajax/getExternalFileOutput',
+                               'ajax/getExportResultOutput',
                                {
-                                 workspace: scope.workspace,
-                                 output: {
-                                   boxID: scope.plug.boxId,
-                                   id: scope.plug.id
-                                 }
+                                 stateId: scope.workspace.selectedStateId,
                                });
         exportResult.then(
           function success(exportResult) {
-            scope.scalar = exportResult.scalar;
-            scope.exported = exportResult.computed;
+            scope.alreadyExported = exportResult.computeProgress;
+
+            scope.prettifyCamelCase = function(camelCase) {
+              // insert a space before all caps
+              var split = camelCase.replace(/([A-Z])/g, ' $1');
+              // uppercase the first character
+              var prettified = split.replace(/^./, function(str) {
+                return str.toUpperCase();
+                });
+              return prettified;
+            };
+            scope.fileMetaData =
+              (exportResult.computedValue) ? JSON.parse(exportResult.computedValue.string) : {};
+
             scope.export = function() {
-              util.lazyFetchScalarValue(scope.scalar, true);
+              util.lazyFetchScalarValue(exportResult, true);
             };
           });
       },
