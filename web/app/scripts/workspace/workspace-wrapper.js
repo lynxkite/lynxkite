@@ -91,8 +91,12 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
           cnt = 0;
         } else {
           var usedNumbers = this.state.boxes.map(function(box) {
+            if (box.id === 'anchor'){
+              return 0;
+            } else {
             var split = box.id.split('_');
             return parseInt(split[split.length - 1]);
+            }
           });
           cnt = Math.max.apply(null, usedNumbers) + 1;
         }
