@@ -16,13 +16,19 @@ class NoInputOutputOperations(env: SparkFreeEnvironment) extends OperationRegist
     registerOp(id, category, List(), List(), factory)
   }
 
-  //Categories
+  // Categories
   val BoxDecorators = Category("Box decorators", "black", icon = "kraken")
+  val AnchorBox = Category("Anchor box", "black", icon = "kraken", visible = false)
 
   register("Add comment", BoxDecorators)(new DecoratorOperation(_) {
     def parameters = List(
       Code("comment", "Comment", language = "plain_text")
     )
   })
-}
 
+  register("Anchor", AnchorBox)(new DecoratorOperation(_) {
+    def parameters = List(
+      Code("description", "Description", language = "plain_text"),
+      ParametersParam("parameters", "Parameters"))
+  })
+}
