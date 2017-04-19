@@ -2,7 +2,7 @@
 // parameters.
 package com.lynxanalytics.biggraph.controllers
 
-import com.lynxanalytics.biggraph.model
+import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.serving.FrontendJson
 import play.api.libs.json
 
@@ -159,14 +159,19 @@ object OperationParams {
     val multipleChoice = false
     val options = List()
     def validate(value: String): Unit = {
-      ParametersParam.parse(value)
+      ParametersParam.parse(Some(value))
     }
   }
   object ParametersParam {
     val defaultValue = "[]"
-    def parse(value: String): List[FEOperationParameterMeta] = {
-      import FrontendJson.fFEOperationParameterMeta
-      json.Json.parse(value).as[List[FEOperationParameterMeta]]
+    def parse(value: Option[String]): Seq[CustomOperationParameterMeta] = {
+      import FrontendJson.fCustomOperationParameterMeta
+      json.Json.parse(value.getOrElse(defaultValue)).as[List[CustomOperationParameterMeta]]
+    }
+    def toFE(custom: Seq[CustomOperationParameterMeta],
+             tables: Seq[graph_api.Table],
+             projects: Seq[ProjectEditor]): List[FEOperationParameterMeta] = {
+      ??? // TODO: We will need this to display the parameters of a custom box.
     }
   }
 }

@@ -10,7 +10,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   val bigGraphController = new BigGraphController(this)
   val ops = new frontend_operations.Operations(this)
   val user = serving.User.fake
-  def context(ws: Workspace) = ws.context(user, ops, Map())
+  def context(ws: Workspace, params: (String, String)*) = ws.context(user, ops, params.toMap)
 
   def create(name: String) =
     controller.createWorkspace(user, CreateWorkspaceRequest(name, "private"))
@@ -256,5 +256,27 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         set("test-workspace", Workspace(List(withDescription, another)))
       }.getMessage.contains("Duplicate box name: anchor"))
     }
+  }
+
+  test("parametric parameters") {
+    val anchor = Box("anchor", "Anchor", Map(
+      "parameters" -> json.Json.toJson(List(
+        Map("id" -> "p1", "kind" -> "text", "defaultValue" -> "def1"),
+        Map("id" -> "p2", "kind" -> "text", "defaultValue" -> "def2"))).toString), 0, 0, Map())
+    val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+    val const = Box(
+      "const", "Add constant vertex attribute",
+      Map("value" -> "1", "type" -> "String"), 0, 20, Map("project" -> eg.output("project")),
+      Map("name" -> "$p1 $p2"))
+    val ws = Workspace(List(anchor, eg, const))
+    assert(
+      context(ws).allStates(const.output("project")).project
+        .vertexAttributes.contains("def1 def2"))
+    assert(
+      context(ws, "p1" -> "some1").allStates(const.output("project")).project
+        .vertexAttributes.contains("some1 def2"))
+    assert(intercept[AssertionError] {
+      context(ws, "p3" -> "some3").allStates(const.output("project")).project
+    }.getMessage.contains("Unrecognized parameter: p3"))
   }
 }
