@@ -77,7 +77,6 @@ class ScalaScriptSecurityManager extends SecurityManager {
 
 object ScalaScript {
   private val engine = new ScriptEngineManager().getEngineByName("scala").asInstanceOf[IMain]
-  private val timeout = Duration(10L, "second")
 
   private val restrictedSecurityManager = new ScalaScriptSecurityManager
   System.setSecurityManager(restrictedSecurityManager)
@@ -85,26 +84,26 @@ object ScalaScript {
   settings.usejavacp.value = true
   settings.embeddedDefaults[ScalaScriptSecurityManager]
 
-  def run(code: String): String = {
+  def run(code: String, timeoutInSeconds: Long = 10L): String = {
     // IMAIN.compile changes the class loader and does not restore it.
     // https://issues.scala-lang.org/browse/SI-8521
     val cl = Thread.currentThread().getContextClassLoader
     val result = try {
-      runInner(code)
+      runInner(code, timeoutInSeconds)
     } finally {
       Thread.currentThread().setContextClassLoader(cl)
     }
     result
   }
 
-  private def runInner(code: String): String = {
+  private def runInner(code: String, timeoutInSeconds: Long): String = {
     val ctxName = s"RestrictedScalaScript-${Timestamp.toString}"
     val executionContext = ThreadUtil.limitedExecutionContext(ctxName, 1)
     val compiledCode = engine.compile(code)
     val result = try {
       SafeFuture {
         restrictedSecurityManager.checkedRun(compiledCode.eval()).toString
-      }(executionContext).awaitResult(timeout)
+      }(executionContext).awaitResult(Duration(timeoutInSeconds, "second"))
     } finally {
       executionContext.shutdownNow()
     }

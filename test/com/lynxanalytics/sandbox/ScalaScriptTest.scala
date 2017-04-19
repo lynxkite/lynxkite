@@ -8,10 +8,10 @@ class ScalaScriptTest extends FunSuite {
   test("Can't do infinite loop") {
     val code =
       """
-        Thread.sleep(15000L)
+        Thread.sleep(3000L)
       """
     intercept[java.util.concurrent.TimeoutException] {
-      ScalaScript.run(code)
+      ScalaScript.run(code, timeoutInSeconds = 2L)
     }
   }
 
