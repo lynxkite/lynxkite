@@ -15,26 +15,11 @@ case class Workspace(
     s"Duplicate box name: ${dups.mkString(", ")}"
   })
 
+  assert(findBox("anchor").operationID == "Anchor", "Anchor box is missing.")
+
   def findBox(id: String): Box = {
-    assert(boxMap.contains(id), s"Cannot find box $id")
+    assert(boxMap.contains(id), s"Cannot find box: $id")
     boxMap(id)
-  }
-
-  // Changes the workspace to enforce some invariants.
-  def repaired(ops: OperationRepository): Workspace = {
-    repairAnchor
-    // TODO: #5883 after #5834.
-  }
-
-  private def repairAnchor: Workspace = {
-    val anchors = boxes.filter(_.operationID == "Anchor")
-    anchors match {
-      case List(box) =>
-        assert(box.id == "anchor", "The anchor box must have the 'anchor' ID.")
-        this
-      case Nil => Workspace(Workspace.anchorBox +: boxes)
-      case _ => throw new AssertionError(s"${anchors.size} anchors found.")
-    }
   }
 
   def checkpoint(previous: String = null)(implicit manager: graph_api.MetaGraphManager): String = {
@@ -158,8 +143,11 @@ case class Workspace(
 }
 
 object Workspace {
-  val anchorBox = Box("anchor", "Anchor", Map(), 0, 0, Map())
-  val empty = Workspace(List(anchorBox))
+  def from(boxes: Box*): Workspace = {
+    // Automatically add anchor if missing. Helps with tests.
+    if (boxes.find(_.id == "anchor").nonEmpty) new Workspace(boxes.toList)
+    else new Workspace(Box("anchor", "Anchor", Map(), 0, 0, Map()) +: boxes.toList)
+  }
 }
 
 case class Box(
