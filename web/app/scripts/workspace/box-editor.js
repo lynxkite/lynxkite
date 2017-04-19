@@ -39,7 +39,8 @@ angular.module('biggraph')
             return;
           }
           if (!boxId) {
-            scope.newOpSelected(undefined);
+            scope.box = undefined;
+            scope.boxMeta = undefined;
             return;
           }
           var box = scope.workspace.getBox(boxId);
