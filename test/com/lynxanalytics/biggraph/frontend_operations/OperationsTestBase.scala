@@ -51,7 +51,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       val boxes = scala.collection.mutable.ListBuffer[Box]()
       projectRec(boxes)
       val lastBox = boxes.last
-      val ws = Workspace(boxes = boxes.toList)
+      val ws = Workspace.from(boxes: _*)
       (ws, lastBox)
     }
 

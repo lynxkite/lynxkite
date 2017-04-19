@@ -11,7 +11,7 @@ class RemoteAPITest extends FunSuite with TestGraphOp {
     import RemoteAPIProtocol._
     val u = User.fake
     val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
-    val ws = Workspace(List(eg))
+    val ws = Workspace.from(eg)
     /*
     val example = ctrl.updateWorkspace(u, OperationRequest(empty, Map(), "examplegraph", Map())).checkpoint
     val view1 = ctrl.createView(

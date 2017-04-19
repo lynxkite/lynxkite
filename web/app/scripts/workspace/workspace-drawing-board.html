@@ -35,10 +35,11 @@
 
       <rect
           class="box-main"
-          ng-class="{ 'selected-box': box.instance.id == workspace.selectedBoxId }"
+          ng-class="{ 'selected-box': workspace.selectedBoxIds.includes(box.instance.id) }"
           ng-attr-width="{{box.width}}"
           ng-attr-height="{{box.height}}">
       </rect>
+
       <text x="5" y="15">
         {{box.metadata.operationID}}
       </text>
@@ -49,7 +50,15 @@
       </text>
     </g>
     <!-- end box -->
-
+    <g>
+    <rect
+      class="selection-box"
+      ng-attr-x="{{workspace.selection.leftX}}"
+      ng-attr-y="{{workspace.selection.upperY}}"
+      ng-attr-width="{{workspace.selection.width}}"
+      ng-attr-height="{{workspace.selection.height}}">
+    </rect>
+  </g>
     <!-- start arrow -->
     <g ng-repeat="arrow in workspace.arrows()">
       <line class="arrow"
