@@ -188,7 +188,8 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
   def importBox(user: serving.User, box: Box) = async[String] {
-    val op = ops.opForBox(user, box, inputs = Map()).asInstanceOf[ImportOperation]
+    val op = ops.opForBox(
+      user, box, inputs = null, workspaceParameters = null).asInstanceOf[ImportOperation]
     val df = op.getDataFrame(SQLController.defaultContext(user))
     val table = ImportDataFrame.run(df)
     dataManager.getFuture(table) // Start importing in the background.
