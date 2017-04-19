@@ -10,6 +10,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   val bigGraphController = new BigGraphController(this)
   val ops = new frontend_operations.Operations(this)
   val user = serving.User.fake
+  def context(ws: Workspace) = ws.context(user, ops, Map())
 
   def create(name: String) =
     controller.createWorkspace(user, CreateWorkspaceRequest(name, "private"))
@@ -51,7 +52,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val pr = Box("pr", "Compute PageRank", pagerankParams, 0, 20, Map("project" -> eg.output("project")))
     val ws = Workspace.from(eg, pr)
-    val project = ws.allStates(user, ops)(pr.output("project")).project
+    val project = context(ws).allStates(pr.output("project")).project
     import graph_api.Scripting._
     assert(project.vertexAttributes("pagerank").rdd.values.collect.toSet == Set(
       1.4099834026132592, 1.4099834026132592, 0.9892062327983842, 0.19082696197509774))
@@ -63,7 +64,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       "merge", "Merge vertices by attribute", Map("key" -> "gender"), 0, 20,
       Map("project" -> eg.output("project")))
     val ws = Workspace.from(eg, merge)
-    val project = ws.allStates(user, ops)(merge.output("project")).project
+    val project = context(ws).allStates(merge.output("project")).project
     import graph_api.Scripting._
     assert(project.scalars("!vertex_count_delta").value == -2)
   }
@@ -80,7 +81,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val pr1 = Box("pr1", "Compute PageRank", pagerankParams, 0, 20, Map())
     val pr2 = pr1.copy(id = "pr2", inputs = Map("project" -> pr1.output("project")))
     val ws = Workspace.from(pr1, pr2)
-    val allStates = ws.allStates(user, ops)
+    val allStates = context(ws).allStates
     val p1 = allStates(pr1.output("project"))
     val p2 = allStates(pr2.output("project"))
     val ex1 = intercept[AssertionError] { p1.project }
@@ -157,7 +158,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(
         op.parameters.find(_.id == "src").get.options.map(_.id) ==
           Seq("!unset", "dst", "id", "ordinal", "src"))
-      val project = ws.allStates(user, ops)(combine.output("project")).project
+      val project = context(ws).allStates(combine.output("project")).project
       import graph_api.Scripting._
       import graph_util.Scripting._
       assert(project.edgeBundle.countScalar.value == 2)
@@ -188,7 +189,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val computedBeforePR = progressBeforePR.computed
       import graph_api.Scripting._
       // trigger PR computation
-      ws.allStates(user, ops)(pr.output("project")).project.vertexAttributes(pagerankParams("name"))
+      context(ws).allStates(pr.output("project")).project.vertexAttributes(pagerankParams("name"))
         .rdd.values.collect
       val progressAfterPR = controller.getProgress(user,
         GetProgressRequest(List(prStateID))

@@ -28,9 +28,7 @@ class NoInputOutputOperations(env: SparkFreeEnvironment) extends OperationRegist
 
   register("Anchor", AnchorBox)(new DecoratorOperation(_) {
     def parameters = List(
-      Code("description", "Description", language = "plain_text")
-    // TODO: Workspace parameters.
-    )
+      Code("description", "Description", language = "plain_text"),
+      ParametersParam("parameters", "Parameters"))
   })
 }
-
