@@ -263,7 +263,7 @@ case class BoxOutputState(
     manager.table((state.get \ "guid").as[String].asUUID)
   }
 
-  def exportresult(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[FileMetaData] = {
+  def exportResult(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[FileMetaData] = {
     assert(isExportResult, s"Tried to access '$kind' as 'exportResult.")
     assert(success.enabled, success.disabledReason)
     import graph_api.MetaGraphManager.StringAsUUID
