@@ -97,7 +97,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val state = getOutput(user, request.stateId)
     state.kind match {
       case BoxOutputKind.ExportResult =>
-        val scalar = state.exportresult
+        val scalar = state.exportResult
         ProjectViewer.feScalar(scalar, "file metadata", "", Map())
     }
   }
@@ -113,7 +113,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
               val progress = entityProgressManager.computeProgress(state.table)
               stateID -> Some(List(progress))
             case BoxOutputKind.ExportResult =>
-              val progress = entityProgressManager.computeProgress(state.exportresult)
+              val progress = entityProgressManager.computeProgress(state.exportResult)
               stateID -> Some(List(progress))
             case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }
