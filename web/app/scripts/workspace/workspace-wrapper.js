@@ -86,19 +86,12 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
 
       // boxID should be used for test-purposes only
       addBox: function(operationId, x, y, boxId) {
-        var cnt;
-        if(this.state.boxes.length === 0){
-          cnt = 0;
-        } else {
-          var usedNumbers = this.state.boxes.map(function(box) {
-            if (box.id === 'anchor'){
-              return 0;
-            } else {
-            var split = box.id.split('_');
-            return parseInt(split[split.length - 1]);
-            }
+        var usedIds = this.state.boxes.map(function(box) {
+            return box.id;
           });
-          cnt = Math.max.apply(null, usedNumbers) + 1;
+        var cnt = 1;
+        while(usedIds.includes(operationId.replace(/ /g, '-') + '_' + cnt)) {
+          cnt += 1;
         }
         boxId = boxId || operationId.replace(/ /g, '-') + '_' + cnt;
         this.state.boxes.push(
@@ -114,10 +107,10 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
       },
 
       deleteBox: function(boxId) {
-        var i = this.state.boxes.map(function(box) {
+        var box = this.state.boxes.filter(function(box) {
           return box.id === boxId;
-        }).indexOf(true);
-
+        });
+        var i = this.state.boxes.indexOf(box);
         this.state.boxes.splice(i,1);
         this._build();
       },
