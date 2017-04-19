@@ -15,7 +15,7 @@ import scala.reflect.runtime.universe._
 
 case class FEOperationMeta(
   id: String,
-  title: String,
+  htmlId: String,
   parameters: List[FEOperationParameterMeta],
   visibleScalars: List[FEScalar],
   category: String = "",
@@ -233,7 +233,7 @@ trait BasicOperation extends Operation {
 
   def toFE: FEOperationMeta = FEOperationMeta(
     id,
-    title,
+    Operation.htmlID(id),
     allParameters.map { param => param.toFE },
     visibleScalars,
     context.meta.categoryID,
@@ -359,7 +359,7 @@ abstract class DecoratorOperation(
   def summary = title
   def toFE: FEOperationMeta = FEOperationMeta(
     id,
-    title,
+    Operation.htmlID(id),
     parameters.map { param => param.toFE },
     List(),
     context.meta.categoryID,
