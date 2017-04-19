@@ -28,7 +28,7 @@ object FEOperationParameterMeta {
     "choice", // A drop down box.
     "file", // Simple textbox with file upload button.
     "tag-list", // A variation of "multipleChoice" with a more concise, horizontal design.
-    "code", // JavaScript code
+    "code", // An editor with a language option for highlights.
     "model", // A special kind to set model parameters.
     "imported-table", // A table importing button.
     "segmentation") // One of the segmentations of the current project.
@@ -344,6 +344,35 @@ abstract class ProjectTransformation(
     updateDeltas(project.rootEditor, before)
     makeOutput(project)
   }
+}
+
+// A DecoratorOperation is an operation that has no input or output and is outside of the
+// Metagraph.
+abstract class DecoratorOperation(
+    protected val context: Operation.Context) extends Operation {
+  assert(
+    context.meta.inputs == List(),
+    s"A DecoratorOperation must not have an input. $context")
+  assert(
+    context.meta.outputs == List(),
+    s"A DecoratorOperation must not have an output. $context")
+
+  protected def parameters: List[OperationParameterMeta]
+
+  protected val id = context.meta.operationID
+  val title = id
+  def summary = title
+  def toFE: FEOperationMeta = FEOperationMeta(
+    id,
+    title,
+    parameters.map { param => param.toFE },
+    List(),
+    context.meta.categoryID,
+    enabled)
+
+  def getOutputs() = Map()
+
+  def enabled = FEStatus.enabled
 }
 
 abstract class TableOutputOperation(

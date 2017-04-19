@@ -3,7 +3,7 @@
 // Viewer and editor of a box instance.
 
 angular.module('biggraph')
- .directive('boxEditor', function(util) {
+ .directive('boxEditor', function($timeout, util) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/box-editor.html',
@@ -12,15 +12,9 @@ angular.module('biggraph')
       },
       link: function(scope) {
         scope.$watch(
-            'workspace.selectedBoxId',
-            function() {
-              if (!scope.workspace) {
-                return;
-              }
-              // Make a copy of the parameter values.
-              scope.paramValues = Object.assign(
-                  {}, scope.workspace.selectedBox().instance.parameters);
-              scope.loadBoxMeta();
+            'workspace.selectedBoxIds[0]',
+            function(boxId) {
+              scope.loadBoxMeta(boxId);
             });
         // The metadata (param definition list) of the current box
         // depends on the whole workspace. (Attributes added by
@@ -29,24 +23,24 @@ angular.module('biggraph')
         // then we can put a timestamp in workspace and watch that,
         // or only deepwatch the current selected box (and assume
         // box selection has to change to edit other boxes).
-        scope.$watch(
+        util.deepWatch(
+            scope,
             'workspace.backendState',
             function() {
               if (!scope.workspace) {
                 return;
               }
-              scope.loadBoxMeta();
-            },
-            true);
+              scope.loadBoxMeta(scope.workspace.selectedBoxIds[0]);
+            });
 
         scope.paramValues = {};
         scope.parametricParams = {};
 
-        scope.loadBoxMeta = function() {
-          if (!scope.workspace || !scope.workspace.selectedBoxId) {
+        scope.loadBoxMeta = function(boxId) {
+          if (!scope.workspace || !boxId) {
             return;
           }
-          var box = scope.workspace.selectedBox();
+          var box = scope.workspace.getBox(boxId);
           // Checking currentRequest makes sure that the response
           // to the result of the latest getOperationMetaRequest
           // will be passed to scope.newOpSelected().
@@ -56,7 +50,7 @@ angular.module('biggraph')
               '/ajax/getOperationMeta',
               {
                   workspace: scope.workspace.name,
-                  box: scope.workspace.selectedBoxId,
+                  box: boxId,
               })
             .then(
               function success(boxMeta) {
@@ -74,29 +68,50 @@ angular.module('biggraph')
         // Invoked when the user selects a new operation and its
         // metadata is successfully downloaded.
         scope.newOpSelected = function(box, boxMeta) {
-            scope.box = box;
-            scope.boxMeta = boxMeta;
+            // We avoid replacing the objects if the data has not changed.
+            // This is to avoid recreating the DOM for the parameters. (Which would lose the focus.)
+            if (!angular.equals(box, scope.box)) {
+              onBlurNow(); // Switching to a different box is also "blur".
+              scope.box = box;
+            }
+            if (!angular.equals(boxMeta, scope.boxMeta)) {
+              scope.boxMeta = boxMeta;
+            }
             if (!box) {
               return;
             }
 
-            // Populate parameter values.
+            // Make a copy of the parameter values.
+            var paramValues = Object.assign({}, box.instance.parameters);
+            // Copy defaults for unset parameters.
             for (var i = 0; i < boxMeta.parameters.length; ++i) {
               var p = boxMeta.parameters[i];
-              if (scope.paramValues[p.id] !== undefined) {
-                // Parameter is set externally.
+              if (paramValues[p.id] !== undefined) {
+                // Parameter is not unset.
               } else if (p.options.length === 0) {
-                scope.paramValues[p.id] = p.defaultValue;
+                paramValues[p.id] = p.defaultValue;
               } else if (p.multipleChoice) {
-                scope.paramValues[p.id] = '';
+                paramValues[p.id] = '';
               } else {
-                scope.paramValues[p.id] = p.options[0].id;
+                paramValues[p.id] = p.options[0].id;
               }
+            }
+            if (!angular.equals(paramValues, scope.paramValues)) {
+              scope.paramValues = paramValues;
             }
         };
 
-        scope.apply = function() {
-          scope.workspace.updateSelectedBox(scope.paramValues, scope.parametricParams);
+        function onBlurNow() {
+          if (scope.box) {
+            scope.workspace.updateBox(scope.box.instance.id, scope.paramValues,
+                        scope.parametricParams);
+          }
+        }
+
+        // Updates the workspace with the parameter changes after allowing for a digest loop to
+        // bubble them up from the directives.
+        scope.onBlur = function() {
+          $timeout(onBlurNow);
         };
       },
     };

@@ -106,7 +106,7 @@ case class FEProjectListElement(
 
   assert(
     objectType == "table" || objectType == "project" ||
-      objectType == "view" || objectType == "workspace",
+      objectType == "view" || objectType == "workspace" || objectType == "snapshot",
     s"Unrecognized objectType: $objectType")
 }
 
