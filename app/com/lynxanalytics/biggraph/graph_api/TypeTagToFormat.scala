@@ -22,6 +22,7 @@ object TypeTagToFormat {
   implicit val formatUIAttributeFilter = json.Json.format[UIAttributeFilter]
   implicit val formatUICenterRequest = json.Json.format[UICenterRequest]
   implicit val formatUIStatus = json.Json.format[UIStatus]
+  import com.lynxanalytics.biggraph.serving.FrontendJson.fDownloadFileRequest
   implicit val formatFileMetaData = json.Json.format[FileMetaData]
 
   implicit object ToJsonFormat extends json.Format[ToJson] {

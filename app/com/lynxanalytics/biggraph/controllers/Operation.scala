@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.serving.DownloadFileRequest
 import play.api.libs.json
 import org.apache.spark
 
@@ -454,4 +455,5 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
   def enabled = FEStatus.enabled
 }
 
-case class FileMetaData(numberOfRows: Long, format: String, path: String)
+case class FileMetaData(numberOfRows: Long, format: String, path: String,
+                        download: Option[DownloadFileRequest])
