@@ -7,6 +7,7 @@ import javax.script._
 
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
+import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 import scala.concurrent.duration.Duration
 import scala.tools.nsc.interpreter.IMain
@@ -77,9 +78,6 @@ class ScalaScriptSecurityManager extends SecurityManager {
 object ScalaScript {
   private val engine = new ScriptEngineManager().getEngineByName("scala").asInstanceOf[IMain]
   private val timeout = Duration(10L, "second")
-  private val numRestrictedThreads = 5
-  private val executionContext =
-    ThreadUtil.limitedExecutionContext("RestrictedScalaScript", numRestrictedThreads)
 
   private val restrictedSecurityManager = new ScalaScriptSecurityManager
   System.setSecurityManager(restrictedSecurityManager)
@@ -100,11 +98,15 @@ object ScalaScript {
   }
 
   private def runInner(code: String): String = {
+    val ctxName = s"RestrictedScalaScript-${Timestamp.toString}"
+    val executionContext = ThreadUtil.limitedExecutionContext(ctxName, 1)
+    val compiledCode = engine.compile(code)
     val result = try {
-      val compiledCode = engine.compile(code)
       SafeFuture {
         restrictedSecurityManager.checkedRun(compiledCode.eval()).toString
       }(executionContext).awaitResult(timeout)
+    } finally {
+      executionContext.shutdownNow()
     }
     result
   }
