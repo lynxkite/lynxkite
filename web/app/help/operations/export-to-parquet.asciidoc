@@ -1,4 +1,4 @@
-### Export to Parquet File
+### Export to Parquet
 
 https://parquet.apache.org/[Apache Parquet] is a columnar data storage format.
 
