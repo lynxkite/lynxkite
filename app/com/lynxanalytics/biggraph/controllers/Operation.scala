@@ -2,12 +2,12 @@
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util
-import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.serving.DownloadFileRequest
+import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.graph_api._
 import play.api.libs.json
 import org.apache.spark
 
@@ -33,6 +33,7 @@ object FEOperationParameterMeta {
     "model", // A special kind to set model parameters.
     "imported-table", // A table importing button.
     "exported-table", // A table exporting button.
+    "parameters", // A whole section defining the parameters of an operation.
     "segmentation") // One of the segmentations of the current project.
 }
 
@@ -103,6 +104,7 @@ object Operation {
     box: Box,
     meta: BoxMetadata,
     inputs: Map[String, BoxOutputState],
+    workspaceParameters: Map[String, String],
     manager: MetaGraphManager)
 
   // Turns an operation name into a valid HTML identifier.
@@ -172,9 +174,12 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 
   def operationIds = operations.keys.toSeq
 
-  def opForBox(user: serving.User, box: Box, inputs: Map[String, BoxOutputState]) = {
+  def opForBox(
+    user: serving.User, box: Box, inputs: Map[String, BoxOutputState],
+    workspaceParameters: Map[String, String]) = {
     val (meta, factory) = operations(box.operationID)
-    val context = Operation.Context(user, box, meta, inputs, env.metaGraphManager)
+    val context =
+      Operation.Context(user, box, meta, inputs, workspaceParameters, env.metaGraphManager)
     factory(context)
   }
 }
@@ -186,7 +191,12 @@ trait BasicOperation extends Operation {
   protected val id = context.meta.operationID
   protected val title = id
   // Parameters without default values:
-  protected val paramValues = context.box.parameters
+  protected val parametricValues = context.box.parametricParameters.map {
+    case (name, value) =>
+      val result = com.lynxanalytics.sandbox.ScalaScript.run(value)
+      name -> result
+  }
+  protected val paramValues = context.box.parameters ++ parametricValues
   // Parameters with default values:
   protected def params =
     parameters
