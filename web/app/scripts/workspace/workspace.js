@@ -232,19 +232,19 @@ angular.module('biggraph')
           this.saveWorkspace();
         },
 
-        deleteBox: function(boxId) {
-          if (boxId === 'anchor') {
-            util.error('Anchor box cannot be deleted.');
-          } else {
-            this.wrapper.deleteBox(boxId);
-            this.saveWorkspace();
+        deleteBoxes: function(boxIds) {
+          for(i = 0; i < boxIds.length; i+=1) {
+            if (boxIds[i] === 'anchor') {
+              util.error('Anchor box cannot be deleted.');
+            } else {
+              this.wrapper.deleteBox(boxIds[i]);
+            }
           }
+          this.saveWorkspace();
         },
 
         deleteSelectedBoxes: function() {
-          for(i = 0; i < this.selectedBoxIds.length; i++) {
-            this.deleteBox(this.selectedBoxIds[i]);
-          }
+          this.deleteBoxes(this.selectedBoxIds);
           this.selectedBoxIds = [];
         },
 
