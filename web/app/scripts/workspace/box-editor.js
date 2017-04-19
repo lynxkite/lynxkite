@@ -14,10 +14,7 @@ angular.module('biggraph')
         scope.$watch(
             'workspace.selectedBoxIds[0]',
             function(boxId) {
-              // Temporary hack (until popups are implemented) to force refresh operation help.
-              if (scope.boxMeta) { scope.boxMeta.htmlId = undefined; }
-              scope.loadBoxMeta(boxId);
-            });
+              scope.loadBoxMeta(boxId);});
         // The metadata (param definition list) of the current box
         // depends on the whole workspace. (Attributes added by
         // previous operations, state of apply_to_ parameters of
@@ -39,9 +36,17 @@ angular.module('biggraph')
         scope.parametricParams = {};
 
         scope.loadBoxMeta = function(boxId) {
-          if (!scope.workspace || !boxId) {
+          if (!scope.workspace) {
             return;
           }
+          if (!boxId) {
+            scope.box = undefined;
+            scope.boxMeta = undefined;
+            return;
+          }
+          // Temporary hack (until popups are implemented) to force-refresh operation help.
+          if (scope.boxMeta) { scope.boxMeta.htmlId = undefined; }
+          
           var box = scope.workspace.getBox(boxId);
           // Checking currentRequest makes sure that the response
           // to the result of the latest getOperationMetaRequest
