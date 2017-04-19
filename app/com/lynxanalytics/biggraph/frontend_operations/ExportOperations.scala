@@ -37,12 +37,12 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("path", "Path", defaultValue = "<download>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("quote", "Quote", defaultValue = ""),
-      Choice("header", "Strip header", FEOption.list("no", "yes")),
+      Choice("header", "Include header", FEOption.list("no", "yes")),
       NonNegInt("version", "Version", default = 0)
     )
 
     def apply() = {
-      val header = if (params("header") == "no") true else false
+      val header = if (params("header") == "yes") true else false
       val op = graph_operations.ExportTableToCSV(
         params("path"), header,
         params("delimiter"), params("quote"),
