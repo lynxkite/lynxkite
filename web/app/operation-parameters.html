@@ -5,9 +5,11 @@
     <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
   </label>
   <div class="col-sm-8 operation-attribute-input" id="{{param.id}}">
+    <input type="checkbox" ng-model="parametric[param.id]"> parametric
     <input ng-if="param.kind === 'default'"
         class="form-control operation-attribute-entry"
         ng-model="output[param.id]"
+        ng-submit="onBlur()"
         ng-disabled="!editable">
     <div
       ui-ace="{
@@ -29,6 +31,7 @@
     <file-parameter ng-if="param.kind === 'file'"
         editable="editable"
         model="output[param.id]"
+        on-blur="onBlur()"
         file-uploads="fileUploads.count"
         class="operation-attribute-entry">
     </file-parameter>
@@ -42,7 +45,8 @@
       ng-if="param.kind === 'imported-table'"
       box="box"
       params="output"
-      snapshot="output[param.id]"
+      guid="output[param.id]"
+      on-blur="onBlur()"
       file-uploads="fileUploads.count"
       class="operation-attribute-entry">
     </table-kind>
@@ -51,6 +55,7 @@
       ng-if="(param.kind === 'choice' && !param.multipleChoice) || (param.kind === 'segmentation')"
       class="form-control operation-attribute-entry"
       ng-model="output[param.id]"
+      ng-change="onBlur()"
       ng-options="option.id as option.title for option in param.options"></select>
     <select
       ng-disabled="!editable"
@@ -59,12 +64,18 @@
       ng-attr-size="{{ param.options.length }}"
       class="form-control operation-attribute-entry"
       ng-model="multiOutput[param.id]"
+      ng-change="onBlur()"
       ng-options="option.id as option.title for option in param.options"></select>
     <tag-list
       editable="editable"
       ng-if="param.kind === 'tag-list'"
       model="multiOutput[param.id]"
+      on-blur="onBlur()"
       options="param.options"
       class="operation-attribute-entry"></tag-list>
+    <parameters-parameter
+      ng-if="param.kind === 'parameters'"
+      model="output[param.id]"
+      class="operation-attribute-entry"></parameters-parameter>
   </div>
 </div>
