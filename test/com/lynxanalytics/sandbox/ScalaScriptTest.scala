@@ -32,17 +32,6 @@ class ScalaScriptTest extends FunSuite {
     }
   }
 
-  test("Security manager disables file access 2") {
-    val testFile = getClass.getResource("/graph_api/permission_check.txt")
-    val contents = "This file is used to check the security manager implementation.\n"
-    assert(scala.io.Source.fromFile(testFile.getFile).mkString == contents)
-    val path = testFile.getPath
-    val code = s"""scala.io.Source.fromFile("${path}").mkString"""
-    intercept[AccessControlException] {
-      ScalaScript.run(code)
-    }
-  }
-
   test("Can't replace the security manager") {
     val code = "System.setSecurityManager(null)"
     intercept[AccessControlException] {
@@ -89,10 +78,4 @@ class ScalaScriptTest extends FunSuite {
     }
   }
 
-  test("Can't access biggraph classes 2") {
-    val code = "com.lynxanalytics.biggraph.graph_util.Timestamp.toString"
-    intercept[AccessControlException] {
-      ScalaScript.run(code)
-    }
-  }
 }
