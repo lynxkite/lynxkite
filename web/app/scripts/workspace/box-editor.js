@@ -21,7 +21,7 @@ angular.module('biggraph')
               scope.paramValues = Object.assign(
                   {}, scope.workspace.selectedBox().instance.parameters);
               // Temporary hack (until popups are implemented) to force refresh operation help.
-              if (scope.boxMeta) { scope.boxMeta.id = undefined; }
+              if (scope.boxMeta) { scope.boxMeta.htmlId = undefined; }
               scope.loadBoxMeta();
             });
         // The metadata (param definition list) of the current box
@@ -76,8 +76,6 @@ angular.module('biggraph')
         // metadata is successfully downloaded.
         scope.newOpSelected = function(box, boxMeta) {
             scope.box = box;
-            boxMeta.title = boxMeta.id;
-            boxMeta.id = boxMeta.id.replace(/ /g, '-');
             scope.boxMeta = boxMeta;
             if (!box) {
               return;

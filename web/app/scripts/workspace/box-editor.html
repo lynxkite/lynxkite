@@ -1,11 +1,11 @@
 <div class="box col-sm-11 {{color}}">
   <h1>
-    {{ boxMeta.title }}
+    {{ boxMeta.id }}
   </h1>
 
   <!-- For documented operations. -->
-  <p ng-if="boxMeta.id"
-     help-id="{{ boxMeta.id }}"
+  <p ng-if="boxMeta.htmlId"
+     help-id="{{ boxMeta.htmlId }}"
      remove-header="yes"
      scalars="scalars"
      class="description"></p>
