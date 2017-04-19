@@ -21,7 +21,7 @@ case class Workspace(
   }
 
   private def parametersMeta: List[FEOperationParameterMeta] = {
-    val anchor = boxMap.getOrElse("anchor", Workspace.anchorBox)
+    val anchor = findBox("anchor")
     val parametersParamValue =
       anchor.parameters.getOrElse("parameters", OperationParams.ParametersParam.defaultValue)
     OperationParams.ParametersParam.parse(parametersParamValue)
