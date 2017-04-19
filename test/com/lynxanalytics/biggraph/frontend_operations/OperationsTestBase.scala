@@ -16,7 +16,6 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
   val ops = new Operations(this)
   val sql = new SQLController(this, ops)
   val user = serving.User.fake
-  val ctx = WorkspaceExecutionContext(user, ops, Map())
 
   case class TestBox(
       operationID: String,
@@ -57,8 +56,10 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
 
     def meta = ops.getBoxMetadata(operationID)
 
+    def ctx = workspace.context(user, ops, Map())
+
     lazy val project: RootProjectEditor =
-      workspace.allStates(ctx)(realBox.output("project")).project
+      ctx.allStates(realBox.output("project")).project
 
     def box(operationID: String,
             parameters: Map[String, String] = Map(),
