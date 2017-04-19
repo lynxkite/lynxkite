@@ -332,7 +332,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   def getWorkspace(cp: String): controllers.Workspace =
-    metaManager.checkpointRepo.readCheckpoint(cp).workspace.getOrElse(Workspace.empty)
+    metaManager.checkpointRepo.readCheckpoint(cp).workspace.getOrElse(Workspace.from())
 
   // Run an operation on a root project or a segmentation in a workspace.
   def runOperation(user: User, request: OperationRequest): CheckpointResponse = {

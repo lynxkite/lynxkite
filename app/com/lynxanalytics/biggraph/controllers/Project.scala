@@ -1029,7 +1029,7 @@ class WorkspaceFrame(path: SymbolPath)(
     set(rootDir / "objectType", "workspace")
   }
   override def subproject = ???
-  def workspace: Workspace = viewer.rootState.workspace.getOrElse(Workspace.empty)
+  def workspace: Workspace = viewer.rootState.workspace.getOrElse(Workspace.from())
 }
 
 abstract class ObjectFrame(path: SymbolPath)(
