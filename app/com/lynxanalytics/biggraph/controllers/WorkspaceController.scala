@@ -1,12 +1,15 @@
 // Methods for manipulating workspaces.
 package com.lynxanalytics.biggraph.controllers
 
+import scala.reflect.runtime.universe.TypeTag
 import scala.collection.mutable.HashMap
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.spark_util.SQLHelper
 
 case class GetWorkspaceRequest(name: String)
 case class BoxOutputInfo(boxOutput: BoxOutput, stateID: String, success: FEStatus, kind: String)
@@ -17,6 +20,9 @@ case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: 
 case class GetProgressRequest(stateIDs: List[String])
 case class GetProgressResponse(progress: Map[String, Option[Progress]])
 case class GetProjectOutputRequest(id: String, path: String)
+case class GetTableOutputRequest(id: String)
+case class TableColumn(name: String, dataType: String)
+case class GetTableOutputResponse(header: List[TableColumn], data: List[List[DynamicValue]])
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 case class CreateSnapshotRequest(name: String, id: String)
@@ -88,6 +94,30 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         val pathSeq = SubProject.splitPipedPath(request.path).filter(_ != "")
         val viewer = state.project.viewer.offspringViewer(pathSeq)
         viewer.toFE(request.path)
+    }
+  }
+
+  def getTableOutput(user: serving.User, request: GetTableOutputRequest): GetTableOutputResponse = {
+    val state = getOutput(user, request.id)
+    state.table.schema
+    state.kind match {
+      case BoxOutputKind.Table =>
+        val columns = state.table.schema.toList.map { field =>
+          field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
+        }
+        GetTableOutputResponse(
+          header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) },
+          data = List()
+        // TODO: get rows from dataframe
+        //            SQLHelper.toSeqRDD(df).take(request.maxRows).map {
+        //            row =>
+        //              row.toSeq.toList.zip(columns).map {
+        //                case (null, field) => DynamicValue("null", defined = false)
+        //                case (item, (name, tt)) => DynamicValue.convert(item)(tt)
+        //              }
+        //          }.toList
+        )
+
     }
   }
 
