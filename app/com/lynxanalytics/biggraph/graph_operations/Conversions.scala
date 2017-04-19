@@ -63,7 +63,7 @@ object DynamicValue {
       DynamicValue(string = json.Json.prettyPrint(json.Json.toJson(uiStatus)))
     }
     else if (typeOf[T] =:= typeOf[FileMetaData]) value => {
-      implicit val fFileMetaData = json.Json.format[FileMetaData]
+      import com.lynxanalytics.biggraph.serving.FrontendJson.fFileMetaData
       val fileMetaData = value.asInstanceOf[FileMetaData]
       DynamicValue(string = json.Json.prettyPrint(json.Json.toJson(fileMetaData)))
     }
