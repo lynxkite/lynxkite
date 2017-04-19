@@ -156,7 +156,8 @@ case class Box(
     parameters: Map[String, String],
     x: Double,
     y: Double,
-    inputs: Map[String, BoxOutput]) {
+    inputs: Map[String, BoxOutput],
+    parametricParameters: Map[String, String] = Map()) {
 
   def output(id: String) = BoxOutput(this.id, id)
 

@@ -2,11 +2,11 @@
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util
-import com.lynxanalytics.biggraph.serving
-import com.lynxanalytics.biggraph.graph_operations
 
+import com.lynxanalytics.biggraph.graph_util
+import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.graph_api._
 import play.api.libs.json
 import org.apache.spark
 
@@ -184,7 +184,12 @@ trait BasicOperation extends Operation {
   protected val id = context.meta.operationID
   protected val title = id
   // Parameters without default values:
-  protected val paramValues = context.box.parameters
+  protected val parametricValues = context.box.parametricParameters.map {
+    case (name, value) =>
+      val result = com.lynxanalytics.sandbox.ScalaScript.run(value)
+      name -> result
+  }
+  protected val paramValues = context.box.parameters ++ parametricValues
   // Parameters with default values:
   protected def params =
     parameters

@@ -129,10 +129,10 @@ angular.module('biggraph')
           return this.wrapper.boxMap[id];
         },
 
-        updateBox: function(id, paramValues) {
+        updateBox: function(id, paramValues, parametricParameters) {
           var box = this.getBox(id).instance;
           if (!angular.equals(paramValues, box.parameters)) {
-            this.wrapper.setBoxParams(id, paramValues);
+            this.wrapper.setBoxParams(id, paramValues, parametricParameters);
             this.saveWorkspace();
           }
         },

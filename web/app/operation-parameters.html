@@ -5,6 +5,7 @@
     <help-popup href="{{box.meta.operationID + '-' + param.id}}"></help-popup>
   </label>
   <div class="col-sm-8 operation-attribute-input" id="{{param.id}}">
+    <input type="checkbox" ng-model="parametric[param.id]"> parametric
     <input ng-if="param.kind === 'default'"
         class="form-control operation-attribute-entry"
         ng-model="output[param.id]"
