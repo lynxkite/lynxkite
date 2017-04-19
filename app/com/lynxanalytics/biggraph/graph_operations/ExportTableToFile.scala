@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.controllers.FileMetaData
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, Timestamp }
+import com.lynxanalytics.biggraph.serving.DownloadFileRequest
 
 object ExportTableToFile {
   class Input extends MagicInputSignature {
@@ -58,7 +59,9 @@ case class ExportTableToCSV(path: String, header: Boolean,
       "header" -> (if (header) "true" else "false"))
     df.write.format("csv").options(options).save(file.resolvedName)
     val numberOfRows = df.count
-    val exportResult = FileMetaData(numberOfRows, "csv", file.resolvedName)
+    val download =
+      if (path == "<download>") Some(DownloadFileRequest(file.symbolicName, !header)) else None
+    val exportResult = FileMetaData(numberOfRows, "csv", file.resolvedName, download)
     output(o.exportResult, exportResult)
   }
 }
@@ -85,7 +88,9 @@ case class ExportTableToStructuredFile(path: String, format: String, version: In
     val df = inputs.t.df
     df.write.format(format).save(file.resolvedName)
     val numberOfRows = df.count
-    val exportResult = FileMetaData(numberOfRows, format, file.resolvedName)
+    val download =
+      if (path == "<download>") Some(DownloadFileRequest(file.symbolicName, false)) else None
+    val exportResult = FileMetaData(numberOfRows, format, file.resolvedName, download)
     output(o.exportResult, exportResult)
   }
 }

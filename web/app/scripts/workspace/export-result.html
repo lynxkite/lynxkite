@@ -1,7 +1,7 @@
 <div>
     <table ng-if="alreadyExported">
         <tr ng-repeat="(stat, value) in fileMetaData">
-            <th> {{ prettifyCamelCase(stat) }} </th>
+            <th> {{ stat }} </th>
             <td>{{ value }}</td>
         </tr>
     </table>
