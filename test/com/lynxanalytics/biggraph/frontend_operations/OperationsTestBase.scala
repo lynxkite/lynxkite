@@ -20,6 +20,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
   case class TestBox(
       operationID: String,
       parameters: Map[String, String],
+      parametricParameters: Map[String, String],
       inputs: Seq[TestBox]) {
 
     private def projectRec(boxes: scala.collection.mutable.ListBuffer[Box]): String = {
@@ -40,7 +41,8 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
         name,
         operationID,
         parameters, 0, 0,
-        inputBoxOutputs
+        inputBoxOutputs,
+        parametricParameters
       )
       boxes += box
       name
@@ -61,15 +63,17 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
 
     def box(operationID: String,
             parameters: Map[String, String] = Map(),
-            otherInputs: Seq[TestBox] = Seq()): TestBox = {
-      TestBox(operationID, parameters, this +: otherInputs)
+            otherInputs: Seq[TestBox] = Seq(),
+            parametricParameters: Map[String, String] = Map()): TestBox = {
+      TestBox(operationID, parameters, parametricParameters, this +: otherInputs)
     }
   }
 
   def box(operationID: String,
           parameters: Map[String, String] = Map(),
-          inputs: Seq[TestBox] = Seq()): TestBox = {
-    TestBox(operationID, parameters, inputs)
+          inputs: Seq[TestBox] = Seq(),
+          parametricParameters: Map[String, String] = Map()): TestBox = {
+    TestBox(operationID, parameters, parametricParameters, inputs)
   }
 
   def importBox(operationID: String,

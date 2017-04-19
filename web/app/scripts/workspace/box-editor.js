@@ -34,6 +34,7 @@ angular.module('biggraph')
             });
 
         scope.paramValues = {};
+        scope.parametricParams = {};
 
         scope.loadBoxMeta = function(boxId) {
           if (!scope.workspace || !boxId) {
@@ -102,7 +103,8 @@ angular.module('biggraph')
 
         function onBlurNow() {
           if (scope.box) {
-            scope.workspace.updateBox(scope.box.instance.id, scope.paramValues);
+            scope.workspace.updateBox(scope.box.instance.id, scope.paramValues,
+                        scope.parametricParams);
           }
         }
 
