@@ -19,6 +19,7 @@ GET /ajax/getProjectOutput com.lynxanalytics.biggraph.serving.ProductionJsonServ
 GET /ajax/getProgress com.lynxanalytics.biggraph.serving.ProductionJsonServer.getProgress
 GET /ajax/getOperationMeta com.lynxanalytics.biggraph.serving.ProductionJsonServer.getOperationMeta
 GET /ajax/boxCatalog com.lynxanalytics.biggraph.serving.ProductionJsonServer.boxCatalog
+GET /ajax/customBoxCatalog com.lynxanalytics.biggraph.serving.ProductionJsonServer.customBoxCatalog
 
 GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView
 GET  /ajax/histo       com.lynxanalytics.biggraph.serving.ProductionJsonServer.histo

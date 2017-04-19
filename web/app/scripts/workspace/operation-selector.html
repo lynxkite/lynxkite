@@ -1,10 +1,10 @@
-<div class="operation-selector row" ng-class="{ open: category || searching }">
+<div class="operation-selector row" ng-class="{ open: category || mode === 'searching' }">
 
   <div class="col-sm-1 categories">
     <div ng-if="editMode">
       <!-- The real category buttons: -->
       <div class="category yellow"
-        ng-class="{ active: searching }"
+        ng-class="{ active: mode === 'searching' }"
         id="operation-search"
         drop-tooltip="Search"
         drop-tooltip-position="left middle"
@@ -22,6 +22,14 @@
         <span ng-if="cat.icon" class="glyphicon glyphicon-{{cat.icon}}"></span>
         <span ng-if="!cat.icon">{{cat.title[0]}}</span>
       </div>
+      <div class="category green"
+        ng-class="{ active: category === 'custom' }"
+        drop-tooltip="Custom boxes"
+        drop-tooltip-position="left middle"
+        drop-tooltip-enable="true"
+        ng-click="customClicked()">
+        <i class="glyphicon glyphicon-send"></i>
+      </div>
     </div>
   </div>
   <div ng-if="category" class="box col-sm-11 {{category.color}}">
@@ -30,11 +38,22 @@
     </operation-selector-entry>
   </div>
 
-  <div ng-if="searching" class="panel box col-sm-11 yellow">
+  <div ng-if="mode === 'searching'" class="panel box col-sm-11 yellow">
     <h1><input id="filter" ng-model="opFilter" ng-keyup="filterKey($event)"></h1>
     <operation-selector-entry ng-repeat="op in boxes | filter: { operationID: opFilter } | orderBy: 'title'"
         op="op"
         ng-class="{ highlight: $index === searchSelection }">
+    </operation-selector-entry>
+  </div>
+
+  <div ng-if="mode === 'custom'" class="panel box col-sm-11 green">
+    <progressbar ng-show="!customBoxCatalog.$resolved" value="100" class="progress-striped active">
+    </progressbar>
+    <progressbar ng-show="customBoxCatalog.$error" type="danger" value="100"
+                 ng-click="reportRequestError(customBoxCatalog, 'Failed to load custom boxes.')">
+        Failed to load custom boxes. Click to report error.
+    </progressbar>
+    <operation-selector-entry ng-repeat="op in customBoxCatalog.boxes" op="op">
     </operation-selector-entry>
   </div>
 </div>

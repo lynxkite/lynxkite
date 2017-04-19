@@ -29,6 +29,12 @@ case class Workspace(
     OperationParams.ParametersParam.parse(parametersParamValue)
   }
 
+  // This workspace as a custom box.
+  def getBoxMetadata(name: String): BoxMetadata = {
+    BoxMetadata("Custom boxes", name, List(), List())
+    // TODO: Input and output list from input/output boxes.
+  }
+
   def context(
     user: serving.User, ops: OperationRepository, workspaceParameters: Map[String, String]) = {
     val defaultParameters = parametersMeta.map(p => p.id -> p.defaultValue).toMap
