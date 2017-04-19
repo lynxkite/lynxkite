@@ -2,7 +2,7 @@
 // Operation can be dragged to the workspace drawing board to create boxes.
 'use strict';
 
-angular.module('biggraph').directive('operationSelector', function() {
+angular.module('biggraph').directive('operationSelector', function(util) {
   return {
     restrict: 'E',
     scope: {
@@ -30,7 +30,6 @@ angular.module('biggraph').directive('operationSelector', function() {
               title: box.categoryID,
               ops: [],
               color: 'blue',
-              icon: 'wrench',
             };
             scope.categories.push(cat);
             categories[box.categoryID] = cat;
@@ -40,7 +39,7 @@ angular.module('biggraph').directive('operationSelector', function() {
 
       });
 
-      scope.$watch('searching && !op', function(search) {
+      scope.$watch('mode === "search" && !op', function(search) {
         if (search) {
           var filter = elem.find('#filter');
           filter.focus();
@@ -49,7 +48,7 @@ angular.module('biggraph').directive('operationSelector', function() {
       });
 
       scope.filterKey = function(e) {
-        if (!scope.searching || scope.op) { return; }
+        if (scope.mode !== 'search') { return; }
         var operations = elem.find('.operation');
         if (e.keyCode === 38) { // UP
           e.preventDefault();
@@ -70,30 +69,40 @@ angular.module('biggraph').directive('operationSelector', function() {
       };
 
       scope.clickedCat = function(cat) {
-        if (scope.category === cat && !scope.op) {
+        if (scope.category === cat) {
           scope.category = undefined;
         } else {
           scope.category = cat;
         }
-        scope.searching = undefined;
-        scope.op = undefined;
+        scope.mode = undefined;
       };
+
       scope.searchClicked = function() {
-        if (scope.searching) {
-          scope.searching = undefined;
-          scope.op = undefined;
+        if (scope.mode === 'searching') {
+          scope.mode = undefined;
         } else {
           startSearch();
         }
       };
+
+      scope.customClicked = function() {
+        if (scope.mode === 'custom') {
+          scope.mode = undefined;
+        } else {
+          scope.mode = 'custom';
+          scope.customBoxCatalog = util.nocache('/ajax/customBoxCatalog');
+        }
+        scope.category = undefined;
+      };
+
+      scope.reportRequestError = util.reportRequestError;
+
       scope.$on('open operation search', startSearch);
       function startSearch() {
-        scope.op = undefined;
         scope.category = undefined;
-        scope.searching = true;
+        scope.mode = 'searching';
       }
     },
-
   };
 });
 
