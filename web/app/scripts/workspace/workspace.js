@@ -44,6 +44,38 @@ angular.module('biggraph')
           return this.wrapper ? this.wrapper.arrows : [];
         },
 
+        selection: {
+          startX: undefined,
+          startY: undefined,
+          endX: undefined,
+          endY: undefined,
+          // The parameters below are calculated from the above ones by this.updateSelection.
+          leftX: undefined,
+          upperY: undefined,
+          width: undefined,
+          height: undefined
+        },
+
+        updateSelection: function(){
+          this.selection.leftX = Math.min(this.selection.startX, this.selection.endX);
+          this.selection.upperY = Math.min(this.selection.startY, this.selection.endY);
+          this.selection.width = Math.abs(this.selection.endX - this.selection.startX);
+          this.selection.height = Math.abs(this.selection.endY - this.selection.startY);
+        },
+
+        removeSelection: function(){
+          this.selection.startX = undefined;
+          this.selection.endX = undefined;
+          this.selection.startY = undefined;
+          this.selection.endY = undefined;
+          this.selection.leftX = undefined;
+          this.selection.upperY = undefined;
+          this.selection.width = undefined;
+          this.selection.length = undefined;
+        },
+
+        selectedBoxIds: [],
+
         loadWorkspace: function() {
           var that = this;
           util.nocache(
@@ -81,20 +113,47 @@ angular.module('biggraph')
         },
 
         selectBox: function(boxId) {
-          this.selectedBoxId = boxId;
+          this.selectedBoxIds.push(boxId);
         },
 
-        selectedBox: function() {
-          if (this.selectedBoxId) {
-            return this.wrapper.boxMap[this.selectedBoxId];
+        selectedBoxes: function() {
+          if (this.selectedBoxIds) {
+            var workspaceWrapper = this.wrapper;
+            return this.selectedBoxIds.map(function(id){return workspaceWrapper.boxMap[id];});
           } else {
             return undefined;
           }
         },
 
-        updateSelectedBox: function(paramValues) {
-          this.wrapper.setBoxParams(this.selectedBoxId, paramValues);
-          this.saveWorkspace();
+        getBox: function(id) {
+          return this.wrapper.boxMap[id];
+        },
+
+        updateBox: function(id, paramValues) {
+          var box = this.getBox(id).instance;
+          if (!angular.equals(paramValues, box.parameters)) {
+            this.wrapper.setBoxParams(id, paramValues);
+            this.saveWorkspace();
+          }
+        },
+
+        selectBoxesInSelection: function(){
+          var boxes = this.boxes();
+          this.selectedBoxIds = [];
+          for (var i = 0; i < boxes.length; i++) {
+            var box = boxes[i];
+            if(this.inSelection(box)){
+              this.selectedBoxIds.push(box.instance.id);
+            }
+          }
+        },
+
+        inSelection: function(box){
+          var sb = this.selection;
+          return(sb.leftX < box.instance.x + box.width &&
+            box.instance.x < sb.leftX + sb.width &&
+            sb.upperY < box.instance.y + box.height &&
+            box.instance.y < sb.upperY + sb.height);
         },
 
         selectState: function(boxID, outputID) {
@@ -114,23 +173,38 @@ angular.module('biggraph')
 
         onMouseMove: function(mouseLogical) {
           this.mouseLogical = mouseLogical;
-          if (event.buttons === 1 && this.movedBox) {
-            this.movedBox.onMouseMove(this.mouseLogical);
+          if (event.buttons === 1 && this.movedBoxes) {
+            for(i = 0; i < this.movedBoxes.length; i++){
+              this.movedBoxes[i].onMouseMove(this.mouseLogical);
+            }
           }
         },
 
         onMouseUp: function() {
-          if (this.movedBox && this.movedBox.isMoved) {
-            this.saveWorkspace();
+          if(this.movedBoxes){
+            for(i = 0; i < this.movedBoxes.length; i++){
+              if (this.movedBoxes[i].isMoved) {
+                this.saveWorkspace();
+                break;
+              }
+            }
           }
-          this.movedBox = undefined;
+          this.movedBoxes = undefined;
           this.pulledPlug = undefined;
         },
 
         onMouseDownOnBox: function(box, mouseLogical) {
-          this.selectBox(box.instance.id);
-          this.movedBox = box;
-          this.movedBox.onMouseDown(mouseLogical);
+          var selectedBoxes = this.selectedBoxes();
+          if (selectedBoxes.indexOf(box) === -1) {
+            this.selectedBoxIds = [];
+            this.selectBox(box.instance.id);
+            this.movedBoxes = [box];
+            this.movedBoxes[0].onMouseDown(mouseLogical);
+          } else {
+            this.movedBoxes = selectedBoxes;
+            this.movedBoxes.map(function(b) {
+              b.onMouseDown(mouseLogical);});
+          }
         },
 
         onMouseDownOnPlug: function(plug, event) {
