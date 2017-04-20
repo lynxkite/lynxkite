@@ -5,15 +5,18 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, Timestamp }
 import com.lynxanalytics.biggraph.serving.DownloadFileRequest
 
-object ExportTableToFile {
+trait ExportTable {
   class Input extends MagicInputSignature {
     val t = table
   }
+
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
     val exportResult = scalar[FileMetaData]
   }
+}
 
+object ExportTableToFile extends ExportTable {
   def getFile(format: String, path: String)(implicit dataManager: DataManager) = {
     if (path == "<download>") {
       dataManager.repositoryPath / "exports" / Timestamp.toString + "." + format

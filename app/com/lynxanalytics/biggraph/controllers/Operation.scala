@@ -444,6 +444,10 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
   protected def makeOutput(exportResult: Scalar[FileMetaData]): Map[BoxOutput, BoxOutputState] = {
     Map(context.meta.outputs(0).ofBox(context.box) -> BoxOutputState.from(exportResult))
   }
+}
+
+abstract class ExportOperationToFile(context: Operation.Context)
+    extends ExportOperation(context) {
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)

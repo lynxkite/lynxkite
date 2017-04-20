@@ -32,7 +32,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import OperationParams._
   import org.apache.spark
 
-  register("Export to CSV")(new ExportOperation(_) {
+  register("Export to CSV")(new ExportOperationToFile(_) {
     lazy val parameters = List(
       Param("path", "Path", defaultValue = "<download>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
@@ -52,7 +52,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Export to JSON")(new ExportOperation(_) {
+  register("Export to JSON")(new ExportOperationToFile(_) {
     lazy val parameters = List(
       Param("path", "Path", defaultValue = "<download>"),
       NonNegInt("version", "Version", default = 0)
@@ -66,7 +66,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Export to Parquet")(new ExportOperation(_) {
+  register("Export to Parquet")(new ExportOperationToFile(_) {
     lazy val parameters = List(
       Param("path", "Path", defaultValue = "<download>"),
       NonNegInt("version", "Version", default = 0)
@@ -80,7 +80,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Export to ORC")(new ExportOperation(_) {
+  register("Export to ORC")(new ExportOperationToFile(_) {
     lazy val parameters = List(
       Param("path", "Path", defaultValue = "<download>"),
       NonNegInt("version", "Version", default = 0)
