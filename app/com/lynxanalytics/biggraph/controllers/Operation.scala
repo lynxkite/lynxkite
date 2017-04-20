@@ -438,10 +438,8 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
 
   protected lazy val table = tableInput("table")
 
-  protected var _exportResult: Option[Scalar[FileMetaData]] = None
-  def exportResult = _exportResult
-  protected def exportResult_=(newExportResult: Option[Scalar[FileMetaData]]) =
-    _exportResult = newExportResult
+  def apply() = ???
+  def exportResult: Scalar[FileMetaData]
 
   protected def makeOutput(exportResult: Scalar[FileMetaData]): Map[BoxOutput, BoxOutputState] = {
     Map(context.meta.outputs(0).ofBox(context.box) -> BoxOutputState.from(exportResult))
@@ -450,8 +448,7 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)
     assertWriteAllowed(params("path"))
-    apply()
-    makeOutput(exportResult.get)
+    makeOutput(exportResult)
   }
 
   private def assertWriteAllowed(path: String) = {

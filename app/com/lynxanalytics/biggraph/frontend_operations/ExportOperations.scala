@@ -41,14 +41,14 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       NonNegInt("version", "Version", default = 0)
     )
 
-    def apply() = {
+    def exportResult() = {
       val header = if (params("header") == "yes") true else false
       val op = graph_operations.ExportTableToCSV(
         params("path"), header,
         params("delimiter"), params("quote"),
         params("version").toInt
       )
-      exportResult = Some(op(op.t, table).result.exportResult)
+      op(op.t, table).result.exportResult
     }
   })
 
@@ -58,11 +58,11 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       NonNegInt("version", "Version", default = 0)
     )
 
-    def apply() = {
+    def exportResult() = {
       val op = graph_operations.ExportTableToStructuredFile(
         params("path"), "json", params("version").toInt
       )
-      exportResult = Some(op(op.t, table).result.exportResult)
+      op(op.t, table).result.exportResult
     }
   })
 
@@ -72,11 +72,11 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       NonNegInt("version", "Version", default = 0)
     )
 
-    def apply() = {
+    def exportResult = {
       val op = graph_operations.ExportTableToStructuredFile(
         params("path"), "parquet", params("version").toInt
       )
-      exportResult = Some(op(op.t, table).result.exportResult)
+      op(op.t, table).result.exportResult
     }
   })
 
@@ -86,11 +86,11 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       NonNegInt("version", "Version", default = 0)
     )
 
-    def apply() = {
+    def exportResult = {
       val op = graph_operations.ExportTableToStructuredFile(
         params("path"), "orc", params("version").toInt
       )
-      exportResult = Some(op(op.t, table).result.exportResult)
+      op(op.t, table).result.exportResult
     }
   })
 }
