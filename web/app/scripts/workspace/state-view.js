@@ -8,7 +8,9 @@ angular.module('biggraph')
       restrict: 'E',
       templateUrl: 'scripts/workspace/state-view.html',
       scope: {
-        workspace: '='
+        workspace: '=',
+        stateId: '=',
+        stateKind: '=',
       },
       link: function(scope) {
 
@@ -16,7 +18,7 @@ angular.module('biggraph')
           scope.saving = true;
           util.post('/ajax/createSnapshot', {
             name: saveAsName,
-            id: scope.workspace.selectedStateId
+            id: scope.stateId
           }).finally(function() {
             scope.saving = false;
           });
