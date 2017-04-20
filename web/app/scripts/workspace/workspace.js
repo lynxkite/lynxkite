@@ -56,6 +56,8 @@ angular.module('biggraph')
           height: undefined
         },
 
+        popups: [],
+
         updateSelection: function(){
           this.selection.leftX = Math.min(this.selection.startX, this.selection.endX);
           this.selection.upperY = Math.min(this.selection.startY, this.selection.endY);
@@ -173,9 +175,13 @@ angular.module('biggraph')
 
         onMouseMove: function(mouseLogical) {
           this.mouseLogical = mouseLogical;
-          if (event.buttons === 1 && this.movedBoxes) {
-            for(i = 0; i < this.movedBoxes.length; i++){
-              this.movedBoxes[i].onMouseMove(this.mouseLogical);
+          if (event.buttons === 1) {
+            if (this.movedBoxes) {
+              for (var i = 0; i < this.movedBoxes.length; i++) {
+                this.movedBoxes[i].onMouseMove(this.mouseLogical);
+              }
+            } else if (this.movedPopup) {
+              this.movedPopup.onMouseMove(this.mouseLogical);
             }
           }
         },
@@ -191,6 +197,7 @@ angular.module('biggraph')
           }
           this.movedBoxes = undefined;
           this.pulledPlug = undefined;
+          this.movedPopup = undefined;
         },
 
         onMouseDownOnBox: function(box, mouseLogical) {
@@ -205,6 +212,46 @@ angular.module('biggraph')
             this.movedBoxes.map(function(b) {
               b.onMouseDown(mouseLogical);});
           }
+        },
+
+        closePopup: function(id) {
+          for (var i = 0; i < this.popups.length; ++i) {
+            if (this.popups[i].id === id) {
+              this.popups.splice(i, 1);
+              return true;
+            }
+          }
+          return false;
+        },
+
+        onDoubleClickOnBox: function(box) {
+          if (this.closePopup(box.instance.id)) {
+            return;  // popup was open, we close it
+          }
+          // popup was not open, we open it
+
+          var that = this;
+          this.popups.push({
+            id: box.instance.id,
+            x: 100,
+            y: 100,
+            onMouseDown: function(event) {
+              event.stopPropagation();
+              that.movedPopup = this;
+              this.moveOffsetX = this.x - event.pageX;
+              this.moveOffsetY = this.y - event.pageY;
+            },
+            onMouseUp: function() {
+              that.movedPopup = undefined;
+            },
+            onMouseMove: function(event) {
+              this.x = this.moveOffsetX + event.pageX;
+              this.y = this.moveOffsetY + event.pageY;
+            },
+            close: function() {
+              that.closePopup(this.id);
+            },
+          });
         },
 
         onMouseDownOnPlug: function(plug, event) {
