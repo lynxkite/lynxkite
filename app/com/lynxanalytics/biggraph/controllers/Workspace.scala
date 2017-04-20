@@ -22,11 +22,9 @@ case class Workspace(
     boxMap(id)
   }
 
-  private def parametersMeta: List[FEOperationParameterMeta] = {
+  private def parametersMeta: Seq[CustomOperationParameterMeta] = {
     val anchor = findBox("anchor")
-    val parametersParamValue =
-      anchor.parameters.getOrElse("parameters", OperationParams.ParametersParam.defaultValue)
-    OperationParams.ParametersParam.parse(parametersParamValue)
+    OperationParams.ParametersParam.parse(anchor.parameters.get("parameters"))
   }
 
   // This workspace as a custom box.
@@ -37,7 +35,10 @@ case class Workspace(
 
   def context(
     user: serving.User, ops: OperationRepository, workspaceParameters: Map[String, String]) = {
-    val defaultParameters = parametersMeta.map(p => p.id -> p.defaultValue).toMap
+    val pm = parametersMeta
+    val defaultParameters = pm.map(p => p.id -> p.defaultValue).toMap
+    val unrecognized = workspaceParameters.keySet -- pm.map(_.id).toSet
+    assert(unrecognized.isEmpty, s"Unrecognized parameter: ${unrecognized.mkString(", ")}")
     WorkspaceExecutionContext(
       this, user, ops, defaultParameters ++ workspaceParameters)
   }

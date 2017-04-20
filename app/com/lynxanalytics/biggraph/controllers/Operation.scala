@@ -15,7 +15,7 @@ import scala.reflect.runtime.universe._
 
 case class FEOperationMeta(
   id: String,
-  title: String,
+  htmlId: String,
   parameters: List[FEOperationParameterMeta],
   visibleScalars: List[FEScalar],
   category: String = "",
@@ -48,6 +48,24 @@ case class FEOperationParameterMeta(
     kind.isEmpty || FEOperationParameterMeta.validKinds.contains(kind),
     s"'$kind' is not a valid parameter type")
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
+}
+
+case class CustomOperationParameterMeta(
+    id: String,
+    kind: String,
+    defaultValue: String) {
+  assert(
+    CustomOperationParameterMeta.validKinds.contains(kind),
+    s"'$kind' is not a valid parameter type.")
+}
+object CustomOperationParameterMeta {
+  val validKinds = Seq(
+    "text",
+    "boolean",
+    "code",
+    "vertexattribute",
+    "edgeattribute",
+    "segmentation")
 }
 
 case class FEOperationSpec(
@@ -191,7 +209,9 @@ trait BasicOperation extends Operation {
   // Parameters without default values:
   protected val parametricValues = context.box.parametricParameters.map {
     case (name, value) =>
-      val result = com.lynxanalytics.sandbox.ScalaScript.run(value)
+      val result = com.lynxanalytics.sandbox.ScalaScript.run(
+        "s\"\"\"" + value + "\"\"\"",
+        context.workspaceParameters)
       name -> result
   }
   protected val paramValues = context.box.parameters ++ parametricValues
@@ -243,7 +263,7 @@ trait BasicOperation extends Operation {
 
   def toFE: FEOperationMeta = FEOperationMeta(
     id,
-    title,
+    Operation.htmlID(id),
     allParameters.map { param => param.toFE },
     visibleScalars,
     context.meta.categoryID,
@@ -369,7 +389,7 @@ abstract class DecoratorOperation(
   def summary = title
   def toFE: FEOperationMeta = FEOperationMeta(
     id,
-    title,
+    Operation.htmlID(id),
     parameters.map { param => param.toFE },
     List(),
     context.meta.categoryID,

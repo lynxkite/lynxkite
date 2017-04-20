@@ -225,7 +225,8 @@ object FrontendJson {
 
   implicit val fFEStatus = json.Json.format[FEStatus]
   implicit val fFEOption = json.Json.format[FEOption]
-  implicit val fFEOperationParameterMeta = json.Json.format[FEOperationParameterMeta]
+  implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
+  implicit val fCustomOperationParameterMeta = json.Json.format[CustomOperationParameterMeta]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wFEScalar = json.Json.writes[FEScalar]
   implicit val wFEOperationMeta = json.Json.writes[FEOperationMeta]

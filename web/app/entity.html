@@ -116,42 +116,5 @@
   <div class="menu-item" ng-click="loadUIStatus()" ng-show="isUIStatus()" id="load-visualization">
     <i class="glyphicon glyphicon-eye-open"></i> Load visualization
   </div>
-
-  <div class="menu-item" ng-click="toggleShowEmoji()">
-    Set icon
-    <i ng-hide="showEmoji" class="glyphicon glyphicon-chevron-right pull-right"></i>
-    <help-popup ng-show="showEmoji" href="set-{{ kind }}-icon"></help-popup>
-  </div>
-
-  <div class="emoji-picker" ng-if="showEmoji">
-    <progressbar class="progress-striped active" ng-show="emojiList.$resolved === false">
-    </progressbar>
-    <img ng-repeat="e in emojiList"
-         src="/images/emoji/{{ e }}.png"
-         class="emoji"
-         ng-click="setIcon(e)">
-  </div>
-
-  <div class="menu-item" ng-show="entity.metadata.icon" ng-click="clearIcon()">
-    Clear icon
-  </div>
-
-  <div class="menu-item" ng-click="discard()">
-    <i class="glyphicon glyphicon-trash"></i> Discard
-  </div>
-
-  <div class="menu-item" ng-hide="menu.renaming" ng-click="startRenaming()" id="rename-menu-item">
-    <i class="glyphicon glyphicon-pencil"></i> Rename...
-  </div>
-  <form ng-show="menu.renaming" ng-submit="applyRenaming()">
-    <input class="form-control"
-           placeholder="Rename..."
-           ng-model="menu.renameTo"
-           id="rename-to">
-  </form>
-
-  <div class="menu-item" ng-click="duplicate()">
-    <i class="glyphicon glyphicon-floppy-disk"></i> Duplicate
-  </div>
-
+  
 </div>
