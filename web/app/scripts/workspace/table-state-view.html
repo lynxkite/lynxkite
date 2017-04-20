@@ -1,4 +1,7 @@
-<div class="col-sm-12">
+<div ng-if="!table.header">
+    Table preview is loading...
+</div>
+<div ng-if="table.header" class="col-sm-12">
     <h3>Columns</h3>
     <table class="table table-striped table-bordered">
         <thead>
@@ -14,6 +17,26 @@
         </tr>
         </tbody>
     </table>
+    <h3>Table statistics</h3>
+    <p>Number of rows: {{table.numRows}}</p>
     <h3>Sample</h3>
+    <table class="table table-striped table-bordered">
+        <thead>
+        <tr>
+            <th ng-repeat="col in table.header">
+                <span>{{col.name}}</span>
+                <br>
+                <span class="column-type">{{col.dataType}}</span>
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="row in table.data">
+            <td ng-repeat="item in row track by $index" ng-class="{ 'is-null': !item.defined }">
+                {{ item.string }}
+            </td>
+        </tr>
+        </tbody>
+    </table>
 </div>
 
