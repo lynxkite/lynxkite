@@ -58,10 +58,9 @@ case class ExportTableToCSV(path: String, header: Boolean,
       "nullValue" -> "",
       "header" -> (if (header) "true" else "false"))
     df.write.format("csv").options(options).save(file.resolvedName)
-    val numberOfRows = df.count
     val download =
       if (path == "<download>") Some(DownloadFileRequest(file.symbolicName, !header)) else None
-    val exportResult = FileMetaData(numberOfRows, "csv", file.resolvedName, download)
+    val exportResult = FileMetaData("csv", file.resolvedName, download)
     output(o.exportResult, exportResult)
   }
 }
@@ -87,10 +86,9 @@ case class ExportTableToStructuredFile(path: String, format: String, version: In
     val file = getFile(format, path)
     val df = inputs.t.df
     df.write.format(format).save(file.resolvedName)
-    val numberOfRows = df.count
     val download =
       if (path == "<download>") Some(DownloadFileRequest(file.symbolicName, false)) else None
-    val exportResult = FileMetaData(numberOfRows, format, file.resolvedName, download)
+    val exportResult = FileMetaData(format, file.resolvedName, download)
     output(o.exportResult, exportResult)
   }
 }
