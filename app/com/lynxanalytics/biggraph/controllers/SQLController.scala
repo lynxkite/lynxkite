@@ -281,6 +281,17 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     )
   }
 
+  def getTableSample(table: Table): GetTableOutputResponse = {
+    val columns = table.schema.toList.map { field =>
+      field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
+    }
+    GetTableOutputResponse(
+      header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) },
+      // TODO: get first 10 rows of dataframe
+      data = List()
+    )
+  }
+
   def exportSQLQueryToTable(
     user: serving.User, request: SQLExportToTableRequest) = async[Unit] {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))

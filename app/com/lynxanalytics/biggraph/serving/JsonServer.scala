@@ -15,6 +15,7 @@ import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
+import com.lynxanalytics.biggraph.serving
 import org.apache.spark.sql.types.{ StructField, StructType }
 
 abstract class JsonServer extends mvc.Controller {
@@ -410,7 +411,6 @@ object ProductionJsonServer extends JsonServer {
   def getWorkspace = jsonGet(workspaceController.getWorkspace)
   def createSnapshot = jsonPost(workspaceController.createSnapshot)
   def getProjectOutput = jsonGet(workspaceController.getProjectOutput)
-  def getTableOutput = jsonGet(workspaceController.getTableOutput)
   def getProgress = jsonGet(workspaceController.getProgress)
   def getOperationMeta = jsonGet(workspaceController.getOperationMeta)
   def setWorkspace = jsonPost(workspaceController.setWorkspace)
@@ -427,6 +427,8 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
   def importBox = jsonFuturePost(sqlController.importBox)
   def createViewDFSpec = jsonPost(sqlController.createViewDFSpec)
+
+  def getTableOutput = jsonGet(getTableOutputData)
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
@@ -468,6 +470,11 @@ object ProductionJsonServer extends JsonServer {
   }
 
   val version = KiteInstanceInfo.kiteVersion
+
+  def getTableOutputData(user: serving.User, request: GetTableOutputRequest): GetTableOutputResponse = {
+    val table = workspaceController.getTable(user, request)
+    sqlController.getTableSample(table)
+  }
 
   def getAuthMethods = {
     val authMethods = scala.collection.mutable.ListBuffer[AuthMethod]()
