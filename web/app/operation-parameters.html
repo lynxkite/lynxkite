@@ -2,7 +2,7 @@
 <div class="form-group" ng-repeat="param in meta.parameters">
   <label for="{{param.id}}" class="col-sm-4 control-label">
     {{param.title}}
-    <help-popup href="{{box.meta.operationID + '-' + param.id}}"></help-popup>
+    <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
   </label>
   <div class="col-sm-8 operation-attribute-input" id="{{param.id}}">
     <input type="checkbox" ng-model="parametric[param.id]"> parametric
