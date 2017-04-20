@@ -11,6 +11,10 @@ arg_parser.add_argument(
     default=os.environ['USER'] + '-ecosystem-test',
     help='Name of the cluster to start')
 arg_parser.add_argument(
+    '--public_ip',
+    default=None,
+    help='The Elastic IP associated to the cluster')
+arg_parser.add_argument(
     '--ec2_key_file',
     default=os.environ['HOME'] + '/.ssh/lynx-cli.pem')
 arg_parser.add_argument(
@@ -89,6 +93,7 @@ class Ecosystem:
   def __init__(self, args):
     self.cluster_config = {
         'cluster_name': args.cluster_name,
+        'public_ip': args.public_ip,
         'ec2_key_file': args.ec2_key_file,
         'ec2_key_name': args.ec2_key_name,
         'emr_region': args.emr_region,
@@ -131,7 +136,10 @@ class Ecosystem:
         owner=conf['owner'],
         expiry=conf['expiry'],
         instance_count=conf['emr_instance_count'],
-        hdfs_replication=conf['hdfs_replication'])
+        hdfs_replication=conf['hdfs_replication'],
+    )
+    if conf['public_ip']:
+      self.cluster = lib.associate_address(self.cluster, conf['public_ip'])
     self.instances = [self.cluster]
     # Spin up a mysql RDS instance only if requested.
     if conf['with_rds']:
