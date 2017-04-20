@@ -85,6 +85,9 @@ angular.module('biggraph')
             })
             .then(function(response) {
               var state = response.workspace;
+              for(i = 0; i< state.boxes.length; i++) {
+                state.boxes[i].summary = response.summaries[state.boxes[i].operationID];
+              }
               that.backendState = state;
               // User edits will be applied to a deep copy of
               // the original backend state. This way watchers
@@ -130,18 +133,6 @@ angular.module('biggraph')
         },
 
         updateBox: function(id, paramValues, parametricParameters) {
-          var that = this;
-          var operationId = this.wrapper.boxMap[id].metadata.operationID;
-          util.nocache(
-            '/ajax/getSummary',
-            {
-                operationId: operationId,
-                parameters: paramValues,
-            })
-          .then(
-            function success(response) {
-                that.wrapper.setBoxSummary(that.selectedBoxId, response.summary);
-            });
           var box = this.getBox(id).instance;
           if (!angular.equals(paramValues, box.parameters)) {
             this.wrapper.setBoxParams(id, paramValues, parametricParameters);
