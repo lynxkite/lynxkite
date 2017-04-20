@@ -2,7 +2,7 @@
 // Operation can be dragged to the workspace drawing board to create boxes.
 'use strict';
 
-angular.module('biggraph').directive('operationSelector', function(util) {
+angular.module('biggraph').directive('operationSelector', function() {
   return {
     restrict: 'E',
     scope: {
@@ -39,7 +39,7 @@ angular.module('biggraph').directive('operationSelector', function(util) {
 
       });
 
-      scope.$watch('mode === "search" && !op', function(search) {
+      scope.$watch('searching && !op', function(search) {
         if (search) {
           var filter = elem.find('#filter');
           filter.focus();
@@ -48,7 +48,7 @@ angular.module('biggraph').directive('operationSelector', function(util) {
       });
 
       scope.filterKey = function(e) {
-        if (scope.mode !== 'search') { return; }
+        if (!scope.searching || scope.op) { return; }
         var operations = elem.find('.operation');
         if (e.keyCode === 38) { // UP
           e.preventDefault();
@@ -69,40 +69,30 @@ angular.module('biggraph').directive('operationSelector', function(util) {
       };
 
       scope.clickedCat = function(cat) {
-        if (scope.category === cat) {
+        if (scope.category === cat && !scope.op) {
           scope.category = undefined;
         } else {
           scope.category = cat;
         }
-        scope.mode = undefined;
+        scope.searching = undefined;
+        scope.op = undefined;
       };
-
       scope.searchClicked = function() {
-        if (scope.mode === 'searching') {
-          scope.mode = undefined;
+        if (scope.searching) {
+          scope.searching = undefined;
+          scope.op = undefined;
         } else {
           startSearch();
         }
       };
-
-      scope.customClicked = function() {
-        if (scope.mode === 'custom') {
-          scope.mode = undefined;
-        } else {
-          scope.mode = 'custom';
-          scope.customBoxCatalog = util.nocache('/ajax/customBoxCatalog');
-        }
-        scope.category = undefined;
-      };
-
-      scope.reportRequestError = util.reportRequestError;
-
       scope.$on('open operation search', startSearch);
       function startSearch() {
+        scope.op = undefined;
         scope.category = undefined;
-        scope.mode = 'searching';
+        scope.searching = true;
       }
     },
+
   };
 });
 
