@@ -84,11 +84,14 @@ gulp.task('dist', ['clean:dist', 'asciidoctor', 'genTemplates', 'html'], functio
     'app/images/**',
     'app/**/*.html', '!app/index.html',
     ], { base: 'app' });
-  // Move Bootstrap fonts to where the relative URLs will find them.
-  var fonts = gulp.src([
+  // Move fonts to where the relative URLs will find them.
+  var bootstrapFonts = gulp.src([
     'node_modules/bootstrap/dist/fonts/*',
     ], { base: 'node_modules/bootstrap/dist' });
-  return merge(dynamicFiles, staticFiles, fonts)
+  var fontAwesomeFonts = gulp.src([
+    'node_modules/font-awesome/fonts/*',
+  ], {base: 'node_modules/font-awesome'});
+  return merge(dynamicFiles, staticFiles, bootstrapFonts, fontAwesomeFonts)
     .pipe(gulp.dest('dist'));
 });
 

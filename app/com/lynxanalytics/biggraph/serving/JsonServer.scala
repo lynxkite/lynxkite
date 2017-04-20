@@ -11,7 +11,6 @@ import scala.concurrent.Future
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
-import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
 import com.lynxanalytics.biggraph.protection.Limitations
@@ -225,8 +224,8 @@ object FrontendJson {
   implicit val fDownloadFileRequest = json.Json.format[DownloadFileRequest]
 
   implicit val fFEStatus = json.Json.format[FEStatus]
-  implicit val wFEOption = json.Json.writes[FEOption]
-  implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
+  implicit val fFEOption = json.Json.format[FEOption]
+  implicit val fFEOperationParameterMeta = json.Json.format[FEOperationParameterMeta]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wFEScalar = json.Json.writes[FEScalar]
   implicit val wFEOperationMeta = json.Json.writes[FEOperationMeta]
@@ -284,18 +283,20 @@ object FrontendJson {
   implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
 
   import WorkspaceJsonFormatters._
+  implicit val fBoxOutputInfo = json.Json.format[BoxOutputInfo]
+  implicit val fProgress = json.Json.format[Progress]
   implicit val rGetWorkspaceRequest = json.Json.reads[GetWorkspaceRequest]
+  implicit val wGetWorkspaceResponse = json.Json.writes[GetWorkspaceResponse]
   implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
   implicit val rGetSummaryRequest = json.Json.reads[GetSummaryRequest]
   implicit val wGetSummaryResponse = json.Json.writes[GetSummaryResponse]
-  implicit val rGetOutputIDRequest = json.Json.reads[GetOutputIDRequest]
-  implicit val rGetProjectOutputRequest = json.Json.reads[GetProjectOutputRequest]
-  implicit val rGetProgressRequest = json.Json.reads[GetProgressRequest]
   implicit val rGetOperationMetaRequest = json.Json.reads[GetOperationMetaRequest]
-  implicit val wGetOutputIDResponse = json.Json.writes[GetOutputIDResponse]
-  implicit val wGetProgressResponse = json.Json.writes[GetProgressResponse]
+  implicit val rGetProgressRequest = json.Json.reads[GetProgressRequest]
+  implicit val rGetProgressResponse = json.Json.writes[GetProgressResponse]
+  implicit val rGetProjectOutputRequest = json.Json.reads[GetProjectOutputRequest]
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
   implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
+  implicit val rCreateSnapshotRequest = json.Json.reads[CreateSnapshotRequest]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
@@ -407,7 +408,7 @@ object ProductionJsonServer extends JsonServer {
   def createWorkspace = jsonPost(workspaceController.createWorkspace)
   def getWorkspace = jsonGet(workspaceController.getWorkspace)
   def getSummary = jsonGet(workspaceController.getSummary)
-  def getOutputID = jsonGet(workspaceController.getOutputID)
+  def createSnapshot = jsonPost(workspaceController.createSnapshot)
   def getProjectOutput = jsonGet(workspaceController.getProjectOutput)
   def getProgress = jsonGet(workspaceController.getProgress)
   def getOperationMeta = jsonGet(workspaceController.getOperationMeta)

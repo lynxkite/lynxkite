@@ -60,6 +60,11 @@ rect.box-main, circle.io-circle {
 rect.selected-box {
   stroke-width: 3;
 }
+rect.selection-box{
+  stroke: black;
+  fill-opacity: 0;
+  stroke-dasharray: 5,5;
+}
 g.selected-plug circle {
   stroke-width: 3;
 }
