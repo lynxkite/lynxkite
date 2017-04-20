@@ -22,7 +22,7 @@ case class Workspace(
     boxMap(id)
   }
 
-  private def parametersMeta: Seq[CustomOperationParameterMeta] = {
+  def parametersMeta: Seq[CustomOperationParameterMeta] = {
     val anchor = findBox("anchor")
     OperationParams.ParametersParam.parse(anchor.parameters.get("parameters"))
   }

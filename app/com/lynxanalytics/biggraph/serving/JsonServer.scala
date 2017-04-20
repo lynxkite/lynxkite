@@ -150,6 +150,7 @@ case class GlobalSettings(
   authMethods: List[AuthMethod],
   title: String,
   tagline: String,
+  workspaceParameterKinds: List[String],
   version: String)
 
 object AssertLicenseNotExpired {
@@ -481,6 +482,7 @@ object ProductionJsonServer extends JsonServer {
       authMethods = getAuthMethods,
       title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
       tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"),
+      workspaceParameterKinds = CustomOperationParameterMeta.validKinds,
       version = version)
   }
 
