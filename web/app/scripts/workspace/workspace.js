@@ -232,6 +232,22 @@ angular.module('biggraph')
           this.saveWorkspace();
         },
 
+        deleteBoxes: function(boxIds) {
+          for(i = 0; i < boxIds.length; i+=1) {
+            if (boxIds[i] === 'anchor') {
+              util.error('Anchor box cannot be deleted.');
+            } else {
+              this.wrapper.deleteBox(boxIds[i]);
+            }
+          }
+          this.saveWorkspace();
+        },
+
+        deleteSelectedBoxes: function() {
+          this.deleteBoxes(this.selectedBoxIds);
+          this.selectedBoxIds = [];
+        },
+
         getAndUpdateProgress: function(errorHandler) {
           var wrapperBefore = this.wrapper;
           var that = this;

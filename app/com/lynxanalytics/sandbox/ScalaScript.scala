@@ -84,29 +84,50 @@ object ScalaScript {
   settings.usejavacp.value = true
   settings.embeddedDefaults[ScalaScriptSecurityManager]
 
-  def run(code: String, timeoutInSeconds: Long = 10L): String = {
+  def run(
+    code: String, bindings: Map[String, String] = Map(), timeoutInSeconds: Long = 10L): String = {
+    import org.apache.commons.lang.StringEscapeUtils
+    val binds = bindings.map {
+      case (k, v) => s"""val $k: String = "${StringEscapeUtils.escapeJava(v)}" """
+    }.mkString("\n")
+    val fullCode = s"""
+    $binds
+    val result = {
+      $code
+    }.toString
+    result
+    """
+
+    withContextClassLoader {
+      val compiledCode = engine.compile(fullCode)
+      withTimeout(timeoutInSeconds) {
+        restrictedSecurityManager.checkedRun {
+          compiledCode.eval().toString
+        }
+      }
+    }
+  }
+
+  private def withContextClassLoader[T](func: => T): T = {
     // IMAIN.compile changes the class loader and does not restore it.
     // https://issues.scala-lang.org/browse/SI-8521
     val cl = Thread.currentThread().getContextClassLoader
-    val result = try {
-      runInner(code, timeoutInSeconds)
+    try {
+      func
     } finally {
       Thread.currentThread().setContextClassLoader(cl)
     }
-    result
   }
 
-  private def runInner(code: String, timeoutInSeconds: Long): String = {
+  private def withTimeout[T](timeoutInSeconds: Long)(func: => T): T = {
     val ctxName = s"RestrictedScalaScript-${Timestamp.toString}"
     val executionContext = ThreadUtil.limitedExecutionContext(ctxName, 1)
-    val compiledCode = engine.compile(code)
-    val result = try {
+    try {
       SafeFuture {
-        restrictedSecurityManager.checkedRun(compiledCode.eval()).toString
+        func
       }(executionContext).awaitResult(Duration(timeoutInSeconds, "second"))
     } finally {
       executionContext.shutdownNow()
     }
-    result
   }
 }

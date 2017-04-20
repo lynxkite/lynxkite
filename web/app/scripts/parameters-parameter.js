@@ -27,7 +27,7 @@ angular.module('biggraph').directive('parametersParameter', function(util) {
       });
 
       scope.add = function() {
-        scope.parameters.push({ kind: 'text' });
+        scope.parameters.push({ kind: 'text', id: '', defaultValue: '' });
         console.log(scope.parameters);
       };
 
