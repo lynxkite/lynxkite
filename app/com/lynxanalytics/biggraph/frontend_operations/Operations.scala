@@ -17,7 +17,7 @@ import play.api.libs.json
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   override val atomicOperations =
     new ProjectOperations(env).operations.toMap ++
-      new NoInputOutputOperations(env).operations.toMap ++
+      new MetaOperations(env).operations.toMap ++
       new ImportOperations(env).operations.toMap
 }
 

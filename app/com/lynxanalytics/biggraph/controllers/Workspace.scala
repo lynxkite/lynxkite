@@ -29,8 +29,11 @@ case class Workspace(
 
   // This workspace as a custom box.
   def getBoxMetadata(name: String): BoxMetadata = {
-    BoxMetadata("Custom boxes", name, List(), List())
-    // TODO: Input and output list from input/output boxes.
+    val inputs = boxes.filter(_.operationID == "Input box").flatMap(b => b.parameters.get("name"))
+    val outputs = boxes.filter(_.operationID == "Output box").flatMap(b => b.parameters.get("name"))
+    // TODO: Remove type annotation from outputs?
+    BoxMetadata(
+      "Custom boxes", name, inputs, outputs.map(o => TypedConnection(o, BoxOutputKind.Project)))
   }
 
   def context(
