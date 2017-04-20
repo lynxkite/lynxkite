@@ -296,7 +296,8 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
             case (null, field) => DynamicValue("null", defined = false)
             case (item, (name, tt)) => DynamicValue.convert(item)(tt)
           }
-      }.toList
+      }.toList,
+      numRows = df.count()
     )
   }
 
