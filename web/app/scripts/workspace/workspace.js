@@ -158,21 +158,6 @@ angular.module('biggraph')
             box.instance.y < sb.upperY + sb.height);
         },
 
-        selectState: function(boxID, outputID) {
-          var outPlug = this.wrapper.boxMap[boxID].outputMap[outputID];
-          this.selectedStateId = outPlug.stateID;
-          this.selectedStateKind = outPlug.kind;
-        },
-
-        selectPlug: function(plug) {
-          this.selectedPlug = plug;
-          if (plug.direction === 'outputs') {
-            this.selectState(plug.boxId, plug.id);
-          } else {
-            this.selectedState = undefined;
-          }
-        },
-
         onMouseMove: function(mouseLogical) {
           this.mouseLogical = mouseLogical;
           if (event.buttons === 1) {
@@ -289,9 +274,6 @@ angular.module('biggraph')
             if (this.wrapper.addArrow(otherPlug, plug)) {
               this.saveWorkspace();
             }
-          }
-          if (!this.pulledPlug || this.pulledPlug !== plug) {
-            this.selectPlug(plug);
           }
         },
 
