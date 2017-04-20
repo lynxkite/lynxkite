@@ -281,14 +281,22 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     )
   }
 
+  // TODO: Remove code duplication
   def getTableSample(table: Table): GetTableOutputResponse = {
     val columns = table.schema.toList.map { field =>
       field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
     }
+    import Scripting._
+    val df = table.df
     GetTableOutputResponse(
       header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) },
-      // TODO: get first 10 rows of dataframe
-      data = List()
+      data = SQLHelper.toSeqRDD(df).take(10).map {
+        row =>
+          row.toSeq.toList.zip(columns).map {
+            case (null, field) => DynamicValue("null", defined = false)
+            case (item, (name, tt)) => DynamicValue.convert(item)(tt)
+          }
+      }.toList
     )
   }
 
