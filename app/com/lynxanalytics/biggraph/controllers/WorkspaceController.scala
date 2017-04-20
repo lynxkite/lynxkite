@@ -140,17 +140,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def boxCatalog(user: serving.User, request: serving.Empty): BoxCatalogResponse = {
-    BoxCatalogResponse(ops.operationIds.toList.map(ops.getBoxMetadata(_)))
-  }
-
-  def customBoxCatalog(
-    user: serving.User, request: serving.Empty): BoxCatalogResponse = metaManager.synchronized {
-    val frames = DirectoryEntry.fromName("").asDirectory
-      .listObjectsRecursively
-      .filter(_.readAllowedFrom(user))
-      .collect { case wsf: WorkspaceFrame => wsf }
-      // TODO: Filter to workspaces with input/output boxes.
-    BoxCatalogResponse(frames.map(wsf => wsf.workspace.getBoxMetadata(wsf.path.toString)).toList)
+    BoxCatalogResponse(ops.operationIds(user).toList.map(ops.getBoxMetadata(_)))
   }
 
   def getOperationMeta(user: serving.User, request: GetOperationMetaRequest): FEOperationMeta = {

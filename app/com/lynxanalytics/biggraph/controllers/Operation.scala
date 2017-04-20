@@ -59,13 +59,15 @@ case class CustomOperationParameterMeta(
     s"'$kind' is not a valid parameter type.")
 }
 object CustomOperationParameterMeta {
-  val validKinds = Seq(
+  val validKinds = List(
     "text",
     "boolean",
     "code",
     "vertexattribute",
     "edgeattribute",
-    "segmentation")
+    "segmentation",
+    "scalar",
+    "column")
 }
 
 case class FEOperationSpec(
@@ -161,6 +163,9 @@ object Operation {
               .toList
               .filter(_ != ""))
     }
+    implicit class OperationTable(table: Table) {
+      def columnList = FEOption.list(table.schema.map(_.name).toList)
+    }
   }
 }
 import Operation.Implicits._
@@ -183,17 +188,39 @@ trait OperationRegistry {
 
 // OperationRepository holds a registry of all operations.
 abstract class OperationRepository(env: SparkFreeEnvironment) {
+  implicit val metaGraphManager = env.metaGraphManager
   // The registry maps operation IDs to their constructors.
-  protected val operations: Map[String, (BoxMetadata, Operation.Factory)]
+  protected val atomicOperations: Map[String, (BoxMetadata, Operation.Factory)]
 
-  def getBoxMetadata(id: String) = operations(id)._1
+  private def getBox(id: String): (BoxMetadata, Operation.Factory) = {
+    if (atomicOperations.contains(id)) {
+      atomicOperations(id)
+    } else {
+      val frame = DirectoryEntry.fromName(id).asInstanceOf[WorkspaceFrame]
+      val ws = frame.workspace
+      (ws.getBoxMetadata(frame.path.toString), new CustomBoxOperation(ws, _))
+    }
+  }
 
-  def operationIds = operations.keys.toSeq
+  def getBoxMetadata(id: String) = getBox(id)._1
+
+  def operationIds = atomicOperations.keys.toSeq.sorted
+
+  def operationIds(user: serving.User) = {
+    val customBoxes = DirectoryEntry.fromName("").asDirectory
+      .listObjectsRecursively
+      .filter(_.readAllowedFrom(user))
+      .collect { case wsf: WorkspaceFrame => wsf }
+      // TODO: Filter to workspaces with input/output boxes.
+      .map(_.path.toString).toSet
+    val atomicBoxes = atomicOperations.keySet
+    (atomicBoxes ++ customBoxes).toSeq.sorted
+  }
 
   def opForBox(
     user: serving.User, box: Box, inputs: Map[String, BoxOutputState],
     workspaceParameters: Map[String, String]) = {
-    val (meta, factory) = operations(box.operationID)
+    val (meta, factory) = getBox(box.operationID)
     val context =
       Operation.Context(user, box, meta, inputs, workspaceParameters, env.metaGraphManager)
     factory(context)
@@ -443,4 +470,32 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
   }
 
   def getRawDataFrame(context: spark.sql.SQLContext): spark.sql.DataFrame
+}
+
+class CustomBoxOperation(
+    workspace: Workspace, val context: Operation.Context) extends BasicOperation {
+  lazy val parameters = {
+    val custom = workspace.parametersMeta
+    val fe = FEOperationParameterMeta
+    val tables = context.inputs.values.collect { case i if i.isTable => i.table }
+    val projects = context.inputs.values.collect { case i if i.isProject => i.project }
+    custom.map { p =>
+      val id = p.id
+      val dv = p.defaultValue
+      import OperationParams._
+      p.kind match {
+        case "text" => Param(id, id, dv)
+        case "boolean" => Choice(id, id, FEOption.bools)
+        case "code" => Code(id, id, "plain_text", dv)
+        case "vertexattribute" => Choice(id, id, projects.flatMap(_.vertexAttrList).toList)
+        case "edgeattribute" => Choice(id, id, projects.flatMap(_.edgeAttrList).toList)
+        case "segmentation" => Choice(id, id, projects.flatMap(_.segmentationList).toList)
+        case "scalar" => Choice(id, id, projects.flatMap(_.scalarList).toList)
+        case "column" => Choice(id, id, tables.flatMap(_.columnList).toList)
+      }
+    }.toList
+  }
+  def apply(): Unit = ???
+  def enabled = FEStatus.enabled
+  def getOutputs() = Map()
 }
