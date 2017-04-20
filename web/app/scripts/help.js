@@ -23,7 +23,7 @@ angular.module('biggraph').directive('helpId',
           return;
         }
         var content = helpContent.find('#' + id).first();
-        if (content.length === 0) {
+        if (content.length === 0 && !id.includes('-apply_to')) {
           console.warn('Could not find help ID', id);
         }
         content = content.clone();

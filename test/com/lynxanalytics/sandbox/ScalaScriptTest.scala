@@ -21,6 +21,10 @@ class ScalaScriptTest extends FunSuite {
     assert(ScalaScript.run(code) == "26")
   }
 
+  test("Bindings work") {
+    assert(ScalaScript.run("s\"\"\"asd $qwe\"\"\"", Map("qwe" -> "123")) == "asd 123")
+  }
+
   test("Security manager disables file access") {
     val testFile = getClass.getResource("/graph_api/permission_check.txt")
     val contents = "This file is used to check the security manager implementation.\n"

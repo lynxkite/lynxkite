@@ -44,6 +44,9 @@ angular.module('biggraph')
             scope.boxMeta = undefined;
             return;
           }
+          // Temporary hack (until popups are implemented) to force-refresh operation help.
+          if (scope.boxMeta) { scope.boxMeta.htmlId = undefined; }
+          
           var box = scope.workspace.getBox(boxId);
           // Checking currentRequest makes sure that the response
           // to the result of the latest getOperationMetaRequest

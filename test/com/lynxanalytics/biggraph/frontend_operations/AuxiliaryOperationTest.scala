@@ -43,7 +43,7 @@ class AuxiliaryOperationTest extends OperationsTestBase {
       .box("Add constant vertex attribute",
         Map("name" -> "const55", "type" -> "Double"),
         Seq(),
-        Map("value" -> "(1 to 10).sum"))
+        Map("value" -> "${ (1 to 10).sum }"))
       .project
       .vertexAttributes("const55")
       .rdd
