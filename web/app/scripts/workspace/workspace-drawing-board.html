@@ -30,7 +30,8 @@
                   ng-attr-fill="{{ plug.error ? 'red' : plug.progressColor }}"
                   ng-attr-drop-tooltip="{{ plug.error }}"
                   ng-mousedown="workspace.onMouseDownOnPlug(plug, $event)"
-                  ng-mouseup="workspace.onMouseUpOnPlug(plug, $event)">
+                  ng-mouseup="workspace.onMouseUpOnPlug(plug, $event)"
+                  ng-dblclick="workspace.onDoubleClickOnPlug(plug, $event)">
             </circle>
           </g>
         </g>
@@ -105,11 +106,19 @@
           </a>
         </div>
       </div>
-      <box-editor workspace="workspace"
-          box-id="popup.id"
-          ng-mousedown="$event.stopPropagation()"
-          ng-mouseup="$event.stopPropagation()">
-      </box-editor>
+      <div class="popup-content"
+            ng-mousedown="$event.stopPropagation()"
+            ng-mouseup="$event.stopPropagation()">
+        <box-editor ng-if="popup.content.type === 'box'"
+            workspace="workspace"
+            box-id="popup.content.boxId">
+        </box-editor>
+        <state-view ng-if="popup.content.type === 'plug'"
+            workspace="workspace"
+            state-id="popup.content.stateId"
+            state-kind="popup.content.stateKind">
+        </state-view>
+      </div>
     </div>
   </div>
 </div>

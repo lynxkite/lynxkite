@@ -224,15 +224,15 @@ angular.module('biggraph')
           return false;
         },
 
-        onDoubleClickOnBox: function(box) {
-          if (this.closePopup(box.instance.id)) {
+        openPopup: function(id, content) {
+          if (this.closePopup(id)) {
             return;  // popup was open, we close it
           }
           // popup was not open, we open it
-
           var that = this;
           this.popups.push({
-            id: box.instance.id,
+            id: id,
+            content: content,
             x: 100,
             y: 100,
             onMouseDown: function(event) {
@@ -252,6 +252,28 @@ angular.module('biggraph')
               that.closePopup(this.id);
             },
           });
+        },
+
+        onDoubleClickOnPlug: function(plug, event) {
+          event.stopPropagation();
+          if (plug.direction === 'outputs') {
+            this.openPopup(
+              plug.boxId + '::' + plug.id,
+              {
+                type: 'plug',
+                stateId: plug.stateID,
+                stateKind: plug.kind,
+              });
+          }
+        },
+
+        onDoubleClickOnBox: function(box) {
+          this.openPopup(
+            box.instance.id,
+            {
+              type: 'box',
+              boxId: box.instance.id,
+            });
         },
 
         onMouseDownOnPlug: function(plug, event) {
