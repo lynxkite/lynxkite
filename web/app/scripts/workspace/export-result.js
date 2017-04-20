@@ -17,18 +17,19 @@ angular.module('biggraph')
                                {
                                  stateId: scope.stateId,
                                });
-
           scope.exportResult.then(function success(exportResult) {
-            scope.alreadyExported = (exportResult.computeProgress === 1.0) ? true : false;
+            scope.alreadyExported = (exportResult.computeProgress === 1) ? true : false;
+            scope.error =
+              (exportResult.computeProgress === -1) ? exportResult.errorMessage : undefined;
             var metaData =
-              (exportResult.computedValue) ? JSON.parse(exportResult.computedValue.string) : {};
+              (exportResult.computedValue) ? JSON.parse(exportResult.computedValue.string)
+                                           : undefined;
             scope.fileMetaData = fileMetaDataToFE(metaData);
           });
         });
 
         scope.export = function() {
           var scalarValue = util.lazyFetchScalarValue(scope.exportResult, true);
-          scope.alreadyExported = true;
           scalarValue.value.then(function success(result) {
             var metaData = JSON.parse(result.string);
             if(metaData.download) {
@@ -36,6 +37,10 @@ angular.module('biggraph')
                     '/downloadFile?q=' + encodeURIComponent(JSON.stringify(metaData.download));
             }
             scope.fileMetaData = fileMetaDataToFE(metaData);
+          }, function error(error) {
+               scope.error = error;
+          }).finally(function() {
+               scope.alreadyExported = true;
           });
         };
 
