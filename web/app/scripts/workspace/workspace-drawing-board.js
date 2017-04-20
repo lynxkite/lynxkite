@@ -14,6 +14,8 @@ angular.module('biggraph')
       },
       link: function(scope, element) {
         var workspaceDrag = false;
+        var selectBoxes = false;
+        var moveSelection = false;
         var workspaceX = 0;
         var workspaceY = 0;
         var workspaceZoom = 0;
@@ -25,11 +27,33 @@ angular.module('biggraph')
             x: (event.offsetX - workspaceX) / zoomToScale(workspaceZoom),
             y: (event.offsetY - workspaceY) / zoomToScale(workspaceZoom) };
         }
+        function actualDragMode(event) {
+          var dragMode = (window.localStorage.getItem('drag_mode') || 'pan');
+          //Shift chooses the opposite mode.
+          if (dragMode === 'select') {
+            return event.shiftKey ? 'pan' : 'select';
+          } else {
+            return event.shiftKey ? 'select' : 'pan';
+          }
+        }
+
         scope.onMouseMove = function(event) {
           event.preventDefault();
           if (workspaceDrag) {
             workspaceX += event.offsetX - mouseX;
             workspaceY += event.offsetY - mouseY;
+          } else if (selectBoxes) {
+            var logicalPos = getLogicalPosition(event);
+            scope.workspace.selection.endX = logicalPos.x;
+            scope.workspace.selection.endY = logicalPos.y;
+            scope.workspace.updateSelection();
+            scope.workspace.selectBoxesInSelection();
+          } else if (moveSelection) {
+            scope.workspace.selection.startX += event.offsetX - mouseX;
+            scope.workspace.selection.endX += event.offsetX - mouseX;
+            scope.workspace.selection.startY += event.offsetY - mouseY;
+            scope.workspace.selection.endY += event.offsetY - mouseY;
+            scope.workspace.updateSelection();
           }
           mouseX = event.offsetX;
           mouseY = event.offsetY;
@@ -38,21 +62,37 @@ angular.module('biggraph')
 
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
+          scope.workspace.removeSelection();
           scope.workspace.onMouseDownOnBox(box, getLogicalPosition(event));
         };
 
         scope.onMouseUp = function(event) {
-          workspaceDrag = false;
           element[0].style.cursor = '';
-          scope.workspace.onMouseUp(event);
+          workspaceDrag = false;
+          selectBoxes = false;
+          moveSelection = false;
+          scope.workspace.removeSelection();
+          scope.workspace.onMouseUp(getLogicalPosition(event));
         };
 
         scope.onMouseDown = function(event) {
+          var dragMode = actualDragMode(event);
           event.preventDefault();
-          workspaceDrag = true;
-          setGrabCursor(element[0]);
-          mouseX = event.offsetX;
-          mouseY = event.offsetY;
+          if (dragMode === 'pan'){
+            workspaceDrag = true;
+            setGrabCursor(element[0]);
+            mouseX = event.offsetX;
+            mouseY = event.offsetY;
+          } else if (dragMode === 'select'){
+            var logicalPos = getLogicalPosition(event);
+            selectBoxes = true;
+            scope.workspace.selectedBoxIds = [];
+            scope.workspace.selection.endX = logicalPos.x;
+            scope.workspace.selection.endY = logicalPos.y;
+            scope.workspace.selection.startX = logicalPos.x;
+            scope.workspace.selection.startY = logicalPos.y;
+            scope.workspace.updateSelection();
+          }
         };
 
         scope.workspaceTransform = function() {

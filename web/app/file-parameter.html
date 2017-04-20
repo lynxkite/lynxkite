@@ -1,7 +1,11 @@
 <table style="width: 100%;" class="file-parameter">
   <tr>
     <td style="width: 100%;">
-      <input ng-hide="uploading" class="form-control" ng-model="filename" ng-disabled="!editable">
+      <input
+        ng-hide="uploading"
+        class="form-control"
+        ng-model="filename"
+        ng-disabled="!editable">
       <progressbar ng-show="uploading" value="progress">
         {{progress}}%
       </progressbar>

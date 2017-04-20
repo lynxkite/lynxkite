@@ -17,6 +17,7 @@ import play.api.libs.json
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   override val operations =
     new ProjectOperations(env).operations.toMap ++
+      new NoInputOutputOperations(env).operations.toMap ++
       new ImportOperations(env).operations.toMap
 }
 
@@ -1261,6 +1262,15 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         project.edgeAttributes = g.edgeAttributes.mapValues(_.entity)
       }
     })
+
+  register("Load snapshot", StructureOperations)(new ProjectOutputOperation(_) {
+    lazy val parameters = List(Param("path", "Path"))
+    def enabled = FEStatus.enabled
+    def apply() = {
+      val snapshot = DirectoryEntry.fromName(paramValues("path")).asSnapshotFrame
+      project.state = snapshot.getState.project.state
+    }
+  })
 
   register("Hash vertex attribute", ImportOperations, new ProjectTransformation(_) {
     lazy val parameters = List(

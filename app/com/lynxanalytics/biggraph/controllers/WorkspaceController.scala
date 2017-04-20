@@ -9,18 +9,19 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 
 case class GetWorkspaceRequest(name: String)
+case class BoxOutputInfo(boxOutput: BoxOutput, stateID: String, success: FEStatus, kind: String)
+case class GetWorkspaceResponse(workspace: Workspace, outputs: List[BoxOutputInfo])
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetSummaryRequest(operationId: String, parameters: Map[String, String])
 case class GetSummaryResponse(summary: String)
-case class GetOutputIDRequest(workspace: String, output: BoxOutput)
-case class GetProjectOutputRequest(id: String, path: String)
-case class GetProgressRequest(workspace: String, output: BoxOutput)
 case class GetOperationMetaRequest(workspace: String, box: String)
-case class GetOutputIDResponse(id: String, kind: String)
-case class GetOutputResponse(kind: String, project: Option[FEProject] = None)
-case class GetProgressResponse(progressList: List[BoxOutputProgress])
+case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
+case class GetProgressRequest(stateIDs: List[String])
+case class GetProgressResponse(progress: Map[String, Option[Progress]])
+case class GetProjectOutputRequest(id: String, path: String)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
+case class CreateSnapshotRequest(name: String, id: String)
 
 class WorkspaceController(env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -53,8 +54,21 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def getWorkspace(
-    user: serving.User, request: GetWorkspaceRequest): Workspace =
-    getWorkspaceByName(user, request.name)
+    user: serving.User, request: GetWorkspaceRequest): GetWorkspaceResponse = {
+    val workspace = getWorkspaceByName(user, request.name)
+    val states = workspace.context(user, ops, Map()).allStates
+    val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
+    calculatedStates.synchronized {
+      for ((_, (boxOutputState, id)) <- statesWithId) {
+        calculatedStates(id) = boxOutputState
+      }
+    }
+    val stateInfo = statesWithId.toList.map {
+      case (boxOutput, (boxOutputState, stateID)) =>
+        BoxOutputInfo(boxOutput, stateID, boxOutputState.success, boxOutputState.kind)
+    }
+    GetWorkspaceResponse(workspace, stateInfo)
+  }
 
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
   val calculatedStates = new HashMap[String, BoxOutputState]()
@@ -63,41 +77,62 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: GetSummaryRequest): GetSummaryResponse = {
     val boxmeta = ops.getBoxMetadata(request.operationId)
     GetSummaryResponse(
-      ops.opForBox(user, new Box("", boxmeta.operationID, request.parameters, 0, 0, Map()), Map()).summary)
+      ops.opForBox(user, new Box("", boxmeta.operationID, request.parameters, 0, 0, Map()), Map(), Map()).summary)
   }
 
-  def getOutputID(
-    user: serving.User, request: GetOutputIDRequest): GetOutputIDResponse = {
-    val ws = getWorkspaceByName(user, request.workspace)
-    val state = ws.state(user, ops, request.output)
-    val id = Timestamp.toString
+  private def getOutput(user: serving.User, stateID: String): BoxOutputState = {
     calculatedStates.synchronized {
-      calculatedStates(id) = state
+      calculatedStates.get(stateID)
+    } match {
+      case None => throw new AssertionError(s"BoxOutputState state identified by $stateID not found")
+      case Some(state: BoxOutputState) => state
     }
-    GetOutputIDResponse(id, state.kind)
   }
 
   def getProjectOutput(
     user: serving.User, request: GetProjectOutputRequest): FEProject = {
-    calculatedStates.synchronized {
-      calculatedStates.get(request.id)
-    } match {
-      case None => throw new AssertionError(s"BoxOutputState state identified by ${request.id} not found")
-      case Some(state: BoxOutputState) =>
-        state.kind match {
-          case BoxOutputKind.Project =>
-            val pathSeq = SubProject.splitPipedPath(request.path)
-              .filter(_ != "")
-            val viewer = state.project.viewer.offspringViewer(pathSeq)
-            viewer.toFE(request.path)
-        }
+    val state = getOutput(user, request.id)
+    state.kind match {
+      case BoxOutputKind.Project =>
+        val pathSeq = SubProject.splitPipedPath(request.path).filter(_ != "")
+        val viewer = state.project.viewer.offspringViewer(pathSeq)
+        viewer.toFE(request.path)
     }
   }
 
-  def getProgress(
-    user: serving.User, request: GetProgressRequest): GetProgressResponse = {
-    val ws = getWorkspaceByName(user, request.workspace)
-    GetProgressResponse(ws.progress(user, ops, request.output))
+  def getProgress(user: serving.User, request: GetProgressRequest): GetProgressResponse = {
+    val states = request.stateIDs.map(stateID => stateID -> getOutput(user, stateID)).toMap
+    val progress = states.map {
+      case (stateID, state) =>
+        if (state.success.enabled) {
+          state.kind match {
+            case BoxOutputKind.Project => stateID -> Some(state.project.viewer.getProgress)
+            case BoxOutputKind.Table =>
+              val progress = entityProgressManager.computeProgress(state.table)
+              stateID -> Some(List(progress))
+            case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
+          }
+        } else {
+          stateID -> None
+        }
+    }.mapValues(option => option.map(
+      progressList => Progress(
+        computed = progressList.count(_ == 1.0),
+        inProgress = progressList.count(x => x < 1.0 && x > 0.0),
+        notYetStarted = progressList.count(_ == 0.0),
+        failed = progressList.count(_ < 0.0)
+      ))
+    ).view.force
+    GetProgressResponse(progress)
+  }
+
+  def createSnapshot(
+    user: serving.User, request: CreateSnapshotRequest): Unit = {
+    val calculatedState = calculatedStates.synchronized {
+      calculatedStates(request.id)
+    }
+    val snapshot = new SnapshotFrame(SymbolPath.parse(request.name))
+    snapshot.initialize(calculatedState)
   }
 
   def setWorkspace(
@@ -119,7 +154,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def getOperationMeta(user: serving.User, request: GetOperationMetaRequest): FEOperationMeta = {
     val ws = getWorkspaceByName(user, request.workspace)
-    val op = ws.getOperation(user, ops, request.box)
+    val op = ws.context(user, ops, Map()).getOperation(request.box)
     op.toFE
   }
 }

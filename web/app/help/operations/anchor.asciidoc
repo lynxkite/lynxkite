@@ -1,0 +1,10 @@
+### Anchor
+
+This special box represents the workspace itself. There is always exactly one instance of it. It
+allows you to control workspace-wide settings as parameters on this box. It can also serve to anchor
+your workspace with a high-level description.
+
+====
+[[description]] Description::
+An overall description of the purpose of this workspace.
+====

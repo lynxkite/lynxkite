@@ -65,12 +65,14 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
             if (inputs.hasOwnProperty(inputName)) {
               var input = inputs[inputName];
               var src = this.boxMap[input.boxID];
-              var srcPlug = this._lookupArrowEndpoint(
-                src.outputs, input.id);
-              var dstPlug = this._lookupArrowEndpoint(
-                dst.inputs, inputName);
-              this.arrows.push(this._createArrow(
-                srcPlug, dstPlug));
+              if(src){
+                var srcPlug = this._lookupArrowEndpoint(
+                  src.outputs, input.id);
+                var dstPlug = this._lookupArrowEndpoint(
+                  dst.inputs, inputName);
+                this.arrows.push(this._createArrow(
+                  srcPlug, dstPlug));
+              }
             }
           }
         }
@@ -83,11 +85,16 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         this._buildArrows();
       },
 
-      // boxID should be used for  test-purposes only
+      // boxID should be used for test-purposes only
       addBox: function(operationId, x, y, boxId) {
-        var cnt = this.boxes.length;
-        boxId = boxId || operationId.replace(/ /g, '-') + cnt;
-
+        var usedIds = this.state.boxes.map(function(box) {
+            return box.id;
+          });
+        var cnt = 1;
+        while(usedIds.includes(operationId.replace(/ /g, '-') + '_' + cnt)) {
+          cnt += 1;
+        }
+        boxId = boxId || operationId.replace(/ /g, '-') + '_' + cnt;
         this.state.boxes.push(
             {
               id: boxId,
@@ -95,8 +102,18 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
               x: x,
               y: y,
               inputs: {},
-              parameters: {}
+              parameters: {},
+              parametricParameters: {}
             });
+        this._build();
+      },
+
+      deleteBox: function(boxId) {
+        var box = this.state.boxes.filter(function(box) {
+          return box.id === boxId;
+        });
+        var i = this.state.boxes.indexOf(box);
+        this.state.boxes.splice(i,1);
         this._build();
       },
 
@@ -120,17 +137,39 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         return true;
       },
 
-      updateProgress: function(progressList) {
-        for (var i = 0; i < progressList.length; i++) {
-          var boxOutputProgress =  progressList[i];
-          var plugDescription = boxOutputProgress.boxOutput;
-          var box = this.boxMap[plugDescription.boxID];
-          var plug = box.outputMap[plugDescription.id];
-          plug.updateProgress(boxOutputProgress.progress, boxOutputProgress.success);
+      assignStateInfoToPlugs: function(stateInfo) {
+        this.knownStateIDs = [];
+        this.stateID2Plug = {};
+        for (var i = 0; i < stateInfo.length; i++) {
+          var item = stateInfo[i];
+          var boxOutput = item.boxOutput;
+          var stateID = item.stateID;
+          this.knownStateIDs.push(stateID);
+          var box = this.boxMap[boxOutput.boxID];
+          var plug = box.outputMap[boxOutput.id];
+          plug.stateID = stateID;
+          plug.setHealth(item.success);
+          plug.kind = item.kind;
+          this.stateID2Plug[stateID] = plug;
         }
       },
 
-      clearProgress : function() {
+      updateProgress: function(progressMap) {
+        for (var stateID in progressMap) {
+          if (progressMap.hasOwnProperty(stateID)) {
+            var progress = progressMap[stateID];
+            // failed states has 'undefined' as progress
+            if (progress) {
+              var plug = this.stateID2Plug[stateID];
+              if (plug) {
+                plug.updateProgress(progress);
+              }
+            }
+          }
+        }
+      },
+
+      clearProgress: function() {
         for (var i = 0; i < this.boxes.length; i++) {
           var box = this.boxes[i];
           for (var j = 0; j < box.outputs.length; j++) {
@@ -139,9 +178,18 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         }
       },
 
-      setBoxParams: function(boxId, paramValues) {
-        this.boxMap[boxId].instance.parameters =
-            Object.assign({}, paramValues);
+      setBoxParams: function(boxId, paramValues, parametricParameters) {
+        var simple = Object.assign({}, paramValues);
+        var parametric = {};
+        for (var name in simple) {
+          if ((name in parametricParameters) && (parametricParameters[name] === true)) {
+            parametric[name] = simple[name];
+            delete simple[name];
+          }
+        }
+
+        this.boxMap[boxId].instance.parameters = simple;
+        this.boxMap[boxId].instance.parametricParameters = parametric;
       },
 
       setBoxSummary: function(boxId, summary) {
