@@ -13,8 +13,11 @@ angular.module('biggraph')
         stateId: '=',
       },
       link: function(scope) {
-        scope.table = util.nocache('/ajax/getTableOutput', {
+        scope.table = null;
+        util.deepWatch(scope, 'stateId', function() {
+          scope.table = util.nocache('/ajax/getTableOutput', {
             id: scope.stateId,
+          });
         });
       },
     };
