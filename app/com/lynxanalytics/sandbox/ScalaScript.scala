@@ -8,6 +8,7 @@ import javax.script._
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import groovy.transform.Synchronized
 
 import scala.concurrent.duration.Duration
 import scala.tools.nsc.interpreter.IMain
@@ -97,13 +98,14 @@ object ScalaScript {
     }.toString
     result
     """
-    val compiledCode = engine.compile(fullCode)
+
     withContextClassLoader {
-      withTimeout(timeoutInSeconds) {
+      val compiledCode = engine.compile(fullCode)
+      withTimeout {
         restrictedSecurityManager.checkedRun {
           compiledCode.eval().toString
         }
-      }
+      }(timeoutInSeconds)
     }
   }
 
@@ -118,7 +120,7 @@ object ScalaScript {
     }
   }
 
-  private def withTimeout[T](timeoutInSeconds: Long = 10)(func: T): T = {
+  private def withTimeout[T](func: => T)(timeoutInSeconds: Long): T = {
     val ctxName = s"RestrictedScalaScript-${Timestamp.toString}"
     val executionContext = ThreadUtil.limitedExecutionContext(ctxName, 1)
     try {
