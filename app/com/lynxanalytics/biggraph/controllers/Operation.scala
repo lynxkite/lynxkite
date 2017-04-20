@@ -119,6 +119,7 @@ object Operation {
   type Factory = Context => Operation
   case class Context(
     user: serving.User,
+    ops: OperationRepository,
     box: Box,
     meta: BoxMetadata,
     inputs: Map[String, BoxOutputState],
@@ -222,7 +223,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
     workspaceParameters: Map[String, String]) = {
     val (meta, factory) = getBox(box.operationID)
     val context =
-      Operation.Context(user, box, meta, inputs, workspaceParameters, env.metaGraphManager)
+      Operation.Context(user, this, box, meta, inputs, workspaceParameters, env.metaGraphManager)
     factory(context)
   }
 }
@@ -398,19 +399,10 @@ abstract class ProjectTransformation(
   }
 }
 
-// A DecoratorOperation is an operation that has no input or output and is outside of the
-// Metagraph.
-abstract class DecoratorOperation(
+// A MinimalOperation defines simple defaults for everything.
+abstract class MinimalOperation(
     protected val context: Operation.Context) extends Operation {
-  assert(
-    context.meta.inputs == List(),
-    s"A DecoratorOperation must not have an input. $context")
-  assert(
-    context.meta.outputs == List(),
-    s"A DecoratorOperation must not have an output. $context")
-
-  protected def parameters: List[OperationParameterMeta]
-
+  protected def parameters: List[OperationParameterMeta] = List()
   protected val id = context.meta.operationID
   val title = id
   def summary = title
@@ -421,10 +413,19 @@ abstract class DecoratorOperation(
     List(),
     context.meta.categoryID,
     enabled)
-
-  def getOutputs() = Map()
-
+  def getOutputs() = ???
   def enabled = FEStatus.enabled
+}
+
+// A DecoratorOperation is an operation that has no input or output and is outside of the
+// Metagraph.
+abstract class DecoratorOperation(context: Operation.Context) extends MinimalOperation(context) {
+  assert(
+    context.meta.inputs == List(),
+    s"A DecoratorOperation must not have an input. $context")
+  assert(
+    context.meta.outputs == List(),
+    s"A DecoratorOperation must not have an output. $context")
 }
 
 abstract class TableOutputOperation(
@@ -476,7 +477,6 @@ class CustomBoxOperation(
     workspace: Workspace, val context: Operation.Context) extends BasicOperation {
   lazy val parameters = {
     val custom = workspace.parametersMeta
-    val fe = FEOperationParameterMeta
     val tables = context.inputs.values.collect { case i if i.isTable => i.table }
     val projects = context.inputs.values.collect { case i if i.isProject => i.project }
     custom.map { p =>
@@ -495,7 +495,35 @@ class CustomBoxOperation(
       }
     }.toList
   }
-  def apply(): Unit = ???
+
+  def apply: Unit = ???
   def enabled = FEStatus.enabled
-  def getOutputs() = Map()
+  override def allParameters = parameters
+
+  def connectedWorkspace = {
+    workspace.copy(boxes = workspace.boxes.map { box =>
+      if (box.operationID == "Input box" && box.parameters.contains("name")) {
+        new Box(
+          box.id, box.operationID, box.parameters, box.x, box.y, box.inputs,
+          box.parametricParameters) {
+          override def execute(
+            ctx: WorkspaceExecutionContext,
+            inputStates: Map[String, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
+            Map(this.output("input") -> context.inputs(this.parameters("name")))
+          }
+        }
+      } else box
+    })
+  }
+
+  def getOutputs = {
+    val ws = connectedWorkspace
+    val states = ws.context(context.user, context.ops, params).allStates
+    val byOutput = ws.boxes.flatMap { box =>
+      if (box.operationID == "Output box" && box.parameters.contains("name"))
+        Some(box.parameters("name") -> states(box.inputs("output")))
+      else None
+    }.toMap
+    context.meta.outputs.map(output => output.ofBox(context.box) -> byOutput(output.id)).toMap
+  }
 }
