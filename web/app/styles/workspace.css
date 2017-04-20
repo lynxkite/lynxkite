@@ -39,15 +39,15 @@ box-editor {
   display: block;
 }
 
-rect.box-main, circle.io-circle {
+g.box rect, g.box circle {
   stroke-width: 1;
   stroke: blue;
   fill-opacity: 0;
 }
-rect.selected-box {
+g.selected.selected rect, g.box.selected circle {
   stroke-width: 3;
 }
-rect.selection-box{
+rect.selection-box {
   stroke: black;
   fill-opacity: 0;
   stroke-dasharray: 5,5;

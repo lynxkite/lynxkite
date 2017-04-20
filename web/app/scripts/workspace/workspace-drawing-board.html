@@ -13,14 +13,14 @@
           ng-dblclick="workspace.onDoubleClickOnBox(box)"
           ng-attr-transform="{{ box.mainPosTransform() }}"
           class="box"
-          id="{{ box.instance.id }}">
+          id="{{ box.instance.id }}"
+          ng-class="{ 'selected': workspace.selectedBoxIds.includes(box.instance.id) }">
 
         <!-- start list of I/O plugs -->
         <g ng-repeat="direction in ['inputs', 'outputs']"
           id="{{ direction }}">
           <g ng-repeat="plug in box[direction]"
               ng-attr-transform="{{ plug.posTransform }}"
-              ng-class="{ 'selected-plug': plug == workspace.selectedPlug }"
               id="{{ plug.id }}">
             <text x="10">{{ plug.id }}</text>
             <circle ng-attr-r="{{ plug.radius }}"
@@ -39,7 +39,6 @@
 
         <rect
             class="box-main"
-            ng-class="{ 'selected-box': workspace.selectedBoxIds.includes(box.instance.id) }"
             ng-attr-width="{{box.width}}"
             ng-attr-height="{{box.height}}">
         </rect>
