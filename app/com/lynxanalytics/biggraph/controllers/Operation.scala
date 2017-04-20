@@ -207,14 +207,14 @@ trait BasicOperation extends Operation {
   protected val id = context.meta.operationID
   protected val title = id
   // Parameters without default values:
-  protected val parametricValues = context.box.parametricParameters.map {
+  protected lazy val parametricValues = context.box.parametricParameters.map {
     case (name, value) =>
       val result = com.lynxanalytics.sandbox.ScalaScript.run(
         "s\"\"\"" + value + "\"\"\"",
         context.workspaceParameters)
       name -> result
   }
-  protected val paramValues = context.box.parameters ++ parametricValues
+  protected lazy val paramValues = context.box.parameters ++ parametricValues
   // Parameters with default values:
   protected def params =
     parameters
