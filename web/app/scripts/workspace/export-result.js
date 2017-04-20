@@ -38,7 +38,8 @@ angular.module('biggraph')
             }
             scope.fileMetaData = fileMetaDataToFE(metaData);
           }, function error(error) {
-               scope.error = error;
+               scope.error = error.data;
+               util.ajaxError(error);
           }).finally(function() {
                scope.alreadyExported = true;
           });
