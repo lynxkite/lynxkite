@@ -50,6 +50,24 @@ case class FEOperationParameterMeta(
   if (kind == "tag-list") require(multipleChoice, "multipleChoice is required for tag-list")
 }
 
+case class CustomOperationParameterMeta(
+    id: String,
+    kind: String,
+    defaultValue: String) {
+  assert(
+    CustomOperationParameterMeta.validKinds.contains(kind),
+    s"'$kind' is not a valid parameter type.")
+}
+object CustomOperationParameterMeta {
+  val validKinds = Seq(
+    "text",
+    "boolean",
+    "code",
+    "vertexattribute",
+    "edgeattribute",
+    "segmentation")
+}
+
 case class FEOperationSpec(
   id: String,
   parameters: Map[String, String])
@@ -191,7 +209,9 @@ trait BasicOperation extends Operation {
   // Parameters without default values:
   protected val parametricValues = context.box.parametricParameters.map {
     case (name, value) =>
-      val result = com.lynxanalytics.sandbox.ScalaScript.run(value)
+      val result = com.lynxanalytics.sandbox.ScalaScript.run(
+        "s\"\"\"" + value + "\"\"\"",
+        context.workspaceParameters)
       name -> result
   }
   protected val paramValues = context.box.parameters ++ parametricValues
