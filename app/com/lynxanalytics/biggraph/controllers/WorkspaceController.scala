@@ -97,27 +97,11 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
   }
 
-  def getTableOutput(user: serving.User, request: GetTableOutputRequest): GetTableOutputResponse = {
+  def getTable(user: serving.User, request: GetTableOutputRequest): Table = {
     val state = getOutput(user, request.id)
-    state.table.schema
     state.kind match {
       case BoxOutputKind.Table =>
-        val columns = state.table.schema.toList.map { field =>
-          field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
-        }
-        GetTableOutputResponse(
-          header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) },
-          data = List()
-        // TODO: get rows from dataframe
-        //            SQLHelper.toSeqRDD(df).take(request.maxRows).map {
-        //            row =>
-        //              row.toSeq.toList.zip(columns).map {
-        //                case (null, field) => DynamicValue("null", defined = false)
-        //                case (item, (name, tt)) => DynamicValue.convert(item)(tt)
-        //              }
-        //          }.toList
-        )
-
+        state.table
     }
   }
 
