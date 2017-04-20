@@ -57,6 +57,7 @@ class EMRLib:
   def __init__(self, ec2_key_file, ec2_key_name, region='us-east-1'):
     self.ec2_key_file = ec2_key_file
     self.ec2_key_name = ec2_key_name
+    self.ec2_client = boto3.client('ec2', region_name=region)
     self.emr_client = boto3.client('emr', region_name=region)
     self.rds_client = boto3.client('rds', region_name=region)
     self.s3_client = boto3.client('s3', region_name=region)
@@ -170,6 +171,21 @@ class EMRLib:
         }])
     return EMRCluster(res['JobFlowId'], self)
 
+  def associate_address(self, cluster, ip):
+    self.wait_for_services([cluster])
+    cluster_id = cluster.cluster_id()
+    master_dns = cluster.master()
+    instances = self.emr_client.list_instances(ClusterId=cluster_id)['Instances']
+    master = [i['Ec2InstanceId'] for i in instances if i['PublicDnsName'] == master_dns][0]
+    self.ec2_client.associate_address(InstanceId=master, PublicIp=ip, AllowReassociation=False)
+    updated = EMRCluster(cluster_id, self)
+    # after associating a new address to the master, the public dns changes but it takes some time
+    # until the change propagates to the cluster description
+    while updated.desc()['Cluster']['MasterPublicDnsName'] == master_dns:
+      print('Waiting for dns change')
+      time.sleep(15)
+    return updated
+
   def create_or_connect_to_rds_instance(self, name):
     if RDSInstance.get_description(self.rds_client, name) is None:
       print('Creating new DB instance.')
@@ -244,6 +260,9 @@ class EMRCluster:
 
   def __str__(self):
     return 'EMR(' + self.id + ')'
+
+  def cluster_id(self):
+    return self.id
 
   def desc(self):
     '''Raw description of the cluster.'''
