@@ -5,12 +5,24 @@
     <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
   </label>
   <div class="col-sm-8 operation-attribute-input" id="{{param.id}}">
-    <input type="checkbox" ng-model="parametric[param.id]"> parametric
-    <input ng-if="param.kind === 'default'"
+    <i class="glyphicon glyphicon-plus-sign"
+      ng-show="parametricFlags[param.id] === true && canBeParametric(param)"
+      ng-click="parametricFlags[param.id] = false">
+    </i>
+    <i class="glyphicon glyphicon-minus-sign"
+      ng-show="parametricFlags[param.id] !== true && canBeParametric(param)"
+      ng-click="parametricFlags[param.id] = true"></i>
+
+    <input ng-if="param.kind === 'default' && parametricFlags[param.id] !== true"
         class="form-control operation-attribute-entry"
         ng-model="output[param.id]"
         ng-submit="onBlur()"
         ng-disabled="!editable">
+    <input ng-if="param.kind === 'default' && parametricFlags[param.id] === true"
+       class="form-control operation-attribute-entry"
+       ng-model="parametric[param.id]"
+       ng-submit="onBlur()"
+       ng-disabled="!editable">
     <div
       ui-ace="{
         mode: '{{ param.payload.language }}',
@@ -25,9 +37,28 @@
         onLoad: onLoad,
       }"
       class="form-control operation-attribute-entry"
-      ng-if="param.kind === 'code'"
+      ng-if="param.kind === 'code' && parametricFlags[param.id] !== true"
       ng-model="output[param.id]"
       ng-disabled="!editable"></div>
+
+    <div
+      ui-ace="{
+        mode: '{{ param.payload.language }}',
+        showGutter: false,
+        rendererOptions: {
+          fontSize: '16px'
+        },
+        advanced: {
+          behavioursEnabled: false,
+          useWorker: false
+        },
+        onLoad: onLoad,
+      }"
+      class="form-control operation-attribute-entry"
+      ng-if="param.kind === 'code'  && parametricFlags[param.id] === true"
+      ng-model="parametric[param.id]"
+      ng-disabled="!editable"></div>
+
     <file-parameter ng-if="param.kind === 'file'"
         editable="editable"
         model="output[param.id]"
@@ -52,11 +83,19 @@
     </table-kind>
     <select
       ng-disabled="!editable"
-      ng-if="(param.kind === 'choice' && !param.multipleChoice) || (param.kind === 'segmentation')"
+      ng-if="((param.kind === 'choice' && !param.multipleChoice) || (param.kind === 'segmentation'))
+        && parametricFlags[param.id] !== true"
       class="form-control operation-attribute-entry"
       ng-model="output[param.id]"
       ng-change="onBlur()"
       ng-options="option.id as option.title for option in param.options"></select>
+    <input
+      ng-disabled="!editable"
+      ng-if="((param.kind === 'choice' && !param.multipleChoice) || (param.kind === 'segmentation'))
+        && parametricFlags[param.id] === true"
+      class="form-control operation-attribute-entry"
+      ng-model="parametric[param.id]"
+      ng-change="onBlur()">
     <select
       ng-disabled="!editable"
       ng-if="param.kind === 'choice' && param.multipleChoice"

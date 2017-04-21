@@ -9,10 +9,10 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       box: '=',
       meta: '=',
       output: '=',
+      parametric: '=',
       onBlur: '&',
       busy: '=?',
       editable: '=',
-      parametric: '='
     },
     templateUrl: 'operation-parameters.html',
     link: function(scope, element) {
@@ -21,6 +21,25 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       scope.$watch('fileUploads.count', function(count) {
         scope.busy = count !== 0;
       });
+
+
+      scope.parametricFlags = {};
+      util.deepWatch(scope, 'parametricFlags', function(flags) {
+        console.log('output: ' + scope.output);
+        console.log('para: ' + scope.parametric);
+        for (var v in flags) {
+          if (flags[v] === true) {
+             util.move(v, scope.output, scope.parametric);
+          } else {
+            util.move(v, scope.parametric, scope.output);
+          }
+        }
+      });
+
+     scope.canBeParametric = function(param) {
+        var kind = param.kind;
+        return kind === 'default' || (kind === 'choice' && !param.multipleChoice);
+     };
 
       // Translate between arrays and comma-separated strings for multiselects.
       scope.multiOutput = {};
@@ -37,6 +56,8 @@ angular.module('biggraph').directive('operationParameters', function(util) {
           }
         }
       });
+
+
 
       util.deepWatch(scope, 'multiOutput', function(multiOutput) {
         for (var i = 0; i < scope.meta.parameters.length; ++i) {
