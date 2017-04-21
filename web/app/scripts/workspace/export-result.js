@@ -12,40 +12,46 @@ angular.module('biggraph')
       },
       link: function(scope) {
         util.deepWatch(scope, 'stateId', function() {
-          scope.exportResult = util.nocache(
+          scope.exportResult = util.get(
                                'ajax/getExportResultOutput',
                                {
                                  stateId: scope.stateId,
                                });
           scope.exportResult.then(function success(exportResult) {
-            scope.alreadyExported = (exportResult.computeProgress === 1) ? true : false;
-            scope.error =
-              (exportResult.computeProgress === -1) ? exportResult.errorMessage : undefined;
-            var metaData =
-              (exportResult.computedValue) ? JSON.parse(exportResult.computedValue.string)
+            if (exportResult.computeProgress === 0.5) {
+              // This creates the scalarVale so that the progress bar shows up even if you
+              // have started the export before clicking on the plug.
+              scope.export();
+            } else {
+                scope.alreadyExported = (exportResult.computeProgress === 1) ? true : false;
+                scope.error =
+                    (exportResult.computeProgress === -1) ? exportResult.errorMessage : undefined;
+                var metaData =
+                  (exportResult.computedValue) ? JSON.parse(exportResult.computedValue.string)
                                            : undefined;
-            scope.fileMetaData = fileMetaDataToFE(metaData);
+                scope.metaDataToDisplay = new CollectedMetaDataToDisplay(metaData);
+            }
           });
         });
 
         scope.export = function() {
-          var scalarValue = util.lazyFetchScalarValue(scope.exportResult, true);
-          scalarValue.value.then(function success(result) {
+          scope.scalarValue = util.lazyFetchScalarValue(scope.exportResult, true);
+          scope.scalarValue.value.then(function success(result) {
+             scope.alreadyExported = true;
             var metaData = JSON.parse(result.string);
             if(metaData.download) {
               $window.location =
                     '/downloadFile?q=' + encodeURIComponent(JSON.stringify(metaData.download));
             }
-            scope.fileMetaData = fileMetaDataToFE(metaData);
+            scope.metaDataToDisplay = new CollectedMetaDataToDisplay(metaData);
           }, function error(error) {
                scope.error = error.data;
                util.ajaxError(error);
           }).finally(function() {
-               scope.alreadyExported = true;
           });
         };
 
-        function fileMetaDataToFE(metaData) {
+        function CollectedMetaDataToDisplay(metaData) {
           if (metaData) {
             var fEMetaData = {};
             if (metaData.file) {
