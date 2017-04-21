@@ -85,39 +85,9 @@
     </g>
   </svg>
 
-  <div id="popups">
-    <div
-        class="popup"
-        ng-repeat="popup in workspace.popups"
-        ng-style="{'left': popup.x + 'px', 'top': popup.y + 'px'}">
-      <div
-          class="popup-head"
-          ng-mousedown="popup.onMouseDown($event)">
-        {{popup.id}}
-        <div class="btn-group pull-right" style="font-size: 5px;">
-          <a class="btn btn-default"
-               ng-click="popup.close(); event.stopPropagation();"
-               id="close-popup"
-               tooltip="Close&nbsp;popup"
-               tooltip-append-to-body="true"
-               tooltip-placement="bottom">
-            <i class="glyphicon glyphicon-remove"></i>
-          </a>
-        </div>
-      </div>
-      <div class="popup-content"
-            ng-mousedown="$event.stopPropagation()"
-            ng-mouseup="$event.stopPropagation()">
-        <box-editor ng-if="popup.content.type === 'box'"
-            workspace="workspace"
-            box-id="popup.content.boxId">
-        </box-editor>
-        <state-view ng-if="popup.content.type === 'plug'"
-            workspace="workspace"
-            state-id="popup.content.stateId"
-            state-kind="popup.content.stateKind">
-        </state-view>
-      </div>
-    </div>
-  </div>
+  <popup popup-model="popup"
+      workspace="workspace"
+      ng-repeat="popup in workspace.popups">
+  </popup>
+
 </div>

@@ -22,8 +22,9 @@
 // 5. saveWorkspace()
 // 6. GOTO 2
 
-angular.module('biggraph')
-  .factory('workspace', function(workspaceWrapper, util, $interval) {
+angular.module('biggraph').factory(
+  'workspace',
+  function(workspaceWrapper, popupModel, util, $interval) {
     return function(boxCatalog, workspaceName) {
       var progressUpdater;
 
@@ -209,40 +210,15 @@ angular.module('biggraph')
           return false;
         },
 
-        openPopup: function(id, content) {
-          if (this.closePopup(id)) {
-            return;  // popup was open, we close it
-          }
-          // popup was not open, we open it
-          var that = this;
-          this.popups.push({
-            id: id,
-            content: content,
-            x: 100,
-            y: 100,
-            onMouseDown: function(event) {
-              event.stopPropagation();
-              that.movedPopup = this;
-              this.moveOffsetX = this.x - event.pageX;
-              this.moveOffsetY = this.y - event.pageY;
-            },
-            onMouseUp: function() {
-              that.movedPopup = undefined;
-            },
-            onMouseMove: function(event) {
-              this.x = this.moveOffsetX + event.pageX;
-              this.y = this.moveOffsetY + event.pageY;
-            },
-            close: function() {
-              that.closePopup(this.id);
-            },
-          });
+        togglePopup: function(id, content) {
+          var model = popupModel(id, content, this);
+          model.toggle();
         },
 
         onDoubleClickOnPlug: function(plug, event) {
           event.stopPropagation();
           if (plug.direction === 'outputs') {
-            this.openPopup(
+            this.togglePopup(
               plug.boxId + '::' + plug.id,
               {
                 type: 'plug',
@@ -253,7 +229,7 @@ angular.module('biggraph')
         },
 
         onDoubleClickOnBox: function(box) {
-          this.openPopup(
+          this.togglePopup(
             box.instance.id,
             {
               type: 'box',
