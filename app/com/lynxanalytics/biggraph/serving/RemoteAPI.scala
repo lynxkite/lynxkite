@@ -223,15 +223,15 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     first + rest.mkString("")
   }
 
-  lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
-  lazy val camelizedIds = ops.operationIds.map(id => camelize(id)).toList
+  lazy val normalizedIds = ops.atomicOperationIds.map(id => normalize(id) -> id).toMap
+  lazy val camelizedIds = ops.atomicOperationIds.map(id => camelize(id)).toList
 
   def getOperationNames(user: User, request: Empty): OperationNamesResponse = {
     OperationNamesResponse(camelizedIds)
   }
 
   def getBoxMetadatas(user: User, request: Empty): BoxMetadatasResponse = {
-    BoxMetadatasResponse(ops.operationIds.toList.map(ops.getBoxMetadata(_)))
+    BoxMetadatasResponse(ops.atomicOperationIds.toList.map(ops.getBoxMetadata(_)))
   }
 
   def getDirectoryEntry(user: User, request: DirectoryEntryRequest): DirectoryEntryResult = {

@@ -141,7 +141,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def boxCatalog(user: serving.User, request: serving.Empty): BoxCatalogResponse = {
-    BoxCatalogResponse(ops.operationIds.toList.map(ops.getBoxMetadata(_)))
+    BoxCatalogResponse(ops.operationIds(user).toList.map(ops.getBoxMetadata(_)))
   }
 
   def getOperationMeta(user: serving.User, request: GetOperationMetaRequest): FEOperationMeta = {
