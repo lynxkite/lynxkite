@@ -175,18 +175,9 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         }
       },
 
-      setBoxParams: function(boxId, paramValues, parametricParameters) {
-        var simple = Object.assign({}, paramValues);
-        var parametric = {};
-        for (var name in simple) {
-          if ((name in parametricParameters) && (parametricParameters[name] === true)) {
-            parametric[name] = simple[name];
-            delete simple[name];
-          }
-        }
-
-        this.boxMap[boxId].instance.parameters = simple;
-        this.boxMap[boxId].instance.parametricParameters = parametric;
+      setBoxParams: function(boxId, plainParamValues, parametricParamValues) {
+        this.boxMap[boxId].instance.parameters = plainParamValues;
+        this.boxMap[boxId].instance.parametricParameters = parametricParamValues;
       },
 
     };
