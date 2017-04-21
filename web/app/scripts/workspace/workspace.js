@@ -24,7 +24,7 @@
 
 angular.module('biggraph').factory(
   'workspace',
-  function(workspaceWrapper, popupModel, util, $interval) {
+  function(workspaceWrapper, PopupModel, util, $interval) {
     return function(boxCatalog, workspaceName) {
       var progressUpdater;
 
@@ -214,22 +214,10 @@ angular.module('biggraph').factory(
           return false;
         },
 
-        togglePopup: function(id, content, x, y, width, height) {
-          var model = popupModel(
-              id,
-              content,
-              x,
-              y,
-              width,
-              height,
-              this);
-          model.toggle();
-        },
-
         onDoubleClickOnPlug: function(plug, event) {
           event.stopPropagation();
           if (plug.direction === 'outputs') {
-            this.togglePopup(
+            var model = new PopupModel(
               plug.boxId + '::' + plug.id,
               {
                 type: 'plug',
@@ -239,12 +227,14 @@ angular.module('biggraph').factory(
               event.pageX - 300,
               event.pageY + 15,
               600,
-              400);
+              400,
+              this);
+            model.toggle();
           }
         },
 
         onDoubleClickOnBox: function(box, event) {
-          this.togglePopup(
+          var model = new PopupModel(
             box.instance.id,
             {
               type: 'box',
@@ -253,7 +243,9 @@ angular.module('biggraph').factory(
             event.pageX - 200,
             event.pageY + 60,
             400,
-            600);
+            600,
+            this);
+          model.toggle();
         },
 
         onMouseDownOnPlug: function(plug, event) {

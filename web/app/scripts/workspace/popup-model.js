@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').factory('popupModel', function() {
+angular.module('biggraph').factory('PopupModel', function() {
   // Creates a new popup model data structure.
   // id: unique key
   // content: description of content to render
@@ -8,45 +8,55 @@ angular.module('biggraph').factory('popupModel', function() {
   // owner: owning object. It should have an owner.popups
   //        list of all popups. And owner.movedPopup a pointer
   //        to the currently moved popup, if any.
-  return function(id, content, x, y, width, height, owner) {
-    return {
-      id: id,
-      content: content,
-      x: x,
-      y: y,
-      width: width,
-      height: height,
-      onMouseDown: function(event) {
-        event.stopPropagation();
-        owner.movedPopup = this;
-        this.moveOffsetX = this.x - event.pageX;
-        this.moveOffsetY = this.y - event.pageY;
-      },
-      onMouseUp: function() {
-        owner.movedPopup = undefined;
-      },
-      onMouseMove: function(event) {
-        this.x = this.moveOffsetX + event.pageX;
-        this.y = this.moveOffsetY + event.pageY;
-      },
-      isOpen: function() {
-        return owner.popups.find(function(p) { return p.id === id; }) !== undefined;
-      },
-      close: function() {
-        owner.popups = owner.popups.filter(function(p) { return p.id !== id; });
-      },
-      open: function() {
-        if (!this.isOpen()) {
-          owner.popups.push(this);
-        }
-      },
-      toggle: function() {
-        if (this.isOpen()) {
-          this.close();
-        } else {
-          this.open();
-        }
-      },
-    };
+  var PopupModel = function(id, content, x, y, width, height, owner) {
+    this.id = id;
+    this.content = content;
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.owner = owner;
   };
+
+  PopupModel.prototype.onMouseDown = function(event) {
+    event.stopPropagation();
+    this.owner.movedPopup = this;
+    this.moveOffsetX = this.x - event.pageX;
+    this.moveOffsetY = this.y - event.pageY;
+  };
+
+  PopupModel.prototype.onMouseUp = function() {
+    this.owner.movedPopup = undefined;
+  };
+
+  PopupModel.prototype.onMouseMove = function(event) {
+    this.x = this.moveOffsetX + event.pageX;
+    this.y = this.moveOffsetY + event.pageY;
+  };
+
+  PopupModel.prototype.isOpen = function() {
+    var that = this;
+    return this.owner.popups.find(function(p) { return p.id === that.id; }) !== undefined;
+  };
+
+  PopupModel.prototype.close = function() {
+    var that = this;
+    this.owner.popups = this.owner.popups.filter(function(p) { return p.id !== that.id; });
+  };
+
+  PopupModel.prototype.open = function() {
+    if (!this.isOpen()) {
+      this.owner.popups.push(this);
+    }
+  };
+
+  PopupModel.prototype.toggle = function() {
+    if (this.isOpen()) {
+      this.close();
+    } else {
+      this.open();
+    }
+  };
+
+  return PopupModel;
 });
