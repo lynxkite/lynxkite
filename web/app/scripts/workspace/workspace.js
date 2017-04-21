@@ -236,7 +236,7 @@ angular.module('biggraph')
         clipboard: [],
 
         copyBoxes: function() {
-          this.clipboard = this.selectedBoxes();
+          this.clipboard = angular.copy(this.selectedBoxes());
         },
 
         pasteBoxes: function() {
@@ -249,12 +249,15 @@ angular.module('biggraph')
               box.operationID, {x: box.x + 1.1 * diffX, y: box.y + 10});
             mapping[box.id] = createdBox;
           }
-          for (var j = 0; j < clipboard.length; ++j) {
-            var oldBox = clipboard[j].instance;
+          for (i = 0; i < clipboard.length; ++i) {
+            var oldBox = clipboard[i].instance;
             var newBox = mapping[oldBox.id];
             for (var key in oldBox.inputs) {
-              var newInput = mapping[oldBox.inputs[key].boxID];
-              newBox.inputs[key] = { boxID: newInput.id, id: key };
+              var oldInputId = oldBox.inputs[key].boxID;
+              if (oldInputId in mapping) {
+                var newInput = mapping[oldInputId];
+                newBox.inputs[key] = { boxID: newInput.id, id: key };
+              }
             }
           }
         },
