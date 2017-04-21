@@ -163,15 +163,18 @@ angular.module('biggraph').factory(
             box.instance.y < sb.upperY + sb.height);
         },
 
-        onMouseMove: function(mouseLogical) {
-          this.mouseLogical = mouseLogical;
+        onMouseMove: function(event) {
+          this.mouseLogical = {
+            x: event.logicalX,
+            y: event.logicalY,
+          };
           if (event.buttons === 1) {
             if (this.movedBoxes) {
               for (var i = 0; i < this.movedBoxes.length; i++) {
-                this.movedBoxes[i].onMouseMove(this.mouseLogical);
+                this.movedBoxes[i].onMouseMove(event);
               }
             } else if (this.movedPopup) {
-              this.movedPopup.onMouseMove(this.mouseLogical);
+              this.movedPopup.onMouseMove(event);
             }
           }
         },
@@ -190,17 +193,18 @@ angular.module('biggraph').factory(
           this.movedPopup = undefined;
         },
 
-        onMouseDownOnBox: function(box, mouseLogical) {
+        onMouseDownOnBox: function(box, event) {
           var selectedBoxes = this.selectedBoxes();
           if (selectedBoxes.indexOf(box) === -1) {
             this.selectedBoxIds = [];
             this.selectBox(box.instance.id);
             this.movedBoxes = [box];
-            this.movedBoxes[0].onMouseDown(mouseLogical);
+            this.movedBoxes[0].onMouseDown(event);
           } else {
             this.movedBoxes = selectedBoxes;
             this.movedBoxes.map(function(b) {
-              b.onMouseDown(mouseLogical);});
+              b.onMouseDown(event);
+            });
           }
         },
 
@@ -265,8 +269,12 @@ angular.module('biggraph').factory(
         },
 
         // boxID should be used for test-purposes only
-        addBox: function(operationId, pos, boxID) {
-          this.wrapper.addBox(operationId, pos.x, pos.y, boxID);
+        addBox: function(operationId, event, boxID) {
+          this.wrapper.addBox(
+              operationId,
+              event.logicalX,
+              event.logicalY,
+              boxID);
           this.saveWorkspace();
         },
 
