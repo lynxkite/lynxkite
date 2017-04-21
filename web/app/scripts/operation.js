@@ -18,6 +18,7 @@ angular.module('biggraph').directive('operation', function(util, hotkeys /*, $ti
       scope.scalars = {};
       scope.fileUploads = {};
       scope.$watch('op.parameters', function() {
+        console.log('parameters changed');
         for (var i = 0; i < scope.op.parameters.length; ++i) {
           var p = scope.op.parameters[i];
           if (scope.params[p.id] !== undefined) {

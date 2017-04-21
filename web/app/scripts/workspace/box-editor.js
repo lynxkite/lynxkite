@@ -32,8 +32,8 @@ angular.module('biggraph')
               scope.loadBoxMeta(scope.workspace.selectedBoxIds[0]);
             });
 
-        scope.paramValues = {};
-        scope.parametricParams = {};
+        scope.plainParamValues = {};
+        scope.parametricParamValues = {};
 
         scope.loadBoxMeta = function(boxId) {
           if (!scope.workspace) {
@@ -89,11 +89,16 @@ angular.module('biggraph')
             }
 
             // Make a copy of the parameter values.
+            console.log('newOpSelected');
             var paramValues = Object.assign({}, box.instance.parameters);
+            for (var q in box.instance) {
+                console.log(q, box.instance[q]);
+            }
             // Copy defaults for unset parameters.
             for (var i = 0; i < boxMeta.parameters.length; ++i) {
               var p = boxMeta.parameters[i];
-              if (paramValues[p.id] !== undefined) {
+              if ((paramValues[p.id] !== undefined) ||
+                  (scope.parametricParamValues[p.id] !== undefined)) {
                 // Parameter is not unset.
               } else if (p.options.length === 0) {
                 paramValues[p.id] = p.defaultValue;
@@ -104,14 +109,14 @@ angular.module('biggraph')
               }
             }
             if (!angular.equals(paramValues, scope.paramValues)) {
-              scope.paramValues = paramValues;
+              scope.plainParamValues = paramValues;
             }
         };
 
         function onBlurNow() {
           if (scope.box) {
-            scope.workspace.updateBox(scope.box.instance.id, scope.paramValues,
-                        scope.parametricParams);
+            scope.workspace.updateBox(scope.box.instance.id, scope.plainParamValues,
+                        scope.parametricParamValues);
           }
         }
 
