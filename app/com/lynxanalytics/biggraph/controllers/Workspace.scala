@@ -236,7 +236,7 @@ object BoxOutputState {
     BoxOutputState(BoxOutputKind.Table, Some(json.Json.obj("guid" -> table.gUID)))
   }
 
-  def from(exportResult: graph_api.Scalar[FileMetaData]): BoxOutputState = {
+  def from(exportResult: graph_api.Scalar[ExportResultMetaData]): BoxOutputState = {
     BoxOutputState(BoxOutputKind.ExportResult, Some(json.Json.obj("guid" -> exportResult.gUID)))
   }
 }
@@ -270,11 +270,11 @@ case class BoxOutputState(
     manager.table((state.get \ "guid").as[String].asUUID)
   }
 
-  def exportResult(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[FileMetaData] = {
+  def exportResult(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[ExportResultMetaData] = {
     assert(isExportResult, s"Tried to access '$kind' as 'exportResult.")
     assert(success.enabled, success.disabledReason)
     import graph_api.MetaGraphManager.StringAsUUID
-    manager.scalarOf[FileMetaData]((state.get \ "guid").as[String].asUUID)
+    manager.scalarOf[ExportResultMetaData]((state.get \ "guid").as[String].asUUID)
   }
 }
 

@@ -439,11 +439,18 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
   protected lazy val table = tableInput("table")
 
   def apply() = ???
-  def exportResult: Scalar[FileMetaData]
+  def exportResult: Scalar[ExportResultMetaData]
 
-  protected def makeOutput(exportResult: Scalar[FileMetaData]): Map[BoxOutput, BoxOutputState] = {
+  protected def makeOutput(exportResult: Scalar[ExportResultMetaData]): Map[BoxOutput, BoxOutputState] = {
     Map(context.meta.outputs(0).ofBox(context.box) -> BoxOutputState.from(exportResult))
   }
+
+  def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+    validateParameters(params)
+    makeOutput(exportResult)
+  }
+
+  def enabled = FEStatus.enabled
 }
 
 abstract class ExportOperationToFile(context: Operation.Context)
@@ -461,9 +468,19 @@ abstract class ExportOperationToFile(context: Operation.Context)
       file.assertWriteAllowedFrom(context.user)
     }
   }
-
-  def enabled = FEStatus.enabled
 }
 
-case class FileMetaData(format: String, path: String,
-                        download: Option[DownloadFileRequest])
+case class ExportToFileResult(path: String, format: String)
+case class ExportToJdbcResult(
+  jdbcUrl: String,
+  table: String,
+  mode: String)
+case class ExportResultMetaData(
+    file: Option[ExportToFileResult],
+    download: Option[DownloadFileRequest],
+    jdbc: Option[ExportToJdbcResult]) {
+  assert(file.isDefined ^ jdbc.isDefined,
+    "ExportResultData has to have exactly one of these defined: file, jdbc.")
+  assert(!(download.isDefined && file.isEmpty),
+    "ExportResultData can only have download defined if file is also defined. ")
+}

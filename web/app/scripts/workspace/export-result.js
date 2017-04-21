@@ -45,20 +45,27 @@ angular.module('biggraph')
           });
         };
 
-        var fileMetaDataToFE = function(metaData) {
+        function fileMetaDataToFE(metaData) {
           if (metaData) {
-            var fEMetaData = {Format: metaData.format};
-            if (metaData.download) {
-              var splitPath = metaData.download.path.split('/');
-              fEMetaData['Downloaded as'] = splitPath[splitPath.length - 1];
-            } else {
-                fEMetaData.Path = metaData.path;
-            }
+            var fEMetaData = {};
+            if (metaData.file) {
+              fEMetaData.Format =  metaData.file.format;
+              if (metaData.download) {
+                var splitPath = metaData.download.path.split('/');
+                fEMetaData['Downloaded as'] = splitPath[splitPath.length - 1];
+              } else {
+                  fEMetaData.Path = metaData.file.path;
+              }
+            } else if (metaData.jdbc) {
+                fEMetaData['JDBC URL'] = metaData.jdbc.jdbcUrl;
+                fEMetaData.Table = metaData.jdbc.table;
+                fEMetaData.mode = metaData.jdbc.mode;
+           }
             return fEMetaData;
           } else {
               return {};
           }
-        };
+        }
       },
     };
 });
