@@ -213,7 +213,6 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
       .listObjectsRecursively
       .filter(_.readAllowedFrom(user))
       .collect { case wsf: WorkspaceFrame => wsf }
-      // TODO: Filter to workspaces with input/output boxes.
       .map(_.path.toString).toSet
     val atomicBoxes = atomicOperations.keySet
     (atomicBoxes ++ customBoxes).toSeq.sorted
