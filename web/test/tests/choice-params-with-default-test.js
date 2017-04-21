@@ -16,13 +16,17 @@ module.exports = function(fw) {
                             params: { name: 'page_rank_incoming', direction: 'incoming edges'} });
     },
     function() {
+      var state = lib.workspace.openStateView('pr2', 'project');
       expect(
         lib.state.vertexAttribute('page_rank_incoming').getHistogramValues()).not.toEqual(
         lib.state.vertexAttribute('page_rank_default').getHistogramValues());
-      lib.workspace.selectBox('pr1');
-      lib.workspace.expectSelectedBoxSelectParameter('direction', 'string:outgoing edges');
-      lib.workspace.selectBox('pr2');
-      lib.workspace.expectSelectedBoxSelectParameter('direction', 'string:incoming edges');
+      state.close();
+      var boxEditor = lib.workspace.openBoxEditor('pr1');
+      boxEditor.expectSelectParameter('direction', 'string:outgoing edges');
+      boxEditor.close();
+      boxEditor = lib.workspace.openBoxEditor('pr2');
+      boxEditor.expectSelectParameter('direction', 'string:incoming edges');
+      boxEditor.close();
     });
 
   fw.statePreservingTest(
@@ -31,11 +35,12 @@ module.exports = function(fw) {
     function() {
       lib.workspace.editBox('pr1', {direction: 'all edges'});  // change direction
       lib.workspace.editBox('pr2', {direction: 'all edges'});  // change direction
-
-      lib.workspace.selectBox('pr1');
-      lib.workspace.expectSelectedBoxSelectParameter('direction', 'string:all edges');
-      lib.workspace.selectBox('pr2');
-      lib.workspace.expectSelectedBoxSelectParameter('direction', 'string:all edges');
+      var boxEditor = lib.workspace.openBoxEditor('pr1');
+      boxEditor.expectSelectParameter('direction', 'string:all edges');
+      boxEditor.close();
+      boxEditor = lib.workspace.openBoxEditor('pr2');
+      boxEditor.expectSelectParameter('direction', 'string:all edges');
+      boxEditor.close();
 
       // Restore original state, because this is a state-preserving test.
       lib.workspace.editBox('pr1', {direction: 'outgoing edges'});

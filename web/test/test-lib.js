@@ -2,10 +2,14 @@
 
 var testLib; // Forward declarations.
 var TableBrowser; // Forward declarations.
+var BoxEditor;
+var Side;
+var State;
 var request = require('request');
 var fs = require('fs');
 
 var K = protractor.Key;  // Short alias.
+
 
 // Mirrors the "id" filter.
 function toID(x) {
@@ -132,7 +136,6 @@ function Workspace() {
   this.main = element(by.id('workspace-main'));
   this.selector = element(by.css('.operation-selector'));
   this.board = element(by.css('workspace-drawing-board'));
-  this.boxEditor = element(by.css('box-editor'));
 }
 
 Workspace.prototype = {
@@ -155,19 +158,6 @@ Workspace.prototype = {
     this.selector.element(by.id('operation-search')).click();
   },
 
-  operationParameter: function(param) {
-    return this.boxEditor.element(by.css(
-        'operation-parameters #' + param + ' .operation-attribute-entry'));
-  },
-
-  populateOperation: function(params) {
-    params = params || {};
-    for (var key in params) {
-      testLib.setParameter(this.operationParameter(key), params[key]);
-    }
-    $('#workspace-name').click(); // Make sure the parameters are not focused.
-  },
-
   addBox: function(boxData) {
     var id = boxData.id;
     var after = boxData.after;
@@ -188,26 +178,12 @@ Workspace.prototype = {
     if (params) {
       this.editBox(id, params);
     }
-    this.selectOutput(id);
-  },
-
-  selectBox(boxID) {
-    this.getBox(boxID).$('rect').click();
   },
 
   editBox: function(boxID, params) {
-    this.selectBox(boxID);
-    this.populateOperation(params);
-  },
-
-  expectSelectedBoxParameter: function(paramName, expectedValue) {
-    var param = this.boxEditor.$('div#' + paramName + ' input');
-    expect(param.getAttribute('value')).toBe(expectedValue);
-  },
-
-  expectSelectedBoxSelectParameter: function(paramName, expectedValue) {
-    var param = this.boxEditor.$('div#' + paramName + ' select');
-    expect(param.getAttribute('value')).toBe(expectedValue);
+    var boxEditor = this.openBoxEditor(boxID);
+    boxEditor.populateOperation(params);
+    boxEditor.close();
   },
 
   getBox(boxID) {
@@ -232,8 +208,33 @@ Workspace.prototype = {
     }
   },
 
-  selectOutput: function(boxID, plugID) {
+  toggleStateView: function(boxID, plugID) {
     this.getOutputPlug(boxID, plugID).click();
+  },
+
+
+  openBoxEditor: function(boxId) {
+    this.getBox(boxId).$('rect').click();
+    var popup = this.board.$('.popup#' + boxId);
+    expect(popup.isDisplayed()).toBe(true);
+    this.movePopupToCenter(popup);
+    return new BoxEditor(popup);
+  },
+
+  movePopupToCenter: function(popup) {
+    var head = popup.$('div.popup-head');
+    browser.actions()
+        .mouseDown(head)
+        .mouseMove(this.board, {x: 700, y: 20})
+        .mouseUp(head)
+        .perform();
+  },
+
+  openStateView: function(boxId, plugId) {
+    this.toggleStateView(boxId, plugId);
+    var popup = this.board.$('.popup#' + boxId + '_' + plugId);
+    this.movePopupToCenter(popup);
+    return new State(popup);
   },
 
   connectBoxes: function(srcBoxID, srcPlugID, dstBoxID, dstPlugID) {
@@ -250,10 +251,62 @@ Workspace.prototype = {
 
 };
 
+function BoxEditor(popup) {
+  this.popup = popup;
+  this.boxEditor = popup.$('box-editor');
+}
 
-function Side(direction) {
+BoxEditor.prototype = {
+
+  operationParameter: function(param) {
+    return this.boxEditor.element(by.css(
+        'operation-parameters #' + param + ' .operation-attribute-entry'));
+  },
+
+  populateOperation: function(params) {
+    params = params || {};
+    for (var key in params) {
+      testLib.setParameter(this.operationParameter(key), params[key]);
+    }
+    $('#workspace-name').click(); // Make sure the parameters are not focused.
+  },
+
+  expectParameter: function(paramName, expectedValue) {
+    var param = this.boxEditor.$('div#' + paramName + ' input');
+    expect(param.getAttribute('value')).toBe(expectedValue);
+  },
+
+  expectSelectParameter: function(paramName, expectedValue) {
+    var param = this.boxEditor.$('div#' + paramName + ' select');
+    expect(param.getAttribute('value')).toBe(expectedValue);
+  },
+
+  close: function() {
+    this.popup.$('#close-popup').click();
+  },
+};
+
+function State(popup) {
+  this.popup = popup;
+  this.left = new Side(this.popup, 'left');
+  this.right = new Side(this.popup, 'right');
+}
+
+State.prototype = {
+  close: function() {
+    this.popup.$('#close-popup').click();
+  }
+};
+
+function Side(popup, direction) {
+  if (popup === undefined) {
+    this.side = $('project-state-view #side-' + direction);
+    return;  // TODO: kill this branch
+  }
   this.direction = direction;
-  this.side = $('project-state-view #side-' + direction);
+  this.side = popup.$('project-state-view #side-' + direction);
+  expect(popup.isDisplayed()).toBe(true);
+  expect(this.side.isDisplayed()).toBe(true);
 }
 
 Side.prototype = {
@@ -869,9 +922,9 @@ var lastDownloadList;
 
 testLib = {
   theRandomPattern: randomPattern(),
-  state: new Side('left'),
-  left: new Side('left'),
-  right: new Side('right'),
+  state: new Side(undefined, 'left'),
+  left: new Side(undefined, 'left'),
+  right: new Side(undefined, 'right'),
   workspace: new Workspace(),
   visualization: visualization,
   splash: splash,
@@ -1183,8 +1236,8 @@ testLib = {
       }
 
       var dropEvent = createEvent('drop');
-      dropEvent.offsetX = dstX;
-      dropEvent.offsetY = dstY;
+      dropEvent.pageX = dstX;
+      dropEvent.pageY = dstY;
 
       dropEvent.dataTransfer = dragStartEvent.dataTransfer;
       dst.dispatchEvent(dropEvent);

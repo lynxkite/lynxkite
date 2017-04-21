@@ -1,4 +1,5 @@
 <div class="popup"
+    id="{{popupModel.id}}"
     ng-style="{
         'left': popupModel.x + 'px',
         'top': popupModel.y + 'px',
@@ -8,7 +9,7 @@
   <div
       class="popup-head"
       ng-mousedown="popupModel.onMouseDown($event)">
-    {{popupModel.id}}
+    {{popupModel.title}}
     <div class="clicky pull-right glyphicon glyphicon-remove"
         ng-click="popupModel.close(); event.stopPropagation();"
         id="close-popup"

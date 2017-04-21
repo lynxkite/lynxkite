@@ -92,7 +92,7 @@ line.pulled-arrow {
 }
 
 div.popup {
-  position: fixed;
+  position: absolute;
   border: 1px solid darkgray;
 }
 

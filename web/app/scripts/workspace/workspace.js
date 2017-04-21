@@ -169,14 +169,12 @@ angular.module('biggraph').factory(
             x: event.logicalX,
             y: event.logicalY,
           };
-          if (event.buttons === 1) {
-            if (this.movedBoxes) {
-              for (var i = 0; i < this.movedBoxes.length; i++) {
-                this.movedBoxes[i].onMouseMove(event);
-              }
-            } else if (this.movedPopup) {
-              this.movedPopup.onMouseMove(event);
+          if (this.movedBoxes) {
+            for (var i = 0; i < this.movedBoxes.length; i++) {
+              this.movedBoxes[i].onMouseMove(event);
             }
+          } else if (this.movedPopup) {
+            this.movedPopup.onMouseMove(event);
           }
         },
 
@@ -223,6 +221,7 @@ angular.module('biggraph').factory(
           event.stopPropagation();
           if (plug.direction === 'outputs') {
             var model = new PopupModel(
+              plug.boxId + '_' + plug.id,
               plug.boxId + '::' + plug.id,
               {
                 type: 'plug',
@@ -243,6 +242,7 @@ angular.module('biggraph').factory(
             return;
           }
           var model = new PopupModel(
+            box.instance.id,
             box.instance.id,
             {
               type: 'box',

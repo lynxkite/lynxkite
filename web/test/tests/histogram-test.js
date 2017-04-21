@@ -8,7 +8,7 @@ module.exports = function(fw) {
   var weight = lib.state.edgeAttribute('weight');
 
   fw.statePreservingTest(
-    'test-example workspace with example graph state selected',
+    'test-example workspace with example graph state open',
     'string vertex histogram looks good',
     function() {
       expect(name.getHistogramValues().then(lib.sortHistogramValues)).toEqual([
@@ -19,7 +19,7 @@ module.exports = function(fw) {
       ]);
     });
   fw.statePreservingTest(
-    'test-example workspace with example graph state selected',
+    'test-example workspace with example graph state open',
     'double vertex histogram looks good',
     function() {
       expect(income.getHistogramValues()).toEqual([
@@ -46,7 +46,7 @@ module.exports = function(fw) {
       ]);
     });
   fw.statePreservingTest(
-    'test-example workspace with example graph state selected',
+    'test-example workspace with example graph state open',
     'double edge histogram looks good',
     function() {
       expect(weight.getHistogramValues()).toEqual([
@@ -137,9 +137,11 @@ module.exports = function(fw) {
                              params: { size: '123456' } });
       lib.workspace.addBox({ id: 'add-attr', name: 'add constant vertex attribute', x: 100, y: 200,
                              after: 'create-vertices', params: { name: 'c' } });
-      expect(lib.state.vertexAttribute('c').getHistogramValues(true)).toEqual([
-        { title : '1.00-1.00', size: 100, value: 123456 },
-      ]);
+      var state = lib.workspace.openStateView('add-attr', 'project');
+      expect(state.left.vertexAttribute('c').getHistogramValues(true))
+          .toEqual([
+              { title : '1.00-1.00', size: 100, value: 123456 },
+          ]);
     },
     function() {});
 
