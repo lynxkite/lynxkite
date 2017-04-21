@@ -132,6 +132,10 @@ angular.module('biggraph').factory(
           return this.wrapper.boxMap[id];
         },
 
+        getOutputPlug: function(boxId, plugId) {
+          return this.getBox(boxId).outputMap[plugId];
+        },
+
         updateBox: function(id, paramValues, parametricParameters) {
           var box = this.getBox(id).instance;
           if (!angular.equals(paramValues, box.parameters)) {
@@ -222,8 +226,8 @@ angular.module('biggraph').factory(
               plug.boxId + '::' + plug.id,
               {
                 type: 'plug',
-                stateId: plug.stateID,
-                stateKind: plug.kind,
+                boxId: plug.boxId,
+                plugId: plug.id,
               });
           }
         },
