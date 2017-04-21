@@ -4,7 +4,7 @@
 // arrows diagram.
 
 angular.module('biggraph')
-  .directive('workspaceDrawingBoard', function() {
+  .directive('workspaceDrawingBoard', function(hotkeys) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -99,6 +99,15 @@ angular.module('biggraph')
           var z = zoomToScale(workspaceZoom);
           return 'translate(' + workspaceX + ', ' + workspaceY + ') scale(' + z + ')';
         };
+
+
+        var hk = hotkeys.bindTo(scope);
+        hk.add({
+          combo: 'ctrl+c', description: 'Copy boxes',
+          callback: function() { scope.workspace.copyBoxes(); } });
+        hk.add({
+          combo: 'ctrl+v', description: 'Paste boxes',
+          callback: function() { scope.workspace.pasteBoxes(); } });
 
         function setGrabCursor(e) {
           // Trying to assign an invalid cursor will silently fail. Try to find a supported value.

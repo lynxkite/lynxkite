@@ -228,8 +228,35 @@ angular.module('biggraph')
 
         // boxID should be used for test-purposes only
         addBox: function(operationId, pos, boxID) {
-          this.wrapper.addBox(operationId, pos.x, pos.y, boxID);
+          var box = this.wrapper.addBox(operationId, pos.x, pos.y, boxID);
           this.saveWorkspace();
+          return box;
+        },
+
+        clipboard: [],
+
+        copyBoxes: function() {
+          this.clipboard = this.selectedBoxes();
+        },
+
+        pasteBoxes: function() {
+          var clipboard = this.clipboard;
+          var mapping = {};
+          for (var i = 0; i < clipboard.length; ++i) {
+            var box = clipboard[i].instance;
+            var diffX = clipboard[i].width;
+            var createdBox =  this.addBox(
+              box.operationID, {x: box.x + 1.1 * diffX, y: box.y + 10});
+            mapping[box.id] = createdBox;
+          }
+          for (var j = 0; j < clipboard.length; ++j) {
+            var oldBox = clipboard[j].instance;
+            var newBox = mapping[oldBox.id];
+            for (var key in oldBox.inputs) {
+              var newInput = mapping[oldBox.inputs[key].boxID];
+              newBox.inputs[key] = { boxID: newInput.id, id: key };
+            }
+          }
         },
 
         deleteBoxes: function(boxIds) {
