@@ -5,13 +5,12 @@
     <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
   </label>
   <div class="col-sm-8 operation-attribute-input" id="{{param.id}}">
-    <i class="glyphicon glyphicon-plus-sign"
-      ng-show="parametricFlags[param.id] === true"
-      ng-click="parametricFlags[param.id] = false">
+    <i class="fa fa-dollar parametric-switch"
+       drop-tooltip="Parametric: {{ parametricFlags[param.id] ? 'yes' : 'no' }}"
+       drop-tooltip-position="top center"
+       ng-class="{ active: parametricFlags[param.id] === true }"
+       ng-click="parametricFlags[param.id] = !parametricFlags[param.id]">
     </i>
-    <i class="glyphicon glyphicon-minus-sign"
-      ng-show="parametricFlags[param.id] !== true"
-      ng-click="parametricFlags[param.id] = true"></i>
     <div
       ui-ace="{
         mode: 'plain_text',
