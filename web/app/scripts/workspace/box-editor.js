@@ -89,11 +89,7 @@ angular.module('biggraph')
             }
 
             // Make a copy of the parameter values.
-            console.log('newOpSelected');
             var paramValues = Object.assign({}, box.instance.parameters);
-            for (var q in box.instance) {
-                console.log(q, box.instance[q]);
-            }
             // Copy defaults for unset parameters.
             for (var i = 0; i < boxMeta.parameters.length; ++i) {
               var p = boxMeta.parameters[i];
