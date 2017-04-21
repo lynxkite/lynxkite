@@ -103,17 +103,3 @@ line.pulled-arrow {
   pointer-events: none;
   z-index: -1;
 }
-
-.sample-table {
-  overflow-x: auto;
-}
-
-table-state-view {
-  overflow: auto;
-}
-
-.is-null, .column-type {
-  font-weight: normal;
-  font-style: italic;
-  color: #666;
-}
