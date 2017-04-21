@@ -1,5 +1,10 @@
 <div class="popup"
-    ng-style="{'left': popupModel.x + 'px', 'top': popupModel.y + 'px'}">
+    ng-style="{
+        'left': popupModel.x + 'px',
+        'top': popupModel.y + 'px',
+        'width': popupModel.width + 'px',
+        'height': popupModel.height + 'py',
+    }">
   <div
       class="popup-head"
       ng-mousedown="popupModel.onMouseDown($event)">

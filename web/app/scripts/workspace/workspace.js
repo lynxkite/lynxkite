@@ -214,8 +214,15 @@ angular.module('biggraph').factory(
           return false;
         },
 
-        togglePopup: function(id, content) {
-          var model = popupModel(id, content, this);
+        togglePopup: function(id, content, x, y, width, height) {
+          var model = popupModel(
+              id,
+              content,
+              x,
+              y,
+              width,
+              height,
+              this);
           model.toggle();
         },
 
@@ -228,17 +235,25 @@ angular.module('biggraph').factory(
                 type: 'plug',
                 boxId: plug.boxId,
                 plugId: plug.id,
-              });
+              },
+              event.pageX - 300,
+              event.pageY + 15,
+              600,
+              400);
           }
         },
 
-        onDoubleClickOnBox: function(box) {
+        onDoubleClickOnBox: function(box, event) {
           this.togglePopup(
             box.instance.id,
             {
               type: 'box',
               boxId: box.instance.id,
-            });
+            },
+            event.pageX - 200,
+            event.pageY + 60,
+            400,
+            600);
         },
 
         onMouseDownOnPlug: function(plug, event) {
