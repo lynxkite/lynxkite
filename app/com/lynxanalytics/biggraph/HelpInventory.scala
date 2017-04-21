@@ -11,7 +11,7 @@ object HelpInventory extends App {
     def entityProgressManager = null
   })
   val fos = new java.io.FileOutputStream(args.head)
-  for (op <- ops.operationIds.map(Operation.htmlID).sorted) {
+  for (op <- ops.atomicOperationIds.map(Operation.htmlID).sorted) {
     if (!hiddenOps.contains(op)) {
       fos.write(op.getBytes("UTF-8"))
       fos.write('\n')

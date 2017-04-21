@@ -296,13 +296,16 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         "output", "Output box", Map("name" -> "out1"), 0, 0, Map("output" -> pr.output("project")))
       set("test-custom-box", Workspace(List(anchor, inputBox, pr, outputBox)))
 
+      // Now use "test-custom-box" as a custom box.
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val cb = Box("cb", "test-custom-box", Map(), 0, 0, Map("in1" -> eg.output("project")))
       assert({
+        // Relying on default parameters.
         val ws = Workspace.from(eg, cb)
         context(ws).allStates(cb.output("out1")).project.vertexAttributes.contains("pr_def1")
       })
       assert({
+        // Providing a specific parameter value.
         val ws = Workspace.from(eg, cb.copy(parameters = Map("param1" -> "xyz")))
         context(ws).allStates(cb.output("out1")).project.vertexAttributes.contains("pr_xyz")
       })
