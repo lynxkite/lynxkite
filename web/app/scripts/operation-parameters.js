@@ -25,8 +25,6 @@ angular.module('biggraph').directive('operationParameters', function(util) {
 
       scope.parametricFlags = {};
       util.deepWatch(scope, 'parametricFlags', function(flags) {
-        console.log('output: ' + scope.output);
-        console.log('para: ' + scope.parametric);
         for (var v in flags) {
           if (flags[v] === true) {
             util.move(v, scope.output, scope.parametric);
