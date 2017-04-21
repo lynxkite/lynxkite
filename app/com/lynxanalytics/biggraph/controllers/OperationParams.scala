@@ -168,11 +168,6 @@ object OperationParams {
       import FrontendJson.fCustomOperationParameterMeta
       json.Json.parse(value.getOrElse(defaultValue)).as[List[CustomOperationParameterMeta]]
     }
-    def toFE(custom: Seq[CustomOperationParameterMeta],
-             tables: Seq[graph_api.Table],
-             projects: Seq[ProjectEditor]): List[FEOperationParameterMeta] = {
-      ??? // TODO: We will need this to display the parameters of a custom box.
-    }
   }
 }
 

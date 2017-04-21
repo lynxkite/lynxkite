@@ -1,0 +1,13 @@
+### Input box
+
+This special box represents an input that comes from outside of this workspace.
+This box will not have a valid output on its own. When this workspace is used as a custom
+box in another workspace, the custom box will have one input for each input box.
+When the inputs are connected, those input states will appear on the outputs of the input boxes.
+
+Input boxes without a name are ignored. Each input box must have a different name.
+
+====
+[[name]] Name::
+The name of the input, when the workspace is used as a custom box.
+====
