@@ -28,8 +28,8 @@ angular.module('biggraph')
               scope.loadBoxMeta(scope.boxId);
             });
 
-        scope.paramValues = {};
-        scope.parametricParams = {};
+        scope.plainParamValues = {};
+        scope.parametricParamValues = {};
 
         scope.loadBoxMeta = function(boxId) {
           if (!scope.workspace) {
@@ -86,7 +86,8 @@ angular.module('biggraph')
             // Copy defaults for unset parameters.
             for (var i = 0; i < boxMeta.parameters.length; ++i) {
               var p = boxMeta.parameters[i];
-              if (paramValues[p.id] !== undefined) {
+              if ((paramValues[p.id] !== undefined) ||
+                  (scope.parametricParamValues[p.id] !== undefined)) {
                 // Parameter is not unset.
               } else if (p.options.length === 0) {
                 paramValues[p.id] = p.defaultValue;
@@ -97,14 +98,14 @@ angular.module('biggraph')
               }
             }
             if (!angular.equals(paramValues, scope.paramValues)) {
-              scope.paramValues = paramValues;
+              scope.plainParamValues = paramValues;
             }
         };
 
         function onBlurNow() {
           if (scope.box) {
-            scope.workspace.updateBox(scope.box.instance.id, scope.paramValues,
-                        scope.parametricParams);
+            scope.workspace.updateBox(scope.box.instance.id, scope.plainParamValues,
+                        scope.parametricParamValues);
           }
         }
 
