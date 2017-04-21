@@ -192,15 +192,6 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         this.boxMap[boxId].instance.parametricParameters = parametric;
       },
 
-      setBoxSummary: function(boxId, summary) {
-        window.box = this.boxMap[boxId];
-        console.log('moof');
-        console.log(summary);
-        this.boxMap[boxId].summary = summary;
-        /*this.boxMap[boxId].instance.parameters =
-            Object.assign({}, paramValues);*/
-      },
-
     };
 
     wrapper._build();

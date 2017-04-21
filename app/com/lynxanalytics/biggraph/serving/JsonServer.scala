@@ -289,8 +289,6 @@ object FrontendJson {
   implicit val rGetWorkspaceRequest = json.Json.reads[GetWorkspaceRequest]
   implicit val wGetWorkspaceResponse = json.Json.writes[GetWorkspaceResponse]
   implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
-  implicit val rGetSummaryRequest = json.Json.reads[GetSummaryRequest]
-  implicit val wGetSummaryResponse = json.Json.writes[GetSummaryResponse]
   implicit val rGetOperationMetaRequest = json.Json.reads[GetOperationMetaRequest]
   implicit val rGetProgressRequest = json.Json.reads[GetProgressRequest]
   implicit val rGetProgressResponse = json.Json.writes[GetProgressResponse]
@@ -408,7 +406,6 @@ object ProductionJsonServer extends JsonServer {
   val workspaceController = new WorkspaceController(BigGraphProductionEnvironment)
   def createWorkspace = jsonPost(workspaceController.createWorkspace)
   def getWorkspace = jsonGet(workspaceController.getWorkspace)
-  def getSummary = jsonGet(workspaceController.getSummary)
   def createSnapshot = jsonPost(workspaceController.createSnapshot)
   def getProjectOutput = jsonGet(workspaceController.getProjectOutput)
   def getProgress = jsonGet(workspaceController.getProgress)
