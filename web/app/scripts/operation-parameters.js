@@ -29,7 +29,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
         console.log('para: ' + scope.parametric);
         for (var v in flags) {
           if (flags[v] === true) {
-             util.move(v, scope.output, scope.parametric);
+            util.move(v, scope.output, scope.parametric);
           } else {
             util.move(v, scope.parametric, scope.output);
           }
