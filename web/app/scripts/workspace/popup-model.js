@@ -29,19 +29,22 @@ angular.module('biggraph').factory('popupModel', function() {
         this.x = this.moveOffsetX + event.pageX;
         this.y = this.moveOffsetY + event.pageY;
       },
-      close: function() {
-        for (var i = 0; i < owner.popups.length; ++i) {
-          if (owner.popups[i].id === id) {
-            owner.popups.splice(i, 1);
-            return true;
-          }
-        }
-        return false;
+      isOpen: function() {
+        return owner.popups.find(function(p) { return p.id === id; }) !== undefined;
       },
-      // Close if opened, open if closed.
-      toggle: function() {
-        if (!this.close()) {
+      close: function() {
+        owner.popups = owner.popups.filter(function(p) { return p.id !== id; });
+      },
+      open: function() {
+        if (!this.isOpen()) {
           owner.popups.push(this);
+        }
+      },
+      toggle: function() {
+        if (this.isOpen()) {
+          this.close();
+        } else {
+          this.open();
         }
       },
     };
