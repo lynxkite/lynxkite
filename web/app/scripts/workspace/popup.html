@@ -9,15 +9,12 @@
       class="popup-head"
       ng-mousedown="popupModel.onMouseDown($event)">
     {{popupModel.id}}
-    <div class="btn-group pull-right" style="font-size: 5px;">
-      <a class="btn btn-default"
-           ng-click="popupModel.close(); event.stopPropagation();"
-           id="close-popup"
-           tooltip="Close&nbsp;popup"
-           tooltip-append-to-body="true"
-           tooltip-placement="bottom">
-        <i class="glyphicon glyphicon-remove"></i>
-      </a>
+    <div class="clicky pull-right glyphicon glyphicon-remove"
+        ng-click="popupModel.close(); event.stopPropagation();"
+        id="close-popup"
+        tooltip="Close&nbsp;popup"
+        tooltip-append-to-body="true"
+        tooltip-placement="bottom">
     </div>
   </div>
   <div class="popup-content"

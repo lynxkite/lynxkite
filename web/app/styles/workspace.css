@@ -93,14 +93,15 @@ line.pulled-arrow {
 
 div.popup {
   position: fixed;
+  border: 1px solid darkgray;
 }
 
 div.popup-head {
-  height: 20px;
   width: 100%;
-  background: blue;
-  color: white;
+  background: lightblue;
   font-weight: bold;
+  padding: 3px;
+  height: 35px;
 }
 
 div.popup-content {
