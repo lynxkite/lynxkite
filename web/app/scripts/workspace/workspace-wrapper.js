@@ -110,7 +110,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
       deleteBox: function(boxId) {
         var box = this.state.boxes.filter(function(box) {
           return box.id === boxId;
-        });
+        })[0];
         var i = this.state.boxes.indexOf(box);
         this.state.boxes.splice(i,1);
         this._build();
