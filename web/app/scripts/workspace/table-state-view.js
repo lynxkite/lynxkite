@@ -14,8 +14,8 @@ angular.module('biggraph')
       },
       link: function(scope) {
         scope.table = null;
-        util.deepWatch(scope, 'stateId', function() {
-          scope.table = util.nocache('/ajax/getTableOutput', {
+        scope.$watch('stateId', function() {
+          scope.table = util.get('/ajax/getTableOutput', {
             id: scope.stateId,
           });
         });

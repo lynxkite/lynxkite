@@ -282,7 +282,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   // TODO: Remove code duplication
-  def getTableSample(table: Table): GetTableOutputResponse = {
+  def getTableSample(table: Table, sampleRows: Int = 10): GetTableOutputResponse = {
     val columns = table.schema.toList.map { field =>
       field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
     }
@@ -290,14 +290,13 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val df = table.df
     GetTableOutputResponse(
       header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) },
-      data = SQLHelper.toSeqRDD(df).take(10).map {
+      data = SQLHelper.toSeqRDD(df).take(sampleRows).map {
         row =>
           row.toSeq.toList.zip(columns).map {
             case (null, field) => DynamicValue("null", defined = false)
             case (item, (name, tt)) => DynamicValue.convert(item)(tt)
           }
-      }.toList,
-      numRows = df.count()
+      }.toList
     )
   }
 
