@@ -49,9 +49,9 @@ module.exports = function(fw) {
     function() {
       var state = lib.workspace.openStateView(
           'reversed-edges', 'project');
-      expect(lib.state.vertexCount()).toEqual(4);
-      expect(lib.state.edgeCount()).toEqual(8);
-      expect(lib.state.attributeCount()).toEqual(8);
+      expect(state.left.vertexCount()).toEqual(4);
+      expect(state.left.edgeCount()).toEqual(8);
+      expect(state.left.attributeCount()).toEqual(8);
       state.close();
     });
 

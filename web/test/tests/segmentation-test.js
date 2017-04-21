@@ -52,7 +52,7 @@ module.exports = function(fw) {
       state.left.expectCurrentProjectIs('State » bucketing');
       state.right.expectCurrentProjectIs('State » bucketing » copy');
       // Close sub-segmentation on the right-hand side:
-      lib.right.close();
+      state.right.close();
       // This should reopen its grandparent it's grandparent on the left:
       state.left.expectCurrentProjectIs('State');
       state.right.expectCurrentProjectIs('State » bucketing');
@@ -98,11 +98,11 @@ module.exports = function(fw) {
     },
     function() {
       var state = lib.workspace.openStateView('filter-op', 'project');
-      lib.left.openSegmentation('self');
-      expect(lib.right.getValue('segment-count')).toBe(4);
-      expect(lib.right.getValue('total-segment-size')).toBe(2);
-      expect(lib.right.getValue('total-segment-coverage')).toBe(2);
-      expect(lib.right.getValue('non-empty-segment-count')).toBe(2);
+      state.left.openSegmentation('self');
+      expect(state.right.getValue('segment-count')).toBe(4);
+      expect(state.right.getValue('total-segment-size')).toBe(2);
+      expect(state.right.getValue('total-segment-coverage')).toBe(2);
+      expect(state.right.getValue('non-empty-segment-count')).toBe(2);
       state.close();
     });
 };
