@@ -111,6 +111,14 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         this.state.boxes = this.state.boxes.filter(function(box) {
           return box.id !== boxId;
         });
+        this.state.boxes.map(function(box) {
+          var inputs = box.inputs;
+          for (var inputName in inputs) {
+            if (inputs[inputName].boxID === boxId) {
+              delete box.inputs[inputName];
+            }
+          }
+        });
         this._build();
       },
 
