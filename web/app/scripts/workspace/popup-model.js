@@ -4,15 +4,18 @@ angular.module('biggraph').factory('popupModel', function() {
   // Creates a new popup model data structure.
   // id: unique key
   // content: description of content to render
+  // x, y, width, height: location and size of the popup
   // owner: owning object. It should have an owner.popups
   //        list of all popups. And owner.movedPopup a pointer
   //        to the currently moved popup, if any.
-  return function(id, content, owner) {
+  return function(id, content, x, y, width, height, owner) {
     return {
       id: id,
       content: content,
-      x: 100,
-      y: 100,
+      x: x,
+      y: y,
+      width: width,
+      height: height,
       onMouseDown: function(event) {
         event.stopPropagation();
         owner.movedPopup = this;

@@ -10,7 +10,7 @@
       <!-- start box -->
       <g ng-repeat="box in workspace.boxes()"
           ng-mousedown="onMouseDownOnBox(box, $event)"
-          ng-dblclick="workspace.onDoubleClickOnBox(box)"
+          ng-dblclick="workspace.onDoubleClickOnBox(box, $event)"
           ng-attr-transform="{{ box.mainPosTransform() }}"
           class="box"
           id="{{ box.instance.id }}"
