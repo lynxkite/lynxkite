@@ -18,8 +18,8 @@ module.exports = function(fw) {
     function() {
       var state = lib.workspace.openStateView('pr2', 'project');
       expect(
-        lib.state.vertexAttribute('page_rank_incoming').getHistogramValues()).not.toEqual(
-        lib.state.vertexAttribute('page_rank_default').getHistogramValues());
+        state.left.vertexAttribute('page_rank_incoming').getHistogramValues()).not.toEqual(
+        state.left.vertexAttribute('page_rank_default').getHistogramValues());
       state.close();
       var boxEditor = lib.workspace.openBoxEditor('pr1');
       boxEditor.expectSelectParameter('direction', 'string:outgoing edges');

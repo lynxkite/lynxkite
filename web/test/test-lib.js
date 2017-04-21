@@ -237,6 +237,11 @@ Workspace.prototype = {
     return new State(popup);
   },
 
+  getStateView: function(boxId, plugId) {
+    var popup = this.board.$('.popup#' + boxId + '_' + plugId);
+    return new State(popup);
+  },
+
   connectBoxes: function(srcBoxID, srcPlugID, dstBoxID, dstPlugID) {
     var src = this.getOutputPlug(srcBoxID, srcPlugID);
     var dst = this.getInputPlug(dstBoxID, dstPlugID);
@@ -299,14 +304,8 @@ State.prototype = {
 };
 
 function Side(popup, direction) {
-  if (popup === undefined) {
-    this.side = $('project-state-view #side-' + direction);
-    return;  // TODO: kill this branch
-  }
   this.direction = direction;
   this.side = popup.$('project-state-view #side-' + direction);
-  expect(popup.isDisplayed()).toBe(true);
-  expect(this.side.isDisplayed()).toBe(true);
 }
 
 Side.prototype = {
@@ -922,9 +921,6 @@ var lastDownloadList;
 
 testLib = {
   theRandomPattern: randomPattern(),
-  state: new Side(undefined, 'left'),
-  left: new Side(undefined, 'left'),
-  right: new Side(undefined, 'right'),
   workspace: new Workspace(),
   visualization: visualization,
   splash: splash,

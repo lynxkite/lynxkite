@@ -3,9 +3,10 @@
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
-  var name = lib.state.vertexAttribute('name');
-  var income = lib.state.vertexAttribute('income');
-  var weight = lib.state.edgeAttribute('weight');
+  var state = lib.workspace.getStateView('eg0', 'project');
+  var name = state.left.vertexAttribute('name');
+  var income = state.left.vertexAttribute('income');
+  var weight = state.left.edgeAttribute('weight');
 
   fw.statePreservingTest(
     'test-example workspace with example graph state open',
@@ -146,3 +147,4 @@ module.exports = function(fw) {
     function() {});
 
 };
+
