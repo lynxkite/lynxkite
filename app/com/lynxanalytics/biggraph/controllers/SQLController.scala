@@ -282,6 +282,25 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     )
   }
 
+  // TODO: Remove code duplication
+  def getTableSample(table: Table, sampleRows: Int = 10): GetTableOutputResponse = {
+    val columns = table.schema.toList.map { field =>
+      field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
+    }
+    import Scripting._
+    val df = table.df
+    GetTableOutputResponse(
+      header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) },
+      data = SQLHelper.toSeqRDD(df).take(sampleRows).map {
+        row =>
+          row.toSeq.toList.zip(columns).map {
+            case (null, field) => DynamicValue("null", defined = false)
+            case (item, (name, tt)) => DynamicValue.convert(item)(tt)
+          }
+      }.toList
+    )
+  }
+
   def exportSQLQueryToTable(
     user: serving.User, request: SQLExportToTableRequest) = async[Unit] {
     val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))

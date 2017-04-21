@@ -5,6 +5,7 @@ import scala.collection.mutable.HashMap
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 
@@ -17,6 +18,9 @@ case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: 
 case class GetProgressRequest(stateIDs: List[String])
 case class GetProgressResponse(progress: Map[String, Option[Progress]])
 case class GetProjectOutputRequest(id: String, path: String)
+case class GetTableOutputRequest(id: String)
+case class TableColumn(name: String, dataType: String)
+case class GetTableOutputResponse(header: List[TableColumn], data: List[List[DynamicValue]])
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 case class CreateSnapshotRequest(name: String, id: String)
@@ -71,7 +75,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
   val calculatedStates = new HashMap[String, BoxOutputState]()
 
-  private def getOutput(user: serving.User, stateID: String): BoxOutputState = {
+  def getOutput(user: serving.User, stateID: String): BoxOutputState = {
     calculatedStates.synchronized {
       calculatedStates.get(stateID)
     } match {
@@ -83,12 +87,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def getProjectOutput(
     user: serving.User, request: GetProjectOutputRequest): FEProject = {
     val state = getOutput(user, request.id)
-    state.kind match {
-      case BoxOutputKind.Project =>
-        val pathSeq = SubProject.splitPipedPath(request.path).filter(_ != "")
-        val viewer = state.project.viewer.offspringViewer(pathSeq)
-        viewer.toFE(request.path)
-    }
+    val pathSeq = SubProject.splitPipedPath(request.path).filter(_ != "")
+    val viewer = state.project.viewer.offspringViewer(pathSeq)
+    viewer.toFE(request.path)
   }
 
   def getProgress(user: serving.User, request: GetProgressRequest): GetProgressResponse = {

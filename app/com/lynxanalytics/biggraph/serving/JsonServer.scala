@@ -15,6 +15,7 @@ import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
+import com.lynxanalytics.biggraph.serving
 import org.apache.spark.sql.types.{ StructField, StructType }
 
 abstract class JsonServer extends mvc.Controller {
@@ -293,6 +294,9 @@ object FrontendJson {
   implicit val rGetProgressRequest = json.Json.reads[GetProgressRequest]
   implicit val rGetProgressResponse = json.Json.writes[GetProgressResponse]
   implicit val rGetProjectOutputRequest = json.Json.reads[GetProjectOutputRequest]
+  implicit val rGetTableOutputRequest = json.Json.reads[GetTableOutputRequest]
+  implicit val wTableColumn = json.Json.writes[TableColumn]
+  implicit val wGetTableOutputResponse = json.Json.writes[GetTableOutputResponse]
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
   implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
   implicit val rCreateSnapshotRequest = json.Json.reads[CreateSnapshotRequest]
@@ -424,6 +428,13 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
   def importBox = jsonFuturePost(sqlController.importBox)
   def createViewDFSpec = jsonPost(sqlController.createViewDFSpec)
+
+  def getTableOutput = jsonGet(getTableOutputData)
+  def getTableOutputData(user: serving.User, request: GetTableOutputRequest): GetTableOutputResponse = {
+    implicit val metaManager = workspaceController.metaManager
+    val table = workspaceController.getOutput(user, request.id).table
+    sqlController.getTableSample(table)
+  }
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
