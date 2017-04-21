@@ -36,11 +36,6 @@ angular.module('biggraph').directive('operationParameters', function(util) {
         }
       });
 
-     scope.canBeParametric = function(param) {
-        var kind = param.kind;
-        return kind === 'default' || (kind === 'choice' && !param.multipleChoice);
-     };
-
       // Translate between arrays and comma-separated strings for multiselects.
       scope.multiOutput = {};
       util.deepWatch(scope, 'output', function(output) {
@@ -56,8 +51,6 @@ angular.module('biggraph').directive('operationParameters', function(util) {
           }
         }
       });
-
-
 
       util.deepWatch(scope, 'multiOutput', function(multiOutput) {
         for (var i = 0; i < scope.meta.parameters.length; ++i) {
