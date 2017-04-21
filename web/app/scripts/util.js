@@ -153,11 +153,10 @@ angular.module('biggraph').factory('util', function utilFactory(
       return scope.$watch(expr, fun, true);
     },
 
-    // Move move an element from one dictionary to another
+    // Move an element from one dictionary to another
     // After this completes, we want the src dictionary to not contain
     // the element, and the dst dictionary to contain the element.
     move: function(key, src, dst) {
-        console.log('Moving: ' + key);
         if (key in src) {
             dst[key] = src[key];
             delete src[key];
