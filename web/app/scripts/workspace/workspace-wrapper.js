@@ -83,9 +83,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         this._buildBoxes();
         this._buildArrows();
       },
-
-      // boxID should be used for test-purposes only
-      addBox: function(operationId, x, y, boxId) {
+      getUniqueId: function(operationId) {
         var usedIds = this.state.boxes.map(function(box) {
             return box.id;
           });
@@ -93,18 +91,23 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         while(usedIds.includes(operationId.replace(/ /g, '-') + '_' + cnt)) {
           cnt += 1;
         }
-        boxId = boxId || operationId.replace(/ /g, '-') + '_' + cnt;
-        this.state.boxes.push(
-            {
-              id: boxId,
-              operationID: operationId,
-              x: x,
-              y: y,
-              inputs: {},
-              parameters: {},
-              parametricParameters: {}
-            });
+        return operationId.replace(/ /g, '-') + '_' + cnt;
+      },
+
+      // boxID should be used for test-purposes only
+      addBox: function(operationId, x, y, boxId) {
+        var uniqueId = this.getUniqueId(operationId);
+        boxId = boxId || uniqueId;
+        var box = { id: boxId,
+             operationID: operationId,
+             x: x,
+             y: y,
+             inputs: {},
+             parameters: {},
+             parametricParameters: {} };
+        this.state.boxes.push(box);
         this._build();
+        return box;
       },
 
       deleteBox: function(boxId) {
