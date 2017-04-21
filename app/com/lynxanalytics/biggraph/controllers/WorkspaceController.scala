@@ -12,8 +12,6 @@ case class GetWorkspaceRequest(name: String)
 case class BoxOutputInfo(boxOutput: BoxOutput, stateID: String, success: FEStatus, kind: String)
 case class GetWorkspaceResponse(workspace: Workspace, outputs: List[BoxOutputInfo], summaries: Map[String, String])
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
-case class GetSummaryRequest(operationId: String, parameters: Map[String, String])
-case class GetSummaryResponse(summary: String)
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
 case class GetProgressRequest(stateIDs: List[String])
@@ -81,13 +79,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
   val calculatedStates = new HashMap[String, BoxOutputState]()
-
-  def getSummary(
-    user: serving.User, request: GetSummaryRequest): GetSummaryResponse = {
-    val boxmeta = ops.getBoxMetadata(request.operationId)
-    GetSummaryResponse(
-      ops.opForBox(user, new Box("", boxmeta.operationID, request.parameters, 0, 0, Map()), Map(), Map()).summary)
-  }
 
   private def getOutput(user: serving.User, stateID: String): BoxOutputState = {
     calculatedStates.synchronized {
