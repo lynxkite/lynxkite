@@ -5,7 +5,7 @@
              ng-click="util.reportRequestError(table, 'Failed to load table sample.')">
   Failed to load table sample. Click to report error.
 </progressbar>
-<div ng-show="table.$resolved" class="col-sm-12">
+<div ng-if="table.$resolved" class="col-sm-12">
   <h3>Table sample</h3>
   <table class="table table-striped table-bordered">
     <thead>
