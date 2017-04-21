@@ -155,19 +155,22 @@ case class WorkspaceExecutionContext(
     }
   }
 
-  def getOperation(boxID: String): Operation = {
-    val box = ws.findBox(boxID)
-    val meta = ops.getBoxMetadata(box.operationID)
-    for (i <- meta.inputs) {
-      assert(box.inputs.contains(i), s"Input $i is not connected.")
-    }
-    val states = allStates
+  def getOperationForStates(box: Box, states: Map[BoxOutput, BoxOutputState]): Operation = {
     val inputs = box.inputs.map { case (id, output) => id -> states(output) }
     assert(!inputs.exists(_._2.isError), {
       val errors = inputs.filter(_._2.isError).map(_._1).mkString(", ")
       s"Input $errors has an error."
     })
     box.getOperation(this, inputs)
+  }
+
+  def getOperation(boxID: String): Operation = {
+    val box = ws.findBox(boxID)
+    val meta = ops.getBoxMetadata(box.operationID)
+    for (i <- meta.inputs) {
+      assert(box.inputs.contains(i), s"Input $i is not connected.")
+    }
+    getOperationForStates(box, allStates)
   }
 }
 
