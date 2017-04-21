@@ -191,6 +191,7 @@ trait OperationRegistry {
 abstract class OperationRepository(env: SparkFreeEnvironment) {
   implicit val metaGraphManager = env.metaGraphManager
   // The registry maps operation IDs to their constructors.
+  // "Atomic" operations (as opposed to custom boxes) are simply in a Map.
   protected val atomicOperations: Map[String, (BoxMetadata, Operation.Factory)]
 
   private def getBox(id: String): (BoxMetadata, Operation.Factory) = {
@@ -205,7 +206,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 
   def getBoxMetadata(id: String) = getBox(id)._1
 
-  def operationIds = atomicOperations.keys.toSeq.sorted
+  def atomicOperationIds = atomicOperations.keys.toSeq.sorted
 
   def operationIds(user: serving.User) = {
     val customBoxes = DirectoryEntry.fromName("").asDirectory
@@ -500,6 +501,8 @@ class CustomBoxOperation(
   def enabled = FEStatus.enabled
   override def allParameters = parameters
 
+  // Returns a version of the internal workspace in which the input boxes are patched to output the
+  // inputs connected to the custom box.
   def connectedWorkspace = {
     workspace.copy(boxes = workspace.boxes.map { box =>
       if (box.operationID == "Input box" && box.parameters.contains("name")) {
