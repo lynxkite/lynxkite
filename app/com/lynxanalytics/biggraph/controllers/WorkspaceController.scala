@@ -54,7 +54,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def getWorkspace(
     user: serving.User, request: GetWorkspaceRequest): GetWorkspaceResponse = {
     val workspace = getWorkspaceByName(user, request.name)
-    val states = workspace.context(user, ops, Map()).allStates
+    val context = workspace.context(user, ops, Map())
+    val states = context.allStates
     val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
     calculatedStates.synchronized {
       for ((_, (boxOutputState, id)) <- statesWithId) {
@@ -65,13 +66,10 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       case (boxOutput, (boxOutputState, stateID)) =>
         BoxOutputInfo(boxOutput, stateID, boxOutputState.success, boxOutputState.kind)
     }
-    val boxInfo = stateInfo.groupBy(_.boxOutput.boxID).map {
-      case (id, infos) => (id, infos.map(_.success.enabled).foldLeft(true) { (a, b) => a && b })
-    }
     val summaries = workspace.boxes.map(
       box => box.id -> (
-        if (boxInfo.getOrElse(box.id, false)) ops.opForBox(user, box, Map(), Map()).summary
-        else box.operationID
+        try { context.getOperationForStates(box, states).summary }
+        catch { case e: Exception => box.operationID }
       )
     ).toMap
     GetWorkspaceResponse(workspace, stateInfo, summaries)
