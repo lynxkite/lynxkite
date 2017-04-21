@@ -1,0 +1,30 @@
+table-state-view {
+  overflow: auto;
+}
+
+#table-samle th {
+  cursor: pointer; /* Click to sort. */
+  user-select: none;
+}
+
+#table-sample .is-null,
+#table-sample .column-type {
+  font-weight: normal;
+  font-style: italic;
+  color: #666;
+}
+
+#table-sample .ordering {
+  /* Reserves a little space for the ordering triangles, even when the triangle is not displayed. */
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  overflow: visible;
+}
+
+.no-break {
+  white-space: nowrap;
+}
+
+
+

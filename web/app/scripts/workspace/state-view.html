@@ -17,4 +17,7 @@
     state-id="stateId"
     ng-if="stateKind === 'project'">
 </project-state-view>
-
+<table-state-view
+        state-id="workspace.selectedStateId"
+        ng-if="workspace.selectedStateKind === 'table'">
+</table-state-view>

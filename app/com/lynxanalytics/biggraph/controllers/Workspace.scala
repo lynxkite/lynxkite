@@ -22,9 +22,18 @@ case class Workspace(
     boxMap(id)
   }
 
-  private def parametersMeta: Seq[CustomOperationParameterMeta] = {
+  def parametersMeta: Seq[CustomOperationParameterMeta] = {
     val anchor = findBox("anchor")
     OperationParams.ParametersParam.parse(anchor.parameters.get("parameters"))
+  }
+
+  // This workspace as a custom box.
+  def getBoxMetadata(name: String): BoxMetadata = {
+    val inputs = boxes.filter(_.operationID == "Input box").flatMap(b => b.parameters.get("name"))
+    val outputs = boxes.filter(_.operationID == "Output box").flatMap(b => b.parameters.get("name"))
+    // TODO: Remove type annotation from outputs?
+    BoxMetadata(
+      "Custom boxes", name, inputs, outputs.map(o => TypedConnection(o, BoxOutputKind.Project)))
   }
 
   def context(
@@ -132,6 +141,8 @@ case class WorkspaceExecutionContext(
     if (unconnectedInputs.nonEmpty) {
       val list = unconnectedInputs.mkString(", ")
       allOutputsWithError(s"Input $list is not connected.")
+    } else if (meta.outputs.isEmpty) {
+      Map() // No reason to execute the box if it has no outputs.
     } else {
       val inputs = box.inputs.map { case (id, output) => id -> inputStates(output) }
       val inputErrors = inputs.filter(_._2.isError)

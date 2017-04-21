@@ -9,14 +9,7 @@ angular.module('biggraph').directive('parametersParameter', function(util) {
     },
     templateUrl: 'parameters-parameter.html',
     link: function(scope) {
-      scope.validKinds = [
-        'text',
-        'boolean',
-        'code',
-        'vertexattribute',
-        'edgeattribute',
-        'segmentation',
-      ];
+      scope.validKinds = util.globals.workspaceParameterKinds;
 
       scope.$watch('model', function(model) {
         scope.parameters = JSON.parse(model);
