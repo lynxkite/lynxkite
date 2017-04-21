@@ -86,7 +86,7 @@ angular.module('biggraph')
             .then(function(response) {
               var state = response.workspace;
               for(i = 0; i< state.boxes.length; i++) {
-                state.boxes[i].summary = response.summaries[state.boxes[i].operationID];
+                state.boxes[i].summary = response.summaries[state.boxes[i].id];
               }
               that.backendState = state;
               // User edits will be applied to a deep copy of

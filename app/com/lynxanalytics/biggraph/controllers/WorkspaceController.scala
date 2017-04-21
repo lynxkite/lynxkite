@@ -67,8 +67,14 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       case (boxOutput, (boxOutputState, stateID)) =>
         BoxOutputInfo(boxOutput, stateID, boxOutputState.success, boxOutputState.kind)
     }
+    val boxInfo = stateInfo.groupBy(_.boxOutput.boxID).map {
+      case (id, infos) => (id, infos.map(_.success.enabled).foldLeft(true) { (a, b) => a && b })
+    }
     val summaries = workspace.boxes.map(
-      box => box.operationID -> "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      box => box.id -> (
+        if (boxInfo.getOrElse(box.id, false)) ops.opForBox(user, box, Map(), Map()).summary
+        else box.operationID
+      )
     ).toMap
     GetWorkspaceResponse(workspace, stateInfo, summaries)
   }
