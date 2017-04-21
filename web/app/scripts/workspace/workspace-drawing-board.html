@@ -10,7 +10,7 @@
       <!-- start box -->
       <g ng-repeat="box in workspace.boxes()"
           ng-mousedown="onMouseDownOnBox(box, $event)"
-          ng-dblclick="workspace.onDoubleClickOnBox(box, $event)"
+          ng-mouseup="workspace.onMouseUpOnBox(box, $event)"
           ng-attr-transform="{{ box.mainPosTransform() }}"
           class="box"
           id="{{ box.instance.id }}"
@@ -31,7 +31,7 @@
                   ng-attr-drop-tooltip="{{ plug.error }}"
                   ng-mousedown="workspace.onMouseDownOnPlug(plug, $event)"
                   ng-mouseup="workspace.onMouseUpOnPlug(plug, $event)"
-                  ng-dblclick="workspace.onDoubleClickOnPlug(plug, $event)">
+                  ng-click="workspace.onClickOnPlug(plug, $event)">
             </circle>
           </g>
         </g>

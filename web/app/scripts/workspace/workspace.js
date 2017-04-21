@@ -180,8 +180,8 @@ angular.module('biggraph').factory(
         },
 
         onMouseUp: function() {
-          if(this.movedBoxes){
-            for(i = 0; i < this.movedBoxes.length; i++){
+          if (this.movedBoxes) {
+            for (var i = 0; i < this.movedBoxes.length; i++) {
               if (this.movedBoxes[i].isMoved) {
                 this.saveWorkspace();
                 break;
@@ -218,7 +218,7 @@ angular.module('biggraph').factory(
           return false;
         },
 
-        onDoubleClickOnPlug: function(plug, event) {
+        onClickOnPlug: function(plug, event) {
           event.stopPropagation();
           if (plug.direction === 'outputs') {
             var model = new PopupModel(
@@ -237,7 +237,10 @@ angular.module('biggraph').factory(
           }
         },
 
-        onDoubleClickOnBox: function(box, event) {
+        onMouseUpOnBox: function(box, event) {
+          if (box.isMoved || this.pulledPlug) {
+            return;
+          }
           var model = new PopupModel(
             box.instance.id,
             {
