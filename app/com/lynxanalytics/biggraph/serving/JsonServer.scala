@@ -429,6 +429,11 @@ object ProductionJsonServer extends JsonServer {
   def createViewDFSpec = jsonPost(sqlController.createViewDFSpec)
 
   def getTableOutput = jsonGet(getTableOutputData)
+  def getTableOutputData(user: serving.User, request: GetTableOutputRequest): GetTableOutputResponse = {
+    implicit val metaManager = workspaceController.metaManager
+    val table = workspaceController.getOutput(user, request.id).table
+    sqlController.getTableSample(table)
+  }
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
@@ -470,11 +475,6 @@ object ProductionJsonServer extends JsonServer {
   }
 
   val version = KiteInstanceInfo.kiteVersion
-
-  def getTableOutputData(user: serving.User, request: GetTableOutputRequest): GetTableOutputResponse = {
-    val table = workspaceController.getTable(user, request)
-    sqlController.getTableSample(table)
-  }
 
   def getAuthMethods = {
     val authMethods = scala.collection.mutable.ListBuffer[AuthMethod]()
