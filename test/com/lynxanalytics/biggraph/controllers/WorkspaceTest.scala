@@ -258,11 +258,16 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     }
   }
 
+  def anchorWithParams(params: (String, String, String)*): Box = {
+    Box("anchor", "Anchor", Map(
+      "parameters" -> json.Json.toJson(params.toList.map {
+        case (id, kind, defaultValue) =>
+          Map("id" -> id, "kind" -> kind, "defaultValue" -> defaultValue)
+      }).toString), 0, 0, Map())
+  }
+
   test("parametric parameters") {
-    val anchor = Box("anchor", "Anchor", Map(
-      "parameters" -> json.Json.toJson(List(
-        Map("id" -> "p1", "kind" -> "text", "defaultValue" -> "def1"),
-        Map("id" -> "p2", "kind" -> "text", "defaultValue" -> "def2"))).toString), 0, 0, Map())
+    val anchor = anchorWithParams(("p1", "text", "def1"), ("p2", "text", "def2"))
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val const = Box(
       "const", "Add constant vertex attribute",
@@ -278,5 +283,29 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     assert(intercept[AssertionError] {
       context(ws, "p3" -> "some3").allStates(const.output("project")).project
     }.getMessage.contains("Unrecognized parameter: p3"))
+  }
+
+  test("custom box") {
+    using("test-custom-box") {
+      val anchor = anchorWithParams(("param1", "text", "def1"))
+      val inputBox = Box("input", "Input box", Map("name" -> "in1"), 0, 0, Map())
+      val pr = Box(
+        "pr", "Compute PageRank", pagerankParams - "name", 0, 0,
+        Map("project" -> inputBox.output("input")), Map("name" -> "pr_$param1"))
+      val outputBox = Box(
+        "output", "Output box", Map("name" -> "out1"), 0, 0, Map("output" -> pr.output("project")))
+      set("test-custom-box", Workspace(List(anchor, inputBox, pr, outputBox)))
+
+      val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+      val cb = Box("cb", "test-custom-box", Map(), 0, 0, Map("in1" -> eg.output("project")))
+      assert({
+        val ws = Workspace.from(eg, cb)
+        context(ws).allStates(cb.output("out1")).project.vertexAttributes.contains("pr_def1")
+      })
+      assert({
+        val ws = Workspace.from(eg, cb.copy(parameters = Map("param1" -> "xyz")))
+        context(ws).allStates(cb.output("out1")).project.vertexAttributes.contains("pr_xyz")
+      })
+    }
   }
 }

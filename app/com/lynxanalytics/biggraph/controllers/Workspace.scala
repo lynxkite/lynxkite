@@ -141,6 +141,8 @@ case class WorkspaceExecutionContext(
     if (unconnectedInputs.nonEmpty) {
       val list = unconnectedInputs.mkString(", ")
       allOutputsWithError(s"Input $list is not connected.")
+    } else if (meta.outputs.isEmpty) {
+      Map() // No reason to execute the box if it has no outputs.
     } else {
       val inputs = box.inputs.map { case (id, output) => id -> inputStates(output) }
       val inputErrors = inputs.filter(_._2.isError)
