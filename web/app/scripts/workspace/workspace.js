@@ -245,32 +245,7 @@ angular.module('biggraph')
         },
 
         pasteBoxes: function(currentPosition) {
-          var clipboard = this.clipboard;
-          var mapping = {};
-
-          for (var i = 0; i < clipboard.length; ++i) {
-            var box = clipboard[i].instance;
-            var diffX = clipboard[i].width;
-            var createdBox =  this.wrapper.addBox(
-              box.operationID,
-              currentPosition.x + box.x + 1.1 * diffX,
-              currentPosition.y + box.y + 10);
-            mapping[box.id] = createdBox;
-          }
-          for (i = 0; i < clipboard.length; ++i) {
-            var oldBox = clipboard[i].instance;
-            var newBox = mapping[oldBox.id];
-            for (var key in oldBox.inputs) {
-              if (!oldBox.inputs.hasOwnProperty(key)) {
-                break;
-              }
-              var oldInputId = oldBox.inputs[key].boxID;
-              if (mapping.hasOwnProperty(oldInputId)) {
-                var newInput = mapping[oldInputId];
-                newBox.inputs[key] = { boxID: newInput.id, id: key };
-              }
-            }
-          }
+          this.wrapper.pasteFromClipboard(this.clipboard, currentPosition);
           this.saveWorkspace();
         },
 

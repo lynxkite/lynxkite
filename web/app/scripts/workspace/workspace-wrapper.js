@@ -194,6 +194,33 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         this.boxMap[boxId].instance.parametricParameters = parametric;
       },
 
+      pasteFromClipboard: function(clipboard, currentPosition) {
+        var mapping = {};
+        for (var i = 0; i < clipboard.length; ++i) {
+          var box = clipboard[i].instance;
+          var diffX = clipboard[i].width;
+          var createdBox =  this.addBox(
+            box.operationID,
+            currentPosition.x + box.x + 1.1 * diffX,
+            currentPosition.y + box.y + 10);
+          mapping[box.id] = createdBox;
+        }
+        for (i = 0; i < clipboard.length; ++i) {
+          var oldBox = clipboard[i].instance;
+          var newBox = mapping[oldBox.id];
+          for (var key in oldBox.inputs) {
+            if (!oldBox.inputs.hasOwnProperty(key)) {
+              break;
+            }
+            var oldInputId = oldBox.inputs[key].boxID;
+            if (mapping.hasOwnProperty(oldInputId)) {
+              var newInput = mapping[oldInputId];
+              newBox.inputs[key] = { boxID: newInput.id, id: key };
+            }
+          }
+        }
+      }
+
     };
 
     wrapper._build();
