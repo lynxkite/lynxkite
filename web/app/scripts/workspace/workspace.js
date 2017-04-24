@@ -259,7 +259,7 @@ angular.module('biggraph')
             var newBox = mapping[oldBox.id];
             for (var key in oldBox.inputs) {
               var oldInputId = oldBox.inputs[key].boxID;
-              if (oldInputId in mapping) {
+              if (mapping.hasOwnProperty(oldInputId)) {
                 var newInput = mapping[oldInputId];
                 newBox.inputs[key] = { boxID: newInput.id, id: key };
               }
