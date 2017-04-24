@@ -100,14 +100,17 @@ angular.module('biggraph')
           return 'translate(' + workspaceX + ', ' + workspaceY + ') scale(' + z + ')';
         };
 
-
         var hk = hotkeys.bindTo(scope);
         hk.add({
           combo: 'ctrl+c', description: 'Copy boxes',
           callback: function() { scope.workspace.copyBoxes(); } });
         hk.add({
           combo: 'ctrl+v', description: 'Paste boxes',
-          callback: function() { scope.workspace.pasteBoxes(); } });
+          callback: function() {
+            scope.workspace.pasteBoxes(getLogicalPosition({ offsetX: 0, offsetY: 0})); } });
+        hk.add({
+          combo: 'del', description: 'Paste boxes',
+          callback: function() { scope.workspace.deleteSelectedBoxes(); } });
 
         function setGrabCursor(e) {
           // Trying to assign an invalid cursor will silently fail. Try to find a supported value.
