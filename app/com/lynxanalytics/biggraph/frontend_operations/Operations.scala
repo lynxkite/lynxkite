@@ -567,7 +567,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     override def summary = {
       val attrName = params("attr")
       val overlap = params("overlap") == "yes"
-      s"Segmentation by $attrName" + (if (overlap) " with overlap" else "")
+      val name = params("name")
+      s"Segmentation by $attrName" + (if (overlap) " with overlap" else "") + ": $name"
     }
 
     def apply() = {
@@ -597,7 +598,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       project.vertexAttrList[String].nonEmpty, "No string vertex attributes.")
     override def summary = {
       val attrName = params("attr")
-      s"Segmentation by $attrName"
+      val name = params("name")
+      s"Segmentation by $attrName" + ": $name"
     }
 
     def apply() = {
@@ -630,7 +632,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val beginAttrName = params("begin_attr")
       val endAttrName = params("end_attr")
       val overlap = params("overlap") == "yes"
-      s"Interval segmentation by $beginAttrName and $endAttrName" + (if (overlap) " with overlap" else "")
+      val name = params("name")
+      s"Interval segmentation by $beginAttrName and $endAttrName" + (if (overlap) " with overlap" else "") + ": $name"
     }
 
     def apply() = {
@@ -689,6 +692,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           FEStatus.assert(
             project.vertexAttrList[Double].nonEmpty,
             "There must be a double attribute to define event times")
+
+    override def summary = {
+      val name = params("name")
+      s"Segmentation by event sequence: $name"
+    }
 
     def apply() = {
       val timeAttrName = params("time_attr")
