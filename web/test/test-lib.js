@@ -241,9 +241,12 @@ Workspace.prototype = {
     this.getOutputPlug(boxID, plugID).click();
   },
 
+  selectBox: function(boxId) {
+    this.getBox(boxId).$('rect').click();
+  },
 
   openBoxEditor: function(boxId) {
-    this.getBox(boxId).$('rect').click();
+    this.selectBox(boxId);
     var popup = this.board.$('.popup#' + boxId);
     expect(popup.isDisplayed()).toBe(true);
     this.movePopupToCenter(popup);
