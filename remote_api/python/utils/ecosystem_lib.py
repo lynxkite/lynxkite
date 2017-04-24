@@ -85,7 +85,7 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     '--applications',
     help='''Applications to start on the cluster like Hive, Hue, Pig... as
-  a coma separated list. (e.g. "Hive,Hue").''')
+  a comma separated list. (e.g. "Hive,Hue").''')
 
 
 class Ecosystem:
