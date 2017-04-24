@@ -15,17 +15,22 @@ angular.module('biggraph')
       link: function(scope, element) {
         var workspaceDrag = false;
         var selectBoxes = false;
-        var moveSelection = false;
         var workspaceX = 0;
         var workspaceY = 0;
         var workspaceZoom = 0;
         var mouseX = 0;
         var mouseY = 0;
         function zoomToScale(z) { return Math.exp(z * 0.001); }
-        function getLogicalPosition(event) {
-          return {
-            x: (event.offsetX - workspaceX) / zoomToScale(workspaceZoom),
-            y: (event.offsetY - workspaceY) / zoomToScale(workspaceZoom) };
+        function addLogicalMousePosition(event) {
+          console.assert(!('logicalX' in event) && !('logicalX' in event));
+          // event.offsetX/Y are distorted when the mouse is
+          // over a popup window (even if over an invisible
+          // overflow part of it), hence we compute our own:
+          var offsetX = event.pageX - element.offset().left;
+          var offsetY = event.pageY - element.offset().top;
+          // Add location according to pan and zoom:
+          event.logicalX = (offsetX - workspaceX) / zoomToScale(workspaceZoom);
+          event.logicalY = (offsetY - workspaceY) / zoomToScale(workspaceZoom);
         }
         function actualDragMode(event) {
           var dragMode = (window.localStorage.getItem('drag_mode') || 'pan');
@@ -39,40 +44,35 @@ angular.module('biggraph')
 
         scope.onMouseMove = function(event) {
           event.preventDefault();
+          addLogicalMousePosition(event);
           if (workspaceDrag) {
             workspaceX += event.offsetX - mouseX;
             workspaceY += event.offsetY - mouseY;
           } else if (selectBoxes) {
-            var logicalPos = getLogicalPosition(event);
-            scope.workspace.selection.endX = logicalPos.x;
-            scope.workspace.selection.endY = logicalPos.y;
+            scope.workspace.selection.endX = event.logicalX;
+            scope.workspace.selection.endY = event.logicalY;
             scope.workspace.updateSelection();
             scope.workspace.selectBoxesInSelection();
-          } else if (moveSelection) {
-            scope.workspace.selection.startX += event.offsetX - mouseX;
-            scope.workspace.selection.endX += event.offsetX - mouseX;
-            scope.workspace.selection.startY += event.offsetY - mouseY;
-            scope.workspace.selection.endY += event.offsetY - mouseY;
-            scope.workspace.updateSelection();
           }
           mouseX = event.offsetX;
           mouseY = event.offsetY;
-          scope.workspace.onMouseMove(getLogicalPosition(event));
+          scope.workspace.onMouseMove(event);
         };
 
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
+          addLogicalMousePosition(event);
           scope.workspace.removeSelection();
-          scope.workspace.onMouseDownOnBox(box, getLogicalPosition(event));
+          scope.workspace.onMouseDownOnBox(box, event);
         };
 
         scope.onMouseUp = function(event) {
           element[0].style.cursor = '';
           workspaceDrag = false;
           selectBoxes = false;
-          moveSelection = false;
           scope.workspace.removeSelection();
-          scope.workspace.onMouseUp(getLogicalPosition(event));
+          addLogicalMousePosition(event);
+          scope.workspace.onMouseUp(event);
         };
 
         scope.onMouseDown = function(event) {
@@ -84,13 +84,13 @@ angular.module('biggraph')
             mouseX = event.offsetX;
             mouseY = event.offsetY;
           } else if (dragMode === 'select'){
-            var logicalPos = getLogicalPosition(event);
+            addLogicalMousePosition(event);
             selectBoxes = true;
             scope.workspace.selectedBoxIds = [];
-            scope.workspace.selection.endX = logicalPos.x;
-            scope.workspace.selection.endY = logicalPos.y;
-            scope.workspace.selection.startX = logicalPos.x;
-            scope.workspace.selection.startY = logicalPos.y;
+            scope.workspace.selection.endX = event.logicalX;
+            scope.workspace.selection.endY = event.logicalY;
+            scope.workspace.selection.startX = event.logicalX;
+            scope.workspace.selection.startY = event.logicalY;
             scope.workspace.updateSelection();
           }
         };
@@ -112,7 +112,7 @@ angular.module('biggraph')
           }
         }
 
-        element.on('wheel', function(event) {
+        element.find('svg').on('wheel', function(event) {
           event.preventDefault();
           var delta = event.originalEvent.deltaY;
           if (/Firefox/.test(window.navigator.userAgent)) {
@@ -140,7 +140,8 @@ angular.module('biggraph')
           var boxID = event.originalEvent.dataTransfer.getData('id');
           // This is received from operation-selector-entry.js
           scope.$apply(function() {
-            scope.workspace.addBox(operationID, getLogicalPosition(origEvent), boxID);
+            addLogicalMousePosition(origEvent);
+            scope.workspace.addBox(operationID, origEvent, boxID);
           });
         });
 

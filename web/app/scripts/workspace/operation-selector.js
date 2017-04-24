@@ -30,7 +30,6 @@ angular.module('biggraph').directive('operationSelector', function() {
               title: box.categoryID,
               ops: [],
               color: 'blue',
-              icon: 'wrench',
             };
             scope.categories.push(cat);
             categories[box.categoryID] = cat;
