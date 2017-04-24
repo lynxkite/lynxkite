@@ -96,9 +96,9 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
 
       // boxID should be used for test-purposes only
       addBox: function(operationId, x, y, boxId) {
-        var uniqueId = this.getUniqueId(operationId);
-        boxId = boxId || uniqueId;
-        var box = { id: boxId,
+        boxId = boxId || this.getUniqueId(operationId);
+        var box = {
+             id: boxId,
              operationID: operationId,
              x: x,
              y: y,
