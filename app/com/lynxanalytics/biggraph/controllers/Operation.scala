@@ -59,13 +59,15 @@ case class CustomOperationParameterMeta(
     s"'$kind' is not a valid parameter type.")
 }
 object CustomOperationParameterMeta {
-  val validKinds = Seq(
+  val validKinds = List(
     "text",
     "boolean",
     "code",
     "vertexattribute",
     "edgeattribute",
-    "segmentation")
+    "segmentation",
+    "scalar",
+    "column")
 }
 
 case class FEOperationSpec(
@@ -117,6 +119,7 @@ object Operation {
   type Factory = Context => Operation
   case class Context(
     user: serving.User,
+    ops: OperationRepository,
     box: Box,
     meta: BoxMetadata,
     inputs: Map[String, BoxOutputState],
@@ -161,6 +164,9 @@ object Operation {
               .toList
               .filter(_ != ""))
     }
+    implicit class OperationTable(table: Table) {
+      def columnList = FEOption.list(table.schema.map(_.name).toList)
+    }
   }
 }
 import Operation.Implicits._
@@ -183,19 +189,41 @@ trait OperationRegistry {
 
 // OperationRepository holds a registry of all operations.
 abstract class OperationRepository(env: SparkFreeEnvironment) {
+  implicit val metaGraphManager = env.metaGraphManager
   // The registry maps operation IDs to their constructors.
-  protected val operations: Map[String, (BoxMetadata, Operation.Factory)]
+  // "Atomic" operations (as opposed to custom boxes) are simply in a Map.
+  protected val atomicOperations: Map[String, (BoxMetadata, Operation.Factory)]
 
-  def getBoxMetadata(id: String) = operations(id)._1
+  private def getBox(id: String): (BoxMetadata, Operation.Factory) = {
+    if (atomicOperations.contains(id)) {
+      atomicOperations(id)
+    } else {
+      val frame = DirectoryEntry.fromName(id).asInstanceOf[WorkspaceFrame]
+      val ws = frame.workspace
+      (ws.getBoxMetadata(frame.path.toString), new CustomBoxOperation(ws, _))
+    }
+  }
 
-  def operationIds = operations.keys.toSeq
+  def getBoxMetadata(id: String) = getBox(id)._1
+
+  def atomicOperationIds = atomicOperations.keys.toSeq.sorted
+
+  def operationIds(user: serving.User) = {
+    val customBoxes = DirectoryEntry.fromName("").asDirectory
+      .listObjectsRecursively
+      .filter(_.readAllowedFrom(user))
+      .collect { case wsf: WorkspaceFrame => wsf }
+      .map(_.path.toString).toSet
+    val atomicBoxes = atomicOperations.keySet
+    (atomicBoxes ++ customBoxes).toSeq.sorted
+  }
 
   def opForBox(
     user: serving.User, box: Box, inputs: Map[String, BoxOutputState],
     workspaceParameters: Map[String, String]) = {
-    val (meta, factory) = operations(box.operationID)
+    val (meta, factory) = getBox(box.operationID)
     val context =
-      Operation.Context(user, box, meta, inputs, workspaceParameters, env.metaGraphManager)
+      Operation.Context(user, this, box, meta, inputs, workspaceParameters, env.metaGraphManager)
     factory(context)
   }
 }
@@ -207,14 +235,14 @@ trait BasicOperation extends Operation {
   protected val id = context.meta.operationID
   protected val title = id
   // Parameters without default values:
-  protected val parametricValues = context.box.parametricParameters.map {
+  protected lazy val parametricValues = context.box.parametricParameters.map {
     case (name, value) =>
       val result = com.lynxanalytics.sandbox.ScalaScript.run(
         "s\"\"\"" + value + "\"\"\"",
         context.workspaceParameters)
       name -> result
   }
-  protected val paramValues = context.box.parameters ++ parametricValues
+  protected lazy val paramValues = context.box.parameters ++ parametricValues
   // Parameters with default values:
   protected def params =
     parameters
@@ -371,19 +399,10 @@ abstract class ProjectTransformation(
   }
 }
 
-// A DecoratorOperation is an operation that has no input or output and is outside of the
-// Metagraph.
-abstract class DecoratorOperation(
+// A MinimalOperation defines simple defaults for everything.
+abstract class MinimalOperation(
     protected val context: Operation.Context) extends Operation {
-  assert(
-    context.meta.inputs == List(),
-    s"A DecoratorOperation must not have an input. $context")
-  assert(
-    context.meta.outputs == List(),
-    s"A DecoratorOperation must not have an output. $context")
-
-  protected def parameters: List[OperationParameterMeta]
-
+  protected def parameters: List[OperationParameterMeta] = List()
   protected val id = context.meta.operationID
   val title = id
   def summary = title
@@ -394,10 +413,19 @@ abstract class DecoratorOperation(
     List(),
     context.meta.categoryID,
     enabled)
-
-  def getOutputs() = Map()
-
+  def getOutputs() = ???
   def enabled = FEStatus.enabled
+}
+
+// A DecoratorOperation is an operation that has no input or output and is outside of the
+// Metagraph.
+abstract class DecoratorOperation(context: Operation.Context) extends MinimalOperation(context) {
+  assert(
+    context.meta.inputs == List(),
+    s"A DecoratorOperation must not have an input. $context")
+  assert(
+    context.meta.outputs == List(),
+    s"A DecoratorOperation must not have an output. $context")
 }
 
 abstract class TableOutputOperation(
@@ -443,4 +471,61 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
   }
 
   def getRawDataFrame(context: spark.sql.SQLContext): spark.sql.DataFrame
+}
+
+class CustomBoxOperation(
+    workspace: Workspace, val context: Operation.Context) extends BasicOperation {
+  lazy val parameters = {
+    val custom = workspace.parametersMeta
+    val tables = context.inputs.values.collect { case i if i.isTable => i.table }
+    val projects = context.inputs.values.collect { case i if i.isProject => i.project }
+    custom.map { p =>
+      val id = p.id
+      val dv = p.defaultValue
+      import OperationParams._
+      p.kind match {
+        case "text" => Param(id, id, dv)
+        case "boolean" => Choice(id, id, FEOption.bools)
+        case "code" => Code(id, id, "plain_text", dv)
+        case "vertexattribute" => Choice(id, id, projects.flatMap(_.vertexAttrList).toList)
+        case "edgeattribute" => Choice(id, id, projects.flatMap(_.edgeAttrList).toList)
+        case "segmentation" => Choice(id, id, projects.flatMap(_.segmentationList).toList)
+        case "scalar" => Choice(id, id, projects.flatMap(_.scalarList).toList)
+        case "column" => Choice(id, id, tables.flatMap(_.columnList).toList)
+      }
+    }.toList
+  }
+
+  def apply: Unit = ???
+  def enabled = FEStatus.enabled
+  override def allParameters = parameters
+
+  // Returns a version of the internal workspace in which the input boxes are patched to output the
+  // inputs connected to the custom box.
+  def connectedWorkspace = {
+    workspace.copy(boxes = workspace.boxes.map { box =>
+      if (box.operationID == "Input box" && box.parameters.contains("name")) {
+        new Box(
+          box.id, box.operationID, box.parameters, box.x, box.y, box.inputs,
+          box.parametricParameters) {
+          override def execute(
+            ctx: WorkspaceExecutionContext,
+            inputStates: Map[String, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
+            Map(this.output("input") -> context.inputs(this.parameters("name")))
+          }
+        }
+      } else box
+    })
+  }
+
+  def getOutputs = {
+    val ws = connectedWorkspace
+    val states = ws.context(context.user, context.ops, params).allStates
+    val byOutput = ws.boxes.flatMap { box =>
+      if (box.operationID == "Output box" && box.parameters.contains("name"))
+        Some(box.parameters("name") -> states(box.inputs("output")))
+      else None
+    }.toMap
+    context.meta.outputs.map(output => output.ofBox(context.box) -> byOutput(output.id)).toMap
+  }
 }

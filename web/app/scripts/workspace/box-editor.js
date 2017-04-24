@@ -9,31 +9,27 @@ angular.module('biggraph')
       templateUrl: 'scripts/workspace/box-editor.html',
       scope: {
         workspace: '=',
+        boxId: '=',
       },
       link: function(scope) {
-        scope.$watch(
-            'workspace.selectedBoxIds[0]',
-            function(boxId) {
-              scope.loadBoxMeta(boxId);});
         // The metadata (param definition list) of the current box
         // depends on the whole workspace. (Attributes added by
         // previous operations, state of apply_to_ parameters of
         // current box.) If this deepwatch is a performance problem,
-        // then we can put a timestamp in workspace and watch that,
-        // or only deepwatch the current selected box (and assume
-        // box selection has to change to edit other boxes).
+        // then we can put a timestamp in workspace and watch that
+        // instead of workspace.backendState.
         util.deepWatch(
             scope,
-            'workspace.backendState',
+            '[workspace.backendState, boxId]',
             function() {
-              if (!scope.workspace) {
+              if (!scope.boxId) {
                 return;
               }
-              scope.loadBoxMeta(scope.workspace.selectedBoxIds[0]);
+              scope.loadBoxMeta(scope.boxId);
             });
 
-        scope.paramValues = {};
-        scope.parametricParams = {};
+        scope.plainParamValues = {};
+        scope.parametricParamValues = {};
 
         scope.loadBoxMeta = function(boxId) {
           if (!scope.workspace) {
@@ -44,9 +40,6 @@ angular.module('biggraph')
             scope.boxMeta = undefined;
             return;
           }
-          // Temporary hack (until popups are implemented) to force-refresh operation help.
-          if (scope.boxMeta) { scope.boxMeta.htmlId = undefined; }
-          
           var box = scope.workspace.getBox(boxId);
           // Checking currentRequest makes sure that the response
           // to the result of the latest getOperationMetaRequest
@@ -93,7 +86,8 @@ angular.module('biggraph')
             // Copy defaults for unset parameters.
             for (var i = 0; i < boxMeta.parameters.length; ++i) {
               var p = boxMeta.parameters[i];
-              if (paramValues[p.id] !== undefined) {
+              if ((paramValues[p.id] !== undefined) ||
+                  (scope.parametricParamValues[p.id] !== undefined)) {
                 // Parameter is not unset.
               } else if (p.options.length === 0) {
                 paramValues[p.id] = p.defaultValue;
@@ -104,14 +98,14 @@ angular.module('biggraph')
               }
             }
             if (!angular.equals(paramValues, scope.paramValues)) {
-              scope.paramValues = paramValues;
+              scope.plainParamValues = paramValues;
             }
         };
 
         function onBlurNow() {
           if (scope.box) {
-            scope.workspace.updateBox(scope.box.instance.id, scope.paramValues,
-                        scope.parametricParams);
+            scope.workspace.updateBox(scope.box.instance.id, scope.plainParamValues,
+                        scope.parametricParamValues);
           }
         }
 

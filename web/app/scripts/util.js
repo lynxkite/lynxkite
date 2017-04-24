@@ -153,6 +153,19 @@ angular.module('biggraph').factory('util', function utilFactory(
       return scope.$watch(expr, fun, true);
     },
 
+    // Move an element from one dictionary to another
+    // After this completes, we want the src dictionary to not contain
+    // the element, and the dst dictionary to contain the element.
+    move: function(key, src, dst) {
+        if (key in src) {
+            dst[key] = src[key];
+            delete src[key];
+        } else if(! (key in dst)) {
+            console.log('key ' + key + ' not present in either dictionaries!');
+        }
+    },
+
+
     // Json GET with caching and parameter wrapping.
     get: function(url, params) { return getResource(url, params, { cache: true }); },
 
