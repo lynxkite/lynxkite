@@ -840,6 +840,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("dist", "Distribution", options = FEOption.list(graph_operations.RandomDistribution.getNames)),
       RandomSeed("seed", "Seed"))
     def enabled = project.hasVertexSet
+    override def summary = {
+      val dist = params("dist").toLowerCase
+      s"Add $dist vertex attribute"
+    }
     def apply() = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.AddRandomAttribute(params("seed").toInt, params("dist"))
@@ -854,6 +858,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("dist", "Distribution", options = FEOption.list(graph_operations.RandomDistribution.getNames)),
       RandomSeed("seed", "Seed"))
     def enabled = project.hasEdgeBundle
+    override def summary = {
+      val dist = params("dist").toLowerCase
+      s"Add $dist edge attribute"
+    }
     def apply() = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.AddRandomAttribute(params("seed").toInt, params("dist"))
