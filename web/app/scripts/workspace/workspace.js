@@ -251,7 +251,7 @@ angular.module('biggraph')
           for (var i = 0; i < clipboard.length; ++i) {
             var box = clipboard[i].instance;
             var diffX = clipboard[i].width;
-            var createdBox =  this.addBox(
+            var createdBox =  this.wrapper.addBox(
               box.operationID,
               currentPosition.x + box.x + 1.1 * diffX,
               currentPosition.y + box.y + 10);
@@ -271,6 +271,7 @@ angular.module('biggraph')
               }
             }
           }
+          this.saveWorkspace();
         },
 
         deleteBoxes: function(boxIds) {
