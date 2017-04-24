@@ -19,6 +19,7 @@ angular.module('biggraph')
       window.localStorage.setItem('drag_mode', dragMode);
     });
 
+  // Do not cache box catalog, so that custom boxes are up to date.
   $scope.boxCatalog = util.nocache('/ajax/boxCatalog');
   $scope.$watch(
     'boxCatalog.$resolved',

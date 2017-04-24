@@ -6,9 +6,12 @@ import com.lynxanalytics.biggraph.frontend_operations.Operations
 
 object HelpInventory extends App {
   val hiddenOps = Set("create-enhanced-example-graph")
-  val ops = new Operations(null)
+  val ops = new Operations(new SparkFreeEnvironment {
+    def metaGraphManager = null
+    def entityProgressManager = null
+  })
   val fos = new java.io.FileOutputStream(args.head)
-  for (op <- ops.operationIds.map(Operation.htmlID).sorted) {
+  for (op <- ops.atomicOperationIds.map(Operation.htmlID).sorted) {
     if (!hiddenOps.contains(op)) {
       fos.write(op.getBytes("UTF-8"))
       fos.write('\n')

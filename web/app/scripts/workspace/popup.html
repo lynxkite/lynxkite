@@ -1,0 +1,34 @@
+<div class="popup"
+    id="{{popupModel.id}}"
+    ng-style="{
+        'left': popupModel.x + 'px',
+        'top': popupModel.y + 'px',
+        'width': popupModel.width + 'px',
+        'height': popupModel.height + 'px',
+    }">
+  <div
+      class="popup-head"
+      ng-mousedown="popupModel.onMouseDown($event)">
+    {{popupModel.title}}
+    <div class="clicky pull-right glyphicon glyphicon-remove"
+        ng-click="popupModel.close(); event.stopPropagation();"
+        id="close-popup"
+        tooltip="Close&nbsp;popup"
+        tooltip-append-to-body="true"
+        tooltip-placement="bottom">
+    </div>
+  </div>
+  <div class="popup-content"
+        ng-mousedown="$event.stopPropagation()"
+        ng-mouseup="$event.stopPropagation()">
+    <box-editor ng-if="popupModel.content.type === 'box'"
+        workspace="workspace"
+        box-id="popupModel.content.boxId">
+    </box-editor>
+    <state-view ng-if="popupModel.content.type === 'plug'"
+        workspace="workspace"
+        box-id="popupModel.content.boxId"
+        plug-id="popupModel.content.plugId">
+    </state-view>
+  </div>
+</div>

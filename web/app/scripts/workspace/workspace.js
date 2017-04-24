@@ -22,8 +22,9 @@
 // 5. saveWorkspace()
 // 6. GOTO 2
 
-angular.module('biggraph')
-  .factory('workspace', function(workspaceWrapper, util, $interval) {
+angular.module('biggraph').factory(
+  'workspace',
+  function(workspaceWrapper, PopupModel, util, $interval) {
     return function(boxCatalog, workspaceName) {
       var progressUpdater;
 
@@ -55,6 +56,8 @@ angular.module('biggraph')
           width: undefined,
           height: undefined
         },
+
+        popups: [],
 
         updateSelection: function(){
           this.selection.leftX = Math.min(this.selection.startX, this.selection.endX);
@@ -129,10 +132,15 @@ angular.module('biggraph')
           return this.wrapper.boxMap[id];
         },
 
-        updateBox: function(id, paramValues, parametricParameters) {
+        getOutputPlug: function(boxId, plugId) {
+          return this.getBox(boxId).outputMap[plugId];
+        },
+
+        updateBox: function(id, plainParamValues, parametricParamValues) {
           var box = this.getBox(id).instance;
-          if (!angular.equals(paramValues, box.parameters)) {
-            this.wrapper.setBoxParams(id, paramValues, parametricParameters);
+          if (!angular.equals(plainParamValues, box.parameters) ||
+              !angular.equals(parametricParamValues, box.parametricParameters)) {
+            this.wrapper.setBoxParams(id, plainParamValues, parametricParamValues);
             this.saveWorkspace();
           }
         },
@@ -156,33 +164,23 @@ angular.module('biggraph')
             box.instance.y < sb.upperY + sb.height);
         },
 
-        selectState: function(boxID, outputID) {
-          var outPlug = this.wrapper.boxMap[boxID].outputMap[outputID];
-          this.selectedStateId = outPlug.stateID;
-          this.selectedStateKind = outPlug.kind;
-        },
-
-        selectPlug: function(plug) {
-          this.selectedPlug = plug;
-          if (plug.direction === 'outputs') {
-            this.selectState(plug.boxId, plug.id);
-          } else {
-            this.selectedState = undefined;
-          }
-        },
-
-        onMouseMove: function(mouseLogical) {
-          this.mouseLogical = mouseLogical;
-          if (event.buttons === 1 && this.movedBoxes) {
-            for(i = 0; i < this.movedBoxes.length; i++){
-              this.movedBoxes[i].onMouseMove(this.mouseLogical);
+        onMouseMove: function(event) {
+          this.mouseLogical = {
+            x: event.logicalX,
+            y: event.logicalY,
+          };
+          if (this.movedBoxes) {
+            for (var i = 0; i < this.movedBoxes.length; i++) {
+              this.movedBoxes[i].onMouseMove(event);
             }
+          } else if (this.movedPopup) {
+            this.movedPopup.onMouseMove(event);
           }
         },
 
         onMouseUp: function() {
-          if(this.movedBoxes){
-            for(i = 0; i < this.movedBoxes.length; i++){
+          if (this.movedBoxes) {
+            for (var i = 0; i < this.movedBoxes.length; i++) {
               if (this.movedBoxes[i].isMoved) {
                 this.saveWorkspace();
                 break;
@@ -191,9 +189,10 @@ angular.module('biggraph')
           }
           this.movedBoxes = undefined;
           this.pulledPlug = undefined;
+          this.movedPopup = undefined;
         },
 
-        onMouseDownOnBox: function(box, mouseLogical, ctrl) {
+        onMouseDownOnBox: function(box, event, ctrl) {
           var selectedBoxes = this.selectedBoxes();
           if (selectedBoxes.indexOf(box) === -1) {
             if (!ctrl) {
@@ -201,15 +200,66 @@ angular.module('biggraph')
             }
             this.selectBox(box.instance.id);
             this.movedBoxes = [box];
-            this.movedBoxes[0].onMouseDown(mouseLogical);
+            this.movedBoxes[0].onMouseDown(event);
           } else if (ctrl) {
             var selectedIndex = this.selectedBoxIds.indexOf(box.instance.id);
             this.selectedBoxIds.splice(selectedIndex, selectedIndex);
+            this.movedBoxes[0].onMouseDown(event);
           } else {
             this.movedBoxes = selectedBoxes;
             this.movedBoxes.map(function(b) {
-              b.onMouseDown(mouseLogical);});
+              b.onMouseDown(event);
+            });
           }
+        },
+
+        closePopup: function(id) {
+          for (var i = 0; i < this.popups.length; ++i) {
+            if (this.popups[i].id === id) {
+              this.popups.splice(i, 1);
+              return true;
+            }
+          }
+          return false;
+        },
+
+        onClickOnPlug: function(plug, event) {
+          event.stopPropagation();
+          if (plug.direction === 'outputs') {
+            var model = new PopupModel(
+              plug.boxId + '_' + plug.id,
+              plug.boxId + '::' + plug.id,
+              {
+                type: 'plug',
+                boxId: plug.boxId,
+                plugId: plug.id,
+              },
+              event.pageX - 300,
+              event.pageY + 15,
+              600,
+              400,
+              this);
+            model.toggle();
+          }
+        },
+
+        onMouseUpOnBox: function(box, event) {
+          if (box.isMoved || this.pulledPlug) {
+            return;
+          }
+          var model = new PopupModel(
+            box.instance.id,
+            box.instance.id,
+            {
+              type: 'box',
+              boxId: box.instance.id,
+            },
+            event.pageX - 200,
+            event.pageY + 60,
+            400,
+            600,
+            this);
+          model.toggle();
         },
 
         onMouseDownOnPlug: function(plug, event) {
@@ -226,16 +276,6 @@ angular.module('biggraph')
               this.saveWorkspace();
             }
           }
-          if (!this.pulledPlug || this.pulledPlug !== plug) {
-            this.selectPlug(plug);
-          }
-        },
-
-        // boxID should be used for test-purposes only
-        addBox: function(operationId, pos, boxID) {
-          var box = this.wrapper.addBox(operationId, pos.x, pos.y, boxID);
-          this.saveWorkspace();
-          return box;
         },
 
         clipboard: [],
@@ -247,6 +287,17 @@ angular.module('biggraph')
         pasteBoxes: function(currentPosition) {
           this.wrapper.pasteFromClipboard(this.clipboard, currentPosition);
           this.saveWorkspace();
+        },
+
+        // boxID should be used for test-purposes only
+        addBox: function(operationId, event, boxID) {
+          var box = this.wrapper.addBox(
+              operationId,
+              event.logicalX,
+              event.logicalY,
+              boxID);
+          this.saveWorkspace();
+          return box;
         },
 
         deleteBoxes: function(boxIds) {
