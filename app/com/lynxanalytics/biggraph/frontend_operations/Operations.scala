@@ -1407,7 +1407,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = project.hasVertexSet
     override def summary = {
       val name = params("output")
-      s"Derive vertex attribute ($name)"
+      val expr = params("expr")
+      s"Derive vertex attribute: $name = $expr"
     }
     def apply() = {
       assert(params("output").nonEmpty, "Please set an output attribute name.")
@@ -1445,7 +1446,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = project.hasEdgeBundle
     override def summary = {
       val name = params("output")
-      s"Derive edge attribute ($name)"
+      val expr = params("expr")
+      s"Derive edge attribute: $name = $expr"
     }
     def apply() = {
       val expr = params("expr")
@@ -1496,7 +1498,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = FEStatus.enabled
     override def summary = {
       val name = params("output")
-      s"Derive scalar ($name)"
+      val expr = params("expr")
+      s"Derive scalar: $name = $expr"
     }
     def apply() = {
       val expr = params("expr")
