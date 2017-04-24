@@ -28,7 +28,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import Operation.Implicits._
 
   private val projectInput = "project" // The default input name, just to avoid typos.
-  private val projectOutput = TypedConnection("project", BoxOutputKind.Project)
+  private val projectOutput = "project"
 
   def register(
     id: String,

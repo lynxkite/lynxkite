@@ -31,9 +31,7 @@ case class Workspace(
   def getBoxMetadata(name: String): BoxMetadata = {
     val inputs = boxes.filter(_.operationID == "Input box").flatMap(b => b.parameters.get("name"))
     val outputs = boxes.filter(_.operationID == "Output box").flatMap(b => b.parameters.get("name"))
-    // TODO: Remove type annotation from outputs?
-    BoxMetadata(
-      "Custom boxes", name, inputs, outputs.map(o => TypedConnection(o, BoxOutputKind.Project)))
+    BoxMetadata("Custom boxes", name, inputs, outputs)
   }
 
   def context(
@@ -116,12 +114,7 @@ case class WorkspaceExecutionContext(
     val statesWithCircularDependency = dependencies.withCircularDependency.flatMap { box =>
       val meta = ops.getBoxMetadata(box.operationID)
       meta.outputs.map { o =>
-        o.ofBox(box) ->
-          BoxOutputState(
-            o.kind,
-            None,
-            FEStatus.disabled("Can not compute state due to circular dependencies.")
-          )
+        box.output(o) -> BoxOutputState.error("Can not compute state due to circular dependencies.")
       }
     }.toMap
     statesWithoutCircularDependency ++ statesWithCircularDependency
@@ -133,7 +126,7 @@ case class WorkspaceExecutionContext(
 
     def allOutputsWithError(msg: String): Map[BoxOutput, BoxOutputState] = {
       meta.outputs.map {
-        o => o.ofBox(box) -> BoxOutputState(o.kind, None, FEStatus.disabled(msg))
+        o => box.output(o) -> BoxOutputState.error(msg)
       }.toMap
     }
 
@@ -211,13 +204,6 @@ case class Box(
   }
 }
 
-case class TypedConnection(
-    id: String,
-    kind: String) {
-  BoxOutputKind.assertKind(kind)
-  def ofBox(box: Box) = box.output(id)
-}
-
 case class BoxOutput(
   boxID: String,
   id: String)
@@ -226,12 +212,13 @@ case class BoxMetadata(
   categoryID: String,
   operationID: String,
   inputs: List[String],
-  outputs: List[TypedConnection])
+  outputs: List[String])
 
 object BoxOutputKind {
   val Project = "project"
   val Table = "table"
-  val validKinds = Set(Project, Table)
+  val Error = "error"
+  val validKinds = Set(Project, Table, Error)
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
 }
@@ -245,6 +232,10 @@ object BoxOutputState {
 
   def from(table: graph_api.Table): BoxOutputState = {
     BoxOutputState(BoxOutputKind.Table, Some(json.Json.obj("guid" -> table.gUID)))
+  }
+
+  def error(msg: String): BoxOutputState = {
+    BoxOutputState(BoxOutputKind.Error, None, FEStatus.disabled(msg))
   }
 }
 
@@ -261,8 +252,8 @@ case class BoxOutputState(
   def isTable = kind == BoxOutputKind.Table
 
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
-    assert(isProject, s"Tried to access '$kind' as 'project'.")
     assert(success.enabled, success.disabledReason)
+    assert(isProject, s"Tried to access '$kind' as 'project'.")
     import CheckpointRepository.fCommonProjectState
     val p = state.get.as[CommonProjectState]
     val rps = RootProjectState.emptyState.copy(state = p)
@@ -270,8 +261,8 @@ case class BoxOutputState(
   }
 
   def table(implicit manager: graph_api.MetaGraphManager): graph_api.Table = {
-    assert(isTable, s"Tried to access '$kind' as 'table'.")
     assert(success.enabled, success.disabledReason)
+    assert(isTable, s"Tried to access '$kind' as 'table'.")
     import graph_api.MetaGraphManager.StringAsUUID
     manager.table((state.get \ "guid").as[String].asUUID)
   }
@@ -280,7 +271,6 @@ case class BoxOutputState(
 object WorkspaceJsonFormatters {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fFEStatus
   implicit val fBoxOutput = json.Json.format[BoxOutput]
-  implicit val fTypedConnection = json.Json.format[TypedConnection]
   implicit val fBoxOutputState = json.Json.format[BoxOutputState]
   implicit val fBox = json.Json.format[Box]
   implicit val fBoxMetadata = json.Json.format[BoxMetadata]
