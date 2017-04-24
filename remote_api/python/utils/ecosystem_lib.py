@@ -82,6 +82,10 @@ arg_parser.add_argument(
     help='''The "expiration date" of this cluster in "YYYYmmdd" format.
   After this date the 'owner' will be asked if the cluster can
   be shut down.''')
+arg_parser.add_argument(
+    '--applications',
+    help='''Applications to start on the cluster like Hive, Hue, Pig... as
+  a coma separated list. (e.g. "Hive,Hue").''')
 
 
 class Ecosystem:
@@ -99,6 +103,7 @@ class Ecosystem:
         'rm': args.rm,
         'owner': args.owner,
         'expiry': args.expiry,
+        'applications': args.applications,
     }
     self.lynxkite_config = {
         'biggraph_releases_dir': args.biggraph_releases_dir,
@@ -131,7 +136,8 @@ class Ecosystem:
         owner=conf['owner'],
         expiry=conf['expiry'],
         instance_count=conf['emr_instance_count'],
-        hdfs_replication=conf['hdfs_replication'])
+        hdfs_replication=conf['hdfs_replication'],
+        applications=conf['applications'])
     self.instances = [self.cluster]
     # Spin up a mysql RDS instance only if requested.
     if conf['with_rds']:

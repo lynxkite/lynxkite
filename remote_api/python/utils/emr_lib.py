@@ -93,7 +93,8 @@ class EMRLib:
   def create_or_connect_to_emr_cluster(
           self, name, log_uri, owner, expiry,
           instance_count=2,
-          hdfs_replication='2'):
+          hdfs_replication='2',
+          applications=''):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
@@ -110,6 +111,9 @@ class EMRLib:
         '-Dcom.sun.management.jmxremote.authenticate=false ' \
         '-Dcom.sun.management.jmxremote.ssl=false ' \
         '-Dcom.sun.management.jmxremote.port={port} ${{{name}}}"'
+    emr_applications = []
+    if applications:
+      emr_applications = [{'Name': app} for app in applications.split(',')]
     res = self.emr_client.run_job_flow(
         Name=name,
         LogUri=log_uri,
@@ -155,6 +159,7 @@ class EMRLib:
                 }
             }
         ],
+        Applications=emr_applications,
         JobFlowRole="EMR_EC2_DefaultRole",
         VisibleToAllUsers=True,
         ServiceRole="EMR_DefaultRole",
