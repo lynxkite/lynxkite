@@ -5,8 +5,30 @@
     <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
   </label>
   <div class="col-sm-8 operation-attribute-input" id="{{param.id}}">
-    <input type="checkbox" ng-model="parametric[param.id]"> parametric
-    <input ng-if="param.kind === 'default'"
+    <i class="fa fa-dollar parametric-switch"
+       drop-tooltip="Parametric: {{ parametricFlags[param.id] ? 'yes' : 'no' }}"
+       drop-tooltip-position="top center"
+       ng-class="{ active: parametricFlags[param.id] === true }"
+       ng-click="parametricFlags[param.id] = !parametricFlags[param.id]">
+    </i>
+    <div
+      ui-ace="{
+        mode: 'plain_text',
+        showGutter: false,
+        rendererOptions: {
+          fontSize: '16px'
+        },
+        advanced: {
+          behavioursEnabled: false,
+          useWorker: false
+        },
+        onLoad: onLoad,
+      }"
+      class="form-control operation-attribute-entry"
+      ng-if="parametricFlags[param.id] === true"
+      ng-model="parametric[param.id]"
+      ng-disabled="!editable"></div>
+    <input ng-if="param.kind === 'default' && parametricFlags[param.id] !== true"
         class="form-control operation-attribute-entry"
         ng-model="output[param.id]"
         ng-submit="onBlur()"
@@ -25,24 +47,24 @@
         onLoad: onLoad,
       }"
       class="form-control operation-attribute-entry"
-      ng-if="param.kind === 'code'"
+      ng-if="param.kind === 'code'  && parametricFlags[param.id] !== true"
       ng-model="output[param.id]"
       ng-disabled="!editable"></div>
-    <file-parameter ng-if="param.kind === 'file'"
+    <file-parameter ng-if="param.kind === 'file' && parametricFlags[param.id] !== true"
         editable="editable"
         model="output[param.id]"
         on-blur="onBlur()"
         file-uploads="fileUploads.count"
         class="operation-attribute-entry">
     </file-parameter>
-    <model-parameter ng-if="param.kind === 'model'"
+    <model-parameter ng-if="param.kind === 'model' && parametricFlags[param.id] !== true"
         param="param"
         editable="editable"
         model-json="output[param.id]"
         class="operation-attribute-entry">
     </model-parameter>
     <table-kind
-      ng-if="param.kind === 'imported-table'"
+      ng-if="param.kind === 'imported-table' && parametricFlags[param.id] !== true"
       box="box"
       params="output"
       guid="output[param.id]"
@@ -52,14 +74,15 @@
     </table-kind>
     <select
       ng-disabled="!editable"
-      ng-if="(param.kind === 'choice' && !param.multipleChoice) || (param.kind === 'segmentation')"
+      ng-if="((param.kind === 'choice' && !param.multipleChoice) || (param.kind === 'segmentation'))
+        && parametricFlags[param.id] !== true"
       class="form-control operation-attribute-entry"
       ng-model="output[param.id]"
       ng-change="onBlur()"
       ng-options="option.id as option.title for option in param.options"></select>
     <select
       ng-disabled="!editable"
-      ng-if="param.kind === 'choice' && param.multipleChoice"
+      ng-if="param.kind === 'choice' && param.multipleChoice && parametricFlags[param.id] !== true"
       multiple
       ng-attr-size="{{ param.options.length }}"
       class="form-control operation-attribute-entry"
@@ -68,7 +91,7 @@
       ng-options="option.id as option.title for option in param.options"></select>
     <tag-list
       editable="editable"
-      ng-if="param.kind === 'tag-list'"
+      ng-if="param.kind === 'tag-list' && parametricFlags[param.id] !== true"
       model="multiOutput[param.id]"
       on-blur="onBlur()"
       options="param.options"

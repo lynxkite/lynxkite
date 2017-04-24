@@ -110,14 +110,14 @@ angular.module('biggraph').factory('boxWrapper', function() {
       mainPosTransform: function() {
         return 'translate(' + this.instance.x + ', ' + this.instance.y + ')';
       },
-      onMouseMove: function(mousePos) {
+      onMouseMove: function(event) {
         this.isMoved = true;
-        this.instance.x = mousePos.x + this.xOffset;
-        this.instance.y = mousePos.y + this.yOffset;
+        this.instance.x = event.logicalX + this.xOffset;
+        this.instance.y = event.logicalY + this.yOffset;
       },
-      onMouseDown: function(mousePos) {
-        this.xOffset = this.instance.x - mousePos.x;
-        this.yOffset = this.instance.y - mousePos.y;
+      onMouseDown: function(event) {
+        this.xOffset = this.instance.x - event.logicalX;
+        this.yOffset = this.instance.y - event.logicalY;
       },
     };
   };
