@@ -13,8 +13,8 @@ module.exports = function(fw) {
       lib.workspace.duplicate();
     },
     function() {
-      lib.workspace.selectBox('Create-example-graph_1'); // Fails if there is no box
-      lib.workspace.selectBox('Compute-PageRank_1');
-      lib.workspace.expectSelectedBoxSelectParameter('direction', 'string:outgoing edges');
+      lib.workspace.openBoxEditor('Create-example-graph_1').close(); // Fails if there is no box
+      var pr = lib.workspace.openBoxEditor('Compute-PageRank_1');
+      pr.expectSelectParameter('direction', 'string:outgoing edges');
     });
 };
