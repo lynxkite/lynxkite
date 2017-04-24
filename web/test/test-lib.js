@@ -160,6 +160,13 @@ Workspace.prototype = {
         'operation-parameters #' + param + ' .operation-attribute-entry'));
   },
 
+  duplicate: function() {
+    browser.actions()
+        .sendKeys(K.chord(K.CONTROL, 'c'))
+        .sendKeys(K.chord(K.CONTROL, 'v'))
+        .perform();
+  },
+
   populateOperation: function(params) {
     params = params || {};
     for (var key in params) {
@@ -193,6 +200,16 @@ Workspace.prototype = {
 
   selectBox(boxID) {
     this.getBox(boxID).$('rect').click();
+  },
+
+  selectBoxes(boxIds) {
+    // Without this, we would just add additional boxes to the previous selection
+    this.selectBox(boxIds[0]);
+    browser.actions().keyDown(protractor.Key.CONTROL).perform();
+    for (var i = 1; i < boxIds.length; ++i) {
+      this.selectBox(boxIds[i]);
+    }
+    browser.actions().keyUp(protractor.Key.CONTROL).perform();
   },
 
   editBox: function(boxID, params) {
