@@ -2,7 +2,11 @@ table-state-view {
   overflow: auto;
 }
 
-#table-samle th {
+#table-sample {
+  margin-top: 10px;
+}
+
+#table-sample th {
   cursor: pointer; /* Click to sort. */
   user-select: none;
 }
@@ -24,6 +28,16 @@ table-state-view {
 
 .no-break {
   white-space: nowrap;
+}
+
+#table-sample-spinner {
+  animation: spinner 4s infinite linear;
+  font-size: 30px;
+  opacity: 0.8;
+  /* For some reason it is positioned higher than the buttons and screws up the layout.
+   * This is a simple workaround. */
+  line-height: 0;
+  top: 10px;
 }
 
 
