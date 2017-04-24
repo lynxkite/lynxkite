@@ -69,7 +69,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val summaries = workspace.boxes.map(
       box => box.id -> (
         try { context.getOperationForStates(box, states).summary }
-        catch { case e: Exception => box.operationID }
+        catch { case e: AssertionError => box.operationID }
       )
     ).toMap
     GetWorkspaceResponse(workspace, stateInfo, summaries)
