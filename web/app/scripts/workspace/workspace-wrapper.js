@@ -203,6 +203,8 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
             box.operationID,
             currentPosition.x + box.x + 1.1 * diffX,
             currentPosition.y + box.y + 10);
+          createdBox.parameters = box.parameters;
+          createdBox.parametricParameters = box.parametricParameters;
           mapping[box.id] = createdBox;
         }
         for (i = 0; i < clipboard.length; ++i) {
