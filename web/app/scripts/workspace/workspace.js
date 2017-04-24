@@ -193,13 +193,18 @@ angular.module('biggraph')
           this.pulledPlug = undefined;
         },
 
-        onMouseDownOnBox: function(box, mouseLogical) {
+        onMouseDownOnBox: function(box, mouseLogical, ctrl) {
           var selectedBoxes = this.selectedBoxes();
           if (selectedBoxes.indexOf(box) === -1) {
-            this.selectedBoxIds = [];
+            if (!ctrl) {
+              this.selectedBoxIds = [];
+            }
             this.selectBox(box.instance.id);
             this.movedBoxes = [box];
             this.movedBoxes[0].onMouseDown(mouseLogical);
+          } else if (ctrl) {
+            var selectedIndex = this.selectedBoxIds.indexOf(box.instance.id);
+            this.selectedBoxIds.splice(selectedIndex, selectedIndex);
           } else {
             this.movedBoxes = selectedBoxes;
             this.movedBoxes.map(function(b) {
