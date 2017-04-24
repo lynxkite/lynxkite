@@ -17,7 +17,6 @@ angular.module('biggraph')
         scope.inProgress = 0;
 
         scope.getSample = function() {
-          console.log('x');
           scope.inProgress = 1;
           scope.table = util.get('/ajax/getTableOutput', {
             id: scope.stateId,
@@ -39,10 +38,6 @@ angular.module('biggraph')
           scope.sampleRows += scope.showMoreRowsIncrement();
           scope.getSample();
         };
-
-//        scope.$watch('stateId', function() {
-//          scope.table = scope.getSample();
-//        });
 
         scope.sort = {
           column: undefined,
