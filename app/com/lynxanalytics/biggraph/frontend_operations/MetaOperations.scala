@@ -34,8 +34,7 @@ class MetaOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   registerOp(
     "Input box", OtherBoxes,
-    // TODO: Remove type annotation from outputs?
-    List(), List(TypedConnection("input", BoxOutputKind.Project)),
+    List(), List("input"),
     new MinimalOperation(_) {
       override def parameters = List(Param("name", "Name"))
     })
