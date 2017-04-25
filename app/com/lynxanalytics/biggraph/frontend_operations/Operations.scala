@@ -1258,6 +1258,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
     def enabled = FEStatus.assert(
       project.vertexAttrList[Double].nonEmpty, "No numeric (double) vertex attributes")
+    override def summary = {
+      val name = params("keyattr")
+      s"Add rank attribute for '$name'"
+    }
     def apply() = {
       val keyAttr = params("keyattr")
       val rankAttr = params("rankattr")
