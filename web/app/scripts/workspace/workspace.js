@@ -150,7 +150,7 @@ angular.module('biggraph').factory(
           this.selectedBoxIds = [];
           for (var i = 0; i < boxes.length; i++) {
             var box = boxes[i];
-            if(this.inSelection(box)){
+            if (this.inSelection(box)){
               this.selectedBoxIds.push(box.instance.id);
             }
           }
@@ -158,7 +158,7 @@ angular.module('biggraph').factory(
 
         inSelection: function(box){
           var sb = this.selection;
-          return(sb.leftX < box.instance.x + box.width &&
+          return (sb.leftX < box.instance.x + box.width &&
             box.instance.x < sb.leftX + sb.width &&
             sb.upperY < box.instance.y + box.height &&
             box.instance.y < sb.upperY + sb.height);
@@ -283,7 +283,7 @@ angular.module('biggraph').factory(
         },
 
         deleteBoxes: function(boxIds) {
-          for(i = 0; i < boxIds.length; i+=1) {
+          for (i = 0; i < boxIds.length; i+=1) {
             if (boxIds[i] === 'anchor') {
               util.error('Anchor box cannot be deleted.');
             } else {

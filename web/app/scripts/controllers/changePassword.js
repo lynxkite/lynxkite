@@ -1,4 +1,4 @@
-// The "/changepassword" page 
+// The "/changepassword" page
 'use strict';
 
 angular.module('biggraph')
@@ -21,12 +21,12 @@ angular.module('biggraph')
           newPassword: $scope.newPassword,
           newPassword2: $scope.newPassword2,
         }).$status.then(function(success){
-          $scope.passwordChangeWaiting = false; 
+          $scope.passwordChangeWaiting = false;
           if (success) {
             $scope.passwordChangeSucceeded = true;
           } else {
             $scope.passwordChangeFailed = true;
-            $scope.passwordChangeDisabled = false; 
+            $scope.passwordChangeDisabled = false;
           }
         });
     };
