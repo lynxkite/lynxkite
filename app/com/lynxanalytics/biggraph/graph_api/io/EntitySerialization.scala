@@ -34,16 +34,16 @@ abstract class EntitySerializer[-T](val name: String) extends Serializable {
   def unsafeSerialize(t: Any): BytesWritable = serialize(t.asInstanceOf[T])
 }
 
-class UnitSerializer extends EntitySerializer[Unit]("unit") {
+class UnitSerializer extends EntitySerializer[Unit]("Unit") {
   @transient lazy val empty = new BytesWritable()
   def serialize(t: Unit) = empty
 }
 
-class StringSerializer extends EntitySerializer[String]("string") {
+class StringSerializer extends EntitySerializer[String]("String") {
   def serialize(t: String) = new BytesWritable(t.getBytes("utf-8"))
 }
 
-class DoubleSerializer extends EntitySerializer[Double]("double") {
+class DoubleSerializer extends EntitySerializer[Double]("Double") {
   @transient lazy val bytes = new Array[Byte](8)
   @transient lazy val bw = new BytesWritable(bytes)
   @transient lazy val bb = ByteBuffer.wrap(bytes)
@@ -53,7 +53,7 @@ class DoubleSerializer extends EntitySerializer[Double]("double") {
   }
 }
 
-class EdgeSerializer extends EntitySerializer[Edge]("edge") {
+class EdgeSerializer extends EntitySerializer[Edge]("Edge") {
   @transient lazy val bytes = new Array[Byte](16)
   @transient lazy val bw = new BytesWritable(bytes)
   @transient lazy val bb = ByteBuffer.wrap(bytes)
@@ -67,13 +67,13 @@ class EdgeSerializer extends EntitySerializer[Edge]("edge") {
 // This serializer is not for speed, but for reliability. Scala sets are complex types internally
 // and we don't know the full set of classes that we would need to register with Kryo to be sure
 // we can successfully serialize them.
-class SetSerializer extends EntitySerializer[Set[_]]("set") {
+class SetSerializer extends EntitySerializer[Set[_]]("Set") {
   def serialize(t: Set[_]) = {
     new BytesWritable(RDDUtils.kryoSerialize(t.toVector))
   }
 }
 
-class KryoSerializer[T: TypeTag] extends EntitySerializer[T](s"kryo[${typeOf[T]}]") {
+class KryoSerializer[T: TypeTag] extends EntitySerializer[T](s"Kryo[${typeOf[T]}]") {
   def serialize(t: T) = {
     new BytesWritable(RDDUtils.kryoSerialize(t))
   }
@@ -91,12 +91,12 @@ object EntityDeserializer {
   def forName[T: TypeTag](name: String): EntityDeserializer[T] = {
     val stripped = name.replaceFirst("\\[.*", "") // Drop Kryo type note.
     val d: EntityDeserializer[T] = stripped match {
-      case "unit" => castDeserializer(new UnitDeserializer)
-      case "string" => castDeserializer(new StringDeserializer)
-      case "double" => castDeserializer(new DoubleDeserializer)
-      case "edge" => castDeserializer(new EdgeDeserializer)
-      case "set" => SetDeserializer[T]()
-      case "kryo" => new KryoDeserializer[T]
+      case "Unit" => castDeserializer(new UnitDeserializer)
+      case "String" => castDeserializer(new StringDeserializer)
+      case "Double" => castDeserializer(new DoubleDeserializer)
+      case "Edge" => castDeserializer(new EdgeDeserializer)
+      case "Set" => SetDeserializer[T]()
+      case "Kryo" => new KryoDeserializer[T]
       case _ => throw new AssertionError(s"Cannot find deserializer for $name.")
     }
     assert(d.name == stripped, s"Bad deserializer mapping. $name mapped to ${d.name}.")
@@ -107,26 +107,26 @@ abstract class EntityDeserializer[+T](val name: String) extends Serializable {
   def deserialize(bw: BytesWritable): T
 }
 
-class UnitDeserializer extends EntityDeserializer[Unit]("unit") {
+class UnitDeserializer extends EntityDeserializer[Unit]("Unit") {
   def deserialize(bw: BytesWritable) = ()
 }
 
-class KryoDeserializer[T] extends EntityDeserializer[T]("kryo") {
+class KryoDeserializer[T] extends EntityDeserializer[T]("Kryo") {
   def deserialize(bw: BytesWritable) = RDDUtils.kryoDeserialize[T](bw.getBytes)
 }
 
-class StringDeserializer extends EntityDeserializer[String]("string") {
+class StringDeserializer extends EntityDeserializer[String]("String") {
   def deserialize(bw: BytesWritable) = new String(bw.getBytes, 0, bw.getLength, "utf-8")
 }
 
-class DoubleDeserializer extends EntityDeserializer[Double]("double") {
+class DoubleDeserializer extends EntityDeserializer[Double]("Double") {
   def deserialize(bw: BytesWritable) = {
     val bb = ByteBuffer.wrap(bw.getBytes)
     bb.getDouble
   }
 }
 
-class EdgeDeserializer extends EntityDeserializer[Edge]("edge") {
+class EdgeDeserializer extends EntityDeserializer[Edge]("Edge") {
   def deserialize(bw: BytesWritable) = {
     val bb = ByteBuffer.wrap(bw.getBytes)
     Edge(bb.getLong(0), bb.getLong(8))
@@ -144,10 +144,10 @@ object SetDeserializer {
     val tt = typeTag[T]
     val args = TypeTagUtil.typeArgs(tt)
     // If it has more or less than 1 type args, it is definitely not a Set.
-    assert(args.size == 1, s"set is for Set[_], not ${tt.tpe}")
+    assert(args.size == 1, s"Set is for Set[_], not ${tt.tpe}")
     fromTypeTag(tt, args(0))
   }
 }
-class SetDeserializer[DT] extends EntityDeserializer[Set[DT]]("set") {
+class SetDeserializer[DT] extends EntityDeserializer[Set[DT]]("Set") {
   def deserialize(bw: BytesWritable) = RDDUtils.kryoDeserialize[Vector[DT]](bw.getBytes).toSet
 }

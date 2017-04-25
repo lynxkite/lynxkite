@@ -67,7 +67,7 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
       .box("Convert edge attribute to double", Map("attr" -> "call"))
       .box("Derive edge attribute", Map(
         "output" -> "call",
-        "type" -> "double",
+        "type" -> "Double",
         "expr" -> "call == 6.0 ? call : undefined"))
       .box("Merge parallel edges", Map(
         "aggregate_src" -> "most_common",

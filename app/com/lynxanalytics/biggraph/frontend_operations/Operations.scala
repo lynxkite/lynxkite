@@ -1467,16 +1467,16 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val onlyOnDefinedAttrs = params.getOrElse("defined_attrs", "true").toBoolean
 
       val result = params("type") match {
-        case "string" =>
+        case "String" =>
           graph_operations.DeriveJS.deriveFromAttributes[String](
             expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
-        case "double" =>
+        case "Double" =>
           graph_operations.DeriveJS.deriveFromAttributes[Double](
             expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
-        case "vector of strings" =>
+        case "Vector of Strings" =>
           graph_operations.DeriveJS.deriveFromAttributes[Vector[String]](
             expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
-        case "vector of doubles" =>
+        case "Vector of Doubles" =>
           graph_operations.DeriveJS.deriveFromAttributes[Vector[Double]](
             expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
       }
@@ -1521,16 +1521,16 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val onlyOnDefinedAttrs = params.getOrElse("defined_attrs", "true").toBoolean
 
       val result = params("type") match {
-        case "string" =>
+        case "String" =>
           graph_operations.DeriveJS.deriveFromAttributes[String](
             expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
-        case "double" =>
+        case "Double" =>
           graph_operations.DeriveJS.deriveFromAttributes[Double](
             expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
-        case "vector of strings" =>
+        case "Vector of Strings" =>
           graph_operations.DeriveJS.deriveFromAttributes[Vector[String]](
             expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
-        case "vector of doubles" =>
+        case "Vector of Doubles" =>
           graph_operations.DeriveJS.deriveFromAttributes[Vector[Double]](
             expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
       }
@@ -1541,7 +1541,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Derive scalar", GlobalOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Param("output", "Save as"),
-      Choice("type", "Result type", options = FEOption.list("double", "string")),
+      Choice("type", "Result type", options = FEOption.list("Double", "String")),
       Code("expr", "Value", defaultValue = "1 + 1", language = "javascript"))
     def enabled = FEStatus.enabled
     override def summary = {
@@ -1553,9 +1553,9 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val expr = params("expr")
       val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val result = params("type") match {
-        case "string" =>
+        case "String" =>
           graph_operations.DeriveJSScalar.deriveFromScalars[String](expr, namedScalars)
-        case "double" =>
+        case "Double" =>
           graph_operations.DeriveJSScalar.deriveFromScalars[Double](expr, namedScalars)
       }
       project.scalars(params("output")) = result.sc
