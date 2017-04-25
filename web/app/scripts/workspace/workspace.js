@@ -88,7 +88,7 @@ angular.module('biggraph').factory(
             })
             .then(function(response) {
               var state = response.workspace;
-              for(i = 0; i< state.boxes.length; i++) {
+              for (i = 0; i< state.boxes.length; i++) {
                 state.boxes[i].summary = response.summaries[state.boxes[i].id];
               }
               that.backendState = state;
