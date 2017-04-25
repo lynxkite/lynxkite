@@ -128,8 +128,8 @@ angular.module('biggraph').directive('importWizard', function($q, util) {
       }
 
       function fillCSVFromData(csv, data) {
-        csv.filename  = data.files;
-        csv.columnNames  = joinCSVLine(data.columnNames);
+        csv.filename = data.files;
+        csv.columnNames = joinCSVLine(data.columnNames);
         csv.delimiter = data.delimiter;
         csv.mode = data.mode;
         csv.infer = data.infer;
