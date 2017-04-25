@@ -54,9 +54,9 @@ case class Workspace(
   // Tries to determine a topological order among boxes. All boxes with a circular dependency and
   // ones that depend on another with a circular dependency are returned unordered.
   private[controllers] def discoverDependencies: Dependencies = {
-    val outEdges: Map[Box, Set[Box]] = {
-      val edges = boxes.flatMap(dst => dst.inputs.map(input => findBox(input._2.boxID) -> dst))
-      edges.groupBy(_._1).mapValues(_.map(_._2).toSet)
+    val outEdges: Map[String, Seq[String]] = {
+      val edges = boxes.flatMap(dst => dst.inputs.toSeq.map(input => input._2.boxID -> dst.id))
+      edges.groupBy(_._1).mapValues(_.map(_._2).toSeq)
     }
 
     // Determines the topological order by selecting a node without in-edges, removing the node and
@@ -74,10 +74,10 @@ case class Workspace(
             withCircularDependency = remainingBoxInDegrees.map(_._1)
           )
         } else {
-          val dependants = outEdges.getOrElse(nextBox, Set())
+          val dependants = outEdges.getOrElse(nextBox.id, Seq())
           val updatedInDegrees = remainingBoxInDegrees.withFilter(_._1 != nextBox)
             .map {
-              case (box, degree) => (box, if (dependants.contains(box)) degree - 1 else degree)
+              case (box, degree) => (box, degree - dependants.filter(_ == box.id).size)
             }.map(identity)
           discover(nextBox :: reversedTopologicalOrder, updatedInDegrees)
         }
