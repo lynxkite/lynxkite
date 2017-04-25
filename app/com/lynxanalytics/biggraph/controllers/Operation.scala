@@ -20,7 +20,8 @@ case class FEOperationMeta(
   visibleScalars: List[FEScalar],
   category: String = "",
   status: FEStatus = FEStatus.enabled,
-  color: Option[String] = None)
+  color: Option[String] = None,
+  description: Option[String] = None)
 
 object FEOperationParameterMeta {
   val validKinds = Seq(
@@ -295,7 +296,8 @@ trait BasicOperation extends Operation {
     allParameters.map { param => param.toFE },
     visibleScalars,
     context.meta.categoryID,
-    enabled)
+    enabled,
+    description = context.meta.description)
 
   protected def projectInput(input: String): ProjectEditor = {
     val segPath = SubProject.splitPipedPath(paramValues.getOrElse("apply_to_" + input, ""))

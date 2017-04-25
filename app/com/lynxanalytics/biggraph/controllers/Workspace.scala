@@ -15,7 +15,9 @@ case class Workspace(
     s"Duplicate box name: ${dups.mkString(", ")}"
   })
 
-  assert(findBox("anchor").operationID == "Anchor", "Anchor box is missing.")
+  assert(anchor.operationID == "Anchor", "Anchor box is missing.")
+
+  def anchor = findBox("anchor")
 
   def findBox(id: String): Box = {
     assert(boxMap.contains(id), s"Cannot find box: $id")
@@ -23,15 +25,15 @@ case class Workspace(
   }
 
   def parametersMeta: Seq[CustomOperationParameterMeta] = {
-    val anchor = findBox("anchor")
     OperationParams.ParametersParam.parse(anchor.parameters.get("parameters"))
   }
 
   // This workspace as a custom box.
   def getBoxMetadata(name: String): BoxMetadata = {
+    val description = anchor.parameters.getOrElse("description", "")
     val inputs = boxes.filter(_.operationID == "Input box").flatMap(b => b.parameters.get("name"))
     val outputs = boxes.filter(_.operationID == "Output box").flatMap(b => b.parameters.get("name"))
-    BoxMetadata("Custom boxes", name, inputs, outputs)
+    BoxMetadata("Custom boxes", name, inputs, outputs, description = Some(description))
   }
 
   def context(
@@ -212,7 +214,8 @@ case class BoxMetadata(
   categoryID: String,
   operationID: String,
   inputs: List[String],
-  outputs: List[String])
+  outputs: List[String],
+  description: Option[String] = None)
 
 object BoxOutputKind {
   val Project = "project"
