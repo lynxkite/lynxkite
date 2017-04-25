@@ -1,11 +1,19 @@
 <div class="col-sm-12">
   <h3>Table sample</h3>
   <div>
-    <span>maximum number of rows in sample: {{sampleRows}}</span>
-    <button class="btn btn-primary" id="get-sample-button" ng-click="showMoreRows()">
-      Show {{ showMoreRowsIncrement() }} more rows
+    <span>maximum number of rows: </span>
+    <input class="form-control ng-pristine ng-valid ng-touched"
+           type="number"
+           min="0"
+           id="max-rows"
+           ng-model="sampleRows">
+    <button class="btn btn-primary" id="get-sample-button" ng-click="getSample()">
+      Show sample
     </button>
-    <span id="table-sample-spinner" class="glyphicon glyphicon-cog" ng-if="inProgress"></span>
+    <button class="btn btn-primary" id="more-rows-button" ng-click="showMoreRows()">
+      + {{ showMoreRowsIncrement() }} rows
+    </button>
+    <span id="table-sample-spinner" class="glyphicon glyphicon-cog" ng-if="!table.$resolved"></span>
   </div>
   <table ng-if="table.data" class="table table-striped table-bordered" id="table-sample">
     <thead>
