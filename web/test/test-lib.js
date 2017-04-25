@@ -968,7 +968,8 @@ testLib = {
             defer.reject(new Error(error));  // TODO: include message?
           } else {
             func(defer);
-          }});
+          }
+        });
       return defer.promise;
     }
     return browser.controlFlow().execute(sendRequest);

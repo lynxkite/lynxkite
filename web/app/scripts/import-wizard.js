@@ -31,8 +31,7 @@ angular.module('biggraph').directive('importWizard', function($q, util) {
         parameters.asView = scope.asView;
         if (scope.limit) {
           parameters.limit = parseInt(scope.limit);
-        }
-        else {
+        } else {
           parameters.limit = null;
         }
 
