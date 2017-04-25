@@ -109,22 +109,21 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
             var that = this;
             util
               .nocache(
-                  '/ajax/getTableBrowserNodes',
-                  {
-                    'path': this.absolutePath,
-                    'isImplicitTable': this.objectType === 'table'
-                  })
+                '/ajax/getTableBrowserNodes', {
+                  'path': this.absolutePath,
+                  'isImplicitTable': this.objectType === 'table'
+                })
               .then(function(result) {
-                  var srcList = result.list || [];
-                  that.list = [];
-                  for (var i = 0; i < srcList.length; ++i) {
-                    that.list[i] = createNode(
-                        that,
-                        srcList[i].name,
-                        srcList[i].absolutePath,
-                        srcList[i].objectType,
-                        srcList[i].columnType);
-                  }
+                var srcList = result.list || [];
+                that.list = [];
+                for (var i = 0; i < srcList.length; ++i) {
+                  that.list[i] = createNode(
+                    that,
+                    srcList[i].name,
+                    srcList[i].absolutePath,
+                    srcList[i].objectType,
+                    srcList[i].columnType);
+                }
               });
           },
 
@@ -151,25 +150,25 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
                 });
             }
             promise.then(function(result) {
-                that.list = [];
-                var i = 0;
-                for (i = 0; i < result.directories.length; ++i) {
-                  var path = result.directories[i];
-                  that.list.push(createNode(
-                      that,
-                      that.childPathToName(path),
-                      path,
-                      'directory'));
-                }
-                for (i = 0; i < result.objects.length; ++i) {
-                  var obj = result.objects[i];
-                  that.list.push(createNode(
-                      that,
-                      that.childPathToName(obj.name),
-                      obj.name,
-                      obj.objectType));
-                }
-              });
+              that.list = [];
+              var i = 0;
+              for (i = 0; i < result.directories.length; ++i) {
+                var path = result.directories[i];
+                that.list.push(createNode(
+                    that,
+                    that.childPathToName(path),
+                    path,
+                    'directory'));
+              }
+              for (i = 0; i < result.objects.length; ++i) {
+                var obj = result.objects[i];
+                that.list.push(createNode(
+                    that,
+                    that.childPathToName(obj.name),
+                    obj.name,
+                    obj.objectType));
+              }
+            });
           },
 
           // Queries the server and populates the list
@@ -210,10 +209,8 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
               }
             }
           },
-
         };
       }
-      
     }
   };
 });

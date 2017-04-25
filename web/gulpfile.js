@@ -83,11 +83,11 @@ gulp.task('dist', ['clean:dist', 'asciidoctor', 'genTemplates', 'html'], functio
     'app/*.{png,svg}',
     'app/images/**',
     'app/**/*.html', '!app/index.html',
-    ], { base: 'app' });
+  ], { base: 'app' });
   // Move fonts to where the relative URLs will find them.
   var bootstrapFonts = gulp.src([
     'node_modules/bootstrap/dist/fonts/*',
-    ], { base: 'node_modules/bootstrap/dist' });
+  ], { base: 'node_modules/bootstrap/dist' });
   var fontAwesomeFonts = gulp.src([
     'node_modules/font-awesome/fonts/*',
   ], {base: 'node_modules/font-awesome'});
@@ -198,9 +198,9 @@ function runProtractor(url, done) {
     var jar = jars[jars.length - 1]; // Take the latest version.
     spawn(
       protractorDir + 'bin/protractor', [
-      'test/protractor.conf.js',
-      '--seleniumServerJar', jar,
-      '--baseUrl', url + '/'],
+        'test/protractor.conf.js',
+        '--seleniumServerJar', jar,
+        '--baseUrl', url + '/'],
       { stdio: 'inherit' }).once('close', done);
   });
 }

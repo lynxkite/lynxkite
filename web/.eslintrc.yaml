@@ -13,6 +13,8 @@
     semi:
       - error
       - always
+    no-console:
+      - warn
   parserOptions:
     ecmaVersion: 6
   globals:

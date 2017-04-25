@@ -108,6 +108,7 @@ angular.module('biggraph')
       $scope,
       function() { return $location.search(); },
       function(after, before) {
+        /* eslint-disable no-console */
         var beforeState = parseState(before);
         // We are only interested in this change, if the old URL reflected
         // the current state. Otherwise the change in the state triggered the
@@ -174,6 +175,7 @@ angular.module('biggraph')
     var randomChannel = 'channel-' + Math.random().toString(36);
     $scope.linkChannel = sessionStorage.getItem('link') || randomChannel;
     sessionStorage.setItem('link', $scope.linkChannel);
+    /* eslint-disable no-console */
     console.log('link channel is:', $scope.linkChannel);
 
     // Handle state change and reload notifications from other windows.

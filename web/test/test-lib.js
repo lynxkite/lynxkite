@@ -1,10 +1,6 @@
 'use strict';
 
 var testLib; // Forward declarations.
-var TableBrowser; // Forward declarations.
-var BoxEditor;
-var Side;
-var State;
 var request = require('request');
 var fs = require('fs');
 
@@ -782,7 +778,7 @@ Selector.prototype = {
       document.styleSheets[0].insertRule(
         '.spark-status, .bottom-links { position: static !important; }');
         `);
-      },
+  },
 
   openDirectory: function(name) {
     this.directory(name).click();
@@ -947,7 +943,8 @@ testLib = {
             defer.reject(new Error(error));
           } else {
             defer.fulfill();
-      }});
+          }
+        });
     }
     this.authenticateAndPost('admin', 'adminpw', 'lynxkite', discard);
   },
@@ -1172,7 +1169,7 @@ testLib = {
   expectNoClass(element, cls) {
     expect(element.getAttribute('class')).toBeDefined();
     element.getAttribute('class').then(function(classes) {
-          expect(classes.split(' ').indexOf(cls)).toBe(-1);
+      expect(classes.split(' ').indexOf(cls)).toBe(-1);
     });
   },
 
@@ -1186,7 +1183,7 @@ testLib = {
     browser.getAllWindowHandles()
       .then(handles => {
         browser.driver.switchTo().window(handles[pos]);
-    });
+      });
   },
 
   showSelector: function() {

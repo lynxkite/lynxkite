@@ -1,7 +1,7 @@
 // Assorted utility functions.
 'use strict';
 
-/* exported COMMON_UTIL */
+/* eslint-disable no-unused-vars */
 var COMMON_UTIL = {
   minmax: function(xs) {
     var Inf = parseFloat('Infinity');

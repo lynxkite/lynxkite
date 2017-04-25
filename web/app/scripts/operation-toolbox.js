@@ -31,7 +31,7 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
             scope.categoriesCallback().then(
               function (result) {
                 scope.categories = result.categories;
-            });
+              });
           }
           scope.editMode = true;
           $rootScope.$broadcast('close all other history toolboxes', scope);
@@ -125,6 +125,7 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
             return;
           }
         }
+        /* eslint-disable no-console */
         console.error('Could not find category for', op.id);
       });
 
