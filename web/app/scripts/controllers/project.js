@@ -242,9 +242,13 @@ angular.module('biggraph')
           var key = localStorage.key(i);
           var parts = key.split(':');
           var channel = null;
-          if (key.indexOf('channel-') === 0) { channel = key; }
-          else if (parts[0] === 'reload') { channel = parts[1]; }
-          else if (parts[0] === 'pong') { channel = parts[1]; }
+          if (key.indexOf('channel-') === 0) {
+            channel = key;
+          } else if (parts[0] === 'reload') {
+            channel = parts[1];
+          } else if (parts[0] === 'pong') {
+            channel = parts[1];
+          }
           if (channel !== null && channel !== $scope.linkChannel && !pongs[channel]) {
             localStorage.removeItem(key);
           }
