@@ -903,7 +903,7 @@ Selector.prototype = {
 var splash = new Selector(element(by.id('splash')));
 
 function randomPattern () {
-  /* jshint bitwise: false */
+  /* eslint-disable no-bitwise */
   var crypto = require('crypto');
   var buf = crypto.randomBytes(16);
   var sixteenLetters = 'abcdefghijklmnop';

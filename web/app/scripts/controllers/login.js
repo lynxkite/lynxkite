@@ -28,7 +28,7 @@ angular.module('biggraph')
     };
 
     $scope.googleLogin = function(googleUser) {
-      /* jshint camelcase: false */
+      /* eslint-disable camelcase */
       if (!googleUser) { return; }
       var id_token = googleUser.getAuthResponse().id_token;
       console.log(
