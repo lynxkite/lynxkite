@@ -56,7 +56,7 @@ module.exports = function(fw) {
       // Convert the predictions to a more convenient format to test.
       lib.left.runOperation('Derive vertex attribute', {
         output: 'age_prediction',
-        type: 'double',
+        type: 'Double',
         expr: 'age_prediction | 0'});
       lib.left.runOperation('Convert vertex attribute to string', {attr: 'age_prediction'});
       expect(lib.left.vertexAttribute('age_prediction').getHistogramValues()).toEqual([

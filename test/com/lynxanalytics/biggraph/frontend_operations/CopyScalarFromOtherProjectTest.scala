@@ -8,7 +8,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
     val other = box("Create example graph")
       .box("Derive scalar", Map(
         "output" -> "scalar_val",
-        "type" -> "double",
+        "type" -> "Double",
         "expr" -> "42.0"))
     val project = box("Create example graph")
       .box("Copy scalar from other project", Map(
@@ -33,7 +33,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
       .box("Derive scalar", Map(
         "apply_to_project" -> "|seg",
         "output" -> "scalar_val",
-        "type" -> "string",
+        "type" -> "String",
         "expr" -> "'myvalue'"))
     val project = box("Create example graph")
       .box("Copy scalar from other project", Map(
@@ -70,7 +70,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
       .box("Derive scalar", Map(
         "apply_to_project" -> "|seg|seg2",
         "output" -> "deep_scalar",
-        "type" -> "string",
+        "type" -> "String",
         "expr" -> "'deep value'"))
     val project = box("Create example graph")
       .box("Copy scalar from other project", Map(

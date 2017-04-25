@@ -24,7 +24,7 @@ module.exports = function(fw) {
       lib.left.runOperation('Convert vertex attribute to double', { attr: 'ordinal' });
       lib.left.runOperation('Derive vertex attribute', {
         'output': 'seg',
-        'type': 'double',
+        'type': 'Double',
         'expr': 'ordinal % 4'});
       // values of attribute seg now: [0, 0, 0, 1, 1, 1, 2, 2, 3, 3]
       lib.left.runOperation('Segment by double attribute', {
