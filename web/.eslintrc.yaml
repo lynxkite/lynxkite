@@ -12,6 +12,8 @@
     no-console: [warn]
     eol-last: [error]
     brace-style: [error, 1tbs, { allowSingleLine: true }]
+    curly: [error]
+    space-before-blocks: [error]
   parserOptions:
     ecmaVersion: 6
   globals:
