@@ -102,6 +102,7 @@ div.popup-head {
   font-weight: bold;
   padding: 3px;
   height: 35px;
+  cursor: default;
 }
 
 div.popup-content {
