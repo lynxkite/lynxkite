@@ -10,6 +10,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Visualization up to 10&times; faster in some cases.
  - Added _Discard segmentation links_ operation.
  - Added _Merge parallel segmentation links_ operation.
+ - Fixed the type of numeric values coming from Oracle databases.
 
 ### 1.13.0
 
