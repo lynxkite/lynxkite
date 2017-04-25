@@ -14,16 +14,11 @@ angular.module('biggraph')
       },
       link: function(scope) {
         scope.sampleRows = 10;
-        scope.inProgress = 0;
 
         scope.getSample = function() {
-          scope.inProgress = 1;
           scope.table = util.get('/ajax/getTableOutput', {
             id: scope.stateId,
             sampleRows: scope.sampleRows,
-          });
-          scope.table.finally( function() {
-            scope.inProgress = 0;
           });
         };
 
