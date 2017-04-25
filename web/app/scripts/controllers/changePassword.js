@@ -20,7 +20,7 @@ angular.module('biggraph')
           oldPassword: $scope.oldPassword,
           newPassword: $scope.newPassword,
           newPassword2: $scope.newPassword2,
-        }).$status.then(function(success){
+        }).$status.then(function(success) {
           $scope.passwordChangeWaiting = false;
           if (success) {
             $scope.passwordChangeSucceeded = true;
