@@ -876,6 +876,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("value", "Value", defaultValue = "1"),
       Choice("type", "Type", options = FEOption.list("Double", "String")))
     def enabled = project.hasEdgeBundle
+    override def summary = {
+      val name = params("name")
+      val value = params("value")
+      s"Add constant edge attribute: $name = $value"
+    }
     def apply() = {
       val res = {
         if (params("type") == "Double") {
@@ -894,6 +899,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("value", "Value", defaultValue = "1"),
       Choice("type", "Type", options = FEOption.list("Double", "String")))
     def enabled = project.hasVertexSet
+    override def summary = {
+      val name = params("name")
+      val value = params("value")
+      s"Add constant vertex attribute: $name = $value"
+    }
     def apply() = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val value = params("value")
@@ -916,6 +926,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       def enabled = FEStatus.assert(
         (project.vertexAttrList[String] ++ project.vertexAttrList[Double]).nonEmpty,
         "No vertex attributes.")
+      override def summary = {
+        val name = params("attr")
+        s"Fill vertex attribute '$name' with constant default value"
+      }
       def apply() = {
         val attr = project.vertexAttributes(params("attr"))
         val op: graph_operations.AddConstantAttribute[_] =
@@ -937,6 +951,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       def enabled = FEStatus.assert(
         (project.edgeAttrList[String] ++ project.edgeAttrList[Double]).nonEmpty,
         "No edge attributes.")
+      override def summary = {
+        val name = params("attr")
+        s"Fill edge attribute '$name' with constant default value"
+      }
       def apply() = {
         val attr = project.edgeAttributes(params("attr"))
         val op: graph_operations.AddConstantAttribute[_] =
@@ -954,6 +972,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("attr2", "Secondary attribute", options = project.vertexAttrList))
     def enabled = FEStatus.assert(
       project.vertexAttrList.size >= 2, "Not enough vertex attributes.")
+    override def summary = {
+      val name1 = params("attr1")
+      val name2 = params("attr2")
+      s"Merge two vertex attributes: $name1, $name2"
+    }
     def apply() = {
       val name = params("name")
       assert(name.nonEmpty, "You must specify a name for the new attribute.")
@@ -972,6 +995,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("attr2", "Secondary attribute", options = project.edgeAttrList))
     def enabled = FEStatus.assert(
       project.edgeAttrList.size >= 2, "Not enough edge attributes.")
+    override def summary = {
+      val name1 = params("attr1")
+      val name2 = params("attr2")
+      s"Merge two edge attributes: $name1, $name2"
+    }
     def apply() = {
       val name = params("name")
       assert(name.nonEmpty, "You must specify a name for the new attribute.")
