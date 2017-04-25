@@ -64,7 +64,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
             if (inputs.hasOwnProperty(inputName)) {
               var input = inputs[inputName];
               var src = this.boxMap[input.boxID];
-              if (src){
+              if (src) {
                 var srcPlug = this._lookupArrowEndpoint(
                   src.outputs, input.id);
                 var dstPlug = this._lookupArrowEndpoint(

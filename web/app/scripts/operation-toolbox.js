@@ -130,7 +130,7 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
       });
 
       scope.$watch('op', function(opId) {
-        if (!scope.categories){
+        if (!scope.categories) {
           return;
         }
 
