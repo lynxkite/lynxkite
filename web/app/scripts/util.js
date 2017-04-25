@@ -56,6 +56,7 @@ angular.module('biggraph').factory('util', function utilFactory(
           return;
         }
       }
+      /* eslint-disable no-console */
       console.error('Could not find finished request in the queue:', request, q);
     },
   };
@@ -80,7 +81,7 @@ angular.module('biggraph').factory('util', function utilFactory(
       '/ajax/center',
       '/ajax/getDataFilesStatus',
       '/ajax/model',
-      ];
+    ];
     // Some requests may trigger substantial calculation on the backend. If we
     // make many slow requests in parallel we can easily exhaust the browser's
     // parallel connection limit. (The limit depends on the browser. It is 6 for
@@ -157,12 +158,13 @@ angular.module('biggraph').factory('util', function utilFactory(
     // After this completes, we want the src dictionary to not contain
     // the element, and the dst dictionary to contain the element.
     move: function(key, src, dst) {
-        if (key in src) {
-            dst[key] = src[key];
-            delete src[key];
-        } else if(! (key in dst)) {
-            console.log('key ' + key + ' not present in either dictionaries!');
-        }
+      if (key in src) {
+        dst[key] = src[key];
+        delete src[key];
+      } else if(! (key in dst)) {
+        /* eslint-disable no-console */
+        console.error('Key "' + key + '" is not present in either dictionary!');
+      }
     },
 
 
@@ -190,6 +192,7 @@ angular.module('biggraph').factory('util', function utilFactory(
       if (x === undefined) { return '?'; }
       if (typeof x !== 'number') { return x; }
       if (isNaN(x)) { return x; }
+      /* eslint-disable no-constant-condition */
       for (var i = 0; true; ++i) {
         if (x < 1000 || i === siSymbols.length - 1) {
           return x + siSymbols[i];
@@ -403,6 +406,7 @@ angular.module('biggraph').factory('util', function utilFactory(
       } else if (scalar.computeProgress === COMPUTE_PROGRESS_ERROR) {
         constructValueForError();
       } else {
+        /* eslint-disable no-console */
         console.error('Unknown computation state for scalar in ', scalar);
       }
 

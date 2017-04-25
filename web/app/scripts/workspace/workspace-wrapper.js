@@ -87,23 +87,22 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
       // boxID should be used for test-purposes only
       addBox: function(operationId, x, y, boxId) {
         var usedIds = this.state.boxes.map(function(box) {
-            return box.id;
-          });
+          return box.id;
+        });
         var cnt = 1;
         while(usedIds.includes(operationId.replace(/ /g, '-') + '_' + cnt)) {
           cnt += 1;
         }
         boxId = boxId || operationId.replace(/ /g, '-') + '_' + cnt;
-        this.state.boxes.push(
-            {
-              id: boxId,
-              operationID: operationId,
-              x: x,
-              y: y,
-              inputs: {},
-              parameters: {},
-              parametricParameters: {}
-            });
+        this.state.boxes.push({
+          id: boxId,
+          operationID: operationId,
+          x: x,
+          y: y,
+          inputs: {},
+          parameters: {},
+          parametricParameters: {}
+        });
         this._build();
       },
 

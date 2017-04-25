@@ -22,6 +22,7 @@ angular.module('biggraph')
         var mouseY = 0;
         function zoomToScale(z) { return Math.exp(z * 0.001); }
         function addLogicalMousePosition(event) {
+          /* eslint-disable no-console */
           console.assert(!('logicalX' in event) && !('logicalY' in event));
           console.assert(!('workspaceX' in event) && !('workspaceY' in event));
           // event.offsetX/Y are distorted when the mouse is

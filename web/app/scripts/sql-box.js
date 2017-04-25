@@ -7,7 +7,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
     scope: {
       side: '=?',
       directory: '=?',
-     },
+    },
     templateUrl: 'sql-box.html',
     link: function(scope) {
       scope.inProgress = 0;
@@ -149,21 +149,21 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
       };
 
       scope.offerWithPath = function() {
-         if (typeof scope.directory !== 'undefined') {
-           if (scope.directory === '') {
-             return '';
-           } else {
-             return scope.directory + '/';
-           }
-         } else {
-           if (typeof scope.project !== 'undefined') {
-             var proj = scope.project;
-             var lastSepIndex = proj.lastIndexOf('/');
-             return proj.substring(0, lastSepIndex + 1);
-           } else {
-             return '';
-           }
-         }
+        if (typeof scope.directory !== 'undefined') {
+          if (scope.directory === '') {
+            return '';
+          } else {
+            return scope.directory + '/';
+          }
+        } else {
+          if (typeof scope.project !== 'undefined') {
+            var proj = scope.project;
+            var lastSepIndex = proj.lastIndexOf('/');
+            return proj.substring(0, lastSepIndex + 1);
+          } else {
+            return '';
+          }
+        }
       };
 
       scope.$watch('exportFormat', function(exportFormat) {
@@ -211,11 +211,10 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
           result = util.post('/ajax/exportSQLQueryToTable', req, postOpts);
         } else if (scope.exportFormat === 'segmentation') {
           result = scope.side.applyOp(
-              'Create-segmentation-from-SQL',
-              {
-                name: scope.exportSegmentation,
-                sql: scope.sql
-              });
+            'Create-segmentation-from-SQL', {
+              name: scope.exportSegmentation,
+              sql: scope.sql
+            });
         } else if (scope.exportFormat === 'view') {
           req.name = scope.exportKiteTable;
           req.privacy = 'public-read';
