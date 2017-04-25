@@ -161,7 +161,7 @@ angular.module('biggraph').factory('util', function utilFactory(
       if (key in src) {
         dst[key] = src[key];
         delete src[key];
-      } else if(! (key in dst)) {
+      } else if (! (key in dst)) {
         /* eslint-disable no-console */
         console.error('Key "' + key + '" is not present in either dictionary!');
       }

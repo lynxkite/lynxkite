@@ -15,10 +15,10 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
       scope.maxRows = 10;
       scope.maxPersistedHistoryLength = 100;
 
-      if(!!scope.side && scope.directoryDefined) {
+      if (!!scope.side && scope.directoryDefined) {
         throw 'can not be both defined: scope.side, scope.directory';
       }
-      if(!scope.side && !scope.directoryDefined) {
+      if (!scope.side && !scope.directoryDefined) {
         throw 'one of them needs to be defined: scope.side, scope.directory';
       }
       scope.isGlobal = !scope.side;
@@ -41,7 +41,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
             if (!Array.isArray(history)) {
               throw 'sqlHistory is not an array';
             }
-          } catch(e) {
+          } catch (e) {
             history = [];
             window.localStorage.setItem('sqlHistory', angular.toJson([]));
           }

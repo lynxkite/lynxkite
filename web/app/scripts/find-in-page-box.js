@@ -63,7 +63,7 @@ angular.module('biggraph').directive('findInPageBox', function() {
       function wrapTextNodeInHighlightElem(node, selectionId) {
         var highlightElem = document.createElement('span');
         highlightElem.className =
-          'find-highlight find-highlight-' + selectionId; 
+          'find-highlight find-highlight-' + selectionId;
         var nodeClone = node.cloneNode(true);
         highlightElem.appendChild(nodeClone);
         node.parentNode.replaceChild(highlightElem, node);
