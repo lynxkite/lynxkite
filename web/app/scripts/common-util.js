@@ -34,7 +34,7 @@ var COMMON_UTIL = {
 
   // Java's hash function in JS.
   hashCode: function(text) {
-    /* jshint bitwise: false */
+    /* eslint-disable no-bitwise */
     var hash = 0;
     for (var i = 0; i < text.length; ++i) {
       hash = hash * 31 + text.charCodeAt(i);

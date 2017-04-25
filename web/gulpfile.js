@@ -37,7 +37,7 @@ var $ = require('gulp-load-plugins')();
 
 // Builds HTML files from AsciiDoctor documentation.
 gulp.task('asciidoctor', function () {
-  // jshint camelcase: false
+  // eslint-disable camelcase
   var docs = ['academy', 'admin-manual', 'help'];
   var streams = [];
   for (var i = 0; i < docs.length; ++i) {
@@ -120,11 +120,11 @@ gulp.task('js', function () {
 });
 
 // Lints JavaScript files.
-gulp.task('jshint', function() {
+gulp.task('eslint', function() {
   return gulp.src(['app/scripts/**/*.js', 'gulpfile.js', 'test/**/*.js'])
-    .pipe($.jshint())
-    .pipe($.jshint.reporter('default'))
-    .pipe($.jshint.reporter('fail'));
+    .pipe($.eslint())
+    .pipe($.eslint.format())
+    .pipe($.eslint.failAfterError());
 });
 
 // Deletes dist.
@@ -172,7 +172,7 @@ gulp.task('serve', ['quick'], function() {
       });
   });
   gulp.watch('app/styles/*.{,s}css', ['css']);
-  gulp.watch('app/scripts/**/*.js', ['jshint', 'js']);
+  gulp.watch('app/scripts/**/*.js', ['eslint', 'js']);
   gulp.watch('app/**/*.html', ['html']);
   gulp.watch('app/**/*.asciidoc', ['asciidoctor', 'genTemplates']);
 });
@@ -216,7 +216,7 @@ gulp.task('test:serve', ['webdriver-update'], function(done) {
 });
 
 // The default task builds dist.
-gulp.task('default', ['jshint', 'dist']);
+gulp.task('default', ['eslint', 'dist']);
 
 // A quicker build that populates .tmp.
-gulp.task('quick', ['jshint', 'html', 'asciidoctor']);
+gulp.task('quick', ['eslint', 'html', 'asciidoctor']);
