@@ -1,5 +1,6 @@
 #workspace-main {
   height: 100vh;
+  overflow: hidden;
 }
 
 #workspace-header {
