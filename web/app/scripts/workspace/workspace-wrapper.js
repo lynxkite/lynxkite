@@ -32,6 +32,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
           var operationId = rawBox.operationID;
           var boxId = rawBox.id;
           box = boxWrapper(boxCatalogMap[operationId], rawBox);
+          if (!box.instance.summary) { box.instance.summary = box.metadata.operationID; }
           this.boxes[i] = box;
           this.boxMap[boxId] = box;
         }
