@@ -906,7 +906,7 @@ function randomPattern () {
   var r = '';
   for (var i = 0; i < buf.length; i++) {
     var v = buf[i];
-    var lo =  (v & 0xf);
+    var lo = (v & 0xf);
     var hi = (v >> 4);
     r += sixteenLetters[lo] + sixteenLetters[hi];
   }
