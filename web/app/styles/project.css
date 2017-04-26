@@ -334,3 +334,8 @@ pick-options table {
 #menu-setting-save-visualization button {
   vertical-align: top;
 }
+
+/* Click these to report errors. */
+.progress-bar-danger {
+  cursor: pointer;
+}

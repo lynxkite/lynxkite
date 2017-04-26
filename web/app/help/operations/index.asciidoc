@@ -307,6 +307,8 @@ include::import-vertices-and-edges-from-a-single-table.asciidoc[]
 
 include::import-vertices.asciidoc[]
 
+include::input-box.asciidoc[]
+
 include::link-project-and-segmentation-by-fingerprint.asciidoc[]
 
 include::load-snapshot.asciidoc[]
@@ -324,6 +326,8 @@ include::merge-two-edge-attributes.asciidoc[]
 include::merge-two-vertex-attributes.asciidoc[]
 
 include::merge-vertices-by-attribute.asciidoc[]
+
+include::output-box.asciidoc[]
 
 include::predict-attribute-by-viral-modeling.asciidoc[]
 

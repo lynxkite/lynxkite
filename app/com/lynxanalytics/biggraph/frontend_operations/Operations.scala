@@ -15,11 +15,11 @@ import com.lynxanalytics.biggraph.serving.FrontendJson
 import play.api.libs.json
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
-  override val operations =
+  override val atomicOperations =
     new ProjectOperations(env).operations.toMap ++
       new ImportOperations(env).operations.toMap ++
       new ExportOperations(env).operations.toMap ++
-      new NoInputOutputOperations(env).operations.toMap
+      new MetaOperations(env).operations.toMap
 }
 
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
@@ -29,7 +29,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import Operation.Implicits._
 
   private val projectInput = "project" // The default input name, just to avoid typos.
-  private val projectOutput = TypedConnection("project", BoxOutputKind.Project)
+  private val projectOutput = "project"
 
   def register(
     id: String,
@@ -568,7 +568,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     override def summary = {
       val attrName = params("attr")
       val overlap = params("overlap") == "yes"
-      s"Segmentation by $attrName" + (if (overlap) " with overlap" else "")
+      val name = params("name")
+      s"Segmentation by $attrName" + (if (overlap) " with overlap" else "") + ": $name"
     }
 
     def apply() = {
@@ -598,7 +599,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       project.vertexAttrList[String].nonEmpty, "No string vertex attributes.")
     override def summary = {
       val attrName = params("attr")
-      s"Segmentation by $attrName"
+      val name = params("name")
+      s"Segmentation by $attrName" + ": $name"
     }
 
     def apply() = {
@@ -631,7 +633,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val beginAttrName = params("begin_attr")
       val endAttrName = params("end_attr")
       val overlap = params("overlap") == "yes"
-      s"Interval segmentation by $beginAttrName and $endAttrName" + (if (overlap) " with overlap" else "")
+      val name = params("name")
+      s"Interval segmentation by $beginAttrName and $endAttrName" + (if (overlap) " with overlap" else "") + ": $name"
     }
 
     def apply() = {
@@ -690,6 +693,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           FEStatus.assert(
             project.vertexAttrList[Double].nonEmpty,
             "There must be a double attribute to define event times")
+
+    override def summary = {
+      val name = params("name")
+      s"Segmentation by event sequence: $name"
+    }
 
     def apply() = {
       val timeAttrName = params("time_attr")
@@ -833,6 +841,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("dist", "Distribution", options = FEOption.list(graph_operations.RandomDistribution.getNames)),
       RandomSeed("seed", "Seed"))
     def enabled = project.hasVertexSet
+    override def summary = {
+      val dist = params("dist").toLowerCase
+      s"Add $dist vertex attribute"
+    }
     def apply() = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.AddRandomAttribute(params("seed").toInt, params("dist"))
@@ -847,6 +859,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("dist", "Distribution", options = FEOption.list(graph_operations.RandomDistribution.getNames)),
       RandomSeed("seed", "Seed"))
     def enabled = project.hasEdgeBundle
+    override def summary = {
+      val dist = params("dist").toLowerCase
+      s"Add $dist edge attribute"
+    }
     def apply() = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.AddRandomAttribute(params("seed").toInt, params("dist"))
@@ -861,6 +877,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("value", "Value", defaultValue = "1"),
       Choice("type", "Type", options = FEOption.list("Double", "String")))
     def enabled = project.hasEdgeBundle
+    override def summary = {
+      val name = params("name")
+      val value = params("value")
+      s"Add constant edge attribute: $name = $value"
+    }
     def apply() = {
       val res = {
         if (params("type") == "Double") {
@@ -879,6 +900,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("value", "Value", defaultValue = "1"),
       Choice("type", "Type", options = FEOption.list("Double", "String")))
     def enabled = project.hasVertexSet
+    override def summary = {
+      val name = params("name")
+      val value = params("value")
+      s"Add constant vertex attribute: $name = $value"
+    }
     def apply() = {
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val value = params("value")
@@ -901,6 +927,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       def enabled = FEStatus.assert(
         (project.vertexAttrList[String] ++ project.vertexAttrList[Double]).nonEmpty,
         "No vertex attributes.")
+      override def summary = {
+        val name = params("attr")
+        s"Fill vertex attribute '$name' with constant default value"
+      }
       def apply() = {
         val attr = project.vertexAttributes(params("attr"))
         val op: graph_operations.AddConstantAttribute[_] =
@@ -922,6 +952,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       def enabled = FEStatus.assert(
         (project.edgeAttrList[String] ++ project.edgeAttrList[Double]).nonEmpty,
         "No edge attributes.")
+      override def summary = {
+        val name = params("attr")
+        s"Fill edge attribute '$name' with constant default value"
+      }
       def apply() = {
         val attr = project.edgeAttributes(params("attr"))
         val op: graph_operations.AddConstantAttribute[_] =
@@ -939,6 +973,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("attr2", "Secondary attribute", options = project.vertexAttrList))
     def enabled = FEStatus.assert(
       project.vertexAttrList.size >= 2, "Not enough vertex attributes.")
+    override def summary = {
+      val name1 = params("attr1")
+      val name2 = params("attr2")
+      s"Merge two vertex attributes: $name1, $name2"
+    }
     def apply() = {
       val name = params("name")
       assert(name.nonEmpty, "You must specify a name for the new attribute.")
@@ -957,6 +996,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("attr2", "Secondary attribute", options = project.edgeAttrList))
     def enabled = FEStatus.assert(
       project.edgeAttrList.size >= 2, "Not enough edge attributes.")
+    override def summary = {
+      val name1 = params("attr1")
+      val name2 = params("attr2")
+      s"Merge two edge attributes: $name1, $name2"
+    }
     def apply() = {
       val name = params("name")
       assert(name.nonEmpty, "You must specify a name for the new attribute.")
@@ -1215,6 +1259,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
     def enabled = FEStatus.assert(
       project.vertexAttrList[Double].nonEmpty, "No numeric (double) vertex attributes")
+    override def summary = {
+      val name = params("keyattr")
+      s"Add rank attribute for '$name'"
+    }
     def apply() = {
       val keyAttr = params("keyattr")
       val rankAttr = params("rankattr")
@@ -1408,7 +1456,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = project.hasVertexSet
     override def summary = {
       val name = params("output")
-      s"Derive vertex attribute ($name)"
+      val expr = params("expr")
+      s"Derive vertex attribute: $name = $expr"
     }
     def apply() = {
       assert(params("output").nonEmpty, "Please set an output attribute name.")
@@ -1446,7 +1495,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = project.hasEdgeBundle
     override def summary = {
       val name = params("output")
-      s"Derive edge attribute ($name)"
+      val expr = params("expr")
+      s"Derive edge attribute: $name = $expr"
     }
     def apply() = {
       val expr = params("expr")
@@ -1497,7 +1547,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = FEStatus.enabled
     override def summary = {
       val name = params("output")
-      s"Derive scalar ($name)"
+      val expr = params("expr")
+      s"Derive scalar: $name = $expr"
     }
     def apply() = {
       val expr = params("expr")
@@ -1555,7 +1606,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     override def summary = {
       val method = params("method").capitalize
       val label = params("label")
-      s"build a model using $method for $label"
+      s"Build a $method model for $label"
     }
     def apply() = {
       assert(params("name").nonEmpty, "Please set the name of the model.")

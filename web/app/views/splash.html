@@ -6,7 +6,7 @@
         {{ util.globals.title || 'LynxKite' }}
         <img src="kite-icon.svg" width="30">
       </h1>
-      <h2>{{ util.globals.tagline }}</h2>
+      <h2 trusted-html="util.globals.tagline"></h2>
     </div>
   </div>
 

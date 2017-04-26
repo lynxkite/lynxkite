@@ -6,35 +6,35 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   var svg = SVG_UTIL;
   var common = COMMON_UTIL;
   var directive = {
-      restrict: 'E',
-      templateUrl: 'graph-view.html',
-      scope: { graph: '=', menu: '=' },
-      replace: true,
-      link: function(scope, element) {
-        element = angular.element(element);
-        scope.gv = new GraphView(scope, element);
-        scope.updateGraph = function() {
-          if (scope.graph.view === undefined ||
-            !scope.graph.view.$resolved ||
-            !scope.gv.iconsLoaded()) {
-            scope.gv.loading();
-          } else if (scope.graph.view.$error) {
-            scope.gv.error(scope.graph.view);
-          } else {
-            scope.gv.update(scope.graph.view, scope.menu);
-          }
-        };
-        scope.$watch('graph.view', scope.updateGraph);
-        scope.$watch('graph.view.$resolved', scope.updateGraph);
-        // An attribute change can happen without a graph data change. Watch them separately.
-        // (When switching from "color" to "slider", for example.)
-        util.deepWatch(scope, 'graph.left.vertexAttrs', scope.updateGraph);
-        util.deepWatch(scope, 'graph.right.vertexAttrs', scope.updateGraph);
-        util.deepWatch(scope, 'graph.left.edgeAttrs', scope.updateGraph);
-        util.deepWatch(scope, 'graph.right.edgeAttrs', scope.updateGraph);
-        handleResizeEvents(scope);
-      },
-    };
+    restrict: 'E',
+    templateUrl: 'graph-view.html',
+    scope: { graph: '=', menu: '=' },
+    replace: true,
+    link: function(scope, element) {
+      element = angular.element(element);
+      scope.gv = new GraphView(scope, element);
+      scope.updateGraph = function() {
+        if (scope.graph.view === undefined ||
+          !scope.graph.view.$resolved ||
+          !scope.gv.iconsLoaded()) {
+          scope.gv.loading();
+        } else if (scope.graph.view.$error) {
+          scope.gv.error(scope.graph.view);
+        } else {
+          scope.gv.update(scope.graph.view, scope.menu);
+        }
+      };
+      scope.$watch('graph.view', scope.updateGraph);
+      scope.$watch('graph.view.$resolved', scope.updateGraph);
+      // An attribute change can happen without a graph data change. Watch them separately.
+      // (When switching from "color" to "slider", for example.)
+      util.deepWatch(scope, 'graph.left.vertexAttrs', scope.updateGraph);
+      util.deepWatch(scope, 'graph.right.vertexAttrs', scope.updateGraph);
+      util.deepWatch(scope, 'graph.left.edgeAttrs', scope.updateGraph);
+      util.deepWatch(scope, 'graph.right.edgeAttrs', scope.updateGraph);
+      handleResizeEvents(scope);
+    },
+  };
 
   function handleResizeEvents(scope) {
     var timer;
@@ -551,6 +551,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         resultMap = stringColorMap(mapByAttr(siblings, colorKey, 'string'));
         this.addColorLegend(resultMap, fullLegendTitle);
       } else {
+        /* eslint-disable no-console */
         console.error('The type of ' +
                       colorMeta + ' (' + colorMeta.typeName +
                       ') is not supported for color visualization!');
@@ -1216,6 +1217,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     });
     // Generate initial layout for 2 seconds or until it stabilizes.
     var t1 = Date.now();
+    /* eslint-disable no-empty */
     while (engine.calculate(vertices) && Date.now() - t1 <= 2000) {}
     engine.apply(vertices);
     var animating = false;

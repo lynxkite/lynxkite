@@ -4,6 +4,14 @@
     <span id="workspace-name">{{workspace.name}}</span>
     <div class="btn-group pull-right">
       <button class="btn btn-default"
+           id="delete-selected-boxes"
+           ng-click="workspace.deleteSelectedBoxes()"
+           tooltip="Delete&nbsp;selected&nbsp;boxes"
+           tooltip-append-to-body="true"
+           tooltip-placement="bottom">
+        <i class="fa fa-trash-o"></i>
+      </button>
+      <button class="btn btn-default"
            id="select-mode-on"
            ng-click="dragMode = 'select'"
            ng-class="{ active: dragMode === 'select' }"
@@ -37,12 +45,6 @@
     </workspace-drawing-board>
     <operation-selector box-catalog="boxCatalog" editable="true">
     </operation-selector>
-    <div id="right-panel">
-      <state-view workspace="workspace">
-      </state-view>
-      <box-editor workspace="workspace">
-      </box-editor>
-    </div>
   </div>
 
 </div>

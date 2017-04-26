@@ -7,8 +7,10 @@ angular.module('biggraph')
     $scope.util = util;
     loginScope = $scope;
     $scope.credentials = { username: '', password: '', method: 'lynxkite' };
-    // OAuth is only set up on pizzakite.lynxanalytics.com.
-    $scope.passwordSignIn = window.location.hostname !== 'pizzakite.lynxanalytics.com';
+    // OAuth is only set up on our internal test servers.
+    $scope.passwordSignIn =
+      window.location.hostname !== 'pizzakite.lynxanalytics.com' &&
+      window.location.hostname !== 'pizzabox.lynxanalytics.com';
 
     function tryLogin(url, credentials) {
       util.post(url, credentials).$status.then(function(success) {
@@ -26,7 +28,7 @@ angular.module('biggraph')
     };
 
     $scope.googleLogin = function(googleUser) {
-      /* jshint camelcase: false */
+      /* eslint-disable camelcase, no-console */
       if (!googleUser) { return; }
       var id_token = googleUser.getAuthResponse().id_token;
       console.log(
@@ -41,7 +43,7 @@ angular.module('biggraph')
     };
   });
 
-/* exported googleSignInCallback */
+/* eslint-disable no-unused-vars */
 function googleSignInCallback(googleUser) {
   loginScope.googleLogin(googleUser);
 }

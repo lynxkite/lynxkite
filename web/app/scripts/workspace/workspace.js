@@ -22,8 +22,9 @@
 // 5. saveWorkspace()
 // 6. GOTO 2
 
-angular.module('biggraph')
-  .factory('workspace', function(workspaceWrapper, util, $interval) {
+angular.module('biggraph').factory(
+  'workspace',
+  function(workspaceWrapper, PopupModel, util, $interval) {
     return function(boxCatalog, workspaceName) {
       var progressUpdater;
 
@@ -56,14 +57,16 @@ angular.module('biggraph')
           height: undefined
         },
 
-        updateSelection: function(){
+        popups: [],
+
+        updateSelection: function() {
           this.selection.leftX = Math.min(this.selection.startX, this.selection.endX);
           this.selection.upperY = Math.min(this.selection.startY, this.selection.endY);
           this.selection.width = Math.abs(this.selection.endX - this.selection.startX);
           this.selection.height = Math.abs(this.selection.endY - this.selection.startY);
         },
 
-        removeSelection: function(){
+        removeSelection: function() {
           this.selection.startX = undefined;
           this.selection.endX = undefined;
           this.selection.startY = undefined;
@@ -85,6 +88,9 @@ angular.module('biggraph')
             })
             .then(function(response) {
               var state = response.workspace;
+              for (i = 0; i< state.boxes.length; i++) {
+                state.boxes[i].summary = response.summaries[state.boxes[i].id];
+              }
               that.backendState = state;
               // User edits will be applied to a deep copy of
               // the original backend state. This way watchers
@@ -119,7 +125,9 @@ angular.module('biggraph')
         selectedBoxes: function() {
           if (this.selectedBoxIds) {
             var workspaceWrapper = this.wrapper;
-            return this.selectedBoxIds.map(function(id){return workspaceWrapper.boxMap[id];});
+            return this.selectedBoxIds.map(function(id) {
+              return workspaceWrapper.boxMap[id];
+            });
           } else {
             return undefined;
           }
@@ -129,60 +137,55 @@ angular.module('biggraph')
           return this.wrapper.boxMap[id];
         },
 
-        updateBox: function(id, paramValues, parametricParameters) {
+        getOutputPlug: function(boxId, plugId) {
+          return this.getBox(boxId).outputMap[plugId];
+        },
+
+        updateBox: function(id, plainParamValues, parametricParamValues) {
           var box = this.getBox(id).instance;
-          if (!angular.equals(paramValues, box.parameters)) {
-            this.wrapper.setBoxParams(id, paramValues, parametricParameters);
+          if (!angular.equals(plainParamValues, box.parameters) ||
+              !angular.equals(parametricParamValues, box.parametricParameters)) {
+            this.wrapper.setBoxParams(id, plainParamValues, parametricParamValues);
             this.saveWorkspace();
           }
         },
 
-        selectBoxesInSelection: function(){
+        selectBoxesInSelection: function() {
           var boxes = this.boxes();
           this.selectedBoxIds = [];
           for (var i = 0; i < boxes.length; i++) {
             var box = boxes[i];
-            if(this.inSelection(box)){
+            if (this.inSelection(box)) {
               this.selectedBoxIds.push(box.instance.id);
             }
           }
         },
 
-        inSelection: function(box){
+        inSelection: function(box) {
           var sb = this.selection;
-          return(sb.leftX < box.instance.x + box.width &&
+          return (sb.leftX < box.instance.x + box.width &&
             box.instance.x < sb.leftX + sb.width &&
             sb.upperY < box.instance.y + box.height &&
             box.instance.y < sb.upperY + sb.height);
         },
 
-        selectState: function(boxID, outputID) {
-          var outPlug = this.wrapper.boxMap[boxID].outputMap[outputID];
-          this.selectedStateId = outPlug.stateID;
-          this.selectedStateKind = outPlug.kind;
-        },
-
-        selectPlug: function(plug) {
-          this.selectedPlug = plug;
-          if (plug.direction === 'outputs') {
-            this.selectState(plug.boxId, plug.id);
-          } else {
-            this.selectedState = undefined;
-          }
-        },
-
-        onMouseMove: function(mouseLogical) {
-          this.mouseLogical = mouseLogical;
-          if (event.buttons === 1 && this.movedBoxes) {
-            for(i = 0; i < this.movedBoxes.length; i++){
-              this.movedBoxes[i].onMouseMove(this.mouseLogical);
+        onMouseMove: function(event) {
+          this.mouseLogical = {
+            x: event.logicalX,
+            y: event.logicalY,
+          };
+          if (this.movedBoxes) {
+            for (var i = 0; i < this.movedBoxes.length; i++) {
+              this.movedBoxes[i].onMouseMove(event);
             }
+          } else if (this.movedPopup) {
+            this.movedPopup.onMouseMove(event);
           }
         },
 
         onMouseUp: function() {
-          if(this.movedBoxes){
-            for(i = 0; i < this.movedBoxes.length; i++){
+          if (this.movedBoxes) {
+            for (var i = 0; i < this.movedBoxes.length; i++) {
               if (this.movedBoxes[i].isMoved) {
                 this.saveWorkspace();
                 break;
@@ -191,20 +194,71 @@ angular.module('biggraph')
           }
           this.movedBoxes = undefined;
           this.pulledPlug = undefined;
+          this.movedPopup = undefined;
         },
 
-        onMouseDownOnBox: function(box, mouseLogical) {
+        onMouseDownOnBox: function(box, event) {
           var selectedBoxes = this.selectedBoxes();
           if (selectedBoxes.indexOf(box) === -1) {
             this.selectedBoxIds = [];
             this.selectBox(box.instance.id);
             this.movedBoxes = [box];
-            this.movedBoxes[0].onMouseDown(mouseLogical);
+            this.movedBoxes[0].onMouseDown(event);
           } else {
             this.movedBoxes = selectedBoxes;
             this.movedBoxes.map(function(b) {
-              b.onMouseDown(mouseLogical);});
+              b.onMouseDown(event);
+            });
           }
+        },
+
+        closePopup: function(id) {
+          for (var i = 0; i < this.popups.length; ++i) {
+            if (this.popups[i].id === id) {
+              this.popups.splice(i, 1);
+              return true;
+            }
+          }
+          return false;
+        },
+
+        onClickOnPlug: function(plug, event) {
+          event.stopPropagation();
+          if (plug.direction === 'outputs') {
+            var model = new PopupModel(
+              plug.boxId + '_' + plug.id,
+              plug.boxId + '::' + plug.id,
+              {
+                type: 'plug',
+                boxId: plug.boxId,
+                plugId: plug.id,
+              },
+              event.pageX - 300,
+              event.pageY + 15,
+              600,
+              400,
+              this);
+            model.toggle();
+          }
+        },
+
+        onMouseUpOnBox: function(box, event) {
+          if (box.isMoved || this.pulledPlug) {
+            return;
+          }
+          var model = new PopupModel(
+            box.instance.id,
+            box.instance.id,
+            {
+              type: 'box',
+              boxId: box.instance.id,
+            },
+            event.pageX - 200,
+            event.pageY + 60,
+            400,
+            600,
+            this);
+          model.toggle();
         },
 
         onMouseDownOnPlug: function(plug, event) {
@@ -221,15 +275,32 @@ angular.module('biggraph')
               this.saveWorkspace();
             }
           }
-          if (!this.pulledPlug || this.pulledPlug !== plug) {
-            this.selectPlug(plug);
-          }
         },
 
         // boxID should be used for test-purposes only
-        addBox: function(operationId, pos, boxID) {
-          this.wrapper.addBox(operationId, pos.x, pos.y, boxID);
+        addBox: function(operationId, event, boxID) {
+          this.wrapper.addBox(
+              operationId,
+              event.logicalX,
+              event.logicalY,
+              boxID);
           this.saveWorkspace();
+        },
+
+        deleteBoxes: function(boxIds) {
+          for (i = 0; i < boxIds.length; i+=1) {
+            if (boxIds[i] === 'anchor') {
+              util.error('Anchor box cannot be deleted.');
+            } else {
+              this.wrapper.deleteBox(boxIds[i]);
+            }
+          }
+          this.saveWorkspace();
+        },
+
+        deleteSelectedBoxes: function() {
+          this.deleteBoxes(this.selectedBoxIds);
+          this.selectedBoxIds = [];
         },
 
         getAndUpdateProgress: function(errorHandler) {
