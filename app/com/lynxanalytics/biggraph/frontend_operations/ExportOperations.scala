@@ -11,12 +11,10 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import Operation.Category
   import Operation.Context
 
-  private val tableInput = "table"
-  private val exportResultConnection = TypedConnection("result", BoxOutputKind.ExportResult)
   val ExportOperations = Category("Export operations", "blue", icon = "folder-open")
 
   def register(id: String)(factory: Context => ExportOperation): Unit = {
-    registerOp(id, ExportOperations, List(tableInput), List(exportResultConnection), factory)
+    registerOp(id, ExportOperations, List("table"), List("exportResult"), factory)
   }
 
   import OperationParams._

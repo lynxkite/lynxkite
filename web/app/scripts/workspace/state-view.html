@@ -18,8 +18,8 @@
     ng-if="stateKind === 'project'">
 </project-state-view>
 <export-result
-    state-id="workspace.selectedStateId"
-    ng-if="workspace.selectedStateKind === 'exportResult'">
+    state-id="stateId"
+    ng-if="stateKind === 'exportResult'">
 </export-result>
 <table-state-view
         state-id="stateId"
