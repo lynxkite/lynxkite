@@ -31,9 +31,8 @@ module.exports = function(fw) {
     'snapshot-loaded-in-new-workspace',
     function() {
       lib.splash.openNewWorkspace('test-load-snapshot');
-      lib.workspace.addBox({id: 'sb0', name: 'load snapshot',
-                            params: {path: snapshotName},
-                            x: 100, y: 100});
+      lib.workspace.addBox({
+        id: 'sb0', name: 'load snapshot', params: {path: snapshotName}, x: 100, y: 100});
     },
     function() {
       var state = lib.workspace.openStateView('sb0', 'project');

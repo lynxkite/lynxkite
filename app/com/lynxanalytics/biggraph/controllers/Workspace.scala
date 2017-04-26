@@ -15,7 +15,9 @@ case class Workspace(
     s"Duplicate box name: ${dups.mkString(", ")}"
   })
 
-  assert(findBox("anchor").operationID == "Anchor", "Anchor box is missing.")
+  assert(anchor.operationID == "Anchor", "Anchor box is missing.")
+
+  def anchor = findBox("anchor")
 
   def findBox(id: String): Box = {
     assert(boxMap.contains(id), s"Cannot find box: $id")
@@ -23,15 +25,15 @@ case class Workspace(
   }
 
   def parametersMeta: Seq[CustomOperationParameterMeta] = {
-    val anchor = findBox("anchor")
     OperationParams.ParametersParam.parse(anchor.parameters.get("parameters"))
   }
 
   // This workspace as a custom box.
   def getBoxMetadata(name: String): BoxMetadata = {
+    val description = anchor.parameters.getOrElse("description", "")
     val inputs = boxes.filter(_.operationID == "Input box").flatMap(b => b.parameters.get("name"))
     val outputs = boxes.filter(_.operationID == "Output box").flatMap(b => b.parameters.get("name"))
-    BoxMetadata("Custom boxes", name, inputs, outputs)
+    BoxMetadata("Custom boxes", name, inputs, outputs, description = Some(description))
   }
 
   def context(
@@ -54,9 +56,9 @@ case class Workspace(
   // Tries to determine a topological order among boxes. All boxes with a circular dependency and
   // ones that depend on another with a circular dependency are returned unordered.
   private[controllers] def discoverDependencies: Dependencies = {
-    val outEdges: Map[Box, Set[Box]] = {
-      val edges = boxes.flatMap(dst => dst.inputs.map(input => findBox(input._2.boxID) -> dst))
-      edges.groupBy(_._1).mapValues(_.map(_._2).toSet)
+    val outEdges: Map[String, Seq[String]] = {
+      val edges = boxes.flatMap(dst => dst.inputs.toSeq.map(input => input._2.boxID -> dst.id))
+      edges.groupBy(_._1).mapValues(_.map(_._2).toSeq)
     }
 
     // Determines the topological order by selecting a node without in-edges, removing the node and
@@ -74,10 +76,10 @@ case class Workspace(
             withCircularDependency = remainingBoxInDegrees.map(_._1)
           )
         } else {
-          val dependants = outEdges.getOrElse(nextBox, Set())
+          val dependants = outEdges.getOrElse(nextBox.id, Seq())
           val updatedInDegrees = remainingBoxInDegrees.withFilter(_._1 != nextBox)
             .map {
-              case (box, degree) => (box, if (dependants.contains(box)) degree - 1 else degree)
+              case (box, degree) => (box, degree - dependants.filter(_ == box.id).size)
             }.map(identity)
           discover(nextBox :: reversedTopologicalOrder, updatedInDegrees)
         }
@@ -159,13 +161,11 @@ case class WorkspaceExecutionContext(
     }
   }
 
-  def getOperation(boxID: String): Operation = {
-    val box = ws.findBox(boxID)
+  def getOperationForStates(box: Box, states: Map[BoxOutput, BoxOutputState]): Operation = {
     val meta = ops.getBoxMetadata(box.operationID)
     for (i <- meta.inputs) {
       assert(box.inputs.contains(i), s"Input $i is not connected.")
     }
-    val states = allStates
     val inputs = box.inputs.map { case (id, output) => id -> states(output) }
     assert(!inputs.exists(_._2.isError), {
       val errors = inputs.filter(_._2.isError).map(_._1).mkString(", ")
@@ -173,6 +173,8 @@ case class WorkspaceExecutionContext(
     })
     box.getOperation(this, inputs)
   }
+
+  def getOperation(boxID: String): Operation = getOperationForStates(ws.findBox(boxID), allStates)
 }
 
 case class Box(
@@ -212,7 +214,8 @@ case class BoxMetadata(
   categoryID: String,
   operationID: String,
   inputs: List[String],
-  outputs: List[String])
+  outputs: List[String],
+  description: Option[String] = None)
 
 object BoxOutputKind {
   val Project = "project"

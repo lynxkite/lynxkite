@@ -1,4 +1,4 @@
-// jshint camelcase: false
+// eslint-disable camelcase
 exports.config = {
   framework: 'jasmine2',
   directConnect: true,

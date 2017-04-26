@@ -28,7 +28,7 @@ angular.module('biggraph')
     };
 
     $scope.googleLogin = function(googleUser) {
-      /* jshint camelcase: false */
+      /* eslint-disable camelcase, no-console */
       if (!googleUser) { return; }
       var id_token = googleUser.getAuthResponse().id_token;
       console.log(
@@ -43,7 +43,7 @@ angular.module('biggraph')
     };
   });
 
-/* exported googleSignInCallback */
+/* eslint-disable no-unused-vars */
 function googleSignInCallback(googleUser) {
   loginScope.googleLogin(googleUser);
 }

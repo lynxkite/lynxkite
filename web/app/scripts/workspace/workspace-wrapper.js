@@ -32,6 +32,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
           var operationId = rawBox.operationID;
           var boxId = rawBox.id;
           box = boxWrapper(boxCatalogMap[operationId], rawBox);
+          if (!box.instance.summary) { box.instance.summary = box.metadata.operationID; }
           this.boxes[i] = box;
           this.boxMap[boxId] = box;
         }
@@ -64,7 +65,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
             if (inputs.hasOwnProperty(inputName)) {
               var input = inputs[inputName];
               var src = this.boxMap[input.boxID];
-              if(src){
+              if (src) {
                 var srcPlug = this._lookupArrowEndpoint(
                   src.outputs, input.id);
                 var dstPlug = this._lookupArrowEndpoint(
@@ -84,27 +85,32 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         this._buildArrows();
       },
 
-      // boxID should be used for test-purposes only
-      addBox: function(operationId, x, y, boxId) {
+      getUniqueId: function(operationId) {
         var usedIds = this.state.boxes.map(function(box) {
-            return box.id;
-          });
+          return box.id;
+        });
         var cnt = 1;
-        while(usedIds.includes(operationId.replace(/ /g, '-') + '_' + cnt)) {
+        while (usedIds.includes(operationId.replace(/ /g, '-') + '_' + cnt)) {
           cnt += 1;
         }
-        boxId = boxId || operationId.replace(/ /g, '-') + '_' + cnt;
-        this.state.boxes.push(
-            {
-              id: boxId,
-              operationID: operationId,
-              x: x,
-              y: y,
-              inputs: {},
-              parameters: {},
-              parametricParameters: {}
-            });
+        return operationId.replace(/ /g, '-') + '_' + cnt;
+      },
+
+      // boxID should be used for test-purposes only
+      addBox: function(operationId, x, y, boxId) {
+        boxId = boxId || this.getUniqueId(operationId);
+        var box = {
+          id: boxId,
+          operationID: operationId,
+          x: x,
+          y: y,
+          inputs: {},
+          parameters: {},
+          parametricParameters: {}
+        };
+        this.state.boxes.push(box);
         this._build();
+        return box;
       },
 
       deleteBox: function(boxId) {
@@ -187,6 +193,35 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         this.boxMap[boxId].instance.parameters = plainParamValues;
         this.boxMap[boxId].instance.parametricParameters = parametricParamValues;
       },
+
+      pasteFromClipboard: function(clipboard, currentPosition) {
+        var mapping = {};
+        for (var i = 0; i < clipboard.length; ++i) {
+          var box = clipboard[i].instance;
+          var diffX = clipboard[i].width;
+          var createdBox = this.addBox(
+            box.operationID,
+            currentPosition.logicalX + box.x + 1.1 * diffX,
+            currentPosition.logicalY + box.y + 10);
+          createdBox.parameters = box.parameters;
+          createdBox.parametricParameters = box.parametricParameters;
+          mapping[box.id] = createdBox;
+        }
+        for (i = 0; i < clipboard.length; ++i) {
+          var oldBox = clipboard[i].instance;
+          var newBox = mapping[oldBox.id];
+          for (var key in oldBox.inputs) {
+            if (!oldBox.inputs.hasOwnProperty(key)) {
+              break;
+            }
+            var oldInputId = oldBox.inputs[key].boxID;
+            if (mapping.hasOwnProperty(oldInputId)) {
+              var newInput = mapping[oldInputId];
+              newBox.inputs[key] = { boxID: newInput.id, id: key };
+            }
+          }
+        }
+      }
 
     };
 

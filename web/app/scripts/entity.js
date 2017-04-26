@@ -32,13 +32,17 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       });
       // Reset menu state when opening.
       scope.menu = {};
-      drop.on('open', function() { $timeout(function() {
-        scope.menu = { open: true };
-        updateHistogram();
-      }); });
-      drop.on('close', function() { $timeout(function() {
-        scope.menu.open = false;
-      }); });
+      drop.on('open', function() {
+        $timeout(function() {
+          scope.menu = { open: true };
+          updateHistogram();
+        });
+      });
+      drop.on('close', function() {
+        $timeout(function() {
+          scope.menu.open = false;
+        });
+      });
 
       scope.closeMenu = function() { // For testing.
         drop.close();
