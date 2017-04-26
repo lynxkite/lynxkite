@@ -10,8 +10,9 @@ module.exports = function(fw) {
     'test-example workspace with example graph',
     'segmentation by double created',
     function() {
-      lib.workspace.addBox({ id: 'segment-op', name: 'segment by double attribute', x: 100, y: 200,
-                             after: 'eg0', params: { attr: 'income', interval_size: '10'} });
+      lib.workspace.addBox({
+        id: 'segment-op', name: 'segment by double attribute', x: 100, y: 200,
+        after: 'eg0', params: { attr: 'income', interval_size: '10'} });
     },
     function() {
     });
@@ -34,8 +35,9 @@ module.exports = function(fw) {
         apply_to_project: '|bucketing',
         name: 'copy'
       };
-      lib.workspace.addBox({ id: 'copy-op', name: 'copy graph into a segmentation', x: 100, y: 300,
-                             after: 'segment-op', params: params });
+      lib.workspace.addBox({
+        id: 'copy-op', name: 'copy graph into a segmentation', x: 100, y: 300,
+        after: 'segment-op', params: params });
     },
     function() {});
 
@@ -64,8 +66,9 @@ module.exports = function(fw) {
     'segmentation copied to sub-segmentation',
     'discard segmentation works',
     function() {
-      lib.workspace.addBox({ id: 'discard-segment', name: 'discard segmentation', x: 100, y: 400,
-                             after: 'copy-op', params: { name: 'bucketing' } });
+      lib.workspace.addBox({
+        id: 'discard-segment', name: 'discard segmentation', x: 100, y: 400,
+        after: 'copy-op', params: { name: 'bucketing' } });
     },
     function() {
       var state = lib.workspace.openStateView('discard-segment', 'project');
@@ -77,8 +80,9 @@ module.exports = function(fw) {
     'test-example workspace with example graph',
     'segmentation size reporting - non empty segments',
     function() {
-      lib.workspace.addBox({ id: 'copy', name: 'copy graph into a segmentation', x: 100, y: 200,
-                             after: 'eg0', params: { name: 'self' } });
+      lib.workspace.addBox({
+        id: 'copy', name: 'copy graph into a segmentation', x: 100, y: 200,
+        after: 'eg0', params: { name: 'self' } });
     },
     function() {
       var state = lib.workspace.openStateView('copy', 'project');
@@ -93,8 +97,9 @@ module.exports = function(fw) {
     'segmentation size reporting - non empty segments',
     'segmentation size reporting - has empty segments',
     function() {
-      lib.workspace.addBox({ id: 'filter-op', name: 'filter by attributes', x: 100, y: 300,
-                             after: 'copy', params: { 'filterva_income': '*' } });
+      lib.workspace.addBox({
+        id: 'filter-op', name: 'filter by attributes', x: 100, y: 300,
+        after: 'copy', params: { 'filterva_income': '*' } });
     },
     function() {
       var state = lib.workspace.openStateView('filter-op', 'project');

@@ -237,6 +237,18 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     }
   }
 
+  test("non-circular dependencies (#5971)") {
+    val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+    val imp = Box(
+      "imp", "Import segmentation", Map(
+        "name" -> "self", "base_id_attr" -> "name",
+        "base_id_column" -> "name", "seg_id_column" -> "name"), 0, 0,
+      Map("project" -> eg.output("project"), "segmentation" -> eg.output("project")))
+    val ws = Workspace.from(eg, imp)
+    val p = context(ws).allStates(imp.output("project")).project
+    assert(p.segmentationNames.contains("self"))
+  }
+
   test("anchor box") {
     using("test-workspace") {
       val anchorBox = Box("anchor", "Anchor", Map(), 0, 0, Map())
