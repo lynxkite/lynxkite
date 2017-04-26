@@ -482,7 +482,7 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
     context.meta.inputs == List("table"),
     s"An ExportOperation must input a single table. $context")
   assert(
-    context.meta.outputs == List(TypedConnection("result", BoxOutputKind.ExportResult)),
+    context.meta.outputs == List("exportResult"),
     s"An ExportOperation must output an ExportResult. $context"
   )
 
@@ -492,7 +492,7 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
   def exportResult: Scalar[ExportResultMetaData]
 
   protected def makeOutput(exportResult: Scalar[ExportResultMetaData]): Map[BoxOutput, BoxOutputState] = {
-    Map(context.meta.outputs(0).ofBox(context.box) -> BoxOutputState.from(exportResult))
+    Map(context.box.output(context.meta.outputs(0)) -> BoxOutputState.from(exportResult))
   }
 
   def getOutputs(): Map[BoxOutput, BoxOutputState] = {
