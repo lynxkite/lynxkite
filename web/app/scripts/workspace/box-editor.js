@@ -3,7 +3,7 @@
 // Viewer and editor of a box instance.
 
 angular.module('biggraph')
- .directive('boxEditor', function($timeout, util) {
+  .directive('boxEditor', function($timeout, util) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/box-editor.html',
@@ -47,10 +47,9 @@ angular.module('biggraph')
           var currentRequest;
           scope.lastRequest = currentRequest = util
             .nocache(
-              '/ajax/getOperationMeta',
-              {
-                  workspace: scope.workspace.name,
-                  box: boxId,
+              '/ajax/getOperationMeta', {
+                workspace: scope.workspace.name,
+                box: boxId,
               })
             .then(
               function success(boxMeta) {
@@ -68,38 +67,38 @@ angular.module('biggraph')
         // Invoked when the user selects a new operation and its
         // metadata is successfully downloaded.
         scope.newOpSelected = function(box, boxMeta) {
-            // We avoid replacing the objects if the data has not changed.
-            // This is to avoid recreating the DOM for the parameters. (Which would lose the focus.)
-            if (!angular.equals(box, scope.box)) {
-              onBlurNow(); // Switching to a different box is also "blur".
-              scope.box = box;
-            }
-            if (!angular.equals(boxMeta, scope.boxMeta)) {
-              scope.boxMeta = boxMeta;
-            }
-            if (!box) {
-              return;
-            }
+          // We avoid replacing the objects if the data has not changed.
+          // This is to avoid recreating the DOM for the parameters. (Which would lose the focus.)
+          if (!angular.equals(box, scope.box)) {
+            onBlurNow(); // Switching to a different box is also "blur".
+            scope.box = box;
+          }
+          if (!angular.equals(boxMeta, scope.boxMeta)) {
+            scope.boxMeta = boxMeta;
+          }
+          if (!box) {
+            return;
+          }
 
-            // Make a copy of the parameter values.
-            var paramValues = Object.assign({}, box.instance.parameters);
-            // Copy defaults for unset parameters.
-            for (var i = 0; i < boxMeta.parameters.length; ++i) {
-              var p = boxMeta.parameters[i];
-              if ((paramValues[p.id] !== undefined) ||
-                  (scope.parametricParamValues[p.id] !== undefined)) {
-                // Parameter is not unset.
-              } else if (p.options.length === 0) {
-                paramValues[p.id] = p.defaultValue;
-              } else if (p.multipleChoice) {
-                paramValues[p.id] = '';
-              } else {
-                paramValues[p.id] = p.options[0].id;
-              }
+          // Make a copy of the parameter values.
+          var paramValues = Object.assign({}, box.instance.parameters);
+          // Copy defaults for unset parameters.
+          for (var i = 0; i < boxMeta.parameters.length; ++i) {
+            var p = boxMeta.parameters[i];
+            if ((paramValues[p.id] !== undefined) ||
+                (scope.parametricParamValues[p.id] !== undefined)) {
+              // Parameter is not unset.
+            } else if (p.options.length === 0) {
+              paramValues[p.id] = p.defaultValue;
+            } else if (p.multipleChoice) {
+              paramValues[p.id] = '';
+            } else {
+              paramValues[p.id] = p.options[0].id;
             }
-            if (!angular.equals(paramValues, scope.paramValues)) {
-              scope.plainParamValues = paramValues;
-            }
+          }
+          if (!angular.equals(paramValues, scope.paramValues)) {
+            scope.plainParamValues = paramValues;
+          }
         };
 
         function onBlurNow() {
@@ -116,4 +115,4 @@ angular.module('biggraph')
         };
       },
     };
-});
+  });

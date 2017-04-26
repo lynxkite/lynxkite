@@ -1,10 +1,6 @@
 'use strict';
 
 var testLib; // Forward declarations.
-var TableBrowser; // Forward declarations.
-var BoxEditor;
-var Side;
-var State;
 var request = require('request');
 var fs = require('fs');
 
@@ -814,7 +810,7 @@ Selector.prototype = {
       document.styleSheets[0].insertRule(
         '.spark-status, .bottom-links { position: static !important; }');
         `);
-      },
+  },
 
   openDirectory: function(name) {
     this.directory(name).click();
@@ -935,14 +931,14 @@ Selector.prototype = {
 var splash = new Selector(element(by.id('splash')));
 
 function randomPattern () {
-  /* jshint bitwise: false */
+  /* eslint-disable no-bitwise */
   var crypto = require('crypto');
   var buf = crypto.randomBytes(16);
   var sixteenLetters = 'abcdefghijklmnop';
   var r = '';
   for (var i = 0; i < buf.length; i++) {
     var v = buf[i];
-    var lo =  (v & 0xf);
+    var lo = (v & 0xf);
     var hi = (v >> 4);
     r += sixteenLetters[lo] + sixteenLetters[hi];
   }
@@ -979,7 +975,8 @@ testLib = {
             defer.reject(new Error(error));
           } else {
             defer.fulfill();
-      }});
+          }
+        });
     }
     this.authenticateAndPost('admin', 'adminpw', 'lynxkite', discard);
   },
@@ -1003,7 +1000,8 @@ testLib = {
             defer.reject(new Error(error));  // TODO: include message?
           } else {
             func(defer);
-          }});
+          }
+        });
       return defer.promise;
     }
     return browser.controlFlow().execute(sendRequest);
@@ -1204,7 +1202,7 @@ testLib = {
   expectNoClass(element, cls) {
     expect(element.getAttribute('class')).toBeDefined();
     element.getAttribute('class').then(function(classes) {
-          expect(classes.split(' ').indexOf(cls)).toBe(-1);
+      expect(classes.split(' ').indexOf(cls)).toBe(-1);
     });
   },
 
@@ -1218,7 +1216,7 @@ testLib = {
     browser.getAllWindowHandles()
       .then(handles => {
         browser.driver.switchTo().window(handles[pos]);
-    });
+      });
   },
 
   showSelector: function() {
