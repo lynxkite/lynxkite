@@ -193,10 +193,19 @@ Workspace.prototype = {
     browser.actions().keyUp(protractor.Key.CONTROL).perform();
   },
 
+  deleteBoxes: function(boxIds) {
+    this.selectBoxes(boxIds);
+    this.main.element(by.id('delete-selected-boxes')).click();
+  },
+
   editBox: function(boxID, params) {
     var boxEditor = this.openBoxEditor(boxID);
     boxEditor.populateOperation(params);
     boxEditor.close();
+  },
+
+  boxExists(boxId) {
+    return this.board.$('.box#' + boxId).isPresent();
   },
 
   getBox(boxID) {
