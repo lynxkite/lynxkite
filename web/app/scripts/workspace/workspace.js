@@ -314,9 +314,7 @@ angular.module('biggraph').factory(
             }
           });
           for (i = 0; i < boxIds.length; i += 1) {
-            if (boxIds[i] === 'anchor') {
-              util.error('Anchor box cannot be deleted.');
-            } else {
+            if (boxIds[i] !== 'anchor') {
               this.wrapper.deleteBox(boxIds[i]);
             }
           }
