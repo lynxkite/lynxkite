@@ -64,7 +64,7 @@ angular.module('biggraph')
     Side.prototype.sectionElements = function(section) {
       if (section === 'scalar') {
         return this.project.scalars.filter(function(s) {
-          return s.title[0] !== '!' && s.title !== 'vertex_count' && s.title !== 'edge_count';
+          return s.title[0] !== '!';
         });
       } else if (section === 'vertex-attribute') {
         return this.project.vertexAttributes;

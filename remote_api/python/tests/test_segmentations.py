@@ -36,7 +36,7 @@ class TestSegmentations(unittest.TestCase):
         directions='ignore directions',
         name='connected_components')
     s = p.segmentation('connected_components')
-    num = s.scalar('vertex_count')
+    num = s.scalar('!vertex_count')
     self.assertEqual(num, 2.0)
 
   def test_segmentation_operations(self):
@@ -60,7 +60,7 @@ class TestSegmentations(unittest.TestCase):
         name='bucketing',
         overlap='no')
     s2 = s.segmentation('bucketing')
-    num = s2.scalar('vertex_count')
+    num = s2.scalar('!vertex_count')
     self.assertEqual(num, 4.0)
 
 
