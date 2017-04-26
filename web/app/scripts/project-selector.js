@@ -22,7 +22,7 @@ angular.module('biggraph').directive('projectSelector',
         hotkeys.bindTo(scope)
           .add({
             combo: 'c', description: 'Create new workspace',
-            callback: function(e) { e.preventDefault(); scope.newWorkspace= { expanded: true }; },
+            callback: function(e) { e.preventDefault(); scope.newWorkspace = { expanded: true }; },
           });
 
         scope.$watch('newWorkspace.expanded', function(ex) {
@@ -234,7 +234,7 @@ angular.module('biggraph').directive('projectSelector',
           },
           editConfig: function(name, config, type) {
             if (config.class.includes('SQL')) {
-              scope.showSQL=true;
+              scope.showSQL = true;
               $anchorScroll('global-sql-box');
               $timeout(function () {
                 scope.$broadcast('fill sql-box from config and clear sql result', name, config, type);
