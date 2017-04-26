@@ -30,8 +30,8 @@ class DissectTest extends OperationsTestBase {
     for ((name, attr) <- originalEdgeAttributes) {
       assert(project.vertexAttributes("edge_" + name) == attr)
     }
-    assert(project.scalars.keys == Set("vertex_count", "!vertex_count_delta"))
-    assert(project.scalars("vertex_count").value == 19)
+    assert(project.scalars.keys == Set("!vertex_count", "!vertex_count_delta"))
+    assert(project.scalars("!vertex_count").value == 19)
     assert(project.edgeBundle == null)
     assert(project.segmentations == Seq())
   }
