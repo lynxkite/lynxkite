@@ -31,8 +31,7 @@ angular.module('biggraph').directive('importWizard', function($q, util) {
         parameters.asView = scope.asView;
         if (scope.limit) {
           parameters.limit = parseInt(scope.limit);
-        }
-        else {
+        } else {
           parameters.limit = null;
         }
 
@@ -129,8 +128,8 @@ angular.module('biggraph').directive('importWizard', function($q, util) {
       }
 
       function fillCSVFromData(csv, data) {
-        csv.filename  = data.files;
-        csv.columnNames  = joinCSVLine(data.columnNames);
+        csv.filename = data.files;
+        csv.columnNames = joinCSVLine(data.columnNames);
         csv.delimiter = data.delimiter;
         csv.mode = data.mode;
         csv.infer = data.infer;

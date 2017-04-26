@@ -21,8 +21,7 @@ angular.module('biggraph').directive('aclSettings', function(util) {
 
       scope.save = function() {
         scope.saving = true;
-        util.post('/ajax/changeACLSettings',
-        {
+        util.post('/ajax/changeACLSettings', {
           project: scope.path,
           readACL: scope.readACL,
           writeACL: scope.writeACL,

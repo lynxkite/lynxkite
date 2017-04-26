@@ -20,7 +20,8 @@ case class FEOperationMeta(
   visibleScalars: List[FEScalar],
   category: String = "",
   status: FEStatus = FEStatus.enabled,
-  color: Option[String] = None)
+  color: Option[String] = None,
+  description: Option[String] = None)
 
 object FEOperationParameterMeta {
   val validKinds = Seq(
@@ -179,7 +180,7 @@ trait OperationRegistry {
     id: String,
     category: Operation.Category,
     inputs: List[String],
-    outputs: List[TypedConnection],
+    outputs: List[String],
     factory: Operation.Factory): Unit = {
     // TODO: Register category somewhere.
     assert(!operations.contains(id), s"$id is already registered.")
@@ -272,8 +273,8 @@ trait BasicOperation extends Operation {
 
   // Updates the vertex_count_delta/edge_count_delta scalars after an operation finished.
   protected def updateDeltas(editor: ProjectEditor, original: ProjectViewer): Unit = {
-    updateDelta(editor, original, "vertex_count")
-    updateDelta(editor, original, "edge_count")
+    updateDelta(editor, original, "!vertex_count")
+    updateDelta(editor, original, "!edge_count")
     for (seg <- editor.segmentationNames) {
       if (original.state.segmentations.contains(seg)) {
         updateDeltas(editor.existingSegmentation(seg), original.segmentation(seg))
@@ -286,7 +287,7 @@ trait BasicOperation extends Operation {
     val delta =
       if (before.isEmpty || after.isEmpty || before == after) null
       else graph_operations.ScalarLongDifference.run(after.get, before.get)
-    editor.scalars.set(s"!${name}_delta", delta)
+    editor.scalars.set(s"${name}_delta", delta)
   }
 
   def toFE: FEOperationMeta = FEOperationMeta(
@@ -295,7 +296,8 @@ trait BasicOperation extends Operation {
     allParameters.map { param => param.toFE },
     visibleScalars,
     context.meta.categoryID,
-    enabled)
+    enabled,
+    description = context.meta.description)
 
   protected def projectInput(input: String): ProjectEditor = {
     val segPath = SubProject.splitPipedPath(paramValues.getOrElse("apply_to_" + input, ""))
@@ -368,12 +370,12 @@ trait BasicOperation extends Operation {
 abstract class ProjectOutputOperation(
     protected val context: Operation.Context) extends BasicOperation {
   assert(
-    context.meta.outputs == List(TypedConnection("project", BoxOutputKind.Project)),
+    context.meta.outputs == List("project"),
     s"A ProjectOperation must output a project. $context")
   protected lazy val project: ProjectEditor = new RootProjectEditor(RootProjectState.emptyState)
 
   protected def makeOutput(project: ProjectEditor): Map[BoxOutput, BoxOutputState] = {
-    Map(context.meta.outputs(0).ofBox(context.box) -> BoxOutputState.from(project))
+    Map(context.box.output(context.meta.outputs(0)) -> BoxOutputState.from(project))
   }
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
@@ -431,11 +433,11 @@ abstract class DecoratorOperation(context: Operation.Context) extends MinimalOpe
 abstract class TableOutputOperation(
     protected val context: Operation.Context) extends BasicOperation {
   assert(
-    context.meta.outputs == List(TypedConnection("table", BoxOutputKind.Table)),
+    context.meta.outputs == List("table"),
     s"A TableOutputOperation must output a table. $context")
 
   protected def makeOutput(t: Table): Map[BoxOutput, BoxOutputState] = {
-    Map(context.meta.outputs(0).ofBox(context.box) -> BoxOutputState.from(t))
+    Map(context.box.output(context.meta.outputs(0)) -> BoxOutputState.from(t))
   }
 }
 
@@ -526,6 +528,6 @@ class CustomBoxOperation(
         Some(box.parameters("name") -> states(box.inputs("output")))
       else None
     }.toMap
-    context.meta.outputs.map(output => output.ofBox(context.box) -> byOutput(output.id)).toMap
+    context.meta.outputs.map(output => context.box.output(output) -> byOutput(output)).toMap
   }
 }

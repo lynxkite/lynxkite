@@ -21,11 +21,10 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import Operation.Context
   import Operation.Implicits._
 
-  private val tableConnection = TypedConnection("table", BoxOutputKind.Table)
   val ImportOperations = Category("Import operations", "green", icon = "folder-open")
 
   def register(id: String)(factory: Context => ImportOperation): Unit = {
-    registerOp(id, ImportOperations, List(), List(tableConnection), factory)
+    registerOp(id, ImportOperations, List(), List("table"), factory)
   }
 
   import OperationParams._

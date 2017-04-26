@@ -64,7 +64,7 @@ angular.module('biggraph')
     Side.prototype.sectionElements = function(section) {
       if (section === 'scalar') {
         return this.project.scalars.filter(function(s) {
-          return s.title[0] !== '!' && s.title !== 'vertex_count' && s.title !== 'edge_count';
+          return s.title[0] !== '!';
         });
       } else if (section === 'vertex-attribute') {
         return this.project.vertexAttributes;
@@ -73,6 +73,7 @@ angular.module('biggraph')
       } else if (section === 'segmentation') {
         return this.project.segmentations;
       }
+      /* eslint-disable no-console */
       console.error('Unexpected section:', section);
     };
     Side.prototype.showSection = function(section, show) {
@@ -347,11 +348,10 @@ angular.module('biggraph')
 
     Side.prototype.load = function() {
       return util.nocache(
-          '/ajax/getProjectOutput',
-          {
-              path: this.state.projectPath,
-              id: this.stateId,
-          });
+        '/ajax/getProjectOutput', {
+          path: this.state.projectPath,
+          id: this.stateId,
+        });
     };
 
     Side.prototype.loaded = function() {

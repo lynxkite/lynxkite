@@ -1,4 +1,5 @@
 'use strict';
+/* eslint-disable no-console */
 
 function UIDescription() {
   var states = {};
@@ -181,6 +182,7 @@ try {
     userVisiblePrefix = 'http://' + require('os').hostname() + ':8888/userContent/';
   }
 } catch (e) {
+  console.error(e, e.stack);
 }
 
 // Makes a screenshot if an expectation fails.
