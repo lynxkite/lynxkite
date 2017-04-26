@@ -59,7 +59,7 @@ angular.module('biggraph').directive('histogram', function($timeout, util) {
         if (model.labelType === 'between') {
           var histoLabels = [];
           for (var j = 1; j < model.labels.length; ++j) {
-            histoLabels[j-1] = model.labels[j-1] + '-' + model.labels[j];
+            histoLabels[j - 1] = model.labels[j - 1] + '-' + model.labels[j];
           }
           scope.histoLabels = histoLabels;
         } else {
