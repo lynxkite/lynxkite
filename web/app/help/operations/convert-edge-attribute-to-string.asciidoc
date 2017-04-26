@@ -1,4 +1,4 @@
-### Convert edge attribute to string
+### Convert edge attribute to String
 
 Converts the selected edge attributes to `String` type.
 

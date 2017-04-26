@@ -25,7 +25,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
         "dist" -> "Standard Normal",
         "name" -> "rnd",
         "seed" -> "1474343267"))
-      .box("Segment by double attribute", Map(
+      .box("Segment by Double attribute", Map(
         "attr" -> "rnd",
         "interval_size" -> "0.1",
         "name" -> "seg",
@@ -51,7 +51,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
         "dist" -> "Standard Normal",
         "name" -> "rnd",
         "seed" -> "1474343267"))
-      .box("Segment by double attribute", Map(
+      .box("Segment by Double attribute", Map(
         "attr" -> "rnd",
         "interval_size" -> "0.1",
         "name" -> "seg",
@@ -61,7 +61,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
         "dist" -> "Standard Normal",
         "name" -> "rnd2",
         "seed" -> "1474343267"))
-      .box("Segment by double attribute", Map(
+      .box("Segment by Double attribute", Map(
         "apply_to_project" -> "|seg",
         "attr" -> "rnd2",
         "interval_size" -> "0.1",

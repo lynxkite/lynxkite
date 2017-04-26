@@ -556,14 +556,14 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Segment by double attribute", CreateSegmentationOperations, new ProjectTransformation(_) {
+  register("Segment by Double attribute", CreateSegmentationOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Choice("attr", "Attribute", options = project.vertexAttrList[Double]),
       NonNegDouble("interval_size", "Interval size"),
       Choice("overlap", "Overlap", options = FEOption.noyes))
     def enabled = FEStatus.assert(
-      project.vertexAttrList[Double].nonEmpty, "No double vertex attributes.")
+      project.vertexAttrList[Double].nonEmpty, "No Double vertex attributes.")
     override def summary = {
       val attrName = params("attr")
       val overlap = params("overlap") == "yes"
@@ -590,12 +590,12 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Segment by string attribute", CreateSegmentationOperations, new ProjectTransformation(_) {
+  register("Segment by String attribute", CreateSegmentationOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
       Choice("attr", "Attribute", options = project.vertexAttrList[String]))
     def enabled = FEStatus.assert(
-      project.vertexAttrList[String].nonEmpty, "No string vertex attributes.")
+      project.vertexAttrList[String].nonEmpty, "No String vertex attributes.")
     override def summary = {
       val attrName = params("attr")
       val name = params("name")
@@ -627,7 +627,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("overlap", "Overlap", options = FEOption.noyes))
     def enabled = FEStatus.assert(
       project.vertexAttrList[Double].size >= 2,
-      "Less than two double vertex attributes.")
+      "Less than two Double vertex attributes.")
     override def summary = {
       val beginAttrName = params("begin_attr")
       val endAttrName = params("end_attr")
@@ -688,10 +688,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       FEStatus.assert(project.isSegmentation, "Must be run on a segmentation") &&
         FEStatus.assert(
           possibleLocations.nonEmpty,
-          "There must be a string attribute or a sub-segmentation to define event locations") &&
+          "There must be a String attribute or a sub-segmentation to define event locations") &&
           FEStatus.assert(
             project.vertexAttrList[Double].nonEmpty,
-            "There must be a double attribute to define event times")
+            "There must be a Double attribute to define event times")
 
     override def summary = {
       val name = params("name")
@@ -1257,7 +1257,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("order", "Order", options = FEOption.list("ascending", "descending")))
 
     def enabled = FEStatus.assert(
-      project.vertexAttrList[Double].nonEmpty, "No numeric (double) vertex attributes")
+      project.vertexAttrList[Double].nonEmpty, "No numeric (Double) vertex attributes")
     override def summary = {
       val name = params("keyattr")
       s"Add rank attribute for '$name'"
@@ -1356,7 +1356,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register(
-    "Convert vertex attribute to string", VertexAttributesOperations, new ProjectTransformation(_) {
+    "Convert vertex attribute to String", VertexAttributesOperations, new ProjectTransformation(_) {
       lazy val parameters = List(
         Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true))
       def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes.")
@@ -1368,7 +1368,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   register(
-    "Convert edge attribute to string", EdgeAttributesOperations, new ProjectTransformation(_) {
+    "Convert edge attribute to String", EdgeAttributesOperations, new ProjectTransformation(_) {
       lazy val parameters = List(
         Choice("attr", "Edge attribute", options = project.edgeAttrList, multipleChoice = true))
       def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No edge attributes.")
@@ -1380,7 +1380,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   register(
-    "Convert vertex attribute to double", VertexAttributesOperations, new ProjectTransformation(_) {
+    "Convert vertex attribute to Double", VertexAttributesOperations, new ProjectTransformation(_) {
       val eligible =
         project.vertexAttrList[String] ++
           project.vertexAttrList[Long] ++
@@ -1397,7 +1397,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   register(
-    "Convert edge attribute to double", EdgeAttributesOperations, new ProjectTransformation(_) {
+    "Convert edge attribute to Double", EdgeAttributesOperations, new ProjectTransformation(_) {
       val eligible =
         project.edgeAttrList[String] ++
           project.edgeAttrList[Long] ++
@@ -2006,7 +2006,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("idx", "Index attribute name", defaultValue = "index"))
 
     def enabled =
-      FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No double vertex attributes")
+      FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No Double vertex attributes")
     def doSplit(doubleAttr: Attribute[Double]): graph_operations.SplitVertices.Output = {
       val op = graph_operations.SplitVertices()
       op(op.attr, doubleAttr.asLong).result
@@ -2027,7 +2027,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("idx", "Index attribute name", defaultValue = "index"))
 
     def enabled =
-      FEStatus.assert(project.edgeAttrList[Double].nonEmpty, "No double edge attributes")
+      FEStatus.assert(project.edgeAttrList[Double].nonEmpty, "No Double edge attributes")
     def doSplit(doubleAttr: Attribute[Double]): graph_operations.SplitEdges.Output = {
       val op = graph_operations.SplitEdges()
       op(op.es, project.edgeBundle)(op.attr, doubleAttr.asLong).result
@@ -2865,10 +2865,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         project.assertSegmentation &&
           FEStatus.assert(
             project.vertexAttrList[String].nonEmpty,
-            "No string vertex attributes in this segmentation.") &&
+            "No String vertex attributes in this segmentation.") &&
             FEStatus.assert(
               parent.vertexAttributeNames[String].nonEmpty,
-              "No string vertex attributes in base project.")
+              "No String vertex attributes in base project.")
       def apply() = {
         val baseIdAttr = parent.vertexAttributes(params("base_id_attr")).runtimeSafeCast[String]
         val segIdAttr = project.vertexAttributes(params("seg_id_attr")).runtimeSafeCast[String]
@@ -3006,7 +3006,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         defaultValue = ""))
     def enabled =
       project.hasEdgeBundle &&
-        FEStatus.assert(project.vertexAttrList[String].size >= 2, "Two string attributes are needed.")
+        FEStatus.assert(project.vertexAttrList[String].size >= 2, "Two String attributes are needed.")
     def apply() = {
       val mo = params("mo").toInt
       val ms = params("ms").toDouble

@@ -10,7 +10,7 @@ class ExportImportOperationTest extends OperationsTestBase {
       .box("Find connected components", Map(
         "name" -> "cc",
         "directions" -> "ignore directions"))
-      .box("Convert vertex attribute to string", Map(
+      .box("Convert vertex attribute to String", Map(
         "apply_to_project" -> "|cc",
         "attr" -> "id"))
 
@@ -149,7 +149,7 @@ class ExportImportOperationTest extends OperationsTestBase {
 
     val ex = intercept[java.lang.AssertionError] {
       box("Create example graph")
-        .box("Convert vertex attribute to string", Map(
+        .box("Convert vertex attribute to String", Map(
           "attr" -> "id"))
         .box("Import vertex attributes", Map(
           "id_attr" -> "id",
