@@ -1045,7 +1045,7 @@ testLib = {
               e.element(by.cssContainingText('option', optionLabelPattern)).click();
             }
           } else if (kind === 'choice') {
-            e.$('option[label="' + value +'"]').click();
+            e.$('option[label="' + value + '"]').click();
           } else {
             e.sendKeys(testLib.selectAllKey + value);
           }
@@ -1069,7 +1069,7 @@ testLib = {
         'window.confirm0 = window.confirm;' +
         'window.confirm = function() {' +
         '  window.confirm = window.confirm0;' +
-        '  return ' + responseValue+ ';' +
+        '  return ' + responseValue + ';' +
         '}');
   },
 

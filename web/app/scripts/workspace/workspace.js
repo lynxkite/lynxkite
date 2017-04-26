@@ -88,7 +88,7 @@ angular.module('biggraph').factory(
             })
             .then(function(response) {
               var state = response.workspace;
-              for (i = 0; i< state.boxes.length; i++) {
+              for (i = 0; i < state.boxes.length; i++) {
                 state.boxes[i].summary = response.summaries[state.boxes[i].id];
               }
               that.backendState = state;
@@ -306,7 +306,7 @@ angular.module('biggraph').factory(
         },
 
         deleteBoxes: function(boxIds) {
-          for (i = 0; i < boxIds.length; i+=1) {
+          for (i = 0; i < boxIds.length; i += 1) {
             if (boxIds[i] === 'anchor') {
               util.error('Anchor box cannot be deleted.');
             } else {

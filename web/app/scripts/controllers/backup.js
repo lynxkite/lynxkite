@@ -29,7 +29,7 @@ angular.module('biggraph')
       if ($scope.backupSettings.dataDir === '') {
         return true;
       }
-      if ($scope.backupSettings.ephemeralDataDir === '' ) {
+      if ($scope.backupSettings.ephemeralDataDir === '') {
         return true;
       }
       if ($scope.inProgress) {
