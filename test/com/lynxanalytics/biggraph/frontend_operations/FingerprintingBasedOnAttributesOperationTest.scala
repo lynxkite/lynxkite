@@ -29,9 +29,9 @@ class FingerprintingBasedOnAttributesOperationTest extends OperationsTestBase {
     val connected = fingerprinted
       .box("Discard edges")
       .box("Connect vertices on attribute", Map("fromAttr" -> "email", "toAttr" -> "email"))
-    assert(connected.project.scalars("edge_count").value == 18)
-    assert(connected.project.scalars("vertex_count").value == 109)
+    assert(connected.project.scalars("!edge_count").value == 18)
+    assert(connected.project.scalars("!vertex_count").value == 109)
     val merged = connected.box("Merge vertices by attribute", Map("key" -> "name"))
-    assert(merged.project.scalars("vertex_count").value == 100)
+    assert(merged.project.scalars("!vertex_count").value == 100)
   }
 }

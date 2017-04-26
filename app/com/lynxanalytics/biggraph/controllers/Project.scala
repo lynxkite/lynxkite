@@ -194,8 +194,8 @@ sealed trait ProjectViewer {
       projectName,
       objectType,
       state.notes,
-      feScalar("vertex_count"),
-      feScalar("edge_count"),
+      feScalar("!vertex_count"),
+      feScalar("!edge_count"),
       details = details)
   }
 
@@ -551,10 +551,10 @@ sealed trait ProjectEditor {
       state = state.copy(segmentations = Map())
       if (e != null) {
         state = state.copy(vertexSetGUID = Some(e.gUID))
-        scalars("vertex_count") = graph_operations.Count.run(e)
+        scalars("!vertex_count") = graph_operations.Count.run(e)
       } else {
         state = state.copy(vertexSetGUID = None)
-        scalars("vertex_count") = null
+        scalars("!vertex_count") = null
       }
     }
   }
@@ -573,10 +573,10 @@ sealed trait ProjectEditor {
     }
     if (e != null) {
       state = state.copy(edgeBundleGUID = Some(e.gUID))
-      scalars("edge_count") = graph_operations.Count.run(e)
+      scalars("!edge_count") = graph_operations.Count.run(e)
     } else {
       state = state.copy(edgeBundleGUID = None)
-      scalars("edge_count") = null
+      scalars("!edge_count") = null
     }
   }
 

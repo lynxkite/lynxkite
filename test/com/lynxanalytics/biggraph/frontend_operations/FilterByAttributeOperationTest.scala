@@ -21,7 +21,7 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
         .box("Filter by attributes",
           Map("filterva_v" -> "> 0.0", "filterea_e" -> "> 1.0"))
         .project
-      project.scalars("edge_count").value
+      project.scalars("!edge_count").value
     }
   }
 

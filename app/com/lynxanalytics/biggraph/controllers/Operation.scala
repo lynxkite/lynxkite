@@ -273,8 +273,8 @@ trait BasicOperation extends Operation {
 
   // Updates the vertex_count_delta/edge_count_delta scalars after an operation finished.
   protected def updateDeltas(editor: ProjectEditor, original: ProjectViewer): Unit = {
-    updateDelta(editor, original, "vertex_count")
-    updateDelta(editor, original, "edge_count")
+    updateDelta(editor, original, "!vertex_count")
+    updateDelta(editor, original, "!edge_count")
     for (seg <- editor.segmentationNames) {
       if (original.state.segmentations.contains(seg)) {
         updateDeltas(editor.existingSegmentation(seg), original.segmentation(seg))
