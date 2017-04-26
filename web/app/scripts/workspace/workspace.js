@@ -230,8 +230,8 @@ angular.module('biggraph').factory(
               },
               event.pageX - 300,
               event.pageY + 15,
-              600,
-              400,
+              500,
+              500,
               this);
             model.toggle();
           }
@@ -250,8 +250,8 @@ angular.module('biggraph').factory(
             },
             event.pageX - 200,
             event.pageY + 60,
-            400,
-            600,
+            500,
+            500,
             this);
           model.toggle();
         },
