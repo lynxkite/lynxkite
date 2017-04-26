@@ -59,14 +59,14 @@ angular.module('biggraph').factory(
 
         popups: [],
 
-        updateSelection: function(){
+        updateSelection: function() {
           this.selection.leftX = Math.min(this.selection.startX, this.selection.endX);
           this.selection.upperY = Math.min(this.selection.startY, this.selection.endY);
           this.selection.width = Math.abs(this.selection.endX - this.selection.startX);
           this.selection.height = Math.abs(this.selection.endY - this.selection.startY);
         },
 
-        removeSelection: function(){
+        removeSelection: function() {
           this.selection.startX = undefined;
           this.selection.endX = undefined;
           this.selection.startY = undefined;
@@ -88,6 +88,9 @@ angular.module('biggraph').factory(
             })
             .then(function(response) {
               var state = response.workspace;
+              for (i = 0; i< state.boxes.length; i++) {
+                state.boxes[i].summary = response.summaries[state.boxes[i].id];
+              }
               that.backendState = state;
               // User edits will be applied to a deep copy of
               // the original backend state. This way watchers
@@ -122,7 +125,9 @@ angular.module('biggraph').factory(
         selectedBoxes: function() {
           if (this.selectedBoxIds) {
             var workspaceWrapper = this.wrapper;
-            return this.selectedBoxIds.map(function(id){return workspaceWrapper.boxMap[id];});
+            return this.selectedBoxIds.map(function(id) {
+              return workspaceWrapper.boxMap[id];
+            });
           } else {
             return undefined;
           }
@@ -145,20 +150,20 @@ angular.module('biggraph').factory(
           }
         },
 
-        selectBoxesInSelection: function(){
+        selectBoxesInSelection: function() {
           var boxes = this.boxes();
           this.selectedBoxIds = [];
           for (var i = 0; i < boxes.length; i++) {
             var box = boxes[i];
-            if(this.inSelection(box)){
+            if (this.inSelection(box)) {
               this.selectedBoxIds.push(box.instance.id);
             }
           }
         },
 
-        inSelection: function(box){
+        inSelection: function(box) {
           var sb = this.selection;
-          return(sb.leftX < box.instance.x + box.width &&
+          return (sb.leftX < box.instance.x + box.width &&
             box.instance.x < sb.leftX + sb.width &&
             sb.upperY < box.instance.y + box.height &&
             box.instance.y < sb.upperY + sb.height);
@@ -301,7 +306,7 @@ angular.module('biggraph').factory(
         },
 
         deleteBoxes: function(boxIds) {
-          for(i = 0; i < boxIds.length; i+=1) {
+          for (i = 0; i < boxIds.length; i+=1) {
             if (boxIds[i] === 'anchor') {
               util.error('Anchor box cannot be deleted.');
             } else {

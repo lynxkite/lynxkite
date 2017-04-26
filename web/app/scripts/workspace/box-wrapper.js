@@ -83,7 +83,7 @@ angular.module('biggraph').factory('boxWrapper', function() {
       inputs.push(plugWrapper(metadata.inputs[i], i, 'inputs'));
     }
     for (i = 0; i < metadata.outputs.length; ++i) {
-      var plug = plugWrapper(metadata.outputs[i].id, i, 'outputs');
+      var plug = plugWrapper(metadata.outputs[i], i, 'outputs');
       outputs.push(plug);
       outputMap[plug.id] = plug;
     }

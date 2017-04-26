@@ -24,11 +24,11 @@ angular.module('biggraph').directive('findInPageBox', function() {
           node.tagName !== 'script' &&
           node.tagName !== 'style' &&
           node.tagName !== 'find-in-page-box') {
-            // Take only element nodes that have children.
-            // Ignore script node, style nodes and search box.
-            for (var i = 0; i < node.childNodes.length; i++) {
-              getTextNodes(node.childNodes[i], list);
-            }
+          // Take only element nodes that have children.
+          // Ignore script node, style nodes and search box.
+          for (var i = 0; i < node.childNodes.length; i++) {
+            getTextNodes(node.childNodes[i], list);
+          }
         }
       }
 
@@ -48,6 +48,7 @@ angular.module('biggraph').directive('findInPageBox', function() {
         txt = normalizeString(txt);
         var startPos = 0;
         var list = [];
+        /* eslint-disable no-constant-condition */
         while (true) {
           var pos = txt.indexOf(pattern, startPos);
           if (pos < 0) {
@@ -62,7 +63,7 @@ angular.module('biggraph').directive('findInPageBox', function() {
       function wrapTextNodeInHighlightElem(node, selectionId) {
         var highlightElem = document.createElement('span');
         highlightElem.className =
-          'find-highlight find-highlight-' + selectionId; 
+          'find-highlight find-highlight-' + selectionId;
         var nodeClone = node.cloneNode(true);
         highlightElem.appendChild(nodeClone);
         node.parentNode.replaceChild(highlightElem, node);
@@ -137,9 +138,9 @@ angular.module('biggraph').directive('findInPageBox', function() {
 
       function unhighlight() {
         return $('span.find-highlight').each(function () {
-            var parent = this.parentNode;
-            parent.replaceChild(this.firstChild, this);
-            parent.normalize();
+          var parent = this.parentNode;
+          parent.replaceChild(this.firstChild, this);
+          parent.normalize();
         }).end();
       }
 
@@ -195,7 +196,7 @@ angular.module('biggraph').directive('findInPageBox', function() {
             findNext();
             event.preventDefault();
           }
-      });
+        });
       scope.$watch('text', function() {
         unhighlight(doc);
         if (scope.text && scope.text.length >= 3) {

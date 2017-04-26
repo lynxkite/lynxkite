@@ -73,6 +73,7 @@ angular.module('biggraph')
       } else if (section === 'segmentation') {
         return this.project.segmentations;
       }
+      /* eslint-disable no-console */
       console.error('Unexpected section:', section);
     };
     Side.prototype.showSection = function(section, show) {
@@ -347,11 +348,10 @@ angular.module('biggraph')
 
     Side.prototype.load = function() {
       return util.nocache(
-          '/ajax/getProjectOutput',
-          {
-              path: this.state.projectPath,
-              id: this.stateId,
-          });
+        '/ajax/getProjectOutput', {
+          path: this.state.projectPath,
+          id: this.stateId,
+        });
     };
 
     Side.prototype.loaded = function() {

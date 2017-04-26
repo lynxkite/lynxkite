@@ -57,8 +57,8 @@ if len(non_makefiles) > 0:
       warn('  ' + l)
 
 if any(fn.endswith('.js') for fn in files):
-  if subprocess.call('cd web; gulp jshint', shell=True):
-    warn('JSHint fails.')
+  if subprocess.call('cd web; gulp eslint', shell=True):
+    warn('ESLint fails.')
 
 pythons = [fn for fn in files if fn.endswith('.py')]
 if pythons:

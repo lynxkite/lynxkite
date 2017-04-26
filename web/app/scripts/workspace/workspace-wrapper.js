@@ -32,6 +32,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
           var operationId = rawBox.operationID;
           var boxId = rawBox.id;
           box = boxWrapper(boxCatalogMap[operationId], rawBox);
+          if (!box.instance.summary) { box.instance.summary = box.metadata.operationID; }
           this.boxes[i] = box;
           this.boxMap[boxId] = box;
         }
@@ -64,7 +65,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
             if (inputs.hasOwnProperty(inputName)) {
               var input = inputs[inputName];
               var src = this.boxMap[input.boxID];
-              if(src){
+              if (src) {
                 var srcPlug = this._lookupArrowEndpoint(
                   src.outputs, input.id);
                 var dstPlug = this._lookupArrowEndpoint(
@@ -83,12 +84,13 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         this._buildBoxes();
         this._buildArrows();
       },
+
       getUniqueId: function(operationId) {
         var usedIds = this.state.boxes.map(function(box) {
-            return box.id;
-          });
+          return box.id;
+        });
         var cnt = 1;
-        while(usedIds.includes(operationId.replace(/ /g, '-') + '_' + cnt)) {
+        while (usedIds.includes(operationId.replace(/ /g, '-') + '_' + cnt)) {
           cnt += 1;
         }
         return operationId.replace(/ /g, '-') + '_' + cnt;
@@ -98,13 +100,14 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
       addBox: function(operationId, x, y, boxId) {
         boxId = boxId || this.getUniqueId(operationId);
         var box = {
-             id: boxId,
-             operationID: operationId,
-             x: x,
-             y: y,
-             inputs: {},
-             parameters: {},
-             parametricParameters: {} };
+          id: boxId,
+          operationID: operationId,
+          x: x,
+          y: y,
+          inputs: {},
+          parameters: {},
+          parametricParameters: {}
+        };
         this.state.boxes.push(box);
         this._build();
         return box;
@@ -196,8 +199,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         for (var i = 0; i < clipboard.length; ++i) {
           var box = clipboard[i].instance;
           var diffX = clipboard[i].width;
-          console.log(currentPosition);
-          var createdBox =  this.addBox(
+          var createdBox = this.addBox(
             box.operationID,
             currentPosition.logicalX + box.x + 1.1 * diffX,
             currentPosition.logicalY + box.y + 10);

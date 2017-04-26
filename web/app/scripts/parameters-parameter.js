@@ -13,7 +13,6 @@ angular.module('biggraph').directive('parametersParameter', function(util) {
 
       scope.$watch('model', function(model) {
         scope.parameters = JSON.parse(model);
-        console.log('w', scope.parameters);
       });
       util.deepWatch(scope, 'parameters', function(parameters) {
         scope.model = JSON.stringify(parameters);
@@ -21,12 +20,10 @@ angular.module('biggraph').directive('parametersParameter', function(util) {
 
       scope.add = function() {
         scope.parameters.push({ kind: 'text', id: '', defaultValue: '' });
-        console.log(scope.parameters);
       };
 
       scope.discard = function(index) {
         scope.parameters.splice(index, 1);
-        console.log(scope.parameters);
       };
     },
   };

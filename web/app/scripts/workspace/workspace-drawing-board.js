@@ -22,6 +22,7 @@ angular.module('biggraph')
         var mouseY = 0;
         function zoomToScale(z) { return Math.exp(z * 0.001); }
         function addLogicalMousePosition(event) {
+          /* eslint-disable no-console */
           console.assert(!('logicalX' in event) && !('logicalY' in event));
           console.assert(!('workspaceX' in event) && !('workspaceY' in event));
           // event.offsetX/Y are distorted when the mouse is
@@ -82,12 +83,12 @@ angular.module('biggraph')
           var dragMode = actualDragMode(event);
           event.preventDefault();
           addLogicalMousePosition(event);
-          if (dragMode === 'pan'){
+          if (dragMode === 'pan') {
             workspaceDrag = true;
             setGrabCursor(element[0]);
             mouseX = event.workspaceX;
             mouseY = event.workspaceY;
-          } else if (dragMode === 'select'){
+          } else if (dragMode === 'select') {
             selectBoxes = true;
             scope.workspace.selectedBoxIds = [];
             scope.workspace.selection.endX = event.logicalX;
@@ -110,7 +111,8 @@ angular.module('biggraph')
         hk.add({
           combo: 'ctrl+v', description: 'Paste boxes',
           callback: function() {
-            scope.workspace.pasteBoxes(addLogicalMousePosition({ pageX: 0, pageY: 0})); } });
+            scope.workspace.pasteBoxes(addLogicalMousePosition({ pageX: 0, pageY: 0}));
+          } });
         hk.add({
           combo: 'del', description: 'Paste boxes',
           callback: function() { scope.workspace.deleteSelectedBoxes(); } });

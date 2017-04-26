@@ -15,7 +15,9 @@ case class Workspace(
     s"Duplicate box name: ${dups.mkString(", ")}"
   })
 
-  assert(findBox("anchor").operationID == "Anchor", "Anchor box is missing.")
+  assert(anchor.operationID == "Anchor", "Anchor box is missing.")
+
+  def anchor = findBox("anchor")
 
   def findBox(id: String): Box = {
     assert(boxMap.contains(id), s"Cannot find box: $id")
@@ -23,17 +25,15 @@ case class Workspace(
   }
 
   def parametersMeta: Seq[CustomOperationParameterMeta] = {
-    val anchor = findBox("anchor")
     OperationParams.ParametersParam.parse(anchor.parameters.get("parameters"))
   }
 
   // This workspace as a custom box.
   def getBoxMetadata(name: String): BoxMetadata = {
+    val description = anchor.parameters.getOrElse("description", "")
     val inputs = boxes.filter(_.operationID == "Input box").flatMap(b => b.parameters.get("name"))
     val outputs = boxes.filter(_.operationID == "Output box").flatMap(b => b.parameters.get("name"))
-    // TODO: Remove type annotation from outputs?
-    BoxMetadata(
-      "Custom boxes", name, inputs, outputs.map(o => TypedConnection(o, BoxOutputKind.Project)))
+    BoxMetadata("Custom boxes", name, inputs, outputs, description = Some(description))
   }
 
   def context(
@@ -56,9 +56,9 @@ case class Workspace(
   // Tries to determine a topological order among boxes. All boxes with a circular dependency and
   // ones that depend on another with a circular dependency are returned unordered.
   private[controllers] def discoverDependencies: Dependencies = {
-    val outEdges: Map[Box, Set[Box]] = {
-      val edges = boxes.flatMap(dst => dst.inputs.map(input => findBox(input._2.boxID) -> dst))
-      edges.groupBy(_._1).mapValues(_.map(_._2).toSet)
+    val outEdges: Map[String, Seq[String]] = {
+      val edges = boxes.flatMap(dst => dst.inputs.toSeq.map(input => input._2.boxID -> dst.id))
+      edges.groupBy(_._1).mapValues(_.map(_._2).toSeq)
     }
 
     // Determines the topological order by selecting a node without in-edges, removing the node and
@@ -76,10 +76,10 @@ case class Workspace(
             withCircularDependency = remainingBoxInDegrees.map(_._1)
           )
         } else {
-          val dependants = outEdges.getOrElse(nextBox, Set())
+          val dependants = outEdges.getOrElse(nextBox.id, Seq())
           val updatedInDegrees = remainingBoxInDegrees.withFilter(_._1 != nextBox)
             .map {
-              case (box, degree) => (box, if (dependants.contains(box)) degree - 1 else degree)
+              case (box, degree) => (box, degree - dependants.filter(_ == box.id).size)
             }.map(identity)
           discover(nextBox :: reversedTopologicalOrder, updatedInDegrees)
         }
@@ -116,12 +116,7 @@ case class WorkspaceExecutionContext(
     val statesWithCircularDependency = dependencies.withCircularDependency.flatMap { box =>
       val meta = ops.getBoxMetadata(box.operationID)
       meta.outputs.map { o =>
-        o.ofBox(box) ->
-          BoxOutputState(
-            o.kind,
-            None,
-            FEStatus.disabled("Can not compute state due to circular dependencies.")
-          )
+        box.output(o) -> BoxOutputState.error("Can not compute state due to circular dependencies.")
       }
     }.toMap
     statesWithoutCircularDependency ++ statesWithCircularDependency
@@ -133,7 +128,7 @@ case class WorkspaceExecutionContext(
 
     def allOutputsWithError(msg: String): Map[BoxOutput, BoxOutputState] = {
       meta.outputs.map {
-        o => o.ofBox(box) -> BoxOutputState(o.kind, None, FEStatus.disabled(msg))
+        o => box.output(o) -> BoxOutputState.error(msg)
       }.toMap
     }
 
@@ -166,13 +161,11 @@ case class WorkspaceExecutionContext(
     }
   }
 
-  def getOperation(boxID: String): Operation = {
-    val box = ws.findBox(boxID)
+  def getOperationForStates(box: Box, states: Map[BoxOutput, BoxOutputState]): Operation = {
     val meta = ops.getBoxMetadata(box.operationID)
     for (i <- meta.inputs) {
       assert(box.inputs.contains(i), s"Input $i is not connected.")
     }
-    val states = allStates
     val inputs = box.inputs.map { case (id, output) => id -> states(output) }
     assert(!inputs.exists(_._2.isError), {
       val errors = inputs.filter(_._2.isError).map(_._1).mkString(", ")
@@ -180,6 +173,8 @@ case class WorkspaceExecutionContext(
     })
     box.getOperation(this, inputs)
   }
+
+  def getOperation(boxID: String): Operation = getOperationForStates(ws.findBox(boxID), allStates)
 }
 
 case class Box(
@@ -211,13 +206,6 @@ case class Box(
   }
 }
 
-case class TypedConnection(
-    id: String,
-    kind: String) {
-  BoxOutputKind.assertKind(kind)
-  def ofBox(box: Box) = box.output(id)
-}
-
 case class BoxOutput(
   boxID: String,
   id: String)
@@ -226,12 +214,14 @@ case class BoxMetadata(
   categoryID: String,
   operationID: String,
   inputs: List[String],
-  outputs: List[TypedConnection])
+  outputs: List[String],
+  description: Option[String] = None)
 
 object BoxOutputKind {
   val Project = "project"
   val Table = "table"
-  val validKinds = Set(Project, Table)
+  val Error = "error"
+  val validKinds = Set(Project, Table, Error)
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
 }
@@ -245,6 +235,10 @@ object BoxOutputState {
 
   def from(table: graph_api.Table): BoxOutputState = {
     BoxOutputState(BoxOutputKind.Table, Some(json.Json.obj("guid" -> table.gUID)))
+  }
+
+  def error(msg: String): BoxOutputState = {
+    BoxOutputState(BoxOutputKind.Error, None, FEStatus.disabled(msg))
   }
 }
 
@@ -261,8 +255,8 @@ case class BoxOutputState(
   def isTable = kind == BoxOutputKind.Table
 
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
-    assert(isProject, s"Tried to access '$kind' as 'project'.")
     assert(success.enabled, success.disabledReason)
+    assert(isProject, s"Tried to access '$kind' as 'project'.")
     import CheckpointRepository.fCommonProjectState
     val p = state.get.as[CommonProjectState]
     val rps = RootProjectState.emptyState.copy(state = p)
@@ -270,8 +264,8 @@ case class BoxOutputState(
   }
 
   def table(implicit manager: graph_api.MetaGraphManager): graph_api.Table = {
-    assert(isTable, s"Tried to access '$kind' as 'table'.")
     assert(success.enabled, success.disabledReason)
+    assert(isTable, s"Tried to access '$kind' as 'table'.")
     import graph_api.MetaGraphManager.StringAsUUID
     manager.table((state.get \ "guid").as[String].asUUID)
   }
@@ -280,7 +274,6 @@ case class BoxOutputState(
 object WorkspaceJsonFormatters {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fFEStatus
   implicit val fBoxOutput = json.Json.format[BoxOutput]
-  implicit val fTypedConnection = json.Json.format[TypedConnection]
   implicit val fBoxOutputState = json.Json.format[BoxOutputState]
   implicit val fBox = json.Json.format[Box]
   implicit val fBoxMetadata = json.Json.format[BoxMetadata]
