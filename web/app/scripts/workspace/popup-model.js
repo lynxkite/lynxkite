@@ -20,10 +20,13 @@ angular.module('biggraph').factory('PopupModel', function() {
   };
 
   PopupModel.prototype.onMouseDown = function(event) {
-    event.stopPropagation();
-    this.owner.movedPopup = this;
-    this.moveOffsetX = this.x - event.pageX;
-    this.moveOffsetY = this.y - event.pageY;
+    var leftButton = event.buttons & 1;
+    if (leftButton) {
+      event.stopPropagation();
+      this.owner.movedPopup = this;
+      this.moveOffsetX = this.x - event.pageX;
+      this.moveOffsetY = this.y - event.pageY;
+    }
   };
 
   PopupModel.prototype.onMouseUp = function() {
@@ -31,8 +34,14 @@ angular.module('biggraph').factory('PopupModel', function() {
   };
 
   PopupModel.prototype.onMouseMove = function(event) {
-    this.x = this.moveOffsetX + event.pageX;
-    this.y = this.moveOffsetY + event.pageY;
+    var leftButton = event.buttons & 1;
+    if (!leftButton) {
+      // Button is no longer pressed. (It was released outside of the window, for example.)
+      this.owner.movedPopup = undefined;
+    } else {
+      this.x = this.moveOffsetX + event.pageX;
+      this.y = this.moveOffsetY + event.pageY;
+    }
   };
 
   PopupModel.prototype.isOpen = function() {

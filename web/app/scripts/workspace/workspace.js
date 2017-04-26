@@ -170,16 +170,22 @@ angular.module('biggraph').factory(
         },
 
         onMouseMove: function(event) {
-          this.mouseLogical = {
-            x: event.logicalX,
-            y: event.logicalY,
-          };
-          if (this.movedBoxes) {
-            for (var i = 0; i < this.movedBoxes.length; i++) {
-              this.movedBoxes[i].onMouseMove(event);
+          var leftButton = event.buttons & 1;
+          if (!leftButton) {
+            // Button is no longer pressed. (It was released outside of the window, for example.)
+            this.onMouseUp();
+          } else {
+            this.mouseLogical = {
+              x: event.logicalX,
+              y: event.logicalY,
+            };
+            if (this.movedBoxes) {
+              for (var i = 0; i < this.movedBoxes.length; i++) {
+                this.movedBoxes[i].onMouseMove(event);
+              }
+            } else if (this.movedPopup) {
+              this.movedPopup.onMouseMove(event);
             }
-          } else if (this.movedPopup) {
-            this.movedPopup.onMouseMove(event);
           }
         },
 
@@ -307,9 +313,7 @@ angular.module('biggraph').factory(
 
         deleteBoxes: function(boxIds) {
           for (i = 0; i < boxIds.length; i+=1) {
-            if (boxIds[i] === 'anchor') {
-              util.error('Anchor box cannot be deleted.');
-            } else {
+            if (boxIds[i] !== 'anchor') {
               this.wrapper.deleteBox(boxIds[i]);
             }
           }
