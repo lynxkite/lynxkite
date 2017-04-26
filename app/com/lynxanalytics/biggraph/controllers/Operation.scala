@@ -287,7 +287,7 @@ trait BasicOperation extends Operation {
     val delta =
       if (before.isEmpty || after.isEmpty || before == after) null
       else graph_operations.ScalarLongDifference.run(after.get, before.get)
-    editor.scalars.set(s"!${name}_delta", delta)
+    editor.scalars.set(s"${name}_delta", delta)
   }
 
   def toFE: FEOperationMeta = FEOperationMeta(
