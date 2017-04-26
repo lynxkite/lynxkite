@@ -34,7 +34,7 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
 
   test("merge parallel edges by attribute works for Double") {
     val project = load("merge-parallel-edges-double.csv")
-      .box("Convert edge attribute to double", Map("attr" -> "call"))
+      .box("Convert edge attribute to Double", Map("attr" -> "call"))
       .box("Merge parallel edges by attribute", Map(
         "key" -> "call"
       ))
@@ -64,7 +64,7 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
 
   test("Merge parallel edges with undefined values keeps the defined values") {
     val project = load("merge-parallel-edges-double.csv")
-      .box("Convert edge attribute to double", Map("attr" -> "call"))
+      .box("Convert edge attribute to Double", Map("attr" -> "call"))
       .box("Derive edge attribute", Map(
         "output" -> "call",
         "type" -> "Double",
