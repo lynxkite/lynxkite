@@ -273,8 +273,8 @@ trait BasicOperation extends Operation {
 
   // Updates the vertex_count_delta/edge_count_delta scalars after an operation finished.
   protected def updateDeltas(editor: ProjectEditor, original: ProjectViewer): Unit = {
-    updateDelta(editor, original, "vertex_count")
-    updateDelta(editor, original, "edge_count")
+    updateDelta(editor, original, "!vertex_count")
+    updateDelta(editor, original, "!edge_count")
     for (seg <- editor.segmentationNames) {
       if (original.state.segmentations.contains(seg)) {
         updateDeltas(editor.existingSegmentation(seg), original.segmentation(seg))
@@ -287,7 +287,7 @@ trait BasicOperation extends Operation {
     val delta =
       if (before.isEmpty || after.isEmpty || before == after) null
       else graph_operations.ScalarLongDifference.run(after.get, before.get)
-    editor.scalars.set(s"!${name}_delta", delta)
+    editor.scalars.set(s"${name}_delta", delta)
   }
 
   def toFE: FEOperationMeta = FEOperationMeta(

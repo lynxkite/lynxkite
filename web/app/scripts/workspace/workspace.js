@@ -88,7 +88,7 @@ angular.module('biggraph').factory(
             })
             .then(function(response) {
               var state = response.workspace;
-              for (i = 0; i< state.boxes.length; i++) {
+              for (i = 0; i < state.boxes.length; i++) {
                 state.boxes[i].summary = response.summaries[state.boxes[i].id];
               }
               that.backendState = state;
@@ -312,7 +312,14 @@ angular.module('biggraph').factory(
         },
 
         deleteBoxes: function(boxIds) {
-          for (i = 0; i < boxIds.length; i+=1) {
+          var that = this;
+          var popups = this.popups.slice();
+          popups.forEach(function(popup) {
+            if (boxIds.includes(popup.content.boxId)) {
+              that.closePopup(popup.id);
+            }
+          });
+          for (i = 0; i < boxIds.length; i += 1) {
             if (boxIds[i] !== 'anchor') {
               this.wrapper.deleteBox(boxIds[i]);
             }

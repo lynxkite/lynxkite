@@ -179,7 +179,7 @@ try {
   var stats = fs.lstatSync(userContentDir);
   if (stats.isDirectory()) {
     screenshotDir = userContentDir + '/';
-    userVisiblePrefix = 'http://' + require('os').hostname() + ':8888/userContent/';
+    userVisiblePrefix = 'http://jenkins/userContent/';
   }
 } catch (e) {
   console.error(e, e.stack);
