@@ -64,6 +64,7 @@ angular.module('biggraph').directive('renderer', function($timeout) {
           clear();
           // Geometry generation. 8 points and 12 triangles are generated for each edge.
           var n = edges.length;
+          /* globals Float32Array, Uint32Array */
           // Position of this point.
           var ps = new Float32Array(n * 8 * 3 * 3);
           // Index array.
@@ -122,9 +123,10 @@ angular.module('biggraph').directive('renderer', function($timeout) {
 
         function orthogonals(j) {
           var h = { x: j.y * j.z, y: -0.5 * j.x * j.z, z: -0.5 * j.x * j.y };
-          var v = { x: j.y * h.z - j.z * h.y,
-                    y: j.z * h.x - j.x * h.z,
-                    z: j.x * h.y - j.y * h.x };
+          var v = {
+            x: j.y * h.z - j.z * h.y,
+            y: j.z * h.x - j.x * h.z,
+            z: j.x * h.y - j.y * h.x };
           return [normalized(h), normalized(v)];
         }
 

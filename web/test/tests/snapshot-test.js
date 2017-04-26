@@ -9,11 +9,14 @@ module.exports = function(fw) {
   var snapshotName = 'This is a snapshot.';
 
   fw.transitionTest(
-    'test-example workspace with example graph state selected',
+    'test-example workspace with example graph',
     'snapshot-created',
     function() {
-      var inputBox = $$('.save-as-snapshot-box input');
-      var inputButton = $$('.save-as-snapshot-box .glyphicon-camera');
+      var state = lib.workspace.openStateView('eg0', 'project');
+      var inputBox = state.popup
+          .$('.save-as-snapshot-box input');
+      var inputButton = state.popup
+          .$('.save-as-snapshot-box .glyphicon-camera');
 
       inputBox.sendKeys(lib.selectAllKey + snapshotName);
       inputButton.click();
@@ -28,14 +31,15 @@ module.exports = function(fw) {
     'snapshot-loaded-in-new-workspace',
     function() {
       lib.splash.openNewWorkspace('test-load-snapshot');
-      lib.workspace.addBox({id: 'sb0', name: 'load snapshot',
-                            params: {path: snapshotName},
-                            x: 100, y: 100});
+      lib.workspace.addBox({
+        id: 'sb0', name: 'load snapshot', params: {path: snapshotName}, x: 100, y: 100});
     },
     function() {
-      expect(lib.state.vertexCount()).toEqual(4);
-      expect(lib.state.edgeCount()).toEqual(4);
-      expect(lib.state.attributeCount()).toEqual(8);
+      var state = lib.workspace.openStateView('sb0', 'project');
+      expect(state.left.vertexCount()).toEqual(4);
+      expect(state.left.edgeCount()).toEqual(4);
+      expect(state.left.attributeCount()).toEqual(8);
+      state.close();
     });
 
 };

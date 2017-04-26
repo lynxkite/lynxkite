@@ -7,7 +7,7 @@
 // missing.
 
 angular.module('biggraph')
- .directive('projectStateView', function(util, side) {
+  .directive('projectStateView', function(util, side) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/project-state-view.html',
@@ -17,7 +17,7 @@ angular.module('biggraph')
       link: function(scope) {
         scope.sides = [];
 
-        util.deepWatch(scope, 'stateId', function() {
+        scope.$watch('stateId', function() {
           scope.sides = [];
           scope.left = new side.Side(scope.sides, 'left', scope.stateId);
           scope.right = new side.Side(scope.sides, 'right', scope.stateId);
@@ -44,4 +44,4 @@ angular.module('biggraph')
           });
       },
     };
-});
+  });

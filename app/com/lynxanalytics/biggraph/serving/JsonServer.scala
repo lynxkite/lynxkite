@@ -15,6 +15,7 @@ import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
+import com.lynxanalytics.biggraph.serving
 import org.apache.spark.sql.types.{ StructField, StructType }
 
 abstract class JsonServer extends mvc.Controller {
@@ -150,6 +151,7 @@ case class GlobalSettings(
   authMethods: List[AuthMethod],
   title: String,
   tagline: String,
+  workspaceParameterKinds: List[String],
   version: String)
 
 object AssertLicenseNotExpired {
@@ -225,7 +227,8 @@ object FrontendJson {
 
   implicit val fFEStatus = json.Json.format[FEStatus]
   implicit val fFEOption = json.Json.format[FEOption]
-  implicit val fFEOperationParameterMeta = json.Json.format[FEOperationParameterMeta]
+  implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
+  implicit val fCustomOperationParameterMeta = json.Json.format[CustomOperationParameterMeta]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wFEScalar = json.Json.writes[FEScalar]
   implicit val wFEOperationMeta = json.Json.writes[FEOperationMeta]
@@ -292,6 +295,9 @@ object FrontendJson {
   implicit val rGetProgressRequest = json.Json.reads[GetProgressRequest]
   implicit val rGetProgressResponse = json.Json.writes[GetProgressResponse]
   implicit val rGetProjectOutputRequest = json.Json.reads[GetProjectOutputRequest]
+  implicit val rGetTableOutputRequest = json.Json.reads[GetTableOutputRequest]
+  implicit val wTableColumn = json.Json.writes[TableColumn]
+  implicit val wGetTableOutputResponse = json.Json.writes[GetTableOutputResponse]
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
   implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
   implicit val rCreateSnapshotRequest = json.Json.reads[CreateSnapshotRequest]
@@ -429,6 +435,13 @@ object ProductionJsonServer extends JsonServer {
   def importBox = jsonFuturePost(sqlController.importBox)
   def createViewDFSpec = jsonPost(sqlController.createViewDFSpec)
 
+  def getTableOutput = jsonGet(getTableOutputData)
+  def getTableOutputData(user: serving.User, request: GetTableOutputRequest): GetTableOutputResponse = {
+    implicit val metaManager = workspaceController.metaManager
+    val table = workspaceController.getOutput(user, request.id).table
+    sqlController.getTableSample(table)
+  }
+
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
   def sparkCancelJobs = jsonPost(sparkClusterController.sparkCancelJobs)
@@ -485,6 +498,7 @@ object ProductionJsonServer extends JsonServer {
       authMethods = getAuthMethods,
       title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
       tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"),
+      workspaceParameterKinds = CustomOperationParameterMeta.validKinds,
       version = version)
   }
 

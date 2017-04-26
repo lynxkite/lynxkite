@@ -10,7 +10,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   val bigGraphController = new BigGraphController(this)
   val ops = new frontend_operations.Operations(this)
   val user = serving.User.fake
-  def context(ws: Workspace) = ws.context(user, ops, Map())
+  def context(ws: Workspace, params: (String, String)*) = ws.context(user, ops, params.toMap)
 
   def create(name: String) =
     controller.createWorkspace(user, CreateWorkspaceRequest(name, "private"))
@@ -237,6 +237,18 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     }
   }
 
+  test("non-circular dependencies (#5971)") {
+    val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+    val imp = Box(
+      "imp", "Import segmentation", Map(
+        "name" -> "self", "base_id_attr" -> "name",
+        "base_id_column" -> "name", "seg_id_column" -> "name"), 0, 0,
+      Map("project" -> eg.output("project"), "segmentation" -> eg.output("project")))
+    val ws = Workspace.from(eg, imp)
+    val p = context(ws).allStates(imp.output("project")).project
+    assert(p.segmentationNames.contains("self"))
+  }
+
   test("anchor box") {
     using("test-workspace") {
       val anchorBox = Box("anchor", "Anchor", Map(), 0, 0, Map())
@@ -255,6 +267,60 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(intercept[AssertionError] {
         set("test-workspace", Workspace(List(withDescription, another)))
       }.getMessage.contains("Duplicate box name: anchor"))
+    }
+  }
+
+  def anchorWithParams(params: (String, String, String)*): Box = {
+    Box("anchor", "Anchor", Map(
+      "parameters" -> json.Json.toJson(params.toList.map {
+        case (id, kind, defaultValue) =>
+          Map("id" -> id, "kind" -> kind, "defaultValue" -> defaultValue)
+      }).toString), 0, 0, Map())
+  }
+
+  test("parametric parameters") {
+    val anchor = anchorWithParams(("p1", "text", "def1"), ("p2", "text", "def2"))
+    val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+    val const = Box(
+      "const", "Add constant vertex attribute",
+      Map("value" -> "1", "type" -> "String"), 0, 20, Map("project" -> eg.output("project")),
+      Map("name" -> "$p1 $p2"))
+    val ws = Workspace(List(anchor, eg, const))
+    assert(
+      context(ws).allStates(const.output("project")).project
+        .vertexAttributes.contains("def1 def2"))
+    assert(
+      context(ws, "p1" -> "some1").allStates(const.output("project")).project
+        .vertexAttributes.contains("some1 def2"))
+    assert(intercept[AssertionError] {
+      context(ws, "p3" -> "some3").allStates(const.output("project")).project
+    }.getMessage.contains("Unrecognized parameter: p3"))
+  }
+
+  test("custom box") {
+    using("test-custom-box") {
+      val anchor = anchorWithParams(("param1", "text", "def1"))
+      val inputBox = Box("input", "Input box", Map("name" -> "in1"), 0, 0, Map())
+      val pr = Box(
+        "pr", "Compute PageRank", pagerankParams - "name", 0, 0,
+        Map("project" -> inputBox.output("input")), Map("name" -> "pr_$param1"))
+      val outputBox = Box(
+        "output", "Output box", Map("name" -> "out1"), 0, 0, Map("output" -> pr.output("project")))
+      set("test-custom-box", Workspace(List(anchor, inputBox, pr, outputBox)))
+
+      // Now use "test-custom-box" as a custom box.
+      val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+      val cb = Box("cb", "test-custom-box", Map(), 0, 0, Map("in1" -> eg.output("project")))
+      assert({
+        // Relying on default parameters.
+        val ws = Workspace.from(eg, cb)
+        context(ws).allStates(cb.output("out1")).project.vertexAttributes.contains("pr_def1")
+      })
+      assert({
+        // Providing a specific parameter value.
+        val ws = Workspace.from(eg, cb.copy(parameters = Map("param1" -> "xyz")))
+        context(ws).allStates(cb.output("out1")).project.vertexAttributes.contains("pr_xyz")
+      })
     }
   }
 }

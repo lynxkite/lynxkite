@@ -5,18 +5,22 @@ import scala.collection.mutable.HashMap
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.frontend_operations.Operations
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 
 case class GetWorkspaceRequest(name: String)
 case class BoxOutputInfo(boxOutput: BoxOutput, stateID: String, success: FEStatus, kind: String)
-case class GetWorkspaceResponse(workspace: Workspace, outputs: List[BoxOutputInfo])
+case class GetWorkspaceResponse(workspace: Workspace, outputs: List[BoxOutputInfo], summaries: Map[String, String])
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
 case class GetProgressRequest(stateIDs: List[String])
 case class GetProgressResponse(progress: Map[String, Option[Progress]])
 case class GetProjectOutputRequest(id: String, path: String)
+case class GetTableOutputRequest(id: String)
+case class TableColumn(name: String, dataType: String)
+case class GetTableOutputResponse(header: List[TableColumn], data: List[List[DynamicValue]])
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 case class CreateSnapshotRequest(name: String, id: String)
@@ -55,7 +59,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def getWorkspace(
     user: serving.User, request: GetWorkspaceRequest): GetWorkspaceResponse = {
     val workspace = getWorkspaceByName(user, request.name)
-    val states = workspace.context(user, ops, Map()).allStates
+    val context = workspace.context(user, ops, Map())
+    val states = context.allStates
     val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
     calculatedStates.synchronized {
       for ((_, (boxOutputState, id)) <- statesWithId) {
@@ -66,13 +71,19 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       case (boxOutput, (boxOutputState, stateID)) =>
         BoxOutputInfo(boxOutput, stateID, boxOutputState.success, boxOutputState.kind)
     }
-    GetWorkspaceResponse(workspace, stateInfo)
+    val summaries = workspace.boxes.map(
+      box => box.id -> (
+        try { context.getOperationForStates(box, states).summary }
+        catch { case e: AssertionError => box.operationID }
+      )
+    ).toMap
+    GetWorkspaceResponse(workspace, stateInfo, summaries)
   }
 
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
   val calculatedStates = new HashMap[String, BoxOutputState]()
 
-  private def getOutput(user: serving.User, stateID: String): BoxOutputState = {
+  def getOutput(user: serving.User, stateID: String): BoxOutputState = {
     calculatedStates.synchronized {
       calculatedStates.get(stateID)
     } match {
@@ -84,12 +95,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def getProjectOutput(
     user: serving.User, request: GetProjectOutputRequest): FEProject = {
     val state = getOutput(user, request.id)
-    state.kind match {
-      case BoxOutputKind.Project =>
-        val pathSeq = SubProject.splitPipedPath(request.path).filter(_ != "")
-        val viewer = state.project.viewer.offspringViewer(pathSeq)
-        viewer.toFE(request.path)
-    }
+    val pathSeq = SubProject.splitPipedPath(request.path).filter(_ != "")
+    val viewer = state.project.viewer.offspringViewer(pathSeq)
+    viewer.toFE(request.path)
   }
 
   def getExportResultOutput(
@@ -154,7 +162,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def boxCatalog(user: serving.User, request: serving.Empty): BoxCatalogResponse = {
-    BoxCatalogResponse(ops.operationIds.toList.map(ops.getBoxMetadata(_)))
+    BoxCatalogResponse(ops.operationIds(user).toList.map(ops.getBoxMetadata(_)))
   }
 
   def getOperationMeta(user: serving.User, request: GetOperationMetaRequest): FEOperationMeta = {

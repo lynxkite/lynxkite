@@ -1,13 +1,17 @@
 <div class="box col-sm-11 {{color}}">
   <h1>
-    {{ boxMeta.operationID }}
+    {{ boxMeta.id }}
   </h1>
 
   <!-- For documented operations. -->
-  <p help-id="{{ boxMeta.operationID }}"
+  <p ng-if="boxMeta.htmlId && !boxMeta.description"
+     help-id="{{ boxMeta.htmlId }}"
      remove-header="yes"
      scalars="scalars"
      class="description"></p>
+
+  <!-- For custom boxes. -->
+  <p class="description"> {{ boxMeta.description }} </p>
 
   <p ng-if="boxMeta.parameters.length === 0" class="text-center">
     No parameters
@@ -16,8 +20,8 @@
     <operation-parameters
         box="box"
         meta="boxMeta"
-        output="paramValues"
-        parametric="parametricParams"
+        output="plainParamValues"
+        parametric="parametricParamValues"
         editable="true"
         on-blur="onBlur()">
     </operation-parameters>

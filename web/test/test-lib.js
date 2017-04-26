@@ -1,11 +1,11 @@
 'use strict';
 
 var testLib; // Forward declarations.
-var TableBrowser; // Forward declarations.
 var request = require('request');
 var fs = require('fs');
 
 var K = protractor.Key;  // Short alias.
+
 
 // Mirrors the "id" filter.
 function toID(x) {
@@ -132,7 +132,6 @@ function Workspace() {
   this.main = element(by.id('workspace-main'));
   this.selector = element(by.css('.operation-selector'));
   this.board = element(by.css('workspace-drawing-board'));
-  this.boxEditor = element(by.css('box-editor'));
 }
 
 Workspace.prototype = {
@@ -155,19 +154,6 @@ Workspace.prototype = {
     this.selector.element(by.id('operation-search')).click();
   },
 
-  operationParameter: function(param) {
-    return this.boxEditor.element(by.css(
-        'operation-parameters #' + param + ' .operation-attribute-entry'));
-  },
-
-  populateOperation: function(params) {
-    params = params || {};
-    for (var key in params) {
-      testLib.setParameter(this.operationParameter(key), params[key]);
-    }
-    $('#workspace-name').click(); // Make sure the parameters are not focused.
-  },
-
   addBox: function(boxData) {
     var id = boxData.id;
     var after = boxData.after;
@@ -188,26 +174,12 @@ Workspace.prototype = {
     if (params) {
       this.editBox(id, params);
     }
-    this.selectOutput(id);
-  },
-
-  selectBox(boxID) {
-    this.getBox(boxID).$('rect').click();
   },
 
   editBox: function(boxID, params) {
-    this.selectBox(boxID);
-    this.populateOperation(params);
-  },
-
-  expectSelectedBoxParameter: function(paramName, expectedValue) {
-    var param = this.boxEditor.$('div#' + paramName + ' input');
-    expect(param.getAttribute('value')).toBe(expectedValue);
-  },
-
-  expectSelectedBoxSelectParameter: function(paramName, expectedValue) {
-    var param = this.boxEditor.$('div#' + paramName + ' select');
-    expect(param.getAttribute('value')).toBe(expectedValue);
+    var boxEditor = this.openBoxEditor(boxID);
+    boxEditor.populateOperation(params);
+    boxEditor.close();
   },
 
   getBox(boxID) {
@@ -232,8 +204,38 @@ Workspace.prototype = {
     }
   },
 
-  selectOutput: function(boxID, plugID) {
+  toggleStateView: function(boxID, plugID) {
     this.getOutputPlug(boxID, plugID).click();
+  },
+
+
+  openBoxEditor: function(boxId) {
+    this.getBox(boxId).$('rect').click();
+    var popup = this.board.$('.popup#' + boxId);
+    expect(popup.isDisplayed()).toBe(true);
+    this.movePopupToCenter(popup);
+    return new BoxEditor(popup);
+  },
+
+  movePopupToCenter: function(popup) {
+    var head = popup.$('div.popup-head');
+    browser.actions()
+        .mouseDown(head)
+        .mouseMove(this.board, {x: 700, y: 20})
+        .mouseUp(head)
+        .perform();
+  },
+
+  openStateView: function(boxId, plugId) {
+    this.toggleStateView(boxId, plugId);
+    var popup = this.board.$('.popup#' + boxId + '_' + plugId);
+    this.movePopupToCenter(popup);
+    return new State(popup);
+  },
+
+  getStateView: function(boxId, plugId) {
+    var popup = this.board.$('.popup#' + boxId + '_' + plugId);
+    return new State(popup);
   },
 
   connectBoxes: function(srcBoxID, srcPlugID, dstBoxID, dstPlugID) {
@@ -250,10 +252,56 @@ Workspace.prototype = {
 
 };
 
+function BoxEditor(popup) {
+  this.popup = popup;
+  this.boxEditor = popup.$('box-editor');
+}
 
-function Side(direction) {
+BoxEditor.prototype = {
+
+  operationParameter: function(param) {
+    return this.boxEditor.element(by.css(
+        'operation-parameters #' + param + ' .operation-attribute-entry'));
+  },
+
+  populateOperation: function(params) {
+    params = params || {};
+    for (var key in params) {
+      testLib.setParameter(this.operationParameter(key), params[key]);
+    }
+    $('#workspace-name').click(); // Make sure the parameters are not focused.
+  },
+
+  expectParameter: function(paramName, expectedValue) {
+    var param = this.boxEditor.$('div#' + paramName + ' input');
+    expect(param.getAttribute('value')).toBe(expectedValue);
+  },
+
+  expectSelectParameter: function(paramName, expectedValue) {
+    var param = this.boxEditor.$('div#' + paramName + ' select');
+    expect(param.getAttribute('value')).toBe(expectedValue);
+  },
+
+  close: function() {
+    this.popup.$('#close-popup').click();
+  },
+};
+
+function State(popup) {
+  this.popup = popup;
+  this.left = new Side(this.popup, 'left');
+  this.right = new Side(this.popup, 'right');
+}
+
+State.prototype = {
+  close: function() {
+    this.popup.$('#close-popup').click();
+  }
+};
+
+function Side(popup, direction) {
   this.direction = direction;
-  this.side = $('project-state-view #side-' + direction);
+  this.side = popup.$('project-state-view #side-' + direction);
 }
 
 Side.prototype = {
@@ -730,7 +778,7 @@ Selector.prototype = {
       document.styleSheets[0].insertRule(
         '.spark-status, .bottom-links { position: static !important; }');
         `);
-      },
+  },
 
   openDirectory: function(name) {
     this.directory(name).click();
@@ -851,14 +899,14 @@ Selector.prototype = {
 var splash = new Selector(element(by.id('splash')));
 
 function randomPattern () {
-  /* jshint bitwise: false */
+  /* eslint-disable no-bitwise */
   var crypto = require('crypto');
   var buf = crypto.randomBytes(16);
   var sixteenLetters = 'abcdefghijklmnop';
   var r = '';
   for (var i = 0; i < buf.length; i++) {
     var v = buf[i];
-    var lo =  (v & 0xf);
+    var lo = (v & 0xf);
     var hi = (v >> 4);
     r += sixteenLetters[lo] + sixteenLetters[hi];
   }
@@ -869,9 +917,6 @@ var lastDownloadList;
 
 testLib = {
   theRandomPattern: randomPattern(),
-  state: new Side('left'),
-  left: new Side('left'),
-  right: new Side('right'),
   workspace: new Workspace(),
   visualization: visualization,
   splash: splash,
@@ -898,7 +943,8 @@ testLib = {
             defer.reject(new Error(error));
           } else {
             defer.fulfill();
-      }});
+          }
+        });
     }
     this.authenticateAndPost('admin', 'adminpw', 'lynxkite', discard);
   },
@@ -922,7 +968,8 @@ testLib = {
             defer.reject(new Error(error));  // TODO: include message?
           } else {
             func(defer);
-          }});
+          }
+        });
       return defer.promise;
     }
     return browser.controlFlow().execute(sendRequest);
@@ -1123,7 +1170,7 @@ testLib = {
   expectNoClass(element, cls) {
     expect(element.getAttribute('class')).toBeDefined();
     element.getAttribute('class').then(function(classes) {
-          expect(classes.split(' ').indexOf(cls)).toBe(-1);
+      expect(classes.split(' ').indexOf(cls)).toBe(-1);
     });
   },
 
@@ -1137,7 +1184,7 @@ testLib = {
     browser.getAllWindowHandles()
       .then(handles => {
         browser.driver.switchTo().window(handles[pos]);
-    });
+      });
   },
 
   showSelector: function() {
@@ -1183,8 +1230,8 @@ testLib = {
       }
 
       var dropEvent = createEvent('drop');
-      dropEvent.offsetX = dstX;
-      dropEvent.offsetY = dstY;
+      dropEvent.pageX = dstX;
+      dropEvent.pageY = dstY;
 
       dropEvent.dataTransfer = dragStartEvent.dataTransfer;
       dst.dispatchEvent(dropEvent);

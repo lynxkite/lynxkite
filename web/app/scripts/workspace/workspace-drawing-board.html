@@ -1,83 +1,93 @@
-<svg
-  ng-mousemove="onMouseMove($event)"
-  ng-mouseup="onMouseUp($event)"
-  ng-mousedown="onMouseDown($event)">
-  <g id="drawing-board"
-     ng-attr-transform="{{ workspaceTransform() }}">
+<div
+    id="workspace-drawing-board"
+    ng-mousemove="onMouseMove($event)"
+    ng-mouseup="onMouseUp($event)"
+    ng-mousedown="onMouseDown($event)">
+  <svg>
+    <g id="drawing-board"
+       ng-attr-transform="{{ workspaceTransform() }}">
 
-    <!-- start box -->
-    <g ng-repeat="box in workspace.boxes()"
-        ng-mousedown="onMouseDownOnBox(box, $event)"
-        ng-attr-transform="{{ box.mainPosTransform() }}"
-        class="box"
-        id="{{ box.instance.id }}">
+      <!-- start box -->
+      <g ng-repeat="box in workspace.boxes()"
+          ng-mousedown="onMouseDownOnBox(box, $event)"
+          ng-mouseup="workspace.onMouseUpOnBox(box, $event)"
+          ng-attr-transform="{{ box.mainPosTransform() }}"
+          class="box"
+          id="{{ box.instance.id }}"
+          ng-class="{ 'selected': workspace.selectedBoxIds.includes(box.instance.id) }">
 
-      <!-- start list of I/O plugs -->
-      <g ng-repeat="direction in ['inputs', 'outputs']"
-        id="{{ direction }}">
-        <g ng-repeat="plug in box[direction]"
-            ng-attr-transform="{{ plug.posTransform }}"
-            ng-class="{ 'selected-plug': plug == workspace.selectedPlug }"
-            id="{{ plug.id }}">
-          <text x="10">{{ plug.id }}</text>
-          <circle ng-attr-r="{{ plug.radius }}"
-                class="io-circle"
-                ng-class="{'in-progress': plug.inProgress,
-                          'colored-output': plug.progressColor || plug.error }"
-                ng-attr-fill="{{ plug.error ? 'red' : plug.progressColor }}"
-                ng-attr-drop-tooltip="{{ plug.error }}"
-                ng-mousedown="workspace.onMouseDownOnPlug(plug, $event)"
-                ng-mouseup="workspace.onMouseUpOnPlug(plug, $event)">
-          </circle>
+        <!-- start list of I/O plugs -->
+        <g ng-repeat="direction in ['inputs', 'outputs']"
+          id="{{ direction }}">
+          <g ng-repeat="plug in box[direction]"
+              ng-attr-transform="{{ plug.posTransform }}"
+              id="{{ plug.id }}">
+            <text x="10">{{ plug.id }}</text>
+            <circle ng-attr-r="{{ plug.radius }}"
+                  class="io-circle"
+                  ng-class="{'in-progress': plug.inProgress,
+                            'colored-output': plug.progressColor || plug.error }"
+                  ng-attr-fill="{{ plug.error ? 'red' : plug.progressColor }}"
+                  ng-attr-drop-tooltip="{{ plug.error }}"
+                  ng-mousedown="workspace.onMouseDownOnPlug(plug, $event)"
+                  ng-mouseup="workspace.onMouseUpOnPlug(plug, $event)"
+                  ng-click="workspace.onClickOnPlug(plug, $event)">
+            </circle>
+          </g>
         </g>
+        <!-- end list of I/O plugs -->
+
+        <rect
+            class="box-main"
+            ng-attr-width="{{box.width}}"
+            ng-attr-height="{{box.height}}">
+        </rect>
+
+        <text x="5" y="15">
+          {{box.instance.summary}}
+        </text>
+        <text x="5" y="50" ng-show="box.commentLines">
+          <tspan xml:space="preserve" font-family="monospace" x="5" dy="15"
+                 ng-repeat="line in box.commentLines track by $index">{{line}}
+          </tspan>
+        </text>
       </g>
-      <!-- end list of I/O plugs -->
-
+      <!-- end box -->
+      <g>
       <rect
-          class="box-main"
-          ng-class="{ 'selected-box': workspace.selectedBoxIds.includes(box.instance.id) }"
-          ng-attr-width="{{box.width}}"
-          ng-attr-height="{{box.height}}">
+        class="selection-box"
+        ng-attr-x="{{workspace.selection.leftX}}"
+        ng-attr-y="{{workspace.selection.upperY}}"
+        ng-attr-width="{{workspace.selection.width}}"
+        ng-attr-height="{{workspace.selection.height}}">
       </rect>
-
-      <text x="5" y="15">
-        {{box.metadata.operationID}}
-      </text>
-      <text x="5" y="50" ng-show="box.commentLines">
-        <tspan xml:space="preserve" font-family="monospace" x="5" dy="15"
-               ng-repeat="line in box.commentLines track by $index">{{line}}
-        </tspan>
-      </text>
     </g>
-    <!-- end box -->
-    <g>
-    <rect
-      class="selection-box"
-      ng-attr-x="{{workspace.selection.leftX}}"
-      ng-attr-y="{{workspace.selection.upperY}}"
-      ng-attr-width="{{workspace.selection.width}}"
-      ng-attr-height="{{workspace.selection.height}}">
-    </rect>
-  </g>
-    <!-- start arrow -->
-    <g ng-repeat="arrow in workspace.arrows()">
-      <line class="arrow"
-          ng-attr-x1="{{arrow.x1()}}"
-          ng-attr-y1="{{arrow.y1()}}"
-          ng-attr-x2="{{arrow.x2()}}"
-          ng-attr-y2="{{arrow.y2()}}"></line>
-    </g>
-    <!-- end arrow -->
+      <!-- start arrow -->
+      <g ng-repeat="arrow in workspace.arrows()">
+        <line class="arrow"
+            ng-attr-x1="{{arrow.x1()}}"
+            ng-attr-y1="{{arrow.y1()}}"
+            ng-attr-x2="{{arrow.x2()}}"
+            ng-attr-y2="{{arrow.y2()}}"></line>
+      </g>
+      <!-- end arrow -->
 
-    <!-- start pulled arrow -->
-    <g ng-if="workspace.pulledPlug">
-      <line class="arrow pulled-arrow"
-          ng-attr-x1="{{workspace.pulledPlug.x()}}"
-          ng-attr-y1="{{workspace.pulledPlug.y()}}"
-          ng-attr-x2="{{workspace.mouseLogical.x}}"
-          ng-attr-y2="{{workspace.mouseLogical.y}}">
-      </line>
-    </g>
+      <!-- start pulled arrow -->
+      <g ng-if="workspace.pulledPlug">
+        <line class="arrow pulled-arrow"
+            ng-attr-x1="{{workspace.pulledPlug.x()}}"
+            ng-attr-y1="{{workspace.pulledPlug.y()}}"
+            ng-attr-x2="{{workspace.mouseLogical.x}}"
+            ng-attr-y2="{{workspace.mouseLogical.y}}">
+        </line>
+      </g>
 
-  </g>
-</svg>
+    </g>
+  </svg>
+
+  <popup popup-model="popup"
+      workspace="workspace"
+      ng-repeat="popup in workspace.popups">
+  </popup>
+
+</div>
