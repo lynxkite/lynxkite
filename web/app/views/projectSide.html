@@ -70,7 +70,7 @@
       <value id="vertex-count"
              class="emph"
              ng-if="side.project.vertexSet !== ''"
-             ref="side.scalars['vertex_count']">
+             ref="side.scalars['!vertex_count']">
       </value>
       <delta ref="side.scalars['!vertex_count_delta']"
              last-operation="side.project.undoOp"></delta>
@@ -78,7 +78,7 @@
       vertices with
       <value class="emph"
              ng-if="side.project.edgeBundle !== ''"
-             ref="side.scalars['edge_count']"
+             ref="side.scalars['!edge_count']"
              id="edge-count">
       </value>
       <delta ref="side.scalars['!edge_count_delta']"
@@ -90,21 +90,21 @@
     <span ng-if="side.scalars['!belongsToEdges'] !== undefined">
       <!-- Segmentation summary -->
       <value class="emph"
-             ref="side.scalars['vertex_count']"
+             ref="side.scalars['!vertex_count']"
              id="segment-count">
       </value>
       <delta ref="side.scalars['!vertex_count_delta']"
              last-operation="side.project.undoOp"></delta>
-      <span ng-if="side.scalars['!nonEmpty'].value.double === side.scalars['vertex_count'].value.double">
+      <span ng-if="side.scalars['!nonEmpty'].value.double === side.scalars['!vertex_count'].value.double">
         non-empty segments
       </span>
-      <span ng-if="side.scalars['!nonEmpty'].value.double !== side.scalars['vertex_count'].value.double">
+      <span ng-if="side.scalars['!nonEmpty'].value.double !== side.scalars['!vertex_count'].value.double">
         segments (of which <value id="non-empty-segment-count" class="emph" ref="side.scalars['!nonEmpty']"></value> are non-empty)
       </span>
       with total size of <value id="total-segment-size" class="emph" ref="side.scalars['!belongsToEdges']"></value>
       covering <value id="total-segment-coverage" class="emph" ref="side.scalars['!coverage']"></value> base vertices
       <span ng-if="side.project.edgeBundle !== ''">
-        with <value id="segmentation-edge-count" class="emph" ref="side.scalars['edge_count']"></value>
+        with <value id="segmentation-edge-count" class="emph" ref="side.scalars['!edge_count']"></value>
         <delta ref="side.scalars['!edge_count_delta']"
                last-operation="side.project.undoOp"></delta>
         edges

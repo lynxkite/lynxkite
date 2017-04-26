@@ -37,8 +37,8 @@ module.exports = function(fw) {
     'test-example workspace with reverse edges',
     function() {
       lib.workspace.addBox({ id: 'eg1', name: 'create example graph', x: 350, y: 100 });
-      lib.workspace.addBox({ id: 'reversed-edges', name: 'add reversed edges', x: 100, y: 200,
-                             after: 'eg0' });
+      lib.workspace.addBox({
+        id: 'reversed-edges', name: 'add reversed edges', x: 100, y: 200, after: 'eg0' });
     },
     function() {
     });

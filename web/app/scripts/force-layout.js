@@ -1,7 +1,7 @@
 // The 2D graph layout algoritm used in sampled mode.
 'use strict';
 
-/* exported FORCE_LAYOUT */
+/* eslint-disable no-unused-vars */
 var FORCE_LAYOUT = (function() {
   var lib = {};
   // Options:

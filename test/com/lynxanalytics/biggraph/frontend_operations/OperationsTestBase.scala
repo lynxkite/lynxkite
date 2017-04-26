@@ -34,7 +34,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
         case ((inputId, inputName), inputBox) =>
           val outputs = inputBox.meta.outputs
           assert(outputs.size == 1, s"for $inputName outputs.")
-          inputId -> BoxOutput(inputName, outputs.head.id)
+          inputId -> BoxOutput(inputName, outputs.head)
       }.toMap
 
       val box = Box(
