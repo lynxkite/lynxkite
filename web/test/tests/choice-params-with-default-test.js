@@ -9,12 +9,12 @@ module.exports = function(fw) {
     'empty test-example workspace',
     'test pagerank default choice values',
     function() {
-      lib.workspace.addBox({id: 'ex0', name: 'create example graph', x: 100, y: 100});
+      lib.workspace.addBox({id: 'ex0', name: 'create example graph', x: 300, y: 100});
       lib.workspace.addBox({
-        id: 'pr1', name: 'compute pagerank', x: 100, y: 200, after: 'ex0',
+        id: 'pr1', name: 'compute pagerank', x: 300, y: 200, after: 'ex0',
         params: { name: 'page_rank_default' } });
       lib.workspace.addBox({
-        id: 'pr2', name: 'compute pagerank', x: 100, y: 300, after: 'pr1',
+        id: 'pr2', name: 'compute pagerank', x: 300, y: 300, after: 'pr1',
         params: { name: 'page_rank_incoming', direction: 'incoming edges'} });
     },
     function() {

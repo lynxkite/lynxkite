@@ -1,8 +1,11 @@
 // Provides utility functions, most importantly the Ajax IO functions.
 'use strict';
 
-angular.module('biggraph').factory('util', function utilFactory(
-      $location, $window, $http, $rootScope, $modal, $q) {
+angular.module('biggraph')
+.service('environment', function() {
+  this.protractor = false; // If we want to handle tests specially somewhere.
+})
+.factory('util', function utilFactory($location, $window, $http, $rootScope, $modal, $q) {
   var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
   // DataManager computation status codes. Keep these in sync
   // with EntityProgressManager.computeProgress
