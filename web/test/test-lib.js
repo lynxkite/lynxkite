@@ -195,7 +195,7 @@ Workspace.prototype = {
 
   deleteBoxes: function(boxIds) {
     this.selectBoxes(boxIds);
-    this.main.element(by.id('delete-selected-boxes')).click();
+    this.main.$('#delete-selected-boxes').click();
   },
 
   editBox: function(boxID, params) {

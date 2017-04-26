@@ -309,7 +309,8 @@ angular.module('biggraph').factory(
           var that = this;
           var popups = this.popups.slice();
           popups.forEach(function(popup) {
-            if (boxIds.includes(popup.content.boxId)) {
+            var boxId = popup.content.boxId;
+            if (boxIds.includes(boxId) && boxId !== 'anchor') {
               that.closePopup(popup.id);
             }
           });
