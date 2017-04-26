@@ -153,24 +153,12 @@ Workspace.prototype = {
   closeOperationSelector: function() {
     this.selector.element(by.id('operation-search')).click();
   },
-  operationParameter: function(param) {
-    return this.boxEditor.element(by.css(
-        'operation-parameters #' + param + ' .operation-attribute-entry'));
-  },
 
   duplicate: function() {
     browser.actions()
         .sendKeys(K.chord(K.CONTROL, 'c'))
         .sendKeys(K.chord(K.CONTROL, 'v'))
         .perform();
-  },
-
-  populateOperation: function(params) {
-    params = params || {};
-    for (var key in params) {
-      testLib.setParameter(this.operationParameter(key), params[key]);
-    }
-    $('#workspace-name').click(); // Make sure the parameters are not focused.
   },
 
   addBox: function(boxData) {
