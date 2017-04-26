@@ -24,7 +24,7 @@
 
 angular.module('biggraph').factory(
   'workspace',
-  function(workspaceWrapper, PopupModel, util, $interval) {
+  function(workspaceWrapper, PopupModel, util, $interval, environment) {
     return function(boxCatalog, workspaceName) {
       var progressUpdater;
 
@@ -171,7 +171,7 @@ angular.module('biggraph').factory(
 
         onMouseMove: function(event) {
           var leftButton = event.buttons & 1;
-          if (!leftButton) {
+          if (!leftButton && !environment.protractor) {
             // Button is no longer pressed. (It was released outside of the window, for example.)
             this.onMouseUp();
           } else {
