@@ -1,8 +1,10 @@
 'use strict';
 
-var testLib; // Forward declarations.
-var TableBrowser; // Forward declarations.
+// Forward declarations.
+var testLib;
+var TableBrowser;
 var BoxEditor;
+var Table;
 var Side;
 var State;
 var request = require('request');
@@ -295,12 +297,72 @@ function State(popup) {
   this.popup = popup;
   this.left = new Side(this.popup, 'left');
   this.right = new Side(this.popup, 'right');
+  this.table = new Table(this.popup);
 }
 
 State.prototype = {
   close: function() {
     this.popup.$('#close-popup').click();
   }
+};
+
+function Table(popup) {
+  this.popup = popup;
+  this.sample = popup.$('#table-sample');
+  this.control = popup.$('#table-control');
+}
+
+Table.prototype = {
+  rowCount: function() {
+    return this.sample.all(by.css('tbody tr')).count();
+  },
+
+  expectRowCountIs: function(number) {
+    expect(this.rowCount()).toBe(number);
+  },
+
+  columnNames: function() {
+    return this.sample.$$('thead tr th span.column-name').map(e => e.getText());
+  },
+
+  expectColumnNamesAre(columnNames) {
+    expect(this.columnNames()).toEqual(columnNames);
+  },
+
+  columnTypes: function() {
+    return this.sample.$$('thead tr th span.column-type').map(e => e.getText());
+  },
+
+  expectColumnTypesAre(columnTypes) {
+    expect(this.columnTypes()).toEqual(columnTypes);
+  },
+
+  rows: function() {
+    return this.sample.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()));
+  },
+
+  expectRowsAre(rows) {
+    expect(this.rows()).toEqual(rows);
+  },
+
+  firstRow: function() {
+    return this.sample.$$('tbody tr').get(0).$$('td').map(e => e.getText());
+  },
+
+  expectFirstRowIs: function(row) {
+    expect(this.firstRow()).toEqual(row);
+  },
+
+  clickColumn(columnId) { // for sorting
+    var header = this.sample.$$('thead tr th').get(columnId);
+    header.click();
+  },
+
+  clickShowMoreRows: function() {
+    var button = this.control.$('#more-rows-button');
+    button.click();
+  },
+
 };
 
 function Side(popup, direction) {
