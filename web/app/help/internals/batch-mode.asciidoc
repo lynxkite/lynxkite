@@ -126,7 +126,7 @@ project.exportVertexAttributesToFile(
   format: 'CSV')
 
 // Print metrics.
-count = project.scalars['vertex_count']
+count = project.scalars['!vertex_count']
 time = (System.currentTimeMillis() - start_time) / 1000
 println "$count vertices processed in $time seconds."
 
