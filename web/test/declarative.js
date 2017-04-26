@@ -8,7 +8,7 @@ function UIDescription() {
 
   var mocks = require('./mocks.js');
   mocks.addTo(browser);
-  browser.driver.manage().window().setSize(1100, 600);
+  browser.driver.manage().window().setSize(1100, 700);
 
   return {
     isSolo: () => soloMode,
