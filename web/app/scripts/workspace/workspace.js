@@ -306,6 +306,12 @@ angular.module('biggraph').factory(
         },
 
         deleteBoxes: function(boxIds) {
+          var workspace = this;
+          this.popups.forEach(function(popup) {
+            if (boxIds.includes(popup.content.boxId)) {
+              workspace.closePopup(popup.id);
+            }
+          });
           for (i = 0; i < boxIds.length; i+=1) {
             if (boxIds[i] === 'anchor') {
               util.error('Anchor box cannot be deleted.');
