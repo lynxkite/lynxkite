@@ -208,6 +208,10 @@ Workspace.prototype = {
     return this.board.$('.box#' + boxId).isPresent();
   },
 
+  boxPopupExists(boxId) {
+    return this.board.$('.popup#' + boxId).isPresent();
+  },
+
   getBox(boxID) {
     return this.board.$('.box#' + boxID);
   },
