@@ -2,6 +2,12 @@ table-state-view {
   overflow: auto;
 }
 
+input.form-control#sample-rows {
+  width: 65px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 #table-sample {
   margin-top: 10px;
 }

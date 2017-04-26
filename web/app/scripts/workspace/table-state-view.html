@@ -1,11 +1,11 @@
 <div class="col-sm-12">
   <h3>Table sample</h3>
-  <div>
+  <div id="table-control">
     <span>maximum number of rows: </span>
     <input class="form-control ng-pristine ng-valid ng-touched"
            type="number"
            min="0"
-           id="max-rows"
+           id="sample-rows"
            ng-model="sampleRows">
     <button class="btn btn-primary" id="get-sample-button" ng-click="getSample()">
       Show sample
@@ -19,7 +19,7 @@
     <thead>
       <tr>
         <th ng-repeat="col in table.header" ng-click="sort.select($index)">
-          <span>{{col.name}}</span>
+          <span class="column-name">{{col.name}}</span>
           <br>
           <span class="no-break">
             <span class="column-type">{{col.dataType}}</span>
