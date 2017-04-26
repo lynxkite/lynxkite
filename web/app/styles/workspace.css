@@ -1,6 +1,7 @@
 #workspace-main {
   height: 100vh;
   overflow: hidden;
+  position: relative; /* Constrain absolute-positioned elements within. */
 }
 
 #workspace-header {
