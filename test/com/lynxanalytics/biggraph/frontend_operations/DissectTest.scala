@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class DissectTest extends OperationsTestBase {
   test("Take segmentation as base project") {
     val base = box("Create example graph")
-      .box("Segment by string attribute", Map("name" -> "gender", "attr" -> "gender"))
+      .box("Segment by String attribute", Map("name" -> "gender", "attr" -> "gender"))
     val stateOfTheSegmentation = base.project.state.segmentations("gender").state
     val project = base.box("Take segmentation as base project", Map("apply_to_project" -> "|gender")).project
     // The vertex_count_delta is updated after each operation so the project's state has now a
