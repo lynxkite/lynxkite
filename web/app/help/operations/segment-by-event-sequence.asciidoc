@@ -12,7 +12,7 @@ over a graph containing people as vertices.
 The new segmentation will be saved under this name.
 
 [[time_attr]] Time attribute::
-The `double` attribute corresponding the time of events.
+The `Double` attribute corresponding the time of events.
 
 [[location]] Location::
 A segmentation over events or an attribute corresponding to the location of events.

@@ -6,7 +6,7 @@ class FillEdgeAttributeWithConstantDefaultValueOperationTest extends OperationsT
   test("Fill edge attribute with constant default value") {
     val project = box("Create example graph")
       .box("Derive edge attribute",
-        Map("type" -> "double", "output" -> "income_edge", "expr" -> "src$income"))
+        Map("type" -> "Double", "output" -> "income_edge", "expr" -> "src$income"))
       .box("Fill edge attribute with constant default value",
         Map("attr" -> "income_edge", "def" -> "-1.0")).project
     val filledIncome = project.edgeAttributes("income_edge").runtimeSafeCast[Double]

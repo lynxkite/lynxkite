@@ -18,7 +18,7 @@ include::{g}[tag=table-import]
 The vertex attribute which is used to join with the table's ID column.
 
 [[id_column]] ID column::
-The ID column name in the table. This should be a string column that uses the values
+The ID column name in the table. This should be a String column that uses the values
 of the chosen vertex attribute as IDs.
 
 [[prefix]] Name prefix for the imported vertex attributes::

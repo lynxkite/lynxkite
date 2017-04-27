@@ -135,15 +135,15 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val blanks = Box("blanks", "Create vertices", Map("size" -> "2"), 0, 0, Map())
       val convert = Box(
-        "convert", "Convert vertex attribute to double",
+        "convert", "Convert vertex attribute to Double",
         Map("attr" -> "ordinal"), 0, 0, Map("project" -> blanks.output("project")))
       val srcs = Box(
         "srcs", "Derive vertex attribute",
-        Map("output" -> "src", "type" -> "string", "expr" -> "ordinal == 0 ? 'Adam' : 'Eve'"),
+        Map("output" -> "src", "type" -> "String", "expr" -> "ordinal == 0 ? 'Adam' : 'Eve'"),
         0, 0, Map("project" -> convert.output("project")))
       val dsts = Box(
         "dsts", "Derive vertex attribute",
-        Map("output" -> "dst", "type" -> "string", "expr" -> "ordinal == 0 ? 'Eve' : 'Bob'"),
+        Map("output" -> "dst", "type" -> "String", "expr" -> "ordinal == 0 ? 'Eve' : 'Bob'"),
         0, 0, Map("project" -> srcs.output("project")))
       val combine = Box(
         "combine", "Import edges for existing vertices",

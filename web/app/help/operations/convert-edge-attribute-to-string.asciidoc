@@ -1,8 +1,8 @@
-### Convert edge attribute to string
+### Convert edge attribute to String
 
 Converts the selected edge attributes to `String` type.
 
-The attributes will be converted in-place. If you want to keep the original string attribute as
+The attributes will be converted in-place. If you want to keep the original String attribute as
 well, make a copy first!
 
 ====

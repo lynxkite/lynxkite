@@ -75,7 +75,7 @@ object OperationParams {
     val multipleChoice = false
     def validate(value: String): Unit = {
       assert((value matches """\d+(\.\d+)?""") && (value.toDouble <= 1.0),
-        s"$title ($value) has to be a ratio, a double between 0.0 and 1.0")
+        s"$title ($value) has to be a ratio, a number between 0.0 and 1.0")
     }
   }
 
@@ -96,7 +96,7 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     def validate(value: String): Unit = {
-      assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative double")
+      assert(value matches """\d+(\.\d+)?""", s"$title ($value) has to be a non negative number")
     }
   }
 
