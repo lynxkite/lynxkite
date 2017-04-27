@@ -1,6 +1,6 @@
 ### Split edges
 
-Split (multiply) edges in a graph. A double edge attribute controls how many
+Split (multiply) edges in a graph. A Double edge attribute controls how many
 copies of the edge should exist after the operation. If this attribute is
 1, the edge will be kept as it is. If this attribute is zero, the edge
 will be discarded entirely. Higher values (e.g., 2) will result in
@@ -15,9 +15,9 @@ index attribute values running from 0 to n-1.
 
 ====
 [[rep]] Repetition attribute::
-A double edge attribute that specifies how many copies of the edge should
+A Double edge attribute that specifies how many copies of the edge should
 exist after the operation.
-(The double value is rounded to the nearest integer, so 1.8 will mean 2 copies.)
+(The Double value is rounded to the nearest integer, so 1.8 will mean 2 copies.)
 
 [[idx]] Index attribute name::
 The name of the attribute that will contain unique identifiers for the otherwise

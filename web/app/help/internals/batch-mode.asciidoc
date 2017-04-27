@@ -58,7 +58,7 @@ The properties of `GroovyProject` are:
 
  - `Map<String, GroovyProject> **segmentations**` is the list of segmentations for the project.
  - `Map<String, GroovyScalar> **scalars**` is the list of scalars. `GroovyScalar` has a `toString()`
-   and a `toDouble()` method, they return its value as a string/double respectively.
+   and a `toDouble()` method, they return its value as a String/Double respectively.
  - `Map<String, GroovyAttribute> **vertexAttributes**` and
    `Map<String, GroovyAttribute> **edgeAttributes**` are the vertex and edge attributes.
    `GroovyAttribute` has a `histogram()` method that

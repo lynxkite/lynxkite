@@ -18,7 +18,7 @@ class ViralModelingOperationTest extends OperationsTestBase {
         "name" -> "cliques",
         "bothdir" -> "false",
         "min" -> "3"))
-      .box("Convert vertex attribute to double", Map(
+      .box("Convert vertex attribute to Double", Map(
         "attr" -> "num"))
       .box("Predict attribute by viral modeling", Map(
         "prefix" -> "viral",

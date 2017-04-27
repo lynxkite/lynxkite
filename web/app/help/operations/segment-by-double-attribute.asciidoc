@@ -1,4 +1,4 @@
-### Segment by double attribute
+### Segment by Double attribute
 
 Segments the vertices by a `Double` vertex attribute.
 
