@@ -11,7 +11,7 @@ module.exports = function(fw) {
     'segmentation by double created',
     function() {
       lib.workspace.addBox({
-        id: 'segment-op', name: 'segment by double attribute', x: 100, y: 200,
+        id: 'segment-op', name: 'segment by double attribute', x: 300, y: 200,
         after: 'eg0', params: { attr: 'income', interval_size: '10'} });
     },
     function() {
@@ -36,7 +36,7 @@ module.exports = function(fw) {
         name: 'copy'
       };
       lib.workspace.addBox({
-        id: 'copy-op', name: 'copy graph into a segmentation', x: 100, y: 300,
+        id: 'copy-op', name: 'copy graph into a segmentation', x: 300, y: 300,
         after: 'segment-op', params: params });
     },
     function() {});
@@ -67,7 +67,7 @@ module.exports = function(fw) {
     'discard segmentation works',
     function() {
       lib.workspace.addBox({
-        id: 'discard-segment', name: 'discard segmentation', x: 100, y: 400,
+        id: 'discard-segment', name: 'discard segmentation', x: 300, y: 400,
         after: 'copy-op', params: { name: 'bucketing' } });
     },
     function() {
@@ -81,7 +81,7 @@ module.exports = function(fw) {
     'segmentation size reporting - non empty segments',
     function() {
       lib.workspace.addBox({
-        id: 'copy', name: 'copy graph into a segmentation', x: 100, y: 200,
+        id: 'copy', name: 'copy graph into a segmentation', x: 300, y: 200,
         after: 'eg0', params: { name: 'self' } });
     },
     function() {
@@ -98,7 +98,7 @@ module.exports = function(fw) {
     'segmentation size reporting - has empty segments',
     function() {
       lib.workspace.addBox({
-        id: 'filter-op', name: 'filter by attributes', x: 100, y: 300,
+        id: 'filter-op', name: 'filter by attributes', x: 300, y: 300,
         after: 'copy', params: { 'filterva_income': '*' } });
     },
     function() {
