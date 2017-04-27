@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('biggraph').factory('PopupModel', function() {
+angular.module('biggraph').factory('PopupModel', function(environment) {
   // Creates a new popup model data structure.
   // id: unique key
   // content: description of content to render
@@ -21,7 +21,7 @@ angular.module('biggraph').factory('PopupModel', function() {
 
   PopupModel.prototype.onMouseDown = function(event) {
     var leftButton = event.buttons & 1;
-    if (leftButton) {
+    if (leftButton || environment.protractor) {
       event.stopPropagation();
       this.owner.movedPopup = this;
       this.moveOffsetX = this.x - event.pageX;
@@ -35,12 +35,12 @@ angular.module('biggraph').factory('PopupModel', function() {
 
   PopupModel.prototype.onMouseMove = function(event) {
     var leftButton = event.buttons & 1;
-    if (!leftButton) {
-      // Button is no longer pressed. (It was released outside of the window, for example.)
-      this.owner.movedPopup = undefined;
-    } else {
+    if (leftButton || environment.protractor) {
       this.x = this.moveOffsetX + event.pageX;
       this.y = this.moveOffsetY + event.pageY;
+    } else {
+      // Button is no longer pressed. (It was released outside of the window, for example.)
+      this.owner.movedPopup = undefined;
     }
   };
 
