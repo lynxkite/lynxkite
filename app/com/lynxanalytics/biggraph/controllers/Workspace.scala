@@ -149,7 +149,7 @@ case class WorkspaceExecutionContext(
           box.execute(this, inputs)
         } catch {
           case ex: Throwable =>
-            log.error(s"Failed to execute $box:", ex)
+            log.info(s"Failed to execute $box:", ex)
             val msg = ex match {
               case ae: AssertionError => ae.getMessage
               case _ => ex.toString
