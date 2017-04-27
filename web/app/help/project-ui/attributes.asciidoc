@@ -52,7 +52,7 @@ Suppose, for example, that a person's name is represented by three attributes:
 `FirstName`, `MiddleName`, and `LastName`. In this case, `MiddleName` could be the
 empty string (meaning that the person in question has no middle name), or it could be
 undefined (meaning that their middle name is not known). Thus, the empty string is
-treated as an ordinary string attribute.
+treated as an ordinary String attribute.
 
 #### Differences between undefined and defined values
 
@@ -146,13 +146,13 @@ The size of vertices will be set based on this attribute. Only available for num
 Position::
 Available on attributes of type `(Double, Double)`. The attribute will be interpreted as (X, Y)
 coordinates on the plane and vertices will be laid out on the screen based on these coordinates.
-(You can create a `(Double, Double)` attribute from two double attributes using the
+(You can create a `(Double, Double)` attribute from two Double attributes using the
 <<vertex-attributes-to-position>> operation.)
 
 Geo coordinates::
 Available on attributes of type `(Double, Double)`. The attribute will be interpreted as a
 latitude-longitude coordinate and the vertices will be put on a world map based on this coordinate.
-(You can create a `(Double, Double)` attribute from two double attributes using the
+(You can create a `(Double, Double)` attribute from two Double attributes using the
 <<vertex-attributes-to-position>> operation.)
 
 #### Edge visualizations
