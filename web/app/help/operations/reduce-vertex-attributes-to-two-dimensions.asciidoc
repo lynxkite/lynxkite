@@ -1,6 +1,6 @@
 ### Reduce vertex attributes to two dimensions 
 
-Transforms multiple double attributes to a two-dimensional space (two double attributes) by
+Transforms multiple Double attributes to a two-dimensional space (two Double attributes) by
 Principal Component Analysis. A pre-scaling on mean and standard deviation is performed.
 
 Principal Component Analysis (PCA) is used to emphsize variation and bring out strong patterns in 
@@ -9,10 +9,10 @@ https://en.wikipedia.org/wiki/Principal_component_analysis[Principal Component A
 
 ====
 [[output_name1]] First dimension name::
-The first dimension will be stored as a double attribute using this name.
+The first dimension will be stored as a Double attribute using this name.
 
 [[output_name2]] Second dimension name::
-The second dimension will be stored as a double attribute using this name.
+The second dimension will be stored as a Double attribute using this name.
 
 [[features]] Feature attributes::
 Attributes to be used as inputs for the dimension reduction. 

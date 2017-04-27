@@ -67,7 +67,7 @@ angular.module('biggraph')
           event.stopPropagation();
           addLogicalMousePosition(event);
           scope.workspace.removeSelection();
-          scope.workspace.onMouseDownOnBox(box, event, event.ctrlKey);
+          scope.workspace.onMouseDownOnBox(box, event);
         };
 
         scope.onMouseUp = function(event) {

@@ -1,6 +1,6 @@
 ### Segment by interval
 
-Segments the vertices by a pair of `double` vertex attributes representing intervals.
+Segments the vertices by a pair of `Double` vertex attributes representing intervals.
 
 The domain of the attributes is split into intervals of the given size. Each of these
 intervals will represent a segment. Each vertex will belong to each segment whose
@@ -11,10 +11,10 @@ interval intersects with the interval of the vertex. Empty segments are not crea
 The new segmentation will be saved under this name.
 
 [[begin_attr]] Begin attribute::
-The `double` attribute corresponding the beginning of intervals to segment by.
+The `Double` attribute corresponding the beginning of intervals to segment by.
 
 [[end_attr]] End attribute::
-The `double` attribute corresponding the end of intervals to segment by.
+The `Double` attribute corresponding the end of intervals to segment by.
 
 [[interval_size]] interval size::
 The attribute's domain will be split into intervals of this size. The splitting always starts at

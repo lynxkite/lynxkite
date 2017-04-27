@@ -6,7 +6,7 @@ class MergeTwoEdgeAttributesOperationTest extends OperationsTestBase {
   test("Merge two edge attributes") {
     val project = box("Create example graph")
       .box("Derive edge attribute",
-        Map("type" -> "double", "output" -> "income_edge", "expr" -> "src$income"))
+        Map("type" -> "Double", "output" -> "income_edge", "expr" -> "src$income"))
       .box("Merge two edge attributes",
         Map("name" -> "merged", "attr1" -> "income_edge", "attr2" -> "weight"))
       .project

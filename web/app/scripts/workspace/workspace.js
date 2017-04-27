@@ -203,16 +203,16 @@ angular.module('biggraph').factory(
           this.movedPopup = undefined;
         },
 
-        onMouseDownOnBox: function(box, event, ctrl) {
+        onMouseDownOnBox: function(box, event) {
           var selectedBoxes = this.selectedBoxes();
           if (selectedBoxes.indexOf(box) === -1) {
-            if (!ctrl) {
+            if (!event.ctrlKey) {
               this.selectedBoxIds = [];
             }
             this.selectBox(box.instance.id);
             this.movedBoxes = [box];
             this.movedBoxes[0].onMouseDown(event);
-          } else if (ctrl) {
+          } else if (event.ctrlKey) {
             var selectedIndex = this.selectedBoxIds.indexOf(box.instance.id);
             this.selectedBoxIds.splice(selectedIndex, selectedIndex);
             this.movedBoxes[0].onMouseDown(event);
@@ -235,6 +235,10 @@ angular.module('biggraph').factory(
         },
 
         onClickOnPlug: function(plug, event) {
+          var leftButton = event.button === 0;
+          if (!leftButton || event.ctrlKey || event.shiftKey) {
+            return;
+          }
           event.stopPropagation();
           if (plug.direction === 'outputs') {
             var model = new PopupModel(
@@ -247,8 +251,8 @@ angular.module('biggraph').factory(
               },
               event.pageX - 300,
               event.pageY + 15,
-              600,
-              400,
+              500,
+              500,
               this);
             model.toggle();
           }
@@ -256,6 +260,10 @@ angular.module('biggraph').factory(
 
         onMouseUpOnBox: function(box, event) {
           if (box.isMoved || this.pulledPlug) {
+            return;
+          }
+          var leftButton = event.button === 0;
+          if (!leftButton || event.ctrlKey || event.shiftKey) {
             return;
           }
           var model = new PopupModel(
@@ -267,8 +275,8 @@ angular.module('biggraph').factory(
             },
             event.pageX - 200,
             event.pageY + 60,
-            400,
-            600,
+            500,
+            500,
             this);
           model.toggle();
         },
@@ -315,7 +323,8 @@ angular.module('biggraph').factory(
           var that = this;
           var popups = this.popups.slice();
           popups.forEach(function(popup) {
-            if (boxIds.includes(popup.content.boxId)) {
+            var boxId = popup.content.boxId;
+            if (boxIds.includes(boxId) && boxId !== 'anchor') {
               that.closePopup(popup.id);
             }
           });
