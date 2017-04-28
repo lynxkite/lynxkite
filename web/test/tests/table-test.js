@@ -58,8 +58,7 @@ module.exports = function(fw) {
       boxEditor.populateOperation({
         'infer': 'yes'
       });
-      var loadButton = $('#imported_table button');
-      loadButton.click();
+      lib.loadImportedTable();
       boxEditor.close();
     },
     function() {

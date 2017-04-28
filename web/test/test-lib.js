@@ -1234,6 +1234,11 @@ testLib = {
     input.sendKeys(fileName);
   },
 
+  loadImportedTable: function() {
+    var loadButton = $('#imported_table button');
+    loadButton.click();
+  },
+
   startDownloadWatch: function() {
     browser.controlFlow().execute(function() {
       expect(lastDownloadList).toBe(undefined);
