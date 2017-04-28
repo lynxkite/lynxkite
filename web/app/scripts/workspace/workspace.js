@@ -285,6 +285,7 @@ angular.module('biggraph').factory(
         onMouseDownOnPlug: function(plug, event) {
           event.stopPropagation();
           this.pulledPlug = plug;
+          this.mouseLogical = undefined;
         },
 
         onMouseUpOnPlug: function(plug, event) {

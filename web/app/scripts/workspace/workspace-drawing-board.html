@@ -73,7 +73,7 @@
       <!-- end arrow -->
 
       <!-- start pulled arrow -->
-      <g ng-if="workspace.pulledPlug">
+      <g ng-if="workspace.pulledPlug && workspace.mouseLogical">
         <line class="arrow pulled-arrow"
             ng-attr-x1="{{workspace.pulledPlug.x()}}"
             ng-attr-y1="{{workspace.pulledPlug.y()}}"
