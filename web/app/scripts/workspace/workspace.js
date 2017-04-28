@@ -244,7 +244,7 @@ angular.module('biggraph').factory(
           if (plug.direction === 'outputs') {
             var model = new PopupModel(
               plug.boxId + '_' + plug.id,
-              plug.boxId + '::' + plug.id,
+              plug.boxInstance.operationID + ' ➡ ' + plug.id,
               {
                 type: 'plug',
                 boxId: plug.boxId,
@@ -269,7 +269,7 @@ angular.module('biggraph').factory(
           }
           var model = new PopupModel(
             box.instance.id,
-            box.instance.id,
+            box.instance.operationID,
             {
               type: 'box',
               boxId: box.instance.id,
