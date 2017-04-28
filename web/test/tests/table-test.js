@@ -3,25 +3,21 @@
 
 module.exports = function(fw) {
   var lib = require('../test-lib.js');
-  var path = require('path');
 
   fw.transitionTest(
     'empty test-example workspace',
     'small CSV file imported as table',
     function() {
-      var importPath = path.resolve(__dirname, 'data/import_csv_test.csv');
       lib.workspace.addBox({
         id: 'ib0',
         name: 'Import CSV',
         x: 100, y: 100 });
       var boxEditor = lib.workspace.openBoxEditor('ib0');
-      var csvFileParameter = $('file-parameter');
-      lib.uploadIntoFileParameter(csvFileParameter, importPath);
+      lib.uploadCSVFileParameter('tests/data/import_csv_test.csv', boxEditor);
       boxEditor.populateOperation({
         'columns': 'name,age'
       });
-      var loadButton = $('#imported_table button');
-      loadButton.click();
+      lib.loadImportedTable();
       boxEditor.close();
     },
     function() {
@@ -47,14 +43,12 @@ module.exports = function(fw) {
     'empty test-example workspace',
     'large CSV file imported as table',
     function() {
-      var importPath = path.resolve(__dirname, 'data/import_large_csv_test.csv');
       lib.workspace.addBox({
         id: 'ib1',
         name: 'Import CSV',
         x: 400, y: 100 });
       var boxEditor = lib.workspace.openBoxEditor('ib1');
-      var csvFileParameter = $('file-parameter');
-      lib.uploadIntoFileParameter(csvFileParameter, importPath);
+      lib.uploadCSVFileParameter('tests/data/import_large_csv_test.csv', boxEditor);
       boxEditor.populateOperation({
         'infer': 'yes'
       });
