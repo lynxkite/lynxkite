@@ -87,19 +87,8 @@ angular.module('biggraph').factory(
               name: this.name
             })
             .then(function(response) {
-              var state = response.workspace;
-              for (i = 0; i < state.boxes.length; i++) {
-                state.boxes[i].summary = response.summaries[state.boxes[i].id];
-              }
-              that.backendState = state;
-              // User edits will be applied to a deep copy of
-              // the original backend state. This way watchers
-              // of backendState will only be notified once the
-              // backend is fully aware of the new state.
-              var stateCopy = angular.copy(state);
               that.wrapper = workspaceWrapper(
-                stateCopy, boxCatalogMap);
-              that.wrapper.assignStateInfoToPlugs(response.outputs);
+                response, boxCatalogMap);
             })
             .then(function() {
               that.startProgressUpdate();
