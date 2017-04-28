@@ -1,11 +1,11 @@
 <div id="workspace-main">
 
   <div id="workspace-header">
-    <span id="workspace-name">{{workspace.name}}</span>
+    <span id="workspace-name">{{guiMaster.name}}</span>
     <div class="btn-group pull-right">
       <button class="btn btn-default"
            id="delete-selected-boxes"
-           ng-click="workspace.deleteSelectedBoxes()"
+           ng-click="guiMaster.deleteSelectedBoxes()"
            drop-tooltip="Delete&nbsp;selected&nbsp;boxes"
            drop-tooltip-placement="bottom">
         <i class="fa fa-trash-o"></i>
@@ -37,7 +37,7 @@
   </div>
 
   <div id="workspace-main-layout">
-    <workspace-drawing-board workspace="workspace">
+    <workspace-drawing-board gui-master="guiMaster">
     </workspace-drawing-board>
     <operation-selector box-catalog="boxCatalog" editable="true">
     </operation-selector>

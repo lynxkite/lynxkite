@@ -23,7 +23,7 @@
 // 6. GOTO 2
 
 angular.module('biggraph').factory(
-  'workspace',
+  'workspaceGuiMaster',
   function(workspaceWrapper, PopupModel, util, $interval, environment) {
     return function(boxCatalog, workspaceName) {
       var progressUpdater;
