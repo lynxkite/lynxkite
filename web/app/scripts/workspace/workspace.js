@@ -171,6 +171,7 @@ angular.module('biggraph').factory(
 
         onMouseMove: function(event) {
           var leftButton = event.buttons & 1;
+          // Protractor omits button data from simulated mouse events.
           if (!leftButton && !environment.protractor) {
             // Button is no longer pressed. (It was released outside of the window, for example.)
             this.onMouseUp();
