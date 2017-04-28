@@ -970,7 +970,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
       def apply() = {
         val attr = project.edgeAttributes(params("attr"))
-      val paramDef = params("def")
+        val paramDef = params("def")
         val op: graph_operations.AddConstantAttribute[_] =
           graph_operations.AddConstantAttribute.doubleOrString(
             isDouble = attr.is[Double], paramDef)
@@ -1676,8 +1676,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Train a decision tree classification model", MachineLearningOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Param("name", "The name of the model"),
-      Choice("label", "Label", options = project.vertexAttributes[Double]),
-      Choice("features", "Features", options = project.vertexAttributes[Double], multipleChoice = true),
+      Choice("label", "Label", options = project.vertexAttrList[Double]),
+      Choice("features", "Features", options = project.vertexAttrList[Double], multipleChoice = true),
       Choice("impurity", "Impurity", options = FEOption.list("entropy", "gini")),
       NonNegInt("maxBins", "Maximum number of bins", default = 32),
       NonNegInt("maxDepth", "Maximum depth of tree", default = 5),
@@ -1685,7 +1685,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       NonNegInt("minInstancesPerNode", "Minimum size of children after splits", default = 1),
       RandomSeed("seed", "Seed"))
     def enabled =
-      FEStatus.assert(project.vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+      FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
     def apply() = {
       assert(params("name").nonEmpty, "Please set the name of the model.")
       assert(params("features").nonEmpty, "Please select at least one feature.")
@@ -1715,15 +1715,15 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Train a decision tree regression model", MachineLearningOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Param("name", "The name of the model"),
-      Choice("label", "Label", options = project.vertexAttributes[Double]),
-      Choice("features", "Features", options = project.vertexAttributes[Double], multipleChoice = true),
+      Choice("label", "Label", options = project.vertexAttrList[Double]),
+      Choice("features", "Features", options = project.vertexAttrList[Double], multipleChoice = true),
       NonNegInt("maxBins", "Maximum number of bins", default = 32),
       NonNegInt("maxDepth", "Maximum depth of tree", default = 5),
       NonNegDouble("minInfoGain", "Minimum information gain for splits", defaultValue = "0.0"),
       NonNegInt("minInstancesPerNode", "Minimum size of children after splits", default = 1),
       RandomSeed("seed", "Seed"))
     def enabled =
-      FEStatus.assert(project.vertexAttributes[Double].nonEmpty, "No numeric vertex attributes.")
+      FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
     def apply() = {
       assert(params("name").nonEmpty, "Please set the name of the model.")
       assert(params("features").nonEmpty, "Please select at least one feature.")
