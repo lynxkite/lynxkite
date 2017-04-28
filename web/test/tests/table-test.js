@@ -70,8 +70,8 @@ module.exports = function(fw) {
     'large CSV file imported as table',
     'Sorting and Show more rows are working on table state view',
     function() {
-      var tableState = lib.workspace.openStateView('ib1', 'table');
-      var table = tableState.table;
+      var state = lib.workspace.openStateView('ib1', 'table');
+      var table = state.table;
       table.expectRowCountIs(10);
       table.expectColumnNamesAre([
         'country', 'country_code', 'population', 'area', 'currency']);
@@ -90,6 +90,9 @@ module.exports = function(fw) {
       table.expectRowCountIs(20);
       table.clickShowMoreRows();
       table.expectRowCountIs(30);
+      table.setRowCount(7);
+      table.clickShowSample();
+      table.expectRowCountIs(7);
     }
   );
 

@@ -391,6 +391,17 @@ Table.prototype = {
     button.click();
   },
 
+  setRowCount: function(num) {
+    var input = this.control.$('#sample-rows');
+    input.sendKeys(testLib.selectAllKey + num.toString());
+  },
+
+  clickShowSample: function() {
+    var button = this.control.$('#get-sample-button');
+    button.click();
+  },
+
+
 };
 
 function Side(popup, direction) {
