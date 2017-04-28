@@ -80,6 +80,7 @@ angular.module('biggraph')
         };
 
         scope.onMouseDown = function(event) {
+          window.addEventListener('mousemove', scope.onMouseMove);
           var dragMode = actualDragMode(event);
           event.preventDefault();
           addLogicalMousePosition(event);
