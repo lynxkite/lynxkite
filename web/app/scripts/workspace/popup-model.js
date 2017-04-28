@@ -21,6 +21,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
 
   PopupModel.prototype.onMouseDown = function(event) {
     var leftButton = event.buttons & 1;
+    // Protractor omits button data from simulated mouse events.
     if (leftButton || environment.protractor) {
       event.stopPropagation();
       this.owner.movedPopup = this;
@@ -35,6 +36,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
 
   PopupModel.prototype.onMouseMove = function(event) {
     var leftButton = event.buttons & 1;
+    // Protractor omits button data from simulated mouse events.
     if (leftButton || environment.protractor) {
       this.x = this.moveOffsetX + event.pageX;
       this.y = this.moveOffsetY + event.pageY;
