@@ -4,6 +4,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
+import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import play.api.libs.json
 import scala.concurrent.ExecutionContextExecutorService
 
@@ -47,7 +48,7 @@ class OperationLogger(instance: MetaGraphOperationInstance,
     assert(stopTime == -1, "stopTimer() called more than once")
     stopTime = System.currentTimeMillis()
   }
-  def addInput(name: String, input: EntityData): Unit = {
+  def addInput(name: String, input: EntityData): Unit = inputInfoList.synchronized {
     if (instance.operation.isHeavy) input match {
       case rddData: EntityRDDData[_] =>
         inputInfoList +=
@@ -60,34 +61,42 @@ class OperationLogger(instance: MetaGraphOperationInstance,
     }
   }
 
-  def logWhenReady(): Unit = {
+  def logWhenReady(controlledFutures: ControlledFutures): Unit = {
     val outputsFuture = SafeFuture.sequence(outputInfoList)
-
     outputsFuture.map {
-      outputs => dump(outputs)
+      outputs =>
+        controlledFutures.register {
+          dump(outputs)
+        }
     }
   }
 
   private def dump(outputs: Seq[OutputInfo]): Unit = {
+    if (outputs.nonEmpty) {
+      try {
+        implicit val formatInput = json.Json.format[InputInfo]
+        implicit val formatOutput = json.Json.format[OutputInfo]
 
-    implicit val formatInput = json.Json.format[InputInfo]
-    implicit val formatOutput = json.Json.format[OutputInfo]
+        val instanceProperties = json.Json.obj(
+          "kiteVersion" -> KiteInstanceInfo.kiteVersion,
+          "sparkVersion" -> KiteInstanceInfo.sparkVersion,
+          "instanceName" -> KiteInstanceInfo.instanceName
+        )
 
-    val instanceProperties = json.Json.obj(
-      "kiteVersion" -> KiteInstanceInfo.kiteVersion,
-      "sparkVersion" -> KiteInstanceInfo.sparkVersion,
-      "instanceName" -> KiteInstanceInfo.instanceName
-    )
-
-    val out = json.Json.obj(
-      "instanceProperties" -> instanceProperties,
-      "name" -> instance.operation.toString,
-      "timestamp" -> com.lynxanalytics.biggraph.graph_util.Timestamp.toString,
-      "guid" -> instance.operation.gUID.toString,
-      "elapsedMs" -> elapsedMs(),
-      "inputs" -> inputInfoList.sortBy(_.name),
-      "outputs" -> outputs.sortBy(_.name)
-    )
-    log.info(s"$marker $out")
+        val out = json.Json.obj(
+          "instanceProperties" -> instanceProperties,
+          "name" -> instance.operation.toString,
+          "timestamp" -> com.lynxanalytics.biggraph.graph_util.Timestamp.toString,
+          "guid" -> instance.operation.gUID.toString,
+          "elapsedMs" -> elapsedMs(),
+          "inputs" -> inputInfoList.synchronized { inputInfoList.sortBy(_.name) },
+          "outputs" -> outputs.sortBy(_.name)
+        )
+        log.info(s"$marker $out")
+      } catch {
+        case t: Throwable =>
+          log.error("dump failed: " + t)
+      }
+    }
   }
 }
