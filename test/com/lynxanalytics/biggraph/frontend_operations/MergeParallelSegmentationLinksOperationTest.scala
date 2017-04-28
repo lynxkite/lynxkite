@@ -1,5 +1,9 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
+<<<<<<< HEAD
+=======
+import com.lynxanalytics.biggraph.graph_api._
+>>>>>>> origin/master
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class MergeParallelSegmentationLinksOperationTest extends OperationsTestBase {

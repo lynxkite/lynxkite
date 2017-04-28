@@ -70,7 +70,15 @@ class EMRLib:
     while True:
       i = 0
       while i < len(services):
-        if services[i].is_ready():
+        service_ready = False
+        try:
+          service_ready = services[i].is_ready()
+        except botocore.exceptions.ClientError as e:
+          if e.response['Error']['Code'] == 'ThrottlingException':
+            time.sleep(60)
+          else:
+            raise e
+        if service_ready:
           print('{name!s} is ready, waiting for {n!s} more services to start...'.format(
               name=services[i],
               n=(len(services) - 1)
@@ -85,14 +93,17 @@ class EMRLib:
   def create_or_connect_to_emr_cluster(
           self, name, log_uri, owner, expiry,
           instance_count=2,
-          hdfs_replication='2'):
+          hdfs_replication='2',
+          applications=''):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
       if cluster['Name'] == name:
         cluster_id = cluster['Id']
-        print('Reusing existing cluster: ' + cluster_id)
-        return EMRCluster(cluster_id, self)
+        instances = self.emr_client.list_instances(ClusterId=cluster_id)['Instances']
+        if len(instances) == instance_count:
+          print('Reusing existing cluster: ' + cluster_id)
+          return EMRCluster(cluster_id, self)
     print('Creating new cluster.')
     # We're passing these options to the namenode and to the hdfs datanodes so
     # that they will make their monitoring data accessible via the jmx interface.
@@ -100,6 +111,9 @@ class EMRLib:
         '-Dcom.sun.management.jmxremote.authenticate=false ' \
         '-Dcom.sun.management.jmxremote.ssl=false ' \
         '-Dcom.sun.management.jmxremote.port={port} ${{{name}}}"'
+    emr_applications = []
+    if applications:
+      emr_applications = [{'Name': app} for app in applications.split(',')]
     res = self.emr_client.run_job_flow(
         Name=name,
         LogUri=log_uri,
@@ -145,17 +159,20 @@ class EMRLib:
                 }
             }
         ],
+        Applications=emr_applications,
         JobFlowRole="EMR_EC2_DefaultRole",
         VisibleToAllUsers=True,
         ServiceRole="EMR_DefaultRole",
         Tags=[{
-              'Key': 'owner',
-              'Value': owner
-              },
-              {
-              'Key': 'expiry',
-              'Value': expiry
-              }])
+            'Key': 'owner',
+            'Value': owner
+        }, {
+            'Key': 'expiry',
+            'Value': expiry
+        }, {
+            'Key': 'name',
+            'Value': name
+        }])
     return EMRCluster(res['JobFlowId'], self)
 
   def create_or_connect_to_rds_instance(self, name):
