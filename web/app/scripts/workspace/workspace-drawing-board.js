@@ -31,8 +31,9 @@ angular.module('biggraph')
           event.workspaceX = event.pageX - element.offset().left;
           event.workspaceY = event.pageY - element.offset().top;
           // Add location according to pan and zoom:
-          event.logicalX = (event.workspaceX - workspaceX) / zoomToScale(workspaceZoom);
-          event.logicalY = (event.workspaceY - workspaceY) / zoomToScale(workspaceZoom);
+          var logical = scope.pageToLogical({ x: event.pageX, y: event.pageY });
+          event.logicalX = logical.x;
+          event.logicalY = logical.y;
           return event;
         }
 
