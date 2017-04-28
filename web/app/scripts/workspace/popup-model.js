@@ -74,6 +74,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
 
   // Computes the triangle for the popup trail as a string.
   PopupModel.prototype.trail = function(pageToLogical, logicalToPage) {
+    // "L" variables are in logical coordinates, P variables are in page coordinates.
     var anchorL = {
       x: this.anchor.x(),
       y: this.anchor.y() };
@@ -81,7 +82,15 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     var attachP = {
       x: this.x + this.width / 2,
       y: this.y + 20 };
-    // We want an isosceles triangle with a fixed width at the attachment point.
+    // We want an isosceles triangle with a fixed width at the attachment point. Like this:
+    //
+    // anchor
+    //   +-------+ A
+    //    \     /
+    //     \   + attach
+    //      \ /
+    //       + B
+    //
     var HALF_WIDTH = 10;
     var dx = attachP.x - anchorP.x;
     var dy = attachP.y - anchorP.y;
@@ -89,7 +98,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     // Normalized direction.
     var nx = dx / d;
     var ny = dy / d;
-    // Orthogonal points.
+    // Orthogonal points A and B.
     var aP = {
       x: attachP.x + ny * HALF_WIDTH,
       y: attachP.y - nx * HALF_WIDTH };
