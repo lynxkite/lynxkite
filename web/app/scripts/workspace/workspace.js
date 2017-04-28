@@ -342,7 +342,7 @@ angular.module('biggraph').factory(
           this.selectedBoxIds = [];
         },
 
-        getAndUpdateProgress: function(errorHandler) {
+        getAndUpdateProgress: function() {
           var wrapperBefore = this.wrapper;
           var that = this;
           if (wrapperBefore) {
@@ -355,7 +355,10 @@ angular.module('biggraph').factory(
                   that.wrapper.updateProgress(progressMap);
                 }
               },
-              errorHandler);
+              function onerror(error) {
+                /* eslint-disable no-console */
+                console.error('Couldn\'t get progress information.', error);
+              });
           }
         },
 
@@ -363,12 +366,7 @@ angular.module('biggraph').factory(
           this.stopProgressUpdate();
           var that = this;
           progressUpdater = $interval(function() {
-            function errorHandler(error) {
-              util.error('Couldn\'t get progress information.', error);
-              that.stopProgressUpdate();
-              that.wrapper.clearProgress();
-            }
-            that.getAndUpdateProgress(errorHandler);
+            that.getAndUpdateProgress();
           }, 2000);
         },
 
