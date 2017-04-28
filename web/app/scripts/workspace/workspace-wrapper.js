@@ -99,6 +99,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
       // boxID should be used for test-purposes only
       addBox: function(operationId, x, y, boxId) {
         boxId = boxId || this.getUniqueId(operationId);
+        // Create a box backend data structure, an unwrapped box:
         var box = {
           id: boxId,
           operationID: operationId,
@@ -109,6 +110,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
           parametricParameters: {}
         };
         this.state.boxes.push(box);
+        // Rebuild box wrappers:
         this._build();
         return box;
       },
