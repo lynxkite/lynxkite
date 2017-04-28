@@ -102,7 +102,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Discard segmentation links", StructureOperations, new ProjectTransformation(_) with SegOp {
     def segmentationParameters = List()
     def enabled = project.assertSegmentation
-    def apply(params: Map[String, String]) = {
+    def apply() = {
       val op = graph_operations.EmptyEdgeBundle()
       seg.belongsTo = op(op.src, parent.vertexSet)(op.dst, seg.vertexSet).result.eb
     }
@@ -2738,7 +2738,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val to = params("destination")
       s"Copy edge attribute $from to $to"
     }
-    def apply(params: Map[String, String]) = {
+    def apply() = {
       project.newEdgeAttribute(
         params("destination"), project.edgeAttributes(params("name")),
         project.viewer.getEdgeAttributeNote(params("name")))
@@ -2790,7 +2790,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val to = params("destination")
       s"Copy scalar $from to $to"
     }
-    def apply(params: Map[String, String]) = {
+    def apply() = {
       project.newScalar(
         params("destination"), project.scalars(params("name")),
         project.viewer.getScalarNote(params("name")))
