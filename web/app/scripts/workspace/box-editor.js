@@ -20,7 +20,7 @@ angular.module('biggraph')
         // instead of workspace.backendState.
         util.deepWatch(
             scope,
-            '[guiMaster.backendState, boxId]',
+            '[guiMaster.wrapper.backendState, boxId]',
             function() {
               if (!scope.boxId) {
                 return;
