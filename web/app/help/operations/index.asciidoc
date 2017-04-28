@@ -223,9 +223,9 @@ include::discard-loop-edges.asciidoc[]
 
 include::discard-scalars.asciidoc[]
 
-include::discard-segmentation.asciidoc[]
-
 include::discard-segmentation-links.asciidoc[]
+
+include::discard-segmentation.asciidoc[]
 
 include::discard-vertex-attributes.asciidoc[]
 
@@ -314,11 +314,6 @@ include::merge-parallel-edges-by-attribute.asciidoc[]
 include::merge-parallel-edges.asciidoc[]
 
 include::merge-parallel-segmentation-links.asciidoc[]
-<<<<<<< HEAD
-=======
-
-include::merge-two-attributes.asciidoc[]
->>>>>>> origin/master
 
 include::merge-two-edge-attributes.asciidoc[]
 
@@ -386,17 +381,15 @@ include::split-to-train-and-test-set.asciidoc[]
 
 include::split-vertices.asciidoc[]
 
-<<<<<<< HEAD
 include::take-edges-as-vertices.asciidoc[]
 
 include::take-segmentation-as-base-project.asciidoc[]
 
 include::take-segmentation-links-as-base-project.asciidoc[]
-=======
+
 include::train-a-decision-tree-classification-model.asciidoc[]
 
 include::train-a-decision-tree-regression-model.asciidoc[]
->>>>>>> origin/master
 
 include::train-a-kmeans-clustering-model.asciidoc[]
 
