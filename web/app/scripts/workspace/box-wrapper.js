@@ -105,6 +105,8 @@ angular.module('biggraph').factory('boxWrapper', function() {
       outputMap: outputMap,
       width: width,
       height: height,
+      x: function() { return instance.x + width / 2; },
+      y: function() { return instance.y + height / 2; },
       commentLines: getCommentLines(),
       isMoved: false,
       mainPosTransform: function() {

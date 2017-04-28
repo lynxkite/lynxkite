@@ -82,6 +82,12 @@
         </line>
       </g>
 
+      <polygon
+        class="popup-trail"
+        ng-repeat="popup in workspace.popups"
+        points="{{ popup.trail(pageToLogical, logicalToPage) }}">
+      </polygon>
+
     </g>
   </svg>
 
