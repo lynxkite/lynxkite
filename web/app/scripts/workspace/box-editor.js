@@ -30,6 +30,7 @@ angular.module('biggraph')
 
         scope.plainParamValues = {};
         scope.parametricParamValues = {};
+        scope.parametricFlags = {};
 
         scope.loadBoxMeta = function(boxId) {
           if (!scope.workspace) {
@@ -82,22 +83,36 @@ angular.module('biggraph')
 
           // Make a copy of the parameter values.
           var paramValues = Object.assign({}, box.instance.parameters);
+          var parametricParamValues = Object.assign({}, box.instance.parametricParameters);
+          var parametricFlags = {};
+
           // Copy defaults for unset parameters.
           for (var i = 0; i < boxMeta.parameters.length; ++i) {
             var p = boxMeta.parameters[i];
-            if ((paramValues[p.id] !== undefined) ||
-                (scope.parametricParamValues[p.id] !== undefined)) {
-              // Parameter is not unset.
+            var id = p.id;
+            if (paramValues[id] !== undefined) {
+              parametricFlags[id] = false;
+              // Parameter p is not unset and is not parametric
+            } else if (parametricParamValues[id] !== undefined) {
+              parametricFlags[id] = true;
+              // parameter p is not unset and it is parametric
             } else if (p.options.length === 0) {
-              paramValues[p.id] = p.defaultValue;
+              paramValues[id] = p.defaultValue;
+              parametricFlags[id] = false;
             } else if (p.multipleChoice) {
-              paramValues[p.id] = '';
+              paramValues[id] = '';
+              parametricFlags[id] = false;
             } else {
-              paramValues[p.id] = p.options[0].id;
+              paramValues[id] = p.options[0].id;
+              parametricFlags[id] = false;
             }
           }
-          if (!angular.equals(paramValues, scope.paramValues)) {
+          if (!angular.equals(paramValues, scope.paramValues) ||
+              !angular.equals(parametricParamValues, scope.parametricParamValues) ||
+              !angular.equals(parametricFlags, scope.parametricFlags)) {
             scope.plainParamValues = paramValues;
+            scope.parametricParamValues = parametricParamValues;
+            scope.parametricFlags = parametricFlags;
           }
         };
 
