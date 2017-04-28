@@ -325,7 +325,7 @@ function State(popup) {
   this.popup = popup;
   this.left = new Side(this.popup, 'left');
   this.right = new Side(this.popup, 'right');
-  this.table = new Table(this.popup);
+  this.table = new TableState(this.popup);
 }
 
 State.prototype = {
@@ -334,15 +334,14 @@ State.prototype = {
   }
 };
 
-function Table(popup) {
-  this.popup = popup;
+function TableState(popup) {
   this.sample = popup.$('#table-sample');
   this.control = popup.$('#table-control');
 }
 
-Table.prototype = {
+TableState.prototype = {
   rowCount: function() {
-    return this.sample.all(by.css('tbody tr')).count();
+    return this.sample.$$('tbody tr').count();
   },
 
   expectRowCountIs: function(number) {
@@ -365,8 +364,12 @@ Table.prototype = {
     expect(this.columnTypes()).toEqual(columnTypes);
   },
 
+  getRowAsArray: function(row) {
+    return row.$$('td').map(e => e.getText());
+  },
+
   rows: function() {
-    return this.sample.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()));
+    return this.sample.$$('tbody tr').map(e => this.getRowAsArray(e));
   },
 
   expectRowsAre(rows) {
@@ -374,7 +377,8 @@ Table.prototype = {
   },
 
   firstRow: function() {
-    return this.sample.$$('tbody tr').get(0).$$('td').map(e => e.getText());
+    var row = this.sample.$$('tbody tr').get(0);
+    return this.getRowAsArray(row);
   },
 
   expectFirstRowIs: function(row) {
