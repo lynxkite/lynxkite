@@ -73,6 +73,7 @@ angular.module('biggraph').directive('operationSelector', function() {
           scope.category = undefined;
         } else {
           scope.category = cat;
+          scope.currentCatOps = cat.ops;
         }
         scope.searching = undefined;
         scope.op = undefined;

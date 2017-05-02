@@ -20,13 +20,12 @@ angular.module('biggraph').directive('operationSelectorEntry', function() {
             'text',
             scope.op.operationID);
       });
-      element.bind('drag', function() {
+      element.bind('dragover', function() {
         scope.$apply(function() {
           scope.close();
         });
       });
       element.bind('dragend', function() {
-        console.log('a');
         scope.$apply(function() {
           scope.open();
         });
