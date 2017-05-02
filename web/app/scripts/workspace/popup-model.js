@@ -8,8 +8,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   // owner: Owning object. It should have an owner.popups
   //        list of all popups. And owner.movedPopup a pointer
   //        to the currently moved popup, if any.
-  // anchor: The popup trail will be drawn from this object. It needs x() and y() methods.
-  var PopupModel = function(id, title, content, x, y, width, height, owner, anchor) {
+  var PopupModel = function(id, title, content, x, y, width, height, owner) {
     this.id = id;
     this.title = title;
     this.content = content;
@@ -18,7 +17,6 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     this.width = width;
     this.height = height;
     this.owner = owner;
-    this.anchor = anchor;
   };
 
   PopupModel.prototype.onMouseDown = function(event) {
@@ -72,12 +70,22 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     }
   };
 
+  // Returns a reference to the object in the workspace this popup belongs to.
+  PopupModel.prototype.contentObject = function(workspace) {
+    if (this.content.type === 'box') {
+      return workspace.getBox(this.content.boxId);
+    } else if (this.content.type === 'plug') {
+      return workspace.getOutputPlug(this.content.boxId, this.content.plugId);
+    }
+  };
+
   // Computes the triangle for the popup trail as a string.
-  PopupModel.prototype.trail = function(pageToLogical, logicalToPage) {
+  PopupModel.prototype.trail = function(pageToLogical, logicalToPage, workspace) {
     // "L" variables are in logical coordinates, P variables are in page coordinates.
+    var anchor = this.contentObject(workspace);
     var anchorL = {
-      x: this.anchor.x(),
-      y: this.anchor.y() };
+      x: anchor.x(),
+      y: anchor.y() };
     var anchorP = logicalToPage(anchorL);
     var attachP = {
       x: this.x + this.width / 2,
