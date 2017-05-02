@@ -199,7 +199,10 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
     if (atomicOperations.contains(id)) {
       atomicOperations(id)
     } else {
-      val frame = DirectoryEntry.fromName(id).asInstanceOf[WorkspaceFrame]
+      val frame = DirectoryEntry.fromName(id) match {
+        case f: WorkspaceFrame => f
+        case _ => throw new AssertionError(s"Unknown operation: $id")
+      }
       val ws = frame.workspace
       (ws.getBoxMetadata(frame.path.toString), new CustomBoxOperation(ws, _))
     }

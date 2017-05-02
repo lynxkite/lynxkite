@@ -13,13 +13,26 @@ angular.module('biggraph')
         stateId: '=',
       },
       link: function(scope) {
-        scope.table = null;
+        scope.sampleRows = 10;
 
-        scope.$watch('stateId', function() {
+        scope.getSample = function() {
           scope.table = util.get('/ajax/getTableOutput', {
             id: scope.stateId,
+            sampleRows: scope.sampleRows,
           });
-        });
+        };
+
+        scope.onload = scope.getSample();
+
+        scope.showMoreRowsIncrement = function() {
+          // Offer increases of 10, 100, 1000, etc. depending on the magnitude of the current limit.
+          return Math.max(10, Math.pow(10, Math.floor(Math.log10(scope.sampleRows))));
+        };
+
+        scope.showMoreRows = function() {
+          scope.sampleRows += scope.showMoreRowsIncrement();
+          scope.getSample();
+        };
 
         scope.sort = {
           column: undefined,

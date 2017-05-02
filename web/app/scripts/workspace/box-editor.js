@@ -8,7 +8,7 @@ angular.module('biggraph')
       restrict: 'E',
       templateUrl: 'scripts/workspace/box-editor.html',
       scope: {
-        workspace: '=',
+        guiMaster: '=',
         boxId: '=',
       },
       link: function(scope) {
@@ -20,7 +20,7 @@ angular.module('biggraph')
         // instead of workspace.backendState.
         util.deepWatch(
             scope,
-            '[workspace.backendState, boxId]',
+            '[guiMaster.wrapper.backendState, boxId]',
             function() {
               if (!scope.boxId) {
                 return;
@@ -33,7 +33,7 @@ angular.module('biggraph')
         scope.parametricFlags = {};
 
         scope.loadBoxMeta = function(boxId) {
-          if (!scope.workspace) {
+          if (!scope.guiMaster) {
             return;
           }
           if (!boxId) {
@@ -41,7 +41,7 @@ angular.module('biggraph')
             scope.boxMeta = undefined;
             return;
           }
-          var box = scope.workspace.getBox(boxId);
+          var box = scope.guiMaster.getBox(boxId);
           // Checking currentRequest makes sure that the response
           // to the result of the latest getOperationMetaRequest
           // will be passed to scope.newOpSelected().
@@ -49,7 +49,7 @@ angular.module('biggraph')
           scope.lastRequest = currentRequest = util
             .nocache(
               '/ajax/getOperationMeta', {
-                workspace: scope.workspace.name,
+                workspace: scope.guiMaster.name,
                 box: boxId,
               })
             .then(
@@ -123,7 +123,7 @@ angular.module('biggraph')
 
         function onBlurNow() {
           if (scope.box) {
-            scope.workspace.updateBox(scope.box.instance.id, scope.plainParamValues,
+            scope.guiMaster.updateBox(scope.box.instance.id, scope.plainParamValues,
                         scope.parametricParamValues);
           }
         }
