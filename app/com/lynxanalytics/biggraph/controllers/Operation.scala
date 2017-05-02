@@ -489,9 +489,9 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
   protected lazy val table = tableInput("table")
 
   def apply() = ???
-  def exportResult: Scalar[ExportResultMetaData]
+  def exportResult: Scalar[String]
 
-  protected def makeOutput(exportResult: Scalar[ExportResultMetaData]): Map[BoxOutput, BoxOutputState] = {
+  protected def makeOutput(exportResult: Scalar[String]): Map[BoxOutput, BoxOutputState] = {
     Map(context.box.output(context.meta.outputs(0)) -> BoxOutputState.from(exportResult))
   }
 
@@ -518,21 +518,6 @@ abstract class ExportOperationToFile(context: Operation.Context)
       file.assertWriteAllowedFrom(context.user)
     }
   }
-}
-
-case class ExportToFileResult(path: String, format: String)
-case class ExportToJdbcResult(
-  jdbcUrl: String,
-  table: String,
-  mode: String)
-case class ExportResultMetaData(
-    file: Option[ExportToFileResult],
-    download: Option[DownloadFileRequest],
-    jdbc: Option[ExportToJdbcResult]) {
-  assert(file.isDefined ^ jdbc.isDefined,
-    "ExportResultData has to have exactly one of these defined: file, jdbc.")
-  assert(!(download.isDefined && file.isEmpty),
-    "ExportResultData can only have download defined if file is also defined. ")
 }
 
 class CustomBoxOperation(

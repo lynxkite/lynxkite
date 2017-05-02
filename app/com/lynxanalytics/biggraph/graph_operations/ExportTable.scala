@@ -1,6 +1,5 @@
 package com.lynxanalytics.biggraph.graph_operations
 
-import com.lynxanalytics.biggraph.controllers.{ ExportResultMetaData, ExportToFileResult, ExportToJdbcResult }
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, Timestamp }
 import com.lynxanalytics.biggraph.serving.DownloadFileRequest
@@ -12,7 +11,7 @@ object ExportTable {
 
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
-    val exportResult = scalar[ExportResultMetaData]
+    val exportResult = scalar[String]
   }
 }
 
@@ -31,9 +30,6 @@ abstract class ExportTableToFile(path: String, format: String) extends ExportTab
       HadoopFile(path)
     }
   }
-  def fileResult(file: HadoopFile) = Some(ExportToFileResult(file.resolvedName, format))
-  def downloadRequest(file: HadoopFile) =
-    if (path == "<download>") Some(DownloadFileRequest(file.symbolicName, false)) else None
 }
 
 object ExportTableToCSV extends OpFromJson {
@@ -64,10 +60,7 @@ case class ExportTableToCSV(path: String, header: Boolean,
       "nullValue" -> "",
       "header" -> (if (header) "true" else "false"))
     df.write.format("csv").options(options).save(file.resolvedName)
-    val exportResult = ExportResultMetaData(
-      fileResult(file),
-      downloadRequest(file),
-      None)
+    val exportResult = "Export done."
     output(o.exportResult, exportResult)
   }
 }
@@ -93,10 +86,7 @@ case class ExportTableToStructuredFile(path: String, format: String, version: In
     val df = inputs.t.df
     val file = getFile
     df.write.format(format).save(file.resolvedName)
-    val exportResult = ExportResultMetaData(
-      fileResult(file),
-      downloadRequest(file),
-      None)
+    val exportResult = "Export done."
     output(o.exportResult, exportResult)
   }
 }
@@ -119,8 +109,7 @@ case class ExportTableToJdbc(jdbcUrl: String, table: String, mode: String)
     implicit val dataManager = rc.dataManager
     val df = inputs.t.df
     df.write.mode(mode).jdbc(jdbcUrl, table, new java.util.Properties)
-    val jdbcResult = ExportToJdbcResult(jdbcUrl, table, mode)
-    val exportResult = ExportResultMetaData(None, None, Some(jdbcResult))
-    output(o.exportResult, exportResult)
+    val jdbcResult = "Export done."
+    output(o.exportResult, jdbcResult)
   }
 }
