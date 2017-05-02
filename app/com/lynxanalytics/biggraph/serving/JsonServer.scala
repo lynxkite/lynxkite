@@ -434,7 +434,7 @@ object ProductionJsonServer extends JsonServer {
   def getTableOutputData(user: serving.User, request: GetTableOutputRequest): GetTableOutputResponse = {
     implicit val metaManager = workspaceController.metaManager
     val table = workspaceController.getOutput(user, request.id).table
-    sqlController.getTableSample(table)
+    sqlController.getTableSample(table, request.sampleRows)
   }
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)

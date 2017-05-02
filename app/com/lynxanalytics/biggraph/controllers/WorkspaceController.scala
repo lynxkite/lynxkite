@@ -18,7 +18,7 @@ case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: 
 case class GetProgressRequest(stateIDs: List[String])
 case class GetProgressResponse(progress: Map[String, Option[Progress]])
 case class GetProjectOutputRequest(id: String, path: String)
-case class GetTableOutputRequest(id: String)
+case class GetTableOutputRequest(id: String, sampleRows: Int)
 case class TableColumn(name: String, dataType: String)
 case class GetTableOutputResponse(header: List[TableColumn], data: List[List[DynamicValue]])
 case class CreateWorkspaceRequest(name: String, privacy: String)
