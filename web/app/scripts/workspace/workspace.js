@@ -254,8 +254,7 @@ angular.module('biggraph').factory(
               event.pageY + 15,
               500,
               500,
-              this,
-              plug);
+              this);
             model.toggle();
           }
         },
@@ -279,8 +278,7 @@ angular.module('biggraph').factory(
             event.pageY + 60,
             500,
             500,
-            this,
-            box);
+            this);
           model.toggle();
         },
 
