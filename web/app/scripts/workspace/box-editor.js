@@ -90,23 +90,28 @@ angular.module('biggraph')
           for (var i = 0; i < boxMeta.parameters.length; ++i) {
             var p = boxMeta.parameters[i];
             var id = p.id;
-            if (paramValues[id] !== undefined) {
-              parametricFlags[id] = false;
-              // Parameter p is not unset and is not parametric
-            } else if (parametricParamValues[id] !== undefined) {
-              parametricFlags[id] = true;
-              // parameter p is not unset and it is parametric
+            if (paramValues[id] !== undefined ||
+                parametricParamValues[id] !== undefined) {
+              // Parameter p is not unset
             } else if (p.options.length === 0) {
               paramValues[id] = p.defaultValue;
-              parametricFlags[id] = false;
             } else if (p.multipleChoice) {
               paramValues[id] = '';
-              parametricFlags[id] = false;
             } else {
               paramValues[id] = p.options[0].id;
-              parametricFlags[id] = false;
             }
           }
+
+          // Re-establish parametric flags.
+          for (var k = 0; k < boxMeta.parameters.length; ++k) {
+            var id2 = boxMeta.parameters[k].id;
+            if (parametricParamValues[id2] !== undefined) {
+              parametricFlags[id2] = true;
+            } else {
+              parametricFlags[id2] = false;
+            }
+          }
+
           if (!angular.equals(paramValues, scope.paramValues) ||
               !angular.equals(parametricParamValues, scope.parametricParamValues) ||
               !angular.equals(parametricFlags, scope.parametricFlags)) {
