@@ -95,6 +95,7 @@ angular.module('biggraph').directive('operationSelector', function() {
           scope.category = scope.lastCat;
         } else {
           scope.searching = true;
+          scope.opFilter = '';
         }
       };
       scope.$on('open operation search', startSearch);
