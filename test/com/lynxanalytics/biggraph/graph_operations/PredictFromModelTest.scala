@@ -19,9 +19,34 @@ class PredictFromModelTest extends ModelTestBase {
     assertRoughlyEquals(age, 15, 1)
   }
 
-  test("test prediction from model") {
+  test("test different types of linear regression") {
     checkModel("Linear regression")
     checkModel("Ridge regression")
     checkModel("Lasso")
+  }
+
+  test("test decision tree regression") {
+    import com.lynxanalytics.biggraph.graph_operations.DataForDecisionTreeTests.{
+      trainingData,
+      testDataForRegression
+    }
+    val m = model(
+      method = "Decision tree regression",
+      labelName = trainingData.labelName,
+      label = trainingData.label,
+      featureNames = trainingData.featureNames,
+      attrs = trainingData.attrs,
+      graph(trainingData.vertexNumber))
+
+    val g = graph(testDataForRegression.vertexNumber)
+    val attrs = testDataForRegression.attrs
+    val features = attrs.map(attr => {
+      AddVertexAttribute.run[Double](g.vs, attr)
+    })
+    val op = PredictFromModel(testDataForRegression.featureNames.size)
+    val result = op(op.features, features)(op.model, m).result
+    val prediction = result.prediction.rdd.collect.toMap
+    assert(prediction.size == 6)
+    assertRoughlyEquals(prediction, testDataForRegression.label, 0.1)
   }
 }

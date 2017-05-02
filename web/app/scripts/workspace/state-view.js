@@ -8,7 +8,7 @@ angular.module('biggraph')
       restrict: 'E',
       templateUrl: 'scripts/workspace/state-view.html',
       scope: {
-        workspace: '=',
+        guiMaster: '=',
         boxId: '=',
         plugId: '=',
       },
@@ -16,8 +16,8 @@ angular.module('biggraph')
         util.deepWatch(
             scope,
             function() {
-              if (scope.boxId && scope.plugId && scope.workspace) {
-                var plug = scope.workspace.getOutputPlug(
+              if (scope.boxId && scope.plugId && scope.guiMaster) {
+                var plug = scope.guiMaster.getOutputPlug(
                     scope.boxId, scope.plugId);
                 return {stateId: plug.stateID, kind: plug.kind};
               } else {
