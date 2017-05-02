@@ -36,8 +36,8 @@ angular
         controller: 'SplashCtrl',
       })
       .when('/workspace/:workspaceName*', {
-        templateUrl: 'scripts/workspace/workspace-main.html',
-        controller: 'WorkspaceMainCtrl',
+        templateUrl: 'scripts/workspace/workspace-entry-point.html',
+        controller: 'WorkspaceEntryPointCtrl',
       })
       .when('/demoMode', {
         templateUrl: 'views/demoMode.html',
