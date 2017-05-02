@@ -1,8 +1,11 @@
 'use strict';
 
-var testLib; // Forward declarations.
+
 var request = require('request');
 var fs = require('fs');
+
+// Forward declarations.
+var testLib;
 
 var K = protractor.Key;  // Short alias.
 
@@ -324,12 +327,87 @@ function State(popup) {
   this.popup = popup;
   this.left = new Side(this.popup, 'left');
   this.right = new Side(this.popup, 'right');
+  this.table = new TableState(this.popup);
 }
 
 State.prototype = {
   close: function() {
     this.popup.$('#close-popup').click();
   }
+};
+
+function TableState(popup) {
+  this.sample = popup.$('#table-sample');
+  this.control = popup.$('#table-control');
+}
+
+TableState.prototype = {
+  rowCount: function() {
+    return this.sample.$$('tbody tr').count();
+  },
+
+  expectRowCountIs: function(number) {
+    expect(this.rowCount()).toBe(number);
+  },
+
+  columnNames: function() {
+    return this.sample.$$('thead tr th span.column-name').map(e => e.getText());
+  },
+
+  expectColumnNamesAre(columnNames) {
+    expect(this.columnNames()).toEqual(columnNames);
+  },
+
+  columnTypes: function() {
+    return this.sample.$$('thead tr th span.column-type').map(e => e.getText());
+  },
+
+  expectColumnTypesAre(columnTypes) {
+    expect(this.columnTypes()).toEqual(columnTypes);
+  },
+
+  getRowAsArray: function(row) {
+    return row.$$('td').map(e => e.getText());
+  },
+
+  rows: function() {
+    return this.sample.$$('tbody tr').map(e => this.getRowAsArray(e));
+  },
+
+  expectRowsAre(rows) {
+    expect(this.rows()).toEqual(rows);
+  },
+
+  firstRow: function() {
+    var row = this.sample.$$('tbody tr').get(0);
+    return this.getRowAsArray(row);
+  },
+
+  expectFirstRowIs: function(row) {
+    expect(this.firstRow()).toEqual(row);
+  },
+
+  clickColumn(columnId) { // for sorting
+    var header = this.sample.$$('thead tr th').get(columnId);
+    header.click();
+  },
+
+  clickShowMoreRows: function() {
+    var button = this.control.$('#more-rows-button');
+    button.click();
+  },
+
+  setRowCount: function(num) {
+    var input = this.control.$('#sample-rows');
+    input.sendKeys(testLib.selectAllKey + num.toString());
+  },
+
+  clickShowSample: function() {
+    var button = this.control.$('#get-sample-button');
+    button.click();
+  },
+
+
 };
 
 function Side(popup, direction) {
@@ -1160,6 +1238,11 @@ testLib = {
       },
       input.getWebElement());
     input.sendKeys(fileName);
+  },
+
+  loadImportedTable: function() {
+    var loadButton = $('#imported_table button');
+    loadButton.click();
   },
 
   startDownloadWatch: function() {

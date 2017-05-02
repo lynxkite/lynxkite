@@ -145,6 +145,17 @@ if [ -n "${NUM_EXECUTORS}" ]; then
   fi
 fi
 
+if [ -n "${RESOURCE_POOL}" ]; then
+  if [ "${SPARK_MASTER}" == "yarn" ]; then
+    RESOURCE_POOL_OPTION="--queue ${RESOURCE_POOL}"
+  else
+     >&2 echo "Resource pool option is only supported for master: yarn"
+     exit 1
+  fi
+else
+    RESOURCE_POOL_OPTION=""
+fi
+
 if [ -n "${KERBEROS_PRINCIPAL}" ] || [ -n "${KERBEROS_KEYTAB}" ]; then
   if [ -z "${KERBEROS_PRINCIPAL}" ] || [ -z "${KERBEROS_KEYTAB}" ]; then
     >&2 echo "Please define KERBEROS_PRINICPAL and KERBEROS_KEYTAB together: either both of them or none."
@@ -190,6 +201,7 @@ command=(
     ${EXTRA_OPTIONS} \
     ${YARN_SETTINGS} \
     ${DEV_EXTRA_SPARK_OPTIONS} \
+    ${RESOURCE_POOL_OPTION} \
     "${fake_application_jar}" \
     "${app_commands[@]}" \
     "${residual_args[@]:1}"

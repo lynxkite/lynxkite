@@ -10,7 +10,7 @@ angular.module('biggraph')
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
       templateNamespace: 'svg',
       scope: {
-        workspace: '=',
+        guiMaster: '=',
       },
       link: function(scope, element) {
         var workspaceDrag = false;
@@ -72,30 +72,30 @@ angular.module('biggraph')
             workspaceX += event.workspaceX - mouseX;
             workspaceY += event.workspaceY - mouseY;
           } else if (selectBoxes) {
-            scope.workspace.selection.endX = event.logicalX;
-            scope.workspace.selection.endY = event.logicalY;
-            scope.workspace.updateSelection();
-            scope.workspace.selectBoxesInSelection();
+            scope.guiMaster.selection.endX = event.logicalX;
+            scope.guiMaster.selection.endY = event.logicalY;
+            scope.guiMaster.updateSelection();
+            scope.guiMaster.selectBoxesInSelection();
           }
           mouseX = event.workspaceX;
           mouseY = event.workspaceY;
-          scope.workspace.onMouseMove(event);
+          scope.guiMaster.onMouseMove(event);
         };
 
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
           addLogicalMousePosition(event);
-          scope.workspace.removeSelection();
-          scope.workspace.onMouseDownOnBox(box, event);
+          scope.guiMaster.removeSelection();
+          scope.guiMaster.onMouseDownOnBox(box, event);
         };
 
         scope.onMouseUp = function(event) {
           element[0].style.cursor = '';
           workspaceDrag = false;
           selectBoxes = false;
-          scope.workspace.removeSelection();
+          scope.guiMaster.removeSelection();
           addLogicalMousePosition(event);
-          scope.workspace.onMouseUp(event);
+          scope.guiMaster.onMouseUp(event);
         };
 
         scope.onMouseDown = function(event) {
@@ -109,12 +109,12 @@ angular.module('biggraph')
             mouseY = event.workspaceY;
           } else if (dragMode === 'select') {
             selectBoxes = true;
-            scope.workspace.selectedBoxIds = [];
-            scope.workspace.selection.endX = event.logicalX;
-            scope.workspace.selection.endY = event.logicalY;
-            scope.workspace.selection.startX = event.logicalX;
-            scope.workspace.selection.startY = event.logicalY;
-            scope.workspace.updateSelection();
+            scope.guiMaster.selectedBoxIds = [];
+            scope.guiMaster.selection.endX = event.logicalX;
+            scope.guiMaster.selection.endY = event.logicalY;
+            scope.guiMaster.selection.startX = event.logicalX;
+            scope.guiMaster.selection.startY = event.logicalY;
+            scope.guiMaster.updateSelection();
           }
         };
 
@@ -126,15 +126,15 @@ angular.module('biggraph')
         var hk = hotkeys.bindTo(scope);
         hk.add({
           combo: 'ctrl+c', description: 'Copy boxes',
-          callback: function() { scope.workspace.copyBoxes(); } });
+          callback: function() { scope.guiMaster.copyBoxes(); } });
         hk.add({
           combo: 'ctrl+v', description: 'Paste boxes',
           callback: function() {
-            scope.workspace.pasteBoxes(addLogicalMousePosition({ pageX: 0, pageY: 0}));
+            scope.guiMaster.pasteBoxes(addLogicalMousePosition({ pageX: 0, pageY: 0}));
           } });
         hk.add({
           combo: 'del', description: 'Paste boxes',
-          callback: function() { scope.workspace.deleteSelectedBoxes(); } });
+          callback: function() { scope.guiMaster.deleteSelectedBoxes(); } });
 
         function setGrabCursor(e) {
           // Trying to assign an invalid cursor will silently fail. Try to find a supported value.
@@ -177,12 +177,12 @@ angular.module('biggraph')
           // This is received from operation-selector-entry.js
           scope.$apply(function() {
             addLogicalMousePosition(origEvent);
-            scope.workspace.addBox(operationID, origEvent, boxID);
+            scope.guiMaster.addBox(operationID, origEvent, boxID);
           });
         });
 
         scope.$on('$destroy', function() {
-          scope.workspace.stopProgressUpdate();
+          scope.guiMaster.stopProgressUpdate();
         });
       }
     };

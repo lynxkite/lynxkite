@@ -23,7 +23,7 @@
 // 6. GOTO 2
 
 angular.module('biggraph').factory(
-  'workspace',
+  'workspaceGuiMaster',
   function(workspaceWrapper, PopupModel, util, $interval, environment) {
     return function(boxCatalog, workspaceName) {
       var progressUpdater;
@@ -87,19 +87,8 @@ angular.module('biggraph').factory(
               name: this.name
             })
             .then(function(response) {
-              var state = response.workspace;
-              for (i = 0; i < state.boxes.length; i++) {
-                state.boxes[i].summary = response.summaries[state.boxes[i].id];
-              }
-              that.backendState = state;
-              // User edits will be applied to a deep copy of
-              // the original backend state. This way watchers
-              // of backendState will only be notified once the
-              // backend is fully aware of the new state.
-              var stateCopy = angular.copy(state);
               that.wrapper = workspaceWrapper(
-                stateCopy, boxCatalogMap);
-              that.wrapper.assignStateInfoToPlugs(response.outputs);
+                response, boxCatalogMap);
             })
             .then(function() {
               that.startProgressUpdate();
@@ -244,7 +233,7 @@ angular.module('biggraph').factory(
           if (plug.direction === 'outputs') {
             var model = new PopupModel(
               plug.boxId + '_' + plug.id,
-              plug.boxId + '::' + plug.id,
+              plug.boxInstance.operationID + ' ➡ ' + plug.id,
               {
                 type: 'plug',
                 boxId: plug.boxId,
@@ -269,7 +258,7 @@ angular.module('biggraph').factory(
           }
           var model = new PopupModel(
             box.instance.id,
-            box.instance.id,
+            box.instance.operationID,
             {
               type: 'box',
               boxId: box.instance.id,
@@ -285,6 +274,7 @@ angular.module('biggraph').factory(
         onMouseDownOnPlug: function(plug, event) {
           event.stopPropagation();
           this.pulledPlug = plug;
+          this.mouseLogical = undefined;
         },
 
         onMouseUpOnPlug: function(plug, event) {
