@@ -71,18 +71,18 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   };
 
   // Returns a reference to the object in the workspace this popup belongs to.
-  PopupModel.prototype.contentObject = function(workspace) {
+  PopupModel.prototype.contentObject = function(guiMaster) {
     if (this.content.type === 'box') {
-      return workspace.getBox(this.content.boxId);
+      return guiMaster.getBox(this.content.boxId);
     } else if (this.content.type === 'plug') {
-      return workspace.getOutputPlug(this.content.boxId, this.content.plugId);
+      return guiMaster.getOutputPlug(this.content.boxId, this.content.plugId);
     }
   };
 
   // Computes the triangle for the popup trail as a string.
-  PopupModel.prototype.trail = function(pageToLogical, logicalToPage, workspace) {
+  PopupModel.prototype.trail = function(pageToLogical, logicalToPage, guiMaster) {
     // "L" variables are in logical coordinates, P variables are in page coordinates.
-    var anchor = this.contentObject(workspace);
+    var anchor = this.contentObject(guiMaster);
     var anchorL = {
       x: anchor.x(),
       y: anchor.y() };
