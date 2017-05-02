@@ -8,13 +8,13 @@
        ng-attr-transform="{{ workspaceTransform() }}">
 
       <!-- start box -->
-      <g ng-repeat="box in workspace.boxes()"
+      <g ng-repeat="box in guiMaster.boxes()"
           ng-mousedown="onMouseDownOnBox(box, $event)"
-          ng-mouseup="workspace.onMouseUpOnBox(box, $event)"
+          ng-mouseup="guiMaster.onMouseUpOnBox(box, $event)"
           ng-attr-transform="{{ box.mainPosTransform() }}"
           class="box"
           id="{{ box.instance.id }}"
-          ng-class="{ 'selected': workspace.selectedBoxIds.includes(box.instance.id) }">
+          ng-class="{ 'selected': guiMaster.selectedBoxIds.includes(box.instance.id) }">
 
         <!-- start list of I/O plugs -->
         <g ng-repeat="direction in ['inputs', 'outputs']"
@@ -29,9 +29,9 @@
                             'colored-output': plug.progressColor || plug.error }"
                   ng-attr-fill="{{ plug.error ? 'red' : plug.progressColor }}"
                   ng-attr-drop-tooltip="{{ plug.error }}"
-                  ng-mousedown="workspace.onMouseDownOnPlug(plug, $event)"
-                  ng-mouseup="workspace.onMouseUpOnPlug(plug, $event)"
-                  ng-click="workspace.onClickOnPlug(plug, $event)">
+                  ng-mousedown="guiMaster.onMouseDownOnPlug(plug, $event)"
+                  ng-mouseup="guiMaster.onMouseUpOnPlug(plug, $event)"
+                  ng-click="guiMaster.onClickOnPlug(plug, $event)">
             </circle>
           </g>
         </g>
@@ -44,7 +44,7 @@
         </rect>
 
         <text x="5" y="15">
-          {{box.instance.summary}}
+          {{box.summary}}
         </text>
         <text x="5" y="50" ng-show="box.commentLines">
           <tspan xml:space="preserve" font-family="monospace" x="5" dy="15"
@@ -56,14 +56,14 @@
       <g>
       <rect
         class="selection-box"
-        ng-attr-x="{{workspace.selection.leftX}}"
-        ng-attr-y="{{workspace.selection.upperY}}"
-        ng-attr-width="{{workspace.selection.width}}"
-        ng-attr-height="{{workspace.selection.height}}">
+        ng-attr-x="{{guiMaster.selection.leftX}}"
+        ng-attr-y="{{guiMaster.selection.upperY}}"
+        ng-attr-width="{{guiMaster.selection.width}}"
+        ng-attr-height="{{guiMaster.selection.height}}">
       </rect>
     </g>
       <!-- start arrow -->
-      <g ng-repeat="arrow in workspace.arrows()">
+      <g ng-repeat="arrow in guiMaster.arrows()">
         <line class="arrow"
             ng-attr-x1="{{arrow.x1()}}"
             ng-attr-y1="{{arrow.y1()}}"
@@ -73,12 +73,12 @@
       <!-- end arrow -->
 
       <!-- start pulled arrow -->
-      <g ng-if="workspace.pulledPlug">
+      <g ng-if="guiMaster.pulledPlug && guiMaster.mouseLogical">
         <line class="arrow pulled-arrow"
-            ng-attr-x1="{{workspace.pulledPlug.x()}}"
-            ng-attr-y1="{{workspace.pulledPlug.y()}}"
-            ng-attr-x2="{{workspace.mouseLogical.x}}"
-            ng-attr-y2="{{workspace.mouseLogical.y}}">
+            ng-attr-x1="{{guiMaster.pulledPlug.x()}}"
+            ng-attr-y1="{{guiMaster.pulledPlug.y()}}"
+            ng-attr-x2="{{guiMaster.mouseLogical.x}}"
+            ng-attr-y2="{{guiMaster.mouseLogical.y}}">
         </line>
       </g>
 
@@ -92,8 +92,8 @@
   </svg>
 
   <popup popup-model="popup"
-      workspace="workspace"
-      ng-repeat="popup in workspace.popups">
+      gui-master="guiMaster"
+      ng-repeat="popup in guiMaster.popups">
   </popup>
 
 </div>

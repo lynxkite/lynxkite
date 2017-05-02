@@ -116,7 +116,7 @@ def results_local_dir(args):
   '''
   basedir = args.results_dir
   dataset = test_sets[args.test_set_size]['data']
-  instance_count = test_sets[args.test_set_size]['instances']
+  instance_count = args.emr_instance_count
   executors = instance_count - 1
   return "{bd}emr_{e}_{i}_{ds}".format(
       bd=basedir,

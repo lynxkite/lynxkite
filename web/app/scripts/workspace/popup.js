@@ -10,7 +10,7 @@ angular.module('biggraph')
       templateUrl: 'scripts/workspace/popup.html',
       scope: {
         popupModel: '=',
-        workspace: '=',
+        guiMaster: '=',
       },
     };
   });
