@@ -3,7 +3,6 @@
 
 var request = require('request');
 var fs = require('fs');
-var path = require('path');
 
 // Forward declarations.
 var testLib;
@@ -1239,12 +1238,6 @@ testLib = {
       },
       input.getWebElement());
     input.sendKeys(fileName);
-  },
-
-  uploadCSVFileParameter: function(csvPath, boxEditor) {
-    var importPath = path.resolve(__dirname, csvPath);
-    var csvFileParameter = boxEditor.popup.$('file-parameter');
-    this.uploadIntoFileParameter(csvFileParameter, importPath);
   },
 
   loadImportedTable: function() {

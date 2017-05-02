@@ -3,6 +3,7 @@
 
 module.exports = function(fw) {
   var lib = require('../test-lib.js');
+  var path = require('path');
 
   fw.transitionTest(
     'empty test-example workspace',
@@ -13,8 +14,9 @@ module.exports = function(fw) {
         name: 'Import CSV',
         x: 100, y: 100 });
       var boxEditor = lib.workspace.openBoxEditor('ib0');
-      lib.uploadCSVFileParameter('tests/data/import_csv_test.csv', boxEditor);
+      var importPath = path.resolve(__dirname, 'data/import_csv_test.csv');
       boxEditor.populateOperation({
+        'filename': importPath,
         'columns': 'name,age'
       });
       lib.loadImportedTable();
@@ -48,8 +50,9 @@ module.exports = function(fw) {
         name: 'Import CSV',
         x: 400, y: 100 });
       var boxEditor = lib.workspace.openBoxEditor('ib1');
-      lib.uploadCSVFileParameter('tests/data/import_large_csv_test.csv', boxEditor);
+      var importPath = path.resolve(__dirname, 'data/import_large_csv_test.csv');
       boxEditor.populateOperation({
+        'filename': importPath,
         'infer': 'yes'
       });
       lib.loadImportedTable();
