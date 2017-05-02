@@ -30,6 +30,13 @@ private[biggraph] class LinearRegressionModelImpl(
   def details: String = statistics
 }
 
+private[biggraph] class DecisionTreeRegressionModelImpl(
+    m: ml.regression.DecisionTreeRegressionModel,
+    statistics: String) extends ModelImplementation {
+  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
+  def details: String = statistics
+}
+
 private[biggraph] class LogisticRegressionModelImpl(
     m: ml.classification.LogisticRegressionModel,
     statistics: String) extends ModelImplementation {
@@ -45,6 +52,13 @@ private[biggraph] class ClusterModelImpl(
   // Transform the data with clustering model.
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = s"cluster centers: ${m.clusterCenters}\n" + statistics
+}
+
+private[biggraph] class DecisionTreeClassificationModelImpl(
+    m: ml.classification.DecisionTreeClassificationModel,
+    statistics: String) extends ModelImplementation {
+  def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
+  def details: String = statistics
 }
 
 case class Model(
@@ -85,10 +99,15 @@ case class Model(
     method match {
       case "Linear regression" | "Ridge regression" | "Lasso" =>
         new LinearRegressionModelImpl(ml.regression.LinearRegressionModel.load(path), statistics.get)
+      case "Decision tree regression" =>
+        new DecisionTreeRegressionModelImpl(ml.regression.DecisionTreeRegressionModel.load(path), statistics.get)
       case "Logistic regression" =>
         new LogisticRegressionModelImpl(ml.classification.LogisticRegressionModel.load(path), statistics.get)
       case "KMeans clustering" =>
         new ClusterModelImpl(ml.clustering.KMeansModel.load(path), statistics.get)
+      case "Decision tree classification" =>
+        new DecisionTreeClassificationModelImpl(
+          ml.classification.DecisionTreeClassificationModel.load(path), statistics.get)
     }
   }
 }
@@ -193,6 +212,7 @@ case class FEModel(
 
 trait ModelMeta {
   def isClassification: Boolean
+  def isBinary: Boolean
   def generatesProbability: Boolean = false
   def featureNames: List[String]
 }
