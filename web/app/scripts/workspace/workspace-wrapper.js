@@ -13,7 +13,13 @@
 // 3. _build() updates the frontend-facing objects
 
 angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
-  return function(state, boxCatalogMap) {
+  return function(backendResponse, boxCatalogMap) {
+    var backendState = backendResponse.workspace;
+    // User edits will be applied to a deep copy of
+    // the original backend state. This way watchers
+    // of backendState will only be notified once the
+    // backend is fully aware of the new state.
+    var state = angular.copy(backendState);
     var wrapper = {
       state: state,
       // The below data structures are generated from rawBoxes
@@ -22,6 +28,9 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
       boxes: [],
       arrows: [],
       boxMap: {},
+      // Immutable backup of the backend state from last
+      // request:
+      backendState: backendState,
 
       _buildBoxes: function() {
         this.boxes = [];
@@ -32,7 +41,6 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
           var operationId = rawBox.operationID;
           var boxId = rawBox.id;
           box = boxWrapper(boxCatalogMap[operationId], rawBox);
-          if (!box.instance.summary) { box.instance.summary = box.metadata.operationID; }
           this.boxes[i] = box;
           this.boxMap[boxId] = box;
         }
@@ -99,6 +107,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
       // boxID should be used for test-purposes only
       addBox: function(operationId, x, y, boxId) {
         boxId = boxId || this.getUniqueId(operationId);
+        // Create a box backend data structure, an unwrapped box:
         var box = {
           id: boxId,
           operationID: operationId,
@@ -109,6 +118,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
           parametricParameters: {}
         };
         this.state.boxes.push(box);
+        // Rebuild box wrappers:
         this._build();
         return box;
       },
@@ -162,6 +172,16 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
           plug.setHealth(item.success);
           plug.kind = item.kind;
           this.stateID2Plug[stateID] = plug;
+        }
+      },
+
+      assignSummaryInfoToBoxes: function(summaries) {
+        for (var i = 0; i < this.boxes.length; i++) {
+          var box = this.boxes[i];
+          box.summary = summaries[box.id];
+          if (!box.summary) {
+            box.summary = box.metadata.operationID;
+          }
         }
       },
 
@@ -226,6 +246,8 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
     };
 
     wrapper._build();
+    wrapper.assignStateInfoToPlugs(backendResponse.outputs);
+    wrapper.assignSummaryInfoToBoxes(backendResponse.summaries);
     return wrapper;
   };
 });
