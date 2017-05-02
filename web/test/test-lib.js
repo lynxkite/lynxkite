@@ -274,6 +274,11 @@ Workspace.prototype = {
     return new State(popup);
   },
 
+  expectConnected: function(srcBoxID, srcPlugID, dstBoxID, dstPlugID) {
+    var line = this.board.$(`line#${srcBoxID}-${srcPlugID}-${dstBoxID}-${dstPlugID}`);
+    expect(line.isPresent()).toBe(true);
+  },
+
   connectBoxes: function(srcBoxID, srcPlugID, dstBoxID, dstPlugID) {
     var src = this.getOutputPlug(srcBoxID, srcPlugID);
     var dst = this.getInputPlug(dstBoxID, dstPlugID);
@@ -284,6 +289,7 @@ Workspace.prototype = {
         .mouseMove(dst)
         .mouseUp()
         .perform();
+    this.expectConnected(srcBoxID, srcPlugID, dstBoxID, dstPlugID);
   }
 
 };
