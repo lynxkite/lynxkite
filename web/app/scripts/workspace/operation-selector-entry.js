@@ -7,6 +7,9 @@ angular.module('biggraph').directive('operationSelectorEntry', function() {
     restrict: 'E',
     scope: {
       op: '=',
+      search: '=',
+      close: '=',
+      open: '='
     },
     templateUrl: 'scripts/workspace/operation-selector-entry.html',
     link: function(scope, element) {
@@ -17,7 +20,16 @@ angular.module('biggraph').directive('operationSelectorEntry', function() {
             'text',
             scope.op.operationID);
       });
-    }
-  };
+      element.bind('drag', function() {
+        scope.$apply(function() {
+          scope.close();
+        });
+      });
+      element.bind('dragend', function() {
+        console.log('a');
+        scope.$apply(function() {
+          scope.open();
+        });
+      });
+    }};
 });
-

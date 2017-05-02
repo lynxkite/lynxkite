@@ -85,6 +85,18 @@ angular.module('biggraph').directive('operationSelector', function() {
           startSearch();
         }
       };
+      scope.closeCurrentCatOrSearch = function() {
+        scope.searching = undefined;
+        scope.lastCat = scope.category;
+        scope.category = undefined;
+      };
+      scope.openLastCatOrSearch = function() {
+        if (scope.lastCat) {
+          scope.category = scope.lastCat;
+        } else {
+          scope.searching = true;
+        }
+      };
       scope.$on('open operation search', startSearch);
       function startSearch() {
         scope.op = undefined;
@@ -95,4 +107,3 @@ angular.module('biggraph').directive('operationSelector', function() {
 
   };
 });
-
