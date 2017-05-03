@@ -92,12 +92,12 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
       y: this.y + 20 };
     // We want an isosceles triangle with a fixed width at the attachment point. Like this:
     //
-    // anchor
-    //   +-------+ A
+    //     Attach
+    // A +---+---+ B
     //    \     /
-    //     \   + attach
+    //     \   /
     //      \ /
-    //       + B
+    //       + Anchor
     //
     var HALF_WIDTH = 10;
     var dx = attachP.x - anchorP.x;
