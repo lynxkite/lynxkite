@@ -104,6 +104,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     var dy = attachP.y - anchorP.y;
     var d = Math.sqrt(dx * dx + dy * dy);
     // Normalized direction.
+    if (d === 0) { return; }
     var nx = dx / d;
     var ny = dy / d;
     // Orthogonal points A and B.
