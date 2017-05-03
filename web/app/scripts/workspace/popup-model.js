@@ -84,8 +84,8 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     // "L" variables are in logical coordinates, P variables are in page coordinates.
     var anchor = this.contentObject(guiMaster);
     var anchorL = {
-      x: anchor.x(),
-      y: anchor.y() };
+      x: anchor.cx(),
+      y: anchor.cy() };
     var anchorP = logicalToPage(anchorL);
     var attachP = {
       x: this.x + this.width / 2,
