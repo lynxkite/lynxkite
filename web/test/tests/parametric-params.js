@@ -34,5 +34,5 @@ module.exports = function(fw) {
       expect(boxEditor.parametricSwitch('value').getAttribute('class')).toContain('active');
       expect(lib.getACEText(boxEditor.operationParameter('value'))).toBe('${1+5}');
       boxEditor.close();
-    }, true);
+    });
 };
