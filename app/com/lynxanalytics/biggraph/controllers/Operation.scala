@@ -490,9 +490,12 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
 
   def apply() = ???
   def exportResult: Scalar[String]
+  val format: String
 
   protected def makeOutput(exportResult: Scalar[String]): Map[BoxOutput, BoxOutputState] = {
-    Map(context.box.output(context.meta.outputs(0)) -> BoxOutputState.from(exportResult))
+    val paramsWithFormat = params ++ Map("format" -> format)
+    Map(context.box.output(
+      context.meta.outputs(0)) -> BoxOutputState.from(exportResult, paramsWithFormat))
   }
 
   def getOutputs(): Map[BoxOutput, BoxOutputState] = {

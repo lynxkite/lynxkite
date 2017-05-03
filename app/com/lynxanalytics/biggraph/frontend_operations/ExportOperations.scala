@@ -20,6 +20,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import OperationParams._
 
   register("Export to CSV")(new ExportOperationToFile(_) {
+    lazy val format = "csv"
     lazy val parameters = List(
       Param("path", "Path", defaultValue = "<auto>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
@@ -40,6 +41,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Export to JDBC")(new ExportOperation(_) {
+    lazy val format = "jdbc"
     lazy val parameters = List(
       Param("jdbcUrl", "JDBC URL"),
       Param("table", "Table"),
@@ -68,8 +70,9 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   registerExportToStructuredFile("Export to Parquet")("parquet")
   registerExportToStructuredFile("Export to ORC")("orc")
 
-  def registerExportToStructuredFile(id: String)(format: String) {
+  def registerExportToStructuredFile(id: String)(fileFormat: String) {
     register(id)(new ExportOperationToFile(_) {
+      lazy val format = fileFormat
       lazy val parameters = List(
         Param("path", "Path", defaultValue = "<auto>"),
         NonNegInt("version", "Version", default = 0)
