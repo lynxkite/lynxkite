@@ -300,11 +300,8 @@ BoxEditor.prototype = {
         'operation-parameters #' + param + ' .operation-attribute-entry'));
   },
 
-
-  toggleParametricFlag: function(param) {
-    this.boxEditor.element(by.css(
-        'operation-parameters #' + param + ' .parametric-switch'))
-        .click();
+  parametricSwitch: function(param) {
+    return this.boxEditor.$('operation-parameters #' + param + ' .parametric-switch');
   },
 
   populateOperation: function(params) {
