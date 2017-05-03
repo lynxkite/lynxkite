@@ -100,6 +100,7 @@ class Ecosystem:
         'emr_log_uri': args.emr_log_uri,
         'hdfs_replication': '1',
         'with_rds': args.with_rds,
+        'with_jupyter': args.with_jupyter,
         'rm': args.rm,
         'owner': args.owner,
         'expiry': args.expiry,
@@ -171,6 +172,8 @@ class Ecosystem:
         lk_conf['kite_instance_name'],
         conf['emr_instance_count'])
     self.config_aws_s3_native()
+    if self.cluster_config['with_jupyter']:
+      self.install_and_setup_jupyter()
     self.start_monitoring_on_extra_nodes_native(conf['ec2_key_file'])
     self.start_supervisor_native()
     print('LynxKite ecosystem was started by supervisor.')
@@ -404,6 +407,16 @@ EOF
       set -x
       source /mnt/lynx/config/central
       /usr/local/bin/supervisord -c config/supervisord.conf
+      ''')
+
+  def install_and_setup_jupyter(self):
+    self.cluster.ssh('''
+      sudo pip-3.4 install --upgrade jupyter sklearn matplotlib
+    ''')
+    self.cluster.ssh_nohup('''
+      source /mnt/lynx/config/central
+      export PYTHONPATH=/mnt/lynx/apps/remote_api/python/
+      jupyter-notebook --port=2222
       ''')
 
   ###
