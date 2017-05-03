@@ -516,7 +516,7 @@ abstract class ExportOperationToFile(context: Operation.Context)
   }
 
   private def assertWriteAllowed(path: String) = {
-    if (path != "<download>") {
+    if (path != "<auto>") {
       val file = HadoopFile(path)
       file.assertWriteAllowedFrom(context.user)
     }
