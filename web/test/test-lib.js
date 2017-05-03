@@ -300,6 +300,13 @@ BoxEditor.prototype = {
         'operation-parameters #' + param + ' .operation-attribute-entry'));
   },
 
+
+  toggleParametricFlag: function(param) {
+    this.boxEditor.element(by.css(
+        'operation-parameters #' + param + ' .parametric-switch'))
+        .click();
+  },
+
   populateOperation: function(params) {
     params = params || {};
     for (var key in params) {

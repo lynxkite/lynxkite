@@ -32,6 +32,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
             util.move(v, scope.parametric, scope.output);
           }
         }
+        scope.onBlur();
       });
 
       // Translate between arrays and comma-separated strings for multiselects.
