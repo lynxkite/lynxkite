@@ -15,17 +15,14 @@ module.exports = function(fw) {
         params: {'value': '${1+5}'},
         x: 100, y: 200, after: 'ex0'});
       var boxEditor = lib.workspace.openBoxEditor('ace');
-      boxEditor.toggleParametricFlag('value');
+      boxEditor.parametricSwitch('value').click();
       boxEditor.close();
     },
     function() {
-//      var boxEditor = lib.workspace.openBoxEditor('ace');
       var state = lib.workspace.openStateView('ace', 'project');
       var hist = state.left.edgeAttribute('weight').getHistogramValues();
       var expected = [{title: '6.00-6.00', size: 100, value: 4}];
-//      browser.pause();
       expect(hist).toEqual(expected);
-//      boxEditor.close();
       state.close();
     });
 
@@ -34,8 +31,8 @@ module.exports = function(fw) {
     'parametric parameters are preserved',
     function() {
       var boxEditor = lib.workspace.openBoxEditor('ace');
-      boxEditor.isParametric('value');
-      browser.pause();
+      expect(boxEditor.parametricSwitch('value').getAttribute('class')).toContain('active');
+      expect(lib.getACEText(boxEditor.operationParameter('value'))).toBe('${1+5}');
       boxEditor.close();
     }, true);
 };
