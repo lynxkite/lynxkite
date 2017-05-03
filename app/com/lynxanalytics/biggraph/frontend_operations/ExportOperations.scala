@@ -21,7 +21,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Export to CSV")(new ExportOperationToFile(_) {
     lazy val parameters = List(
-      Param("path", "Path", defaultValue = "<download>"),
+      Param("path", "Path", defaultValue = "<auto>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("quote", "Quote", defaultValue = ""),
       Choice("header", "Include header", FEOption.list("yes", "no")),
@@ -71,7 +71,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   def registerExportToStructuredFile(id: String)(format: String) {
     register(id)(new ExportOperationToFile(_) {
       lazy val parameters = List(
-        Param("path", "Path", defaultValue = "<download>"),
+        Param("path", "Path", defaultValue = "<auto>"),
         NonNegInt("version", "Version", default = 0)
       )
 
