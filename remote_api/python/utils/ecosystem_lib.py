@@ -172,8 +172,10 @@ class Ecosystem:
         lk_conf['kite_instance_name'],
         conf['emr_instance_count'])
     self.config_aws_s3_native()
-    if self.cluster_config['with_jupyter']:
+    if conf['with_jupyter']:
       self.install_and_setup_jupyter()
+    if conf['applications'] and 'hive' in [a.lower() for a in conf['applications'].split(',')]:
+      self.hive_patch()
     self.start_monitoring_on_extra_nodes_native(conf['ec2_key_file'])
     self.start_supervisor_native()
     print('LynxKite ecosystem was started by supervisor.')
@@ -369,6 +371,17 @@ AWS_CLASSPATH_ALL=$AWS_CLASSPATH1$AWS_CLASSPATH2$AWS_CLASSPATH3
 export SPARK_DIST_CLASSPATH=$SPARK_DIST_CLASSPATH:${AWS_CLASSPATH_ALL::-1}
 EOF
       chmod a+x spark/conf/spark-env.sh
+    ''')
+
+  def hive_patch(self):
+    #  This is needed because of a Spark 2 - EMR - YARN - jersey conflict
+    #  Disables timeline service in yarn.
+    self.cluster.ssh('''
+      cd /mnt/lynx/spark/conf
+      cp spark-defaults.conf.template spark-defaults.conf
+      cat >>spark-defaults.conf <<'EOF'
+spark.hadoop.yarn.timeline-service.enabled false
+EOF
     ''')
 
   def start_monitoring_on_extra_nodes_native(self, keyfile):
