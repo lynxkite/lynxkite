@@ -2,7 +2,7 @@
 // the workspace drawing board.
 'use strict';
 
-angular.module('biggraph').directive('operationSelectorEntry', function() {
+angular.module('biggraph').directive('operationSelectorEntry', function($interval) {
   return {
     restrict: 'E',
     scope: {
@@ -19,11 +19,7 @@ angular.module('biggraph').directive('operationSelectorEntry', function() {
         event.originalEvent.dataTransfer.setData(
             'text',
             scope.op.operationID);
-      });
-      element.bind('dragover', function() {
-        scope.$apply(function() {
-          scope.close();
-        });
+        $interval(scope.close(), 100);
       });
       element.bind('dragend', function() {
         scope.$apply(function() {
