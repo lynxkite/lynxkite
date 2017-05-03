@@ -54,28 +54,51 @@ angular.module('biggraph').factory(
           leftX: undefined,
           upperY: undefined,
           width: undefined,
-          height: undefined
+          height: undefined,
+
+          update: function() {
+            this.leftX = Math.min(this.startX, this.endX);
+            this.upperY = Math.min(this.startY, this.endY);
+            this.width = Math.abs(this.endX - this.startX);
+            this.height = Math.abs(this.endY - this.startY);
+          },
+
+          remove: function() {
+            this.startX = undefined;
+            this.endX = undefined;
+            this.startY = undefined;
+            this.endY = undefined;
+            this.leftX = undefined;
+            this.upperY = undefined;
+            this.width = undefined;
+            this.length = undefined;
+          },
+
+
+          inSelection: function(box) {
+            return (this.leftX < box.instance.x + box.width &&
+              box.instance.x < this.leftX + this.width &&
+              this.upperY < box.instance.y + box.height &&
+              box.instance.y < this.upperY + this.height);
+          },
+
+          onMouseDown: function(event) {
+            this.endX = event.logicalX;
+            this.endY = event.logicalY;
+            this.startX = event.logicalX;
+            this.startY = event.logicalY;
+            this.update();
+          },
+
+          onMouseMove: function(event) {
+            this.endX = event.logicalX;
+            this.endY = event.logicalY;
+            this.update();
+          },
+
         },
 
         popups: [],
-
-        updateSelection: function() {
-          this.selection.leftX = Math.min(this.selection.startX, this.selection.endX);
-          this.selection.upperY = Math.min(this.selection.startY, this.selection.endY);
-          this.selection.width = Math.abs(this.selection.endX - this.selection.startX);
-          this.selection.height = Math.abs(this.selection.endY - this.selection.startY);
-        },
-
-        removeSelection: function() {
-          this.selection.startX = undefined;
-          this.selection.endX = undefined;
-          this.selection.startY = undefined;
-          this.selection.endY = undefined;
-          this.selection.leftX = undefined;
-          this.selection.upperY = undefined;
-          this.selection.width = undefined;
-          this.selection.length = undefined;
-        },
 
         selectedBoxIds: [],
 
@@ -144,18 +167,10 @@ angular.module('biggraph').factory(
           this.selectedBoxIds = [];
           for (var i = 0; i < boxes.length; i++) {
             var box = boxes[i];
-            if (this.inSelection(box)) {
+            if (this.selection.inSelection(box)) {
               this.selectedBoxIds.push(box.instance.id);
             }
           }
-        },
-
-        inSelection: function(box) {
-          var sb = this.selection;
-          return (sb.leftX < box.instance.x + box.width &&
-            box.instance.x < sb.leftX + sb.width &&
-            sb.upperY < box.instance.y + box.height &&
-            box.instance.y < sb.upperY + sb.height);
         },
 
         onMouseMove: function(event) {

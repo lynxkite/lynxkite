@@ -53,9 +53,7 @@ angular.module('biggraph')
             workspaceX += event.workspaceX - mouseX;
             workspaceY += event.workspaceY - mouseY;
           } else if (selectBoxes) {
-            scope.guiMaster.selection.endX = event.logicalX;
-            scope.guiMaster.selection.endY = event.logicalY;
-            scope.guiMaster.updateSelection();
+            scope.guiMaster.selection.onMouseMove(event);
             scope.guiMaster.selectBoxesInSelection();
           }
           mouseX = event.workspaceX;
@@ -66,7 +64,7 @@ angular.module('biggraph')
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
           addLogicalMousePosition(event);
-          scope.guiMaster.removeSelection();
+          scope.guiMaster.selection.remove();
           scope.guiMaster.onMouseDownOnBox(box, event);
         };
 
@@ -74,7 +72,7 @@ angular.module('biggraph')
           element[0].style.cursor = '';
           workspaceDrag = false;
           selectBoxes = false;
-          scope.guiMaster.removeSelection();
+          scope.guiMaster.selection.remove();
           addLogicalMousePosition(event);
           scope.guiMaster.onMouseUp(event);
         };
@@ -91,11 +89,7 @@ angular.module('biggraph')
           } else if (dragMode === 'select') {
             selectBoxes = true;
             scope.guiMaster.selectedBoxIds = [];
-            scope.guiMaster.selection.endX = event.logicalX;
-            scope.guiMaster.selection.endY = event.logicalY;
-            scope.guiMaster.selection.startX = event.logicalX;
-            scope.guiMaster.selection.startY = event.logicalY;
-            scope.guiMaster.updateSelection();
+            scope.guiMaster.selection.onMouseDown(event);
           }
         };
 
