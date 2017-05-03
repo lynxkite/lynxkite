@@ -427,9 +427,10 @@ EOF
       sudo pip-3.4 install --upgrade jupyter sklearn matplotlib
     ''')
     self.cluster.ssh_nohup('''
+      mkdir -p /mnt/lynx/notebooks
+      cd /mnt/lynx/notebooks
       source /mnt/lynx/config/central
-      export PYTHONPATH=/mnt/lynx/apps/remote_api/python/
-      jupyter-notebook --port=2222
+      jupyter-notebook --NotebookApp.token='' --port=2222
       ''')
 
   ###
