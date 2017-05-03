@@ -4,6 +4,8 @@ package com.lynxanalytics.biggraph.controllers
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import play.api.libs.json.JsObject
+import play.api.libs.json.JsString
 
 import scala.annotation.tailrec
 
@@ -238,8 +240,11 @@ object BoxOutputState {
     BoxOutputState(BoxOutputKind.Table, Some(json.Json.obj("guid" -> table.gUID)))
   }
 
-  def from(exportResult: graph_api.Scalar[String]): BoxOutputState = {
-    BoxOutputState(BoxOutputKind.ExportResult, Some(json.Json.obj("guid" -> exportResult.gUID)))
+  def from(exportResult: graph_api.Scalar[String],
+           params: Map[String, String]): BoxOutputState = {
+    val paramsAndGuid = params ++ Map("guid" -> exportResult.gUID.toString)
+    val state = json.Json.toJson(paramsAndGuid)
+    BoxOutputState(BoxOutputKind.ExportResult, Some(state))
   }
 
   def error(msg: String): BoxOutputState = {
