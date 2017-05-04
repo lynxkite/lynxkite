@@ -24,7 +24,7 @@
 
 angular.module('biggraph').factory(
   'workspaceGuiMaster',
-  function(workspaceWrapper, PopupModel, environment) {
+  function(workspaceWrapper) {
     return function(boxCatalog, workspaceName) {
 
       var workspace = {
@@ -37,109 +37,6 @@ angular.module('biggraph').factory(
         getOutputPlug: function(boxId, plugId) {
           return this.getBox(boxId).outputMap[plugId];
         },
-
-        onMouseMove: function(event) {
-          var leftButton = event.buttons & 1;
-          // Protractor omits button data from simulated mouse events.
-          if (!leftButton && !environment.protractor) {
-            // Button is no longer pressed. (It was released outside of the window, for example.)
-            this.onMouseUp();
-          } else {
-            this.mouseLogical = {
-              x: event.logicalX,
-              y: event.logicalY,
-            };
-            if (this.movedBoxes) {
-              for (var i = 0; i < this.movedBoxes.length; i++) {
-                this.movedBoxes[i].onMouseMove(event);
-              }
-            } else if (this.movedPopup) {
-              this.movedPopup.onMouseMove(event);
-            }
-          }
-        },
-
-        onMouseUp: function() {
-          if (this.movedBoxes) {
-            this.wrapper.saveIfBoxesMoved();
-          }
-          this.movedBoxes = undefined;
-          this.pulledPlug = undefined;
-          this.movedPopup = undefined;
-        },
-
-        closePopup: function(id) {
-          for (var i = 0; i < this.popups.length; ++i) {
-            if (this.popups[i].id === id) {
-              this.popups.splice(i, 1);
-              return true;
-            }
-          }
-          return false;
-        },
-
-        onClickOnPlug: function(plug, event) {
-          var leftButton = event.button === 0;
-          if (!leftButton || event.ctrlKey || event.shiftKey) {
-            return;
-          }
-          event.stopPropagation();
-          if (plug.direction === 'outputs') {
-            var model = new PopupModel(
-              plug.boxId + '_' + plug.id,
-              plug.boxInstance.operationID + ' ➡ ' + plug.id,
-              {
-                type: 'plug',
-                boxId: plug.boxId,
-                plugId: plug.id,
-              },
-              event.pageX - 300,
-              event.pageY + 15,
-              500,
-              500,
-              this);
-            model.toggle();
-          }
-        },
-
-        onMouseUpOnBox: function(box, event) {
-          if (box.isMoved || this.pulledPlug) {
-            return;
-          }
-          var leftButton = event.button === 0;
-          if (!leftButton || event.ctrlKey || event.shiftKey) {
-            return;
-          }
-          var model = new PopupModel(
-            box.instance.id,
-            box.instance.operationID,
-            {
-              type: 'box',
-              boxId: box.instance.id,
-            },
-            event.pageX - 200,
-            event.pageY + 60,
-            500,
-            500,
-            this);
-          model.toggle();
-        },
-
-        onMouseDownOnPlug: function(plug, event) {
-          event.stopPropagation();
-          this.pulledPlug = plug;
-          this.mouseLogical = undefined;
-        },
-
-        onMouseUpOnPlug: function(plug, event) {
-          event.stopPropagation();
-          if (this.pulledPlug) {
-            var otherPlug = this.pulledPlug;
-            this.pulledPlug = undefined;
-            this.wrapper.addArrow(otherPlug, plug);
-          }
-        },
-
 
       };
 

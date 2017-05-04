@@ -4,7 +4,7 @@
 // arrows diagram.
 
 angular.module('biggraph')
-  .directive('workspaceDrawingBoard', function(hotkeys, SelectionModel) {
+  .directive('workspaceDrawingBoard', function(hotkeys, SelectionModel, environment, PopupModel) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -70,7 +70,25 @@ angular.module('biggraph')
           }
           mouseX = event.workspaceX;
           mouseY = event.workspaceY;
-          scope.guiMaster.onMouseMove(event);
+
+          var leftButton = event.buttons & 1;
+          // Protractor omits button data from simulated mouse events.
+          if (!leftButton && !environment.protractor) {
+            // Button is no longer pressed. (It was released outside of the window, for example.)
+            this.guiMaster.onMouseUp();
+          } else {
+            this.guiMaster.mouseLogical = {
+              x: event.logicalX,
+              y: event.logicalY,
+            };
+            if (this.guiMaster.movedBoxes) {
+              for (var i = 0; i < this.guiMaster.movedBoxes.length; i++) {
+                this.guiMaster.movedBoxes[i].onMouseMove(event);
+              }
+            } else if (this.guiMaster.movedPopup) {
+              this.guiMaster.movedPopup.onMouseMove(event);
+            }
+          }
         };
 
         scope.onMouseDownOnBox = function(box, event) {
@@ -96,13 +114,90 @@ angular.module('biggraph')
           }
         };
 
+        scope.onMouseUpOnBox = function(box, event) {
+          if (box.isMoved || scope.guiMaster.pulledPlug) {
+            return;
+          }
+          var leftButton = event.button === 0;
+          if (!leftButton || event.ctrlKey || event.shiftKey) {
+            return;
+          }
+          var model = new PopupModel(
+            box.instance.id,
+            box.instance.operationID,
+            {
+              type: 'box',
+              boxId: box.instance.id,
+            },
+            event.pageX - 200,
+            event.pageY + 60,
+            500,
+            500,
+            scope.guiMaster);
+          model.toggle();
+        };
+
+        scope.closePopup = function(id) {
+          for (var i = 0; i < scope.guiMaster.popups.length; ++i) {
+            if (scope.guiMaster.popups[i].id === id) {
+              scope.guiMaster.popups.splice(i, 1);
+              return true;
+            }
+          }
+          return false;
+        };
+
+        scope.onClickOnPlug = function(plug, event) {
+          var leftButton = event.button === 0;
+          if (!leftButton || event.ctrlKey || event.shiftKey) {
+            return;
+          }
+          event.stopPropagation();
+          if (plug.direction === 'outputs') {
+            var model = new PopupModel(
+              plug.boxId + '_' + plug.id,
+              plug.boxInstance.operationID + ' ➡ ' + plug.id,
+              {
+                type: 'plug',
+                boxId: plug.boxId,
+                plugId: plug.id,
+              },
+              event.pageX - 300,
+              event.pageY + 15,
+              500,
+              500,
+              scope.guiMaster);
+            model.toggle();
+          }
+        };
+
+        scope.onMouseDownOnPlug = function(plug, event) {
+          event.stopPropagation();
+          scope.guiMaster.pulledPlug = plug;
+          scope.guiMaster.mouseLogical = undefined;
+        };
+
+        scope.onMouseUpOnPlug = function(plug, event) {
+          event.stopPropagation();
+          if (scope.guiMaster.pulledPlug) {
+            var otherPlug = scope.guiMaster.pulledPlug;
+            scope.guiMaster.pulledPlug = undefined;
+            scope.guiMaster.wrapper.addArrow(otherPlug, plug);
+          }
+        };
+
         scope.onMouseUp = function(event) {
           element[0].style.cursor = '';
           workspaceDrag = false;
           selectBoxes = false;
           scope.selection.remove();
           addLogicalMousePosition(event);
-          scope.guiMaster.onMouseUp(event);
+          if (scope.guiMaster.movedBoxes) {
+            scope.guiMaster.wrapper.saveIfBoxesMoved();
+          }
+          scope.guiMaster.movedBoxes = undefined;
+          scope.guiMaster.pulledPlug = undefined;
+          scope.guiMaster.movedPopup = undefined;
         };
 
         scope.onMouseDown = function(event) {
@@ -174,7 +269,7 @@ angular.module('biggraph')
           popups.forEach(function(popup) {
             var boxId = popup.content.boxId;
             if (boxIds.includes(boxId) && boxId !== 'anchor') {
-              that.guiMaster.closePopup(popup.id);
+              that.closePopup(popup.id);
             }
           });
           this.guiMaster.wrapper.deleteBoxes(boxIds);
