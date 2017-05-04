@@ -120,8 +120,8 @@
 
       <polygon
         class="popup-trail"
-        ng-repeat="popup in guiMaster.popups"
-        points="{{ popup.trail(pageToLogical, logicalToPage, guiMaster) }}">
+        ng-repeat="popup in popups"
+        ng-attr-points="{{ popup.trail(pageToLogical, logicalToPage, workspace) }}">
       </polygon>
 
     </g>
