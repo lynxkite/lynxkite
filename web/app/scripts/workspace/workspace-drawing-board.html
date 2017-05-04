@@ -1,5 +1,5 @@
 <div id="workspace-header">
-  <span id="workspace-name">{{guiMaster.wrapper.name}}</span>
+  <span id="workspace-name">{{workspace.name}}</span>
   <div class="btn-group pull-right">
     <button class="btn btn-default"
          id="delete-selected-boxes"
@@ -122,7 +122,7 @@
   </svg>
 
   <popup popup-model="popup"
-      gui-master="guiMaster"
+      workspace="workspace"
       ng-repeat="popup in popups">
   </popup>
 
