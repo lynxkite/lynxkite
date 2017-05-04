@@ -23,6 +23,8 @@ angular.module('biggraph')
         // The last known position of the mouse, expressed in logical
         // workspace coordinates.
         scope.mouseLogical = undefined;
+        scope.popups = [];
+        scope.movedPopup = undefined;
 
         scope.$watch(
           'dragMode',
@@ -92,8 +94,8 @@ angular.module('biggraph')
               for (var i = 0; i < this.guiMaster.movedBoxes.length; i++) {
                 this.guiMaster.movedBoxes[i].onMouseMove(event);
               }
-            } else if (this.guiMaster.movedPopup) {
-              this.guiMaster.movedPopup.onMouseMove(event);
+            } else if (scope.movedPopup) {
+              scope.movedPopup.onMouseMove(event);
             }
           }
         };
@@ -140,14 +142,14 @@ angular.module('biggraph')
             event.pageY + 60,
             500,
             500,
-            scope.guiMaster);
+            scope);
           model.toggle();
         };
 
         scope.closePopup = function(id) {
-          for (var i = 0; i < scope.guiMaster.popups.length; ++i) {
-            if (scope.guiMaster.popups[i].id === id) {
-              scope.guiMaster.popups.splice(i, 1);
+          for (var i = 0; i < scope.popups.length; ++i) {
+            if (scope.popups[i].id === id) {
+              scope.popups.splice(i, 1);
               return true;
             }
           }
@@ -173,7 +175,7 @@ angular.module('biggraph')
               event.pageY + 15,
               500,
               500,
-              scope.guiMaster);
+              scope);
             model.toggle();
           }
         };
@@ -203,7 +205,7 @@ angular.module('biggraph')
           }
           scope.guiMaster.movedBoxes = undefined;
           scope.pulledPlug = undefined;
-          scope.guiMaster.movedPopup = undefined;
+          scope.movedPopup = undefined;
         };
 
         scope.onMouseDown = function(event) {
@@ -270,15 +272,14 @@ angular.module('biggraph')
         };
 
         scope.deleteBoxes = function(boxIds) {
-          var that = this;
-          var popups = this.guiMaster.popups.slice();
+          var popups = scope.popups.slice();
           popups.forEach(function(popup) {
             var boxId = popup.content.boxId;
             if (boxIds.includes(boxId) && boxId !== 'anchor') {
-              that.closePopup(popup.id);
+              scope.closePopup(popup.id);
             }
           });
-          this.guiMaster.wrapper.deleteBoxes(boxIds);
+          scope.guiMaster.wrapper.deleteBoxes(boxIds);
         };
 
         scope.deleteSelectedBoxes = function() {
