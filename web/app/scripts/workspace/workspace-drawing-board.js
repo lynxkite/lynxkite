@@ -4,7 +4,7 @@
 // arrows diagram.
 
 angular.module('biggraph')
-  .directive('workspaceDrawingBoard', function(hotkeys) {
+  .directive('workspaceDrawingBoard', function(hotkeys, $rootScope) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -135,6 +135,12 @@ angular.module('biggraph')
         hk.add({
           combo: 'del', description: 'Paste boxes',
           callback: function() { scope.guiMaster.deleteSelectedBoxes(); } });
+        hk.add({
+          combo: '/', description: 'Find operation',
+          callback: function(e) {
+            e.preventDefault();  // Do not type "/".
+            $rootScope.$broadcast('open operation search');
+          }});
 
         function setGrabCursor(e) {
           // Trying to assign an invalid cursor will silently fail. Try to find a supported value.
