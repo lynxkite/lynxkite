@@ -31,8 +31,9 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
     def exportResult() = {
       val header = if (params("header") == "yes") true else false
+      val path = generatePathIfNeeded(params("path"))
       val op = graph_operations.ExportTableToCSV(
-        params("path"), header,
+        path, header,
         params("delimiter"), params("quote"),
         params("version").toInt
       )
@@ -78,6 +79,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         NonNegInt("version", "Version", default = 0)
       )
 
+      val path = generatePathIfNeeded(params("path"))
       def exportResult = {
         val op = graph_operations.ExportTableToStructuredFile(
           params("path"), format, params("version").toInt
