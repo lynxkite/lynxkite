@@ -25,6 +25,7 @@ case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 case class CreateSnapshotRequest(name: String, id: String)
 case class GetExportResultRequest(stateId: String)
+case class GetExportResultResponse(parameters: Map[String, String], status: FEScalar)
 
 class WorkspaceController(env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -101,12 +102,14 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def getExportResultOutput(
-    user: serving.User, request: GetExportResultRequest): FEScalar = {
+    user: serving.User, request: GetExportResultRequest): GetExportResultResponse = {
     val state = getOutput(user, request.stateId)
     state.kind match {
       case BoxOutputKind.ExportResult =>
         val scalar = state.exportResult
-        ProjectViewer.feScalar(scalar, "file metadata", "", Map())
+        val feScalar = ProjectViewer.feScalar(scalar, "file metadata", "", Map())
+        val parameters = (state.state.get \ "parameters").as[Map[String, String]]
+        GetExportResultResponse(parameters, feScalar)
     }
   }
 
