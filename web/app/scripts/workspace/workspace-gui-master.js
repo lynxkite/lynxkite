@@ -30,23 +30,6 @@ angular.module('biggraph').factory(
       var workspace = {
         popups: [],
 
-        selectedBoxIds: [],
-
-        selectBox: function(boxId) {
-          this.selectedBoxIds.push(boxId);
-        },
-
-        selectedBoxes: function() {
-          if (this.selectedBoxIds) {
-            var workspaceWrapper = this.wrapper;
-            return this.selectedBoxIds.map(function(id) {
-              return workspaceWrapper.boxMap[id];
-            });
-          } else {
-            return undefined;
-          }
-        },
-
         getBox: function(id) {
           return this.wrapper.boxMap[id];
         },
@@ -83,27 +66,6 @@ angular.module('biggraph').factory(
           this.movedBoxes = undefined;
           this.pulledPlug = undefined;
           this.movedPopup = undefined;
-        },
-
-        onMouseDownOnBox: function(box, event) {
-          var selectedBoxes = this.selectedBoxes();
-          if (selectedBoxes.indexOf(box) === -1) {
-            if (!event.ctrlKey) {
-              this.selectedBoxIds = [];
-            }
-            this.selectBox(box.instance.id);
-            this.movedBoxes = [box];
-            this.movedBoxes[0].onMouseDown(event);
-          } else if (event.ctrlKey) {
-            var selectedIndex = this.selectedBoxIds.indexOf(box.instance.id);
-            this.selectedBoxIds.splice(selectedIndex, selectedIndex);
-            this.movedBoxes[0].onMouseDown(event);
-          } else {
-            this.movedBoxes = selectedBoxes;
-            this.movedBoxes.map(function(b) {
-              b.onMouseDown(event);
-            });
-          }
         },
 
         closePopup: function(id) {
