@@ -14,6 +14,14 @@ angular.module('biggraph')
       },
       link: function(scope, element) {
         scope.selection = new SelectionModel();
+        scope.clipboard = [];
+        scope.dragMode = window.localStorage.getItem('drag_mode') || 'pan';
+        scope.$watch(
+          'dragMode',
+          function(dragMode) {
+            window.localStorage.setItem('drag_mode', dragMode);
+          });
+
 
         var workspaceDrag = false;
         var selectBoxes = false;
@@ -27,11 +35,12 @@ angular.module('biggraph')
           /* eslint-disable no-console */
           console.assert(!('logicalX' in event) && !('logicalY' in event));
           console.assert(!('workspaceX' in event) && !('workspaceY' in event));
+          var board = element.find('#workspace-drawing-board');
           // event.offsetX/Y are distorted when the mouse is
           // over a popup window (even if over an invisible
           // overflow part of it), hence we compute our own:
-          event.workspaceX = event.pageX - element.offset().left;
-          event.workspaceY = event.pageY - element.offset().top;
+          event.workspaceX = event.pageX - board.offset().left;
+          event.workspaceY = event.pageY - board.offset().top;
           // Add location according to pan and zoom:
           event.logicalX = (event.workspaceX - workspaceX) / zoomToScale(workspaceZoom);
           event.logicalY = (event.workspaceY - workspaceY) / zoomToScale(workspaceZoom);
@@ -119,18 +128,44 @@ angular.module('biggraph')
           }
         };
 
+        scope.copyBoxes = function() {
+          this.clipboard = angular.copy(this.guiMaster.selectedBoxes());
+        };
+
+        scope.pasteBoxes = function(currentPosition) {
+          this.guiMaster.wrapper.pasteFromClipboard(this.clipboard, currentPosition);
+        };
+
+        scope.deleteBoxes = function(boxIds) {
+          var that = this;
+          var popups = this.guiMaster.popups.slice();
+          popups.forEach(function(popup) {
+            var boxId = popup.content.boxId;
+            if (boxIds.includes(boxId) && boxId !== 'anchor') {
+              that.guiMaster.closePopup(popup.id);
+            }
+          });
+          this.guiMaster.wrapper.deleteBoxes(boxIds);
+        };
+
+        scope.deleteSelectedBoxes = function() {
+          this.deleteBoxes(this.guiMaster.selectedBoxIds);
+          this.guiMaster.selectedBoxIds = [];
+        };
+
+
         var hk = hotkeys.bindTo(scope);
         hk.add({
           combo: 'ctrl+c', description: 'Copy boxes',
-          callback: function() { scope.guiMaster.copyBoxes(); } });
+          callback: function() { scope.copyBoxes(); } });
         hk.add({
           combo: 'ctrl+v', description: 'Paste boxes',
           callback: function() {
-            scope.guiMaster.pasteBoxes(addLogicalMousePosition({ pageX: 0, pageY: 0}));
+            scope.pasteBoxes(addLogicalMousePosition({ pageX: 0, pageY: 0}));
           } });
         hk.add({
           combo: 'del', description: 'Paste boxes',
-          callback: function() { scope.guiMaster.deleteSelectedBoxes(); } });
+          callback: function() { scope.deleteSelectedBoxes(); } });
 
         function setGrabCursor(e) {
           // Trying to assign an invalid cursor will silently fail. Try to find a supported value.
