@@ -21,6 +21,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
     // backend is fully aware of the new state.
     var state = angular.copy(backendState);
     var wrapper = {
+      backendResponse: backendResponse,
       state: state,
       // The below data structures are generated from rawBoxes
       // by this.build(). These are the ones that interact with
