@@ -4,7 +4,7 @@
 // This object wraps the actual box data representation and
 // provides methods to interact with the GUI, e.g. mouse events
 // and values to bind with Angular to SVG elements.
-// The wrapped box date representation has two parts:
+// The wrapped box data representation has two parts:
 // - metadata describes the type of operation of the box.
 // - instance describes the operation parameter values,
 //   coordinates on the workspace and everything related to this
