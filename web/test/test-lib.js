@@ -132,7 +132,7 @@ Entity.prototype = {
 };
 
 function Workspace() {
-  this.main = element(by.id('workspace-main'));
+  this.main = element(by.id('workspace-entry-point'));
   this.selector = element(by.css('.operation-selector'));
   this.board = element(by.css('#workspace-drawing-board'));
 }
