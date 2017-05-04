@@ -4,7 +4,7 @@
 // arrows diagram.
 
 angular.module('biggraph')
-  .directive('workspaceDrawingBoard', function(hotkeys) {
+  .directive('workspaceDrawingBoard', function(hotkeys, SelectionModel) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -13,6 +13,8 @@ angular.module('biggraph')
         guiMaster: '=',
       },
       link: function(scope, element) {
+        scope.selection = new SelectionModel();
+
         var workspaceDrag = false;
         var selectBoxes = false;
         var workspaceX = 0;
@@ -53,8 +55,8 @@ angular.module('biggraph')
             workspaceX += event.workspaceX - mouseX;
             workspaceY += event.workspaceY - mouseY;
           } else if (selectBoxes) {
-            scope.guiMaster.selection.onMouseMove(event);
-            scope.guiMaster.selectBoxesInSelection();
+            scope.selection.onMouseMove(event);
+            scope.selectBoxesInSelection();
           }
           mouseX = event.workspaceX;
           mouseY = event.workspaceY;
@@ -64,7 +66,7 @@ angular.module('biggraph')
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
           addLogicalMousePosition(event);
-          scope.guiMaster.selection.remove();
+          scope.selection.remove();
           scope.guiMaster.onMouseDownOnBox(box, event);
         };
 
@@ -72,7 +74,7 @@ angular.module('biggraph')
           element[0].style.cursor = '';
           workspaceDrag = false;
           selectBoxes = false;
-          scope.guiMaster.selection.remove();
+          scope.selection.remove();
           addLogicalMousePosition(event);
           scope.guiMaster.onMouseUp(event);
         };
@@ -89,7 +91,7 @@ angular.module('biggraph')
           } else if (dragMode === 'select') {
             selectBoxes = true;
             scope.guiMaster.selectedBoxIds = [];
-            scope.guiMaster.selection.onMouseDown(event);
+            scope.selection.onMouseDown(event);
           }
         };
 
@@ -104,6 +106,17 @@ angular.module('biggraph')
 
         scope.arrows = function() {
           return scope.guiMaster && scope.guiMaster.wrapper ? this.guiMaster.wrapper.arrows : [];
+        };
+
+        scope.selectBoxesInSelection = function() {
+          var boxes = this.boxes();
+          this.guiMaster.selectedBoxIds = [];
+          for (var i = 0; i < boxes.length; i++) {
+            var box = boxes[i];
+            if (this.selection.inSelection(box)) {
+              this.guiMaster.selectedBoxIds.push(box.instance.id);
+            }
+          }
         };
 
         var hk = hotkeys.bindTo(scope);

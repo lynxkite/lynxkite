@@ -28,60 +28,6 @@ angular.module('biggraph').factory(
     return function(boxCatalog, workspaceName) {
 
       var workspace = {
-
-        selection: {
-          startX: undefined,
-          startY: undefined,
-          endX: undefined,
-          endY: undefined,
-          // The parameters below are calculated from the above ones by this.updateSelection.
-          leftX: undefined,
-          upperY: undefined,
-          width: undefined,
-          height: undefined,
-
-          update: function() {
-            this.leftX = Math.min(this.startX, this.endX);
-            this.upperY = Math.min(this.startY, this.endY);
-            this.width = Math.abs(this.endX - this.startX);
-            this.height = Math.abs(this.endY - this.startY);
-          },
-
-          remove: function() {
-            this.startX = undefined;
-            this.endX = undefined;
-            this.startY = undefined;
-            this.endY = undefined;
-            this.leftX = undefined;
-            this.upperY = undefined;
-            this.width = undefined;
-            this.length = undefined;
-          },
-
-
-          inSelection: function(box) {
-            return (this.leftX < box.instance.x + box.width &&
-              box.instance.x < this.leftX + this.width &&
-              this.upperY < box.instance.y + box.height &&
-              box.instance.y < this.upperY + this.height);
-          },
-
-          onMouseDown: function(event) {
-            this.endX = event.logicalX;
-            this.endY = event.logicalY;
-            this.startX = event.logicalX;
-            this.startY = event.logicalY;
-            this.update();
-          },
-
-          onMouseMove: function(event) {
-            this.endX = event.logicalX;
-            this.endY = event.logicalY;
-            this.update();
-          },
-
-        },
-
         popups: [],
 
         selectedBoxIds: [],
@@ -107,17 +53,6 @@ angular.module('biggraph').factory(
 
         getOutputPlug: function(boxId, plugId) {
           return this.getBox(boxId).outputMap[plugId];
-        },
-
-        selectBoxesInSelection: function() {
-          var boxes = this.boxes();
-          this.selectedBoxIds = [];
-          for (var i = 0; i < boxes.length; i++) {
-            var box = boxes[i];
-            if (this.selection.inSelection(box)) {
-              this.selectedBoxIds.push(box.instance.id);
-            }
-          }
         },
 
         onMouseMove: function(event) {
