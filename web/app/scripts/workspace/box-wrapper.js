@@ -30,6 +30,8 @@ angular.module('biggraph').factory('boxWrapper', function(plugWrapper) {
       outputMap: {},
       width: 200,
       height: 40,
+      cx: function() { return instance.x + this.width / 2; },
+      cy: function() { return instance.y + this.height / 2; },
       commentLines: getCommentLines(),
       isMoved: false,
       mainPosTransform: function() {
