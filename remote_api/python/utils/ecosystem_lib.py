@@ -383,6 +383,13 @@ EOF
 spark.hadoop.yarn.timeline-service.enabled false
 EOF
     ''')
+    # Configure Hive with Spark:
+    # execution engine = mr
+    self.cluster.ssh('''
+      cp /etc/hive/conf/hive-site.xml /mnt/lynx/spark/conf/
+      cd /mnt/lynx/spark/conf/
+      sed -i -e 's#<value>tez</value>#<value>mr</value>#g' hive-site.xml
+    ''')
 
   def start_monitoring_on_extra_nodes_native(self, keyfile):
     cluster_keyfile = 'cluster_key.pem'
