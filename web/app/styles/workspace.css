@@ -1,4 +1,4 @@
-#workspace-main {
+#workspace-entry-point {
   height: 100vh;
   overflow: hidden;
   position: relative; /* Constrain absolute-positioned elements within. */
@@ -12,10 +12,6 @@
 
 span#workspace-name {
   font-size: 2em;
-}
-
-div#workspace-main-layout {
-  height: calc(100% - 50px);
 }
 
 #workspace-drawing-board {
