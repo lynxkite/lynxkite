@@ -26,6 +26,22 @@
            drop-tooltip-placement="bottom">
         <i class="fa fa-hand-paper-o"></i>
       </button>
+      <button class="btn btn-default"
+           id="undo"
+           ng-click="undo()"
+           ng-disabled="!guiMaster.wrapper.backendResponse.undo"
+           drop-tooltip="Undo"
+           drop-tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-backward"></i>
+      </button>
+      <button class="btn btn-default"
+           id="redo"
+           ng-click="redo()"
+           ng-disabled="!guiMaster.wrapper.backendResponse.redo"
+           drop-tooltip="Redo"
+           drop-tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-forward"></i>
+      </button>
       <a class="btn btn-default"
            href="#/"
            id="close-workspace"

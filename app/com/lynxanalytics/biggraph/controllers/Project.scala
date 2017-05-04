@@ -876,7 +876,7 @@ class ProjectFrame(path: SymbolPath)(
   private def farthestCheckpoint_=(x: String): Unit = set(rootDir / "farthestCheckpoint", x)
 
   // The next checkpoint in the current redo sequence if a redo is available
-  private def nextCheckpoint: Option[String] = get(rootDir / "nextCheckpoint") match {
+  def nextCheckpoint: Option[String] = get(rootDir / "nextCheckpoint") match {
     case "" => None
     case x => Some(x)
   }
