@@ -438,7 +438,7 @@ EOF
       mkdir -p /mnt/lynx/notebooks
       source /mnt/lynx/config/central
       cd /mnt/lynx/notebooks
-      jupyter-notebook --NotebookApp.token='' --port=2222
+      jupyter-notebook --NotebookApp.token='' --port=2202
       ''')
 
   ###
