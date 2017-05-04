@@ -178,32 +178,6 @@ angular.module('biggraph').factory(
           }
         },
 
-        clipboard: [],
-
-        copyBoxes: function() {
-          this.clipboard = angular.copy(this.selectedBoxes());
-        },
-
-        pasteBoxes: function(currentPosition) {
-          this.wrapper.pasteFromClipboard(this.clipboard, currentPosition);
-        },
-
-        deleteBoxes: function(boxIds) {
-          var that = this;
-          var popups = this.popups.slice();
-          popups.forEach(function(popup) {
-            var boxId = popup.content.boxId;
-            if (boxIds.includes(boxId) && boxId !== 'anchor') {
-              that.closePopup(popup.id);
-            }
-          });
-          this.wrapper.deleteBoxes(boxIds);
-        },
-
-        deleteSelectedBoxes: function() {
-          this.deleteBoxes(this.selectedBoxIds);
-          this.selectedBoxIds = [];
-        },
 
       };
 
