@@ -111,12 +111,18 @@
       <!-- start pulled arrow -->
       <g ng-if="pulledPlug && mouseLogical">
         <line class="arrow pulled-arrow"
-            ng-attr-x1="{{pulledPlug.x()}}"
-            ng-attr-y1="{{pulledPlug.y()}}"
+            ng-attr-x1="{{pulledPlug.cx()}}"
+            ng-attr-y1="{{pulledPlug.cy()}}"
             ng-attr-x2="{{mouseLogical.x}}"
             ng-attr-y2="{{mouseLogical.y}}">
         </line>
       </g>
+
+      <polygon
+        class="popup-trail"
+        ng-repeat="popup in guiMaster.popups"
+        points="{{ popup.trail(pageToLogical, logicalToPage, guiMaster) }}">
+      </polygon>
 
     </g>
   </svg>
