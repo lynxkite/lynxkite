@@ -31,10 +31,29 @@ angular.module('biggraph')
           event.workspaceX = event.pageX - element.offset().left;
           event.workspaceY = event.pageY - element.offset().top;
           // Add location according to pan and zoom:
-          event.logicalX = (event.workspaceX - workspaceX) / zoomToScale(workspaceZoom);
-          event.logicalY = (event.workspaceY - workspaceY) / zoomToScale(workspaceZoom);
+          var logical = scope.pageToLogical({ x: event.pageX, y: event.pageY });
+          event.logicalX = logical.x;
+          event.logicalY = logical.y;
           return event;
         }
+
+        scope.pageToLogical = function(pos) {
+          var z = zoomToScale(workspaceZoom);
+          var off = element.offset();
+          return {
+            x: (pos.x - off.left - workspaceX) / z,
+            y: (pos.y - off.top - workspaceY) / z,
+          };
+        };
+
+        scope.logicalToPage = function(pos) {
+          var z = zoomToScale(workspaceZoom);
+          var off = element.offset();
+          return {
+            x: pos.x * z + workspaceX + off.left,
+            y: pos.y * z + workspaceY + off.top,
+          };
+        };
 
         function actualDragMode(event) {
           var dragMode = (window.localStorage.getItem('drag_mode') || 'pan');
