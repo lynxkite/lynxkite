@@ -20,6 +20,9 @@ angular.module('biggraph')
         // mouse, then this points to the plug where the line was
         // started.
         scope.pulledPlug = undefined;
+        // The last known position of the mouse, expressed in logical
+        // workspace coordinates.
+        scope.mouseLogical = undefined;
 
         scope.$watch(
           'dragMode',
@@ -81,7 +84,7 @@ angular.module('biggraph')
             // Button is no longer pressed. (It was released outside of the window, for example.)
             this.guiMaster.onMouseUp();
           } else {
-            this.guiMaster.mouseLogical = {
+            this.mouseLogical = {
               x: event.logicalX,
               y: event.logicalY,
             };
@@ -178,7 +181,7 @@ angular.module('biggraph')
         scope.onMouseDownOnPlug = function(plug, event) {
           event.stopPropagation();
           scope.pulledPlug = plug;
-          scope.guiMaster.mouseLogical = undefined;
+          scope.mouseLogical = undefined;
         };
 
         scope.onMouseUpOnPlug = function(plug, event) {
