@@ -376,10 +376,10 @@ EOF
   def hive_patch(self):
     #  This is needed because of a Spark 2 - EMR - YARN - jersey conflict
     #  Disables timeline service in yarn.
+    #  https://issues.apache.org/jira/browse/SPARK-15343
     self.cluster.ssh('''
       cd /mnt/lynx/spark/conf
-      cp spark-defaults.conf.template spark-defaults.conf
-      cat >>spark-defaults.conf <<'EOF'
+      cat >spark-defaults.conf <<'EOF'
 spark.hadoop.yarn.timeline-service.enabled false
 EOF
     ''')
@@ -425,11 +425,12 @@ EOF
   def install_and_setup_jupyter(self):
     self.cluster.ssh('''
       sudo pip-3.4 install --upgrade jupyter sklearn matplotlib
+      sudo pip-3.4 install --upgrade pandas seaborn
     ''')
     self.cluster.ssh_nohup('''
       mkdir -p /mnt/lynx/notebooks
-      cd /mnt/lynx/notebooks
       source /mnt/lynx/config/central
+      cd /mnt/lynx/notebooks
       jupyter-notebook --NotebookApp.token='' --port=2222
       ''')
 
