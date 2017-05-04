@@ -207,6 +207,15 @@ Workspace.prototype = {
     boxEditor.close();
   },
 
+  addWorkspaceParameter: function(name, kind, defaultValue) {
+    var boxEditor = this.openBoxEditor('anchor');
+    boxEditor.element.$('#add-parameter').click();
+    boxEditor.element.$('#-id').sendKeys(name);
+    boxEditor.element.$('#' + name + '-type').sendKeys(kind);
+    boxEditor.element.$('#' + name + '-default').sendKeys(defaultValue);
+    boxEditor.close();
+  },
+
   boxExists(boxId) {
     return this.board.$('.box#' + boxId).isPresent();
   },
@@ -296,18 +305,18 @@ Workspace.prototype = {
 
 function BoxEditor(popup) {
   this.popup = popup;
-  this.boxEditor = popup.$('box-editor');
+  this.element = popup.$('box-editor');
 }
 
 BoxEditor.prototype = {
 
   operationParameter: function(param) {
-    return this.boxEditor.element(by.css(
-        'operation-parameters #' + param + ' .operation-attribute-entry'));
+    return this.element.$(
+        'operation-parameters #' + param + ' .operation-attribute-entry');
   },
 
   parametricSwitch: function(param) {
-    return this.boxEditor.$('operation-parameters #' + param + ' .parametric-switch');
+    return this.element.$('operation-parameters #' + param + ' .parametric-switch');
   },
 
   populateOperation: function(params) {
@@ -319,12 +328,12 @@ BoxEditor.prototype = {
   },
 
   expectParameter: function(paramName, expectedValue) {
-    var param = this.boxEditor.$('div#' + paramName + ' input');
+    var param = this.element.$('div#' + paramName + ' input');
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
   expectSelectParameter: function(paramName, expectedValue) {
-    var param = this.boxEditor.$('div#' + paramName + ' select');
+    var param = this.element.$('div#' + paramName + ' select');
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 

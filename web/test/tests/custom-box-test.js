@@ -8,12 +8,17 @@ module.exports = function(fw) {
     'custom box created',
     function() {
       lib.splash.openNewWorkspace('test-custom-box');
+      lib.workspace.addWorkspaceParameter('prname', 'text', 'default_pr');
       lib.workspace.addBox({
         id: 'in', name: 'Input', x: 100, y: 100, params: { name: 'in' } });
       lib.workspace.addBox({
         id: 'eg', name: 'Create example graph', x: 400, y: 100 });
       lib.workspace.addBox({
         id: 'pr', name: 'Compute PageRank', x: 100, y: 300, after: 'eg' });
+      var pr = lib.workspace.openBoxEditor('pr');
+      pr.populateOperation({ name: '$prname' });
+      pr.parametricSwitch('name').click();
+      pr.close();
       lib.workspace.addBox({
         id: 'cc', name: 'Compute clustering coefficient', x: 100, y: 400, after: 'pr' });
       lib.workspace.addBox({
@@ -45,8 +50,20 @@ module.exports = function(fw) {
       var state = lib.workspace.openStateView('cb', 'out');
       expect(state.left.vertexCount()).toEqual(4);
       expect(state.left.edgeCount()).toEqual(4);
-      expect(state.left.attributeCount()).toEqual(10);
+      expect(state.left.vertexAttribute('default_pr').isPresent()).toBe(true);
+      expect(state.left.vertexAttribute('clustering_coefficient').isPresent()).toBe(true);
       state.close();
     });
+
+  fw.transitionTest(
+    'custom box placed',
+    'custom box with parameter set',
+    function() {
+      lib.workspace.editBox('cb', { prname: 'custom_pr' });
+      var state = lib.workspace.openStateView('cb', 'out');
+      expect(state.left.vertexAttribute('default_pr').isPresent()).toBe(false);
+      expect(state.left.vertexAttribute('custom_pr').isPresent()).toBe(true);
+    },
+    function() {});
 
 };
