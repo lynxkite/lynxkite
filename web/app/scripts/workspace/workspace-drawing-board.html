@@ -109,12 +109,12 @@
       <!-- end arrow -->
 
       <!-- start pulled arrow -->
-      <g ng-if="pulledPlug && guiMaster.mouseLogical">
+      <g ng-if="pulledPlug && mouseLogical">
         <line class="arrow pulled-arrow"
             ng-attr-x1="{{pulledPlug.x()}}"
             ng-attr-y1="{{pulledPlug.y()}}"
-            ng-attr-x2="{{guiMaster.mouseLogical.x}}"
-            ng-attr-y2="{{guiMaster.mouseLogical.y}}">
+            ng-attr-x2="{{mouseLogical.x}}"
+            ng-attr-y2="{{mouseLogical.y}}">
         </line>
       </g>
 
