@@ -28,15 +28,6 @@ angular.module('biggraph').factory(
     return function(boxCatalog, workspaceName) {
 
       var workspace = {
-        name: workspaceName,
-
-        boxes: function() {
-          return this.wrapper ? this.wrapper.boxes : [];
-        },
-
-        arrows: function() {
-          return this.wrapper ? this.wrapper.arrows : [];
-        },
 
         selection: {
           startX: undefined,

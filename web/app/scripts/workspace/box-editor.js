@@ -48,7 +48,7 @@ angular.module('biggraph')
           scope.lastRequest = currentRequest = util
             .nocache(
               '/ajax/getOperationMeta', {
-                workspace: scope.guiMaster.name,
+                workspace: scope.guiMaster.wrapper.name,
                 box: boxId,
               })
             .then(

@@ -98,6 +98,14 @@ angular.module('biggraph')
           return 'translate(' + workspaceX + ', ' + workspaceY + ') scale(' + z + ')';
         };
 
+        scope.boxes = function() {
+          return scope.guiMaster && scope.guiMaster.wrapper ? this.guiMaster.wrapper.boxes : [];
+        };
+
+        scope.arrows = function() {
+          return scope.guiMaster && scope.guiMaster.wrapper ? this.guiMaster.wrapper.arrows : [];
+        };
+
         var hk = hotkeys.bindTo(scope);
         hk.add({
           combo: 'ctrl+c', description: 'Copy boxes',
