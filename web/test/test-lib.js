@@ -306,6 +306,10 @@ BoxEditor.prototype = {
         'operation-parameters #' + param + ' .operation-attribute-entry'));
   },
 
+  parametricSwitch: function(param) {
+    return this.boxEditor.$('operation-parameters #' + param + ' .parametric-switch');
+  },
+
   populateOperation: function(params) {
     params = params || {};
     for (var key in params) {
