@@ -1,16 +1,20 @@
 'use strict';
 
-// Creates a workspace object. A workspace is a set of boxes and arrows.
+// Creates a workspace wrapper object. A workspace is a set of boxes and arrows.
 // This object wraps the actual workspace data representation and
 // provides methods to interact with the GUI, e.g. mouse events
-// and values to bind with Angular to SVG elements.
+// and values to bind with Angular to SVG elements. It also manages
+// the life-cycle of the workspace state.
 //
-// Every time the underlying workspace data was significantly changed, the
-// _build() method is invoked to rebuild the frontend-facing data.
-// The flow of changes here is always one-way:
-// 1. user change or new workspace state loaded
-// 2. "raw" state is updated
-// 3. _build() updates the frontend-facing objects
+// Every time the underlying workspace data was changed, the following flow needs to be executed:
+// 1. user change happens, which updates the "raw" state in
+//    this.state
+// 2. this._build() updates this.boxes, this.arrows and this.boxMap based
+//   on this.state. (This updates the GUI.)
+// 3. this.saveWorkspace() upload this.state to the server
+// 4. this.loadWorkspace() downloads the new state (what was sent
+//    in the previous point plus what the server has changed).
+// 5. this._build() is invoked again
 
 angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper, util, $interval) {
   return function(name, boxCatalog) {
