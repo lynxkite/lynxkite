@@ -16,6 +16,10 @@ angular.module('biggraph')
         scope.clipboard = [];
         scope.dragMode = window.localStorage.getItem('drag_mode') || 'pan';
         scope.selectedBoxIds = [];
+        // If the user is connecting plugs by drawing a line with the
+        // mouse, then this points to the plug where the line was
+        // started.
+        scope.pulledPlug = undefined;
 
         scope.$watch(
           'dragMode',
@@ -115,7 +119,7 @@ angular.module('biggraph')
         };
 
         scope.onMouseUpOnBox = function(box, event) {
-          if (box.isMoved || scope.guiMaster.pulledPlug) {
+          if (box.isMoved || scope.pulledPlug) {
             return;
           }
           var leftButton = event.button === 0;
@@ -173,15 +177,15 @@ angular.module('biggraph')
 
         scope.onMouseDownOnPlug = function(plug, event) {
           event.stopPropagation();
-          scope.guiMaster.pulledPlug = plug;
+          scope.pulledPlug = plug;
           scope.guiMaster.mouseLogical = undefined;
         };
 
         scope.onMouseUpOnPlug = function(plug, event) {
           event.stopPropagation();
-          if (scope.guiMaster.pulledPlug) {
-            var otherPlug = scope.guiMaster.pulledPlug;
-            scope.guiMaster.pulledPlug = undefined;
+          if (scope.pulledPlug) {
+            var otherPlug = scope.pulledPlug;
+            scope.pulledPlug = undefined;
             scope.guiMaster.wrapper.addArrow(otherPlug, plug);
           }
         };
@@ -196,7 +200,7 @@ angular.module('biggraph')
             scope.guiMaster.wrapper.saveIfBoxesMoved();
           }
           scope.guiMaster.movedBoxes = undefined;
-          scope.guiMaster.pulledPlug = undefined;
+          scope.pulledPlug = undefined;
           scope.guiMaster.movedPopup = undefined;
         };
 
