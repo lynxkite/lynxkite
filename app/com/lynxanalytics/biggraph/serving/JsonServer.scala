@@ -302,6 +302,7 @@ object FrontendJson {
   implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
   implicit val rCreateSnapshotRequest = json.Json.reads[CreateSnapshotRequest]
   implicit val rGetExportResultRequest = json.Json.reads[GetExportResultRequest]
+  implicit val wGetExportResultResponse = json.Json.writes[GetExportResultResponse]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]

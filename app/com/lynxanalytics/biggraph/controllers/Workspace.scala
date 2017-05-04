@@ -242,9 +242,9 @@ object BoxOutputState {
 
   def from(exportResult: graph_api.Scalar[String],
            params: Map[String, String]): BoxOutputState = {
-    val paramsAndGuid = params ++ Map("guid" -> exportResult.gUID.toString)
-    val state = json.Json.toJson(paramsAndGuid)
-    BoxOutputState(BoxOutputKind.ExportResult, Some(state))
+    BoxOutputState(BoxOutputKind.ExportResult, Some(json.Json.obj(
+      "guid" -> exportResult.gUID, "parameters" -> params)))
+
   }
 
   def error(msg: String): BoxOutputState = {
