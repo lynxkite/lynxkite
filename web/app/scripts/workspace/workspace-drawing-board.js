@@ -82,7 +82,7 @@ angular.module('biggraph')
           // Protractor omits button data from simulated mouse events.
           if (!leftButton && !environment.protractor) {
             // Button is no longer pressed. (It was released outside of the window, for example.)
-            this.guiMaster.onMouseUp();
+            this.onMouseUp();
           } else {
             this.mouseLogical = {
               x: event.logicalX,
@@ -193,12 +193,11 @@ angular.module('biggraph')
           }
         };
 
-        scope.onMouseUp = function(event) {
+        scope.onMouseUp = function() {
           element[0].style.cursor = '';
           workspaceDrag = false;
           selectBoxes = false;
           scope.selection.remove();
-          addLogicalMousePosition(event);
           if (scope.guiMaster.movedBoxes) {
             scope.guiMaster.wrapper.saveIfBoxesMoved();
           }
