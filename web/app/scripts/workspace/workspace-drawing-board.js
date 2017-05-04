@@ -15,6 +15,8 @@ angular.module('biggraph')
         scope.selection = new SelectionModel();
         scope.clipboard = [];
         scope.dragMode = window.localStorage.getItem('drag_mode') || 'pan';
+        scope.selectedBoxIds = [];
+
         scope.$watch(
           'dragMode',
           function(dragMode) {
@@ -75,7 +77,23 @@ angular.module('biggraph')
           event.stopPropagation();
           addLogicalMousePosition(event);
           scope.selection.remove();
-          scope.guiMaster.onMouseDownOnBox(box, event);
+          if (scope.selectedBoxIds.indexOf(box.instance.id) === -1) {
+            if (!event.ctrlKey) {
+              scope.selectedBoxIds = [];
+            }
+            scope.selectBox(box.instance.id);
+            scope.guiMaster.movedBoxes = [box];
+            scope.guiMaster.movedBoxes[0].onMouseDown(event);
+          } else if (event.ctrlKey) {
+            var selectedIndex = scope.selectedBoxIds.indexOf(box.instance.id);
+            scope.selectedBoxIds.splice(selectedIndex, selectedIndex);
+            scope.guiMaster.movedBoxes[0].onMouseDown(event);
+          } else {
+            scope.guiMaster.movedBoxes = this.selectedBoxes();
+            scope.guiMaster.movedBoxes.map(function(b) {
+              b.onMouseDown(event);
+            });
+          }
         };
 
         scope.onMouseUp = function(event) {
@@ -98,7 +116,7 @@ angular.module('biggraph')
             mouseY = event.workspaceY;
           } else if (dragMode === 'select') {
             selectBoxes = true;
-            scope.guiMaster.selectedBoxIds = [];
+            scope.selectedBoxIds = [];
             scope.selection.onMouseDown(event);
           }
         };
@@ -118,17 +136,32 @@ angular.module('biggraph')
 
         scope.selectBoxesInSelection = function() {
           var boxes = this.boxes();
-          this.guiMaster.selectedBoxIds = [];
+          this.selectedBoxIds = [];
           for (var i = 0; i < boxes.length; i++) {
             var box = boxes[i];
             if (this.selection.inSelection(box)) {
-              this.guiMaster.selectedBoxIds.push(box.instance.id);
+              this.selectedBoxIds.push(box.instance.id);
             }
           }
         };
 
+        scope.selectBox = function(boxId) {
+          scope.selectedBoxIds.push(boxId);
+        };
+
+        scope.selectedBoxes = function() {
+          if (scope.selectedBoxIds) {
+            var workspaceWrapper = scope.guiMaster.wrapper;
+            return scope.selectedBoxIds.map(function(id) {
+              return workspaceWrapper.boxMap[id];
+            });
+          } else {
+            return undefined;
+          }
+        };
+
         scope.copyBoxes = function() {
-          this.clipboard = angular.copy(this.guiMaster.selectedBoxes());
+          this.clipboard = angular.copy(this.selectedBoxes());
         };
 
         scope.pasteBoxes = function(currentPosition) {
@@ -148,8 +181,8 @@ angular.module('biggraph')
         };
 
         scope.deleteSelectedBoxes = function() {
-          this.deleteBoxes(this.guiMaster.selectedBoxIds);
-          this.guiMaster.selectedBoxIds = [];
+          this.deleteBoxes(this.selectedBoxIds);
+          this.selectedBoxIds = [];
         };
 
 

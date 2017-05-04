@@ -50,7 +50,7 @@
           ng-attr-transform="{{ box.mainPosTransform() }}"
           class="box"
           id="{{ box.instance.id }}"
-          ng-class="{ 'selected': guiMaster.selectedBoxIds.includes(box.instance.id) }">
+          ng-class="{ 'selected': selectedBoxIds.includes(box.instance.id) }">
 
         <!-- start list of I/O plugs -->
         <g ng-repeat="direction in ['inputs', 'outputs']"
