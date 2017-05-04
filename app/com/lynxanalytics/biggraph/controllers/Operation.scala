@@ -515,11 +515,19 @@ abstract class ExportOperationToFile(context: Operation.Context)
     makeOutput(exportResult)
   }
 
+  protected def generatePathIfNeeded(path: String): String = {
+    if (path == "<auto>") {
+      val inputGuid = table.gUID.toString
+      val paramsWithInput = params ++ Map("input" -> inputGuid)
+      "DATA$/exports/" + paramsWithInput.hashCode.toString + "." + format
+    } else
+      path
+  }
+
   private def assertWriteAllowed(path: String) = {
-    if (path != "<auto>") {
-      val file = HadoopFile(path)
-      file.assertWriteAllowedFrom(context.user)
-    }
+    val genPath = generatePathIfNeeded(path)
+    val file = HadoopFile(genPath)
+    file.assertWriteAllowedFrom(context.user)
   }
 }
 
