@@ -8,7 +8,6 @@ angular.module('biggraph')
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
-      templateNamespace: 'svg',
       scope: {
         guiMaster: '=',
       },
