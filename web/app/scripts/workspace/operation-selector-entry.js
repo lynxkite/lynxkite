@@ -2,14 +2,14 @@
 // the workspace drawing board.
 'use strict';
 
-angular.module('biggraph').directive('operationSelectorEntry', function($interval) {
+angular.module('biggraph').directive('operationSelectorEntry', function($timeout) {
   return {
     restrict: 'E',
     scope: {
       op: '=',
       search: '=',
-      close: '=',
-      open: '='
+      closeCurrentCatOrSearch: '=',
+      openLastCatOrSearch: '='
     },
     templateUrl: 'scripts/workspace/operation-selector-entry.html',
     link: function(scope, element) {
@@ -19,11 +19,11 @@ angular.module('biggraph').directive('operationSelectorEntry', function($interva
         event.originalEvent.dataTransfer.setData(
             'text',
             scope.op.operationID);
-        $interval(scope.close(), 100);
+        $timeout(scope.closeCurrentCatOrSearch());
       });
       element.bind('dragend', function() {
         scope.$apply(function() {
-          scope.open();
+          scope.openLastCatOrSearch();
         });
       });
     }};
