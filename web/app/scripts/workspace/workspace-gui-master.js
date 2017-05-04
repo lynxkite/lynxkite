@@ -28,8 +28,6 @@ angular.module('biggraph').factory(
     return function(boxCatalog, workspaceName) {
 
       var workspace = {
-        popups: [],
-
         getBox: function(id) {
           return this.wrapper.boxMap[id];
         },
