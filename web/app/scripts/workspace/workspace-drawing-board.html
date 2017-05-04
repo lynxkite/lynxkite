@@ -46,7 +46,7 @@
       <!-- start box -->
       <g ng-repeat="box in boxes()"
           ng-mousedown="onMouseDownOnBox(box, $event)"
-          ng-mouseup="guiMaster.onMouseUpOnBox(box, $event)"
+          ng-mouseup="onMouseUpOnBox(box, $event)"
           ng-attr-transform="{{ box.mainPosTransform() }}"
           class="box"
           id="{{ box.instance.id }}"
@@ -65,9 +65,9 @@
                             'colored-output': plug.progressColor || plug.error }"
                   ng-attr-fill="{{ plug.error ? 'red' : plug.progressColor }}"
                   ng-attr-drop-tooltip="{{ plug.error }}"
-                  ng-mousedown="guiMaster.onMouseDownOnPlug(plug, $event)"
-                  ng-mouseup="guiMaster.onMouseUpOnPlug(plug, $event)"
-                  ng-click="guiMaster.onClickOnPlug(plug, $event)">
+                  ng-mousedown="onMouseDownOnPlug(plug, $event)"
+                  ng-mouseup="onMouseUpOnPlug(plug, $event)"
+                  ng-click="onClickOnPlug(plug, $event)">
             </circle>
           </g>
         </g>
