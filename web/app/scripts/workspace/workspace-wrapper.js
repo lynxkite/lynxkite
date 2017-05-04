@@ -358,6 +358,13 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper, util
         }
       },
 
+      getBox: function(id) {
+        return this.boxMap[id];
+      },
+
+      getOutputPlug: function(boxId, plugId) {
+        return this.getBox(boxId).outputMap[plugId];
+      },
     };
   };
 });

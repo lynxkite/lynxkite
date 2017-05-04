@@ -4,18 +4,21 @@
 // arrows diagram.
 
 angular.module('biggraph')
-  .directive('workspaceDrawingBoard', function(hotkeys, SelectionModel, environment, PopupModel) {
+  .directive('workspaceDrawingBoard', function(hotkeys, SelectionModel, environment, PopupModel, workspaceWrapper) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
       scope: {
-        guiMaster: '=',
+        boxCatalog: '=',
+        workspaceName: '=',
       },
       link: function(scope, element) {
+        scope.workspace = undefined;
         scope.selection = new SelectionModel();
         scope.clipboard = [];
         scope.dragMode = window.localStorage.getItem('drag_mode') || 'pan';
         scope.selectedBoxIds = [];
+        scope.movedBoxes = undefined;
         // If the user is connecting plugs by drawing a line with the
         // mouse, then this points to the plug where the line was
         // started.
@@ -26,12 +29,22 @@ angular.module('biggraph')
         scope.popups = [];
         scope.movedPopup = undefined;
 
+        scope.$watchGroup(
+          ['boxCatalog.$resolved', 'workspaceName'],
+
+          function() {
+            if (scope.boxCatalog.$resolved && scope.workspaceName) {
+              scope.workspace = workspaceWrapper(
+                scope.workspaceName,
+                scope.boxCatalog);
+              scope.workspace.loadWorkspace();
+            }
+          });
         scope.$watch(
           'dragMode',
           function(dragMode) {
             window.localStorage.setItem('drag_mode', dragMode);
           });
-
 
         var workspaceDrag = false;
         var selectBoxes = false;
@@ -84,15 +97,15 @@ angular.module('biggraph')
           // Protractor omits button data from simulated mouse events.
           if (!leftButton && !environment.protractor) {
             // Button is no longer pressed. (It was released outside of the window, for example.)
-            this.onMouseUp();
+            scope.onMouseUp();
           } else {
-            this.mouseLogical = {
+            scope.mouseLogical = {
               x: event.logicalX,
               y: event.logicalY,
             };
-            if (this.guiMaster.movedBoxes) {
-              for (var i = 0; i < this.guiMaster.movedBoxes.length; i++) {
-                this.guiMaster.movedBoxes[i].onMouseMove(event);
+            if (scope.movedBoxes) {
+              for (var i = 0; i < scope.movedBoxes.length; i++) {
+                scope.movedBoxes[i].onMouseMove(event);
               }
             } else if (scope.movedPopup) {
               scope.movedPopup.onMouseMove(event);
@@ -109,15 +122,15 @@ angular.module('biggraph')
               scope.selectedBoxIds = [];
             }
             scope.selectBox(box.instance.id);
-            scope.guiMaster.movedBoxes = [box];
-            scope.guiMaster.movedBoxes[0].onMouseDown(event);
+            scope.movedBoxes = [box];
+            scope.movedBoxes[0].onMouseDown(event);
           } else if (event.ctrlKey) {
             var selectedIndex = scope.selectedBoxIds.indexOf(box.instance.id);
             scope.selectedBoxIds.splice(selectedIndex, selectedIndex);
-            scope.guiMaster.movedBoxes[0].onMouseDown(event);
+            scope.movedBoxes[0].onMouseDown(event);
           } else {
-            scope.guiMaster.movedBoxes = this.selectedBoxes();
-            scope.guiMaster.movedBoxes.map(function(b) {
+            scope.movedBoxes = this.selectedBoxes();
+            scope.movedBoxes.map(function(b) {
               b.onMouseDown(event);
             });
           }
@@ -191,7 +204,7 @@ angular.module('biggraph')
           if (scope.pulledPlug) {
             var otherPlug = scope.pulledPlug;
             scope.pulledPlug = undefined;
-            scope.guiMaster.wrapper.addArrow(otherPlug, plug);
+            scope.workspace.addArrow(otherPlug, plug);
           }
         };
 
@@ -200,10 +213,10 @@ angular.module('biggraph')
           workspaceDrag = false;
           selectBoxes = false;
           scope.selection.remove();
-          if (scope.guiMaster.movedBoxes) {
-            scope.guiMaster.wrapper.saveIfBoxesMoved();
+          if (scope.movedBoxes) {
+            scope.workspace.saveIfBoxesMoved();
           }
-          scope.guiMaster.movedBoxes = undefined;
+          scope.movedBoxes = undefined;
           scope.pulledPlug = undefined;
           scope.movedPopup = undefined;
         };
@@ -230,11 +243,11 @@ angular.module('biggraph')
         };
 
         scope.boxes = function() {
-          return scope.guiMaster && scope.guiMaster.wrapper ? this.guiMaster.wrapper.boxes : [];
+          return scope.workspace ? scope.workspace.boxes : [];
         };
 
         scope.arrows = function() {
-          return scope.guiMaster && scope.guiMaster.wrapper ? this.guiMaster.wrapper.arrows : [];
+          return scope.workspace ? scope.workspace.arrows : [];
         };
 
         scope.selectBoxesInSelection = function() {
@@ -254,9 +267,8 @@ angular.module('biggraph')
 
         scope.selectedBoxes = function() {
           if (scope.selectedBoxIds) {
-            var workspaceWrapper = scope.guiMaster.wrapper;
             return scope.selectedBoxIds.map(function(id) {
-              return workspaceWrapper.boxMap[id];
+              return scope.workspace.boxMap[id];
             });
           } else {
             return undefined;
@@ -264,11 +276,12 @@ angular.module('biggraph')
         };
 
         scope.copyBoxes = function() {
-          this.clipboard = angular.copy(this.selectedBoxes());
+          scope.clipboard = angular.copy(scope.selectedBoxes());
         };
 
         scope.pasteBoxes = function(currentPosition) {
-          this.guiMaster.wrapper.pasteFromClipboard(this.clipboard, currentPosition);
+          scope.workspace.pasteFromClipboard(
+              scope.clipboard, currentPosition);
         };
 
         scope.deleteBoxes = function(boxIds) {
@@ -279,7 +292,7 @@ angular.module('biggraph')
               scope.closePopup(popup.id);
             }
           });
-          scope.guiMaster.wrapper.deleteBoxes(boxIds);
+          scope.workspace.deleteBoxes(boxIds);
         };
 
         scope.deleteSelectedBoxes = function() {
@@ -342,12 +355,12 @@ angular.module('biggraph')
           // This is received from operation-selector-entry.js
           scope.$apply(function() {
             addLogicalMousePosition(origEvent);
-            scope.guiMaster.wrapper.addBox(operationID, origEvent, boxID);
+            scope.workspace.addBox(operationID, origEvent, boxID);
           });
         });
 
         scope.$on('$destroy', function() {
-          scope.guiMaster.stopProgressUpdate();
+          scope.workspace.stopProgressUpdate();
         });
       }
     };
