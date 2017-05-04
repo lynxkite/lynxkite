@@ -1305,30 +1305,22 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   })
 
   register("Add rank attribute", new VertexAttributesOperation(_, _) {
+    def options = (vertexAttributes[String] ++ vertexAttributes[Double] ++
+      vertexAttributes[Long] ++ vertexAttributes[Int]).sortBy(_.title)
     def parameters = List(
       Param("rankattr", "Rank attribute name", defaultValue = "ranking"),
-      Choice("keyattr", "Key attribute name", options = vertexAttributes[String] ++ vertexAttributes[Double]),
+      Choice("keyattr", "Key attribute name", options = options),
       Choice("order", "Order", options = FEOption.list("ascending", "descending")))
-
     def enabled = FEStatus.assert(
-      (vertexAttributes[String] ++ vertexAttributes[Double]).nonEmpty, "No numeric (double) or string vertex attributes.")
+      optoins.nonEmpty, "No ordered vertex attributes.")
     def apply(params: Map[String, String]) = {
       val keyAttr = params("keyattr")
-      val isDouble = project.vertexAttributes(params("keyattr")).is[Double]
       val rankAttr = params("rankattr")
       val ascending = params("order") == "ascending"
-      assert(keyAttr.nonEmpty, "Please set a key attribute name.")
       assert(rankAttr.nonEmpty, "Please set a name for the rank attribute")
-      val resAttr = if (isDouble) {
-        val op = graph_operations.AddRankingAttributeDouble(ascending)
-        val sortKey = project.vertexAttributes(keyAttr).runtimeSafeCast[Double]
-        op(op.sortKey, sortKey).result.ordinal.asDouble
-      } else {
-        val op = graph_operations.AddRankingAttributeString(ascending)
-        val sortKey = project.vertexAttributes(keyAttr).runtimeSafeCast[String]
-        op(op.sortKey, sortKey).result.ordinal.asDouble
-      }
-      project.newVertexAttribute(rankAttr, resAttr, s"rank by $keyAttr" + help)
+      val sortKey = project.vertexAttributes(keyAttr)
+      val rank = graph_operations.AddRankingAttribute.run(sortKey, ascending)
+      project.newVertexAttribute(rankAttr, rank.asDouble, s"rank by $keyAttr" + help)
     }
   })
 
