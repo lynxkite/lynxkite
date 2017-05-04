@@ -366,6 +366,23 @@ angular.module('biggraph').factory(
             progressUpdater = undefined;
           }
         },
+
+        undoEnabled: function() { return this.wrapper.backendResponse.undo; },
+        redoEnabled: function() { return this.wrapper.backendResponse.redo; },
+
+        undo: function() {
+          if (!this.undoEnabled()) { return; }
+          var that = this;
+          util.post('/ajax/undoWorkspace', { name: this.name })
+            .then(function() { that.loadWorkspace(); });
+        },
+
+        redo: function() {
+          if (!this.redoEnabled()) { return; }
+          var that = this;
+          util.post('/ajax/redoWorkspace', { name: this.name })
+            .then(function() { that.loadWorkspace(); });
+        },
       };
 
       workspace.loadWorkspace();

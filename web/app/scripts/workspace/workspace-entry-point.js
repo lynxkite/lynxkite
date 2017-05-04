@@ -23,13 +23,4 @@ angular.module('biggraph')
             $routeParams.workspaceName);
         }
       });
-
-    $scope.undo = function() {
-      util.post('/ajax/undoWorkspace', { name: $routeParams.workspaceName })
-        .then(function() { $scope.guiMaster.loadWorkspace(); });
-    };
-    $scope.redo = function() {
-      util.post('/ajax/redoWorkspace', { name: $routeParams.workspaceName })
-        .then(function() { $scope.guiMaster.loadWorkspace(); });
-    };
   });

@@ -133,6 +133,16 @@ angular.module('biggraph')
             scope.guiMaster.pasteBoxes(addLogicalMousePosition({ pageX: 0, pageY: 0}));
           } });
         hk.add({
+          combo: 'ctrl+z', description: 'Undo',
+          callback: function() {
+            scope.guiMaster.undo();
+          } });
+        hk.add({
+          combo: 'ctrl+y', description: 'Redo',
+          callback: function() {
+            scope.guiMaster.redo();
+          } });
+        hk.add({
           combo: 'del', description: 'Paste boxes',
           callback: function() { scope.guiMaster.deleteSelectedBoxes(); } });
         hk.add({
