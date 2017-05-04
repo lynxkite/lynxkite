@@ -103,8 +103,10 @@ angular.module('biggraph')
 
         function onBlurNow() {
           if (scope.box) {
-            scope.guiMaster.updateBox(scope.box.instance.id, scope.plainParamValues,
-                        scope.parametricParamValues);
+            scope.guiMaster.wrapper.updateBox(
+                scope.box.instance.id,
+                scope.plainParamValues,
+                scope.parametricParamValues);
           }
         }
 

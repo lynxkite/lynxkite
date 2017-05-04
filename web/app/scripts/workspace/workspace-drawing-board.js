@@ -152,7 +152,7 @@ angular.module('biggraph')
           // This is received from operation-selector-entry.js
           scope.$apply(function() {
             addLogicalMousePosition(origEvent);
-            scope.guiMaster.addBox(operationID, origEvent, boxID);
+            scope.guiMaster.wrapper.addBox(operationID, origEvent, boxID);
           });
         });
 

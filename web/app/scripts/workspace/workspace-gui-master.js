@@ -24,15 +24,8 @@
 
 angular.module('biggraph').factory(
   'workspaceGuiMaster',
-  function(workspaceWrapper, PopupModel, util, $interval, environment) {
+  function(workspaceWrapper, PopupModel, environment) {
     return function(boxCatalog, workspaceName) {
-      var progressUpdater;
-
-      var boxCatalogMap = {};
-      for (var i = 0; i < boxCatalog.boxes.length; ++i) {
-        var boxMeta = boxCatalog.boxes[i];
-        boxCatalogMap[boxMeta.operationID] = boxMeta;
-      }
 
       var workspace = {
         name: workspaceName,
@@ -102,34 +95,6 @@ angular.module('biggraph').factory(
 
         selectedBoxIds: [],
 
-        loadWorkspace: function() {
-          var that = this;
-          util.nocache(
-            '/ajax/getWorkspace',
-            {
-              name: this.name
-            })
-            .then(function(response) {
-              that.wrapper = workspaceWrapper(
-                response, boxCatalogMap);
-            })
-            .then(function() {
-              that.startProgressUpdate();
-            });
-        },
-
-        saveWorkspace: function() {
-          var that = this;
-          util.post(
-            '/ajax/setWorkspace',
-            {
-              name: this.name,
-              workspace: that.wrapper.state,
-            }).finally(
-              // Reload workspace both in error and success cases.
-              function() { that.loadWorkspace(); });
-        },
-
         selectBox: function(boxId) {
           this.selectedBoxIds.push(boxId);
         },
@@ -151,15 +116,6 @@ angular.module('biggraph').factory(
 
         getOutputPlug: function(boxId, plugId) {
           return this.getBox(boxId).outputMap[plugId];
-        },
-
-        updateBox: function(id, plainParamValues, parametricParamValues) {
-          var box = this.getBox(id).instance;
-          if (!angular.equals(plainParamValues, box.parameters) ||
-              !angular.equals(parametricParamValues, box.parametricParameters)) {
-            this.wrapper.setBoxParams(id, plainParamValues, parametricParamValues);
-            this.saveWorkspace();
-          }
         },
 
         selectBoxesInSelection: function() {
@@ -196,12 +152,7 @@ angular.module('biggraph').factory(
 
         onMouseUp: function() {
           if (this.movedBoxes) {
-            for (var i = 0; i < this.movedBoxes.length; i++) {
-              if (this.movedBoxes[i].isMoved) {
-                this.saveWorkspace();
-                break;
-              }
-            }
+            this.wrapper.saveIfBoxesMoved();
           }
           this.movedBoxes = undefined;
           this.pulledPlug = undefined;
@@ -297,9 +248,7 @@ angular.module('biggraph').factory(
           if (this.pulledPlug) {
             var otherPlug = this.pulledPlug;
             this.pulledPlug = undefined;
-            if (this.wrapper.addArrow(otherPlug, plug)) {
-              this.saveWorkspace();
-            }
+            this.wrapper.addArrow(otherPlug, plug);
           }
         },
 
@@ -311,18 +260,6 @@ angular.module('biggraph').factory(
 
         pasteBoxes: function(currentPosition) {
           this.wrapper.pasteFromClipboard(this.clipboard, currentPosition);
-          this.saveWorkspace();
-        },
-
-        // boxID should be used for test-purposes only
-        addBox: function(operationId, event, boxID) {
-          var box = this.wrapper.addBox(
-              operationId,
-              event.logicalX,
-              event.logicalY,
-              boxID);
-          this.saveWorkspace();
-          return box;
         },
 
         deleteBoxes: function(boxIds) {
@@ -334,12 +271,7 @@ angular.module('biggraph').factory(
               that.closePopup(popup.id);
             }
           });
-          for (i = 0; i < boxIds.length; i += 1) {
-            if (boxIds[i] !== 'anchor') {
-              this.wrapper.deleteBox(boxIds[i]);
-            }
-          }
-          this.saveWorkspace();
+          this.wrapper.deleteBoxes(boxIds);
         },
 
         deleteSelectedBoxes: function() {
@@ -347,43 +279,10 @@ angular.module('biggraph').factory(
           this.selectedBoxIds = [];
         },
 
-        getAndUpdateProgress: function() {
-          var wrapperBefore = this.wrapper;
-          var that = this;
-          if (wrapperBefore) {
-            util.nocache('/ajax/getProgress', {
-              stateIDs: wrapperBefore.knownStateIDs,
-            }).then(
-              function success(response) {
-                if (that.wrapper && that.wrapper === wrapperBefore) {
-                  var progressMap = response.progress;
-                  that.wrapper.updateProgress(progressMap);
-                }
-              },
-              function onerror(error) {
-                /* eslint-disable no-console */
-                console.error('Couldn\'t get progress information.', error);
-              });
-          }
-        },
-
-        startProgressUpdate: function() {
-          this.stopProgressUpdate();
-          var that = this;
-          progressUpdater = $interval(function() {
-            that.getAndUpdateProgress();
-          }, 2000);
-        },
-
-        stopProgressUpdate: function() {
-          if (progressUpdater) {
-            $interval.cancel(progressUpdater);
-            progressUpdater = undefined;
-          }
-        },
       };
 
-      workspace.loadWorkspace();
+      workspace.wrapper = workspaceWrapper(workspaceName, boxCatalog);
+      workspace.wrapper.loadWorkspace();
       return workspace;
     };
   });
