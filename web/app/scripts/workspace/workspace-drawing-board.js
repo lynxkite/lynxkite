@@ -55,17 +55,17 @@ angular.module('biggraph')
         var workspaceZoom = 0;
         var mouseX = 0;
         var mouseY = 0;
+        var svgElement = element.find('svg');
         function zoomToScale(z) { return Math.exp(z * 0.001); }
         function addLogicalMousePosition(event) {
           /* eslint-disable no-console */
           console.assert(!('logicalX' in event) && !('logicalY' in event));
           console.assert(!('workspaceX' in event) && !('workspaceY' in event));
-          var board = element.find('#workspace-drawing-board');
           // event.offsetX/Y are distorted when the mouse is
           // over a popup window (even if over an invisible
           // overflow part of it), hence we compute our own:
-          event.workspaceX = event.pageX - board.offset().left;
-          event.workspaceY = event.pageY - board.offset().top;
+          event.workspaceX = event.pageX - svgElement.offset().left;
+          event.workspaceY = event.pageY - svgElement.offset().top;
           // Add location according to pan and zoom:
           var logical = scope.pageToLogical({ x: event.pageX, y: event.pageY });
           event.logicalX = logical.x;
@@ -75,19 +75,19 @@ angular.module('biggraph')
 
         scope.pageToLogical = function(pos) {
           var z = zoomToScale(workspaceZoom);
-          var off = element.offset();
+          var offset = svgElement.offset();
           return {
-            x: (pos.x - off.left - workspaceX) / z,
-            y: (pos.y - off.top - workspaceY) / z,
+            x: (pos.x - offset.left - workspaceX) / z,
+            y: (pos.y - offset.top - workspaceY) / z,
           };
         };
 
         scope.logicalToPage = function(pos) {
           var z = zoomToScale(workspaceZoom);
-          var off = element.offset();
+          var offset = svgElement.offset();
           return {
-            x: pos.x * z + workspaceX + off.left,
-            y: pos.y * z + workspaceY + off.top,
+            x: pos.x * z + workspaceX + offset.left,
+            y: pos.y * z + workspaceY + offset.top,
           };
         };
 
