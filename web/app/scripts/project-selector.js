@@ -19,11 +19,19 @@ angular.module('biggraph').directive('projectSelector',
         scope.newDirectory = defaultSettings();
         scope.path = scope.path || window.sessionStorage.getItem('last_selector_path') ||
           window.localStorage.getItem('last_selector_path') || '';
-        hotkeys.bindTo(scope)
-          .add({
-            combo: 'c', description: 'Create new workspace',
-            callback: function(e) { e.preventDefault(); scope.newWorkspace = { expanded: true }; },
-          });
+        var hk = hotkeys.bindTo(scope);
+        hk.add({
+          combo: 'c', description: 'Create new workspace',
+          callback: function(e) { e.preventDefault(); scope.newWorkspace = { expanded: true }; },
+        });
+        hk.add({
+          combo: 'd', description: 'Create new folder',
+          callback: function(e) { e.preventDefault(); scope.newDirectory = { expanded: true }; },
+        });
+        hk.add({
+          combo: '/', description: 'Search',
+          callback: function(e) { e.preventDefault(); element.find('#search-box').focus(); },
+        });
 
         scope.$watch('newWorkspace.expanded', function(ex) {
           if (ex) {
