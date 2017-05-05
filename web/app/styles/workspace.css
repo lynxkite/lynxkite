@@ -85,6 +85,7 @@ circle.io-circle.in-progress {
 line.arrow {
   stroke-width: 1;
   stroke: blue;
+  pointer-events: none; /* Pass events through, so arrows do not block plugs. */
 }
 line.pulled-arrow {
   stroke-dasharray: 2;
