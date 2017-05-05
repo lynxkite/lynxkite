@@ -973,11 +973,11 @@ Selector.prototype = {
   },
 
   enterSearchQuery: function(query) {
-    element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + query);
+    element(by.id('search-box')).sendKeys(testLib.selectAllKey + query);
   },
 
   clearSearchQuery: function() {
-    element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + K.BACK_SPACE);
+    element(by.id('search-box')).sendKeys(testLib.selectAllKey + K.BACK_SPACE);
   },
 
   globalSqlEditor: function() {
