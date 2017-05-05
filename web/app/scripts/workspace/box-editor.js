@@ -8,7 +8,7 @@ angular.module('biggraph')
       restrict: 'E',
       templateUrl: 'scripts/workspace/box-editor.html',
       scope: {
-        guiMaster: '=',
+        workspace: '=',
         boxId: '=',
       },
       link: function(scope) {
@@ -20,7 +20,7 @@ angular.module('biggraph')
         // instead of workspace.backendState.
         util.deepWatch(
             scope,
-            '[guiMaster.wrapper.backendState, boxId]',
+            '[workspace.backendState, boxId]',
             function() {
               if (!scope.boxId) {
                 return;
@@ -30,9 +30,10 @@ angular.module('biggraph')
 
         scope.plainParamValues = {};
         scope.parametricParamValues = {};
+        scope.parametricFlags = {};
 
         scope.loadBoxMeta = function(boxId) {
-          if (!scope.guiMaster) {
+          if (!scope.workspace) {
             return;
           }
           if (!boxId) {
@@ -40,7 +41,7 @@ angular.module('biggraph')
             scope.boxMeta = undefined;
             return;
           }
-          var box = scope.guiMaster.getBox(boxId);
+          var box = scope.workspace.getBox(boxId);
           // Checking currentRequest makes sure that the response
           // to the result of the latest getOperationMetaRequest
           // will be passed to scope.newOpSelected().
@@ -48,7 +49,7 @@ angular.module('biggraph')
           scope.lastRequest = currentRequest = util
             .nocache(
               '/ajax/getOperationMeta', {
-                workspace: scope.guiMaster.name,
+                workspace: scope.workspace.name,
                 box: boxId,
               })
             .then(
@@ -82,29 +83,50 @@ angular.module('biggraph')
 
           // Make a copy of the parameter values.
           var paramValues = Object.assign({}, box.instance.parameters);
+          var parametricParamValues = Object.assign({}, box.instance.parametricParameters);
+          var parametricFlags = {};
+
           // Copy defaults for unset parameters.
           for (var i = 0; i < boxMeta.parameters.length; ++i) {
             var p = boxMeta.parameters[i];
-            if ((paramValues[p.id] !== undefined) ||
-                (scope.parametricParamValues[p.id] !== undefined)) {
-              // Parameter is not unset.
+            var id = p.id;
+            if (paramValues[id] !== undefined ||
+                parametricParamValues[id] !== undefined) {
+              // Parameter p is not unset
             } else if (p.options.length === 0) {
-              paramValues[p.id] = p.defaultValue;
+              paramValues[id] = p.defaultValue;
             } else if (p.multipleChoice) {
-              paramValues[p.id] = '';
+              paramValues[id] = '';
             } else {
-              paramValues[p.id] = p.options[0].id;
+              paramValues[id] = p.options[0].id;
             }
           }
-          if (!angular.equals(paramValues, scope.paramValues)) {
+
+          // Re-establish parametric flags.
+          for (var k = 0; k < boxMeta.parameters.length; ++k) {
+            var id2 = boxMeta.parameters[k].id;
+            if (parametricParamValues[id2] !== undefined) {
+              parametricFlags[id2] = true;
+            } else {
+              parametricFlags[id2] = false;
+            }
+          }
+
+          if (!angular.equals(paramValues, scope.paramValues) ||
+              !angular.equals(parametricParamValues, scope.parametricParamValues) ||
+              !angular.equals(parametricFlags, scope.parametricFlags)) {
             scope.plainParamValues = paramValues;
+            scope.parametricParamValues = parametricParamValues;
+            scope.parametricFlags = parametricFlags;
           }
         };
 
         function onBlurNow() {
           if (scope.box) {
-            scope.guiMaster.updateBox(scope.box.instance.id, scope.plainParamValues,
-                        scope.parametricParamValues);
+            scope.workspace.updateBox(
+                scope.box.instance.id,
+                scope.plainParamValues,
+                scope.parametricParamValues);
           }
         }
 

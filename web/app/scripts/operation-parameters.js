@@ -10,6 +10,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       meta: '=',
       output: '=',
       parametric: '=',
+      pflags: '=',
       onBlur: '&',
       busy: '=?',
       editable: '=',
@@ -23,8 +24,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       });
 
 
-      scope.parametricFlags = {};
-      util.deepWatch(scope, 'parametricFlags', function(flags) {
+      util.deepWatch(scope, 'pflags', function(flags) {
         for (var v in flags) {
           if (flags[v] === true) {
             util.move(v, scope.output, scope.parametric);
@@ -32,6 +32,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
             util.move(v, scope.parametric, scope.output);
           }
         }
+        scope.onBlur();
       });
 
       // Translate between arrays and comma-separated strings for multiselects.

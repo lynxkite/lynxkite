@@ -1,4 +1,4 @@
-#workspace-main {
+#workspace-entry-point {
   height: 100vh;
   overflow: hidden;
   position: relative; /* Constrain absolute-positioned elements within. */
@@ -14,10 +14,6 @@ span#workspace-name {
   font-size: 2em;
 }
 
-div#workspace-main-layout {
-  height: calc(100% - 50px);
-}
-
 #workspace-drawing-board {
   user-select: none;
   height: 100%;
@@ -28,6 +24,7 @@ div#workspace-main-layout {
   margin-left: -35px;
   float: left;
   max-height: 100%;
+  width: 35px;
   overflow: auto; /* Allow scrolling category list, if necessary. */
 }
 #workspace-drawing-board > svg {
@@ -114,4 +111,10 @@ div.popup-content {
   height: 100%;
   overflow: auto;
   background: white;
+}
+
+polygon.popup-trail {
+  fill: white;
+  opacity: 0.5;
+  pointer-events: none; /* Let mouse events through so we do not block clicks. */
 }

@@ -2,7 +2,7 @@
 // Operation can be dragged to the workspace drawing board to create boxes.
 'use strict';
 
-angular.module('biggraph').directive('operationSelector', function() {
+angular.module('biggraph').directive('operationSelector', function($timeout) {
   return {
     restrict: 'E',
     scope: {
@@ -39,14 +39,6 @@ angular.module('biggraph').directive('operationSelector', function() {
 
       });
 
-      scope.$watch('searching && !op', function(search) {
-        if (search) {
-          var filter = elem.find('#filter');
-          filter.focus();
-          scope.searchSelection = 0;
-        }
-      });
-
       scope.filterKey = function(e) {
         if (!scope.searching || scope.op) { return; }
         var operations = elem.find('.operation');
@@ -65,6 +57,9 @@ angular.module('biggraph').directive('operationSelector', function() {
           if (scope.searchSelection >= operations.length) {
             scope.searchSelection = operations.length - 1;
           }
+        } else if (e.keyCode === 27) { // ESCAPE
+          scope.searching = undefined;
+          scope.op = undefined;
         }
       };
 
@@ -104,6 +99,8 @@ angular.module('biggraph').directive('operationSelector', function() {
         scope.op = undefined;
         scope.category = undefined;
         scope.searching = true;
+        scope.searchSelection = 0;
+        $timeout(function() { elem.find('#filter').focus(); });
       }
     },
 

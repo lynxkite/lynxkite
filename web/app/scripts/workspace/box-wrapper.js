@@ -4,7 +4,7 @@
 // This object wraps the actual box data representation and
 // provides methods to interact with the GUI, e.g. mouse events
 // and values to bind with Angular to SVG elements.
-// The wrapped box date representation has two parts:
+// The wrapped box data representation has two parts:
 // - metadata describes the type of operation of the box.
 // - instance describes the operation parameter values,
 //   coordinates on the workspace and everything related to this
@@ -30,6 +30,8 @@ angular.module('biggraph').factory('boxWrapper', function(plugWrapper) {
       outputMap: {},
       width: 200,
       height: 40,
+      cx: function() { return instance.x + this.width / 2; },
+      cy: function() { return instance.y + this.height / 2; },
       commentLines: getCommentLines(),
       isMoved: false,
       mainPosTransform: function() {
