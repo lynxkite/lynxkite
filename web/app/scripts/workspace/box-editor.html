@@ -4,7 +4,7 @@
      id="help-toggle"
      ng-click="showHelp = !showHelp">
     <i class="glyphicon glyphicon-question-sign"></i>
-    About {{ boxMeta.id }}</a>
+    {{ showHelp ? 'Less' : 'More' }} about "{{ boxMeta.id }}"</a>
   <!-- For documented operations. -->
   <p ng-if="showHelp && boxMeta.htmlId && !boxMeta.description"
      help-id="{{ boxMeta.htmlId }}"
