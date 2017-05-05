@@ -29,7 +29,7 @@
       <button class="btn btn-default"
            id="undo"
            ng-click="guiMaster.undo()"
-           ng-disabled="!guiMaster.undoEnabled()"
+           ng-disabled="!guiMaster.canUndo()"
            drop-tooltip="Undo"
            drop-tooltip-placement="bottom">
         <i class="glyphicon glyphicon-backward"></i>
@@ -37,7 +37,7 @@
       <button class="btn btn-default"
            id="redo"
            ng-click="guiMaster.redo()"
-           ng-disabled="!guiMaster.redoEnabled()"
+           ng-disabled="!guiMaster.canRedo()"
            drop-tooltip="Redo"
            drop-tooltip-placement="bottom">
         <i class="glyphicon glyphicon-forward"></i>
