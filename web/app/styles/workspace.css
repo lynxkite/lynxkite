@@ -101,8 +101,9 @@ div.popup-head {
   width: 100%;
   background: lightblue;
   font-weight: bold;
-  padding: 3px;
+  padding-left: 10px;
   height: 35px;
+  line-height: 35px;
   cursor: default;
 }
 
