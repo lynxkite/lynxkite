@@ -323,4 +323,40 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       })
     }
   }
+
+  test("dropping unrecognized parameters") {
+    using("test-workspace") {
+      val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+      val pr = Box("pr", "Compute PageRank", pagerankParams, 0, 100, Map("project" -> eg.output("project")))
+      val originalParameters = Map("aggregate_pagerank" -> "sum", "prefix" -> "g")
+      val agg = Box(
+        "agg", "Aggregate vertex attribute globally", originalParameters,
+        0, 100, Map("project" -> pr.output("project")))
+      set("test-workspace", Workspace.from(eg, pr, agg))
+      val op = getOpMeta("test-workspace", "pr")
+      def ws = get("test-workspace").workspace
+      def project = context(ws).allStates(agg.output("project")).project
+      import graph_api.Scripting._
+      assert(project.scalarNames.contains("g_pagerank_sum"))
+
+      def save(ws: Workspace) = set("test-workspace", ws)
+      def aggregateParams = ws.boxes.find(_.id == "agg").get.parameters
+      // We will disconnect and reconnect the aggregate box and check when the parameter disappears.
+      // Disconnect.
+      save(ws.copy(boxes = ws.boxes.map { box =>
+        if (box.id == "agg") box.copy(inputs = Map()) else box
+      }))
+      assert(aggregateParams == originalParameters)
+      // Change "pagerank" name.
+      save(ws.copy(boxes = ws.boxes.map { box =>
+        if (box.id == "pr") box.copy(parameters = box.parameters + ("name" -> "pr")) else box
+      }))
+      assert(aggregateParams == originalParameters)
+      // Reconnect.
+      save(ws.copy(boxes = ws.boxes.map { box =>
+        if (box.id == "agg") box.copy(inputs = Map("project" -> pr.output("project"))) else box
+      }))
+      assert(aggregateParams == Map("prefix" -> "g")) // Parameter has been cleaned up.
+    }
+  }
 }
