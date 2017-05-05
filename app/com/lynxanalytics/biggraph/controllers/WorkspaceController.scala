@@ -141,7 +141,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     f.assertWriteAllowedFrom(user)
     f match {
       case f: WorkspaceFrame =>
-        val cp = request.workspace.checkpoint(previous = f.checkpoint)
+        val ws = request.workspace
+        val repaired = ws.context(user, ops, Map()).repairedWorkspace
+        val cp = repaired.checkpoint(previous = f.checkpoint)
         f.setCheckpoint(cp)
       case _ => throw new AssertionError(s"${request.name} is not a workspace.")
     }
