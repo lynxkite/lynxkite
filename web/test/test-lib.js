@@ -132,9 +132,9 @@ Entity.prototype = {
 };
 
 function Workspace() {
-  this.main = element(by.id('workspace-main'));
+  this.main = element(by.id('workspace-entry-point'));
   this.selector = element(by.css('.operation-selector'));
-  this.board = element(by.css('workspace-drawing-board'));
+  this.board = element(by.css('#workspace-drawing-board'));
 }
 
 Workspace.prototype = {
@@ -257,7 +257,7 @@ Workspace.prototype = {
     var head = popup.$('div.popup-head');
     browser.actions()
         .mouseDown(head)
-        .mouseMove(this.board, {x: 700, y: 20})
+        .mouseMove(this.board, {x: 500, y: 20})
         .mouseUp(head)
         .perform();
   },
@@ -298,6 +298,10 @@ BoxEditor.prototype = {
   operationParameter: function(param) {
     return this.boxEditor.element(by.css(
         'operation-parameters #' + param + ' .operation-attribute-entry'));
+  },
+
+  parametricSwitch: function(param) {
+    return this.boxEditor.$('operation-parameters #' + param + ' .parametric-switch');
   },
 
   populateOperation: function(params) {

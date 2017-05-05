@@ -1,27 +1,34 @@
 'use strict';
 
-// Creates a workspace object. A workspace is a set of boxes and arrows.
+// Creates a workspace wrapper object. A workspace is a set of boxes and arrows.
 // This object wraps the actual workspace data representation and
 // provides methods to interact with the GUI, e.g. mouse events
-// and values to bind with Angular to SVG elements.
+// and values to bind with Angular to SVG elements. It also manages
+// the life-cycle of the workspace state.
 //
-// Every time the underlying workspace data was significantly changed, the
-// _build() method is invoked to rebuild the frontend-facing data.
-// The flow of changes here is always one-way:
-// 1. user change or new workspace state loaded
-// 2. "raw" state is updated
-// 3. _build() updates the frontend-facing objects
+// Every time the underlying workspace data was changed, the following flow needs to be executed:
+// 1. user change happens, which updates the "raw" state in
+//    this.state
+// 2. this._build() updates this.boxes, this.arrows and this.boxMap based
+//   on this.state. (This updates the GUI.)
+// 3. this.saveWorkspace() upload this.state to the server
+// 4. this.loadWorkspace() downloads the new state (what was sent
+//    in the previous point plus what the server has changed).
+// 5. this._build() is invoked again
 
-angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
-  return function(backendResponse, boxCatalogMap) {
-    var backendState = backendResponse.workspace;
-    // User edits will be applied to a deep copy of
-    // the original backend state. This way watchers
-    // of backendState will only be notified once the
-    // backend is fully aware of the new state.
-    var state = angular.copy(backendState);
-    var wrapper = {
-      state: state,
+angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper, util, $interval) {
+  return function(name, boxCatalog) {
+    var progressUpdater;
+    var boxCatalogMap = {};
+    for (var i = 0; i < boxCatalog.boxes.length; ++i) {
+      var boxMeta = boxCatalog.boxes[i];
+      boxCatalogMap[boxMeta.operationID] = boxMeta;
+    }
+
+    return {
+      name: name,
+
+      state: undefined,
       // The below data structures are generated from rawBoxes
       // by this.build(). These are the ones that interact with
       // the GUI.
@@ -30,7 +37,8 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
       boxMap: {},
       // Immutable backup of the backend state from last
       // request:
-      backendState: backendState,
+      backendRequest: undefined,
+      backendState: undefined,
 
       _buildBoxes: function() {
         this.boxes = [];
@@ -57,10 +65,10 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
 
       _createArrow: function(srcPlug, dstPlug) {
         return {
-          x1: srcPlug.x,
-          y1: srcPlug.y,
-          x2: dstPlug.x,
-          y2: dstPlug.y,
+          x1: function() { return srcPlug.cx(); },
+          y1: function() { return srcPlug.cy(); },
+          x2: function() { return dstPlug.cx(); },
+          y2: function() { return dstPlug.cy(); },
         };
       },
 
@@ -93,6 +101,79 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         this._buildArrows();
       },
 
+      _init: function(response) {
+        this.backendResponse = response;
+        this.backendState = response.workspace;
+        // User edits will be applied to a deep copy of
+        // the original backend state. This way watchers
+        // of backendState will only be notified once the
+        // backend is fully aware of the new state.
+        this.state = angular.copy(this.backendState);
+        this._build();
+        this._assignStateInfoToPlugs(response.outputs);
+        this._assignSummaryInfoToBoxes(response.summaries);
+      },
+
+      _startProgressUpdate: function() {
+        this._stopProgressUpdate();
+        var that = this;
+        progressUpdater = $interval(function() {
+          that._getAndUpdateProgress();
+        }, 2000);
+      },
+
+      _stopProgressUpdate: function() {
+        if (progressUpdater) {
+          $interval.cancel(progressUpdater);
+          progressUpdater = undefined;
+        }
+      },
+
+      _getAndUpdateProgress: function() {
+        if (this.knownStateIDs) {
+          var that = this;
+          var lastProgressRequest = that.lastProgressRequest = util.nocache('/ajax/getProgress', {
+            stateIDs: that.knownStateIDs,
+          }).then(
+            function success(response) {
+              if (lastProgressRequest === that.lastProgressRequest) {
+                that.updateProgress(response.progress);
+              }
+            },
+            function onerror(error) {
+              /* eslint-disable no-console */
+              console.error('Couldn\'t get progress information.', error);
+            });
+        }
+      },
+
+      loadWorkspace: function() {
+        var that = this;
+        util.nocache(
+          '/ajax/getWorkspace',
+          {
+            name: this.name
+          })
+          .then(function(response) {
+            that._init(response);
+          })
+          .then(function() {
+            that._startProgressUpdate();
+          });
+      },
+
+      saveWorkspace: function() {
+        var that = this;
+        util.post(
+          '/ajax/setWorkspace',
+          {
+            name: this.name,
+            workspace: that.state,
+          }).finally(
+            // Reload workspace both in error and success cases.
+            function() { that.loadWorkspace(); });
+      },
+
       getUniqueId: function(operationId) {
         var usedIds = this.state.boxes.map(function(box) {
           return box.id;
@@ -105,7 +186,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
       },
 
       // boxID should be used for test-purposes only
-      addBox: function(operationId, x, y, boxId) {
+      _addBox: function(operationId, x, y, boxId) {
         boxId = boxId || this.getUniqueId(operationId);
         // Create a box backend data structure, an unwrapped box:
         var box = {
@@ -123,7 +204,18 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         return box;
       },
 
-      deleteBox: function(boxId) {
+      // boxID should be used for test-purposes only
+      addBox: function(operationId, event, boxID) {
+        var box = this._addBox(
+            operationId,
+            event.logicalX,
+            event.logicalY,
+            boxID);
+        this.saveWorkspace();
+        return box;
+      },
+
+      _deleteBox: function(boxId) {
         this.state.boxes = this.state.boxes.filter(function(box) {
           return box.id !== boxId;
         });
@@ -136,6 +228,15 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
           }
         });
         this._build();
+      },
+
+      deleteBoxes: function(boxIds) {
+        for (var i = 0; i < boxIds.length; i += 1) {
+          if (boxIds[i] !== 'anchor') {
+            this._deleteBox(boxIds[i]);
+          }
+        }
+        this.saveWorkspace();
       },
 
       addArrow: function(plug1, plug2) {
@@ -155,10 +256,11 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         };
         // Rebuild API objects based on raw workflow:
         this._build();
+        this.saveWorkspace();
         return true;
       },
 
-      assignStateInfoToPlugs: function(stateInfo) {
+      _assignStateInfoToPlugs: function(stateInfo) {
         this.knownStateIDs = [];
         this.stateID2Plug = {};
         for (var i = 0; i < stateInfo.length; i++) {
@@ -175,7 +277,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         }
       },
 
-      assignSummaryInfoToBoxes: function(summaries) {
+      _assignSummaryInfoToBoxes: function(summaries) {
         for (var i = 0; i < this.boxes.length; i++) {
           var box = this.boxes[i];
           box.summary = summaries[box.id];
@@ -209,9 +311,18 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         }
       },
 
-      setBoxParams: function(boxId, plainParamValues, parametricParamValues) {
+      _setBoxParams: function(boxId, plainParamValues, parametricParamValues) {
         this.boxMap[boxId].instance.parameters = plainParamValues;
         this.boxMap[boxId].instance.parametricParameters = parametricParamValues;
+      },
+
+      updateBox: function(id, plainParamValues, parametricParamValues) {
+        var box = this.boxMap[id].instance;
+        if (!angular.equals(plainParamValues, box.parameters) ||
+            !angular.equals(parametricParamValues, box.parametricParameters)) {
+          this._setBoxParams(id, plainParamValues, parametricParamValues);
+          this.saveWorkspace();
+        }
       },
 
       pasteFromClipboard: function(clipboard, currentPosition) {
@@ -219,7 +330,7 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
         for (var i = 0; i < clipboard.length; ++i) {
           var box = clipboard[i].instance;
           var diffX = clipboard[i].width;
-          var createdBox = this.addBox(
+          var createdBox = this._addBox(
             box.operationID,
             currentPosition.logicalX + box.x + 1.1 * diffX,
             currentPosition.logicalY + box.y + 10);
@@ -241,13 +352,43 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper) {
             }
           }
         }
-      }
+        this.saveWorkspace();
+      },
+
+      saveIfBoxesMoved: function() {
+        for (var i = 0; i < this.boxes.length; i++) {
+          if (this.boxes[i].isMoved) {
+            this.saveWorkspace();
+            break;
+          }
+        }
+      },
+
+      getBox: function(id) {
+        return this.boxMap[id];
+      },
+
+      getOutputPlug: function(boxId, plugId) {
+        return this.getBox(boxId).outputMap[plugId];
+      },
+
+      canUndo: function() { return this.backendResponse && this.backendResponse.canUndo; },
+      canRedo: function() { return this.backendResponse && this.backendResponse.canRedo; },
+
+      undo: function() {
+        if (!this.canUndo()) { return; }
+        var that = this;
+        util.post('/ajax/undoWorkspace', { name: this.name })
+          .then(function() { that.loadWorkspace(); });
+      },
+
+      redo: function() {
+        if (!this.canRedo()) { return; }
+        var that = this;
+        util.post('/ajax/redoWorkspace', { name: this.name })
+          .then(function() { that.loadWorkspace(); });
+      },
 
     };
-
-    wrapper._build();
-    wrapper.assignStateInfoToPlugs(backendResponse.outputs);
-    wrapper.assignSummaryInfoToBoxes(backendResponse.summaries);
-    return wrapper;
   };
 });

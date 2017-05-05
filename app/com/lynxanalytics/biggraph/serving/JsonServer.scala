@@ -416,6 +416,8 @@ object ProductionJsonServer extends JsonServer {
   def getProgress = jsonGet(workspaceController.getProgress)
   def getOperationMeta = jsonGet(workspaceController.getOperationMeta)
   def setWorkspace = jsonPost(workspaceController.setWorkspace)
+  def undoWorkspace = jsonPost(workspaceController.undoWorkspace)
+  def redoWorkspace = jsonPost(workspaceController.redoWorkspace)
   def boxCatalog = jsonGet(workspaceController.boxCatalog)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment, workspaceController.ops)
