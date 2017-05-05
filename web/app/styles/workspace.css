@@ -28,6 +28,7 @@ div#workspace-main-layout {
   margin-left: -35px;
   float: left;
   max-height: 100%;
+  width: 35px;
   overflow: auto; /* Allow scrolling category list, if necessary. */
 }
 #workspace-drawing-board > svg {
