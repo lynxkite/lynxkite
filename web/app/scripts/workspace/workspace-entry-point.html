@@ -1,62 +1,8 @@
-<div id="workspace-main">
-
-  <div id="workspace-header">
-    <span id="workspace-name">{{guiMaster.name}}</span>
-    <div class="btn-group pull-right">
-      <button class="btn btn-default"
-           id="delete-selected-boxes"
-           ng-click="guiMaster.deleteSelectedBoxes()"
-           drop-tooltip="Delete&nbsp;selected&nbsp;boxes"
-           drop-tooltip-placement="bottom">
-        <i class="fa fa-trash-o"></i>
-      </button>
-      <button class="btn btn-default"
-           id="select-mode-on"
-           ng-click="dragMode = 'select'"
-           ng-class="{ active: dragMode === 'select' }"
-           drop-tooltip="Select&nbsp;boxes&nbsp;on&nbsp;drag"
-           drop-tooltip-placement="bottom">
-        <i class="fa fa-mouse-pointer"></i>
-      </button>
-      <button class="btn btn-default"
-           id="pan-mode-on"
-           ng-click="dragMode = 'pan'"
-           ng-class="{ active: dragMode === 'pan' }"
-           drop-tooltip="Pan&nbsp;workspace&nbsp;on&nbsp;drag"
-           drop-tooltip-placement="bottom">
-        <i class="fa fa-hand-paper-o"></i>
-      </button>
-      <button class="btn btn-default"
-           id="undo"
-           ng-click="guiMaster.undo()"
-           ng-disabled="!guiMaster.canUndo()"
-           drop-tooltip="Undo"
-           drop-tooltip-placement="bottom">
-        <i class="glyphicon glyphicon-backward"></i>
-      </button>
-      <button class="btn btn-default"
-           id="redo"
-           ng-click="guiMaster.redo()"
-           ng-disabled="!guiMaster.canRedo()"
-           drop-tooltip="Redo"
-           drop-tooltip-placement="bottom">
-        <i class="glyphicon glyphicon-forward"></i>
-      </button>
-      <a class="btn btn-default"
-           href="#/"
-           id="close-workspace"
-           drop-tooltip="Close&nbsp;workspace"
-           drop-tooltip-placement="bottom">
-        <i class="glyphicon glyphicon-remove"></i>
-      </a>
-    </div>
-  </div>
-
-  <div id="workspace-main-layout">
-    <workspace-drawing-board gui-master="guiMaster">
+<div id="workspace-entry-point">
+    <workspace-drawing-board
+        box-catalog="boxCatalog"
+        workspace-name="routeParams.workspaceName">
     </workspace-drawing-board>
     <operation-selector box-catalog="boxCatalog" editable="true">
     </operation-selector>
-  </div>
-
 </div>

@@ -1,3 +1,55 @@
+<div id="workspace-header">
+  <span id="workspace-name">{{workspace.name}}</span>
+  <div class="btn-group pull-right">
+    <button class="btn btn-default"
+         id="delete-selected-boxes"
+         ng-click="deleteSelectedBoxes()"
+         drop-tooltip="Delete&nbsp;selected&nbsp;boxes"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-trash-o"></i>
+    </button>
+    <button class="btn btn-default"
+         id="select-mode-on"
+         ng-click="dragMode = 'select'"
+         ng-class="{ active: dragMode === 'select' }"
+         drop-tooltip="Select&nbsp;boxes&nbsp;on&nbsp;drag"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-mouse-pointer"></i>
+    </button>
+    <button class="btn btn-default"
+         id="pan-mode-on"
+         ng-click="dragMode = 'pan'"
+         ng-class="{ active: dragMode === 'pan' }"
+         drop-tooltip="Pan&nbsp;workspace&nbsp;on&nbsp;drag"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-hand-paper-o"></i>
+    </button>
+    <button class="btn btn-default"
+         id="undo"
+         ng-click="workspace.undo()"
+         ng-disabled="!workspace.canUndo()"
+         drop-tooltip="Undo"
+         drop-tooltip-placement="bottom">
+      <i class="glyphicon glyphicon-backward"></i>
+    </button>
+    <button class="btn btn-default"
+         id="redo"
+         ng-click="workspace.redo()"
+         ng-disabled="!workspace.canRedo()"
+         drop-tooltip="Redo"
+         drop-tooltip-placement="bottom">
+      <i class="glyphicon glyphicon-forward"></i>
+    </button>
+    <a class="btn btn-default"
+         href="#/"
+         id="close-workspace"
+         drop-tooltip="Close&nbsp;workspace"
+         drop-tooltip-placement="bottom">
+      <i class="glyphicon glyphicon-remove"></i>
+    </a>
+  </div>
+</div>
+
 <div
     id="workspace-drawing-board"
     ng-mousemove="onMouseMove($event)"
@@ -8,13 +60,13 @@
        ng-attr-transform="{{ workspaceTransform() }}">
 
       <!-- start box -->
-      <g ng-repeat="box in guiMaster.boxes()"
+      <g ng-repeat="box in boxes()"
           ng-mousedown="onMouseDownOnBox(box, $event)"
-          ng-mouseup="guiMaster.onMouseUpOnBox(box, $event)"
+          ng-mouseup="onMouseUpOnBox(box, $event)"
           ng-attr-transform="{{ box.mainPosTransform() }}"
           class="box"
           id="{{ box.instance.id }}"
-          ng-class="{ 'selected': guiMaster.selectedBoxIds.includes(box.instance.id) }">
+          ng-class="{ 'selected': selectedBoxIds.includes(box.instance.id) }">
 
         <!-- start list of I/O plugs -->
         <g ng-repeat="direction in ['inputs', 'outputs']"
@@ -29,9 +81,9 @@
                             'colored-output': plug.progressColor || plug.error }"
                   ng-attr-fill="{{ plug.error ? 'red' : plug.progressColor }}"
                   ng-attr-drop-tooltip="{{ plug.error }}"
-                  ng-mousedown="guiMaster.onMouseDownOnPlug(plug, $event)"
-                  ng-mouseup="guiMaster.onMouseUpOnPlug(plug, $event)"
-                  ng-click="guiMaster.onClickOnPlug(plug, $event)">
+                  ng-mousedown="onMouseDownOnPlug(plug, $event)"
+                  ng-mouseup="onMouseUpOnPlug(plug, $event)"
+                  ng-click="onClickOnPlug(plug, $event)">
             </circle>
           </g>
         </g>
@@ -56,14 +108,14 @@
       <g>
       <rect
         class="selection-box"
-        ng-attr-x="{{guiMaster.selection.leftX}}"
-        ng-attr-y="{{guiMaster.selection.upperY}}"
-        ng-attr-width="{{guiMaster.selection.width}}"
-        ng-attr-height="{{guiMaster.selection.height}}">
+        ng-attr-x="{{selection.leftX}}"
+        ng-attr-y="{{selection.upperY}}"
+        ng-attr-width="{{selection.width}}"
+        ng-attr-height="{{selection.height}}">
       </rect>
     </g>
       <!-- start arrow -->
-      <g ng-repeat="arrow in guiMaster.arrows()">
+      <g ng-repeat="arrow in arrows()">
         <line class="arrow"
             ng-attr-x1="{{arrow.x1()}}"
             ng-attr-y1="{{arrow.y1()}}"
@@ -73,27 +125,27 @@
       <!-- end arrow -->
 
       <!-- start pulled arrow -->
-      <g ng-if="guiMaster.pulledPlug && guiMaster.mouseLogical">
+      <g ng-if="pulledPlug && mouseLogical">
         <line class="arrow pulled-arrow"
-            ng-attr-x1="{{guiMaster.pulledPlug.cx()}}"
-            ng-attr-y1="{{guiMaster.pulledPlug.cy()}}"
-            ng-attr-x2="{{guiMaster.mouseLogical.x}}"
-            ng-attr-y2="{{guiMaster.mouseLogical.y}}">
+            ng-attr-x1="{{pulledPlug.cx()}}"
+            ng-attr-y1="{{pulledPlug.cy()}}"
+            ng-attr-x2="{{mouseLogical.x}}"
+            ng-attr-y2="{{mouseLogical.y}}">
         </line>
       </g>
 
       <polygon
         class="popup-trail"
-        ng-repeat="popup in guiMaster.popups"
-        points="{{ popup.trail(pageToLogical, logicalToPage, guiMaster) }}">
+        ng-repeat="popup in popups"
+        ng-attr-points="{{ popup.trail(pageToLogical, logicalToPage, workspace) }}">
       </polygon>
 
     </g>
   </svg>
 
   <popup popup-model="popup"
-      gui-master="guiMaster"
-      ng-repeat="popup in guiMaster.popups">
+      workspace="workspace"
+      ng-repeat="popup in popups">
   </popup>
 
 </div>

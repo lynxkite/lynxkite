@@ -22,11 +22,11 @@
         ng-mousedown="$event.stopPropagation()"
         ng-mouseup="$event.stopPropagation()">
     <box-editor ng-if="popupModel.content.type === 'box'"
-        gui-master="guiMaster"
+        workspace="workspace"
         box-id="popupModel.content.boxId">
     </box-editor>
     <state-view ng-if="popupModel.content.type === 'plug'"
-        gui-master="guiMaster"
+        workspace="workspace"
         box-id="popupModel.content.boxId"
         plug-id="popupModel.content.plugId">
     </state-view>
