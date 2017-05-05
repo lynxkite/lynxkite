@@ -15,8 +15,8 @@ case class GetWorkspaceResponse(
   workspace: Workspace,
   outputs: List[BoxOutputInfo],
   summaries: Map[String, String],
-  undo: Option[String],
-  redo: Option[String])
+  canUndo: Boolean,
+  canRedo: Boolean)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
@@ -84,8 +84,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     ).toMap
     GetWorkspaceResponse(
       workspace, stateInfo, summaries,
-      undo = frame.currentState.previousCheckpoint,
-      redo = frame.nextCheckpoint)
+      canUndo = frame.currentState.previousCheckpoint.nonEmpty,
+      canRedo = frame.nextCheckpoint.nonEmpty)
   }
 
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.

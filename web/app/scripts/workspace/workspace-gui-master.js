@@ -367,18 +367,24 @@ angular.module('biggraph').factory(
           }
         },
 
-        undoEnabled: function() { return this.wrapper.backendResponse.undo; },
-        redoEnabled: function() { return this.wrapper.backendResponse.redo; },
+        canUndo: function() {
+          var w = this.wrapper;
+          return w && w.backendResponse && w.backendResponse.canUndo;
+        },
+        canRedo: function() {
+          var w = this.wrapper;
+          return w && w.backendResponse && w.backendResponse.canRedo;
+        },
 
         undo: function() {
-          if (!this.undoEnabled()) { return; }
+          if (!this.canUndo()) { return; }
           var that = this;
           util.post('/ajax/undoWorkspace', { name: this.name })
             .then(function() { that.loadWorkspace(); });
         },
 
         redo: function() {
-          if (!this.redoEnabled()) { return; }
+          if (!this.canRedo()) { return; }
           var that = this;
           util.post('/ajax/redoWorkspace', { name: this.name })
             .then(function() { that.loadWorkspace(); });
