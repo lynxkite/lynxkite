@@ -105,6 +105,26 @@ case class WorkspaceExecutionContext(
     ops: OperationRepository,
     workspaceParameters: Map[String, String]) {
 
+  // Enforces some invariants.
+  def repairedWorkspace: Workspace = {
+    this.dropUnknownParameters
+  }
+
+  // For boxes that are able to provide their parameter list, we discard the recorded parameters
+  // that are not in the list. (It would be confusing to keep these, since they do not show up on
+  // the UI.) The unknown parameters can be, for example, left over from when the box was previously
+  // connected to a different input.
+  protected def dropUnknownParameters: Workspace = {
+    val states = allStates
+    ws.copy(boxes = ws.boxes.map { box =>
+      try {
+        val op = getOperationForStates(box, states)
+        val params = op.toFE.parameters.map(_.id).toSet
+        box.copy(parameters = box.parameters.filter { case (k, v) => params.contains(k) })
+      } catch { case t: Throwable => box }
+    })
+  }
+
   def allStates: Map[BoxOutput, BoxOutputState] = {
     val dependencies = ws.discoverDependencies
     val statesWithoutCircularDependency = dependencies.topologicalOrder

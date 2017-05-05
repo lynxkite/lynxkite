@@ -147,7 +147,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: SetWorkspaceRequest): Unit = metaManager.synchronized {
     val f = getWorkspaceFrame(user, request.name)
     f.assertWriteAllowedFrom(user)
-    val cp = request.workspace.checkpoint(previous = f.checkpoint)
+    val ws = request.workspace
+    val repaired = ws.context(user, ops, Map()).repairedWorkspace
+    val cp = repaired.checkpoint(previous = f.checkpoint)
     f.setCheckpoint(cp)
   }
 
