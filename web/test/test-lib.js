@@ -257,7 +257,7 @@ Workspace.prototype = {
     var head = popup.$('div.popup-head');
     browser.actions()
         .mouseDown(head)
-        .mouseMove(this.board, {x: 700, y: 20})
+        .mouseMove(this.board, {x: 500, y: 20})
         .mouseUp(head)
         .perform();
   },
