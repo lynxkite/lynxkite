@@ -118,3 +118,10 @@ polygon.popup-trail {
   opacity: 0.5;
   pointer-events: none; /* Let mouse events through so we do not block clicks. */
 }
+
+.popup #help-toggle {
+  text-align: right;
+  display: block;
+  margin-bottom: 10px;
+  text-decoration: none;
+}
