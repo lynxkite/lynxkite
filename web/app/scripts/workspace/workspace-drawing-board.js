@@ -46,6 +46,10 @@ angular.module('biggraph')
           }
         }
 
+        scope.callbackWrapper = function(callback) {
+          return function(event) {scope.$apply(callback(event));};
+        };
+
         scope.onMouseMove = function(event) {
           event.preventDefault();
           addLogicalMousePosition(event);
@@ -63,7 +67,11 @@ angular.module('biggraph')
           scope.workspace.onMouseMove(event);
         };
 
+        scope.wrappedOnMouseMove = scope.callbackWrapper(scope.onMouseMove);
+
         scope.onMouseDownOnBox = function(box, event) {
+          window.addEventListener('mousemove', scope.wrappedOnMouseMove);
+          window.addEventListener('mouseup', scope.wrappedOnMouseUp);
           event.stopPropagation();
           addLogicalMousePosition(event);
           scope.workspace.removeSelection();
@@ -77,10 +85,15 @@ angular.module('biggraph')
           scope.workspace.removeSelection();
           addLogicalMousePosition(event);
           scope.workspace.onMouseUp(event);
+          window.removeEventListener('mousemove', scope.wrappedOnMouseMove);
+          window.removeEventListener('mouseup', scope.wrappedOnMouseUp);
         };
 
+        scope.wrappedOnMouseUp = scope.callbackWrapper(scope.onMouseUp);
+
         scope.onMouseDown = function(event) {
-          window.addEventListener('mousemove', scope.onMouseMove);
+          window.addEventListener('mousemove', scope.wrappedOnMouseMove);
+          window.addEventListener('mouseup', scope.wrappedOnMouseUp);
           var dragMode = actualDragMode(event);
           event.preventDefault();
           addLogicalMousePosition(event);
