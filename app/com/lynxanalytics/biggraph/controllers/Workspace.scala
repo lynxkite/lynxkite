@@ -240,8 +240,9 @@ case class BoxMetadata(
 object BoxOutputKind {
   val Project = "project"
   val Table = "table"
+  val Plot = "plot"
   val Error = "error"
-  val validKinds = Set(Project, Table, Error)
+  val validKinds = Set(Project, Table, Plot, Error)
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
 }
@@ -255,6 +256,12 @@ object BoxOutputState {
 
   def from(table: graph_api.Table): BoxOutputState = {
     BoxOutputState(BoxOutputKind.Table, Some(json.Json.obj("guid" -> table.gUID)))
+  }
+
+  def from(plot: graph_api.Scalar[String]) = {
+    BoxOutputState(BoxOutputKind.Plot, Some(json.Json.obj(
+      "guid" -> plot.gUID
+    )))
   }
 
   def error(msg: String): BoxOutputState = {
@@ -273,6 +280,7 @@ case class BoxOutputState(
   def isError = !success.enabled
   def isProject = kind == BoxOutputKind.Project
   def isTable = kind == BoxOutputKind.Table
+  def isPlot = kind == BoxOutputKind.Plot
 
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(success.enabled, success.disabledReason)
@@ -288,6 +296,13 @@ case class BoxOutputState(
     assert(isTable, s"Tried to access '$kind' as 'table'.")
     import graph_api.MetaGraphManager.StringAsUUID
     manager.table((state.get \ "guid").as[String].asUUID)
+  }
+
+  def plot(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
+    assert(isPlot, s"Tried to access '$kind' as 'Plot'.")
+    assert(success.enabled, success.disabledReason)
+    import graph_api.MetaGraphManager.StringAsUUID
+    manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)
   }
 }
 
