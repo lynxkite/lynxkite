@@ -6,6 +6,7 @@ angular.module('biggraph').directive('bottomLinks', function($window, util) {
     restrict: 'E',
     scope: {
       info: '=',  // Debug data to post with "send feedback".
+      dropup: '@',
     },
     templateUrl: 'bottom-links.html',
     link: function(scope) {
