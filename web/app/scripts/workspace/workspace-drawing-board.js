@@ -70,9 +70,14 @@ angular.module('biggraph')
         scope.wrappedOnMouseMove = scope.callbackWrapper(scope.onMouseMove);
 
         scope.onMouseDownOnBox = function(box, event) {
+          event.stopPropagation();
+          var leftClick = event.button === 0;
+          if (!leftClick) {
+            return;
+          }
           window.addEventListener('mousemove', scope.wrappedOnMouseMove);
           window.addEventListener('mouseup', scope.wrappedOnMouseUp);
-          event.stopPropagation();
+
           addLogicalMousePosition(event);
           scope.workspace.removeSelection();
           scope.workspace.onMouseDownOnBox(box, event);
