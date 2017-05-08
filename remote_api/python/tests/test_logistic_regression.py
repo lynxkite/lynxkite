@@ -30,7 +30,7 @@ class TestLogisticRegression(unittest.TestCase):
     p.deriveVertexAttribute(
         expr='rnd  > 0 ? 1 : 0',
         output='label',
-        type='double')
+        type='Double')
     p.addRandomVertexAttribute(
         name='feature',
         dist='Standard Uniform',

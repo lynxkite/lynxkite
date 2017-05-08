@@ -36,7 +36,7 @@ class MergeVerticesByAttributeOperationTest extends OperationsTestBase {
 
   test("Merge vertices by attribute, segmentation") {
     val project = box("Create example graph")
-      .box("Segment by string attribute", Map("name" -> "bucketing", "attr" -> "gender"))
+      .box("Segment by String attribute", Map("name" -> "bucketing", "attr" -> "gender"))
       .box("Add constant vertex attribute", Map(
         "name" -> "constant",
         "value" -> "1",

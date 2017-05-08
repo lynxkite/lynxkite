@@ -62,9 +62,9 @@ module.exports = function(fw) {
     expect(aggrList.getText()).toEqual(sortedAttributes);
     lib.left.closeOperation();
 
-    // Checking if the attributes listed for the Convert vertex attribute to string operation are in
+    // Checking if the attributes listed for the Convert vertex attribute to String operation are in
     // correct order.
-    lib.left.openOperation('Convert vertex attribute to string');
+    lib.left.openOperation('Convert vertex attribute to String');
     // The list of the attributes in the order they are displayed in the listbox.
     var castList = lib.left.operationParameter(lib.left.toolbox, 'attr');
     expect(castList.getText()).toEqual(sortedAttributes.join('\n'));

@@ -1,10 +1,10 @@
 <table class="table-condensed">
   <tr><th>name</th><th>type</th><th>default</th><th></th></tr>
   <tr ng-repeat="p in parameters">
-    <td><input ng-model="p.id" class="form-control"></td>
-    <td><select ng-model="p.kind" ng-options="k for k in validKinds" class="form-control"></td>
-    <td><input ng-model="p.defaultValue" class="form-control"></td>
-    <td><button ng-click="discard($index)" class="btn">&times;</button></td>
+    <td><input id="{{ p.id }}-id" ng-model="p.id" class="form-control"></td>
+    <td><select id="{{ p.id }}-type" ng-model="p.kind" ng-options="k for k in validKinds" class="form-control"></td>
+    <td><input id="{{ p.id }}-default" ng-model="p.defaultValue" class="form-control"></td>
+    <td><button id="{{ p.id }}-delete" ng-click="discard($index)" class="btn">&times;</button></td>
   </tr>
-  <tr><td><button ng-click="add()" class="btn">+</button></td></tr>
+  <tr><td><button id="add-parameter" ng-click="add()" class="btn">+</button></td></tr>
 </table>

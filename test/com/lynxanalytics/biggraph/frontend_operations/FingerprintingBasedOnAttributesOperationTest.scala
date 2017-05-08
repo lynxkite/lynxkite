@@ -14,11 +14,11 @@ class FingerprintingBasedOnAttributesOperationTest extends OperationsTestBase {
       // Turn empty strings into "undefined".
       .box("Derive vertex attribute", Map(
         "output" -> "email",
-        "type" -> "string",
+        "type" -> "String",
         "expr" -> "email ? email : undefined"))
       .box("Derive vertex attribute", Map(
         "output" -> "name",
-        "type" -> "string",
+        "type" -> "String",
         "expr" -> "name ? name : undefined"))
       .box("Fingerprint based on attributes", Map(
         "leftName" -> "email",
