@@ -144,7 +144,7 @@ module.exports = function(fw) {
        left.runOperation('Derive vertex attribute', {
          expr: 'income === 1000 ? \'apple\' : \'orange\'',
          output: 'new_attr',
-         type: 'string',
+         type: 'String',
        });
        left.runSql('select new_attr from vertices');
        left.clickSqlSort(0);
@@ -223,8 +223,8 @@ module.exports = function(fw) {
       left.executeSqlSaving();
       lib.confirmSweetAlert('Entry already exists');
 
-      left.runOperation('Convert vertex attribute to double', { attr: 'ordinal' });
-      left.runOperation('Convert vertex attribute to string', { attr: 'ordinal' });
+      left.runOperation('Convert vertex attribute to Double', { attr: 'ordinal' });
+      left.runOperation('Convert vertex attribute to String', { attr: 'ordinal' });
       left.runOperation(
         'Import edges for existing vertices',
         {

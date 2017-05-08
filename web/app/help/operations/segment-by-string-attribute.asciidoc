@@ -1,4 +1,4 @@
-### Segment by string attribute
+### Segment by String attribute
 
 Segments the vertices by a `String` vertex attribute.
 

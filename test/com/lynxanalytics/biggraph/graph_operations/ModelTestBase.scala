@@ -24,11 +24,33 @@ class ModelTestBase extends FunSuite with TestGraphOp {
       case "Linear regression" | "Ridge regression" | "Lasso" =>
         val op = RegressionModelTrainer(method, labelName, featureNames)
         op(op.features, features)(op.label, l).result.model
+      case "Decision tree regression" =>
+        val op = TrainDecisionTreeRegressor(
+          labelName,
+          featureNames,
+          impurity = "variance",
+          maxBins = 32,
+          maxDepth = 5,
+          minInfoGain = 0,
+          minInstancesPerNode = 1,
+          seed = 1234567)
+        op(op.features, features)(op.label, l).result.model
       case "Logistic regression" =>
         val op = LogisticRegressionModelTrainer(
           maxIter = 20,
           labelName,
           featureNames)
+        op(op.features, features)(op.label, l).result.model
+      case "Decision tree classification" =>
+        val op = TrainDecisionTreeClassifier(
+          labelName,
+          featureNames,
+          impurity = "gini",
+          maxBins = 32,
+          maxDepth = 5,
+          minInfoGain = 0,
+          minInstancesPerNode = 1,
+          seed = 1234567)
         op(op.features, features)(op.label, l).result.model
     }
   }
@@ -48,7 +70,7 @@ class ModelTestBase extends FunSuite with TestGraphOp {
       maxIter = 50,
       seed = 1000,
       featureNames)
-    // The k-means model built from the above features 
+    // The k-means model built from the above features
     op(op.features, features).result.model
   }
 
@@ -63,6 +85,10 @@ class ModelTestBase extends FunSuite with TestGraphOp {
 
   def assertRoughlyEquals(x: Double, y: Double, maxDifference: Double): Unit = {
     assert(Math.abs(x - y) < maxDifference, s"$x does not equal to $y with $maxDifference precision")
+  }
+
+  def assertRoughlyEquals(x: Map[ID, Double], y: Map[Int, Double], maxDifference: Double): Unit = {
+    x.foreach { case (i, d) => assertRoughlyEquals(d, y(i.toInt), maxDifference) }
   }
 
   def vectorsRDD(arr: Array[Double]*): rdd.RDD[mllib.linalg.Vector] = {

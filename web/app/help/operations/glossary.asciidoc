@@ -121,7 +121,7 @@ rarely do you need to give random seeds any thought.
 end::random-seed[]
 
 tag::random-attribute[]
-Generates a new random double attribute with the specified distribution, which can be either
+Generates a new random Double attribute with the specified distribution, which can be either
 (1) a Standard Normal (i.e., Gaussian) distribution with a mean of 0 and a standard deviation of 1, or (2)
 a Standard Uniform distribution where values fall between 0 and 1.
 

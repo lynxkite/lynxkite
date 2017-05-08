@@ -11,14 +11,19 @@ import com.lynxanalytics.biggraph.serving
 
 case class GetWorkspaceRequest(name: String)
 case class BoxOutputInfo(boxOutput: BoxOutput, stateID: String, success: FEStatus, kind: String)
-case class GetWorkspaceResponse(workspace: Workspace, outputs: List[BoxOutputInfo], summaries: Map[String, String])
+case class GetWorkspaceResponse(
+  workspace: Workspace,
+  outputs: List[BoxOutputInfo],
+  summaries: Map[String, String],
+  canUndo: Boolean,
+  canRedo: Boolean)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
 case class GetProgressRequest(stateIDs: List[String])
 case class GetProgressResponse(progress: Map[String, Option[Progress]])
 case class GetProjectOutputRequest(id: String, path: String)
-case class GetTableOutputRequest(id: String)
+case class GetTableOutputRequest(id: String, sampleRows: Int)
 case class TableColumn(name: String, dataType: String)
 case class GetTableOutputResponse(header: List[TableColumn], data: List[List[DynamicValue]])
 case class CreateWorkspaceRequest(name: String, privacy: String)
@@ -44,20 +49,21 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     w.setupACL(request.privacy, user)
   }
 
-  private def getWorkspaceByName(
-    user: serving.User, name: String): Workspace = metaManager.synchronized {
+  private def getWorkspaceFrame(
+    user: serving.User, name: String): WorkspaceFrame = metaManager.synchronized {
     val f = DirectoryEntry.fromName(name)
     assert(f.exists, s"Project ${name} does not exist.")
     f.assertReadAllowedFrom(user)
     f match {
-      case f: WorkspaceFrame => f.workspace
+      case f: WorkspaceFrame => f
       case _ => throw new AssertionError(s"${name} is not a workspace.")
     }
   }
 
   def getWorkspace(
     user: serving.User, request: GetWorkspaceRequest): GetWorkspaceResponse = {
-    val workspace = getWorkspaceByName(user, request.name)
+    val frame = getWorkspaceFrame(user, request.name)
+    val workspace = frame.workspace
     val context = workspace.context(user, ops, Map())
     val states = context.allStates
     val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
@@ -76,7 +82,10 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         catch { case e: AssertionError => box.operationID }
       )
     ).toMap
-    GetWorkspaceResponse(workspace, stateInfo, summaries)
+    GetWorkspaceResponse(
+      workspace, stateInfo, summaries,
+      canUndo = frame.currentState.previousCheckpoint.nonEmpty,
+      canRedo = frame.nextCheckpoint.nonEmpty)
   }
 
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
@@ -136,15 +145,26 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def setWorkspace(
     user: serving.User, request: SetWorkspaceRequest): Unit = metaManager.synchronized {
-    val f = DirectoryEntry.fromName(request.name)
-    assert(f.exists, s"Project ${request.name} does not exist.")
+    val f = getWorkspaceFrame(user, request.name)
     f.assertWriteAllowedFrom(user)
-    f match {
-      case f: WorkspaceFrame =>
-        val cp = request.workspace.checkpoint(previous = f.checkpoint)
-        f.setCheckpoint(cp)
-      case _ => throw new AssertionError(s"${request.name} is not a workspace.")
-    }
+    val ws = request.workspace
+    val repaired = ws.context(user, ops, Map()).repairedWorkspace
+    val cp = repaired.checkpoint(previous = f.checkpoint)
+    f.setCheckpoint(cp)
+  }
+
+  def undoWorkspace(
+    user: serving.User, request: GetWorkspaceRequest): Unit = metaManager.synchronized {
+    val f = getWorkspaceFrame(user, request.name)
+    f.assertWriteAllowedFrom(user)
+    f.undo()
+  }
+
+  def redoWorkspace(
+    user: serving.User, request: GetWorkspaceRequest): Unit = metaManager.synchronized {
+    val f = getWorkspaceFrame(user, request.name)
+    f.assertWriteAllowedFrom(user)
+    f.redo()
   }
 
   def boxCatalog(user: serving.User, request: serving.Empty): BoxCatalogResponse = {
@@ -152,7 +172,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def getOperationMeta(user: serving.User, request: GetOperationMetaRequest): FEOperationMeta = {
-    val ws = getWorkspaceByName(user, request.workspace)
+    val ws = getWorkspaceFrame(user, request.workspace).workspace
     val op = ws.context(user, ops, Map()).getOperation(request.box)
     op.toFE
   }

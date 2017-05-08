@@ -22,12 +22,15 @@ class HDFS:
   '''HDFS utilities.'''
 
   @staticmethod
-  def list(path, env=None):
+  def list(path, env=None, options=None):
     '''Returns a list of objects for the direct contents of the directory.
 
     Set ``env`` to customize environment variables, such as ``HADOOP_CONF_DIR``.
     '''
-    cmd = ['hadoop', 'fs', '-ls', path]
+    if options:
+      cmd = ['hadoop', 'fs', '-ls', options, path]
+    else:
+      cmd = ['hadoop', 'fs', '-ls', path]
     print(cmd)
     output = subprocess.check_output(cmd, env=env)
     return HDFS._parse_hadoop_ls(output)
@@ -44,7 +47,12 @@ class HDFS:
     The column widths are unpredictable. The second column contains either "+" or " ". (The ACL
     bit.) The file name may contain spaces. There is no other format available. We are parsing this.
     '''
-    lines = output.decode('utf-8').strip().split('\n')[1:]
+    lines = output.decode('utf-8').strip().split('\n')
+    if lines == ['']:
+      return []
+    # hadoop fs -ls -R does not print Found n items...
+    if lines[0].startswith('Found '):
+      lines = lines[1:]
     return [HDFS._parse_hadoop_ls_line(line) for line in lines]
 
   @staticmethod
