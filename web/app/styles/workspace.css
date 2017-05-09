@@ -99,6 +99,7 @@ div.popup {
   z-index: 3;
   resize: both;
   overflow: auto;
+  background: white;
 }
 
 div.popup-head {
@@ -113,8 +114,7 @@ div.popup-head {
 
 div.popup-content {
   width: 100%;
-  height: calc(100% - 35px); /* All space minus popup-head. */
-  background: white;
+/*  height: calc(100% - 35px);  All space minus popup-head. */
 }
 
 polygon.popup-trail {
