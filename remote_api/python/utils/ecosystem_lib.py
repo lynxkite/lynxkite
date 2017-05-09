@@ -89,6 +89,9 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     '--with_tasks',
     help='If specified, the Luigi tasks are copied to the cluster')
+arg_parser.add_argument(
+    '--python_dependencies',
+    help='Install Python dependencies in the specified file')
 
 
 class Ecosystem:
@@ -119,6 +122,7 @@ class Ecosystem:
         's3_metadata_version': args.s3_metadata_version,
         's3_metadata_dir': '',
         'tasks': args.with_tasks,
+        'extra_python_dependencies': args.python_dependencies,
     }
     self.cluster = None
     self.instances = []
@@ -163,8 +167,10 @@ class Ecosystem:
     conf = self.cluster_config
     lk_conf = self.lynxkite_config
     self.upload_test_tasks()
-    if conf['tasks']:
-      self.upload_tasks(src=conf['tasks'])
+    if lk_conf['extra_python_dependencies']:
+      self.install_extra_python_dependencies(lk_conf['extra_python_dependencies'])
+    if lk_conf['tasks']:
+      self.upload_tasks(src=lk_conf['tasks'])
     self.upload_tools()
     self.install_lynx_stuff(
         lk_conf['lynx_release_dir'],
@@ -253,6 +259,11 @@ class Ecosystem:
             dir=releases_dir,
             version=lynx_version),
         dst='/mnt/')
+
+  def install_extra_python_dependencies(self, requirements):
+    self.cluster.rsync_up(requirements, '.')
+    file_name = os.path.basename(requirements)
+    self.cluster.ssh('sudo pip-3.4 install --upgrade -r {}'.format(file_name))
 
   def upload_tasks(self, src, dst='/mnt/lynx/luigi_tasks/'):
     self.cluster.ssh('mkdir -p ' + dst)
