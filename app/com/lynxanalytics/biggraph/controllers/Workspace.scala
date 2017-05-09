@@ -33,7 +33,7 @@ case class Workspace(
     val description = anchor.parameters.getOrElse("description", "")
     val inputs = boxes.filter(_.operationID == "Input box").flatMap(b => b.parameters.get("name"))
     val outputs = boxes.filter(_.operationID == "Output box").flatMap(b => b.parameters.get("name"))
-    BoxMetadata("Custom boxes", name, inputs, outputs, description = Some(description))
+    BoxMetadata("Custom boxes", name, "", inputs, outputs, description = Some(description))
   }
 
   def context(
@@ -233,6 +233,7 @@ case class BoxOutput(
 case class BoxMetadata(
   categoryID: String,
   operationID: String,
+  htmlID: String,
   inputs: List[String],
   outputs: List[String],
   description: Option[String] = None)
