@@ -1,6 +1,5 @@
 .user-menu {
   background-color: rgba(255,255,255,0.9);
-  z-index: 2; /* The bottom links should not be covered by the spark status indicator. */
 }
 
 .user-menu > * {
@@ -22,6 +21,7 @@
   position: fixed;
   bottom: 5px;
   right: 5px;
+  z-index: 2; /* The bottom links should not be covered by the spark status indicator. */
 }
 
 .user-menu-in-toolbar {
