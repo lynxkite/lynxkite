@@ -259,9 +259,7 @@ object BoxOutputState {
   }
 
   def from(plot: graph_api.Scalar[String]) = {
-    BoxOutputState(BoxOutputKind.Plot, Some(json.Json.obj(
-      "guid" -> plot.gUID
-    )))
+    BoxOutputState(BoxOutputKind.Plot, Some(json.Json.obj("guid" -> plot.gUID)))
   }
 
   def error(msg: String): BoxOutputState = {
