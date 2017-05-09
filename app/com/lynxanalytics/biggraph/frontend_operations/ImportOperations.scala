@@ -31,7 +31,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import org.apache.spark
 
   register("Import CSV")(new ImportOperation(_) {
-    lazy val parameters = List(
+    override val params = super.params ++ List(
       FileParam("filename", "File"),
       Param("columns", "Columns in file"),
       Param("delimiter", "Delimiter", defaultValue = ","),
@@ -74,7 +74,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Import JDBC")(new ImportOperation(_) {
-    lazy val parameters = List(
+    override val params = super.params ++ List(
       Param("jdbc_url", "JDBC URL"),
       Param("jdbc_table", "JDBC table"),
       Param("key_column", "Key column"),
@@ -104,7 +104,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   abstract class FileWithSchema(context: Context) extends ImportOperation(context) {
     val format: String
-    lazy val parameters = List(
+    override val params = super.params ++ List(
       FileParam("filename", "File"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
@@ -123,7 +123,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Import JSON")(new FileWithSchema(_) { val format = "json" })
 
   register("Import from Hive")(new ImportOperation(_) {
-    lazy val parameters = List(
+    override val params = super.params ++ List(
       FileParam("hive_table", "Hive table"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),

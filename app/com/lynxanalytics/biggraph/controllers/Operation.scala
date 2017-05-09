@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import play.api.libs.json
 import org.apache.spark
 
@@ -232,46 +233,90 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   }
 }
 
+object LazyParameters {
+  def apply(context: Operation.Context) = new LazyParameters(context, Stream())
+}
+class LazyParameters(context: Operation.Context, metas: Stream[() => OperationParameterMeta]) {
+  def apply(name: String): String = {
+    if (context.box.parametricParameters.contains(name)) {
+      com.lynxanalytics.sandbox.ScalaScript.run(
+        "s\"\"\"" + context.box.parametricParameters(name) + "\"\"\"",
+        context.workspaceParameters)
+    } else if (context.box.parameters.contains(name)) {
+      context.box.parameters(name)
+    } else goodMetas.find(_.id == name) match {
+      case Some(meta) => meta.defaultValue
+      case None =>
+        logErrors()
+        throw new AssertionError(s"Parameter not found: $name")
+    }
+  }
+
+  def +(next: => OperationParameterMeta): LazyParameters = {
+    new LazyParameters(context, metas :+ (() => next))
+  }
+
+  def ++(more: => Seq[OperationParameterMeta]): LazyParameters = {
+    new LazyParameters(context, metas #::: more.toStream.map(m => () => m))
+  }
+
+  private def allMetas: Seq[OperationParameterMeta] = {
+    metas.map(fn => fn())
+  }
+
+  private def goodMetas: Seq[OperationParameterMeta] = {
+    metas.view.flatMap(fn => util.Try(fn()).toOption)
+  }
+
+  private def logErrors(): Unit = {
+    for (exception <- metas.flatMap(fn => util.Try(fn()).failed.toOption)) {
+      log.error("Failure while generating parameters.", exception)
+    }
+  }
+
+  def validate(): Unit = {
+    val ms = allMetas
+    val dups = ms.groupBy(_.id).filter(_._2.size > 1).keys
+    assert(dups.isEmpty, s"Duplicate parameter: ${dups.mkString(", ")}")
+    val paramIds = ms.map(_.id).toSet
+    val keys = context.box.parameters.keySet.union(context.box.parametricParameters.keySet)
+    val extraIds = keys &~ paramIds
+    assert(extraIds.size == 0,
+      s"""Extra parameters found: ${extraIds.mkString(", ")} is not in ${paramIds.mkString(", ")}""")
+    for (meta <- ms) {
+      meta.validate(this(meta.id))
+    }
+  }
+
+  def toFE: List[FEOperationParameterMeta] = goodMetas.map(_.toFE).toList
+
+  def toMap: Map[String, String] = allMetas.map(m => m.id -> this(m.id)).toMap
+}
+
 // A base class with some conveniences for working with projects and tables.
 trait BasicOperation extends Operation {
   implicit val manager = context.manager
   protected val user = context.user
   protected val id = context.meta.operationID
   protected val title = id
-  // Parameters without default values:
-  protected lazy val parametricValues = context.box.parametricParameters.map {
-    case (name, value) =>
-      val result = com.lynxanalytics.sandbox.ScalaScript.run(
-        "s\"\"\"" + value + "\"\"\"",
-        context.workspaceParameters)
-      name -> result
-  }
-  protected lazy val paramValues = context.box.parameters ++ parametricValues
-  // Parameters with default values:
-  protected def params =
-    parameters
-      .map {
-        paramMeta => (paramMeta.id, paramMeta.defaultValue)
-      }
-      .toMap ++ paramValues
-  protected def parameters: List[OperationParameterMeta]
   protected def visibleScalars: List[FEScalar] = List()
   def summary = title
-
   protected def apply(): Unit
   protected def help = // Add to notes for help link.
     "<help-popup href=\"" + Operation.htmlID(id) + "\"></help-popup>"
 
-  protected def validateParameters(values: Map[String, String]): Unit = {
-    val paramIds = allParameters.map { param => param.id }.toSet
-    val extraIds = values.keySet &~ paramIds
-    assert(extraIds.size == 0,
-      s"""Extra parameters found: ${extraIds.mkString(", ")} is not in ${paramIds.mkString(", ")}""")
-    for (param <- allParameters) {
-      if (values.contains(param.id)) {
-        param.validate(values(param.id))
-      }
+  protected def blankParams = LazyParameters(context) // Without apply_to parameters.
+  protected def params: LazyParameters = {
+    // "apply_to_*" is used to pick the base project or segmentation to apply the operation to.
+    // An "apply_to_*" parameter is added for each project input.
+    val projects = context.meta.inputs.filter(i => context.inputs(i).kind == BoxOutputKind.Project)
+    val applyTos = projects.map { input =>
+      val param = "apply_to_" + input
+      OperationParams.SegmentationParam(
+        param, s"Apply to ($input)",
+        context.inputs(input).project.segmentationsRecursively)
     }
+    blankParams ++ applyTos
   }
 
   // Updates the vertex_count_delta/edge_count_delta scalars after an operation finished.
@@ -296,15 +341,16 @@ trait BasicOperation extends Operation {
   def toFE: FEOperationMeta = FEOperationMeta(
     id,
     Operation.htmlID(id),
-    allParameters.map { param => param.toFE },
+    params.toFE,
     visibleScalars,
     context.meta.categoryID,
     enabled,
     description = context.meta.description)
 
   protected def projectInput(input: String): ProjectEditor = {
-    val segPath = SubProject.splitPipedPath(paramValues.getOrElse("apply_to_" + input, ""))
-    assert(segPath.head == "", s"'apply_to_$input' path must start with separator: $paramValues")
+    val param = params("apply_to_" + input)
+    val segPath = SubProject.splitPipedPath(param)
+    assert(segPath.head == "", s"'apply_to_$input' path must start with separator: $param")
     context.inputs(input).project.offspringEditor(segPath.tail)
   }
 
@@ -345,23 +391,6 @@ trait BasicOperation extends Operation {
     table.schema.fieldNames.toList.map(n => FEOption(n, n))
   }
 
-  protected def reservedParameter(reserved: String): Unit = {
-    assert(
-      parameters.find(_.id == reserved).isEmpty, s"$id: '$reserved' is a reserved parameter name.")
-  }
-
-  protected def allParameters: List[OperationParameterMeta] = {
-    // "apply_to_*" is used to pick the base project or segmentation to apply the operation to.
-    // An "apply_to_*" parameter is added for each project input.
-    context.inputs.filter(_._2.kind == BoxOutputKind.Project).keys.toList.sorted.map { input =>
-      val param = "apply_to_" + input
-      reservedParameter(param)
-      OperationParams.SegmentationParam(
-        param, s"Apply to ($input)",
-        context.inputs(input).project.segmentationsRecursively)
-    } ++ parameters
-  }
-
   protected def splitParam(param: String): Seq[String] = {
     val p = params(param)
     if (p.isEmpty) Seq()
@@ -382,7 +411,7 @@ abstract class ProjectOutputOperation(
   }
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
-    validateParameters(params)
+    params.validate()
     apply()
     makeOutput(project)
   }
@@ -396,7 +425,7 @@ abstract class ProjectTransformation(
     s"A ProjectTransformation must input a single project. $context")
   override lazy val project = projectInput("project")
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
-    validateParameters(params)
+    params.validate()
     val before = project.rootEditor.viewer
     apply()
     updateDeltas(project.rootEditor, before)
@@ -407,14 +436,14 @@ abstract class ProjectTransformation(
 // A MinimalOperation defines simple defaults for everything.
 abstract class MinimalOperation(
     protected val context: Operation.Context) extends Operation {
-  protected def parameters: List[OperationParameterMeta] = List()
+  protected def params = LazyParameters(context)
   protected val id = context.meta.operationID
   val title = id
   def summary = title
   def toFE: FEOperationMeta = FEOperationMeta(
     id,
     Operation.htmlID(id),
-    parameters.map { param => param.toFE },
+    params.toFE,
     List(),
     context.meta.categoryID,
     enabled)
@@ -449,7 +478,7 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
   protected def tableFromParam(name: String): Table = manager.table(params(name).asUUID)
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
-    validateParameters(params)
+    params.validate()
     assert(params("imported_table").nonEmpty, "You have to import the data first.")
     makeOutput(tableFromParam("imported_table"))
   }
@@ -480,11 +509,11 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
 
 class CustomBoxOperation(
     workspace: Workspace, val context: Operation.Context) extends BasicOperation {
-  lazy val parameters = {
+  override val params = {
     val custom = workspace.parametersMeta
     val tables = context.inputs.values.collect { case i if i.isTable => i.table }
     val projects = context.inputs.values.collect { case i if i.isProject => i.project }
-    custom.map { p =>
+    super.blankParams ++ custom.map { p =>
       val id = p.id
       val dv = p.defaultValue
       import OperationParams._
@@ -498,12 +527,11 @@ class CustomBoxOperation(
         case "scalar" => Choice(id, id, projects.flatMap(_.scalarList).toList)
         case "column" => Choice(id, id, tables.flatMap(_.columnList).toList)
       }
-    }.toList
+    }
   }
 
   def apply: Unit = ???
   def enabled = FEStatus.enabled
-  override def allParameters = parameters
 
   // Returns a version of the internal workspace in which the input boxes are patched to output the
   // inputs connected to the custom box.
@@ -525,7 +553,7 @@ class CustomBoxOperation(
 
   def getOutputs = {
     val ws = connectedWorkspace
-    val states = ws.context(context.user, context.ops, params).allStates
+    val states = ws.context(context.user, context.ops, params.toMap).allStates
     val byOutput = ws.boxes.flatMap { box =>
       if (box.operationID == "Output box" && box.parameters.contains("name"))
         Some(box.parameters("name") -> states(box.inputs("output")))

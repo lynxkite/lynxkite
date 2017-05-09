@@ -21,28 +21,27 @@ class MetaOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   val AnchorBox = Category("Anchor box", "black", icon = "kraken", visible = false)
 
   register("Add comment", OtherBoxes)(new DecoratorOperation(_) {
-    override def parameters = List(
+    override val params = super.params +
       Code("comment", "Comment", language = "plain_text")
-    )
   })
 
   register("Anchor", AnchorBox)(new DecoratorOperation(_) {
-    override def parameters = List(
-      Code("description", "Description", language = "plain_text"),
-      ParametersParam("parameters", "Parameters"))
+    override val params = super.params +
+      Code("description", "Description", language = "plain_text") +
+      ParametersParam("parameters", "Parameters")
   })
 
   registerOp(
     "Input box", OtherBoxes,
     List(), List("input"),
     new MinimalOperation(_) {
-      override def parameters = List(Param("name", "Name"))
+      override val params = super.params + Param("name", "Name")
     })
 
   registerOp(
     "Output box", OtherBoxes,
     List("output"), List(),
     new MinimalOperation(_) {
-      override def parameters = List(Param("name", "Name"))
+      override val params = super.params + Param("name", "Name")
     })
 }
