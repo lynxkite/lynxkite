@@ -138,8 +138,6 @@ class Ecosystem:
         instance_count=conf['emr_instance_count'],
         hdfs_replication=conf['hdfs_replication'],
     )
-    if conf['public_ip']:
-      self.cluster = lib.associate_address(self.cluster, conf['public_ip'])
     self.instances = [self.cluster]
     # Spin up a mysql RDS instance only if requested.
     if conf['with_rds']:
@@ -153,6 +151,8 @@ class Ecosystem:
           mysql_address=mysql_address)
     else:
       lib.wait_for_services(self.instances)
+    if conf['public_ip']:
+      self.cluster.associate_address(conf['public_ip'])
 
   def start(self):
     print('Starting LynxKite on EMR cluster.')

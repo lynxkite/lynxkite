@@ -171,21 +171,6 @@ class EMRLib:
         }])
     return EMRCluster(res['JobFlowId'], self)
 
-  def associate_address(self, cluster, ip):
-    self.wait_for_services([cluster])
-    cluster_id = cluster.cluster_id()
-    master_dns = cluster.master()
-    instances = self.emr_client.list_instances(ClusterId=cluster_id)['Instances']
-    master = [i['Ec2InstanceId'] for i in instances if i['PublicDnsName'] == master_dns][0]
-    self.ec2_client.associate_address(InstanceId=master, PublicIp=ip, AllowReassociation=False)
-    updated = EMRCluster(cluster_id, self)
-    # after associating a new address to the master, the public dns changes but it takes some time
-    # until the change propagates to the cluster description
-    while updated.desc()['Cluster']['MasterPublicDnsName'] == master_dns:
-      print('Waiting for dns change')
-      time.sleep(15)
-    return updated
-
   def create_or_connect_to_rds_instance(self, name):
     if RDSInstance.get_description(self.rds_client, name) is None:
       print('Creating new DB instance.')
@@ -247,6 +232,7 @@ class EMRCluster:
   def __init__(self, id, lib):
     self.id = id
     self.emr_client = lib.emr_client
+    self.ec2_client = lib.ec2_client
     self.ssh_cmd = [
         'ssh',
         '-T',
@@ -257,12 +243,10 @@ class EMRCluster:
         '-o', 'ServerAliveInterval=30',
     ]
     self._master = None
+    self._master_instance = None
 
   def __str__(self):
     return 'EMR(' + self.id + ')'
-
-  def cluster_id(self):
-    return self.id
 
   def desc(self):
     '''Raw description of the cluster.'''
@@ -275,6 +259,20 @@ class EMRCluster:
       if self.is_ready(desc=desc):
         self._master = desc['Cluster']['MasterPublicDnsName']
     return self._master
+
+  def master_instance(self):
+    '''The Ec2InstanceId of the master host.'''
+    if not self._master_instance:
+      master_dns = self.master()
+      instances = self.emr_client.list_instances(ClusterId=self.id)['Instances']
+      self._master_instance = [i['Ec2InstanceId'] for i in instances
+                               if i['PublicDnsName'] == master_dns][0]
+    return self._master_instance
+
+  def reset_cache(self):
+    '''Some properties (e.g. dns of the master) is cached. This method resets these kind of data.'''
+    self._master = None
+    self._master_instance = None
 
   def is_ready(self, desc=None):
     '''Is the cluster started up and ready?'''
@@ -397,3 +395,16 @@ EOF
   def terminate(self):
     self.emr_client.terminate_job_flows(
         JobFlowIds=[self.id])
+
+  def associate_address(self, ip):
+    assert self.is_ready(), 'Can not associate new IP address before the cluster is ready.'
+    old_dns = self.master()
+    master = self.master_instance()
+    self.ec2_client.associate_address(InstanceId=master, PublicIp=ip)
+    self.reset_cache()
+    # after associating a new address to the master, the public dns changes but it takes some time
+    # until the change propagates to the cluster description
+    print('Waiting for dns change...')
+    while self.desc()['Cluster']['MasterPublicDnsName'] == old_dns:
+      time.sleep(15)
+    print('Dns changed.')
