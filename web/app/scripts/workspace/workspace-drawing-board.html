@@ -117,6 +117,7 @@
       <!-- start arrow -->
       <g ng-repeat="arrow in arrows()">
         <line class="arrow"
+            id="{{ arrow.src.boxId }}-{{ arrow.src.id }}-{{ arrow.dst.boxId }}-{{ arrow.dst.id }}"
             ng-attr-x1="{{arrow.x1()}}"
             ng-attr-y1="{{arrow.y1()}}"
             ng-attr-x2="{{arrow.x2()}}"
