@@ -86,6 +86,9 @@ arg_parser.add_argument(
     help='''The "expiration date" of this cluster in "YYYYmmdd" format.
   After this date the 'owner' will be asked if the cluster can
   be shut down.''')
+arg_parser.add_argument(
+    '--with_tasks',
+    help='If specified, the Luigi tasks are copied to the cluster')
 
 
 class Ecosystem:
@@ -115,6 +118,7 @@ class Ecosystem:
         'restore_metadata': args.restore_metadata,
         's3_metadata_version': args.s3_metadata_version,
         's3_metadata_dir': '',
+        'tasks': args.with_tasks,
     }
     self.cluster = None
     self.instances = []
@@ -158,7 +162,9 @@ class Ecosystem:
     print('Starting LynxKite on EMR cluster.')
     conf = self.cluster_config
     lk_conf = self.lynxkite_config
-    self.upload_tasks()
+    self.upload_test_tasks()
+    if conf['tasks']:
+      self.upload_tasks(src=conf['tasks'])
     self.upload_tools()
     self.install_lynx_stuff(
         lk_conf['lynx_release_dir'],
@@ -248,10 +254,12 @@ class Ecosystem:
             version=lynx_version),
         dst='/mnt/')
 
-  def upload_tasks(self):
-    ecosystem_task_dir = '/mnt/lynx/luigi_tasks/test_tasks'
-    self.cluster.ssh('mkdir -p ' + ecosystem_task_dir)
-    self.cluster.rsync_up('ecosystem/tests/', ecosystem_task_dir)
+  def upload_tasks(self, src, dst='/mnt/lynx/luigi_tasks/'):
+    self.cluster.ssh('mkdir -p ' + dst)
+    self.cluster.rsync_up(src, dst)
+
+  def upload_test_tasks(self):
+    self.upload_tasks('ecosystem/tests/', '/mnt/lynx/luigi_tasks/test_tasks')
     self.cluster.ssh('''
         set -x
         cd /mnt/lynx/luigi_tasks/test_tasks
