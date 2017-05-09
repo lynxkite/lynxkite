@@ -1,13 +1,9 @@
-.bottom-links {
-  position: inherit;
-  float: inherit;
-  bottom: inherit;
-  right: inherit;
+.user-menu {
   background-color: rgba(255,255,255,0.9);
   z-index: 2; /* The bottom links should not be covered by the spark status indicator. */
 }
 
-.bottom-links > * {
+.user-menu > * {
   margin-right: 10px;
 }
 
@@ -17,21 +13,20 @@
   padding: 10px;
 }
 
-.bottom-links-dropup {
+.user-menu-dropup {
   cursor: pointer;
   user-select: none;
 }
 
-.bottom-links-original {
+.user-menu-at-bottom {
   position: fixed;
   bottom: 5px;
   right: 5px;
 }
 
-.bottom-links-workspace {
+.user-menu-in-toolbar {
   position: relative;
   float: left;
-  margin-top: 8px;
   margin-left: 8px;
 }
 
