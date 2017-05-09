@@ -1,4 +1,4 @@
-<div class="bottom-links hidden-print">
+<span class="user-menu hidden-print">
   <span class="login-info" ng-show="util.globals.hasAuth" id="login-info">
     Logged in as {{ util.user.email }}
   </span>
@@ -7,9 +7,11 @@
       <i class="glyphicon glyphicon-question-sign"></i> help
     </a>
   </span> -->
-  <span class="dropup">
-    <a class="dropdown-toggle bottom-links-dropup" data-toggle="dropdown">
-      <i class="glyphicon glyphicon-menu-hamburger"></i> settings
+  <span ng-class="direction">
+    <a class="dropdown-toggle user-menu-dropup btn btn-default"
+       data-toggle="dropdown"
+       drop-tooltip="User&nbsp;menu">
+      <i class="glyphicon glyphicon-menu-hamburger"></i>
     </a>
     <ul class="dropdown-menu pull-right">
       <li>
@@ -59,4 +61,4 @@
       </li>
     </ul>
   </span>
-</div>
+</span>
