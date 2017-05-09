@@ -76,7 +76,10 @@ libraryDependencies ++= Seq(
   "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209",
   // The Google Cloud Storage connector for Spark and Hive
   "com.google.cloud.bigdataoss" % "gcs-connector" % "1.5.2-hadoop2",
-  "org.geotools" % "gt-shapefile" % "16.1")
+  "org.geotools" % "gt-shapefile" % "16.1",
+  // Plot drawing
+  "org.vegas-viz" %% "vegas" % "0.3.9",
+  "org.vegas-viz" %% "vegas-spark" % "0.3.9")
 
 resolvers ++= Seq(
   "Twitter Repository" at "http://maven.twttr.com",

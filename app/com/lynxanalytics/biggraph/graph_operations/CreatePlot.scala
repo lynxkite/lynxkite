@@ -36,9 +36,13 @@ case class CreatePlot(plotCode: String)
     implicit val id = inputDatas
     implicit val runtimeContext = rc
     val df = inputs.t.df
-    
+    // create plot generating script
 
-    val plotDescription : String = "placeholder for plot description"
+    // eval script
+
+    // test
+    val plotDescription: String = df.take(1).toString
+
     output(o.plot, plotDescription)
   }
 }
