@@ -85,6 +85,7 @@ circle.io-circle.in-progress {
 line.arrow {
   stroke-width: 1;
   stroke: blue;
+  pointer-events: none; /* Pass events through, so arrows do not block plugs. */
 }
 line.pulled-arrow {
   stroke-dasharray: 2;
@@ -101,8 +102,9 @@ div.popup-head {
   width: 100%;
   background: lightblue;
   font-weight: bold;
-  padding: 3px;
+  padding-left: 10px;
   height: 35px;
+  line-height: 35px;
   cursor: default;
 }
 
@@ -117,4 +119,11 @@ polygon.popup-trail {
   fill: white;
   opacity: 0.5;
   pointer-events: none; /* Let mouse events through so we do not block clicks. */
+}
+
+.popup #help-toggle {
+  text-align: right;
+  display: block;
+  margin-bottom: 10px;
+  text-decoration: none;
 }

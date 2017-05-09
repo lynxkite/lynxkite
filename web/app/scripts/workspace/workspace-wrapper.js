@@ -65,6 +65,8 @@ angular.module('biggraph').factory('workspaceWrapper', function(boxWrapper, util
 
       _createArrow: function(srcPlug, dstPlug) {
         return {
+          src: srcPlug,
+          dst: dstPlug,
           x1: function() { return srcPlug.cx(); },
           y1: function() { return srcPlug.cy(); },
           x2: function() { return dstPlug.cx(); },
