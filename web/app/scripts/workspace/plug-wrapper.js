@@ -30,7 +30,7 @@ angular.module('biggraph').factory('PlugWrapper', function() {
     this.posTransform = 'translate(' + this.rx + ', ' + this.ry + ')';
     this.inProgress = false;
     this.progressColor = undefined;
-    this.error = '';
+    this.error = undefined;
   }
 
   PlugWrapper.prototype = {
@@ -59,7 +59,9 @@ angular.module('biggraph').factory('PlugWrapper', function() {
     },
 
     setHealth: function(success) {
-      if (!success.enabled) {
+      if (success.enabled) {
+        this.error = undefined;
+      } else {
         this.error = success.disabledReason;
       }
     },
