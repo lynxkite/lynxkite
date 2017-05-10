@@ -1,7 +1,8 @@
 <div class="col-sm-12">
     {{ error }}
-    <table class="table table-striped table-bordered" ng-if="alreadyExported">
-        <tr ng-repeat="(stat, value) in metaDataToDisplay">
+    {{ result.computedValue.string }}
+    <table class="table table-striped table-bordered">
+        <tr ng-repeat="(stat, value) in parameters">
             <th> {{ stat }} </th>
             <td>{{ value }}</td>
         </tr>
@@ -12,6 +13,11 @@
         Export <i class="glyphicon glyphicon-play"></i>
       </button>
     </div>
+    <button  class="col-sm-6 col-sm-offset-3" ng-click="download()"
+             ng-show="alreadyExported">
+        Download <i class="glyphicon glyphicon-play"></i>
+    </button>
+</div>
     <progressbar ng-show="scalarValue && !(scalarValue.value.$resolved)"
                  value="100" class="progress-striped active">
     </progressbar>

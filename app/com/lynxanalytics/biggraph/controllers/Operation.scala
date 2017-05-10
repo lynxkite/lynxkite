@@ -492,10 +492,12 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
   def exportResult: Scalar[String]
   val format: String
 
+  def getParamsToDisplay() = params + ("format" -> format)
+
   protected def makeOutput(exportResult: Scalar[String]): Map[BoxOutput, BoxOutputState] = {
-    val paramsWithFormat = params ++ Map("format" -> format)
+    val paramsToDisplay = getParamsToDisplay()
     Map(context.box.output(
-      context.meta.outputs(0)) -> BoxOutputState.from(exportResult, paramsWithFormat))
+      context.meta.outputs(0)) -> BoxOutputState.from(exportResult, paramsToDisplay))
   }
 
   def getOutputs(): Map[BoxOutput, BoxOutputState] = {
@@ -529,6 +531,9 @@ abstract class ExportOperationToFile(context: Operation.Context)
     val file = HadoopFile(genPath)
     file.assertWriteAllowedFrom(context.user)
   }
+
+  override def getParamsToDisplay() = params +
+    ("format" -> format, "path" -> generatePathIfNeeded(params("path")))
 }
 
 class CustomBoxOperation(
