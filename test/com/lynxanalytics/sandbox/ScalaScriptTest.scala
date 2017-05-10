@@ -25,6 +25,17 @@ class ScalaScriptTest extends FunSuite {
     assert(ScalaScript.run("s\"\"\"asd $qwe\"\"\"", Map("qwe" -> "123")) == "asd 123")
   }
 
+  test("Scala Double bindings work") {
+    val code1 = "2*x"
+    val code2 = "x+42"
+    val a = 3.0
+    val b = 1.1
+    assert(ScalaScript.runWithDouble(code1, a) == "6.0")
+    assert(ScalaScript.runWithDouble(code1, b) == "2.2")
+    assert(ScalaScript.runWithDouble(code2, a) == "45.0")
+    assert(ScalaScript.runWithDouble(code2, b) == "43.1")
+  }
+
   test("Security manager disables file access") {
     val testFile = getClass.getResource("/graph_api/permission_check.txt")
     val contents = "This file is used to check the security manager implementation.\n"
