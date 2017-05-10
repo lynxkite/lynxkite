@@ -11,7 +11,7 @@ angular.module('biggraph').directive('tagList', function() {
       editable: '=',
       onBlur: '&',
     },
-    templateUrl: 'tag-list.html',
+    templateUrl: 'scripts/operation/tag-list.html',
     link: function(scope) {
       scope.addTag = function(id) {
         scope.removeTag(id);

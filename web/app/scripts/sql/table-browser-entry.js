@@ -12,7 +12,7 @@ angular.module('biggraph').directive('tableBrowserEntry', function() {
       text: '=',
       draggableText: '='
     },
-    templateUrl: 'table-browser-entry.html',
+    templateUrl: 'scripts/sql/table-browser-entry.html',
     link: function(scope, element) {
       element.bind('dragstart', function(event) {
         event.originalEvent.dataTransfer.setData(

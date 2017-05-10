@@ -4,6 +4,6 @@
 angular.module('biggraph').directive('computeProgress', function() {
   return {
     scope: { computeProgress: '=model' },
-    templateUrl: 'compute-progress.html',
+    templateUrl: 'scripts/util/compute-progress.html',
   };
 });

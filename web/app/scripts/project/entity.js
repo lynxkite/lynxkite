@@ -9,7 +9,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       kind: '@',
       side: '=',
     },
-    templateUrl: 'entity.html',
+    templateUrl: 'scripts/project/entity.html',
     link: function(scope, element) {
       /* global Drop */
       // Angular element for easier access of popup elements.

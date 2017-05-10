@@ -10,7 +10,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
       fileUploads: '=',
       onBlur: '&',
     },
-    templateUrl: 'table-kind.html',
+    templateUrl: 'scripts/sql/table-kind.html',
     link: function(scope) {
       scope.importBox = function() {
         scope.disabled = true;

@@ -5,7 +5,7 @@ angular.module('biggraph').directive('workflowEditor', function(side, util) {
   return {
     restrict: 'E',
     scope: { side: '=', state: '=' },
-    templateUrl: 'workflow-editor.html',
+    templateUrl: 'scripts/project/workflow-editor.html',
     link: function(scope) {
       scope.close = function() {
         scope.state.enabled = false;

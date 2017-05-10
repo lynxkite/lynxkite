@@ -6,7 +6,7 @@ angular.module('biggraph').directive('histogram', function($timeout, util) {
     restrict: 'E',
     scope: { model: '=' },
     replace: false,
-    templateUrl: 'histogram.html',
+    templateUrl: 'scripts/project/histogram.html',
     link: function(scope) {
       function maxSize() {
         var max = 1;

@@ -15,7 +15,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       busy: '=?',
       editable: '=',
     },
-    templateUrl: 'operation-parameters.html',
+    templateUrl: 'scripts/operation/operation-parameters.html',
     link: function(scope, element) {
       element.on('focusout', function() { scope.onBlur(); });
       scope.fileUploads = { count: 0 };

@@ -4,7 +4,7 @@
 angular.module('biggraph').directive('topAlerts', function(util) {
   return {
     restrict: 'E',
-    templateUrl: 'top-alerts.html',
+    templateUrl: 'scripts/util/top-alerts.html',
     link: function(scope) {
       scope.alerts = [];
       scope.$on('topAlert', function(evt, msg) {

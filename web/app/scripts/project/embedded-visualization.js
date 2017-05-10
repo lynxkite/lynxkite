@@ -9,7 +9,7 @@ angular.module('biggraph').directive('embeddedVisualization', function(util, sid
       width: '=',
       height: '=',
     },
-    templateUrl: 'embedded-visualization.html',
+    templateUrl: 'scripts/project/embedded-visualization.html',
     link: function(scope, element, attrs) {
       scope.side = new side.Side([]);
       // Copy settings from attributes to the state. This only works for top-level string

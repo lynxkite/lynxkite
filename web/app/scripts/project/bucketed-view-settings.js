@@ -5,7 +5,7 @@ angular.module('biggraph').directive('bucketedViewSettings', function(ViewSettin
   return {
     scope: { side: '=' },
     restrict: 'E',
-    templateUrl: 'bucketed-view-settings.html',
+    templateUrl: 'scripts/project/bucketed-view-settings.html',
     link: function(scope, element) {
       new ViewSettings(scope, element);
     },

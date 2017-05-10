@@ -6,7 +6,7 @@ angular.module('biggraph').directive('lazySlider', function() {
     restrict: 'E',
     scope: { value: '=' },
     replace: false,
-    templateUrl: 'lazy-slider.html',
+    templateUrl: 'scripts/project/lazy-slider.html',
     link: function(scope) {
       scope.$watch('value', update);
 

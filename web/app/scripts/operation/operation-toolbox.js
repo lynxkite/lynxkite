@@ -22,7 +22,7 @@ angular.module('biggraph').directive('operationToolbox', function($rootScope) {
       discardChanges: '&', // (Method.) For manipulating history.
       categoriesCallback: '&' // (Input.) Callback for when there is no categories or checkpoint.
     },
-    templateUrl: 'operation-toolbox.html',
+    templateUrl: 'scripts/operation/operation-toolbox.html',
     link: function(scope, elem) {
       scope.editMode = !scope.historyMode;
       if (scope.historyMode) {

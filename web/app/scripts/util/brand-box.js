@@ -5,7 +5,7 @@
 angular.module('biggraph').directive('brandBox', function() {
   return {
     restrict: 'E',
-    templateUrl: 'brand-box.html',
+    templateUrl: 'scripts/util/brand-box.html',
     link: function(scope) {
       var tips = [
         'You can zoom the graph visualization with the mouse wheel or by (right)' +

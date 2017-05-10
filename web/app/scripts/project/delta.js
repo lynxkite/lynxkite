@@ -5,6 +5,6 @@ angular.module('biggraph').directive('delta', function() {
   return {
     restrict: 'E',
     scope: { ref: '=', lastOperation: '=' },
-    templateUrl: 'delta.html',
+    templateUrl: 'scripts/project/delta.html',
   };
 });

@@ -6,7 +6,7 @@ function(util, $timeout, removeOptionalDefaults) {
   return {
     restrict: 'E',
     scope: { show: '=', side: '=' },
-    templateUrl: 'project-history.html',
+    templateUrl: 'scripts/project/project-history.html',
     link: function(scope) {
       scope.$watch('show', getHistory);
       scope.$watch('side.state.projectName', getHistory);
