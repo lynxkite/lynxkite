@@ -16,7 +16,6 @@ import scala.util.DynamicVariable
 class ScalaScriptSecurityManager extends SecurityManager {
 
   val shouldCheck = new DynamicVariable[Boolean](false)
-
   def checkedRun[R](op: => R): R = {
     shouldCheck.withValue(true) {
       op
