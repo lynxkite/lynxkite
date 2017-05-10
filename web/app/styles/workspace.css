@@ -1,5 +1,7 @@
-#workspace-main {
+#workspace-entry-point {
   height: 100vh;
+  overflow: hidden;
+  position: relative; /* Constrain absolute-positioned elements within. */
 }
 
 #workspace-header {
@@ -12,10 +14,6 @@ span#workspace-name {
   font-size: 2em;
 }
 
-div#workspace-main-layout {
-  height: calc(100% - 50px);
-}
-
 #workspace-drawing-board {
   user-select: none;
   height: 100%;
@@ -25,6 +23,9 @@ div#workspace-main-layout {
 .operation-selector {
   margin-left: -35px;
   float: left;
+  max-height: 100%;
+  width: 35px;
+  overflow: auto; /* Allow scrolling category list, if necessary. */
 }
 #workspace-drawing-board > svg {
   display: block;
@@ -84,6 +85,7 @@ circle.io-circle.in-progress {
 line.arrow {
   stroke-width: 1;
   stroke: blue;
+  pointer-events: none; /* Pass events through, so arrows do not block plugs. */
 }
 line.pulled-arrow {
   stroke-dasharray: 2;
@@ -100,8 +102,9 @@ div.popup-head {
   width: 100%;
   background: lightblue;
   font-weight: bold;
-  padding: 3px;
+  padding-left: 10px;
   height: 35px;
+  line-height: 35px;
   cursor: default;
 }
 
@@ -110,4 +113,17 @@ div.popup-content {
   height: 100%;
   overflow: auto;
   background: white;
+}
+
+polygon.popup-trail {
+  fill: white;
+  opacity: 0.5;
+  pointer-events: none; /* Let mouse events through so we do not block clicks. */
+}
+
+.popup #help-toggle {
+  text-align: right;
+  display: block;
+  margin-bottom: 10px;
+  text-decoration: none;
 }

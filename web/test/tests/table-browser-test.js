@@ -11,7 +11,7 @@ module.exports = function(fw) {
     'SQL table browser in project',
     function() {
       // Create a segmentation.
-      lib.left.runOperation('Segment by double attribute', {
+      lib.left.runOperation('Segment by Double attribute', {
         'attr': 'age',
         'interval_size': '1',
         'name': 'bucketing'

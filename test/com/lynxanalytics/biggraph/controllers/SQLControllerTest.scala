@@ -221,7 +221,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     createProject(name = "dir/example2")
     run("Create example graph", on = "dir/example2")
     run(
-      "Segment by double attribute",
+      "Segment by Double attribute",
       params = Map(
         "name" -> "bucketing",
         "attr" -> "age",
@@ -229,7 +229,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
         "overlap" -> "no"),
       on = "dir/example2")
     run(
-      "Segment by double attribute",
+      "Segment by Double attribute",
       params = Map(
         "name" -> "vertices", // This segmentation is named vertices to test extremes.
         "attr" -> "age",

@@ -284,7 +284,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     var i;
     var zoom = this.svg.height() * graphToSVGRatio;
     var sides = [this.scope.graph.left, this.scope.graph.right];
-    var visibleSides = sides.filter(function(s) { return s && s.graphMode; } );
+    var visibleSides = sides.filter(function(s) { return s && s.graphMode; });
     var halfColumnWidth = this.svg.width() / visibleSides.length / 2;
     this.edgeGroups = [];
     this.vertexGroups = [];
@@ -642,7 +642,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       var labelSize = 0.5;
       if (labelSizeAttr) {
         var l = vertex.attrs[labelSizeAttr].double;
-        labelSize = l > 0 ? l / labelSizeMax: 0;
+        labelSize = l > 0 ? l / labelSizeMax : 0;
       }
 
       var color = UNCOLORED;

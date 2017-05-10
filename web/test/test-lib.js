@@ -1,8 +1,11 @@
 'use strict';
 
-var testLib; // Forward declarations.
+
 var request = require('request');
 var fs = require('fs');
+
+// Forward declarations.
+var testLib;
 
 var K = protractor.Key;  // Short alias.
 
@@ -129,9 +132,9 @@ Entity.prototype = {
 };
 
 function Workspace() {
-  this.main = element(by.id('workspace-main'));
+  this.main = element(by.id('workspace-entry-point'));
   this.selector = element(by.css('.operation-selector'));
-  this.board = element(by.css('workspace-drawing-board'));
+  this.board = element(by.css('#workspace-drawing-board'));
 }
 
 Workspace.prototype = {
@@ -152,6 +155,13 @@ Workspace.prototype = {
 
   closeOperationSelector: function() {
     this.selector.element(by.id('operation-search')).click();
+  },
+
+  duplicate: function() {
+    browser.actions()
+        .sendKeys(K.chord(K.CONTROL, 'c'))
+        .sendKeys(K.chord(K.CONTROL, 'v'))
+        .perform();
   },
 
   addBox: function(boxData) {
@@ -176,10 +186,42 @@ Workspace.prototype = {
     }
   },
 
+  selectBoxes: function(boxIds) {
+    // Without this, we would just add additional boxes to the previous selection
+    this.selectBox(boxIds[0]);
+    browser.actions().keyDown(protractor.Key.CONTROL).perform();
+    for (var i = 1; i < boxIds.length; ++i) {
+      this.selectBox(boxIds[i]);
+    }
+    browser.actions().keyUp(protractor.Key.CONTROL).perform();
+  },
+
+  deleteBoxes: function(boxIds) {
+    this.selectBoxes(boxIds);
+    this.main.$('#delete-selected-boxes').click();
+  },
+
   editBox: function(boxID, params) {
     var boxEditor = this.openBoxEditor(boxID);
     boxEditor.populateOperation(params);
     boxEditor.close();
+  },
+
+  addWorkspaceParameter: function(name, kind, defaultValue) {
+    var boxEditor = this.openBoxEditor('anchor');
+    boxEditor.element.$('#add-parameter').click();
+    boxEditor.element.$('#-id').sendKeys(name);
+    boxEditor.element.$('#' + name + '-type').sendKeys(kind);
+    boxEditor.element.$('#' + name + '-default').sendKeys(defaultValue);
+    boxEditor.close();
+  },
+
+  boxExists(boxId) {
+    return this.board.$('.box#' + boxId).isPresent();
+  },
+
+  boxPopupExists(boxId) {
+    return this.board.$('.popup#' + boxId).isPresent();
   },
 
   getBox(boxID) {
@@ -208,9 +250,12 @@ Workspace.prototype = {
     this.getOutputPlug(boxID, plugID).click();
   },
 
+  selectBox: function(boxId) {
+    this.getBox(boxId).$('rect').click();
+  },
 
   openBoxEditor: function(boxId) {
-    this.getBox(boxId).$('rect').click();
+    this.selectBox(boxId);
     var popup = this.board.$('.popup#' + boxId);
     expect(popup.isDisplayed()).toBe(true);
     this.movePopupToCenter(popup);
@@ -221,7 +266,7 @@ Workspace.prototype = {
     var head = popup.$('div.popup-head');
     browser.actions()
         .mouseDown(head)
-        .mouseMove(this.board, {x: 700, y: 20})
+        .mouseMove(this.board, {x: 500, y: 20})
         .mouseUp(head)
         .perform();
   },
@@ -238,6 +283,11 @@ Workspace.prototype = {
     return new State(popup);
   },
 
+  expectConnected: function(srcBoxID, srcPlugID, dstBoxID, dstPlugID) {
+    var line = this.board.$(`line#${srcBoxID}-${srcPlugID}-${dstBoxID}-${dstPlugID}`);
+    expect(line.isPresent()).toBe(true);
+  },
+
   connectBoxes: function(srcBoxID, srcPlugID, dstBoxID, dstPlugID) {
     var src = this.getOutputPlug(srcBoxID, srcPlugID);
     var dst = this.getInputPlug(dstBoxID, dstPlugID);
@@ -248,20 +298,25 @@ Workspace.prototype = {
         .mouseMove(dst)
         .mouseUp()
         .perform();
+    this.expectConnected(srcBoxID, srcPlugID, dstBoxID, dstPlugID);
   }
 
 };
 
 function BoxEditor(popup) {
   this.popup = popup;
-  this.boxEditor = popup.$('box-editor');
+  this.element = popup.$('box-editor');
 }
 
 BoxEditor.prototype = {
 
   operationParameter: function(param) {
-    return this.boxEditor.element(by.css(
-        'operation-parameters #' + param + ' .operation-attribute-entry'));
+    return this.element.$(
+        'operation-parameters #' + param + ' .operation-attribute-entry');
+  },
+
+  parametricSwitch: function(param) {
+    return this.element.$('operation-parameters #' + param + ' .parametric-switch');
   },
 
   populateOperation: function(params) {
@@ -273,12 +328,12 @@ BoxEditor.prototype = {
   },
 
   expectParameter: function(paramName, expectedValue) {
-    var param = this.boxEditor.$('div#' + paramName + ' input');
+    var param = this.element.$('div#' + paramName + ' input');
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
   expectSelectParameter: function(paramName, expectedValue) {
-    var param = this.boxEditor.$('div#' + paramName + ' select');
+    var param = this.element.$('div#' + paramName + ' select');
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
@@ -291,12 +346,87 @@ function State(popup) {
   this.popup = popup;
   this.left = new Side(this.popup, 'left');
   this.right = new Side(this.popup, 'right');
+  this.table = new TableState(this.popup);
 }
 
 State.prototype = {
   close: function() {
     this.popup.$('#close-popup').click();
   }
+};
+
+function TableState(popup) {
+  this.sample = popup.$('#table-sample');
+  this.control = popup.$('#table-control');
+}
+
+TableState.prototype = {
+  rowCount: function() {
+    return this.sample.$$('tbody tr').count();
+  },
+
+  expectRowCountIs: function(number) {
+    expect(this.rowCount()).toBe(number);
+  },
+
+  columnNames: function() {
+    return this.sample.$$('thead tr th span.column-name').map(e => e.getText());
+  },
+
+  expectColumnNamesAre(columnNames) {
+    expect(this.columnNames()).toEqual(columnNames);
+  },
+
+  columnTypes: function() {
+    return this.sample.$$('thead tr th span.column-type').map(e => e.getText());
+  },
+
+  expectColumnTypesAre(columnTypes) {
+    expect(this.columnTypes()).toEqual(columnTypes);
+  },
+
+  getRowAsArray: function(row) {
+    return row.$$('td').map(e => e.getText());
+  },
+
+  rows: function() {
+    return this.sample.$$('tbody tr').map(e => this.getRowAsArray(e));
+  },
+
+  expectRowsAre(rows) {
+    expect(this.rows()).toEqual(rows);
+  },
+
+  firstRow: function() {
+    var row = this.sample.$$('tbody tr').get(0);
+    return this.getRowAsArray(row);
+  },
+
+  expectFirstRowIs: function(row) {
+    expect(this.firstRow()).toEqual(row);
+  },
+
+  clickColumn(columnId) { // for sorting
+    var header = this.sample.$$('thead tr th').get(columnId);
+    header.click();
+  },
+
+  clickShowMoreRows: function() {
+    var button = this.control.$('#more-rows-button');
+    button.click();
+  },
+
+  setRowCount: function(num) {
+    var input = this.control.$('#sample-rows');
+    input.sendKeys(testLib.selectAllKey + num.toString());
+  },
+
+  clickShowSample: function() {
+    var button = this.control.$('#get-sample-button');
+    button.click();
+  },
+
+
 };
 
 function Side(popup, direction) {
@@ -776,7 +906,7 @@ Selector.prototype = {
     // Floating elements can overlap buttons and block clicks.
     browser.executeScript(`
       document.styleSheets[0].insertRule(
-        '.spark-status, .bottom-links { position: static !important; }');
+        '.spark-status, .user-menu { position: static !important; }');
         `);
   },
 
@@ -843,11 +973,11 @@ Selector.prototype = {
   },
 
   enterSearchQuery: function(query) {
-    element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + query);
+    element(by.id('search-box')).sendKeys(testLib.selectAllKey + query);
   },
 
   clearSearchQuery: function() {
-    element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + K.BACK_SPACE);
+    element(by.id('search-box')).sendKeys(testLib.selectAllKey + K.BACK_SPACE);
   },
 
   globalSqlEditor: function() {
@@ -1025,7 +1155,7 @@ testLib = {
               e.element(by.cssContainingText('option', optionLabelPattern)).click();
             }
           } else if (kind === 'choice') {
-            e.$('option[label="' + value +'"]').click();
+            e.$('option[label="' + value + '"]').click();
           } else {
             e.sendKeys(testLib.selectAllKey + value);
           }
@@ -1049,7 +1179,7 @@ testLib = {
         'window.confirm0 = window.confirm;' +
         'window.confirm = function() {' +
         '  window.confirm = window.confirm0;' +
-        '  return ' + responseValue+ ';' +
+        '  return ' + responseValue + ';' +
         '}');
   },
 
@@ -1127,6 +1257,11 @@ testLib = {
       },
       input.getWebElement());
     input.sendKeys(fileName);
+  },
+
+  loadImportedTable: function() {
+    var loadButton = $('#imported_table button');
+    loadButton.click();
   },
 
   startDownloadWatch: function() {

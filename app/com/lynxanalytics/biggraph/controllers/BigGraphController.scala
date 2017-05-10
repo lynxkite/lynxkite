@@ -66,7 +66,7 @@ object FEOption {
   val noWeight = special("!no weight")
   val unitDistances = special("!unit distances")
   val internalId = special("!internal id (default)")
-  val jsDataTypes = FEOption.list("double", "string", "vector of doubles", "vector of strings")
+  val jsDataTypes = FEOption.list("Double", "String", "Vector of Doubles", "Vector of Strings")
 }
 
 case class FEAttribute(

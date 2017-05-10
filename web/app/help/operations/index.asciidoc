@@ -223,6 +223,8 @@ include::discard-loop-edges.asciidoc[]
 
 include::discard-scalars.asciidoc[]
 
+include::discard-segmentation-links.asciidoc[]
+
 include::discard-segmentation.asciidoc[]
 
 include::discard-vertex-attributes.asciidoc[]
@@ -392,6 +394,10 @@ include::take-edges-as-vertices.asciidoc[]
 include::take-segmentation-as-base-project.asciidoc[]
 
 include::take-segmentation-links-as-base-project.asciidoc[]
+
+include::train-a-decision-tree-classification-model.asciidoc[]
+
+include::train-a-decision-tree-regression-model.asciidoc[]
 
 include::train-a-kmeans-clustering-model.asciidoc[]
 

@@ -418,6 +418,8 @@ object ProductionJsonServer extends JsonServer {
   def getProgress = jsonGet(workspaceController.getProgress)
   def getOperationMeta = jsonGet(workspaceController.getOperationMeta)
   def setWorkspace = jsonPost(workspaceController.setWorkspace)
+  def undoWorkspace = jsonPost(workspaceController.undoWorkspace)
+  def redoWorkspace = jsonPost(workspaceController.redoWorkspace)
   def boxCatalog = jsonGet(workspaceController.boxCatalog)
   def getExportResultOutput = jsonGet(workspaceController.getExportResultOutput)
 
@@ -437,7 +439,7 @@ object ProductionJsonServer extends JsonServer {
   def getTableOutputData(user: serving.User, request: GetTableOutputRequest): GetTableOutputResponse = {
     implicit val metaManager = workspaceController.metaManager
     val table = workspaceController.getOutput(user, request.id).table
-    sqlController.getTableSample(table)
+    sqlController.getTableSample(table, request.sampleRows)
   }
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)

@@ -19,17 +19,25 @@ angular.module('biggraph').directive('projectSelector',
         scope.newDirectory = defaultSettings();
         scope.path = scope.path || window.sessionStorage.getItem('last_selector_path') ||
           window.localStorage.getItem('last_selector_path') || '';
-        hotkeys.bindTo(scope)
-          .add({
-            combo: 'c', description: 'Create new project',
-            callback: function(e) { e.preventDefault(); scope.newProject = { expanded: true }; },
-          });
+        var hk = hotkeys.bindTo(scope);
+        hk.add({
+          combo: 'c', description: 'Create new workspace',
+          callback: function(e) { e.preventDefault(); scope.newWorkspace = { expanded: true }; },
+        });
+        hk.add({
+          combo: 'd', description: 'Create new folder',
+          callback: function(e) { e.preventDefault(); scope.newDirectory = { expanded: true }; },
+        });
+        hk.add({
+          combo: '/', description: 'Search',
+          callback: function(e) { e.preventDefault(); element.find('#search-box').focus(); },
+        });
 
-        scope.$watch('newProject.expanded', function(ex) {
+        scope.$watch('newWorkspace.expanded', function(ex) {
           if (ex) {
             $timeout(
               function() {
-                element.find('#new-project-name')[0].focus();
+                element.find('#new-workspace-name')[0].focus();
               },
               0,
               false); // Do not invoke apply as we don't change the scope.
@@ -234,7 +242,7 @@ angular.module('biggraph').directive('projectSelector',
           },
           editConfig: function(name, config, type) {
             if (config.class.includes('SQL')) {
-              scope.showSQL=true;
+              scope.showSQL = true;
               $anchorScroll('global-sql-box');
               $timeout(function () {
                 scope.$broadcast('fill sql-box from config and clear sql result', name, config, type);
@@ -244,7 +252,9 @@ angular.module('biggraph').directive('projectSelector',
               scope.startTableImport();
               $timeout(function () {
                 $anchorScroll('import-table');
-                scope.$broadcast('fill import from config', config, name, type);
+                var fullName = name.split('/');
+                var relativeName = fullName[fullName.length - 1];
+                scope.$broadcast('fill import from config', config, relativeName, type);
               });
             }
           },

@@ -8,7 +8,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
     val other = box("Create example graph")
       .box("Derive scalar", Map(
         "output" -> "scalar_val",
-        "type" -> "double",
+        "type" -> "Double",
         "expr" -> "42.0"))
     val project = box("Create example graph")
       .box("Copy scalar from other project", Map(
@@ -25,7 +25,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
         "dist" -> "Standard Normal",
         "name" -> "rnd",
         "seed" -> "1474343267"))
-      .box("Segment by double attribute", Map(
+      .box("Segment by Double attribute", Map(
         "attr" -> "rnd",
         "interval_size" -> "0.1",
         "name" -> "seg",
@@ -33,7 +33,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
       .box("Derive scalar", Map(
         "apply_to_project" -> "|seg",
         "output" -> "scalar_val",
-        "type" -> "string",
+        "type" -> "String",
         "expr" -> "'myvalue'"))
     val project = box("Create example graph")
       .box("Copy scalar from other project", Map(
@@ -51,7 +51,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
         "dist" -> "Standard Normal",
         "name" -> "rnd",
         "seed" -> "1474343267"))
-      .box("Segment by double attribute", Map(
+      .box("Segment by Double attribute", Map(
         "attr" -> "rnd",
         "interval_size" -> "0.1",
         "name" -> "seg",
@@ -61,7 +61,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
         "dist" -> "Standard Normal",
         "name" -> "rnd2",
         "seed" -> "1474343267"))
-      .box("Segment by double attribute", Map(
+      .box("Segment by Double attribute", Map(
         "apply_to_project" -> "|seg",
         "attr" -> "rnd2",
         "interval_size" -> "0.1",
@@ -70,7 +70,7 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
       .box("Derive scalar", Map(
         "apply_to_project" -> "|seg|seg2",
         "output" -> "deep_scalar",
-        "type" -> "string",
+        "type" -> "String",
         "expr" -> "'deep value'"))
     val project = box("Create example graph")
       .box("Copy scalar from other project", Map(
