@@ -1403,7 +1403,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register(
     "Convert edge attribute to Double", EdgeAttributesOperations, new ProjectTransformation(_) {
-      val eligible =
+      def eligible =
         project.edgeAttrList[String] ++
           project.edgeAttrList[Long] ++
           project.edgeAttrList[Int]
@@ -1774,7 +1774,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Predict from model", MachineLearningOperations, new ProjectTransformation(_) {
-    val models = project.viewer.models.filterNot(_._2.isClassification)
+    def models = project.viewer.models.filterNot(_._2.isClassification)
     override val params = super.params ++ List(
       Param("name", "The name of the attribute of the predictions"),
       ModelParams("model", "The parameters of the model", models, project.vertexAttrList[Double]))
@@ -1800,7 +1800,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Classify vertices with a model", MachineLearningOperations, new ProjectTransformation(_) {
-    val models = project.viewer.models.filter(_._2.isClassification)
+    def models = project.viewer.models.filter(_._2.isClassification)
     override val params = super.params ++ List(
       Param("name", "The name of the attribute of the classifications"),
       ModelParams("model", "The parameters of the model", models, project.vertexAttrList[Double]))
