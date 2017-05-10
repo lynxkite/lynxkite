@@ -263,12 +263,22 @@ class LazyParameters(context: Operation.Context, metas: Stream[() => OperationPa
     metas.map(fn => fn())
   }
 
+  private val goodSoFar =
+    new ThreadLocal[Seq[OperationParameterMeta]] { override def initialValue() = null }
   private def goodMetas: Seq[OperationParameterMeta] = {
-    var good = Seq[OperationParameterMeta]()
-    try {
-      for (fn <- metas) good = good :+ fn()
-    } catch { case t: Throwable => }
-    good
+    if (goodSoFar.get != null) {
+      // This is a recursive call. Just return what we have so far.
+      goodSoFar.get
+    } else {
+      // First call. Do the real work.
+      goodSoFar.set(Seq())
+      try {
+        for (fn <- metas) goodSoFar.set(goodSoFar.get :+ fn())
+      } catch { case t: Throwable => }
+      val good = goodSoFar.get
+      goodSoFar.set(null)
+      good
+    }
   }
 
   private def logErrors(): Unit = {
