@@ -28,7 +28,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
       this.owner.movedPopup = this;
       this.moveOffsetX = this.x - event.pageX;
       this.moveOffsetY = this.y - event.pageY;
-      // Save width and height of the popup in case it has been resized. Remove 'px' from the end.
+      // Save width and height of the popup. Remove 'px' from the end.
       this.width = event.target.parentElement.style.width.slice(0, -2);
       this.height = event.target.parentElement.style.height.slice(0, -2);
     }

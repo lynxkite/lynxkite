@@ -29,7 +29,7 @@ module.exports = function(fw) {
       boxEditor = lib.workspace.openBoxEditor('pr2');
       boxEditor.expectSelectParameter('direction', 'string:incoming edges');
       boxEditor.close();
-    });
+    }, 'solo');
 
   fw.statePreservingTest(
     'test pagerank default choice values',
