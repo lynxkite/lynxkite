@@ -241,6 +241,8 @@ include::export-segmentation-to-file.asciidoc[]
 
 include::export-to-csv.asciidoc[]
 
+include::export-to-jdbc.asciidoc[]
+
 include::export-to-json.asciidoc[]
 
 include::export-to-orc.asciidoc[]

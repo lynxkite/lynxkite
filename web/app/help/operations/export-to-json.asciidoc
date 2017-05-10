@@ -6,6 +6,15 @@ https://en.wikipedia.org/wiki/JSON[JSON] object.
 
 ====
 [[path]] Path::
-The distributed file-system path of the output file. It defaults to `<download>`, in which case the
-output file will be downloaded through the browser. This is the simplest option for small data sets.
+The distributed file-system path of the output file. It defaults to `<auto>`, in which case the
+path is auto generated from the parameters and the type of export (e.g. `Export to CSV`).
+This means that the same export operation with the same parameters always generates the same path.
+
+[[version]] Version::
+Version is the version number of the result of the export operation. It is a non negative integer.
+LynxKite treats export operations as other operations: it remembers the result (which in this case
+is the knowledge that the export was successfully done) and won't repeat the calculation. However,
+there might be a need to export an already exported table with the same set of parameters (e.g. the
+exported file is lost). In this case you need to change the version number, making that parameters
+are not the same as in the previous export.
 ====
