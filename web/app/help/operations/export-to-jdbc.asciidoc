@@ -22,4 +22,12 @@ it already exists. Use this mode with great care.
 +
 **Insert into an existing table** requires the
 table to already exist and it will add the exported data at the end of the existing table.
+
+[[version]] Version::
+Version is the version number of the result of the export operation. It is a non negative integer.
+LynxKite treats export operations as other operations: it remembers the result (which in this case
+is the knowledge that the export was successfully done) and won't repeat the calculation. However,
+there might be a need to export an already exported table with the same set of parameters (e.g. the
+exported table is lost). In this case you need to change the version number, making that parameters
+are not the same as in the previous export.
 ====
