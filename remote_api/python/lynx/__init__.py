@@ -14,7 +14,7 @@ Example usage::
     lk = lynx.LynxKite()
     p = lk.new_project()
     p.newVertexSet(size=100)
-    print(p.scalar('vertex_count'))
+    print(p.scalar('!vertex_count'))
 
 The list of operations is not documented, but you can copy the invocation from a LynxKite project
 history.
@@ -621,7 +621,7 @@ class SubProject:
         directions='ignore directions',
         name='connected_components')
       s = p.segmentation('connected_components')
-      print(s.scalar('vertex_count'))
+      print(s.scalar('!vertex_count'))
 
   '''
 

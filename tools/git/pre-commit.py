@@ -25,7 +25,7 @@ def get_hashes(files):
   return hashes
 
 
-protected_branches = ['master']
+protected_branches = ['master', 'boxes']
 branch = subprocess.check_output(
     'git rev-parse --abbrev-ref=strict HEAD'.split()).strip()
 if branch in protected_branches:

@@ -22,7 +22,7 @@ is set accordingly). Vectors can not contain `undefined` elements.
 The new attribute will be created under this name.
 
 [[type]] Result type::
-The type (`double`, `string`, `vector of doubles` or `vector of strings`) of the created attribute.
+The type (`Double`, `String`, `Vector of Doubles` or `Vector of Strings`) of the created attribute.
 
 [[defined_attrs]] Only run on defined attributes::
 - `true`: The new attribute will only be defined on edges for which all the attributes used in the

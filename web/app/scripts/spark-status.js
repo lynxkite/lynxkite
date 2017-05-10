@@ -24,7 +24,7 @@ angular.module('biggraph')
       scope.hashToColor = function(active, hash) {
         hash = Math.abs(hash);
         /* global tinycolor */
-        var color = tinycolor({ h: hash % 360, s: 1.0, l: active ? 0.5 : 0.9 } );
+        var color = tinycolor({ h: hash % 360, s: 1.0, l: active ? 0.5 : 0.9 });
         return color.toString();
       };
 

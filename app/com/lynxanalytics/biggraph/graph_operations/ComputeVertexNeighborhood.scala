@@ -15,6 +15,7 @@ object ComputeVertexNeighborhood extends OpFromJson {
     ComputeVertexNeighborhood((j \ "centers").as[Seq[ID]], (j \ "radius").as[Int])
 }
 import ComputeVertexNeighborhood._
+@deprecated("ComputeVertexNeighborhood is deprecated, use ComputeVertexNeighborhoodFromEdgesAndNeighbors", "1.13.1")
 case class ComputeVertexNeighborhood(
     centers: Seq[ID],
     radius: Int) extends TypedMetaGraphOp[Input, Output] {

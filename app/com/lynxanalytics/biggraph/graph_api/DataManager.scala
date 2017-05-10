@@ -20,6 +20,7 @@ import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
@@ -28,7 +29,6 @@ trait EntityProgressManager {
     computeProgress: Double,
     value: Option[T],
     error: Option[Throwable])
-
   // Returns an indication of whether the entity has already been computed.
   // 0 means it is not computed.
   // 1 means it is computed.
@@ -114,23 +114,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
     entityCache(entity.gUID) = data
   }
 
-  // This is for asynchronous tasks. We store them so that waitAllFutures can wait
-  // for them, but remove them on completion so that the data structure does not grow indefinitely.
-  private val loggedFutures = collection.mutable.Map[Object, SafeFuture[Unit]]()
-
-  def loggedFuture(func: => Unit): Unit = loggedFutures.synchronized {
-    val key = new Object
-    val future = SafeFuture {
-      try {
-        func
-      } catch {
-        case t: Throwable => log.error("future failed:", t)
-      } finally loggedFutures.synchronized {
-        loggedFutures.remove(key)
-      }
-    }
-    loggedFutures.put(key, future)
-  }
+  private val asyncJobs = new ControlledFutures()(executionContext)
 
   // Runs something on the DataManager threadpool.
   // Use this to run Spark operations from HTTP handlers. (SPARK-12964)
@@ -181,7 +165,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
           // We still save all scalars even for non-heavy operations,
           // unless they are explicitly say 'never serialize'.
           // This can happen asynchronously though.
-          loggedFuture {
+          asyncJobs.register {
             saveOutputs(instance, outputDatas.values.collect { case o: ScalarData[_] => o })
           }
         }
@@ -314,7 +298,9 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
               instanceFuture.map(_(output.gUID))
             })
         }
-        logger.logWhenReady()
+
+        logger.logWhenReady(asyncJobs)
+
       }
     }
   }
@@ -358,8 +344,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
 
   def waitAllFutures(): Unit = {
     SafeFuture.sequence(entityCache.values.toSeq).awaitReady(Duration.Inf)
-    val futures = loggedFutures.synchronized { loggedFutures.values.toList }
-    SafeFuture.sequence(futures).awaitReady(Duration.Inf)
+    asyncJobs.waitAllFutures()
   }
 
   def get(vertexSet: VertexSet): VertexSetData = {

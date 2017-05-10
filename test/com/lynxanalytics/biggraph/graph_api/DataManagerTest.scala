@@ -1,12 +1,11 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import org.apache.spark
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.graph_operations
-import com.lynxanalytics.biggraph.graph_operations.{ EnhancedExampleGraph, ExampleGraph }
+import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
 class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataManager {
@@ -170,23 +169,6 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     assert(df.count == 5)
   }
   */
-
-  ignore("waitAllFutures waits for futures") {
-    val metaManager = cleanMetaManager
-    val dataManager = cleanDataManager
-
-    val state = new java.util.concurrent.atomic.AtomicReference[Integer](0)
-    dataManager.loggedFuture {
-      Thread.sleep(1000L * 15)
-      state.set(1)
-    }
-    val instance = metaManager.apply(ExampleGraph(), MetaDataSet())
-    val greeting = instance.outputs.scalars('greeting).runtimeSafeCast[String]
-    dataManager.get(greeting)
-
-    dataManager.waitAllFutures()
-    assert(state.get() == 1)
-  }
 
   test("an operation triggering computation results in exception (#5580)") {
     implicit val metaManager = cleanMetaManager
