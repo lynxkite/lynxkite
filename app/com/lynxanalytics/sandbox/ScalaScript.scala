@@ -16,6 +16,7 @@ import scala.util.DynamicVariable
 class ScalaScriptSecurityManager extends SecurityManager {
 
   val shouldCheck = new DynamicVariable[Boolean](false)
+
   def checkedRun[R](op: => R): R = {
     shouldCheck.withValue(true) {
       op
@@ -61,6 +62,12 @@ class ScalaScriptSecurityManager extends SecurityManager {
         case _ =>
           super.checkPermission(permission)
       }
+    }
+  }
+
+  override def checkPermission(permission: Permission, o: scala.Any): Unit = {
+    if (shouldCheck.value) {
+      super.checkPermission(permission, o)
     }
   }
 
