@@ -99,7 +99,6 @@ abstract class OperationParameterMeta {
 // Operation.Context parameter. Operations are short-lived and created for a specific input.
 trait Operation {
   protected val context: Operation.Context
-  def enabled: FEStatus
   def summary: String
   def getOutputs: Map[BoxOutput, BoxOutputState]
   def toFE: FEOperationMeta
@@ -257,7 +256,7 @@ class LazyParameters(context: Operation.Context, metas: Stream[() => OperationPa
   }
 
   def ++(more: => Seq[OperationParameterMeta]): LazyParameters = {
-    new LazyParameters(context, metas #::: more.toStream.map(m => () => m))
+    new LazyParameters(context, metas.append(more.map(m => () => m)))
   }
 
   private def allMetas: Seq[OperationParameterMeta] = {
@@ -265,12 +264,18 @@ class LazyParameters(context: Operation.Context, metas: Stream[() => OperationPa
   }
 
   private def goodMetas: Seq[OperationParameterMeta] = {
-    metas.view.flatMap(fn => util.Try(fn()).toOption)
+    var good = Seq[OperationParameterMeta]()
+    try {
+      for (fn <- metas) good = good :+ fn()
+    } catch { case t: Throwable => }
+    good
   }
 
   private def logErrors(): Unit = {
-    for (exception <- metas.flatMap(fn => util.Try(fn()).failed.toOption)) {
-      log.error("Failure while generating parameters.", exception)
+    try {
+      for (fn <- metas) fn()
+    } catch {
+      case t: Throwable => log.error("Failure while generating parameters.", t)
     }
   }
 
@@ -302,6 +307,9 @@ trait BasicOperation extends Operation {
   protected def visibleScalars: List[FEScalar] = List()
   def summary = title
   protected def apply(): Unit
+  protected def enabled: FEStatus
+  protected def safeEnabled: FEStatus =
+    util.Try(enabled).recover { case exc => FEStatus.disabled(exc.getMessage) }.get
   protected def help = // Add to notes for help link.
     "<help-popup href=\"" + Operation.htmlID(id) + "\"></help-popup>"
 
@@ -344,7 +352,7 @@ trait BasicOperation extends Operation {
     params.toFE,
     visibleScalars,
     context.meta.categoryID,
-    enabled,
+    safeEnabled,
     description = context.meta.description)
 
   protected def projectInput(input: String): ProjectEditor = {
@@ -446,9 +454,8 @@ abstract class MinimalOperation(
     params.toFE,
     List(),
     context.meta.categoryID,
-    enabled)
+    FEStatus.enabled)
   def getOutputs() = ???
-  def enabled = FEStatus.enabled
 }
 
 // A DecoratorOperation is an operation that has no input or output and is outside of the
