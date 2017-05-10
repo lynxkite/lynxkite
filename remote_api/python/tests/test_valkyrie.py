@@ -7,10 +7,6 @@ import types
 
 class TestValkyrie(unittest.TestCase):
 
-  def test_ttl(self):
-    ttl = valkyrie.ValkyrieCleanup._ttl('root/some directory (ttl=48h)')
-    self.assertEqual(datetime.timedelta(days=2), ttl)
-
   @mock.patch('lynx.util.HDFS.rm')
   @mock.patch('lynx.util.HDFS.list')
   def test_run(self, hdfs_list, hdfs_rm):
