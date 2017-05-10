@@ -10,54 +10,55 @@
 //   coordinates on the workspace and everything related to this
 //   box instance that have to be saved.
 
-angular.module('biggraph').factory('boxWrapper', function(plugWrapper) {
-  return function(metadata, instance) {
-    function getCommentLines() {
-      var comment;
-      if (metadata.operationID === 'Add comment') {
-        comment = instance.parameters.comment;
-      } else if (metadata.operationID === 'Anchor') {
-        comment = instance.parameters.description;
-      }
-      return comment ? comment.split('\n') : [];
+angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
+  function getCommentLines(metadata, instance) {
+    var comment;
+    if (metadata.operationID === 'Add comment') {
+      comment = instance.parameters.comment;
+    } else if (metadata.operationID === 'Anchor') {
+      comment = instance.parameters.description;
     }
+    return comment ? comment.split('\n') : [];
+  }
 
-    var box = {
-      metadata: metadata,
-      instance: instance,
-      inputs: [],
-      outputs: [],
-      outputMap: {},
-      width: 200,
-      height: 40,
-      cx: function() { return instance.x + this.width / 2; },
-      cy: function() { return instance.y + this.height / 2; },
-      commentLines: getCommentLines(),
-      isMoved: false,
-      mainPosTransform: function() {
-        return 'translate(' + this.instance.x + ', ' + this.instance.y + ')';
-      },
-      onMouseMove: function(event) {
-        this.isMoved = true;
-        this.instance.x = event.logicalX + this.xOffset;
-        this.instance.y = event.logicalY + this.yOffset;
-      },
-      onMouseDown: function(event) {
-        this.xOffset = this.instance.x - event.logicalX;
-        this.yOffset = this.instance.y - event.logicalY;
-      },
-    };
+  function BoxWrapper(metadata, instance) {
+    this.metadata = metadata;
+    this.instance = instance,
+    this.inputs = [];
+    this.outputs = [];
+    this.outputMap = {};
+    this.width = 200;
+    this.height = 40;
+    this.commentLines = getCommentLines(metadata, instance);
+    this.isMoved = false;
 
     var i;
-    for (i = 0; i < box.metadata.inputs.length; ++i) {
-      box.inputs.push(plugWrapper(box.metadata.inputs[i], i, 'inputs', box));
+    for (i = 0; i < metadata.inputs.length; ++i) {
+      this.inputs.push(new PlugWrapper(metadata.inputs[i], i, 'inputs', this));
     }
-    for (i = 0; i < box.metadata.outputs.length; ++i) {
-      var plug = plugWrapper(box.metadata.outputs[i], i, 'outputs', box);
-      box.outputs.push(plug);
-      box.outputMap[plug.id] = plug;
+    for (i = 0; i < metadata.outputs.length; ++i) {
+      var plug = new PlugWrapper(metadata.outputs[i], i, 'outputs', this);
+      this.outputs.push(plug);
+      this.outputMap[plug.id] = plug;
     }
+  }
 
-    return box;
+  BoxWrapper.prototype = {
+    cx: function() { return this.instance.x + this.width / 2; },
+    cy: function() { return this.instance.y + this.height / 2; },
+    mainPosTransform: function() {
+      return 'translate(' + this.instance.x + ', ' + this.instance.y + ')';
+    },
+    onMouseMove: function(event) {
+      this.isMoved = true;
+      this.instance.x = event.logicalX + this.xOffset;
+      this.instance.y = event.logicalY + this.yOffset;
+    },
+    onMouseDown: function(event) {
+      this.xOffset = this.instance.x - event.logicalX;
+      this.yOffset = this.instance.y - event.logicalY;
+    },
   };
+
+  return BoxWrapper;
 });

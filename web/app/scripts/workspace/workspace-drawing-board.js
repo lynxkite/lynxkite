@@ -6,7 +6,7 @@
 angular.module('biggraph')
   .directive(
   'workspaceDrawingBoard',
-  function(environment, hotkeys, PopupModel, SelectionModel, workspaceWrapper, $rootScope) {
+  function(environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -36,7 +36,7 @@ angular.module('biggraph')
 
           function() {
             if (scope.boxCatalog.$resolved && scope.workspaceName) {
-              scope.workspace = workspaceWrapper(
+              scope.workspace = new WorkspaceWrapper(
                 scope.workspaceName,
                 scope.boxCatalog);
               scope.workspace.loadWorkspace();

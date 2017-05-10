@@ -8,7 +8,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   // owner: Owning object. It should have an owner.popups
   //        list of all popups. And owner.movedPopup a pointer
   //        to the currently moved popup, if any.
-  var PopupModel = function(id, title, content, x, y, width, height, owner) {
+  function PopupModel(id, title, content, x, y, width, height, owner) {
     this.id = id;
     this.title = title;
     this.content = content;
@@ -17,7 +17,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     this.width = width;
     this.height = height;
     this.owner = owner;
-  };
+  }
 
   PopupModel.prototype.onMouseDown = function(event) {
     var leftButton = event.buttons & 1;
