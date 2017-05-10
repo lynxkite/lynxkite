@@ -49,8 +49,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     protected def parent = seg.parent
     protected def segmentationParameters(): List[OperationParameterMeta]
     override val params =
-      if (project.isSegmentation) super.params ++ segmentationParameters
-      else super.params
+      super.params ++ (if (project.isSegmentation) segmentationParameters else Nil)
   }
 
   // Categories
@@ -2831,11 +2830,9 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           "seg_id_column",
           s"Identifying column for segmentation",
           options = FEOption.unset +: links.vertexAttrList))
-      override def params = {
+      override val params =
         // We cannot just mix in SegOp, because it extends ProjectTransformation.
-        if (project.isSegmentation) super.params ++ segmentationParameters
-        else super.params
-      }
+        super.params ++ (if (project.isSegmentation) segmentationParameters else Nil)
       def enabled =
         project.assertSegmentation &&
           FEStatus.assert(
