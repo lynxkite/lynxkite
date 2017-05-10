@@ -108,6 +108,24 @@ object ScalaScript {
     }
   }
 
+  def runWithDouble( // this is a POC method
+    code: String, x: Double, timeoutInSeconds: Long = 10L): String = synchronized {
+    withContextClassLoader {
+      engine.put("x: Double", x)
+      val fullCode = s"""
+      val result = {
+          $code
+      }.toString
+      result
+      """
+      val compiledCode = engine.compile(fullCode)
+      withTimeout(timeoutInSeconds) {
+        restrictedSecurityManager.checkedRun {
+          compiledCode.eval().toString
+        }
+      }
+    }
+  }
   private def withContextClassLoader[T](func: => T): T = {
     // IMAIN.compile changes the class loader and does not restore it.
     // https://issues.scala-lang.org/browse/SI-8521
