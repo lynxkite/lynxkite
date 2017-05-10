@@ -75,7 +75,7 @@ angular.module('biggraph')
     return {
       restrict: 'E',
       scope: { helpId: '@href' },
-      templateUrl: 'help-popup.html',
+      templateUrl: 'scripts/help/help-popup.html',
       link: function(scope, element) {
         var button = element.find('#help-button')[0];
         var popup = element.find('#help-popup');

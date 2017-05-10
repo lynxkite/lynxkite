@@ -14,7 +14,7 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
       // Function to call on "blur".
       onBlur: '&',
     },
-    templateUrl: 'file-parameter.html',
+    templateUrl: 'scripts/operation/file-parameter.html',
     link: function(scope, element) {
       var input = angular.element(element).find('input[type="file"]');
       scope.dialog = function() {

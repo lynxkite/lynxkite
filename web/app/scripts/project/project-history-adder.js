@@ -11,6 +11,6 @@ angular.module('biggraph')
         segmentations: '=',  // (Input) List of possible segmentations.
         insertOperation: '&',  // (Method) The directive will call this to insert a new operation.
       },
-      templateUrl: 'project-history-adder.html',
+      templateUrl: 'scripts/project/project-history-adder.html',
     };
   });

@@ -5,7 +5,7 @@ angular.module('biggraph').directive('modelDetails', function(util) {
   return {
     restrict: 'E',
     scope: { scalarId: '=' },
-    templateUrl: 'model-details.html',
+    templateUrl: 'scripts/project/model-details.html',
     link: function(scope) {
       scope.model = util.get('/ajax/model', {
         scalarId: scope.scalarId,

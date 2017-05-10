@@ -7,7 +7,7 @@ angular.module('biggraph').directive('bottomLinks', function($window, util) {
     scope: {
       info: '=',  // Debug data to post with "send feedback".
     },
-    templateUrl: 'bottom-links.html',
+    templateUrl: 'scripts/util/bottom-links.html',
     link: function(scope) {
       scope.util = util;
 

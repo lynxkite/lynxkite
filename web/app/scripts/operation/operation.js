@@ -13,7 +13,7 @@ angular.module('biggraph').directive('operation', function(util, hotkeys /*, $ti
       sideWorkflowEditor: '=',  // (Input/output.) The workflow editor available on this side.
       historyMode: '=',  // (Input.) Whether this operation is inside the history browser.
     },
-    templateUrl: 'operation.html',
+    templateUrl: 'scripts/operation/operation.html',
     link: function(scope, element) {
       scope.scalars = {};
       scope.fileUploads = {};

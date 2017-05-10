@@ -4,7 +4,7 @@ angular.module('biggraph').directive('findInPageBox', function() {
   return {
     restrict: 'E',
     scope: {},
-    templateUrl: 'find-in-page-box.html',
+    templateUrl: 'scripts/help/find-in-page-box.html',
     link: function(scope, element) {
       // DOM root node where to do the searching.
       // Currently this is hard-wired to the parent.

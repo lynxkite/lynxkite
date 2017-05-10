@@ -7,7 +7,7 @@ function($rootScope, hotkeys, util, removeOptionalDefaults) {
   return {
     restrict: 'E',
     scope: { side: '=' },
-    templateUrl: 'side-operation-toolbox.html',
+    templateUrl: 'scripts/project/side-operation-toolbox.html',
     link: function(scope) {
       scope.box = {};
       if (scope.side.direction === 'left') {  // Set up hotkeys for the left side only.

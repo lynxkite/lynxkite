@@ -6,7 +6,7 @@ angular.module('biggraph')
   return {
     restrict: 'E',
     scope: {},
-    templateUrl: 'spark-status.html',
+    templateUrl: 'scripts/util/spark-status.html',
     link: function(scope) {
       sparkStatusUpdater.bind(scope, 'status');
 

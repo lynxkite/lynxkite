@@ -8,7 +8,7 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
       graph: '=',      // The graph to visualize.
       mapFilters: '=', // (Output) Filter settings for the map tiles.
     },
-    templateUrl: 'graph-view-sidebar.html',
+    templateUrl: 'scripts/project/graph-view-sidebar.html',
     link: function(scope, element) {
       scope.$watch('graph.view', updateTSV);
       scope.$watch('graph.view.$resolved', updateTSV);

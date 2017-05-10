@@ -7,7 +7,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   var common = COMMON_UTIL;
   var directive = {
     restrict: 'E',
-    templateUrl: 'graph-view.html',
+    templateUrl: 'scripts/project/graph-view.html',
     scope: { graph: '=', menu: '=' },
     replace: true,
     link: function(scope, element) {

@@ -9,7 +9,7 @@ angular.module('biggraph').directive('projectSelector',
         name: '=', // Exposes the name of the selected project.
         path: '=?', // Starting path.
       },
-      templateUrl: 'project-selector.html',
+      templateUrl: 'scripts/splash/project-selector.html',
       link: function(scope, element) {
         scope.util = util;
         function defaultSettings() {

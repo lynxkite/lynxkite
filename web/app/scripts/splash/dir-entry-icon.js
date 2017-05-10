@@ -7,7 +7,7 @@ angular.module('biggraph').directive('dirEntryIcon',
       scope: {
         objectType: '='
       },
-      templateUrl: 'dir-entry-icon.html',
+      templateUrl: 'scripts/splash/dir-entry-icon.html',
     };
   }
 );

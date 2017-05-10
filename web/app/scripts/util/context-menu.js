@@ -6,7 +6,7 @@ angular.module('biggraph').directive('contextMenu', function($timeout) {
     replace: true,
     restrict: 'E',
     scope: { model: '=' },
-    templateUrl: 'context-menu.html',
+    templateUrl: 'scripts/util/context-menu.html',
     link: function(scope, element) {
       scope.$watch('model.enabled', function(enabled) {
         if (enabled) {

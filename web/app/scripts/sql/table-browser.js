@@ -9,7 +9,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
       directory: '=',
       projectState: '=',
     },
-    templateUrl: 'table-browser.html',
+    templateUrl: 'scripts/sql/table-browser.html',
     link: function(scope) {
       // Create a root node. Its path is the base path in which this
       // browser is operating. (Same as the path of the SQL box.)

@@ -9,7 +9,7 @@ angular.module('biggraph').directive('modelParameter', function(util) {
       editable: '=', // Whether this input is editable.
       modelJson: '=', // Input/output: Model configuration in JSON.
     },
-    templateUrl: 'model-parameter.html',
+    templateUrl: 'scripts/operation/model-parameter.html',
     link: function(scope) {
       scope.activeModel = undefined;
       // Feature name to attribute name. Matching names are added by default.
