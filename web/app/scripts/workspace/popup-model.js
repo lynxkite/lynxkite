@@ -24,9 +24,11 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     // Protractor omits button data from simulated mouse events.
     if (leftButton || environment.protractor) {
       event.stopPropagation();
+      // Enter 'moving mode', i.e. movedPopup is defined.
       this.owner.movedPopup = this;
       this.moveOffsetX = this.x - event.pageX;
       this.moveOffsetY = this.y - event.pageY;
+      // Save width and height of the popup in case it has been resized. Remove 'px' from the end.
       this.width = event.target.parentElement.style.width.slice(0, -2);
       this.height = event.target.parentElement.style.height.slice(0, -2);
     }
@@ -40,6 +42,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     var leftButton = event.buttons & 1;
     // Protractor omits button data from simulated mouse events.
     if (leftButton || environment.protractor) {
+      // Only move the popup if we are in the 'moving mode' (i.e. movedPopup is defined).
       if (this.owner.movedPopup) {
         this.x = this.moveOffsetX + event.pageX;
         this.y = this.moveOffsetY + event.pageY;

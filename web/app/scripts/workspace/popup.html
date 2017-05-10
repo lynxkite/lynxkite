@@ -1,7 +1,7 @@
 <div class="popup"
     ng-mousedown="$event.stopPropagation()"
     ng-mouseup="$event.stopPropagation()"
-    ng-mousemove="$event.stopPropagation()"
+    ng-mousemove="popupModel.onMouseMove($event); $event.stopPropagation();"
     id="{{popupModel.id}}"
     ng-style="{
         'left': popupModel.x + 'px',
@@ -11,10 +11,11 @@
     }">
   <div
       class="popup-head"
-      ng-mousedown="popupModel.onMouseDown($event)">
+      ng-mousedown="popupModel.onMouseDown($event);">
     {{popupModel.title}}
     <div class="clicky pull-right glyphicon glyphicon-remove"
         ng-click="popupModel.close(); event.stopPropagation();"
+        ng-mousedown="$event.stopPropagation()"
         id="close-popup"
         tooltip="Close&nbsp;popup"
         tooltip-append-to-body="true"
