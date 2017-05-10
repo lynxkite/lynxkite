@@ -19,18 +19,17 @@ angular.module('biggraph')
            }
          );
          scope.exportResultOutput.then(function success(exportResultOutput) {
-           scope.result = exportResultOutput.result;
+           // scope.status is the scalar value which is shown on the state viewer.
+           scope.status = util.lazyFetchScalarValue(scope.exportResultOutput.result, false);
+           scope.status.value.computeOnCommand = true;
+           scope.parameters = exportResultOutput.parameters;
+           // Only exported files can be downloaded, JDBC exports not.
+           scope.downloadable = (scope.parameters.format !== 'jdbc') ? true : false;
          });
        });
 
-       util.deepWatch(scope, 'result', function() {
-         var progress = scope.result.computeProgress;
-         scope.alreadyExported = (progress === 1) ? true : false;
-         scope.error = (progress === -1) ? scope.result.errorMessage : undefined;
-       });
-
        scope.export = function() {
-         util.lazyFetchScalarValue(scope.result, true);
+         scope.status = util.lazyFetchScalarValue(scope.exportResultOutput.result, true);
        };
 
        scope.download = function () {
