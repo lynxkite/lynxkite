@@ -1,24 +1,25 @@
 <div class="col-sm-12">
-    {{ error }}
-    {{ result.computedValue.string }}
+    <div class="token"
+         ng-class="{ active: active() }"
+         id="scalar-export-status">
+        <span class="title"> Export </span>
+        <value class="subtoken"
+               id="scalar-value-export-status"
+               ref="status">
+        </value>
+    </div>
+    <div>
     <table class="table table-striped table-bordered">
         <tr ng-repeat="(stat, value) in parameters">
             <th> {{ stat }} </th>
             <td>{{ value }}</td>
         </tr>
     </table>
-    <div class="pager">
-      <button  class="col-sm-6 col-sm-offset-3" ng-click="export()"
-               ng-show="!alreadyExported && !(scalarValue && !scalarValue.$resolved)">
-        Export <i class="glyphicon glyphicon-play"></i>
-      </button>
-    </div>
     <button  class="col-sm-6 col-sm-offset-3" ng-click="download()"
-             ng-show="alreadyExported">
-        Download <i class="glyphicon glyphicon-play"></i>
+             ng-show="status.value.$resolved && !status.value.$error && downloadable"
+             drop-tooltip="Download exported file through browser">
+        Download <i class="glyphicon glyphicon-download"></i>
     </button>
+    </div>
 </div>
-    <progressbar ng-show="scalarValue && !(scalarValue.value.$resolved)"
-                 value="100" class="progress-striped active">
-    </progressbar>
-</div>
+
