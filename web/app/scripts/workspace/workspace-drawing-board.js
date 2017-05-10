@@ -102,7 +102,7 @@ angular.module('biggraph')
         }
 
         scope.callbackWrapper = function(callback) {
-          return function(event) {scope.$apply(callback(event));};
+          return function(event) {scope.$apply(function () { callback(event); });};
         };
 
         scope.onMouseMove = function(event) {
@@ -139,6 +139,8 @@ angular.module('biggraph')
         };
 
         scope.wrappedOnMouseMove = scope.callbackWrapper(scope.onMouseMove);
+
+        scope.wrappedOnMouseUp = scope.callbackWrapper(scope.onMouseUp);
 
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
@@ -256,8 +258,6 @@ angular.module('biggraph')
           scope.pulledPlug = undefined;
           scope.movedPopup = undefined;
         };
-
-        scope.wrappedOnMouseUp = scope.callbackWrapper(scope.onMouseUp);
 
         scope.onMouseDown = function(event) {
           window.addEventListener('mousemove', scope.wrappedOnMouseMove);
