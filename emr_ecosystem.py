@@ -35,6 +35,12 @@ arg_parser.add_argument(
     default=3,
     help='Number of instances on EMR cluster, including master.')
 
+arg_parser.add_argument(
+    '--with_jupyter',
+    action='store_true',
+    help='''If it is set, a jupyter notebook server will be installed and started
+  on the cluster. Some Python packages (sklearn, matplotlib) will also be added.''')
+
 
 def main(args):
   # We don't want to stop a cluster which was just started.
