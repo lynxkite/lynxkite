@@ -242,7 +242,7 @@ class EMRCluster:
         '-o', 'StrictHostKeyChecking=no',
         '-o', 'ServerAliveInterval=30',
     ]
-    self._master = None
+    self._master_dns = None
     self._master_instance = None
 
   def __str__(self):
@@ -254,11 +254,11 @@ class EMRCluster:
 
   def master(self):
     '''DNS name of the master host.'''
-    if self._master is None:
+    if self._master_dns is None:
       desc = self.desc()
       if self.is_ready(desc=desc):
-        self._master = desc['Cluster']['MasterPublicDnsName']
-    return self._master
+        self._master_dns = desc['Cluster']['MasterPublicDnsName']
+    return self._master_dns
 
   def master_instance(self):
     '''The Ec2InstanceId of the master host.'''
@@ -271,7 +271,7 @@ class EMRCluster:
 
   def reset_cache(self):
     '''Some properties (e.g. dns of the master) is cached. This method resets these kind of data.'''
-    self._master = None
+    self._master_dns = None
     self._master_instance = None
 
   def is_ready(self, desc=None):
