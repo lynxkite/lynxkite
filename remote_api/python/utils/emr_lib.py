@@ -404,7 +404,7 @@ EOF
     self.reset_cache()
     # after associating a new address to the master, the public dns changes but it takes some time
     # until the change propagates to the cluster description
-    print('Waiting for dns change...')
+    print('Waiting for updated master dns address to appear...')
     while self.desc()['Cluster']['MasterPublicDnsName'] == old_dns:
       time.sleep(15)
-    print('Dns changed.')
+    print('Dns updated successfully.')
