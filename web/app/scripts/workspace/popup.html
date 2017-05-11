@@ -7,10 +7,12 @@
         'top': popupModel.y + 'px',
         'width': popupModel.width + 'px',
         'height': popupModel.height + 'px',
-    }">
+    }"
+    ng-class="{ 'selected': popupModel.isSelected() }">
   <div
       class="popup-head"
-      ng-mousedown="popupModel.onMouseDown($event)">
+      ng-mousedown="popupModel.onMouseDown($event)"
+      ng-class="{ 'selected': popupModel.isSelected() }">
     {{popupModel.title}}
     <div class="clicky pull-right glyphicon glyphicon-remove"
         ng-click="popupModel.close(); event.stopPropagation();"

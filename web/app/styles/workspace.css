@@ -102,6 +102,10 @@ div.popup {
   background: white;
 }
 
+div.popup.selected {
+  z-index: 4;
+}
+
 div.popup-head {
   width: 100%;
   background: lightblue;
@@ -110,6 +114,10 @@ div.popup-head {
   height: 35px;
   line-height: 35px;
   cursor: default;
+}
+
+div.popup-head.selected {
+  background: royalblue;
 }
 
 div.popup-content {
