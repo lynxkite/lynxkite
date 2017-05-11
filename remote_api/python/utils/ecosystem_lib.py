@@ -169,8 +169,6 @@ class Ecosystem:
     self.upload_test_tasks()
     if lk_conf['extra_python_dependencies']:
       self.install_extra_python_dependencies(lk_conf['extra_python_dependencies'])
-    if lk_conf['tasks']:
-      self.upload_tasks(src=lk_conf['tasks'])
     self.upload_tools()
     self.install_lynx_stuff(
         lk_conf['lynx_release_dir'],
@@ -186,6 +184,8 @@ class Ecosystem:
         conf['emr_instance_count'])
     self.config_aws_s3_native()
     self.start_monitoring_on_extra_nodes_native(conf['ec2_key_file'])
+    if lk_conf['tasks']:
+      self.upload_tasks(src=lk_conf['tasks'])
     self.start_supervisor_native()
     print('LynxKite ecosystem was started by supervisor.')
 
