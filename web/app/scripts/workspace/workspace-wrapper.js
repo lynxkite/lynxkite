@@ -406,6 +406,141 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         .then(function() { that.loadWorkspace(); });
     },
 
+    saveAsCustomBox: function(ids, name, description) {
+      var i, j, box;
+      var workspaceParameters =
+        JSON.parse(this.boxMap['anchor'].instance.parameters.parameters);
+      var boxes = [{
+        id: 'anchor',
+        operationID: 'Anchor',
+        x: 0,
+        y: 0,
+        inputs: {},
+        parameters: {
+          description: description,
+          parameters: JSON.stringify(workspaceParameters),
+        },
+        parametricParameters: {},
+      }];
+      var inputNameCounts = {};
+      var outputNameCounts = {};
+      var inputBoxX = 100;
+      var outputBoxX = 100;
+      var usedOutputs = {};
+      var SEPARATOR = ', ';
+      // This custom box will replace the selected boxes.
+      var customBox = {
+        id: this.getUniqueId(name),
+        operationID: name,
+        x: 0,
+        y: 0,
+        inputs: {},
+        parameters: {},
+        parametricParameters: {},
+      };
+      // Pass all workspace parameters through.
+      for (i = 0; i < workspaceParameters; ++i) {
+        var param = workspaceParameters[i].id;
+        customBox.parametricParameters[param] = '$' + param;
+      }
+      for (i = 0; i < ids.length; ++i) {
+        box = this.boxMap[ids[i]];
+        console.assert(box.instance.id.indexOf('input-') !== 0);
+        console.assert(box.instance.id.indexOf('output-') !== 0);
+        // Place the custom box in the average position of the selected boxes.
+        customBox.x += box.instance.x / ids.length;
+        customBox.y += box.instance.y / ids.length;
+        if (ids[i] === 'anchor') { continue; }  // Ignore anchor.
+        var instance = angular.copy(box.instance);
+        boxes.push(instance);
+        for (j = 0; j < box.inputs.length; ++j) {
+          var inputName = box.metadata.inputs[j];
+          var input = box.instance.inputs[inputName];
+          // Record used output.
+          if (input.boxID) {
+            console.assert(!input.boxID.includes(SEPARATOR) && !input.id.includes(SEPARATOR));
+            usedOutputs[input.boxID + SEPARATOR + input.id] = true;
+          }
+          // Create input box if necessary.
+          if (!ids.includes(input.boxID)) {
+            var inputBoxName = inputName;
+            var inputNameCount = inputNameCounts[inputName] || 0;
+            if (inputNameCount > 0) {
+              inputBoxName += ' ' + (inputNameCount + 1);
+              inputNameCounts[inputName] = inputNameCount + 1;
+            }
+            boxes.push({
+              id: 'input-' + inputBoxName,
+              operationID: 'Input box',
+              x: inputBoxX,
+              y: -100,
+              inputs: {},
+              parameters: { name: inputBoxName },
+              parametricParameters: {},
+            });
+            inputBoxX += 100;
+            instance.inputs[inputName] = { boxID: 'input-' + inputBoxName, id: 'input' };
+            if (input.boxID) { // Connected to a non-selected box.
+              customBox.inputs[inputBoxName] = input;
+            }
+          }
+        }
+      }
+      // Add output boxes as necessary.
+      for (i = 0; i < ids.length; ++i) {
+        box = this.boxMap[ids[i]];
+        for (j = 0; j < box.metadata.outputs.length; ++j) {
+          var outputName = box.metadata.outputs[j];
+          if (!usedOutputs[box.instance.id + SEPARATOR + outputName]) {
+            var outputBoxName = outputName;
+            var outputNameCount = outputNameCounts[outputName] || 0;
+            if (outputNameCount > 0) {
+              outputBoxName += ' ' + (outputNameCount + 1);
+              outputNameCounts[outputName] = outputNameCount + 1;
+            }
+            boxes.push({
+              id: 'output-' + outputBoxName,
+              operationID: 'Output box',
+              x: outputBoxX,
+              y: 400,
+              inputs: { output: { boxID: box.instance.id, id: outputName } },
+              parameters: { name: outputBoxName },
+              parametricParameters: {},
+            });
+            outputBoxX += 100;
+            // Update non-selected output connections.
+            for (var k = 0; k < this.arrows.length; ++k) {
+              var arrow = this.arrows[k];
+              if (arrow.src.boxId === box.instance.id && arrow.src.id === outputName) {
+                arrow.dst.box.instance.inputs[arrow.dst.id] =
+                  { boxID: customBox.id, id: outputBoxName };
+              }
+            }
+          }
+        }
+      }
+      this.state.boxes = this.state.boxes.filter(function(box) {
+        return box.id === 'anchor' || !ids.includes(box.id);
+      });
+      this.state.boxes.push(customBox);
+      var that = this;
+      util.post('/ajax/createWorkspace', {
+        name: name,
+        privacy: 'private',
+      }).then(function success() {
+        return util.post('/ajax/setWorkspace', {
+          name: name,
+          workspace: { boxes: boxes },
+        });
+      }).then(function success() {
+        return that._updateBoxCatalog();
+      }).then(function success() {
+        that.saveWorkspace();
+      }, function error() {
+        that.loadWorkspace();
+      });
+    },
+
   };
 
   return WorkspaceWrapper;
