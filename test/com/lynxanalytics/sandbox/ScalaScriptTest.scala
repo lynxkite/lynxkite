@@ -3,7 +3,10 @@ package com.lynxanalytics.sandbox
 import org.scalatest.FunSuite
 import java.security.AccessControlException
 
-class ScalaScriptTest extends FunSuite {
+import com.lynxanalytics.biggraph.graph_api.TestGraphOp
+import com.lynxanalytics.biggraph.graph_operations.ImportDataFrameTest
+
+class ScalaScriptTest extends FunSuite with TestGraphOp {
 
   test("Can't do infinite loop") {
     val code =
@@ -34,6 +37,18 @@ class ScalaScriptTest extends FunSuite {
     assert(ScalaScript.runWithDouble(code1, b) == "2.2")
     assert(ScalaScript.runWithDouble(code2, a) == "45.0")
     assert(ScalaScript.runWithDouble(code2, b) == "43.1")
+  }
+
+  test("Scala DataFrame bindings work") {
+    val df = ImportDataFrameTest.jdbcDF(dataManager)
+    val code1 = "df.take(3).toList"
+    val code2 = "df.count()"
+    def ty[T](v: T) = v
+    println(ty(df.collect().toSeq(1)(0)))
+    println(ty(df.collect().toSeq(1)(1)))
+    assert(ScalaScript.runWithDataFrame(code1, df) == "[[],[],[]]")
+    assert(ScalaScript.runWithDataFrame(code2, df) == "5")
+
   }
 
   test("Security manager disables file access") {
