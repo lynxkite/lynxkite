@@ -3,8 +3,11 @@ package com.lynxanalytics.sandbox
 import org.scalatest.FunSuite
 import java.security.AccessControlException
 
-import com.lynxanalytics.biggraph.graph_api.TestGraphOp
+import com.lynxanalytics.biggraph.controllers.SQLController
+import com.lynxanalytics.biggraph.graph_api.{ Scripting, Table, TestGraphOp }
 import com.lynxanalytics.biggraph.graph_operations.ImportDataFrameTest
+import com.lynxanalytics.biggraph.spark_util.SQLHelper
+import org.apache.spark.sql.DataFrame
 
 class ScalaScriptTest extends FunSuite with TestGraphOp {
 
@@ -39,16 +42,28 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
     assert(ScalaScript.runWithDouble(code2, b) == "43.1")
   }
 
-  test("Scala DataFrame bindings work") {
+  test("Scala DataFrame bindings work with runVegas") {
     val df = ImportDataFrameTest.jdbcDF(dataManager)
-    val code1 = "df.take(3).toList"
-    val code2 = "df.count()"
-    def ty[T](v: T) = v
-    println(ty(df.collect().toSeq(1)(0)))
-    println(ty(df.collect().toSeq(1)(1)))
-    assert(ScalaScript.runWithDataFrame(code1, df) == "[[],[],[]]")
-    assert(ScalaScript.runWithDataFrame(code2, df) == "5")
 
+    // Helper function to convert a dataframe to a Seq of Maps
+    // This format used by the Vegas plot drawing library
+    def dfToSeq(df: DataFrame, maxRows: Int = 10000): Seq[Map[String, Any]] = {
+      val names = df.schema.toList.map { field => field.name }
+
+      SQLHelper.toSeqRDD(df).take(maxRows).map {
+        row =>
+          names.zip(row.toSeq.toList).
+            groupBy(_._1).
+            mapValues(_.map(_._2)).
+            mapValues(_(0))
+      }.toSeq
+    }
+
+    val code = """encodeX("name", Nominal).
+      encodeY("level", Quantitative).
+      mark(Bar)"""
+    print(ScalaScript.runVegas(code, dfToSeq(df, 2), "Test1"))
+    print(ScalaScript.runVegas(code, dfToSeq(df, 4), "Test2"))
   }
 
   test("Security manager disables file access") {
