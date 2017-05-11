@@ -331,14 +331,10 @@ angular.module('biggraph')
           callback: function() { scope.pasteBoxes(); } });
         hk.add({
           combo: 'ctrl+z', description: 'Undo',
-          callback: function() {
-            scope.guiMaster.undo();
-          } });
+          callback: function() { scope.workspace.undo(); } });
         hk.add({
           combo: 'ctrl+y', description: 'Redo',
-          callback: function() {
-            scope.guiMaster.redo();
-          } });
+          callback: function() { scope.workspace.redo(); } });
         hk.add({
           combo: 'del', description: 'Paste boxes',
           callback: function() { scope.deleteSelectedBoxes(); } });
