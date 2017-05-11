@@ -1,11 +1,11 @@
 import datetime
 import unittest
-from lynx.luigi.directory_cleaner import DirectoryCleaner
+from lynx.luigi.local_directory_cleaner import LocalDirectoryCleaner
 from unittest import mock
 import types
 
 
-class TestDirectoryCleaner(unittest.TestCase):
+class TestLocalDirectoryCleaner(unittest.TestCase):
 
   @mock.patch('os.walk')
   @mock.patch('os.remove')
@@ -28,7 +28,7 @@ class TestDirectoryCleaner(unittest.TestCase):
         '/tmp/old, no ttl/old, short ttl (ttl=1m)': datetime.datetime(2017, 4, 10, 15, 32).timestamp(),
     }[x]
 
-    task = DirectoryCleaner(date=datetime.datetime(2017, 4, 15, 16, 00), directory='/tmp')
+    task = LocalDirectoryCleaner(date=datetime.datetime(2017, 4, 15, 16, 00), directory='/tmp')
     output = mock.MagicMock()
     with mock.patch.object(task, 'output', return_value=mock.DEFAULT) as m:
       m.return_value = output
