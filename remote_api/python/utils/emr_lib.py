@@ -252,7 +252,7 @@ class EMRCluster:
     '''Raw description of the cluster.'''
     return self.emr_client.describe_cluster(ClusterId=self.id)
 
-  def master(self):
+  def master_dns(self):
     '''DNS name of the master host.'''
     if self._master_dns is None:
       desc = self.desc()
@@ -263,10 +263,9 @@ class EMRCluster:
   def master_instance(self):
     '''The Ec2InstanceId of the master host.'''
     if not self._master_instance:
-      master_dns = self.master()
       instances = self.emr_client.list_instances(ClusterId=self.id)['Instances']
       self._master_instance = [i['Ec2InstanceId'] for i in instances
-                               if i['PublicDnsName'] == master_dns][0]
+                               if i['PublicDnsName'] == self.master_dns()][0]
     return self._master_instance
 
   def reset_cache(self):
@@ -294,7 +293,7 @@ class EMRCluster:
     # Stop on errors by default.
     cmds = 'set -e\n' + cmds
     return call_cmd(
-        self.ssh_cmd + ['hadoop@' + self.master()],
+        self.ssh_cmd + ['hadoop@' + self.master_dns()],
         input=cmds,
         print_output=print_output,
         assert_successful=assert_successful)
@@ -370,7 +369,7 @@ EOF
             '-r',
             '--copy-dirlinks',
             src,
-            'hadoop@' + self.master() + ':' + dst
+            'hadoop@' + self.master_dns() + ':' + dst
         ])
 
   def rsync_down(self, src, dst):
@@ -383,7 +382,7 @@ EOF
             ' '.join(self.ssh_cmd),
             '-r',
             '--copy-dirlinks',
-            'hadoop@' + self.master() + ':' + src,
+            'hadoop@' + self.master_dns() + ':' + src,
             dst
         ])
 
@@ -398,7 +397,7 @@ EOF
 
   def associate_address(self, ip):
     assert self.is_ready(), 'Can not associate new IP address before the cluster is ready.'
-    old_dns = self.master()
+    old_dns = self.master_dns()
     master = self.master_instance()
     self.ec2_client.associate_address(InstanceId=master, PublicIp=ip)
     self.reset_cache()
