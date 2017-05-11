@@ -8,7 +8,6 @@ import javax.script._
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
 import com.lynxanalytics.biggraph.graph_util.Timestamp
-import org.apache.spark.sql.DataFrame
 
 import scala.concurrent.duration.Duration
 import scala.tools.nsc.interpreter.IMain
@@ -128,35 +127,31 @@ object ScalaScript {
     }
   }
 
-  def runWithDataFrame( // this is a POC method
-    code: String, df: DataFrame, timeoutInSeconds: Long = 10L): String = synchronized {
-    withContextClassLoader {
-      engine.put("df: org.apache.spark.sql.DataFrame", df)
-      val fullCode = s"""
-      val result = {
-          $code
-      }.toString
-      result
-      """
-      val compiledCode = engine.compile(fullCode)
-      withTimeout(timeoutInSeconds) {
-        restrictedSecurityManager.checkedRun {
-          compiledCode.eval().toString
-        }
-      }
-    }
-  }
-
   def runVegas( // this is a POC method
-    code: String, df: DataFrame, timeoutInSeconds: Long = 10L): String = synchronized {
+    code: String, data: Seq[Map[String, Any]], title: String, timeoutInSeconds: Long = 10L): String = synchronized {
     withContextClassLoader {
-      engine.put("df: org.apache.spark.sql.DataFrame", df)
+      engine.put("dfData: Seq[Map[String, Any]]", data)
+      engine.put("Vegas", vegas.Vegas)
+      engine.put("Nominal", vegas.Nominal)
+      engine.put("Quantitative", vegas.Quantitative)
+      engine.put("Bar", vegas.Bar)
+
       val fullCode = s"""
+      //import vegas._
       val result = {
-          $code
+        val plot = Vegas("$title").
+        withData(dfData).
+        $code
+        val json: String = plot.toJson
+        json
       }.toString
       result
       """
+      println()
+      print("**** Full code ****")
+      print(fullCode)
+      print("**** --------- ****")
+      println()
       val compiledCode = engine.compile(fullCode)
       withTimeout(timeoutInSeconds) {
         restrictedSecurityManager.checkedRun {
