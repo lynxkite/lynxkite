@@ -12,7 +12,9 @@ all: backend
 
 .PHONY: clean
 clean:
-	sudo git clean -f -X -d
+	# Remove all ignored files. Sudo is required because of files created by docker containers.
+	# Deleting the .idea folder messes with IntelliJ, so exclude that.
+	sudo git clean -f -X -d --exclude="!.idea/"
 
 .build/gulp-done: $(shell $(find) web/app) web/gulpfile.js web/package.json
 	cd web && LC_ALL=C yarn --frozen-lockfile && gulp && cd - && touch $@
