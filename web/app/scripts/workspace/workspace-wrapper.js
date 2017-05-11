@@ -19,12 +19,8 @@
 angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util, $interval) {
   function WorkspaceWrapper(name, boxCatalog) {
     this._progressUpdater = undefined;
-    this._boxCatalogMap = {};
-    for (var i = 0; i < boxCatalog.boxes.length; ++i) {
-      var boxMeta = boxCatalog.boxes[i];
-      this._boxCatalogMap[boxMeta.operationID] = boxMeta;
-    }
-
+    this.boxCatalog = boxCatalog;  // Updated for the sake of the operation palette.
+    this._boxCatalogMap = undefined;
     this.name = name;
     this.state = undefined;
     // The below data structures are generated from rawBoxes
@@ -37,9 +33,24 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     // request:
     this.backendRequest = undefined;
     this.backendState = undefined;
+    this._updateBoxCatalog();
   }
 
   WorkspaceWrapper.prototype = {
+    _updateBoxCatalog: function() {
+      var that = this;
+      var request = util.nocache('/ajax/boxCatalog');
+      angular.merge(that.boxCatalog, request);
+      return request.then(function(bc) {
+        angular.merge(that.boxCatalog, request);
+        that._boxCatalogMap = {};
+        for (var i = 0; i < bc.boxes.length; ++i) {
+          var boxMeta = bc.boxes[i];
+          that._boxCatalogMap[boxMeta.operationID] = boxMeta;
+        }
+      });
+    },
+
     _buildBoxes: function() {
       this.boxes = [];
       this.boxMap = {};
@@ -151,6 +162,10 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
 
     loadWorkspace: function() {
       var that = this;
+      if (!this._boxCatalogMap) { // Need to load catalog first.
+        this._updateBoxCatalog().then(function() { that.loadWorkspace(); });
+        return;
+      }
       util.nocache(
         '/ajax/getWorkspace',
         {

@@ -31,11 +31,11 @@ angular.module('biggraph')
         scope.popups = [];
         scope.movedPopup = undefined;
 
-        scope.$watchGroup(
-          ['boxCatalog.$resolved', 'workspaceName'],
+        scope.$watch(
+          'workspaceName',
 
           function() {
-            if (scope.boxCatalog.$resolved && scope.workspaceName) {
+            if (scope.workspaceName) {
               scope.workspace = new WorkspaceWrapper(
                 scope.workspaceName,
                 scope.boxCatalog);
