@@ -10,6 +10,10 @@ pip = .build/pip3-packages-installed
 .PHONY: all
 all: backend
 
+.PHONY: clean
+clean:
+	sudo git clean -f -x -d
+
 .build/gulp-done: $(shell $(find) web/app) web/gulpfile.js web/package.json
 	cd web && LC_ALL=C yarn --frozen-lockfile && gulp && cd - && touch $@
 .build/documentation-verified: $(shell $(find) app) .build/gulp-done
