@@ -22,7 +22,7 @@ object CreatePlot extends OpFromJson {
 }
 import CreatePlot._
 case class CreatePlot(plotCode: String)
-  extends TypedMetaGraphOp[Input, Output] {
+    extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 

@@ -8,6 +8,7 @@ import javax.script._
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import org.apache.spark.sql.DataFrame
 
 import scala.concurrent.duration.Duration
 import scala.tools.nsc.interpreter.IMain
@@ -70,7 +71,7 @@ class ScalaScriptSecurityManager extends SecurityManager {
       (s.contains("com.lynxanalytics.biggraph") ||
         s.contains("org.apache.spark") ||
         s.contains("scala.reflect"))) {
-      throw new java.security.AccessControlException("Illegal package access")
+      throw new java.security.AccessControlException(s"Illegal package access: $s")
     }
   }
 }
@@ -126,6 +127,45 @@ object ScalaScript {
       }
     }
   }
+
+  def runWithDataFrame( // this is a POC method
+    code: String, df: DataFrame, timeoutInSeconds: Long = 10L): String = synchronized {
+    withContextClassLoader {
+      engine.put("df: org.apache.spark.sql.DataFrame", df)
+      val fullCode = s"""
+      val result = {
+          $code
+      }.toString
+      result
+      """
+      val compiledCode = engine.compile(fullCode)
+      withTimeout(timeoutInSeconds) {
+        restrictedSecurityManager.checkedRun {
+          compiledCode.eval().toString
+        }
+      }
+    }
+  }
+
+  def runVegas( // this is a POC method
+    code: String, df: DataFrame, timeoutInSeconds: Long = 10L): String = synchronized {
+    withContextClassLoader {
+      engine.put("df: org.apache.spark.sql.DataFrame", df)
+      val fullCode = s"""
+      val result = {
+          $code
+      }.toString
+      result
+      """
+      val compiledCode = engine.compile(fullCode)
+      withTimeout(timeoutInSeconds) {
+        restrictedSecurityManager.checkedRun {
+          compiledCode.eval().toString
+        }
+      }
+    }
+  }
+
   private def withContextClassLoader[T](func: => T): T = {
     // IMAIN.compile changes the class loader and does not restore it.
     // https://issues.scala-lang.org/browse/SI-8521
