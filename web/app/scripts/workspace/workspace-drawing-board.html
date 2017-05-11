@@ -2,8 +2,17 @@
   <span id="workspace-name">{{workspace.name}}</span>
   <div class="btn-group pull-right">
     <button class="btn btn-default"
+         id="save-selection-as-custom-box"
+         ng-click="saveSelectionAsCustomBox('tmp')"
+         ng-disabled="selectedBoxIds.length === 0"
+         drop-tooltip="Save&nbsp;selection as&nbsp;custom&nbsp;box"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-superpowers"></i>
+    </button>
+    <button class="btn btn-default"
          id="copy-boxes"
          ng-click="copyBoxes()"
+         ng-disabled="selectedBoxIds.length === 0"
          drop-tooltip="Copy&nbsp;boxes (Ctrl-C)"
          drop-tooltip-placement="bottom">
       <i class="fa fa-copy"></i>
@@ -18,6 +27,7 @@
     <button class="btn btn-default"
          id="delete-selected-boxes"
          ng-click="deleteSelectedBoxes()"
+         ng-disabled="selectedBoxIds.length === 0"
          drop-tooltip="Delete&nbsp;selected&nbsp;boxes (Delete)"
          drop-tooltip-placement="bottom">
       <i class="fa fa-trash-o"></i>
