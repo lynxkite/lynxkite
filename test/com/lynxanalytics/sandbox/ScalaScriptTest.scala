@@ -41,7 +41,7 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
     assert(ScalaScript.runWithDouble(code2, a) == "45.0")
     assert(ScalaScript.runWithDouble(code2, b) == "43.1")
   }
-
+  
   test("Scala DataFrame bindings work with runVegas") {
     val df = ImportDataFrameTest.jdbcDF(dataManager)
 
@@ -65,6 +65,7 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
     print(ScalaScript.runVegas(code, dfToSeq(df, 2), "Test1"))
     print(ScalaScript.runVegas(code, dfToSeq(df, 4), "Test2"))
   }
+
 
   test("Security manager disables file access") {
     val testFile = getClass.getResource("/graph_api/permission_check.txt")

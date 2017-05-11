@@ -30,36 +30,35 @@ class ScalaScriptSecurityManager extends SecurityManager {
     }
   }
 
-  // The scala class loader does stuff disallowed by the
-  // SecurityManager, namely:
-  // 1) Creating an URL like this: new URL(null, s"memory:${file.path}", new URLStreamHandler)
-  // 2) When called in sbt test environment, it also wants to access this file:
-  //   ~/.sbt/boot/scala-2.10.4/org.scala-sbt/sbt/0.13.5/test-agent-0.13.5.jar
-  //   I have no idea why.
-  // So, if we are called from scala.reflect.internal.util.ScalaClassLoader.classAsStream
-  // we'll be a bit less restrictive, otherwise we couldn't create classes.
-  // This is a bit expensive, but we'll make sure not to call it too often.
   private def calledByClassLoader: Boolean = {
     Thread.currentThread.getStackTrace.exists {
       stackTraceElement =>
-        stackTraceElement.getClassName == "scala.reflect.internal.util.ScalaClassLoader$class" &&
-          stackTraceElement.getMethodName == "classAsStream"
+        stackTraceElement.getClassName == "java.lang.ClassLoader" &&
+          stackTraceElement.getMethodName == "loadClass"
     }
   }
 
   override def checkPermission(permission: Permission): Unit = {
     if (shouldCheck.value) {
-      permission match {
-        case _: NetPermission =>
-          if (!calledByClassLoader) {
+      shouldCheck.value = false
+      try {
+        permission match {
+          case _: NetPermission =>
+            if (!calledByClassLoader) {
+              super.checkPermission(permission)
+            }
+          case p: FilePermission =>
+            // File reads are allowed if they are initiated by the class loader.
+            if (!(p.getActions == "read" && calledByClassLoader)) {
+              super.checkPermission(permission)
+            }
+          case _ =>
             super.checkPermission(permission)
-          }
-        case p: FilePermission =>
-          if (!(p.getActions == "read" && p.getName.contains(".sbt") && calledByClassLoader)) {
-            super.checkPermission(permission)
-          }
-        case _ =>
-          super.checkPermission(permission)
+        }
+      } finally {
+        // "finally" is used instead of "withValue" because "withValue" triggers
+        // class loading for the anonymous class and thus infinite recursion.
+        shouldCheck.value = true
       }
     }
   }
@@ -131,13 +130,9 @@ object ScalaScript {
     code: String, data: Seq[Map[String, Any]], title: String, timeoutInSeconds: Long = 10L): String = synchronized {
     withContextClassLoader {
       engine.put("dfData: Seq[Map[String, Any]]", data)
-      engine.put("Vegas", vegas.Vegas)
-      engine.put("Nominal", vegas.Nominal)
-      engine.put("Quantitative", vegas.Quantitative)
-      engine.put("Bar", vegas.Bar)
 
       val fullCode = s"""
-      //import vegas._
+      import vegas._
       val result = {
         val plot = Vegas("$title").
         withData(dfData).
@@ -147,11 +142,6 @@ object ScalaScript {
       }.toString
       result
       """
-      println()
-      print("**** Full code ****")
-      print(fullCode)
-      print("**** --------- ****")
-      println()
       val compiledCode = engine.compile(fullCode)
       withTimeout(timeoutInSeconds) {
         restrictedSecurityManager.checkedRun {
