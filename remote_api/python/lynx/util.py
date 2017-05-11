@@ -19,7 +19,7 @@ def parse_duration(s):
   return delta
 
 
-def ttl(path):
+def get_ttl_from_path(path):
   '''Returns the TTL as a timedelta, or None if no TTL is set on the path.'''
   m = _TTL_RE.search(path)
   if not m:
