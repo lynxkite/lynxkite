@@ -30,7 +30,7 @@ class TestUtil(unittest.TestCase):
       d = util.parse_duration('0d')
 
   def test_ttl(self):
-    ttl = util.ttl('root/some directory (ttl=48h)')
+    ttl = util.get_ttl_from_path('root/some directory (ttl=48h)')
     self.assertEqual(datetime.timedelta(days=2), ttl)
 
 
