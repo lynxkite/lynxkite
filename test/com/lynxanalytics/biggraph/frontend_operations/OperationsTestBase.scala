@@ -18,7 +18,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
   val user = serving.User.fake
 
   case class TestBox(
-      operationID: String,
+      operationId: String,
       parameters: Map[String, String],
       parametricParameters: Map[String, String],
       inputs: Seq[TestBox]) {
@@ -27,7 +27,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       val inputNames = inputs.map(
         input => input.projectRec(boxes)
       )
-      val name = s"${operationID} ${boxes.length}"
+      val name = s"${operationId} ${boxes.length}"
       val inputIds = meta.inputs
       assert(inputNames.size == inputIds.size, s"for $name")
       val inputBoxOutputs = inputIds.zip(inputNames).zip(inputs).map {
@@ -39,7 +39,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
 
       val box = Box(
         name,
-        operationID,
+        operationId,
         parameters, 0, 0,
         inputBoxOutputs,
         parametricParameters
@@ -56,34 +56,34 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       (ws, lastBox)
     }
 
-    def meta = ops.getBoxMetadata(operationID)
+    def meta = ops.getBoxMetadata(operationId)
 
     def ctx = workspace.context(user, ops, Map())
 
     lazy val project: RootProjectEditor =
       ctx.allStates(realBox.output("project")).project
 
-    def box(operationID: String,
+    def box(operationId: String,
             parameters: Map[String, String] = Map(),
             otherInputs: Seq[TestBox] = Seq(),
             parametricParameters: Map[String, String] = Map()): TestBox = {
-      TestBox(operationID, parameters, parametricParameters, this +: otherInputs)
+      TestBox(operationId, parameters, parametricParameters, this +: otherInputs)
     }
   }
 
-  def box(operationID: String,
+  def box(operationId: String,
           parameters: Map[String, String] = Map(),
           inputs: Seq[TestBox] = Seq(),
           parametricParameters: Map[String, String] = Map()): TestBox = {
-    TestBox(operationID, parameters, parametricParameters, inputs)
+    TestBox(operationId, parameters, parametricParameters, inputs)
   }
 
-  def importBox(operationID: String,
+  def importBox(operationId: String,
                 parameters: Map[String, String] = Map()): TestBox = {
-    val b = box(operationID, parameters)
+    val b = box(operationId, parameters)
     val guidFuture = sql.importBox(user, b.realBox)
     val guid = concurrent.Await.result(guidFuture, concurrent.duration.Duration.Inf)
-    box(operationID, parameters + ("imported_table" -> guid))
+    box(operationId, parameters + ("imported_table" -> guid))
   }
 
   def importCSV(filename: String, options: Map[String, String] = Map()): TestBox =

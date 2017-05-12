@@ -1,11 +1,12 @@
 <div class="popup"
+    ng-mousedown="$event.stopPropagation()"
+    ng-mousemove="popupModel.onMouseMove($event); $event.stopPropagation();"
     id="{{popupModel.id}}"
     ng-style="{
         'left': popupModel.x + 'px',
         'top': popupModel.y + 'px',
         'width': popupModel.width + 'px',
         'height': popupModel.height + 'px',
-        'z-index': 3,
     }">
   <div
       class="popup-head"
@@ -13,15 +14,14 @@
     {{popupModel.title}}
     <div class="clicky pull-right glyphicon glyphicon-remove"
         ng-click="popupModel.close(); event.stopPropagation();"
+        ng-mousedown="$event.stopPropagation()"
         id="close-popup"
         tooltip="Close&nbsp;popup"
         tooltip-append-to-body="true"
         tooltip-placement="bottom">
     </div>
   </div>
-  <div class="popup-content"
-        ng-mousedown="$event.stopPropagation()"
-        ng-mouseup="$event.stopPropagation()">
+  <div class="popup-content">
     <box-editor ng-if="popupModel.content.type === 'box'"
         workspace="workspace"
         box-id="popupModel.content.boxId">
