@@ -1,6 +1,6 @@
 <span ng-if="ref.$resolved === false" class="value spinner">|</span>
 <span ng-if="ref.$error && ref.$statusCode < 500" drop-tooltip="{{ref.$error}}">
-  {{ iconForStatus(ref.$statusCode, ref.computeOnCommand) }}
+  {{ iconForStatus(ref.$statusCode, ref.displayComputeButton) }}
 </span>
 <span ng-if="ref.$error && ref.$statusCode >= 500"
   class="value-error"
