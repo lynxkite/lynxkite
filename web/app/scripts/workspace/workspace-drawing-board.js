@@ -6,7 +6,7 @@
 angular.module('biggraph')
   .directive(
   'workspaceDrawingBoard',
-  function(environment, hotkeys, PopupModel, SelectionModel, workspaceWrapper, $rootScope) {
+  function(environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -36,7 +36,7 @@ angular.module('biggraph')
 
           function() {
             if (scope.boxCatalog.$resolved && scope.workspaceName) {
-              scope.workspace = workspaceWrapper(
+              scope.workspace = new WorkspaceWrapper(
                 scope.workspaceName,
                 scope.boxCatalog);
               scope.workspace.loadWorkspace();
@@ -316,9 +316,9 @@ angular.module('biggraph')
           scope.clipboard = angular.copy(scope.selectedBoxes());
         };
 
-        scope.pasteBoxes = function(currentPosition) {
-          scope.workspace.pasteFromClipboard(
-              scope.clipboard, currentPosition);
+        scope.pasteBoxes = function() {
+          var pos = addLogicalMousePosition({ pageX: 0, pageY: 0});
+          scope.workspace.pasteFromClipboard(scope.clipboard, pos);
         };
 
         scope.deleteBoxes = function(boxIds) {
@@ -344,19 +344,13 @@ angular.module('biggraph')
           callback: function() { scope.copyBoxes(); } });
         hk.add({
           combo: 'ctrl+v', description: 'Paste boxes',
-          callback: function() {
-            scope.pasteBoxes(addLogicalMousePosition({ pageX: 0, pageY: 0}));
-          } });
+          callback: function() { scope.pasteBoxes(); } });
         hk.add({
           combo: 'ctrl+z', description: 'Undo',
-          callback: function() {
-            scope.guiMaster.undo();
-          } });
+          callback: function() { scope.workspace.undo(); } });
         hk.add({
           combo: 'ctrl+y', description: 'Redo',
-          callback: function() {
-            scope.guiMaster.redo();
-          } });
+          callback: function() { scope.workspace.redo(); } });
         hk.add({
           combo: 'del', description: 'Paste boxes',
           callback: function() { scope.deleteSelectedBoxes(); } });
