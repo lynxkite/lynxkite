@@ -25,13 +25,13 @@ angular.module('biggraph').directive('tagList', function() {
         }
       };
       scope.getTags = function() {
-        var tagsByID = {};
+        var tagsById = {};
         for (var i = 0; i < scope.options.length; ++i) {
-          tagsByID[scope.options[i].id] = scope.options[i];
+          tagsById[scope.options[i].id] = scope.options[i];
         }
         var tags = [];
         for (i = 0; i < scope.model.length; ++i) {
-          tags.push(tagsByID[scope.model[i]]);
+          tags.push(tagsById[scope.model[i]]);
         }
         return tags;
       };

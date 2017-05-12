@@ -477,8 +477,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       case Some(smallEdgeSet) =>
         log.info("PERF Small edge set mode for request: " + request)
         val smallEdgeSetMap = smallEdgeSet.toMap
-        val filteredEdgeSetIDs = FEFilters.localFilter(smallEdgeSetMap.keySet, request.filters)
-        val filteredEdgeSet = filteredEdgeSetIDs.map(id => id -> smallEdgeSetMap(id))
+        val filteredEdgeSetIds = FEFilters.localFilter(smallEdgeSetMap.keySet, request.filters)
+        val filteredEdgeSet = filteredEdgeSetIds.map(id => id -> smallEdgeSetMap(id))
         val srcIdxMapping = srcView.vertexIndices.getOrElse {
           val indexAttr = indexFromIndexingSeq(srcView.vertexSet, srcView.indexingSeq)
           val srcVertexIds = filteredEdgeSet.map { case (id, edge) => edge.src }.toSet
@@ -506,9 +506,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
               metaManager.attribute(attr.attributeId.asUUID),
               attr.aggregator)).toMap
         val attributeValues = attributesWithAggregators.mapValues(
-          getAggregatedAttributeByCoord(filteredEdgeSetIDs, _, idToCoordMapping))
+          getAggregatedAttributeByCoord(filteredEdgeSetIds, _, idToCoordMapping))
         val weightMap = graph_operations.RestrictAttributeToIds.run(
-          weights, filteredEdgeSetIDs).value.toMap
+          weights, filteredEdgeSetIds).value.toMap
         val counts = mutable.Map[(Int, Int), Double]().withDefaultValue(0.0)
         for ((id, coord) <- idToCoordMapping) {
           counts(coord) += weightMap.getOrElse(id, 0.0)

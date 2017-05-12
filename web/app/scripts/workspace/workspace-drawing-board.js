@@ -167,7 +167,7 @@ angular.module('biggraph')
           }
           var model = new PopupModel(
             box.instance.id,
-            box.instance.operationID,
+            box.instance.operationId,
             {
               type: 'box',
               boxId: box.instance.id,
@@ -199,7 +199,7 @@ angular.module('biggraph')
           if (plug.direction === 'outputs') {
             var model = new PopupModel(
               plug.boxId + '_' + plug.id,
-              plug.boxInstance.operationID + ' ➡ ' + plug.id,
+              plug.boxInstance.operationId + ' ➡ ' + plug.id,
               {
                 type: 'plug',
                 boxId: plug.boxId,
@@ -331,14 +331,10 @@ angular.module('biggraph')
           callback: function() { scope.pasteBoxes(); } });
         hk.add({
           combo: 'ctrl+z', description: 'Undo',
-          callback: function() {
-            scope.guiMaster.undo();
-          } });
+          callback: function() { scope.workspace.undo(); } });
         hk.add({
           combo: 'ctrl+y', description: 'Redo',
-          callback: function() {
-            scope.guiMaster.redo();
-          } });
+          callback: function() { scope.workspace.redo(); } });
         hk.add({
           combo: 'del', description: 'Paste boxes',
           callback: function() { scope.deleteSelectedBoxes(); } });
@@ -384,13 +380,13 @@ angular.module('biggraph')
         element.bind('drop', function(event) {
           event.preventDefault();
           var origEvent = event.originalEvent;
-          var operationID = event.originalEvent.dataTransfer.getData('text');
+          var operationId = event.originalEvent.dataTransfer.getData('text');
           // This isn't undefined iff testing
-          var boxID = event.originalEvent.dataTransfer.getData('id');
+          var boxId = event.originalEvent.dataTransfer.getData('id');
           // This is received from operation-selector-entry.js
           scope.$apply(function() {
             addLogicalMousePosition(origEvent);
-            scope.workspace.addBox(operationID, origEvent, boxID);
+            scope.workspace.addBox(operationId, origEvent, boxId);
           });
         });
 

@@ -17,7 +17,7 @@ case class Workspace(
     s"Duplicate box name: ${dups.mkString(", ")}"
   })
 
-  assert(anchor.operationID == "Anchor", "Anchor box is missing.")
+  assert(anchor.operationId == "Anchor", "Anchor box is missing.")
 
   def anchor = findBox("anchor")
 
@@ -33,8 +33,8 @@ case class Workspace(
   // This workspace as a custom box.
   def getBoxMetadata(name: String): BoxMetadata = {
     val description = anchor.parameters.getOrElse("description", "")
-    val inputs = boxes.filter(_.operationID == "Input box").flatMap(b => b.parameters.get("name"))
-    val outputs = boxes.filter(_.operationID == "Output box").flatMap(b => b.parameters.get("name"))
+    val inputs = boxes.filter(_.operationId == "Input box").flatMap(b => b.parameters.get("name"))
+    val outputs = boxes.filter(_.operationId == "Output box").flatMap(b => b.parameters.get("name"))
     BoxMetadata("Custom boxes", name, inputs, outputs, description = Some(description))
   }
 
@@ -59,7 +59,7 @@ case class Workspace(
   // ones that depend on another with a circular dependency are returned unordered.
   private[controllers] def discoverDependencies: Dependencies = {
     val outEdges: Map[String, Seq[String]] = {
-      val edges = boxes.flatMap(dst => dst.inputs.toSeq.map(input => input._2.boxID -> dst.id))
+      val edges = boxes.flatMap(dst => dst.inputs.toSeq.map(input => input._2.boxId -> dst.id))
       edges.groupBy(_._1).mapValues(_.map(_._2).toSeq)
     }
 
@@ -136,7 +136,7 @@ case class WorkspaceExecutionContext(
           newOutputStates ++ states
       }
     val statesWithCircularDependency = dependencies.withCircularDependency.flatMap { box =>
-      val meta = ops.getBoxMetadata(box.operationID)
+      val meta = ops.getBoxMetadata(box.operationId)
       meta.outputs.map { o =>
         box.output(o) -> BoxOutputState.error("Can not compute state due to circular dependencies.")
       }
@@ -146,7 +146,7 @@ case class WorkspaceExecutionContext(
 
   private def outputStatesOfBox(
     box: Box, inputStates: Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
-    val meta = ops.getBoxMetadata(box.operationID)
+    val meta = ops.getBoxMetadata(box.operationId)
 
     def allOutputsWithError(msg: String): Map[BoxOutput, BoxOutputState] = {
       meta.outputs.map {
@@ -184,7 +184,7 @@ case class WorkspaceExecutionContext(
   }
 
   def getOperationForStates(box: Box, states: Map[BoxOutput, BoxOutputState]): Operation = {
-    val meta = ops.getBoxMetadata(box.operationID)
+    val meta = ops.getBoxMetadata(box.operationId)
     for (i <- meta.inputs) {
       assert(box.inputs.contains(i), s"Input $i is not connected.")
     }
@@ -196,12 +196,12 @@ case class WorkspaceExecutionContext(
     box.getOperation(this, inputs)
   }
 
-  def getOperation(boxID: String): Operation = getOperationForStates(ws.findBox(boxID), allStates)
+  def getOperation(boxId: String): Operation = getOperationForStates(ws.findBox(boxId), allStates)
 }
 
 case class Box(
     id: String,
-    operationID: String,
+    operationId: String,
     parameters: Map[String, String],
     x: Double,
     y: Double,
@@ -229,12 +229,12 @@ case class Box(
 }
 
 case class BoxOutput(
-  boxID: String,
+  boxId: String,
   id: String)
 
 case class BoxMetadata(
-  categoryID: String,
-  operationID: String,
+  categoryId: String,
+  operationId: String,
   inputs: List[String],
   outputs: List[String],
   description: Option[String] = None)
