@@ -109,29 +109,29 @@ case class Fingerprinting(
       .sort(workingPartitioner)
       .sortedLeftOuterJoin(outNeighbors(inputs.rightEdges.rdd, inputs.rightEdgeWeights.rdd))
       .map {
-        case (rightID, (leftID, Some(rightNeighbors))) => (leftID, (rightID, rightNeighbors))
-        case (rightID, (leftID, None)) => (leftID, (rightID, Seq()))
+        case (rightId, (leftId, Some(rightNeighbors))) => (leftId, (rightId, rightNeighbors))
+        case (rightId, (leftId, None)) => (leftId, (rightId, Seq()))
       }
       .sort(workingPartitioner)
       .sortedLeftOuterJoin(outNeighbors(inputs.leftEdges.rdd, inputs.leftEdgeWeights.rdd))
       .map {
-        case (leftID, ((rightID, rightNeighbors), Some(leftNeighbors))) =>
-          (leftID, leftNeighbors, rightID, rightNeighbors)
-        case (leftID, ((rightID, rightNeighbors), None)) =>
-          (leftID, Seq(), rightID, rightNeighbors)
+        case (leftId, ((rightId, rightNeighbors), Some(leftNeighbors))) =>
+          (leftId, leftNeighbors, rightId, rightNeighbors)
+        case (leftId, ((rightId, rightNeighbors), None)) =>
+          (leftId, Seq(), rightId, rightNeighbors)
       }
 
     // Calculate the similarity metric.
     val leftSimilarities =
       candidates.flatMap {
-        case (leftID, leftNeighbors, rightID, rightNeighbors) =>
+        case (leftId, leftNeighbors, rightId, rightNeighbors) =>
           val ln = leftNeighbors.toMap
           val rn = rightNeighbors.toMap
           val common = (ln.keySet intersect rn.keySet).toSeq
           if (common.isEmpty) {
             // Not just a shortcut. The formula would divide by zero if ln and rn are both empty.
             if (minimumOverlap > 0 || minimumSimilarity > 0) None
-            else Some(leftID -> (rightID, 0.0))
+            else Some(leftId -> (rightId, 0.0))
           } else if (common.size < minimumOverlap) {
             None
           } else {
@@ -161,7 +161,7 @@ case class Fingerprinting(
             val union = all.map(k => (lw(k) max rw(k)) * weights(k)).sum
             val similarity = isect / (union + multiNeighborsPreference)
             if (similarity < minimumSimilarity) None
-            else Some(leftID -> (rightID, similarity))
+            else Some(leftId -> (rightId, similarity))
           }
       }.sort(candidatesPartitioner)
     val rightSimilarities =
@@ -189,12 +189,12 @@ case class Fingerprinting(
         .randomNumbered(if (rightCount < leftCount) rightPartitioner else leftPartitioner))
     output(o.leftSimilarities, leftSimilarities.sortedJoin(leftToRight)
       .flatMapValues {
-        case ((simID, sim), id) if simID == id => Some(sim)
+        case ((simId, sim), id) if simId == id => Some(sim)
         case _ => None
       }.sortUnique(leftPartitioner))
     output(o.rightSimilarities, rightSimilarities.sortedJoin(rightToLeft)
       .flatMapValues {
-        case ((simID, sim), id) if simID == id => Some(sim)
+        case ((simId, sim), id) if simId == id => Some(sim)
         case _ => None
       }.sortUnique(rightPartitioner))
   }

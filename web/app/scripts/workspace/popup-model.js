@@ -8,7 +8,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   // owner: Owning object. It should have an owner.popups
   //        list of all popups. And owner.movedPopup a pointer
   //        to the currently moved popup, if any.
-  var PopupModel = function(id, title, content, x, y, width, height, owner) {
+  function PopupModel(id, title, content, x, y, width, height, owner) {
     this.id = id;
     this.title = title;
     this.content = content;
@@ -17,16 +17,20 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     this.width = width;
     this.height = height;
     this.owner = owner;
-  };
+  }
 
   PopupModel.prototype.onMouseDown = function(event) {
     var leftButton = event.buttons & 1;
     // Protractor omits button data from simulated mouse events.
     if (leftButton || environment.protractor) {
       event.stopPropagation();
+      // Enter 'moving mode', i.e. movedPopup is defined.
       this.owner.movedPopup = this;
       this.moveOffsetX = this.x - event.pageX;
       this.moveOffsetY = this.y - event.pageY;
+      // Save width and height of the popup. Remove 'px' from the end.
+      this.width = event.target.parentElement.style.width.slice(0, -2);
+      this.height = event.target.parentElement.style.height.slice(0, -2);
     }
   };
 
@@ -38,8 +42,11 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     var leftButton = event.buttons & 1;
     // Protractor omits button data from simulated mouse events.
     if (leftButton || environment.protractor) {
-      this.x = this.moveOffsetX + event.pageX;
-      this.y = this.moveOffsetY + event.pageY;
+      // Only move the popup if we are in the 'moving mode' (i.e. movedPopup is defined).
+      if (this.owner.movedPopup) {
+        this.x = this.moveOffsetX + event.pageX;
+        this.y = this.moveOffsetY + event.pageY;
+      }
     } else {
       // Button is no longer pressed. (It was released outside of the window, for example.)
       this.owner.movedPopup = undefined;

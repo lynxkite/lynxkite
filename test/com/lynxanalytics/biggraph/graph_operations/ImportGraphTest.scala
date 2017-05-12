@@ -88,7 +88,7 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
     val es = data.edges.rdd
     assert(vs.count === 6)
     assert(es.count === 8)
-    val names = data.stringID.rdd
+    val names = data.stringId.rdd
     val bySrc = es.map { case (e, Edge(s, d)) => s -> (e, d) }
     val byDst = bySrc.join(names).map { case (s, ((e, d), ns)) => d -> (e, ns) }
     val named = byDst.join(names).map { case (d, ((e, ns), nd)) => e -> (ns, nd) }
@@ -116,7 +116,7 @@ class ImportGraphTest extends FunSuite with TestGraphOp {
       edgeSourceFieldName, edgeDestFieldName).result
     val vs = data.vertices.rdd
     val es = data.edges.rdd
-    val names = data.stringID.rdd
+    val names = data.stringId.rdd
     val comments = data.attrs("comment").rdd
     val bySrc = es.map { case (e, Edge(s, d)) => s -> (e, d) }
     val byDst = bySrc.join(names).map { case (s, ((e, d), ns)) => d -> (e, ns) }

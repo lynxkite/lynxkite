@@ -25,16 +25,16 @@ angular.module('biggraph').directive('operationSelector', function($timeout) {
         var categories = {};
         for (var i = 0; i < scope.boxes.length; ++i) {
           var box = scope.boxes[i];
-          if (!(box.categoryID in categories)) {
+          if (!(box.categoryId in categories)) {
             var cat = {
-              title: box.categoryID,
+              title: box.categoryId,
               ops: [],
               color: 'blue',
             };
             scope.categories.push(cat);
-            categories[box.categoryID] = cat;
+            categories[box.categoryId] = cat;
           }
-          categories[box.categoryID].ops.push(box);
+          categories[box.categoryId].ops.push(box);
         }
 
       });

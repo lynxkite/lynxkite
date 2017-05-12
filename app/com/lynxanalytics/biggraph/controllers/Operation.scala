@@ -127,7 +127,7 @@ object Operation {
     manager: MetaGraphManager)
 
   // Turns an operation name into a valid HTML identifier.
-  def htmlID(name: String) = name.toLowerCase.replaceAll("\\W+", "-").replaceFirst("-+$", "")
+  def htmlId(name: String) = name.toLowerCase.replaceAll("\\W+", "-").replaceFirst("-+$", "")
 
   // Adds a bunch of utility methods to projects that make it easier to write operations.
   object Implicits {
@@ -224,7 +224,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   def opForBox(
     user: serving.User, box: Box, inputs: Map[String, BoxOutputState],
     workspaceParameters: Map[String, String]) = {
-    val (meta, factory) = getBox(box.operationID)
+    val (meta, factory) = getBox(box.operationId)
     val context =
       Operation.Context(user, this, box, meta, inputs, workspaceParameters, env.metaGraphManager)
     factory(context)
@@ -235,7 +235,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 trait BasicOperation extends Operation {
   implicit val manager = context.manager
   protected val user = context.user
-  protected val id = context.meta.operationID
+  protected val id = context.meta.operationId
   protected val title = id
   protected def visibleScalars: List[FEScalar] = List()
   def summary = title
@@ -244,7 +244,7 @@ trait BasicOperation extends Operation {
   protected def safeEnabled: FEStatus =
     util.Try(enabled).recover { case exc => FEStatus.disabled(exc.getMessage) }.get
   protected def help = // Add to notes for help link.
-    "<help-popup href=\"" + Operation.htmlID(id) + "\"></help-popup>"
+    "<help-popup href=\"" + Operation.htmlId(id) + "\"></help-popup>"
 
   protected def blankParams = LazyParameters(context) // Without apply_to parameters.
   protected def params: LazyParameters = {
@@ -281,10 +281,10 @@ trait BasicOperation extends Operation {
 
   def toFE: FEOperationMeta = FEOperationMeta(
     id,
-    Operation.htmlID(id),
+    Operation.htmlId(id),
     params.toFE,
     visibleScalars,
-    context.meta.categoryID,
+    context.meta.categoryId,
     safeEnabled,
     description = context.meta.description)
 
@@ -378,15 +378,15 @@ abstract class ProjectTransformation(
 abstract class MinimalOperation(
     protected val context: Operation.Context) extends Operation {
   protected def params = LazyParameters(context)
-  protected val id = context.meta.operationID
+  protected val id = context.meta.operationId
   val title = id
   def summary = title
   def toFE: FEOperationMeta = FEOperationMeta(
     id,
-    Operation.htmlID(id),
+    Operation.htmlId(id),
     params.toFE,
     List(),
-    context.meta.categoryID,
+    context.meta.categoryId,
     FEStatus.enabled)
   def getOutputs() = ???
 }
@@ -477,9 +477,9 @@ class CustomBoxOperation(
   // inputs connected to the custom box.
   def connectedWorkspace = {
     workspace.copy(boxes = workspace.boxes.map { box =>
-      if (box.operationID == "Input box" && box.parameters.contains("name")) {
+      if (box.operationId == "Input box" && box.parameters.contains("name")) {
         new Box(
-          box.id, box.operationID, box.parameters, box.x, box.y, box.inputs,
+          box.id, box.operationId, box.parameters, box.x, box.y, box.inputs,
           box.parametricParameters) {
           override def execute(
             ctx: WorkspaceExecutionContext,
@@ -495,7 +495,7 @@ class CustomBoxOperation(
     val ws = connectedWorkspace
     val states = ws.context(context.user, context.ops, params.toMap).allStates
     val byOutput = ws.boxes.flatMap { box =>
-      if (box.operationID == "Output box" && box.parameters.contains("name"))
+      if (box.operationId == "Output box" && box.parameters.contains("name"))
         Some(box.parameters("name") -> states(box.inputs("output")))
       else None
     }.toMap
