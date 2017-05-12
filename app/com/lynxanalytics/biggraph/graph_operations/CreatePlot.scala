@@ -3,10 +3,8 @@
 // The result of the operation ais a JSON description of the plot as a Scalar.
 package com.lynxanalytics.biggraph.graph_operations
 
-import vegas._
-import vegas.sparkExt._
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.sandbox.ScalaScript
 
 object CreatePlot extends OpFromJson {
   class Input extends MagicInputSignature {
@@ -17,11 +15,13 @@ object CreatePlot extends OpFromJson {
     val plot = scalar[String]
   }
   def fromJson(j: JsValue) = CreatePlot(
-    (j \ "plotCode").as[String]
-  )
+    (j \ "plotCode").as[String],
+    (j \ "width").as[Int],
+    (j \ "height").as[Int])
 }
+
 import CreatePlot._
-case class CreatePlot(plotCode: String)
+case class CreatePlot(plotCode: String, width: Int, height: Int)
     extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
@@ -36,13 +36,8 @@ case class CreatePlot(plotCode: String)
     implicit val id = inputDatas
     implicit val runtimeContext = rc
     val df = inputs.t.df
-    // create plot generating script
-
-    // eval script
-
-    // test
-    val plotDescription: String = df.take(1).toString
-
+    val plotDescription: String = ScalaScript.runVegas(
+      plotCode, df, title="plotTitle", width=width, height=height)
     output(o.plot, plotDescription)
   }
 }

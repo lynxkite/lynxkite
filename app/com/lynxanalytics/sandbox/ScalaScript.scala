@@ -8,6 +8,8 @@ import javax.script._
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
 import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.spark_util.SQLHelper
+import org.apache.spark.sql.DataFrame
 
 import scala.concurrent.duration.Duration
 import scala.tools.nsc.interpreter.IMain
@@ -126,15 +128,38 @@ object ScalaScript {
     }
   }
 
+  // Helper function to convert a dataframe to a Seq of Maps
+  // This format used by the Vegas plot drawing library
+  // The default value of maxRows (10000) is the maximum number of data points
+  // allowed in a chart
+  def dfToSeq(df: DataFrame, maxRows: Int = 10000): Seq[Map[String, Any]] = {
+    val names = df.schema.toList.map { field => field.name }
+
+    SQLHelper.toSeqRDD(df).take(maxRows).map {
+      row =>
+        names.zip(row.toSeq.toList).
+          groupBy(_._1).
+          mapValues(_.map(_._2)).
+          mapValues(_(0))
+    }.toSeq
+  }
+
   def runVegas( // this is a POC method
-    code: String, data: Seq[Map[String, Any]], title: String, timeoutInSeconds: Long = 10L): String = synchronized {
+    code: String,
+    df: DataFrame,
+    title: String,
+    width: Int = 500,
+    height: Int = 500,
+    timeoutInSeconds: Long = 10L): String = synchronized {
+    // To avoid the need of spark packages in the script
+    // we convert the DataFrame before passing it to Vegas
+    val data = dfToSeq(df)
     withContextClassLoader {
       engine.put("dfData: Seq[Map[String, Any]]", data)
-
       val fullCode = s"""
       import vegas._
       val result = {
-        val plot = Vegas("$title").
+        val plot = Vegas("$title", width=$width, height=$height).
         withData(dfData).
         $code
         val json: String = plot.toJson

@@ -41,31 +41,14 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
     assert(ScalaScript.runWithDouble(code2, a) == "45.0")
     assert(ScalaScript.runWithDouble(code2, b) == "43.1")
   }
-  
+
   test("Scala DataFrame bindings work with runVegas") {
     val df = ImportDataFrameTest.jdbcDF(dataManager)
-
-    // Helper function to convert a dataframe to a Seq of Maps
-    // This format used by the Vegas plot drawing library
-    def dfToSeq(df: DataFrame, maxRows: Int = 10000): Seq[Map[String, Any]] = {
-      val names = df.schema.toList.map { field => field.name }
-
-      SQLHelper.toSeqRDD(df).take(maxRows).map {
-        row =>
-          names.zip(row.toSeq.toList).
-            groupBy(_._1).
-            mapValues(_.map(_._2)).
-            mapValues(_(0))
-      }.toSeq
-    }
-
     val code = """encodeX("name", Nominal).
       encodeY("level", Quantitative).
       mark(Bar)"""
-    print(ScalaScript.runVegas(code, dfToSeq(df, 2), "Test1"))
-    print(ScalaScript.runVegas(code, dfToSeq(df, 4), "Test2"))
+    print(ScalaScript.runVegas(code, df, "Test1"))
   }
-
 
   test("Security manager disables file access") {
     val testFile = getClass.getResource("/graph_api/permission_check.txt")
