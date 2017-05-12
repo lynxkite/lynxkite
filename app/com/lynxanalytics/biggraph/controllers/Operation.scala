@@ -514,10 +514,9 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
 abstract class ExportOperationToFile(context: Operation.Context)
     extends ExportOperation(context) {
 
-  override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
-    validateParameters(params)
+  override def validateParameters(params: Map[String, String]): Unit = {
+    super.validateParameters(params)
     assertWriteAllowed(params("path"))
-    makeOutput(exportResult)
   }
 
   protected def generatePathIfNeeded(path: String): String = {
