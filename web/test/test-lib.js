@@ -906,7 +906,7 @@ Selector.prototype = {
     // Floating elements can overlap buttons and block clicks.
     browser.executeScript(`
       document.styleSheets[0].insertRule(
-        '.spark-status, .bottom-links { position: static !important; }');
+        '.spark-status, .user-menu { position: static !important; }');
         `);
   },
 
