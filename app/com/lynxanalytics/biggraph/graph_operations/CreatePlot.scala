@@ -37,7 +37,7 @@ case class CreatePlot(plotCode: String, width: Int, height: Int)
     implicit val runtimeContext = rc
     val df = inputs.t.df
     val plotDescription: String = ScalaScript.runVegas(
-      plotCode, df, title="plotTitle", width=width, height=height)
+      plotCode, df, title = "plotTitle", width = width, height = height)
     output(o.plot, plotDescription)
   }
 }
