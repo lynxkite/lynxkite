@@ -13,9 +13,9 @@
 angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
   function getCommentLines(metadata, instance) {
     var comment;
-    if (metadata.operationID === 'Add comment') {
+    if (metadata.operationId === 'Add comment') {
       comment = instance.parameters.comment;
-    } else if (metadata.operationID === 'Anchor') {
+    } else if (metadata.operationId === 'Anchor') {
       comment = instance.parameters.description;
     }
     return comment ? comment.split('\n') : [];

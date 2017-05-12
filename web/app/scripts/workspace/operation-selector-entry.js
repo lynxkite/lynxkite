@@ -15,7 +15,7 @@ angular.module('biggraph').directive('operationSelectorEntry', function() {
         // This will be received in workspace-board.js
         event.originalEvent.dataTransfer.setData(
             'text',
-            scope.op.operationID);
+            scope.op.operationId);
       });
     }
   };

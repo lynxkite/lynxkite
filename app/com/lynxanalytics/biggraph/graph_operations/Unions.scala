@@ -106,7 +106,7 @@ case class EdgeBundleUnion(numEdgeBundles: Int)
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val idSetUnion = inputs.idSetUnion.rdd
-    val reIDedEbs = Range(0, numEdgeBundles).map { i =>
+    val reIdedEbs = Range(0, numEdgeBundles).map { i =>
       val eb = inputs.ebs(i).rdd
       // Here typically none of the injections are identity, so we don't special case for that.
       val injection =
@@ -115,6 +115,6 @@ case class EdgeBundleUnion(numEdgeBundles: Int)
           .sortUnique(eb.partitioner.get)
       eb.sortedJoin(injection).map { case (oldId, (edge, newId)) => (newId, edge) }
     }
-    output(o.union, rc.sparkContext.union(reIDedEbs).sortUnique(idSetUnion.partitioner.get))
+    output(o.union, rc.sparkContext.union(reIdedEbs).sortUnique(idSetUnion.partitioner.get))
   }
 }
