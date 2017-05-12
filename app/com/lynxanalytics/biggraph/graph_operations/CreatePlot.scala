@@ -16,18 +16,23 @@ object CreatePlot extends OpFromJson {
   }
   def fromJson(j: JsValue) = CreatePlot(
     (j \ "plotCode").as[String],
+    (j \ "title").as[String],
     (j \ "width").as[Int],
     (j \ "height").as[Int])
 }
 
 import CreatePlot._
-case class CreatePlot(plotCode: String, width: Int, height: Int)
+case class CreatePlot(plotCode: String, title: String, width: Int, height: Int)
     extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj("plotCode" -> plotCode)
+  override def toJson = Json.obj(
+    "plotCode" -> plotCode,
+    "title" -> title,
+    "width" -> width,
+    "height" -> height)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -37,7 +42,7 @@ case class CreatePlot(plotCode: String, width: Int, height: Int)
     implicit val runtimeContext = rc
     val df = inputs.t.df
     val plotDescription: String = ScalaScript.runVegas(
-      plotCode, df, title = "plotTitle", width = width, height = height)
+      plotCode, df, title = title, width = width, height = height)
     output(o.plot, plotDescription)
   }
 }

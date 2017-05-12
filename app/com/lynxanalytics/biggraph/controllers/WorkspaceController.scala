@@ -118,6 +118,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
             case BoxOutputKind.Table =>
               val progress = entityProgressManager.computeProgress(state.table)
               stateID -> Some(List(progress))
+            case BoxOutputKind.Plot =>
+              val progress = entityProgressManager.computeProgress(state.plot)
+              stateID -> Some(List(progress))
             case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }
         } else {
