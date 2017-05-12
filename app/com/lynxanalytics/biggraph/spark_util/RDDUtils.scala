@@ -300,10 +300,10 @@ object Implicits {
   //   parts: The number of partitions.
   //   part: Current partition index.
   //   row: Current row index.
-  private[spark_util] def genID(parts: Int, part: Int, row: Int): Long = {
+  private[spark_util] def genId(parts: Int, part: Int, row: Int): Long = {
     // HashPartitioner will use nonNegativeMod(id.hashCode, parts) to pick the partition.
     // We generate the ID such that nonNegativeMod(id.hashCode, parts) == part.
-    val longID = parts.toLong * row.toLong + part.toLong
+    val longId = parts.toLong * row.toLong + part.toLong
     val low = Int.MaxValue % parts
     val high = Int.MinValue % parts
     // Correction for overflows. No correction needed for underflows.
@@ -311,8 +311,8 @@ object Implicits {
     val jump = (low + 1 - high + parts * 2) % parts
     val period = Int.MaxValue.toLong * 2L - jump // Distance between overflows.
     val offset = Int.MaxValue.toLong - jump // Zero is at this point in the period.
-    val jumps = (longID + offset) / period
-    val jumped = longID + jump * jumps
+    val jumps = (longId + offset) / period
+    val jumped = longId + jump * jumps
     jumped ^ (jumped >>> 32) // Cancel out the bit flips in Long.hashCode.
   }
 
@@ -337,13 +337,13 @@ object Implicits {
       self.mapPartitionsWithIndex({
         case (pid, it) =>
           val rnd = new scala.util.Random(pid)
-          var uniqueID = pid.toLong - numPartitions
+          var uniqueId = pid.toLong - numPartitions
           it.map { value =>
-            val randomID = rnd.nextInt.toLong
-            uniqueID += numPartitions
-            // The ID computed here is guaranteed unique as long as uniqueID fits in one unsigned
+            val randomId = rnd.nextInt.toLong
+            uniqueId += numPartitions
+            // The ID computed here is guaranteed unique as long as uniqueId fits in one unsigned
             // int. Otherwise it's still unique with large probability.
-            ((randomID << 32) ^ uniqueID) -> value
+            ((randomId << 32) ^ uniqueId) -> value
           }
       }).sortUnique(partitioner)
     }

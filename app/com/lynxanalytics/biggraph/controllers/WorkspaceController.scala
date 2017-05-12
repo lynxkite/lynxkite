@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 
 case class GetWorkspaceRequest(name: String)
-case class BoxOutputInfo(boxOutput: BoxOutput, stateID: String, success: FEStatus, kind: String)
+case class BoxOutputInfo(boxOutput: BoxOutput, stateId: String, success: FEStatus, kind: String)
 case class GetWorkspaceResponse(
   workspace: Workspace,
   outputs: List[BoxOutputInfo],
@@ -20,7 +20,7 @@ case class GetWorkspaceResponse(
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
 case class GetOperationMetaRequest(workspace: String, box: String)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
-case class GetProgressRequest(stateIDs: List[String])
+case class GetProgressRequest(stateIds: List[String])
 case class GetProgressResponse(progress: Map[String, Option[Progress]])
 case class GetProjectOutputRequest(id: String, path: String)
 case class GetTableOutputRequest(id: String, sampleRows: Int)
@@ -73,13 +73,13 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       }
     }
     val stateInfo = statesWithId.toList.map {
-      case (boxOutput, (boxOutputState, stateID)) =>
-        BoxOutputInfo(boxOutput, stateID, boxOutputState.success, boxOutputState.kind)
+      case (boxOutput, (boxOutputState, stateId)) =>
+        BoxOutputInfo(boxOutput, stateId, boxOutputState.success, boxOutputState.kind)
     }
     val summaries = workspace.boxes.map(
       box => box.id -> (
         try { context.getOperationForStates(box, states).summary }
-        catch { case e: AssertionError => box.operationID }
+        catch { case e: AssertionError => box.operationId }
       )
     ).toMap
     GetWorkspaceResponse(
@@ -91,11 +91,11 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
   val calculatedStates = new HashMap[String, BoxOutputState]()
 
-  def getOutput(user: serving.User, stateID: String): BoxOutputState = {
+  def getOutput(user: serving.User, stateId: String): BoxOutputState = {
     calculatedStates.synchronized {
-      calculatedStates.get(stateID)
+      calculatedStates.get(stateId)
     } match {
-      case None => throw new AssertionError(s"BoxOutputState state identified by $stateID not found")
+      case None => throw new AssertionError(s"BoxOutputState state identified by $stateId not found")
       case Some(state: BoxOutputState) => state
     }
   }
@@ -109,19 +109,19 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def getProgress(user: serving.User, request: GetProgressRequest): GetProgressResponse = {
-    val states = request.stateIDs.map(stateID => stateID -> getOutput(user, stateID)).toMap
+    val states = request.stateIds.map(stateId => stateId -> getOutput(user, stateId)).toMap
     val progress = states.map {
-      case (stateID, state) =>
+      case (stateId, state) =>
         if (state.success.enabled) {
           state.kind match {
-            case BoxOutputKind.Project => stateID -> Some(state.project.viewer.getProgress)
+            case BoxOutputKind.Project => stateId -> Some(state.project.viewer.getProgress)
             case BoxOutputKind.Table =>
               val progress = entityProgressManager.computeProgress(state.table)
-              stateID -> Some(List(progress))
+              stateId -> Some(List(progress))
             case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }
         } else {
-          stateID -> None
+          stateId -> None
         }
     }.mapValues(option => option.map(
       progressList => Progress(
