@@ -2,9 +2,23 @@
   <span id="workspace-name">{{workspace.name}}</span>
   <div class="btn-group pull-right">
     <button class="btn btn-default"
+         id="copy-boxes"
+         ng-click="copyBoxes()"
+         drop-tooltip="Copy&nbsp;boxes (Ctrl-C)"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-copy"></i>
+    </button>
+    <button class="btn btn-default"
+         id="paste-boxes"
+         ng-click="pasteBoxes()"
+         drop-tooltip="Paste&nbsp;boxes (Ctrl-V)"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-paste"></i>
+    </button>
+    <button class="btn btn-default"
          id="delete-selected-boxes"
          ng-click="deleteSelectedBoxes()"
-         drop-tooltip="Delete&nbsp;selected&nbsp;boxes"
+         drop-tooltip="Delete&nbsp;selected&nbsp;boxes (Delete)"
          drop-tooltip-placement="bottom">
       <i class="fa fa-trash-o"></i>
     </button>
@@ -28,7 +42,7 @@
          id="undo"
          ng-click="workspace.undo()"
          ng-disabled="!workspace.canUndo()"
-         drop-tooltip="Undo"
+         drop-tooltip="Undo (Ctrl-Z)"
          drop-tooltip-placement="bottom">
       <i class="glyphicon glyphicon-backward"></i>
     </button>
@@ -36,7 +50,7 @@
          id="redo"
          ng-click="workspace.redo()"
          ng-disabled="!workspace.canRedo()"
-         drop-tooltip="Redo"
+         drop-tooltip="Redo (Ctrl-Y)"
          drop-tooltip-placement="bottom">
       <i class="glyphicon glyphicon-forward"></i>
     </button>
@@ -47,6 +61,7 @@
          drop-tooltip-placement="bottom">
       <i class="glyphicon glyphicon-remove"></i>
     </a>
+    <user-menu info="list" direction="dropdown" class="user-menu-in-toolbar"></user-menu>
   </div>
 </div>
 

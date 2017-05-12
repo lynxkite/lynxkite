@@ -100,6 +100,7 @@ class Ecosystem:
         'emr_log_uri': args.emr_log_uri,
         'hdfs_replication': '1',
         'with_rds': args.with_rds,
+        'with_jupyter': args.with_jupyter,
         'rm': args.rm,
         'owner': args.owner,
         'expiry': args.expiry,
@@ -171,6 +172,10 @@ class Ecosystem:
         lk_conf['kite_instance_name'],
         conf['emr_instance_count'])
     self.config_aws_s3_native()
+    if conf['with_jupyter']:
+      self.install_and_setup_jupyter()
+    if conf['applications'] and 'hive' in [a.lower() for a in conf['applications'].split(',')]:
+      self.hive_patch()
     self.start_monitoring_on_extra_nodes_native(conf['ec2_key_file'])
     self.start_supervisor_native()
     print('LynxKite ecosystem was started by supervisor.')
@@ -368,6 +373,24 @@ EOF
       chmod a+x spark/conf/spark-env.sh
     ''')
 
+  def hive_patch(self):
+    #  This is needed because of a Spark 2 - EMR - YARN - jersey conflict
+    #  Disables timeline service in yarn.
+    #  https://issues.apache.org/jira/browse/SPARK-15343
+    self.cluster.ssh('''
+      cd /mnt/lynx/spark/conf
+      cat >spark-defaults.conf <<'EOF'
+spark.hadoop.yarn.timeline-service.enabled false
+EOF
+    ''')
+    # Configure Hive with Spark:
+    # execution engine = mr
+    self.cluster.ssh('''
+      cp /etc/hive/conf/hive-site.xml /mnt/lynx/spark/conf/
+      cd /mnt/lynx/spark/conf/
+      sed -i -e 's#<value>tez</value>#<value>mr</value>#g' hive-site.xml
+    ''')
+
   def start_monitoring_on_extra_nodes_native(self, keyfile):
     cluster_keyfile = 'cluster_key.pem'
     self.cluster.rsync_up(src=keyfile, dst='/home/hadoop/.ssh/' + cluster_keyfile)
@@ -404,6 +427,18 @@ EOF
       set -x
       source /mnt/lynx/config/central
       /usr/local/bin/supervisord -c config/supervisord.conf
+      ''')
+
+  def install_and_setup_jupyter(self):
+    self.cluster.ssh('''
+      sudo pip-3.4 install --upgrade jupyter sklearn matplotlib
+      sudo pip-3.4 install --upgrade pandas seaborn
+    ''')
+    self.cluster.ssh_nohup('''
+      mkdir -p /mnt/lynx/notebooks
+      source /mnt/lynx/config/central
+      cd /mnt/lynx/notebooks
+      jupyter-notebook --NotebookApp.token='' --port=2202
       ''')
 
   ###
