@@ -29,7 +29,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   def getOpMeta(ws: String, box: String) =
     controller.getOperationMeta(user, GetOperationMetaRequest(ws, box))
 
-  def getOutputIDs(ws: String) = {
+  def getOutputIds(ws: String) = {
     val allIds = get(ws).outputs
     allIds.map {
       case BoxOutputInfo(bo, id, _, _) => (bo, id)
@@ -95,7 +95,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
       val ws = Workspace.from(eg)
       set("test-workspace", ws)
-      val id = getOutputIDs("test-workspace")(eg.output("project"))
+      val id = getOutputIds("test-workspace")(eg.output("project"))
       val o = getProjectOutput(id)
       val income = o.vertexAttributes.find(_.title == "income").get
       assert(income.metadata("icon") == "money_bag")
@@ -178,11 +178,11 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val prOutput = pr.output("project")
       val ws = Workspace.from(eg, cc, pr)
       set("test-workspace", ws)
-      val stateIDs = getOutputIDs("test-workspace")
-      val prStateID = stateIDs(prOutput)
+      val stateIds = getOutputIds("test-workspace")
+      val prStateId = stateIds(prOutput)
       val progressBeforePR = controller.getProgress(user,
-        GetProgressRequest(List(prStateID))
-      ).progress(prStateID).get
+        GetProgressRequest(List(prStateId))
+      ).progress(prStateId).get
       assert(progressBeforePR.inProgress == 0)
       assert(progressBeforePR.computed + progressBeforePR.inProgress
         + progressBeforePR.notYetStarted + progressBeforePR.failed > 0)
@@ -192,8 +192,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       context(ws).allStates(pr.output("project")).project.vertexAttributes(pagerankParams("name"))
         .rdd.values.collect
       val progressAfterPR = controller.getProgress(user,
-        GetProgressRequest(List(prStateID))
-      ).progress(prStateID).get
+        GetProgressRequest(List(prStateId))
+      ).progress(prStateId).get
       val computedAfterPR = progressAfterPR.computed
       assert(computedAfterPR > computedBeforePR)
     }
@@ -206,11 +206,11 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val prOutput = pr.output("project")
       val ws = Workspace.from(pr)
       set("test-workspace", ws)
-      val stateIDs = getOutputIDs("test-workspace")
-      val prStateID = stateIDs(prOutput)
+      val stateIds = getOutputIds("test-workspace")
+      val prStateId = stateIds(prOutput)
       val progress = controller.getProgress(user,
-        GetProgressRequest(List(prStateID))
-      ).progress(prStateID)
+        GetProgressRequest(List(prStateId))
+      ).progress(prStateId)
       assert(progress.isEmpty)
     }
   }

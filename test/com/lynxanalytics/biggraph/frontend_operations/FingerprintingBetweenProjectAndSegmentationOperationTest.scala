@@ -55,7 +55,7 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
         "name" -> "other"), Seq(other))
       .box("Define segmentation links from matching attributes", Map(
         "apply_to_project" -> "|other",
-        "base_id_attr" -> "stringID",
+        "base_id_attr" -> "stringId",
         "seg_id_attr" -> "link"))
     def seg(box: TestBox) = box.project.segmentation("other")
     def belongsTo(box: TestBox) = seg(box).belongsTo.toPairSeq

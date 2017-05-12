@@ -15,10 +15,10 @@ object PulledOverEdges extends OpFromJson {
   class Input extends MagicInputSignature {
     val originalSrc = vertexSet
     val originalDst = vertexSet
-    val originalIDs = vertexSet
-    val originalEB = edgeBundle(originalSrc, originalDst, idSet = originalIDs)
+    val originalIds = vertexSet
+    val originalEB = edgeBundle(originalSrc, originalDst, idSet = originalIds)
     val destinationVS = vertexSet
-    val injection = edgeBundle(destinationVS, originalIDs, EdgeBundleProperties.injection)
+    val injection = edgeBundle(destinationVS, originalIds, EdgeBundleProperties.injection)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
@@ -52,11 +52,11 @@ case class PulledOverEdges()
         val joinableOriginalEB = originalEB.sortUnique(destinationPartitioner)
         joinableOriginalEB.sortedJoin(destinationVS).mapValues { case (edge, _) => edge }
       } else {
-        val originalToDestinationID = injection
+        val originalToDestinationId = injection
           .map { case (id, edge) => (edge.dst, edge.src) }
           .sortUnique(originalEB.partitioner.get)
-        originalEB.sortedJoin(originalToDestinationID)
-          .map { case (originalID, (edge, destinationID)) => (destinationID, edge) }
+        originalEB.sortedJoin(originalToDestinationId)
+          .map { case (originalId, (edge, destinationId)) => (destinationId, edge) }
           .sortUnique(destinationPartitioner)
       }
     output(o.pulledEB, pulledEB)
