@@ -1,0 +1,18 @@
+### Create plot
+
+Creates a chart from the input table. The chart can be defined using the Vegas plot
+description language.
+
+====
+[[title]] Title::
+The title of the plot.
+
+[[width]] Plot width::
+The width of the plot in pixels.
+
+[[height]] Plot height::
+The height of the plot in pixels.
+
+[[plotCode]] Plot description::
+Scala code for defining the plot. For examples see: ...
+====
