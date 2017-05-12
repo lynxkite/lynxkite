@@ -57,15 +57,15 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     output(o.segments, ccVertices)
   }
 
-  type ComponentID = ID
+  type ComponentId = ID
 
   def getComponents(
-    graph: SortedRDD[ID, Set[ID]], iteration: Int): UniqueSortedRDD[ID, ComponentID] = {
+    graph: SortedRDD[ID, Set[ID]], iteration: Int): UniqueSortedRDD[ID, ComponentId] = {
     // Need to take a count of edges, and then operate on the graph.
     // We best cache it here.
     graph.persist(StorageLevel.MEMORY_AND_DISK)
     if (graph.count == 0) {
-      return graph.sparkContext.emptyRDD[(ID, ComponentID)].sortUnique(graph.partitioner.get)
+      return graph.sparkContext.emptyRDD[(ID, ComponentId)].sortUnique(graph.partitioner.get)
     }
     val edgeCount = graph.map(_._2.size).reduce(_ + _)
     if (edgeCount <= maxEdgesProcessedLocally) {
@@ -75,7 +75,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     }
   }
 
-  def getComponentsDist(graph: SortedRDD[ID, Set[ID]], iteration: Int): UniqueSortedRDD[ID, ComponentID] = {
+  def getComponentsDist(graph: SortedRDD[ID, Set[ID]], iteration: Int): UniqueSortedRDD[ID, ComponentId] = {
     val partitioner = graph.partitioner.get
 
     // Each node decides if it is hosting a party or going out as a guest.
@@ -126,7 +126,7 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
     // Third, remove finished components.
     val newGraph = almostDone.filter({ case (n, edges) => edges.nonEmpty })
     // Recursion.
-    val newComponents: UniqueSortedRDD[ID, ComponentID] = getComponents(newGraph, iteration + 1)
+    val newComponents: UniqueSortedRDD[ID, ComponentId] = getComponents(newGraph, iteration + 1)
     // We just have to map back the component IDs to the vertices.
     val reverseMoves = moves.map(_.swap)
     val parties = reverseMoves.groupBySortedKey(partitioner)
@@ -138,14 +138,14 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
   }
 
   def getComponentsLocal(
-    graphRDD: SortedRDD[ID, Set[ID]]): UniqueSortedRDD[ID, ComponentID] = {
+    graphRDD: SortedRDD[ID, Set[ID]]): UniqueSortedRDD[ID, ComponentId] = {
     // Moves all the data to one worker and processes it there.
     val p = graphRDD.coalesce(1)
 
     p.mapPartitions(
       { it =>
         val graph = it.toMap
-        val components = mutable.Map[ID, ComponentID]()
+        val components = mutable.Map[ID, ComponentId]()
         // Breadth-first search.
         for (node <- graph.keys) {
           if (!components.contains(node)) {
