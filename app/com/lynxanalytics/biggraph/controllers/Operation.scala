@@ -404,6 +404,34 @@ abstract class ProjectTransformation(
   }
 }
 
+// A PlotOperation takes a Table as input and returns an PlotResult as output.
+abstract class PlotOperation(protected val context: Operation.Context) extends BasicOperation {
+  assert(
+    context.meta.inputs == List("table"),
+    s"A PlotOperation must input a single table. $context")
+  assert(
+    context.meta.outputs == List("plotResult"),
+    s"A PlotOperation must output an PlotResult. $context"
+  )
+
+  protected lazy val table = tableInput("table")
+
+  def apply() = ???
+  def plotResult: Scalar[String]
+
+  protected def makeOutput(exportResult: Scalar[String]): Map[BoxOutput, BoxOutputState] = {
+    Map(context.box.output(
+      context.meta.outputs(0)) -> BoxOutputState.from(plotResult))
+  }
+
+  def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+    validateParameters(params)
+    makeOutput(plotResult)
+  }
+
+  def enabled = FEStatus.enabled
+}
+
 // A MinimalOperation defines simple defaults for everything.
 abstract class MinimalOperation(
     protected val context: Operation.Context) extends Operation {
