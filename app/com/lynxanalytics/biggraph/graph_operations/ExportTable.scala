@@ -1,8 +1,8 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, Timestamp }
-import com.lynxanalytics.biggraph.serving.DownloadFileRequest
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import org.apache.spark
 
 object ExportTable {
   class Input extends MagicInputSignature {
@@ -20,6 +20,20 @@ abstract class ExportTable extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
+
+  def execute(inputDatas: DataSet,
+              o: Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    implicit val ds = inputDatas
+    implicit val dataManager = rc.dataManager
+    val df = inputs.t.df
+    exportDataFrame(df)
+    val exportResult = "Export done."
+    output(o.exportResult, exportResult)
+  }
+
+  def exportDataFrame(df: spark.sql.DataFrame)
 }
 
 object ExportTableToCSV extends OpFromJson {
@@ -36,13 +50,7 @@ case class ExportTableToCSV(path: String, header: Boolean,
     "path" -> path, "header" -> header,
     "delimiter" -> delimiter, "quote" -> quote, "version" -> version)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
-    implicit val ds = inputDatas
-    implicit val dataManager = rc.dataManager
-    val df = inputs.t.df
+  def exportDataFrame(df: spark.sql.DataFrame) = {
     val file = HadoopFile(path)
     val options = Map(
       "delimiter" -> delimiter,
@@ -50,8 +58,6 @@ case class ExportTableToCSV(path: String, header: Boolean,
       "nullValue" -> "",
       "header" -> (if (header) "true" else "false"))
     df.write.format("csv").options(options).save(file.resolvedName)
-    val exportResult = "Export done."
-    output(o.exportResult, exportResult)
   }
 }
 
@@ -67,17 +73,9 @@ case class ExportTableToStructuredFile(path: String, format: String, version: In
   override def toJson = Json.obj(
     "path" -> path, "format" -> format, "version" -> version)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
-    implicit val ds = inputDatas
-    implicit val dataManager = rc.dataManager
-    val df = inputs.t.df
+  def exportDataFrame(df: spark.sql.DataFrame) = {
     val file = HadoopFile(path)
     df.write.format(format).save(file.resolvedName)
-    val exportResult = "Export done."
-    output(o.exportResult, exportResult)
   }
 }
 
@@ -91,15 +89,7 @@ case class ExportTableToJdbc(jdbcUrl: String, table: String, mode: String)
 
   override def toJson = Json.obj("jdbcUrl" -> jdbcUrl, "table" -> table, "mode" -> mode)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
-    implicit val ds = inputDatas
-    implicit val dataManager = rc.dataManager
-    val df = inputs.t.df
+  def exportDataFrame(df: spark.sql.DataFrame) = {
     df.write.mode(mode).jdbc(jdbcUrl, table, new java.util.Properties)
-    val jdbcResult = "Export done."
-    output(o.exportResult, jdbcResult)
   }
 }

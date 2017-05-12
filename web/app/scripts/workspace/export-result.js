@@ -24,7 +24,7 @@ angular.module('biggraph')
            // computeOnCommand is used in inline-loading. It makes it so that if the scalar
            // is not computed yet, it will show a Start computation button instead of the retry
            // button.
-           scope.status.value.computeOnCommand = true;
+           scope.status.value.displayComputeButton = true;
            scope.parameters = exportResultOutput.parameters;
            // Only exported files can be downloaded, JDBC exports not.
            scope.downloadable = (scope.parameters.format !== 'jdbc') ? true : false;
@@ -32,7 +32,7 @@ angular.module('biggraph')
        });
 
        scope.export = function() {
-         scope.status = util.lazyFetchScalarValue(scope.exportResultOutput.result, true);
+         util.lazyFetchScalarValue(scope.exportResultOutput.result, true);
        };
 
        scope.download = function () {

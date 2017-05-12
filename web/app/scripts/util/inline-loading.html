@@ -10,11 +10,11 @@
   class="value-error"
   drop-tooltip="Click to report error"
   ng-click="util.stopEventPropagation($event); reportError();">&times;</span>
-<span ng-if="ref.retryFunction && !ref.computeOnCommand"
+<span ng-if="ref.retryFunction && !ref.displayComputeButton"
   class="value-retry"
   drop-tooltip="Click to retry"
   ng-click="util.stopEventPropagation($event); ref.retryFunction();">&#8635;</span>
-<span ng-if="ref.retryFunction && ref.computeOnCommand"
+<span ng-if="ref.retryFunction && ref.displayComputeButton"
       class="value-retry"
       drop-tooltip="Start computation"
       ng-click="util.stopEventPropagation($event); ref.retryFunction();">&#9654;</span>
