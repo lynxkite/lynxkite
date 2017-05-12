@@ -7,7 +7,6 @@ import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import play.api.libs.json
 import org.apache.spark
 
@@ -230,82 +229,6 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
       Operation.Context(user, this, box, meta, inputs, workspaceParameters, env.metaGraphManager)
     factory(context)
   }
-}
-
-object LazyParameters {
-  def apply(context: Operation.Context) = new LazyParameters(context, Stream())
-}
-class LazyParameters(context: Operation.Context, metas: Stream[() => OperationParameterMeta]) {
-  def apply(name: String): String = {
-    if (context.box.parametricParameters.contains(name)) {
-      com.lynxanalytics.sandbox.ScalaScript.run(
-        "s\"\"\"" + context.box.parametricParameters(name) + "\"\"\"",
-        context.workspaceParameters)
-    } else if (context.box.parameters.contains(name)) {
-      context.box.parameters(name)
-    } else goodMetas.find(_.id == name) match {
-      case Some(meta) => meta.defaultValue
-      case None =>
-        logErrors()
-        throw new AssertionError(s"Parameter not found: $name")
-    }
-  }
-
-  def +(next: => OperationParameterMeta): LazyParameters = {
-    new LazyParameters(context, metas :+ (() => next))
-  }
-
-  def ++(more: => Seq[OperationParameterMeta]): LazyParameters = {
-    new LazyParameters(context, metas.append(more.map(m => () => m)))
-  }
-
-  private def allMetas: Seq[OperationParameterMeta] = {
-    metas.map(fn => fn())
-  }
-
-  private val goodSoFar =
-    new ThreadLocal[Seq[OperationParameterMeta]] { override def initialValue() = null }
-  private def goodMetas: Seq[OperationParameterMeta] = {
-    if (goodSoFar.get != null) {
-      // This is a recursive call. Just return what we have so far.
-      goodSoFar.get
-    } else {
-      // First call. Do the real work.
-      goodSoFar.set(Seq())
-      try {
-        for (fn <- metas) goodSoFar.set(goodSoFar.get :+ fn())
-      } catch { case t: Throwable => }
-      val good = goodSoFar.get
-      goodSoFar.set(null)
-      good
-    }
-  }
-
-  private def logErrors(): Unit = {
-    try {
-      for (fn <- metas) fn()
-    } catch {
-      case t: Throwable => log.error("Failure while generating parameters.", t)
-    }
-  }
-
-  def validate(): Unit = {
-    val ms = allMetas
-    val dups = ms.groupBy(_.id).filter(_._2.size > 1).keys
-    assert(dups.isEmpty, s"Duplicate parameter: ${dups.mkString(", ")}")
-    val paramIds = ms.map(_.id).toSet
-    val keys = context.box.parameters.keySet.union(context.box.parametricParameters.keySet)
-    val extraIds = keys &~ paramIds
-    assert(extraIds.size == 0,
-      s"""Extra parameters found: ${extraIds.mkString(", ")} is not in ${paramIds.mkString(", ")}""")
-    for (meta <- ms) {
-      meta.validate(this(meta.id))
-    }
-  }
-
-  def toFE: List[FEOperationParameterMeta] = goodMetas.map(_.toFE).toList
-
-  def toMap: Map[String, String] = allMetas.map(m => m.id -> this(m.id)).toMap
 }
 
 // A base class with some conveniences for working with projects and tables.
