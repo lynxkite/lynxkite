@@ -524,7 +524,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       });
       this.state.boxes.push(customBox);
       var that = this;
-      util.post('/ajax/createWorkspace', {
+      return util.post('/ajax/createWorkspace', {
         name: name,
         privacy: 'private',
       }).then(function success() {
