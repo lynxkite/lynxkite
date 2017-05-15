@@ -31,10 +31,6 @@ angular.module('biggraph')
          });
        });
 
-       scope.export = function() {
-         util.lazyFetchScalarValue(scope.exportResultOutput.result, true);
-       };
-
        scope.download = function () {
          $window.location =
                '/downloadFile?q=' + encodeURIComponent(JSON.stringify(
