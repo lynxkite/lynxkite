@@ -99,14 +99,81 @@ as specified <<kiterc-extra-jars,here>>.
 
 ### Integration with Hive
 
-To enable direct integration with Apache Hive running on the same Hadoop cluster you need to
-tell Spark about your Hive configuration. The simplest way to do this is to create a symbolic link
-from the `conf` directory under your Spark installation directory to your hive-site.xml file. E.g.,
-depending on your Hadoop distribution, something like this would do:
+#### Overview
+Hive stores the actual data on HDFS (usually under the /user/hive/warehouse directory), while the
+metadata (location of the underlying file, schema, ..) of the tables is stored by Hive Metastore.
+When Spark wants to import a hive table then it first asks the Hive Metastore for the metadata then
+using it it tries to import directly from the underlying file.
+This means that for Spark to import a hive table, it needs:
+
+ - to know how to access the Hive Metastore;
+ - to have the authorization to access the Hive Metastore;
+ - to have the authorization to read the metadata of the table;
+ - to have read access for the underlying file on HDFS.
+
+#### Telling Spark how to access the Hive Metastore
+The simplest way to do this is to create a symbolic link from the conf directory under the Spark
+installation directory LynxKite is using to the hive-site.xml file.
+E.g. depending on your Hadoop distribution, something like this would do:
 
 ```
-ln -s /etc/hive/conf/hive-site.xml ~/spark-1.6.0/conf/
+ln -s /etc/hive/conf/hive-site.xml ~/spark-<version>/conf/
 ```
+
+#### Getting authorization to read the metadata of a table
+Hive Metastore server supports Kerberos authentication for Thrift clients, so it is possible that
+on clusters using Kerberos the access to Hive Metastore is restricted to only a subset of Kerberos
+users.
+
+To see if that is the case on your cluster, check the `hadoop.proxyuser.hive.groups` property in
+the `core-site.xml` on the Hive Metastore host. If its value is set to *** or it is not set then
+that means that there is no restriction on who can acces the Hive Metastore. However, if it
+contains a list of groups, then add the group which the user running LynxKite belongs to to the
+list.
+
+For more on the subject, please consult the following link:
+https://www.cloudera.com/documentation/enterprise/5-6-x/topics/cdh_sg_hive_metastore_security.html
+
+If the impersonating concept is not clear from the above articel, then the general idea is better
+explained here:
+https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/Superusers.html
+
+#### Getting authorization to read the metadata of given table
+Hive offers 3 authorization options:
+https://cwiki.apache.org/confluence/display/Hive/LanguageManual+Authorization
+
+Storaged Based Authorization in the Metastore Server: this means that the user has the same access right for the metadata as he has for the underlying data on HDFS.
+https://cwiki.apache.org/confluence/display/Hive/Storage+Based+Authorization+in+the+Metastore+Server
+
+
+SQL Standards Based Authorization: Like in a MySQL database you add privileges to users. https://cwiki.apache.org/confluence/display/Hive/SQL+Standard+Based+Hive+Authorization
+
+
+Default Hive Authorization (Legacy Mode): Uses roles to group grants. These roles then can be assigned to users, groups or to other roles.
+https://cwiki.apache.org/confluence/display/Hive/Hive+Default+Authorization+-+Legacy+Mode
+
+
+#### Getting authorization to read the underlying file on HDFS
+Please consult with the owner of the cluster to give you read access for the corresponding files.
+
+#### Known issues
+
+.If in the imported table the values of some columns become all nulls.
+Hive is case insensitive when it comes to table names and column names. Because of this, Hive
+Metastore stores the column names in all lower case. But Parquet files and ORC are case preserving
+so If the underlying file doesn’t use this convention, then Spark will try to import data from
+non-existing columns and this will result in columns with all nulls.
+
+One exception is the partitioner column - since the partitioner is part of the HDFS path, Hive
+Metastore is forced to store it in a case preserving manner.
+So if you can change the schema of the underlying files without causing problem then that’s the
+fix. If not, then create new tables whose underlying files’ column names are all in lower
+case - e.g. you can do this with
+```
+CREATE TABLE <new_table> AS
+    SELECT * FROM <old table>
+```
+query.
 
 ### Integrating with High Availability mode HDFS
 
