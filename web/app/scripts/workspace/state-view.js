@@ -31,11 +31,11 @@ angular.module('biggraph')
               }
             });
 
-        scope.createSnapshot = function(saveAsName) {
-          return util.post('/ajax/createSnapshot', {
+        scope.createSnapshot = function(saveAsName, success, error) {
+          util.post('/ajax/createSnapshot', {
             name: saveAsName,
             id: scope.stateId
-          });
+          }).then(success, error);
         };
       },
     };
