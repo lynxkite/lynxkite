@@ -26,6 +26,8 @@ case class GetProjectOutputRequest(id: String, path: String)
 case class GetTableOutputRequest(id: String, sampleRows: Int)
 case class TableColumn(name: String, dataType: String)
 case class GetTableOutputResponse(header: List[TableColumn], data: List[List[DynamicValue]])
+case class GetPlotOutputRequest(id: String)
+case class GetPlotOutputResponse(json: FEScalar)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 case class CreateSnapshotRequest(name: String, id: String)
@@ -106,6 +108,17 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val pathSeq = SubProject.splitPipedPath(request.path).filter(_ != "")
     val viewer = state.project.viewer.offspringViewer(pathSeq)
     viewer.toFE(request.path)
+  }
+
+  def getPlotOutput(
+    user: serving.User, request: GetPlotOutputRequest): GetPlotOutputResponse = {
+    val state = getOutput(user, request.id)
+    state.kind match {
+      case BoxOutputKind.Plot =>
+        val scalar = state.plot
+        val fescalar = ProjectViewer.feScalar(scalar, "result", "", Map())
+        GetPlotOutputResponse(fescalar)
+    }
   }
 
   def getProgress(user: serving.User, request: GetProgressRequest): GetProgressResponse = {
