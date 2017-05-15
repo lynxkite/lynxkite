@@ -1,23 +1,23 @@
-<div class="btn-group" ng-if="stateKind === 'project'">
-    <label class="btn btn-default save-as-snapshot-box"
-           ng-click="createSnapshot(saveAsName)"
-           tooltip="Click to snapshot state as {{saveAsName}}"
-           tooltip-append-to-body="true"
-           tooltip-placement="bottom">
-        <form ng-submit="createSnapshot(saveAsName)" style="display: inline;">
-            <input class="form-control save-as"
-                   ng-disabled="saving"
-                   ng-model="saveAsName"
-                   ng-click="$event.stopPropagation()">
-        </form>
-        <i class="glyphicon glyphicon-camera"></i>
-    </label>
+<div ng-if="stateKind === 'project'">
+  <div class="pull-right">
+    <inline-input
+      placeholder="Snapshot name..."
+      onsubmit="createSnapshot(input)"
+      open="snapshotNameOpen"></inline-input>
+  </div>
+  <button
+    class="pull-right btn btn-default save-as-snapshot-box"
+    ng-click="snapshotNameOpen = true"
+    drop-tooltip="Click to snapshot state as {{saveAsName}}"
+    drop-tooltip-placement="bottom">
+    <i class="glyphicon glyphicon-camera"></i>
+  </button>
 </div>
 <project-state-view
-    state-id="stateId"
-    ng-if="stateKind === 'project'">
+  state-id="stateId"
+  ng-if="stateKind === 'project'">
 </project-state-view>
 <table-state-view
-        state-id="stateId"
-        ng-if="stateKind === 'table'">
+  state-id="stateId"
+  ng-if="stateKind === 'table'">
 </table-state-view>

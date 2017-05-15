@@ -32,12 +32,9 @@ angular.module('biggraph')
             });
 
         scope.createSnapshot = function(saveAsName) {
-          scope.saving = true;
-          util.post('/ajax/createSnapshot', {
+          return util.post('/ajax/createSnapshot', {
             name: saveAsName,
             id: scope.stateId
-          }).finally(function() {
-            scope.saving = false;
           });
         };
       },
