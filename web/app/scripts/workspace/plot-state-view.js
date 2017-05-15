@@ -15,6 +15,8 @@ angular.module('biggraph')
           id: scope.stateId
         });
 
+        scope.plotDivId = 'vegaplot-' + scope.stateId;
+
         scope.plot.then(function() {
           scope.plotJSON = util.lazyFetchScalarValue(scope.plot.json, true);
           scope.embedSpec = {
@@ -23,7 +25,7 @@ angular.module('biggraph')
           scope.embedSpec.spec = JSON.parse(scope.plotJSON.value.string);
           /* global vg */
           console.log(scope.embedSpec);
-          vg.embed("#vegaplot", scope.embedSpec, function() {});
+          vg.embed('#' + scope.plotDivId, scope.embedSpec, function() {});
         }, function() {
           console.log('plot error');
         });
