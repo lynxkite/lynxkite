@@ -4,12 +4,18 @@
   <div class="btn-group pull-right">
     <button class="btn btn-default"
          id="save-selection-as-custom-box"
-         ng-click="saveSelectionAsCustomBox('tmp')"
+         ng-click="saveSelectionAsCustomBoxInputOpen = true"
          ng-disabled="selectedBoxIds.length === 0"
          drop-tooltip="Save&nbsp;selection as&nbsp;custom&nbsp;box"
          drop-tooltip-placement="bottom">
       <i class="fa fa-superpowers"></i>
     </button>
+    <div class="pull-left">
+      <inline-input
+        placeholder="Save as..."
+        open="saveSelectionAsCustomBoxInputOpen"
+        onsubmit="saveSelectionAsCustomBox(input)"></inline-input>
+    </div>
     <button class="btn btn-default"
          id="copy-boxes"
          ng-click="copyBoxes()"
