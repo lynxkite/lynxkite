@@ -104,7 +104,7 @@ Hive stores the actual data on HDFS (usually under the `/user/hive/warehouse` di
 metadata (location of the underlying file, schema, ...) of the tables is stored by Hive Metastore.
 When Spark wants to import a Hive table then it first asks the Hive Metastore for the metadata then
 tries to import directly from the underlying files.
-This means that for Spark to import a hive table, it needs:
+This means that for Spark to import a Hive table, it needs:
 
  - to know how to access the Hive Metastore;
  - to have the authorization to access the Hive Metastore;
