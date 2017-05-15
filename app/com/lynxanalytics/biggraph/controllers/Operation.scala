@@ -404,14 +404,14 @@ abstract class ProjectTransformation(
   }
 }
 
-// A PlotOperation takes a Table as input and returns an PlotResult as output.
+// A PlotOperation takes a Table as input and returns a PlotResult as output.
 abstract class PlotOperation(protected val context: Operation.Context) extends BasicOperation {
   assert(
     context.meta.inputs == List("table"),
     s"A PlotOperation must input a single table. $context")
   assert(
     context.meta.outputs == List("plotResult"),
-    s"A PlotOperation must output an PlotResult. $context"
+    s"A PlotOperation must output a PlotResult. $context"
   )
 
   protected lazy val table = tableInput("table")
@@ -419,7 +419,7 @@ abstract class PlotOperation(protected val context: Operation.Context) extends B
   def apply() = ???
   def plotResult: Scalar[String]
 
-  protected def makeOutput(exportResult: Scalar[String]): Map[BoxOutput, BoxOutputState] = {
+  protected def makeOutput(plotResult: Scalar[String]): Map[BoxOutput, BoxOutputState] = {
     Map(context.box.output(
       context.meta.outputs(0)) -> BoxOutputState.from(plotResult))
   }
