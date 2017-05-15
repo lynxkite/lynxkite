@@ -22,7 +22,10 @@
     "tether-drop": "1.4.2",
     "threejs": "jiyinyiyong/three.js#0.82.0",
     "threestrap": "unconed/threestrap#0.0.10",
-    "tinycolor2": "1.2.1"
+    "tinycolor2": "1.2.1",
+    "vega": "2.6.3",
+    "vega-embed": "2.2.0",
+    "vega-lite": "1.2.0"
   },
   "devDependencies": {
     "angular-mocks": "1.4.4",
@@ -35,9 +38,9 @@
     "gulp-angular-filesort": "1.1.1",
     "gulp-asciidoctor": "1.0.7",
     "gulp-autoprefixer": "3.1.0",
+    "gulp-eslint": "3.0.1",
     "gulp-if": "2.0.0",
     "gulp-inject": "3.0.0",
-    "gulp-eslint": "3.0.1",
     "gulp-load-plugins": "1.2.0",
     "gulp-ng-annotate": "2.0.0",
     "gulp-rename": "1.2.2",
