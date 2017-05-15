@@ -78,7 +78,7 @@ class ExportImportOperationTest extends OperationsTestBase {
       assert(componentMap("Adam") == componentMap("Bob"))
       assert(componentMap("Adam") != componentMap("Isolated Joe"))
       assert(
-        vAttrs("stringID").rdd.map(_._2).collect.toSet ==
+        vAttrs("stringId").rdd.map(_._2).collect.toSet ==
           Set("Adam", "Eve", "Bob", "Isolated Joe", "0", "3"))
     }
   }
