@@ -409,7 +409,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     saveAsCustomBox: function(ids, name, description) {
       var i, j, box;
       var workspaceParameters =
-        JSON.parse(this.boxMap['anchor'].instance.parameters.parameters);
+        JSON.parse(this.boxMap['anchor'].instance.parameters.parameters || '[]');
       var boxes = [{
         id: 'anchor',
         operationID: 'Anchor',
