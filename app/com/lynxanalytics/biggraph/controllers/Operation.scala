@@ -501,6 +501,8 @@ class CustomBoxOperation(
     }.toList
   }
 
+  override def params = super.params // Make public.
+
   def apply: Unit = ???
   def enabled = FEStatus.enabled
   override def allParameters = parameters
