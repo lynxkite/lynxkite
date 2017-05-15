@@ -11,24 +11,29 @@ angular.module('biggraph')
         stateId: '=',
       },
       link: function(scope) {
-        scope.plot = util.get('/ajax/getPlotOutput', {
-          id: scope.stateId
-        });
-
+        scope.inProgress = 0;
         scope.plotDivId = 'vegaplot-' + scope.stateId;
 
-        scope.plot.then(function() {
-          scope.plotJSON = util.lazyFetchScalarValue(scope.plot.json, true);
-          scope.embedSpec = {
-            mode: "vega-lite",
-          };
-          scope.embedSpec.spec = JSON.parse(scope.plotJSON.value.string);
-          /* global vg */
-          console.log(scope.embedSpec);
-          vg.embed('#' + scope.plotDivId, scope.embedSpec, function() {});
-        }, function() {
-          console.log('plot error');
-        });
+        scope.showPlot = function() {
+          scope.plot = util.get('/ajax/getPlotOutput', {
+            id: scope.stateId
+          });
+          scope.plot.then(function() {
+            scope.inProgress = 1;
+            scope.plotJSON = util.lazyFetchScalarValue(scope.plot.json, true);
+            scope.inProgress = 0;
+            scope.embedSpec = {
+              mode: "vega-lite",
+            };
+            scope.embedSpec.spec = JSON.parse(scope.plotJSON.value.string);
+            /* global vg */
+            vg.embed('#' + scope.plotDivId, scope.embedSpec, function() {});
+          }, function() {
+            console.log('plot error');
+          });
+        };
+
+        scope.onload = scope.showPlot();
       },
     };
   });
