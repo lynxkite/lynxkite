@@ -7,7 +7,7 @@ angular.module('biggraph').directive('inlineInput', function($q) {
     restrict: 'E',
     scope: { onsubmit: '&', placeholder: '@', open: '=' },
     templateUrl: 'scripts/util/inline-input.html',
-    link: function(scope) {
+    link: function(scope, element) {
       scope.enabled = true;
       scope.done = function(input) {
         scope.enabled = false;
@@ -19,6 +19,10 @@ angular.module('biggraph').directive('inlineInput', function($q) {
         scope.enabled = true;
         scope.open = false;
       };
+
+      scope.$watch('open', function(open) {
+        if (open) { element.find('input').focus(); }
+      });
     },
   };
 });
