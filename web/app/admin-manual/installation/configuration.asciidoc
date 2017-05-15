@@ -103,7 +103,7 @@ as specified <<kiterc-extra-jars,here>>.
 Hive stores the actual data on HDFS (usually under the /user/hive/warehouse directory), while the
 metadata (location of the underlying file, schema, ..) of the tables is stored by Hive Metastore.
 When Spark wants to import a hive table then it first asks the Hive Metastore for the metadata then
-using it it tries to import directly from the underlying file.
+uses this metadata to try to import directly from the underlying files.
 This means that for Spark to import a hive table, it needs:
 
  - to know how to access the Hive Metastore;
@@ -142,19 +142,19 @@ https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/Superus
 Hive offers 3 authorization options:
 https://cwiki.apache.org/confluence/display/Hive/LanguageManual+Authorization
 
-Storaged Based Authorization in the Metastore Server: this means that the user has the same access right for the metadata as he has for the underlying data on HDFS.
+- Storaged Based Authorization in the Metastore Server: this means that the user has the same access right for the metadata as he has for the underlying data on HDFS.
 https://cwiki.apache.org/confluence/display/Hive/Storage+Based+Authorization+in+the+Metastore+Server
 
 
-SQL Standards Based Authorization: Like in a MySQL database you add privileges to users. https://cwiki.apache.org/confluence/display/Hive/SQL+Standard+Based+Hive+Authorization
+- SQL Standards Based Authorization: Like in a MySQL database you add privileges to users. https://cwiki.apache.org/confluence/display/Hive/SQL+Standard+Based+Hive+Authorization
 
 
-Default Hive Authorization (Legacy Mode): Uses roles to group grants. These roles then can be assigned to users, groups or to other roles.
+- Default Hive Authorization (Legacy Mode): Uses roles to group grants. These roles then can be assigned to users, groups or to other roles.
 https://cwiki.apache.org/confluence/display/Hive/Hive+Default+Authorization+-+Legacy+Mode
 
 
 #### Getting authorization to read the underlying file on HDFS
-Please consult with the owner of the cluster to give you read access for the corresponding files.
+Please consult with the owner of the cluster to give you read access for all the corresponding files.
 
 #### Known issues
 
