@@ -26,6 +26,8 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     }
 
     this.name = name;
+    this.top = name;
+    this.customBoxStack = [];
     this.state = undefined;
     // The below data structures are generated from rawBoxes
     // by this.build(). These are the ones that interact with
@@ -40,6 +42,10 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
   }
 
   WorkspaceWrapper.prototype = {
+    ref: function() {  // Returns a WorkspaceReference object.
+      return { top: this.top, customBoxStack: this.customBoxStack };
+    },
+
     _buildBoxes: function() {
       this.boxes = [];
       this.boxMap = {};
@@ -105,6 +111,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
 
     _init: function(response) {
       this.backendResponse = response;
+      this.name = response.name;
       this.backendState = response.workspace;
       // User edits will be applied to a deep copy of
       // the original backend state. This way watchers
@@ -151,11 +158,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
 
     loadWorkspace: function() {
       var that = this;
-      util.nocache(
-        '/ajax/getWorkspace',
-        {
-          name: this.name
-        })
+      util.nocache('/ajax/getWorkspace', this.ref())
         .then(function(response) {
           that._init(response);
         })

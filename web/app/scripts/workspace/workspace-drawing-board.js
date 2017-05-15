@@ -321,6 +321,15 @@ angular.module('biggraph')
           this.selectedBoxIds = [];
         };
 
+        scope.diveUp = function() {
+          scope.workspace.customBoxStack.pop();
+          scope.workspace.loadWorkspace();
+        };
+
+        scope.diveDown = function() {
+          scope.workspace.customBoxStack.push(scope.selectedBoxIds[0]);
+          scope.workspace.loadWorkspace();
+        };
 
         var hk = hotkeys.bindTo(scope);
         hk.add({
