@@ -93,7 +93,6 @@ arg_parser.add_argument(
 def main(args):
   # Cluster config for tests
 
-  args.with_jupyter = False
   if args.emr_instance_count == 0:
     args.emr_instance_count = test_sets[args.test_set_size]['instances']
   # Test configuration
