@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api.RuntimeContext
 import com.lynxanalytics.biggraph.TestSparkContext
 
 class RDDUtilsTest extends FunSuite with TestSparkContext {
-  test("genID works for small and large numbers") {
+  test("genId works for small and large numbers") {
     val parts = 10
     val border = Int.MaxValue / parts
     val interestingRows = Seq(
@@ -21,23 +21,23 @@ class RDDUtilsTest extends FunSuite with TestSparkContext {
     val ids = collection.mutable.Set[Long]()
     for (part <- 0 until parts) {
       for (row <- interestingRows) {
-        val id = Implicits.genID(parts, part, row)
-        assert(partitioner.getPartition(id) == part, s"genID($parts, $part, $row)")
-        assert(!ids.contains(id), s"genID($parts, $part, $row)")
+        val id = Implicits.genId(parts, part, row)
+        assert(partitioner.getPartition(id) == part, s"genId($parts, $part, $row)")
+        assert(!ids.contains(id), s"genId($parts, $part, $row)")
         ids += id
       }
     }
   }
 
-  test("genID works for random numbers") {
+  test("genId works for random numbers") {
     val rnd = new util.Random(0)
     for (i <- 0 to 1000) {
       val parts = rnd.nextInt(1000) max 1
       val part = rnd.nextInt(parts)
       val row = rnd.nextInt(1000000)
-      val id = Implicits.genID(parts, part, row)
+      val id = Implicits.genId(parts, part, row)
       val partitioner = new HashPartitioner(parts)
-      assert(partitioner.getPartition(id) == part, s"genID($parts, $part, $row)")
+      assert(partitioner.getPartition(id) == part, s"genId($parts, $part, $row)")
     }
   }
 

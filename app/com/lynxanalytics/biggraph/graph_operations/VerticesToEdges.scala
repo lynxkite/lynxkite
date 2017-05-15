@@ -16,7 +16,7 @@ object VerticesToEdges extends OpFromJson {
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val (vs, es) = graph
-    val stringID = vertexAttribute[String](vs)
+    val stringId = vertexAttribute[String](vs)
     val embedding = edgeBundle(es.idSet, inputs.vs.entity, EdgeBundleProperties.embedding)
   }
   def fromJson(j: JsValue) = VerticesToEdges()
@@ -58,7 +58,7 @@ case class VerticesToEdges() extends TypedMetaGraphOp[Input, Output] {
     val idToNameForOutput = RDDUtils.maybeRepartitionForOutput(idToName)
     output(o.vs, idToNameForOutput.mapValues(_ => ()))
     output(o.es, edges)
-    output(o.stringID, idToNameForOutput)
+    output(o.stringId, idToNameForOutput)
     output(o.embedding, embedding)
   }
 }
