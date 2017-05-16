@@ -57,6 +57,7 @@ class EMRLib:
   def __init__(self, ec2_key_file, ec2_key_name, region='us-east-1'):
     self.ec2_key_file = ec2_key_file
     self.ec2_key_name = ec2_key_name
+    self.ec2_client = boto3.client('ec2', region_name=region)
     self.emr_client = boto3.client('emr', region_name=region)
     self.rds_client = boto3.client('rds', region_name=region)
     self.s3_client = boto3.client('s3', region_name=region)
@@ -236,6 +237,7 @@ class EMRCluster:
   def __init__(self, id, lib):
     self.id = id
     self.emr_client = lib.emr_client
+    self.ec2_client = lib.ec2_client
     self.ssh_cmd = [
         'ssh',
         '-T',
@@ -245,7 +247,8 @@ class EMRCluster:
         '-o', 'StrictHostKeyChecking=no',
         '-o', 'ServerAliveInterval=30',
     ]
-    self._master = None
+    self._master_dns = None
+    self._master_instance = None
 
   def __str__(self):
     return 'EMR(' + self.id + ')'
@@ -254,13 +257,26 @@ class EMRCluster:
     '''Raw description of the cluster.'''
     return self.emr_client.describe_cluster(ClusterId=self.id)
 
-  def master(self):
+  def master_dns(self):
     '''DNS name of the master host.'''
-    if self._master is None:
+    if self._master_dns is None:
       desc = self.desc()
       if self.is_ready(desc=desc):
-        self._master = desc['Cluster']['MasterPublicDnsName']
-    return self._master
+        self._master_dns = desc['Cluster']['MasterPublicDnsName']
+    return self._master_dns
+
+  def master_instance(self):
+    '''The Ec2InstanceId of the master host.'''
+    if not self._master_instance:
+      instances = self.emr_client.list_instances(ClusterId=self.id)['Instances']
+      self._master_instance = [i['Ec2InstanceId'] for i in instances
+                               if i['PublicDnsName'] == self.master_dns()][0]
+    return self._master_instance
+
+  def reset_cache(self):
+    '''Some properties (e.g. dns of the master) is cached. This method resets these kind of data.'''
+    self._master_dns = None
+    self._master_instance = None
 
   def is_ready(self, desc=None):
     '''Is the cluster started up and ready?'''
@@ -282,7 +298,7 @@ class EMRCluster:
     # Stop on errors by default.
     cmds = 'set -e\n' + cmds
     return call_cmd(
-        self.ssh_cmd + ['hadoop@' + self.master()],
+        self.ssh_cmd + ['hadoop@' + self.master_dns()],
         input=cmds,
         print_output=print_output,
         assert_successful=assert_successful)
@@ -358,7 +374,7 @@ EOF
             '-r',
             '--copy-dirlinks',
             src,
-            'hadoop@' + self.master() + ':' + dst
+            'hadoop@' + self.master_dns() + ':' + dst
         ])
 
   def rsync_down(self, src, dst):
@@ -371,7 +387,7 @@ EOF
             ' '.join(self.ssh_cmd),
             '-r',
             '--copy-dirlinks',
-            'hadoop@' + self.master() + ':' + src,
+            'hadoop@' + self.master_dns() + ':' + src,
             dst
         ])
 
@@ -383,3 +399,16 @@ EOF
   def terminate(self):
     self.emr_client.terminate_job_flows(
         JobFlowIds=[self.id])
+
+  def associate_address(self, ip):
+    assert self.is_ready(), 'Can not associate new IP address before the cluster is ready.'
+    old_dns = self.master_dns()
+    master = self.master_instance()
+    self.ec2_client.associate_address(InstanceId=master, PublicIp=ip)
+    self.reset_cache()
+    # after associating a new address to the master, the public dns changes but it takes some time
+    # until the change propagates to the cluster description
+    print('Waiting for updated master dns address to appear...')
+    while self.desc()['Cluster']['MasterPublicDnsName'] == old_dns:
+      time.sleep(15)
+    print('Dns updated successfully.')

@@ -4,6 +4,8 @@ package com.lynxanalytics.biggraph.controllers
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import play.api.libs.json.JsObject
+import play.api.libs.json.JsString
 
 import scala.annotation.tailrec
 
@@ -15,7 +17,7 @@ case class Workspace(
     s"Duplicate box name: ${dups.mkString(", ")}"
   })
 
-  assert(anchor.operationID == "Anchor", "Anchor box is missing.")
+  assert(anchor.operationId == "Anchor", "Anchor box is missing.")
 
   def anchor = findBox("anchor")
 
@@ -31,8 +33,8 @@ case class Workspace(
   // This workspace as a custom box.
   def getBoxMetadata(name: String): BoxMetadata = {
     val description = anchor.parameters.getOrElse("description", "")
-    val inputs = boxes.filter(_.operationID == "Input box").flatMap(b => b.parameters.get("name"))
-    val outputs = boxes.filter(_.operationID == "Output box").flatMap(b => b.parameters.get("name"))
+    val inputs = boxes.filter(_.operationId == "Input box").flatMap(b => b.parameters.get("name"))
+    val outputs = boxes.filter(_.operationId == "Output box").flatMap(b => b.parameters.get("name"))
     BoxMetadata("Custom boxes", name, inputs, outputs, description = Some(description))
   }
 
@@ -57,7 +59,7 @@ case class Workspace(
   // ones that depend on another with a circular dependency are returned unordered.
   private[controllers] def discoverDependencies: Dependencies = {
     val outEdges: Map[String, Seq[String]] = {
-      val edges = boxes.flatMap(dst => dst.inputs.toSeq.map(input => input._2.boxID -> dst.id))
+      val edges = boxes.flatMap(dst => dst.inputs.toSeq.map(input => input._2.boxId -> dst.id))
       edges.groupBy(_._1).mapValues(_.map(_._2).toSeq)
     }
 
@@ -134,7 +136,7 @@ case class WorkspaceExecutionContext(
           newOutputStates ++ states
       }
     val statesWithCircularDependency = dependencies.withCircularDependency.flatMap { box =>
-      val meta = ops.getBoxMetadata(box.operationID)
+      val meta = ops.getBoxMetadata(box.operationId)
       meta.outputs.map { o =>
         box.output(o) -> BoxOutputState.error("Can not compute state due to circular dependencies.")
       }
@@ -144,7 +146,7 @@ case class WorkspaceExecutionContext(
 
   private def outputStatesOfBox(
     box: Box, inputStates: Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
-    val meta = ops.getBoxMetadata(box.operationID)
+    val meta = ops.getBoxMetadata(box.operationId)
 
     def allOutputsWithError(msg: String): Map[BoxOutput, BoxOutputState] = {
       meta.outputs.map {
@@ -182,7 +184,7 @@ case class WorkspaceExecutionContext(
   }
 
   def getOperationForStates(box: Box, states: Map[BoxOutput, BoxOutputState]): Operation = {
-    val meta = ops.getBoxMetadata(box.operationID)
+    val meta = ops.getBoxMetadata(box.operationId)
     for (i <- meta.inputs) {
       assert(box.inputs.contains(i), s"Input $i is not connected.")
     }
@@ -194,12 +196,12 @@ case class WorkspaceExecutionContext(
     box.getOperation(this, inputs)
   }
 
-  def getOperation(boxID: String): Operation = getOperationForStates(ws.findBox(boxID), allStates)
+  def getOperation(boxId: String): Operation = getOperationForStates(ws.findBox(boxId), allStates)
 }
 
 case class Box(
     id: String,
-    operationID: String,
+    operationId: String,
     parameters: Map[String, String],
     x: Double,
     y: Double,
@@ -227,12 +229,12 @@ case class Box(
 }
 
 case class BoxOutput(
-  boxID: String,
+  boxId: String,
   id: String)
 
 case class BoxMetadata(
-  categoryID: String,
-  operationID: String,
+  categoryId: String,
+  operationId: String,
   inputs: List[String],
   outputs: List[String],
   description: Option[String] = None)
@@ -240,9 +242,11 @@ case class BoxMetadata(
 object BoxOutputKind {
   val Project = "project"
   val Table = "table"
+  val ExportResult = "exportResult"
   val Plot = "plot"
   val Error = "error"
-  val validKinds = Set(Project, Table, Plot, Error)
+  val validKinds = Set(Project, Table, Error, ExportResult, Plot)
+
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
 }
@@ -258,8 +262,15 @@ object BoxOutputState {
     BoxOutputState(BoxOutputKind.Table, Some(json.Json.obj("guid" -> table.gUID)))
   }
 
+
   def from(plot: graph_api.Scalar[String]) = {
     BoxOutputState(BoxOutputKind.Plot, Some(json.Json.obj("guid" -> plot.gUID)))
+  }
+
+  def from(exportResult: graph_api.Scalar[String],
+           params: Map[String, String]): BoxOutputState = {
+    BoxOutputState(BoxOutputKind.ExportResult, Some(json.Json.obj(
+      "guid" -> exportResult.gUID, "parameters" -> params)))
   }
 
   def error(msg: String): BoxOutputState = {
@@ -279,6 +290,7 @@ case class BoxOutputState(
   def isProject = kind == BoxOutputKind.Project
   def isTable = kind == BoxOutputKind.Table
   def isPlot = kind == BoxOutputKind.Plot
+  def isExportResult = kind == BoxOutputKind.ExportResult
 
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(success.enabled, success.disabledReason)
@@ -298,6 +310,13 @@ case class BoxOutputState(
 
   def plot(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
     assert(isPlot, s"Tried to access '$kind' as 'Plot'.")
+    assert(success.enabled, success.disabledReason)
+    import graph_api.MetaGraphManager.StringAsUUID
+    manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)
+  }
+
+  def exportResult(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
+    assert(isExportResult, s"Tried to access '$kind' as 'exportResult.")
     assert(success.enabled, success.disabledReason)
     import graph_api.MetaGraphManager.StringAsUUID
     manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)

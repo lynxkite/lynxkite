@@ -17,9 +17,10 @@ import play.api.libs.json
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   override val atomicOperations =
     new ProjectOperations(env).operations.toMap ++
-      new MetaOperations(env).operations.toMap ++
-      new ImportOperations(env).operations.toMap ++
-      new PlotOperations(env).operations.toMap
+    new MetaOperations(env).operations.toMap ++
+    new ImportOperations(env).operations.toMap ++
+    new ExportOperations(env).operations.toMap ++
+    new PlotOperations(env).operations.toMap
 }
 
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
@@ -258,7 +259,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             op.dstAttr, edges.vertexAttributes(dst).runtimeSafeCast[String]).result
         }
         project.setVertexSet(eg.vs, idAttr = "id")
-        project.newVertexAttribute("stringID", eg.stringID)
+        project.newVertexAttribute("stringId", eg.stringId)
         project.edgeBundle = eg.es
         for ((name, attr) <- edges.vertexAttributes) {
           project.edgeAttributes(name) = attr.pullVia(eg.embedding)

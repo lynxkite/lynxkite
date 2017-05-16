@@ -27,10 +27,10 @@ case class FEOption(
   title: String)
 object FEOption {
   def regular(optionTitleAndId: String): FEOption = FEOption(optionTitleAndId, optionTitleAndId)
-  def special(specialID: String): FEOption = specialOpt(specialID).get
+  def special(specialId: String): FEOption = specialOpt(specialId).get
   val TitledCheckpointRE = raw"!checkpoint\(([0-9]*),([^|]*)\)(|\|.*)".r
-  private def specialOpt(specialID: String): Option[FEOption] = {
-    Option(specialID match {
+  private def specialOpt(specialId: String): Option[FEOption] = {
+    Option(specialId match {
       case "!unset" => ""
       case "!no weight" => "no weight"
       case "!unit distances" => "unit distances"
@@ -42,7 +42,7 @@ object FEOption {
         }
         s"$title$suffix ($time)"
       case _ => null
-    }).map(FEOption(specialID, _))
+    }).map(FEOption(specialId, _))
   }
   def titledCheckpoint(cp: String, title: String, suffix: String = ""): FEOption =
     special(s"!checkpoint($cp,$title)$suffix")
@@ -56,7 +56,7 @@ object FEOption {
       case _ => None
     }
 
-  def fromID(id: String) = specialOpt(id).getOrElse(FEOption.regular(id))
+  def fromId(id: String) = specialOpt(id).getOrElse(FEOption.regular(id))
   def list(lst: String*): List[FEOption] = list(lst.toList)
   def list(lst: List[String]): List[FEOption] = lst.map(id => FEOption(id, id))
   val bools = list("true", "false")

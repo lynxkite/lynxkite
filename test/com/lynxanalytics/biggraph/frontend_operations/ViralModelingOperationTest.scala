@@ -4,8 +4,8 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class ViralModelingOperationTest extends OperationsTestBase {
-  def remapIDs[T](attr: Attribute[T], origIDs: Attribute[String]) =
-    attr.rdd.sortedJoin(origIDs.rdd).map { case (id, (num, origID)) => origID -> num }
+  def remapIds[T](attr: Attribute[T], origIds: Attribute[String]) =
+    attr.rdd.sortedJoin(origIds.rdd).map { case (id, (num, origId)) => origId -> num }
 
   test("Viral modeling segment logic") {
     val project = importCSV("viral-vertices-1.csv")
@@ -32,8 +32,8 @@ class ViralModelingOperationTest extends OperationsTestBase {
         "apply_to_project" -> "|cliques"))
       .project
     val viral = project.vertexAttributes("viral_num_after_iteration_1").runtimeSafeCast[Double]
-    val stringID = project.vertexAttributes("id").runtimeSafeCast[String]
-    assert(remapIDs(viral, stringID).collect.toMap == Map(
+    val stringId = project.vertexAttributes("id").runtimeSafeCast[String]
+    assert(remapIds(viral, stringId).collect.toMap == Map(
       "0" -> 0.5,
       "1" -> 0.0,
       "2" -> 1.0,

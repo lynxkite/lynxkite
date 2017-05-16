@@ -16,11 +16,13 @@ angular.module('biggraph').directive('inlineLoading', function(util) {
         util.reportRequestError(scope.ref, scope.details);
       };
 
-      scope.iconForStatus = function(status) {
-        // Use custom icon for some status codes.
-        return {
-          202: '\u2026', // 202 Accepted: ... (ellipsis)
-        }[status] || '?';
+      scope.iconForStatus = function(status, displayComputeButton) {
+        if (!displayComputeButton) {
+          // Use custom icon for some status codes.
+          return {
+            202: '\u2026', // 202 Accepted: ... (ellipsis)
+          }[status] || '?';
+        }
       };
     },
   };

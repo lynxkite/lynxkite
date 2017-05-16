@@ -93,8 +93,8 @@ case class IOContext(dataRoot: DataRoot, sparkSession: spark.sql.SparkSession) {
     val outputEntities: Seq[MetaGraphEntity] = attributes :+ vs
     val paths = outputEntities.map(e => partitionedPath(e, data.partitions.size).forWriting)
 
-    val trackerID = Timestamp.toString
-    val rddID = data.id
+    val trackerId = Timestamp.toString
+    val rddId = data.id
     val vsCount = sparkContext.longAccumulator(s"Vertex count for ${vs.gUID}")
     val attrCounts = attributes.map {
       attr => sparkContext.longAccumulator(s"Attribute count for ${attr.gUID}")
@@ -105,7 +105,7 @@ case class IOContext(dataRoot: DataRoot, sparkSession: spark.sql.SparkSession) {
     // RDD into one part-xxxx file per column, plus one for the vertex set.
     val writeShard = (task: spark.TaskContext, iterator: Iterator[(ID, Seq[Any])]) => {
       val collection = new IOContext.TaskFileCollection(
-        trackerID, rddID, hadoop.mapreduce.TaskType.REDUCE, task.partitionId, task.attemptNumber)
+        trackerId, rddId, hadoop.mapreduce.TaskType.REDUCE, task.partitionId, task.attemptNumber)
       val files = paths.map(collection.createTaskFile(_))
       try {
         val verticesWriter = files.last.writer
@@ -128,7 +128,7 @@ case class IOContext(dataRoot: DataRoot, sparkSession: spark.sql.SparkSession) {
       for (file <- files) file.committer.commitTask(file.context)
     }
     val collection = new IOContext.TaskFileCollection(
-      trackerID, rddID, hadoop.mapreduce.TaskType.JOB_CLEANUP, 0, 0)
+      trackerId, rddId, hadoop.mapreduce.TaskType.JOB_CLEANUP, 0, 0)
     val files = paths.map(collection.createTaskFile(_))
     for (file <- files) file.committer.setupJob(file.context)
     sparkContext.runJob(data, writeShard)
