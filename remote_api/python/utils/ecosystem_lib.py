@@ -32,7 +32,6 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     '--with_jupyter',
     action='store_true',
-    default=False,
     help='''If it is set, a jupyter notebook server will be installed and started
   on the cluster. Some Python packages (sklearn, matplotlib) will also be added.''')
 arg_parser.add_argument(
