@@ -1,5 +1,5 @@
 <div class="popup"
-    ng-mousedown="$event.stopPropagation()"
+    ng-mousedown="popupModel.bringToFront(); $event.stopPropagation();"
     ng-mousemove="popupModel.onMouseMove($event); $event.stopPropagation();"
     id="{{popupModel.id}}"
     ng-style="{
@@ -7,12 +7,10 @@
         'top': popupModel.y + 'px',
         'width': popupModel.width + 'px',
         'height': popupModel.height + 'px',
-    }"
-    ng-class="{ 'selected': popupModel.isSelected() }">
+    }">
   <div
       class="popup-head"
-      ng-mousedown="popupModel.onMouseDown($event)"
-      ng-class="{ 'selected': popupModel.isSelected() }">
+      ng-mousedown="popupModel.onMouseDown($event)">
     {{popupModel.title}}
     <div class="clicky pull-right glyphicon glyphicon-remove"
         ng-click="popupModel.close(); event.stopPropagation();"
