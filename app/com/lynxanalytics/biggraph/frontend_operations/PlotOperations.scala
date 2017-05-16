@@ -23,7 +23,7 @@ class PlotOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("title", "Title"),
       NonNegInt("width", "Plot width", default = 500),
       NonNegInt("height", "Plot height", default = 500),
-      Code("plotCode", "Plot description", language = "scala"))
+      Code("plotCode", "Plot code", language = "scala"))
 
     def plotResult() = {
       val title = params("title")

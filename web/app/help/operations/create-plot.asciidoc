@@ -13,6 +13,6 @@ The width of the plot in pixels.
 [[height]] Plot height::
 The height of the plot in pixels.
 
-[[plotCode]] Plot description::
+[[plotcode]] Plot code::
 Scala code for defining the plot. For examples see: ...
 ====
