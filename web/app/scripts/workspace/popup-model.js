@@ -23,8 +23,6 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     var leftButton = event.buttons & 1;
     // Protractor omits button data from simulated mouse events.
     if (leftButton || environment.protractor) {
-      event.stopPropagation();
-      this.owner.selectedPopup = this;
       // Enter 'moving mode', i.e. movedPopup is defined.
       this.owner.movedPopup = this;
       this.moveOffsetX = this.x - event.pageX;
@@ -33,10 +31,6 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
       this.width = event.target.parentElement.style.width.slice(0, -2);
       this.height = event.target.parentElement.style.height.slice(0, -2);
     }
-  };
-
-  PopupModel.prototype.isSelected = function() {
-    return this.owner.selectedPopup === this;
   };
 
   PopupModel.prototype.onMouseUp = function() {
@@ -78,6 +72,15 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     if (this.isOpen()) {
       this.close();
     } else {
+      this.open();
+    }
+  };
+
+  PopupModel.prototype.bringToFront = function() {
+    var leftButton = event.buttons & 1;
+    // Protractor omits button data from simulated mouse events.
+    if (leftButton || environment.protractor) {
+      this.close();
       this.open();
     }
   };
