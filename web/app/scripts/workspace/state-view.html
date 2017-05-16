@@ -1,4 +1,4 @@
-<div ng-if="stateKind === 'project'">
+<div ng-if="stateKind === 'project'" id="save-as-snapshot-box">
   <div class="pull-right">
     <inline-input
       placeholder="Snapshot name..."
@@ -6,7 +6,7 @@
       open="snapshotNameOpen"></inline-input>
   </div>
   <button
-    class="pull-right btn btn-default save-as-snapshot-box"
+    class="pull-right btn btn-default" id="save-as-snapshot-button"
     ng-click="snapshotNameOpen = true"
     drop-tooltip="Click to snapshot state as {{saveAsName}}"
     drop-tooltip-placement="bottom">

@@ -1385,6 +1385,15 @@ testLib = {
     );
   },
 
+  submitInlineInput: function(element, text) {
+    var inputBox = element.$('input');
+    var okButton = element.$('#ok');
+    // Wait for CSS animation.
+    testLib.wait(protractor.ExpectedConditions.elementToBeClickable(inputBox));
+    inputBox.sendKeys(text);
+    okButton.click();
+  },
+
 };
 
 module.exports = testLib;
