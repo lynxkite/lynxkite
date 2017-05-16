@@ -1,5 +1,10 @@
 <div class="col-sm-12">
-    <h3>Plot</h3>
-    <div id={{plotDivId}}></div>
-    <span ng-if="inProgress">Plot is loading</span>
+  <h3>Plot</h3>
+  <div ng-if="plotJSON.value.$resolved">
+    <!-- The hidden paragraph triggers the embedding of the plot. -->
+    <p hidden>{{showPlot()}}</p>
+    <!-- This is the placeholder DIV for the plot -->
+    <div  ng-attr-id={{plotDivId}}> </div>
+  </div>
+  <div ng-if="!plotJSON.value.$resolved">Computing plot...</div>
 </div>
