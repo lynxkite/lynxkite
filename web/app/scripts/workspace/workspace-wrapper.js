@@ -418,16 +418,18 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         inputs: {},
         parameters: {
           description: description,
+          // The new workspace simply inherits all the parameters from the current workspace.
           parameters: JSON.stringify(workspaceParameters),
         },
         parametricParameters: {},
       }];
       var inputNameCounts = {};
       var outputNameCounts = {};
-      var inputBoxX = 100;
-      var outputBoxX = 100;
-      var usedOutputs = {};
       var SEPARATOR = ', ';
+      var PADDING = 200;
+      var inputBoxX = PADDING;
+      var outputBoxX = PADDING;
+      var usedOutputs = {};
       // This custom box will replace the selected boxes.
       var customBox = {
         id: this.getUniqueId(name),
@@ -443,16 +445,29 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         var param = workspaceParameters[i].id;
         customBox.parametricParameters[param] = '$' + param;
       }
+      var minX = Infinity;
+      var minY = Infinity;
+      var maxY = -Infinity;
       for (i = 0; i < ids.length; ++i) {
         box = this.boxMap[ids[i]];
-        console.assert(box.instance.id.indexOf('input-') !== 0);
-        console.assert(box.instance.id.indexOf('output-') !== 0);
         // Place the custom box in the average position of the selected boxes.
         customBox.x += box.instance.x / ids.length;
         customBox.y += box.instance.y / ids.length;
+        minX = Math.min(minX, box.instance.x);
+        minY = Math.min(minY, box.instance.y);
+        maxY = Math.max(maxY, box.instance.y);
+      }
+      for (i = 0; i < ids.length; ++i) {
+        box = this.boxMap[ids[i]];
+        // "input-" and "output-" IDs will be used for the input and output boxes.
+        console.assert(box.instance.id.indexOf('input-') !== 0);
+        console.assert(box.instance.id.indexOf('output-') !== 0);
         if (ids[i] === 'anchor') { continue; }  // Ignore anchor.
+        // Copy this box to the new workspace.
         var instance = angular.copy(box.instance);
         boxes.push(instance);
+        instance.x += 200 - minX;
+        instance.y += 200 - minY;
         for (j = 0; j < box.inputs.length; ++j) {
           var inputName = box.metadata.inputs[j];
           var input = box.instance.inputs[inputName];
@@ -473,12 +488,12 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
               id: 'input-' + inputBoxName,
               operationId: 'Input box',
               x: inputBoxX,
-              y: -100,
+              y: 0,
               inputs: {},
               parameters: { name: inputBoxName },
               parametricParameters: {},
             });
-            inputBoxX += 100;
+            inputBoxX += PADDING;
             instance.inputs[inputName] = { boxId: 'input-' + inputBoxName, id: 'input' };
             if (input.boxId) { // Connected to a non-selected box.
               customBox.inputs[inputBoxName] = input;
@@ -502,12 +517,12 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
               id: 'output-' + outputBoxName,
               operationId: 'Output box',
               x: outputBoxX,
-              y: 400,
+              y: maxY + 200,
               inputs: { output: { boxId: box.instance.id, id: outputName } },
               parameters: { name: outputBoxName },
               parametricParameters: {},
             });
-            outputBoxX += 100;
+            outputBoxX += PADDING;
             // Update non-selected output connections.
             for (var k = 0; k < this.arrows.length; ++k) {
               var arrow = this.arrows[k];
