@@ -12,10 +12,8 @@ angular.module('biggraph')
       },
       link: function(scope) {
         scope.plotDivId = 'vegaplot-' + scope.stateId;
-//        console.log('Stateid 1: ', scope.plotDivId);
         scope.rendered = 0;
 
-        console.log('Plot scalar computation started');
         scope.plot = util.get('/ajax/getPlotOutput', {
           id: scope.stateId
         });
@@ -24,19 +22,16 @@ angular.module('biggraph')
         }, function() {
           console.log('plot error');
         });
-        console.log('Plot scalar computed');
 
         scope.showPlot = function() {
           console.log('Plotting is started.');
           scope.embedSpec = {
             mode: "vega-lite",
           };
-//          console.log('Before parse JSON: ', scope.plotJSON.value.string);
           scope.embedSpec.spec = JSON.parse(scope.plotJSON.value.string);
 
           // After lazyFetchScalarValue the stateId can be changed.
           scope.plotDivId = 'vegaplot-' + scope.stateId;
-//        console.log('Stateid 2: ', scope.plotDivId);
           if (scope.rendered === 0) {
             /* global vg */
             vg.embed('#' + scope.plotDivId, scope.embedSpec, function() {});
