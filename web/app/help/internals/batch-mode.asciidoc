@@ -122,7 +122,7 @@ project.computePageRank(
 project.exportVertexAttributesToFile(
   path: params['output'],
   link: 'exported_csv',
-  attrs: 'stringID,page_rank',
+  attrs: 'stringId,page_rank',
   format: 'CSV')
 
 // Print metrics.

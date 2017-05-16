@@ -19,11 +19,11 @@ class DissectTest extends OperationsTestBase {
 
   test("Take edges as vertices") {
     val base = box("Create enhanced example graph")
-    val originalEdgeID = base.project.edgeBundle.idSet
+    val originalEdgeId = base.project.edgeBundle.idSet
     val originalEdgeAttributes = base.project.edgeAttributes
     val originalVertexAttributes = base.project.vertexAttributes
     val project = base.box("Take edges as vertices").project
-    assert(project.vertexSet == originalEdgeID)
+    assert(project.vertexSet == originalEdgeId)
     assert(project.vertexAttributes.keySet
       == originalEdgeAttributes.keySet.map("edge_" + _)
       ++ originalVertexAttributes.keySet.flatMap { k => Set("src_" + k, "dst_" + k) })

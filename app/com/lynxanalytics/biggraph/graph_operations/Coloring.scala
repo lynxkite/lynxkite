@@ -70,13 +70,13 @@ case class Coloring()
       }
     }
 
-    val edgesWithoutID = edges.map { case (id, e) => (e.src, e.dst) }
+    val edgesWithoutId = edges.map { case (id, e) => (e.src, e.dst) }
       .filter { case (src, dst) => src != dst }.distinct()
 
     // directs the edges to create a DAG according to the input attribute: edges go from lower to higher attribute
     def directEdgesFromOrdering(ordering: AttributeRDD[Double]) = {
       // RDD of (dst, (src, order of src))
-      val directedEdges2 = ordering.join(edgesWithoutID).map { case (src, (srcOrd, dst)) => (dst, (src, srcOrd)) }
+      val directedEdges2 = ordering.join(edgesWithoutId).map { case (src, (srcOrd, dst)) => (dst, (src, srcOrd)) }
       // RDD of ((src, order of src), (dst, order of dst)
       val directedEdges1 = ordering.join(directedEdges2).
         map { case (dst, (dstOrd, (src, srcOrd))) => ((src, srcOrd), (dst, dstOrd)) }
@@ -112,7 +112,7 @@ case class Coloring()
       } else oldColoring
     }
 
-    val degreeWithoutIsolatedVertices = edgesWithoutID.flatMap { case (src, dst) => Seq(src -> 1.0, dst -> 1.0) }.
+    val degreeWithoutIsolatedVertices = edgesWithoutId.flatMap { case (src, dst) => Seq(src -> 1.0, dst -> 1.0) }.
       reduceBySortedKey(betterPartitioner, _ + _)
 
     /* we use the degree AttributeRDD to direct the edges to create a directed acyclic graph (DAG).
