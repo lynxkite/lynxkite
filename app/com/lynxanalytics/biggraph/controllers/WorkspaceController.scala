@@ -29,6 +29,8 @@ case class GetTableOutputResponse(header: List[TableColumn], data: List[List[Dyn
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 case class CreateSnapshotRequest(name: String, id: String)
+case class GetExportResultRequest(stateId: String)
+case class GetExportResultResponse(parameters: Map[String, String], result: FEScalar)
 
 class WorkspaceController(env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -108,6 +110,18 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     viewer.toFE(request.path)
   }
 
+  def getExportResultOutput(
+    user: serving.User, request: GetExportResultRequest): GetExportResultResponse = {
+    val state = getOutput(user, request.stateId)
+    state.kind match {
+      case BoxOutputKind.ExportResult =>
+        val scalar = state.exportResult
+        val feScalar = ProjectViewer.feScalar(scalar, "result", "", Map())
+        val parameters = (state.state.get \ "parameters").as[Map[String, String]]
+        GetExportResultResponse(parameters, feScalar)
+    }
+  }
+
   def getProgress(user: serving.User, request: GetProgressRequest): GetProgressResponse = {
     val states = request.stateIds.map(stateId => stateId -> getOutput(user, stateId)).toMap
     val progress = states.map {
@@ -117,6 +131,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
             case BoxOutputKind.Project => stateId -> Some(state.project.viewer.getProgress)
             case BoxOutputKind.Table =>
               val progress = entityProgressManager.computeProgress(state.table)
+              stateId -> Some(List(progress))
+            case BoxOutputKind.ExportResult =>
+              val progress = entityProgressManager.computeProgress(state.exportResult)
               stateId -> Some(List(progress))
             case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }
