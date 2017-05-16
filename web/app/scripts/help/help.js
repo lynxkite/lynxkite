@@ -74,13 +74,18 @@ angular.module('biggraph')
 
     return {
       restrict: 'E',
-      scope: { helpId: '@href' },
+      scope: {
+        helpId: '@href',
+        description: '@'
+        //If both the helpId and the description is provided, then we go with the helpId.
+      },
       templateUrl: 'scripts/help/help-popup.html',
       link: function(scope, element) {
         var button = element.find('#help-button')[0];
         var popup = element.find('#help-popup');
+        popup.append(scope.description);
         scope.isEmpty = function() {
-          return popup.children().length === 0;
+          return !scope.helpId && !scope.description;
         };
         /* global Drop */
         var drop = new Drop({
