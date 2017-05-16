@@ -16,11 +16,9 @@ angular.module('biggraph').directive('operationSelectorEntry', function($timeout
       element.bind('dragstart', function(event) {
         // We send the ID of the box over drag-and-drop.
         // This will be received in workspace-board.js
-        scope.$apply(function() {
-          event.originalEvent.dataTransfer.setData(
-            'text',
-            scope.op.operationId);
-        });
+        event.originalEvent.dataTransfer.setData(
+          'text',
+          scope.op.operationId);
         $timeout(scope.closeCurrentCatOrSearch());
       });
       element.bind('dragend', function() {
