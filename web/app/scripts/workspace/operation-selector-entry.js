@@ -20,11 +20,6 @@ angular.module('biggraph').directive('operationSelectorEntry', function($timeout
           event.originalEvent.dataTransfer.setData(
             'text',
             scope.op.operationId);
-          var dragIcon = document.createElement('img');
-          dragIcon.src = '../../images/box_icons/box.png';
-          dragIcon.width = 100;
-          dragIcon.height = 100;
-          event.originalEvent.dataTransfer.setDragImage(dragIcon, 0, 0);
         });
         $timeout(scope.closeCurrentCatOrSearch());
       });
