@@ -191,7 +191,7 @@ Workspace.prototype = {
     this.selectBox(boxIds[0]);
     browser.actions().keyDown(protractor.Key.CONTROL).perform();
     for (var i = 1; i < boxIds.length; ++i) {
-      this.selectBox(boxIds[i]);
+      this.clickBox(boxIds[i]);
     }
     browser.actions().keyUp(protractor.Key.CONTROL).perform();
   },
@@ -250,12 +250,16 @@ Workspace.prototype = {
     this.getOutputPlug(boxId, plugId).click();
   },
 
-  selectBox: function(boxId) {
+  clickBox: function(boxId) {
     this.getBox(boxId).$('rect').click();
   },
 
+  selectBox: function(boxId) {
+    this.openBoxEditor(boxId).close();
+  },
+
   openBoxEditor: function(boxId) {
-    this.selectBox(boxId);
+    this.clickBox(boxId);
     var popup = this.board.$('.popup#' + boxId);
     expect(popup.isDisplayed()).toBe(true);
     this.movePopupToCenter(popup);

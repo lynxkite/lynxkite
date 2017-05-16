@@ -9,7 +9,6 @@ module.exports = function(fw) {
     'test pagerank default choice values',
     'delete boxes',
     function() {
-      lib.workspace.selectBox('pr2');
       lib.workspace.deleteBoxes(['pr1', 'ex0']);
     },
     function() {
