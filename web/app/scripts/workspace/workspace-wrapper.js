@@ -482,8 +482,8 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
             var inputNameCount = inputNameCounts[inputName] || 0;
             if (inputNameCount > 0) {
               inputBoxName += ' ' + (inputNameCount + 1);
-              inputNameCounts[inputName] = inputNameCount + 1;
             }
+            inputNameCounts[inputName] = inputNameCount + 1;
             boxes.push({
               id: 'input-' + inputBoxName,
               operationId: 'Input box',
@@ -511,8 +511,8 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
             var outputNameCount = outputNameCounts[outputName] || 0;
             if (outputNameCount > 0) {
               outputBoxName += ' ' + (outputNameCount + 1);
-              outputNameCounts[outputName] = outputNameCount + 1;
             }
+            outputNameCounts[outputName] = outputNameCount + 1;
             boxes.push({
               id: 'output-' + outputBoxName,
               operationId: 'Output box',
