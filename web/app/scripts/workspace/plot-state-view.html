@@ -6,5 +6,7 @@
     <!-- This is the placeholder DIV for the plot -->
     <div  ng-attr-id={{plotDivId}}> </div>
   </div>
-  <div ng-if="!plotJSON.value.$resolved">Computing plot...</div>
+  <progressbar ng-if="!plotJSON.value.$resolved" value="100" class="progress-striped active">
+    Computing plot...
+  </progressbar>
 </div>

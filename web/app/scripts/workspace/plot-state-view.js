@@ -24,7 +24,6 @@ angular.module('biggraph')
         });
 
         scope.showPlot = function() {
-          console.log('Plotting is started.');
           scope.embedSpec = {
             mode: "vega-lite",
           };
