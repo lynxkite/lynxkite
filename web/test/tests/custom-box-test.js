@@ -63,6 +63,36 @@ module.exports = function(fw) {
       var state = lib.workspace.openStateView('cb', 'out');
       expect(state.left.vertexAttribute('default_pr').isPresent()).toBe(false);
       expect(state.left.vertexAttribute('custom_pr').isPresent()).toBe(true);
+      state.close();
+    },
+    function() {});
+
+  fw.transitionTest(
+    'custom box with parameter set',
+    'dive into custom box',
+    function() {
+      lib.workspace.selectBox('cb');
+      $('#dive-down').click();
+      var state = lib.workspace.openStateView('cc', 'project');
+      expect(state.left.vertexAttribute('custom_pr').isPresent()).toBe(true);
+      expect(state.left.vertexAttribute('clustering_coefficient').isPresent()).toBe(true);
+      state.close();
+
+      // Make a change.
+      var cc = lib.workspace.openBoxEditor('cc');
+      cc.populateOperation({ name: 'clustco' });
+      cc.close();
+      state = lib.workspace.openStateView('cc', 'project');
+      expect(state.left.vertexAttribute('clustering_coefficient').isPresent()).toBe(false);
+      expect(state.left.vertexAttribute('clustco').isPresent()).toBe(true);
+      state.close();
+
+      // Affects the higher level too.
+      $('#dive-up').click();
+      state = lib.workspace.openStateView('cb', 'out');
+      expect(state.left.vertexAttribute('clustering_coefficient').isPresent()).toBe(false);
+      expect(state.left.vertexAttribute('clustco').isPresent()).toBe(true);
+      state.close();
     },
     function() {});
 
