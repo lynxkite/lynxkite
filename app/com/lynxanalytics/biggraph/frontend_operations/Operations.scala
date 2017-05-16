@@ -257,7 +257,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             op.dstAttr, edges.vertexAttributes(dst).runtimeSafeCast[String]).result
         }
         project.setVertexSet(eg.vs, idAttr = "id")
-        project.newVertexAttribute("stringID", eg.stringID)
+        project.newVertexAttribute("stringId", eg.stringId)
         project.edgeBundle = eg.es
         for ((name, attr) <- edges.vertexAttributes) {
           project.edgeAttributes(name) = attr.pullVia(eg.embedding)

@@ -11,7 +11,7 @@ var K = protractor.Key;  // Short alias.
 
 
 // Mirrors the "id" filter.
-function toID(x) {
+function toId(x) {
   return x.toLowerCase().replace(/ /g, '-');
 }
 
@@ -178,7 +178,7 @@ Workspace.prototype = {
     if (inputs) {
       for (var i = 0; i < inputs.length; ++i) {
         var input = inputs[i];
-        this.connectBoxes(input.boxID, input.srcPlugID, id, input.dstPlugID);
+        this.connectBoxes(input.boxId, input.srcPlugId, id, input.dstPlugId);
       }
     }
     if (params) {
@@ -201,8 +201,8 @@ Workspace.prototype = {
     this.main.$('#delete-selected-boxes').click();
   },
 
-  editBox: function(boxID, params) {
-    var boxEditor = this.openBoxEditor(boxID);
+  editBox: function(boxId, params) {
+    var boxEditor = this.openBoxEditor(boxId);
     boxEditor.populateOperation(params);
     boxEditor.close();
   },
@@ -224,30 +224,30 @@ Workspace.prototype = {
     return this.board.$('.popup#' + boxId).isPresent();
   },
 
-  getBox(boxID) {
-    return this.board.$('.box#' + boxID);
+  getBox(boxId) {
+    return this.board.$('.box#' + boxId);
   },
 
-  getInputPlug: function(boxID, plugID) {
-    let box = this.getBox(boxID);
-    if (plugID) {
-      return box.$('#inputs #' + plugID + ' circle');
+  getInputPlug: function(boxId, plugId) {
+    let box = this.getBox(boxId);
+    if (plugId) {
+      return box.$('#inputs #' + plugId + ' circle');
     } else {
       return box.$$('#inputs circle').get(0);
     }
   },
 
-  getOutputPlug: function(boxID, plugID) {
-    let box = this.getBox(boxID);
-    if (plugID) {
-      return box.$('#outputs #' + plugID + ' circle');
+  getOutputPlug: function(boxId, plugId) {
+    let box = this.getBox(boxId);
+    if (plugId) {
+      return box.$('#outputs #' + plugId + ' circle');
     } else {
       return box.$$('#outputs circle').get(0);
     }
   },
 
-  toggleStateView: function(boxID, plugID) {
-    this.getOutputPlug(boxID, plugID).click();
+  toggleStateView: function(boxId, plugId) {
+    this.getOutputPlug(boxId, plugId).click();
   },
 
   selectBox: function(boxId) {
@@ -283,14 +283,14 @@ Workspace.prototype = {
     return new State(popup);
   },
 
-  expectConnected: function(srcBoxID, srcPlugID, dstBoxID, dstPlugID) {
-    var line = this.board.$(`line#${srcBoxID}-${srcPlugID}-${dstBoxID}-${dstPlugID}`);
+  expectConnected: function(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
+    var line = this.board.$(`line#${srcBoxId}-${srcPlugId}-${dstBoxId}-${dstPlugId}`);
     expect(line.isPresent()).toBe(true);
   },
 
-  connectBoxes: function(srcBoxID, srcPlugID, dstBoxID, dstPlugID) {
-    var src = this.getOutputPlug(srcBoxID, srcPlugID);
-    var dst = this.getInputPlug(dstBoxID, dstPlugID);
+  connectBoxes: function(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
+    var src = this.getOutputPlug(srcBoxId, srcPlugId);
+    var dst = this.getInputPlug(dstBoxId, dstPlugId);
     expect(src.isDisplayed()).toBe(true);
     expect(dst.isDisplayed()).toBe(true);
     browser.actions()
@@ -298,7 +298,7 @@ Workspace.prototype = {
         .mouseMove(dst)
         .mouseUp()
         .perform();
-    this.expectConnected(srcBoxID, srcPlugID, dstBoxID, dstPlugID);
+    this.expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId);
   }
 
 };
@@ -564,7 +564,7 @@ Side.prototype = {
   },
 
   scalarValue: function(name) {
-    return this.side.element(by.id('scalar-value-' + toID(name)));
+    return this.side.element(by.id('scalar-value-' + toId(name)));
   },
 
   saveProjectAs: function(newName) {
@@ -794,23 +794,23 @@ function Selector(root) {
 
 Selector.prototype = {
   workspace: function(name) {
-    return element(by.id('workspace-' + toID(name)));
+    return element(by.id('workspace-' + toId(name)));
   },
 
   directory: function(name) {
-    return element(by.id('directory-' + toID(name)));
+    return element(by.id('directory-' + toId(name)));
   },
 
   table: function(name) {
-    return element(by.id('table-' + toID(name)));
+    return element(by.id('table-' + toId(name)));
   },
 
   view: function(name) {
-    return element(by.id('view-' + toID(name)));
+    return element(by.id('view-' + toId(name)));
   },
 
   snapshot: function(name) {
-    return element(by.id('snapshot-' + toID(name)));
+    return element(by.id('snapshot-' + toId(name)));
   },
 
   expectNumWorkspaces: function(n) {
@@ -906,7 +906,7 @@ Selector.prototype = {
     // Floating elements can overlap buttons and block clicks.
     browser.executeScript(`
       document.styleSheets[0].insertRule(
-        '.spark-status, .bottom-links { position: static !important; }');
+        '.spark-status, .user-menu { position: static !important; }');
         `);
   },
 

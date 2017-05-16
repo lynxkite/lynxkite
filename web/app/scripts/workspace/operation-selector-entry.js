@@ -19,7 +19,7 @@ angular.module('biggraph').directive('operationSelectorEntry', function($timeout
         scope.$apply(function() {
           event.originalEvent.dataTransfer.setData(
             'text',
-            scope.op.operationID);
+            scope.op.operationId);
           var dragIcon = document.createElement('img');
           dragIcon.src = '../../images/box_icons/box.png';
           dragIcon.width = 100;

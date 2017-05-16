@@ -6,7 +6,7 @@
 angular.module('biggraph')
   .directive(
   'workspaceDrawingBoard',
-  function(environment, hotkeys, PopupModel, SelectionModel, workspaceWrapper, $rootScope) {
+  function(environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -36,7 +36,7 @@ angular.module('biggraph')
 
           function() {
             if (scope.boxCatalog.$resolved && scope.workspaceName) {
-              scope.workspace = workspaceWrapper(
+              scope.workspace = new WorkspaceWrapper(
                 scope.workspaceName,
                 scope.boxCatalog);
               scope.workspace.loadWorkspace();
@@ -101,6 +101,10 @@ angular.module('biggraph')
           }
         }
 
+        scope.callbackWrapper = function(callback) {
+          return function(event) {scope.$apply(function () { callback(event); });};
+        };
+
         scope.onMouseMove = function(event) {
           event.preventDefault();
           addLogicalMousePosition(event);
@@ -116,10 +120,7 @@ angular.module('biggraph')
 
           var leftButton = event.buttons & 1;
           // Protractor omits button data from simulated mouse events.
-          if (!leftButton && !environment.protractor) {
-            // Button is no longer pressed. (It was released outside of the window, for example.)
-            scope.onMouseUp();
-          } else {
+          if (leftButton || environment.protractor) {
             scope.mouseLogical = {
               x: event.logicalX,
               y: event.logicalY,
@@ -134,8 +135,19 @@ angular.module('biggraph')
           }
         };
 
+        scope.wrappedOnMouseMove = scope.callbackWrapper(scope.onMouseMove);
+
+        scope.wrappedOnMouseUp = scope.callbackWrapper(scope.onMouseUp);
+
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
+          var leftClick = event.button === 0;
+          if (!leftClick) {
+            return;
+          }
+          window.addEventListener('mousemove', scope.wrappedOnMouseMove);
+          window.addEventListener('mouseup', scope.wrappedOnMouseUp);
+
           addLogicalMousePosition(event);
           scope.selection.remove();
           if (scope.selectedBoxIds.indexOf(box.instance.id) === -1) {
@@ -167,7 +179,7 @@ angular.module('biggraph')
           }
           var model = new PopupModel(
             box.instance.id,
-            box.instance.operationID,
+            box.instance.operationId,
             {
               type: 'box',
               boxId: box.instance.id,
@@ -199,7 +211,7 @@ angular.module('biggraph')
           if (plug.direction === 'outputs') {
             var model = new PopupModel(
               plug.boxId + '_' + plug.id,
-              plug.boxInstance.operationID + ' ➡ ' + plug.id,
+              plug.boxInstance.operationId + ' ➡ ' + plug.id,
               {
                 type: 'plug',
                 boxId: plug.boxId,
@@ -233,6 +245,8 @@ angular.module('biggraph')
           element[0].style.cursor = '';
           workspaceDrag = false;
           selectBoxes = false;
+          window.removeEventListener('mousemove', scope.wrappedOnMouseMove);
+          window.removeEventListener('mouseup', scope.wrappedOnMouseUp);
           scope.selection.remove();
           if (scope.movedBoxes) {
             scope.workspace.saveIfBoxesMoved();
@@ -243,6 +257,8 @@ angular.module('biggraph')
         };
 
         scope.onMouseDown = function(event) {
+          window.addEventListener('mousemove', scope.wrappedOnMouseMove);
+          window.addEventListener('mouseup', scope.wrappedOnMouseUp);
           var dragMode = actualDragMode(event);
           event.preventDefault();
           addLogicalMousePosition(event);
@@ -300,9 +316,9 @@ angular.module('biggraph')
           scope.clipboard = angular.copy(scope.selectedBoxes());
         };
 
-        scope.pasteBoxes = function(currentPosition) {
-          scope.workspace.pasteFromClipboard(
-              scope.clipboard, currentPosition);
+        scope.pasteBoxes = function() {
+          var pos = addLogicalMousePosition({ pageX: 0, pageY: 0});
+          scope.workspace.pasteFromClipboard(scope.clipboard, pos);
         };
 
         scope.deleteBoxes = function(boxIds) {
@@ -328,19 +344,13 @@ angular.module('biggraph')
           callback: function() { scope.copyBoxes(); } });
         hk.add({
           combo: 'ctrl+v', description: 'Paste boxes',
-          callback: function() {
-            scope.pasteBoxes(addLogicalMousePosition({ pageX: 0, pageY: 0}));
-          } });
+          callback: function() { scope.pasteBoxes(); } });
         hk.add({
           combo: 'ctrl+z', description: 'Undo',
-          callback: function() {
-            scope.guiMaster.undo();
-          } });
+          callback: function() { scope.workspace.undo(); } });
         hk.add({
           combo: 'ctrl+y', description: 'Redo',
-          callback: function() {
-            scope.guiMaster.redo();
-          } });
+          callback: function() { scope.workspace.redo(); } });
         hk.add({
           combo: 'del', description: 'Paste boxes',
           callback: function() { scope.deleteSelectedBoxes(); } });
@@ -386,13 +396,13 @@ angular.module('biggraph')
         element.bind('drop', function(event) {
           event.preventDefault();
           var origEvent = event.originalEvent;
-          var operationID = event.originalEvent.dataTransfer.getData('text');
+          var operationId = event.originalEvent.dataTransfer.getData('text');
           // This isn't undefined iff testing
-          var boxID = event.originalEvent.dataTransfer.getData('id');
+          var boxId = event.originalEvent.dataTransfer.getData('id');
           // This is received from operation-selector-entry.js
           scope.$apply(function() {
             addLogicalMousePosition(origEvent);
-            scope.workspace.addBox(operationID, origEvent, boxID);
+            scope.workspace.addBox(operationId, origEvent, boxId);
           });
         });
 

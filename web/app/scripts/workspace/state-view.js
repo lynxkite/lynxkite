@@ -19,7 +19,7 @@ angular.module('biggraph')
               if (scope.boxId && scope.plugId && scope.workspace) {
                 var plug = scope.workspace.getOutputPlug(
                     scope.boxId, scope.plugId);
-                return {stateId: plug.stateID, kind: plug.kind};
+                return {stateId: plug.stateId, kind: plug.kind};
               } else {
                 return undefined;
               }
