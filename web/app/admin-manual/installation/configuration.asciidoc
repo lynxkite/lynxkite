@@ -143,7 +143,7 @@ Hive offers 3 https://cwiki.apache.org/confluence/display/Hive/LanguageManual+Au
 authorization options].
 
 - https://cwiki.apache.org/confluence/display/Hive/Storage+Based+Authorization+in+the+Metastore+Server[
-Storaged Based Authorization in the Metastore Server]: this means that the user has the same access
+Storage Based Authorization in the Metastore Server]: this means that the user has the same access
 right for the metadata as he has for the underlying data on HDFS.
 
 
@@ -175,9 +175,9 @@ underlying files than in Hive Metastore) and this results in columns with all `n
 
 One exception is the partitioner column - since the partitioner is part of the HDFS path, Hive
 Metastore is forced to store it in a case preserving manner.
-So if you can change the schema of the underlying files without causing problem then that’s the
-fix. If not, then create new tables whose underlying files’ column names are all in lower
-case - e.g. you can do this with query:
+So if you can change the schema of the underlying files without causing problem then that is the
+fix. If not, then create new tables whose underlying files' column names are all in lower
+case. For example, the following query can be used:
 `CREATE TABLE <new_table> AS SELECT * FROM <old table>`.
 
 ### Integrating with High Availability mode HDFS
