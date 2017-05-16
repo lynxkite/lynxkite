@@ -65,6 +65,12 @@ class ScalaScriptSecurityManager extends SecurityManager {
     }
   }
 
+  override def checkPermission(permission: Permission, o: scala.Any): Unit = {
+    if (shouldCheck.value) {
+      super.checkPermission(permission, o)
+    }
+  }
+
   override def checkPackageAccess(s: String): Unit = {
     super.checkPackageAccess(s) // This must be the first thing to do!
     if (shouldCheck.value &&

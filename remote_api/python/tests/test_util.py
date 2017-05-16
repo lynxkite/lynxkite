@@ -29,6 +29,10 @@ class TestUtil(unittest.TestCase):
     with self.assertRaises(AssertionError):
       d = util.parse_duration('0d')
 
+  def test_ttl(self):
+    ttl = util.get_ttl_from_path('root/some directory (ttl=48h)')
+    self.assertEqual(datetime.timedelta(days=2), ttl)
+
 
 class TestHDFS(unittest.TestCase):
 

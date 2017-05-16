@@ -5,7 +5,7 @@ Each column in the table will be accessible as an edge attribute.
 
 Vertices will be generated for the endpoints of the edges with two vertex attributes:
 
- - `stringID` will contain the ID string that was used in the table.
+ - `stringId` will contain the ID string that was used in the table.
  - `id` will contain the internal vertex ID.
 
 This is useful when your table contains edges (e.g., calls) and there is no separate

@@ -52,11 +52,11 @@ case class AddReversedEdges(addIsNewAttr: Boolean = false) extends TypedMetaGrap
     val renumbered: UniqueSortedRDD[ID, (ID, (Edge, Double))] =
       reverseAdded.randomNumbered(partitioner)
     renumbered.persist(spark.storage.StorageLevel.DISK_ONLY)
-    output(o.esPlus, renumbered.mapValues { case (oldID, (e, _)) => e })
+    output(o.esPlus, renumbered.mapValues { case (oldId, (e, _)) => e })
     output(
       o.newToOriginal,
       renumbered.mapValuesWithKeys {
-        case (newID, (oldID, (e, _))) => Edge(newID, oldID)
+        case (newId, (oldId, (e, _))) => Edge(newId, oldId)
       })
     if (addIsNewAttr) {
       output(o.isNew,

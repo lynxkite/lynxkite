@@ -241,6 +241,16 @@ include::export-segmentation-to-database.asciidoc[]
 
 include::export-segmentation-to-file.asciidoc[]
 
+include::export-to-csv.asciidoc[]
+
+include::export-to-jdbc.asciidoc[]
+
+include::export-to-json.asciidoc[]
+
+include::export-to-orc.asciidoc[]
+
+include::export-to-parquet.asciidoc[]
+
 include::export-vertex-attributes-to-database.asciidoc[]
 
 include::export-vertex-attributes-to-file.asciidoc[]
