@@ -184,7 +184,7 @@ trait OperationRegistry {
     factory: Operation.Factory): Unit = {
     // TODO: Register category somewhere.
     assert(!operations.contains(id), s"$id is already registered.")
-    operations(id) = BoxMetadata(category.title, id, Operation.htmlID(id), inputs, outputs) -> factory
+    operations(id) = BoxMetadata(category.title, id, Operation.htmlId(id), inputs, outputs) -> factory
   }
 }
 
