@@ -188,7 +188,7 @@ Workspace.prototype = {
 
   selectBoxes: function(boxIds) {
     // Without this, we would just add additional boxes to the previous selection
-    this.selectBox(boxIds[0]);
+    this.openBoxEditor(boxIds[0]).close();
     browser.actions().keyDown(protractor.Key.CONTROL).perform();
     for (var i = 1; i < boxIds.length; ++i) {
       this.selectBox(boxIds[i]);
@@ -855,7 +855,7 @@ Selector.prototype = {
   clickAndWaitForCsvImport: function() {
     var importCsvButton = element(by.id('import-csv-button'));
     // Wait for the upload to finish.
-    testLib.wait(protractor.ExpectedConditions.elementToBeClickable(importCsvButton));
+    testLib.waitUntilClickable(importCsvButton);
     importCsvButton.click();
   },
 
@@ -1385,12 +1385,17 @@ testLib = {
     );
   },
 
+  waitUntilClickable: function(element) {
+    testLib.wait(protractor.ExpectedConditions.elementToBeClickable(element));
+  },
+
   submitInlineInput: function(element, text) {
     var inputBox = element.$('input');
     var okButton = element.$('#ok');
     // Wait for CSS animation.
-    testLib.wait(protractor.ExpectedConditions.elementToBeClickable(inputBox));
+    testLib.waitUntilClickable(inputBox);
     inputBox.sendKeys(text);
+    testLib.waitUntilClickable(okButton);
     okButton.click();
   },
 
