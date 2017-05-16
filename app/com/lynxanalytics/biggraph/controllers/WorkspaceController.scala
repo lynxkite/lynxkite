@@ -112,7 +112,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     viewer.toFE(request.path)
   }
 
-
   def getPlotOutput(
     user: serving.User, request: GetPlotOutputRequest): GetPlotOutputResponse = {
     val state = getOutput(user, request.id)
