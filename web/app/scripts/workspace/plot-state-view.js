@@ -46,6 +46,7 @@ angular.module('biggraph')
           }
           return 'The plot is rendered.';
         };
+
       },
     };
   });
