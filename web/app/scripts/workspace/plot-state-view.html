@@ -1,10 +1,16 @@
 <div class="col-sm-12">
   <h3>Plot: {{title}}</h3>
-  <div ng-if="plotJSON.value.$resolved">
+  <div ng-if="plotJSON.value.$resolved && !plotJSON.value.$error">
     <!-- The hidden paragraph triggers the embedding of the plot. -->
     <p hidden>{{showPlot()}}</p>
     <!-- This is the placeholder DIV for the plot -->
     <div  ng-attr-id={{plotDivId}}> </div>
+  </div>
+  <div ng-if="plotJSON.value.$resolved && plotJSON.value.$error">
+    <p>
+      Cannot create plot.<br>
+      <span class="plot-error">{{plotJSON.value.$error}}</span>
+    </p>
   </div>
   <progressbar ng-if="!plotJSON.value.$resolved" value="100" class="progress-striped active">
     Computing plot...
