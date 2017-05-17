@@ -1,8 +1,6 @@
 <div class="col-sm-12">
   <h3>Plot: {{title}}</h3>
   <div ng-if="plotJSON.value.$resolved && !plotJSON.value.$error">
-    <!-- The hidden paragraph triggers the embedding of the plot. -->
-    <p hidden>{{showPlot()}}</p>
     <!-- This is the placeholder DIV for the plot -->
     <div  ng-attr-id={{plotDivId}}> </div>
   </div>
