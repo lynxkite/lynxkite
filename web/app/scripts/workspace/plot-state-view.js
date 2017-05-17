@@ -13,6 +13,7 @@ angular.module('biggraph')
       link: function(scope) {
         scope.plotDivId = 'vegaplot-' + scope.stateId;
         scope.rendered = 0;
+        scope.title = 'unnamed';
 
         scope.plot = util.get('/ajax/getPlotOutput', {
           id: scope.stateId
@@ -20,8 +21,15 @@ angular.module('biggraph')
         scope.plot.then(function() {
           scope.plotJSON = util.lazyFetchScalarValue(scope.plot.json, true);
         }, function() {
+          /* eslint-disable no-console */
           console.log('plot error');
         });
+
+        scope.$watch('embedSpec.spec.description', function(newValue, oldValue, scope) {
+          if (newValue) {
+            scope.title = newValue;
+          }
+        }, true);
 
         scope.showPlot = function() {
           scope.embedSpec = {

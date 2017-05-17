@@ -1637,13 +1637,9 @@ form-data@~2.1.1:
     combined-stream "^1.0.5"
     mime-types "^2.1.12"
 
-formidable@1.0.14:
+formidable@1.0.14, formidable@1.0.x:
   version "1.0.14"
   resolved "https://registry.yarnpkg.com/formidable/-/formidable-1.0.14.tgz#2b3f4c411cbb5fdd695c44843e2a23514a43231a"
-
-formidable@1.0.x:
-  version "1.0.17"
-  resolved "https://registry.yarnpkg.com/formidable/-/formidable-1.0.17.tgz#ef5491490f9433b705faa77249c99029ae348559"
 
 foxy@^11.1.2:
   version "11.1.5"
@@ -4918,6 +4914,20 @@ then-request@^2.0.1:
     http-response-object "^1.1.0"
     promise "^7.1.1"
     qs "^6.1.0"
+
+three.js@^0.77.1:
+  version "0.77.1"
+  resolved "https://registry.yarnpkg.com/three.js/-/three.js-0.77.1.tgz#07858a8749e4b627a31083252a2d987776cca32a"
+  dependencies:
+    three "0.77.0"
+
+three@0.77.0:
+  version "0.77.0"
+  resolved "https://registry.yarnpkg.com/three/-/three-0.77.0.tgz#8b0b1b00047689ceaa020d480a562ca60d87ff37"
+
+three@0.82.0:
+  version "0.82.0"
+  resolved "https://registry.yarnpkg.com/three/-/three-0.82.0.tgz#03670b7c7f1b73910a8d2cf059c3dd12e7d96dff"
 
 three@>=0.58.10:
   version "0.82.1"
