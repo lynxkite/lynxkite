@@ -19,12 +19,8 @@
 angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util, $interval) {
   function WorkspaceWrapper(name, boxCatalog) {
     this._progressUpdater = undefined;
-    this._boxCatalogMap = {};
-    for (var i = 0; i < boxCatalog.boxes.length; ++i) {
-      var boxMeta = boxCatalog.boxes[i];
-      this._boxCatalogMap[boxMeta.operationId] = boxMeta;
-    }
-
+    this.boxCatalog = boxCatalog;  // Updated for the sake of the operation palette.
+    this._boxCatalogMap = undefined;
     this.name = name;
     this.state = undefined;
     // The below data structures are generated from rawBoxes
@@ -37,9 +33,24 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     // request:
     this.backendRequest = undefined;
     this.backendState = undefined;
+    this._updateBoxCatalog();
   }
 
   WorkspaceWrapper.prototype = {
+    _updateBoxCatalog: function() {
+      var that = this;
+      var request = util.nocache('/ajax/boxCatalog');
+      angular.merge(that.boxCatalog, request);
+      return request.then(function(bc) {
+        angular.merge(that.boxCatalog, request);
+        that._boxCatalogMap = {};
+        for (var i = 0; i < bc.boxes.length; ++i) {
+          var boxMeta = bc.boxes[i];
+          that._boxCatalogMap[boxMeta.operationId] = boxMeta;
+        }
+      });
+    },
+
     _buildBoxes: function() {
       this.boxes = [];
       this.boxMap = {};
@@ -151,6 +162,10 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
 
     loadWorkspace: function() {
       var that = this;
+      if (!this._boxCatalogMap) { // Need to load catalog first.
+        this._updateBoxCatalog().then(function() { that.loadWorkspace(); });
+        return;
+      }
       util.nocache(
         '/ajax/getWorkspace',
         {
@@ -389,6 +404,156 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       var that = this;
       util.post('/ajax/redoWorkspace', { name: this.name })
         .then(function() { that.loadWorkspace(); });
+    },
+
+    saveAsCustomBox: function(ids, name, description) {
+      var i, j, box;
+      var workspaceParameters =
+        JSON.parse(this.boxMap['anchor'].instance.parameters.parameters || '[]');
+      var boxes = [{
+        id: 'anchor',
+        operationId: 'Anchor',
+        x: 0,
+        y: 0,
+        inputs: {},
+        parameters: {
+          description: description,
+          // The new workspace simply inherits all the parameters from the current workspace.
+          parameters: JSON.stringify(workspaceParameters),
+        },
+        parametricParameters: {},
+      }];
+      var inputNameCounts = {};
+      var outputNameCounts = {};
+      var SEPARATOR = ', ';
+      var PADDING = 200;
+      var inputBoxX = PADDING;
+      var outputBoxX = PADDING;
+      var usedOutputs = {};
+      // This custom box will replace the selected boxes.
+      var customBox = {
+        id: this.getUniqueId(name),
+        operationId: name,
+        x: 0,
+        y: 0,
+        inputs: {},
+        parameters: {},
+        parametricParameters: {},
+      };
+      // Pass all workspace parameters through.
+      for (i = 0; i < workspaceParameters; ++i) {
+        var param = workspaceParameters[i].id;
+        customBox.parametricParameters[param] = '$' + param;
+      }
+      var minX = Infinity;
+      var minY = Infinity;
+      var maxY = -Infinity;
+      for (i = 0; i < ids.length; ++i) {
+        box = this.boxMap[ids[i]];
+        // Place the custom box in the average position of the selected boxes.
+        customBox.x += box.instance.x / ids.length;
+        customBox.y += box.instance.y / ids.length;
+        minX = Math.min(minX, box.instance.x);
+        minY = Math.min(minY, box.instance.y);
+        maxY = Math.max(maxY, box.instance.y);
+      }
+      for (i = 0; i < ids.length; ++i) {
+        box = this.boxMap[ids[i]];
+        // "input-" and "output-" IDs will be used for the input and output boxes.
+        console.assert(box.instance.id.indexOf('input-') !== 0);
+        console.assert(box.instance.id.indexOf('output-') !== 0);
+        if (ids[i] === 'anchor') { continue; }  // Ignore anchor.
+        // Copy this box to the new workspace.
+        var instance = angular.copy(box.instance);
+        boxes.push(instance);
+        instance.x += 200 - minX;
+        instance.y += 200 - minY;
+        for (j = 0; j < box.inputs.length; ++j) {
+          var inputName = box.metadata.inputs[j];
+          var input = box.instance.inputs[inputName];
+          // Record used output.
+          if (input.boxId) {
+            console.assert(!input.boxId.includes(SEPARATOR) && !input.id.includes(SEPARATOR));
+            usedOutputs[input.boxId + SEPARATOR + input.id] = true;
+          }
+          // Create input box if necessary.
+          if (!ids.includes(input.boxId)) {
+            var inputBoxName = inputName;
+            var inputNameCount = inputNameCounts[inputName] || 0;
+            if (inputNameCount > 0) {
+              inputBoxName += ' ' + (inputNameCount + 1);
+            }
+            inputNameCounts[inputName] = inputNameCount + 1;
+            boxes.push({
+              id: 'input-' + inputBoxName,
+              operationId: 'Input box',
+              x: inputBoxX,
+              y: 0,
+              inputs: {},
+              parameters: { name: inputBoxName },
+              parametricParameters: {},
+            });
+            inputBoxX += PADDING;
+            instance.inputs[inputName] = { boxId: 'input-' + inputBoxName, id: 'input' };
+            if (input.boxId) { // Connected to a non-selected box.
+              customBox.inputs[inputBoxName] = input;
+            }
+          }
+        }
+      }
+      // Add output boxes as necessary.
+      for (i = 0; i < ids.length; ++i) {
+        box = this.boxMap[ids[i]];
+        for (j = 0; j < box.metadata.outputs.length; ++j) {
+          var outputName = box.metadata.outputs[j];
+          if (!usedOutputs[box.instance.id + SEPARATOR + outputName]) {
+            var outputBoxName = outputName;
+            var outputNameCount = outputNameCounts[outputName] || 0;
+            if (outputNameCount > 0) {
+              outputBoxName += ' ' + (outputNameCount + 1);
+            }
+            outputNameCounts[outputName] = outputNameCount + 1;
+            boxes.push({
+              id: 'output-' + outputBoxName,
+              operationId: 'Output box',
+              x: outputBoxX,
+              y: maxY + 200,
+              inputs: { output: { boxId: box.instance.id, id: outputName } },
+              parameters: { name: outputBoxName },
+              parametricParameters: {},
+            });
+            outputBoxX += PADDING;
+            // Update non-selected output connections.
+            for (var k = 0; k < this.arrows.length; ++k) {
+              var arrow = this.arrows[k];
+              if (arrow.src.boxId === box.instance.id && arrow.src.id === outputName) {
+                arrow.dst.box.instance.inputs[arrow.dst.id] =
+                  { boxId: customBox.id, id: outputBoxName };
+              }
+            }
+          }
+        }
+      }
+      this.state.boxes = this.state.boxes.filter(function(box) {
+        return box.id === 'anchor' || !ids.includes(box.id);
+      });
+      this.state.boxes.push(customBox);
+      var that = this;
+      return util.post('/ajax/createWorkspace', {
+        name: name,
+        privacy: 'private',
+      }).then(function success() {
+        return util.post('/ajax/setWorkspace', {
+          name: name,
+          workspace: { boxes: boxes },
+        });
+      }).then(function success() {
+        return that._updateBoxCatalog();
+      }).then(function success() {
+        that.saveWorkspace();
+      }, function error() {
+        that.loadWorkspace();
+      });
     },
 
   };

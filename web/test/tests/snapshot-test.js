@@ -13,13 +13,11 @@ module.exports = function(fw) {
     'snapshot-created',
     function() {
       var state = lib.workspace.openStateView('eg0', 'project');
-      var inputBox = state.popup
-          .$('.save-as-snapshot-box input');
-      var inputButton = state.popup
-          .$('.save-as-snapshot-box .glyphicon-camera');
+      var snapshotBox = state.popup.$('#save-as-snapshot-box');
+      var snapshotButton = snapshotBox.$('#save-as-snapshot-button');
 
-      inputBox.sendKeys(lib.selectAllKey + snapshotName);
-      inputButton.click();
+      snapshotButton.click();
+      lib.submitInlineInput(snapshotBox, snapshotName);
       lib.workspace.close();
     },
     function() {

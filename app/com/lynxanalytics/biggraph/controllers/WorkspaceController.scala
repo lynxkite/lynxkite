@@ -8,6 +8,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 case class GetWorkspaceRequest(name: String)
 case class BoxOutputInfo(boxOutput: BoxOutput, stateId: String, success: FEStatus, kind: String)
@@ -66,28 +67,39 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: GetWorkspaceRequest): GetWorkspaceResponse = {
     val frame = getWorkspaceFrame(user, request.name)
     val workspace = frame.workspace
-    val context = workspace.context(user, ops, Map())
-    val states = context.allStates
-    val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
-    calculatedStates.synchronized {
-      for ((_, (boxOutputState, id)) <- statesWithId) {
-        calculatedStates(id) = boxOutputState
+    try {
+      val context = workspace.context(user, ops, Map())
+      val states = context.allStates
+      val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
+      calculatedStates.synchronized {
+        for ((_, (boxOutputState, id)) <- statesWithId) {
+          calculatedStates(id) = boxOutputState
+        }
       }
+      val stateInfo = statesWithId.toList.map {
+        case (boxOutput, (boxOutputState, stateId)) =>
+          BoxOutputInfo(boxOutput, stateId, boxOutputState.success, boxOutputState.kind)
+      }
+      val summaries = workspace.boxes.map(
+        box => box.id -> (
+          try { context.getOperationForStates(box, states).summary }
+          catch { case e: AssertionError => box.operationId }
+        )
+      ).toMap
+      GetWorkspaceResponse(
+        workspace, stateInfo, summaries,
+        canUndo = frame.currentState.previousCheckpoint.nonEmpty,
+        canRedo = frame.nextCheckpoint.nonEmpty)
+    } catch {
+      case t: Throwable =>
+        log.error(s"Could not execute ${request.name}", t)
+        // We can still return the "cold" data that is available without execution.
+        // This makes it at least possible to press Undo.
+        GetWorkspaceResponse(
+          workspace, List(), Map(),
+          canUndo = frame.currentState.previousCheckpoint.nonEmpty,
+          canRedo = frame.nextCheckpoint.nonEmpty)
     }
-    val stateInfo = statesWithId.toList.map {
-      case (boxOutput, (boxOutputState, stateId)) =>
-        BoxOutputInfo(boxOutput, stateId, boxOutputState.success, boxOutputState.kind)
-    }
-    val summaries = workspace.boxes.map(
-      box => box.id -> (
-        try { context.getOperationForStates(box, states).summary }
-        catch { case e: AssertionError => box.operationId }
-      )
-    ).toMap
-    GetWorkspaceResponse(
-      workspace, stateInfo, summaries,
-      canUndo = frame.currentState.previousCheckpoint.nonEmpty,
-      canRedo = frame.nextCheckpoint.nonEmpty)
   }
 
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
