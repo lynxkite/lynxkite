@@ -47,9 +47,6 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
         this.x = this.moveOffsetX + event.pageX;
         this.y = this.moveOffsetY + event.pageY;
       }
-    } else {
-      // Button is no longer pressed. (It was released outside of the window, for example.)
-      this.owner.movedPopup = undefined;
     }
   };
 

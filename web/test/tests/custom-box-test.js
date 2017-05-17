@@ -3,6 +3,15 @@
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
+  function setParametric(boxId, param, value) {
+    var editor = lib.workspace.openBoxEditor(boxId);
+    var params = {};
+    params[param] = value;
+    editor.populateOperation(params);
+    editor.parametricSwitch(param).click();
+    editor.close();
+  }
+
   fw.transitionTest(
     'empty splash',
     'custom box created',
@@ -15,10 +24,7 @@ module.exports = function(fw) {
         id: 'eg', name: 'Create example graph', x: 400, y: 100 });
       lib.workspace.addBox({
         id: 'pr', name: 'Compute PageRank', x: 100, y: 300, after: 'eg' });
-      var pr = lib.workspace.openBoxEditor('pr');
-      pr.populateOperation({ name: '$prname' });
-      pr.parametricSwitch('name').click();
-      pr.close();
+      setParametric('pr', 'name', '$prname');
       lib.workspace.addBox({
         id: 'cc', name: 'Compute clustering coefficient', x: 100, y: 400, after: 'pr' });
       lib.workspace.addBox({
@@ -96,4 +102,47 @@ module.exports = function(fw) {
     },
     function() {});
 
+  fw.transitionTest(
+    'empty splash',
+    'save as custom box',
+    function() {
+      // Set up a few connected boxes.
+      lib.splash.openNewWorkspace('test-custom-box');
+      lib.workspace.addWorkspaceParameter('prname', 'text', 'default_pr');
+      lib.workspace.addBox({
+        id: 'eg', name: 'Create example graph', x: 100, y: 100 });
+      lib.workspace.addBox({
+        id: 'pr1', name: 'Compute PageRank', x: 100, y: 200, after: 'eg' });
+      setParametric('pr1', 'name', '${prname}_1');
+      lib.workspace.addBox({
+        id: 'pr2', name: 'Compute PageRank', x: 100, y: 300, after: 'pr1' });
+      setParametric('pr2', 'name', '${prname}_2');
+      lib.workspace.addBox({
+        id: 'pr3', name: 'Compute PageRank', x: 100, y: 400, after: 'pr2' });
+      setParametric('pr3', 'name', '${prname}_3');
+
+      function checkOutput() {
+        var state = lib.workspace.openStateView('pr3', 'project');
+        expect(state.left.vertexAttribute('default_pr_1').isPresent()).toBe(true);
+        expect(state.left.vertexAttribute('default_pr_2').isPresent()).toBe(true);
+        expect(state.left.vertexAttribute('default_pr_3').isPresent()).toBe(true);
+        state.close();
+      }
+      checkOutput();
+
+      // Now save "pr1" and "pr2" as a custom box.
+      lib.workspace.selectBoxes(['pr1', 'pr2']);
+      $('#save-selection-as-custom-box').click();
+      lib.submitInlineInput($('inline-input'), 'my-custom-box');
+
+      // Check that the box has been replaced.
+      expect(lib.workspace.getBox('pr1').isPresent()).toBe(false);
+      expect(lib.workspace.getBox('pr2').isPresent()).toBe(false);
+      expect(lib.workspace.getBox('eg').isPresent()).toBe(true);
+      expect(lib.workspace.getBox('pr3').isPresent()).toBe(true);
+
+      // The output is still the same.
+      checkOutput();
+    },
+    function() {});
 };

@@ -1,0 +1,33 @@
+### Export to JDBC
+
+JDBC is used to connect to relational databases such as MySQL. See <<jdbc-details>> for setup steps
+required for connecting to a database.
+
+====
+[[url]] JDBC URL::
+The connection URL for the database. This typically includes the username and password. The exact
+syntax entirely depends on the database type. Please consult the documentation of the database.
+
+[[table]] Table::
+The name of the database table to export to.
+
+[[mode]] Mode::
+Describes whether LynxKite should expect a table to already exist and how to handle this case.
++
+**The table must not exist** means the table will be created and it is an error if it already
+exists.
++
+**Drop the table if it already exists** means the table will be deleted and re-created if
+it already exists. Use this mode with great care.
++
+**Insert into an existing table** requires the
+table to already exist and it will add the exported data at the end of the existing table.
+
+[[version]] Version::
+Version is the version number of the result of the export operation. It is a non negative integer.
+LynxKite treats export operations as other operations: it remembers the result (which in this case
+is the knowledge that the export was successfully done) and won't repeat the calculation. However,
+there might be a need to export an already exported table with the same set of parameters (e.g. the
+exported table is lost). In this case you need to change the version number, making that parameters
+are not the same as in the previous export.
+====

@@ -4,10 +4,26 @@
     <span ng-repeat="s in workspace.customBoxStack">&raquo; {{ s }}</span>
     <span ng-if="workspace.name !== workspace.top">({{ workspace.name }})</span>
   </span>
+  <user-menu info="list" direction="dropdown" class="pull-right user-menu-in-toolbar"></user-menu>
   <div class="btn-group pull-right">
+    <button class="btn btn-default"
+         id="save-selection-as-custom-box"
+         ng-click="saveSelectionAsCustomBoxInputOpen = true"
+         ng-disabled="selectedBoxIds.length === 0"
+         drop-tooltip="Save&nbsp;selection as&nbsp;custom&nbsp;box"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-superpowers"></i>
+    </button>
+    <div class="pull-left">
+      <inline-input
+        placeholder="Save as..."
+        open="saveSelectionAsCustomBoxInputOpen"
+        onsubmit="saveSelectionAsCustomBox(input, success, error)"></inline-input>
+    </div>
     <button class="btn btn-default"
          id="copy-boxes"
          ng-click="copyBoxes()"
+         ng-disabled="selectedBoxIds.length === 0"
          drop-tooltip="Copy&nbsp;boxes (Ctrl-C)"
          drop-tooltip-placement="bottom">
       <i class="fa fa-copy"></i>
@@ -22,6 +38,7 @@
     <button class="btn btn-default"
          id="delete-selected-boxes"
          ng-click="deleteSelectedBoxes()"
+         ng-disabled="selectedBoxIds.length === 0"
          drop-tooltip="Delete&nbsp;selected&nbsp;boxes (Delete)"
          drop-tooltip-placement="bottom">
       <i class="fa fa-trash-o"></i>
@@ -83,7 +100,6 @@
          drop-tooltip-placement="bottom">
       <i class="glyphicon glyphicon-remove"></i>
     </a>
-    <user-menu info="list" direction="dropdown" class="user-menu-in-toolbar"></user-menu>
   </div>
 </div>
 
