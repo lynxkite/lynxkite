@@ -11,19 +11,21 @@ angular.module('biggraph')
         stateId: '=',
       },
       link: function(scope) {
-        scope.plotDivId = 'vegaplot-' + scope.stateId;
-        scope.rendered = 0;
-        scope.title = 'unnamed';
+        scope.$watch('stateId', function(newValue, oldValue, scope) {
+          scope.plotDivId = 'vegaplot-' + scope.stateId;
+          scope.rendered = 0;
+          scope.title = 'unnamed';
 
-        scope.plot = util.get('/ajax/getPlotOutput', {
-          id: scope.stateId
-        });
-        scope.plot.then(function() {
-          scope.plotJSON = util.lazyFetchScalarValue(scope.plot.json, true);
-        }, function() {
-          /* eslint-disable no-console */
-          console.log('plot error');
-        });
+          scope.plot = util.get('/ajax/getPlotOutput', {
+            id: scope.stateId
+          });
+          scope.plot.then(function() {
+            scope.plotJSON = util.lazyFetchScalarValue(scope.plot.json, true);
+          }, function() {
+            /* eslint-disable no-console */
+            console.log('plot error');
+          });
+        }, true);
 
         scope.$watch('embedSpec.spec.description', function(newValue, oldValue, scope) {
           if (newValue) {
@@ -31,7 +33,7 @@ angular.module('biggraph')
           }
         }, true);
 
-        scope.showPlot = function() {
+        scope.$watch('plotJSON.value.string', function(newValue, oldValue, scope) {
           scope.embedSpec = {
             mode: "vega-lite",
           };
@@ -44,9 +46,7 @@ angular.module('biggraph')
             vg.embed('#' + scope.plotDivId, scope.embedSpec, function() {});
             scope.rendered = 1;
           }
-          return 'The plot is rendered.';
-        };
-
+        }, true);
       },
     };
   });
