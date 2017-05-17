@@ -6,6 +6,7 @@ import types
 
 
 _DURATION_RE = re.compile(r'((?P<days>\d+)d)?((?P<hours>\d+)h)?((?P<minutes>\d+)m)?')
+_TTL_RE = re.compile(r'\(ttl=(.*?)\)')
 
 
 def parse_duration(s):
@@ -16,6 +17,14 @@ def parse_duration(s):
   delta = datetime.timedelta(**units)
   assert delta != datetime.timedelta(0), 'Could not parse "{}" as a duration.'.format(s)
   return delta
+
+
+def get_ttl_from_path(path):
+  '''Returns the TTL as a timedelta, or None if no TTL is set on the path.'''
+  m = _TTL_RE.search(path)
+  if not m:
+    return None
+  return parse_duration(m.group(1))
 
 
 class HDFS:

@@ -8,6 +8,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 case class WorkspaceName(name: String)
 case class WorkspaceReference(
@@ -33,6 +34,8 @@ case class GetTableOutputResponse(header: List[TableColumn], data: List[List[Dyn
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 case class CreateSnapshotRequest(name: String, id: String)
+case class GetExportResultRequest(stateId: String)
+case class GetExportResultResponse(parameters: Map[String, String], result: FEScalar)
 
 class WorkspaceController(env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -81,24 +84,33 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def getWorkspace(
     user: serving.User, request: WorkspaceReference): GetWorkspaceResponse = {
     val res = ResolvedWorkspaceReference(user, request)
-    val context = res.context
-    val states = context.allStates
-    val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
-    calculatedStates.synchronized {
-      for ((_, (boxOutputState, id)) <- statesWithId) {
-        calculatedStates(id) = boxOutputState
+    val (stateInfo, summaries) = try {
+      val context = res.context
+      val states = context.allStates
+      val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
+      calculatedStates.synchronized {
+        for ((_, (boxOutputState, id)) <- statesWithId) {
+          calculatedStates(id) = boxOutputState
+        }
       }
+      val stateInfo = statesWithId.toList.map {
+        case (boxOutput, (boxOutputState, stateId)) =>
+          BoxOutputInfo(boxOutput, stateId, boxOutputState.success, boxOutputState.kind)
+      }
+      val summaries = res.ws.boxes.map(
+        box => box.id -> (
+          try { context.getOperationForStates(box, states).summary }
+          catch { case e: AssertionError => box.operationId }
+        )
+      ).toMap
+      (stateInfo, summaries)
+    } catch {
+      case t: Throwable =>
+        log.error(s"Could not execute $request", t)
+        // We can still return the "cold" data that is available without execution.
+        // This makes it at least possible to press Undo.
+        (List[BoxOutputInfo](), Map[String, String]())
     }
-    val stateInfo = statesWithId.toList.map {
-      case (boxOutput, (boxOutputState, stateId)) =>
-        BoxOutputInfo(boxOutput, stateId, boxOutputState.success, boxOutputState.kind)
-    }
-    val summaries = res.ws.boxes.map(
-      box => box.id -> (
-        try { context.getOperationForStates(box, states).summary }
-        catch { case e: AssertionError => box.operationId }
-      )
-    ).toMap
     GetWorkspaceResponse(
       res.name, res.ws, stateInfo, summaries,
       canUndo = res.frame.currentState.previousCheckpoint.nonEmpty,
@@ -125,6 +137,18 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     viewer.toFE(request.path)
   }
 
+  def getExportResultOutput(
+    user: serving.User, request: GetExportResultRequest): GetExportResultResponse = {
+    val state = getOutput(user, request.stateId)
+    state.kind match {
+      case BoxOutputKind.ExportResult =>
+        val scalar = state.exportResult
+        val feScalar = ProjectViewer.feScalar(scalar, "result", "", Map())
+        val parameters = (state.state.get \ "parameters").as[Map[String, String]]
+        GetExportResultResponse(parameters, feScalar)
+    }
+  }
+
   def getProgress(user: serving.User, request: GetProgressRequest): GetProgressResponse = {
     val states = request.stateIds.map(stateId => stateId -> getOutput(user, stateId)).toMap
     val progress = states.map {
@@ -134,6 +158,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
             case BoxOutputKind.Project => stateId -> Some(state.project.viewer.getProgress)
             case BoxOutputKind.Table =>
               val progress = entityProgressManager.computeProgress(state.table)
+              stateId -> Some(List(progress))
+            case BoxOutputKind.ExportResult =>
+              val progress = entityProgressManager.computeProgress(state.exportResult)
               stateId -> Some(List(progress))
             case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }
