@@ -246,18 +246,18 @@ trait BasicOperation extends Operation {
   protected def help = // Add to notes for help link.
     "<help-popup href=\"" + Operation.htmlId(id) + "\"></help-popup>"
 
-  protected def blankParams = LazyParameters(context) // Without apply_to parameters.
-  protected def params: LazyParameters = {
+  protected val params = {
+    val params = new ParameterHolder(context)
     // "apply_to_*" is used to pick the base project or segmentation to apply the operation to.
     // An "apply_to_*" parameter is added for each project input.
     val projects = context.meta.inputs.filter(i => context.inputs(i).kind == BoxOutputKind.Project)
-    val applyTos = projects.map { input =>
+    for (input <- projects) {
       val param = "apply_to_" + input
-      OperationParams.SegmentationParam(
+      params += OperationParams.SegmentationParam(
         param, s"Apply to ($input)",
         context.inputs(input).project.segmentationsRecursively)
     }
-    blankParams ++ applyTos
+    params
   }
 
   // Updates the vertex_count_delta/edge_count_delta scalars after an operation finished.
@@ -377,7 +377,7 @@ abstract class ProjectTransformation(
 // A MinimalOperation defines simple defaults for everything.
 abstract class MinimalOperation(
     protected val context: Operation.Context) extends Operation {
-  protected def params = LazyParameters(context)
+  protected val params = new ParameterHolder(context)
   protected val id = context.meta.operationId
   val title = id
   def summary = title
@@ -449,11 +449,11 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
 
 class CustomBoxOperation(
     workspace: Workspace, val context: Operation.Context) extends BasicOperation {
-  override val params = {
+  params ++= {
     val custom = workspace.parametersMeta
     val tables = context.inputs.values.collect { case i if i.isTable => i.table }
     val projects = context.inputs.values.collect { case i if i.isProject => i.project }
-    super.blankParams ++ custom.map { p =>
+    custom.map { p =>
       val id = p.id
       val dv = p.defaultValue
       import OperationParams._
