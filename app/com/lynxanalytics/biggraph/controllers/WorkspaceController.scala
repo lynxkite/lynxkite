@@ -10,7 +10,9 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 
 case class WorkspaceName(name: String)
-case class WorkspaceReference(top: String, customBoxStack: List[String] = List())
+case class WorkspaceReference(
+  top: String, // The name of the top-level workspace.
+  customBoxStack: List[String] = List()) // The ID of the custom boxes we have "dived" into.
 case class BoxOutputInfo(boxOutput: BoxOutput, stateId: String, success: FEStatus, kind: String)
 case class GetWorkspaceResponse(
   name: String,
