@@ -324,11 +324,13 @@ angular.module('biggraph')
         scope.diveUp = function() {
           scope.workspace.customBoxStack.pop();
           scope.workspace.loadWorkspace();
+          scope.popups = [];
         };
 
         scope.diveDown = function() {
           scope.workspace.customBoxStack.push(scope.selectedBoxIds[0]);
           scope.workspace.loadWorkspace();
+          scope.popups = [];
         };
 
         var hk = hotkeys.bindTo(scope);
