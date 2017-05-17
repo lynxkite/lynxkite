@@ -70,8 +70,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   case class ResolvedWorkspaceReference(user: serving.User, ref: WorkspaceReference) {
     val topWorkspace = getWorkspaceFrame(user, ref.top).workspace
     val (ws, params, name) = ref.customBoxStack.foldLeft((topWorkspace, Map[String, String](), ref.top)) {
-      (up, boxId) =>
-        val (ws, params, name) = up
+      case ((ws, params, _), boxId) =>
         val ctx = ws.context(user, ops, params)
         val op = ctx.getOperation(boxId).asInstanceOf[CustomBoxOperation]
         val cws = op.connectedWorkspace
