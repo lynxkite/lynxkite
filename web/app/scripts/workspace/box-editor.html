@@ -1,6 +1,11 @@
 <div class="box col-sm-11 {{color}}">
 
+  <p ng-if="error"
+     class="box-error">
+    Cannot retrieve box metadata: {{ error }}
+  </p>
   <a href
+     ng-if="box"
      id="help-toggle"
      ng-click="showHelp = !showHelp">
     <i class="glyphicon glyphicon-question-sign"></i>
