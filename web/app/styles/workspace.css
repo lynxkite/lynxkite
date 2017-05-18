@@ -114,6 +114,9 @@ div.popup-head {
 
 div.popup-content {
   width: 100%;
+  /* Popup height - (header height + some space for resize handle)*/
+  height: calc(100% - 45px);
+  overflow: auto;
 }
 
 polygon.popup-trail {
