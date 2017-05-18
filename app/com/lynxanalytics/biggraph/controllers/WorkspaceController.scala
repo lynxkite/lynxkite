@@ -55,7 +55,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   private def getWorkspaceFrame(
     user: serving.User, name: String): WorkspaceFrame = metaManager.synchronized {
     val f = DirectoryEntry.fromName(name)
-    assert(f.exists, s"Project ${name} does not exist.")
+    assert(f.exists, s"Entry ${name} does not exist.")
     f.assertReadAllowedFrom(user)
     f match {
       case f: WorkspaceFrame => f
