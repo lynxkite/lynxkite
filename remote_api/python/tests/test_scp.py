@@ -42,7 +42,7 @@ class TestSCP(unittest.TestCase):
 
     def transform(src, dst):
       for name in os.listdir(src):
-        shutil.copyfile(os.path.join(src, name), os.path.join(dst, name))
+        shutil.copyfile(os.path.join(src, name), os.path.join(dst, name + '-copy'))
 
     with mock.patch.object(t, 'transform_fn') as m:
       m.side_effect = transform
@@ -52,8 +52,8 @@ class TestSCP(unittest.TestCase):
     check_call.assert_any_call(['hadoop', 'fs', '-cp', 'input/*',
                                 'file:' + local_path], env=mock.ANY)
     check_call.assert_any_call(['ssh', 'dsthost', "mkdir -p 'dstpath'"])
-    check_call.assert_any_call(['ssh', 'dsthost', "cat > 'dstpath/one'"], stdin=mock.ANY)
-    check_call.assert_any_call(['ssh', 'dsthost', "cat > 'dstpath/two'"], stdin=mock.ANY)
+    check_call.assert_any_call(['ssh', 'dsthost', "cat > 'dstpath/one-copy'"], stdin=mock.ANY)
+    check_call.assert_any_call(['ssh', 'dsthost', "cat > 'dstpath/two-copy'"], stdin=mock.ANY)
     check_call.assert_any_call(['ssh', 'dsthost', "cat > 'dstpath/_SUCCESS'"], stdin=mock.ANY)
     self.assertEqual(5, check_call.call_count)
 
