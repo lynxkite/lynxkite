@@ -33,7 +33,8 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
 
   test("Scala DataFrame bindings work with runVegas") {
     val df = ImportDataFrameTest.jdbcDF(dataManager)
-    val code = """encodeX("name", Nominal).
+    val code = """plot.
+      encodeX("name", Nominal).
       encodeY("level", Quantitative).
       mark(Bar)"""
     print(ScalaScript.runVegas(code, df, "Test1"))
