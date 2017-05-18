@@ -115,26 +115,7 @@ object ScalaScript {
     }
   }
 
-  def runWithDouble( // this is a POC method
-    code: String, x: Double, timeoutInSeconds: Long = 10L): String = synchronized {
-    withContextClassLoader {
-      engine.put("x: Double", x)
-      val fullCode = s"""
-      val result = {
-          $code
-      }.toString
-      result
-      """
-      val compiledCode = engine.compile(fullCode)
-      withTimeout(timeoutInSeconds) {
-        restrictedSecurityManager.checkedRun {
-          compiledCode.eval().toString
-        }
-      }
-    }
-  }
-
-  // Helper function to convert a dataframe to a Seq of Maps
+  // Helper function to convert a DataFrame to a Seq of Maps
   // This format used by the Vegas plot drawing library
   // The default value of maxRows (10000) is the maximum number of data points
   // allowed in a chart
@@ -150,12 +131,10 @@ object ScalaScript {
     }.toSeq
   }
 
-  def runVegas( // this is a POC method
+  def runVegas(
     code: String,
     df: DataFrame,
     title: String,
-    width: Int = 500,
-    height: Int = 500,
     timeoutInSeconds: Long = 10L): String = synchronized {
     // To avoid the need of spark packages in the script
     // we convert the DataFrame before passing it to Vegas
@@ -164,14 +143,11 @@ object ScalaScript {
       engine.put("dfData: Seq[Map[String, Any]]", data)
       val fullCode = s"""
       import vegas._
-      val result = {
-        val plot = Vegas("$title", width=$width, height=$height).
-        withData(dfData).
+      val plot = Vegas("$title").withData(dfData)
+      val customized = {
         $code
-        val json: String = plot.toJson
-        json
-      }.toString
-      result
+      }
+      customized.toJson.toString
       """
       val compiledCode = engine.compile(fullCode)
       withTimeout(timeoutInSeconds) {

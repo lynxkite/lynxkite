@@ -22,8 +22,7 @@ angular.module('biggraph')
           scope.plot.then(function() {
             scope.plotJSON = util.lazyFetchScalarValue(scope.plot.json, true);
           }, function() {
-            /* eslint-disable no-console */
-            console.log('plot error');
+
           });
         }, true);
 
@@ -47,6 +46,7 @@ angular.module('biggraph')
             scope.rendered = 1;
           }
         }, true);
+
       },
     };
   });

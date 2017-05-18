@@ -31,17 +31,6 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
     assert(ScalaScript.run("s\"\"\"asd $qwe\"\"\"", Map("qwe" -> "123")) == "asd 123")
   }
 
-  test("Scala Double bindings work") {
-    val code1 = "2*x"
-    val code2 = "x+42"
-    val a = 3.0
-    val b = 1.1
-    assert(ScalaScript.runWithDouble(code1, a) == "6.0")
-    assert(ScalaScript.runWithDouble(code1, b) == "2.2")
-    assert(ScalaScript.runWithDouble(code2, a) == "45.0")
-    assert(ScalaScript.runWithDouble(code2, b) == "43.1")
-  }
-
   test("Scala DataFrame bindings work with runVegas") {
     val df = ImportDataFrameTest.jdbcDF(dataManager)
     val code = """encodeX("name", Nominal).
