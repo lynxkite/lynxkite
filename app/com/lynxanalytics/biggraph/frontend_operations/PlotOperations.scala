@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_api.Scalar
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class PlotOperations(env: SparkFreeEnvironment) extends OperationRegistry {
@@ -18,20 +19,43 @@ class PlotOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     registerOp(id, PlotOperations, List("table"), List("plotResult"), factory)
   }
 
-  register("Create plot", new PlotOperation(_) {
+  // A PlotOperation takes a Table as input and returns a PlotResult as output.
+  class PlotOperation(val context: Operation.Context) extends BasicOperation {
+    assert(
+      context.meta.inputs == List("table"),
+      s"A PlotOperation must input a single table. $context")
+    assert(
+      context.meta.outputs == List("plotResult"),
+      s"A PlotOperation must output a PlotResult. $context"
+    )
+
+    protected lazy val table = tableInput("table")
+
+    def apply() = ???
+
+    protected def makeOutput(plotResult: Scalar[String]): Map[BoxOutput, BoxOutputState] = {
+      Map(context.box.output(
+        context.meta.outputs(0)) -> BoxOutputState.plot(plotResult))
+    }
+
+    def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+      validateParameters(params)
+      makeOutput(plotResult)
+    }
+
+    def enabled = FEStatus.enabled
+
     lazy val parameters = List(
       Param("title", "Title"),
-      NonNegInt("width", "Plot width", default = 500),
-      NonNegInt("height", "Plot height", default = 500),
       Code("plotCode", "Plot code", language = "scala"))
 
     def plotResult() = {
       val title = params("title")
-      val width = params("width").toInt
-      val height = params("height").toInt
       val plotCode = params("plotCode")
-      val op = graph_operations.CreatePlot(plotCode, title, width, height)
+      val op = graph_operations.CreatePlot(plotCode, title)
       op(op.t, table).result.plot
     }
-  })
+  }
+
+  register("Create plot", new PlotOperation(_))
 }

@@ -127,12 +127,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def getPlotOutput(
     user: serving.User, request: GetPlotOutputRequest): GetPlotOutputResponse = {
     val state = getOutput(user, request.id)
-    state.kind match {
-      case BoxOutputKind.Plot =>
-        val scalar = state.plot
-        val fescalar = ProjectViewer.feScalar(scalar, "result", "", Map())
-        GetPlotOutputResponse(fescalar)
-    }
+    val scalar = state.plot
+    val fescalar = ProjectViewer.feScalar(scalar, "result", "", Map())
+    GetPlotOutputResponse(fescalar)
   }
 
   def getExportResultOutput(

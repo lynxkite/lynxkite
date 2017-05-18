@@ -4925,13 +4925,9 @@ three@0.77.0:
   version "0.77.0"
   resolved "https://registry.yarnpkg.com/three/-/three-0.77.0.tgz#8b0b1b00047689ceaa020d480a562ca60d87ff37"
 
-three@0.82.0:
+three@0.82.0, three@>=0.58.10:
   version "0.82.0"
   resolved "https://registry.yarnpkg.com/three/-/three-0.82.0.tgz#03670b7c7f1b73910a8d2cf059c3dd12e7d96dff"
-
-three@>=0.58.10:
-  version "0.82.1"
-  resolved "https://registry.yarnpkg.com/three/-/three-0.82.1.tgz#f63c3730971520c54479e3627d370d764a4a8383"
 
 threejs@jiyinyiyong/three.js#0.82.0:
   version "0.82.0"
