@@ -40,6 +40,11 @@ box-editor {
   display: block;
 }
 
+.box-error {
+  color: red;
+  margin-top: 8px;
+}
+
 g.box rect, g.box circle {
   stroke-width: 1;
   stroke: blue;

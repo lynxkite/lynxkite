@@ -58,15 +58,23 @@ angular.module('biggraph')
                   scope.newOpSelected(box, boxMeta);
                 }
               },
-              function error() {
+              function error(error) {
                 if (scope.lastRequest === currentRequest) {
-                  scope.newOpSelected(undefined);
+                  scope.boxError(error);
                 }
               });
         };
 
-        // Invoked when the user selects a new operation and its
-        // metadata is successfully downloaded.
+        // Invoked when an error happens after the user selected a new operation.
+        scope.boxError = function(error) {
+          onBlurNow();
+          scope.box = undefined;
+          scope.boxMeta = undefined;
+          scope.error = error.data;
+        };
+
+        // Invoked when the user selects a new operation and its metadata is
+        // successfully downloaded. Both box and boxMeta has to be defined.
         scope.newOpSelected = function(box, boxMeta) {
           // We avoid replacing the objects if the data has not changed.
           // This is to avoid recreating the DOM for the parameters. (Which would lose the focus.)
@@ -77,9 +85,7 @@ angular.module('biggraph')
           if (!angular.equals(boxMeta, scope.boxMeta)) {
             scope.boxMeta = boxMeta;
           }
-          if (!box) {
-            return;
-          }
+          scope.error = undefined;
 
           // Make a copy of the parameter values.
           var paramValues = Object.assign({}, box.instance.parameters);
