@@ -241,6 +241,12 @@ angular.module('biggraph')
           }
         };
 
+        scope.onMouseLeave = function() {
+          // If the mouse leaves the workspace we have to fire the mouse up event to leave the
+          // workspace in a consistent state.
+          scope.onMouseUp();
+        };
+
         scope.onMouseUp = function() {
           element[0].style.cursor = '';
           workspaceDrag = false;
@@ -401,14 +407,16 @@ angular.module('biggraph')
         element.bind('drop', function(event) {
           event.preventDefault();
           var origEvent = event.originalEvent;
-          var operationId = event.originalEvent.dataTransfer.getData('text');
-          // This isn't undefined iff testing
-          var boxId = event.originalEvent.dataTransfer.getData('id');
-          // This is received from operation-selector-entry.js
-          scope.$apply(function() {
-            addLogicalMousePosition(origEvent);
-            scope.workspace.addBox(operationId, origEvent, boxId);
-          });
+          var operationId = event.originalEvent.dataTransfer.getData('operation-id');
+          if (operationId) {
+            // This isn't undefined iff testing
+            var boxId = event.originalEvent.dataTransfer.getData('id');
+            // This is received from operation-selector-entry.js
+            scope.$apply(function() {
+              addLogicalMousePosition(origEvent);
+              scope.workspace.addBox(operationId, origEvent, boxId);
+            });
+          }
         });
 
         scope.$on('$destroy', function() {
