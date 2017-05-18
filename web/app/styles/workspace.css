@@ -1,3 +1,8 @@
+:root {
+  --popup-header-height: 35;
+  --popup-footer-height: 10;
+}
+
 #workspace-entry-point {
   height: 100vh;
   overflow: hidden;
@@ -107,7 +112,7 @@ div.popup-head {
   background: lightblue;
   font-weight: bold;
   padding-left: 10px;
-  height: 35px;
+  height: calc(var(--popup-header-height) * 1px);
   line-height: 35px;
   cursor: default;
 }
@@ -115,7 +120,7 @@ div.popup-head {
 div.popup-content {
   width: 100%;
   /* Popup height - (header height + some space for resize handle)*/
-  height: calc(100% - 45px);
+  height: calc(100% - ( var(--popup-header-height) + var(--popup-footer-height) ) * 1px );
   overflow: auto;
 }
 
