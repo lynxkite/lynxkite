@@ -17,7 +17,7 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
         Thread.sleep(3000L)
       """
     intercept[java.util.concurrent.TimeoutException] {
-      ScalaScript.run(code, timeoutInSeconds = 2L)
+      ScalaScript.run(code, Map(), 2L)
     }
   }
 
@@ -33,11 +33,12 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
 
   test("Scala DataFrame bindings work with runVegas") {
     val df = ImportDataFrameTest.jdbcDF(dataManager)
-    val code = """plot.
+    val code = """Vegas("My plot test").
+      withData(Data).
       encodeX("name", Nominal).
       encodeY("level", Quantitative).
       mark(Bar)"""
-    print(ScalaScript.runVegas(code, df, "Test1"))
+    println(ScalaScript.runVegas(code, df))
   }
 
   test("Security manager disables file access") {

@@ -16,17 +16,17 @@ class PlotOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   val PlotOperations = Category("Plot operations", "lightblue", icon = "bar-chart")
 
   def register(id: String, factory: Context => Operation): Unit = {
-    registerOp(id, PlotOperations, List("table"), List("plotResult"), factory)
+    registerOp(id, PlotOperations, List("table"), List("plot"), factory)
   }
 
-  // A PlotOperation takes a Table as input and returns a PlotResult as output.
+  // A PlotOperation takes a Table as input and returns a Plot as output.
   class PlotOperation(val context: Operation.Context) extends BasicOperation {
     assert(
       context.meta.inputs == List("table"),
       s"A PlotOperation must input a single table. $context")
     assert(
-      context.meta.outputs == List("plotResult"),
-      s"A PlotOperation must output a PlotResult. $context"
+      context.meta.outputs == List("plot"),
+      s"A PlotOperation must output a Plot. $context"
     )
 
     protected lazy val table = tableInput("table")
@@ -46,13 +46,15 @@ class PlotOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def enabled = FEStatus.enabled
 
     lazy val parameters = List(
-      Param("title", "Title"),
-      Code("plotCode", "Plot code", language = "scala"))
+      Code(
+        "plot_code",
+        "Plot code",
+        language = "scala",
+        defaultValue = "Vegas(\"My title\").\nwithData(Data).\n"))
 
     def plotResult() = {
-      val title = params("title")
-      val plotCode = params("plotCode")
-      val op = graph_operations.CreatePlot(plotCode, title)
+      val plotCode = params("plot_code")
+      val op = graph_operations.CreatePlot(plotCode)
       op(op.t, table).result.plot
     }
   }

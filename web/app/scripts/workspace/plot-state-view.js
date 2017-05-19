@@ -11,9 +11,6 @@ angular.module('biggraph')
         stateId: '=',
       },
       link: function(scope) {
-        // This will change when the window is resized.
-        scope.width = 350;
-        scope.height = 320;
         scope.$watch('stateId', function(newValue, oldValue, scope) {
           scope.plotDivId = 'vegaplot-' + scope.stateId;
           scope.title = 'unnamed';
@@ -23,9 +20,8 @@ angular.module('biggraph')
           });
           scope.plot.then(function() {
             scope.plotJSON = util.lazyFetchScalarValue(scope.plot.json, true);
-          }, function() {
-
-          });
+          }, function() {}
+          );
         }, true);
 
         scope.$watch('embedSpec.spec.description', function(newValue, oldValue, scope) {

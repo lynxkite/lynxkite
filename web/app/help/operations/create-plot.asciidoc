@@ -1,12 +1,12 @@
 ### Create plot
 
-Creates a chart from the input table. The chart can be defined using the Vegas plot
+Creates a plot from the input table. The plot can be defined using the Vegas plot
 description language.
 
 ====
 [[title]] Title::
 The title of the plot.
 
-[[plotcode]] Plot code::
+[[plot_code]] Plot code::
 Scala code for defining the plot.
 ====
