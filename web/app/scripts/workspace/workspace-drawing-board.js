@@ -133,6 +133,9 @@ angular.module('biggraph')
               scope.movedPopup.onMouseMove(event);
             }
           }
+          for (var j = 0; j < scope.popups.length; ++j) {
+            scope.popups[j].updateSize();
+          }
         };
 
         scope.wrappedOnMouseMove = scope.callbackWrapper(scope.onMouseMove);
