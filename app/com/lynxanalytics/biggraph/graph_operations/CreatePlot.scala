@@ -1,6 +1,6 @@
 // CreatePlot creates a vega-lite plot description using a table as input
 // and a (vegas) scala code to specify the plot.
-// The result of the operation ais a JSON description of the plot as a Scalar.
+// The result of the operation is a JSON description of the plot as a Scalar.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
