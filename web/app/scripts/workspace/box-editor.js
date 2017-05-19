@@ -72,6 +72,7 @@ angular.module('biggraph')
           scope.boxMeta = undefined;
           scope.error = error.data;
         };
+        scope.reportError = util.reportError;
 
         // Invoked when the user selects a new operation and its metadata is
         // successfully downloaded. Both box and boxMeta has to be defined.
@@ -86,6 +87,9 @@ angular.module('biggraph')
             scope.boxMeta = boxMeta;
           }
           scope.error = undefined;
+          if (!box) {
+            return;
+          }
 
           // Make a copy of the parameter values.
           var paramValues = Object.assign({}, box.instance.parameters);
