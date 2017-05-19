@@ -11,6 +11,10 @@
 }
 
 span#workspace-name {
+  font: bold 2.5em serif;
+}
+
+span#custom-box-stack {
   font-size: 2em;
 }
 
