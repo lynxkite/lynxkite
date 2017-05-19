@@ -11,9 +11,11 @@ angular.module('biggraph')
         stateId: '=',
       },
       link: function(scope) {
+        // This will change when the window is resized.
+        scope.width = 350;
+        scope.height = 320;
         scope.$watch('stateId', function(newValue, oldValue, scope) {
           scope.plotDivId = 'vegaplot-' + scope.stateId;
-          scope.rendered = 0;
           scope.title = 'unnamed';
 
           scope.plot = util.get('/ajax/getPlotOutput', {
@@ -37,16 +39,13 @@ angular.module('biggraph')
             mode: "vega-lite",
           };
           scope.embedSpec.spec = JSON.parse(scope.plotJSON.value.string);
-
+          scope.embedSpec.spec.width = scope.width;
+          scope.embedSpec.spec.height = scope.height;
           // After lazyFetchScalarValue the stateId can be changed.
           scope.plotDivId = 'vegaplot-' + scope.stateId;
-          if (scope.rendered === 0) {
-            /* global vg */
-            vg.embed('#' + scope.plotDivId, scope.embedSpec, function() {});
-            scope.rendered = 1;
-          }
+          /* global vg */
+          vg.embed('#' + scope.plotDivId, scope.embedSpec, function() {});
         }, true);
-
       },
     };
   });
