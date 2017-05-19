@@ -1,5 +1,10 @@
 <div id="workspace-header">
-  <span id="workspace-name">{{workspace.name}}</span>
+  <span id="workspace-name">
+    {{ workspace.name }}
+  </span>
+  <span id="custom-box-stack" ng-if="workspace.customBoxStack.length > 0">
+    (accessed as {{ workspace.top }} » {{ workspace.customBoxStack.join(' » ') }})
+  </span>
   <user-menu info="list" direction="dropdown" class="pull-right user-menu-in-toolbar"></user-menu>
   <div class="btn-group pull-right">
     <button class="btn btn-default"
@@ -38,6 +43,24 @@
          drop-tooltip="Delete&nbsp;selected&nbsp;boxes (Delete)"
          drop-tooltip-placement="bottom">
       <i class="fa fa-trash-o"></i>
+    </button>
+    <button class="btn btn-default"
+         id="dive-up"
+         ng-click="diveUp()"
+         ng-disabled="workspace.customBoxStack.length === 0"
+         drop-tooltip="Leave custom box {{ workspace.customBoxStack[workspace.customBoxStack.length - 1] }}"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-level-up"></i>
+    </button>
+    <button class="btn btn-default"
+         id="dive-down"
+         ng-click="diveDown()"
+         ng-disabled="!(
+         selectedBoxIds.length === 1 &&
+         workspace.getBox(selectedBoxIds[0]).metadata.categoryId === 'Custom boxes')"
+         drop-tooltip="Dive into custom box {{ selectedBoxIds[0] }}"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-level-down"></i>
     </button>
     <button class="btn btn-default"
          id="select-mode-on"
