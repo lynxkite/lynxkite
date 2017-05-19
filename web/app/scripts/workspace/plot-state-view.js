@@ -37,6 +37,7 @@ angular.module('biggraph')
         scope.$watch('plotJSON.value.string', function(newValue, oldValue, scope) {
           scope.embedSpec = {
             mode: "vega-lite",
+            actions: false,
           };
           scope.embedSpec.spec = JSON.parse(scope.plotJSON.value.string);
           scope.embedSpec.spec.width = scope.width;
