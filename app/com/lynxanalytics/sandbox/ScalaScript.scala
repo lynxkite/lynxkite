@@ -7,7 +7,7 @@ import javax.script._
 
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
-import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, Timestamp }
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark.sql.DataFrame
 
@@ -117,11 +117,10 @@ object ScalaScript {
 
   // Helper function to convert a DataFrame to a Seq of Maps
   // This format used by the Vegas plot drawing library
-  // The default value of maxRows (10000) is the maximum number of data points
-  // allowed in a chart
-  def dfToSeq(df: DataFrame, maxRows: Int = 10000): Seq[Map[String, Any]] = {
+  // The value of maxRows is the maximum number of data points allowed in a chart
+  def dfToSeq(df: DataFrame): Seq[Map[String, Any]] = {
     val names = df.schema.toList.map { field => field.name }
-
+    val maxRows = LoggedEnvironment.envOrElse("MAX_ROWS_OF_PLOT_DATA", "10000").toInt
     SQLHelper.toSeqRDD(df).take(maxRows).map {
       row =>
         names.zip(row.toSeq.toList).
@@ -133,21 +132,19 @@ object ScalaScript {
 
   def runVegas(
     code: String,
-    df: DataFrame,
-    title: String,
-    timeoutInSeconds: Long = 10L): String = synchronized {
+    df: DataFrame): String = synchronized {
     // To avoid the need of spark packages in the script
     // we convert the DataFrame before passing it to Vegas
     val data = dfToSeq(df)
+    val timeoutInSeconds = LoggedEnvironment.envOrElse("SCALASCRIPT_TIMEOUT_SECONDS", "10").toLong
     withContextClassLoader {
-      engine.put("dfData: Seq[Map[String, Any]]", data)
+      engine.put("Data: Seq[Map[String, Any]]", data)
       val fullCode = s"""
       import vegas._
-      val plot = Vegas("$title").withData(dfData)
-      val customized = {
+      val plot = {
         $code
       }
-      customized.toJson.toString
+      plot.toJson.toString
       """
       val compiledCode = engine.compile(fullCode)
       withTimeout(timeoutInSeconds) {
