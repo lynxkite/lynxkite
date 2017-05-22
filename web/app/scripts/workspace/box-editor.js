@@ -72,7 +72,9 @@ angular.module('biggraph')
           scope.boxMeta = undefined;
           scope.error = error.data;
         };
-        scope.reportError = util.reportError;
+        scope.reportError = function(error) {
+          util.reportError({ message: error });
+        };
 
         // Invoked when the user selects a new operation and its metadata is
         // successfully downloaded. Both box and boxMeta has to be defined.
