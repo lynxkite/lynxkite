@@ -1,8 +1,3 @@
-:root {
-  --popup-header-height: 35;
-  --popup-footer-height: 10;
-}
-
 #workspace-entry-point {
   height: 100vh;
   overflow: hidden;
@@ -99,11 +94,10 @@ line.pulled-arrow {
 }
 
 div.popup {
+  display: inline-block; /* shrink-wrap around content */
   position: absolute;
   border: 1px solid darkgray;
   z-index: 3;
-  resize: both;
-  overflow: auto;
   background: white;
 }
 
@@ -112,15 +106,14 @@ div.popup-head {
   background: lightblue;
   font-weight: bold;
   padding-left: 10px;
-  height: calc(var(--popup-header-height) * 1px);
+  height: 35px;
   line-height: 35px;
   cursor: default;
 }
 
 div.popup-content {
   width: 100%;
-  /* Popup height - (header height + some space for resize handle)*/
-  height: calc(100% - ( var(--popup-header-height) + var(--popup-footer-height) ) * 1px );
+  resize: both;
   overflow: auto;
 }
 
