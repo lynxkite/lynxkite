@@ -1,5 +1,5 @@
 <div class="popup"
-    ng-mousedown="$event.stopPropagation()"
+    ng-mousedown="popupModel.bringToFront(); $event.stopPropagation();"
     ng-mousemove="popupModel.onMouseMove($event); $event.stopPropagation();"
     id="{{popupModel.id}}"
     ng-style="{

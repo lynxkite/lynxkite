@@ -12,5 +12,8 @@ angular.module('biggraph')
         popupModel: '=',
         workspace: '=',
       },
+      link: function(scope, element) {
+        scope.popupModel.element = element;
+      },
     };
   });
