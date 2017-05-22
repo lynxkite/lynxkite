@@ -270,7 +270,11 @@ Workspace.prototype = {
     var head = popup.$('div.popup-head');
     browser.actions()
         .mouseDown(head)
-        .mouseMove(this.board, {x: 500, y: 20})
+        // Absolute positioning of mouse. If I don't use first
+        // parameter, then it becomes a relative move. If the
+        // first parameter is this.board, then a weird
+        // scrolling of the whole body happens.
+        .mouseMove($('body'), {x: 800, y: 90})
         .mouseUp(head)
         .perform();
   },
