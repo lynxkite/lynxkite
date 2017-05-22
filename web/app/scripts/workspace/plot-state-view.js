@@ -15,7 +15,6 @@ angular.module('biggraph')
           scope.plotDivId = 'vegaplot-' + scope.stateId;
           scope.title = 'unnamed';
 
-
           scope.plot = util.get('/ajax/getPlotOutput', {
             id: scope.stateId
           });
