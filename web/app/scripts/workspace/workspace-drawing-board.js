@@ -419,6 +419,9 @@ angular.module('biggraph')
         element.bind('dragover', function(event) {
           event.preventDefault();
         });
+        element.bind('dragstart', function(event) {
+          event.preventDefault();
+        });
         element.bind('drop', function(event) {
           event.preventDefault();
           var origEvent = event.originalEvent;
