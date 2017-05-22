@@ -10,16 +10,20 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
-case class GetWorkspaceRequest(name: String)
+case class WorkspaceName(name: String)
+case class WorkspaceReference(
+  top: String, // The name of the top-level workspace.
+  customBoxStack: List[String] = List()) // The ID of the custom boxes we have "dived" into.
 case class BoxOutputInfo(boxOutput: BoxOutput, stateId: String, success: FEStatus, kind: String)
 case class GetWorkspaceResponse(
+  name: String,
   workspace: Workspace,
   outputs: List[BoxOutputInfo],
   summaries: Map[String, String],
   canUndo: Boolean,
   canRedo: Boolean)
 case class SetWorkspaceRequest(name: String, workspace: Workspace)
-case class GetOperationMetaRequest(workspace: String, box: String)
+case class GetOperationMetaRequest(workspace: WorkspaceReference, box: String)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
 case class GetProgressRequest(stateIds: List[String])
 case class GetProgressResponse(progress: Map[String, Option[Progress]])
@@ -57,7 +61,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   private def getWorkspaceFrame(
     user: serving.User, name: String): WorkspaceFrame = metaManager.synchronized {
     val f = DirectoryEntry.fromName(name)
-    assert(f.exists, s"Project ${name} does not exist.")
+    assert(f.exists, s"Entry ${name} does not exist.")
     f.assertReadAllowedFrom(user)
     f match {
       case f: WorkspaceFrame => f
@@ -65,12 +69,24 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
   }
 
+  case class ResolvedWorkspaceReference(user: serving.User, ref: WorkspaceReference) {
+    val topWorkspace = getWorkspaceFrame(user, ref.top).workspace
+    val (ws, params, name) = ref.customBoxStack.foldLeft((topWorkspace, Map[String, String](), ref.top)) {
+      case ((ws, params, _), boxId) =>
+        val ctx = ws.context(user, ops, params)
+        val op = ctx.getOperation(boxId).asInstanceOf[CustomBoxOperation]
+        val cws = op.connectedWorkspace
+        (cws, op.params, op.context.box.operationId)
+    }
+    lazy val frame = getWorkspaceFrame(user, name)
+    lazy val context = ws.context(user, ops, params)
+  }
+
   def getWorkspace(
-    user: serving.User, request: GetWorkspaceRequest): GetWorkspaceResponse = {
-    val frame = getWorkspaceFrame(user, request.name)
-    val workspace = frame.workspace
-    try {
-      val context = workspace.context(user, ops, Map())
+    user: serving.User, request: WorkspaceReference): GetWorkspaceResponse = {
+    val res = ResolvedWorkspaceReference(user, request)
+    val (stateInfo, summaries) = try {
+      val context = res.context
       val states = context.allStates
       val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
       calculatedStates.synchronized {
@@ -82,26 +98,24 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         case (boxOutput, (boxOutputState, stateId)) =>
           BoxOutputInfo(boxOutput, stateId, boxOutputState.success, boxOutputState.kind)
       }
-      val summaries = workspace.boxes.map(
+      val summaries = res.ws.boxes.map(
         box => box.id -> (
           try { context.getOperationForStates(box, states).summary }
           catch { case e: AssertionError => box.operationId }
         )
       ).toMap
-      GetWorkspaceResponse(
-        workspace, stateInfo, summaries,
-        canUndo = frame.currentState.previousCheckpoint.nonEmpty,
-        canRedo = frame.nextCheckpoint.nonEmpty)
+      (stateInfo, summaries)
     } catch {
       case t: Throwable =>
-        log.error(s"Could not execute ${request.name}", t)
+        log.error(s"Could not execute $request", t)
         // We can still return the "cold" data that is available without execution.
         // This makes it at least possible to press Undo.
-        GetWorkspaceResponse(
-          workspace, List(), Map(),
-          canUndo = frame.currentState.previousCheckpoint.nonEmpty,
-          canRedo = frame.nextCheckpoint.nonEmpty)
+        (List[BoxOutputInfo](), Map[String, String]())
     }
+    GetWorkspaceResponse(
+      res.name, res.ws, stateInfo, summaries,
+      canUndo = res.frame.currentState.previousCheckpoint.nonEmpty,
+      canRedo = res.frame.nextCheckpoint.nonEmpty)
   }
 
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
@@ -196,14 +210,14 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def undoWorkspace(
-    user: serving.User, request: GetWorkspaceRequest): Unit = metaManager.synchronized {
+    user: serving.User, request: WorkspaceName): Unit = metaManager.synchronized {
     val f = getWorkspaceFrame(user, request.name)
     f.assertWriteAllowedFrom(user)
     f.undo()
   }
 
   def redoWorkspace(
-    user: serving.User, request: GetWorkspaceRequest): Unit = metaManager.synchronized {
+    user: serving.User, request: WorkspaceName): Unit = metaManager.synchronized {
     val f = getWorkspaceFrame(user, request.name)
     f.assertWriteAllowedFrom(user)
     f.redo()
@@ -214,8 +228,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def getOperationMeta(user: serving.User, request: GetOperationMetaRequest): FEOperationMeta = {
-    val ws = getWorkspaceFrame(user, request.workspace).workspace
-    val op = ws.context(user, ops, Map()).getOperation(request.box)
+    val ctx = ResolvedWorkspaceReference(user, request.workspace).context
+    val op = ctx.getOperation(request.box)
     op.toFE
   }
 }
