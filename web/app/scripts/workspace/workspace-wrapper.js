@@ -22,6 +22,8 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     this.boxCatalog = boxCatalog;  // Updated for the sake of the operation palette.
     this._boxCatalogMap = undefined;
     this.name = name;
+    this.top = name;
+    this.customBoxStack = [];
     this.state = undefined;
     // The below data structures are generated from rawBoxes
     // by this.build(). These are the ones that interact with
@@ -37,6 +39,10 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
   }
 
   WorkspaceWrapper.prototype = {
+    ref: function() {  // Returns a WorkspaceReference object.
+      return { top: this.top, customBoxStack: this.customBoxStack };
+    },
+
     _updateBoxCatalog: function() {
       var that = this;
       var request = util.nocache('/ajax/boxCatalog');
@@ -116,6 +122,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
 
     _init: function(response) {
       this.backendResponse = response;
+      this.name = response.name;
       this.backendState = response.workspace;
       // User edits will be applied to a deep copy of
       // the original backend state. This way watchers
@@ -128,14 +135,14 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     },
 
     _startProgressUpdate: function() {
-      this._stopProgressUpdate();
+      this.stopProgressUpdate();
       var that = this;
       this._progressUpdater = $interval(function() {
         that._getAndUpdateProgress();
       }, 2000);
     },
 
-    _stopProgressUpdate: function() {
+    stopProgressUpdate: function() {
       if (this._progressUpdater) {
         $interval.cancel(this._progressUpdater);
         this._progressUpdater = undefined;
@@ -148,12 +155,12 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         var lastProgressRequest = that.lastProgressRequest = util.nocache('/ajax/getProgress', {
           stateIds: that.knownStateIds,
         }).then(
-          function success(response) {
+          function onSuccess(response) {
             if (lastProgressRequest === that.lastProgressRequest) {
               that.updateProgress(response.progress);
             }
           },
-          function onerror(error) {
+          function onError(error) {
             /* eslint-disable no-console */
             console.error('Couldn\'t get progress information.', error);
           });
@@ -166,14 +173,14 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         this._updateBoxCatalog().then(function() { that.loadWorkspace(); });
         return;
       }
-      util.nocache(
-        '/ajax/getWorkspace',
-        {
-          name: this.name
-        })
-        .then(function(response) {
-          that._init(response);
-        })
+      util.nocache('/ajax/getWorkspace', this.ref())
+        .then(
+          function onSuccess(response) {
+            that._init(response);
+          },
+          function onError(error) {
+            util.error('Cannot load workspace: ' + error.data);
+          })
         .then(function() {
           that._startProgressUpdate();
         });
