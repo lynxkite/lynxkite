@@ -4,9 +4,20 @@ Creates a plot from the input table. The plot can be defined using the Vegas plo
 description language.
 
 ====
-[[title]] Title::
-The title of the plot.
-
 [[plot_code]] Plot code::
-Scala code for defining the plot.
+Scala code for defining the plot. The code always has to be started as
+```
+Vegas("Some custom title").
+withData(Data).
+```
+A simple example of a line chart:
+```
+Vegas("GDP growth year by year").
+withData(Data).
+mark(Line).
+encodeX("year", Ordinal).
+encodeY("gdp_growth", Quantitative)
+```
+For more examples see
+http://nbviewer.jupyter.org/github/aishfenton/Vegas/blob/master/notebooks/jupyter_example.ipynb[this Jupyter notebook].
 ====
