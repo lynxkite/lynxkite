@@ -38,7 +38,12 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
       encodeX("name", Nominal).
       encodeY("level", Quantitative).
       mark(Bar)"""
-    println(ScalaScript.runVegas(code, df))
+    val JSONString = ScalaScript.runVegas(code, df)
+    assert(JSONString contains """"mark" : "bar"""")
+    assert(JSONString contains "encoding")
+    assert(JSONString contains "description")
+    assert(JSONString contains "My plot test")
+    assert(JSONString contains """"name" : "Felix",""")
   }
 
   test("Security manager disables file access") {
