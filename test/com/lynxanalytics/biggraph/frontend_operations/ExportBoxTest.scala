@@ -10,8 +10,8 @@ class ExportBoxTest extends OperationsTestBase {
     "EXPORTTEST$",
     getClass.getResource("/graph_operations/ExportTest").toString)
 
-  def vattr[T: reflect.runtime.universe.TypeTag: Ordering](project: ProjectEditor, name: String) =
-    project.vertexAttributes(name).runtimeSafeCast[T].rdd.collect.toMap.values.toSeq.sorted
+  def vattr(project: ProjectEditor, name: String) =
+    project.vertexAttributes(name).runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
 
   test("Export to CSV") {
     val path = "EXPORTTEST$/tmp/exported"
@@ -29,8 +29,8 @@ class ExportBoxTest extends OperationsTestBase {
       "infer" -> "no")
     ).box("Import vertices").project
 
-    assert(vattr[String](importedAgain, "name") == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
-    assert(vattr[String](importedAgain, "favorite_sport") == Seq(
+    assert(vattr(importedAgain, "name") == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
+    assert(vattr(importedAgain, "favorite_sport") == Seq(
       "American football", "Basketball", "Football", "Solitaire"))
 
     val exported = HadoopFile(path)
