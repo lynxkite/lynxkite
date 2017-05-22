@@ -134,3 +134,12 @@ polygon.popup-trail {
   margin-bottom: 10px;
   text-decoration: none;
 }
+
+.plot-title {
+  font-weight: bold;
+  font-size:1.5em;
+}
+
+.plot-header {
+  padding-top: 10px;
+}
