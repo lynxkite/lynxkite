@@ -9,7 +9,7 @@
   position: absolute;
   margin-left: 35px;
   overflow-y: auto;
-  z-index: 2;  /* This has to be over the state view and the box editor panels. */
+  z-index: 4; /* This has to be over the state view and the box editor panels. */
 }
 .operation-selector .box h1 {
   padding: 15px;
@@ -26,6 +26,7 @@
   user-select: none;
   width: 35px;
   padding: 0;
+  z-index: 4;
 }
 .operation-toolbox.open .categories {
   box-shadow: none;

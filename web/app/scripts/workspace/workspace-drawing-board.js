@@ -133,6 +133,9 @@ angular.module('biggraph')
               scope.movedPopup.onMouseMove(event);
             }
           }
+          for (var j = 0; j < scope.popups.length; ++j) {
+            scope.popups[j].updateSize();
+          }
         };
 
         scope.wrappedOnMouseMove = scope.callbackWrapper(scope.onMouseMove);
@@ -335,6 +338,18 @@ angular.module('biggraph')
         scope.deleteSelectedBoxes = function() {
           this.deleteBoxes(this.selectedBoxIds);
           this.selectedBoxIds = [];
+        };
+
+        scope.diveUp = function() {
+          scope.workspace.customBoxStack.pop();
+          scope.workspace.loadWorkspace();
+          scope.popups = [];
+        };
+
+        scope.diveDown = function() {
+          scope.workspace.customBoxStack.push(scope.selectedBoxIds[0]);
+          scope.workspace.loadWorkspace();
+          scope.popups = [];
         };
 
         scope.saveSelectionAsCustomBox = function(name, success, error) {
