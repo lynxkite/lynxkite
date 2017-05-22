@@ -15,6 +15,7 @@ angular.module('biggraph')
           scope.plotDivId = 'vegaplot-' + scope.stateId;
           scope.title = 'unnamed';
 
+
           scope.plot = util.get('/ajax/getPlotOutput', {
             id: scope.stateId
           });
@@ -30,18 +31,20 @@ angular.module('biggraph')
           }
         }, true);
 
-        scope.$watch('plotJSON.value.string', function(newValue, oldValue, scope) {
-          scope.embedSpec = {
-            mode: "vega-lite",
-            actions: false,
-          };
-          scope.embedSpec.spec = JSON.parse(scope.plotJSON.value.string);
-          scope.embedSpec.spec.width = scope.width;
-          scope.embedSpec.spec.height = scope.height;
-          // After lazyFetchScalarValue the stateId can be changed.
-          scope.plotDivId = 'vegaplot-' + scope.stateId;
-          /* global vg */
-          vg.embed('#' + scope.plotDivId, scope.embedSpec, function() {});
+        scope.$watch('plotJSON', function(newValue, oldValue, scope) {
+          if (scope.plotJSON && scope.plotJSON.value && scope.plotJSON.value.string) {
+            scope.embedSpec = {
+              mode: "vega-lite",
+              actions: false,
+            };
+            scope.embedSpec.spec = JSON.parse(scope.plotJSON.value.string);
+            scope.embedSpec.spec.width = scope.width;
+            scope.embedSpec.spec.height = scope.height;
+            // After lazyFetchScalarValue the stateId can be changed.
+            scope.plotDivId = 'vegaplot-' + scope.stateId;
+            /* global vg */
+            vg.embed('#' + scope.plotDivId, scope.embedSpec, function() {});
+          }
         }, true);
       },
     };
