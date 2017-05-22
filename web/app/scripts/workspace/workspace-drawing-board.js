@@ -425,10 +425,10 @@ angular.module('biggraph')
         element.bind('drop', function(event) {
           event.preventDefault();
           var origEvent = event.originalEvent;
-          var operationId = event.originalEvent.dataTransfer.getData('operation-id');
+          var operationId = origEvent.dataTransfer.getData('operation-id');
           if (operationId) {
             // This isn't undefined iff testing
-            var boxId = event.originalEvent.dataTransfer.getData('id');
+            var boxId = origEvent.dataTransfer.getData('id');
             // This is received from operation-selector-entry.js
             scope.$apply(function() {
               addLogicalMousePosition(origEvent);
