@@ -83,7 +83,9 @@ angular.module('biggraph')
       link: function(scope, element) {
         var button = element.find('#help-button')[0];
         var popup = element.find('#help-popup');
-        popup.append(scope.description);
+        if (!scope.helpId && scope.description) {
+          popup.append(scope.description);
+        }
         scope.isEmpty = function() {
           return !scope.helpId && !scope.description;
         };
