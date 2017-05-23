@@ -81,7 +81,7 @@ angular.module('biggraph')
         scope.newOpSelected = function(box, boxMeta) {
           // We avoid replacing the objects if the data has not changed.
           // This is to avoid recreating the DOM for the parameters. (Which would lose the focus.)
-          if (!angular.equals(box, scope.box)) {
+          if (scope.box === undefined || !angular.equals(box.instance, scope.box.instance)) {
             onBlurNow(); // Switching to a different box is also "blur".
             scope.box = box;
           }
