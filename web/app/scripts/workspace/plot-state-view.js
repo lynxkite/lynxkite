@@ -12,11 +12,20 @@ angular.module('biggraph')
         popupModel: '=',
       },
       link: function(scope) {
+        // We need some additional space for the axes and the legend.
+        scope.getPlotWidth = function () {
+          return scope.popupModel.width - 150;
+        };
+
+        scope.getPlotHeight = function () {
+          return scope.popupModel.height - 150;
+        };
+
         scope.$watch('stateId', function(newValue, oldValue, scope) {
           scope.plotDivId = 'vegaplot-' + scope.stateId;
           scope.title = 'unnamed';
-          scope.plotWidth = 0;
-          scope.plotHeight = 0;
+          scope.plotWidth = scope.getPlotWidth();
+          scope.plotHeight = scope.getPlotHeight();
 
           scope.plot = util.get('/ajax/getPlotOutput', {
             id: scope.stateId
@@ -28,13 +37,11 @@ angular.module('biggraph')
         }, true);
 
         scope.$watch('popupModel.width', function(newValue, oldValue, scope) {
-          scope.plotWidth = newValue - 150;
-//          scope.resizePlot();
+          scope.plotWidth = scope.getPlotWidth();
         }, true);
 
         scope.$watch('popupModel.height', function(newValue, oldValue, scope) {
-          scope.plotHeight = newValue - 150;
-//          scope.resizePlot();
+          scope.plotHeight = scope.getPlotHeight();
         }, true);
 
         scope.$watch('embedSpec.spec.description', function(newValue, oldValue, scope) {
