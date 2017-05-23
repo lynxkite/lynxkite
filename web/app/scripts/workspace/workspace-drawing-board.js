@@ -31,11 +31,11 @@ angular.module('biggraph')
         scope.popups = [];
         scope.movedPopup = undefined;
 
-        scope.$watchGroup(
-          ['boxCatalog.$resolved', 'workspaceName'],
+        scope.$watch(
+          'workspaceName',
 
           function() {
-            if (scope.boxCatalog.$resolved && scope.workspaceName) {
+            if (scope.workspaceName) {
               scope.workspace = new WorkspaceWrapper(
                 scope.workspaceName,
                 scope.boxCatalog);
@@ -132,6 +132,9 @@ angular.module('biggraph')
             } else if (scope.movedPopup) {
               scope.movedPopup.onMouseMove(event);
             }
+          }
+          for (var j = 0; j < scope.popups.length; ++j) {
+            scope.popups[j].updateSize();
           }
         };
 
@@ -337,6 +340,23 @@ angular.module('biggraph')
           this.selectedBoxIds = [];
         };
 
+        scope.diveUp = function() {
+          scope.workspace.customBoxStack.pop();
+          scope.workspace.loadWorkspace();
+          scope.popups = [];
+        };
+
+        scope.diveDown = function() {
+          scope.workspace.customBoxStack.push(scope.selectedBoxIds[0]);
+          scope.workspace.loadWorkspace();
+          scope.popups = [];
+        };
+
+        scope.saveSelectionAsCustomBox = function(name, success, error) {
+          scope.workspace.saveAsCustomBox(
+              scope.selectedBoxIds, name, 'Created from ' + scope.workspaceName)
+            .then(success, error);
+        };
 
         var hk = hotkeys.bindTo(scope);
         hk.add({

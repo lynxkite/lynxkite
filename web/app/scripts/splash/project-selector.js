@@ -110,11 +110,9 @@ angular.module('biggraph').directive('projectSelector',
           if (scope.path) {
             name = scope.path + '/' + name;
           }
-          var notes = scope.newWorkspace.notes;
           util.post('/ajax/createWorkspace',
             {
               name: name,
-              notes: notes || '',
               privacy: scope.newWorkspace.privacy,
             }).then(function() {
               scope.name = name;

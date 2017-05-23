@@ -4,6 +4,8 @@ package com.lynxanalytics.biggraph.controllers
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import play.api.libs.json.JsObject
+import play.api.libs.json.JsString
 
 import scala.annotation.tailrec
 
@@ -241,8 +243,9 @@ case class BoxMetadata(
 object BoxOutputKind {
   val Project = "project"
   val Table = "table"
+  val ExportResult = "exportResult"
   val Error = "error"
-  val validKinds = Set(Project, Table, Error)
+  val validKinds = Set(Project, Table, Error, ExportResult)
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
 }
@@ -256,6 +259,13 @@ object BoxOutputState {
 
   def from(table: graph_api.Table): BoxOutputState = {
     BoxOutputState(BoxOutputKind.Table, Some(json.Json.obj("guid" -> table.gUID)))
+  }
+
+  def from(exportResult: graph_api.Scalar[String],
+           params: Map[String, String]): BoxOutputState = {
+    BoxOutputState(BoxOutputKind.ExportResult, Some(json.Json.obj(
+      "guid" -> exportResult.gUID, "parameters" -> params)))
+
   }
 
   def error(msg: String): BoxOutputState = {
@@ -274,6 +284,7 @@ case class BoxOutputState(
   def isError = !success.enabled
   def isProject = kind == BoxOutputKind.Project
   def isTable = kind == BoxOutputKind.Table
+  def isExportResult = kind == BoxOutputKind.ExportResult
 
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(success.enabled, success.disabledReason)
@@ -289,6 +300,13 @@ case class BoxOutputState(
     assert(isTable, s"Tried to access '$kind' as 'table'.")
     import graph_api.MetaGraphManager.StringAsUUID
     manager.table((state.get \ "guid").as[String].asUUID)
+  }
+
+  def exportResult(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
+    assert(isExportResult, s"Tried to access '$kind' as 'exportResult.")
+    assert(success.enabled, success.disabledReason)
+    import graph_api.MetaGraphManager.StringAsUUID
+    manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)
   }
 }
 

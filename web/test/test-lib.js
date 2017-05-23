@@ -188,10 +188,10 @@ Workspace.prototype = {
 
   selectBoxes: function(boxIds) {
     // Without this, we would just add additional boxes to the previous selection
-    this.selectBox(boxIds[0]);
+    this.openBoxEditor(boxIds[0]).close();
     browser.actions().keyDown(protractor.Key.CONTROL).perform();
     for (var i = 1; i < boxIds.length; ++i) {
-      this.selectBox(boxIds[i]);
+      this.clickBox(boxIds[i]);
     }
     browser.actions().keyUp(protractor.Key.CONTROL).perform();
   },
@@ -250,12 +250,16 @@ Workspace.prototype = {
     this.getOutputPlug(boxId, plugId).click();
   },
 
-  selectBox: function(boxId) {
+  clickBox: function(boxId) {
     this.getBox(boxId).$('rect').click();
   },
 
+  selectBox: function(boxId) {
+    this.openBoxEditor(boxId).close();
+  },
+
   openBoxEditor: function(boxId) {
-    this.selectBox(boxId);
+    this.clickBox(boxId);
     var popup = this.board.$('.popup#' + boxId);
     expect(popup.isDisplayed()).toBe(true);
     this.movePopupToCenter(popup);
@@ -266,9 +270,22 @@ Workspace.prototype = {
     var head = popup.$('div.popup-head');
     browser.actions()
         .mouseDown(head)
-        .mouseMove(this.board, {x: 500, y: 20})
+        // Absolute positioning of mouse. If we don't specify the first
+        // argument then this becomes a relative move. If the first argument
+        // is this.board, then protractor scrolls the element of this.board
+        // to the top of the page, even though scrolling is not enabled.
+        .mouseMove($('body'), {x: 800, y: 90})
         .mouseUp(head)
         .perform();
+    // Moving with protractor is sensitive to circumstances so we double check
+    // that it was successful. The expected coordinates are different from 800,90
+    // because the mouse is clicked on the center of the popup header.
+    expect(
+      popup.getLocation().then(
+        function(loc) {
+          return 'x=' + loc.x + ',y=' + loc.y;
+        }))
+      .toEqual('x=549,y=72');
   },
 
   openStateView: function(boxId, plugId) {
@@ -855,7 +872,7 @@ Selector.prototype = {
   clickAndWaitForCsvImport: function() {
     var importCsvButton = element(by.id('import-csv-button'));
     // Wait for the upload to finish.
-    testLib.wait(protractor.ExpectedConditions.elementToBeClickable(importCsvButton));
+    testLib.waitUntilClickable(importCsvButton);
     importCsvButton.click();
   },
 
@@ -1383,6 +1400,20 @@ testLib = {
       dstX, dstY,
       dataTransferOverrides
     );
+  },
+
+  waitUntilClickable: function(element) {
+    testLib.wait(protractor.ExpectedConditions.elementToBeClickable(element));
+  },
+
+  submitInlineInput: function(element, text) {
+    var inputBox = element.$('input');
+    var okButton = element.$('#ok');
+    // Wait for CSS animation.
+    testLib.waitUntilClickable(inputBox);
+    inputBox.sendKeys(text);
+    testLib.waitUntilClickable(okButton);
+    okButton.click();
   },
 
 };
