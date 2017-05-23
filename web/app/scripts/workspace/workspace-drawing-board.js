@@ -244,12 +244,6 @@ angular.module('biggraph')
           }
         };
 
-        scope.onMouseLeave = function() {
-          // If the mouse leaves the workspace we have to fire the mouse up event to leave the
-          // workspace in a consistent state.
-          scope.onMouseUp();
-        };
-
         scope.onMouseUp = function() {
           element[0].style.cursor = '';
           workspaceDrag = false;
