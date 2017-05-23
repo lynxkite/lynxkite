@@ -1,0 +1,36 @@
+.inline-input {
+  padding: 0;
+  height: 34px;  /* Match the Bootstrap buttons. */
+  transition: width 0.5s;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 224px;
+}
+.inline-input.closed {
+  width: 0;
+}
+
+.inline-input form {
+  height: 100%;
+}
+
+.inline-input input {
+  padding-left: 5px;
+  height: 100%;
+  border: 0;
+}
+
+.inline-input button {
+  background: white;
+  color: gray;
+  border: 0;
+  padding: 2px;
+}
+
+.inline-input button:last-child {
+  padding-right: 7px;
+}
+
+.inline-input button:hover {
+  color: black;
+}

@@ -2,9 +2,10 @@
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.serving.DownloadFileRequest
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.graph_api._
 import play.api.libs.json
@@ -478,6 +479,65 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
   def getRawDataFrame(context: spark.sql.SQLContext): spark.sql.DataFrame
 }
 
+// An ExportOperation takes a Table as input and returns an ExportResult as output.
+abstract class ExportOperation(protected val context: Operation.Context) extends BasicOperation {
+  assert(
+    context.meta.inputs == List("table"),
+    s"An ExportOperation must input a single table. $context")
+  assert(
+    context.meta.outputs == List("exportResult"),
+    s"An ExportOperation must output an ExportResult. $context"
+  )
+
+  protected lazy val table = tableInput("table")
+
+  def apply() = ???
+  def exportResult: Scalar[String]
+  val format: String
+
+  def getParamsToDisplay() = params + ("format" -> format)
+
+  protected def makeOutput(exportResult: Scalar[String]): Map[BoxOutput, BoxOutputState] = {
+    val paramsToDisplay = getParamsToDisplay()
+    Map(context.box.output(
+      context.meta.outputs(0)) -> BoxOutputState.from(exportResult, paramsToDisplay))
+  }
+
+  def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+    validateParameters(params)
+    makeOutput(exportResult)
+  }
+
+  def enabled = FEStatus.enabled
+}
+
+abstract class ExportOperationToFile(context: Operation.Context)
+    extends ExportOperation(context) {
+
+  override def validateParameters(params: Map[String, String]): Unit = {
+    super.validateParameters(params)
+    assertWriteAllowed(params("path"))
+  }
+
+  protected def generatePathIfNeeded(path: String): String = {
+    if (path == "<auto>") {
+      val inputGuid = table.gUID.toString
+      val paramsWithInput = params ++ Map("input" -> inputGuid)
+      "DATA$/exports/" + paramsWithInput.hashCode.toString + "." + format
+    } else
+      path
+  }
+
+  private def assertWriteAllowed(path: String) = {
+    val genPath = generatePathIfNeeded(path)
+    val file = HadoopFile(genPath)
+    file.assertWriteAllowedFrom(context.user)
+  }
+
+  override def getParamsToDisplay() = params +
+    ("format" -> format, "path" -> generatePathIfNeeded(params("path")))
+}
+
 class CustomBoxOperation(
     workspace: Workspace, val context: Operation.Context) extends BasicOperation {
   lazy val parameters = {
@@ -500,6 +560,8 @@ class CustomBoxOperation(
       }
     }.toList
   }
+
+  override def params = super.params // Make public.
 
   def apply: Unit = ???
   def enabled = FEStatus.enabled

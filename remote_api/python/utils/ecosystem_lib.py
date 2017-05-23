@@ -11,6 +11,10 @@ arg_parser.add_argument(
     default=os.environ['USER'] + '-ecosystem-test',
     help='Name of the cluster to start')
 arg_parser.add_argument(
+    '--public_ip',
+    default=None,
+    help='The Elastic IP associated to the cluster')
+arg_parser.add_argument(
     '--ec2_key_file',
     default=os.environ['HOME'] + '/.ssh/lynx-cli.pem')
 arg_parser.add_argument(
@@ -83,6 +87,12 @@ arg_parser.add_argument(
   After this date the 'owner' will be asked if the cluster can
   be shut down.''')
 arg_parser.add_argument(
+    '--with_tasks',
+    help='If specified, the Luigi tasks are copied to the cluster')
+arg_parser.add_argument(
+    '--python_dependencies',
+    help='Install Python dependencies in the specified file')
+arg_parser.add_argument(
     '--applications',
     help='''Applications to start on the cluster like Hive, Hue, Pig... as
   a comma separated list. (e.g. "Hive,Hue").''')
@@ -93,6 +103,7 @@ class Ecosystem:
   def __init__(self, args):
     self.cluster_config = {
         'cluster_name': args.cluster_name,
+        'public_ip': args.public_ip,
         'ec2_key_file': args.ec2_key_file,
         'ec2_key_name': args.ec2_key_name,
         'emr_region': args.emr_region,
@@ -116,6 +127,8 @@ class Ecosystem:
         'restore_metadata': args.restore_metadata,
         's3_metadata_version': args.s3_metadata_version,
         's3_metadata_dir': '',
+        'tasks': args.with_tasks,
+        'extra_python_dependencies': args.python_dependencies,
     }
     self.cluster = None
     self.instances = []
@@ -138,7 +151,8 @@ class Ecosystem:
         expiry=conf['expiry'],
         instance_count=conf['emr_instance_count'],
         hdfs_replication=conf['hdfs_replication'],
-        applications=conf['applications'])
+        applications=conf['applications'],
+    )
     self.instances = [self.cluster]
     # Spin up a mysql RDS instance only if requested.
     if conf['with_rds']:
@@ -152,12 +166,16 @@ class Ecosystem:
           mysql_address=mysql_address)
     else:
       lib.wait_for_services(self.instances)
+    if conf['public_ip']:
+      self.cluster.associate_address(conf['public_ip'])
 
   def start(self):
     print('Starting LynxKite on EMR cluster.')
     conf = self.cluster_config
     lk_conf = self.lynxkite_config
-    self.upload_tasks()
+    self.upload_test_tasks()
+    if lk_conf['extra_python_dependencies']:
+      self.install_extra_python_dependencies(lk_conf['extra_python_dependencies'])
     self.upload_tools()
     self.install_lynx_stuff(
         lk_conf['lynx_release_dir'],
@@ -177,6 +195,8 @@ class Ecosystem:
     if conf['applications'] and 'hive' in [a.lower() for a in conf['applications'].split(',')]:
       self.hive_patch()
     self.start_monitoring_on_extra_nodes_native(conf['ec2_key_file'])
+    if lk_conf['tasks']:
+      self.upload_tasks(src=lk_conf['tasks'])
     self.start_supervisor_native()
     print('LynxKite ecosystem was started by supervisor.')
 
@@ -251,10 +271,17 @@ class Ecosystem:
             version=lynx_version),
         dst='/mnt/')
 
-  def upload_tasks(self):
-    ecosystem_task_dir = '/mnt/lynx/luigi_tasks/test_tasks'
-    self.cluster.ssh('mkdir -p ' + ecosystem_task_dir)
-    self.cluster.rsync_up('ecosystem/tests/', ecosystem_task_dir)
+  def install_extra_python_dependencies(self, requirements):
+    self.cluster.rsync_up(requirements, '.')
+    file_name = os.path.basename(requirements)
+    self.cluster.ssh('sudo pip-3.4 install --upgrade -r {}'.format(file_name))
+
+  def upload_tasks(self, src, dst='/mnt/lynx/luigi_tasks/'):
+    self.cluster.ssh('mkdir -p ' + dst)
+    self.cluster.rsync_up(src, dst)
+
+  def upload_test_tasks(self):
+    self.upload_tasks('ecosystem/tests/', '/mnt/lynx/luigi_tasks/test_tasks')
     self.cluster.ssh('''
         set -x
         cd /mnt/lynx/luigi_tasks/test_tasks

@@ -1,12 +1,10 @@
 <div class="popup"
-    ng-mousedown="$event.stopPropagation()"
+    ng-mousedown="popupModel.bringToFront(); $event.stopPropagation();"
     ng-mousemove="popupModel.onMouseMove($event); $event.stopPropagation();"
     id="{{popupModel.id}}"
     ng-style="{
         'left': popupModel.x + 'px',
         'top': popupModel.y + 'px',
-        'width': popupModel.width + 'px',
-        'height': popupModel.height + 'px',
     }">
   <div
       class="popup-head"
@@ -21,7 +19,11 @@
         tooltip-placement="bottom">
     </div>
   </div>
-  <div class="popup-content">
+  <div class="popup-content"
+    ng-style="{
+        'width': popupModel.width + 'px',
+        'height': popupModel.height + 'px',
+    }">
     <box-editor ng-if="popupModel.content.type === 'box'"
         workspace="workspace"
         box-id="popupModel.content.boxId">
