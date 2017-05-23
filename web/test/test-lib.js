@@ -270,13 +270,22 @@ Workspace.prototype = {
     var head = popup.$('div.popup-head');
     browser.actions()
         .mouseDown(head)
-        // Absolute positioning of mouse. If I don't use first
-        // parameter, then it becomes a relative move. If the
-        // first parameter is this.board, then a weird
-        // scrolling of the whole body happens.
+        // Absolute positioning of mouse. If we don't specify the first
+        // argument then this becomes a relative move. If the first argument
+        // is this.board, then protractor scrolls the element of this.board
+        // to the top of the page, even though scrolling is not enabled.
         .mouseMove($('body'), {x: 800, y: 90})
         .mouseUp(head)
         .perform();
+    // Moving with protractor is sensitive to circumstances so we double check
+    // that it was successful. The expected coordinates are different from 800,90
+    // because the mouse is clicked on the center of the popup header.
+    expect(
+      popup.getLocation().then(
+        function(loc) {
+          return 'x=' + loc.x + ',y=' + loc.y;
+        }))
+      .toEqual('x=549,y=72');
   },
 
   openStateView: function(boxId, plugId) {
