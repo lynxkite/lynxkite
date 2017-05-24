@@ -1,19 +1,9 @@
 <div class="col-sm-12">
   <div ng-if="plotJSON.value.$resolved && !plotJSON.value.$error">
-    <div class="plot-header">
-      <span class="plot-title">Plot: {{title}}</span>
-      <div class="btn-group pull-right">
-        <button class="btn btn-default"
-             id="resize-plot-to-window"
-             ng-click="resizePlot()"
-             ng-disabled="plotJSON.value.$error"
-             drop-tooltip="Resize&nbsp;plot&nbsp;to&nbsp;window"
-             drop-tooltip-placement="bottom">
-          <i class="fa fa-expand"></i>
-        </button>
-      </div>
-    </div>
-      <!-- This is the placeholder DIV for the plot -->
+    <h3>Plot: {{title}}</h3>
+    <!-- This is the placeholder DIV for a hidden plot to cimpute correct sizes -->
+    <div  ng-show="false" ng-attr-id={{plotDivId+'-hidden'}}> </div>
+    <!-- This is the placeholder DIV for the plot -->
     <div  ng-attr-id={{plotDivId}}> </div>
   </div>
   <div ng-if="plotJSON.value.$resolved && plotJSON.value.$error">
