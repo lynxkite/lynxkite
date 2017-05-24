@@ -18,16 +18,16 @@ class ExportBoxTest extends OperationsTestBase {
     val exportResult = importBox("Import CSV", Map(
       "filename" -> "EXPORTTEST$/table_input.csv",
       "columns" -> "",
-      "infer" -> "no")
-    ).box("Export to CSV",
-      Map("path" -> path)
-    ).exportResult
+      "infer" -> "no"))
+      .box("Export to CSV",
+        Map("path" -> path)
+      ).exportResult
     dataManager.get(exportResult)
     val importedAgain = importBox("Import CSV", Map(
       "filename" -> path,
       "columns" -> "",
-      "infer" -> "no")
-    ).box("Import vertices").project
+      "infer" -> "no")).
+      box("Import vertices").project
 
     assert(vattr(importedAgain, "name") == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
     assert(vattr(importedAgain, "favorite_sport") == Seq(
