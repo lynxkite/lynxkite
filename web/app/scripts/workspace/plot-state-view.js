@@ -44,12 +44,6 @@ angular.module('biggraph')
           scope.plotHeight = scope.getPlotHeight();
         }, true);
 
-        scope.$watch('embedSpec.spec.description', function(newValue, oldValue, scope) {
-          if (newValue) {
-            scope.title = newValue;
-          }
-        }, true);
-
         scope.embedPlot = function (width, height) {
           scope.embedSpec = {
             mode: "vega-lite",
@@ -64,6 +58,10 @@ angular.module('biggraph')
           scope.plotDivId = 'vegaplot-' + scope.stateId;
           /* global vg */
           vg.embed('#' + scope.plotDivId, scope.embedSpec, function() {});
+          // Refresh title after embedding the plot
+          if (scope.embedSpec.spec.description) {
+            scope.title = scope.embedSpec.spec.description;
+          }
         };
 
         scope.resizePlot = function() {
