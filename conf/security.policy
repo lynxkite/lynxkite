@@ -1,0 +1,3 @@
+grant codeBase "file:${lynxkite.spark_home}/jars/*" {
+        permission org.apache.derby.security.SystemPermission "engine", "usederbyinternals";
+};
