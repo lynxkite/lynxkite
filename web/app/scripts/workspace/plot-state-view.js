@@ -11,7 +11,7 @@ angular.module('biggraph')
         stateId: '=',
         popupModel: '=',
       },
-      link: function(scope) {
+      link: function(scope, element) {
         // We leave some empty space.
         scope.getPlotWidth = function () {
           return scope.popupModel.width - 50;
@@ -24,8 +24,6 @@ angular.module('biggraph')
 
         scope.updatePlotSpec = function () {
           scope.embedSpec.spec = JSON.parse(scope.plotJSON.value.string);
-          // After lazyFetchScalarValue the stateId can be changed.
-          scope.plotDivId = 'vegaplot-' + scope.stateId;
         };
 
         // Vega-embed can be configured using `width` and `height` parameters, but
@@ -43,9 +41,10 @@ angular.module('biggraph')
           // Desired plot size
           scope.embedSpec.spec.width = scope.getPlotWidth();
           scope.embedSpec.spec.height = scope.getPlotHeight();
+          var plotElement = element.find("#hidden-plot-div")[0];
           /* global vg */
-          vg.embed('#' + scope.plotDivId + '-hidden', scope.embedSpec, function() {
-            var svg = angular.element('#' + scope.plotDivId + '-hidden .vega svg')[0];
+          vg.embed(plotElement, scope.embedSpec, function() {
+            var svg = element.find('#hidden-plot-div .vega svg')[0];
             var w = svg.attributes['width'].value;
             var h = svg.attributes['height'].value;
             // The assumption is that the difference is constant, not linear.
@@ -61,13 +60,13 @@ angular.module('biggraph')
           if (scope.diffX !== undefined && scope.diffY !== undefined) {
             scope.embedSpec.spec.width = scope.getPlotWidth() + scope.diffX;
             scope.embedSpec.spec.height = scope.getPlotHeight() + scope.diffY;
+            var plotElement = element.find("#plot-div")[0];
             /* global vg */
-            vg.embed('#' + scope.plotDivId, scope.embedSpec, function() {});
+            vg.embed(plotElement, scope.embedSpec, function() {});
           }
         };
 
         scope.$watch('stateId', function(newValue, oldValue, scope) {
-          scope.plotDivId = 'vegaplot-' + scope.stateId;
           scope.embedSpec = {
             mode: 'vega-lite',
             actions: false,
