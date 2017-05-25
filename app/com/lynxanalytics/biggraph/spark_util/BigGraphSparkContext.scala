@@ -10,6 +10,7 @@ import org.apache.spark.sql.jdbc.JdbcDialects
 import org.apache.spark.serializer.KryoRegistrator
 import scala.collection.mutable
 import scala.reflect.ClassTag
+
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_operations
