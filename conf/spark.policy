@@ -1,3 +1,0 @@
-grant codeBase "file:${lynxkite.spark_home}/jars/*" {
-        permission java.security.AllPermission;
-};
