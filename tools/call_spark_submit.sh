@@ -59,6 +59,8 @@ addJPropIfNonEmpty () {
   fi
 }
 
+addJPropIfNonEmpty lynxkite.spark_home ${SPARK_HOME}
+addJPropIfNonEmpty java.security.policy ${conf_dir}/spark.policy
 addJPropIfNonEmpty http.port "${KITE_HTTP_PORT}"
 addJPropIfNonEmpty https.port "${KITE_HTTPS_PORT}"
 addJPropIfNonEmpty https.keyStore "${KITE_HTTPS_KEYSTORE}"
