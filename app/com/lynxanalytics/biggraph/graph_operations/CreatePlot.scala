@@ -33,8 +33,7 @@ case class CreatePlot(plotCode: String)
     implicit val id = inputDatas
     implicit val runtimeContext = rc
     val df = inputs.t.df
-    val code = plotCode.replaceAll("\\n", "")
-    val plotDescription: String = ScalaScript.runVegas(code, df)
+    val plotDescription: String = ScalaScript.runVegas(plotCode, df)
     output(o.plot, plotDescription)
   }
 }
