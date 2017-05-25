@@ -38,12 +38,13 @@ angular.module('biggraph')
         // the difference.
         scope.computeSizeDiff = function() {
           scope.updatePlotSpec();
+          var computeSpec = angular.copy(scope.embedSpec);
           // Desired plot size
-          scope.embedSpec.spec.width = scope.getPlotWidth();
-          scope.embedSpec.spec.height = scope.getPlotHeight();
+          computeSpec.spec.width = scope.getPlotWidth();
+          computeSpec.spec.height = scope.getPlotHeight();
           var plotElement = element.find("#hidden-plot-div")[0];
           /* global vg */
-          vg.embed(plotElement, scope.embedSpec, function() {
+          vg.embed(plotElement, computeSpec, function() {
             var svg = element.find('#hidden-plot-div .vega svg')[0];
             var w = svg.attributes['width'].value;
             var h = svg.attributes['height'].value;
