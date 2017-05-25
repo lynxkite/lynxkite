@@ -28,6 +28,11 @@ angular.module('biggraph')
           scope.plotDivId = 'vegaplot-' + scope.stateId;
         };
 
+        // Vega-embed can be configured using `width` and `height` parameters, but
+        // unfortunately the size of the axes and the legend is not included in these
+        // parameters. So if we want to control the "outer" or "real" size of the plot,
+        // we need extra steps:
+        //
         // We embed a plot into a hidden DIV to get its real size.
         // From the size of the hidden plot we can compute the difference
         // between the desired and the actual size. If the actual size is larger than
@@ -54,8 +59,8 @@ angular.module('biggraph')
         scope.embedPlot = function () {
           scope.updatePlotSpec();
           if (scope.diffX !== undefined && scope.diffY !== undefined) {
-            scope.embedSpec.spec.width = scope.plotWidth + scope.diffX;
-            scope.embedSpec.spec.height = scope.plotHeight + scope.diffY;
+            scope.embedSpec.spec.width = scope.getPlotWidth() + scope.diffX;
+            scope.embedSpec.spec.height = scope.getPlotHeight() + scope.diffY;
             /* global vg */
             vg.embed('#' + scope.plotDivId, scope.embedSpec, function() {});
           }
@@ -63,8 +68,6 @@ angular.module('biggraph')
 
         scope.$watch('stateId', function(newValue, oldValue, scope) {
           scope.plotDivId = 'vegaplot-' + scope.stateId;
-          scope.plotWidth = scope.getPlotWidth();
-          scope.plotHeight = scope.getPlotHeight();
           scope.embedSpec = {
             mode: 'vega-lite',
             actions: false,
@@ -74,29 +77,29 @@ angular.module('biggraph')
           scope.plot = util.get('/ajax/getPlotOutput', {
             id: scope.stateId
           });
-          scope.plot.then(function() {
-            scope.plotJSON = util.lazyFetchScalarValue(scope.plot.json, true);
-          }, function() {}
+          scope.plot.then(
+            function() {
+              scope.plotJSON = util.lazyFetchScalarValue(scope.plot.json, true);
+            }, function() {}
           );
         }, true);
 
-        scope.$watch('popupModel.width', function(newValue, oldValue, scope) {
-          scope.plotWidth = scope.getPlotWidth();
-        }, true);
-
-        scope.$watch('popupModel.height', function(newValue, oldValue, scope) {
-          scope.plotHeight = scope.getPlotHeight();
-        }, true);
-
-        scope.$watchGroup(['plotWidth', 'plotHeight', 'plotJSON.value.string', 'diffX', 'diffY'], function() {
-          if (scope.plotJSON && scope.plotJSON.value && scope.plotJSON.value.string) {
-            scope.embedPlot();
+        scope.$watchGroup([
+          'popupModel.width', 'popupModel.height',
+          'plotJSON.value.string',
+          'diffX', 'diffY'],
+          function() {
+            if (scope.plotJSON && scope.plotJSON.value && scope.plotJSON.value.string) {
+              scope.embedPlot();
+            }
           }
-        });
+         );
 
         scope.$watch('embedSpec.spec.description', function(newValue, oldValue, scope) {
           // Refresh title after embedding the plot
-          scope.title = scope.embedSpec.spec.description;
+          if (scope.embedSpec.spec && scope.embedSpec.spec.description) {
+            scope.title = scope.embedSpec.spec.description;
+          }
         }, true);
 
         scope.$watch('plotJSON', function(newValue, oldValue, scope) {
