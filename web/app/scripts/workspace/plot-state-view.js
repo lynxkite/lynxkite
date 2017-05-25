@@ -51,8 +51,11 @@ angular.module('biggraph')
             // The assumption is that the difference is constant, not linear.
             var diffX = scope.getPlotWidth() - w;
             var diffY = scope.getPlotHeight() - h;
-            scope.diffX = diffX < 0 ? diffX : 0;
-            scope.diffY = diffY < 0 ? diffY : 0;
+            scope.$apply(function () {
+              scope.diffX = diffX < 0 ? diffX : 0;
+              scope.diffY = diffY < 0 ? diffY : 0;
+            });
+
           });
         };
 
