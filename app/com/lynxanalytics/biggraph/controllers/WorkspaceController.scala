@@ -33,6 +33,8 @@ case class TableColumn(name: String, dataType: String)
 case class GetTableOutputResponse(header: List[TableColumn], data: List[List[DynamicValue]])
 case class GetPlotOutputRequest(id: String)
 case class GetPlotOutputResponse(json: FEScalar)
+case class GetVisualizationOutputRequest(id: String)
+case class GetVisualizationOutputResponse(id: String)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 case class CreateSnapshotRequest(name: String, id: String)
@@ -146,6 +148,11 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     GetPlotOutputResponse(fescalar)
   }
 
+  def getVisualizationOutput(
+    user: serving.User, request: GetVisualizationOutputRequest): GetVisualizationOutputResponse = {
+    GetVisualizationOutputResponse(request.id)
+  }
+
   def getExportResultOutput(
     user: serving.User, request: GetExportResultRequest): GetExportResultResponse = {
     val state = getOutput(user, request.stateId)
@@ -174,6 +181,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
             case BoxOutputKind.ExportResult =>
               val progress = entityProgressManager.computeProgress(state.exportResult)
               stateId -> Some(List(progress))
+            case BoxOutputKind.Visualization =>
+              stateId -> Some(List(1.0))
             case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }
         } else {
