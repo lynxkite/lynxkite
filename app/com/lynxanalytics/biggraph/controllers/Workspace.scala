@@ -245,7 +245,8 @@ object BoxOutputKind {
   val ExportResult = "exportResult"
   val Plot = "plot"
   val Error = "error"
-  val validKinds = Set(Project, Table, Error, ExportResult, Plot)
+  val Visualization = "visualization"
+  val validKinds = Set(Project, Table, Error, ExportResult, Plot, Visualization)
 
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
@@ -275,6 +276,17 @@ object BoxOutputState {
   def error(msg: String): BoxOutputState = {
     BoxOutputState(BoxOutputKind.Error, None, FEStatus.disabled(msg))
   }
+
+  def visualization(project: ProjectEditor, uiState: String): BoxOutputState = {
+    import CheckpointRepository._ // For JSON formatters.
+    val js = json.Json.parse(uiState)
+    BoxOutputState(
+      BoxOutputKind.Visualization,
+      Some(json.Json.obj(
+        "uiState" -> js,
+        "project" -> json.Json.toJson(project.rootState.state))
+      ))
+  }
 }
 
 case class BoxOutputState(
@@ -290,6 +302,7 @@ case class BoxOutputState(
   def isTable = kind == BoxOutputKind.Table
   def isPlot = kind == BoxOutputKind.Plot
   def isExportResult = kind == BoxOutputKind.ExportResult
+  def isVisuzalization = kind == BoxOutputKind.Visualization
 
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(success.enabled, success.disabledReason)

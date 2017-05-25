@@ -20,7 +20,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       new MetaOperations(env).operations.toMap ++
       new ImportOperations(env).operations.toMap ++
       new ExportOperations(env).operations.toMap ++
-      new PlotOperations(env).operations.toMap
+      new PlotOperations(env).operations.toMap ++
+      new VisualizationOperations(env).operations.toMap
 }
 
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
