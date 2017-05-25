@@ -1,3 +1,7 @@
-grant codeBase "file:${lynxkite.spark_home}/jars/*" {
+//
+// See issue #6129
+// We grant the derby jar this single SystemPermission
+//
+grant codeBase "file:${lynxkite.derby_jar}" {
         permission org.apache.derby.security.SystemPermission "engine", "usederbyinternals";
 };

@@ -59,7 +59,14 @@ addJPropIfNonEmpty () {
   fi
 }
 
-addJPropIfNonEmpty lynxkite.spark_home ${SPARK_HOME}
+derby_jar=$(find ${SPARK_HOME}/jars/ -name "derby*.jar")
+
+if [ "$(echo ${derby_jar} | wc -w)" != "1" ]; then
+  >&2 echo "I expected to find one Derby jar, found this: $derby_jar"
+  exit 1
+fi
+
+addJPropIfNonEmpty lynxkite.derby_jar ${derby_jar}
 addJPropIfNonEmpty java.security.policy ${conf_dir}/security.policy
 addJPropIfNonEmpty http.port "${KITE_HTTP_PORT}"
 addJPropIfNonEmpty https.port "${KITE_HTTPS_PORT}"
