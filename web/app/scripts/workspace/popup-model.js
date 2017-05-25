@@ -23,8 +23,8 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   PopupModel.prototype.updateSize = function() {
     var popupElement = this.element.find('.popup-content')[0];
     // Save width and height of the popup. Remove 'px' from the end.
-    this.width = popupElement.style.width.slice(0, -2);
-    this.height = popupElement.style.height.slice(0, -2);
+    this.width = parseInt(popupElement.style.width.slice(0, -2));
+    this.height = parseInt(popupElement.style.height.slice(0, -2));
   };
 
   PopupModel.prototype.onMouseDown = function(event) {
