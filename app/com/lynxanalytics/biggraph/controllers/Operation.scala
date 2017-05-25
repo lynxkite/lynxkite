@@ -384,6 +384,7 @@ abstract class ProjectOutputOperation(
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)
+    assert(enabled.enabled, enabled.disabledReason)
     apply()
     makeOutput(project)
   }
@@ -399,6 +400,7 @@ abstract class ProjectTransformation(
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)
     val before = project.rootEditor.viewer
+    assert(enabled.enabled, enabled.disabledReason)
     apply()
     updateDeltas(project.rootEditor, before)
     makeOutput(project)
