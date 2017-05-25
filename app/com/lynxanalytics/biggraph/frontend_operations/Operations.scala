@@ -1312,7 +1312,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       Choice("keyattr", "Key attribute name", options = options),
       Choice("order", "Order", options = FEOption.list("ascending", "descending")))
     def enabled = FEStatus.assert(
-      optoins.nonEmpty, "No ordered vertex attributes.")
+      options.nonEmpty, "No ordered vertex attributes.")
     def apply(params: Map[String, String]) = {
       val keyAttr = params("keyattr")
       val rankAttr = params("rankattr")
