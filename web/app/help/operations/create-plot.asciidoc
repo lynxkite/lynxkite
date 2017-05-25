@@ -20,4 +20,6 @@ encodeY("gdp_growth", Quantitative)
 ```
 For more examples see
 http://nbviewer.jupyter.org/github/aishfenton/Vegas/blob/master/notebooks/jupyter_example.ipynb[this Jupyter notebook].
+For understanding the vega-lite plot grammar (the JSON plot format used by Vegas) see
+https://vega.github.io/vega-lite-1/docs/[the vega-Lite documentation].
 ====
