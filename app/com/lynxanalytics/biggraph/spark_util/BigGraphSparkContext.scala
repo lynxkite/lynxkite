@@ -8,7 +8,6 @@ import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
 import org.apache.spark
 import org.apache.spark.sql.jdbc.JdbcDialects
 import org.apache.spark.serializer.KryoRegistrator
-
 import scala.collection.mutable
 import scala.reflect.ClassTag
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
