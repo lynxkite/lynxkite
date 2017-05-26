@@ -99,7 +99,6 @@ abstract class OperationParameterMeta {
 // Operation.Context parameter. Operations are short-lived and created for a specific input.
 trait Operation {
   protected val context: Operation.Context
-  def enabled: FEStatus
   def summary: String
   def getOutputs: Map[BoxOutput, BoxOutputState]
   def toFE: FEOperationMeta
@@ -237,6 +236,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 trait BasicOperation extends Operation {
   implicit val manager = context.manager
   protected val user = context.user
+  protected def enabled: FEStatus
   protected val id = context.meta.operationId
   protected val title = id
   // Parameters without default values:
