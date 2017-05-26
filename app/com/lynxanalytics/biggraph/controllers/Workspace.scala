@@ -237,14 +237,17 @@ case class BoxMetadata(
   operationId: String,
   inputs: List[String],
   outputs: List[String],
-  description: Option[String] = None)
+  description: Option[String] = None,
+  htmlId: Option[String] = None)
 
 object BoxOutputKind {
   val Project = "project"
   val Table = "table"
   val ExportResult = "exportResult"
+  val Plot = "plot"
   val Error = "error"
-  val validKinds = Set(Project, Table, Error, ExportResult)
+  val validKinds = Set(Project, Table, Error, ExportResult, Plot)
+
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
 }
@@ -260,11 +263,14 @@ object BoxOutputState {
     BoxOutputState(BoxOutputKind.Table, Some(json.Json.obj("guid" -> table.gUID)))
   }
 
+  def plot(plot: graph_api.Scalar[String]) = {
+    BoxOutputState(BoxOutputKind.Plot, Some(json.Json.obj("guid" -> plot.gUID)))
+  }
+
   def from(exportResult: graph_api.Scalar[String],
            params: Map[String, String]): BoxOutputState = {
     BoxOutputState(BoxOutputKind.ExportResult, Some(json.Json.obj(
       "guid" -> exportResult.gUID, "parameters" -> params)))
-
   }
 
   def error(msg: String): BoxOutputState = {
@@ -283,6 +289,7 @@ case class BoxOutputState(
   def isError = !success.enabled
   def isProject = kind == BoxOutputKind.Project
   def isTable = kind == BoxOutputKind.Table
+  def isPlot = kind == BoxOutputKind.Plot
   def isExportResult = kind == BoxOutputKind.ExportResult
 
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
@@ -299,6 +306,13 @@ case class BoxOutputState(
     assert(isTable, s"Tried to access '$kind' as 'table'.")
     import graph_api.MetaGraphManager.StringAsUUID
     manager.table((state.get \ "guid").as[String].asUUID)
+  }
+
+  def plot(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
+    assert(isPlot, s"Tried to access '$kind' as 'Plot'.")
+    assert(success.enabled, success.disabledReason)
+    import graph_api.MetaGraphManager.StringAsUUID
+    manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)
   }
 
   def exportResult(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {

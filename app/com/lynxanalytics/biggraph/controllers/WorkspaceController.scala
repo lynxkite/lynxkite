@@ -31,6 +31,8 @@ case class GetProjectOutputRequest(id: String, path: String)
 case class GetTableOutputRequest(id: String, sampleRows: Int)
 case class TableColumn(name: String, dataType: String)
 case class GetTableOutputResponse(header: List[TableColumn], data: List[List[DynamicValue]])
+case class GetPlotOutputRequest(id: String)
+case class GetPlotOutputResponse(json: FEScalar)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 case class CreateSnapshotRequest(name: String, id: String)
@@ -136,6 +138,14 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     viewer.toFE(request.path)
   }
 
+  def getPlotOutput(
+    user: serving.User, request: GetPlotOutputRequest): GetPlotOutputResponse = {
+    val state = getOutput(user, request.id)
+    val scalar = state.plot
+    val fescalar = ProjectViewer.feScalar(scalar, "result", "", Map())
+    GetPlotOutputResponse(fescalar)
+  }
+
   def getExportResultOutput(
     user: serving.User, request: GetExportResultRequest): GetExportResultResponse = {
     val state = getOutput(user, request.stateId)
@@ -157,6 +167,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
             case BoxOutputKind.Project => stateId -> Some(state.project.viewer.getProgress)
             case BoxOutputKind.Table =>
               val progress = entityProgressManager.computeProgress(state.table)
+              stateId -> Some(List(progress))
+            case BoxOutputKind.Plot =>
+              val progress = entityProgressManager.computeProgress(state.plot)
               stateId -> Some(List(progress))
             case BoxOutputKind.ExportResult =>
               val progress = entityProgressManager.computeProgress(state.exportResult)
