@@ -199,6 +199,8 @@ include::create-edges-from-set-overlaps.asciidoc[]
 
 include::create-example-graph.asciidoc[]
 
+include::create-plot.asciidoc[]
+
 include::create-random-edge-bundle.asciidoc[]
 
 include::create-scale-free-random-edge-bundle.asciidoc[]

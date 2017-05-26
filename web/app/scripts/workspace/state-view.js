@@ -11,6 +11,7 @@ angular.module('biggraph')
         workspace: '=',
         boxId: '=',
         plugId: '=',
+        popupModel: '=',
       },
       link: function(scope) {
         util.deepWatch(
