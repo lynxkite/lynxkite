@@ -237,7 +237,8 @@ case class BoxMetadata(
   operationId: String,
   inputs: List[String],
   outputs: List[String],
-  description: Option[String] = None)
+  description: Option[String] = None,
+  htmlId: Option[String] = None)
 
 object BoxOutputKind {
   val Project = "project"
