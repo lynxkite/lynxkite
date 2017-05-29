@@ -196,6 +196,22 @@ Workspace.prototype = {
     browser.actions().keyUp(protractor.Key.CONTROL).perform();
   },
 
+  selectArea: function(startBoxId, point1, point2) {
+    let box = this.getBox(startBoxId);
+    browser.actions()
+      .mouseMove(box, point1)
+      .keyDown(protractor.Key.SHIFT)
+      .mouseDown()
+      .mouseMove(point2)
+      .mouseUp()
+      .keyUp(protractor.Key.SHIFT)
+      .perform();
+  },
+
+  expectNumSelectedBoxes: function(n) {
+    return expect($$('g.selected.selected rect').count()).toEqual(n);
+  },
+
   deleteBoxes: function(boxIds) {
     this.selectBoxes(boxIds);
     this.main.$('#delete-selected-boxes').click();
