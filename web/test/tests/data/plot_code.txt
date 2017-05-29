@@ -1,5 +1,0 @@
-Vegas("Simple bar chart").
-withData(Data).
-encodeX("product", Ordinal).
-encodeY("cnt", Quantitative).
-mark(Bar)
