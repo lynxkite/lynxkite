@@ -12,7 +12,7 @@ angular.module('biggraph').directive('inlineInput', function(util) {
       scope.done = function() {
         scope.enabled = false;
         scope.onsubmit({
-          input: scope.input,
+          input: scope.input || '',
           success: scope.close,
           error: function(error) {
             scope.enabled = true;
