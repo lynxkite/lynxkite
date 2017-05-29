@@ -1,4 +1,12 @@
+<!--
 <div class="col-sm-12">
   <h3>Visualization</h3>
   {{ visualization.id }}
 </div>
+-->
+<project-graph
+  left="left.viewData" right="right.viewData"
+  left-to-right-bundle="leftToRightBundle" right-to-left-bundle="rightToLeftBundle"
+  context-menu="$parent.contextMenu"></project-graph>
+
+<div ng-repeat="side in sides" ng-include="'scripts/project/side.html'"></div>

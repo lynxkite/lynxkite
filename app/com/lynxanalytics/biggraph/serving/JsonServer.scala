@@ -301,6 +301,7 @@ object FrontendJson {
   implicit val wGetTableOutputResponse = json.Json.writes[GetTableOutputResponse]
   implicit val rGetPlotOutputRequest = json.Json.reads[GetPlotOutputRequest]
   implicit val wGetPlotOutputResponse = json.Json.writes[GetPlotOutputResponse]
+  import UIStatusSerialization.fUIStatus
   implicit val rGetVisualizationOutputRequest = json.Json.reads[GetVisualizationOutputRequest]
   implicit val wGetVisualizationOutputResponse = json.Json.writes[GetVisualizationOutputResponse]
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
@@ -346,6 +347,7 @@ object FrontendJson {
 
   implicit val wBackupSettings = json.Json.writes[BackupSettings]
   implicit val wBackupVersion = json.Json.writes[BackupVersion]
+
 }
 
 object ProductionJsonServer extends JsonServer {

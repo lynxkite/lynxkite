@@ -302,13 +302,17 @@ case class BoxOutputState(
   def isTable = kind == BoxOutputKind.Table
   def isPlot = kind == BoxOutputKind.Plot
   def isExportResult = kind == BoxOutputKind.ExportResult
-  def isVisuzalization = kind == BoxOutputKind.Visualization
+  def isVisualization = kind == BoxOutputKind.Visualization
 
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(success.enabled, success.disabledReason)
-    assert(isProject, s"Tried to access '$kind' as 'project'.")
     import CheckpointRepository.fCommonProjectState
-    val p = state.get.as[CommonProjectState]
+    assert(isProject || isVisualization, s"Tried to access '$kind' as 'project'.")
+    val p = if (isProject) {
+      state.get.as[CommonProjectState]
+    } else {
+      (state.get \ "project").as[CommonProjectState]
+    }
     val rps = RootProjectState.emptyState.copy(state = p)
     new RootProjectEditor(rps)
   }
@@ -332,6 +336,12 @@ case class BoxOutputState(
     assert(success.enabled, success.disabledReason)
     import graph_api.MetaGraphManager.StringAsUUID
     manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)
+  }
+
+  def visualization(implicit manager: graph_api.MetaGraphManager) = {
+    import UIStatusSerialization.fUIStatus
+    assert(isVisualization)
+    (state.get \ "uiState").as[UIStatus]
   }
 }
 
