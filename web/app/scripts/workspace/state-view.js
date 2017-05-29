@@ -33,10 +33,11 @@ angular.module('biggraph')
             });
 
         scope.createSnapshot = function(saveAsName, success, error) {
+          let postOpts = { reportErrors: false };
           util.post('/ajax/createSnapshot', {
             name: saveAsName,
-            id: scope.stateId
-          }).then(success, error);
+            id: scope.stateId,
+          }, postOpts).then(success, error);
         };
       },
     };
