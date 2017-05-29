@@ -4,6 +4,7 @@
 module.exports = function(fw) {
   var lib = require('../test-lib.js');
   var path = require('path');
+  var fs = require('fs');
 
   fw.transitionTest(
     'empty test-example workspace',
@@ -35,8 +36,7 @@ module.exports = function(fw) {
         name: 'Create plot',
         x: 200, y: 200 });
       lib.workspace.connectBoxes('ib0', 'table', 'plot1', 'table');
-      var plot_code = 'Vegas("Simple bar chart")\n.withData(Data)' +
-        '.\nencodeX("product", Ordinal).\nencodeY("cnt", Quantitative).\nmark(Bar)';
+      var plot_code = fs.readFileSync(__dirname + '/data/plot_code.txt', 'utf8');
       var boxEditor = lib.workspace.openBoxEditor('plot1');
       boxEditor.populateOperation({
         'plot_code': plot_code,
@@ -44,7 +44,7 @@ module.exports = function(fw) {
       boxEditor.close();
       var plotState = lib.workspace.openStateView('plot1', 'plot');
       var plot = plotState.plot;
-      plot.expectBarHeightsAre(['97', '191', '149', '316']);
+      plot.expectBarHeightsToBe(['97', '191', '149', '316']);
     },
     function() {
     }
