@@ -383,15 +383,15 @@ PlotState.prototype = {
     var canvasEl = element(by.css('#plot-div .vega svg'));
     browser.wait(until.presenceOf(canvasEl),
       15000,
-      'Canvas taking too long to appear in the DOM');
+      'Canvas is taking too long to appear in the DOM');
     var el = element(by.css('g.mark-rect.marks rect'));
     browser.wait(until.presenceOf(el),
       15000,
-      'Bar chart taking too long to appear in the DOM');
+      'Bar chart is taking too long to appear in the DOM');
     return this.canvas.$$('g.mark-rect.marks rect').map(e => e.getAttribute('height'));
   },
 
-  expectBarHeightsAre: function(heights) {
+  expectBarHeightsToBe: function(heights) {
     expect(this.barHeights()).toEqual(heights);
   }
 };
