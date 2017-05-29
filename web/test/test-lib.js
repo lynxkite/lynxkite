@@ -196,8 +196,8 @@ Workspace.prototype = {
     browser.actions().keyUp(protractor.Key.CONTROL).perform();
   },
 
-  // Protractor mouseMove only takes offsets, so we need to set the initial position
-  // based on a box's position.
+  // Protractor mouseMove only takes offsets, so first we set the mouse position to a box based on
+  // its id, and then move it to 2 other points on the screen.
   selectArea: function(startBoxId, point1, point2) {
     let box = this.getBox(startBoxId);
     browser.actions()
