@@ -138,10 +138,6 @@ angular.module('biggraph')
           }
         };
 
-        scope.wrappedOnMouseMove = scope.callbackWrapper(scope.onMouseMove);
-
-        scope.wrappedOnMouseUp = scope.callbackWrapper(scope.onMouseUp);
-
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
           var leftClick = event.button === 0;
@@ -258,6 +254,10 @@ angular.module('biggraph')
           scope.pulledPlug = undefined;
           scope.movedPopup = undefined;
         };
+
+        scope.wrappedOnMouseMove = scope.callbackWrapper(scope.onMouseMove);
+
+        scope.wrappedOnMouseUp = scope.callbackWrapper(scope.onMouseUp);
 
         scope.onMouseDown = function(event) {
           window.addEventListener('mousemove', scope.wrappedOnMouseMove);
