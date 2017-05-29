@@ -364,6 +364,7 @@ function State(popup) {
   this.left = new Side(this.popup, 'left');
   this.right = new Side(this.popup, 'right');
   this.table = new TableState(this.popup);
+  this.plot = new PlotState(this.popup);
 }
 
 State.prototype = {
@@ -371,6 +372,30 @@ State.prototype = {
     this.popup.$('#close-popup').click();
   }
 };
+
+function PlotState(popup) {
+  this.canvas = popup.$('#plot-div .vega svg');
+}
+
+PlotState.prototype = {
+  barHeights: function() {
+    var until = protractor.ExpectedConditions;
+    var canvasEl = element(by.css('#plot-div .vega svg'));
+    browser.wait(until.presenceOf(canvasEl),
+      15000,
+      'Canvas taking too long to appear in the DOM');
+    var el = element(by.css('g.mark-rect.marks rect'));
+    browser.wait(until.presenceOf(el),
+      15000,
+      'Bar chart taking too long to appear in the DOM');
+    return this.canvas.$$('g.mark-rect.marks rect').map(e => e.getAttribute('height'));
+  },
+
+  expectBarHeightsAre: function(heights) {
+    expect(this.barHeights()).toEqual(heights);
+  }
+};
+
 
 function TableState(popup) {
   this.sample = popup.$('#table-sample');
