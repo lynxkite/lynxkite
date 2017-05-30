@@ -99,7 +99,6 @@ abstract class OperationParameterMeta {
 // Operation.Context parameter. Operations are short-lived and created for a specific input.
 trait Operation {
   protected val context: Operation.Context
-  def enabled: FEStatus
   def summary: String
   def getOutputs: Map[BoxOutput, BoxOutputState]
   def toFE: FEOperationMeta
@@ -238,6 +237,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 trait BasicOperation extends Operation {
   implicit val manager = context.manager
   protected val user = context.user
+  protected def enabled: FEStatus
   protected val id = context.meta.operationId
   protected val title = id
   // Parameters without default values:
@@ -385,6 +385,7 @@ abstract class ProjectOutputOperation(
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)
+    assert(enabled.enabled, enabled.disabledReason)
     apply()
     makeOutput(project)
   }
@@ -400,6 +401,7 @@ abstract class ProjectTransformation(
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)
     val before = project.rootEditor.viewer
+    assert(enabled.enabled, enabled.disabledReason)
     apply()
     updateDeltas(project.rootEditor, before)
     makeOutput(project)
