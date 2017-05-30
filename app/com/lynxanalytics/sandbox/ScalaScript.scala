@@ -15,6 +15,12 @@ import scala.concurrent.duration.Duration
 import scala.tools.nsc.interpreter.IMain
 import scala.util.DynamicVariable
 
+object ScalaScriptSecurityManager {
+  private[sandbox] val restrictedSecurityManager = new ScalaScriptSecurityManager
+  System.setSecurityManager(restrictedSecurityManager)
+  def init() = {}
+}
+
 class ScalaScriptSecurityManager extends SecurityManager {
 
   val shouldCheck = new DynamicVariable[Boolean](false)
@@ -85,8 +91,6 @@ class ScalaScriptSecurityManager extends SecurityManager {
 object ScalaScript {
   private val engine = new ScriptEngineManager().getEngineByName("scala").asInstanceOf[IMain]
 
-  private val restrictedSecurityManager = new ScalaScriptSecurityManager
-  System.setSecurityManager(restrictedSecurityManager)
   private val settings = engine.settings
   settings.usejavacp.value = true
   settings.embeddedDefaults[ScalaScriptSecurityManager]
@@ -108,7 +112,7 @@ object ScalaScript {
     withContextClassLoader {
       val compiledCode = engine.compile(fullCode)
       withTimeout(timeoutInSeconds) {
-        restrictedSecurityManager.checkedRun {
+        ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
           compiledCode.eval().toString
         }
       }
@@ -148,7 +152,7 @@ object ScalaScript {
       """
       val compiledCode = engine.compile(fullCode)
       withTimeout(timeoutInSeconds) {
-        restrictedSecurityManager.checkedRun {
+        ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
           compiledCode.eval().toString
         }
       }
