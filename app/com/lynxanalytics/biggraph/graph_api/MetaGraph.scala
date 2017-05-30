@@ -712,6 +712,8 @@ class OutputBuilder(val instance: MetaGraphOperationInstance) {
   }
 
   def apply(table: Table, df: spark.sql.DataFrame): Unit = {
+    assert(table.schema == df.schema,
+      s"Output schema mismatch. Declared: ${table.schema} Output: ${df.schema}")
     addData(new TableData(table, df))
   }
 
