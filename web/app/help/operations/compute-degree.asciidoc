@@ -1,0 +1,32 @@
+### Compute degree
+
+For every vertex, this operation calculates either the number of edges it is connected to
+or the number of neighboring vertices it is connected to.
+You can use the `Count` parameter to control this calculation:
+choosing one of the 'edges' settings can result in a neighboring
+vertex being counted several times (depending on the number of edges between
+the vertex and the neighboring vertex); whereas choosing one of the 'neighbors' settings
+will result in each neighboring vertex counted once.
+
+====
+[[name]] Attribute name::
+The new attribute will be created under this name.
+
+[[direction]] Count::
+ - `incoming edges`: Count the edges coming in to each vertex.
+ - `outgoing edges`: Count the edges going out of each vertex.
+ - `all edges`: Count all the edges going in or out of each vertex.
+ - `symmetric edges`:
+   Count the 'symmetric' edges for each vertex: this means that if you have n edges
+   going from A to B and k edges going from B to A, then min(n,k) edges will be
+   taken into account for both A and B.
+ - `in-neighbors`: For each vertex A, count those vertices
+   that have an outgoing edge to A.
+ - `out-neighbors`: For each vertex A, count those vertices
+   that have an incoming edge from A.
+ - `all neighbors`: For each vertex A, count those vertices
+   that either have an outgoing edge to or an incoming edge from A.
+ - `symmetric neighbors`: For each vertex A, count those vertices
+   that have both an outgoing edge to and an incoming edge from A.
+
+====

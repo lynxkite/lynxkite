@@ -1,3 +1,0 @@
-### No operation
-
-Placeholder when creating new operations.

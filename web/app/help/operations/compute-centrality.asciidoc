@@ -1,0 +1,37 @@
+### Compute centrality
+
+Calculates an approximation of the centrality for every vertex. Higher centrality means that
+the vertex is more embedded in the graph. Multiple different centrality measures have been defined
+in the literature. You can choose the specific centrality measure as a parameter to this operation.
+
+====
+[[name]] Attribute name::
+The new attribute will be created under this name.
+
+[[maxdiameter]] Maximal diameter to check::
+The algorithm works by counting the shortest paths up to a certain length in each iteration.
+This parameter sets the maximal length to check, so it has a strong influence over the run
+time of the operation.
++
+A setting lower than the actual diameter of the graph can theoretically introduce unbounded error
+to the results. In typical small world graphs this effect may be acceptable, however.
+
+[[algorithm]] The centrality algorithm to use::
+- The **harmonic centrality** of the vertex A is the sum of the reciprocals of all shortest paths to
+A.
+- **Lin's centrality** of the vertex A is the square of the size of its coreachable set divided by
+the sum of the shortest paths to A.
+- **Average distance** of the vertex A is the sum of the shortest paths to A divided by the size of
+its coreachable set.
+
+[[bits]] The precision of the algorithm::
+The centrality algorithm is an approximation. This parameter sets the trade-off between
+the quality of the approximation and the memory and time consumption of the algorithm.
+In most cases the default value is good enough. On very large graphs it may help to use
+a lower number in order to speed up the algorithm or meet memory constraints.
+
+[[direction]] Direction::
+ - `incoming edges`: Calculating paths _from_ vertices.
+ - `outgoing edges`: Calculating paths _to_ vertices.
+ - `all edges`: Calculating paths to both directions - effectively on an undirected graph.
+====

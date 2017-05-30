@@ -1,0 +1,56 @@
+<div class="col-sm-12">
+  <h3>Table sample</h3>
+  <div id="table-control">
+    <form>
+    <span>maximum number of rows: </span>
+    <input class="form-control ng-pristine ng-valid ng-touched"
+           type="number"
+           min="0"
+           step="1"
+           id="sample-rows"
+           ng-model="sampleRows">
+    <button class="btn btn-primary" id="get-sample-button" ng-click="getSample()">
+      Show sample
+    </button>
+    <button class="btn btn-primary" id="more-rows-button" ng-click="showMoreRows()">
+      + {{ showMoreRowsIncrement() }} rows
+    </button>
+    <span id="table-sample-spinner" class="glyphicon glyphicon-cog" ng-if="!table.$resolved"></span>
+    </form>
+  </div>
+  <div ng-if="table.$error" id="table-sample-error">
+    Failed to load table sample.
+    <a href="" ng-click="util.reportRequestError(table, 'Failed to load table sample.')">
+      Click to report error.
+    </a>
+  </div>
+  <table ng-if="table.data" class="table table-striped table-bordered" id="table-sample">
+    <thead>
+      <tr>
+        <th ng-repeat="col in table.header" ng-click="sort.select($index)">
+          <span class="column-name">{{col.name}}</span>
+          <br>
+          <span class="no-break">
+            <span class="column-type">{{col.dataType}}</span>
+            <span class="ordering">
+              <i ng-show="sort.column === $index.toString()"
+                 class="glyphicon glyphicon-triangle-{{ sort.reverse ? 'top' : 'bottom' }}"></i>
+            </span>
+          </span>
+        </th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr ng-if="!sort.column"
+          ng-repeat="row in table.data">
+        <td ng-repeat="item in row track by $index" ng-class="{ 'is-null': !item.defined }">
+          {{ item.string }}</td>
+      </tr>
+      <tr ng-if="sort.column"
+          ng-repeat="row in table.data | orderBy:sortKey:sort.reverse track by $index">
+        <td ng-repeat="item in row track by $index" ng-class="{ 'is-null': !item.defined }">
+          {{ item.string }}</td>
+      </tr>
+      </tbody>
+  </table>
+</div>

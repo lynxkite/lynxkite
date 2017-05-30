@@ -1,7 +1,7 @@
 ### Import segmentation
 
 Imports a segmentation from a table. The table must have a column identifying an existing vertex by
-a string attribute and another column that specifies the segment it belongs to.
+a String attribute and another column that specifies the segment it belongs to.
 Each vertex may belong to any number of segments.
 
 The rest of the columns in the table are ignored.
@@ -12,12 +12,12 @@ include::{g}[tag=table-import]
 [[name]] Name of new segmentation::
 The imported segmentation will be created under this name.
 
-[[base-id-attr]] Vertex ID attribute::
+[[base_id_attr]] Vertex ID attribute::
 The `String` vertex attribute that identifies the base vertices.
 
-[[base-id-column]] Vertex ID column::
+[[base_id_column]] Vertex ID column::
 The table column that identifies vertices.
 
-[[seg-id-column]] Segment ID column::
+[[seg_id_column]] Segment ID column::
 The table column that identifies segments.
 ====

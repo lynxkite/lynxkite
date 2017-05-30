@@ -1,5 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/spark_tests/cache_memdisk_ser.groovy with params List((dataSize,2000000000), (numPartitions,1000))
-MEMORY_AND_DISK_SER: STAGE DONE: [1.0] localities: Map(PROCESS_LOCAL -> 1000)  mapPartitionsWithIndex at SparkTests.scala:45 97 seconds
-MEMORY_AND_DISK_SER: STAGE DONE: [2.0] localities: Map(PROCESS_LOCAL -> 1000)  foreach at SparkTests.scala:58 1134 seconds
-MEMORY_AND_DISK_SER: STAGE DONE: [4.0] localities: Map(PROCESS_LOCAL -> 1000)  foreach at SparkTests.scala:59 44 seconds
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/spark_tests/cache_memdisk_ser.groovy, took 1278 seconds

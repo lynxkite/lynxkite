@@ -1,0 +1,18 @@
+<div class="col-sm-12">
+  <div ng-if="plotJSON.value.$resolved && !plotJSON.value.$error">
+    <h3>Plot: {{title}}</h3>
+    <!-- This is the placeholder DIV for a hidden plot to compute correct sizes -->
+    <div ng-show="false" id="hidden-plot-div"> </div>
+    <!-- This is the placeholder DIV for the plot -->
+    <div id="plot-div"> </div>
+  </div>
+  <div ng-if="plotJSON.value.$resolved && plotJSON.value.$error">
+    <p>
+      Cannot create plot.<br>
+      <span class="plot-error">{{plotJSON.value.$error}}</span>
+    </p>
+  </div>
+  <progressbar ng-if="!plotJSON.value.$resolved" value="100" class="progress-striped active">
+    Computing plot...
+  </progressbar>
+</div>

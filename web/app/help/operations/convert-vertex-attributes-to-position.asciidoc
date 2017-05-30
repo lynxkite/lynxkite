@@ -1,0 +1,15 @@
+### Convert vertex attributes to position
+
+Creates an attribute of type `(Double, Double)` from two `Double` attributes.
+The created attribute can be used as an X-Y or latitude-longitude location.
+
+====
+[[output]] Save as::
+The new attribute will be created under this name.
+
+[[x]] X or latitude::
+The attribute that makes up the first coordinate.
+
+[[y]] Y or longitude::
+The attribute that makes up the second coordinate.
+====

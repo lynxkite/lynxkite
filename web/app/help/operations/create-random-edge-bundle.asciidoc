@@ -3,7 +3,7 @@
 Creates edges randomly, so that each vertex will have a degree uniformly chosen between 0 and
 2 &times; the provided parameter.
 
-For example, you can create a random graph by first applying operation <<New vertex set>>
+For example, you can create a random graph by first applying operation <<Create vertices>>
 and then creating the random edges.
 
 ====

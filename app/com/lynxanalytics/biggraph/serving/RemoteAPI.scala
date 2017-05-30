@@ -16,16 +16,16 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving.FrontendJson._
-import com.lynxanalytics.biggraph.table.TableImport
 import org.apache.spark.sql.types.StructType
 
 object RemoteAPIProtocol {
   case class ParquetMetadataResponse(rowCount: Long)
   case class CheckpointResponse(checkpoint: String)
   case class OperationNamesResponse(names: List[String])
+  case class BoxMetadatasResponse(boxes: List[BoxMetadata])
   case class OperationRequest(
     checkpoint: String,
-    path: List[String],
+    inputs: Map[String, BoxOutput],
     operation: String,
     parameters: Map[String, String])
   case class LoadNameRequest(name: String)
@@ -56,11 +56,29 @@ object RemoteAPIProtocol {
         implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
       val dfs = checkpoints.flatMap {
         case (name, cp) =>
-          val viewer =
-            new controllers.RootProjectViewer(metaManager.checkpointRepo.readCheckpoint(cp))
-          getDFsOfViewer(user, context, viewer, name)
+          ???
+        // getDFsOfViewer(user, context, /* RemoteAPIController.getViewer(cp) */ ???, name)
       }
       DataManager.sql(context, query, dfs.toList)
+    }
+
+    /*
+    // Lists all the DataFrames in the workspace.
+    private def getDFsOfWorkspace(
+      user: User,
+      sqlContext: SQLContext,
+      workspace: controllers.Workspace,
+      prefix: String)(
+        implicit mm: MetaGraphManager,
+        dm: DataManager): Iterable[(String, DataFrame)] = {
+      val leaves = workspace.leafStates
+      val leafDFs =
+        if (leaves.size == 1) getDFsOfViewer(user, sqlContext, leaves.head.project.viewer, prefix)
+        else Seq()
+      val fullPrefix = if (prefix.nonEmpty) prefix + "|" else ""
+      leafDFs ++ workspace.states.flatMap(
+        s => getDFsOfViewer(
+          user, sqlContext, s.project.viewer, fullPrefix + s.box + "|" + s.output))
     }
 
     // Lists all the DataFrames in the project/table/view given by the viewer.
@@ -80,6 +98,7 @@ object RemoteAPIProtocol {
       val recipeDFs = viewer.viewRecipe.map(prefix -> _.createDataFrame(user, sqlContext))
       tableDFs ++ recipeDFs
     }
+    */
   }
 
   case class CheckpointRequest(checkpoint: String)
@@ -91,9 +110,9 @@ object RemoteAPIProtocol {
   case class DirectoryEntryResult(
     exists: Boolean,
     isView: Boolean,
-    isTable: Boolean,
     isProject: Boolean,
     isDirectory: Boolean,
+    isWorkspace: Boolean,
     isReadAllowed: Boolean,
     isWriteAllowed: Boolean)
   case class ExportViewToCSVRequest(
@@ -116,6 +135,7 @@ object RemoteAPIProtocol {
   case class ListElement(name: String, checkpoint: String, objectType: String)
   case class ListResult(entries: List[ListElement])
 
+  import WorkspaceJsonFormatters._
   implicit val wParquetMetadataResponse = json.Json.writes[ParquetMetadataResponse]
   implicit val wCheckpointResponse = json.Json.writes[CheckpointResponse]
   implicit val wOperationNamesResponse = json.Json.writes[OperationNamesResponse]
@@ -160,15 +180,13 @@ object RemoteAPIServer extends JsonServer {
   def getPrefixedPath = jsonPost(c.getPrefixedPath)
   def getViewSchema = jsonPost(c.getViewSchema)
   def getParquetMetadata = jsonPost(c.getParquetMetadata)
-  def newProject = jsonPost(c.newProject)
-  def loadProject = jsonPost(c.loadProject)
+  def newWorkspace = jsonPost(c.newWorkspace)
+  def loadWorkspace = jsonPost(c.loadWorkspace)
   def removeName = jsonPost(c.removeName)
-  def loadTable = jsonPost(c.loadTable)
   def loadView = jsonPost(c.loadView)
   def runOperation = jsonPost(c.runOperation)
   def getOperationNames = jsonPost(c.getOperationNames)
-  def saveProject = jsonPost(c.saveProject)
-  def saveTable = jsonPost(c.saveTable)
+  def saveWorkspace = jsonPost(c.saveWorkspace)
   def saveView = jsonPost(c.saveView)
   def takeFromView = jsonFuturePost(c.takeFromView)
   def exportViewToCSV = jsonFuturePost(c.exportViewToCSV)
@@ -176,19 +194,12 @@ object RemoteAPIServer extends JsonServer {
   def exportViewToORC = jsonFuturePost(c.exportViewToORC)
   def exportViewToParquet = jsonFuturePost(c.exportViewToParquet)
   def exportViewToJdbc = jsonFuturePost(c.exportViewToJdbc)
-  def exportViewToTable = jsonFuturePost(c.exportViewToTable)
   private def createView[T <: ViewRecipe: json.Writes: json.Reads] =
     jsonPost[T, CheckpointResponse](c.createView)
-  def createViewJdbc = createView[JdbcImportRequest]
-  def createViewHive = createView[HiveImportRequest]
-  def createViewCSV = createView[CSVImportRequest]
-  def createViewParquet = createView[ParquetImportRequest]
-  def createViewORC = createView[ORCImportRequest]
-  def createViewJson = createView[JsonImportRequest]
   def changeACL = jsonPost(c.changeACL)
   def globalSQL = createView[GlobalSQLRequest]
   def isComputed = jsonPost(c.isComputed)
-  def computeProject = jsonPost(c.computeProject)
+  def computeWorkspace = jsonPost(c.computeWorkspace)
   def list = jsonPost(c.list)
   def cleanFileSystem = jsonPost(c.cleanFileSystem)
 }
@@ -200,11 +211,11 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
   val ops = new frontend_operations.Operations(env)
-  val sqlController = new SQLController(env)
+  val sqlController = new SQLController(env, ops)
   val bigGraphController = new BigGraphController(env)
   val graphDrawingController = new GraphDrawingController(env)
 
-  def normalize(operation: String) = operation.replace("-", "").toLowerCase
+  def normalize(operation: String) = operation.replace(" ", "").toLowerCase
   def camelize(operation: String) = {
     val words = operation.split("-").toList
     val first = words.head.toLowerCase
@@ -212,11 +223,15 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     first + rest.mkString("")
   }
 
-  lazy val normalizedIds = ops.operationIds.map(id => normalize(id) -> id).toMap
-  lazy val camelizedIds = ops.operationIds.map(id => camelize(id)).toList
+  lazy val normalizedIds = ops.atomicOperationIds.map(id => normalize(id) -> id).toMap
+  lazy val camelizedIds = ops.atomicOperationIds.map(id => camelize(id)).toList
 
   def getOperationNames(user: User, request: Empty): OperationNamesResponse = {
-    return OperationNamesResponse(camelizedIds)
+    OperationNamesResponse(camelizedIds)
+  }
+
+  def getBoxMetadatas(user: User, request: Empty): BoxMetadatasResponse = {
+    BoxMetadatasResponse(ops.atomicOperationIds.toList.map(ops.getBoxMetadata(_)))
   }
 
   def getDirectoryEntry(user: User, request: DirectoryEntryRequest): DirectoryEntryResult = {
@@ -225,9 +240,9 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     DirectoryEntryResult(
       exists = entry.exists,
       isView = entry.isView,
-      isTable = entry.isTable,
       isProject = entry.isProject,
       isDirectory = entry.isDirectory,
+      isWorkspace = entry.isWorkspace,
       isReadAllowed = entry.readAllowedFrom(user),
       isWriteAllowed = entry.writeAllowedFrom(user)
     )
@@ -240,7 +255,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
       resolved = file.resolvedName)
   }
 
-  def newProject(user: User, request: Empty): CheckpointResponse = {
+  def newWorkspace(user: User, request: Empty): CheckpointResponse = {
     CheckpointResponse("") // Blank checkpoint.
   }
 
@@ -256,12 +271,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     CheckpointResponse(frame.checkpoint)
   }
 
-  def loadProject(user: User, request: LoadNameRequest): CheckpointResponse = {
-    loadObject(user, request, _.isProject)
-  }
-
-  def loadTable(user: User, request: LoadNameRequest): CheckpointResponse = {
-    loadObject(user, request, _.isTable)
+  def loadWorkspace(user: User, request: LoadNameRequest): CheckpointResponse = {
+    loadObject(user, request, _.isWorkspace)
   }
 
   def loadView(user: User, request: LoadNameRequest): CheckpointResponse = {
@@ -293,12 +304,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     CheckpointResponse(p.checkpoint)
   }
 
-  def saveProject(user: User, request: SaveCheckpointRequest): CheckpointResponse = {
-    saveFrame(user, request, _.asNewProjectFrame(_))
-  }
-
-  def saveTable(user: User, request: SaveCheckpointRequest): CheckpointResponse = {
-    saveFrame(user, request, _.asNewTableFrame(_))
+  def saveWorkspace(user: User, request: SaveCheckpointRequest): CheckpointResponse = {
+    saveFrame(user, request, _.asNewWorkspaceFrame(_))
   }
 
   def saveView(user: User, request: SaveCheckpointRequest): CheckpointResponse = {
@@ -308,22 +315,41 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   def getViewer(cp: String): controllers.RootProjectViewer =
     new controllers.RootProjectViewer(metaManager.checkpointRepo.readCheckpoint(cp))
 
+  /*
+    val p = metaManager.checkpointRepo.readCheckpoint(cp)
+    p.workspace.map { ws =>
+      val leaves = ws.leafStates
+      assert(leaves.size == 1, s"Workspace must have 1 leaf states: $ws")
+      leaves.head.project.viewer
+    }.getOrElse(new controllers.RootProjectViewer(p))
+  }
+  */
+
   // Get a viewer for a project which can be a root project or a segmentation.
   def getViewer(cp: String, path: List[String]): controllers.ProjectViewer = {
     val rootProjectViewer = getViewer(cp)
     rootProjectViewer.offspringViewer(path)
   }
 
-  // Run an operation on a root project or a segmentation
+  def getWorkspace(cp: String): controllers.Workspace =
+    metaManager.checkpointRepo.readCheckpoint(cp).workspace.getOrElse(Workspace.from())
+
+  // Run an operation on a root project or a segmentation in a workspace.
   def runOperation(user: User, request: OperationRequest): CheckpointResponse = {
+    ??? /*
     val normalized = normalize(request.operation)
     assert(normalizedIds.contains(normalized), s"No such operation: ${request.operation}")
     val operation = normalizedIds(normalized)
-    val viewer = getViewer(request.checkpoint, request.path)
-    val context = controllers.Operation.Context(user, viewer)
-    val spec = controllers.FEOperationSpec(operation, request.parameters)
-    val newState = ops.applyAndCheckpoint(context, spec)
-    CheckpointResponse(newState.checkpoint.get)
+    val workspace = getWorkspace(request.checkpoint)
+    val inputBoxes = request.inputs.values.map(c => workspace.findBox(c.box).get)
+    val avgX = inputBoxes.map(_.x).sum / inputBoxes.size
+    val avgY = inputBoxes.map(_.y).sum / inputBoxes.size
+    val newBox = workspace.autoName(
+      ops.getBoxMetadata(operation).toBox(request.parameters, x = avgX, y = avgY + 50))
+    val newArrows = request.inputs.map { case (id, source) => Arrow(source, newBox.input(id)) }
+    val newWorkspace = workspace.addBox(newBox).addArrows(newArrows)
+    val checkpoint = newWorkspace.checkpoint(previous = request.checkpoint)
+    CheckpointResponse(checkpoint)*/
   }
 
   def getScalar(user: User, request: ScalarRequest): Future[DynamicValue] = {
@@ -500,12 +526,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   }
 
   def exportViewToTable(
-    user: User, request: ExportViewToTableRequest): Future[CheckpointResponse] = dataManager.async {
-    val df = viewToDF(user, request.checkpoint)
-    val table = TableImport.importDataFrameAsync(df)
-    val cp = table.saveAsCheckpoint("Created from a view via the Remote API.")
-    CheckpointResponse(cp)
-  }
+    user: User, request: ExportViewToTableRequest): Future[CheckpointResponse] = ???
 
   private def isComputed(entity: TypedEntity[_]): Boolean = {
     val progress = dataManager.computeProgress(entity)
@@ -528,7 +549,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
       segmentations.map(_.editor).forall(isComputed)
   }
 
-  def computeProject(user: User, request: CheckpointRequest): Unit = {
+  def computeWorkspace(user: User, request: CheckpointRequest): Unit = {
     val viewer = getViewer(request.checkpoint)
     computeProject(viewer.editor)
   }

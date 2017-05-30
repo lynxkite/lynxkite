@@ -1,0 +1,9 @@
+### Compute embeddedness
+
+Calculates the overlap size of vertex neighborhoods along the edges. If an A{to}B edge
+has an embeddedness of `N`, it means A and B have `N` common neighbors.
+
+====
+[[name]] Attribute name::
+The new attribute will be created under this name.
+====

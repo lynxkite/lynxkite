@@ -15,7 +15,7 @@ A simple example:
 ```
 6 * 7
 ```
-will generate a constant double attribute of value `42.0`. You can also use values of other attributes
+will generate a constant Double attribute of value `42.0`. You can also use values of other attributes
 in the expression:
 ```
 6 * age
@@ -68,7 +68,7 @@ var coinToss3 = rand.nextBoolean() ? 'H' : 'T';
 coinToss1 + coinToss2 + coinToss3;
 ```
 This example assumes that there is already an attribute named `randomSeedAttr`,
-which we are using as the random seed. The result in this example will be a string
+which we are using as the random seed. The result in this example will be a String
 attribute.
 
 The available methods are listed here:
@@ -97,8 +97,8 @@ Values of other types need to be manually converted before passing to or from Ja
 particular, long numeric types need these conversions. You can use for example one of
 the following operations to achieve that:
 <<vertex-attribute-to-string>> or <<vertex-attribute-to-double>>.
-Converting to double will of course cause precision loss for large numbers, but
-converting to string will not.
+Converting to Double will of course cause precision loss for large numbers, but
+converting to String will not.
 
 ### JavaScript engine
 

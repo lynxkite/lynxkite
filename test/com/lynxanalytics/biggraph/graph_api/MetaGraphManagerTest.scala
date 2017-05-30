@@ -77,9 +77,6 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
         vertexSets = Map('inputVertices -> firstVertices),
         attributes = Map('inputAttr -> firstVattr)))
 
-    val path = SymbolPath.parse("my/favorite/vertices/first")
-    m1o.setTag(path, firstVertices)
-
     val m1c = MetaRepositoryManager(m1Dir)
 
     val entities = firstInstance.entities.all.values ++ secondInstance.entities.all.values
@@ -95,8 +92,6 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
         m2o.entity(entity.gUID)
       }
     }
-
-    assert(m1c.vertexSet(path).gUID == firstVertices.gUID)
   }
 
   test("No operation should be calculated twice") {

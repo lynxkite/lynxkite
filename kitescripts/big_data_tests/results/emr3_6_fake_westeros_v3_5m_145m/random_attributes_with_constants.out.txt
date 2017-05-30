@@ -1,2 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/random_attributes_with_constants.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/random_attributes_with_constants.groovy, took 0 seconds

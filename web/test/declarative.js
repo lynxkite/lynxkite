@@ -1,4 +1,5 @@
 'use strict';
+/* eslint-disable no-console */
 
 function UIDescription() {
   var states = {};
@@ -8,7 +9,7 @@ function UIDescription() {
 
   var mocks = require('./mocks.js');
   mocks.addTo(browser);
-  browser.driver.manage().window().setSize(1100, 600);
+  browser.driver.manage().window().setSize(1100, 700);
 
   return {
     isSolo: () => soloMode,
@@ -178,9 +179,10 @@ try {
   var stats = fs.lstatSync(userContentDir);
   if (stats.isDirectory()) {
     screenshotDir = userContentDir + '/';
-    userVisiblePrefix = 'http://' + require('os').hostname() + ':8888/userContent/';
+    userVisiblePrefix = 'http://jenkins/userContent/';
   }
 } catch (e) {
+  console.error(e, e.stack);
 }
 
 // Makes a screenshot if an expectation fails.

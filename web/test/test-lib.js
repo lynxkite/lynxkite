@@ -1,15 +1,17 @@
 'use strict';
 
-var testLib; // Forward declarations.
-var History; // Forward declarations.
-var TableBrowser; // Forward declarations.
+
 var request = require('request');
 var fs = require('fs');
 
+// Forward declarations.
+var testLib;
+
 var K = protractor.Key;  // Short alias.
 
+
 // Mirrors the "id" filter.
-function toID(x) {
+function toId(x) {
   return x.toLowerCase().replace(/ /g, '-');
 }
 
@@ -129,33 +131,376 @@ Entity.prototype = {
   },
 };
 
+function Workspace() {
+  this.main = element(by.id('workspace-entry-point'));
+  this.selector = element(by.css('.operation-selector'));
+  this.board = element(by.css('#workspace-drawing-board'));
+}
 
-function Side(direction) {
+Workspace.prototype = {
+  expectCurrentWorkspaceIs: function(name) {
+    expect(this.main.element(by.id('workspace-name')).getText()).toBe(name);
+    // TODO: check that workspace is error-free
+  },
+
+  close: function() {
+    this.main.element(by.id('close-workspace')).click();
+  },
+
+  openOperation: function(name) {
+    this.selector.element(by.id('operation-search')).click();
+    this.selector.element(by.id('filter')).sendKeys(name, K.ENTER);
+    return this.selector.$$('operation-selector-entry').get(0);
+  },
+
+  closeOperationSelector: function() {
+    this.selector.element(by.id('operation-search')).click();
+  },
+
+  duplicate: function() {
+    browser.actions()
+        .sendKeys(K.chord(K.CONTROL, 'c'))
+        .sendKeys(K.chord(K.CONTROL, 'v'))
+        .perform();
+  },
+
+  addBox: function(boxData) {
+    var id = boxData.id;
+    var after = boxData.after;
+    var inputs = boxData.inputs;
+    var params = boxData.params;
+    var op = this.openOperation(boxData.name);
+    testLib.simulateDragAndDrop(op, this.board, boxData.x, boxData.y, {id: id});
+    this.closeOperationSelector();
+    if (after) {
+      this.connectBoxes(after, 'project', id, 'project');
+    }
+    if (inputs) {
+      for (var i = 0; i < inputs.length; ++i) {
+        var input = inputs[i];
+        this.connectBoxes(input.boxId, input.srcPlugId, id, input.dstPlugId);
+      }
+    }
+    if (params) {
+      this.editBox(id, params);
+    }
+  },
+
+  selectBoxes: function(boxIds) {
+    // Without this, we would just add additional boxes to the previous selection
+    this.openBoxEditor(boxIds[0]).close();
+    browser.actions().keyDown(protractor.Key.CONTROL).perform();
+    for (var i = 1; i < boxIds.length; ++i) {
+      this.clickBox(boxIds[i]);
+    }
+    browser.actions().keyUp(protractor.Key.CONTROL).perform();
+  },
+
+  // Protractor mouseMove only takes offsets, so first we set the mouse position to a box based on
+  // its id, and then move it to 2 other points on the screen.
+  selectArea: function(startBoxId, point1, point2) {
+    let box = this.getBox(startBoxId);
+    browser.actions()
+      .mouseMove(box, point1)
+      .keyDown(protractor.Key.SHIFT)
+      .mouseDown()
+      .mouseMove(point2)
+      .mouseUp()
+      .keyUp(protractor.Key.SHIFT)
+      .perform();
+  },
+
+  expectNumSelectedBoxes: function(n) {
+    return expect($$('g.selected.selected rect').count()).toEqual(n);
+  },
+
+  deleteBoxes: function(boxIds) {
+    this.selectBoxes(boxIds);
+    this.main.$('#delete-selected-boxes').click();
+  },
+
+  editBox: function(boxId, params) {
+    var boxEditor = this.openBoxEditor(boxId);
+    boxEditor.populateOperation(params);
+    boxEditor.close();
+  },
+
+  addWorkspaceParameter: function(name, kind, defaultValue) {
+    var boxEditor = this.openBoxEditor('anchor');
+    boxEditor.element.$('#add-parameter').click();
+    boxEditor.element.$('#-id').sendKeys(name);
+    boxEditor.element.$('#' + name + '-type').sendKeys(kind);
+    boxEditor.element.$('#' + name + '-default').sendKeys(defaultValue);
+    boxEditor.close();
+  },
+
+  boxExists(boxId) {
+    return this.board.$('.box#' + boxId).isPresent();
+  },
+
+  boxPopupExists(boxId) {
+    return this.board.$('.popup#' + boxId).isPresent();
+  },
+
+  getBox(boxId) {
+    return this.board.$('.box#' + boxId);
+  },
+
+  getInputPlug: function(boxId, plugId) {
+    let box = this.getBox(boxId);
+    if (plugId) {
+      return box.$('#inputs #' + plugId + ' circle');
+    } else {
+      return box.$$('#inputs circle').get(0);
+    }
+  },
+
+  getOutputPlug: function(boxId, plugId) {
+    let box = this.getBox(boxId);
+    if (plugId) {
+      return box.$('#outputs #' + plugId + ' circle');
+    } else {
+      return box.$$('#outputs circle').get(0);
+    }
+  },
+
+  toggleStateView: function(boxId, plugId) {
+    this.getOutputPlug(boxId, plugId).click();
+  },
+
+  clickBox: function(boxId) {
+    this.getBox(boxId).$('rect').click();
+  },
+
+  selectBox: function(boxId) {
+    this.openBoxEditor(boxId).close();
+  },
+
+  openBoxEditor: function(boxId) {
+    this.clickBox(boxId);
+    var popup = this.board.$('.popup#' + boxId);
+    expect(popup.isDisplayed()).toBe(true);
+    this.movePopupToCenter(popup);
+    return new BoxEditor(popup);
+  },
+
+  movePopupToCenter: function(popup) {
+    var head = popup.$('div.popup-head');
+    browser.actions()
+        .mouseDown(head)
+        // Absolute positioning of mouse. If we don't specify the first
+        // argument then this becomes a relative move. If the first argument
+        // is this.board, then protractor scrolls the element of this.board
+        // to the top of the page, even though scrolling is not enabled.
+        .mouseMove($('body'), {x: 800, y: 90})
+        .mouseUp(head)
+        .perform();
+    // Moving with protractor is sensitive to circumstances so we double check
+    // that it was successful. The expected coordinates are different from 800,90
+    // because the mouse is clicked on the center of the popup header.
+    expect(
+      popup.getLocation().then(
+        function(loc) {
+          return 'x=' + loc.x + ',y=' + loc.y;
+        }))
+      .toEqual('x=549,y=72');
+  },
+
+  openStateView: function(boxId, plugId) {
+    this.toggleStateView(boxId, plugId);
+    var popup = this.board.$('.popup#' + boxId + '_' + plugId);
+    this.movePopupToCenter(popup);
+    return new State(popup);
+  },
+
+  getStateView: function(boxId, plugId) {
+    var popup = this.board.$('.popup#' + boxId + '_' + plugId);
+    return new State(popup);
+  },
+
+  expectConnected: function(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
+    var line = this.board.$(`line#${srcBoxId}-${srcPlugId}-${dstBoxId}-${dstPlugId}`);
+    expect(line.isPresent()).toBe(true);
+  },
+
+  connectBoxes: function(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
+    var src = this.getOutputPlug(srcBoxId, srcPlugId);
+    var dst = this.getInputPlug(dstBoxId, dstPlugId);
+    expect(src.isDisplayed()).toBe(true);
+    expect(dst.isDisplayed()).toBe(true);
+    browser.actions()
+        .mouseDown(src)
+        .mouseMove(dst)
+        .mouseUp()
+        .perform();
+    this.expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId);
+  }
+
+};
+
+function BoxEditor(popup) {
+  this.popup = popup;
+  this.element = popup.$('box-editor');
+}
+
+BoxEditor.prototype = {
+
+  operationParameter: function(param) {
+    return this.element.$(
+        'operation-parameters #' + param + ' .operation-attribute-entry');
+  },
+
+  parametricSwitch: function(param) {
+    return this.element.$('operation-parameters #' + param + ' .parametric-switch');
+  },
+
+  populateOperation: function(params) {
+    params = params || {};
+    for (var key in params) {
+      testLib.setParameter(this.operationParameter(key), params[key]);
+    }
+    $('#workspace-name').click(); // Make sure the parameters are not focused.
+  },
+
+  expectParameter: function(paramName, expectedValue) {
+    var param = this.element.$('div#' + paramName + ' input');
+    expect(param.getAttribute('value')).toBe(expectedValue);
+  },
+
+  expectSelectParameter: function(paramName, expectedValue) {
+    var param = this.element.$('div#' + paramName + ' select');
+    expect(param.getAttribute('value')).toBe(expectedValue);
+  },
+
+  close: function() {
+    this.popup.$('#close-popup').click();
+  },
+};
+
+function State(popup) {
+  this.popup = popup;
+  this.left = new Side(this.popup, 'left');
+  this.right = new Side(this.popup, 'right');
+  this.table = new TableState(this.popup);
+  this.plot = new PlotState(this.popup);
+}
+
+State.prototype = {
+  close: function() {
+    this.popup.$('#close-popup').click();
+  }
+};
+
+function PlotState(popup) {
+  this.canvas = popup.$('#plot-div .vega svg');
+}
+
+PlotState.prototype = {
+  barHeights: function() {
+    var until = protractor.ExpectedConditions;
+    var canvasEl = element(by.css('#plot-div .vega svg'));
+    browser.wait(until.presenceOf(canvasEl),
+      15000,
+      'Canvas is taking too long to appear in the DOM');
+    var el = element(by.css('g.mark-rect.marks rect'));
+    browser.wait(until.presenceOf(el),
+      15000,
+      'Bar chart is taking too long to appear in the DOM');
+    return this.canvas.$$('g.mark-rect.marks rect').map(e => e.getAttribute('height'));
+  },
+
+  expectBarHeightsToBe: function(heights) {
+    expect(this.barHeights()).toEqual(heights);
+  }
+};
+
+
+function TableState(popup) {
+  this.sample = popup.$('#table-sample');
+  this.control = popup.$('#table-control');
+}
+
+TableState.prototype = {
+  rowCount: function() {
+    return this.sample.$$('tbody tr').count();
+  },
+
+  expectRowCountIs: function(number) {
+    expect(this.rowCount()).toBe(number);
+  },
+
+  columnNames: function() {
+    return this.sample.$$('thead tr th span.column-name').map(e => e.getText());
+  },
+
+  expectColumnNamesAre(columnNames) {
+    expect(this.columnNames()).toEqual(columnNames);
+  },
+
+  columnTypes: function() {
+    return this.sample.$$('thead tr th span.column-type').map(e => e.getText());
+  },
+
+  expectColumnTypesAre(columnTypes) {
+    expect(this.columnTypes()).toEqual(columnTypes);
+  },
+
+  getRowAsArray: function(row) {
+    return row.$$('td').map(e => e.getText());
+  },
+
+  rows: function() {
+    return this.sample.$$('tbody tr').map(e => this.getRowAsArray(e));
+  },
+
+  expectRowsAre(rows) {
+    expect(this.rows()).toEqual(rows);
+  },
+
+  firstRow: function() {
+    var row = this.sample.$$('tbody tr').get(0);
+    return this.getRowAsArray(row);
+  },
+
+  expectFirstRowIs: function(row) {
+    expect(this.firstRow()).toEqual(row);
+  },
+
+  clickColumn(columnId) { // for sorting
+    var header = this.sample.$$('thead tr th').get(columnId);
+    header.click();
+  },
+
+  clickShowMoreRows: function() {
+    var button = this.control.$('#more-rows-button');
+    button.click();
+  },
+
+  setRowCount: function(num) {
+    var input = this.control.$('#sample-rows');
+    input.sendKeys(testLib.selectAllKey + num.toString());
+  },
+
+  clickShowSample: function() {
+    var button = this.control.$('#get-sample-button');
+    button.click();
+  },
+
+
+};
+
+function Side(popup, direction) {
   this.direction = direction;
-  this.side = element(by.id('side-' + direction));
-  this.toolbox = element(by.id('operation-toolbox-' + direction));
-  this.history = new History(this);
-  this.tableBrowser = new TableBrowser(this.side);
+  this.side = popup.$('project-state-view #side-' + direction);
 }
 
 Side.prototype = {
   expectCurrentProjectIs: function(name) {
-    expect(this.side.evaluate('side.project.$error')).toBeFalsy();
-    expect(this.side.evaluate('side.state.projectName')).toBe(name);
-  },
-
-  expectCurrentProjectIsError: function() {
-    expect(this.side.evaluate('side.project.$error')).toBeTruthy();
-  },
-
-  // Only for opening the second project next to an already open project.
-  openSecondProject: function(project) {
-    testLib.showSelector();
-    this.side.$('#project-' + toID(project)).click();
+    expect(this.side.$('.project-name').getText()).toBe(name);
   },
 
   close: function() {
-    this.side.element(by.id('close-project')).click();
+    this.side.$('#close-project').click();
   },
 
   evaluate: function(expr) {
@@ -168,10 +513,6 @@ Side.prototype = {
 
   getCategorySelector: function(categoryTitle) {
     return this.toolbox.$('div.category[tooltip="' + categoryTitle + '"]');
-  },
-
-  getProjectHistory: function() {
-    return this.side.$('div.project.history');
   },
 
   getValue: function(id) {
@@ -240,32 +581,8 @@ Side.prototype = {
     return this.side.element(by.id('redo-button'));
   },
 
-  operationParameter: function(opElement, param) {
-    return opElement.$('operation-parameters #' + param + ' .operation-attribute-entry');
-  },
-
-  populateOperation: function(parentElement, params) {
-    params = params || {};
-    for (var key in params) {
-      testLib.setParameter(this.operationParameter(parentElement, key), params[key]);
-    }
-  },
-
   populateOperationInput: function(parameterId, param) {
     this.toolbox.element(by.id(parameterId)).sendKeys(testLib.selectAllKey + param);
-  },
-
-  submitOperation: function(parentElement) {
-    var button = parentElement.$('.ok-button');
-    // Wait for uploads or whatever.
-    testLib.wait(protractor.ExpectedConditions.textToBePresentInElement(button, 'OK'));
-    button.click();
-  },
-
-  runOperation: function(name, params) {
-    this.openOperation(name);
-    this.populateOperation(this.toolbox, params);
-    this.submitOperation(this.toolbox);
   },
 
   expectOperationScalar: function(name, text) {
@@ -307,7 +624,7 @@ Side.prototype = {
   },
 
   scalarValue: function(name) {
-    return this.side.element(by.id('scalar-value-' + toID(name)));
+    return this.side.element(by.id('scalar-value-' + toId(name)));
   },
 
   saveProjectAs: function(newName) {
@@ -427,135 +744,6 @@ TableBrowser.prototype = {
 
 };
 
-function History(side) {
-  this.side = side;
-}
-
-History.prototype = {
-  open: function() {
-    this.side.side.$('.history-button').click();
-  },
-
-  close: function(discardChanges) {
-    if (discardChanges) {
-      testLib.expectDialogAndRespond(true);
-    }
-    this.side.side.element(by.id('close-history-button')).click();
-    if (discardChanges) {
-      testLib.checkAndCleanupDialogExpectation();
-    }
-  },
-
-  save: function(name) {
-    this.side.side.$('.save-history-button').click();
-    if (name !== undefined) {
-      var inputBox = this.side.side.$('.save-as-history-box input');
-      inputBox.sendKeys(testLib.selectAllKey + name);
-    }
-    this.side.side.$('.save-as-history-box .glyphicon-floppy-disk').click();
-  },
-
-  expectSaveable: function(saveable) {
-    expect(this.side.side.$('.save-history-button').isPresent()).toBe(saveable);
-  },
-
-  // Get an operation from the history. position is a zero-based index.
-  getOperation: function(position) {
-    var list = this.side.side.
-      $$('project-history div.list-group > li.history-operation-item');
-    return list.get(position);
-  },
-
-  // Beware, the category is left open, so calling this the second time for the same category
-  // does not work.
-  getOperationInCategoryByName: function(operation, tooltip, name) {
-    operation.$('operation-toolbox').$('div[drop-tooltip="' + tooltip + '"]').click();
-    var ops = operation.$('operation-toolbox').$$('div.operation');
-    return ops.filter(function(element) {
-        return element.getText().then(function(text) { return text === name; });
-      }).get(0);
-  },
-
-  getInsertMenu: function(position) {
-    var list = this.side.side.
-      $$('project-history div.list-group > li > project-history-adder');
-    return list.get(position);
-  },
-
-  getOperationName: function(position) {
-    return this.getOperation(position).$('h1').getText();
-  },
-
-  getOperationSegmentation: function(position) {
-    return this.getOperation(position).$('div.affected-segmentation').getText();
-  },
-
-  openDropdownMenu: function(operation) {
-    var menu = operation.$('.history-options');
-    menu.$('a.dropdown-toggle').click();
-    return menu;
-  },
-
-  clickDropDownMenuItem: function(position, itemId) {
-    var operation = this.getInsertMenu(position);
-    this.openDropdownMenu(operation).$('a#dropdown-menu-' + itemId).click();
-  },
-
-  selectOperation: function(op, name) {
-    op.element(by.id('operation-search')).click();
-    op.element(by.id('filter')).sendKeys(name, K.ENTER);
-  },
-
-  deleteOperation: function(position) {
-    this.getOperation(position).$('#operation-discard').click();
-  },
-
-  enterEditMode: function(op) {
-    op.$('#operation-edit').click();
-  },
-
-  discardEdits: function(op) {
-    op.$('#operation-discard-changes').click();
-  },
-
-  initInsertedOperation: function(newPos, name, params) {
-    var newOp = this.getOperation(newPos);
-    this.selectOperation(newOp, name);
-    this.side.populateOperation(newOp, params);
-    this.side.submitOperation(newOp);
-  },
-
-  insertOperationSimple: function(pos, name, params) {
-    this.getInsertMenu(pos).click();
-    this.initInsertedOperation(pos, name, params);
-  },
-
-  insertOperationForSegmentation: function(pos, name, params, segmentation) {
-    var menuItemId = 'add';
-    if (segmentation) {
-      menuItemId += '-for-' + segmentation;
-    }
-    this.clickDropDownMenuItem(pos, menuItemId);
-    this.initInsertedOperation(pos, name, params);
-  },
-
-  numOperations: function() {
-    return this.side.side.
-      $$('project-history div.list-group > li.history-operation-item').
-      count();
-  },
-
-  expectOperationParameter: function(opPosition, paramName, expectedValue) {
-    var param = this.getOperation(opPosition).$('div#' + paramName + ' input');
-    expect(param.getAttribute('value')).toBe(expectedValue);
-  },
-
-  expectOperationSelectParameter: function(opPosition, paramName, expectedValue) {
-    var param = this.getOperation(opPosition).$('div#' + paramName + ' select');
-    expect(param.getAttribute('value')).toBe(expectedValue);
-  }
-};
-
 var visualization = {
   svg: $('svg.graph-view'),
 
@@ -665,24 +853,28 @@ function Selector(root) {
 }
 
 Selector.prototype = {
-  project: function(name) {
-    return element(by.id('project-' + toID(name)));
+  workspace: function(name) {
+    return element(by.id('workspace-' + toId(name)));
   },
 
   directory: function(name) {
-    return element(by.id('directory-' + toID(name)));
+    return element(by.id('directory-' + toId(name)));
   },
 
   table: function(name) {
-    return element(by.id('table-' + toID(name)));
+    return element(by.id('table-' + toId(name)));
   },
 
   view: function(name) {
-    return element(by.id('view-' + toID(name)));
+    return element(by.id('view-' + toId(name)));
   },
 
-  expectNumProjects: function(n) {
-    return expect($$('.project-entry').count()).toEqual(n);
+  snapshot: function(name) {
+    return element(by.id('snapshot-' + toId(name)));
+  },
+
+  expectNumWorkspaces: function(n) {
+    return expect($$('.workspace-entry').count()).toEqual(n);
   },
 
   expectNumDirectories: function(n) {
@@ -709,10 +901,10 @@ Selector.prototype = {
     return expect(table.$('value').getText()).toEqual(n.toString());
   },
 
-  openNewProject: function(name) {
-    element(by.id('new-project')).click();
-    element(by.id('new-project-name')).sendKeys(name);
-    $('#new-project button[type=submit]').click();
+  openNewWorkspace: function(name) {
+    element(by.id('new-workspace')).click();
+    element(by.id('new-workspace-name')).sendKeys(name);
+    $('#new-workspace button[type=submit]').click();
     this.hideFloatingElements();
   },
 
@@ -723,7 +915,7 @@ Selector.prototype = {
   clickAndWaitForCsvImport: function() {
     var importCsvButton = element(by.id('import-csv-button'));
     // Wait for the upload to finish.
-    testLib.wait(protractor.ExpectedConditions.elementToBeClickable(importCsvButton));
+    testLib.waitUntilClickable(importCsvButton);
     importCsvButton.click();
   },
 
@@ -774,9 +966,9 @@ Selector.prototype = {
     // Floating elements can overlap buttons and block clicks.
     browser.executeScript(`
       document.styleSheets[0].insertRule(
-        '.spark-status, .bottom-links { position: static !important; }');
+        '.spark-status, .user-menu { position: static !important; }');
         `);
-      },
+  },
 
   openDirectory: function(name) {
     this.directory(name).click();
@@ -786,14 +978,14 @@ Selector.prototype = {
     element(by.id('pop-directory-icon')).click();
   },
 
-  renameProject: function(name, newName) {
-    var project = this.project(name);
-    testLib.menuClick(project, 'rename');
-    project.element(by.id('renameBox')).sendKeys(testLib.selectAllKey, newName).submit();
+  renameWorkspace: function(name, newName) {
+    var workspace = this.workspace(name);
+    testLib.menuClick(workspace, 'rename');
+    workspace.element(by.id('renameBox')).sendKeys(testLib.selectAllKey, newName).submit();
   },
 
-  deleteProject: function(name) {
-    testLib.menuClick(this.project(name), 'discard');
+  deleteWorkspace: function(name) {
+    testLib.menuClick(this.workspace(name), 'discard');
   },
 
   deleteDirectory: function(name) {
@@ -808,12 +1000,12 @@ Selector.prototype = {
     testLib.menuClick(this.view(name), 'edit-import');
   },
 
-  expectProjectListed: function(name) {
-    testLib.expectElement(this.project(name));
+  expectWorkspaceListed: function(name) {
+    testLib.expectElement(this.workspace(name));
   },
 
-  expectProjectNotListed: function(name) {
-    testLib.expectNotElement(this.project(name));
+  expectWorkspaceNotListed: function(name) {
+    testLib.expectNotElement(this.workspace(name));
   },
 
   expectDirectoryListed: function(name) {
@@ -836,12 +1028,16 @@ Selector.prototype = {
     testLib.expectElement(this.view(name));
   },
 
+  expectSnapshotListed: function(name) {
+    testLib.expectElement(this.snapshot(name));
+  },
+
   enterSearchQuery: function(query) {
-    element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + query);
+    element(by.id('search-box')).sendKeys(testLib.selectAllKey + query);
   },
 
   clearSearchQuery: function() {
-    element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + K.BACK_SPACE);
+    element(by.id('search-box')).sendKeys(testLib.selectAllKey + K.BACK_SPACE);
   },
 
   globalSqlEditor: function() {
@@ -893,14 +1089,14 @@ Selector.prototype = {
 var splash = new Selector(element(by.id('splash')));
 
 function randomPattern () {
-  /* jshint bitwise: false */
+  /* eslint-disable no-bitwise */
   var crypto = require('crypto');
   var buf = crypto.randomBytes(16);
   var sixteenLetters = 'abcdefghijklmnop';
   var r = '';
   for (var i = 0; i < buf.length; i++) {
     var v = buf[i];
-    var lo =  (v & 0xf);
+    var lo = (v & 0xf);
     var hi = (v >> 4);
     r += sixteenLetters[lo] + sixteenLetters[hi];
   }
@@ -911,8 +1107,7 @@ var lastDownloadList;
 
 testLib = {
   theRandomPattern: randomPattern(),
-  left: new Side('left'),
-  right: new Side('right'),
+  workspace: new Workspace(),
   visualization: visualization,
   splash: splash,
   selectAllKey: K.chord(K.CONTROL, 'a'),
@@ -938,7 +1133,8 @@ testLib = {
             defer.reject(new Error(error));
           } else {
             defer.fulfill();
-      }});
+          }
+        });
     }
     this.authenticateAndPost('admin', 'adminpw', 'lynxkite', discard);
   },
@@ -962,7 +1158,8 @@ testLib = {
             defer.reject(new Error(error));  // TODO: include message?
           } else {
             func(defer);
-          }});
+          }
+        });
       return defer.promise;
     }
     return browser.controlFlow().execute(sendRequest);
@@ -1018,7 +1215,7 @@ testLib = {
               e.element(by.cssContainingText('option', optionLabelPattern)).click();
             }
           } else if (kind === 'choice') {
-            e.$('option[label="' + value +'"]').click();
+            e.$('option[label="' + value + '"]').click();
           } else {
             e.sendKeys(testLib.selectAllKey + value);
           }
@@ -1042,7 +1239,7 @@ testLib = {
         'window.confirm0 = window.confirm;' +
         'window.confirm = function() {' +
         '  window.confirm = window.confirm0;' +
-        '  return ' + responseValue+ ';' +
+        '  return ' + responseValue + ';' +
         '}');
   },
 
@@ -1122,6 +1319,11 @@ testLib = {
     input.sendKeys(fileName);
   },
 
+  loadImportedTable: function() {
+    var loadButton = $('#imported_table button');
+    loadButton.click();
+  },
+
   startDownloadWatch: function() {
     browser.controlFlow().execute(function() {
       expect(lastDownloadList).toBe(undefined);
@@ -1163,7 +1365,7 @@ testLib = {
   expectNoClass(element, cls) {
     expect(element.getAttribute('class')).toBeDefined();
     element.getAttribute('class').then(function(classes) {
-          expect(classes.split(' ').indexOf(cls)).toBe(-1);
+      expect(classes.split(' ').indexOf(cls)).toBe(-1);
     });
   },
 
@@ -1177,7 +1379,7 @@ testLib = {
     browser.getAllWindowHandles()
       .then(handles => {
         browser.driver.switchTo().window(handles[pos]);
-    });
+      });
   },
 
   showSelector: function() {
@@ -1192,6 +1394,71 @@ testLib = {
     $('.sweet-alert button.confirm').click();
     testLib.wait(EC.stalenessOf($('.sweet-alert.showSweetAlert')));
   },
+
+  // Because of https://github.com/angular/protractor/issues/3289, we cannot use protractor
+  // to generate and send drag-and-drop events to the page. This function can be used to
+  // achieve that.
+  simulateDragAndDrop: function(srcSelector, dstSelector, dstX, dstY, dataTransferOverrides) {
+
+    function simulateDragAndDropInBrowser(src, dst, dstX, dstY, dataTransferOverrides) {
+      function createEvent(type) {
+        var event = new CustomEvent('CustomEvent');
+        event.initCustomEvent(type, true, true, null);
+        event.dataTransfer = {
+          data: {},
+          setData: function(type, value) {
+            this.data[type] = value;
+          },
+          getData: function(type) {
+            return this.data[type];
+          }
+        };
+        return event;
+      }
+
+      var dragStartEvent = createEvent('dragstart');
+      src.dispatchEvent(dragStartEvent);
+      for (var key in dataTransferOverrides) {
+        if (dataTransferOverrides.hasOwnProperty(key)) {
+          dragStartEvent.dataTransfer.setData(key, dataTransferOverrides[key]);
+        }
+      }
+
+      var dropEvent = createEvent('drop');
+      dropEvent.pageX = dstX;
+      dropEvent.pageY = dstY;
+
+      dropEvent.dataTransfer = dragStartEvent.dataTransfer;
+      dst.dispatchEvent(dropEvent);
+
+      var dragEndEvent = createEvent('dragend');
+      dragEndEvent.dataTransfer = dragStartEvent.dataTransfer;
+      src.dispatchEvent(dragEndEvent);
+    }
+
+    browser.executeScript(
+      simulateDragAndDropInBrowser,
+      srcSelector.getWebElement(),
+      dstSelector.getWebElement(),
+      dstX, dstY,
+      dataTransferOverrides
+    );
+  },
+
+  waitUntilClickable: function(element) {
+    testLib.wait(protractor.ExpectedConditions.elementToBeClickable(element));
+  },
+
+  submitInlineInput: function(element, text) {
+    var inputBox = element.$('input');
+    var okButton = element.$('#ok');
+    // Wait for CSS animation.
+    testLib.waitUntilClickable(inputBox);
+    inputBox.sendKeys(text);
+    testLib.waitUntilClickable(okButton);
+    okButton.click();
+  },
+
 };
 
 module.exports = testLib;
