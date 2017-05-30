@@ -3779,6 +3779,22 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
+  registerOp("SQL", UtilityOperations, List("stuff"), List("table"), new TableOutputOperation(_) {
+    override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+      validateParameters(params)
+      val sql = params("sql")
+      val inputs = Seq(
+        "vertices" -> tableLikeInput("stuff").asTable)
+      val result = null //graph_operations.SQL.run(sql, inputs)
+      makeOutput(result)
+    }
+
+    lazy val parameters = List(
+      Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql"))
+    def enabled = FEStatus.enabled
+
+  })
+
   private def getShapeFilePath(params: Map[String, String]): String = {
     val shapeFilePath = params("shapefile")
     assert(listShapefiles().exists(f => f.id == shapeFilePath),
