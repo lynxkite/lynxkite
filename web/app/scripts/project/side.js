@@ -135,13 +135,17 @@ angular.module('biggraph')
 
 
     Side.prototype.updateViewData = function() {
+      console.log('updateViewData');
       var vd = this.viewData || {};
       var noCenters = (this.state.centers === undefined) || (this.state.centers.length === 0);
+      console.log(this.loaded(), this.state.graphMode, noCenters);
       if (!this.loaded() || !this.state.graphMode ||
           (this.state.graphMode === 'sampled' && noCenters)) {
         this.viewData = undefined;
+        console.log('PASS');
         return;
       }
+      console.log('GO');
 
       vd.vertexSet = { id: this.project.vertexSet };
       if (this.project.edgeBundle) {
@@ -355,6 +359,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.loaded = function() {
+      console.log('loaded? ', this.project);
       return this.project && this.project.$resolved && !this.project.$error;
     };
 
