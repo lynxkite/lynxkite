@@ -1,4 +1,7 @@
-<div class="col-sm-12">
+<progressbar ng-if="!exportResultOutput.$resolved" value="100" class="progress-striped active">
+Loading export state...
+</progressbar>
+<div class="col-sm-12" ng-show="exportResultOutput.$resolved">
     <div class="token"
          ng-class="{ active: active() }"
          id="scalar-export-status">
