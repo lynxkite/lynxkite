@@ -86,7 +86,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
 
   // Returns a reference to the object in the workspace this popup belongs to.
   PopupModel.prototype.contentObject = function(workspace) {
-    if (this.content.type === 'box') {
+    if (this.content.type === 'box' || this.content.type === 'visualization') {
       return workspace.getBox(this.content.boxId);
     } else if (this.content.type === 'plug') {
       return workspace.getOutputPlug(this.content.boxId, this.content.plugId);

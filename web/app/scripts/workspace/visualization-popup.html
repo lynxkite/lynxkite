@@ -1,0 +1,28 @@
+<!--
+<div class="col-sm-12">
+  <h3>Visualization</h3>
+  {{ visualization.id }}
+</div>
+-->
+<ui-layout
+  options="{ disableToggle: true }"
+  class="split-screen"
+  ng-style="{
+    'top': '35px',
+    'width': popupModel.width + 'px',
+    'height': popupModel.height + 'px',
+  }">
+
+<div ui-layout-container size="50%">
+
+<project-graph
+  left="left.viewData" right="right.viewData"
+  left-to-right-bundle="leftToRightBundle" right-to-left-bundle="rightToLeftBundle"
+  context-menu="$parent.contextMenu"></project-graph>
+
+</div>
+<div ui-layout-container>
+
+<div ng-repeat="side in sides" ng-include="'scripts/project/side.html'"></div>
+
+</div>

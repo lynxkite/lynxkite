@@ -34,5 +34,11 @@
         popup-model="popupModel"
         plug-id="popupModel.content.plugId">
     </state-view>
+    <visualization-popup
+        ng-if="popupModel.content.type === 'visualization'"
+        box="popupModel.content.box"
+        state-id="popupModel.content.stateId"
+        popup-model="popupModel">
+    </visualization-popup>
   </div>
 </div>

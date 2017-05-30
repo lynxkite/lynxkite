@@ -116,6 +116,7 @@ angular.module('biggraph')
 
     Side.prototype.updateFromBackendJson = function(backendJson) {
       var backendState = JSON.parse(backendJson);
+      console.log('BS ', backendState);
       backendState.projectName = this.state.projectName;
       this.state = backendState;
       if (this.state.centers === undefined) {
