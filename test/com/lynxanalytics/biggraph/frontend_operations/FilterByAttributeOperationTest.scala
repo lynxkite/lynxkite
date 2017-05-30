@@ -10,32 +10,32 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
 
     TestUtils.withRestoreGlobals(verticesPerPartition = 2, tolerance = 1.0) {
       val sizeForTwoPartitions = 3
-      run("New vertex set",
+      val project = box("Create vertices",
         Map("size" -> sizeForTwoPartitions.toString))
-      run("Create random edge bundle",
-        Map("degree" -> "2.0", "seed" -> "42"))
-      run("Add constant edge attribute",
-        Map("name" -> "e", "value" -> "0.0", "type" -> "Double"))
-      run("Add constant vertex attribute",
-        Map("name" -> "v", "value" -> "0.0", "type" -> "Double"))
-      run("Filter by attributes",
-        Map("filterva-v" -> "> 0.0", "filterea-e" -> "> 1.0"))
-
-      project.scalars("edge_count").value
+        .box("Create random edge bundle",
+          Map("degree" -> "2.0", "seed" -> "42"))
+        .box("Add constant edge attribute",
+          Map("name" -> "e", "value" -> "0.0", "type" -> "Double"))
+        .box("Add constant vertex attribute",
+          Map("name" -> "v", "value" -> "0.0", "type" -> "Double"))
+        .box("Filter by attributes",
+          Map("filterva_v" -> "> 0.0", "filterea_e" -> "> 1.0"))
+        .project
+      project.scalars("!edge_count").value
     }
   }
 
   test("Filtering by segment ID") {
-    run("Example Graph")
-    run("Connected components",
-      Map("name" -> "cc", "directions" -> "ignore directions"))
-    run("Filter by attributes",
-      Map("filterva-size" -> "3"),
-      on = project.segmentation("cc"))
-    val c1 = project.segmentation("cc").vertexSet.rdd.keys.take(1).head
-    run("Filter by attributes",
-      Map("filterva-segmentation[cc]" -> s"any($c1)"))
-    assert(project.vertexSet.rdd.count == 3)
+    val base = box("Create example graph")
+      .box("Find connected components",
+        Map("name" -> "cc", "directions" -> "ignore directions"))
+      .box("Filter by attributes",
+        Map("filterva_size" -> "3", "apply_to_project" -> "|cc"))
+    val c1 = base.project.segmentation("cc").vertexSet.rdd.keys.take(1).head
+    val project2 = base.box("Filter by attributes",
+      Map("filterva_segmentation[cc]" -> s"any($c1)"))
+      .project
+    assert(project2.vertexSet.rdd.count == 3)
   }
 }
 

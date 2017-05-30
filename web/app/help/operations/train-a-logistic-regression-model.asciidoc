@@ -21,7 +21,7 @@ be binary label of either 0.0 or 1.0.
 [[features]] Feature attributes::
 Attributes to be used as inputs for the training algorithm.
 
-[[max-iter]] Maximum iterations::
+[[max_iter]] Maximum iterations::
 The maximum number of iterations (>=0).
 
 ====

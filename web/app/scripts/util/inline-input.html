@@ -1,0 +1,17 @@
+<div class="inline-input closed" ng-class="{ closed: !open }">
+  <form ng-submit="done()">
+    <input placeholder="{{ placeholder }}" ng-model="input" ng-disabled="!enabled">
+    <button
+      id="ok"
+      type="submit"
+      class="glyphicon glyphicon-ok"
+      ng-click="done()"
+      ng-disabled="!enabled"></button>
+    <button
+      id="close"
+      type="button"
+      class="glyphicon glyphicon-remove"
+      ng-click="close()"
+      ng-disabled="!enabled"></button>
+  </form>
+</div>

@@ -1,8 +1,0 @@
-### Discard vertex attribute
-
-Throws away vertex attributes.
-
-====
-[[name]] Name::
-The vertex attributes to discard.
-====

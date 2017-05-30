@@ -1,0 +1,24 @@
+### Find modular clustering
+
+Tries to find a partitioning of the vertices with high
+http://en.wikipedia.org/wiki/Modularity_(networks)[modularity].
+
+Edges that go between vertices in the same segment increase modularity, while edges that go from
+one segment to the other decrease modularity. The algorithm iteratively merges and splits segments
+and moves vertices between segments until it cannot find changes that would significantly improve
+the modularity score.
+
+====
+[[name]] Segmentation name::
+The new segmentation will be saved under this name.
+
+[[weights]] Weight attribute::
+The attribute to use as edge weights.
+
+[[max_iterations]] Maximum number of iterations to do::
+After this number of iterations we stop regardless of modularity increment. Use -1 for unlimited.
+
+[[min_increment_per_iteration]] Minimal modularity increment in an iteration to keep going::
+If the average modularity increment in the last few iterations goes below this then we stop
+the algorithm and settle with the clustering found.
+====

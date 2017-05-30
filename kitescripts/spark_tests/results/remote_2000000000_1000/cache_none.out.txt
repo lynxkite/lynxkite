@@ -1,5 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/spark_tests/cache_none.groovy with params List((dataSize,2000000000), (numPartitions,1000))
-null: STAGE DONE: [1.0] localities: Map(PROCESS_LOCAL -> 1000)  mapPartitionsWithIndex at SparkTests.scala:45 100 seconds
-null: STAGE DONE: [2.0] localities: Map(PROCESS_LOCAL -> 1000)  foreach at SparkTests.scala:58 113 seconds
-null: STAGE DONE: [4.0] localities: Map(PROCESS_LOCAL -> 1000)  foreach at SparkTests.scala:59 111 seconds
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/spark_tests/cache_none.groovy, took 327 seconds

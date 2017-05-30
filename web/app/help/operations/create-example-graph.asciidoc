@@ -1,0 +1,27 @@
+### Create example graph
+
+Creates small test graph with 4 people and 4 edges between them.
+
+====
+The vertices and their attributes are:
+|===
+| name | age | gender | income | location
+
+| Adam | 20.3 | Male | 1000 | _coordinates of New York_
+| Eve | 18.2 | Female | _undefined_ | _coordinates of Budapest_
+| Bob | 50.3 | Male | 2000 | _coordinates of Singapore_
+| Isolated Joe | 2.0 | Male | _undefined_ | _coordinates of Sydney_
+|===
+
+The edges and their attributes are:
+|===
+| src | dst | comment | weight
+
+| Adam | Eve | Adam loves Eve | 1
+| Eve | Adam | Eve loves Adam | 2
+| Bob | Adam | Bob envies Adam | 3
+| Bob | Eve | Bob loves Eve | 4
+|===
+
+As silly as this graph is, it is useful for quickly trying a wide range of features.
+====

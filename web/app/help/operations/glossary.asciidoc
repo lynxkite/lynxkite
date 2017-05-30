@@ -93,6 +93,22 @@ tag::table-import[]
 The table to import from.
 end::table-import[]
 
+tag::import-box[]
+[[imported_columns]] Columns to import::
+The columns to import. Leave empty to import all columns.
+
+[[limit]] Limit::
+Number of rows to import at the most. Leave empty to import all rows.
+
+[[sql]] SQL::
+SQL query to apply to the data before importing it. Filtering before importing can be much more
+efficient than filtering after importing.
+
+[[imported_table]] Table GUID::
+Click this button to actually kick off the import. You can click it again later to repeat the
+import. (Useful if the source data has changed.)
+end::import-box[]
+
 tag::random-seed[]
 =====
 LynxKite operations are typically deterministic. If you re-run an operation with
@@ -105,7 +121,7 @@ rarely do you need to give random seeds any thought.
 end::random-seed[]
 
 tag::random-attribute[]
-Generates a new random double attribute with the specified distribution, which can be either
+Generates a new random Double attribute with the specified distribution, which can be either
 (1) a Standard Normal (i.e., Gaussian) distribution with a mean of 0 and a standard deviation of 1, or (2)
 a Standard Uniform distribution where values fall between 0 and 1.
 

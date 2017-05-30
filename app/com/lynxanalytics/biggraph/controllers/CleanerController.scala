@@ -129,10 +129,10 @@ class CleanerController(environment: BigGraphEnvironment) {
       val op = ops(toExpand.dequeue)
       for (input <- op.inputs.all.values) {
         val dependentOp = input.source
-        val dependentID = dependentOp.gUID
-        if (!(operations isDefinedAt dependentID)) {
-          operations += (dependentID -> dependentOp)
-          toExpand.enqueue(dependentID)
+        val dependentId = dependentOp.gUID
+        if (!(operations isDefinedAt dependentId)) {
+          operations += (dependentId -> dependentOp)
+          toExpand.enqueue(dependentId)
         }
       }
     }
@@ -142,10 +142,16 @@ class CleanerController(environment: BigGraphEnvironment) {
   private def operationsFromAllProjects()(
     implicit manager: MetaGraphManager): Map[UUID, MetaGraphOperationInstance] = {
     val operations = new HashMap[UUID, MetaGraphOperationInstance]
-    for (project <- Operation.allObjects(serving.User.fake)) {
+    for (project <- allObjects) {
       operations ++= operationsFromProject(project.viewer)
     }
     operations.toMap
+  }
+
+  private def allObjects(implicit manager: MetaGraphManager): Seq[ObjectFrame] = {
+    val objects = DirectoryEntry.rootDirectory.listObjectsRecursively
+    // Do not list internal project names (starting with "!").
+    objects.filterNot(_.name.startsWith("!"))
   }
 
   // Returns the operations mapped by their ID strings which created
@@ -154,19 +160,19 @@ class CleanerController(environment: BigGraphEnvironment) {
     project: ProjectViewer): Map[UUID, MetaGraphOperationInstance] = {
     val operations = new HashMap[UUID, MetaGraphOperationInstance]
     if (project.vertexSet != null) {
-      operations += operationWithID(project.vertexSet.source)
+      operations += operationWithId(project.vertexSet.source)
     }
     if (project.edgeBundle != null) {
-      operations += operationWithID(project.edgeBundle.source)
+      operations += operationWithId(project.edgeBundle.source)
     }
     operations ++= project.scalars.map {
-      case (_, s) => operationWithID(s.source)
+      case (_, s) => operationWithId(s.source)
     }
     operations ++= project.vertexAttributes.map {
-      case (_, a) => operationWithID(a.source)
+      case (_, a) => operationWithId(a.source)
     }
     operations ++= project.edgeAttributes.map {
-      case (_, a) => operationWithID(a.source)
+      case (_, a) => operationWithId(a.source)
     }
     for (segmentation <- project.segmentationMap.values) {
       operations ++= operationsFromProject(segmentation)
@@ -174,7 +180,7 @@ class CleanerController(environment: BigGraphEnvironment) {
     operations.toMap
   }
 
-  private def operationWithID(
+  private def operationWithId(
     operation: MetaGraphOperationInstance): (UUID, MetaGraphOperationInstance) = {
     (operation.gUID, operation)
   }

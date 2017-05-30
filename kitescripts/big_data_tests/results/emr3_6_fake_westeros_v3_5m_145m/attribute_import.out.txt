@@ -1,5 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/attribute_import.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-id: {"labelType":"bucket","labels":["1695585","1696732","1697470","1697622","1698379","1698411","1699015","1699177","1699729","Other"],"sizes":[1,1,1,1,1,1,1,1,1,4999991]}
-attr2: {"labelType":"bucket","labels":["0.5206661877070948","0.3317926314256987","0.4144020411322342","0.2392395781394091","0.6376218245770747","0.961230128013831","0.16685783133339316","0.01833428896242384","0.09741132233949912","Other"],"sizes":[1,1,1,1,1,1,1,1,1,4999991]}
-attr1: {"labelType":"bucket","labels":["0.33989388649958585","0.016688558158841293","0.20286753375254185","0.5041631731312708","0.2286043513342495","0.7696512101215746","0.9654775233375423","0.45729141212419855","0.8572510147330034","Other"],"sizes":[1,1,1,1,1,1,1,1,1,4999991]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/attribute_import.groovy, took 52 seconds

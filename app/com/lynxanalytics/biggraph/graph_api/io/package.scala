@@ -7,6 +7,7 @@ package object io {
   val ModelsDir = "models"
   val EntitiesDir = "entities"
   val PartitionedDir = "partitioned"
+  val TablesDir = "tables"
   val OperationsDir = "operations"
   val DeletedSfx = ".deleted"
   val Success = "_SUCCESS"

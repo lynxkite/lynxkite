@@ -1,4 +1,4 @@
-### Predict with a neural network 1st version
+### Predict with a neural network (1st version)
 
 *Warning! Experimental operation.*
 

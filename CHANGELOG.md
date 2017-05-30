@@ -4,6 +4,13 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 # Changes
 
+### 2.0
+
+ - Replaced LynxKite projects with more powerful and flexible workspaces. Workspaces allow you to
+   focus on your computation instead of your data by editing a network of computations directly.
+ - Renamed several operations to have uniform imperative names. E.g. _"Example graph"_ became
+   _"Create example graph"_.
+
 ### master
 
 ### 1.14.0

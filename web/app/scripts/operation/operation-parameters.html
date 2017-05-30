@@ -1,0 +1,104 @@
+<!-- This has to be inside a <form class="form-horizontal">. -->
+<div class="form-group" ng-repeat="param in meta.parameters">
+  <label for="{{param.id}}" class="col-sm-4 control-label">
+    {{param.title}}
+    <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
+  </label>
+  <div class="col-sm-8 operation-attribute-input" id="{{param.id}}">
+    <i class="fa fa-dollar parametric-switch"
+       drop-tooltip="Parametric: {{ pflags[param.id] ? 'yes' : 'no' }}"
+       drop-tooltip-position="top center"
+       ng-class="{ active: pflags[param.id] === true }"
+       ng-click="pflags[param.id] = !pflags[param.id]">
+    </i>
+    <div
+      ui-ace="{
+        mode: 'plain_text',
+        showGutter: false,
+        rendererOptions: {
+          fontSize: '16px'
+        },
+        advanced: {
+          behavioursEnabled: false,
+          useWorker: false
+        },
+        onLoad: onLoad,
+      }"
+      class="form-control operation-attribute-entry"
+      ng-if="pflags[param.id] === true"
+      ng-model="parametric[param.id]"
+      ng-disabled="!editable"></div>
+    <input ng-if="param.kind === 'default' && pflags[param.id] !== true"
+        class="form-control operation-attribute-entry"
+        ng-model="output[param.id]"
+        ng-submit="onBlur()"
+        ng-disabled="!editable">
+    <div
+      ui-ace="{
+        mode: '{{ param.payload.language }}',
+        showGutter: false,
+        rendererOptions: {
+          fontSize: '16px'
+        },
+        advanced: {
+          behavioursEnabled: false,
+          useWorker: false
+        },
+        onLoad: onLoad,
+      }"
+      class="form-control operation-attribute-entry"
+      ng-if="param.kind === 'code'  && pflags[param.id] !== true"
+      ng-model="output[param.id]"
+      ng-disabled="!editable"></div>
+    <file-parameter ng-if="param.kind === 'file' && pflags[param.id] !== true"
+        editable="editable"
+        model="output[param.id]"
+        on-blur="onBlur()"
+        file-uploads="fileUploads.count"
+        class="operation-attribute-entry">
+    </file-parameter>
+    <model-parameter ng-if="param.kind === 'model' && pflags[param.id] !== true"
+        param="param"
+        editable="editable"
+        model-json="output[param.id]"
+        class="operation-attribute-entry">
+    </model-parameter>
+    <table-kind
+      ng-if="param.kind === 'imported-table' && pflags[param.id] !== true"
+      box="box"
+      params="output"
+      guid="output[param.id]"
+      on-blur="onBlur()"
+      file-uploads="fileUploads.count"
+      class="operation-attribute-entry">
+    </table-kind>
+    <select
+      ng-disabled="!editable"
+      ng-if="((param.kind === 'choice' && !param.multipleChoice) || (param.kind === 'segmentation'))
+        && pflags[param.id] !== true"
+      class="form-control operation-attribute-entry"
+      ng-model="output[param.id]"
+      ng-change="onBlur()"
+      ng-options="option.id as option.title for option in param.options"></select>
+    <select
+      ng-disabled="!editable"
+      ng-if="param.kind === 'choice' && param.multipleChoice && pflags[param.id] !== true"
+      multiple
+      ng-attr-size="{{ param.options.length }}"
+      class="form-control operation-attribute-entry"
+      ng-model="multiOutput[param.id]"
+      ng-change="onBlur()"
+      ng-options="option.id as option.title for option in param.options"></select>
+    <tag-list
+      editable="editable"
+      ng-if="param.kind === 'tag-list' && pflags[param.id] !== true"
+      model="multiOutput[param.id]"
+      on-blur="onBlur()"
+      options="param.options"
+      class="operation-attribute-entry"></tag-list>
+    <parameters-parameter
+      ng-if="param.kind === 'parameters'"
+      model="output[param.id]"
+      class="operation-attribute-entry"></parameters-parameter>
+  </div>
+</div>

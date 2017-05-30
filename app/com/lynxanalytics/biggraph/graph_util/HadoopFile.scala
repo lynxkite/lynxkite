@@ -64,21 +64,21 @@ class HadoopFile private (
   val symbolicName = prefixSymbol + normalizedRelativePath
   val resolvedName = PrefixRepository.getPrefixInfo(prefixSymbol) + normalizedRelativePath
 
-  val (resolvedNameWithNoCredentials, awsID, awsSecret) = resolvedName match {
+  val (resolvedNameWithNoCredentials, awsId, awsSecret) = resolvedName match {
     case HadoopFile.s3nWithCredentialsPattern(scheme, key, secret, relPath) =>
       (scheme + "://" + relPath, key, secret)
     case _ =>
       (resolvedName, "", "")
   }
 
-  private def hasCredentials = awsID.nonEmpty
+  private def hasCredentials = awsId.nonEmpty
 
   override def toString = symbolicName
 
   def hadoopConfiguration(): hadoop.conf.Configuration = {
     val conf = SparkHadoopUtil.get.conf
     if (hasCredentials) {
-      conf.set("fs.s3n.awsAccessKeyId", awsID)
+      conf.set("fs.s3n.awsAccessKeyId", awsId)
       conf.set("fs.s3n.awsSecretAccessKey", awsSecret)
     }
     return conf
@@ -88,7 +88,7 @@ class HadoopFile private (
     if (hasCredentials) {
       hadoopOutput match {
         case HadoopFile.s3nNoCredentialsPattern(scheme, path) =>
-          scheme + "://" + awsID + ":" + awsSecret + "@" + path
+          scheme + "://" + awsId + ":" + awsSecret + "@" + path
       }
     } else {
       hadoopOutput
