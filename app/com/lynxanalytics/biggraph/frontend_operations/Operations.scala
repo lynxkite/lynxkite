@@ -1338,7 +1338,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Hash vertex attribute", ImportOperations, new ProjectTransformation(_) {
+  register("Hash vertex attribute", VertexAttributesOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true),
       Param("salt", "Salt",
