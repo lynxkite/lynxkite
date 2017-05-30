@@ -94,6 +94,27 @@
          drop-tooltip-placement="bottom">
       <i class="glyphicon glyphicon-forward"></i>
     </button>
+    <!-- "Save as" is closed. The floppy reveals the input box. -->
+    <label class="btn btn-default"
+           ng-click="workspace.startSavingAs()"
+           ng-if="!workspace.showSaveAs"
+           id="save-as-starter-button"
+           tooltip="Save&nbsp;as..."
+           tooltip-append-to-body="true"
+           tooltip-placement="bottom">
+      <i class="glyphicon glyphicon-floppy-disk"></i>
+    </label>
+    <!-- "Save as" is open. The floppy sends the request (if something was entered) and hides the input box. -->
+    <label class="btn btn-default"
+           ng-if="workspace.showSaveAs"
+           ng-click="workspace.maybeSaveAs()"
+           tooltip="{{workspace.saveAsName === workspace.state.projectName ? 'Enter new name' : 'Click the icon to save as ' + workspace.saveAsName}}"
+           tooltip-append-to-body="true" tooltip-placement="bottom">
+      <form ng-submit="workspace.maybeSaveAs()" style="display: inline;">
+        <input class="form-control save-as" ng-model="side.saveAsName" ng-click="$event.stopPropagation();" id='save-as-input'>
+      </form>
+      <i id="save-as-button" class="glyphicon glyphicon-floppy-disk"></i>
+    </label>
     <a class="btn btn-default"
          href="#/"
          id="close-workspace"
