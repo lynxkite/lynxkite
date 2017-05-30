@@ -9,6 +9,7 @@ angular.module('biggraph')
       templateUrl: 'scripts/workspace/visualization-state-view.html',
       scope: {
         stateId: '=',
+        popupModel: '=',
       },
       link: function(scope) {
 
@@ -29,13 +30,17 @@ angular.module('biggraph')
           });
           scope.visualization.then(
             function() {
-              console.log('LOAD');
-              console.log(scope.visualization);
-              console.log(scope.visualization.status);
-              scope.left.state = scope.visualization.status;
+              scope.applyVisualizationData();
             }, function() {}
           );
         });
+
+        scope.applyVisualizationData = function() {
+          if (scope.visualization.$resolved) {
+            scope.left.state = scope.visualization.status;
+            scope.left.updateViewData();
+          }
+        };
 
         function getLeftToRightBundle() {
           var left = scope.left;
@@ -65,16 +70,26 @@ angular.module('biggraph')
 
         scope.$watchGroup(
           ['left.project.$resolved', 'right.project.$resolved'],
-          function(leftLoaded, rightLoaded) {
+          function(result) {
+            var leftLoaded = result[0];
+            var rightLoaded = result[1];
             if (leftLoaded) {
+              console.log('LOAD LEFT');
               scope.left.onProjectLoaded();
+              console.log('LOAD LEFT: DONE');
             }
             if (rightLoaded) {
+              console.log('right resolved? ', rightLoaded);
+              console.log('right resolved? ', scope.right.project.$resolved);
+              console.log(scope.right.project);
+              console.log('LOAD RIGHT');
               scope.right.onProjectLoaded();
+              console.log('LOAD RIGHT: DONE');
             }
             if (leftLoaded || rightLoaded) {
               scope.leftToRightBundle = getLeftToRightBundle();
               scope.rightToLeftBundle = getRightToLeftBundle();
+              scope.applyVisualizationData();
             }
 
           });

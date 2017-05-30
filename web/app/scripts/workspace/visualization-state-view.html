@@ -5,8 +5,13 @@
 </div>
 -->
 <project-graph
+  ng-style="{
+    'width': popupModel.width + 'px',
+    'height': popupModel.height + 'px',
+  }"
   left="left.viewData" right="right.viewData"
   left-to-right-bundle="leftToRightBundle" right-to-left-bundle="rightToLeftBundle"
   context-menu="$parent.contextMenu"></project-graph>
-
+<!--
 <div ng-repeat="side in sides" ng-include="'scripts/project/side.html'"></div>
+-->
