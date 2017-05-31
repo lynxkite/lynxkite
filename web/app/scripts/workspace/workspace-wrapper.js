@@ -563,6 +563,37 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       });
     },
 
+    startSavingAs : function() {
+      console.log("startSavingAs");
+      this.showSaveAs = true;
+      this.saveAsName = this.name;
+    },
+
+    maybeSaveAs : function() {
+      console.log("maybeSaveAs");
+      // We only need to do an actual action if the user has changed the name.
+      console.log(this.saveAsName);
+      console.log(this.saveAsName);
+      if (this.saveAsName !== this.name) {
+        this.saveAs(this.saveAsName);
+      }
+      this.showSaveAs = false;
+      console.log("maybeSaveAs done");
+    },
+
+    saveAs : function(newName) {
+      console.log("saveAs");
+      var that = this;
+      util.post('/ajax/forkEntry',
+        {
+          from: this.name,
+          to: newName,
+        }).then(function() {
+          that.state.projectName = newName;
+          console.log("maybeSaveAs done");
+        });
+    },
+
   };
 
   return WorkspaceWrapper;
