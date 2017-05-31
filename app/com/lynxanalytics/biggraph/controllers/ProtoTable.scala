@@ -17,6 +17,10 @@ object ProtoTable {
   def apply(table: Table) = new TableWrappingProtoTable(table)
   def apply(attributes: Iterable[(String, Attribute[_])])(implicit m: MetaGraphManager) =
     new AttributesProtoTable(attributes)
+  def minimize(sql: String, protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
+    // TODO: Minimize the ProtoTables using SQLHelper.getInputColumns or SparkSqlParser.
+    protoTables
+  }
 }
 
 class TableWrappingProtoTable(table: Table) extends ProtoTable {

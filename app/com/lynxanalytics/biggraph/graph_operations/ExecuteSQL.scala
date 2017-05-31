@@ -3,77 +3,79 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
-import org.apache.spark.sql
+import org.apache.spark
+import org.apache.spark.sql.types
 
-/* #5817
 object ExecuteSQL extends OpFromJson {
-  class Input(inputTables: Map[String, Seq[String]]) extends MagicInputSignature {
-    val tables = inputTables.map {
-      case (tableName, _) =>
-        (tableName, vertexSet(Symbol(s"${tableName}_vs")))
-    }.toMap
-
-    val tableColumns = inputTables.map {
-      case (tableName, columnNames) =>
-        val columns = columnNames.map(
-          columnName => (
-            columnName,
-            anyVertexAttribute(
-              tables(tableName),
-              Symbol(s"${tableName}_${columnName}_attr")
-            )
-          )
-        )
-        (tableName, columns.toMap)
-    }.toMap
+  class Input(inputTables: Set[String]) extends MagicInputSignature {
+    val tables = inputTables.map(name => table(Symbol(name)))
+  }
+  class Output(schema: types.StructType)(
+      implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val t = table(schema)
   }
 
   def fromJson(j: JsValue) = {
     new ExecuteSQL(
       (j \ "sqlQuery").as[String],
-      (j \ "inputTables").as[Map[String, Seq[String]]],
-      sql.types.DataType.fromJson((j \ "outputSchema").as[String])
-        .asInstanceOf[sql.types.StructType]
+      (j \ "inputTables").as[Set[String]],
+      types.DataType.fromJson((j \ "outputSchema").as[String])
+        .asInstanceOf[types.StructType]
     )
+  }
+
+  def getLogicalPlan(sqlQuery: String, tables: Map[String, Table]) = {
+    import spark.sql.SQLHelperHelper
+    import spark.sql.catalyst.plans.logical._
+    import spark.sql.catalyst.analysis._
+    import spark.sql.catalyst.expressions._
+    val parser = new spark.sql.execution.SparkSqlParser(
+      spark.sql.SQLHelperHelper.caseSensitiveSQLConf)
+    // Parse the query.
+    val planParsed = parser.parsePlan(sqlQuery)
+    // Resolve the table references with our tables.
+    val planResolved = planParsed.resolveOperators {
+      case u: UnresolvedRelation =>
+        val attributes = tables(u.tableName).schema.map {
+          f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()
+        }
+        LocalRelation(attributes)
+    }
+    // Do the rest of the analysis.
+    SimpleAnalyzer.execute(planResolved)
+  }
+
+  def run(sqlQuery: String, tables: Map[String, Table])(implicit m: MetaGraphManager): Table = {
+    import Scripting._
+    val outputSchema = getLogicalPlan(sqlQuery, tables).schema
+    val op = ExecuteSQL(sqlQuery, tables.keySet, outputSchema)
+    op.tables.foldLeft(InstanceBuilder(op)) {
+      case (builder, template) => builder(template, tables(template.name.name))
+    }.result.t
   }
 }
 
+import ExecuteSQL._
 case class ExecuteSQL(
-  val sqlQuery: String,
-  val inputTables: Map[String, Seq[String]],
-  val outputSchema: sql.types.StructType)
-    extends TypedMetaGraphOp[ExecuteSQL.Input, SQLHelper.DataFrameOutput] {
-
-  import ExecuteSQL._
-  override val isHeavy = true
-  override val hasCustomSaving = true // Single-pass import.
+    sqlQuery: String,
+    inputTables: Set[String],
+    outputSchema: types.StructType) extends TypedMetaGraphOp[Input, Output] {
+  override val isHeavy = false // Optimize for the case where the user just wants to see a sample.
   @transient override lazy val inputs = new Input(inputTables)
-
-  def outputMeta(instance: MetaGraphOperationInstance) =
-    new SQLHelper.DataFrameOutput(outputSchema)(instance)
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output(outputSchema)(instance)
   override def toJson = Json.obj(
     "sqlQuery" -> sqlQuery,
     "inputTables" -> inputTables,
     "outputSchema" -> outputSchema.prettyJson)
 
   def execute(inputDatas: DataSet,
-              o: SQLHelper.DataFrameOutput,
+              o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val sqlContext = rc.dataManager.newSQLContext()
-    val dfs = inputs.tables.map {
-      case (tableName, tableVs) =>
-        val rawTable = RawTable(
-          tableVs.entity(output.instance),
-          inputs.tableColumns(tableName).mapValues(_.entity(output.instance)))
-        val tableRelation =
-          new RDDRelation(
-            rawTable, sqlContext, tableVs.rdd, inputs.tableColumns(tableName).mapValues(_.rdd))
-        tableName -> tableRelation.toDF
-    }
-    val dataFrame = DataManager.sql(sqlContext, sqlQuery, dfs.toList)
-    o.populateOutput(rc, outputSchema, dataFrame)
+    val sqlContext = rc.dataManager.masterSQLContext
+    val dfs = inputs.tables.map { t => t.name.name -> t.df }
+    val df = DataManager.sql(sqlContext, sqlQuery, dfs.toList)
+    output(o.t, df)
   }
 }
-*/
