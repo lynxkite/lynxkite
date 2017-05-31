@@ -12,4 +12,10 @@ object SQLHelperHelper {
     val explain = ExplainCommand(df.queryExecution.logical, extended = false)
     df.sparkSession.sessionState.executePlan(explain).executedPlan.executeCollect()
   }
+
+  def caseSensitiveSQLConf = {
+    val conf = new org.apache.spark.sql.internal.SQLConf()
+    conf.setConf(org.apache.spark.sql.internal.SQLConf.CASE_SENSITIVE, true)
+    conf
+  }
 }

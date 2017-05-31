@@ -3792,8 +3792,9 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         case (inputName, state) if state.isProject => state.project.viewer.getProtoTables.map {
           case (tableName, proto) => s"$inputName|$tableName" -> proto
         }
-      }
-      val result = null //graph_operations.SQL.run(sql, inputs)
+      }.toMap
+      val tables = ProtoTable.minimize(sql, protoTables).mapValues(_.toTable)
+      val result = graph_operations.ExecuteSQL.run(sql, tables)
       makeOutput(result)
     }
   })
