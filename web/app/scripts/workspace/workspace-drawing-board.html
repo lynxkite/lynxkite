@@ -108,7 +108,7 @@
     <label class="btn btn-default"
            ng-if="workspace.showSaveAs"
            ng-click="workspace.maybeSaveAs()"
-           tooltip="{{workspace.saveAsName === workspace.state.projectName ? 'Enter new name' : 'Click the icon to save as ' + workspace.saveAsName}}"
+           tooltip="{{workspace.saveAsName === workspace.name ? 'Enter new name' : 'Click the icon to save as ' + workspace.saveAsName}}"
            tooltip-append-to-body="true" tooltip-placement="bottom">
       <form ng-submit="workspace.maybeSaveAs()" style="display: inline;">
         <input class="form-control save-as" ng-model="side.saveAsName" ng-click="$event.stopPropagation();" id='save-as-input'>
