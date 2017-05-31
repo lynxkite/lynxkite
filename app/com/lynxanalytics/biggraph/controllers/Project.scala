@@ -252,13 +252,38 @@ sealed trait ProjectViewer {
     }
   }
 
-  def implicitTableNames: Iterable[String]
-  def allRelativeTablePaths: Seq[SymbolPath] = {
-    val localTables = implicitTableNames.toSeq.map(name => SymbolPath(name))
-    val childTables = sortedSegmentations.flatMap(segmentation =>
-      segmentation.allRelativeTablePaths.map(
-        childPath => segmentation.segmentationName /: childPath))
-    localTables ++ childTables
+  protected def getLocalProtoTables: Iterable[(String, ProtoTable)] = {
+    import ProjectViewer._
+    Option(vertexSet).map { vertexSet =>
+      VertexTableName -> ProtoTable(vertexAttributes)
+    } ++
+      Option(edgeBundle).map { edgeBundle =>
+        EdgeAttributeTableName -> ProtoTable(edgeAttributes)
+      } ++
+      Option(edgeBundle).map { edgeBundle =>
+        EdgeTableName -> {
+          import graph_operations.VertexToEdgeAttribute._
+          val edgeAttrs = edgeAttributes.map {
+            case (name, attr) => s"edge_$name" -> attr
+          }
+          val srcAttrs = vertexAttributes.map {
+            case (name, attr) => s"src_$name" -> srcAttribute(attr, edgeBundle)
+          }
+          val dstAttrs = vertexAttributes.map {
+            case (name, attr) => s"dst_$name" -> dstAttribute(attr, edgeBundle)
+          }
+          ProtoTable(edgeAttrs ++ srcAttrs ++ dstAttrs)
+        }
+      }
+  }
+
+  def getProtoTables: Iterable[(String, ProtoTable)] = {
+    val childProtoTables = sortedSegmentations.flatMap { segmentation =>
+      segmentation.getLocalProtoTables.map {
+        case (name, table) => segmentation.segmentationName + "|" + name -> table
+      }
+    }
+    getLocalProtoTables ++ childProtoTables
   }
 }
 object ProjectViewer {
@@ -336,13 +361,6 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
   def offspringPath: Seq[String] = Nil
 
   protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] = None
-
-  def implicitTableNames =
-    Option(edgeBundle).map(_ => ProjectViewer.EdgeTableName) ++
-      Option(edgeBundle).map(_ => ProjectViewer.EdgeAttributeTableName) ++
-      Option(vertexSet).map(_ => ProjectViewer.VertexTableName)
-
-  def allAbsoluteTablePaths: Seq[SymbolPath] = allRelativeTablePaths
 
   def viewRecipe = rootState.viewRecipe.map(TypedJson.read[ViewRecipe])
 }
