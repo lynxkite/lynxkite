@@ -3780,19 +3780,22 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   registerOp("SQL", UtilityOperations, List("stuff"), List("table"), new TableOutputOperation(_) {
-    override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+    lazy val parameters = List(
+      Code("sql", "SQL", defaultValue = "select * from `stuff|vertices`", language = "sql"))
+    def enabled = FEStatus.enabled
+
+    override def getOutputs() = {
       validateParameters(params)
       val sql = params("sql")
-      val inputs = Seq(
-        "vertices" -> tableLikeInput("stuff").asTable)
+      val protoTables = context.inputs.flatMap {
+        case (name, state) if state.isTable => Seq(name -> ProtoTable(state.table))
+        case (inputName, state) if state.isProject => state.project.viewer.getProtoTables.map {
+          case (tableName, proto) => s"$inputName|$tableName" -> proto
+        }
+      }
       val result = null //graph_operations.SQL.run(sql, inputs)
       makeOutput(result)
     }
-
-    lazy val parameters = List(
-      Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql"))
-    def enabled = FEStatus.enabled
-
   })
 
   private def getShapeFilePath(params: Map[String, String]): String = {
