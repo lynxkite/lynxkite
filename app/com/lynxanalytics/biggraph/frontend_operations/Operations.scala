@@ -629,21 +629,21 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Segment by vector attribute", CreateSegmentationOperations, new ProjectTransformation(_) {
+  register("Segment by Vector attribute", CreateSegmentationOperations, new ProjectTransformation(_) {
     def vectorAttributes =
-      vertexAttributes[Vector[Double]] ++
-        vertexAttributes[Vector[String]] ++
-        vertexAttributes[Vector[Long]]
+      project.vertexAttrList[Vector[Double]] ++
+        project.vertexAttrList[Vector[String]] ++
+        project.vertexAttrList[Vector[Long]]
     def parameters = List(
       Param("name", "Segmentation name"),
       Choice("attr", "Attribute", options = vectorAttributes))
     def enabled = FEStatus.assert(vectorAttributes.nonEmpty, "No suitable vector vertex attributes.")
-    override def summary(params: Map[String, String]) = {
+    override def summary = {
       val attrName = params("attr")
       s"Segmentation by $attrName"
     }
 
-    def apply(params: Map[String, String]) = {
+    def apply() = {
       import SerializableType.Implicits._
       val attrName = params("attr")
       val attr = project.vertexAttributes(attrName)
@@ -663,7 +663,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
       val segmentation = project.segmentation(params("name"))
       segmentation.setVertexSet(bucketing.segments, idAttr = "id")
-      segmentation.notes = summary(params)
+      segmentation.notes = summary
       segmentation.belongsTo = bucketing.belongsTo
       segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
       segmentation.newVertexAttribute(attrName, bucketing.label)
