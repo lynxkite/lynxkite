@@ -30,7 +30,7 @@ object ExecuteSQL extends OpFromJson {
     import spark.sql.catalyst.analysis._
     import spark.sql.catalyst.expressions._
     val parser = new spark.sql.execution.SparkSqlParser(
-      spark.sql.SQLHelperHelper.caseSensitiveSQLConf)
+      spark.sql.SQLHelperHelper.newSQLConf)
     // Parse the query.
     val planParsed = parser.parsePlan(sqlQuery)
     // Resolve the table references with our tables.
