@@ -277,13 +277,17 @@ object BoxOutputState {
     BoxOutputState(BoxOutputKind.Error, None, FEStatus.disabled(msg))
   }
 
-  def visualization(project: ProjectEditor, uiState: String): BoxOutputState = {
+  def visualization(
+    project: ProjectEditor,
+    leftStateJson: String,
+    rightStateJson: String): BoxOutputState = {
     import CheckpointRepository._ // For JSON formatters.
-    val js = json.Json.parse(uiState)
+    // val js = json.Json.parse(uiState)
     BoxOutputState(
       BoxOutputKind.Visualization,
       Some(json.Json.obj(
-        "uiState" -> js,
+        "leftStateJson" -> leftStateJson,
+        "rightStateJson" -> rightStateJson,
         "project" -> json.Json.toJson(project.rootState.state))
       ))
   }
@@ -341,7 +345,11 @@ case class BoxOutputState(
   def visualization(implicit manager: graph_api.MetaGraphManager) = {
     import UIStatusSerialization.fUIStatus
     assert(isVisualization)
-    (state.get \ "uiState").as[UIStatus]
+    (
+      (state.get \ "leftStateJson").as[String],
+      (state.get \ "rightStateJson").as[String]
+    )
+
   }
 }
 
