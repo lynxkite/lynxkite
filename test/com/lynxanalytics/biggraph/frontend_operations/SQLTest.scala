@@ -16,6 +16,7 @@ class SQLTest extends OperationsTestBase {
     val table = box("Create example graph")
       .box("SQL", Map("sql" -> "select * from `stuff|vertices` order by id"))
       .table
+    assert(table.schema.map(_.name) == Seq("name", "location", "age", "id", "income", "gender"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
       Seq("Adam", Seq(40.71448, -74.00598), 20.3, 0, 1000.0, "Male"),
@@ -28,6 +29,9 @@ class SQLTest extends OperationsTestBase {
     val table = box("Create example graph")
       .box("SQL", Map("sql" -> "select * from `stuff|edges` order by edge_comment"))
       .table
+    assert(table.schema.map(_.name) == Seq("edge_comment", "edge_weight", "src_name",
+      "src_location", "src_age", "src_id", "src_income", "src_gender", "dst_name", "dst_location",
+      "dst_age", "dst_id", "dst_income", "dst_gender"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
       Seq("Adam loves Eve", 1.0, "Adam", Seq(40.71448, -74.00598), 20.3, 0, 1000.0, "Male", "Eve",
@@ -44,6 +48,7 @@ class SQLTest extends OperationsTestBase {
     val table = box("Create example graph")
       .box("SQL", Map("sql" -> "select * from `stuff|edge_attributes` order by comment"))
       .table
+    assert(table.schema.map(_.name) == Seq("comment", "weight"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
       Seq("Adam loves Eve", 1.0),
@@ -59,8 +64,37 @@ class SQLTest extends OperationsTestBase {
         select base_name, segment_id, segment_size
         from `stuff|connected_components|belongs_to` order by base_id"""))
       .table
+    assert(table.schema.map(_.name) == Seq("base_name", "segment_id", "segment_size"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
       Seq("Adam", 0, 3.0), Seq("Eve", 0, 3.0), Seq("Bob", 0, 3.0), Seq("Isolated Joe", 3, 1.0)))
+  }
+
+  test("sql on vertices") {
+    val table = box("Create example graph")
+      .box("SQL", Map("sql" -> "select name from vertices where age < 40"))
+      .table
+    assert(table.schema.map(_.name) == Seq("name"))
+    val data = table.df.collect.toSeq.map(row => toSeq(row))
+    assert(data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
+  }
+
+  test("sql with empty results") {
+    val table = box("Create example graph")
+      .box("SQL", Map("sql" -> "select id from vertices where id = 11"))
+      .table
+    assert(table.schema.map(_.name) == Seq("id"))
+    val data = table.df.collect.toSeq
+    assert(data == List())
+  }
+
+  test("sql file reading is disabled") {
+    val file = getClass.getResource("/controllers/noread.csv").toString
+    val ws = box("Create example graph")
+      .box("SQL", Map("sql" -> s"select * from csv.`$file`"))
+    val e = intercept[AssertionError] {
+      ws.table
+    }
+    assert(e.getMessage.contains("No such table: csv."))
   }
 }

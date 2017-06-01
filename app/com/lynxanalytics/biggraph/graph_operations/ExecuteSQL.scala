@@ -36,6 +36,7 @@ object ExecuteSQL extends OpFromJson {
     // Resolve the table references with our tables.
     val planResolved = planParsed.resolveOperators {
       case u: UnresolvedRelation =>
+        assert(tables.contains(u.tableName), s"No such table: ${u.tableName}")
         val attributes = tables(u.tableName).schema.map {
           f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()
         }
