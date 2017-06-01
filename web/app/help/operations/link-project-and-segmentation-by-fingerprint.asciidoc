@@ -1,0 +1,41 @@
+### Link project and segmentation by fingerprint
+
+Finds the best matching between a project and a segmentation.
+It considers a base vertex A and a segment B a good "match"
+if the neighborhood of A (including A) is very connected to the neighborhood of B (including B)
+according to the current connections between project and segmentation.
+
+The result of this operation is a new edge set between the project and the
+segmentation, that is a one-to-one matching.
+
+====
+The matches are identified by calculating a similarity score between vertices and picking a
+matching that ensures a high total similarity score across the matched pairs.
+
+The similarity calculation is based on the network structure: the more alike their neighborhoods
+are, the more similar two vertices are considered. Vertex attributes are not considered in the
+calculation.
+
+*Example use case*
+
+Project M is an MSISDN graph based on call data. Project F is a Facebook
+graph. A CSV file contains a number of MSISDN{to}Facebook ID mappings, a many-to-many
+relationship. Connect the two projects with <<import-project-as-segmentation>> and
+<<import-segmentation-links>>, then use the
+fingerprinting operation to turn the mapping into a high-quality one-to-one relationship.
+
+*Parameters*
+
+[[mo]] Minimum overlap::
+The number of common neighbors two vertices must have to be considered for matching.
+It must be at least 1. (If two vertices have no common neighbors their similarity would be zero
+anyway.)
+
+[[ms]] Minimum similarity::
+The similarity threshold below which two vertices will not be considered a match even if there are
+no better matches for them. Similarity is normalized to [0, 1].
+
+[[extra]] Fingerprinting algorithm additional parameters::
+You can use this box to further tweak how the fingerprinting operation works. Consult with a Lynx
+expert if you think you need this.
+====

@@ -1,0 +1,12 @@
+### Convert edge attribute to Double
+
+Converts the selected `String` typed edge attributes to `Double` (floating point
+number) type.
+
+The attributes will be converted in-place. If you want to keep the original `String` attribute as
+well, make a copy first!
+
+====
+[[attr]] Edge attribute::
+The attributes to be converted.
+====

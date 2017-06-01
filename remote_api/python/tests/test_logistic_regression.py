@@ -23,23 +23,23 @@ class TestLogisticRegression(unittest.TestCase):
   def test_training(self):
     p = self.lk.new_project()
     p.newvertexSet(size=100)
-    p.addRandomVertexAttribute(**{
-        'name': 'rnd',
-        'dist': 'Standard Normal',
-        'seed': '1234543'})
-    p.derivedVertexAttribute(
+    p.addRandomVertexAttribute(
+        name='rnd',
+        dist='Standard Normal',
+        seed='1234543')
+    p.deriveVertexAttribute(
         expr='rnd  > 0 ? 1 : 0',
         output='label',
-        type='double')
-    p.addRandomVertexAttribute(**{
-        'name': 'feature',
-        'dist': 'Standard Uniform',
-        'seed': '1235321'})
-    p.trainALogisticRegressionModel(**{
-        'features': 'feature',
-        'label': 'label',
-        'max-iter': 20,
-        'name': 'test'})
+        type='Double')
+    p.addRandomVertexAttribute(
+        name='feature',
+        dist='Standard Uniform',
+        seed='1235321')
+    p.trainALogisticRegressionModel(
+        features='feature',
+        label='label',
+        max_iter=20,
+        name='test')
     # No assert, we only want to see if it runs without error.
     # This test try to catch an error caused by wrong breeze version.
     self.assertFalse(p.is_computed())
@@ -82,17 +82,17 @@ class TestLogisticRegression(unittest.TestCase):
 
     # Model training
     train_p = self.lk.new_project()
-    train_p.importVertices(**{'id-attr': 'id', 'table': table})
+    train_p.importVertices(id_attr='id', table=table)
     train_p.vertexAttributeToDouble(attr='accept,f1,f2')
-    train_p.trainALogisticRegressionModel(**{
-        'features': 'f1,f2',
-        'label': 'accept',
-        'max-iter': 20,
-        'name': 'logreg_model'})
+    train_p.trainALogisticRegressionModel(
+        features='f1,f2',
+        label='accept',
+        max_iter=20,
+        name='logreg_model')
 
     # Classification based on model
     classify_p = self.lk.new_project()
-    classify_p.importVertices(**{'id-attr': 'id', 'table': table})
+    classify_p.importVertices(id_attr='id', table=table)
     classify_p.vertexAttributeToDouble(attr='accept,f1,f2')
     classify_p.copyScalarFromOtherProject(
         destScalarName='model',

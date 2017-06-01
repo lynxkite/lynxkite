@@ -1,5 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/spark_tests/cache_memory_ser.groovy with params List((dataSize,2000000000), (numPartitions,1000))
-MEMORY_ONLY_SER: STAGE DONE: [1.0] localities: Map(PROCESS_LOCAL -> 1000)  mapPartitionsWithIndex at SparkTests.scala:45 100 seconds
-MEMORY_ONLY_SER: STAGE DONE: [2.0] localities: Map(PROCESS_LOCAL -> 1000)  foreach at SparkTests.scala:58 1047 seconds
-MEMORY_ONLY_SER: STAGE DONE: [4.0] localities: Map(PROCESS_LOCAL -> 1000)  foreach at SparkTests.scala:59 301 seconds
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/spark_tests/cache_memory_ser.groovy, took 1451 seconds

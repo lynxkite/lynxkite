@@ -1,0 +1,144 @@
+<div class="project-list">
+  <div class="entry" id="new-workspace" ng-click="newWorkspace.expanded = true">
+    <span class="icon glyphicon glyphicon-plus"></span>
+    <span class="lead" ng-hide="newWorkspace.expanded">New workspace</span>
+    <form ng-show="newWorkspace.expanded" class="form-inline" role="form">
+      <div class="form-group"><input id="new-workspace-name" placeholder="Workspace name" ng-model="newWorkspace.name" class="form-control"></div>
+      <div class="form-group">about</div>
+      <div class="form-group"><input placeholder="Description" ng-model="newWorkspace.notes" class="form-control"></div>
+      <span ng-show="util.globals.hasAuth">
+        <div class="form-group">that</div>
+        <div class="form-group"><select
+                                   ng-model="newWorkspace.privacy"
+                                   class="form-control">
+            <option value="private">no one else can see</option>
+            <option value="public-read">everyone can see</option>
+            <option value="public-write">everyone can modify</option>
+        </select></div>
+      </span>
+      <button type="submit" class="btn btn-default" ng-click="createWorkspace()"
+        ng-disabled="newWorkspace.sending || !newWorkspace.name">
+        {{newWorkspace.sending && '...' || 'Create'}}
+      </button>
+    </form>
+  </div>
+
+  <div class="entry" id="new-directory" ng-click="newDirectory.expanded = true">
+    <span class="icon glyphicon glyphicon-plus"></span>
+    <span class="lead" ng-hide="newDirectory.expanded">New folder</span>
+    <form ng-show="newDirectory.expanded" class="form-inline" role="form">
+      <div class="form-group"><input id="new-directory-name" placeholder="Folder name" ng-model="newDirectory.name" class="form-control"></div>
+      <span ng-show="util.globals.hasAuth">
+        <div class="form-group">that</div>
+        <div class="form-group"><select
+                                   ng-model="newDirectory.privacy"
+                                   class="form-control">
+            <option value="private">no one else can see</option>
+            <option value="public-read">everyone can see</option>
+            <option value="public-write">everyone can modify</option>
+        </select></div>
+      </span>
+      <button type="submit" class="btn btn-default" ng-click="createDirectory()"
+        ng-disabled="newDirectory.sending || !newDirectory.name">
+        {{newDirectory.sending && '...' || 'Create'}}
+      </button>
+    </form>
+  </div>
+  <div style="margin-left: 20px">
+    <sql-box  ng-click="$event.stopPropagation()" directory="path" ng-if="showSQL"></sql-box>
+  </div>
+
+  <div id="current-directory" class="path">
+    <div class="description">{{ path ? 'Current folder:' : 'Root folder' }}</div>
+    <span class="lead" ng-show="path">
+      <!-- Make sure there is no whitespace around the slash, so it can still be copied. -->
+      <span ng-repeat="dir in pathElements() track by $index"
+        >{{ dir }}<span ng-hide="$last" class="slash">/</span></span>
+    </span>
+    <span class="clicky glyphicon glyphicon-chevron-left" ng-click="popDirectory()" id="pop-directory-icon" ng-show="path"></span>
+    <span class="clicky glyphicon glyphicon-cog"
+      ng-show="util.globals.hasAuth"
+      ng-click="scope.showSettings = !scope.showSettings"
+      id="directory-settings-icon"></span>
+  </div>
+
+  <!-- Directory settings. -->
+  <div class="acl-settings" ng-if="scope.showSettings">
+    <acl-settings reload="reload()" path="path" entity="data"></acl-settings>
+  </div>
+
+  <div class="entry">
+    <span class="icon glyphicon glyphicon-search"></span>
+    <input class="form-control" id="search-box" placeholder="Search" ng-model="searchQuery">
+  </div>
+
+  <progressbar ng-if="!data.$resolved" value="100" class="progress-striped active">
+    Loading...
+  </progressbar>
+
+  <div class="alert alert-danger" ng-if="data.$error">
+    Could not load directory listing.
+    <i class="pull-right"><a href ng-click="reportListError()">report problem</a></i>
+    <p class="alert-details">{{ data.$error }}</p>
+  </div>
+
+  <div ng-repeat="directory in data.directories"
+    id="directory-{{ pathInside(directory) | id }}"
+    class="entry directory-entry" href ng-click="enterDirectory($event, directory)">
+    <dir-entry-icon objectType="directory" class="icon">
+    </dir-entry-icon>
+    <span class="icon glyphicon glyphicon-folder-open"></span>
+    <span class="lead">
+      <item-name-and-menu
+        menu="menu"
+        name="{{directory}}"
+        short-name="{{pathInside(directory)}}"
+        type="directory">
+      </item-name-and-menu>
+    </span>
+  </div>
+
+  <div
+    ng-repeat="object in data.objects"
+    id="{{ object.objectType }}-{{ pathInside(object.name) | id }}"
+    class="entry {{ object.objectType }}-entry clearfix"
+    href
+    ng-click="objectClick($event, object)"
+    ng-class="{ error: object.error }">
+
+    <dir-entry-icon
+        object-type="object.objectType"
+        class="pull-left icon">
+    </dir-entry-icon>
+    <span class="lead">
+      <item-name-and-menu
+        menu="menu"
+        name="{{object.name}}"
+        short-name="{{pathInside(object.name)}}"
+        type="{{object.objectType}}"
+        config="object.details">
+      </item-name-and-menu>
+      <a ng-if="isWorkspace(object)" href="#/workspace/{{object.name}}" target="_blank"
+        ng-hide="object.error" ng-click="util.captureClick($event)" class="open-in-new-tab-icon">
+        <span class="icon glyphicon glyphicon-new-window"></span>
+      </a>
+    </span>
+
+    <div ng-if="object.error">
+      {{object.error}}
+      <i class="pull-right"><a ng-click="reportProjectError(object)">report problem</a></i>
+    </div>
+    <div ng-if="!object.error">
+      <span ng-if="isWorkspace(object)">
+<!--
+        <value ref="vertexCounts[object.name]"></value> vertices,
+        <value ref="edgeCounts[object.name]"></value> edges.
+-->
+      </span>
+      <span ng-if="isTable(object)">
+        <value ref="vertexCounts[object.name]"></value> rows.
+      </span>
+      {{object.notes}}
+    </div>
+  </div>
+</div>

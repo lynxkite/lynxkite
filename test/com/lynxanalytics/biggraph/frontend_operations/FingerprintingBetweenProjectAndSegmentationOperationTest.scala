@@ -7,31 +7,24 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class FingerprintingBetweenProjectAndSegmentationOperationTest extends OperationsTestBase {
   test("Fingerprinting between project and segmentation") {
-    run("Example Graph")
-    run("Import project as segmentation", Map(
-      "them" -> s"!checkpoint(${project.checkpoint.get},ExampleGraph2)"))
-    val seg = project.segmentation("ExampleGraph2")
-    run("Import segmentation links", Map(
-      "table" -> importCSV("OPERATIONSTEST$/fingerprint-example-connections.csv"),
-      "base-id-attr" -> "name",
-      "base-id-column" -> "src",
-      "seg-id-attr" -> "name",
-      "seg-id-column" -> "dst"),
-      on = seg)
-    run("Fingerprinting between project and segmentation", Map(
-      "mo" -> "1",
-      "ms" -> "0.5"),
-      on = seg)
-    run("Aggregate from segmentation",
-      Map("prefix" -> "seg",
-        "aggregate-age" -> "average",
-        "aggregate-id" -> "",
-        "aggregate-name" -> "",
-        "aggregate-location" -> "",
-        "aggregate-gender" -> "",
-        "aggregate-fingerprinting_similarity_score" -> "",
-        "aggregate-income" -> ""),
-      on = seg)
+    val project = box("Create example graph")
+      .box("Import project as segmentation", Map(
+        "name" -> "eg2"), Seq(box("Create example graph")))
+      .box("Import segmentation links", Map(
+        "apply_to_project" -> "|eg2",
+        "base_id_attr" -> "name",
+        "base_id_column" -> "src",
+        "seg_id_attr" -> "name",
+        "seg_id_column" -> "dst"), Seq(importCSV("fingerprint-example-connections.csv")))
+      .box("Link project and segmentation by fingerprint", Map(
+        "apply_to_project" -> "|eg2",
+        "mo" -> "1",
+        "ms" -> "0.5"))
+      .box("Aggregate from segmentation", Map(
+        "apply_to_project" -> "|eg2",
+        "prefix" -> "seg",
+        "aggregate_age" -> "average"))
+      .project
     val newAge = project.vertexAttributes("seg_age_average")
       .runtimeSafeCast[Double].rdd.collect.toSeq.sorted
     // Two mappings.
@@ -45,40 +38,36 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
   }
 
   test("Fingerprinting between project and segmentation by attribute") {
-    run("Import vertices and edges from a single table", Map(
-      "table" -> importCSV("OPERATIONSTEST$/fingerprint-edges-2.csv"),
+    val other = box("Import vertices and edges from a single table", Map(
       "src" -> "src",
-      "dst" -> "dst"))
-    run("Aggregate edge attribute to vertices", Map(
-      "prefix" -> "",
-      "direction" -> "outgoing edges",
-      "aggregate-src_link" -> "most_common",
-      "aggregate-dst" -> "",
-      "aggregate-src" -> ""))
-    run("Rename vertex attribute", Map("from" -> "src_link_most_common", "to" -> "link"))
-    val otherCp = project.checkpoint.get
-    run("Import vertices and edges from a single table", Map(
-      "table" -> importCSV("OPERATIONSTEST$/fingerprint-edges-1.csv"),
+      "dst" -> "dst"), Seq(importCSV("fingerprint-edges-2.csv")))
+      .box("Aggregate edge attribute to vertices", Map(
+        "prefix" -> "",
+        "direction" -> "outgoing edges",
+        "aggregate_src_link" -> "most_common"))
+      .box("Rename vertex attribute", Map(
+        "before" -> "src_link_most_common",
+        "after" -> "link"))
+    val golden = box("Import vertices and edges from a single table", Map(
       "src" -> "src",
-      "dst" -> "dst"))
-    run("Import project as segmentation", Map(
-      "them" -> s"!checkpoint($otherCp,other)"))
-    val seg = project.segmentation("other")
-    run("Define segmentation links from matching attributes", Map(
-      "base-id-attr" -> "stringID",
-      "seg-id-attr" -> "link"),
-      on = seg)
-    def belongsTo = seg.belongsTo.toPairSeq
-    assert(belongsTo.size == 6)
-    run("Fingerprinting between project and segmentation", Map(
+      "dst" -> "dst"), Seq(importCSV("fingerprint-edges-1.csv")))
+      .box("Import project as segmentation", Map(
+        "name" -> "other"), Seq(other))
+      .box("Define segmentation links from matching attributes", Map(
+        "apply_to_project" -> "|other",
+        "base_id_attr" -> "stringId",
+        "seg_id_attr" -> "link"))
+    def seg(box: TestBox) = box.project.segmentation("other")
+    def belongsTo(box: TestBox) = seg(box).belongsTo.toPairSeq
+    assert(belongsTo(golden).size == 6)
+    val fingerprinted = golden.box("Link project and segmentation by fingerprint", Map(
+      "apply_to_project" -> "|other",
       "mo" -> "0",
-      "ms" -> "0"),
-      on = seg)
-    assert(belongsTo.size == 6)
-    val similarity = seg.vertexAttributes("fingerprinting_similarity_score")
+      "ms" -> "0"))
+    assert(belongsTo(fingerprinted).size == 6)
+    val similarity = seg(fingerprinted).vertexAttributes("fingerprinting_similarity_score")
       .runtimeSafeCast[Double].rdd.values.collect
     assert(similarity.size == 6)
     assert(similarity.filter(_ > 0).size == 6)
   }
-
 }

@@ -19,8 +19,8 @@ Regardless of the visualization mode you can do the same basic adjustments on th
 screen:
 
 Zooming in/out::
-Use your mouse wheel or scroll gesture to zoom in and out. Left doubleclick and right
-doubleclick can also be used for this.
+Use your mouse wheel or scroll gesture to zoom in and out. Left double-click and right
+double-click can also be used for this.
 
 Panning::
 Hold down your left mouse button anywhere on the visualizaton screen and drag the graph around.
