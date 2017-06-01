@@ -512,6 +512,7 @@ abstract class ExportOperationToFile(context: Operation.Context)
 
 class CustomBoxOperation(
     workspace: Workspace, val context: Operation.Context) extends BasicOperation {
+  override val params = new ParameterHolder(context) // No automatically generated parameters.
   params ++= {
     val custom = workspace.parametersMeta
     val tables = context.inputs.values.collect { case i if i.isTable => i.table }
