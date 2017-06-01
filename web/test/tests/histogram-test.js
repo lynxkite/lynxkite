@@ -90,26 +90,26 @@ module.exports = function(fw) {
     'soft filters are applied to double edge histogram',
     function() {
       expect(weight.getHistogramValues()).toEqual([
-        { title : '1.00-1.15', size : 0, value : 0 },
-        { title : '1.15-1.30', size : 0, value : 0 },
-        { title : '1.30-1.45', size : 0, value : 0 },
-        { title : '1.45-1.60', size : 0, value : 0 },
-        { title : '1.60-1.75', size : 0, value : 0 },
-        { title : '1.75-1.90', size : 0, value : 0 },
-        { title : '1.90-2.05', size : 100, value : 1 },
-        { title : '2.05-2.20', size : 0, value : 0 },
-        { title : '2.20-2.35', size : 0, value : 0 },
-        { title : '2.35-2.50', size : 0, value : 0 },
-        { title : '2.50-2.65', size : 0, value : 0 },
-        { title : '2.65-2.80', size : 0, value : 0 },
-        { title : '2.80-2.95', size : 0, value : 0 },
-        { title : '2.95-3.10', size : 0, value : 0 },
-        { title : '3.10-3.25', size : 0, value : 0 },
-        { title : '3.25-3.40', size : 0, value : 0 },
-        { title : '3.40-3.55', size : 0, value : 0 },
-        { title : '3.55-3.70', size : 0, value : 0 },
-        { title : '3.70-3.85', size : 0, value : 0 },
-        { title : '3.85-4.00', size : 0, value : 0 },
+        { title: '1.00-1.15', size: 0, value: 0 },
+        { title: '1.15-1.30', size: 0, value: 0 },
+        { title: '1.30-1.45', size: 0, value: 0 },
+        { title: '1.45-1.60', size: 0, value: 0 },
+        { title: '1.60-1.75', size: 0, value: 0 },
+        { title: '1.75-1.90', size: 0, value: 0 },
+        { title: '1.90-2.05', size: 100, value: 1 },
+        { title: '2.05-2.20', size: 0, value: 0 },
+        { title: '2.20-2.35', size: 0, value: 0 },
+        { title: '2.35-2.50', size: 0, value: 0 },
+        { title: '2.50-2.65', size: 0, value: 0 },
+        { title: '2.65-2.80', size: 0, value: 0 },
+        { title: '2.80-2.95', size: 0, value: 0 },
+        { title: '2.95-3.10', size: 0, value: 0 },
+        { title: '3.10-3.25', size: 0, value: 0 },
+        { title: '3.25-3.40', size: 0, value: 0 },
+        { title: '3.40-3.55', size: 0, value: 0 },
+        { title: '3.55-3.70', size: 0, value: 0 },
+        { title: '3.70-3.85', size: 0, value: 0 },
+        { title: '3.85-4.00', size: 0, value: 0 },
       ]);
     });
   fw.statePreservingTest(
@@ -126,7 +126,7 @@ module.exports = function(fw) {
     'hard filters are applied to double edge histogram',
     function() {
       expect(weight.getHistogramValues()).toEqual([
-        { title : '2.00-2.00', size : 100, value : 1 },
+        { title: '2.00-2.00', size: 100, value: 1 },
       ]);
     });*/
 
