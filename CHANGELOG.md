@@ -13,10 +13,15 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 1.14.0
+
  - Added separate training operations for decision tree models (_Train a decision tree classification model_ and _Train a decision tree regression model_), so now you are able to train a decision tree model, look at its parameters and use it to create predictions.
  - Visualization up to 10&times; faster in some cases.
  - Added _Discard segmentation links_ operation.
  - Added _Merge parallel segmentation links_ operation.
+
+### 1.13.1
+
  - Fixed the type of numeric values coming from Oracle databases.
 
 ### 1.13.0

@@ -31,11 +31,11 @@ angular.module('biggraph')
         scope.popups = [];
         scope.movedPopup = undefined;
 
-        scope.$watchGroup(
-          ['boxCatalog.$resolved', 'workspaceName'],
+        scope.$watch(
+          'workspaceName',
 
           function() {
-            if (scope.boxCatalog.$resolved && scope.workspaceName) {
+            if (scope.workspaceName) {
               scope.workspace = new WorkspaceWrapper(
                 scope.workspaceName,
                 scope.boxCatalog);
@@ -101,6 +101,10 @@ angular.module('biggraph')
           }
         }
 
+        scope.callbackWrapper = function(callback) {
+          return function(event) {scope.$apply(function () { callback(event); });};
+        };
+
         scope.onMouseMove = function(event) {
           event.preventDefault();
           addLogicalMousePosition(event);
@@ -116,10 +120,7 @@ angular.module('biggraph')
 
           var leftButton = event.buttons & 1;
           // Protractor omits button data from simulated mouse events.
-          if (!leftButton && !environment.protractor) {
-            // Button is no longer pressed. (It was released outside of the window, for example.)
-            scope.onMouseUp();
-          } else {
+          if (leftButton || environment.protractor) {
             scope.mouseLogical = {
               x: event.logicalX,
               y: event.logicalY,
@@ -132,10 +133,20 @@ angular.module('biggraph')
               scope.movedPopup.onMouseMove(event);
             }
           }
+          for (var j = 0; j < scope.popups.length; ++j) {
+            scope.popups[j].updateSize();
+          }
         };
 
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
+          var leftClick = event.button === 0;
+          if (!leftClick) {
+            return;
+          }
+          window.addEventListener('mousemove', scope.wrappedOnMouseMove);
+          window.addEventListener('mouseup', scope.wrappedOnMouseUp);
+
           addLogicalMousePosition(event);
           scope.selection.remove();
           if (scope.selectedBoxIds.indexOf(box.instance.id) === -1) {
@@ -233,6 +244,8 @@ angular.module('biggraph')
           element[0].style.cursor = '';
           workspaceDrag = false;
           selectBoxes = false;
+          window.removeEventListener('mousemove', scope.wrappedOnMouseMove);
+          window.removeEventListener('mouseup', scope.wrappedOnMouseUp);
           scope.selection.remove();
           if (scope.movedBoxes) {
             scope.workspace.saveIfBoxesMoved();
@@ -242,7 +255,13 @@ angular.module('biggraph')
           scope.movedPopup = undefined;
         };
 
+        scope.wrappedOnMouseMove = scope.callbackWrapper(scope.onMouseMove);
+
+        scope.wrappedOnMouseUp = scope.callbackWrapper(scope.onMouseUp);
+
         scope.onMouseDown = function(event) {
+          window.addEventListener('mousemove', scope.wrappedOnMouseMove);
+          window.addEventListener('mouseup', scope.wrappedOnMouseUp);
           var dragMode = actualDragMode(event);
           event.preventDefault();
           addLogicalMousePosition(event);
@@ -321,6 +340,23 @@ angular.module('biggraph')
           this.selectedBoxIds = [];
         };
 
+        scope.diveUp = function() {
+          scope.workspace.customBoxStack.pop();
+          scope.workspace.loadWorkspace();
+          scope.popups = [];
+        };
+
+        scope.diveDown = function() {
+          scope.workspace.customBoxStack.push(scope.selectedBoxIds[0]);
+          scope.workspace.loadWorkspace();
+          scope.popups = [];
+        };
+
+        scope.saveSelectionAsCustomBox = function(name, success, error) {
+          scope.workspace.saveAsCustomBox(
+              scope.selectedBoxIds, name, 'Created from ' + scope.workspaceName)
+            .then(success, error);
+        };
 
         var hk = hotkeys.bindTo(scope);
         hk.add({
@@ -377,17 +413,22 @@ angular.module('biggraph')
         element.bind('dragover', function(event) {
           event.preventDefault();
         });
+        element.bind('dragstart', function(event) {
+          event.preventDefault();
+        });
         element.bind('drop', function(event) {
           event.preventDefault();
           var origEvent = event.originalEvent;
-          var operationId = event.originalEvent.dataTransfer.getData('text');
-          // This isn't undefined iff testing
-          var boxId = event.originalEvent.dataTransfer.getData('id');
-          // This is received from operation-selector-entry.js
-          scope.$apply(function() {
-            addLogicalMousePosition(origEvent);
-            scope.workspace.addBox(operationId, origEvent, boxId);
-          });
+          var operationId = origEvent.dataTransfer.getData('operation-id');
+          if (operationId) {
+            // This isn't undefined iff testing
+            var boxId = origEvent.dataTransfer.getData('id');
+            // This is received from operation-selector-entry.js
+            scope.$apply(function() {
+              addLogicalMousePosition(origEvent);
+              scope.workspace.addBox(operationId, origEvent, boxId);
+            });
+          }
         });
 
         scope.$on('$destroy', function() {

@@ -1267,6 +1267,12 @@ class DirectoryEntry(val path: SymbolPath)(
     res
   }
 
+  def asNewSnapshotFrame(calculatedState: BoxOutputState): SnapshotFrame = {
+    assert(!exists, s"Entry '$path' already exists")
+    val snapshot = new SnapshotFrame(path)
+    snapshot.initialize(calculatedState)
+    snapshot
+  }
   def asSnapshotFrame: SnapshotFrame = {
     assert(isInstanceOf[SnapshotFrame], s"Entry '$path' is not a snapshot.")
     asInstanceOf[SnapshotFrame]

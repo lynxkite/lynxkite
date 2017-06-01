@@ -2,9 +2,10 @@
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.serving.DownloadFileRequest
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.graph_api._
 import play.api.libs.json
@@ -183,7 +184,8 @@ trait OperationRegistry {
     factory: Operation.Factory): Unit = {
     // TODO: Register category somewhere.
     assert(!operations.contains(id), s"$id is already registered.")
-    operations(id) = BoxMetadata(category.title, id, inputs, outputs) -> factory
+    operations(id) = BoxMetadata(category.title, id, inputs, outputs,
+      htmlId = Some(Operation.htmlId(id))) -> factory
   }
 }
 
@@ -235,6 +237,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 trait BasicOperation extends Operation {
   implicit val manager = context.manager
   protected val user = context.user
+  protected def enabled: FEStatus
   protected val id = context.meta.operationId
   protected val title = id
   protected def visibleScalars: List[FEScalar] = List()
@@ -353,6 +356,7 @@ abstract class ProjectOutputOperation(
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     params.validate()
+    assert(enabled.enabled, enabled.disabledReason)
     apply()
     makeOutput(project)
   }
@@ -368,6 +372,7 @@ abstract class ProjectTransformation(
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     params.validate()
     val before = project.rootEditor.viewer
+    assert(enabled.enabled, enabled.disabledReason)
     apply()
     updateDeltas(project.rootEditor, before)
     makeOutput(project)
@@ -447,6 +452,65 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
   def getRawDataFrame(context: spark.sql.SQLContext): spark.sql.DataFrame
 }
 
+// An ExportOperation takes a Table as input and returns an ExportResult as output.
+abstract class ExportOperation(protected val context: Operation.Context) extends BasicOperation {
+  assert(
+    context.meta.inputs == List("table"),
+    s"An ExportOperation must input a single table. $context")
+  assert(
+    context.meta.outputs == List("exportResult"),
+    s"An ExportOperation must output an ExportResult. $context"
+  )
+
+  protected lazy val table = tableInput("table")
+
+  def apply() = ???
+  def exportResult: Scalar[String]
+  val format: String
+
+  def getParamsToDisplay() = params + ("format" -> format)
+
+  protected def makeOutput(exportResult: Scalar[String]): Map[BoxOutput, BoxOutputState] = {
+    val paramsToDisplay = getParamsToDisplay()
+    Map(context.box.output(
+      context.meta.outputs(0)) -> BoxOutputState.from(exportResult, paramsToDisplay))
+  }
+
+  def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+    validateParameters(params)
+    makeOutput(exportResult)
+  }
+
+  def enabled = FEStatus.enabled
+}
+
+abstract class ExportOperationToFile(context: Operation.Context)
+    extends ExportOperation(context) {
+
+  override def validateParameters(params: Map[String, String]): Unit = {
+    super.validateParameters(params)
+    assertWriteAllowed(params("path"))
+  }
+
+  protected def generatePathIfNeeded(path: String): String = {
+    if (path == "<auto>") {
+      val inputGuid = table.gUID.toString
+      val paramsWithInput = params ++ Map("input" -> inputGuid)
+      "DATA$/exports/" + paramsWithInput.hashCode.toString + "." + format
+    } else
+      path
+  }
+
+  private def assertWriteAllowed(path: String) = {
+    val genPath = generatePathIfNeeded(path)
+    val file = HadoopFile(genPath)
+    file.assertWriteAllowedFrom(context.user)
+  }
+
+  override def getParamsToDisplay() = params +
+    ("format" -> format, "path" -> generatePathIfNeeded(params("path")))
+}
+
 class CustomBoxOperation(
     workspace: Workspace, val context: Operation.Context) extends BasicOperation {
   params ++= {
@@ -469,6 +533,8 @@ class CustomBoxOperation(
       }
     }
   }
+
+  override def params = super.params // Make public.
 
   def apply: Unit = ???
   def enabled = FEStatus.enabled

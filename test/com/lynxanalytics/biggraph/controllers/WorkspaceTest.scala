@@ -15,7 +15,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   def create(name: String) =
     controller.createWorkspace(user, CreateWorkspaceRequest(name, "private"))
   def get(name: String): GetWorkspaceResponse =
-    controller.getWorkspace(user, GetWorkspaceRequest(name))
+    controller.getWorkspace(user, WorkspaceReference(name))
   def set(name: String, workspace: Workspace): Unit =
     controller.setWorkspace(user, SetWorkspaceRequest(name, workspace))
   def discard(name: String) =
@@ -27,7 +27,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     } finally discard(name)
   }
   def getOpMeta(ws: String, box: String) =
-    controller.getOperationMeta(user, GetOperationMetaRequest(ws, box))
+    controller.getOperationMeta(user, GetOperationMetaRequest(WorkspaceReference(ws), box))
 
   def getOutputIds(ws: String) = {
     val allIds = get(ws).outputs

@@ -68,6 +68,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout) {
           scope.category = undefined;
         } else {
           scope.category = cat;
+          scope.currentCatOps = cat.ops;
         }
         scope.searching = undefined;
         scope.op = undefined;
@@ -78,6 +79,19 @@ angular.module('biggraph').directive('operationSelector', function($timeout) {
           scope.op = undefined;
         } else {
           startSearch();
+        }
+      };
+      scope.closeCurrentCatOrSearch = function() {
+        scope.searching = undefined;
+        scope.lastCat = scope.category;
+        scope.category = undefined;
+      };
+      scope.openLastCatOrSearch = function() {
+        if (scope.lastCat) {
+          scope.category = scope.lastCat;
+        } else {
+          scope.searching = true;
+          scope.opFilter = '';
         }
       };
       scope.$on('open operation search', startSearch);
@@ -92,4 +106,3 @@ angular.module('biggraph').directive('operationSelector', function($timeout) {
 
   };
 });
-

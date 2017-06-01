@@ -18,7 +18,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   override val atomicOperations =
     new ProjectOperations(env).operations.toMap ++
       new MetaOperations(env).operations.toMap ++
-      new ImportOperations(env).operations.toMap
+      new ImportOperations(env).operations.toMap ++
+      new ExportOperations(env).operations.toMap ++
+      new PlotOperations(env).operations.toMap
 }
 
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
@@ -1317,7 +1319,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Hash vertex attribute", ImportOperations, new ProjectTransformation(_) {
+  register("Hash vertex attribute", VertexAttributesOperations, new ProjectTransformation(_) {
     params ++= List(
       Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true),
       Param("salt", "Salt",
