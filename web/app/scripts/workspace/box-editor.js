@@ -49,7 +49,7 @@ angular.module('biggraph')
           scope.lastRequest = currentRequest = util
             .nocache(
               '/ajax/getOperationMeta', {
-                workspace: scope.workspace.name,
+                workspace: scope.workspace.ref(),
                 box: boxId,
               })
             .then(
@@ -58,25 +58,37 @@ angular.module('biggraph')
                   scope.newOpSelected(box, boxMeta);
                 }
               },
-              function error() {
+              function error(error) {
                 if (scope.lastRequest === currentRequest) {
-                  scope.newOpSelected(undefined);
+                  scope.boxError(error);
                 }
               });
         };
 
-        // Invoked when the user selects a new operation and its
-        // metadata is successfully downloaded.
+        // Invoked when an error happens after the user selected a new operation.
+        scope.boxError = function(error) {
+          onBlurNow();
+          scope.box = undefined;
+          scope.boxMeta = undefined;
+          scope.error = error.data;
+        };
+        scope.reportError = function(error) {
+          util.reportError({ message: error });
+        };
+
+        // Invoked when the user selects a new operation and its metadata is
+        // successfully downloaded. Both box and boxMeta has to be defined.
         scope.newOpSelected = function(box, boxMeta) {
           // We avoid replacing the objects if the data has not changed.
           // This is to avoid recreating the DOM for the parameters. (Which would lose the focus.)
-          if (!angular.equals(box, scope.box)) {
+          if (scope.box === undefined || !angular.equals(box.instance, scope.box.instance)) {
             onBlurNow(); // Switching to a different box is also "blur".
             scope.box = box;
           }
           if (!angular.equals(boxMeta, scope.boxMeta)) {
             scope.boxMeta = boxMeta;
           }
+          scope.error = undefined;
           if (!box) {
             return;
           }

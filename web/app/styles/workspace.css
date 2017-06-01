@@ -11,6 +11,10 @@
 }
 
 span#workspace-name {
+  font: bold 2.5em serif;
+}
+
+span#custom-box-stack {
   font-size: 2em;
 }
 
@@ -38,6 +42,11 @@ state-view {
 }
 box-editor {
   display: block;
+}
+
+.box-error {
+  color: red;
+  margin-top: 8px;
 }
 
 g.box rect, g.box circle {
@@ -94,11 +103,10 @@ line.pulled-arrow {
 }
 
 div.popup {
+  display: inline-block;  /* This element "shrink-wraps" around .popup-content */
   position: absolute;
   border: 1px solid darkgray;
   z-index: 3;
-  resize: both;
-  overflow: auto;
   background: white;
 }
 
@@ -113,7 +121,8 @@ div.popup-head {
 }
 
 div.popup-content {
-  width: 100%;
+  resize: both;
+  overflow: auto;
 }
 
 polygon.popup-trail {
@@ -127,4 +136,13 @@ polygon.popup-trail {
   display: block;
   margin-bottom: 10px;
   text-decoration: none;
+}
+
+.plot-title {
+  font-weight: bold;
+  font-size:1.5em;
+}
+
+.plot-header {
+  padding-top: 10px;
 }

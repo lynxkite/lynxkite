@@ -199,6 +199,8 @@ include::create-edges-from-set-overlaps.asciidoc[]
 
 include::create-example-graph.asciidoc[]
 
+include::create-plot.asciidoc[]
+
 include::create-random-edge-bundle.asciidoc[]
 
 include::create-scale-free-random-edge-bundle.asciidoc[]
@@ -238,6 +240,16 @@ include::export-edge-attributes-to-file.asciidoc[]
 include::export-segmentation-to-database.asciidoc[]
 
 include::export-segmentation-to-file.asciidoc[]
+
+include::export-to-csv.asciidoc[]
+
+include::export-to-jdbc.asciidoc[]
+
+include::export-to-json.asciidoc[]
+
+include::export-to-orc.asciidoc[]
+
+include::export-to-parquet.asciidoc[]
 
 include::export-vertex-attributes-to-database.asciidoc[]
 

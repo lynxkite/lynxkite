@@ -188,12 +188,30 @@ Workspace.prototype = {
 
   selectBoxes: function(boxIds) {
     // Without this, we would just add additional boxes to the previous selection
-    this.selectBox(boxIds[0]);
+    this.openBoxEditor(boxIds[0]).close();
     browser.actions().keyDown(protractor.Key.CONTROL).perform();
     for (var i = 1; i < boxIds.length; ++i) {
-      this.selectBox(boxIds[i]);
+      this.clickBox(boxIds[i]);
     }
     browser.actions().keyUp(protractor.Key.CONTROL).perform();
+  },
+
+  // Protractor mouseMove only takes offsets, so first we set the mouse position to a box based on
+  // its id, and then move it to 2 other points on the screen.
+  selectArea: function(startBoxId, point1, point2) {
+    let box = this.getBox(startBoxId);
+    browser.actions()
+      .mouseMove(box, point1)
+      .keyDown(protractor.Key.SHIFT)
+      .mouseDown()
+      .mouseMove(point2)
+      .mouseUp()
+      .keyUp(protractor.Key.SHIFT)
+      .perform();
+  },
+
+  expectNumSelectedBoxes: function(n) {
+    return expect($$('g.selected.selected rect').count()).toEqual(n);
   },
 
   deleteBoxes: function(boxIds) {
@@ -250,12 +268,16 @@ Workspace.prototype = {
     this.getOutputPlug(boxId, plugId).click();
   },
 
-  selectBox: function(boxId) {
+  clickBox: function(boxId) {
     this.getBox(boxId).$('rect').click();
   },
 
+  selectBox: function(boxId) {
+    this.openBoxEditor(boxId).close();
+  },
+
   openBoxEditor: function(boxId) {
-    this.selectBox(boxId);
+    this.clickBox(boxId);
     var popup = this.board.$('.popup#' + boxId);
     expect(popup.isDisplayed()).toBe(true);
     this.movePopupToCenter(popup);
@@ -266,9 +288,22 @@ Workspace.prototype = {
     var head = popup.$('div.popup-head');
     browser.actions()
         .mouseDown(head)
-        .mouseMove(this.board, {x: 500, y: 20})
+        // Absolute positioning of mouse. If we don't specify the first
+        // argument then this becomes a relative move. If the first argument
+        // is this.board, then protractor scrolls the element of this.board
+        // to the top of the page, even though scrolling is not enabled.
+        .mouseMove($('body'), {x: 800, y: 90})
         .mouseUp(head)
         .perform();
+    // Moving with protractor is sensitive to circumstances so we double check
+    // that it was successful. The expected coordinates are different from 800,90
+    // because the mouse is clicked on the center of the popup header.
+    expect(
+      popup.getLocation().then(
+        function(loc) {
+          return 'x=' + loc.x + ',y=' + loc.y;
+        }))
+      .toEqual('x=549,y=72');
   },
 
   openStateView: function(boxId, plugId) {
@@ -347,6 +382,7 @@ function State(popup) {
   this.left = new Side(this.popup, 'left');
   this.right = new Side(this.popup, 'right');
   this.table = new TableState(this.popup);
+  this.plot = new PlotState(this.popup);
 }
 
 State.prototype = {
@@ -354,6 +390,30 @@ State.prototype = {
     this.popup.$('#close-popup').click();
   }
 };
+
+function PlotState(popup) {
+  this.canvas = popup.$('#plot-div .vega svg');
+}
+
+PlotState.prototype = {
+  barHeights: function() {
+    var until = protractor.ExpectedConditions;
+    var canvasEl = element(by.css('#plot-div .vega svg'));
+    browser.wait(until.presenceOf(canvasEl),
+      15000,
+      'Canvas is taking too long to appear in the DOM');
+    var el = element(by.css('g.mark-rect.marks rect'));
+    browser.wait(until.presenceOf(el),
+      15000,
+      'Bar chart is taking too long to appear in the DOM');
+    return this.canvas.$$('g.mark-rect.marks rect').map(e => e.getAttribute('height'));
+  },
+
+  expectBarHeightsToBe: function(heights) {
+    expect(this.barHeights()).toEqual(heights);
+  }
+};
+
 
 function TableState(popup) {
   this.sample = popup.$('#table-sample');
@@ -855,7 +915,7 @@ Selector.prototype = {
   clickAndWaitForCsvImport: function() {
     var importCsvButton = element(by.id('import-csv-button'));
     // Wait for the upload to finish.
-    testLib.wait(protractor.ExpectedConditions.elementToBeClickable(importCsvButton));
+    testLib.waitUntilClickable(importCsvButton);
     importCsvButton.click();
   },
 
@@ -1383,6 +1443,20 @@ testLib = {
       dstX, dstY,
       dataTransferOverrides
     );
+  },
+
+  waitUntilClickable: function(element) {
+    testLib.wait(protractor.ExpectedConditions.elementToBeClickable(element));
+  },
+
+  submitInlineInput: function(element, text) {
+    var inputBox = element.$('input');
+    var okButton = element.$('#ok');
+    // Wait for CSS animation.
+    testLib.waitUntilClickable(inputBox);
+    inputBox.sendKeys(text);
+    testLib.waitUntilClickable(okButton);
+    okButton.click();
   },
 
 };

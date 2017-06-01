@@ -11,6 +11,7 @@ angular.module('biggraph')
         workspace: '=',
         boxId: '=',
         plugId: '=',
+        popupModel: '=',
       },
       link: function(scope) {
         util.deepWatch(
@@ -31,14 +32,12 @@ angular.module('biggraph')
               }
             });
 
-        scope.createSnapshot = function(saveAsName) {
-          scope.saving = true;
+        scope.createSnapshot = function(saveAsName, success, error) {
+          var postOpts = { reportErrors: false };
           util.post('/ajax/createSnapshot', {
             name: saveAsName,
-            id: scope.stateId
-          }).finally(function() {
-            scope.saving = false;
-          });
+            id: scope.stateId,
+          }, postOpts).then(success, error);
         };
       },
     };

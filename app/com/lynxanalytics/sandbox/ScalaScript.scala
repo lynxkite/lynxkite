@@ -7,11 +7,19 @@ import javax.script._
 
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
-import com.lynxanalytics.biggraph.graph_util.Timestamp
+import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, Timestamp }
+import com.lynxanalytics.biggraph.spark_util.SQLHelper
+import org.apache.spark.sql.DataFrame
 
 import scala.concurrent.duration.Duration
 import scala.tools.nsc.interpreter.IMain
 import scala.util.DynamicVariable
+
+object ScalaScriptSecurityManager {
+  private[sandbox] val restrictedSecurityManager = new ScalaScriptSecurityManager
+  System.setSecurityManager(restrictedSecurityManager)
+  def init() = {}
+}
 
 class ScalaScriptSecurityManager extends SecurityManager {
 
@@ -30,37 +38,42 @@ class ScalaScriptSecurityManager extends SecurityManager {
     }
   }
 
-  // The scala class loader does stuff disallowed by the
-  // SecurityManager, namely:
-  // 1) Creating an URL like this: new URL(null, s"memory:${file.path}", new URLStreamHandler)
-  // 2) When called in sbt test environment, it also wants to access this file:
-  //   ~/.sbt/boot/scala-2.10.4/org.scala-sbt/sbt/0.13.5/test-agent-0.13.5.jar
-  //   I have no idea why.
-  // So, if we are called from scala.reflect.internal.util.ScalaClassLoader.classAsStream
-  // we'll be a bit less restrictive, otherwise we couldn't create classes.
-  // This is a bit expensive, but we'll make sure not to call it too often.
   private def calledByClassLoader: Boolean = {
     Thread.currentThread.getStackTrace.exists {
       stackTraceElement =>
-        stackTraceElement.getClassName == "scala.reflect.internal.util.ScalaClassLoader$class" &&
-          stackTraceElement.getMethodName == "classAsStream"
+        stackTraceElement.getClassName == "java.lang.ClassLoader" &&
+          stackTraceElement.getMethodName == "loadClass"
     }
   }
 
   override def checkPermission(permission: Permission): Unit = {
     if (shouldCheck.value) {
-      permission match {
-        case _: NetPermission =>
-          if (!calledByClassLoader) {
+      shouldCheck.value = false
+      try {
+        permission match {
+          case _: NetPermission =>
+            if (!calledByClassLoader) {
+              super.checkPermission(permission)
+            }
+          case p: FilePermission =>
+            // File reads are allowed if they are initiated by the class loader.
+            if (!(p.getActions == "read" && calledByClassLoader)) {
+              super.checkPermission(permission)
+            }
+          case _ =>
             super.checkPermission(permission)
-          }
-        case p: FilePermission =>
-          if (!(p.getActions == "read" && p.getName.contains(".sbt") && calledByClassLoader)) {
-            super.checkPermission(permission)
-          }
-        case _ =>
-          super.checkPermission(permission)
+        }
+      } finally {
+        // "finally" is used instead of "withValue" because "withValue" triggers
+        // class loading for the anonymous class and thus infinite recursion.
+        shouldCheck.value = true
       }
+    }
+  }
+
+  override def checkPermission(permission: Permission, o: scala.Any): Unit = {
+    if (shouldCheck.value) {
+      super.checkPermission(permission, o)
     }
   }
 
@@ -70,7 +83,7 @@ class ScalaScriptSecurityManager extends SecurityManager {
       (s.contains("com.lynxanalytics.biggraph") ||
         s.contains("org.apache.spark") ||
         s.contains("scala.reflect"))) {
-      throw new java.security.AccessControlException("Illegal package access")
+      throw new java.security.AccessControlException(s"Illegal package access: $s")
     }
   }
 }
@@ -78,8 +91,6 @@ class ScalaScriptSecurityManager extends SecurityManager {
 object ScalaScript {
   private val engine = new ScriptEngineManager().getEngineByName("scala").asInstanceOf[IMain]
 
-  private val restrictedSecurityManager = new ScalaScriptSecurityManager
-  System.setSecurityManager(restrictedSecurityManager)
   private val settings = engine.settings
   settings.usejavacp.value = true
   settings.embeddedDefaults[ScalaScriptSecurityManager]
@@ -101,7 +112,47 @@ object ScalaScript {
     withContextClassLoader {
       val compiledCode = engine.compile(fullCode)
       withTimeout(timeoutInSeconds) {
-        restrictedSecurityManager.checkedRun {
+        ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
+          compiledCode.eval().toString
+        }
+      }
+    }
+  }
+
+  // Helper function to convert a DataFrame to a Seq of Maps
+  // This format used by the Vegas plot drawing library
+  // The value of maxRows is the maximum number of data points allowed in a chart
+  def dfToSeq(df: DataFrame): Seq[Map[String, Any]] = {
+    val names = df.schema.toList.map { field => field.name }
+    val maxRows = LoggedEnvironment.envOrElse("MAX_ROWS_OF_PLOT_DATA", "10000").toInt
+    SQLHelper.toSeqRDD(df).take(maxRows).map {
+      row =>
+        names.zip(row.toSeq.toList).
+          groupBy(_._1).
+          mapValues(_.map(_._2)).
+          mapValues(_(0))
+    }.toSeq
+  }
+
+  def runVegas(
+    code: String,
+    df: DataFrame): String = synchronized {
+    // To avoid the need of spark packages in the script
+    // we convert the DataFrame before passing it to Vegas
+    val data = dfToSeq(df)
+    val timeoutInSeconds = LoggedEnvironment.envOrElse("SCALASCRIPT_TIMEOUT_SECONDS", "10").toLong
+    withContextClassLoader {
+      engine.put("Data: Seq[Map[String, Any]]", data)
+      val fullCode = s"""
+      import vegas._
+      val plot = {
+        $code
+      }
+      plot.toJson.toString
+      """
+      val compiledCode = engine.compile(fullCode)
+      withTimeout(timeoutInSeconds) {
+        ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
           compiledCode.eval().toString
         }
       }

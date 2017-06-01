@@ -288,7 +288,8 @@ object FrontendJson {
   import WorkspaceJsonFormatters._
   implicit val fBoxOutputInfo = json.Json.format[BoxOutputInfo]
   implicit val fProgress = json.Json.format[Progress]
-  implicit val rGetWorkspaceRequest = json.Json.reads[GetWorkspaceRequest]
+  implicit val rWorkspaceName = json.Json.reads[WorkspaceName]
+  implicit val rWorkspaceReference = json.Json.reads[WorkspaceReference]
   implicit val wGetWorkspaceResponse = json.Json.writes[GetWorkspaceResponse]
   implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
   implicit val rGetOperationMetaRequest = json.Json.reads[GetOperationMetaRequest]
@@ -298,9 +299,13 @@ object FrontendJson {
   implicit val rGetTableOutputRequest = json.Json.reads[GetTableOutputRequest]
   implicit val wTableColumn = json.Json.writes[TableColumn]
   implicit val wGetTableOutputResponse = json.Json.writes[GetTableOutputResponse]
+  implicit val rGetPlotOutputRequest = json.Json.reads[GetPlotOutputRequest]
+  implicit val wGetPlotOutputResponse = json.Json.writes[GetPlotOutputResponse]
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
   implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
   implicit val rCreateSnapshotRequest = json.Json.reads[CreateSnapshotRequest]
+  implicit val rGetExportResultRequest = json.Json.reads[GetExportResultRequest]
+  implicit val wGetExportResultResponse = json.Json.writes[GetExportResultResponse]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
@@ -419,6 +424,8 @@ object ProductionJsonServer extends JsonServer {
   def undoWorkspace = jsonPost(workspaceController.undoWorkspace)
   def redoWorkspace = jsonPost(workspaceController.redoWorkspace)
   def boxCatalog = jsonGet(workspaceController.boxCatalog)
+  def getPlotOutput = jsonGet(workspaceController.getPlotOutput)
+  def getExportResultOutput = jsonGet(workspaceController.getExportResultOutput)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment, workspaceController.ops)
   def getTableBrowserNodes = jsonFuture(sqlController.getTableBrowserNodes)
