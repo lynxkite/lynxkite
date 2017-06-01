@@ -33,17 +33,16 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
 
     def apply() = ???
 
-    protected def makeOutput(leftStateJson: String, rightStateJson: String): Map[BoxOutput, BoxOutputState] = {
-      Map(
-        context.box.output(context.meta.outputs(0)) ->
-          BoxOutputState.visualization(project, leftStateJson, rightStateJson))
-    }
-
     def getOutputs(): Map[BoxOutput, BoxOutputState] = {
       validateParameters(params)
-      makeOutput(
-        params("leftStateJson"),
-        params("rightStateJson"))
+
+      Map(
+        context.box.output(context.meta.outputs(0)) ->
+          BoxOutputState.visualization(
+            project,
+            params("leftStateJson"),
+            params("rightStateJson"))
+      )
     }
 
     def enabled = FEStatus.enabled
@@ -51,10 +50,10 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
     lazy val parameters = List(
       Param(
         "leftStateJson",
-        "UI status as JSON"),
+        "Left-side UI status as JSON"),
       Param(
         "rightStateJson",
-        "UI status as JSON"))
+        "Right-side UI status as JSON"))
 
   }
 

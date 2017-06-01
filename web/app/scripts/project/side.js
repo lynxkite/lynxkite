@@ -122,7 +122,7 @@ angular.module('biggraph')
       var backendState = JSON.parse(backendJson);
       backendState.projectName = this.state.projectName;
       this.state = backendState;
-      if (this.state.centers === undefined) {
+      if (this.state.graphMode && this.state.centers === undefined) {
         this.state.centers = [];
         this.sendCenterRequest(this.state.lastCentersRequest);
       }
@@ -141,7 +141,6 @@ angular.module('biggraph')
     Side.prototype.updateViewData = function() {
       var vd = this.viewData || {};
       var noCenters = (this.state.centers === undefined) || (this.state.centers.length === 0);
-      console.log(this.loaded(), this.state.graphMode, noCenters);
       if (!this.loaded() || !this.state.graphMode ||
           (this.state.graphMode === 'sampled' && noCenters)) {
         this.viewData = undefined;
