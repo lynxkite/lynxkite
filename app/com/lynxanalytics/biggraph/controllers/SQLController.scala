@@ -8,6 +8,7 @@ import scala.reflect.runtime.universe.TypeTag
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
+import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL
 import com.lynxanalytics.biggraph.graph_operations.ImportDataFrame
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
@@ -64,8 +65,32 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
       val givenTableNames = findTablesFromQuery(sql)
       // Maps the relative table names used in the sql query with the global name
       val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
-      // TODO: Adapt this to querying named snapshots.
-      queryTables(sql, Seq())
+      val pathAndTableName = tableNames.mapValues(wholePath => {
+        val split = wholePath.split('|')
+        (split.head, split.tail)
+      })
+      val snapshotsAndInernalTables = pathAndTableName.mapValues {
+        case (path, table) => (DirectoryEntry.fromName(path), table)
+      }
+      val goodSnapshots = snapshotsAndInernalTables.collect {
+        case (name, (snapshot, table)) if snapshot.isSnapshot && snapshot.readAllowedFrom(user) =>
+          (name, (snapshot.asSnapshotFrame, table))
+      }
+      val (projectSnapshots, tableSnapshots) = goodSnapshots.partition(_._2._2.length > 0)
+      val projectTables = projectSnapshots.mapValues {
+        case (snapshot, tablePath) => {
+          val rootViewer = snapshot.getState.project.viewer
+          val protoTableMap = rootViewer.getProtoTables.toMap
+          val protoTable = protoTableMap(tablePath.mkString("|"))
+          protoTable.toTable
+        }
+      }
+      val notProjectTables = tableSnapshots.mapValues {
+        case (snapshot, empty) => snapshot.getState.table
+      }
+      val result = ExecuteSQL.run(sql, projectTables ++ notProjectTables)
+      import Scripting._
+      result.df
     }
 
   private def queryTables(
