@@ -577,13 +577,12 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     },
 
     saveAs : function(newName) {
-      var that = this;
       util.post('/ajax/forkEntry',
         {
           from: this.name,
           to: newName,
         }).then(function() {
-          that.state.projectName = newName;
+          window.location = '#/workspace/' + newName;
         });
     },
 
