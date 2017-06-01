@@ -39,7 +39,7 @@ class PlotOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
 
     def getOutputs(): Map[BoxOutput, BoxOutputState] = {
-      validateParameters(params)
+      params.validate()
       makeOutput(plotResult)
     }
 
