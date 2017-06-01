@@ -1,4 +1,4 @@
-### Segment by vector attribute
+### Segment by Vector attribute
 
 Segments the vertices by a vector vertex attribute.
 
