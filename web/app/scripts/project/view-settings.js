@@ -34,11 +34,5 @@ angular.module('biggraph').factory('ViewSettings', function() {
         e = e.parentNode;
       }
     };
-
-    scope.saveVisualization = function(e) {
-      scope.side.saveStateToBackend(
-          scope.saveVisualizationName,
-          function() { that.getDrop(e).close(); });
-    };
   };
 });

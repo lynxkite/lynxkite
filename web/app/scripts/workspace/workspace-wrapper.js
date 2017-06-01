@@ -344,11 +344,8 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       var box = this.boxMap[id].instance;
       if (!angular.equals(plainParamValues, box.parameters) ||
           !angular.equals(parametricParamValues, box.parametricParameters)) {
-        console.log('UPDATE YES ', id, plainParamValues);
         this._setBoxParams(id, plainParamValues, parametricParamValues);
         this.saveWorkspace();
-      } else {
-        console.log('UPDATE NO ', id);
       }
     },
 

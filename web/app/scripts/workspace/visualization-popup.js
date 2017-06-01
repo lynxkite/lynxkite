@@ -24,25 +24,27 @@ angular.module('biggraph')
 
           scope.sides[0].state.projectPath = '';
 
-          scope.sides[0].reload();
-
           scope.applyVisualizationData();
+          scope.sides[0].reload();
+          scope.sides[1].reload();
+
         });
 
         scope.applyVisualizationData = function() {
           console.log('applyVisualizationData ', scope.box.instance.parameters);
           console.log(scope.box);
           if (scope.box.instance.parameters.leftStateJson) {
-            console.log('APPLY/APPLY');
             scope.left.updateFromBackendJson(
                 scope.box.instance.parameters.leftStateJson);
           } else {
-            console.log('APPLY/CLEAN');
             scope.left.cleanState();
             scope.left.state.graphMode = 'sampled';
           }
-          // scope.right.updateFromBackendJson(
-          //    scope.box.instance.parameters.rightStateJson);
+          if (scope.box.instance.parameters.rightStateJson) {
+            console.log(scope.box.instance.parameters.rightStateJson);
+            scope.right.updateFromBackendJson(
+                scope.box.instance.parameters.rightStateJson);
+          }
         };
 
         function getLeftToRightBundle() {
@@ -85,30 +87,37 @@ angular.module('biggraph')
             if (leftLoaded || rightLoaded) {
               scope.leftToRightBundle = getLeftToRightBundle();
               scope.rightToLeftBundle = getRightToLeftBundle();
-              scope.applyVisualizationData();
+              // scope.applyVisualizationData();
             }
 
           });
 
-        util.deepWatch(scope, 'left.state', function() {
-          scope.left.updateViewData();
-          var params = Object.assign({}, scope.box.instance.parameters);
-          params.leftStateJson = JSON.stringify(scope.left.state);
+        scope.saveBoxState = function() {
+          var params = {
+            leftStateJson: JSON.stringify(scope.left.state),
+            rightStateJson: JSON.stringify(scope.right.state),
+          };
+          console.log('SAVE0 ', scope.right.state.projectPath);
+          console.log('SAVE ', params);
           scope.workspace.updateBox(
             scope.box.instance.id,
             params,
             {});
-        });
-        util.deepWatch(scope, 'right.state', function() {
-          scope.right.updateViewData();
-          var params = Object.assign({}, scope.box.instance.parameters);
-          params.rightStateJson = JSON.stringify(scope.right.state);
-          scope.workspace.updateBox(
-            scope.box.instance.id,
-            params,
-            {});
-        });
+        };
 
+        util.deepWatch(
+          scope,
+          '[left.state, right.state]',
+          function(newVal, oldVal) {
+            if (oldVal === newVal) {
+              // This was the initial watch call.
+              return;
+            }
+            console.log(oldVal, newVal);
+            scope.left.updateViewData();
+            scope.right.updateViewData();
+            scope.saveBoxState();
+          });
       },
     };
   });

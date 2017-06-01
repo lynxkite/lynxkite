@@ -252,6 +252,10 @@ object BoxOutputKind {
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
 }
 
+case class VisualizationState(
+  leftStateJson: String,
+  rightStateJson: String)
+
 object BoxOutputState {
   // Cannot call these "apply" due to the JSON formatter macros.
   def from(project: ProjectEditor): BoxOutputState = {
@@ -342,14 +346,13 @@ case class BoxOutputState(
     manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)
   }
 
-  def visualization(implicit manager: graph_api.MetaGraphManager) = {
+  def visualization(implicit manager: graph_api.MetaGraphManager): VisualizationState = {
     import UIStatusSerialization.fUIStatus
     assert(isVisualization)
-    (
+    VisualizationState(
       (state.get \ "leftStateJson").as[String],
       (state.get \ "rightStateJson").as[String]
     )
-
   }
 }
 

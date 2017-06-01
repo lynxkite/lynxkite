@@ -20,9 +20,8 @@ angular.module('biggraph')
           scope.sides.push(scope.left);
           scope.sides.push(scope.right);
 
-          scope.sides[0].state.projectPath = '';
-
-          scope.sides[0].reload();
+          // scope.sides[0].state.projectPath = '';
+          // scope.sides[0].reload();
 
 
           scope.visualization = util.get('/ajax/getVisualizationOutput', {
@@ -37,9 +36,12 @@ angular.module('biggraph')
 
         scope.applyVisualizationData = function() {
           if (scope.visualization.$resolved) {
-            console.log('APPLY ', scope.visualization);
             scope.left.updateFromBackendJson(
                 scope.visualization.leftStateJson);
+            scope.right.updateFromBackendJson(
+                scope.visualization.rightStateJson);
+            scope.left.reload();
+            scope.right.reload();
           }
         };
 
@@ -75,22 +77,15 @@ angular.module('biggraph')
             var leftLoaded = result[0];
             var rightLoaded = result[1];
             if (leftLoaded) {
-              console.log('LOAD LEFT');
               scope.left.onProjectLoaded();
-              console.log('LOAD LEFT: DONE');
             }
             if (rightLoaded) {
-              console.log('right resolved? ', rightLoaded);
-              console.log('right resolved? ', scope.right.project.$resolved);
-              console.log(scope.right.project);
-              console.log('LOAD RIGHT');
               scope.right.onProjectLoaded();
-              console.log('LOAD RIGHT: DONE');
             }
             if (leftLoaded || rightLoaded) {
               scope.leftToRightBundle = getLeftToRightBundle();
               scope.rightToLeftBundle = getRightToLeftBundle();
-              scope.applyVisualizationData();
+              // scope.applyVisualizationData();
             }
 
           });

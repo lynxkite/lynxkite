@@ -303,7 +303,7 @@ object FrontendJson {
   implicit val wGetPlotOutputResponse = json.Json.writes[GetPlotOutputResponse]
   import UIStatusSerialization.fUIStatus
   implicit val rGetVisualizationOutputRequest = json.Json.reads[GetVisualizationOutputRequest]
-  implicit val wGetVisualizationOutputResponse = json.Json.writes[GetVisualizationOutputResponse]
+  implicit val wVisualizationState = json.Json.writes[VisualizationState]
   implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
   implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
   implicit val rCreateSnapshotRequest = json.Json.reads[CreateSnapshotRequest]
