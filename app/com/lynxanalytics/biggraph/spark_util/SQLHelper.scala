@@ -102,4 +102,8 @@ object SQLHelper {
     val tupleColumnIdList = getTupleColumnIdList(dataFrame.schema)
     dataFrame.rdd.map(processDataFrameRow(tupleColumnIdList))
   }
+
+  // Make every column nullable. Nullability is not stored in Parquet.
+  def allNullable(schema: types.StructType): types.StructType =
+    types.StructType(schema.map(_.copy(nullable = true)))
 }
