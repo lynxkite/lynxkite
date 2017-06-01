@@ -1,27 +1,100 @@
 'use strict';
 
+
 module.exports = function(fw) {
   var lib = require('../test-lib.js');
   var path = require('path');
-  var tableName = 'csv imported';
 
   fw.transitionTest(
-    'empty splash',
-    'CSV file imported as table',
+    'empty test-example workspace',
+    'small CSV file imported as table',
     function() {
+      lib.workspace.addBox({
+        id: 'ib0',
+        name: 'Import CSV',
+        x: 100, y: 100 });
+      var boxEditor = lib.workspace.openBoxEditor('ib0');
       var importPath = path.resolve(__dirname, 'data/import_csv_test.csv');
-      lib.splash.startTableImport();
-      lib.splash.importLocalCSVFile(tableName, importPath, 'name,age', 'name');
-      lib.splash.computeTable(tableName);
+      boxEditor.populateOperation({
+        'filename': importPath,
+        'columns': 'name,age'
+      });
+      lib.loadImportedTable();
+      boxEditor.close();
     },
     function() {
-      lib.splash.expectNumProjects(0);
-      lib.splash.expectNumDirectories(0);
-      lib.splash.expectNumTables(1);
-      lib.splash.expectTableWithNumRows(tableName, 3);
     }
   );
 
+  fw.transitionTest(
+    'small CSV file imported as table',
+    'table state view opened',
+    function() {
+      var tableState = lib.workspace.openStateView('ib0', 'table');
+      var table = tableState.table;
+      table.expectRowCountIs(3);
+      table.expectColumnNamesAre(['name', 'age']);
+      table.expectColumnTypesAre(['String', 'String']);
+      table.expectRowsAre([['Adam', '24'], ['Eve', '32'], ['Bob', '41']]);
+    },
+    function() {
+    }
+  );
+
+  fw.transitionTest(
+    'empty test-example workspace',
+    'large CSV file imported as table',
+    function() {
+      lib.workspace.addBox({
+        id: 'ib1',
+        name: 'Import CSV',
+        x: 400, y: 100 });
+      var boxEditor = lib.workspace.openBoxEditor('ib1');
+      var importPath = path.resolve(__dirname, 'data/import_large_csv_test.csv');
+      boxEditor.populateOperation({
+        'filename': importPath,
+        'infer': 'yes'
+      });
+      lib.loadImportedTable();
+      boxEditor.close();
+    },
+    function() {
+    }
+  );
+
+  fw.statePreservingTest(
+    'large CSV file imported as table',
+    'Sorting and Show more rows are working on table state view',
+    function() {
+      var state = lib.workspace.openStateView('ib1', 'table');
+      var table = state.table;
+      table.expectRowCountIs(10);
+      table.expectColumnNamesAre([
+        'country', 'country_code', 'population', 'area', 'currency']);
+      table.expectColumnTypesAre([
+        'String', 'String', 'Int', 'Int', 'String']);
+      table.expectFirstRowIs([
+        'Afghanistan', 'AF', '33332025', '652230', 'AFN']);
+      table.clickColumn(2); // population column, asc
+      table.expectFirstRowIs([
+        'Antarctica', 'AQ', '0', '14000000', 'null']);
+      table.clickColumn(0); // country column, desc
+      table.clickColumn(0);
+      table.expectFirstRowIs([
+        'Åland Islands', 'AX', '29013', '1580', 'EUR']);
+      table.clickShowMoreRows();
+      table.expectRowCountIs(20);
+      table.clickShowMoreRows();
+      table.expectRowCountIs(30);
+      table.setRowCount(7);
+      table.clickShowSample();
+      table.expectRowCountIs(7);
+    }
+  );
+
+
+
+/*
   fw.transitionTest(
     'CSV file imported as table',
     'Table described in global SQL box',
@@ -165,5 +238,6 @@ module.exports = function(fw) {
       lib.splash.expectNumTables(1);
       lib.splash.expectTableWithNumRows('jdbc imported', 4);
     });
-
+*/
 };
+

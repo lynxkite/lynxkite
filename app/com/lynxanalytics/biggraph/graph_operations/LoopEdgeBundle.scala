@@ -30,8 +30,8 @@ case class LoopEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
               rc: RuntimeContext): Unit = {
     implicit val iLoveScalaImplicits = inputDatas
 
-    val vertexIDPlusUnit = inputs.vs.rdd
-    val loopEdges = vertexIDPlusUnit.mapValuesWithKeys { case (id, _) => Edge(id, id) }
+    val vertexIdPlusUnit = inputs.vs.rdd
+    val loopEdges = vertexIdPlusUnit.mapValuesWithKeys { case (id, _) => Edge(id, id) }
     output(o.eb, loopEdges)
   }
 }

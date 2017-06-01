@@ -59,6 +59,6 @@ For example `any(male)` for a `Vector[String]` will match when the Vector contai
 
 Any filter can be prefixed with `!` to negate it. For example `!medium` will exclude
 "medium" values. Another typical usecase for this is specifying `!` (a single exclamation mark
-character) as the filter for a string attribute. This is interpreted as non-empty, so it will
-restrict to those vertices/edges where the string attribute is defined and its value is not empty
+character) as the filter for a String attribute. This is interpreted as non-empty, so it will
+restrict to those vertices/edges where the String attribute is defined and its value is not empty
 string. Remember, all filters work on defined values only, so `!*` will not match any vertices/edges.

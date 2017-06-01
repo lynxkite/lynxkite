@@ -1,0 +1,20 @@
+### Anchor
+
+This special box represents the workspace itself. There is always exactly one instance of it. It
+allows you to control workspace-wide settings as parameters on this box. It can also serve to anchor
+your workspace with a high-level description.
+
+====
+[[description]] Description::
+An overall description of the purpose of this workspace.
+
+[[parameters]] Parameters::
+Workspaces containing output boxes can be used as custom boxes in other workspaces. Here you can
+define what parameters the custom box created from this workspace shall have.
++
+Parameters can also be used as workspace-wide constants. For example if you want to import
+`accounts-2017.csv` and `transactions-2017.csv`, you could create a `date` parameter with default
+value set to `2017` and import the files as `accounts-$date.csv` and `transactions-$date.csv`. (Make
+sure to mark these parametric file names as _parametric_.) This makes it easy to change the date for
+all imported files at once later.
+====

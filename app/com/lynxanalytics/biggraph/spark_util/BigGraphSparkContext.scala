@@ -15,6 +15,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.spark_util
+import com.lynxanalytics.sandbox.ScalaScriptSecurityManager
 
 // Placeholders for deleted classes.
 class DeadClass1
@@ -285,7 +286,9 @@ class BigGraphKryoForcedRegistrator extends BigGraphKryoRegistrator {
 }
 
 object BigGraphSparkContext {
+  ScalaScriptSecurityManager.init()
   lazy val teradataDialect = new TeradataDialect()
+  lazy val oracleJdbcDialect = new OracleJdbcDialect()
 
   def createKryoWithForcedRegistration(): Kryo = {
     val myKryo = new Kryo()
@@ -363,6 +366,7 @@ object BigGraphSparkContext {
     settings: Traversable[(String, String)] = Map()): spark.sql.SparkSession = {
     rotateSparkEventLogs()
     JdbcDialects.registerDialect(teradataDialect)
+    JdbcDialects.registerDialect(oracleJdbcDialect)
 
     val versionFound = KiteInstanceInfo.sparkVersion
     val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim

@@ -33,7 +33,7 @@ trait EntityProgressManager {
   // 0 means it is not computed.
   // 1 means it is computed.
   // Anything in between indicates that the computation is in progress.
-  // -1.0 indicates that an error has occured during computation.
+  // -1.0 indicates that an error has occurred during computation.
   // These constants need to be kept in sync with the ones in:
   // /web/app/script/util.js
   def computeProgress(entity: MetaGraphEntity): Double
@@ -52,18 +52,18 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
   private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
   lazy val masterSQLContext = sparkSession.sqlContext
-  lazy val hiveConfigured = (getClass.getResource("/hive-site.xml") != null)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
 
   def entityIO(entity: MetaGraphEntity): io.EntityIO = {
-    val context = io.IOContext(dataRoot, sparkSession.sparkContext)
+    val context = io.IOContext(dataRoot, sparkSession)
     entity match {
       case vs: VertexSet => new io.VertexSetIO(vs, context)
       case eb: EdgeBundle => new io.EdgeBundleIO(eb, context)
       case va: Attribute[_] => new io.AttributeIO(va, context)
       case sc: Scalar[_] => new io.ScalarIO(sc, context)
+      case tb: Table => new io.TableIO(tb, context)
     }
   }
 
@@ -327,12 +327,18 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
     entityCache(scalar.gUID).map(_.asInstanceOf[ScalarData[_]].runtimeSafeCast[T])
   }
 
+  def getFuture(table: Table): SafeFuture[TableData] = {
+    loadOrExecuteIfNecessary(table)
+    entityCache(table.gUID).map(_.asInstanceOf[TableData])
+  }
+
   def getFuture(entity: MetaGraphEntity): SafeFuture[EntityData] = {
     entity match {
       case vs: VertexSet => getFuture(vs)
       case eb: EdgeBundle => getFuture(eb)
       case va: Attribute[_] => getFuture(va)
       case sc: Scalar[_] => getFuture(sc)
+      case tb: Table => getFuture(tb)
     }
   }
 
@@ -352,6 +358,9 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
   }
   def get[T](scalar: Scalar[T]): ScalarData[T] = {
     getFuture(scalar).awaitResult(Duration.Inf)
+  }
+  def get(table: Table): TableData = {
+    getFuture(table).awaitResult(Duration.Inf)
   }
   def get(entity: MetaGraphEntity): EntityData = {
     getFuture(entity).awaitResult(Duration.Inf)
@@ -397,6 +406,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
               coLocatedFuture(getFuture(va), va.vertexSet)(va.classTag)
                 .map { case (rdd, count) => new AttributeData(va, rdd, count) }
             case sc: Scalar[_] => getFuture(sc)
+            case tb: Table => getFuture(tb)
           }
           sparkCachedEntities.add(entity.gUID)
         }
@@ -419,7 +429,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
     RuntimeContext(
       sparkContext = sparkSession.sparkContext,
       sqlContext = masterSQLContext,
-      ioContext = io.IOContext(dataRoot, sparkSession.sparkContext),
+      ioContext = io.IOContext(dataRoot, sparkSession),
       broadcastDirectory = broadcastDirectory,
       dataManager = this)
   }
@@ -450,4 +460,5 @@ object DataManager {
     log.info(s"Executing query: $query")
     ctx.sql(query)
   }
+  lazy val hiveConfigured = (getClass.getResource("/hive-site.xml") != null)
 }

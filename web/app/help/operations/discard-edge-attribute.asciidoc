@@ -1,8 +1,0 @@
-### Discard edge attribute
-
-Throws away edge attributes.
-
-====
-[[name]] Name::
-The attributes to discard.
-====

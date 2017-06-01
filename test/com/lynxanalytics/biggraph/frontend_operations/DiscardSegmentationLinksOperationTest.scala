@@ -4,18 +4,20 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class DiscardSegmentationLinksOperationTest extends OperationsTestBase {
   test("Discard segmentation links") {
-    run("Example Graph")
-    run("Segment by string attribute", Map("name" -> "bucketing", "attr" -> "gender"))
-    val bucketing = project.segmentation("bucketing")
-    run("Discard segmentation links", on = bucketing)
+    val bucketed = box("Create example graph")
+      .box("Segment by String attribute", Map("name" -> "bucketing", "attr" -> "gender"))
+      .box("Discard segmentation links", Map("apply_to_project" -> "|bucketing"))
+    val bucketing = bucketed.project.segmentation("bucketing")
     assert(bucketing.scalars("!coverage").value == 0)
     assert(bucketing.scalars("!belongsToEdges").value == 0)
     assert(bucketing.scalars("!nonEmpty").value == 0)
-    run("Define segmentation links from matching attributes",
-      Map("base-id-attr" -> "gender", "seg-id-attr" -> "gender"),
-      on = bucketing)
-    assert(bucketing.scalars("!coverage").value == 4)
-    assert(bucketing.scalars("!belongsToEdges").value == 4)
-    assert(bucketing.scalars("!nonEmpty").value == 2)
+    val linked = bucketed
+      .box("Define segmentation links from matching attributes",
+        Map("apply_to_project" -> "|bucketing", "base_id_attr" -> "gender", "seg_id_attr" ->
+          "gender"))
+      .project.segmentation("bucketing")
+    assert(linked.scalars("!coverage").value == 4)
+    assert(linked.scalars("!belongsToEdges").value == 4)
+    assert(linked.scalars("!nonEmpty").value == 2)
   }
 }

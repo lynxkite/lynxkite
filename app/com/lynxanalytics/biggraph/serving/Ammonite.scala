@@ -6,19 +6,11 @@ import org.apache.spark
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
-import com.lynxanalytics.biggraph.groovy
-import com.lynxanalytics.biggraph.table
 
 object Ammonite {
   val env = BigGraphProductionEnvironment
   implicit val metaGraphManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
-
-  def saveAsTable(df: spark.sql.DataFrame, tableName: String, notes: String = ""): Unit = {
-    DirectoryEntry.fromName(tableName).asNewTableFrame(
-      table.TableImport.importDataFrameAsync(df),
-      notes)
-  }
 
   // Starting Ammonite if requested.
   val help = org.apache.commons.lang.StringEscapeUtils.escapeJava(
@@ -44,8 +36,6 @@ For convenience, we've set up some Kite specific bindings for you:
  metaManager: The MetaManager instance used by Kite.
  batch.runScript("name_of_script_file", "param1" -> "value1", "param2" -> "value2", ...): A method
    for running a batch script on the running Kite instance.
- saveAsTable(dataFrame, "tablePath"[, "notes"]): Saves the given data frame as
-   a top level Kite table.
 
 Remember, any of the above can be used to easily destroy the running server or even any data.
 Drive responsibly.""")
@@ -71,9 +61,7 @@ println("${help}")
         Bind("sc", env.sparkContext),
         Bind("metaManager", metaGraphManager),
         Bind("dataManager", dataManager),
-        Bind("sql", dataManager.masterSQLContext),
-        Bind("batch", groovy.GroovyContext),
-        Bind("saveAsTable", saveAsTable _)))
+        Bind("sql", dataManager.masterSQLContext)))
   }
 
   def maybeStart() = {

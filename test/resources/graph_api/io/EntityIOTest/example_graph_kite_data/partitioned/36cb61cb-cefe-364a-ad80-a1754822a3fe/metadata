@@ -1,4 +1,4 @@
 {
   "lines" : 4,
-  "serialization" : "kryo[(Double, Double)]"
+  "serialization" : "Kryo[(Double, Double)]"
 }
