@@ -44,6 +44,15 @@
       </button>
     </form>
   </div>
+
+  <div ng-class="showSQL ? 'entry-nohover' : 'entry'"
+       id="global-sql-box" ng-click="showSQL=!showSQL">
+    <span class="icon glyphicon glyphicon-{{ showSQL ? 'minus' : 'plus' }}"></span>
+    <span class="lead">SQL Interface
+      <help-popup href="global-sql-box" class="pull-right"></help-popup>
+    </span>
+    <br/>
+  </div>
   <div style="margin-left: 20px">
     <sql-box  ng-click="$event.stopPropagation()" directory="path" ng-if="showSQL"></sql-box>
   </div>
