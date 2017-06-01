@@ -22,7 +22,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
         throw 'one of them needs to be defined: scope.side, scope.directory';
       }
       scope.isGlobal = !scope.side;
-      scope.sql = scope.isGlobal ? 'select * from `directory/project|vertices`' :
+      scope.sql = scope.isGlobal ? 'select * from `directory/snapshot|vertices`' :
        'select * from vertices';
 
       function SqlHistory(maxLength) {
