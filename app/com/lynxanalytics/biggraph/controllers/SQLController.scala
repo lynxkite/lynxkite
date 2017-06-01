@@ -69,26 +69,24 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
         val split = wholePath.split('|')
         (split.head, split.tail)
       })
-      val snapshotsAndInernalTables = pathAndTableName.mapValues {
+      val snapshotsAndInternalTables = pathAndTableName.mapValues {
         case (path, table) => (DirectoryEntry.fromName(path), table)
       }
-      val goodSnapshots = snapshotsAndInernalTables.collect {
+      val goodSnapshotStates = snapshotsAndInternalTables.collect {
         case (name, (snapshot, table)) if snapshot.isSnapshot && snapshot.readAllowedFrom(user) =>
-          (name, (snapshot.asSnapshotFrame, table))
+          (name, (snapshot.asSnapshotFrame.getState(), table))
       }
-      val (projectSnapshots, tableSnapshots) = goodSnapshots.partition(_._2._2.length > 0)
-      val projectTables = projectSnapshots.mapValues {
-        case (snapshot, tablePath) => {
-          val rootViewer = snapshot.getState.project.viewer
+      val tables = goodSnapshotStates.mapValues {
+        case (state, tablePath) if state.isTable => state.table
+        case (state, tablePath) if state.isProject => {
+          val rootViewer = state.project.viewer
           val protoTableMap = rootViewer.getProtoTables.toMap
           val protoTable = protoTableMap(tablePath.mkString("|"))
           protoTable.toTable
         }
+        case (state, tablePath) if state.isPlot => ???
       }
-      val notProjectTables = tableSnapshots.mapValues {
-        case (snapshot, empty) => snapshot.getState.table
-      }
-      val result = ExecuteSQL.run(sql, projectTables ++ notProjectTables)
+      val result = ExecuteSQL.run(sql, tables)
       import Scripting._
       result.df
     }
