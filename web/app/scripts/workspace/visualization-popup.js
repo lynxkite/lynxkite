@@ -11,13 +11,14 @@ angular.module('biggraph')
         stateId: '=',
         popupModel: '=',
         box: '=',
+        workspace: '=',
       },
       link: function(scope) {
 
         scope.$watch('stateId', function(newValue, oldValue, scope) {
           scope.sides = [];
-          scope.left = new side.Side(scope.sides, 'left', scope.stateId);
-          scope.right = new side.Side(scope.sides, 'right', scope.stateId);
+          scope.left = new side.Side(scope.sides, 'left', scope.stateId, true);
+          scope.right = new side.Side(scope.sides, 'right', scope.stateId, true);
           scope.sides.push(scope.left);
           scope.sides.push(scope.right);
 
@@ -29,8 +30,19 @@ angular.module('biggraph')
         });
 
         scope.applyVisualizationData = function() {
-          scope.left.updateFromBackendJson(
-              scope.box.instance.parameters.uiStatusJson);
+          console.log('applyVisualizationData ', scope.box.instance.parameters);
+          console.log(scope.box);
+          if (scope.box.instance.parameters.leftStateJson) {
+            console.log('APPLY/APPLY');
+            scope.left.updateFromBackendJson(
+                scope.box.instance.parameters.leftStateJson);
+          } else {
+            console.log('APPLY/CLEAN');
+            scope.left.cleanState();
+            scope.left.state.graphMode = 'sampled';
+          }
+          // scope.right.updateFromBackendJson(
+          //    scope.box.instance.parameters.rightStateJson);
         };
 
         function getLeftToRightBundle() {
@@ -80,9 +92,21 @@ angular.module('biggraph')
 
         util.deepWatch(scope, 'left.state', function() {
           scope.left.updateViewData();
+          var params = Object.assign({}, scope.box.instance.parameters);
+          params.leftStateJson = JSON.stringify(scope.left.state);
+          scope.workspace.updateBox(
+            scope.box.instance.id,
+            params,
+            {});
         });
         util.deepWatch(scope, 'right.state', function() {
           scope.right.updateViewData();
+          var params = Object.assign({}, scope.box.instance.parameters);
+          params.rightStateJson = JSON.stringify(scope.right.state);
+          scope.workspace.updateBox(
+            scope.box.instance.id,
+            params,
+            {});
         });
 
       },

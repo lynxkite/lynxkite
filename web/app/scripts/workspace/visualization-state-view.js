@@ -37,8 +37,9 @@ angular.module('biggraph')
 
         scope.applyVisualizationData = function() {
           if (scope.visualization.$resolved) {
-            scope.left.state = scope.visualization.status;
-            scope.left.updateViewData();
+            console.log('APPLY ', scope.visualization);
+            scope.left.updateFromBackendJson(
+                scope.visualization.leftStateJson);
           }
         };
 

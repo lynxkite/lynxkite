@@ -33,7 +33,7 @@ angular.module('biggraph')
       };
     }
 
-    function Side(sides, direction, stateId) {
+    function Side(sides, direction, stateId, enableVisualizationUi) {
       // The list of all sides.
       this.sides = sides;
       // Left or right?
@@ -46,6 +46,7 @@ angular.module('biggraph')
       // The /ajax/getProjectOutput Ajax response.
       this.project = undefined;
       this.stateId = stateId;
+      this.enableVisualizationUi = enableVisualizationUi;
     }
 
     Side.prototype.sections = ['scalar', 'vertex-attribute', 'edge-attribute', 'segmentation'];
@@ -115,8 +116,10 @@ angular.module('biggraph')
     };
 
     Side.prototype.updateFromBackendJson = function(backendJson) {
+      if (!backendJson) {
+        return;
+      }
       var backendState = JSON.parse(backendJson);
-      console.log('BS ', backendState);
       backendState.projectName = this.state.projectName;
       this.state = backendState;
       if (this.state.centers === undefined) {
@@ -136,17 +139,14 @@ angular.module('biggraph')
 
 
     Side.prototype.updateViewData = function() {
-      console.log('updateViewData');
       var vd = this.viewData || {};
       var noCenters = (this.state.centers === undefined) || (this.state.centers.length === 0);
       console.log(this.loaded(), this.state.graphMode, noCenters);
       if (!this.loaded() || !this.state.graphMode ||
           (this.state.graphMode === 'sampled' && noCenters)) {
         this.viewData = undefined;
-        console.log('PASS');
         return;
       }
-      console.log('GO');
 
       vd.vertexSet = { id: this.project.vertexSet };
       if (this.project.edgeBundle) {
@@ -360,7 +360,6 @@ angular.module('biggraph')
     };
 
     Side.prototype.loaded = function() {
-      console.log('loaded? ', this.project);
       return this.project && this.project.$resolved && !this.project.$error;
     };
 
@@ -710,7 +709,7 @@ angular.module('biggraph')
 
     // Called when Side.project is loaded.
     Side.prototype.onProjectLoaded = function() {
-      this.cleanState();
+      // this.cleanState();
       this.loadScalars();
       this.updateViewData();
       if (!this.project.vertexSet) {

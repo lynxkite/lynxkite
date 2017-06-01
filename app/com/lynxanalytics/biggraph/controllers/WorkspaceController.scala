@@ -34,7 +34,9 @@ case class GetTableOutputResponse(header: List[TableColumn], data: List[List[Dyn
 case class GetPlotOutputRequest(id: String)
 case class GetPlotOutputResponse(json: FEScalar)
 case class GetVisualizationOutputRequest(id: String)
-case class GetVisualizationOutputResponse(status: UIStatus)
+case class GetVisualizationOutputResponse(
+  leftStateJson: String,
+  rightStateJson: String)
 case class CreateWorkspaceRequest(name: String, privacy: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 case class CreateSnapshotRequest(name: String, id: String)
@@ -152,7 +154,11 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: GetVisualizationOutputRequest): GetVisualizationOutputResponse = {
     val state = getOutput(user, request.id)
     // println(state.visualization)
-    GetVisualizationOutputResponse(state.visualization)
+    // val left: Int = state.visualization
+    GetVisualizationOutputResponse(
+      state.visualization._1,
+      state.visualization._2
+    )
   }
 
   def getExportResultOutput(
