@@ -47,38 +47,8 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   }
   */
 
-  // TODO: Depends on #5811.
+  // TODO: Depends on #5731.
   /*
-  test("sql on vertices") {
-    run("Create example graph")
-    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.local(project = projectName, sql = "select name from vertices where age < 40"),
-      maxRows = 10)))
-    assert(result.header == List(SQLColumn("name", "String")))
-    val resultStrings = SQLResultToStrings(result.data)
-    assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
-  }
-
-  test("sql with empty results") {
-    run("Create example graph")
-    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.local(project = projectName, sql = "select id from vertices where id = 11"),
-      maxRows = 10)))
-    assert(result.header == List(SQLColumn("id", "Long")))
-    assert(result.data == List())
-  }
-
-  test("sql file reading is disabled") {
-    val file = getClass.getResource("/controllers/noread.csv").toString
-    intercept[Throwable] {
-      await(sqlController.runSQLQuery(user, SQLQueryRequest(
-        DataFrameSpec.local(
-          project = projectName,
-          sql = s"select * from csv.`$file`"),
-        maxRows = 10)))
-    }
-  }
-
   test("sql export to csv") {
     run("Create example graph")
     val result = await(sqlController.exportSQLQueryToCSV(user, SQLExportToCSVRequest(
@@ -117,10 +87,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     connection.close()
     assert(results.sorted == Seq("Adam;20.3", "Eve;18.2", "Isolated Joe;2.0"))
   }
-  */
 
-  // TODO: Depends on #5731.
-  /*
   test("sql export to parquet + import back (including tuple columns)") {
     val exportPath = "IMPORTGRAPHTEST$/example.parquet"
     graph_util.HadoopFile(exportPath).deleteIfExists
@@ -160,60 +127,7 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   }
   */
 
-  // TODO: Depends on #5875.
-  /*
-  test("export global sql to view + query it again") {
-    val cols = List(
-      SQLColumn("vertexId", "String"),
-      SQLColumn("name", "String"),
-      SQLColumn("age", "String"))
-    val colNames = cols.map { case SQLColumn(n, t) => n }
-    createViewCSV("testgraph/vertex-data", colNames)
-    sqlController.createViewDFSpec(user,
-      SQLCreateViewRequest(name = "sql-view-test", privacy = "public-read",
-        DataFrameSpec(
-          directory = Some(""),
-          project = None,
-          sql = "select * from `csv-view-test`"
-        ), overwrite = false))
-    val res = Await.result(sqlController.runSQLQuery(user,
-      SQLQueryRequest(
-        DataFrameSpec(
-          directory = Some(""),
-          project = None,
-          sql = "select vertexId, name, age from `sql-view-test` order by vertexId"
-        ), maxRows = 120)),
-      Duration.Inf)
-    assert(res.header == cols)
-    val resultStrings = SQLResultToStrings(res.data)
-    assert(resultStrings == List(
-      List("0", "Adam", "20.3"), List("1", "Eve", "18.2"), List("2", "Bob", "50.3")))
-  }
-
-  test("export global sql to view with limit + query it again") {
-    val colNames = List("vertexId", "name", "age")
-    // vertex-data has 3 rows, but we limit the import to 2.
-    createViewCSV("testgraph/vertex-data", colNames, limit = Some(2))
-    sqlController.createViewDFSpec(user,
-      SQLCreateViewRequest(name = "sql-view-test", privacy = "public-read",
-        DataFrameSpec(
-          directory = Some(""),
-          project = None,
-          sql = "select * from `csv-view-test`"
-        ), overwrite = false))
-    val res = Await.result(sqlController.runSQLQuery(user,
-      SQLQueryRequest(
-        DataFrameSpec(
-          directory = Some(""),
-          project = None,
-          sql = "select vertexId, name, age from `sql-view-test` order by vertexId"
-        ), maxRows = 120)),
-      Duration.Inf)
-    assert(res.data.length == 2)
-  }
-  */
-
-  // TODO: Depends on #5811.
+  // TODO: Depends on https://app.asana.com/0/194476945034319/354006072569797.
   /*
   test("list project tables") {
     createProject(name = "example1")
