@@ -243,7 +243,6 @@ trait BasicOperation extends Operation {
   protected def visibleScalars: List[FEScalar] = List()
   def summary = title
   protected def apply(): Unit
-  protected def enabled: FEStatus
   protected def safeEnabled: FEStatus =
     util.Try(enabled).recover { case exc => FEStatus.disabled(exc.getMessage) }.get
   protected def help = // Add to notes for help link.
@@ -468,7 +467,7 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
   def exportResult: Scalar[String]
   val format: String
 
-  def getParamsToDisplay() = params + ("format" -> format)
+  def getParamsToDisplay() = params.toMap + ("format" -> format)
 
   protected def makeOutput(exportResult: Scalar[String]): Map[BoxOutput, BoxOutputState] = {
     val paramsToDisplay = getParamsToDisplay()
@@ -477,7 +476,7 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
   }
 
   def getOutputs(): Map[BoxOutput, BoxOutputState] = {
-    validateParameters(params)
+    params.validate()
     makeOutput(exportResult)
   }
 
@@ -487,15 +486,15 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
 abstract class ExportOperationToFile(context: Operation.Context)
     extends ExportOperation(context) {
 
-  override def validateParameters(params: Map[String, String]): Unit = {
-    super.validateParameters(params)
+  override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     assertWriteAllowed(params("path"))
+    super.getOutputs()
   }
 
   protected def generatePathIfNeeded(path: String): String = {
     if (path == "<auto>") {
       val inputGuid = table.gUID.toString
-      val paramsWithInput = params ++ Map("input" -> inputGuid)
+      val paramsWithInput = params.toMap ++ Map("input" -> inputGuid)
       "DATA$/exports/" + paramsWithInput.hashCode.toString + "." + format
     } else
       path
@@ -507,7 +506,7 @@ abstract class ExportOperationToFile(context: Operation.Context)
     file.assertWriteAllowedFrom(context.user)
   }
 
-  override def getParamsToDisplay() = params +
+  override def getParamsToDisplay() = params.toMap +
     ("format" -> format, "path" -> generatePathIfNeeded(params("path")))
 }
 
@@ -534,7 +533,7 @@ class CustomBoxOperation(
     }
   }
 
-  override def params = super.params // Make public.
+  def getParams = params.toMap
 
   def apply: Unit = ???
   def enabled = FEStatus.enabled
