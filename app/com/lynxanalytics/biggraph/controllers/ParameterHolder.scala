@@ -1,20 +1,21 @@
-// A very lazy collection for accessing parameter values and metadata in frontend operations.
+// Frontend operations use ParameterHolder to define and access their parameters.
 //
-// Example:
+// Parameter has mutable state to which you can add one parameter with "+=" or multiple parameters
+// with "++=". Parameters can refer to earlier defined parameters. For example:
 //
-//   val params =
-//     LazyParameters(context) +
-//       Param("one", "One") + Param("two", params("one")) ++
-//         (if (params("two").nonEmpty) List(Param("three", "Three")) else Nil)
+//   params += Param("one", "One")
+//   params += Param("two", params("one"))
+//   params ++= (if (params("two").nonEmpty) List(Param("three", "Three")) else Nil)
 //
-// Constructing a parameter list is nearly identical to building a normal Scala List.
-// "+" can be used to add single elements and "++" can be used to add sequences.
-// But both "+" and "++" evaluate their parameter lazily. When the example code runs, none of the
-// "Param()" constructors get executed. They will only get executed when a parameter is accessed.
+// "+=" and "++=" handle exceptions in the definitions and save them. If the parameter is later
+// accessed, the exception will surface. But the exceptions will not break the entire box. The
+// successfully defined parameters can still be accessed from the frontend.
 //
-// This makes it possible for one parameter to depend on the value of another parameter. In the
-// example the value of "one" is used as the display name of "two", and "three" is only added if
-// "two" is non-empty.
+// Make sure the exception happens after "+=" / "++=". For example this variation of the third
+// example will break the box if "two" has an error:
+//
+//   if (params("two").nonEmpty) params += Param("three", "Three")
+//
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
