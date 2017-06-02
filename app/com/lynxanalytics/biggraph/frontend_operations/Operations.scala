@@ -9,9 +9,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.model
-import com.lynxanalytics.biggraph.serving.FrontendJson
 import play.api.libs.json
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
@@ -2995,6 +2993,82 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         project.scalars(scalarName) = them.scalars(origName)
       }
     })
+
+  register("Join", StructureOperations, "left", "right")(
+    new ProjectOutputOperation(_) {
+
+      protected def extendSegmentationParameters(originalList: List[FEOption],
+                                                 suffixes: List[String]): List[FEOption] = {
+        originalList.map {
+          case feOption =>
+            suffixes.map {
+              case suffix =>
+                FEOption(feOption.id + suffix, feOption.title + suffix)
+            }
+        }.flatten.sortBy(_.title)
+      }
+
+      // We have to skip the assert in the base class here, because we need to have the
+      // same ProjectEditor for multiple "segmentations"
+      override protected def projectInput(input: String): ProjectEditor = {
+        val segPath = SubProject.splitPipedPath(paramValues.getOrElse("apply_to_" + input, ""))
+        context.inputs(input).project.offspringEditor(segPath.tail)
+      }
+
+      private def segmentationParameter(titlePrefix: String,
+                                        input: String,
+                                        idTitle: String): OperationParams.SegmentationParam = {
+        val param = titlePrefix + input
+        reservedParameter(param)
+        val originalSegmentations =
+          context.inputs(input).project.segmentationsRecursively
+        val segList = extendSegmentationParameters(originalSegmentations, List(" vertices", " edges"))
+        OperationParams.SegmentationParam(param, idTitle, segList)
+      }
+
+      override protected def allParameters: List[OperationParameterMeta] = {
+        val segParams = List(
+          segmentationParameter("apply_to_", "left", "Apply to (left)"),
+          segmentationParameter("apply_to_", "right", "Take from (right)"))
+        segParams ++ parameters
+      }
+
+      private def toFEList(s: Seq[String]): List[FEOption] = {
+        s.map {
+          case name => FEOption(name, name)
+        }.toList
+      }
+      private val left = projectInput("left")
+      private val right = projectInput("right")
+
+      private def withoutEmptyTagLists(params: List[OperationParameterMeta]): List[OperationParameterMeta] = {
+        params.filter {
+          x =>
+            !x.isInstanceOf[TagList] || x.asInstanceOf[TagList].options.nonEmpty
+        }
+      }
+
+      lazy val parameters = {
+        val targetIsVertex =
+          context.box.parameters.getOrElse("apply_to_left", " vertices") == " vertices"
+        val fullList =
+          if (targetIsVertex) {
+            List(
+              TagList("va", "Vertex Attributes", toFEList(right.vertexAttributeNames)),
+              TagList("sg", "Segmentations", toFEList(right.segmentationNames)),
+              Choice("edges", "Edges", FEOption.bools))
+          } else {
+            List(
+              TagList("ea", "Edge Attributes", toFEList(right.edgeAttributeNames)))
+          }
+        withoutEmptyTagLists(fullList)
+      }
+      def enabled = FEStatus(true)
+      def apply() {
+        project.state = left.rootEditor.state
+      }
+    }
+  )
 
   register("Union with another project", StructureOperations, "a", "b")(new ProjectOutputOperation(_) {
     override lazy val project = projectInput("a")
