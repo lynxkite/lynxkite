@@ -2997,8 +2997,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Join", StructureOperations, "left", "right")(
     new ProjectOutputOperation(_) {
 
-      protected def extendSegmentationParameters(originalList: List[FEOption],
-                                                 suffixes: List[String]): List[FEOption] = {
+      private def extendSegmentationParameters(originalList: List[FEOption],
+                                               suffixes: List[String]): List[FEOption] = {
         originalList.map {
           case feOption =>
             suffixes.map {
