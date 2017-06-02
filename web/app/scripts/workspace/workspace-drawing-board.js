@@ -180,7 +180,6 @@ angular.module('biggraph')
           if (!leftButton || event.ctrlKey || event.shiftKey) {
             return;
           }
-          console.log('BOX ', box);
           var content;
           if (box.metadata.operationId === 'Create visualization') {
             content = {
