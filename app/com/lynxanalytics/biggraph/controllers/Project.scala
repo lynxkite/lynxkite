@@ -274,38 +274,42 @@ sealed trait ProjectViewer {
     getLocalProtoTables ++ childProtoTables
   }
 
-  def getSingleProtoTable(tablePath: String) = {
+  def getSingleProtoTable(tablePath: String): ProtoTable = {
     val splittedPath = tablePath.split('|')
     val (segPath, tableName) = (splittedPath.dropRight(1), splittedPath.last)
     val segViewer = offspringViewer(segPath)
-    import ProjectViewer._
-    val protoTable = tableName match {
-      case VertexTableName => ProtoTable(vertexAttributes)
-      case EdgeTableName => {
-        import graph_operations.VertexToEdgeAttribute._
-        val edgeAttrs = edgeAttributes.map {
-          case (name, attr) => s"edge_$name" -> attr
+    if (segViewer == this) {
+      import ProjectViewer._
+      val protoTable = tableName match {
+        case VertexTableName => ProtoTable(vertexAttributes)
+        case EdgeTableName => {
+          import graph_operations.VertexToEdgeAttribute._
+          val edgeAttrs = edgeAttributes.map {
+            case (name, attr) => s"edge_$name" -> attr
+          }
+          val srcAttrs = vertexAttributes.map {
+            case (name, attr) => s"src_$name" -> srcAttribute(attr, edgeBundle)
+          }
+          val dstAttrs = vertexAttributes.map {
+            case (name, attr) => s"dst_$name" -> dstAttribute(attr, edgeBundle)
+          }
+          ProtoTable(edgeAttrs ++ srcAttrs ++ dstAttrs)
         }
-        val srcAttrs = vertexAttributes.map {
-          case (name, attr) => s"src_$name" -> srcAttribute(attr, edgeBundle)
+        case EdgeAttributeTableName => ProtoTable(edgeAttributes)
+        case BelongsToTableName =>
+          throw new AssertionError("Only segmentations have a BelongsTo table")
+        case _ => {
+          val correctTableNames = List(VertexTableName, EdgeTableName, EdgeAttributeTableName,
+            BelongsToTableName).mkString(", ")
+          throw new AssertionError("Not recognized table name. Correct table names: " +
+            s"${correctTableNames}")
         }
-        val dstAttrs = vertexAttributes.map {
-          case (name, attr) => s"dst_$name" -> dstAttribute(attr, edgeBundle)
-        }
-        ProtoTable(edgeAttrs ++ srcAttrs ++ dstAttrs)
       }
-      case EdgeAttributeTableName => ProtoTable(edgeAttributes)
-      case BelongsToTableName => throw new AssertionError("Only segmentations have a BelongsTo table")
-      case _ => {
-        val correctTableNames = List(VertexTableName, EdgeTableName, EdgeAttributeTableName,
-          BelongsToTableName).mkString(", ")
-        throw new AssertionError("Not recognized table name. Correct table names: " +
-          s"${correctTableNames}")
-      }
-    }
-    protoTable
+      protoTable
+    } else segViewer.getSingleProtoTable(tableName)
   }
 }
+
 object ProjectViewer {
   val VertexTableName = "vertices"
   val EdgeTableName = "edges"
@@ -444,17 +448,31 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
   override def getLocalProtoTables: Iterable[(String, ProtoTable)] = {
     import ProjectViewer._
     Option(belongsTo).map { belongsTo =>
-      BelongsToTableName -> {
-        import graph_operations.VertexToEdgeAttribute._
-        val baseAttrs = parent.vertexAttributes.map {
-          case (name, attr) => s"base_$name" -> srcAttribute(attr, belongsTo)
-        }
-        val segAttrs = vertexAttributes.map {
-          case (name, attr) => s"segment_$name" -> dstAttribute(attr, belongsTo)
-        }
-        ProtoTable(baseAttrs ++ segAttrs)
-      }
+      BelongsToTableName -> getSingleProtoTable(BelongsToTableName)
     } ++ super.getLocalProtoTables
+  }
+
+  override def getSingleProtoTable(tablePath: String): ProtoTable = {
+    val splittedPath = tablePath.split('|')
+    val (segPath, tableName) = (splittedPath.dropRight(1), splittedPath.last)
+    val segViewer = offspringViewer(segPath)
+    if (segViewer == this) {
+      import ProjectViewer._
+      val protoTable = tableName match {
+        case BelongsToTableName => {
+          import graph_operations.VertexToEdgeAttribute._
+          val baseAttrs = parent.vertexAttributes.map {
+            case (name, attr) => s"base_$name" -> srcAttribute(attr, belongsTo)
+          }
+          val segAttrs = vertexAttributes.map {
+            case (name, attr) => s"segment_$name" -> dstAttribute(attr, belongsTo)
+          }
+          ProtoTable(baseAttrs ++ segAttrs)
+        }
+        case _ => super.getSingleProtoTable(tablePath)
+      }
+      protoTable
+    } else segViewer.getSingleProtoTable(tableName)
   }
 }
 
