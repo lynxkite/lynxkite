@@ -80,8 +80,7 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
         case (state, tablePath) if state.isTable => state.table
         case (state, tablePath) if state.isProject => {
           val rootViewer = state.project.viewer
-          val protoTableMap = rootViewer.getProtoTables.toMap
-          val protoTable = protoTableMap(tablePath.mkString("|"))
+          val protoTable = rootViewer.getSingleProtoTable(tablePath.mkString("|"))
           protoTable.toTable
         }
         case (state, tablePath) if state.isPlot => ???
