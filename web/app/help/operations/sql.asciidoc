@@ -1,0 +1,8 @@
+### SQL
+
+Executes an SQL query on its inputs, which can be either projects or tables. Outputs a table.
+
+====
+[[sql]] SQL query::
+The query. For the syntax see the section on <<sql-box>>.
+====

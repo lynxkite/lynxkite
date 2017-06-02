@@ -4,8 +4,6 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class CreateSegmentationFromSQLTest extends OperationsTestBase {
-  // TODO: Depends on #5811.
-  /*
   test("Create segmentation from SQL") {
     val project = box("Create example graph")
       .box(
@@ -15,6 +13,5 @@ class CreateSegmentationFromSQLTest extends OperationsTestBase {
     assert(seg.vertexSet.toSeq.size == 4)
     assert(seg.vertexAttributes("location").rdd.count == 4)
   }
-  */
 }
 
