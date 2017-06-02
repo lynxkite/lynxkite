@@ -393,6 +393,8 @@ include::split-to-train-and-test-set.asciidoc[]
 
 include::split-vertices.asciidoc[]
 
+include::sql.asciidoc[]
+
 include::take-edges-as-vertices.asciidoc[]
 
 include::take-segmentation-as-base-project.asciidoc[]

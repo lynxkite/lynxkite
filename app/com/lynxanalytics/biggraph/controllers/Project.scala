@@ -252,7 +252,7 @@ sealed trait ProjectViewer {
     }
   }
 
-  protected def getLocalProtoTables: Iterable[(String, ProtoTable)] = {
+  def getLocalProtoTables: Iterable[(String, ProtoTable)] = {
     import ProjectViewer._
     Option(vertexSet).map { vertexSet =>
       VertexTableName -> getSingleProtoTable(VertexTableName)
@@ -441,11 +441,21 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
       equivalentUIAttribute)
   }
 
-  def implicitTableNames =
-    Option(belongsTo).map(_ => ProjectViewer.BelongsToTableName) ++
-      Option(edgeBundle).map(_ => ProjectViewer.EdgeTableName) ++
-      Option(edgeBundle).map(_ => ProjectViewer.EdgeAttributeTableName) ++
-      Option(vertexSet).map(_ => ProjectViewer.VertexTableName)
+  override def getLocalProtoTables: Iterable[(String, ProtoTable)] = {
+    import ProjectViewer._
+    Option(belongsTo).map { belongsTo =>
+      BelongsToTableName -> {
+        import graph_operations.VertexToEdgeAttribute._
+        val baseAttrs = parent.vertexAttributes.map {
+          case (name, attr) => s"base_$name" -> srcAttribute(attr, belongsTo)
+        }
+        val segAttrs = vertexAttributes.map {
+          case (name, attr) => s"segment_$name" -> dstAttribute(attr, belongsTo)
+        }
+        ProtoTable(baseAttrs ++ segAttrs)
+      }
+    } ++ super.getLocalProtoTables
+  }
 }
 
 // The CheckpointRepository's job is to persist project states to checkpoints.

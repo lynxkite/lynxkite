@@ -30,12 +30,13 @@ object ExecuteSQL extends OpFromJson {
     import spark.sql.catalyst.analysis._
     import spark.sql.catalyst.expressions._
     val parser = new spark.sql.execution.SparkSqlParser(
-      spark.sql.SQLHelperHelper.caseSensitiveSQLConf)
+      spark.sql.SQLHelperHelper.newSQLConf)
     // Parse the query.
     val planParsed = parser.parsePlan(sqlQuery)
     // Resolve the table references with our tables.
     val planResolved = planParsed.resolveOperators {
       case u: UnresolvedRelation =>
+        assert(tables.contains(u.tableName), s"No such table: ${u.tableName}")
         val attributes = tables(u.tableName).schema.map {
           f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()
         }
@@ -73,7 +74,7 @@ case class ExecuteSQL(
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val sqlContext = rc.dataManager.masterSQLContext
+    val sqlContext = rc.dataManager.masterSQLContext // TODO: Use a newSQLContext() instead.
     val dfs = inputs.tables.map { t => t.name.name -> t.df }
     val df = DataManager.sql(sqlContext, sqlQuery, dfs.toList)
     output(o.t, df)

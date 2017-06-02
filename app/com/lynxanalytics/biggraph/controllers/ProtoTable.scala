@@ -7,9 +7,15 @@ import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.graph_api._
 import org.apache.spark.sql.types
 
+// A kind of wrapper for Tables that can be used for trimming unused dependencies from table
+// operations like ExecuteSQL.
 trait ProtoTable {
+  // The schema of the Table that would be created by toTable.
   def schema: types.StructType
+  // Returns a ProtoTable that is a possibly smaller subset of this one, still containing the
+  // specified columns.
   def select(columns: Iterable[String]): ProtoTable
+  // Creates the promised table.
   def toTable: Table
 }
 
@@ -25,6 +31,7 @@ object ProtoTable {
 
 class TableWrappingProtoTable(table: Table) extends ProtoTable {
   def schema = table.schema
+  // Tables are atomic metagraph entities, so we use the whole thing even if only parts are needed.
   def select(columns: Iterable[String]) = this
   def toTable = table
 }
