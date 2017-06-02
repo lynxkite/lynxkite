@@ -94,6 +94,20 @@ angular.module('biggraph').directive('operationSelector', function($timeout) {
           scope.opFilter = '';
         }
       };
+      scope.filter = function(boxes, opFilter) {
+        /* global Fuse */
+        var options = {
+          shouldSort: true,
+          threshold: 0.6,
+          location: 0,
+          distance: 100,
+          maxPatternLength: 32,
+          minMatchCharLength: 1,
+          keys: [ "operationId" ]
+        };
+        var fuse = new Fuse(boxes, options);
+        return fuse.search(opFilter);
+      };
       scope.$on('open operation search', startSearch);
       function startSearch() {
         scope.op = undefined;
