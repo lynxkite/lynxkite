@@ -40,7 +40,8 @@ object ExecuteSQL extends OpFromJson {
         val attributes = tables(u.tableName).schema.map {
           f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()
         }
-        LocalRelation(attributes)
+        val rel = LocalRelation(attributes)
+        u.alias.map(alias => SubqueryAlias(alias, rel, None)).getOrElse(rel)
     }
     // Do the rest of the analysis.
     SimpleAnalyzer.execute(planResolved)

@@ -1,4 +1,4 @@
-### SQL
+### SQL2
 
 Executes an SQL query on its inputs, which can be either projects or tables. Outputs a table.
 

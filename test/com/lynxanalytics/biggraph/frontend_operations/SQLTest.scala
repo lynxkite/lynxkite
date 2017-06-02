@@ -14,7 +14,7 @@ class SQLTest extends OperationsTestBase {
 
   test("vertices table") {
     val table = box("Create example graph")
-      .box("SQL", Map("sql" -> "select * from `stuff|vertices` order by id"))
+      .box("SQL1", Map("sql" -> "select * from vertices order by id"))
       .table
     assert(table.schema.map(_.name) == Seq("name", "location", "age", "id", "income", "gender"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
@@ -27,7 +27,7 @@ class SQLTest extends OperationsTestBase {
 
   test("edges table") {
     val table = box("Create example graph")
-      .box("SQL", Map("sql" -> "select * from `stuff|edges` order by edge_comment"))
+      .box("SQL1", Map("sql" -> "select * from edges` order by edge_comment"))
       .table
     assert(table.schema.map(_.name) == Seq("edge_comment", "edge_weight", "src_name",
       "src_location", "src_age", "src_id", "src_income", "src_gender", "dst_name", "dst_location",
@@ -46,7 +46,7 @@ class SQLTest extends OperationsTestBase {
 
   test("edge_attributes table") {
     val table = box("Create example graph")
-      .box("SQL", Map("sql" -> "select * from `stuff|edge_attributes` order by comment"))
+      .box("SQL1", Map("sql" -> "select * from edge_attributes order by comment"))
       .table
     assert(table.schema.map(_.name) == Seq("comment", "weight"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
@@ -60,9 +60,9 @@ class SQLTest extends OperationsTestBase {
   test("belongs_to table") {
     val table = box("Create example graph")
       .box("Find connected components")
-      .box("SQL", Map("sql" -> """
+      .box("SQL1", Map("sql" -> """
         select base_name, segment_id, segment_size
-        from `stuff|connected_components|belongs_to` order by base_id"""))
+        from `connected_components|belongs_to` order by base_id"""))
       .table
     assert(table.schema.map(_.name) == Seq("base_name", "segment_id", "segment_size"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
@@ -72,7 +72,7 @@ class SQLTest extends OperationsTestBase {
 
   test("sql on vertices") {
     val table = box("Create example graph")
-      .box("SQL", Map("sql" -> "select name from vertices where age < 40"))
+      .box("SQL1", Map("sql" -> "select name from vertices where age < 40"))
       .table
     assert(table.schema.map(_.name) == Seq("name"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
@@ -81,7 +81,7 @@ class SQLTest extends OperationsTestBase {
 
   test("sql with empty results") {
     val table = box("Create example graph")
-      .box("SQL", Map("sql" -> "select id from vertices where id = 11"))
+      .box("SQL1", Map("sql" -> "select id from vertices where id = 11"))
       .table
     assert(table.schema.map(_.name) == Seq("id"))
     val data = table.df.collect.toSeq
@@ -91,10 +91,30 @@ class SQLTest extends OperationsTestBase {
   test("sql file reading is disabled") {
     val file = getClass.getResource("/controllers/noread.csv").toString
     val ws = box("Create example graph")
-      .box("SQL", Map("sql" -> s"select * from csv.`$file`"))
+      .box("SQL1", Map("sql" -> s"select * from csv.`$file`"))
     val e = intercept[AssertionError] {
       ws.table
     }
     assert(e.getMessage.contains("No such table: csv."))
+  }
+
+  test("three inputs") {
+    val one = box("Create example graph")
+    val two = box("Create example graph")
+    val three = box("Create example graph")
+    val table = box("SQL3", Map("sql" -> """
+      select one.edge_comment, two.name, three.name
+      from `one|edges` as one
+      join `two|vertices` as two
+      join `three|vertices` as three
+      where one.src_name = two.name and one.dst_name = three.name
+      """), Seq(one, two, three)).table
+    assert(table.schema.map(_.name) == Seq("edge_comment", "name", "name"))
+    val data = table.df.collect.toSeq.map(row => toSeq(row))
+    assert(data == Seq(
+      Seq("Bob envies Adam", "Bob", "Adam"),
+      Seq("Eve loves Adam", "Eve", "Adam"),
+      Seq("Adam loves Eve", "Adam", "Eve"),
+      Seq("Bob loves Eve", "Bob", "Eve")))
   }
 }

@@ -391,7 +391,11 @@ include::split-to-train-and-test-set.asciidoc[]
 
 include::split-vertices.asciidoc[]
 
-include::sql.asciidoc[]
+include::sql1.asciidoc[]
+
+include::sql2.asciidoc[]
+
+include::sql3.asciidoc[]
 
 include::take-edges-as-vertices.asciidoc[]
 
