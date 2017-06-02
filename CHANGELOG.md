@@ -10,6 +10,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    focus on your computation instead of your data by editing a network of computations directly.
  - Renamed several operations to have uniform imperative names. E.g. _"Example graph"_ became
    _"Create example graph"_.
+ - New operation _"Segment by Vector attribute"_ is added.
 
 ### master
 
