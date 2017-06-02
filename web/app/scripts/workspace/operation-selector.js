@@ -94,8 +94,9 @@ angular.module('biggraph').directive('operationSelector', function($timeout) {
           scope.opFilter = '';
         }
       };
-      scope.filter = function(boxes, opFilter) {
+      scope.filterAndSort = function(boxes, opFilter) {
         /* global Fuse */
+        // Case insensitive by default.
         var options = {
           shouldSort: true,
           threshold: 0.6,
