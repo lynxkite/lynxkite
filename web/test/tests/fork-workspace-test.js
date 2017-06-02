@@ -16,5 +16,5 @@ module.exports = function(fw) {
       expect(browser.getCurrentUrl()).toEqual(browser.baseUrl + '#/workspace/test-example-fork');
       lib.workspace.close();
       lib.splash.expectWorkspaceListed('test-example-fork');
-    },true);
+    });
 };
