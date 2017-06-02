@@ -3759,31 +3759,42 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  // TODO: Replace "stuff" with dynamic inputs.
-  registerOp("SQL", UtilityOperations, List("stuff"), List("table"), new TableOutputOperation(_) {
-    lazy val parameters = List(
-      Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql"))
-    def enabled = FEStatus.enabled
+  // TODO: Use dynamic inputs. #5820
+  def registerSQL(name: String, inputs: List[String])(
+    getProtoTables: Operation.Context => Map[String, ProtoTable]): Unit = {
+    registerOp(name, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) {
+      lazy val parameters = List(
+        Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql"))
+      def enabled = FEStatus.enabled
+      override def getOutputs() = {
+        validateParameters(params)
+        val sql = params("sql")
+        val protoTables = getProtoTables(context)
+        val tables = ProtoTable.minimize(sql, protoTables).mapValues(_.toTable)
+        val result = graph_operations.ExecuteSQL.run(sql, tables)
+        makeOutput(result)
+      }
+    })
+  }
 
-    override def getOutputs() = {
-      validateParameters(params)
-      val sql = params("sql")
-      val protoTables =
-        (if (context.inputs.size == 1 && context.inputs.head._2.isProject) {
-          // If we only have a single project as the input, make its tables directly accessible.
-          context.inputs.head._2.project.viewer.getProtoTables.toMap
-        } else Map()) ++
-          context.inputs.flatMap {
-            case (name, state) if state.isTable => Seq(name -> ProtoTable(state.table))
-            case (inputName, state) if state.isProject => state.project.viewer.getProtoTables.map {
-              case (tableName, proto) => s"$inputName|$tableName" -> proto
-            }
-          }.toMap
-      val tables = ProtoTable.minimize(sql, protoTables).mapValues(_.toTable)
-      val result = graph_operations.ExecuteSQL.run(sql, tables)
-      makeOutput(result)
+  registerSQL("SQL1", List("input")) { context =>
+    val input = context.inputs("input")
+    input.kind match {
+      case BoxOutputKind.Project => input.project.viewer.getProtoTables.toMap
+      case BoxOutputKind.Table => Map("input" -> ProtoTable(input.table))
     }
-  })
+  }
+
+  for (inputs <- 2 to 3) {
+    registerSQL(s"SQL$inputs", List("one", "two", "three").take(inputs)) { context =>
+      context.inputs.flatMap {
+        case (name, state) if state.isTable => Seq(name -> ProtoTable(state.table))
+        case (inputName, state) if state.isProject => state.project.viewer.getProtoTables.map {
+          case (tableName, proto) => s"$inputName|$tableName" -> proto
+        }
+      }.toMap
+    }
+  }
 
   private def getShapeFilePath(params: Map[String, String]): String = {
     val shapeFilePath = params("shapefile")
