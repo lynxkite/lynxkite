@@ -3620,23 +3620,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Create segmentation from SQL", StructureOperations, new ProjectTransformation(_) {
-    override lazy val parameters = List(
-      Param("name", "Name"),
-      Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql"))
-    def enabled = FEStatus.enabled
-
-    def apply() = {
-      val sql = params("sql")
-      val protoTables = project.viewer.getProtoTables.toMap
-      val tables = ProtoTable.minimize(sql, protoTables).mapValues(_.toTable)
-      val table = graph_operations.ExecuteSQL.run(sql, tables).toAttributes
-      val seg = project.segmentation(params("name"))
-      seg.vertexSet = table.ids
-      seg.vertexAttributes = table.columns.mapValues(_.entity)
-    }
-  })
-
   register("Split to train and test set", MachineLearningOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Choice("source", "Source attribute",
