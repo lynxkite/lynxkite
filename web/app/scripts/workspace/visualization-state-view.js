@@ -20,10 +20,6 @@ angular.module('biggraph')
           scope.sides.push(scope.left);
           scope.sides.push(scope.right);
 
-          // scope.sides[0].state.projectPath = '';
-          // scope.sides[0].reload();
-
-
           scope.visualization = util.get('/ajax/getVisualizationOutput', {
             id: scope.stateId
           });
@@ -36,10 +32,15 @@ angular.module('biggraph')
 
         scope.applyVisualizationData = function() {
           if (scope.visualization.$resolved) {
-            scope.left.updateFromBackendJson(
-                scope.visualization.leftStateJson);
-            scope.right.updateFromBackendJson(
-                scope.visualization.rightStateJson);
+            var state = {
+              left: undefined,
+              right: undefined,
+            };
+            if (scope.visualization.state) {
+              state = JSON.parse(scope.visualization.state);
+            }
+            scope.left.updateFromBackendJson(state.left);
+            scope.right.updateFromBackendJson(state.right);
             scope.left.reload();
             scope.right.reload();
           }

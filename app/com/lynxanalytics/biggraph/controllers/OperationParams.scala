@@ -169,6 +169,16 @@ object OperationParams {
       json.Json.parse(value.getOrElse(defaultValue)).as[List[CustomOperationParameterMeta]]
     }
   }
+
+  case class VisualizationParam(
+      id: String,
+      title: String,
+      defaultValue: String = "") extends OperationParameterMeta {
+    val kind = "visualization"
+    def validate(value: String): Unit = {}
+    val multipleChoice = false
+    val options = List()
+  }
 }
 
 // A special parameter payload to describe applicable models on the UI.

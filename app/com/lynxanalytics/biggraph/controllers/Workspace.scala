@@ -253,8 +253,7 @@ object BoxOutputKind {
 }
 
 case class VisualizationState(
-  leftStateJson: String,
-  rightStateJson: String)
+  state: String)
 
 object BoxOutputState {
   // Cannot call these "apply" due to the JSON formatter macros.
@@ -283,15 +282,13 @@ object BoxOutputState {
 
   def visualization(
     project: ProjectEditor,
-    leftStateJson: String,
-    rightStateJson: String): BoxOutputState = {
+    state: String): BoxOutputState = {
     import CheckpointRepository._ // For JSON formatters.
     // val js = json.Json.parse(uiState)
     BoxOutputState(
       BoxOutputKind.Visualization,
       Some(json.Json.obj(
-        "leftStateJson" -> leftStateJson,
-        "rightStateJson" -> rightStateJson,
+        "state" -> state,
         "project" -> json.Json.toJson(project.rootState.state))
       ))
   }
@@ -350,8 +347,7 @@ case class BoxOutputState(
     import UIStatusSerialization.fUIStatus
     assert(isVisualization)
     VisualizationState(
-      (state.get \ "leftStateJson").as[String],
-      (state.get \ "rightStateJson").as[String]
+      (state.get \ "state").as[String]
     )
   }
 }

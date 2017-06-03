@@ -40,20 +40,16 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
         context.box.output(context.meta.outputs(0)) ->
           BoxOutputState.visualization(
             project,
-            params("leftStateJson"),
-            params("rightStateJson"))
+            params("state"))
       )
     }
 
     def enabled = FEStatus.enabled
 
     lazy val parameters = List(
-      Param(
-        "leftStateJson",
-        "Left-side UI status as JSON"),
-      Param(
-        "rightStateJson",
-        "Right-side UI status as JSON"))
+      VisualizationParam(
+        "state",
+        "Left-side and right-side UI statuses as JSON"))
 
   }
 
