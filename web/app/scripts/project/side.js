@@ -115,11 +115,10 @@ angular.module('biggraph')
       return JSON.stringify(backendState, null, 2);
     };
 
-    Side.prototype.updateFromBackendJson = function(backendJson) {
-      if (!backendJson) {
+    Side.prototype.updateFromBackendJson = function(backendState) {
+      if (!backendState) {
         return;
       }
-      var backendState = JSON.parse(backendJson);
       backendState.projectName = this.state.projectName;
       this.state = backendState;
       if (this.state.graphMode && this.state.centers === undefined) {

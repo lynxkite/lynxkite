@@ -34,7 +34,8 @@ object FEOperationParameterMeta {
     "model", // A special kind to set model parameters.
     "imported-table", // A table importing button.
     "parameters", // A whole section defining the parameters of an operation.
-    "segmentation") // One of the segmentations of the current project.
+    "segmentation", // One of the segmentations of the current project.
+    "visualization") // Describes a two-sided visualization UI state.
 }
 
 case class FEOperationParameterMeta(

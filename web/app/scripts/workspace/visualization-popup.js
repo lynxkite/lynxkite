@@ -31,19 +31,22 @@ angular.module('biggraph')
         });
 
         scope.applyVisualizationData = function() {
-          console.log('applyVisualizationData ', scope.box.instance.parameters);
-          console.log(scope.box);
-          if (scope.box.instance.parameters.leftStateJson) {
-            scope.left.updateFromBackendJson(
-                scope.box.instance.parameters.leftStateJson);
+          var state = {
+            left: undefined,
+            right: undefined,
+          };
+          if (scope.box.instance.parameters.state) {
+            state = JSON.parse(scope.box.instance.parameters.state);
+          }
+
+          if (state.left) {
+            scope.left.updateFromBackendJson(state.left);
           } else {
             scope.left.cleanState();
             scope.left.state.graphMode = 'sampled';
           }
-          if (scope.box.instance.parameters.rightStateJson) {
-            console.log(scope.box.instance.parameters.rightStateJson);
-            scope.right.updateFromBackendJson(
-                scope.box.instance.parameters.rightStateJson);
+          if (state.right) {
+            scope.right.updateFromBackendJson(state.right);
           }
         };
 
@@ -94,11 +97,11 @@ angular.module('biggraph')
 
         scope.saveBoxState = function() {
           var params = {
-            leftStateJson: JSON.stringify(scope.left.state),
-            rightStateJson: JSON.stringify(scope.right.state),
+            state: JSON.stringify({
+              left: scope.left.state,
+              right: scope.right.state,
+            })
           };
-          console.log('SAVE0 ', scope.right.state.projectPath);
-          console.log('SAVE ', params);
           scope.workspace.updateBox(
             scope.box.instance.id,
             params,
