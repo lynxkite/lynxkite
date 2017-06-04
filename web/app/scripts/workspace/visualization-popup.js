@@ -8,17 +8,16 @@ angular.module('biggraph')
       restrict: 'E',
       templateUrl: 'scripts/workspace/visualization-popup.html',
       scope: {
-        stateId: '=',
-        popupModel: '=',
-        box: '=',
-        workspace: '=',
+        projectStateId: '=',
+        uiState: '=',
+        onUiStateChanged: '&',
       },
       link: function(scope) {
 
-        scope.$watch('stateId', function(newValue, oldValue, scope) {
+        scope.$watch('projectStateId', function(newValue, oldValue, scope) {
           scope.sides = [];
-          scope.left = new side.Side(scope.sides, 'left', scope.stateId, true);
-          scope.right = new side.Side(scope.sides, 'right', scope.stateId, true);
+          scope.left = new side.Side(scope.sides, 'left', scope.projectStateId, true);
+          scope.right = new side.Side(scope.sides, 'right', scope.projectStateId, true);
           scope.sides.push(scope.left);
           scope.sides.push(scope.right);
 
@@ -35,8 +34,8 @@ angular.module('biggraph')
             left: undefined,
             right: undefined,
           };
-          if (scope.box.instance.parameters.state) {
-            state = JSON.parse(scope.box.instance.parameters.state);
+          if (scope.uiState) {
+            state = JSON.parse(scope.uiState);
           }
 
           if (state.left) {
@@ -96,16 +95,11 @@ angular.module('biggraph')
           });
 
         scope.saveBoxState = function() {
-          var params = {
-            state: JSON.stringify({
-              left: scope.left.state,
-              right: scope.right.state,
-            })
-          };
-          scope.workspace.updateBox(
-            scope.box.instance.id,
-            params,
-            {});
+          scope.uiState = JSON.stringify({
+            left: scope.left.state,
+            right: scope.right.state
+          });
+          scope.onUiStateChanged();
         };
 
         util.deepWatch(
@@ -116,7 +110,6 @@ angular.module('biggraph')
               // This was the initial watch call.
               return;
             }
-            console.log(oldVal, newVal);
             scope.left.updateViewData();
             scope.right.updateViewData();
             scope.saveBoxState();

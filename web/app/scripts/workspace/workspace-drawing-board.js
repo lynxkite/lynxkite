@@ -180,25 +180,13 @@ angular.module('biggraph')
           if (!leftButton || event.ctrlKey || event.shiftKey) {
             return;
           }
-          var content;
-          if (box.metadata.operationId === 'Create visualization') {
-            content = {
-              type: 'visualization',
-              stateId: box.outputs[0].stateId,
-              boxId: box.instance.id,
-              box: box,
-            };
-          } else {
-            content = {
-              type: 'box',
-              boxId: box.instance.id,
-
-            };
-          }
           var model = new PopupModel(
             box.instance.id,
             box.instance.operationId,
-            content,
+            {
+              type: 'box',
+              boxId: box.instance.id,
+            },
             event.pageX - 200,
             event.pageY + 60,
             500,
