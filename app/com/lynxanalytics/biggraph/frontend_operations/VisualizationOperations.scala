@@ -20,7 +20,9 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
   }
 
   // A VisualizationOperation takes a Table as input and returns a Plot as output.
-  class VisualizationOperation(val context: Operation.Context) extends BasicOperation {
+  class VisualizationOperation(val context: Operation.Context) extends Operation {
+    protected val id = context.meta.operationId
+
     assert(
       context.meta.inputs == List("project"),
       s"A VisualizationOperation must input a single project. $context")
@@ -29,11 +31,25 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
       s"A PlotOperation must output a Plot. $context"
     )
 
-    protected lazy val project = projectInput("project")
+    protected lazy val project = context.inputs("project").project
+
+    def summary: String = "TODO"
+
+    def toFE: FEOperationMeta = FEOperationMeta(
+      id,
+      Operation.htmlId(id),
+      parameters.map { param => param.toFE },
+      List(),
+      context.meta.categoryId,
+      enabled,
+      description = context.meta.description)
 
     def apply() = ???
 
-    def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+    def validateParameters(values: Map[String, String]) = {
+    }
+
+    override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
       validateParameters(params)
 
       Map(
@@ -45,6 +61,14 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
     }
 
     def enabled = FEStatus.enabled
+
+    protected lazy val paramValues = context.box.parameters
+    protected def params =
+      parameters
+        .map {
+          paramMeta => (paramMeta.id, paramMeta.defaultValue)
+        }
+        .toMap ++ paramValues
 
     lazy val parameters = List(
       VisualizationParam(

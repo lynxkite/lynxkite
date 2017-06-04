@@ -284,7 +284,6 @@ object BoxOutputState {
     project: ProjectEditor,
     state: String): BoxOutputState = {
     import CheckpointRepository._ // For JSON formatters.
-    // val js = json.Json.parse(uiState)
     BoxOutputState(
       BoxOutputKind.Visualization,
       Some(json.Json.obj(
