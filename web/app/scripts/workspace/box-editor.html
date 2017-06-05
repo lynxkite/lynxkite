@@ -1,10 +1,6 @@
 <div class="box col-sm-11 {{color}}">
 
-  <p ng-show="error"
-     class="box-error">
-    Cannot retrieve box metadata: {{ error }}
-    <i class="pull-right"><a href ng-click="reportError(error)">report problem</a></i>
-  </p>
+  <display-error caption="Cannot retrieve box metadata." error="error"></display-error>
   <a href
      ng-show="box"
      id="help-toggle"
