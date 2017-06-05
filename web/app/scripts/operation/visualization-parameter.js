@@ -1,12 +1,12 @@
 'use strict';
 
-// Viewer of a plot state.
+// Editor for a visualization state stored in a parameter string.
 
 angular.module('biggraph')
-  .directive('visualizationPopup', function(util, side) {
+  .directive('visualizationParameter', function(util, side) {
     return {
       restrict: 'E',
-      templateUrl: 'scripts/workspace/visualization-popup.html',
+      templateUrl: 'scripts/operation/visualization-parameter.html',
       scope: {
         projectStateId: '=',
         uiState: '=',

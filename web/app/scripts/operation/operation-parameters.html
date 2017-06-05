@@ -100,12 +100,12 @@
       ng-if="param.kind === 'parameters'"
       model="output[param.id]"
       class="operation-attribute-entry"></parameters-parameter>
-    <visualization-popup
+    <visualization-parameter
         ng-if="param.kind === 'visualization' && pflags[param.id] !== true"
         ui-state="output[param.id]"
         on-ui-state-changed="onBlur()"
         project-state-id="box.outputs[0].stateId">
-    </visualization-popup>
+    </visualization-parameter>
 
 
   </div>
