@@ -10,6 +10,7 @@ import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.model
+import org.dmg.pmml.True
 import play.api.libs.json
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
@@ -3038,34 +3039,61 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           case name => FEOption(name, name)
         }.toList
       }
-      private val left = projectInput("left")
-      private val right = projectInput("right")
 
-      private def withoutEmptyTagLists(params: List[OperationParameterMeta]): List[OperationParameterMeta] = {
-        params.filter {
-          x =>
-            !x.isInstanceOf[TagList] || x.asInstanceOf[TagList].options.nonEmpty
+      case class JoinSideInfo(apply_target: String) {
+        assert(apply_target == "left" || apply_target == "right",
+          s"Invalid apply_target: $apply_target")
+        val editor = projectInput(apply_target)
+        val param = context.box.parameters.getOrElse(s"apply_to_${apply_target}", " vertices")
+        val isVertex = param.endsWith(" vertices")
+        val edgeIdSet: Option[VertexSet] = {
+          if (editor.edgeBundle != null) Some(editor.edgeBundle.idSet)
+          else None
         }
+        val idSet: Option[VertexSet] = {
+          if (isVertex) {
+            if (editor.vertexSet != null) Some(editor.vertexSet)
+            else None
+          } else {
+            edgeIdSet
+          }
+        }
+        override def toString = s"$apply_target $editor $param $isVertex $idSet"
       }
 
+      // TODO: Extend this to allow filtered vertex sets to be compatible
+      private def compatible(a: Option[VertexSet], b: Option[VertexSet]): Boolean = {
+        a.isDefined && b.isDefined && a.get == b.get
+      }
+
+      private lazy val left = JoinSideInfo("left")
+      private lazy val right = JoinSideInfo("right")
       lazy val parameters = {
-        val targetIsVertex =
-          context.box.parameters.getOrElse("apply_to_left", " vertices") == " vertices"
         val fullList =
-          if (targetIsVertex) {
+          if (left.isVertex) {
             List(
-              TagList("va", "Vertex Attributes", toFEList(right.vertexAttributeNames)),
-              TagList("sg", "Segmentations", toFEList(right.segmentationNames)),
+              TagList("va", "Attributes", toFEList(right.editor.vertexAttributeNames)),
+              TagList("sg", "Segmentations", toFEList(right.editor.segmentationNames)),
               Choice("edges", "Edges", FEOption.bools))
           } else {
             List(
-              TagList("ea", "Edge Attributes", toFEList(right.edgeAttributeNames)))
+              TagList("ea", "Attributes", toFEList(right.editor.edgeAttributeNames)))
           }
-        withoutEmptyTagLists(fullList)
+        filterInvalids(fullList)
       }
-      def enabled = FEStatus(true)
+
+      private def filterInvalids(params: List[OperationParameterMeta]): List[OperationParameterMeta] = {
+        val comp = compatible(left.idSet, right.idSet)
+        params.filter {
+          case _: Choice => compatible(left.edgeIdSet, right.edgeIdSet)
+          case x: TagList => comp && x.options.nonEmpty
+          case _ => ???
+        }
+      }
+
+      def enabled = FEStatus(parameters.nonEmpty, "Left and right are incompatible - no join is possible")
       def apply() {
-        project.state = left.rootEditor.state
+        project.state = left.editor.rootEditor.state
       }
     }
   )
