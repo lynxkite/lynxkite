@@ -55,7 +55,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def exportResult() = {
       val mode = params("mode") match {
         case "The table must not exist" => "error"
-        case "Overwrite table if it already exists" => "overwrite"
+        case "Drop the table if it already exists" => "overwrite"
         case "Insert into an existing table" => "append"
       }
       val op = graph_operations.ExportTableToJdbc(
