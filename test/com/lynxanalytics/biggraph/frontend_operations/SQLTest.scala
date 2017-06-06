@@ -70,6 +70,15 @@ class SQLTest extends OperationsTestBase {
       Seq("Adam", 0, 3.0), Seq("Eve", 0, 3.0), Seq("Bob", 0, 3.0), Seq("Isolated Joe", 3, 1.0)))
   }
 
+  test("functions") {
+    val table = box("Create example graph")
+      .box("SQL1", Map("sql" -> "select avg(age) as avg_age from vertices"))
+      .table
+    assert(table.schema.map(_.name) == Seq("avg_age"))
+    val data = table.df.collect.toSeq.map(row => toSeq(row))
+    assert(data == Seq(Seq(22.7)))
+  }
+
   test("sql on vertices") {
     val table = box("Create example graph")
       .box("SQL1", Map("sql" -> "select name from vertices where age < 40"))
