@@ -44,8 +44,8 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Export to JDBC")(new ExportOperation(_) {
     lazy val format = "jdbc"
     lazy val parameters = List(
-      Param("jdbcUrl", "JDBC URL"),
-      Param("table", "Table"),
+      Param("jdbc_url", "JDBC URL"),
+      Param("jdbc_table", "Table"),
       Choice("mode", "Mode", FEOption.list(
         "The table must not exist",
         "Drop the table if it already exists",
@@ -59,8 +59,8 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         case "Insert into an existing table" => "append"
       }
       val op = graph_operations.ExportTableToJdbc(
-        params("jdbcUrl"),
-        params("table"),
+        params("jdbc_url"),
+        params("jdbc_table"),
         mode
       )
       op(op.t, table).result.exportResult
