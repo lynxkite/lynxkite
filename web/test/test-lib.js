@@ -1149,7 +1149,7 @@ testLib = {
       var req = request.defaults({ jar: true });
       req.post(
         browser.baseUrl + 'passwordLogin',
-        { json : {
+        { json: {
           'username': username,
           'password': password,
           'method': method

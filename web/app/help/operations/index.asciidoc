@@ -377,6 +377,8 @@ include::segment-by-interval.asciidoc[]
 
 include::segment-by-string-attribute.asciidoc[]
 
+include::segment-by-vector-attribute.asciidoc[]
+
 include::set-edge-attribute-icon.asciidoc[]
 
 include::set-scalar-icon.asciidoc[]
