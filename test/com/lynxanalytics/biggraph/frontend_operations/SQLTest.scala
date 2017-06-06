@@ -16,32 +16,32 @@ class SQLTest extends OperationsTestBase {
     val table = box("Create example graph")
       .box("SQL1", Map("sql" -> "select * from vertices order by id"))
       .table
-    assert(table.schema.map(_.name) == Seq("name", "location", "age", "id", "income", "gender"))
+    assert(table.schema.map(_.name) == Seq("age", "gender", "id", "income", "location", "name"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
-      Seq("Adam", Seq(40.71448, -74.00598), 20.3, 0, 1000.0, "Male"),
-      Seq("Eve", Seq(47.5269674, 19.0323968), 18.2, 1, null, "Female"),
-      Seq("Bob", Seq(1.352083, 103.819836), 50.3, 2, 2000.0, "Male"),
-      Seq("Isolated Joe", Seq(-33.8674869, 151.2069902), 2.0, 3, null, "Male")))
+      Seq(20.3, "Male", 0, 1000.0, Seq(40.71448, -74.00598), "Adam"),
+      Seq(18.2, "Female", 1, null, Seq(47.5269674, 19.0323968), "Eve"),
+      Seq(50.3, "Male", 2, 2000.0, Seq(1.352083, 103.819836), "Bob"),
+      Seq(2.0, "Male", 3, null, Seq(-33.8674869, 151.2069902), "Isolated Joe")))
   }
 
   test("edges table") {
     val table = box("Create example graph")
       .box("SQL1", Map("sql" -> "select * from edges order by edge_comment"))
       .table
-    assert(table.schema.map(_.name) == Seq("edge_comment", "edge_weight", "src_name",
-      "src_location", "src_age", "src_id", "src_income", "src_gender", "dst_name", "dst_location",
-      "dst_age", "dst_id", "dst_income", "dst_gender"))
+    assert(table.schema.map(_.name) == Seq("dst_age", "dst_gender", "dst_id", "dst_income",
+      "dst_location", "dst_name", "edge_comment", "edge_weight", "src_age", "src_gender", "src_id",
+      "src_income", "src_location", "src_name"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
-      Seq("Adam loves Eve", 1.0, "Adam", Seq(40.71448, -74.00598), 20.3, 0, 1000.0, "Male", "Eve",
-        Seq(47.5269674, 19.0323968), 18.2, 1, null, "Female"),
-      Seq("Bob envies Adam", 3.0, "Bob", Seq(1.352083, 103.819836), 50.3, 2, 2000.0, "Male", "Adam",
-        Seq(40.71448, -74.00598), 20.3, 0, 1000.0, "Male"),
-      Seq("Bob loves Eve", 4.0, "Bob", Seq(1.352083, 103.819836), 50.3, 2, 2000.0, "Male", "Eve",
-        Seq(47.5269674, 19.0323968), 18.2, 1, null, "Female"),
-      Seq("Eve loves Adam", 2.0, "Eve", Seq(47.5269674, 19.0323968), 18.2, 1, null, "Female",
-        "Adam", Seq(40.71448, -74.00598), 20.3, 0, 1000.0, "Male")))
+      Seq(18.2, "Female", 1, null, Seq(47.5269674, 19.0323968), "Eve", "Adam loves Eve", 1.0,
+        20.3, "Male", 0, 1000.0, Seq(40.71448, -74.00598), "Adam"),
+      Seq(20.3, "Male", 0, 1000.0, Seq(40.71448, -74.00598), "Adam", "Bob envies Adam", 3.0, 50.3,
+        "Male", 2, 2000.0, Seq(1.352083, 103.819836), "Bob"),
+      Seq(18.2, "Female", 1, null, Seq(47.5269674, 19.0323968), "Eve", "Bob loves Eve", 4.0, 50.3,
+        "Male", 2, 2000.0, Seq(1.352083, 103.819836), "Bob"),
+      Seq(20.3, "Male", 0, 1000.0, Seq(40.71448, -74.00598), "Adam", "Eve loves Adam", 2.0, 18.2,
+        "Female", 1, null, Seq(47.5269674, 19.0323968), "Eve")))
   }
 
   test("edge_attributes table") {
