@@ -22,8 +22,6 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     data.map { case l: List[DynamicValue] => l.map { dv => dv.string } }
   }
 
-  // TODO: Depends on #5875.
-
   test("global sql on vertices") {
     val eg = box("Create example graph")
     eg.snapshotOutput("test_dir/people", "project")
@@ -36,6 +34,49 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     assert(result.header == List(SQLColumn("name", "String")))
     val resultStrings = SQLResultToStrings(result.data)
     assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
+  }
+
+  test("global sql on edges") {
+    val eg = box("Create example graph")
+    eg.snapshotOutput("test_dir/people", "project")
+
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(directory = "test_dir",
+        sql = "select src_name, dst_name from `people|edges` where edge_weight = 1"),
+      maxRows = 10)))
+
+    assert(result.header == List(SQLColumn("src_name", "String"), SQLColumn("dst_name", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Adam", "Eve")))
+  }
+
+  test("global sql on edge_attributes") {
+    val eg = box("Create example graph")
+    eg.snapshotOutput("test_dir/people", "project")
+
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(directory = "test_dir",
+        sql = "select comment from `people|edge_attributes` where weight = 1"),
+      maxRows = 10)))
+
+    assert(result.header == List(SQLColumn("comment", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Adam loves Eve")))
+  }
+
+  test("global sql on segmentation's belongs_to") {
+    val egSeg = box("Create example graph").box("Segment by String attribute",
+      Map("name" -> "gender_seg", "attr" -> "gender"))
+    egSeg.snapshotOutput("test_dir/people", "project")
+
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(directory = "test_dir",
+        sql = "select base_gender from `people|gender_seg|belongs_to` where segment_size = 1"),
+      maxRows = 10)))
+
+    assert(result.header == List(SQLColumn("base_gender", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Female")))
   }
 
   test("global sql on vertices from root directory") {
@@ -65,19 +106,35 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
-  test("global sql on segmentation") {
-    val egSeg = box("Create example graph").box("Segment by String attribute",
-      Map("name" -> "gender_seg", "attr" -> "gender"))
-    egSeg.snapshotOutput("test_dir/people", "project")
+  test("global sql with upper case snapshot name") {
+    val eg = box("Create example graph")
+    eg.snapshotOutput("test_dir/PEOPLE", "project")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
       DataFrameSpec.global(directory = "test_dir",
-        sql = "select gender from `people|gender_seg|vertices`"),
+        sql = "select name from `PEOPLE|vertices` where age < 40"),
       maxRows = 10)))
 
-    assert(result.header == List(SQLColumn("gender", "String")))
+    assert(result.header == List(SQLColumn("name", "String")))
     val resultStrings = SQLResultToStrings(result.data)
-    assert(resultStrings == List(List("Male"), List("Female")))
+    assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
+  }
+
+  // This should work, whether we choose to implement case sensitive or case insensitive
+  // SQL in the future.
+  test("global sql with upper case attribute name") {
+    val eg = box("Create example graph").box("Rename vertex attribute",
+      Map("before" -> "name", "after" -> "NAME"))
+    eg.snapshotOutput("test_dir/people", "project")
+
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(directory = "test_dir",
+        sql = "select NAME from `people|vertices` where age < 40"),
+      maxRows = 10)))
+
+    assert(result.header == List(SQLColumn("NAME", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
   // TODO: Depends on #5731.
