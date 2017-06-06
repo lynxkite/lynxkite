@@ -27,7 +27,7 @@ class SQLTest extends OperationsTestBase {
 
   test("edges table") {
     val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select * from edges` order by edge_comment"))
+      .box("SQL1", Map("sql" -> "select * from edges order by edge_comment"))
       .table
     assert(table.schema.map(_.name) == Seq("edge_comment", "edge_weight", "src_name",
       "src_location", "src_age", "src_id", "src_income", "src_gender", "dst_name", "dst_location",
