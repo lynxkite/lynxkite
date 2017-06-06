@@ -57,7 +57,7 @@ class ExportBoxTest extends OperationsTestBase {
     val connection = graph_util.JDBCUtil.getConnection(sqliteURL)
     connection.close()
     val exportResult = importTestFile.box("Export to JDBC", Map(
-      "jdbcUrl" -> sqliteURL, "table" -> "hobbies",
+      "jdbc_url" -> sqliteURL, "jdbc_table" -> "hobbies",
       "mode" -> "Drop the table if it already exists")).exportResult
     dataManager.get(exportResult)
     val importedAgain = importBox("Import JDBC", Map(
