@@ -17,6 +17,7 @@
     </button>
     <div class="pull-left">
       <inline-input
+        id="save-selection-as-custom-box-input"
         placeholder="Save as..."
         open="saveSelectionAsCustomBoxInputOpen"
         onsubmit="saveSelectionAsCustomBox(input, success, error)"></inline-input>
@@ -94,6 +95,21 @@
          drop-tooltip-placement="bottom">
       <i class="glyphicon glyphicon-forward"></i>
     </button>
+    <button class="btn btn-default"
+            id="save-workspace-as-starter-button"
+            ng-click="workspace.startSavingAs()"
+            ng-disabled="workspace.showSaveAs"
+            drop-tooltip="Save&nbsp;workspace&nbsp;as..."
+            drop-tooltip-placement="bottom">
+      <i class="glyphicon glyphicon-floppy-disk"></i>
+    </button>
+    <div class="pull-left">
+      <inline-input
+              id="save-workspace-as-input"
+              input="workspace.saveAsName"
+              open="workspace.showSaveAs"
+              onsubmit="workspace.maybeSaveAs()"></inline-input>
+    </div>
     <a class="btn btn-default"
          href="#/"
          id="close-workspace"
