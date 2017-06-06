@@ -10,7 +10,6 @@ import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.model
-import org.dmg.pmml.True
 import play.api.libs.json
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
