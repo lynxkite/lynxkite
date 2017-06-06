@@ -203,10 +203,6 @@ angular.module('biggraph').directive('projectSelector',
           return scope.path.split('/');
         };
 
-        scope.reportListError = function() {
-          util.reportRequestError(scope.data, 'Workspace list could not be loaded.');
-        };
-
         scope.reportWorkspaceError = function(workspace) {
           util.reportError({ message: workspace.error, details: scope.data });
         };
