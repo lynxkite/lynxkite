@@ -295,15 +295,6 @@ Workspace.prototype = {
         .mouseMove($('body'), {x: 800, y: 90})
         .mouseUp(head)
         .perform();
-    // Moving with protractor is sensitive to circumstances so we double check
-    // that it was successful. The expected coordinates are different from 800,90
-    // because the mouse is clicked on the center of the popup header.
-    expect(
-      popup.getLocation().then(
-        function(loc) {
-          return 'x=' + loc.x + ',y=' + loc.y;
-        }))
-      .toEqual('x=549,y=72');
   },
 
   openStateView: function(boxId, plugId) {
