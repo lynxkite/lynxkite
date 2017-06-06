@@ -3,7 +3,7 @@
 // Viewer of a plot state.
 
 angular.module('biggraph')
-  .directive('visualizationStateView', function(util, side) {
+  .directive('visualizationStateView', function(util, side, $q) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/visualization-state-view.html',
@@ -41,8 +41,27 @@ angular.module('biggraph')
             }
             scope.left.updateFromBackendJson(state.left);
             scope.right.updateFromBackendJson(state.right);
-            scope.left.reload();
-            scope.right.reload();
+            var leftPromise = scope.left.reload();
+            var rightPromise = scope.right.reload();
+            var pendingReloads = [];
+            // Collect project load promises into a list and handle side completion events:
+            if (leftPromise) {
+              pendingReloads.push(leftPromise);
+              leftPromise.then(function() {
+                scope.left.onProjectLoaded();
+              });
+            }
+            if (rightPromise) {
+              pendingReloads.push(rightPromise);
+              rightPromise.then(function() {
+                scope.right.onProjectLoaded();
+              });
+            }
+            // When all reloads are completed:
+            $q.all(pendingReloads).then(function() {
+              scope.leftToRightBundle = getLeftToRightBundle();
+              scope.rightToLeftBundle = getRightToLeftBundle();
+            });
           }
         };
 
@@ -71,26 +90,6 @@ angular.module('biggraph')
           }
           return undefined;
         }
-
-        scope.$watchGroup(
-          ['left.project.$resolved', 'right.project.$resolved'],
-          function(result) {
-            var leftLoaded = result[0];
-            var rightLoaded = result[1];
-            if (leftLoaded) {
-              scope.left.onProjectLoaded();
-            }
-            if (rightLoaded) {
-              scope.right.onProjectLoaded();
-            }
-            if (leftLoaded || rightLoaded) {
-              scope.leftToRightBundle = getLeftToRightBundle();
-              scope.rightToLeftBundle = getRightToLeftBundle();
-              // scope.applyVisualizationData();
-            }
-
-          });
-
       },
     };
   });
