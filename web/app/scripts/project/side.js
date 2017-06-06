@@ -703,7 +703,7 @@ angular.module('biggraph')
 
     // Called when Side.project is loaded.
     Side.prototype.onProjectLoaded = function() {
-      // this.cleanState();
+      this.cleanState();
       this.loadScalars();
       this.updateViewData();
       if (!this.project.vertexSet) {
