@@ -1,9 +1,7 @@
 <div class="col-sm-offset-3 col-sm-6">
 
   <h1>Cleaner</h1>
-  <div class="alert alert-danger" ng-show="fileStatus.$error">
-    {{ fileStatus.$error }}
-  </div>
+  <display-error caption="Failed to load data file status." request="fileStatus"></display-error>
   <form ng-show="!fileStatus.$error" ng-disabled="inProgress">
     Free space: <value ref="asScalar(fileStatus.freeSpace)"></value>
     <table class="table table-striped">

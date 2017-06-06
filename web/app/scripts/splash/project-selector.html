@@ -76,11 +76,7 @@
     Loading...
   </progressbar>
 
-  <div class="alert alert-danger" ng-if="data.$error">
-    Could not load directory listing.
-    <i class="pull-right"><a href ng-click="reportListError()">report problem</a></i>
-    <p class="alert-details">{{ data.$error }}</p>
-  </div>
+  <display-error caption="Could not load directory listing." request="data"></display-error>
 
   <div ng-repeat="directory in data.directories"
     id="directory-{{ pathInside(directory) | id }}"
