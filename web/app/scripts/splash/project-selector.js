@@ -203,10 +203,6 @@ angular.module('biggraph').directive('projectSelector',
           return scope.path.split('/');
         };
 
-        scope.reportWorkspaceError = function(workspace) {
-          util.reportError({ message: workspace.error, details: scope.data });
-        };
-
         scope.menu = {
           rename: function(kind, oldName, newName) {
             if (oldName === newName) { return; }

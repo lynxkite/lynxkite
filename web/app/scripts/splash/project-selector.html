@@ -120,10 +120,7 @@
       </a>
     </span>
 
-    <div ng-if="object.error">
-      {{object.error}}
-      <i class="pull-right"><a ng-click="reportProjectError(object)">report problem</a></i>
-    </div>
+    <display-error caption="Error loading entry." error="object.error"></display-error>
     <div ng-if="!object.error">
       <span ng-if="isWorkspace(object)">
 <!--
