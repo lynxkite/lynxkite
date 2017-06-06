@@ -21,13 +21,12 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Export to CSV")(new ExportOperationToFile(_) {
     lazy val format = "csv"
-    lazy val parameters = List(
+    params ++= List(
       Param("path", "Path", defaultValue = "<auto>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("quote", "Quote", defaultValue = ""),
       Choice("header", "Include header", FEOption.list("yes", "no")),
-      NonNegInt("version", "Version", default = 0)
-    )
+      NonNegInt("version", "Version", default = 0))
 
     def exportResult() = {
       val header = if (params("header") == "yes") true else false
@@ -43,14 +42,13 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Export to JDBC")(new ExportOperation(_) {
     lazy val format = "jdbc"
-    lazy val parameters = List(
+    params ++= List(
       Param("jdbcUrl", "JDBC URL"),
       Param("table", "Table"),
       Choice("mode", "Mode", FEOption.list(
         "The table must not exist",
         "Drop the table if it already exists",
-        "Insert into an existing table"))
-    )
+        "Insert into an existing table")))
 
     def exportResult() = {
       val mode = params("mode") match {
@@ -74,10 +72,9 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   def registerExportToStructuredFile(id: String)(fileFormat: String) {
     register(id)(new ExportOperationToFile(_) {
       lazy val format = fileFormat
-      lazy val parameters = List(
+      params ++= List(
         Param("path", "Path", defaultValue = "<auto>"),
-        NonNegInt("version", "Version", default = 0)
-      )
+        NonNegInt("version", "Version", default = 0))
 
       val path = generatePathIfNeeded(params("path"))
       def exportResult = {
