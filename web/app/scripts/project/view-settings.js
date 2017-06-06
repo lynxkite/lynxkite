@@ -34,5 +34,14 @@ angular.module('biggraph').factory('ViewSettings', function() {
         e = e.parentNode;
       }
     };
+
+    scope.$on('$destroy', function() {
+      for (var item in that.drops) {
+        if (that.drops.hasOwnProperty(item)) {
+          that.drops[item].destroy();
+        }
+      }
+      that.drops = {};
+    });
   };
 });

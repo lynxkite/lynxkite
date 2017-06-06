@@ -3,7 +3,7 @@
 // Editor for a visualization state stored in a parameter string.
 
 angular.module('biggraph')
-  .directive('visualizationParameter', function(util, side) {
+  .directive('visualizationParameter', function(util, side, $q) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/operation/visualization-parameter.html',
@@ -13,20 +13,34 @@ angular.module('biggraph')
         onUiStateChanged: '&',
       },
       link: function(scope) {
+        scope.sides = [];
+        scope.left = new side.Side(scope.sides, 'left', undefined, true);
+        scope.right = new side.Side(scope.sides, 'right', undefined, true);
+        scope.sides.push(scope.left);
+        scope.sides.push(scope.right);
+
 
         scope.$watch('projectStateId', function(newValue, oldValue, scope) {
-          scope.sides = [];
-          scope.left = new side.Side(scope.sides, 'left', scope.projectStateId, true);
-          scope.right = new side.Side(scope.sides, 'right', scope.projectStateId, true);
-          scope.sides.push(scope.left);
-          scope.sides.push(scope.right);
-
-          scope.sides[0].state.projectPath = '';
-
+          scope.left.stateId = scope.projectStateId;
+          scope.right.stateId = scope.projectStateId;
           scope.applyVisualizationData();
-          scope.sides[0].reload();
-          scope.sides[1].reload();
-
+          var leftPromise = scope.left.reload();
+          var rightPromise = scope.right.reload();
+          // Collect project load promises into a list and handle side completion events:
+          var pendingReloads = [];
+          if (leftPromise) {
+            pendingReloads.push(leftPromise);
+            leftPromise.then(function() { scope.left.onProjectLoaded(); });
+          }
+          if (rightPromise) {
+            pendingReloads.push(rightPromise);
+            rightPromise.then(function() { scope.right.onProjectLoaded(); });
+          }
+          // Completion trigger when all side's projects are loaded:
+          $q.all(pendingReloads).then(function() {
+            scope.leftToRightBundle = getLeftToRightBundle();
+            scope.rightToLeftBundle = getRightToLeftBundle();
+          });
         });
 
         scope.applyVisualizationData = function() {
@@ -42,6 +56,7 @@ angular.module('biggraph')
             scope.left.updateFromBackendJson(state.left);
           } else {
             scope.left.cleanState();
+            scope.left.state.projectPath = '';
             scope.left.state.graphMode = 'sampled';
           }
           if (state.right) {
@@ -74,7 +89,7 @@ angular.module('biggraph')
           }
           return undefined;
         }
-
+/*
         scope.$watchGroup(
           ['left.project.$resolved', 'right.project.$resolved'],
           function(result) {
@@ -93,6 +108,7 @@ angular.module('biggraph')
             }
 
           });
+*/
 
         scope.saveBoxState = function() {
           scope.uiState = JSON.stringify({
