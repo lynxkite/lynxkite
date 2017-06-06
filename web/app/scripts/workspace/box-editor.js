@@ -76,12 +76,26 @@ angular.module('biggraph')
           util.reportError({ message: error });
         };
 
+        function outputStatesDiffer(box1, box2) {
+          if (box1.outputs.length !== box2.outputs.length) {
+            return true;
+          }
+          for (var i = 0; i < box1.outputs.length; ++i) {
+            if (box1.outputs[i].stateId !== box2.outputs[i].stateId) {
+              return true;
+            }
+          }
+          return false;
+        }
+
         // Invoked when the user selects a new operation and its metadata is
         // successfully downloaded. Both box and boxMeta has to be defined.
         scope.newOpSelected = function(box, boxMeta) {
           // We avoid replacing the objects if the data has not changed.
           // This is to avoid recreating the DOM for the parameters. (Which would lose the focus.)
-          if (scope.box === undefined || !angular.equals(box.instance, scope.box.instance)) {
+          if (scope.box === undefined ||
+              !angular.equals(box.instance, scope.box.instance) /* parameters were changed */ ||
+              outputStatesDiffer(box, scope.box) /* visualization editor needs this */) {
             onBlurNow(); // Switching to a different box is also "blur".
             scope.box = box;
           }

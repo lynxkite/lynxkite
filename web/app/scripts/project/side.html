@@ -1,6 +1,9 @@
 <div class="col-sm-{{ side.columnWidth() }} side" id="side-{{side.direction}}">
 
-  <progressbar ng-if="side.project && !side.project.$resolved" value="100" class="progress-striped active">
+  <progressbar ng-if="side.project && !side.project.$resolved ||
+                      side.pendingProject && !side.pendingProject.$resolved"
+    value="100"
+    class="progress-striped active">
   Loading...
   </progressbar>
 

@@ -327,26 +327,22 @@ angular.module('biggraph')
     // Side.reload makes an unconditional, uncached Ajax request.
     // This is called when the projectPath was changed.
     Side.prototype.reload = function() {
+      this.pendingProject = undefined;
       if (this.state.projectPath !== undefined) {
-        this.project = this.load();
+        var that = this;
+        that.pendingProject = this.load();
+        return that.pendingProject.then(
+          function() {
+            that.project = that.pendingProject;
+          },
+          function onFailure() {
+            that.project = that.pendingProject;
+          });
       } else {
         this.state = defaultSideState();
         this.project = undefined;
+        return undefined;
       }
-      $rootScope.$broadcast('project reloaded');
-    };
-
-    // Reloads all sides. Avoids reloading a side more than once.
-    Side.prototype.reloadAllProjects = function() {
-      for (var i = 0; i < this.sides.length; ++i) {
-        var side = this.sides[i];
-        if (side.state.projectPath !== undefined) {
-          side.project = side.load();
-        } else {
-          side.project = undefined;
-        }
-      }
-      $rootScope.$broadcast('project reloaded');
     };
 
     Side.prototype.load = function() {
