@@ -1,13 +1,16 @@
 package com.lynxanalytics.biggraph.controllers
 
+import com.lynxanalytics.biggraph.frontend_operations.OperationsTestBase
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util
+import com.lynxanalytics.biggraph.serving
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-class SQLControllerTest extends BigGraphControllerTestBase {
+class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBase {
+  override val user = serving.User.fake
   val sqlController = new SQLController(this, ops = null)
   val resourceDir = getClass.getResource("/graph_operations/ImportGraphTest").toString
   graph_util.PrefixRepository.registerPrefix("IMPORTGRAPHTEST$", resourceDir)
@@ -20,13 +23,28 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   }
 
   // TODO: Depends on #5875.
-  /*
+
   test("global sql on vertices") {
-    val globalProjectframe = DirectoryEntry.fromName("Test_Dir/Test_Project").asNewProjectFrame()
-    run("Create example graph", on = "Test_Dir/Test_Project")
+    val eg = box("Create example graph")
+    eg.snapshotOutput("test_dir/people", "project")
+
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.global(directory = "Test_Dir",
-        sql = "select name from `Test_Project|vertices` where age < 40"),
+      DataFrameSpec.global(directory = "test_dir",
+        sql = "select name from `people|vertices` where age < 40"),
+      maxRows = 10)))
+
+    assert(result.header == List(SQLColumn("name", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
+  }
+
+  test("global sql on vertices from root directory") {
+    val eg = box("Create example graph")
+    eg.snapshotOutput("test_dir/people", "project")
+
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(directory = "",
+        sql = "select name from `test_dir/people|vertices` where age < 40"),
       maxRows = 10)))
 
     assert(result.header == List(SQLColumn("name", "String")))
@@ -35,17 +53,32 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   }
 
   test("global sql on vertices with attribute name quoted with backticks") {
-    val globalProjectframe = DirectoryEntry.fromName("Test_Dir/Test_Project").asNewProjectFrame()
-    run("Create example graph", on = "Test_Dir/Test_Project")
+    val eg = box("Create example graph")
+    eg.snapshotOutput("test_dir/people", "project")
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.global(directory = "Test_Dir",
-        sql = "select `name` from `Test_Project|vertices` where age < 40"),
+      DataFrameSpec.global(directory = "test_dir",
+        sql = "select `name` from `people|vertices` where age < 40"),
       maxRows = 10)))
+
     assert(result.header == List(SQLColumn("name", "String")))
     val resultStrings = SQLResultToStrings(result.data)
     assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
-  */
+
+  test("global sql on segmentation") {
+    val egSeg = box("Create example graph").box("Segment by String attribute",
+      Map("name" -> "gender_seg", "attr" -> "gender"))
+    egSeg.snapshotOutput("test_dir/people", "project")
+
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(directory = "test_dir",
+        sql = "select gender from `people|gender_seg|vertices`"),
+      maxRows = 10)))
+
+    assert(result.header == List(SQLColumn("gender", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Male"), List("Female")))
+  }
 
   // TODO: Depends on #5731.
   /*
