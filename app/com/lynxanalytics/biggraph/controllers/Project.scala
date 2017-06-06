@@ -252,29 +252,32 @@ sealed trait ProjectViewer {
     }
   }
 
+  protected def maybeProtoTable(
+    maybe: Any, name: String,
+    attrs: => Iterable[(String, Attribute[_])]): Option[(String, ProtoTable)] = {
+    maybe match {
+      case null => None
+      case _ => Some(name -> ProtoTable(attrs.toSeq.sortBy(_._1)))
+    }
+  }
+
   def getLocalProtoTables: Iterable[(String, ProtoTable)] = {
     import ProjectViewer._
-    Option(vertexSet).map { vertexSet =>
-      VertexTableName -> ProtoTable(vertexAttributes)
-    } ++
-      Option(edgeBundle).map { edgeBundle =>
-        EdgeAttributeTableName -> ProtoTable(edgeAttributes)
-      } ++
-      Option(edgeBundle).map { edgeBundle =>
-        EdgeTableName -> {
-          import graph_operations.VertexToEdgeAttribute._
-          val edgeAttrs = edgeAttributes.map {
-            case (name, attr) => s"edge_$name" -> attr
-          }
-          val srcAttrs = vertexAttributes.map {
-            case (name, attr) => s"src_$name" -> srcAttribute(attr, edgeBundle)
-          }
-          val dstAttrs = vertexAttributes.map {
-            case (name, attr) => s"dst_$name" -> dstAttribute(attr, edgeBundle)
-          }
-          ProtoTable(edgeAttrs ++ srcAttrs ++ dstAttrs)
+    maybeProtoTable(vertexSet, VertexTableName, vertexAttributes) ++
+      maybeProtoTable(edgeBundle, EdgeAttributeTableName, edgeAttributes) ++
+      maybeProtoTable(edgeBundle, EdgeTableName, {
+        import graph_operations.VertexToEdgeAttribute._
+        val edgeAttrs = edgeAttributes.map {
+          case (name, attr) => s"edge_$name" -> attr
         }
-      }
+        val srcAttrs = vertexAttributes.map {
+          case (name, attr) => s"src_$name" -> srcAttribute(attr, edgeBundle)
+        }
+        val dstAttrs = vertexAttributes.map {
+          case (name, attr) => s"dst_$name" -> dstAttribute(attr, edgeBundle)
+        }
+        edgeAttrs ++ srcAttrs ++ dstAttrs
+      })
   }
 
   def getProtoTables: Iterable[(String, ProtoTable)] = {
@@ -423,18 +426,16 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
 
   override def getLocalProtoTables: Iterable[(String, ProtoTable)] = {
     import ProjectViewer._
-    Option(belongsTo).map { belongsTo =>
-      BelongsToTableName -> {
-        import graph_operations.VertexToEdgeAttribute._
-        val baseAttrs = parent.vertexAttributes.map {
-          case (name, attr) => s"base_$name" -> srcAttribute(attr, belongsTo)
-        }
-        val segAttrs = vertexAttributes.map {
-          case (name, attr) => s"segment_$name" -> dstAttribute(attr, belongsTo)
-        }
-        ProtoTable(baseAttrs ++ segAttrs)
+    maybeProtoTable(belongsTo, BelongsToTableName, {
+      import graph_operations.VertexToEdgeAttribute._
+      val baseAttrs = parent.vertexAttributes.map {
+        case (name, attr) => s"base_$name" -> srcAttribute(attr, belongsTo)
       }
-    } ++ super.getLocalProtoTables
+      val segAttrs = vertexAttributes.map {
+        case (name, attr) => s"segment_$name" -> dstAttribute(attr, belongsTo)
+      }
+      baseAttrs ++ segAttrs
+    }) ++ super.getLocalProtoTables
   }
 }
 
