@@ -3765,6 +3765,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     registerOp(name, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) {
       lazy val parameters = List(
         Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql"))
+      override def allParameters = parameters // No "apply_to" parameters.
       def enabled = FEStatus.enabled
       override def getOutputs() = {
         validateParameters(params)

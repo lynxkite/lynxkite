@@ -2,7 +2,7 @@
 
 module.exports = function() {};
 
-/*
+/* TODO: Revive this. #6153
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
