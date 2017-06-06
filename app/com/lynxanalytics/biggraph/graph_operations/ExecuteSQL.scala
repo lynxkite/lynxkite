@@ -26,9 +26,11 @@ object ExecuteSQL extends OpFromJson {
 
   def getLogicalPlan(sqlQuery: String, tables: Map[String, Table]) = {
     import spark.sql.SQLHelperHelper
-    import spark.sql.catalyst.plans.logical._
+    import spark.sql.catalyst._
     import spark.sql.catalyst.analysis._
+    import spark.sql.catalyst.catalog._
     import spark.sql.catalyst.expressions._
+    import spark.sql.catalyst.plans.logical._
     val parser = new spark.sql.execution.SparkSqlParser(
       spark.sql.SQLHelperHelper.newSQLConf)
     // Parse the query.
@@ -44,7 +46,10 @@ object ExecuteSQL extends OpFromJson {
         u.alias.map(alias => SubqueryAlias(alias, rel, None)).getOrElse(rel)
     }
     // Do the rest of the analysis.
-    SimpleAnalyzer.execute(planResolved)
+    val conf = new SimpleCatalystConf(caseSensitiveAnalysis = false)
+    val analyzer = new Analyzer(
+      new SessionCatalog(new InMemoryCatalog, FunctionRegistry.builtin, conf), conf)
+    analyzer.execute(planResolved)
   }
 
   def run(sqlQuery: String, tables: Map[String, Table])(implicit m: MetaGraphManager): Table = {
