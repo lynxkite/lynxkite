@@ -628,7 +628,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       project.vertexAttrList[Vector[Double]] ++
         project.vertexAttrList[Vector[String]] ++
         project.vertexAttrList[Vector[Long]]
-    def parameters = List(
+    params ++= List(
       Param("name", "Segmentation name"),
       Choice("attr", "Attribute", options = vectorAttributes))
     def enabled = FEStatus.assert(vectorAttributes.nonEmpty, "No suitable vector vertex attributes.")
