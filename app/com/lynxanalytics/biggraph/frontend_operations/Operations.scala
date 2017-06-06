@@ -3090,8 +3090,53 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         }
       }
 
-      def enabled = FEStatus(parameters.nonEmpty, "Left and right are incompatible - no join is possible")
+      def enabled = FEStatus(parameters.nonEmpty,
+        "Left and right are incompatible - no join is possible")
+
+      def getMultiParameters(id: String): List[String] = {
+        if (params.contains(id)) {
+          params("id").split(",").toList
+        } else {
+          List()
+        }
+      }
+
+      def applyForVertexTarget(): Unit = {
+        for (attrName <- getMultiParameters("va")) {
+          val va = right.editor.vertexAttributes(attrName)
+          val note = right.editor.viewer.getElementNote(VertexAttributeKind, attrName)
+          left.editor.newVertexAttribute(attrName, va, note)
+        }
+        for (segName <- getMultiParameters("sg")) {
+          val rightSeg = right.editor.existingSegmentation(segName)
+          left.editor.segmentation(segName).state = rightSeg.state
+          val note = right.editor.viewer.getElementNote(SegmentationKind, segName)
+          left.editor.setElementNote(SegmentationKind, segName, note)
+        }
+        if (params.getOrElse("edges", "false") == "true") {
+          left.editor.edgeBundle = right.editor.edgeBundle
+          for (attrName <- right.editor.edgeAttributeNames) {
+            val ea = right.editor.edgeAttributes(attrName)
+            val note = right.editor.viewer.getElementNote(EdgeAttributeKind, attrName)
+            left.editor.newEdgeAttribute(attrName, ea, note)
+          }
+        }
+      }
+
+      def applyForEdgeTarget(): Unit = {
+        for (attrName <- getMultiParameters("ea")) {
+          val ea = right.editor.edgeAttributes(attrName)
+          val note = right.editor.viewer.getElementNote(EdgeAttributeKind, attrName)
+          left.editor.newEdgeAttribute(attrName, ea, note)
+        }
+      }
+
       def apply() {
+        if (left.isVertex) {
+          applyForVertexTarget()
+        } else {
+          applyForEdgeTarget()
+        }
         project.state = left.editor.rootEditor.state
       }
     }
