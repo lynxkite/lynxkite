@@ -32,14 +32,14 @@ class MetaOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   registerOp(
     "Input box", OtherBoxes,
     List(), List("input"),
-    new MinimalOperation(_) {
+    new SimpleOperation(_) {
       params += Param("name", "Name")
     })
 
   registerOp(
     "Output box", OtherBoxes,
     List("output"), List(),
-    new MinimalOperation(_) {
+    new SimpleOperation(_) {
       params += Param("name", "Name")
     })
 }
