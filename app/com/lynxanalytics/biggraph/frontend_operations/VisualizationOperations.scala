@@ -19,7 +19,7 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
     registerOp(id, VisualizationOperations, List("project"), List("visualization"), factory)
   }
 
-  // A VisualizationOperation takes a Table as input and returns a Plot as output.
+  // A VisualizationOperation takes a Project as input and returns a Visualization as output.
   class VisualizationOperation(val context: Operation.Context) extends Operation {
     protected val id = context.meta.operationId
 
@@ -28,7 +28,7 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
       s"A VisualizationOperation must input a single project. $context")
     assert(
       context.meta.outputs == List("visualization"),
-      s"A PlotOperation must output a Plot. $context"
+      s"A VisualizationOperation must output a Visualization. $context"
     )
 
     protected lazy val project = context.inputs("project").project
