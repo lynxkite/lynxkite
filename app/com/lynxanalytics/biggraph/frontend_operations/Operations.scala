@@ -3804,20 +3804,21 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   // TODO: Use dynamic inputs. #5820
   def registerSQLOp(name: String, inputs: List[String])(
     getProtoTables: Operation.Context => Map[String, ProtoTable]): Unit = {
-    registerOp(name, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) {
-      lazy val parameters = List(
-        Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql"))
-      override def allParameters = parameters // No "apply_to" parameters.
-      def enabled = FEStatus.enabled
-      override def getOutputs() = {
-        validateParameters(params)
-        val sql = params("sql")
-        val protoTables = getProtoTables(context)
-        val tables = ProtoTable.minimize(sql, protoTables).mapValues(_.toTable)
-        val result = graph_operations.ExecuteSQL.run(sql, tables)
-        makeOutput(result)
-      }
-    })
+    registerOp(name, defaultIcon, UtilityOperations, inputs, List("table"),
+      new TableOutputOperation(_) {
+        lazy val parameters = List(
+          Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql"))
+        override def allParameters = parameters // No "apply_to" parameters.
+        def enabled = FEStatus.enabled
+        override def getOutputs() = {
+          validateParameters(params)
+          val sql = params("sql")
+          val protoTables = getProtoTables(context)
+          val tables = ProtoTable.minimize(sql, protoTables).mapValues(_.toTable)
+          val result = graph_operations.ExecuteSQL.run(sql, tables)
+          makeOutput(result)
+        }
+      })
   }
 
   registerSQLOp("SQL1", List("input")) { context =>
