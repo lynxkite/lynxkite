@@ -28,7 +28,7 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
     this.outputs = [];
     this.outputMap = {};
     this.width = 200;
-    this.height = 40;
+    this.height = 200;
     this.commentLines = getCommentLines(metadata, instance);
     this.isMoved = false;
 

@@ -128,8 +128,11 @@
   <svg>
 
    <filter id="selected">
-     <feGaussianBlur result="blurred" in="SourceGraphic" stdDeviation="2"/>
-     <feBlend in="SourceGraphic" in2="blurred" mode="screen"/>
+     <feColorMatrix in="SourceGraphic" type="matrix" values="
+       0.0 0.0 0.0 0 0
+       0.4 0.4 0.4 0 0
+       0.6 0.6 0.6 0 0
+       0 0 0 1 0" />
    </filter>
 
     <g id="drawing-board"
