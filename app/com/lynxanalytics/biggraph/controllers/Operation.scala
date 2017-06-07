@@ -100,7 +100,6 @@ abstract class OperationParameterMeta {
 // Operation.Context parameter. Operations are short-lived and created for a specific input.
 trait Operation {
   protected val context: Operation.Context
-  def enabled: FEStatus
   def summary: String
   def getOutputs: Map[BoxOutput, BoxOutputState]
   def toFE: FEOperationMeta
@@ -186,7 +185,8 @@ trait OperationRegistry {
     factory: Operation.Factory): Unit = {
     // TODO: Register category somewhere.
     assert(!operations.contains(id), s"$id is already registered.")
-    operations(id) = BoxMetadata(category.title, id, inputs, outputs) -> factory
+    operations(id) = BoxMetadata(category.title, id, inputs, outputs,
+      htmlId = Some(Operation.htmlId(id))) -> factory
   }
 }
 
@@ -238,6 +238,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 trait BasicOperation extends Operation {
   implicit val manager = context.manager
   protected val user = context.user
+  protected def enabled: FEStatus
   protected val id = context.meta.operationId
   protected val title = id
   // Parameters without default values:
@@ -385,6 +386,7 @@ abstract class ProjectOutputOperation(
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)
+    assert(enabled.enabled, enabled.disabledReason)
     apply()
     makeOutput(project)
   }
@@ -400,6 +402,7 @@ abstract class ProjectTransformation(
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     validateParameters(params)
     val before = project.rootEditor.viewer
+    assert(enabled.enabled, enabled.disabledReason)
     apply()
     updateDeltas(project.rootEditor, before)
     makeOutput(project)
@@ -444,6 +447,8 @@ abstract class TableOutputOperation(
   protected def makeOutput(t: Table): Map[BoxOutput, BoxOutputState] = {
     Map(context.box.output(context.meta.outputs(0)) -> BoxOutputState.from(t))
   }
+
+  override def apply(): Unit = ???
 }
 
 abstract class ImportOperation(context: Operation.Context) extends TableOutputOperation(context) {
@@ -457,8 +462,6 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
   }
 
   def enabled = FEStatus.enabled // Useful default.
-
-  override def apply(): Unit = ???
 
   // Called by /ajax/importBox to create the table that is passed in "imported_table".
   def getDataFrame(context: spark.sql.SQLContext): spark.sql.DataFrame = {
@@ -572,7 +575,7 @@ class CustomBoxOperation(
   // inputs connected to the custom box.
   def connectedWorkspace = {
     workspace.copy(boxes = workspace.boxes.map { box =>
-      if (box.operationId == "Input box" && box.parameters.contains("name")) {
+      if (box.operationId == "Input" && box.parameters.contains("name")) {
         new Box(
           box.id, box.operationId, box.parameters, box.x, box.y, box.inputs,
           box.parametricParameters) {
@@ -590,7 +593,7 @@ class CustomBoxOperation(
     val ws = connectedWorkspace
     val states = ws.context(context.user, context.ops, params).allStates
     val byOutput = ws.boxes.flatMap { box =>
-      if (box.operationId == "Output box" && box.parameters.contains("name"))
+      if (box.operationId == "Output" && box.parameters.contains("name"))
         Some(box.parameters("name") -> states(box.inputs("output")))
       else None
     }.toMap

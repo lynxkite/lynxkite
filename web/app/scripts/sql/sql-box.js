@@ -280,8 +280,8 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
 
       scope.onLoad = function(editor) {
         editor.setOptions({
-          autoScrollEditorIntoView : true,
-          maxLines : 500
+          autoScrollEditorIntoView: true,
+          maxLines: 500
         });
 
         editor.commands.addCommand({

@@ -138,10 +138,6 @@ angular.module('biggraph')
           }
         };
 
-        scope.wrappedOnMouseMove = scope.callbackWrapper(scope.onMouseMove);
-
-        scope.wrappedOnMouseUp = scope.callbackWrapper(scope.onMouseUp);
-
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
           var leftClick = event.button === 0;
@@ -258,6 +254,10 @@ angular.module('biggraph')
           scope.pulledPlug = undefined;
           scope.movedPopup = undefined;
         };
+
+        scope.wrappedOnMouseMove = scope.callbackWrapper(scope.onMouseMove);
+
+        scope.wrappedOnMouseUp = scope.callbackWrapper(scope.onMouseUp);
 
         scope.onMouseDown = function(event) {
           window.addEventListener('mousemove', scope.wrappedOnMouseMove);
@@ -413,17 +413,22 @@ angular.module('biggraph')
         element.bind('dragover', function(event) {
           event.preventDefault();
         });
+        element.bind('dragstart', function(event) {
+          event.preventDefault();
+        });
         element.bind('drop', function(event) {
           event.preventDefault();
           var origEvent = event.originalEvent;
-          var operationId = event.originalEvent.dataTransfer.getData('text');
-          // This isn't undefined iff testing
-          var boxId = event.originalEvent.dataTransfer.getData('id');
-          // This is received from operation-selector-entry.js
-          scope.$apply(function() {
-            addLogicalMousePosition(origEvent);
-            scope.workspace.addBox(operationId, origEvent, boxId);
-          });
+          var operationId = origEvent.dataTransfer.getData('operation-id');
+          if (operationId) {
+            // This isn't undefined iff testing
+            var boxId = origEvent.dataTransfer.getData('id');
+            // This is received from operation-selector-entry.js
+            scope.$apply(function() {
+              addLogicalMousePosition(origEvent);
+              scope.workspace.addBox(operationId, origEvent, boxId);
+            });
+          }
         });
 
         scope.$on('$destroy', function() {

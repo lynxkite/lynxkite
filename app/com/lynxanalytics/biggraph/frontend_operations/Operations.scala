@@ -630,6 +630,47 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
+  register("Segment by Vector attribute", CreateSegmentationOperations, new ProjectTransformation(_) {
+    def vectorAttributes =
+      project.vertexAttrList[Vector[Double]] ++
+        project.vertexAttrList[Vector[String]] ++
+        project.vertexAttrList[Vector[Long]]
+    def parameters = List(
+      Param("name", "Segmentation name"),
+      Choice("attr", "Attribute", options = vectorAttributes))
+    def enabled = FEStatus.assert(vectorAttributes.nonEmpty, "No suitable vector vertex attributes.")
+    override def summary = {
+      val attrName = params("attr")
+      s"Segmentation by $attrName"
+    }
+
+    def apply() = {
+      import SerializableType.Implicits._
+      val attrName = params("attr")
+      val attr = project.vertexAttributes(attrName)
+      val bucketing = {
+        val tt = attr.typeTag
+        tt match {
+          case _ if tt == scala.reflect.runtime.universe.typeTag[Vector[Double]] =>
+            val op = graph_operations.SegmentByVectorAttribute[Double]()(SerializableType.double)
+            op(op.attr, attr.runtimeSafeCast[Vector[Double]]).result
+          case _ if tt == scala.reflect.runtime.universe.typeTag[Vector[String]] =>
+            val op = graph_operations.SegmentByVectorAttribute[String]()(SerializableType.string)
+            op(op.attr, attr.runtimeSafeCast[Vector[String]]).result
+          case _ if tt == scala.reflect.runtime.universe.typeTag[Vector[Long]] =>
+            val op = graph_operations.SegmentByVectorAttribute[Long]()(SerializableType.long)
+            op(op.attr, attr.runtimeSafeCast[Vector[Long]]).result
+        }
+      }
+      val segmentation = project.segmentation(params("name"))
+      segmentation.setVertexSet(bucketing.segments, idAttr = "id")
+      segmentation.notes = summary
+      segmentation.belongsTo = bucketing.belongsTo
+      segmentation.newVertexAttribute("size", computeSegmentSizes(segmentation))
+      segmentation.newVertexAttribute(attrName, bucketing.label)
+    }
+  })
+
   register("Segment by interval", CreateSegmentationOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Param("name", "Segmentation name", defaultValue = "bucketing"),
@@ -1339,7 +1380,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Hash vertex attribute", ImportOperations, new ProjectTransformation(_) {
+  register("Hash vertex attribute", VertexAttributesOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true),
       Param("salt", "Salt",
@@ -3621,26 +3662,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Create segmentation from SQL", StructureOperations, new ProjectTransformation(_) with SegOp {
-    override lazy val parameters = List(
-      Param("name", "Name"),
-      Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql"))
-    def segmentationParameters = List()
-    def enabled = FEStatus.assert(true, "")
-
-    def apply() = {
-      ???
-      /*
-      val table = env.sqlHelper.sqlToTable(project.viewer, params("sql"))
-      val tableSegmentation = project.segmentation(params("name"))
-      tableSegmentation.vertexSet = table.idSet
-      for ((name, column) <- table.columns) {
-        tableSegmentation.newVertexAttribute(name, column)
-      }
-      */
-    }
-  })
-
   register("Split to train and test set", MachineLearningOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Choice("source", "Source attribute",
@@ -3779,6 +3800,44 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       shapefile.close()
     }
   })
+
+  // TODO: Use dynamic inputs. #5820
+  def registerSQLOp(name: String, inputs: List[String])(
+    getProtoTables: Operation.Context => Map[String, ProtoTable]): Unit = {
+    registerOp(name, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) {
+      lazy val parameters = List(
+        Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql"))
+      override def allParameters = parameters // No "apply_to" parameters.
+      def enabled = FEStatus.enabled
+      override def getOutputs() = {
+        validateParameters(params)
+        val sql = params("sql")
+        val protoTables = getProtoTables(context)
+        val tables = ProtoTable.minimize(sql, protoTables).mapValues(_.toTable)
+        val result = graph_operations.ExecuteSQL.run(sql, tables)
+        makeOutput(result)
+      }
+    })
+  }
+
+  registerSQLOp("SQL1", List("input")) { context =>
+    val input = context.inputs("input")
+    input.kind match {
+      case BoxOutputKind.Project => input.project.viewer.getProtoTables.toMap
+      case BoxOutputKind.Table => Map("input" -> ProtoTable(input.table))
+    }
+  }
+
+  for (inputs <- 2 to 3) {
+    registerSQLOp(s"SQL$inputs", List("one", "two", "three").take(inputs)) { context =>
+      context.inputs.flatMap {
+        case (name, state) if state.isTable => Seq(name -> ProtoTable(state.table))
+        case (inputName, state) if state.isProject => state.project.viewer.getProtoTables.map {
+          case (tableName, proto) => s"$inputName|$tableName" -> proto
+        }
+      }.toMap
+    }
+  }
 
   private def getShapeFilePath(params: Map[String, String]): String = {
     val shapeFilePath = params("shapefile")

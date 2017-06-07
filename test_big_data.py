@@ -91,7 +91,8 @@ arg_parser.add_argument(
 
 
 def main(args):
-  # Cluster config fot tests
+  # Cluster config for tests
+
   if args.emr_instance_count == 0:
     args.emr_instance_count = test_sets[args.test_set_size]['instances']
   # Test configuration

@@ -16,9 +16,7 @@ object ImportDataFrame extends OpFromJson {
     (j \ "timestamp").as[String])
 
   def apply(df: DataFrame) = {
-    // Make every column nullable. Nullability is not stored in Parquet.
-    val schema = types.StructType(df.schema.map(_.copy(nullable = true)))
-    new ImportDataFrame(schema, Some(df), Timestamp.toString)
+    new ImportDataFrame(SQLHelper.allNullable(df.schema), Some(df), Timestamp.toString)
   }
 
   def run(df: DataFrame)(implicit mm: MetaGraphManager): Table = {
