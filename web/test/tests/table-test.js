@@ -75,11 +75,11 @@ module.exports = function(fw) {
         'String', 'String', 'Int', 'Int', 'String']);
       table.expectFirstRowIs([
         'Afghanistan', 'AF', '33332025', '652230', 'AFN']);
-      table.clickColumn(2); // population column, asc
+      table.clickColumn('population');
       table.expectFirstRowIs([
         'Antarctica', 'AQ', '0', '14000000', 'null']);
-      table.clickColumn(0); // country column, desc
-      table.clickColumn(0);
+      table.clickColumn('country');
+      table.clickColumn('country');
       table.expectFirstRowIs([
         'Åland Islands', 'AX', '29013', '1580', 'EUR']);
       table.clickShowMoreRows();
