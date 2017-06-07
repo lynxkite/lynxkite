@@ -74,11 +74,21 @@ g.box .summary.backdrop {
 g.box.selected .summary.backdrop {
   stroke: hsl(30, 40%, 80%);
 }
+g.box.selected .plug circle {
+  stroke-width: 3;
+  stroke: hsl(30, 40%, 80%);
+}
 
-g.box .plug {
+g.box #inputs .plug text {
+  text-anchor: end;
+}
+g.box .plug circle {
   stroke-width: 1;
   stroke: black;
   fill-opacity: 0;
+}
+g.box #inputs .plug text {
+  text-anchor: end;
 }
 
 rect.selection-box {
@@ -86,11 +96,8 @@ rect.selection-box {
   fill-opacity: 0;
   stroke-dasharray: 5,5;
 }
-g.selected-plug circle {
-  stroke-width: 3;
-}
 
-circle.io-circle.colored-output {
+g.box circle.io-circle.colored-output {
   fill-opacity: 1;
 }
 
@@ -108,7 +115,7 @@ circle.io-circle.colored-output {
   }
 }
 
-circle.io-circle.in-progress {
+g.box circle.io-circle.in-progress {
   animation-name: in-progress-indication;
   animation-duration: 2s;
   animation-iteration-count: infinite;
