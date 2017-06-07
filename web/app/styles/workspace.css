@@ -67,11 +67,11 @@ g.selected #selection {
 g.box .summary {
   text-anchor: middle;
 }
-g.box .summary.backdrop {
+g.box .backdrop {
   stroke-width: 5;
-  stroke: white;
+  stroke: hsl(30, 40%, 95%);
 }
-g.box.selected .summary.backdrop {
+g.box.selected .backdrop {
   stroke: #e7dad6;
 }
 g.box.selected .plug circle {
