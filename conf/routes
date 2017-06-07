@@ -48,6 +48,7 @@ GET  /ajax/exitDemoMode      com.lynxanalytics.biggraph.serving.ProductionJsonSe
 GET  /ajax/getUsers            com.lynxanalytics.biggraph.serving.ProductionJsonServer.getUsers
 POST /ajax/changeUserPassword  com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeUserPassword
 POST /ajax/changeUser          com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeUser
+POST /ajax/deleteUser          com.lynxanalytics.biggraph.serving.ProductionJsonServer.deleteUser
 POST /ajax/createUser          com.lynxanalytics.biggraph.serving.ProductionJsonServer.createUser
 GET  /ajax/getUserData         com.lynxanalytics.biggraph.serving.ProductionJsonServer.getUserData
 
