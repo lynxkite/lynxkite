@@ -16,11 +16,11 @@ angular.module('biggraph').factory('PlugWrapper', function() {
     var radius = 8;
     var len = box.metadata[direction].length;
     if (len <= 1) {
-      this.rx = box.width / 2;
+      this.ry = box.height - 20;
     } else {
-      this.rx = index * (box.width - radius * 2) / (len - 1) + radius;
+      this.ry = index * (box.height - radius * 2) / (len - 1) + radius;
     }
-    this.ry = direction === 'outputs' ? box.height + 15 : -15;
+    this.rx = direction === 'outputs' ? box.width : 0;
     this.box = box;
     this.boxId = box.instance.id;
     this.boxInstance = box.instance;
