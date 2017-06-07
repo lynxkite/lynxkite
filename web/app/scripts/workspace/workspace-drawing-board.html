@@ -168,7 +168,10 @@
               ng-attr-transform="{{ plug.posTransform }}"
               class="plug"
               id="{{ plug.id }}">
-            <text x="{{ direction === 'inputs' ? -15 : 15 }}">{{ plug.id }}</text>
+            <text
+                ng-class="{ lonely: box[direction].length === 1 }"
+                x="{{ direction === 'inputs' ? -15 : 15 }}">
+              {{ plug.id }}</text>
             <circle ng-attr-r="{{ plug.radius }}"
                   class="io-circle"
                   ng-class="{'in-progress': plug.inProgress,
