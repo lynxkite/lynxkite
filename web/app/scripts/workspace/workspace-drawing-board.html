@@ -126,14 +126,9 @@
     ng-mouseup="onMouseUp($event)"
     ng-mousedown="onMouseDown($event)">
   <svg>
-
-   <filter id="selected">
-     <feColorMatrix in="SourceGraphic" type="matrix" values="
-       0.0 0.0 0.0 0 0
-       0.4 0.4 0.4 0 0
-       0.6 0.6 0.6 0 0
-       0 0 0 1 0" />
-   </filter>
+    <filter ng-repeat="(id, matrix) in filters" id="{{ id }}">
+      <feColorMatrix in="SourceGraphic" type="matrix" values="{{ matrix }}"></feColorMatrix>
+    </filter>
 
     <g id="drawing-board"
        ng-attr-transform="{{ workspaceTransform() }}">
@@ -168,19 +163,20 @@
         </g>
         <!-- end list of I/O plugs -->
 
+        <circle id="selection" cx="50" cy="50" r="55"></circle>
         <image
             class="box-main"
-            href="{{ box.metadata.icon }}" width="150" height="150"></image>
+            filter="{{ filters[box.metadata.color] ? 'url(#' + box.metadata.color + ')' : '' }}"
+            href="{{ box.metadata.icon }}" x="-25" y="-25" width="150" height="150"></image>
 
-        <!-- Text with backdrop. -->
-        <text x="75" y="130" text-anchor="middle" stroke="white" stroke-width="5">
+        <text x="50" y="105" class="summary backdrop">
           {{box.summary}}
         </text>
-        <text x="75" y="130" text-anchor="middle" fill="black">
+        <text x="50" y="105" class="summary text">
           {{box.summary}}
         </text>
 
-        <text x="5" y="140" ng-show="box.commentLines">
+        <text x="-20" y="115" ng-show="box.commentLines">
           <tspan xml:space="preserve" font-family="monospace" x="5" dy="15"
                  ng-repeat="line in box.commentLines track by $index">{{line}}
           </tspan>
