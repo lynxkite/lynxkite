@@ -263,8 +263,8 @@ sealed trait ProjectViewer {
   def getLocalProtoTables: Iterable[(String, ProtoTable)] = {
     import ProjectViewer._
     maybeProtoTable(vertexSet, VertexTableName) ++
-    maybeProtoTable(edgeBundle, EdgeAttributeTableName) ++
-    maybeProtoTable(edgeBundle, EdgeTableName)
+      maybeProtoTable(edgeBundle, EdgeAttributeTableName) ++
+      maybeProtoTable(edgeBundle, EdgeTableName)
   }
 
   def getProtoTables: Iterable[(String, ProtoTable)] = {
@@ -283,7 +283,7 @@ sealed trait ProjectViewer {
     if (segViewer == this) {
       import ProjectViewer._
       val protoTable = tableName match {
-        case VertexTableName => ProtoTable(vertexAttributes)
+        case VertexTableName => ProtoTable(vertexAttributes.toSeq.sortBy(_._1))
         case EdgeTableName => {
           import graph_operations.VertexToEdgeAttribute._
           val edgeAttrs = edgeAttributes.map {
@@ -295,9 +295,9 @@ sealed trait ProjectViewer {
           val dstAttrs = vertexAttributes.map {
             case (name, attr) => s"dst_$name" -> dstAttribute(attr, edgeBundle)
           }
-          ProtoTable(edgeAttrs ++ srcAttrs ++ dstAttrs)
+          ProtoTable((edgeAttrs ++ srcAttrs ++ dstAttrs).toSeq.sortBy(_._1))
         }
-        case EdgeAttributeTableName => ProtoTable(edgeAttributes)
+        case EdgeAttributeTableName => ProtoTable(edgeAttributes.toSeq.sortBy(_._1))
         case BelongsToTableName =>
           throw new AssertionError("Only segmentations have a BelongsTo table")
         case _ => {
@@ -467,7 +467,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
           val segAttrs = vertexAttributes.map {
             case (name, attr) => s"segment_$name" -> dstAttribute(attr, belongsTo)
           }
-          ProtoTable(baseAttrs ++ segAttrs)
+          ProtoTable((baseAttrs ++ segAttrs).toSeq.sortBy(_._1))
         }
         case _ => super.getSingleProtoTable(tablePath)
       }
