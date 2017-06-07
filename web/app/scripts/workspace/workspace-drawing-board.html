@@ -130,6 +130,14 @@
       <feColorMatrix in="SourceGraphic" type="matrix" ng-attr-values="{{ matrix }}"></feColorMatrix>
     </filter>
 
+    <marker id="arrow-head" orient="auto" markerWidth="6" markerHeight="6" viewBox="-8 -5 10 10">
+      <path d="M -8 -5 l 10 5 l -10 5 z"></path>
+    </marker>
+
+    <marker id="arrow-root" markerWidth="4" markerHeight="4" viewBox="-2 -2 4 4">
+      <circle r="2"></circle>
+    </marker>
+
     <g id="drawing-board"
        ng-attr-transform="{{ workspaceTransform() }}">
 
