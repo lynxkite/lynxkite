@@ -176,10 +176,6 @@
               ng-attr-transform="{{ plug.posTransform }}"
               class="plug"
               id="{{ plug.id }}">
-            <text
-                ng-class="{ lonely: box[direction].length === 1 }"
-                ng-attr-x="{{ direction === 'inputs' ? -15 : 15 }}">
-              {{ plug.id }}</text>
             <circle ng-attr-r="{{ plug.radius }}"
                   class="io-circle"
                   ng-class="{'in-progress': plug.inProgress,
@@ -195,15 +191,17 @@
         <!-- end list of I/O plugs -->
       </g>
       <!-- end box -->
+
       <g>
-      <rect
-        class="selection-box"
-        ng-attr-x="{{selection.leftX}}"
-        ng-attr-y="{{selection.upperY}}"
-        ng-attr-width="{{selection.width}}"
-        ng-attr-height="{{selection.height}}">
-      </rect>
-    </g>
+        <rect
+          class="selection-box"
+          ng-attr-x="{{selection.leftX}}"
+          ng-attr-y="{{selection.upperY}}"
+          ng-attr-width="{{selection.width}}"
+          ng-attr-height="{{selection.height}}">
+        </rect>
+      </g>
+
       <!-- start arrow -->
       <g ng-repeat="arrow in arrows()">
         <path class="arrow"
@@ -219,6 +217,28 @@
             pulledPlug.direction === 'inputs'
             ? bezier(mouseLogical.x, mouseLogical.y, pulledPlug.cx(), pulledPlug.cy())
             : bezier(pulledPlug.cx(), pulledPlug.cy(), mouseLogical.x, mouseLogical.y) }}"></path>
+      </g>
+
+      <!-- Put plug labels above arrows. -->
+      <g ng-repeat="box in boxes()"
+          ng-attr-transform="{{ box.mainPosTransform() }}"
+          class="box"
+          ng-class="{ 'selected': selectedBoxIds.includes(box.instance.id) }">
+        <g ng-repeat="direction in ['inputs', 'outputs']" id="{{ direction }}">
+          <g ng-repeat="plug in box[direction]"
+              ng-attr-transform="{{ plug.posTransform }}"
+              class="plug">
+            <text
+                class="backdrop"
+                ng-class="{ lonely: box[direction].length === 1 }"
+                ng-attr-x="{{ direction === 'inputs' ? -15 : 15 }}">
+              {{ plug.id }}</text>
+            <text
+                ng-class="{ lonely: box[direction].length === 1 }"
+                ng-attr-x="{{ direction === 'inputs' ? -15 : 15 }}">
+              {{ plug.id }}</text>
+          </g>
+        </g>
       </g>
 
       <polygon
