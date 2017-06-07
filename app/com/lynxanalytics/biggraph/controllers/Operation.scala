@@ -233,22 +233,35 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   }
 }
 
-// A base class with some conveniences for working with projects and tables.
-trait BasicOperation extends Operation {
+// Defines simple defaults for everything.
+abstract class SimpleOperation(protected val context: Operation.Context) extends Operation {
+  protected val params = new ParameterHolder(context)
+  protected val id = context.meta.operationId
+  val title = id
+  def summary = title
+  def toFE: FEOperationMeta = FEOperationMeta(
+    id,
+    Operation.htmlId(id),
+    params.toFE,
+    List(),
+    context.meta.categoryId,
+    FEStatus.enabled)
+  def getOutputs(): Map[BoxOutput, BoxOutputState] = ???
+}
+
+// Adds a lot of conveniences for working with projects and tables.
+abstract class SmartOperation(context: Operation.Context) extends SimpleOperation(context) {
   implicit val manager = context.manager
   protected val user = context.user
   protected def enabled: FEStatus
-  protected val id = context.meta.operationId
-  protected val title = id
   protected def visibleScalars: List[FEScalar] = List()
-  def summary = title
   protected def apply(): Unit
   protected def safeEnabled: FEStatus =
     util.Try(enabled).recover { case exc => FEStatus.disabled(exc.getMessage) }.get
   protected def help = // Add to notes for help link.
     "<help-popup href=\"" + Operation.htmlId(id) + "\"></help-popup>"
 
-  protected val params = {
+  override protected val params = {
     val params = new ParameterHolder(context)
     // "apply_to_*" is used to pick the base project or segmentation to apply the operation to.
     // An "apply_to_*" parameter is added for each project input.
@@ -281,13 +294,9 @@ trait BasicOperation extends Operation {
     editor.scalars.set(s"${name}_delta", delta)
   }
 
-  def toFE: FEOperationMeta = FEOperationMeta(
-    id,
-    Operation.htmlId(id),
-    params.toFE,
-    visibleScalars,
-    context.meta.categoryId,
-    safeEnabled,
+  override def toFE: FEOperationMeta = super.toFE.copy(
+    visibleScalars = visibleScalars,
+    status = safeEnabled,
     description = context.meta.description)
 
   protected def projectInput(input: String): ProjectEditor = {
@@ -342,8 +351,7 @@ trait BasicOperation extends Operation {
 }
 
 // A ProjectOutputOperation is an operation that has 1 project-typed output.
-abstract class ProjectOutputOperation(
-    protected val context: Operation.Context) extends BasicOperation {
+abstract class ProjectOutputOperation(context: Operation.Context) extends SmartOperation(context) {
   assert(
     context.meta.outputs == List("project"),
     s"A ProjectOperation must output a project. $context")
@@ -378,26 +386,9 @@ abstract class ProjectTransformation(
   }
 }
 
-// A MinimalOperation defines simple defaults for everything.
-abstract class MinimalOperation(
-    protected val context: Operation.Context) extends Operation {
-  protected val params = new ParameterHolder(context)
-  protected val id = context.meta.operationId
-  val title = id
-  def summary = title
-  def toFE: FEOperationMeta = FEOperationMeta(
-    id,
-    Operation.htmlId(id),
-    params.toFE,
-    List(),
-    context.meta.categoryId,
-    FEStatus.enabled)
-  def getOutputs() = ???
-}
-
 // A DecoratorOperation is an operation that has no input or output and is outside of the
 // Metagraph.
-abstract class DecoratorOperation(context: Operation.Context) extends MinimalOperation(context) {
+abstract class DecoratorOperation(context: Operation.Context) extends SimpleOperation(context) {
   assert(
     context.meta.inputs == List(),
     s"A DecoratorOperation must not have an input. $context")
@@ -406,8 +397,7 @@ abstract class DecoratorOperation(context: Operation.Context) extends MinimalOpe
     s"A DecoratorOperation must not have an output. $context")
 }
 
-abstract class TableOutputOperation(
-    protected val context: Operation.Context) extends BasicOperation {
+abstract class TableOutputOperation(context: Operation.Context) extends SmartOperation(context) {
   assert(
     context.meta.outputs == List("table"),
     s"A TableOutputOperation must output a table. $context")
@@ -452,7 +442,7 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
 }
 
 // An ExportOperation takes a Table as input and returns an ExportResult as output.
-abstract class ExportOperation(protected val context: Operation.Context) extends BasicOperation {
+abstract class ExportOperation(context: Operation.Context) extends SmartOperation(context) {
   assert(
     context.meta.inputs == List("table"),
     s"An ExportOperation must input a single table. $context")
@@ -475,7 +465,7 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
       context.meta.outputs(0)) -> BoxOutputState.from(exportResult, paramsToDisplay))
   }
 
-  def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+  override def getOutputs() = {
     params.validate()
     makeOutput(exportResult)
   }
@@ -511,7 +501,7 @@ abstract class ExportOperationToFile(context: Operation.Context)
 }
 
 class CustomBoxOperation(
-    workspace: Workspace, val context: Operation.Context) extends BasicOperation {
+    workspace: Workspace, override val context: Operation.Context) extends SmartOperation(context) {
   override val params = new ParameterHolder(context) // No automatically generated parameters.
   params ++= {
     val custom = workspace.parametersMeta
@@ -557,7 +547,7 @@ class CustomBoxOperation(
     })
   }
 
-  def getOutputs = {
+  override def getOutputs = {
     val ws = connectedWorkspace
     val states = ws.context(context.user, context.ops, params.toMap).allStates
     val byOutput = ws.boxes.flatMap { box =>

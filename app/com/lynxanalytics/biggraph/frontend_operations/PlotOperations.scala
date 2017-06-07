@@ -20,7 +20,7 @@ class PlotOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   }
 
   // A PlotOperation takes a Table as input and returns a Plot as output.
-  class PlotOperation(val context: Operation.Context) extends BasicOperation {
+  class PlotOperation(context: Operation.Context) extends SmartOperation(context) {
     assert(
       context.meta.inputs == List("table"),
       s"A PlotOperation must input a single table. $context")
@@ -38,7 +38,7 @@ class PlotOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         context.meta.outputs(0)) -> BoxOutputState.plot(plotResult))
     }
 
-    def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+    override def getOutputs() = {
       params.validate()
       makeOutput(plotResult)
     }
