@@ -23,6 +23,9 @@ object ProtoTable {
   def apply(table: Table) = new TableWrappingProtoTable(table)
   def apply(attributes: Iterable[(String, Attribute[_])])(implicit m: MetaGraphManager) =
     new AttributesProtoTable(attributes)
+
+  // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
+  // necessary to support the query.
   def minimize(sql: String, protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
     // TODO: Minimize the ProtoTables using SQLHelper.getInputColumns or SparkSqlParser.
     protoTables
