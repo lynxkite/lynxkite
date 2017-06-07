@@ -574,7 +574,7 @@ class CustomBoxOperation(
   // inputs connected to the custom box.
   def connectedWorkspace = {
     workspace.copy(boxes = workspace.boxes.map { box =>
-      if (box.operationId == "Input box" && box.parameters.contains("name")) {
+      if (box.operationId == "Input" && box.parameters.contains("name")) {
         new Box(
           box.id, box.operationId, box.parameters, box.x, box.y, box.inputs,
           box.parametricParameters) {
@@ -592,7 +592,7 @@ class CustomBoxOperation(
     val ws = connectedWorkspace
     val states = ws.context(context.user, context.ops, params).allStates
     val byOutput = ws.boxes.flatMap { box =>
-      if (box.operationId == "Output box" && box.parameters.contains("name"))
+      if (box.operationId == "Output" && box.parameters.contains("name"))
         Some(box.parameters("name") -> states(box.inputs("output")))
       else None
     }.toMap
