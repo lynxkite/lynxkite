@@ -133,7 +133,7 @@ module.exports = function(fw) {
       // Now save "pr1" and "pr2" as a custom box.
       lib.workspace.selectBoxes(['pr1', 'pr2']);
       $('#save-selection-as-custom-box').click();
-      lib.submitInlineInput($('inline-input'), 'my-custom-box');
+      lib.submitInlineInput($('#save-selection-as-custom-box-input'), 'my-custom-box');
 
       // Check that the box has been replaced.
       expect(lib.workspace.getBox('pr1').isPresent()).toBe(false);

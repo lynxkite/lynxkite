@@ -18,7 +18,7 @@ angular.module('biggraph').directive('helpId',
         element.addClass('help');
         documentation('help').then(function(helpContent) {
           var id = scope.helpId.toLowerCase();
-          if (isUserWorkflowId(id)) {
+          if (!id || isUserWorkflowId(id)) {
             element.empty();
             return;
           }
@@ -74,13 +74,19 @@ angular.module('biggraph')
 
     return {
       restrict: 'E',
-      scope: { helpId: '@href' },
+      scope: {
+        helpId: '@href',
+        fallbackText: '@'
+      },
       templateUrl: 'scripts/help/help-popup.html',
       link: function(scope, element) {
         var button = element.find('#help-button')[0];
         var popup = element.find('#help-popup');
+        if (!scope.helpId && scope.fallbackText) {
+          popup.append(scope.fallbackText);
+        }
         scope.isEmpty = function() {
-          return popup.children().length === 0;
+          return !popup.text();
         };
         /* global Drop */
         var drop = new Drop({

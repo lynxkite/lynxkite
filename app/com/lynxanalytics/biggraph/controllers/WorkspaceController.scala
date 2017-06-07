@@ -204,8 +204,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val calculatedState = calculatedStates.synchronized {
       calculatedStates(request.id)
     }
-    val snapshot = new SnapshotFrame(SymbolPath.parse(request.name))
-    snapshot.initialize(calculatedState)
+    new DirectoryEntry(SymbolPath.parse(request.name)).asNewSnapshotFrame(calculatedState)
   }
 
   def setWorkspace(

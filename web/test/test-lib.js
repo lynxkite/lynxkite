@@ -196,6 +196,24 @@ Workspace.prototype = {
     browser.actions().keyUp(protractor.Key.CONTROL).perform();
   },
 
+  // Protractor mouseMove only takes offsets, so first we set the mouse position to a box based on
+  // its id, and then move it to 2 other points on the screen.
+  selectArea: function(startBoxId, point1, point2) {
+    let box = this.getBox(startBoxId);
+    browser.actions()
+      .mouseMove(box, point1)
+      .keyDown(protractor.Key.SHIFT)
+      .mouseDown()
+      .mouseMove(point2)
+      .mouseUp()
+      .keyUp(protractor.Key.SHIFT)
+      .perform();
+  },
+
+  expectNumSelectedBoxes: function(n) {
+    return expect($$('g.selected.selected rect').count()).toEqual(n);
+  },
+
   deleteBoxes: function(boxIds) {
     this.selectBoxes(boxIds);
     this.main.$('#delete-selected-boxes').click();
@@ -277,20 +295,12 @@ Workspace.prototype = {
         .mouseMove($('body'), {x: 800, y: 90})
         .mouseUp(head)
         .perform();
-    // Moving with protractor is sensitive to circumstances so we double check
-    // that it was successful. The expected coordinates are different from 800,90
-    // because the mouse is clicked on the center of the popup header.
-    expect(
-      popup.getLocation().then(
-        function(loc) {
-          return 'x=' + loc.x + ',y=' + loc.y;
-        }))
-      .toEqual('x=549,y=72');
   },
 
   openStateView: function(boxId, plugId) {
-    this.toggleStateView(boxId, plugId);
     var popup = this.board.$('.popup#' + boxId + '_' + plugId);
+    testLib.expectNotElement(popup); // If it is already open, use getStateView() instead.
+    this.toggleStateView(boxId, plugId);
     this.movePopupToCenter(popup);
     return new State(popup);
   },
@@ -364,6 +374,7 @@ function State(popup) {
   this.left = new Side(this.popup, 'left');
   this.right = new Side(this.popup, 'right');
   this.table = new TableState(this.popup);
+  this.plot = new PlotState(this.popup);
 }
 
 State.prototype = {
@@ -372,12 +383,42 @@ State.prototype = {
   }
 };
 
+function PlotState(popup) {
+  this.canvas = popup.$('#plot-div .vega svg');
+}
+
+PlotState.prototype = {
+  barHeights: function() {
+    var until = protractor.ExpectedConditions;
+    var canvasEl = element(by.css('#plot-div .vega svg'));
+    browser.wait(until.presenceOf(canvasEl),
+      15000,
+      'Canvas is taking too long to appear in the DOM');
+    var el = element(by.css('g.mark-rect.marks rect'));
+    browser.wait(until.presenceOf(el),
+      15000,
+      'Bar chart is taking too long to appear in the DOM');
+    return this.canvas.$$('g.mark-rect.marks rect').map(e => e.getAttribute('height'));
+  },
+
+  expectBarHeightsToBe: function(heights) {
+    expect(this.barHeights()).toEqual(heights);
+  }
+};
+
+
 function TableState(popup) {
   this.sample = popup.$('#table-sample');
   this.control = popup.$('#table-control');
 }
 
 TableState.prototype = {
+  expect: function(names, types, rows) {
+    this.expectColumnNamesAre(names);
+    this.expectColumnTypesAre(types);
+    this.expectRowsAre(rows);
+  },
+
   rowCount: function() {
     return this.sample.$$('tbody tr').count();
   },
@@ -424,7 +465,7 @@ TableState.prototype = {
   },
 
   clickColumn(columnId) { // for sorting
-    var header = this.sample.$$('thead tr th').get(columnId);
+    var header = this.sample.$$('thead tr th#' + columnId);
     header.click();
   },
 
@@ -1106,7 +1147,7 @@ testLib = {
       var req = request.defaults({ jar: true });
       req.post(
         browser.baseUrl + 'passwordLogin',
-        { json : {
+        { json: {
           'username': username,
           'password': password,
           'method': method

@@ -34,6 +34,11 @@ arg_parser.add_argument(
     action='store_true',
     help='Spin up a mysql RDS instance to test database operations.')
 arg_parser.add_argument(
+    '--with_jupyter',
+    action='store_true',
+    help='''If it is set, a jupyter notebook server will be installed and started
+  on the cluster. Some Python packages (sklearn, matplotlib) will also be added.''')
+arg_parser.add_argument(
     '--biggraph_releases_dir',
     default=os.environ['HOME'] + '/biggraph_releases',
     help='''Directory containing the downloader script, typically the root of

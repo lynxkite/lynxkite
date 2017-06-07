@@ -46,6 +46,26 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
     assert(JSONString contains """"name" : "Felix",""")
   }
 
+  test("Scala multiline string works in plot code") {
+    val df = ImportDataFrameTest.jdbcDF(dataManager)
+    val filterRule = """datum.b > 20 &&
+    datum.b < 60"""
+    val code = s"""Vegas("Plot test with multiline string").
+      withData(
+        Seq(
+         Map("a" -> "A", "b" -> 28), Map("a" -> "B", "b" -> 55), Map("a" -> "C", "b" -> 43),
+         Map("a" -> "D", "b" -> 91), Map("a" -> "E", "b" -> 81), Map("a" -> "F", "b" -> 53),
+         Map("a" -> "G", "b" -> 19), Map("a" -> "H", "b" -> 87), Map("a" -> "I", "b" -> 52)
+        )
+      ).
+      encodeX("a", Nominal).
+      encodeY("b", Quantitative).
+      mark(Bar).
+      filter(\"\"\"$filterRule\"\"\")"""
+    val JSONString = ScalaScript.runVegas(code, df)
+    println(JSONString)
+  }
+
   test("Security manager disables file access") {
     val testFile = getClass.getResource("/graph_api/permission_check.txt")
     val contents = "This file is used to check the security manager implementation.\n"

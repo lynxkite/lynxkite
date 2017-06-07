@@ -11,6 +11,7 @@ rules:
   eqeqeq: [error]
   indent: [error, 2]
   keyword-spacing: [error]
+  key-spacing: [error]
   linebreak-style: [error, unix]
   no-console: [warn]
   no-multi-spaces: [error]
