@@ -295,20 +295,12 @@ Workspace.prototype = {
         .mouseMove($('body'), {x: 800, y: 90})
         .mouseUp(head)
         .perform();
-    // Moving with protractor is sensitive to circumstances so we double check
-    // that it was successful. The expected coordinates are different from 800,90
-    // because the mouse is clicked on the center of the popup header.
-    expect(
-      popup.getLocation().then(
-        function(loc) {
-          return 'x=' + loc.x + ',y=' + loc.y;
-        }))
-      .toEqual('x=549,y=72');
   },
 
   openStateView: function(boxId, plugId) {
-    this.toggleStateView(boxId, plugId);
     var popup = this.board.$('.popup#' + boxId + '_' + plugId);
+    testLib.expectNotElement(popup); // If it is already open, use getStateView() instead.
+    this.toggleStateView(boxId, plugId);
     this.movePopupToCenter(popup);
     return new State(popup);
   },
@@ -421,6 +413,12 @@ function TableState(popup) {
 }
 
 TableState.prototype = {
+  expect: function(names, types, rows) {
+    this.expectColumnNamesAre(names);
+    this.expectColumnTypesAre(types);
+    this.expectRowsAre(rows);
+  },
+
   rowCount: function() {
     return this.sample.$$('tbody tr').count();
   },
@@ -467,7 +465,7 @@ TableState.prototype = {
   },
 
   clickColumn(columnId) { // for sorting
-    var header = this.sample.$$('thead tr th').get(columnId);
+    var header = this.sample.$$('thead tr th#' + columnId);
     header.click();
   },
 

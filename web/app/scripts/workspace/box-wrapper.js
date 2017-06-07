@@ -13,7 +13,7 @@
 angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
   function getCommentLines(metadata, instance) {
     var comment;
-    if (metadata.operationId === 'Add comment') {
+    if (metadata.operationId === 'Comment') {
       comment = instance.parameters.comment;
     } else if (metadata.operationId === 'Anchor') {
       comment = instance.parameters.description;

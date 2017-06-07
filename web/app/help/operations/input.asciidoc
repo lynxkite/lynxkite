@@ -1,4 +1,4 @@
-### Input box
+### Input
 
 This special box represents an input that comes from outside of this workspace.
 This box will not have a valid output on its own. When this workspace is used as a custom
