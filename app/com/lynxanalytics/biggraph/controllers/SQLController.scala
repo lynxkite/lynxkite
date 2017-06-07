@@ -76,16 +76,12 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
         case (name, (snapshot, tablePath)) if snapshot.isSnapshot && snapshot.readAllowedFrom(user) =>
           (name, (snapshot.asSnapshotFrame.getState(), tablePath))
       }
-      val protoTables = goodSnapshotStates.map {
+      val protoTables = goodSnapshotStates.collect {
         case (name, (state, tablePath)) if state.isTable => (name, ProtoTable(state.table))
-        case (name, (state, tablePath)) if state.isProject => {
+        case (name, (state, tablePath)) if state.isProject =>
           val rootViewer = state.project.viewer
           val protoTable = rootViewer.getSingleProtoTable(tablePath.mkString("|"))
           (name, protoTable)
-        }
-        case (name, (state, tablePath)) =>
-          throw new AssertionError(s"${name} is a ${state.kind} snapshot. " +
-            s"Plot snapshots can not be used in SQL queries.")
       }
       val minimizedProtoTables = ProtoTable.minimize(sql, protoTables)
       val tables = minimizedProtoTables.mapValues(protoTable => protoTable.toTable)
