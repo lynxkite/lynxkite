@@ -493,7 +493,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
             inputNameCounts[inputName] = inputNameCount + 1;
             boxes.push({
               id: 'input-' + inputBoxName,
-              operationId: 'Input box',
+              operationId: 'Input',
               x: inputBoxX,
               y: 0,
               inputs: {},
@@ -522,7 +522,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
             outputNameCounts[outputName] = outputNameCount + 1;
             boxes.push({
               id: 'output-' + outputBoxName,
-              operationId: 'Output box',
+              operationId: 'Output',
               x: outputBoxX,
               y: maxY + 200,
               inputs: { output: { boxId: box.instance.id, id: outputName } },
@@ -561,6 +561,29 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       }, function error() {
         that.loadWorkspace();
       });
+    },
+
+    startSavingAs: function() {
+      this.showSaveAs = true;
+      this.saveAsName = this.name;
+    },
+
+    maybeSaveAs: function() {
+      // We only need to do an actual action if the user has changed the name.
+      if (this.saveAsName !== this.name) {
+        this.saveAs(this.saveAsName);
+      }
+      this.showSaveAs = false;
+    },
+
+    saveAs: function(newName) {
+      util.post('/ajax/forkEntry',
+        {
+          from: this.name,
+          to: newName,
+        }).then(function() {
+          window.location = '#/workspace/' + newName;
+        });
     },
 
   };

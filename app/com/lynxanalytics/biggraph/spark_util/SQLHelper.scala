@@ -25,8 +25,7 @@ object SQLHelper {
   private def isTuple2Type(st: types.StructType) =
     st.size == 2 && st(0).name == "_1" && st(1).name == "_2"
 
-  // I really don't understand why this isn't part of the spark API, but I can't find it.
-  // So here it goes.
+  // This should be part of Spark, but is not. SPARK-12264
   def typeTagFromDataType(dataType: types.DataType): TypeTag[_] = {
     import scala.reflect.runtime.universe._
     dataType match {
@@ -51,6 +50,29 @@ object SQLHelper {
           typeTagFromDataType(st(1).dataType))
       case x => throw new AssertionError(s"Unsupported type in DataFrame: $x")
     }
+  }
+
+  def dataFrameSchema(columns: Iterable[(String, Attribute[_])]): types.StructType = {
+    val fields = columns.map {
+      case (name, attr) =>
+        types.StructField(
+          name = name,
+          dataType = typeTagToDataType(attr.typeTag))
+    }
+    types.StructType(fields.toSeq)
+  }
+
+  private def supportedDataType[T: TypeTag]: Option[types.DataType] = {
+    try {
+      Some(spark.sql.catalyst.ScalaReflection.schemaFor(typeTag[T]).dataType)
+    } catch {
+      case _: UnsupportedOperationException => None
+    }
+  }
+
+  def typeTagToDataType[T: TypeTag]: types.DataType = {
+    // Convert unsupported types to string.
+    supportedDataType[T].getOrElse(types.StringType)
   }
 
   private def processDataFrameRow(tupleColumnIdList: Seq[Int])(row: Row): Seq[Any] = {
@@ -80,4 +102,8 @@ object SQLHelper {
     val tupleColumnIdList = getTupleColumnIdList(dataFrame.schema)
     dataFrame.rdd.map(processDataFrameRow(tupleColumnIdList))
   }
+
+  // Make every column nullable. Nullability is not stored in Parquet.
+  def allNullable(schema: types.StructType): types.StructType =
+    types.StructType(schema.map(_.copy(nullable = true)))
 }
