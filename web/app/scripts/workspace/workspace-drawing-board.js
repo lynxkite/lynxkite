@@ -283,7 +283,12 @@ angular.module('biggraph')
         };
 
         scope.boxes = function() {
-          return scope.workspace ? scope.workspace.boxes : [];
+          if (!scope.workspace) {
+            return undefined;
+          }
+          var boxes = scope.workspace.boxes.slice();
+          boxes.sort(function(a, b) { return a.instance.y < b.instance.y ? -1 : 1; });
+          return boxes;
         };
 
         scope.arrows = function() {

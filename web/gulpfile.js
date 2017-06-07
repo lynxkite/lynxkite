@@ -57,7 +57,7 @@ gulp.task('asciidoctor', function () {
 });
 
 // Preprocesses HTML files.
-gulp.task('html', ['css', 'js'], function () {
+gulp.task('html', ['css', 'js', 'icons'], function () {
   var css = gulp.src('.tmp/**/*.css', { read: false });
   var js = gulp.src('.tmp/**/*.js').pipe($.angularFilesort());
   return gulp.src('app/index.html')
@@ -111,6 +111,11 @@ gulp.task('css', ['sass'], function () {
     .pipe(browserSync.stream());
 });
 
+// Generates the icon files.
+gulp.task('icons', ['sass'], function (done) {
+  spawn('python3', ['icons/generate.py'], { stdio: 'inherit' }).once('close', done);
+});
+
 // Preprocesses JavaScript files.
 gulp.task('js', function () {
   return gulp.src('app/scripts/**/*.js')
@@ -153,7 +158,7 @@ gulp.task('serve', ['quick'], function() {
   browserSync.init({
     port: ProxyPort,
     https: LynxKiteURL.indexOf('https') === 0,
-    server: ['.tmp', 'app', 'node_modules'],
+    server: ['.tmp', 'app', 'node_modules', 'dist'],
     ghostMode: false,
     online: false,
     notify: false,

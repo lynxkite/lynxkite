@@ -12,8 +12,9 @@ class MetaOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   def register(
     id: String,
-    category: Category)(factory: Context => Operation): Unit = {
-    registerOp(id, category, List(), List(), factory)
+    category: Category,
+    icon: String = "black_medium_square")(factory: Context => Operation): Unit = {
+    registerOp(id, icon, category, List(), List(), factory)
   }
 
   // Categories
@@ -26,21 +27,22 @@ class MetaOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     )
   })
 
-  register("Anchor", AnchorBox)(new DecoratorOperation(_) {
+  register("Anchor", AnchorBox, "anchor")(new DecoratorOperation(_) {
     override def parameters = List(
       Code("description", "Description", language = "plain_text"),
+      Param("icon", "Icon URL"),
       ParametersParam("parameters", "Parameters"))
   })
 
   registerOp(
-    "Input box", OtherBoxes,
+    "Input box", "black_down-pointing_triangle", OtherBoxes,
     List(), List("input"),
     new MinimalOperation(_) {
       override def parameters = List(Param("name", "Name"))
     })
 
   registerOp(
-    "Output box", OtherBoxes,
+    "Output box", "black_up-pointing_triangle", OtherBoxes,
     List("output"), List(),
     new MinimalOperation(_) {
       override def parameters = List(Param("name", "Name"))
