@@ -493,7 +493,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
             inputNameCounts[inputName] = inputNameCount + 1;
             boxes.push({
               id: 'input-' + inputBoxName,
-              operationId: 'Input box',
+              operationId: 'Input',
               x: inputBoxX,
               y: 0,
               inputs: {},
@@ -522,7 +522,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
             outputNameCounts[outputName] = outputNameCount + 1;
             boxes.push({
               id: 'output-' + outputBoxName,
-              operationId: 'Output box',
+              operationId: 'Output',
               x: outputBoxX,
               y: maxY + 200,
               inputs: { output: { boxId: box.instance.id, id: outputName } },
