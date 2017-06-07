@@ -300,12 +300,12 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   test("custom box") {
     using("test-custom-box") {
       val anchor = anchorWithParams(("param1", "text", "def1"))
-      val inputBox = Box("input", "Input box", Map("name" -> "in1"), 0, 0, Map())
+      val inputBox = Box("input", "Input", Map("name" -> "in1"), 0, 0, Map())
       val pr = Box(
         "pr", "Compute PageRank", pagerankParams - "name", 0, 0,
         Map("project" -> inputBox.output("input")), Map("name" -> "pr_$param1"))
       val outputBox = Box(
-        "output", "Output box", Map("name" -> "out1"), 0, 0, Map("output" -> pr.output("project")))
+        "output", "Output", Map("name" -> "out1"), 0, 0, Map("output" -> pr.output("project")))
       set("test-custom-box", Workspace(List(anchor, inputBox, pr, outputBox)))
 
       // Now use "test-custom-box" as a custom box.
