@@ -51,12 +51,13 @@ def main():
     os.chdir(os.path.dirname(__file__))
   os.makedirs('../dist/icons', exist_ok=True)
   render('anchor')
-  render('black question mark ornament')
-  render('black medium square')
-  render('black down-pointing triangle')
-  render('black up-pointing triangle')
-  render('black truck')
   render('apl functional symbol quad up caret')
+  render('black down-pointing triangle')
+  render('black medium square')
+  render('black question mark ornament')
+  render('black truck')
+  render('black up-pointing triangle')
+  render('fountain')
 
 
 if __name__ == '__main__':
