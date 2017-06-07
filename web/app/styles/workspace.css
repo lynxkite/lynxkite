@@ -90,6 +90,12 @@ g.box .plug circle {
 g.box #inputs .plug text {
   text-anchor: end;
 }
+g.box .plug text.lonely {
+  display: none;
+}
+g.box:hover .plug text.lonely {
+  display: inherit;
+}
 
 rect.selection-box {
   stroke: black;
