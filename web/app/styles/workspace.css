@@ -58,7 +58,7 @@ box-editor {
 g #selection {
   display: none;
   stroke: transparent;
-  fill: hsl(30, 40%, 80%);
+  fill: rgba(80, 0, 0, 0.1);
 }
 g.selected #selection {
   display: inherit;
@@ -72,11 +72,11 @@ g.box .summary.backdrop {
   stroke: white;
 }
 g.box.selected .summary.backdrop {
-  stroke: hsl(30, 40%, 80%);
+  stroke: #e7dad6;
 }
 g.box.selected .plug circle {
   stroke-width: 3;
-  stroke: hsl(30, 40%, 80%);
+  stroke: #e7dad6;
 }
 
 g.box #inputs .plug text {
@@ -128,12 +128,13 @@ g.box circle.io-circle.in-progress {
   fill: yellow;
 }
 
-line.arrow {
-  stroke-width: 1;
+path.arrow {
+  fill: transparent;
+  stroke-width: 2px;
   stroke: black;
   pointer-events: none; /* Pass events through, so arrows do not block plugs. */
 }
-line.pulled-arrow {
+path.pulled-arrow {
   stroke-dasharray: 2;
   pointer-events: none;
   z-index: -1;

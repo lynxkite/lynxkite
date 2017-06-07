@@ -127,7 +127,7 @@
     ng-mousedown="onMouseDown($event)">
   <svg>
     <filter ng-repeat="(id, matrix) in filters" id="{{ id }}">
-      <feColorMatrix in="SourceGraphic" type="matrix" values="{{ matrix }}"></feColorMatrix>
+      <feColorMatrix in="SourceGraphic" type="matrix" ng-attr-values="{{ matrix }}"></feColorMatrix>
     </filter>
 
     <g id="drawing-board"
@@ -170,7 +170,7 @@
               id="{{ plug.id }}">
             <text
                 ng-class="{ lonely: box[direction].length === 1 }"
-                x="{{ direction === 'inputs' ? -15 : 15 }}">
+                ng-attr-x="{{ direction === 'inputs' ? -15 : 15 }}">
               {{ plug.id }}</text>
             <circle ng-attr-r="{{ plug.radius }}"
                   class="io-circle"
@@ -198,23 +198,19 @@
     </g>
       <!-- start arrow -->
       <g ng-repeat="arrow in arrows()">
-        <line class="arrow"
+        <path class="arrow"
             id="{{ arrow.src.boxId }}-{{ arrow.src.id }}-{{ arrow.dst.boxId }}-{{ arrow.dst.id }}"
-            ng-attr-x1="{{arrow.x1()}}"
-            ng-attr-y1="{{arrow.y1()}}"
-            ng-attr-x2="{{arrow.x2()}}"
-            ng-attr-y2="{{arrow.y2()}}"></line>
+            ng-attr-d="{{ bezier(arrow.x1(), arrow.y1(), arrow.x2(), arrow.y2()) }}"></path>
       </g>
       <!-- end arrow -->
 
       <!-- start pulled arrow -->
       <g ng-if="pulledPlug && mouseLogical">
-        <line class="arrow pulled-arrow"
-            ng-attr-x1="{{pulledPlug.cx()}}"
-            ng-attr-y1="{{pulledPlug.cy()}}"
-            ng-attr-x2="{{mouseLogical.x}}"
-            ng-attr-y2="{{mouseLogical.y}}">
-        </line>
+        <path class="arrow pulled-arrow"
+            ng-attr-d="{{
+            pulledPlug.direction === 'inputs'
+            ? bezier(mouseLogical.x, mouseLogical.y, pulledPlug.cx(), pulledPlug.cy())
+            : bezier(pulledPlug.cx(), pulledPlug.cy(), mouseLogical.x, mouseLogical.y) }}"></path>
       </g>
 
       <polygon

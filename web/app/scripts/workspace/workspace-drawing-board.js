@@ -452,6 +452,10 @@ angular.module('biggraph')
           white: '0.8 0.8 0.8 0 0   0.8 0.8 0.8 0 0   0.8 0.8 0.8 0 0   0 0 0 1 0',
           yellow: '0.6 0.6 0.6 0 0   0.4 0.4 0.4 0 0   0 0 0 0 0   0 0 0 1 0',
         };
+
+        scope.bezier = function(x1, y1, x2, y2) {
+          return ['M', x1, y1, 'C', x1 + 100, y1, ',', x2 - 100, y2, ',', x2, y2].join(' ');
+        };
       }
     };
   });
