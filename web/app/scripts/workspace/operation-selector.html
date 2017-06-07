@@ -35,7 +35,7 @@
 
   <div ng-show="searching" class="panel box col-sm-11 yellow">
     <h1><input id="filter" ng-model="opFilter" ng-keyup="filterKey($event)"></h1>
-    <operation-selector-entry ng-repeat="op in boxes | filter: { operationId: opFilter } | orderBy: 'title'"
+    <operation-selector-entry ng-repeat="op in filterAndSort(boxes, opFilter)"
         op="op"
         open-last-cat-or-search="openLastCatOrSearch"
         close-current-cat-or-search="closeCurrentCatOrSearch"

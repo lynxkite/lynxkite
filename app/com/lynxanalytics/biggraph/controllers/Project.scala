@@ -252,17 +252,19 @@ sealed trait ProjectViewer {
     }
   }
 
+  protected def maybeProtoTable(
+    maybe: Any, tableName: String): Option[(String, ProtoTable)] = {
+    maybe match {
+      case null => None
+      case _ => Some(tableName -> getSingleProtoTable(tableName))
+    }
+  }
+
   def getLocalProtoTables: Iterable[(String, ProtoTable)] = {
     import ProjectViewer._
-    Option(vertexSet).map { vertexSet =>
-      VertexTableName -> getSingleProtoTable(VertexTableName)
-    } ++
-      Option(edgeBundle).map { edgeBundle =>
-        EdgeAttributeTableName -> getSingleProtoTable(EdgeAttributeTableName)
-      } ++
-      Option(edgeBundle).map { edgeBundle =>
-        EdgeTableName -> getSingleProtoTable(EdgeTableName)
-      }
+    maybeProtoTable(vertexSet, VertexTableName) ++
+    maybeProtoTable(edgeBundle, EdgeAttributeTableName) ++
+    maybeProtoTable(edgeBundle, EdgeTableName)
   }
 
   def getProtoTables: Iterable[(String, ProtoTable)] = {
@@ -447,9 +449,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
 
   override def getLocalProtoTables: Iterable[(String, ProtoTable)] = {
     import ProjectViewer._
-    Option(belongsTo).map { belongsTo =>
-      BelongsToTableName -> getSingleProtoTable(BelongsToTableName)
-    } ++ super.getLocalProtoTables
+    maybeProtoTable(belongsTo, BelongsToTableName) ++ super.getLocalProtoTables
   }
 
   override def getSingleProtoTable(tablePath: String): ProtoTable = {
