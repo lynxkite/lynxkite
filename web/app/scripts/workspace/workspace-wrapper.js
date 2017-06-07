@@ -129,7 +129,6 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       // of backendState will only be notified once the
       // backend is fully aware of the new state.
       this.state = angular.copy(this.backendState);
-      this._updateBoxCatalog();
       this._build();
       this._assignStateInfoToPlugs(response.outputs);
       this._assignSummaryInfoToBoxes(response.summaries);
