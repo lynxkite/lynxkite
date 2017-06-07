@@ -102,7 +102,7 @@ When working on the frontend you can avoid running `run.sh` all the time. Start 
  the proxy, any changes to frontend files will perform the necessary frontend build steps and reload
  the page in the browser.
 
-Frontend tests (Protractor tests) can be run with `make frotend-test`. This builds and starts
+Frontend tests (Protractor tests) can be run with `make frontend-test`. This builds and starts
 LynxKite, runs the Protractor tests, then shuts down LynxKite. To run a single test the test
 code has to be modified. After the one or two `function` parameters add a `'solo'` parameter to mark
  the test for solo running. (Multiple tests can be marked with `'solo'` at the same time.) Run

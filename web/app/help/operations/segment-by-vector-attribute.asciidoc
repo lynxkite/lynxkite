@@ -1,0 +1,14 @@
+### Segment by Vector attribute
+
+Segments the vertices by a vector vertex attribute.
+
+Segments are created from the values in all of the vector attributes. A vertex is connected
+to every segment corresponding to the elements in the vector.
+
+====
+[[name]] Segmentation name::
+The new segmentation will be saved under this name.
+
+[[attr]] Attribute::
+The vector attribute to segment by.
+====

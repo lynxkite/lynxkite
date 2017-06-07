@@ -16,6 +16,7 @@
     "es5-shim": "4.5.2",
     "es6-shim": "0.34.4",
     "font-awesome": "^4.7.0",
+    "fuse.js": "^3.0.4",
     "jquery": "2.1.4",
     "json3": "3.3.2",
     "sweetalert": "1.1.3",

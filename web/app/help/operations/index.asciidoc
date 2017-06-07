@@ -205,8 +205,6 @@ include::create-random-edge-bundle.asciidoc[]
 
 include::create-scale-free-random-edge-bundle.asciidoc[]
 
-include::create-segmentation-from-sql.asciidoc[]
-
 include::create-vertices.asciidoc[]
 
 include::define-segmentation-links-from-matching-attributes.asciidoc[]
@@ -377,6 +375,8 @@ include::segment-by-interval.asciidoc[]
 
 include::segment-by-string-attribute.asciidoc[]
 
+include::segment-by-vector-attribute.asciidoc[]
+
 include::set-edge-attribute-icon.asciidoc[]
 
 include::set-scalar-icon.asciidoc[]
@@ -393,7 +393,11 @@ include::split-to-train-and-test-set.asciidoc[]
 
 include::split-vertices.asciidoc[]
 
-include::sql.asciidoc[]
+include::sql1.asciidoc[]
+
+include::sql2.asciidoc[]
+
+include::sql3.asciidoc[]
 
 include::take-edges-as-vertices.asciidoc[]
 
