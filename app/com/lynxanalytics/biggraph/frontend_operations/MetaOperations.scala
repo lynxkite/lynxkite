@@ -18,8 +18,8 @@ class MetaOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   }
 
   // Categories
-  val OtherBoxes = Category("Other boxes", "black", icon = "kraken")
-  val AnchorBox = Category("Anchor box", "black", icon = "kraken", visible = false)
+  val OtherBoxes = Category("Other boxes", "yellow", icon = "kraken")
+  val AnchorBox = Category("Anchor box", "yellow", icon = "kraken", visible = false)
 
   register("Add comment", OtherBoxes)(new DecoratorOperation(_) {
     override def parameters = List(

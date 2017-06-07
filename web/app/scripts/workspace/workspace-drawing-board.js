@@ -439,6 +439,19 @@ angular.module('biggraph')
         scope.$on('$destroy', function() {
           scope.workspace.stopProgressUpdate();
         });
+
+        // TODO: We could generate these with tinycolor from the color names.
+        scope.filters = {
+          black: '0.2 0.2 0.2 0 0   0.2 0.2 0.2 0 0   0.2 0.2 0.2 0 0   0 0 0 1 0',
+          blue: '0 0 0 0 0   0.4 0.4 0.4 0 0   0.6 0.6 0.6 0 0   0 0 0 1 0',
+          green: '0.2 0.2 0.2 0 0   0.6 0.6 0.6 0 0   0.4 0.4 0.4 0 0   0 0 0 1 0',
+          lightblue: '0.2 0.2 0.2 0 0   0.6 0.6 0.6 0 0   0.8 0.8 0.8 0 0   0 0 0 1 0',
+          magenta: '0.5 0.5 0.5 0 0   0 0 0 0 0   0.5 0.5 0.5 0 0   0 0 0 1 0',
+          pink: '0.8 0.8 0.8 0 0   0.4 0.4 0.4 0 0   0.4 0.4 0.4 0 0   0 0 0 1 0',
+          red: '0.6 0.6 0.6 0 0   0 0 0 0 0   0 0 0 0 0   0 0 0 1 0',
+          white: '0.8 0.8 0.8 0 0   0.8 0.8 0.8 0 0   0.8 0.8 0.8 0 0   0 0 0 1 0',
+          yellow: '0.6 0.6 0.6 0 0   0.4 0.4 0.4 0 0   0 0 0 0 0   0 0 0 1 0',
+        };
       }
     };
   });
