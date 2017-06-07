@@ -31,12 +31,18 @@ span#custom-box-stack {
   width: 35px;
   overflow: auto; /* Allow scrolling category list, if necessary. */
 }
+
 #workspace-drawing-board > svg {
   display: block;
   width: 100%;
   height: 100%;
-  background-color: lightgray;
+  background-color: hsl(30, 40%, 95%);
 }
+
+#workspace-drawing-board svg text {
+  font: bold 12px sans-serif;
+}
+
 state-view {
   display: block;
 }
@@ -49,14 +55,18 @@ box-editor {
   margin-top: 8px;
 }
 
-g.box rect, g.box circle {
+g.box circle {
   stroke-width: 1;
   stroke: blue;
   fill-opacity: 0;
 }
-g.selected.selected rect, g.box.selected circle {
+g.selected.selected image {
+  filter: url(#selected);
+}
+g.box.selected circle {
   stroke-width: 3;
 }
+
 rect.selection-box {
   stroke: black;
   fill-opacity: 0;

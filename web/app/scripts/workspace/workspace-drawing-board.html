@@ -126,6 +126,12 @@
     ng-mouseup="onMouseUp($event)"
     ng-mousedown="onMouseDown($event)">
   <svg>
+
+   <filter id="selected">
+     <feGaussianBlur result="blurred" in="SourceGraphic" stdDeviation="2"/>
+     <feBlend in="SourceGraphic" in2="blurred" mode="screen"/>
+   </filter>
+
     <g id="drawing-board"
        ng-attr-transform="{{ workspaceTransform() }}">
 
@@ -159,16 +165,19 @@
         </g>
         <!-- end list of I/O plugs -->
 
-        <rect
+        <image
             class="box-main"
-            ng-attr-width="{{box.width}}"
-            ng-attr-height="{{box.height}}">
-        </rect>
+            href="{{ box.metadata.icon }}" width="150" height="150"></image>
 
-        <text x="5" y="15">
+        <!-- Text with backdrop. -->
+        <text x="75" y="130" text-anchor="middle" stroke="white" stroke-width="5">
           {{box.summary}}
         </text>
-        <text x="5" y="50" ng-show="box.commentLines">
+        <text x="75" y="130" text-anchor="middle" fill="black">
+          {{box.summary}}
+        </text>
+
+        <text x="5" y="140" ng-show="box.commentLines">
           <tspan xml:space="preserve" font-family="monospace" x="5" dy="15"
                  ng-repeat="line in box.commentLines track by $index">{{line}}
           </tspan>
