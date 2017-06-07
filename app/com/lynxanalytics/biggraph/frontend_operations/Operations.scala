@@ -2999,13 +2999,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
       private def extendSegmentationParameters(originalList: List[FEOption],
                                                suffixes: List[String]): List[FEOption] = {
-        originalList.map {
-          case feOption =>
-            suffixes.map {
-              case suffix =>
-                FEOption(feOption.id + suffix, feOption.title + suffix)
-            }
-        }.flatten.sortBy(_.title)
+        originalList.flatMap(feOption => suffixes.map(suffix =>
+          FEOption(feOption.id + suffix, feOption.title + suffix)
+        )
+        ).sortBy(_.title)
       }
 
       // We have to skip the assert in the base class here, because we need to have the
@@ -3017,13 +3014,13 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
       private def segmentationParameter(titlePrefix: String,
                                         input: String,
-                                        idTitle: String): OperationParams.SegmentationParam = {
+                                        title: String): OperationParams.SegmentationParam = {
         val param = titlePrefix + input
         reservedParameter(param)
         val originalSegmentations =
           context.inputs(input).project.segmentationsRecursively
         val segList = extendSegmentationParameters(originalSegmentations, List(" vertices", " edges"))
-        OperationParams.SegmentationParam(param, idTitle, segList)
+        OperationParams.SegmentationParam(param, title, segList)
       }
 
       override protected def allParameters: List[OperationParameterMeta] = {
@@ -3033,11 +3030,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         segParams ++ parameters
       }
 
-      private def toFEList(s: Seq[String]): List[FEOption] = {
-        s.map {
-          case name => FEOption(name, name)
-        }.toList
-      }
+      private def toFEList(s: Seq[String]): List[FEOption] =
+        s.map(name => FEOption(name, name)).toList
 
       case class JoinSideInfo(apply_target: String) {
         assert(apply_target == "left" || apply_target == "right",
@@ -3049,10 +3043,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           if (editor.edgeBundle != null) Some(editor.edgeBundle.idSet)
           else None
         }
+
         val idSet: Option[VertexSet] = {
           if (isVertex) {
-            if (editor.vertexSet != null) Some(editor.vertexSet)
-            else None
+            Option(editor.vertexSet)
           } else {
             edgeIdSet
           }
@@ -3095,7 +3089,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
       def getMultiParameters(id: String): List[String] = {
         if (params.contains(id)) {
-          params("id").split(",").toList
+          params(id).split(",").toList
         } else {
           List()
         }
