@@ -12,4 +12,6 @@ object SQLHelperHelper {
     val explain = ExplainCommand(df.queryExecution.logical, extended = false)
     df.sparkSession.sessionState.executePlan(explain).executedPlan.executeCollect()
   }
+
+  def newSQLConf = new org.apache.spark.sql.internal.SQLConf()
 }

@@ -3662,26 +3662,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Create segmentation from SQL", StructureOperations, new ProjectTransformation(_) with SegOp {
-    override lazy val parameters = List(
-      Param("name", "Name"),
-      Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql"))
-    def segmentationParameters = List()
-    def enabled = FEStatus.assert(true, "")
-
-    def apply() = {
-      ???
-      /*
-      val table = env.sqlHelper.sqlToTable(project.viewer, params("sql"))
-      val tableSegmentation = project.segmentation(params("name"))
-      tableSegmentation.vertexSet = table.idSet
-      for ((name, column) <- table.columns) {
-        tableSegmentation.newVertexAttribute(name, column)
-      }
-      */
-    }
-  })
-
   register("Split to train and test set", MachineLearningOperations, new ProjectTransformation(_) {
     lazy val parameters = List(
       Choice("source", "Source attribute",
@@ -3820,6 +3800,44 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       shapefile.close()
     }
   })
+
+  // TODO: Use dynamic inputs. #5820
+  def registerSQLOp(name: String, inputs: List[String])(
+    getProtoTables: Operation.Context => Map[String, ProtoTable]): Unit = {
+    registerOp(name, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) {
+      lazy val parameters = List(
+        Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql"))
+      override def allParameters = parameters // No "apply_to" parameters.
+      def enabled = FEStatus.enabled
+      override def getOutputs() = {
+        validateParameters(params)
+        val sql = params("sql")
+        val protoTables = getProtoTables(context)
+        val tables = ProtoTable.minimize(sql, protoTables).mapValues(_.toTable)
+        val result = graph_operations.ExecuteSQL.run(sql, tables)
+        makeOutput(result)
+      }
+    })
+  }
+
+  registerSQLOp("SQL1", List("input")) { context =>
+    val input = context.inputs("input")
+    input.kind match {
+      case BoxOutputKind.Project => input.project.viewer.getProtoTables.toMap
+      case BoxOutputKind.Table => Map("input" -> ProtoTable(input.table))
+    }
+  }
+
+  for (inputs <- 2 to 3) {
+    registerSQLOp(s"SQL$inputs", List("one", "two", "three").take(inputs)) { context =>
+      context.inputs.flatMap {
+        case (name, state) if state.isTable => Seq(name -> ProtoTable(state.table))
+        case (inputName, state) if state.isProject => state.project.viewer.getProtoTables.map {
+          case (tableName, proto) => s"$inputName|$tableName" -> proto
+        }
+      }.toMap
+    }
+  }
 
   private def getShapeFilePath(params: Map[String, String]): String = {
     val shapeFilePath = params("shapefile")
