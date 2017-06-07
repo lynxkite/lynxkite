@@ -405,6 +405,8 @@ abstract class TableOutputOperation(context: Operation.Context) extends SmartOpe
   protected def makeOutput(t: Table): Map[BoxOutput, BoxOutputState] = {
     Map(context.box.output(context.meta.outputs(0)) -> BoxOutputState.from(t))
   }
+
+  override def apply(): Unit = ???
 }
 
 abstract class ImportOperation(context: Operation.Context) extends TableOutputOperation(context) {
@@ -418,8 +420,6 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
   }
 
   def enabled = FEStatus.enabled // Useful default.
-
-  override def apply(): Unit = ???
 
   // Called by /ajax/importBox to create the table that is passed in "imported_table".
   def getDataFrame(context: spark.sql.SQLContext): spark.sql.DataFrame = {
