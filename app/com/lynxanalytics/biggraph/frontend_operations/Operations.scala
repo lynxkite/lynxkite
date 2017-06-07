@@ -3749,11 +3749,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   def registerSQLOp(name: String, inputs: List[String])(
     getProtoTables: Operation.Context => Map[String, ProtoTable]): Unit = {
     registerOp(name, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) {
+      override val params = new ParameterHolder(context) // No "apply_to" parameters.
       params += Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql")
-      override def allParameters = parameters // No "apply_to" parameters.
       def enabled = FEStatus.enabled
       override def getOutputs() = {
-        validateParameters(params)
+        params.validate()
         val sql = params("sql")
         val protoTables = getProtoTables(context)
         val tables = ProtoTable.minimize(sql, protoTables).mapValues(_.toTable)
@@ -3782,7 +3782,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   }
 
-  private def getShapeFilePath(params: Map[String, String]): String = {
+  private def getShapeFilePath(params: ParameterHolder): String = {
     val shapeFilePath = params("shapefile")
     assert(listShapefiles().exists(f => f.id == shapeFilePath),
       "Shapefile deleted, please choose another.")
