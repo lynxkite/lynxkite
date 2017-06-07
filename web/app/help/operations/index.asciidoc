@@ -207,6 +207,8 @@ include::create-scale-free-random-edge-bundle.asciidoc[]
 
 include::create-vertices.asciidoc[]
 
+include::create-visualization.asciidoc[]
+
 include::define-segmentation-links-from-matching-attributes.asciidoc[]
 
 include::derive-edge-attribute.asciidoc[]
