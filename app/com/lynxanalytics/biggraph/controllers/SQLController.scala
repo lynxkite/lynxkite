@@ -42,7 +42,7 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
     "Exactly one of directory and project should be defined")
   def createDataFrame(user: User, context: SQLContext)(
     implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
-    if (project.isDefined) projectSQL(user, context)
+    if (project.isDefined) ??? // TODO: Delete this method.
     else globalSQL(user, context)
   }
 
@@ -67,24 +67,6 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
       // TODO: Adapt this to querying named snapshots.
       queryTables(sql, Seq())
     }
-
-  // Executes an SQL query at the project level.
-  private def projectSQL(user: serving.User, context: SQLContext)(
-    implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame = {
-    val tables = metaManager.synchronized {
-      assert(directory.isEmpty,
-        "The directory field in the DataFrameSpec must be empty for local SQL queries.")
-      val p = SubProject.parsePath(project.get)
-      assert(p.frame.exists, s"Project $project does not exist.")
-      p.frame.assertReadAllowedFrom(user)
-
-      val v = p.viewer
-      v.allRelativeTablePaths.map {
-        path => (path.toString -> ???)
-      }
-    }
-    queryTables(sql, Seq())
-  }
 
   private def queryTables(
     sql: String,
@@ -226,7 +208,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   def getProjectTables(frame: ObjectFrame, subPath: Seq[String]): TableBrowserNodeResponse = {
     val viewer = frame.viewer.offspringViewer(subPath)
 
-    val implicitTables = viewer.implicitTableNames.toSeq.map {
+    val implicitTables = viewer.getProtoTables.map(_._1).toSeq.map {
       name =>
         TableBrowserNode(
           absolutePath = (Seq(frame.path.toString) ++ subPath ++ Seq(name)).mkString("|"),

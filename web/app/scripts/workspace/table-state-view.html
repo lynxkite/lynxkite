@@ -27,7 +27,7 @@
   <table ng-if="table.data" class="table table-striped table-bordered" id="table-sample">
     <thead>
       <tr>
-        <th ng-repeat="col in table.header" ng-click="sort.select($index)">
+        <th ng-repeat="col in table.header" id="{{ col.name }}" ng-click="sort.select($index)">
           <span class="column-name">{{col.name}}</span>
           <br>
           <span class="no-break">

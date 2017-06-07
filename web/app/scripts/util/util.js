@@ -431,6 +431,20 @@ angular.module('biggraph')
       confirmCallback);
     }
   };
+
+  util.warning = function(title, text, confirmCallback) {
+    window.sweetAlert({
+      title: title,
+      text: text,
+      type: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#DD6B55',
+      cancelButtonText: 'No',
+      confirmButtonText: 'Yes',
+    },
+    confirmCallback);
+  };
+
   util.globals = util.get('/ajax/getGlobalSettings');
 
   util.reloadUser = function() {
