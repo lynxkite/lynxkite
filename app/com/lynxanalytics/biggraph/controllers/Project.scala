@@ -256,7 +256,7 @@ sealed trait ProjectViewer {
     maybe: Any, tableName: String): Option[(String, ProtoTable)] = {
     maybe match {
       case null => None
-      case _ => Some(tableName -> getSingleProtoTable(tableName))
+      case _ => Some(tableName -> getSingleLocalProtoTable(tableName))
     }
   }
 
@@ -280,35 +280,37 @@ sealed trait ProjectViewer {
     val splittedPath = tablePath.split('|')
     val (segPath, tableName) = (splittedPath.dropRight(1), splittedPath.last)
     val segViewer = offspringViewer(segPath)
-    if (segViewer == this) {
-      import ProjectViewer._
-      val protoTable = tableName match {
-        case VertexTableName => ProtoTable(vertexAttributes.toSeq.sortBy(_._1))
-        case EdgeTableName => {
-          import graph_operations.VertexToEdgeAttribute._
-          val edgeAttrs = edgeAttributes.map {
-            case (name, attr) => s"edge_$name" -> attr
-          }
-          val srcAttrs = vertexAttributes.map {
-            case (name, attr) => s"src_$name" -> srcAttribute(attr, edgeBundle)
-          }
-          val dstAttrs = vertexAttributes.map {
-            case (name, attr) => s"dst_$name" -> dstAttribute(attr, edgeBundle)
-          }
-          ProtoTable((edgeAttrs ++ srcAttrs ++ dstAttrs).toSeq.sortBy(_._1))
+    segViewer.getSingleLocalProtoTable(tableName)
+  }
+
+  protected def getSingleLocalProtoTable(tableName: String): ProtoTable ={
+    import ProjectViewer._
+    val protoTable = tableName match {
+      case VertexTableName => ProtoTable(vertexAttributes.toSeq.sortBy(_._1))
+      case EdgeTableName => {
+        import graph_operations.VertexToEdgeAttribute._
+        val edgeAttrs = edgeAttributes.map {
+          case (name, attr) => s"edge_$name" -> attr
         }
-        case EdgeAttributeTableName => ProtoTable(edgeAttributes.toSeq.sortBy(_._1))
-        case BelongsToTableName =>
-          throw new AssertionError("Only segmentations have a BelongsTo table")
-        case _ => {
-          val correctTableNames = List(VertexTableName, EdgeTableName, EdgeAttributeTableName,
-            BelongsToTableName).mkString(", ")
-          throw new AssertionError("Not recognized table name. Correct table names: " +
-            s"${correctTableNames}")
+        val srcAttrs = vertexAttributes.map {
+          case (name, attr) => s"src_$name" -> srcAttribute(attr, edgeBundle)
         }
+        val dstAttrs = vertexAttributes.map {
+          case (name, attr) => s"dst_$name" -> dstAttribute(attr, edgeBundle)
+        }
+        ProtoTable((edgeAttrs ++ srcAttrs ++ dstAttrs).toSeq.sortBy(_._1))
       }
-      protoTable
-    } else segViewer.getSingleProtoTable(tableName)
+      case EdgeAttributeTableName => ProtoTable(edgeAttributes.toSeq.sortBy(_._1))
+      case BelongsToTableName =>
+        throw new AssertionError("Only segmentations have a BelongsTo table")
+      case _ => {
+        val correctTableNames = List(VertexTableName, EdgeTableName, EdgeAttributeTableName,
+          BelongsToTableName).mkString(", ")
+        throw new AssertionError("Not recognized table name. Correct table names: " +
+          s"$correctTableNames")
+      }
+    }
+    protoTable
   }
 }
 
@@ -452,11 +454,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
     maybeProtoTable(belongsTo, BelongsToTableName) ++ super.getLocalProtoTables
   }
 
-  override def getSingleProtoTable(tablePath: String): ProtoTable = {
-    val splittedPath = tablePath.split('|')
-    val (segPath, tableName) = (splittedPath.dropRight(1), splittedPath.last)
-    val segViewer = offspringViewer(segPath)
-    if (segViewer == this) {
+  override protected  def getSingleLocalProtoTable(tableName: String): ProtoTable = {
       import ProjectViewer._
       val protoTable = tableName match {
         case BelongsToTableName => {
@@ -469,10 +467,9 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
           }
           ProtoTable((baseAttrs ++ segAttrs).toSeq.sortBy(_._1))
         }
-        case _ => super.getSingleProtoTable(tablePath)
+        case _ => super.getSingleLocalProtoTable(tableName)
       }
       protoTable
-    } else segViewer.getSingleProtoTable(tableName)
   }
 }
 
