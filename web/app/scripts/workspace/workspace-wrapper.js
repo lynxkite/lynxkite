@@ -81,14 +81,18 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     },
 
     _createArrow: function(srcPlug, dstPlug) {
-      return {
-        src: srcPlug,
-        dst: dstPlug,
-        x1: function() { return srcPlug.cx(); },
-        y1: function() { return srcPlug.cy(); },
-        x2: function() { return dstPlug.cx(); },
-        y2: function() { return dstPlug.cy(); },
-      };
+      if (srcPlug && dstPlug) {
+        return {
+          src: srcPlug,
+          dst: dstPlug,
+          x1: function() { return srcPlug.cx(); },
+          y1: function() { return srcPlug.cy(); },
+          x2: function() { return dstPlug.cx(); },
+          y2: function() { return dstPlug.cy(); },
+        };
+      } else {
+        return undefined;
+      }
     },
 
     _buildArrows: function() {
