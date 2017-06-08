@@ -58,9 +58,6 @@ angular.module('biggraph')
         var svgElement = element.find('svg');
         function zoomToScale(z) { return Math.exp(z * 0.001); }
         function addLogicalMousePosition(event) {
-          /* eslint-disable no-console */
-          console.assert(!('logicalX' in event) && !('logicalY' in event));
-          console.assert(!('workspaceX' in event) && !('workspaceY' in event));
           // event.offsetX/Y are distorted when the mouse is
           // over a popup window (even if over an invisible
           // overflow part of it), hence we compute our own:
@@ -410,26 +407,12 @@ angular.module('biggraph')
             workspaceY = mouseY - (mouseY - workspaceY) * z2 / z1;
           });
         });
-        element.bind('dragover', function(event) {
-          event.preventDefault();
-        });
-        element.bind('dragstart', function(event) {
-          event.preventDefault();
-        });
-        element.bind('drop', function(event) {
-          event.preventDefault();
-          var origEvent = event.originalEvent;
-          var operationId = origEvent.dataTransfer.getData('operation-id');
-          if (operationId) {
-            // This isn't undefined iff testing
-            var boxId = origEvent.dataTransfer.getData('id');
-            // This is received from operation-selector-entry.js
-            scope.$apply(function() {
-              addLogicalMousePosition(origEvent);
-              scope.workspace.addBox(operationId, origEvent, boxId);
-            });
-          }
-        });
+
+        scope.addOperation = function(op, event) {
+          addLogicalMousePosition(event);
+          var box = scope.workspace.addBox(op.operationId, event, { willSaveLater: true });
+          scope.onMouseDownOnBox(scope.workspace.getBox(box.id), event);
+        };
 
         scope.$on('$destroy', function() {
           scope.workspace.stopProgressUpdate();
