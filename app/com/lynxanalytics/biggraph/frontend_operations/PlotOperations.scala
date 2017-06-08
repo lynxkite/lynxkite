@@ -7,6 +7,8 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_api.Scalar
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
+import org.apache.spark
+
 class PlotOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   implicit lazy val manager = env.metaGraphManager
   import Operation.Category
@@ -29,7 +31,7 @@ class PlotOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       s"A PlotOperation must output a Plot. $context"
     )
 
-    protected lazy val table = tableInput("table")
+    protected val table = tableLikeInput("table").asTable
 
     def apply() = ???
 
@@ -45,11 +47,19 @@ class PlotOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
     def enabled = FEStatus.enabled
 
+    def bestX = table.schema
+      .find(_.dataType == spark.sql.types.StringType)
+      .map(_.name).getOrElse("X")
+    def bestY = table.schema
+      .find(_.dataType == spark.sql.types.DoubleType)
+      .map(_.name).getOrElse("Y")
+
     params += Code(
       "plot_code",
       "Plot code",
       language = "scala",
-      defaultValue = "Vegas(\"My title\").\nwithData(Data).\n")
+      defaultValue =
+        s"""Vegas()\n  .withData(table)\n  .encodeX("$bestX", Nom)\n  .encodeY("$bestY", Quant)\n  .mark(Bar)""")
 
     def plotResult() = {
       val plotCode = params("plot_code")
