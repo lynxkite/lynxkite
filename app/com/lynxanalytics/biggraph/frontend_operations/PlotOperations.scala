@@ -45,12 +45,11 @@ class PlotOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
     def enabled = FEStatus.enabled
 
-    lazy val parameters = List(
-      Code(
-        "plot_code",
-        "Plot code",
-        language = "scala",
-        defaultValue = "Vegas(\"My title\").\nwithData(Data).\n"))
+    params += Code(
+      "plot_code",
+      "Plot code",
+      language = "scala",
+      defaultValue = "Vegas(\"My title\").\nwithData(Data).\n")
 
     def plotResult() = {
       val plotCode = params("plot_code")
