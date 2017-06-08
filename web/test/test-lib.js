@@ -211,7 +211,7 @@ Workspace.prototype = {
   },
 
   expectNumSelectedBoxes: function(n) {
-    return expect($$('g.selected.selected rect').count()).toEqual(n);
+    return expect($$('g.box.selected').count()).toEqual(n);
   },
 
   deleteBoxes: function(boxIds) {
