@@ -300,12 +300,12 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   test("custom box") {
     using("test-custom-box") {
       val anchor = anchorWithParams(("param1", "text", "def1"))
-      val inputBox = Box("input", "Input box", Map("name" -> "in1"), 0, 0, Map())
+      val inputBox = Box("input", "Input", Map("name" -> "in1"), 0, 0, Map())
       val pr = Box(
         "pr", "Compute PageRank", pagerankParams - "name", 0, 0,
         Map("project" -> inputBox.output("input")), Map("name" -> "pr_$param1"))
       val outputBox = Box(
-        "output", "Output box", Map("name" -> "out1"), 0, 0, Map("output" -> pr.output("project")))
+        "output", "Output", Map("name" -> "out1"), 0, 0, Map("output" -> pr.output("project")))
       set("test-custom-box", Workspace(List(anchor, inputBox, pr, outputBox)))
 
       // Now use "test-custom-box" as a custom box.
@@ -357,6 +357,48 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         if (box.id == "agg") box.copy(inputs = Map("project" -> pr.output("project"))) else box
       }))
       assert(aggregateParams == Map("prefix" -> "g")) // Parameter has been cleaned up.
+    }
+  }
+
+  test("broken parameters: parametric apply_to_project with error") {
+    using("test-workspace") {
+      val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+      val pr = Box(
+        "pr", "Compute PageRank", pagerankParams, 0, 100, Map("project" -> eg.output("project")),
+        Map("apply_to_project" -> "$x"))
+      val ws = Workspace.from(eg, pr)
+      val project = context(ws).allStates(pr.output("project"))
+      set("test-workspace", ws)
+      val op = getOpMeta("test-workspace", "pr")
+      // $x is undefined, so the value of "apply_to_project" is unavailable. It would be used for
+      // defining the later parameters, so those parameters are missing.
+      assert(op.parameters.map(_.id) == Seq("apply_to_project"))
+      // The error is reported by marking the operation as disabled.
+      // Also the output carries an error.
+      assert(op.status.disabledReason == "compile-time error")
+      assert(project.isError)
+    }
+  }
+
+  test("broken parameters: parametric PageRank iterations with error") {
+    using("test-workspace") {
+      val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+      val pr = Box(
+        "pr", "Compute PageRank", Map(
+          "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
+          "direction" -> "all edges"),
+        0, 100, Map("project" -> eg.output("project")),
+        Map("iterations" -> "$x"))
+      val ws = Workspace.from(eg, pr)
+      val project = context(ws).allStates(pr.output("project"))
+      set("test-workspace", ws)
+      val op = getOpMeta("test-workspace", "pr")
+      // $x is undefined, so the value of "iterations" is unavailable. No parameters depend on it,
+      // so the parameter list is not affected. Everything is editable.
+      assert(op.parameters.map(_.id) ==
+        Seq("apply_to_project", "name", "weights", "iterations", "damping", "direction"))
+      // The output carries an error.
+      assert(project.isError)
     }
   }
 }
