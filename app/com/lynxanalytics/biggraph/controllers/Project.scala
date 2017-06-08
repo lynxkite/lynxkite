@@ -283,7 +283,7 @@ sealed trait ProjectViewer {
     segViewer.getSingleLocalProtoTable(tableName)
   }
 
-  protected def getSingleLocalProtoTable(tableName: String): ProtoTable ={
+  protected def getSingleLocalProtoTable(tableName: String): ProtoTable = {
     import ProjectViewer._
     val protoTable = tableName match {
       case VertexTableName => ProtoTable(vertexAttributes.toSeq.sortBy(_._1))
@@ -454,22 +454,22 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
     maybeProtoTable(belongsTo, BelongsToTableName) ++ super.getLocalProtoTables
   }
 
-  override protected  def getSingleLocalProtoTable(tableName: String): ProtoTable = {
-      import ProjectViewer._
-      val protoTable = tableName match {
-        case BelongsToTableName => {
-          import graph_operations.VertexToEdgeAttribute._
-          val baseAttrs = parent.vertexAttributes.map {
-            case (name, attr) => s"base_$name" -> srcAttribute(attr, belongsTo)
-          }
-          val segAttrs = vertexAttributes.map {
-            case (name, attr) => s"segment_$name" -> dstAttribute(attr, belongsTo)
-          }
-          ProtoTable((baseAttrs ++ segAttrs).toSeq.sortBy(_._1))
+  override protected def getSingleLocalProtoTable(tableName: String): ProtoTable = {
+    import ProjectViewer._
+    val protoTable = tableName match {
+      case BelongsToTableName => {
+        import graph_operations.VertexToEdgeAttribute._
+        val baseAttrs = parent.vertexAttributes.map {
+          case (name, attr) => s"base_$name" -> srcAttribute(attr, belongsTo)
         }
-        case _ => super.getSingleLocalProtoTable(tableName)
+        val segAttrs = vertexAttributes.map {
+          case (name, attr) => s"segment_$name" -> dstAttribute(attr, belongsTo)
+        }
+        ProtoTable((baseAttrs ++ segAttrs).toSeq.sortBy(_._1))
       }
-      protoTable
+      case _ => super.getSingleLocalProtoTable(tableName)
+    }
+    protoTable
   }
 }
 
