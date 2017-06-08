@@ -55,13 +55,17 @@ box-editor {
   margin-top: 8px;
 }
 
-g #selection {
-  display: none;
-  stroke: transparent;
-  fill: rgba(80, 0, 0, 0.1);
+/* To accomodate the large transparent region of the default icons, the #click-target circle will
+ * receive clicks instead of the icon itself. */
+g.box image {
+  pointer-events: none;
 }
-g.selected #selection {
-  display: inherit;
+g.box #click-target {
+  stroke: transparent;
+  fill: transparent;
+}
+g.box.selected #click-target {
+  fill: rgba(80, 0, 0, 0.1);
 }
 
 g.box .summary {
