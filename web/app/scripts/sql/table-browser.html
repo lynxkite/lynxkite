@@ -22,8 +22,9 @@
         ng-model-options="{ debounce: 300 }">
     </input>
   </div>
-  <div id="table-browser-tree">
+  <div id="table-browser-tree" ng-show="!error">
     <ul ng-include="'scripts/sql/table-browser-node.html'" />
   </div>
+  <display-error caption="Cannot load table browser tree." error="error"></display-error>
 
 </div>

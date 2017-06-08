@@ -124,6 +124,9 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
                     srcList[i].objectType,
                     srcList[i].columnType);
                 }
+                scope.error = undefined;
+              }, function(error) {
+                scope.error = error.data;
               });
           },
 

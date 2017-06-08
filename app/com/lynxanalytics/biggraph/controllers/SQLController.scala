@@ -222,11 +222,27 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
       } else {
         getProjectTables(frame, pathParts.tail)
       }
+    } else if (frame.isWorkspace) {
+      //getWorkspaceTables(user, frame)
+      ???
     } else {
       ???
     }
   }
-
+  /*
+  def getWorkspaceTables(user: serving.User, frame: ObjectFrame): TableBrowserNodeResponse = {
+    val workspace = frame.asWorkspaceFrame.workspace
+    val res = WorkspaceController(env).ResolvedWorkspaceReference(user, WorkspaceReference(workspace.name, List()))
+    val states = res.context.allStates.filter(!_._2.isError)
+    TableBrowserNodeResponse(list = states.map {
+      case (output, state) =>
+        TableBrowserNode(
+          output.box,
+          output.id,
+          state.kind)
+    })
+  }
+*/
   def getProjectTables(frame: ObjectFrame, subPath: Seq[String]): TableBrowserNodeResponse = {
     val viewer = frame.viewer.offspringViewer(subPath)
 

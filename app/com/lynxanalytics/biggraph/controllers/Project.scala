@@ -1284,6 +1284,10 @@ class DirectoryEntry(val path: SymbolPath)(
     res
   }
 
+  def asWorkspaceFrame: WorkspaceFrame = {
+    assert(isInstanceOf[WorkspaceFrame], s"Entry '$path' is not a workspace.")
+    asInstanceOf[WorkspaceFrame]
+  }
   def asNewWorkspaceFrame(): WorkspaceFrame = {
     assert(!exists, s"Entry '$path' already exists.")
     val res = new WorkspaceFrame(path)
