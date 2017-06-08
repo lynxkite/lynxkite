@@ -33,7 +33,7 @@ case class TableColumn(name: String, dataType: String)
 case class GetTableOutputResponse(header: List[TableColumn], data: List[List[DynamicValue]])
 case class GetPlotOutputRequest(id: String)
 case class GetPlotOutputResponse(json: FEScalar)
-case class CreateWorkspaceRequest(name: String, privacy: String)
+case class CreateWorkspaceRequest(name: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 case class CreateSnapshotRequest(name: String, id: String)
 case class GetExportResultRequest(stateId: String)
@@ -55,7 +55,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val entry = DirectoryEntry.fromName(request.name)
     entry.assertParentWriteAllowedFrom(user)
     val w = entry.asNewWorkspaceFrame()
-    w.setupACL(request.privacy, user)
+    w.setupACL("public-write", user)
   }
 
   private def getWorkspaceFrame(

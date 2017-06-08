@@ -4,17 +4,6 @@
     <span class="lead" ng-hide="newWorkspace.expanded">New workspace</span>
     <form ng-show="newWorkspace.expanded" class="form-inline" role="form">
       <div class="form-group"><input id="new-workspace-name" placeholder="Workspace name" ng-model="newWorkspace.name" class="form-control"></div>
-      <div class="form-group">about</div>
-      <span ng-show="util.globals.hasAuth">
-        <div class="form-group">that</div>
-        <div class="form-group"><select
-                                   ng-model="newWorkspace.privacy"
-                                   class="form-control">
-            <option value="private">no one else can see</option>
-            <option value="public-read">everyone can see</option>
-            <option value="public-write">everyone can modify</option>
-        </select></div>
-      </span>
       <button type="submit" class="btn btn-default" ng-click="createWorkspace()"
         ng-disabled="newWorkspace.sending || !newWorkspace.name">
         {{newWorkspace.sending && '...' || 'Create'}}
