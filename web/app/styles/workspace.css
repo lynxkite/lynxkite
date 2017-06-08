@@ -90,6 +90,7 @@ g.box .plug circle {
   stroke-width: 1;
   stroke: black;
   fill-opacity: 0;
+  mix-blend-mode: darken; /* Allow arrow to be visible even if it is below. */
 }
 g.box #inputs .plug text {
   text-anchor: end;
