@@ -20,7 +20,7 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
   }
 
   // A VisualizationOperation takes a Project as input and returns a Visualization as output.
-  class VisualizationOperation(context: Operation.Context) extends SmartOperation(context) {
+  class VisualizationOperation(context: Operation.Context) extends SimpleOperation(context) {
     assert(
       context.meta.inputs == List("project"),
       s"A VisualizationOperation must input a single project. $context")
