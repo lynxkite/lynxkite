@@ -138,25 +138,10 @@
       <marker id="arrow-root" markerWidth="4" markerHeight="4" viewBox="-2 -2 4 4">
         <circle r="2"></circle>
       </marker>
-
-      <pattern
-        ng-if="background"
-        id="background-pattern"
-        x="0"
-        y="0"
-        patternUnits="userSpaceOnUse"
-        ng-attr-width="{{ background.width }}"
-        ng-attr-height="{{ background.height }}"
-        patternTransform="matrix(0.5 -0.05 0.115 0.31 0 0)">
-        <!-- The transform was experimentally matched to the camera in scene.pov. -->
-        <image ng-attr-href="{{ background.image }}"></image>
-      </pattern>
     </defs>
 
     <g id="drawing-board"
        ng-attr-transform="{{ workspaceTransform() }}">
-      <rect width="100%" height="100%" fill="url(#background-pattern)" mix-blend-mode="multiply"
-      fill-opacity="0.1"></rect>
 
       <!-- start box -->
       <g ng-repeat="box in boxes()"
