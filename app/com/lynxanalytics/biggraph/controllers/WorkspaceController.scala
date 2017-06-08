@@ -101,7 +101,11 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       val summaries = res.ws.boxes.map(
         box => box.id -> (
           try { context.getOperationForStates(box, states).summary }
-          catch { case e: AssertionError => box.operationId }
+          catch {
+            case t: Throwable =>
+              log.error(s"Error while generating summary for $box in $request.", t)
+              box.operationId
+          }
         )
       ).toMap
       (stateInfo, summaries)
