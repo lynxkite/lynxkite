@@ -29,7 +29,8 @@ table-kind import-wizard form {
 
 .parametric-switch {
   position: absolute;
-  right: 0;
+  right: 5px;
+  top: 10px;
   opacity: 0.2;
   cursor: pointer;
 }
