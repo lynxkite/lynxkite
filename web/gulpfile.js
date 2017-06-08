@@ -57,7 +57,7 @@ gulp.task('asciidoctor', function () {
 });
 
 // Preprocesses HTML files.
-gulp.task('html', ['css', 'js', 'icons'], function () {
+gulp.task('html', ['css', 'js'], function () {
   var css = gulp.src('.tmp/**/*.css', { read: false });
   var js = gulp.src('.tmp/**/*.js').pipe($.angularFilesort());
   return gulp.src('app/index.html')
@@ -109,11 +109,6 @@ gulp.task('css', ['sass'], function () {
     .pipe($.autoprefixer())
     .pipe(gulp.dest('.tmp/styles'))
     .pipe(browserSync.stream());
-});
-
-// Generates the icon files.
-gulp.task('icons', ['sass'], function (done) {
-  spawn('python3', ['icons/generate.py'], { stdio: 'inherit' }).once('close', done);
 });
 
 // Preprocesses JavaScript files.
