@@ -20,6 +20,7 @@ Statue("{}")
       '+W200',  # Width.
       '+H200',  # Height.
       '+UA',  # Output alpha.
+      '-D',  # No display.
       '+Itmp.pov',
       '+O' + output_file,
       'Declare=shadow_pass=' + str(shadow_pass),
