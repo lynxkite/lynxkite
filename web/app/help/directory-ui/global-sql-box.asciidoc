@@ -1,21 +1,24 @@
 [[global-sql-box]]
-## SQL interface on the project browser page
+## SQL interface on the workspace browser page
 
-There is a SQL interface on the project browser page that can be expanded by clicking on the plus
-button and which can be used to make queries to all available projects in the current folder
-(those in subfolders included). To refer to the table you want to access, you first need to provide the path from
-your current folder to the project, then use `|` to specify the table you want to access. It is important to keep
-in mind that you need to enclose all of this between two `{backtick}` symbols (_see example below_).
+There is a SQL interface on the workspace browser page that can be expanded by clicking on the plus
+button and which can be used to make queries to all available snapshots in the current folder
+(those in subfolders included). To refer to the table you want to access, you first need to
+provide the path from your current folder to the snapshot, then in case of project snapshots
+use `|` to specify the table you want to access. The table reference must be enclosed between two
+`{backtick}` characters (_see example below_).
 
-For example, let's say you are in your private folder where you have a subfolder called Premier_League, in which you
-have a project named Arsenal. If you want to access the vertices table of the Arsenal project from your private folder,
-you need to refer to it by `{backtick}Premier_League/Arsenal|vertices{backtick}`. In case you are already in the
+For example, let's say you are in your private folder where you have a subfolder called
+`Premier_League`, in which you have a project snapshot named `Arsenal`. If you want to access the
+vertices table of the Arsenal project snapshot from your private folder, you need to refer to it by
+`{backtick}Premier_League/Arsenal|vertices{backtick}`. In case you are already in the
 `Premier_League` folder, the reference shortens to `{backtick}Arsenal|vertices{backtick}`
 
-The SQL interface on the project browser page can also be used to reference tables not imported into projects. For
-example, let's say you have a table called Players which has the data of all football players playing in the
-Premier League. Then you can reference it the same way as the tables in projects: e.g. you can list all Arsenal players
-with `select * from {backtick}Players{backtick} where team = "Arsenal"`. Notice that you still need to enclose the
-table name between two {backtick} symbols.
+The SQL interface on the workspace browser page can also be used to reference table snapshots.
+For example, let's say you have a table snapshot called `Players` which has the data of all
+football players playing in the Premier League. Then you can reference it the same way as the
+tables in project snapshots: e.g. you can list all Arsenal players with `select * from
+{backtick}Players{backtick} where team = "Arsenal"`. Notice that you still need to enclose the
+name of the snapshot between two `{backtick}` symbols.
 
 See the section on <<sql-box>> for more details on the usage of the SQL interface.

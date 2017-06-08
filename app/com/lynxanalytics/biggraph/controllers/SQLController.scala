@@ -8,6 +8,7 @@ import scala.reflect.runtime.universe.TypeTag
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
+import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL
 import com.lynxanalytics.biggraph.graph_operations.ImportDataFrame
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
@@ -64,8 +65,29 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
       val givenTableNames = findTablesFromQuery(sql)
       // Maps the relative table names used in the sql query with the global name
       val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
-      // TODO: Adapt this to querying named snapshots.
-      queryTables(sql, Seq())
+      val pathAndTableName = tableNames.mapValues(wholePath => {
+        val split = wholePath.split('|')
+        (split.head, split.tail)
+      })
+      val snapshotsAndInternalTables = pathAndTableName.mapValues {
+        case (snapshotPath, tablePath) => (DirectoryEntry.fromName(snapshotPath), tablePath)
+      }
+      val goodSnapshotStates = snapshotsAndInternalTables.collect {
+        case (name, (snapshot, tablePath)) if snapshot.isSnapshot && snapshot.readAllowedFrom(user) =>
+          (name, (snapshot.asSnapshotFrame.getState(), tablePath))
+      }
+      val protoTables = goodSnapshotStates.collect {
+        case (name, (state, tablePath)) if state.isTable => (name, ProtoTable(state.table))
+        case (name, (state, tablePath)) if state.isProject =>
+          val rootViewer = state.project.viewer
+          val protoTable = rootViewer.getSingleProtoTable(tablePath.mkString("|"))
+          (name, protoTable)
+      }
+      val minimizedProtoTables = ProtoTable.minimize(sql, protoTables)
+      val tables = minimizedProtoTables.mapValues(protoTable => protoTable.toTable)
+      val result = ExecuteSQL.run(sql, tables)
+      import Scripting._
+      result.df
     }
 
   private def queryTables(

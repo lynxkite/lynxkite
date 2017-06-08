@@ -72,9 +72,6 @@ angular.module('biggraph')
           scope.boxMeta = undefined;
           scope.error = error.data;
         };
-        scope.reportError = function(error) {
-          util.reportError({ message: error });
-        };
 
         function outputStatesDiffer(box1, box2) {
           if (box1.outputs.length !== box2.outputs.length) {
