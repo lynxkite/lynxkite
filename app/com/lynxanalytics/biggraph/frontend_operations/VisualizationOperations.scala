@@ -20,9 +20,7 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
   }
 
   // A VisualizationOperation takes a Project as input and returns a Visualization as output.
-  class VisualizationOperation(val context: Operation.Context) extends Operation {
-    protected val id = context.meta.operationId
-
+  class VisualizationOperation(context: Operation.Context) extends SmartOperation(context) {
     assert(
       context.meta.inputs == List("project"),
       s"A VisualizationOperation must input a single project. $context")
@@ -33,25 +31,10 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
 
     protected lazy val project = context.inputs("project").project
 
-    def summary: String = "TODO"
-
-    def toFE: FEOperationMeta = FEOperationMeta(
-      id,
-      Operation.htmlId(id),
-      parameters.map { param => param.toFE },
-      List(),
-      context.meta.categoryId,
-      enabled,
-      description = context.meta.description)
-
     def apply() = ???
 
-    def validateParameters(values: Map[String, String]) = {
-    }
-
     override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
-      validateParameters(params)
-
+      params.validate()
       Map(
         context.box.output(context.meta.outputs(0)) ->
           BoxOutputState.visualization(
@@ -62,19 +45,10 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
 
     def enabled = FEStatus.enabled
 
-    protected lazy val paramValues = context.box.parameters
-    protected def params =
-      parameters
-        .map {
-          paramMeta => (paramMeta.id, paramMeta.defaultValue)
-        }
-        .toMap ++ paramValues
-
-    lazy val parameters = List(
-      VisualizationParam(
-        "state",
-        "Left-side and right-side UI statuses as JSON"))
-
+    override val params = new ParameterHolder(context) // No "apply_to" parameters.
+    params += VisualizationParam(
+      "state",
+      "Left-side and right-side UI statuses as JSON")
   }
 
   register("Create visualization", new VisualizationOperation(_))
