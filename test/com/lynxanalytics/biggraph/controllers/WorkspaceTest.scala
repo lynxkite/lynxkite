@@ -13,7 +13,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   def context(ws: Workspace, params: (String, String)*) = ws.context(user, ops, params.toMap)
 
   def create(name: String) =
-    controller.createWorkspace(user, CreateWorkspaceRequest(name, "private"))
+    controller.createWorkspace(user, CreateWorkspaceRequest(name))
   def get(name: String): GetWorkspaceResponse =
     controller.getWorkspace(user, WorkspaceReference(name))
   def set(name: String, workspace: Workspace): Unit =
