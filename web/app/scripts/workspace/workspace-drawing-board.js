@@ -456,6 +456,12 @@ angular.module('biggraph')
         scope.bezier = function(x1, y1, x2, y2) {
           return ['M', x1, y1, 'C', x1 + 100, y1, ',', x2 - 100, y2, ',', x2, y2].join(' ');
         };
+
+        // TODO: Option to toggle background?
+        scope.background = {
+          width: 4911, height: 3508,
+          image: '/images/deep-halls-production.jpg',
+        };
       }
     };
   });
