@@ -36,7 +36,14 @@ case class Workspace(
     val icon = anchor.parameters.getOrElse("icon", "/images/icons/black_medium_square.png")
     val inputs = boxes.filter(_.operationId == "Input").flatMap(b => b.parameters.get("name"))
     val outputs = boxes.filter(_.operationId == "Output").flatMap(b => b.parameters.get("name"))
-    BoxMetadata("Custom boxes", icon, "natural", name, inputs, outputs, description = Some(description))
+    BoxMetadata(
+      categoryId = "Custom boxes",
+      icon = icon,
+      color = "natural",
+      operationId = name,
+      inputs = inputs,
+      outputs = outputs,
+      description = Some(description))
   }
 
   def context(
