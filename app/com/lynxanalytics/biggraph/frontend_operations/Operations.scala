@@ -2986,15 +2986,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
-  register("Union with another project", StructureOperations, "a", "b")(new ProjectOutputOperation(_) {
+  register("Union of projects", StructureOperations, "a", "b")(new ProjectOutputOperation(_) {
     override lazy val project = projectInput("a")
     lazy val other = projectInput("b")
     params += Param("id_attr", "ID attribute name", defaultValue = "new_id")
     def enabled = project.hasVertexSet && other.hasVertexSet
-    override def summary = {
-      val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(params("other"))
-      s"Union with $title"
-    }
 
     def checkTypeCollision(other: ProjectViewer) = {
       val commonAttributeNames =
