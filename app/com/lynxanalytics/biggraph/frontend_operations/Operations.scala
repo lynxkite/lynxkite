@@ -71,15 +71,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   val MachineLearningOperations = Category("Machine learning operations", "pink ", icon = "knight")
   val UtilityOperations = Category("Utility operations", "green", icon = "wrench", sortKey = "zz")
 
-  def getAndCheckProjectCheckpoint(readableProjectCheckpoint: String) = {
-    val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(
-      readableProjectCheckpoint,
-      customError =
-        s"Obsolete project reference: $readableProjectCheckpoint. Please select a new project from the dropdown.")
-    assert(suffix == "", s"Invalid project reference $readableProjectCheckpoint with suffix $suffix")
-    (cp, title, suffix)
-  }
-
   import OperationParams._
 
   register("Discard vertices", StructureOperations, new ProjectTransformation(_) {
