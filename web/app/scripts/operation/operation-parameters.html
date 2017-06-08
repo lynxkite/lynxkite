@@ -1,12 +1,13 @@
 <!-- This has to be inside a <form class="form-horizontal">. -->
 <div class="form-group" ng-repeat="param in meta.parameters">
   <label for="{{param.id}}" class="col-sm-4 control-label"
-      ng-if="param.kind !== 'visualization'">
+      ng-if="!isVisualizationParam(param)">
     {{param.title}}
     <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
   </label>
   <div ng-class="{
-        'col-sm-8': param.kind !== 'visualization',
+        'col-sm-8': !isVisualizationParam(param),
+        'col-sm-12': isVisualizationParam(param),
         'operation-attribute-input': true,
       }"
       id="{{param.id}}">
