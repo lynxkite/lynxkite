@@ -1,13 +1,16 @@
 package com.lynxanalytics.biggraph.controllers
 
+import com.lynxanalytics.biggraph.frontend_operations.OperationsTestBase
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util
+import com.lynxanalytics.biggraph.serving
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-class SQLControllerTest extends BigGraphControllerTestBase {
+class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBase {
+  override val user = serving.User.fake
   val sqlController = new SQLController(this, ops = null)
   val resourceDir = getClass.getResource("/graph_operations/ImportGraphTest").toString
   graph_util.PrefixRepository.registerPrefix("IMPORTGRAPHTEST$", resourceDir)
@@ -19,14 +22,70 @@ class SQLControllerTest extends BigGraphControllerTestBase {
     data.map { case l: List[DynamicValue] => l.map { dv => dv.string } }
   }
 
-  // TODO: Depends on #5875.
-  /*
   test("global sql on vertices") {
-    val globalProjectframe = DirectoryEntry.fromName("Test_Dir/Test_Project").asNewProjectFrame()
-    run("Create example graph", on = "Test_Dir/Test_Project")
+    val eg = box("Create example graph")
+    eg.snapshotOutput("test_dir/people", "project")
+
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.global(directory = "Test_Dir",
-        sql = "select name from `Test_Project|vertices` where age < 40"),
+      DataFrameSpec.global(directory = "test_dir",
+        sql = "select name from `people|vertices` where age < 40"),
+      maxRows = 10)))
+
+    assert(result.header == List(SQLColumn("name", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
+  }
+
+  test("global sql on edges") {
+    val eg = box("Create example graph")
+    eg.snapshotOutput("test_dir/people", "project")
+
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(directory = "test_dir",
+        sql = "select src_name, dst_name from `people|edges` where edge_weight = 1"),
+      maxRows = 10)))
+
+    assert(result.header == List(SQLColumn("src_name", "String"), SQLColumn("dst_name", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Adam", "Eve")))
+  }
+
+  test("global sql on edge_attributes") {
+    val eg = box("Create example graph")
+    eg.snapshotOutput("test_dir/people", "project")
+
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(directory = "test_dir",
+        sql = "select comment from `people|edge_attributes` where weight = 1"),
+      maxRows = 10)))
+
+    assert(result.header == List(SQLColumn("comment", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Adam loves Eve")))
+  }
+
+  test("global sql on segmentation's belongs_to") {
+    val egSeg = box("Create example graph").box("Segment by String attribute",
+      Map("name" -> "gender_seg", "attr" -> "gender"))
+    egSeg.snapshotOutput("test_dir/people", "project")
+
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(directory = "test_dir",
+        sql = "select base_gender from `people|gender_seg|belongs_to` where segment_size = 1"),
+      maxRows = 10)))
+
+    assert(result.header == List(SQLColumn("base_gender", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Female")))
+  }
+
+  test("global sql on vertices from root directory") {
+    val eg = box("Create example graph")
+    eg.snapshotOutput("test_dir/people", "project")
+
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(directory = "",
+        sql = "select name from `test_dir/people|vertices` where age < 40"),
       maxRows = 10)))
 
     assert(result.header == List(SQLColumn("name", "String")))
@@ -35,97 +94,48 @@ class SQLControllerTest extends BigGraphControllerTestBase {
   }
 
   test("global sql on vertices with attribute name quoted with backticks") {
-    val globalProjectframe = DirectoryEntry.fromName("Test_Dir/Test_Project").asNewProjectFrame()
-    run("Create example graph", on = "Test_Dir/Test_Project")
+    val eg = box("Create example graph")
+    eg.snapshotOutput("test_dir/people", "project")
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.global(directory = "Test_Dir",
-        sql = "select `name` from `Test_Project|vertices` where age < 40"),
+      DataFrameSpec.global(directory = "test_dir",
+        sql = "select `name` from `people|vertices` where age < 40"),
       maxRows = 10)))
+
     assert(result.header == List(SQLColumn("name", "String")))
     val resultStrings = SQLResultToStrings(result.data)
     assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
-  */
 
-  // TODO: Depends on #5731.
-  /*
-  test("sql export to csv") {
-    run("Create example graph")
-    val result = await(sqlController.exportSQLQueryToCSV(user, SQLExportToCSVRequest(
-      DataFrameSpec.local(
-        project = projectName,
-        sql = "select name, age from vertices where age < 40"),
-      path = "<download>",
-      delimiter = ";",
-      quote = "\"",
-      header = true)))
-    val output = graph_util.HadoopFile(result.download.get.path).loadTextFile(sparkContext)
-    val header = "name;age"
-    assert(output.collect.filter(_ != header).sorted.mkString(", ") ==
-      "Adam;20.3, Eve;18.2, Isolated Joe;2.0")
+  test("global sql with upper case snapshot name") {
+    val eg = box("Create example graph")
+    eg.snapshotOutput("test_dir/PEOPLE", "project")
+
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(directory = "test_dir",
+        sql = "select name from `PEOPLE|vertices` where age < 40"),
+      maxRows = 10)))
+
+    assert(result.header == List(SQLColumn("name", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
-  test("sql export to database") {
-    val url = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
-    run("Create example graph")
-    val connection = graph_util.JDBCUtil.getConnection(url)
-    val result = await(sqlController.exportSQLQueryToJdbc(user, SQLExportToJdbcRequest(
-      DataFrameSpec.local(
-        project = projectName,
-        sql = "select name, age from vertices where age < 40 order by name"),
-      jdbcUrl = url,
-      table = "export_test",
-      mode = "error")))
-    val statement = connection.createStatement()
-    val results = {
-      val rs = statement.executeQuery("select * from export_test;")
-      new Iterator[String] {
-        def hasNext = rs.next
-        def next = s"${rs.getString(1)};${rs.getDouble(2)}"
-      }.toIndexedSeq
-    }
-    connection.close()
-    assert(results.sorted == Seq("Adam;20.3", "Eve;18.2", "Isolated Joe;2.0"))
+  // This should work, whether we choose to implement case sensitive or case insensitive
+  // SQL in the future.
+  test("global sql with upper case attribute name") {
+    val eg = box("Create example graph").box("Rename vertex attribute",
+      Map("before" -> "name", "after" -> "NAME"))
+    eg.snapshotOutput("test_dir/people", "project")
+
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(directory = "test_dir",
+        sql = "select NAME from `people|vertices` where age < 40"),
+      maxRows = 10)))
+
+    assert(result.header == List(SQLColumn("NAME", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
-
-  test("sql export to parquet + import back (including tuple columns)") {
-    val exportPath = "IMPORTGRAPHTEST$/example.parquet"
-    graph_util.HadoopFile(exportPath).deleteIfExists
-
-    run("Create example graph")
-    val result = await(
-      sqlController.exportSQLQueryToParquet(
-        user,
-        SQLExportToParquetRequest(
-          DataFrameSpec.local(
-            project = projectName,
-            sql = "select name, age, location from vertices"),
-          path = exportPath)))
-    val response = sqlController.importParquet(
-      user,
-      ParquetImportRequest(
-        table = "csv-import-test",
-        privacy = "public-read",
-        files = exportPath + "/part*",
-        overwrite = false,
-        columnsToImport = List("name", "location"),
-        limit = None))
-    val tablePath = response.id
-    run(
-      "Import vertices",
-      Map(
-        "table" -> tablePath,
-        "id_attr" -> "new_id"))
-
-    assert(vattr[String]("name") == Seq("Adam", "Bob", "Eve", "Isolated Joe"))
-    assert(vattr[(Double, Double)]("location") == Seq(
-      (-33.8674869, 151.2069902),
-      (1.352083, 103.819836),
-      (40.71448, -74.00598),
-      (47.5269674, 19.0323968)))
-    graph_util.HadoopFile(exportPath).delete
-  }
-  */
 
   // TODO: Depends on https://app.asana.com/0/194476945034319/354006072569797.
   /*
