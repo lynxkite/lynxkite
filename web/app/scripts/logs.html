@@ -2,6 +2,7 @@
 
   <h1>LynxKite Logs</h1>
   <div class="log-files-table">
+    <display-error caption="Failed to log files." request="logFiles"></display-error>
     <table class="table table-striped">
       <tr><th>File name</th><th>File size</th><th>Last modification date</th></tr>
       <tr ng-repeat="logFile in logFiles.files">

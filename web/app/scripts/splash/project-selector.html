@@ -84,11 +84,7 @@
     Loading...
   </progressbar>
 
-  <div class="alert alert-danger" ng-if="data.$error">
-    Could not load directory listing.
-    <i class="pull-right"><a href ng-click="reportListError()">report problem</a></i>
-    <p class="alert-details">{{ data.$error }}</p>
-  </div>
+  <display-error caption="Could not load directory listing." request="data"></display-error>
 
   <div ng-repeat="directory in data.directories"
     id="directory-{{ pathInside(directory) | id }}"
@@ -132,10 +128,7 @@
       </a>
     </span>
 
-    <div ng-if="object.error">
-      {{object.error}}
-      <i class="pull-right"><a ng-click="reportProjectError(object)">report problem</a></i>
-    </div>
+    <display-error caption="Error loading entry." error="object.error"></display-error>
     <div ng-if="!object.error">
       <span ng-if="isWorkspace(object)">
 <!--
