@@ -15,7 +15,7 @@ angular.module('biggraph').directive('projectSelector',
         function defaultSettings() {
           return { privacy: 'private' };
         }
-        scope.newWorkspace = defaultSettings();
+        scope.newWorkspace = {};
         scope.newDirectory = defaultSettings();
         scope.path = scope.path || window.sessionStorage.getItem('last_selector_path') ||
           window.localStorage.getItem('last_selector_path') || '';
@@ -113,7 +113,6 @@ angular.module('biggraph').directive('projectSelector',
           util.post('/ajax/createWorkspace',
             {
               name: name,
-              privacy: scope.newWorkspace.privacy,
             }).then(function() {
               scope.name = name;
             }).finally(function() {
