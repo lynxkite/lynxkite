@@ -35,8 +35,6 @@
 #help-button {
   cursor: pointer;
   user-select: none;
-}
-help-popup {
   padding: 6px; /* Button-like padding. */
   font-size: 14px;
 }
