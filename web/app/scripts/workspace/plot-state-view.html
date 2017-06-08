@@ -1,6 +1,6 @@
 <div class="col-sm-12">
   <div ng-if="plotJSON.value.$resolved && !plotJSON.value.$error">
-    <h3>Plot: {{title}}</h3>
+    <h3 ng-show="title">{{title}}</h3>
     <!-- This is the placeholder DIV for a hidden plot to compute correct sizes -->
     <div ng-show="false" id="hidden-plot-div"> </div>
     <!-- This is the placeholder DIV for the plot -->
