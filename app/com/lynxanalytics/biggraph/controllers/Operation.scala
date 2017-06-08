@@ -240,47 +240,46 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   }
 }
 
-// A base class with some conveniences for working with projects and tables.
-trait BasicOperation extends Operation {
+// Defines simple defaults for everything.
+abstract class SimpleOperation(protected val context: Operation.Context) extends Operation {
+  protected val params = new ParameterHolder(context)
+  protected val id = context.meta.operationId
+  val title = id
+  def summary = title
+  def toFE: FEOperationMeta = FEOperationMeta(
+    id,
+    Operation.htmlId(id),
+    params.toFE,
+    List(),
+    context.meta.categoryId,
+    FEStatus.enabled)
+  def getOutputs(): Map[BoxOutput, BoxOutputState] = ???
+}
+
+// Adds a lot of conveniences for working with projects and tables.
+abstract class SmartOperation(context: Operation.Context) extends SimpleOperation(context) {
   implicit val manager = context.manager
   protected val user = context.user
   protected def enabled: FEStatus
-  protected val id = context.meta.operationId
-  protected val title = id
-  // Parameters without default values:
-  protected lazy val parametricValues = context.box.parametricParameters.map {
-    case (name, value) =>
-      val result = com.lynxanalytics.sandbox.ScalaScript.run(
-        "s\"\"\"" + value + "\"\"\"",
-        context.workspaceParameters)
-      name -> result
-  }
-  protected lazy val paramValues = context.box.parameters ++ parametricValues
-  // Parameters with default values:
-  protected def params =
-    parameters
-      .map {
-        paramMeta => (paramMeta.id, paramMeta.defaultValue)
-      }
-      .toMap ++ paramValues
-  protected def parameters: List[OperationParameterMeta]
   protected def visibleScalars: List[FEScalar] = List()
-  def summary = title
-
   protected def apply(): Unit
+  protected def safeEnabled: FEStatus =
+    util.Try(enabled).recover { case exc => FEStatus.disabled(exc.getMessage) }.get
   protected def help = // Add to notes for help link.
     "<help-popup href=\"" + Operation.htmlId(id) + "\"></help-popup>"
 
-  protected def validateParameters(values: Map[String, String]): Unit = {
-    val paramIds = allParameters.map { param => param.id }.toSet
-    val extraIds = values.keySet &~ paramIds
-    assert(extraIds.size == 0,
-      s"""Extra parameters found: ${extraIds.mkString(", ")} is not in ${paramIds.mkString(", ")}""")
-    for (param <- allParameters) {
-      if (values.contains(param.id)) {
-        param.validate(values(param.id))
-      }
+  override protected val params = {
+    val params = new ParameterHolder(context)
+    // "apply_to_*" is used to pick the base project or segmentation to apply the operation to.
+    // An "apply_to_*" parameter is added for each project input.
+    val projects = context.meta.inputs.filter(i => context.inputs(i).kind == BoxOutputKind.Project)
+    for (input <- projects) {
+      val param = "apply_to_" + input
+      params += OperationParams.SegmentationParam(
+        param, s"Apply to ($input)",
+        context.inputs(input).project.segmentationsRecursively)
     }
+    params
   }
 
   // Updates the vertex_count_delta/edge_count_delta scalars after an operation finished.
@@ -302,18 +301,15 @@ trait BasicOperation extends Operation {
     editor.scalars.set(s"${name}_delta", delta)
   }
 
-  def toFE: FEOperationMeta = FEOperationMeta(
-    id,
-    Operation.htmlId(id),
-    allParameters.map { param => param.toFE },
-    visibleScalars,
-    context.meta.categoryId,
-    enabled,
+  override def toFE: FEOperationMeta = super.toFE.copy(
+    visibleScalars = visibleScalars,
+    status = safeEnabled,
     description = context.meta.description)
 
   protected def projectInput(input: String): ProjectEditor = {
-    val segPath = SubProject.splitPipedPath(paramValues.getOrElse("apply_to_" + input, ""))
-    assert(segPath.head == "", s"'apply_to_$input' path must start with separator: $paramValues")
+    val param = params("apply_to_" + input)
+    val segPath = SubProject.splitPipedPath(param)
+    assert(segPath.head == "", s"'apply_to_$input' path must start with separator: $param")
     context.inputs(input).project.offspringEditor(segPath.tail)
   }
 
@@ -354,23 +350,6 @@ trait BasicOperation extends Operation {
     table.schema.fieldNames.toList.map(n => FEOption(n, n))
   }
 
-  protected def reservedParameter(reserved: String): Unit = {
-    assert(
-      parameters.find(_.id == reserved).isEmpty, s"$id: '$reserved' is a reserved parameter name.")
-  }
-
-  protected def allParameters: List[OperationParameterMeta] = {
-    // "apply_to_*" is used to pick the base project or segmentation to apply the operation to.
-    // An "apply_to_*" parameter is added for each project input.
-    context.inputs.filter(_._2.kind == BoxOutputKind.Project).keys.toList.sorted.map { input =>
-      val param = "apply_to_" + input
-      reservedParameter(param)
-      OperationParams.SegmentationParam(
-        param, s"Apply to ($input)",
-        context.inputs(input).project.segmentationsRecursively)
-    } ++ parameters
-  }
-
   protected def splitParam(param: String): Seq[String] = {
     val p = params(param)
     if (p.isEmpty) Seq()
@@ -379,8 +358,7 @@ trait BasicOperation extends Operation {
 }
 
 // A ProjectOutputOperation is an operation that has 1 project-typed output.
-abstract class ProjectOutputOperation(
-    protected val context: Operation.Context) extends BasicOperation {
+abstract class ProjectOutputOperation(context: Operation.Context) extends SmartOperation(context) {
   assert(
     context.meta.outputs == List("project"),
     s"A ProjectOperation must output a project. $context")
@@ -391,7 +369,7 @@ abstract class ProjectOutputOperation(
   }
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
-    validateParameters(params)
+    params.validate()
     assert(enabled.enabled, enabled.disabledReason)
     apply()
     makeOutput(project)
@@ -406,7 +384,7 @@ abstract class ProjectTransformation(
     s"A ProjectTransformation must input a single project. $context")
   override lazy val project = projectInput("project")
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
-    validateParameters(params)
+    params.validate()
     val before = project.rootEditor.viewer
     assert(enabled.enabled, enabled.disabledReason)
     apply()
@@ -415,27 +393,9 @@ abstract class ProjectTransformation(
   }
 }
 
-// A MinimalOperation defines simple defaults for everything.
-abstract class MinimalOperation(
-    protected val context: Operation.Context) extends Operation {
-  protected def parameters: List[OperationParameterMeta] = List()
-  protected val id = context.meta.operationId
-  val title = id
-  def summary = title
-  def toFE: FEOperationMeta = FEOperationMeta(
-    id,
-    Operation.htmlId(id),
-    parameters.map { param => param.toFE },
-    List(),
-    context.meta.categoryId,
-    enabled)
-  def getOutputs() = ???
-  def enabled = FEStatus.enabled
-}
-
 // A DecoratorOperation is an operation that has no input or output and is outside of the
 // Metagraph.
-abstract class DecoratorOperation(context: Operation.Context) extends MinimalOperation(context) {
+abstract class DecoratorOperation(context: Operation.Context) extends SimpleOperation(context) {
   assert(
     context.meta.inputs == List(),
     s"A DecoratorOperation must not have an input. $context")
@@ -444,8 +404,7 @@ abstract class DecoratorOperation(context: Operation.Context) extends MinimalOpe
     s"A DecoratorOperation must not have an output. $context")
 }
 
-abstract class TableOutputOperation(
-    protected val context: Operation.Context) extends BasicOperation {
+abstract class TableOutputOperation(context: Operation.Context) extends SmartOperation(context) {
   assert(
     context.meta.outputs == List("table"),
     s"A TableOutputOperation must output a table. $context")
@@ -462,7 +421,7 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
   protected def tableFromParam(name: String): Table = manager.table(params(name).asUUID)
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
-    validateParameters(params)
+    params.validate()
     assert(params("imported_table").nonEmpty, "You have to import the data first.")
     makeOutput(tableFromParam("imported_table"))
   }
@@ -490,7 +449,7 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
 }
 
 // An ExportOperation takes a Table as input and returns an ExportResult as output.
-abstract class ExportOperation(protected val context: Operation.Context) extends BasicOperation {
+abstract class ExportOperation(context: Operation.Context) extends SmartOperation(context) {
   assert(
     context.meta.inputs == List("table"),
     s"An ExportOperation must input a single table. $context")
@@ -505,7 +464,7 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
   def exportResult: Scalar[String]
   val format: String
 
-  def getParamsToDisplay() = params + ("format" -> format)
+  def getParamsToDisplay() = params.toMap + ("format" -> format)
 
   protected def makeOutput(exportResult: Scalar[String]): Map[BoxOutput, BoxOutputState] = {
     val paramsToDisplay = getParamsToDisplay()
@@ -513,8 +472,8 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
       context.meta.outputs(0)) -> BoxOutputState.from(exportResult, paramsToDisplay))
   }
 
-  def getOutputs(): Map[BoxOutput, BoxOutputState] = {
-    validateParameters(params)
+  override def getOutputs() = {
+    params.validate()
     makeOutput(exportResult)
   }
 
@@ -524,15 +483,15 @@ abstract class ExportOperation(protected val context: Operation.Context) extends
 abstract class ExportOperationToFile(context: Operation.Context)
     extends ExportOperation(context) {
 
-  override def validateParameters(params: Map[String, String]): Unit = {
-    super.validateParameters(params)
+  override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     assertWriteAllowed(params("path"))
+    super.getOutputs()
   }
 
   protected def generatePathIfNeeded(path: String): String = {
     if (path == "<auto>") {
       val inputGuid = table.gUID.toString
-      val paramsWithInput = params ++ Map("input" -> inputGuid)
+      val paramsWithInput = params.toMap ++ Map("input" -> inputGuid)
       "DATA$/exports/" + paramsWithInput.hashCode.toString + "." + format
     } else
       path
@@ -544,13 +503,14 @@ abstract class ExportOperationToFile(context: Operation.Context)
     file.assertWriteAllowedFrom(context.user)
   }
 
-  override def getParamsToDisplay() = params +
+  override def getParamsToDisplay() = params.toMap +
     ("format" -> format, "path" -> generatePathIfNeeded(params("path")))
 }
 
 class CustomBoxOperation(
-    workspace: Workspace, val context: Operation.Context) extends BasicOperation {
-  lazy val parameters = {
+    workspace: Workspace, override val context: Operation.Context) extends SmartOperation(context) {
+  override val params = new ParameterHolder(context) // No automatically generated parameters.
+  params ++= {
     val custom = workspace.parametersMeta
     val tables = context.inputs.values.collect { case i if i.isTable => i.table }
     val projects = context.inputs.values.collect { case i if i.isProject => i.project }
@@ -568,14 +528,13 @@ class CustomBoxOperation(
         case "scalar" => Choice(id, id, projects.flatMap(_.scalarList).toList)
         case "column" => Choice(id, id, tables.flatMap(_.columnList).toList)
       }
-    }.toList
+    }
   }
 
-  override def params = super.params // Make public.
+  def getParams = params.toMap
 
   def apply: Unit = ???
   def enabled = FEStatus.enabled
-  override def allParameters = parameters
 
   // Returns a version of the internal workspace in which the input boxes are patched to output the
   // inputs connected to the custom box.
@@ -595,9 +554,9 @@ class CustomBoxOperation(
     })
   }
 
-  def getOutputs = {
+  override def getOutputs = {
     val ws = connectedWorkspace
-    val states = ws.context(context.user, context.ops, params).allStates
+    val states = ws.context(context.user, context.ops, params.toMap).allStates
     val byOutput = ws.boxes.flatMap { box =>
       if (box.operationId == "Output" && box.parameters.contains("name"))
         Some(box.parameters("name") -> states(box.inputs("output")))

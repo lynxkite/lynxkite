@@ -76,7 +76,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         val ctx = ws.context(user, ops, params)
         val op = ctx.getOperation(boxId).asInstanceOf[CustomBoxOperation]
         val cws = op.connectedWorkspace
-        (cws, op.params, op.context.box.operationId)
+        (cws, op.getParams, op.context.box.operationId)
     }
     lazy val frame = getWorkspaceFrame(user, name)
     lazy val context = ws.context(user, ops, params)
