@@ -187,7 +187,7 @@ trait OperationRegistry {
     assert(!operations.contains(id), s"$id is already registered.")
     operations(id) = BoxMetadata(
       category.title,
-      s"/icons/$icon.png",
+      s"/images/icons/$icon.png",
       category.color,
       id,
       inputs,
