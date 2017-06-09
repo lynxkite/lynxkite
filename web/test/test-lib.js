@@ -211,7 +211,7 @@ Workspace.prototype = {
   },
 
   expectNumSelectedBoxes: function(n) {
-    return expect($$('g.selected.selected rect').count()).toEqual(n);
+    return expect($$('g.box.selected').count()).toEqual(n);
   },
 
   deleteBoxes: function(boxIds) {
@@ -269,7 +269,7 @@ Workspace.prototype = {
   },
 
   clickBox: function(boxId) {
-    this.getBox(boxId).$('rect').click();
+    this.getBox(boxId).$('#click-target').click();
   },
 
   selectBox: function(boxId) {
@@ -311,8 +311,8 @@ Workspace.prototype = {
   },
 
   expectConnected: function(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
-    var line = this.board.$(`line#${srcBoxId}-${srcPlugId}-${dstBoxId}-${dstPlugId}`);
-    expect(line.isPresent()).toBe(true);
+    var arrow = this.board.$(`path#${srcBoxId}-${srcPlugId}-${dstBoxId}-${dstPlugId}`);
+    expect(arrow.isPresent()).toBe(true);
   },
 
   connectBoxes: function(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {

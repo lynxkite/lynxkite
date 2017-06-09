@@ -283,7 +283,12 @@ angular.module('biggraph')
         };
 
         scope.boxes = function() {
-          return scope.workspace ? scope.workspace.boxes : [];
+          if (!scope.workspace) {
+            return undefined;
+          }
+          var boxes = scope.workspace.boxes.slice();
+          boxes.sort(function(a, b) { return a.instance.y < b.instance.y ? -1 : 1; });
+          return boxes;
         };
 
         scope.arrows = function() {
@@ -434,6 +439,23 @@ angular.module('biggraph')
         scope.$on('$destroy', function() {
           scope.workspace.stopProgressUpdate();
         });
+
+        // TODO: We could generate these with tinycolor from the color names.
+        scope.filters = {
+          black: '0.2 0.2 0.2 0 0   0.2 0.2 0.2 0 0   0.2 0.2 0.2 0 0   0 0 0 1 0',
+          blue: '0 0 0 0 0   0.4 0.4 0.4 0 0   0.6 0.6 0.6 0 0   0 0 0 1 0',
+          green: '0.2 0.2 0.2 0 0   0.4 0.4 0.4 0 0   0 0 0 0 0   0 0 0 1 0',
+          lightblue: '0.2 0.2 0.2 0 0   0.6 0.6 0.6 0 0   0.8 0.8 0.8 0 0   0 0 0 1 0',
+          magenta: '0.5 0.5 0.5 0 0   0 0 0 0 0   0.5 0.5 0.5 0 0   0 0 0 1 0',
+          natural: '1 0 0 0 0   0 1 0 0 0   0 0 1 0 0   0 0 0 1 0',
+          pink: '0.8 0.8 0.8 0 0   0.4 0.4 0.4 0 0   0.4 0.4 0.4 0 0   0 0 0 1 0',
+          red: '0.6 0.6 0.6 0 0   0 0 0 0 0   0 0 0 0 0   0 0 0 1 0',
+          yellow: '0.6 0.6 0.6 0 0   0.4 0.4 0.4 0 0   0 0 0 0 0   0 0 0 1 0',
+        };
+
+        scope.bezier = function(x1, y1, x2, y2) {
+          return ['M', x1, y1, 'C', x1 + 100, y1, ',', x2 - 100, y2, ',', x2, y2].join(' ');
+        };
       }
     };
   });

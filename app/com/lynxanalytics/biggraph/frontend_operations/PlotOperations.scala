@@ -18,7 +18,9 @@ class PlotOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   val PlotOperations = Category("Plot operations", "lightblue", icon = "bar-chart")
 
   def register(id: String, factory: Context => Operation): Unit = {
-    registerOp(id, PlotOperations, List("table"), List("plot"), factory)
+    registerOp(
+      id, "apl_functional_symbol_quad_up_caret",
+      PlotOperations, List("table"), List("plot"), factory)
   }
 
   // A PlotOperation takes a Table as input and returns a Plot as output.
