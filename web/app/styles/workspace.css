@@ -165,6 +165,10 @@ div.popup-head {
   cursor: default;
 }
 
+.popup-type-plug div.popup-head {
+  background: bisque;
+}
+
 div.popup-content {
   resize: both;
   overflow: auto;
