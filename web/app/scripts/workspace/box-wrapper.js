@@ -24,6 +24,7 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
   function BoxWrapper(metadata, instance) {
     this.metadata = metadata;
     this.instance = instance;
+    this.summary = metadata.operationId;
     this.inputs = [];
     this.outputs = [];
     this.outputMap = {};

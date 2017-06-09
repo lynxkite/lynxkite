@@ -46,7 +46,8 @@ angular.module('biggraph')
           if (!instrument) {
             return;
           }
-          // TODO: Do this without temporary workspace.
+          // We add the instrument box to a copy of the current workspace saved in the "tmp"
+          // directory. TODO: Do this without temporary workspace.
           var ws = scope.workspace;
           var tmpBox = instrument + ' ' + Date();
           var tmpWS = 'tmp/' + ws.name + '/' + tmpBox;

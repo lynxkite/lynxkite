@@ -169,9 +169,13 @@ Workspace.prototype = {
     var after = boxData.after;
     var inputs = boxData.inputs;
     var params = boxData.params;
-    var op = this.openOperation(boxData.name);
-    testLib.simulateDragAndDrop(op, this.board, boxData.x, boxData.y, {id: id});
-    this.closeOperationSelector();
+    browser.waitForAngular();
+    browser.executeScript(`
+        $(document.querySelector('#workspace-drawing-board')).scope().workspace.addBox(
+          '${ boxData.name }',
+          { logicalX: ${ boxData.x }, logicalY: ${ boxData.y } },
+          { boxId: '${ boxData.id }' });
+        `);
     if (after) {
       this.connectBoxes(after, 'project', id, 'project');
     }
@@ -280,28 +284,13 @@ Workspace.prototype = {
     this.clickBox(boxId);
     var popup = this.board.$('.popup#' + boxId);
     expect(popup.isDisplayed()).toBe(true);
-    this.movePopupToCenter(popup);
     return new BoxEditor(popup);
-  },
-
-  movePopupToCenter: function(popup) {
-    var head = popup.$('div.popup-head');
-    browser.actions()
-        .mouseDown(head)
-        // Absolute positioning of mouse. If we don't specify the first
-        // argument then this becomes a relative move. If the first argument
-        // is this.board, then protractor scrolls the element of this.board
-        // to the top of the page, even though scrolling is not enabled.
-        .mouseMove($('body'), {x: 800, y: 90})
-        .mouseUp(head)
-        .perform();
   },
 
   openStateView: function(boxId, plugId) {
     var popup = this.board.$('.popup#' + boxId + '_' + plugId);
     testLib.expectNotElement(popup); // If it is already open, use getStateView() instead.
     this.toggleStateView(boxId, plugId);
-    this.movePopupToCenter(popup);
     return new State(popup);
   },
 
@@ -384,10 +373,13 @@ State.prototype = {
 };
 
 function PlotState(popup) {
+  this.popup = popup;
   this.canvas = popup.$('#plot-div .vega svg');
 }
 
 PlotState.prototype = {
+  close: State.prototype.close,
+
   barHeights: function() {
     return this.canvas.$$('g.mark-rect.marks rect').map(e => e.getAttribute('height'));
   },
@@ -399,11 +391,14 @@ PlotState.prototype = {
 
 
 function TableState(popup) {
+  this.popup = popup;
   this.sample = popup.$('#table-sample');
   this.control = popup.$('#table-control');
 }
 
 TableState.prototype = {
+  close: State.prototype.close,
+
   expect: function(names, types, rows) {
     this.expectColumnNamesAre(names);
     this.expectColumnTypesAre(types);
@@ -1382,56 +1377,6 @@ testLib = {
     expect($('.sweet-alert h2').getText()).toBe(expectedMessage);
     $('.sweet-alert button.confirm').click();
     testLib.wait(EC.stalenessOf($('.sweet-alert.showSweetAlert')));
-  },
-
-  // Because of https://github.com/angular/protractor/issues/3289, we cannot use protractor
-  // to generate and send drag-and-drop events to the page. This function can be used to
-  // achieve that.
-  simulateDragAndDrop: function(srcSelector, dstSelector, dstX, dstY, dataTransferOverrides) {
-
-    function simulateDragAndDropInBrowser(src, dst, dstX, dstY, dataTransferOverrides) {
-      function createEvent(type) {
-        var event = new CustomEvent('CustomEvent');
-        event.initCustomEvent(type, true, true, null);
-        event.dataTransfer = {
-          data: {},
-          setData: function(type, value) {
-            this.data[type] = value;
-          },
-          getData: function(type) {
-            return this.data[type];
-          }
-        };
-        return event;
-      }
-
-      var dragStartEvent = createEvent('dragstart');
-      src.dispatchEvent(dragStartEvent);
-      for (var key in dataTransferOverrides) {
-        if (dataTransferOverrides.hasOwnProperty(key)) {
-          dragStartEvent.dataTransfer.setData(key, dataTransferOverrides[key]);
-        }
-      }
-
-      var dropEvent = createEvent('drop');
-      dropEvent.pageX = dstX;
-      dropEvent.pageY = dstY;
-
-      dropEvent.dataTransfer = dragStartEvent.dataTransfer;
-      dst.dispatchEvent(dropEvent);
-
-      var dragEndEvent = createEvent('dragend');
-      dragEndEvent.dataTransfer = dragStartEvent.dataTransfer;
-      src.dispatchEvent(dragEndEvent);
-    }
-
-    browser.executeScript(
-      simulateDragAndDropInBrowser,
-      srcSelector.getWebElement(),
-      dstSelector.getWebElement(),
-      dstX, dstY,
-      dataTransferOverrides
-    );
   },
 
   waitUntilClickable: function(element) {
