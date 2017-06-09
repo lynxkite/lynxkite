@@ -313,7 +313,7 @@ include::import-vertices.asciidoc[]
 
 include::input.asciidoc[]
 
-include::join.asciidoc[]
+include::join-projects.asciidoc[]
 
 include::link-project-and-segmentation-by-fingerprint.asciidoc[]
 
