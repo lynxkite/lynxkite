@@ -69,6 +69,9 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     lazy val table: Table =
       ctx.allStates(realBox.output("table")).table
 
+    def output(name: String): BoxOutputState =
+      ctx.allStates(realBox.output(name))
+
     def snapshotOutput(name: String, output: String): SnapshotFrame = {
       val state = ctx.allStates(realBox.output(output))
       new DirectoryEntry(SymbolPath.parse(name)).asNewSnapshotFrame(state)
