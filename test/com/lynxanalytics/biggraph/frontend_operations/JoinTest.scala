@@ -9,7 +9,7 @@ class JoinTest extends OperationsTestBase {
       .box("Add constant vertex attribute",
         Map("name" -> "seven", "value" -> "7", "type" -> "Double"))
     val left = root
-    val project = box("Join", Map("va" -> "seven", "edges" -> "false"), Seq(left, right)).project
+    val project = box("Join", Map("attr" -> "seven"), Seq(left, right)).project
 
     val values = project.vertexAttributes("seven").rdd.collect.toMap.values.toSeq
 
