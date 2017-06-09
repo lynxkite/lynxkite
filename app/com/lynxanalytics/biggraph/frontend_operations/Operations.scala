@@ -2975,7 +2975,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
-  register("Join", StructureOperations, "left", "right")(
+  register("Join projects", StructureOperations, "left", "right")(
     new ProjectOutputOperation(_) {
 
       trait AttributeEditor {
