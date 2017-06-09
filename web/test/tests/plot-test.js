@@ -36,10 +36,10 @@ module.exports = function(fw) {
         name: 'Create plot',
         x: 200, y: 200 });
       lib.workspace.connectBoxes('ib0', 'table', 'plot1', 'table');
-      var plot_code = fs.readFileSync(__dirname + '/data/plot_code.scala', 'utf8');
+      var plotCode = fs.readFileSync(__dirname + '/data/plot_code.scala', 'utf8');
       var boxEditor = lib.workspace.openBoxEditor('plot1');
       boxEditor.populateOperation({
-        'plot_code': plot_code,
+        'plot_code': plotCode,
       });
       boxEditor.close();
       var plotState = lib.workspace.openStateView('plot1', 'plot');
