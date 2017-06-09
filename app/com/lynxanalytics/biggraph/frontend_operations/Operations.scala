@@ -2975,7 +2975,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
-  register("Join projects", StructureOperations, "left", "right")(
+  register("Join projects", StructureOperations, "a", "b")(
     new ProjectOutputOperation(_) {
 
       trait AttributeEditor {
@@ -3062,8 +3062,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
       override protected val params = {
         val p = new ParameterHolder(context)
-        p += attributeEditorParameter("apply_to_", "left", "Apply to (left)")
-        p += attributeEditorParameter("apply_to_", "right", "Take from (right)")
+        p += attributeEditorParameter("apply_to_", "a", "Apply to (a)")
+        p += attributeEditorParameter("apply_to_", "b", "Take from (b)")
         p
       }
 
@@ -3076,8 +3076,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
       private def compatible = compatibleIdSets(left.idSet, right.idSet)
 
-      private val left = attributeEditor("left")
-      private val right = attributeEditor("right")
+      private val left = attributeEditor("a")
+      private val right = attributeEditor("b")
 
       private def attributesAreAvailable = right.names.nonEmpty
       private def segmentationsAreAvailable = {
@@ -3086,10 +3086,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
 
       if (compatible && attributesAreAvailable) {
-        params += TagList("attr", "Attributes", toFEList(right.names))
+        params += TagList("attrs", "Attributes", toFEList(right.names))
       }
       if (compatible && segmentationsAreAvailable) {
-        params += TagList("sg", "Segmentations", toFEList(right.projectEditor.segmentationNames))
+        params += TagList("segs", "Segmentations", toFEList(right.projectEditor.segmentationNames))
       }
 
       def enabled = FEStatus(compatible, "Left and right are not compatible") &&
@@ -3097,14 +3097,14 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
       def apply() {
         if (attributesAreAvailable) {
-          for (attrName <- splitParam("attr")) {
+          for (attrName <- splitParam("attrs")) {
             val attr = right.attributes(attrName)
             val note = right.getElementNote(attrName)
             left.newAttribute(attrName, attr, note)
           }
         }
         if (segmentationsAreAvailable) {
-          for (segmName <- splitParam("sg")) {
+          for (segmName <- splitParam("segs")) {
             val leftEditor = left.projectEditor
             val rightEditor = right.projectEditor
             if (leftEditor.segmentationNames.contains(segmName)) {
