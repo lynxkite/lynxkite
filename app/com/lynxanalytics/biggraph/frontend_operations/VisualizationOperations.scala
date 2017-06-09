@@ -13,10 +13,12 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
   import Operation.Context
   import OperationParams._
 
-  val VisualizationOperations = Category("Visuzalization operations", "lightblue", icon = "eye")
+  val VisualizationOperations = Category("Visualization operations", "lightblue", icon = "eye")
 
   def register(id: String, factory: Context => Operation): Unit = {
-    registerOp(id, VisualizationOperations, List("project"), List("visualization"), factory)
+    registerOp(
+      id, "black_question_mark_ornament",
+      VisualizationOperations, List("project"), List("visualization"), factory)
   }
 
   // A VisualizationOperation takes a Project as input and returns a Visualization as output.
