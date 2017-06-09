@@ -33,7 +33,7 @@ angular.module('biggraph')
       };
     }
 
-    function Side(sides, direction, stateId, enableVisualizationUi) {
+    function Side(sides, direction, stateId, enableVisualizationUI) {
       // The list of all sides.
       this.sides = sides;
       // Left or right?
@@ -46,7 +46,7 @@ angular.module('biggraph')
       // The /ajax/getProjectOutput Ajax response.
       this.project = undefined;
       this.stateId = stateId;
-      this.enableVisualizationUi = enableVisualizationUi;
+      this.enableVisualizationUI = enableVisualizationUI;
     }
 
     Side.prototype.sections = ['scalar', 'vertex-attribute', 'edge-attribute', 'segmentation'];
