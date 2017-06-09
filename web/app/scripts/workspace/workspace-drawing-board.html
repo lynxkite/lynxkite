@@ -127,6 +127,7 @@
     ng-mousedown="onMouseDown($event)">
   <svg>
     <defs>
+      <!-- The filters to apply colors to the grayscale icons. -->
       <filter ng-repeat="(id, matrix) in filters" id="{{ id }}">
         <feColorMatrix in="SourceGraphic" type="matrix" ng-attr-values="{{ matrix }}"></feColorMatrix>
       </filter>
@@ -179,6 +180,7 @@
           ng-class="{ 'selected': selectedBoxIds.includes(box.instance.id) }">
         <circle id="click-target" cx="50" cy="60" r="50"></circle>
 
+        <!-- Icon. The filter applies color according to the metadata. -->
         <image
           class="box-main"
           filter="{{ filters[box.metadata.color] ? 'url(#' + box.metadata.color + ')' : '' }}"
