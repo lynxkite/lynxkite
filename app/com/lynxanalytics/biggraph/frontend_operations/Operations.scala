@@ -3023,21 +3023,16 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
       private val edgeMarker = "!edges"
       private def withEdgeMarker(s: String) = s + edgeMarker
-      private def withoutEdgeMarker(s: String) = {
-        if (s.endsWith(edgeMarker)) s.dropRight(edgeMarker.length)
-        else s
-      }
+      private def withoutEdgeMarker(s: String) = s.stripSuffix(edgeMarker)
 
       // We're using the same project editor for both
       // |segmentation and |segmentation!edges
       protected def attributeEditor(input: String): AttributeEditor = {
         val fullInputDesc = params("apply_to_" + input)
+        val edgeEditor = fullInputDesc.endsWith(edgeMarker)
+        val editorPath = SubProject.splitPipedPath(withoutEdgeMarker(fullInputDesc))
 
-        val attributeEditorPath = SubProject.splitPipedPath(fullInputDesc)
-        val edgeEditor = attributeEditorPath.last.endsWith(edgeMarker)
-        val segmentationEditorPath = attributeEditorPath.map(withoutEdgeMarker(_))
-
-        val editor = context.inputs(input).project.offspringEditor(segmentationEditorPath.tail)
+        val editor = context.inputs(input).project.offspringEditor(editorPath.tail)
         if (edgeEditor) new EdgeAttributeEditor(editor)
         else new VertexAttributeEditor(editor)
       }
@@ -3082,14 +3077,13 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
 
       if (compatible && attributesAreAvailable) {
-        params += TagList("attrs", "Attributes", toFEList(right.names))
+        params += TagList("attrs", "Attributes", FEOption.list(right.names.toList))
       }
       if (compatible && segmentationsAreAvailable) {
-        params += TagList("segs", "Segmentations", toFEList(right.projectEditor.segmentationNames))
+        params += TagList("segs", "Segmentations", FEOption.list(right.projectEditor.segmentationNames.toList))
       }
 
-      def enabled = FEStatus(compatible, "Left and right are not compatible") &&
-        FEStatus(attributesAreAvailable || segmentationsAreAvailable, "Nothing to join")
+      def enabled = FEStatus(compatible, "Left and right are not compatible")
 
       def apply() {
         if (attributesAreAvailable) {
