@@ -91,6 +91,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
           y2: function() { return dstPlug.cy(); },
         };
       } else {
+        // TODO: Add some kind of visual indicator to direct the user's attention to the erroneous plugs.
         return undefined;
       }
     },
