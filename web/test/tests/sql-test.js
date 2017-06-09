@@ -12,7 +12,7 @@ module.exports = function(fw) {
       lib.workspace.addBox({
         id: 'sql', name: 'SQL1', x: 100, y: 200 });
       lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
-      var table = lib.workspace.openStateView('sql', 'table').table;
+      var table = lib.workspace.openStateView('sql', 'table');
       table.expect(
         ['age', 'gender', 'id', 'income', 'location', 'name'],
         ['Double', 'String', 'Long', 'Double', '(Double, Double)', 'String'],
@@ -26,12 +26,7 @@ module.exports = function(fw) {
 
   function runSQL(query) {
     lib.workspace.editBox('sql', { sql: query });
-    /* eslint-disable no-constant-condition */
-    if (true) { // TODO: Remove this after #6169.
-      lib.workspace.getStateView('sql', 'table').close();
-      lib.workspace.openStateView('sql', 'table');
-    }
-    return lib.workspace.getStateView('sql', 'table').table;
+    return lib.workspace.getStateView('sql', 'table');
   }
 
   function sqlTest(name, query, checks, solo) {
@@ -136,6 +131,7 @@ module.exports = function(fw) {
           [ 'Isolated Joe', 'null' ],
           [ 'Eve', 'null' ],
         ]);
+      table.close();
       lib.workspace.addBox({
         id: 'new_attr', name: 'Derive vertex attribute', x: 400, y: 150, after: 'eg0', params: {
           expr: 'income === 1000 ? \'apple\' : \'orange\'',
@@ -144,6 +140,7 @@ module.exports = function(fw) {
         }
       });
       lib.workspace.connectBoxes('new_attr', 'project', 'sql', 'input');
+      table = lib.workspace.openStateView('sql', 'table');
       table = runSQL('select new_attr from vertices');
       table.clickColumn('new_attr');
       table.expect(
@@ -155,8 +152,10 @@ module.exports = function(fw) {
           [ 'apple' ],
           [ 'orange' ],
         ]);
+      table.close();
       lib.workspace.deleteBoxes(['new_attr']);
       lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
+      lib.workspace.openStateView('sql', 'table');
     });
 
   fw.transitionTest(
