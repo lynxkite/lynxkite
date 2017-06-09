@@ -9,9 +9,9 @@ module.exports = function(fw) {
     'empty test-example workspace',
     'test add constant edge attribute with parametric parameters',
     function() {
-      lib.workspace.addBox({id: 'ex0', name: 'create example graph', x: 100, y: 100});
+      lib.workspace.addBox({id: 'ex0', name: 'Create example graph', x: 100, y: 100});
       lib.workspace.addBox({
-        id: 'ace', name: 'add constant edge attribute',
+        id: 'ace', name: 'Add constant edge attribute',
         params: {'value': '${1+5}'},
         x: 100, y: 200, after: 'ex0'});
       var boxEditor = lib.workspace.openBoxEditor('ace');

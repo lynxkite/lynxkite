@@ -60,15 +60,15 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     _buildBoxes: function() {
       this.boxes = [];
       this.boxMap = {};
-      var box;
       for (var i = 0; i < this.state.boxes.length; ++i) {
-        var rawBox = this.state.boxes[i];
-        var operationId = rawBox.operationId;
-        var boxId = rawBox.id;
-        box = new BoxWrapper(this._boxCatalogMap[operationId], rawBox);
-        this.boxes[i] = box;
-        this.boxMap[boxId] = box;
+        this._addBoxWrapper(this.state.boxes[i]);
       }
+    },
+
+    _addBoxWrapper: function(rawBox) {
+      var box = new BoxWrapper(this._boxCatalogMap[rawBox.operationId], rawBox);
+      this.boxes.push(box);
+      this.boxMap[rawBox.id] = box;
     },
 
     _lookupArrowEndpoint: function(list, id) {
@@ -214,9 +214,10 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       return operationId.replace(/ /g, '-') + '_' + cnt;
     },
 
-    // boxId should be used for test-purposes only
-    _addBox: function(operationId, x, y, boxId) {
-      boxId = boxId || this.getUniqueId(operationId);
+    _addBox: function(operationId, x, y, opts) {
+      opts = opts || {};
+      // opts.boxId should be used for test-purposes only
+      var boxId = opts.boxId || this.getUniqueId(operationId);
       // Create a box backend data structure, an unwrapped box:
       var box = {
         id: boxId,
@@ -228,19 +229,20 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         parametricParameters: {}
       };
       this.state.boxes.push(box);
-      // Rebuild box wrappers:
-      this._build();
+      this._addBoxWrapper(box);
       return box;
     },
 
-    // boxId should be used for test-purposes only
-    addBox: function(operationId, event, boxId) {
+    addBox: function(operationId, event, opts) {
+      opts = opts || {};
       var box = this._addBox(
           operationId,
           event.logicalX,
           event.logicalY,
-          boxId);
-      this.saveWorkspace();
+          opts);
+      if (!opts.willSaveLater) {
+        this.saveWorkspace();
+      }
       return box;
     },
 
