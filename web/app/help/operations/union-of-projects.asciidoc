@@ -1,4 +1,4 @@
-### Union with another project
+### Union of projects
 
 The resulting graph is just a disconnected graph containing the vertices and edges of
 the two originating projects. All vertex and edge attributes are preserved. If an attribute
@@ -24,9 +24,6 @@ based on their email address.
 similarity.
 
 *Parameters*
-
-[[other]] Other project's name::
-The project to merge into the current project.
 
 [[id_attr]] ID attribute name::
 The internal vertex IDs change after the union. The old ID attributes are preserved, but no

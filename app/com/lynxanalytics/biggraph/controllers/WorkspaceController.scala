@@ -33,7 +33,7 @@ case class TableColumn(name: String, dataType: String)
 case class GetTableOutputResponse(header: List[TableColumn], data: List[List[DynamicValue]])
 case class GetPlotOutputRequest(id: String)
 case class GetPlotOutputResponse(json: FEScalar)
-case class CreateWorkspaceRequest(name: String, privacy: String)
+case class CreateWorkspaceRequest(name: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 case class CreateSnapshotRequest(name: String, id: String)
 case class GetExportResultRequest(stateId: String)
@@ -55,7 +55,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val entry = DirectoryEntry.fromName(request.name)
     entry.assertParentWriteAllowedFrom(user)
     val w = entry.asNewWorkspaceFrame()
-    w.setupACL(request.privacy, user)
+    w.setupACL("public-write", user)
   }
 
   private def getWorkspaceFrame(
@@ -76,7 +76,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         val ctx = ws.context(user, ops, params)
         val op = ctx.getOperation(boxId).asInstanceOf[CustomBoxOperation]
         val cws = op.connectedWorkspace
-        (cws, op.params, op.context.box.operationId)
+        (cws, op.getParams, op.context.box.operationId)
     }
     lazy val frame = getWorkspaceFrame(user, name)
     lazy val context = ws.context(user, ops, params)
@@ -101,7 +101,11 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       val summaries = res.ws.boxes.map(
         box => box.id -> (
           try { context.getOperationForStates(box, states).summary }
-          catch { case e: AssertionError => box.operationId }
+          catch {
+            case t: Throwable =>
+              log.error(s"Error while generating summary for $box in $request.", t)
+              box.operationId
+          }
         )
       ).toMap
       (stateInfo, summaries)

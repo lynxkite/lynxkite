@@ -18,7 +18,7 @@ angular.module('biggraph').directive('helpId',
         element.addClass('help');
         documentation('help').then(function(helpContent) {
           var id = scope.helpId.toLowerCase();
-          if (isUserWorkflowId(id)) {
+          if (!id || isUserWorkflowId(id)) {
             element.empty();
             return;
           }
