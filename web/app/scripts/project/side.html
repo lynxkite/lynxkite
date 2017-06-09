@@ -29,7 +29,7 @@
   <div class="project" ng-if="
     side.project.$resolved && !side.project.$error && !side.showHistory && !side.unsaved.workflowEditor.enabled">
 
-    <div class="btn-group pull-right">
+    <div class="btn-group pull-right" ng-show="side.columnWidth() !== 12">
       <label class="btn btn-default"
              ng-click="side.close()"
              id="close-project"
