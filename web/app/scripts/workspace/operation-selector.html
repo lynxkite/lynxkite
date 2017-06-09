@@ -28,8 +28,7 @@
     <h1>{{category.title}}</h1>
     <operation-selector-entry ng-repeat="op in currentCatOps"
       op="op"
-      open-last-cat-or-search="openLastCatOrSearch"
-      close-current-cat-or-search="closeCurrentCatOrSearch">
+      ondrag="localOndrag(op, $event)">
     </operation-selector-entry>
   </div>
 
@@ -37,8 +36,7 @@
     <h1><input id="filter" ng-model="opFilter" ng-keyup="filterKey($event)"></h1>
     <operation-selector-entry ng-repeat="op in filterAndSort(boxes, opFilter)"
         op="op"
-        open-last-cat-or-search="openLastCatOrSearch"
-        close-current-cat-or-search="closeCurrentCatOrSearch"
+        ondrag="localOndrag(op, $event)"
         ng-class="{ highlight: $index === searchSelection }">
     </operation-selector-entry>
   </div>
