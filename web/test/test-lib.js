@@ -283,28 +283,13 @@ Workspace.prototype = {
     this.clickBox(boxId);
     var popup = this.board.$('.popup#' + boxId);
     expect(popup.isDisplayed()).toBe(true);
-    this.movePopupToCenter(popup);
     return new BoxEditor(popup);
-  },
-
-  movePopupToCenter: function(popup) {
-    var head = popup.$('div.popup-head');
-    browser.actions()
-        .mouseDown(head)
-        // Absolute positioning of mouse. If we don't specify the first
-        // argument then this becomes a relative move. If the first argument
-        // is this.board, then protractor scrolls the element of this.board
-        // to the top of the page, even though scrolling is not enabled.
-        .mouseMove($('body'), {x: 800, y: 90})
-        .mouseUp(head)
-        .perform();
   },
 
   openStateView: function(boxId, plugId) {
     var popup = this.board.$('.popup#' + boxId + '_' + plugId);
     testLib.expectNotElement(popup); // If it is already open, use getStateView() instead.
     this.toggleStateView(boxId, plugId);
-    this.movePopupToCenter(popup);
     return new State(popup);
   },
 

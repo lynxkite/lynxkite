@@ -165,6 +165,38 @@ angular.module('biggraph')
           }
         };
 
+        function placePopup(event) {
+          // Avoid the event position, stay on the screen, and try to be close to the event.
+          var w = 500;
+          var h = 500;
+          var eventX = event.pageX - w / 2;
+          var eventY = event.pageY - h / 2;
+          var maxX = angular.element(window).width() - w;
+          var maxY = angular.element(window).height() - h;
+          var bestX = maxX / 2;
+          var bestY = maxY / 2;
+          var minDist = Math.sqrt(w * w + h * h) / 2;
+          function len(x, y) { return Math.sqrt(x * x + y * y); }
+          var bestDist = len(bestX - eventX, bestY - eventY);
+          for (var i = 0; i < 100; ++i) {
+            var rndX = Math.random() * maxX;
+            var rndY = Math.random() * maxY;
+            var dist = len(rndX - eventX, rndY - eventY);
+            if (dist < minDist) { continue; }
+            if (bestDist < minDist || dist < bestDist) {
+              bestX = rndX;
+              bestY = rndY;
+              bestDist = dist;
+            }
+          }
+          return {
+            x: bestX,
+            y: bestY,
+            width: w,
+            height: h,
+          };
+        }
+
         scope.onMouseUpOnBox = function(box, event) {
           if (box.isMoved || scope.pulledPlug) {
             return;
@@ -173,6 +205,7 @@ angular.module('biggraph')
           if (!leftButton || event.ctrlKey || event.shiftKey) {
             return;
           }
+          var pos = placePopup(event);
           var model = new PopupModel(
             box.instance.id,
             box.instance.operationId,
@@ -180,10 +213,10 @@ angular.module('biggraph')
               type: 'box',
               boxId: box.instance.id,
             },
-            event.pageX - 200,
-            event.pageY + 60,
-            500,
-            500,
+            pos.x,
+            pos.y,
+            pos.width,
+            pos.height,
             scope);
           model.toggle();
         };
@@ -205,6 +238,7 @@ angular.module('biggraph')
           }
           event.stopPropagation();
           if (plug.direction === 'outputs') {
+            var pos = placePopup(event);
             var model = new PopupModel(
               plug.boxId + '_' + plug.id,
               plug.boxInstance.operationId + ' ➡ ' + plug.id,
@@ -213,10 +247,10 @@ angular.module('biggraph')
                 boxId: plug.boxId,
                 plugId: plug.id,
               },
-              event.pageX - 300,
-              event.pageY + 15,
-              500,
-              500,
+              pos.x,
+              pos.y,
+              pos.width,
+              pos.height,
               scope);
             model.toggle();
           }
