@@ -362,37 +362,24 @@ function State(popup) {
   this.popup = popup;
   this.left = new Side(this.popup, 'left');
   this.right = new Side(this.popup, 'right');
-  this.table = new TableState(this.popup);
-  this.plot = new PlotState(this.popup);
+  this.canvas = popup.$('#plot-div .vega svg');
+  this.sample = popup.$('#table-sample');
+  this.control = popup.$('#table-control');
 }
 
 State.prototype = {
   close: function() {
     this.popup.$('#close-popup').click();
-  }
-};
+  },
 
-function PlotState(popup) {
-  this.canvas = popup.$('#plot-div .vega svg');
-}
-
-PlotState.prototype = {
   barHeights: function() {
     return this.canvas.$$('g.mark-rect.marks rect').map(e => e.getAttribute('height'));
   },
 
   expectBarHeightsToBe: function(heights) {
     expect(this.barHeights()).toEqual(heights);
-  }
-};
+  },
 
-
-function TableState(popup) {
-  this.sample = popup.$('#table-sample');
-  this.control = popup.$('#table-control');
-}
-
-TableState.prototype = {
   expect: function(names, types, rows) {
     this.expectColumnNamesAre(names);
     this.expectColumnTypesAre(types);
@@ -463,7 +450,6 @@ TableState.prototype = {
     var button = this.control.$('#get-sample-button');
     button.click();
   },
-
 
 };
 

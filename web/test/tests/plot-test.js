@@ -42,8 +42,7 @@ module.exports = function(fw) {
         'plot_code': plotCode,
       });
       boxEditor.close();
-      var plotState = lib.workspace.openStateView('plot1', 'plot');
-      var plot = plotState.plot;
+      var plot = lib.workspace.openStateView('plot1', 'plot');
       plot.expectBarHeightsToBe(['97', '191', '149', '316']);
     },
     function() {
