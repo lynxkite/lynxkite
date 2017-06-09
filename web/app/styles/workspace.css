@@ -31,12 +31,18 @@ span#custom-box-stack {
   width: 35px;
   overflow: auto; /* Allow scrolling category list, if necessary. */
 }
+
 #workspace-drawing-board > svg {
   display: block;
   width: 100%;
   height: 100%;
-  background-color: lightgray;
+  background-color: hsl(30, 40%, 95%);
 }
+
+#workspace-drawing-board svg text {
+  font: bold 12px sans-serif;
+}
+
 state-view {
   display: block;
 }
@@ -49,24 +55,60 @@ box-editor {
   margin-top: 8px;
 }
 
-g.box rect, g.box circle {
-  stroke-width: 1;
-  stroke: blue;
-  fill-opacity: 0;
+/* To accomodate the large transparent region of the default icons, the #click-target circle will
+ * receive clicks instead of the icon itself. */
+g.box image {
+  pointer-events: none;
 }
-g.selected.selected rect, g.box.selected circle {
+g.box #click-target {
+  stroke: transparent;
+  fill: transparent;
+}
+g.box.selected #click-target {
+  fill: rgba(80, 0, 0, 0.1);
+}
+
+g.box .summary {
+  text-anchor: middle;
+}
+g.box .backdrop {
+  stroke-width: 5;
+  stroke: hsl(30, 40%, 95%);
+}
+g.box.selected .backdrop {
+  stroke: #e7dad6;
+}
+g.box.selected .plug circle {
   stroke-width: 3;
+  stroke: #e7dad6;
 }
+
+g.box #inputs .plug text {
+  text-anchor: end;
+}
+g.box .plug circle {
+  stroke-width: 1;
+  stroke: black;
+  fill-opacity: 0;
+  mix-blend-mode: darken; /* Allow arrow to be visible even if it is below. */
+}
+g.box #inputs .plug text {
+  text-anchor: end;
+}
+g.box .plug text.lonely {
+  display: none;
+}
+g.box:hover .plug text.lonely {
+  display: inherit;
+}
+
 rect.selection-box {
   stroke: black;
   fill-opacity: 0;
   stroke-dasharray: 5,5;
 }
-g.selected-plug circle {
-  stroke-width: 3;
-}
 
-circle.io-circle.colored-output {
+g.box circle.io-circle.colored-output {
   fill-opacity: 1;
 }
 
@@ -84,19 +126,22 @@ circle.io-circle.colored-output {
   }
 }
 
-circle.io-circle.in-progress {
+g.box circle.io-circle.in-progress {
   animation-name: in-progress-indication;
   animation-duration: 2s;
   animation-iteration-count: infinite;
   fill: yellow;
 }
 
-line.arrow {
-  stroke-width: 1;
-  stroke: blue;
+path.arrow {
+  fill: transparent;
+  stroke-width: 2px;
+  stroke: black;
   pointer-events: none; /* Pass events through, so arrows do not block plugs. */
+  marker-start: url(#arrow-root);
+  marker-end: url(#arrow-head);
 }
-line.pulled-arrow {
+path.pulled-arrow {
   stroke-dasharray: 2;
   pointer-events: none;
   z-index: -1;
