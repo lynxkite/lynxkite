@@ -1,4 +1,4 @@
-// Frontend operations that create a plot from a table.
+// Frontend operations that create a visualization from a project.
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
