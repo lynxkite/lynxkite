@@ -342,7 +342,6 @@ angular.module('biggraph')
 
         scope.diveUp = function() {
           scope.workspace.customBoxStack.pop();
-          scope.workspace._boxCatalogMap = undefined;
           scope.workspace.loadWorkspace();
           scope.popups = [];
         };
