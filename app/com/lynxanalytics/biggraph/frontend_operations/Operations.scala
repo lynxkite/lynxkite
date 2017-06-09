@@ -3058,9 +3058,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         p
       }
 
-      private def toFEList(s: Seq[String]): List[FEOption] =
-        s.map(name => FEOption(name, name)).toList
-
       // TODO: Extend this to allow filtered vertex sets to be compatible
       private def compatibleIdSets(a: Option[VertexSet], b: Option[VertexSet]): Boolean = {
         a.isDefined && b.isDefined && a.get == b.get
