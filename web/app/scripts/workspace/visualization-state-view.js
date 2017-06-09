@@ -1,6 +1,6 @@
-'use strict';
+// Viewer of a visualization state.
 
-// Viewer of a plot state.
+'use strict';
 
 angular.module('biggraph')
   .directive('visualizationStateView', function(util, side, $q) {

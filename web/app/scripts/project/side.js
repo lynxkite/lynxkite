@@ -327,14 +327,17 @@ angular.module('biggraph')
     // Side.reload makes an unconditional, uncached Ajax request.
     // This is called when the projectPath was changed.
     Side.prototype.reload = function() {
+      // We don't directly download data into this.project, so that
+      // the UI can still show the previous state of the project
+      // while loading, and state like (center picker stuff) does
+      // not get lost. On the other hand, we want an indicator for
+      // loading. The solution is to first load into
+      // this.pendingProject and only copy into this.project on completion.
       this.pendingProject = undefined;
       if (this.state.projectPath !== undefined) {
         var that = this;
         that.pendingProject = this.load();
-        return that.pendingProject.then(
-          function() {
-            that.project = that.pendingProject;
-          },
+        return that.pendingProject.finally(
           function onFailure() {
             that.project = that.pendingProject;
           });
