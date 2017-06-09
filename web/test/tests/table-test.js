@@ -30,7 +30,8 @@ module.exports = function(fw) {
     'small CSV file imported as table',
     'table state view opened',
     function() {
-      var table = lib.workspace.openStateView('ib0', 'table');
+      var tableState = lib.workspace.openStateView('ib0', 'table');
+      var table = tableState.table;
       table.expectRowCountIs(3);
       table.expectColumnNamesAre(['name', 'age']);
       table.expectColumnTypesAre(['String', 'String']);
@@ -65,7 +66,8 @@ module.exports = function(fw) {
     'large CSV file imported as table',
     'Sorting and Show more rows are working on table state view',
     function() {
-      var table = lib.workspace.openStateView('ib1', 'table');
+      var state = lib.workspace.openStateView('ib1', 'table');
+      var table = state.table;
       table.expectRowCountIs(10);
       table.expectColumnNamesAre([
         'country', 'country_code', 'population', 'area', 'currency']);
