@@ -31,9 +31,9 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
         Map(
           context.box.output(context.meta.outputs(0)) ->
             BoxOutputState.visualization(
-              project,
-              params("state"))
-        )
+              VisualizationState.fromString(
+                params("state"),
+                project)))
       }
 
       override val params = new ParameterHolder(context) // No "apply_to" parameters.

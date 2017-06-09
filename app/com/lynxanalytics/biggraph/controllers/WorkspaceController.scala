@@ -139,7 +139,11 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: GetProjectOutputRequest): FEProject = {
     val state = getOutput(user, request.id)
     val pathSeq = SubProject.splitPipedPath(request.path).filter(_ != "")
-    val viewer = state.project.viewer.offspringViewer(pathSeq)
+    val project =
+      if (state.isProject) state.project
+      else if (state.isVisualization) state.visualization.project
+      else ???
+    val viewer = project.viewer.offspringViewer(pathSeq)
     viewer.toFE(request.path)
   }
 
@@ -151,10 +155,12 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     GetPlotOutputResponse(fescalar)
   }
 
+  import UIStatusSerialization.fTwoSidedUIStatus
+
   def getVisualizationOutput(
-    user: serving.User, request: GetVisualizationOutputRequest): VisualizationState = {
+    user: serving.User, request: GetVisualizationOutputRequest): TwoSidedUIStatus = {
     val state = getOutput(user, request.id)
-    state.visualization
+    state.visualization.uiStatus
   }
 
   def getExportResultOutput(

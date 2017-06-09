@@ -264,7 +264,19 @@ object BoxOutputKind {
 }
 
 case class VisualizationState(
-  state: String)
+  uiStatus: TwoSidedUIStatus,
+  project: RootProjectEditor)
+object VisualizationState {
+  def fromString(uiStatus: String, project: RootProjectEditor): VisualizationState = {
+    import UIStatusSerialization.fTwoSidedUIStatus
+    val uiStatusJson =
+      if (uiStatus.isEmpty) TwoSidedUIStatus(left = None, right = None)
+      else json.Json.parse(uiStatus).as[TwoSidedUIStatus]
+    VisualizationState(
+      uiStatusJson,
+      project)
+  }
+}
 
 object BoxOutputState {
   // Cannot call these "apply" due to the JSON formatter macros.
@@ -291,15 +303,14 @@ object BoxOutputState {
     BoxOutputState(BoxOutputKind.Error, None, FEStatus.disabled(msg))
   }
 
-  def visualization(
-    project: ProjectEditor,
-    state: String): BoxOutputState = {
-    import CheckpointRepository._ // For JSON formatters.
+  def visualization(v: VisualizationState): BoxOutputState = {
+    import UIStatusSerialization.fTwoSidedUIStatus
+    import CheckpointRepository._
     BoxOutputState(
       BoxOutputKind.Visualization,
       Some(json.Json.obj(
-        "state" -> state,
-        "project" -> json.Json.toJson(project.rootState.state))
+        "uiStatus" -> v.uiStatus,
+        "project" -> json.Json.toJson(v.project.rootState.state))
       ))
   }
 }
@@ -322,12 +333,8 @@ case class BoxOutputState(
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(success.enabled, success.disabledReason)
     import CheckpointRepository.fCommonProjectState
-    assert(isProject || isVisualization, s"Tried to access '$kind' as 'project'.")
-    val p = if (isProject) {
-      state.get.as[CommonProjectState]
-    } else {
-      (state.get \ "project").as[CommonProjectState]
-    }
+    assert(isProject, s"Tried to access '$kind' as 'project'.")
+    val p = state.get.as[CommonProjectState]
     val rps = RootProjectState.emptyState.copy(state = p)
     new RootProjectEditor(rps)
   }
@@ -354,10 +361,14 @@ case class BoxOutputState(
   }
 
   def visualization(implicit manager: graph_api.MetaGraphManager): VisualizationState = {
-    import UIStatusSerialization.fUIStatus
+    import UIStatusSerialization.fTwoSidedUIStatus
+    import CheckpointRepository.fCommonProjectState
     assert(isVisualization)
+    val projectState = (state.get \ "project").as[CommonProjectState]
+    val rootProjectState = RootProjectState.emptyState.copy(state = projectState)
     VisualizationState(
-      (state.get \ "state").as[String]
+      (state.get \ "uiStatus").as[TwoSidedUIStatus],
+      new RootProjectEditor(rootProjectState)
     )
   }
 }
