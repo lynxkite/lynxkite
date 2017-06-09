@@ -76,7 +76,7 @@ class JoinTest extends OperationsTestBase {
     assert(tens > 0 && tens == values.size)
   }
 
-  test("Edge attributes joined to vertex attributes") {
+  test("Vertex attributes joined to edge attributes") {
     val root = box("Create example graph")
     val left = root
     val right = root
