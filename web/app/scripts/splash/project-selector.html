@@ -4,18 +4,6 @@
     <span class="lead" ng-hide="newWorkspace.expanded">New workspace</span>
     <form ng-show="newWorkspace.expanded" class="form-inline" role="form">
       <div class="form-group"><input id="new-workspace-name" placeholder="Workspace name" ng-model="newWorkspace.name" class="form-control"></div>
-      <div class="form-group">about</div>
-      <div class="form-group"><input placeholder="Description" ng-model="newWorkspace.notes" class="form-control"></div>
-      <span ng-show="util.globals.hasAuth">
-        <div class="form-group">that</div>
-        <div class="form-group"><select
-                                   ng-model="newWorkspace.privacy"
-                                   class="form-control">
-            <option value="private">no one else can see</option>
-            <option value="public-read">everyone can see</option>
-            <option value="public-write">everyone can modify</option>
-        </select></div>
-      </span>
       <button type="submit" class="btn btn-default" ng-click="createWorkspace()"
         ng-disabled="newWorkspace.sending || !newWorkspace.name">
         {{newWorkspace.sending && '...' || 'Create'}}
@@ -43,6 +31,15 @@
         {{newDirectory.sending && '...' || 'Create'}}
       </button>
     </form>
+  </div>
+
+  <div ng-class="showSQL ? 'entry-nohover' : 'entry'"
+       id="global-sql-box" ng-click="showSQL=!showSQL">
+    <span class="icon glyphicon glyphicon-{{ showSQL ? 'minus' : 'plus' }}"></span>
+    <span class="lead">SQL Interface
+      <help-popup href="global-sql-box" class="pull-right"></help-popup>
+    </span>
+    <br/>
   </div>
   <div style="margin-left: 20px">
     <sql-box  ng-click="$event.stopPropagation()" directory="path" ng-if="showSQL"></sql-box>
@@ -76,11 +73,7 @@
     Loading...
   </progressbar>
 
-  <div class="alert alert-danger" ng-if="data.$error">
-    Could not load directory listing.
-    <i class="pull-right"><a href ng-click="reportListError()">report problem</a></i>
-    <p class="alert-details">{{ data.$error }}</p>
-  </div>
+  <display-error caption="Could not load directory listing." request="data"></display-error>
 
   <div ng-repeat="directory in data.directories"
     id="directory-{{ pathInside(directory) | id }}"
@@ -124,10 +117,7 @@
       </a>
     </span>
 
-    <div ng-if="object.error">
-      {{object.error}}
-      <i class="pull-right"><a ng-click="reportProjectError(object)">report problem</a></i>
-    </div>
+    <display-error caption="Error loading entry." error="object.error"></display-error>
     <div ng-if="!object.error">
       <span ng-if="isWorkspace(object)">
 <!--

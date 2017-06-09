@@ -28,34 +28,15 @@ case class FEOption(
 object FEOption {
   def regular(optionTitleAndId: String): FEOption = FEOption(optionTitleAndId, optionTitleAndId)
   def special(specialId: String): FEOption = specialOpt(specialId).get
-  val TitledCheckpointRE = raw"!checkpoint\(([0-9]*),([^|]*)\)(|\|.*)".r
   private def specialOpt(specialId: String): Option[FEOption] = {
     Option(specialId match {
       case "!unset" => ""
       case "!no weight" => "no weight"
       case "!unit distances" => "unit distances"
       case "!internal id (default)" => "internal id (default)"
-      case TitledCheckpointRE(cp, title, suffix) =>
-        val time = {
-          val df = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm z")
-          df.format(new java.util.Date(cp.toLong))
-        }
-        s"$title$suffix ($time)"
       case _ => null
     }).map(FEOption(specialId, _))
   }
-  def titledCheckpoint(cp: String, title: String, suffix: String = ""): FEOption =
-    special(s"!checkpoint($cp,$title)$suffix")
-  def unpackTitledCheckpoint(id: String): (String, String, String) =
-    unpackTitledCheckpoint(id, s"$id does not look like a project checkpoint identifier")
-  def unpackTitledCheckpoint(id: String, customError: String): (String, String, String) =
-    maybeUnpackTitledCheckpoint(id).getOrElse(throw new AssertionError(customError))
-  def maybeUnpackTitledCheckpoint(id: String): Option[(String, String, String)] =
-    id match {
-      case TitledCheckpointRE(cp, title, suffix) => Some((cp, title, suffix))
-      case _ => None
-    }
-
   def fromId(id: String) = specialOpt(id).getOrElse(FEOption.regular(id))
   def list(lst: String*): List[FEOption] = list(lst.toList)
   def list(lst: List[String]): List[FEOption] = lst.map(id => FEOption(id, id))

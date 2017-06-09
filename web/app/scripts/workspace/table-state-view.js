@@ -20,7 +20,9 @@ angular.module('biggraph')
           });
         };
 
-        scope.onload = scope.getSample();
+        scope.$watch('stateId', function() {
+          scope.getSample();
+        });
 
         scope.showMoreRowsIncrement = function() {
           // Offer increases of 10, 100, 1000, etc. depending on the magnitude of the current limit.

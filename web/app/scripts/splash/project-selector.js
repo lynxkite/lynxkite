@@ -15,7 +15,7 @@ angular.module('biggraph').directive('projectSelector',
         function defaultSettings() {
           return { privacy: 'private' };
         }
-        scope.newWorkspace = defaultSettings();
+        scope.newWorkspace = {};
         scope.newDirectory = defaultSettings();
         scope.path = scope.path || window.sessionStorage.getItem('last_selector_path') ||
           window.localStorage.getItem('last_selector_path') || '';
@@ -113,7 +113,6 @@ angular.module('biggraph').directive('projectSelector',
           util.post('/ajax/createWorkspace',
             {
               name: name,
-              privacy: scope.newWorkspace.privacy,
             }).then(function() {
               scope.name = name;
             }).finally(function() {
@@ -201,14 +200,6 @@ angular.module('biggraph').directive('projectSelector',
 
         scope.pathElements = function() {
           return scope.path.split('/');
-        };
-
-        scope.reportListError = function() {
-          util.reportRequestError(scope.data, 'Workspace list could not be loaded.');
-        };
-
-        scope.reportWorkspaceError = function(workspace) {
-          util.reportError({ message: workspace.error, details: scope.data });
         };
 
         scope.menu = {

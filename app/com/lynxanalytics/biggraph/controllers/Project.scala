@@ -252,15 +252,68 @@ sealed trait ProjectViewer {
     }
   }
 
-  def implicitTableNames: Iterable[String]
-  def allRelativeTablePaths: Seq[SymbolPath] = {
-    val localTables = implicitTableNames.toSeq.map(name => SymbolPath(name))
-    val childTables = sortedSegmentations.flatMap(segmentation =>
-      segmentation.allRelativeTablePaths.map(
-        childPath => segmentation.segmentationName /: childPath))
-    localTables ++ childTables
+  protected def maybeProtoTable(
+    maybe: Any, tableName: String): Option[(String, ProtoTable)] = {
+    maybe match {
+      case null => None
+      case _ => Some(tableName -> getSingleLocalProtoTable(tableName))
+    }
+  }
+
+  def getLocalProtoTables: Iterable[(String, ProtoTable)] = {
+    import ProjectViewer._
+    maybeProtoTable(vertexSet, VertexTableName) ++
+      maybeProtoTable(edgeBundle, EdgeAttributeTableName) ++
+      maybeProtoTable(edgeBundle, EdgeTableName)
+  }
+
+  def getProtoTables: Iterable[(String, ProtoTable)] = {
+    val childProtoTables = sortedSegmentations.flatMap { segmentation =>
+      segmentation.getLocalProtoTables.map {
+        case (name, table) => segmentation.segmentationName + "|" + name -> table
+      }
+    }
+    getLocalProtoTables ++ childProtoTables
+  }
+
+  def getSingleProtoTable(tablePath: String): ProtoTable = {
+    val splittedPath = tablePath.split('|')
+    val (segPath, tableName) = (splittedPath.dropRight(1), splittedPath.last)
+    val segViewer = offspringViewer(segPath)
+    segViewer.getSingleLocalProtoTable(tableName)
+  }
+
+  protected def getSingleLocalProtoTable(tableName: String): ProtoTable = {
+    import ProjectViewer._
+    val protoTable = tableName match {
+      case VertexTableName => ProtoTable(vertexAttributes.toSeq.sortBy(_._1))
+      case EdgeTableName => {
+        import graph_operations.VertexToEdgeAttribute._
+        val edgeAttrs = edgeAttributes.map {
+          case (name, attr) => s"edge_$name" -> attr
+        }
+        val srcAttrs = vertexAttributes.map {
+          case (name, attr) => s"src_$name" -> srcAttribute(attr, edgeBundle)
+        }
+        val dstAttrs = vertexAttributes.map {
+          case (name, attr) => s"dst_$name" -> dstAttribute(attr, edgeBundle)
+        }
+        ProtoTable((edgeAttrs ++ srcAttrs ++ dstAttrs).toSeq.sortBy(_._1))
+      }
+      case EdgeAttributeTableName => ProtoTable(edgeAttributes.toSeq.sortBy(_._1))
+      case BelongsToTableName =>
+        throw new AssertionError("Only segmentations have a BelongsTo table")
+      case _ => {
+        val correctTableNames = List(VertexTableName, EdgeTableName, EdgeAttributeTableName,
+          BelongsToTableName).mkString(", ")
+        throw new AssertionError("Not recognized table name. Correct table names: " +
+          s"$correctTableNames")
+      }
+    }
+    protoTable
   }
 }
+
 object ProjectViewer {
   val VertexTableName = "vertices"
   val EdgeTableName = "edges"
@@ -337,13 +390,6 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
 
   protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] = None
 
-  def implicitTableNames =
-    Option(edgeBundle).map(_ => ProjectViewer.EdgeTableName) ++
-      Option(edgeBundle).map(_ => ProjectViewer.EdgeAttributeTableName) ++
-      Option(vertexSet).map(_ => ProjectViewer.VertexTableName)
-
-  def allAbsoluteTablePaths: Seq[SymbolPath] = allRelativeTablePaths
-
   def viewRecipe = rootState.viewRecipe.map(TypedJson.read[ViewRecipe])
 }
 
@@ -403,11 +449,28 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
       equivalentUIAttribute)
   }
 
-  def implicitTableNames =
-    Option(belongsTo).map(_ => ProjectViewer.BelongsToTableName) ++
-      Option(edgeBundle).map(_ => ProjectViewer.EdgeTableName) ++
-      Option(edgeBundle).map(_ => ProjectViewer.EdgeAttributeTableName) ++
-      Option(vertexSet).map(_ => ProjectViewer.VertexTableName)
+  override def getLocalProtoTables: Iterable[(String, ProtoTable)] = {
+    import ProjectViewer._
+    maybeProtoTable(belongsTo, BelongsToTableName) ++ super.getLocalProtoTables
+  }
+
+  override protected def getSingleLocalProtoTable(tableName: String): ProtoTable = {
+    import ProjectViewer._
+    val protoTable = tableName match {
+      case BelongsToTableName => {
+        import graph_operations.VertexToEdgeAttribute._
+        val baseAttrs = parent.vertexAttributes.map {
+          case (name, attr) => s"base_$name" -> srcAttribute(attr, belongsTo)
+        }
+        val segAttrs = vertexAttributes.map {
+          case (name, attr) => s"segment_$name" -> dstAttribute(attr, belongsTo)
+        }
+        ProtoTable((baseAttrs ++ segAttrs).toSeq.sortBy(_._1))
+      }
+      case _ => super.getSingleLocalProtoTable(tableName)
+    }
+    protoTable
+  }
 }
 
 // The CheckpointRepository's job is to persist project states to checkpoints.

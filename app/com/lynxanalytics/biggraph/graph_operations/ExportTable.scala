@@ -81,13 +81,13 @@ case class ExportTableToStructuredFile(path: String, format: String, version: In
 
 object ExportTableToJdbc extends OpFromJson {
   def fromJson(j: JsValue) = ExportTableToJdbc(
-    (j \ "jdbcUrl").as[String], (j \ "table").as[String], (j \ "mode").as[String])
+    (j \ "jdbc_url").as[String], (j \ "jdbc_table").as[String], (j \ "mode").as[String])
 }
 
 case class ExportTableToJdbc(jdbcUrl: String, table: String, mode: String)
     extends ExportTable {
 
-  override def toJson = Json.obj("jdbcUrl" -> jdbcUrl, "table" -> table, "mode" -> mode)
+  override def toJson = Json.obj("jdbc_url" -> jdbcUrl, "jdbc_table" -> table, "mode" -> mode)
 
   def exportDataFrame(df: spark.sql.DataFrame) = {
     df.write.mode(mode).jdbc(jdbcUrl, table, new java.util.Properties)

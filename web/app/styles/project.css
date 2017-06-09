@@ -128,7 +128,7 @@ input.save-as {
   border-top: 1px solid #e0e0e0;
 }
 
-.token-section-label help-popup {
+.token-section-label #help-button {
   font-size: 10px;
   padding: 0 10px;
 }
@@ -179,7 +179,7 @@ label {
   text-transform: uppercase;
 }
 
-.entry-bottom help-popup {
+.entry-bottom #help-button {
   font-size: 10px;
 }
 
