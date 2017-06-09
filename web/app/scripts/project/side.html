@@ -1,4 +1,4 @@
-<div class="col-sm-{{ side.columnWidth() }} side" id="side-{{side.direction}}">
+<div class="col-sm-{{ 12 / side.activeSides().length }} side" id="side-{{side.direction}}">
 
   <progressbar ng-if="side.project && !side.project.$resolved" value="100" class="progress-striped active">
   Loading...
@@ -29,7 +29,7 @@
   <div class="project" ng-if="
     side.project.$resolved && !side.project.$error && !side.showHistory && !side.unsaved.workflowEditor.enabled">
 
-    <div class="btn-group pull-right" ng-show="side.columnWidth() !== 12">
+    <div class="btn-group pull-right" ng-show="side.activeSides().length > 1">
       <label class="btn btn-default"
              ng-click="side.close()"
              id="close-project"
@@ -52,6 +52,9 @@
 
     <div class="project-name">
       <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'">
+        <span ng-show="side.activeSides().length > 1">
+          Base
+        </span>
         <span ng-repeat="parent in side.parentProjects()">
           {{parent}} &raquo;
         </span>
