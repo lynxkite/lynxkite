@@ -169,9 +169,12 @@ Workspace.prototype = {
     var after = boxData.after;
     var inputs = boxData.inputs;
     var params = boxData.params;
-    var op = this.openOperation(boxData.name);
-    testLib.simulateDragAndDrop(op, this.board, boxData.x, boxData.y, {id: id});
-    this.closeOperationSelector();
+    browser.executeScript(`
+        $(document.querySelector('#workspace-drawing-board')).scope().workspace.addBox(
+          '${ boxData.name }',
+          { logicalX: ${ boxData.x }, logicalY: ${ boxData.y } },
+          { boxId: '${ boxData.id }' });
+        `);
     if (after) {
       this.connectBoxes(after, 'project', id, 'project');
     }
@@ -1391,56 +1394,6 @@ testLib = {
     expect($('.sweet-alert h2').getText()).toBe(expectedMessage);
     $('.sweet-alert button.confirm').click();
     testLib.wait(EC.stalenessOf($('.sweet-alert.showSweetAlert')));
-  },
-
-  // Because of https://github.com/angular/protractor/issues/3289, we cannot use protractor
-  // to generate and send drag-and-drop events to the page. This function can be used to
-  // achieve that.
-  simulateDragAndDrop: function(srcSelector, dstSelector, dstX, dstY, dataTransferOverrides) {
-
-    function simulateDragAndDropInBrowser(src, dst, dstX, dstY, dataTransferOverrides) {
-      function createEvent(type) {
-        var event = new CustomEvent('CustomEvent');
-        event.initCustomEvent(type, true, true, null);
-        event.dataTransfer = {
-          data: {},
-          setData: function(type, value) {
-            this.data[type] = value;
-          },
-          getData: function(type) {
-            return this.data[type];
-          }
-        };
-        return event;
-      }
-
-      var dragStartEvent = createEvent('dragstart');
-      src.dispatchEvent(dragStartEvent);
-      for (var key in dataTransferOverrides) {
-        if (dataTransferOverrides.hasOwnProperty(key)) {
-          dragStartEvent.dataTransfer.setData(key, dataTransferOverrides[key]);
-        }
-      }
-
-      var dropEvent = createEvent('drop');
-      dropEvent.pageX = dstX;
-      dropEvent.pageY = dstY;
-
-      dropEvent.dataTransfer = dragStartEvent.dataTransfer;
-      dst.dispatchEvent(dropEvent);
-
-      var dragEndEvent = createEvent('dragend');
-      dragEndEvent.dataTransfer = dragStartEvent.dataTransfer;
-      src.dispatchEvent(dragEndEvent);
-    }
-
-    browser.executeScript(
-      simulateDragAndDropInBrowser,
-      srcSelector.getWebElement(),
-      dstSelector.getWebElement(),
-      dstX, dstY,
-      dataTransferOverrides
-    );
   },
 
   waitUntilClickable: function(element) {
