@@ -12,7 +12,7 @@ module.exports = function(fw) {
       lib.workspace.addBox({
         id: 'sql', name: 'SQL1', x: 100, y: 200 });
       lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
-      var table = lib.workspace.openStateView('sql', 'table');
+      var table = lib.workspace.openStateView('sql', 'table').table;
       table.expect(
         ['age', 'gender', 'id', 'income', 'location', 'name'],
         ['Double', 'String', 'Long', 'Double', '(Double, Double)', 'String'],
@@ -26,7 +26,7 @@ module.exports = function(fw) {
 
   function runSQL(query) {
     lib.workspace.editBox('sql', { sql: query });
-    return lib.workspace.getStateView('sql', 'table');
+    return lib.workspace.getStateView('sql', 'table').table;
   }
 
   function sqlTest(name, query, checks, solo) {
