@@ -3035,7 +3035,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       // We're using the same project editor for both
       // |segmentation and |segmentation!edges
       protected def attributeEditor(input: String): AttributeEditor = {
-        val fullInputDesc = paramValues.getOrElse("apply_to_" + input, "")
+        val fullInputDesc = params("apply_to_" + input)
 
         val attributeEditorPath = SubProject.splitPipedPath(fullInputDesc)
         val edgeEditor = attributeEditorPath.last.endsWith(edgeMarker)
@@ -3050,7 +3050,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
                                            input: String,
                                            title: String): OperationParams.SegmentationParam = {
         val param = titlePrefix + input
-        reservedParameter(param)
         val vertexAttributeEditors =
           context.inputs(input).project.segmentationsRecursively
         val edgeAttributeEditors =
@@ -3061,65 +3060,50 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         OperationParams.SegmentationParam(param, title, attributeEditors)
       }
 
-      override protected def allParameters: List[OperationParameterMeta] = {
-        val editorParams = List(
-          attributeEditorParameter("apply_to_", "left", "Apply to (left)"),
-          attributeEditorParameter("apply_to_", "right", "Take from (right)")
-        )
-
-        editorParams ++ parameters
+      override protected val params = {
+        val p = new ParameterHolder(context)
+        p += attributeEditorParameter("apply_to_", "left", "Apply to (left)")
+        p += attributeEditorParameter("apply_to_", "right", "Take from (right)")
+        p
       }
 
       private def toFEList(s: Seq[String]): List[FEOption] =
         s.map(name => FEOption(name, name)).toList
 
       // TODO: Extend this to allow filtered vertex sets to be compatible
-      private def compatible(a: Option[VertexSet], b: Option[VertexSet]): Boolean = {
+      private def compatibleIdSets(a: Option[VertexSet], b: Option[VertexSet]): Boolean = {
         a.isDefined && b.isDefined && a.get == b.get
       }
+      private def compatible = compatibleIdSets(left.idSet, right.idSet)
 
-      private lazy val left = attributeEditor("left")
-      private lazy val right = attributeEditor("right")
-      var disabledReason: String = ""
-      lazy val parameters = {
-        if (!compatible(left.idSet, right.idSet)) {
-          disabledReason = "Left and right are not compatible"
-          List()
-        } else {
-          val l = new scala.collection.mutable.ListBuffer[OperationParameterMeta]
-          if (right.names.nonEmpty) {
-            l += TagList("attr", "Attributes", toFEList(right.names))
-          }
-          if (left.kind == VertexAttributeKind
-            && right.kind == VertexAttributeKind
-            && right.projectEditor.segmentationNames.nonEmpty) {
-            l += TagList("sg", "Segmentations", toFEList(right.projectEditor.segmentationNames))
-          }
-          disabledReason =
-            if (l.isEmpty) "Nothing can be joined from the right to the left"
-            else ""
-          l.toList
-        }
+      private val left = attributeEditor("left")
+      private val right = attributeEditor("right")
+
+      private def attributesAreAvailable = right.names.nonEmpty
+      private def segmentationsAreAvailable = {
+        (left.kind == VertexAttributeKind) &&
+          (right.kind == VertexAttributeKind) && (right.projectEditor.segmentationNames.nonEmpty)
       }
 
-      def enabled = FEStatus(disabledReason.isEmpty, disabledReason)
-
-      override protected def splitParam(param: String): Seq[String] = {
-        if (!params.contains(param)) {
-          Seq()
-        } else {
-          super.splitParam(param)
-        }
+      if (compatible && attributesAreAvailable) {
+        params += TagList("attr", "Attributes", toFEList(right.names))
       }
+      if (compatible && segmentationsAreAvailable) {
+        params += TagList("sg", "Segmentations", toFEList(right.projectEditor.segmentationNames))
+      }
+
+      def enabled = FEStatus(compatible, "Left and right are not compatible") &&
+        FEStatus(attributesAreAvailable || segmentationsAreAvailable, "Nothing to join")
 
       def apply() {
-        for (attrName <- splitParam("attr")) {
-          val attr = right.attributes(attrName)
-          val note = right.getElementNote(attrName)
-          left.newAttribute(attrName, attr, note)
+        if (attributesAreAvailable) {
+          for (attrName <- splitParam("attr")) {
+            val attr = right.attributes(attrName)
+            val note = right.getElementNote(attrName)
+            left.newAttribute(attrName, attr, note)
+          }
         }
-
-        if (left.kind == VertexAttributeKind) {
+        if (segmentationsAreAvailable) {
           for (segmName <- splitParam("sg")) {
             val leftEditor = left.projectEditor
             val rightEditor = right.projectEditor
@@ -3131,7 +3115,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             leftSegm.segmentationState = rightSegm.segmentationState
           }
         }
-
         project.state = left.projectEditor.rootEditor.state
       }
     }
