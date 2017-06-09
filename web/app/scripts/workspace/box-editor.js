@@ -90,9 +90,16 @@ angular.module('biggraph')
         scope.newOpSelected = function(box, boxMeta) {
           // We avoid replacing the objects if the data has not changed.
           // This is to avoid recreating the DOM for the parameters. (Which would lose the focus.)
+          // We replace objects in the following cases:
+          // - box data did not exist before (box editor initialization)
+          // - box data was changed (box parameter change)
+          // - output state of the box was changed (In this case
+          //   the visualization state editors need to be updated,
+          //   because they are using the project state from the output
+          //   of the operation.)
           if (scope.box === undefined ||
-              !angular.equals(box.instance, scope.box.instance) /* parameters were changed */ ||
-              outputStatesDiffer(box, scope.box) /* visualization editor needs this */) {
+              !angular.equals(box.instance, scope.box.instance) ||
+              outputStatesDiffer(box, scope.box)) {
             onBlurNow(); // Switching to a different box is also "blur".
             scope.box = box;
           }
