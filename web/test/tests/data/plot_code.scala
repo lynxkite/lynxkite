@@ -1,5 +1,5 @@
 Vegas("Simple bar chart")
-  .withData(Data)
+  .withData(table)
   .encodeX("product", Ordinal)
   .encodeY("cnt", Quantitative)
   .mark(Bar)
