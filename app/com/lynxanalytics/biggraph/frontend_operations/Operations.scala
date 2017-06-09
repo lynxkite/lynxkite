@@ -2997,141 +2997,161 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Join", StructureOperations, "left", "right")(
     new ProjectOutputOperation(_) {
 
-      private def extendSegmentationParameters(originalList: List[FEOption],
-                                               suffixes: List[String]): List[FEOption] = {
-        originalList.flatMap(feOption => suffixes.map(suffix =>
-          FEOption(feOption.id + suffix, feOption.title + suffix)
-        )
-        ).sortBy(_.title)
+      trait AttributeEditor {
+        def projectEditor: ProjectEditor
+        def kind: ElementKind
+        def newAttribute(name: String, attr: Attribute[_], note: String = null): Unit
+        def attributes: StateMapHolder[Attribute[_]]
+        def idSet: Option[VertexSet]
+        def names: Seq[String]
+
+        def setElementNote(name: String, note: String) = {
+          projectEditor.setElementNote(kind, name, note)
+        }
+        def getElementNote(name: String) = {
+          projectEditor.viewer.getElementNote(kind, name)
+        }
       }
 
-      // We have to skip the assert in the base class here, because we need to have the
-      // same ProjectEditor for multiple "segmentations"
+      class VertexAttributeEditor(editor: ProjectEditor) extends AttributeEditor {
+        override def projectEditor = editor
+        override def kind = VertexAttributeKind
+        override def attributes = editor.vertexAttributes
+        override def newAttribute(name: String, attr: Attribute[_], note: String = null) = {
+          editor.newVertexAttribute(name, attr, note)
+        }
+        override def idSet = Option(editor.vertexSet)
+        override def names: Seq[String] = {
+          editor.vertexAttributeNames
+        }
+      }
+
+      class EdgeAttributeEditor(editor: ProjectEditor) extends AttributeEditor {
+        override def projectEditor = editor
+        override def kind = EdgeAttributeKind
+        override def attributes = editor.edgeAttributes
+        override def newAttribute(name: String, attr: Attribute[_], note: String = null) = {
+          editor.newEdgeAttribute(name, attr, note)
+        }
+        override def idSet = Option(editor.edgeBundle).map(_.idSet)
+
+        override def names: Seq[String] = {
+          editor.edgeAttributeNames
+        }
+      }
+
       override protected def projectInput(input: String): ProjectEditor = {
-        val segPath = SubProject.splitPipedPath(paramValues.getOrElse("apply_to_" + input, ""))
-        context.inputs(input).project.offspringEditor(segPath.tail)
+        throw new AssertionError("This projectInput would not be compatible with anything! Don't use it!")
       }
 
-      private def segmentationParameter(titlePrefix: String,
-                                        input: String,
-                                        title: String): OperationParams.SegmentationParam = {
+      private val edgeMarker = "!edges"
+      private def withEdgeMarker(s: String) = s + edgeMarker
+      private def withoutEdgeMarker(s: String) = {
+        if (s.endsWith(edgeMarker)) s.dropRight(edgeMarker.length)
+        else s
+      }
+
+      // We're using the same project editor for both
+      // |segmentation and |segmentation!edges
+      protected def attributeEditor(input: String): AttributeEditor = {
+        val fullInputDesc = paramValues.getOrElse("apply_to_" + input, "")
+
+        val attributeEditorPath = SubProject.splitPipedPath(fullInputDesc)
+        val edgeEditor = attributeEditorPath.last.endsWith(edgeMarker)
+        val segmentationEditorPath = attributeEditorPath.map(withoutEdgeMarker(_))
+
+        val editor = context.inputs(input).project.offspringEditor(segmentationEditorPath.tail)
+        if (edgeEditor) new EdgeAttributeEditor(editor)
+        else new VertexAttributeEditor(editor)
+      }
+
+      private def attributeEditorParameter(titlePrefix: String,
+                                           input: String,
+                                           title: String): OperationParams.SegmentationParam = {
         val param = titlePrefix + input
         reservedParameter(param)
-        val originalSegmentations =
+        val vertexAttributeEditors =
           context.inputs(input).project.segmentationsRecursively
-        val segList = extendSegmentationParameters(originalSegmentations, List(" vertices", " edges"))
-        OperationParams.SegmentationParam(param, title, segList)
+        val edgeAttributeEditors =
+          vertexAttributeEditors.map(x => FEOption(id = withEdgeMarker(x.id), title = withEdgeMarker(x.title)))
+
+        val attributeEditors = (vertexAttributeEditors ++ edgeAttributeEditors).sortBy(_.title)
+        // TODO: This should be something like an OperationParams.AttributeEditorParam
+        OperationParams.SegmentationParam(param, title, attributeEditors)
       }
 
       override protected def allParameters: List[OperationParameterMeta] = {
-        val segParams = List(
-          segmentationParameter("apply_to_", "left", "Apply to (left)"),
-          segmentationParameter("apply_to_", "right", "Take from (right)"))
-        segParams ++ parameters
+        val editorParams = List(
+          attributeEditorParameter("apply_to_", "left", "Apply to (left)"),
+          attributeEditorParameter("apply_to_", "right", "Take from (right)")
+        )
+
+        editorParams ++ parameters
       }
 
       private def toFEList(s: Seq[String]): List[FEOption] =
         s.map(name => FEOption(name, name)).toList
-
-      case class JoinSideInfo(apply_target: String) {
-        assert(apply_target == "left" || apply_target == "right",
-          s"Invalid apply_target: $apply_target")
-        val editor = projectInput(apply_target)
-        val param = context.box.parameters.getOrElse(s"apply_to_${apply_target}", " vertices")
-        val isVertex = param.endsWith(" vertices")
-        val edgeIdSet: Option[VertexSet] = {
-          if (editor.edgeBundle != null) Some(editor.edgeBundle.idSet)
-          else None
-        }
-
-        val idSet: Option[VertexSet] = {
-          if (isVertex) {
-            Option(editor.vertexSet)
-          } else {
-            edgeIdSet
-          }
-        }
-        override def toString = s"$apply_target $editor $param $isVertex $idSet"
-      }
 
       // TODO: Extend this to allow filtered vertex sets to be compatible
       private def compatible(a: Option[VertexSet], b: Option[VertexSet]): Boolean = {
         a.isDefined && b.isDefined && a.get == b.get
       }
 
-      private lazy val left = JoinSideInfo("left")
-      private lazy val right = JoinSideInfo("right")
+      private lazy val left = attributeEditor("left")
+      private lazy val right = attributeEditor("right")
+      var disabledReason: String = ""
       lazy val parameters = {
-        val fullList =
-          if (left.isVertex) {
-            List(
-              TagList("va", "Attributes", toFEList(right.editor.vertexAttributeNames)),
-              TagList("sg", "Segmentations", toFEList(right.editor.segmentationNames)),
-              Choice("edges", "Edges", FEOption.bools))
-          } else {
-            List(
-              TagList("ea", "Attributes", toFEList(right.editor.edgeAttributeNames)))
-          }
-        filterInvalids(fullList)
-      }
-
-      private def filterInvalids(params: List[OperationParameterMeta]): List[OperationParameterMeta] = {
-        val comp = compatible(left.idSet, right.idSet)
-        params.filter {
-          case _: Choice => compatible(left.edgeIdSet, right.edgeIdSet)
-          case x: TagList => comp && x.options.nonEmpty
-          case _ => ???
-        }
-      }
-
-      def enabled = FEStatus(parameters.nonEmpty,
-        "Left and right are incompatible - no join is possible")
-
-      def getMultiParameters(id: String): List[String] = {
-        if (params.contains(id)) {
-          params(id).split(",").toList
-        } else {
+        if (!compatible(left.idSet, right.idSet)) {
+          disabledReason = "Left and right are not compatible"
           List()
-        }
-      }
-
-      def applyForVertexTarget(): Unit = {
-        for (attrName <- getMultiParameters("va")) {
-          val va = right.editor.vertexAttributes(attrName)
-          val note = right.editor.viewer.getElementNote(VertexAttributeKind, attrName)
-          left.editor.newVertexAttribute(attrName, va, note)
-        }
-        for (segName <- getMultiParameters("sg")) {
-          val rightSeg = right.editor.existingSegmentation(segName)
-          left.editor.segmentation(segName).state = rightSeg.state
-          val note = right.editor.viewer.getElementNote(SegmentationKind, segName)
-          left.editor.setElementNote(SegmentationKind, segName, note)
-        }
-        if (params.getOrElse("edges", "false") == "true") {
-          left.editor.edgeBundle = right.editor.edgeBundle
-          for (attrName <- right.editor.edgeAttributeNames) {
-            val ea = right.editor.edgeAttributes(attrName)
-            val note = right.editor.viewer.getElementNote(EdgeAttributeKind, attrName)
-            left.editor.newEdgeAttribute(attrName, ea, note)
+        } else {
+          val l = new scala.collection.mutable.ListBuffer[OperationParameterMeta]
+          if (right.names.nonEmpty) {
+            l += TagList("attr", "Attributes", toFEList(right.names))
           }
+          if (left.kind == VertexAttributeKind
+            && right.kind == VertexAttributeKind
+            && right.projectEditor.segmentationNames.nonEmpty) {
+            l += TagList("sg", "Segmentations", toFEList(right.projectEditor.segmentationNames))
+          }
+          disabledReason =
+            if (l.isEmpty) "Nothing can be joined from the right to the left"
+            else ""
+          l.toList
         }
       }
 
-      def applyForEdgeTarget(): Unit = {
-        for (attrName <- getMultiParameters("ea")) {
-          val ea = right.editor.edgeAttributes(attrName)
-          val note = right.editor.viewer.getElementNote(EdgeAttributeKind, attrName)
-          left.editor.newEdgeAttribute(attrName, ea, note)
+      def enabled = FEStatus(disabledReason.isEmpty, disabledReason)
+
+      override protected def splitParam(param: String): Seq[String] = {
+        if (!params.contains(param)) {
+          Seq()
+        } else {
+          super.splitParam(param)
         }
       }
 
       def apply() {
-        if (left.isVertex) {
-          applyForVertexTarget()
-        } else {
-          applyForEdgeTarget()
+        for (attrName <- splitParam("attr")) {
+          val attr = right.attributes(attrName)
+          val note = right.getElementNote(attrName)
+          left.newAttribute(attrName, attr, note)
         }
-        project.state = left.editor.rootEditor.state
+
+        if (left.kind == VertexAttributeKind) {
+          for (segmName <- splitParam("sg")) {
+            val leftEditor = left.projectEditor
+            val rightEditor = right.projectEditor
+            if (leftEditor.segmentationNames.contains(segmName)) {
+              leftEditor.deleteSegmentation(segmName)
+            }
+            val rightSegm = rightEditor.existingSegmentation(segmName)
+            val leftSegm = leftEditor.segmentation(segmName)
+            leftSegm.segmentationState = rightSegm.segmentationState
+          }
+        }
+
+        project.state = left.projectEditor.rootEditor.state
       }
     }
   )
