@@ -32,13 +32,7 @@ angular.module('biggraph')
 
         scope.applyVisualizationData = function() {
           if (scope.visualization.$resolved) {
-            var state = {
-              left: undefined,
-              right: undefined,
-            };
-            if (scope.visualization.state) {
-              state = JSON.parse(scope.visualization.state);
-            }
+            var state = scope.visualization;
             scope.left.updateFromBackendJson(state.left);
             scope.right.updateFromBackendJson(state.right);
             var leftPromise = scope.left.reload();
