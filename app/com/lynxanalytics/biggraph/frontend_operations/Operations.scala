@@ -1343,7 +1343,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
-  registerOp("Load snapshot", StructureOperations,
+  registerOp("Load snapshot", "black_medium_square", StructureOperations,
     inputs = List(), outputs = List("state"), factory = new SimpleOperation(_) {
       params += Param("path", "Path")
       override def getOutputs() = {
