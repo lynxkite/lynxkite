@@ -85,7 +85,7 @@ angular.module('biggraph')
               scope.plotJSON = util.lazyFetchScalarValue(scope.plot.json, true);
             }, function() {}
           );
-        }, true);
+        });
 
         scope.$watchGroup([
           'popupModel.width', 'popupModel.height',
@@ -98,12 +98,10 @@ angular.module('biggraph')
           }
          );
 
-        scope.$watch('embedSpec.spec.description', function(newValue, oldValue, scope) {
+        scope.$watch('embedSpec.spec.description', function(title) {
           // Refresh title after embedding the plot
-          if (scope.embedSpec.spec && scope.embedSpec.spec.description) {
-            scope.title = scope.embedSpec.spec.description;
-          }
-        }, true);
+          scope.title = title;
+        });
 
         scope.$watch('plotJSON', function(newValue, oldValue, scope) {
           if (scope.plotJSON && scope.plotJSON.value && scope.plotJSON.value.string) {
