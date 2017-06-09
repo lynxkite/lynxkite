@@ -169,6 +169,7 @@ Workspace.prototype = {
     var after = boxData.after;
     var inputs = boxData.inputs;
     var params = boxData.params;
+    browser.waitForAngular();
     browser.executeScript(`
         $(document.querySelector('#workspace-drawing-board')).scope().workspace.addBox(
           '${ boxData.name }',
