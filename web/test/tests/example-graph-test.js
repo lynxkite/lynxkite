@@ -7,7 +7,7 @@ module.exports = function(fw) {
     'empty test-example workspace',
     'test-example workspace with example graph',
     function() {
-      lib.workspace.addBox({ id: 'eg0', name: 'create example graph', x: 100, y: 100 });
+      lib.workspace.addBox({ id: 'eg0', name: 'Create example graph', x: 100, y: 100 });
     },
     function() {
     });
@@ -36,9 +36,9 @@ module.exports = function(fw) {
     'test-example workspace with example graph',
     'test-example workspace with reverse edges',
     function() {
-      lib.workspace.addBox({ id: 'eg1', name: 'create example graph', x: 350, y: 100 });
+      lib.workspace.addBox({ id: 'eg1', name: 'Create example graph', x: 350, y: 100 });
       lib.workspace.addBox({
-        id: 'reversed-edges', name: 'add reversed edges', x: 100, y: 200, after: 'eg0' });
+        id: 'reversed-edges', name: 'Add reversed edges', x: 100, y: 200, after: 'eg0' });
     },
     function() {
     });

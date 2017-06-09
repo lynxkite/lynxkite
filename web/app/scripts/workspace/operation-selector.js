@@ -6,6 +6,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout) {
   return {
     restrict: 'E',
     scope: {
+      ondrag: '&',
       boxCatalog: '=',  // (Input.) List of available boxes.
     },
     templateUrl: 'scripts/workspace/operation-selector.html',
@@ -81,19 +82,14 @@ angular.module('biggraph').directive('operationSelector', function($timeout) {
           startSearch();
         }
       };
-      scope.closeCurrentCatOrSearch = function() {
+
+      scope.localOndrag = function(op, event) {
         scope.searching = undefined;
         scope.lastCat = scope.category;
         scope.category = undefined;
+        scope.ondrag({ op: op, $event: event });
       };
-      scope.openLastCatOrSearch = function() {
-        if (scope.lastCat) {
-          scope.category = scope.lastCat;
-        } else {
-          scope.searching = true;
-          scope.opFilter = '';
-        }
-      };
+
       scope.filterAndSort = function(boxes, opFilter) {
         if (opFilter) {
           /* global Fuse */
