@@ -3021,10 +3021,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         }
       }
 
-      override protected def projectInput(input: String): ProjectEditor = {
-        throw new AssertionError("This projectInput would not be compatible with anything! Don't use it!")
-      }
-
       private val edgeMarker = "!edges"
       private def withEdgeMarker(s: String) = s + edgeMarker
       private def withoutEdgeMarker(s: String) = {
