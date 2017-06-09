@@ -93,7 +93,8 @@ angular.module('biggraph')
         }, function(stateId) {
           if (stateId) {
             scope.instrumentStateId = stateId;
-            scope.instrumentStateKind = scope.instrumentWorkspace.getBox(scope.instrumentBoxId).outputMap[scope.instrumentPlugId].kind;
+            var box = scope.instrumentWorkspace.getBox(scope.instrumentBoxId);
+            scope.instrumentStateKind = box.outputMap[scope.instrumentPlugId].kind;
           }
         });
       },
