@@ -171,16 +171,18 @@ angular.module('biggraph')
           var h = 500;
           var eventX = event.pageX - w / 2;
           var eventY = event.pageY - h / 2;
+          var minX = 0;
+          var minY = svgElement.offset().top; // Do not overlap toolbar.
           var maxX = angular.element(window).width() - w;
           var maxY = angular.element(window).height() - h;
-          var bestX = maxX / 2;
-          var bestY = maxY / 2;
+          var bestX = (minX + maxX) / 2;
+          var bestY = (minY + maxY) / 2;
           var minDist = Math.sqrt(w * w + h * h) / 2;
           function len(x, y) { return Math.sqrt(x * x + y * y); }
           var bestDist = len(bestX - eventX, bestY - eventY);
           for (var i = 0; i < 100; ++i) {
-            var rndX = Math.random() * maxX;
-            var rndY = Math.random() * maxY;
+            var rndX = minX + Math.random() * (maxX - minX);
+            var rndY = minY + Math.random() * (maxY - minY);
             var dist = len(rndX - eventX, rndY - eventY);
             if (dist < minDist) { continue; }
             if (bestDist < minDist || dist < bestDist) {
