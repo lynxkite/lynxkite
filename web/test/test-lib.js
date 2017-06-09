@@ -373,10 +373,13 @@ State.prototype = {
 };
 
 function PlotState(popup) {
+  this.popup = popup;
   this.canvas = popup.$('#plot-div .vega svg');
 }
 
 PlotState.prototype = {
+  close: State.prototype.close,
+
   barHeights: function() {
     return this.canvas.$$('g.mark-rect.marks rect').map(e => e.getAttribute('height'));
   },
@@ -388,11 +391,14 @@ PlotState.prototype = {
 
 
 function TableState(popup) {
+  this.popup = popup;
   this.sample = popup.$('#table-sample');
   this.control = popup.$('#table-control');
 }
 
 TableState.prototype = {
+  close: State.prototype.close,
+
   expect: function(names, types, rows) {
     this.expectColumnNamesAre(names);
     this.expectColumnTypesAre(types);
