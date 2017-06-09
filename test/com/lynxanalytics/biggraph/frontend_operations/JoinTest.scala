@@ -10,7 +10,7 @@ class JoinTest extends OperationsTestBase {
         "Add constant vertex attribute",
         Map("name" -> "seven", "value" -> "7", "type" -> "Double"))
     val left = root
-    val project = box("Join", Map("attr" -> "seven"), Seq(left, right)).project
+    val project = box("Join projects", Map("attrs" -> "seven"), Seq(left, right)).project
 
     val values = project.vertexAttributes("seven").rdd.collect.toMap.values.toSeq
 
@@ -25,11 +25,11 @@ class JoinTest extends OperationsTestBase {
         Map("name" -> "eight", "value" -> "8", "type" -> "Double"))
     val left = root
     val project = box(
-      "Join",
+      "Join projects",
       Map(
-        "apply_to_left" -> "!edges",
-        "apply_to_right" -> "!edges",
-        "attr" -> "eight"), Seq(left, right)).project
+        "apply_to_a" -> "!edges",
+        "apply_to_b" -> "!edges",
+        "attrs" -> "eight"), Seq(left, right)).project
 
     val values = project.edgeAttributes("eight").rdd.collect.toMap.values.toSeq
 
@@ -62,11 +62,11 @@ class JoinTest extends OperationsTestBase {
           "name" -> "ten",
           "value" -> "10",
           "type" -> "Double"))
-    val project = box("Join",
+    val project = box("Join projects",
       Map(
-        "apply_to_left" -> "",
-        "apply_to_right" -> "",
-        "sg" -> "bucketing"
+        "apply_to_a" -> "",
+        "apply_to_b" -> "",
+        "segs" -> "bucketing"
       ), Seq(left, right)
     ).project
 
@@ -84,11 +84,11 @@ class JoinTest extends OperationsTestBase {
         "Take edges as vertices",
         Map())
 
-    val project = box("Join",
+    val project = box("Join projects",
       Map(
-        "apply_to_left" -> "!edges",
-        "apply_to_right" -> "",
-        "attr" -> "dst_name,dst_gender"
+        "apply_to_a" -> "!edges",
+        "apply_to_b" -> "",
+        "attrs" -> "dst_name,dst_gender"
       ), Seq(left, right)
     ).project
 
