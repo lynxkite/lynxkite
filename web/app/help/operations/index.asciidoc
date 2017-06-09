@@ -417,7 +417,7 @@ include::train-a-logistic-regression-model.asciidoc[]
 
 include::train-linear-regression-model.asciidoc[]
 
-include::union-with-another-project.asciidoc[]
+include::union-of-projects.asciidoc[]
 
 include::weighted-aggregate-edge-attribute-globally.asciidoc[]
 

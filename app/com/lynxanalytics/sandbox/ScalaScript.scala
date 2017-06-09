@@ -142,7 +142,7 @@ object ScalaScript {
     val data = dfToSeq(df)
     val timeoutInSeconds = LoggedEnvironment.envOrElse("SCALASCRIPT_TIMEOUT_SECONDS", "10").toLong
     withContextClassLoader {
-      engine.put("Data: Seq[Map[String, Any]]", data)
+      engine.put("table: Seq[Map[String, Any]]", data)
       val fullCode = s"""
       import vegas._
       val plot = {

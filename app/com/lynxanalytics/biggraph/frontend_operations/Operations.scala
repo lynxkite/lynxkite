@@ -32,19 +32,20 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   private val projectInput = "project" // The default input name, just to avoid typos.
   private val projectOutput = "project"
+  private val defaultIcon = "black_question_mark_ornament"
 
   def register(
     id: String,
     category: Category,
     factory: Context => ProjectTransformation): Unit = {
-    registerOp(id, category, List(projectInput), List(projectOutput), factory)
+    registerOp(id, defaultIcon, category, List(projectInput), List(projectOutput), factory)
   }
 
   def register(
     id: String,
     category: Category,
     inputProjects: String*)(factory: Context => Operation): Unit = {
-    registerOp(id, category, inputProjects.toList, List(projectOutput), factory)
+    registerOp(id, defaultIcon, category, inputProjects.toList, List(projectOutput), factory)
   }
 
   trait SegOp extends ProjectTransformation {
@@ -71,15 +72,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   val StructureOperations = Category("Structure operations", "pink", icon = "asterisk")
   val MachineLearningOperations = Category("Machine learning operations", "pink ", icon = "knight")
   val UtilityOperations = Category("Utility operations", "green", icon = "wrench", sortKey = "zz")
-
-  def getAndCheckProjectCheckpoint(readableProjectCheckpoint: String) = {
-    val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(
-      readableProjectCheckpoint,
-      customError =
-        s"Obsolete project reference: $readableProjectCheckpoint. Please select a new project from the dropdown.")
-    assert(suffix == "", s"Invalid project reference $readableProjectCheckpoint with suffix $suffix")
-    (cp, title, suffix)
-  }
 
   import OperationParams._
 
@@ -178,7 +170,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   registerOp(
-    "Import vertices", ImportOperations,
+    "Import vertices", defaultIcon, ImportOperations,
     inputs = List("vertices"), outputs = List(projectOutput),
     factory = new ProjectOutputOperation(_) {
       lazy val vertices = tableLikeInput("vertices").asProject
@@ -200,7 +192,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   registerOp(
-    "Import edges for existing vertices", ImportOperations,
+    "Import edges for existing vertices", defaultIcon, ImportOperations,
     inputs = List(projectInput, "edges"), outputs = List(projectOutput),
     factory = new ProjectOutputOperation(_) {
       override lazy val project = projectInput("project")
@@ -234,7 +226,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   registerOp(
-    "Import vertices and edges from a single table", ImportOperations,
+    "Import vertices and edges from a single table", defaultIcon, ImportOperations,
     inputs = List("edges"), outputs = List(projectOutput),
     factory = new ProjectOutputOperation(_) {
       lazy val edges = tableLikeInput("edges").asProject
@@ -262,7 +254,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   registerOp(
-    "Import vertex attributes", ImportOperations,
+    "Import vertex attributes", defaultIcon, ImportOperations,
     inputs = List(projectInput, "attributes"),
     outputs = List(projectOutput),
     factory = new ProjectOutputOperation(_) {
@@ -304,7 +296,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   registerOp(
-    "Import edge attributes", ImportOperations,
+    "Import edge attributes", defaultIcon, ImportOperations,
     inputs = List(projectInput, "attributes"),
     outputs = List(projectOutput),
     factory = new ProjectOutputOperation(_) {
@@ -1352,14 +1344,14 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
-  register("Load snapshot", StructureOperations)(new ProjectOutputOperation(_) {
-    params += Param("path", "Path")
-    def enabled = FEStatus.enabled
-    def apply() = {
-      val snapshot = DirectoryEntry.fromName(params("path")).asSnapshotFrame
-      project.state = snapshot.getState.project.state
-    }
-  })
+  registerOp("Load snapshot", "black_medium_square", StructureOperations,
+    inputs = List(), outputs = List("state"), factory = new SimpleOperation(_) {
+      params += Param("path", "Path")
+      override def getOutputs() = {
+        val snapshot = DirectoryEntry.fromName(params("path")).asSnapshotFrame
+        Map(context.box.output("state") -> snapshot.getState)
+      }
+    })
 
   register("Hash vertex attribute", VertexAttributesOperations, new ProjectTransformation(_) {
     params ++= List(
@@ -2829,7 +2821,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   registerOp(
-    "Import segmentation links", ImportOperations,
+    "Import segmentation links", defaultIcon, ImportOperations,
     inputs = List(projectInput, "links"), outputs = List(projectOutput),
     factory = new ProjectOutputOperation(_) {
       override lazy val project = projectInput("project")
@@ -2884,7 +2876,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   registerOp(
-    "Import segmentation", ImportOperations,
+    "Import segmentation", defaultIcon, ImportOperations,
     inputs = List(projectInput, "segmentation"),
     outputs = List(projectOutput),
     factory = new ProjectOutputOperation(_) {
@@ -2987,15 +2979,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
-  register("Union with another project", StructureOperations, "a", "b")(new ProjectOutputOperation(_) {
+  register("Union of projects", StructureOperations, "a", "b")(new ProjectOutputOperation(_) {
     override lazy val project = projectInput("a")
     lazy val other = projectInput("b")
     params += Param("id_attr", "ID attribute name", defaultValue = "new_id")
     def enabled = project.hasVertexSet && other.hasVertexSet
-    override def summary = {
-      val (cp, title, suffix) = FEOption.unpackTitledCheckpoint(params("other"))
-      s"Union with $title"
-    }
 
     def checkTypeCollision(other: ProjectViewer) = {
       val commonAttributeNames =
@@ -3749,7 +3737,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   // TODO: Use dynamic inputs. #5820
   def registerSQLOp(name: String, inputs: List[String])(
     getProtoTables: Operation.Context => Map[String, ProtoTable]): Unit = {
-    registerOp(name, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) {
+    registerOp(name, defaultIcon, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) {
       override val params = new ParameterHolder(context) // No "apply_to" parameters.
       params += Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql")
       def enabled = FEStatus.enabled
