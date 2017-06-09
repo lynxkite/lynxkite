@@ -23,10 +23,12 @@ the original attributes and segmentations on the right side in case there is
 a name collision.
 
 ====
-[[attr]] Attributes::
+[[attrs]] Attributes::
 Attributes that should be joined to the project. They overwrite attributes in the
 left side project which have identical names.
-[[segm]] Segmentations::
+
+[[segs]] Segmentations::
 Segmentations to join to the project. They overwrite segmentations in the left
 side of the project which have identical names.
+
 ====
