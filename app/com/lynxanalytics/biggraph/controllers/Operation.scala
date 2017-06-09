@@ -339,7 +339,7 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
       input.kind match {
         case BoxOutputKind.Project =>
           val p = projectInput(name)
-          ??? // TODO: Do it with AttributesToTable.
+          graph_operations.AttributesToTable.run(p.vertexAttributes)
         case BoxOutputKind.Table =>
           tableInput(name)
       }
