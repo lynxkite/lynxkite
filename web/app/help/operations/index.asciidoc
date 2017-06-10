@@ -315,6 +315,8 @@ include::import-vertices.asciidoc[]
 
 include::input.asciidoc[]
 
+include::join-projects.asciidoc[]
+
 include::link-project-and-segmentation-by-fingerprint.asciidoc[]
 
 include::load-snapshot.asciidoc[]
