@@ -12,13 +12,15 @@ angular.module('biggraph')
         popupModel: '=',
       },
       link: function(scope) {
+        scope.sides = [];
+        scope.left = new side.Side(scope.sides, 'left', undefined);
+        scope.right = new side.Side(scope.sides, 'right', undefined);
+        scope.sides.push(scope.left);
+        scope.sides.push(scope.right);
 
         scope.$watch('stateId', function(newValue, oldValue, scope) {
-          scope.sides = [];
-          scope.left = new side.Side(scope.sides, 'left', scope.stateId);
-          scope.right = new side.Side(scope.sides, 'right', scope.stateId);
-          scope.sides.push(scope.left);
-          scope.sides.push(scope.right);
+          scope.left.stateId = scope.stateId;
+          scope.right.stateId = scope.stateId;
 
           scope.visualization = util.get('/ajax/getVisualizationOutput', {
             id: scope.stateId
