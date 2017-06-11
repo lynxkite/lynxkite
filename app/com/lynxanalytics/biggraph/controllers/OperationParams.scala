@@ -175,7 +175,13 @@ object OperationParams {
       title: String,
       defaultValue: String = "") extends OperationParameterMeta {
     val kind = "visualization"
-    def validate(value: String): Unit = {}
+    def validate(value: String): Unit = {
+      if (!value.isEmpty) {
+        import UIStatusSerialization._
+        val j = json.Json.parse(value)
+        j.as[TwoSidedUIStatus]
+      }
+    }
     val multipleChoice = false
     val options = List()
   }
