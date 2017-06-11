@@ -383,7 +383,7 @@ angular.module('biggraph')
         // Apply mutual exclusions and do initialization.
         if (setting === 'slider') {
           this.state.attributeTitles.color = undefined;
-          this.state.sliderPos = 50;
+          this.state.sliderPos = '50';
         } else if (setting === 'color') {
           this.state.attributeTitles.image = undefined;
           this.state.attributeTitles.slider = undefined;

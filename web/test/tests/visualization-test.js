@@ -2,7 +2,7 @@
 
 module.exports = function() {};
 
-// var fs = require('fs');
+var fs = require('fs');
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
@@ -101,10 +101,10 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox({
         id: 'sg0',
-        name: 'Segment by Double attribute',
+        name: 'Copy graph into a segmentation',
         x: 100, y: 200,
         after: 'eg0',
-        params: { attr: 'income', interval_size: '10'},
+        params: { name: 'seg' },
       });
       lib.workspace.addBox({
         id: 'vz0',
@@ -122,7 +122,7 @@ module.exports = function(fw) {
     function() {
     });
 
-  fw.statePreservingTest(
+  fw.transitionTest(
     'test-example workspace with visualization open',
     'sampled mode attribute visualizations',
     function() {
@@ -321,21 +321,20 @@ module.exports = function(fw) {
         ]);
       });
 
-      //lib.navigateToProject('test-example'); // Restore state.
-    });
-/*
-  fw.statePreservingTest(
-    'test-example workspace with example graph',
+    },
+    function() {});
+
+  fw.transitionTest(
+    'test-example workspace with visualization open',
     'visualize as slider',
     function() {
       addConcurMatcher();
-      lib.left.toggleSampledVisualization();
       name.visualizeAs('label');
       age.visualizeAs('slider');
       var RED = 'rgb(161, 53, 53)';
       var YELLOW = 'rgb(184, 184, 46)';
       var GREEN = 'rgb(53, 161, 53)';
-      lib.visualization.graphData().then(function(graph) {
+      visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
           { label: 'Adam', color: GREEN },
           { label: 'Eve', color: GREEN },
@@ -346,7 +345,7 @@ module.exports = function(fw) {
       var K = protractor.Key;
 
       slider.sendKeys(K.HOME);
-      lib.visualization.graphData().then(function(graph) {
+      visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
           { label: 'Adam', color: RED },
           { label: 'Eve', color: RED },
@@ -355,7 +354,7 @@ module.exports = function(fw) {
       });
 
       slider.sendKeys(K.RIGHT);
-      lib.visualization.graphData().then(function(graph) {
+      visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
           { label: 'Adam', color: RED },
           { label: 'Eve', color: YELLOW },
@@ -364,7 +363,7 @@ module.exports = function(fw) {
       });
 
       slider.sendKeys(K.RIGHT);
-      lib.visualization.graphData().then(function(graph) {
+      visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
           { label: 'Adam', color: RED },
           { label: 'Eve', color: GREEN },
@@ -373,7 +372,7 @@ module.exports = function(fw) {
       });
 
       slider.sendKeys(K.END);
-      lib.visualization.graphData().then(function(graph) {
+      visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
           { label: 'Adam', color: GREEN },
           { label: 'Eve', color: GREEN },
@@ -382,7 +381,7 @@ module.exports = function(fw) {
       });
 
       slider.sendKeys(K.LEFT);
-      lib.visualization.graphData().then(function(graph) {
+      visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
           { label: 'Adam', color: GREEN },
           { label: 'Eve', color: GREEN },
@@ -391,32 +390,33 @@ module.exports = function(fw) {
       });
 
       slider.sendKeys(K.LEFT);
-      lib.visualization.graphData().then(function(graph) {
+      visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
           { label: 'Adam', color: GREEN },
           { label: 'Eve', color: GREEN },
           { label: 'Bob', color: RED },
         ]);
       });
-    });
+    },
+    function() {});
 
-  fw.statePreservingTest(
-    'test-example workspace with example graph',
+  fw.transitionTest(
+    'test-example workspace with visualization open',
     'bucketed mode attribute visualizations',
     function() {
       addConcurMatcher();
-      lib.left.toggleBucketedVisualization();
-      lib.visualization.graphData().then(function(graph) {
+      editor.left.toggleBucketedVisualization();
+      visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur([{ src: 0, dst: 0 }]);
         expect(graph.vertices).toConcur([{ label: '4' }]);
       });
 
       gender.visualizeAs('x');
-      lib.visualization.graphData().then(function(graph) {
+      visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur([
-          { src: 0, dst: 1, width: '<6' },
-          { src: 1, dst: 0, width: '>6' },
-          { src: 1, dst: 1, width: '<6' },
+          { src: 0, dst: 1, width: '<12' },
+          { src: 1, dst: 0, width: '>12' },
+          { src: 1, dst: 1, width: '<12' },
         ]);
         expect(graph.vertices).toConcur([
           { label: '1' },
@@ -425,7 +425,7 @@ module.exports = function(fw) {
       });
 
       age.visualizeAs('y');
-      lib.visualization.graphData().then(function(graph) {
+      visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur([
           { src: 0, dst: 2, width: '>2' },
           { src: 2, dst: 0, width: '>2' },
@@ -439,27 +439,25 @@ module.exports = function(fw) {
           { label: '1' },
         ]);
       });
+    },
+    function() {});
 
-      lib.navigateToProject('test-example'); // Restore state.
-    });
-
-  fw.statePreservingTest(
-    'test-example workspace with example graph',
+  fw.transitionTest(
+    'test-example workspace with visualization open',
     'visualization for two open projects',
     function() {
       addConcurMatcher();
-      lib.left.toggleSampledVisualization();
       name.visualizeAs('label');
       var leftPositions;
-      lib.visualization.graphData().then(function(graph) {
+      visualization.graphData().then(function(graph) {
         leftPositions = positions(graph);
         expect(graph.vertices.length).toBe(3);
       });
 
-      lib.right.openSecondProject('test-example');
-      lib.right.toggleBucketedVisualization();
-      lib.right.vertexAttribute('gender').visualizeAs('y');
-      lib.visualization.graphData().then(function(graph) {
+      editor.left.openSegmentation('seg');
+      editor.right.toggleBucketedVisualization();
+      editor.right.vertexAttribute('gender').visualizeAs('y');
+      visualization.graphData().then(function(graph) {
         // Make sure the original vertices did not move.
         function matchPos(a, b) {
           return a.x.toFixed(3) === b.x.toFixed(3) && a.y.toFixed(3) === b.y.toFixed(3);
@@ -476,20 +474,16 @@ module.exports = function(fw) {
           expect(found).toBe(true);
         }
         expect(graph.edges).toConcur([
-          { src: 0, dst: 1, width: '<6' },
-          { src: 0, dst: 3, width: '<6' },
-          { src: 1, dst: 0, width: '<6' },
-          { src: 1, dst: 4, width: '<6' },
-          { src: 2, dst: 0, width: '<6' },
-          { src: 2, dst: 1, width: '<6' },
-          { src: 2, dst: 3, width: '<6' },
-          { src: 2, dst: 4, width: '<6' },
-          { src: 3, dst: 0, width: '<6' },
-          { src: 3, dst: 4, width: '<6' },
-          { src: 4, dst: 0, width: '<6' },
-          { src: 4, dst: 1, width: '>6' },
-          { src: 4, dst: 3, width: '>6' },
-          { src: 4, dst: 4, width: '<6' },
+          { src: 0, dst: 1, width: '<12' },
+          { src: 0, dst: 4, width: '<12' },
+          { src: 1, dst: 0, width: '<12' },
+          { src: 1, dst: 3, width: '<12' },
+          { src: 2, dst: 0, width: '<12' },
+          { src: 2, dst: 1, width: '<12' },
+          { src: 2, dst: 4, width: '<12' },
+          { src: 3, dst: 4, width: '<12' },
+          { src: 4, dst: 3, width: '>12' },
+          { src: 4, dst: 4, width: '<12' },
         ]);
         expect(graph.vertices).toConcur([
           { label: 'Adam' },
@@ -499,14 +493,12 @@ module.exports = function(fw) {
           { label: '3' },
         ]);
       });
-
       // Check TSV of this complex visualization.
       var expectedTSV = fs.readFileSync(__dirname + '/data/visualization-tsv-data.txt', 'utf8');
-      expect(lib.visualization.asTSV()).toEqual(expectedTSV);
+      expect(visualization.asTSV()).toEqual(expectedTSV);
+    },
+    function() {});
 
-      lib.navigateToProject('test-example'); // Restore state.
-    });
-*/
 /*
   fw.statePreservingTest(
     'test-example project with example graph',

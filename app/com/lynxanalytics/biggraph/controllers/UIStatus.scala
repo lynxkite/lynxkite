@@ -43,7 +43,8 @@ case class UIStatus(
   // For centers set by a getCenter request, the following parameters will be set
   // so that we can redo the getCenter request.
   lastCentersRequest: Option[UICenterRequest],
-  customVisualizationFilters: Option[Boolean])
+  customVisualizationFilters: Option[Boolean],
+  sliderPos: Option[String])
 case class TwoSidedUIStatus(
   left: Option[UIStatus],
   right: Option[UIStatus])
