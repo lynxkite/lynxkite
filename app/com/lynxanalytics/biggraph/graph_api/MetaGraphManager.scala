@@ -6,12 +6,13 @@ package com.lynxanalytics.biggraph.graph_api
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.util.UUID
+
 import play.api.libs.json
 import play.api.libs.json.Json
+
 import scala.collection.immutable
 import scala.collection.mutable
 import scala.reflect.runtime.universe.TypeTag
-
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers.CheckpointRepository
 import com.lynxanalytics.biggraph.graph_util.Timestamp
@@ -19,6 +20,7 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 class MetaGraphManager(val repositoryPath: String) {
   val checkpointRepo = MetaGraphManager.getCheckpointRepo(repositoryPath)
   val repositoryRoot = new File(repositoryPath).getParent()
+  val builtInsRoot = new File(repositoryRoot).getParent()
 
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
@@ -148,6 +150,7 @@ class MetaGraphManager(val repositoryPath: String) {
     mutable.Map[UUID, List[MetaGraphOperationInstance]]().withDefaultValue(List())
 
   initializeFromDisk()
+  createBuiltIns()
 
   private def internalApply(operationInstance: MetaGraphOperationInstance): Unit = {
     operationInstances(operationInstance.gUID) = operationInstance
@@ -246,6 +249,55 @@ class MetaGraphManager(val repositoryPath: String) {
         op.inputSig.tables
           .map(n => n -> table(inputs(n))).toMap))
   }
+
+  private def createBuiltIns() = {
+    if (!builtsInDirectoryExists()) {
+      log.info("Loading builtIns from disk...")
+      for ((file, j) <- MetaGraphManager.loadBuiltIns(builtInsRoot)) {
+        try {
+          val checkpoint = saveWorkspace(j)
+          val path = SymbolPath("projects") / "builtins" / file.getName()
+          setTag(path / "objectType", "workspace")
+          setTag(path / "checkpoint", checkpoint)
+          setTag(path / "nextCheckpoint", "")
+          setTag(path / "farthestCheckpoint", checkpoint)
+
+        } catch {
+          case e: Throwable => throw new Exception(s"failed to load $file.", e)
+        }
+      }
+      log.info("BuiltIns loaded from disk.")
+    }
+  }
+
+  private def saveWorkspace(j: json.JsValue): String = {
+    val time = Timestamp.toString
+    val repo = new File(repositoryPath, "checkpoints")
+    val dumpFile = new File(repo, s"dump-$time")
+    val finalFile = new File(repo, s"save-$time")
+    val fullCheckpoint = makeFullCheckpointFromWorkspace(j)
+    FileUtils.writeStringToFile(dumpFile, Json.prettyPrint(fullCheckpoint), "utf8")
+    dumpFile.renameTo(finalFile)
+    time
+  }
+
+  private def makeFullCheckpointFromWorkspace(j: json.JsValue) = {
+    val emptyMap = Map[String, String]()
+    val state = json.Json.obj(
+      "vertexAttributeGUIDs" -> emptyMap,
+      "edgeAttributeGUIDs" -> emptyMap,
+      "scalarGUIDs" -> emptyMap,
+      "segmentations" -> emptyMap,
+      "notes" -> "",
+      "elementNotes" -> emptyMap,
+      "elementMetadata" -> emptyMap
+    )
+    json.Json.obj("state" -> state, "previousCheckpoint" -> "", "lastOperationDesc" -> "", "workspace" -> j)
+  }
+
+  private def builtsInDirectoryExists(): Boolean = {
+    tagExists(List(Symbol("projects"), Symbol("builtIns")))
+  }
 }
 object MetaGraphManager {
   implicit class StringAsUUID(s: String) {
@@ -257,6 +309,15 @@ object MetaGraphManager {
     val opdir = new File(repo, "operations")
     if (!opdir.exists) opdir.mkdirs
     val files = opdir.listFiles.filter(_.getName.startsWith("save-")).sortBy(_.getName)
+    files.iterator.map { f =>
+      f -> Json.parse(FileUtils.readFileToString(f, "utf8"))
+    }
+  }
+
+  def loadBuiltIns(repo: String): Iterator[(File, json.JsValue)] = {
+    val opdir = new File(repo, "builtIns")
+    if (!opdir.exists) opdir.mkdirs
+    val files = opdir.listFiles.sortBy(_.getName)
     files.iterator.map { f =>
       f -> Json.parse(FileUtils.readFileToString(f, "utf8"))
     }
