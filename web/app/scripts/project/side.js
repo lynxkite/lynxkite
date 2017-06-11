@@ -339,7 +339,11 @@ angular.module('biggraph')
         that.pendingProject = this.load();
         return that.pendingProject.finally(
           function onFailure() {
-            that.project = that.pendingProject;
+            if (!angular.equals(that.project, that.pendingProject)) {
+              // This check is to avoid DOM-rebuild of entity
+              // drop popups.
+              that.project = that.pendingProject;
+            }
           });
       } else {
         this.state = defaultSideState();
