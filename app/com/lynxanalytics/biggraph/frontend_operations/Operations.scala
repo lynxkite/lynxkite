@@ -9,9 +9,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.model
-import com.lynxanalytics.biggraph.serving.FrontendJson
 import play.api.libs.json
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
@@ -31,19 +29,20 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   private val projectInput = "project" // The default input name, just to avoid typos.
   private val projectOutput = "project"
+  private val defaultIcon = "black_question_mark_ornament"
 
   def register(
     id: String,
     category: Category,
     factory: Context => ProjectTransformation): Unit = {
-    registerOp(id, category, List(projectInput), List(projectOutput), factory)
+    registerOp(id, defaultIcon, category, List(projectInput), List(projectOutput), factory)
   }
 
   def register(
     id: String,
     category: Category,
     inputProjects: String*)(factory: Context => Operation): Unit = {
-    registerOp(id, category, inputProjects.toList, List(projectOutput), factory)
+    registerOp(id, defaultIcon, category, inputProjects.toList, List(projectOutput), factory)
   }
 
   trait SegOp extends ProjectTransformation {
@@ -168,7 +167,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   registerOp(
-    "Import vertices", ImportOperations,
+    "Import vertices", defaultIcon, ImportOperations,
     inputs = List("vertices"), outputs = List(projectOutput),
     factory = new ProjectOutputOperation(_) {
       lazy val vertices = tableLikeInput("vertices").asProject
@@ -190,7 +189,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   registerOp(
-    "Import edges for existing vertices", ImportOperations,
+    "Import edges for existing vertices", defaultIcon, ImportOperations,
     inputs = List(projectInput, "edges"), outputs = List(projectOutput),
     factory = new ProjectOutputOperation(_) {
       override lazy val project = projectInput("project")
@@ -224,7 +223,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   registerOp(
-    "Import vertices and edges from a single table", ImportOperations,
+    "Import vertices and edges from a single table", defaultIcon, ImportOperations,
     inputs = List("edges"), outputs = List(projectOutput),
     factory = new ProjectOutputOperation(_) {
       lazy val edges = tableLikeInput("edges").asProject
@@ -252,7 +251,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   registerOp(
-    "Import vertex attributes", ImportOperations,
+    "Import vertex attributes", defaultIcon, ImportOperations,
     inputs = List(projectInput, "attributes"),
     outputs = List(projectOutput),
     factory = new ProjectOutputOperation(_) {
@@ -294,7 +293,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   registerOp(
-    "Import edge attributes", ImportOperations,
+    "Import edge attributes", defaultIcon, ImportOperations,
     inputs = List(projectInput, "attributes"),
     outputs = List(projectOutput),
     factory = new ProjectOutputOperation(_) {
@@ -1342,14 +1341,14 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
-  register("Load snapshot", StructureOperations)(new ProjectOutputOperation(_) {
-    params += Param("path", "Path")
-    def enabled = FEStatus.enabled
-    def apply() = {
-      val snapshot = DirectoryEntry.fromName(params("path")).asSnapshotFrame
-      project.state = snapshot.getState.project.state
-    }
-  })
+  registerOp("Load snapshot", "black_medium_square", StructureOperations,
+    inputs = List(), outputs = List("state"), factory = new SimpleOperation(_) {
+      params += Param("path", "Path")
+      override def getOutputs() = {
+        val snapshot = DirectoryEntry.fromName(params("path")).asSnapshotFrame
+        Map(context.box.output("state") -> snapshot.getState)
+      }
+    })
 
   register("Hash vertex attribute", VertexAttributesOperations, new ProjectTransformation(_) {
     params ++= List(
@@ -2819,7 +2818,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   registerOp(
-    "Import segmentation links", ImportOperations,
+    "Import segmentation links", defaultIcon, ImportOperations,
     inputs = List(projectInput, "links"), outputs = List(projectOutput),
     factory = new ProjectOutputOperation(_) {
       override lazy val project = projectInput("project")
@@ -2874,7 +2873,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
 
   registerOp(
-    "Import segmentation", ImportOperations,
+    "Import segmentation", defaultIcon, ImportOperations,
     inputs = List(projectInput, "segmentation"),
     outputs = List(projectOutput),
     factory = new ProjectOutputOperation(_) {
@@ -2976,6 +2975,138 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         project.scalars(scalarName) = them.scalars(origName)
       }
     })
+
+  register("Join projects", StructureOperations, "a", "b")(
+    new ProjectOutputOperation(_) {
+
+      trait AttributeEditor {
+        def projectEditor: ProjectEditor
+        def kind: ElementKind
+        def newAttribute(name: String, attr: Attribute[_], note: String = null): Unit
+        def attributes: StateMapHolder[Attribute[_]]
+        def idSet: Option[VertexSet]
+        def names: Seq[String]
+
+        def setElementNote(name: String, note: String) = {
+          projectEditor.setElementNote(kind, name, note)
+        }
+        def getElementNote(name: String) = {
+          projectEditor.viewer.getElementNote(kind, name)
+        }
+      }
+
+      class VertexAttributeEditor(editor: ProjectEditor) extends AttributeEditor {
+        override def projectEditor = editor
+        override def kind = VertexAttributeKind
+        override def attributes = editor.vertexAttributes
+        override def newAttribute(name: String, attr: Attribute[_], note: String = null) = {
+          editor.newVertexAttribute(name, attr, note)
+        }
+        override def idSet = Option(editor.vertexSet)
+        override def names: Seq[String] = {
+          editor.vertexAttributeNames
+        }
+      }
+
+      class EdgeAttributeEditor(editor: ProjectEditor) extends AttributeEditor {
+        override def projectEditor = editor
+        override def kind = EdgeAttributeKind
+        override def attributes = editor.edgeAttributes
+        override def newAttribute(name: String, attr: Attribute[_], note: String = null) = {
+          editor.newEdgeAttribute(name, attr, note)
+        }
+        override def idSet = Option(editor.edgeBundle).map(_.idSet)
+
+        override def names: Seq[String] = {
+          editor.edgeAttributeNames
+        }
+      }
+
+      private val edgeMarker = "!edges"
+      private def withEdgeMarker(s: String) = s + edgeMarker
+      private def withoutEdgeMarker(s: String) = s.stripSuffix(edgeMarker)
+
+      // We're using the same project editor for both
+      // |segmentation and |segmentation!edges
+      protected def attributeEditor(input: String): AttributeEditor = {
+        val fullInputDesc = params("apply_to_" + input)
+        val edgeEditor = fullInputDesc.endsWith(edgeMarker)
+        val editorPath = SubProject.splitPipedPath(withoutEdgeMarker(fullInputDesc))
+
+        val editor = context.inputs(input).project.offspringEditor(editorPath.tail)
+        if (edgeEditor) new EdgeAttributeEditor(editor)
+        else new VertexAttributeEditor(editor)
+      }
+
+      private def attributeEditorParameter(titlePrefix: String,
+                                           input: String,
+                                           title: String): OperationParams.SegmentationParam = {
+        val param = titlePrefix + input
+        val vertexAttributeEditors =
+          context.inputs(input).project.segmentationsRecursively
+        val edgeAttributeEditors =
+          vertexAttributeEditors.map(x => FEOption(id = withEdgeMarker(x.id), title = withEdgeMarker(x.title)))
+
+        val attributeEditors = (vertexAttributeEditors ++ edgeAttributeEditors).sortBy(_.title)
+        // TODO: This should be something like an OperationParams.AttributeEditorParam
+        OperationParams.SegmentationParam(param, title, attributeEditors)
+      }
+
+      override protected val params = {
+        val p = new ParameterHolder(context)
+        p += attributeEditorParameter("apply_to_", "a", "Apply to (a)")
+        p += attributeEditorParameter("apply_to_", "b", "Take from (b)")
+        p
+      }
+
+      // TODO: Extend this to allow filtered vertex sets to be compatible
+      private def compatibleIdSets(a: Option[VertexSet], b: Option[VertexSet]): Boolean = {
+        a.isDefined && b.isDefined && a.get == b.get
+      }
+      private def compatible = compatibleIdSets(left.idSet, right.idSet)
+
+      private val left = attributeEditor("a")
+      private val right = attributeEditor("b")
+
+      private def attributesAreAvailable = right.names.nonEmpty
+      private def segmentationsAreAvailable = {
+        (left.kind == VertexAttributeKind) &&
+          (right.kind == VertexAttributeKind) && (right.projectEditor.segmentationNames.nonEmpty)
+      }
+
+      if (compatible && attributesAreAvailable) {
+        params += TagList("attrs", "Attributes", FEOption.list(right.names.toList))
+      }
+      if (compatible && segmentationsAreAvailable) {
+        params += TagList("segs", "Segmentations", FEOption.list(right.projectEditor.segmentationNames.toList))
+      }
+
+      def enabled = FEStatus(compatible, "Left and right are not compatible")
+
+      def apply() {
+        if (attributesAreAvailable) {
+          for (attrName <- splitParam("attrs")) {
+            val attr = right.attributes(attrName)
+            val note = right.getElementNote(attrName)
+            left.newAttribute(attrName, attr, note)
+          }
+        }
+        if (segmentationsAreAvailable) {
+          for (segmName <- splitParam("segs")) {
+            val leftEditor = left.projectEditor
+            val rightEditor = right.projectEditor
+            if (leftEditor.segmentationNames.contains(segmName)) {
+              leftEditor.deleteSegmentation(segmName)
+            }
+            val rightSegm = rightEditor.existingSegmentation(segmName)
+            val leftSegm = leftEditor.segmentation(segmName)
+            leftSegm.segmentationState = rightSegm.segmentationState
+          }
+        }
+        project.state = left.projectEditor.rootEditor.state
+      }
+    }
+  )
 
   register("Union of projects", StructureOperations, "a", "b")(new ProjectOutputOperation(_) {
     override lazy val project = projectInput("a")
@@ -3735,7 +3866,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   // TODO: Use dynamic inputs. #5820
   def registerSQLOp(name: String, inputs: List[String])(
     getProtoTables: Operation.Context => Map[String, ProtoTable]): Unit = {
-    registerOp(name, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) {
+    registerOp(name, defaultIcon, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) {
       override val params = new ParameterHolder(context) // No "apply_to" parameters.
       params += Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql")
       def enabled = FEStatus.enabled

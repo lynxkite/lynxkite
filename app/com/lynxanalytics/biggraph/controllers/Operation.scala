@@ -178,13 +178,20 @@ trait OperationRegistry {
   val operations = mutable.Map[String, (BoxMetadata, Operation.Factory)]()
   def registerOp(
     id: String,
+    icon: String,
     category: Operation.Category,
     inputs: List[String],
     outputs: List[String],
     factory: Operation.Factory): Unit = {
     // TODO: Register category somewhere.
     assert(!operations.contains(id), s"$id is already registered.")
-    operations(id) = BoxMetadata(category.title, id, inputs, outputs,
+    operations(id) = BoxMetadata(
+      category.title,
+      s"/images/icons/$icon.png",
+      category.color,
+      id,
+      inputs,
+      outputs,
       htmlId = Some(Operation.htmlId(id))) -> factory
   }
 }
@@ -332,7 +339,7 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
       input.kind match {
         case BoxOutputKind.Project =>
           val p = projectInput(name)
-          ??? // TODO: Do it with AttributesToTable.
+          graph_operations.AttributesToTable.run(p.vertexAttributes)
         case BoxOutputKind.Table =>
           tableInput(name)
       }

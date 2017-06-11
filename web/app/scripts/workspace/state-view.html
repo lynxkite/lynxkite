@@ -1,4 +1,4 @@
-<div ng-if="stateKind === 'project'" id="save-as-snapshot-box">
+<div id="save-as-snapshot-box">
   <div class="pull-right">
     <inline-input
       placeholder="Snapshot name..."
@@ -13,20 +13,63 @@
     <i class="glyphicon glyphicon-camera"></i>
   </button>
 </div>
-<project-state-view
-  state-id="stateId"
-  ng-if="stateKind === 'project'">
-</project-state-view>
-<export-result
+
+<!-- TODO: Build instrument toolbar dynamically, allow any operation. -->
+<button
+  class="pull-right btn btn-default"
+  ng-click="instrument = 'SQL1'">
+  SQL
+</button>
+<button
+  ng-show="stateKind === 'table'"
+  class="pull-right btn btn-default"
+  ng-click="instrument = 'Create plot'">
+  Plot
+</button>
+
+<div ng-if="instrument">
+  <box-editor
+    workspace="instrumentWorkspace"
+    box-id="instrumentBoxId">
+  </box-editor>
+  <!-- TODO: A recursive directive would be perfect here.
+    It is not trivial, so for now I just repeated the state kind switch.
+    See also: https://stackoverflow.com/questions/14430655/recursion-in-angular-directives -->
+  <project-state-view
+    state-id="instrumentStateId"
+    ng-if="instrumentStateKind === 'project'">
+  </project-state-view>
+  <export-result
+    state-id="instrumentStateId"
+    ng-if="instrumentStateKind === 'exportResult'">
+  </export-result>
+  <table-state-view
+    state-id="instrumentStateId"
+    ng-if="instrumentStateKind === 'table'">
+  </table-state-view>
+  <plot-state-view
+    state-id="instrumentStateId"
+    popup-model="popupModel"
+    ng-if="instrumentStateKind === 'plot'">
+  </plot-state-view>
+</div>
+
+<div ng-if="!instrument">
+  <project-state-view
+    state-id="stateId"
+    ng-if="stateKind === 'project'">
+  </project-state-view>
+  <export-result
     state-id="stateId"
     ng-if="stateKind === 'exportResult'">
-</export-result>
-<table-state-view
-  state-id="stateId"
-  ng-if="stateKind === 'table'">
-</table-state-view>
-<plot-state-view
-  state-id="stateId"
-  popup-model="popupModel"
-  ng-if="stateKind === 'plot'">
-</plot-state-view>
+  </export-result>
+  <table-state-view
+    state-id="stateId"
+    ng-if="stateKind === 'table'">
+  </table-state-view>
+  <plot-state-view
+    state-id="stateId"
+    popup-model="popupModel"
+    ng-if="stateKind === 'plot'">
+  </plot-state-view>
+</div>
