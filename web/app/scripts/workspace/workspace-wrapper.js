@@ -270,7 +270,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       this.saveWorkspace();
     },
 
-    addArrow: function(plug1, plug2) {
+    addArrow: function(plug1, plug2, opts) {
       if (plug1.direction === plug2.direction) {
         return false;
       }
@@ -286,9 +286,24 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         id: src.id
       };
       // Rebuild API objects based on raw workflow:
-      this._build();
-      this.saveWorkspace();
+      this._buildArrows();
+      if (!opts.willSaveLater) {
+        this.saveWorkspace();
+      }
       return true;
+    },
+
+    followArrowsFrom: function(plug) {
+      var dsts = [];
+      for (var box of this.boxes) {
+        for (var input of box.inputs) {
+          var conn = box.instance.inputs[input.id];
+          if (conn && conn.boxId === plug.boxId && conn.id === plug.id) {
+            dsts.push(box);
+          }
+        }
+      }
+      return dsts;
     },
 
     _assignStateInfoToPlugs: function(stateInfo) {
