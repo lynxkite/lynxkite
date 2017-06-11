@@ -256,7 +256,7 @@ class MetaGraphManager(val repositoryPath: String) {
       for ((file, j) <- MetaGraphManager.loadBuiltIns(builtInsRoot)) {
         try {
           val checkpoint = saveWorkspace(j)
-          val path = SymbolPath("projects") / "builtins" / file.getName()
+          val path = SymbolPath("projects") / "builtIns" / file.getName()
           setTag(path / "objectType", "workspace")
           setTag(path / "checkpoint", checkpoint)
           setTag(path / "nextCheckpoint", "")
