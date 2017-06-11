@@ -352,7 +352,7 @@ angular.module('biggraph')
         };
 
         scope.selectBoxesInSelection = function() {
-          var boxes = this.boxes();
+          var boxes = scope.workspace.boxes;
           this.selectedBoxIds = [];
           for (var i = 0; i < boxes.length; i++) {
             var box = boxes[i];
