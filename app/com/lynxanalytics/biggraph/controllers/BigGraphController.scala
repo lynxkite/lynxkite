@@ -115,11 +115,12 @@ case class FESegmentation(
   // the vector of ids of segments the vertex belongs to.
   equivalentAttribute: FEAttribute)
 case class ProjectRequest(name: String)
-case class ProjectListRequest(path: String)
+case class ProjectListRequest(path: String, filterTypes: Option[List[String]])
 case class ProjectSearchRequest(
   basePath: String, // We only search for projects/directories contained (recursively) in this.
   query: String,
-  includeNotes: Boolean)
+  includeNotes: Boolean,
+  filterTypes: Option[List[String]])
 case class ProjectList(
   path: String,
   readACL: String,
@@ -161,12 +162,15 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val (dirs, objects) = entries.partition(_.isDirectory)
     val visibleDirs = dirs.filter(_.readAllowedFrom(user)).map(_.asDirectory)
     val visibleObjectFrames = objects.filter(_.readAllowedFrom(user)).map(_.asObjectFrame)
+    val filteredForTypes = visibleObjectFrames.filter {
+      f => request.filterTypes.map(_.contains(f.getObjectType)).getOrElse(true)
+    }
     ProjectList(
       request.path,
       dir.readACL,
       dir.writeACL,
       visibleDirs.map(_.path.toString).toList,
-      visibleObjectFrames.map(_.toListElementFE).toList)
+      filteredForTypes.map(_.toListElementFE).toList)
   }
 
   def projectSearch(user: serving.User, request: ProjectSearchRequest): ProjectList = metaManager.synchronized {
@@ -192,6 +196,9 @@ class BigGraphController(val env: SparkFreeEnvironment) {
             baseName.toLowerCase.contains(term) ||
               (request.includeNotes && notes.toLowerCase.contains(term))
         }
+      }
+      .filter {
+        f => request.filterTypes.map(_.contains(f.getObjectType)).getOrElse(true)
       }
 
     ProjectList(
