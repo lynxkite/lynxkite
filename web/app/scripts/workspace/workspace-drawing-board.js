@@ -172,9 +172,9 @@ angular.module('biggraph')
           var eventX = event.pageX - w / 2;
           var eventY = event.pageY - h / 2;
           var minX = 0;
-          var minY = svgElement.offset().top; // Do not overlap toolbar.
-          var maxX = angular.element(window).width() - w;
-          var maxY = angular.element(window).height() - h;
+          var minY = svgElement.offset().top;  // Do not overlap toolbar.
+          var maxX = svgElement.width() - w - 35;  // Do not overlap toolbox.
+          var maxY = svgElement.height() - h;
 
           function len(x, y) { return Math.sqrt(x * x + y * y); }
           function rectangleOverlapArea(left1, top1, width1, height1, left2, top2, width2, height2) {
