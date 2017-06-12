@@ -3,6 +3,6 @@
 
 PORT=$1
 
-while ! nc -z localhost ${PORT}; do
+while ! nc -z -w 1 localhost ${PORT}; do
   sleep 1
 done

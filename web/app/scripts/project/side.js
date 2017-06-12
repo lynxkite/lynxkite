@@ -33,7 +33,7 @@ angular.module('biggraph')
       };
     }
 
-    function Side(sides, direction, stateId) {
+    function Side(sides, direction, stateId, enableVisualizationUI) {
       // The list of all sides.
       this.sides = sides;
       // Left or right?
@@ -46,6 +46,7 @@ angular.module('biggraph')
       // The /ajax/getProjectOutput Ajax response.
       this.project = undefined;
       this.stateId = stateId;
+      this.enableVisualizationUI = enableVisualizationUI;
     }
 
     Side.prototype.sections = ['scalar', 'vertex-attribute', 'edge-attribute', 'segmentation'];
@@ -113,11 +114,13 @@ angular.module('biggraph')
       return JSON.stringify(backendState, null, 2);
     };
 
-    Side.prototype.updateFromBackendJson = function(backendJson) {
-      var backendState = JSON.parse(backendJson);
+    Side.prototype.updateFromBackendJson = function(backendState) {
+      if (!backendState) {
+        return;
+      }
       backendState.projectName = this.state.projectName;
       this.state = backendState;
-      if (this.state.centers === undefined) {
+      if (this.state.graphMode && this.state.centers === undefined) {
         this.state.centers = [];
         this.sendCenterRequest(this.state.lastCentersRequest);
       }
@@ -323,26 +326,29 @@ angular.module('biggraph')
     // Side.reload makes an unconditional, uncached Ajax request.
     // This is called when the projectPath was changed.
     Side.prototype.reload = function() {
+      // We don't directly download data into this.project, so that
+      // the UI can still show the previous state of the project
+      // while loading, and state like (center picker stuff) does
+      // not get lost. On the other hand, we want an indicator for
+      // loading. The solution is to first load into
+      // this.pendingProject and only copy into this.project on completion.
+      this.pendingProject = undefined;
       if (this.state.projectPath !== undefined) {
-        this.project = this.load();
+        var that = this;
+        that.pendingProject = this.load();
+        return that.pendingProject.finally(
+          function onFailure() {
+            if (!angular.equals(that.project, that.pendingProject)) {
+              // This check is to avoid DOM-rebuild of entity
+              // drop popups.
+              that.project = that.pendingProject;
+            }
+          });
       } else {
         this.state = defaultSideState();
         this.project = undefined;
+        return undefined;
       }
-      $rootScope.$broadcast('project reloaded');
-    };
-
-    // Reloads all sides. Avoids reloading a side more than once.
-    Side.prototype.reloadAllProjects = function() {
-      for (var i = 0; i < this.sides.length; ++i) {
-        var side = this.sides[i];
-        if (side.state.projectPath !== undefined) {
-          side.project = side.load();
-        } else {
-          side.project = undefined;
-        }
-      }
-      $rootScope.$broadcast('project reloaded');
     };
 
     Side.prototype.load = function() {
@@ -376,7 +382,7 @@ angular.module('biggraph')
         // Apply mutual exclusions and do initialization.
         if (setting === 'slider') {
           this.state.attributeTitles.color = undefined;
-          this.state.sliderPos = 50;
+          this.state.sliderPos = '50';
         } else if (setting === 'color') {
           this.state.attributeTitles.image = undefined;
           this.state.attributeTitles.slider = undefined;

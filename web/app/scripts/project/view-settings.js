@@ -35,10 +35,13 @@ angular.module('biggraph').factory('ViewSettings', function() {
       }
     };
 
-    scope.saveVisualization = function(e) {
-      scope.side.saveStateToBackend(
-          scope.saveVisualizationName,
-          function() { that.getDrop(e).close(); });
-    };
+    scope.$on('$destroy', function() {
+      for (var item in that.drops) {
+        if (that.drops.hasOwnProperty(item)) {
+          that.drops[item].destroy();
+        }
+      }
+      that.drops = {};
+    });
   };
 });

@@ -33,6 +33,7 @@ case class TableColumn(name: String, dataType: String)
 case class GetTableOutputResponse(header: List[TableColumn], data: List[List[DynamicValue]])
 case class GetPlotOutputRequest(id: String)
 case class GetPlotOutputResponse(json: FEScalar)
+case class GetVisualizationOutputRequest(id: String)
 case class CreateWorkspaceRequest(name: String)
 case class BoxCatalogResponse(boxes: List[BoxMetadata])
 case class CreateSnapshotRequest(name: String, id: String)
@@ -138,7 +139,11 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: GetProjectOutputRequest): FEProject = {
     val state = getOutput(user, request.id)
     val pathSeq = SubProject.splitPipedPath(request.path).filter(_ != "")
-    val viewer = state.project.viewer.offspringViewer(pathSeq)
+    val project =
+      if (state.isProject) state.project
+      else if (state.isVisualization) state.visualization.project
+      else ???
+    val viewer = project.viewer.offspringViewer(pathSeq)
     viewer.toFE(request.path)
   }
 
@@ -148,6 +153,14 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val scalar = state.plot
     val fescalar = ProjectViewer.feScalar(scalar, "result", "", Map())
     GetPlotOutputResponse(fescalar)
+  }
+
+  import UIStatusSerialization.fTwoSidedUIStatus
+
+  def getVisualizationOutput(
+    user: serving.User, request: GetVisualizationOutputRequest): TwoSidedUIStatus = {
+    val state = getOutput(user, request.id)
+    state.visualization.uiStatus
   }
 
   def getExportResultOutput(
@@ -178,6 +191,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
             case BoxOutputKind.ExportResult =>
               val progress = entityProgressManager.computeProgress(state.exportResult)
               stateId -> Some(List(progress))
+            case BoxOutputKind.Visualization =>
+              stateId -> Some(List(1.0))
             case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }
         } else {

@@ -1,7 +1,6 @@
 # Graph visualizations
 
-When some kind of visualization is turned on, a visualization screen opens above the
-<<project-header>>.
+When you click the output of a <<create-visualization>> operation, a visualization screen opens.
 
 There are multiple types of visualizations, but in every case you see some objects connected by
 some arcs.
@@ -32,7 +31,5 @@ Hold down the Shift button while zooming in and out to only change the size of o
 include::concrete-vertices.asciidoc[]
 
 include::bucketed-view.asciidoc[]
-
-include::saving-visualizations.asciidoc[]
 
 include::color-customization.asciidoc[]

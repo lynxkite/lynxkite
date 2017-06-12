@@ -256,10 +256,26 @@ object BoxOutputKind {
   val ExportResult = "exportResult"
   val Plot = "plot"
   val Error = "error"
-  val validKinds = Set(Project, Table, Error, ExportResult, Plot)
+  val Visualization = "visualization"
+  val validKinds = Set(Project, Table, Error, ExportResult, Plot, Visualization)
 
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
+}
+
+case class VisualizationState(
+  uiStatus: TwoSidedUIStatus,
+  project: RootProjectEditor)
+object VisualizationState {
+  def fromString(uiStatus: String, project: RootProjectEditor): VisualizationState = {
+    import UIStatusSerialization.fTwoSidedUIStatus
+    val uiStatusJson =
+      if (uiStatus.isEmpty) TwoSidedUIStatus(left = None, right = None)
+      else json.Json.parse(uiStatus).as[TwoSidedUIStatus]
+    VisualizationState(
+      uiStatusJson,
+      project)
+  }
 }
 
 object BoxOutputState {
@@ -286,6 +302,17 @@ object BoxOutputState {
   def error(msg: String): BoxOutputState = {
     BoxOutputState(BoxOutputKind.Error, None, FEStatus.disabled(msg))
   }
+
+  def visualization(v: VisualizationState): BoxOutputState = {
+    import UIStatusSerialization.fTwoSidedUIStatus
+    import CheckpointRepository._
+    BoxOutputState(
+      BoxOutputKind.Visualization,
+      Some(json.Json.obj(
+        "uiStatus" -> v.uiStatus,
+        "project" -> json.Json.toJson(v.project.rootState.state))
+      ))
+  }
 }
 
 case class BoxOutputState(
@@ -301,11 +328,12 @@ case class BoxOutputState(
   def isTable = kind == BoxOutputKind.Table
   def isPlot = kind == BoxOutputKind.Plot
   def isExportResult = kind == BoxOutputKind.ExportResult
+  def isVisualization = kind == BoxOutputKind.Visualization
 
   def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
     assert(success.enabled, success.disabledReason)
-    assert(isProject, s"Tried to access '$kind' as 'project'.")
     import CheckpointRepository.fCommonProjectState
+    assert(isProject, s"Tried to access '$kind' as 'project'.")
     val p = state.get.as[CommonProjectState]
     val rps = RootProjectState.emptyState.copy(state = p)
     new RootProjectEditor(rps)
@@ -330,6 +358,18 @@ case class BoxOutputState(
     assert(success.enabled, success.disabledReason)
     import graph_api.MetaGraphManager.StringAsUUID
     manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)
+  }
+
+  def visualization(implicit manager: graph_api.MetaGraphManager): VisualizationState = {
+    import UIStatusSerialization.fTwoSidedUIStatus
+    import CheckpointRepository.fCommonProjectState
+    assert(isVisualization, s"Tried to access '$kind' as 'visualization'.")
+    val projectState = (state.get \ "project").as[CommonProjectState]
+    val rootProjectState = RootProjectState.emptyState.copy(state = projectState)
+    VisualizationState(
+      (state.get \ "uiStatus").as[TwoSidedUIStatus],
+      new RootProjectEditor(rootProjectState)
+    )
   }
 }
 
