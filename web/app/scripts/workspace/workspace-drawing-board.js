@@ -140,19 +140,22 @@ angular.module('biggraph')
 
         // Tries hooking up open plugs when a box is moving.
         function autoConnect(moving) {
-          const hookDistance = 20;
-          for (let input of moving.inputs) {
+          var hookDistance = 20;
+          for (var i = 0; i < moving.inputs.length; ++i) {
+            var input = moving.inputs[i];
             if (moving.instance.inputs[input.id] !== undefined) {
               continue;
             }
-            for (let box of scope.workspace.boxes) {
-              for (let output of box.outputs) {
+            for (var j = 0; j < scope.workspace.boxes.length; ++j) {
+              var box = scope.workspace.boxes[j];
+              for (var k = 0; k < box.outputs.length; ++k) {
+                var output = box.outputs[k];
                 if (output.getAttachedBoxes().length > 0) {
                   continue;
                 }
-                let dx = input.cx() - output.cx();
-                let dy = input.cy() - output.cy();
-                let dist = Math.sqrt(dx * dx + dy * dy);
+                var dx = input.cx() - output.cx();
+                var dy = input.cy() - output.cy();
+                var dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist < hookDistance) {
                   scope.workspace.addArrow(input, output, { willSaveLater: true });
                 }
