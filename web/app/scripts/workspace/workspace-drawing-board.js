@@ -231,7 +231,6 @@ angular.module('biggraph')
           for (var x = minX; x <= maxX; x += (maxX - minX) / 10) {
             for (var y = minY; y <= maxY; y += (maxY - minY) / 20) {
               var currentScore = score(x, y);
-              if (currentScore < 0) { continue; }
               if (isScoreBetterThan(currentScore, bestScore)) {
                 bestX = x;
                 bestY = y;
