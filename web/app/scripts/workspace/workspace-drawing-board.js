@@ -172,23 +172,70 @@ angular.module('biggraph')
           var eventX = event.pageX - w / 2;
           var eventY = event.pageY - h / 2;
           var minX = 0;
-          var minY = svgElement.offset().top; // Do not overlap toolbar.
-          var maxX = angular.element(window).width() - w;
-          var maxY = angular.element(window).height() - h;
+          var minY = svgElement.offset().top;  // Do not overlap toolbar.
+          var maxX = svgElement.width() - w - 35;  // Do not overlap toolbox.
+          var maxY = svgElement.height() - h;
+
+          function len(x, y) { return Math.sqrt(x * x + y * y); }
+          function rectangleOverlapArea(left1, top1, width1, height1, left2, top2, width2, height2) {
+            var right1 = left1 + width1;
+            var bottom1 = top1 + height1;
+            var right2 = left2 + width2;
+            var bottom2 = top2 + height2;
+            // Comute intersection:
+            var left = Math.max(left1, left2);
+            var top = Math.max(top1, top2);
+            var right = Math.min(right1, right2);
+            var bottom = Math.min(bottom1, bottom2);
+            if (left > right || top > bottom) {
+              return 0;
+            } else {
+              return (right - left) * (bottom - top);
+            }
+          }
+          function overlap(x, y) {
+            var total = 0;
+            for (var i = 0; i < scope.popups.length; ++i) {
+              total += rectangleOverlapArea(
+                  scope.popups[i].x, scope.popups[i].y, scope.popups[i].width, scope.popups[i].height,
+                  x, y, w, h);
+            }
+            return total;
+          }
+          function score(x, y) {
+            return {
+              distance: len(x - eventX, y - eventY),
+              overlap: overlap(x, y),
+            };
+          }
+          function isScoreBetterThan(current, best) {
+            var minDist = Math.sqrt(w * w + h * h) / 2;
+            if (best.distance < minDist && current.distance > best.distance) {
+              return true;
+            }
+            if (current.overlap < best.overlap) {
+              return true;
+            } else if (current.overlap > best.overlap) {
+              return false;
+            }
+            if (current.distance > minDist && current.distance < best.distance) {
+              return true;
+            } else {
+              return false;
+            }
+          }
+
           var bestX = (minX + maxX) / 2;
           var bestY = (minY + maxY) / 2;
-          var minDist = Math.sqrt(w * w + h * h) / 2;
-          function len(x, y) { return Math.sqrt(x * x + y * y); }
-          var bestDist = len(bestX - eventX, bestY - eventY);
-          for (var i = 0; i < 100; ++i) {
-            var rndX = minX + Math.random() * (maxX - minX);
-            var rndY = minY + Math.random() * (maxY - minY);
-            var dist = len(rndX - eventX, rndY - eventY);
-            if (dist < minDist) { continue; }
-            if (bestDist < minDist || dist < bestDist) {
-              bestX = rndX;
-              bestY = rndY;
-              bestDist = dist;
+          var bestScore = score(bestX, bestY);
+          for (var x = minX; x <= maxX; x += (maxX - minX) / 10) {
+            for (var y = minY; y <= maxY; y += (maxY - minY) / 20) {
+              var currentScore = score(x, y);
+              if (isScoreBetterThan(currentScore, bestScore)) {
+                bestX = x;
+                bestY = y;
+                bestScore = currentScore;
+              }
             }
           }
           return {
