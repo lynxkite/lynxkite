@@ -52,6 +52,11 @@
     popup-model="popupModel"
     ng-if="instrumentStateKind === 'plot'">
   </plot-state-view>
+  <visualization-state-view
+    state-id="stateId"
+    popup-model="popupModel"
+    ng-if="stateKind === 'visualization'">
+  </visualization-state-view>
 </div>
 
 <div ng-if="!instrument">
@@ -72,4 +77,9 @@
     popup-model="popupModel"
     ng-if="stateKind === 'plot'">
   </plot-state-view>
+  <visualization-state-view
+    state-id="stateId"
+    popup-model="popupModel"
+    ng-if="stateKind === 'visualization'">
+  </visualization-state-view>
 </div>

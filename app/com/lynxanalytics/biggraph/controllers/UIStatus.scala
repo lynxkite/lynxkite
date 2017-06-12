@@ -27,7 +27,8 @@ case class UICenterRequest(
   filters: Seq[UIAttributeFilter],
   offset: Option[Int])
 case class UIStatus(
-  graphMode: String,
+  projectPath: Option[String],
+  graphMode: Option[String],
   display: String,
   filters: UIFilterStatus,
   bucketCount: String,
@@ -42,7 +43,11 @@ case class UIStatus(
   // For centers set by a getCenter request, the following parameters will be set
   // so that we can redo the getCenter request.
   lastCentersRequest: Option[UICenterRequest],
-  customVisualizationFilters: Option[Boolean])
+  customVisualizationFilters: Option[Boolean],
+  sliderPos: Option[String])
+case class TwoSidedUIStatus(
+  left: Option[UIStatus],
+  right: Option[UIStatus])
 object UIStatusSerialization {
   implicit val fUIFilterStatus = json.Json.format[UIFilterStatus]
   implicit val fUIAttributeAxisOptions = json.Json.format[UIAttributeAxisOptions]
@@ -51,5 +56,6 @@ object UIStatusSerialization {
   implicit val fUIAttributeFilter = json.Json.format[UIAttributeFilter]
   implicit val fUICenterRequest = json.Json.format[UICenterRequest]
   implicit val fUIStatus = json.Json.format[UIStatus]
+  implicit val fTwoSidedUIStatus = json.Json.format[TwoSidedUIStatus]
 }
 

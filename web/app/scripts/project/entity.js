@@ -43,9 +43,17 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
           scope.menu.open = false;
         });
       });
+      scope.$on('$destroy', function() {
+        if (drop) {
+          drop.destroy();
+          drop = undefined;
+        }
+      });
 
       scope.closeMenu = function() { // For testing.
-        drop.close();
+        scope.$apply(function() {
+          drop.close();
+        });
       };
 
       // Attributes and scalars have a "title", segmentations have a "name".
