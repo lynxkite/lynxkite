@@ -363,7 +363,7 @@ case class BoxOutputState(
   def visualization(implicit manager: graph_api.MetaGraphManager): VisualizationState = {
     import UIStatusSerialization.fTwoSidedUIStatus
     import CheckpointRepository.fCommonProjectState
-    assert(isVisualization)
+    assert(isVisualization, s"Tried to access '$kind' as 'visualization'.")
     val projectState = (state.get \ "project").as[CommonProjectState]
     val rootProjectState = RootProjectState.emptyState.copy(state = projectState)
     VisualizationState(
