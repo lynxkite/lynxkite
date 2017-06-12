@@ -460,6 +460,55 @@ angular.module('biggraph')
           scope.onMouseDownOnBox(scope.workspace.getBox(box.id), event);
         };
 
+        // Insert an import box when a file is dropped on the board.
+        element.bind('dragover', function(e) { e.preventDefault(); });
+        element.bind('drop', function(event) {
+          event = event.originalEvent;
+          event.preventDefault();
+          addLogicalMousePosition(event);
+          var file = event.dataTransfer.files[0];
+          var op = 'Import CSV';
+          if (file.name.match(/\.json$/i)) {
+            op = 'Import JSON';
+          } else if (file.name.match(/\.parquet$/i)) {
+            op = 'Import Parquet';
+          } else if (file.name.match(/\.orc$/i)) {
+            op = 'Import ORC';
+          }
+          var box = scope.workspace.addBox(op, event, { willSaveLater: true });
+          uploadFile(file).then(function(filename) {
+            box.parameters.filename = filename;
+            return util.post('/ajax/importBox', box);
+          }).then(function(guid) {
+            box.parameters.imported_table = guid;
+            scope.workspace.saveWorkspace();
+          }).catch(function() {
+            scope.workspace.deleteBoxes([box.id]);
+          });
+        });
+
+        function uploadFile(file) {
+          var defer = $q.defer();
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', '/ajax/upload');
+          xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {  // DONE
+              scope.$apply(function() {
+                if (xhr.status === 200) {  // SUCCESS
+                  defer.resolve(xhr.responseText);
+                } else {
+                  util.error('File upload failed.', { file: file });
+                  defer.reject(xhr);
+                }
+              });
+            }
+          };
+          var fd = new FormData();
+          fd.append('file', file);
+          xhr.send(fd);
+          return defer.promise;
+        }
+
         scope.$on('$destroy', function() {
           scope.workspace.stopProgressUpdate();
         });
