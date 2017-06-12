@@ -66,7 +66,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     },
 
     _addBoxWrapper: function(rawBox) {
-      var box = new BoxWrapper(this._boxCatalogMap[rawBox.operationId], rawBox);
+      var box = new BoxWrapper(this, this._boxCatalogMap[rawBox.operationId], rawBox);
       this.boxes.push(box);
       this.boxMap[rawBox.id] = box;
     },
@@ -270,7 +270,8 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       this.saveWorkspace();
     },
 
-    addArrow: function(plug1, plug2) {
+    addArrow: function(plug1, plug2, opts) {
+      opts = opts || {};
       if (plug1.direction === plug2.direction) {
         return false;
       }
@@ -286,8 +287,10 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         id: src.id
       };
       // Rebuild API objects based on raw workflow:
-      this._build();
-      this.saveWorkspace();
+      this._buildArrows();
+      if (!opts.willSaveLater) {
+        this.saveWorkspace();
+      }
       return true;
     },
 

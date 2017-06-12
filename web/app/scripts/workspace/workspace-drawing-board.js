@@ -126,6 +126,9 @@ angular.module('biggraph')
               for (var i = 0; i < scope.movedBoxes.length; i++) {
                 scope.movedBoxes[i].onMouseMove(event);
               }
+              if (scope.movedBoxes.length === 1) {
+                autoConnect(scope.movedBoxes[0]);
+              }
             } else if (scope.movedPopup) {
               scope.movedPopup.onMouseMove(event);
             }
@@ -134,6 +137,32 @@ angular.module('biggraph')
             scope.popups[j].updateSize();
           }
         };
+
+        // Tries hooking up open plugs when a box is moving.
+        function autoConnect(moving) {
+          var hookDistance = 20;
+          for (var i = 0; i < moving.inputs.length; ++i) {
+            var input = moving.inputs[i];
+            if (moving.instance.inputs[input.id] !== undefined) {
+              continue;
+            }
+            for (var j = 0; j < scope.workspace.boxes.length; ++j) {
+              var box = scope.workspace.boxes[j];
+              for (var k = 0; k < box.outputs.length; ++k) {
+                var output = box.outputs[k];
+                if (output.getAttachedBoxes().length > 0) {
+                  continue;
+                }
+                var dx = input.cx() - output.cx();
+                var dy = input.cy() - output.cy();
+                var dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < hookDistance) {
+                  scope.workspace.addArrow(input, output, { willSaveLater: true });
+                }
+              }
+            }
+          }
+        }
 
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
@@ -376,7 +405,7 @@ angular.module('biggraph')
         };
 
         scope.selectBoxesInSelection = function() {
-          var boxes = this.boxes();
+          var boxes = scope.workspace.boxes;
           this.selectedBoxIds = [];
           for (var i = 0; i < boxes.length; i++) {
             var box = boxes[i];
