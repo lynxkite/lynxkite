@@ -220,43 +220,46 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
       if (request.isImplicitTable) {
         getTableColumns(frame, pathParts.tail)
       } else {
-        getProjectTables(frame, pathParts.tail)
+        getProjectTables(frame.path, frame.viewer, pathParts.tail)
       }
-    } else if (frame.isWorkspace) {
-      //getWorkspaceTables(user, frame)
-      ???
+    } else if (frame.isSnapshot) {
+      getSnapshot(user, frame, pathParts.tail)
     } else {
-      ???
+      throw new AssertionError(
+        s"Table browser nodes are only available for views, project or snapshots (${frame.path}).")
     }
   }
-  /*
-  def getWorkspaceTables(user: serving.User, frame: ObjectFrame): TableBrowserNodeResponse = {
-    val workspace = frame.asWorkspaceFrame.workspace
-    val res = WorkspaceController(env).ResolvedWorkspaceReference(user, WorkspaceReference(workspace.name, List()))
-    val states = res.context.allStates.filter(!_._2.isError)
-    TableBrowserNodeResponse(list = states.map {
-      case (output, state) =>
-        TableBrowserNode(
-          output.box,
-          output.id,
-          state.kind)
-    })
-  }
-*/
-  def getProjectTables(frame: ObjectFrame, subPath: Seq[String]): TableBrowserNodeResponse = {
-    val viewer = frame.viewer.offspringViewer(subPath)
 
+  def getSnapshot(user: serving.User, frame: ObjectFrame, pathTail: Seq[String]): TableBrowserNodeResponse = {
+    val state = frame.asSnapshotFrame.getState
+    if (state.isTable) {
+      getColumnsFromSchema(state.table.schema)
+    } else if (state.isProject) {
+      if (pathTail.isEmpty) {
+        getProjectTables(frame.path, state.project.viewer, pathTail)
+      } else {
+        val protoTable = state.project.viewer.getSingleProtoTable(pathTail.mkString("|"))
+        getColumnsFromSchema(protoTable.toTable.schema)
+      }
+    } else {
+      throw new AssertionError(
+        s"Snaphot ${frame.path} has to be of table or project kind, not ${state.kind}.")
+    }
+  }
+
+  def getProjectTables(path: SymbolPath, parentViewer: RootProjectViewer, subPath: Seq[String]): TableBrowserNodeResponse = {
+    val viewer = parentViewer.offspringViewer(subPath)
     val implicitTables = viewer.getProtoTables.map(_._1).toSeq.map {
       name =>
         TableBrowserNode(
-          absolutePath = (Seq(frame.path.toString) ++ subPath ++ Seq(name)).mkString("|"),
+          absolutePath = (Seq(path.toString) ++ subPath ++ Seq(name)).mkString("|"),
           name = name,
           objectType = "table")
     }
     val subProjects = viewer.sortedSegmentations.map {
       segmentation =>
         TableBrowserNode(
-          absolutePath = (Seq(frame.path.toString) ++ subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
+          absolutePath = (Seq(path.toString) ++ subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
           name = segmentation.segmentationName,
           objectType = "segmentation"
         )
@@ -268,8 +271,12 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   def getViewColumns(user: serving.User, frame: ViewFrame): TableBrowserNodeResponse = {
     val viewRecipe = frame.getRecipe
     val df = viewRecipe.createDataFrame(user, SQLController.defaultContext(user))
+    getColumnsFromSchema(df.schema)
+  }
+
+  def getColumnsFromSchema(schema: spark.sql.types.StructType): TableBrowserNodeResponse = {
     TableBrowserNodeResponse(
-      list = df.schema.fields.map { field =>
+      list = schema.fields.map { field =>
         TableBrowserNode(
           absolutePath = "",
           name = field.name,
@@ -277,8 +284,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
           columnType = ProjectViewer.feTypeName(
             SQLHelper.typeTagFromDataType(field.dataType))
         )
-      }
-    )
+      })
   }
 
   def getTableColumns(frame: ObjectFrame, tablePath: Seq[String]): TableBrowserNodeResponse = {

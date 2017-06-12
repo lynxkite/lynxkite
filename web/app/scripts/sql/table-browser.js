@@ -124,9 +124,8 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
                     srcList[i].objectType,
                     srcList[i].columnType);
                 }
-                scope.error = undefined;
               }, function(error) {
-                scope.error = error.data;
+                that.error = error.data;
               });
           },
 
@@ -144,12 +143,14 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
                   'basePath': this.absolutePath,
                   'query': query,
                   'includeNotes': false,
+                  'filterTypes': ['snapshot'],
                 });
             } else {
               promise = util.nocache(
                 '/ajax/projectList',
                 {
                   'path': this.absolutePath,
+                  'filterTypes': ['snapshot'],
                 });
             }
             promise.then(function(result) {
