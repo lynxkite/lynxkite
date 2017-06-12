@@ -147,7 +147,7 @@ angular.module('biggraph')
             }
             for (let box of scope.workspace.boxes) {
               for (let output of box.outputs) {
-                if (scope.workspace.followArrowsFrom(output).length > 0) {
+                if (output.getAttachedBoxes().length > 0) {
                   continue;
                 }
                 let dx = input.cx() - output.cx();
