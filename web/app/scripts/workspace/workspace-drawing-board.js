@@ -127,27 +127,7 @@ angular.module('biggraph')
                 scope.movedBoxes[i].onMouseMove(event);
               }
               if (scope.movedBoxes.length === 1) {
-                // Try hooking up open plugs when dragging a single box.
-                const hookDistance = 20;
-                let moved = scope.movedBoxes[0];
-                for (let input of moved.inputs) {
-                  if (moved.instance.inputs[input.id] !== undefined) {
-                    continue;
-                  }
-                  for (let box of scope.workspace.boxes) {
-                    for (let output of box.outputs) {
-                      if (scope.workspace.followArrowsFrom(output).length > 0) {
-                        continue;
-                      }
-                      let dx = input.cx() - output.cx();
-                      let dy = input.cy() - output.cy();
-                      let dist = Math.sqrt(dx * dx + dy * dy);
-                      if (dist < hookDistance) {
-                        scope.workspace.addArrow(input, output, { willSaveLater: true });
-                      }
-                    }
-                  }
-                }
+                autoConnect(scope.movedBoxes[0]);
               }
             } else if (scope.movedPopup) {
               scope.movedPopup.onMouseMove(event);
@@ -157,6 +137,29 @@ angular.module('biggraph')
             scope.popups[j].updateSize();
           }
         };
+
+        // Tries hooking up open plugs when a box is moving.
+        function autoConnect(moving) {
+          const hookDistance = 20;
+          for (let input of moving.inputs) {
+            if (moving.instance.inputs[input.id] !== undefined) {
+              continue;
+            }
+            for (let box of scope.workspace.boxes) {
+              for (let output of box.outputs) {
+                if (scope.workspace.followArrowsFrom(output).length > 0) {
+                  continue;
+                }
+                let dx = input.cx() - output.cx();
+                let dy = input.cy() - output.cy();
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < hookDistance) {
+                  scope.workspace.addArrow(input, output, { willSaveLater: true });
+                }
+              }
+            }
+          }
+        }
 
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
