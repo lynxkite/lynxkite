@@ -165,7 +165,7 @@ angular.module('biggraph')
           }
         };
 
-        scope.placePopup = function(event) {
+        function placePopup(event) {
           // Avoid the event position, stay on the screen, and try to be close to the event.
           var w = 500;
           var h = 500;
@@ -244,7 +244,7 @@ angular.module('biggraph')
             width: w,
             height: h,
           };
-        };
+        }
 
         scope.onMouseUpOnBox = function(box, event) {
           if (box.isMoved || scope.pulledPlug) {
@@ -254,7 +254,7 @@ angular.module('biggraph')
           if (!leftButton || event.ctrlKey || event.shiftKey) {
             return;
           }
-          var pos = scope.placePopup(event);
+          var pos = placePopup(event);
           var model = new PopupModel(
             box.instance.id,
             box.instance.operationId,
@@ -287,7 +287,7 @@ angular.module('biggraph')
           }
           event.stopPropagation();
           if (plug.direction === 'outputs') {
-            var pos = scope.placePopup(event);
+            var pos = placePopup(event);
             var model = new PopupModel(
               plug.boxId + '_' + plug.id,
               plug.boxInstance.operationId + ' ➡ ' + plug.id,
