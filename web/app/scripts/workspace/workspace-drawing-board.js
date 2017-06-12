@@ -6,7 +6,7 @@
 angular.module('biggraph')
   .directive(
   'workspaceDrawingBoard',
-  function(environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope) {
+  function(environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope, $q, util) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -451,6 +451,11 @@ angular.module('biggraph')
 
         scope.addOperation = function(op, event) {
           addLogicalMousePosition(event);
+          // Offset event to place icon centered on the cursor.
+          // TODO: May be better to center all icons on the logical positions.
+          // Then we never need to worry about sizes.
+          event.logicalX -= 50;
+          event.logicalY -= 50;
           var box = scope.workspace.addBox(op.operationId, event, { willSaveLater: true });
           scope.onMouseDownOnBox(scope.workspace.getBox(box.id), event);
         };
