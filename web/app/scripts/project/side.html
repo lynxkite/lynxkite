@@ -1,4 +1,4 @@
-<div class="col-sm-{{ side.columnWidth() }} side" id="side-{{side.direction}}">
+<div class="col-sm-{{ 12 / side.activeSides().length }} side" id="side-{{side.direction}}">
 
   <progressbar ng-if="side.project && !side.project.$resolved" value="100" class="progress-striped active">
   Loading...
@@ -29,7 +29,7 @@
   <div class="project" ng-if="
     side.project.$resolved && !side.project.$error && !side.showHistory && !side.unsaved.workflowEditor.enabled">
 
-    <div class="btn-group pull-right">
+    <div class="btn-group pull-right" ng-show="side.activeSides().length > 1">
       <label class="btn btn-default"
              ng-click="side.close()"
              id="close-project"
@@ -52,8 +52,8 @@
 
     <div class="project-name">
       <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'">
-        <span>
-          State
+        <span ng-show="side.activeSides().length > 1">
+          Base
         </span>
         <span ng-repeat="parent in side.parentProjects()">
           {{parent}} &raquo;
@@ -110,21 +110,6 @@
         edges
       </span>
     </span>
-
-    <div class="project-notes">
-      <textarea class="project-notes"
-                placeholder="Enter project notes here"
-                rows="{{side.project.notes.split('\n').length}}"
-                ng-model="side.project.notes"
-                ng-change="side.unsavedNotes = true"
-                ng-trim="false"></textarea>
-      <button ng-if="side.unsavedNotes"
-              ng-click="side.saveNotes()"
-              ng-disabled="side.savingNotes"
-              class="btn btn-default">
-        {{ side.savingNotes ? '...' : 'Save' }}
-      </button>
-    </div>
 
     <!-- Project settings. -->
     <div class="acl-settings" ng-if="side.showSettings">

@@ -86,15 +86,14 @@ angular.module('biggraph')
       }
     };
 
-    // Returns the number of Bootstrap columns to use for this side.
-    Side.prototype.columnWidth = function() {
-      var count = 0;
+    Side.prototype.activeSides = function() {
+      var active = [];
       for (var i = 0 ; i < this.sides.length; ++i) {
         if (this.sides[i].state.projectPath !== undefined) {
-          count += 1;
+          active.push(this.sides[i]);
         }
       }
-      return 12 / count;
+      return active;
     };
 
     // Creates a JSON formatted version of the current UI state of this side. The output is
