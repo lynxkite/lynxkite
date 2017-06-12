@@ -51,13 +51,13 @@ module.exports = function(fw) {
 
       expect(state.left.segmentCount()).toEqual(2);
       expect(state.right.segmentCount()).toEqual(2);
-      state.left.expectCurrentProjectIs('State » bucketing');
-      state.right.expectCurrentProjectIs('State » bucketing » copy');
+      state.left.expectCurrentProjectIs('Base » bucketing');
+      state.right.expectCurrentProjectIs('Base » bucketing » copy');
       // Close sub-segmentation on the right-hand side:
       state.right.close();
       // This should reopen its grandparent it's grandparent on the left:
-      state.left.expectCurrentProjectIs('State');
-      state.right.expectCurrentProjectIs('State » bucketing');
+      state.left.expectCurrentProjectIs('Base');
+      state.right.expectCurrentProjectIs('Base » bucketing');
 
       state.close();
     });
