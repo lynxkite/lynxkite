@@ -210,7 +210,7 @@ angular.module('biggraph')
           }
           function isScoreBetterThan(current, best) {
             var minDist = Math.sqrt(w * w + h * h) / 2;
-            if (best.distance < minDist && current.distance >= minDist) {
+            if (best.distance < minDist && current.distance > best.distance) {
               return true;
             }
             if (current.overlap < best.overlap) {
