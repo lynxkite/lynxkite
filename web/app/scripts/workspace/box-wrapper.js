@@ -21,7 +21,8 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
     return comment ? comment.split('\n') : [];
   }
 
-  function BoxWrapper(metadata, instance) {
+  function BoxWrapper(workspace, metadata, instance) {
+    this.workspace = workspace;
     this.metadata = metadata;
     this.instance = instance;
     this.summary = metadata.operationId;
@@ -35,10 +36,10 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
 
     var i;
     for (i = 0; i < metadata.inputs.length; ++i) {
-      this.inputs.push(new PlugWrapper(metadata.inputs[i], i, 'inputs', this));
+      this.inputs.push(new PlugWrapper(workspace, metadata.inputs[i], i, 'inputs', this));
     }
     for (i = 0; i < metadata.outputs.length; ++i) {
-      var plug = new PlugWrapper(metadata.outputs[i], i, 'outputs', this);
+      var plug = new PlugWrapper(workspace, metadata.outputs[i], i, 'outputs', this);
       this.outputs.push(plug);
       this.outputMap[plug.id] = plug;
     }
