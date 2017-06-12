@@ -271,6 +271,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     },
 
     addArrow: function(plug1, plug2, opts) {
+      opts = opts || {};
       if (plug1.direction === plug2.direction) {
         return false;
       }
