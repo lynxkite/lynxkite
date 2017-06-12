@@ -3059,9 +3059,56 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         p
       }
 
-      // TODO: Extend this to allow filtered vertex sets to be compatible
+      class VertexCompatibilityChain(broaderSet: Option[VertexSet],
+                                     narrowerSet: Option[VertexSet]) {
+        private lazy val manager = {
+          val m1 =broaderSet.get.source.manager
+          val m2 = narrowerSet.get.source.manager
+          assert(m1 == m2, s"Incompatible managers! $m1 != $m2")
+          m1
+        }
+
+        lazy val equal: Boolean = {
+          if (!broaderSet.isDefined || !narrowerSet.isDefined) {
+            false
+          } else if (broaderSet.get == narrowerSet.get) {
+              true
+          } else {
+            false
+          }
+        }
+
+        private lazy val chain: List[EdgeBundle] = {
+          assert(!equal)
+        }
+
+        lazy val compatible: Boolean = {
+          equal ||  chain.nonEmpty
+          }
+        }
+
+        def check(v: VertexSet): Boolean = {
+          val edges = manager.incomingBundles(v)
+          val possiblePaths = edges.filter(eb =>
+            eb.properties == EdgeBundleProperties.identity ||
+              eb.properties == EdgeBundleProperties.embedding)
+          val srcVertexSets = possiblePaths.map(_.srcVertexSet)
+          for (src <- srcVertexSets) {
+            if (check(src)) {
+              return true
+            }
+          }
+          return false
+        }
+      }
+
       private def compatibleIdSets(a: Option[VertexSet], b: Option[VertexSet]): Boolean = {
-        a.isDefined && b.isDefined && a.get == b.get
+        if (!a.isDefined || !b.isDefined) {
+          false
+        } else {
+          val cmp = new VertexCompatibilityChain(a.get)
+          return cmp.check(b.get)
+        }
       }
       private def compatible = compatibleIdSets(left.idSet, right.idSet)
 
@@ -3086,7 +3133,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       def apply() {
         if (attributesAreAvailable) {
           for (attrName <- splitParam("attrs")) {
+
             val attr = right.attributes(attrName)
+
+            val qq = graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
             val note = right.getElementNote(attrName)
             left.newAttribute(attrName, attr, note)
           }
