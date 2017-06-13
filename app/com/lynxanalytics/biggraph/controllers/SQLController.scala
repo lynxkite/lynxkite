@@ -212,21 +212,11 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val entry = DirectoryEntry.fromName(pathParts.head)
     entry.assertReadAllowedFrom(user)
     val frame = entry.asObjectFrame
-    if (frame.isView) {
-      assert(pathParts.length == 1)
-      getViewColumns(user, frame.asViewFrame)
-    } else if (frame.isProject) {
-      assert(pathParts.length >= 1)
-      if (request.isImplicitTable) {
-        getTableColumns(frame, pathParts.tail)
-      } else {
-        getProjectTables(frame.path, frame.viewer, pathParts.tail)
-      }
-    } else if (frame.isSnapshot) {
+    if (frame.isSnapshot) {
       getSnapshot(user, frame, pathParts.tail)
     } else {
       throw new AssertionError(
-        s"Table browser nodes are only available for views, project or snapshots (${frame.path}).")
+        s"Table browser nodes are only available for snapshots (${frame.path}).")
     }
   }
 
@@ -236,10 +226,12 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
       getColumnsFromSchema(state.table.schema)
     } else if (state.isProject) {
       if (pathTail.isEmpty) {
+        // The last path segment is the frame, therefore the state is really a project.
         getProjectTables(frame.path, state.project.viewer, pathTail)
       } else {
+        // The path identifies a table within a snapshot of a project kind.
         val protoTable = state.project.viewer.getSingleProtoTable(pathTail.mkString("|"))
-        getColumnsFromSchema(protoTable.toTable.schema)
+        getColumnsFromSchema(protoTable.schema)
       }
     } else {
       throw new AssertionError(
@@ -266,12 +258,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     }
 
     TableBrowserNodeResponse(list = implicitTables ++ subProjects)
-  }
-
-  def getViewColumns(user: serving.User, frame: ViewFrame): TableBrowserNodeResponse = {
-    val viewRecipe = frame.getRecipe
-    val df = viewRecipe.createDataFrame(user, SQLController.defaultContext(user))
-    getColumnsFromSchema(df.schema)
   }
 
   def getColumnsFromSchema(schema: spark.sql.types.StructType): TableBrowserNodeResponse = {

@@ -11,7 +11,7 @@ import org.apache.spark.sql.types
 // operations like ExecuteSQL.
 trait ProtoTable {
   // The schema of the Table that would be created by toTable.
-  protected def schema: types.StructType
+  def schema: types.StructType
   // Returns a ProtoTable that is a possibly smaller subset of this one, still containing the
   // specified columns.
   protected def maybeSelect(columns: Iterable[String]): ProtoTable
