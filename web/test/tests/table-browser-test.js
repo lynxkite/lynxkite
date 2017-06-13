@@ -2,7 +2,6 @@
 
 module.exports = function() {};
 
-/* TODO: Revive this. #6153
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
@@ -11,10 +10,14 @@ module.exports = function(fw) {
     'SQL table browser in project',
     function() {
       // Create a segmentation.
-      lib.left.runOperation('Segment by Double attribute', {
-        'attr': 'age',
-        'interval_size': '1',
-        'name': 'bucketing'
+      lib.workspace.addBox({
+        id: 'sda1', name: 'Segment by Double attribute',
+        x: 100, y: 200, after: 'eg0',
+        params: {
+          'attr': 'age',
+          'interval_size': '1',
+          'name': 'bucketing'
+        }
       });
 
       var tableBrowser = lib.left.tableBrowser;
@@ -82,4 +85,4 @@ module.exports = function(fw) {
     function() {
     });
 };
-*/
+
