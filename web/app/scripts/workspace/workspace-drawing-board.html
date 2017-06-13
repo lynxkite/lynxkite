@@ -126,8 +126,49 @@
     ng-mouseup="onMouseUp($event)"
     ng-mousedown="onMouseDown($event)">
   <svg>
+    <defs>
+      <!-- The filters to apply colors to the grayscale icons. -->
+      <filter ng-repeat="(id, matrix) in filters" id="{{ id }}">
+        <feColorMatrix in="SourceGraphic" type="matrix" ng-attr-values="{{ matrix }}"></feColorMatrix>
+      </filter>
+
+      <marker id="arrow-head" orient="auto" markerWidth="6" markerHeight="6" viewBox="-8 -5 10 10">
+        <path d="M -8 -5 l 10 5 l -10 5 z"></path>
+      </marker>
+
+      <marker id="arrow-root" markerWidth="4" markerHeight="4" viewBox="-2 -2 4 4">
+        <circle r="2"></circle>
+      </marker>
+    </defs>
+
     <g id="drawing-board"
        ng-attr-transform="{{ workspaceTransform() }}">
+      <g>
+        <rect
+          class="selection-box"
+          ng-attr-x="{{selection.leftX}}"
+          ng-attr-y="{{selection.upperY}}"
+          ng-attr-width="{{selection.width}}"
+          ng-attr-height="{{selection.height}}">
+        </rect>
+      </g>
+
+      <!-- start arrow -->
+      <g ng-repeat="arrow in arrows()">
+        <path class="arrow"
+            id="{{ arrow.src.boxId }}-{{ arrow.src.id }}-{{ arrow.dst.boxId }}-{{ arrow.dst.id }}"
+            ng-attr-d="{{ bezier(arrow.x1(), arrow.y1(), arrow.x2(), arrow.y2()) }}"></path>
+      </g>
+      <!-- end arrow -->
+
+      <!-- start pulled arrow -->
+      <g ng-if="pulledPlug && mouseLogical">
+        <path class="arrow pulled-arrow"
+            ng-attr-d="{{
+            pulledPlug.direction === 'inputs'
+            ? bezier(mouseLogical.x, mouseLogical.y, pulledPlug.cx(), pulledPlug.cy())
+            : bezier(pulledPlug.cx(), pulledPlug.cy(), mouseLogical.x, mouseLogical.y) }}"></path>
+      </g>
 
       <!-- start box -->
       <g ng-repeat="box in boxes()"
@@ -137,14 +178,31 @@
           class="box"
           id="{{ box.instance.id }}"
           ng-class="{ 'selected': selectedBoxIds.includes(box.instance.id) }">
+        <circle id="click-target" cx="50" cy="60" r="50"></circle>
 
-        <!-- start list of I/O plugs -->
-        <g ng-repeat="direction in ['inputs', 'outputs']"
-          id="{{ direction }}">
+        <!-- Icon. The filter applies color according to the metadata. -->
+        <image
+          class="box-main"
+          filter="{{ filters[box.metadata.color] ? 'url(#' + box.metadata.color + ')' : '' }}"
+          href="{{ box.metadata.icon }}" x="-25" y="-25" width="150" height="150"></image>
+
+        <text x="50" y="105" class="summary backdrop">
+          {{box.summary}}
+        </text>
+        <text x="50" y="105" class="summary text">
+          {{box.summary}}
+        </text>
+
+        <text x="-20" y="115" ng-show="box.commentLines">
+          <tspan xml:space="preserve" font-family="monospace" x="5" dy="15"
+                 ng-repeat="line in box.commentLines track by $index">{{line}}
+          </tspan>
+        </text>
+        <g ng-repeat="direction in ['inputs', 'outputs']" id="{{ direction }}">
           <g ng-repeat="plug in box[direction]"
               ng-attr-transform="{{ plug.posTransform }}"
+              class="plug"
               id="{{ plug.id }}">
-            <text x="10">{{ plug.id }}</text>
             <circle ng-attr-r="{{ plug.radius }}"
                   class="io-circle"
                   ng-class="{'in-progress': plug.inProgress,
@@ -155,54 +213,17 @@
                   ng-mouseup="onMouseUpOnPlug(plug, $event)"
                   ng-click="onClickOnPlug(plug, $event)">
             </circle>
+            <text
+                class="backdrop"
+                ng-class="{ lonely: box[direction].length === 1 }"
+                ng-attr-x="{{ direction === 'inputs' ? -15 : 15 }}">
+              {{ plug.id }}</text>
+            <text
+                ng-class="{ lonely: box[direction].length === 1 }"
+                ng-attr-x="{{ direction === 'inputs' ? -15 : 15 }}">
+              {{ plug.id }}</text>
           </g>
         </g>
-        <!-- end list of I/O plugs -->
-
-        <rect
-            class="box-main"
-            ng-attr-width="{{box.width}}"
-            ng-attr-height="{{box.height}}">
-        </rect>
-
-        <text x="5" y="15">
-          {{box.summary}}
-        </text>
-        <text x="5" y="50" ng-show="box.commentLines">
-          <tspan xml:space="preserve" font-family="monospace" x="5" dy="15"
-                 ng-repeat="line in box.commentLines track by $index">{{line}}
-          </tspan>
-        </text>
-      </g>
-      <!-- end box -->
-      <g>
-      <rect
-        class="selection-box"
-        ng-attr-x="{{selection.leftX}}"
-        ng-attr-y="{{selection.upperY}}"
-        ng-attr-width="{{selection.width}}"
-        ng-attr-height="{{selection.height}}">
-      </rect>
-    </g>
-      <!-- start arrow -->
-      <g ng-repeat="arrow in arrows()">
-        <line class="arrow"
-            id="{{ arrow.src.boxId }}-{{ arrow.src.id }}-{{ arrow.dst.boxId }}-{{ arrow.dst.id }}"
-            ng-attr-x1="{{arrow.x1()}}"
-            ng-attr-y1="{{arrow.y1()}}"
-            ng-attr-x2="{{arrow.x2()}}"
-            ng-attr-y2="{{arrow.y2()}}"></line>
-      </g>
-      <!-- end arrow -->
-
-      <!-- start pulled arrow -->
-      <g ng-if="pulledPlug && mouseLogical">
-        <line class="arrow pulled-arrow"
-            ng-attr-x1="{{pulledPlug.cx()}}"
-            ng-attr-y1="{{pulledPlug.cy()}}"
-            ng-attr-x2="{{mouseLogical.x}}"
-            ng-attr-y2="{{mouseLogical.y}}">
-        </line>
       </g>
 
       <polygon
@@ -220,3 +241,5 @@
   </popup>
 
 </div>
+<operation-selector box-catalog="boxCatalog" ondrag="addOperation(op, $event)">
+</operation-selector>

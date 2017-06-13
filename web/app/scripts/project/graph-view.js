@@ -1,14 +1,14 @@
 // Graph visualization. Generates the SVG contents.
 'use strict';
 
-angular.module('biggraph').directive('graphView', function(util, $compile, $timeout, $window) {
+angular.module('biggraph').directive('graphView', function(util, $compile, $timeout) {
   /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT, tinycolor */
   var svg = SVG_UTIL;
   var common = COMMON_UTIL;
   var directive = {
     restrict: 'E',
     templateUrl: 'scripts/project/graph-view.html',
-    scope: { graph: '=', menu: '=' },
+    scope: { graph: '=', menu: '=', width: '=', height: '=' },
     replace: true,
     link: function(scope, element) {
       element = angular.element(element);
@@ -39,18 +39,15 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   function handleResizeEvents(scope) {
     var timer;
     function update() {
+      // Only update 100ms after the last resize to reduce
+      // excessive redrawing.
       $timeout.cancel(timer);
       timer = $timeout(scope.updateGraph, 100);
     }
 
-    var eventName = 'resize.graph-view-' + scope.$id;
-    var window = angular.element($window);
-    window.bind(eventName, update);
-    scope.$on('ui.layout.toggle', update);
-    scope.$on('ui.layout.resize', update);
+    scope.$watchGroup(['width', 'height'], update);
     scope.$on('$destroy', function() {
       $timeout.cancel(timer);
-      window.unbind(eventName);
     });
   }
 

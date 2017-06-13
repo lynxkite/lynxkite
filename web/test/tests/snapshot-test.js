@@ -10,7 +10,7 @@ module.exports = function(fw) {
 
   fw.transitionTest(
     'test-example workspace with example graph',
-    'snapshot-created',
+    'snapshot created',
     function() {
       var state = lib.workspace.openStateView('eg0', 'project');
       var snapshotBox = state.popup.$('#save-as-snapshot-box');
@@ -25,15 +25,15 @@ module.exports = function(fw) {
     });
 
   fw.transitionTest(
-    'snapshot-created',
-    'snapshot-loaded-in-new-workspace',
+    'snapshot created',
+    'snapshot loaded in new workspace',
     function() {
       lib.splash.openNewWorkspace('test-load-snapshot');
       lib.workspace.addBox({
-        id: 'sb0', name: 'load snapshot', params: {path: snapshotName}, x: 100, y: 100});
+        id: 'sb0', name: 'Load snapshot', params: {path: snapshotName}, x: 100, y: 100});
     },
     function() {
-      var state = lib.workspace.openStateView('sb0', 'project');
+      var state = lib.workspace.openStateView('sb0', 'state');
       expect(state.left.vertexCount()).toEqual(4);
       expect(state.left.edgeCount()).toEqual(4);
       expect(state.left.attributeCount()).toEqual(8);

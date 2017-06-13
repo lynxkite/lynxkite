@@ -45,6 +45,7 @@ Entity.prototype = {
   popoff: function() {
     this.element.isPresent().then(present => {
       if (present) { this.element.evaluate('closeMenu()'); }
+      if (present) { this.element.evaluate('closeMenu()'); }
     });
   },
 
@@ -169,9 +170,13 @@ Workspace.prototype = {
     var after = boxData.after;
     var inputs = boxData.inputs;
     var params = boxData.params;
-    var op = this.openOperation(boxData.name);
-    testLib.simulateDragAndDrop(op, this.board, boxData.x, boxData.y, {id: id});
-    this.closeOperationSelector();
+    browser.waitForAngular();
+    browser.executeScript(`
+        $(document.querySelector('#workspace-drawing-board')).scope().workspace.addBox(
+          '${ boxData.name }',
+          { logicalX: ${ boxData.x }, logicalY: ${ boxData.y } },
+          { boxId: '${ boxData.id }' });
+        `);
     if (after) {
       this.connectBoxes(after, 'project', id, 'project');
     }
@@ -211,7 +216,7 @@ Workspace.prototype = {
   },
 
   expectNumSelectedBoxes: function(n) {
-    return expect($$('g.selected.selected rect').count()).toEqual(n);
+    return expect($$('g.box.selected').count()).toEqual(n);
   },
 
   deleteBoxes: function(boxIds) {
@@ -269,39 +274,29 @@ Workspace.prototype = {
   },
 
   clickBox: function(boxId) {
-    this.getBox(boxId).$('rect').click();
+    this.getBox(boxId).$('#click-target').click();
   },
 
   selectBox: function(boxId) {
     this.openBoxEditor(boxId).close();
   },
 
-  openBoxEditor: function(boxId) {
-    this.clickBox(boxId);
+  getBoxEditor: function(boxId) {
     var popup = this.board.$('.popup#' + boxId);
-    expect(popup.isDisplayed()).toBe(true);
-    this.movePopupToCenter(popup);
-    return new BoxEditor(popup);
+    return popup;
   },
 
-  movePopupToCenter: function(popup) {
-    var head = popup.$('div.popup-head');
-    browser.actions()
-        .mouseDown(head)
-        // Absolute positioning of mouse. If we don't specify the first
-        // argument then this becomes a relative move. If the first argument
-        // is this.board, then protractor scrolls the element of this.board
-        // to the top of the page, even though scrolling is not enabled.
-        .mouseMove($('body'), {x: 800, y: 90})
-        .mouseUp(head)
-        .perform();
+  openBoxEditor: function(boxId) {
+    this.clickBox(boxId);
+    var popup = this.getBoxEditor(boxId);
+    expect(popup.isDisplayed()).toBe(true);
+    return new BoxEditor(popup);
   },
 
   openStateView: function(boxId, plugId) {
     var popup = this.board.$('.popup#' + boxId + '_' + plugId);
     testLib.expectNotElement(popup); // If it is already open, use getStateView() instead.
     this.toggleStateView(boxId, plugId);
-    this.movePopupToCenter(popup);
     return new State(popup);
   },
 
@@ -310,9 +305,14 @@ Workspace.prototype = {
     return new State(popup);
   },
 
+  getVisualizationEditor(boxId) {
+    var popup = this.getBoxEditor(boxId);
+    return new State(popup);
+  },
+
   expectConnected: function(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
-    var line = this.board.$(`line#${srcBoxId}-${srcPlugId}-${dstBoxId}-${dstPlugId}`);
-    expect(line.isPresent()).toBe(true);
+    var arrow = this.board.$(`path#${srcBoxId}-${srcPlugId}-${dstBoxId}-${dstPlugId}`);
+    expect(arrow.isPresent()).toBe(true);
   },
 
   connectBoxes: function(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
@@ -330,12 +330,35 @@ Workspace.prototype = {
 
 };
 
+function PopupBase() {
+}
+
+PopupBase.prototype = {
+  close: function() {
+    this.popup.$('#close-popup').click();
+  },
+
+  moveTo: function(x, y) {
+    var head = this.popup.$('div.popup-head');
+    browser.actions()
+        .mouseDown(head)
+        // Absolute positioning of mouse. If we don't specify the first
+        // argument then this becomes a relative move. If the first argument
+        // is this.board, then protractor scrolls the element of this.board
+        // to the top of the page, even though scrolling is not enabled.
+        .mouseMove($('body'), {x: x, y: y})
+        .mouseUp(head)
+        .perform();
+  },
+};
+
 function BoxEditor(popup) {
   this.popup = popup;
   this.element = popup.$('box-editor');
 }
 
 BoxEditor.prototype = {
+  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
 
   operationParameter: function(param) {
     return this.element.$(
@@ -364,9 +387,6 @@ BoxEditor.prototype = {
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
-  close: function() {
-    this.popup.$('#close-popup').click();
-  },
 };
 
 function State(popup) {
@@ -375,29 +395,22 @@ function State(popup) {
   this.right = new Side(this.popup, 'right');
   this.table = new TableState(this.popup);
   this.plot = new PlotState(this.popup);
+  this.visualization = new VisualizationState(this.popup);
 }
 
 State.prototype = {
-  close: function() {
-    this.popup.$('#close-popup').click();
-  }
+  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
 };
 
 function PlotState(popup) {
+  this.popup = popup;
   this.canvas = popup.$('#plot-div .vega svg');
 }
 
 PlotState.prototype = {
+  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
+
   barHeights: function() {
-    var until = protractor.ExpectedConditions;
-    var canvasEl = element(by.css('#plot-div .vega svg'));
-    browser.wait(until.presenceOf(canvasEl),
-      15000,
-      'Canvas is taking too long to appear in the DOM');
-    var el = element(by.css('g.mark-rect.marks rect'));
-    browser.wait(until.presenceOf(el),
-      15000,
-      'Bar chart is taking too long to appear in the DOM');
     return this.canvas.$$('g.mark-rect.marks rect').map(e => e.getAttribute('height'));
   },
 
@@ -408,11 +421,14 @@ PlotState.prototype = {
 
 
 function TableState(popup) {
+  this.popup = popup;
   this.sample = popup.$('#table-sample');
   this.control = popup.$('#table-control');
 }
 
 TableState.prototype = {
+  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
+
   expect: function(names, types, rows) {
     this.expectColumnNamesAre(names);
     this.expectColumnTypesAre(types);
@@ -489,7 +505,7 @@ TableState.prototype = {
 
 function Side(popup, direction) {
   this.direction = direction;
-  this.side = popup.$('project-state-view #side-' + direction);
+  this.side = popup.$('#side-' + direction);
 }
 
 Side.prototype = {
@@ -742,8 +758,11 @@ TableBrowser.prototype = {
 
 };
 
-var visualization = {
-  svg: $('svg.graph-view'),
+function VisualizationState(popup) {
+  this.svg = popup.$('svg.graph-view');
+}
+
+VisualizationState.prototype = {
 
   elementByLabel: function(label) {
     return this.svg.element(by.xpath('.//*[contains(text(),"' + label + '")]/..'));
@@ -761,12 +780,13 @@ var visualization = {
 
   // The visualization response received from the server.
   graphView: function() {
-    return visualization.svg.evaluate('graph.view');
+    return this.svg.evaluate('graph.view');
   },
 
   // The currently visualized graph data extracted from the SVG DOM.
   graphData: function() {
     browser.waitForAngular();
+    //browser.pause();
     return browser.executeScript(function() {
 
       // Vertices as simple objects.
@@ -839,7 +859,7 @@ var visualization = {
   },
 
   vertexCounts: function(index) {
-    return visualization.graphView().then(function(gv) {
+    return this.graphView().then(function(gv) {
       return gv.vertexSets[index].vertices.length;
     });
   },
@@ -1106,7 +1126,6 @@ var lastDownloadList;
 testLib = {
   theRandomPattern: randomPattern(),
   workspace: new Workspace(),
-  visualization: visualization,
   splash: splash,
   selectAllKey: K.chord(K.CONTROL, 'a'),
   protractorDownloads: '/tmp/protractorDownloads.' + process.pid,
@@ -1391,56 +1410,6 @@ testLib = {
     expect($('.sweet-alert h2').getText()).toBe(expectedMessage);
     $('.sweet-alert button.confirm').click();
     testLib.wait(EC.stalenessOf($('.sweet-alert.showSweetAlert')));
-  },
-
-  // Because of https://github.com/angular/protractor/issues/3289, we cannot use protractor
-  // to generate and send drag-and-drop events to the page. This function can be used to
-  // achieve that.
-  simulateDragAndDrop: function(srcSelector, dstSelector, dstX, dstY, dataTransferOverrides) {
-
-    function simulateDragAndDropInBrowser(src, dst, dstX, dstY, dataTransferOverrides) {
-      function createEvent(type) {
-        var event = new CustomEvent('CustomEvent');
-        event.initCustomEvent(type, true, true, null);
-        event.dataTransfer = {
-          data: {},
-          setData: function(type, value) {
-            this.data[type] = value;
-          },
-          getData: function(type) {
-            return this.data[type];
-          }
-        };
-        return event;
-      }
-
-      var dragStartEvent = createEvent('dragstart');
-      src.dispatchEvent(dragStartEvent);
-      for (var key in dataTransferOverrides) {
-        if (dataTransferOverrides.hasOwnProperty(key)) {
-          dragStartEvent.dataTransfer.setData(key, dataTransferOverrides[key]);
-        }
-      }
-
-      var dropEvent = createEvent('drop');
-      dropEvent.pageX = dstX;
-      dropEvent.pageY = dstY;
-
-      dropEvent.dataTransfer = dragStartEvent.dataTransfer;
-      dst.dispatchEvent(dropEvent);
-
-      var dragEndEvent = createEvent('dragend');
-      dragEndEvent.dataTransfer = dragStartEvent.dataTransfer;
-      src.dispatchEvent(dragEndEvent);
-    }
-
-    browser.executeScript(
-      simulateDragAndDropInBrowser,
-      srcSelector.getWebElement(),
-      dstSelector.getWebElement(),
-      dstX, dstY,
-      dataTransferOverrides
-    );
   },
 
   waitUntilClickable: function(element) {

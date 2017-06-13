@@ -61,7 +61,7 @@ addJPropIfNonEmpty () {
 
 derby_jar=$(find ${SPARK_HOME}/jars/ -name "derby*.jar")
 
-if [ "$(echo ${derby_jar} | wc -w)" != "1" ]; then
+if [ "$(echo ${derby_jar} | wc -w | tr -d ' ')" != "1" ]; then
   >&2 echo "I expected to find one Derby jar, found this: $derby_jar"
   exit 1
 fi

@@ -24,11 +24,17 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   val ImportOperations = Category("Import operations", "green", icon = "folder-open")
 
   def register(id: String)(factory: Context => ImportOperation): Unit = {
-    registerOp(id, ImportOperations, List(), List("table"), factory)
+    registerOp(id, "fountain", ImportOperations, List(), List("table"), factory)
   }
 
   import OperationParams._
   import org.apache.spark
+
+  def simpleFileName(name: String): String = {
+    // Drop the hash if this is an upload.
+    if (name.startsWith("UPLOAD$")) name.split("/", -1).last.split("\\.", 2).last
+    else name.split("/", -1).last
+  }
 
   register("Import CSV")(new ImportOperation(_) {
     params ++= List(
@@ -44,6 +50,12 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
       ImportedTableParam("imported_table", "Table GUID"))
+
+    override def summary = {
+      val fn = simpleFileName(params("filename"))
+      s"Import $fn"
+    }
+
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       val errorHandling = params("error_handling")
       val infer = params("infer") == "yes"
@@ -110,6 +122,12 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
       ImportedTableParam("imported_table", "Table GUID"))
+
+    override def summary = {
+      val fn = simpleFileName(params("filename"))
+      s"Import $fn"
+    }
+
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       val hadoopFile = graph_util.HadoopFile(params("filename"))
       hadoopFile.assertReadAllowedFrom(user)
