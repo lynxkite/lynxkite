@@ -314,7 +314,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     _assignSummaryInfoToBoxes: function(summaries) {
       for (var i = 0; i < this.boxes.length; i++) {
         var box = this.boxes[i];
-        box.summary = summaries[box.id];
+        box.summary = summaries[box.instance.id];
         if (!box.summary) {
           box.summary = box.metadata.operationId;
         }
