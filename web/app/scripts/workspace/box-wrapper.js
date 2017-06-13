@@ -21,23 +21,25 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
     return comment ? comment.split('\n') : [];
   }
 
-  function BoxWrapper(metadata, instance) {
+  function BoxWrapper(workspace, metadata, instance) {
+    this.workspace = workspace;
     this.metadata = metadata;
     this.instance = instance;
+    this.summary = metadata.operationId;
     this.inputs = [];
     this.outputs = [];
     this.outputMap = {};
-    this.width = 200;
-    this.height = 40;
+    this.width = 100;
+    this.height = 100;
     this.commentLines = getCommentLines(metadata, instance);
     this.isMoved = false;
 
     var i;
     for (i = 0; i < metadata.inputs.length; ++i) {
-      this.inputs.push(new PlugWrapper(metadata.inputs[i], i, 'inputs', this));
+      this.inputs.push(new PlugWrapper(workspace, metadata.inputs[i], i, 'inputs', this));
     }
     for (i = 0; i < metadata.outputs.length; ++i) {
-      var plug = new PlugWrapper(metadata.outputs[i], i, 'outputs', this);
+      var plug = new PlugWrapper(workspace, metadata.outputs[i], i, 'outputs', this);
       this.outputs.push(plug);
       this.outputMap[plug.id] = plug;
     }

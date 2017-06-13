@@ -12,15 +12,11 @@ angular.module('biggraph').factory('PlugWrapper', function() {
     return tinycolor.mix('blue', 'green', progressRatio * 100).toHexString();
   }
 
-  function PlugWrapper(id, index, direction, box) {
+  function PlugWrapper(workspace, id, index, direction, box) {
+    this.workspace = workspace;
     var radius = 8;
-    var len = box.metadata[direction].length;
-    if (len <= 1) {
-      this.rx = box.width / 2;
-    } else {
-      this.rx = index * (box.width - radius * 2) / (len - 1) + radius;
-    }
-    this.ry = direction === 'outputs' ? box.height + 15 : -15;
+    this.rx = direction === 'outputs' ? box.width : 0;
+    this.ry = box.height - 20 * (index + 1);
     this.box = box;
     this.boxId = box.instance.id;
     this.boxInstance = box.instance;
@@ -64,6 +60,21 @@ angular.module('biggraph').factory('PlugWrapper', function() {
       } else {
         this.error = success.disabledReason;
       }
+    },
+
+    getAttachedBoxes: function() {
+      var dsts = [];
+      for (var i = 0; i < this.workspace.boxes.length; ++i) {
+        var box = this.workspace.boxes[i];
+        for (var j = 0; j < box.inputs.length; ++j) {
+          var input = box.inputs[j];
+          var conn = box.instance.inputs[input.id];
+          if (conn && conn.boxId === this.boxId && conn.id === this.id) {
+            dsts.push(box);
+          }
+        }
+      }
+      return dsts;
     },
   };
 

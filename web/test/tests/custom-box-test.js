@@ -19,16 +19,16 @@ module.exports = function(fw) {
       lib.splash.openNewWorkspace('test-custom-box');
       lib.workspace.addWorkspaceParameter('prname', 'text', 'default_pr');
       lib.workspace.addBox({
-        id: 'in', name: 'Input', x: 100, y: 100, params: { name: 'in' } });
+        id: 'in', name: 'Input', x: 100, y: 0, params: { name: 'in' } });
       lib.workspace.addBox({
-        id: 'eg', name: 'Create example graph', x: 400, y: 100 });
+        id: 'eg', name: 'Create example graph', x: 400, y: 0 });
       lib.workspace.addBox({
-        id: 'pr', name: 'Compute PageRank', x: 100, y: 300, after: 'eg' });
+        id: 'pr', name: 'Compute PageRank', x: 100, y: 100, after: 'eg' });
       setParametric('pr', 'name', '$prname');
       lib.workspace.addBox({
-        id: 'cc', name: 'Compute clustering coefficient', x: 100, y: 400, after: 'pr' });
+        id: 'cc', name: 'Compute clustering coefficient', x: 100, y: 200, after: 'pr' });
       lib.workspace.addBox({
-        id: 'out', name: 'Output', x: 100, y: 500 });
+        id: 'out', name: 'Output', x: 100, y: 300 });
       lib.workspace.connectBoxes('cc', 'project', 'out', 'output');
       lib.workspace.editBox('out', { name: 'out' });
       lib.workspace.connectBoxes('in', 'input', 'pr', 'project');

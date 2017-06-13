@@ -1,13 +1,15 @@
-<div class="col-sm-{{ side.columnWidth() }} side" id="side-{{side.direction}}">
+<div class="col-sm-{{ 12 / side.activeSides().length }} side" id="side-{{side.direction}}">
 
-  <progressbar ng-if="side.project && !side.project.$resolved" value="100" class="progress-striped active">
+  <progressbar ng-if="side.project && !side.project.$resolved ||
+                      side.pendingProject && !side.pendingProject.$resolved"
+    value="100"
+    class="progress-striped active">
   Loading...
   </progressbar>
 
   <div class="panel panel-danger" ng-if="side.project.$error">
     <div class="panel-heading project-name">
       {{side.state.projectName}}
-
       <div class="btn-group pull-right">
         <label class="btn btn-default"
                ng-click="side.close()"
@@ -28,8 +30,30 @@
 
   <div class="project" ng-if="
     side.project.$resolved && !side.project.$error && !side.showHistory && !side.unsaved.workflowEditor.enabled">
+    <div class="btn-group pull-right" ng-if="side.enableVisualizationUI">
+      <label class="btn btn-default"
+             id="bucketed-mode-button"
+             ng-model="side.state.graphMode"
+             btn-radio="'bucketed'"
+             uncheckable
+             tooltip="Bucketed&nbsp;graph"
+             tooltip-append-to-body="true"
+             tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-th"></i>
+      </label>
+      <label class="btn btn-default"
+             id="sampled-mode-button"
+             ng-model="side.state.graphMode"
+             btn-radio="'sampled'"
+             uncheckable
+             tooltip="Concrete&nbsp;vertices"
+             tooltip-append-to-body="true"
+             tooltip-placement="bottom">
+        <i class="glyphicon glyphicon-eye-open"></i>
+      </label>
+    </div>
 
-    <div class="btn-group pull-right">
+    <div class="btn-group pull-right" ng-show="side.activeSides().length > 1">
       <label class="btn btn-default"
              ng-click="side.close()"
              id="close-project"
@@ -52,8 +76,8 @@
 
     <div class="project-name">
       <span ng-class="unconnectedSides() ? 'warning' : 'de-emph'">
-        <span>
-          State
+        <span ng-show="side.activeSides().length > 1">
+          Base
         </span>
         <span ng-repeat="parent in side.parentProjects()">
           {{parent}} &raquo;
@@ -111,24 +135,38 @@
       </span>
     </span>
 
-    <div class="project-notes">
-      <textarea class="project-notes"
-                placeholder="Enter project notes here"
-                rows="{{side.project.notes.split('\n').length}}"
-                ng-model="side.project.notes"
-                ng-change="side.unsavedNotes = true"
-                ng-trim="false"></textarea>
-      <button ng-if="side.unsavedNotes"
-              ng-click="side.saveNotes()"
-              ng-disabled="side.savingNotes"
-              class="btn btn-default">
-        {{ side.savingNotes ? '...' : 'Save' }}
-      </button>
-    </div>
-
     <!-- Project settings. -->
     <div class="acl-settings" ng-if="side.showSettings">
       <acl-settings reload="side.reload()" path="side.state.projectName" entity="side.project"></acl-settings>
+    </div>
+
+    <!-- Extra controls for visualizations. -->
+    <div class="token-section-label"
+         ng-show="side.state.graphMode && !side.showSection('view-settings')">
+      <span class="label-text" ng-click="side.showSection('view-settings', true)">
+        Visualization settings are hidden. </span>
+    </div>
+    <div class="extra-controls"
+         ng-if="side.state.graphMode"
+         ng-show="side.showSection('view-settings')">
+      <!-- Sampled view extra controls. -->
+      <div ng-if="side.state.graphMode === 'sampled'">
+        <div class="token-section-label">
+          <span class="label-text" ng-click="side.showSection('view-settings', false)">
+            Visualization settings </span>
+          <help-popup href="concrete-view-settings"></help-popup>
+        </div>
+        <sampled-view-settings side="side"></sampled-view-settings>
+      </div>
+
+      <!-- Extra controls for the bucketed view. -->
+      <div ng-if="side.state.graphMode === 'bucketed'">
+        <div class="token-section-label">
+          <span class="label-text" ng-click="side.showSection('view-settings', false)">
+            Visualization settings </span>
+        </div>
+        <bucketed-view-settings side="side"></bucketed-view-settings>
+      </div>
     </div>
 
     <!-- Attributes/segmentations. -->

@@ -207,6 +207,8 @@ include::create-scale-free-random-edge-bundle.asciidoc[]
 
 include::create-vertices.asciidoc[]
 
+include::create-visualization.asciidoc[]
+
 include::define-segmentation-links-from-matching-attributes.asciidoc[]
 
 include::derive-edge-attribute.asciidoc[]
@@ -312,6 +314,8 @@ include::import-vertices-and-edges-from-a-single-table.asciidoc[]
 include::import-vertices.asciidoc[]
 
 include::input.asciidoc[]
+
+include::join-projects.asciidoc[]
 
 include::link-project-and-segmentation-by-fingerprint.asciidoc[]
 

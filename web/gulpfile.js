@@ -153,7 +153,7 @@ gulp.task('serve', ['quick'], function() {
   browserSync.init({
     port: ProxyPort,
     https: LynxKiteURL.indexOf('https') === 0,
-    server: ['.tmp', 'app', 'node_modules'],
+    server: ['.tmp', 'app', 'node_modules', 'dist'],
     ghostMode: false,
     online: false,
     notify: false,

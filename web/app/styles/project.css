@@ -17,7 +17,6 @@ input[type=range] {
 .project {
   min-height: 407px; /* The height of the operations toolbox. */
   margin-right: 35px;
-  background: #f5f5f5;
   padding: 10px 15px;
 }
 .version {
