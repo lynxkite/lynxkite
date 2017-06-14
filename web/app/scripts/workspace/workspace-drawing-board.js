@@ -276,7 +276,7 @@ angular.module('biggraph')
         }
 
         scope.onMouseUpOnBox = function(box, event) {
-          if (box.isMoved || scope.pulledPlug) {
+          if (box.isMoved || scope.pulledPlug || scope.selection.isActive()) {
             return;
           }
           var leftButton = event.button === 0;
@@ -435,7 +435,8 @@ angular.module('biggraph')
 
         scope.pasteBoxes = function() {
           var pos = addLogicalMousePosition({ pageX: 0, pageY: 0});
-          scope.workspace.pasteFromClipboard(scope.clipboard, pos);
+          var added = scope.workspace.pasteFromClipboard(scope.clipboard, pos);
+          scope.selectedBoxIds = added.map(function(box) { return box.id; });
         };
 
         scope.deleteBoxes = function(boxIds) {
@@ -455,15 +456,17 @@ angular.module('biggraph')
         };
 
         scope.diveUp = function() {
-          scope.workspace.customBoxStack.pop();
+          var id = scope.workspace.customBoxStack.pop();
           scope.workspace.loadWorkspace();
           scope.popups = [];
+          scope.selectedBoxIds = [id];
         };
 
         scope.diveDown = function() {
           scope.workspace.customBoxStack.push(scope.selectedBoxIds[0]);
           scope.workspace.loadWorkspace();
           scope.popups = [];
+          scope.selectedBoxIds = [];
         };
 
         scope.saveSelectionAsCustomBox = function(name, success, error) {

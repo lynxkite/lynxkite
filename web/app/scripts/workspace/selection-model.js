@@ -13,6 +13,10 @@ angular.module('biggraph').factory('SelectionModel', function() {
     this.height = undefined;
   };
 
+  SelectionModel.prototype.isActive = function() {
+    return this.startX !== undefined;
+  };
+
   SelectionModel.prototype.update = function() {
     this.leftX = Math.min(this.startX, this.endX);
     this.upperY = Math.min(this.startY, this.endY);
@@ -28,7 +32,7 @@ angular.module('biggraph').factory('SelectionModel', function() {
     this.leftX = undefined;
     this.upperY = undefined;
     this.width = undefined;
-    this.length = undefined;
+    this.height = undefined;
   };
 
   SelectionModel.prototype.inSelection = function(box) {
