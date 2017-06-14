@@ -1123,11 +1123,21 @@ function randomPattern () {
 
 var lastDownloadList;
 
+function getSelectAllKey() {
+  // Mac is 'darwin': https://nodejs.org/api/process.html#process_process_platform
+  if (process.platform === 'darwin') {
+    // The command key is not supported properly, so we word around with Shift+Up.
+    return K.chord(K.SHIFT, K.UP);
+  } else {
+    return K.chord(K.CONTROL, 'a');
+  }
+}
+
 testLib = {
   theRandomPattern: randomPattern(),
   workspace: new Workspace(),
   splash: splash,
-  selectAllKey: K.chord(K.CONTROL, 'a'),
+  selectAllKey: getSelectAllKey(),
   protractorDownloads: '/tmp/protractorDownloads.' + process.pid,
 
   expectElement: function(e) {
