@@ -20,7 +20,6 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 class MetaGraphManager(val repositoryPath: String) {
   val checkpointRepo = MetaGraphManager.getCheckpointRepo(repositoryPath)
   val repositoryRoot = new File(repositoryPath).getParent()
-  val builtInsRoot = new File(repositoryRoot).getParent()
 
   def apply[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     operation: TypedMetaGraphOp[IS, OMDS],
@@ -251,12 +250,13 @@ class MetaGraphManager(val repositoryPath: String) {
   }
 
   private def createBuiltIns() = {
-    if (!builtsInDirectoryExists()) {
-      log.info("Loading builtIns from disk...")
-      for ((file, j) <- MetaGraphManager.loadBuiltIns(builtInsRoot)) {
+    if (!builtInsDirectoryExists()) {
+      log.info("Loading built_ins from disk...")
+      val builtInsLocalDir = getBuiltInsLocalDirectory()
+      for ((file, j) <- MetaGraphManager.loadBuiltIns(builtInsLocalDir)) {
         try {
           val checkpoint = saveWorkspace(j)
-          val path = SymbolPath("projects") / "builtIns" / file.getName()
+          val path = SymbolPath("projects") / "built_ins" / file.getName()
           setTag(path / "objectType", "workspace")
           setTag(path / "checkpoint", checkpoint)
           setTag(path / "nextCheckpoint", "")
@@ -266,7 +266,7 @@ class MetaGraphManager(val repositoryPath: String) {
           case e: Throwable => throw new Exception(s"failed to load $file.", e)
         }
       }
-      log.info("BuiltIns loaded from disk.")
+      log.info("Built_ins loaded from disk.")
     }
   }
 
@@ -295,8 +295,13 @@ class MetaGraphManager(val repositoryPath: String) {
     json.Json.obj("state" -> state, "previousCheckpoint" -> "", "lastOperationDesc" -> "", "workspace" -> j)
   }
 
-  private def builtsInDirectoryExists(): Boolean = {
-    tagExists(List(Symbol("projects"), Symbol("builtIns")))
+  private def getBuiltInsLocalDirectory(): String = {
+    val stageDir = scala.util.Properties.envOrNone("KITE_STAGE_DIR")
+    stageDir.get
+  }
+
+  private def builtInsDirectoryExists(): Boolean = {
+    tagExists(List(Symbol("projects"), Symbol("built_ins")))
   }
 }
 object MetaGraphManager {
@@ -315,7 +320,7 @@ object MetaGraphManager {
   }
 
   def loadBuiltIns(repo: String): Iterator[(File, json.JsValue)] = {
-    val opdir = new File(repo, "builtIns")
+    val opdir = new File(repo, "built_ins")
     if (!opdir.exists) opdir.mkdirs
     val files = opdir.listFiles.sortBy(_.getName)
     files.iterator.map { f =>
