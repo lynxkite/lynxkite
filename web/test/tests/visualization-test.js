@@ -305,9 +305,9 @@ module.exports = function(fw) {
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
-          { pos: { x: '>200', y: '>300' } },
-          { pos: { x: '>200', y: '<300' } },
-          { pos: { x: '<200', y: '<200' } },
+          { pos: { x: '>250', y: '>300' } },
+          { pos: { x: '>250', y: '<300' } },
+          { pos: { x: '<250', y: '<100' } },
         ]);
       });
 
