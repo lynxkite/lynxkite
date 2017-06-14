@@ -5,17 +5,13 @@
 }
 
 #workspace-header {
-  height: 50px;
+  min-height: 50px;
   padding: 5px 10px;
   border-bottom: 1px solid lightgray;
 }
 
 span#workspace-name {
   font: bold 2.5em serif;
-}
-
-span#custom-box-stack {
-  font-size: 2em;
 }
 
 #workspace-drawing-board {
