@@ -16,7 +16,8 @@ angular.module('biggraph').factory('PlugWrapper', function() {
     this.workspace = workspace;
     var radius = 8;
     this.rx = direction === 'outputs' ? box.width : 0;
-    this.ry = box.height - 20 * (index + 1);
+    var count = box.metadata[direction].length;
+    this.ry = box.height - 20 * (count - index);
     this.box = box;
     this.boxId = box.instance.id;
     this.boxInstance = box.instance;
