@@ -72,7 +72,7 @@ module.exports = function(fw) {
 */
 
   fw.transitionTest(
-    'a few projects created',
+    'a few workspaces created',
     'SQL table browser - global SQL box',
     function() {
       lib.splash.openGlobalSqlBox();
