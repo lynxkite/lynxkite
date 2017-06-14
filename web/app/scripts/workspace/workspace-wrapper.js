@@ -557,20 +557,23 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       });
       this.state.boxes.push(customBox);
       var that = this;
-      return util.post('/ajax/createWorkspace', {
-        name: name,
-      }).then(function success() {
-        return util.post('/ajax/setWorkspace', {
+      return {
+        customBox: customBox,
+        promise: util.post('/ajax/createWorkspace', {
           name: name,
-          workspace: { boxes: boxes },
-        });
-      }).then(function success() {
-        return that._updateBoxCatalog();
-      }).then(function success() {
-        that.saveWorkspace();
-      }, function error() {
-        that.loadWorkspace();
-      });
+        }).then(function success() {
+          return util.post('/ajax/setWorkspace', {
+            name: name,
+            workspace: { boxes: boxes },
+          });
+        }).then(function success() {
+          return that._updateBoxCatalog();
+        }).then(function success() {
+          that.saveWorkspace();
+        }, function error() {
+          that.loadWorkspace();
+        }),
+      };
     },
 
     startSavingAs: function() {
