@@ -435,7 +435,8 @@ angular.module('biggraph')
 
         scope.pasteBoxes = function() {
           var pos = addLogicalMousePosition({ pageX: 0, pageY: 0});
-          scope.workspace.pasteFromClipboard(scope.clipboard, pos);
+          var added = scope.workspace.pasteFromClipboard(scope.clipboard, pos);
+          scope.selectedBoxIds = added.map(function(box) { return box.id; });
         };
 
         scope.deleteBoxes = function(boxIds) {

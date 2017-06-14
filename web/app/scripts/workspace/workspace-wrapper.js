@@ -361,6 +361,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
 
     pasteFromClipboard: function(clipboard, currentPosition) {
       var mapping = {};
+      var newBoxes = [];
       for (var i = 0; i < clipboard.length; ++i) {
         var box = clipboard[i].instance;
         var diffX = clipboard[i].width;
@@ -371,6 +372,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         createdBox.parameters = box.parameters;
         createdBox.parametricParameters = box.parametricParameters;
         mapping[box.id] = createdBox;
+        newBoxes.push(createdBox);
       }
       for (i = 0; i < clipboard.length; ++i) {
         var oldBox = clipboard[i].instance;
@@ -387,6 +389,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         }
       }
       this.saveWorkspace();
+      return newBoxes;
     },
 
     saveIfBoxesMoved: function() {
