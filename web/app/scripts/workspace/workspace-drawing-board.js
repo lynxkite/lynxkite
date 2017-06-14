@@ -475,19 +475,22 @@ angular.module('biggraph')
 
         var hk = hotkeys.bindTo(scope);
         hk.add({
-          combo: 'ctrl+c', description: 'Copy boxes',
+          combo: 'mod+c', description: 'Copy boxes',
           callback: function() { scope.copyBoxes(); } });
         hk.add({
-          combo: 'ctrl+v', description: 'Paste boxes',
+          combo: 'mod+v', description: 'Paste boxes',
           callback: function() { scope.pasteBoxes(); } });
         hk.add({
-          combo: 'ctrl+z', description: 'Undo',
+          combo: 'mod+z', description: 'Undo',
           callback: function() { scope.workspace.undo(); } });
         hk.add({
-          combo: 'ctrl+y', description: 'Redo',
+          combo: 'mod+y', description: 'Redo',
           callback: function() { scope.workspace.redo(); } });
         hk.add({
-          combo: 'del', description: 'Paste boxes',
+          combo: 'del', description: 'Delete boxes',
+          callback: function() { scope.deleteSelectedBoxes(); } });
+        hk.add({
+          combo: 'backspace', description: 'Delete boxes',
           callback: function() { scope.deleteSelectedBoxes(); } });
         hk.add({
           combo: '/', description: 'Find operation',
