@@ -606,6 +606,16 @@ angular.module('biggraph')
         scope.bezier = function(x1, y1, x2, y2) {
           return ['M', x1, y1, 'C', x1 + 100, y1, ',', x2 - 100, y2, ',', x2, y2].join(' ');
         };
+
+        scope.getDirectoryPart = function(path) {
+          if (path === undefined) { return undefined; }
+          return path.split('/').slice(0, -1).join('/') + '/';
+        };
+
+        scope.getLastPart = function(path) {
+          if (path === undefined) { return undefined; }
+          return path.split('/').slice(-1)[0];
+        };
       }
     };
   });
