@@ -455,15 +455,17 @@ angular.module('biggraph')
         };
 
         scope.diveUp = function() {
-          scope.workspace.customBoxStack.pop();
+          var id = scope.workspace.customBoxStack.pop();
           scope.workspace.loadWorkspace();
           scope.popups = [];
+          scope.selectedBoxIds = [id];
         };
 
         scope.diveDown = function() {
           scope.workspace.customBoxStack.push(scope.selectedBoxIds[0]);
           scope.workspace.loadWorkspace();
           scope.popups = [];
+          scope.selectedBoxIds = [];
         };
 
         scope.saveSelectionAsCustomBox = function(name, success, error) {
