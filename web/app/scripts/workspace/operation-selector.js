@@ -114,6 +114,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout) {
         scope.op = undefined;
         scope.category = undefined;
         scope.searching = true;
+        scope.opFilter = '';
         scope.searchSelection = 0;
         $timeout(function() { elem.find('#filter').focus(); });
       }

@@ -443,9 +443,10 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       var inputNameCounts = {};
       var outputNameCounts = {};
       var SEPARATOR = ', ';
-      var PADDING = 200;
-      var inputBoxX = PADDING;
-      var outputBoxX = PADDING;
+      var PADDING_X = 200;
+      var PADDING_Y = 150;
+      var inputBoxY = PADDING_Y;
+      var outputBoxY = PADDING_Y;
       var usedOutputs = {};
       // This custom box will replace the selected boxes.
       var customBox = {
@@ -464,7 +465,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       }
       var minX = Infinity;
       var minY = Infinity;
-      var maxY = -Infinity;
+      var maxX = -Infinity;
       for (i = 0; i < ids.length; ++i) {
         box = this.boxMap[ids[i]];
         // Place the custom box in the average position of the selected boxes.
@@ -472,7 +473,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         customBox.y += box.instance.y / ids.length;
         minX = Math.min(minX, box.instance.x);
         minY = Math.min(minY, box.instance.y);
-        maxY = Math.max(maxY, box.instance.y);
+        maxX = Math.max(maxX, box.instance.x);
       }
       for (i = 0; i < ids.length; ++i) {
         box = this.boxMap[ids[i]];
@@ -483,8 +484,8 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         // Copy this box to the new workspace.
         var instance = angular.copy(box.instance);
         boxes.push(instance);
-        instance.x += 200 - minX;
-        instance.y += 200 - minY;
+        instance.x += PADDING_X - minX;
+        instance.y += PADDING_Y / 2 - minY;
         for (j = 0; j < box.inputs.length; ++j) {
           var inputName = box.metadata.inputs[j];
           var input = box.instance.inputs[inputName];
@@ -504,13 +505,13 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
             boxes.push({
               id: 'input-' + inputBoxName,
               operationId: 'Input',
-              x: inputBoxX,
-              y: 0,
+              x: 0,
+              y: inputBoxY,
               inputs: {},
               parameters: { name: inputBoxName },
               parametricParameters: {},
             });
-            inputBoxX += PADDING;
+            inputBoxY += PADDING_Y;
             instance.inputs[inputName] = { boxId: 'input-' + inputBoxName, id: 'input' };
             if (input.boxId) { // Connected to a non-selected box.
               customBox.inputs[inputBoxName] = input;
@@ -533,13 +534,13 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
             boxes.push({
               id: 'output-' + outputBoxName,
               operationId: 'Output',
-              x: outputBoxX,
-              y: maxY + 200,
+              x: maxX - minX + PADDING_X * 2,
+              y: outputBoxY,
               inputs: { output: { boxId: box.instance.id, id: outputName } },
               parameters: { name: outputBoxName },
               parametricParameters: {},
             });
-            outputBoxX += PADDING;
+            outputBoxY += PADDING_Y;
             // Update non-selected output connections.
             for (var k = 0; k < this.arrows.length; ++k) {
               var arrow = this.arrows[k];

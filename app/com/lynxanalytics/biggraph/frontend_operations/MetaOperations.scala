@@ -36,6 +36,7 @@ class MetaOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     List(), List("input"),
     new SimpleOperation(_) {
       params += Param("name", "Name")
+      override def summary = s"Input ${params("name")}"
     })
 
   registerOp(
@@ -43,5 +44,6 @@ class MetaOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     List("output"), List(),
     new SimpleOperation(_) {
       params += Param("name", "Name")
+      override def summary = s"Output ${params("name")}"
     })
 }
