@@ -251,7 +251,8 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val subProjects = viewer.sortedSegmentations.map {
       segmentation =>
         TableBrowserNode(
-          absolutePath = (Seq(path.toString) ++ subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
+          absolutePath =
+            (Seq(path.toString) ++ subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
           name = segmentation.segmentationName,
           objectType = "segmentation"
         )
