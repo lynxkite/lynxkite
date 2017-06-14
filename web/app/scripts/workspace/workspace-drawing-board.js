@@ -276,7 +276,7 @@ angular.module('biggraph')
         }
 
         scope.onMouseUpOnBox = function(box, event) {
-          if (box.isMoved || scope.pulledPlug) {
+          if (box.isMoved || scope.pulledPlug || scope.selection.isActive()) {
             return;
           }
           var leftButton = event.button === 0;
