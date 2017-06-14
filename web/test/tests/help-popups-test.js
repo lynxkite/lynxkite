@@ -52,12 +52,12 @@ module.exports = function(fw) {
           expect(operation.all(by.tagName('help-popup')).count()).toBe(1);
           var helpPopup = operation.element(by.tagName('help-popup'));
           expect(helpPopup.isDisplayed()).toBe(true);
-          // Check that help id corresponds attribute id, that is:
-          // There exists a pair of <div id="<some-operation-id"> and
-          // <help popup="Add-constant-edge-attribute-<some-operation-id>"> tags.
-          operation.$('div.operation-attribute-input').getAttribute('id').then(
-            function(attributeId) {
-              expect(helpPopup.getAttribute('href')).toBe('Add-constant-edge-attribute-' + attributeId);
+          // Check that help id corresponds parameter id, that is:
+          // There exists a pair of <div id="<some-parameter-id"> and
+          // <help popup="Add-constant-edge-attribute-<some-parameter-id>"> tags.
+          operation.$('div.operation-parameter-input').getAttribute('id').then(
+            function(parameterId) {
+              expect(helpPopup.getAttribute('href')).toBe('Add-constant-edge-attribute-' + parameterId);
             }
           );
         });
