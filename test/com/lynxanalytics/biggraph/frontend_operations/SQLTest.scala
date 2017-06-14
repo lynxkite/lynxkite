@@ -126,4 +126,18 @@ class SQLTest extends OperationsTestBase {
       Seq("Adam loves Eve", "Adam", "Eve"),
       Seq("Bob loves Eve", "Bob", "Eve")))
   }
+
+  test("alias") {
+    val table = box("Create example graph")
+      .box("SQL1", Map("sql" -> "select v.age from vertices v"))
+      .table
+    assert(table.schema.map(_.name) == Seq("age"))
+  }
+
+  test("name reference") {
+    val table = box("Create example graph")
+      .box("SQL1", Map("sql" -> "select vertices.age from vertices"))
+      .table
+    assert(table.schema.map(_.name) == Seq("age"))
+  }
 }
