@@ -467,9 +467,10 @@ angular.module('biggraph')
         };
 
         scope.saveSelectionAsCustomBox = function(name, success, error) {
-          scope.workspace.saveAsCustomBox(
-              scope.selectedBoxIds, name, 'Created from ' + scope.workspaceName)
-            .then(success, error);
+          var b = scope.workspace.saveAsCustomBox(
+              scope.selectedBoxIds, name, 'Created from ' + scope.workspaceName);
+          scope.selectedBoxIds = [b.customBox.id];
+          b.promise.then(success, error);
         };
 
         var hk = hotkeys.bindTo(scope);
