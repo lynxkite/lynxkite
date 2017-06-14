@@ -26,6 +26,12 @@
   ng-click="instrument = 'Create plot'">
   Plot
 </button>
+<button
+  ng-show="stateKind === 'project'"
+  class="pull-right btn btn-default"
+  ng-click="instrument = 'Create visualization'">
+  Visualize
+</button>
 
 <div ng-if="instrument">
   <box-editor
@@ -53,9 +59,9 @@
     ng-if="instrumentStateKind === 'plot'">
   </plot-state-view>
   <visualization-state-view
-    state-id="stateId"
+    state-id="instrumentStateId"
     popup-model="popupModel"
-    ng-if="stateKind === 'visualization'">
+    ng-if="instrumentStateKind === 'visualization'">
   </visualization-state-view>
 </div>
 

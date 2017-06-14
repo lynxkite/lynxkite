@@ -192,7 +192,7 @@ class BigGraphController(val env: SparkFreeEnvironment) {
       .filter(_.readAllowedFrom(user))
       .filter { project =>
         val baseName = project.path.last.name
-        val notes = project.viewer.state.notes
+        val notes = if (project.isSnapshot) "" else project.viewer.state.notes
         terms.forall {
           term =>
             baseName.toLowerCase.contains(term) ||
