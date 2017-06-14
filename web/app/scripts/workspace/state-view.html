@@ -1,37 +1,39 @@
-<div id="save-as-snapshot-box">
-  <div class="pull-right">
-    <inline-input
-      placeholder="Snapshot name..."
-      onsubmit="createSnapshot(input, success, error)"
-      open="snapshotNameOpen"></inline-input>
+<div id="state-toolbar" class="clearfix">
+  <div id="save-as-snapshot-box">
+    <div class="pull-right">
+      <inline-input
+        placeholder="Snapshot name..."
+        onsubmit="createSnapshot(input, success, error)"
+        open="snapshotNameOpen"></inline-input>
+    </div>
+    <button
+      class="pull-right btn btn-default" id="save-as-snapshot-button"
+      ng-click="snapshotNameOpen = true"
+      drop-tooltip="Click to snapshot state as {{saveAsName}}"
+      drop-tooltip-placement="bottom">
+      <i class="glyphicon glyphicon-camera"></i>
+    </button>
   </div>
+
+  <!-- TODO: Build instrument toolbar dynamically, allow any operation. -->
   <button
-    class="pull-right btn btn-default" id="save-as-snapshot-button"
-    ng-click="snapshotNameOpen = true"
-    drop-tooltip="Click to snapshot state as {{saveAsName}}"
-    drop-tooltip-placement="bottom">
-    <i class="glyphicon glyphicon-camera"></i>
+    class="pull-right btn btn-default"
+    ng-click="instrument = 'SQL1'">
+    SQL
+  </button>
+  <button
+    ng-show="stateKind === 'table'"
+    class="pull-right btn btn-default"
+    ng-click="instrument = 'Create plot'">
+    Plot
+  </button>
+  <button
+    ng-show="stateKind === 'project'"
+    class="pull-right btn btn-default"
+    ng-click="instrument = 'Create visualization'">
+    Visualize
   </button>
 </div>
-
-<!-- TODO: Build instrument toolbar dynamically, allow any operation. -->
-<button
-  class="pull-right btn btn-default"
-  ng-click="instrument = 'SQL1'">
-  SQL
-</button>
-<button
-  ng-show="stateKind === 'table'"
-  class="pull-right btn btn-default"
-  ng-click="instrument = 'Create plot'">
-  Plot
-</button>
-<button
-  ng-show="stateKind === 'project'"
-  class="pull-right btn btn-default"
-  ng-click="instrument = 'Create visualization'">
-  Visualize
-</button>
 
 <div ng-if="instrument">
   <box-editor
