@@ -5,6 +5,10 @@ module.exports = function() {};
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
+
+/* TODO: Revive this: #6153
+
+
   fw.statePreservingTest(
     'test-example project with example graph',
     'SQL table browser in project',
@@ -65,6 +69,7 @@ module.exports = function(fw) {
       tableBrowser.toggle();
       lib.expectNotElement(lib.left.side.$('#table-browser'));
     });
+*/
 
   fw.transitionTest(
     'a few projects created',
