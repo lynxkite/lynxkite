@@ -22,7 +22,8 @@ case class FEOperationMeta(
   category: String = "",
   status: FEStatus = FEStatus.enabled,
   color: Option[String] = None,
-  description: Option[String] = None)
+  description: Option[String] = None,
+  withTableBrowser: Boolean = false)
 
 object FEOperationParameterMeta {
   val validKinds = Seq(
@@ -268,6 +269,7 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
     util.Try(enabled).recover { case exc => FEStatus.disabled(exc.getMessage) }.get
   protected def help = // Add to notes for help link.
     "<help-popup href=\"" + Operation.htmlId(id) + "\"></help-popup>"
+  protected def withTableBrowser: Boolean = false
 
   override protected val params = {
     val params = new ParameterHolder(context)
@@ -305,7 +307,8 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
   override def toFE: FEOperationMeta = super.toFE.copy(
     visibleScalars = visibleScalars,
     status = safeEnabled,
-    description = context.meta.description)
+    description = context.meta.description,
+    withTableBrowser = withTableBrowser)
 
   protected def projectInput(input: String): ProjectEditor = {
     val param = params("apply_to_" + input)

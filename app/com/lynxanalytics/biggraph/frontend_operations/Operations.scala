@@ -22,6 +22,10 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
       new VisualizationOperations(env).operations.toMap
 }
 
+trait SQLOperation {
+  def getProtoTables(): Map[String, ProtoTable]
+}
+
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   implicit lazy val manager = env.metaGraphManager
   import Operation.Category
@@ -3866,15 +3870,17 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   // TODO: Use dynamic inputs. #5820
   def registerSQLOp(name: String, inputs: List[String])(
-    getProtoTables: Operation.Context => Map[String, ProtoTable]): Unit = {
-    registerOp(name, defaultIcon, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) {
+    protoTablesFunction: Operation.Context => Map[String, ProtoTable]): Unit = {
+    registerOp(name, defaultIcon, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) with SQLOperation {
       override val params = new ParameterHolder(context) // No "apply_to" parameters.
       params += Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql")
       def enabled = FEStatus.enabled
+      override def withTableBrowser = true
+      def getProtoTables() = protoTablesFunction(context)
       override def getOutputs() = {
         params.validate()
         val sql = params("sql")
-        val protoTables = getProtoTables(context)
+        val protoTables = getProtoTables()
         val tables = ProtoTable.minimize(sql, protoTables).mapValues(_.toTable)
         val result = graph_operations.ExecuteSQL.run(sql, tables)
         makeOutput(result)

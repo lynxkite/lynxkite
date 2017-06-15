@@ -165,6 +165,10 @@ angular.module('biggraph')
         scope.onBlur = function() {
           $timeout(onBlurNow);
         };
+
+        scope.getBox = function() {
+          return scope.workspace.boxMap[scope.boxId];
+        };
       },
     };
   });
