@@ -49,7 +49,7 @@ box-editor {
 box-editor table-browser {
   width: 30%;
   float: right;
-  margin-left: 10px;
+  padding-left: 10px;
 }
 
 .operation-params-size-half {
