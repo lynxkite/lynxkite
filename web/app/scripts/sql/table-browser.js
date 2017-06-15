@@ -8,7 +8,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
     scope: {
       directory: '=',
       projectState: '=',
-      box: '=',
+      box: '=',  // Set box for table browser in the workspace.
     },
     templateUrl: 'scripts/sql/table-browser.html',
     link: function(scope) {
