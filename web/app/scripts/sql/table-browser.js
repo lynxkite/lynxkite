@@ -8,12 +8,19 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
     scope: {
       directory: '=',
       projectState: '=',
+      box: '=',
     },
     templateUrl: 'scripts/sql/table-browser.html',
     link: function(scope) {
       // Create a root node. Its path is the base path in which this
       // browser is operating. (Same as the path of the SQL box.)
-      if (scope.projectState) {
+      if (scope.box) {
+        scope.node = createNode(
+            undefined,
+            '',
+            '',
+            'directory');
+      } else if (scope.projectState) {
         scope.node = createNode(
             undefined,
             '',
@@ -107,26 +114,37 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
           // table, column and view.
           fetchSubProjectList: function() {
             var that = this;
-            util
-              .nocache(
+            var promise;
+            if (scope.box) {
+              promise = util.nocache(
+                '/ajax/getTableBrowserColumnsForBox', {
+                  operationRequest: {
+                    'workspace': scope.box.workspace.ref(),
+                    'box': scope.box.instance.id
+                  },
+                  path: this.absolutePath
+                });
+            } else {
+              promise = util.nocache(
                 '/ajax/getTableBrowserNodes', {
                   'path': this.absolutePath,
                   'isImplicitTable': this.objectType === 'table'
-                })
-              .then(function(result) {
-                var srcList = result.list || [];
-                that.list = [];
-                for (var i = 0; i < srcList.length; ++i) {
-                  that.list[i] = createNode(
-                    that,
-                    srcList[i].name,
-                    srcList[i].absolutePath,
-                    srcList[i].objectType,
-                    srcList[i].columnType);
-                }
-              }, function(error) {
-                that.error = error.data;
-              });
+                });
+            }
+            promise.then(function(result) {
+              var srcList = result.list || [];
+              that.list = [];
+              for (var i = 0; i < srcList.length; ++i) {
+                that.list[i] = createNode(
+                  that,
+                  srcList[i].name,
+                  srcList[i].absolutePath,
+                  srcList[i].objectType,
+                  srcList[i].columnType);
+              }
+            }, function(error) {
+              that.error = error.data;
+            });
           },
 
           // Fetches the list of child nodes for nodes of type
@@ -136,7 +154,14 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
           fetchProjectList: function(query) {
             var that = this;
             var promise;
-            if (query) {
+            if (scope.box) {
+              promise = util.nocache(
+                '/ajax/getInputTablesForBox',
+                {
+                  'workspace': scope.box.workspace.ref(),
+                  'box': scope.box.instance.id
+                });
+            } else if (query) {
               promise = util.nocache(
                 '/ajax/projectSearch',
                 {

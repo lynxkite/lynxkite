@@ -211,6 +211,22 @@ class BigGraphController(val env: SparkFreeEnvironment) {
       objects.map(_.toListElementFE).toList)
   }
 
+  def getInputTablesForBox(
+    user: serving.User, inputTables: Map[String, ProtoTable]): ProjectList = {
+    ProjectList(
+      "",
+      "*",
+      "*",
+      Nil,
+      inputTables.map {
+        case (name, table) =>
+          FEProjectListElement(
+            name,
+            "table",
+            "")
+      }.toList)
+  }
+
   private def assertNameNotExists(name: String) = {
     assert(!DirectoryEntry.fromName(name).exists, s"Entry '$name' already exists.")
   }

@@ -174,6 +174,10 @@ case class TableBrowserNode(
   columnType: String = "")
 case class TableBrowserNodeResponse(list: Seq[TableBrowserNode])
 
+case class TableBrowserColumnsForBoxRequest(
+  operationRequest: GetOperationMetaRequest,
+  path: String)
+
 class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager: DataManager = env.dataManager
@@ -202,6 +206,12 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
+
+  def getTableBrowserColumnsForBox(
+    user: serving.User, inputTables: Map[String, ProtoTable], path: String): TableBrowserNodeResponse = {
+    assert(inputTables.contains(path), s"$path is not a valid proto table")
+    getColumnsFromSchema(inputTables.get(path).get.schema)
+  }
 
   // Return list of nodes for the table browser. The nodes can be:
   // - segmentations and implicit tables of a project

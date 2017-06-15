@@ -30,18 +30,21 @@
      scalars="scalars"
      class="description"></p>
 
-  <p ng-if="op.parameters.length === 0" class="text-center">
-    No parameters
-  </p>
-  <form ng-if="op.parameters" class="form-horizontal" ng-submit="apply()">
-    <operation-parameters op="op" output="params" busy="$parent.busy" editable="editable"></operation-parameters>
-  </form>
-  <div tabindex="0" ng-click="apply()" class="ok-button text-center operation-apply-button">
-    <span ng-if="applying">
-      <i class="glyphicon glyphicon-hourglass"></i>
-    </span>
-    <span ng-if="!applying">
-      OK <i class="glyphicon glyphicon-ok"></i>
-    </span>
-  </div>
+  <span>
+    <table-browser directory="directory"></table-browser>
+    <p ng-if="op.parameters.length === 0" class="text-center">
+      No parameters
+    </p>
+    <form ng-if="op.parameters" class="form-horizontal" ng-submit="apply()">
+      <operation-parameters op="op" output="params" busy="$parent.busy" editable="editable"></operation-parameters>
+    </form>
+    <div tabindex="0" ng-click="apply()" class="ok-button text-center operation-apply-button">
+      <span ng-if="applying">
+        <i class="glyphicon glyphicon-hourglass"></i>
+      </span>
+      <span ng-if="!applying">
+        OK <i class="glyphicon glyphicon-ok"></i>
+      </span>
+    </div>
+  </span>
 </div>
