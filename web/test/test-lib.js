@@ -159,10 +159,17 @@ Workspace.prototype = {
   },
 
   duplicate: function() {
-    browser.actions()
+    if (process.platform === 'darwin') {
+      browser.actions()
         .sendKeys(K.chord(K.META, 'c'))
         .sendKeys(K.chord(K.META, 'v'))
         .perform();
+    } else {
+      browser.actions()
+        .sendKeys(K.chord(K.CONTROL, 'c'))
+        .sendKeys(K.chord(K.CONTROL, 'v'))
+        .perform();
+    }
   },
 
   addBox: function(boxData) {
