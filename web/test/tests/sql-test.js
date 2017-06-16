@@ -179,6 +179,18 @@ module.exports = function(fw) {
       table.expect(['sum'], ['Double'], [['100']]);
     }, function() {});
 
+  fw.transitionTest(
+    'SQL box added',
+    'SQL box table browser',
+    function() {
+      var se = lib.workspace.openBoxEditor('SQL1_1');
+      var tableBrowser = se.expectTableBrowser();
+      tableBrowser.toggle();
+      tableBrowser.expectNode([0], 'plum', '`plum`');
+      tableBrowser.expectNode([1], 'This is a snapshot.', '`This is a snapshot.`');
+      tableBrowser.toggleNode([1]);
+    }, function() {}, 'solo');
+
   /*
   fw.statePreservingTest(
     'test-example project with example graph',

@@ -125,10 +125,10 @@ case class ProjectSearchRequest(
   filterTypes: Option[List[String]] = None)
 case class ProjectList(
   path: String,
-  readACL: String,
-  writeACL: String,
-  directories: List[String],
-  objects: List[FEProjectListElement])
+  readACL: String = "",
+  writeACL: String = "",
+  directories: List[String] = Nil,
+  objects: List[FEProjectListElement] = Nil)
 case class CreateProjectRequest(name: String, notes: String, privacy: String)
 case class CreateDirectoryRequest(name: String, privacy: String)
 case class DiscardEntryRequest(name: String)
@@ -214,16 +214,12 @@ class BigGraphController(val env: SparkFreeEnvironment) {
   def getInputTablesForBox(
     user: serving.User, inputTables: Map[String, ProtoTable]): ProjectList = {
     ProjectList(
-      "",
-      "*",
-      "*",
-      Nil,
-      inputTables.map {
+      path = "", // Boxes don't have paths.
+      objects = inputTables.map {
         case (name, table) =>
           FEProjectListElement(
             name,
-            "table",
-            "")
+            "table")
       }.toList)
   }
 

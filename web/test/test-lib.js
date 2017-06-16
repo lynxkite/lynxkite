@@ -387,6 +387,11 @@ BoxEditor.prototype = {
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
+  expectTableBrowser: function() {
+    var tb = TableBrowser(this);
+    expect(this.element.$('#toggle-table-browser')).isPresent();
+    return tb;
+  },
 };
 
 function State(popup) {
@@ -695,8 +700,8 @@ function TableBrowser(root) {
 }
 
 TableBrowser.prototype = {
-  toggle: function() {
-    this.root.element(by.id('toggle-table-browser')).click();
+  toggle: function(root) {
+    root.element(by.id('toggle-table-browser')).click();
   },
 
   getNode: function(posList) {
