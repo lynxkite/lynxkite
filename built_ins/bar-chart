@@ -3,7 +3,7 @@
       "id" : "anchor",
       "operationId" : "Anchor",
       "parameters" : {
-        "description" : "A bar chart or bar graph is a chart or graph that presents\ngrouped data with rectangular bars with lengths proportional\nto the values that they represent. \n\nParameters:\n  X: The name of the attribute displayed on the X coordinate.\n  Y: The name of the attribute displayed on the Y coordinate.\n     Needs to be a number type.",
+        "description" : "A bar chart is a chart that presents grouped data with rectangular\nbars with lengths proportional to the values that they represent. \n\nParameters:\n  X: The name of the attribute displayed on the X coordinate.\n  Y: The name of the attribute displayed on the Y coordinate.\n     Needs to be a number type.",
         "parameters" : "[{\"kind\":\"text\",\"id\":\"X\",\"defaultValue\":\"\",\"$$hashKey\":\"object:9222\"},{\"kind\":\"text\",\"id\":\"Y\",\"defaultValue\":\"\",\"$$hashKey\":\"object:9319\"}]"
       },
       "x" : 0.0,
