@@ -12,6 +12,8 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.model
 import play.api.libs.json
 
+import scala.collection.immutable.TreeMap
+
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   override val atomicOperations =
     new ProjectOperations(env).operations.toMap ++
@@ -3870,13 +3872,13 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   // TODO: Use dynamic inputs. #5820
   def registerSQLOp(name: String, inputs: List[String])(
-    protoTablesFunction: Operation.Context => Map[String, ProtoTable]): Unit = {
+    protoTablesFunction: Operation.Context => Iterable[(String, ProtoTable)]): Unit = {
     registerOp(name, defaultIcon, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) with SQLOperation {
       override val params = new ParameterHolder(context) // No "apply_to" parameters.
       params += Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql")
       def enabled = FEStatus.enabled
       override def withTableBrowser = true
-      def getProtoTables() = protoTablesFunction(context)
+      def getProtoTables() = new TreeMap() ++ protoTablesFunction(context)
       override def getOutputs() = {
         params.validate()
         val sql = params("sql")
@@ -3891,8 +3893,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   registerSQLOp("SQL1", List("input")) { context =>
     val input = context.inputs("input")
     input.kind match {
-      case BoxOutputKind.Project => input.project.viewer.getProtoTables.toMap
-      case BoxOutputKind.Table => Map("input" -> ProtoTable(input.table))
+      case BoxOutputKind.Project => input.project.viewer.getProtoTables
+      case BoxOutputKind.Table => Seq("input" -> ProtoTable(input.table))
     }
   }
 
@@ -3903,7 +3905,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         case (inputName, state) if state.isProject => state.project.viewer.getProtoTables.map {
           case (tableName, proto) => s"$inputName|$tableName" -> proto
         }
-      }.toMap
+      }
     }
   }
 
