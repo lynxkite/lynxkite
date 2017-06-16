@@ -4,7 +4,7 @@
       "operationId" : "Anchor",
       "parameters" : {
         "description" : "Represents the data as a continous line.\n\nParameters:\n  X: The name of the attribute displayed on the X coordinate.\n  Y: The name of the attribute displayed on the Y coordinate.\n     Needs to be a number type.",
-        "parameters" : "[{\"kind\":\"text\",\"id\":\"X\",\"defaultValue\":\"\",\"$$hashKey\":\"object:21015\"},{\"kind\":\"text\",\"id\":\"Y\",\"defaultValue\":\"\",\"$$hashKey\":\"object:21109\"}]"
+        "parameters" : "[{\"kind\":\"column\",\"id\":\"X\",\"defaultValue\":\"\",\"$$hashKey\":\"object:21015\"},{\"kind\":\"column\",\"id\":\"Y\",\"defaultValue\":\"\",\"$$hashKey\":\"object:21109\"}]"
       },
       "x" : 0.0,
       "y" : 0.0,
@@ -33,7 +33,7 @@
         }
       },
       "parametricParameters" : {
-        "plot_code" : "Vegas(\"Line chart\")\n.withData(Data)\n.encodeX(\"$X\", Nominal)\n.encodeY(\"$Y\", Quantitative)\n.mark(Line)\n"
+        "plot_code" : "Vegas(\"Line chart\")\n.withData(table)\n.encodeX(\"$X\", Nominal)\n.encodeY(\"$Y\", Quantitative)\n.mark(Line)\n"
       }
     }, {
       "id" : "Output_1",

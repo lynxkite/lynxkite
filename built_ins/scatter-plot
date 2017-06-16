@@ -4,7 +4,7 @@
       "operationId" : "Anchor",
       "parameters" : {
         "description" : "A scatter plot is a type of plot or mathematical diagram\nusing Cartesian coordinates to display values for two\nvariables for a set of data.\n\nParameters:\n  X: The name of the attribute displayed on the X coordinate.\n     Needs to be a number type.\n  Y: The name of the attribute displayed on the Y coordinate.\n     Needs to be a number type.",
-        "parameters" : "[{\"kind\":\"text\",\"id\":\"X\",\"defaultValue\":\"\",\"$$hashKey\":\"object:12331\"},{\"kind\":\"text\",\"id\":\"Y\",\"defaultValue\":\"\",\"$$hashKey\":\"object:12348\"}]"
+        "parameters" : "[{\"kind\":\"column\",\"id\":\"X\",\"defaultValue\":\"\",\"$$hashKey\":\"object:12331\"},{\"kind\":\"column\",\"id\":\"Y\",\"defaultValue\":\"\",\"$$hashKey\":\"object:12348\"}]"
       },
       "x" : 0.0,
       "y" : 0.0,
@@ -33,7 +33,7 @@
         }
       },
       "parametricParameters" : {
-        "plot_code" : "Vegas(\"Scatter plot\")\n.withData(Data)\n.encodeX(\"$X\", Quantitative)\n.encodeY(\"$Y\", Quantitative)\n.mark(Point)"
+        "plot_code" : "Vegas(\"Scatter plot\")\n.withData(table)\n.encodeX(\"$X\", Quantitative)\n.encodeY(\"$Y\", Quantitative)\n.mark(Point)"
       }
     }, {
       "id" : "Output_1",
