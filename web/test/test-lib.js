@@ -159,10 +159,17 @@ Workspace.prototype = {
   },
 
   duplicate: function() {
-    browser.actions()
+    if (process.platform === 'darwin') {
+      browser.actions()
+        .sendKeys(K.chord(K.META, 'c'))
+        .sendKeys(K.chord(K.META, 'v'))
+        .perform();
+    } else {
+      browser.actions()
         .sendKeys(K.chord(K.CONTROL, 'c'))
         .sendKeys(K.chord(K.CONTROL, 'v'))
         .perform();
+    }
   },
 
   addBox: function(boxData) {
@@ -1126,13 +1133,9 @@ var lastDownloadList;
 function getSelectAllKey() {
   // Mac is 'darwin': https://nodejs.org/api/process.html#process_process_platform
   if (process.platform === 'darwin') {
-    // The command key is not supported properly, so we work around with Shift+Up/Down/Left
+    // The command key is not supported properly, so we work around with Shift+HOME etc.
     // and Delete. https://github.com/angular/protractor/issues/690
-    return (
-      K.chord(K.SHIFT, K.UP) + K.chord(K.SHIFT, K.UP) + K.chord(K.SHIFT, K.UP) +
-      K.chord(K.SHIFT, K.UP) + K.DELETE + K.chord(K.SHIFT, K.DOWN) + K.chord(K.SHIFT, K.DOWN) +
-      K.chord(K.SHIFT, K.DOWN) + K.chord(K.SHIFT, K.DOWN) + K.DELETE + K.chord(K.SHIFT, K.LEFT) +
-      K.chord(K.SHIFT, K.LEFT) + K.chord(K.SHIFT, K.LEFT) + K.chord(K.SHIFT, K.LEFT) + K.DELETE);
+    return K.END + K.PAGE_DOWN + K.chord(K.SHIFT, K.HOME) + K.chord(K.SHIFT, K.PAGE_UP) + K.DELETE;
   } else {
     return K.chord(K.CONTROL, 'a');
   }
