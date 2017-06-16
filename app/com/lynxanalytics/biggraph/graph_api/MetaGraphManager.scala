@@ -256,7 +256,7 @@ class MetaGraphManager(val repositoryPath: String) {
       for ((file, j) <- MetaGraphManager.loadBuiltIns(builtInsLocalDir)) {
         try {
           val checkpoint = saveWorkspace(j)
-          val path = SymbolPath("projects") / "built_ins" / file.getName()
+          val path = SymbolPath("projects") / "built_ins" / file
           setTag(path / "objectType", "workspace")
           setTag(path / "checkpoint", checkpoint)
           setTag(path / "nextCheckpoint", "")
@@ -319,13 +319,14 @@ object MetaGraphManager {
     }
   }
 
-  def loadBuiltIns(repo: String): Iterator[(File, json.JsValue)] = {
+  def loadBuiltIns(repo: String): Iterator[(String, json.JsValue)] = {
     val opdir = new File(repo, "built_ins")
-    if (!opdir.exists) opdir.mkdirs
-    val files = opdir.listFiles.sortBy(_.getName)
-    files.iterator.map { f =>
-      f -> Json.parse(FileUtils.readFileToString(f, "utf8"))
-    }
+    if (opdir.exists) {
+      val files = opdir.listFiles.sortBy(_.getName)
+      files.iterator.map { f =>
+        f.getName() -> Json.parse(FileUtils.readFileToString(f, "utf8"))
+      }
+    } else null
   }
 
   def getCheckpointRepo(repositoryPath: String): CheckpointRepository =
