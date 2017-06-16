@@ -388,8 +388,8 @@ BoxEditor.prototype = {
   },
 
   expectTableBrowser: function() {
-    var tb = TableBrowser(this);
-    expect(this.element.$('#toggle-table-browser')).isPresent();
+    expect(this.element.$('#toggle-table-browser').isPresent()).toBe(true);
+    var tb = new TableBrowser(this.popup);
     return tb;
   },
 };
@@ -700,8 +700,8 @@ function TableBrowser(root) {
 }
 
 TableBrowser.prototype = {
-  toggle: function(root) {
-    root.element(by.id('toggle-table-browser')).click();
+  toggle: function() {
+    this.root.element(by.id('toggle-table-browser')).click();
   },
 
   getNode: function(posList) {

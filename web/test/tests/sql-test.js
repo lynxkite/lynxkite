@@ -180,16 +180,45 @@ module.exports = function(fw) {
     }, function() {});
 
   fw.transitionTest(
-    'SQL box added',
-    'SQL box table browser',
+    'test-example workspace with example graph',
+    'SQL1 box table browser',
     function() {
-      var se = lib.workspace.openBoxEditor('SQL1_1');
+      lib.workspace.addBox({
+        id: 'sql', name: 'SQL1', x: 100, y: 200 });
+      lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
+    }, function() {
+      var se = lib.workspace.openBoxEditor('sql');
       var tableBrowser = se.expectTableBrowser();
       tableBrowser.toggle();
-      tableBrowser.expectNode([0], 'plum', '`plum`');
-      tableBrowser.expectNode([1], 'This is a snapshot.', '`This is a snapshot.`');
-      tableBrowser.toggleNode([1]);
-    }, function() {}, 'solo');
+      tableBrowser.expectNode([0], 'edge_attributes', '`edge_attributes`');
+      tableBrowser.expectNode([1], 'edges', '`edges`');
+      tableBrowser.expectNode([2], 'vertices', '`vertices`');
+      tableBrowser.toggleNode([2]);
+      tableBrowser.expectNode([2, 1], 'age (Double)', '`age`');
+    });
+
+  fw.transitionTest(
+    'test-example workspace with example graph',
+    'SQL2 box table browser',
+    function() {
+      lib.workspace.addBox({ id: 'eg1', name: 'Create example graph', x: 350, y: 100 });
+      lib.workspace.addBox({
+        id: 'sql', name: 'SQL2', x: 100, y: 200 });
+      lib.workspace.connectBoxes('eg0', 'project', 'sql', 'one');
+      lib.workspace.connectBoxes('eg1', 'project', 'sql', 'two');
+    }, function() {
+      var se = lib.workspace.openBoxEditor('sql');
+      var tableBrowser = se.expectTableBrowser();
+      tableBrowser.toggle();
+      tableBrowser.expectNode([0], 'one|edge_attributes', '`one|edge_attributes`');
+      tableBrowser.expectNode([1], 'one|edges', '`one|edges`');
+      tableBrowser.expectNode([2], 'one|vertices', '`one|vertices`');
+      tableBrowser.expectNode([3], 'two|edge_attributes', '`two|edge_attributes`');
+      tableBrowser.expectNode([4], 'two|edges', '`two|edges`');
+      tableBrowser.expectNode([5], 'two|vertices', '`two|vertices`');
+      tableBrowser.toggleNode([2]);
+      tableBrowser.expectNode([2, 1], 'age (Double)', '`age`');
+    });
 
   /*
   fw.statePreservingTest(
