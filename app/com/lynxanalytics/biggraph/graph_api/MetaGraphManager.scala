@@ -187,13 +187,18 @@ class MetaGraphManager(val repositoryPath: String) {
     }
   }
 
-  private def saveOperation(j: json.JsValue): Unit = {
+  private def saveOperation(j: json.JsValue): String = saveJson("operations", j)
+
+  private def saveCheckpoint(j: json.JsValue): String = saveJson("checkpoints", j)
+
+  private def saveJson(folder: String, j: json.JsValue): String = {
     val time = Timestamp.toString
-    val repo = new File(repositoryPath, "operations")
+    val repo = new File(repositoryPath, folder)
     val dumpFile = new File(repo, s"dump-$time")
     val finalFile = new File(repo, s"save-$time")
     FileUtils.writeStringToFile(dumpFile, Json.prettyPrint(j), "utf8")
     dumpFile.renameTo(finalFile)
+    time
   }
 
   private def initializeFromDisk(): Unit = synchronized {
@@ -268,14 +273,8 @@ class MetaGraphManager(val repositoryPath: String) {
   }
 
   private def saveWorkspace(j: json.JsValue): String = {
-    val time = Timestamp.toString
-    val repo = new File(repositoryPath, "checkpoints")
-    val dumpFile = new File(repo, s"dump-$time")
-    val finalFile = new File(repo, s"save-$time")
     val fullCheckpoint = makeFullCheckpointFromWorkspace(j)
-    FileUtils.writeStringToFile(dumpFile, Json.prettyPrint(fullCheckpoint), "utf8")
-    dumpFile.renameTo(finalFile)
-    time
+    saveCheckpoint(fullCheckpoint)
   }
 
   private def makeFullCheckpointFromWorkspace(j: json.JsValue) = {
