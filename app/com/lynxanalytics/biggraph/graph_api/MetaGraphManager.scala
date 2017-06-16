@@ -15,6 +15,7 @@ import scala.collection.mutable
 import scala.reflect.runtime.universe.TypeTag
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers.CheckpointRepository
+import com.lynxanalytics.biggraph.controllers.DirectoryEntry
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 class MetaGraphManager(val repositoryPath: String) {
@@ -253,15 +254,11 @@ class MetaGraphManager(val repositoryPath: String) {
     if (!builtInsDirectoryExists()) {
       log.info("Loading built_ins from disk...")
       val builtInsLocalDir = getBuiltInsLocalDirectory()
+      implicit val metaGraphManager = this
       for ((file, j) <- MetaGraphManager.loadBuiltIns(builtInsLocalDir)) {
         try {
           val checkpoint = saveWorkspace(j)
-          val path = SymbolPath("projects") / "built_ins" / file
-          setTag(path / "objectType", "workspace")
-          setTag(path / "checkpoint", checkpoint)
-          setTag(path / "nextCheckpoint", "")
-          setTag(path / "farthestCheckpoint", checkpoint)
-
+          DirectoryEntry.fromName("built_ins/" + file).asNewWorkspaceFrame(checkpoint)
         } catch {
           case e: Throwable => throw new Exception(s"failed to load $file.", e)
         }
