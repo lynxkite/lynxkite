@@ -1480,7 +1480,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
-      Code("expr", "Value", defaultValue = "1 + 1", language = "javascript"))
+      Code("expr", "Value", defaultValue = "", language = "javascript"))
     def enabled = project.hasVertexSet
     override def summary = {
       val name = params("output")
@@ -1519,7 +1519,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
-      Code("expr", "Value", defaultValue = "1 + 1", language = "javascript"))
+      Code("expr", "Value", defaultValue = "", language = "javascript"))
     def enabled = project.hasEdgeBundle
     override def summary = {
       val name = params("output")
@@ -1571,7 +1571,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     params ++= List(
       Param("output", "Save as"),
       Choice("type", "Result type", options = FEOption.list("Double", "String")),
-      Code("expr", "Value", defaultValue = "1 + 1", language = "javascript"))
+      Code("expr", "Value", defaultValue = "", language = "javascript"))
     def enabled = FEStatus.enabled
     override def summary = {
       val name = params("output")
