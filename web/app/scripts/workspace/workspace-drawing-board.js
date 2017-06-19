@@ -138,24 +138,31 @@ angular.module('biggraph')
           }
         };
 
-        // Tries hooking up open plugs when a box is moving.
+        // Tries hooking up plugs when a box is moving.
         function autoConnect(moving) {
+          function flatten(array) {
+            return Array.prototype.concat.apply([], array);
+          }
+          function filterOpen(plugs) {
+            return plugs.filter(function(plug) { return plug.getAttachedPlugs().length === 0; });
+          }
+          var allOutputs = flatten(scope.workspace.boxes.map(function(box) { return box.outputs; }));
+          var allInputs = flatten(scope.workspace.boxes.map(function(box) { return box.inputs; }));
+          autoConnectPlugs(moving.inputs, allOutputs);
+          autoConnectPlugs(filterOpen(moving.outputs), filterOpen(allInputs));
+        }
+
+        function autoConnectPlugs(srcPlugs, dstPlugs) {
           var hookDistance = 20;
-          for (var i = 0; i < moving.inputs.length; ++i) {
-            var input = moving.inputs[i];
-            if (moving.instance.inputs[input.id] !== undefined) {
-              continue;
-            }
-            for (var j = 0; j < scope.workspace.boxes.length; ++j) {
-              var box = scope.workspace.boxes[j];
-              for (var k = 0; k < box.outputs.length; ++k) {
-                var output = box.outputs[k];
-                var dx = input.cx() - output.cx();
-                var dy = input.cy() - output.cy();
-                var dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < hookDistance) {
-                  scope.workspace.addArrow(input, output, { willSaveLater: true });
-                }
+          for (var i = 0; i < srcPlugs.length; ++i) {
+            var src = srcPlugs[i];
+            for (var j = 0; j < dstPlugs.length; ++j) {
+              var dst = dstPlugs[j];
+              var dx = src.cx() - dst.cx();
+              var dy = src.cy() - dst.cy();
+              var dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < hookDistance) {
+                scope.workspace.addArrow(src, dst, { willSaveLater: true });
               }
             }
           }
