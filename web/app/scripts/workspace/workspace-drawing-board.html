@@ -210,12 +210,16 @@
               id="{{ plug.id }}">
             <circle ng-attr-r="{{ plug.radius }}"
                   class="io-circle"
-                  ng-class="{'in-progress': plug.inProgress,
-                            'colored-output': plug.progressColor || plug.error }"
+                  ng-class="{
+                    'in-progress': plug.inProgress,
+                    'colored-output': plug.progressColor || plug.error,
+                    'pulled-plug-hover': pulledPlug && pulledPlug.direction !== direction && mouseOnThisPlug }"
                   ng-attr-fill="{{ plug.error ? 'red' : plug.progressColor }}"
                   ng-attr-drop-tooltip="{{ plug.error }}"
                   ng-mousedown="onMouseDownOnPlug(plug, $event)"
                   ng-mouseup="onMouseUpOnPlug(plug, $event)"
+                  ng-mousemove="mouseOnThisPlug = true"
+                  ng-mouseout="mouseOnThisPlug = false"
                   ng-click="onClickOnPlug(plug, $event)">
             </circle>
             <text
