@@ -165,6 +165,7 @@ object FileImportValidator {
 // and etc. tables that are automatically parts of projects.)
 case class TableBrowserNodeRequest(
   path: String,
+  query: Option[String],
   isImplicitTable: Boolean = false)
 
 case class TableBrowserNode(
@@ -174,7 +175,7 @@ case class TableBrowserNode(
   columnType: String = "")
 case class TableBrowserNodeResponse(list: Seq[TableBrowserNode])
 
-case class TableBrowserColumnsForBoxRequest(
+case class TableBrowserNodeForBoxRequest(
   operationRequest: GetOperationMetaRequest,
   path: String)
 
@@ -207,10 +208,26 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
 
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
 
-  def getTableBrowserColumnsForBox(
+  private def getInputTablesForBox(
+    user: serving.User, inputTables: Map[String, ProtoTable]): TableBrowserNodeResponse = {
+    TableBrowserNodeResponse(
+      list = inputTables.map {
+        case (name, table) =>
+          TableBrowserNode(
+            absolutePath = name, // Same as name for top level nodes.
+            name = name,
+            objectType = "table")
+      }.toList.sortWith(_.name < _.name))
+  }
+
+  def getTableBrowserNodesForBox(
     user: serving.User, inputTables: Map[String, ProtoTable], path: String): TableBrowserNodeResponse = {
-    assert(inputTables.contains(path), s"$path is not a valid proto table")
-    getColumnsFromSchema(inputTables.get(path).get.schema)
+    if (path.isEmpty) { // Top level request.
+      getInputTablesForBox(user, inputTables)
+    } else {
+      assert(inputTables.contains(path), s"$path is not a valid proto table")
+      getColumnsFromSchema(inputTables(path).schema)
+    }
   }
 
   // Return list of nodes for the table browser. The nodes can be:
@@ -221,17 +238,43 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val pathParts = SubProject.splitPipedPath(request.path)
     val entry = DirectoryEntry.fromName(pathParts.head)
     entry.assertReadAllowedFrom(user)
-    val frame = entry.asObjectFrame
-    if (frame.isSnapshot) {
-      getSnapshot(user, frame, pathParts.tail)
+    if (entry.isDirectory) {
+      getDirectory(user, entry.asDirectory, request.query)
+    } else if (entry.isSnapshot) {
+      getSnapshot(user, entry.asSnapshotFrame, pathParts.tail)
     } else {
       throw new AssertionError(
-        s"Table browser nodes are only available for snapshots (${frame.path}).")
+        s"Table browser nodes are only available for snapshots and directories (${entry.path}).")
     }
   }
 
-  def getSnapshot(user: serving.User, frame: ObjectFrame, pathTail: Seq[String]): TableBrowserNodeResponse = {
-    val state = frame.asSnapshotFrame.getState
+  def getDirectory(
+    user: serving.User,
+    dir: Directory,
+    query: Option[String]): TableBrowserNodeResponse = {
+    val (visibleDirs, visibleObjectFrames) = if (!query.isEmpty && !query.get.isEmpty) {
+      BigGraphController.projectSearch(user, dir, query.get, includeNotes = false)
+    } else {
+      BigGraphController.projectList(user, dir)
+    }
+    TableBrowserNodeResponse(list = (
+      visibleDirs.map { dir =>
+        TableBrowserNode(
+          absolutePath = dir.path.toString,
+          name = dir.path.name.name,
+          objectType = "directory")
+      } ++ visibleObjectFrames.filter(_.objectType == "snapshot").map { frame =>
+        TableBrowserNode(
+          absolutePath = frame.path.toString,
+          name = frame.path.name.name,
+          objectType = frame.objectType
+        )
+      }
+    ).toList)
+  }
+
+  def getSnapshot(user: serving.User, frame: SnapshotFrame, pathTail: Seq[String]): TableBrowserNodeResponse = {
+    val state = frame.getState
     if (state.isTable) {
       getColumnsFromSchema(state.table.schema)
     } else if (state.isProject) {

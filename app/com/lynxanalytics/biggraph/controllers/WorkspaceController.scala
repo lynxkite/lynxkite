@@ -4,7 +4,6 @@ package com.lynxanalytics.biggraph.controllers
 import scala.collection.mutable.HashMap
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.frontend_operations.Operations
-import com.lynxanalytics.biggraph.frontend_operations.SQLOperation
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.Timestamp
@@ -250,8 +249,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     getOperation(user, request).toFE
   }
 
-  def getSQLOperationInputTables(user: serving.User, request: GetOperationMetaRequest): Map[String, ProtoTable] = {
-    getOperation(user, request).asInstanceOf[SQLOperation].getProtoTables()
+  def getOperationInputTables(user: serving.User, request: GetOperationMetaRequest): Map[String, ProtoTable] = {
+    import Operation.Implicits._
+    getOperation(user, request).getInputTables()
   }
 
   private def getOperation(user: serving.User, request: GetOperationMetaRequest): Operation = {

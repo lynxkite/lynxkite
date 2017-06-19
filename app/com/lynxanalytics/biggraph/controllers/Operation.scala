@@ -22,8 +22,7 @@ case class FEOperationMeta(
   category: String = "",
   status: FEStatus = FEStatus.enabled,
   color: Option[String] = None,
-  description: Option[String] = None,
-  withTableBrowser: Boolean = false)
+  description: Option[String] = None)
 
 object FEOperationParameterMeta {
   val validKinds = Seq(
@@ -170,6 +169,20 @@ object Operation {
     implicit class OperationTable(table: Table) {
       def columnList = FEOption.list(table.schema.map(_.name).toList)
     }
+    implicit class OperationInputTables(operation: Operation) {
+      def getInputTables()(implicit metaManager: MetaGraphManager): Map[String, ProtoTable] = {
+        val inputs = operation.context.inputs
+        val bindInputName = inputs.size > 1 // Whether to bind input names to avoid collisions.
+        inputs.flatMap {
+          case (inputName, state) if state.isTable => Seq(inputName -> ProtoTable(state.table))
+          case (inputName, state) if state.isProject => state.project.viewer.getProtoTables.map {
+            case (tableName, proto) =>
+              val prefix = if (bindInputName) s"$inputName|" else ""
+              s"$prefix$tableName" -> proto
+          }
+        }
+      }
+    }
   }
 }
 import Operation.Implicits._
@@ -269,7 +282,6 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
     util.Try(enabled).recover { case exc => FEStatus.disabled(exc.getMessage) }.get
   protected def help = // Add to notes for help link.
     "<help-popup href=\"" + Operation.htmlId(id) + "\"></help-popup>"
-  protected def withTableBrowser: Boolean = false
 
   override protected val params = {
     val params = new ParameterHolder(context)
@@ -307,8 +319,7 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
   override def toFE: FEOperationMeta = super.toFE.copy(
     visibleScalars = visibleScalars,
     status = safeEnabled,
-    description = context.meta.description,
-    withTableBrowser = withTableBrowser)
+    description = context.meta.description)
 
   protected def projectInput(input: String): ProjectEditor = {
     val param = params("apply_to_" + input)

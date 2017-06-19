@@ -116,13 +116,11 @@ case class FESegmentation(
   equivalentAttribute: FEAttribute)
 case class ProjectRequest(name: String)
 case class ProjectListRequest(
-  path: String,
-  filterTypes: Option[List[String]] = None)
+  path: String)
 case class ProjectSearchRequest(
   basePath: String, // We only search for projects/directories contained (recursively) in this.
   query: String,
-  includeNotes: Boolean,
-  filterTypes: Option[List[String]] = None)
+  includeNotes: Boolean)
 case class ProjectList(
   path: String,
   readACL: String = "",
@@ -152,34 +150,21 @@ case class ForkEntryRequest(from: String, to: String)
 case class RenameEntryRequest(from: String, to: String, overwrite: Boolean)
 case class ACLSettingsRequest(project: String, readACL: String, writeACL: String)
 
-class BigGraphController(val env: SparkFreeEnvironment) {
-  implicit val metaManager = env.metaGraphManager
-  implicit val entityProgressManager: EntityProgressManager = env.entityProgressManager
-
-  def projectList(user: serving.User, request: ProjectListRequest): ProjectList = metaManager.synchronized {
-    val entry = DirectoryEntry.fromName(request.path)
-    entry.assertReadAllowedFrom(user)
-    val dir = entry.asDirectory
+object BigGraphController {
+  def projectList(user: serving.User, dir: Directory): (Iterable[DirectoryEntry], Iterable[ObjectFrame]) = {
     val entries = dir.list
     val (dirs, objects) = entries.partition(_.isDirectory)
     val visibleDirs = dirs.filter(_.readAllowedFrom(user)).map(_.asDirectory)
     val visibleObjectFrames = objects.filter(_.readAllowedFrom(user)).map(_.asObjectFrame)
-    val filteredForTypes = visibleObjectFrames.filter {
-      f => request.filterTypes.map(_.contains(f.getObjectType)).getOrElse(true)
-    }
-    ProjectList(
-      request.path,
-      dir.readACL,
-      dir.writeACL,
-      visibleDirs.map(_.path.toString).toList,
-      filteredForTypes.map(_.toListElementFE).toList)
+    (visibleDirs, visibleObjectFrames)
   }
 
-  def projectSearch(user: serving.User, request: ProjectSearchRequest): ProjectList = metaManager.synchronized {
-    val entry = DirectoryEntry.fromName(request.basePath)
-    entry.assertReadAllowedFrom(user)
-    val dir = entry.asDirectory
-    val terms = request.query.split(" ").map(_.toLowerCase)
+  def projectSearch(
+    user: serving.User,
+    dir: Directory,
+    query: String,
+    includeNotes: Boolean): (Iterable[DirectoryEntry], Iterable[ObjectFrame]) = {
+    val terms = query.split(" ").map(_.toLowerCase)
     val dirs = dir
       .listDirectoriesRecursively
       .filter(_.readAllowedFrom(user))
@@ -196,31 +181,41 @@ class BigGraphController(val env: SparkFreeEnvironment) {
         terms.forall {
           term =>
             baseName.toLowerCase.contains(term) ||
-              (request.includeNotes && notes.toLowerCase.contains(term))
+              (includeNotes && notes.toLowerCase.contains(term))
         }
       }
-      .filter {
-        f => request.filterTypes.map(_.contains(f.getObjectType)).getOrElse(true)
-      }
+    (dirs, objects)
+  }
+}
 
+class BigGraphController(val env: SparkFreeEnvironment) {
+  implicit val metaManager = env.metaGraphManager
+  implicit val entityProgressManager: EntityProgressManager = env.entityProgressManager
+
+  def projectList(user: serving.User, request: ProjectListRequest): ProjectList = metaManager.synchronized {
+    val entry = DirectoryEntry.fromName(request.path)
+    entry.assertReadAllowedFrom(user)
+    val dir = entry.asDirectory
+    val (visibleDirs, visibleObjectFrames) = BigGraphController.projectList(user, dir)
+    ProjectList(
+      request.path,
+      dir.readACL,
+      dir.writeACL,
+      visibleDirs.map(_.path.toString).toList,
+      visibleObjectFrames.map(_.toListElementFE).toList)
+  }
+
+  def projectSearch(user: serving.User, request: ProjectSearchRequest): ProjectList = metaManager.synchronized {
+    val entry = DirectoryEntry.fromName(request.basePath)
+    entry.assertReadAllowedFrom(user)
+    val dir = entry.asDirectory
+    val (dirs, objects) = BigGraphController.projectSearch(user, dir, request.query, request.includeNotes)
     ProjectList(
       request.basePath,
       dir.readACL,
       dir.writeACL,
       dirs.map(_.path.toString).toList,
       objects.map(_.toListElementFE).toList)
-  }
-
-  def getInputTablesForBox(
-    user: serving.User, inputTables: Map[String, ProtoTable]): ProjectList = {
-    ProjectList(
-      path = "", // Boxes don't have paths.
-      objects = inputTables.map {
-        case (name, table) =>
-          FEProjectListElement(
-            name,
-            "table")
-      }.toList)
   }
 
   private def assertNameNotExists(name: String) = {
