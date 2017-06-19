@@ -12,8 +12,6 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.model
 import play.api.libs.json
 
-import scala.collection.immutable.TreeMap
-
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   override val atomicOperations =
     new ProjectOperations(env).operations.toMap ++
