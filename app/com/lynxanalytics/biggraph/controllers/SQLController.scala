@@ -208,6 +208,16 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
 
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
 
+  def getTableBrowserNodesForBox(
+    user: serving.User, inputTables: Map[String, ProtoTable], path: String): TableBrowserNodeResponse = {
+    if (path.isEmpty) { // Top level request, for boxes that means input tables.
+      getInputTablesForBox(user, inputTables)
+    } else { // Lower level request, for boxes that means table columns.
+      assert(inputTables.contains(path), s"$path is not a valid proto table")
+      getColumnsFromSchema(inputTables(path).schema)
+    }
+  }
+
   private def getInputTablesForBox(
     user: serving.User, inputTables: Map[String, ProtoTable]): TableBrowserNodeResponse = {
     TableBrowserNodeResponse(
@@ -220,20 +230,10 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
       }.toList.sortWith(_.name < _.name)) // Map orders elements randomly so we need to sort for the UI.
   }
 
-  def getTableBrowserNodesForBox(
-    user: serving.User, inputTables: Map[String, ProtoTable], path: String): TableBrowserNodeResponse = {
-    if (path.isEmpty) {  // Top level request, for boxes that means input tables.
-      getInputTablesForBox(user, inputTables)
-    } else {  // Lower level request, for boxes that means table columns.
-      assert(inputTables.contains(path), s"$path is not a valid proto table")
-      getColumnsFromSchema(inputTables(path).schema)
-    }
-  }
-
-  // Return list of nodes for the table browser. The nodes can be:
-  // - Snapshots and subdirs in directories
-  // - segmentations and implicit tables of a snapshot
-  // - columns of a table
+  // Returns the list of nodes for the table browser. The nodes can be:
+  // - snapshots and subdirs in directories
+  // - segmentations and implicit tables of a project kind snapshot
+  // - columns of a table kind snapshot
   def getTableBrowserNodes(user: serving.User, request: TableBrowserNodeRequest) = async[TableBrowserNodeResponse] {
     val pathParts = SubProject.splitPipedPath(request.path)
     val entry = DirectoryEntry.fromName(pathParts.head)
@@ -248,7 +248,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     }
   }
 
-  def getDirectory(
+  private def getDirectory(
     user: serving.User,
     dir: Directory,
     query: Option[String]): TableBrowserNodeResponse = {
@@ -273,7 +273,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     ).toList)
   }
 
-  def getSnapshot(user: serving.User, frame: SnapshotFrame, pathTail: Seq[String]): TableBrowserNodeResponse = {
+  private def getSnapshot(user: serving.User, frame: SnapshotFrame, pathTail: Seq[String]): TableBrowserNodeResponse = {
     val state = frame.getState
     if (state.isTable) {
       getColumnsFromSchema(state.table.schema)
@@ -292,7 +292,10 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     }
   }
 
-  def getProjectTables(path: SymbolPath, parentViewer: RootProjectViewer, subPath: Seq[String]): TableBrowserNodeResponse = {
+  private def getProjectTables(
+    path: SymbolPath,
+    parentViewer: RootProjectViewer,
+    subPath: Seq[String]): TableBrowserNodeResponse = {
     val viewer = parentViewer.offspringViewer(subPath)
     val implicitTables = viewer.getProtoTables.map(_._1).toSeq.map {
       name =>
@@ -314,7 +317,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     TableBrowserNodeResponse(list = implicitTables ++ subProjects)
   }
 
-  def getColumnsFromSchema(schema: spark.sql.types.StructType): TableBrowserNodeResponse = {
+  private def getColumnsFromSchema(schema: spark.sql.types.StructType): TableBrowserNodeResponse = {
     TableBrowserNodeResponse(
       list = schema.fields.map { field =>
         TableBrowserNode(
