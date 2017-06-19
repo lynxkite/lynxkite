@@ -110,14 +110,16 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
             return result;
           },
 
-          // Fetches the list of child nodes for nodes of type
-          // table, column and view.
-          fetchSubProjectList: function() {
+          // Queries the server and populates the list
+          // member of this node with its children.
+          // searchQuery is optional and used for searching for
+          // a subset of directories.
+          fetchList: function(searchQuery) {
             var that = this;
             var promise;
             if (scope.box) {
               promise = util.nocache(
-                '/ajax/getTableBrowserColumnsForBox', {
+                '/ajax/getTableBrowserNodesForBox', {
                   operationRequest: {
                     'workspace': scope.box.workspace.ref(),
                     'box': scope.box.instance.id
@@ -128,6 +130,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
               promise = util.nocache(
                 '/ajax/getTableBrowserNodes', {
                   'path': this.absolutePath,
+                  'query': searchQuery,
                   'isImplicitTable': this.objectType === 'table'
                 });
             }
@@ -145,82 +148,6 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
             }, function(error) {
               that.error = error.data;
             });
-          },
-
-          // Fetches the list of child nodes for nodes of type
-          // directory. If the string searchQuery is non-empty,
-          // then the subtree is traversed recursively, and only
-          // nodes with their name including query are returned.
-          fetchProjectList: function(query) {
-            var that = this;
-            var promise;
-            if (scope.box) {
-              promise = util.nocache(
-                '/ajax/getInputTablesForBox',
-                {
-                  'workspace': scope.box.workspace.ref(),
-                  'box': scope.box.instance.id
-                });
-            } else if (query) {
-              promise = util.nocache(
-                '/ajax/projectSearch',
-                {
-                  'basePath': this.absolutePath,
-                  'query': query,
-                  'includeNotes': false,
-                  'filterTypes': ['snapshot'],
-                });
-            } else {
-              promise = util.nocache(
-                '/ajax/projectList',
-                {
-                  'path': this.absolutePath,
-                  'filterTypes': ['snapshot'],
-                });
-            }
-            promise.then(function(result) {
-              that.list = [];
-              var i = 0;
-              for (i = 0; i < result.directories.length; ++i) {
-                var path = result.directories[i];
-                that.list.push(createNode(
-                    that,
-                    that.childPathToName(path),
-                    path,
-                    'directory'));
-              }
-              for (i = 0; i < result.objects.length; ++i) {
-                var obj = result.objects[i];
-                that.list.push(createNode(
-                    that,
-                    that.childPathToName(obj.name),
-                    obj.name,
-                    obj.objectType));
-              }
-            });
-          },
-
-          // Queries the server and populates the list
-          // member of this node with its children.
-          // searchQuery is optional and used for searching for
-          // a subset of directories.
-          fetchList: function(searchQuery) {
-            if (this.objectType !== 'directory') {
-              this.fetchSubProjectList();
-            } else {
-              this.fetchProjectList(searchQuery);
-            }
-          },
-
-          // Converts the absolute path of a child node
-          // to the name of that childnode. i.e. strips
-          // the path of this node from the prefix.
-          childPathToName: function(path) {
-            if (this.absolutePath === '') {
-              return path;
-            } else {
-              return path.substring(this.absolutePath.length + 1);
-            }
           },
 
           // Opens this node in the tree view. When invoked for

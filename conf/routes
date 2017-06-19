@@ -33,8 +33,7 @@ GET  /ajax/model       com.lynxanalytics.biggraph.serving.ProductionJsonServer.m
 GET  /ajax/center      com.lynxanalytics.biggraph.serving.ProductionJsonServer.center
 
 GET  /ajax/getTableBrowserNodes     com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableBrowserNodes
-GET  /ajax/getTableBrowserColumnsForBox     com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableBrowserColumnsForBox
-GET  /ajax/getInputTablesForBox     com.lynxanalytics.biggraph.serving.ProductionJsonServer.getInputTablesForBox
+GET  /ajax/getTableBrowserNodesForBox     com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableBrowserNodesForBox
 GET  /ajax/runSQLQuery      com.lynxanalytics.biggraph.serving.ProductionJsonServer.runSQLQuery
 POST /ajax/exportSQLQueryToCSV     com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToCSV
 POST /ajax/exportSQLQueryToJson    com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToJson

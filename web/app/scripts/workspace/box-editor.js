@@ -169,6 +169,20 @@ angular.module('biggraph')
         scope.getBox = function() {
           return scope.workspace.boxMap[scope.boxId];
         };
+
+        // Returns true iff the boxMta has least one SQL code type parameters.
+        scope.withTableBrowser = function() {
+          if (!scope.boxMeta) {
+            return false;
+          }
+          for (var k = 0; k < scope.boxMeta.parameters.length; ++k) {
+            var p = scope.boxMeta.parameters[k];
+            if (p.kind === 'code' && p.payload.language === 'sql') {
+              return true;
+            }
+          }
+          return false;
+        };
       },
     };
   });
