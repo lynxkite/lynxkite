@@ -172,7 +172,7 @@ div.popup-content {
 
 polygon.popup-trail {
   fill: white;
-  opacity: 0.5;
+  opacity: 0.9;
   pointer-events: none; /* Let mouse events through so we do not block clicks. */
 }
 
