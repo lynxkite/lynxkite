@@ -399,10 +399,8 @@ BoxEditor.prototype = {
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
-  expectTableBrowser: function() {
-    expect(this.element.$('#toggle-table-browser').isPresent()).toBe(true);
-    var tb = new TableBrowser(this.popup);
-    return tb;
+  getTableBrowser: function() {
+    return new TableBrowser(this.popup);
   },
 };
 

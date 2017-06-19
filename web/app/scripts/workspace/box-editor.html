@@ -19,25 +19,25 @@
     No parameters
   </p>
   <div class="{{showTableBrowser ? 'operation-params-size-half' : ''}}">
-  <form ng-if="boxMeta.parameters" class="form-horizontal" ng-submit="onBlur()">
-    <operation-parameters
-        box="box"
-        meta="boxMeta"
-        output="plainParamValues"
-        parametric="parametricParamValues"
-        pflags="parametricFlags"
-        editable="true"
-        on-blur="onBlur()">
-    </operation-parameters>
-    <input type="submit" ng-show="false"><!-- For ng-submit. -->
-  </form>
-  <button
-      class="btn btn-primary"
-      id="toggle-table-browser"
-      ng-show="withTableBrowser()"
-      ng-click="showTableBrowser = !showTableBrowser">
-        Tables {{showTableBrowser ? '&#9204;' : '&#9205;'}}
-  </button>
+    <form ng-if="boxMeta.parameters" class="form-horizontal" ng-submit="onBlur()">
+      <operation-parameters
+          box="box"
+          meta="boxMeta"
+          output="plainParamValues"
+          parametric="parametricParamValues"
+          pflags="parametricFlags"
+          editable="true"
+          on-blur="onBlur()">
+      </operation-parameters>
+      <input type="submit" ng-show="false"><!-- For ng-submit. -->
+    </form>
+    <button
+        class="btn btn-primary"
+        id="toggle-table-browser"
+        ng-show="withTableBrowser()"
+        ng-click="showTableBrowser = !showTableBrowser">
+          Tables {{showTableBrowser ? '&#9204;' : '&#9205;'}}
+    </button>
   </div>
   <table-browser box="getBox()" ng-if="withTableBrowser() && showTableBrowser"></table-browser>
 </div>

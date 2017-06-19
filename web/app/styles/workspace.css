@@ -57,10 +57,6 @@ box-editor table-browser {
   float: left;
 }
 
-.operation-params-size-full {
-  width: 100%;
-}
-
 .box-error {
   color: red;
   margin-top: 8px;

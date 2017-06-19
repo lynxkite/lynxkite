@@ -170,6 +170,7 @@ object Operation {
       def columnList = FEOption.list(table.schema.map(_.name).toList)
     }
     implicit class OperationInputTables(operation: Operation) {
+      // Returns all tables output by all inputs of this operation.
       def getInputTables()(implicit metaManager: MetaGraphManager): Map[String, ProtoTable] = {
         val inputs = operation.context.inputs
         val bindInputName = inputs.size > 1 // Whether to bind input names to avoid collisions.
