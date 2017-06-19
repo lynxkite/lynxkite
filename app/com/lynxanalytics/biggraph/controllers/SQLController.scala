@@ -217,22 +217,22 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
             absolutePath = name, // Same as name for top level nodes.
             name = name,
             objectType = "table")
-      }.toList.sortWith(_.name < _.name))
+      }.toList.sortWith(_.name < _.name)) // Map orders elements randomly so we need to sort for the UI.
   }
 
   def getTableBrowserNodesForBox(
     user: serving.User, inputTables: Map[String, ProtoTable], path: String): TableBrowserNodeResponse = {
-    if (path.isEmpty) { // Top level request.
+    if (path.isEmpty) {  // Top level request, for boxes that means input tables.
       getInputTablesForBox(user, inputTables)
-    } else {
+    } else {  // Lower level request, for boxes that means table columns.
       assert(inputTables.contains(path), s"$path is not a valid proto table")
       getColumnsFromSchema(inputTables(path).schema)
     }
   }
 
   // Return list of nodes for the table browser. The nodes can be:
-  // - segmentations and implicit tables of a project
-  // - columns of a view
+  // - Snapshots and subdirs in directories
+  // - segmentations and implicit tables of a snapshot
   // - columns of a table
   def getTableBrowserNodes(user: serving.User, request: TableBrowserNodeRequest) = async[TableBrowserNodeResponse] {
     val pathParts = SubProject.splitPipedPath(request.path)

@@ -115,18 +115,17 @@ case class FESegmentation(
   // the vector of ids of segments the vertex belongs to.
   equivalentAttribute: FEAttribute)
 case class ProjectRequest(name: String)
-case class ProjectListRequest(
-  path: String)
+case class ProjectListRequest(path: String)
 case class ProjectSearchRequest(
   basePath: String, // We only search for projects/directories contained (recursively) in this.
   query: String,
   includeNotes: Boolean)
 case class ProjectList(
   path: String,
-  readACL: String = "",
-  writeACL: String = "",
-  directories: List[String] = Nil,
-  objects: List[FEProjectListElement] = Nil)
+  readACL: String,
+  writeACL: String,
+  directories: List[String],
+  objects: List[FEProjectListElement])
 case class CreateProjectRequest(name: String, notes: String, privacy: String)
 case class CreateDirectoryRequest(name: String, privacy: String)
 case class DiscardEntryRequest(name: String)

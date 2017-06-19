@@ -188,7 +188,7 @@ module.exports = function(fw) {
       lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
     }, function() {
       var se = lib.workspace.openBoxEditor('sql');
-      var tableBrowser = se.expectTableBrowser();
+      var tableBrowser = se.getTableBrowser();
       tableBrowser.toggle();
       tableBrowser.expectNode([0], 'edge_attributes', '`edge_attributes`');
       tableBrowser.expectNode([1], 'edges', '`edges`');
@@ -208,7 +208,7 @@ module.exports = function(fw) {
       lib.workspace.connectBoxes('eg1', 'project', 'sql', 'two');
     }, function() {
       var se = lib.workspace.openBoxEditor('sql');
-      var tableBrowser = se.expectTableBrowser();
+      var tableBrowser = se.getTableBrowser();
       tableBrowser.toggle();
       tableBrowser.expectNode([0], 'one|edge_attributes', '`one|edge_attributes`');
       tableBrowser.expectNode([1], 'one|edges', '`one|edges`');
