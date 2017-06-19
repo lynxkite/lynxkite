@@ -150,9 +150,6 @@ angular.module('biggraph')
               var box = scope.workspace.boxes[j];
               for (var k = 0; k < box.outputs.length; ++k) {
                 var output = box.outputs[k];
-                if (output.getAttachedBoxes().length > 0) {
-                  continue;
-                }
                 var dx = input.cx() - output.cx();
                 var dy = input.cy() - output.cy();
                 var dist = Math.sqrt(dx * dx + dy * dy);
