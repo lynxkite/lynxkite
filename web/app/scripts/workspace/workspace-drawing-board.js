@@ -619,7 +619,8 @@ angular.module('biggraph')
 
         scope.getDirectoryPart = function(path) {
           if (path === undefined) { return undefined; }
-          return path.split('/').slice(0, -1).join('/') + '/';
+          var dir = path.split('/').slice(0, -1);
+          return dir.length === 0 ? '' : dir.join('/') + '/';
         };
 
         scope.getLastPart = function(path) {
