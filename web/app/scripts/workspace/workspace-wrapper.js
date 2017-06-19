@@ -427,7 +427,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     },
 
     saveAsCustomBox: function(ids, name, description) {
-      var i, j, box;
+      var i, j, box, input;
       var workspaceParameters =
         JSON.parse(this.boxMap['anchor'].instance.parameters.parameters || '[]');
       var boxes = [{
@@ -450,7 +450,8 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       var PADDING_Y = 150;
       var inputBoxY = PADDING_Y;
       var outputBoxY = PADDING_Y;
-      var usedOutputs = {};
+      var internallyUsedOutputs = {};
+      var externallyUsedOutputs = {};
       // This custom box will replace the selected boxes.
       var customBox = {
         id: this.getUniqueId(name),
@@ -478,6 +479,19 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         minY = Math.min(minY, box.instance.y);
         maxX = Math.max(maxX, box.instance.x);
       }
+      // Record used outputs.
+      for (i = 0; i < this.boxes.length; ++i) {
+        box = this.boxes[i];
+        var inputs = Object.keys(box.instance.inputs);
+        for (j = 0; j < inputs.length; ++j) {
+          input = box.instance.inputs[inputs[j]];
+          if (input.boxId) {
+            console.assert(!input.boxId.includes(SEPARATOR) && !input.id.includes(SEPARATOR));
+            var key = input.boxId + SEPARATOR + input.id;
+            externallyUsedOutputs[key] = (externallyUsedOutputs[key] || 0) + 1;
+          }
+        }
+      }
       for (i = 0; i < ids.length; ++i) {
         box = this.boxMap[ids[i]];
         // "input-" and "output-" IDs will be used for the input and output boxes.
@@ -491,11 +505,12 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         instance.y += PADDING_Y / 2 - minY;
         for (j = 0; j < box.inputs.length; ++j) {
           var inputName = box.metadata.inputs[j];
-          var input = box.instance.inputs[inputName];
-          // Record used output.
+          input = box.instance.inputs[inputName];
+          // Record internally used output.
           if (input.boxId) {
             console.assert(!input.boxId.includes(SEPARATOR) && !input.id.includes(SEPARATOR));
-            usedOutputs[input.boxId + SEPARATOR + input.id] = true;
+            externallyUsedOutputs[input.boxId + SEPARATOR + input.id] -= 1;
+            internallyUsedOutputs[input.boxId + SEPARATOR + input.id] = true;
           }
           // Create input box if necessary.
           if (!ids.includes(input.boxId)) {
@@ -527,7 +542,8 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         box = this.boxMap[ids[i]];
         for (j = 0; j < box.metadata.outputs.length; ++j) {
           var outputName = box.metadata.outputs[j];
-          if (!usedOutputs[box.instance.id + SEPARATOR + outputName]) {
+          if (!internallyUsedOutputs[box.instance.id + SEPARATOR + outputName] ||
+              externallyUsedOutputs[box.instance.id + SEPARATOR + outputName]) {
             var outputBoxName = outputName;
             var outputNameCount = outputNameCounts[outputName] || 0;
             if (outputNameCount > 0) {
