@@ -31,6 +31,7 @@ angular.module('biggraph')
         scope.plainParamValues = {};
         scope.parametricParamValues = {};
         scope.parametricFlags = {};
+        scope.showTableBrowser = true;
 
         scope.loadBoxMeta = function(boxId) {
           if (!scope.workspace) {
