@@ -63,19 +63,25 @@ angular.module('biggraph').factory('PlugWrapper', function() {
       }
     },
 
-    getAttachedBoxes: function() {
-      var dsts = [];
-      for (var i = 0; i < this.workspace.boxes.length; ++i) {
-        var box = this.workspace.boxes[i];
-        for (var j = 0; j < box.inputs.length; ++j) {
-          var input = box.inputs[j];
-          var conn = box.instance.inputs[input.id];
-          if (conn && conn.boxId === this.boxId && conn.id === this.id) {
-            dsts.push(box);
+    getAttachedPlugs: function() {
+      var conn;
+      if (this.direction === 'inputs') {
+        conn = this.boxInstance.inputs[this.id];
+        return conn ? [this.workspace.getOutputPlug(conn.boxId, conn.id)] : [];
+      } else {
+        var dsts = [];
+        for (var i = 0; i < this.workspace.boxes.length; ++i) {
+          var box = this.workspace.boxes[i];
+          for (var j = 0; j < box.inputs.length; ++j) {
+            var input = box.inputs[j];
+            conn = box.instance.inputs[input.id];
+            if (conn && conn.boxId === this.boxId && conn.id === this.id) {
+              dsts.push(input);
+            }
           }
         }
+        return dsts;
       }
-      return dsts;
     },
   };
 
