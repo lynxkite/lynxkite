@@ -46,6 +46,17 @@ box-editor {
   display: block;
 }
 
+box-editor table-browser {
+  width: 30%;
+  float: right;
+  padding-left: 10px;
+}
+
+.operation-params-size-half {
+  width: 70%;
+  float: left;
+}
+
 .box-error {
   color: red;
   margin-top: 8px;

@@ -311,6 +311,7 @@ object FrontendJson {
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
   implicit val rSQLTableBrowserNodeRequest = json.Json.reads[TableBrowserNodeRequest]
+  implicit val rTableBrowserNodeForBoxRequest = json.Json.reads[TableBrowserNodeForBoxRequest]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
   implicit val fSQLExportToTableRequest = json.Json.format[SQLExportToTableRequest]
   implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
@@ -449,6 +450,12 @@ object ProductionJsonServer extends JsonServer {
     implicit val metaManager = workspaceController.metaManager
     val table = workspaceController.getOutput(user, request.id).table
     sqlController.getTableSample(table, request.sampleRows)
+  }
+  def getTableBrowserNodesForBox = jsonGet(getTableBrowserNodesForBoxData)
+  def getTableBrowserNodesForBoxData(
+    user: serving.User, request: TableBrowserNodeForBoxRequest): TableBrowserNodeResponse = {
+    val inputTables = workspaceController.getOperationInputTables(user, request.operationRequest)
+    sqlController.getTableBrowserNodesForBox(user, inputTables, request.path)
   }
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)

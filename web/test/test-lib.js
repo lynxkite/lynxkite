@@ -399,6 +399,9 @@ BoxEditor.prototype = {
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
+  getTableBrowser: function() {
+    return new TableBrowser(this.popup);
+  },
 };
 
 function State(popup) {

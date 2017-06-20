@@ -3865,8 +3865,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   // TODO: Use dynamic inputs. #5820
-  def registerSQLOp(name: String, inputs: List[String])(
-    getProtoTables: Operation.Context => Map[String, ProtoTable]): Unit = {
+  def registerSQLOp(name: String, inputs: List[String]): Unit = {
     registerOp(name, defaultIcon, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) {
       override val params = new ParameterHolder(context) // No "apply_to" parameters.
       params += Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql")
@@ -3874,7 +3873,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       override def getOutputs() = {
         params.validate()
         val sql = params("sql")
-        val protoTables = getProtoTables(context)
+        val protoTables = this.getInputTables()
         val tables = ProtoTable.minimize(sql, protoTables).mapValues(_.toTable)
         val result = graph_operations.ExecuteSQL.run(sql, tables)
         makeOutput(result)
@@ -3882,23 +3881,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
   }
 
-  registerSQLOp("SQL1", List("input")) { context =>
-    val input = context.inputs("input")
-    input.kind match {
-      case BoxOutputKind.Project => input.project.viewer.getProtoTables.toMap
-      case BoxOutputKind.Table => Map("input" -> ProtoTable(input.table))
-    }
-  }
+  registerSQLOp("SQL1", List("input"))
 
   for (inputs <- 2 to 3) {
-    registerSQLOp(s"SQL$inputs", List("one", "two", "three").take(inputs)) { context =>
-      context.inputs.flatMap {
-        case (name, state) if state.isTable => Seq(name -> ProtoTable(state.table))
-        case (inputName, state) if state.isProject => state.project.viewer.getProtoTables.map {
-          case (tableName, proto) => s"$inputName|$tableName" -> proto
-        }
-      }.toMap
-    }
+    registerSQLOp(s"SQL$inputs", List("one", "two", "three").take(inputs))
   }
 
   private def getShapeFilePath(params: ParameterHolder): String = {
