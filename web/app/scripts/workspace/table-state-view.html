@@ -18,12 +18,7 @@
     <span id="table-sample-spinner" class="glyphicon glyphicon-cog" ng-if="!table.$resolved"></span>
     </form>
   </div>
-  <div ng-if="table.$error" id="table-sample-error">
-    Failed to load table sample.
-    <a href="" ng-click="util.reportRequestError(table, 'Failed to load table sample.')">
-      Click to report error.
-    </a>
-  </div>
+  <display-error caption="Failed to load table." request="table"></display-error>
   <table ng-if="table.data" class="table table-striped table-bordered" id="table-sample">
     <thead>
       <tr>
