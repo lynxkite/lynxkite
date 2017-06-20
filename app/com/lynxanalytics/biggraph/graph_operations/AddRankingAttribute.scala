@@ -25,7 +25,10 @@ object AddRankingAttribute extends OpFromJson {
     op(op.sortKey, attr).result.ordinal
   }
 
-  def fromJson(j: JsValue) = {
+  // Need to specify the return type, otherwise the compiler doesn't figure it out properly
+  // and generates faulty Java bytecode (keeping the abstract method from FromJson). This
+  // results in a runtime error when trying to call the abstract fromJson().
+  def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
     val ascending = (j \ "ascending").as[Boolean]
     val tpe = SerializableType.fromJson(j \ "type")
     AddRankingAttribute(ascending)(tpe)
