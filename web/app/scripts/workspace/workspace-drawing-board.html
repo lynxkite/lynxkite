@@ -133,7 +133,7 @@
   <svg>
     <defs>
       <!-- The filters to apply colors to the grayscale icons. -->
-      <filter ng-repeat="(id, matrix) in filters" id="{{ id }}">
+      <filter ng-repeat="(id, matrix) in filters" id="{{ id | id }}">
         <feColorMatrix in="SourceGraphic" type="matrix" ng-attr-values="{{ matrix }}"></feColorMatrix>
       </filter>
 
@@ -161,7 +161,7 @@
       <!-- start arrow -->
       <g ng-repeat="arrow in arrows()">
         <path class="arrow"
-            id="{{ arrow.src.boxId }}-{{ arrow.src.id }}-{{ arrow.dst.boxId }}-{{ arrow.dst.id }}"
+            id="{{ arrow.src.boxId | id }}-{{ arrow.src.id | id }}-{{ arrow.dst.boxId | id }}-{{ arrow.dst.id | id }}"
             ng-attr-d="{{ bezier(arrow.x1(), arrow.y1(), arrow.x2(), arrow.y2()) }}"></path>
       </g>
       <!-- end arrow -->
@@ -181,7 +181,7 @@
           ng-mouseup="onMouseUpOnBox(box, $event)"
           ng-attr-transform="{{ box.mainPosTransform() }}"
           class="box"
-          id="{{ box.instance.id }}"
+          id="{{ box.instance.id | id }}"
           ng-class="{ 'selected': selectedBoxIds.includes(box.instance.id) }">
         <circle id="click-target" cx="50" cy="60" r="50"></circle>
 
@@ -203,11 +203,11 @@
                  ng-repeat="line in box.commentLines track by $index">{{line}}
           </tspan>
         </text>
-        <g ng-repeat="direction in ['inputs', 'outputs']" id="{{ direction }}">
+        <g ng-repeat="direction in ['inputs', 'outputs']" id="{{ direction | id }}">
           <g ng-repeat="plug in box[direction]"
               ng-attr-transform="{{ plug.posTransform }}"
               class="plug"
-              id="{{ plug.id }}">
+              id="{{ plug.id | id }}">
             <circle ng-attr-r="{{ plug.radius }}"
                   class="io-circle"
                   ng-class="{'in-progress': plug.inProgress,
