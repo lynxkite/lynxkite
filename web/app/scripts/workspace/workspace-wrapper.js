@@ -451,7 +451,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       var inputBoxY = PADDING_Y;
       var outputBoxY = PADDING_Y;
       var internallyUsedOutputs = {};
-      var externallyUsedOutputs = {};
+      var externallyUsedOutputCounts = {};
       // This custom box will replace the selected boxes.
       var customBox = {
         id: this.getUniqueId(name),
@@ -488,7 +488,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
           if (input.boxId) {
             console.assert(!input.boxId.includes(SEPARATOR) && !input.id.includes(SEPARATOR));
             var key = input.boxId + SEPARATOR + input.id;
-            externallyUsedOutputs[key] = (externallyUsedOutputs[key] || 0) + 1;
+            externallyUsedOutputCounts[key] = (externallyUsedOutputCounts[key] || 0) + 1;
           }
         }
       }
@@ -509,7 +509,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
           // Record internally used output.
           if (input.boxId) {
             console.assert(!input.boxId.includes(SEPARATOR) && !input.id.includes(SEPARATOR));
-            externallyUsedOutputs[input.boxId + SEPARATOR + input.id] -= 1;
+            externallyUsedOutputCounts[input.boxId + SEPARATOR + input.id] -= 1;
             internallyUsedOutputs[input.boxId + SEPARATOR + input.id] = true;
           }
           // Create input box if necessary.
@@ -543,7 +543,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         for (j = 0; j < box.metadata.outputs.length; ++j) {
           var outputName = box.metadata.outputs[j];
           if (!internallyUsedOutputs[box.instance.id + SEPARATOR + outputName] ||
-              externallyUsedOutputs[box.instance.id + SEPARATOR + outputName]) {
+              externallyUsedOutputCounts[box.instance.id + SEPARATOR + outputName] > 0) {
             var outputBoxName = outputName;
             var outputNameCount = outputNameCounts[outputName] || 0;
             if (outputNameCount > 0) {
