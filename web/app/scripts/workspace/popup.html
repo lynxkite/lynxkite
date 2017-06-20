@@ -1,7 +1,7 @@
 <div class="popup popup-type-{{ popupModel.content.type }}"
     ng-mousedown="popupModel.bringToFront(); $event.stopPropagation();"
     ng-mousemove="popupModel.onMouseMove($event);"
-    id="{{popupModel.id}}"
+    id="{{ popupModel.id | id }}"
     ng-style="{
         'left': popupModel.x + 'px',
         'top': popupModel.y + 'px',
