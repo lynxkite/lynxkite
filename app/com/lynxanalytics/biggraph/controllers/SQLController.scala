@@ -267,7 +267,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
         TableBrowserNode(
           absolutePath = frame.path.toString,
           name = frame.path.name.name,
-          objectType = frame.objectType
+          objectType = getObjectType(frame)
         )
       }
     ).toList)
@@ -328,6 +328,14 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
             SQLHelper.typeTagFromDataType(field.dataType))
         )
       })
+  }
+
+  private def getObjectType(frame: ObjectFrame): String = {
+    if (frame.isSnapshot) {
+      frame.asSnapshotFrame.getState().kind
+    } else {
+      frame.objectType
+    }
   }
 
   def getTableColumns(frame: ObjectFrame, tablePath: Seq[String]): TableBrowserNodeResponse = {
