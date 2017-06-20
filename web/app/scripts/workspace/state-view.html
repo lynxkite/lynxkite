@@ -22,13 +22,13 @@
     SQL
   </button>
   <button
-    ng-show="stateKind === 'table'"
+    ng-show="plug.kind === 'table'"
     class="pull-right btn btn-default"
     ng-click="instrument = 'Create plot'">
     Plot
   </button>
   <button
-    ng-show="stateKind === 'project'"
+    ng-show="plug.kind === 'project'"
     class="pull-right btn btn-default"
     ng-click="instrument = 'Create visualization'">
     Visualize
@@ -69,25 +69,25 @@
 
 <div ng-if="!instrument">
   <project-state-view
-    state-id="stateId"
-    ng-if="stateKind === 'project'">
+    state-id="plug.stateId"
+    ng-if="plug.kind === 'project'">
   </project-state-view>
   <export-result
-    state-id="stateId"
-    ng-if="stateKind === 'exportResult'">
+    state-id="plug.stateId"
+    ng-if="plug.kind === 'exportResult'">
   </export-result>
   <table-state-view
-    state-id="stateId"
-    ng-if="stateKind === 'table'">
+    state-id="plug.stateId"
+    ng-if="plug.kind === 'table'">
   </table-state-view>
   <plot-state-view
-    state-id="stateId"
+    state-id="plug.stateId"
     popup-model="popupModel"
-    ng-if="stateKind === 'plot'">
+    ng-if="plug.kind === 'plot'">
   </plot-state-view>
   <visualization-state-view
-    state-id="stateId"
+    state-id="plug.stateId"
     popup-model="popupModel"
-    ng-if="stateKind === 'visualization'">
+    ng-if="plug.kind === 'visualization'">
   </visualization-state-view>
 </div>
