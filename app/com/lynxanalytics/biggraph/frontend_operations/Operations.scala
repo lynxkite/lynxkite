@@ -3867,7 +3867,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   // TODO: Use dynamic inputs. #5820
   def registerSQLOp(name: String, inputs: List[String]): Unit = {
     registerOp(name, defaultIcon, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) {
-      import com.lynxanalytics.biggraph.controllers.Operation.Implicits._
       override val params = new ParameterHolder(context) // No "apply_to" parameters.
       params += Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql")
       def enabled = FEStatus.enabled
