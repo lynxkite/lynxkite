@@ -90,4 +90,10 @@
     popup-model="popupModel"
     ng-if="plug.kind === 'visualization'">
   </visualization-state-view>
+  <display-error
+    class="col-sm-12"
+    ng-if="plug.kind === 'error'"
+    caption="Failed to generate output state."
+    error="plug.error">
+  </display-error>
 </div>
