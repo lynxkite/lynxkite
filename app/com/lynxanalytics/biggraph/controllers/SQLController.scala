@@ -227,7 +227,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
             absolutePath = name, // Same as name for top level nodes.
             name = name,
             objectType = "table")
-      }.toList.sortWith(_.name < _.name)) // Map orders elements randomly so we need to sort for the UI.
+      }.toList.sortBy(_.name)) // Map orders elements randomly so we need to sort for the UI.
   }
 
   // Returns the list of nodes for the table browser. The nodes can be:

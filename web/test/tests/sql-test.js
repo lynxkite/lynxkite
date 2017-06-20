@@ -189,7 +189,6 @@ module.exports = function(fw) {
     }, function() {
       var se = lib.workspace.openBoxEditor('sql');
       var tableBrowser = se.getTableBrowser();
-      tableBrowser.toggle();
       tableBrowser.expectNode([0], 'edge_attributes', '`edge_attributes`');
       tableBrowser.expectNode([1], 'edges', '`edges`');
       tableBrowser.expectNode([2], 'vertices', '`vertices`');
@@ -209,7 +208,6 @@ module.exports = function(fw) {
     }, function() {
       var se = lib.workspace.openBoxEditor('sql');
       var tableBrowser = se.getTableBrowser();
-      tableBrowser.toggle();
       tableBrowser.expectNode([0], 'one|edge_attributes', '`one|edge_attributes`');
       tableBrowser.expectNode([1], 'one|edges', '`one|edges`');
       tableBrowser.expectNode([2], 'one|vertices', '`one|vertices`');
