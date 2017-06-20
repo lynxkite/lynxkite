@@ -54,6 +54,12 @@ h6 {
   font-weight: bold;
 }
 
+.backend-error-message {
+  color: darkred;
+  /* Wrap lines, but keep whitespace otherwise. Good for console-oriented errors. */
+  white-space: pre-wrap;
+}
+
 /*
 Makes disabled buttons still receive pointer (e.g. mouse) events.
 This is useful for example if we still want to have tooltips if the
@@ -64,4 +70,3 @@ disabling of pointer events.
 label.btn.bypass-disabled {
   pointer-events: auto;
 }
-
