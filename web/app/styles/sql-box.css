@@ -4,13 +4,15 @@ sql-box #sql-box-main.size-full {
 }
 
 sql-box #sql-box-main.size-half {
-  width: 50%;
+  width: 70%;
   float: left;
 }
 
 sql-box table-browser {
-  width: 50%;
+  width: 30%;
   float: left;
+  padding-left: 10px;
+  max-height: 75vh;
 }
 
 /* This only comes into play when the window is resized to
