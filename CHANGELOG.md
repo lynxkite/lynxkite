@@ -4,6 +4,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 # Changes
 
+ - _Add rank attribute_ can be used on String attributes.
+
 ### 2.0
 
  - Replaced LynxKite projects with more powerful and flexible workspaces. Workspaces allow you to
