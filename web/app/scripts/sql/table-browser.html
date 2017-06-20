@@ -1,4 +1,6 @@
-<div id="table-browser" style="background-color: white;">
+<div id="table-browser" style="background-color: white;"
+  ng-mousedown="$event.stopPropagation()"
+  ng-mousemove="$event.stopPropagation()">
   <div id="table-browser-head">
     <i>Hint: drag table and column names into the editor box
     with your mouse.</i>

@@ -79,7 +79,6 @@ module.exports = function(fw) {
       lib.splash.popDirectory();
       lib.splash.openGlobalSqlBox();
       var tableBrowser = lib.splash.tableBrowser;
-      tableBrowser.toggle();
       tableBrowser.expectNode([0], 'plum', '`plum`');
       tableBrowser.expectNode([1], 'This is a snapshot.', '`This is a snapshot.`');
       tableBrowser.toggleNode([1]);

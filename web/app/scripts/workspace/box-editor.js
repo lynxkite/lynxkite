@@ -31,6 +31,7 @@ angular.module('biggraph')
         scope.plainParamValues = {};
         scope.parametricParamValues = {};
         scope.parametricFlags = {};
+        scope.showTableBrowser = true;
 
         scope.loadBoxMeta = function(boxId) {
           if (!scope.workspace) {
@@ -164,6 +165,24 @@ angular.module('biggraph')
         // bubble them up from the directives.
         scope.onBlur = function() {
           $timeout(onBlurNow);
+        };
+
+        scope.getBox = function() {
+          return scope.workspace.boxMap[scope.boxId];
+        };
+
+        // Returns true iff the boxMeta has at least one SQL code type parameter.
+        scope.withTableBrowser = function() {
+          if (!scope.boxMeta) {
+            return false;
+          }
+          for (var k = 0; k < scope.boxMeta.parameters.length; ++k) {
+            var p = scope.boxMeta.parameters[k];
+            if (p.kind === 'code' && p.payload.language === 'sql') {
+              return true;
+            }
+          }
+          return false;
         };
       },
     };

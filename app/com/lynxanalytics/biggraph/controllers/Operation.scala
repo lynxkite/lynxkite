@@ -169,6 +169,22 @@ object Operation {
     implicit class OperationTable(table: Table) {
       def columnList = FEOption.list(table.schema.map(_.name).toList)
     }
+    implicit class OperationInputTables(operation: Operation) {
+      // Returns all tables output by all inputs of this operation.
+      def getInputTables()(implicit metaManager: MetaGraphManager): Map[String, ProtoTable] = {
+        val inputs = operation.context.inputs
+        // TODO: Clean this hack up once we have a standard way of handling N-input boxes.
+        val bindInputName = inputs.size > 1 // Whether to bind input names to avoid collisions.
+        inputs.flatMap {
+          case (inputName, state) if state.isTable => Seq(inputName -> ProtoTable(state.table))
+          case (inputName, state) if state.isProject => state.project.viewer.getProtoTables.map {
+            case (tableName, proto) =>
+              val prefix = if (bindInputName) s"$inputName|" else ""
+              s"$prefix$tableName" -> proto
+          }
+        }
+      }
+    }
   }
 }
 import Operation.Implicits._
