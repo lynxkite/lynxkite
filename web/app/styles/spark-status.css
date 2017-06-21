@@ -4,8 +4,8 @@
 
 .spark-status {
   position: fixed;
-  bottom: 40px;
-  right: 5px;
+  bottom: 5px;
+  right: 40px;
 }
 
 .spark-status .spinner {
