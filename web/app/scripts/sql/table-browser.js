@@ -20,22 +20,19 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
             undefined,
             '',
             '',
-            'directory',
-            '');
+            'directory');
       } else if (scope.projectState) {
         scope.node = createNode(
             undefined,
             '',
             scope.projectState.projectName,
-            'project',
-            '');
+            'project');
       } else {
         scope.node = createNode(
             undefined,
             '',
             scope.directory,
-            'directory',
-            '');
+            'directory');
       }
       // Trigger loading it's children and open it.
       scope.node.toggle();
@@ -50,15 +47,13 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
           name,
           absolutePath,
           objectType,
-          columnType,
-          stateId) {
+          columnType) {
         return {
           name: name,
           parentNode: parentNode,
           absolutePath: absolutePath,
           objectType: objectType,
           columnType: columnType,
-          stateId: stateId,
 
           // User-visible text:
           uiText: name +
