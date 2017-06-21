@@ -236,8 +236,8 @@
       </g>
 
       <polygon
-        class="popup-trail"
         ng-repeat="popup in popups"
+        class="popup-trail popup-type-{{ popup.content.type }}"
         ng-attr-points="{{ popup.trail(pageToLogical, logicalToPage, workspace) }}">
       </polygon>
 
