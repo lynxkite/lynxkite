@@ -1,10 +1,4 @@
 <div id="workspace-header">
-  <span id="workspace-name">
-    {{ workspace.name }}
-  </span>
-  <span id="custom-box-stack" ng-if="workspace.customBoxStack.length > 0">
-    (accessed as {{ workspace.top }} » {{ workspace.customBoxStack.join(' » ') }})
-  </span>
   <user-menu info="list" direction="dropdown" class="pull-right user-menu-in-toolbar"></user-menu>
   <div class="btn-group pull-right">
     <button class="btn btn-default"
@@ -118,7 +112,18 @@
       <i class="glyphicon glyphicon-remove"></i>
     </a>
   </div>
+
+  <span id="workspace-directory">
+    {{ getDirectoryPart(workspace.name) }}
+  </span>
+  <span id="workspace-name">
+    {{ getLastPart(workspace.name) }}
+  </span>
+  <span id="custom-box-stack" ng-if="workspace.customBoxStack.length > 0">
+    (accessed as {{ workspace.top }} » {{ workspace.customBoxStack.join(' » ') }})
+  </span>
 </div>
+<div class="clearfix"></div>
 
 <div
     id="workspace-drawing-board"
@@ -128,7 +133,7 @@
   <svg>
     <defs>
       <!-- The filters to apply colors to the grayscale icons. -->
-      <filter ng-repeat="(id, matrix) in filters" id="{{ id }}">
+      <filter ng-repeat="(id, matrix) in filters" id="{{ id | id }}">
         <feColorMatrix in="SourceGraphic" type="matrix" ng-attr-values="{{ matrix }}"></feColorMatrix>
       </filter>
 
@@ -156,7 +161,7 @@
       <!-- start arrow -->
       <g ng-repeat="arrow in arrows()">
         <path class="arrow"
-            id="{{ arrow.src.boxId }}-{{ arrow.src.id }}-{{ arrow.dst.boxId }}-{{ arrow.dst.id }}"
+            id="{{ arrow.src.boxId | id }}-{{ arrow.src.id | id }}-{{ arrow.dst.boxId | id }}-{{ arrow.dst.id | id }}"
             ng-attr-d="{{ bezier(arrow.x1(), arrow.y1(), arrow.x2(), arrow.y2()) }}"></path>
       </g>
       <!-- end arrow -->
@@ -176,7 +181,7 @@
           ng-mouseup="onMouseUpOnBox(box, $event)"
           ng-attr-transform="{{ box.mainPosTransform() }}"
           class="box"
-          id="{{ box.instance.id }}"
+          id="{{ box.instance.id | id }}"
           ng-class="{ 'selected': selectedBoxIds.includes(box.instance.id) }">
         <circle id="click-target" cx="50" cy="60" r="50"></circle>
 
@@ -198,19 +203,23 @@
                  ng-repeat="line in box.commentLines track by $index">{{line}}
           </tspan>
         </text>
-        <g ng-repeat="direction in ['inputs', 'outputs']" id="{{ direction }}">
+        <g ng-repeat="direction in ['inputs', 'outputs']" id="{{ direction | id }}">
           <g ng-repeat="plug in box[direction]"
               ng-attr-transform="{{ plug.posTransform }}"
               class="plug"
-              id="{{ plug.id }}">
+              id="{{ plug.id | id }}">
             <circle ng-attr-r="{{ plug.radius }}"
                   class="io-circle"
-                  ng-class="{'in-progress': plug.inProgress,
-                            'colored-output': plug.progressColor || plug.error }"
+                  ng-class="{
+                    'in-progress': plug.inProgress,
+                    'colored-output': plug.progressColor || plug.error,
+                    'pulled-plug-hover': pulledPlug && pulledPlug.direction !== direction && mouseOnThisPlug }"
                   ng-attr-fill="{{ plug.error ? 'red' : plug.progressColor }}"
                   ng-attr-drop-tooltip="{{ plug.error }}"
                   ng-mousedown="onMouseDownOnPlug(plug, $event)"
                   ng-mouseup="onMouseUpOnPlug(plug, $event)"
+                  ng-mousemove="mouseOnThisPlug = true"
+                  ng-mouseout="mouseOnThisPlug = false"
                   ng-click="onClickOnPlug(plug, $event)">
             </circle>
             <text

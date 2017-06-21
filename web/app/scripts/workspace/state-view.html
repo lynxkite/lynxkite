@@ -1,31 +1,39 @@
-<div id="save-as-snapshot-box">
-  <div class="pull-right">
-    <inline-input
-      placeholder="Snapshot name..."
-      onsubmit="createSnapshot(input, success, error)"
-      open="snapshotNameOpen"></inline-input>
+<div id="state-toolbar" class="clearfix">
+  <div id="save-as-snapshot-box">
+    <div class="pull-right">
+      <inline-input
+        placeholder="Snapshot name..."
+        onsubmit="createSnapshot(input, success, error)"
+        open="snapshotNameOpen"></inline-input>
+    </div>
+    <button
+      class="pull-right btn btn-default" id="save-as-snapshot-button"
+      ng-click="snapshotNameOpen = true"
+      drop-tooltip="Click to snapshot state as {{saveAsName}}"
+      drop-tooltip-placement="bottom">
+      <i class="glyphicon glyphicon-camera"></i>
+    </button>
   </div>
+
+  <!-- TODO: Build instrument toolbar dynamically, allow any operation. -->
   <button
-    class="pull-right btn btn-default" id="save-as-snapshot-button"
-    ng-click="snapshotNameOpen = true"
-    drop-tooltip="Click to snapshot state as {{saveAsName}}"
-    drop-tooltip-placement="bottom">
-    <i class="glyphicon glyphicon-camera"></i>
+    class="pull-right btn btn-default"
+    ng-click="instrument = 'SQL1'">
+    SQL
+  </button>
+  <button
+    ng-show="plug.kind === 'table'"
+    class="pull-right btn btn-default"
+    ng-click="instrument = 'Create plot'">
+    Plot
+  </button>
+  <button
+    ng-show="plug.kind === 'project'"
+    class="pull-right btn btn-default"
+    ng-click="instrument = 'Create visualization'">
+    Visualize
   </button>
 </div>
-
-<!-- TODO: Build instrument toolbar dynamically, allow any operation. -->
-<button
-  class="pull-right btn btn-default"
-  ng-click="instrument = 'SQL1'">
-  SQL
-</button>
-<button
-  ng-show="stateKind === 'table'"
-  class="pull-right btn btn-default"
-  ng-click="instrument = 'Create plot'">
-  Plot
-</button>
 
 <div ng-if="instrument">
   <box-editor
@@ -52,24 +60,40 @@
     popup-model="popupModel"
     ng-if="instrumentStateKind === 'plot'">
   </plot-state-view>
+  <visualization-state-view
+    state-id="instrumentStateId"
+    popup-model="popupModel"
+    ng-if="instrumentStateKind === 'visualization'">
+  </visualization-state-view>
 </div>
 
 <div ng-if="!instrument">
   <project-state-view
-    state-id="stateId"
-    ng-if="stateKind === 'project'">
+    state-id="plug.stateId"
+    ng-if="plug.kind === 'project'">
   </project-state-view>
   <export-result
-    state-id="stateId"
-    ng-if="stateKind === 'exportResult'">
+    state-id="plug.stateId"
+    ng-if="plug.kind === 'exportResult'">
   </export-result>
   <table-state-view
-    state-id="stateId"
-    ng-if="stateKind === 'table'">
+    state-id="plug.stateId"
+    ng-if="plug.kind === 'table'">
   </table-state-view>
   <plot-state-view
-    state-id="stateId"
+    state-id="plug.stateId"
     popup-model="popupModel"
-    ng-if="stateKind === 'plot'">
+    ng-if="plug.kind === 'plot'">
   </plot-state-view>
+  <visualization-state-view
+    state-id="plug.stateId"
+    popup-model="popupModel"
+    ng-if="plug.kind === 'visualization'">
+  </visualization-state-view>
+  <display-error
+    class="col-sm-12"
+    ng-if="plug.kind === 'error'"
+    caption="Failed to generate output state."
+    error="plug.error">
+  </display-error>
 </div>

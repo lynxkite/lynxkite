@@ -68,6 +68,10 @@ angular.module('biggraph').directive('operationParameters', function(util) {
           maxLines: 50,
         });
       };
+
+      scope.isVisualizationParam = function(param) {
+        return param.kind === 'visualization' && !scope.pflags[param.id];
+      };
     }
   };
 });

@@ -31,6 +31,7 @@ angular.module('biggraph')
         scope.plainParamValues = {};
         scope.parametricParamValues = {};
         scope.parametricFlags = {};
+        scope.showTableBrowser = true;
 
         scope.loadBoxMeta = function(boxId) {
           if (!scope.workspace) {
@@ -73,12 +74,33 @@ angular.module('biggraph')
           scope.error = error.data;
         };
 
+        function outputStatesDiffer(box1, box2) {
+          if (box1.outputs.length !== box2.outputs.length) {
+            return true;
+          }
+          for (var i = 0; i < box1.outputs.length; ++i) {
+            if (box1.outputs[i].stateId !== box2.outputs[i].stateId) {
+              return true;
+            }
+          }
+          return false;
+        }
+
         // Invoked when the user selects a new operation and its metadata is
         // successfully downloaded. Both box and boxMeta has to be defined.
         scope.newOpSelected = function(box, boxMeta) {
           // We avoid replacing the objects if the data has not changed.
           // This is to avoid recreating the DOM for the parameters. (Which would lose the focus.)
-          if (scope.box === undefined || !angular.equals(box.instance, scope.box.instance)) {
+          // We replace objects in the following cases:
+          // - box data did not exist before (box editor initialization)
+          // - box data was changed (box parameter change)
+          // - output state of the box was changed (In this case
+          //   the visualization state editors need to be updated,
+          //   because they are using the project state from the output
+          //   of the operation.)
+          if (scope.box === undefined ||
+              !angular.equals(box.instance, scope.box.instance) ||
+              outputStatesDiffer(box, scope.box)) {
             onBlurNow(); // Switching to a different box is also "blur".
             scope.box = box;
           }
@@ -143,6 +165,24 @@ angular.module('biggraph')
         // bubble them up from the directives.
         scope.onBlur = function() {
           $timeout(onBlurNow);
+        };
+
+        scope.getBox = function() {
+          return scope.workspace.boxMap[scope.boxId];
+        };
+
+        // Returns true iff the boxMeta has at least one SQL code type parameter.
+        scope.withTableBrowser = function() {
+          if (!scope.boxMeta) {
+            return false;
+          }
+          for (var k = 0; k < scope.boxMeta.parameters.length; ++k) {
+            var p = scope.boxMeta.parameters[k];
+            if (p.kind === 'code' && p.payload.language === 'sql') {
+              return true;
+            }
+          }
+          return false;
         };
       },
     };

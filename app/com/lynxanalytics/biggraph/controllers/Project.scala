@@ -1267,6 +1267,7 @@ class DirectoryEntry(val path: SymbolPath)(
   def isView = get(rootDir / "objectType", "") == "view"
   def isWorkspace = get(rootDir / "objectType", "") == "workspace"
   def isSnapshot = get(rootDir / "objectType", "") == "snapshot"
+  def getObjectType = get(rootDir / "objectType", "")
 
   def asProjectFrame: ProjectFrame = {
     assert(isInstanceOf[ProjectFrame], s"Entry '$path' is not a project.")

@@ -96,7 +96,9 @@ object ScalaScript {
   settings.embeddedDefaults[ScalaScriptSecurityManager]
 
   def run(
-    code: String, bindings: Map[String, String] = Map(), timeoutInSeconds: Long = 10L): String = {
+    code: String,
+    bindings: Map[String, String] = Map(),
+    timeoutInSeconds: Long = 10L): String = synchronized {
     import org.apache.commons.lang.StringEscapeUtils
     val binds = bindings.map {
       case (k, v) => s"""val $k: String = "${StringEscapeUtils.escapeJava(v)}" """
