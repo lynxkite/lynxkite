@@ -44,7 +44,8 @@ object ExecuteSQL extends OpFromJson {
           f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()
         }
         val rel = LocalRelation(attributes)
-        u.alias.map(alias => SubqueryAlias(alias, rel, None)).getOrElse(rel)
+        val name = u.alias.getOrElse(u.tableIdentifier.table)
+        SubqueryAlias(name, rel, None)
     }
     // Do the rest of the analysis.
     val conf = new SimpleCatalystConf(caseSensitiveAnalysis = false)

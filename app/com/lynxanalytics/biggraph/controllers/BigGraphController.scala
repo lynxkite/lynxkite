@@ -149,31 +149,21 @@ case class ForkEntryRequest(from: String, to: String)
 case class RenameEntryRequest(from: String, to: String, overwrite: Boolean)
 case class ACLSettingsRequest(project: String, readACL: String, writeACL: String)
 
-class BigGraphController(val env: SparkFreeEnvironment) {
-  implicit val metaManager = env.metaGraphManager
-  implicit val entityProgressManager: EntityProgressManager = env.entityProgressManager
-
-  def projectList(user: serving.User, request: ProjectListRequest): ProjectList = metaManager.synchronized {
-    val entry = DirectoryEntry.fromName(request.path)
-    entry.assertReadAllowedFrom(user)
-    val dir = entry.asDirectory
+object BigGraphController {
+  def projectList(user: serving.User, dir: Directory): (Iterable[DirectoryEntry], Iterable[ObjectFrame]) = {
     val entries = dir.list
     val (dirs, objects) = entries.partition(_.isDirectory)
     val visibleDirs = dirs.filter(_.readAllowedFrom(user)).map(_.asDirectory)
     val visibleObjectFrames = objects.filter(_.readAllowedFrom(user)).map(_.asObjectFrame)
-    ProjectList(
-      request.path,
-      dir.readACL,
-      dir.writeACL,
-      visibleDirs.map(_.path.toString).toList,
-      visibleObjectFrames.map(_.toListElementFE).toList)
+    (visibleDirs, visibleObjectFrames)
   }
 
-  def projectSearch(user: serving.User, request: ProjectSearchRequest): ProjectList = metaManager.synchronized {
-    val entry = DirectoryEntry.fromName(request.basePath)
-    entry.assertReadAllowedFrom(user)
-    val dir = entry.asDirectory
-    val terms = request.query.split(" ").map(_.toLowerCase)
+  def projectSearch(
+    user: serving.User,
+    dir: Directory,
+    query: String,
+    includeNotes: Boolean): (Iterable[DirectoryEntry], Iterable[ObjectFrame]) = {
+    val terms = query.split(" ").map(_.toLowerCase)
     val dirs = dir
       .listDirectoriesRecursively
       .filter(_.readAllowedFrom(user))
@@ -186,14 +176,39 @@ class BigGraphController(val env: SparkFreeEnvironment) {
       .filter(_.readAllowedFrom(user))
       .filter { project =>
         val baseName = project.path.last.name
-        val notes = project.viewer.state.notes
+        val notes = if (project.isSnapshot) "" else project.viewer.state.notes
         terms.forall {
           term =>
             baseName.toLowerCase.contains(term) ||
-              (request.includeNotes && notes.toLowerCase.contains(term))
+              (includeNotes && notes.toLowerCase.contains(term))
         }
       }
+    (dirs, objects)
+  }
+}
 
+class BigGraphController(val env: SparkFreeEnvironment) {
+  implicit val metaManager = env.metaGraphManager
+  implicit val entityProgressManager: EntityProgressManager = env.entityProgressManager
+
+  def projectList(user: serving.User, request: ProjectListRequest): ProjectList = metaManager.synchronized {
+    val entry = DirectoryEntry.fromName(request.path)
+    entry.assertReadAllowedFrom(user)
+    val dir = entry.asDirectory
+    val (visibleDirs, visibleObjectFrames) = BigGraphController.projectList(user, dir)
+    ProjectList(
+      request.path,
+      dir.readACL,
+      dir.writeACL,
+      visibleDirs.map(_.path.toString).toList,
+      visibleObjectFrames.map(_.toListElementFE).toList)
+  }
+
+  def projectSearch(user: serving.User, request: ProjectSearchRequest): ProjectList = metaManager.synchronized {
+    val entry = DirectoryEntry.fromName(request.basePath)
+    entry.assertReadAllowedFrom(user)
+    val dir = entry.asDirectory
+    val (dirs, objects) = BigGraphController.projectSearch(user, dir, request.query, request.includeNotes)
     ProjectList(
       request.basePath,
       dir.readACL,

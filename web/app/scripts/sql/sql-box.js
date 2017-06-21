@@ -14,6 +14,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
       scope.directoryDefined = (typeof scope.directory !== 'undefined');
       scope.maxRows = 10;
       scope.maxPersistedHistoryLength = 100;
+      scope.showTableBrowser = true;
 
       if (!!scope.side && scope.directoryDefined) {
         throw 'can not be both defined: scope.side, scope.directory';

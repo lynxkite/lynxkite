@@ -6,6 +6,8 @@ angular.module('biggraph').directive('projectGraph', function (util, loadGraph) 
   return {
     restrict: 'E',
     scope: {
+      width: '=',
+      height: '=',
       left: '=',
       right: '=',
       leftToRightBundle: '=',

@@ -42,7 +42,8 @@ class TypeTagToFormatTest extends FunSuite {
   test("TypeTag -> json conversions (UIStatus)") {
     val uiStatus =
       UIStatus(
-        "sampled",
+        Some(""),
+        Some("sampled"),
         "svg",
         UIFilterStatus(Map(), Map()),
         "4",
@@ -54,7 +55,8 @@ class TypeTagToFormatTest extends FunSuite {
         UIAnimation(false, "neutral", "0"),
         None,
         Some(UICenterRequest(1, List(), None)),
-        Some(false))
+        Some(false),
+        Some("42"))
     testTag(uiStatus)
   }
 

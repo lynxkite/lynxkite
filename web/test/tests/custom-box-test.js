@@ -104,7 +104,7 @@ module.exports = function(fw) {
 
   fw.transitionTest(
     'empty splash',
-    'save as custom box',
+    'save as custom box with parameters',
     function() {
       // Set up a few connected boxes.
       lib.splash.openNewWorkspace('test-custom-box');
@@ -143,6 +143,28 @@ module.exports = function(fw) {
 
       // The output is still the same.
       checkOutput();
+    },
+    function() {});
+
+  fw.transitionTest(
+    'empty splash',
+    'save as custom box with mixed outputs',
+    function() {
+      lib.splash.openNewWorkspace('test-custom-box');
+      lib.workspace.addBox({
+        id: 'eg', name: 'Create example graph', x: 0, y: 200 });
+      lib.workspace.addBox({
+        id: 'pr1', name: 'Compute PageRank', x: 200, y: 100, after: 'eg' });
+      lib.workspace.addBox({
+        id: 'pr2', name: 'Compute PageRank', x: 200, y: 200, after: 'eg' });
+      lib.workspace.addBox({
+        id: 'pr3', name: 'Compute PageRank', x: 400, y: 200, after: 'pr2' });
+
+      lib.workspace.selectBoxes(['eg', 'pr2']);
+      $('#save-selection-as-custom-box').click();
+      lib.submitInlineInput($('#save-selection-as-custom-box-input'), 'my-custom-box');
+      lib.workspace.expectConnected('my-custom-box_1', 'project', 'pr1', 'project');
+      lib.workspace.expectConnected('my-custom-box_1', 'project-2', 'pr3', 'project');
     },
     function() {});
 };

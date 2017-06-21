@@ -1,4 +1,6 @@
-<progressbar ng-if="node.list === undefined" value="100" class="progress-striped active">
+<display-error caption="Cannot load table browser tree node." error="node.error"></display-error>
+
+<progressbar ng-if="node.list === undefined && !node.error" value="100" class="progress-striped active">
 loading
 </progressbar>
 

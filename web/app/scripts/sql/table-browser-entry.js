@@ -10,7 +10,7 @@ angular.module('biggraph').directive('tableBrowserEntry', function() {
     restrict: 'E',
     scope: {
       text: '=',
-      draggableText: '='
+      draggableText: '=',
     },
     templateUrl: 'scripts/sql/table-browser-entry.html',
     link: function(scope, element) {
