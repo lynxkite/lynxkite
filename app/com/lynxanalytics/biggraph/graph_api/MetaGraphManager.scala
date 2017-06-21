@@ -293,7 +293,9 @@ class MetaGraphManager(val repositoryPath: String) {
 
   private def getBuiltInsLocalDirectory(): String = {
     val stageDir = scala.util.Properties.envOrNone("KITE_STAGE_DIR")
-    stageDir.get
+    // In the backend-tests because there we don't have the KITE_STAGE_DIR environment variable
+    // set.
+    stageDir.getOrElse("stage")
   }
 
   private def builtInsDirectoryExists(): Boolean = {
@@ -322,7 +324,7 @@ object MetaGraphManager {
       files.iterator.map { f =>
         f.getName() -> Json.parse(FileUtils.readFileToString(f, "utf8"))
       }
-    } else null
+    } else Iterator()
   }
 
   def getCheckpointRepo(repositoryPath: String): CheckpointRepository =
