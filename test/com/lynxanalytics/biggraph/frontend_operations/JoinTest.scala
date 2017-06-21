@@ -100,5 +100,36 @@ class JoinTest extends OperationsTestBase {
     assert(genders == List("Female", "Female", "Male", "Male"))
   }
 
+  test("Filtering vertex attributes") {
+    val root = box("Create example graph")
+    val left = root
+    val right = root
+      .box("Filter by attributes",
+        Map("filterva_age" -> "> -10", // Dummy segmentation
+          "filterva_gender" -> "", "filterva_id" -> "", "filterva_income" -> "",
+          "filterva_location" -> "", "filterva_name" -> "", "filterea_comment" -> "",
+          "filterea_weight" -> ""))
+
+      .box("Filter by attributes",
+        Map("filterva_age" -> "> 40", // Keep only Bob
+          "filterva_gender" -> "", "filterva_id" -> "", "filterva_income" -> "",
+          "filterva_location" -> "", "filterva_name" -> "", "filterea_comment" -> "",
+          "filterea_weight" -> ""))
+      .box(
+        "Add constant vertex attribute",
+        Map("name" -> "ten", "value" -> "10", "type" -> "Double"))
+
+    val project = box(
+      "Join projects",
+      Map(
+        "attrs" -> "name,ten"),
+      Seq(left, right)).project
+
+    assert(project.vertexAttributes("name").rdd.collect.toMap.values.toSeq == Seq("Bob"))
+    assert(project.vertexAttributes("ten").rdd.collect.toMap.values.toSeq == Seq(10))
+    assert(project.vertexAttributes("age").rdd.collect.toMap.values.toSeq
+      .asInstanceOf[Seq[Double]].sorted == Seq(2.0, 18.2, 20.3, 50.3))
+  }
+
 }
 
