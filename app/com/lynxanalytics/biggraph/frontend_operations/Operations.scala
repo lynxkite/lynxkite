@@ -3060,10 +3060,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         p
       }
 
-      class VertexCompatibilityChain(broaderSet: Option[VertexSet],
-                                     narrowerSet: Option[VertexSet]) {
-        println(s"broader: $broaderSet")
-        println(s"narrower: $narrowerSet")
+      class VertexCompatibilityChecker(broaderSet: Option[VertexSet],
+                                       narrowerSet: Option[VertexSet]) {
         private lazy val manager = {
           val m1 = broaderSet.get.source.manager
           val m2 = narrowerSet.get.source.manager
@@ -3082,46 +3080,29 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         }
 
         private def compatibleBundle(eb: EdgeBundle) = {
+          // a -> a
+          // b -> b
+          // c
+          // d -> d
+          // e
           eb.properties.isIdPreserving &&
             eb.properties.isFunction &&
             eb.properties.isReversedFunction &&
             eb.properties.isReverseEverywhereDefined
         }
 
-        println(s"embedding ${EdgeBundleProperties.embedding}")
-        println(s"identity: ${EdgeBundleProperties.identity}")
-        private def rep(eb: EdgeBundle): String = {
-          val s = eb.srcVertexSet.gUID
-          val d = eb.dstVertexSet.gUID
-          val p = eb.properties
-          s"$s -> $d  [$p] [${compatibleBundle(eb)}]"
-        }
-
-        private def computeChainRec(currentChain: List[EdgeBundle], v: VertexSet, dd: Int = 0): List[EdgeBundle] = {
-          if (dd > 20) {
-            println("OVERFLOW")
-            return List()
-          }
-          val d = "  " * dd
-          println(s"$d computeChainRec: $v")
-          for (qq <- currentChain) {
-            println(s"$d currentChain: ${rep(qq)}")
-          }
+        private def computeChainRec(currentChain: List[EdgeBundle], v: VertexSet): List[EdgeBundle] = {
           val allBundlesWhoseDstIsV = manager.incomingBundles(v)
-          for (q <- allBundlesWhoseDstIsV) {
-            println(s"$d all bundles: ${rep(q)}")
-          }
           val compatibleBundles = allBundlesWhoseDstIsV.filter {
             case eb =>
               compatibleBundle(eb)
           }
           for (eb <- compatibleBundles) {
-            println(s"looking at compatible bundle $d ${rep(eb)}")
             val extendedChain = currentChain :+ eb
             if (eb.srcVertexSet == broaderSet.get) {
               return extendedChain
             }
-            val t = computeChainRec(extendedChain, eb.srcVertexSet, dd + 1)
+            val t = computeChainRec(extendedChain, eb.srcVertexSet)
             if (t.nonEmpty) {
               return t
             }
@@ -3129,17 +3110,9 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           return List()
         }
 
-        private lazy val chain: List[EdgeBundle] = {
-          assert(!equal)
-          val r = computeChainRec(List(), narrowerSet.get)
-          if (r.nonEmpty) {
-            println("Chain found:")
-            for (q <- r) {
-              println(s"${rep(q)}")
-            }
-            println("******")
-          }
-          r
+        lazy val chain: List[EdgeBundle] = {
+          assert(!equal, "Compute chain only for non-equals!")
+          computeChainRec(List(), narrowerSet.get)
         }
 
         lazy val compatible: Boolean = {
@@ -3150,7 +3123,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       private val left = attributeEditor("a")
       private val right = attributeEditor("b")
 
-      private val compatibilityChecker = new VertexCompatibilityChain(left.idSet, right.idSet)
+      private val compatibilityChecker = new VertexCompatibilityChecker(left.idSet, right.idSet)
       private val compatible = compatibilityChecker.compatible
 
       private def attributesAreAvailable = right.names.nonEmpty
