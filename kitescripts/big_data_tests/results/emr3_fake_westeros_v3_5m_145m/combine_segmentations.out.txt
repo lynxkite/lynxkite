@@ -1,3 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/combine_segmentations.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-[seg_combined] vertices: 9999486 edges null
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/combine_segmentations.groovy, took 74 seconds

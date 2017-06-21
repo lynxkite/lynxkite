@@ -1,4 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy with params List((testDataSet,fake_westeros_v3_10m_303m))
-vertex_count: 9996343
-edge_count: 143242254
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy, took 1757 seconds

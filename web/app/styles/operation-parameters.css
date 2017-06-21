@@ -26,3 +26,22 @@ tag-list div[dropdown] {
 table-kind import-wizard form {
   margin-top: 15px;
 }
+
+.parametric-switch {
+  position: absolute;
+  right: 5px;
+  top: 10px;
+  opacity: 0.2;
+  cursor: pointer;
+}
+.parametric-switch:hover {
+  opacity: 0.5;
+}
+.parametric-switch.active,
+.parametric-switch.active:hover {
+  opacity: 1.0;
+}
+
+.operation-parameter-input {
+  position: relative; /* For good placement of the parametric toggle. */
+}

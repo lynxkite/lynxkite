@@ -4,14 +4,14 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class DiscardLoopEdgesOperationTest extends OperationsTestBase {
   test("Discard loop edges") {
-    run("Import vertices and edges from a single table", Map(
-      "table" -> importCSV("OPERATIONSTEST$/loop-edges.csv"),
-      "src" -> "src",
-      "dst" -> "dst"))
-    def colors =
-      project.edgeAttributes("color").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
-    assert(colors == Seq("blue", "green", "red"))
-    run("Discard loop edges")
-    assert(colors == Seq("blue", "green")) // "red" was the loop edge.
+    val imported = importCSV("loop-edges.csv")
+      .box("Import vertices and edges from a single table", Map(
+        "src" -> "src",
+        "dst" -> "dst"))
+    val discarded = imported.box("Discard loop edges")
+    def colors(box: TestBox) =
+      box.project.edgeAttributes("color").runtimeSafeCast[String].rdd.values.collect.toSeq.sorted
+    assert(colors(imported) == Seq("blue", "green", "red"))
+    assert(colors(discarded) == Seq("blue", "green")) // "red" was the loop edge.
   }
 }

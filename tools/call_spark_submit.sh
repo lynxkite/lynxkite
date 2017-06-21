@@ -59,6 +59,15 @@ addJPropIfNonEmpty () {
   fi
 }
 
+derby_jar=$(find ${SPARK_HOME}/jars/ -name "derby*.jar")
+
+if [ "$(echo ${derby_jar} | wc -w | tr -d ' ')" != "1" ]; then
+  >&2 echo "I expected to find one Derby jar, found this: $derby_jar"
+  exit 1
+fi
+
+addJPropIfNonEmpty lynxkite.derby_jar ${derby_jar}
+addJPropIfNonEmpty java.security.policy ${conf_dir}/security.policy
 addJPropIfNonEmpty http.port "${KITE_HTTP_PORT}"
 addJPropIfNonEmpty https.port "${KITE_HTTPS_PORT}"
 addJPropIfNonEmpty https.keyStore "${KITE_HTTPS_KEYSTORE}"
@@ -145,6 +154,17 @@ if [ -n "${NUM_EXECUTORS}" ]; then
   fi
 fi
 
+if [ -n "${RESOURCE_POOL}" ]; then
+  if [ "${SPARK_MASTER}" == "yarn" ]; then
+    RESOURCE_POOL_OPTION="--queue ${RESOURCE_POOL}"
+  else
+     >&2 echo "Resource pool option is only supported for master: yarn"
+     exit 1
+  fi
+else
+    RESOURCE_POOL_OPTION=""
+fi
+
 if [ -n "${KERBEROS_PRINCIPAL}" ] || [ -n "${KERBEROS_KEYTAB}" ]; then
   if [ -z "${KERBEROS_PRINCIPAL}" ] || [ -z "${KERBEROS_KEYTAB}" ]; then
     >&2 echo "Please define KERBEROS_PRINICPAL and KERBEROS_KEYTAB together: either both of them or none."
@@ -190,6 +210,7 @@ command=(
     ${EXTRA_OPTIONS} \
     ${YARN_SETTINGS} \
     ${DEV_EXTRA_SPARK_OPTIONS} \
+    ${RESOURCE_POOL_OPTION} \
     "${fake_application_jar}" \
     "${app_commands[@]}" \
     "${residual_args[@]:1}"

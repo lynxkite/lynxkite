@@ -1,6 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-id: <computed>
-2016-09-06 01:57:47,062 - [ERROR] - from org.apache.spark.scheduler.cluster.YarnScheduler in dispatcher-event-loop-2 
-Lost executor 3 on ip-10-146-66-158.ec2.internal: Container marked as failed: container_1473093320364_0035_01_000004 on host: ip-10-146-66-158.ec2.internal. Exit status: -100. Diagnostics: Container released on a *lost* node
-centrality: {"labelType":"between","labels":["1895516.5","2113677.8","2356948.0","2628217.0","2930707.2","3268012.1","3644138.5","4063554.5","4531242.5","5052758.2","5634297.0"],"sizes":[6,11025,792135,940492,2368802,887529,10,1,1,1]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy, took 837 seconds

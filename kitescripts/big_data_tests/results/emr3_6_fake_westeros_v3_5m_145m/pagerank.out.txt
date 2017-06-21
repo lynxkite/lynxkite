@@ -1,6 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/pagerank.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-page_rank_weights: {"labelType":"between","labels":["0.2","0.6","2.5","10.0","39.4","155.6","614.5","2426.7","9583.4","37846.5","149462.9"],"sizes":[2929451,1995450,59277,11985,2871,725,182,46,12,3]}
-id: <computed>
-ordinal: {"labelType":"between","labels":["0.0","1.0","4.7","21.9","102.3","478.2","2236.1","10456.4","48896.6","228652.6","1069234.8","5000001.0"],"sizes":[1,4,17,81,376,1758,8220,38440,179756,840582,3930767]}
-page_rank_no_weights: {"labelType":"between","labels":["0.2","0.8","3.1","11.8","45.4","175.3","676.0","2606.9","10053.9","38773.9","149536.4"],"sizes":[4290280,650645,45794,9960,2468,634,164,43,11,3]}
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/pagerank.groovy, took 1299 seconds

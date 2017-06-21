@@ -1,0 +1,45 @@
+<div class="col-sm-offset-3 col-sm-6">
+
+  <h1>Cleaner</h1>
+  <display-error caption="Failed to load data file status." request="fileStatus"></display-error>
+  <form ng-show="!fileStatus.$error" ng-disabled="inProgress">
+    Free space: <value ref="asScalar(fileStatus.freeSpace)"></value>
+    <table class="table table-striped">
+      <tr><th>Method</th><th>Number of entities</th><th>Total size on disk</th><th/></tr>
+      <tr>
+        <td>Entities (not in trash)</td>
+        <td><value ref="asScalar(fileStatus.total.fileCount)"></value></td>
+        <td><value ref="asScalar(fileStatus.total.totalSize)"></value></td>
+        <td/>
+      </tr>
+      <tr>
+        <td>Entities in trash</td>
+        <td><value ref="asScalar(fileStatus.trash.fileCount)"></value></td>
+        <td><value ref="asScalar(fileStatus.trash.totalSize)"></value></td>
+        <td/>
+      </tr>
+      <tr ng-repeat="method in fileStatus.methods">
+        <td title="{{ method.desc }}">{{ method.name }}</td>
+        <td><value ref="asScalar(method.fileCount)"></value></td>
+        <td><value ref="asScalar(method.totalSize)"></value></td>
+        <td>
+          <div class="form-group">
+            <button type="submit" class="btn btn-success" ng-click="moveToTrash(method.id)">
+              Move to trash
+            </button>
+          </div>
+        </td>
+      </tr>
+    </table>
+    <div class="form-horizontal">
+      <div class="form-group">
+        <button type="submit" class="btn btn-success" ng-click="emptyTrash()">
+          Empty trash
+        </button>
+      </div>
+    </div>
+  </form>
+  <span id="cleaner-spinner" class="glyphicon glyphicon-cog" ng-if="inProgress"></span>
+
+  <user-menu info="list" direction="dropup" class="user-menu-at-bottom"></user-menu>
+</div>

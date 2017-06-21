@@ -1,9 +1,0 @@
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/centrality.groovy:1552
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/edge_import.groovy:1700
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/filter_high_degree_vertices.groovy:1757
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/js.groovy:15
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy:1071
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/load_vertices_from_test_set.groovy:49
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/pagerank.groovy:3484
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/vertex_and_edge_import.groovy:1321
-/home/hadoop/biggraphstage/kitescripts/big_data_tests/visualization.groovy:183

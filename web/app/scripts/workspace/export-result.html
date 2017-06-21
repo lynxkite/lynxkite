@@ -1,0 +1,29 @@
+<progressbar ng-if="!exportResultOutput.$resolved" value="100" class="progress-striped active">
+Loading export state...
+</progressbar>
+<div class="col-sm-12" ng-show="exportResultOutput.$resolved">
+    <div class="token"
+         ng-class="{ active: active() }"
+         id="scalar-export-status">
+        <span class="title"> Export </span>
+        <value class="subtoken"
+               id="scalar-value-export-status"
+               ref="status">
+        </value>
+    </div>
+    <div>
+    <table class="table table-striped table-bordered">
+        <tr ng-repeat="(stat, value) in parameters">
+            <th> {{ stat }} </th>
+            <td>{{ value }}</td>
+        </tr>
+    </table>
+    <button  class="col-sm-6 col-sm-offset-3" ng-click="download()"
+             ng-show="status.value.$resolved && !status.value.$error && downloadable"
+             drop-tooltip="Download exported file through browser">
+        Download <i class="glyphicon glyphicon-download"></i>
+    </button>
+    </div>
+    <display-error caption="Cannot download export." request="status.value"></display-error>
+</div>
+

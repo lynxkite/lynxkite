@@ -10,6 +10,9 @@ module.exports = {
         })
         .service('dropTooltipConfig', function() {
           this.enabled = false;
+        })
+        .service('environment', function() {
+          this.protractor = true;
         });
     });
   },

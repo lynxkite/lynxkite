@@ -24,16 +24,16 @@
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.model
+import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
-import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving.{ AccessControl, User, Utils }
-
 import java.io.File
 import java.util.UUID
+
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json.JsObject
@@ -80,10 +80,12 @@ case class RootProjectState(
     lastOperationDesc: String,
     // This will be set exactly when previousCheckpoint is set.
     lastOperationRequest: Option[SubProjectOperation],
-    viewRecipe: Option[JsObject]) {
+    viewRecipe: Option[JsObject],
+    workspace: Option[Workspace]) {
 }
 object RootProjectState {
-  val emptyState = RootProjectState(CommonProjectState.emptyState, Some(""), None, "", None, None)
+  val emptyState = RootProjectState(
+    CommonProjectState.emptyState, Some(""), None, "", None, None, None)
 }
 
 // Complete state of segmentation.
@@ -128,6 +130,30 @@ sealed trait ProjectViewer {
     }
   }
 
+  def getProgress()(implicit entityProgressManager: EntityProgressManager): List[Double] = {
+    def commonProjectStateProgress(state: CommonProjectState): List[Double] = {
+      val allEntities = state.vertexSetGUID.map(manager.vertexSet).toList ++
+        state.edgeBundleGUID.map(manager.edgeBundle).toList ++
+        state.scalarGUIDs.values.map(manager.scalar) ++
+        state.vertexAttributeGUIDs.values.map(manager.attribute) ++
+        state.edgeAttributeGUIDs.values.map(manager.attribute)
+
+      val segmentationProgress = state.segmentations.values.flatMap(segmentationStateProgress)
+      allEntities.map(entityProgressManager.computeProgress) ++ segmentationProgress
+    }
+
+    def segmentationStateProgress(state: SegmentationState): List[Double] = {
+      val segmentationProgress = commonProjectStateProgress(state.state)
+      val belongsToProgress = state.belongsToGUID.map(belongsToGUID => {
+        val belongsTo = manager.edgeBundle(belongsToGUID)
+        entityProgressManager.computeProgress(belongsTo)
+      }).toList
+      belongsToProgress ++ segmentationProgress
+    }
+
+    commonProjectStateProgress(state)
+  }
+
   lazy val segmentationMap: Map[String, SegmentationViewer] =
     state.segmentations
       .map { case (name, state) => name -> new SegmentationViewer(this, name) }
@@ -168,8 +194,8 @@ sealed trait ProjectViewer {
       projectName,
       objectType,
       state.notes,
-      feScalar("vertex_count"),
-      feScalar("edge_count"),
+      feScalar("!vertex_count"),
+      feScalar("!edge_count"),
       details = details)
   }
 
@@ -226,16 +252,74 @@ sealed trait ProjectViewer {
     }
   }
 
-  def implicitTableNames: Iterable[String]
-  def allRelativeTablePaths: Seq[RelativeTablePath] = {
-    val localTables = implicitTableNames.toSeq.map(name => RelativeTablePath(Seq(name)))
-    val childTables = sortedSegmentations.flatMap(segmentation =>
-      segmentation.allRelativeTablePaths.map(
-        childPath => segmentation.segmentationName /: childPath))
-    localTables ++ childTables
+  protected def maybeProtoTable(
+    maybe: Any, tableName: String): Option[(String, ProtoTable)] = {
+    maybe match {
+      case null => None
+      case _ => Some(tableName -> getSingleLocalProtoTable(tableName))
+    }
+  }
+
+  def getLocalProtoTables: Iterable[(String, ProtoTable)] = {
+    import ProjectViewer._
+    maybeProtoTable(vertexSet, VertexTableName) ++
+      maybeProtoTable(edgeBundle, EdgeAttributeTableName) ++
+      maybeProtoTable(edgeBundle, EdgeTableName)
+  }
+
+  def getProtoTables: Iterable[(String, ProtoTable)] = {
+    val childProtoTables = sortedSegmentations.flatMap { segmentation =>
+      segmentation.getLocalProtoTables.map {
+        case (name, table) => segmentation.segmentationName + "|" + name -> table
+      }
+    }
+    getLocalProtoTables ++ childProtoTables
+  }
+
+  def getSingleProtoTable(tablePath: String): ProtoTable = {
+    val splittedPath = tablePath.split('|')
+    val (segPath, tableName) = (splittedPath.dropRight(1), splittedPath.last)
+    val segViewer = offspringViewer(segPath)
+    segViewer.getSingleLocalProtoTable(tableName)
+  }
+
+  protected def getSingleLocalProtoTable(tableName: String): ProtoTable = {
+    import ProjectViewer._
+    val protoTable = tableName match {
+      case VertexTableName => ProtoTable(vertexAttributes.toSeq.sortBy(_._1))
+      case EdgeTableName => {
+        import graph_operations.VertexToEdgeAttribute._
+        val edgeAttrs = edgeAttributes.map {
+          case (name, attr) => s"edge_$name" -> attr
+        }
+        val srcAttrs = vertexAttributes.map {
+          case (name, attr) => s"src_$name" -> srcAttribute(attr, edgeBundle)
+        }
+        val dstAttrs = vertexAttributes.map {
+          case (name, attr) => s"dst_$name" -> dstAttribute(attr, edgeBundle)
+        }
+        ProtoTable((edgeAttrs ++ srcAttrs ++ dstAttrs).toSeq.sortBy(_._1))
+      }
+      case EdgeAttributeTableName => ProtoTable(edgeAttributes.toSeq.sortBy(_._1))
+      case BelongsToTableName =>
+        throw new AssertionError("Only segmentations have a BelongsTo table")
+      case _ => {
+        val correctTableNames = List(VertexTableName, EdgeTableName, EdgeAttributeTableName,
+          BelongsToTableName).mkString(", ")
+        throw new AssertionError("Not recognized table name. Correct table names: " +
+          s"$correctTableNames")
+      }
+    }
+    protoTable
   }
 }
+
 object ProjectViewer {
+  val VertexTableName = "vertices"
+  val EdgeTableName = "edges"
+  val EdgeAttributeTableName = "edge_attributes"
+  val BelongsToTableName = "belongs_to"
+
   def feTypeName[T](typeTag: TypeTag[T]): String = {
     typeTag.tpe.toString
       .replace("com.lynxanalytics.biggraph.graph_api.", "")
@@ -306,13 +390,6 @@ class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: M
 
   protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] = None
 
-  def implicitTableNames =
-    Option(edgeBundle).map(_ => Table.EdgeTableName) ++
-      Option(edgeBundle).map(_ => Table.EdgeAttributeTableName) ++
-      Option(vertexSet).map(_ => Table.VertexTableName)
-
-  def allAbsoluteTablePaths: Seq[AbsoluteTablePath] = allRelativeTablePaths.map(_.toAbsolute(Nil))
-
   def viewRecipe = rootState.viewRecipe.map(TypedJson.read[ViewRecipe])
 }
 
@@ -372,11 +449,28 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
       equivalentUIAttribute)
   }
 
-  def implicitTableNames =
-    Option(belongsTo).map(_ => Table.BelongsToTableName) ++
-      Option(edgeBundle).map(_ => Table.EdgeTableName) ++
-      Option(edgeBundle).map(_ => Table.EdgeAttributeTableName) ++
-      Option(vertexSet).map(_ => Table.VertexTableName)
+  override def getLocalProtoTables: Iterable[(String, ProtoTable)] = {
+    import ProjectViewer._
+    maybeProtoTable(belongsTo, BelongsToTableName) ++ super.getLocalProtoTables
+  }
+
+  override protected def getSingleLocalProtoTable(tableName: String): ProtoTable = {
+    import ProjectViewer._
+    val protoTable = tableName match {
+      case BelongsToTableName => {
+        import graph_operations.VertexToEdgeAttribute._
+        val baseAttrs = parent.vertexAttributes.map {
+          case (name, attr) => s"base_$name" -> srcAttribute(attr, belongsTo)
+        }
+        val segAttrs = vertexAttributes.map {
+          case (name, attr) => s"segment_$name" -> dstAttribute(attr, belongsTo)
+        }
+        ProtoTable((baseAttrs ++ segAttrs).toSeq.sortBy(_._1))
+      }
+      case _ => super.getSingleLocalProtoTable(tableName)
+    }
+    protoTable
+  }
 }
 
 // The CheckpointRepository's job is to persist project states to checkpoints.
@@ -400,6 +494,7 @@ object CheckpointRepository {
         "state" -> commonProjectStateToJSon(o.state),
         "belongsToGUID" -> o.belongsToGUID)
   }
+  import WorkspaceJsonFormatters._
   implicit val fCommonProjectState = Json.format[CommonProjectState]
   implicit val fRootProjectState = Json.format[RootProjectState]
 
@@ -519,10 +614,10 @@ sealed trait ProjectEditor {
       state = state.copy(segmentations = Map())
       if (e != null) {
         state = state.copy(vertexSetGUID = Some(e.gUID))
-        scalars("vertex_count") = graph_operations.Count.run(e)
+        scalars.set("!vertex_count", graph_operations.Count.run(e))
       } else {
         state = state.copy(vertexSetGUID = None)
-        scalars("vertex_count") = null
+        scalars.set("!vertex_count", null)
       }
     }
   }
@@ -541,10 +636,10 @@ sealed trait ProjectEditor {
     }
     if (e != null) {
       state = state.copy(edgeBundleGUID = Some(e.gUID))
-      scalars("edge_count") = graph_operations.Count.run(e)
+      scalars.set("!edge_count", graph_operations.Count.run(e))
     } else {
       state = state.copy(edgeBundleGUID = None)
-      scalars("edge_count") = null
+      scalars.set("!edge_count", null)
     }
   }
 
@@ -844,7 +939,7 @@ class ProjectFrame(path: SymbolPath)(
   private def farthestCheckpoint_=(x: String): Unit = set(rootDir / "farthestCheckpoint", x)
 
   // The next checkpoint in the current redo sequence if a redo is available
-  private def nextCheckpoint: Option[String] = get(rootDir / "nextCheckpoint") match {
+  def nextCheckpoint: Option[String] = get(rootDir / "nextCheckpoint") match {
     case "" => None
     case x => Some(x)
   }
@@ -939,23 +1034,6 @@ object SubProject {
   }
 }
 
-class TableFrame(path: SymbolPath)(
-    implicit manager: MetaGraphManager) extends ObjectFrame(path) {
-  def initializeFromTable(table: Table, notes: String): Unit = manager.synchronized {
-    initializeFromCheckpoint(table.saveAsCheckpoint(notes))
-  }
-  def initializeFromCheckpoint(cp: String): Unit = manager.synchronized {
-    // Marking this as a table.
-    set(rootDir / "objectType", "table")
-    checkpoint = cp
-  }
-
-  def setImportConfig(obj: json.JsObject) = details = obj
-
-  override def copy(to: DirectoryEntry): TableFrame = super.copy(to).asTableFrame
-  def table: Table = Table(GlobalTablePath(checkpoint, name, Seq(Table.VertexTableName)))
-}
-
 class ViewFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
   def initializeFromConfig[T <: ViewRecipe: json.Writes](
@@ -971,6 +1049,50 @@ class ViewFrame(path: SymbolPath)(
 
   override def isDirectory: Boolean = false
   def getRecipe: ViewRecipe = viewer.viewRecipe.get
+}
+
+class SnapshotFrame(path: SymbolPath)(
+    implicit manager: MetaGraphManager) extends ObjectFrame(path) {
+
+  def initialize(state: BoxOutputState) = {
+    set(rootDir / "objectType", "snapshot")
+    import WorkspaceJsonFormatters.fBoxOutputState
+    details = json.Json.toJson(state).as[JsObject]
+  }
+
+  override def toListElementFE()(implicit epm: EntityProgressManager) = {
+    try {
+      FEProjectListElement(
+        name = name,
+        objectType = objectType,
+        details = details)
+    } catch {
+      case ex: Throwable =>
+        log.warn(s"Could not list $name:", ex)
+        FEProjectListElement(
+          name = name,
+          objectType = objectType,
+          error = Some(ex.getMessage)
+        )
+    }
+  }
+
+  def getState(): BoxOutputState = {
+    import WorkspaceJsonFormatters.fBoxOutputState
+    details.get.as[BoxOutputState]
+  }
+
+  override def isDirectory: Boolean = false
+}
+
+class WorkspaceFrame(path: SymbolPath)(
+    implicit manager: MetaGraphManager) extends ProjectFrame(path) {
+  override def initialize(): Unit = manager.synchronized {
+    super.initialize()
+    set(rootDir / "objectType", "workspace")
+  }
+  override def subproject = ???
+  def workspace: Workspace = viewer.rootState.workspace.getOrElse(Workspace.from())
 }
 
 abstract class ObjectFrame(path: SymbolPath)(
@@ -1138,10 +1260,14 @@ class DirectoryEntry(val path: SymbolPath)(
   def parents: Iterable[Directory] = parent ++ parent.toSeq.flatMap(_.parents)
 
   def hasCheckpoint = manager.tagExists(rootDir / "checkpoint")
+  def hasObjectType = manager.tagExists(rootDir / "objectType")
   def isTable = get(rootDir / "objectType", "") == "table"
-  def isProject = hasCheckpoint && !isTable && !isView
-  def isDirectory = exists && !hasCheckpoint
+  def isProject = hasCheckpoint && !isView && !isWorkspace
+  def isDirectory = exists && !hasCheckpoint && !hasObjectType
   def isView = get(rootDir / "objectType", "") == "view"
+  def isWorkspace = get(rootDir / "objectType", "") == "workspace"
+  def isSnapshot = get(rootDir / "objectType", "") == "snapshot"
+  def getObjectType = get(rootDir / "objectType", "")
 
   def asProjectFrame: ProjectFrame = {
     assert(isInstanceOf[ProjectFrame], s"Entry '$path' is not a project.")
@@ -1159,20 +1285,15 @@ class DirectoryEntry(val path: SymbolPath)(
     res
   }
 
-  def asTableFrame: TableFrame = {
-    assert(isInstanceOf[TableFrame], s"Entry '$path' is not a table.")
-    asInstanceOf[TableFrame]
-  }
-  def asNewTableFrame(table: Table, notes: String): TableFrame = {
+  def asNewWorkspaceFrame(): WorkspaceFrame = {
     assert(!exists, s"Entry '$path' already exists.")
-    val res = new TableFrame(path)
-    res.initializeFromTable(table, notes)
+    val res = new WorkspaceFrame(path)
+    res.initialize()
     res
   }
-  def asNewTableFrame(checkpoint: String): TableFrame = {
-    assert(!exists, s"Entry '$path' already exists.")
-    val res = new TableFrame(path)
-    res.initializeFromCheckpoint(checkpoint)
+  def asNewWorkspaceFrame(checkpoint: String): WorkspaceFrame = {
+    val res = asNewWorkspaceFrame()
+    res.setCheckpoint(checkpoint)
     res
   }
 
@@ -1209,6 +1330,17 @@ class DirectoryEntry(val path: SymbolPath)(
     res.initializeFromCheckpoint(checkpoint)
     res
   }
+
+  def asNewSnapshotFrame(calculatedState: BoxOutputState): SnapshotFrame = {
+    assert(!exists, s"Entry '$path' already exists")
+    val snapshot = new SnapshotFrame(path)
+    snapshot.initialize(calculatedState)
+    snapshot
+  }
+  def asSnapshotFrame: SnapshotFrame = {
+    assert(isInstanceOf[SnapshotFrame], s"Entry '$path' is not a snapshot.")
+    asInstanceOf[SnapshotFrame]
+  }
 }
 
 object DirectoryEntry {
@@ -1230,10 +1362,12 @@ object DirectoryEntry {
     if (entry.exists) {
       if (entry.isProject) {
         new ProjectFrame(entry.path)
-      } else if (entry.isTable) {
-        new TableFrame(entry.path)
       } else if (entry.isView) {
         new ViewFrame(entry.path)
+      } else if (entry.isWorkspace) {
+        new WorkspaceFrame(entry.path)
+      } else if (entry.isSnapshot) {
+        new SnapshotFrame(entry.path)
       } else {
         new Directory(entry.path)
       }

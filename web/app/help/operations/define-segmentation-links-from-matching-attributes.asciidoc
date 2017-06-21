@@ -7,11 +7,11 @@ one has been imported as a segmentation of the other.
 (See <<Import project as segmentation>>.)
 
 ====
-[[base-id-attr]] Identifying vertex attribute in base project::
+[[base_id_attr]] Identifying vertex attribute in base project::
 A vertex will be connected to a segment if the selected vertex attribute of the vertex
 matches the selected vertex attribute of the segment.
 
-[[seg-id-attr]] Identifying vertex attribute in the segmentation::
+[[seg_id_attr]] Identifying vertex attribute in the segmentation::
 A vertex will be connected to a segment if the selected vertex attribute of the vertex
 matches the selected vertex attribute of the segment.
 ====

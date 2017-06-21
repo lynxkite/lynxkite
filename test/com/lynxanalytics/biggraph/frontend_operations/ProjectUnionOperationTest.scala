@@ -1,21 +1,18 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
-import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class ProjectUnionOperationTest extends OperationsTestBase {
   test("Project union") {
-    run("Example Graph")
-    val otherEditor = clone(project)
-    run("Rename vertex attribute", Map("from" -> "age", "to" -> "newage"), on = otherEditor)
-    run("Rename edge attribute", Map("from" -> "comment", "to" -> "newcomment"), on = otherEditor)
-    run(
-      "Union with another project",
-      Map(
-        "other" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
-        "id-attr" -> "new_id"))
+    val a = box("Create example graph")
+    val b = box("Create example graph")
+      .box("Rename vertex attribute", Map("before" -> "age", "after" -> "newage"))
+      .box("Rename edge attribute", Map("before" -> "comment", "after" -> "newcomment"))
+    val union = box("Union of projects", Map("id_attr" -> "new_id"), Seq(a, b))
+    val project = union.project
 
     assert(project.vertexSet.rdd.count == 8)
+
     assert(project.edgeBundle.rdd.count == 8)
 
     val vAttrs = project.vertexAttributes.toMap
@@ -39,30 +36,26 @@ class ProjectUnionOperationTest extends OperationsTestBase {
   }
 
   test("Project union on vertex sets") {
-    run("New vertex set", Map("size" -> "10"))
-    run(
-      "Union with another project",
-      Map(
-        "other" -> s"!checkpoint(${project.checkpoint.get},Copy)",
-        "id-attr" -> "new_id"))
+    val a = box("Create vertices", Map("size" -> "10"))
+    val b = box("Create vertices", Map("size" -> "10"))
+    val union = box(
+      "Union of projects",
+      Map("id_attr" -> "new_id"), Seq(a, b))
+    val project = union.project
 
     assert(project.vertexSet.rdd.count == 20)
     assert(project.edgeBundle == null)
   }
 
   test("Project union - useful error message (#1611)") {
-    run("Example Graph")
-    val otherEditor = clone(project)
-    run("Rename vertex attribute",
-      Map("from" -> "age", "to" -> "newage"), on = otherEditor)
-    run("Add constant vertex attribute",
-      Map("name" -> "age", "value" -> "dummy", "type" -> "String"), on = otherEditor)
-
+    val a = box("Create example graph")
+    val b = box("Create example graph")
+      .box("Rename vertex attribute", Map("before" -> "age", "after" -> "newage"))
+      .box("Add constant vertex attribute",
+        Map("name" -> "age", "value" -> "dummy", "type" -> "String"))
     val ex = intercept[java.lang.AssertionError] {
-      run("Union with another project",
-        Map(
-          "other" -> s"!checkpoint(${otherEditor.checkpoint.get},ExampleGraph2)",
-          "id-attr" -> "new_id"))
+      val union = box("Union of projects", Map("id_attr" -> "new_id"), Seq(a, b))
+      union.project
     }
     assert(ex.getMessage.contains(
       "Attribute 'age' has conflicting types in the two projects: (Double and String)"))

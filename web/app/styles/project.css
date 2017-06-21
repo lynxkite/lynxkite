@@ -15,10 +15,7 @@ input[type=range] {
 }
 
 .project {
-  min-height: 407px; /* The height of the operations toolbox. */
-  margin-right: 35px;
-  background: #f5f5f5;
-  padding: 10px 15px;
+  padding: 0 15px;
 }
 .version {
   color: rgba(0, 0, 0, 0.3);
@@ -128,7 +125,7 @@ input.save-as {
   border-top: 1px solid #e0e0e0;
 }
 
-.token-section-label help-popup {
+.token-section-label #help-button {
   font-size: 10px;
   padding: 0 10px;
 }
@@ -179,7 +176,7 @@ label {
   text-transform: uppercase;
 }
 
-.entry-bottom help-popup {
+.entry-bottom #help-button {
   font-size: 10px;
 }
 
@@ -333,4 +330,9 @@ pick-options table {
 }
 #menu-setting-save-visualization button {
   vertical-align: top;
+}
+
+/* Click these to report errors. */
+.progress-bar-danger {
+  cursor: pointer;
 }

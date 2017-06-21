@@ -15,6 +15,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.spark_util
+import com.lynxanalytics.sandbox.ScalaScriptSecurityManager
 
 // Placeholders for deleted classes.
 class DeadClass1
@@ -267,6 +268,10 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[org.apache.spark.sql.types.BooleanType$])
     kryo.register(classOf[org.apache.spark.sql.catalyst.expressions.NullsFirst$])
     kryo.register(classOf[com.lynxanalytics.biggraph.graph_operations.EdgesAndNeighbors])
+    kryo.register(Class.forName("org.apache.spark.mllib.tree.impurity.GiniAggregator"))
+    kryo.register(Class.forName("org.apache.spark.mllib.tree.impurity.Gini$"))
+    kryo.register(Class.forName("org.apache.spark.mllib.tree.impurity.GiniCalculator"))
+
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.
@@ -281,7 +286,9 @@ class BigGraphKryoForcedRegistrator extends BigGraphKryoRegistrator {
 }
 
 object BigGraphSparkContext {
+  ScalaScriptSecurityManager.init()
   lazy val teradataDialect = new TeradataDialect()
+  lazy val oracleJdbcDialect = new OracleJdbcDialect()
 
   def createKryoWithForcedRegistration(): Kryo = {
     val myKryo = new Kryo()
@@ -359,6 +366,7 @@ object BigGraphSparkContext {
     settings: Traversable[(String, String)] = Map()): spark.sql.SparkSession = {
     rotateSparkEventLogs()
     JdbcDialects.registerDialect(teradataDialect)
+    JdbcDialects.registerDialect(oracleJdbcDialect)
 
     val versionFound = KiteInstanceInfo.sparkVersion
     val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim

@@ -84,6 +84,12 @@ exceeding size, but the executors themselves are not reporting out of memory err
 # export YARN_EXECUTOR_MEMORY_OVERHEAD_MB=4000
 ```
 
+YARN offers the possibility of using resource pools. You can specify an existing resource pool and
+allocate LynxKite to it.
+```
+# export RESOURCE_POOL=
+```
+
 Specify how much memory is available for LynxKite on a single worker machine.
 Ignored for `local` setups, use `KITE_MASTER_MEMORY_MB` for that case.
 ```

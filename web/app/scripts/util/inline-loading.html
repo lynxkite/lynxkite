@@ -1,0 +1,21 @@
+<span ng-if="ref.$resolved === false" class="value spinner">|</span>
+<span ng-if="ref.$error && ref.$statusCode < 500" drop-tooltip="{{ref.$error}}">
+  {{ iconForStatus(ref.$statusCode, ref.displayComputeButton) }}
+</span>
+<span ng-if="ref.$error && ref.$statusCode >= 500"
+  class="value-error"
+  drop-tooltip="Click to report error"
+  ng-click="util.stopEventPropagation($event); reportError();">&times;</span>
+<span ng-if="ref === undefined"
+  class="value-error"
+  drop-tooltip="Click to report error"
+  ng-click="util.stopEventPropagation($event); reportError();">&times;</span>
+<span ng-if="ref.retryFunction && !ref.displayComputeButton"
+  class="value-retry"
+  drop-tooltip="Click to retry"
+  ng-click="util.stopEventPropagation($event); ref.retryFunction();">&#8635;</span>
+<span ng-if="ref.retryFunction && ref.displayComputeButton"
+      class="value-retry"
+      drop-tooltip="Start computation"
+      ng-click="util.stopEventPropagation($event); ref.retryFunction();">&#9654;</span>
+

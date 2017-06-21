@@ -1,6 +1,6 @@
 ### Split vertices
 
-Split (multiply) vertices in a graph. A double vertex attribute controls how many
+Split (multiply) vertices in a graph. A Double vertex attribute controls how many
 copies of the vertex should exist after the operation. If this attribute is
 1, the vertex will be kept as it is. If this attribute is zero, the vertex
 will be discarded entirely. Higher values (e.g., 2) will result in
@@ -20,9 +20,9 @@ via a new vertex attribute.
 
 ====
 [[rep]] Repetition attribute::
-A double vertex attribute that specifies how many copies of the vertex should
+A Double vertex attribute that specifies how many copies of the vertex should
 exist after the operation.
-(The double value is rounded to the nearest integer, so 1.8 will mean 2 copies.)
+(The Double value is rounded to the nearest integer, so 1.8 will mean 2 copies.)
 
 [[idattr]] ID attribute name::
 The name of the vertex attribute that will hold the new vertex ids.

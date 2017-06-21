@@ -82,6 +82,40 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       FEEdge(0, 1, 1.0), FEEdge(1, 0, 1.0), FEEdge(2, 0, 1.0), FEEdge(2, 1, 1.0)))
   }
 
+  test("edge diagram with incomplete edge attribute as weight") {
+    val g = graph_operations.ExampleGraph()().result
+    val incomplete =
+      g.comment.deriveX[Double]("x.indexOf('love') == -1 ? undefined : 1").gUID.toString
+    val req = FEGraphRequest(
+      vertexSets = Seq(VertexDiagramSpec(
+        vertexSetId = g.vertices.gUID.toString,
+        filters = Seq(),
+        mode = "sampled",
+        centralVertexIds = Seq("0"),
+        sampleSmearEdgeBundleId = g.edges.gUID.toString,
+        radius = 1)),
+      edgeBundles = Seq(EdgeDiagramSpec(
+        srcDiagramId = "idx[0]",
+        dstDiagramId = "idx[0]",
+        srcIdx = 0,
+        dstIdx = 0,
+        edgeBundleId = g.edges.gUID.toString,
+        filters = Seq(),
+        layout3D = false,
+        relativeEdgeDensity = false,
+        edgeWeightId = incomplete)))
+    val res = controller.getComplexView(user, req)
+    assert(res.vertexSets(0).vertices.toSet == Set(
+      FEVertex(0.0, 0, 0, id = "0", attrs = Map()),
+      FEVertex(0.0, 0, 0, id = "1", attrs = Map()),
+      FEVertex(0.0, 0, 0, id = "2", attrs = Map())))
+    assert(res.edgeBundles(0).edges.toSet == Set(
+      FEEdge(0, 1, 1.0, Map()),
+      FEEdge(1, 0, 1.0, Map()),
+      FEEdge(2, 0, 0.0, Map()),
+      FEEdge(2, 1, 1.0, Map())))
+  }
+
   test("get sampled vertex diagram of ExampleGraph with filters and attrs") {
     val g = graph_operations.ExampleGraph()().result
     val age = g.age.gUID.toString
