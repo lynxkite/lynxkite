@@ -144,8 +144,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
                   srcList[i].name,
                   srcList[i].absolutePath,
                   srcList[i].objectType,
-                  srcList[i].columnType,
-                  srcList[i].stateId);
+                  srcList[i].columnType);
               }
             }, function(error) {
               that.error = error.data;
