@@ -185,9 +185,14 @@ div.popup-content {
 }
 
 polygon.popup-trail {
-  fill: white;
-  opacity: 0.9;
+  fill: lightblue;
+  stroke: black;
+  stroke-width: 0.5px;
+  opacity: 0.5;
   pointer-events: none; /* Let mouse events through so we do not block clicks. */
+}
+polygon.popup-trail.popup-type-plug {
+  fill: bisque;
 }
 
 .popup #help-toggle {
