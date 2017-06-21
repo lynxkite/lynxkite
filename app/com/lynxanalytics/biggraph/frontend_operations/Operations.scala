@@ -3111,8 +3111,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         }
 
         lazy val chain: List[EdgeBundle] = {
-          assert(!equal, "Compute chain only for non-equals!")
-          computeChainRec(List(), narrowerSet.get)
+          if (equal) {
+            List()
+          } else {
+            computeChainRec(List(), narrowerSet.get)
+          }
         }
 
         lazy val compatible: Boolean = {
@@ -3144,10 +3147,12 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       def apply() {
         if (attributesAreAvailable) {
           for (attrName <- splitParam("attrs")) {
-
             val attr = right.attributes(attrName)
             val note = right.getElementNote(attrName)
-            left.newAttribute(attrName, attr, note)
+            val newAttr =
+              compatibilityChecker.chain.foldLeft(attr)((a, b) =>
+                graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, b))
+            left.newAttribute(attrName, newAttr, note)
           }
         }
         if (segmentationsAreAvailable) {
