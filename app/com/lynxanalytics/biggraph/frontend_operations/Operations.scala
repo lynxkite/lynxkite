@@ -3062,8 +3062,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
       class VertexCompatibilityChain(broaderSet: Option[VertexSet],
                                      narrowerSet: Option[VertexSet]) {
+        println(s"broader: $broaderSet")
+        println(s"narrower: $narrowerSet")
         private lazy val manager = {
-          val m1 =broaderSet.get.source.manager
+          val m1 = broaderSet.get.source.manager
           val m2 = narrowerSet.get.source.manager
           assert(m1 == m2, s"Incompatible managers! $m1 != $m2")
           m1
@@ -3073,48 +3075,83 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           if (!broaderSet.isDefined || !narrowerSet.isDefined) {
             false
           } else if (broaderSet.get == narrowerSet.get) {
-              true
+            true
           } else {
             false
           }
         }
 
+        private def compatibleBundle(eb: EdgeBundle) = {
+          eb.properties.isIdPreserving &&
+            eb.properties.isFunction &&
+            eb.properties.isReversedFunction &&
+            eb.properties.isReverseEverywhereDefined
+        }
+
+        println(s"embedding ${EdgeBundleProperties.embedding}")
+        println(s"identity: ${EdgeBundleProperties.identity}")
+        private def rep(eb: EdgeBundle): String = {
+          val s = eb.srcVertexSet.gUID
+          val d = eb.dstVertexSet.gUID
+          val p = eb.properties
+          s"$s -> $d  [$p] [${compatibleBundle(eb)}]"
+        }
+
+        private def computeChainRec(currentChain: List[EdgeBundle], v: VertexSet, dd: Int = 0): List[EdgeBundle] = {
+          if (dd > 20) {
+            println("OVERFLOW")
+            return List()
+          }
+          val d = "  " * dd
+          println(s"$d computeChainRec: $v")
+          for (qq <- currentChain) {
+            println(s"$d currentChain: ${rep(qq)}")
+          }
+          val allBundlesWhoseDstIsV = manager.incomingBundles(v)
+          for (q <- allBundlesWhoseDstIsV) {
+            println(s"$d all bundles: ${rep(q)}")
+          }
+          val compatibleBundles = allBundlesWhoseDstIsV.filter {
+            case eb =>
+              compatibleBundle(eb)
+          }
+          for (eb <- compatibleBundles) {
+            println(s"looking at compatible bundle $d ${rep(eb)}")
+            val extendedChain = currentChain :+ eb
+            if (eb.srcVertexSet == broaderSet.get) {
+              return extendedChain
+            }
+            val t = computeChainRec(extendedChain, eb.srcVertexSet, dd + 1)
+            if (t.nonEmpty) {
+              return t
+            }
+          }
+          return List()
+        }
+
         private lazy val chain: List[EdgeBundle] = {
           assert(!equal)
+          val r = computeChainRec(List(), narrowerSet.get)
+          if (r.nonEmpty) {
+            println("Chain found:")
+            for (q <- r) {
+              println(s"${rep(q)}")
+            }
+            println("******")
+          }
+          r
         }
 
         lazy val compatible: Boolean = {
-          equal ||  chain.nonEmpty
-          }
-        }
-
-        def check(v: VertexSet): Boolean = {
-          val edges = manager.incomingBundles(v)
-          val possiblePaths = edges.filter(eb =>
-            eb.properties == EdgeBundleProperties.identity ||
-              eb.properties == EdgeBundleProperties.embedding)
-          val srcVertexSets = possiblePaths.map(_.srcVertexSet)
-          for (src <- srcVertexSets) {
-            if (check(src)) {
-              return true
-            }
-          }
-          return false
+          equal || chain.nonEmpty
         }
       }
-
-      private def compatibleIdSets(a: Option[VertexSet], b: Option[VertexSet]): Boolean = {
-        if (!a.isDefined || !b.isDefined) {
-          false
-        } else {
-          val cmp = new VertexCompatibilityChain(a.get)
-          return cmp.check(b.get)
-        }
-      }
-      private def compatible = compatibleIdSets(left.idSet, right.idSet)
 
       private val left = attributeEditor("a")
       private val right = attributeEditor("b")
+
+      private val compatibilityChecker = new VertexCompatibilityChain(left.idSet, right.idSet)
+      private val compatible = compatibilityChecker.compatible
 
       private def attributesAreAvailable = right.names.nonEmpty
       private def segmentationsAreAvailable = {
@@ -3136,8 +3173,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           for (attrName <- splitParam("attrs")) {
 
             val attr = right.attributes(attrName)
-
-            val qq = graph_operations.PulledOverVertexAttribute.pullAttributeVia(attr, pullBundle)
             val note = right.getElementNote(attrName)
             left.newAttribute(attrName, attr, note)
           }
