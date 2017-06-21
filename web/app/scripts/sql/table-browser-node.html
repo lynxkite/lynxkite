@@ -17,12 +17,13 @@ loading
   </span>
 </li>
 <li ng-repeat="node in node.list">
-  <span ng-click="node.toggle()">
-    <dir-entry-icon object-type="node.objectType">
+  <span>
+    <dir-entry-icon object-type="node.objectType" ng-click="node.toggle()">
     </dir-entry-icon>
     <table-browser-entry
       text="node.uiText"
-      draggable-text="node.getDraggableText(fullyQualifyNames)">
+      draggable-text="node.getDraggableText(fullyQualifyNames)"
+      ng-dblclick="node.dropToEditor()">
     </table-browser-entry>
   </span>
   <ul ng-if="node.isOpen" list="node.list" ng-include="'scripts/sql/table-browser-node.html'" />

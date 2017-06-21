@@ -9,6 +9,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
       directory: '=',
       projectState: '=',
       box: '=',  // Set box for table browser in the workspace.
+      editor: '=',
     },
     templateUrl: 'scripts/sql/table-browser.html',
     link: function(scope) {
@@ -19,19 +20,22 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
             undefined,
             '',
             '',
-            'directory');
+            'directory',
+            '');
       } else if (scope.projectState) {
         scope.node = createNode(
             undefined,
             '',
             scope.projectState.projectName,
-            'project');
+            'project',
+            '');
       } else {
         scope.node = createNode(
             undefined,
             '',
             scope.directory,
-            'directory');
+            'directory',
+            '');
       }
       // Trigger loading it's children and open it.
       scope.node.toggle();
@@ -46,13 +50,15 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
           name,
           absolutePath,
           objectType,
-          columnType) {
+          columnType,
+          stateId) {
         return {
           name: name,
           parentNode: parentNode,
           absolutePath: absolutePath,
           objectType: objectType,
           columnType: columnType,
+          stateId: stateId,
 
           // User-visible text:
           uiText: name +
@@ -143,7 +149,8 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
                   srcList[i].name,
                   srcList[i].absolutePath,
                   srcList[i].objectType,
-                  srcList[i].columnType);
+                  srcList[i].columnType,
+                  srcList[i].stateId);
               }
             }, function(error) {
               that.error = error.data;
@@ -163,6 +170,14 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
               if (this.list === undefined) {
                 this.fetchList();
               }
+            }
+          },
+
+          dropToEditor: function() {
+            if (scope.editor) {
+              scope.editor.session.insert(
+                scope.editor.getCursorPosition(),
+                this.getDraggableText(scope.fullyQualifyNames));
             }
           },
         };
