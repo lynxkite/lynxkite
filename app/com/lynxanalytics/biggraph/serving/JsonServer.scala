@@ -445,8 +445,8 @@ object ProductionJsonServer extends JsonServer {
   def importBox = jsonFuturePost(sqlController.importBox)
   def createViewDFSpec = jsonPost(sqlController.createViewDFSpec)
 
-  def getTableOutput = jsonGet(getTableOutputData)
-  def getTableOutputData(user: serving.User, request: GetTableOutputRequest): GetTableOutputResponse = {
+  def getTableOutput = jsonFuture(getTableOutputData)
+  def getTableOutputData(user: serving.User, request: GetTableOutputRequest): Future[GetTableOutputResponse] = {
     implicit val metaManager = workspaceController.metaManager
     val table = workspaceController.getOutput(user, request.id).table
     sqlController.getTableSample(table, request.sampleRows)
