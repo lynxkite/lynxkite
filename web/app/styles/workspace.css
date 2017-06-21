@@ -108,6 +108,9 @@ g.box .plug text.lonely {
 g.box:hover .plug text.lonely {
   display: inherit;
 }
+g.box .plug circle.pulled-plug-hover {
+  stroke-width: 5;
+}
 
 rect.selection-box {
   stroke: black;
