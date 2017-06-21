@@ -1,0 +1,32 @@
+### Union of projects
+
+The resulting graph is just a disconnected graph containing the vertices and edges of
+the two originating projects. All vertex and edge attributes are preserved. If an attribute
+exists in both projects, it must have the same data type in both.
+
+The resulting graph will have as many vertices as the sum of the vertex counts in the two
+source graphs. The same with the edges.
+
+====
+*Example use case*
+
+You have imported a call data graph in one project and a Facebook graph in another.
+Some, but not all vertices have an email address associated with them.
+We want to merge the two graphs into a single graph that represents connections
+(either calls or Facebook friendships) between people.
+
+A simple procedure for connecting the two graphs would be the following.
+
+. Take the union of the two projects.
+. Use <<Merge vertices by attribute>> to combine the vertices that can be exactly matched
+based on their email address.
+. Use <<Fingerprint based on attributes>> to identify more matches based on neighborhood
+similarity.
+
+*Parameters*
+
+[[id_attr]] ID attribute name::
+The internal vertex IDs change after the union. The old ID attributes are preserved, but no
+longer reflect the internal IDs. The new internal IDs will be exposed through a new attribute.
+This parameter sets the name of this new attribute.
+====

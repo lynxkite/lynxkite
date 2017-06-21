@@ -5,7 +5,7 @@
 #  kite performance logs to gs, and redash will be able to collect the data
 #  from there.
 
-source "$(dirname $0)/tools/biggraph_common.sh"
+source "$(dirname $0)/biggraph_common.sh"
 
 LOG=`git log  master --merges --first-parent master --oneline  --format='%H %at %ai %cn %s' -1`
 COMMIT=`echo $LOG | awk '{print $1}'`

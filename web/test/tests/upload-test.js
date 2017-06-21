@@ -1,5 +1,8 @@
 'use strict';
 
+module.exports = function() {};
+
+/*
 module.exports = function(fw) {
   var lib = require('../test-lib.js');
   var path = require('path');
@@ -16,3 +19,4 @@ module.exports = function(fw) {
     }
   );
 };
+*/

@@ -70,32 +70,4 @@ class SparkSQLTest extends FunSuite with TestDataManager with BeforeAndAfter {
     // The columns of a row in the result can be accessed by field index or by field name.
     results.map(t => "Name: " + t(0)).collect().foreach(println)
   }
-
-  test("DataFrame from LynxKite project") {
-    import com.lynxanalytics.biggraph.controllers._
-
-    val env = new TestGraphOp {}
-    implicit val mm = env.metaGraphManager
-    val controller = new BigGraphController(env)
-    val projectName = "df-test"
-    val user = com.lynxanalytics.biggraph.serving.User.fake
-    controller.createProject(
-      user,
-      CreateProjectRequest(name = projectName, notes = "test project", privacy = "private"))
-    def run(op: String, params: Map[String, String] = Map(), on: String = projectName) = {
-      controller.projectOp(
-        user,
-        ProjectOperationRequest(on, FEOperationSpec(Operation.titleToID(op), params)))
-    }
-    val projectFrame = ProjectFrame.fromName(projectName)
-    val subProject = projectFrame.subproject
-    run("Example Graph", Map())
-    // Add an attribute that is of a type that DataFrames do not support.
-    run("Aggregate on neighbors",
-      Map("prefix" -> "", "direction" -> "all edges", "aggregate-name" -> "set"))
-    implicit val dm = env.dataManager
-    val df = Table.fromTableName("vertices", subProject.viewer).toDF(dm.newSQLContext())
-    df.printSchema()
-    df.show()
-  }
 }

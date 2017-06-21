@@ -15,18 +15,18 @@ longitudes for those towers. Here the tower IDs still have to be unique in the l
 ====
 include::{g}[tag=table-import]
 
-[[id-attr]] Edge attribute::
+[[id_attr]] Edge attribute::
 The edge attribute which is used to join with the table's ID column.
 
-[[id-column]] ID column::
-The ID column name in the table. This should be a string column that uses the values
+[[id_column]] ID column::
+The ID column name in the table. This should be a String column that uses the values
 of the chosen edge attribute as IDs.
 
 [[prefix]] Name prefix for the imported edge attributes::
 Prepend this prefix string to the new edge attribute names. This can be used to avoid
 accidentally overwriting existing attributes.
 
-[[unique-keys]] Assert unique edge attribute values::
+[[unique_keys]] Assert unique edge attribute values::
 Assert that the edge attribute values have to be unique if set true. The values of the
 matching ID column in the table have to be unique in both cases.
 ====

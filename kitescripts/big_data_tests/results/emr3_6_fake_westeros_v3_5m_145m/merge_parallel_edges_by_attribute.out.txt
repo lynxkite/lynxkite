@@ -1,7 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/merge_parallel_edges_by_attribute.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-label: {"labelType":"between","labels":["0.00000000000","1.00000000000","1.00000000000"],"sizes":[71056797,71069302]}
-label_average: {"labelType":"between","labels":["0.00000000000","1.00000000000","1.00000000000"],"sizes":[71056797,71069302]}
-id: <computed>
-ordinal: {"labelType":"between","labels":["0.0","1.0","4.7","21.9","102.3","478.2","2236.1","10456.4","48896.6","228652.6","1069234.8","5000001.0"],"sizes":[1,4,17,81,376,1758,8220,38440,179756,840582,3930767]}
-!edge_count_delta: -3059139
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/merge_parallel_edges_by_attribute.groovy, took 792 seconds

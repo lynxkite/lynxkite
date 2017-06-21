@@ -1,0 +1,207 @@
+#workspace-entry-point {
+  height: 100vh;
+  overflow: hidden;
+  position: relative; /* Constrain absolute-positioned elements within. */
+}
+
+#workspace-header {
+  min-height: 50px;
+  padding: 5px 10px;
+  border-bottom: 1px solid lightgray;
+}
+
+span#workspace-name {
+  font: bold 2.5em serif;
+}
+
+#workspace-drawing-board {
+  user-select: none;
+  height: 100%;
+  width: 100%;
+  float: left;
+}
+.operation-selector {
+  margin-left: -35px;
+  float: left;
+  max-height: 100%;
+  width: 35px;
+  overflow: auto; /* Allow scrolling category list, if necessary. */
+}
+
+#workspace-drawing-board > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: hsl(30, 40%, 95%);
+}
+
+#workspace-drawing-board svg text {
+  font: bold 12px sans-serif;
+}
+
+state-view {
+  display: block;
+}
+box-editor {
+  display: block;
+}
+
+box-editor table-browser {
+  width: 30%;
+  float: right;
+  padding-left: 10px;
+}
+
+.operation-params-size-half {
+  width: 70%;
+  float: left;
+}
+
+.box-error {
+  color: red;
+  margin-top: 8px;
+}
+
+/* To accomodate the large transparent region of the default icons, the #click-target circle will
+ * receive clicks instead of the icon itself. */
+g.box image {
+  pointer-events: none;
+}
+g.box #click-target {
+  stroke: transparent;
+  fill: transparent;
+}
+g.box.selected #click-target {
+  fill: rgba(80, 0, 0, 0.1);
+}
+
+g.box .summary {
+  text-anchor: middle;
+}
+g.box .backdrop {
+  stroke-width: 5;
+  stroke: hsl(30, 40%, 95%);
+}
+g.box.selected .backdrop {
+  stroke: #e7dad6;
+}
+g.box.selected .plug circle {
+  stroke-width: 3;
+  stroke: #e7dad6;
+}
+
+g.box #inputs .plug text {
+  text-anchor: end;
+}
+g.box .plug circle {
+  stroke-width: 1;
+  stroke: black;
+  fill-opacity: 0;
+  mix-blend-mode: darken; /* Allow arrow to be visible even if it is below. */
+}
+g.box #inputs .plug text {
+  text-anchor: end;
+}
+g.box .plug text.lonely {
+  display: none;
+}
+g.box:hover .plug text.lonely {
+  display: inherit;
+}
+g.box .plug circle.pulled-plug-hover {
+  stroke-width: 5;
+}
+
+rect.selection-box {
+  stroke: black;
+  fill-opacity: 0;
+  stroke-dasharray: 5,5;
+}
+
+g.box circle.io-circle.colored-output {
+  fill-opacity: 1;
+}
+
+@keyframes in-progress-indication {
+  0% {
+    fill-opacity: 1;
+  }
+
+  50% {
+    fill-opacity: 0;
+  }
+
+  100% {
+    fill-opacity: 1;
+  }
+}
+
+g.box circle.io-circle.in-progress {
+  animation-name: in-progress-indication;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+  fill: yellow;
+}
+
+path.arrow {
+  fill: transparent;
+  stroke-width: 2px;
+  stroke: black;
+  pointer-events: none; /* Pass events through, so arrows do not block plugs. */
+  marker-start: url(#arrow-root);
+  marker-end: url(#arrow-head);
+}
+path.pulled-arrow {
+  stroke-dasharray: 2;
+  pointer-events: none;
+  z-index: -1;
+}
+
+div.popup {
+  display: inline-block;  /* This element "shrink-wraps" around .popup-content */
+  position: absolute;
+  border: 1px solid darkgray;
+  z-index: 3;
+  background: white;
+}
+
+div.popup-head {
+  width: 100%;
+  background: lightblue;
+  font-weight: bold;
+  padding-left: 10px;
+  height: 35px;
+  line-height: 35px;
+  cursor: default;
+}
+
+.popup-type-plug div.popup-head {
+  background: bisque;
+}
+
+div.popup-content {
+  resize: both;
+  overflow: auto;
+}
+
+polygon.popup-trail {
+  fill: white;
+  opacity: 0.9;
+  pointer-events: none; /* Let mouse events through so we do not block clicks. */
+}
+
+.popup #help-toggle {
+  text-align: right;
+  display: block;
+  margin-bottom: 10px;
+  text-decoration: none;
+}
+
+.plot-title {
+  font-weight: bold;
+  font-size:1.5em;
+}
+
+.plot-header {
+  padding-top: 10px;
+}

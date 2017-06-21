@@ -1,0 +1,5 @@
+### Comment
+
+Adds a comment to the workspace. As with any box, you can freely place your comment anywhere on the
+workspace. Adding comments does not have any effect on the computation but can potentially make your
+workflow easier to understand for others - or even for your future self.

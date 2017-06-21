@@ -1,2 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy with params List((testDataSet,fake_westeros_v3_100k_2m))
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/load_edges_from_test_set.groovy, took 26 seconds

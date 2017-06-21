@@ -2,8 +2,8 @@
 package com.lynxanalytics.biggraph.graph_operations
 
 import play.api.libs.json
-import scala.reflect.runtime.universe._
 
+import scala.reflect.runtime.universe._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.controllers.UIStatus
 import com.lynxanalytics.biggraph.controllers.UIStatusSerialization
@@ -35,6 +35,9 @@ object DynamicValue {
     else if (typeOf[T] =:= typeOf[Long]) value =>
       DynamicValue(
         double = Some(value.asInstanceOf[Long].toDouble), string = value.toString)
+    else if (typeOf[T] =:= typeOf[Int]) value =>
+      DynamicValue(
+        double = Some(value.asInstanceOf[Int].toDouble), string = value.toString)
     else if (typeOf[T] =:= typeOf[String]) value =>
       DynamicValue(string = value.asInstanceOf[String])
     else if (typeOf[T] =:= typeOf[(Double, Double)]) value => {
