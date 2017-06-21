@@ -1284,13 +1284,17 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Add rank attribute", VertexAttributesOperations, new ProjectTransformation(_) {
+    def attrs = (
+      project.vertexAttrList[String] ++
+      project.vertexAttrList[Double] ++
+      project.vertexAttrList[Long] ++
+      project.vertexAttrList[Int]).sortBy(_.title)
     params ++= List(
       Param("rankattr", "Rank attribute name", defaultValue = "ranking"),
-      Choice("keyattr", "Key attribute name", options = project.vertexAttrList[Double]),
+      Choice("keyattr", "Key attribute name", options = attrs),
       Choice("order", "Order", options = FEOption.list("ascending", "descending")))
 
-    def enabled = FEStatus.assert(
-      project.vertexAttrList[Double].nonEmpty, "No numeric (Double) vertex attributes")
+    def enabled = FEStatus.assert(attrs.nonEmpty, "No sortable vertex attributes")
     override def summary = {
       val name = params("keyattr")
       s"Add rank attribute for '$name'"
@@ -1299,12 +1303,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val keyAttr = params("keyattr")
       val rankAttr = params("rankattr")
       val ascending = params("order") == "ascending"
-      assert(keyAttr.nonEmpty, "Please set a key attribute name.")
       assert(rankAttr.nonEmpty, "Please set a name for the rank attribute")
-      val op = graph_operations.AddRankingAttributeDouble(ascending)
-      val sortKey = project.vertexAttributes(keyAttr).runtimeSafeCast[Double]
-      project.newVertexAttribute(
-        rankAttr, op(op.sortKey, sortKey).result.ordinal.asDouble, s"rank by $keyAttr" + help)
+      val sortKey = project.vertexAttributes(keyAttr)
+      val rank = graph_operations.AddRankingAttribute.run(sortKey, ascending)
+      project.newVertexAttribute(rankAttr, rank.asDouble, s"rank by $keyAttr" + help)
     }
   })
 
