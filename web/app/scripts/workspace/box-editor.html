@@ -36,7 +36,7 @@
         id="toggle-table-browser"
         ng-show="withTableBrowser()"
         ng-click="showTableBrowser = !showTableBrowser">
-          Tables {{showTableBrowser ? '&#9204;' : '&#9205;'}}
+          Tables <span class="glyphicon glyphicon-triangle-{{showTableBrowser ? 'left' : 'right'}}"></span>
     </button>
   </div>
   <table-browser box="getBox()" ng-if="withTableBrowser() && showTableBrowser"></table-browser>

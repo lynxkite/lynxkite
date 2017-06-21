@@ -50,6 +50,7 @@ box-editor table-browser {
   width: 30%;
   float: right;
   padding-left: 10px;
+  max-height: 400px;
 }
 
 .operation-params-size-half {

@@ -15,8 +15,6 @@
 
 #table-browser-tree {
   margin: 0px;
-  padding: 0px;
-  height: 75vh;
   overflow-x: auto;
   overflow-y: auto;
   padding: 3px;
