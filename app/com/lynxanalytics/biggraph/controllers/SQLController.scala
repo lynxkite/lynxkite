@@ -234,7 +234,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   // - snapshots and subdirs in directories
   // - segmentations and implicit tables of a project kind snapshot
   // - columns of a table kind snapshot
-  def getTableBrowserNodes(user: serving.User, request: TableBrowserNodeRequest) = async[TableBrowserNodeResponse] {
+  def getTableBrowserNodes(user: serving.User, request: TableBrowserNodeRequest): TableBrowserNodeResponse =
     metaManager.synchronized {
       val pathParts = SubProject.splitPipedPath(request.path)
       val entry = DirectoryEntry.fromName(pathParts.head)
@@ -248,7 +248,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
           s"Table browser nodes are only available for snapshots and directories (${entry.path}).")
       }
     }
-  }
 
   private def getDirectory(
     user: serving.User,
