@@ -218,27 +218,30 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def setWorkspace(
-    user: serving.User, request: SetWorkspaceRequest): Unit = metaManager.synchronized {
+    user: serving.User, request: SetWorkspaceRequest): GetWorkspaceResponse = metaManager.synchronized {
     val f = getWorkspaceFrame(user, request.name)
     f.assertWriteAllowedFrom(user)
     val ws = request.workspace
     val repaired = ws.context(user, ops, Map()).repairedWorkspace
     val cp = repaired.checkpoint(previous = f.checkpoint)
     f.setCheckpoint(cp)
+    getWorkspace(user, WorkspaceReference(top = request.name))
   }
 
   def undoWorkspace(
-    user: serving.User, request: WorkspaceName): Unit = metaManager.synchronized {
+    user: serving.User, request: WorkspaceName): GetWorkspaceResponse = metaManager.synchronized {
     val f = getWorkspaceFrame(user, request.name)
     f.assertWriteAllowedFrom(user)
     f.undo()
+    getWorkspace(user, WorkspaceReference(request.name))
   }
 
   def redoWorkspace(
-    user: serving.User, request: WorkspaceName): Unit = metaManager.synchronized {
+    user: serving.User, request: WorkspaceName): GetWorkspaceResponse = metaManager.synchronized {
     val f = getWorkspaceFrame(user, request.name)
     f.assertWriteAllowedFrom(user)
     f.redo()
+    getWorkspace(user, WorkspaceReference(request.name))
   }
 
   def boxCatalog(user: serving.User, request: serving.Empty): BoxCatalogResponse = {
