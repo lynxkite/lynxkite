@@ -384,7 +384,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
           var oldInputId = oldBox.inputs[key].boxId;
           if (mapping.hasOwnProperty(oldInputId)) {
             var newInput = mapping[oldInputId];
-            newBox.inputs[key] = { boxId: newInput.id, id: key };
+            newBox.inputs[key] = { boxId: newInput.id, id: oldBox.inputs[key].id };
           }
         }
       }
