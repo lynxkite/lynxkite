@@ -434,7 +434,7 @@ object ProductionJsonServer extends JsonServer {
   def getExportResultOutput = jsonGet(workspaceController.getExportResultOutput)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment, workspaceController.ops)
-  def getTableBrowserNodes = jsonFuture(sqlController.getTableBrowserNodes)
+  def getTableBrowserNodes = jsonGet(sqlController.getTableBrowserNodes)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
   def exportSQLQueryToTable = jsonFuturePost(sqlController.exportSQLQueryToTable)
   def exportSQLQueryToCSV = jsonFuturePost(sqlController.exportSQLQueryToCSV)
