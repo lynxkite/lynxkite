@@ -434,7 +434,7 @@ object ProductionJsonServer extends JsonServer {
   def getExportResultOutput = jsonGet(workspaceController.getExportResultOutput)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment, workspaceController.ops)
-  def getTableBrowserNodes = jsonFuture(sqlController.getTableBrowserNodes)
+  def getTableBrowserNodes = jsonGet(sqlController.getTableBrowserNodes)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
   def exportSQLQueryToTable = jsonFuturePost(sqlController.exportSQLQueryToTable)
   def exportSQLQueryToCSV = jsonFuturePost(sqlController.exportSQLQueryToCSV)
@@ -445,8 +445,8 @@ object ProductionJsonServer extends JsonServer {
   def importBox = jsonFuturePost(sqlController.importBox)
   def createViewDFSpec = jsonPost(sqlController.createViewDFSpec)
 
-  def getTableOutput = jsonGet(getTableOutputData)
-  def getTableOutputData(user: serving.User, request: GetTableOutputRequest): GetTableOutputResponse = {
+  def getTableOutput = jsonFuture(getTableOutputData)
+  def getTableOutputData(user: serving.User, request: GetTableOutputRequest): Future[GetTableOutputResponse] = {
     implicit val metaManager = workspaceController.metaManager
     val table = workspaceController.getOutput(user, request.id).table
     sqlController.getTableSample(table, request.sampleRows)
