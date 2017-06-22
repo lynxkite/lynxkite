@@ -172,13 +172,14 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       }
     },
 
-    loadWorkspace: function() {
+    loadWorkspace: function(workspaceStateRequest) {
       var that = this;
       if (!this._boxCatalogMap) { // Need to load catalog first.
-        this._updateBoxCatalog().then(function() { that.loadWorkspace(); });
+        this._updateBoxCatalog().then(function() { that.loadWorkspace(workspaceStateRequest); });
         return;
       }
-      util.nocache('/ajax/getWorkspace', this.ref())
+      var request = workspaceStateRequest || util.nocache('/ajax/getWorkspace', this.ref());
+      request
         .then(
           function onSuccess(response) {
             that._init(response);
@@ -193,14 +194,8 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
 
     saveWorkspace: function() {
       var that = this;
-      util.post(
-        '/ajax/setWorkspace',
-        {
-          name: this.name,
-          workspace: that.state,
-        }).finally(
-          // Reload workspace both in error and success cases.
-          function() { that.loadWorkspace(); });
+      that.loadWorkspace(
+        util.post('/ajax/setWorkspace', { name: this.name, workspace: that.state }));
     },
 
     getUniqueId: function(operationId) {
@@ -415,15 +410,13 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     undo: function() {
       if (!this.canUndo()) { return; }
       var that = this;
-      util.post('/ajax/undoWorkspace', { name: this.name })
-        .then(function() { that.loadWorkspace(); });
+      that.loadWorkspace(util.post('/ajax/undoWorkspace', { name: this.name }));
     },
 
     redo: function() {
       if (!this.canRedo()) { return; }
       var that = this;
-      util.post('/ajax/redoWorkspace', { name: this.name })
-        .then(function() { that.loadWorkspace(); });
+      that.loadWorkspace(util.post('/ajax/redoWorkspace', { name: this.name }));
     },
 
     saveAsCustomBox: function(ids, name, description) {
