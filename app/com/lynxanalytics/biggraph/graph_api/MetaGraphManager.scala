@@ -16,6 +16,7 @@ import scala.reflect.runtime.universe.TypeTag
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers.CheckpointRepository
 import com.lynxanalytics.biggraph.controllers.DirectoryEntry
+import com.lynxanalytics.biggraph.controllers.Workspace
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 class MetaGraphManager(val repositoryPath: String) {
@@ -260,35 +261,19 @@ class MetaGraphManager(val repositoryPath: String) {
       log.info("Loading built_ins from disk...")
       val builtInsLocalDir = getBuiltInsLocalDirectory()
       implicit val metaGraphManager = this
+      import com.lynxanalytics.biggraph.serving.FrontendJson.rWorkspace
       for ((file, j) <- MetaGraphManager.loadBuiltIns(builtInsLocalDir)) {
         try {
-          val checkpoint = saveWorkspace(j)
-          DirectoryEntry.fromName("built_ins/" + file).asNewWorkspaceFrame(checkpoint)
+          val ws = j.as[Workspace]
+          val entry = DirectoryEntry.fromName("built_ins/" + file).asNewWorkspaceFrame()
+          val cp = ws.checkpoint()
+          entry.setCheckpoint(cp)
         } catch {
           case e: Throwable => throw new Exception(s"failed to load $file.", e)
         }
       }
       log.info("Built_ins loaded from disk.")
     }
-  }
-
-  private def saveWorkspace(j: json.JsValue): String = {
-    val fullCheckpoint = makeFullCheckpointFromWorkspace(j)
-    saveCheckpoint(fullCheckpoint)
-  }
-
-  private def makeFullCheckpointFromWorkspace(j: json.JsValue) = {
-    val emptyMap = Map[String, String]()
-    val state = json.Json.obj(
-      "vertexAttributeGUIDs" -> emptyMap,
-      "edgeAttributeGUIDs" -> emptyMap,
-      "scalarGUIDs" -> emptyMap,
-      "segmentations" -> emptyMap,
-      "notes" -> "",
-      "elementNotes" -> emptyMap,
-      "elementMetadata" -> emptyMap
-    )
-    json.Json.obj("state" -> state, "previousCheckpoint" -> "", "lastOperationDesc" -> "", "workspace" -> j)
   }
 
   private def getBuiltInsLocalDirectory(): String = {
