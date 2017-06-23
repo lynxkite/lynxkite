@@ -15,7 +15,7 @@ class PlotOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import Operation.Context
   import OperationParams._
 
-  val PlotOperations = Category("Plot operations", "lightblue", icon = "bar-chart")
+  val PlotOperations = Category("Plot operations", "blue")
 
   def register(id: String, factory: Context => Operation): Unit = {
     registerOp(

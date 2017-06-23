@@ -13,7 +13,7 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
   import Operation.Context
   import OperationParams._
 
-  val VisualizationOperations = Category("Visualization operations", "lightblue", icon = "eye")
+  val VisualizationOperations = Category("Visualization operations", "blue")
 
   // Takes a Project as input and returns a Visualization as output.
   registerOp(
