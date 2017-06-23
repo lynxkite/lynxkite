@@ -13,13 +13,16 @@ import com.lynxanalytics.biggraph.model
 import play.api.libs.json
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
-  override val atomicOperations =
-    new ProjectOperations(env).operations.toMap ++
-      new MetaOperations(env).operations.toMap ++
-      new ImportOperations(env).operations.toMap ++
-      new ExportOperations(env).operations.toMap ++
-      new PlotOperations(env).operations.toMap ++
-      new VisualizationOperations(env).operations.toMap
+  val registries = Seq(
+    new ProjectOperations(env),
+    new MetaOperations(env),
+    new ImportOperations(env),
+    new ExportOperations(env),
+    new PlotOperations(env),
+    new VisualizationOperations(env))
+
+  override val atomicOperations = registries.map(_.operations).flatten.toMap
+  override val categories = registries.map(_.categories).flatten.toMap
 }
 
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
@@ -65,7 +68,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   val PropagationOperations = Category("Propagation operations", "green", icon = "fullscreen")
   val HiddenOperations = Category("Hidden operations", "black", visible = false)
   val DeprecatedOperations =
-    Category("Deprecated operations", "red", deprecated = true, icon = "remove-sign")
+    Category("Deprecated operations", "red", visible = false, icon = "remove-sign")
   val CreateSegmentationOperations = Category("Create segmentation", "green", icon = "th-large")
   val StructureOperations = Category("Structure operations", "pink", icon = "asterisk")
   val MachineLearningOperations = Category("Machine learning operations", "pink ", icon = "knight")
