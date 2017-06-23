@@ -115,7 +115,7 @@ object Operation {
     private val safeSortKey = Option(sortKey).getOrElse(title)
     def compare(that: Category) = this.safeSortKey compare that.safeSortKey
     def toFE: OperationCategory =
-      OperationCategory(title, icon, color)
+      OperationCategory(title, if (icon.nonEmpty) "glyphicon glyphicon-" + icon else "", color)
   }
 
   type Factory = Context => Operation
@@ -223,7 +223,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   // The registry maps operation IDs to their constructors.
   // "Atomic" operations (as opposed to custom boxes) are simply in a Map.
   protected val atomicOperations: Map[String, (BoxMetadata, Operation.Factory)]
-  protected val categories: Map[String, Operation.Category]
+  protected val atomicCategories: Map[String, Operation.Category]
 
   private def getBox(id: String): (BoxMetadata, Operation.Factory) = {
     if (atomicOperations.contains(id)) {
@@ -253,7 +253,8 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   }
 
   def getCategories(user: serving.User): List[OperationCategory] = {
-    categories.values.filter(_.visible).toList.sorted.map(_.toFE)
+    atomicCategories.values.filter(_.visible).toList.sorted.map(_.toFE) :+
+      OperationCategory("Custom boxes", "fa fa-superpowers", "yellow")
   }
 
   def opForBox(
