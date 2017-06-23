@@ -35,7 +35,7 @@ case class GetPlotOutputRequest(id: String)
 case class GetPlotOutputResponse(json: FEScalar)
 case class GetVisualizationOutputRequest(id: String)
 case class CreateWorkspaceRequest(name: String)
-case class BoxCatalogResponse(boxes: List[BoxMetadata])
+case class BoxCatalogResponse(boxes: List[BoxMetadata], categories: List[OperationCategory])
 case class CreateSnapshotRequest(name: String, id: String)
 case class GetExportResultRequest(stateId: String)
 case class GetExportResultResponse(parameters: Map[String, String], result: FEScalar)
@@ -242,7 +242,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def boxCatalog(user: serving.User, request: serving.Empty): BoxCatalogResponse = {
-    BoxCatalogResponse(ops.operationIds(user).toList.map(ops.getBoxMetadata(_)))
+    BoxCatalogResponse(
+      ops.operationIds(user).toList.map(ops.getBoxMetadata(_)),
+      ops.getCategories(user))
   }
 
   def getOperationMeta(user: serving.User, request: GetOperationMetaRequest): FEOperationMeta = {

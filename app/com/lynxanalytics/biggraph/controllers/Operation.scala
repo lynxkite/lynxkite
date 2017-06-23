@@ -78,7 +78,7 @@ case class FEOperationSpec(
   parameters: Map[String, String])
 
 case class OperationCategory(
-  title: String, icon: String, color: String, ops: List[FEOperationMeta])
+  title: String, icon: String, color: String)
 
 abstract class OperationParameterMeta {
   val id: String
@@ -106,16 +106,16 @@ trait Operation {
 }
 object Operation {
   case class Category(
-      title: String,
-      color: String, // A color class from web/app/styles/operation-toolbox.css.
-      visible: Boolean = true,
-      icon: String = "", // Glyphicon name, or empty for first letter of title.
-      sortKey: String = null, // Categories are ordered by this. The title is used by default.
-      deprecated: Boolean = false) extends Ordered[Category] {
+    title: String,
+    color: String, // A color class from web/app/styles/operation-toolbox.scss.
+    visible: Boolean = true,
+    icon: String = "", // Glyphicon name, or empty for first letter of title.
+    sortKey: String = null) // Categories are ordered by this. The title is used by default.
+      extends Ordered[Category] {
     private val safeSortKey = Option(sortKey).getOrElse(title)
     def compare(that: Category) = this.safeSortKey compare that.safeSortKey
-    def toFE(ops: List[FEOperationMeta]): OperationCategory =
-      OperationCategory(title, icon, color, ops)
+    def toFE: OperationCategory =
+      OperationCategory(title, icon, color)
   }
 
   type Factory = Context => Operation
@@ -193,6 +193,7 @@ import Operation.Implicits._
 trait OperationRegistry {
   // The registry maps operation IDs to their constructors.
   val operations = mutable.Map[String, (BoxMetadata, Operation.Factory)]()
+  val categories = mutable.Map[String, Operation.Category]()
   def registerOp(
     id: String,
     icon: String,
@@ -200,8 +201,11 @@ trait OperationRegistry {
     inputs: List[String],
     outputs: List[String],
     factory: Operation.Factory): Unit = {
-    // TODO: Register category somewhere.
     assert(!operations.contains(id), s"$id is already registered.")
+    assert(
+      !categories.contains(category.title) || categories(category.title) == category,
+      s"Re-registered category with different value: ${category.title}")
+    categories(category.title) = category
     operations(id) = BoxMetadata(
       category.title,
       s"/images/icons/$icon.png",
@@ -219,6 +223,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   // The registry maps operation IDs to their constructors.
   // "Atomic" operations (as opposed to custom boxes) are simply in a Map.
   protected val atomicOperations: Map[String, (BoxMetadata, Operation.Factory)]
+  protected val categories: Map[String, Operation.Category]
 
   private def getBox(id: String): (BoxMetadata, Operation.Factory) = {
     if (atomicOperations.contains(id)) {
@@ -245,6 +250,10 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
       .map(_.path.toString).toSet
     val atomicBoxes = atomicOperations.keySet
     (atomicBoxes ++ customBoxes).toSeq.sorted
+  }
+
+  def getCategories(user: serving.User): List[OperationCategory] = {
+    categories.values.filter(_.visible).toList.sorted.map(_.toFE)
   }
 
   def opForBox(
