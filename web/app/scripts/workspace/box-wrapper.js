@@ -52,9 +52,13 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
       return 'translate(' + this.instance.x + ', ' + this.instance.y + ')';
     },
     onMouseMove: function(event) {
-      this.isMoved = true;
-      this.instance.x = event.logicalX + this.xOffset;
-      this.instance.y = event.logicalY + this.yOffset;
+      var newX = event.logicalX + this.xOffset;
+      var newY = event.logicalY + this.yOffset;
+      if (newX !== this.instance.x || newY !== this.instance.y) {
+        this.isMoved = true;
+        this.instance.x = newX;
+        this.instance.y = newY;
+      }
     },
     onMouseDown: function(event) {
       this.xOffset = this.instance.x - event.logicalX;
