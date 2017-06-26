@@ -23,7 +23,7 @@ loading
     <table-browser-entry
       text="node.uiText"
       draggable-text="node.getDraggableText(fullyQualifyNames)"
-      ng-dblclick="node.dropToEditor()">
+      ng-dblclick="node.insertIntoEditor()">
     </table-browser-entry>
   </span>
   <ul ng-if="node.isOpen" list="node.list" ng-include="'scripts/sql/table-browser-node.html'" />
