@@ -261,7 +261,7 @@ class MetaGraphManager(val repositoryPath: String) {
       log.info("Loading built_ins from disk...")
       val builtInsLocalDir = getBuiltInsLocalDirectory()
       implicit val metaGraphManager = this
-      import com.lynxanalytics.biggraph.serving.FrontendJson.rWorkspace
+      import com.lynxanalytics.biggraph.controllers.WorkspaceJsonFormatters._
       for ((file, j) <- MetaGraphManager.loadBuiltIns(builtInsLocalDir)) {
         try {
           val ws = j.as[Workspace]
