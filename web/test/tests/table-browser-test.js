@@ -2,19 +2,26 @@
 
 module.exports = function() {};
 
-/* TODO: Revive this. #6153
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
+
+/* TODO: Revive this: #6153
+
+
   fw.statePreservingTest(
     'test-example project with example graph',
     'SQL table browser in project',
     function() {
       // Create a segmentation.
-      lib.left.runOperation('Segment by Double attribute', {
-        'attr': 'age',
-        'interval_size': '1',
-        'name': 'bucketing'
+      lib.workspace.addBox({
+        id: 'sda1', name: 'Segment by Double attribute',
+        x: 100, y: 200, after: 'eg0',
+        params: {
+          'attr': 'age',
+          'interval_size': '1',
+          'name': 'bucketing'
+        }
       });
 
       var tableBrowser = lib.left.tableBrowser;
@@ -62,24 +69,25 @@ module.exports = function(fw) {
       tableBrowser.toggle();
       lib.expectNotElement(lib.left.side.$('#table-browser'));
     });
+*/
 
   fw.transitionTest(
-    'a few projects created',
+    'snapshot created',
     'SQL table browser - global SQL box',
     function() {
+      lib.splash.newDirectory('plum');
+      lib.splash.popDirectory();
       lib.splash.openGlobalSqlBox();
       var tableBrowser = lib.splash.tableBrowser;
-      tableBrowser.toggle();
       tableBrowser.expectNode([0], 'plum', '`plum`');
-      tableBrowser.expectNode([1], 'apple', '`apple`');
-      tableBrowser.expectNode([2], 'pear', '`pear`');
-      tableBrowser.toggleNode([0]);
-      tableBrowser.expectNode([0, 1], 'grape', '`plum/grape`');
-      tableBrowser.enterSearchQuery('grape');
-      tableBrowser.expectNode([0], 'plum/grape', '`plum/grape`');
+      tableBrowser.expectNode([1], 'This is a snapshot.', '`This is a snapshot.`');
+      tableBrowser.toggleNode([1]);
+      tableBrowser.expectNode([1, 0], 'vertices', '`This is a snapshot.|vertices`');
+      tableBrowser.enterSearchQuery('snap');
+      tableBrowser.expectNode([0], 'This is a snapshot.', '`This is a snapshot.`');
       tableBrowser.toggle();
     },
     function() {
     });
 };
-*/
+

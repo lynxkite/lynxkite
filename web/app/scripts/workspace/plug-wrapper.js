@@ -12,10 +12,12 @@ angular.module('biggraph').factory('PlugWrapper', function() {
     return tinycolor.mix('blue', 'green', progressRatio * 100).toHexString();
   }
 
-  function PlugWrapper(id, index, direction, box) {
+  function PlugWrapper(workspace, id, index, direction, box) {
+    this.workspace = workspace;
     var radius = 8;
     this.rx = direction === 'outputs' ? box.width : 0;
-    this.ry = box.height - 20 * (index + 1);
+    var count = box.metadata[direction].length;
+    this.ry = box.height - 20 * (count - index);
     this.box = box;
     this.boxId = box.instance.id;
     this.boxInstance = box.instance;
@@ -58,6 +60,27 @@ angular.module('biggraph').factory('PlugWrapper', function() {
         this.error = undefined;
       } else {
         this.error = success.disabledReason;
+      }
+    },
+
+    getAttachedPlugs: function() {
+      var conn;
+      if (this.direction === 'inputs') {
+        conn = this.boxInstance.inputs[this.id];
+        return conn ? [this.workspace.getOutputPlug(conn.boxId, conn.id)] : [];
+      } else {
+        var dsts = [];
+        for (var i = 0; i < this.workspace.boxes.length; ++i) {
+          var box = this.workspace.boxes[i];
+          for (var j = 0; j < box.inputs.length; ++j) {
+            var input = box.inputs[j];
+            conn = box.instance.inputs[input.id];
+            if (conn && conn.boxId === this.boxId && conn.id === this.id) {
+              dsts.push(input);
+            }
+          }
+        }
+        return dsts;
       }
     },
   };

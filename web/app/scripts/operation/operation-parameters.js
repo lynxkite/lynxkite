@@ -62,11 +62,15 @@ angular.module('biggraph').directive('operationParameters', function(util) {
 
       scope.onLoad = function(editor) {
         editor.getSession().setTabSize(2);
-        editor.renderer.setScrollMargin(3, 3, 3, 3);
+        editor.renderer.setScrollMargin(7, 6);
         editor.setOptions({
           highlightActiveLine: false,
           maxLines: 50,
         });
+      };
+
+      scope.isVisualizationParam = function(param) {
+        return param.kind === 'visualization' && !scope.pflags[param.id];
       };
     }
   };

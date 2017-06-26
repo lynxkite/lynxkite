@@ -66,7 +66,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     },
 
     _addBoxWrapper: function(rawBox) {
-      var box = new BoxWrapper(this._boxCatalogMap[rawBox.operationId], rawBox);
+      var box = new BoxWrapper(this, this._boxCatalogMap[rawBox.operationId], rawBox);
       this.boxes.push(box);
       this.boxMap[rawBox.id] = box;
     },
@@ -270,7 +270,8 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       this.saveWorkspace();
     },
 
-    addArrow: function(plug1, plug2) {
+    addArrow: function(plug1, plug2, opts) {
+      opts = opts || {};
       if (plug1.direction === plug2.direction) {
         return false;
       }
@@ -286,8 +287,10 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         id: src.id
       };
       // Rebuild API objects based on raw workflow:
-      this._build();
-      this.saveWorkspace();
+      this._buildArrows();
+      if (!opts.willSaveLater) {
+        this.saveWorkspace();
+      }
       return true;
     },
 
@@ -311,7 +314,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     _assignSummaryInfoToBoxes: function(summaries) {
       for (var i = 0; i < this.boxes.length; i++) {
         var box = this.boxes[i];
-        box.summary = summaries[box.id];
+        box.summary = summaries[box.instance.id];
         if (!box.summary) {
           box.summary = box.metadata.operationId;
         }
@@ -358,6 +361,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
 
     pasteFromClipboard: function(clipboard, currentPosition) {
       var mapping = {};
+      var newBoxes = [];
       for (var i = 0; i < clipboard.length; ++i) {
         var box = clipboard[i].instance;
         var diffX = clipboard[i].width;
@@ -368,6 +372,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         createdBox.parameters = box.parameters;
         createdBox.parametricParameters = box.parametricParameters;
         mapping[box.id] = createdBox;
+        newBoxes.push(createdBox);
       }
       for (i = 0; i < clipboard.length; ++i) {
         var oldBox = clipboard[i].instance;
@@ -379,11 +384,12 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
           var oldInputId = oldBox.inputs[key].boxId;
           if (mapping.hasOwnProperty(oldInputId)) {
             var newInput = mapping[oldInputId];
-            newBox.inputs[key] = { boxId: newInput.id, id: key };
+            newBox.inputs[key] = { boxId: newInput.id, id: oldBox.inputs[key].id };
           }
         }
       }
       this.saveWorkspace();
+      return newBoxes;
     },
 
     saveIfBoxesMoved: function() {
@@ -421,7 +427,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     },
 
     saveAsCustomBox: function(ids, name, description) {
-      var i, j, box;
+      var i, j, box, input;
       var workspaceParameters =
         JSON.parse(this.boxMap['anchor'].instance.parameters.parameters || '[]');
       var boxes = [{
@@ -440,10 +446,12 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       var inputNameCounts = {};
       var outputNameCounts = {};
       var SEPARATOR = ', ';
-      var PADDING = 200;
-      var inputBoxX = PADDING;
-      var outputBoxX = PADDING;
-      var usedOutputs = {};
+      var PADDING_X = 200;
+      var PADDING_Y = 150;
+      var inputBoxY = PADDING_Y;
+      var outputBoxY = PADDING_Y;
+      var internallyUsedOutputs = {};
+      var externallyUsedOutputCounts = {};
       // This custom box will replace the selected boxes.
       var customBox = {
         id: this.getUniqueId(name),
@@ -461,7 +469,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       }
       var minX = Infinity;
       var minY = Infinity;
-      var maxY = -Infinity;
+      var maxX = -Infinity;
       for (i = 0; i < ids.length; ++i) {
         box = this.boxMap[ids[i]];
         // Place the custom box in the average position of the selected boxes.
@@ -469,7 +477,20 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         customBox.y += box.instance.y / ids.length;
         minX = Math.min(minX, box.instance.x);
         minY = Math.min(minY, box.instance.y);
-        maxY = Math.max(maxY, box.instance.y);
+        maxX = Math.max(maxX, box.instance.x);
+      }
+      // Record used outputs.
+      for (i = 0; i < this.boxes.length; ++i) {
+        box = this.boxes[i];
+        var inputs = Object.keys(box.instance.inputs);
+        for (j = 0; j < inputs.length; ++j) {
+          input = box.instance.inputs[inputs[j]];
+          if (input.boxId) {
+            console.assert(!input.boxId.includes(SEPARATOR) && !input.id.includes(SEPARATOR));
+            var key = input.boxId + SEPARATOR + input.id;
+            externallyUsedOutputCounts[key] = (externallyUsedOutputCounts[key] || 0) + 1;
+          }
+        }
       }
       for (i = 0; i < ids.length; ++i) {
         box = this.boxMap[ids[i]];
@@ -480,15 +501,16 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         // Copy this box to the new workspace.
         var instance = angular.copy(box.instance);
         boxes.push(instance);
-        instance.x += 200 - minX;
-        instance.y += 200 - minY;
+        instance.x += PADDING_X - minX;
+        instance.y += PADDING_Y / 2 - minY;
         for (j = 0; j < box.inputs.length; ++j) {
           var inputName = box.metadata.inputs[j];
-          var input = box.instance.inputs[inputName];
-          // Record used output.
+          input = box.instance.inputs[inputName];
+          // Record internally used output.
           if (input.boxId) {
             console.assert(!input.boxId.includes(SEPARATOR) && !input.id.includes(SEPARATOR));
-            usedOutputs[input.boxId + SEPARATOR + input.id] = true;
+            externallyUsedOutputCounts[input.boxId + SEPARATOR + input.id] -= 1;
+            internallyUsedOutputs[input.boxId + SEPARATOR + input.id] = true;
           }
           // Create input box if necessary.
           if (!ids.includes(input.boxId)) {
@@ -501,13 +523,13 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
             boxes.push({
               id: 'input-' + inputBoxName,
               operationId: 'Input',
-              x: inputBoxX,
-              y: 0,
+              x: 0,
+              y: inputBoxY,
               inputs: {},
               parameters: { name: inputBoxName },
               parametricParameters: {},
             });
-            inputBoxX += PADDING;
+            inputBoxY += PADDING_Y;
             instance.inputs[inputName] = { boxId: 'input-' + inputBoxName, id: 'input' };
             if (input.boxId) { // Connected to a non-selected box.
               customBox.inputs[inputBoxName] = input;
@@ -520,7 +542,8 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         box = this.boxMap[ids[i]];
         for (j = 0; j < box.metadata.outputs.length; ++j) {
           var outputName = box.metadata.outputs[j];
-          if (!usedOutputs[box.instance.id + SEPARATOR + outputName]) {
+          if (!internallyUsedOutputs[box.instance.id + SEPARATOR + outputName] ||
+              externallyUsedOutputCounts[box.instance.id + SEPARATOR + outputName] > 0) {
             var outputBoxName = outputName;
             var outputNameCount = outputNameCounts[outputName] || 0;
             if (outputNameCount > 0) {
@@ -530,13 +553,13 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
             boxes.push({
               id: 'output-' + outputBoxName,
               operationId: 'Output',
-              x: outputBoxX,
-              y: maxY + 200,
+              x: maxX - minX + PADDING_X * 2,
+              y: outputBoxY,
               inputs: { output: { boxId: box.instance.id, id: outputName } },
               parameters: { name: outputBoxName },
               parametricParameters: {},
             });
-            outputBoxX += PADDING;
+            outputBoxY += PADDING_Y;
             // Update non-selected output connections.
             for (var k = 0; k < this.arrows.length; ++k) {
               var arrow = this.arrows[k];
@@ -553,20 +576,23 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       });
       this.state.boxes.push(customBox);
       var that = this;
-      return util.post('/ajax/createWorkspace', {
-        name: name,
-      }).then(function success() {
-        return util.post('/ajax/setWorkspace', {
+      return {
+        customBox: customBox,
+        promise: util.post('/ajax/createWorkspace', {
           name: name,
-          workspace: { boxes: boxes },
-        });
-      }).then(function success() {
-        return that._updateBoxCatalog();
-      }).then(function success() {
-        that.saveWorkspace();
-      }, function error() {
-        that.loadWorkspace();
-      });
+        }).then(function success() {
+          return util.post('/ajax/setWorkspace', {
+            name: name,
+            workspace: { boxes: boxes },
+          });
+        }).then(function success() {
+          return that._updateBoxCatalog();
+        }).then(function success() {
+          that.saveWorkspace();
+        }, function error() {
+          that.loadWorkspace();
+        }),
+      };
     },
 
     startSavingAs: function() {

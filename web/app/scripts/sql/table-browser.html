@@ -1,4 +1,6 @@
-<div id="table-browser" style="background-color: white;">
+<div id="table-browser" style="background-color: white;"
+  ng-mousedown="$event.stopPropagation()"
+  ng-mousemove="$event.stopPropagation()">
   <div id="table-browser-head">
     <i>Hint: drag table and column names into the editor box
     with your mouse.</i>
@@ -12,7 +14,7 @@
       </label>
     </div>
 
-    <!-- Search field (not visible in projects). -->
+    <!-- Search field (not visible in boxes). -->
     <input type="text"
         id="table-browser-search-box"
         placeholder="Search"

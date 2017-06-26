@@ -16,29 +16,21 @@ angular.module('biggraph')
       link: function(scope) {
         scope.instrument = undefined;
 
-        util.deepWatch(
-            scope,
-            function() {
-              if (scope.boxId && scope.plugId && scope.workspace) {
-                var plug = scope.workspace.getOutputPlug(
-                    scope.boxId, scope.plugId);
-                return {stateId: plug.stateId, kind: plug.kind};
-              } else {
-                return undefined;
-              }
-            },
-            function(plugDesc) {
-              if (plugDesc) {
-                scope.stateId = plugDesc.stateId;
-                scope.stateKind = plugDesc.kind;
-              }
-            });
+        scope.$watch(function() {
+          if (scope.boxId && scope.plugId && scope.workspace) {
+            scope.plug = scope.workspace.getOutputPlug(scope.boxId, scope.plugId);
+            return scope.plug.stateId;
+          } else {
+            scope.plug = undefined;
+            return undefined;
+          }
+        });
 
         scope.createSnapshot = function(saveAsName, success, error) {
           var postOpts = { reportErrors: false };
           util.post('/ajax/createSnapshot', {
             name: saveAsName,
-            id: scope.stateId,
+            id: scope.plug.stateId,
           }, postOpts).then(success, error);
         };
 

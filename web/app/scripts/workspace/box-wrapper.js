@@ -21,7 +21,8 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
     return comment ? comment.split('\n') : [];
   }
 
-  function BoxWrapper(metadata, instance) {
+  function BoxWrapper(workspace, metadata, instance) {
+    this.workspace = workspace;
     this.metadata = metadata;
     this.instance = instance;
     this.summary = metadata.operationId;
@@ -35,10 +36,10 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
 
     var i;
     for (i = 0; i < metadata.inputs.length; ++i) {
-      this.inputs.push(new PlugWrapper(metadata.inputs[i], i, 'inputs', this));
+      this.inputs.push(new PlugWrapper(workspace, metadata.inputs[i], i, 'inputs', this));
     }
     for (i = 0; i < metadata.outputs.length; ++i) {
-      var plug = new PlugWrapper(metadata.outputs[i], i, 'outputs', this);
+      var plug = new PlugWrapper(workspace, metadata.outputs[i], i, 'outputs', this);
       this.outputs.push(plug);
       this.outputMap[plug.id] = plug;
     }
@@ -51,9 +52,13 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
       return 'translate(' + this.instance.x + ', ' + this.instance.y + ')';
     },
     onMouseMove: function(event) {
-      this.isMoved = true;
-      this.instance.x = event.logicalX + this.xOffset;
-      this.instance.y = event.logicalY + this.yOffset;
+      var newX = event.logicalX + this.xOffset;
+      var newY = event.logicalY + this.yOffset;
+      if (newX !== this.instance.x || newY !== this.instance.y) {
+        this.isMoved = true;
+        this.instance.x = newX;
+        this.instance.y = newY;
+      }
     },
     onMouseDown: function(event) {
       this.xOffset = this.instance.x - event.logicalX;

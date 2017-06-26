@@ -4,6 +4,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 # Changes
 
+### master
+
+ - _Add rank attribute_ can be used on String attributes.
+
 ### 2.0
 
  - Replaced LynxKite projects with more powerful and flexible workspaces. Workspaces allow you to
@@ -11,8 +15,6 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Renamed several operations to have uniform imperative names. E.g. _"Example graph"_ became
    _"Create example graph"_.
  - New operation _"Segment by Vector attribute"_ is added.
-
-### master
 
 ### 1.14.0
 
