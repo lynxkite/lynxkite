@@ -70,7 +70,7 @@ angular.module('biggraph')
           onBlurNow();
           scope.box = undefined;
           scope.boxMeta = undefined;
-          scope.error = error.data;
+          scope.error = util.responseToErrorMessage(error);
         };
 
         function outputStatesDiffer(box1, box2) {
