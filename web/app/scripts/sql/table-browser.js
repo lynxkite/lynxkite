@@ -167,7 +167,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
             }
           },
 
-          dropToEditor: function() {
+          insertIntoEditor: function() {
             if (scope.editor) {
               scope.editor.session.insert(
                 scope.editor.getCursorPosition(),
