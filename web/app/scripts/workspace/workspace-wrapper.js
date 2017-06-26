@@ -195,7 +195,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     saveWorkspace: function() {
       var that = this;
       that.loadWorkspace(
-        util.post('/ajax/setWorkspace', { reference: this.ref(), workspace: that.state }));
+        util.post('/ajax/setWorkspace', { reference: that.ref(), workspace: that.state }));
     },
 
     getUniqueId: function(operationId) {
@@ -410,13 +410,13 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     undo: function() {
       if (!this.canUndo()) { return; }
       var that = this;
-      that.loadWorkspace(util.post('/ajax/undoWorkspace', this.ref()));
+      that.loadWorkspace(util.post('/ajax/undoWorkspace', that.ref()));
     },
 
     redo: function() {
       if (!this.canRedo()) { return; }
       var that = this;
-      that.loadWorkspace(util.post('/ajax/redoWorkspace', this.ref()));
+      that.loadWorkspace(util.post('/ajax/redoWorkspace', that.ref()));
     },
 
     saveAsCustomBox: function(ids, name, description) {
@@ -575,7 +575,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
           name: name,
         }).then(function success() {
           return util.post('/ajax/setWorkspace', {
-            reference: this.ref(),
+            reference: { top: name, customBoxStack: [] },
             workspace: { boxes: boxes },
           });
         }).then(function success() {
