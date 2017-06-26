@@ -25,6 +25,11 @@ function Entity(side, kind, name) {
   this.menu = $('#menu-' + this.kindName);
 }
 
+function isMacOS() {
+  // Mac is 'darwin': https://nodejs.org/api/process.html#process_process_platform
+  return process.platform === 'darwin';
+}
+
 Entity.prototype = {
 
   isPresent: function() {
@@ -44,6 +49,7 @@ Entity.prototype = {
 
   popoff: function() {
     this.element.isPresent().then(present => {
+      if (present) { this.element.evaluate('closeMenu()'); }
       if (present) { this.element.evaluate('closeMenu()'); }
     });
   },
@@ -158,10 +164,17 @@ Workspace.prototype = {
   },
 
   duplicate: function() {
-    browser.actions()
+    if (isMacOS()) {
+      browser.actions()
+        .sendKeys(K.chord(K.META, 'c'))
+        .sendKeys(K.chord(K.META, 'v'))
+        .perform();
+    } else {
+      browser.actions()
         .sendKeys(K.chord(K.CONTROL, 'c'))
         .sendKeys(K.chord(K.CONTROL, 'v'))
         .perform();
+    }
   },
 
   addBox: function(boxData) {
@@ -280,9 +293,14 @@ Workspace.prototype = {
     this.openBoxEditor(boxId).close();
   },
 
+  getBoxEditor: function(boxId) {
+    var popup = this.board.$('.popup#' + boxId);
+    return popup;
+  },
+
   openBoxEditor: function(boxId) {
     this.clickBox(boxId);
-    var popup = this.board.$('.popup#' + boxId);
+    var popup = this.getBoxEditor(boxId);
     expect(popup.isDisplayed()).toBe(true);
     return new BoxEditor(popup);
   },
@@ -296,6 +314,11 @@ Workspace.prototype = {
 
   getStateView: function(boxId, plugId) {
     var popup = this.board.$('.popup#' + boxId + '_' + plugId);
+    return new State(popup);
+  },
+
+  getVisualizationEditor(boxId) {
+    var popup = this.getBoxEditor(boxId);
     return new State(popup);
   },
 
@@ -319,12 +342,35 @@ Workspace.prototype = {
 
 };
 
+function PopupBase() {
+}
+
+PopupBase.prototype = {
+  close: function() {
+    this.popup.$('#close-popup').click();
+  },
+
+  moveTo: function(x, y) {
+    var head = this.popup.$('div.popup-head');
+    browser.actions()
+        .mouseDown(head)
+        // Absolute positioning of mouse. If we don't specify the first
+        // argument then this becomes a relative move. If the first argument
+        // is this.board, then protractor scrolls the element of this.board
+        // to the top of the page, even though scrolling is not enabled.
+        .mouseMove($('body'), {x: x, y: y})
+        .mouseUp(head)
+        .perform();
+  },
+};
+
 function BoxEditor(popup) {
   this.popup = popup;
   this.element = popup.$('box-editor');
 }
 
 BoxEditor.prototype = {
+  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
 
   operationParameter: function(param) {
     return this.element.$(
@@ -353,8 +399,8 @@ BoxEditor.prototype = {
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
-  close: function() {
-    this.popup.$('#close-popup').click();
+  getTableBrowser: function() {
+    return new TableBrowser(this.popup);
   },
 };
 
@@ -364,12 +410,11 @@ function State(popup) {
   this.right = new Side(this.popup, 'right');
   this.table = new TableState(this.popup);
   this.plot = new PlotState(this.popup);
+  this.visualization = new VisualizationState(this.popup);
 }
 
 State.prototype = {
-  close: function() {
-    this.popup.$('#close-popup').click();
-  }
+  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
 };
 
 function PlotState(popup) {
@@ -378,7 +423,7 @@ function PlotState(popup) {
 }
 
 PlotState.prototype = {
-  close: State.prototype.close,
+  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
 
   barHeights: function() {
     return this.canvas.$$('g.mark-rect.marks rect').map(e => e.getAttribute('height'));
@@ -397,7 +442,7 @@ function TableState(popup) {
 }
 
 TableState.prototype = {
-  close: State.prototype.close,
+  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
 
   expect: function(names, types, rows) {
     this.expectColumnNamesAre(names);
@@ -475,7 +520,7 @@ TableState.prototype = {
 
 function Side(popup, direction) {
   this.direction = direction;
-  this.side = popup.$('project-state-view #side-' + direction);
+  this.side = popup.$('#side-' + direction);
 }
 
 Side.prototype = {
@@ -728,8 +773,11 @@ TableBrowser.prototype = {
 
 };
 
-var visualization = {
-  svg: $('svg.graph-view'),
+function VisualizationState(popup) {
+  this.svg = popup.$('svg.graph-view');
+}
+
+VisualizationState.prototype = {
 
   elementByLabel: function(label) {
     return this.svg.element(by.xpath('.//*[contains(text(),"' + label + '")]/..'));
@@ -747,12 +795,13 @@ var visualization = {
 
   // The visualization response received from the server.
   graphView: function() {
-    return visualization.svg.evaluate('graph.view');
+    return this.svg.evaluate('graph.view');
   },
 
   // The currently visualized graph data extracted from the SVG DOM.
   graphData: function() {
     browser.waitForAngular();
+    //browser.pause();
     return browser.executeScript(function() {
 
       // Vertices as simple objects.
@@ -825,7 +874,7 @@ var visualization = {
   },
 
   vertexCounts: function(index) {
-    return visualization.graphView().then(function(gv) {
+    return this.graphView().then(function(gv) {
       return gv.vertexSets[index].vertices.length;
     });
   },
@@ -1089,12 +1138,21 @@ function randomPattern () {
 
 var lastDownloadList;
 
+function getSelectAllKey() {
+  if (isMacOS()) {
+    // The command key is not supported properly, so we work around with Shift+HOME etc.
+    // and Delete. https://github.com/angular/protractor/issues/690
+    return K.END + K.PAGE_DOWN + K.chord(K.SHIFT, K.HOME) + K.chord(K.SHIFT, K.PAGE_UP) + K.DELETE;
+  } else {
+    return K.chord(K.CONTROL, 'a');
+  }
+}
+
 testLib = {
   theRandomPattern: randomPattern(),
   workspace: new Workspace(),
-  visualization: visualization,
   splash: splash,
-  selectAllKey: K.chord(K.CONTROL, 'a'),
+  selectAllKey: getSelectAllKey(),
   protractorDownloads: '/tmp/protractorDownloads.' + process.pid,
 
   expectElement: function(e) {

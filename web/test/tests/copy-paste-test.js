@@ -13,8 +13,8 @@ module.exports = function(fw) {
       lib.workspace.duplicate();
     },
     function() {
-      lib.workspace.openBoxEditor('Create-example-graph_1').close(); // Fails if there is no box
-      var pr = lib.workspace.openBoxEditor('Compute-PageRank_1');
+      lib.workspace.openBoxEditor('create-example-graph_1').close(); // Fails if there is no box
+      var pr = lib.workspace.openBoxEditor('compute-pagerank_1');
       pr.expectSelectParameter('direction', 'string:outgoing edges');
     });
 };

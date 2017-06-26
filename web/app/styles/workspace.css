@@ -5,17 +5,13 @@
 }
 
 #workspace-header {
-  height: 50px;
+  min-height: 50px;
   padding: 5px 10px;
   border-bottom: 1px solid lightgray;
 }
 
 span#workspace-name {
   font: bold 2.5em serif;
-}
-
-span#custom-box-stack {
-  font-size: 2em;
 }
 
 #workspace-drawing-board {
@@ -48,6 +44,18 @@ state-view {
 }
 box-editor {
   display: block;
+}
+
+box-editor table-browser {
+  width: 30%;
+  float: right;
+  padding-left: 10px;
+  max-height: 400px;
+}
+
+.operation-params-size-half {
+  width: 70%;
+  float: left;
 }
 
 .box-error {
@@ -100,6 +108,9 @@ g.box .plug text.lonely {
 }
 g.box:hover .plug text.lonely {
   display: inherit;
+}
+g.box .plug circle.pulled-plug-hover {
+  stroke-width: 5;
 }
 
 rect.selection-box {
@@ -175,9 +186,14 @@ div.popup-content {
 }
 
 polygon.popup-trail {
-  fill: white;
+  fill: lightblue;
+  stroke: black;
+  stroke-width: 0.5px;
   opacity: 0.5;
   pointer-events: none; /* Let mouse events through so we do not block clicks. */
+}
+polygon.popup-trail.popup-type-plug {
+  fill: bisque;
 }
 
 .popup #help-toggle {

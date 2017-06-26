@@ -6,7 +6,7 @@
 angular.module('biggraph')
   .directive(
   'workspaceDrawingBoard',
-  function(environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope) {
+  function(environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope, $q, util) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -126,6 +126,9 @@ angular.module('biggraph')
               for (var i = 0; i < scope.movedBoxes.length; i++) {
                 scope.movedBoxes[i].onMouseMove(event);
               }
+              if (scope.movedBoxes.length === 1) {
+                autoConnect(scope.movedBoxes[0]);
+              }
             } else if (scope.movedPopup) {
               scope.movedPopup.onMouseMove(event);
             }
@@ -134,6 +137,36 @@ angular.module('biggraph')
             scope.popups[j].updateSize();
           }
         };
+
+        // Tries hooking up plugs when a box is moving.
+        function autoConnect(moving) {
+          function flatten(array) {
+            return Array.prototype.concat.apply([], array);
+          }
+          function filterOpen(plugs) {
+            return plugs.filter(function(plug) { return plug.getAttachedPlugs().length === 0; });
+          }
+          var allOutputs = flatten(scope.workspace.boxes.map(function(box) { return box.outputs; }));
+          var allInputs = flatten(scope.workspace.boxes.map(function(box) { return box.inputs; }));
+          autoConnectPlugs(moving.inputs, allOutputs);
+          autoConnectPlugs(filterOpen(moving.outputs), filterOpen(allInputs));
+        }
+
+        function autoConnectPlugs(srcPlugs, dstPlugs) {
+          var hookDistance = 20;
+          for (var i = 0; i < srcPlugs.length; ++i) {
+            var src = srcPlugs[i];
+            for (var j = 0; j < dstPlugs.length; ++j) {
+              var dst = dstPlugs[j];
+              var dx = src.cx() - dst.cx();
+              var dy = src.cy() - dst.cy();
+              var dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < hookDistance) {
+                scope.workspace.addArrow(src, dst, { willSaveLater: true });
+              }
+            }
+          }
+        }
 
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
@@ -172,23 +205,70 @@ angular.module('biggraph')
           var eventX = event.pageX - w / 2;
           var eventY = event.pageY - h / 2;
           var minX = 0;
-          var minY = svgElement.offset().top; // Do not overlap toolbar.
-          var maxX = angular.element(window).width() - w;
-          var maxY = angular.element(window).height() - h;
+          var minY = svgElement.offset().top;  // Do not overlap toolbar.
+          var maxX = svgElement.width() - w - 35;  // Do not overlap toolbox.
+          var maxY = svgElement.height() - h;
+
+          function len(x, y) { return Math.sqrt(x * x + y * y); }
+          function rectangleOverlapArea(left1, top1, width1, height1, left2, top2, width2, height2) {
+            var right1 = left1 + width1;
+            var bottom1 = top1 + height1;
+            var right2 = left2 + width2;
+            var bottom2 = top2 + height2;
+            // Comute intersection:
+            var left = Math.max(left1, left2);
+            var top = Math.max(top1, top2);
+            var right = Math.min(right1, right2);
+            var bottom = Math.min(bottom1, bottom2);
+            if (left > right || top > bottom) {
+              return 0;
+            } else {
+              return (right - left) * (bottom - top);
+            }
+          }
+          function overlap(x, y) {
+            var total = 0;
+            for (var i = 0; i < scope.popups.length; ++i) {
+              total += rectangleOverlapArea(
+                  scope.popups[i].x, scope.popups[i].y, scope.popups[i].width, scope.popups[i].height,
+                  x, y, w, h);
+            }
+            return total;
+          }
+          function score(x, y) {
+            return {
+              distance: len(x - eventX, y - eventY),
+              overlap: overlap(x, y),
+            };
+          }
+          function isScoreBetterThan(current, best) {
+            var minDist = Math.sqrt(w * w + h * h) / 2;
+            if (best.distance < minDist && current.distance > best.distance) {
+              return true;
+            }
+            if (current.overlap < best.overlap) {
+              return true;
+            } else if (current.overlap > best.overlap) {
+              return false;
+            }
+            if (current.distance > minDist && current.distance < best.distance) {
+              return true;
+            } else {
+              return false;
+            }
+          }
+
           var bestX = (minX + maxX) / 2;
           var bestY = (minY + maxY) / 2;
-          var minDist = Math.sqrt(w * w + h * h) / 2;
-          function len(x, y) { return Math.sqrt(x * x + y * y); }
-          var bestDist = len(bestX - eventX, bestY - eventY);
-          for (var i = 0; i < 100; ++i) {
-            var rndX = minX + Math.random() * (maxX - minX);
-            var rndY = minY + Math.random() * (maxY - minY);
-            var dist = len(rndX - eventX, rndY - eventY);
-            if (dist < minDist) { continue; }
-            if (bestDist < minDist || dist < bestDist) {
-              bestX = rndX;
-              bestY = rndY;
-              bestDist = dist;
+          var bestScore = score(bestX, bestY);
+          for (var x = minX; x <= maxX; x += (maxX - minX) / 10) {
+            for (var y = minY; y <= maxY; y += (maxY - minY) / 20) {
+              var currentScore = score(x, y);
+              if (isScoreBetterThan(currentScore, bestScore)) {
+                bestX = x;
+                bestY = y;
+                bestScore = currentScore;
+              }
             }
           }
           return {
@@ -200,7 +280,7 @@ angular.module('biggraph')
         }
 
         scope.onMouseUpOnBox = function(box, event) {
-          if (box.isMoved || scope.pulledPlug) {
+          if (box.isMoved || scope.pulledPlug || scope.selection.isActive()) {
             return;
           }
           var leftButton = event.button === 0;
@@ -329,7 +409,7 @@ angular.module('biggraph')
         };
 
         scope.selectBoxesInSelection = function() {
-          var boxes = this.boxes();
+          var boxes = scope.workspace.boxes;
           this.selectedBoxIds = [];
           for (var i = 0; i < boxes.length; i++) {
             var box = boxes[i];
@@ -359,7 +439,8 @@ angular.module('biggraph')
 
         scope.pasteBoxes = function() {
           var pos = addLogicalMousePosition({ pageX: 0, pageY: 0});
-          scope.workspace.pasteFromClipboard(scope.clipboard, pos);
+          var added = scope.workspace.pasteFromClipboard(scope.clipboard, pos);
+          scope.selectedBoxIds = added.map(function(box) { return box.id; });
         };
 
         scope.deleteBoxes = function(boxIds) {
@@ -379,38 +460,44 @@ angular.module('biggraph')
         };
 
         scope.diveUp = function() {
-          scope.workspace.customBoxStack.pop();
+          var id = scope.workspace.customBoxStack.pop();
           scope.workspace.loadWorkspace();
           scope.popups = [];
+          scope.selectedBoxIds = [id];
         };
 
         scope.diveDown = function() {
           scope.workspace.customBoxStack.push(scope.selectedBoxIds[0]);
           scope.workspace.loadWorkspace();
           scope.popups = [];
+          scope.selectedBoxIds = [];
         };
 
         scope.saveSelectionAsCustomBox = function(name, success, error) {
-          scope.workspace.saveAsCustomBox(
-              scope.selectedBoxIds, name, 'Created from ' + scope.workspaceName)
-            .then(success, error);
+          var b = scope.workspace.saveAsCustomBox(
+              scope.selectedBoxIds, name, 'Created from ' + scope.workspaceName);
+          scope.selectedBoxIds = [b.customBox.id];
+          b.promise.then(success, error);
         };
 
         var hk = hotkeys.bindTo(scope);
         hk.add({
-          combo: 'ctrl+c', description: 'Copy boxes',
+          combo: 'mod+c', description: 'Copy boxes',
           callback: function() { scope.copyBoxes(); } });
         hk.add({
-          combo: 'ctrl+v', description: 'Paste boxes',
+          combo: 'mod+v', description: 'Paste boxes',
           callback: function() { scope.pasteBoxes(); } });
         hk.add({
-          combo: 'ctrl+z', description: 'Undo',
+          combo: 'mod+z', description: 'Undo',
           callback: function() { scope.workspace.undo(); } });
         hk.add({
-          combo: 'ctrl+y', description: 'Redo',
+          combo: 'mod+y', description: 'Redo',
           callback: function() { scope.workspace.redo(); } });
         hk.add({
-          combo: 'del', description: 'Paste boxes',
+          combo: 'del', description: 'Delete boxes',
+          callback: function() { scope.deleteSelectedBoxes(); } });
+        hk.add({
+          combo: 'backspace', description: 'Delete boxes',
           callback: function() { scope.deleteSelectedBoxes(); } });
         hk.add({
           combo: '/', description: 'Find operation',
@@ -451,9 +538,66 @@ angular.module('biggraph')
 
         scope.addOperation = function(op, event) {
           addLogicalMousePosition(event);
+          // Offset event to place icon centered on the cursor.
+          // TODO: May be better to center all icons on the logical positions.
+          // Then we never need to worry about sizes.
+          event.logicalX -= 50;
+          event.logicalY -= 50;
           var box = scope.workspace.addBox(op.operationId, event, { willSaveLater: true });
           scope.onMouseDownOnBox(scope.workspace.getBox(box.id), event);
         };
+
+        // Insert an import box when a file is dropped on the board.
+        element.bind('dragover', function(e) { e.preventDefault(); });
+        element.bind('drop', function(event) {
+          event = event.originalEvent;
+          event.preventDefault();
+          addLogicalMousePosition(event);
+          var file = event.dataTransfer.files[0];
+          var op = 'Import CSV';
+          if (file.name.match(/\.json$/i)) {
+            op = 'Import JSON';
+          } else if (file.name.match(/\.parquet$/i)) {
+            op = 'Import Parquet';
+          } else if (file.name.match(/\.orc$/i)) {
+            op = 'Import ORC';
+          }
+          var box = scope.workspace.addBox(op, event, { willSaveLater: true });
+          if (op === 'Import CSV') {
+            box.parameters.infer = 'yes';
+          }
+          uploadFile(file).then(function(filename) {
+            box.parameters.filename = filename;
+            return util.post('/ajax/importBox', box);
+          }).then(function(guid) {
+            box.parameters.imported_table = guid;
+            scope.workspace.saveWorkspace();
+          }).catch(function() {
+            scope.workspace.deleteBoxes([box.id]);
+          });
+        });
+
+        function uploadFile(file) {
+          var defer = $q.defer();
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', '/ajax/upload');
+          xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {  // DONE
+              scope.$apply(function() {
+                if (xhr.status === 200) {  // SUCCESS
+                  defer.resolve(xhr.responseText);
+                } else {
+                  util.error('File upload failed.', { file: file });
+                  defer.reject(xhr);
+                }
+              });
+            }
+          };
+          var fd = new FormData();
+          fd.append('file', file);
+          xhr.send(fd);
+          return defer.promise;
+        }
 
         scope.$on('$destroy', function() {
           scope.workspace.stopProgressUpdate();
@@ -474,6 +618,17 @@ angular.module('biggraph')
 
         scope.bezier = function(x1, y1, x2, y2) {
           return ['M', x1, y1, 'C', x1 + 100, y1, ',', x2 - 100, y2, ',', x2, y2].join(' ');
+        };
+
+        scope.getDirectoryPart = function(path) {
+          if (path === undefined) { return undefined; }
+          var dir = path.split('/').slice(0, -1);
+          return dir.length === 0 ? '' : dir.join('/') + '/';
+        };
+
+        scope.getLastPart = function(path) {
+          if (path === undefined) { return undefined; }
+          return path.split('/').slice(-1)[0];
         };
       }
     };

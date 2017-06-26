@@ -1,4 +1,4 @@
-<div class="{{color}} container-fluid">
+<div class="{{color}} container-fluid" id="box-editor">
 
   <display-error caption="Cannot retrieve box metadata." error="error"></display-error>
   <a href
@@ -15,20 +15,29 @@
      class="description"></p>
   <!-- For custom boxes. -->
   <p ng-if="showHelp && boxMeta.description" class="description"> {{ boxMeta.description }} </p>
-
   <p ng-if="boxMeta.parameters.length === 0" class="text-center">
     No parameters
   </p>
-  <form ng-if="boxMeta.parameters" class="form-horizontal" ng-submit="onBlur()">
-    <operation-parameters
-        box="box"
-        meta="boxMeta"
-        output="plainParamValues"
-        parametric="parametricParamValues"
-        pflags="parametricFlags"
-        editable="true"
-        on-blur="onBlur()">
-    </operation-parameters>
-    <input type="submit" ng-show="false"><!-- For ng-submit. -->
-  </form>
+  <div class="{{showTableBrowser ? 'operation-params-size-half' : ''}}">
+    <form ng-if="boxMeta.parameters" class="form-horizontal" ng-submit="onBlur()">
+      <operation-parameters
+          box="box"
+          meta="boxMeta"
+          output="plainParamValues"
+          parametric="parametricParamValues"
+          pflags="parametricFlags"
+          editable="true"
+          on-blur="onBlur()">
+      </operation-parameters>
+      <input type="submit" ng-show="false"><!-- For ng-submit. -->
+    </form>
+    <button
+        class="btn btn-primary"
+        id="toggle-table-browser"
+        ng-show="withTableBrowser()"
+        ng-click="showTableBrowser = !showTableBrowser">
+          Tables <span class="glyphicon glyphicon-triangle-{{showTableBrowser ? 'left' : 'right'}}"></span>
+    </button>
+  </div>
+  <table-browser box="getBox()" ng-if="withTableBrowser() && showTableBrowser"></table-browser>
 </div>
