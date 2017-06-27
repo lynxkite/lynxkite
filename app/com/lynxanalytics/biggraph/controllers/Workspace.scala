@@ -37,7 +37,7 @@ case class Workspace(
     val inputs = boxes.filter(_.operationId == "Input").flatMap(b => b.parameters.get("name"))
     val outputs = boxes.filter(_.operationId == "Output").flatMap(b => b.parameters.get("name"))
     BoxMetadata(
-      categoryId = "Custom boxes",
+      categoryId = Workspace.customBoxesCategory,
       icon = icon,
       color = "natural",
       operationId = name,
@@ -106,6 +106,8 @@ object Workspace {
     if (boxes.find(_.id == "anchor").nonEmpty) new Workspace(boxes.toList)
     else new Workspace(Box("anchor", "Anchor", Map(), 0, 0, Map()) +: boxes.toList)
   }
+
+  val customBoxesCategory = "Custom boxes"
 }
 
 // Everything required for executing things in a workspace.
