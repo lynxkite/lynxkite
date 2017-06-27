@@ -22,3 +22,15 @@ tables in project snapshots: e.g. you can list all Arsenal players with `select 
 name of the snapshot between two `{backtick}` symbols.
 
 See the section on <<sql-box>> for more details on the usage of the SQL interface.
+
+[[table-browser]]
+### The table browser
+
+The table browser helps to find available table and column names for the global SQL box or for
+SQL boxes in the workspace. The following hints help with usage:
+
+* Drag table and column names into the editor box with your mouse.
+* Double click on names works too with the global SQL editor.
+* Click on the icon to expand a directory, a snapshot or a table.
+
+
