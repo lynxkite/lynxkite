@@ -12,6 +12,7 @@ import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark.sql.DataFrame
 
 import scala.concurrent.duration.Duration
+import scala.reflect.runtime.universe._
 import scala.tools.nsc.interpreter.IMain
 import scala.util.DynamicVariable
 
@@ -156,6 +157,27 @@ object ScalaScript {
       withTimeout(timeoutInSeconds) {
         ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
           compiledCode.eval().toString
+        }
+      }
+    }
+  }
+
+  def inferType(code: String, paramTypes: Map[String, String], timeoutInSeconds: Long = 10L): AnyRef = synchronized {
+    val paramString = paramTypes.map { case (k, v) => s"$k: $v" }.mkString(", ")
+    val fullCode = s"""
+    import scala.reflect.runtime.universe._
+    def typeTagOf[T: TypeTag](t: T) = typeTag[T]
+    def eval($paramString) = {
+      $code
+    }
+    typeTagOf(eval _)
+    """
+    val compiledCode = engine.compile(fullCode)
+    withContextClassLoader {
+      engine.interpret(fullCode)
+      withTimeout(timeoutInSeconds) {
+        ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
+          compiledCode.eval()
         }
       }
     }
