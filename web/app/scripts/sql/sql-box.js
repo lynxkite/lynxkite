@@ -312,6 +312,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
           },
           exec: function() { scope.$apply(function() { scope.runSQLQuery(); }); },
         });
+        scope.sqlEditor = editor;
       };
 
       scope.$on('fill sql-box from config and clear sql result', function(evt, name, config, type) {

@@ -2,8 +2,10 @@
   ng-mousedown="$event.stopPropagation()"
   ng-mousemove="$event.stopPropagation()">
   <div id="table-browser-head">
-    <i>Hint: drag table and column names into the editor box
-    with your mouse.</i>
+    <div id="table-browser-help">
+      <span>Table browser</span>
+      <help-popup href="table-browser" class="pull-right"></help-popup>
+    </div>
 
     <div class="checkbox">
       <label>
