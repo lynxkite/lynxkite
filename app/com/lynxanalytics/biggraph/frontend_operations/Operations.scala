@@ -2379,7 +2379,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       NonNegInt("walksFromOnePoint", "Number of walks from each start point", default = 10000),
       Ratio("walkAbortionProbability", "Walk abortion probability", defaultValue = "0.15"),
       Param("vertexAttrName", "Save vertex indices as", defaultValue = "first_reached"),
-      Param("edgeAttrName", "Save edge indices as", defaultValue = "firts_traversed"),
+      Param("edgeAttrName", "Save edge indices as", defaultValue = "first_traversed"),
       RandomSeed("seed", "Seed"))
     def enabled = project.hasVertexSet && project.hasEdgeBundle
 
