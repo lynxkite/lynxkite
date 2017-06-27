@@ -313,6 +313,10 @@ angular.module('biggraph')
           return false;
         };
 
+        scope.closeLastPopup = function() {
+          scope.popups.pop();
+        };
+
         scope.onClickOnPlug = function(plug, event) {
           var leftButton = event.button === 0;
           if (!leftButton || event.ctrlKey || event.shiftKey) {
@@ -504,6 +508,11 @@ angular.module('biggraph')
           callback: function(e) {
             e.preventDefault();  // Do not type "/".
             $rootScope.$broadcast('open operation search');
+          }});
+        hk.add({
+          combo: 'escape', description: 'Close last popup',
+          callback: function() {
+            scope.closeLastPopup();
           }});
 
         function setGrabCursor(e) {
