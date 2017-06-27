@@ -32,36 +32,39 @@ angular
 
     $routeProvider
       .when('/', {
-        templateUrl: 'views/splash.html',
+        templateUrl: 'scripts/splash/splash.html',
         controller: 'SplashCtrl',
       })
-      .when('/project/:project*', {
-        templateUrl: 'views/project.html',
-        controller: 'ProjectViewCtrl',
-        reloadOnSearch: false,
+      .when('/workspace/:workspaceName*', {
+        templateUrl: 'scripts/workspace/workspace-entry-point.html',
+        controller: 'WorkspaceEntryPointCtrl',
       })
-      .when('/demoMode', {
-        templateUrl: 'views/demoMode.html',
+      .when('/demo-mode', {
+        templateUrl: 'scripts/demo-mode.html',
         controller: 'DemoModeCtrl',
       })
       .when('/login', {
-        templateUrl: 'views/login.html',
+        templateUrl: 'scripts/login.html',
         controller: 'LoginCtrl',
       })
-      .when('/changepassword', {
-        templateUrl: 'views/changepassword.html',
+      .when('/change-password', {
+        templateUrl: 'scripts/change-password.html',
         controller: 'ChangePasswordCtrl',
       })
       .when('/users', {
-        templateUrl: 'views/users.html',
+        templateUrl: 'scripts/users.html',
         controller: 'UsersCtrl',
       })
       .when('/cleaner', {
-        templateUrl: 'views/cleaner.html',
+        templateUrl: 'scripts/cleaner.html',
         controller: 'CleanerCtrl',
       })
+      .when('/backup', {
+        templateUrl: 'scripts/backup.html',
+        controller: 'BackupCtrl',
+      })
       .when('/logs', {
-        templateUrl: 'views/logs.html',
+        templateUrl: 'scripts/logs.html',
         controller: 'LogsCtrl',
       })
       .otherwise({

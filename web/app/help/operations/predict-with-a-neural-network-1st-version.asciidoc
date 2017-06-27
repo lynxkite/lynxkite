@@ -1,4 +1,4 @@
-### Predict with a neural network 1st version
+### Predict with a neural network (1st version)
 
 *Warning! Experimental operation.*
 
@@ -78,7 +78,8 @@ The minimum size of subgraphs chosen for training.
 The maximum size of subgraphs chosen for training.
 
 [[trainingradius]] Radius for training subgraphs::
-The subgraphs are chosen as follows. We choose a single vertex at random and get
+If 0, the whole graph is used as one single training subgraph. Otherwise
+the subgraphs are chosen as follows. We choose a single vertex at random and get
 all the vertices whose distance from the chosen one is at most this number.
 If the number of these vertices is less than the minimum given above, then we choose
 another node and get its environment. We repeat this procedure until there are

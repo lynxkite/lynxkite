@@ -11,7 +11,6 @@ import play.api.libs.json.Json
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers.CommonProjectState
-import com.lynxanalytics.biggraph.controllers.ObsoleteProject
 import com.lynxanalytics.biggraph.controllers.RootProjectState
 import com.lynxanalytics.biggraph.controllers.SegmentationState
 
@@ -214,7 +213,8 @@ object MetaRepositoryManager {
         state.scalarGUIDs.mapValues(newGUID),
         state.segmentations.mapValues(updatedSegmentation),
         state.notes,
-        state.elementNotes)
+        state.elementNotes,
+        state.elementMetadata)
     def updatedSegmentation(segmentation: SegmentationState): SegmentationState =
       SegmentationState(
         updatedProject(segmentation.state),
@@ -227,7 +227,8 @@ object MetaRepositoryManager {
         rootState.previousCheckpoint,
         rootState.lastOperationDesc,
         rootState.lastOperationRequest,
-        rootState.viewRecipe)
+        rootState.viewRecipe,
+        rootState.workspace)
 
     val oldRepo = MetaGraphManager.getCheckpointRepo(src)
     for ((checkpoint, state) <- oldRepo.allCheckpoints) {
@@ -242,11 +243,7 @@ object MetaRepositoryManager {
         // We already use version 1 tags that are GUID agnostic. All we need to do is copy the tags.
         mm.setTags(oldTags)
       case 0 =>
-        // First we upgrade guids
-        val guidsFixedTags = oldTags.mapValues(g => guidMapping.getOrElse(g, g))
-        val v1TagRoot = TagRoot.temporaryRoot
-        v1TagRoot.setTags(guidsFixedTags)
-        ObsoleteProject.migrateV1ToV2(v1TagRoot, mm)
+        throw new AssertionError(s"Project version $projectVersion is no longer supported")
       case _ =>
         assert(false, s"Unknown project version $projectVersion")
     }

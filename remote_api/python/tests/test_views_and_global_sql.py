@@ -6,6 +6,7 @@ from datetime import datetime
 class TestViewsAndGlobalSql(unittest.TestCase):
 
   lk = lynx.LynxKite()
+  lk._request('/ajax/discardAllReallyIMeanIt')
   p = lk.new_project()
   p.exampleGraph()
 
@@ -17,6 +18,12 @@ class TestViewsAndGlobalSql(unittest.TestCase):
     '''Used to check whether a view really points to the project p.'''
     names = sorted([i['name'] for i in view.take(4)])
     self.assertEqual(names, ['Adam', 'Bob', 'Eve', 'Isolated Joe'])
+
+  def test_upload(self):
+    csv = 'name\nAdam\nBob\nEve\nIsolated Joe'
+    path = self.lk.upload(csv)
+    view = self.lk.import_csv(path)
+    self.check_view(view)
 
   def test_global_sql_with_project_input(self):
     view = self.generate_view()

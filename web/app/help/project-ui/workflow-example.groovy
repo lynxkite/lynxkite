@@ -13,7 +13,7 @@ if (params['degree'] != '') {
   // The keys can be constructed similarly.
   // For aggregations you can just list the attribute you need.
   project.aggregateOnNeighbors(
-    "aggregate-count of ${params['degree']}": 'max',
+    "aggregate_count of ${params['degree']}": 'max',
     direction: 'incoming edges',
     prefix: 'neighborhood')
 

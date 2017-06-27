@@ -457,6 +457,9 @@ trait UniqueSortedRDD[K, V] extends SortedRDD[K, V] {
   override def mapValues[U](f: V => U)(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, U] =
     mapValuesRecipe(f).trustedUnique
 
+  override def flatMapValues[U](f: V => TraversableOnce[U])(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, U] =
+    flatMapValuesRecipe(f).trustedUnique
+
   override def filter(f: ((K, V)) => Boolean): UniqueSortedRDD[K, V] =
     filterRecipe(f).trustedUnique
 
@@ -530,9 +533,12 @@ private[spark_util] class SortedArrayRDD[K: Ordering, V](data: RDD[(K, V)], need
   override val partitioner = data.partitioner
   override def compute(split: Partition, context: TaskContext): Iterator[(Int, Array[(K, V)])] = {
     val it = data.iterator(split, context)
-    val array = it.toArray
-    if (needsSorting) Sorting.quickSort(array)(Ordering.by[(K, V), K](_._1))
-    Iterator((split.index, array))
+    Iterator((split.index, it)).map {
+      case (idx, it) =>
+        val array = it.toArray
+        if (needsSorting) Sorting.quickSort(array)(Ordering.by[(K, V), K](_._1))
+        (idx, array)
+    }
   }
 }
 
@@ -637,11 +643,17 @@ object RestrictedArrayBackedSortedRDD {
     arrayRDD: SortedArrayRDD[K, V],
     ids: IndexedSeq[K]): RDD[(K, V)] = {
     val partitioner = arrayRDD.partitioner.get
-    arrayRDD.mapPartitions(
-      { it =>
-        val (pid, array) = it.next
-        val idsInThisPartition = ids.filter(id => partitioner.getPartition(id) == pid)
-        BinarySearchUtils.findIds[K, V](array, idsInThisPartition, 0, array.size)
+    arrayRDD.mapPartitionsWithIndex(
+      {
+        case (pid, it) =>
+          val idsInThisPartition = ids.filter(id => partitioner.getPartition(id) == pid)
+          // Skip potentially expensive it.next in case arrayRDD is a SortedArrayRDD.
+          if (idsInThisPartition.size > 0) {
+            val (_, array) = it.next
+            BinarySearchUtils.findIds[K, V](array, idsInThisPartition, 0, array.size)
+          } else {
+            Iterator()
+          }
       },
       preservesPartitioning = true)
   }

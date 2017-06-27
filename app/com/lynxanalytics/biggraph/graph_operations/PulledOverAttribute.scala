@@ -59,10 +59,10 @@ case class PulledOverVertexAttribute[T]()
           originalAttr.sortedJoin(joinableFunction).mapValues { case (value, edge) => value }
         originallyPartitioned.sortedRepartition(destinationPartitioner)
       } else {
-        val originalToDestinationID = function
+        val originalToDestinationId = function
           .map { case (id, edge) => (edge.dst, edge.src) }
           .sort(originalPartitioner)
-        originalToDestinationID.sortedJoin(originalAttr)
+        originalToDestinationId.sortedJoin(originalAttr)
           .values
           .sortUnique(destinationPartitioner)
       }

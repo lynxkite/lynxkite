@@ -1,93 +1,226 @@
 'use strict';
 
+module.exports = function() {};
+
 var lib = require('../test-lib.js');
-var left = lib.left;
-var right = lib.right;
 
 module.exports = function(fw) {
-  fw.statePreservingTest(
-    'test-example project with example graph',
-    'SQL default query works',
-    function() {
-      left.runSql();
-
-      left.expectSqlResult(
-        ['age', 'gender', 'id', 'income', 'location', 'name'],
-        [
-          ['20.3', 'Male', '0', '1000.0', '[40.71448,-74.00598]', 'Adam'],
-          ['18.2', 'Female', '1', 'null', '[47.5269674,19.0323968]', 'Eve'],
-          ['50.3', 'Male', '2', '2000.0', '[1.352083,103.819836]', 'Bob'],
-          ['2.0', 'Male', '3', 'null', '[-33.8674869,151.2069902]', 'Isolated Joe'],
-        ]);
-    });
-
   fw.transitionTest(
-    'test-example project with example graph',
-    'SQL creating segmentation works',
+    'test-example workspace with example graph',
+    'SQL box added',
     function() {
-      left.runSql('select age, gender, name from vertices');
-      left.startSqlSaving();
-
-      // Choose in-project table format, and save.
-      left.side.element(by.css('#exportFormat option[value="segmentation"]')).click();
-      left.side.element(by.css('#exportSegmentation')).sendKeys('exported_segmentation');
-      left.executeSqlSaving();
-      lib.left.openSegmentation('exported_segmentation');
-      expect(lib.right.segmentCount()).toEqual(4);
-      expect(lib.right.vertexAttribute('age').isPresent()).toBe(true);
-      expect(lib.right.vertexAttribute('gender').isPresent()).toBe(true);
-      expect(lib.right.vertexAttribute('name').isPresent()).toBe(true);
+      lib.workspace.addBox({
+        id: 'sql', name: 'SQL1', x: 100, y: 200 });
+      lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
+      var table = lib.workspace.openStateView('sql', 'table').table;
+      table.expect(
+        ['age', 'gender', 'id', 'income', 'location', 'name'],
+        ['Double', 'String', 'Long', 'Double', '(Double, Double)', 'String'],
+        [
+          ['20.3', 'Male', '0', '1000', '(40.71448,-74.00598)', 'Adam'],
+          ['18.2', 'Female', '1', 'null', '(47.5269674,19.0323968)', 'Eve'],
+          ['50.3', 'Male', '2', '2000', '(1.352083,103.819836)', 'Bob'],
+          ['2', 'Male', '3', 'null', '(-33.8674869,151.2069902)', 'Isolated Joe'],
+        ]);
     }, function() {});
 
-  fw.statePreservingTest(
-    'test-example project with example graph',
-    'SQL works for edge attributes',
-    function() {
-      left.runSql('select edge_comment, src_name from edges order by edge_comment');
+  function runSQL(query) {
+    lib.workspace.editBox('sql', { sql: query });
+    return lib.workspace.getStateView('sql', 'table').table;
+  }
 
-      left.expectSqlResult(
-        ['edge_comment', 'src_name'],
+  function sqlTest(name, query, checks, solo) {
+    // These tests do not fully preserve the state, as they change the query.
+    // But they can be run in any order, since they do not depend on the currently set query.
+    fw.statePreservingTest(
+      'SQL box added',
+      name,
+      function() {
+        checks(runSQL(query));
+      }, solo);
+  }
+
+  function sqlSimpleTest(name, query, resultNames, resultTypes, resultRows, solo) {
+    sqlTest(name, query, function(table) {
+      table.expect(resultNames, resultTypes, resultRows);
+    }, solo);
+  }
+
+  sqlSimpleTest(
+    'SQL works for edge attributes',
+    'select edge_comment, src_name from edges order by edge_comment',
+    ['edge_comment', 'src_name'],
+    ['String', 'String'],
+    [
+      [ 'Adam loves Eve', 'Adam' ],
+      [ 'Bob envies Adam', 'Bob' ],
+      [ 'Bob loves Eve', 'Bob' ],
+      [ 'Eve loves Adam', 'Eve' ],
+    ]);
+
+  sqlSimpleTest(
+    '"order by" works right',
+    'select id, name from vertices order by name',
+    ['id', 'name'],
+    ['Long', 'String'],
+    [
+      [ '0', 'Adam' ],
+      [ '2', 'Bob' ],
+      [ '1', 'Eve' ],
+      [ '3', 'Isolated Joe' ],
+    ]);
+
+  sqlTest(
+    'sql result table ordering works right with numbers',
+    'select age, name from vertices',
+    function(table) {
+      table.clickColumn('age');
+      table.expect(
+        ['age', 'name'],
+        ['Double', 'String'],
         [
-          [ 'Adam loves Eve', 'Adam' ],
-          [ 'Bob envies Adam', 'Bob' ],
-          [ 'Bob loves Eve', 'Bob' ],
-          [ 'Eve loves Adam', 'Eve' ],
+          [ '2', 'Isolated Joe' ],
+          [ '18.2', 'Eve' ],
+          [ '20.3', 'Adam' ],
+          [ '50.3', 'Bob' ],
+        ]);
+      table.clickColumn('name');
+      table.expect(
+        ['age', 'name'],
+        ['Double', 'String'],
+        [
+          [ '20.3', 'Adam' ],
+          [ '50.3', 'Bob' ],
+          [ '18.2', 'Eve' ],
+          [ '2', 'Isolated Joe' ],
+        ]);
+      table.clickColumn('age');
+      table.clickColumn('age');
+      table.expect(
+        ['age', 'name'],
+        ['Double', 'String'],
+        [
+          [ '50.3', 'Bob' ],
+          [ '20.3', 'Adam' ],
+          [ '18.2', 'Eve' ],
+          [ '2', 'Isolated Joe' ],
         ]);
     });
 
-  fw.statePreservingTest(
-    'test-example project with example graph',
-    '"order by" works right',
-    function() {
-      left.runSql('select id, name from vertices order by name');
-
-      left.expectSqlResult(
-        ['id', 'name'],
+  sqlTest(
+    'sql result table ordering works right with nulls',
+    'select name, income from vertices',
+    function(table) {
+      table.clickColumn('income');
+      table.expect(
+        ['name', 'income'],
+        ['String', 'Double'],
         [
-          [ '0', 'Adam' ],
-          [ '2', 'Bob' ],
-          [ '1', 'Eve' ],
-          [ '3', 'Isolated Joe' ],
+          [ 'Eve', 'null' ],
+          [ 'Isolated Joe', 'null' ],
+          [ 'Adam', '1000' ],
+          [ 'Bob', '2000' ],
         ]);
+      table.clickColumn('income');
+      table.expect(
+        ['name', 'income'],
+        ['String', 'Double'],
+        [
+          [ 'Bob', '2000' ],
+          [ 'Adam', '1000' ],
+          [ 'Isolated Joe', 'null' ],
+          [ 'Eve', 'null' ],
+        ]);
+      table.close();
+      lib.workspace.addBox({
+        id: 'new_attr', name: 'Derive vertex attribute', x: 400, y: 150, after: 'eg0', params: {
+          expr: 'income === 1000 ? \'apple\' : \'orange\'',
+          output: 'new_attr',
+          type: 'String',
+        }
+      });
+      lib.workspace.connectBoxes('new_attr', 'project', 'sql', 'input');
+      table = lib.workspace.openStateView('sql', 'table');
+      table = runSQL('select new_attr from vertices');
+      table.clickColumn('new_attr');
+      table.expect(
+        ['new_attr'],
+        ['String'],
+        [
+          [ 'null' ],
+          [ 'null' ],
+          [ 'apple' ],
+          [ 'orange' ],
+        ]);
+      table.close();
+      lib.workspace.deleteBoxes(['new_attr']);
+      lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
+      lib.workspace.openStateView('sql', 'table');
     });
 
   fw.transitionTest(
-    'empty test-example project',
+    'empty test-example workspace',
     'SQL runs nice on belongs to reached from project and segmentation',
     function() {
-      left.runOperation('New vertex set', { size: '100' });
-      left.runOperation('Add random vertex attribute', { seed: '1' });
-      left.runOperation('Copy graph into a segmentation');
-      left.openSegmentation('self_as_segmentation');
-      left.runSql(
+      lib.workspace.addBox({
+        id: 'vs', name: 'Create vertices', x: 100, y: 100, params: { size: '100' }});
+      lib.workspace.addBox({
+        after: 'vs',
+        id: 'rnd', name: 'Add random vertex attribute', x: 100, y: 200, params: { seed: '1' }});
+      lib.workspace.addBox({
+        after: 'rnd',
+        id: 'copy', name: 'Copy graph into a segmentation', x: 100, y: 300 });
+      lib.workspace.addBox({
+        id: 'sql', name: 'SQL1', x: 100, y: 400 });
+      lib.workspace.connectBoxes('copy', 'project', 'sql', 'input');
+      lib.workspace.openStateView('sql', 'table');
+      var table = runSQL(
         'select sum(base_random / segment_random) as sum from `self_as_segmentation|belongs_to`');
-      right.runSql('select sum(base_random - segment_random) as error from belongs_to');
-    },
+      table.expect(['sum'], ['Double'], [['100']]);
+    }, function() {});
+
+  fw.transitionTest(
+    'test-example workspace with example graph',
+    'SQL1 box table browser',
     function() {
-      left.expectSqlResult(['sum'], [['100.0']]);
-      right.expectSqlResult(['error'], [['0.0']]);
+      lib.workspace.addBox({
+        id: 'sql', name: 'SQL1', x: 100, y: 200 });
+      lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
+    }, function() {
+      var se = lib.workspace.openBoxEditor('sql');
+      var tableBrowser = se.getTableBrowser();
+      tableBrowser.toggle();
+      tableBrowser.expectNode([0], 'edge_attributes', '`edge_attributes`');
+      tableBrowser.expectNode([1], 'edges', '`edges`');
+      tableBrowser.expectNode([2], 'vertices', '`vertices`');
+      tableBrowser.toggleNode([2]);
+      tableBrowser.expectNode([2, 1], 'age (Double)', '`age`');
     });
 
+  fw.transitionTest(
+    'test-example workspace with example graph',
+    'SQL2 box table browser',
+    function() {
+      lib.workspace.addBox({ id: 'eg1', name: 'Create example graph', x: 350, y: 100 });
+      lib.workspace.addBox({
+        id: 'sql', name: 'SQL2', x: 100, y: 200 });
+      lib.workspace.connectBoxes('eg0', 'project', 'sql', 'one');
+      lib.workspace.connectBoxes('eg1', 'project', 'sql', 'two');
+    }, function() {
+      var se = lib.workspace.openBoxEditor('sql');
+      var tableBrowser = se.getTableBrowser();
+      tableBrowser.toggle();
+      tableBrowser.expectNode([0], 'one|edge_attributes', '`one|edge_attributes`');
+      tableBrowser.expectNode([1], 'one|edges', '`one|edges`');
+      tableBrowser.expectNode([2], 'one|vertices', '`one|vertices`');
+      tableBrowser.expectNode([3], 'two|edge_attributes', '`two|edge_attributes`');
+      tableBrowser.expectNode([4], 'two|edges', '`two|edges`');
+      tableBrowser.expectNode([5], 'two|vertices', '`two|vertices`');
+      tableBrowser.toggleNode([2]);
+      tableBrowser.expectNode([2, 1], 'age (Double)', '`age`');
+    });
+
+  /*
   fw.statePreservingTest(
     'test-example project with example graph',
     'Save SQL result as CSV works',
@@ -116,7 +249,7 @@ module.exports = function(fw) {
     'empty test-example project',
     'table export and reimport',
     function() {
-      left.runOperation('New vertex set', { size: '100' });
+      left.runOperation('Create vertices', { size: '100' });
       left.runOperation('Add random vertex attribute', { name: 'random1', seed: '1' });
       left.runOperation('Add random vertex attribute', { name: 'random2', seed: '2' });
       left.runOperation('Add rank attribute', { keyattr: 'random1', rankattr: 'rank1' });
@@ -128,9 +261,13 @@ module.exports = function(fw) {
       left.side.$('#exportFormat option[value="table"]').click();
       left.side.$('#exportKiteTable').sendKeys('Random Edges');
       left.executeSqlSaving();
+      // Test overwriting.
+      left.startSqlSaving();
+      left.executeSqlSaving();
+      lib.confirmSweetAlert('Entry already exists');
 
-      left.runOperation('Vertex attribute to double', { attr: 'ordinal' });
-      left.runOperation('Vertex attribute to string', { attr: 'ordinal' });
+      left.runOperation('Convert vertex attribute to Double', { attr: 'ordinal' });
+      left.runOperation('Convert vertex attribute to String', { attr: 'ordinal' });
       left.runOperation(
         'Import edges for existing vertices',
         {
@@ -141,11 +278,11 @@ module.exports = function(fw) {
         });
 
       left.runSql('select sum(rank1) as r1sum, sum(rank2) as r2sum from edge_attributes');
-      left.expectSqlResult(['r1sum', 'r2sum'], [['4950.0', '4950.0']]);
+      left.expectSqlResult(['r1sum', 'r2sum'], ['Double', 'Double'], [['4950', '4950']]);
 
       left.runSql(
         'select min(edge_rank1 = src_ordinal) as srcgood, min(edge_rank2 = dst_ordinal) as dstgood from edges');
-      left.expectSqlResult(['srcgood', 'dstgood'], [['true', 'true']]);
+      left.expectSqlResult(['srcgood', 'dstgood'], ['Boolean', 'Boolean'], [['true', 'true']]);
     },
     function() {
     });
@@ -195,7 +332,7 @@ module.exports = function(fw) {
     'empty test-example project',
     'test-example project with 100 vertices',
     function() {
-      left.runOperation('New vertex set', { size: '100'});
+      left.runOperation('Create vertices', { size: '100'});
       var maxRows = left.side.element(by.css('#max-rows'));
 
       maxRows.clear().sendKeys('1000');
@@ -312,5 +449,5 @@ module.exports = function(fw) {
       lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
       expect(lib.getACEText(editor)).toBe('0');
     });
-
+*/
 };

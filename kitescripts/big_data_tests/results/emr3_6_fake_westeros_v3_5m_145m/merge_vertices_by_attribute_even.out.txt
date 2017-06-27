@@ -1,6 +1,0 @@
-STARTING SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/merge_vertices_by_attribute_even.groovy with params List((testDataSet,fake_westeros_v3_5m_145m))
-id: <computed>
-rnd_std_uniform_average: {"labelType":"between","labels":["0.00000010","0.00000049","0.00000248","0.00001245","0.00006251","0.00031376","0.00157500","0.00790608","0.03968633","0.19921426","0.99999989"],"sizes":[2,10,50,251,1256,6306,31655,158902,797639,4003929]}
-label: {"labelType":"between","labels":["0.0","1.0","4.7","21.9","102.3","478.2","2236.1","10456.4","48896.6","228652.5","1069234.4","4999999.0"],"sizes":[1,4,17,81,376,1758,8220,38440,179756,840582,3930765]}
-!vertex_count_delta: -495000000
-FINISHED SCRIPT /home/hadoop/biggraphstage/kitescripts/big_data_tests/merge_vertices_by_attribute_even.groovy, took 2472 seconds

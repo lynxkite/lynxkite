@@ -1,0 +1,12 @@
+### Output
+
+This special box represents an output that goes outside of this workspace.
+When this workspace is used as a custom box in another workspace, the custom box
+will have one output for each output box.
+
+Output boxes without a name are ignored. Each output box must have a different name.
+
+====
+[[name]] Name::
+The name of the output, when the workspace is used as a custom box.
+====

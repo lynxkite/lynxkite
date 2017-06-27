@@ -1,7 +1,7 @@
 # Can be set from the command line. E.g.:
 #   make ecosystem-release VERSION=2.0.0
 export VERSION=snapshot
-export BDT=normal  # Big data test test set size.
+export TEST_SET_SIZE=medium
 
 find = git ls-files --others --exclude-standard --cached
 pip = .build/pip3-packages-installed
@@ -10,8 +10,15 @@ pip = .build/pip3-packages-installed
 .PHONY: all
 all: backend
 
+# Remove all ignored files. The ecosystem folder is ignored because of files created by
+# docker containers are owned by root and cannot be deleted by others.
+# Deleting the .idea folder messes with IntelliJ, so exclude that too.
+.PHONY: clean
+clean:
+	git clean -f -X -d --exclude="!.idea/" --exclude="!ecosystem/**"
+
 .build/gulp-done: $(shell $(find) web/app) web/gulpfile.js web/package.json
-	cd web && yarn && gulp && cd - && touch $@
+	cd web && LC_ALL=C yarn --frozen-lockfile && gulp && cd - && touch $@
 .build/documentation-verified: $(shell $(find) app) .build/gulp-done
 	./tools/check_documentation.sh && touch $@
 $(pip): python_requirements.txt
@@ -25,11 +32,11 @@ $(pip): python_requirements.txt
 		$(shell $(find) web/test) build.sbt .build/backend-done \
 		.build/documentation-verified .build/gulp-done
 	./.test_frontend.sh && touch $@
-.build/chronomaster-test-passed: $(shell $(find) chronomaster) $(pip)
+.build/chronomaster-test-passed: $(shell $(find) chronomaster remote_api/python) $(pip)
 	chronomaster/test.sh && touch $@
 .build/remote_api-python-test-passed: $(shell $(find) remote_api/python) .build/backend-done $(pip)
 	tools/with_lk.sh remote_api/python/test.sh && touch $@
-.build/documentation-done-${VERSION}: $(shell $(find) ecosystem/documentation remote_api/python)
+.build/documentation-done-${VERSION}: $(shell $(find) ecosystem/documentation remote_api/python) python_requirements.txt
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
 		$(shell $(find) ecosystem/native remote_api chronomaster ecosystem/release/lynx/luigi_tasks) \
@@ -55,15 +62,11 @@ chronomaster-test: .build/chronomaster-test-passed
 .PHONY: remote_api-test
 remote_api-test: .build/remote_api-python-test-passed
 .PHONY: ecosystem-test
-ecosystem-test: chronomaster-test remote_api-test
+ecosystem-test: # TEMPORARILY DISABLED FOR "BOXES" # chronomaster-test remote_api-test
 .PHONY: test
 test: backend-test frontend-test ecosystem-test
 .PHONY: big-data-test
 big-data-test: .build/ecosystem-done
-	./test_ecosystem.py \
-		--lynx_release_dir ecosystem/native/dist \
-		--test \
-		--bigdata \
-		--bigdata_test_set ${BDT}
+	./test_big_data.py --test_set_size ${TEST_SET_SIZE} --rm
 .PHONY: statter
 statter: .build/statter-done

@@ -57,8 +57,10 @@ class EMRLib:
   def __init__(self, ec2_key_file, ec2_key_name, region='us-east-1'):
     self.ec2_key_file = ec2_key_file
     self.ec2_key_name = ec2_key_name
+    self.ec2_client = boto3.client('ec2', region_name=region)
     self.emr_client = boto3.client('emr', region_name=region)
     self.rds_client = boto3.client('rds', region_name=region)
+    self.s3_client = boto3.client('s3', region_name=region)
     _, self.ssh_tmp_hosts_file = tempfile.mkstemp()
 
   def wait_for_services(self, services):
@@ -69,7 +71,15 @@ class EMRLib:
     while True:
       i = 0
       while i < len(services):
-        if services[i].is_ready():
+        service_ready = False
+        try:
+          service_ready = services[i].is_ready()
+        except botocore.exceptions.ClientError as e:
+          if e.response['Error']['Code'] == 'ThrottlingException':
+            time.sleep(60)
+          else:
+            raise e
+        if service_ready:
           print('{name!s} is ready, waiting for {n!s} more services to start...'.format(
               name=services[i],
               n=(len(services) - 1)
@@ -82,16 +92,19 @@ class EMRLib:
       time.sleep(15)
 
   def create_or_connect_to_emr_cluster(
-          self, name, log_uri,
+          self, name, log_uri, owner, expiry,
           instance_count=2,
-          hdfs_replication='2'):
+          hdfs_replication='2',
+          applications=''):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
       if cluster['Name'] == name:
         cluster_id = cluster['Id']
-        print('Reusing existing cluster: ' + cluster_id)
-        return EMRCluster(cluster_id, self)
+        instances = self.emr_client.list_instances(ClusterId=cluster_id)['Instances']
+        if len(instances) == instance_count:
+          print('Reusing existing cluster: ' + cluster_id)
+          return EMRCluster(cluster_id, self)
     print('Creating new cluster.')
     # We're passing these options to the namenode and to the hdfs datanodes so
     # that they will make their monitoring data accessible via the jmx interface.
@@ -99,6 +112,9 @@ class EMRLib:
         '-Dcom.sun.management.jmxremote.authenticate=false ' \
         '-Dcom.sun.management.jmxremote.ssl=false ' \
         '-Dcom.sun.management.jmxremote.port={port} ${{{name}}}"'
+    emr_applications = []
+    if applications:
+      emr_applications = [{'Name': app} for app in applications.split(',')]
     res = self.emr_client.run_job_flow(
         Name=name,
         LogUri=log_uri,
@@ -144,9 +160,20 @@ class EMRLib:
                 }
             }
         ],
+        Applications=emr_applications,
         JobFlowRole="EMR_EC2_DefaultRole",
         VisibleToAllUsers=True,
-        ServiceRole="EMR_DefaultRole")
+        ServiceRole="EMR_DefaultRole",
+        Tags=[{
+            'Key': 'owner',
+            'Value': owner
+        }, {
+            'Key': 'expiry',
+            'Value': expiry
+        }, {
+            'Key': 'name',
+            'Value': name
+        }])
     return EMRCluster(res['JobFlowId'], self)
 
   def create_or_connect_to_rds_instance(self, name):
@@ -210,6 +237,7 @@ class EMRCluster:
   def __init__(self, id, lib):
     self.id = id
     self.emr_client = lib.emr_client
+    self.ec2_client = lib.ec2_client
     self.ssh_cmd = [
         'ssh',
         '-T',
@@ -219,7 +247,8 @@ class EMRCluster:
         '-o', 'StrictHostKeyChecking=no',
         '-o', 'ServerAliveInterval=30',
     ]
-    self._master = None
+    self._master_dns = None
+    self._master_instance = None
 
   def __str__(self):
     return 'EMR(' + self.id + ')'
@@ -228,13 +257,26 @@ class EMRCluster:
     '''Raw description of the cluster.'''
     return self.emr_client.describe_cluster(ClusterId=self.id)
 
-  def master(self):
+  def master_dns(self):
     '''DNS name of the master host.'''
-    if self._master is None:
+    if self._master_dns is None:
       desc = self.desc()
       if self.is_ready(desc=desc):
-        self._master = desc['Cluster']['MasterPublicDnsName']
-    return self._master
+        self._master_dns = desc['Cluster']['MasterPublicDnsName']
+    return self._master_dns
+
+  def master_instance(self):
+    '''The Ec2InstanceId of the master host.'''
+    if not self._master_instance:
+      instances = self.emr_client.list_instances(ClusterId=self.id)['Instances']
+      self._master_instance = [i['Ec2InstanceId'] for i in instances
+                               if i['PublicDnsName'] == self.master_dns()][0]
+    return self._master_instance
+
+  def reset_cache(self):
+    '''Some properties (e.g. dns of the master) is cached. This method resets these kind of data.'''
+    self._master_dns = None
+    self._master_instance = None
 
   def is_ready(self, desc=None):
     '''Is the cluster started up and ready?'''
@@ -256,7 +298,7 @@ class EMRCluster:
     # Stop on errors by default.
     cmds = 'set -e\n' + cmds
     return call_cmd(
-        self.ssh_cmd + ['hadoop@' + self.master()],
+        self.ssh_cmd + ['hadoop@' + self.master_dns()],
         input=cmds,
         print_output=print_output,
         assert_successful=assert_successful)
@@ -332,7 +374,7 @@ EOF
             '-r',
             '--copy-dirlinks',
             src,
-            'hadoop@' + self.master() + ':' + dst
+            'hadoop@' + self.master_dns() + ':' + dst
         ])
 
   def rsync_down(self, src, dst):
@@ -345,7 +387,7 @@ EOF
             ' '.join(self.ssh_cmd),
             '-r',
             '--copy-dirlinks',
-            'hadoop@' + self.master() + ':' + src,
+            'hadoop@' + self.master_dns() + ':' + src,
             dst
         ])
 
@@ -357,3 +399,16 @@ EOF
   def terminate(self):
     self.emr_client.terminate_job_flows(
         JobFlowIds=[self.id])
+
+  def associate_address(self, ip):
+    assert self.is_ready(), 'Can not associate new IP address before the cluster is ready.'
+    old_dns = self.master_dns()
+    master = self.master_instance()
+    self.ec2_client.associate_address(InstanceId=master, PublicIp=ip)
+    self.reset_cache()
+    # after associating a new address to the master, the public dns changes but it takes some time
+    # until the change propagates to the cluster description
+    print('Waiting for updated master dns address to appear...')
+    while self.desc()['Cluster']['MasterPublicDnsName'] == old_dns:
+      time.sleep(15)
+    print('Dns updated successfully.')

@@ -1,0 +1,96 @@
+.operation-selector .box {
+  right: 35px;
+  background: rgba(0, 0, 0, 0.75);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  padding: 0;
+  max-width: 40%; /* Avoid very long lines and very sparse forms. */
+  margin-bottom: 20px;
+  max-height: 90%;
+  position: absolute;
+  margin-left: 35px;
+  overflow-y: auto;
+  z-index: 4; /* This has to be over the state view and the box editor panels. */
+}
+.operation-selector .box h1 {
+  padding: 15px;
+  margin: 0;
+  color: black;
+}
+
+
+.operation-selector .categories {
+  background: rgba(0, 0, 0, 0.75);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  width: 35px;
+  padding: 0;
+  z-index: 4;
+}
+.operation-toolbox.open .categories {
+  box-shadow: none;
+}
+.operation-selector .category {
+  padding: 10px;
+  text-align: center;
+  font: 15px Arial;
+}
+.operation-selector .category.active {
+  padding-left: 9px;
+  border-left: 1px solid transparent;
+}
+.operation-selector .categories.uneditable {
+  cursor: not-allowed;
+}
+
+.operation-selector .box .clicky:hover { color: black !important; }
+
+@mixin make-color($name, $base) {
+  .operation-selector {
+    .category.#{$name} { color: $base; }
+    .category.active.#{$name} { background: $base; color: black; }
+    .box.#{$name} h1 { background: $base; }
+    .box.#{$name} .clicky:hover { background: $base; }
+    .box.#{$name} .ok-button:focus,
+    .box.#{$name} .ok-button:hover, { background: $base }
+    .box.#{$name} .operation:hover { color: $base; }
+    .box.#{$name} .clicky { color: $base; }
+    .box.#{$name} .dropdown-toggle { color: $base; }
+  }
+}
+
+@include make-color("blue", aqua);
+@include make-color("green", greenyellow);
+@include make-color("magenta", violet);
+@include make-color("pink", pink);
+@include make-color("red", #f44);
+@include make-color("yellow", gold);
+
+
+operation-selector-entry div {
+  cursor: pointer;
+  user-select: none;
+  padding: 5px;
+  color: rgba(255, 255, 255, 0.8);
+}
+operation-selector-entry:hover div {
+  background: black !important;
+}
+operation-selector-entry.highlight div {
+  color: gold !important;
+  background: black !important;
+}
+operation-selectory-entry div.disabled {
+  color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.operation-selector #filter {
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+
+.operation-selector #edit-operation-button .glyphicon-pencil {
+  color: #333;
+}

@@ -1,0 +1,36 @@
+### Lookup region
+
+For every `position` vertex attribute looks up features in a Shapefile and returns a specified
+attribute.
+
+* The lookup depends on the coordinate reference system of the feature. The input position must
+  use the same coordinate reference system as the one specified in the Shapefile.
+* If there are no matching features the output is omitted.
+* If the specified attribute does not exist for any matching feature the output is omitted.
+* If there are multiple suitable features the algorithm picks the first one.
+
+Shapefiles can be obtained from various sources, like
+http://wiki.openstreetmap.org/wiki/Shapefiles[OpenStreetMap].
+
+====
+
+*Parameters*
+
+[[position]] Position::
+The (latitude, longitude) location tuple.
+
+[[shapefile]] Shapefile::
+The https://en.wikipedia.org/wiki/Shapefile[Shapefile] used for the lookup. The list is created from
+the files in the `KITE_META/resources/shapefiles` directory. A Shapefile consist of a `.shp`, `.shx`
+and `.dbf` file of the same name.
+
+[[attribute]] Attribute from the Shapefile::
+The attribute in the Shapefile used for the output.
+
+[[ignoreUnsupportedShapes]]: Ignore unsupported shape types::
+If set `true`, silently ignores unknown shape types potentially contained by the Shapefile.
+Otherwise throws an error.
+
+[[output]] Output::
+The name of the new vertex attribute.
+====

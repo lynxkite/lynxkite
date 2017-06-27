@@ -1,0 +1,55 @@
+table-state-view {
+  overflow: auto;
+}
+
+input.form-control#sample-rows {
+  width: 65px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#table-sample {
+  margin-top: 10px;
+}
+
+#table-sample th {
+  cursor: pointer; /* Click to sort. */
+  user-select: none;
+}
+
+#table-sample .is-null,
+#table-sample .column-type {
+  font-weight: normal;
+  font-style: italic;
+  color: #666;
+}
+
+#table-sample .ordering {
+  /* Reserves a little space for the ordering triangles, even when the triangle is not displayed. */
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  overflow: visible;
+}
+
+.no-break {
+  white-space: nowrap;
+}
+
+#table-sample-spinner {
+  animation: spinner 4s infinite linear;
+  font-size: 30px;
+  opacity: 0.8;
+  /* For some reason it is positioned higher than the buttons and screws up the layout.
+   * This is a simple workaround. */
+  line-height: 0;
+  top: 10px;
+}
+
+#table-sample-error {
+  color: darkred;
+  margin-top: 10px;
+}
+
+
+

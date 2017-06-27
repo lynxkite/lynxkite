@@ -15,6 +15,7 @@ import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
+import com.lynxanalytics.biggraph.serving
 import org.apache.spark.sql.types.{ StructField, StructType }
 
 abstract class JsonServer extends mvc.Controller {
@@ -150,6 +151,7 @@ case class GlobalSettings(
   authMethods: List[AuthMethod],
   title: String,
   tagline: String,
+  workspaceParameterKinds: List[String],
   version: String)
 
 object AssertLicenseNotExpired {
@@ -223,9 +225,10 @@ object FrontendJson {
   }
   implicit val fDownloadFileRequest = json.Json.format[DownloadFileRequest]
 
-  implicit val wFEStatus = json.Json.writes[FEStatus]
-  implicit val wFEOption = json.Json.writes[FEOption]
+  implicit val fFEStatus = json.Json.format[FEStatus]
+  implicit val fFEOption = json.Json.format[FEOption]
   implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
+  implicit val fCustomOperationParameterMeta = json.Json.format[CustomOperationParameterMeta]
   implicit val wDynamicValue = json.Json.writes[DynamicValue]
   implicit val wFEScalar = json.Json.writes[FEScalar]
   implicit val wFEOperationMeta = json.Json.writes[FEOperationMeta]
@@ -262,7 +265,6 @@ object FrontendJson {
 
   implicit val rScalarValueRequest = json.Json.reads[ScalarValueRequest]
 
-  implicit val rCreateProjectRequest = json.Json.reads[CreateProjectRequest]
   implicit val rCreateDirectoryRequest = json.Json.reads[CreateDirectoryRequest]
   implicit val rDiscardEntryRequest = json.Json.reads[DiscardEntryRequest]
   implicit val rRenameEntryRequest = json.Json.reads[RenameEntryRequest]
@@ -270,16 +272,8 @@ object FrontendJson {
   implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
   implicit val rSubProjectOperation = json.Json.reads[SubProjectOperation]
   implicit val rProjectAttributeFilter = json.Json.reads[ProjectAttributeFilter]
-  implicit val rProjectFilterRequest = json.Json.reads[ProjectFilterRequest]
   implicit val rForkEntryRequest = json.Json.reads[ForkEntryRequest]
-  implicit val rUndoProjectRequest = json.Json.reads[UndoProjectRequest]
-  implicit val rRedoProjectRequest = json.Json.reads[RedoProjectRequest]
   implicit val rACLSettingsRequest = json.Json.reads[ACLSettingsRequest]
-  implicit val rHistoryRequest = json.Json.reads[HistoryRequest]
-  implicit val rAlternateHistory = json.Json.reads[AlternateHistory]
-  implicit val rSaveHistoryRequest = json.Json.reads[SaveHistoryRequest]
-  implicit val rSaveWorkflowRequest = json.Json.reads[SaveWorkflowRequest]
-  implicit val rWorkflowRequest = json.Json.reads[WorkflowRequest]
   implicit val rProjectListRequest = json.Json.reads[ProjectListRequest]
   implicit val rProjectSearchRequest = json.Json.reads[ProjectSearchRequest]
   implicit val wOperationCategory = json.Json.writes[OperationCategory]
@@ -290,12 +284,34 @@ object FrontendJson {
   implicit val wProjectList = json.Json.writes[ProjectList]
   implicit val wFEOperationSpec = json.Json.writes[FEOperationSpec]
   implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
-  implicit val wProjectHistoryStep = json.Json.writes[ProjectHistoryStep]
-  implicit val wProjectHistory = json.Json.writes[ProjectHistory]
-  implicit val wOPCategories = json.Json.writes[OpCategories]
+
+  import WorkspaceJsonFormatters._
+  implicit val fBoxOutputInfo = json.Json.format[BoxOutputInfo]
+  implicit val fProgress = json.Json.format[Progress]
+  implicit val rWorkspaceName = json.Json.reads[WorkspaceName]
+  implicit val rWorkspaceReference = json.Json.reads[WorkspaceReference]
+  implicit val wGetWorkspaceResponse = json.Json.writes[GetWorkspaceResponse]
+  implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
+  implicit val rGetOperationMetaRequest = json.Json.reads[GetOperationMetaRequest]
+  implicit val rGetProgressRequest = json.Json.reads[GetProgressRequest]
+  implicit val rGetProgressResponse = json.Json.writes[GetProgressResponse]
+  implicit val rGetProjectOutputRequest = json.Json.reads[GetProjectOutputRequest]
+  implicit val rGetTableOutputRequest = json.Json.reads[GetTableOutputRequest]
+  implicit val wTableColumn = json.Json.writes[TableColumn]
+  implicit val wGetTableOutputResponse = json.Json.writes[GetTableOutputResponse]
+  implicit val rGetPlotOutputRequest = json.Json.reads[GetPlotOutputRequest]
+  implicit val wGetPlotOutputResponse = json.Json.writes[GetPlotOutputResponse]
+  implicit val rGetVisualizationOutputRequest = json.Json.reads[GetVisualizationOutputRequest]
+  implicit val rCreateWorkspaceRequest = json.Json.reads[CreateWorkspaceRequest]
+  implicit val wBoxCatalogResponse = json.Json.writes[BoxCatalogResponse]
+  implicit val rCreateSnapshotRequest = json.Json.reads[CreateSnapshotRequest]
+  implicit val rGetExportResultRequest = json.Json.reads[GetExportResultRequest]
+  implicit val wGetExportResultResponse = json.Json.writes[GetExportResultResponse]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
+  implicit val rSQLTableBrowserNodeRequest = json.Json.reads[TableBrowserNodeRequest]
+  implicit val rTableBrowserNodeForBoxRequest = json.Json.reads[TableBrowserNodeForBoxRequest]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
   implicit val fSQLExportToTableRequest = json.Json.format[SQLExportToTableRequest]
   implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
@@ -303,19 +319,17 @@ object FrontendJson {
   implicit val rSQLExportToParquetRequest = json.Json.reads[SQLExportToParquetRequest]
   implicit val rSQLExportToORCRequest = json.Json.reads[SQLExportToORCRequest]
   implicit val rSQLExportToJdbcRequest = json.Json.reads[SQLExportToJdbcRequest]
+  implicit val wTableDesc = json.Json.writes[TableBrowserNode]
+  implicit val wSQLTableBrowserNodeResponse = json.Json.writes[TableBrowserNodeResponse]
+  implicit val wSQLColumn = json.Json.writes[SQLColumn]
   implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
   implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
-  implicit val fCSVImportRequest = json.Json.format[CSVImportRequest]
-  implicit val fJdbcImportRequest = json.Json.format[JdbcImportRequest]
-  implicit val fParquetImportRequest = json.Json.format[ParquetImportRequest]
-  implicit val fORCImportRequest = json.Json.format[ORCImportRequest]
-  implicit val fJsonImportRequest = json.Json.format[JsonImportRequest]
-  implicit val fHiveImportRequest = json.Json.format[HiveImportRequest]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
   implicit val rChangeUserPasswordRequest = json.Json.reads[ChangeUserPasswordRequest]
   implicit val rChangeUserRequest = json.Json.reads[ChangeUserRequest]
+  implicit val rDeleteUserRequest = json.Json.reads[DeleteUserRequest]
   implicit val rCreateUserRequest = json.Json.reads[CreateUserRequest]
   implicit val wFEUser = json.Json.writes[FEUser]
   implicit val wFEUserList = json.Json.writes[FEUserList]
@@ -330,10 +344,15 @@ object FrontendJson {
   implicit val rMoveToTrashRequest = json.Json.reads[MoveToTrashRequest]
   implicit val wDataFilesStats = json.Json.writes[DataFilesStats]
   implicit val wDataFilesStatus = json.Json.writes[DataFilesStatus]
+
+  implicit val wBackupSettings = json.Json.writes[BackupSettings]
+  implicit val wBackupVersion = json.Json.writes[BackupVersion]
+
 }
 
 object ProductionJsonServer extends JsonServer {
   import FrontendJson._
+  import WorkspaceJsonFormatters._
 
   AssertLicenseNotExpired()
   AssertNotRunningAndRegisterRunning()
@@ -388,28 +407,34 @@ object ProductionJsonServer extends JsonServer {
   // Play! uses the routings in /conf/routes to execute actions
 
   val bigGraphController = new BigGraphController(BigGraphProductionEnvironment)
-  def createProject = jsonPost(bigGraphController.createProject)
   def createDirectory = jsonPost(bigGraphController.createDirectory)
   def discardEntry = jsonPost(bigGraphController.discardEntry)
   def renameEntry = jsonPost(bigGraphController.renameEntry)
   def discardAll = jsonPost(bigGraphController.discardAll)
   def projectOp = jsonPost(bigGraphController.projectOp)
-  def project = jsonGet(bigGraphController.project)
   def projectList = jsonGet(bigGraphController.projectList)
   def projectSearch = jsonGet(bigGraphController.projectSearch)
-  def filterProject = jsonPost(bigGraphController.filterProject)
   def forkEntry = jsonPost(bigGraphController.forkEntry)
-  def undoProject = jsonPost(bigGraphController.undoProject)
-  def redoProject = jsonPost(bigGraphController.redoProject)
   def changeACLSettings = jsonPost(bigGraphController.changeACLSettings)
-  def getHistory = jsonGet(bigGraphController.getHistory)
-  def getOPCategories = jsonGet(bigGraphController.getOpCategories)
-  def validateHistory = jsonPost(bigGraphController.validateHistory)
-  def saveHistory = jsonPost(bigGraphController.saveHistory)
-  def saveWorkflow = jsonPost(bigGraphController.saveWorkflow)
-  def workflow = jsonGet(bigGraphController.workflow)
 
-  val sqlController = new SQLController(BigGraphProductionEnvironment)
+  val workspaceController = new WorkspaceController(BigGraphProductionEnvironment)
+  def createWorkspace = jsonPost(workspaceController.createWorkspace)
+  def getWorkspace = jsonGet(workspaceController.getWorkspace)
+  def createSnapshot = jsonPost(workspaceController.createSnapshot)
+  def getProjectOutput = jsonGet(workspaceController.getProjectOutput)
+  def getProgress = jsonGet(workspaceController.getProgress)
+  def getOperationMeta = jsonGet(workspaceController.getOperationMeta)
+  def setWorkspace = jsonPost(workspaceController.setWorkspace)
+  def undoWorkspace = jsonPost(workspaceController.undoWorkspace)
+  def redoWorkspace = jsonPost(workspaceController.redoWorkspace)
+  def boxCatalog = jsonGet(workspaceController.boxCatalog)
+  def getPlotOutput = jsonGet(workspaceController.getPlotOutput)
+  import UIStatusSerialization.fTwoSidedUIStatus
+  def getVisualizationOutput = jsonGet(workspaceController.getVisualizationOutput)
+  def getExportResultOutput = jsonGet(workspaceController.getExportResultOutput)
+
+  val sqlController = new SQLController(BigGraphProductionEnvironment, workspaceController.ops)
+  def getTableBrowserNodes = jsonGet(sqlController.getTableBrowserNodes)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
   def exportSQLQueryToTable = jsonFuturePost(sqlController.exportSQLQueryToTable)
   def exportSQLQueryToCSV = jsonFuturePost(sqlController.exportSQLQueryToCSV)
@@ -417,19 +442,21 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)
   def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
-  def importCSV = jsonPost(sqlController.importCSV)
-  def importJdbc = jsonPost(sqlController.importJdbc)
-  def importParquet = jsonPost(sqlController.importParquet)
-  def importORC = jsonPost(sqlController.importORC)
-  def importJson = jsonPost(sqlController.importJson)
-  def importHive = jsonPost(sqlController.importHive)
-  def createViewCSV = jsonPost(sqlController.createViewCSV)
-  def createViewJdbc = jsonPost(sqlController.createViewJdbc)
-  def createViewParquet = jsonPost(sqlController.createViewParquet)
-  def createViewORC = jsonPost(sqlController.createViewORC)
-  def createViewJson = jsonPost(sqlController.createViewJson)
-  def createViewHive = jsonPost(sqlController.createViewHive)
+  def importBox = jsonFuturePost(sqlController.importBox)
   def createViewDFSpec = jsonPost(sqlController.createViewDFSpec)
+
+  def getTableOutput = jsonFuture(getTableOutputData)
+  def getTableOutputData(user: serving.User, request: GetTableOutputRequest): Future[GetTableOutputResponse] = {
+    implicit val metaManager = workspaceController.metaManager
+    val table = workspaceController.getOutput(user, request.id).table
+    sqlController.getTableSample(table, request.sampleRows)
+  }
+  def getTableBrowserNodesForBox = jsonGet(getTableBrowserNodesForBoxData)
+  def getTableBrowserNodesForBoxData(
+    user: serving.User, request: TableBrowserNodeForBoxRequest): TableBrowserNodeResponse = {
+    val inputTables = workspaceController.getOperationInputTables(user, request.operationRequest)
+    sqlController.getTableBrowserNodesForBox(user, inputTables, request.path)
+  }
 
   val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
   def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
@@ -455,6 +482,7 @@ object ProductionJsonServer extends JsonServer {
   def getUsers = jsonGet(userController.getUsers)
   def changeUserPassword = jsonPost(userController.changeUserPassword, logRequest = false)
   def changeUser = jsonPost(userController.changeUser, logRequest = false)
+  def deleteUser = jsonPost(userController.deleteUser, logRequest = false)
   def createUser = jsonPost(userController.createUser, logRequest = false)
   def getUserData = jsonGet(userController.getUserData)
 
@@ -487,11 +515,14 @@ object ProductionJsonServer extends JsonServer {
       authMethods = getAuthMethods,
       title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
       tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"),
+      workspaceParameterKinds = CustomOperationParameterMeta.validKinds,
       version = version)
   }
 
   val copyController = new CopyController(BigGraphProductionEnvironment, sparkClusterController)
   def copyEphemeral = jsonPost(copyController.copyEphemeral)
+  def getBackupSettings = jsonGet(copyController.getBackupSettings)
+  def backup = jsonGet(copyController.backup)
 
   Ammonite.maybeStart()
 }

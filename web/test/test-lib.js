@@ -1,14 +1,17 @@
 'use strict';
 
-var testLib; // Forward declarations.
-var History; // Forward declarations.
+
 var request = require('request');
 var fs = require('fs');
 
+// Forward declarations.
+var testLib;
+
 var K = protractor.Key;  // Short alias.
 
+
 // Mirrors the "id" filter.
-function toID(x) {
+function toId(x) {
   return x.toLowerCase().replace(/ /g, '-');
 }
 
@@ -20,6 +23,11 @@ function Entity(side, kind, name) {
   this.kindName = kind + '-' + name;
   this.element = this.side.$('#' + this.kindName);
   this.menu = $('#menu-' + this.kindName);
+}
+
+function isMacOS() {
+  // Mac is 'darwin': https://nodejs.org/api/process.html#process_process_platform
+  return process.platform === 'darwin';
 }
 
 Entity.prototype = {
@@ -41,6 +49,7 @@ Entity.prototype = {
 
   popoff: function() {
     this.element.isPresent().then(present => {
+      if (present) { this.element.evaluate('closeMenu()'); }
       if (present) { this.element.evaluate('closeMenu()'); }
     });
   },
@@ -128,32 +137,407 @@ Entity.prototype = {
   },
 };
 
+function Workspace() {
+  this.main = element(by.id('workspace-entry-point'));
+  this.selector = element(by.css('.operation-selector'));
+  this.board = element(by.css('#workspace-drawing-board'));
+}
 
-function Side(direction) {
+Workspace.prototype = {
+  expectCurrentWorkspaceIs: function(name) {
+    expect(this.main.element(by.id('workspace-name')).getText()).toBe(name);
+    // TODO: check that workspace is error-free
+  },
+
+  close: function() {
+    this.main.element(by.id('close-workspace')).click();
+  },
+
+  openOperation: function(name) {
+    this.selector.element(by.id('operation-search')).click();
+    this.selector.element(by.id('filter')).sendKeys(name, K.ENTER);
+    return this.selector.$$('operation-selector-entry').get(0);
+  },
+
+  closeOperationSelector: function() {
+    this.selector.element(by.id('operation-search')).click();
+  },
+
+  closeLastPopup: function() {
+    browser.actions().sendKeys(K.ESCAPE).perform();
+  },
+
+  duplicate: function() {
+    if (isMacOS()) {
+      browser.actions()
+        .sendKeys(K.chord(K.META, 'c'))
+        .sendKeys(K.chord(K.META, 'v'))
+        .perform();
+    } else {
+      browser.actions()
+        .sendKeys(K.chord(K.CONTROL, 'c'))
+        .sendKeys(K.chord(K.CONTROL, 'v'))
+        .perform();
+    }
+  },
+
+  addBox: function(boxData) {
+    var id = boxData.id;
+    var after = boxData.after;
+    var inputs = boxData.inputs;
+    var params = boxData.params;
+    browser.waitForAngular();
+    browser.executeScript(`
+        $(document.querySelector('#workspace-drawing-board')).scope().workspace.addBox(
+          '${ boxData.name }',
+          { logicalX: ${ boxData.x }, logicalY: ${ boxData.y } },
+          { boxId: '${ boxData.id }' });
+        `);
+    if (after) {
+      this.connectBoxes(after, 'project', id, 'project');
+    }
+    if (inputs) {
+      for (var i = 0; i < inputs.length; ++i) {
+        var input = inputs[i];
+        this.connectBoxes(input.boxId, input.srcPlugId, id, input.dstPlugId);
+      }
+    }
+    if (params) {
+      this.editBox(id, params);
+    }
+  },
+
+  selectBoxes: function(boxIds) {
+    // Without this, we would just add additional boxes to the previous selection
+    this.openBoxEditor(boxIds[0]).close();
+    browser.actions().keyDown(protractor.Key.CONTROL).perform();
+    for (var i = 1; i < boxIds.length; ++i) {
+      this.clickBox(boxIds[i]);
+    }
+    browser.actions().keyUp(protractor.Key.CONTROL).perform();
+  },
+
+  // Protractor mouseMove only takes offsets, so first we set the mouse position to a box based on
+  // its id, and then move it to 2 other points on the screen.
+  selectArea: function(startBoxId, point1, point2) {
+    let box = this.getBox(startBoxId);
+    browser.actions()
+      .mouseMove(box, point1)
+      .keyDown(protractor.Key.SHIFT)
+      .mouseDown()
+      .mouseMove(point2)
+      .mouseUp()
+      .keyUp(protractor.Key.SHIFT)
+      .perform();
+  },
+
+  expectNumSelectedBoxes: function(n) {
+    return expect($$('g.box.selected').count()).toEqual(n);
+  },
+
+  deleteBoxes: function(boxIds) {
+    this.selectBoxes(boxIds);
+    this.main.$('#delete-selected-boxes').click();
+  },
+
+  editBox: function(boxId, params) {
+    var boxEditor = this.openBoxEditor(boxId);
+    boxEditor.populateOperation(params);
+    boxEditor.close();
+  },
+
+  addWorkspaceParameter: function(name, kind, defaultValue) {
+    var boxEditor = this.openBoxEditor('anchor');
+    boxEditor.element.$('#add-parameter').click();
+    boxEditor.element.$('#-id').sendKeys(name);
+    boxEditor.element.$('#' + name + '-type').sendKeys(kind);
+    boxEditor.element.$('#' + name + '-default').sendKeys(defaultValue);
+    boxEditor.close();
+  },
+
+  boxExists(boxId) {
+    return this.board.$('.box#' + boxId).isPresent();
+  },
+
+  boxPopupExists(boxId) {
+    return this.board.$('.popup#' + boxId).isPresent();
+  },
+
+  getBox(boxId) {
+    return this.board.$('.box#' + boxId);
+  },
+
+  getInputPlug: function(boxId, plugId) {
+    let box = this.getBox(boxId);
+    if (plugId) {
+      return box.$('#inputs #' + plugId + ' circle');
+    } else {
+      return box.$$('#inputs circle').get(0);
+    }
+  },
+
+  getOutputPlug: function(boxId, plugId) {
+    let box = this.getBox(boxId);
+    if (plugId) {
+      return box.$('#outputs #' + plugId + ' circle');
+    } else {
+      return box.$$('#outputs circle').get(0);
+    }
+  },
+
+  toggleStateView: function(boxId, plugId) {
+    this.getOutputPlug(boxId, plugId).click();
+  },
+
+  clickBox: function(boxId) {
+    this.getBox(boxId).$('#click-target').click();
+  },
+
+  selectBox: function(boxId) {
+    this.openBoxEditor(boxId).close();
+  },
+
+  getBoxEditor: function(boxId) {
+    var popup = this.board.$('.popup#' + boxId);
+    return popup;
+  },
+
+  openBoxEditor: function(boxId) {
+    this.clickBox(boxId);
+    var popup = this.getBoxEditor(boxId);
+    expect(popup.isDisplayed()).toBe(true);
+    return new BoxEditor(popup);
+  },
+
+  openStateView: function(boxId, plugId) {
+    var popup = this.board.$('.popup#' + boxId + '_' + plugId);
+    testLib.expectNotElement(popup); // If it is already open, use getStateView() instead.
+    this.toggleStateView(boxId, plugId);
+    return new State(popup);
+  },
+
+  getStateView: function(boxId, plugId) {
+    var popup = this.board.$('.popup#' + boxId + '_' + plugId);
+    return new State(popup);
+  },
+
+  getVisualizationEditor(boxId) {
+    var popup = this.getBoxEditor(boxId);
+    return new State(popup);
+  },
+
+  expectConnected: function(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
+    var arrow = this.board.$(`path#${srcBoxId}-${srcPlugId}-${dstBoxId}-${dstPlugId}`);
+    expect(arrow.isPresent()).toBe(true);
+  },
+
+  connectBoxes: function(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
+    var src = this.getOutputPlug(srcBoxId, srcPlugId);
+    var dst = this.getInputPlug(dstBoxId, dstPlugId);
+    expect(src.isDisplayed()).toBe(true);
+    expect(dst.isDisplayed()).toBe(true);
+    browser.actions()
+        .mouseDown(src)
+        .mouseMove(dst)
+        .mouseUp()
+        .perform();
+    this.expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId);
+  }
+
+};
+
+function PopupBase() {
+}
+
+PopupBase.prototype = {
+  close: function() {
+    this.popup.$('#close-popup').click();
+  },
+
+  moveTo: function(x, y) {
+    var head = this.popup.$('div.popup-head');
+    browser.actions()
+        .mouseDown(head)
+        // Absolute positioning of mouse. If we don't specify the first
+        // argument then this becomes a relative move. If the first argument
+        // is this.board, then protractor scrolls the element of this.board
+        // to the top of the page, even though scrolling is not enabled.
+        .mouseMove($('body'), {x: x, y: y})
+        .mouseUp(head)
+        .perform();
+  },
+};
+
+function BoxEditor(popup) {
+  this.popup = popup;
+  this.element = popup.$('box-editor');
+}
+
+BoxEditor.prototype = {
+  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
+
+  operationParameter: function(param) {
+    return this.element.$(
+        'operation-parameters #' + param + ' .operation-attribute-entry');
+  },
+
+  parametricSwitch: function(param) {
+    return this.element.$('operation-parameters #' + param + ' .parametric-switch');
+  },
+
+  populateOperation: function(params) {
+    params = params || {};
+    for (var key in params) {
+      testLib.setParameter(this.operationParameter(key), params[key]);
+    }
+    $('#workspace-name').click(); // Make sure the parameters are not focused.
+  },
+
+  expectParameter: function(paramName, expectedValue) {
+    var param = this.element.$('div#' + paramName + ' input');
+    expect(param.getAttribute('value')).toBe(expectedValue);
+  },
+
+  expectSelectParameter: function(paramName, expectedValue) {
+    var param = this.element.$('div#' + paramName + ' select');
+    expect(param.getAttribute('value')).toBe(expectedValue);
+  },
+
+  getTableBrowser: function() {
+    return new TableBrowser(this.popup);
+  },
+
+  isPresent: function() {
+    return this.element.isPresent();
+  },
+};
+
+function State(popup) {
+  this.popup = popup;
+  this.left = new Side(this.popup, 'left');
+  this.right = new Side(this.popup, 'right');
+  this.table = new TableState(this.popup);
+  this.plot = new PlotState(this.popup);
+  this.visualization = new VisualizationState(this.popup);
+}
+
+State.prototype = {
+  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
+};
+
+function PlotState(popup) {
+  this.popup = popup;
+  this.canvas = popup.$('#plot-div .vega svg');
+}
+
+PlotState.prototype = {
+  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
+
+  barHeights: function() {
+    return this.canvas.$$('g.mark-rect.marks rect').map(e => e.getAttribute('height'));
+  },
+
+  expectBarHeightsToBe: function(heights) {
+    expect(this.barHeights()).toEqual(heights);
+  }
+};
+
+
+function TableState(popup) {
+  this.popup = popup;
+  this.sample = popup.$('#table-sample');
+  this.control = popup.$('#table-control');
+}
+
+TableState.prototype = {
+  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
+
+  expect: function(names, types, rows) {
+    this.expectColumnNamesAre(names);
+    this.expectColumnTypesAre(types);
+    this.expectRowsAre(rows);
+  },
+
+  rowCount: function() {
+    return this.sample.$$('tbody tr').count();
+  },
+
+  expectRowCountIs: function(number) {
+    expect(this.rowCount()).toBe(number);
+  },
+
+  columnNames: function() {
+    return this.sample.$$('thead tr th span.column-name').map(e => e.getText());
+  },
+
+  expectColumnNamesAre(columnNames) {
+    expect(this.columnNames()).toEqual(columnNames);
+  },
+
+  columnTypes: function() {
+    return this.sample.$$('thead tr th span.column-type').map(e => e.getText());
+  },
+
+  expectColumnTypesAre(columnTypes) {
+    expect(this.columnTypes()).toEqual(columnTypes);
+  },
+
+  getRowAsArray: function(row) {
+    return row.$$('td').map(e => e.getText());
+  },
+
+  rows: function() {
+    return this.sample.$$('tbody tr').map(e => this.getRowAsArray(e));
+  },
+
+  expectRowsAre(rows) {
+    expect(this.rows()).toEqual(rows);
+  },
+
+  firstRow: function() {
+    var row = this.sample.$$('tbody tr').get(0);
+    return this.getRowAsArray(row);
+  },
+
+  expectFirstRowIs: function(row) {
+    expect(this.firstRow()).toEqual(row);
+  },
+
+  clickColumn(columnId) { // for sorting
+    var header = this.sample.$$('thead tr th#' + columnId);
+    header.click();
+  },
+
+  clickShowMoreRows: function() {
+    var button = this.control.$('#more-rows-button');
+    button.click();
+  },
+
+  setRowCount: function(num) {
+    var input = this.control.$('#sample-rows');
+    input.sendKeys(testLib.selectAllKey + num.toString());
+  },
+
+  clickShowSample: function() {
+    var button = this.control.$('#get-sample-button');
+    button.click();
+  },
+
+
+};
+
+function Side(popup, direction) {
   this.direction = direction;
-  this.side = element(by.id('side-' + direction));
-  this.toolbox = element(by.id('operation-toolbox-' + direction));
-  this.history = new History(this);
+  this.side = popup.$('#side-' + direction);
 }
 
 Side.prototype = {
   expectCurrentProjectIs: function(name) {
-    expect(this.side.evaluate('side.project.$error')).toBeFalsy();
-    expect(this.side.evaluate('side.state.projectName')).toBe(name);
-  },
-
-  expectCurrentProjectIsError: function() {
-    expect(this.side.evaluate('side.project.$error')).toBeTruthy();
-  },
-
-  // Only for opening the second project next to an already open project.
-  openSecondProject: function(project) {
-    testLib.showSelector();
-    this.side.$('#project-' + toID(project)).click();
+    expect(this.side.$('.project-name').getText()).toBe(name);
   },
 
   close: function() {
-    this.side.element(by.id('close-project')).click();
+    this.side.$('#close-project').click();
   },
 
   evaluate: function(expr) {
@@ -168,10 +552,6 @@ Side.prototype = {
     return this.toolbox.$('div.category[tooltip="' + categoryTitle + '"]');
   },
 
-  getProjectHistory: function() {
-    return this.side.$('div.project.history');
-  },
-
   getValue: function(id) {
     var asStr = this.side.$('value#' + id + ' span.value').getText();
     return asStr.then(function(asS) { return parseInt(asS); });
@@ -179,6 +559,10 @@ Side.prototype = {
 
   getWorkflowCodeEditor: function() {
     return this.side.element(by.id('workflow-code-editor'));
+  },
+
+  getPythonWorkflowCodeEditor: function() {
+    return this.side.element(by.id('python-code-editor'));
   },
 
   getWorkflowDescriptionEditor: function() {
@@ -234,32 +618,8 @@ Side.prototype = {
     return this.side.element(by.id('redo-button'));
   },
 
-  operationParameter: function(opElement, param) {
-    return opElement.$('operation-parameters #' + param + ' .operation-attribute-entry');
-  },
-
-  populateOperation: function(parentElement, params) {
-    params = params || {};
-    for (var key in params) {
-      testLib.setParameter(this.operationParameter(parentElement, key), params[key]);
-    }
-  },
-
   populateOperationInput: function(parameterId, param) {
     this.toolbox.element(by.id(parameterId)).sendKeys(testLib.selectAllKey + param);
-  },
-
-  submitOperation: function(parentElement) {
-    var button = parentElement.$('.ok-button');
-    // Wait for uploads or whatever.
-    testLib.wait(protractor.ExpectedConditions.textToBePresentInElement(button, 'OK'));
-    button.click();
-  },
-
-  runOperation: function(name, params) {
-    this.openOperation(name);
-    this.populateOperation(this.toolbox, params);
-    this.submitOperation(this.toolbox);
   },
 
   expectOperationScalar: function(name, text) {
@@ -285,7 +645,8 @@ Side.prototype = {
   },
 
   setSampleRadius: function(radius) {
-    var slider = this.side.element(by.id('sample-radius-slider'));
+    this.side.$('#setting-sample-radius').click();
+    var slider = $('#sample-radius-slider');
     slider.getAttribute('value').then(function(value) {
       var diff = radius - value;
       while (diff > 0) {
@@ -300,7 +661,7 @@ Side.prototype = {
   },
 
   scalarValue: function(name) {
-    return this.side.element(by.id('scalar-value-' + toID(name)));
+    return this.side.element(by.id('scalar-value-' + toId(name)));
   },
 
   saveProjectAs: function(newName) {
@@ -325,14 +686,21 @@ Side.prototype = {
     this.side.element(by.id('run-sql-button')).click();
   },
 
-  expectSqlResult: function(header, rows) {
+  expectSqlResult: function(names, types, rows) {
     var res = this.side.$('#sql-result');
-    expect(res.$$('thead tr th').map(e => e.getText())).toEqual(header);
+    expect(res.$$('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(names);
+    expect(res.$$('thead tr th span.sql-type').map(e => e.getText())).toEqual(types);
     expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
   },
 
   startSqlSaving: function() {
     this.side.element(by.id('save-results-opener')).click();
+  },
+
+  clickSqlSort(colId) {
+    var res = this.side.$('#sql-result');
+    var header = res.$$('thead tr th').get(colId);
+    header.click();
   },
 
   executeSqlSaving: function() {
@@ -345,134 +713,79 @@ Side.prototype = {
   segmentation: function(name) { return new Entity(this.side, 'segmentation', name); },
 };
 
-
-function History(side) {
-  this.side = side;
+function TableBrowser(root) {
+  this.root = root;
 }
 
-History.prototype = {
-  open: function() {
-    this.side.side.$('.history-button').click();
+TableBrowser.prototype = {
+  toggle: function() {
+    this.root.element(by.id('toggle-table-browser')).click();
   },
 
-  close: function(discardChanges) {
-    if (discardChanges) {
-      testLib.expectDialogAndRespond(true);
+  getNode: function(posList) {
+    var pos = posList[0];
+    var node = this.root.$$('#table-browser-tree > ul > li').get(pos);
+    for (var i = 1; i < posList.length; ++i) {
+      pos = posList[i];
+      node = node.$$(node.locator().value + ' > ul > li').get(pos);
     }
-    this.side.side.element(by.id('close-history-button')).click();
-    if (discardChanges) {
-      testLib.checkAndCleanupDialogExpectation();
+    return node;
+  },
+
+  expectNode: function(posList, expectedName, expectedDragText) {
+    var li = this.getNode(posList);
+    expect(li.getText()).toBe(expectedName);
+    if (expectedDragText) {
+      this.expectDragText(li, expectedDragText);
     }
   },
 
-  save: function(name) {
-    this.side.side.$('.save-history-button').click();
-    if (name !== undefined) {
-      var inputBox = this.side.side.$('.save-as-history-box input');
-      inputBox.sendKeys(testLib.selectAllKey + name);
-    }
-    this.side.side.$('.save-as-history-box .glyphicon-floppy-disk').click();
+  toggleNode: function(posList) {
+    var li = this.getNode(posList);
+    li.$(li.locator().value + ' > span').click();
   },
 
-  expectSaveable: function(saveable) {
-    expect(this.side.side.$('.save-history-button').isPresent()).toBe(saveable);
+  getColumn: function(tablePos, columnPos) {
+    var tableLi = this.getTable(tablePos);
+    return tableLi.$$('ul > li').get(columnPos + 1);
   },
 
-  // Get an operation from the history. position is a zero-based index.
-  getOperation: function(position) {
-    var list = this.side.side.
-      $$('project-history div.list-group > li.history-operation-item');
-    return list.get(position);
+  expectColumn: function(tablePos, columnPos, name) {
+    var columnLi = this.getColumn(tablePos, columnPos);
+    expect(columnLi.getText()).toBe(name);
   },
 
-  // Beware, the category is left open, so calling this the second time for the same category
-  // does not work.
-  getOperationInCategoryByName: function(operation, tooltip, name) {
-    operation.$('operation-toolbox').$('div[drop-tooltip="' + tooltip + '"]').click();
-    var ops = operation.$('operation-toolbox').$$('div.operation');
-    return ops.filter(function(element) {
-        return element.getText().then(function(text) { return text === name; });
-      }).get(0);
+  searchTable: function(searchText) {
+    var searchBox = this.root.$('#search-for-tables');
+    searchBox.sendKeys(searchText);
   },
 
-  getInsertMenu: function(position) {
-    var list = this.side.side.
-      $$('project-history div.list-group > li > project-history-adder');
-    return list.get(position);
+  expectDragText: function(li, expected) {
+    // We cannot do a real drag-and-drop workflow here
+    // because of:
+    // https://github.com/angular/protractor/issues/583
+    // Just doing a simple check for now.
+    var span = li.$(li.locator().value +
+        ' > span > table-browser-entry > span');
+    expect(span.evaluate('draggableText')).toBe(expected);
   },
 
-  getOperationName: function(position) {
-    return this.getOperation(position).$('h1').getText();
+  toggleFullyQualify: function() {
+    this.root.$('#use-fully-qualified-names').click();
   },
 
-  getOperationSegmentation: function(position) {
-    return this.getOperation(position).$('div.affected-segmentation').getText();
+  enterSearchQuery: function(query) {
+    element(by.id('table-browser-search-box'))
+        .sendKeys(testLib.selectAllKey + query);
   },
-
-  openDropdownMenu: function(operation) {
-    var menu = operation.$('.history-options');
-    menu.$('a.dropdown-toggle').click();
-    return menu;
-  },
-
-  clickDropDownMenuItem: function(position, itemId) {
-    var operation = this.getInsertMenu(position);
-    this.openDropdownMenu(operation).$('a#dropdown-menu-' + itemId).click();
-  },
-
-  selectOperation: function(op, name) {
-    op.element(by.id('operation-search')).click();
-    op.element(by.id('filter')).sendKeys(name, K.ENTER);
-  },
-
-  deleteOperation: function(position) {
-    this.getOperation(position).$('#operation-discard').click();
-  },
-
-  enterEditMode: function(op) {
-    op.$('#operation-edit').click();
-  },
-
-  discardEdits: function(op) {
-    op.$('#operation-discard-changes').click();
-  },
-
-  initInsertedOperation: function(newPos, name, params) {
-    var newOp = this.getOperation(newPos);
-    this.selectOperation(newOp, name);
-    this.side.populateOperation(newOp, params);
-    this.side.submitOperation(newOp);
-  },
-
-  insertOperationSimple: function(pos, name, params) {
-    this.getInsertMenu(pos).click();
-    this.initInsertedOperation(pos, name, params);
-  },
-
-  insertOperationForSegmentation: function(pos, name, params, segmentation) {
-    var menuItemId = 'add';
-    if (segmentation) {
-      menuItemId += '-for-' + segmentation;
-    }
-    this.clickDropDownMenuItem(pos, menuItemId);
-    this.initInsertedOperation(pos, name, params);
-  },
-
-  numOperations: function() {
-    return this.side.side.
-      $$('project-history div.list-group > li.history-operation-item').
-      count();
-  },
-
-  expectOperationParameter: function(opPosition, paramName, expectedValue) {
-    var param = this.getOperation(opPosition).$('div#' + paramName + ' input');
-    expect(param.getAttribute('value')).toBe(expectedValue);
-  }
 
 };
 
-var visualization = {
-  svg: $('svg.graph-view'),
+function VisualizationState(popup) {
+  this.svg = popup.$('svg.graph-view');
+}
+
+VisualizationState.prototype = {
 
   elementByLabel: function(label) {
     return this.svg.element(by.xpath('.//*[contains(text(),"' + label + '")]/..'));
@@ -490,12 +803,13 @@ var visualization = {
 
   // The visualization response received from the server.
   graphView: function() {
-    return visualization.svg.evaluate('graph.view');
+    return this.svg.evaluate('graph.view');
   },
 
   // The currently visualized graph data extracted from the SVG DOM.
   graphData: function() {
     browser.waitForAngular();
+    //browser.pause();
     return browser.executeScript(function() {
 
       // Vertices as simple objects.
@@ -568,7 +882,7 @@ var visualization = {
   },
 
   vertexCounts: function(index) {
-    return visualization.graphView().then(function(gv) {
+    return this.graphView().then(function(gv) {
       return gv.vertexSets[index].vertices.length;
     });
   },
@@ -576,27 +890,32 @@ var visualization = {
 
 function Selector(root) {
   this.root = root;
+  this.tableBrowser = new TableBrowser(this.root);
 }
 
 Selector.prototype = {
-  project: function(name) {
-    return element(by.id('project-' + toID(name)));
+  workspace: function(name) {
+    return element(by.id('workspace-' + toId(name)));
   },
 
   directory: function(name) {
-    return element(by.id('directory-' + toID(name)));
+    return element(by.id('directory-' + toId(name)));
   },
 
   table: function(name) {
-    return element(by.id('table-' + toID(name)));
+    return element(by.id('table-' + toId(name)));
   },
 
   view: function(name) {
-    return element(by.id('view-' + toID(name)));
+    return element(by.id('view-' + toId(name)));
   },
 
-  expectNumProjects: function(n) {
-    return expect($$('.project-entry').count()).toEqual(n);
+  snapshot: function(name) {
+    return element(by.id('snapshot-' + toId(name)));
+  },
+
+  expectNumWorkspaces: function(n) {
+    return expect($$('.workspace-entry').count()).toEqual(n);
   },
 
   expectNumDirectories: function(n) {
@@ -623,11 +942,11 @@ Selector.prototype = {
     return expect(table.$('value').getText()).toEqual(n.toString());
   },
 
-  openNewProject: function(name) {
-    element(by.id('new-project')).click();
-    element(by.id('new-project-name')).sendKeys(name);
-    $('#new-project button[type=submit]').click();
-    this.hideSparkStatus();
+  openNewWorkspace: function(name) {
+    element(by.id('new-workspace')).click();
+    element(by.id('new-workspace-name')).sendKeys(name);
+    $('#new-workspace button[type=submit]').click();
+    this.hideFloatingElements();
   },
 
   startTableImport: function() {
@@ -637,7 +956,7 @@ Selector.prototype = {
   clickAndWaitForCsvImport: function() {
     var importCsvButton = element(by.id('import-csv-button'));
     // Wait for the upload to finish.
-    testLib.wait(protractor.ExpectedConditions.elementToBeClickable(importCsvButton));
+    testLib.waitUntilClickable(importCsvButton);
     importCsvButton.click();
   },
 
@@ -681,13 +1000,15 @@ Selector.prototype = {
 
   openProject: function(name) {
     this.project(name).click();
-    this.hideSparkStatus();
+    this.hideFloatingElements();
   },
 
-  hideSparkStatus: function() {
+  hideFloatingElements: function() {
     // Floating elements can overlap buttons and block clicks.
-    browser.executeScript(
-      'document.styleSheets[0].insertRule(\'.spark-status { position: static !important; }\');');
+    browser.executeScript(`
+      document.styleSheets[0].insertRule(
+        '.spark-status, .user-menu { position: static !important; }');
+        `);
   },
 
   openDirectory: function(name) {
@@ -698,14 +1019,14 @@ Selector.prototype = {
     element(by.id('pop-directory-icon')).click();
   },
 
-  renameProject: function(name, newName) {
-    var project = this.project(name);
-    testLib.menuClick(project, 'rename');
-    project.element(by.id('renameBox')).sendKeys(testLib.selectAllKey, newName).submit();
+  renameWorkspace: function(name, newName) {
+    var workspace = this.workspace(name);
+    testLib.menuClick(workspace, 'rename');
+    workspace.element(by.id('renameBox')).sendKeys(testLib.selectAllKey, newName).submit();
   },
 
-  deleteProject: function(name) {
-    testLib.menuClick(this.project(name), 'discard');
+  deleteWorkspace: function(name) {
+    testLib.menuClick(this.workspace(name), 'discard');
   },
 
   deleteDirectory: function(name) {
@@ -720,12 +1041,12 @@ Selector.prototype = {
     testLib.menuClick(this.view(name), 'edit-import');
   },
 
-  expectProjectListed: function(name) {
-    testLib.expectElement(this.project(name));
+  expectWorkspaceListed: function(name) {
+    testLib.expectElement(this.workspace(name));
   },
 
-  expectProjectNotListed: function(name) {
-    testLib.expectNotElement(this.project(name));
+  expectWorkspaceNotListed: function(name) {
+    testLib.expectNotElement(this.workspace(name));
   },
 
   expectDirectoryListed: function(name) {
@@ -748,12 +1069,16 @@ Selector.prototype = {
     testLib.expectElement(this.view(name));
   },
 
+  expectSnapshotListed: function(name) {
+    testLib.expectElement(this.snapshot(name));
+  },
+
   enterSearchQuery: function(query) {
-    element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + query);
+    element(by.id('search-box')).sendKeys(testLib.selectAllKey + query);
   },
 
   clearSearchQuery: function() {
-    element(by.id('project-search-box')).sendKeys(testLib.selectAllKey + K.BACK_SPACE);
+    element(by.id('search-box')).sendKeys(testLib.selectAllKey + K.BACK_SPACE);
   },
 
   globalSqlEditor: function() {
@@ -763,16 +1088,21 @@ Selector.prototype = {
     testLib.sendKeysToACE(this.globalSqlEditor(), sql);
   },
 
-  runGlobalSql: function(sql) {
+  openGlobalSqlBox: function() {
     element(by.id('global-sql-box')).click();
+  },
+
+  runGlobalSql: function(sql) {
+    this.openGlobalSqlBox();
     this.setGlobalSql(sql);
     element(by.id('run-sql-button')).click();
   },
 
 
-  expectGlobalSqlResult: function(header, rows) {
+  expectGlobalSqlResult: function(names, types, rows) {
     var res = element(by.id('sql-result'));
-    expect(res.$$('thead tr th').map(e => e.getText())).toEqual(header);
+    expect(res.$$('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(names);
+    expect(res.$$('thead tr th span.sql-type').map(e => e.getText())).toEqual(types);
     expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
   },
 
@@ -800,14 +1130,14 @@ Selector.prototype = {
 var splash = new Selector(element(by.id('splash')));
 
 function randomPattern () {
-  /* jshint bitwise: false */
+  /* eslint-disable no-bitwise */
   var crypto = require('crypto');
   var buf = crypto.randomBytes(16);
   var sixteenLetters = 'abcdefghijklmnop';
   var r = '';
   for (var i = 0; i < buf.length; i++) {
     var v = buf[i];
-    var lo =  (v & 0xf);
+    var lo = (v & 0xf);
     var hi = (v >> 4);
     r += sixteenLetters[lo] + sixteenLetters[hi];
   }
@@ -816,13 +1146,21 @@ function randomPattern () {
 
 var lastDownloadList;
 
+function getSelectAllKey() {
+  if (isMacOS()) {
+    // The command key is not supported properly, so we work around with Shift+HOME etc.
+    // and Delete. https://github.com/angular/protractor/issues/690
+    return K.END + K.PAGE_DOWN + K.chord(K.SHIFT, K.HOME) + K.chord(K.SHIFT, K.PAGE_UP) + K.DELETE;
+  } else {
+    return K.chord(K.CONTROL, 'a');
+  }
+}
+
 testLib = {
   theRandomPattern: randomPattern(),
-  left: new Side('left'),
-  right: new Side('right'),
-  visualization: visualization,
+  workspace: new Workspace(),
   splash: splash,
-  selectAllKey: K.chord(K.CONTROL, 'a'),
+  selectAllKey: getSelectAllKey(),
   protractorDownloads: '/tmp/protractorDownloads.' + process.pid,
 
   expectElement: function(e) {
@@ -835,21 +1173,46 @@ testLib = {
 
   // Deletes all projects and directories.
   discardAll: function() {
-    function sendRequest() {
-      var defer = protractor.promise.defer();
-      request.post(
+    function discard(defer) {
+      var req = request.defaults({ jar: true });
+      req.post(
         browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
         { json: { fake: 1 } },
-        function(error, message) {
+        (error, message) => {
           if (error || message.statusCode >= 400) {
-            defer.reject({ error : error, message : message });
+            defer.reject(new Error(error));
           } else {
             defer.fulfill();
           }
         });
+    }
+    this.authenticateAndPost('admin', 'adminpw', 'lynxkite', discard);
+  },
+
+  authenticateAndPost: function(username, password, method, func) {
+    function sendRequest() {
+      var defer = protractor.promise.defer();
+      if (!process.env.HTTPS_PORT) {
+        return func(defer);
+      }
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+      var req = request.defaults({ jar: true });
+      req.post(
+        browser.baseUrl + 'passwordLogin',
+        { json: {
+          'username': username,
+          'password': password,
+          'method': method
+        }}, (error, message) => {
+          if (error || message.statusCode >= 400) {
+            defer.reject(new Error(error));  // TODO: include message?
+          } else {
+            func(defer);
+          }
+        });
       return defer.promise;
     }
-    browser.controlFlow().execute(sendRequest);
+    return browser.controlFlow().execute(sendRequest);
   },
 
   navigateToProject: function(name) {
@@ -902,7 +1265,7 @@ testLib = {
               e.element(by.cssContainingText('option', optionLabelPattern)).click();
             }
           } else if (kind === 'choice') {
-            e.element(by.cssContainingText('option', value)).click();
+            e.$('option[label="' + value + '"]').click();
           } else {
             e.sendKeys(testLib.selectAllKey + value);
           }
@@ -926,7 +1289,7 @@ testLib = {
         'window.confirm0 = window.confirm;' +
         'window.confirm = function() {' +
         '  window.confirm = window.confirm0;' +
-        '  return ' + responseValue+ ';' +
+        '  return ' + responseValue + ';' +
         '}');
   },
 
@@ -1006,6 +1369,11 @@ testLib = {
     input.sendKeys(fileName);
   },
 
+  loadImportedTable: function() {
+    var loadButton = $('#imported_table button');
+    loadButton.click();
+  },
+
   startDownloadWatch: function() {
     browser.controlFlow().execute(function() {
       expect(lastDownloadList).toBe(undefined);
@@ -1047,7 +1415,7 @@ testLib = {
   expectNoClass(element, cls) {
     expect(element.getAttribute('class')).toBeDefined();
     element.getAttribute('class').then(function(classes) {
-          expect(classes.split(' ').indexOf(cls)).toBe(-1);
+      expect(classes.split(' ').indexOf(cls)).toBe(-1);
     });
   },
 
@@ -1061,12 +1429,36 @@ testLib = {
     browser.getAllWindowHandles()
       .then(handles => {
         browser.driver.switchTo().window(handles[pos]);
-    });
+      });
   },
 
   showSelector: function() {
     $('#show-selector-button').click();
   },
+
+  confirmSweetAlert: function(expectedMessage) {
+    // SweetAlert is not an Angular library. We need to wait until it pops in and out.
+    var EC = protractor.ExpectedConditions;
+    testLib.wait(EC.visibilityOf($('.sweet-alert.showSweetAlert.visible')));
+    expect($('.sweet-alert h2').getText()).toBe(expectedMessage);
+    $('.sweet-alert button.confirm').click();
+    testLib.wait(EC.stalenessOf($('.sweet-alert.showSweetAlert')));
+  },
+
+  waitUntilClickable: function(element) {
+    testLib.wait(protractor.ExpectedConditions.elementToBeClickable(element));
+  },
+
+  submitInlineInput: function(element, text) {
+    var inputBox = element.$('input');
+    var okButton = element.$('#ok');
+    // Wait for CSS animation.
+    testLib.waitUntilClickable(inputBox);
+    inputBox.sendKeys(text);
+    testLib.waitUntilClickable(okButton);
+    okButton.click();
+  },
+
 };
 
 module.exports = testLib;

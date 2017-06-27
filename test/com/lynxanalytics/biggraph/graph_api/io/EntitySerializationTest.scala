@@ -20,18 +20,18 @@ class EntitySerializationTest extends FunSuite {
       serde(values, s, d)
     }
 
-    withTyped(Seq(1, 2, 3, 4), "kryo[Int]")
-    withTyped(Seq((), ()), "unit")
-    withTyped(Seq("alma", "beka"), "string")
-    withTyped(Seq(5.5, 7.25), "double")
-    withTyped(Seq(Edge(6L, 8L), Edge(7L, 9L)), "edge")
-    withTyped(Seq[Set[Int]](Set(), Set(1), Set(1, 2), Set(1, 2, 3)), "set")
+    withTyped(Seq(1, 2, 3, 4), "Kryo[Int]")
+    withTyped(Seq((), ()), "Unit")
+    withTyped(Seq("alma", "beka"), "String")
+    withTyped(Seq(5.5, 7.25), "Double")
+    withTyped(Seq(Edge(6L, 8L), Edge(7L, 9L)), "Edge")
+    withTyped(Seq[Set[Int]](Set(), Set(1), Set(1, 2), Set(1, 2, 3)), "Set")
   }
 
   test("legacy") {
     def withKryo[T: TypeTag](values: Seq[T]) = {
       val s = new KryoSerializer
-      val d = EntityDeserializer.forName[T]("kryo")
+      val d = EntityDeserializer.forName[T]("Kryo")
       serde(values, s, d)
     }
 
