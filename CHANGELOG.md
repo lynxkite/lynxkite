@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 2.0-beta-3
+
  - _Add rank attribute_ can be used on String attributes.
 
 ### 2.0-beta-1
