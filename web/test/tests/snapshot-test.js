@@ -14,7 +14,7 @@ module.exports = function(fw) {
     function() {
       var state = lib.workspace.openStateView('eg0', 'project');
       var snapshotBox = state.popup.$('#save-as-snapshot-box');
-      var snapshotButton = snapshotBox.$('#save-as-snapshot-button');
+      var snapshotButton = state.popup.$('#save-as-snapshot-button');
 
       snapshotButton.click();
       lib.submitInlineInput(snapshotBox, snapshotName);
