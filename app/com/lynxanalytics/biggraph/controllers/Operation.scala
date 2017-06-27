@@ -77,7 +77,7 @@ case class FEOperationSpec(
   id: String,
   parameters: Map[String, String])
 
-case class OperationCategory(
+case class FEOperationCategory(
   title: String, icon: String, color: String)
 
 abstract class OperationParameterMeta {
@@ -109,13 +109,19 @@ object Operation {
     title: String,
     color: String, // A color class from web/app/styles/operation-toolbox.scss.
     visible: Boolean = true,
-    icon: String = "", // Glyphicon name, or empty for first letter of title.
+    icon: String = "", // Icon class name, or empty for first letter of title.
     sortKey: String = null) // Categories are ordered by this. The title is used by default.
       extends Ordered[Category] {
     private val safeSortKey = Option(sortKey).getOrElse(title)
     def compare(that: Category) = this.safeSortKey compare that.safeSortKey
-    def toFE: OperationCategory =
-      OperationCategory(title, if (icon.nonEmpty) "glyphicon glyphicon-" + icon else "", color)
+    def toFE: FEOperationCategory =
+      FEOperationCategory(title, addClass(icon), color)
+    // Add main CSS class. E.g. "fa-superpowers" => "fa fa-superpowers".
+    private def addClass(cls: String): String = {
+      val parts = cls.split("-", 2)
+      if (parts.length == 1) cls
+      else s"${parts.head} $cls"
+    }
   }
 
   type Factory = Context => Operation
@@ -252,9 +258,14 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
     (atomicBoxes ++ customBoxes).toSeq.sorted
   }
 
-  def getCategories(user: serving.User): List[OperationCategory] = {
-    atomicCategories.values.filter(_.visible).toList.sorted.map(_.toFE) :+
-      OperationCategory("Custom boxes", "fa fa-superpowers", "yellow")
+  private val customBoxesCategory = Operation.Category(
+    Workspace.customBoxesCategory, "yellow", icon = "fa-superpowers", sortKey = "zzz")
+
+  def getCategories(user: serving.User): List[FEOperationCategory] = {
+    (atomicCategories.values.toList :+ customBoxesCategory)
+      .filter(_.visible)
+      .sorted
+      .map(_.toFE)
   }
 
   def opForBox(
