@@ -9,8 +9,10 @@ import com.lynxanalytics.biggraph.graph_operations.ImportDataFrameTest
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark.sql.DataFrame
 
-class ScalaScriptTest extends FunSuite with TestGraphOp {
+import scala.reflect.runtime.universe._
 
+class ScalaScriptTest extends FunSuite with TestGraphOp {
+  /*
   test("Can't do infinite loop") {
     val code =
       """
@@ -124,5 +126,10 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
       ScalaScript.run(code)
     }
   }
-
+*/
+  test("Infer type") {
+    //assert(ScalaScript.inferType("a + b", Map("a" -> "String", "b" -> "String")) == typeTag[(String, String) => java.lang.String])
+    //assert(ScalaScript.inferType("Vector(a)", Map("a" -> "String")) == typeTag[String => scala.collection.immutable.Vector[String]])
+    assert(ScalaScript.inferType("a ++ Vector(\"x\")", Map("a" -> "Vector[String]")) == typeTag[scala.Vector[String] => scala.collection.immutable.Vector[String]])
+  }
 }
