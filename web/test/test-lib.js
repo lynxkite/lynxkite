@@ -163,6 +163,10 @@ Workspace.prototype = {
     this.selector.element(by.id('operation-search')).click();
   },
 
+  closeLastPopup: function() {
+    browser.actions().sendKeys(K.ESCAPE).perform();
+  },
+
   duplicate: function() {
     if (isMacOS()) {
       browser.actions()
@@ -401,6 +405,10 @@ BoxEditor.prototype = {
 
   getTableBrowser: function() {
     return new TableBrowser(this.popup);
+  },
+
+  isPresent: function() {
+    return this.element.isPresent();
   },
 };
 
