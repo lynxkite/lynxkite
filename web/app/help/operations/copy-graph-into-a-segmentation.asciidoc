@@ -3,8 +3,8 @@
 Imports the project as its own segmentation and creates edges between the original
 vertices and their corresponding vertices in the segmentation.
 
-For example, to find the <<PageRank>> of nodes by ignoring edges with certain properties you
-can do a filter and a <<PageRank>> on the imported segmentation and then copy back
+For example, to find the PageRank of nodes by ignoring edges with certain properties you
+can do a filter and a <<Compute PageRank>> on the imported segmentation and then copy back
 the resulting attribute.
 
 ====

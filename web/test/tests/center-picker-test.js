@@ -1,19 +1,21 @@
 'use strict';
 
+module.exports = function() {};
+
+/*
 var lib = require('../test-lib.js');
 var K = protractor.Key;
 
 module.exports = function(fw) {
-  var centers = lib.left.side.element(by.id('centers'));
-  var pickButton = lib.left.side.element(by.id('pick-and-next-button'));
-  var pickExpandButton = lib.left.side.element(by.id('pick-expand-button'));
-  var pickOffset = lib.left.side.element(by.id('pick-offset'));
-  var customFiltersToggleOnButton =
-    lib.left.side.element(by.id('custom-filters-toggle-on-button'));
-  var customFiltersToggleOffButton =
-    lib.left.side.element(by.id('custom-filters-toggle-off-button'));
-  var centerCount = lib.left.side.element(by.id('pick-center-count'));
-  var addRestrictionButton = lib.left.side.element(by.id('add-restriction-button'));
+  var centersToken = lib.left.side.$('#setting-centers');
+  var centers = $('#centers');
+  var pickButton = $('#pick-and-next-button');
+  var pickExpandButton = $('#pick-expand-button');
+  var pickOffset = $('#pick-offset');
+  var customFiltersToggleOnButton = $('#custom-filters-toggle-on-button');
+  var customFiltersToggleOffButton = $('#custom-filters-toggle-off-button');
+  var centerCount = $('#pick-center-count');
+  var addRestrictionButton = $('#add-restriction-button');
 
 
   fw.statePreservingTest(
@@ -21,15 +23,17 @@ module.exports = function(fw) {
     'simple center selection',
     function() {
       // Automatic center selection.
-      expect(centers.getAttribute('value')).toBe('0');
+      expect(centersToken.getText()).toBe('centers: 0');
       expect(lib.visualization.vertexCounts(0)).toBe(3);
+      centersToken.click();
       expect(pickButton.getText()).toBe('Next');
 
       // Selection with filter.
       var name = lib.left.vertexAttribute('name');
       name.setFilter('Eve');
-      expect(centers.getAttribute('value')).toBe('0');
+      expect(centersToken.getText()).toBe('centers: 0');
       expect(lib.visualization.vertexCounts(0)).toBe(1);
+      centersToken.click();
       expect(pickButton.getText()).toBe('Pick');
       pickButton.click();
       expect(lib.visualization.vertexCounts(0)).toBe(1);
@@ -37,6 +41,7 @@ module.exports = function(fw) {
       name.setFilter('');
 
       // Manual center selection.
+      centersToken.click();
       centers.clear();
       centers.sendKeys('3', K.ENTER); // Isolated Joe.
       expect(lib.visualization.vertexCounts(0)).toBe(1);
@@ -70,6 +75,7 @@ module.exports = function(fw) {
     'test-example project in sampled view',
     'advanced center selection',
     function() {
+      centersToken.click();
       customFiltersToggleOnButton.click();
 
       // Center count.
@@ -84,8 +90,8 @@ module.exports = function(fw) {
 
       // Restriction.
       addRestrictionButton.click();
-      lib.left.side.element(by.id('center-restriction-0-attribute')).sendKeys('gender');
-      lib.left.side.element(by.id('center-restriction-0-spec')).sendKeys('Male');
+      $('#center-restriction-0-attribute').sendKeys('gender');
+      $('#center-restriction-0-spec').sendKeys('Male');
       pickButton.click();
       expect(centers.getAttribute('value')).toBe('0, 2');
       pickButton.click();
@@ -94,7 +100,7 @@ module.exports = function(fw) {
       // Close and discard custom filters.
       lib.expectDialogAndRespond(true);
       customFiltersToggleOffButton.click();
-      expect(lib.left.side.element(by.id('center-restriction-0-attribute')).isPresent()).toBe(false);
+      expect($('#center-restriction-0-attribute').isPresent()).toBe(false);
       expect(addRestrictionButton.isDisplayed()).toBe(false);
 
       // Clean up state.
@@ -107,6 +113,7 @@ module.exports = function(fw) {
     'test-example project in sampled view',
     'pick by offset',
     function() {
+      centersToken.click();
       centerCount.clear();
       centerCount.sendKeys('2');
 
@@ -127,3 +134,4 @@ module.exports = function(fw) {
       centerCount.sendKeys('1');
     });
 };
+*/

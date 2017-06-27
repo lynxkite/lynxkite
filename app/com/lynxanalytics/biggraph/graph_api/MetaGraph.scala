@@ -1,7 +1,7 @@
 // The core classes for representing our data.
 //
 // The "metagraph" is made up of MetaGraphEntities (vertex sets, edge bundles,
-// attributes, and scalars) and MetaGraphOperationInstances. The entities are
+// attributes, scalars, and tables) and MetaGraphOperationInstances. The entities are
 // the inputs and outputs of the operation instances. The operation instance is
 // an operation that is bound to a set of inputs.
 //
@@ -20,6 +20,7 @@ import scala.Symbol // There is a Symbol in the universe package too.
 import scala.collection.mutable
 import scala.collection.immutable.SortedMap
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
+import org.apache.spark
 
 sealed trait MetaGraphEntity extends Serializable {
   val source: MetaGraphOperationInstance
@@ -160,12 +161,21 @@ case class Scalar[T: TypeTag](source: MetaGraphOperationInstance,
   val typeTag = implicitly[TypeTag[T]]
 }
 
+case class Table(
+  source: MetaGraphOperationInstance,
+  name: Symbol,
+  schema: spark.sql.types.StructType)
+    extends MetaGraphEntity {
+  assert(name != null, s"name is null for $this")
+}
+
 case class InputSignature(
   vertexSets: Set[Symbol],
   edgeBundles: Set[Symbol],
   hybridEdgeBundles: Set[Symbol],
   attributes: Set[Symbol],
-  scalars: Set[Symbol])
+  scalars: Set[Symbol],
+  tables: Set[Symbol])
 trait InputSignatureProvider {
   def inputSignature: InputSignature
 }
@@ -311,6 +321,11 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def value(implicit dataSet: DataSet) = data.value
   }
 
+  class TableTemplate(nameOpt: Option[Symbol]) extends ET[Table](nameOpt) {
+    def data(implicit dataSet: DataSet) = dataSet.tables(name).asInstanceOf[TableData]
+    def df(implicit dataSet: DataSet) = data.df
+  }
+
   def vertexSet = new VertexSetTemplate(None)
   def vertexSet(name: Symbol) = new VertexSetTemplate(Some(name))
   def edgeBundle(
@@ -334,6 +349,8 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     new EdgeAttributeTemplate[T](es.name, Option(name))
   def scalar[T] = new ScalarTemplate[T](None)
   def scalar[T](name: Symbol) = new ScalarTemplate[T](Some(name))
+  def table = new TableTemplate(None)
+  def table(name: Symbol) = new TableTemplate(Some(name))
   def graph = {
     val vs = vertexSet
     (vs, edgeBundle(vs, vs))
@@ -349,7 +366,8 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
         case a: EdgeAttributeTemplate[_] => a.name
         case a: AnyVertexAttributeTemplate => a.name
       }.toSet,
-      scalars = templates.collect { case sc: ScalarTemplate[_] => sc.name }.toSet)
+      scalars = templates.collect { case sc: ScalarTemplate[_] => sc.name }.toSet,
+      tables = templates.collect { case tb: TableTemplate => tb.name }.toSet)
 
   private val templates = mutable.Buffer[ET[_ <: MetaGraphEntity]]()
   private lazy val templatesByName = {
@@ -427,6 +445,8 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
     new P(Attribute[T](instance, _, eb.idSet), Option(name))
   def scalar[T: TypeTag] = new P(Scalar[T](instance, _), None)
   def scalar[T: TypeTag](name: Symbol) = new P(Scalar[T](instance, _), Some(name))
+  def table(schema: spark.sql.types.StructType, name: Symbol = null) =
+    new P(Table(instance, _, schema), Option(name))
 
   private val placeholders = mutable.Buffer[P[_ <: MetaGraphEntity]]()
 
@@ -608,17 +628,24 @@ class ScalarData[T](val entity: Scalar[T],
   val typeTag = scalar.typeTag
 }
 
+class TableData(val entity: Table,
+                val df: spark.sql.DataFrame)
+    extends EntityData {
+  val table = entity
+}
+
 // A bundle of metadata types.
 case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
                        edgeBundles: Map[Symbol, EdgeBundle] = Map(),
                        hybridEdgeBundles: Map[Symbol, HybridEdgeBundle] = Map(),
                        attributes: Map[Symbol, Attribute[_]] = Map(),
-                       scalars: Map[Symbol, Scalar[_]] = Map())
+                       scalars: Map[Symbol, Scalar[_]] = Map(),
+                       tables: Map[Symbol, Table] = Map())
     extends ToJson {
   val all: Map[Symbol, MetaGraphEntity] =
-    vertexSets ++ edgeBundles ++ hybridEdgeBundles ++ attributes ++ scalars
+    vertexSets ++ edgeBundles ++ hybridEdgeBundles ++ attributes ++ scalars ++ tables
   assert(all.size ==
-    vertexSets.size + edgeBundles.size + hybridEdgeBundles.size + attributes.size + scalars.size,
+    vertexSets.size + edgeBundles.size + hybridEdgeBundles.size + attributes.size + scalars.size + tables.size,
     s"Cross type collision in $this")
 
   def asStringMap: Map[String, String] =
@@ -642,7 +669,8 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
       edgeBundles ++ mds.edgeBundles,
       hybridEdgeBundles ++ mds.hybridEdgeBundles,
       attributes ++ mds.attributes,
-      scalars ++ mds.scalars)
+      scalars ++ mds.scalars,
+      tables ++ mds.tables)
   }
 
   def mapNames(mapping: (Symbol, Symbol)*): MetaDataSet = {
@@ -660,7 +688,8 @@ object MetaDataSet {
       edgeBundles = all.collect { case (k, v: EdgeBundle) => (k, v) },
       hybridEdgeBundles = all.collect { case (k, v: HybridEdgeBundle) => (k, v) },
       attributes = all.collect { case (k, v: Attribute[_]) => (k, v) }.toMap,
-      scalars = all.collect { case (k, v: Scalar[_]) => (k, v) }.toMap)
+      scalars = all.collect { case (k, v: Scalar[_]) => (k, v) }.toMap,
+      tables = all.collect { case (k, v: Table) => (k, v) })
   }
 }
 
@@ -669,16 +698,22 @@ case class DataSet(vertexSets: Map[Symbol, VertexSetData] = Map(),
                    edgeBundles: Map[Symbol, EdgeBundleData] = Map(),
                    hybridEdgeBundles: Map[Symbol, HybridEdgeBundleData] = Map(),
                    attributes: Map[Symbol, AttributeData[_]] = Map(),
-                   scalars: Map[Symbol, ScalarData[_]] = Map()) {
+                   scalars: Map[Symbol, ScalarData[_]] = Map(),
+                   tables: Map[Symbol, TableData] = Map()) {
   def metaDataSet = MetaDataSet(
     vertexSets.mapValues(_.vertexSet),
     edgeBundles.mapValues(_.edgeBundle),
     hybridEdgeBundles.mapValues(_.hybridEdgeBundle),
     attributes.mapValues(_.attribute),
-    scalars.mapValues(_.scalar))
+    scalars.mapValues(_.scalar),
+    tables.mapValues(_.table))
 
   def all: Map[Symbol, EntityData] =
+<<<<<<< HEAD
     vertexSets ++ edgeBundles ++ hybridEdgeBundles ++ attributes ++ scalars
+=======
+    vertexSets ++ edgeBundles ++ attributes ++ scalars ++ tables
+>>>>>>> 3da5800a1db8d1a14aad8477ef5a16957cb2f086
 }
 
 object DataSet {
@@ -688,7 +723,8 @@ object DataSet {
       edgeBundles = all.collect { case (k, v: EdgeBundleData) => (k, v) },
       hybridEdgeBundles = all.collect { case (k, v: HybridEdgeBundleData) => (k, v) },
       attributes = all.collect { case (k, v: AttributeData[_]) => (k, v) }.toMap,
-      scalars = all.collect { case (k, v: ScalarData[_]) => (k, v) }.toMap)
+      scalars = all.collect { case (k, v: ScalarData[_]) => (k, v) }.toMap,
+      tables = all.collect { case (k, v: TableData) => (k, v) })
   }
 }
 
@@ -725,6 +761,13 @@ class OutputBuilder(val instance: MetaGraphOperationInstance) {
 
   def apply[T](scalar: Scalar[T], value: T): Unit = {
     addData(new ScalarData(scalar, value))
+  }
+
+  def apply(table: Table, df: spark.sql.DataFrame): Unit = {
+    import com.lynxanalytics.biggraph.spark_util.SQLHelper
+    assert(SQLHelper.allNullable(table.schema) == SQLHelper.allNullable(df.schema),
+      s"Output schema mismatch. Declared: ${table.schema} Output: ${df.schema}")
+    addData(new TableData(table, df))
   }
 
   def dataMap() = {

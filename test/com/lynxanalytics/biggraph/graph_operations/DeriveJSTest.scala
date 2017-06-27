@@ -133,4 +133,135 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     assert(rndSum.rdd.collect.toSeq.sorted ==
       Seq(0 -> rndSumScala(1000.0), 2 -> rndSumScala(2000.0)))
   }
+
+  test("example graph - all vertices: income === undefined") {
+    val expr = "income === undefined ? 666 : income * 10"
+    val g = ExampleGraph()().result
+    val op = DeriveJSDouble(
+      JavaScript(expr),
+      Seq("income"),
+      onlyOnDefinedAttrs = false)
+    val derived = op(
+      op.attrs,
+      VertexAttributeToJSValue.seq(g.income.entity)).result.attr
+    assert(derived.rdd.collect.toSet == Set((0, 10000.0), (1, 666.0), (2, 20000.0), (3, 666.0)))
+  }
+
+  test("example graph - all vertices: income == undefined") {
+    val expr = "income == undefined ? 666 : income * 10"
+    val g = ExampleGraph()().result
+    val op = DeriveJSDouble(
+      JavaScript(expr),
+      Seq("income"),
+      onlyOnDefinedAttrs = false)
+    val derived = op(
+      op.attrs,
+      VertexAttributeToJSValue.seq(g.income.entity)).result.attr
+    assert(derived.rdd.collect.toSet == Set((0, 10000.0), (1, 666.0), (2, 20000.0), (3, 666.0)))
+  }
+
+  test("example graph - all vertices: undefined returns undefined") {
+    val expr = "income"
+    val g = ExampleGraph()().result
+    val op = DeriveJSDouble(
+      JavaScript(expr),
+      Seq("income"),
+      onlyOnDefinedAttrs = false)
+    val derived = op(
+      op.attrs,
+      VertexAttributeToJSValue.seq(g.income.entity)).result.attr
+    assert(derived.rdd.collect.toSet == Set((0, 1000.0), (2, 2000.0)))
+  }
+
+  // Tests that using undefined attribute values results in an invalid return rather than
+  // magic conversions.
+  test("example graph - all vertices: returns NaN") {
+    val expr = "income * 10"
+    val g = ExampleGraph()().result
+    val op = DeriveJSDouble(
+      JavaScript(expr),
+      Seq("income"),
+      onlyOnDefinedAttrs = false)
+    val derived = op(
+      op.attrs,
+      VertexAttributeToJSValue.seq(g.income.entity)).result.attr
+    intercept[org.apache.spark.SparkException] { // Script returns NaN.
+      derived.rdd.collect
+    }
+  }
+
+  test("example graph - all vertices: two attributes") {
+    val expr = "income === undefined ? undefined: income + age"
+    val g = ExampleGraph()().result
+    val op = DeriveJSDouble(
+      JavaScript(expr),
+      Seq("income", "age"),
+      onlyOnDefinedAttrs = false)
+    val derived = op(
+      op.attrs,
+      VertexAttributeToJSValue.seq(g.income.entity, g.age.entity)).result.attr
+    assert(derived.rdd.collect.toSet == Set((0, 1020.3), (2, 2050.3)))
+  }
+
+  // Tests that using undefined attribute values results in an invalid return rather than
+  // magic conversions.
+  test("example graph - all vertices: two attributes return NaN") {
+    val expr = "income + age"
+    val g = ExampleGraph()().result
+    val op = DeriveJSDouble(
+      JavaScript(expr),
+      Seq("income", "age"),
+      onlyOnDefinedAttrs = false)
+    val derived = op(
+      op.attrs,
+      VertexAttributeToJSValue.seq(g.income.entity, g.age.entity)).result.attr
+    intercept[org.apache.spark.SparkException] { // Script returns NaN.
+      derived.rdd.collect
+    }
+  }
+
+  def checkJS(expr: String, name: String, attr: Attribute[_], result: Set[(Int, String)]) = {
+    val op = DeriveJSString(JavaScript(expr), Seq(name))
+    val derived = op(op.attrs, VertexAttributeToJSValue.seq(attr)).result.attr
+    assert(derived.rdd.collect.toSet == result)
+  }
+
+  test("example graph - arrays") {
+    val g = ExampleGraph()().result
+    val ages = {
+      val op = AggregateByEdgeBundle(Aggregator.AsVector[Double]())
+      op(op.connection, g.edges)(op.attr, g.age).result.attr
+    }
+    val genders = {
+      val op = AggregateByEdgeBundle(Aggregator.AsVector[String]())
+      op(op.connection, g.edges)(op.attr, g.gender).result.attr
+    }
+    checkJS("ages.toString()", "ages", ages, Set(0 -> "18.2,50.3", 1 -> "20.3,50.3"))
+    checkJS("genders.toString()", "genders", genders, Set(0 -> "Female,Male", 1 -> "Male,Male"))
+    checkJS("ages.length.toString()", "ages", ages, Set(0 -> "2", 1 -> "2"))
+    checkJS("genders.length.toString()", "genders", genders, Set(0 -> "2", 1 -> "2"))
+    checkJS("ages[0].toString()", "ages", ages, Set(0 -> "18.2", 1 -> "20.3"))
+    checkJS("genders[0]", "genders", genders, Set(0 -> "Female", 1 -> "Male"))
+    checkJS("ages.concat([100]).toString()", "ages", ages, Set(0 -> "18.2,50.3,100", 1 -> "20.3,50.3,100"))
+    checkJS("genders.concat(['abc']).toString()", "genders", genders, Set(0 -> "Female,Male,abc", 1 -> "Male,Male,abc"))
+  }
+
+  test("example graph - arrays of arrays") {
+    val g = SmallTestGraph(Map(0 -> Seq(1, 2), 1 -> Seq(0, 2), 2 -> Seq(0, 1)))().result
+    val age = AddVertexAttribute.run(g.vs, Map(0 -> "10", 1 -> "20", 2 -> "30"))
+    val ages = {
+      val op = AggregateByEdgeBundle(Aggregator.AsVector[String]())
+      op(op.connection, g.es)(op.attr, age).result.attr
+    }
+    val agess = {
+      val op = AggregateByEdgeBundle(Aggregator.AsVector[Vector[String]]())
+      op(op.connection, g.es)(op.attr, ages).result.attr
+    }
+    checkJS("agess.length.toString()", "agess", agess, Set(0 -> "2", 1 -> "2", 2 -> "2"))
+    // toString() prints the flattened structure, but we have already checked length
+    checkJS("agess.toString()", "agess", agess,
+      Set(0 -> "10,30,10,20", 1 -> "20,30,10,20", 2 -> "20,30,10,30"))
+    checkJS("agess[0].toString()", "agess", agess, Set(0 -> "10,30", 1 -> "20,30", 2 -> "20,30"))
+    checkJS("agess[0][0].toString()", "agess", agess, Set(0 -> "10", 1 -> "20", 2 -> "20"))
+  }
 }

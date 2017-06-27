@@ -1,0 +1,37 @@
+### Import CSV
+
+CSV stands for comma-separated values. It is a common human-readable file format where each record
+is on a separate line and fields of the record are simply separated with a comma or other delimiter.
+CSV does not store data types, so all fields become strings when importing from this format.
+
+====
+[[filename]] File::
+Upload a file by clicking the
++++<label class="btn btn-default"><i class="glyphicon glyphicon-cloud-upload"></i></label>+++ button
+or specify a path explicitly. Wildcard (`+foo/*.csv+`) and glob (`+foo/{bar,baz}.csv+`) patterns are
+accepted. See <<prefixed-paths>> for more details on specifying paths.
+
+[[columns]] Columns in file::
+The names of all the columns in the file, as a comma-separated list. If empty, the column names will
+be read from the file. (Use this if the file has a header.)
+
+[[delimiter]] Delimiter::
+The delimiter separating the fields in each line.
+
+[[error_handling]] Error handling::
+What should happen if a line has more or less fields than the number of columns?
++
+**Fail on any malformed line** will cause the import to fail if there is such a line.
++
+**Ignore malformed lines** will simply omit such lines from the table. In this case an erroneously
+defined column list can result in an empty table.
++
+**Salvage malformed lines: truncate or fill with nulls** will still import the problematic lines,
+dropping some data or inserting undefined values.
+
+[[infer]] Infer types::
+Automatically detects data types in the CSV. For example a column full of numbers will become a
+`Double`. If disabled, all columns are imported as ``String``s.
+
+include::{g}[tag=import-box]
+====

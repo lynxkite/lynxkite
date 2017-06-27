@@ -6,6 +6,7 @@ mysqlclient
 prometheus_client
 python-dateutil
 PyYAML
+requests
 sqlalchemy
 # Dependencies for developing and testing
 autopep8
@@ -14,3 +15,7 @@ boto3
 pandas
 Sphinx
 sphinx-rtd-theme
+pytest
+selenium
+prettytable==0.7.2
+

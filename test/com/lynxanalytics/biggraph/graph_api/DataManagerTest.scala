@@ -1,11 +1,11 @@
 package com.lynxanalytics.biggraph.graph_api
 
-import org.apache.spark
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
+import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.graph_operations
-import com.lynxanalytics.biggraph.graph_operations.{ EnhancedExampleGraph, ExampleGraph }
+import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
 class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataManager {
@@ -92,11 +92,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val testfile = HadoopFile(myTempDirPrefix) / "test.csv"
     // Create the file so the schema can be read from it.
     testfile.createFromStrings("a,b\n1,2\n")
-    val df = dataManager.masterSQLContext.read
-      .format("com.databricks.spark.csv")
-      .option("header", "true")
-      .load(testfile.resolvedName)
-    val imported = graph_operations.ImportDataFrame(df).result
+    val imported = TestGraph.loadCSV(testfile.resolvedName)(metaManager, dataManager)
 
     // Delete file, so that the actual computation fails.
     testfile.delete()
@@ -156,4 +152,59 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     assert(dataManagerEphemeral.computeProgress(greeting) == 1.0)
   }
 
+  /*
+  // TODO: Adapt to boxes.
+  case class TestTable(idSet: VertexSet, columns: Map[String, Attribute[_]])
+    extends controllers.Table
+
+  test("operation chaining does not exhaust thread pool (#5580)") {
+    implicit val metaManager = cleanMetaManager
+    implicit val dataManager = cleanDataManager
+    import Scripting._
+    var df = dataManager.sparkSession.range(5).toDF("x")
+    for (i <- 1 to 6) {
+      val g = graph_operations.ImportDataFrame(df).result
+      df = TestTable(g.ids, g.columns.mapValues(_.entity)).toDF(dataManager.masterSQLContext)
+    }
+    assert(df.count == 5)
+  }
+  */
+
+  test("an operation triggering computation results in exception (#5580)") {
+    implicit val metaManager = cleanMetaManager
+    implicit val dataManager = cleanDataManager
+    import Scripting._
+    val g = ExampleGraph().result
+    val vs = {
+      val op = OpTriggeringTestOperation()
+      op.sideChannelVS = g.vertices
+      op.result.vs
+    }
+    val exc = intercept[Exception] {
+      println(vs.rdd.collect)
+    }
+    assert(java.util.regex.Pattern.matches(
+      ".*OpTriggeringTestOperation.* triggered the computation of .*vertices of .*ExampleGraph.*",
+      exc.getCause.getMessage))
+  }
+}
+
+object OpTriggeringTestOperation extends OpFromJson {
+  def fromJson(j: JsValue) = OpTriggeringTestOperation()
+  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+    val vs = vertexSet
+  }
+}
+case class OpTriggeringTestOperation()
+    extends TypedMetaGraphOp[graph_operations.NoInput, OpTriggeringTestOperation.Output] {
+  var sideChannelVS: VertexSet = null
+  @transient override lazy val inputs = new graph_operations.NoInput
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new OpTriggeringTestOperation.Output()(instance)
+  def execute(inputDatas: DataSet,
+              o: OpTriggeringTestOperation.Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    println(rc.dataManager.get(sideChannelVS).rdd.collect)
+  }
 }

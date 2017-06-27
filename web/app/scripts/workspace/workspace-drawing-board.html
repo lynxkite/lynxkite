@@ -1,0 +1,254 @@
+<div id="workspace-header">
+  <user-menu info="list" direction="dropdown" class="pull-right user-menu-in-toolbar"></user-menu>
+  <div class="btn-group pull-right">
+    <button class="btn btn-default"
+         id="save-selection-as-custom-box"
+         ng-click="saveSelectionAsCustomBoxInputOpen = true"
+         ng-disabled="selectedBoxIds.length === 0"
+         drop-tooltip="Save&nbsp;selection as&nbsp;custom&nbsp;box"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-superpowers"></i>
+    </button>
+    <div class="pull-left">
+      <inline-input
+        id="save-selection-as-custom-box-input"
+        placeholder="Save as..."
+        open="saveSelectionAsCustomBoxInputOpen"
+        onsubmit="saveSelectionAsCustomBox(input, success, error)"></inline-input>
+    </div>
+    <button class="btn btn-default"
+         id="copy-boxes"
+         ng-click="copyBoxes()"
+         ng-disabled="selectedBoxIds.length === 0"
+         drop-tooltip="Copy&nbsp;boxes (Ctrl-C)"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-copy"></i>
+    </button>
+    <button class="btn btn-default"
+         id="paste-boxes"
+         ng-click="pasteBoxes()"
+         drop-tooltip="Paste&nbsp;boxes (Ctrl-V)"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-paste"></i>
+    </button>
+    <button class="btn btn-default"
+         id="delete-selected-boxes"
+         ng-click="deleteSelectedBoxes()"
+         ng-disabled="selectedBoxIds.length === 0"
+         drop-tooltip="Delete&nbsp;selected&nbsp;boxes (Delete)"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-trash-o"></i>
+    </button>
+    <button class="btn btn-default"
+         id="dive-up"
+         ng-click="diveUp()"
+         ng-disabled="workspace.customBoxStack.length === 0"
+         drop-tooltip="Leave custom box {{ workspace.customBoxStack[workspace.customBoxStack.length - 1] }}"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-level-up"></i>
+    </button>
+    <button class="btn btn-default"
+         id="dive-down"
+         ng-click="diveDown()"
+         ng-disabled="!(
+         selectedBoxIds.length === 1 &&
+         workspace.getBox(selectedBoxIds[0]).metadata.categoryId === 'Custom boxes')"
+         drop-tooltip="Dive into custom box {{ selectedBoxIds[0] }}"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-level-down"></i>
+    </button>
+    <button class="btn btn-default"
+         id="select-mode-on"
+         ng-click="dragMode = 'select'"
+         ng-class="{ active: dragMode === 'select' }"
+         drop-tooltip="Select&nbsp;boxes&nbsp;on&nbsp;drag"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-mouse-pointer"></i>
+    </button>
+    <button class="btn btn-default"
+         id="pan-mode-on"
+         ng-click="dragMode = 'pan'"
+         ng-class="{ active: dragMode === 'pan' }"
+         drop-tooltip="Pan&nbsp;workspace&nbsp;on&nbsp;drag"
+         drop-tooltip-placement="bottom">
+      <i class="fa fa-hand-paper-o"></i>
+    </button>
+    <button class="btn btn-default"
+         id="undo"
+         ng-click="workspace.undo()"
+         ng-disabled="!workspace.canUndo()"
+         drop-tooltip="Undo (Ctrl-Z)"
+         drop-tooltip-placement="bottom">
+      <i class="glyphicon glyphicon-backward"></i>
+    </button>
+    <button class="btn btn-default"
+         id="redo"
+         ng-click="workspace.redo()"
+         ng-disabled="!workspace.canRedo()"
+         drop-tooltip="Redo (Ctrl-Y)"
+         drop-tooltip-placement="bottom">
+      <i class="glyphicon glyphicon-forward"></i>
+    </button>
+    <button class="btn btn-default"
+            id="save-workspace-as-starter-button"
+            ng-click="workspace.startSavingAs()"
+            ng-disabled="workspace.showSaveAs"
+            drop-tooltip="Save&nbsp;workspace&nbsp;as..."
+            drop-tooltip-placement="bottom">
+      <i class="glyphicon glyphicon-floppy-disk"></i>
+    </button>
+    <div class="pull-left">
+      <inline-input
+              id="save-workspace-as-input"
+              input="workspace.saveAsName"
+              open="workspace.showSaveAs"
+              onsubmit="workspace.maybeSaveAs()"></inline-input>
+    </div>
+    <a class="btn btn-default"
+         href="#/"
+         id="close-workspace"
+         drop-tooltip="Close&nbsp;workspace"
+         drop-tooltip-placement="bottom">
+      <i class="glyphicon glyphicon-remove"></i>
+    </a>
+  </div>
+
+  <span id="workspace-directory">
+    {{ getDirectoryPart(workspace.name) }}
+  </span>
+  <span id="workspace-name">
+    {{ getLastPart(workspace.name) }}
+  </span>
+  <span id="custom-box-stack" ng-if="workspace.customBoxStack.length > 0">
+    (accessed as {{ workspace.top }} » {{ workspace.customBoxStack.join(' » ') }})
+  </span>
+</div>
+<div class="clearfix"></div>
+
+<div
+    id="workspace-drawing-board"
+    ng-mousemove="onMouseMove($event)"
+    ng-mouseup="onMouseUp($event)"
+    ng-mousedown="onMouseDown($event)">
+  <svg>
+    <defs>
+      <!-- The filters to apply colors to the grayscale icons. -->
+      <filter ng-repeat="(id, matrix) in filters" id="{{ id | id }}">
+        <feColorMatrix in="SourceGraphic" type="matrix" ng-attr-values="{{ matrix }}"></feColorMatrix>
+      </filter>
+
+      <marker id="arrow-head" orient="auto" markerWidth="6" markerHeight="6" viewBox="-8 -5 10 10">
+        <path d="M -8 -5 l 10 5 l -10 5 z"></path>
+      </marker>
+
+      <marker id="arrow-root" markerWidth="4" markerHeight="4" viewBox="-2 -2 4 4">
+        <circle r="2"></circle>
+      </marker>
+    </defs>
+
+    <g id="drawing-board"
+       ng-attr-transform="{{ workspaceTransform() }}">
+      <g>
+        <rect
+          class="selection-box"
+          ng-attr-x="{{selection.leftX}}"
+          ng-attr-y="{{selection.upperY}}"
+          ng-attr-width="{{selection.width}}"
+          ng-attr-height="{{selection.height}}">
+        </rect>
+      </g>
+
+      <!-- start arrow -->
+      <g ng-repeat="arrow in arrows()">
+        <path class="arrow"
+            id="{{ arrow.src.boxId | id }}-{{ arrow.src.id | id }}-{{ arrow.dst.boxId | id }}-{{ arrow.dst.id | id }}"
+            ng-attr-d="{{ bezier(arrow.x1(), arrow.y1(), arrow.x2(), arrow.y2()) }}"></path>
+      </g>
+      <!-- end arrow -->
+
+      <!-- start pulled arrow -->
+      <g ng-if="pulledPlug && mouseLogical">
+        <path class="arrow pulled-arrow"
+            ng-attr-d="{{
+            pulledPlug.direction === 'inputs'
+            ? bezier(mouseLogical.x, mouseLogical.y, pulledPlug.cx(), pulledPlug.cy())
+            : bezier(pulledPlug.cx(), pulledPlug.cy(), mouseLogical.x, mouseLogical.y) }}"></path>
+      </g>
+
+      <!-- start box -->
+      <g ng-repeat="box in boxes()"
+          ng-mousedown="onMouseDownOnBox(box, $event)"
+          ng-mouseup="onMouseUpOnBox(box, $event)"
+          ng-attr-transform="{{ box.mainPosTransform() }}"
+          class="box"
+          id="{{ box.instance.id | id }}"
+          ng-class="{ 'selected': selectedBoxIds.includes(box.instance.id) }">
+        <circle id="click-target" cx="50" cy="60" r="50"></circle>
+
+        <!-- Icon. The filter applies color according to the metadata. -->
+        <image
+          class="box-main"
+          filter="{{ filters[box.metadata.color] ? 'url(#' + box.metadata.color + ')' : '' }}"
+          href="{{ box.metadata.icon }}" x="-25" y="-25" width="150" height="150"></image>
+
+        <text x="50" y="105" class="summary backdrop">
+          {{box.summary}}
+        </text>
+        <text x="50" y="105" class="summary text">
+          {{box.summary}}
+        </text>
+
+        <text x="-20" y="115" ng-show="box.commentLines">
+          <tspan xml:space="preserve" font-family="monospace" x="5" dy="15"
+                 ng-repeat="line in box.commentLines track by $index">{{line}}
+          </tspan>
+        </text>
+        <g ng-repeat="direction in ['inputs', 'outputs']" id="{{ direction | id }}">
+          <g ng-repeat="plug in box[direction]"
+              ng-attr-transform="{{ plug.posTransform }}"
+              class="plug"
+              id="{{ plug.id | id }}">
+            <circle ng-attr-r="{{ plug.radius }}"
+                  class="io-circle"
+                  ng-class="{
+                    'in-progress': plug.inProgress,
+                    'colored-output': plug.progressColor || plug.error,
+                    'pulled-plug-hover': pulledPlug && pulledPlug.direction !== direction && mouseOnThisPlug }"
+                  ng-attr-fill="{{ plug.error ? 'red' : plug.progressColor }}"
+                  ng-attr-drop-tooltip="{{ plug.error }}"
+                  ng-mousedown="onMouseDownOnPlug(plug, $event)"
+                  ng-mouseup="onMouseUpOnPlug(plug, $event)"
+                  ng-mousemove="mouseOnThisPlug = true"
+                  ng-mouseout="mouseOnThisPlug = false"
+                  ng-click="onClickOnPlug(plug, $event)">
+            </circle>
+            <text
+                class="backdrop"
+                ng-class="{ lonely: box[direction].length === 1 }"
+                ng-attr-x="{{ direction === 'inputs' ? -15 : 15 }}">
+              {{ plug.id }}</text>
+            <text
+                ng-class="{ lonely: box[direction].length === 1 }"
+                ng-attr-x="{{ direction === 'inputs' ? -15 : 15 }}">
+              {{ plug.id }}</text>
+          </g>
+        </g>
+      </g>
+
+      <polygon
+        ng-repeat="popup in popups"
+        class="popup-trail popup-type-{{ popup.content.type }}"
+        ng-attr-points="{{ popup.trail(pageToLogical, logicalToPage, workspace) }}">
+      </polygon>
+
+    </g>
+  </svg>
+
+  <popup popup-model="popup"
+      workspace="workspace"
+      ng-repeat="popup in popups">
+  </popup>
+
+</div>
+<operation-selector box-catalog="boxCatalog" ondrag="addOperation(op, $event)">
+</operation-selector>

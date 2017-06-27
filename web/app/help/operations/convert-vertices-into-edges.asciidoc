@@ -1,6 +1,6 @@
 ### Convert vertices into edges
 
-Re-interprets the vertices as edges. You select two string-typed vertex attributes
+Re-interprets the vertices as edges. You select two String-typed vertex attributes
 which specify the source and destination of the edges. New vertices will be generated for each
 distinct value of these attributes, and they will be connected if an original vertex described
 a connection between them.

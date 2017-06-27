@@ -331,7 +331,7 @@ object ImportEdgeList extends OpFromJson {
     val attrs = fields.map {
       f => f -> edgeAttribute[String](edges, ImportCommon.toSymbol(f))
     }.toMap
-    val stringID = vertexAttribute[String](vertices)
+    val stringId = vertexAttribute[String](vertices)
   }
   def fromJson(j: JsValue) =
     ImportEdgeList(TypedJson.read[RowInput](j \ "input"), (j \ "src").as[String], (j \ "dst").as[String])
@@ -386,7 +386,7 @@ class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
 
     output(o.edges, edges)
     output(o.vertices, idToName.mapValues(_ => ()))
-    output(o.stringID, idToName)
+    output(o.stringId, idToName)
   }
 }
 

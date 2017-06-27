@@ -1,5 +1,8 @@
 'use strict';
 
+module.exports = function() {};
+
+/*
 module.exports = function(fw) {
   var lib = require('../test-lib.js');
   var path = require('path');
@@ -24,6 +27,18 @@ module.exports = function(fw) {
       lib.splash.expectNumTables(0);
       lib.splash.expectNumViews(1);
       lib.splash.expectViewListed(viewName);
+    }
+  );
+
+  fw.transitionTest(
+    'CSV file imported as view',
+    'View described in global SQL box',
+    function() {
+      lib.splash.view(viewName).click();
+    },
+    function() {
+      var expectedData = [['Adam', '24'], ['Eve', '32'], ['Bob', '41']];
+      lib.splash.expectGlobalSqlResult(columns.split(','), ['String', 'String'], expectedData);
     }
   );
 
@@ -102,3 +117,4 @@ module.exports = function(fw) {
     lib.splash.expectNumViews(1);
   });
 };
+*/

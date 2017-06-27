@@ -11,8 +11,8 @@ over a graph containing people as vertices.
 [[name]] segmentation name::
 The new segmentation will be saved under this name.
 
-[[time-attr]] Time attribute::
-The `double` attribute corresponding the time of events.
+[[time_attr]] Time attribute::
+The `Double` attribute corresponding the time of events.
 
 [[location]] Location::
 A segmentation over events or an attribute corresponding to the location of events.
@@ -28,13 +28,13 @@ are defined by _Time window step_ and bucketing starts from 0.0 time.
 Takes all event sequences that are no longer than _Time window length_ and then creates a segment
 for each subsequence with _Sequence length_.
 
-[[sequence-length]] Sequence length::
+[[sequence_length]] Sequence length::
 Number of events in each segment.
 
-[[time-window-step]] Time window step::
+[[time_window_step]] Time window step::
 Bucket size used for discretizing events.
 
-[[time-window-length]] Time window length::
+[[time_window_length]] Time window length::
 Maximum time difference between first and last event in a segment.
 
 ====

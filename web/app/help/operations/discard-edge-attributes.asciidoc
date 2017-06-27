@@ -1,0 +1,8 @@
+### Discard edge attributes
+
+Throws away edge attributes.
+
+====
+[[name]] Name::
+The attributes to discard.
+====

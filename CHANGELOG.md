@@ -6,6 +6,72 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - _Add rank attribute_ can be used on String attributes.
+
+### 2.0
+
+ - Replaced LynxKite projects with more powerful and flexible workspaces. Workspaces allow you to
+   focus on your computation instead of your data by editing a network of computations directly.
+ - Renamed several operations to have uniform imperative names. E.g. _"Example graph"_ became
+   _"Create example graph"_.
+ - New operation _"Segment by Vector attribute"_ is added.
+
+### 1.14.0
+
+ - Added separate training operations for decision tree models (_Train a decision tree classification model_ and _Train a decision tree regression model_), so now you are able to train a decision tree model, look at its parameters and use it to create predictions.
+ - Visualization up to 10&times; faster in some cases.
+ - Added _Discard segmentation links_ operation.
+ - Added _Merge parallel segmentation links_ operation.
+
+### 1.13.1
+
+ - Fixed the type of numeric values coming from Oracle databases.
+
+### 1.13.0
+
+ - Visualization settings UI now matches the new attribute UI.
+ - When you try to overwrite a table or view, you now get a confirmation prompt instead of an error.
+ - Tab-completion for LynxKite operations works in Python command-line
+   and in Jupyter notebooks.
+ - You can now filter for position (Double, Double) attributes.
+ - Added _Segment by geographical proximity_ operation to segment vertices using Shapefiles and
+   coordinate vertex attributes. Can be used e.g. to segment by geo regions or points of interests.
+ - New _"Sample graph by random walks"_ operation added. It can be used to make small smart samples
+   that preserves the structure of the network to speed up model creation.
+ - Edge and scalar attribute notes added or augmented.
+ - Merge vertices by attributes operation keeps links with base project.
+
+### 1.12.1
+
+ - Admins can backup LynxKite project data from UI.
+ - Column types are displayed in SQL result box.
+ - Added _Lookup Region_ operation for finding locations inside shapefiles.
+
+### 1.12.0
+
+ - Restore Hive support. (It was unintentionally disabled with the Spark upgrade in
+   LynxKite 1.11.0.)
+ - Remote API works on PizzaKite now.
+ - Added a table and column explorer to the SQL box. Click on the "Tables" button in the SQL
+   box to give it a try!
+ - Upgraded to _Apache Spark 2.1.0_.
+ - You can assign icons to attributes/segmentations/scalars. (As suggested by Marton Szel. :+1:)
+ - New _"Copy scalar from other project"_ operation added. For example it can be used to take a model which
+   was trained in an other project.
+ - Clicking on a table or view scrolls to the global SQL box and executes the
+   `select *` query on it.
+ - You can submit SQL queries with Ctrl-Enter.
+ - New Remote API methods: `project.copy()`, `project.global_table_name()`,
+   `project.vertices_table()`, `project.edges_table()`.
+ - Spark Monitor doesn't send alarm in case of long-running tasks.
+
+Ecosystem:
+
+ - Replace `run_task.sh` and `show_target.sh` with a new unified `tasks.sh`.
+ - Renamed from "Lynx Data Automation Framework" to "Lynx Enterprise".
+
+### 1.11.0
+
 LynxKite:
 
  - Upgraded to _Apache Spark 2.0.2_.
@@ -21,6 +87,12 @@ LynxKite:
  - Fixed all reported bugs in the new project UI.
  - Vertex and edge ID attribute values are only optionally unique in "_Import vertex attributes_"
    and "_Import edge attributes_" operations.
+ - New "_Split Edges_" operation added. It can be used to create multiple copies of the same edge,
+   based on a repetition attribute.
+ - "_Derive vertex attribute_" and "_Derive edge attribute_" operations can be evaluated on all
+   vertices / edges using undefined input attribute values.
+ - "_Derive vertex attribute_" and "_Derive edge attribute_" operations can return vectors of
+   doubles or vectors of strings.
 
 ### 1.10.0
 

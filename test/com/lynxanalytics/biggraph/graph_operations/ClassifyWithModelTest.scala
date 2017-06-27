@@ -20,10 +20,10 @@ class ClassifyWithModelTest extends ModelTestBase {
     val result = op(op.features, features)(op.model, m).result
     val clustering = result.classification.rdd.values.collect
     assert(clustering.size == 4)
-    // Check that the first five and the last five data points shall have same labels.
+    // Check that the first two and the last two data points shall have identical labels.
     assert(clustering(0) == clustering(1))
     assert(clustering(2) == clustering(3))
-    // Check that distant data points have different labels. 
+    // Check that distant data points have different labels.
     assert(clustering(0) != clustering(3))
   }
 
@@ -47,9 +47,36 @@ class ClassifyWithModelTest extends ModelTestBase {
     assert(classification(0) == 0.0 && classification(1) == 0.0)
     assert(classification(2) == 1.0 && classification(3) == 1.0)
     val probability = result.probability.rdd.values.collect
-    // Check that each probability is proportional to their attribute values and each  
-    // probability is greater than 0.5.  
-    assert(probability(0) > probability(1) && probability(1) > 0.5)
-    assert(probability(3) > probability(2) && probability(2) > 0.5)
+    // Check that the probability is higher if the datapoint is farther from the threshold.
+    assert(probability(0) > probability(1))
+    assert(probability(3) > probability(2))
+
+  }
+
+  test("test the decision tree classification model") {
+    import com.lynxanalytics.biggraph.graph_operations.DataForDecisionTreeTests.{
+      trainingData,
+      testDataForClassification
+    }
+    val m = model(
+      method = "Decision tree classification",
+      labelName = trainingData.labelName,
+      label = trainingData.label,
+      featureNames = trainingData.featureNames,
+      attrs = trainingData.attrs,
+      graph(trainingData.vertexNumber))
+
+    val g = graph(testDataForClassification.vertexNumber)
+    val attrs = testDataForClassification.attrs
+    val features = attrs.map(attr => {
+      AddVertexAttribute.run[Double](g.vs, attr)
+    })
+    val op = ClassifyWithModel(testDataForClassification.featureNames.size)
+    val result = op(op.features, features)(op.model, m).result
+    val classification = result.classification.rdd.collect.toMap
+    assert(classification.size == testDataForClassification.vertexNumber)
+    assert(classification == testDataForClassification.label)
+    val probability = result.probability.rdd.collect.toMap
+    assertRoughlyEquals(probability, testDataForClassification.probability, 0.1)
   }
 }

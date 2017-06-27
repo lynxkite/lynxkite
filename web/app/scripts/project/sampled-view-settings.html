@@ -1,0 +1,104 @@
+<div class="token-list">
+  <div class="token" id="setting-display" ng-class="{ default: side.state.display === 'svg' }">
+    <span class="title">{{ side.state.display === 'svg' ? '2D' : '3D' }}</span>
+  </div>
+  <div class="menu token-menu" id="menu-setting-display">
+    <div class="menu-item default" ng-click="side.state.display = 'svg'"> 2D </div>
+    <div class="menu-item" ng-click="side.state.display = '3d'"> 3D </div>
+  </div>
+
+  <span ng-show="side.state.display === 'svg'">
+    <div class="token"
+         id="setting-animate"
+         tooltip="Animation {{ side.state.animate.enabled ? 'enabled' : 'disabled' }}"
+         ng-class="{ default: !side.state.animate.enabled }">
+      <span class="title">
+        <i class="glyphicon glyphicon-play" ng-show="side.state.animate.enabled"></i>
+        <i class="glyphicon glyphicon-pause" ng-hide="side.state.animate.enabled"></i>
+      </span>
+    </div>
+    <div class="menu token-menu" id="menu-setting-animate">
+      <div class="menu-item" ng-click="side.state.animate.enabled = true">
+        <i class="glyphicon glyphicon-play"></i> Enable animation </div>
+      <div class="menu-item default" ng-click="side.state.animate.enabled = false">
+        <i class="glyphicon glyphicon-pause"></i> Disable animation </div>
+    </div>
+
+    <div class="token"
+         id="setting-label-attraction"
+         ng-class="{ default: side.state.animate.labelAttraction === '0' }">
+      <span class="title">
+        label attraction: {{ side.state.animate.labelAttraction * 100 | number : 0 }}%
+      </span>
+    </div>
+    <div class="menu token-menu" id="menu-setting-label-attraction">
+      <div>
+        <input id="label-attraction-slider"
+               type="range"
+               max="1"
+               step="0.01"
+               ng-model="side.state.animate.labelAttraction">
+      </div>
+    </div>
+
+    <div class="token"
+         id="setting-layout"
+         ng-class="{ default: side.state.animate.style === 'neutral' }"
+         tooltip="
+         {{
+         side.state.animate.style === 'neutral' ?
+         'Vertices with large degrees act as centers themselves.' :
+         side.state.animate.style === 'centralize' ?
+         'Vertices with large degrees tend to be in the middle.' :
+         side.state.animate.style === 'decentralize' ?
+         'Vertices with large degrees tend to be on the periphery.' :
+         ''
+         }}">
+      <span class="title">
+        {{
+        side.state.animate.style === 'neutral' ? 'neutral layout' :
+        side.state.animate.style === 'centralize' ? 'centralized layout' :
+        side.state.animate.style === 'decentralize' ? 'decentralized layout' :
+        side.state.animate.style
+        }}
+      </span>
+    </div>
+    <div class="menu token-menu" id="menu-setting-layout">
+      <div class="menu-item default" ng-click="side.state.animate.style = 'neutral'"> Neutral </div>
+      <div class="menu-item" ng-click="side.state.animate.style = 'centralize'"> Centralized </div>
+      <div class="menu-item" ng-click="side.state.animate.style = 'decentralize'"> Decentralized </div>
+    </div>
+  </span>
+
+  <div class="token" id="setting-centers">
+    <span class="title">
+      centers: {{ side.state.centers.join(', ') || 'nothing' }}
+      <span class="spinner" ng-show="side.centerRequest && !side.centerRequest.$resolved">|</span>
+    </span>
+  </div>
+  <div class="menu token-menu" id="menu-setting-centers">
+    <div> Centers visualized: </div>
+    <input class="form-control"
+           id="centers"
+           ng-model="side.state.centers"
+           ng-model-options="{ updateOn: 'change blur' }"
+           ng-list>
+    <div class="menu-item" ng-click="side.state.centers = ['*']"> Show all vertices </div>
+    <pick-options side="side"></pick-options>
+  </div>
+
+  <div class="token"
+       id="setting-sample-radius"
+       ng-class="{ default: side.state.sampleRadius === '1' }">
+    <span class="title">
+      radius {{ side.state.sampleRadius }}
+    </span>
+  </div>
+  <div class="menu token-menu" id="menu-setting-sample-radius">
+    <input id="sample-radius-slider"
+           type="range"
+           max="10"
+           step="1"
+           ng-model="side.state.sampleRadius">
+  </div>
+</div>

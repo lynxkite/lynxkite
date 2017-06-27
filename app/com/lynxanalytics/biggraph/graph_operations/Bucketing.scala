@@ -8,14 +8,17 @@ import com.lynxanalytics.biggraph.spark_util.RDDUtils
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 
 // Helper class for creating segmentations by an attribute.
-case class Bucketing[T: Ordering: reflect.ClassTag](attrIdsToBuckets: SortedRDD[ID, T])(implicit rc: RuntimeContext) {
-  private val partitioner = rc.partitionerForNRows(RDDUtils.countApproxEvenRDD(attrIdsToBuckets))
+case class Bucketing[T: Ordering: reflect.ClassTag](
+    attrIdsToBuckets: SortedRDD[ID, T], even: Boolean = true)(implicit rc: RuntimeContext) {
+  private val partitioner = rc.partitionerForNRows(if (even) {
+    RDDUtils.countApproxEvenRDD(attrIdsToBuckets)
+  } else {
+    attrIdsToBuckets.count
+  })
   private val segToValue = attrIdsToBuckets.values.distinct.randomNumbered(partitioner)
   private val vToSeg = {
     val valueToSeg = segToValue.map(_.swap).sortUnique(partitioner)
-    HybridRDD.of(attrIdsToBuckets.map(_.swap), partitioner, even = true)
-      .lookup(valueToSeg)
-      .map { case (value, (v, seg)) => (v, seg) }
+    HybridRDD.of(attrIdsToBuckets.map(_.swap), partitioner, even)
   }
   val segments = segToValue.mapValues(_ => ())
   val label = segToValue

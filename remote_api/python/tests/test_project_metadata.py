@@ -11,7 +11,7 @@ class TestProjectMetadata(unittest.TestCase):
     self.assertNotEqual(md.vertex_set_id(), '')
     self.assertEqual(md.edge_bundle_id(), '')
     self.assertEqual(md.data.segmentations, [])
-    self.assertEqual(md.data.scalars[0].title, 'vertex_count')
+    self.assertEqual(md.data.scalars[0].title, '!vertex_count')
 
   def test_attributes(self):
     p = lynx.LynxKite().new_project()

@@ -26,12 +26,5 @@ src	dst	size
 Edges from the left-side graph to the right-side graph:
 src	dst	size
 2	1	1
-2	0	1
-1	1	1
-0	0	1
-
-Edges from the right-side graph to the left-side graph:
-src	dst	size
 1	0	1
-1	1	2
-0	0	1
+0	1	1

@@ -4,6 +4,10 @@ Merges each set of vertices that are equal by the chosen attribute. Aggregations
 can be specified for how to handle the rest of the attributes, which may be different
 among the merged vertices. Any edge that connected two vertices that are merged will become a loop.
 
+Merge vertices by attributes might create parallel links between the base projects
+and its segmentations. If it is important that there are no such parallel links
+(e.g. when performing aggregations to and from segmentations),
+make sure to run the <<merge-parallel-segmentation-links, Merge parallel segmentation links>> operation on the segmentations in question. 
 ====
 *Example use case*
 

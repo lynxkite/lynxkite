@@ -29,6 +29,10 @@ class TestUtil(unittest.TestCase):
     with self.assertRaises(AssertionError):
       d = util.parse_duration('0d')
 
+  def test_ttl(self):
+    ttl = util.get_ttl_from_path('root/some directory (ttl=48h)')
+    self.assertEqual(datetime.timedelta(days=2), ttl)
+
 
 class TestHDFS(unittest.TestCase):
 
@@ -67,12 +71,13 @@ Found 3 items
   @mock.patch('subprocess.check_call')
   def test_rm(self, check_call):
     ls = util.HDFS.rm('my dir')
-    check_call.assert_called_once_with(['hadoop', 'fs', '-rm', '-r', 'my dir'], env=None)
+    check_call.assert_called_once_with(['hadoop', 'fs', '-rm', '-r', '-skipTrash', 'my dir'],
+                                       env=None)
     # Check that special characters are escaped.
     check_call.reset_mock()
     ls = util.HDFS.rm('my \\ dir [ttl=7d]')
     check_call.assert_called_once_with(
-        ['hadoop', 'fs', '-rm', '-r', 'my \\\\ dir \\[ttl=7d\\]'], env=None)
+        ['hadoop', 'fs', '-rm', '-r', '-skipTrash', 'my \\\\ dir \\[ttl=7d\\]'], env=None)
 
 
 if __name__ == '__main__':

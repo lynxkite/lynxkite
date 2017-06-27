@@ -1,0 +1,31 @@
+.user-menu {
+  background-color: rgba(255,255,255,0.9);
+}
+
+.user-menu > * {
+  margin-right: 10px;
+}
+
+.login-info {
+  color: gray;
+  padding: 3px 20px; /* Matches ".dropdown-menu > li > a" from Bootstrap. */
+}
+
+.user-menu-dropup {
+  cursor: pointer;
+  user-select: none;
+}
+
+.user-menu-at-bottom {
+  position: fixed;
+  bottom: 5px;
+  right: 5px;
+  z-index: 2; /* The bottom links should not be covered by the spark status indicator. */
+}
+
+.user-menu-in-toolbar {
+  position: relative;
+  float: left;
+  margin-left: 8px;
+}
+

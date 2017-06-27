@@ -7,7 +7,6 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
 
-import com.google.common.collect.MapMaker
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
@@ -21,6 +20,7 @@ import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
@@ -29,41 +29,42 @@ trait EntityProgressManager {
     computeProgress: Double,
     value: Option[T],
     error: Option[Throwable])
-
   // Returns an indication of whether the entity has already been computed.
   // 0 means it is not computed.
   // 1 means it is computed.
   // Anything in between indicates that the computation is in progress.
-  // -1.0 indicates that an error has occured during computation.
+  // -1.0 indicates that an error has occurred during computation.
   // These constants need to be kept in sync with the ones in:
   // /web/app/script/util.js
   def computeProgress(entity: MetaGraphEntity): Double
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
 }
 
-class DataManager(sparkSession: spark.sql.SparkSession,
+class DataManager(val sparkSession: spark.sql.SparkSession,
                   val repositoryPath: HadoopFile,
                   val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext("DataManager",
       maxParallelism = LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
+  private var executingOperation =
+    new ThreadLocal[Option[MetaGraphOperationInstance]] { override def initialValue() = None }
   private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
   lazy val masterSQLContext = sparkSession.sqlContext
-  lazy val hiveConfigured = (getClass.getResource("/hive-site.xml") != null)
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
 
   def entityIO(entity: MetaGraphEntity): io.EntityIO = {
-    val context = io.IOContext(dataRoot, sparkSession.sparkContext)
+    val context = io.IOContext(dataRoot, sparkSession)
     entity match {
       case vs: VertexSet => new io.VertexSetIO(vs, context)
       case eb: EdgeBundle => new io.EdgeBundleIO(eb, context)
       case eb: HybridEdgeBundle => new io.HybridEdgeBundleIO(eb, context)
       case va: Attribute[_] => new io.AttributeIO(va, context)
       case sc: Scalar[_] => new io.ScalarIO(sc, context)
+      case tb: Table => new io.TableIO(tb, context)
     }
   }
 
@@ -114,21 +115,7 @@ class DataManager(sparkSession: spark.sql.SparkSession,
     entityCache(entity.gUID) = data
   }
 
-  // This is for asynchronous tasks. We store them as weak references so that waitAllFutures can wait
-  // for them, but the data structure does not grow indefinitely.
-  // MapMaker returns thread-safe maps.
-  private val loggedFutures = new MapMaker().weakKeys().makeMap[SafeFuture[Unit], Unit]()
-
-  private def loggedFuture(func: => Unit): Unit = {
-    val f = SafeFuture {
-      try {
-        func
-      } catch {
-        case t: Throwable => log.error("future failed:", t)
-      }
-    }
-    loggedFutures.put(f, ())
-  }
+  private val asyncJobs = new ControlledFutures()(executionContext)
 
   // Runs something on the DataManager threadpool.
   // Use this to run Spark operations from HTTP handlers. (SPARK-12964)
@@ -136,6 +123,13 @@ class DataManager(sparkSession: spark.sql.SparkSession,
     SafeFuture {
       fn
     }.future
+  }
+
+  // Asserts that this thread is not in the process of executing an operation.
+  private def assertNotInOperation(msg: String): Unit = {
+    for (op <- executingOperation.get) {
+      throw new AssertionError(s"$op $msg")
+    }
   }
 
   private def execute(instance: MetaGraphOperationInstance,
@@ -160,7 +154,9 @@ class DataManager(sparkSession: spark.sql.SparkSession,
         log.info(s"PERF Computing scalar $scalar")
       }
       val outputDatas = concurrent.blocking {
-        instance.run(inputDatas, runtimeContext)
+        executingOperation.set(Some(instance))
+        try instance.run(inputDatas, runtimeContext)
+        finally executingOperation.set(None)
       }
       validateOutput(instance, outputDatas)
       concurrent.blocking {
@@ -170,7 +166,7 @@ class DataManager(sparkSession: spark.sql.SparkSession,
           // We still save all scalars even for non-heavy operations,
           // unless they are explicitly say 'never serialize'.
           // This can happen asynchronously though.
-          loggedFuture {
+          asyncJobs.register {
             saveOutputs(instance, outputDatas.values.collect { case o: ScalarData[_] => o })
           }
         }
@@ -284,6 +280,7 @@ class DataManager(sparkSession: spark.sql.SparkSession,
         set(entity, load(entity))
       } else {
         assert(computationAllowed, "DEMO MODE, you cannot start new computations")
+        assertNotInOperation(s"has triggered the computation of $entity. #5580")
         // Otherwise we schedule execution of its operation.
         val instance = entity.source
 
@@ -302,7 +299,9 @@ class DataManager(sparkSession: spark.sql.SparkSession,
               instanceFuture.map(_(output.gUID))
             })
         }
-        logger.logWhenReady()
+
+        logger.logWhenReady(asyncJobs)
+
       }
     }
   }
@@ -334,6 +333,11 @@ class DataManager(sparkSession: spark.sql.SparkSession,
     entityCache(scalar.gUID).map(_.asInstanceOf[ScalarData[_]].runtimeSafeCast[T])
   }
 
+  def getFuture(table: Table): SafeFuture[TableData] = {
+    loadOrExecuteIfNecessary(table)
+    entityCache(table.gUID).map(_.asInstanceOf[TableData])
+  }
+
   def getFuture(entity: MetaGraphEntity): SafeFuture[EntityData] = {
     entity match {
       case vs: VertexSet => getFuture(vs)
@@ -341,13 +345,13 @@ class DataManager(sparkSession: spark.sql.SparkSession,
       case heb: HybridEdgeBundle => getFuture(heb)
       case va: Attribute[_] => getFuture(va)
       case sc: Scalar[_] => getFuture(sc)
+      case tb: Table => getFuture(tb)
     }
   }
 
   def waitAllFutures(): Unit = {
     SafeFuture.sequence(entityCache.values.toSeq).awaitReady(Duration.Inf)
-    import collection.JavaConversions.asScalaSet
-    SafeFuture.sequence(loggedFutures.keySet.toSeq).awaitReady(Duration.Inf)
+    asyncJobs.waitAllFutures()
   }
 
   def get(vertexSet: VertexSet): VertexSetData = {
@@ -364,6 +368,9 @@ class DataManager(sparkSession: spark.sql.SparkSession,
   }
   def get[T](scalar: Scalar[T]): ScalarData[T] = {
     getFuture(scalar).awaitResult(Duration.Inf)
+  }
+  def get(table: Table): TableData = {
+    getFuture(table).awaitResult(Duration.Inf)
   }
   def get(entity: MetaGraphEntity): EntityData = {
     getFuture(entity).awaitResult(Duration.Inf)
@@ -411,6 +418,7 @@ class DataManager(sparkSession: spark.sql.SparkSession,
               coLocatedFuture(getFuture(va), va.vertexSet)(va.classTag)
                 .map { case (rdd, count) => new AttributeData(va, rdd, count) }
             case sc: Scalar[_] => getFuture(sc)
+            case tb: Table => getFuture(tb)
           }
           sparkCachedEntities.add(entity.gUID)
         }
@@ -433,7 +441,7 @@ class DataManager(sparkSession: spark.sql.SparkSession,
     RuntimeContext(
       sparkContext = sparkSession.sparkContext,
       sqlContext = masterSQLContext,
-      ioContext = io.IOContext(dataRoot, sparkSession.sparkContext),
+      ioContext = io.IOContext(dataRoot, sparkSession),
       broadcastDirectory = broadcastDirectory,
       dataManager = this)
   }
@@ -464,4 +472,5 @@ object DataManager {
     log.info(s"Executing query: $query")
     ctx.sql(query)
   }
+  lazy val hiveConfigured = (getClass.getResource("/hive-site.xml") != null)
 }

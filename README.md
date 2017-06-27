@@ -5,8 +5,8 @@ LynxKite
 
 Install `nvm` (https://github.com/creationix/nvm). Then:
 
-    nvm install 5.7
-    nvm alias default 5.7
+    nvm install 6.10
+    nvm alias default 6.10
     npm install -g gulp
     # Install Yarn.
     sudo apt-key adv --fetch-keys http://dl.yarnpkg.com/debian/pubkey.gpg
@@ -31,6 +31,11 @@ Install Spark:
 For various tools you will require Python and AWS CLI. To install dependencies please run:
 
     sudo -H pip3 install -r python_requirements.txt
+
+Before running the above command you may also need to install the following packages:
+
+    sudo apt-get install libmysqlclient-dev
+    sudo apt-get install python3-dev
 
 Spark does a reverse DNS lookup for 0.0.0.0 on startup. At least on Ubuntu 14.04 this is equivalent
 to running `avahi-resolve-address 0.0.0.0` and takes 5 seconds. If you want to avoid this delay on
@@ -97,7 +102,7 @@ When working on the frontend you can avoid running `run.sh` all the time. Start 
  the proxy, any changes to frontend files will perform the necessary frontend build steps and reload
  the page in the browser.
 
-Frontend tests (Protractor tests) can be run with `make frotend-test`. This builds and starts
+Frontend tests (Protractor tests) can be run with `make frontend-test`. This builds and starts
 LynxKite, runs the Protractor tests, then shuts down LynxKite. To run a single test the test
 code has to be modified. After the one or two `function` parameters add a `'solo'` parameter to mark
  the test for solo running. (Multiple tests can be marked with `'solo'` at the same time.) Run
@@ -113,6 +118,7 @@ The Protractor tests pop up an actual browser. If you want to avoid this, use `x
 This will run the frontend tests in a virtual framebuffer. (In Ubuntu `xfvb-run` is available in
 package `xvfb`.)
 
+
 ## Ecosystem development
 
 You can run `make ecosystem-test` to run all tests, or run
@@ -121,28 +127,55 @@ You can run `make ecosystem-test` to run all tests, or run
 
 ## Big Data tests
 
-If you want to measure the effect of a code change on big data, create a PR and add
-a comment to it containing the phrase `Big Data Test please`. This will trigger Jenkins
-to spin up an EMR cluster, run the tests and push the results as a commit into your PR.
+If you want to measure the effect of a code change on big data, run `make big-data-test`
+and create a new PR containing the new test results. These results are in `ecosystem/tests/results`.
+There are four different data sets used by the performance tests labeled `small`, `medium`, `large` and
+`xlarge`. By default big data tests use the `medium` sized data set.
 
-You can manually run these tests using `test_big_data.sh`, and you can also specify more parameters
-that way, e.g. `test_big_data.sh pagerank 'fake_westeros_xt_25m'`. For further use cases, see the
-comments in `test_big_data.sh`.
+The tests run on an EMR cluster, launched by `test_big_data.py`. The command
+
+        make big-data-test
+
+builds LynxKite and Ecosystem, and by default uses this new build to run the tests. After building
+LynxKite it calls `test_big_data.py`. You can also call `test_big_data.py` manually, but before doing this,
+don't forget to build your currently checked out branch (`make ecosystem` or `ecosystem/native/build.sh`),
+or use a release. In the later case you need to update your `biggraph_releases` repo.
+
+The performance tests are implemented as Luigi tasks and they use the Python Remote API to
+run LynxKite operations on the test data. There are two wrapper tasks `AllTests` and `DefaultTests` which
+ can be used to run predefined test sets. You can also pick a single test task to run.
+
+You can find detailed examples in `test_big_data.py` about how to specify parameters of this script for
+ fine tuning the performance tests. Here are some examples:
+
+        ./test_big_data.py --task AllTests
+        ./test_big_data.py --lynx_version native-1.10.0 --test_set_size large --task ModularClustering
+        ./test_big_data.py --emr_instance_count 8 --test_size xlarge --task DefaultTests
 
 ## Test results on Jenkins
 
-To see the details of the automatic Jenkins tests, you have to create an ssh tunnel to the
-Jenkins machine. For this to work, you need Google Cloud SDK.
-The required steps to see the test results:
+To see the details of the automatic tests, click on `Details` link on GitHub in the box that is
+showing the tests.
 
- 1. Install [Google Cloud SDK](https://cloud.google.com/sdk/).
+Jenkins runs on the local network in the Budapest office. To access these results from
+outside of the office, you can use the
+[SSH gateway](https://github.com/biggraph/deployments/tree/master/budapest-office) and
+[FoxyProxy](https://github.com/biggraph/biggraph/wiki/Accessing-our-instances-in-public-clouds).
 
- 2. Create ssh tunnel to Jenkins.
+### Jenkins cleanup
 
-        gcloud compute ssh --zone=europe-west1-b jenkins --ssh-flag="-L8888:localhost:80"
+It can happen that Jenkins runs out of _inodes_, and it causes
+"No space left on device" error.  To resolve this issue you can do the following.
 
- 3. Click on `Details` link on GitHub in the box that is showing the tests.
+ 1. Login to Jenkins: `ssh jenkins@192.168.0.37`. (Password is in the secrets repo.)
 
+ 2. Check available inodes: `df -i`
+
+ 3. Start docker shell: `docker exec -u root -it lynx-jenkins bash`
+
+ 4. Delete content of `/tmp` in the container: `rm -Rf /tmp/*` If there are a huge number of files in `/tmp` this
+command may fail wih `[Argument list too long]`. In that case the solution is to delete (`rm -r /tmp`) and recreate (`mkdir /tmp`) the `/tmp` folder
+with proper (`chmod 1777 /tmp`) permissions.
 
 ## Run executors on different JVM-s.
 
@@ -173,12 +206,26 @@ Here's how I managed to set it up.
 Before doing a release, please run the following tests:
 ```
 tools/emr_based_test.sh frontend
-test_big_data.sh
+make big-data-test
 ```
 If you are changing Spark settings or Spark version, then also this one:
 ```
 test_spark.sh
 ```
 After this, please create a PR that updates the generated big data test result file.
-(`test_big_data.sh` is the same as saying `Big Data Test please` in a PR, but this one can reuse
+(`make big-data-test` is the same as saying `Big Data Test please` in a PR, but this one can reuse
 the cluster started in the previous line.)
+
+## What is this `yarn.lock`?
+
+From https://yarnpkg.com/en/docs/yarn-lock:
+
+> All `yarn.lock` files should be checked into source control (e.g. git or mercurial). This allows
+Yarn to install the same exact dependency tree across all machines, whether it be your coworker’s
+laptop or a CI server.
+
+```
+error Your lockfile needs to be updated, but yarn was run with `--frozen-lockfile`.
+```
+
+If you get this error, just run `yarn` in the `web` directory.

@@ -1,0 +1,30 @@
+<display-error caption="Cannot load table browser tree node." error="node.error"></display-error>
+
+<progressbar ng-if="node.list === undefined && !node.error" value="100" class="progress-striped active">
+loading
+</progressbar>
+
+<li ng-if="node.list.length === 0">
+  <i>Empty list.</i>
+</li>
+
+<li ng-if="(node.list !== undefined) && (node.objectType === 'view' || node.objectType === 'table')">
+  <span>
+    <table-browser-entry
+        text="'*ALL*'"
+        draggable-text="node.allColumnsSQL(fullyQualifyNames)">
+    </table-browser-entry>
+  </span>
+</li>
+<li ng-repeat="node in node.list">
+  <span>
+    <dir-entry-icon object-type="node.objectType" ng-click="node.toggle()">
+    </dir-entry-icon>
+    <table-browser-entry
+      text="node.uiText"
+      draggable-text="node.getDraggableText(fullyQualifyNames)"
+      ng-dblclick="node.insertIntoEditor()">
+    </table-browser-entry>
+  </span>
+  <ul ng-if="node.isOpen" list="node.list" ng-include="'scripts/sql/table-browser-node.html'" />
+</li>
