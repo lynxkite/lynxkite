@@ -13,13 +13,16 @@ import com.lynxanalytics.biggraph.model
 import play.api.libs.json
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
-  override val atomicOperations =
-    new ProjectOperations(env).operations.toMap ++
-      new MetaOperations(env).operations.toMap ++
-      new ImportOperations(env).operations.toMap ++
-      new ExportOperations(env).operations.toMap ++
-      new PlotOperations(env).operations.toMap ++
-      new VisualizationOperations(env).operations.toMap
+  val registries = Seq(
+    new ProjectOperations(env),
+    new MetaOperations(env),
+    new ImportOperations(env),
+    new ExportOperations(env),
+    new PlotOperations(env),
+    new VisualizationOperations(env))
+
+  override val atomicOperations = registries.map(_.operations).flatten.toMap
+  override val atomicCategories = registries.map(_.categories).flatten.toMap
 }
 
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
@@ -54,22 +57,26 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   }
 
   // Categories
-  val SpecialtyOperations = Category("Specialty operations", "green", icon = "book")
+  val SpecialtyOperations = Category("Specialty operations", "green", icon = "glyphicon-book")
   val EdgeAttributesOperations =
     Category("Edge attribute operations", "blue", sortKey = "Attribute, edge")
   val VertexAttributesOperations =
     Category("Vertex attribute operations", "blue", sortKey = "Attribute, vertex")
-  val GlobalOperations = Category("Global operations", "magenta", icon = "globe")
-  val ImportOperations = Category("Import operations", "yellow", icon = "import")
-  val MetricsOperations = Category("Graph metrics", "green", icon = "stats")
-  val PropagationOperations = Category("Propagation operations", "green", icon = "fullscreen")
+  val GlobalOperations = Category("Global operations", "magenta", icon = "glyphicon-globe")
+  val ImportOperations = Category("Import operations", "yellow", icon = "glyphicon-import")
+  val MetricsOperations = Category("Graph metrics", "green", icon = "glyphicon-stats")
+  val PropagationOperations =
+    Category("Propagation operations", "green", icon = "glyphicon-fullscreen")
   val HiddenOperations = Category("Hidden operations", "black", visible = false)
   val DeprecatedOperations =
-    Category("Deprecated operations", "red", deprecated = true, icon = "remove-sign")
-  val CreateSegmentationOperations = Category("Create segmentation", "green", icon = "th-large")
-  val StructureOperations = Category("Structure operations", "pink", icon = "asterisk")
-  val MachineLearningOperations = Category("Machine learning operations", "pink ", icon = "knight")
-  val UtilityOperations = Category("Utility operations", "green", icon = "wrench", sortKey = "zz")
+    Category("Deprecated operations", "red", visible = false, icon = "glyphicon-remove-sign")
+  val CreateSegmentationOperations =
+    Category("Create segmentation", "green", icon = "glyphicon-th-large")
+  val StructureOperations = Category("Structure operations", "pink", icon = "glyphicon-asterisk")
+  val MachineLearningOperations =
+    Category("Machine learning operations", "pink ", icon = "glyphicon-knight")
+  val UtilityOperations =
+    Category("Utility operations", "green", icon = "glyphicon-wrench", sortKey = "zz")
 
   import OperationParams._
 

@@ -276,7 +276,7 @@ object FrontendJson {
   implicit val rACLSettingsRequest = json.Json.reads[ACLSettingsRequest]
   implicit val rProjectListRequest = json.Json.reads[ProjectListRequest]
   implicit val rProjectSearchRequest = json.Json.reads[ProjectSearchRequest]
-  implicit val wOperationCategory = json.Json.writes[OperationCategory]
+  implicit val wFEOperationCategory = json.Json.writes[FEOperationCategory]
   implicit val wFEAttribute = json.Json.writes[FEAttribute]
   implicit val wFESegmentation = json.Json.writes[FESegmentation]
   implicit val wFEProject = json.Json.writes[FEProject]
