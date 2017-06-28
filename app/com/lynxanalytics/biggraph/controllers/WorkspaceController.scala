@@ -10,7 +10,6 @@ import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
-case class WorkspaceName(name: String)
 case class WorkspaceReference(
   top: String, // The name of the top-level workspace.
   customBoxStack: List[String] = List()) // The ID of the custom boxes we have "dived" into.
@@ -22,7 +21,7 @@ case class GetWorkspaceResponse(
   summaries: Map[String, String],
   canUndo: Boolean,
   canRedo: Boolean)
-case class SetWorkspaceRequest(name: String, workspace: Workspace)
+case class SetWorkspaceRequest(reference: WorkspaceReference, workspace: Workspace)
 case class GetOperationMetaRequest(workspace: WorkspaceReference, box: String)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
 case class GetProgressRequest(stateIds: List[String])
@@ -218,27 +217,30 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def setWorkspace(
-    user: serving.User, request: SetWorkspaceRequest): Unit = metaManager.synchronized {
-    val f = getWorkspaceFrame(user, request.name)
+    user: serving.User, request: SetWorkspaceRequest): GetWorkspaceResponse = metaManager.synchronized {
+    val f = getWorkspaceFrame(user, ResolvedWorkspaceReference(user, request.reference).name)
     f.assertWriteAllowedFrom(user)
     val ws = request.workspace
     val repaired = ws.context(user, ops, Map()).repairedWorkspace
     val cp = repaired.checkpoint(previous = f.checkpoint)
     f.setCheckpoint(cp)
+    getWorkspace(user, request.reference)
   }
 
   def undoWorkspace(
-    user: serving.User, request: WorkspaceName): Unit = metaManager.synchronized {
-    val f = getWorkspaceFrame(user, request.name)
+    user: serving.User, request: WorkspaceReference): GetWorkspaceResponse = metaManager.synchronized {
+    val f = getWorkspaceFrame(user, ResolvedWorkspaceReference(user, request).name)
     f.assertWriteAllowedFrom(user)
     f.undo()
+    getWorkspace(user, request)
   }
 
   def redoWorkspace(
-    user: serving.User, request: WorkspaceName): Unit = metaManager.synchronized {
-    val f = getWorkspaceFrame(user, request.name)
+    user: serving.User, request: WorkspaceReference): GetWorkspaceResponse = metaManager.synchronized {
+    val f = getWorkspaceFrame(user, ResolvedWorkspaceReference(user, request).name)
     f.assertWriteAllowedFrom(user)
     f.redo()
+    getWorkspace(user, request)
   }
 
   def boxCatalog(user: serving.User, request: serving.Empty): BoxCatalogResponse = {
