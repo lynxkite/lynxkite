@@ -11,7 +11,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import Operation.Category
   import Operation.Context
 
-  val ExportOperations = Category("Export operations", "blue", icon = "folder-open")
+  val ExportOperations = Category("Export operations", "blue", icon = "glyphicon-folder-open")
 
   def register(id: String)(factory: Context => ExportOperation): Unit = {
     registerOp(id, "black_truck", ExportOperations, List("table"), List("exportResult"), factory)

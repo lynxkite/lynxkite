@@ -6,7 +6,9 @@
 angular.module('biggraph')
   .directive(
   'workspaceDrawingBoard',
-  function(environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope, $q, util) {
+  function(
+    environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope, $q,
+    $location, util) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -638,6 +640,10 @@ angular.module('biggraph')
         scope.getLastPart = function(path) {
           if (path === undefined) { return undefined; }
           return path.split('/').slice(-1)[0];
+        };
+
+        scope.closeWorkspace = function() {
+          $location.url('/');
         };
       }
     };

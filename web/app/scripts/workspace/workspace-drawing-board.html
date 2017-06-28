@@ -1,129 +1,124 @@
-<div id="workspace-header">
-  <user-menu info="list" direction="dropdown" class="pull-right user-menu-in-toolbar"></user-menu>
-  <div class="btn-group pull-right">
-    <button class="btn btn-default"
-         id="save-selection-as-custom-box"
-         ng-click="saveSelectionAsCustomBoxInputOpen = true"
-         ng-disabled="selectedBoxIds.length === 0"
-         drop-tooltip="Save&nbsp;selection as&nbsp;custom&nbsp;box"
-         drop-tooltip-placement="bottom">
-      <i class="fa fa-superpowers"></i>
-    </button>
-    <div class="pull-left">
-      <inline-input
-        id="save-selection-as-custom-box-input"
-        placeholder="Save as..."
-        open="saveSelectionAsCustomBoxInputOpen"
-        onsubmit="saveSelectionAsCustomBox(input, success, error)"></inline-input>
-    </div>
-    <button class="btn btn-default"
-         id="copy-boxes"
-         ng-click="copyBoxes()"
-         ng-disabled="selectedBoxIds.length === 0"
-         drop-tooltip="Copy&nbsp;boxes (Ctrl-C)"
-         drop-tooltip-placement="bottom">
-      <i class="fa fa-copy"></i>
-    </button>
-    <button class="btn btn-default"
-         id="paste-boxes"
-         ng-click="pasteBoxes()"
-         drop-tooltip="Paste&nbsp;boxes (Ctrl-V)"
-         drop-tooltip-placement="bottom">
-      <i class="fa fa-paste"></i>
-    </button>
-    <button class="btn btn-default"
-         id="delete-selected-boxes"
-         ng-click="deleteSelectedBoxes()"
-         ng-disabled="selectedBoxIds.length === 0"
-         drop-tooltip="Delete&nbsp;selected&nbsp;boxes (Delete)"
-         drop-tooltip-placement="bottom">
-      <i class="fa fa-trash-o"></i>
-    </button>
-    <button class="btn btn-default"
-         id="dive-up"
-         ng-click="diveUp()"
-         ng-disabled="workspace.customBoxStack.length === 0"
-         drop-tooltip="Leave custom box {{ workspace.customBoxStack[workspace.customBoxStack.length - 1] }}"
-         drop-tooltip-placement="bottom">
-      <i class="fa fa-level-up"></i>
-    </button>
-    <button class="btn btn-default"
-         id="dive-down"
-         ng-click="diveDown()"
-         ng-disabled="!(
-         selectedBoxIds.length === 1 &&
-         workspace.getBox(selectedBoxIds[0]).metadata.categoryId === 'Custom boxes')"
-         drop-tooltip="Dive into custom box {{ selectedBoxIds[0] }}"
-         drop-tooltip-placement="bottom">
-      <i class="fa fa-level-down"></i>
-    </button>
-    <button class="btn btn-default"
-         id="select-mode-on"
-         ng-click="dragMode = 'select'"
-         ng-class="{ active: dragMode === 'select' }"
-         drop-tooltip="Select&nbsp;boxes&nbsp;on&nbsp;drag"
-         drop-tooltip-placement="bottom">
-      <i class="fa fa-mouse-pointer"></i>
-    </button>
-    <button class="btn btn-default"
-         id="pan-mode-on"
-         ng-click="dragMode = 'pan'"
-         ng-class="{ active: dragMode === 'pan' }"
-         drop-tooltip="Pan&nbsp;workspace&nbsp;on&nbsp;drag"
-         drop-tooltip-placement="bottom">
-      <i class="fa fa-hand-paper-o"></i>
-    </button>
-    <button class="btn btn-default"
-         id="undo"
-         ng-click="workspace.undo()"
-         ng-disabled="!workspace.canUndo()"
-         drop-tooltip="Undo (Ctrl-Z)"
-         drop-tooltip-placement="bottom">
-      <i class="glyphicon glyphicon-backward"></i>
-    </button>
-    <button class="btn btn-default"
-         id="redo"
-         ng-click="workspace.redo()"
-         ng-disabled="!workspace.canRedo()"
-         drop-tooltip="Redo (Ctrl-Y)"
-         drop-tooltip-placement="bottom">
-      <i class="glyphicon glyphicon-forward"></i>
-    </button>
-    <button class="btn btn-default"
-            id="save-workspace-as-starter-button"
-            ng-click="workspace.startSavingAs()"
-            ng-disabled="workspace.showSaveAs"
-            drop-tooltip="Save&nbsp;workspace&nbsp;as..."
-            drop-tooltip-placement="bottom">
-      <i class="glyphicon glyphicon-floppy-disk"></i>
-    </button>
-    <div class="pull-left">
-      <inline-input
-              id="save-workspace-as-input"
-              input="workspace.saveAsName"
-              open="workspace.showSaveAs"
-              onsubmit="workspace.maybeSaveAs()"></inline-input>
-    </div>
-    <a class="btn btn-default"
-         href="#/"
-         id="close-workspace"
-         drop-tooltip="Close&nbsp;workspace"
-         drop-tooltip-placement="bottom">
-      <i class="glyphicon glyphicon-remove"></i>
-    </a>
+<div id="workspace-header" class="flat-toolbar">
+  <div class="flat-toolbar-title">
+    <span id="workspace-directory">
+      {{ getDirectoryPart(workspace.name) }}
+    </span>
+    <span id="workspace-name">
+      {{ getLastPart(workspace.name) }}
+    </span>
+    <span id="custom-box-stack" ng-if="workspace.customBoxStack.length > 0">
+      (accessed as {{ workspace.top }} » {{ workspace.customBoxStack.join(' » ') }})
+    </span>
   </div>
 
-  <span id="workspace-directory">
-    {{ getDirectoryPart(workspace.name) }}
-  </span>
-  <span id="workspace-name">
-    {{ getLastPart(workspace.name) }}
-  </span>
-  <span id="custom-box-stack" ng-if="workspace.customBoxStack.length > 0">
-    (accessed as {{ workspace.top }} » {{ workspace.customBoxStack.join(' » ') }})
-  </span>
+  <inline-input
+       id="save-selection-as-custom-box-input"
+       placeholder="Save as..."
+       open="saveSelectionAsCustomBoxInputOpen"
+       onsubmit="saveSelectionAsCustomBox(input, success, error)"></inline-input>
+  <button class="btn btn-default"
+       id="save-selection-as-custom-box"
+       ng-click="saveSelectionAsCustomBoxInputOpen = true"
+       ng-disabled="selectedBoxIds.length === 0"
+       drop-tooltip="Save&nbsp;selection as&nbsp;custom&nbsp;box"
+       drop-tooltip-placement="bottom">
+    <i class="fa fa-superpowers"></i>
+  </button>
+  <button class="btn btn-default"
+       id="copy-boxes"
+       ng-click="copyBoxes()"
+       ng-disabled="selectedBoxIds.length === 0"
+       drop-tooltip="Copy&nbsp;boxes (Ctrl-C)"
+       drop-tooltip-placement="bottom">
+    <i class="fa fa-copy"></i>
+  </button>
+  <button class="btn btn-default"
+       id="paste-boxes"
+       ng-click="pasteBoxes()"
+       drop-tooltip="Paste&nbsp;boxes (Ctrl-V)"
+       drop-tooltip-placement="bottom">
+    <i class="fa fa-paste"></i>
+  </button>
+  <button class="btn btn-default"
+       id="delete-selected-boxes"
+       ng-click="deleteSelectedBoxes()"
+       ng-disabled="selectedBoxIds.length === 0"
+       drop-tooltip="Delete&nbsp;selected&nbsp;boxes (Delete)"
+       drop-tooltip-placement="bottom">
+    <i class="fa fa-trash-o"></i>
+  </button>
+  <button class="btn btn-default"
+       id="dive-up"
+       ng-click="diveUp()"
+       ng-disabled="workspace.customBoxStack.length === 0"
+       drop-tooltip="Leave custom box {{ workspace.customBoxStack[workspace.customBoxStack.length - 1] }}"
+       drop-tooltip-placement="bottom">
+    <i class="fa fa-level-up"></i>
+  </button>
+  <button class="btn btn-default"
+       id="dive-down"
+       ng-click="diveDown()"
+       ng-disabled="!(
+       selectedBoxIds.length === 1 &&
+       workspace.getBox(selectedBoxIds[0]).metadata.categoryId === 'Custom boxes')"
+       drop-tooltip="Dive into custom box {{ selectedBoxIds[0] }}"
+       drop-tooltip-placement="bottom">
+    <i class="fa fa-level-down"></i>
+  </button>
+  <button class="btn btn-default"
+       id="select-mode-on"
+       ng-click="dragMode = 'select'"
+       ng-class="{ active: dragMode === 'select' }"
+       drop-tooltip="Select&nbsp;boxes&nbsp;on&nbsp;drag"
+       drop-tooltip-placement="bottom">
+    <i class="fa fa-mouse-pointer"></i>
+  </button>
+  <button class="btn btn-default"
+       id="pan-mode-on"
+       ng-click="dragMode = 'pan'"
+       ng-class="{ active: dragMode === 'pan' }"
+       drop-tooltip="Pan&nbsp;workspace&nbsp;on&nbsp;drag"
+       drop-tooltip-placement="bottom">
+    <i class="fa fa-hand-paper-o"></i>
+  </button>
+  <button class="btn btn-default"
+       id="undo"
+       ng-click="workspace.undo()"
+       ng-disabled="!workspace.canUndo()"
+       drop-tooltip="Undo (Ctrl-Z)"
+       drop-tooltip-placement="bottom">
+    <i class="glyphicon glyphicon-backward"></i>
+  </button>
+  <button class="btn btn-default"
+       id="redo"
+       ng-click="workspace.redo()"
+       ng-disabled="!workspace.canRedo()"
+       drop-tooltip="Redo (Ctrl-Y)"
+       drop-tooltip-placement="bottom">
+    <i class="glyphicon glyphicon-forward"></i>
+  </button>
+  <inline-input
+       id="save-workspace-as-input"
+       input="workspace.saveAsName"
+       open="workspace.showSaveAs"
+       onsubmit="workspace.maybeSaveAs()"></inline-input>
+  <button class="btn btn-default"
+          id="save-workspace-as-starter-button"
+          ng-click="workspace.startSavingAs()"
+          ng-disabled="workspace.showSaveAs"
+          drop-tooltip="Save&nbsp;workspace&nbsp;as..."
+          drop-tooltip-placement="bottom">
+    <i class="glyphicon glyphicon-floppy-disk"></i>
+  </button>
+  <button class="btn btn-default"
+       ng-click="closeWorkspace()"
+       id="close-workspace"
+       drop-tooltip="Close&nbsp;workspace"
+       drop-tooltip-placement="bottom">
+    <i class="glyphicon glyphicon-remove"></i>
+  </button>
+  <user-menu info="list" direction="dropdown" class="user-menu-in-toolbar"></user-menu>
 </div>
-<div class="clearfix"></div>
 
 <div
     id="workspace-drawing-board"
