@@ -12,6 +12,7 @@ import org.apache.spark.sql.DataFrame
 import scala.reflect.runtime.universe._
 
 class ScalaScriptTest extends FunSuite with TestGraphOp {
+
   test("Can't do infinite loop") {
     val code =
       """
