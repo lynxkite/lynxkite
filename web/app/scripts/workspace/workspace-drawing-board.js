@@ -63,8 +63,8 @@ angular.module('biggraph')
           // event.offsetX/Y are distorted when the mouse is
           // over a popup window (even if over an invisible
           // overflow part of it), hence we compute our own:
-          event.workspaceX = event.pageX - svgElement.offset().left;
-          event.workspaceY = event.pageY - svgElement.offset().top;
+          event.workspaceX = event.pageX - svgOffset.left;
+          event.workspaceY = event.pageY - svgOffset.top;
           // Add location according to pan and zoom:
           var logical = scope.pageToLogical({ x: event.pageX, y: event.pageY });
           event.logicalX = logical.x;
@@ -72,21 +72,21 @@ angular.module('biggraph')
           return event;
         }
 
+        var svgOffset = svgElement.offset();
+
         scope.pageToLogical = function(pos) {
           var z = zoomToScale(workspaceZoom);
-          var offset = svgElement.offset();
           return {
-            x: (pos.x - offset.left - workspaceX) / z,
-            y: (pos.y - offset.top - workspaceY) / z,
+            x: (pos.x - svgOffset.left - workspaceX) / z,
+            y: (pos.y - svgOffset.top - workspaceY) / z,
           };
         };
 
         scope.logicalToPage = function(pos) {
           var z = zoomToScale(workspaceZoom);
-          var offset = svgElement.offset();
           return {
-            x: pos.x * z + workspaceX + offset.left,
-            y: pos.y * z + workspaceY + offset.top,
+            x: pos.x * z + workspaceX + svgOffset.left,
+            y: pos.y * z + workspaceY + svgOffset.top,
           };
         };
 
@@ -204,7 +204,7 @@ angular.module('biggraph')
           var eventX = event.pageX - w / 2;
           var eventY = event.pageY - h / 2;
           var minX = 0;
-          var minY = svgElement.offset().top;  // Do not overlap toolbar.
+          var minY = svgOffset.top;  // Do not overlap toolbar.
           var maxX = svgElement.width() - w - 35;  // Do not overlap toolbox.
           var maxY = svgElement.height() - h;
 
