@@ -151,7 +151,6 @@ class MetaGraphManager(val repositoryPath: String) {
     mutable.Map[UUID, List[MetaGraphOperationInstance]]().withDefaultValue(List())
 
   initializeFromDisk()
-  createBuiltIns()
 
   private def internalApply(operationInstance: MetaGraphOperationInstance): Unit = {
     operationInstances(operationInstance.gUID) = operationInstance
@@ -255,37 +254,6 @@ class MetaGraphManager(val repositoryPath: String) {
         op.inputSig.tables
           .map(n => n -> table(inputs(n))).toMap))
   }
-
-  private def createBuiltIns() = {
-    if (!builtInsDirectoryExists()) {
-      log.info("Loading built_ins from disk...")
-      val builtInsLocalDir = getBuiltInsLocalDirectory()
-      implicit val metaGraphManager = this
-      import com.lynxanalytics.biggraph.controllers.WorkspaceJsonFormatters._
-      for ((file, j) <- MetaGraphManager.loadBuiltIns(builtInsLocalDir)) {
-        try {
-          val ws = j.as[Workspace]
-          val entry = DirectoryEntry.fromName("built_ins/" + file).asNewWorkspaceFrame()
-          val cp = ws.checkpoint()
-          entry.setCheckpoint(cp)
-        } catch {
-          case e: Throwable => throw new Exception(s"failed to load $file.", e)
-        }
-      }
-      log.info("Built_ins loaded from disk.")
-    }
-  }
-
-  private def getBuiltInsLocalDirectory(): String = {
-    val stageDir = scala.util.Properties.envOrNone("KITE_STAGE_DIR")
-    // In the backend-tests because there we don't have the KITE_STAGE_DIR environment variable
-    // set.
-    stageDir.getOrElse("stage")
-  }
-
-  private def builtInsDirectoryExists(): Boolean = {
-    tagExists(List(Symbol("projects"), Symbol("built_ins")))
-  }
 }
 object MetaGraphManager {
   implicit class StringAsUUID(s: String) {
@@ -302,16 +270,48 @@ object MetaGraphManager {
     }
   }
 
-  def loadBuiltIns(repo: String): Iterator[(String, json.JsValue)] = {
-    val opdir = new File(repo, "built_ins")
-    if (opdir.exists) {
-      val files = opdir.listFiles.sortBy(_.getName)
-      files.iterator.map { f =>
-        f.getName() -> Json.parse(FileUtils.readFileToString(f, "utf8"))
-      }
-    } else Iterator()
-  }
-
   def getCheckpointRepo(repositoryPath: String): CheckpointRepository =
     new CheckpointRepository(repositoryPath + "/checkpoints")
+}
+
+object BuiltIns {
+  def createBuiltIns(implicit manager: MetaGraphManager) = {
+    if (!builtInsDirectoryExists) {
+      log.info("Loading built-ins from disk...")
+      val builtInsLocalDir = getBuiltInsLocalDirectory()
+      import com.lynxanalytics.biggraph.controllers.WorkspaceJsonFormatters._
+      for ((file, j) <- loadBuiltIns(builtInsLocalDir)) {
+        try {
+          val ws = j.as[Workspace]
+          val entry = DirectoryEntry.fromName("built-ins/" + file).asNewWorkspaceFrame()
+          val cp = ws.checkpoint()
+          entry.setCheckpoint(cp)
+        } catch {
+          case e: Throwable => throw new Exception(s"failed to load $file.", e)
+        }
+      }
+      log.info("Built-ins loaded from disk.")
+    }
+  }
+
+  private def getBuiltInsLocalDirectory(): String = {
+    val stageDir = scala.util.Properties.envOrNone("KITE_STAGE_DIR")
+    // In the backend-tests because there we don't have the KITE_STAGE_DIR environment variable
+    // set.
+    stageDir.getOrElse("stage")
+  }
+
+  private def loadBuiltIns(repo: String): Iterable[(String, json.JsValue)] = {
+    val opdir = new File(repo, "built-ins")
+    if (opdir.exists) {
+      val files = opdir.listFiles.sortBy(_.getName)
+      files.map { f =>
+        f.getName() -> Json.parse(FileUtils.readFileToString(f, "utf8"))
+      }
+    } else Iterable()
+  }
+
+  private def builtInsDirectoryExists(implicit manager: MetaGraphManager): Boolean = {
+    DirectoryEntry.fromName("built-ins").exists
+  }
 }

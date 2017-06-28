@@ -149,4 +149,4 @@ mappings in Universal ++= dirContents(baseDirectory.value, "tools", "performance
 
 mappings in Universal ++= dirContents(baseDirectory.value, "tools", "api", "python", "lynx")
 
-mappings in Universal ++= dirContents(baseDirectory.value, "built_ins")
+mappings in Universal ++= dirContents(baseDirectory.value, "built-ins")
