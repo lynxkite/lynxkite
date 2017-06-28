@@ -162,8 +162,8 @@ object ScalaScript {
     }
   }
 
-  def inferType(code: String, paramTypes: Map[String, String], timeoutInSeconds: Long = 10L): AnyRef = synchronized {
-    val paramString = paramTypes.map { case (k, v) => s"$k: $v" }.mkString(", ")
+  def inferType(code: String, paramTypes: Map[String, TypeTag[_]], timeoutInSeconds: Long = 10L): TypeTag[_] = synchronized {
+    val paramString = paramTypes.map { case (k, v) => s"$k: ${v.tpe}" }.mkString(", ")
     val fullCode = s"""
     import scala.reflect.runtime.universe._
     def typeTagOf[T: TypeTag](t: T) = typeTag[T]
@@ -173,14 +173,16 @@ object ScalaScript {
     typeTagOf(eval _)
     """
     val compiledCode = engine.compile(fullCode)
-    withContextClassLoader {
-      engine.interpret(fullCode)
-      withTimeout(timeoutInSeconds) {
-        ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
-          compiledCode.eval()
+    val result =
+      withContextClassLoader {
+        engine.interpret(fullCode)
+        withTimeout(timeoutInSeconds) {
+          ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
+            compiledCode.eval()
+          }
         }
       }
-    }
+    result.asInstanceOf[TypeTag[_]]
   }
 
   private def withContextClassLoader[T](func: => T): T = {
