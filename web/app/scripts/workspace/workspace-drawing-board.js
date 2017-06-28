@@ -135,9 +135,6 @@ angular.module('biggraph')
               scope.movedPopup.onMouseMove(event);
             }
           }
-          for (var j = 0; j < scope.popups.length; ++j) {
-            scope.popups[j].updateSize();
-          }
         };
 
         // Tries hooking up plugs when a box is moving.
