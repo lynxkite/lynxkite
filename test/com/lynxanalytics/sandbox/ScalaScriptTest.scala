@@ -12,7 +12,6 @@ import org.apache.spark.sql.DataFrame
 import scala.reflect.runtime.universe._
 
 class ScalaScriptTest extends FunSuite with TestGraphOp {
-  /*
   test("Can't do infinite loop") {
     val code =
       """
@@ -126,10 +125,16 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
       ScalaScript.run(code)
     }
   }
-*/
+
   test("Infer type") {
-    //assert(ScalaScript.inferType("a + b", Map("a" -> "String", "b" -> "String")) == typeTag[(String, String) => java.lang.String])
-    //assert(ScalaScript.inferType("Vector(a)", Map("a" -> "String")) == typeTag[String => scala.collection.immutable.Vector[String]])
-    assert(ScalaScript.inferType("a ++ Vector(\"x\")", Map("a" -> "Vector[String]")) == typeTag[scala.Vector[String] => scala.collection.immutable.Vector[String]])
+    assert(
+      ScalaScript.inferType("a + b", Map("a" -> typeTag[String], "b" -> typeTag[String])).tpe =:=
+        typeTag[(String, String) => String].tpe)
+    assert(
+      ScalaScript.inferType("Vector(a)", Map("a" -> typeTag[String])).tpe =:=
+        typeTag[String => scala.collection.immutable.Vector[String]].tpe)
+    assert(
+      ScalaScript.inferType("a ++ Vector(\"x\")", Map("a" -> typeTag[Vector[String]])).tpe =:=
+        typeTag[Vector[String] => scala.collection.immutable.Vector[String]].tpe)
   }
 }
