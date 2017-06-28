@@ -1,0 +1,42 @@
+.flat-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.popup .flat-toolbar {
+  background-color: lightblue;
+}
+.popup.popup-type-plug .flat-toolbar {
+  background-color: bisque;
+}
+
+.flat-toolbar-title {
+  flex: 1; /* The title fills up the entire space left of the buttons. */
+}
+
+.flat-toolbar .btn {
+  display: inline-block;
+  border-radius: 0;
+  border: none;
+  background-color: transparent;
+  color: #444;
+  font-weight: bold;
+  margin: 0;
+  margin-left: 5px;
+}
+.flat-toolbar .btn:hover {
+  color: black;
+}
+.flat-toolbar .btn.active {
+  background-color: rgba(250, 250, 250, 0.9);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.flat-toolbar .inline-input {
+  height: 100%;
+}
+
+.flat-toolbar .user-menu .btn {
+  height: 100%;
+}

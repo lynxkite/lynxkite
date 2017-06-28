@@ -21,7 +21,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import Operation.Context
   import Operation.Implicits._
 
-  val ImportOperations = Category("Import operations", "green", icon = "folder-open")
+  val ImportOperations = Category("Import operations", "green", icon = "glyphicon-folder-open")
 
   def register(id: String)(factory: Context => ImportOperation): Unit = {
     registerOp(id, "fountain", ImportOperations, List(), List("table"), factory)

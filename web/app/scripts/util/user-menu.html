@@ -1,15 +1,10 @@
 <span class="user-menu hidden-print">
-  <!-- <span>
-    <a href="#/help" id="help-link" target="_blank">
-      <i class="glyphicon glyphicon-question-sign"></i> help
-    </a>
-  </span> -->
   <span ng-class="direction">
-    <a class="dropdown-toggle user-menu-dropup btn btn-default"
+    <button class="dropdown-toggle user-menu-dropup btn btn-default"
        data-toggle="dropdown"
        drop-tooltip="User&nbsp;menu">
       <i class="glyphicon glyphicon-menu-hamburger"></i>
-    </a>
+    </button>
     <ul class="dropdown-menu pull-right">
       <li class="login-info" ng-show="util.globals.hasAuth" id="login-info">
         Logged in as {{ util.user.email }}
@@ -17,6 +12,11 @@
       <li>
         <a href="#/">
           <i class="glyphicon glyphicon-home"></i> home
+        </a>
+      </li>
+      <li>
+        <a href="#/help" id="help-link" target="_blank">
+          <i class="glyphicon glyphicon-question-sign"></i> help
         </a>
       </li>
       <li ng-if="util.globals.hasAuth">
