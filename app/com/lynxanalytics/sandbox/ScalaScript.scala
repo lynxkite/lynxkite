@@ -182,7 +182,7 @@ object ScalaScript {
           }
         }
       }
-    result.asInstanceOf[TypeTag[_]]
+    result.asInstanceOf[TypeTag[_]] // We cannot use asInstanceOf within the SecurityManager.
   }
 
   private def withContextClassLoader[T](func: => T): T = {
