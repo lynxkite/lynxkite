@@ -376,7 +376,7 @@ case class BoxOutputState(
 }
 
 object WorkspaceJsonFormatters {
-  import com.lynxanalytics.biggraph.serving.FrontendJson.fFEStatus
+  implicit val fFEStatus = json.Json.format[FEStatus]
   implicit val fBoxOutput = json.Json.format[BoxOutput]
   implicit val fBoxOutputState = json.Json.format[BoxOutputState]
   implicit val fBox = json.Json.format[Box]
