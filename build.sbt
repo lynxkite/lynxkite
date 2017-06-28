@@ -45,8 +45,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion.value % "provided",
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
   "org.mozilla" % "rhino" % "1.7.7",
-  "org.scalactic" %% "scalactic" % "3.0.1",
-  "org.scalatest" %% "scalatest" % "2.1.5" % "test",
+  "org.scalatest" %% "scalatest" % "2.2.6" % "test",
   "org.apache.spark" %% "spark-mllib" % sparkVersion.value % "provided",
   "org.apache.spark" %% "spark-hive" % sparkVersion.value % "provided",
   // For accessing S3 fs from local instance.
