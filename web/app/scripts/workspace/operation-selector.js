@@ -22,7 +22,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout) {
           return;
         }
         scope.categories = scope.boxCatalog.categories;
-        scope.boxes = scope.boxCatalog.boxes;
+        scope.boxes = [];
 
         var categoryMap = {};
         var i;
@@ -31,12 +31,13 @@ angular.module('biggraph').directive('operationSelector', function($timeout) {
           cat.ops = [];
           categoryMap[cat.title] = cat;
         }
-        for (i = 0; i < scope.boxes.length; ++i) {
-          var box = scope.boxes[i];
+        for (i = 0; i < scope.boxCatalog.boxes.length; ++i) {
+          var box = scope.boxCatalog.boxes[i];
           if (!(box.categoryId in categoryMap)) {
             continue;
           }
           categoryMap[box.categoryId].ops.push(box);
+          scope.boxes.push(box);
         }
       });
 
