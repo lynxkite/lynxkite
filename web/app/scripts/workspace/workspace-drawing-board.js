@@ -58,6 +58,7 @@ angular.module('biggraph')
         var mouseX = 0;
         var mouseY = 0;
         var svgElement = element.find('svg');
+        var svgOffset = svgElement.offset();
         function zoomToScale(z) { return Math.exp(z * 0.001); }
         function addLogicalMousePosition(event) {
           // event.offsetX/Y are distorted when the mouse is
@@ -71,8 +72,6 @@ angular.module('biggraph')
           event.logicalY = logical.y;
           return event;
         }
-
-        var svgOffset = svgElement.offset();
 
         scope.pageToLogical = function(pos) {
           var z = zoomToScale(workspaceZoom);
