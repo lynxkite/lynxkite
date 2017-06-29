@@ -1187,11 +1187,11 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
       // http://arxiv.org/pdf/1310.6753v1.pdf
       val normalizedDispersion = {
-        val op = graph_operations.DeriveJSDouble(
-          JavaScript("Math.pow(disp, 0.61) / (emb + 5)"),
+        val op = graph_operations.DeriveJS[Double](
+          "Math.pow(disp, 0.61) / (emb + 5)",
           Seq("disp", "emb"))
-        op(op.attrs, graph_operations.VertexAttributeToJSValue.seq(
-          dispersion, embeddedness)).result.attr.entity
+        op(op.attrs, Seq(
+          dispersion, embeddedness)).result.attr
       }
       // TODO: recursive dispersion
       project.newEdgeAttribute(params("name"), dispersion, help)
@@ -1486,7 +1486,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Derive vertex attribute", VertexAttributesOperations, new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
-      Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
       Code("expr", "Value", defaultValue = "", language = "javascript"))
@@ -1504,20 +1503,9 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val onlyOnDefinedAttrs = params("defined_attrs").toBoolean
 
-      val result = params("type") match {
-        case "String" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](
-            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
-        case "Double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](
-            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
-        case "Vector of Strings" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Vector[String]](
-            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
-        case "Vector of Doubles" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Vector[Double]](
-            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
-      }
+      val result = graph_operations.DeriveJS.deriveFromAttributes(
+        expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
+
       project.newVertexAttribute(params("output"), result, expr + help)
     }
   })
@@ -1558,20 +1546,9 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
       val onlyOnDefinedAttrs = params("defined_attrs").toBoolean
 
-      val result = params("type") match {
-        case "String" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](
-            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
-        case "Double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](
-            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
-        case "Vector of Strings" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Vector[String]](
-            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
-        case "Vector of Doubles" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Vector[Double]](
-            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
-      }
+      val result = graph_operations.DeriveJS.deriveFromAttributes(
+        expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
+
       project.newEdgeAttribute(params("output"), result, expr + help)
     }
   })
@@ -1862,13 +1839,13 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         project.newVertexAttribute(name + "_certainty", certainty,
           s"probability of predicted class according to ${modelName}")
         if (isBinary) {
-          val probabilityOf0 = graph_operations.DeriveJS.deriveFromAttributes[Double](
+          val probabilityOf0 = graph_operations.DeriveJS.deriveFromAttributes(
             "classification == 0 ? certainty : 1 - certainty",
             Seq("certainty" -> certainty, "classification" -> classifiedAttribute),
             project.vertexSet)
           project.newVertexAttribute(name + "_probability_of_0", probabilityOf0,
             s"probability of class 0 according to ${modelName}")
-          val probabilityOf1 = graph_operations.DeriveJS.deriveFromAttributes[Double](
+          val probabilityOf1 = graph_operations.DeriveJS.deriveFromAttributes(
             "1 - probabilityOf0", Seq("probabilityOf0" -> probabilityOf0), project.vertexSet)
           project.newVertexAttribute(name + "_probability_of_1", probabilityOf1,
             s"probability of class 1 according to ${modelName}")
@@ -1978,8 +1955,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       AttributeWithLocalAggregator(parent.vertexSet.idAttribute, "count")
     )
     val sizeSquare: Attribute[Double] = {
-      val op = graph_operations.DeriveJSDouble(
-        JavaScript("size * size"),
+      val op = graph_operations.DeriveJS[Double](
+        "size * size",
         Seq("size"))
       op(
         op.attrs,
@@ -3470,7 +3447,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         parent.scalars(s"$prefix $targetName coverage initial") = coverage
 
         var timeOfDefinition = {
-          val op = graph_operations.DeriveJSDouble(JavaScript("0"), Seq("attr"))
+          val op = graph_operations.DeriveJS[Double]("0", Seq("attr"))
           op(op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr.entity
         }
 
@@ -3495,17 +3472,17 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
               .runtimeSafeCast[Double]
           }
           val segStdDevDefined = {
-            val op = graph_operations.DeriveJSDouble(
-              JavaScript(s"""
+            val op = graph_operations.DeriveJS[Double](
+              s"""
                 deviation <= $maxDeviation &&
                 defined / ids >= ${params("min_ratio_defined")} &&
                 defined >= ${params("min_num_defined")}
                 ? deviation
-                : undefined"""),
+                : undefined""",
               Seq("deviation", "ids", "defined"))
             op(
               op.attrs,
-              graph_operations.VertexAttributeToJSValue.seq(segStdDev, segSizes, segTargetCount))
+              Seq(segStdDev, segSizes, segTargetCount))
               .result.attr
           }
           project.newVertexAttribute(
@@ -3526,8 +3503,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             op(op.attr, train)(op.role, roles).result
           }
           val error = {
-            val op = graph_operations.DeriveJSDouble(
-              JavaScript("Math.abs(test - train)"), Seq("test", "train"))
+            val op = graph_operations.DeriveJS[Double](
+              "Math.abs(test - train)", Seq("test", "train"))
             val mae = op(
               op.attrs,
               graph_operations.VertexAttributeToJSValue.seq(
@@ -3545,8 +3522,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             error
 
           timeOfDefinition = {
-            val op = graph_operations.DeriveJSDouble(
-              JavaScript(i.toString), Seq("attr"))
+            val op = graph_operations.DeriveJS[Double](
+              i.toString, Seq("attr"))
             val newDefinitions = op(
               op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr
             unifyAttributeT(timeOfDefinition, newDefinitions)
@@ -3695,8 +3672,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     val srcSize = graph_operations.VertexToEdgeAttribute.srcAttribute(size, seg.edgeBundle)
     val dstSize = graph_operations.VertexToEdgeAttribute.dstAttribute(size, seg.edgeBundle)
     val sizeProduct: Attribute[Double] = {
-      val op = graph_operations.DeriveJSDouble(
-        JavaScript("src_size * dst_size"),
+      val op = graph_operations.DeriveJS[Double](
+        "src_size * dst_size",
         Seq("src_size", "dst_size"))
       op(
         op.attrs,
