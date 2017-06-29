@@ -55,6 +55,7 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
       var newX = event.logicalX + this.xOffset;
       var newY = event.logicalY + this.yOffset;
       if (newX !== this.instance.x || newY !== this.instance.y) {
+        this.workspace._requestInvalidated = true;
         this.isMoved = true;
         this.instance.x = newX;
         this.instance.y = newY;
