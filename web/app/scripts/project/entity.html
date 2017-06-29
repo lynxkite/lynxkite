@@ -17,7 +17,7 @@
         ng-show="side.state.graphMode === 'bucketed' && axisOptions.logarithmic"> log </span>
 
   <span ng-repeat="
-        visualization in ::side.filterApplied(availableVisualizationsLowerCase(), title())"
+        visualization in side.filterApplied(availableVisualizationsLowerCase(), title())"
         class="subtoken visualization"
         id="visualized-as-{{ visualization | id }}">
     {{ visualization }} </span>
