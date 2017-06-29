@@ -38,6 +38,13 @@ case class BoxCatalogResponse(boxes: List[BoxMetadata], categories: List[FEOpera
 case class CreateSnapshotRequest(name: String, id: String)
 case class GetExportResultRequest(stateId: String)
 case class GetExportResultResponse(parameters: Map[String, String], result: FEScalar)
+case class GetInstrumentedStateRequest(
+  workspace: WorkspaceReference,
+  inputStateId: String,
+  operationId: String,
+  parameters: Map[String, String],
+  parametricParameters: Map[String, String])
+case class GetInstrumentedStateResponse(stateId: String, kind: String, error: String)
 
 class WorkspaceController(env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -261,5 +268,23 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   private def getOperation(user: serving.User, request: GetOperationMetaRequest): Operation = {
     val ctx = ResolvedWorkspaceReference(user, request.workspace).context
     ctx.getOperation(request.box)
+  }
+
+  def getInstrumentedState(
+    user: serving.User, request: GetInstrumentedStateRequest): GetInstrumentedStateResponse = {
+    val meta = ops.getBoxMetadata(request.operationId)
+    assert(meta.inputs.size == 1, s"${request.operationId} has ${meta.inputs.size} inputs.")
+    assert(meta.outputs.size == 1, s"${request.operationId} has ${meta.outputs.size} outputs.")
+    val state = getOutput(user, request.inputStateId)
+    val ctx = ResolvedWorkspaceReference(user, request.workspace).context
+    val box = Box(
+      "", request.operationId, request.parameters, 0, 0,
+      Map(meta.inputs.head -> null), request.parametricParameters)
+    val output = box.execute(ctx, Map(meta.inputs.head -> state))(box.output(meta.outputs.head))
+    val newStateId = Timestamp.toString
+    calculatedStates.synchronized {
+      calculatedStates(newStateId) = output
+    }
+    GetInstrumentedStateResponse(newStateId, output.kind, output.success.disabledReason)
   }
 }

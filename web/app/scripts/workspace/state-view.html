@@ -1,99 +1,89 @@
-<div id="state-toolbar" class="flat-toolbar">
-  <button
-    class="btn btn-default" id="save-as-snapshot-button"
-    ng-click="snapshotNameOpen = true"
-    drop-tooltip="Click to snapshot state as {{saveAsName}}"
-    drop-tooltip-placement="bottom">
-    <i class="glyphicon glyphicon-camera"></i>
-  </button>
-  <inline-input
-    id="save-as-snapshot-box"
-    placeholder="Snapshot name..."
-    onsubmit="createSnapshot(input, success, error)"
-    open="snapshotNameOpen"></inline-input>
-
-  <!-- TODO: Build instrument toolbar dynamically, allow any operation. -->
-  <button
-    ng-class="{ active: instrument === 'SQL1' }"
-    class="btn btn-default"
-    ng-click="instrument = 'SQL1'">
-    SQL
-  </button>
-  <button
-    ng-show="plug.kind === 'table'"
-    ng-class="{ active: instrument === 'Create plot' }"
-    class="btn btn-default"
-    ng-click="instrument = 'Create plot'">
-    Plot
-  </button>
-  <button
-    ng-show="plug.kind === 'project'"
-    ng-class="{ active: instrument === 'Create visualization' }"
-    class="btn btn-default"
-    ng-click="instrument = 'Create visualization'">
-    Visualize
-  </button>
-</div>
-
-<div ng-if="instrument">
+<div ng-repeat="state in instruments track by $index">
+  <!--
   <box-editor
-    workspace="instrumentWorkspace"
-    box-id="instrumentBoxId">
-  </box-editor>
-  <!-- TODO: A recursive directive would be perfect here.
-    It is not trivial, so for now I just repeated the state kind switch.
-    See also: https://stackoverflow.com/questions/14430655/recursion-in-angular-directives -->
-  <project-state-view
-    state-id="instrumentStateId"
-    ng-if="instrumentStateKind === 'project'">
-  </project-state-view>
-  <export-result
-    state-id="instrumentStateId"
-    ng-if="instrumentStateKind === 'exportResult'">
-  </export-result>
-  <table-state-view
-    state-id="instrumentStateId"
-    ng-if="instrumentStateKind === 'table'">
-  </table-state-view>
-  <plot-state-view
-    state-id="instrumentStateId"
-    popup-model="popupModel"
-    ng-if="instrumentStateKind === 'plot'">
-  </plot-state-view>
-  <visualization-state-view
-    state-id="instrumentStateId"
-    popup-model="popupModel"
-    ng-if="instrumentStateKind === 'visualization'">
-  </visualization-state-view>
-</div>
+    ng-if="state.box"
+    workspace="workspace"
+    box-id="plug.boxId"
+    instruments="instruments.slice(0, $index + 1)"></box-editor>
+  -->
 
-<div ng-if="!instrument">
-  <project-state-view
-    state-id="plug.stateId"
-    ng-if="plug.kind === 'project'">
-  </project-state-view>
-  <export-result
-    state-id="plug.stateId"
-    ng-if="plug.kind === 'exportResult'">
-  </export-result>
-  <table-state-view
-    state-id="plug.stateId"
-    ng-if="plug.kind === 'table'">
-  </table-state-view>
-  <plot-state-view
-    state-id="plug.stateId"
-    popup-model="popupModel"
-    ng-if="plug.kind === 'plot'">
-  </plot-state-view>
-  <visualization-state-view
-    state-id="plug.stateId"
-    popup-model="popupModel"
-    ng-if="plug.kind === 'visualization'">
-  </visualization-state-view>
-  <display-error
-    class="col-sm-12"
-    ng-if="plug.kind === 'error'"
-    caption="Failed to generate output state."
-    error="plug.error">
-  </display-error>
+  <div id="state-toolbar" class="flat-toolbar" ng-if="state.stateId">
+    <button
+      class="btn btn-default" id="save-as-snapshot-button"
+      ng-click="snapshotNameOpen = true"
+      drop-tooltip="Click to snapshot state as {{saveAsName}}"
+      drop-tooltip-placement="bottom">
+      <i class="glyphicon glyphicon-camera"></i>
+    </button>
+    <inline-input
+      id="save-as-snapshot-box"
+      placeholder="Snapshot name..."
+      onsubmit="createSnapshot(input, success, error)"
+      open="snapshotNameOpen"></inline-input>
+
+    <!-- TODO: Build instrument toolbar dynamically, allow any operation. -->
+    <button
+      ng-hide="$last"
+      class="btn btn-default"
+      ng-click="clearInstrument($index)"
+      drop-tooltip="Return to this state"
+      drop-tooltip-placement="bottom">
+      <i class="glyphicon glyphicon-remove"></i>
+    </button>
+    <button
+      ng-show="state.kind === 'table' || state.kind === 'project'"
+      ng-class="{ active: state.box.operationId === 'SQL1' }"
+      class="btn btn-default"
+      ng-click="setInstrument($index, 'SQL1')">
+      SQL
+    </button>
+    <button
+      ng-show="state.kind === 'table'"
+      ng-class="{ active: state.box.operationId === 'Create plot' }"
+      class="btn btn-default"
+      ng-click="setInstrument($index, 'Create plot')">
+      Plot
+    </button>
+    <button
+      ng-show="state.kind === 'project'"
+      ng-class="{ active: state.box.operationId === 'Create visualization' }"
+      class="btn btn-default"
+      ng-click="setInstrument($index, 'Create visualization')">
+      Visualize
+    </button>
+  </div>
+
+  <div ng-if="$last">
+    <project-state-view
+      state-id="state.stateId"
+      ng-if="state.kind === 'project'">
+    </project-state-view>
+    <export-result
+      state-id="state.stateId"
+      ng-if="state.kind === 'exportResult'">
+    </export-result>
+    <table-state-view
+      state-id="state.stateId"
+      ng-if="state.kind === 'table'">
+    </table-state-view>
+    <plot-state-view
+      state-id="state.stateId"
+      popup-model="popupModel"
+      ng-if="state.kind === 'plot'">
+    </plot-state-view>
+    <visualization-state-view
+      state-id="state.stateId"
+      popup-model="popupModel"
+      ng-if="state.kind === 'visualization'">
+    </visualization-state-view>
+    <display-error
+      class="col-sm-12"
+      ng-if="state.kind === 'error'"
+      caption="Failed to generate output state."
+      error="state.error">
+    </display-error>
+    <progressbar
+      ng-if="state.stateId === undefined" value="100" class="progress-striped active">
+    </progressbar>
+  </div>
 </div>
