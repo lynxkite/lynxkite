@@ -17,7 +17,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   def get(name: String): GetWorkspaceResponse =
     controller.getWorkspace(user, WorkspaceReference(name))
   def set(name: String, workspace: Workspace): Unit =
-    controller.setWorkspace(user, SetWorkspaceRequest(name, workspace))
+    controller.setWorkspace(user, SetWorkspaceRequest(WorkspaceReference(name), workspace))
   def discard(name: String) =
     bigGraphController.discardEntry(user, DiscardEntryRequest(name))
   def using[T](name: String)(f: => T): T = {

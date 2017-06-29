@@ -11,8 +11,9 @@ import scala.concurrent.Future
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_api.BuiltIns
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
-import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
+import com.lynxanalytics.biggraph.graph_util.{ Timestamp, LoggedEnvironment, KiteInstanceInfo, HadoopFile }
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving
@@ -288,7 +289,6 @@ object FrontendJson {
   import WorkspaceJsonFormatters._
   implicit val fBoxOutputInfo = json.Json.format[BoxOutputInfo]
   implicit val fProgress = json.Json.format[Progress]
-  implicit val rWorkspaceName = json.Json.reads[WorkspaceName]
   implicit val rWorkspaceReference = json.Json.reads[WorkspaceReference]
   implicit val wGetWorkspaceResponse = json.Json.writes[GetWorkspaceResponse]
   implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
@@ -525,4 +525,6 @@ object ProductionJsonServer extends JsonServer {
   def backup = jsonGet(copyController.backup)
 
   Ammonite.maybeStart()
+  implicit val metaManager = workspaceController.metaManager
+  BuiltIns.createBuiltIns(metaManager)
 }
