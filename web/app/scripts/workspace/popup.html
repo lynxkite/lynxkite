@@ -28,9 +28,8 @@
     </box-editor>
     <state-view ng-if="popupModel.content.type === 'plug'"
         workspace="workspace"
-        box-id="popupModel.content.boxId"
-        popup-model="popupModel"
-        plug-id="popupModel.content.plugId">
+        plug="workspace.getOutputPlug(popupModel.content.boxId, popupModel.content.plugId)"
+        popup-model="popupModel">
     </state-view>
   </div>
 </div>

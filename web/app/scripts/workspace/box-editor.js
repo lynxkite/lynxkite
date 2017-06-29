@@ -10,6 +10,7 @@ angular.module('biggraph')
       scope: {
         workspace: '=',
         boxId: '=',
+        instruments: '=?',
       },
       link: function(scope) {
         // The metadata (param definition list) of the current box
@@ -20,7 +21,7 @@ angular.module('biggraph')
         // instead of workspace.backendState.
         util.deepWatch(
             scope,
-            '[workspace.backendState, boxId]',
+            '[workspace.backendState, boxId, instruments]',
             function() {
               if (!scope.boxId) {
                 return;
@@ -51,6 +52,7 @@ angular.module('biggraph')
               '/ajax/getOperationMeta', {
                 workspace: scope.workspace.ref(),
                 box: boxId,
+                instruments: scope.instruments,
               })
             .then(
               function success(boxMeta) {
