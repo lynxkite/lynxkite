@@ -3246,7 +3246,7 @@ map-stream@~0.0.3, map-stream@~0.0.4:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/map-stream/-/map-stream-0.0.6.tgz#d2ef4eb811a28644c7a8989985c69c2fdd496827"
 
-meow@3.3.0, meow@^3.1.0, meow@^3.3.0:
+meow@3.3.0, meow@^3.1.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/meow/-/meow-3.3.0.tgz#f8777fd0db67f73d1de1beee08c97c8665efc6ed"
   dependencies:
@@ -3255,7 +3255,7 @@ meow@3.3.0, meow@^3.1.0, meow@^3.3.0:
     minimist "^1.1.0"
     object-assign "^3.0.0"
 
-meow@^3.7.0:
+meow@^3.3.0, meow@^3.7.0:
   version "3.7.0"
   resolved "https://registry.yarnpkg.com/meow/-/meow-3.7.0.tgz#72cb668b425228290abbfa856892587308a801fb"
   dependencies:
