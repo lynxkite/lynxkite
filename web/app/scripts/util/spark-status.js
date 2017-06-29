@@ -28,7 +28,7 @@ angular.module('biggraph')
           /* global tinycolor */
           hashColors[hash] = {
             true: tinycolor({ h: hash % 360, s: 1.0, l: 0.5 }).toString(),
-            false: tinycolor({ h: hash % 360, s: 1.0, l: 0.5 }).toString() };
+            false: tinycolor({ h: hash % 360, s: 1.0, l: 0.9 }).toString() };
         }
         return hashColors[hash][active];
       };
