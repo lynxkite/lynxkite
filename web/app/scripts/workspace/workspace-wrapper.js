@@ -171,7 +171,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
           });
       }
     },
-
+    _lastLoadRequest: undefined,
     loadWorkspace: function(workspaceStateRequest) {
       var that = this;
       if (!this._boxCatalogMap) { // Need to load catalog first.
@@ -179,10 +179,13 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         return;
       }
       var request = workspaceStateRequest || util.nocache('/ajax/getWorkspace', this.ref());
+      this._lastLoadRequest = request;
       request
         .then(
           function onSuccess(response) {
-            that._init(response);
+            if (request === that._lastLoadRequest) {
+              that._init(response);
+            }
           },
           function onError(error) {
             util.error('Cannot load workspace: ' + error.data);
