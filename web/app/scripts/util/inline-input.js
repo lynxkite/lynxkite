@@ -5,7 +5,12 @@
 angular.module('biggraph').directive('inlineInput', function(util) {
   return {
     restrict: 'E',
-    scope: { onsubmit: '&', input: '=', placeholder: '@', open: '=' },
+    scope: {
+      onsubmit: '&',
+      input: '=?',
+      placeholder: '@',
+      open: '=',
+    },
     templateUrl: 'scripts/util/inline-input.html',
     link: function(scope, element) {
       scope.enabled = true;
