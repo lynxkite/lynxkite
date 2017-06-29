@@ -15,14 +15,14 @@ angular.module('biggraph')
           vertex: {},
         },
         graphMode: undefined,
-        bucketCount: '4',
+        bucketCount: 4,
         preciseBucketSizes: false,
         relativeEdgeDensity: false,
-        sampleRadius: '1',
+        sampleRadius: 1,
         display: 'svg',
         animate: {
           enabled: false,
-          labelAttraction: '0',
+          labelAttraction: 0,
           style: 'neutral',
         },
         attributeTitles: {},
@@ -382,7 +382,7 @@ angular.module('biggraph')
         // Apply mutual exclusions and do initialization.
         if (setting === 'slider') {
           this.state.attributeTitles.color = undefined;
-          this.state.sliderPos = '50';
+          this.state.sliderPos = 50;
         } else if (setting === 'color') {
           this.state.attributeTitles.image = undefined;
           this.state.attributeTitles.slider = undefined;
