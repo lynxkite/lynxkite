@@ -401,10 +401,12 @@ angular.module('biggraph')
 
     Side.prototype.filterApplied = function(settings, value) {
       var that = this;
-      var applied = settings.filter(
-        function(setting) {
-          return that.state.attributeTitles[setting] === value;
-        });
+      var applied = [];
+      for (var i = 0; i < settings.length; ++i) {
+        if (that.state.attributeTitles[settings[i]] === value) {
+          applied.push(settings[i]);
+        }
+      }
       return applied;
     };
 
