@@ -24,10 +24,6 @@ object Assets extends Controller {
     if (requested.startsWith(static) && file.exists) {
       // Send file from ./static if it exists.
       Ok.sendFile(file)
-    } else {
-      // Redirect e.g. /project/x to /#/project/x.
-      // Absolutely bogus URLs get redirected then to the main page by Angular.
-      Redirect("/#" + request.path)
-    }
+    } else NotFound
   }
 }
