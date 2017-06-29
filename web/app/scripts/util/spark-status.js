@@ -23,8 +23,8 @@ angular.module('biggraph')
 
       var hashColors = {}; // Cache for this surprisingly costly method.
       scope.hashToColor = function(active, hash) {
+        hash = Math.abs(hash);
         if (!(hash in hashColors)) {
-          hash = Math.abs(hash);
           /* global tinycolor */
           hashColors[hash] = {
             true: tinycolor({ h: hash % 360, s: 1.0, l: 0.5 }).toString(),
