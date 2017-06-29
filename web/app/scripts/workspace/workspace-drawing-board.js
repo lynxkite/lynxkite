@@ -183,7 +183,7 @@ angular.module('biggraph')
             scope.movedBoxes[0].onMouseDown(event);
           } else if (event.ctrlKey) {
             var selectedIndex = scope.selectedBoxIds.indexOf(box.instance.id);
-            scope.selectedBoxIds.splice(selectedIndex, selectedIndex);
+            scope.selectedBoxIds.splice(selectedIndex, 1);
             scope.movedBoxes[0].onMouseDown(event);
           } else {
             scope.movedBoxes = this.selectedBoxes();
