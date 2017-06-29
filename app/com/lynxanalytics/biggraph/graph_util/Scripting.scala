@@ -98,8 +98,8 @@ object Scripting {
     }
 
     def deriveX[S: TypeTag](expression: String): Attribute[S] = {
-      graph_operations.DeriveJS.deriveFromAttributes[S](
-        expression, Seq("x" -> self), self.vertexSet)
+      graph_operations.DeriveJS.deriveFromAttributes(
+        expression, Seq("x" -> self), self.vertexSet).runtimeSafeCast[S]
     }
   }
 

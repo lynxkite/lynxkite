@@ -175,7 +175,6 @@ object ScalaScript {
     val compiledCode = engine.compile(fullCode)
     val result =
       withContextClassLoader {
-        engine.interpret(fullCode)
         withTimeout(timeoutInSeconds) {
           ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
             compiledCode.eval()
@@ -183,6 +182,32 @@ object ScalaScript {
         }
       }
     result.asInstanceOf[TypeTag[_]] // We cannot use asInstanceOf within the SecurityManager.
+  }
+
+  case class Evaluator(compiledCode: javax.script.CompiledScript) {
+    def evaluate(params: Map[String, Any]): AnyRef = {
+      import scala.collection.JavaConversions._
+      val bindings = new javax.script.SimpleBindings(params.mapValues(_.asInstanceOf[AnyRef]))
+      withContextClassLoader {
+        ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
+          compiledCode.eval(bindings)
+        }
+
+      }
+    }
+  }
+
+  def getEvaluator(code: String, paramTypes: Map[String, TypeTag[_]], timeoutInSeconds: Long = 10L): Evaluator = synchronized {
+    val paramString = paramTypes.map { case (k, v) => s"$k: ${v.tpe}" }.mkString(", ")
+    val paramKeysString = paramTypes.keys.mkString(", ")
+    val fullCode = s"""
+    def eval($paramString) = {
+      $code
+    }
+    eval($paramKeysString)
+    """
+    val compiledCode = engine.compile(fullCode)
+    Evaluator(compiledCode)
   }
 
   private def withContextClassLoader[T](func: => T): T = {

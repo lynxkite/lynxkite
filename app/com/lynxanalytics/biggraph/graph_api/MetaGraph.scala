@@ -299,6 +299,11 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def value(implicit dataSet: DataSet) = data.value
   }
 
+  class AnyScalarTemplate(nameOpt: Option[Symbol]) extends ET[Scalar[_]](nameOpt) {
+    def data(implicit dataSet: DataSet) = dataSet.scalars(name)
+    def value(implicit dataSet: DataSet) = data.value
+  }
+
   class TableTemplate(nameOpt: Option[Symbol]) extends ET[Table](nameOpt) {
     def data(implicit dataSet: DataSet) = dataSet.tables(name).asInstanceOf[TableData]
     def df(implicit dataSet: DataSet) = data.df
@@ -321,6 +326,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
   def edgeAttribute[T](es: EdgeBundleTemplate, name: Symbol = null) =
     new EdgeAttributeTemplate[T](es.name, Option(name))
   def scalar[T] = new ScalarTemplate[T](None)
+  def anyScalar(name: Symbol) = new AnyScalarTemplate(Some(name))
   def scalar[T](name: Symbol) = new ScalarTemplate[T](Some(name))
   def table = new TableTemplate(None)
   def table(name: Symbol) = new TableTemplate(Some(name))
@@ -410,6 +416,8 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
   }
   def vertexAttribute[T: TypeTag](vs: => EntityContainer[VertexSet], name: Symbol = null) =
     new P(Attribute[T](instance, _, vs), Option(name))
+  def vertexAttributeFromTypeTag(vs: => EntityContainer[VertexSet], name: Symbol = null)(implicit t: TypeTag[_]) =
+    new P(Attribute(instance, _, vs), Option(name))
   def edgeAttribute[T: TypeTag](eb: => EntityContainer[EdgeBundle], name: Symbol = null) =
     new P(Attribute[T](instance, _, eb.idSet), Option(name))
   def scalar[T: TypeTag] = new P(Scalar[T](instance, _), None)

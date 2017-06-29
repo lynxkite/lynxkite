@@ -8,32 +8,38 @@ import com.lynxanalytics.biggraph.JavaScriptEvaluator
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-import org.mozilla.javascript
+import com.lynxanalytics.sandbox.ScalaScript
 
 object DeriveJS {
   class Input(attrCount: Int, scalarCount: Int)
       extends MagicInputSignature {
     val vs = vertexSet
-    val attrs = (0 until attrCount).map(i => vertexAttribute[JSValue](vs, Symbol("attr-" + i)))
-    val scalars = (0 until scalarCount).map(i => scalar[JSValue](Symbol("scalar-" + i)))
+    val attrs = (0 until attrCount).map(i => anyVertexAttribute(vs, Symbol("attr-" + i)))
+    val scalars = (0 until scalarCount).map(i => anyScalar(Symbol("scalar-" + i)))
   }
-  class Output[T: TypeTag](implicit instance: MetaGraphOperationInstance,
-                           inputs: Input) extends MagicOutput(instance) {
+  class Output[T](implicit instance: MetaGraphOperationInstance,
+                  inputs: Input, tt: TypeTag[T]) extends MagicOutput(instance) {
     val attr = vertexAttribute[T](inputs.vs.entity)
   }
   def negative(x: Attribute[Double])(implicit manager: MetaGraphManager): Attribute[Double] = {
     import Scripting._
-    val op = DeriveJSDouble(JavaScript("-x"), Seq("x"))
+    val op = DeriveJS[Double]("-x", Seq("x"))
     op(op.attrs, Seq(x).map(VertexAttributeToJSValue.run[Double])).result.attr
   }
 
-  def deriveFromAttributes[T: TypeTag](
+  val resultTypeWhiteList = Seq(
+    typeTag[String],
+    typeTag[Double],
+    typeTag[Vector[String]],
+    typeTag[Vector[Double]])
+
+  def deriveFromAttributes(
     exprString: String,
     namedAttributes: Seq[(String, Attribute[_])],
     vertexSet: VertexSet,
     namedScalars: Seq[(String, Scalar[_])] = Seq(),
     onlyOnDefinedAttrs: Boolean = true)(
-      implicit manager: MetaGraphManager): Attribute[T] = {
+      implicit manager: MetaGraphManager): Attribute[_] = {
 
     // Check name collision between scalars and attributes
     val common =
@@ -44,62 +50,44 @@ object DeriveJS {
         s" Please rename either the scalar or the attribute."
     })
 
-    val js = JavaScript(exprString)
+    val paramTypes = (
+      namedAttributes.map { case (k, v) => k -> v.typeTag } ++
+      namedScalars.map { case (k, v) => k -> v.typeTag }).toMap[String, TypeTag[_]]
+    val expressionTypeTag = ScalaScript.inferType(exprString, paramTypes)
+    val resultTypeTag = resultTypeWhiteList.find(_.tpe =:= expressionTypeTag.tpe)
+    assert(resultTypeTag.nonEmpty, s"Unsupported result type of expression $exprString: $expressionTypeTag")
 
-    // Good to go, let's prepare the attributes for DeriveJS.
-    val jsValueAttributes =
-      namedAttributes.map { case (_, attr) => VertexAttributeToJSValue.run(attr) }
-
-    val jsValueScalars =
-      namedScalars.map { case (_, sclr) => ScalarToJSValue.run(sclr) }
-
-    val op: DeriveJS[T] =
-      if (typeOf[T] =:= typeOf[String]) {
-        DeriveJSString(js, namedAttributes.map(_._1), namedScalars.map(_._1),
-          onlyOnDefinedAttrs).asInstanceOf[DeriveJS[T]]
-      } else if (typeOf[T] =:= typeOf[Double]) {
-        DeriveJSDouble(js, namedAttributes.map(_._1), namedScalars.map(_._1),
-          onlyOnDefinedAttrs).asInstanceOf[DeriveJS[T]]
-      } else if (typeOf[T] =:= typeOf[Vector[String]]) {
-        DeriveJSVectorOfStrings(js, namedAttributes.map(_._1), namedScalars.map(_._1),
-          onlyOnDefinedAttrs).asInstanceOf[DeriveJS[T]]
-      } else if (typeOf[T] =:= typeOf[Vector[Double]]) {
-        DeriveJSVectorOfDoubles(js, namedAttributes.map(_._1), namedScalars.map(_._1),
-          onlyOnDefinedAttrs).asInstanceOf[DeriveJS[T]]
-      } else ???
-
-    val defaultAttributeValues =
-      namedAttributes.map { case (_, attr) => JSValue.defaultValue(attr.typeTag).value }
-    val defaultScalarValues =
-      namedScalars.map { case (_, sc) => JSValue.defaultValue(sc.typeTag).value }
-    op.validateJS[T](defaultAttributeValues, defaultScalarValues)
+    val a = namedAttributes.map(_._1)
+    val s = namedScalars.map(_._1)
+    val e = exprString
+    val o = onlyOnDefinedAttrs
+    val t = resultTypeTag.get.tpe
+    val op = t match {
+      case _ if t =:= typeOf[String] => DeriveJS[String](e, a, s, o)
+      case _ if t =:= typeOf[Double] => DeriveJS[Double](e, a, s, o)
+      case _ if t =:= typeOf[Vector[String]] => DeriveJS[Vector[String]](e, a, s, o)
+      case _ if t =:= typeOf[Vector[Double]] => DeriveJS[Vector[Double]](e, a, s, o)
+    }
 
     import Scripting._
-    op(op.vs, vertexSet)(op.attrs, jsValueAttributes)(op.scalars, jsValueScalars).result.attr
+    op(op.vs, vertexSet)(
+      op.attrs, namedAttributes.map(_._2))(
+        op.scalars, namedScalars.map(_._2)).result.attr
   }
 }
 import DeriveJS._
-abstract class DeriveJS[T](
-  expr: JavaScript,
+case class DeriveJS[T: TypeTag](
+  expr: String,
   attrNames: Seq[String],
-  scalarNames: Seq[String],
-  onlyOnDefinedAttrs: Boolean)
+  scalarNames: Seq[String] = Seq(),
+  onlyOnDefinedAttrs: Boolean = true)
     extends TypedMetaGraphOp[Input, Output[T]] {
-  implicit def resultTypeTag: TypeTag[T]
-  implicit def resultClassTag: reflect.ClassTag[T]
+  val tt = typeTag[T]
+  implicit def ct = RuntimeSafeCastable.classTagFromTypeTag(tt)
   override val isHeavy = true
   @transient override lazy val inputs = new Input(attrNames.size, scalarNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) =
-    new Output()(resultTypeTag, instance, inputs)
-
-  // Validate JS using default values for the types of the attributes.
-  def validateJS[T: TypeTag](
-    defaultAttributeValues: Seq[Any],
-    defaultScalarValues: Seq[Any]): Unit = {
-    val testNamedValues =
-      (attrNames ++ scalarNames).zip(defaultAttributeValues ++ defaultScalarValues).toMap
-    evaluate(expr.evaluator, testNamedValues)
-  }
+    new Output[T]()(instance, inputs, tt)
 
   def execute(inputDatas: DataSet,
               o: Output[T],
@@ -107,7 +95,7 @@ abstract class DeriveJS[T](
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val joined = {
-      val noAttrs = inputs.vs.rdd.mapValues(_ => new Array[JSValue](attrNames.size))
+      val noAttrs = inputs.vs.rdd.mapValues(_ => new Array[Any](attrNames.size))
       if (onlyOnDefinedAttrs) {
         inputs.attrs.zipWithIndex.foldLeft(noAttrs) {
           case (rdd, (attr, idx)) =>
@@ -122,8 +110,7 @@ abstract class DeriveJS[T](
           case (rdd, (attr, idx)) =>
             rdd.sortedLeftOuterJoin(attr.rdd).mapValues {
               case (attrs, attr) =>
-                // Have to pass undefined explicitly to Rhino to avoid surprise conversions.
-                attrs(idx) = attr.getOrElse(JSValue(javascript.Undefined.instance))
+                attrs(idx) = attr.getOrElse(null)
                 attrs
             }
         }
@@ -132,165 +119,22 @@ abstract class DeriveJS[T](
 
     val scalars = inputs.scalars.map { _.value }.toArray
     val allNames = attrNames ++ scalarNames
+    val paramTypes = (
+      inputs.attrs.map { attr => attr.name.toString -> attr.data.typeTag } ++
+      inputs.scalars.map { scalar => scalar.name.toString -> scalar.data.typeTag })
+      .toMap[String, TypeTag[_]]
 
     val derived = joined.mapPartitions({ it =>
-      val evaluator = expr.evaluator
-      it.flatMap {
+      val evaluator = ScalaScript.getEvaluator(expr, paramTypes)
+      it.map {
         case (key, values) =>
-          val namedValues = allNames.zip(values ++ scalars).toMap.mapValues(_.value)
-          evaluate(evaluator, namedValues).map {
-            result => key -> convertJSResult(result, expr.contextString(namedValues))
-          }
+          val namedValues = allNames.zip(values ++ scalars).toMap
+          // It would be nice to do an extra type check here but we can only get the
+          // runtime types, after generic type erasure.
+          key -> evaluator.evaluate(namedValues).asInstanceOf[T]
       }
     }, preservesPartitioning = true).asUniqueSortedRDD
     output(o.attr, derived)
   }
-
-  private def evaluate(evaluator: JavaScriptEvaluator, mapping: Map[String, Any]): Option[AnyRef] = {
-    evaluator.evaluate(mapping)
-  }
-  // Converts the result of the JS evaluation to T. All type and sanity checks must be implemented here.
-  protected def convertJSResult(
-    v: AnyRef, // The value to convert.
-    context: => String): T // The context of the conversion for detailed error messages.
 }
 
-object DeriveJSString extends OpFromJson {
-  private val scalarNamesParameter = NewParameter[Seq[String]]("scalarNames", Seq())
-  private val onlyOnDefinedAttrsParameter = NewParameter[Boolean]("onlyOnDefinedAttrs", true)
-  def fromJson(j: JsValue) =
-    DeriveJSString(JavaScript(
-      (j \ "expr").as[String]),
-      (j \ "attrNames").as[Seq[String]],
-      scalarNamesParameter.fromJson(j),
-      onlyOnDefinedAttrsParameter.fromJson(j))
-}
-case class DeriveJSString(
-  expr: JavaScript,
-  attrNames: Seq[String],
-  scalarNames: Seq[String] = Seq(),
-  onlyOnDefinedAttrs: Boolean = true)
-    extends DeriveJS[String](expr, attrNames, scalarNames, onlyOnDefinedAttrs) {
-  @transient lazy val resultTypeTag = typeTag[String]
-  @transient lazy val resultClassTag = reflect.classTag[String]
-  override def toJson = Json.obj(
-    "expr" -> expr.expression,
-    "attrNames" -> attrNames) ++
-    DeriveJSString.scalarNamesParameter.toJson(scalarNames) ++
-    DeriveJSString.onlyOnDefinedAttrsParameter.toJson(onlyOnDefinedAttrs)
-  def convertJSResult(result: AnyRef, context: => String): String = javascript.Context.toString(result)
-}
-
-object DeriveJSDouble extends OpFromJson {
-  private val scalarNamesParameter = NewParameter[Seq[String]]("scalarNames", Seq())
-  private val onlyOnDefinedAttrsParameter = NewParameter[Boolean]("onlyOnDefinedAttrs", true)
-  def fromJson(j: JsValue) =
-    DeriveJSDouble(JavaScript(
-      (j \ "expr").as[String]),
-      (j \ "attrNames").as[Seq[String]],
-      scalarNamesParameter.fromJson(j),
-      onlyOnDefinedAttrsParameter.fromJson(j))
-}
-case class DeriveJSDouble(
-  expr: JavaScript,
-  attrNames: Seq[String],
-  scalarNames: Seq[String] = Seq(),
-  onlyOnDefinedAttrs: Boolean = true)
-    extends DeriveJS[Double](expr, attrNames, scalarNames, onlyOnDefinedAttrs) {
-  @transient lazy val resultTypeTag = typeTag[Double]
-  @transient lazy val resultClassTag = reflect.classTag[Double]
-  override def toJson = Json.obj(
-    "expr" -> expr.expression,
-    "attrNames" -> attrNames) ++
-    DeriveJSDouble.scalarNamesParameter.toJson(scalarNames) ++
-    DeriveJSDouble.onlyOnDefinedAttrsParameter.toJson(onlyOnDefinedAttrs)
-  def convertJSResult(result: AnyRef, context: => String): Double = {
-    // Converts everything to a Double. For results which cannot be interpreted as Doubles
-    // like 'abc' this will return Double.NaN.
-    val v = javascript.Context.toNumber(result)
-    assert(!v.isNaN(), s"$context did not return a number: $v")
-    assert(!v.isInfinite(), s"$context returned an infinite number: $v")
-    v
-  }
-}
-
-object DeriveJSVector {
-  def convertJSResultToVector(result: AnyRef, context: => String): Vector[_] = {
-    assert(result.isInstanceOf[javascript.NativeArray],
-      s"$context did not return a vector: $result")
-    val vector = result.asInstanceOf[javascript.NativeArray].toArray().toVector
-    for (i <- vector) { // Sanity checks, vector should not contain null or undefined elements.
-      assert(Option(i).nonEmpty, s"$context returned undefined element in vector: $i")
-      assert(!i.isInstanceOf[javascript.Undefined],
-        s"$context returned undefined element in vector: $i")
-    }
-    vector
-  }
-}
-
-object DeriveJSVectorOfStrings extends OpFromJson {
-  private val scalarNamesParameter = NewParameter[Seq[String]]("scalarNames", Seq())
-  private val onlyOnDefinedAttrsParameter = NewParameter[Boolean]("onlyOnDefinedAttrs", true)
-  def fromJson(j: JsValue) =
-    DeriveJSVectorOfStrings(JavaScript(
-      (j \ "expr").as[String]),
-      (j \ "attrNames").as[Seq[String]],
-      scalarNamesParameter.fromJson(j),
-      onlyOnDefinedAttrsParameter.fromJson(j))
-}
-case class DeriveJSVectorOfStrings(
-  expr: JavaScript,
-  attrNames: Seq[String],
-  scalarNames: Seq[String] = Seq(),
-  onlyOnDefinedAttrs: Boolean = true)
-    extends DeriveJS[Vector[String]](expr, attrNames, scalarNames, onlyOnDefinedAttrs) {
-  @transient lazy val resultTypeTag = typeTag[Vector[String]]
-  @transient lazy val resultClassTag = reflect.classTag[Vector[String]]
-  override def toJson = Json.obj(
-    "expr" -> expr.expression,
-    "attrNames" -> attrNames) ++
-    DeriveJSVectorOfStrings.scalarNamesParameter.toJson(scalarNames) ++
-    DeriveJSVectorOfStrings.onlyOnDefinedAttrsParameter.toJson(onlyOnDefinedAttrs)
-  def convertJSResult(result: AnyRef, context: => String): Vector[String] = {
-    DeriveJSVector.convertJSResultToVector(result, context).map {
-      i => javascript.Context.toString(i)
-    }
-  }
-}
-
-object DeriveJSVectorOfDoubles extends OpFromJson {
-  private val scalarNamesParameter = NewParameter[Seq[String]]("scalarNames", Seq())
-  private val onlyOnDefinedAttrsParameter = NewParameter[Boolean]("onlyOnDefinedAttrs", true)
-  def fromJson(j: JsValue) =
-    DeriveJSVectorOfDoubles(JavaScript(
-      (j \ "expr").as[String]),
-      (j \ "attrNames").as[Seq[String]],
-      scalarNamesParameter.fromJson(j),
-      onlyOnDefinedAttrsParameter.fromJson(j))
-}
-case class DeriveJSVectorOfDoubles(
-  expr: JavaScript,
-  attrNames: Seq[String],
-  scalarNames: Seq[String] = Seq(),
-  onlyOnDefinedAttrs: Boolean = true)
-    extends DeriveJS[Vector[Double]](expr, attrNames, scalarNames, onlyOnDefinedAttrs) {
-  @transient lazy val resultTypeTag = typeTag[Vector[Double]]
-  @transient lazy val resultClassTag = reflect.classTag[Vector[Double]]
-  override def toJson = Json.obj(
-    "expr" -> expr.expression,
-    "attrNames" -> attrNames) ++
-    DeriveJSVectorOfDoubles.scalarNamesParameter.toJson(scalarNames) ++
-    DeriveJSVectorOfDoubles.onlyOnDefinedAttrsParameter.toJson(onlyOnDefinedAttrs)
-  def convertJSResult(result: AnyRef, context: => String): Vector[Double] = {
-    DeriveJSVector.convertJSResultToVector(result, context).map { i =>
-      {
-        // Converts everything to a Double. For results which cannot be interpreted as Doubles
-        // like 'abc' this will return Double.NaN.
-        val d = javascript.Context.toNumber(i)
-        assert(!d.isNaN(), s"$context did not return a number in vector: $d")
-        assert(!d.isInfinite(), s"$context returned an infinite number in vector: $d")
-        d
-      }
-    }
-  }
-}
