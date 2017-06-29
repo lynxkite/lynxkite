@@ -101,6 +101,7 @@ angular.module('biggraph')
 
         scope.onMouseMove = function(event) {
           event.preventDefault();
+          svgOffset = svgElement.offset(); // Just in case the layout changed.
           addLogicalMousePosition(event);
           if (workspaceDrag) {
             workspaceX += event.workspaceX - mouseX;
