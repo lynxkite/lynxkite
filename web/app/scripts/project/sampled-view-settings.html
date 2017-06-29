@@ -26,7 +26,7 @@
 
     <div class="token"
          id="setting-label-attraction"
-         ng-class="{ default: side.state.animate.labelAttraction === '0' }">
+         ng-class="{ default: side.state.animate.labelAttraction === 0 }">
       <span class="title">
         label attraction: {{ side.state.animate.labelAttraction * 100 | number : 0 }}%
       </span>
@@ -89,7 +89,7 @@
 
   <div class="token"
        id="setting-sample-radius"
-       ng-class="{ default: side.state.sampleRadius === '1' }">
+       ng-class="{ default: side.state.sampleRadius === 1 }">
     <span class="title">
       radius {{ side.state.sampleRadius }}
     </span>

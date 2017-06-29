@@ -18,7 +18,7 @@ case class UIAxisOptions(
 case class UIAnimation(
   enabled: Boolean,
   style: String,
-  labelAttraction: String)
+  labelAttraction: Double)
 case class UIAttributeFilter(
   val attributeName: String,
   val valueSpec: String)
@@ -31,11 +31,11 @@ case class UIStatus(
   graphMode: Option[String],
   display: String,
   filters: UIFilterStatus,
-  bucketCount: String,
+  bucketCount: Int,
   preciseBucketSizes: Option[Boolean],
   relativeEdgeDensity: Option[Boolean],
   axisOptions: UIAxisOptions,
-  sampleRadius: String,
+  sampleRadius: Int,
   attributeTitles: Map[String, String],
   animate: UIAnimation,
   // For explicit center ids entered by the user, this will be set.
@@ -44,7 +44,7 @@ case class UIStatus(
   // so that we can redo the getCenter request.
   lastCentersRequest: Option[UICenterRequest],
   customVisualizationFilters: Option[Boolean],
-  sliderPos: Option[String])
+  sliderPos: Option[Double])
 case class TwoSidedUIStatus(
   left: Option[UIStatus],
   right: Option[UIStatus])
