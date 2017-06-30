@@ -193,11 +193,11 @@
           {{box.summary}}
         </text>
 
-        <text x="-20" y="115" ng-show="box.commentLines">
-          <tspan xml:space="preserve" font-family="monospace" x="5" dy="15"
-                 ng-repeat="line in box.commentLines track by $index">{{line}}
-          </tspan>
-        </text>
+        <foreignObject x="-20" y="115" width="200" height="1000" ng-if="box.comment">
+          <body xmlns="http://www.w3.org/1999/xhtml">
+            <span trusted-html="box.comment"></span>
+          </body>
+        </foreignObject>
         <g ng-repeat="direction in ['inputs', 'outputs']" id="{{ direction | id }}">
           <g ng-repeat="plug in box[direction]"
               ng-attr-transform="{{ plug.posTransform }}"
