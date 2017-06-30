@@ -6,7 +6,7 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
   test("Derive vertex attribute (Double)") {
     val project = box("Create example graph")
       .box("Derive vertex attribute",
-        Map("type" -> "Double", "output" -> "output", "expr" -> "100 + age + 10 * name.length"))
+        Map("output" -> "output", "expr" -> "100 + age + 10 * name.length"))
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 160.3, 1 -> 148.2, 2 -> 180.3, 3 -> 222.0))
@@ -15,10 +15,11 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
   test("Multi-line function") {
     val project = box("Create example graph")
       .box("Derive vertex attribute",
-        Map("type" -> "Double", "output" -> "output", "expr" -> """
-        (function() {
-          return age;
-        })()"""))
+        Map("output" -> "output", "expr" -> """
+        def a() = {
+          age
+        }
+        a()"""))
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 20.3, 1 -> 18.2, 2 -> 50.3, 3 -> 2.0))
@@ -27,9 +28,9 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
   test("Multi-line expression and utility function") {
     val project = box("Create example graph")
       .box("Derive vertex attribute",
-        Map("type" -> "Double", "output" -> "output", "expr" -> """
-        var rnd = util.rnd(income);
-        rnd.nextDouble() + rnd.nextDouble();"""))
+        Map("output" -> "output", "expr" -> """
+        var rnd = new scala.util.Random(income.toLong)
+        rnd.nextDouble() + rnd.nextDouble()"""))
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     def rndSumScala(income: Double) = {
@@ -44,8 +45,9 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
       .box("Aggregate on neighbors",
         Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate_name" -> "vector"))
       .box("Derive vertex attribute",
-        Map("type" -> "String", "output" -> "output", "expr" -> """
-        (function() { neighbor_name_vector.sort(); return neighbor_name_vector[0]; })()"""))
+        Map("output" -> "output", "expr" -> """
+          val sorted = neighbor_name_vector.sorted
+          sorted(0)"""))
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[String]
     assert(attr.rdd.collect.toMap == Map(0 -> "Bob", 1 -> "Adam", 2 -> "Adam"))
@@ -56,14 +58,16 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
       .box("Aggregate on neighbors",
         Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate_age" -> "vector"))
       .box("Derive vertex attribute",
-        Map("type" -> "Double", "output" -> "output", "expr" -> """
-        (function() {
+        Map("output" -> "output", "expr" -> """
+        def f() = {
            if (neighbor_age_vector.length > 0) {
-             neighbor_age_vector.sort();
-             return neighbor_age_vector[0] * 1;
+             val sorted = neighbor_age_vector.sorted
+             Some(sorted(0) * 1)
+           } else {
+             None
            }
-           return undefined;
-         })()"""))
+         }
+       f()"""))
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 18.2, 1 -> 20.3, 2 -> 18.2))
@@ -79,10 +83,10 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
           "direction" -> "all edges",
           "aggregate_neighbor_age_vector" -> "vector"))
       .box("Derive vertex attribute",
-        Map("type" -> "Double", "output" -> "output", "expr" -> """
-        neighbor_neighbor_age_vector_vector.map(function(subarray) {
-          return subarray.reduce(function(a, b) { return a + b; }, 0);
-        }).reduce(function(a, b) { return a + b; }, 0)"""))
+        Map("output" -> "output", "expr" -> """
+        neighbor_neighbor_age_vector_vector.map({ subarray =>
+          subarray.reduce(_ + _)
+        }).reduce(_ + _)"""))
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 220.3, 1 -> 211.89999999999998, 2 -> 177.6))
@@ -93,17 +97,17 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
       .box("Aggregate on neighbors",
         Map("prefix" -> "neighbor", "direction" -> "all edges", "aggregate_name" -> "vector"))
       .box("Derive vertex attribute",
-        Map("type" -> "Double", "output" -> "output", "expr" -> "neighbor_name_vector.length"))
+        Map("output" -> "output", "expr" -> "neighbor_name_vector.length.toDouble"))
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
-    assert(attr.rdd.collect.toMap == Map(0 -> 3, 1 -> 3, 2 -> 2))
+    assert(attr.rdd.collect.toMap == Map(0 -> 3.0, 1 -> 3.0, 2 -> 2.0))
   }
 
-  test("Wrong type") {
+  ignore("Wrong type") {
     val e = intercept[org.apache.spark.SparkException] {
       val project = box("Create example graph")
         .box("Derive vertex attribute",
-          Map("type" -> "Double", "output" -> "output", "expr" -> "'hello'"))
+          Map("output" -> "output", "expr" -> "'hello'"))
         .project
       project.vertexAttributes("output").runtimeSafeCast[Double].rdd.collect
     }
@@ -158,7 +162,7 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     val project = box("Create example graph")
       .box("Rename vertex attribute", Map("before" -> "income", "after" -> "nam"))
       .box("Derive vertex attribute",
-        Map("type" -> "Double", "output" -> "output", "expr" -> "100 + age + 10 * name.length"))
+        Map("output" -> "output", "expr" -> "100 + age + 10 * name.length"))
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.size == 4)
@@ -168,11 +172,11 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     val project = box("Create example graph")
       // Test dropping values.
       .box("Derive vertex attribute",
-        Map("type" -> "String", "output" -> "gender",
-          "expr" -> "name == 'Isolated Joe' ? undefined : gender"))
+        Map("output" -> "gender",
+          "expr" -> "if (name == \"Isolated Joe\") None else Some(gender)"))
       .box("Derive vertex attribute",
-        Map("type" -> "String", "output" -> "output",
-          "expr" -> "gender == 'Male' ? 'Mr ' + name : 'Ms ' + name"))
+        Map("output" -> "output",
+          "expr" -> "if (gender == \"Male\") \"Mr \" + name else \"Ms \" + name"))
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[String]
     assert(attr.rdd.collect.toMap == Map(0 -> "Mr Adam", 1 -> "Ms Eve", 2 -> "Mr Bob"))
@@ -183,7 +187,7 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     val project = box("Create example graph")
       // Test dropping values.
       .box("Derive edge attribute",
-        Map("type" -> "String", "output" -> "tripletke",
+        Map("output" -> "tripletke",
           "expr" -> "src$name + ':' + comment + ':' + dst$age + '#' + weight"))
       .project
     val attr = project.edgeAttributes("tripletke").runtimeSafeCast[String]
@@ -197,7 +201,7 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
   test("Derive vertex attribute (Vector of Strings)") {
     val project = box("Create example graph")
       .box("Derive vertex attribute",
-        Map("type" -> "Vector of Strings", "output" -> "vector", "expr" -> "[gender]"))
+        Map("output" -> "vector", "expr" -> "Vector(gender)"))
       .project
     val attr = project.vertexAttributes("vector").runtimeSafeCast[Vector[String]]
     assert(attr.rdd.collect.toMap == Map(
@@ -207,43 +211,32 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
   test("Derive vertex attribute (Vector of Doubles)") {
     val project = box("Create example graph")
       .box("Derive vertex attribute",
-        Map("type" -> "Vector of Doubles", "output" -> "vector", "expr" -> "[age]"))
+        Map("output" -> "vector", "expr" -> "Vector(age)"))
       .project
     val attr = project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]]
     assert(attr.rdd.collect.toMap == Map(
       0 -> Vector(20.3), 1 -> Vector(18.2), 2 -> Vector(50.3), 3 -> Vector(2.0)))
   }
 
-  test("Derive vertex attribute (does not return vector)") {
+  ignore("Derive vertex attribute (does not return vector)") {
     val e = intercept[org.apache.spark.SparkException] {
       box("Create example graph")
         .box("Derive vertex attribute",
-          Map("type" -> "Vector of Strings", "output" -> "vector", "expr" -> "gender"))
+          Map("output" -> "vector", "expr" -> "gender"))
         .project.vertexAttributes("vector").runtimeSafeCast[Vector[String]].rdd.collect
     }
     assert(e.getCause.getMessage == "assertion failed: JavaScript(gender) with values: " +
       "{gender: Male} did not return a vector: Male")
   }
 
-  test("Derive vertex attribute (wrong vector generic type)") {
+  ignore("Derive vertex attribute (wrong vector generic type)") {
     val e = intercept[org.apache.spark.SparkException] {
       box("Create example graph")
         .box("Derive vertex attribute",
-          Map("type" -> "Vector of Doubles", "output" -> "vector", "expr" -> "[gender]"))
+          Map("type" -> "Vector of Doubles", "output" -> "vector", "expr" -> "Vector(gender)"))
         .project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]].rdd.collect
     }
     assert(e.getCause.getMessage == "assertion failed: JavaScript([gender]) with values: " +
       "{gender: Male} did not return a number in vector: NaN")
-  }
-
-  test("Derive vertex attribute (undefined in vector)") {
-    val e = intercept[org.apache.spark.SparkException] {
-      box("Create example graph")
-        .box("Derive vertex attribute", Map("type" -> "Vector of Doubles",
-          "output" -> "vector", "defined_attrs" -> "false", "expr" -> "[income]"))
-        .project.vertexAttributes("vector").runtimeSafeCast[Vector[Double]].rdd.collect
-    }
-    assert(e.getCause.getMessage == "assertion failed: JavaScript([income]) with values: " +
-      "{income: undefined} returned undefined element in vector: null")
   }
 }

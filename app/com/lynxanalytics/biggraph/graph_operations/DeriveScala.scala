@@ -138,10 +138,9 @@ case class DeriveScala[T: TypeTag](
     assert(t.payLoadType =:= tt.tpe,
       s"Scala script returns wrong type: expected ${tt.tpe} but got ${t.payLoadType} instead.")
 
-    val fullCode = ScalaScript.getFullCode(expr, paramTypes, toOptionType = !onlyOnDefinedAttrs)
     val isOptionType = t.isOptionType
     val derived = joined.mapPartitions({ it =>
-      @transient lazy val evaluator = ScalaScript.getEvaluator(fullCode)
+      val evaluator = ScalaScript.getEvaluator(expr, paramTypes, toOptionType = !onlyOnDefinedAttrs)
       it.flatMap {
         case (key, values) =>
           val namedValues = allNames.zip(values ++ scalars).toMap

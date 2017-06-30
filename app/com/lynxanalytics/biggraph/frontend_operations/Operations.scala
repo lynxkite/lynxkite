@@ -1188,7 +1188,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       // http://arxiv.org/pdf/1310.6753v1.pdf
       val normalizedDispersion = {
         val op = graph_operations.DeriveScala[Double](
-          "Math.pow(disp, 0.61) / (emb + 5)",
+          "scala.math.pow(disp, 0.61) / (emb + 5)",
           Seq("disp", "emb"))
         op(op.attrs, Seq(
           dispersion, embeddedness)).result.attr
@@ -1840,7 +1840,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           s"probability of predicted class according to ${modelName}")
         if (isBinary) {
           val probabilityOf0 = graph_operations.DeriveScala.deriveFromAttributes(
-            "classification == 0 ? certainty : 1 - certainty",
+            "if (classification == 0) certainty else 1 - certainty",
             Seq("certainty" -> certainty, "classification" -> classifiedAttribute),
             project.vertexSet)
           project.newVertexAttribute(name + "_probability_of_0", probabilityOf0,
@@ -2333,7 +2333,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
 
       // Creating derived attribute based on rnd and ratio parameter.
-      val startingDistance = rnd.deriveX[Double](s"x < ${ratio} ? 0.0 : undefined")
+      val startingDistance = rnd.deriveX[Double](s"if (x < ${ratio}) Some(0.0) else None")
 
       // Constant unit length for all edges.
       val edgeLength = project.edgeBundle.const(1.0)
@@ -3474,11 +3474,13 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           val segStdDevDefined = {
             val op = graph_operations.DeriveScala[Double](
               s"""
-                deviation <= $maxDeviation &&
-                defined / ids >= ${params("min_ratio_defined")} &&
-                defined >= ${params("min_num_defined")}
-                ? deviation
-                : undefined""",
+                if (deviation <= $maxDeviation &&
+                  defined / ids >= ${params("min_ratio_defined")} &&
+                  defined >= ${params("min_num_defined")}) {
+                  Some(deviation)
+                } else {
+                  None
+                }""",
               Seq("deviation", "ids", "defined"))
             op(
               op.attrs,
@@ -3504,7 +3506,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           }
           val error = {
             val op = graph_operations.DeriveScala[Double](
-              "Math.abs(test - train)", Seq("test", "train"))
+              "scala.math.abs(test - train)", Seq("test", "train"))
             val mae = op(
               op.attrs,
               graph_operations.VertexAttributeToJSValue.seq(
