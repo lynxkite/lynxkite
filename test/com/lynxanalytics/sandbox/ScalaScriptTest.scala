@@ -129,13 +129,13 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
 
   test("Infer type") {
     assert(
-      ScalaScript.inferType("a + b", Map("a" -> typeTag[String], "b" -> typeTag[String])).tpe =:=
-        typeTag[(String, String) => String].tpe)
+      ScalaScript.inferType("a + b", Map("a" -> typeTag[String], "b" -> typeTag[String]), toOptionType = false).tpe =:=
+        typeOf[(String, String) => String])
     assert(
-      ScalaScript.inferType("Vector(a)", Map("a" -> typeTag[String])).tpe =:=
-        typeTag[String => scala.collection.immutable.Vector[String]].tpe)
+      ScalaScript.inferType("Vector(a)", Map("a" -> typeTag[String]), toOptionType = false).tpe =:=
+        typeOf[String => scala.collection.immutable.Vector[String]])
     assert(
-      ScalaScript.inferType("a ++ Vector(\"x\")", Map("a" -> typeTag[Vector[String]])).tpe =:=
-        typeTag[Vector[String] => scala.collection.immutable.Vector[String]].tpe)
+      ScalaScript.inferType("a ++ Vector(\"x\")", Map("a" -> typeTag[Vector[String]]), toOptionType = false).tpe =:=
+        typeOf[Vector[String] => scala.collection.immutable.Vector[String]])
   }
 }

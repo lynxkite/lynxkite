@@ -7,27 +7,28 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class DeriveJSTest extends FunSuite with TestGraphOp {
+
   test("example graph: 'name.length * 10 + age'") {
     val expr = "name.length * 10 + age"
     val g = ExampleGraph()().result
-    val op = DeriveJSDouble(
-      JavaScript(expr),
+    val op = DeriveJS[Double](
+      expr,
       Seq("age", "name"))
     val derived = op(
       op.attrs,
-      VertexAttributeToJSValue.seq(g.age.entity, g.name.entity)).result.attr
+      Seq(g.age.entity, g.name.entity)).result.attr
     assert(derived.rdd.collect.toSet == Set(0 -> 60.3, 1 -> 48.2, 2 -> 80.3, 3 -> 122.0))
   }
 
   test("Spread out scalar to vertices") {
     val expr = "greeting"
     val g = ExampleGraph()().result
-    val op = DeriveJSString(
-      JavaScript(expr),
+    val op = DeriveJS[String](
+      expr,
       Seq(), Seq("greeting"))
     val derived = op(
       op.vs, g.vertices)(
-        op.scalars, ScalarToJSValue.seq(g.greeting.entity)).result.attr
+        op.scalars, Seq(g.greeting.entity)).result.attr
     val elements = derived.rdd.collect()
     assert(elements.size == 4 && elements.forall(_._2 == "Hello world! 😀 "))
   }
@@ -35,35 +36,38 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
   test("example graph: 'name.length * 10 + age + greeting.length'") {
     val expr = "name.length * 10 + age + greeting.length"
     val g = ExampleGraph()().result
-    val op = DeriveJSDouble(
-      JavaScript(expr),
+    val op = DeriveJS[Double](
+      expr,
       Seq("age", "name"), Seq("greeting"))
     val derived = op(
       op.attrs,
-      VertexAttributeToJSValue.seq(g.age.entity, g.name.entity))(
-        op.scalars, ScalarToJSValue.seq(g.greeting.entity)).result.attr
+      Seq(g.age.entity, g.name.entity))(
+        op.scalars, Seq(g.greeting.entity)).result.attr
     assert(derived.rdd.collect.sorted.toList == List(0 -> 76.3, 1 -> 64.2, 2 -> 96.3, 3 -> 138.0))
   }
 
   test("example graph: cons string gets converted back to String correctly") {
-    val expr = "var res = 'a'; res += 'b'; res;"
+    val expr = """
+      var res = "a"
+      res += "b"
+      res"""
     val g = ExampleGraph()().result
-    val op = DeriveJSString(
-      JavaScript(expr),
+    val op = DeriveJS[String](
+      expr,
       Seq())
     val derived = op(op.vs, g.vertices)(op.attrs, Seq()).result.attr
     assert(derived.rdd.collect.toSet == Set(0 -> "ab", 1 -> "ab", 2 -> "ab", 3 -> "ab"))
   }
 
-  test("example graph: \"gender == 'Male' ? 'Mr ' + name : 'Ms ' + name\"") {
-    val expr = "gender == 'Male' ? 'Mr ' + name : 'Ms ' + name"
+  test("example graph: \"if (gender == \"Male\") \"Mr \" + name else \"Ms \" + name\"") {
+    val expr = "if (gender == \"Male\") \"Mr \" + name else \"Ms \" + name"
     val g = ExampleGraph()().result
-    val op = DeriveJSString(
-      JavaScript(expr),
+    val op = DeriveJS[String](
+      expr,
       Seq("gender", "name"))
     val derived = op(
       op.attrs,
-      VertexAttributeToJSValue.seq(g.gender.entity, g.name.entity)).result.attr
+      Seq(g.gender.entity, g.name.entity)).result.attr
     assert(derived.rdd.collect.toSet == Set(
       0 -> "Mr Adam", 1 -> "Ms Eve", 2 -> "Mr Bob", 3 -> "Mr Isolated Joe"))
   }
@@ -71,8 +75,8 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
   test("DeriveJS works with no input attributes (vertices)") {
     val expr = "1.0"
     val g = ExampleGraph()().result
-    val op = DeriveJSDouble(
-      JavaScript(expr),
+    val op = DeriveJS[Double](
+      expr,
       Seq())
     val derived = op(op.vs, g.vertices.entity)(
       op.attrs,
@@ -80,18 +84,11 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     assert(derived.rdd.collect.toSet == Set(0 -> 1.0, 1 -> 1.0, 2 -> 1.0, 3 -> 1.0))
   }
 
-  test("JS integers become Scala doubles") {
-    val g = ExampleGraph()().result
-
-    val derived = DeriveJS.deriveFromAttributes[Double]("2", Seq(), g.vertices)
-    assert(derived.rdd.collect.toSet == Set(0 -> 2.0, 1 -> 2.0, 2 -> 2.0, 3 -> 2.0))
-  }
-
   test("DeriveJS works with no input attributes (edges)") {
-    val expr = "'hallo'"
+    val expr = "\"hallo\""
     val g = ExampleGraph()().result
-    val op = DeriveJSString(
-      JavaScript(expr),
+    val op = DeriveJS[String](
+      expr,
       Seq())
     val derived = op(op.vs, g.edges.idSet)(
       op.attrs,
@@ -99,33 +96,18 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     assert(derived.rdd.collect.toSet == Set(0 -> "hallo", 1 -> "hallo", 2 -> "hallo", 3 -> "hallo"))
   }
 
-  test("Random weird types are not supported as input") {
-    val g = ExampleGraph()().result
-    intercept[AssertionError] {
-      DeriveJS.deriveFromAttributes[Double](
-        "location ? 1.0 : 2.0", Seq("location" -> g.location), g.vertices)
-    }
-  }
-
-  test("We cannot simply access java stuff from JS") {
-    val js = JavaScript("java.lang.System.out.println(3)")
-    intercept[org.mozilla.javascript.EcmaError] {
-      js.evaluator.evaluateString(Map())
-    }
-  }
-
   test("Utility methods") {
     val g = ExampleGraph()().result
-    val nameHash = DeriveJS.deriveFromAttributes[Double](
-      "util.hash(name)", Seq("name" -> g.name), g.vertices)
+    val nameHash = DeriveJS.deriveFromAttributes(
+      "util.hash(name)", Seq("name" -> g.name), g.vertices).runtimeSafeCast[Double]
     assert(nameHash.rdd.collect.toSeq.sorted ==
       Seq(0 -> "Adam".hashCode.toDouble, 1 -> "Eve".hashCode.toDouble,
         2 -> "Bob".hashCode.toDouble, 3 -> "Isolated Joe".hashCode.toDouble))
 
-    val rndSum = DeriveJS.deriveFromAttributes[Double](
+    val rndSum = DeriveJS.deriveFromAttributes(
       "var rnd = util.rnd(income); rnd.nextDouble() + rnd.nextDouble();",
       Seq("income" -> g.income),
-      g.vertices)
+      g.vertices).runtimeSafeCast[Double]
     def rndSumScala(income: Double) = {
       val rnd = new scala.util.Random(income.toLong)
       rnd.nextDouble + rnd.nextDouble
@@ -134,94 +116,77 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
       Seq(0 -> rndSumScala(1000.0), 2 -> rndSumScala(2000.0)))
   }
 
-  test("example graph - all vertices: income === undefined") {
-    val expr = "income === undefined ? 666 : income * 10"
+  test("example graph - all vertices: income == null") {
+    val expr = "income.map(_ * 10.0).getOrElse(666.0)"
     val g = ExampleGraph()().result
-    val op = DeriveJSDouble(
-      JavaScript(expr),
+    val op = DeriveJS[Double](
+      expr,
       Seq("income"),
       onlyOnDefinedAttrs = false)
     val derived = op(
       op.attrs,
-      VertexAttributeToJSValue.seq(g.income.entity)).result.attr
+      Seq(g.income.entity)).result.attr
     assert(derived.rdd.collect.toSet == Set((0, 10000.0), (1, 666.0), (2, 20000.0), (3, 666.0)))
   }
 
-  test("example graph - all vertices: income == undefined") {
-    val expr = "income == undefined ? 666 : income * 10"
-    val g = ExampleGraph()().result
-    val op = DeriveJSDouble(
-      JavaScript(expr),
-      Seq("income"),
-      onlyOnDefinedAttrs = false)
-    val derived = op(
-      op.attrs,
-      VertexAttributeToJSValue.seq(g.income.entity)).result.attr
-    assert(derived.rdd.collect.toSet == Set((0, 10000.0), (1, 666.0), (2, 20000.0), (3, 666.0)))
-  }
-
-  test("example graph - all vertices: undefined returns undefined") {
+  test("example graph - all vertices: Option to Option") {
     val expr = "income"
     val g = ExampleGraph()().result
-    val op = DeriveJSDouble(
-      JavaScript(expr),
+    val op = DeriveJS[Double](
+      expr,
       Seq("income"),
       onlyOnDefinedAttrs = false)
     val derived = op(
       op.attrs,
-      VertexAttributeToJSValue.seq(g.income.entity)).result.attr
+      Seq(g.income.entity)).result.attr
     assert(derived.rdd.collect.toSet == Set((0, 1000.0), (2, 2000.0)))
   }
 
   // Tests that using undefined attribute values results in an invalid return rather than
   // magic conversions.
-  test("example graph - all vertices: returns NaN") {
-    val expr = "income * 10"
+  test("example graph - all vertices: Option[Double] * 10 throws error") {
+    val expr = "income * 10.0"
     val g = ExampleGraph()().result
-    val op = DeriveJSDouble(
-      JavaScript(expr),
-      Seq("income"),
-      onlyOnDefinedAttrs = false)
-    val derived = op(
-      op.attrs,
-      VertexAttributeToJSValue.seq(g.income.entity)).result.attr
-    intercept[org.apache.spark.SparkException] { // Script returns NaN.
-      derived.rdd.collect
+    intercept[javax.script.ScriptException] { // Script returns NaN.
+      DeriveJS[Double](
+        expr,
+        Seq("income"),
+        onlyOnDefinedAttrs = false)
     }
   }
 
   test("example graph - all vertices: two attributes") {
-    val expr = "income === undefined ? undefined: income + age"
+    val expr = "income.map(_ + age)"
     val g = ExampleGraph()().result
-    val op = DeriveJSDouble(
-      JavaScript(expr),
+    val op = DeriveJS[Double](
+      expr,
       Seq("income", "age"),
       onlyOnDefinedAttrs = false)
     val derived = op(
       op.attrs,
-      VertexAttributeToJSValue.seq(g.income.entity, g.age.entity)).result.attr
+      Seq(g.income.entity, g.age.entity)).result.attr
     assert(derived.rdd.collect.toSet == Set((0, 1020.3), (2, 2050.3)))
   }
 
   // Tests that using undefined attribute values results in an invalid return rather than
   // magic conversions.
-  test("example graph - all vertices: two attributes return NaN") {
+  test("example graph - all vertices: two attributes wrong type") {
     val expr = "income + age"
     val g = ExampleGraph()().result
-    val op = DeriveJSDouble(
-      JavaScript(expr),
+    val op = DeriveJS[Double](
+      expr,
       Seq("income", "age"),
       onlyOnDefinedAttrs = false)
     val derived = op(
       op.attrs,
-      VertexAttributeToJSValue.seq(g.income.entity, g.age.entity)).result.attr
-    intercept[org.apache.spark.SparkException] { // Script returns NaN.
+      Seq(g.income.entity, g.age.entity)).result.attr
+    intercept[javax.script.ScriptException] { // Script returns NaN.
       derived.rdd.collect
     }
   }
 
   def checkJS(expr: String, name: String, attr: Attribute[_], result: Set[(Int, String)]) = {
-    val op = DeriveJSString(JavaScript(expr), Seq(name))
+    val op = DeriveJS[String](expr, Seq(name))
     val derived = op(op.attrs, VertexAttributeToJSValue.seq(attr)).result.attr
     assert(derived.rdd.collect.toSet == result)
   }

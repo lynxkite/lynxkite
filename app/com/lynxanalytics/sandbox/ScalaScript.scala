@@ -7,6 +7,7 @@ import javax.script._
 
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
+import com.lynxanalytics.biggraph.graph_api.TypeTagUtil
 import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, Timestamp }
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark.sql.DataFrame
@@ -17,12 +18,13 @@ import scala.tools.nsc.interpreter.IMain
 import scala.util.DynamicVariable
 
 object ScalaScriptSecurityManager {
-  private[sandbox] val restrictedSecurityManager = new ScalaScriptSecurityManager
+  private[sandbox] val restrictedSecurityManager = new ScalaScriptSecurityManager(withReflect = false)
+  private[sandbox] val restrictedSecurityManagerWithReflect = new ScalaScriptSecurityManager(withReflect = true)
   System.setSecurityManager(restrictedSecurityManager)
   def init() = {}
 }
 
-class ScalaScriptSecurityManager extends SecurityManager {
+class ScalaScriptSecurityManager(val withReflect: Boolean) extends SecurityManager {
 
   val shouldCheck = new DynamicVariable[Boolean](false)
   def checkedRun[R](op: => R): R = {
@@ -83,7 +85,7 @@ class ScalaScriptSecurityManager extends SecurityManager {
     if (shouldCheck.value &&
       (s.contains("com.lynxanalytics.biggraph") ||
         s.contains("org.apache.spark") ||
-        s.contains("scala.reflect"))) {
+        (!withReflect && s.contains("scala.reflect")))) {
       throw new java.security.AccessControlException(s"Illegal package access: $s")
     }
   }
@@ -162,8 +164,20 @@ object ScalaScript {
     }
   }
 
-  def inferType(code: String, paramTypes: Map[String, TypeTag[_]], timeoutInSeconds: Long = 10L): TypeTag[_] = synchronized {
-    val paramString = paramTypes.map { case (k, v) => s"$k: ${v.tpe}" }.mkString(", ")
+  private def convert(paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): Map[String, TypeTag[_]] = {
+    if (toOptionType) {
+      paramTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) }
+    } else {
+      paramTypes
+    }
+  }
+
+  def inferReturnType(code: String, paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): Type = {
+    inferType(code, paramTypes, toOptionType).tpe.typeArgs.last
+  }
+
+  def inferType(code: String, paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): TypeTag[_] = synchronized {
+    val paramString = convert(paramTypes, toOptionType).map { case (k, v) => s"$k: ${v.tpe}" }.mkString(", ")
     val fullCode = s"""
     import scala.reflect.runtime.universe._
     def typeTagOf[T: TypeTag](t: T) = typeTag[T]
@@ -175,39 +189,32 @@ object ScalaScript {
     val compiledCode = engine.compile(fullCode)
     val result =
       withContextClassLoader {
-        withTimeout(timeoutInSeconds) {
-          ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
-            compiledCode.eval()
-          }
+        ScalaScriptSecurityManager.restrictedSecurityManagerWithReflect.checkedRun {
+          compiledCode.eval()
         }
       }
     result.asInstanceOf[TypeTag[_]] // We cannot use asInstanceOf within the SecurityManager.
   }
 
-  case class Evaluator(compiledCode: javax.script.CompiledScript) {
+  case class Evaluator(evalFunc: Function1[Map[String, Any], AnyRef]) {
     def evaluate(params: Map[String, Any]): AnyRef = {
-      import scala.collection.JavaConversions._
-      val bindings = new javax.script.SimpleBindings(params.mapValues(_.asInstanceOf[AnyRef]))
-      withContextClassLoader {
-        ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
-          compiledCode.eval(bindings)
-        }
-
-      }
+      evalFunc.apply(params)
     }
   }
 
-  def getEvaluator(code: String, paramTypes: Map[String, TypeTag[_]], timeoutInSeconds: Long = 10L): Evaluator = synchronized {
-    val paramString = paramTypes.map { case (k, v) => s"$k: ${v.tpe}" }.mkString(", ")
-    val paramKeysString = paramTypes.keys.mkString(", ")
+  def getEvaluator(code: String, paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): Evaluator = synchronized {
+    val paramsString = convert(paramTypes, toOptionType).map {
+      case (k, t) => s"""val $k = params("$k").asInstanceOf[${t.tpe}]"""
+    }.mkString("\n")
     val fullCode = s"""
-    def eval($paramString) = {
+    def eval(params: Map[String, Any]) = {
+      $paramsString
       $code
     }
-    eval($paramKeysString)
+    eval _
     """
     val compiledCode = engine.compile(fullCode)
-    Evaluator(compiledCode)
+    Evaluator(compiledCode.eval().asInstanceOf[Function1[Map[String, Any], AnyRef]])
   }
 
   private def withContextClassLoader[T](func: => T): T = {

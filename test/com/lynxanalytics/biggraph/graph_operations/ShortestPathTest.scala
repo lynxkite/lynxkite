@@ -20,8 +20,8 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
       op(op.vs, vs).result.es
     }
     val startingDistance = {
-      val op = DeriveJSDouble(
-        JavaScript("ordinal < 3 ? 1000.0 : undefined"),
+      val op = DeriveJS[Double](
+        "ordinal < 3 ? 1000.0 : undefined",
         Seq("ordinal"))
       op(
         op.attrs,
@@ -93,8 +93,8 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
     val es = graph.edges
     val name = graph.name
     val startingDistance = {
-      val op = DeriveJSDouble(
-        JavaScript("name === 'Bob' ? 1000.0 : undefined"),
+      val op = DeriveJS[Double](
+        "name === 'Bob' ? 1000.0 : undefined",
         Seq("name"))
       op(
         op.attrs,

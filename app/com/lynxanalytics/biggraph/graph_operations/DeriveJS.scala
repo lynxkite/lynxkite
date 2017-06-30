@@ -10,7 +10,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 import com.lynxanalytics.sandbox.ScalaScript
 
-object DeriveJS {
+object DeriveJS extends OpFromJson {
   class Input(attrCount: Int, scalarCount: Int)
       extends MagicInputSignature {
     val vs = vertexSet
@@ -24,14 +24,8 @@ object DeriveJS {
   def negative(x: Attribute[Double])(implicit manager: MetaGraphManager): Attribute[Double] = {
     import Scripting._
     val op = DeriveJS[Double]("-x", Seq("x"))
-    op(op.attrs, Seq(x).map(VertexAttributeToJSValue.run[Double])).result.attr
+    op(op.attrs, Seq(x)).result.attr
   }
-
-  val resultTypeWhiteList = Seq(
-    typeTag[String],
-    typeTag[Double],
-    typeTag[Vector[String]],
-    typeTag[Vector[Double]])
 
   def deriveFromAttributes(
     exprString: String,
@@ -53,20 +47,18 @@ object DeriveJS {
     val paramTypes = (
       namedAttributes.map { case (k, v) => k -> v.typeTag } ++
       namedScalars.map { case (k, v) => k -> v.typeTag }).toMap[String, TypeTag[_]]
-    val expressionTypeTag = ScalaScript.inferType(exprString, paramTypes)
-    val resultTypeTag = resultTypeWhiteList.find(_.tpe =:= expressionTypeTag.tpe)
-    assert(resultTypeTag.nonEmpty, s"Unsupported result type of expression $exprString: $expressionTypeTag")
+    val t = ScalaScript.inferReturnType(exprString, paramTypes, toOptionType = !onlyOnDefinedAttrs)
 
     val a = namedAttributes.map(_._1)
     val s = namedScalars.map(_._1)
     val e = exprString
     val o = onlyOnDefinedAttrs
-    val t = resultTypeTag.get.tpe
     val op = t match {
-      case _ if t =:= typeOf[String] => DeriveJS[String](e, a, s, o)
-      case _ if t =:= typeOf[Double] => DeriveJS[Double](e, a, s, o)
-      case _ if t =:= typeOf[Vector[String]] => DeriveJS[Vector[String]](e, a, s, o)
-      case _ if t =:= typeOf[Vector[Double]] => DeriveJS[Vector[Double]](e, a, s, o)
+      case _ if t =:= typeOf[String] => DeriveJS[String](e, a, s, o, false)
+      case _ if t =:= typeOf[Double] => DeriveJS[Double](e, a, s, o, false)
+      case _ if t =:= typeOf[Vector[String]] => DeriveJS[Vector[String]](e, a, s, o, false)
+      case _ if t =:= typeOf[Vector[Double]] => DeriveJS[Vector[Double]](e, a, s, o, false)
+      case _ => throw new AssertionError(s"Unsupported result type of expression $exprString: $t")
     }
 
     import Scripting._
@@ -74,16 +66,37 @@ object DeriveJS {
       op.attrs, namedAttributes.map(_._2))(
         op.scalars, namedScalars.map(_._2)).result.attr
   }
+
+  def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
+    implicit val tt = SerializableType.fromJson(j \ "type").typeTag
+    DeriveJS(
+      (j \ "expr").as[String],
+      (j \ "attrNames").as[List[String]].toSeq,
+      (j \ "scalarNames").as[List[String]].toSeq,
+      (j \ "onlyOnDefinedAttrs").as[Boolean],
+      (j \ "checkResultType").as[Boolean])
+  }
 }
 import DeriveJS._
 case class DeriveJS[T: TypeTag](
   expr: String,
   attrNames: Seq[String],
   scalarNames: Seq[String] = Seq(),
-  onlyOnDefinedAttrs: Boolean = true)
+  onlyOnDefinedAttrs: Boolean = true,
+  checkResultType: Boolean = true)
     extends TypedMetaGraphOp[Input, Output[T]] {
-  val tt = typeTag[T]
+
+  def tt = typeTag[T]
+  def st = SerializableType(tt)
   implicit def ct = RuntimeSafeCastable.classTagFromTypeTag(tt)
+  override def toJson = Json.obj(
+    "type" -> st.toJson,
+    "expr" -> expr,
+    "attrNames" -> attrNames,
+    "scalarNames" -> scalarNames,
+    "onlyOnDefinedAttrs" -> onlyOnDefinedAttrs,
+    "checkResultType" -> checkResultType)
+
   override val isHeavy = true
   @transient override lazy val inputs = new Input(attrNames.size, scalarNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -110,7 +123,7 @@ case class DeriveJS[T: TypeTag](
           case (rdd, (attr, idx)) =>
             rdd.sortedLeftOuterJoin(attr.rdd).mapValues {
               case (attrs, attr) =>
-                attrs(idx) = attr.getOrElse(null)
+                attrs(idx) = attr
                 attrs
             }
         }
@@ -120,12 +133,17 @@ case class DeriveJS[T: TypeTag](
     val scalars = inputs.scalars.map { _.value }.toArray
     val allNames = attrNames ++ scalarNames
     val paramTypes = (
-      inputs.attrs.map { attr => attr.name.toString -> attr.data.typeTag } ++
-      inputs.scalars.map { scalar => scalar.name.toString -> scalar.data.typeTag })
+      attrNames.zip(inputs.attrs).map { case (k, v) => k -> v.data.typeTag } ++
+      scalarNames.zip(inputs.scalars).map { case (k, v) => k -> v.data.typeTag })
       .toMap[String, TypeTag[_]]
 
+    if (checkResultType) {
+      val rtpe = ScalaScript.inferReturnType(expr, paramTypes, toOptionType = !onlyOnDefinedAttrs)
+      assert(rtpe =:= tt.tpe, s"Scala script returns wrong type: expected ${tt.tpe} but got ${rtpe}")
+    }
+
     val derived = joined.mapPartitions({ it =>
-      val evaluator = ScalaScript.getEvaluator(expr, paramTypes)
+      val evaluator = ScalaScript.getEvaluator(expr, paramTypes, toOptionType = !onlyOnDefinedAttrs)
       it.map {
         case (key, values) =>
           val namedValues = allNames.zip(values ++ scalars).toMap
