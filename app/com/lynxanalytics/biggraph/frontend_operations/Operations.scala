@@ -1187,7 +1187,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
       // http://arxiv.org/pdf/1310.6753v1.pdf
       val normalizedDispersion = {
-        val op = graph_operations.DeriveJS[Double](
+        val op = graph_operations.DeriveScala[Double](
           "Math.pow(disp, 0.61) / (emb + 5)",
           Seq("disp", "emb"))
         op(op.attrs, Seq(
@@ -1503,7 +1503,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val onlyOnDefinedAttrs = params("defined_attrs").toBoolean
 
-      val result = graph_operations.DeriveJS.deriveFromAttributes(
+      val result = graph_operations.DeriveScala.deriveFromAttributes(
         expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
 
       project.newVertexAttribute(params("output"), result, expr + help)
@@ -1546,7 +1546,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
       val onlyOnDefinedAttrs = params("defined_attrs").toBoolean
 
-      val result = graph_operations.DeriveJS.deriveFromAttributes(
+      val result = graph_operations.DeriveScala.deriveFromAttributes(
         expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
 
       project.newEdgeAttribute(params("output"), result, expr + help)
@@ -1839,13 +1839,13 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         project.newVertexAttribute(name + "_certainty", certainty,
           s"probability of predicted class according to ${modelName}")
         if (isBinary) {
-          val probabilityOf0 = graph_operations.DeriveJS.deriveFromAttributes(
+          val probabilityOf0 = graph_operations.DeriveScala.deriveFromAttributes(
             "classification == 0 ? certainty : 1 - certainty",
             Seq("certainty" -> certainty, "classification" -> classifiedAttribute),
             project.vertexSet)
           project.newVertexAttribute(name + "_probability_of_0", probabilityOf0,
             s"probability of class 0 according to ${modelName}")
-          val probabilityOf1 = graph_operations.DeriveJS.deriveFromAttributes(
+          val probabilityOf1 = graph_operations.DeriveScala.deriveFromAttributes(
             "1 - probabilityOf0", Seq("probabilityOf0" -> probabilityOf0), project.vertexSet)
           project.newVertexAttribute(name + "_probability_of_1", probabilityOf1,
             s"probability of class 1 according to ${modelName}")
@@ -1955,7 +1955,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       AttributeWithLocalAggregator(parent.vertexSet.idAttribute, "count")
     )
     val sizeSquare: Attribute[Double] = {
-      val op = graph_operations.DeriveJS[Double](
+      val op = graph_operations.DeriveScala[Double](
         "size * size",
         Seq("size"))
       op(
@@ -3447,7 +3447,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         parent.scalars(s"$prefix $targetName coverage initial") = coverage
 
         var timeOfDefinition = {
-          val op = graph_operations.DeriveJS[Double]("0", Seq("attr"))
+          val op = graph_operations.DeriveScala[Double]("0", Seq("attr"))
           op(op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr.entity
         }
 
@@ -3472,7 +3472,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
               .runtimeSafeCast[Double]
           }
           val segStdDevDefined = {
-            val op = graph_operations.DeriveJS[Double](
+            val op = graph_operations.DeriveScala[Double](
               s"""
                 deviation <= $maxDeviation &&
                 defined / ids >= ${params("min_ratio_defined")} &&
@@ -3503,7 +3503,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             op(op.attr, train)(op.role, roles).result
           }
           val error = {
-            val op = graph_operations.DeriveJS[Double](
+            val op = graph_operations.DeriveScala[Double](
               "Math.abs(test - train)", Seq("test", "train"))
             val mae = op(
               op.attrs,
@@ -3522,7 +3522,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             error
 
           timeOfDefinition = {
-            val op = graph_operations.DeriveJS[Double](
+            val op = graph_operations.DeriveScala[Double](
               i.toString, Seq("attr"))
             val newDefinitions = op(
               op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr
@@ -3672,7 +3672,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     val srcSize = graph_operations.VertexToEdgeAttribute.srcAttribute(size, seg.edgeBundle)
     val dstSize = graph_operations.VertexToEdgeAttribute.dstAttribute(size, seg.edgeBundle)
     val sizeProduct: Attribute[Double] = {
-      val op = graph_operations.DeriveJS[Double](
+      val op = graph_operations.DeriveScala[Double](
         "src_size * dst_size",
         Seq("src_size", "dst_size"))
       op(

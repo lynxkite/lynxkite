@@ -20,12 +20,12 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
       op(op.vs, vs).result.es
     }
     val startingDistance = {
-      val op = DeriveJS[Double](
-        "ordinal < 3 ? 1000.0 : undefined",
+      val op = DeriveScala[Double](
+        "if (ordinal < 3) Some(1000.0) else None",
         Seq("ordinal"))
       op(
         op.attrs,
-        VertexAttributeToJSValue.seq(ordinal.asDouble)).result.attr
+        Seq(ordinal.asDouble.entity)).result.attr
     }
     val edgeDistance = AddConstantAttribute.run(es.idSet, 1.0)
     val distance = {
@@ -93,12 +93,12 @@ class ShortestPathTest extends FunSuite with TestGraphOp {
     val es = graph.edges
     val name = graph.name
     val startingDistance = {
-      val op = DeriveJS[Double](
-        "name === 'Bob' ? 1000.0 : undefined",
+      val op = DeriveScala[Double](
+        "if (name == \"Bob\") Some(1000.0) else None",
         Seq("name"))
       op(
         op.attrs,
-        VertexAttributeToJSValue.seq(name)).result.attr
+        Seq(name.entity)).result.attr
     }
     val distance = {
       val op = ShortestPath(10)
