@@ -5,6 +5,14 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.graph_api._
+import org.apache.spark.SparkConf
+import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
+import org.apache.spark.sql.catalyst.plans.logical.BinaryNode
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.catalyst.plans.logical.UnaryNode
+import org.apache.spark.sql.catalyst.plans.logical.LeafNode
+import org.apache.spark.sql.execution.SparkSqlParser
+import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types
 
 // A kind of wrapper for Tables that can be used for trimming unused dependencies from table
@@ -27,8 +35,20 @@ object ProtoTable {
   // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
   // necessary to support the query.
   def minimize(sql: String, protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
-    // TODO: Minimize the ProtoTables using SQLHelper.getInputColumns or SparkSqlParser.
-    protoTables
+    val parser = new SparkSqlParser(new SQLConf())
+    val tables = parsePlanForTableNames(parser.parsePlan(sql))
+    protoTables.filter(p => tables.contains(p._1))
+  }
+
+  def parsePlanForTableNames(plan: LogicalPlan): List[String] = {
+    plan match {
+      case u: UnresolvedRelation => List(u.tableIdentifier.identifier)
+      case l: LeafNode =>
+        bigGraphLogger.info(s"$l ignored in ProtoTable minimalization")
+        List()
+      case s: UnaryNode => parsePlanForTableNames(s.child)
+      case s: BinaryNode => parsePlanForTableNames(s.left) ++ parsePlanForTableNames(s.right)
+    }
   }
 }
 
