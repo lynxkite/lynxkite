@@ -208,10 +208,11 @@ Workspace.prototype = {
   },
 
   selectBoxes: function(boxIds) {
-    // Without this, we would just add additional boxes to the previous selection
-    this.openBoxEditor(boxIds[0]).close();
     browser.actions().keyDown(protractor.Key.CONTROL).perform();
-    for (var i = 1; i < boxIds.length; ++i) {
+    // Unselect all.
+    $$('g.box.selected').click();
+    // Select given boxes.
+    for (var i = 0; i < boxIds.length; ++i) {
       this.clickBox(boxIds[i]);
     }
     browser.actions().keyUp(protractor.Key.CONTROL).perform();

@@ -1,7 +1,7 @@
 ### Create plot
 
-Creates a plot from the input table. The plot can be defined using the Vegas plot
-description language.
+Creates a plot from the input table. The plot can be defined using the
+https://github.com/vegas-viz/Vegas[Vegas] plot description language.
 
 ====
 [[plot_code]] Plot code::
@@ -20,6 +20,6 @@ encodeY("gdp_growth", Quantitative)
 ```
 For more examples see
 http://nbviewer.jupyter.org/github/aishfenton/Vegas/blob/master/notebooks/jupyter_example.ipynb[this Jupyter notebook].
-For understanding the vega-lite plot grammar (the JSON plot format used by Vegas) see
-https://vega.github.io/vega-lite-1/docs/[the vega-Lite documentation].
+For understanding the Vega-Lite plot grammar (the JSON plot format used by Vegas) see
+https://vega.github.io/vega-lite/docs/[the Vega-Lite documentation].
 ====

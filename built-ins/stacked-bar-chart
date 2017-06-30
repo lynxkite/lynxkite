@@ -1,0 +1,54 @@
+{
+    "boxes" : [ {
+      "id" : "anchor",
+      "operationId" : "Anchor",
+      "parameters" : {
+        "description" : "A stacked bar chart is a bar chart that also shows sub-groups,\nbut the sub-groups are displayed on the same bar differentiated\nwith colors.\n\nParameters:\n  X: The name of the attribute displayed on the X coordinate.\n  Y: The name of the attribute displayed on the Y coordinate.\n     Needs to be a number type.\n  colordBy: The name of the attribute used for creating the\n            sub-groups.",
+        "parameters" : "[{\"kind\":\"column\",\"id\":\"X\",\"defaultValue\":\"\",\"$$hashKey\":\"object:4089\"},{\"kind\":\"column\",\"id\":\"Y\",\"defaultValue\":\"\",\"$$hashKey\":\"object:4363\"},{\"kind\":\"column\",\"id\":\"coloredBy\",\"defaultValue\":\"\",\"$$hashKey\":\"object:4499\"}]"
+      },
+      "x" : 0.0,
+      "y" : 0.0,
+      "inputs" : { },
+      "parametricParameters" : { }
+    }, {
+      "id" : "Create-plot_1",
+      "operationId" : "Create plot",
+      "parameters" : { },
+      "x" : 650.0,
+      "y" : 200.0,
+      "inputs" : {
+        "table" : {
+          "boxId" : "Input_1",
+          "id" : "input"
+        }
+      },
+      "parametricParameters" : {
+        "plot_code" : "Vegas(\"Stacked bar chart\")\n.withData(table)\n.encodeX(\"$X\", Ordinal)\n.encodeY(\"$Y\", Quantitative, aggregate=AggOps.Sum)\n.encodeColor(\"$coloredBy\", Nominal)\n.mark(Bar)"
+      }
+    }, {
+      "id" : "output-plot",
+      "operationId" : "Output",
+      "parameters" : {
+        "name" : "plot"
+      },
+      "x" : 650.0,
+      "y" : 300.0,
+      "inputs" : {
+        "output" : {
+          "boxId" : "Create-plot_1",
+          "id" : "plot"
+        }
+      },
+      "parametricParameters" : { }
+    }, {
+      "id" : "Input_1",
+      "operationId" : "Input",
+      "parameters" : {
+        "name" : "table"
+      },
+      "x" : 650.0,
+      "y" : 100.0,
+      "inputs" : { },
+      "parametricParameters" : { }
+    } ]
+}

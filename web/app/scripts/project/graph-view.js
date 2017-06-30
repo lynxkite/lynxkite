@@ -1039,7 +1039,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       if (!sliderAttr) { return; }
       var sb = common.minmax(
           vertices.vs.map(function(v) { return (v.data.attrs[sliderAttr.id] || {}).double; }));
-      var pos = Number(sliderPos());
+      var pos = sliderPos();
       for (var i = 0; i < vertices.vs.length; ++i) {
         var v = vertices.vs[i];
         var x =
@@ -1209,7 +1209,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       repulsion: scale,
       gravity: 0.05,
       drag: 0.2,
-      labelAttraction: parseFloat(vertices.side.animate.labelAttraction),
+      labelAttraction: vertices.side.animate.labelAttraction,
       style: vertices.side.animate.style,
     });
     // Generate initial layout for 2 seconds or until it stabilizes.
@@ -1230,7 +1230,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       // This also ends up getting called when the side is closed due to the deep watch.
       // Accept this silently.
       if (!animate) { return; }
-      engine.opts.labelAttraction = parseFloat(animate.labelAttraction);
+      engine.opts.labelAttraction = animate.labelAttraction;
       engine.opts.style = animate.style;
       if (animating && animate.enabled && engine.step(vertices)) {
         window.requestAnimationFrame(vertices.step);

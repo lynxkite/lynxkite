@@ -10,7 +10,8 @@ angular
     'cfp.hotkeys',
   ])
 
-  .config(function ($routeProvider) {
+  .config(function ($routeProvider, $locationProvider) {
+    $locationProvider.hashPrefix(''); // https://docs.angularjs.org/guide/migration#commit-aa077e8
     function docTemplate(doc) {
       return { template:
         '<div class="documentation">' +

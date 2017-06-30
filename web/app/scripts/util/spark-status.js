@@ -21,11 +21,16 @@ angular.module('biggraph')
         return status.activeStages.concat(status.pastStages);
       };
 
+      var hashColors = {}; // Cache for this surprisingly costly method.
       scope.hashToColor = function(active, hash) {
         hash = Math.abs(hash);
-        /* global tinycolor */
-        var color = tinycolor({ h: hash % 360, s: 1.0, l: active ? 0.5 : 0.9 });
-        return color.toString();
+        if (!(hash in hashColors)) {
+          /* global tinycolor */
+          hashColors[hash] = {
+            true: tinycolor({ h: hash % 360, s: 1.0, l: 0.5 }).toString(),
+            false: tinycolor({ h: hash % 360, s: 1.0, l: 0.9 }).toString() };
+        }
+        return hashColors[hash][active];
       };
 
       scope.height = function(stage) {

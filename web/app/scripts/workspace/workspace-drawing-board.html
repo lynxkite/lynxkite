@@ -128,8 +128,8 @@
   <svg>
     <defs>
       <!-- The filters to apply colors to the grayscale icons. -->
-      <filter ng-repeat="(id, matrix) in filters" id="{{ id | id }}">
-        <feColorMatrix in="SourceGraphic" type="matrix" ng-attr-values="{{ matrix }}"></feColorMatrix>
+      <filter ng-repeat="(id, matrix) in ::filters" id="{{ ::id | id }}">
+        <feColorMatrix in="SourceGraphic" type="matrix" ng-attr-values="{{ ::matrix }}"></feColorMatrix>
       </filter>
 
       <marker id="arrow-head" orient="auto" markerWidth="6" markerHeight="6" viewBox="-8 -5 10 10">
@@ -156,7 +156,7 @@
       <!-- start arrow -->
       <g ng-repeat="arrow in arrows()">
         <path class="arrow"
-            id="{{ arrow.src.boxId | id }}-{{ arrow.src.id | id }}-{{ arrow.dst.boxId | id }}-{{ arrow.dst.id | id }}"
+            id="{{ ::arrow.src.boxId | id }}-{{ ::arrow.src.id | id }}-{{ ::arrow.dst.boxId | id }}-{{ ::arrow.dst.id | id }}"
             ng-attr-d="{{ bezier(arrow.x1(), arrow.y1(), arrow.x2(), arrow.y2()) }}"></path>
       </g>
       <!-- end arrow -->
@@ -176,15 +176,15 @@
           ng-mouseup="onMouseUpOnBox(box, $event)"
           ng-attr-transform="{{ box.mainPosTransform() }}"
           class="box"
-          id="{{ box.instance.id | id }}"
+          id="{{ ::box.instance.id | id }}"
           ng-class="{ 'selected': selectedBoxIds.includes(box.instance.id) }">
         <circle id="click-target" cx="50" cy="60" r="50"></circle>
 
         <!-- Icon. The filter applies color according to the metadata. -->
         <image
           class="box-main"
-          filter="{{ filters[box.metadata.color] ? 'url(#' + box.metadata.color + ')' : '' }}"
-          href="{{ box.metadata.icon }}" x="-25" y="-25" width="150" height="150"></image>
+          filter="{{ ::filters[box.metadata.color] ? 'url(#' + box.metadata.color + ')' : '' }}"
+          href="{{ ::box.metadata.icon }}" x="-25" y="-25" width="150" height="150"></image>
 
         <text x="50" y="105" class="summary backdrop">
           {{box.summary}}
@@ -193,16 +193,16 @@
           {{box.summary}}
         </text>
 
-        <text x="-20" y="115" ng-show="box.commentLines">
-          <tspan xml:space="preserve" font-family="monospace" x="5" dy="15"
-                 ng-repeat="line in box.commentLines track by $index">{{line}}
-          </tspan>
-        </text>
+        <foreignObject x="-20" y="115" width="200" height="1000" ng-if="box.comment">
+          <body xmlns="http://www.w3.org/1999/xhtml">
+            <span trusted-html="box.comment"></span>
+          </body>
+        </foreignObject>
         <g ng-repeat="direction in ['inputs', 'outputs']" id="{{ direction | id }}">
-          <g ng-repeat="plug in box[direction]"
+          <g ng-repeat="plug in ::box[direction]"
               ng-attr-transform="{{ plug.posTransform }}"
               class="plug"
-              id="{{ plug.id | id }}">
+              id="{{ ::plug.id | id }}">
             <circle ng-attr-r="{{ plug.radius }}"
                   class="io-circle"
                   ng-class="{
@@ -221,18 +221,18 @@
                 class="backdrop"
                 ng-class="{ lonely: box[direction].length === 1 }"
                 ng-attr-x="{{ direction === 'inputs' ? -15 : 15 }}">
-              {{ plug.id }}</text>
+              {{ ::plug.id }}</text>
             <text
                 ng-class="{ lonely: box[direction].length === 1 }"
                 ng-attr-x="{{ direction === 'inputs' ? -15 : 15 }}">
-              {{ plug.id }}</text>
+              {{ ::plug.id }}</text>
           </g>
         </g>
       </g>
 
       <polygon
         ng-repeat="popup in popups"
-        class="popup-trail popup-type-{{ popup.content.type }}"
+        class="popup-trail popup-type-{{ ::popup.content.type }}"
         ng-attr-points="{{ popup.trail(pageToLogical, logicalToPage, workspace) }}">
       </polygon>
 
