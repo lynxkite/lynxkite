@@ -70,7 +70,8 @@
     </div>
   </span>
 
-  <div class="token" id="setting-centers">
+  <div class="token" id="setting-centers"
+       ng-class="{ default: side.state.centers[0] === 'auto' }">
     <span class="title">
       centers: {{ side.state.centers.join(', ') || 'nothing' }}
       <span class="spinner" ng-show="side.centerRequest && !side.centerRequest.$resolved">|</span>
