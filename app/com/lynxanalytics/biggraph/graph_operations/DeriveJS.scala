@@ -142,8 +142,9 @@ case class DeriveJS[T: TypeTag](
       assert(rtpe =:= tt.tpe, s"Scala script returns wrong type: expected ${tt.tpe} but got ${rtpe}")
     }
 
+    val fullCode = ScalaScript.getFullCode(expr, paramTypes, toOptionType = !onlyOnDefinedAttrs)
     val derived = joined.mapPartitions({ it =>
-      val evaluator = ScalaScript.getEvaluator(expr, paramTypes, toOptionType = !onlyOnDefinedAttrs)
+      val evaluator = ScalaScript.getEvaluator(fullCode)
       it.map {
         case (key, values) =>
           val namedValues = allNames.zip(values ++ scalars).toMap

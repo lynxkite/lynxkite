@@ -187,7 +187,7 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
 
   def checkJS(expr: String, name: String, attr: Attribute[_], result: Set[(Int, String)]) = {
     val op = DeriveJS[String](expr, Seq(name))
-    val derived = op(op.attrs, VertexAttributeToJSValue.seq(attr)).result.attr
+    val derived = op(op.attrs, Seq(attr)).result.attr
     assert(derived.rdd.collect.toSet == result)
   }
 
@@ -201,14 +201,18 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[String]())
       op(op.connection, g.edges)(op.attr, g.gender).result.attr
     }
-    checkJS("ages.toString()", "ages", ages, Set(0 -> "18.2,50.3", 1 -> "20.3,50.3"))
-    checkJS("genders.toString()", "genders", genders, Set(0 -> "Female,Male", 1 -> "Male,Male"))
+    checkJS("ages.toString()", "ages", ages,
+      Set(0 -> "Vector(18.2, 50.3)", 1 -> "Vector(20.3, 50.3)"))
+    checkJS("genders.toString()", "genders", genders,
+      Set(0 -> "Vector(Female, Male)", 1 -> "Vector(Male, Male)"))
     checkJS("ages.length.toString()", "ages", ages, Set(0 -> "2", 1 -> "2"))
     checkJS("genders.length.toString()", "genders", genders, Set(0 -> "2", 1 -> "2"))
     checkJS("ages[0].toString()", "ages", ages, Set(0 -> "18.2", 1 -> "20.3"))
     checkJS("genders[0]", "genders", genders, Set(0 -> "Female", 1 -> "Male"))
-    checkJS("ages.concat([100]).toString()", "ages", ages, Set(0 -> "18.2,50.3,100", 1 -> "20.3,50.3,100"))
-    checkJS("genders.concat(['abc']).toString()", "genders", genders, Set(0 -> "Female,Male,abc", 1 -> "Male,Male,abc"))
+    checkJS("(ages :+ 100.0).toString()", "ages", ages,
+      Set(0 -> "Vector(18.2, 50.3, 100.0)", 1 -> "Vector(20.3, 50.3, 100.0)"))
+    checkJS("(genders :+ \"abc\").toString()", "genders", genders,
+      Set(0 -> "Vector(Female, Male, abc)", 1 -> "Vector(Male, Male, abc)"))
   }
 
   test("example graph - arrays of arrays") {
