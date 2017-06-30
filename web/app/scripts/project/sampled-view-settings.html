@@ -26,7 +26,7 @@
 
     <div class="token"
          id="setting-label-attraction"
-         ng-class="{ default: side.state.animate.labelAttraction === '0' }">
+         ng-class="{ default: side.state.animate.labelAttraction === 0 }">
       <span class="title">
         label attraction: {{ side.state.animate.labelAttraction * 100 | number : 0 }}%
       </span>
@@ -70,7 +70,8 @@
     </div>
   </span>
 
-  <div class="token" id="setting-centers">
+  <div class="token" id="setting-centers"
+       ng-class="{ default: side.state.centers[0] === 'auto' }">
     <span class="title">
       centers: {{ side.state.centers.join(', ') || 'nothing' }}
       <span class="spinner" ng-show="side.centerRequest && !side.centerRequest.$resolved">|</span>
@@ -89,7 +90,7 @@
 
   <div class="token"
        id="setting-sample-radius"
-       ng-class="{ default: side.state.sampleRadius === '1' }">
+       ng-class="{ default: side.state.sampleRadius === 1 }">
     <span class="title">
       radius {{ side.state.sampleRadius }}
     </span>

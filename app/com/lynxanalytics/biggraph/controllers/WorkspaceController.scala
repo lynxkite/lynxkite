@@ -141,7 +141,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val project =
       if (state.isProject) state.project
       else if (state.isVisualization) state.visualization.project
-      else ???
+      else if (state.isError) throw new AssertionError(state.success.disabledReason)
+      else throw new AssertionError(s"Not a project: $state")
     val viewer = project.viewer.offspringViewer(pathSeq)
     viewer.toFE(request.path)
   }
