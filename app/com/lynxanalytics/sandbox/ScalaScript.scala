@@ -202,17 +202,20 @@ object ScalaScript {
     }
   }
 
-  def getEvaluator(code: String, paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): Evaluator = synchronized {
+  def getFullCode(code: String, paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): String = {
     val paramsString = convert(paramTypes, toOptionType).map {
       case (k, t) => s"""val $k = params("$k").asInstanceOf[${t.tpe}]"""
     }.mkString("\n")
-    val fullCode = s"""
+    s"""
     def eval(params: Map[String, Any]) = {
       $paramsString
       $code
     }
     eval _
     """
+  }
+
+  def getEvaluator(fullCode: String): Evaluator = synchronized {
     val compiledCode = engine.compile(fullCode)
     Evaluator(compiledCode.eval().asInstanceOf[Function1[Map[String, Any], AnyRef]])
   }
