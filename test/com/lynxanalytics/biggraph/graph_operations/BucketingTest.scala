@@ -39,12 +39,12 @@ class BucketingTest extends FunSuite with TestGraphOp {
   test("example graph with negative values") {
     val g = ExampleGraph()().result
     val ageMinus20 = {
-      val op = DeriveJS[Double](
+      val op = DeriveScala[Double](
         "age - 20",
         Seq("age"))
       op(
         op.attrs,
-        VertexAttributeToJSValue.seq(g.age)).result.attr
+        Seq(g.age.entity)).result.attr
     }
     // ages should be: -18, -1.8, 0.3, 30.3
     val bucketing = {
@@ -77,12 +77,12 @@ class BucketingTest extends FunSuite with TestGraphOp {
   test("example graph by age intervals") {
     val g = ExampleGraph()().result
     val ageTimes1_5 = {
-      val op = DeriveJS[Double](
+      val op = DeriveScala[Double](
         "age * 1.5",
         Seq("age"))
       op(
         op.attrs,
-        VertexAttributeToJSValue.seq(g.age)).result.attr
+        Seq(g.age.entity)).result.attr
     }
     // intervals should be: [2, 3], [18.2, 27.3], [20.3, 30.45], [50.3, 75.45]
     val bucketing = {
@@ -102,12 +102,12 @@ class BucketingTest extends FunSuite with TestGraphOp {
   test("example graph by age intervals with overlap") {
     val g = ExampleGraph()().result
     val ageTimes1_5 = {
-      val op = DeriveJS[Double](
+      val op = DeriveScala[Double](
         "age * 1.5",
         Seq("age"))
       op(
         op.attrs,
-        VertexAttributeToJSValue.seq(g.age)).result.attr
+        Seq(g.age.entity)).result.attr
     }
     // intervals should be: [2, 3], [18.2, 27.3], [20.3, 30.45], [50.3, 75.45]
     val bucketing = {

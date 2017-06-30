@@ -172,8 +172,19 @@ object ScalaScript {
     }
   }
 
-  def inferReturnType(code: String, paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): Type = {
-    inferType(code, paramTypes, toOptionType).tpe.typeArgs.last
+  import scala.language.existentials
+  case class ScalaType(funcType: TypeTag[_]) {
+    private val returnType = funcType.tpe.typeArgs.last
+    def isOptionType = TypeTagUtil.isOfKind1[Option](returnType)
+    def payLoadType = if (isOptionType) {
+      returnType.typeArgs(0)
+    } else {
+      returnType
+    }
+  }
+
+  def getType(code: String, paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): ScalaType = {
+    ScalaType(inferType(code, paramTypes, toOptionType))
   }
 
   def inferType(code: String, paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): TypeTag[_] = synchronized {
@@ -186,16 +197,16 @@ object ScalaScript {
     }
     typeTagOf(eval _)
     """
-    val compiledCode = engine.compile(fullCode)
-    val result =
-      withContextClassLoader {
-        ScalaScriptSecurityManager.restrictedSecurityManagerWithReflect.checkedRun {
-          compiledCode.eval()
-        }
+    withContextClassLoader {
+      val compiledCode = engine.compile(fullCode)
+      val result = ScalaScriptSecurityManager.restrictedSecurityManagerWithReflect.checkedRun {
+        compiledCode.eval()
       }
-    result.asInstanceOf[TypeTag[_]] // We cannot use asInstanceOf within the SecurityManager.
+      result.asInstanceOf[TypeTag[_]] // We cannot use asInstanceOf within the SecurityManager.
+    }
   }
 
+  // A wrapper class for the ugly evalFunc.
   case class Evaluator(evalFunc: Function1[Map[String, Any], AnyRef]) {
     def evaluate(params: Map[String, Any]): AnyRef = {
       evalFunc.apply(params)
@@ -216,8 +227,13 @@ object ScalaScript {
   }
 
   def getEvaluator(fullCode: String): Evaluator = synchronized {
-    val compiledCode = engine.compile(fullCode)
-    Evaluator(compiledCode.eval().asInstanceOf[Function1[Map[String, Any], AnyRef]])
+    withContextClassLoader {
+      val compiledCode = engine.compile(fullCode)
+      val result = ScalaScriptSecurityManager.restrictedSecurityManagerWithReflect.checkedRun {
+        compiledCode.eval()
+      }
+      Evaluator(result.asInstanceOf[Function1[Map[String, Any], AnyRef]])
+    }
   }
 
   private def withContextClassLoader[T](func: => T): T = {
