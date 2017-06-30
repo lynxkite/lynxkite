@@ -344,7 +344,10 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
         case a: EdgeAttributeTemplate[_] => a.name
         case a: AnyVertexAttributeTemplate => a.name
       }.toSet,
-      scalars = templates.collect { case sc: ScalarTemplate[_] => sc.name }.toSet,
+      scalars = templates.collect {
+        case sc: ScalarTemplate[_] => sc.name
+        case sc: AnyScalarTemplate => sc.name
+      }.toSet,
       tables = templates.collect { case tb: TableTemplate => tb.name }.toSet)
 
   private val templates = mutable.Buffer[ET[_ <: MetaGraphEntity]]()

@@ -100,6 +100,8 @@ object SerializableType {
       case "Double" => double
       case "Long" => long
       case "Int" => int
+      case "Vector[String]" => stringVector
+      case "Vector[Double]" => doubleVector
     }
   }
 
@@ -108,13 +110,26 @@ object SerializableType {
   val long = new SerializableType[Long]("Long")
   val int = new SerializableType[Int]("Int")
 
+  class VectorOrdering[T] extends Ordering[Vector[T]] with Serializable {
+    def compare(x: Vector[T], y: Vector[T]): Int = {
+      0
+    }
+  }
+  implicit val oSV = new VectorOrdering[String]
+  val stringVector = new SerializableType[Vector[String]]("Vector[String]")
+  implicit val oDV = new VectorOrdering[Double]
+  val doubleVector = new SerializableType[Vector[Double]]("Vector[Double]")
+
   def apply[T: TypeTag]: SerializableType[T] = {
+    import scala.language.existentials
     val t = typeOf[T]
     val st =
       if (t =:= typeOf[String]) string
       else if (t =:= typeOf[Double]) double
       else if (t =:= typeOf[Long]) long
       else if (t =:= typeOf[Int]) int
+      else if (t =:= typeOf[Vector[String]]) stringVector
+      else if (t =:= typeOf[Vector[Double]]) doubleVector
       else assert(false, s"Unsupported type: $t")
     st.asInstanceOf[SerializableType[T]]
   }

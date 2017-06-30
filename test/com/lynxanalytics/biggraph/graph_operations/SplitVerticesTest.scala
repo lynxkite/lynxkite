@@ -35,8 +35,8 @@ class SplitVerticesTest extends FunSuite with TestGraphOp {
   test("Zero drops vertices - one hundred lonely guys") {
     val expr = "name == 'Isolated Joe' ? 100.0 : 0.0"
     val g = ExampleGraph()().result
-    val op = DeriveJSDouble(
-      JavaScript(expr),
+    val op = DeriveJS[Double](
+      expr,
       Seq("name"))
     val derived = op(
       op.attrs,
