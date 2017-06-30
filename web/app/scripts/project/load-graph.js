@@ -66,14 +66,14 @@ angular.module('biggraph').factory('loadGraph', function (util) {
         // Bucketed view parameters.
         xBucketingAttributeId: xAttr,
         yBucketingAttributeId: yAttr,
-        xNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
-        yNumBuckets: parseInt(viewData.bucketCount),  // angular.js/pull/7370
+        xNumBuckets: viewData.bucketCount,
+        yNumBuckets: viewData.bucketCount,
         xAxisOptions: viewData.xAxisOptions,
         yAxisOptions: viewData.yAxisOptions,
         sampleSize: viewData.preciseBucketSizes ? -1 : 50000,
         // Sampled view parameters.
         // angular.js/pull/7370
-        radius: viewData.edgeBundle ? parseInt(viewData.sampleRadius) : 0,
+        radius: viewData.edgeBundle ? viewData.sampleRadius : 0,
         centralVertexIds: viewData.centers,
         sampleSmearEdgeBundleId: (viewData.edgeBundle || { id: '' }).id,
         attrs: vertexAttrs,
