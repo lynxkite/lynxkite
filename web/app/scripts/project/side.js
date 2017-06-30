@@ -714,9 +714,6 @@ angular.module('biggraph')
       this.cleanState();
       this.loadScalars();
       this.updateViewData();
-      if (!this.project.vertexSet) {
-        this.state.graphMode = undefined;
-      }
     };
 
     // Removes entries from state which depend on nonexistent attributes
