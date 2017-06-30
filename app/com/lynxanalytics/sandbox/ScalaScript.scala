@@ -175,7 +175,7 @@ object ScalaScript {
   import scala.language.existentials
   case class ScalaType(funcType: TypeTag[_]) {
     private val returnType = funcType.tpe.typeArgs.last
-    def isOptionType = TypeTagUtil.isOfKind1[Option](returnType)
+    def isOptionType = TypeTagUtil.isSubtypeOf[Option[_]](returnType)
     def payLoadType = if (isOptionType) {
       returnType.typeArgs(0)
     } else {
@@ -187,7 +187,7 @@ object ScalaScript {
     ScalaType(inferType(code, paramTypes, toOptionType))
   }
 
-  def inferType(code: String, paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): TypeTag[_] = synchronized {
+  private def inferType(code: String, paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): TypeTag[_] = synchronized {
     val paramString = convert(paramTypes, toOptionType).map { case (k, v) => s"$k: ${v.tpe}" }.mkString(", ")
     val fullCode = s"""
     import scala.reflect.runtime.universe._
@@ -213,20 +213,17 @@ object ScalaScript {
     }
   }
 
-  def getFullCode(code: String, paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): String = {
+  def getEvaluator(code: String, paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): Evaluator = synchronized {
     val paramsString = convert(paramTypes, toOptionType).map {
       case (k, t) => s"""val $k = params("$k").asInstanceOf[${t.tpe}]"""
     }.mkString("\n")
-    s"""
+    val fullCode = s"""
     def eval(params: Map[String, Any]) = {
       $paramsString
       $code
     }
     eval _
     """
-  }
-
-  def getEvaluator(fullCode: String): Evaluator = synchronized {
     withContextClassLoader {
       val compiledCode = engine.compile(fullCode)
       val result = ScalaScriptSecurityManager.restrictedSecurityManagerWithReflect.checkedRun {

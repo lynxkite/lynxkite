@@ -6,7 +6,7 @@ class LogisticRegressionTest extends OperationsTestBase {
   test("train and score a logistic regression") {
     val project = box("Create example graph")
       .box("Derive vertex attribute",
-        Map("type" -> "Double", "output" -> "label", "expr" -> "age > 30? 1.0 : 0.0"))
+        Map("output" -> "label", "expr" -> "if (age > 30) 1.0 else 0.0"))
       .box("Train a logistic regression model",
         Map("name" -> "model", "label" -> "label", "features" -> "age", "max_iter" -> "20"))
       .box("Classify vertices with a model",
