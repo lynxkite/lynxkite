@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Upgraded to _Apache Spark 2.1.1_ to get the fix for SPARK-19857.
+
 ### 2.0-beta-3
 
  - _Add rank attribute_ can be used on String attributes.

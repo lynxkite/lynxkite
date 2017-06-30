@@ -14,6 +14,15 @@ angular.module('biggraph')
       },
       link: function(scope, element) {
         scope.popupModel.element = element;
+        var observer = new MutationObserver(function() {
+          scope.$apply(function() {
+            scope.popupModel.updateSize();
+          });
+        });
+        observer.observe(element.find('.popup-content')[0], { attributes: true });
+        scope.$on('$destroy', function() {
+          observer.disconnect();
+        });
       },
     };
   });
