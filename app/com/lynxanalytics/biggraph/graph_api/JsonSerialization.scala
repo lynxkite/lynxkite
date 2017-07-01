@@ -110,14 +110,13 @@ object SerializableType {
   val long = new SerializableType[Long]("Long")
   val int = new SerializableType[Int]("Int")
 
-  class VectorOrdering[T] extends Ordering[Vector[T]] with Serializable {
-    def compare(x: Vector[T], y: Vector[T]): Int = {
-      0
-    }
+  class MockVectorOrdering[T] extends Ordering[Vector[T]] with Serializable {
+    def compare(x: Vector[T], y: Vector[T]): Int = ???
   }
-  implicit val oSV = new VectorOrdering[String]
+
+  implicit val oSV = new MockVectorOrdering[String]
   val stringVector = new SerializableType[Vector[String]]("Vector[String]")
-  implicit val oDV = new VectorOrdering[Double]
+  implicit val oDV = new MockVectorOrdering[Double]
   val doubleVector = new SerializableType[Vector[Double]]("Vector[Double]")
 
   def apply[T: TypeTag]: SerializableType[T] = {

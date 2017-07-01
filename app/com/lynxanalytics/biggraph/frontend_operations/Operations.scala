@@ -1556,7 +1556,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Derive scalar", GlobalOperations, new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
-      Choice("type", "Result type", options = FEOption.list("Double", "String")),
       Code("expr", "Value", defaultValue = "", language = "javascript"))
     def enabled = FEStatus.enabled
     override def summary = {
@@ -1567,12 +1566,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def apply() = {
       val expr = params("expr")
       val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
-      val result = params("type") match {
-        case "String" =>
-          graph_operations.DeriveJSScalar.deriveFromScalars[String](expr, namedScalars)
-        case "Double" =>
-          graph_operations.DeriveJSScalar.deriveFromScalars[Double](expr, namedScalars)
-      }
+      val result = graph_operations.DeriveScalaScalar.deriveFromScalars(expr, namedScalars)
       project.newScalar(params("output"), result.sc, expr + help)
     }
   })
