@@ -164,18 +164,21 @@ object ScalaScript {
     }
   }
 
-  private def convert(paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): Map[String, TypeTag[_]] = {
-    if (toOptionType) {
+  private def convert(paramTypes: Map[String, TypeTag[_]], paramsToOption: Boolean): Map[String, TypeTag[_]] = {
+    if (paramsToOption) {
       paramTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) }
     } else {
       paramTypes
     }
   }
 
+  // A wrapper class representing the type signature of a scala expression.
   import scala.language.existentials
   case class ScalaType(funcType: TypeTag[_]) {
     private val returnType = funcType.tpe.typeArgs.last
+    // Whether the expression returns an Option or not.
     def isOptionType = TypeTagUtil.isSubtypeOf[Option[_]](returnType)
+    // The type argument for Options otherwise the return type.
     def payLoadType = if (isOptionType) {
       returnType.typeArgs(0)
     } else {
@@ -183,12 +186,18 @@ object ScalaScript {
     }
   }
 
-  def getType(code: String, paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): ScalaType = {
-    ScalaType(inferType(code, paramTypes, toOptionType))
+  def compileAndGetType(
+    code: String, paramTypes: Map[String, TypeTag[_]], paramsToOption: Boolean): ScalaType = {
+    ScalaType(inferType(code, paramTypes, paramsToOption))
   }
 
-  private def inferType(code: String, paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): TypeTag[_] = synchronized {
-    val paramString = convert(paramTypes, toOptionType).map { case (k, v) => s"$k: ${v.tpe}" }.mkString(", ")
+  private def inferType(
+    code: String,
+    paramTypes: Map[String, TypeTag[_]],
+    paramsToOption: Boolean): TypeTag[_] = synchronized {
+    val paramString = convert(paramTypes, paramsToOption).map {
+      case (k, v) => s"`$k`: ${v.tpe}"
+    }.mkString(", ")
     val fullCode = s"""
     import scala.reflect.runtime.universe._
     def typeTagOf[T: TypeTag](t: T) = typeTag[T]
@@ -206,16 +215,19 @@ object ScalaScript {
     }
   }
 
-  // A wrapper class for the ugly evalFunc.
+  // A wrapper class for the evalFunc.
   case class Evaluator(evalFunc: Function1[Map[String, Any], AnyRef]) {
     def evaluate(params: Map[String, Any]): AnyRef = {
       evalFunc.apply(params)
     }
   }
 
-  def getEvaluator(code: String, paramTypes: Map[String, TypeTag[_]], toOptionType: Boolean): Evaluator = synchronized {
-    val paramsString = convert(paramTypes, toOptionType).map {
-      case (k, t) => s"""val $k = params("$k").asInstanceOf[${t.tpe}]"""
+  def compileAndGetEvaluator(
+    code: String,
+    paramTypes: Map[String, TypeTag[_]],
+    paramsToOption: Boolean): Evaluator = synchronized {
+    val paramsString = convert(paramTypes, paramsToOption).map {
+      case (k, t) => s"""val `$k` = params("$k").asInstanceOf[${t.tpe}]"""
     }.mkString("\n")
     val fullCode = s"""
     def eval(params: Map[String, Any]) = {

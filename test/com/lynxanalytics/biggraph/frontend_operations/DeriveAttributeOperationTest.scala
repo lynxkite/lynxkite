@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.frontend_operations
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
 class DeriveAttributeOperationTest extends OperationsTestBase {
+
   test("Derive vertex attribute (Double)") {
     val project = box("Create example graph")
       .box("Derive vertex attribute",
@@ -10,6 +11,26 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 160.3, 1 -> 148.2, 2 -> 180.3, 3 -> 222.0))
+  }
+
+  test("Derive vertex attribute - back quote") {
+    val project = box("Create example graph")
+      .box("Derive vertex attribute",
+        Map("output" -> "output", "expr" -> "`age`"))
+      .project
+    val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
+    assert(attr.rdd.collect.toMap == Map(0 -> 20.3, 1 -> 18.2, 2 -> 50.3, 3 -> 2.0))
+  }
+
+  test("Derive vertex attribute - back quote crazy identifier") {
+    val project = box("Create example graph")
+      .box("Add constant vertex attribute",
+        Map("name" -> "123 weird # name", "type" -> "Double", "value" -> "0.0"))
+      .box("Derive vertex attribute",
+        Map("output" -> "output", "expr" -> "`123 weird # name`"))
+      .project
+    val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
+    assert(attr.rdd.collect.toMap == Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0, 3 -> 0.0))
   }
 
   test("Multi-line function") {
@@ -115,47 +136,22 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
       "assertion failed: JavaScript('hello') with values: {} did not return a number: NaN")
   }
 
-  test("The containsIdentifierJS function identifier name ending characters") {
-    val expr =
-      """a+b-c*d/e%f==g.h,i;j:k'l"m`n
-         !o@p#q(r{s[t]u}v)w^x>y<z"""
+  test("ScalaUtilities finds identifiers") {
+    assert(true == ScalaUtilities.containsIdentifier("`age`", "age"))
+    assert(true == ScalaUtilities.containsIdentifier("`123 weird id #?!`", "123 weird id #?!"))
+    assert(true == ScalaUtilities.containsIdentifier("age", "age"))
+    assert(true == ScalaUtilities.containsIdentifier(" age ", "age"))
+    assert(true == ScalaUtilities.containsIdentifier("src$age", "src$age"))
+    assert(true == ScalaUtilities.containsIdentifier("age - name", "age"))
+    assert(true == ScalaUtilities.containsIdentifier("age_v2", "age_v2"))
+    assert(true == ScalaUtilities.containsIdentifier("age.toString", "age"))
+    assert(true == ScalaUtilities.containsIdentifier("age\n1.0", "age"))
 
-    val identified = ('a' to 'z').map(i => i -> JSUtilities.containsIdentifierJS(expr, i.toString)).toMap
-    val shouldBe = ('a' to 'z').map(i => i -> true).toMap
-    assert(identified == shouldBe)
-  }
-
-  test("The containsIdentifierJS function with substring conflicts") {
-    val expr = "ArsenalFC and FCBarcelona are$the \\be\\sts."
-    val testResults = Map(
-      "Match starting substring" -> JSUtilities.containsIdentifierJS(expr, "Arsenal"),
-      "Match ending substring" -> JSUtilities.containsIdentifierJS(expr, "Barcelona"),
-      "Match with $ on right side" -> JSUtilities.containsIdentifierJS(expr, "are"),
-      "Match with $ on left side" -> JSUtilities.containsIdentifierJS(expr, "the"),
-      "Finds identifiers with special regex characters" -> JSUtilities.containsIdentifierJS(expr, "\\be\\sts")
-    )
-    val resultShouldBe = Map(
-      "Match starting substring" -> false,
-      "Match ending substring" -> false,
-      "Match with $ on right side" -> false,
-      "Match with $ on left side" -> false,
-      "Finds identifiers with special regex characters" -> true
-    )
-    assert(testResults == resultShouldBe)
-  }
-
-  // See #5567
-  test("The containsIdentifierJS function with attr names that are valid JS literals") {
-    assert(false == JSUtilities.containsIdentifierJS("1 + 1", "1"))
-    assert(false == JSUtilities.containsIdentifierJS("'a' + a", "'a'"))
-    assert(false == JSUtilities.containsIdentifierJS("a = 1", "b"))
-    assert(true == JSUtilities.containsIdentifierJS("a = 1", "a"))
-    assert(true == JSUtilities.containsIdentifierJS("$a = 1", "$a"))
-    assert(true == JSUtilities.containsIdentifierJS("_a = 1", "_a"))
-    assert(true == JSUtilities.containsIdentifierJS("\\u0061 = 1", "\\u0061"))
-    // The following should be true according to ES5 spec, but we don't get it.
-    // assert(true == JSUtilities.containsIdentifierJS("\\u0061 = 1", "a"))
-    assert(false == JSUtilities.containsIdentifierJS("a + b + c", "a + b"))
+    assert(false == ScalaUtilities.containsIdentifier("name", "nam"))
+    assert(false == ScalaUtilities.containsIdentifier("name", "ame"))
+    assert(false == ScalaUtilities.containsIdentifier("nam", "name"))
+    assert(false == ScalaUtilities.containsIdentifier("ame", "name"))
+    assert(false == ScalaUtilities.containsIdentifier("Name", "Name"))
   }
 
   test("Derive vertex attribute with substring conflict (#1676)") {
@@ -182,8 +178,7 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     assert(attr.rdd.collect.toMap == Map(0 -> "Mr Adam", 1 -> "Ms Eve", 2 -> "Mr Bob"))
   }
 
-  // TODO: Re-enable this test. See #1037.
-  ignore("Derive edge attribute") {
+  test("Derive edge attribute") {
     val project = box("Create example graph")
       // Test dropping values.
       .box("Derive edge attribute",
@@ -192,10 +187,10 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
       .project
     val attr = project.edgeAttributes("tripletke").runtimeSafeCast[String]
     assert(attr.rdd.collect.toSeq == Seq(
-      (0, "Adam:Adam loves Eve:18.2#1"),
-      (1, "Eve:Eve loves Adam:20.3#2"),
-      (2, "Bob:Bob envies Adam:20.3#3"),
-      (3, "Bob:Bob loves Eve:18.2#4")))
+      (0, "Adam:Adam loves Eve:18.2#1.0"),
+      (1, "Eve:Eve loves Adam:20.3#2.0"),
+      (2, "Bob:Bob envies Adam:20.3#3.0"),
+      (3, "Bob:Bob loves Eve:18.2#4.0")))
   }
 
   test("Derive vertex attribute (Vector of Strings)") {

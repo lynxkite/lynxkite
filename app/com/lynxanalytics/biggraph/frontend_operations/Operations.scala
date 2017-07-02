@@ -1499,8 +1499,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       assert(params("output").nonEmpty, "Please set an output attribute name.")
       val expr = params("expr")
       val vertexSet = project.vertexSet
-      val namedAttributes = JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
-      val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val namedAttributes = ScalaUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
+      val namedScalars = ScalaUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val onlyOnDefinedAttrs = params("defined_attrs").toBoolean
 
       val result = graph_operations.DeriveScala.deriveFromAttributes(
@@ -1527,16 +1527,16 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val expr = params("expr")
       val edgeBundle = project.edgeBundle
       val idSet = project.edgeBundle.idSet
-      val namedEdgeAttributes = JSUtilities.collectIdentifiers[Attribute[_]](project.edgeAttributes, expr)
+      val namedEdgeAttributes = ScalaUtilities.collectIdentifiers[Attribute[_]](project.edgeAttributes, expr)
       val namedSrcVertexAttributes =
-        JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "src$")
+        ScalaUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "src$")
           .map {
             case (name, attr) =>
               "src$" + name -> graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle)
           }
-      val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val namedScalars = ScalaUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val namedDstVertexAttributes =
-        JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "dst$")
+        ScalaUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "dst$")
           .map {
             case (name, attr) =>
               "dst$" + name -> graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle)
@@ -1565,7 +1565,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
     def apply() = {
       val expr = params("expr")
-      val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val namedScalars = ScalaUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val result = graph_operations.DeriveScalaScalar.deriveFromScalars(expr, namedScalars)
       project.newScalar(params("output"), result.sc, expr + help)
     }
@@ -4066,42 +4066,32 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     val op = graph_operations.CreateStringScalar(data)
     op.result.created
   }
-
 }
 
-object JSUtilities {
-  // Listing the valid characters for JS variable names. The \\p{*} syntax is for specifying
-  // Unicode categories for scala regex.
-  // For more information about the valid variable names in JS please consult:
-  // http://es5.github.io/x7.html#x7.6
-  val validJSCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\p{Mn}" +
-    "\\p{Mc}\\p{Nd}\\p{Pc}\\u200C\\u200D\\\\"
-  val validJSFirstCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\\\"
+object ScalaUtilities {
+  // https://www.scala-lang.org/files/archive/spec/2.11/01-lexical-syntax.html
+  val simpleVariableChar = "a-zA-Z0-9_\\$"
+  val simpleIdent = s"[a-z][$simpleVariableChar]*"
 
   def collectIdentifiers[T <: MetaGraphEntity](
     holder: StateMapHolder[T],
     expr: String,
     prefix: String = ""): IndexedSeq[(String, T)] = {
     holder.filter {
-      case (name, _) => containsIdentifierJS(expr, prefix + name)
+      case (name, _) => containsIdentifier(expr, prefix + name)
     }.toIndexedSeq
   }
 
-  // Whether a string can be a JavaScript identifier.
-  def canBeValidJSIdentifier(identifier: String): Boolean = {
-    val re = s"^[${validJSFirstCharacters}][${validJSCharacters}]*$$"
-    identifier.matches(re)
-  }
-
-  // Whether a JavaScript expression contains a given identifier.
-  // It's a best-effort implementation with no guarantees of correctness.
-  def containsIdentifierJS(expr: String, identifier: String): Boolean = {
-    if (!canBeValidJSIdentifier(identifier)) {
-      false
-    } else {
-      val quotedIdentifer = java.util.regex.Pattern.quote(identifier)
-      val re = s"(?s)(^|.*[^$validJSCharacters])${quotedIdentifer}($$|[^$validJSCharacters].*)"
-      expr.matches(re)
-    }
+  // Whether a Scala expression contains a given identifier. All back quoted identifiers are found.
+  // However simple identifiers are only matched in simple, unambiguous cases.
+  def containsIdentifier(expr: String, identifier: String): Boolean = {
+    val escapedIdent = identifier.replace("$", "\\$")
+    // The algorithm finds every identifier within back quotes.
+    expr.contains("`" + identifier + "`") ||
+      // The algorithm should find some (many) of the valid identifiers in the expression, but it
+      // should not find any invalid or fake identifiers to avoid compilation errors and pulling in
+      // unused attributes. This is a nicety, but only back quotes are expected to work 100% properly.
+      (identifier.matches(simpleIdent) && (" " + expr + " ").matches(
+        s"(?s).*[^$simpleVariableChar]$escapedIdent[^$simpleVariableChar].*"))
   }
 }
