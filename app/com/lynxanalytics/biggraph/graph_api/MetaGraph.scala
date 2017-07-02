@@ -709,11 +709,7 @@ case class DataSet(vertexSets: Map[Symbol, VertexSetData] = Map(),
     tables.mapValues(_.table))
 
   def all: Map[Symbol, EntityData] =
-<<<<<<< HEAD
-    vertexSets ++ edgeBundles ++ hybridEdgeBundles ++ attributes ++ scalars
-=======
-    vertexSets ++ edgeBundles ++ attributes ++ scalars ++ tables
->>>>>>> 3da5800a1db8d1a14aad8477ef5a16957cb2f086
+    vertexSets ++ edgeBundles ++ hybridEdgeBundles ++ attributes ++ scalars ++ tables
 }
 
 object DataSet {

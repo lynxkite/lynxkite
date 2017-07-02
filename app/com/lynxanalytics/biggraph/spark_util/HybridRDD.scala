@@ -92,6 +92,10 @@ object HybridRDD {
   }
 }
 
+case class LargeKeysPartition(idx: Int) extends spark.Partition {
+  def index = idx
+}
+
 // A wrapping class for potentially skewed RDDs. Skewed means the cardinality of keys
 // is extremely unevenly distributed.
 case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
@@ -106,8 +110,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   Seq(new spark.OneToOneDependency(smallKeysRDD)) ++
     largeKeysRDD.map(rdd => Seq[spark.Dependency[(K, T)]](new spark.OneToOneDependency(rdd))).getOrElse(Seq())) {
 
-  override def getPartitions: Array[Partition] =
-    smallKeysRDD.partitions ++ largeKeysRDD.map(_.partitions).getOrElse(Array[Partition]())
+  override def getPartitions: Array[Partition] = smallKeysRDD.partitions
   override def compute(split: Partition, context: TaskContext) =
     smallKeysRDD.iterator(split, context) ++
       largeKeysRDD.map(_.iterator(split, context)).getOrElse(Iterator())

@@ -88,15 +88,20 @@ class CSVExportTest extends FunSuite with TestGraphOp {
          |""".stripMargin)
   }
 
+  def sortedBundle(connection: EdgeBundle): HybridEdgeBundle = {
+    val op = graph_operations.SortedBundle()
+    op(op.es, connection).result.sb
+  }
+
   test("Export Vector") {
     val g = ExampleGraph()().result
     val neighbors = {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[String])
-      op(op.connection, g.edges)(op.attr, g.name).result.attr
+      op(op.sortedConnection, sortedBundle(g.edges))(op.attr, g.name).result.attr
     }
     val neighborAges = {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[Double])
-      op(op.connection, g.edges)(op.attr, g.age).result.attr
+      op(op.sortedConnection, sortedBundle(g.edges))(op.attr, g.age).result.attr
     }
     assert(CSVExport.exportVertexAttributes(
       g.vertices,
