@@ -152,6 +152,8 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     assert(false == ScalaUtilities.containsIdentifier("nam", "name"))
     assert(false == ScalaUtilities.containsIdentifier("ame", "name"))
     assert(false == ScalaUtilities.containsIdentifier("Name", "Name"))
+    assert(false == ScalaUtilities.containsIdentifier("\"name\"", "name"))
+    assert(false == ScalaUtilities.containsIdentifier("'name", "name"))
   }
 
   test("Derive vertex attribute with substring conflict (#1676)") {
