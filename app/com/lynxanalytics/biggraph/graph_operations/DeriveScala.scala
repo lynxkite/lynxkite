@@ -50,6 +50,8 @@ object DeriveScala extends OpFromJson {
     val t = ScalaScript.compileAndGetType(
       exprString, paramTypes, paramsToOption = !onlyOnDefinedAttrs).payLoadType
 
+    // The MetaGraph API expects to know the types of the outputs in compilation time,
+    // so we cannot be more dynamic here.
     val a = namedAttributes.map(_._1)
     val s = namedScalars.map(_._1)
     val e = exprString
@@ -148,7 +150,8 @@ case class DeriveScala[T: TypeTag](
           val namedValues = allNames.zip(values ++ scalars).toMap
           val result = evaluator.evaluate(namedValues)
           assert(Option(result).nonEmpty, s"Scala script $expr returned null.")
-          // The compiler should guarantee that this is always correct.
+          // The compiler in ScalaScript should guarantee that this is always correct. We filter
+          // out None-s, so the result is always a fully defined RDD[(ID, T)].
           if (isOptionType) {
             result.asInstanceOf[Option[T]].map { r => key -> r }
           } else {

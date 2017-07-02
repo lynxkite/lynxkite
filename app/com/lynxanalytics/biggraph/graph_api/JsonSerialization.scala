@@ -110,6 +110,7 @@ object SerializableType {
   val long = new SerializableType[Long]("Long")
   val int = new SerializableType[Int]("Int")
 
+  // Every serializable type defines an ordering here, but we never use it for vectors.
   class MockVectorOrdering[T] extends Ordering[Vector[T]] with Serializable {
     def compare(x: Vector[T], y: Vector[T]): Int = ???
   }
@@ -120,7 +121,6 @@ object SerializableType {
   val doubleVector = new SerializableType[Vector[Double]]("Vector[Double]")
 
   def apply[T: TypeTag]: SerializableType[T] = {
-    import scala.language.existentials
     val t = typeOf[T]
     val st =
       if (t =:= typeOf[String]) string

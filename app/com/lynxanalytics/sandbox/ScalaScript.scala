@@ -18,13 +18,14 @@ import scala.tools.nsc.interpreter.IMain
 import scala.util.DynamicVariable
 
 object ScalaScriptSecurityManager {
-  private[sandbox] val restrictedSecurityManager = new ScalaScriptSecurityManager(withReflect = false)
-  private[sandbox] val restrictedSecurityManagerWithReflect = new ScalaScriptSecurityManager(withReflect = true)
+  private[sandbox] val restrictedSecurityManager = new ScalaScriptSecurityManager()
+  private[sandbox] val restrictedSecurityManagerReflectAllowed =
+    new ScalaScriptSecurityManager(reflectAllowed = true)
   System.setSecurityManager(restrictedSecurityManager)
   def init() = {}
 }
 
-class ScalaScriptSecurityManager(val withReflect: Boolean) extends SecurityManager {
+class ScalaScriptSecurityManager(val reflectAllowed: Boolean = false) extends SecurityManager {
 
   val shouldCheck = new DynamicVariable[Boolean](false)
   def checkedRun[R](op: => R): R = {
@@ -85,7 +86,7 @@ class ScalaScriptSecurityManager(val withReflect: Boolean) extends SecurityManag
     if (shouldCheck.value &&
       (s.contains("com.lynxanalytics.biggraph") ||
         s.contains("org.apache.spark") ||
-        (!withReflect && s.contains("scala.reflect")))) {
+        (!reflectAllowed && s.contains("scala.reflect")))) {
       throw new java.security.AccessControlException(s"Illegal package access: $s")
     }
   }
@@ -164,7 +165,9 @@ object ScalaScript {
     }
   }
 
-  private def convert(paramTypes: Map[String, TypeTag[_]], paramsToOption: Boolean): Map[String, TypeTag[_]] = {
+  // Helper function to convert param types to Option types.
+  private def convert(
+    paramTypes: Map[String, TypeTag[_]], paramsToOption: Boolean): Map[String, TypeTag[_]] = {
     if (paramsToOption) {
       paramTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) }
     } else {
@@ -208,14 +211,14 @@ object ScalaScript {
     """
     withContextClassLoader {
       val compiledCode = engine.compile(fullCode)
-      val result = ScalaScriptSecurityManager.restrictedSecurityManagerWithReflect.checkedRun {
+      val result = ScalaScriptSecurityManager.restrictedSecurityManagerReflectAllowed.checkedRun {
         compiledCode.eval()
       }
       result.asInstanceOf[TypeTag[_]] // We cannot use asInstanceOf within the SecurityManager.
     }
   }
 
-  // A wrapper class for the evalFunc.
+  // A wrapper class to call the compiled function with the parameter Map.
   case class Evaluator(evalFunc: Function1[Map[String, Any], AnyRef]) {
     def evaluate(params: Map[String, Any]): AnyRef = {
       evalFunc.apply(params)
@@ -226,6 +229,8 @@ object ScalaScript {
     code: String,
     paramTypes: Map[String, TypeTag[_]],
     paramsToOption: Boolean): Evaluator = synchronized {
+    // Parameters are back quoted and taken out from the Map. The input argument is one Map to
+    // make the calling of the compiled function easier (otherwise we had varying number of args).
     val paramsString = convert(paramTypes, paramsToOption).map {
       case (k, t) => s"""val `$k` = params("$k").asInstanceOf[${t.tpe}]"""
     }.mkString("\n")
@@ -238,7 +243,7 @@ object ScalaScript {
     """
     withContextClassLoader {
       val compiledCode = engine.compile(fullCode)
-      val result = ScalaScriptSecurityManager.restrictedSecurityManagerWithReflect.checkedRun {
+      val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
         compiledCode.eval()
       }
       Evaluator(result.asInstanceOf[Function1[Map[String, Any], AnyRef]])

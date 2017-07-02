@@ -4069,8 +4069,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 }
 
 object ScalaUtilities {
-  // https://www.scala-lang.org/files/archive/spec/2.11/01-lexical-syntax.html
   val simpleVariableChar = "a-zA-Z0-9_\\$"
+  val quoteChar = "\"'"
   val simpleIdent = s"[a-z][$simpleVariableChar]*"
 
   def collectIdentifiers[T <: MetaGraphEntity](
@@ -4083,15 +4083,14 @@ object ScalaUtilities {
   }
 
   // Whether a Scala expression contains a given identifier. All back quoted identifiers are found.
-  // However simple identifiers are only matched in simple, unambiguous cases.
+  // Implementation for simple identifiers is not guaranteed to be 100% correct.
   def containsIdentifier(expr: String, identifier: String): Boolean = {
     val escapedIdent = identifier.replace("$", "\\$")
     // The algorithm finds every identifier within back quotes.
     expr.contains("`" + identifier + "`") ||
-      // The algorithm should find some (many) of the valid identifiers in the expression, but it
-      // should not find any invalid or fake identifiers to avoid compilation errors and pulling in
-      // unused attributes. This is a nicety, but only back quotes are expected to work 100% properly.
+      // Try to match simple identifiers if they are not between quotes nor substrings of the actual
+      // identifier. The rule is quite crude, both false positives and negatives are possible.
       (identifier.matches(simpleIdent) && (" " + expr + " ").matches(
-        s"(?s).*[^$simpleVariableChar]$escapedIdent[^$simpleVariableChar].*"))
+        s"(?s).*[^$simpleVariableChar$quoteChar]$escapedIdent[^$simpleVariableChar$quoteChar].*"))
   }
 }
