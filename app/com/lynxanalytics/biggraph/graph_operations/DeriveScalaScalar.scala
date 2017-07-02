@@ -1,4 +1,4 @@
-// Creates a new scalar by evaluating a JavaScript expression over other scalars.
+// Creates a new scalar by evaluating a Scala expression over other scalars.
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.reflect.runtime.universe._
@@ -22,7 +22,8 @@ object DeriveScalaScalar extends OpFromJson {
     namedScalars: Seq[(String, Scalar[_])])(implicit manager: MetaGraphManager): Output[_] = {
     val paramTypes =
       namedScalars.map { case (k, v) => k -> v.typeTag }.toMap[String, TypeTag[_]]
-    val t = ScalaScript.getType(exprString, paramTypes, toOptionType = false).payLoadType
+    val t = ScalaScript.compileAndGetType(
+      exprString, paramTypes, paramsToOption = false).payLoadType
 
     val s = namedScalars.map(_._1)
     val e = exprString
@@ -72,12 +73,12 @@ case class DeriveScalaScalar[T: TypeTag](
       scalarNames.zip(inputs.scalars).map { case (k, v) => k -> v.data.typeTag }
         .toMap[String, TypeTag[_]]
 
-    val t = ScalaScript.getType(expr, paramTypes, toOptionType = false)
-    assert(!t.isOptionType)
+    val t = ScalaScript.compileAndGetType(expr, paramTypes, paramsToOption = false)
+    assert(!t.isOptionType, "Scala script returned Option type for scalars.")
     assert(t.payLoadType =:= tt.tpe,
       s"Scala script returns wrong type: expected ${tt.tpe} but got ${t.payLoadType} instead.")
 
-    val evaluator = ScalaScript.getEvaluator(expr, paramTypes, toOptionType = false)
+    val evaluator = ScalaScript.compileAndGetEvaluator(expr, paramTypes, paramsToOption = false)
     val namedValues = scalarNames.zip(scalars).toMap
     val result = evaluator.evaluate(namedValues)
     assert(Option(result).nonEmpty, s"Scala script $expr returned null.")

@@ -1,4 +1,4 @@
-// Creates a new attribute by evaluating a JavaScript expression over other attributes.
+// Creates a new attribute by evaluating a Scala expression over other attributes.
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.reflect.runtime.universe._
@@ -47,7 +47,8 @@ object DeriveScala extends OpFromJson {
     val paramTypes = (
       namedAttributes.map { case (k, v) => k -> v.typeTag } ++
       namedScalars.map { case (k, v) => k -> v.typeTag }).toMap[String, TypeTag[_]]
-    val t = ScalaScript.getType(exprString, paramTypes, toOptionType = !onlyOnDefinedAttrs).payLoadType
+    val t = ScalaScript.compileAndGetType(
+      exprString, paramTypes, paramsToOption = !onlyOnDefinedAttrs).payLoadType
 
     val a = namedAttributes.map(_._1)
     val s = namedScalars.map(_._1)
@@ -134,13 +135,14 @@ case class DeriveScala[T: TypeTag](
       scalarNames.zip(inputs.scalars).map { case (k, v) => k -> v.data.typeTag })
       .toMap[String, TypeTag[_]]
 
-    val t = ScalaScript.getType(expr, paramTypes, toOptionType = !onlyOnDefinedAttrs)
+    val t = ScalaScript.compileAndGetType(expr, paramTypes, paramsToOption = !onlyOnDefinedAttrs)
     assert(t.payLoadType =:= tt.tpe,
       s"Scala script returns wrong type: expected ${tt.tpe} but got ${t.payLoadType} instead.")
 
     val isOptionType = t.isOptionType
     val derived = joined.mapPartitions({ it =>
-      val evaluator = ScalaScript.getEvaluator(expr, paramTypes, toOptionType = !onlyOnDefinedAttrs)
+      val evaluator = ScalaScript.compileAndGetEvaluator(
+        expr, paramTypes, paramsToOption = !onlyOnDefinedAttrs)
       it.flatMap {
         case (key, values) =>
           val namedValues = allNames.zip(values ++ scalars).toMap
