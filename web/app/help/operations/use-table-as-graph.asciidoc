@@ -1,4 +1,4 @@
-### Import vertices and edges from a single table
+### Use table as graph
 
 Imports edges from a table. Each line in the table represents one edge.
 Each column in the table will be accessible as an edge attribute.

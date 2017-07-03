@@ -201,9 +201,9 @@ include::create-example-graph.asciidoc[]
 
 include::create-plot.asciidoc[]
 
-include::create-random-edge-bundle.asciidoc[]
+include::create-random-edges.asciidoc[]
 
-include::create-scale-free-random-edge-bundle.asciidoc[]
+include::create-scale-free-random-edges.asciidoc[]
 
 include::create-vertices.asciidoc[]
 
@@ -287,8 +287,6 @@ include::import-csv.asciidoc[]
 
 include::import-edge-attributes.asciidoc[]
 
-include::import-edges-for-existing-vertices.asciidoc[]
-
 include::import-from-hive.asciidoc[]
 
 include::import-jdbc.asciidoc[]
@@ -310,10 +308,6 @@ include::import-segmentation.asciidoc[]
 include::import-snapshot.asciidoc[]
 
 include::import-vertex-attributes.asciidoc[]
-
-include::import-vertices-and-edges-from-a-single-table.asciidoc[]
-
-include::import-vertices.asciidoc[]
 
 include::input.asciidoc[]
 
@@ -420,6 +414,12 @@ include::train-a-logistic-regression-model.asciidoc[]
 include::train-linear-regression-model.asciidoc[]
 
 include::union-of-projects.asciidoc[]
+
+include::use-table-as-edges.asciidoc[]
+
+include::use-table-as-graph.asciidoc[]
+
+include::use-table-as-vertices.asciidoc[]
 
 include::weighted-aggregate-edge-attribute-globally.asciidoc[]
 
