@@ -299,8 +299,6 @@ include::import-parquet.asciidoc[]
 
 include::import-snapshot.asciidoc[]
 
-include::import-vertex-attributes.asciidoc[]
-
 include::input.asciidoc[]
 
 include::join-projects.asciidoc[]
@@ -418,6 +416,8 @@ include::use-table-as-graph.asciidoc[]
 include::use-table-as-segmentation-links.asciidoc[]
 
 include::use-table-as-segmentation.asciidoc[]
+
+include::use-table-as-vertex-attributes.asciidoc[]
 
 include::use-table-as-vertices.asciidoc[]
 
