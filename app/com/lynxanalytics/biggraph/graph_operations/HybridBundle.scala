@@ -8,33 +8,33 @@ import com.lynxanalytics.biggraph.spark_util.RDDUtils
 
 import org.apache.spark
 
-object SortedBundle extends OpFromJson {
+object HybridEdgeBundle extends OpFromJson {
   class Input extends MagicInputSignature {
     val vsA = vertexSet
     val vsB = vertexSet
     val es = edgeBundle(vsA, vsB)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
-    val sb = hybridEdgeBundle(inputs.es.entity)
+    val sb = hybridBundle(inputs.es.entity)
   }
-  def fromJson(j: JsValue) = SortedBundle()
+  def fromJson(j: JsValue) = HybridEdgeBundle()
 
   import com.lynxanalytics.biggraph.graph_api.Scripting._
-  def bySrc(connection: EdgeBundle)(implicit manager: MetaGraphManager): HybridEdgeBundle = {
-    val op = SortedBundle()
+  def bySrc(connection: EdgeBundle)(implicit manager: MetaGraphManager): HybridBundle = {
+    val op = HybridEdgeBundle()
     op(op.es, connection).result.sb
   }
-  def byDst(connection: EdgeBundle)(implicit manager: MetaGraphManager): HybridEdgeBundle = {
+  def byDst(connection: EdgeBundle)(implicit manager: MetaGraphManager): HybridBundle = {
     val reversedConnection = {
       val op = ReverseEdges()
       op(op.esAB, connection).result.esBA
     }
-    val op = SortedBundle()
+    val op = HybridEdgeBundle()
     op(op.es, reversedConnection).result.sb
   }
 }
-import SortedBundle._
-case class SortedBundle() extends TypedMetaGraphOp[Input, Output] {
+import HybridEdgeBundle._
+case class HybridEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
