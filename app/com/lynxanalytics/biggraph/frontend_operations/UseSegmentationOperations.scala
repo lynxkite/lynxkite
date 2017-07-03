@@ -10,11 +10,11 @@ import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.json
 
 class UseSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Category
   import Operation.Context
   import Operation.Implicits._
 
-  val UseSegmentationOperations = Category("Use segmentation", "blue")
+  import Categories.UseSegmentationOperations
+
   val defaultIcon = "hammer"
 
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {

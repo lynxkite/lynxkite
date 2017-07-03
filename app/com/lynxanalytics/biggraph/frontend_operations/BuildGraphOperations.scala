@@ -9,11 +9,11 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 
 class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Category
   import Operation.Context
   import Operation.Implicits._
 
-  val BuildGraphOperations = Category("Build Graph", "blue")
+  import Categories.BuildGraphOperations
+
   val defaultIcon = "hammer"
 
   def register(id: String)(factory: Context => ProjectOutputOperation): Unit = {

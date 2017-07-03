@@ -11,11 +11,11 @@ import com.lynxanalytics.biggraph.graph_api.Attribute
 import com.lynxanalytics.biggraph.graph_api.Scalar
 
 class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Category
   import Operation.Context
   import Operation.Implicits._
 
-  val VertexAttributeOperations = Category("Vertex attributes", "blue")
+  import Categories.VertexAttributeOperations
+
   val defaultIcon = "v"
 
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {

@@ -9,15 +9,15 @@ import com.lynxanalytics.biggraph.model
 import play.api.libs.json
 
 class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Category
   import Operation.Context
   import Operation.Implicits._
 
-  val MachineLearningOperationsTemp = Category("Machine learning", "blue")
+  import Categories.MachineLearningOperations
+
   val defaultIcon = "p"
 
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
-    registerOp(id, defaultIcon, MachineLearningOperationsTemp, List(projectOutput),
+    registerOp(id, defaultIcon, MachineLearningOperations, List(projectOutput),
       List(projectOutput), factory)
   }
 

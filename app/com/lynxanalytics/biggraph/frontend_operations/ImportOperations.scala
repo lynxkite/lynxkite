@@ -9,11 +9,11 @@ import com.lynxanalytics.biggraph.controllers._
 
 class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   implicit lazy val manager = env.metaGraphManager
-  import Operation.Category
   import Operation.Context
   import Operation.Implicits._
 
-  val ImportOperations = Category("Import", "green", icon = "glyphicon-folder-open")
+  import Categories.ImportOperations
+
   val defaultIcon = "fountain"
 
   def register(id: String)(factory: Context => ImportOperation): Unit = {
