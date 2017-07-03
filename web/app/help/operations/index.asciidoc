@@ -197,15 +197,13 @@ include::create-edges-from-set-overlaps.asciidoc[]
 
 include::create-example-graph.asciidoc[]
 
-include::create-plot.asciidoc[]
-
 include::create-random-edges.asciidoc[]
 
 include::create-scale-free-random-edges.asciidoc[]
 
 include::create-vertices.asciidoc[]
 
-include::create-visualization.asciidoc[]
+include::custom-plot.asciidoc[]
 
 include::define-segmentation-links-from-matching-attributes.asciidoc[]
 
@@ -276,6 +274,8 @@ include::find-shortest-path.asciidoc[]
 include::find-triangles.asciidoc[]
 
 include::fingerprint-based-on-attributes.asciidoc[]
+
+include::graph-visualization.asciidoc[]
 
 include::grow-segmentation.asciidoc[]
 
