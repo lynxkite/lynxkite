@@ -1,4 +1,4 @@
-### Import project as segmentation
+### Use project as segmentation
 
 Copies another project into a new segmentation for this one. There will be no
 connections between the segments and the base vertices. You can import/create those via

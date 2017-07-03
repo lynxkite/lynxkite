@@ -2,10 +2,6 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-import com.lynxanalytics.biggraph.controllers.OperationParams.NonNegInt
-import com.lynxanalytics.biggraph.controllers.OperationParams.Param
-import com.lynxanalytics.biggraph.controllers.OperationParams.RandomSeed
-import com.lynxanalytics.biggraph.controllers.OperationParams.Ratio
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Scripting._
@@ -22,6 +18,8 @@ class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
     registerOp(id, defaultIcon, SubgraphOperations, List(projectOutput), List(projectOutput), factory)
   }
+
+  import com.lynxanalytics.biggraph.controllers.OperationParams._
 
   register("Create snowball sample")(new ProjectTransformation(_) {
     params ++= List(

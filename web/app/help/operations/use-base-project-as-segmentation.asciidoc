@@ -1,4 +1,4 @@
-### Copy graph into a segmentation
+### "Use base project as segmentation
 
 Imports the project as its own segmentation and creates edges between the original
 vertices and their corresponding vertices in the segmentation.
