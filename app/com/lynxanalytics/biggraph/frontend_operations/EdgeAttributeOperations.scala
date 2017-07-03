@@ -152,7 +152,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
   })
 
-  register("Expose internal edge ID", EdgeAttributesOperations, new ProjectTransformation(_) {
+  register("Expose internal edge ID")(new ProjectTransformation(_) {
     params += Param("name", "Attribute name", defaultValue = "id")
     def enabled = project.hasEdgeBundle
     def apply() = {
