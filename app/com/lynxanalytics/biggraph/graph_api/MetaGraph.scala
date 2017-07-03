@@ -609,7 +609,7 @@ class HybridEdgeBundleData(val entity: HybridEdgeBundle,
                            val rdd: HybridEdgeBundleRDD,
                            val count: Option[Long] = None) extends EntityRDDData[ID] {
   val hybridEdgeBundle = entity
-  def cached = new HybridEdgeBundleData(entity, rdd, count)
+  def cached = new HybridEdgeBundleData(entity, rdd.persist(spark.storage.StorageLevel.MEMORY_ONLY), count)
 }
 
 class AttributeData[T](val entity: Attribute[T],

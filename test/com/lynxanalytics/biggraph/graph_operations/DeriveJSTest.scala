@@ -226,20 +226,15 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     assert(derived.rdd.collect.toSet == result)
   }
 
-  private def sortedBundle(connection: EdgeBundle): HybridEdgeBundle = {
-    val op = SortedBundle()
-    op(op.es, connection).result.sb
-  }
-
   test("example graph - arrays") {
     val g = ExampleGraph()().result
     val ages = {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[Double]())
-      op(op.sortedConnection, sortedBundle(g.edges))(op.attr, g.age).result.attr
+      op(op.sortedConnection, SortedBundle.bySrc(g.edges))(op.attr, g.age).result.attr
     }
     val genders = {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[String]())
-      op(op.sortedConnection, sortedBundle(g.edges))(op.attr, g.gender).result.attr
+      op(op.sortedConnection, SortedBundle.bySrc(g.edges))(op.attr, g.gender).result.attr
     }
     checkJS("ages.toString()", "ages", ages, Set(0 -> "18.2,50.3", 1 -> "20.3,50.3"))
     checkJS("genders.toString()", "genders", genders, Set(0 -> "Female,Male", 1 -> "Male,Male"))
@@ -256,11 +251,11 @@ class DeriveJSTest extends FunSuite with TestGraphOp {
     val age = AddVertexAttribute.run(g.vs, Map(0 -> "10", 1 -> "20", 2 -> "30"))
     val ages = {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[String]())
-      op(op.sortedConnection, sortedBundle(g.es))(op.attr, age).result.attr
+      op(op.sortedConnection, SortedBundle.bySrc(g.es))(op.attr, age).result.attr
     }
     val agess = {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[Vector[String]]())
-      op(op.sortedConnection, sortedBundle(g.es))(op.attr, ages).result.attr
+      op(op.sortedConnection, SortedBundle.bySrc(g.es))(op.attr, ages).result.attr
     }
     checkJS("agess.length.toString()", "agess", agess, Set(0 -> "2", 1 -> "2", 2 -> "2"))
     // toString() prints the flattened structure, but we have already checked length
