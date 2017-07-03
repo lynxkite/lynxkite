@@ -1,4 +1,4 @@
-### Load snapshot
+### Import snapshot
 
 Makes a previously saved snapshot accessible from the workspace.
 

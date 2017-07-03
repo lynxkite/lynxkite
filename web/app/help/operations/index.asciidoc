@@ -307,6 +307,8 @@ include::import-segmentation-links.asciidoc[]
 
 include::import-segmentation.asciidoc[]
 
+include::import-snapshot.asciidoc[]
+
 include::import-vertex-attributes.asciidoc[]
 
 include::import-vertices-and-edges-from-a-single-table.asciidoc[]
@@ -318,8 +320,6 @@ include::input.asciidoc[]
 include::join-projects.asciidoc[]
 
 include::link-project-and-segmentation-by-fingerprint.asciidoc[]
-
-include::load-snapshot.asciidoc[]
 
 include::lookup-region.asciidoc[]
 
