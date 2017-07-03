@@ -22,6 +22,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 trait EntityProgressManager {
@@ -412,8 +413,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
             case eb: EdgeBundle =>
               coLocatedFuture(getFuture(eb), eb.idSet)
                 .map { case (rdd, count) => new EdgeBundleData(eb, rdd, count) }
-            case heb: HybridEdgeBundle =>
-              throw new Exception("Not supported")
+            case heb: HybridEdgeBundle => getFuture(heb).map(_.cached)
             case va: Attribute[_] =>
               coLocatedFuture(getFuture(va), va.vertexSet)(va.classTag)
                 .map { case (rdd, count) => new AttributeData(va, rdd, count) }

@@ -3984,17 +3984,14 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     op(op.attr, attributeWithAggregator.attr).result.aggregated
   }
 
-  private def sortedBundle(connection: EdgeBundle): HybridEdgeBundle = {
-    val op = graph_operations.SortedBundle()
-    op(op.es, connection).result.sb
-  }
-
   // Performs AggregateByEdgeBundle.
   private def aggregateViaConnection[From, To](
     connection: EdgeBundle,
     attributeWithAggregator: AttributeWithLocalAggregator[From, To]): Attribute[To] = {
     val op = graph_operations.AggregateByEdgeBundle(attributeWithAggregator.aggregator)
-    op(op.sortedConnection, sortedBundle(connection))(op.attr, attributeWithAggregator.attr).result.attr
+    op(
+      op.sortedConnection, graph_operations.SortedBundle.bySrc(connection))(
+        op.attr, attributeWithAggregator.attr).result.attr
   }
 
   // Performs AggregateFromEdges.

@@ -92,10 +92,6 @@ object HybridRDD {
   }
 }
 
-case class LargeKeysPartition(idx: Int) extends spark.Partition {
-  def index = idx
-}
-
 // A wrapping class for potentially skewed RDDs. Skewed means the cardinality of keys
 // is extremely unevenly distributed.
 case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](

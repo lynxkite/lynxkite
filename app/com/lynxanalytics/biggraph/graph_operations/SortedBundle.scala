@@ -18,6 +18,20 @@ object SortedBundle extends OpFromJson {
     val sb = hybridEdgeBundle(inputs.es.entity)
   }
   def fromJson(j: JsValue) = SortedBundle()
+
+  import com.lynxanalytics.biggraph.graph_api.Scripting._
+  def bySrc(connection: EdgeBundle)(implicit manager: MetaGraphManager): HybridEdgeBundle = {
+    val op = SortedBundle()
+    op(op.es, connection).result.sb
+  }
+  def byDst(connection: EdgeBundle)(implicit manager: MetaGraphManager): HybridEdgeBundle = {
+    val reversedConnection = {
+      val op = ReverseEdges()
+      op(op.esAB, connection).result.esBA
+    }
+    val op = SortedBundle()
+    op(op.es, reversedConnection).result.sb
+  }
 }
 import SortedBundle._
 case class SortedBundle() extends TypedMetaGraphOp[Input, Output] {
