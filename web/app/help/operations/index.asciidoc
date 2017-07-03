@@ -283,8 +283,6 @@ include::hash-vertex-attribute.asciidoc[]
 
 include::import-csv.asciidoc[]
 
-include::import-edge-attributes.asciidoc[]
-
 include::import-from-hive.asciidoc[]
 
 include::import-jdbc.asciidoc[]
@@ -408,6 +406,8 @@ include::union-of-projects.asciidoc[]
 include::use-base-project-as-segmentation.asciidoc[]
 
 include::use-project-as-segmentation.asciidoc[]
+
+include::use-table-as-edge-attributes.asciidoc[]
 
 include::use-table-as-edges.asciidoc[]
 
