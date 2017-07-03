@@ -93,54 +93,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   import OperationParams._
 
-  register("Discard vertices", StructureOperations, new ProjectTransformation(_) {
-    def enabled = project.hasVertexSet && project.assertNotSegmentation
-    def apply() = {
-      project.vertexSet = null
-    }
-  })
-
-  register("Add gaussian vertex attribute", DeprecatedOperations, new ProjectTransformation(_) {
-    params ++= List(
-      Param("name", "Attribute name", defaultValue = "random"),
-      RandomSeed("seed", "Seed"))
-    def enabled = project.hasVertexSet
-    def apply() = {
-      assert(params("name").nonEmpty, "Please set an attribute name.")
-      val op = graph_operations.AddRandomAttribute(params("seed").toInt, "Standard Normal")
-      project.newVertexAttribute(
-        params("name"), op(op.vs, project.vertexSet).result.attr, help)
-    }
-  })
-
-  register("Change project notes", UtilityOperations, new ProjectTransformation(_) {
-    params += Param("notes", "New contents")
-    def enabled = FEStatus.enabled
-    def apply() = {
-      project.notes = params("notes")
-    }
-  })
-
-  register("Save UI status as graph attribute", UtilityOperations, new ProjectTransformation(_) {
-    params ++= List(
-      // In the future we may want a special kind for this so that users don't see JSON.
-      Param("scalarName", "Name of new graph attribute"),
-      Param("uiStatusJson", "UI status as JSON"))
-    def enabled = FEStatus.enabled
-    override def summary = {
-      val scalarName = params("scalarName")
-      s"Save visualization as $scalarName"
-    }
-
-    def apply() = {
-      import UIStatusSerialization._
-      val j = json.Json.parse(params("uiStatusJson"))
-      val uiStatus = j.as[UIStatus]
-      project.scalars(params("scalarName")) =
-        graph_operations.CreateUIStatusScalar(uiStatus).result.created
-    }
-  })
-
   protected def segmentationSizesSquareSum(seg: SegmentationEditor, parent: ProjectEditor)(
     implicit manager: MetaGraphManager): Scalar[_] = {
     val size = aggregateViaConnection(
