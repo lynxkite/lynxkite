@@ -8,7 +8,6 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_api.Attribute
-import play.api.libs.json
 
 class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
   import Operation.Category
