@@ -1,4 +1,4 @@
-### Create random edge bundle
+### Create random edges
 
 Creates edges randomly, so that each vertex will have a degree uniformly chosen between 0 and
 2 &times; the provided parameter.

@@ -1,4 +1,4 @@
-### Create scale-free random edge bundle
+### Create scale-free random edges
 
 Creates edges randomly so that the resulting graph is scale-free.
 

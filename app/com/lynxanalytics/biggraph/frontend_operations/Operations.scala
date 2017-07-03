@@ -17,6 +17,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     new ProjectOperations(env),
     new MetaOperations(env),
     new ImportOperations(env),
+    new BuildGraphOperations(env),
     new ExportOperations(env),
     new PlotOperations(env),
     new VisualizationOperations(env))
@@ -31,8 +32,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import Operation.Context
   import Operation.Implicits._
 
-  private val projectInput = "project" // The default input name, just to avoid typos.
-  private val projectOutput = "project"
+  protected val projectInput = "project" // The default input name, just to avoid typos.
+  protected val projectOutput = "project"
   private val defaultIcon = "black_question_mark_ornament"
 
   def register(
@@ -102,161 +103,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       seg.belongsTo = op(op.src, parent.vertexSet)(op.dst, seg.vertexSet).result.eb
     }
   })
-
-  register("Create vertices", StructureOperations)(new ProjectOutputOperation(_) {
-    params += NonNegInt("size", "Vertex set size", default = 10)
-    def enabled = FEStatus.enabled
-    def apply() = {
-      val result = graph_operations.CreateVertexSet(params("size").toLong)().result
-      project.setVertexSet(result.vs, idAttr = "id")
-      project.newVertexAttribute("ordinal", result.ordinal)
-    }
-  })
-
-  register("Create random edge bundle", StructureOperations, new ProjectTransformation(_) {
-    params ++= List(
-      NonNegDouble("degree", "Average degree", defaultValue = "10.0"),
-      RandomSeed("seed", "Seed"))
-    def enabled = project.hasVertexSet
-    def apply() = {
-      val op = graph_operations.FastRandomEdgeBundle(
-        params("seed").toInt, params("degree").toDouble)
-      project.edgeBundle = op(op.vs, project.vertexSet).result.es
-    }
-  })
-
-  register("Create scale-free random edge bundle", StructureOperations, new ProjectTransformation(_) {
-    params ++= List(
-      NonNegInt("iterations", "Number of iterations", default = 10),
-      NonNegDouble(
-        "perIterationMultiplier",
-        "Per iteration edge number multiplier",
-        defaultValue = "1.3"),
-      RandomSeed("seed", "Seed"))
-    def enabled = project.hasVertexSet
-    def apply() = {
-      val op = graph_operations.ScaleFreeEdgeBundle(
-        params("iterations").toInt,
-        params("seed").toLong,
-        params("perIterationMultiplier").toDouble)
-      project.edgeBundle = op(op.vs, project.vertexSet).result.es
-    }
-  })
-
-  register("Connect vertices on attribute", StructureOperations, new ProjectTransformation(_) {
-    params ++= List(
-      Choice("fromAttr", "Source attribute", options = project.vertexAttrList),
-      Choice("toAttr", "Destination attribute", options = project.vertexAttrList))
-    def enabled =
-      (project.hasVertexSet
-        && FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes."))
-    private def applyAA[A](fromAttr: Attribute[A], toAttr: Attribute[A]) = {
-      if (fromAttr == toAttr) {
-        // Use the slightly faster operation.
-        val op = graph_operations.EdgesFromAttributeMatches[A]()
-        project.edgeBundle = op(op.attr, fromAttr).result.edges
-      } else {
-        val op = graph_operations.EdgesFromBipartiteAttributeMatches[A]()
-        project.edgeBundle = op(op.fromAttr, fromAttr)(op.toAttr, toAttr).result.edges
-      }
-    }
-    private def applyAB[A, B](fromAttr: Attribute[A], toAttr: Attribute[B]) = {
-      applyAA(fromAttr, toAttr.asInstanceOf[Attribute[A]])
-    }
-    def apply() = {
-      val fromAttrName = params("fromAttr")
-      val toAttrName = params("toAttr")
-      val fromAttr = project.vertexAttributes(fromAttrName)
-      val toAttr = project.vertexAttributes(toAttrName)
-      assert(fromAttr.typeTag.tpe =:= toAttr.typeTag.tpe,
-        s"$fromAttrName and $toAttrName are not of the same type.")
-      applyAB(fromAttr, toAttr)
-    }
-  })
-
-  registerOp(
-    "Import vertices", defaultIcon, ImportOperations,
-    inputs = List("vertices"), outputs = List(projectOutput),
-    factory = new ProjectOutputOperation(_) {
-      lazy val vertices = tableLikeInput("vertices").asProject
-      params += Param("id_attr", "Save internal ID as", defaultValue = "")
-      def enabled = FEStatus.enabled
-      def apply() = {
-        project.vertexSet = vertices.vertexSet
-        for ((name, attr) <- vertices.vertexAttributes) {
-          project.newVertexAttribute(name, attr, "imported")
-        }
-        val idAttr = params("id_attr")
-        if (idAttr.nonEmpty) {
-          assert(
-            !project.vertexAttributes.contains(idAttr),
-            s"The input also contains a column called '$idAttr'. Please pick a different name.")
-          project.newVertexAttribute(idAttr, project.vertexSet.idAttribute, "internal")
-        }
-      }
-    })
-
-  registerOp(
-    "Import edges for existing vertices", defaultIcon, ImportOperations,
-    inputs = List(projectInput, "edges"), outputs = List(projectOutput),
-    factory = new ProjectOutputOperation(_) {
-      override lazy val project = projectInput("project")
-      lazy val edges = tableLikeInput("edges").asProject
-      params ++= List(
-        Choice("attr", "Vertex ID attribute", options = FEOption.unset +: project.vertexAttrList),
-        Choice("src", "Source ID column", options = FEOption.unset +: edges.vertexAttrList),
-        Choice("dst", "Destination ID column", options = FEOption.unset +: edges.vertexAttrList))
-      def enabled =
-        FEStatus.assert(
-          project.vertexAttrList.nonEmpty, "No attributes on the project to use as id.") &&
-          FEStatus.assert(
-            edges.vertexAttrList.nonEmpty, "No attributes on the edges to use as id.")
-      def apply() = {
-        val src = params("src")
-        val dst = params("dst")
-        val id = params("attr")
-        assert(src != FEOption.unset.id, "The Source ID column parameter must be set.")
-        assert(dst != FEOption.unset.id, "The Destination ID column parameter must be set.")
-        assert(id != FEOption.unset.id, "The Vertex ID attribute parameter must be set.")
-        val idAttr = project.vertexAttributes(id)
-        val srcAttr = edges.vertexAttributes(src)
-        val dstAttr = edges.vertexAttributes(dst)
-        val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
-          idAttr, idAttr, srcAttr, dstAttr)
-        project.edgeBundle = imp.edges
-        for ((name, attr) <- edges.vertexAttributes) {
-          project.edgeAttributes(name) = attr.pullVia(imp.embedding)
-        }
-      }
-    })
-
-  registerOp(
-    "Import vertices and edges from a single table", defaultIcon, ImportOperations,
-    inputs = List("edges"), outputs = List(projectOutput),
-    factory = new ProjectOutputOperation(_) {
-      lazy val edges = tableLikeInput("edges").asProject
-      params ++= List(
-        Choice("src", "Source ID column", options = FEOption.unset +: edges.vertexAttrList),
-        Choice("dst", "Destination ID column", options = FEOption.unset +: edges.vertexAttrList))
-      def enabled = FEStatus.enabled
-      def apply() = {
-        val src = params("src")
-        val dst = params("dst")
-        assert(src != FEOption.unset.id, "The Source ID column parameter must be set.")
-        assert(dst != FEOption.unset.id, "The Destination ID column parameter must be set.")
-        val eg = {
-          val op = graph_operations.VerticesToEdges()
-          op(op.srcAttr, edges.vertexAttributes(src).runtimeSafeCast[String])(
-            op.dstAttr, edges.vertexAttributes(dst).runtimeSafeCast[String]).result
-        }
-        project.setVertexSet(eg.vs, idAttr = "id")
-        project.newVertexAttribute("stringId", eg.stringId)
-        project.edgeBundle = eg.es
-        for ((name, attr) <- edges.vertexAttributes) {
-          project.edgeAttributes(name) = attr.pullVia(eg.embedding)
-        }
-      }
-    })
 
   registerOp(
     "Import vertex attributes", defaultIcon, ImportOperations,
@@ -1314,25 +1160,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val sortKey = project.vertexAttributes(keyAttr)
       val rank = graph_operations.AddRankingAttribute.run(sortKey, ascending)
       project.newVertexAttribute(rankAttr, rank.asDouble, s"rank by $keyAttr" + help)
-    }
-  })
-
-  register("Create example graph", StructureOperations)(new ProjectOutputOperation(_) {
-    def enabled = FEStatus.enabled
-    def apply() = {
-      val g = graph_operations.ExampleGraph()().result
-      project.vertexSet = g.vertices
-      project.edgeBundle = g.edges
-      for ((name, attr) <- g.vertexAttributes) {
-        project.newVertexAttribute(name, attr)
-      }
-      project.newVertexAttribute("id", project.vertexSet.idAttribute)
-      project.edgeAttributes = g.edgeAttributes.mapValues(_.entity)
-      for ((name, s) <- g.scalars) {
-        project.scalars(name) = s.entity
-      }
-      project.setElementMetadata(VertexAttributeKind, "income", MetadataNames.Icon, "money_bag")
-      project.setElementMetadata(VertexAttributeKind, "location", MetadataNames.Icon, "paw_prints")
     }
   })
 
