@@ -14,8 +14,6 @@ import play.api.libs.json
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   val registries = Seq(
-    new ProjectOperations(env),
-    new MetaOperations(env),
     new ImportOperations(env),
     new BuildGraphOperations(env),
     new SubgraphOperations(env),
@@ -375,7 +373,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     val op = graph_operations.CreateStringScalar(data)
     op.result.created
   }
-
 }
 
 object JSUtilities {
