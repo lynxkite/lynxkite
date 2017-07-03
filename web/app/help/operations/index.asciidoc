@@ -299,8 +299,6 @@ include::import-snapshot.asciidoc[]
 
 include::input.asciidoc[]
 
-include::join-projects.asciidoc[]
-
 include::link-project-and-segmentation-by-fingerprint.asciidoc[]
 
 include::lookup-region.asciidoc[]
@@ -326,6 +324,10 @@ include::predict-from-model.asciidoc[]
 include::predict-vertex-attribute.asciidoc[]
 
 include::predict-with-a-neural-network-experimental.asciidoc[]
+
+include::project-rejoin.asciidoc[]
+
+include::project-union.asciidoc[]
 
 include::pull-segmentation-one-level-up.asciidoc[]
 
@@ -400,8 +402,6 @@ include::train-a-kmeans-clustering-model.asciidoc[]
 include::train-a-logistic-regression-model.asciidoc[]
 
 include::train-linear-regression-model.asciidoc[]
-
-include::union-of-projects.asciidoc[]
 
 include::use-base-project-as-segmentation.asciidoc[]
 
