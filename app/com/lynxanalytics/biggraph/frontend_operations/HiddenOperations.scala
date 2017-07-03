@@ -1,7 +1,6 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
@@ -10,15 +9,15 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 
 class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Category
   import Operation.Context
   import Operation.Implicits._
 
-  val HiddenOperationsTemp = Category("Manage project", "blue", visible = false)
+  import Categories.HiddenOperations
+
   val defaultIcon = "black_medium_square"
 
   def register(id: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
-    registerOp(id, defaultIcon, HiddenOperationsTemp, inputs, outputs, factory)
+    registerOp(id, defaultIcon, HiddenOperations, inputs, outputs, factory)
   }
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._

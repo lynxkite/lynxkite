@@ -10,15 +10,15 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_api.Attribute
 
 class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Category
   import Operation.Context
   import Operation.Implicits._
 
-  val StructureOperationsTemp = Category("Structure", "blue")
+  import Categories.StructureOperations
+
   val defaultIcon = "house"
 
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
-    registerOp(id, defaultIcon, StructureOperationsTemp, List(projectOutput), List(projectOutput), factory)
+    registerOp(id, defaultIcon, StructureOperations, List(projectOutput), List(projectOutput), factory)
   }
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._

@@ -11,11 +11,11 @@ import com.lynxanalytics.biggraph.graph_api.Attribute
 import com.lynxanalytics.biggraph.graph_api.SerializableType
 
 class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Category
   import Operation.Context
   import Operation.Implicits._
 
-  val BuildSegmentationOperations = Category("Build segmentation", "blue")
+  import Categories.BuildSegmentationOperations
+
   val defaultIcon = "hammer"
 
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {

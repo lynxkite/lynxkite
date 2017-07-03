@@ -33,9 +33,32 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   override val atomicCategories = registries.flatMap(_.categories).toMap
 }
 
+// The categories are collected here so that it is easier to manage them. E.g. sorting them or
+// grouping them with colors.
+object Categories {
+  import com.lynxanalytics.biggraph.controllers.Operation.Category
+
+  val ImportOperations = Category("Import", "green", icon = "glyphicon-folder-open", sortKey = "a")
+  val BuildGraphOperations = Category("Build Graph", "blue", sortKey = "b")
+  val SubgraphOperations = Category("Subgraph", "blue", sortKey = "c")
+  val BuildSegmentationOperations = Category("Build segmentation", "blue", sortKey = "d")
+  val UseSegmentationOperations = Category("Use segmentation", "blue", sortKey = "e")
+  val StructureOperations = Category("Structure", "blue", sortKey = "f")
+  val ScalarOperations = Category("Scalars", "blue", icon = "glyphicon-globe", sortKey = "g")
+  val VertexAttributeOperations = Category("Vertex attributes", "blue", sortKey = "h")
+  val EdgeAttributeOperations = Category("Edge attributes", "blue", sortKey = "i")
+  val AttributePropagationOperations = Category("Attribute propagation", "blue", sortKey = "j")
+  val GraphComputationOperations = Category("Graph computation", "blue", sortKey = "k")
+  val MachineLearningOperations = Category("Machine learning", "blue", sortKey = "l")
+  val WorkflowOperations = Category("Workflow", "blue", sortKey = "m")
+  val ManageProjectOperations = Category("Manage project", "blue", sortKey = "n")
+  val VisualizationOperations = Category("Visualization operations", "blue", sortKey = "o")
+  val ExportOperations = Category("Export operations", "blue", icon = "glyphicon-folder-open", sortKey = "p")
+  val HiddenOperations = Category("Manage project", "blue", visible = false, sortKey = "q")
+}
+
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   implicit lazy val manager = env.metaGraphManager
-  import Operation.Category
 
   protected val projectInput = "project" // The default input name, just to avoid typos.
   protected val projectOutput = "project"
@@ -46,28 +69,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     protected def addSegmentationParameters(): Unit
     if (project.isSegmentation) addSegmentationParameters()
   }
-
-  // Categories
-  val SpecialtyOperations = Category("Specialty operations", "green", icon = "glyphicon-book")
-  val EdgeAttributesOperations =
-    Category("Edge attribute operations", "blue", sortKey = "Attribute, edge")
-  val VertexAttributesOperations =
-    Category("Vertex attribute operations", "blue", sortKey = "Attribute, vertex")
-  val GlobalOperations = Category("Global operations", "magenta", icon = "glyphicon-globe")
-  val ImportOperations = Category("Import operations", "yellow", icon = "glyphicon-import")
-  val MetricsOperations = Category("Graph metrics", "green", icon = "glyphicon-stats")
-  val PropagationOperations =
-    Category("Propagation operations", "green", icon = "glyphicon-fullscreen")
-  val HiddenOperations = Category("Hidden operations", "black", visible = false)
-  val DeprecatedOperations =
-    Category("Deprecated operations", "red", visible = false, icon = "glyphicon-remove-sign")
-  val CreateSegmentationOperations =
-    Category("Create segmentation", "green", icon = "glyphicon-th-large")
-  val StructureOperations = Category("Structure operations", "pink", icon = "glyphicon-asterisk")
-  val MachineLearningOperations =
-    Category("Machine learning operations", "pink ", icon = "glyphicon-knight")
-  val UtilityOperations =
-    Category("Utility operations", "green", icon = "glyphicon-wrench", sortKey = "zz")
 
   import OperationParams._
 

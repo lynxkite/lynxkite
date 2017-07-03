@@ -11,11 +11,11 @@ import com.lynxanalytics.biggraph.graph_api.Attribute
 import com.lynxanalytics.biggraph.graph_api.Scalar
 
 class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Category
   import Operation.Context
   import Operation.Implicits._
 
-  val EdgeAttributeOperations = Category("Edge attributes", "blue")
+  import Categories.EdgeAttributeOperations
+
   val defaultIcon = "e"
 
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {

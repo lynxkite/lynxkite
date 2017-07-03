@@ -1,20 +1,18 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
-import play.api.libs.json
 
 class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Category
   import Operation.Context
   import Operation.Implicits._
 
-  val WorkflowOperations = Category("Workflow", "blue")
+  import Categories.WorkflowOperations
+
   val defaultIcon = "p"
 
   def register(id: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
@@ -271,7 +269,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
 
   // TODO: Use dynamic inputs. #5820
   def registerSQLOp(name: String, inputs: List[String]): Unit = {
-    registerOp(name, defaultIcon, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) {
+    registerOp(name, defaultIcon, WorkflowOperations, inputs, List("table"), new TableOutputOperation(_) {
       override val params = new ParameterHolder(context) // No "apply_to" parameters.
       params += Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql")
       def enabled = FEStatus.enabled

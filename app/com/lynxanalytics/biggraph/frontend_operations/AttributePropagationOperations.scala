@@ -7,11 +7,11 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 
 class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Category
   import Operation.Context
   import Operation.Implicits._
 
-  val AttributePropagationOperations = Category("Attribute propagation", "blue")
+  import Categories.AttributePropagationOperations
+
   val defaultIcon = "p"
 
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {

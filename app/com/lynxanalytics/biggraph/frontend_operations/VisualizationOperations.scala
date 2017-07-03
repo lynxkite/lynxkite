@@ -11,11 +11,10 @@ import play.api.libs.json
 
 class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   implicit lazy val manager = env.metaGraphManager
-  import Operation.Category
   import Operation.Context
   import OperationParams._
 
-  val VisualizationOperations = Category("Visualization operations", "blue")
+  import Categories.VisualizationOperations
 
   def register(id: String, icon: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
     registerOp(id, icon, VisualizationOperations, inputs, outputs, factory)

@@ -8,11 +8,11 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 
 class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Category
   import Operation.Context
   import Operation.Implicits._
 
-  val SubgraphOperations = Category("Subgraph", "blue")
+  import Categories.SubgraphOperations
+
   val defaultIcon = "hammer"
 
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {

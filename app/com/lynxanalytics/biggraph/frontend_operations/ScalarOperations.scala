@@ -11,11 +11,11 @@ import com.lynxanalytics.biggraph.graph_api.EdgeBundleProperties
 import com.lynxanalytics.biggraph.graph_api.Scalar
 
 class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Category
   import Operation.Context
   import Operation.Implicits._
 
-  val ScalarOperations = Category("Scalars", "blue", icon = "glyphicon-globe")
+  import Categories.ScalarOperations
+
   val defaultIcon = "s"
 
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
