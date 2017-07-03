@@ -325,7 +325,7 @@ include::predict-from-model.asciidoc[]
 
 include::predict-vertex-attribute.asciidoc[]
 
-include::predict-with-a-neural-network-1st-version.asciidoc[]
+include::predict-with-a-neural-network-experimental.asciidoc[]
 
 include::pull-segmentation-one-level-up.asciidoc[]
 
