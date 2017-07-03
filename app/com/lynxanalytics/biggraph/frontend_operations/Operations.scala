@@ -1351,15 +1351,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
-  registerOp("Load snapshot", "black_medium_square", StructureOperations,
-    inputs = List(), outputs = List("state"), factory = new SimpleOperation(_) {
-      params += Param("path", "Path")
-      override def getOutputs() = {
-        val snapshot = DirectoryEntry.fromName(params("path")).asSnapshotFrame
-        Map(context.box.output("state") -> snapshot.getState)
-      }
-    })
-
   register("Hash vertex attribute", VertexAttributesOperations, new ProjectTransformation(_) {
     params ++= List(
       Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true),

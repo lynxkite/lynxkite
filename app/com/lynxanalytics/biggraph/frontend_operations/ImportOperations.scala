@@ -1,19 +1,11 @@
-// Frontend operations for importing tables.
+// Frontend operations for importing data from outside of the workspace.
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
-import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
-import com.lynxanalytics.biggraph.model
-import com.lynxanalytics.biggraph.serving.FrontendJson
-import play.api.libs.json
 
 class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   implicit lazy val manager = env.metaGraphManager
@@ -21,10 +13,16 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   import Operation.Context
   import Operation.Implicits._
 
-  val ImportOperations = Category("Import operations", "green", icon = "glyphicon-folder-open")
+  val ImportOperations = Category("Import", "green", icon = "glyphicon-folder-open")
+  val defaultIcon = "fountain"
 
   def register(id: String)(factory: Context => ImportOperation): Unit = {
-    registerOp(id, "fountain", ImportOperations, List(), List("table"), factory)
+    registerOp(id, defaultIcon, ImportOperations, List(), List("table"), factory)
+  }
+
+  def register(id: String, inputs: List[String], outputs: List[String])(
+    factory: Context => Operation): Unit = {
+    registerOp(id, defaultIcon, ImportOperations, inputs, outputs, factory)
   }
 
   import OperationParams._
@@ -152,6 +150,14 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         DataManager.hiveConfigured,
         "Hive is not configured for this LynxKite instance. Contact your system administrator.")
       context.table(params("hive_table"))
+    }
+  })
+
+  register("Import snapshot", List(), List("state"))(new SimpleOperation(_) {
+    params += Param("path", "Path")
+    override def getOutputs() = {
+      val snapshot = DirectoryEntry.fromName(params("path")).asSnapshotFrame
+      Map(context.box.output("state") -> snapshot.getState)
     }
   })
 }
