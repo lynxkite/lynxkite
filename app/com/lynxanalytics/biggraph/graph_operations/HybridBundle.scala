@@ -1,4 +1,4 @@
-// Creates an src -> dst HybridEdgeBundle from an EdgeBundle.
+// HybridEdgeBundle creates an src -> dst HybridBundle from an EdgeBundle.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -47,7 +47,10 @@ case class HybridEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
     implicit val runtimeContext = rc
     val edges = inputs.es.rdd
     val partitioner = edges.partitioner.get
-    val bySrc = HybridRDD.of(edges.map { case (_, Edge(src, dst)) => src -> dst }, partitioner, even = true)
+    val bySrc = HybridRDD.of(
+      edges.map { case (_, Edge(src, dst)) => src -> dst },
+      partitioner,
+      even = true)
     output(o.sb, bySrc)
   }
 }
