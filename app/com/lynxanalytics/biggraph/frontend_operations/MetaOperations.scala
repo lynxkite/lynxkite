@@ -21,29 +21,10 @@ class MetaOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   val OtherBoxes = Category("Other boxes", "yellow")
   val AnchorBox = Category("Anchor box", "yellow", visible = false)
 
-  register("Comment", OtherBoxes)(new DecoratorOperation(_) {
-    params += Code("comment", "Comment", language = "plain_text")
-  })
-
   register("Anchor", AnchorBox, "anchor")(new DecoratorOperation(_) {
     params += Code("description", "Description", language = "plain_text")
     params += Param("icon", "Icon URL")
     params += ParametersParam("parameters", "Parameters")
   })
 
-  registerOp(
-    "Input", "black_down-pointing_triangle", OtherBoxes,
-    List(), List("input"),
-    new SimpleOperation(_) {
-      params += Param("name", "Name")
-      override def summary = s"Input ${params("name")}"
-    })
-
-  registerOp(
-    "Output", "black_up-pointing_triangle", OtherBoxes,
-    List("output"), List(),
-    new SimpleOperation(_) {
-      params += Param("name", "Name")
-      override def summary = s"Output ${params("name")}"
-    })
 }

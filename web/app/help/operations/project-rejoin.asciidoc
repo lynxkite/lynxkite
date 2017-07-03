@@ -1,4 +1,4 @@
-### Join projects
+### Project rejoin
 
 This operation allows the user to join (i.e., carry over) attributes from on project to another one.
 This is only allowed when the target of the join (where the attributes are taken to) and the source

@@ -1,4 +1,4 @@
-### Union of projects
+### Project union
 
 The resulting graph is just a disconnected graph containing the vertices and edges of
 the two originating projects. All vertex and edge attributes are preserved. If an attribute
