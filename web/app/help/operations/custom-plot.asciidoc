@@ -1,4 +1,4 @@
-### Create plot
+### Custom plot
 
 Creates a plot from the input table. The plot can be defined using the
 https://github.com/vegas-viz/Vegas[Vegas] plot description language.

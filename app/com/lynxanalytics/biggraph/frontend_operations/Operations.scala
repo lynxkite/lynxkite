@@ -31,7 +31,6 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     new WorkflowOperations(env),
     new ManageProjectOperations(env),
     new ExportOperations(env),
-    new PlotOperations(env),
     new VisualizationOperations(env))
 
   override val atomicOperations = registries.flatMap(_.operations).toMap
