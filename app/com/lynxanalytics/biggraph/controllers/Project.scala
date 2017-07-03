@@ -418,7 +418,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
     val reversedBelongsTo = graph_operations.ReverseEdges.run(belongsTo)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
     aop(
-      aop.sortedConnection, graph_operations.SortedBundle.bySrc(reversedBelongsTo))(
+      aop.bySrc, graph_operations.HybridEdgeBundle.bySrc(reversedBelongsTo))(
         aop.attr, segmentationIds).result.attr
   }
 
@@ -426,7 +426,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
     val parentIds = graph_operations.IdAsAttribute.run(parent.vertexSet)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
     aop(
-      aop.sortedConnection, graph_operations.SortedBundle.bySrc(belongsTo))(
+      aop.bySrc, graph_operations.HybridEdgeBundle.bySrc(belongsTo))(
         aop.attr, parentIds).result.attr
   }
 

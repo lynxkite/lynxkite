@@ -133,9 +133,9 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
   val isLocal = srcVertexSet == dstVertexSet
 }
 
-case class HybridEdgeBundle(source: MetaGraphOperationInstance,
-                            name: Symbol,
-                            edgeBundle: EdgeBundle) // The RDD for idSet will be auto-generated.
+case class HybridBundle(source: MetaGraphOperationInstance,
+                        name: Symbol,
+                        edgeBundle: EdgeBundle) // The RDD for idSet will be auto-generated.
     extends MetaGraphEntity {
   assert(name != null, s"name is null for $this")
 }
@@ -172,7 +172,7 @@ case class Table(
 case class InputSignature(
   vertexSets: Set[Symbol],
   edgeBundles: Set[Symbol],
-  hybridEdgeBundles: Set[Symbol],
+  hybridBundles: Set[Symbol],
   attributes: Set[Symbol],
   scalars: Set[Symbol],
   tables: Set[Symbol])
@@ -263,17 +263,17 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
-  class HybridEdgeBundleTemplate(
+  class HybridBundleTemplate(
     esF: => Symbol,
     nameOpt: Option[Symbol])
-      extends ET[HybridEdgeBundle](nameOpt) {
+      extends ET[HybridBundle](nameOpt) {
     private lazy val es = esF
-    override def set(target: MetaDataSet, heb: HybridEdgeBundle): MetaDataSet = {
+    override def set(target: MetaDataSet, heb: HybridBundle): MetaDataSet = {
       val withEs =
         templatesByName(es).asInstanceOf[EdgeBundleTemplate].set(target, heb.edgeBundle)
       super.set(withEs, heb)
     }
-    def data(implicit dataSet: DataSet) = dataSet.hybridEdgeBundles(name)
+    def data(implicit dataSet: DataSet) = dataSet.HybridBundles(name)
     def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
@@ -336,10 +336,10 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     name: Symbol = null) =
     new EdgeBundleTemplate(
       src.name, dst.name, Option(idSet).map(_.name), requiredProperties, Option(name))
-  def hybridEdgeBundle(
+  def hybridBundle(
     es: EdgeBundleTemplate,
     name: Symbol = null) =
-    new HybridEdgeBundleTemplate(
+    new HybridBundleTemplate(
       es.name, Option(name))
   def vertexAttribute[T](vs: VertexSetTemplate, name: Symbol = null) =
     new VertexAttributeTemplate[T](vs.name, Option(name))
@@ -360,7 +360,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     InputSignature(
       vertexSets = templates.collect { case vs: VertexSetTemplate => vs.name }.toSet,
       edgeBundles = templates.collect { case eb: EdgeBundleTemplate => eb.name }.toSet,
-      hybridEdgeBundles = templates.collect { case heb: HybridEdgeBundleTemplate => heb.name }.toSet,
+      hybridBundles = templates.collect { case heb: HybridBundleTemplate => heb.name }.toSet,
       attributes = templates.collect {
         case a: VertexAttributeTemplate[_] => a.name
         case a: EdgeAttributeTemplate[_] => a.name
@@ -432,9 +432,9 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
       idSetSafe, autogenerateIdSet = idSet == null), Option(name))
     eb
   }
-  def hybridEdgeBundle(
+  def hybridBundle(
     es: => EntityContainer[EdgeBundle],
-    name: Symbol = null) = new P(HybridEdgeBundle(instance, _, es), Option(name))
+    name: Symbol = null) = new P(HybridBundle(instance, _, es), Option(name))
   def graph = {
     val v = vertexSet
     (v, edgeBundle(v, v))
@@ -605,11 +605,11 @@ class EdgeBundleData(val entity: EdgeBundle,
   def cached = new EdgeBundleData(entity, rdd.copyWithAncestorsCached, count)
 }
 
-class HybridEdgeBundleData(val entity: HybridEdgeBundle,
-                           val rdd: HybridEdgeBundleRDD,
-                           val count: Option[Long] = None) extends EntityRDDData[ID] {
-  val hybridEdgeBundle = entity
-  def cached = new HybridEdgeBundleData(entity, rdd.persist(spark.storage.StorageLevel.MEMORY_ONLY), count)
+class HybridBundleData(val entity: HybridBundle,
+                       val rdd: HybridBundleRDD,
+                       val count: Option[Long] = None) extends EntityRDDData[ID] {
+  val HybridBundle = entity
+  def cached = new HybridBundleData(entity, rdd.persist(spark.storage.StorageLevel.MEMORY_ONLY), count)
 }
 
 class AttributeData[T](val entity: Attribute[T],
@@ -637,15 +637,15 @@ class TableData(val entity: Table,
 // A bundle of metadata types.
 case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
                        edgeBundles: Map[Symbol, EdgeBundle] = Map(),
-                       hybridEdgeBundles: Map[Symbol, HybridEdgeBundle] = Map(),
+                       HybridBundles: Map[Symbol, HybridBundle] = Map(),
                        attributes: Map[Symbol, Attribute[_]] = Map(),
                        scalars: Map[Symbol, Scalar[_]] = Map(),
                        tables: Map[Symbol, Table] = Map())
     extends ToJson {
   val all: Map[Symbol, MetaGraphEntity] =
-    vertexSets ++ edgeBundles ++ hybridEdgeBundles ++ attributes ++ scalars ++ tables
+    vertexSets ++ edgeBundles ++ HybridBundles ++ attributes ++ scalars ++ tables
   assert(all.size ==
-    vertexSets.size + edgeBundles.size + hybridEdgeBundles.size + attributes.size + scalars.size + tables.size,
+    vertexSets.size + edgeBundles.size + HybridBundles.size + attributes.size + scalars.size + tables.size,
     s"Cross type collision in $this")
 
   def asStringMap: Map[String, String] =
@@ -667,7 +667,7 @@ case class MetaDataSet(vertexSets: Map[Symbol, VertexSet] = Map(),
     return MetaDataSet(
       vertexSets ++ mds.vertexSets,
       edgeBundles ++ mds.edgeBundles,
-      hybridEdgeBundles ++ mds.hybridEdgeBundles,
+      HybridBundles ++ mds.HybridBundles,
       attributes ++ mds.attributes,
       scalars ++ mds.scalars,
       tables ++ mds.tables)
@@ -686,7 +686,7 @@ object MetaDataSet {
     MetaDataSet(
       vertexSets = all.collect { case (k, v: VertexSet) => (k, v) },
       edgeBundles = all.collect { case (k, v: EdgeBundle) => (k, v) },
-      hybridEdgeBundles = all.collect { case (k, v: HybridEdgeBundle) => (k, v) },
+      HybridBundles = all.collect { case (k, v: HybridBundle) => (k, v) },
       attributes = all.collect { case (k, v: Attribute[_]) => (k, v) }.toMap,
       scalars = all.collect { case (k, v: Scalar[_]) => (k, v) }.toMap,
       tables = all.collect { case (k, v: Table) => (k, v) })
@@ -696,20 +696,20 @@ object MetaDataSet {
 // A bundle of data types.
 case class DataSet(vertexSets: Map[Symbol, VertexSetData] = Map(),
                    edgeBundles: Map[Symbol, EdgeBundleData] = Map(),
-                   hybridEdgeBundles: Map[Symbol, HybridEdgeBundleData] = Map(),
+                   HybridBundles: Map[Symbol, HybridBundleData] = Map(),
                    attributes: Map[Symbol, AttributeData[_]] = Map(),
                    scalars: Map[Symbol, ScalarData[_]] = Map(),
                    tables: Map[Symbol, TableData] = Map()) {
   def metaDataSet = MetaDataSet(
     vertexSets.mapValues(_.vertexSet),
     edgeBundles.mapValues(_.edgeBundle),
-    hybridEdgeBundles.mapValues(_.hybridEdgeBundle),
+    HybridBundles.mapValues(_.HybridBundle),
     attributes.mapValues(_.attribute),
     scalars.mapValues(_.scalar),
     tables.mapValues(_.table))
 
   def all: Map[Symbol, EntityData] =
-    vertexSets ++ edgeBundles ++ hybridEdgeBundles ++ attributes ++ scalars ++ tables
+    vertexSets ++ edgeBundles ++ HybridBundles ++ attributes ++ scalars ++ tables
 }
 
 object DataSet {
@@ -717,7 +717,7 @@ object DataSet {
     DataSet(
       vertexSets = all.collect { case (k, v: VertexSetData) => (k, v) },
       edgeBundles = all.collect { case (k, v: EdgeBundleData) => (k, v) },
-      hybridEdgeBundles = all.collect { case (k, v: HybridEdgeBundleData) => (k, v) },
+      HybridBundles = all.collect { case (k, v: HybridBundleData) => (k, v) },
       attributes = all.collect { case (k, v: AttributeData[_]) => (k, v) }.toMap,
       scalars = all.collect { case (k, v: ScalarData[_]) => (k, v) }.toMap,
       tables = all.collect { case (k, v: TableData) => (k, v) })
@@ -747,8 +747,8 @@ class OutputBuilder(val instance: MetaGraphOperationInstance) {
     }
   }
 
-  def apply(hybridEdgeBundle: HybridEdgeBundle, rdd: HybridEdgeBundleRDD): Unit = {
-    addData(new HybridEdgeBundleData(hybridEdgeBundle, rdd))
+  def apply(HybridBundle: HybridBundle, rdd: HybridBundleRDD): Unit = {
+    addData(new HybridBundleData(HybridBundle, rdd))
   }
 
   def apply[T](attribute: Attribute[T], rdd: AttributeRDD[T]): Unit = {

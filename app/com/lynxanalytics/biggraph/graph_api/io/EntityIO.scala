@@ -528,8 +528,8 @@ class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
   def valueTypeTag = typeTag[Edge]
 }
 
-class HybridEdgeBundleIO(entity: HybridEdgeBundle, context: IOContext)
-    extends PartitionedDataIO[ID, HybridEdgeBundleData](entity, context) {
+class HybridBundleIO(entity: HybridBundle, context: IOContext)
+    extends PartitionedDataIO[ID, HybridBundleData](entity, context) {
 
   override def correspondingVertexSet = None
 
@@ -541,7 +541,7 @@ class HybridEdgeBundleIO(entity: HybridEdgeBundle, context: IOContext)
                 count: Long,
                 serialization: String,
                 partitioner: spark.Partitioner,
-                parent: Option[VertexSetData]): HybridEdgeBundleData = {
+                parent: Option[VertexSetData]): HybridBundleData = {
     import scala.reflect._
     implicit val cv = classTag[ID]
     val idSerializer = EntitySerializer.forType(typeTag[ID]).name
@@ -553,7 +553,7 @@ class HybridEdgeBundleIO(entity: HybridEdgeBundle, context: IOContext)
     } else {
       Some((path / "large_keys_rdd").loadEntityRDD[ID](sc, idSerializer))
     }
-    new HybridEdgeBundleData(
+    new HybridBundleData(
       entity,
       HybridRDD(largeKeysRDD,
         smallKeysRDD.sort(partitioner),
@@ -562,7 +562,7 @@ class HybridEdgeBundleIO(entity: HybridEdgeBundle, context: IOContext)
       Some(count))
   }
 
-  def castData(data: EntityData) = data.asInstanceOf[HybridEdgeBundleData]
+  def castData(data: EntityData) = data.asInstanceOf[HybridBundleData]
 
   def valueTypeTag = typeTag[ID]
 }

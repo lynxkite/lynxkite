@@ -21,7 +21,7 @@ object AggregateByEdgeBundle extends OpFromJson {
     val src = vertexSet
     val dst = vertexSet
     val connection = edgeBundle(src, dst)
-    val sortedConnection = hybridEdgeBundle(connection)
+    val bySrc = hybridBundle(connection)
     val attr = vertexAttribute[From](src)
   }
   class Output[From, To: TypeTag](implicit instance: MetaGraphOperationInstance,
@@ -51,7 +51,7 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
     implicit val ftt = inputs.attr.data.typeTag
     implicit val fct = inputs.attr.data.classTag
     implicit val runtimeContext = rc
-    val es = inputs.sortedConnection.rdd
+    val es = inputs.bySrc.rdd
 
     val partitioner = es.partitioner.get
     val withAttr = es.lookup(inputs.attr.rdd.sortedRepartition(partitioner))

@@ -13,7 +13,7 @@ package object graph_api {
 
   type EdgeBundleRDD = UniqueSortedRDD[ID, Edge]
 
-  type HybridEdgeBundleRDD = HybridRDD[ID, ID]
+  type HybridBundleRDD = HybridRDD[ID, ID]
 }
 
 package graph_api {

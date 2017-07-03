@@ -92,11 +92,11 @@ class CSVExportTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val neighbors = {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[String])
-      op(op.sortedConnection, SortedBundle.bySrc(g.edges))(op.attr, g.name).result.attr
+      op(op.bySrc, HybridEdgeBundle.bySrc(g.edges))(op.attr, g.name).result.attr
     }
     val neighborAges = {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[Double])
-      op(op.sortedConnection, SortedBundle.bySrc(g.edges))(op.attr, g.age).result.attr
+      op(op.bySrc, HybridEdgeBundle.bySrc(g.edges))(op.attr, g.age).result.attr
     }
     assert(CSVExport.exportVertexAttributes(
       g.vertices,

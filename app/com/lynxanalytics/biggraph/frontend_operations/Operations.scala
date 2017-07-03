@@ -3990,7 +3990,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     attributeWithAggregator: AttributeWithLocalAggregator[From, To]): Attribute[To] = {
     val op = graph_operations.AggregateByEdgeBundle(attributeWithAggregator.aggregator)
     op(
-      op.sortedConnection, graph_operations.SortedBundle.bySrc(connection))(
+      op.bySrc, graph_operations.HybridEdgeBundle.bySrc(connection))(
         op.attr, attributeWithAggregator.attr).result.attr
   }
 

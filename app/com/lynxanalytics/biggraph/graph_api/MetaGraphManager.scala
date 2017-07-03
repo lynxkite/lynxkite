@@ -50,7 +50,7 @@ class MetaGraphManager(val repositoryPath: String) {
 
   def vertexSet(gUID: UUID): VertexSet = entities(gUID).asInstanceOf[VertexSet]
   def edgeBundle(gUID: UUID): EdgeBundle = entities(gUID).asInstanceOf[EdgeBundle]
-  def hybridEdgeBundle(gUID: UUID): HybridEdgeBundle = entities(gUID).asInstanceOf[HybridEdgeBundle]
+  def hybridBundle(gUID: UUID): HybridBundle = entities(gUID).asInstanceOf[HybridBundle]
   def attribute(gUID: UUID): Attribute[_] =
     entities(gUID).asInstanceOf[Attribute[_]]
   def attributeOf[T: TypeTag](gUID: UUID): Attribute[T] =
@@ -240,8 +240,8 @@ class MetaGraphManager(val repositoryPath: String) {
           .map(n => n -> vertexSet(inputs(n))).toMap,
         op.inputSig.edgeBundles
           .map(n => n -> edgeBundle(inputs(n))).toMap,
-        op.inputSig.hybridEdgeBundles
-          .map(n => n -> hybridEdgeBundle(inputs(n))).toMap,
+        op.inputSig.hybridBundles
+          .map(n => n -> hybridBundle(inputs(n))).toMap,
         op.inputSig.attributes
           .map(n => n -> attribute(inputs(n))).toMap,
         op.inputSig.scalars
