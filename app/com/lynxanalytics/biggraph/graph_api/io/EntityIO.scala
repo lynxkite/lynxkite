@@ -354,13 +354,17 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     val (lines, serialization) = rdd match {
       case sortedRDD: SortedRDD[ID, _] => targetDir(partitions).saveEntityRDD(sortedRDD, valueTypeTag)
       case hybridRDD: HybridRDD[ID, _] =>
-        val l1 = (targetDir(partitions) / "small_keys_rdd").saveEntityRDD(hybridRDD.smallKeysRDD, valueTypeTag)._1
-        (targetDir(partitions) / "larges").saveEntityRDD(sc.parallelize(hybridRDD.larges, 1), typeTag[Long])
-        val l2 = if (hybridRDD.isSkewed) {
-          (targetDir(partitions) / "large_keys_rdd").saveEntityRDD(hybridRDD.largeKeysRDD.get, valueTypeTag)._1
+        val linesSmallKeys = (targetDir(partitions) / "small_keys_rdd")
+          .saveEntityRDD(hybridRDD.smallKeysRDD, valueTypeTag)._1
+        (targetDir(partitions) / "larges")
+          .saveEntityRDD(sc.parallelize(hybridRDD.larges, 1), typeTag[Long])
+        val linesLargeKeys = if (hybridRDD.isSkewed) {
+          (targetDir(partitions) / "large_keys_rdd")
+            .saveEntityRDD(hybridRDD.largeKeysRDD.get, valueTypeTag)._1
         } else { 0L }
         (targetDir(partitions) / Success).create()
-        (l1 + l2, "hybrid")
+        (linesSmallKeys + linesLargeKeys, "hybrid")
+      case _ => throw new AssertionError(s"Wrong entity RDD type ${rdd.getClass}")
     }
     val metadata = EntityMetadata(lines, Some(serialization))
     metadata.write(partitionedPath.forWriting)
