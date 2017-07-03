@@ -25,8 +25,8 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     new PlotOperations(env),
     new VisualizationOperations(env))
 
-  override val atomicOperations = registries.map(_.operations).flatten.toMap
-  override val atomicCategories = registries.map(_.categories).flatten.toMap
+  override val atomicOperations = registries.flatMap(_.operations).toMap
+  override val atomicCategories = registries.flatMap(_.categories).toMap
 }
 
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
