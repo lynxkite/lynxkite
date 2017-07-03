@@ -21,6 +21,7 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
     new SubgraphOperations(env),
     new BuildSegmentationOperations(env),
     new UseSegmentationOperations(env),
+    new StructureOperations(env),
     new ExportOperations(env),
     new PlotOperations(env),
     new VisualizationOperations(env))
@@ -480,41 +481,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
-  register("Reverse edge direction", StructureOperations, new ProjectTransformation(_) {
-    def enabled = project.hasEdgeBundle
-    def apply() = {
-      val op = graph_operations.ReverseEdges()
-      val res = op(op.esAB, project.edgeBundle).result
-      project.pullBackEdges(
-        project.edgeBundle,
-        project.edgeAttributes.toIndexedSeq,
-        res.esBA,
-        res.injection)
-    }
-  })
-
-  register("Add reversed edges", StructureOperations, new ProjectTransformation(_) {
-    params += Param("distattr", "Distinguishing edge attribute")
-    def enabled = project.hasEdgeBundle
-    def apply() = {
-      val addIsNewAttr = params("distattr").nonEmpty
-
-      val rev = {
-        val op = graph_operations.AddReversedEdges(addIsNewAttr)
-        op(op.es, project.edgeBundle).result
-      }
-
-      project.pullBackEdges(
-        project.edgeBundle,
-        project.edgeAttributes.toIndexedSeq,
-        rev.esPlus,
-        rev.newToOriginal)
-      if (addIsNewAttr) {
-        project.edgeAttributes(params("distattr")) = rev.isNew
-      }
-    }
-  })
-
   register("Find vertex coloring", MetricsOperations, new ProjectTransformation(_) {
     params += Param("name", "Attribute name", defaultValue = "color")
     def enabled = project.hasEdgeBundle
@@ -841,16 +807,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         project.newVertexAttribute(params("output"), pos, s"($paramX, $paramY)" + help)
       }
     })
-
-  register("Replace with edge graph", StructureOperations, new ProjectTransformation(_) {
-    def enabled = project.hasEdgeBundle
-    def apply() = {
-      val op = graph_operations.EdgeGraph()
-      val g = op(op.es, project.edgeBundle).result
-      project.setVertexSet(g.newVS, idAttr = "id")
-      project.edgeBundle = g.newES
-    }
-  })
 
   register("Derive vertex attribute", VertexAttributesOperations, new ProjectTransformation(_) {
     params ++= List(
@@ -1370,105 +1326,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Split vertices", StructureOperations, new ProjectTransformation(_) {
-    params ++= List(
-      Choice("rep", "Repetition attribute", options = project.vertexAttrList[Double]),
-      Param("idattr", "ID attribute name", defaultValue = "new_id"),
-      Param("idx", "Index attribute name", defaultValue = "index"))
-
-    def enabled =
-      FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No Double vertex attributes")
-    def doSplit(doubleAttr: Attribute[Double]): graph_operations.SplitVertices.Output = {
-      val op = graph_operations.SplitVertices()
-      op(op.attr, doubleAttr.asLong).result
-    }
-    def apply() = {
-      val rep = params("rep")
-      val split = doSplit(project.vertexAttributes(rep).runtimeSafeCast[Double])
-
-      project.pullBack(split.belongsTo)
-      project.vertexAttributes(params("idx")) = split.indexAttr
-      project.newVertexAttribute(params("idattr"), project.vertexSet.idAttribute)
-    }
-  })
-
-  register("Split edges", StructureOperations, new ProjectTransformation(_) {
-    params ++= List(
-      Choice("rep", "Repetition attribute", options = project.edgeAttrList[Double]),
-      Param("idx", "Index attribute name", defaultValue = "index"))
-
-    def enabled =
-      FEStatus.assert(project.edgeAttrList[Double].nonEmpty, "No Double edge attributes")
-    def doSplit(doubleAttr: Attribute[Double]): graph_operations.SplitEdges.Output = {
-      val op = graph_operations.SplitEdges()
-      op(op.es, project.edgeBundle)(op.attr, doubleAttr.asLong).result
-    }
-    def apply() = {
-      val rep = params("rep")
-      val split = doSplit(project.edgeAttributes(rep).runtimeSafeCast[Double])
-
-      project.pullBackEdges(
-        project.edgeBundle, project.edgeAttributes.toIndexedSeq, split.newEdges, split.belongsTo)
-      project.edgeAttributes(params("idx")) = split.indexAttr
-    }
-  })
-
-  register("Merge vertices by attribute", StructureOperations, new ProjectTransformation(_) {
-    params += Choice("key", "Match by", options = project.vertexAttrList)
-    params ++= aggregateParams(project.vertexAttributes)
-    def enabled =
-      FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
-    def merge[T](attr: Attribute[T]): graph_operations.MergeVertices.Output = {
-      val op = graph_operations.MergeVertices[T]()
-      op(op.attr, attr).result
-    }
-    def apply() = {
-      val key = params("key")
-      val m = merge(project.vertexAttributes(key))
-      val oldVAttrs = project.vertexAttributes.toMap
-      val oldEdges = project.edgeBundle
-      val oldEAttrs = project.edgeAttributes.toMap
-      val oldSegmentations = project.viewer.segmentationMap
-      val oldBelongsTo = if (project.isSegmentation) project.asSegmentation.belongsTo else null
-      project.setVertexSet(m.segments, idAttr = "id")
-      for ((name, segViewer) <- oldSegmentations) {
-        val seg = project.segmentation(name)
-        seg.segmentationState = segViewer.segmentationState
-        val op = graph_operations.InducedEdgeBundle(induceDst = false)
-        seg.belongsTo = op(
-          op.srcMapping, m.belongsTo)(
-            op.edges, seg.belongsTo).result.induced
-      }
-      if (project.isSegmentation) {
-        val seg = project.asSegmentation
-        val op = graph_operations.InducedEdgeBundle(induceSrc = false)
-        seg.belongsTo = op(
-          op.dstMapping, m.belongsTo)(
-            op.edges, oldBelongsTo).result.induced
-      }
-      for ((attr, choice) <- parseAggregateParams(params)) {
-        val result = aggregateViaConnection(
-          m.belongsTo,
-          AttributeWithLocalAggregator(oldVAttrs(attr), choice))
-        project.newVertexAttribute(s"${attr}_${choice}", result)
-      }
-      // Automatically keep the key attribute.
-      project.vertexAttributes(key) = aggregateViaConnection(
-        m.belongsTo,
-        AttributeWithAggregator(oldVAttrs(key), "first"))
-      if (oldEdges != null) {
-        val edgeInduction = {
-          val op = graph_operations.InducedEdgeBundle()
-          op(op.srcMapping, m.belongsTo)(op.dstMapping, m.belongsTo)(op.edges, oldEdges).result
-        }
-        project.edgeBundle = edgeInduction.induced
-        for ((name, eAttr) <- oldEAttrs) {
-          project.edgeAttributes(name) = eAttr.pullVia(edgeInduction.embedding)
-        }
-      }
-    }
-  })
-
   private def mergeEdgesWithKey[T](edgesAsAttr: Attribute[(ID, ID)], keyAttr: Attribute[T]) = {
     val edgesAndKey: Attribute[((ID, ID), T)] = edgesAsAttr.join(keyAttr)
     val op = graph_operations.MergeVertices[((ID, ID), T)]()
@@ -1481,7 +1338,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   }
 
   // Common code for operations "merge parallel edges" and "merge parallel edges by key"
-  private def applyMergeParallelEdges(
+  protected def applyMergeParallelEdges(
     project: ProjectEditor, params: ParameterHolder, byKey: Boolean) = {
 
     val edgesAsAttr = {
@@ -1518,47 +1375,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           AttributeWithLocalAggregator(oldAttrs(key), "most_common"))
     }
   }
-
-  register("Merge parallel edges", StructureOperations, new ProjectTransformation(_) {
-    params ++= aggregateParams(project.edgeAttributes)
-    def enabled = project.hasEdgeBundle
-
-    def apply() = {
-      applyMergeParallelEdges(project, params, byKey = false)
-    }
-  })
-
-  register("Merge parallel edges by attribute", StructureOperations, new ProjectTransformation(_) {
-    params += Choice("key", "Merge by", options = project.edgeAttrList)
-    params ++= aggregateParams(project.edgeAttributes)
-    def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty,
-      "There must be at least one edge attribute")
-
-    def apply() = {
-      applyMergeParallelEdges(project, params, byKey = true)
-    }
-  })
-
-  register("Replace edges with triadic closure", StructureOperations, new ProjectTransformation(_) {
-    def enabled = project.hasVertexSet && project.hasEdgeBundle
-    def apply() = {
-      val op = graph_operations.ConcatenateBundlesMulti()
-      val result = op(op.edgesAB, project.edgeBundle)(
-        op.edgesBC, project.edgeBundle).result
-
-      // saving attributes and original edges
-      val origEdgeAttrs = project.edgeAttributes.toIndexedSeq
-
-      // new edges after closure
-      project.edgeBundle = result.edgesAC
-
-      // pulling old edge attributes
-      for ((name, attr) <- origEdgeAttrs) {
-        project.newEdgeAttribute("ab_" + name, attr.pullVia(result.projectionFirst))
-        project.newEdgeAttribute("bc_" + name, attr.pullVia(result.projectionSecond))
-      }
-    }
-  })
 
   register("Aggregate vertex attribute globally", GlobalOperations, new ProjectTransformation(_) {
     params += Param("prefix", "Generated name prefix")
