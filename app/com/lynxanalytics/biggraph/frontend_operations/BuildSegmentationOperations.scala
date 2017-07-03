@@ -1,4 +1,4 @@
-// Frontend operations for creating segmentations.
+// Frontend operations for creating segmentations and / or segmentation links.
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
