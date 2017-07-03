@@ -36,26 +36,9 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   implicit lazy val manager = env.metaGraphManager
   import Operation.Category
-  import Operation.Context
-  import Operation.Implicits._
 
   protected val projectInput = "project" // The default input name, just to avoid typos.
   protected val projectOutput = "project"
-  private val defaultIcon = "black_question_mark_ornament"
-
-  def register(
-    id: String,
-    category: Category,
-    factory: Context => ProjectTransformation): Unit = {
-    registerOp(id, defaultIcon, category, List(projectInput), List(projectOutput), factory)
-  }
-
-  def register(
-    id: String,
-    category: Category,
-    inputProjects: String*)(factory: Context => Operation): Unit = {
-    registerOp(id, defaultIcon, category, inputProjects.toList, List(projectOutput), factory)
-  }
 
   trait SegOp extends ProjectTransformation {
     protected def seg = project.asSegmentation
