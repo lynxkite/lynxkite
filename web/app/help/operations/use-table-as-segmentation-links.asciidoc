@@ -1,4 +1,4 @@
-### Import segmentation links
+### Use table as segmentation links
 
 Import the connection between the main project and this segmentation from a table.
 Each row in the table represents a connection between one base vertex and one segment.

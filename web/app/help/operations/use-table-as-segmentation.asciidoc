@@ -1,4 +1,4 @@
-### Import segmentation
+### Use table as segmentation
 
 Imports a segmentation from a table. The table must have a column identifying an existing vertex by
 a String attribute and another column that specifies the segment it belongs to.
