@@ -15,8 +15,8 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
   import Operation.Context
   import Operation.Implicits._
 
-  val ScalarOperations = Category("Scalars", "blue")
-  val defaultIcon = "glyphicon-globe"
+  val ScalarOperations = Category("Scalars", "blue", icon = "glyphicon-globe")
+  val defaultIcon = "s"
 
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
     registerOp(id, defaultIcon, ScalarOperations, List(projectOutput),
@@ -24,7 +24,7 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
   }
 
   def register(id: String, inputs: List[String])(factory: Context => ProjectOutputOperation): Unit = {
-    registerOp(id, defaultIcon, ScalarOperations, List(projectOutput),
+    registerOp(id, defaultIcon, ScalarOperations, inputs,
       List(projectOutput), factory)
   }
 

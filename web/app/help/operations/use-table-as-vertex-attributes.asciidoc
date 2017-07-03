@@ -1,4 +1,4 @@
-### Import vertex attributes
+### Use table as vertex attributes
 
 Imports vertex attributes for existing vertices from a table. This is
 useful when you already have vertices and just want to import one or more attributes.
