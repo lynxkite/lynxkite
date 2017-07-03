@@ -1,4 +1,4 @@
-### Import edge attributes
+### Use table as edge attributes
 
 Imports edge attributes for existing edges from a table. This is
 useful when you already have edges and just want to import one or more attributes.
