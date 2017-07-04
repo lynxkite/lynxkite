@@ -1,8 +1,6 @@
 // Frontend operations for projects.
 package com.lynxanalytics.biggraph.frontend_operations
 
-import java.util.UUID
-
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
@@ -3126,7 +3124,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         }
       }
 
-      class PathFinder(start: VertexSet, name: String) {
+      class PathFinder(start: VertexSet) {
         assert(start != null)
 
         private val pathTo = mutable.Map[VertexSet, BundleWrapper]()
@@ -3154,9 +3152,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
           if (hasMore) {
             level += 1
             val newPerimeterEdges = mutable.Set[BundleWrapper]()
-            println(s"Finder: $this level: $level")
             for (eb <- perimeterEdges) {
-              println(s"  perimeter edge: ${(eb)}")
               val v = eb.src
               if (!vertices.contains(v)) {
                 vertices.add(v)
@@ -3167,12 +3163,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
               }
             }
             perimeterEdges = newPerimeterEdges
-            for (v <- vertices) {
-              println(s"vertices now: ${(v)}")
-            }
-            for (e <- newPerimeterEdges) {
-              println(s"new eb: ${(e)}")
-            }
           }
         }
       }
@@ -3188,8 +3178,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         } else if (!leftSet.isDefined || !rightSet.isDefined) {
           None
         } else {
-          val leftFinder = new PathFinder(left.idSet.get, "left")
-          val rightFinder = new PathFinder(right.idSet.get, "right")
+          val leftFinder = new PathFinder(left.idSet.get)
+          val rightFinder = new PathFinder(right.idSet.get)
           var intersection = mutable.Set[VertexSet]()
           while ((leftFinder.hasMore || rightFinder.hasMore) && intersection.isEmpty) {
             leftFinder.nextStep()
@@ -3213,9 +3203,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       private val left = attributeEditor("a")
       private val right = attributeEditor("b")
 
-      println(s"left: ${left.idSet}  right: ${right.idSet}")
       val chain = computeChains(left.idSet, right.idSet)
-      println(s"Chain: $chain")
       private val compatible = chain.isDefined
 
       private def attributesAreAvailable = right.names.nonEmpty
@@ -3234,12 +3222,6 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       def enabled = FEStatus(compatible, "Left and right are not compatible")
 
       def apply() {
-        println(s"target: ${left.idSet.get}")
-        println(s"source: ${right.idSet.get}")
-        println(s"Chain up:")
-        chain.get.upChain.foreach(println)
-        println(s"Chain down:")
-        chain.get.downChain.foreach(println)
         if (attributesAreAvailable) {
           for (attrName <- splitParam("attrs")) {
             val attr = right.attributes(attrName)
