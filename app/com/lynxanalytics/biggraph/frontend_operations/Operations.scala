@@ -38,23 +38,29 @@ class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
 object Categories {
   import com.lynxanalytics.biggraph.controllers.Operation.Category
 
-  val ImportOperations = Category("Import", "green", icon = "glyphicon-folder-open", sortKey = "a")
-  val BuildGraphOperations = Category("Build Graph", "blue", sortKey = "b")
+  val ImportOperations = Category("Import", "green", icon = "glyphicon-import", sortKey = "a")
+  val BuildGraphOperations = Category("Build Graph", "blue",
+    sortKey = "b")
   val SubgraphOperations = Category("Subgraph", "blue", sortKey = "c")
-  val BuildSegmentationOperations = Category("Build segmentation", "blue", sortKey = "d")
+  val BuildSegmentationOperations = Category("Build segmentation", "blue",
+    icon = "glyphicon-th-large", sortKey = "d")
   val UseSegmentationOperations = Category("Use segmentation", "blue", sortKey = "e")
-  val StructureOperations = Category("Structure", "blue", sortKey = "f")
+  val StructureOperations = Category("Structure", "blue", icon = "glyphicon-asterisk",
+    sortKey = "f")
   val ScalarOperations = Category("Scalars", "blue", icon = "glyphicon-globe", sortKey = "g")
   val VertexAttributeOperations = Category("Vertex attributes", "blue", sortKey = "h")
   val EdgeAttributeOperations = Category("Edge attributes", "blue", sortKey = "i")
-  val AttributePropagationOperations = Category("Attribute propagation", "blue", sortKey = "j")
-  val GraphComputationOperations = Category("Graph computation", "blue", sortKey = "k")
-  val MachineLearningOperations = Category("Machine learning", "blue", sortKey = "l")
+  val AttributePropagationOperations = Category("Attribute propagation", "blue",
+    icon = "glyphicon-fullscreen", sortKey = "j")
+  val GraphComputationOperations = Category("Graph computation", "blue", icon = "glyphicon-stats",
+    sortKey = "k")
+  val MachineLearningOperations = Category("Machine learning", "blue", icon = "glyphicon-knight",
+    sortKey = "l")
   val WorkflowOperations = Category("Workflow", "blue", sortKey = "m")
-  val ManageProjectOperations = Category("Manage project", "blue", sortKey = "n")
+  val ManageProjectOperations = Category("Manage project", "blue", icon = "glyphicon-wrench", sortKey = "n")
   val VisualizationOperations = Category("Visualization operations", "blue", sortKey = "o")
-  val ExportOperations = Category("Export operations", "blue", icon = "glyphicon-folder-open", sortKey = "p")
-  val HiddenOperations = Category("Manage project", "blue", visible = false, sortKey = "q")
+  val ExportOperations = Category("Export operations", "blue", icon = "glyphicon-export", sortKey = "p")
+  val HiddenOperations = Category("Manage project", "yellow", visible = false, sortKey = "q")
 }
 
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
