@@ -16,13 +16,17 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
 
   val defaultIcon = "black_medium_square"
 
+  def register(id: String, icon: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
+    registerOp(id, icon, HiddenOperations, inputs, outputs, factory)
+  }
+
   def register(id: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
     registerOp(id, defaultIcon, HiddenOperations, inputs, outputs, factory)
   }
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
-  register("Anchor", List(), List())(new DecoratorOperation(_) {
+  register("Anchor", "anchor", List(), List())(new DecoratorOperation(_) {
     params += Code("description", "Description", language = "plain_text")
     params += Param("icon", "Icon URL")
     params += ParametersParam("parameters", "Parameters")
