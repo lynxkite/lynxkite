@@ -16,8 +16,6 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
 
   import Categories.EdgeAttributeOperations
 
-  val defaultIcon = "e"
-
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
     registerOp(id, defaultIcon, EdgeAttributeOperations, List(projectOutput),
       List(projectOutput), factory)

@@ -14,7 +14,6 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
   import Operation.Implicits._
 
   import Categories.GraphComputationOperations
-  val defaultIcon = "p"
 
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
     registerOp(id, defaultIcon, GraphComputationOperations, List(projectOutput),

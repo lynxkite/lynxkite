@@ -15,8 +15,6 @@ class UseSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   import Categories.UseSegmentationOperations
 
-  val defaultIcon = "hammer"
-
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
     registerOp(id, defaultIcon, UseSegmentationOperations, List(projectOutput), List(projectOutput), factory)
   }

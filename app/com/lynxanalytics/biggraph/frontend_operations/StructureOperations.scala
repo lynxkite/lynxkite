@@ -15,8 +15,6 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
 
   import Categories.StructureOperations
 
-  val defaultIcon = "house"
-
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
     registerOp(id, defaultIcon, StructureOperations, List(projectOutput), List(projectOutput), factory)
   }

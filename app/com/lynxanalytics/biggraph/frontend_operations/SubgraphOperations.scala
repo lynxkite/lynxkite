@@ -13,8 +13,6 @@ class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
 
   import Categories.SubgraphOperations
 
-  val defaultIcon = "hammer"
-
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
     registerOp(id, defaultIcon, SubgraphOperations, List(projectOutput), List(projectOutput), factory)
   }

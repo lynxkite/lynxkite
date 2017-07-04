@@ -13,8 +13,6 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
 
   import Categories.WorkflowOperations
 
-  val defaultIcon = "p"
-
   def register(id: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
     registerOp(id, defaultIcon, WorkflowOperations, inputs, outputs, factory)
   }

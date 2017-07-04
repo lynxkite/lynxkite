@@ -14,8 +14,6 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
 
   import Categories.BuildGraphOperations
 
-  val defaultIcon = "hammer"
-
   def register(id: String)(factory: Context => ProjectOutputOperation): Unit = {
     registerOp(id, defaultIcon, BuildGraphOperations, List(), List(projectOutput), factory)
   }

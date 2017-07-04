@@ -16,8 +16,6 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
 
   import Categories.ScalarOperations
 
-  val defaultIcon = "s"
-
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
     registerOp(id, defaultIcon, ScalarOperations, List(projectOutput),
       List(projectOutput), factory)

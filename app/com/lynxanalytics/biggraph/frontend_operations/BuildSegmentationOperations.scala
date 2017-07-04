@@ -16,8 +16,6 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
 
   import Categories.BuildSegmentationOperations
 
-  val defaultIcon = "hammer"
-
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
     registerOp(id, defaultIcon, BuildSegmentationOperations, List(projectOutput), List(projectOutput), factory)
   }
