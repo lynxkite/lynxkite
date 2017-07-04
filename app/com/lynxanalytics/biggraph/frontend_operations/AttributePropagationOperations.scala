@@ -12,8 +12,6 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
 
   import Categories.AttributePropagationOperations
 
-  val defaultIcon = "p"
-
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
     registerOp(id, defaultIcon, AttributePropagationOperations, List(projectOutput),
       List(projectOutput), factory)

@@ -14,8 +14,6 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   import Categories.MachineLearningOperations
 
-  val defaultIcon = "p"
-
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
     registerOp(id, defaultIcon, MachineLearningOperations, List(projectOutput),
       List(projectOutput), factory)

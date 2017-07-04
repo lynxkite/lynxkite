@@ -10,8 +10,6 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
 
   import Categories.ManageProjectOperations
 
-  val defaultIcon = "p"
-
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
     registerOp(id, defaultIcon, ManageProjectOperations, List(projectOutput),
       List(projectOutput), factory)

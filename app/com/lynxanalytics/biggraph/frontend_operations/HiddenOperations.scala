@@ -14,8 +14,6 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
 
   import Categories.HiddenOperations
 
-  val defaultIcon = "black_medium_square"
-
   def register(id: String, icon: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
     registerOp(id, icon, HiddenOperations, inputs, outputs, factory)
   }

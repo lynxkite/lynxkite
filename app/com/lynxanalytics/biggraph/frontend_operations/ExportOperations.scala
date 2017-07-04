@@ -8,12 +8,14 @@ import com.lynxanalytics.biggraph.controllers._
 class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   implicit lazy val manager = env.metaGraphManager
 
+  override val defaultIcon = "black_truck"
+
   import Operation.Context
 
   import Categories.ExportOperations
 
   def register(id: String)(factory: Context => ExportOperation): Unit = {
-    registerOp(id, "black_truck", ExportOperations, List("table"), List("exportResult"), factory)
+    registerOp(id, defaultIcon, ExportOperations, List("table"), List("exportResult"), factory)
   }
 
   import OperationParams._

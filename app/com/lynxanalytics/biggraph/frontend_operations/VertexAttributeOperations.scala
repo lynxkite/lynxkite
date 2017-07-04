@@ -16,8 +16,6 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   import Categories.VertexAttributeOperations
 
-  val defaultIcon = "v"
-
   def register(id: String)(factory: Context => ProjectTransformation): Unit = {
     registerOp(id, defaultIcon, VertexAttributeOperations, List(projectOutput),
       List(projectOutput), factory)
