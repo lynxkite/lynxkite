@@ -26,6 +26,8 @@ class ExportBoxTest extends OperationsTestBase {
 
   test("Export to CSV") {
     val path = "EXPORTTEST$/tmp/exportedCSV"
+    val exportTarget = HadoopFile(path)
+    exportTarget.deleteIfExists()
     val exportResult = importTestFile.box("Export to CSV", Map("path" -> path)).exportResult
     dataManager.get(exportResult)
     val importedAgain = importBox("Import CSV", Map(
@@ -35,19 +37,19 @@ class ExportBoxTest extends OperationsTestBase {
       box("Import vertices").project
     checkResult(importedAgain)
 
-    val exported = HadoopFile(path)
-    exported.delete()
+    exportTarget.delete()
   }
 
   test("Export to structured file (JSON)") {
     val path = "EXPORTTEST$/tmp/exportedJSON"
+    val exportTarget = HadoopFile(path)
+    exportTarget.deleteIfExists()
     val exportResult = importTestFile.box("Export to JSON", Map("path" -> path)).exportResult
     dataManager.get(exportResult)
     val importedAgain = importBox("Import JSON", Map("filename" -> path)).box("Import vertices").project
     checkResult(importedAgain)
 
-    val exported = HadoopFile(path)
-    exported.delete()
+    exportTarget.delete()
   }
 
   test("Export to JDBC") {
