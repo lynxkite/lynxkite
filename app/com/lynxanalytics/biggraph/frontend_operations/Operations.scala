@@ -1,6 +1,8 @@
 // Frontend operations for projects.
 package com.lynxanalytics.biggraph.frontend_operations
 
+import java.util.UUID
+
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
@@ -11,6 +13,8 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.model
 import play.api.libs.json
+
+import scala.collection.mutable
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
   override val atomicOperations =
@@ -3060,74 +3064,159 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         p
       }
 
-      class VertexCompatibilityChecker(broaderSet: Option[VertexSet],
-                                       narrowerSet: Option[VertexSet]) {
-        private lazy val manager = {
-          val m1 = broaderSet.get.source.manager
-          val m2 = narrowerSet.get.source.manager
-          assert(m1 == m2, s"Incompatible managers! $m1 != $m2")
-          m1
+      object BundleWrapper {
+        private def commonRequirements(eb: EdgeBundle): Boolean = {
+          (eb.properties.isIdPreserving
+            && eb.properties.isFunction
+            && eb.properties.isReversedFunction)
         }
-
-        lazy val equal: Boolean = {
-          if (!broaderSet.isDefined || !narrowerSet.isDefined) {
-            false
-          } else if (broaderSet.get == narrowerSet.get) {
-            true
-          } else {
-            false
-          }
-        }
-
-        private def compatibleBundle(eb: EdgeBundle) = {
+        def there(eb: EdgeBundle): Boolean = {
           // a -> a
           // b -> b
           // c
           // d -> d
           // e
-          eb.properties.isIdPreserving &&
-            eb.properties.isFunction &&
-            eb.properties.isReversedFunction &&
-            eb.properties.isReverseEverywhereDefined
+          commonRequirements(eb) && eb.properties.isReverseEverywhereDefined
         }
-
-        private def computeChainRec(currentChain: List[EdgeBundle], v: VertexSet): List[EdgeBundle] = {
-          val allBundlesWhoseDstIsV = manager.incomingBundles(v)
-          val compatibleBundles = allBundlesWhoseDstIsV.filter {
-            case eb =>
-              compatibleBundle(eb)
-          }
-          for (eb <- compatibleBundles) {
-            val extendedChain = currentChain :+ eb
-            if (eb.srcVertexSet == broaderSet.get) {
-              return extendedChain
-            }
-            val t = computeChainRec(extendedChain, eb.srcVertexSet)
-            if (t.nonEmpty) {
-              return t
+        def back(eb: EdgeBundle): Boolean = {
+          // a <- a
+          // b <- b
+          // c
+          // d <- d
+          // e
+          commonRequirements(eb) && eb.properties.isEverywhereDefined
+        }
+        def connectingEdges(v: VertexSet): Seq[BundleWrapper] = {
+          def containsReversedEb(bundles: Seq[EdgeBundle], eb: EdgeBundle): Boolean = {
+            !bundles.forall {
+              b =>
+                b.srcVertexSet != eb.dstVertexSet || b.dstVertexSet != eb.srcVertexSet
             }
           }
-          return List()
+
+          val incoming =
+            manager.incomingBundles(v).filter(there(_))
+          val outgoing =
+            manager.outgoingBundles(v).filter {
+              eb =>
+                back(eb) && !containsReversedEb(incoming, eb)
+            }
+          (incoming.toSet union outgoing.toSet).map(BundleWrapper(_)).toSeq
+        }
+      }
+
+      case class BundleWrapper(eb: EdgeBundle) {
+        private val fromSrcToDst = {
+          if (BundleWrapper.there(eb)) true
+          else if (BundleWrapper.back(eb)) false
+          else throw new AssertionError(s"Edge bundle $eb cannot be wrapped")
+        }
+        val src =
+          if (fromSrcToDst) eb.srcVertexSet else eb.dstVertexSet
+        val dst =
+          if (fromSrcToDst) eb.dstVertexSet else eb.srcVertexSet
+        private def short(s: VertexSet): String = s.gUID.toString.substring(0, 5)
+        override def toString = {
+          s"${short(src)} -> ${short(dst)} ($fromSrcToDst) $eb"
         }
 
-        lazy val chain: List[EdgeBundle] = {
-          if (equal) {
-            List()
+        def bundleForAttributePulling(upTowardsCommonAncestor: Boolean): EdgeBundle = {
+          if ((fromSrcToDst && upTowardsCommonAncestor) || (!fromSrcToDst && !upTowardsCommonAncestor)) eb
+          else graph_operations.ReverseEdges.run(eb)
+        }
+      }
+
+      class PathFinder(start: VertexSet, name: String) {
+        assert(start != null)
+
+        private val pathTo = mutable.Map[VertexSet, BundleWrapper]()
+        val dist = mutable.Map[VertexSet, Int]()
+        val vertices = mutable.Set[VertexSet](start)
+        private var perimeterEdges = mutable.Set[BundleWrapper]()
+        private var level = 0
+        BundleWrapper.connectingEdges(start).foreach(perimeterEdges.add(_))
+        pathTo(start) = null
+        dist(start) = level
+        def hasMore: Boolean = perimeterEdges.nonEmpty
+        def getChain(parentVertex: VertexSet): List[BundleWrapper] = {
+          val l = scala.collection.mutable.MutableList[BundleWrapper]()
+          var v = parentVertex
+          var eb = pathTo(parentVertex)
+          while (eb != null) {
+            assert(eb.src == v)
+            l += eb
+            v = eb.dst
+            eb = pathTo(v)
+          }
+          l.toList
+        }
+        def nextStep(): Unit = {
+          if (hasMore) {
+            level += 1
+            val newPerimeterEdges = mutable.Set[BundleWrapper]()
+            println(s"Finder: $this level: $level")
+            for (eb <- perimeterEdges) {
+              println(s"  perimeter edge: ${(eb)}")
+              val v = eb.src
+              if (!vertices.contains(v)) {
+                vertices.add(v)
+                dist(v) = level
+                pathTo(v) = eb
+                val newEdges = BundleWrapper.connectingEdges(v)
+                newEdges.foreach(newPerimeterEdges.add(_))
+              }
+            }
+            perimeterEdges = newPerimeterEdges
+            for (v <- vertices) {
+              println(s"vertices now: ${(v)}")
+            }
+            for (e <- newPerimeterEdges) {
+              println(s"new eb: ${(e)}")
+            }
+          }
+        }
+      }
+
+      // Wrapper class to represent path from source id set to common ancestor (upChain)
+      // and from common ancestor to target id set (downChain)
+      case class Chains(upChain: List[BundleWrapper], downChain: List[BundleWrapper])
+
+      def computeChains(leftSet: Option[VertexSet],
+                        rightSet: Option[VertexSet]): Option[Chains] = {
+        if (leftSet == rightSet) {
+          Some(Chains(List(), List()))
+        } else if (!leftSet.isDefined || !rightSet.isDefined) {
+          None
+        } else {
+          val leftFinder = new PathFinder(left.idSet.get, "left")
+          val rightFinder = new PathFinder(right.idSet.get, "right")
+          var intersection = mutable.Set[VertexSet]()
+          while ((leftFinder.hasMore || rightFinder.hasMore) && intersection.isEmpty) {
+            leftFinder.nextStep()
+            rightFinder.nextStep()
+            intersection = leftFinder.vertices & rightFinder.vertices
+          }
+          if (intersection.isEmpty) {
+            None
           } else {
-            computeChainRec(List(), narrowerSet.get)
+            val bestParentVertex =
+              intersection.toSeq.sortBy {
+                v => leftFinder.dist(v) + rightFinder.dist(v)
+              }.head
+            val upChain = rightFinder.getChain(bestParentVertex).reverse
+            val downChain = leftFinder.getChain(bestParentVertex)
+            Some(Chains(upChain, downChain))
           }
-        }
-
-        lazy val compatible: Boolean = {
-          equal || chain.nonEmpty
         }
       }
 
       private val left = attributeEditor("a")
       private val right = attributeEditor("b")
 
-      private val compatibilityChecker = new VertexCompatibilityChecker(left.idSet, right.idSet)
-      private val compatible = compatibilityChecker.compatible
+      println(s"left: ${left.idSet}  right: ${right.idSet}")
+      val chain = computeChains(left.idSet, right.idSet)
+      println(s"Chain: $chain")
+      private val compatible = chain.isDefined
 
       private def attributesAreAvailable = right.names.nonEmpty
       private def segmentationsAreAvailable = {
@@ -3145,13 +3234,29 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       def enabled = FEStatus(compatible, "Left and right are not compatible")
 
       def apply() {
+        println(s"target: ${left.idSet.get}")
+        println(s"source: ${right.idSet.get}")
+        println(s"Chain up:")
+        chain.get.upChain.foreach(println)
+        println(s"Chain down:")
+        chain.get.downChain.foreach(println)
         if (attributesAreAvailable) {
           for (attrName <- splitParam("attrs")) {
             val attr = right.attributes(attrName)
             val note = right.getElementNote(attrName)
+            val attrCommonAncestor =
+              chain.get.upChain.foldLeft(attr) {
+                (a, b) =>
+                  val eb = b.bundleForAttributePulling(upTowardsCommonAncestor = true)
+                  graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, eb)
+              }
             val newAttr =
-              compatibilityChecker.chain.foldLeft(attr)((a, b) =>
-                graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, b))
+              chain.get.downChain.foldLeft(attrCommonAncestor) {
+                (a, b) =>
+                  val eb = b.bundleForAttributePulling(upTowardsCommonAncestor = false)
+                  graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, eb)
+              }
+
             left.newAttribute(attrName, newAttr, note)
           }
         }
