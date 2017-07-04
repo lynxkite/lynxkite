@@ -1,8 +1,10 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import org.apache.spark
 
 class JoinTest extends OperationsTestBase {
+
   test("Simple vertex attribute join works") {
     val root = box("Create example graph")
     val right = root
@@ -129,6 +131,74 @@ class JoinTest extends OperationsTestBase {
     assert(project.vertexAttributes("ten").rdd.collect.toMap.values.toSeq == Seq(10))
     assert(project.vertexAttributes("age").rdd.collect.toMap.values.toSeq
       .asInstanceOf[Seq[Double]].sorted == Seq(2.0, 18.2, 20.3, 50.3))
+  }
+
+  test("Complex test") {
+
+    val root =
+      box("Create vertices", Map("size" -> "10"))
+        .box("Add constant vertex attribute",
+          Map("name" -> "const1", "value" -> "1", "type" -> "Double"))
+        .box("Connect vertices on attribute", Map("fromAttr" -> "const1", "toAttr" -> "const1"))
+        .box("Add random vertex attribute",
+          Map(
+            "dist" -> "Standard Normal",
+            "name" -> "rnd",
+            "seed" -> "1474343267"))
+        .box("Add rank attribute",
+          Map(
+            "rankattr" -> "ranking", "keyattr" -> "rnd", "order" -> "ascending"))
+    // Now split, filter, edges to vertices, and then filter again.
+    val source = root
+      .box("Derive edge attribute",
+        Map("type" -> "Double", "output" -> "keep1",
+          "expr" -> "src$ranking % 2 === dst$ranking % 2"))
+      .box("Filter by attributes",
+        Map("filterva_const1" -> "",
+          "filterva_rnd" -> "",
+          "filterva_ranking" -> "",
+          "filterea_keep1" -> ">0.5"))
+      .box("Take edges as vertices")
+      .box("Derive vertex attribute",
+        Map("type" -> "Double", "output" -> "keep2",
+          "expr" -> "dst_ranking < src_ranking"))
+      .box("Filter by attributes",
+        Map(
+          "filterva_dst_ranking" -> "",
+          "filterva_src_ranking" -> "",
+          "filterva_dst_const1" -> "",
+          "filterva_src_const1" -> "",
+          "filterva_dst_rnd" -> "",
+          "filterva_src_rnd" -> "",
+          "filterva_edge_keep1" -> "",
+          "filterva_keep2" -> ">0.5"
+        )
+      )
+      .box("Derive vertex attribute",
+        Map("type" -> "String", "output" -> "newattr",
+          "expr" -> "'' + dst_ranking + '_' + src_ranking"))
+    // The target should also undergo some filtering:
+    val target = root
+      .box("Filter by attributes",
+        Map("filterva_const1" -> "",
+          "filterva_rnd" -> "",
+          "filterva_ranking" -> "< 8"))
+      .box("Filter by attributes",
+        Map("filterva_const1" -> "",
+          "filterva_rnd" -> "",
+          "filterva_ranking" -> "> 2"))
+    val project = box("Join projects",
+      Map(
+        "apply_to_a" -> "!edges",
+        "apply_to_b" -> "",
+        "attrs" -> "newattr"
+      ), Seq(target, source)
+    ).project
+
+    val newEdgeAttributes = project.edgeAttributes("newattr")
+      .rdd.collect.toMap.values.toList.map(_.asInstanceOf[String]).sorted
+    assert(newEdgeAttributes == List("3_5", "3_7", "4_6", "5_7"))
+
   }
 
 }
