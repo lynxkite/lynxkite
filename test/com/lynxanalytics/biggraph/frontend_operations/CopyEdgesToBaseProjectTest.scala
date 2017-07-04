@@ -6,9 +6,9 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 class CopyEdgesToBaseProjectTest extends OperationsTestBase {
   test("Copy edges to base project") {
     val project = box("Create vertices", Map("size" -> "5"))
-      .box("Copy graph into a segmentation", Map("name" -> "copy"))
+      .box("Use base project as segmentation", Map("name" -> "copy"))
       .box(
-        "Create random edge bundle",
+        "Create random edges",
         Map("degree" -> "5", "seed" -> "0", "apply_to_project" -> "|copy"))
       .box(
         "Add constant edge attribute",

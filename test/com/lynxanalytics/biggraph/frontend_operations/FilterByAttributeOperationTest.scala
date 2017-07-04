@@ -12,7 +12,7 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
       val sizeForTwoPartitions = 3
       val project = box("Create vertices",
         Map("size" -> sizeForTwoPartitions.toString))
-        .box("Create random edge bundle",
+        .box("Create random edges",
           Map("degree" -> "2.0", "seed" -> "42"))
         .box("Add constant edge attribute",
           Map("name" -> "e", "value" -> "0.0", "type" -> "Double"))

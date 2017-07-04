@@ -289,8 +289,6 @@ include::import-jdbc.asciidoc[]
 
 include::import-json.asciidoc[]
 
-include::import-metagraph.asciidoc[]
-
 include::import-orc.asciidoc[]
 
 include::import-parquet.asciidoc[]
@@ -404,6 +402,8 @@ include::train-a-logistic-regression-model.asciidoc[]
 include::train-linear-regression-model.asciidoc[]
 
 include::use-base-project-as-segmentation.asciidoc[]
+
+include::use-metagraph-as-graph.asciidoc[]
 
 include::use-project-as-segmentation.asciidoc[]
 
