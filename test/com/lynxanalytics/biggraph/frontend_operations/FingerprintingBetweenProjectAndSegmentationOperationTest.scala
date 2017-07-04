@@ -8,9 +8,9 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 class FingerprintingBetweenProjectAndSegmentationOperationTest extends OperationsTestBase {
   test("Fingerprinting between project and segmentation") {
     val project = box("Create example graph")
-      .box("Import project as segmentation", Map(
+      .box("Use project as segmentation", Map(
         "name" -> "eg2"), Seq(box("Create example graph")))
-      .box("Import segmentation links", Map(
+      .box("Use table as segmentation links", Map(
         "apply_to_project" -> "|eg2",
         "base_id_attr" -> "name",
         "base_id_column" -> "src",
@@ -38,7 +38,7 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
   }
 
   test("Fingerprinting between project and segmentation by attribute") {
-    val other = box("Import vertices and edges from a single table", Map(
+    val other = box("Use table as graph", Map(
       "src" -> "src",
       "dst" -> "dst"), Seq(importCSV("fingerprint-edges-2.csv")))
       .box("Aggregate edge attribute to vertices", Map(
@@ -48,10 +48,10 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       .box("Rename vertex attribute", Map(
         "before" -> "src_link_most_common",
         "after" -> "link"))
-    val golden = box("Import vertices and edges from a single table", Map(
+    val golden = box("Use table as graph", Map(
       "src" -> "src",
       "dst" -> "dst"), Seq(importCSV("fingerprint-edges-1.csv")))
-      .box("Import project as segmentation", Map(
+      .box("Use project as segmentation", Map(
         "name" -> "other"), Seq(other))
       .box("Define segmentation links from matching attributes", Map(
         "apply_to_project" -> "|other",

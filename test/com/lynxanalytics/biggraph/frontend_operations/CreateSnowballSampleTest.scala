@@ -25,7 +25,7 @@ class CreateSnowballSampleTest extends OperationsTestBase {
 
   test("Snowball sample with small graph (1000 vertices, ratio=0.1)") {
     val project = box("Create vertices", Map("size" -> "1000"))
-      .box("Create random edge bundle", Map("degree" -> "10.0", "seed" -> "12321"))
+      .box("Create random edges", Map("degree" -> "10.0", "seed" -> "12321"))
       .box("Create snowball sample",
         Map("ratio" -> "0.1", "radius" -> "0", "seed" -> "123454321", "attrName" -> "distance_from_start_point")
       )

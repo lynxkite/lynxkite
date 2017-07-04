@@ -10,7 +10,7 @@ class JoinTest extends OperationsTestBase {
         "Add constant vertex attribute",
         Map("name" -> "seven", "value" -> "7", "type" -> "Double"))
     val left = root
-    val project = box("Join projects", Map("attrs" -> "seven"), Seq(left, right)).project
+    val project = box("Project rejoin", Map("attrs" -> "seven"), Seq(left, right)).project
 
     val values = project.vertexAttributes("seven").rdd.collect.toMap.values.toSeq
 
@@ -25,7 +25,7 @@ class JoinTest extends OperationsTestBase {
         Map("name" -> "eight", "value" -> "8", "type" -> "Double"))
     val left = root
     val project = box(
-      "Join projects",
+      "Project rejoin",
       Map(
         "apply_to_a" -> "!edges",
         "apply_to_b" -> "!edges",
@@ -49,7 +49,7 @@ class JoinTest extends OperationsTestBase {
           "overlap" -> "no"
         ))
       .box(
-        "Create random edge bundle",
+        "Create random edges",
         Map(
           "apply_to_project" -> "|bucketing",
           "degree" -> "10",
@@ -62,7 +62,7 @@ class JoinTest extends OperationsTestBase {
           "name" -> "ten",
           "value" -> "10",
           "type" -> "Double"))
-    val project = box("Join projects",
+    val project = box("Project rejoin",
       Map(
         "apply_to_a" -> "",
         "apply_to_b" -> "",
@@ -84,7 +84,7 @@ class JoinTest extends OperationsTestBase {
         "Take edges as vertices",
         Map())
 
-    val project = box("Join projects",
+    val project = box("Project rejoin",
       Map(
         "apply_to_a" -> "!edges",
         "apply_to_b" -> "",

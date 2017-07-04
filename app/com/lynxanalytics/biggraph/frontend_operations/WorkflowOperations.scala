@@ -41,7 +41,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       override def summary = s"Output ${params("name")}"
     })
 
-  register("Project rejoin", List("a"), List("b"))(
+  register("Project rejoin", List("a", "b"), List(projectOutput))(
     new ProjectOutputOperation(_) {
 
       trait AttributeEditor {
@@ -173,7 +173,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     }
   )
 
-  register("Project union", List("a"), List("b"))(new ProjectOutputOperation(_) {
+  register("Project union", List("a", "b"), List(projectOutput))(new ProjectOutputOperation(_) {
     override lazy val project = projectInput("a")
     lazy val other = projectInput("b")
     params += Param("id_attr", "ID attribute name", defaultValue = "new_id")

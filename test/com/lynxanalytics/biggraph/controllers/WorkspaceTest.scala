@@ -146,7 +146,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         Map("output" -> "dst", "type" -> "String", "expr" -> "ordinal == 0 ? 'Eve' : 'Bob'"),
         0, 0, Map("project" -> srcs.output("project")))
       val combine = Box(
-        "combine", "Import edges for existing vertices",
+        "combine", "Use table as edges",
         Map("attr" -> "name", "src" -> "src", "dst" -> "dst"), 0, 0,
         Map("project" -> eg.output("project"), "edges" -> dsts.output("project")))
       val ws = Workspace.from(eg, blanks, convert, srcs, dsts, combine)
@@ -240,7 +240,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   test("non-circular dependencies (#5971)") {
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val imp = Box(
-      "imp", "Import segmentation", Map(
+      "imp", "Use table as segmentation", Map(
         "name" -> "self", "base_id_attr" -> "name",
         "base_id_column" -> "name", "seg_id_column" -> "name"), 0, 0,
       Map("project" -> eg.output("project"), "segmentation" -> eg.output("project")))

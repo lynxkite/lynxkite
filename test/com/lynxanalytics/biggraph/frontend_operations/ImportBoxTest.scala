@@ -19,7 +19,7 @@ class ImportBoxTest extends OperationsTestBase {
       "columns" -> columns.mkString(","),
       "infer" -> (if (infer) "yes" else "no"),
       "limit" -> limit.map(_.toString).getOrElse("")))
-      .box("Import vertices")
+      .box("Use table as vertices")
       .project
   }
 
@@ -93,7 +93,7 @@ class ImportBoxTest extends OperationsTestBase {
   }
 
   def checkSqliteSubscribers(box: TestBox) = {
-    val p = box.box("Import vertices", Map("id_attr" -> "new_id")).project
+    val p = box.box("Use table as vertices", Map("id_attr" -> "new_id")).project
     assert(vattr[String](p, "n") == Seq("A", "B", "C", "D"))
     assert(vattr[Long](p, "id") == Seq(1, 2, 3, 4, 5))
     assert(vattr[String](p, "name") == Seq("Beata", "Daniel", "Felix", "Oliver"))
@@ -167,7 +167,7 @@ class ImportBoxTest extends OperationsTestBase {
   }
 
   def checkSqliteNonConventionalTable(box: TestBox) = {
-    val p = box.box("Import vertices").project
+    val p = box.box("Use table as vertices").project
     assert(vattr[Long](p, "id") == Seq(1L))
     assert(vattr[Long](p, "colname with space") == Seq(1L))
     assert(vattr[String](p, "a") == Seq("x"))
