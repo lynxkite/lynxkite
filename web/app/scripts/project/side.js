@@ -753,5 +753,5 @@ angular.module('biggraph')
       return this.applyOp('Set-' + kind + '-icon', { name: name, icon: icon });
     };
 
-    return { Side: Side, defaultSideState: defaultSideState };
+    return { Side: Side };
   });
