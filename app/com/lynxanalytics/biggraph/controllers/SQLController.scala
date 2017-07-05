@@ -234,19 +234,20 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   // - snapshots and subdirs in directories
   // - segmentations and implicit tables of a project kind snapshot
   // - columns of a table kind snapshot
-  def getTableBrowserNodes(user: serving.User, request: TableBrowserNodeRequest) = async[TableBrowserNodeResponse] {
-    val pathParts = SubProject.splitPipedPath(request.path)
-    val entry = DirectoryEntry.fromName(pathParts.head)
-    entry.assertReadAllowedFrom(user)
-    if (entry.isDirectory) {
-      getDirectory(user, entry.asDirectory, request.query)
-    } else if (entry.isSnapshot) {
-      getSnapshot(user, entry.asSnapshotFrame, pathParts.tail)
-    } else {
-      throw new AssertionError(
-        s"Table browser nodes are only available for snapshots and directories (${entry.path}).")
+  def getTableBrowserNodes(user: serving.User, request: TableBrowserNodeRequest): TableBrowserNodeResponse =
+    metaManager.synchronized {
+      val pathParts = SubProject.splitPipedPath(request.path)
+      val entry = DirectoryEntry.fromName(pathParts.head)
+      entry.assertReadAllowedFrom(user)
+      if (entry.isDirectory) {
+        getDirectory(user, entry.asDirectory, request.query)
+      } else if (entry.isSnapshot) {
+        getSnapshot(user, entry.asSnapshotFrame, pathParts.tail)
+      } else {
+        throw new AssertionError(
+          s"Table browser nodes are only available for snapshots and directories (${entry.path}).")
+      }
     }
-  }
 
   private def getDirectory(
     user: serving.User,
@@ -267,7 +268,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
         TableBrowserNode(
           absolutePath = frame.path.toString,
           name = frame.path.name.name,
-          objectType = frame.objectType
+          objectType = getObjectType(frame)
         )
       }
     ).toList)
@@ -330,6 +331,14 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
       })
   }
 
+  private def getObjectType(frame: ObjectFrame): String = {
+    if (frame.isSnapshot) {
+      frame.asSnapshotFrame.getState().kind
+    } else {
+      frame.objectType
+    }
+  }
+
   def getTableColumns(frame: ObjectFrame, tablePath: Seq[String]): TableBrowserNodeResponse = {
     ??? // TODO: Do it for snapshots instead.
   }
@@ -352,7 +361,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   // TODO: Remove code duplication
-  def getTableSample(table: Table, sampleRows: Int = 10): GetTableOutputResponse = {
+  def getTableSample(table: Table, sampleRows: Int = 10) = async[GetTableOutputResponse] {
     val columns = table.schema.toList.map { field =>
       field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
     }

@@ -36,7 +36,7 @@ instead of ng-model="sql" -->
       class="btn btn-primary"
       id="toggle-table-browser"
       ng-click="showTableBrowser = !showTableBrowser">
-        Tables {{showTableBrowser ? '&#9204;' : '&#9205;'}}
+        Tables <span class="glyphicon glyphicon-triangle-{{showTableBrowser ? 'left' : 'right'}}"></span>
     </button>
   </div>
 
@@ -217,6 +217,7 @@ instead of ng-model="sql" -->
 <table-browser
     project-state="side.state"
     directory="directory"
+    editor="sqlEditor"
     ng-if="showTableBrowser">
 </table-browser>
 

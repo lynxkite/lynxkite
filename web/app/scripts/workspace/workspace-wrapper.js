@@ -171,17 +171,23 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
           });
       }
     },
-
-    loadWorkspace: function() {
+    _lastLoadRequest: undefined,
+    _requestInvalidated: false,
+    loadWorkspace: function(workspaceStateRequest) {
       var that = this;
       if (!this._boxCatalogMap) { // Need to load catalog first.
-        this._updateBoxCatalog().then(function() { that.loadWorkspace(); });
+        this._updateBoxCatalog().then(function() { that.loadWorkspace(workspaceStateRequest); });
         return;
       }
-      util.nocache('/ajax/getWorkspace', this.ref())
+      var request = workspaceStateRequest || util.nocache('/ajax/getWorkspace', this.ref());
+      this._lastLoadRequest = request;
+      this._requestInvalidated = false;
+      request
         .then(
           function onSuccess(response) {
-            that._init(response);
+            if (request === that._lastLoadRequest && !that._requestInvalidated) {
+              that._init(response);
+            }
           },
           function onError(error) {
             util.error('Cannot load workspace: ' + error.data);
@@ -193,14 +199,8 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
 
     saveWorkspace: function() {
       var that = this;
-      util.post(
-        '/ajax/setWorkspace',
-        {
-          name: this.name,
-          workspace: that.state,
-        }).finally(
-          // Reload workspace both in error and success cases.
-          function() { that.loadWorkspace(); });
+      that.loadWorkspace(
+        util.post('/ajax/setWorkspace', { reference: that.ref(), workspace: that.state }));
     },
 
     getUniqueId: function(operationId) {
@@ -384,7 +384,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
           var oldInputId = oldBox.inputs[key].boxId;
           if (mapping.hasOwnProperty(oldInputId)) {
             var newInput = mapping[oldInputId];
-            newBox.inputs[key] = { boxId: newInput.id, id: key };
+            newBox.inputs[key] = { boxId: newInput.id, id: oldBox.inputs[key].id };
           }
         }
       }
@@ -415,15 +415,13 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     undo: function() {
       if (!this.canUndo()) { return; }
       var that = this;
-      util.post('/ajax/undoWorkspace', { name: this.name })
-        .then(function() { that.loadWorkspace(); });
+      that.loadWorkspace(util.post('/ajax/undoWorkspace', that.ref()));
     },
 
     redo: function() {
       if (!this.canRedo()) { return; }
       var that = this;
-      util.post('/ajax/redoWorkspace', { name: this.name })
-        .then(function() { that.loadWorkspace(); });
+      that.loadWorkspace(util.post('/ajax/redoWorkspace', that.ref()));
     },
 
     saveAsCustomBox: function(ids, name, description) {
@@ -582,7 +580,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
           name: name,
         }).then(function success() {
           return util.post('/ajax/setWorkspace', {
-            name: name,
+            reference: { top: name, customBoxStack: [] },
             workspace: { boxes: boxes },
           });
         }).then(function success() {

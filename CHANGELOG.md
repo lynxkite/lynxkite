@@ -4,15 +4,26 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 # Changes
 
-### 2.0
+### master
+
+ - Upgraded to _Apache Spark 2.1.1_ to get the fix for SPARK-19857.
+
+### 2.0-beta-3
+
+ - _Add rank attribute_ can be used on String attributes.
+
+### 2.0-beta-1
 
  - Replaced LynxKite projects with more powerful and flexible workspaces. Workspaces allow you to
-   focus on your computation instead of your data by editing a network of computations directly.
+   express full workflows, structure your work, re-use components, and easily navigate your
+   experiments.
+ - LynxKite 2.0 is incompatible with the 1.x series in the sense that 1.x instances can only be
+   upgraded to 2.0 with the loss of all LynxKite state. (External data, such as Parquet files on
+   HDFS, would survive.)
+ - The remote API is temporarily not available.
  - Renamed several operations to have uniform imperative names. E.g. _"Example graph"_ became
    _"Create example graph"_.
  - New operation _"Segment by Vector attribute"_ is added.
-
-### master
 
 ### 1.14.0
 

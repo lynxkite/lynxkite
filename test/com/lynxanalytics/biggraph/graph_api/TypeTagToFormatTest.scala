@@ -46,17 +46,17 @@ class TypeTagToFormatTest extends FunSuite {
         Some("sampled"),
         "svg",
         UIFilterStatus(Map(), Map()),
-        "4",
+        4,
         Some(false),
         Some(false),
         UIAxisOptions(Map(), Map()),
-        "1",
+        1,
         Map(),
-        UIAnimation(false, "neutral", "0"),
+        UIAnimation(false, "neutral", 0),
         None,
         Some(UICenterRequest(1, List(), None)),
         Some(false),
-        Some("42"))
+        Some(42))
     testTag(uiStatus)
   }
 

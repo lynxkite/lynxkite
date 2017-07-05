@@ -9,6 +9,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
       directory: '=',
       projectState: '=',
       box: '=',  // Set box for table browser in the workspace.
+      editor: '=',
     },
     templateUrl: 'scripts/sql/table-browser.html',
     link: function(scope) {
@@ -146,7 +147,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
                   srcList[i].columnType);
               }
             }, function(error) {
-              that.error = error.data;
+              that.error = util.responseToErrorMessage(error);
             });
           },
 
@@ -163,6 +164,14 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
               if (this.list === undefined) {
                 this.fetchList();
               }
+            }
+          },
+
+          insertIntoEditor: function() {
+            if (scope.editor) {
+              scope.editor.session.insert(
+                scope.editor.getCursorPosition(),
+                this.getDraggableText(scope.fullyQualifyNames));
             }
           },
         };

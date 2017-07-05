@@ -31,7 +31,6 @@ angular.module('biggraph')
         scope.plainParamValues = {};
         scope.parametricParamValues = {};
         scope.parametricFlags = {};
-        scope.showTableBrowser = true;
 
         scope.loadBoxMeta = function(boxId) {
           if (!scope.workspace) {
@@ -71,7 +70,7 @@ angular.module('biggraph')
           onBlurNow();
           scope.box = undefined;
           scope.boxMeta = undefined;
-          scope.error = error.data;
+          scope.error = util.responseToErrorMessage(error);
         };
 
         function outputStatesDiffer(box1, box2) {

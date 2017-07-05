@@ -213,6 +213,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         sample.size <= request.maxSize,
         s"The full graph is too large to display (larger than ${request.maxSize}).")
       sample
+    } else if (request.centralVertexIds == Seq("auto")) {
+      // Pick one center.
+      val op = graph_operations.SampleVertices(1)
+      op(op.vs, filtered).result.sample.value
     } else {
       request.centralVertexIds.map(_.toLong)
     }
@@ -221,7 +225,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
       dataManager.cache(smearBundle)
       val edgesAndNeighbors = edgesAndNeighborsMapping(smearBundle, sampled = false)
-      val nop = graph_operations.ComputeVertexNeighborhoodFromEdgesAndNeighbors(
+      val nop = graph_operations.ComputeVertexNeighborhood(
         centers, request.radius, request.maxSize)
       val nopres = nop(
         nop.vertices, vertexSet)(

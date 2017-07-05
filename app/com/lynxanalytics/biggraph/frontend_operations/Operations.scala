@@ -15,13 +15,16 @@ import play.api.libs.json
 import scala.collection.mutable
 
 class Operations(env: SparkFreeEnvironment) extends OperationRepository(env) {
-  override val atomicOperations =
-    new ProjectOperations(env).operations.toMap ++
-      new MetaOperations(env).operations.toMap ++
-      new ImportOperations(env).operations.toMap ++
-      new ExportOperations(env).operations.toMap ++
-      new PlotOperations(env).operations.toMap ++
-      new VisualizationOperations(env).operations.toMap
+  val registries = Seq(
+    new ProjectOperations(env),
+    new MetaOperations(env),
+    new ImportOperations(env),
+    new ExportOperations(env),
+    new PlotOperations(env),
+    new VisualizationOperations(env))
+
+  override val atomicOperations = registries.map(_.operations).flatten.toMap
+  override val atomicCategories = registries.map(_.categories).flatten.toMap
 }
 
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
@@ -56,22 +59,26 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   }
 
   // Categories
-  val SpecialtyOperations = Category("Specialty operations", "green", icon = "book")
+  val SpecialtyOperations = Category("Specialty operations", "green", icon = "glyphicon-book")
   val EdgeAttributesOperations =
     Category("Edge attribute operations", "blue", sortKey = "Attribute, edge")
   val VertexAttributesOperations =
     Category("Vertex attribute operations", "blue", sortKey = "Attribute, vertex")
-  val GlobalOperations = Category("Global operations", "magenta", icon = "globe")
-  val ImportOperations = Category("Import operations", "yellow", icon = "import")
-  val MetricsOperations = Category("Graph metrics", "green", icon = "stats")
-  val PropagationOperations = Category("Propagation operations", "green", icon = "fullscreen")
+  val GlobalOperations = Category("Global operations", "magenta", icon = "glyphicon-globe")
+  val ImportOperations = Category("Import operations", "yellow", icon = "glyphicon-import")
+  val MetricsOperations = Category("Graph metrics", "green", icon = "glyphicon-stats")
+  val PropagationOperations =
+    Category("Propagation operations", "green", icon = "glyphicon-fullscreen")
   val HiddenOperations = Category("Hidden operations", "black", visible = false)
   val DeprecatedOperations =
-    Category("Deprecated operations", "red", deprecated = true, icon = "remove-sign")
-  val CreateSegmentationOperations = Category("Create segmentation", "green", icon = "th-large")
-  val StructureOperations = Category("Structure operations", "pink", icon = "asterisk")
-  val MachineLearningOperations = Category("Machine learning operations", "pink ", icon = "knight")
-  val UtilityOperations = Category("Utility operations", "green", icon = "wrench", sortKey = "zz")
+    Category("Deprecated operations", "red", visible = false, icon = "glyphicon-remove-sign")
+  val CreateSegmentationOperations =
+    Category("Create segmentation", "green", icon = "glyphicon-th-large")
+  val StructureOperations = Category("Structure operations", "pink", icon = "glyphicon-asterisk")
+  val MachineLearningOperations =
+    Category("Machine learning operations", "pink ", icon = "glyphicon-knight")
+  val UtilityOperations =
+    Category("Utility operations", "green", icon = "glyphicon-wrench", sortKey = "zz")
 
   import OperationParams._
 
@@ -1286,13 +1293,17 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   })
 
   register("Add rank attribute", VertexAttributesOperations, new ProjectTransformation(_) {
+    def attrs = (
+      project.vertexAttrList[String] ++
+      project.vertexAttrList[Double] ++
+      project.vertexAttrList[Long] ++
+      project.vertexAttrList[Int]).sortBy(_.title)
     params ++= List(
       Param("rankattr", "Rank attribute name", defaultValue = "ranking"),
-      Choice("keyattr", "Key attribute name", options = project.vertexAttrList[Double]),
+      Choice("keyattr", "Key attribute name", options = attrs),
       Choice("order", "Order", options = FEOption.list("ascending", "descending")))
 
-    def enabled = FEStatus.assert(
-      project.vertexAttrList[Double].nonEmpty, "No numeric (Double) vertex attributes")
+    def enabled = FEStatus.assert(attrs.nonEmpty, "No sortable vertex attributes")
     override def summary = {
       val name = params("keyattr")
       s"Add rank attribute for '$name'"
@@ -1301,12 +1312,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val keyAttr = params("keyattr")
       val rankAttr = params("rankattr")
       val ascending = params("order") == "ascending"
-      assert(keyAttr.nonEmpty, "Please set a key attribute name.")
       assert(rankAttr.nonEmpty, "Please set a name for the rank attribute")
-      val op = graph_operations.AddRankingAttributeDouble(ascending)
-      val sortKey = project.vertexAttributes(keyAttr).runtimeSafeCast[Double]
-      project.newVertexAttribute(
-        rankAttr, op(op.sortKey, sortKey).result.ordinal.asDouble, s"rank by $keyAttr" + help)
+      val sortKey = project.vertexAttributes(keyAttr)
+      val rank = graph_operations.AddRankingAttribute.run(sortKey, ascending)
+      project.newVertexAttribute(rankAttr, rank.asDouble, s"rank by $keyAttr" + help)
     }
   })
 
@@ -2379,7 +2388,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       NonNegInt("walksFromOnePoint", "Number of walks from each start point", default = 10000),
       Ratio("walkAbortionProbability", "Walk abortion probability", defaultValue = "0.15"),
       Param("vertexAttrName", "Save vertex indices as", defaultValue = "first_reached"),
-      Param("edgeAttrName", "Save edge indices as", defaultValue = "firts_traversed"),
+      Param("edgeAttrName", "Save edge indices as", defaultValue = "first_traversed"),
       RandomSeed("seed", "Seed"))
     def enabled = project.hasVertexSet && project.hasEdgeBundle
 

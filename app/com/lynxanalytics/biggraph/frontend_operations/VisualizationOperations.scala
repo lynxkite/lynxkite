@@ -6,6 +6,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_api.Scalar
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import play.api.libs.json
 
 class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   implicit lazy val manager = env.metaGraphManager
@@ -13,7 +14,7 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
   import Operation.Context
   import OperationParams._
 
-  val VisualizationOperations = Category("Visualization operations", "lightblue", icon = "eye")
+  val VisualizationOperations = Category("Visualization operations", "blue")
 
   // Takes a Project as input and returns a Visualization as output.
   registerOp(
@@ -37,9 +38,13 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
       }
 
       override val params = new ParameterHolder(context) // No "apply_to" parameters.
+      import UIStatusSerialization._
       params += VisualizationParam(
         "state",
-        "Left-side and right-side UI statuses as JSON")
+        "Left-side and right-side UI statuses as JSON",
+        json.Json.toJson(TwoSidedUIStatus(
+          left = Some(UIStatus.default.copy(graphMode = Some("sampled"))),
+          right = None)).toString)
     })
 
 }

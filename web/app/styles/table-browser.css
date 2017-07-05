@@ -13,10 +13,17 @@
   padding: 3px;
 }
 
+#table-browser-help {
+  height: 26px;
+}
+
+#table-browser-help span {
+  vertical-align: middle;
+  line-height: 26px;
+}
+
 #table-browser-tree {
   margin: 0px;
-  padding: 0px;
-  height: 75vh;
   overflow-x: auto;
   overflow-y: auto;
   padding: 3px;
@@ -34,5 +41,9 @@
 
 #table-browser-tree > ul {
   padding-left: 0px;
+}
+
+#table-browser-tree dir-entry-icon:hover {
+  background: lightgrey;
 }
 
