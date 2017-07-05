@@ -1,7 +1,7 @@
 // The list of entries.
 'use strict';
 
-angular.module('biggraph').directive('projectSelector',
+angular.module('biggraph').directive('entrySelector',
   function(util, hotkeys, $timeout, $anchorScroll) {
     return {
       restrict: 'E',
@@ -9,7 +9,7 @@ angular.module('biggraph').directive('projectSelector',
         name: '=', // Exposes the name of the selected entry.
         path: '=?', // Starting path.
       },
-      templateUrl: 'scripts/splash/project-selector.html',
+      templateUrl: 'scripts/splash/entry-selector.html',
       link: function(scope, element) {
         scope.util = util;
         function defaultSettings() {
