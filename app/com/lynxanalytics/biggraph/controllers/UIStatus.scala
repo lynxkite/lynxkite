@@ -48,7 +48,7 @@ case class UIStatus(
   sliderPos: Option[Double])
 object UIStatus {
   val default = UIStatus(
-    projectPath = Some(""),
+    projectPath = None,
     graphMode = None,
     display = "svg",
     filters = UIFilterStatus(vertex = Map(), edge = Map()),
