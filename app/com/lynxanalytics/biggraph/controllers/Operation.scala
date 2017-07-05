@@ -35,7 +35,8 @@ object FEOperationParameterMeta {
     "imported-table", // A table importing button.
     "parameters", // A whole section defining the parameters of an operation.
     "segmentation", // One of the segmentations of the current project.
-    "visualization") // Describes a two-sided visualization UI state.
+    "visualization", // Describes a two-sided visualization UI state.
+    "hash-check") // Used for checking staleness of parameters.
 }
 
 case class FEOperationParameterMeta(
@@ -456,12 +457,28 @@ abstract class TableOutputOperation(context: Operation.Context) extends SmartOpe
 
 abstract class ImportOperation(context: Operation.Context) extends TableOutputOperation(context) {
   import MetaGraphManager.StringAsUUID
-  protected def tableFromParam(name: String): Table = manager.table(params(name).asUUID)
+  protected def tableFromGuid(guid: String): Table = manager.table(guid.asUUID)
+
+  // Used for checking if the import settings are stale
+  def parameterHash(): String = {
+    val realParameters = params.toMap - "imported_table" - "last_hash"
+    realParameters.hashCode().toString()
+  }
+  // We get the hash of the parameters of the last import from the frontend. We check if it is the
+  // same as the hash of the current parameters. If not then the settings are stale.
+  private def checkHash(hash: String): Boolean = {
+    val paramHash = parameterHash()
+    hash == paramHash
+  }
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     params.validate()
     assert(params("imported_table").nonEmpty, "You have to import the data first.")
-    makeOutput(tableFromParam("imported_table"))
+    val lastHash = params("last_hash")
+    val currentHash = parameterHash()
+    assert(lastHash == currentHash, "Import settings are stale. Please make sure that you have clicked " +
+      "on the import button after changing the import settings.")
+    makeOutput(tableFromGuid(params("imported_table")))
   }
 
   def enabled = FEStatus.enabled // Useful default.
