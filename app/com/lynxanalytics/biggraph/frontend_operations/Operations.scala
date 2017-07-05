@@ -3877,7 +3877,13 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   def registerSQLOp(name: String, inputs: List[String]): Unit = {
     registerOp(name, defaultIcon, UtilityOperations, inputs, List("table"), new TableOutputOperation(_) {
       override val params = new ParameterHolder(context) // No "apply_to" parameters.
-      params += Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql")
+      params += Code(
+        "sql",
+        "SQL",
+        defaultValue = "select * from vertices",
+        language = "sql",
+        enableTableBrowser = true)
+
       def enabled = FEStatus.enabled
       override def getOutputs() = {
         params.validate()

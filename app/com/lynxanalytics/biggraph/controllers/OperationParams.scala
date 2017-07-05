@@ -104,11 +104,16 @@ object OperationParams {
       id: String,
       title: String,
       language: String,
-      defaultValue: String = "") extends OperationParameterMeta {
+      defaultValue: String = "",
+      enableTableBrowser: Boolean = false) extends OperationParameterMeta {
     val kind = "code"
     val options = List()
     val multipleChoice = false
-    override val payload = Some(json.Json.obj("language" -> language))
+    override val payload = Some(
+      json.Json.obj(
+        "language" -> language,
+        "enableTableBrowser" -> enableTableBrowser
+      ))
     def validate(value: String): Unit = {}
   }
 
