@@ -46,7 +46,6 @@ object JsonMigration {
   private def className(o: Any) = o.getClass.getName.replace("$", "")
   val current = new JsonMigration(
     Map(
-      className(graph_operations.ComputeVertexNeighborhoodFromTriplets) -> 1,
       className(graph_operations.CreateUIStatusScalar) -> 2,
       className(graph_operations.CreateVertexSet) -> 1,
       className(graph_operations.DoubleBucketing) -> 1,
@@ -62,9 +61,6 @@ object JsonMigration {
       .withDefaultValue(0),
     Map(
       ("com.lynxanalytics.biggraph.graph_api.ProjectFrame", 0) -> identity,
-      (className(graph_operations.ComputeVertexNeighborhoodFromTriplets), 0) -> {
-        j => JsonMigration.replaceJson(j, "maxCount" -> Json.toJson(1000))
-      },
       (className(graph_operations.CreateUIStatusScalar), 1) -> {
         j =>
           val value = JsonMigration.replaceJson(

@@ -2,7 +2,8 @@
 
 Creates a new vertex attribute that is the _rank_ of the vertex when ordered by the key
 attribute. Rank 0 will be the vertex with the highest or lowest key attribute value
-(depending on the direction of the ordering).
+(depending on the direction of the ordering). `String` attributes will be ranked
+alphabetically.
 
 This operation makes it easy to find the top (or bottom) N vertices by an attribute.
 First, create the ranking attribute. Then filter by this attribute.
@@ -15,6 +16,8 @@ The new attribute will be created under this name.
 The attribute to rank by.
 
 [[order]] Order::
-With _ascending_ ordering rank 0 belongs to the vertex with the minimal key attribute value.
-With _descending_ ordering rank 0 belongs to the vertex with the maximal key attribute value.
+With _ascending_ ordering rank 0 belongs to the vertex with the minimal key attribute value or
+the vertex that is at the beginning of the alphabet.
+With _descending_ ordering rank 0 belongs to the vertex with the maximal key attribute value or
+the vertex that is at the end of the alphabet.
 ====

@@ -48,7 +48,6 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
         this.y = this.moveOffsetY + event.pageY;
       }
     }
-    this.updateSize();
   };
 
   PopupModel.prototype.isOpen = function() {

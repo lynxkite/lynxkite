@@ -11,14 +11,15 @@
 //   box instance that have to be saved.
 
 angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
-  function getCommentLines(metadata, instance) {
+  function getComment(metadata, instance) {
+    var md = window.markdownit();
     var comment;
     if (metadata.operationId === 'Comment') {
       comment = instance.parameters.comment;
     } else if (metadata.operationId === 'Anchor') {
       comment = instance.parameters.description;
     }
-    return comment ? comment.split('\n') : [];
+    return comment ? md.render(comment) : undefined;
   }
 
   function BoxWrapper(workspace, metadata, instance) {
@@ -31,7 +32,7 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
     this.outputMap = {};
     this.width = 100;
     this.height = 100;
-    this.commentLines = getCommentLines(metadata, instance);
+    this.comment = getComment(metadata, instance);
     this.isMoved = false;
 
     var i;
@@ -52,9 +53,14 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
       return 'translate(' + this.instance.x + ', ' + this.instance.y + ')';
     },
     onMouseMove: function(event) {
-      this.isMoved = true;
-      this.instance.x = event.logicalX + this.xOffset;
-      this.instance.y = event.logicalY + this.yOffset;
+      var newX = event.logicalX + this.xOffset;
+      var newY = event.logicalY + this.yOffset;
+      if (newX !== this.instance.x || newY !== this.instance.y) {
+        this.workspace._requestInvalidated = true;
+        this.isMoved = true;
+        this.instance.x = newX;
+        this.instance.y = newY;
+      }
     },
     onMouseDown: function(event) {
       this.xOffset = this.instance.x - event.logicalX;

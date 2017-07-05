@@ -163,6 +163,10 @@ Workspace.prototype = {
     this.selector.element(by.id('operation-search')).click();
   },
 
+  closeLastPopup: function() {
+    browser.actions().sendKeys(K.ESCAPE).perform();
+  },
+
   duplicate: function() {
     if (isMacOS()) {
       browser.actions()
@@ -204,10 +208,11 @@ Workspace.prototype = {
   },
 
   selectBoxes: function(boxIds) {
-    // Without this, we would just add additional boxes to the previous selection
-    this.openBoxEditor(boxIds[0]).close();
     browser.actions().keyDown(protractor.Key.CONTROL).perform();
-    for (var i = 1; i < boxIds.length; ++i) {
+    // Unselect all.
+    $$('g.box.selected').click();
+    // Select given boxes.
+    for (var i = 0; i < boxIds.length; ++i) {
       this.clickBox(boxIds[i]);
     }
     browser.actions().keyUp(protractor.Key.CONTROL).perform();
@@ -401,6 +406,10 @@ BoxEditor.prototype = {
 
   getTableBrowser: function() {
     return new TableBrowser(this.popup);
+  },
+
+  isPresent: function() {
+    return this.element.isPresent();
   },
 };
 

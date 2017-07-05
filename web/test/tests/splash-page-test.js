@@ -16,7 +16,7 @@ module.exports = function(fw) {
         fs.rmdirSync(lib.protractorDownloads);
       }
       fs.mkdirSync(lib.protractorDownloads);
-      browser.get('/');
+      browser.get('/#/');
     },
     function() {
     });
