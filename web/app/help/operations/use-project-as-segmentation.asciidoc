@@ -2,14 +2,14 @@
 
 Copies another project into a new segmentation for this one. There will be no
 connections between the segments and the base vertices. You can import/create those via
-other operations (see <<import-segmentation-links>> and
-<<define-segmentation-links-from-matching-attributes>>).
+other operations (see <<Use table as segmentation links>> and
+<<Define segmentation links from matching attributes>>).
 
 Note that it is possible to import the project itself as segmentation. But even in this
 special case, there will be no connections between the segments and the base vertices.
-Another operation, <<copy-graph-into-a-segmentation>> can be used to overcome this limitation.
+Another operation, <<Use base project as segmentation>> can be used to overcome this limitation.
 
 ====
 [[them]] Other project's name::
-The project to import.
+The project to copy.
 ====

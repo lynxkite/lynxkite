@@ -4,7 +4,7 @@ Connect vertices in the base project with segments based on matching attributes.
 
 This operation can be used (among other things) to create connections between two projects once
 one has been imported as a segmentation of the other.
-(See <<Import project as segmentation>>.)
+(See <<Use project as segmentation>>.)
 
 ====
 [[base_id_attr]] Identifying vertex attribute in base project::
