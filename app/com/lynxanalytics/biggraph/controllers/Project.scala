@@ -188,10 +188,10 @@ sealed trait ProjectViewer {
     }
   }
 
-  def toListElementFE(projectName: String, objectType: String, details: Option[json.JsObject])(
+  def toListElementFE(name: String, objectType: String, details: Option[json.JsObject])(
     implicit epm: EntityProgressManager): FEEntryListElement = {
     FEEntryListElement(
-      projectName,
+      name,
       objectType,
       state.notes,
       feScalar("!vertex_count"),

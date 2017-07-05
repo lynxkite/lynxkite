@@ -115,7 +115,7 @@ case class FESegmentation(
   equivalentAttribute: FEAttribute)
 case class EntryListRequest(path: String)
 case class EntrySearchRequest(
-  basePath: String, // We only search for projects/directories contained (recursively) in this.
+  basePath: String, // We only search for entries contained (recursively) in this.
   query: String,
   includeNotes: Boolean)
 case class EntryList(
