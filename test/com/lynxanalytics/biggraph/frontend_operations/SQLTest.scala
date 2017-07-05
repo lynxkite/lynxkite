@@ -1,8 +1,11 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
+import com.lynxanalytics.biggraph.graph_api.{ DataManager, ThreadUtil }
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import org.apache.spark
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.{ DataFrame, Row }
 
 class SQLTest extends OperationsTestBase {
   private def toSeq(row: spark.sql.Row): Seq[Any] = {
@@ -140,4 +143,40 @@ class SQLTest extends OperationsTestBase {
       .table
     assert(table.schema.map(_.name) == Seq("age"))
   }
+
+  test("Thread safe sql") {
+    val columnName = "col"
+    val tableName = "table"
+    val schema = StructType(Seq(StructField("column", IntegerType)))
+    val sqlCtx = dataManager.newSQLContext
+    val numRows = 1000
+    def getDf(value: Int): DataFrame = {
+      import scala.collection.JavaConverters._
+      val data = List.fill(numRows)(Row(value)).asJava
+      sqlCtx.createDataFrame(data, schema).toDF(columnName)
+    }
+
+    val numWorkers = 300
+    val frames = (0 until numWorkers).map { n => getDf(n) }.toList
+
+    val maxParalellism = 30
+    implicit val sqlTestExecutionContext =
+      ThreadUtil.limitedExecutionContext("ThreadSafeSQL", maxParallelism = maxParalellism)
+    val asyncJobs = new ControlledFutures()(sqlTestExecutionContext)
+
+    val counter = new java.util.concurrent.atomic.AtomicInteger(0)
+
+    for (f <- frames) {
+      val df = List((tableName, f))
+      asyncJobs.register {
+        val avg =
+          DataManager.sql(sqlCtx, s"select AVG($columnName) from $tableName", df)
+            .collect().toList.take(1).head.getDouble(0)
+        counter.addAndGet(avg.toInt)
+      }
+    }
+    asyncJobs.waitAllFutures()
+    assert(counter.intValue() == (0 until numWorkers).sum)
+  }
+
 }
