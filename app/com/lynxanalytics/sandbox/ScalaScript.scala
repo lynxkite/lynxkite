@@ -19,13 +19,11 @@ import scala.util.DynamicVariable
 
 object ScalaScriptSecurityManager {
   private[sandbox] val restrictedSecurityManager = new ScalaScriptSecurityManager()
-  private[sandbox] val restrictedSecurityManagerReflectAllowed =
-    new ScalaScriptSecurityManager(reflectAllowed = true)
   System.setSecurityManager(restrictedSecurityManager)
   def init() = {}
 }
 
-class ScalaScriptSecurityManager(val reflectAllowed: Boolean = false) extends SecurityManager {
+class ScalaScriptSecurityManager() extends SecurityManager {
 
   val shouldCheck = new DynamicVariable[Boolean](false)
   def checkedRun[R](op: => R): R = {
@@ -85,8 +83,7 @@ class ScalaScriptSecurityManager(val reflectAllowed: Boolean = false) extends Se
     super.checkPackageAccess(s) // This must be the first thing to do!
     if (shouldCheck.value &&
       (s.contains("com.lynxanalytics.biggraph") ||
-        s.contains("org.apache.spark") ||
-        (!reflectAllowed && s.contains("scala.reflect")))) {
+        s.contains("org.apache.spark"))) {
       throw new java.security.AccessControlException(s"Illegal package access: $s")
     }
   }
@@ -178,7 +175,7 @@ object ScalaScript {
   // A wrapper class representing the type signature of a scala expression.
   import scala.language.existentials
   case class ScalaType(funcType: TypeTag[_]) {
-    private val returnType = funcType.tpe.typeArgs.last
+    val returnType = funcType.tpe.typeArgs.last
     // Whether the expression returns an Option or not.
     def isOptionType = TypeTagUtil.isSubtypeOf[Option[_]](returnType)
     // The type argument for Options otherwise the return type.
@@ -211,7 +208,7 @@ object ScalaScript {
     """
     withContextClassLoader {
       val compiledCode = engine.compile(fullCode)
-      val result = ScalaScriptSecurityManager.restrictedSecurityManagerReflectAllowed.checkedRun {
+      val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
         compiledCode.eval()
       }
       result.asInstanceOf[TypeTag[_]] // We cannot use asInstanceOf within the SecurityManager.
