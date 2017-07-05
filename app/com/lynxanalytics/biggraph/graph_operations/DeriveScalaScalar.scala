@@ -23,7 +23,7 @@ object DeriveScalaScalar extends OpFromJson {
     val paramTypes =
       namedScalars.map { case (k, v) => k -> v.typeTag }.toMap[String, TypeTag[_]]
     val t = ScalaScript.compileAndGetType(
-      exprString, paramTypes, paramsToOption = false).payLoadType
+      exprString, paramTypes, paramsToOption = false).returnType
 
     val s = namedScalars.map(_._1)
     val e = exprString
@@ -74,9 +74,8 @@ case class DeriveScalaScalar[T: TypeTag](
         .toMap[String, TypeTag[_]]
 
     val t = ScalaScript.compileAndGetType(expr, paramTypes, paramsToOption = false)
-    assert(!t.isOptionType, "Scala script returned Option type for scalars.")
-    assert(t.payLoadType =:= tt.tpe,
-      s"Scala script returns wrong type: expected ${tt.tpe} but got ${t.payLoadType} instead.")
+    assert(t.returnType =:= tt.tpe,
+      s"Scala script returns wrong type: expected ${tt.tpe} but got ${t.returnType} instead.")
 
     val evaluator = ScalaScript.compileAndGetEvaluator(expr, paramTypes, paramsToOption = false)
     val namedValues = scalarNames.zip(scalars).toMap

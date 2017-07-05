@@ -419,8 +419,6 @@ abstract class MagicOutput(instance: MetaGraphOperationInstance)
   }
   def vertexAttribute[T: TypeTag](vs: => EntityContainer[VertexSet], name: Symbol = null) =
     new P(Attribute[T](instance, _, vs), Option(name))
-  def vertexAttributeFromTypeTag(vs: => EntityContainer[VertexSet], name: Symbol = null)(implicit t: TypeTag[_]) =
-    new P(Attribute(instance, _, vs), Option(name))
   def edgeAttribute[T: TypeTag](eb: => EntityContainer[EdgeBundle], name: Symbol = null) =
     new P(Attribute[T](instance, _, eb.idSet), Option(name))
   def scalar[T: TypeTag] = new P(Scalar[T](instance, _), None)
