@@ -221,8 +221,6 @@ include::discard-loop-edges.asciidoc[]
 
 include::discard-scalars.asciidoc[]
 
-include::discard-segmentation-links.asciidoc[]
-
 include::discard-segmentation.asciidoc[]
 
 include::discard-vertex-attributes.asciidoc[]
@@ -300,6 +298,8 @@ include::input.asciidoc[]
 include::link-project-and-segmentation-by-fingerprint.asciidoc[]
 
 include::lookup-region.asciidoc[]
+
+include::make-all-segments-empy.asciidoc[]
 
 include::merge-parallel-edges-by-attribute.asciidoc[]
 

@@ -104,7 +104,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     }
   })
 
-  register("Discard segmentation links")(new ProjectTransformation(_) with SegOp {
+  register("Make all segments empty")(new ProjectTransformation(_) with SegOp {
     def addSegmentationParameters = {}
     def enabled = project.assertSegmentation
     def apply() = {
