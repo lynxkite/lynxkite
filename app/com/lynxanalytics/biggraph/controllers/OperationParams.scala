@@ -190,6 +190,16 @@ object OperationParams {
     val multipleChoice = false
     val options = List()
   }
+
+  case class HashCheck(
+      id: String,
+      title: String,
+      defaultValue: String = "") extends OperationParameterMeta {
+    val kind = "hash-check"
+    val options = List()
+    val multipleChoice = false
+    def validate(value: String): Unit = {}
+  }
 }
 
 // A special parameter payload to describe applicable models on the UI.

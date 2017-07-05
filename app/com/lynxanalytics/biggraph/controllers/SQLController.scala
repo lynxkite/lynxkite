@@ -20,6 +20,8 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 import play.api.libs.json
 
+case class ImportBoxResponse(guid: String, parameterHash: String)
+
 // FrameSettings holds details for creating an ObjectFrame.
 trait FrameSettings {
   def name: String
@@ -197,13 +199,15 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
-  def importBox(user: serving.User, box: Box) = async[String] {
+  def importBox(user: serving.User, box: Box) = async[ImportBoxResponse] {
     val op = ops.opForBox(
       user, box, inputs = null, workspaceParameters = null).asInstanceOf[ImportOperation]
+    val parameterHash = op.parameterHash()
     val df = op.getDataFrame(SQLController.defaultContext(user))
     val table = ImportDataFrame.run(df)
     dataManager.getFuture(table) // Start importing in the background.
-    table.gUID.toString
+    val guid = table.gUID.toString
+    ImportBoxResponse(guid, parameterHash)
   }
 
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
