@@ -11,8 +11,8 @@
       "inputs" : { },
       "parametricParameters" : { }
     }, {
-      "id" : "Create-plot_1",
-      "operationId" : "Create plot",
+      "id" : "Custom-plot_1",
+      "operationId" : "Custom plot",
       "parameters" : { },
       "x" : 650.0,
       "y" : 200.0,
@@ -45,7 +45,7 @@
       "y" : 300.0,
       "inputs" : {
         "output" : {
-          "boxId" : "Create-plot_1",
+          "boxId" : "Custom-plot_1",
           "id" : "plot"
         }
       },
