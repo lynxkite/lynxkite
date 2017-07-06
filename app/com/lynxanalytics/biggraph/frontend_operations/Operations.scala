@@ -3434,7 +3434,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         parent.scalars(s"$prefix $targetName coverage initial") = coverage
 
         var timeOfDefinition = {
-          graph_operations.DeriveScala.derive[Double]("0", Seq("attr" -> train))
+          graph_operations.DeriveScala.derive[Double]("0.0", Seq("attr" -> train))
         }
 
         // iterative prediction
@@ -3503,7 +3503,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
           timeOfDefinition = {
             val newDefinitions = graph_operations.DeriveScala.derive[Double](
-              i.toString, Seq("attr" -> train))
+              s"$i.0", Seq("attr" -> train))
             unifyAttributeT(timeOfDefinition, newDefinitions)
           }
         }

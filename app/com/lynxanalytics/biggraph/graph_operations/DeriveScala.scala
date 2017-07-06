@@ -133,7 +133,7 @@ object DeriveScala extends OpFromJson {
           SerializableType(t)
         } catch {
           case e: AssertionError => throw new AssertionError(
-            s"Unsupported type $t for input parameter $k.")
+            s"Unsupported type $t for input parameter $k. Please don't use this parameter or change its type.")
         }
     }
   }
