@@ -176,7 +176,7 @@ class SQLTest extends OperationsTestBase {
         // and the test would pass despite the assertion. Anyway, using the counters array
         // gives us a nicer way to see what exactly went wrong.
         if (0 <= idx && idx < numWorkers) {
-          counters(resultThatIsSupposedToBeEqualToValue.toInt).getAndIncrement()
+          counters(idx).getAndIncrement()
         }
       }
     }
