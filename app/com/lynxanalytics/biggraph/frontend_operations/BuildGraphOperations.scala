@@ -9,18 +9,9 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 
 class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Context
   import Operation.Implicits._
 
-  import Categories.BuildGraphOperations
-
-  def register(id: String)(factory: Context => ProjectOutputOperation): Unit = {
-    registerOp(id, defaultIcon, BuildGraphOperations, List(), List(projectOutput), factory)
-  }
-
-  def register(id: String, inputs: List[String])(factory: Context => ProjectOutputOperation): Unit = {
-    registerOp(id, defaultIcon, BuildGraphOperations, inputs, List(projectOutput), factory)
-  }
+  val category = Categories.BuildGraphOperations
 
   import OperationParams._
 
@@ -55,7 +46,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     }
   })
 
-  register("Create example graph")(new ProjectOutputOperation(_) {
+  registerProjectCreatingOp("Create example graph")(new ProjectOutputOperation(_) {
     def enabled = FEStatus.enabled
     def apply() = {
       val g = graph_operations.ExampleGraph()().result
@@ -104,7 +95,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     }
   })
 
-  register("Create vertices")(new ProjectOutputOperation(_) {
+  registerProjectCreatingOp("Create vertices")(new ProjectOutputOperation(_) {
     params += NonNegInt("size", "Vertex set size", default = 10)
     def enabled = FEStatus.enabled
     def apply() = {

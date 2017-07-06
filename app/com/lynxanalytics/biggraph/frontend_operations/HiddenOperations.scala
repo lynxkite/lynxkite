@@ -12,14 +12,14 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
   import Operation.Context
   import Operation.Implicits._
 
-  import Categories.HiddenOperations
+  val category = Categories.HiddenOperations
 
   def register(id: String, icon: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
-    registerOp(id, icon, HiddenOperations, inputs, outputs, factory)
+    registerOp(id, icon, category, inputs, outputs, factory)
   }
 
   def register(id: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
-    registerOp(id, defaultIcon, HiddenOperations, inputs, outputs, factory)
+    registerOp(id, defaultIcon, category, inputs, outputs, factory)
   }
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._

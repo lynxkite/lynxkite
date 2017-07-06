@@ -10,15 +10,9 @@ import com.lynxanalytics.biggraph.controllers._
 import play.api.libs.json
 
 class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Context
   import Operation.Implicits._
 
-  import Categories.GraphComputationOperations
-
-  def register(id: String)(factory: Context => ProjectTransformation): Unit = {
-    registerOp(id, defaultIcon, GraphComputationOperations, List(projectOutput),
-      List(projectOutput), factory)
-  }
+  val category = Categories.GraphComputationOperations
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 

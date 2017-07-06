@@ -13,11 +13,7 @@ class UseSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperat
   import Operation.Context
   import Operation.Implicits._
 
-  import Categories.UseSegmentationOperations
-
-  def register(id: String)(factory: Context => ProjectTransformation): Unit = {
-    registerOp(id, defaultIcon, UseSegmentationOperations, List(projectOutput), List(projectOutput), factory)
-  }
+  val category = Categories.UseSegmentationOperations
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 

@@ -14,10 +14,10 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
   import Operation.Context
   import OperationParams._
 
-  import Categories.VisualizationOperations
+  val category = Categories.VisualizationOperations
 
   def register(id: String, icon: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
-    registerOp(id, icon, VisualizationOperations, inputs, outputs, factory)
+    registerOp(id, icon, category, inputs, outputs, factory)
   }
 
   // Takes a Project as input and returns a Visualization as output.

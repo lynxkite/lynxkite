@@ -11,14 +11,14 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
   import Operation.Context
   import Operation.Implicits._
 
-  import Categories.WorkflowOperations
+  val category = Categories.WorkflowOperations
 
   def register(id: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
-    registerOp(id, defaultIcon, WorkflowOperations, inputs, outputs, factory)
+    registerOp(id, defaultIcon, category, inputs, outputs, factory)
   }
 
   def register(id: String, icon: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
-    registerOp(id, icon, WorkflowOperations, inputs, outputs, factory)
+    registerOp(id, icon, category, inputs, outputs, factory)
   }
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
@@ -267,7 +267,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
 
   // TODO: Use dynamic inputs. #5820
   def registerSQLOp(name: String, inputs: List[String]): Unit = {
-    registerOp(name, defaultIcon, WorkflowOperations, inputs, List("table"), new TableOutputOperation(_) {
+    registerOp(name, defaultIcon, category, inputs, List("table"), new TableOutputOperation(_) {
       override val params = new ParameterHolder(context) // No "apply_to" parameters.
       params += Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql")
       def enabled = FEStatus.enabled

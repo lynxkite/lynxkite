@@ -63,11 +63,27 @@ object Categories {
   val HiddenOperations = Category("Hidden operations", "yellow", visible = false, sortKey = "q")
 }
 
-class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
+abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
+  import Operation.Context
+
+  val category: Operation.Category
+
   implicit lazy val manager = env.metaGraphManager
 
   protected val projectInput = "project" // The default input name, just to avoid typos.
   protected val projectOutput = "project"
+
+  def registerProjectCreatingOp(id: String)(factory: Context => ProjectOutputOperation): Unit = {
+    registerOp(id, defaultIcon, category, List(), List(projectOutput), factory)
+  }
+
+  def register(id: String)(factory: Context => ProjectTransformation): Unit = {
+    registerOp(id, defaultIcon, category, List(projectInput), List(projectOutput), factory)
+  }
+
+  def register(id: String, inputs: List[String])(factory: Context => ProjectOutputOperation): Unit = {
+    registerOp(id, defaultIcon, category, inputs, List(projectOutput), factory)
+  }
 
   trait SegOp extends ProjectTransformation {
     protected def seg = project.asSegmentation

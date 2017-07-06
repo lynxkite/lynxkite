@@ -11,18 +11,9 @@ import com.lynxanalytics.biggraph.graph_api.Attribute
 import com.lynxanalytics.biggraph.graph_api.SerializableType
 
 class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Context
   import Operation.Implicits._
 
-  import Categories.BuildSegmentationOperations
-
-  def register(id: String)(factory: Context => ProjectTransformation): Unit = {
-    registerOp(id, defaultIcon, BuildSegmentationOperations, List(projectOutput), List(projectOutput), factory)
-  }
-
-  def register(id: String, inputs: List[String])(factory: Context => ProjectOutputOperation): Unit = {
-    registerOp(id, defaultIcon, BuildSegmentationOperations, inputs, List(projectOutput), factory)
-  }
+  val category = Categories.BuildSegmentationOperations
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
