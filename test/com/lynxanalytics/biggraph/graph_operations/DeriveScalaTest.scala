@@ -84,6 +84,18 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
     assert(derived.rdd.collect.toSet == Set(0 -> 1.0, 1 -> 1.0, 2 -> 1.0, 3 -> 1.0))
   }
 
+  test("Many input attributes to check correct param substitution") {
+    val expr = "age.toString + income.toString + name + gender"
+    val g = ExampleGraph()().result
+    val op = DeriveScala[String](
+      expr,
+      Seq("age", "income", "name", "gender"))
+    val derived = op(op.vs, g.vertices.entity)(
+      op.attrs,
+      Seq(g.age.entity, g.income.entity, g.name.entity, g.gender.entity)).result.attr
+    assert(derived.rdd.collect.toSet == Set(0 -> "20.31000.0AdamMale", 2 -> "50.32000.0BobMale"))
+  }
+
   test("DeriveScala works with no input attributes (edges)") {
     val expr = "\"hallo\""
     val g = ExampleGraph()().result

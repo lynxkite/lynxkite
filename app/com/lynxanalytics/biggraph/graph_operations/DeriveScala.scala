@@ -83,68 +83,18 @@ object DeriveScala extends OpFromJson {
   }
 }
 
-abstract class ScalaExprEvaluator[T] {
-  val joined: spark.rdd.RDD[(ID, Array[Any])]
-  val expr: String
-  val paramTypes: Map[String, TypeTag[_]]
-  val scalars: Array[Any]
-  val onlyOnDefinedAttrs: Boolean
-
-  def evalRDD(): spark.rdd.RDD[(ID, T)] = {
-    joined.mapPartitions({ it =>
-      val evaluator = ScalaScript.compileAndGetEvaluator(
-        expr, paramTypes, paramsToOption = !onlyOnDefinedAttrs)
-      evalPartition(it, evaluator)
-    }, preservesPartitioning = true)
-  }
-
-  def evalPartition(it: Iterator[(ID, Array[Any])], evaluator: ScalaScript.Evaluator): Iterator[(ID, T)]
-
-  def evalRow(evaluator: ScalaScript.Evaluator, values: Array[Any]) = {
-    val namedValues = paramTypes.keys.zip(values ++ scalars).toMap
-    val result = evaluator.evaluate(namedValues)
-    assert(result != null, s"Scala script $expr returned null for parameters $namedValues.")
-    result
-  }
-}
-
-case class ScalaFunctionEvaluator[T](
-    joined: spark.rdd.RDD[(ID, Array[Any])],
-    expr: String,
-    paramTypes: Map[String, TypeTag[_]],
-    scalars: Array[Any],
-    onlyOnDefinedAttrs: Boolean) extends ScalaExprEvaluator[T] {
-
-  def evalPartition(it: Iterator[(ID, Array[Any])], evaluator: ScalaScript.Evaluator) = {
-    it.map {
-      case (key, values) =>
-        val result = evalRow(evaluator, values)
-        key -> result.asInstanceOf[T]
-    }
-  }
-}
-
-case class ScalaPartialFunctionEvaluator[T](
-    joined: spark.rdd.RDD[(ID, Array[Any])],
-    expr: String,
-    paramTypes: Map[String, TypeTag[_]],
-    scalars: Array[Any],
-    onlyOnDefinedAttrs: Boolean) extends ScalaExprEvaluator[T] {
-
-  def evalPartition(it: Iterator[(ID, Array[Any])], evaluator: ScalaScript.Evaluator) = {
-    it.flatMap {
-      case (key, values) =>
-        val result = evalRow(evaluator, values)
-        result.asInstanceOf[Option[T]].map { r => key -> r }
-    }
-  }
-}
-
+// Derives a new AttributeRDD using the Scala expression (expr) and the input attribute and scalar
+// values. The expression may return T or Option[T]. In the latter case the result RDD will be
+// partially defined exactly where the expression returned Some[T]. The expression should never
+// return nulls.
+// If onlyOnDefinedAttrs is true then the expression is only evaluated for those records where all
+// input attributes are present. If false, it's evaluated for every record, and the parameters will
+// be substituted wrapped in Options.
 import DeriveScala._
 case class DeriveScala[T: TypeTag](
-  expr: String,
-  attrNames: Seq[String],
-  scalarNames: Seq[String] = Seq(),
+  expr: String, // The Scala expression to evaluate.
+  attrNames: Seq[String], // Input attributes to substitute.
+  scalarNames: Seq[String] = Seq(), // Input scalars to substitute.
   onlyOnDefinedAttrs: Boolean = true)
     extends TypedMetaGraphOp[Input, Output[T]] {
 
@@ -192,21 +142,37 @@ case class DeriveScala[T: TypeTag](
     }
 
     val scalars = inputs.scalars.map { _.value }.toArray
+    val allNames = attrNames ++ scalarNames
     val paramTypes = (
       attrNames.zip(inputs.attrs).map { case (k, v) => k -> v.data.typeTag } ++
       scalarNames.zip(inputs.scalars).map { case (k, v) => k -> v.data.typeTag })
       .toMap[String, TypeTag[_]]
 
     val t = ScalaScript.compileAndGetType(expr, paramTypes, paramsToOption = !onlyOnDefinedAttrs)
-    assert(t.payLoadType =:= tt.tpe,
+    assert(t.payLoadType =:= tt.tpe, // PayLoadType should always match T.
       s"Scala script returns wrong type: expected ${tt.tpe} but got ${t.payLoadType} instead.")
 
-    val derived = if (t.isOptionType) {
-      ScalaPartialFunctionEvaluator[T](joined, expr, paramTypes, scalars, onlyOnDefinedAttrs).evalRDD()
-    } else {
-      ScalaFunctionEvaluator[T](joined, expr, paramTypes, scalars, onlyOnDefinedAttrs).evalRDD()
-    }
-    output(o.attr, derived.asUniqueSortedRDD)
+    val returnsOptionType = t.isOptionType
+    val derived = joined.mapPartitions({ it =>
+      val evaluator = ScalaScript.compileAndGetEvaluator(
+        expr, paramTypes, paramsToOption = !onlyOnDefinedAttrs)
+      it.flatMap {
+        case (key, values) =>
+          val namedValues = allNames.zip(values ++ scalars).toMap
+          val result = evaluator.evaluate(namedValues)
+          assert(Option(result).nonEmpty, s"Scala script $expr returned null.")
+          // The compiler in ScalaScript should guarantee that this is always correct. We filter
+          // out None-s, so the result is always a fully defined RDD[(ID, T)].
+          if (returnsOptionType) {
+            // The script returns Option[T] so we wrap it to Option[ID -> T].
+            result.asInstanceOf[Option[T]].map { r => key -> r }
+          } else {
+            // The script returns T so we wrap it to Some[ID -> T] for consistency.
+            Some(key -> result.asInstanceOf[T])
+          }
+      }
+    }, preservesPartitioning = true).asUniqueSortedRDD
+    output(o.attr, derived)
   }
 }
 
