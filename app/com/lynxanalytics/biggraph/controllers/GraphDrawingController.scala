@@ -225,7 +225,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       val smearBundle = metaManager.edgeBundle(request.sampleSmearEdgeBundleId.asUUID)
       dataManager.cache(smearBundle)
       val edgesAndNeighbors = edgesAndNeighborsMapping(smearBundle, sampled = false)
-      val nop = graph_operations.ComputeVertexNeighborhoodFromEdgesAndNeighbors(
+      val nop = graph_operations.ComputeVertexNeighborhood(
         centers, request.radius, request.maxSize)
       val nopres = nop(
         nop.vertices, vertexSet)(

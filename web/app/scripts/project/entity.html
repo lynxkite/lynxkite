@@ -6,7 +6,7 @@
        class="emoji"
        src="/images/emoji/{{ entity.metadata.icon }}.png">
   <value class="subtoken"
-         ng-if="isScalar() && !isUIStatus()"
+         ng-if="isScalar()"
          id="scalar-value-{{ title() | id }}"
          ref="side.scalars[title()]"></value>
   <span class="subtoken filter"
@@ -28,7 +28,7 @@
     {{ title() }} = <span trusted-html="entity.note"></span>
   </div>
 
-  <i ng-show="entity.computeProgress === 1.0 && !isUIStatus()"
+  <i ng-show="entity.computeProgress === 1.0"
      class="de-emph compute-progress glyphicon glyphicon-ok"
      drop-tooltip="Already computed"
      drop-tooltip-position="right middle"></i>
@@ -37,7 +37,7 @@
      drop-tooltip="Computation started"
      drop-tooltip-position="right middle"></i>
 
-  <div ng-show="isAttribute() || isScalar() && !isUIStatus() && !isModel()"
+  <div ng-show="isAttribute() || isScalar() && !isModel()"
        class="de-emph"
        drop-tooltip="{{ title() }} is of type {{ entity.typeName }}"
        drop-tooltip-position="left middle">
@@ -112,9 +112,5 @@
          min="-1"
          max="101"
          tooltip="Threshold">
-
-  <div class="menu-item" ng-click="loadUIStatus()" ng-show="isUIStatus()" id="load-visualization">
-    <i class="glyphicon glyphicon-eye-open"></i> Load visualization
-  </div>
 
 </div>
