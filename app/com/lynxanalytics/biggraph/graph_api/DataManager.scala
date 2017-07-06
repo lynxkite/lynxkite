@@ -452,7 +452,7 @@ object DataManager {
   def sql(
     ctx: SQLContext,
     query: String,
-    dfs: List[(String, spark.sql.DataFrame)]): spark.sql.DataFrame = synchronized {
+    dfs: List[(String, spark.sql.DataFrame)]): spark.sql.DataFrame = {
     for ((name, df) <- dfs) {
       assert(df.sqlContext == ctx, "DataFrame from foreign SQLContext.")
       df.createOrReplaceTempView(s"`$name`")
