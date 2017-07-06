@@ -405,7 +405,7 @@ include::use-base-project-as-segmentation.asciidoc[]
 
 include::use-metagraph-as-graph.asciidoc[]
 
-include::use-project-as-segmentation.asciidoc[]
+include::use-other-project-as-segmentation.asciidoc[]
 
 include::use-table-as-edge-attributes.asciidoc[]
 
