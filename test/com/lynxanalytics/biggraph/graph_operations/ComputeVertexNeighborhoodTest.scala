@@ -5,7 +5,7 @@ import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 
-class ComputeVertexNeighborhoodFromEdgesAndNeighborsTest extends FunSuite with TestGraphOp {
+class ComputeVertexNeighborhoodTest extends FunSuite with TestGraphOp {
 
   test("vertex neighborhood of example graph using triplets") {
     val g = ExampleGraph()().result
@@ -13,7 +13,7 @@ class ComputeVertexNeighborhoodFromEdgesAndNeighborsTest extends FunSuite with T
       val op = EdgeAndNeighborMapping()
       op(op.edges, g.edges).result
     }
-    val nop = ComputeVertexNeighborhoodFromEdgesAndNeighbors(Seq(2, 3), 1, 10)
+    val nop = ComputeVertexNeighborhood(Seq(2, 3), 1, 10)
     val nopres = nop(
       nop.vertices, g.vertices)(
         nop.srcMapping, triplets.srcEdges)(
@@ -32,7 +32,7 @@ class ComputeVertexNeighborhoodFromEdgesAndNeighborsTest extends FunSuite with T
       op(op.edges, g.es).result
     }
     val neighborhood = {
-      val op = ComputeVertexNeighborhoodFromEdgesAndNeighbors(Seq(0), 2, 10)
+      val op = ComputeVertexNeighborhood(Seq(0), 2, 10)
       op(
         op.vertices, g.vs)(
           op.srcMapping, triplets.srcEdges)(
