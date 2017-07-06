@@ -46,7 +46,7 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
           left = Some(UIStatus.default.copy(
             projectPath = Some(""),
             graphMode = Some("sampled"))),
-          right = None)).toString)
+          right = Some(UIStatus.default))).toString)
     })
 
 }
