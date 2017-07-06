@@ -267,18 +267,6 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
-  class AnyVertexAttributeTemplate(vsF: => Symbol, nameOpt: Option[Symbol])
-      extends ET[Attribute[_]](nameOpt) {
-    lazy val vs = vsF
-    override def set(target: MetaDataSet, va: Attribute[_]): MetaDataSet = {
-      val withVs =
-        templatesByName(vs).asInstanceOf[VertexSetTemplate].set(target, va.vertexSet)
-      super.set(withVs, va)
-    }
-    def data(implicit dataSet: DataSet) = dataSet.attributes(name)
-    def rdd(implicit dataSet: DataSet) = data.rdd
-  }
-
   class EdgeAttributeTemplate[T](esF: => Symbol, nameOpt: Option[Symbol])
       extends ET[Attribute[T]](nameOpt) {
     lazy val es = esF
@@ -299,11 +287,6 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def value(implicit dataSet: DataSet) = data.value
   }
 
-  class AnyScalarTemplate(nameOpt: Option[Symbol]) extends ET[Scalar[_]](nameOpt) {
-    def data(implicit dataSet: DataSet) = dataSet.scalars(name)
-    def value(implicit dataSet: DataSet) = data.value
-  }
-
   class TableTemplate(nameOpt: Option[Symbol]) extends ET[Table](nameOpt) {
     def data(implicit dataSet: DataSet) = dataSet.tables(name).asInstanceOf[TableData]
     def df(implicit dataSet: DataSet) = data.df
@@ -321,12 +304,11 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
       src.name, dst.name, Option(idSet).map(_.name), requiredProperties, Option(name))
   def vertexAttribute[T](vs: VertexSetTemplate, name: Symbol = null) =
     new VertexAttributeTemplate[T](vs.name, Option(name))
-  def anyVertexAttribute(vs: VertexSetTemplate, name: Symbol = null) =
-    new AnyVertexAttributeTemplate(vs.name, Option(name))
+  def vertexAttributeT[T: TypeTag](vs: VertexSetTemplate, name: Symbol = null) =
+    new VertexAttributeTemplate[T](vs.name, Option(name))
   def edgeAttribute[T](es: EdgeBundleTemplate, name: Symbol = null) =
     new EdgeAttributeTemplate[T](es.name, Option(name))
   def scalar[T] = new ScalarTemplate[T](None)
-  def anyScalar(name: Symbol) = new AnyScalarTemplate(Some(name))
   def scalar[T](name: Symbol) = new ScalarTemplate[T](Some(name))
   def table = new TableTemplate(None)
   def table(name: Symbol) = new TableTemplate(Some(name))
@@ -342,11 +324,9 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
       attributes = templates.collect {
         case a: VertexAttributeTemplate[_] => a.name
         case a: EdgeAttributeTemplate[_] => a.name
-        case a: AnyVertexAttributeTemplate => a.name
       }.toSet,
       scalars = templates.collect {
         case sc: ScalarTemplate[_] => sc.name
-        case sc: AnyScalarTemplate => sc.name
       }.toSet,
       tables = templates.collect { case tb: TableTemplate => tb.name }.toSet)
 

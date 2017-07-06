@@ -35,12 +35,9 @@ class SplitVerticesTest extends FunSuite with TestGraphOp {
   test("Zero drops vertices - one hundred lonely guys") {
     val expr = "if (name == \"Isolated Joe\") 100.0 else 0.0"
     val g = ExampleGraph()().result
-    val op = DeriveScala[Double](
+    val derived = DeriveScala.derive[Double](
       expr,
-      Seq("name"))
-    val derived = op(
-      op.attrs,
-      Seq(g.name.entity)).result.attr
+      Seq("name" -> g.name.entity))
     val splitOp = SplitVertices()
     val longAttr = DoubleAttributeToLong.run(derived)
     val res = splitOp(splitOp.attr, longAttr).result

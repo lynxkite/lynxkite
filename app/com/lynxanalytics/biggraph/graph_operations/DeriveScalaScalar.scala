@@ -9,8 +9,11 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.sandbox.ScalaScript
 
 object DeriveScalaScalar extends OpFromJson {
-  class Input(scalarCount: Int) extends MagicInputSignature {
-    val scalars = (0 until scalarCount).map(i => anyScalar(Symbol("scalar-" + i)))
+  class Input(s: Seq[(String, SerializableType[_])]) extends MagicInputSignature {
+    val scalars = s.map(i => {
+      implicit val tt = i._2.typeTag
+      scalar[Any](Symbol(i._1))
+    })
   }
   class Output[T: TypeTag](implicit instance: MetaGraphOperationInstance)
       extends MagicOutput(instance) {
@@ -22,10 +25,11 @@ object DeriveScalaScalar extends OpFromJson {
     namedScalars: Seq[(String, Scalar[_])])(implicit manager: MetaGraphManager): Output[_] = {
     val paramTypes =
       namedScalars.map { case (k, v) => k -> v.typeTag }.toMap[String, TypeTag[_]]
+    DeriveScala.checkInputTypes(paramTypes)
     val t = ScalaScript.compileAndGetType(
       exprString, paramTypes, paramsToOption = false).returnType
 
-    val s = namedScalars.map(_._1)
+    val s = namedScalars.map { case (k, v) => k -> v.typeTag }
     val e = exprString
     val op = t match {
       case _ if t =:= typeOf[String] => DeriveScalaScalar[String](e, s)
@@ -34,20 +38,20 @@ object DeriveScalaScalar extends OpFromJson {
     }
 
     import Scripting._
-    op(op.scalars, namedScalars.map(_._2)).result
+    op(op.scalars, namedScalars.map(_._2.asInstanceOf[Scalar[Any]])).result
   }
 
   def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
     implicit val tt = SerializableType.fromJson(j \ "type").typeTag
     DeriveScalaScalar(
       (j \ "expr").as[String],
-      (j \ "scalarNames").as[List[String]].toSeq)
+      DeriveScala.jsonToParams(j \ "scalarNames"))
   }
 }
 import DeriveScalaScalar._
 case class DeriveScalaScalar[T: TypeTag](
   expr: String,
-  scalarNames: Seq[String])
+  scalarParams: Seq[(String, TypeTag[_])])
     extends TypedMetaGraphOp[Input, Output[T]] {
 
   def tt = typeTag[T]
@@ -56,10 +60,10 @@ case class DeriveScalaScalar[T: TypeTag](
   override def toJson = Json.obj(
     "type" -> st.toJson,
     "expr" -> expr,
-    "scalarNames" -> scalarNames)
+    "scalarNames" -> DeriveScala.paramsToJson(scalarParams))
 
   override val isHeavy = true
-  @transient override lazy val inputs = new Input(scalarNames.size)
+  @transient override lazy val inputs = new Input(scalarParams.map { case (k, v) => k -> SerializableType(v) })
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(tt, instance)
 
@@ -68,17 +72,15 @@ case class DeriveScalaScalar[T: TypeTag](
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val scalars = inputs.scalars.map(_.value)
-    val paramTypes =
-      scalarNames.zip(inputs.scalars).map { case (k, v) => k -> v.data.typeTag }
-        .toMap[String, TypeTag[_]]
+    val scalarValues = inputs.scalars.map(_.value)
+    val paramTypes = scalarParams.toMap[String, TypeTag[_]]
 
     val t = ScalaScript.compileAndGetType(expr, paramTypes, paramsToOption = false)
     assert(t.returnType =:= tt.tpe,
       s"Scala script returns wrong type: expected ${tt.tpe} but got ${t.returnType} instead.")
 
     val evaluator = ScalaScript.compileAndGetEvaluator(expr, paramTypes, paramsToOption = false)
-    val namedValues = scalarNames.zip(scalars).toMap
+    val namedValues = scalarParams.map(_._1).zip(scalarValues).toMap
     val result = evaluator.evaluate(namedValues)
     assert(Option(result).nonEmpty, s"Scala script $expr returned null.")
     output(o.sc, result.asInstanceOf[T])

@@ -11,24 +11,20 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
   test("example graph: 'name.length * 10 + age'") {
     val expr = "name.length * 10 + age"
     val g = ExampleGraph()().result
-    val op = DeriveScala[Double](
+    val derived = DeriveScala.derive[Double](
       expr,
-      Seq("age", "name"))
-    val derived = op(
-      op.attrs,
-      Seq(g.age.entity, g.name.entity)).result.attr
+      Seq("age" -> g.age.entity, "name" -> g.name.entity))
     assert(derived.rdd.collect.toSet == Set(0 -> 60.3, 1 -> 48.2, 2 -> 80.3, 3 -> 122.0))
   }
 
   test("Spread out scalar to vertices") {
     val expr = "greeting"
     val g = ExampleGraph()().result
-    val op = DeriveScala[String](
+    val derived = DeriveScala.derive[String](
       expr,
-      Seq(), Seq("greeting"))
-    val derived = op(
-      op.vs, g.vertices)(
-        op.scalars, Seq(g.greeting.entity)).result.attr
+      Seq(),
+      Seq("greeting" -> g.greeting.entity),
+      vertexSet = Some(g.vertices))
     val elements = derived.rdd.collect()
     assert(elements.size == 4 && elements.forall(_._2 == "Hello world! 😀 "))
   }
@@ -36,13 +32,9 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
   test("example graph: 'name.length * 10 + age + greeting.length'") {
     val expr = "name.length * 10 + age + greeting.length"
     val g = ExampleGraph()().result
-    val op = DeriveScala[Double](
+    val derived = DeriveScala.derive[Double](
       expr,
-      Seq("age", "name"), Seq("greeting"))
-    val derived = op(
-      op.attrs,
-      Seq(g.age.entity, g.name.entity))(
-        op.scalars, Seq(g.greeting.entity)).result.attr
+      Seq("age" -> g.age.entity, "name" -> g.name.entity), Seq("greeting" -> g.greeting.entity))
     assert(derived.rdd.collect.sorted.toList == List(0 -> 76.3, 1 -> 64.2, 2 -> 96.3, 3 -> 138.0))
   }
 
@@ -52,22 +44,19 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
       res += "b"
       res"""
     val g = ExampleGraph()().result
-    val op = DeriveScala[String](
+    val derived = DeriveScala.derive[String](
       expr,
-      Seq())
-    val derived = op(op.vs, g.vertices)(op.attrs, Seq()).result.attr
+      Seq(),
+      vertexSet = Some(g.vertices))
     assert(derived.rdd.collect.toSet == Set(0 -> "ab", 1 -> "ab", 2 -> "ab", 3 -> "ab"))
   }
 
   test("example graph: \"if (gender == \"Male\") \"Mr \" + name else \"Ms \" + name\"") {
     val expr = "if (gender == \"Male\") \"Mr \" + name else \"Ms \" + name"
     val g = ExampleGraph()().result
-    val op = DeriveScala[String](
+    val derived = DeriveScala.derive[String](
       expr,
-      Seq("gender", "name"))
-    val derived = op(
-      op.attrs,
-      Seq(g.gender.entity, g.name.entity)).result.attr
+      Seq("gender" -> g.gender.entity, "name" -> g.name.entity))
     assert(derived.rdd.collect.toSet == Set(
       0 -> "Mr Adam", 1 -> "Ms Eve", 2 -> "Mr Bob", 3 -> "Mr Isolated Joe"))
   }
@@ -75,36 +64,31 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
   test("DeriveScala works with no input attributes (vertices)") {
     val expr = "1.0"
     val g = ExampleGraph()().result
-    val op = DeriveScala[Double](
+    val derived = DeriveScala.derive[Double](
       expr,
-      Seq())
-    val derived = op(op.vs, g.vertices.entity)(
-      op.attrs,
-      Seq()).result.attr
+      Seq(),
+      vertexSet = Some(g.vertices))
     assert(derived.rdd.collect.toSet == Set(0 -> 1.0, 1 -> 1.0, 2 -> 1.0, 3 -> 1.0))
   }
 
   test("Many input attributes to check correct param substitution") {
     val expr = "age.toString + income.toString + name + gender"
     val g = ExampleGraph()().result
-    val op = DeriveScala[String](
-      expr,
-      Seq("age", "income", "name", "gender"))
-    val derived = op(op.vs, g.vertices.entity)(
-      op.attrs,
-      Seq(g.age.entity, g.income.entity, g.name.entity, g.gender.entity)).result.attr
+    val derived = DeriveScala.derive[String](expr, Seq(
+      "age" -> g.age.entity,
+      "income" -> g.income.entity,
+      "name" -> g.name.entity,
+      "gender" -> g.gender.entity))
     assert(derived.rdd.collect.toSet == Set(0 -> "20.31000.0AdamMale", 2 -> "50.32000.0BobMale"))
   }
 
   test("DeriveScala works with no input attributes (edges)") {
     val expr = "\"hallo\""
     val g = ExampleGraph()().result
-    val op = DeriveScala[String](
+    val derived = DeriveScala.derive[String](
       expr,
-      Seq())
-    val derived = op(op.vs, g.edges.idSet)(
-      op.attrs,
-      Seq()).result.attr
+      Seq(),
+      vertexSet = Some(g.vertices))
     assert(derived.rdd.collect.toSet == Set(0 -> "hallo", 1 -> "hallo", 2 -> "hallo", 3 -> "hallo"))
   }
 
@@ -132,73 +116,57 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
   test("example graph - all vertices: income == null") {
     val expr = "income.map(_ * 10.0).getOrElse(666.0)"
     val g = ExampleGraph()().result
-    val op = DeriveScala[Double](
+    val derived = DeriveScala.derive[Double](
       expr,
-      Seq("income"),
+      Seq("income" -> g.income.entity),
       onlyOnDefinedAttrs = false)
-    val derived = op(
-      op.attrs,
-      Seq(g.income.entity)).result.attr
     assert(derived.rdd.collect.toSet == Set((0, 10000.0), (1, 666.0), (2, 20000.0), (3, 666.0)))
   }
 
   test("example graph - all vertices: Option to Option") {
     val expr = "income"
     val g = ExampleGraph()().result
-    val op = DeriveScala[Double](
+    val derived = DeriveScala.derive[Double](
       expr,
-      Seq("income"),
+      Seq("income" -> g.income.entity),
       onlyOnDefinedAttrs = false)
-    val derived = op(
-      op.attrs,
-      Seq(g.income.entity)).result.attr
     assert(derived.rdd.collect.toSet == Set((0, 1000.0), (2, 2000.0)))
   }
 
   test("example graph - all vertices: Option[Double] * 10 throws error") {
     val expr = "income * 10.0"
     val g = ExampleGraph()().result
-    val op = DeriveScala[Double](
-      expr,
-      Seq("income"),
-      onlyOnDefinedAttrs = false)
     intercept[javax.script.ScriptException] { // Script throws a compilation error.
-      val derived = op(op.attrs, Seq(g.income.entity)).result.attr
-      derived.rdd.collect
+      DeriveScala.derive[Double](
+        expr,
+        Seq("income" -> g.income.entity),
+        onlyOnDefinedAttrs = false)
     }
   }
 
   test("example graph - all vertices: two attributes") {
     val expr = "income.map(_ + age.get)"
     val g = ExampleGraph()().result
-    val op = DeriveScala[Double](
+    val derived = DeriveScala.derive[Double](
       expr,
-      Seq("income", "age"),
+      Seq("income" -> g.income.entity, "age" -> g.age.entity),
       onlyOnDefinedAttrs = false)
-    val derived = op(
-      op.attrs,
-      Seq(g.income.entity, g.age.entity)).result.attr
     assert(derived.rdd.collect.toSet == Set((0, 1020.3), (2, 2050.3)))
   }
 
   test("example graph - all vertices: two attributes wrong type") {
     val expr = "income + age" // Fails because income and age are Option[Double]-s.
     val g = ExampleGraph()().result
-    val op = DeriveScala[Double](
-      expr,
-      Seq("income", "age"),
-      onlyOnDefinedAttrs = false)
-    val derived = op(
-      op.attrs,
-      Seq(g.income.entity, g.age.entity)).result.attr
     intercept[javax.script.ScriptException] {
-      derived.rdd.collect
+      DeriveScala.derive[Double](
+        expr,
+        Seq("income" -> g.income.entity, "age" -> g.age.entity),
+        onlyOnDefinedAttrs = false)
     }
   }
 
   def checkScala(expr: String, name: String, attr: Attribute[_], result: Set[(Int, String)]) = {
-    val op = DeriveScala[String](expr, Seq(name))
-    val derived = op(op.attrs, Seq(attr)).result.attr
+    val derived = DeriveScala.derive[String](expr, Seq(name -> attr))
     assert(derived.rdd.collect.toSet == result)
   }
 
