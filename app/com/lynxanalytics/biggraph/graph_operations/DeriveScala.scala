@@ -17,16 +17,10 @@ object DeriveScala extends OpFromJson {
   class Input(a: Seq[(String, SerializableType[_])], s: Seq[(String, SerializableType[_])])
       extends MagicInputSignature {
     val vs = vertexSet
-    // I don't know how to pass the typeTag here. Also, we still have to convert to Any here
-    // and below when we create the op so the collection has a generic type (Any) instead of a wildcard (_).
-    val attrs = a.map(i => {
-      implicit val tt = i._2.typeTag
-      vertexAttribute[Any](vs, Symbol(i._1))
-    })
-    val scalars = s.map(i => {
-      implicit val tt = i._2.typeTag
-      scalar[Any](Symbol(i._1))
-    })
+    // We still have to convert to Any here and below when we create the op so the collection
+    // has a generic type (Any) instead of a wildcard (_).
+    val attrs = a.map(i => vertexAttributeT(vs, Symbol(i._1))(i._2.typeTag).asInstanceOf[VertexAttributeTemplate[Any]])
+    val scalars = s.map(i => scalarT(Symbol(i._1))(i._2.typeTag).asInstanceOf[ScalarTemplate[Any]])
   }
   class Output[T](implicit instance: MetaGraphOperationInstance,
                   inputs: Input, tt: TypeTag[T]) extends MagicOutput(instance) {
