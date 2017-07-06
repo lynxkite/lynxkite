@@ -13,11 +13,7 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
   import Operation.Context
   import Operation.Implicits._
 
-  import Categories.StructureOperations
-
-  def register(id: String)(factory: Context => ProjectTransformation): Unit = {
-    registerOp(id, defaultIcon, StructureOperations, List(projectOutput), List(projectOutput), factory)
-  }
+  val category = Categories.StructureOperations
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 

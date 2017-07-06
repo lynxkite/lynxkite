@@ -14,17 +14,7 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
   import Operation.Context
   import Operation.Implicits._
 
-  import Categories.ScalarOperations
-
-  def register(id: String)(factory: Context => ProjectTransformation): Unit = {
-    registerOp(id, defaultIcon, ScalarOperations, List(projectOutput),
-      List(projectOutput), factory)
-  }
-
-  def register(id: String, inputs: List[String])(factory: Context => ProjectOutputOperation): Unit = {
-    registerOp(id, defaultIcon, ScalarOperations, inputs,
-      List(projectOutput), factory)
-  }
+  val category = Categories.ScalarOperations
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 

@@ -14,17 +14,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
   import Operation.Context
   import Operation.Implicits._
 
-  import Categories.VertexAttributeOperations
-
-  def register(id: String)(factory: Context => ProjectTransformation): Unit = {
-    registerOp(id, defaultIcon, VertexAttributeOperations, List(projectOutput),
-      List(projectOutput), factory)
-  }
-
-  def register(id: String, inputs: List[String])(factory: Context => ProjectOutputOperation): Unit = {
-    registerOp(id, defaultIcon, VertexAttributeOperations, inputs,
-      List(projectOutput), factory)
-  }
+  val category = Categories.VertexAttributeOperations
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 

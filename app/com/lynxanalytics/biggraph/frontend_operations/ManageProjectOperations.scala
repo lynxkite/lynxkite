@@ -5,15 +5,9 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.controllers._
 
 class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Context
   import Operation.Implicits._
 
-  import Categories.ManageProjectOperations
-
-  def register(id: String)(factory: Context => ProjectTransformation): Unit = {
-    registerOp(id, defaultIcon, ManageProjectOperations, List(projectOutput),
-      List(projectOutput), factory)
-  }
+  val category = Categories.ManageProjectOperations
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
