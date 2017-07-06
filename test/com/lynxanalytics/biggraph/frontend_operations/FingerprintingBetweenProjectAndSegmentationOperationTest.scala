@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 class FingerprintingBetweenProjectAndSegmentationOperationTest extends OperationsTestBase {
   test("Fingerprinting between project and segmentation") {
     val project = box("Create example graph")
-      .box("Use project as segmentation", Map(
+      .box("Use other project as segmentation", Map(
         "name" -> "eg2"), Seq(box("Create example graph")))
       .box("Use table as segmentation links", Map(
         "apply_to_project" -> "|eg2",
@@ -51,7 +51,7 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
     val golden = box("Use table as graph", Map(
       "src" -> "src",
       "dst" -> "dst"), Seq(importCSV("fingerprint-edges-1.csv")))
-      .box("Use project as segmentation", Map(
+      .box("Use other project as segmentation", Map(
         "name" -> "other"), Seq(other))
       .box("Define segmentation links from matching attributes", Map(
         "apply_to_project" -> "|other",

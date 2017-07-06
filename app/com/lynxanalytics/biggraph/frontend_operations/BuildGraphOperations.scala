@@ -107,7 +107,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
 
   register(
     "Use table as vertices", List("table"))(factory = new ProjectOutputOperation(_) {
-      lazy val vertices = tableLikeInput("vertices").asProject
+      lazy val vertices = tableLikeInput("table").asProject
       params += Param("id_attr", "Save internal ID as", defaultValue = "")
       def enabled = FEStatus.enabled
       def apply() = {
@@ -127,7 +127,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
 
   register(
     "Use table as graph", List("table"))(new ProjectOutputOperation(_) {
-      lazy val edges = tableLikeInput("graph").asProject
+      lazy val edges = tableLikeInput("table").asProject
       params ++= List(
         Choice("src", "Source ID column", options = FEOption.unset +: edges.vertexAttrList),
         Choice("dst", "Destination ID column", options = FEOption.unset +: edges.vertexAttrList))
@@ -154,7 +154,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
   register(
     "Use table as edges", List(projectInput, "table"))(new ProjectOutputOperation(_) {
       override lazy val project = projectInput("project")
-      lazy val edges = tableLikeInput("edges").asProject
+      lazy val edges = tableLikeInput("table").asProject
       params ++= List(
         Choice("attr", "Vertex ID attribute", options = FEOption.unset +: project.vertexAttrList),
         Choice("src", "Source ID column", options = FEOption.unset +: edges.vertexAttrList),
