@@ -290,7 +290,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     }
   })
 
-  register("Use project as segmentation", List("project", "segmentation"))(
+  register("Use other project as segmentation", List("project", "segmentation"))(
     new ProjectOutputOperation(_) {
       override lazy val project = projectInput("project")
       lazy val them = projectInput("segmentation")
@@ -305,10 +305,10 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     })
 
   register(
-    "Use table as segmentation", List(projectInput, "segmentation"))(
+    "Use table as segmentation", List(projectInput, "table"))(
       new ProjectOutputOperation(_) {
         override lazy val project = projectInput("project")
-        lazy val segTable = tableLikeInput("segmentation").asProject
+        lazy val segTable = tableLikeInput("table").asProject
         params ++= List(
           Param("name", s"Name of new segmentation"),
           Choice("base_id_attr", "Vertex ID attribute",

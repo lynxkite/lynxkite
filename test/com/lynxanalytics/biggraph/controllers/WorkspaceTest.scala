@@ -148,7 +148,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val combine = Box(
         "combine", "Use table as edges",
         Map("attr" -> "name", "src" -> "src", "dst" -> "dst"), 0, 0,
-        Map("project" -> eg.output("project"), "edges" -> dsts.output("project")))
+        Map("project" -> eg.output("project"), "table" -> dsts.output("project")))
       val ws = Workspace.from(eg, blanks, convert, srcs, dsts, combine)
       set("test-workspace", ws)
       val op = getOpMeta("test-workspace", "combine")
@@ -243,7 +243,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       "imp", "Use table as segmentation", Map(
         "name" -> "self", "base_id_attr" -> "name",
         "base_id_column" -> "name", "seg_id_column" -> "name"), 0, 0,
-      Map("project" -> eg.output("project"), "segmentation" -> eg.output("project")))
+      Map("project" -> eg.output("project"), "table" -> eg.output("project")))
     val ws = Workspace.from(eg, imp)
     val p = context(ws).allStates(imp.output("project")).project
     assert(p.segmentationNames.contains("self"))
