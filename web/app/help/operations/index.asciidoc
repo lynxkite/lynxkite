@@ -317,11 +317,11 @@ include::output.asciidoc[]
 
 include::predict-attribute-by-viral-modeling.asciidoc[]
 
-include::predict-from-model.asciidoc[]
-
 include::predict-vertex-attribute.asciidoc[]
 
 include::predict-with-a-neural-network-experimental.asciidoc[]
+
+include::predict-with-model.asciidoc[]
 
 include::project-rejoin.asciidoc[]
 

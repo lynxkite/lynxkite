@@ -67,7 +67,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
     }
   })
 
-  register("Predict from model")(new ProjectTransformation(_) {
+  register("Predict with model")(new ProjectTransformation(_) {
     def models = project.viewer.models.filterNot(_._2.isClassification)
     params ++= List(
       Param("name", "The name of the attribute of the predictions"),

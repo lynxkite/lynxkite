@@ -51,7 +51,7 @@ class DecisionTreeTest extends OperationsTestBase {
           "minInfoGain" -> "0",
           "minInstancesPerNode" -> "1",
           "seed" -> "1234567"))
-      .box("Predict from model",
+      .box("Predict with model",
         Map(
           "name" -> "prediction",
           "model" -> """{
