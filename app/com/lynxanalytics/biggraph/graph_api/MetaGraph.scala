@@ -310,6 +310,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     new EdgeAttributeTemplate[T](es.name, Option(name))
   def scalar[T] = new ScalarTemplate[T](None)
   def scalar[T](name: Symbol) = new ScalarTemplate[T](Some(name))
+  def scalarT[T: TypeTag](name: Symbol) = new ScalarTemplate[T](Some(name))
   def table = new TableTemplate(None)
   def table(name: Symbol) = new TableTemplate(Some(name))
   def graph = {

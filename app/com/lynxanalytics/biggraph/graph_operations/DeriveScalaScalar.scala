@@ -10,10 +10,7 @@ import com.lynxanalytics.sandbox.ScalaScript
 
 object DeriveScalaScalar extends OpFromJson {
   class Input(s: Seq[(String, SerializableType[_])]) extends MagicInputSignature {
-    val scalars = s.map(i => {
-      implicit val tt = i._2.typeTag
-      scalar[Any](Symbol(i._1))
-    })
+    val scalars = s.map(i => scalarT(Symbol(i._1))(i._2.typeTag).asInstanceOf[ScalarTemplate[Any]])
   }
   class Output[T: TypeTag](implicit instance: MetaGraphOperationInstance)
       extends MagicOutput(instance) {
