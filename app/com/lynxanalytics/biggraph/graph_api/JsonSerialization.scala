@@ -102,6 +102,8 @@ object SerializableType {
       case "Int" => int
       case "Vector[String]" => stringVector
       case "Vector[Double]" => doubleVector
+      case "Vector[Vector[String]]" => stringVectorVector
+      case "Vector[Vector[Double]]" => doubleVectorVector
     }
   }
 
@@ -117,8 +119,12 @@ object SerializableType {
 
   implicit val oSV = new MockVectorOrdering[String]
   val stringVector = new SerializableType[Vector[String]]("Vector[String]")
+  implicit val oSVV = new MockVectorOrdering[Vector[String]]
+  val stringVectorVector = new SerializableType[Vector[Vector[String]]]("Vector[Vector[String]]")
   implicit val oDV = new MockVectorOrdering[Double]
   val doubleVector = new SerializableType[Vector[Double]]("Vector[Double]")
+  implicit val oDVV = new MockVectorOrdering[Vector[Double]]
+  val doubleVectorVector = new SerializableType[Vector[Vector[Double]]]("Vector[Vector[Double]]")
 
   def apply[T: TypeTag]: SerializableType[T] = {
     val t = typeOf[T]
@@ -129,6 +135,8 @@ object SerializableType {
       else if (t =:= typeOf[Int]) int
       else if (t =:= typeOf[Vector[String]]) stringVector
       else if (t =:= typeOf[Vector[Double]]) doubleVector
+      else if (t =:= typeOf[Vector[Vector[String]]]) stringVectorVector
+      else if (t =:= typeOf[Vector[Vector[Double]]]) doubleVectorVector
       else assert(false, s"Unsupported type: $t")
     st.asInstanceOf[SerializableType[T]]
   }
@@ -143,6 +151,6 @@ object SerializableType {
 class SerializableType[T] private (typename: String)(implicit val classTag: ClassTag[T],
                                                      val format: play.api.libs.json.Format[T],
                                                      val ordering: Ordering[T],
-                                                     val typeTag: TypeTag[T]) extends ToJson {
+                                                     val typeTag: TypeTag[T]) extends ToJson with Serializable {
   override def toJson = Json.obj("typename" -> typename)
 }

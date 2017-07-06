@@ -14,22 +14,55 @@ import com.lynxanalytics.sandbox.ScalaScript
 import org.apache.spark
 
 object DeriveScala extends OpFromJson {
-  class Input(attrCount: Int, scalarCount: Int)
+  class Input(a: Seq[(String, SerializableType[_])], s: Seq[(String, SerializableType[_])])
       extends MagicInputSignature {
     val vs = vertexSet
-    val attrs = (0 until attrCount).map(i => anyVertexAttribute(vs, Symbol("attr-" + i)))
-    val scalars = (0 until scalarCount).map(i => anyScalar(Symbol("scalar-" + i)))
+    // I don't know how to pass the typeTag here. Also, we still have to convert to Any here
+    // and below when we create the op so the collection has a generic type (Any) instead of a wildcard (_).
+    val attrs = a.map(i => {
+      implicit val tt = i._2.typeTag
+      vertexAttribute[Any](vs, Symbol(i._1))
+    })
+    val scalars = s.map(i => {
+      implicit val tt = i._2.typeTag
+      scalar[Any](Symbol(i._1))
+    })
   }
   class Output[T](implicit instance: MetaGraphOperationInstance,
                   inputs: Input, tt: TypeTag[T]) extends MagicOutput(instance) {
     val attr = vertexAttribute[T](inputs.vs.entity)
   }
   def negative(x: Attribute[Double])(implicit manager: MetaGraphManager): Attribute[Double] = {
-    import Scripting._
-    val op = DeriveScala[Double]("-x", Seq("x"))
-    op(op.attrs, Seq(x)).result.attr
+    derive[Double]("-x", Seq("x" -> x))
   }
 
+  // Derives a new AttributeRDD using the Scala expression (expr) and the input attribute and scalar
+  // values. The expression may return T or Option[T]. In the latter case the result RDD will be
+  // partially defined exactly where the expression returned Some[T]. The expression should never
+  // return nulls.
+  // If onlyOnDefinedAttrs is true then the expression is only evaluated for those records where all
+  // input attributes are present. If false, it's evaluated for every record, and the parameters will
+  // be substituted wrapped in Options.
+  def derive[T: TypeTag](
+    exprString: String,
+    attributes: Seq[(String, Attribute[_])],
+    scalars: Seq[(String, Scalar[_])] = Seq(),
+    onlyOnDefinedAttrs: Boolean = true,
+    vertexSet: Option[VertexSet] = None)(
+      implicit manager: MetaGraphManager): Attribute[T] = {
+    assert(attributes.nonEmpty || vertexSet.nonEmpty,
+      "There should be either at least one attribute or vertexSet defined.")
+    val attr = deriveFromAttributes(
+      exprString,
+      attributes,
+      vertexSet.getOrElse(attributes.head._2.vertexSet),
+      scalars,
+      onlyOnDefinedAttrs)
+    assert(attr.typeTag.tpe =:= typeOf[T])
+    attr.runtimeSafeCast[T]
+  }
+
+  // Same as above but infers T from the input parameters and the script.
   def deriveFromAttributes(
     exprString: String,
     namedAttributes: Seq[(String, Attribute[_])],
@@ -47,16 +80,18 @@ object DeriveScala extends OpFromJson {
         s" Please rename either the scalar or the attribute."
     })
 
-    val paramTypes = (
-      namedAttributes.map { case (k, v) => k -> v.typeTag } ++
-      namedScalars.map { case (k, v) => k -> v.typeTag }).toMap[String, TypeTag[_]]
+    val attrTypes = namedAttributes.map { case (k, v) => k -> v.typeTag }
+    val scalarTypes = namedScalars.map { case (k, v) => k -> v.typeTag }
+    val paramTypes = (attrTypes ++ scalarTypes).toMap[String, TypeTag[_]]
+    checkInputTypes(paramTypes)
+
     val t = ScalaScript.compileAndGetType(
       exprString, paramTypes, paramsToOption = !onlyOnDefinedAttrs).payLoadType
 
     // The MetaGraph API expects to know the types of the outputs in compilation time,
     // so we cannot be more dynamic here.
-    val a = namedAttributes.map(_._1)
-    val s = namedScalars.map(_._1)
+    val a = attrTypes
+    val s = scalarTypes
     val e = exprString
     val o = onlyOnDefinedAttrs
     val op = t match {
@@ -69,47 +104,65 @@ object DeriveScala extends OpFromJson {
 
     import Scripting._
     op(op.vs, vertexSet)(
-      op.attrs, namedAttributes.map(_._2))(
-        op.scalars, namedScalars.map(_._2)).result.attr
+      op.attrs, namedAttributes.map(_._2.asInstanceOf[Attribute[Any]]))(
+        op.scalars, namedScalars.map(_._2.asInstanceOf[Scalar[Any]])).result.attr
   }
 
   def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
     implicit val tt = SerializableType.fromJson(j \ "type").typeTag
     DeriveScala(
       (j \ "expr").as[String],
-      (j \ "attrNames").as[List[String]].toSeq,
-      (j \ "scalarNames").as[List[String]].toSeq,
+      jsonToParams(j \ "attrNames"),
+      jsonToParams(j \ "scalarNames"),
       (j \ "onlyOnDefinedAttrs").as[Boolean])
+  }
+
+  import play.api.libs.json.Json
+  def paramsToJson(paramTypes: Seq[(String, TypeTag[_])]) = {
+    paramTypes.map { case (n, t) => Json.obj("name" -> n, "type" -> SerializableType(t).toJson) }
+  }
+
+  def jsonToParams(j: JsValue) = {
+    j.as[List[JsValue]].map { p => (p \ "name").as[String] -> SerializableType.fromJson(p \ "type").typeTag }
+  }
+
+  def checkInputTypes(paramTypes: Map[String, TypeTag[_]]): Unit = {
+    paramTypes.foreach {
+      case (k, t) =>
+        try {
+          SerializableType(t)
+        } catch {
+          case e: AssertionError => throw new AssertionError(
+            s"Unsupported type $t for input parameter $k.")
+        }
+    }
   }
 }
 
-// Derives a new AttributeRDD using the Scala expression (expr) and the input attribute and scalar
-// values. The expression may return T or Option[T]. In the latter case the result RDD will be
-// partially defined exactly where the expression returned Some[T]. The expression should never
-// return nulls.
-// If onlyOnDefinedAttrs is true then the expression is only evaluated for those records where all
-// input attributes are present. If false, it's evaluated for every record, and the parameters will
-// be substituted wrapped in Options.
+// Using this constructor directly is discouraged, please use the functions above.
 import DeriveScala._
-case class DeriveScala[T: TypeTag](
+case class DeriveScala[T: TypeTag] private[graph_operations] (
   expr: String, // The Scala expression to evaluate.
-  attrNames: Seq[String], // Input attributes to substitute.
-  scalarNames: Seq[String] = Seq(), // Input scalars to substitute.
+  attrParams: Seq[(String, TypeTag[_])], // Input attributes to substitute.
+  scalarParams: Seq[(String, TypeTag[_])] = Seq(), // Input scalars to substitute.
   onlyOnDefinedAttrs: Boolean = true)
     extends TypedMetaGraphOp[Input, Output[T]] {
 
   def tt = typeTag[T]
   def st = SerializableType(tt)
   implicit def ct = RuntimeSafeCastable.classTagFromTypeTag(tt)
+
   override def toJson = Json.obj(
     "type" -> st.toJson,
     "expr" -> expr,
-    "attrNames" -> attrNames,
-    "scalarNames" -> scalarNames,
+    "attrNames" -> DeriveScala.paramsToJson(attrParams),
+    "scalarNames" -> DeriveScala.paramsToJson(scalarParams),
     "onlyOnDefinedAttrs" -> onlyOnDefinedAttrs)
 
   override val isHeavy = true
-  @transient override lazy val inputs = new Input(attrNames.size, scalarNames.size)
+  @transient override lazy val inputs = new Input(
+    attrParams.map { case (k, v) => k -> SerializableType(v) },
+    scalarParams.map { case (k, v) => k -> SerializableType(v) })
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output[T]()(instance, inputs, tt)
 
@@ -119,7 +172,7 @@ case class DeriveScala[T: TypeTag](
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val joined: spark.rdd.RDD[(ID, Array[Any])] = {
-      val noAttrs = inputs.vs.rdd.mapValues(_ => new Array[Any](attrNames.size))
+      val noAttrs = inputs.vs.rdd.mapValues(_ => new Array[Any](attrParams.size))
       if (onlyOnDefinedAttrs) {
         inputs.attrs.zipWithIndex.foldLeft(noAttrs) {
           case (rdd, (attr, idx)) =>
@@ -141,12 +194,9 @@ case class DeriveScala[T: TypeTag](
       }
     }
 
-    val scalars = inputs.scalars.map { _.value }.toArray
-    val allNames = attrNames ++ scalarNames
-    val paramTypes = (
-      attrNames.zip(inputs.attrs).map { case (k, v) => k -> v.data.typeTag } ++
-      scalarNames.zip(inputs.scalars).map { case (k, v) => k -> v.data.typeTag })
-      .toMap[String, TypeTag[_]]
+    val scalarValues = inputs.scalars.map { _.value }.toArray
+    val allNames = (attrParams.map(_._1) ++ scalarParams.map(_._1)).toSeq
+    val paramTypes = (attrParams ++ scalarParams).toMap[String, TypeTag[_]]
 
     val t = ScalaScript.compileAndGetType(expr, paramTypes, paramsToOption = !onlyOnDefinedAttrs)
     assert(t.payLoadType =:= tt.tpe, // PayLoadType should always match T.
@@ -158,9 +208,9 @@ case class DeriveScala[T: TypeTag](
         expr, paramTypes, paramsToOption = !onlyOnDefinedAttrs)
       it.flatMap {
         case (key, values) =>
-          val namedValues = allNames.zip(values ++ scalars).toMap
+          val namedValues = allNames.zip(values ++ scalarValues).toMap
           val result = evaluator.evaluate(namedValues)
-          assert(Option(result).nonEmpty, s"Scala script $expr returned null.")
+          assert(result != null, s"Scala script $expr returned null.")
           // The compiler in ScalaScript should guarantee that this is always correct. We filter
           // out None-s, so the result is always a fully defined RDD[(ID, T)].
           if (returnsOptionType) {

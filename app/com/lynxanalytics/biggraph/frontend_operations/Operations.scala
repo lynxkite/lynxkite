@@ -1187,11 +1187,9 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
       // http://arxiv.org/pdf/1310.6753v1.pdf
       val normalizedDispersion = {
-        val op = graph_operations.DeriveScala[Double](
+        graph_operations.DeriveScala.derive[Double](
           "scala.math.pow(disp, 0.61) / (emb + 5)",
-          Seq("disp", "emb"))
-        op(op.attrs, Seq(
-          dispersion, embeddedness)).result.attr
+          Seq("disp" -> dispersion, "emb" -> embeddedness))
       }
       // TODO: recursive dispersion
       project.newEdgeAttribute(params("name"), dispersion, help)
@@ -1948,14 +1946,9 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       seg.belongsTo,
       AttributeWithLocalAggregator(parent.vertexSet.idAttribute, "count")
     )
-    val sizeSquare: Attribute[Double] = {
-      val op = graph_operations.DeriveScala[Double](
-        "size * size",
-        Seq("size"))
-      op(
-        op.attrs,
-        graph_operations.VertexAttributeToJSValue.seq(size)).result.attr
-    }
+    val sizeSquare = graph_operations.DeriveScala.derive[Double](
+      "size * size",
+      Seq("size" -> size))
     aggregate(AttributeWithAggregator(sizeSquare, "sum"))
   }
 
@@ -3441,8 +3434,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         parent.scalars(s"$prefix $targetName coverage initial") = coverage
 
         var timeOfDefinition = {
-          val op = graph_operations.DeriveScala[Double]("0", Seq("attr"))
-          op(op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr.entity
+          graph_operations.DeriveScala.derive[Double]("0", Seq("attr" -> train))
         }
 
         // iterative prediction
@@ -3466,7 +3458,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
               .runtimeSafeCast[Double]
           }
           val segStdDevDefined = {
-            val op = graph_operations.DeriveScala[Double](
+            graph_operations.DeriveScala.derive[Double](
               s"""
                 if (deviation <= $maxDeviation &&
                   defined / ids >= ${params("min_ratio_defined")} &&
@@ -3475,11 +3467,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
                 } else {
                   None
                 }""",
-              Seq("deviation", "ids", "defined"))
-            op(
-              op.attrs,
-              Seq(segStdDev, segSizes, segTargetCount))
-              .result.attr
+              Seq("deviation" -> segStdDev, "ids" -> segSizes, "defined" -> segTargetCount))
           }
           project.newVertexAttribute(
             s"${prefix}_${targetName}_standard_deviation_after_iteration_$i",
@@ -3499,12 +3487,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             op(op.attr, train)(op.role, roles).result
           }
           val error = {
-            val op = graph_operations.DeriveScala[Double](
-              "scala.math.abs(test - train)", Seq("test", "train"))
-            val mae = op(
-              op.attrs,
-              graph_operations.VertexAttributeToJSValue.seq(
-                parted.test.entity, partedTrain.test.entity)).result.attr
+            val mae = graph_operations.DeriveScala.derive[Double](
+              "scala.math.abs(test - train)", Seq("test" -> parted.test, "train" -> partedTrain.test))
             aggregate(AttributeWithAggregator(mae, "average"))
           }
           val coverage = {
@@ -3518,10 +3502,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             error
 
           timeOfDefinition = {
-            val op = graph_operations.DeriveScala[Double](
-              i.toString, Seq("attr"))
-            val newDefinitions = op(
-              op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr
+            val newDefinitions = graph_operations.DeriveScala.derive[Double](
+              i.toString, Seq("attr" -> train))
             unifyAttributeT(timeOfDefinition, newDefinitions)
           }
         }
@@ -3667,14 +3649,10 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     )
     val srcSize = graph_operations.VertexToEdgeAttribute.srcAttribute(size, seg.edgeBundle)
     val dstSize = graph_operations.VertexToEdgeAttribute.dstAttribute(size, seg.edgeBundle)
-    val sizeProduct: Attribute[Double] = {
-      val op = graph_operations.DeriveScala[Double](
+    val sizeProduct: Attribute[Double] =
+      graph_operations.DeriveScala.derive[Double](
         "src_size * dst_size",
-        Seq("src_size", "dst_size"))
-      op(
-        op.attrs,
-        graph_operations.VertexAttributeToJSValue.seq(srcSize, dstSize)).result.attr
-    }
+        Seq("src_size" -> srcSize, "dst_size" -> dstSize))
     aggregate(AttributeWithAggregator(sizeProduct, "sum"))
   }
 
