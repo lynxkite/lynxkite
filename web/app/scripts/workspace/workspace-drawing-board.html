@@ -19,19 +19,17 @@
   <button class="btn btn-default"
        id="save-selection-as-custom-box"
        ng-click="saveSelectionAsCustomBoxInputOpen = true"
-       ng-disabled="selectedBoxIds.length === 0"
+       ng-disabled="selectedBoxIds.length === 0 || workspace.error"
        drop-tooltip="Save&nbsp;selection as&nbsp;custom&nbsp;box"
-       drop-tooltip-placement="bottom"
-       ng-disabled="workspace.error">
+       drop-tooltip-placement="bottom">
     <i class="fa fa-superpowers"></i>
   </button>
   <button class="btn btn-default"
        id="copy-boxes"
        ng-click="copyBoxes()"
-       ng-disabled="selectedBoxIds.length === 0"
+       ng-disabled="selectedBoxIds.length === 0 || workspace.error"
        drop-tooltip="Copy&nbsp;boxes (Ctrl-C)"
-       drop-tooltip-placement="bottom"
-       ng-disabled="workspace.error">
+       drop-tooltip-placement="bottom">
     <i class="fa fa-copy"></i>
   </button>
   <button class="btn btn-default"
