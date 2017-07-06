@@ -265,6 +265,55 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     }
   })
 
+  register("Take segmentation as base project")(new ProjectTransformation(_) with SegOp {
+    def addSegmentationParameters = {}
+    def enabled = FEStatus.enabled
+    def apply() = {
+      project.rootEditor.state = project.state
+    }
+  })
+
+  register("Take edges as vertices")(new ProjectTransformation(_) {
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val edgeBundle = project.edgeBundle
+      val vertexAttrs = project.vertexAttributes.toMap
+      val edgeAttrs = project.edgeAttributes.toMap
+      project.scalars = Map()
+      project.vertexSet = edgeBundle.idSet
+      for ((name, attr) <- vertexAttrs) {
+        project.newVertexAttribute(
+          "src_" + name, graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle))
+        project.newVertexAttribute(
+          "dst_" + name, graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle))
+      }
+      for ((name, attr) <- edgeAttrs) {
+        project.newVertexAttribute("edge_" + name, attr)
+      }
+    }
+  })
+
+  register("Take segmentation links as base project")(new ProjectTransformation(_) with SegOp {
+    def addSegmentationParameters = {}
+    def enabled = FEStatus.enabled
+    def apply() = {
+      val root = project.rootEditor
+      val baseAttrs = parent.vertexAttributes.toMap
+      val segAttrs = project.vertexAttributes.toMap
+      val belongsTo = seg.belongsTo
+      root.scalars = Map()
+      root.vertexSet = belongsTo.idSet
+      for ((name, attr) <- baseAttrs) {
+        root.newVertexAttribute(
+          "base_" + name, graph_operations.VertexToEdgeAttribute.srcAttribute(attr, belongsTo))
+      }
+      for ((name, attr) <- segAttrs) {
+        root.newVertexAttribute(
+          "segment_" + name, graph_operations.VertexToEdgeAttribute.dstAttribute(attr, belongsTo))
+      }
+    }
+  })
+
   // TODO: Use dynamic inputs. #5820
   def registerSQLOp(name: String, inputs: List[String]): Unit = {
     registerOp(name, defaultIcon, category, inputs, List("table"), new TableOutputOperation(_) {
