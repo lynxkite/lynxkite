@@ -154,7 +154,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
-  register("Find shortest path")(new ProjectTransformation(_) {
+  register("Compute distance via shortest path")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Attribute name", defaultValue = "shortest_distance"),
       Choice("edge_distance", "Edge distance attribute",

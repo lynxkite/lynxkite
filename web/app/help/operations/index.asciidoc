@@ -153,6 +153,8 @@ include::compute-degree.asciidoc[]
 
 include::compute-dispersion.asciidoc[]
 
+include::compute-distance-via-shortest-path.asciidoc[]
+
 include::compute-embeddedness.asciidoc[]
 
 include::compute-pagerank.asciidoc[]
@@ -266,8 +268,6 @@ include::find-infocom-communities.asciidoc[]
 include::find-maximal-cliques.asciidoc[]
 
 include::find-modular-clustering.asciidoc[]
-
-include::find-shortest-path.asciidoc[]
 
 include::find-triangles.asciidoc[]
 
