@@ -1,11 +1,15 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
+import java.util.concurrent.ConcurrentMap
+
 import com.lynxanalytics.biggraph.graph_api.{ DataManager, ThreadUtil }
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import org.apache.spark
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{ DataFrame, Row }
+import org.apache.spark.sql.{ DataFrame, Row, SQLContext }
+
+import scala.collection.concurrent.Map
 
 class SQLTest extends OperationsTestBase {
   private def toSeq(row: spark.sql.Row): Seq[Any] = {
@@ -144,39 +148,53 @@ class SQLTest extends OperationsTestBase {
     assert(table.schema.map(_.name) == Seq("age"))
   }
 
-  test("Thread safe sql") {
+  test("Thread safe sql even for the same SQL context") {
     val columnName = "col"
     val tableName = "table"
     val schema = StructType(Seq(StructField("column", IntegerType)))
-    val sqlCtx = dataManager.newSQLContext
     val numRows = 1000
-    def getDf(value: Int): DataFrame = {
+    def getDfWithConstantValue(ctx: SQLContext, value: Int): DataFrame = {
       import scala.collection.JavaConverters._
       val data = List.fill(numRows)(Row(value)).asJava
-      sqlCtx.createDataFrame(data, schema).toDF(columnName)
+      ctx.createDataFrame(data, schema).toDF(columnName)
     }
 
-    val numWorkers = 300
-    val frames = (0 until numWorkers).map { n => getDf(n) }.toList
-
-    val maxParalellism = 30
+    val numWorkers = 60
+    val maxParalellism = 20
     implicit val sqlTestExecutionContext =
       ThreadUtil.limitedExecutionContext("ThreadSafeSQL", maxParallelism = maxParalellism)
-    val asyncJobs = new ControlledFutures()(sqlTestExecutionContext)
+    val sqlTestingThreads = new ControlledFutures()(sqlTestExecutionContext)
 
-    val counter = new java.util.concurrent.atomic.AtomicInteger(0)
+    val counters = Array.fill(numWorkers)(new java.util.concurrent.atomic.AtomicInteger(0))
 
-    for (f <- frames) {
-      val df = List((tableName, f))
-      asyncJobs.register {
-        val avg =
-          DataManager.sql(sqlCtx, s"select AVG($columnName) from $tableName", df)
+    val sqlCtx = dataManager.newSQLContext
+    for (value <- (0 until numWorkers)) {
+      val df = List((tableName, getDfWithConstantValue(sqlCtx, value)))
+      sqlTestingThreads.register {
+        val resultThatIsSupposedToBeEqualToValue =
+          DataManager.sql(sqlCtx, s"select AVG(v.$columnName) from $tableName as v CROSS JOIN $tableName", df)
             .collect().toList.take(1).head.getDouble(0)
-        counter.addAndGet(avg.toInt)
+        val idx = resultThatIsSupposedToBeEqualToValue.toInt
+        // We could say assert(idx == resultThatIsSupposedToBeEqualToValue) here,
+        // but this is running on a different thread,
+        // and the test would pass despite the assertion. Anyway, using the counters array
+        // gives us a nicer way to see what exactly went wrong.
+        if (0 <= idx && idx < numWorkers) {
+          counters(resultThatIsSupposedToBeEqualToValue.toInt).getAndIncrement()
+        }
       }
     }
-    asyncJobs.waitAllFutures()
-    assert(counter.intValue() == (0 until numWorkers).sum)
+
+    sqlTestingThreads.waitAllFutures()
+    val resultMap = (0 until numWorkers).map(n => (n, counters(n).get()))
+    val badResults = resultMap.filter(_._2 != 1).toList
+    // Failure here would result in outputs like these:
+    //
+    // List((9,2), (10,0), (14,0), (16,2)) did not equal List()
+    //
+    // This would (probably) mean that worker 9 overwrote the table name of worker 10,
+    // and worker 16 overwrote the name for worker 14.
+    assert(badResults == List())
   }
 
 }
