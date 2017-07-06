@@ -135,7 +135,7 @@ include::change-project-notes.asciidoc[]
 
 include::check-cliques.asciidoc[]
 
-include::classify-vertices-with-a-model.asciidoc[]
+include::classify-with-model.asciidoc[]
 
 include::coloring.asciidoc[]
 
