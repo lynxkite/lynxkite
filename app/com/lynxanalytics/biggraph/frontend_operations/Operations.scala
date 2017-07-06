@@ -60,7 +60,7 @@ object Categories {
   val ManageProjectOperations = Category("Manage project", "blue", icon = "glyphicon-wrench", sortKey = "n")
   val VisualizationOperations = Category("Visualization operations", "blue", sortKey = "o")
   val ExportOperations = Category("Export operations", "blue", icon = "glyphicon-export", sortKey = "p")
-  val HiddenOperations = Category("Manage project", "yellow", visible = false, sortKey = "q")
+  val HiddenOperations = Category("Hidden operations", "yellow", visible = false, sortKey = "q")
 }
 
 class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
