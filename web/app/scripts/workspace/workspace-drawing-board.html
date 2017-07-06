@@ -120,11 +120,14 @@
   <user-menu info="list" direction="dropdown" class="user-menu-in-toolbar"></user-menu>
 </div>
 
+<display-error caption="Cannot load workspace." error="workspace.error"></display-error>
+
 <div
     id="workspace-drawing-board"
     ng-mousemove="onMouseMove($event)"
     ng-mouseup="onMouseUp($event)"
-    ng-mousedown="onMouseDown($event)">
+    ng-mousedown="onMouseDown($event)"
+    ng-show="!workspace.error">
   <svg>
     <defs>
       <!-- The filters to apply colors to the grayscale icons. -->
