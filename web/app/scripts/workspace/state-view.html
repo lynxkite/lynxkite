@@ -35,7 +35,7 @@
   </button>
 </div>
 
-<div ng-if="instrument">
+<div ng-if="instrument && !instrumentWorkspace.error">
   <box-editor
     workspace="instrumentWorkspace"
     box-id="instrumentBoxId">
@@ -66,6 +66,11 @@
     ng-if="instrumentStateKind === 'visualization'">
   </visualization-state-view>
 </div>
+
+<display-error
+  caption="Cannot load instrumented workspace."
+  error="instrumentWorkspace.error">
+</display-error>
 
 <div ng-if="!instrument">
   <project-state-view
