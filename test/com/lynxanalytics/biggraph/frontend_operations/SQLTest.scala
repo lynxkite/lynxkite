@@ -172,7 +172,7 @@ class SQLTest extends OperationsTestBase {
             .collect().toList.take(1).head.getDouble(0)
         val idx = resultThatIsSupposedToBeEqualToValue.toInt
         // We could say assert(idx == resultThatIsSupposedToBeEqualToValue) here,
-        // but this is running on a different thread,
+        // but this is running on a different thread using SafeFuture,
         // and the test would pass despite the assertion. Anyway, using the counters array
         // gives us a nicer way to see what exactly went wrong.
         if (0 <= idx && idx < numWorkers) {
