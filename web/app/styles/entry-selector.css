@@ -5,43 +5,43 @@
   width: 100%;
 }
 
-.project-list {
+.entry-list {
   padding: 0;
 }
 
-.project-list .path {
+.entry-list .path {
   padding: 10px;
   background: whitesmoke;
 }
 
-.project-list .path .description {
+.entry-list .path .description {
   opacity: 0.5;
 }
 
-.project-list .slash {
+.entry-list .slash {
   padding: 0 5px;
 }
 
-.project-list .entry > .icon,
-.project-list .entry-nohover > .icon {
+.entry-list .entry > .icon,
+.entry-list .entry-nohover > .icon {
   position: absolute;
   padding: 10px;
   margin-left: -40px;
   margin-top: 6px;
 }
 
-.project-list .entry .open-in-new-tab-icon {
+.entry-list .entry .open-in-new-tab-icon {
   font-size: 60%;
   vertical-align: super;
 }
 
-.project-list .entry:hover .open-in-new-tab-icon,
-.project-list .entry:focus .open-in-new-tab-icon {
+.entry-list .entry:hover .open-in-new-tab-icon,
+.entry-list .entry:focus .open-in-new-tab-icon {
   color: white;
 }
 
-.project-list .entry,
-.project-list .entry-nohover {
+.entry-list .entry,
+.entry-list .entry-nohover {
   position: relative;
   padding: 10px;
   padding-left: 40px;
@@ -50,18 +50,18 @@
   cursor: pointer;
   user-select: none;
 }
-.project-list .entry:hover,
-.project-list .entry:focus {
+.entry-list .entry:hover,
+.entry-list .entry:focus {
   text-decoration: none;
   background: #428BCA;
   color: white;
 }
-.project-list .entry.error {
+.entry-list .entry.error {
   color: maroon;
   background: white;
   cursor: not-allowed;
 }
-.project-list .entry.error a {
+.entry-list .entry.error a {
   cursor: pointer;
   user-select: none;
 }

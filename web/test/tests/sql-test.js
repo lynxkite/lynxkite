@@ -194,7 +194,21 @@ module.exports = function(fw) {
       tableBrowser.expectNode([1], 'edges', '`edges`');
       tableBrowser.expectNode([2], 'vertices', '`vertices`');
       tableBrowser.toggleNode([2]);
+      tableBrowser.expectNode([2, 0], '*ALL*');
       tableBrowser.expectNode([2, 1], 'age (Double)', '`age`');
+
+      tableBrowser.toggleFullyQualify();
+      tableBrowser.expectNode([2, 1], 'age (Double)', '`vertices`.`age`');
+      tableBrowser.expectNode(
+          [2, 0],
+          '*ALL*',
+          '`vertices`.`age`,\n' +
+              '`vertices`.`gender`,\n' +
+              '`vertices`.`id`,\n' +
+              '`vertices`.`income`,\n' +
+              '`vertices`.`location`,\n' +
+              '`vertices`.`name`');
+      tableBrowser.toggleFullyQualify();
     });
 
   fw.transitionTest(
@@ -217,6 +231,7 @@ module.exports = function(fw) {
       tableBrowser.expectNode([4], 'two|edges', '`two|edges`');
       tableBrowser.expectNode([5], 'two|vertices', '`two|vertices`');
       tableBrowser.toggleNode([2]);
+      tableBrowser.expectNode([2, 0], '*ALL*');
       tableBrowser.expectNode([2, 1], 'age (Double)', '`age`');
     });
 

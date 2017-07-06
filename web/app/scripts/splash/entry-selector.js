@@ -1,15 +1,15 @@
-// The list of projects.
+// The list of entries.
 'use strict';
 
-angular.module('biggraph').directive('projectSelector',
+angular.module('biggraph').directive('entrySelector',
   function(util, hotkeys, $timeout, $anchorScroll) {
     return {
       restrict: 'E',
       scope: {
-        name: '=', // Exposes the name of the selected project.
+        name: '=', // Exposes the name of the selected entry.
         path: '=?', // Starting path.
       },
-      templateUrl: 'scripts/splash/project-selector.html',
+      templateUrl: 'scripts/splash/entry-selector.html',
       link: function(scope, element) {
         scope.util = util;
         function defaultSettings() {
@@ -59,10 +59,10 @@ angular.module('biggraph').directive('projectSelector',
         scope.reload = function() {
           abandonScalars();
           if (!scope.searchQuery) {
-            scope.data = util.nocache('/ajax/projectList', { path: scope.path });
+            scope.data = util.nocache('/ajax/entryList', { path: scope.path });
           } else {
             scope.data = util.nocache(
-              '/ajax/projectSearch',
+              '/ajax/entrySearch',
               {
                 basePath: scope.path,
                 query: scope.searchQuery,
@@ -181,7 +181,7 @@ angular.module('biggraph').directive('projectSelector',
         scope.workspaceClick = function(event, p) {
           // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
           if (event.originalEvent.alreadyHandled) { return; }
-          // Ignore clicks on errored projects.
+          // Ignore clicks on errored entries.
           if (p.error) { return; }
           scope.name = p.name;
         };
