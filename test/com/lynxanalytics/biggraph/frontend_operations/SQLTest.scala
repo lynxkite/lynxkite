@@ -186,10 +186,11 @@ class SQLTest extends OperationsTestBase {
     val badResults = resultMap.filter(_._2 != 1).toList
     // Failure here would result in outputs like these:
     //
-    // List((9,2), (10,0), (14,0), (16,2)) was not empty (SQLTest.scala:197)
+    // List((9,2), (10,0), (14,0), (16,2)) was not empty (SQLTest.scala:194)
     //
-    // This would (probably) mean that worker 9 overwrote the table name of worker 10,
-    // and worker 16 overwrote the name for worker 14.
+    // This would (probably) mean that worker 9 overwrote the data frame registered by
+    // worker 10, and worker 16 overwrote the data frame registered by worker 14.
+    // (All workers use the same name when registering their data frames.)
     assert(badResults.isEmpty)
   }
 
