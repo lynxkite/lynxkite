@@ -1,15 +1,11 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
-import java.util.concurrent.ConcurrentMap
-
 import com.lynxanalytics.biggraph.graph_api.{ DataManager, ThreadUtil }
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import org.apache.spark
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{ DataFrame, Row, SQLContext }
-
-import scala.collection.concurrent.Map
 
 class SQLTest extends OperationsTestBase {
   private def toSeq(row: spark.sql.Row): Seq[Any] = {
