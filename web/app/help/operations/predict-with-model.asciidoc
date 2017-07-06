@@ -1,4 +1,4 @@
-### Predict from model
+### Predict with model
 
 Creates predictions from a model and vertex attributes of the graph.
 
