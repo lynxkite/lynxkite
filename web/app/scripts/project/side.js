@@ -8,7 +8,7 @@ angular.module('biggraph')
       // util.globals will always be resolved by the time execution
       // gets here. That's because util.globals is fetched at page
       // load time, but this code only runs when the user opens a popup.
-      return JSON.parse(JSON.stringify(util.globals.defaultUIStatus));
+      return angular.copy(util.globals.defaultUIStatus);
     }
 
     function Side(sides, direction, stateId, enableVisualizationUI) {
