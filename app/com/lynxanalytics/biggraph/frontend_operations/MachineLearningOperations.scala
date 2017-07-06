@@ -21,7 +21,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
-  register("Classify vertices with a model")(new ProjectTransformation(_) {
+  register("Classify with model")(new ProjectTransformation(_) {
     def models = project.viewer.models.filter(_._2.isClassification)
     params ++= List(
       Param("name", "The name of the attribute of the classifications"),

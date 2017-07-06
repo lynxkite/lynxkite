@@ -1,4 +1,4 @@
-### Classify vertices with a model
+### Classify with model
 
 Creates classifications from a model and vertex attributes of the graph. For the classifications
 with nominal outputs, an additional probability is created to represent the corresponding
