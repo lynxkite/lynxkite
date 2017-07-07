@@ -572,8 +572,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     bigGraphController.changeACLSettings(user, request)
   }
 
-  def list(user: User, request: ProjectListRequest) = {
-    val list = bigGraphController.projectList(user, request)
+  def list(user: User, request: EntryListRequest) = {
+    val list = bigGraphController.entryList(user, request)
     ListResult(
       list.directories.map(d => ListElement(d, "", "directory")) ++
         list.objects.map(e =>

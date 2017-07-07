@@ -1,0 +1,67 @@
+.top-search input {
+  border: 0;
+  outline: none;
+  padding: 10px;
+  width: 100%;
+}
+
+.entry-list {
+  padding: 0;
+}
+
+.entry-list .path {
+  padding: 10px;
+  background: whitesmoke;
+}
+
+.entry-list .path .description {
+  opacity: 0.5;
+}
+
+.entry-list .slash {
+  padding: 0 5px;
+}
+
+.entry-list .entry > .icon,
+.entry-list .entry-nohover > .icon {
+  position: absolute;
+  padding: 10px;
+  margin-left: -40px;
+  margin-top: 6px;
+}
+
+.entry-list .entry .open-in-new-tab-icon {
+  font-size: 60%;
+  vertical-align: super;
+}
+
+.entry-list .entry:hover .open-in-new-tab-icon,
+.entry-list .entry:focus .open-in-new-tab-icon {
+  color: white;
+}
+
+.entry-list .entry,
+.entry-list .entry-nohover {
+  position: relative;
+  padding: 10px;
+  padding-left: 40px;
+  border-bottom: 1px solid whitesmoke;
+  color: #428BCA;
+  cursor: pointer;
+  user-select: none;
+}
+.entry-list .entry:hover,
+.entry-list .entry:focus {
+  text-decoration: none;
+  background: #428BCA;
+  color: white;
+}
+.entry-list .entry.error {
+  color: maroon;
+  background: white;
+  cursor: not-allowed;
+}
+.entry-list .entry.error a {
+  cursor: pointer;
+  user-select: none;
+}
