@@ -148,10 +148,9 @@ class SQLTest extends OperationsTestBase {
     val columnName = "col"
     val tableName = "table"
     val schema = StructType(Seq(StructField("column", IntegerType)))
-    val numRows = 1000
-    def getDfWithConstantValue(ctx: SQLContext, value: Int): DataFrame = {
+    def getTinyDfWithConstantValue(ctx: SQLContext, value: Int): DataFrame = {
       import scala.collection.JavaConverters._
-      val data = List.fill(numRows)(Row(value)).asJava
+      val data = List(Row(value)).asJava
       ctx.createDataFrame(data, schema).toDF(columnName)
     }
 
@@ -161,28 +160,32 @@ class SQLTest extends OperationsTestBase {
       ThreadUtil.limitedExecutionContext("ThreadSafeSQL", maxParallelism = maxParalellism)
     val sqlTestingThreads = new ControlledFutures()(sqlTestExecutionContext)
 
-    val counters = Array.fill(numWorkers)(new java.util.concurrent.atomic.AtomicInteger(0))
+    // Ideally, worker w should only write resultPoolForEachWorker(w), thus
+    // resultPoolForEachWorker should contain only 1's, since each worker runs
+    // once. But this is not the case when the race condition hits, then workers
+    // begin to use each other's data frames.
+    val resultPoolForEachWorker = Array.fill(numWorkers)(new java.util.concurrent.atomic.AtomicInteger(0))
 
     val sqlCtx = dataManager.newSQLContext
-    for (value <- (0 until numWorkers)) {
-      val df = List((tableName, getDfWithConstantValue(sqlCtx, value)))
+    for (workerId <- (0 until numWorkers)) {
+      val df = List((tableName, getTinyDfWithConstantValue(sqlCtx, workerId)))
       sqlTestingThreads.register {
-        val resultThatIsSupposedToBeEqualToValue =
-          DataManager.sql(sqlCtx, s"select AVG(v.$columnName) from $tableName as v CROSS JOIN $tableName", df)
+        val resultThatIsSupposedToBeEqualToWorkerId =
+          DataManager.sql(sqlCtx, s"select AVG($columnName) from $tableName", df)
             .collect().toList.take(1).head.getDouble(0)
-        val idx = resultThatIsSupposedToBeEqualToValue.toInt
-        // We could say assert(idx == resultThatIsSupposedToBeEqualToValue) here,
+        val idx = resultThatIsSupposedToBeEqualToWorkerId.toInt
+        // We could say assert(workerId == resultThatIsSupposedToBeEqualToWorkerId) here,
         // but this is running on a different thread using SafeFuture,
-        // and the test would pass despite the assertion. Anyway, using the counters array
+        // and the test would pass despite the assertion. Anyway, using the resultPoolForEachWorker array
         // gives us a nicer way to see what exactly went wrong.
         if (0 <= idx && idx < numWorkers) {
-          counters(idx).getAndIncrement()
+          resultPoolForEachWorker(idx).getAndIncrement()
         }
       }
     }
 
     sqlTestingThreads.waitAllFutures()
-    val resultMap = (0 until numWorkers).map(n => (n, counters(n).get()))
+    val resultMap = (0 until numWorkers).map(n => (n, resultPoolForEachWorker(n).get()))
     val badResults = resultMap.filter(_._2 != 1).toList
     // Failure here would result in outputs like these:
     //
