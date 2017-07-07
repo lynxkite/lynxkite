@@ -40,15 +40,6 @@ trait ProtoTable {
   def toTable: Table
 }
 
-class SchemaInferencingOptimizer(
-  catalog: SessionCatalog,
-  conf: SQLConf)
-    extends Optimizer(catalog, conf) {
-
-  override def batches: Seq[Batch] = super.batches
-    .filter(b => !Set("Finish Analysis", "LocalRelation").contains(b.name))
-}
-
 object ProtoTable {
   def apply(table: Table) = new TableWrappingProtoTable(table)
   def apply(attributes: Iterable[(String, Attribute[_])])(implicit m: MetaGraphManager) =
@@ -56,44 +47,20 @@ object ProtoTable {
 
   // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
   // necessary to support the query.
-  def minimize(sql: String, protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
-    val (optimizedPlan, aliasTableLookup) = optimizedPlanWithLookup(sql, protoTables)
-    val tables = parsePlanForRequiredTables(optimizedPlan)
+  def minimize(optimizedPlan: LogicalPlan,
+               protoTables: Map[String, (String, ProtoTable)]): Map[String, ProtoTable] = {
+    val tables = getRequiredFields(optimizedPlan)
     val selectedTables = tables.map(f => {
-      val protoTableName = aliasTableLookup(f._1)
-      val table = protoTables(protoTableName)
+      val (name, table) = protoTables(f._1)
       val columns = f._2.flatMap(parseExpression)
       val selectedTable = if (columns.contains("*")) {
         table
       } else {
         table.maybeSelect(columns)
       }
-      protoTableName -> selectedTable
+      name -> selectedTable
     }).toMap
     selectedTables
-  }
-
-  private def optimizedPlanWithLookup(sql: String, protoTables: Map[String, ProtoTable]) = {
-    val sqlConf = new SQLConf()
-    val parser = new SparkSqlParser(sqlConf)
-    val unanalyzedPlan = parser.parsePlan(sql)
-    val aliasTableLookup = new mutable.HashMap[String, String]()
-    val planResolved = unanalyzedPlan.resolveOperators {
-      case u: UnresolvedRelation =>
-        assert(protoTables.contains(u.tableName), s"No such table: ${u.tableName}")
-        val attributes = protoTables(u.tableName).schema.map {
-          f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()
-        }
-        val rel = LocalRelation(attributes)
-        val name = u.alias.getOrElse(u.tableIdentifier.table)
-        aliasTableLookup(name) = u.tableIdentifier.table
-        SubqueryAlias(name, rel, Some(u.tableIdentifier))
-    }
-    val catalog = new SessionCatalog(new InMemoryCatalog, FunctionRegistry.builtin, sqlConf)
-    val analyzer = new Analyzer(catalog, sqlConf)
-    val analyzedPlan = analyzer.execute(planResolved)
-    val optimizer = new SchemaInferencingOptimizer(catalog, sqlConf)
-    (optimizer.execute(analyzedPlan), aliasTableLookup)
   }
 
   private def parseExpression(expression: Expression): Seq[String] = expression match {
@@ -102,7 +69,7 @@ object ProtoTable {
     case exp: Expression => exp.children.flatMap(parseExpression)
   }
 
-  private def parsePlanForRequiredTables(plan: LogicalPlan): List[(String, Seq[NamedExpression])] =
+  private def getRequiredFields(plan: LogicalPlan): List[(String, Seq[NamedExpression])] =
     plan match {
       case SubqueryAlias(name, Project(projectList, _), _) =>
         List((name, projectList))
@@ -111,8 +78,9 @@ object ProtoTable {
       case l: LeafNode =>
         bigGraphLogger.info(s"$l ignored in ProtoTable minimalization")
         List()
-      case s: UnaryNode => parsePlanForRequiredTables(s.child)
-      case s: BinaryNode => parsePlanForRequiredTables(s.left) ++ parsePlanForRequiredTables(s.right)
+      case s: UnaryNode => getRequiredFields(s.child)
+      case s: BinaryNode =>
+        getRequiredFields(s.left) ++ getRequiredFields(s.right)
     }
 }
 
