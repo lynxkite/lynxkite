@@ -5,9 +5,9 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class FingerprintingBasedOnAttributesOperationTest extends OperationsTestBase {
   test("Fingerprinting based on attributes") {
     val vertices = importCSV("fingerprint-100-vertices.csv")
-      .box("Import vertices")
+      .box("Use table as vertices")
     val edges = importCSV("fingerprint-100-edges.csv")
-    val fingerprinted = box("Import edges for existing vertices", Map(
+    val fingerprinted = box("Use table as edges", Map(
       "attr" -> "id",
       "src" -> "src",
       "dst" -> "dst"), Seq(vertices, edges))
