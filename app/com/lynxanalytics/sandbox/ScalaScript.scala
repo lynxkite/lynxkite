@@ -18,12 +18,12 @@ import scala.tools.nsc.interpreter.IMain
 import scala.util.DynamicVariable
 
 object ScalaScriptSecurityManager {
-  private[sandbox] val restrictedSecurityManager = new ScalaScriptSecurityManager()
+  private[sandbox] val restrictedSecurityManager = new ScalaScriptSecurityManager
   System.setSecurityManager(restrictedSecurityManager)
   def init() = {}
 }
 
-class ScalaScriptSecurityManager() extends SecurityManager {
+class ScalaScriptSecurityManager extends SecurityManager {
 
   val shouldCheck = new DynamicVariable[Boolean](false)
   def checkedRun[R](op: => R): R = {
@@ -172,7 +172,7 @@ object ScalaScript {
     }
   }
 
-  // A wrapper class representing the type signature of a scala expression.
+  // A wrapper class representing the type signature of a Scala expression.
   import scala.language.existentials
   case class ScalaType(funcType: TypeTag[_]) {
     val returnType = funcType.tpe.typeArgs.last

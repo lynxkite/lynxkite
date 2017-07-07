@@ -173,7 +173,7 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     def apply() = {
       val expr = params("expr")
       val namedScalars = ScalaUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
-      val result = graph_operations.DeriveScalaScalar.deriveFromScalars(expr, namedScalars)
+      val result = graph_operations.DeriveScalaScalar.deriveAndInferReturnType(expr, namedScalars)
       project.newScalar(params("output"), result, expr + help)
     }
   })
