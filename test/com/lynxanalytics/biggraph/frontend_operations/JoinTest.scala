@@ -131,6 +131,36 @@ class JoinTest extends OperationsTestBase {
       .asInstanceOf[Seq[Double]].sorted == Seq(2.0, 18.2, 20.3, 50.3))
   }
 
+  test("Filtering edge attributes") {
+    val root = box("Create example graph")
+    val target = root
+    val source = root
+      .box("Filter by attributes",
+        Map("filterva_age" -> "",
+          "filterva_gender" -> "", "filterva_id" -> "", "filterva_income" -> "",
+          "filterva_location" -> "", "filterva_name" -> "", "filterea_comment" -> "",
+          "filterea_weight" -> ">-1"))
+
+      .box("Filter by attributes",
+        Map("filterva_age" -> "",
+          "filterva_gender" -> "", "filterva_id" -> "", "filterva_income" -> "",
+          "filterva_location" -> "", "filterva_name" -> "", "filterea_comment" -> "",
+          "filterea_weight" -> ">1"))
+      .box(
+        "Add constant edge attribute",
+        Map("name" -> "ten", "value" -> "10", "type" -> "Double"))
+
+    val project = box(
+      "Join projects",
+      Map(
+        "apply_to_a" -> "!edges",
+        "apply_to_b" -> "!edges",
+        "attrs" -> "ten"),
+      Seq(target, source)).project
+
+    assert(project.edgeAttributes("ten").rdd.collect.toMap.values.toSeq.toList == List(10.0, 10, 10.0))
+  }
+
   test("Bring attributes from broader to narrower set") {
     val root = box("Create example graph")
     val source =
