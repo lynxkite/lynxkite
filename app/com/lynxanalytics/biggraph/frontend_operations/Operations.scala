@@ -3071,190 +3071,106 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         p
       }
 
-      object BundleWrapper {
-        private def commonRequirements(eb: EdgeBundle): Boolean = {
-          (eb.properties.isIdPreserving
-            && eb.properties.isFunction
-            && eb.properties.isReversedFunction)
-        }
-        def there(eb: EdgeBundle): Boolean = {
+      def getReachableAncestors(start: VertexSet): Map[VertexSet, Seq[EdgeBundle]] = {
+        def canCarryAttributes(eb: EdgeBundle): Boolean = {
           // a -> a
           // b -> b
-          // c
+          //      c
           // d -> d
-          // e
-          commonRequirements(eb) && eb.properties.isReverseEverywhereDefined
+          //      e
+          (eb.properties.isIdPreserving
+            && eb.properties.isFunction
+            && eb.properties.isReversedFunction
+            && eb.properties.isEverywhereDefined)
         }
-        def back(eb: EdgeBundle): Boolean = {
-          // a <- a
-          // b <- b
-          // c
-          // d <- d
-          // e
-          commonRequirements(eb) && eb.properties.isEverywhereDefined
-        }
-        def connectingEdges(v: VertexSet): Seq[BundleWrapper] = {
-          def containsReversedEb(bundles: Seq[EdgeBundle], eb: EdgeBundle): Boolean = {
-            !bundles.forall {
-              b =>
-                b.srcVertexSet != eb.dstVertexSet || b.dstVertexSet != eb.srcVertexSet
+
+        val reachableAncestors = mutable.Map[VertexSet, Seq[EdgeBundle]]()
+        val verticesToLookAt = mutable.Queue[VertexSet](start)
+        reachableAncestors(start) = Seq[EdgeBundle]()
+        while (verticesToLookAt.nonEmpty) {
+          val src = verticesToLookAt.dequeue()
+          val possibleOutgoingBundles = manager.outgoingBundles(src).filter(canCarryAttributes(_))
+          for (eb <- possibleOutgoingBundles) {
+            assert(eb.srcVertexSet == src)
+            val dst = eb.dstVertexSet
+            assert(reachableAncestors.contains(src))
+            val pathToSrc = reachableAncestors(src)
+            if (!reachableAncestors.contains(dst)) {
+              val pathToDst = pathToSrc :+ eb
+              reachableAncestors(dst) = pathToDst
+              verticesToLookAt.enqueue(dst)
             }
           }
-
-          val incoming =
-            manager.incomingBundles(v).filter(there(_))
-          val outgoing =
-            manager.outgoingBundles(v).filter {
-              eb =>
-                back(eb) && !containsReversedEb(incoming, eb)
-            }
-          (incoming.toSet union outgoing.toSet).map(BundleWrapper(_)).toSeq
         }
+        reachableAncestors.toMap
       }
 
-      case class BundleWrapper(eb: EdgeBundle) {
-        private val fromSrcToDst = {
-          if (BundleWrapper.there(eb)) true
-          else if (BundleWrapper.back(eb)) false
-          else throw new AssertionError(s"Edge bundle $eb cannot be wrapped")
-        }
-        val src =
-          if (fromSrcToDst) eb.srcVertexSet else eb.dstVertexSet
-        val dst =
-          if (fromSrcToDst) eb.dstVertexSet else eb.srcVertexSet
-        private def short(s: VertexSet): String = s.gUID.toString.substring(0, 5)
-        override def toString = {
-          s"${short(src)} -> ${short(dst)} ($fromSrcToDst) $eb"
-        }
+      // Wrapper class to represent paths that lead to a common ancestor
+      case class Chains(chain1: Seq[EdgeBundle], chain2: Seq[EdgeBundle])
 
-        def bundleForAttributePulling(upTowardsCommonAncestor: Boolean): EdgeBundle = {
-          if ((fromSrcToDst && upTowardsCommonAncestor) || (!fromSrcToDst && !upTowardsCommonAncestor)) eb
-          else graph_operations.ReverseEdges.run(eb)
-        }
-      }
-
-      class PathFinder(start: VertexSet) {
-        assert(start != null)
-
-        private val pathTo = mutable.Map[VertexSet, BundleWrapper]()
-        val dist = mutable.Map[VertexSet, Int]()
-        val vertices = mutable.Set[VertexSet](start)
-        private var perimeterEdges = mutable.Set[BundleWrapper]()
-        private var level = 0
-        BundleWrapper.connectingEdges(start).foreach(perimeterEdges.add(_))
-        pathTo(start) = null
-        dist(start) = level
-        def hasMore: Boolean = perimeterEdges.nonEmpty
-        def getChain(parentVertex: VertexSet): List[BundleWrapper] = {
-          val l = scala.collection.mutable.MutableList[BundleWrapper]()
-          var v = parentVertex
-          var eb = pathTo(parentVertex)
-          while (eb != null) {
-            assert(eb.src == v)
-            l += eb
-            v = eb.dst
-            eb = pathTo(v)
-          }
-          l.toList
-        }
-        def nextStep(): Unit = {
-          if (hasMore) {
-            level += 1
-            val newPerimeterEdges = mutable.Set[BundleWrapper]()
-            for (eb <- perimeterEdges) {
-              val v = eb.src
-              if (!vertices.contains(v)) {
-                vertices.add(v)
-                dist(v) = level
-                pathTo(v) = eb
-                val newEdges = BundleWrapper.connectingEdges(v)
-                newEdges.foreach(newPerimeterEdges.add(_))
-              }
-            }
-            perimeterEdges = newPerimeterEdges
-          }
-        }
-      }
-
-      // Wrapper class to represent path from source id set to common ancestor (upChain)
-      // and from common ancestor to target id set (downChain)
-      case class Chains(upChain: List[BundleWrapper], downChain: List[BundleWrapper])
-
-      def computeChains(leftSet: Option[VertexSet],
-                        rightSet: Option[VertexSet]): Option[Chains] = {
-        if (leftSet == rightSet) {
-          Some(Chains(List(), List()))
-        } else if (!leftSet.isDefined || !rightSet.isDefined) {
+      def computeChains(a: VertexSet,
+                        b: VertexSet): Option[Chains] = {
+        val aPaths = getReachableAncestors(a)
+        val bPaths = getReachableAncestors(b)
+        val possibleCommonAncestors = aPaths.keys.toSet & bPaths.keys.toSet
+        if (possibleCommonAncestors.isEmpty) {
           None
         } else {
-          val leftFinder = new PathFinder(left.idSet.get)
-          val rightFinder = new PathFinder(right.idSet.get)
-          var intersection = mutable.Set[VertexSet]()
-          while ((leftFinder.hasMore || rightFinder.hasMore) && intersection.isEmpty) {
-            leftFinder.nextStep()
-            rightFinder.nextStep()
-            intersection = leftFinder.vertices & rightFinder.vertices
-          }
-          if (intersection.isEmpty) {
-            None
-          } else {
-            val bestParentVertex =
-              intersection.toSeq.sortBy {
-                v => leftFinder.dist(v) + rightFinder.dist(v)
-              }.head
-            val upChain = rightFinder.getChain(bestParentVertex).reverse
-            val downChain = leftFinder.getChain(bestParentVertex)
-            Some(Chains(upChain, downChain))
-          }
+          val bestAncestor = possibleCommonAncestors.map {
+            ancestorCandidate =>
+              (ancestorCandidate, (aPaths(ancestorCandidate).length + bPaths(ancestorCandidate).length))
+          }.toList.sortBy(_._2).head._1
+          Some(Chains(aPaths(bestAncestor), bPaths(bestAncestor)))
         }
       }
 
-      private val left = attributeEditor("a")
-      private val right = attributeEditor("b")
+      private val target = attributeEditor("a")
+      private val source = attributeEditor("b")
 
-      val chain = computeChains(left.idSet, right.idSet)
+      val chain = computeChains(target.idSet.get, source.idSet.get)
       private val compatible = chain.isDefined
 
-      private def attributesAreAvailable = right.names.nonEmpty
+      private def attributesAreAvailable = source.names.nonEmpty
       private def segmentationsAreAvailable = {
-        (left.kind == VertexAttributeKind) &&
-          (right.kind == VertexAttributeKind) && (right.projectEditor.segmentationNames.nonEmpty)
+        (target.kind == VertexAttributeKind) &&
+          (source.kind == VertexAttributeKind) && (source.projectEditor.segmentationNames.nonEmpty)
       }
 
       if (compatible && attributesAreAvailable) {
-        params += TagList("attrs", "Attributes", FEOption.list(right.names.toList))
+        params += TagList("attrs", "Attributes", FEOption.list(source.names.toList))
       }
       if (compatible && segmentationsAreAvailable) {
-        params += TagList("segs", "Segmentations", FEOption.list(right.projectEditor.segmentationNames.toList))
+        params += TagList("segs", "Segmentations", FEOption.list(source.projectEditor.segmentationNames.toList))
       }
 
-      def enabled = FEStatus(compatible, "Left and right are not compatible")
+      def enabled = FEStatus(compatible, "Inputs are not compatible")
 
       def apply() {
+        val fromSourceToAncestor = chain.get.chain2
+        val fromAncestorToTarget = chain.get.chain1.reverse
         if (attributesAreAvailable) {
           for (attrName <- splitParam("attrs")) {
-            val attr = right.attributes(attrName)
-            val note = right.getElementNote(attrName)
+            val attr = source.attributes(attrName)
+            val note = source.getElementNote(attrName)
             val attrCommonAncestor =
-              chain.get.upChain.foldLeft(attr) {
+              fromSourceToAncestor.foldLeft(attr) {
                 (a, b) =>
-                  val eb = b.bundleForAttributePulling(upTowardsCommonAncestor = true)
+                  val eb = graph_operations.ReverseEdges.run(b)
                   graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, eb)
               }
             val newAttr =
-              chain.get.downChain.foldLeft(attrCommonAncestor) {
+              fromAncestorToTarget.foldLeft(attrCommonAncestor) {
                 (a, b) =>
-                  val eb = b.bundleForAttributePulling(upTowardsCommonAncestor = false)
-                  graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, eb)
+                  graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, b)
               }
 
-            left.newAttribute(attrName, newAttr, note)
+            target.newAttribute(attrName, newAttr, note)
           }
         }
         if (segmentationsAreAvailable) {
           for (segmName <- splitParam("segs")) {
-            val leftEditor = left.projectEditor
-            val rightEditor = right.projectEditor
+            val leftEditor = target.projectEditor
+            val rightEditor = source.projectEditor
             if (leftEditor.segmentationNames.contains(segmName)) {
               leftEditor.deleteSegmentation(segmName)
             }
@@ -3263,7 +3179,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             leftSegm.segmentationState = rightSegm.segmentationState
           }
         }
-        project.state = left.projectEditor.rootEditor.state
+        project.state = target.projectEditor.rootEditor.state
       }
     }
   )
