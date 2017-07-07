@@ -13,14 +13,6 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
 
   val category = Categories.WorkflowOperations
 
-  def register(id: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
-    registerOp(id, defaultIcon, category, inputs, outputs, factory)
-  }
-
-  def register(id: String, icon: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
-    registerOp(id, icon, category, inputs, outputs, factory)
-  }
-
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
   register("Comment", List(), List())(new DecoratorOperation(_) {

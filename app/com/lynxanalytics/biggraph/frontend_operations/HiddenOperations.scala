@@ -9,18 +9,9 @@ import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 
 class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
-  import Operation.Context
   import Operation.Implicits._
 
   val category = Categories.HiddenOperations
-
-  def register(id: String, icon: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
-    registerOp(id, icon, category, inputs, outputs, factory)
-  }
-
-  def register(id: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
-    registerOp(id, defaultIcon, category, inputs, outputs, factory)
-  }
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
@@ -30,7 +21,7 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     params += ParametersParam("parameters", "Parameters")
   })
 
-  register("Check cliques", List(projectInput), List(projectOutput))(new ProjectTransformation(_) with SegOp {
+  register("Check cliques")(new ProjectTransformation(_) with SegOp {
     def addSegmentationParameters = {
       params += Param("selected", "Segment IDs to check", defaultValue = "<All>")
       params += Choice("bothdir", "Edges required in both directions", options = FEOption.bools)
@@ -46,8 +37,8 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     }
   })
 
-  register(
-    "Create enhanced example graph", List(), List(projectOutput))(new ProjectOutputOperation(_) {
+  registerProjectCreatingOp(
+    "Create enhanced example graph")(new ProjectOutputOperation(_) {
       def enabled = FEStatus.enabled
       def apply() = {
         val g = graph_operations.EnhancedExampleGraph()().result
@@ -61,7 +52,7 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       }
     })
 
-  register("Use metagraph as graph", List(), List(projectOutput))(new ProjectTransformation(_) {
+  registerProjectCreatingOp("Use metagraph as graph")(new ProjectTransformation(_) {
     params +=
       Param("timestamp", "Current timestamp", defaultValue = graph_util.Timestamp.toString)
     def enabled =
