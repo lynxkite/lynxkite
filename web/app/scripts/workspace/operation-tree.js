@@ -1,12 +1,11 @@
-// An entry in the operation selector list. Supports dragging operations from here into
-// the workspace drawing board.
+// A browser tree for operations to be browsed as a directory tree, e.g. custom boxes.
 'use strict';
 
 angular.module('biggraph').directive('operationTree', function() {
   return {
     restrict: 'E',
     scope: {
-      ops: '=',
+      ops: '=', // The flattened list of operations to be converted to a tree.
       ondrag: '&',
     },
     templateUrl: 'scripts/workspace/operation-tree.html',
@@ -17,6 +16,7 @@ angular.module('biggraph').directive('operationTree', function() {
         isOpen: true,
       };
 
+      // Create a tree from the path fragments of the operations.
       for (var opI in scope.ops) {
         var operation = scope.ops[opI];
         var opPath = operation.operationId.split('/');
