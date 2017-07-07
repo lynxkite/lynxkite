@@ -133,7 +133,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
     }
   })
 
-  register("Derive vertex attribute", VertexAttributesOperations, new ProjectTransformation(_) {
+  register("Derive vertex attribute")(new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
       Choice("defined_attrs", "Only run on defined attributes",

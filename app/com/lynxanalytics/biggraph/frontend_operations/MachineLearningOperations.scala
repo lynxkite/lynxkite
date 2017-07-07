@@ -46,13 +46,13 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
         project.newVertexAttribute(name + "_certainty", certainty,
           s"probability of predicted class according to ${modelName}")
         if (isBinary) {
-          val probabilityOf0 = graph_operations.DeriveJS.deriveFromAttributes[Double](
-            "classification == 0 ? certainty : 1 - certainty",
+          val probabilityOf0 = graph_operations.DeriveScala.deriveFromAttributes(
+            "if (classification == 0) certainty else 1 - certainty",
             Seq("certainty" -> certainty, "classification" -> classifiedAttribute),
             project.vertexSet)
           project.newVertexAttribute(name + "_probability_of_0", probabilityOf0,
             s"probability of class 0 according to ${modelName}")
-          val probabilityOf1 = graph_operations.DeriveJS.deriveFromAttributes[Double](
+          val probabilityOf1 = graph_operations.DeriveScala.deriveFromAttributes(
             "1 - probabilityOf0", Seq("probabilityOf0" -> probabilityOf0), project.vertexSet)
           project.newVertexAttribute(name + "_probability_of_1", probabilityOf1,
             s"probability of class 1 according to ${modelName}")
