@@ -78,7 +78,7 @@ case class FEOperationSpec(
   parameters: Map[String, String])
 
 case class FEOperationCategory(
-  title: String, icon: String, color: String)
+  title: String, icon: String, color: String, browseByDir: Boolean)
 
 abstract class OperationParameterMeta {
   val id: String
@@ -110,12 +110,13 @@ object Operation {
     color: String, // A color class from web/app/styles/operation-toolbox.scss.
     visible: Boolean = true,
     icon: String = "", // Icon class name, or empty for first letter of title.
-    sortKey: String = null) // Categories are ordered by this. The title is used by default.
+    sortKey: String = null, // Categories are ordered by this. The title is used by default.
+    browseByDir: Boolean = false) // Browse operations in this category using the dir structure.
       extends Ordered[Category] {
     private val safeSortKey = Option(sortKey).getOrElse(title)
     def compare(that: Category) = this.safeSortKey compare that.safeSortKey
     def toFE: FEOperationCategory =
-      FEOperationCategory(title, addClass(icon), color)
+      FEOperationCategory(title, addClass(icon), color, browseByDir)
     // Add main CSS class. E.g. "fa-superpowers" => "fa fa-superpowers".
     private def addClass(cls: String): String = {
       val parts = cls.split("-", 2)
@@ -263,7 +264,11 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   }
 
   private val customBoxesCategory = Operation.Category(
-    Workspace.customBoxesCategory, "yellow", icon = "fa-superpowers", sortKey = "zzz")
+    Workspace.customBoxesCategory,
+    "yellow",
+    icon = "fa-superpowers",
+    sortKey = "zzz",
+    browseByDir = true)
 
   def getCategories(user: serving.User): List[FEOperationCategory] = {
     (atomicCategories.values.toList :+ customBoxesCategory)

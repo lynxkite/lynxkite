@@ -28,14 +28,22 @@
     <h1>{{category.title}}</h1>
     <operation-selector-entry ng-repeat="op in currentCatOps"
       op="op"
-      ondrag="localOndrag(op, $event)">
+      name="op.operationId"
+      ondrag="localOndrag(op, $event)"
+      ng-if="!category.browseByDir">
     </operation-selector-entry>
+    <operation-tree
+      ops="currentCatOps"
+      ondrag="localOndrag(op, $event)"
+      ng-if="category.browseByDir">
+    </operation-tree>
   </div>
 
   <div ng-show="searching" class="panel box col-sm-11 yellow">
     <h1><input id="filter" ng-model="opFilter" ng-keyup="filterKey($event)"></h1>
     <operation-selector-entry ng-repeat="op in filterAndSort(boxes, opFilter)"
         op="op"
+        name="op.operationId"
         ondrag="localOndrag(op, $event)"
         ng-class="{ highlight: $index === searchSelection }">
     </operation-selector-entry>
