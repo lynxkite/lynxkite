@@ -51,7 +51,7 @@ angular.module('biggraph')
 
     Side.prototype.sections = ['scalar', 'vertex-attribute', 'edge-attribute', 'segmentation'];
     Side.prototype.sectionHumanName = {
-      'scalar': 'Graph attributes',
+      'scalar': 'Scalars',
       'vertex-attribute': 'Vertex attributes',
       'edge-attribute': 'Edge attributes',
       'segmentation': 'Segmentations',

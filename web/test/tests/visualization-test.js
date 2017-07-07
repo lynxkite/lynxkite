@@ -101,14 +101,14 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox({
         id: 'sg0',
-        name: 'Copy graph into a segmentation',
+        name: 'Use base project as segmentation',
         x: 100, y: 200,
         after: 'eg0',
         params: { name: 'seg' },
       });
       lib.workspace.addBox({
         id: 'vz0',
-        name: 'Create visualization',
+        name: 'Graph visualization',
         x: 100, y: 300,
         after: 'sg0',
       });

@@ -9,8 +9,8 @@ class ViralModelingOperationTest extends OperationsTestBase {
 
   test("Viral modeling segment logic") {
     val project = importCSV("viral-vertices-1.csv")
-      .box("Import vertices")
-      .box("Import edges for existing vertices", Map(
+      .box("Use table as vertices")
+      .box("Use table as edges", Map(
         "attr" -> "id",
         "src" -> "src",
         "dst" -> "dst"), Seq(importCSV("viral-edges-1.csv")))
