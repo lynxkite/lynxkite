@@ -103,8 +103,6 @@ include::add-constant-edge-attribute.asciidoc[]
 
 include::add-constant-vertex-attribute.asciidoc[]
 
-include::add-gaussian-vertex-attribute.asciidoc[]
-
 include::add-random-edge-attribute.asciidoc[]
 
 include::add-random-vertex-attribute.asciidoc[]
@@ -130,8 +128,6 @@ include::anchor.asciidoc[]
 include::approximate-clustering-coefficient.asciidoc[]
 
 include::approximate-embeddedness.asciidoc[]
-
-include::change-project-notes.asciidoc[]
 
 include::check-cliques.asciidoc[]
 
@@ -226,8 +222,6 @@ include::discard-scalars.asciidoc[]
 include::discard-segmentation.asciidoc[]
 
 include::discard-vertex-attributes.asciidoc[]
-
-include::discard-vertices.asciidoc[]
 
 include::export-edge-attributes-to-database.asciidoc[]
 
@@ -348,8 +342,6 @@ include::reverse-edge-direction.asciidoc[]
 include::sample-edges-from-co-occurrence.asciidoc[]
 
 include::sample-graph-by-random-walks.asciidoc[]
-
-include::save-ui-status-as-graph-attribute.asciidoc[]
 
 include::segment-by-double-attribute.asciidoc[]
 
