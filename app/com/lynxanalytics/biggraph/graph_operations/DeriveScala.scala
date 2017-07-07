@@ -17,10 +17,8 @@ object DeriveScala extends OpFromJson {
   class Input(a: Seq[(String, SerializableType[_])], s: Seq[(String, SerializableType[_])])
       extends MagicInputSignature {
     val vs = vertexSet
-    // We still have to convert to Any here and below when we create the op so the collection
-    // has a generic type (Any) instead of a wildcard (_).
-    val attrs = a.map(i => vertexAttributeT(vs, Symbol(i._1))(i._2.typeTag).asInstanceOf[VertexAttributeTemplate[Any]])
-    val scalars = s.map(i => scalarT(Symbol(i._1))(i._2.typeTag).asInstanceOf[ScalarTemplate[Any]])
+    val attrs = a.map(i => runtimeTypedVertexAttribute(vs, Symbol(i._1), i._2.typeTag))
+    val scalars = s.map(i => runtimeTypedScalar(Symbol(i._1), i._2.typeTag))
   }
   class Output[T](implicit instance: MetaGraphOperationInstance,
                   inputs: Input, tt: TypeTag[T]) extends MagicOutput(instance) {
@@ -82,24 +80,13 @@ object DeriveScala extends OpFromJson {
     val t = ScalaScript.compileAndGetType(
       exprString, paramTypes, paramsToOption = !onlyOnDefinedAttrs).payLoadType
 
-    // The MetaGraph API expects to know the types of the outputs in compilation time,
-    // so we cannot be more dynamic here.
-    val a = attrTypes
-    val s = scalarTypes
-    val e = exprString
-    val o = onlyOnDefinedAttrs
-    val op = t match {
-      case _ if t =:= typeOf[String] => DeriveScala[String](e, a, s, o)
-      case _ if t =:= typeOf[Double] => DeriveScala[Double](e, a, s, o)
-      case _ if t =:= typeOf[Vector[String]] => DeriveScala[Vector[String]](e, a, s, o)
-      case _ if t =:= typeOf[Vector[Double]] => DeriveScala[Vector[Double]](e, a, s, o)
-      case _ => throw new AssertionError(s"Unsupported result type of expression $exprString: $t")
-    }
+    val tt = SerializableType(t).typeTag
+    val op = DeriveScala(exprString, attrTypes, scalarTypes, onlyOnDefinedAttrs)(tt)
 
     import Scripting._
     op(op.vs, vertexSet)(
-      op.attrs, namedAttributes.map(_._2.asInstanceOf[Attribute[Any]]))(
-        op.scalars, namedScalars.map(_._2.asInstanceOf[Scalar[Any]])).result.attr
+      op.attrs, namedAttributes.map(_._2))(
+        op.scalars, namedScalars.map(_._2)).result.attr
   }
 
   def fromJson(j: JsValue): TypedMetaGraphOp.Type = {

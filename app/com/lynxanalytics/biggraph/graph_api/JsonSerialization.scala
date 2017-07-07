@@ -127,18 +127,19 @@ object SerializableType {
   val doubleVectorVector = new SerializableType[Vector[Vector[Double]]]("Vector[Vector[Double]]")
 
   def apply[T: TypeTag]: SerializableType[T] = {
-    val t = typeOf[T]
-    val st =
-      if (t =:= typeOf[String]) string
-      else if (t =:= typeOf[Double]) double
-      else if (t =:= typeOf[Long]) long
-      else if (t =:= typeOf[Int]) int
-      else if (t =:= typeOf[Vector[String]]) stringVector
-      else if (t =:= typeOf[Vector[Double]]) doubleVector
-      else if (t =:= typeOf[Vector[Vector[String]]]) stringVectorVector
-      else if (t =:= typeOf[Vector[Vector[Double]]]) doubleVectorVector
-      else assert(false, s"Unsupported type: $t")
-    st.asInstanceOf[SerializableType[T]]
+    apply(typeOf[T]).asInstanceOf[SerializableType[T]]
+  }
+
+  def apply(t: Type): SerializableType[_] = {
+    if (t =:= typeOf[String]) string
+    else if (t =:= typeOf[Double]) double
+    else if (t =:= typeOf[Long]) long
+    else if (t =:= typeOf[Int]) int
+    else if (t =:= typeOf[Vector[String]]) stringVector
+    else if (t =:= typeOf[Vector[Double]]) doubleVector
+    else if (t =:= typeOf[Vector[Vector[String]]]) stringVectorVector
+    else if (t =:= typeOf[Vector[Vector[Double]]]) doubleVectorVector
+    else throw new AssertionError(s"Unsupported type: $t")
   }
 
   object Implicits {
