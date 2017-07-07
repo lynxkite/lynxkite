@@ -149,11 +149,12 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       assert(params("output").nonEmpty, "Please set an output attribute name.")
       val expr = params("expr")
       val vertexSet = project.vertexSet
-      val namedAttributes = ScalaUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
+      val namedAttributes =
+        ScalaUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
       val namedScalars = ScalaUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val onlyOnDefinedAttrs = params("defined_attrs").toBoolean
 
-      val result = graph_operations.DeriveScala.deriveFromAttributes(
+      val result = graph_operations.DeriveScala.deriveAndInferReturnType(
         expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
 
       project.newVertexAttribute(params("output"), result, expr + help)

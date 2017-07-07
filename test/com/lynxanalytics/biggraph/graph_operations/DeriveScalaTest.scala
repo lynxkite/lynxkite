@@ -94,13 +94,13 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
 
   test("Utility methods") {
     val g = ExampleGraph()().result
-    val nameHash = DeriveScala.deriveFromAttributes(
+    val nameHash = DeriveScala.deriveAndInferReturnType(
       "name.hashCode.toDouble", Seq("name" -> g.name), g.vertices).runtimeSafeCast[Double]
     assert(nameHash.rdd.collect.toSeq.sorted ==
       Seq(0 -> "Adam".hashCode.toDouble, 1 -> "Eve".hashCode.toDouble,
         2 -> "Bob".hashCode.toDouble, 3 -> "Isolated Joe".hashCode.toDouble))
 
-    val rndSum = DeriveScala.deriveFromAttributes("""
+    val rndSum = DeriveScala.deriveAndInferReturnType("""
       var rnd = new scala.util.Random(income.toLong)
       rnd.nextDouble() + rnd.nextDouble()""",
       Seq("income" -> g.income),

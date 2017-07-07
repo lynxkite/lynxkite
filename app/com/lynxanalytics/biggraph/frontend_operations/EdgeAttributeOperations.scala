@@ -121,7 +121,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
         namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
       val onlyOnDefinedAttrs = params("defined_attrs").toBoolean
 
-      val result = graph_operations.DeriveScala.deriveFromAttributes(
+      val result = graph_operations.DeriveScala.deriveAndInferReturnType(
         expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
 
       project.newEdgeAttribute(params("output"), result, expr + help)

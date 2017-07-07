@@ -20,12 +20,12 @@ object DeriveScalaScalar extends OpFromJson {
   def derive[T: TypeTag](
     exprString: String,
     namedScalars: Seq[(String, Scalar[_])])(implicit manager: MetaGraphManager): Scalar[T] = {
-    val scalar = deriveFromScalars(exprString, namedScalars)
+    val scalar = deriveAndInferReturnType(exprString, namedScalars)
     assert(scalar.typeTag.tpe =:= typeOf[T])
     scalar.runtimeSafeCast[T]
   }
 
-  def deriveFromScalars(
+  def deriveAndInferReturnType(
     exprString: String,
     namedScalars: Seq[(String, Scalar[_])])(implicit manager: MetaGraphManager): Scalar[_] = {
 

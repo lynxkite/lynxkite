@@ -44,7 +44,7 @@ object DeriveScala extends OpFromJson {
       implicit manager: MetaGraphManager): Attribute[T] = {
     assert(attributes.nonEmpty || vertexSet.nonEmpty,
       "There should be either at least one attribute or vertexSet defined.")
-    val attr = deriveFromAttributes(
+    val attr = deriveAndInferReturnType(
       exprString,
       attributes,
       vertexSet.getOrElse(attributes.head._2.vertexSet),
@@ -55,7 +55,7 @@ object DeriveScala extends OpFromJson {
   }
 
   // Same as above but infers T from the input parameters and the script.
-  def deriveFromAttributes(
+  def deriveAndInferReturnType(
     exprString: String,
     namedAttributes: Seq[(String, Attribute[_])],
     vertexSet: VertexSet,
