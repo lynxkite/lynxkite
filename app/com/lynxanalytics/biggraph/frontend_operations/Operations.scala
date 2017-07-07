@@ -2988,7 +2988,7 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
 
-  register("Join projects", StructureOperations, "a", "b")(
+  register("Join projects", StructureOperations, "target", "source")(
     new ProjectOutputOperation(_) {
 
       trait AttributeEditor {
@@ -3066,8 +3066,8 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
       override protected val params = {
         val p = new ParameterHolder(context)
-        p += attributeEditorParameter("apply_to_", "a", "Apply to (a)")
-        p += attributeEditorParameter("apply_to_", "b", "Take from (b)")
+        p += attributeEditorParameter("apply_to_", "target", "Apply to (target)")
+        p += attributeEditorParameter("apply_to_", "source", "Take from (source)")
         p
       }
 
@@ -3124,11 +3124,13 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         }
       }
 
-      private val target = attributeEditor("a")
-      private val source = attributeEditor("b")
+      private val target = attributeEditor("target")
+      private val source = attributeEditor("source")
 
-      val chain = computeChains(target.idSet.get, source.idSet.get)
-      private val compatible = chain.isDefined
+      lazy val chain = computeChains(target.idSet.get, source.idSet.get)
+      val hasTargetIdSet = target.idSet.isDefined
+      val hasSourceIdSet = source.idSet.isDefined
+      private val compatible = hasTargetIdSet && hasSourceIdSet && chain.isDefined
 
       private def attributesAreAvailable = source.names.nonEmpty
       private def segmentationsAreAvailable = {
@@ -3143,7 +3145,9 @@ class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         params += TagList("segs", "Segmentations", FEOption.list(source.projectEditor.segmentationNames.toList))
       }
 
-      def enabled = FEStatus(compatible, "Inputs are not compatible")
+      def enabled = (FEStatus(hasTargetIdSet, "No target input")
+        && FEStatus(hasSourceIdSet, "No source input")
+        && FEStatus(compatible, "Inputs are not compatible"))
 
       def apply() {
         val fromSourceToAncestor = chain.get.chain2
