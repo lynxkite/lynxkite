@@ -85,6 +85,14 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
     registerOp(id, defaultIcon, category, inputs, List(projectOutput), factory)
   }
 
+  def register(id: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
+    registerOp(id, defaultIcon, category, inputs, outputs, factory)
+  }
+
+  def register(id: String, icon: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
+    registerOp(id, icon, category, inputs, outputs, factory)
+  }
+
   trait SegOp extends ProjectTransformation {
     protected def seg = project.asSegmentation
     protected def parent = seg.parent
