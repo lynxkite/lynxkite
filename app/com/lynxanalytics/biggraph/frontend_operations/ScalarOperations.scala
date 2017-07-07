@@ -160,7 +160,7 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     }
   })
 
-  register("Derive scalar", GlobalOperations, new ProjectTransformation(_) {
+  register("Derive scalar")(new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
       Code("expr", "Value", defaultValue = "", language = "javascript"))
