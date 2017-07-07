@@ -65,7 +65,7 @@ angular.module('biggraph')
             name: tmpWS,
           }).then(function success() {
             return util.post('/ajax/setWorkspace', {
-              reference: { name: tmpWS, customBoxStack: [] },
+              reference: { top: tmpWS, customBoxStack: [] },
               workspace: { boxes: boxes },
             });
           }).then(function success() {
