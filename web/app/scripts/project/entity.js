@@ -67,15 +67,6 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       };
       scope.isModel = function() { return scope.entity.typeName === 'Model'; };
 
-      scope.isUIStatus = function() {
-        return (scope.isScalar() &&
-            scope.entity.typeName === 'com.lynxanalytics.biggraph.controllers.UIStatus');
-      };
-      scope.loadUIStatus = function() {
-        scope.side.updateFromBackendJson(scope.side.scalars[scope.title()].value.string);
-        drop.close();
-      };
-
       scope.active = function() {
         /* if (scope.isSegmentation() &&
             scope.side.sides[1].state.projectName === scope.entity.fullName) {

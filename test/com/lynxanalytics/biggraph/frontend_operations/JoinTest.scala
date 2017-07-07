@@ -10,7 +10,7 @@ class JoinTest extends OperationsTestBase {
         "Add constant vertex attribute",
         Map("name" -> "seven", "value" -> "7", "type" -> "Double"))
     val target = root
-    val project = box("Join projects", Map("attrs" -> "seven"), Seq(target, source)).project
+    val project = box("Project rejoin", Map("attrs" -> "seven"), Seq(target, source)).project
 
     val values = project.vertexAttributes("seven").rdd.collect.toMap.values.toSeq
 
@@ -25,7 +25,7 @@ class JoinTest extends OperationsTestBase {
         Map("name" -> "eight", "value" -> "8", "type" -> "Double"))
     val target = root
     val project = box(
-      "Join projects",
+      "Project rejoin",
       Map(
         "apply_to_target" -> "!edges",
         "apply_to_source" -> "!edges",
@@ -49,7 +49,7 @@ class JoinTest extends OperationsTestBase {
           "overlap" -> "no"
         ))
       .box(
-        "Create random edge bundle",
+        "Create random edges",
         Map(
           "apply_to_project" -> "|bucketing",
           "degree" -> "10",
@@ -62,7 +62,7 @@ class JoinTest extends OperationsTestBase {
           "name" -> "ten",
           "value" -> "10",
           "type" -> "Double"))
-    val project = box("Join projects",
+    val project = box("Project rejoin",
       Map(
         "apply_to_target" -> "",
         "apply_to_source" -> "",
@@ -84,7 +84,7 @@ class JoinTest extends OperationsTestBase {
         "Take edges as vertices",
         Map())
 
-    val project = box("Join projects",
+    val project = box("Project rejoin",
       Map(
         "apply_to_target" -> "!edges",
         "apply_to_source" -> "",
@@ -120,7 +120,7 @@ class JoinTest extends OperationsTestBase {
         Map("name" -> "ten", "value" -> "10", "type" -> "Double"))
 
     val project = box(
-      "Join projects",
+      "Project rejoin",
       Map(
         "attrs" -> "name,ten"),
       Seq(target, source)).project
@@ -151,7 +151,7 @@ class JoinTest extends OperationsTestBase {
         Map("name" -> "ten", "value" -> "10", "type" -> "Double"))
 
     val project = box(
-      "Join projects",
+      "Project rejoin",
       Map(
         "apply_to_target" -> "!edges",
         "apply_to_source" -> "!edges",
@@ -173,7 +173,7 @@ class JoinTest extends OperationsTestBase {
           "filterva_gender" -> "", "filterva_id" -> "", "filterva_income" -> "",
           "filterva_location" -> "", "filterva_name" -> "", "filterea_comment" -> "",
           "filterea_weight" -> ">2"))
-    val project = box("Join projects",
+    val project = box("Project rejoin",
       Map(
         "apply_to_target" -> "!edges",
         "apply_to_source" -> "!edges",
@@ -223,7 +223,7 @@ class JoinTest extends OperationsTestBase {
           "filterva_top" -> "",
           "filterea_random2" -> ">0.5"))
 
-    val join = box("Join projects",
+    val join = box("Project rejoin",
       Map(
         "apply_to_target" -> "|seg!edges",
         "apply_to_source" -> "!edges",
@@ -290,7 +290,7 @@ class JoinTest extends OperationsTestBase {
       .box("Filter by attributes",
         Map("filterva_const1" -> "",
           "filterva_ordinal" -> "> 2"))
-    val project = box("Join projects",
+    val project = box("Project rejoin",
       Map(
         "apply_to_target" -> "!edges",
         "apply_to_source" -> "",

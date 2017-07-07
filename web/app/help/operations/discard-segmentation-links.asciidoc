@@ -1,3 +1,0 @@
-### Discard segmentation links
-
-Throws away all segmentation links.
