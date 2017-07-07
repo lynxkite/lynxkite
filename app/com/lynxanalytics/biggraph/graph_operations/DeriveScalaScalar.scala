@@ -10,32 +10,35 @@ import com.lynxanalytics.sandbox.ScalaScript
 
 object DeriveScalaScalar extends OpFromJson {
   class Input(s: Seq[(String, SerializableType[_])]) extends MagicInputSignature {
-    val scalars = s.map(i => scalarT(Symbol(i._1))(i._2.typeTag).asInstanceOf[ScalarTemplate[Any]])
+    val scalars = s.map(i => runtimeTypedScalar(Symbol(i._1), i._2.typeTag))
   }
   class Output[T: TypeTag](implicit instance: MetaGraphOperationInstance)
       extends MagicOutput(instance) {
     val sc = scalar[T]
   }
 
+  def derive[T: TypeTag](
+    exprString: String,
+    namedScalars: Seq[(String, Scalar[_])])(implicit manager: MetaGraphManager): Scalar[T] = {
+    val scalar = deriveFromScalars(exprString, namedScalars)
+    assert(scalar.typeTag.tpe =:= typeOf[T])
+    scalar.runtimeSafeCast[T]
+  }
+
   def deriveFromScalars(
     exprString: String,
-    namedScalars: Seq[(String, Scalar[_])])(implicit manager: MetaGraphManager): Output[_] = {
-    val paramTypes =
-      namedScalars.map { case (k, v) => k -> v.typeTag }.toMap[String, TypeTag[_]]
-    DeriveScala.checkInputTypes(paramTypes)
-    val t = ScalaScript.compileAndGetType(
-      exprString, paramTypes, paramsToOption = false).returnType
+    namedScalars: Seq[(String, Scalar[_])])(implicit manager: MetaGraphManager): Scalar[_] = {
 
-    val s = namedScalars.map { case (k, v) => k -> v.typeTag }
-    val e = exprString
-    val op = t match {
-      case _ if t =:= typeOf[String] => DeriveScalaScalar[String](e, s)
-      case _ if t =:= typeOf[Double] => DeriveScalaScalar[Double](e, s)
-      case _ => throw new AssertionError(s"Unsupported result type of expression $exprString: $t")
-    }
+    val paramTypes = namedScalars.map { case (k, v) => k -> v.typeTag }
+    val paramTypesMap = paramTypes.toMap[String, TypeTag[_]]
+    DeriveScala.checkInputTypes(paramTypesMap)
+    val t = ScalaScript.compileAndGetType(
+      exprString, paramTypesMap, paramsToOption = false).returnType
+    val tt = SerializableType(t).typeTag
+    val op = DeriveScalaScalar(exprString, paramTypes)(tt)
 
     import Scripting._
-    op(op.scalars, namedScalars.map(_._2.asInstanceOf[Scalar[Any]])).result
+    op(op.scalars, namedScalars.map(_._2)).result.sc
   }
 
   def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
