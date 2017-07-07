@@ -34,7 +34,7 @@ class ExportBoxTest extends OperationsTestBase {
       "filename" -> path,
       "columns" -> "",
       "infer" -> "no")).
-      box("Import vertices").project
+      box("Use table as vertices").project
     checkResult(importedAgain)
 
     exportTarget.delete()
@@ -46,7 +46,7 @@ class ExportBoxTest extends OperationsTestBase {
     exportTarget.deleteIfExists()
     val exportResult = importTestFile.box("Export to JSON", Map("path" -> path)).exportResult
     dataManager.get(exportResult)
-    val importedAgain = importBox("Import JSON", Map("filename" -> path)).box("Import vertices").project
+    val importedAgain = importBox("Import JSON", Map("filename" -> path)).box("Use table as vertices").project
     checkResult(importedAgain)
 
     exportTarget.delete()
@@ -66,7 +66,7 @@ class ExportBoxTest extends OperationsTestBase {
       "jdbc_url" -> sqliteURL,
       "jdbc_table" -> "hobbies",
       "imported_columns" -> "")).
-      box("Import vertices").project
+      box("Use table as vertices").project
     checkResult(importedAgain)
   }
 }

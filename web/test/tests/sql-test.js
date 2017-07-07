@@ -169,7 +169,7 @@ module.exports = function(fw) {
         id: 'rnd', name: 'Add random vertex attribute', x: 100, y: 200, params: { seed: '1' }});
       lib.workspace.addBox({
         after: 'rnd',
-        id: 'copy', name: 'Copy graph into a segmentation', x: 100, y: 300 });
+        id: 'copy', name: 'Use base project as segmentation', x: 100, y: 300 });
       lib.workspace.addBox({
         id: 'sql', name: 'SQL1', x: 100, y: 400 });
       lib.workspace.connectBoxes('copy', 'project', 'sql', 'input');

@@ -17,7 +17,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     // Import vertices as vertices
     {
       val project = eg
-        .box("Import vertices", Map(
+        .box("Use table as vertices", Map(
           "id_attr" -> "new_id"))
         .project
       assert(project.vertexSet.rdd.count == 4)
@@ -34,7 +34,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     {
       val project = eg
         .box("Take edges as vertices")
-        .box("Import vertices", Map(
+        .box("Use table as vertices", Map(
           "id_attr" -> "id"))
         .project
       assert(project.vertexSet.rdd.count == 4)
@@ -56,7 +56,7 @@ class ExportImportOperationTest extends OperationsTestBase {
       val project = eg
         .box("Take segmentation links as base project", Map(
           "apply_to_project" -> "|cc"))
-        .box("Import vertices and edges from a single table", Map(
+        .box("Use table as graph", Map(
           "src" -> "base_name",
           "dst" -> "segment_id"))
         .project
@@ -83,7 +83,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     }
   }
 
-  test("Import edges for existing vertices") {
+  test("Use table as edges") {
     val edges = importSeq(Seq("src", "dst", "value"), Seq(
       ("Adam", "Eve", "value1"),
       ("Isolated Joe", "Bob", "value2"),
@@ -91,7 +91,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     // The string "Alice" in the last row does not match any vertices in the example graph.
     // Therefore we expect it to be discarded.
     val project = box("Create example graph")
-      .box("Import edges for existing vertices", Map(
+      .box("Use table as edges", Map(
         "attr" -> "name",
         "src" -> "src",
         "dst" -> "dst"), Seq(edges))
@@ -105,7 +105,7 @@ class ExportImportOperationTest extends OperationsTestBase {
       valueAttr.collect.toSeq.sorted)
   }
 
-  test("Import vertex attributes") {
+  test("Use table as vertex attributes") {
     val attrs = importSeq(Seq("row_id", "value"), Seq(
       ("Adam", "value1"),
       ("Isolated Joe", "value2"),
@@ -113,7 +113,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     // The string "Alice" in the last row does not match any vertices in the example graph.
     // Therefore we expect it to be discarded.
     val project = box("Create example graph")
-      .box("Import vertex attributes", Map(
+      .box("Use table as vertex attributes", Map(
         "id_attr" -> "name",
         "id_column" -> "row_id",
         "prefix" -> "imported"), Seq(attrs))
@@ -122,7 +122,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     assert(Seq((0, "value1"), (3, "value2")) == valueAttr.collect.toSeq.sorted)
   }
 
-  test("Import edge attributes") {
+  test("Use table as edge attributes") {
     val attrs = importSeq(Seq("row_id", "value"), Seq(
       ("Adam loves Eve", "value1"),
       ("Bob envies Adam", "value2"),
@@ -130,7 +130,7 @@ class ExportImportOperationTest extends OperationsTestBase {
     // The last row does not match any edges in the example graph.
     // Therefore we expect it to be discarded.
     val project = box("Create example graph")
-      .box("Import edge attributes", Map(
+      .box("Use table as edge attributes", Map(
         "id_attr" -> "comment",
         "id_column" -> "row_id",
         "prefix" -> "imported"), Seq(attrs))
@@ -151,7 +151,7 @@ class ExportImportOperationTest extends OperationsTestBase {
       box("Create example graph")
         .box("Convert vertex attribute to String", Map(
           "attr" -> "id"))
-        .box("Import vertex attributes", Map(
+        .box("Use table as vertex attributes", Map(
           "id_attr" -> "id",
           "id_column" -> "id"), Seq(table))
         .project
@@ -161,7 +161,7 @@ class ExportImportOperationTest extends OperationsTestBase {
 
     val ex2 = intercept[java.lang.AssertionError] {
       box("Create example graph")
-        .box("Import edge attributes", Map(
+        .box("Use table as edge attributes", Map(
           "id_attr" -> "comment",
           "id_column" -> "new_comment"), Seq(edgeTable))
         .project

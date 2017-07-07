@@ -36,7 +36,7 @@ module.exports = function(fw) {
         name: 'copy'
       };
       lib.workspace.addBox({
-        id: 'copy-op', name: 'Copy graph into a segmentation', x: 100, y: 300,
+        id: 'copy-op', name: 'Use base project as segmentation', x: 100, y: 300,
         after: 'segment-op', params: params });
     },
     function() {});
@@ -81,7 +81,7 @@ module.exports = function(fw) {
     'segmentation size reporting - non empty segments',
     function() {
       lib.workspace.addBox({
-        id: 'copy', name: 'Copy graph into a segmentation', x: 100, y: 200,
+        id: 'copy', name: 'Use base project as segmentation', x: 100, y: 200,
         after: 'eg0', params: { name: 'self' } });
     },
     function() {
