@@ -117,7 +117,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       }
 
       def getReachableAncestors(start: VertexSet): Map[VertexSet, Seq[EdgeBundle]] = {
-        def canCarryAttributes(eb: EdgeBundle): Boolean = {
+        def canCarryAttributesFromAncestor(eb: EdgeBundle): Boolean = {
           // a -> a
           // b -> b
           //      c
@@ -134,13 +134,12 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         reachableAncestors(start) = Seq[EdgeBundle]()
         while (verticesToLookAt.nonEmpty) {
           val src = verticesToLookAt.dequeue()
-          val possibleOutgoingBundles = manager.outgoingBundles(src).filter(canCarryAttributes(_))
+          val possibleOutgoingBundles =
+            manager.outgoingBundles(src).filter(canCarryAttributesFromAncestor(_))
           for (eb <- possibleOutgoingBundles) {
-            assert(eb.srcVertexSet == src)
             val dst = eb.dstVertexSet
-            assert(reachableAncestors.contains(src))
-            val pathToSrc = reachableAncestors(src)
             if (!reachableAncestors.contains(dst)) {
+              val pathToSrc = reachableAncestors(src)
               val pathToDst = pathToSrc :+ eb
               reachableAncestors(dst) = pathToDst
               verticesToLookAt.enqueue(dst)
@@ -151,10 +150,10 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       }
 
       // Wrapper class to represent paths that lead to a common ancestor
-      case class Chains(chain1: Seq[EdgeBundle], chain2: Seq[EdgeBundle])
+      case class PathsToCommonAncestor(chain1: Seq[EdgeBundle], chain2: Seq[EdgeBundle])
 
       def computeChains(a: VertexSet,
-                        b: VertexSet): Option[Chains] = {
+                        b: VertexSet): Option[PathsToCommonAncestor] = {
         val aPaths = getReachableAncestors(a)
         val bPaths = getReachableAncestors(b)
         val possibleCommonAncestors = aPaths.keys.toSet & bPaths.keys.toSet
@@ -165,7 +164,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
             ancestorCandidate =>
               (ancestorCandidate, (aPaths(ancestorCandidate).length + bPaths(ancestorCandidate).length))
           }.toList.sortBy(_._2).head._1
-          Some(Chains(aPaths(bestAncestor), bPaths(bestAncestor)))
+          Some(PathsToCommonAncestor(aPaths(bestAncestor), bPaths(bestAncestor)))
         }
       }
 
