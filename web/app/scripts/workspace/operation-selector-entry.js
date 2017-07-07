@@ -8,6 +8,7 @@ angular.module('biggraph').directive('operationSelectorEntry', function() {
     scope: {
       ondrag: '&',
       op: '=',
+      name: '=',
     },
     templateUrl: 'scripts/workspace/operation-selector-entry.html',
   };
