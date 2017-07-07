@@ -27,8 +27,8 @@ class JoinTest extends OperationsTestBase {
     val project = box(
       "Join projects",
       Map(
-        "apply_to_a" -> "!edges",
-        "apply_to_b" -> "!edges",
+        "apply_to_target" -> "!edges",
+        "apply_to_source" -> "!edges",
         "attrs" -> "eight"), Seq(target, source)).project
 
     val values = project.edgeAttributes("eight").rdd.collect.toMap.values.toSeq
@@ -64,8 +64,8 @@ class JoinTest extends OperationsTestBase {
           "type" -> "Double"))
     val project = box("Join projects",
       Map(
-        "apply_to_a" -> "",
-        "apply_to_b" -> "",
+        "apply_to_target" -> "",
+        "apply_to_source" -> "",
         "segs" -> "bucketing"
       ), Seq(target, source)
     ).project
@@ -86,8 +86,8 @@ class JoinTest extends OperationsTestBase {
 
     val project = box("Join projects",
       Map(
-        "apply_to_a" -> "!edges",
-        "apply_to_b" -> "",
+        "apply_to_target" -> "!edges",
+        "apply_to_source" -> "",
         "attrs" -> "dst_name,dst_gender"
       ), Seq(target, source)
     ).project
@@ -153,8 +153,8 @@ class JoinTest extends OperationsTestBase {
     val project = box(
       "Join projects",
       Map(
-        "apply_to_a" -> "!edges",
-        "apply_to_b" -> "!edges",
+        "apply_to_target" -> "!edges",
+        "apply_to_source" -> "!edges",
         "attrs" -> "ten"),
       Seq(target, source)).project
 
@@ -175,8 +175,8 @@ class JoinTest extends OperationsTestBase {
           "filterea_weight" -> ">2"))
     val project = box("Join projects",
       Map(
-        "apply_to_a" -> "!edges",
-        "apply_to_b" -> "!edges",
+        "apply_to_target" -> "!edges",
+        "apply_to_source" -> "!edges",
         "attrs" -> "const1"
       ), Seq(target, source)
     ).project
@@ -225,8 +225,8 @@ class JoinTest extends OperationsTestBase {
 
     val join = box("Join projects",
       Map(
-        "apply_to_a" -> "|seg!edges",
-        "apply_to_b" -> "!edges",
+        "apply_to_target" -> "|seg!edges",
+        "apply_to_source" -> "!edges",
         "attrs" -> "random2"
       ), Seq(target, source))
 
@@ -292,8 +292,8 @@ class JoinTest extends OperationsTestBase {
           "filterva_ordinal" -> "> 2"))
     val project = box("Join projects",
       Map(
-        "apply_to_a" -> "!edges",
-        "apply_to_b" -> "",
+        "apply_to_target" -> "!edges",
+        "apply_to_source" -> "",
         "attrs" -> "newattr"
       ), Seq(target, source)
     ).project
