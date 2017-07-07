@@ -386,8 +386,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         params.validate()
         val sql = params("sql")
         val protoTables = this.getInputTables()
-        val tables = ProtoTable.minimize(sql, protoTables).mapValues(_.toTable)
-        val result = graph_operations.ExecuteSQL.run(sql, tables)
+        val result = graph_operations.ExecuteSQL.run(sql, protoTables)
         makeOutput(result)
       }
     })
