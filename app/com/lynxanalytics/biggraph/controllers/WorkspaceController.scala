@@ -211,7 +211,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def createSnapshot(
     user: serving.User, request: CreateSnapshotRequest): Unit = {
-    val entry = new DirectoryEntry(SymbolPath.parse(request.name))
+    val entry = DirectoryEntry.fromName(request.name)
     entry.assertWriteAllowedFrom(user)
     val calculatedState = calculatedStates.synchronized {
       calculatedStates(request.id)
