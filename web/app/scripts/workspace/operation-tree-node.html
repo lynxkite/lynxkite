@@ -1,15 +1,17 @@
 <div class="operation" ng-click="node.toggle()" ng-show="node.baseName">
   <span>
-    <dir-entry-icon object-type="'directory'">
+    <dir-entry-icon object-type="'directory'" class="operation-tree-node-icon">
     </dir-entry-icon>
     {{ node.baseName }}
   </span>
 </div>
-<div ng-show="node.isOpen" class="operation-tree-node-indent">
+<div ng-if="node.isOpen" class="operation-tree-node-indent">
   <operation-tree-node ng-repeat="dir in node.dirs"
+    id="{{ dir.baseName }}"
     node="dir">
   </operation-tree-node>
   <operation-selector-entry ng-repeat="op in node.ops"
+    id="{{ op.baseName }}"
     op="op.op"
     name="op.baseName"
     ondrag="op.localOndrag(op.op, $event)">

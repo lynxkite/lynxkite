@@ -343,8 +343,14 @@ Workspace.prototype = {
         .mouseUp()
         .perform();
     this.expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId);
-  }
+  },
 
+  getCustomBoxBrowserTree: function() {
+    this.selector.element(by.css('div[drop-tooltip="Custom boxes"]')).click();
+    return this.selector
+      .element(by.css('operation-tree'))
+      .element(by.css('operation-tree-node[id="root"]'));
+  },
 };
 
 function PopupBase() {
