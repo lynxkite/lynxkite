@@ -153,7 +153,8 @@ case class GlobalSettings(
   title: String,
   tagline: String,
   workspaceParameterKinds: List[String],
-  version: String)
+  version: String,
+  defaultUIStatus: UIStatus)
 
 object AssertLicenseNotExpired {
   def apply() = {
@@ -334,6 +335,7 @@ object FrontendJson {
   implicit val wFEUserList = json.Json.writes[FEUserList]
 
   implicit val wAuthMethod = json.Json.writes[AuthMethod]
+  import UIStatusSerialization.fUIStatus
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
   implicit val wFileDescriptor = json.Json.writes[FileDescriptor]
@@ -515,7 +517,8 @@ object ProductionJsonServer extends JsonServer {
       title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
       tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"),
       workspaceParameterKinds = CustomOperationParameterMeta.validKinds,
-      version = version)
+      version = version,
+      defaultUIStatus = UIStatus.default)
   }
 
   val copyController = new CopyController(BigGraphProductionEnvironment, sparkClusterController)

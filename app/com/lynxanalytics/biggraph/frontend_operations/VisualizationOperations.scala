@@ -45,8 +45,10 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
         "state",
         "Left-side and right-side UI statuses as JSON",
         json.Json.toJson(TwoSidedUIStatus(
-          left = Some(UIStatus.default.copy(graphMode = Some("sampled"))),
-          right = None)).toString)
+          left = UIStatus.default.copy(
+            projectPath = Some(""),
+            graphMode = Some("sampled")),
+          right = UIStatus.default)).toString)
     })
 
   register(
