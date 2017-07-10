@@ -173,6 +173,7 @@ module.exports = function(fw) {
     'browse-custom-box',
     function() {
       lib.splash.newDirectory('browse-custom-box-dir');
+      lib.splash.popDirectory();
       lib.splash.openNewWorkspace('browse-custom-box-ws');
 
       lib.workspace.addBox({
