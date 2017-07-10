@@ -169,8 +169,7 @@ angular.module('biggraph')
           if (!leftClick) {
             return;
           }
-          window.addEventListener('mousemove', scope.wrappedOnMouseMove);
-          window.addEventListener('mouseup', scope.wrappedOnMouseUp);
+          dragStart();
 
           addLogicalMousePosition(event);
           scope.selection.remove();
@@ -356,8 +355,7 @@ angular.module('biggraph')
           element[0].style.cursor = '';
           workspaceDrag = false;
           selectBoxes = false;
-          window.removeEventListener('mousemove', wrappedOnMouseMove);
-          window.removeEventListener('mouseup', wrappedOnMouseUp);
+          dragEnd();
           scope.selection.remove();
           if (scope.movedBoxes) {
             scope.workspace.saveIfBoxesMoved();
@@ -373,9 +371,21 @@ angular.module('biggraph')
         var wrappedOnMouseMove = wrapCallback(scope.onMouseMove);
         var wrappedOnMouseUp = wrapCallback(scope.onMouseUp);
 
-        scope.onMouseDown = function(event) {
+        scope.startMovingPopup = function(popup) {
+          scope.movedPopup = popup;
+          dragStart();
+        };
+        function dragStart() {
           window.addEventListener('mousemove', wrappedOnMouseMove);
           window.addEventListener('mouseup', wrappedOnMouseUp);
+        }
+        function dragEnd() {
+          window.removeEventListener('mousemove', wrappedOnMouseMove);
+          window.removeEventListener('mouseup', wrappedOnMouseUp);
+        }
+
+        scope.onMouseDown = function(event) {
+          dragStart();
           var dragMode = actualDragMode(event);
           event.preventDefault();
           addLogicalMousePosition(event);
