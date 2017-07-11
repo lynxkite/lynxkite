@@ -21,6 +21,8 @@ import org.apache.spark.sql.SQLContext
 import play.api.libs.json
 
 case class ImportBoxResponse(guid: String, parameterHash: String)
+case class StalenessCheckRequest(box: Box, parameterHash: String)
+case class StalenessCheckResponse(stale: Boolean)
 
 // FrameSettings holds details for creating an ObjectFrame.
 trait FrameSettings {
@@ -208,6 +210,17 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     dataManager.getFuture(table) // Start importing in the background.
     val guid = table.gUID.toString
     ImportBoxResponse(guid, parameterHash)
+  }
+
+  def staleImportParameters(user: serving.User, request: StalenessCheckRequest): StalenessCheckResponse = {
+    val box = request.box
+    val op = ops.opForBox(
+      user, box, inputs = null, workspaceParameters = null).asInstanceOf[ImportOperation]
+    val lastParameterHash = box.parameters("last_hash")
+    val currentParameterHash = op.parameterHash()
+    // The lastParameterHash is empty if we still didn't import and in this case there is no staleness.
+    val stale = lastParameterHash != "" && currentParameterHash != lastParameterHash
+    StalenessCheckResponse(stale)
   }
 
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)

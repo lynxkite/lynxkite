@@ -19,7 +19,6 @@ angular.module('biggraph').directive('tableKind', function(util) {
         box.parameters = scope.params;
         util.post('/ajax/importBox', box).then(function success(response) {
           scope.guid = response.guid;
-          console.log('scope.params', scope.params);
           scope.params['last_hash'] = response.parameterHash;
           scope.onBlur();
         }, function error(error) {
