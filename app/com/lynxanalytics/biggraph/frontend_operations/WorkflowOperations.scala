@@ -203,7 +203,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
             val attrCommonAncestor =
               fromSourceToAncestor.foldLeft(attr) {
                 (a, b) =>
-                  val eb = graph_operations.ReverseEdges.run(b)
+                  val eb = b.reverse
                   graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, eb)
               }
             val newAttr =
@@ -233,7 +233,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
             }
             val newBelongsTo = fromAncestorToTarget.foldLeft(commonAncestorBelongsTo) {
               (currentBelongsTo, nextBelongsTo) =>
-                val reversed = graph_operations.ReverseEdges.run(nextBelongsTo)
+                val reversed = nextBelongsTo.reverse
                 val op = InducedEdgeBundle(induceDst = false)
                 op(op.srcMapping, reversed)(op.edges, currentBelongsTo).result.induced
             }
