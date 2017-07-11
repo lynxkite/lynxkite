@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import org.apache.spark.sql.Row
 
 class JoinTest extends OperationsTestBase {
   test("Simple vertex attribute join works") {
@@ -105,16 +106,10 @@ class JoinTest extends OperationsTestBase {
     val target = root
     val source = root
       .box("Filter by attributes",
-        Map("filterva_age" -> "> -10", // Dummy segmentation
-          "filterva_gender" -> "", "filterva_id" -> "", "filterva_income" -> "",
-          "filterva_location" -> "", "filterva_name" -> "", "filterea_comment" -> "",
-          "filterea_weight" -> ""))
+        Map("filterva_age" -> "> -10")) // Dummy segmentation
 
       .box("Filter by attributes",
-        Map("filterva_age" -> "> 40", // Keep only Bob
-          "filterva_gender" -> "", "filterva_id" -> "", "filterva_income" -> "",
-          "filterva_location" -> "", "filterva_name" -> "", "filterea_comment" -> "",
-          "filterea_weight" -> ""))
+        Map("filterva_age" -> "> 40")) // Keep only Bob
       .box(
         "Add constant vertex attribute",
         Map("name" -> "ten", "value" -> "10", "type" -> "Double"))
@@ -136,16 +131,9 @@ class JoinTest extends OperationsTestBase {
     val target = root
     val source = root
       .box("Filter by attributes",
-        Map("filterva_age" -> "",
-          "filterva_gender" -> "", "filterva_id" -> "", "filterva_income" -> "",
-          "filterva_location" -> "", "filterva_name" -> "", "filterea_comment" -> "",
-          "filterea_weight" -> ">-1"))
-
+        Map("filterea_weight" -> ">-1"))
       .box("Filter by attributes",
-        Map("filterva_age" -> "",
-          "filterva_gender" -> "", "filterva_id" -> "", "filterva_income" -> "",
-          "filterva_location" -> "", "filterva_name" -> "", "filterea_comment" -> "",
-          "filterea_weight" -> ">1"))
+        Map("filterva_age" -> "", "filterea_weight" -> ">1"))
       .box(
         "Add constant edge attribute",
         Map("name" -> "ten", "value" -> "10", "type" -> "Double"))
@@ -169,10 +157,7 @@ class JoinTest extends OperationsTestBase {
           Map("name" -> "const1", "value" -> "1", "type" -> "Double"))
     val target =
       root.box("Filter by attributes",
-        Map("filterva_age" -> "",
-          "filterva_gender" -> "", "filterva_id" -> "", "filterva_income" -> "",
-          "filterva_location" -> "", "filterva_name" -> "", "filterea_comment" -> "",
-          "filterea_weight" -> ">2"))
+        Map("filterea_weight" -> ">2"))
     val project = box("Project rejoin",
       Map(
         "apply_to_target" -> "!edges",
@@ -206,7 +191,6 @@ class JoinTest extends OperationsTestBase {
           "seed" -> "32421341"))
         .box("Filter by attributes",
           Map(
-            "filterva_id" -> "",
             "filterea_random" -> ">0.5",
             "apply_to_project" -> "|seg"))
     val source = root.box("Take segmentation as base project", Map("apply_to_project" -> "|seg"))
@@ -215,13 +199,7 @@ class JoinTest extends OperationsTestBase {
           "dist" -> "Standard Uniform",
           "seed" -> "10101221"))
       .box("Filter by attributes",
-        Map(
-          "filterva_bottom" -> "",
-          "filterva_id" -> "",
-          "filterva_const1" -> "",
-          "filterva_size" -> "",
-          "filterva_top" -> "",
-          "filterea_random2" -> ">0.5"))
+        Map("filterea_random2" -> ">0.5"))
 
     val join = box("Project rejoin",
       Map(
@@ -262,21 +240,13 @@ class JoinTest extends OperationsTestBase {
         Map("type" -> "Double", "output" -> "keep1",
           "expr" -> "src$ordinal % 2 === dst$ordinal % 2"))
       .box("Filter by attributes",
-        Map("filterva_const1" -> "",
-          "filterva_ordinal" -> "",
-          "filterea_keep1" -> ">0.5"))
+        Map("filterea_keep1" -> ">0.5"))
       .box("Take edges as vertices")
       .box("Derive vertex attribute",
         Map("type" -> "Double", "output" -> "keep2",
           "expr" -> "dst_ordinal < src_ordinal"))
       .box("Filter by attributes",
-        Map(
-          "filterva_dst_ordinal" -> "",
-          "filterva_src_ordinal" -> "",
-          "filterva_dst_const1" -> "",
-          "filterva_src_const1" -> "",
-          "filterva_edge_keep1" -> "",
-          "filterva_keep2" -> ">0.5"
+        Map("filterva_keep2" -> ">0.5"
         )
       )
       .box("Derive vertex attribute",
@@ -285,11 +255,9 @@ class JoinTest extends OperationsTestBase {
     // The target should also undergo some filtering:
     val target = root
       .box("Filter by attributes",
-        Map("filterva_const1" -> "",
-          "filterva_ordinal" -> "< 8"))
+        Map("filterva_ordinal" -> "< 8"))
       .box("Filter by attributes",
-        Map("filterva_const1" -> "",
-          "filterva_ordinal" -> "> 2"))
+        Map("filterva_ordinal" -> "> 2"))
     val project = box("Project rejoin",
       Map(
         "apply_to_target" -> "!edges",
@@ -302,6 +270,51 @@ class JoinTest extends OperationsTestBase {
       .rdd.collect.toMap.values.toList.map(_.asInstanceOf[String]).sorted
     assert(newEdgeAttributes == List("3_5", "3_7", "4_6", "5_7"))
 
+  }
+
+  // target has no Bob, source has no Isolated Joe
+  def getTargetSource(): (TestBox, TestBox) = {
+    val root = box("Create example graph")
+    val target = root.box("Filter by attributes",
+      Map("filterva_age" -> "> -1")) // Make chain longer
+      .box("Filter by attributes", Map("filterva_age" -> "<40")) // Discard Bob
+    val source = root.box("Filter by attributes",
+      Map("filterva_age" -> "> -2")) // Make chain longer
+      .box("Filter by attributes", Map("filterva_age" -> ">10")) // Discard Joe
+    (target, source)
+  }
+
+  test("Segmentations work with filters") {
+    val (target, sourceRoot) = getTargetSource()
+    val source = sourceRoot.box(
+      "Segment by Double attribute",
+      Map(
+        "name" -> "bucketing",
+        "attr" -> "age",
+        "interval_size" -> "1",
+        "overlap" -> "no"
+      ))
+      .box("Aggregate to segmentation",
+        Map(
+          "apply_to_project" -> "|bucketing",
+          "aggregate_name" -> "first"))
+      .box("Rename vertex attribute",
+        Map("apply_to_project" -> "|bucketing",
+          "before" -> "name_first", "after" -> "name"))
+    val join = box("Project rejoin",
+      Map(
+        "segs" -> "bucketing"
+      ), Seq(target, source))
+
+    val result =
+      join.box("Aggregate from segmentation",
+        Map(
+          "apply_to_project" -> "|bucketing",
+          "aggregate_name" -> "first"))
+        .box("SQL1",
+          Map("sql" -> "select name,bucketing_name_first from `vertices`"))
+        .table.df.collect.toList.sortBy(_.getString(0))
+    assert(result == List(Row("Adam", "Adam"), Row("Eve", "Eve"), Row("Isolated Joe", null)))
   }
 }
 
