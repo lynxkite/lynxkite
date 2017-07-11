@@ -191,11 +191,11 @@ object OperationParams {
     val options = List()
   }
 
-  case class HashCheck(
+  case class StaleSettingsCheck(
       id: String,
       title: String,
       defaultValue: String = "") extends OperationParameterMeta {
-    val kind = "hash-check"
+    val kind = "staleness-check"
     val options = List()
     val multipleChoice = false
     def validate(value: String): Unit = {}
