@@ -74,7 +74,7 @@ case class FEScalar(
   errorMessage: Option[String],
   computedValue: Option[graph_operations.DynamicValue])
 
-case class FEProjectListElement(
+case class FEEntryListElement(
     name: String,
     objectType: String,
     notes: String = "",
@@ -113,19 +113,17 @@ case class FESegmentation(
   // A Vector[ID] vertex attribute, that contains for each vertex
   // the vector of ids of segments the vertex belongs to.
   equivalentAttribute: FEAttribute)
-case class ProjectRequest(name: String)
-case class ProjectListRequest(path: String)
-case class ProjectSearchRequest(
-  basePath: String, // We only search for projects/directories contained (recursively) in this.
+case class EntryListRequest(path: String)
+case class EntrySearchRequest(
+  basePath: String, // We only search for entries contained (recursively) in this.
   query: String,
   includeNotes: Boolean)
-case class ProjectList(
+case class EntryList(
   path: String,
   readACL: String,
   writeACL: String,
   directories: List[String],
-  objects: List[FEProjectListElement])
-case class CreateProjectRequest(name: String, notes: String, privacy: String)
+  objects: List[FEEntryListElement])
 case class CreateDirectoryRequest(name: String, privacy: String)
 case class DiscardEntryRequest(name: String)
 
@@ -149,7 +147,7 @@ case class RenameEntryRequest(from: String, to: String, overwrite: Boolean)
 case class ACLSettingsRequest(project: String, readACL: String, writeACL: String)
 
 object BigGraphController {
-  def projectList(user: serving.User, dir: Directory): (Iterable[DirectoryEntry], Iterable[ObjectFrame]) = {
+  def entryList(user: serving.User, dir: Directory): (Iterable[DirectoryEntry], Iterable[ObjectFrame]) = {
     val entries = dir.list
     val (dirs, objects) = entries.partition(_.isDirectory)
     val visibleDirs = dirs.filter(_.readAllowedFrom(user)).map(_.asDirectory)
@@ -157,7 +155,7 @@ object BigGraphController {
     (visibleDirs, visibleObjectFrames)
   }
 
-  def projectSearch(
+  def entrySearch(
     user: serving.User,
     dir: Directory,
     query: String,
@@ -190,12 +188,12 @@ class BigGraphController(val env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val entityProgressManager: EntityProgressManager = env.entityProgressManager
 
-  def projectList(user: serving.User, request: ProjectListRequest): ProjectList = metaManager.synchronized {
+  def entryList(user: serving.User, request: EntryListRequest): EntryList = metaManager.synchronized {
     val entry = DirectoryEntry.fromName(request.path)
     entry.assertReadAllowedFrom(user)
     val dir = entry.asDirectory
-    val (visibleDirs, visibleObjectFrames) = BigGraphController.projectList(user, dir)
-    ProjectList(
+    val (visibleDirs, visibleObjectFrames) = BigGraphController.entryList(user, dir)
+    EntryList(
       request.path,
       dir.readACL,
       dir.writeACL,
@@ -203,12 +201,12 @@ class BigGraphController(val env: SparkFreeEnvironment) {
       visibleObjectFrames.map(_.toListElementFE).toList)
   }
 
-  def projectSearch(user: serving.User, request: ProjectSearchRequest): ProjectList = metaManager.synchronized {
+  def entrySearch(user: serving.User, request: EntrySearchRequest): EntryList = metaManager.synchronized {
     val entry = DirectoryEntry.fromName(request.basePath)
     entry.assertReadAllowedFrom(user)
     val dir = entry.asDirectory
-    val (dirs, objects) = BigGraphController.projectSearch(user, dir, request.query, request.includeNotes)
-    ProjectList(
+    val (dirs, objects) = BigGraphController.entrySearch(user, dir, request.query, request.includeNotes)
+    EntryList(
       request.basePath,
       dir.readACL,
       dir.writeACL,

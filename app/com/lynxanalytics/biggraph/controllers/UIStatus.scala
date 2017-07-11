@@ -48,7 +48,7 @@ case class UIStatus(
   sliderPos: Option[Double])
 object UIStatus {
   val default = UIStatus(
-    projectPath = Some(""),
+    projectPath = None,
     graphMode = None,
     display = "svg",
     filters = UIFilterStatus(vertex = Map(), edge = Map()),
@@ -65,8 +65,8 @@ object UIStatus {
 }
 
 case class TwoSidedUIStatus(
-  left: Option[UIStatus],
-  right: Option[UIStatus])
+  left: UIStatus,
+  right: UIStatus)
 object UIStatusSerialization {
   implicit val fUIFilterStatus = json.Json.format[UIFilterStatus]
   implicit val fUIAttributeAxisOptions = json.Json.format[UIAttributeAxisOptions]

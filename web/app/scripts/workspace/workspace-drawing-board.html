@@ -19,7 +19,7 @@
   <button class="btn btn-default"
        id="save-selection-as-custom-box"
        ng-click="saveSelectionAsCustomBoxInputOpen = true"
-       ng-disabled="selectedBoxIds.length === 0"
+       ng-disabled="selectedBoxIds.length === 0 || workspace.error"
        drop-tooltip="Save&nbsp;selection as&nbsp;custom&nbsp;box"
        drop-tooltip-placement="bottom">
     <i class="fa fa-superpowers"></i>
@@ -27,7 +27,7 @@
   <button class="btn btn-default"
        id="copy-boxes"
        ng-click="copyBoxes()"
-       ng-disabled="selectedBoxIds.length === 0"
+       ng-disabled="selectedBoxIds.length === 0 || workspace.error"
        drop-tooltip="Copy&nbsp;boxes (Ctrl-C)"
        drop-tooltip-placement="bottom">
     <i class="fa fa-copy"></i>
@@ -36,13 +36,14 @@
        id="paste-boxes"
        ng-click="pasteBoxes()"
        drop-tooltip="Paste&nbsp;boxes (Ctrl-V)"
-       drop-tooltip-placement="bottom">
+       drop-tooltip-placement="bottom"
+       ng-disabled="workspace.error">
     <i class="fa fa-paste"></i>
   </button>
   <button class="btn btn-default"
        id="delete-selected-boxes"
        ng-click="deleteSelectedBoxes()"
-       ng-disabled="selectedBoxIds.length === 0"
+       ng-disabled="selectedBoxIds.length === 0 || workspace.error"
        drop-tooltip="Delete&nbsp;selected&nbsp;boxes (Delete)"
        drop-tooltip-placement="bottom">
     <i class="fa fa-trash-o"></i>
@@ -50,7 +51,7 @@
   <button class="btn btn-default"
        id="dive-up"
        ng-click="diveUp()"
-       ng-disabled="workspace.customBoxStack.length === 0"
+       ng-disabled="workspace.customBoxStack.length === 0 || workspace.error"
        drop-tooltip="Leave custom box {{ workspace.customBoxStack[workspace.customBoxStack.length - 1] }}"
        drop-tooltip-placement="bottom">
     <i class="fa fa-level-up"></i>
@@ -60,7 +61,7 @@
        ng-click="diveDown()"
        ng-disabled="!(
        selectedBoxIds.length === 1 &&
-       workspace.getBox(selectedBoxIds[0]).metadata.categoryId === 'Custom boxes')"
+       workspace.getBox(selectedBoxIds[0]).metadata.categoryId === 'Custom boxes') || workspace.error"
        drop-tooltip="Dive into custom box {{ selectedBoxIds[0] }}"
        drop-tooltip-placement="bottom">
     <i class="fa fa-level-down"></i>
@@ -70,7 +71,8 @@
        ng-click="dragMode = 'select'"
        ng-class="{ active: dragMode === 'select' }"
        drop-tooltip="Select&nbsp;boxes&nbsp;on&nbsp;drag"
-       drop-tooltip-placement="bottom">
+       drop-tooltip-placement="bottom"
+       ng-disabled="workspace.error">
     <i class="fa fa-mouse-pointer"></i>
   </button>
   <button class="btn btn-default"
@@ -78,13 +80,14 @@
        ng-click="dragMode = 'pan'"
        ng-class="{ active: dragMode === 'pan' }"
        drop-tooltip="Pan&nbsp;workspace&nbsp;on&nbsp;drag"
-       drop-tooltip-placement="bottom">
+       drop-tooltip-placement="bottom"
+       ng-disabled="workspace.error">
     <i class="fa fa-hand-paper-o"></i>
   </button>
   <button class="btn btn-default"
        id="undo"
        ng-click="workspace.undo()"
-       ng-disabled="!workspace.canUndo()"
+       ng-disabled="!workspace.canUndo() || workspace.error"
        drop-tooltip="Undo (Ctrl-Z)"
        drop-tooltip-placement="bottom">
     <i class="glyphicon glyphicon-backward"></i>
@@ -92,7 +95,7 @@
   <button class="btn btn-default"
        id="redo"
        ng-click="workspace.redo()"
-       ng-disabled="!workspace.canRedo()"
+       ng-disabled="!workspace.canRedo() || workspace.error"
        drop-tooltip="Redo (Ctrl-Y)"
        drop-tooltip-placement="bottom">
     <i class="glyphicon glyphicon-forward"></i>
@@ -105,7 +108,7 @@
   <button class="btn btn-default"
           id="save-workspace-as-starter-button"
           ng-click="workspace.startSavingAs()"
-          ng-disabled="workspace.showSaveAs"
+          ng-disabled="workspace.showSaveAs || workspace.error"
           drop-tooltip="Save&nbsp;workspace&nbsp;as..."
           drop-tooltip-placement="bottom">
     <i class="glyphicon glyphicon-floppy-disk"></i>
@@ -120,11 +123,14 @@
   <user-menu info="list" direction="dropdown" class="user-menu-in-toolbar"></user-menu>
 </div>
 
+<display-error caption="Cannot load workspace." error="workspace.error"></display-error>
+
 <div
     id="workspace-drawing-board"
     ng-mousemove="onMouseMove($event)"
     ng-mouseup="onMouseUp($event)"
-    ng-mousedown="onMouseDown($event)">
+    ng-mousedown="onMouseDown($event)"
+    ng-show="!workspace.error">
   <svg>
     <defs>
       <!-- The filters to apply colors to the grayscale icons. -->

@@ -4,33 +4,11 @@
 angular.module('biggraph')
   .factory('side', function (util, $rootScope, getCenter) {
     function defaultSideState() {
-      return {
-        projectPath: undefined,
-        filters: {
-          edge: {},
-          vertex: {},
-        },
-        axisOptions: {
-          edge: {},
-          vertex: {},
-        },
-        graphMode: undefined,
-        bucketCount: 4,
-        preciseBucketSizes: false,
-        relativeEdgeDensity: false,
-        sampleRadius: 1,
-        display: 'svg',
-        animate: {
-          enabled: false,
-          labelAttraction: 0,
-          style: 'neutral',
-        },
-        attributeTitles: {},
-        centers: undefined,
-        lastCentersRequest: undefined,
-        lastCentersResponse: undefined,
-        customVisualizationFilters: false,
-      };
+      // Get a deep copy of the default UI state.
+      // util.globals will always be resolved by the time execution
+      // gets here. That's because util.globals is fetched at page
+      // load time, but this code only runs when the user opens a popup.
+      return angular.copy(util.globals.defaultUIStatus);
     }
 
     function Side(sides, direction, stateId, enableVisualizationUI) {
@@ -51,7 +29,7 @@ angular.module('biggraph')
 
     Side.prototype.sections = ['scalar', 'vertex-attribute', 'edge-attribute', 'segmentation'];
     Side.prototype.sectionHumanName = {
-      'scalar': 'Graph attributes',
+      'scalar': 'Scalars',
       'vertex-attribute': 'Vertex attributes',
       'edge-attribute': 'Edge attributes',
       'segmentation': 'Segmentations',
@@ -753,5 +731,5 @@ angular.module('biggraph')
       return this.applyOp('Set-' + kind + '-icon', { name: name, icon: icon });
     };
 
-    return { Side: Side, defaultSideState: defaultSideState };
+    return { Side: Side };
   });

@@ -201,6 +201,10 @@ trait OperationRegistry {
   // The registry maps operation IDs to their constructors.
   val operations = mutable.Map[String, (BoxMetadata, Operation.Factory)]()
   val categories = mutable.Map[String, Operation.Category]()
+
+  // Default icon for operations.
+  val defaultIcon = "black_medium_square"
+
   def registerOp(
     id: String,
     icon: String,
