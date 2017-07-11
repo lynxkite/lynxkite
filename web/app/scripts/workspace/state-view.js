@@ -26,6 +26,10 @@ angular.module('biggraph')
           }
         });
 
+        scope.getDefaultSnapshotName = function() {
+          return scope.workspace.name + '-' + scope.plugId;
+        };
+
         scope.createSnapshot = function(saveAsName, success, error) {
           var postOpts = { reportErrors: false };
           util.post('/ajax/createSnapshot', {
