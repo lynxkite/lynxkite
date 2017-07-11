@@ -1,4 +1,4 @@
-// An directory in the directory tree based operation browser.
+// A directory in the directory tree based operation browser.
 'use strict';
 
 angular.module('biggraph').directive('operationTreeNode', function() {
