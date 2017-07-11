@@ -5,6 +5,8 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL.Alias
+import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL.TableName
 import org.apache.spark.sql.catalyst.analysis.Analyzer
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
@@ -48,7 +50,7 @@ object ProtoTable {
   // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
   // necessary to support the query.
   def minimize(optimizedPlan: LogicalPlan,
-               protoTables: Map[String, (String, ProtoTable)]): Map[String, ProtoTable] = {
+               protoTables: Map[Alias, (TableName, ProtoTable)]): Map[TableName, ProtoTable] = {
     val tables = getRequiredFields(optimizedPlan)
     val selectedTables = tables.map(f => {
       val (name, table) = protoTables(f._1)
