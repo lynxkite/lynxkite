@@ -325,6 +325,8 @@ object FrontendJson {
   implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
   implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
   implicit val wImportBoxResponse = json.Json.writes[ImportBoxResponse]
+  implicit val rStalenessCheckRequest = json.Json.reads[StalenessCheckRequest]
+  implicit val wStalenessCheckResponse = json.Json.writes[StalenessCheckResponse]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
@@ -444,6 +446,7 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
   def importBox = jsonFuturePost(sqlController.importBox)
+  def staleImportParameters = jsonGet(sqlController.staleImportParameters)
   def createViewDFSpec = jsonPost(sqlController.createViewDFSpec)
 
   def getTableOutput = jsonFuture(getTableOutputData)
