@@ -237,7 +237,6 @@ angular.module('biggraph')
       } else if (resp.status === 0) {
         return 'The server (' + window.location.hostname + ') cannot be reached.';
       }
-      console.log(resp);
       return resp.config.url + ' ' + (resp.statusText || 'failed');
     },
 
