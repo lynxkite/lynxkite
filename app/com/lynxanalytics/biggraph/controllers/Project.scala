@@ -1355,7 +1355,7 @@ object DirectoryEntry {
 
   def fromPath(path: SymbolPath)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
     val entry = new DirectoryEntry(path)
-    val nonDirParent = entry.parents.find(_.hasCheckpoint)
+    val nonDirParent = entry.parents.find(e => e.exists && !e.isDirectory)
     assert(
       nonDirParent.isEmpty,
       s"Invalid path: $path. Parent ${nonDirParent.get} is not a directory.")

@@ -110,13 +110,12 @@ object Operation {
     color: String, // A color class from web/app/styles/operation-toolbox.scss.
     visible: Boolean = true,
     icon: String = "", // Icon class name, or empty for first letter of title.
-    sortKey: String = null, // Categories are ordered by this. The title is used by default.
+    index: Int, // Categories are listed in this order on the UI.
     // Browse operations in this category using the dir structure. If true, the UI will display the
     // operations in a tree structure using the '/' character in the operation id as path separator.
     browseByDir: Boolean = false)
       extends Ordered[Category] {
-    private val safeSortKey = Option(sortKey).getOrElse(title)
-    def compare(that: Category) = this.safeSortKey compare that.safeSortKey
+    def compare(that: Category) = this.index compare that.index
     def toFE: FEOperationCategory =
       FEOperationCategory(title, addClass(icon), color, browseByDir)
     // Add main CSS class. E.g. "fa-superpowers" => "fa fa-superpowers".
@@ -269,7 +268,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
     Workspace.customBoxesCategory,
     "yellow",
     icon = "fa-superpowers",
-    sortKey = "zzz",
+    index = 999,
     browseByDir = true)
 
   def getCategories(user: serving.User): List[FEOperationCategory] = {
