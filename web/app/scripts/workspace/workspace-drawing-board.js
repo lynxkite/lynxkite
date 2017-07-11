@@ -643,7 +643,14 @@ angular.module('biggraph')
 
         scope.$on('create box under mouse', createBoxUnderMouse);
         function createBoxUnderMouse(event, operationId) {
-          scope.workspace.addBox(operationId, {logicalX: mouseX - 50, logicalY: mouseY - 50});
+          addAndSelectBox(operationId, {logicalX: mouseX - 50, logicalY: mouseY - 50});
+        }
+
+        // This is separate from scope.addOperation because we don't have a mouse event here,
+        // which makes using the onMouseDown function pretty difficult.
+        function addAndSelectBox(id, location, options) {
+          var box = scope.workspace.addBox(id, location, options);
+          scope.selectedBoxIds = [box.id];
         }
       }
     };
