@@ -480,8 +480,11 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
     assert(params("imported_table").nonEmpty, "You have to import the data first.")
     val lastHash = params("last_hash")
     val currentHash = parameterHash()
-    assert(lastHash == currentHash, "Import settings are stale. Please make sure that you have clicked " +
-      "on the import button after changing the import settings.")
+    // For not needing to provide the last_hash parameter for testing we are also allowing it to
+    // be empty. This doesn't cause problem in practice since if the last_hash parameter is empty
+    // then there was no import yet so the previous assert comes to play.
+    assert(lastHash == "" || lastHash == currentHash, "Import settings are stale. Please make " +
+      "sure that you have clicked on the import button after changing the import settings.")
     makeOutput(tableFromGuid(params("imported_table")))
   }
 
