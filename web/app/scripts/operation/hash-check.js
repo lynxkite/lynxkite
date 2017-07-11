@@ -10,15 +10,16 @@ angular.module('biggraph').directive('hashCheck', function(util) {
     templateUrl: 'scripts/operation/hash-check.html',
     link: function(scope) {
       util.deepWatch(scope, 'box.instance', function(instance) {
-        var staleSettings = util.get('ajax/staleImportParameters',
-          {
-            box: instance,
-            parameterHash: instance.parameters['last_hash'],
-          });
-        staleSettings.then(function (response) {
-          scope.stale = response.stale;
-          scope.message = (response.stale) ? 'Stale settings!' : 'Settings are up to date';
-        });
+//        var staleSettings = util.get('ajax/staleImportParameters',
+//          {
+//            box: instance,
+//            parameterHash: instance.parameters['last_settings'],
+//          });
+//        staleSettings.then(function (response) {
+//          scope.stale = response.stale;
+//          scope.message = (response.stale) ? 'Stale settings!' : 'Settings are up to date';
+//        });
+        console.log('parameters', instance.parameters);
       });
     }
   };

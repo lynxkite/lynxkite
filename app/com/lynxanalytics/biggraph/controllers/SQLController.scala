@@ -20,7 +20,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 import play.api.libs.json
 
-case class ImportBoxResponse(guid: String, parameterHash: String)
+case class ImportBoxResponse(guid: String, parameterSettings: String)
 case class StalenessCheckRequest(box: Box, parameterHash: String)
 case class StalenessCheckResponse(stale: Boolean)
 
@@ -204,12 +204,12 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   def importBox(user: serving.User, box: Box) = async[ImportBoxResponse] {
     val op = ops.opForBox(
       user, box, inputs = null, workspaceParameters = null).asInstanceOf[ImportOperation]
-    val parameterHash = op.parameterHash()
+    val parameterSettings = op.settingsString()
     val df = op.getDataFrame(SQLController.defaultContext(user))
     val table = ImportDataFrame.run(df)
     dataManager.getFuture(table) // Start importing in the background.
     val guid = table.gUID.toString
-    ImportBoxResponse(guid, parameterHash)
+    ImportBoxResponse(guid, parameterSettings)
   }
 
   def staleImportParameters(user: serving.User, request: StalenessCheckRequest): StalenessCheckResponse = {
@@ -217,10 +217,10 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val op = ops.opForBox(
       user, box, inputs = null, workspaceParameters = null).asInstanceOf[ImportOperation]
     val lastParameterHash = box.parameters.getOrElse("last_hash", "")
-    val currentParameterHash = op.parameterHash()
+    val currentParameterHash = op.settingsString()
     // The lastParameterHash is empty if we still didn't import and in this case there is no staleness.
-    val stale = lastParameterHash != "" && currentParameterHash != lastParameterHash
-    StalenessCheckResponse(stale)
+    // TODO: Change this.
+    StalenessCheckResponse(false)
   }
 
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
