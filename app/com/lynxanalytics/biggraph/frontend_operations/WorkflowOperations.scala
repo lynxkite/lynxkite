@@ -1,13 +1,13 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import scala.collection.mutable
-
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_operations.InducedEdgeBundle
 
 class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
   import Operation.Context
@@ -215,16 +215,30 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
             target.newAttribute(attrName, newAttr, note)
           }
         }
+
         if (segmentationsAreAvailable) {
           for (segmName <- splitParam("segs")) {
-            val leftEditor = target.projectEditor
-            val rightEditor = source.projectEditor
-            if (leftEditor.segmentationNames.contains(segmName)) {
-              leftEditor.deleteSegmentation(segmName)
+            val targetEditor = target.projectEditor
+            val sourceEditor = source.projectEditor
+            if (targetEditor.segmentationNames.contains(segmName)) {
+              targetEditor.deleteSegmentation(segmName)
             }
-            val rightSegm = rightEditor.existingSegmentation(segmName)
-            val leftSegm = leftEditor.segmentation(segmName)
-            leftSegm.segmentationState = rightSegm.segmentationState
+            val sourceSegmentation = sourceEditor.existingSegmentation(segmName)
+            val targetSegmentation = targetEditor.segmentation(segmName)
+            val originalBelongsTo = sourceSegmentation.belongsTo
+            val commonAncestorBelongsTo = fromSourceToAncestor.foldLeft(originalBelongsTo) {
+              (previousBundle, nextBundle) =>
+                val op = InducedEdgeBundle(induceDst = false)
+                op(op.srcMapping, nextBundle)(op.edges, previousBundle).result.induced
+            }
+            val newBelongsTo = fromAncestorToTarget.foldLeft(commonAncestorBelongsTo) {
+              (previousBundle, nextBundle) =>
+                val reversed = graph_operations.ReverseEdges.run(nextBundle)
+                val op = InducedEdgeBundle(induceDst = false)
+                op(op.srcMapping, reversed)(op.edges, previousBundle).result.induced
+            }
+            targetSegmentation.segmentationState = sourceSegmentation.segmentationState
+            targetSegmentation.belongsTo = newBelongsTo
           }
         }
         project.state = target.projectEditor.rootEditor.state
