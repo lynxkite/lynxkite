@@ -196,7 +196,7 @@ angular.module('biggraph')
         function placePopup(event) {
           // Avoid the event position, stay on the screen, and try to be close to the event.
           var w = 500;
-          var h = 500;
+          var h = 540;
           var eventX = event.pageX - w / 2;
           var eventY = event.pageY - h / 2;
           var minX = 0;
