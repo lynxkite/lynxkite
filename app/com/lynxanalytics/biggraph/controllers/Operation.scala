@@ -111,7 +111,9 @@ object Operation {
     visible: Boolean = true,
     icon: String = "", // Icon class name, or empty for first letter of title.
     sortKey: String = null, // Categories are ordered by this. The title is used by default.
-    browseByDir: Boolean = false) // Browse operations in this category using the dir structure.
+    // Browse operations in this category using the dir structure. If true, the UI will display the
+    // operations in a tree structure using the '/' character in the operation id as path separator.
+    browseByDir: Boolean = false)
       extends Ordered[Category] {
     private val safeSortKey = Option(sortKey).getOrElse(title)
     def compare(that: Category) = this.safeSortKey compare that.safeSortKey
