@@ -216,7 +216,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val box = request.box
     val op = ops.opForBox(
       user, box, inputs = null, workspaceParameters = null).asInstanceOf[ImportOperation]
-    val lastParameterHash = box.parameters("last_hash")
+    val lastParameterHash = box.parameters.getOrElse("last_hash", "")
     val currentParameterHash = op.parameterHash()
     // The lastParameterHash is empty if we still didn't import and in this case there is no staleness.
     val stale = lastParameterHash != "" && currentParameterHash != lastParameterHash
