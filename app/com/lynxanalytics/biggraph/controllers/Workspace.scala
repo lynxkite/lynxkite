@@ -271,9 +271,7 @@ case class VisualizationState(
 object VisualizationState {
   def fromString(uiStatus: String, project: RootProjectEditor): VisualizationState = {
     import UIStatusSerialization.fTwoSidedUIStatus
-    val uiStatusJson =
-      if (uiStatus.isEmpty) TwoSidedUIStatus(left = None, right = None)
-      else json.Json.parse(uiStatus).as[TwoSidedUIStatus]
+    val uiStatusJson = json.Json.parse(uiStatus).as[TwoSidedUIStatus]
     VisualizationState(
       uiStatusJson,
       project)

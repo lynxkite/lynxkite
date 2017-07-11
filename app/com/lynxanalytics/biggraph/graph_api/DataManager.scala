@@ -449,10 +449,15 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
 }
 
 object DataManager {
+  // This has to be synchronized; see
+  // https://app.asana.com/0/153258440689361/354006072569798
+  // In a nutshell: we can now call this function from different threads with
+  // the same SQLContext, and name collisions (same name - different DataFrame)
+  // are thus now possible.
   def sql(
     ctx: SQLContext,
     query: String,
-    dfs: List[(String, spark.sql.DataFrame)]): spark.sql.DataFrame = {
+    dfs: List[(String, spark.sql.DataFrame)]): spark.sql.DataFrame = synchronized {
     for ((name, df) <- dfs) {
       assert(df.sqlContext == ctx, "DataFrame from foreign SQLContext.")
       df.createOrReplaceTempView(s"`$name`")

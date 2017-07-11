@@ -271,9 +271,9 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     dir: Directory,
     query: Option[String]): TableBrowserNodeResponse = {
     val (visibleDirs, visibleObjectFrames) = if (!query.isEmpty && !query.get.isEmpty) {
-      BigGraphController.projectSearch(user, dir, query.get, includeNotes = false)
+      BigGraphController.entrySearch(user, dir, query.get, includeNotes = false)
     } else {
-      BigGraphController.projectList(user, dir)
+      BigGraphController.entryList(user, dir)
     }
     TableBrowserNodeResponse(list = (
       visibleDirs.map { dir =>

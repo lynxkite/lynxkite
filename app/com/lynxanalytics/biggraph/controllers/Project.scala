@@ -188,10 +188,10 @@ sealed trait ProjectViewer {
     }
   }
 
-  def toListElementFE(projectName: String, objectType: String, details: Option[json.JsObject])(
-    implicit epm: EntityProgressManager): FEProjectListElement = {
-    FEProjectListElement(
-      projectName,
+  def toListElementFE(name: String, objectType: String, details: Option[json.JsObject])(
+    implicit epm: EntityProgressManager): FEEntryListElement = {
+    FEEntryListElement(
+      name,
       objectType,
       state.notes,
       feScalar("!vertex_count"),
@@ -1062,14 +1062,14 @@ class SnapshotFrame(path: SymbolPath)(
 
   override def toListElementFE()(implicit epm: EntityProgressManager) = {
     try {
-      FEProjectListElement(
+      FEEntryListElement(
         name = name,
         objectType = objectType,
         details = details)
     } catch {
       case ex: Throwable =>
         log.warn(s"Could not list $name:", ex)
-        FEProjectListElement(
+        FEEntryListElement(
           name = name,
           objectType = objectType,
           error = Some(ex.getMessage)
@@ -1129,7 +1129,7 @@ abstract class ObjectFrame(path: SymbolPath)(
     } catch {
       case ex: Throwable =>
         log.warn(s"Could not list $name:", ex)
-        FEProjectListElement(
+        FEEntryListElement(
           name = name,
           objectType = objectType,
           error = Some(ex.getMessage)

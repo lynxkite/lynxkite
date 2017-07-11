@@ -190,7 +190,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
             }
           },
           function onError(error) {
-            util.error('Cannot load workspace: ' + error.data);
+            that.error = util.responseToErrorMessage(error);
           })
         .then(function() {
           that._startProgressUpdate();

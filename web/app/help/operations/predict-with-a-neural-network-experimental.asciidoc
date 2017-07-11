@@ -1,0 +1,94 @@
+### Predict with a neural network (EXPERIMENTAL)
+
+*Warning! Experimental operation.*
+
+Trains a neural network using the graph's vertex attributes and edges. Then uses
+this trained neural network to make a prediction on the same graph.
+
+Currently the computation is not distributed, so please do not use it on really
+big graphs. It will be changed in the future.
+
+Other significant changes are also possible in future versions. (The operation
+might be renamed or split into a separate training and prediction operation,
+some parameters might be added or removed, etc.)
+
+====
+[[label]] Attribute to predict::
+The partially defined attribute that you want to predict. The current
+implementation only supports attributes between -1 and 1.
+
+[[output]] Save as::
+The prediction will be saved as an attribute created under this name.
+
+[[features]] Predictors::
+The attributes that will be used as the input of the prediction.
+
+[[networklayout]] Network layout:: There is a small network at every vertex.
+At first the input for these small networks is the label of the corresponding
+vertex and the sum of its neighbors' labels. Each vertex computes the output of
+the small network on this input. After this, the input for the small network will
+consist of the sum of its neighbors' outputs in the previous round and its own
+previous output. Here you can set the layout of the small networks.
++
+  - **MLP:** The small network is simple, it contains only a single hidden layer.
+  But the layers can have different weights in different rounds.
+  - **LSTM or GRU:** In these layouts the small network is more complicated.
+  http://colah.github.io/posts/2015-08-Understanding-LSTMs/[Further information
+  about LSTM and GRU.]
+
+[[networksize]] Size of the network::
+The number of nodes in one layer of the neural network.
+
+[[radius]] Iterations in prediction::
+The number of rounds when the vertices send information to their neighbors.
+
+[[hidestate]] Hide own state::
+If it is set to `true`, then the vertices do not know their own label, but their neighbors
+can still see it.
+
+[[forgetfraction]] Forget fraction::
+In every training iteration each vertex forgets its label with the probability
+given here. Neither the vertices themselves, nor their neighbors see the forgotten
+labels.
+
+[[knownlabelweight]] Weight for known labels::
+If the forget fraction is greater than 0, then the errors from the non-forgetting
+nodes are multiplied by this number. So if it is set to a small number, then the
+errors from non-forgetting vertices count less than the ones from the forgetting
+vertices.
+
+[[numberoftrainings]] Number of trainings::
+The training is performed on randomly chosen subgraphs. In the first round each
+node gets a small subgraph and performs a few iterations of training. After this
+the average of the learned weights is calculated. In the second round each node
+gets another small subgraph and performs a few iterations of training, starting
+from the average weights. After this, the average of the learned weights is
+calculated again, and so on. You can set here the number of these turns.
+
+[[iterationsintraining]] Iterations in training::
+The number of iterations in one round of training.
+
+[[subgraphsintraining]] Subgraphs in training::
+The number of subgraphs chosen in one training round.
+
+[[mintrainingvertices]] Minimum training subgraph size::
+The minimum size of subgraphs chosen for training.
+
+[[maxtrainingvertices]] Maximum training subgraph size::
+The maximum size of subgraphs chosen for training.
+
+[[trainingradius]] Radius for training subgraphs::
+If 0, the whole graph is used as one single training subgraph. Otherwise
+the subgraphs are chosen as follows. We choose a single vertex at random and get
+all the vertices whose distance from the chosen one is at most this number.
+If the number of these vertices is less than the minimum given above, then we choose
+another node and get its environment. We repeat this procedure until there are
+enough chosen vertices. If the number of these vertices is more than maximum
+given above, then we drop the last few points.
+
+[[seed]] Seed::
+Random seed for initializing network weights and choosing subgraphs.
+
+[[learningrate]] Learning rate::
+Determines the size of the steps in the gradient descent algorithm.
+====

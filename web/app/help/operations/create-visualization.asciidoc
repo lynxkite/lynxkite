@@ -1,5 +1,0 @@
-### Create visualization
-
-Creates a visualization from the input project. You can use the state view of the project to
-define the parameters and layout of the visualization. See <<graph-visualizations>> for more details.
-
