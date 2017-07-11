@@ -79,7 +79,7 @@ class ParameterHolder(context: Operation.Context) {
     assert(dups.isEmpty, s"Duplicate parameter: ${dups.mkString(", ")}")
     val paramIds = metaMap.keySet
     val keys = context.box.parameters.keySet.union(context.box.parametricParameters.keySet)
-    val extraIds = keys &~ paramIds
+    val extraIds = keys &~ paramIds // keys diff paramIds
     assert(extraIds.isEmpty,
       s"""Extra parameters found: ${extraIds.mkString(", ")} is not in ${paramIds.mkString(", ")}""")
     for (meta <- metas) {

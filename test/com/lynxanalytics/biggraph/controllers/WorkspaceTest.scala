@@ -48,6 +48,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
     "iterations" -> "5", "direction" -> "all edges")
 
+  /*
   test("pagerank on example graph") {
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val pr = Box("pr", "Compute PageRank", pagerankParams, 0, 20, Map("project" -> eg.output("project")))
@@ -269,7 +270,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       }.getMessage.contains("Duplicate box name: anchor"))
     }
   }
-
+*/
   def anchorWithParams(params: (String, String, String)*): Box = {
     Box("anchor", "Anchor", Map(
       "parameters" -> json.Json.toJson(params.toList.map {
@@ -277,7 +278,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
           Map("id" -> id, "kind" -> kind, "defaultValue" -> defaultValue)
       }).toString), 0, 0, Map())
   }
-
+  /*
   test("parametric parameters") {
     val anchor = anchorWithParams(("p1", "text", "def1"), ("p2", "text", "def2"))
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
@@ -323,7 +324,37 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       })
     }
   }
+*/
+  test("custom box with aggregation") {
+    using("test-custom-box") {
+      val anchor = anchorWithParams()
+      val inputBox = Box("input", "Input", Map("name" -> "in1"), 0, 0, Map())
+      val aggr = Box("aggr", "Aggregate edge attribute globally",
+        Map("prefix" -> "", "aggregate_weight" -> "sum", "aggregate_comment" -> ""),
+        0, 0, Map("project" -> inputBox.output("input")))
+      val outputBox = Box(
+        "output", "Output", Map("name" -> "out1"), 0, 0, Map("output" -> aggr.output("project")))
+      set("test-custom-box", Workspace(List(anchor, inputBox, aggr, outputBox)))
 
+      // Now use "test-custom-box" as a custom box.
+      val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+      val cb1 = Box("cb1", "test-custom-box", Map(), 0, 0, Map("in1" -> eg.output("project")))
+      assert({
+        // Relying on default parameters.
+        val ws = Workspace.from(eg, cb1)
+        context(ws).allStates(cb1.output("out1")).project.scalars.contains("weight_sum")
+      })
+
+      val d = Box("d", "Discard edge attributes", Map("name" -> "comment"), 0, 0, Map("project" -> eg.output("project")))
+      val cb2 = Box("cb2", "test-custom-box", Map(), 0, 0, Map("in1" -> d.output("project")))
+      assert({
+        // Relying on default parameters.
+        val ws = Workspace.from(eg, d, cb2)
+        context(ws).allStates(cb2.output("out1")).project.scalars.contains("weight_sum")
+      })
+    }
+  }
+  /*
   test("dropping unrecognized parameters") {
     using("test-workspace") {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
@@ -401,4 +432,5 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(project.isError)
     }
   }
+*/
 }
