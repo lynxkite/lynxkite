@@ -5,7 +5,7 @@
     {{ node.baseName }}
   </span>
 </div>
-<div ng-if="node.isOpen" class="operation-tree-node-indent">
+<div ng-if="node.isOpen" ng-class="{ 'operation-tree-node-indent': node.indent }">
   <operation-tree-node ng-repeat="dir in node.dirs"
     id="{{ dir.baseName }}"
     node="dir">

@@ -14,28 +14,35 @@ angular.module('biggraph').directive('operationTree', function() {
         dirs: {},
         ops: {},
         isOpen: true,
+        indent: false,
       };
 
       // Create a tree from the path fragments of the operations.
-      for (var opI in scope.ops) {
-        var operation = scope.ops[opI];
-        var opPath = operation.operationId.split('/');
-        var nodeI = scope.node;
-        for (var i = 0; i < opPath.length - 1; i++) {
-          var opPathI = opPath[i];
-          if (!(opPathI in nodeI.dirs)) {
-            nodeI.dirs[opPathI] = {
+      for (var idx in scope.ops) {
+        var operation = scope.ops[idx];
+        var opPathParts = operation.operationId.split('/');
+        var currentNode = scope.node;
+
+        // Iterate until one before the last part, and create non-leaf nodes.
+        for (var i = 0; i < opPathParts.length - 1; i++) {
+          var opPathPart = opPathParts[i];
+          // Create a node for the dir if not exists.
+          if (!(opPathPart in currentNode.dirs)) {
+            currentNode.dirs[opPathPart] = {
               dirs: {},
               ops: {},
-              baseName: opPathI,
+              baseName: opPathPart,
               isOpen: false,
               toggle: function() { this.isOpen = !this.isOpen; },
+              indent: true,
             };
           }
-          nodeI = nodeI.dirs[opPathI];
+          currentNode = currentNode.dirs[opPathPart];
         }
-        var opBaseName = opPath[opPath.length - 1];
-        nodeI.ops[opBaseName] = {
+
+        // The last part becomes a leaf-node (it's the operation).
+        var opBaseName = opPathParts[opPathParts.length - 1];
+        currentNode.ops[opBaseName] = {
           op: operation,
           baseName: opBaseName,
           localOndrag: function(operation, $event) {
