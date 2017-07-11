@@ -569,14 +569,16 @@ angular.module('biggraph')
             op = 'Import ORC';
           }
           var box = scope.workspace.addBox(op, event, { willSaveLater: true });
+          console.log('box', box);
           if (op === 'Import CSV') {
             box.parameters.infer = 'yes';
           }
           uploadFile(file).then(function(filename) {
             box.parameters.filename = filename;
             return util.post('/ajax/importBox', box);
-          }).then(function(guid) {
-            box.parameters.imported_table = guid;
+          }).then(function(response) {
+            box.parameters.imported_table = response.guid;
+            box.parameters.last_hash = response.parameterHash;
             scope.workspace.saveWorkspace();
           }).catch(function() {
             scope.workspace.deleteBoxes([box.id]);
