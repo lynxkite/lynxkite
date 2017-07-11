@@ -29,6 +29,10 @@ span#workspace-name {
   overflow: auto; /* Allow scrolling category list, if necessary. */
 }
 
+workspace-drawing-board > display-error > * {
+  padding: 20px;
+}
+
 #workspace-drawing-board > svg {
   user-select: none;
   display: block;

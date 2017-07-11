@@ -10,7 +10,7 @@ module.exports = function(fw) {
     'empty test-example workspace forked',
     function() {
       $('#save-workspace-as-starter-button').click();
-      lib.submitInlineInput($('#save-workspace-as-input'), '-fork');
+      lib.submitInlineInput($('#save-workspace-as-input'), 'test-example-fork');
     },
     function() {
       expect(browser.getCurrentUrl()).toEqual(browser.baseUrl + '#/workspace/test-example-fork');
