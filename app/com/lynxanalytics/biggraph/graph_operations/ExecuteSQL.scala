@@ -112,8 +112,10 @@ case class ExecuteSQL(
 }
 
 // We don't use this optimizer to process data (that's taken care of by Spark).
-// This is just used to push down the projections to the leaf nodes, to avoid calculating fields in
-// the data we don't need.
+// The optimizer minimizes the calculations needed to get the results. The only part that we need
+// from this is that projections get pushed down as much as possible, i.e. with the query
+// select a from b where c=d, the projection pushdown would make sure that we only request
+// a, b, c, and d from our data source (ProtoTables in our case).
 class SchemaInferencingOptimizer(
   catalog: SessionCatalog,
   conf: SQLConf)
