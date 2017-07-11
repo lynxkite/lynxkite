@@ -227,15 +227,15 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
             val targetSegmentation = targetEditor.segmentation(segmName)
             val originalBelongsTo = sourceSegmentation.belongsTo
             val commonAncestorBelongsTo = fromSourceToAncestor.foldLeft(originalBelongsTo) {
-              (previousBundle, nextBundle) =>
+              (currentBelongsTo, nextBelongsTo) =>
                 val op = InducedEdgeBundle(induceDst = false)
-                op(op.srcMapping, nextBundle)(op.edges, previousBundle).result.induced
+                op(op.srcMapping, nextBelongsTo)(op.edges, currentBelongsTo).result.induced
             }
             val newBelongsTo = fromAncestorToTarget.foldLeft(commonAncestorBelongsTo) {
-              (previousBundle, nextBundle) =>
-                val reversed = graph_operations.ReverseEdges.run(nextBundle)
+              (currentBelongsTo, nextBelongsTo) =>
+                val reversed = graph_operations.ReverseEdges.run(nextBelongsTo)
                 val op = InducedEdgeBundle(induceDst = false)
-                op(op.srcMapping, reversed)(op.edges, previousBundle).result.induced
+                op(op.srcMapping, reversed)(op.edges, currentBelongsTo).result.induced
             }
             targetSegmentation.segmentationState = sourceSegmentation.segmentationState
             targetSegmentation.belongsTo = newBelongsTo
