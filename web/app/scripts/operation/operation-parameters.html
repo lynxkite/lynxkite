@@ -111,10 +111,10 @@
         on-ui-state-changed="onBlur()"
         project-state-id="box.outputs[0].stateId">
     </visualization-parameter>
-    <hash-check
-            ng-if="param.kind === 'hash-check' && pflags[param.id] !== true"
+    <staleness-check
+            ng-if="param.kind === 'staleness-check' && pflags[param.id] !== true"
             box="box"
             hash="output[param.id]">
-    </hash-check>
+    </staleness-check>
   </div>
 </div>

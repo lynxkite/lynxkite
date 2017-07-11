@@ -36,7 +36,7 @@ object FEOperationParameterMeta {
     "parameters", // A whole section defining the parameters of an operation.
     "segmentation", // One of the segmentations of the current project.
     "visualization", // Describes a two-sided visualization UI state.
-    "hash-check") // Used for checking staleness of parameters.
+    "staleness-check") // Used for checking staleness of parameters.
 }
 
 case class FEOperationParameterMeta(

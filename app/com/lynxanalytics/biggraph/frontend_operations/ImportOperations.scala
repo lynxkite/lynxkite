@@ -48,7 +48,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
       ImportedTableParam("imported_table", "Table GUID"),
-      HashCheck("last_settings", "Stale settings"))
+      StaleSettingsCheck("last_settings", "Stale settings"))
 
     override def summary = {
       val fn = simpleFileName(params("filename"))
@@ -96,7 +96,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("connection_properties", "Connection properties"),
       Code("sql", "SQL", language = "sql"),
       ImportedTableParam("imported_table", "Table GUID"),
-      HashCheck("last_settings", "Stale settings"))
+      StaleSettingsCheck("last_settings", "Stale settings"))
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       JDBCUtil.read(
         context,
@@ -122,7 +122,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
       ImportedTableParam("imported_table", "Table GUID"),
-      HashCheck("last_settings", "Stale settings"))
+      StaleSettingsCheck("last_settings", "Stale settings"))
 
     override def summary = {
       val fn = simpleFileName(params("filename"))
@@ -148,7 +148,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
       ImportedTableParam("imported_table", "Table GUID"),
-      HashCheck("last_settings", "Stale settings"))
+      StaleSettingsCheck("last_settings", "Stale settings"))
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       assert(
         DataManager.hiveConfigured,
