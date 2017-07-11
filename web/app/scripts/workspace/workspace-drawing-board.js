@@ -640,6 +640,11 @@ angular.module('biggraph')
         scope.closeWorkspace = function() {
           $location.url('/');
         };
+
+        scope.$on('create box under mouse', createBoxUnderMouse);
+        function createBoxUnderMouse(event, operationId) {
+          scope.workspace.addBox(operationId, {logicalX: mouseX - 50, logicalY: mouseY - 50});
+        }
       }
     };
   });
