@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.graph_api.Attribute
 import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL
+import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL.OptimizedPlanWithLookup
 
 class ProtoTableTest extends BigGraphControllerTestBase {
   private def attr(name: String): (String, Attribute[_]) =
@@ -31,8 +32,8 @@ class ProtoTableTest extends BigGraphControllerTestBase {
       Map("one" -> Set("a", "b"), "two" -> Set("c", "b")))
   ).foreach(f => {
     test(f._1) {
-      val (plan, tableLookup) = ExecuteSQL.getOptimizedLogicalPlanWithLookup(f._1, protoTables)
-      val minimizedTables = ProtoTable.minimize(plan, tableLookup)
+      val planWithLookup = OptimizedPlanWithLookup(f._1, protoTables)
+      val minimizedTables = ProtoTable.minimize(planWithLookup.plan, planWithLookup.lookup)
       compareProto(f._2, minimizedTables)
     }
   })
