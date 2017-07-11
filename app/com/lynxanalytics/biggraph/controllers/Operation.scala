@@ -466,7 +466,7 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
   // The parameter values without the last_settings and imported_table parameters. The
   // last_settings parameter is only used to check if the settings are stale. The imported_table
   // is generated from the other parameters and is populated in the frontend so it is easier to
-  // also be exclude it.
+  // also exclude it.
   private def currentSettings = params.toMap - "last_settings" - "imported_table"
 
   // We store this in the "last_settings" parameter. It is stringified JSON so it can be used on
