@@ -569,7 +569,6 @@ angular.module('biggraph')
             op = 'Import ORC';
           }
           var box = scope.workspace.addBox(op, event, { willSaveLater: true });
-          console.log('box', box);
           if (op === 'Import CSV') {
             box.parameters.infer = 'yes';
           }
