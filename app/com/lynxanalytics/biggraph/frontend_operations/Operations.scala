@@ -43,7 +43,7 @@ object Categories {
   def idx = { lastIdx += 1; lastIdx }
 
   val ImportOperations = Category("Import", "green", icon = "glyphicon-import", index = idx)
-  val BuildGraphOperations = Category("Build Graph", "blue", index = idx)
+  val BuildGraphOperations = Category("Build graph", "blue", index = idx)
   val SubgraphOperations = Category("Subgraph", "blue", index = idx)
   val BuildSegmentationOperations =
     Category("Build segmentation", "blue", icon = "glyphicon-th-large", index = idx)
