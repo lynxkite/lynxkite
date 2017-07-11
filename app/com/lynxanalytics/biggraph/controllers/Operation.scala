@@ -463,27 +463,32 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
   import MetaGraphManager.StringAsUUID
   protected def tableFromGuid(guid: String): Table = manager.table(guid.asUUID)
 
-  // Used for checking if the import settings are stale
-  def parameterHash(): String = {
-    val realParameters = params.toMap - "imported_table" - "last_hash"
-    realParameters.hashCode().toString()
+  // The parameter values without the last_settings and imported_table parameters. The
+  // last_settings parameter is only used to check if the settings are stale. The imported_table
+  // is generated from the other parameters and is populated in the frontend so it is easier to
+  // also be exclude it.
+  private def currentSettings = params.toMap - "last_settings" - "imported_table"
+
+  // We store this in the "last_settings" parameter. It is stringified JSON so it can be used on
+  // the frontend to check the stale parameters.
+  def settingsString(): String = {
+    val realParamsJson = json.Json.toJson(currentSettings)
+    json.Json.prettyPrint(realParamsJson)
   }
-  // We get the hash of the parameters of the last import from the frontend. We check if it is the
-  // same as the hash of the current parameters. If not then the settings are stale.
-  private def checkHash(hash: String): Boolean = {
-    val paramHash = parameterHash()
-    hash == paramHash
+
+  def getLastSettings = {
+    val lastSettingsString = params("last_settings")
+    json.Json.parse(lastSettingsString).as[Map[String, String]]
   }
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     params.validate()
     assert(params("imported_table").nonEmpty, "You have to import the data first.")
-    val lastHash = params("last_hash")
-    val currentHash = parameterHash()
+    val lastSettings = getLastSettings
     // For not needing to provide the last_hash parameter for testing we are also allowing it to
     // be empty. This doesn't cause problem in practice since if the last_hash parameter is empty
     // then there was no import yet so the previous assert comes to play.
-    assert(lastHash == "" || lastHash == currentHash, "Import settings are stale. Please make " +
+    assert(lastSettings == "" || lastSettings == currentSettings, "Import settings are stale. Please make " +
       "sure that you have clicked on the import button after changing the import settings.")
     makeOutput(tableFromGuid(params("imported_table")))
   }

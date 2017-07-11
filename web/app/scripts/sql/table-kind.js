@@ -16,11 +16,13 @@ angular.module('biggraph').directive('tableKind', function(util) {
         scope.disabled = true;
         scope.error = undefined;
         var box = angular.copy(scope.box.instance);
+        console.log('scope.box', scope.box);
         box.parameters = scope.params;
         util.post('/ajax/importBox', box).then(function success(response) {
           scope.guid = response.guid;
-          scope.params['last_hash'] = response.parameterHash;
+          scope.params['last_settings'] = response.parameterSettings;
           scope.onBlur();
+          console.log('scope.box2', scope.box);
         }, function error(error) {
           scope.error = error;
         }).finally(function() {
