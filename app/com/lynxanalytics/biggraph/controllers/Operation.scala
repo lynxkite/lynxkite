@@ -488,8 +488,8 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
     // For not needing to provide the last_hash parameter for testing we are also allowing it to
     // be empty. This doesn't cause problem in practice since if the last_hash parameter is empty
     // then there was no import yet so the previous assert comes to play.
-    assert(lastSettings == "" || lastSettings == currentSettings, "Import settings are stale. Please make " +
-      "sure that you have clicked on the import button after changing the import settings.")
+    assert(lastSettings == "" || lastSettings == currentSettings, "Import settings are stale. " +
+      "Please click on the import button to apply the changed settings.")
     makeOutput(tableFromGuid(params("imported_table")))
   }
 
