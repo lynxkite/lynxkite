@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import org.apache.spark.sql.Row
 
 class JoinTest extends OperationsTestBase {
   test("Simple vertex attribute join works") {
@@ -269,6 +270,51 @@ class JoinTest extends OperationsTestBase {
       .rdd.collect.toMap.values.toList.map(_.asInstanceOf[String]).sorted
     assert(newEdgeAttributes == List("3_5", "3_7", "4_6", "5_7"))
 
+  }
+
+  // target has no Bob, source has no Isolated Joe
+  def getTargetSource(): (TestBox, TestBox) = {
+    val root = box("Create example graph")
+    val target = root.box("Filter by attributes",
+      Map("filterva_age" -> "> -1")) // Make chain longer
+      .box("Filter by attributes", Map("filterva_age" -> "<40")) // Discard Bob
+    val source = root.box("Filter by attributes",
+      Map("filterva_age" -> "> -2")) // Make chain longer
+      .box("Filter by attributes", Map("filterva_age" -> ">10")) // Discard Joe
+    (target, source)
+  }
+
+  test("Segmentations work with filters") {
+    val (target, sourceRoot) = getTargetSource()
+    val source = sourceRoot.box(
+      "Segment by Double attribute",
+      Map(
+        "name" -> "bucketing",
+        "attr" -> "age",
+        "interval_size" -> "1",
+        "overlap" -> "no"
+      ))
+      .box("Aggregate to segmentation",
+        Map(
+          "apply_to_project" -> "|bucketing",
+          "aggregate_name" -> "first"))
+      .box("Rename vertex attribute",
+        Map("apply_to_project" -> "|bucketing",
+          "before" -> "name_first", "after" -> "name"))
+    val join = box("Project rejoin",
+      Map(
+        "segs" -> "bucketing"
+      ), Seq(target, source))
+
+    val result =
+      join.box("Aggregate from segmentation",
+        Map(
+          "apply_to_project" -> "|bucketing",
+          "aggregate_name" -> "first"))
+        .box("SQL1",
+          Map("sql" -> "select name,bucketing_name_first from `vertices`"))
+        .table.df.collect.toList.sortBy(_.getString(0))
+    assert(result == List(Row("Adam", "Adam"), Row("Eve", "Eve"), Row("Isolated Joe", null)))
   }
 }
 
