@@ -103,7 +103,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       // http://arxiv.org/pdf/1310.6753v1.pdf
       val normalizedDispersion = {
         graph_operations.DeriveScala.derive[Double](
-          "scala.math.pow(disp, 0.61) / (emb + 5)",
+          "math.pow(disp, 0.61) / (emb + 5)",
           Seq("disp" -> dispersion, "emb" -> embeddedness))
       }
       // TODO: recursive dispersion
@@ -346,7 +346,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
           }
           val error = {
             val mae = graph_operations.DeriveScala.derive[Double](
-              "scala.math.abs(test - train)",
+              "math.abs(test - train)",
               Seq("test" -> parted.test, "train" -> partedTrain.test))
             aggregate(AttributeWithAggregator(mae, "average"))
           }
