@@ -147,6 +147,7 @@ object ScalaScript {
       engine.put("table: Seq[Map[String, Any]]", data)
       val fullCode = s"""
       import vegas._
+      import vegas.spec.Spec.Scale
       val plot = {
         $code
       }
