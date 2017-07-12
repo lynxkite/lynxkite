@@ -60,7 +60,7 @@ object LogisticRegressionModelTrainer extends OpFromJson {
       // whose diagonal elements are probability_i * (1 - probability_i).
       val covariance = breeze.linalg.inv(matrix * matrixCost * matrix.t)
       val coefficientsStdErr = breeze.linalg.diag(covariance).map(Math.sqrt)
-      val zValues = breeze.linalg.DenseVector(coefficientsAndIntercept) :/ coefficientsStdErr
+      val zValues = breeze.linalg.DenseVector(coefficientsAndIntercept) /:/ coefficientsStdErr
       zValues.toArray
     }
   }
