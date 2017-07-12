@@ -124,7 +124,7 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
   // SQL in the future.
   test("global sql with upper case attribute name") {
     val eg = box("Create example graph").box("Rename vertex attributes",
-      Map("change_before" -> "NAME"))
+      Map("change_name" -> "NAME"))
     eg.snapshotOutput("test_dir/people", "project")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
