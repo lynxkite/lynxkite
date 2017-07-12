@@ -98,8 +98,8 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     val guidFuture = sql.importBox(user, b.realBox)
     val response = concurrent.Await.result(guidFuture, concurrent.duration.Duration.Inf)
     val guid = response.guid
-    val hash = response.parameterHash
-    box(operationId, parameters + ("imported_table" -> guid) + ("last_hash" -> hash))
+    val settings = response.parameterSettings
+    box(operationId, parameters + ("imported_table" -> guid) + ("last_settings" -> settings))
   }
 
   def importCSV(filename: String, options: Map[String, String] = Map()): TestBox =
