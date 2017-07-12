@@ -175,7 +175,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
     def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
     val attrParams = params.toMap.collect {
-      case (before, after) if before.slice(0, 7) == "change_" => (before.slice(7, before.size), after)
+      case (before, after) if before.startsWith("change_") => (before.stripPrefix("change_"), after)
     }
     val deletedAttrs = attrParams.toMap.filter {
       case (before, after) => after.isEmpty
@@ -205,7 +205,8 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       renamedAttrs.foreach {
         case (before, after) => {
           project.newVertexAttribute(
-            after, project.vertexAttributes(before),
+            after,
+            project.vertexAttributes(before),
             project.viewer.getVertexAttributeNote(before)
           )
           project.vertexAttributes(before) = null
