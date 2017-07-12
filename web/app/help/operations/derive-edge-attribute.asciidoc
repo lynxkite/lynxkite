@@ -13,9 +13,7 @@ assuming that you have a graph attribute _age_average_, you can use the expressi
 `if (src$age < age_average / 2 && dst$age > age_average * 2) 1.0 else 0.0`
 to identify connections between relatively young and relatively old people.
 
-Putting variable names in back quotes is strongly encouraged. Since not all attribute names
-are valid Scala identifiers, only variable names in back quotes are guaranteed to work 100%
-of the time.
+Back quotes can be used to refer to attribute names that are not valid Scala identifiers.
 
 The Scala expression can only return specific types:
 - `Double`,
