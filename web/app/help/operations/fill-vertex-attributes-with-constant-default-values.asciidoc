@@ -1,0 +1,5 @@
+### Fill vertex attributes with constant default values
+
+An attribute may not be defined on every vertex. This operation sets a default value
+for the vertices where it was not defined. The default value must be numeric for `Double`
+attributes.
