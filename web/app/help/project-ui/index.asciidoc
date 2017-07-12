@@ -15,7 +15,7 @@ include::segmentations.asciidoc[]
 
 include::filter-syntax.asciidoc[]
 
-include::javascript-guide.asciidoc[]
+include::scala-guide.asciidoc[]
 
 include::project-history.asciidoc[]
 
