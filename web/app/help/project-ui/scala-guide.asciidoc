@@ -1,105 +1,60 @@
-## JavaScript guide
+## Scala guide
 
-You can derive attributes in LynxKite by implementing the derivation formulas using JavaScript. For a
-general introduction to the JavaScript language, see:
-https://developer.mozilla.org/en-US/docs/Web/JavaScript/A_re-introduction_to_JavaScript
+You can derive attributes in LynxKite by implementing the derivation formulas using Scala. For a
+general introduction to the Scala language, see:
+http://docs.scala-lang.org/tutorials/tour/tour-of-scala.html
 
 ### Getting started
 
-The simplest way of using JavaScript to derive attributes is to just provide a one-liner expression
+The simplest way of using Scala to derive attributes is to just provide a one-liner expression
 in <<derived-vertex-attribute>> or <<derived-edge-attribute>>. The examples below are for deriving
 vertex attributes. The only difference from deriving edge attributes is the way vertex attributes can be
 accessed.
 
 A simple example:
 ```
-6 * 7
+6.0 * 7.0
 ```
 will generate a constant Double attribute of value `42.0`. You can also use values of other attributes
 in the expression:
 ```
-6 * age
+6.0 * age
 ```
 assuming that there is already an `age` attribute defined. LynxKite can also accept a list of
-JavaScript expressions:
+Scala expressions:
 ```
-var x = age + 1.0;
-var y = num_friends + 2.0;
-y / x;
+val x = age + 1.0
+val y = num_friends + 2.0
+y / x
 ```
 In this case, the value of the last expression will be taken as the value of the derived attribute.
 More complex code can be structured using functions:
 ```
-function getAge() {
-  return age + 1.0;
+def getAge() {
+  age + 1.0
 }
-function getNumFriends() {
-  return num_friends + 2.0;
+def getNumFriends() {
+  num_friends + 2.0
 }
-getNumFriends() / getAge();
+getNumFriends() / getAge()
 ```
 
-### Available utilities
+### Allowed types
 
-In addition to the standard JavaScript libraries, LynxKite provides a few utilities of
-its own.
+LynxKite uses Scala data types internally, so there is no need for type conversion between LynxKite
+and the derivations script. However, for performance and stability reasons the available types for
+both input (the type of vertex and edge attributes the script can use) and result are restricted.
 
-#### `util.hash(object)`
+* Double
+* String
+* Int
+* Long
+* Vector[String]
+* Vector[Double]
 
-Computes a 32 bit hash value of the given object.
-
-#### `util.rnd(seed)`
-
-The JavaScript `Math.random()` function does not work well with LynxKite: its seed
-cannot be specified by the user, and therefore its result is not repeatable.
-
-To mitigate this, LynxKite offers the function `util.rnd(seed)`, which returns a
-random number generator starting with the specified seed. This method can be useful
-if you need to generate more than one random number per graph node. (Otherwise
-you can just derive from <<add-random-edge-attribute>> or <<add-random-vertex-attribute>>.)
-
-Usage example:
-```
-var hash = util.hash(randomSeedAttr);
-var rand = util.rnd(hash);
-var coinToss1 = rand.nextBoolean() ? 'H' : 'T';
-var coinToss2 = rand.nextBoolean() ? 'H' : 'T';
-var coinToss3 = rand.nextBoolean() ? 'H' : 'T';
-coinToss1 + coinToss2 + coinToss3;
-```
-This example assumes that there is already an attribute named `randomSeedAttr`,
-which we are using as the random seed. The result in this example will be a String
-attribute.
-
-The available methods are listed here:
-http://www.scala-lang.org/api/current/index.html#scala.util.Random
-
-
-### Types and conversions
-
-LynxKite uses Scala data types internally. These are automatically converted to and from corresponding
-JavaScript types. Each below list item has the form of Scala type &harr; corresponding
-JavaScript type:
-
-* Boolean &harr; boolean
-* Byte &harr; number
-* Short &harr; number
-* Int &harr; number
-* Float &harr; number
-* Double &harr; number
-* Char &harr; string
-* String &harr; string
-* Iterable collection containing instances of the below Scala types &harr; JavaScript array
-containing the converted instances:
-** Boolean, Short,  Int, Float, Double, Char, String
-
-Values of other types need to be manually converted before passing to or from JavaScript. In
-particular, long numeric types need these conversions. You can use for example one of
-the following operations to achieve that:
+Values of other types need to be manually converted before returning from the Scala script.
+For input types, you can use for example one of the following operations to convert:
 <<vertex-attribute-to-string>> or <<vertex-attribute-to-double>>.
 Converting to Double will of course cause precision loss for large numbers, but
 converting to String will not.
 
-### JavaScript engine
-
-LynxKite is using Mozilla Rhino version 1.7.7 as its JavaScript engine.
