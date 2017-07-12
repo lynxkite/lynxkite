@@ -36,7 +36,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import CSV")(new ImportOperation(_) {
     params ++= List(
-      new StaleSettingsCheck("last_settings", "Stale settings", staleSettings()),
+      new StaleSettingsCheck("last_settings", "The settings are ...", staleSettings()),
       FileParam("filename", "File"),
       Param("columns", "Columns in file"),
       Param("delimiter", "Delimiter", defaultValue = ","),
@@ -86,6 +86,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import JDBC")(new ImportOperation(_) {
     params ++= List(
+      new StaleSettingsCheck("last_settings", "The settings are ...", staleSettings()),
       Param("jdbc_url", "JDBC URL"),
       Param("jdbc_table", "JDBC table"),
       Param("key_column", "Key column"),
@@ -96,8 +97,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("connection_properties", "Connection properties"),
       Code("sql", "SQL", language = "sql"),
       ImportedTableParam("imported_table", "Table GUID"))
-    params +=
-      new StaleSettingsCheck("last_settings", "Stale settings", staleSettings)
+
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       JDBCUtil.read(
         context,
@@ -118,13 +118,12 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   abstract class FileWithSchema(context: Context) extends ImportOperation(context) {
     val format: String
     params ++= List(
+      new StaleSettingsCheck("last_settings", "The settings are ...", staleSettings()),
       FileParam("filename", "File"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
       ImportedTableParam("imported_table", "Table GUID"))
-    params +=
-      new StaleSettingsCheck("last_settings", "Stale settings", staleSettings)
 
     override def summary = {
       val fn = simpleFileName(params("filename"))
