@@ -6,8 +6,8 @@ POST /ajax/createDirectory com.lynxanalytics.biggraph.serving.ProductionJsonServ
 POST /ajax/discardEntry com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardEntry
 POST /ajax/discardAllReallyIMeanIt com.lynxanalytics.biggraph.serving.ProductionJsonServer.discardAll
 POST /ajax/projectOp     com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectOp
-GET  /ajax/projectList   com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectList
-GET  /ajax/projectSearch   com.lynxanalytics.biggraph.serving.ProductionJsonServer.projectSearch
+GET  /ajax/entryList   com.lynxanalytics.biggraph.serving.ProductionJsonServer.entryList
+GET  /ajax/entrySearch   com.lynxanalytics.biggraph.serving.ProductionJsonServer.entrySearch
 POST /ajax/forkEntry   com.lynxanalytics.biggraph.serving.ProductionJsonServer.forkEntry
 POST /ajax/renameEntry com.lynxanalytics.biggraph.serving.ProductionJsonServer.renameEntry
 POST /ajax/changeACLSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeACLSettings

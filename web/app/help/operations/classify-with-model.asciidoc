@@ -1,0 +1,16 @@
+### Classify with model
+
+Creates classifications from a model and vertex attributes of the graph. For the classifications
+with nominal outputs, an additional probability is created to represent the corresponding
+outcome probability.
+
+====
+[[name]] Classification vertex attribute name::
+The new attribute of the classification will be created under this name.
+
+[[model]] Name and parameters of the model::
+The model used for the classifications and a mapping from vertex attributes to the model's
+features.
++
+Every feature of the model needs to be mapped to a vertex attribute.
+====

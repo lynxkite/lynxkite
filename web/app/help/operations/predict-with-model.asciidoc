@@ -1,0 +1,14 @@
+### Predict with model
+
+Creates predictions from a model and vertex attributes of the graph.
+
+====
+[[name]] Prediction vertex attribute name::
+The new attribute of the predictions will be created under this name.
+
+[[model]] Name and parameters of the model::
+The model used for the predictions and a mapping from vertex attributes to the model's
+features.
++
+Every feature of the model needs to be mapped to a vertex attribute.
+====

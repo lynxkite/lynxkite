@@ -16,9 +16,9 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
       ("Isolated Joe", "Retired", 3L)))
   }
 
-  test("Import segmentation for example graph") {
+  test("Use table as segmentation for example graph") {
     val project = box("Create example graph")
-      .box("Import segmentation",
+      .box("Use table as segmentation",
         Map(
           "name" -> "imported",
           "base_id_attr" -> "name",
@@ -29,16 +29,16 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
     checkAssertions(project)
   }
 
-  test("Import segmentation links for example graph") {
+  test("Use table as segmentation links for example graph") {
     val project = box("Create example graph")
-      .box("Import segmentation",
+      .box("Use table as segmentation",
         Map(
           "name" -> "imported",
           "base_id_attr" -> "name",
           "base_id_column" -> "base_name",
           "seg_id_column" -> "seg_name"),
         Seq(getTable))
-      .box("Import segmentation links", Map(
+      .box("Use table as segmentation links", Map(
         "base_id_attr" -> "name",
         "seg_id_attr" -> "seg_name",
         "base_id_column" -> "base_name",
@@ -63,9 +63,9 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
     assert(segMap == Seq(v(0) -> "Good", v(1) -> "Naughty", v(2) -> "Good", v(3) -> "Naughty", v(3) -> "Retired"))
   }
 
-  test("Import segmentation for example graph by Long ID") {
+  test("Use table as segmentation for example graph by Long ID") {
     val project = box("Create example graph")
-      .box("Import segmentation", Map(
+      .box("Use table as segmentation", Map(
         "name" -> "imported",
         "base_id_attr" -> "id",
         "base_id_column" -> "base_id",

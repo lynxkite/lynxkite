@@ -9,7 +9,7 @@ class LogisticRegressionTest extends OperationsTestBase {
         Map("type" -> "Double", "output" -> "label", "expr" -> "age > 30? 1.0 : 0.0"))
       .box("Train a logistic regression model",
         Map("name" -> "model", "label" -> "label", "features" -> "age", "max_iter" -> "20"))
-      .box("Classify vertices with a model",
+      .box("Classify with model",
         Map(
           "name" -> "classification",
           "model" -> """{

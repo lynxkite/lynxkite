@@ -24,6 +24,10 @@ angular.module('biggraph')
           };
         });
 
+        scope.getDefaultSnapshotName = function() {
+          return scope.workspace.name + '-' + scope.plugId;
+        };
+
         scope.setInstrument = function(index, operationId) {
           scope.instruments.splice(index + 1);
           var instrument = {
@@ -56,7 +60,6 @@ angular.module('biggraph')
             id: scope.plug.stateId,
           }, postOpts).then(success, error);
         };
-
       },
     };
   });

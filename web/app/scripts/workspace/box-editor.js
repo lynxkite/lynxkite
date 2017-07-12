@@ -179,7 +179,7 @@ angular.module('biggraph')
           }
           for (var k = 0; k < scope.boxMeta.parameters.length; ++k) {
             var p = scope.boxMeta.parameters[k];
-            if (p.kind === 'code' && p.payload.language === 'sql') {
+            if (p.kind === 'code' && p.payload.enableTableBrowser === true) {
               return true;
             }
           }

@@ -33,7 +33,7 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBox({
         id: 'plot1',
-        name: 'Create plot',
+        name: 'Custom plot',
         x: 200, y: 200 });
       lib.workspace.connectBoxes('ib0', 'table', 'plot1', 'table');
       var plotCode = fs.readFileSync(__dirname + '/data/plot_code.scala', 'utf8');
