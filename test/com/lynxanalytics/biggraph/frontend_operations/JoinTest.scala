@@ -237,21 +237,21 @@ class JoinTest extends OperationsTestBase {
     // Now split, filter, edges to vertices, and then filter again.
     val source = root
       .box("Derive edge attribute",
-        Map("type" -> "Double", "output" -> "keep1",
-          "expr" -> "src$ordinal % 2 === dst$ordinal % 2"))
+        Map("output" -> "keep1",
+          "expr" -> "if (src$ordinal % 2 == dst$ordinal % 2) 1.0 else 0.0"))
       .box("Filter by attributes",
         Map("filterea_keep1" -> ">0.5"))
       .box("Take edges as vertices")
       .box("Derive vertex attribute",
-        Map("type" -> "Double", "output" -> "keep2",
-          "expr" -> "dst_ordinal < src_ordinal"))
+        Map("output" -> "keep2",
+          "expr" -> "if (dst_ordinal < src_ordinal) 1.0 else 0.0"))
       .box("Filter by attributes",
         Map("filterva_keep2" -> ">0.5"
         )
       )
       .box("Derive vertex attribute",
-        Map("type" -> "String", "output" -> "newattr",
-          "expr" -> "'' + dst_ordinal + '_' + src_ordinal"))
+        Map("output" -> "newattr",
+          "expr" -> "dst_ordinal.toString + \"_\" + src_ordinal.toString"))
     // The target should also undergo some filtering:
     val target = root
       .box("Filter by attributes",
@@ -268,7 +268,7 @@ class JoinTest extends OperationsTestBase {
 
     val newEdgeAttributes = project.edgeAttributes("newattr")
       .rdd.collect.toMap.values.toList.map(_.asInstanceOf[String]).sorted
-    assert(newEdgeAttributes == List("3_5", "3_7", "4_6", "5_7"))
+    assert(newEdgeAttributes == List("3.0_5.0", "3.0_7.0", "4.0_6.0", "5.0_7.0"))
 
   }
 
