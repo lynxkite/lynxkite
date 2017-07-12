@@ -35,7 +35,8 @@ object FEOperationParameterMeta {
     "imported-table", // A table importing button.
     "parameters", // A whole section defining the parameters of an operation.
     "segmentation", // One of the segmentations of the current project.
-    "visualization") // Describes a two-sided visualization UI state.
+    "visualization", // Describes a two-sided visualization UI state.
+    "dummy") // A piece of text without an input field.
 }
 
 case class FEOperationParameterMeta(

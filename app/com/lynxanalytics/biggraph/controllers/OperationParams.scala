@@ -192,6 +192,14 @@ object OperationParams {
   }
 }
 
+case class Dummy(id: String, title: String) extends OperationParameterMeta {
+  val kind = "dummy"
+  val options = List()
+  val multipleChoice = false
+  val defaultValue = ""
+  def validate(value: String): Unit = {}
+}
+
 // A special parameter payload to describe applicable models on the UI.
 case class ModelsPayload(
   models: List[model.FEModelMeta],
