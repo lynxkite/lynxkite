@@ -182,29 +182,35 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
   })
 
   register(
-    "Fill vertex attribute with constant default value")(new ProjectTransformation(_) {
-      params ++= List(
-        Choice(
-          "attr", "Vertex attribute",
-          options = project.vertexAttrList[String] ++ project.vertexAttrList[Double]),
-        Param("def", "Default value"))
+    "Fill vertex attributes with constant default values")(new ProjectTransformation(_) {
+      params ++= project.vertexAttrList.map {
+        attr => Param(s"fill_${attr.id}", attr.id)
+      }
       def enabled = FEStatus.assert(
         (project.vertexAttrList[String] ++ project.vertexAttrList[Double]).nonEmpty,
         "No vertex attributes.")
+      val attrParams: Map[String, String] = params.toMap.collect {
+        case (name, value) if name.startsWith("fill_") && value.nonEmpty => (name.stripPrefix("fill_"), value)
+      }
       override def summary = {
-        val name = params("attr")
-        s"Fill vertex attribute '$name' with constant default value"
+        val fillStrings = attrParams.map {
+          case (name, const) => s"${name} with ${const}"
+        }
+        s"Filled ${fillStrings.mkString(", ")}"
       }
       def apply() = {
-        val attr = project.vertexAttributes(params("attr"))
-        val paramDef = params("def")
-        val op: graph_operations.AddConstantAttribute[_] =
-          graph_operations.AddConstantAttribute.doubleOrString(
-            isDouble = attr.is[Double], paramDef)
-        val default = op(op.vs, project.vertexSet).result
-        project.newVertexAttribute(
-          params("attr"), unifyAttribute(attr, default.attr.entity),
-          project.viewer.getVertexAttributeNote(params("attr")) + s" (filled with default $paramDef)" + help)
+        attrParams.toMap.foreach {
+          case (name, const) => {
+            val attr = project.vertexAttributes(name)
+            val op: graph_operations.AddConstantAttribute[_] =
+              graph_operations.AddConstantAttribute.doubleOrString(
+                isDouble = attr.is[Double], const)
+            val default = op(op.vs, project.vertexSet).result
+            project.newVertexAttribute(
+              name, unifyAttribute(attr, default.attr.entity),
+              project.viewer.getVertexAttributeNote(name) + s" (filled with default $const)" + help)
+          }
+        }
       }
     })
 
