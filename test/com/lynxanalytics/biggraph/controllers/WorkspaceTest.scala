@@ -139,11 +139,11 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         Map("attr" -> "ordinal"), 0, 0, Map("project" -> blanks.output("project")))
       val srcs = Box(
         "srcs", "Derive vertex attribute",
-        Map("output" -> "src", "type" -> "String", "expr" -> "ordinal == 0 ? 'Adam' : 'Eve'"),
+        Map("output" -> "src", "expr" -> "if (ordinal == 0) \"Adam\" else \"Eve\""),
         0, 0, Map("project" -> convert.output("project")))
       val dsts = Box(
         "dsts", "Derive vertex attribute",
-        Map("output" -> "dst", "type" -> "String", "expr" -> "ordinal == 0 ? 'Eve' : 'Bob'"),
+        Map("output" -> "dst", "expr" -> "if (ordinal == 0) \"Eve\" else \"Bob\""),
         0, 0, Map("project" -> srcs.output("project")))
       val combine = Box(
         "combine", "Use table as edges",

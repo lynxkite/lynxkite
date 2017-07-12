@@ -7,11 +7,13 @@ import javax.script._
 
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
+import com.lynxanalytics.biggraph.graph_api.TypeTagUtil
 import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, Timestamp }
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark.sql.DataFrame
 
 import scala.concurrent.duration.Duration
+import scala.reflect.runtime.universe._
 import scala.tools.nsc.interpreter.IMain
 import scala.util.DynamicVariable
 
@@ -81,8 +83,7 @@ class ScalaScriptSecurityManager extends SecurityManager {
     super.checkPackageAccess(s) // This must be the first thing to do!
     if (shouldCheck.value &&
       (s.contains("com.lynxanalytics.biggraph") ||
-        s.contains("org.apache.spark") ||
-        s.contains("scala.reflect"))) {
+        s.contains("org.apache.spark"))) {
       throw new java.security.AccessControlException(s"Illegal package access: $s")
     }
   }
@@ -158,6 +159,91 @@ object ScalaScript {
           compiledCode.eval().toString
         }
       }
+    }
+  }
+
+  // Helper function to convert param types to Option types.
+  private def convert(
+    paramTypes: Map[String, TypeTag[_]], paramsToOption: Boolean): Map[String, TypeTag[_]] = {
+    if (paramsToOption) {
+      paramTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) }
+    } else {
+      paramTypes
+    }
+  }
+
+  // A wrapper class representing the type signature of a Scala expression.
+  import scala.language.existentials
+  case class ScalaType(funcType: TypeTag[_]) {
+    val returnType = funcType.tpe.typeArgs.last
+    // Whether the expression returns an Option or not.
+    def isOptionType = TypeTagUtil.isSubtypeOf[Option[_]](returnType)
+    // The type argument for Options otherwise the return type.
+    def payLoadType = if (isOptionType) {
+      returnType.typeArgs(0)
+    } else {
+      returnType
+    }
+  }
+
+  def compileAndGetType(
+    code: String, paramTypes: Map[String, TypeTag[_]], paramsToOption: Boolean): ScalaType = {
+    ScalaType(inferType(code, paramTypes, paramsToOption))
+  }
+
+  private def inferType(
+    code: String,
+    paramTypes: Map[String, TypeTag[_]],
+    paramsToOption: Boolean): TypeTag[_] = synchronized {
+    val paramString = convert(paramTypes, paramsToOption).map {
+      case (k, v) => s"`$k`: ${v.tpe}"
+    }.mkString(", ")
+    val fullCode = s"""
+    import scala.reflect.runtime.universe._
+    def typeTagOf[T: TypeTag](t: T) = typeTag[T]
+    def eval($paramString) = {
+      $code
+    }
+    typeTagOf(eval _)
+    """
+    withContextClassLoader {
+      val compiledCode = engine.compile(fullCode)
+      val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
+        compiledCode.eval()
+      }
+      result.asInstanceOf[TypeTag[_]] // We cannot use asInstanceOf within the SecurityManager.
+    }
+  }
+
+  // A wrapper class to call the compiled function with the parameter Map.
+  case class Evaluator(evalFunc: Function1[Map[String, Any], AnyRef]) {
+    def evaluate(params: Map[String, Any]): AnyRef = {
+      evalFunc.apply(params)
+    }
+  }
+
+  def compileAndGetEvaluator(
+    code: String,
+    paramTypes: Map[String, TypeTag[_]],
+    paramsToOption: Boolean): Evaluator = synchronized {
+    // Parameters are back quoted and taken out from the Map. The input argument is one Map to
+    // make the calling of the compiled function easier (otherwise we had varying number of args).
+    val paramsString = convert(paramTypes, paramsToOption).map {
+      case (k, t) => s"""val `$k` = params("$k").asInstanceOf[${t.tpe}]"""
+    }.mkString("\n")
+    val fullCode = s"""
+    def eval(params: Map[String, Any]) = {
+      $paramsString
+      $code
+    }
+    eval _
+    """
+    withContextClassLoader {
+      val compiledCode = engine.compile(fullCode)
+      val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
+        compiledCode.eval()
+      }
+      Evaluator(result.asInstanceOf[Function1[Map[String, Any], AnyRef]])
     }
   }
 

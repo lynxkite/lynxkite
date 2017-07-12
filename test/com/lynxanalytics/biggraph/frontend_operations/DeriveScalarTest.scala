@@ -6,7 +6,7 @@ class DeriveScalarTest extends OperationsTestBase {
   test("Derive scalar") {
     val project = box("Create example graph")
       .box("Derive scalar",
-        Map("type" -> "Double", "output" -> "output", "expr" -> "20 + greeting.length")).project
+        Map("output" -> "output", "expr" -> "20.0 + greeting.length")).project
     val sc = project.scalars("output").runtimeSafeCast[Double]
     assert(sc.value == 36)
   }
