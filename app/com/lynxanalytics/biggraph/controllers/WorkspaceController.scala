@@ -105,8 +105,12 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         case (boxOutput, (boxOutputState, stateId)) =>
           BoxOutputInfo(boxOutput, stateId, boxOutputState.success, boxOutputState.kind)
       }
+      def crop(s: String): String = {
+        val maxLength = 50
+        if (s.length > maxLength) { s.substring(0, maxLength - 3) + "..." } else { s }
+      }
       val summaries = res.ws.boxes.map(
-        box => box.id -> (
+        box => box.id -> crop(
           try { context.getOperationForStates(box, states).summary }
           catch {
             case t: Throwable =>
@@ -148,7 +152,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val project =
       if (state.isProject) state.project
       else if (state.isVisualization) state.visualization.project
-      else ???
+      else if (state.isError) throw new AssertionError(state.success.disabledReason)
+      else throw new AssertionError(s"Not a project: $state")
     val viewer = project.viewer.offspringViewer(pathSeq)
     viewer.toFE(request.path)
   }
@@ -217,10 +222,12 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def createSnapshot(
     user: serving.User, request: CreateSnapshotRequest): Unit = {
+    val entry = DirectoryEntry.fromName(request.name)
+    entry.assertWriteAllowedFrom(user)
     val calculatedState = calculatedStates.synchronized {
       calculatedStates(request.id)
     }
-    new DirectoryEntry(SymbolPath.parse(request.name)).asNewSnapshotFrame(calculatedState)
+    entry.asNewSnapshotFrame(calculatedState)
   }
 
   def setWorkspace(

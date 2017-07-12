@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class PlotTest extends OperationsTestBase {
   test("Plot") {
     val plot = box("Create example graph")
-      .box("Create plot")
+      .box("Custom plot")
       .output("plot").plot.value
     assert(plot == """{
   "mark" : "bar",

@@ -188,10 +188,10 @@ sealed trait ProjectViewer {
     }
   }
 
-  def toListElementFE(projectName: String, objectType: String, details: Option[json.JsObject])(
-    implicit epm: EntityProgressManager): FEProjectListElement = {
-    FEProjectListElement(
-      projectName,
+  def toListElementFE(name: String, objectType: String, details: Option[json.JsObject])(
+    implicit epm: EntityProgressManager): FEEntryListElement = {
+    FEEntryListElement(
+      name,
       objectType,
       state.notes,
       feScalar("!vertex_count"),
@@ -1062,14 +1062,14 @@ class SnapshotFrame(path: SymbolPath)(
 
   override def toListElementFE()(implicit epm: EntityProgressManager) = {
     try {
-      FEProjectListElement(
+      FEEntryListElement(
         name = name,
         objectType = objectType,
         details = details)
     } catch {
       case ex: Throwable =>
         log.warn(s"Could not list $name:", ex)
-        FEProjectListElement(
+        FEEntryListElement(
           name = name,
           objectType = objectType,
           error = Some(ex.getMessage)
@@ -1129,7 +1129,7 @@ abstract class ObjectFrame(path: SymbolPath)(
     } catch {
       case ex: Throwable =>
         log.warn(s"Could not list $name:", ex)
-        FEProjectListElement(
+        FEEntryListElement(
           name = name,
           objectType = objectType,
           error = Some(ex.getMessage)
@@ -1355,7 +1355,7 @@ object DirectoryEntry {
 
   def fromPath(path: SymbolPath)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
     val entry = new DirectoryEntry(path)
-    val nonDirParent = entry.parents.find(_.hasCheckpoint)
+    val nonDirParent = entry.parents.find(e => e.exists && !e.isDirectory)
     assert(
       nonDirParent.isEmpty,
       s"Invalid path: $path. Parent ${nonDirParent.get} is not a directory.")

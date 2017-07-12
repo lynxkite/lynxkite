@@ -1,0 +1,18 @@
+### "Use base project as segmentation
+
+Creates a new segmentation which is a copy of the base project. Also creates segmentation links
+between the original vertices and their corresponding vertices in the segmentation.
+
+For example, let's say we have a social network and we want to make a segmentation containing a
+selected group of people and the segmentation links should represent the original connections
+between the members of this selected group and other people.
+
+We can do this by first using this operation to copy the base project to segmentation then using
+the <<Grow segmentation>> operation to add the necessary segmentation links. Finally, using the
+<<Filter by attributes>> operation, we can ensure that the segmentation contains only members of
+the selected group.
+
+====
+[[name]] Segmentation name::
+The name assigned to the new segmentation. It defaults to the projects name.
+====
