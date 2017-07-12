@@ -12,7 +12,7 @@ angular.module('biggraph').directive('stalenessCheck', function(util) {
     link: function(scope) {
       util.deepWatch(scope, 'box.instance', function() {
         scope.onBlur();
-        scope.message = scope.param.payload.stale ? 'Stale settings!' : 'Settings are up to date';
+        scope.message = scope.param.payload.stale ? 'stale!' : 'up to date';
       });
     }
   };
