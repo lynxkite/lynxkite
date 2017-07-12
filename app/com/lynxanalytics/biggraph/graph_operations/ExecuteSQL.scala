@@ -26,7 +26,6 @@ object ExecuteSQL extends OpFromJson {
 
   def getLogicalPlan(
     sqlQuery: String, tables: Map[String, Table]): spark.sql.catalyst.plans.logical.LogicalPlan = {
-    import spark.sql.SQLHelperHelper
     import spark.sql.catalyst._
     import spark.sql.catalyst.analysis._
     import spark.sql.catalyst.catalog._
