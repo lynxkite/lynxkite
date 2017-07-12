@@ -120,20 +120,6 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
   })
 
-  register("Discard vertex attributes")(new ProjectTransformation(_) {
-    params += Choice("name", "Name", options = project.vertexAttrList, multipleChoice = true)
-    def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
-    override def summary = {
-      val names = params("name").replace(",", ", ")
-      s"Discard vertex attributes: $names"
-    }
-    def apply() = {
-      for (param <- splitParam("name")) {
-        project.deleteVertexAttribute(param)
-      }
-    }
-  })
-
   register("Rename edge attribute")(new ProjectTransformation(_) {
     params ++= List(
       Choice("before", "Old name", options = project.edgeAttrList),
@@ -183,22 +169,60 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
   })
 
-  register("Rename vertex attribute")(new ProjectTransformation(_) {
-    params ++= List(
-      Choice("before", "Old name", options = project.vertexAttrList),
-      Param("after", "New name"))
+  register("Rename or discard vertex attributes")(new ProjectTransformation(_) {
+    params ++= project.vertexAttrList.map {
+      attr => Param(s"change_${attr.id}", attr.id, defaultValue = attr.id)
+    }
     def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
+    val attrParams = params.toMap.collect {
+      case (before, after) if before.slice(0, 7) == "change_" => (before.slice(7, before.size), after)
+    }
+    val deletedAttrs = attrParams.toMap.filter {
+      case (before, after) =>
+        {
+          after.isEmpty
+        }
+    }
+    val renamedAttrs = attrParams.toMap.filter {
+      case (before, after) => {
+        after.nonEmpty && before != after
+      }
+    }
     override def summary = {
-      val before = params("before")
-      val after = params("after")
-      s"Rename vertex attribute $before to $after"
+      val renameStrings = renamedAttrs.map {
+        case (before, after) =>
+          s"${before} to ${after}"
+      }
+      println(deletedAttrs)
+      val deleteStrings = deletedAttrs.keys
+      val renameSummary: String = {
+        if (renameStrings.nonEmpty) {
+          s"Rename " + renameStrings.mkString(", ") + ". "
+        } else ""
+      }
+      val deleteSummary: String = {
+        if (deleteStrings.nonEmpty) {
+          s"Delete " + deleteStrings.mkString(", ")
+        } else ""
+      }
+      println(deleteStrings)
+      renameSummary + deleteSummary
     }
     def apply() = {
-      assert(params("after").nonEmpty, "Please set the new attribute name.")
-      project.newVertexAttribute(
-        params("after"), project.vertexAttributes(params("before")),
-        project.viewer.getVertexAttributeNote(params("before")))
-      project.vertexAttributes(params("before")) = null
+      renamedAttrs.foreach {
+        case (before, after) => {
+          project.newVertexAttribute(
+            after, project.vertexAttributes(before),
+            project.viewer.getVertexAttributeNote(before)
+          )
+          project.vertexAttributes(before) = null
+        }
+      }
+      deletedAttrs.foreach {
+        case (before, after) => {
+          project.deleteVertexAttribute(before)
+        }
+      }
     }
   })
 
