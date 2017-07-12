@@ -136,10 +136,11 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
   test("example graph - all vertices: Option[Double] * 10 throws error") {
     val expr = "income * 10.0"
     val g = ExampleGraph()().result
-    intercept[javax.script.ScriptException] { // Script throws a compilation error.
-      DeriveScala.derive[Double](
+    intercept[java.lang.AssertionError] { // Script throws a compilation error.
+      DeriveScala.deriveAndInferReturnType(
         expr,
         Seq("income" -> g.income.entity),
+        g.vertexSet,
         onlyOnDefinedAttrs = false)
     }
   }
@@ -157,10 +158,11 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
   test("example graph - all vertices: two attributes wrong type") {
     val expr = "income + age" // Fails because income and age are Option[Double]-s.
     val g = ExampleGraph()().result
-    intercept[javax.script.ScriptException] {
-      DeriveScala.derive[Double](
+    intercept[java.lang.AssertionError] {
+      DeriveScala.deriveAndInferReturnType(
         expr,
         Seq("income" -> g.income.entity, "age" -> g.age.entity),
+        g.vertexSet,
         onlyOnDefinedAttrs = false)
     }
   }
