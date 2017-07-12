@@ -112,14 +112,14 @@ object DeriveScala extends OpFromJson {
     j.as[List[JsValue]].map { p => (p \ "name").as[String] -> SerializableType.fromJson(p \ "type").typeTag }
   }
 
-  def checkInputTypes(paramTypes: Map[String, TypeTag[_]], e: String): Unit = {
+  def checkInputTypes(paramTypes: Map[String, TypeTag[_]], expr: String): Unit = {
     paramTypes.foreach {
       case (k, t) =>
         try {
           SerializableType(t)
         } catch {
           case e: AssertionError => throw new AssertionError(
-            s"Unsupported type $t for input parameter $k in expression $e.")
+            s"Unsupported type $t for input parameter $k in expression $expr.", e)
         }
     }
   }

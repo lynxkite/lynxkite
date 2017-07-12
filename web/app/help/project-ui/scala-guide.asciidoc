@@ -49,8 +49,7 @@ both input (the type of vertex and edge attributes the script can use) and resul
 * String
 * Int
 * Long
-* Vector[String]
-* Vector[Double]
+* Any Vector combined from the above types
 
 Values of other types need to be manually converted before returning from the Scala script.
 For input types, you can use for example one of the following operations to convert:
