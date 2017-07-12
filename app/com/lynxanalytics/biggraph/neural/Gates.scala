@@ -105,12 +105,12 @@ object Gates {
       bm.add(v, gradient.mapValues(s * _))
   }
   case class VectorVectorMultiplication(v1: VectorGate, v2: VectorGate) extends VectorGate {
-    def forward(fm: ForwardMemory) = fm.activation(v1, v2).mapValues { case (v1, v2) => v1 :* v2 }
+    def forward(fm: ForwardMemory) = fm.activation(v1, v2).mapValues { case (v1, v2) => v1 *:* v2 }
     def backward(bm: BackwardMemory, gradient: VectorGraph) = {
       val v1d = bm(v1)
       val v2d = bm(v2)
-      bm.add(v1, gradient.map { case (id, g) => id -> (v2d(id) :* g) })
-      bm.add(v2, gradient.map { case (id, g) => id -> (v1d(id) :* g) })
+      bm.add(v1, gradient.map { case (id, g) => id -> (v2d(id) *:* g) })
+      bm.add(v2, gradient.map { case (id, g) => id -> (v1d(id) *:* g) })
     }
   }
   case class VectorVectorAddition(v1: VectorGate, v2: VectorGate) extends VectorGate {
@@ -177,14 +177,14 @@ object Gates {
     def forward(fm: ForwardMemory) = fm.activation(v).mapValues(sigmoid(_))
     def backward(bm: BackwardMemory, gradient: VectorGraph) = {
       val d = bm(this)
-      bm.add(v, gradient.map { case (id, g) => id -> (d(id) :* (1.0 - d(id)) :* g) })
+      bm.add(v, gradient.map { case (id, g) => id -> (d(id) *:* (1.0 - d(id)) *:* g) })
     }
   }
   case class Tanh(v: VectorGate) extends VectorGate {
     def forward(fm: ForwardMemory) = fm.activation(v).mapValues(tanh(_))
     def backward(bm: BackwardMemory, gradient: VectorGraph) = {
       val d = bm(this)
-      bm.add(v, gradient.map { case (id, g) => id -> ((1.0 - (d(id) :* d(id))) :* g) })
+      bm.add(v, gradient.map { case (id, g) => id -> ((1.0 - (d(id) *:* d(id))) *:* g) })
     }
   }
 }
@@ -252,8 +252,8 @@ case class Network private (
     }
     val newAdagradMemory = sums.map {
       case (name, s) => adagradMemory.get(name) match {
-        case Some(mem) => name -> (mem + (s :* s))
-        case None => name -> (s :* s)
+        case Some(mem) => name -> (mem + s *:* s)
+        case None => name -> (s *:* s)
       }
     }
     val newTrainables = trainables.toMap.map {
