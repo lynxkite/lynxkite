@@ -178,34 +178,27 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       case (before, after) if before.slice(0, 7) == "change_" => (before.slice(7, before.size), after)
     }
     val deletedAttrs = attrParams.toMap.filter {
-      case (before, after) =>
-        {
-          after.isEmpty
-        }
+      case (before, after) => after.isEmpty
     }
     val renamedAttrs = attrParams.toMap.filter {
-      case (before, after) => {
-        after.nonEmpty && before != after
-      }
+      case (before, after) => after.nonEmpty && before != after
     }
     override def summary = {
       val renameStrings = renamedAttrs.map {
         case (before, after) =>
           s"${before} to ${after}"
       }
-      println(deletedAttrs)
       val deleteStrings = deletedAttrs.keys
-      val renameSummary: String = {
+      val renameSummary = {
         if (renameStrings.nonEmpty) {
-          s"Rename " + renameStrings.mkString(", ") + ". "
+          s"Rename ${renameStrings.mkString(", ")}. "
         } else ""
       }
-      val deleteSummary: String = {
+      val deleteSummary = {
         if (deleteStrings.nonEmpty) {
           s"Delete " + deleteStrings.mkString(", ")
         } else ""
       }
-      println(deleteStrings)
       renameSummary + deleteSummary
     }
     def apply() = {
