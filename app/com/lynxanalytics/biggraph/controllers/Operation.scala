@@ -88,7 +88,7 @@ abstract class OperationParameterMeta {
   val defaultValue: String
   val options: List[FEOption]
   val multipleChoice: Boolean
-  val payload: Option[json.JsValue] = None
+  def payload: Option[json.JsValue] = None
 
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
@@ -476,19 +476,27 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
     json.Json.prettyPrint(realParamsJson)
   }
 
-  def getLastSettings = {
-    val lastSettingsString = params("last_settings")
-    json.Json.parse(lastSettingsString).as[Map[String, String]]
+  private def getLastSettings = {
+    val lastSettingsString = params.toMap.getOrElse("last_settings", "")
+    if (lastSettingsString == "")
+      Map()
+    else
+      json.Json.parse(lastSettingsString).as[Map[String, String]]
+  }
+
+  protected def staleSettings(): Boolean = {
+    val lastSettings = getLastSettings
+    // For not needing to provide the last_hash parameter for testing we are also allowing it to
+    // be empty. This doesn't cause problem in practice since if the last_hash parameter is empty
+    // then there was no import yet so the assert on the "imported_table" fails before we get to
+    // the assert on the staleSettings.
+    lastSettings != Map() && lastSettings != currentSettings
   }
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     params.validate()
     assert(params("imported_table").nonEmpty, "You have to import the data first.")
-    val lastSettings = getLastSettings
-    // For not needing to provide the last_hash parameter for testing we are also allowing it to
-    // be empty. This doesn't cause problem in practice since if the last_hash parameter is empty
-    // then there was no import yet so the previous assert comes to play.
-    assert(lastSettings == "" || lastSettings == currentSettings, "Import settings are stale. " +
+    assert(!staleSettings, "Import settings are stale. " +
       "Please click on the import button to apply the changed settings.")
     makeOutput(tableFromGuid(params("imported_table")))
   }

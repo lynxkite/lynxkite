@@ -36,6 +36,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import CSV")(new ImportOperation(_) {
     params ++= List(
+      new StaleSettingsCheck("last_settings", "Stale settings", staleSettings()),
       FileParam("filename", "File"),
       Param("columns", "Columns in file"),
       Param("delimiter", "Delimiter", defaultValue = ","),
@@ -47,8 +48,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
-      ImportedTableParam("imported_table", "Table GUID"),
-      StaleSettingsCheck("last_settings", "Stale settings"))
+      ImportedTableParam("imported_table", "Table GUID"))
 
     override def summary = {
       val fn = simpleFileName(params("filename"))
@@ -95,8 +95,9 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("limit", "Limit"),
       Param("connection_properties", "Connection properties"),
       Code("sql", "SQL", language = "sql"),
-      ImportedTableParam("imported_table", "Table GUID"),
-      StaleSettingsCheck("last_settings", "Stale settings"))
+      ImportedTableParam("imported_table", "Table GUID"))
+    params +=
+      new StaleSettingsCheck("last_settings", "Stale settings", staleSettings)
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       JDBCUtil.read(
         context,
@@ -121,8 +122,9 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
-      ImportedTableParam("imported_table", "Table GUID"),
-      StaleSettingsCheck("last_settings", "Stale settings"))
+      ImportedTableParam("imported_table", "Table GUID"))
+    params +=
+      new StaleSettingsCheck("last_settings", "Stale settings", staleSettings)
 
     override def summary = {
       val fn = simpleFileName(params("filename"))
@@ -147,8 +149,9 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
-      ImportedTableParam("imported_table", "Table GUID"),
-      StaleSettingsCheck("last_settings", "Stale settings"))
+      ImportedTableParam("imported_table", "Table GUID"))
+    params +=
+      new StaleSettingsCheck("last_settings", "Stale settings", staleSettings)
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       assert(
         DataManager.hiveConfigured,

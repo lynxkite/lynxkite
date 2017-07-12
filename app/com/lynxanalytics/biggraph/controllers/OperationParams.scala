@@ -191,13 +191,17 @@ object OperationParams {
     val options = List()
   }
 
-  case class StaleSettingsCheck(
-      id: String,
-      title: String,
-      defaultValue: String = "") extends OperationParameterMeta {
+  class StaleSettingsCheck(
+      val id: String,
+      val title: String,
+      stale: => Boolean) extends OperationParameterMeta {
     val kind = "staleness-check"
     val options = List()
+    val defaultValue = ""
     val multipleChoice = false
+    override def payload = Some(
+      json.Json.obj("stale" -> stale)
+    )
     def validate(value: String): Unit = {}
   }
 }
