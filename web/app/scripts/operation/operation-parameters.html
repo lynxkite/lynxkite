@@ -114,7 +114,8 @@
     <staleness-check
             ng-if="param.kind === 'staleness-check' && pflags[param.id] !== true"
             box="box"
-            hash="output[param.id]">
+            param="param"
+            on-blur="onBlur()">
     </staleness-check>
   </div>
 </div>

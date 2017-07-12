@@ -5,21 +5,15 @@ angular.module('biggraph').directive('stalenessCheck', function(util) {
   return {
     scope: {
       box: '=',
-      hash: '=',
+      param: '=',
+      onBlur: '&',
     },
     templateUrl: 'scripts/operation/staleness-check.html',
     link: function(scope) {
-      util.deepWatch(scope, 'box.instance', function(instance) {
-//        var staleSettings = util.get('ajax/staleImportParameters',
-//          {
-//            box: instance,
-//            parameterHash: instance.parameters['last_settings'],
-//          });
-//        staleSettings.then(function (response) {
-//          scope.stale = response.stale;
-//          scope.message = (response.stale) ? 'Stale settings!' : 'Settings are up to date';
-//        });
-        console.log('parameters', instance.parameters);
+      util.deepWatch(scope, 'box.instance', function() {
+        scope.onBlur();
+        scope.message = scope.param.payload.stale ? 'Stale settings!' : 'Settings are up to date';
+        console.log('param', scope.param.payload.stale);
       });
     }
   };
