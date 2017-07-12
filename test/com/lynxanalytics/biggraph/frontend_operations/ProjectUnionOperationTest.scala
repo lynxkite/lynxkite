@@ -6,7 +6,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
   test("Project union") {
     val a = box("Create example graph")
     val b = box("Create example graph")
-      .box("Rename vertex attribute", Map("before" -> "age", "after" -> "newage"))
+      .box("Rename vertex attributes", Map("change_age" -> "newage"))
       .box("Rename edge attribute", Map("before" -> "comment", "after" -> "newcomment"))
     val union = box("Project union", Map("id_attr" -> "new_id"), Seq(a, b))
     val project = union.project
@@ -50,7 +50,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
   test("Project union - useful error message (#1611)") {
     val a = box("Create example graph")
     val b = box("Create example graph")
-      .box("Rename vertex attribute", Map("before" -> "age", "after" -> "newage"))
+      .box("Rename vertex attributes", Map("change_age" -> "newage"))
       .box("Add constant vertex attribute",
         Map("name" -> "age", "value" -> "dummy", "type" -> "String"))
     val ex = intercept[java.lang.AssertionError] {

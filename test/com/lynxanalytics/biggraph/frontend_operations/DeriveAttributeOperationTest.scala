@@ -156,7 +156,7 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
 
   test("Derive vertex attribute with substring conflict (#1676)") {
     val project = box("Create example graph")
-      .box("Rename vertex attribute", Map("before" -> "income", "after" -> "nam"))
+      .box("Rename vertex attributes", Map("change_income" -> "nam"))
       .box("Derive vertex attribute",
         Map("type" -> "Double", "output" -> "output", "expr" -> "100 + age + 10 * name.length"))
       .project

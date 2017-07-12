@@ -45,9 +45,8 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
         "prefix" -> "",
         "direction" -> "outgoing edges",
         "aggregate_src_link" -> "most_common"))
-      .box("Rename vertex attribute", Map(
-        "before" -> "src_link_most_common",
-        "after" -> "link"))
+      .box("Rename vertex attributes", Map(
+        "change_src_link_most_common" -> "link"))
     val golden = box("Use table as graph", Map(
       "src" -> "src",
       "dst" -> "dst"), Seq(importCSV("fingerprint-edges-1.csv")))

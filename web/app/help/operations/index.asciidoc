@@ -251,7 +251,7 @@ include::expose-internal-vertex-id.asciidoc[]
 
 include::fill-edge-attribute-with-constant-default-value.asciidoc[]
 
-include::fill-vertex-attribute-with-constant-default-value.asciidoc[]
+include::fill-vertex-attributes-with-constant-default-values.asciidoc[]
 
 include::filter-by-attributes.asciidoc[]
 
@@ -331,7 +331,7 @@ include::rename-scalar.asciidoc[]
 
 include::rename-segmentation.asciidoc[]
 
-include::rename-vertex-attribute.asciidoc[]
+include::rename-vertex-attributes.asciidoc[]
 
 include::replace-edges-with-triadic-closure.asciidoc[]
 

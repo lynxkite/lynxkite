@@ -1,0 +1,4 @@
+### Rename vertex attributes
+
+Changes the name of vertex attributes. If the new name is empty
+then the attribute will be discarded.
