@@ -192,7 +192,7 @@ object OperationParams {
   }
 }
 
-case class Dummy(id: String, title: String) extends OperationParameterMeta {
+case class DummyParam(id: String, title: String) extends OperationParameterMeta {
   val kind = "dummy"
   val options = List()
   val multipleChoice = false
