@@ -1,54 +1,55 @@
 {
-    "boxes" : [ {
-      "id" : "anchor",
-      "operationId" : "Anchor",
-      "parameters" : {
-        "description" : "Represents the data as a continous line.\n\nParameters:\n  X: The name of the attribute displayed on the X coordinate.\n  Y: The name of the attribute displayed on the Y coordinate.\n     Needs to be a number type.",
-        "parameters" : "[{\"kind\":\"column\",\"id\":\"X\",\"defaultValue\":\"\",\"$$hashKey\":\"object:21015\"},{\"kind\":\"column\",\"id\":\"Y\",\"defaultValue\":\"\",\"$$hashKey\":\"object:21109\"}]"
-      },
-      "x" : 0.0,
-      "y" : 0.0,
-      "inputs" : { },
-      "parametricParameters" : { }
-    }, {
-      "id" : "Input_1",
-      "operationId" : "Input",
-      "parameters" : {
-        "name" : "table"
-      },
-      "x" : 650.0,
-      "y" : 100.0,
-      "inputs" : { },
-      "parametricParameters" : { }
-    }, {
-      "id" : "Custom-plot_1",
-      "operationId" : "Custom plot",
-      "parameters" : { },
-      "x" : 650.0,
-      "y" : 200.0,
-      "inputs" : {
-        "table" : {
-          "boxId" : "Input_1",
-          "id" : "input"
-        }
-      },
-      "parametricParameters" : {
-        "plot_code" : "Vegas(\"Line chart\")\n.withData(table)\n.encodeX(\"$X\", Nominal)\n.encodeY(\"$Y\", Quantitative)\n.mark(Line)\n"
+  "boxes" : [ {
+    "id" : "anchor",
+    "operationId" : "Anchor",
+    "parameters" : {
+      "description" : "# Line chart\n\nRepresents the data as a continous line.\n\nParameters:\n- **X**: The name of the attribute displayed on the X coordinate.\n- **Y**: The name of the attribute displayed on the Y coordinate.\n     Needs to be a number type.",
+      "parameters" : "[{\"kind\":\"column\",\"id\":\"X\",\"defaultValue\":\"\",\"$$hashKey\":\"object:21015\"},{\"kind\":\"column\",\"id\":\"Y\",\"defaultValue\":\"\",\"$$hashKey\":\"object:21109\"}]",
+      "icon" : ""
+    },
+    "x" : 33.0,
+    "y" : 0.0,
+    "inputs" : { },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Input_1",
+    "operationId" : "Input",
+    "parameters" : {
+      "name" : "table"
+    },
+    "x" : 650.0,
+    "y" : 100.0,
+    "inputs" : { },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Custom-plot_1",
+    "operationId" : "Custom plot",
+    "parameters" : { },
+    "x" : 650.0,
+    "y" : 200.0,
+    "inputs" : {
+      "table" : {
+        "boxId" : "Input_1",
+        "id" : "input"
       }
-    }, {
-      "id" : "Output_1",
-      "operationId" : "Output",
-      "parameters" : {
-        "name" : "plot"
-      },
-      "x" : 650.0,
-      "y" : 300.0,
-      "inputs" : {
-        "output" : {
-          "boxId" : "Custom-plot_1",
-          "id" : "plot"
-        }
-      },
-      "parametricParameters" : { }
-    } ]
+    },
+    "parametricParameters" : {
+      "plot_code" : "Vegas(\"Line chart\")\n.withData(table)\n.encodeX(\"$X\", Nominal)\n.encodeY(\"$Y\", Quantitative)\n.mark(Line)\n"
+    }
+  }, {
+    "id" : "Output_1",
+    "operationId" : "Output",
+    "parameters" : {
+      "name" : "plot"
+    },
+    "x" : 650.0,
+    "y" : 300.0,
+    "inputs" : {
+      "output" : {
+        "boxId" : "Custom-plot_1",
+        "id" : "plot"
+      }
+    },
+    "parametricParameters" : { }
+  } ]
 }
