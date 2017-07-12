@@ -118,7 +118,7 @@ class KiteListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener
   def numExecutors: Option[Int] = synchronized {
     LoggedEnvironment.envOrNone("SPARK_MASTER").get match {
       case s if s.startsWith("local") => None
-      case _ => Some(sc.getExecutorStorageStatus.size - 1)
+      case _ => Some(sc.statusTracker.getExecutorInfos.size - 1)
     }
   }
 
