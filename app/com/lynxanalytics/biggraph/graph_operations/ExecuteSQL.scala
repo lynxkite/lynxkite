@@ -32,8 +32,8 @@ object ExecuteSQL extends OpFromJson {
     import spark.sql.catalyst.catalog._
     import spark.sql.catalyst.expressions._
     import spark.sql.catalyst.plans.logical._
-    val parser = new spark.sql.execution.SparkSqlParser(
-      spark.sql.SQLHelperHelper.newSQLConf)
+    val conf = new spark.sql.internal.SQLConf()
+    val parser = new spark.sql.execution.SparkSqlParser(conf)
     // Parse the query.
     val planParsed = parser.parsePlan(sqlQuery)
     // Resolve the table references with our tables.
@@ -44,11 +44,9 @@ object ExecuteSQL extends OpFromJson {
           f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()
         }
         val rel = LocalRelation(attributes)
-        val name = u.alias.getOrElse(u.tableIdentifier.table)
-        SubqueryAlias(name, rel, None)
+        SubqueryAlias(u.tableIdentifier.table, rel)
     }
     // Do the rest of the analysis.
-    val conf = new SimpleCatalystConf(caseSensitiveAnalysis = false)
     val analyzer = new Analyzer(
       new SessionCatalog(new InMemoryCatalog, FunctionRegistry.builtin, conf), conf)
     analyzer.execute(planResolved)
