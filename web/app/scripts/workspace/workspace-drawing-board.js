@@ -577,7 +577,7 @@ angular.module('biggraph')
             return util.post('/ajax/importBox', box);
           }).then(function(response) {
             box.parameters.imported_table = response.guid;
-            box.parameters.last_hash = response.parameterHash;
+            box.parameters.last_settings = response.parameterSettings;
             scope.workspace.saveWorkspace();
           }).catch(function() {
             scope.workspace.deleteBoxes([box.id]);
