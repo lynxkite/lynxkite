@@ -36,7 +36,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import CSV")(new ImportOperation(_) {
     params ++= List(
-      new StaleSettingsCheck("last_settings", "The settings are ...", staleSettings()),
+      new StaleSettingsCheck("last_settings", "The settings are ...", areSettingsStale()),
       FileParam("filename", "File"),
       Param("columns", "Columns in file"),
       Param("delimiter", "Delimiter", defaultValue = ","),
@@ -86,7 +86,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import JDBC")(new ImportOperation(_) {
     params ++= List(
-      new StaleSettingsCheck("last_settings", "The settings are ...", staleSettings()),
+      new StaleSettingsCheck("last_settings", "The settings are ...", areSettingsStale()),
       Param("jdbc_url", "JDBC URL"),
       Param("jdbc_table", "JDBC table"),
       Param("key_column", "Key column"),
@@ -118,7 +118,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   abstract class FileWithSchema(context: Context) extends ImportOperation(context) {
     val format: String
     params ++= List(
-      new StaleSettingsCheck("last_settings", "The settings are ...", staleSettings()),
+      new StaleSettingsCheck("last_settings", "The settings are ...", areSettingsStale()),
       FileParam("filename", "File"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
@@ -144,7 +144,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import from Hive")(new ImportOperation(_) {
     params ++= List(
-      new StaleSettingsCheck("last_settings", "The settings are ...", staleSettings),
+      new StaleSettingsCheck("last_settings", "The settings are ...", areSettingsStale),
       FileParam("hive_table", "Hive table"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
