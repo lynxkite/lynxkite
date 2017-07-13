@@ -5,9 +5,10 @@
 }
 
 #workspace-header {
-  min-height: 50px;
-  padding: 5px 10px;
   border-bottom: 1px solid lightgray;
+}
+#workspace-header .flat-toolbar-title {
+  padding: 5px 10px;
 }
 
 span#workspace-name {
@@ -15,11 +16,11 @@ span#workspace-name {
 }
 
 #workspace-drawing-board {
-  user-select: none;
   height: 100%;
   width: 100%;
   float: left;
 }
+
 .operation-selector {
   margin-left: -35px;
   float: left;
@@ -28,7 +29,12 @@ span#workspace-name {
   overflow: auto; /* Allow scrolling category list, if necessary. */
 }
 
+workspace-drawing-board > display-error > * {
+  padding: 20px;
+}
+
 #workspace-drawing-board > svg {
+  user-select: none;
   display: block;
   width: 100%;
   height: 100%;
@@ -174,6 +180,7 @@ div.popup-head {
   height: 35px;
   line-height: 35px;
   cursor: default;
+  user-select: none;
 }
 
 .popup-type-plug div.popup-head {

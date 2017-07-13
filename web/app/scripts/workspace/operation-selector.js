@@ -2,7 +2,7 @@
 // Operation can be dragged to the workspace drawing board to create boxes.
 'use strict';
 
-angular.module('biggraph').directive('operationSelector', function($timeout) {
+angular.module('biggraph').directive('operationSelector', function($timeout, $rootScope) {
   return {
     restrict: 'E',
     scope: {
@@ -21,23 +21,24 @@ angular.module('biggraph').directive('operationSelector', function($timeout) {
         if (!scope.boxCatalog || !scope.boxCatalog.$resolved) {
           return;
         }
-        scope.boxes = scope.boxCatalog.boxes;
+        scope.categories = scope.boxCatalog.categories;
+        scope.boxes = [];
 
-        var categories = {};
-        for (var i = 0; i < scope.boxes.length; ++i) {
-          var box = scope.boxes[i];
-          if (!(box.categoryId in categories)) {
-            var cat = {
-              title: box.categoryId,
-              ops: [],
-              color: 'blue',
-            };
-            scope.categories.push(cat);
-            categories[box.categoryId] = cat;
-          }
-          categories[box.categoryId].ops.push(box);
+        var categoryMap = {};
+        var i;
+        for (i = 0; i < scope.categories.length; ++i) {
+          var cat = scope.categories[i];
+          cat.ops = [];
+          categoryMap[cat.title] = cat;
         }
-
+        for (i = 0; i < scope.boxCatalog.boxes.length; ++i) {
+          var box = scope.boxCatalog.boxes[i];
+          if (!(box.categoryId in categoryMap)) {
+            continue;
+          }
+          categoryMap[box.categoryId].ops.push(box);
+          scope.boxes.push(box);
+        }
       });
 
       scope.filterKey = function(e) {
@@ -61,6 +62,10 @@ angular.module('biggraph').directive('operationSelector', function($timeout) {
         } else if (e.keyCode === 27) { // ESCAPE
           scope.searching = undefined;
           scope.op = undefined;
+        } else if (e.keyCode === 13) { //ENTER
+          var selectedBox = scope.filterAndSort(
+            scope.boxes, scope.opFilter)[scope.searchSelection];
+          $rootScope.$broadcast('create box under mouse', selectedBox.operationId);
         }
       };
 

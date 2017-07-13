@@ -6,7 +6,9 @@
 angular.module('biggraph')
   .directive(
   'workspaceDrawingBoard',
-  function(environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope, $q, util) {
+  function(
+    environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope, $q,
+    $location, util) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -56,13 +58,14 @@ angular.module('biggraph')
         var mouseX = 0;
         var mouseY = 0;
         var svgElement = element.find('svg');
+        var svgOffset = svgElement.offset();
         function zoomToScale(z) { return Math.exp(z * 0.001); }
         function addLogicalMousePosition(event) {
           // event.offsetX/Y are distorted when the mouse is
           // over a popup window (even if over an invisible
           // overflow part of it), hence we compute our own:
-          event.workspaceX = event.pageX - svgElement.offset().left;
-          event.workspaceY = event.pageY - svgElement.offset().top;
+          event.workspaceX = event.pageX - svgOffset.left;
+          event.workspaceY = event.pageY - svgOffset.top;
           // Add location according to pan and zoom:
           var logical = scope.pageToLogical({ x: event.pageX, y: event.pageY });
           event.logicalX = logical.x;
@@ -72,19 +75,17 @@ angular.module('biggraph')
 
         scope.pageToLogical = function(pos) {
           var z = zoomToScale(workspaceZoom);
-          var offset = svgElement.offset();
           return {
-            x: (pos.x - offset.left - workspaceX) / z,
-            y: (pos.y - offset.top - workspaceY) / z,
+            x: (pos.x - svgOffset.left - workspaceX) / z,
+            y: (pos.y - svgOffset.top - workspaceY) / z,
           };
         };
 
         scope.logicalToPage = function(pos) {
           var z = zoomToScale(workspaceZoom);
-          var offset = svgElement.offset();
           return {
-            x: pos.x * z + workspaceX + offset.left,
-            y: pos.y * z + workspaceY + offset.top,
+            x: pos.x * z + workspaceX + svgOffset.left,
+            y: pos.y * z + workspaceY + svgOffset.top,
           };
         };
 
@@ -98,12 +99,9 @@ angular.module('biggraph')
           }
         }
 
-        scope.callbackWrapper = function(callback) {
-          return function(event) {scope.$apply(function () { callback(event); });};
-        };
-
         scope.onMouseMove = function(event) {
           event.preventDefault();
+          svgOffset = svgElement.offset(); // Just in case the layout changed.
           addLogicalMousePosition(event);
           if (workspaceDrag) {
             workspaceX += event.workspaceX - mouseX;
@@ -132,9 +130,6 @@ angular.module('biggraph')
             } else if (scope.movedPopup) {
               scope.movedPopup.onMouseMove(event);
             }
-          }
-          for (var j = 0; j < scope.popups.length; ++j) {
-            scope.popups[j].updateSize();
           }
         };
 
@@ -174,8 +169,7 @@ angular.module('biggraph')
           if (!leftClick) {
             return;
           }
-          window.addEventListener('mousemove', scope.wrappedOnMouseMove);
-          window.addEventListener('mouseup', scope.wrappedOnMouseUp);
+          addDragListeners();
 
           addLogicalMousePosition(event);
           scope.selection.remove();
@@ -188,7 +182,7 @@ angular.module('biggraph')
             scope.movedBoxes[0].onMouseDown(event);
           } else if (event.ctrlKey) {
             var selectedIndex = scope.selectedBoxIds.indexOf(box.instance.id);
-            scope.selectedBoxIds.splice(selectedIndex, selectedIndex);
+            scope.selectedBoxIds.splice(selectedIndex, 1);
             scope.movedBoxes[0].onMouseDown(event);
           } else {
             scope.movedBoxes = this.selectedBoxes();
@@ -205,7 +199,7 @@ angular.module('biggraph')
           var eventX = event.pageX - w / 2;
           var eventY = event.pageY - h / 2;
           var minX = 0;
-          var minY = svgElement.offset().top;  // Do not overlap toolbar.
+          var minY = svgOffset.top;  // Do not overlap toolbar.
           var maxX = svgElement.width() - w - 35;  // Do not overlap toolbox.
           var maxY = svgElement.height() - h;
 
@@ -361,8 +355,7 @@ angular.module('biggraph')
           element[0].style.cursor = '';
           workspaceDrag = false;
           selectBoxes = false;
-          window.removeEventListener('mousemove', scope.wrappedOnMouseMove);
-          window.removeEventListener('mouseup', scope.wrappedOnMouseUp);
+          removeDragListeners();
           scope.selection.remove();
           if (scope.movedBoxes) {
             scope.workspace.saveIfBoxesMoved();
@@ -372,13 +365,27 @@ angular.module('biggraph')
           scope.movedPopup = undefined;
         };
 
-        scope.wrappedOnMouseMove = scope.callbackWrapper(scope.onMouseMove);
+        function wrapCallback(callback) {
+          return function(event) { scope.$apply(function () { callback(event); }); };
+        }
+        var wrappedOnMouseMove = wrapCallback(scope.onMouseMove);
+        var wrappedOnMouseUp = wrapCallback(scope.onMouseUp);
 
-        scope.wrappedOnMouseUp = scope.callbackWrapper(scope.onMouseUp);
+        scope.startMovingPopup = function(popup) {
+          scope.movedPopup = popup;
+          addDragListeners();
+        };
+        function addDragListeners() {
+          window.addEventListener('mousemove', wrappedOnMouseMove);
+          window.addEventListener('mouseup', wrappedOnMouseUp);
+        }
+        function removeDragListeners() {
+          window.removeEventListener('mousemove', wrappedOnMouseMove);
+          window.removeEventListener('mouseup', wrappedOnMouseUp);
+        }
 
         scope.onMouseDown = function(event) {
-          window.addEventListener('mousemove', scope.wrappedOnMouseMove);
-          window.addEventListener('mouseup', scope.wrappedOnMouseUp);
+          addDragListeners();
           var dragMode = actualDragMode(event);
           event.preventDefault();
           addLogicalMousePosition(event);
@@ -639,6 +646,22 @@ angular.module('biggraph')
           if (path === undefined) { return undefined; }
           return path.split('/').slice(-1)[0];
         };
+
+        scope.closeWorkspace = function() {
+          $location.url('/');
+        };
+
+        scope.$on('create box under mouse', createBoxUnderMouse);
+        function createBoxUnderMouse(event, operationId) {
+          addAndSelectBox(operationId, {logicalX: mouseX - 50, logicalY: mouseY - 50});
+        }
+
+        // This is separate from scope.addOperation because we don't have a mouse event here,
+        // which makes using the onMouseDown function pretty difficult.
+        function addAndSelectBox(id, location, options) {
+          var box = scope.workspace.addBox(id, location, options);
+          scope.selectedBoxIds = [box.id];
+        }
       }
     };
   });

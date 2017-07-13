@@ -4,7 +4,7 @@ Projects make it possible to work with graphs. For a detailed description see th
 <<project-user-interface>> section.
 
 Click +++
-<span class="project-list" style="display: inline-block;">
+<span class="entry-list" style="display: inline-block;">
   <span class="entry" style="display: block;">
     <span style="display: block;" class="icon glyphicon glyphicon-plus"></span>
     <span class="lead">New project</span>

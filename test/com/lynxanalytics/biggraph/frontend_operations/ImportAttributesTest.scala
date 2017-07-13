@@ -6,9 +6,9 @@ import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_operations
 
 class ImportAttributesTest extends OperationsTestBase {
-  test("Import vertex attributes") {
+  test("Use table as vertex attributes") {
     val project = box("Create example graph")
-      .box("Import vertex attributes", Map(
+      .box("Use table as vertex attributes", Map(
         "id_attr" -> "name",
         "id_column" -> "name",
         "prefix" -> "imported"), Seq(importCSV("import-vertex-attributes.csv")))
@@ -18,9 +18,9 @@ class ImportAttributesTest extends OperationsTestBase {
         3 -> "the color of television, tuned to a dead channel"))
   }
 
-  test("Import edge attributes") {
+  test("Use table as edge attributes") {
     val project = box("Create example graph")
-      .box("Import edge attributes", Map(
+      .box("Use table as edge attributes", Map(
         "id_attr" -> "comment",
         "id_column" -> "comment",
         "prefix" -> "imported"), Seq(importCSV("import-edge-attributes.csv")))

@@ -5,21 +5,19 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class FingerprintingBasedOnAttributesOperationTest extends OperationsTestBase {
   test("Fingerprinting based on attributes") {
     val vertices = importCSV("fingerprint-100-vertices.csv")
-      .box("Import vertices")
+      .box("Use table as vertices")
     val edges = importCSV("fingerprint-100-edges.csv")
-    val fingerprinted = box("Import edges for existing vertices", Map(
+    val fingerprinted = box("Use table as edges", Map(
       "attr" -> "id",
       "src" -> "src",
       "dst" -> "dst"), Seq(vertices, edges))
-      // Turn empty strings into "undefined".
+      // Turn empty strings into None.
       .box("Derive vertex attribute", Map(
         "output" -> "email",
-        "type" -> "String",
-        "expr" -> "email ? email : undefined"))
+        "expr" -> "if (email.nonEmpty) Some(email) else None"))
       .box("Derive vertex attribute", Map(
         "output" -> "name",
-        "type" -> "String",
-        "expr" -> "name ? name : undefined"))
+        "expr" -> "if (name.nonEmpty) Some(name) else None"))
       .box("Fingerprint based on attributes", Map(
         "leftName" -> "email",
         "rightName" -> "name",

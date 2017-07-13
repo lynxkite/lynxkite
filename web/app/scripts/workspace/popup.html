@@ -1,6 +1,5 @@
 <div class="popup popup-type-{{ popupModel.content.type }}"
     ng-mousedown="popupModel.bringToFront(); $event.stopPropagation();"
-    ng-mousemove="popupModel.onMouseMove($event);"
     id="{{ popupModel.id | id }}"
     ng-style="{
         'left': popupModel.x + 'px',
@@ -14,9 +13,7 @@
         ng-click="popupModel.close(); event.stopPropagation();"
         ng-mousedown="$event.stopPropagation()"
         id="close-popup"
-        tooltip="Close&nbsp;popup"
-        tooltip-append-to-body="true"
-        tooltip-placement="bottom">
+        drop-tooltip="Close&nbsp;popup">
     </div>
   </div>
   <div class="popup-content"

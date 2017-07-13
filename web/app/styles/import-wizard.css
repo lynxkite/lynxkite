@@ -1,5 +1,0 @@
-import-wizard #import-spinner {
-  animation: spinner 4s infinite linear;
-  font-size: 30px;
-  opacity: 0.8;
-}

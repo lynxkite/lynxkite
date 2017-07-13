@@ -1,7 +1,7 @@
 ### Derive scalar
 
 Generates a new scalar (<<graph attribute, graph-attributes>>) based on existing scalars.
-The value expression can be an arbitrary JavaScript expression, and it can refer to existing
+The value expression can be an arbitrary Scala expression, and it can refer to existing
 scalars as if they were local variables.
 
 For example you could derive a new scalar as `something_sum / something_count` to get the average
@@ -11,9 +11,6 @@ of something.
 [[output]] Save as::
 The new scalar will be created under this name.
 
-[[type]] Result type::
-The type (`Double` or `String`) of the created scalar.
-
 [[expr]] Value::
-The JavaScript expression. You can enter multiple lines in the editor.
+The Scala expression. You can enter multiple lines in the editor.
 ====

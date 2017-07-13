@@ -77,8 +77,8 @@ case class FEOperationSpec(
   id: String,
   parameters: Map[String, String])
 
-case class OperationCategory(
-  title: String, icon: String, color: String, ops: List[FEOperationMeta])
+case class FEOperationCategory(
+  title: String, icon: String, color: String, browseByDir: Boolean)
 
 abstract class OperationParameterMeta {
   val id: String
@@ -106,16 +106,24 @@ trait Operation {
 }
 object Operation {
   case class Category(
-      title: String,
-      color: String, // A color class from web/app/styles/operation-toolbox.css.
-      visible: Boolean = true,
-      icon: String = "", // Glyphicon name, or empty for first letter of title.
-      sortKey: String = null, // Categories are ordered by this. The title is used by default.
-      deprecated: Boolean = false) extends Ordered[Category] {
-    private val safeSortKey = Option(sortKey).getOrElse(title)
-    def compare(that: Category) = this.safeSortKey compare that.safeSortKey
-    def toFE(ops: List[FEOperationMeta]): OperationCategory =
-      OperationCategory(title, icon, color, ops)
+    title: String,
+    color: String, // A color class from web/app/styles/operation-toolbox.scss.
+    visible: Boolean = true,
+    icon: String = "", // Icon class name, or empty for first letter of title.
+    index: Int, // Categories are listed in this order on the UI.
+    // Browse operations in this category using the dir structure. If true, the UI will display the
+    // operations in a tree structure using the '/' character in the operation id as path separator.
+    browseByDir: Boolean = false)
+      extends Ordered[Category] {
+    def compare(that: Category) = this.index compare that.index
+    def toFE: FEOperationCategory =
+      FEOperationCategory(title, addClass(icon), color, browseByDir)
+    // Add main CSS class. E.g. "fa-superpowers" => "fa fa-superpowers".
+    private def addClass(cls: String): String = {
+      val parts = cls.split("-", 2)
+      if (parts.length == 1) cls
+      else s"${parts.head} $cls"
+    }
   }
 
   type Factory = Context => Operation
@@ -193,6 +201,11 @@ import Operation.Implicits._
 trait OperationRegistry {
   // The registry maps operation IDs to their constructors.
   val operations = mutable.Map[String, (BoxMetadata, Operation.Factory)]()
+  val categories = mutable.Map[String, Operation.Category]()
+
+  // Default icon for operations.
+  val defaultIcon = "black_medium_square"
+
   def registerOp(
     id: String,
     icon: String,
@@ -200,8 +213,11 @@ trait OperationRegistry {
     inputs: List[String],
     outputs: List[String],
     factory: Operation.Factory): Unit = {
-    // TODO: Register category somewhere.
     assert(!operations.contains(id), s"$id is already registered.")
+    assert(
+      !categories.contains(category.title) || categories(category.title) == category,
+      s"Re-registered category with different value: ${category.title}")
+    categories(category.title) = category
     operations(id) = BoxMetadata(
       category.title,
       s"/images/icons/$icon.png",
@@ -219,6 +235,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   // The registry maps operation IDs to their constructors.
   // "Atomic" operations (as opposed to custom boxes) are simply in a Map.
   protected val atomicOperations: Map[String, (BoxMetadata, Operation.Factory)]
+  protected val atomicCategories: Map[String, Operation.Category]
 
   private def getBox(id: String): (BoxMetadata, Operation.Factory) = {
     if (atomicOperations.contains(id)) {
@@ -245,6 +262,20 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
       .map(_.path.toString).toSet
     val atomicBoxes = atomicOperations.keySet
     (atomicBoxes ++ customBoxes).toSeq.sorted
+  }
+
+  private val customBoxesCategory = Operation.Category(
+    Workspace.customBoxesCategory,
+    "yellow",
+    icon = "fa-superpowers",
+    index = 999,
+    browseByDir = true)
+
+  def getCategories(user: serving.User): List[FEOperationCategory] = {
+    (atomicCategories.values.toList :+ customBoxesCategory)
+      .filter(_.visible)
+      .sorted
+      .map(_.toFE)
   }
 
   def opForBox(

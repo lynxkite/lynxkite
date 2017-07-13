@@ -6,14 +6,17 @@ package com.lynxanalytics.biggraph.graph_api
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.util.UUID
+
 import play.api.libs.json
 import play.api.libs.json.Json
+
 import scala.collection.immutable
 import scala.collection.mutable
 import scala.reflect.runtime.universe.TypeTag
-
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers.CheckpointRepository
+import com.lynxanalytics.biggraph.controllers.DirectoryEntry
+import com.lynxanalytics.biggraph.controllers.Workspace
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 
 class MetaGraphManager(val repositoryPath: String) {
@@ -185,13 +188,18 @@ class MetaGraphManager(val repositoryPath: String) {
     }
   }
 
-  private def saveOperation(j: json.JsValue): Unit = {
+  private def saveOperation(j: json.JsValue): String = saveJson("operations", j)
+
+  private def saveCheckpoint(j: json.JsValue): String = saveJson("checkpoints", j)
+
+  private def saveJson(folder: String, j: json.JsValue): String = {
     val time = Timestamp.toString
-    val repo = new File(repositoryPath, "operations")
+    val repo = new File(repositoryPath, folder)
     val dumpFile = new File(repo, s"dump-$time")
     val finalFile = new File(repo, s"save-$time")
     FileUtils.writeStringToFile(dumpFile, Json.prettyPrint(j), "utf8")
     dumpFile.renameTo(finalFile)
+    time
   }
 
   private def initializeFromDisk(): Unit = synchronized {
@@ -267,4 +275,46 @@ object MetaGraphManager {
 
   def getCheckpointRepo(repositoryPath: String): CheckpointRepository =
     new CheckpointRepository(repositoryPath + "/checkpoints")
+}
+
+object BuiltIns {
+  def createBuiltIns(implicit manager: MetaGraphManager) = {
+    if (!builtInsDirectoryExists) {
+      log.info("Loading built-ins from disk...")
+      val builtInsLocalDir = getBuiltInsLocalDirectory()
+      import com.lynxanalytics.biggraph.controllers.WorkspaceJsonFormatters._
+      for ((file, j) <- loadBuiltIns(builtInsLocalDir)) {
+        try {
+          val ws = j.as[Workspace]
+          val entry = DirectoryEntry.fromName("built-ins/" + file).asNewWorkspaceFrame()
+          val cp = ws.checkpoint()
+          entry.setCheckpoint(cp)
+        } catch {
+          case e: Throwable => throw new Exception(s"failed to load $file.", e)
+        }
+      }
+      log.info("Built-ins loaded from disk.")
+    }
+  }
+
+  private def getBuiltInsLocalDirectory(): String = {
+    val stageDir = scala.util.Properties.envOrNone("KITE_STAGE_DIR")
+    // In the backend-tests because there we don't have the KITE_STAGE_DIR environment variable
+    // set.
+    stageDir.getOrElse("stage")
+  }
+
+  private def loadBuiltIns(repo: String): Iterable[(String, json.JsValue)] = {
+    val opdir = new File(repo, "built-ins")
+    if (opdir.exists) {
+      val files = opdir.listFiles.sortBy(_.getName)
+      files.map { f =>
+        f.getName() -> Json.parse(FileUtils.readFileToString(f, "utf8"))
+      }
+    } else Iterable()
+  }
+
+  private def builtInsDirectoryExists(implicit manager: MetaGraphManager): Boolean = {
+    DirectoryEntry.fromName("built-ins").exists
+  }
 }

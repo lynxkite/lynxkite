@@ -99,20 +99,24 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   largeKeysRDD: Option[RDD[(K, T)]],
   smallKeysRDD: SortedRDD[K, T],
   larges: Seq[(K, Long)],
-  // A partitioner good enough for the sourceRDD. All RDDs used in the lookup methods
-  // must have the same partitioner.
+  // A partitioner good enough for the smallKeysRDD. All RDDs used in the lookup methods
+  // must have the same partitioner. This is an Option only for compatibility reasons.
   override val partitioner: Option[spark.Partitioner]) extends RDD[(K, T)](
   smallKeysRDD.sparkContext,
-  Seq(new spark.OneToOneDependency(smallKeysRDD)) ++
-    largeKeysRDD.map(rdd => Seq[spark.Dependency[(K, T)]](new spark.OneToOneDependency(rdd))).getOrElse(Seq())) {
+  Seq(new spark.OneToOneDependency(smallKeysRDD)) ++ largeKeysRDD.map(new spark.OneToOneDependency(_))) {
+
+  // True iff this HybridRDD has keys with large cardinalities.
+  val isSkewed = !largeKeysRDD.isEmpty
+
+  assert(smallKeysRDD.partitioner.orNull eq partitioner.get)
+  if (isSkewed) {
+    assert(largeKeysRDD.get.partitioner.orNull eq partitioner.get)
+  }
 
   override def getPartitions: Array[Partition] = smallKeysRDD.partitions
   override def compute(split: Partition, context: TaskContext) =
     smallKeysRDD.iterator(split, context) ++
       largeKeysRDD.map(_.iterator(split, context)).getOrElse(Iterator())
-
-  // True iff this HybridRDD has keys with large cardinalities.
-  val isSkewed = !largeKeysRDD.isEmpty
 
   val (largeKeysSet, largeKeysCoverage) = if (!isSkewed) {
     (Set.empty[K], 0L)

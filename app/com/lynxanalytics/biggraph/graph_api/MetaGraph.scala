@@ -133,9 +133,11 @@ case class EdgeBundle(source: MetaGraphOperationInstance,
   val isLocal = srcVertexSet == dstVertexSet
 }
 
+// A MetaGraph entity created from the src->dst mappings of an EdgeBundle.
 case class HybridBundle(source: MetaGraphOperationInstance,
                         name: Symbol,
-                        edgeBundle: EdgeBundle)
+                        // Always uses the src->dst mapping, the edge IDs are ignored.
+                        srcToDstEdgeBundle: EdgeBundle)
     extends MetaGraphEntity {
   assert(name != null, s"name is null for $this")
 }
@@ -270,7 +272,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     private lazy val es = esF
     override def set(target: MetaDataSet, hb: HybridBundle): MetaDataSet = {
       val withEs =
-        templatesByName(es).asInstanceOf[EdgeBundleTemplate].set(target, hb.edgeBundle)
+        templatesByName(es).asInstanceOf[EdgeBundleTemplate].set(target, hb.srcToDstEdgeBundle)
       super.set(withEs, hb)
     }
     def data(implicit dataSet: DataSet) = dataSet.hybridBundles(name)
@@ -289,10 +291,12 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
-  class AnyVertexAttributeTemplate(vsF: => Symbol, nameOpt: Option[Symbol])
+  class RuntimeTypedVATemplate(vsF: => Symbol, nameOpt: Option[Symbol], tt: TypeTag[_])
       extends ET[Attribute[_]](nameOpt) {
     lazy val vs = vsF
     override def set(target: MetaDataSet, va: Attribute[_]): MetaDataSet = {
+      assert(va.typeTag.tpe =:= tt.tpe,
+        s"Attribute type ${va.typeTag.tpe} does not match required type ${tt.tpe}.")
       val withVs =
         templatesByName(vs).asInstanceOf[VertexSetTemplate].set(target, va.vertexSet)
       super.set(withVs, va)
@@ -321,6 +325,16 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def value(implicit dataSet: DataSet) = data.value
   }
 
+  class RuntimeTypedScalarTemplate(nameOpt: Option[Symbol], tt: TypeTag[_]) extends ET[Scalar[_]](nameOpt) {
+    override def set(target: MetaDataSet, sc: Scalar[_]): MetaDataSet = {
+      assert(sc.typeTag.tpe =:= tt.tpe,
+        s"Scalar type ${sc.typeTag.tpe} does not match required type ${tt.tpe}.")
+      super.set(target, sc)
+    }
+    def data(implicit dataSet: DataSet) = dataSet.scalars(name)
+    def value(implicit dataSet: DataSet) = data.value
+  }
+
   class TableTemplate(nameOpt: Option[Symbol]) extends ET[Table](nameOpt) {
     def data(implicit dataSet: DataSet) = dataSet.tables(name).asInstanceOf[TableData]
     def df(implicit dataSet: DataSet) = data.df
@@ -343,12 +357,14 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
       es.name, Option(name))
   def vertexAttribute[T](vs: VertexSetTemplate, name: Symbol = null) =
     new VertexAttributeTemplate[T](vs.name, Option(name))
-  def anyVertexAttribute(vs: VertexSetTemplate, name: Symbol = null) =
-    new AnyVertexAttributeTemplate(vs.name, Option(name))
+  def runtimeTypedVertexAttribute(vs: VertexSetTemplate, name: Symbol = null, tt: TypeTag[_]) =
+    new RuntimeTypedVATemplate(vs.name, Option(name), tt)
   def edgeAttribute[T](es: EdgeBundleTemplate, name: Symbol = null) =
     new EdgeAttributeTemplate[T](es.name, Option(name))
   def scalar[T] = new ScalarTemplate[T](None)
   def scalar[T](name: Symbol) = new ScalarTemplate[T](Some(name))
+  def runtimeTypedScalar(name: Symbol, tt: TypeTag[_]) =
+    new RuntimeTypedScalarTemplate(Some(name), tt)
   def table = new TableTemplate(None)
   def table(name: Symbol) = new TableTemplate(Some(name))
   def graph = {
@@ -364,9 +380,12 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
       attributes = templates.collect {
         case a: VertexAttributeTemplate[_] => a.name
         case a: EdgeAttributeTemplate[_] => a.name
-        case a: AnyVertexAttributeTemplate => a.name
+        case a: RuntimeTypedVATemplate => a.name
       }.toSet,
-      scalars = templates.collect { case sc: ScalarTemplate[_] => sc.name }.toSet,
+      scalars = templates.collect {
+        case sc: ScalarTemplate[_] => sc.name
+        case sc: RuntimeTypedScalarTemplate => sc.name
+      }.toSet,
       tables = templates.collect { case tb: TableTemplate => tb.name }.toSet)
 
   private val templates = mutable.Buffer[ET[_ <: MetaGraphEntity]]()
@@ -586,7 +605,7 @@ sealed trait EntityData {
   def gUID = entity.gUID
 }
 sealed trait EntityRDDData[T] extends EntityData {
-  val rdd: spark.rdd.RDD[(ID, T)] // Either a SortedRDD or a HybridRDD.
+  val rdd: spark.rdd.RDD[(ID, T)]
   val count: Option[Long]
   def cached: EntityRDDData[T]
   rdd.setName("RDD[%d]/%d of %s GUID[%s]".format(rdd.id, rdd.partitions.size, entity, gUID))

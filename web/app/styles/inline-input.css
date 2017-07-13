@@ -21,7 +21,7 @@
 }
 
 .inline-input button {
-  background: white;
+  background: transparent;
   color: gray;
   border: 0;
   padding: 2px;

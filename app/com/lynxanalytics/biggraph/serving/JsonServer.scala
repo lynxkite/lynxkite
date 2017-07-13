@@ -11,8 +11,9 @@ import scala.concurrent.Future
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_api.BuiltIns
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
-import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
+import com.lynxanalytics.biggraph.graph_util.{ Timestamp, LoggedEnvironment, KiteInstanceInfo, HadoopFile }
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving
@@ -152,7 +153,8 @@ case class GlobalSettings(
   title: String,
   tagline: String,
   workspaceParameterKinds: List[String],
-  version: String)
+  version: String,
+  defaultUIStatus: UIStatus)
 
 object AssertLicenseNotExpired {
   def apply() = {
@@ -268,27 +270,25 @@ object FrontendJson {
   implicit val rCreateDirectoryRequest = json.Json.reads[CreateDirectoryRequest]
   implicit val rDiscardEntryRequest = json.Json.reads[DiscardEntryRequest]
   implicit val rRenameEntryRequest = json.Json.reads[RenameEntryRequest]
-  implicit val rProjectRequest = json.Json.reads[ProjectRequest]
   implicit val rProjectOperationRequest = json.Json.reads[ProjectOperationRequest]
   implicit val rSubProjectOperation = json.Json.reads[SubProjectOperation]
   implicit val rProjectAttributeFilter = json.Json.reads[ProjectAttributeFilter]
   implicit val rForkEntryRequest = json.Json.reads[ForkEntryRequest]
   implicit val rACLSettingsRequest = json.Json.reads[ACLSettingsRequest]
-  implicit val rProjectListRequest = json.Json.reads[ProjectListRequest]
-  implicit val rProjectSearchRequest = json.Json.reads[ProjectSearchRequest]
-  implicit val wOperationCategory = json.Json.writes[OperationCategory]
+  implicit val rEntryListRequest = json.Json.reads[EntryListRequest]
+  implicit val rEntrySearchRequest = json.Json.reads[EntrySearchRequest]
+  implicit val wFEOperationCategory = json.Json.writes[FEOperationCategory]
   implicit val wFEAttribute = json.Json.writes[FEAttribute]
   implicit val wFESegmentation = json.Json.writes[FESegmentation]
   implicit val wFEProject = json.Json.writes[FEProject]
-  implicit val wFEProjectListElement = json.Json.writes[FEProjectListElement]
-  implicit val wProjectList = json.Json.writes[ProjectList]
+  implicit val wFEEntryListElement = json.Json.writes[FEEntryListElement]
+  implicit val wEntryList = json.Json.writes[EntryList]
   implicit val wFEOperationSpec = json.Json.writes[FEOperationSpec]
   implicit val wSubProjectOperation = json.Json.writes[SubProjectOperation]
 
   import WorkspaceJsonFormatters._
   implicit val fBoxOutputInfo = json.Json.format[BoxOutputInfo]
   implicit val fProgress = json.Json.format[Progress]
-  implicit val rWorkspaceName = json.Json.reads[WorkspaceName]
   implicit val rWorkspaceReference = json.Json.reads[WorkspaceReference]
   implicit val wGetWorkspaceResponse = json.Json.writes[GetWorkspaceResponse]
   implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
@@ -335,6 +335,7 @@ object FrontendJson {
   implicit val wFEUserList = json.Json.writes[FEUserList]
 
   implicit val wAuthMethod = json.Json.writes[AuthMethod]
+  import UIStatusSerialization.fUIStatus
   implicit val wGlobalSettings = json.Json.writes[GlobalSettings]
 
   implicit val wFileDescriptor = json.Json.writes[FileDescriptor]
@@ -412,8 +413,8 @@ object ProductionJsonServer extends JsonServer {
   def renameEntry = jsonPost(bigGraphController.renameEntry)
   def discardAll = jsonPost(bigGraphController.discardAll)
   def projectOp = jsonPost(bigGraphController.projectOp)
-  def projectList = jsonGet(bigGraphController.projectList)
-  def projectSearch = jsonGet(bigGraphController.projectSearch)
+  def entryList = jsonGet(bigGraphController.entryList)
+  def entrySearch = jsonGet(bigGraphController.entrySearch)
   def forkEntry = jsonPost(bigGraphController.forkEntry)
   def changeACLSettings = jsonPost(bigGraphController.changeACLSettings)
 
@@ -516,7 +517,8 @@ object ProductionJsonServer extends JsonServer {
       title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
       tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"),
       workspaceParameterKinds = CustomOperationParameterMeta.validKinds,
-      version = version)
+      version = version,
+      defaultUIStatus = UIStatus.default)
   }
 
   val copyController = new CopyController(BigGraphProductionEnvironment, sparkClusterController)
@@ -525,4 +527,6 @@ object ProductionJsonServer extends JsonServer {
   def backup = jsonGet(copyController.backup)
 
   Ammonite.maybeStart()
+  implicit val metaManager = workspaceController.metaManager
+  BuiltIns.createBuiltIns(metaManager)
 }

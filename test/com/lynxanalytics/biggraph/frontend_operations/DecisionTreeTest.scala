@@ -6,7 +6,8 @@ class DecisionTreeTest extends OperationsTestBase {
   test("train and predict with a decision tree classification model") {
     val project = box("Create example graph")
       .box("Derive vertex attribute",
-        Map("type" -> "Double", "output" -> "label", "expr" -> "age > 30? 2.0 : age > 15 ? 1.0 : 0.0 "))
+        Map("output" -> "label",
+          "expr" -> "if (age > 30) 2.0 else if (age > 15) 1.0 else 0.0 "))
       .box("Train a decision tree classification model",
         Map("name" -> "model",
           "label" -> "label",
@@ -17,7 +18,7 @@ class DecisionTreeTest extends OperationsTestBase {
           "minInfoGain" -> "0",
           "minInstancesPerNode" -> "1",
           "seed" -> "1234567"))
-      .box("Classify vertices with a model",
+      .box("Classify with model",
         Map(
           "name" -> "classification",
           "model" -> """{
@@ -39,9 +40,10 @@ class DecisionTreeTest extends OperationsTestBase {
   test("train and predict with a decision tree regression model") {
     val project = box("Create example graph")
       .box("Derive vertex attribute",
-        Map("type" -> "Double", "output" -> "isJoe", "expr" -> "name == 'Isolated Joe'"))
+        Map("output" -> "isJoe", "expr" -> "if (name == \"Isolated Joe\") 1.0 else 0.0"))
       .box("Derive vertex attribute",
-        Map("type" -> "Double", "output" -> "gender01", "expr" -> "gender == 'Male' ? 0.0 : 1.0 "))
+        Map("output" -> "gender01",
+          "expr" -> "if (gender == \"Male\") 0.0 else 1.0 "))
       .box("Train a decision tree regression model",
         Map("name" -> "model",
           "label" -> "age",
@@ -51,7 +53,7 @@ class DecisionTreeTest extends OperationsTestBase {
           "minInfoGain" -> "0",
           "minInstancesPerNode" -> "1",
           "seed" -> "1234567"))
-      .box("Predict from model",
+      .box("Predict with model",
         Map(
           "name" -> "prediction",
           "model" -> """{

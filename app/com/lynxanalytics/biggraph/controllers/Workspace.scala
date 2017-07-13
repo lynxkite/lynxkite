@@ -37,7 +37,7 @@ case class Workspace(
     val inputs = boxes.filter(_.operationId == "Input").flatMap(b => b.parameters.get("name"))
     val outputs = boxes.filter(_.operationId == "Output").flatMap(b => b.parameters.get("name"))
     BoxMetadata(
-      categoryId = "Custom boxes",
+      categoryId = Workspace.customBoxesCategory,
       icon = icon,
       color = "natural",
       operationId = name,
@@ -106,6 +106,8 @@ object Workspace {
     if (boxes.find(_.id == "anchor").nonEmpty) new Workspace(boxes.toList)
     else new Workspace(Box("anchor", "Anchor", Map(), 0, 0, Map()) +: boxes.toList)
   }
+
+  val customBoxesCategory = "Custom boxes"
 }
 
 // Everything required for executing things in a workspace.
@@ -269,9 +271,7 @@ case class VisualizationState(
 object VisualizationState {
   def fromString(uiStatus: String, project: RootProjectEditor): VisualizationState = {
     import UIStatusSerialization.fTwoSidedUIStatus
-    val uiStatusJson =
-      if (uiStatus.isEmpty) TwoSidedUIStatus(left = None, right = None)
-      else json.Json.parse(uiStatus).as[TwoSidedUIStatus]
+    val uiStatusJson = json.Json.parse(uiStatus).as[TwoSidedUIStatus]
     VisualizationState(
       uiStatusJson,
       project)
@@ -374,7 +374,7 @@ case class BoxOutputState(
 }
 
 object WorkspaceJsonFormatters {
-  import com.lynxanalytics.biggraph.serving.FrontendJson.fFEStatus
+  implicit val fFEStatus = json.Json.format[FEStatus]
   implicit val fBoxOutput = json.Json.format[BoxOutput]
   implicit val fBoxOutputState = json.Json.format[BoxOutputState]
   implicit val fBox = json.Json.format[Box]

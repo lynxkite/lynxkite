@@ -1,8 +1,0 @@
-### Change project notes
-
-Modifies the project notes.
-
-====
-[[notes]] New contents::
-The update project notes.
-====

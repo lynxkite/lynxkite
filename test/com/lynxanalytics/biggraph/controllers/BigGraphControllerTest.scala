@@ -49,7 +49,9 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
   }
   */
 
-  def list(dir: String) = controller.projectList(user, ProjectListRequest(dir))
+  def list(dir: String) = controller.entryList(user, EntryListRequest(dir))
+  def search(basePath: String, query: String) =
+    controller.entrySearch(user, EntrySearchRequest(basePath, query, includeNotes = false))
 
   // TODO: Depends on #5860.
   /*
@@ -78,5 +80,35 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
     assert(list("foo").directories == Seq("foo/bar"))
     controller.discardEntry(user, DiscardEntryRequest(name = "foo"))
     assert(list("").directories.isEmpty)
+  }
+
+  val wc = new WorkspaceController(this)
+
+  test("list and search workspace") {
+    wc.createWorkspace(user, CreateWorkspaceRequest(name = "foo/bar"))
+    val bar = Seq(FEEntryListElement("foo/bar", "workspace"))
+    assert(list("").directories == Seq("foo"))
+    assert(list("foo").directories.isEmpty)
+    assert(list("foo").objects == bar)
+    assert(search("", "ba").objects == bar)
+    assert(search("foo", "ar").objects == bar)
+  }
+
+  test("list and search snapshot") {
+    wc.createWorkspace(user, CreateWorkspaceRequest(name = "foo/bar"))
+    val ws = Workspace.from(Box("eg", "Create example graph", Map(), 0, 0, Map()))
+    val stateId = wc.setWorkspace(user, SetWorkspaceRequest(WorkspaceReference("foo/bar"), ws))
+      .outputs(0).stateId
+    wc.createSnapshot(user, CreateSnapshotRequest("foo/snapshot", stateId))
+
+    assert(list("").directories == Seq("foo"))
+    assert(list("foo").directories.isEmpty)
+    // Snapshots return too much info in FEEntryListElement to assert all here.
+    assert(list("foo").objects.map { e => (e.name, e.objectType) } ==
+      Seq(("foo/bar", "workspace"), ("foo/snapshot", "snapshot")))
+    assert(search("", "snap").objects.map { e => (e.name, e.objectType) } ==
+      Seq(("foo/snapshot", "snapshot")))
+    assert(search("foo", "shot").objects.map { e => (e.name, e.objectType) } ==
+      Seq(("foo/snapshot", "snapshot")))
   }
 }
