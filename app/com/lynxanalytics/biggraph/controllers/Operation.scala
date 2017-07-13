@@ -93,6 +93,9 @@ abstract class OperationParameterMeta {
   def validate(value: String): Unit
   def toFE = FEOperationParameterMeta(
     id, title, kind, defaultValue, options, multipleChoice, payload)
+  // Returns false iff the a certain value for this parameter is the equivalent
+  // of an unset parameter value.
+  def isDefined(value: String): Boolean = true
 }
 
 // An Operation is the computation that a Box represents in a workspace.
@@ -103,6 +106,7 @@ trait Operation {
   def summary: String
   def getOutputs: Map[BoxOutput, BoxOutputState]
   def toFE: FEOperationMeta
+  def params: ParameterHolder
 }
 object Operation {
   case class Category(
@@ -290,7 +294,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 
 // Defines simple defaults for everything.
 abstract class SimpleOperation(protected val context: Operation.Context) extends Operation {
-  protected val params = new ParameterHolder(context)
+  val params = new ParameterHolder(context)
   protected val id = context.meta.operationId
   val title = id
   def summary = title
@@ -316,7 +320,7 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
   protected def help = // Add to notes for help link.
     "<help-popup href=\"" + Operation.htmlId(id) + "\"></help-popup>"
 
-  override protected val params = {
+  override val params = {
     val params = new ParameterHolder(context)
     // "apply_to_*" is used to pick the base project or segmentation to apply the operation to.
     // An "apply_to_*" parameter is added for each project input.
