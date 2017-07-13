@@ -2,7 +2,7 @@
 // Operation can be dragged to the workspace drawing board to create boxes.
 'use strict';
 
-angular.module('biggraph').directive('operationSelector', function($timeout) {
+angular.module('biggraph').directive('operationSelector', function($timeout, $rootScope) {
   return {
     restrict: 'E',
     scope: {
@@ -62,6 +62,10 @@ angular.module('biggraph').directive('operationSelector', function($timeout) {
         } else if (e.keyCode === 27) { // ESCAPE
           scope.searching = undefined;
           scope.op = undefined;
+        } else if (e.keyCode === 13) { //ENTER
+          var selectedBox = scope.filterAndSort(
+            scope.boxes, scope.opFilter)[scope.searchSelection];
+          $rootScope.$broadcast('create box under mouse', selectedBox.operationId);
         }
       };
 

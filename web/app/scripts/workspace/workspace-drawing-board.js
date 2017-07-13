@@ -169,8 +169,7 @@ angular.module('biggraph')
           if (!leftClick) {
             return;
           }
-          window.addEventListener('mousemove', scope.wrappedOnMouseMove);
-          window.addEventListener('mouseup', scope.wrappedOnMouseUp);
+          addDragListeners();
 
           addLogicalMousePosition(event);
           scope.selection.remove();
@@ -356,8 +355,7 @@ angular.module('biggraph')
           element[0].style.cursor = '';
           workspaceDrag = false;
           selectBoxes = false;
-          window.removeEventListener('mousemove', wrappedOnMouseMove);
-          window.removeEventListener('mouseup', wrappedOnMouseUp);
+          removeDragListeners();
           scope.selection.remove();
           if (scope.movedBoxes) {
             scope.workspace.saveIfBoxesMoved();
@@ -373,9 +371,21 @@ angular.module('biggraph')
         var wrappedOnMouseMove = wrapCallback(scope.onMouseMove);
         var wrappedOnMouseUp = wrapCallback(scope.onMouseUp);
 
-        scope.onMouseDown = function(event) {
+        scope.startMovingPopup = function(popup) {
+          scope.movedPopup = popup;
+          addDragListeners();
+        };
+        function addDragListeners() {
           window.addEventListener('mousemove', wrappedOnMouseMove);
           window.addEventListener('mouseup', wrappedOnMouseUp);
+        }
+        function removeDragListeners() {
+          window.removeEventListener('mousemove', wrappedOnMouseMove);
+          window.removeEventListener('mouseup', wrappedOnMouseUp);
+        }
+
+        scope.onMouseDown = function(event) {
+          addDragListeners();
           var dragMode = actualDragMode(event);
           event.preventDefault();
           addLogicalMousePosition(event);
@@ -641,6 +651,18 @@ angular.module('biggraph')
         scope.closeWorkspace = function() {
           $location.url('/');
         };
+
+        scope.$on('create box under mouse', createBoxUnderMouse);
+        function createBoxUnderMouse(event, operationId) {
+          addAndSelectBox(operationId, {logicalX: mouseX - 50, logicalY: mouseY - 50});
+        }
+
+        // This is separate from scope.addOperation because we don't have a mouse event here,
+        // which makes using the onMouseDown function pretty difficult.
+        function addAndSelectBox(id, location, options) {
+          var box = scope.workspace.addBox(id, location, options);
+          scope.selectedBoxIds = [box.id];
+        }
       }
     };
   });

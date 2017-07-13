@@ -12,10 +12,10 @@ import util.Random
 
 class NeuralNetworkTest extends FunSuite with TestGraphOp {
   def differenceSquareSum(a: Attribute[Double], b: Attribute[Double]): Double = {
-    val diff = DeriveJS.deriveFromAttributes[Double](
+    val diff = DeriveScala.deriveAndInferReturnType(
       "(a - b) * (a - b)",
       Seq("a" -> a, "b" -> b),
-      a.vertexSet)
+      a.vertexSet).runtimeSafeCast[Double]
     diff.rdd.values.sum
   }
 
@@ -44,7 +44,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   test("label, trivial") {
     // The label is a random attribute. It is visible to the vertex.
     val vs = CreateVertexSet(1000).result.vs
-    val a = vs.randomAttribute(0).deriveX[Double]("x < 0 ? -1 : 1")
+    val a = vs.randomAttribute(0).deriveX[Double]("if (x < 0) -1.0 else 1.0")
     val prediction = {
       val op = PredictViaNNOnGraphV1Simple(
         featureCount = 0, networkSize = 2, learningRate = 0.5, radius = 0,
@@ -59,8 +59,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
   test("feature, trivial") {
     // The label and one of the features are the same random attribute.
     val vs = CreateVertexSet(1000).result.vs
-    val a = vs.randomAttribute(0).deriveX[Double]("x < 0 ? -1 : 1")
-    val b = vs.randomAttribute(1000).deriveX[Double]("x < 0 ? -1 : 1") // Red herring.
+    val a = vs.randomAttribute(0).deriveX[Double]("if (x < 0) -1.0 else 1.0")
+    val b = vs.randomAttribute(1000).deriveX[Double]("if (x < 0) -1.0 else 1.0") // Red herring.
     val prediction = {
       val op = PredictViaNNOnGraphV1Simple(
         featureCount = 2, networkSize = 4, learningRate = 0.5, radius = 1,
@@ -76,8 +76,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     // The label and one of the features are the same random attribute.
     // Propagates through 3 full layers.
     val vs = CreateVertexSet(1000).result.vs
-    val a = vs.randomAttribute(0).deriveX[Double]("x < 0 ? -1 : 1")
-    val b = vs.randomAttribute(1000).deriveX[Double]("x < 0 ? -1 : 1") // Red herring.
+    val a = vs.randomAttribute(0).deriveX[Double]("if (x < 0) -1.0 else 1.0")
+    val b = vs.randomAttribute(1000).deriveX[Double]("if (x < 0) -1.0 else 1.0") // Red herring.
     val prediction = {
       val op = PredictViaNNOnGraphV1Simple(
         featureCount = 2, networkSize = 4, learningRate = 0.5, radius = 3,
@@ -93,7 +93,8 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val vs = CreateVertexSet(1000).result.vs
     val a = vs.randomAttribute(100)
     val b = vs.randomAttribute(200)
-    val c = DeriveJS.deriveFromAttributes[Double]("a - b", Seq("a" -> a, "b" -> b), vs)
+    val c = DeriveScala.deriveAndInferReturnType("a - b", Seq("a" -> a, "b" -> b), vs)
+      .runtimeSafeCast[Double]
     val prediction = {
       val op = PredictViaNNOnGraphV1Simple(
         featureCount = 2, networkSize = 10, learningRate = 0.2, radius = 0,
@@ -110,7 +111,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       getClass.getResource("/graph_operations/NeuralNetworkTest/lattice").toString)
     val es = g.edges.addReversed
     val sideNum = g.attr[String]("side").deriveX[Double](
-      "x === '' ? undefined : x === 'left' ? -1.0 : 1.0")
+      "if (x == \"\") None else if (x == \"left\") Some(-1.0) else Some(1.0)")
     val prediction = {
       val op = PredictViaNNOnGraphV1Simple(
         featureCount = 0, networkSize = 4, learningRate = 0.1, radius = 3,
@@ -118,10 +119,11 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
         gradientCheckOn = false, networkLayout = "MLP")
       op(op.edges, es)(op.label, sideNum).result.prediction
     }
-    val isWrong = DeriveJS.deriveFromAttributes[Double](
-      "var p = prediction < 0 ? 'left' : 'right'; p === truth ? 0.0 : 1.0;",
+    val isWrong = DeriveScala.deriveAndInferReturnType("""
+      val p = if (prediction < 0) "left" else "right"
+      if (p == truth) 0.0 else 1.0""",
       Seq("prediction" -> prediction, "truth" -> g.attrs("side_truth")),
-      g.vertices)
+      g.vertices).runtimeSafeCast[Double]
     assert(isWrong.rdd.values.sum == 0)
   }
 
@@ -131,7 +133,7 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       getClass.getResource("/graph_operations/NeuralNetworkTest/lattice").toString)
     val es = g.edges.addReversed
     val sideNum = g.attr[String]("side").deriveX[Double](
-      "x === '' ? undefined : x === 'left' ? -1.0 : 1.0")
+      "if (x == \"\") None else if (x == \"left\") Some(-1.0) else Some(1.0)")
     val prediction = {
       val op = PredictViaNNOnGraphV1(
         featureCount = 0, networkSize = 4, learningRate = 0.2, radius = 3,
@@ -141,10 +143,11 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
         networkLayout = "LSTM")
       op(op.edges, es)(op.label, sideNum).result.prediction
     }
-    val isWrong = DeriveJS.deriveFromAttributes[Double](
-      "var p = prediction < 0 ? 'left' : 'right'; p === truth ? 0.0 : 1.0;",
+    val isWrong = DeriveScala.deriveAndInferReturnType("""
+       val p = if (prediction < 0) "left" else "right"
+       if (p == truth) 0.0 else 1.0""",
       Seq("prediction" -> prediction, "truth" -> g.attrs("side_truth")),
-      g.vertices)
+      g.vertices).runtimeSafeCast[Double]
     assert(isWrong.rdd.values.sum == 0)
   }
 
@@ -165,10 +168,10 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val vertices = g.result.vs
     val truePartition = AddVertexAttribute.run(vertices, inWhichPartition(1000, 400))
     val a = vertices.randomAttribute(13)
-    val partition = DeriveJS.deriveFromAttributes[Double](
-      "a < -0.7 ? undefined : truePartition",
+    val partition = DeriveScala.deriveAndInferReturnType(
+      "if (a < -0.7) None else Some(truePartition)",
       Seq("a" -> a, "truePartition" -> truePartition),
-      vertices)
+      vertices).runtimeSafeCast[Double]
 
     val prediction = {
       val op = PredictViaNNOnGraphV1(
@@ -179,10 +182,11 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
         networkLayout = "MLP")
       op(op.edges, g.result.es)(op.label, partition).result.prediction
     }
-    val isWrong = DeriveJS.deriveFromAttributes[Double](
-      "var p = prediction < 0 ? -1 : 1; p === truth ? 0.0 : 1.0;",
+    val isWrong = DeriveScala.deriveAndInferReturnType("""
+       val p = if (prediction < 0) -1 else 1
+       if (p == truth) 0.0 else 1.0""",
       Seq("prediction" -> prediction, "truth" -> truePartition),
-      g.result.vs)
+      g.result.vs).runtimeSafeCast[Double]
     assert(isWrong.rdd.values.sum == 0)
   }
 
@@ -235,10 +239,10 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
     val trueParityAttrOnLabeledVertices = AddVertexAttribute.run(vertices, parityOfContainingPath)
     val trueParityAttrOnUnlabeledVertices = AddVertexAttribute.run(vertices, unlabeledParityOfContainingPath)
     val a = vertices.randomAttribute(8)
-    val parityAttr = DeriveJS.deriveFromAttributes[Double](
-      "a < -1 ? undefined : trueParityAttr",
+    val parityAttr = DeriveScala.deriveAndInferReturnType(
+      "if (a < -1) None else Some(trueParityAttr)",
       Seq("a" -> a, "trueParityAttr" -> trueParityAttrOnLabeledVertices),
-      vertices)
+      vertices).runtimeSafeCast[Double]
 
     val prediction = {
       val op = PredictViaNNOnGraphV1(
@@ -249,16 +253,18 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
         networkLayout = "MLP")
       op(op.edges, g.result.es)(op.label, parityAttr).result.prediction
     }
-    val isWrongOnLabeled = DeriveJS.deriveFromAttributes[Double](
-      "var p = prediction < 0 ? -1 : 1; p === truth ? 0.0 : 1.0;",
+    val isWrongOnLabeled = DeriveScala.deriveAndInferReturnType("""
+       val p = if (prediction < 0) -1 else 1
+       if (p == truth) 0.0 else 1.0""",
       Seq("prediction" -> prediction, "truth" -> trueParityAttrOnLabeledVertices),
-      g.result.vs)
+      g.result.vs).runtimeSafeCast[Double]
     assert(isWrongOnLabeled.rdd.values.sum == 0)
 
-    val isWrongOnUnlabeled = DeriveJS.deriveFromAttributes[Double](
-      "var p = prediction < 0 ? -1 : 1; p === truth ? 0.0 : 1.0;",
+    val isWrongOnUnlabeled = DeriveScala.deriveAndInferReturnType("""
+       val p = if (prediction < 0) -1 else 1
+       if (p == truth) 0.0 else 1.0""",
       Seq("prediction" -> prediction, "truth" -> trueParityAttrOnUnlabeledVertices),
-      g.result.vs)
+      g.result.vs).runtimeSafeCast[Double]
     assert(isWrongOnUnlabeled.rdd.values.sum == 0)
   }
 
@@ -275,13 +281,13 @@ class NeuralNetworkTest extends FunSuite with TestGraphOp {
       val realPr = op(op.es, es)(op.weights, weight).result.pagerank
       val maxPr = vs.const(realPr.rdd.values.max)
       val minPr = vs.const(realPr.rdd.values.min)
-      DeriveJS.deriveFromAttributes[Double](
-        "(realPr - minPr) / (maxPr - minPr) * 2 - 1",
-        Seq("realPr" -> realPr, "minPr" -> minPr, "maxPr" -> maxPr), vs)
+      DeriveScala.deriveAndInferReturnType(
+        "(realPr - minPr) / (maxPr - minPr) * 2.0 - 1.0",
+        Seq("realPr" -> realPr, "minPr" -> minPr, "maxPr" -> maxPr), vs).runtimeSafeCast[Double]
     }
     val a = vs.randomAttribute(6)
-    val pr = DeriveJS.deriveFromAttributes[Double](
-      "a < -1 ? undefined : truePr", Seq("a" -> a, "truePr" -> truePr), vs)
+    val pr = DeriveScala.deriveAndInferReturnType(
+      "if (a < -1) None else Some(truePr)", Seq("a" -> a, "truePr" -> truePr), vs).runtimeSafeCast[Double]
 
     val prediction = {
       val op = PredictViaNNOnGraphV1(

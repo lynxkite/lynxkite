@@ -9,6 +9,8 @@
   <inline-input
     id="save-as-snapshot-box"
     placeholder="Snapshot name..."
+    ng-init="snapshotName = getDefaultSnapshotName()"
+    input="snapshotName"
     onsubmit="createSnapshot(input, success, error)"
     open="snapshotNameOpen"></inline-input>
 
