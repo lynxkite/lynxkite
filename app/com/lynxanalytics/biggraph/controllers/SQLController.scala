@@ -85,9 +85,7 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
           val protoTable = rootViewer.getSingleProtoTable(tablePath.mkString("|"))
           (name, protoTable)
       }
-      val minimizedProtoTables = ProtoTable.minimize(sql, protoTables)
-      val tables = minimizedProtoTables.mapValues(protoTable => protoTable.toTable)
-      val result = ExecuteSQL.run(sql, tables)
+      val result = ExecuteSQL.run(sql, protoTables)
       import Scripting._
       result.df
     }
