@@ -10,12 +10,6 @@
         'operation-parameter-input': true,
       }"
       id="{{param.id}}">
-    <i class="fa fa-dollar parametric-switch"
-       drop-tooltip="Parametric: {{ pflags[param.id] ? 'yes' : 'no' }}"
-       drop-tooltip-position="top center"
-       ng-class="{ active: pflags[param.id] === true }"
-       ng-click="pflags[param.id] = !pflags[param.id]">
-    </i>
     <div
       ui-ace="{
         mode: 'plain_text',
@@ -117,5 +111,11 @@
             param="param"
             on-blur="onBlur()">
     </staleness-check>
+    <i class="fa fa-dollar parametric-switch"
+       drop-tooltip="Parametric: {{ pflags[param.id] ? 'yes' : 'no' }}"
+       drop-tooltip-position="top center"
+       ng-class="{ active: pflags[param.id] === true }"
+       ng-click="pflags[param.id] = !pflags[param.id]">
+    </i>
   </div>
 </div>

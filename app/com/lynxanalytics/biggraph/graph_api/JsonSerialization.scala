@@ -100,6 +100,10 @@ object SerializableType {
       case "Double" => double
       case "Long" => long
       case "Int" => int
+      case "Vector[String]" => stringVector
+      case "Vector[Double]" => doubleVector
+      case "Vector[Vector[String]]" => stringVectorVector
+      case "Vector[Vector[Double]]" => doubleVectorVector
     }
   }
 
@@ -108,15 +112,34 @@ object SerializableType {
   val long = new SerializableType[Long]("Long")
   val int = new SerializableType[Int]("Int")
 
+  // Every serializable type defines an ordering here, but we never use it for vectors.
+  class MockVectorOrdering[T] extends Ordering[Vector[T]] with Serializable {
+    def compare(x: Vector[T], y: Vector[T]): Int = ???
+  }
+
+  implicit val oSV = new MockVectorOrdering[String]
+  val stringVector = new SerializableType[Vector[String]]("Vector[String]")
+  implicit val oSVV = new MockVectorOrdering[Vector[String]]
+  val stringVectorVector = new SerializableType[Vector[Vector[String]]]("Vector[Vector[String]]")
+  implicit val oDV = new MockVectorOrdering[Double]
+  val doubleVector = new SerializableType[Vector[Double]]("Vector[Double]")
+  implicit val oDVV = new MockVectorOrdering[Vector[Double]]
+  val doubleVectorVector = new SerializableType[Vector[Vector[Double]]]("Vector[Vector[Double]]")
+
   def apply[T: TypeTag]: SerializableType[T] = {
-    val t = typeOf[T]
-    val st =
-      if (t =:= typeOf[String]) string
-      else if (t =:= typeOf[Double]) double
-      else if (t =:= typeOf[Long]) long
-      else if (t =:= typeOf[Int]) int
-      else assert(false, s"Unsupported type: $t")
-    st.asInstanceOf[SerializableType[T]]
+    apply(typeOf[T]).asInstanceOf[SerializableType[T]]
+  }
+
+  def apply(t: Type): SerializableType[_] = {
+    if (t =:= typeOf[String]) string
+    else if (t =:= typeOf[Double]) double
+    else if (t =:= typeOf[Long]) long
+    else if (t =:= typeOf[Int]) int
+    else if (t =:= typeOf[Vector[String]]) stringVector
+    else if (t =:= typeOf[Vector[Double]]) doubleVector
+    else if (t =:= typeOf[Vector[Vector[String]]]) stringVectorVector
+    else if (t =:= typeOf[Vector[Vector[Double]]]) doubleVectorVector
+    else throw new AssertionError(s"Unsupported type: $t")
   }
 
   object Implicits {
@@ -129,6 +152,6 @@ object SerializableType {
 class SerializableType[T] private (typename: String)(implicit val classTag: ClassTag[T],
                                                      val format: play.api.libs.json.Format[T],
                                                      val ordering: Ordering[T],
-                                                     val typeTag: TypeTag[T]) extends ToJson {
+                                                     val typeTag: TypeTag[T]) extends ToJson with Serializable {
   override def toJson = Json.obj("typename" -> typename)
 }
