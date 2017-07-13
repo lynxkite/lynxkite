@@ -38,13 +38,24 @@ case class BoxCatalogResponse(boxes: List[BoxMetadata], categories: List[FEOpera
 case class CreateSnapshotRequest(name: String, id: String)
 case class GetExportResultRequest(stateId: String)
 case class GetExportResultResponse(parameters: Map[String, String], result: FEScalar)
-case class GetInstrumentedStateRequest(
-  workspace: WorkspaceReference,
-  inputStateId: String,
+
+// An instrument is like a box. But we do not want to place it and save it in the workspace.
+// It always has 1 input and 1 output, so the connections do not need to be expressed either.
+case class Instrument(
   operationId: String,
   parameters: Map[String, String],
   parametricParameters: Map[String, String])
-case class GetInstrumentedStateResponse(stateId: String, kind: String, error: String)
+case class InstrumentState(
+  stateId: String,
+  kind: String,
+  error: String)
+case class GetInstrumentedStateRequest(
+  workspace: WorkspaceReference,
+  inputStateId: String, // State at the start of the instrument chain.
+  instruments: List[Instrument]) // Instrument chain.
+case class GetInstrumentedStateResponse(
+  metas: List[FEOperationMeta], // Metadata for each instrument.
+  states: List[InstrumentState]) // Initial state followed by the output state of each instrument.
 
 class WorkspaceController(env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -277,21 +288,52 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     ctx.getOperation(request.box)
   }
 
+  // "Safe" because if an instrument fails to execute it only returns the results up to there.
+  @annotation.tailrec
+  private def safeInstrumentStatesAndMetas(
+    ctx: WorkspaceExecutionContext,
+    instruments: List[Instrument],
+    states: List[BoxOutputState],
+    opMetas: List[FEOperationMeta]): (List[BoxOutputState], List[FEOperationMeta]) = {
+    val next = if (instruments.isEmpty) {
+      None
+    } else try {
+      val instr = instruments.head
+      val state = states.last
+      val meta = ops.getBoxMetadata(instr.operationId)
+      assert(meta.inputs.size == 1, s"${instr.operationId} has ${meta.inputs.size} inputs.")
+      assert(meta.outputs.size == 1, s"${instr.operationId} has ${meta.outputs.size} outputs.")
+      val box = Box(
+        "", instr.operationId, instr.parameters, 0, 0, Map(meta.inputs.head -> null),
+        instr.parametricParameters)
+      val op = box.getOperation(ctx, Map(meta.inputs.head -> state))
+      val newState = op.getOutputs(box.output(meta.outputs.head))
+      Some((newState, op.toFE))
+    } catch {
+      case t: Throwable =>
+        log.error(s"Could not execute instrument ${instruments.head}.", t)
+        None
+    }
+    next match {
+      case Some((state, meta)) =>
+        safeInstrumentStatesAndMetas(ctx, instruments.tail, states :+ state, opMetas :+ meta)
+      case None => (states, opMetas)
+    }
+  }
+
   def getInstrumentedState(
     user: serving.User, request: GetInstrumentedStateRequest): GetInstrumentedStateResponse = {
-    val meta = ops.getBoxMetadata(request.operationId)
-    assert(meta.inputs.size == 1, s"${request.operationId} has ${meta.inputs.size} inputs.")
-    assert(meta.outputs.size == 1, s"${request.operationId} has ${meta.outputs.size} outputs.")
-    val state = getOutput(user, request.inputStateId)
     val ctx = ResolvedWorkspaceReference(user, request.workspace).context
-    val box = Box(
-      "", request.operationId, request.parameters, 0, 0,
-      Map(meta.inputs.head -> null), request.parametricParameters)
-    val output = box.execute(ctx, Map(meta.inputs.head -> state))(box.output(meta.outputs.head))
-    val newStateId = Timestamp.toString
-    calculatedStates.synchronized {
-      calculatedStates(newStateId) = output
+    val inputState = getOutput(user, request.inputStateId)
+    var (states, opMetas) = safeInstrumentStatesAndMetas(
+      ctx, request.instruments, List(inputState), List[FEOperationMeta]())
+    val instrumentStates = calculatedStates.synchronized {
+      states.map { state =>
+        val id = Timestamp.toString
+        calculatedStates(id) = state
+        InstrumentState(id, state.kind, state.success.disabledReason)
+      }
     }
-    GetInstrumentedStateResponse(newStateId, output.kind, output.success.disabledReason)
+    GetInstrumentedStateResponse(opMetas, instrumentStates)
   }
 }

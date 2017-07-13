@@ -3,7 +3,7 @@
 // Viewer of a state at an output of a box.
 
 angular.module('biggraph')
-  .directive('stateView', function(util, $q) {
+  .directive('stateView', function(util) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/state-view.html',
@@ -14,50 +14,44 @@ angular.module('biggraph')
       },
       link: function(scope) {
         scope.instruments = [];
-        scope.$watch('plug.stateId', function() {
-          console.log('statid change');
-          scope.instruments[0] = {
-            stateId: scope.plug.stateId,
-            kind: scope.plug.kind,
-            error: scope.plug.error,
-            promise: $q.resolve(scope.plug),
-          };
-        });
+        scope.$watch('plug.stateId', update);
+        util.deepWatch(scope, 'instruments', update);
+
+        function update() {
+          if (scope.instruments.length > 0) {
+            scope.result = util.get('/ajax/getInstrumentedState', {
+              workspace: scope.workspace.ref(),
+              inputStateId: scope.plug.stateId,
+              instruments: scope.instruments });
+          } else {
+            scope.result = { states: [scope.plug], metas: [] };
+          }
+        }
 
         scope.getDefaultSnapshotName = function() {
           return scope.workspace.name + '-' + scope.plugId;
         };
 
         scope.setInstrument = function(index, operationId) {
-          scope.instruments.splice(index + 1);
-          var instrument = {
-            workspace: scope.workspace.ref(),
+          scope.instruments.splice(index);
+          scope.instruments.push({
             operationId: operationId,
             parameters: {},
-            parametricParameters: {}
-          };
-          var instrState = { instrument: instrument };
-          scope.instruments.push(instrState);
-          instrState.promise = scope.instruments[index].promise.then(function(state) {
-            instrument.inputStateId = state.stateId;
-            return util.get('/ajax/getInstrumentedState', instrument);
+            parametricParameters: {},
           });
-          instrState.promise.then(function(state) {
-            instrState.stateId = state.stateId;
-            instrState.kind = state.kind;
-            instrState.error = state.error;
-          });
+          update();
         };
 
         scope.clearInstrument = function(index) {
-          scope.instruments.splice(index + 1);
+          scope.instruments.splice(index);
+          update();
         };
 
-        scope.createSnapshot = function(saveAsName, success, error) {
+        scope.createSnapshot = function(stateId, saveAsName, success, error) {
           var postOpts = { reportErrors: false };
           util.post('/ajax/createSnapshot', {
             name: saveAsName,
-            id: scope.plug.stateId,
+            id: stateId,
           }, postOpts).then(success, error);
         };
       },

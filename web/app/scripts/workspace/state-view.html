@@ -1,12 +1,4 @@
-<div ng-repeat="state in instruments track by $index">
-  <!--
-  <box-editor
-    ng-if="state.box"
-    workspace="workspace"
-    box-id="plug.boxId"
-    instruments="instruments.slice(0, $index + 1)"></box-editor>
-  -->
-
+<div ng-repeat="state in result.states track by $index">
   <div id="state-toolbar" class="flat-toolbar" ng-if="state.stateId">
     <button
       class="btn btn-default" id="save-as-snapshot-button"
@@ -20,7 +12,7 @@
       placeholder="Snapshot name..."
       ng-init="snapshotName = getDefaultSnapshotName()"
       input="snapshotName"
-      onsubmit="createSnapshot(input, success, error)"
+      onsubmit="createSnapshot(state.stateId, input, success, error)"
       open="snapshotNameOpen"></inline-input>
 
     <!-- TODO: Build instrument toolbar dynamically, allow any operation. -->
@@ -34,26 +26,32 @@
     </button>
     <button
       ng-show="state.kind === 'table' || state.kind === 'project'"
-      ng-class="{ active: state.box.operationId === 'SQL1' }"
+      ng-class="{ active: instruments[$index].operationId === 'SQL1' }"
       class="btn btn-default"
       ng-click="setInstrument($index, 'SQL1')">
       SQL
     </button>
     <button
       ng-show="state.kind === 'table'"
-      ng-class="{ active: state.box.operationId === 'Custom plot' }"
+      ng-class="{ active: instruments[$index].operationId === 'Custom plot' }"
       class="btn btn-default"
       ng-click="setInstrument($index, 'Custom plot')">
       Plot
     </button>
     <button
       ng-show="state.kind === 'project'"
-      ng-class="{ active: state.box.operationId === 'Graph visualization' }"
+      ng-class="{ active: instruments[$index].operationId === 'Graph visualization' }"
       class="btn btn-default"
       ng-click="setInstrument($index, 'Graph visualization')">
       Visualize
     </button>
   </div>
+
+  <op-editor
+    ng-if="!$last"
+    box-meta="result.metas[$index]"
+    parameters="instruments[$index].parameters"
+    parametric-parameters="instruments[$index].parametricParameters"></op-editor>
 
   <div ng-if="$last">
     <project-state-view

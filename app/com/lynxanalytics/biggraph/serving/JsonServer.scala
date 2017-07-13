@@ -307,7 +307,9 @@ object FrontendJson {
   implicit val rCreateSnapshotRequest = json.Json.reads[CreateSnapshotRequest]
   implicit val rGetExportResultRequest = json.Json.reads[GetExportResultRequest]
   implicit val wGetExportResultResponse = json.Json.writes[GetExportResultResponse]
+  implicit val rInstrument = json.Json.reads[Instrument]
   implicit val rGetInstrumentedStateRequest = json.Json.reads[GetInstrumentedStateRequest]
+  implicit val wInstrumentState = json.Json.writes[InstrumentState]
   implicit val wGetInstrumentedStateResponse = json.Json.writes[GetInstrumentedStateResponse]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
