@@ -1,8 +1,11 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
+import com.lynxanalytics.biggraph.graph_api.{ DataManager, ThreadUtil }
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import org.apache.spark
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.{ DataFrame, Row, SQLContext }
 
 class SQLTest extends OperationsTestBase {
   private def toSeq(row: spark.sql.Row): Seq[Any] = {
@@ -140,4 +143,58 @@ class SQLTest extends OperationsTestBase {
       .table
     assert(table.schema.map(_.name) == Seq("age"))
   }
+
+  test("Thread safe sql even for the same SQL context") {
+    val columnName = "col"
+    val tableName = "table"
+    val schema = StructType(Seq(StructField("column", IntegerType)))
+    def getTinyDfWithConstantValue(ctx: SQLContext, value: Int): DataFrame = {
+      import scala.collection.JavaConverters._
+      val data = List(Row(value)).asJava
+      ctx.createDataFrame(data, schema).toDF(columnName)
+    }
+
+    val numWorkers = 60
+    val maxParalellism = 20
+    implicit val sqlTestExecutionContext =
+      ThreadUtil.limitedExecutionContext("ThreadSafeSQL", maxParallelism = maxParalellism)
+    val sqlTestingThreads = new ControlledFutures()(sqlTestExecutionContext)
+
+    // Ideally, worker w should only write resultPoolForEachWorker(w), thus
+    // resultPoolForEachWorker should contain only 1's, since each worker runs
+    // once. But this is not the case when the race condition hits, then workers
+    // begin to use each other's data frames.
+    val resultPoolForEachWorker = Array.fill(numWorkers)(new java.util.concurrent.atomic.AtomicInteger(0))
+
+    val sqlCtx = dataManager.newSQLContext
+    for (workerId <- (0 until numWorkers)) {
+      val df = List((tableName, getTinyDfWithConstantValue(sqlCtx, workerId)))
+      sqlTestingThreads.register {
+        val resultThatIsSupposedToBeEqualToWorkerId =
+          DataManager.sql(sqlCtx, s"select AVG($columnName) from $tableName", df)
+            .collect().toList.take(1).head.getDouble(0)
+        val idx = resultThatIsSupposedToBeEqualToWorkerId.toInt
+        // We could say assert(workerId == resultThatIsSupposedToBeEqualToWorkerId) here,
+        // but this is running on a different thread using SafeFuture,
+        // and the test would pass despite the assertion. Anyway, using the resultPoolForEachWorker array
+        // gives us a nicer way to see what exactly went wrong.
+        if (0 <= idx && idx < numWorkers) {
+          resultPoolForEachWorker(idx).getAndIncrement()
+        }
+      }
+    }
+
+    sqlTestingThreads.waitAllFutures()
+    val resultMap = (0 until numWorkers).map(n => (n, resultPoolForEachWorker(n).get()))
+    val badResults = resultMap.filter(_._2 != 1).toList
+    // Failure here would result in outputs like these:
+    //
+    // List((9,2), (10,0), (14,0), (16,2)) was not empty (SQLTest.scala:194)
+    //
+    // This would (probably) mean that worker 9 overwrote the data frame registered by
+    // worker 10, and worker 16 overwrote the data frame registered by worker 14.
+    // (All workers use the same name when registering their data frames.)
+    assert(badResults.isEmpty)
+  }
+
 }

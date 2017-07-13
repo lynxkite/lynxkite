@@ -45,7 +45,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion.value % "provided",
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
   "org.mozilla" % "rhino" % "1.7.7",
-  "org.scalatest" %% "scalatest" % "2.1.5" % "test",
+  "org.scalatest" %% "scalatest" % "2.2.6" % "test",
   "org.apache.spark" %% "spark-mllib" % sparkVersion.value % "provided",
   "org.apache.spark" %% "spark-hive" % sparkVersion.value % "provided",
   // For accessing S3 fs from local instance.
@@ -148,3 +148,5 @@ mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts", "spark
 mappings in Universal ++= dirContents(baseDirectory.value, "tools", "performance_collection")
 
 mappings in Universal ++= dirContents(baseDirectory.value, "tools", "api", "python", "lynx")
+
+mappings in Universal ++= dirContents(baseDirectory.value, "built-ins")

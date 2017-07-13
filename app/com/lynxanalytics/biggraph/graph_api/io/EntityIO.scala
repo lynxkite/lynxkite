@@ -347,25 +347,9 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
 
   def write(data: EntityData): Unit = {
     assert(data.entity == entity, s"Tried to write $data through EntityIO for $entity.")
-    val rddData: EntityRDDData[T] = castData(data)
     log.info(s"PERF Instantiating entity $entity on disk")
-    val rdd = rddData.rdd
-    val partitions = rdd.partitions.size
-    val (lines, serialization) = rdd match {
-      case sortedRDD: SortedRDD[ID, _] => targetDir(partitions).saveEntityRDD(sortedRDD, valueTypeTag)
-      case hybridRDD: HybridRDD[ID, _] =>
-        val linesSmallKeys = (targetDir(partitions) / "small_keys_rdd")
-          .saveEntityRDD(hybridRDD.smallKeysRDD, valueTypeTag)._1
-        (targetDir(partitions) / "larges")
-          .saveEntityRDD(sc.parallelize(hybridRDD.larges, 1), typeTag[Long])
-        val linesLargeKeys = if (hybridRDD.isSkewed) {
-          (targetDir(partitions) / "large_keys_rdd")
-            .saveEntityRDD(hybridRDD.largeKeysRDD.get, valueTypeTag)._1
-        } else { 0L }
-        (targetDir(partitions) / Success).create()
-        (linesSmallKeys + linesLargeKeys, "hybrid")
-      case _ => throw new AssertionError(s"Wrong entity RDD type ${rdd.getClass}")
-    }
+    val partitions = castData(data).rdd.partitions.size
+    val (lines, serialization) = write(data, targetDir(partitions))
     val metadata = EntityMetadata(lines, Some(serialization))
     metadata.write(partitionedPath.forWriting)
     log.info(s"PERF Instantiated entity $entity on disk")
@@ -373,6 +357,8 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
 
   // The subclasses know the specific type and can thus make a safer cast.
   def castData(data: EntityData): EntityRDDData[T]
+
+  def write(data: EntityData, dir: HadoopFile): (Long, String)
 
   def valueTypeTag: TypeTag[T] // The TypeTag of the values we write out.
 
@@ -501,6 +487,8 @@ class VertexSetIO(entity: VertexSet, context: IOContext)
 
   def castData(data: EntityData) = data.asInstanceOf[VertexSetData]
 
+  def write(data: EntityData, dir: HadoopFile) = dir.saveEntityRDD(castData(data).rdd, valueTypeTag)
+
   def valueTypeTag = typeTag[Unit]
 }
 
@@ -528,6 +516,8 @@ class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
   }
 
   def castData(data: EntityData) = data.asInstanceOf[EdgeBundleData]
+
+  def write(data: EntityData, dir: HadoopFile) = dir.saveEntityRDD(castData(data).rdd, valueTypeTag)
 
   def valueTypeTag = typeTag[Edge]
 }
@@ -566,6 +556,20 @@ class HybridBundleIO(entity: HybridBundle, context: IOContext)
       Some(count))
   }
 
+  def write(data: EntityData, dir: HadoopFile): (Long, String) = {
+    val hybridRDD = castData(data).rdd
+    val linesSmallKeys = (dir / "small_keys_rdd")
+      .saveEntityRDD(hybridRDD.smallKeysRDD, valueTypeTag)._1
+    (dir / "larges")
+      .saveEntityRDD(sc.parallelize(hybridRDD.larges, 1), typeTag[Long])
+    val linesLargeKeys = if (hybridRDD.isSkewed) {
+      (dir / "large_keys_rdd")
+        .saveEntityRDD(hybridRDD.largeKeysRDD.get, valueTypeTag)._1
+    } else { 0L }
+    (dir / Success).create()
+    (linesSmallKeys + linesLargeKeys, "hybrid")
+  }
+
   def castData(data: EntityData) = data.asInstanceOf[HybridBundleData]
 
   def valueTypeTag = typeTag[ID]
@@ -598,6 +602,8 @@ class AttributeIO[T](entity: Attribute[T], context: IOContext)
 
   def castData(data: EntityData) =
     data.asInstanceOf[AttributeData[_]].runtimeSafeCast(valueTypeTag)
+
+  def write(data: EntityData, dir: HadoopFile) = dir.saveEntityRDD(castData(data).rdd, valueTypeTag)
 
   def valueTypeTag = entity.typeTag
 }

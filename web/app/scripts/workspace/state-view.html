@@ -1,41 +1,43 @@
-<div id="state-toolbar" class="clearfix">
-  <div id="save-as-snapshot-box">
-    <div class="pull-right">
-      <inline-input
-        placeholder="Snapshot name..."
-        onsubmit="createSnapshot(input, success, error)"
-        open="snapshotNameOpen"></inline-input>
-    </div>
-    <button
-      class="pull-right btn btn-default" id="save-as-snapshot-button"
-      ng-click="snapshotNameOpen = true"
-      drop-tooltip="Click to snapshot state as {{saveAsName}}"
-      drop-tooltip-placement="bottom">
-      <i class="glyphicon glyphicon-camera"></i>
-    </button>
-  </div>
+<div id="state-toolbar" class="flat-toolbar">
+  <button
+    class="btn btn-default" id="save-as-snapshot-button"
+    ng-click="snapshotNameOpen = true"
+    drop-tooltip="Click to snapshot state as {{saveAsName}}"
+    drop-tooltip-placement="bottom">
+    <i class="glyphicon glyphicon-camera"></i>
+  </button>
+  <inline-input
+    id="save-as-snapshot-box"
+    placeholder="Snapshot name..."
+    ng-init="snapshotName = getDefaultSnapshotName()"
+    input="snapshotName"
+    onsubmit="createSnapshot(input, success, error)"
+    open="snapshotNameOpen"></inline-input>
 
   <!-- TODO: Build instrument toolbar dynamically, allow any operation. -->
   <button
-    class="pull-right btn btn-default"
+    ng-class="{ active: instrument === 'SQL1' }"
+    class="btn btn-default"
     ng-click="instrument = 'SQL1'">
     SQL
   </button>
   <button
     ng-show="plug.kind === 'table'"
-    class="pull-right btn btn-default"
-    ng-click="instrument = 'Create plot'">
+    ng-class="{ active: instrument === 'Custom plot' }"
+    class="btn btn-default"
+    ng-click="instrument = 'Custom plot'">
     Plot
   </button>
   <button
     ng-show="plug.kind === 'project'"
-    class="pull-right btn btn-default"
-    ng-click="instrument = 'Create visualization'">
+    ng-class="{ active: instrument === 'Graph visualization' }"
+    class="btn btn-default"
+    ng-click="instrument = 'Graph visualization'">
     Visualize
   </button>
 </div>
 
-<div ng-if="instrument">
+<div ng-if="instrument && !instrumentWorkspace.error">
   <box-editor
     workspace="instrumentWorkspace"
     box-id="instrumentBoxId">
@@ -66,6 +68,11 @@
     ng-if="instrumentStateKind === 'visualization'">
   </visualization-state-view>
 </div>
+
+<display-error
+  caption="Cannot load instrumented workspace."
+  error="instrumentWorkspace.error">
+</display-error>
 
 <div ng-if="!instrument">
   <project-state-view

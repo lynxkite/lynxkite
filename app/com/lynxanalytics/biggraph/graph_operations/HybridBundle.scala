@@ -25,12 +25,8 @@ object HybridEdgeBundle extends OpFromJson {
     op(op.es, connection).result.sb
   }
   def byDst(connection: EdgeBundle)(implicit manager: MetaGraphManager): HybridBundle = {
-    val reversedConnection = {
-      val op = ReverseEdges()
-      op(op.esAB, connection).result.esBA
-    }
     val op = HybridEdgeBundle()
-    op(op.es, reversedConnection).result.sb
+    op(op.es, ReverseEdges.run(connection)).result.sb
   }
 }
 import HybridEdgeBundle._

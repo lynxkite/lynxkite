@@ -26,6 +26,10 @@ angular.module('biggraph')
           }
         });
 
+        scope.getDefaultSnapshotName = function() {
+          return scope.workspace.name + '-' + scope.plugId;
+        };
+
         scope.createSnapshot = function(saveAsName, success, error) {
           var postOpts = { reportErrors: false };
           util.post('/ajax/createSnapshot', {
@@ -65,7 +69,7 @@ angular.module('biggraph')
             name: tmpWS,
           }).then(function success() {
             return util.post('/ajax/setWorkspace', {
-              name: tmpWS,
+              reference: { top: tmpWS, customBoxStack: [] },
               workspace: { boxes: boxes },
             });
           }).then(function success() {

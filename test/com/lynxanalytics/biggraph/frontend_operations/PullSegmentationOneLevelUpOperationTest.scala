@@ -7,13 +7,13 @@ class CopySegmentationOneLevelUpOperationTest extends OperationsTestBase {
   test("Pull segmentation one level up") {
     val vertices = importCSV("copy-segmentation-one-level-up-vertices.csv")
     val connections = importCSV("copy-segmentation-one-level-up-connections.csv")
-    val project = vertices.box("Import vertices")
-      .box("Import segmentation", Map(
+    val project = vertices.box("Use table as vertices")
+      .box("Use table as segmentation", Map(
         "name" -> "segmentation1",
         "base_id_attr" -> "num",
         "base_id_column" -> "base_num",
         "seg_id_column" -> "seg_num"), Seq(connections))
-      .box("Import segmentation", Map(
+      .box("Use table as segmentation", Map(
         "name" -> "segmentation2",
         "base_id_attr" -> "seg_num",
         "base_id_column" -> "base_num",

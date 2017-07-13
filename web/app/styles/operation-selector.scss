@@ -85,6 +85,26 @@ operation-selectory-entry div.disabled {
   color: rgba(255, 255, 255, 0.2) !important;
 }
 
+.operation-tree-node {
+  cursor: pointer;
+  user-select: none;
+  padding: 5px;
+  color: rgba(255, 255, 255, 0.8);
+}
+.operation-tree-node:hover {
+  color: gold !important;
+  background: black !important;
+}
+.operation-tree-node div.disabled {
+  color: rgba(255, 255, 255, 0.2) !important;
+}
+.operation-tree-node-indent {
+  padding-left: 10px;
+}
+.operation-tree-node-icon {
+  margin-right: 5px;
+}
+
 .operation-selector #filter {
   background: transparent;
   border: 0;
@@ -94,3 +114,4 @@ operation-selectory-entry div.disabled {
 .operation-selector #edit-operation-button .glyphicon-pencil {
   color: #333;
 }
+

@@ -4,33 +4,11 @@
 angular.module('biggraph')
   .factory('side', function (util, $rootScope, getCenter) {
     function defaultSideState() {
-      return {
-        projectPath: undefined,
-        filters: {
-          edge: {},
-          vertex: {},
-        },
-        axisOptions: {
-          edge: {},
-          vertex: {},
-        },
-        graphMode: undefined,
-        bucketCount: '4',
-        preciseBucketSizes: false,
-        relativeEdgeDensity: false,
-        sampleRadius: '1',
-        display: 'svg',
-        animate: {
-          enabled: false,
-          labelAttraction: '0',
-          style: 'neutral',
-        },
-        attributeTitles: {},
-        centers: undefined,
-        lastCentersRequest: undefined,
-        lastCentersResponse: undefined,
-        customVisualizationFilters: false,
-      };
+      // Get a deep copy of the default UI state.
+      // util.globals will always be resolved by the time execution
+      // gets here. That's because util.globals is fetched at page
+      // load time, but this code only runs when the user opens a popup.
+      return angular.copy(util.globals.defaultUIStatus);
     }
 
     function Side(sides, direction, stateId, enableVisualizationUI) {
@@ -51,7 +29,7 @@ angular.module('biggraph')
 
     Side.prototype.sections = ['scalar', 'vertex-attribute', 'edge-attribute', 'segmentation'];
     Side.prototype.sectionHumanName = {
-      'scalar': 'Graph attributes',
+      'scalar': 'Scalars',
       'vertex-attribute': 'Vertex attributes',
       'edge-attribute': 'Edge attributes',
       'segmentation': 'Segmentations',
@@ -382,7 +360,7 @@ angular.module('biggraph')
         // Apply mutual exclusions and do initialization.
         if (setting === 'slider') {
           this.state.attributeTitles.color = undefined;
-          this.state.sliderPos = '50';
+          this.state.sliderPos = 50;
         } else if (setting === 'color') {
           this.state.attributeTitles.image = undefined;
           this.state.attributeTitles.slider = undefined;
@@ -401,10 +379,12 @@ angular.module('biggraph')
 
     Side.prototype.filterApplied = function(settings, value) {
       var that = this;
-      var applied = settings.filter(
-        function(setting) {
-          return that.state.attributeTitles[setting] === value;
-        });
+      var applied = [];
+      for (var i = 0; i < settings.length; ++i) {
+        if (that.state.attributeTitles[settings[i]] === value) {
+          applied.push(settings[i]);
+        }
+      }
       return applied;
     };
 
@@ -712,9 +692,6 @@ angular.module('biggraph')
       this.cleanState();
       this.loadScalars();
       this.updateViewData();
-      if (!this.project.vertexSet) {
-        this.state.graphMode = undefined;
-      }
     };
 
     // Removes entries from state which depend on nonexistent attributes
@@ -754,5 +731,5 @@ angular.module('biggraph')
       return this.applyOp('Set-' + kind + '-icon', { name: name, icon: icon });
     };
 
-    return { Side: Side, defaultSideState: defaultSideState };
+    return { Side: Side };
   });
