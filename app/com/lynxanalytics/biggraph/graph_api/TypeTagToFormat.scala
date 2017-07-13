@@ -134,6 +134,11 @@ object TypeTagToFormat {
     implicitly[json.Format[List[T]]]
   }
 
+  def vectorToFormat[T](t: TypeTag[T]): json.Format[Vector[T]] = {
+    implicit val innerFormat = typeTagToFormat(t)
+    implicitly[json.Format[Vector[T]]]
+  }
+
   def typeTagToFormat[T](tag: TypeTag[T]): json.Format[T] = {
 
     val t = tag.tpe
@@ -167,6 +172,9 @@ object TypeTagToFormat {
       } else if (TypeTagUtil.isOfKind1[List](t)) {
         val innerType = TypeTagUtil.typeArgs(tag).head
         listToFormat(innerType)
+      } else if (TypeTagUtil.isOfKind1[Vector](t)) {
+        val innerType = TypeTagUtil.typeArgs(tag).head
+        vectorToFormat(innerType)
       } else if (TypeTagUtil.isOfKind1[IndexedSeq](t)) {
         val innerType = TypeTagUtil.typeArgs(tag).head
         indexedSeqToFormat(innerType)
