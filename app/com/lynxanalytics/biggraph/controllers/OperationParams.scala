@@ -192,12 +192,18 @@ object OperationParams {
   }
 }
 
-case class DummyParam(id: String, title: String) extends OperationParameterMeta {
+case class DummyParam(id: String, title: String, title2: String = "")
+    extends OperationParameterMeta {
   val kind = "dummy"
   val options = List()
   val multipleChoice = false
   val defaultValue = ""
   def validate(value: String): Unit = {}
+  override val payload = Some(
+    json.Json.obj(
+      "title2" -> title2
+    )
+  )
 }
 
 // A special parameter payload to describe applicable models on the UI.
