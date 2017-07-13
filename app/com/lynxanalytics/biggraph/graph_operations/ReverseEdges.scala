@@ -16,8 +16,14 @@ object ReverseEdges extends OpFromJson {
   }
   def run(eb: EdgeBundle)(implicit manager: MetaGraphManager): EdgeBundle = {
     import Scripting._
-    val op = ReverseEdges()
-    op(op.esAB, eb).result.esBA
+    // Let's not reverse the edges two times accidentally.
+    if (eb.source.operation.isInstanceOf[ReverseEdges]) {
+      implicit val opInstance = eb.source
+      opInstance.operation.asInstanceOf[ReverseEdges].inputs.esAB.entity
+    } else {
+      val op = ReverseEdges()
+      op(op.esAB, eb).result.esBA
+    }
   }
   def fromJson(j: JsValue) = ReverseEdges()
 }
