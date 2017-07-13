@@ -136,12 +136,18 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
   test("example graph - all vertices: Option[Double] * 10 throws error") {
     val expr = "income * 10.0"
     val g = ExampleGraph()().result
-    intercept[javax.script.ScriptException] { // Script throws a compilation error.
-      DeriveScala.derive[Double](
+    val e = intercept[javax.script.ScriptException] {
+      DeriveScala.deriveAndInferReturnType(
         expr,
         Seq("income" -> g.income.entity),
+        g.vertices,
         onlyOnDefinedAttrs = false)
     }
+    assert(e.getMessage ==
+      """<console>:18: error: value * is not a member of Option[Double]
+             income * 10.0
+                    ^
+""")
   }
 
   test("example graph - all vertices: two attributes") {
@@ -157,12 +163,20 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
   test("example graph - all vertices: two attributes wrong type") {
     val expr = "income + age" // Fails because income and age are Option[Double]-s.
     val g = ExampleGraph()().result
-    intercept[javax.script.ScriptException] {
-      DeriveScala.derive[Double](
+    val e = intercept[javax.script.ScriptException] {
+      DeriveScala.deriveAndInferReturnType(
         expr,
         Seq("income" -> g.income.entity, "age" -> g.age.entity),
+        g.vertices,
         onlyOnDefinedAttrs = false)
     }
+    assert(e.getMessage ==
+      """<console>:18: error: type mismatch;
+ found   : Option[Double]
+ required: String
+             income + age
+                      ^
+""")
   }
 
   def checkScala(expr: String, name: String, attr: Attribute[_], result: Set[(Int, String)]) = {
@@ -213,5 +227,40 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
     checkScala("agess(0).toString()", "agess", agess,
       Set(0 -> "Vector(10, 30)", 1 -> "Vector(20, 30)", 2 -> "Vector(20, 30)"))
     checkScala("agess(0)(0).toString()", "agess", agess, Set(0 -> "10", 1 -> "20", 2 -> "20"))
+  }
+
+  test("example graph - return arrays") {
+    val g = ExampleGraph()().result
+    val d1 = DeriveScala.derive[Vector[Double]]("Vector(age)", Seq("age" -> g.age.entity))
+    assert(d1.rdd.collect.toSet ==
+      Set((0, Vector(20.3)), (1, Vector(18.2)), (2, Vector(50.3)), (3, Vector(2.0))))
+
+    val d2 = DeriveScala.derive[Vector[String]](
+      "Vector(\"abc\")", Seq(), vertexSet = Some(g.vertices))
+    assert(d2.rdd.collect.toSet ==
+      Set((0, Vector("abc")), (1, Vector("abc")), (2, Vector("abc")), (3, Vector("abc"))))
+
+    val d3 = DeriveScala.derive[Vector[Int]]("Vector(1)", Seq(), vertexSet = Some(g.vertices))
+    assert(d3.rdd.collect.toSet ==
+      Set((0, Vector(1)), (1, Vector(1)), (2, Vector(1)), (3, Vector(1))))
+
+    val d4 = DeriveScala.derive[Vector[Vector[Double]]](
+      "Vector(Vector(income))", Seq("income" -> g.income.entity))
+    assert(d4.rdd.collect.toSet ==
+      Set((0, Vector(Vector(1000.0))), (2, Vector(Vector(2000.0)))))
+  }
+
+  test("example graph - security manager") {
+    val expr = """
+    new java.io.File("abc").exists()
+    1.0"""
+    val g = ExampleGraph()().result
+    val derived = DeriveScala.derive[Double](
+      expr, Seq(), vertexSet = Some(g.vertices))
+    val e = intercept[org.apache.spark.SparkException] {
+      derived.rdd.collect
+    }
+    assert(e.getCause.getMessage ==
+      """access denied ("java.util.PropertyPermission" "user.dir" "read")""")
   }
 }
