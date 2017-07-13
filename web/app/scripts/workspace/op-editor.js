@@ -2,7 +2,7 @@
 'use strict';
 
 angular.module('biggraph')
-  .directive('opEditor', function(util) {
+  .directive('opEditor', function(util, $timeout) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/op-editor.html',
@@ -80,6 +80,10 @@ angular.module('biggraph')
         }
 
         scope.onBlur = function() {
+          // If we are triggered from below we need to wait for the digest to update our scope.
+          $timeout(onBlurNow);
+        };
+        function onBlurNow() {
           var e = externalToInternal();
           var i = internal();
           if (!angular.equals(e, i)) {
@@ -90,7 +94,7 @@ angular.module('biggraph')
               scope.onBlurUp();
             }
           }
-        };
+        }
       },
     };
   });
