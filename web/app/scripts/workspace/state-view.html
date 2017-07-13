@@ -49,6 +49,7 @@
 
   <op-editor
     ng-if="!$last"
+    box="{ outputs: [{ stateId: result.states[$index + 1].stateId }] }"
     box-meta="result.metas[$index]"
     parameters="instruments[$index].parameters"
     parametric-parameters="instruments[$index].parametricParameters"></op-editor>
