@@ -21,14 +21,6 @@ span#workspace-name {
   float: left;
 }
 
-.operation-selector {
-  margin-left: -35px;
-  float: left;
-  max-height: 100%;
-  width: 35px;
-  overflow: auto; /* Allow scrolling category list, if necessary. */
-}
-
 workspace-drawing-board > display-error > * {
   padding: 20px;
 }
