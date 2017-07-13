@@ -65,7 +65,7 @@ class SQLTest extends OperationsTestBase {
       .box("Find connected components")
       .box("SQL1", Map("sql" -> """
         select base_name, segment_id, segment_size
-        from `connected_components|belongs_to` order by base_id"""))
+        from `connected_components.belongs_to` order by base_id"""))
       .table
     assert(table.schema.map(_.name) == Seq("base_name", "segment_id", "segment_size"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
@@ -116,9 +116,9 @@ class SQLTest extends OperationsTestBase {
     val three = box("Create example graph")
     val table = box("SQL3", Map("sql" -> """
       select one.edge_comment, two.name, three.name
-      from `one|edges` as one
-      join `two|vertices` as two
-      join `three|vertices` as three
+      from `one.edges` as one
+      join `two.vertices` as two
+      join `three.vertices` as three
       where one.src_name = two.name and one.dst_name = three.name
       """), Seq(one, two, three)).table
     assert(table.schema.map(_.name) == Seq("edge_comment", "name", "name"))
