@@ -144,13 +144,12 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import from Hive")(new ImportOperation(_) {
     params ++= List(
+      new StaleSettingsCheck("last_settings", "The settings are ...", staleSettings),
       FileParam("hive_table", "Hive table"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
       ImportedTableParam("imported_table", "Table GUID"))
-    params +=
-      new StaleSettingsCheck("last_settings", "Stale settings", staleSettings)
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       assert(
         DataManager.hiveConfigured,
