@@ -84,7 +84,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       private def withoutEdgeMarker(s: String) = s.stripSuffix(edgeMarker)
 
       // We're using the same project editor for both
-      // |segmentation and |segmentation!edges
+      // .segmentation and .segmentation!edges
       protected def attributeEditor(input: String): AttributeEditor = {
         val fullInputDesc = params("apply_to_" + input)
         val edgeEditor = fullInputDesc.endsWith(edgeMarker)

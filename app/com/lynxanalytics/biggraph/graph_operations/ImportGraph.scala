@@ -28,7 +28,7 @@ object ImportUtil {
 
   private[graph_operations] def splitter(delimiter: String): String => Seq[String] = {
     val delim = java.util.regex.Pattern.quote(delimiter)
-    def oneOf(options: String*) = options.mkString("|")
+    def oneOf(options: String*) = options.mkString(".")
     def any(p: String) = capture(p) + "*"
     def capture(p: String) = "(" + p + ")"
     def oneField(p: String) = oneOf(capture(p + delim), capture(p + "$")) // Delimiter or line end.
