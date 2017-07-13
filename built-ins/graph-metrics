@@ -1,0 +1,534 @@
+{
+  "boxes" : [ {
+    "id" : "anchor",
+    "operationId" : "Anchor",
+    "parameters" : {
+      "description" : "Created from Main",
+      "parameters" : "[{\"kind\":\"text\",\"id\":\"CustomPercentile\",\"defaultValue\":\"0.5\",\"$$hashKey\":\"object:1753\"},{\"kind\":\"text\",\"id\":\"MaximumNumberOfIterationsToDo\",\"defaultValue\":\"30\",\"$$hashKey\":\"object:11352\"},{\"kind\":\"text\",\"id\":\"MinimalModularityIncerement\",\"defaultValue\":\"0.001\",\"$$hashKey\":\"object:15778\"},{\"kind\":\"boolean\",\"id\":\"ModularClustering\",\"defaultValue\":\"true\",\"$$hashKey\":\"object:19098\"}]",
+      "icon" : "https://media.giphy.com/media/ODy29v7YAJrck/giphy.gif"
+    },
+    "x" : -407.52141624622635,
+    "y" : 0.0,
+    "inputs" : { },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Compute-degree_1",
+    "operationId" : "Compute degree",
+    "parameters" : {
+      "apply_to_project" : "",
+      "name" : "odegree",
+      "direction" : "outgoing edges"
+    },
+    "x" : -67.11468696817506,
+    "y" : 762.746548242263,
+    "inputs" : {
+      "project" : {
+        "boxId" : "input-project",
+        "id" : "input"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "input-project",
+    "operationId" : "Input",
+    "parameters" : {
+      "name" : "project"
+    },
+    "x" : -496.140485410232,
+    "y" : 738.2951266670741,
+    "inputs" : { },
+    "parametricParameters" : { }
+  }, {
+    "id" : "output-project",
+    "operationId" : "Output",
+    "parameters" : {
+      "name" : "General Metrics"
+    },
+    "x" : 1351.7726706800315,
+    "y" : 718.1548460520909,
+    "inputs" : {
+      "output" : {
+        "boxId" : "SQL2_7",
+        "id" : "table"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Compute-degree_2",
+    "operationId" : "Compute degree",
+    "parameters" : {
+      "apply_to_project" : "",
+      "name" : "idegree",
+      "direction" : "incoming edges"
+    },
+    "x" : -63.014210089099336,
+    "y" : 410.62527446546426,
+    "inputs" : {
+      "project" : {
+        "boxId" : "input-project",
+        "id" : "input"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Compute-degree_3",
+    "operationId" : "Compute degree",
+    "parameters" : {
+      "apply_to_project" : "",
+      "name" : "adegree",
+      "direction" : "all edges"
+    },
+    "x" : -52.649701021202354,
+    "y" : 280.3149738993578,
+    "inputs" : {
+      "project" : {
+        "boxId" : "input-project",
+        "id" : "input"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Compute-degree_4",
+    "operationId" : "Compute degree",
+    "parameters" : {
+      "apply_to_project" : "",
+      "name" : "sdegree",
+      "direction" : "symmetric edges"
+    },
+    "x" : -60.85872800683232,
+    "y" : 886.684672116515,
+    "inputs" : {
+      "project" : {
+        "boxId" : "input-project",
+        "id" : "input"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Find-connected-components_1",
+    "operationId" : "Find connected components",
+    "parameters" : {
+      "apply_to_project" : "",
+      "name" : "connected_components",
+      "directions" : "ignore directions"
+    },
+    "x" : -56.71762706820966,
+    "y" : 1055.2937490781696,
+    "inputs" : {
+      "project" : {
+        "boxId" : "input-project",
+        "id" : "input"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Find-modular-clustering_1",
+    "operationId" : "Find modular clustering",
+    "parameters" : {
+      "name" : "modular_clusters",
+      "apply_to_project" : "",
+      "weights" : "!no weight"
+    },
+    "x" : -65.22726115459464,
+    "y" : 1242.1323038695032,
+    "inputs" : {
+      "project" : {
+        "boxId" : "input-project",
+        "id" : "input"
+      }
+    },
+    "parametricParameters" : {
+      "max_iterations" : "${if(ModularClustering.equals(\"true\")) {MaximumNumberOfIterationsToDo} else {\"1\"}}",
+      "min_increment_per_iteration" : "$MinimalModularityIncerement"
+    }
+  }, {
+    "id" : "SQL1_2",
+    "operationId" : "SQL1",
+    "parameters" : { },
+    "x" : 288.5808923185381,
+    "y" : 411.1482270299063,
+    "inputs" : {
+      "input" : {
+        "boxId" : "Compute-degree_2",
+        "id" : "project"
+      }
+    },
+    "parametricParameters" : {
+      "sql" : "select \n  4 as ID, \n  \"In Degree\" as Attribute, \n  sum(idegree) as Sum, \n  avg(idegree) as Avg, \n  percentile(idegree, 0) as Min, \n  percentile(idegree, 0.05) as `5% percentile`, \n  percentile(idegree, 0.5) as Med, \n  percentile(idegree, 0.95) as `95% percentile`, \n  percentile(idegree, 1) as Max, \n  percentile(idegree, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom vertices"
+    }
+  }, {
+    "id" : "SQL2_1",
+    "operationId" : "SQL2",
+    "parameters" : {
+      "sql" : "select * from `one` \nUNION \nselect * from `two` "
+    },
+    "x" : 527.8522063838773,
+    "y" : 339.3706143027851,
+    "inputs" : {
+      "two" : {
+        "boxId" : "SQL1_2",
+        "id" : "table"
+      },
+      "one" : {
+        "boxId" : "SQL1_1",
+        "id" : "table"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL1_3",
+    "operationId" : "SQL1",
+    "parameters" : { },
+    "x" : 283.9361472871557,
+    "y" : 782.3574700141047,
+    "inputs" : {
+      "input" : {
+        "boxId" : "Compute-degree_1",
+        "id" : "project"
+      }
+    },
+    "parametricParameters" : {
+      "sql" : "select \n  4 as ID, \n  \"Out Degree\" as Attribute, \n  sum(odegree) as Sum, \n  avg(odegree) as Avg, \n  percentile(odegree, 0) as Min, \n  percentile(odegree, 0.05) as `5% percentile`, \n  percentile(odegree, 0.5) as Med, \n  percentile(odegree, 0.95) as `95% percentile`, \n  percentile(odegree, 1) as Max, \n  percentile(odegree, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom vertices"
+    }
+  }, {
+    "id" : "SQL1_4",
+    "operationId" : "SQL1",
+    "parameters" : { },
+    "x" : 277.8776277603912,
+    "y" : 900.7189825281388,
+    "inputs" : {
+      "input" : {
+        "boxId" : "Compute-degree_4",
+        "id" : "project"
+      }
+    },
+    "parametricParameters" : {
+      "sql" : "select \n  6 as ID, \n  \"Sym Degree\" as Attribute, \n  sum(sdegree) as Sum, \n  avg(sdegree) as Avg, \n  percentile(sdegree, 0) as Min, \n  percentile(sdegree, 0.05) as `5% percentile`, \n  percentile(sdegree, 0.5) as Med, \n  percentile(sdegree, 0.95) as `95% percentile`, \n  percentile(sdegree, 1) as Max, \n  percentile(sdegree, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile` \nfrom vertices"
+    }
+  }, {
+    "id" : "SQL2_2",
+    "operationId" : "SQL2",
+    "parameters" : {
+      "sql" : "select * from `one` \nUNION \nselect * from `two` "
+    },
+    "x" : 514.709677440453,
+    "y" : 840.0725379175859,
+    "inputs" : {
+      "one" : {
+        "boxId" : "SQL1_3",
+        "id" : "table"
+      },
+      "two" : {
+        "boxId" : "SQL1_4",
+        "id" : "table"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL1_6",
+    "operationId" : "SQL1",
+    "parameters" : { },
+    "x" : 276.3488256410726,
+    "y" : 1247.179213458144,
+    "inputs" : {
+      "input" : {
+        "boxId" : "Find-modular-clustering_1",
+        "id" : "project"
+      }
+    },
+    "parametricParameters" : {
+      "sql" : "select \n  8 as ID, \n  \"Modular Clusternig\" as Attribute, \n  count(size) as Sum, \n  avg(size) as Avg, \n  percentile(size, 0) as Min, \n  percentile(size, 0.05) as `5% percentile`, \n  percentile(size, 0.5) as Med, \n  percentile(size, 0.95) as `95% percentile`, \n  percentile(size, 1) as Max, \n  percentile(size, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom\n(select max(size) as size from `modular_clusters|vertices` group by id) as comps\n"
+    }
+  }, {
+    "id" : "SQL2_4",
+    "operationId" : "SQL2",
+    "parameters" : {
+      "sql" : "select * from `one` \nUNION \nselect * from `two` "
+    },
+    "x" : 521.1879398156011,
+    "y" : 1158.985986491442,
+    "inputs" : {
+      "two" : {
+        "boxId" : "SQL1_6",
+        "id" : "table"
+      },
+      "one" : {
+        "boxId" : "SQL1_5",
+        "id" : "table"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL2_3",
+    "operationId" : "SQL2",
+    "parameters" : {
+      "sql" : "select * from `one` \nUNION \nselect * from `two` "
+    },
+    "x" : 522.7602206745829,
+    "y" : 571.2720456358218,
+    "inputs" : {
+      "one" : {
+        "boxId" : "SQL1_8",
+        "id" : "table"
+      },
+      "two" : {
+        "boxId" : "SQL1_7",
+        "id" : "table"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL2_5",
+    "operationId" : "SQL2",
+    "parameters" : {
+      "sql" : "select * from `one` \nUNION \nselect * from `two` "
+    },
+    "x" : 753.5063910735081,
+    "y" : 461.820195494299,
+    "inputs" : {
+      "one" : {
+        "boxId" : "SQL2_1",
+        "id" : "table"
+      },
+      "two" : {
+        "boxId" : "SQL2_3",
+        "id" : "table"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL2_6",
+    "operationId" : "SQL2",
+    "parameters" : {
+      "sql" : "select * from `one` \nUNION \nselect * from `two` "
+    },
+    "x" : 731.0822844109917,
+    "y" : 994.8172620739106,
+    "inputs" : {
+      "two" : {
+        "boxId" : "SQL2_4",
+        "id" : "table"
+      },
+      "one" : {
+        "boxId" : "SQL2_2",
+        "id" : "table"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL2_7",
+    "operationId" : "SQL2",
+    "parameters" : { },
+    "x" : 999.6602666584771,
+    "y" : 720.2817648585165,
+    "inputs" : {
+      "one" : {
+        "boxId" : "SQL2_5",
+        "id" : "table"
+      },
+      "two" : {
+        "boxId" : "SQL2_6",
+        "id" : "table"
+      }
+    },
+    "parametricParameters" : {
+      "sql" : "select Attribute, Sum, Avg, Min, `5% percentile`, Med, `95% percentile`, Max, `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom(\nselect * from `one` \nUNION \nselect * from `two`\n)\norder by ID"
+    }
+  }, {
+    "id" : "SQL1_5",
+    "operationId" : "SQL1",
+    "parameters" : { },
+    "x" : 265.65531490680087,
+    "y" : 1096.0622660356826,
+    "inputs" : {
+      "input" : {
+        "boxId" : "Find-connected-components_1",
+        "id" : "project"
+      }
+    },
+    "parametricParameters" : {
+      "sql" : "select \n  7 as ID, \n  \"Connected Components\" as Attribute, \n  count(size) as Sum, \n  avg(size) as Avg, \n  percentile(size, 0) as Min, \n  percentile(size, 0.05) as `5% percentile`, \n  percentile(size, 0.5) as Med, \n  percentile(size, 0.95) as `95% percentile`, \n  percentile(size, 1) as Max, \n  percentile(size, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom\n(select max(size) as size from `connected_components|vertices` group by id) as comps\n"
+    }
+  }, {
+    "id" : "SQL1_8",
+    "operationId" : "SQL1",
+    "parameters" : { },
+    "x" : 293.0,
+    "y" : 532.0,
+    "inputs" : {
+      "input" : {
+        "boxId" : "input-project",
+        "id" : "input"
+      }
+    },
+    "parametricParameters" : {
+      "sql" : "select \n  1 as ID, \n  \"Vertices\" as Attribute, \n  count(*) as Sum, \n  double(null) as Avg, \n  int(null) as Min, \n  int(null) as `5% percentile`, \n  int(null) as Med, \n  int(null) as `95% percentile`, \n  int(null) as Max, \n  int(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile` \nfrom vertices"
+    }
+  }, {
+    "id" : "SQL1_7",
+    "operationId" : "SQL1",
+    "parameters" : {
+      "sql" : "select \n  2 as ID, \n  \"Edges\" as Attribute, \n  count(*) as Sum, \n  double(null) as Avg, \n  int(null) as Min, \n  int(null) as `5% percentile`, \n  int(null) as Med, \n  int(null) as `95% percentile`, \n  int(null) as Max, \n  int(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile` \nfrom edges"
+    },
+    "x" : 284.0,
+    "y" : 647.0,
+    "inputs" : {
+      "input" : {
+        "boxId" : "input-project",
+        "id" : "input"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL1_1",
+    "operationId" : "SQL1",
+    "parameters" : { },
+    "x" : 288.0,
+    "y" : 279.0,
+    "inputs" : {
+      "input" : {
+        "boxId" : "Compute-degree_3",
+        "id" : "project"
+      }
+    },
+    "parametricParameters" : {
+      "sql" : "select \n  3 as ID, \n  \"Degree\" as Attribute, \n  sum(adegree) as Sum, \n  avg(adegree) as Avg, \n  percentile(adegree, 0) as Min, \n  percentile(adegree, 0.05) as `5% percentile`, \n  percentile(adegree, 0.5) as Med, \n  percentile(adegree, 0.95) as `95% percentile`, \n  percentile(adegree, 1) as Max, \n  percentile(adegree, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom vertices"
+    }
+  }, {
+    "id" : "Custom-plot_1",
+    "operationId" : "Custom plot",
+    "parameters" : {
+      "plot_code" : "Vegas()\n  .withData(table)\n  .encodeX(\"degrees\", Quant, bin=Bin(maxbins=20.0))\n  .encodeY(\"Vertices\", Quant,  scale= new vegas.spec.Spec.Scale(`type` = Some(ScaleType.Log)) )\n  .mark(Bar)"
+    },
+    "x" : 615.5458141593629,
+    "y" : 3.5922531942784133,
+    "inputs" : {
+      "table" : {
+        "boxId" : "SQL1_9",
+        "id" : "table"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL1_9",
+    "operationId" : "SQL1",
+    "parameters" : {
+      "sql" : "select degrees, count(degrees)-0.01 as Vertices\nfrom\n(select max(adegree) as degrees \nfrom vertices\ngroup by id\norder by degrees desc) as deg\ngroup by degrees"
+    },
+    "x" : 297.6615920124063,
+    "y" : -2.496960085144991,
+    "inputs" : {
+      "input" : {
+        "boxId" : "Compute-degree_3",
+        "id" : "project"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Output_1",
+    "operationId" : "Output",
+    "parameters" : {
+      "name" : "Degree Distribution"
+    },
+    "x" : 1341.9873484696325,
+    "y" : 2.050507680113853,
+    "inputs" : {
+      "output" : {
+        "boxId" : "Custom-plot_1",
+        "id" : "plot"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL1_10",
+    "operationId" : "SQL1",
+    "parameters" : {
+      "sql" : "select size as SizeOfComponent, count(size)-0.01 as NumberOfComponents\nfrom\n(select max(size) as size from `modular_clusters|vertices` group by id)\ngroup by size"
+    },
+    "x" : 177.48202740140937,
+    "y" : 1769.8561938137486,
+    "inputs" : {
+      "input" : {
+        "boxId" : "Find-modular-clustering_1",
+        "id" : "project"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Custom-plot_2",
+    "operationId" : "Custom plot",
+    "parameters" : {
+      "plot_code" : "Vegas()\n  .withData(table)\n  .encodeX(\"SizeOfComponent\", Quant, bin=Bin(maxbins=20.0))\n  .encodeY(\"NumberOfComponents\", Quant,  scale= new vegas.spec.Spec.Scale(`type` = Some(ScaleType.Log)) )\n  .mark(Bar)"
+    },
+    "x" : 482.8840281840454,
+    "y" : 1782.9028096684815,
+    "inputs" : {
+      "table" : {
+        "boxId" : "SQL1_10",
+        "id" : "table"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL1_11",
+    "operationId" : "SQL1",
+    "parameters" : {
+      "sql" : "select size as SizeOfComponent, count(size)-0.01 as NumberOfComponents\nfrom\n(select max(size) as size from `connected_components|vertices` group by id)\ngroup by size"
+    },
+    "x" : 183.92819583026187,
+    "y" : 1526.1437369374041,
+    "inputs" : {
+      "input" : {
+        "boxId" : "Find-connected-components_1",
+        "id" : "project"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Custom-plot_3",
+    "operationId" : "Custom plot",
+    "parameters" : {
+      "plot_code" : "Vegas()\n  .withData(table)\n  .encodeX(\"SizeOfComponent\", Quant, bin=Bin(maxbins=20.0))\n  .encodeY(\"NumberOfComponents\", Quant,  scale= new vegas.spec.Spec.Scale(`type` = Some(ScaleType.Log)) )\n  .mark(Bar)"
+    },
+    "x" : 480.6803680632522,
+    "y" : 1528.878779999459,
+    "inputs" : {
+      "table" : {
+        "boxId" : "SQL1_11",
+        "id" : "table"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Output_2",
+    "operationId" : "Output",
+    "parameters" : {
+      "name" : "Component Distribution"
+    },
+    "x" : 1396.919793851748,
+    "y" : 1527.5112584684314,
+    "inputs" : {
+      "output" : {
+        "boxId" : "Custom-plot_3",
+        "id" : "plot"
+      }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Output_3",
+    "operationId" : "Output",
+    "parameters" : {
+      "name" : "Modular Distribution"
+    },
+    "x" : 1398.2873153827754,
+    "y" : 1784.605306301621,
+    "inputs" : {
+      "output" : {
+        "boxId" : "Custom-plot_2",
+        "id" : "plot"
+      }
+    },
+    "parametricParameters" : { }
+  } ]
+}
+
