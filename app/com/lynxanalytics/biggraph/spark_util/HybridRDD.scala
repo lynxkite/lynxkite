@@ -83,7 +83,13 @@ object HybridRDD {
     }.sort(partitioner)
     // The RDD to use with map lookup. It may contain keys with large cardinalities.
     val largeKeysRDD: Option[RDD[(K, T)]] = if (isSkewed) {
-      Some(sourceRDD)
+      // We need to guarantee that largeKeysRDD has the correct amount of partitions.
+      if (sourceRDD.partitions.size == partitioner.numPartitions) {
+        // Let's not perform expensive repartitioning if avoidable.
+        Some(sourceRDD)
+      } else {
+        Some(sourceRDD.repartition(partitioner.numPartitions))
+      }
     } else {
       None
     }
@@ -108,9 +114,9 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   // True iff this HybridRDD has keys with large cardinalities.
   val isSkewed = !largeKeysRDD.isEmpty
 
-  assert(smallKeysRDD.partitioner.orNull eq partitioner.get)
+  assert(smallKeysRDD.partitions.size == partitioner.get.numPartitions)
   if (isSkewed) {
-    assert(largeKeysRDD.get.partitioner.orNull eq partitioner.get)
+    assert(largeKeysRDD.get.partitions.size == partitioner.get.numPartitions)
   }
 
   override def getPartitions: Array[Partition] = smallKeysRDD.partitions
