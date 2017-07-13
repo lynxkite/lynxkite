@@ -23,6 +23,12 @@
       }"
       id="{{param.id}}">
     <div
+      class = "left-aligned-dummy"
+      ng-if="param.kind === 'dummy' && param.payload.title2">
+      {{param.payload.title2}}
+      <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
+    </div>
+    <div
       ui-ace="{
         mode: 'plain_text',
         showGutter: false,
@@ -117,12 +123,6 @@
       on-ui-state-changed="onBlur()"
       project-state-id="box.outputs[0].stateId">
     </visualization-parameter>
-    <div
-      class = "left-aligned-dummy"
-      ng-if="param.kind === 'dummy' && param.payload.title2">
-      {{param.payload.title2}}
-      <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
-    </div>
 
     <i class="fa fa-dollar parametric-switch"
       drop-tooltip="Parametric: {{ pflags[param.id] ? 'yes' : 'no' }}"
