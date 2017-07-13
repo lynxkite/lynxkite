@@ -196,7 +196,7 @@ case class DummyParam(
     id: String,
     title: String,
     title2: String = "" // If title2 is not empty, title will appear among
-    // the other parameter titles and title2 appear among the parameter
+    // the other parameter titles and title2 will appear among the parameter
     // input fields.
     // If title2 is empty, title will fill the whole line.
     ) extends OperationParameterMeta {
