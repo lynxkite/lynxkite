@@ -29,7 +29,7 @@ class ViralModelingOperationTest extends OperationsTestBase {
         "iterations" -> "1",
         "min_num_defined" -> "1",
         "min_ratio_defined" -> "0.5",
-        "apply_to_project" -> "|cliques"))
+        "apply_to_project" -> ".cliques"))
       .project
     val viral = project.vertexAttributes("viral_num_after_iteration_1").runtimeSafeCast[Double]
     val stringId = project.vertexAttributes("id").runtimeSafeCast[String]
