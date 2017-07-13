@@ -169,6 +169,20 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
   })
 
+  register("Discard vertex attributes")(new ProjectTransformation(_) {
+    params += Choice("name", "Name", options = project.vertexAttrList, multipleChoice = true)
+    def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
+    override def summary = {
+      val names = params("name").replace(",", ", ")
+      s"Discard vertex attributes: $names"
+    }
+    def apply() = {
+      for (param <- splitParam("name")) {
+        project.deleteVertexAttribute(param)
+      }
+    }
+  })
+
   register("Rename vertex attributes")(new ProjectTransformation(_) {
     params ++= project.vertexAttrList.map {
       attr => Param(s"change_${attr.id}", attr.id, defaultValue = attr.id)
