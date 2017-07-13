@@ -17,7 +17,7 @@ module.exports = function(fw) {
       tableBrowser.expectNode([0], 'plum', '`plum`');
       tableBrowser.expectNode([1], 'This is a snapshot.', '`This is a snapshot.`');
       tableBrowser.toggleNode([1]);
-      tableBrowser.expectNode([1, 0], 'vertices', '`This is a snapshot.|vertices`');
+      tableBrowser.expectNode([1, 0], 'vertices', '`This is a snapshot..vertices`');
       tableBrowser.enterSearchQuery('snap');
       tableBrowser.expectNode([0], 'This is a snapshot.', '`This is a snapshot.`');
       tableBrowser.toggle();
