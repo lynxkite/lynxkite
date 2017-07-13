@@ -136,13 +136,18 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
   test("example graph - all vertices: Option[Double] * 10 throws error") {
     val expr = "income * 10.0"
     val g = ExampleGraph()().result
-    intercept[java.lang.AssertionError] { // Script throws a compilation error.
+    val e = intercept[javax.script.ScriptException] {
       DeriveScala.deriveAndInferReturnType(
         expr,
         Seq("income" -> g.income.entity),
-        g.vertexSet,
+        g.vertices,
         onlyOnDefinedAttrs = false)
     }
+    assert(e.getMessage ==
+      """<console>:18: error: value * is not a member of Option[Double]
+             income * 10.0
+                    ^
+""")
   }
 
   test("example graph - all vertices: two attributes") {
@@ -158,13 +163,20 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
   test("example graph - all vertices: two attributes wrong type") {
     val expr = "income + age" // Fails because income and age are Option[Double]-s.
     val g = ExampleGraph()().result
-    intercept[java.lang.AssertionError] {
+    val e = intercept[javax.script.ScriptException] {
       DeriveScala.deriveAndInferReturnType(
         expr,
         Seq("income" -> g.income.entity, "age" -> g.age.entity),
-        g.vertexSet,
+        g.vertices,
         onlyOnDefinedAttrs = false)
     }
+    assert(e.getMessage ==
+      """<console>:18: error: type mismatch;
+ found   : Option[Double]
+ required: String
+             income + age
+                      ^
+""")
   }
 
   def checkScala(expr: String, name: String, attr: Attribute[_], result: Set[(Int, String)]) = {
@@ -240,13 +252,15 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
 
   test("example graph - security manager") {
     val expr = """
-    println("hackers win")
+    new java.io.File("abc").exists()
     1.0"""
     val g = ExampleGraph()().result
     val derived = DeriveScala.derive[Double](
       expr, Seq(), vertexSet = Some(g.vertices))
-    intercept[java.lang.AssertionError] {
+    val e = intercept[org.apache.spark.SparkException] {
       derived.rdd.collect
     }
+    assert(e.getCause.getMessage ==
+      """access denied ("java.util.PropertyPermission" "user.dir" "read")""")
   }
 }

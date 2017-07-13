@@ -205,6 +205,22 @@ object ScalaScript {
     """
   }
 
+  // Compiles the fullCode using the engine, and throws a ScriptException with a meaningful
+  // error message in case of a compilation error.
+  private def compile(fullCode: String) = {
+    // The Scala compiler doesn't include the compilation error message, but prints it to the
+    // console, so we need to capture the console.
+    val os = new java.io.ByteArrayOutputStream
+    try {
+      Console.withOut(os) {
+        engine.compile(fullCode)
+      }
+    } catch {
+      case e: javax.script.ScriptException =>
+        throw new javax.script.ScriptException(new String(os.toByteArray(), "UTF-8"))
+    }
+  }
+
   private def inferType(
     code: String,
     paramTypes: Map[String, TypeTag[_]],
@@ -217,7 +233,7 @@ object ScalaScript {
     typeTagOf(eval _)
     """
     withContextClassLoader {
-      val compiledCode = engine.compile(fullCode)
+      val compiledCode = compile(fullCode)
       val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
         compiledCode.eval()
       }
@@ -257,7 +273,7 @@ object ScalaScript {
     evalWrapper _
     """
     withContextClassLoader {
-      val compiledCode = engine.compile(fullCode)
+      val compiledCode = compile(fullCode)
       val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
         compiledCode.eval()
       }
