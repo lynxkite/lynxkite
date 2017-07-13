@@ -85,7 +85,7 @@ object DeriveScala extends OpFromJson {
     val paramTypes = (attrTypes ++ scalarTypes).toMap[String, TypeTag[_]]
     checkInputTypes(paramTypes, exprString)
 
-    val tt = SerializableType(typeTag[T]).typeTag
+    val tt = SerializableType(typeTag[T]).typeTag // Throws an error if T is not SerializableType.
     val op = DeriveScala(exprString, attrTypes, scalarTypes, onlyOnDefinedAttrs)(tt)
 
     import Scripting._
