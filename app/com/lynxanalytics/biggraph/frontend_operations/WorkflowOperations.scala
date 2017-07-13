@@ -109,7 +109,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         OperationParams.SegmentationParam(param, title, attributeEditors)
       }
 
-      override protected val params = {
+      override val params = {
         val p = new ParameterHolder(context)
         p += attributeEditorParameter("apply_to_", "target", "Apply to (target)")
         p += attributeEditorParameter("apply_to_", "source", "Take from (source)")

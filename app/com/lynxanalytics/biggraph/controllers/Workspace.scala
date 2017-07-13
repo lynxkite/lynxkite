@@ -126,14 +126,19 @@ case class WorkspaceExecutionContext(
   // that are not in the list. (It would be confusing to keep these, since they do not show up on
   // the UI.) The unknown parameters can be, for example, left over from when the box was previously
   // connected to a different input.
+  // Similarly, parameters which are not defined - like unset aggregators - should be removed.
   protected def dropUnknownParameters: Workspace = {
     val states = allStates
     ws.copy(boxes = ws.boxes.map { box =>
       try {
         val op = getOperationForStates(box, states)
-        val params = op.toFE.parameters.map(_.id).toSet
-        box.copy(parameters = box.parameters.filter { case (k, v) => params.contains(k) })
-      } catch { case t: Throwable => box }
+        val params = op.params.getMetaMap
+        box.copy(parameters = box.parameters.filter {
+          case (k, v) => params.contains(k) && params(k).isDefined(v)
+        })
+      } catch {
+        case t: Throwable => box
+      }
     })
   }
 
