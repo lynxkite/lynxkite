@@ -45,3 +45,14 @@ table-kind import-wizard form {
 .operation-parameter-input {
   position: relative; /* For good placement of the parametric toggle. */
 }
+
+.left-aligned-dummy {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.right-aligned-dummy {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  text-align:right;
+}

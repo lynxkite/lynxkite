@@ -1,10 +1,22 @@
 <!-- This has to be inside a <form class="form-horizontal">. -->
 <div class="form-group" ng-repeat="param in meta.parameters">
   <label for="{{param.id}}" class="col-sm-4 control-label"
-      ng-if="!isVisualizationParam(param)">
+      ng-if="!isVisualizationParam(param) && param.kind !== 'dummy'">
     {{param.title}}
     <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
   </label>
+  <div
+    class="col-sm-12 left-aligned-dummy"
+    ng-if="param.kind === 'dummy' && !param.payload.title2">
+    {{param.title}}
+    <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
+  </div>
+  <div
+    class="col-sm-4 right-aligned-dummy"
+    ng-if="param.kind === 'dummy' && param.payload.title2">
+    {{param.title}}
+    <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
+  </div>
   <div ng-class="{
         'col-sm-8': !isVisualizationParam(param),
         'operation-parameter-input': true,
@@ -105,6 +117,12 @@
       on-ui-state-changed="onBlur()"
       project-state-id="box.outputs[0].stateId">
     </visualization-parameter>
+    <div
+      class = "left-aligned-dummy"
+      ng-if="param.kind === 'dummy' && param.payload.title2">
+      {{param.payload.title2}}
+      <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
+    </div>
 
     <i class="fa fa-dollar parametric-switch"
       drop-tooltip="Parametric: {{ pflags[param.id] ? 'yes' : 'no' }}"
