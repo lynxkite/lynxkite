@@ -100,18 +100,18 @@
       model="output[param.id]"
       class="operation-attribute-entry"></parameters-parameter>
     <visualization-parameter
-        ng-if="param.kind === 'visualization' && pflags[param.id] !== true"
-        ui-state="output[param.id]"
-        on-ui-state-changed="onBlur()"
-        project-state-id="box.outputs[0].stateId">
+      ng-if="param.kind === 'visualization' && pflags[param.id] !== true"
+      ui-state="output[param.id]"
+      on-ui-state-changed="onBlur()"
+      project-state-id="box.outputs[0].stateId">
     </visualization-parameter>
 
     <i class="fa fa-dollar parametric-switch"
-    drop-tooltip="Parametric: {{ pflags[param.id] ? 'yes' : 'no' }}"
-    drop-tooltip-position="top center"
-    ng-class="{ active: pflags[param.id] === true }"
-    ng-click="pflags[param.id] = !pflags[param.id]"
-    ng-if="param.kind !== 'dummy'">
-  </i>
+      drop-tooltip="Parametric: {{ pflags[param.id] ? 'yes' : 'no' }}"
+      drop-tooltip-position="top center"
+      ng-class="{ active: pflags[param.id] === true }"
+      ng-click="pflags[param.id] = !pflags[param.id]"
+      ng-if="param.kind !== 'dummy'">
+    </i>
   </div>
 </div>
