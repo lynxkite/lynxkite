@@ -469,14 +469,16 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
   import MetaGraphManager.StringAsUUID
   protected def tableFromGuid(guid: String): Table = manager.table(guid.asUUID)
 
-  // The parameter values without the last_settings and imported_table parameters. The
-  // last_settings parameter is only used to check if the settings are stale. The imported_table
-  // is generated from the other parameters and is populated in the frontend so it is easier to
-  // also exclude it.
+  // The set of those parameters that affect the resulting table of the import operation.
+  // The last_settings parameter is only used to check if the settings are stale. The
+  // imported_table is generated from the other parameters and is populated in the frontend so
+  // it is easier to also exclude it.
   private def currentSettings = params.toMap - "last_settings" - "imported_table"
 
-  // We store this in the "last_settings" parameter. It is stringified JSON so it can be used on
-  // the frontend to check the stale parameters.
+  // When the /ajax/importBox is called then the response contains the guid of the resulting table
+  // and also this string describing the settings at the moment of the import. On the frontend the
+  // table-kind directive gets this response and uses these two strings to populate the
+  // "imported_table" and "last_settings" parameters respectively.
   def settingsString(): String = {
     val realParamsJson = json.Json.toJson(currentSettings)
     json.Json.prettyPrint(realParamsJson)
@@ -484,25 +486,25 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
 
   private def getLastSettings = {
     val lastSettingsString = params.toMap.getOrElse("last_settings", "")
-    if (lastSettingsString == "")
-      Map()
-    else
+    if (lastSettingsString == "") { Map() }
+    else {
       json.Json.parse(lastSettingsString).as[Map[String, String]]
+    }
   }
 
-  protected def staleSettings(): Boolean = {
+  protected def areSettingsStale(): Boolean = {
     val lastSettings = getLastSettings
-    // For not needing to provide the last_hash parameter for testing we are also allowing it to
-    // be empty. This doesn't cause problem in practice since if the last_hash parameter is empty
-    // then there was no import yet so the assert on the "imported_table" fails before we get to
-    // the assert on the staleSettings.
-    lastSettings != Map() && lastSettings != currentSettings
+    // For not needing to provide the last_settings parameter for testing we are also allowing it to
+    // be empty. This doesn't cause problem in practice since in the getOutputs method we first
+    // assert if the "imported_table" is not empty. If the "last_settings" parameter is empty then
+    // there was no import yet so the first assert on the "imported_table" already fails.
+    lastSettings.isEmpty && lastSettings != currentSettings
   }
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     params.validate()
     assert(params("imported_table").nonEmpty, "You have to import the data first.")
-    assert(!staleSettings, "Import settings are stale. " +
+    assert(!areSettingsStale, "Import settings are stale. " +
       "Please click on the import button to apply the changed settings.")
     makeOutput(tableFromGuid(params("imported_table")))
   }
