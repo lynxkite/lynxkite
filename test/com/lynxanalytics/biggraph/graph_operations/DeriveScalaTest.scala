@@ -2,7 +2,6 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import org.scalatest.FunSuite
 
-import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 

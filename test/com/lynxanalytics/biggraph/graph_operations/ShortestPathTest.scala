@@ -7,8 +7,6 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.graph_operations._
 
-import com.lynxanalytics.biggraph.JavaScript
-
 class ShortestPathTest extends FunSuite with TestGraphOp {
 
   test("big random graph") {
