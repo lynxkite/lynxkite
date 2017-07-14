@@ -221,7 +221,7 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
     }
   }
 
-  // Aggregation parameters which are not defined should be removed.
+  // Aggregation parameters which are empty - i.e. no aggregator was defined - should be removed.
   protected def cleanAggregateParams(params: Map[String, String]): Map[String, String] = {
     params.filter { case (k, v) => !k.startsWith("aggregate_") || v.nonEmpty }
   }

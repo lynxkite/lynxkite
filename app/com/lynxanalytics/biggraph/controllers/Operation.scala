@@ -304,11 +304,10 @@ abstract class SimpleOperation(protected val context: Operation.Context) extends
     context.meta.categoryId,
     FEStatus.enabled)
   def getOutputs(): Map[BoxOutput, BoxOutputState] = ???
-  // The common logic for cleaning params for every operation.
-  // For boxes that are able to provide their parameter list, we discard the recorded parameters
-  // that are not in the list. (It would be confusing to keep these, since they do not show up on
-  // the UI.) The unknown parameters can be, for example, left over from when the box was previously
-  // connected to a different input.
+  // The common logic for cleaning box params for every operation.
+  // We discard the recorded parameters that are not present among the parameter metas. (It would
+  // be confusing to keep these, since they do not show up on the UI.) The unknown parameters can
+  // be, for example, left over from when the box was previously connected to a different input.
   def cleanParameters(params: Map[String, String]): Map[String, String] = {
     val paramsMeta = this.params.getMetaMap
     cleanParametersImpl(params.filter { case (k, v) => paramsMeta.contains(k) })
