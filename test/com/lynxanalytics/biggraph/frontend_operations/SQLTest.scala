@@ -1,12 +1,12 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
-import com.lynxanalytics.biggraph.graph_api.{DataManager, ThreadUtil}
+import com.lynxanalytics.biggraph.graph_api.{ DataManager, ThreadUtil }
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations.UnresolvedColumnException
 import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import org.apache.spark
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SQLContext}
+import org.apache.spark.sql.{ DataFrame, Row, SQLContext }
 
 class SQLTest extends OperationsTestBase {
   private def toSeq(row: spark.sql.Row): Seq[Any] = {
