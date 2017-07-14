@@ -24,6 +24,7 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.Project
 import org.apache.spark.sql.catalyst.plans.logical.SubqueryAlias
 import org.apache.spark.sql.catalyst.plans.logical.UnaryNode
+import org.apache.spark.sql.catalyst.plans.logical.Union
 import org.apache.spark.sql.execution.SparkSqlParser
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types
@@ -71,7 +72,7 @@ object ProtoTable {
     case exp: Expression => exp.children.flatMap(parseExpression)
   }
 
-  private def getRequiredFields(plan: LogicalPlan): List[(String, Seq[NamedExpression])] =
+  private def getRequiredFields(plan: LogicalPlan): Seq[(String, Seq[NamedExpression])] =
     plan match {
       case SubqueryAlias(name, Project(projectList, _), _) =>
         List((name, projectList))
@@ -83,6 +84,8 @@ object ProtoTable {
       case s: UnaryNode => getRequiredFields(s.child)
       case s: BinaryNode =>
         getRequiredFields(s.left) ++ getRequiredFields(s.right)
+      case s: Union =>
+        s.children.flatMap(getRequiredFields)
     }
 }
 
