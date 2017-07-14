@@ -296,10 +296,10 @@ class JoinTest extends OperationsTestBase {
       ))
       .box("Aggregate to segmentation",
         Map(
-          "apply_to_project" -> "|bucketing",
+          "apply_to_project" -> ".bucketing",
           "aggregate_name" -> "first"))
       .box("Rename vertex attribute",
-        Map("apply_to_project" -> "|bucketing",
+        Map("apply_to_project" -> ".bucketing",
           "before" -> "name_first", "after" -> "name"))
     val join = box("Project rejoin",
       Map(
@@ -309,7 +309,7 @@ class JoinTest extends OperationsTestBase {
     val result =
       join.box("Aggregate from segmentation",
         Map(
-          "apply_to_project" -> "|bucketing",
+          "apply_to_project" -> ".bucketing",
           "aggregate_name" -> "first"))
         .box("SQL1",
           Map("sql" -> "select name,bucketing_name_first from `vertices`"))
