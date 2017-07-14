@@ -106,7 +106,7 @@ trait Operation {
   def summary: String
   def getOutputs: Map[BoxOutput, BoxOutputState]
   def toFE: FEOperationMeta
-  def params: ParameterHolder
+  def cleanParameters(params: Map[String, String]): Map[String, String]
 }
 object Operation {
   case class Category(
@@ -294,7 +294,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 
 // Defines simple defaults for everything.
 abstract class SimpleOperation(protected val context: Operation.Context) extends Operation {
-  val params = new ParameterHolder(context)
+  protected val params = new ParameterHolder(context)
   protected val id = context.meta.operationId
   val title = id
   def summary = title
@@ -306,6 +306,13 @@ abstract class SimpleOperation(protected val context: Operation.Context) extends
     context.meta.categoryId,
     FEStatus.enabled)
   def getOutputs(): Map[BoxOutput, BoxOutputState] = ???
+  // The common logic for cleaning params fdor every operation.
+  def cleanParameters(params: Map[String, String]): Map[String, String] = {
+    val paramsMeta = this.params.getMetaMap
+    cleanParametersImpl(params.filter { case (k, v) => paramsMeta.contains(k) })
+  }
+  // Custom hook for cleaning params for operations to override.
+  def cleanParametersImpl(params: Map[String, String]): Map[String, String] = params
 }
 
 // Adds a lot of conveniences for working with projects and tables.
@@ -320,7 +327,7 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
   protected def help = // Add to notes for help link.
     "<help-popup href=\"" + Operation.htmlId(id) + "\"></help-popup>"
 
-  override val params = {
+  override protected val params = {
     val params = new ParameterHolder(context)
     // "apply_to_*" is used to pick the base project or segmentation to apply the operation to.
     // An "apply_to_*" parameter is added for each project input.

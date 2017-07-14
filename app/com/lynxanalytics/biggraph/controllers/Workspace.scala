@@ -132,10 +132,7 @@ case class WorkspaceExecutionContext(
     ws.copy(boxes = ws.boxes.map { box =>
       try {
         val op = getOperationForStates(box, states)
-        val params = op.params.getMetaMap
-        box.copy(parameters = box.parameters.filter {
-          case (k, v) => params.contains(k) && params(k).isDefined(v)
-        })
+        box.copy(parameters = op.cleanParameters(box.parameters))
       } catch {
         case t: Throwable => box
       }

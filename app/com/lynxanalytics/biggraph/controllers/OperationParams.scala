@@ -58,7 +58,6 @@ object OperationParams {
     val multipleChoice = true
     val defaultValue = ""
     def validate(value: String): Unit = {}
-    override def isDefined(value: String): Boolean = value.nonEmpty
   }
 
   case class FileParam(id: String, title: String) extends OperationParameterMeta {

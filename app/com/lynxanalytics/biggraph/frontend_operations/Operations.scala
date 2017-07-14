@@ -221,6 +221,10 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
     }
   }
 
+  protected def cleanAggregateParams(params: Map[String, String]): Map[String, String] = {
+    params.filter { case (k, v) => !k.startsWith("aggregate_") || v.nonEmpty }
+  }
+
   // Performs AggregateAttributeToScalar.
   protected def aggregate[From, Intermediate, To](
     attributeWithAggregator: AttributeWithAggregator[From, Intermediate, To]): Scalar[To] = {
