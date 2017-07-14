@@ -103,6 +103,8 @@ trait Operation {
   def summary: String
   def getOutputs: Map[BoxOutput, BoxOutputState]
   def toFE: FEOperationMeta
+  // Custom logic for operations to remove certain parameters.
+  def cleanParameters(params: Map[String, String]): Map[String, String]
 }
 object Operation {
   case class Category(
@@ -302,6 +304,16 @@ abstract class SimpleOperation(protected val context: Operation.Context) extends
     context.meta.categoryId,
     FEStatus.enabled)
   def getOutputs(): Map[BoxOutput, BoxOutputState] = ???
+  // The common logic for cleaning box params for every operation.
+  // We discard the recorded parameters that are not present among the parameter metas. (It would
+  // be confusing to keep these, since they do not show up on the UI.) The unknown parameters can
+  // be, for example, left over from when the box was previously connected to a different input.
+  def cleanParameters(params: Map[String, String]): Map[String, String] = {
+    val paramsMeta = this.params.getMetaMap
+    cleanParametersImpl(params.filter { case (k, v) => paramsMeta.contains(k) })
+  }
+  // Custom hook for cleaning params for operations to override.
+  def cleanParametersImpl(params: Map[String, String]): Map[String, String] = params
 }
 
 // Adds a lot of conveniences for working with projects and tables.

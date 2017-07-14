@@ -324,6 +324,46 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     }
   }
 
+  test("custom box with aggregation") {
+    using("test-custom-box") {
+      val anchor = anchorWithParams()
+      val inputBox = Box("input", "Input", Map("name" -> "in1"), 0, 0, Map())
+      val aggr = {
+        val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+        val aggr = Box("aggr", "Aggregate edge attribute globally",
+          Map("prefix" -> "", "aggregate_weight" -> "sum", "aggregate_comment" -> ""), 0, 0,
+          Map("project" -> eg.output("project")))
+        // This removes the comment aggregator. In reality the UI calls this after every change.
+        set("test-custom-box", Workspace(List(anchor, eg, aggr)))
+        // We connect aggr to the inputBox instead of eg0.
+        get("test-custom-box").workspace.boxes.find(_.id == "aggr").get
+          .copy(inputs = Map("project" -> inputBox.output("input")))
+      }
+
+      // Let's create a custom box.
+      val outputBox = Box(
+        "output", "Output", Map("name" -> "out1"), 0, 0, Map("output" -> aggr.output("project")))
+      set("test-custom-box", Workspace(List(anchor, inputBox, aggr, outputBox)))
+
+      // Now use "test-custom-box" as a custom box.
+      val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+      val cb1 = Box("cb1", "test-custom-box", Map(), 0, 0, Map("in1" -> eg.output("project")))
+      assert({
+        val ws = Workspace.from(eg, cb1)
+        context(ws).allStates(cb1.output("out1")).project.scalars.contains("weight_sum")
+      })
+
+      // Remove the comment edge attribute and see if the custom box still works.
+      val dea = Box("d", "Discard edge attributes", Map("name" -> "comment"), 0, 0,
+        Map("project" -> eg.output("project")))
+      val cb2 = Box("cb2", "test-custom-box", Map(), 0, 0, Map("in1" -> dea.output("project")))
+      assert({
+        val ws = Workspace.from(eg, dea, cb2)
+        context(ws).allStates(cb2.output("out1")).project.scalars.contains("weight_sum")
+      })
+    }
+  }
+
   test("dropping unrecognized parameters") {
     using("test-workspace") {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
