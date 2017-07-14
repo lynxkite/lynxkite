@@ -2,13 +2,13 @@
   class="col-sm-12 left-aligned-dummy"
   ng-if="!param.payload.title2">
   {{param.title}}
-  <help-popup href="{{meta.htmlId + '-' + 'title'}}"></help-popup>
+  <help-popup href="{{htmlId + '-' + 'title'}}"></help-popup>
 </div>
 <div
   class="col-sm-4 right-aligned-dummy"
   ng-if="param.payload.title2">
   {{param.title}}
-  <help-popup href="{{meta.htmlId + '-' + 'title'}}"></help-popup>
+  <help-popup href="{{htmlId + '-' + 'title'}}"></help-popup>
 </div>
 <div ng-class="{
       'col-sm-8': !isVisualizationParam(param),
@@ -19,6 +19,6 @@
     class="left-aligned-dummy"
     ng-if="param.payload.title2">
     {{param.payload.title2}}
-    <help-popup href="{{meta.htmlId + '-' + 'title2'}}"></help-popup>
+    <help-popup href="{{htmlId + '-' + 'title2'}}"></help-popup>
   </div>
 </div>
