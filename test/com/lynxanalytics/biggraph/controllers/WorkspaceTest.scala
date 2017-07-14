@@ -126,7 +126,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(
         op.parameters.find(_.id == "weights").get.options.map(_.id) == Seq("!no weight", "weight"))
       assert(
-        op.parameters.find(_.id == "apply_to_project").get.options.map(_.id) == Seq("", "|cc"))
+        op.parameters.find(_.id == "apply_to_project").get.options.map(_.id) == Seq("", ".cc"))
     }
   }
 
