@@ -278,7 +278,7 @@ angular.module('biggraph')
 
     projectPath: function(projectName) {
       if (!projectName) { return []; }
-      return projectName.split('|');
+      return projectName.split('.');
     },
 
     captureClick: function(event) {
