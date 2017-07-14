@@ -6,7 +6,8 @@ angular.module('biggraph').directive('dummyParameter',
     return {
       restrict: 'E',
       scope: {
-        param: '='
+        param: '=',
+        htmlId: '='
       },
       templateUrl: 'scripts/operation/dummy-parameter.html'
     };
