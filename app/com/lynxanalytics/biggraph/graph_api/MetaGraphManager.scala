@@ -296,7 +296,7 @@ object BuiltIns {
         val cp = json.as[Workspace].checkpoint()
         frame.setCheckpoint(cp)
       } catch {
-        case e: Throwable => throw new Exception(s"failed to load $file.", e)
+        case e: Throwable => throw new Exception(s"Failed to create built-in for file $file.", e)
       }
     }
     log.info("Built-ins loaded from disk.")
@@ -313,7 +313,11 @@ object BuiltIns {
     if (opdir.exists) {
       val files = opdir.listFiles.sortBy(_.getName)
       files.map { f =>
-        f.getName() -> Json.parse(FileUtils.readFileToString(f, "utf8"))
+        try {
+          f.getName() -> Json.parse(FileUtils.readFileToString(f, "utf8"))
+        } catch {
+          case e: Throwable => throw new Exception(s"Failed to load built-in file $f.", e)
+        }
       }
     } else Iterable()
   }
