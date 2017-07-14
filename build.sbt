@@ -42,12 +42,9 @@ libraryDependencies ++= Seq(
   // This way we get s3 consistent view support.)
   "org.apache.httpcomponents" % "httpclient" % "4.5.1",
   "org.apache.commons" % "commons-lang3" % "3.5",
-  "org.apache.spark" %% "spark-core" % sparkVersion.value % "provided",
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
   "org.mozilla" % "rhino" % "1.7.7",
   "org.scalatest" %% "scalatest" % "2.2.6" % "test",
-  "org.apache.spark" %% "spark-mllib" % sparkVersion.value % "provided",
-  "org.apache.spark" %% "spark-hive" % sparkVersion.value % "provided",
   // For accessing S3 fs from local instance.
   "org.apache.hadoop" % "hadoop-aws" % "2.7.3" excludeAll(
     // But we still want to take Hadoop from Spark.
@@ -64,22 +61,32 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" % "ammonite-sshd" % "0.5.7" cross CrossVersion.full,
   // Hive import seems to need this.
   "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.17",
-  "com.google.guava" % "guava" % "16.0.1",
   // For SPARK-10306.
   "org.scala-lang" % "scala-library" % "2.11.8",
   // Fast linear algebra.
-  "org.scalanlp" %% "breeze" % "0.12",
-  "org.scalanlp" %% "breeze-natives" % "0.12",
-  "com.google.guava" % "guava" % "15.0",
+  "org.scalanlp" %% "breeze" % "0.13.1",
+  "org.scalanlp" %% "breeze-natives" % "0.13.1",
   // This is a dependency of Spark. Needed here explicitly
   // so that SetupMetricsSingleton compiles.
   "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209",
   // The Google Cloud Storage connector for Spark and Hive
-  "com.google.cloud.bigdataoss" % "gcs-connector" % "1.5.2-hadoop2",
+  "com.google.cloud.bigdataoss" % "gcs-connector" % "1.6.1-hadoop2",
   "org.geotools" % "gt-shapefile" % "16.1",
   // Plot drawing
   "org.vegas-viz" %% "vegas" % "0.3.9",
   "org.vegas-viz" %% "vegas-spark" % "0.3.9")
+
+// We put the local Spark installation on the classpath for compilation and testing instead of using
+// it from Maven. The version on Maven pulls in an unpredictable (old) version of Hadoop.
+def sparkJars(version: String) = {
+  val home = System.getProperty("user.home")
+  val jarsDir = new java.io.File(s"$home/spark-$version/jars")
+  (jarsDir * "*.jar").get
+}
+
+dependencyClasspath in Compile ++= sparkJars(sparkVersion.value)
+
+dependencyClasspath in Test ++= sparkJars(sparkVersion.value)
 
 resolvers ++= Seq(
   "Twitter Repository" at "http://maven.twttr.com",
