@@ -46,6 +46,8 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
     def apply() = {
       applyMergeParallelEdges(project, params, byKey = false)
     }
+
+    override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
   })
 
   register("Merge parallel edges by attribute")(new ProjectTransformation(_) {
@@ -57,6 +59,8 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
     def apply() = {
       applyMergeParallelEdges(project, params, byKey = true)
     }
+
+    override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
   })
 
   register("Merge vertices by attribute")(new ProjectTransformation(_) {
@@ -113,6 +117,7 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
         }
       }
     }
+    override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
   })
 
   register("Replace edges with triadic closure")(new ProjectTransformation(_) {
