@@ -77,7 +77,9 @@
 
   <div ng-repeat="directory in data.directories"
     id="directory-{{ pathInside(directory) | id }}"
-    class="entry" href ng-click="enterDirectory($event, directory)">
+    class="entry directory-entry"
+    href
+    ng-click="enterDirectory($event, directory)">
     <dir-entry-icon
       object-type="'directory'"
       class="icon">
@@ -95,12 +97,11 @@
   <div
     ng-repeat="object in data.objects"
     id="{{ object.objectType }}-{{ pathInside(object.name) | id }}"
-    class="entry"
+    class="entry {{ object.objectType }}-entry"
     ng-class="{ 'disabled': object.objectType == 'snapshot' }"
     href
     ng-click="objectClick($event, object)"
     ng-class="{ error: object.error }">
-
     <dir-entry-icon
         object-type="object.icon"
         class="icon">
