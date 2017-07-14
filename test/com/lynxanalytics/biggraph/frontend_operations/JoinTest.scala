@@ -316,5 +316,22 @@ class JoinTest extends OperationsTestBase {
         .table.df.collect.toList.sortBy(_.getString(0))
     assert(result == List(Row("Adam", "Adam"), Row("Eve", "Eve"), Row("Isolated Joe", null)))
   }
+
+  test("Edges can be copied over") {
+    val (target, sourceRoot) = getTargetSource()
+    val source = sourceRoot.box("Replace edges with triadic closure", Map())
+      .box("Derive edge attribute",
+        Map("type" -> "String", "output" -> "edge_attr",
+          "expr" -> "src$name + '_' + dst$name"))
+    val result = box("Project rejoin",
+      Map(
+        "edge" -> "yes"
+      ), Seq(target, source))
+      .box("SQL1",
+        Map("sql" -> "select edge_edge_attr from `edges`"))
+      .table.df.collect.toList.sortBy(_.getString(0))
+    assert(result == List(Row("Adam_Adam"), Row("Eve_Eve")))
+  }
+
 }
 
