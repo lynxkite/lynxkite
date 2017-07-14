@@ -4,8 +4,6 @@ package com.lynxanalytics.biggraph.graph_operations
 import scala.reflect._
 import scala.reflect.runtime.universe._
 
-import com.lynxanalytics.biggraph.JavaScript
-import com.lynxanalytics.biggraph.JavaScriptEvaluator
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 

@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import scala.reflect.runtime.universe._
 
-import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
 
 import com.lynxanalytics.sandbox.ScalaScript
