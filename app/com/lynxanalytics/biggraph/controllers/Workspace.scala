@@ -122,7 +122,7 @@ case class WorkspaceExecutionContext(
     this.dropUnknownParameters
   }
 
-  // Drop certain parameters from the Box based on the logic implemented in the corresponding op.
+  // Drop certain parameters from the box based on the logic implemented in the corresponding op.
   protected def dropUnknownParameters: Workspace = {
     val states = allStates
     ws.copy(boxes = ws.boxes.map { box =>
