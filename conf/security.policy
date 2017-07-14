@@ -1,7 +1,4 @@
-//
-// See issue #6129
-// We grant the derby jar this single SystemPermission
-//
-grant codeBase "file:${lynxkite.derby_jar}" {
-        permission org.apache.derby.security.SystemPermission "engine", "usederbyinternals";
+grant {
+  // Allow Derby to work. #6129
+  permission org.apache.derby.security.SystemPermission "engine", "usederbyinternals";
 };
