@@ -1,11 +1,12 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
-import com.lynxanalytics.biggraph.graph_api.{ DataManager, ThreadUtil }
+import com.lynxanalytics.biggraph.graph_api.{DataManager, ThreadUtil}
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_operations.UnresolvedColumnException
 import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import org.apache.spark
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{ DataFrame, Row, SQLContext }
+import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 
 class SQLTest extends OperationsTestBase {
   private def toSeq(row: spark.sql.Row): Seq[Any] = {
@@ -128,6 +129,55 @@ class SQLTest extends OperationsTestBase {
       Seq("Eve loves Adam", "Eve", "Adam"),
       Seq("Adam loves Eve", "Adam", "Eve"),
       Seq("Bob loves Eve", "Bob", "Eve")))
+  }
+
+  test("union") {
+    val one = box("Create example graph")
+    val two = box("Create example graph")
+    val table = box("SQL2", Map("sql" -> """
+      select * from (select edge_comment
+      from `one|edges`
+      union all
+      select edge_comment
+      from `two|edges`)
+      order by edge_comment
+      """), Seq(one, two)).table
+    assert(table.schema.map(_.name) == Seq("edge_comment"))
+    val data = table.df.collect.toSeq.map(row => toSeq(row))
+    assert(data == Seq(
+      Seq("Adam loves Eve"),
+      Seq("Adam loves Eve"),
+      Seq("Bob envies Adam"),
+      Seq("Bob envies Adam"),
+      Seq("Bob loves Eve"),
+      Seq("Bob loves Eve"),
+      Seq("Eve loves Adam"),
+      Seq("Eve loves Adam")))
+  }
+
+  test("group by") {
+    val table = box("Create example graph")
+      .box("SQL1", Map("sql" -> "select id, count(*) as count from vertices group by id"))
+      .table
+    assert(table.schema.map(_.name) == Seq("id", "count"))
+  }
+
+  test("no table") {
+    val table = box("Create example graph")
+      .box("SQL1", Map("sql" -> "select 1 as one, int(null) as n"))
+      .table
+    assert(table.schema.map(_.name) == Seq("one", "n"))
+  }
+
+  test("missing column") {
+    intercept[AssertionError] {
+      val table = box("Create example graph")
+        .box("SQL1", Map("sql" -> "select nonexistent from vertices"))
+        .table
+    } match {
+      case a: AssertionError =>
+        println(a.getMessage.contains("column cannot be found"))
+    }
   }
 
   test("alias") {
