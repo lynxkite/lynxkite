@@ -94,17 +94,24 @@ case class NewParameter[T: Writes: Reads](paramName: String, defaultValue: T) {
 }
 
 object SerializableType {
+  val vectorPattern = "Vector\\[(.*)\\]".r
   def fromJson(j: json.JsValue): SerializableType[_] = {
-    (j \ "typename").as[String] match {
+    typeFromString((j \ "typename").as[String])
+  }
+
+  def typeFromString(s: String): SerializableType[_] = {
+    s match {
       case "String" => string
       case "Double" => double
       case "Long" => long
       case "Int" => int
-      case "Vector[String]" => stringVector
-      case "Vector[Double]" => doubleVector
-      case "Vector[Vector[String]]" => stringVectorVector
-      case "Vector[Vector[Double]]" => doubleVectorVector
+      case vectorPattern(innerTypeString) => vectorTypeFromString(innerTypeString)
     }
+  }
+
+  def vectorTypeFromString(s: String): SerializableType[_] = {
+    val innerType = typeFromString(s)
+    vector(innerType)
   }
 
   val string = new SerializableType[String]("String")
@@ -113,18 +120,13 @@ object SerializableType {
   val int = new SerializableType[Int]("Int")
 
   // Every serializable type defines an ordering here, but we never use it for vectors.
-  class MockVectorOrdering[T] extends Ordering[Vector[T]] with Serializable {
+  class MockVectorOrdering[T: TypeTag] extends Ordering[Vector[T]] with Serializable {
     def compare(x: Vector[T], y: Vector[T]): Int = ???
   }
 
-  implicit val oSV = new MockVectorOrdering[String]
-  val stringVector = new SerializableType[Vector[String]]("Vector[String]")
-  implicit val oSVV = new MockVectorOrdering[Vector[String]]
-  val stringVectorVector = new SerializableType[Vector[Vector[String]]]("Vector[Vector[String]]")
-  implicit val oDV = new MockVectorOrdering[Double]
-  val doubleVector = new SerializableType[Vector[Double]]("Vector[Double]")
-  implicit val oDVV = new MockVectorOrdering[Vector[Double]]
-  val doubleVectorVector = new SerializableType[Vector[Vector[Double]]]("Vector[Vector[Double]]")
+  def vector(innerType: SerializableType[_]): SerializableType[_] = {
+    new VectorSerializableType(s"Vector[${innerType.getTypename}]")(innerType.typeTag)
+  }
 
   def apply[T: TypeTag]: SerializableType[T] = {
     apply(typeOf[T]).asInstanceOf[SerializableType[T]]
@@ -135,10 +137,7 @@ object SerializableType {
     else if (t =:= typeOf[Double]) double
     else if (t =:= typeOf[Long]) long
     else if (t =:= typeOf[Int]) int
-    else if (t =:= typeOf[Vector[String]]) stringVector
-    else if (t =:= typeOf[Vector[Double]]) doubleVector
-    else if (t =:= typeOf[Vector[Vector[String]]]) stringVectorVector
-    else if (t =:= typeOf[Vector[Vector[Double]]]) doubleVectorVector
+    else if (TypeTagUtil.isOfKind1[Vector](t)) vector(apply(t.asInstanceOf[TypeRefApi].args(0)))
     else throw new AssertionError(s"Unsupported type: $t")
   }
 
@@ -149,9 +148,18 @@ object SerializableType {
     implicit def typeTag[T](implicit st: SerializableType[T]) = st.typeTag
   }
 }
-class SerializableType[T] private (typename: String)(implicit val classTag: ClassTag[T],
-                                                     val format: play.api.libs.json.Format[T],
-                                                     val ordering: Ordering[T],
-                                                     val typeTag: TypeTag[T]) extends ToJson with Serializable {
+class SerializableType[T] private[graph_api] (
+    typename: String)(implicit val classTag: ClassTag[T],
+                      val format: play.api.libs.json.Format[T],
+                      val ordering: Ordering[T],
+                      val typeTag: TypeTag[T]) extends ToJson with Serializable {
   override def toJson = Json.obj("typename" -> typename)
+  def getTypename = typename
+}
+class VectorSerializableType[T: TypeTag] private[graph_api] (
+  typename: String) extends SerializableType[Vector[T]](typename)(
+  classTag = RuntimeSafeCastable.classTagFromTypeTag(typeTag),
+  format = TypeTagToFormat.vectorToFormat(typeTag),
+  ordering = new SerializableType.MockVectorOrdering()(typeTag),
+  typeTag = TypeTagUtil.vectorTypeTag(typeTag)) {
 }
