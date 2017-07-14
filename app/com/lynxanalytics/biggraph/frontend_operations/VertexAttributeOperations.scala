@@ -199,17 +199,15 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
         s"Filled ${fillStrings.mkString(", ")}"
       }
       def apply() = {
-        attrParams.toMap.foreach {
-          case (name, const) => {
-            val attr = project.vertexAttributes(name)
-            val op: graph_operations.AddConstantAttribute[_] =
-              graph_operations.AddConstantAttribute.doubleOrString(
-                isDouble = attr.is[Double], const)
-            val default = op(op.vs, project.vertexSet).result
-            project.newVertexAttribute(
-              name, unifyAttribute(attr, default.attr.entity),
-              project.viewer.getVertexAttributeNote(name) + s" (filled with default $const)" + help)
-          }
+        for ((name, const) <- attrParams.toMap) {
+          val attr = project.vertexAttributes(name)
+          val op: graph_operations.AddConstantAttribute[_] =
+            graph_operations.AddConstantAttribute.doubleOrString(
+              isDouble = attr.is[Double], const)
+          val default = op(op.vs, project.vertexSet).result
+          project.newVertexAttribute(
+            name, unifyAttribute(attr, default.attr.entity),
+            project.viewer.getVertexAttributeNote(name) + s" (filled with default $const)" + help)
         }
       }
     })
