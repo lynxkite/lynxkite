@@ -93,9 +93,6 @@ abstract class OperationParameterMeta {
   def validate(value: String): Unit
   def toFE = FEOperationParameterMeta(
     id, title, kind, defaultValue, options, multipleChoice, payload)
-  // Returns false iff the a certain value for this parameter is the equivalent
-  // of an unset parameter value.
-  def isDefined(value: String): Boolean = true
 }
 
 // An Operation is the computation that a Box represents in a workspace.
@@ -106,6 +103,7 @@ trait Operation {
   def summary: String
   def getOutputs: Map[BoxOutput, BoxOutputState]
   def toFE: FEOperationMeta
+  // Custom logic for operations to remove certain parameters.
   def cleanParameters(params: Map[String, String]): Map[String, String]
 }
 object Operation {
@@ -306,7 +304,7 @@ abstract class SimpleOperation(protected val context: Operation.Context) extends
     context.meta.categoryId,
     FEStatus.enabled)
   def getOutputs(): Map[BoxOutput, BoxOutputState] = ???
-  // The common logic for cleaning params fdor every operation.
+  // The common logic for cleaning params for every operation.
   def cleanParameters(params: Map[String, String]): Map[String, String] = {
     val paramsMeta = this.params.getMetaMap
     cleanParametersImpl(params.filter { case (k, v) => paramsMeta.contains(k) })
