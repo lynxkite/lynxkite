@@ -1,7 +1,7 @@
 // Displays dummy parameter.
 'use strict';
 
-angular.module('biggraph').directive('dummyParam',
+angular.module('biggraph').directive('dummyParameter',
   function() {
     return {
       restrict: 'E',
