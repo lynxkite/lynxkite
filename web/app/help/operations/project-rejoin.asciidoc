@@ -22,13 +22,23 @@ Please, bear it in mind that both attributes and segmentations will overwrite
 the original attributes and segmentations on the right side in case there is
 a name collision.
 
+When vertex attributes are joined, it is also possible to copy over the edges from
+the source graph (provided that the source graph has edges). In this case, the
+original edges in the target graph are dropped, and the source edges (along with
+their attributes) will take their place.
+
 ====
 [[attrs]] Attributes::
 Attributes that should be joined to the project. They overwrite attributes in the
-left side project which have identical names.
+target project which have identical names.
 
 [[segs]] Segmentations::
-Segmentations to join to the project. They overwrite segmentations in the left
+Segmentations to join to the project. They overwrite segmentations in the target
 side of the project which have identical names.
+
+[[edge]] Copy edges::
+When set, the edges of the source project (and their attributes) will replace
+the edges of the target project.
+
 
 ====
