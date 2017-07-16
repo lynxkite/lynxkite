@@ -1,0 +1,5 @@
+## Built-ins
+
+The `built-ins` directory is created by default for every LynxKite instance. It contains
+helpful built-in workspaces which can be used as custom boxes. Built-ins are loaded automatically
+every time LynxKite restarts and should not be modified directly.
