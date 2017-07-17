@@ -77,6 +77,7 @@ case class FEScalar(
 case class FEEntryListElement(
     name: String,
     objectType: String,
+    icon: String,
     notes: String = "",
     vertexCount: Option[FEScalar] = None, // Whether the project has vertices defined.
     edgeCount: Option[FEScalar] = None, // Whether the project has edges defined.
