@@ -139,30 +139,36 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
 
   register(
     "Fill edge attribute with constant default value")(new ProjectTransformation(_) {
-      params ++= List(
-        Choice(
-          "attr", "Edge attribute",
-          options = project.edgeAttrList[String] ++ project.edgeAttrList[Double]),
-        Param("def", "Default value"))
+      params += DummyParam("text", "Attributes:", "Default values:")
+      params ++= project.edgeAttrList.map {
+        attr => Param(s"fill_${attr.id}", attr.id)
+      }
       def enabled = FEStatus.assert(
         (project.edgeAttrList[String] ++ project.edgeAttrList[Double]).nonEmpty,
         "No edge attributes.")
+      val attrParams: Map[String, String] = params.toMap.collect {
+        case (name, value) if name.startsWith("fill_") && value.nonEmpty => (name.stripPrefix("fill_"), value)
+      }
       override def summary = {
-        val name = params("attr")
-        s"Fill edge attribute '$name' with constant default value"
+        val fillStrings = attrParams.map {
+          case (name, const) => s"${name} with ${const}"
+        }
+        s"Fill ${fillStrings.mkString(", ")}"
       }
       def apply() = {
-        val attr = project.edgeAttributes(params("attr"))
-        val paramDef = params("def")
-        val op: graph_operations.AddConstantAttribute[_] =
-          graph_operations.AddConstantAttribute.doubleOrString(
-            isDouble = attr.is[Double], paramDef)
-        val default = op(op.vs, project.edgeBundle.idSet).result
-        project.newEdgeAttribute(
-          params("attr"), unifyAttribute(attr, default.attr.entity),
-          project.viewer.getEdgeAttributeNote(params("attr")) + s" (filled with default $paramDef)" + help)
+        for ((name, const) <- attrParams.toMap) {
+          val attr = project.edgeAttributes(name)
+          val op: graph_operations.AddConstantAttribute[_] =
+            graph_operations.AddConstantAttribute.doubleOrString(
+              isDouble = attr.is[Double], const)
+          val default = op(op.vs, project.edgeSet).result
+          project.newEdgeAttribute(
+            name, unifyAttribute(attr, default.attr.entity),
+            project.viewer.getEdgeAttributeNote(name) + s" (filled with default $const)" + help)
+        }
       }
     })
+
 
   register("Merge two edge attributes")(new ProjectTransformation(_) {
     params ++= List(

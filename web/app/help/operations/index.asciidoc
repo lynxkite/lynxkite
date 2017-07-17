@@ -249,7 +249,7 @@ include::expose-internal-edge-id.asciidoc[]
 
 include::expose-internal-vertex-id.asciidoc[]
 
-include::fill-edge-attribute-with-constant-default-value.asciidoc[]
+include::fill-edge-attributes-with-constant-default-value.asciidoc[]
 
 include::fill-vertex-attributes-with-constant-default-values.asciidoc[]
 
@@ -325,7 +325,7 @@ include::pull-segmentation-one-level-up.asciidoc[]
 
 include::reduce-vertex-attributes-to-two-dimensions.asciidoc[]
 
-include::rename-edge-attribute.asciidoc[]
+include::rename-edge-attributes.asciidoc[]
 
 include::rename-scalar.asciidoc[]
 
