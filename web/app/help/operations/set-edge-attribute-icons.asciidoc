@@ -1,4 +1,4 @@
-### Set edge attribute icon
+### Set edge attribute icons
 
 Associates an icon with an edge attribute. It has no effect beyond highlighting something on the
 user interface.
@@ -9,9 +9,10 @@ https://www.google.com/get/noto/help/emoji/[Google Noto Font].
 This operation is more easily accessed from the attribute's dropdown menu in the project view.
 
 ====
-[[name]] Attribute::
-The attribute to highlight.
+[[title]] Attributes::
+Edge attributes of the project.
 
-[[icon]] Icon::
-One of the supported icon names, such as `snowman_without_snow`. Leave empty to _remove_ the icon.
+[[title2]] Icon names::
+Leave empty to _remove_ the icon for the corresponding attribute
+or add one of the supported icon names, such as `snowman_without_snow`.
 ====
