@@ -9,6 +9,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.graph_api.BuiltIns
 
 trait OperationsTestBase extends FunSuite with TestGraphOp {
   val res = getClass.getResource("/controllers/OperationsTest/").toString
@@ -16,6 +17,8 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
   val ops = new Operations(this)
   val sql = new SQLController(this, ops)
   val user = serving.User.fake
+  BuiltIns.createBuiltIns(metaGraphManager)
+
 
   case class TestBox(
       operationId: String,
