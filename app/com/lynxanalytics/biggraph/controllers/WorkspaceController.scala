@@ -44,6 +44,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   implicit val entityProgressManager: EntityProgressManager = env.entityProgressManager
 
   val ops = new Operations(env)
+  BuiltIns.createBuiltIns(env.metaGraphManager)
 
   private def assertNameNotExists(name: String) = {
     assert(!DirectoryEntry.fromName(name).exists, s"Entry '$name' already exists.")
