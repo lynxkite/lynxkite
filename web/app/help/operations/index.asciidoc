@@ -355,13 +355,13 @@ include::segment-by-string-attribute.asciidoc[]
 
 include::segment-by-vector-attribute.asciidoc[]
 
-include::set-edge-attribute-icon.asciidoc[]
+include::set-edge-attribute-icons.asciidoc[]
 
 include::set-scalar-icon.asciidoc[]
 
 include::set-segmentation-icon.asciidoc[]
 
-include::set-vertex-attribute-icon.asciidoc[]
+include::set-vertex-attribute-icons.asciidoc[]
 
 include::snowball-sample.asciidoc[]
 
