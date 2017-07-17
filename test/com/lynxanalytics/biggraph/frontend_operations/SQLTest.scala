@@ -136,10 +136,10 @@ class SQLTest extends OperationsTestBase {
     val two = box("Create example graph")
     val table = box("SQL2", Map("sql" -> """
       select * from (select edge_comment
-      from `one|edges`
+      from `one.edges`
       union all
       select edge_comment
-      from `two|edges`)
+      from `two.edges`)
       order by edge_comment
       """), Seq(one, two)).table
     assert(table.schema.map(_.name) == Seq("edge_comment"))
