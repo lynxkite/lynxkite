@@ -6,8 +6,6 @@ user interface.
 The icons are a subset of the Unicode characters in the "emoji" range, as provided by the
 https://www.google.com/get/noto/help/emoji/[Google Noto Font].
 
-This operation is more easily accessed from the attribute's dropdown menu in the project view.
-
 ====
 [[title]] Attributes::
 Edge attributes of the project.
