@@ -6,8 +6,9 @@ angular.module('biggraph').directive('operationSelectorEntry', function() {
   return {
     restrict: 'E',
     scope: {
-      ondrag: '&',
-      op: '=',
+      ondrag: '&', // The function to handle dragging.
+      op: '=',     // The actual underlying operation.
+      name: '=',   // Name to display on the UI.
     },
     templateUrl: 'scripts/workspace/operation-selector-entry.html',
   };

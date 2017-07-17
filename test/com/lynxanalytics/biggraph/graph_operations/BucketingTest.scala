@@ -5,7 +5,6 @@ import org.scalatest.FunSuite
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.JavaScript
 
 class BucketingTest extends FunSuite with TestGraphOp {
   test("example graph by gender") {
@@ -38,14 +37,9 @@ class BucketingTest extends FunSuite with TestGraphOp {
 
   test("example graph with negative values") {
     val g = ExampleGraph()().result
-    val ageMinus20 = {
-      val op = DeriveJSDouble(
-        JavaScript("age - 20"),
-        Seq("age"))
-      op(
-        op.attrs,
-        VertexAttributeToJSValue.seq(g.age)).result.attr
-    }
+    val ageMinus20 = DeriveScala.derive[Double](
+      "age - 20",
+      Seq("age" -> g.age.entity))
     // ages should be: -18, -1.8, 0.3, 30.3
     val bucketing = {
       val op = DoubleBucketing(bucketWidth = 10.0, overlap = false)
@@ -76,14 +70,9 @@ class BucketingTest extends FunSuite with TestGraphOp {
 
   test("example graph by age intervals") {
     val g = ExampleGraph()().result
-    val ageTimes1_5 = {
-      val op = DeriveJSDouble(
-        JavaScript("age * 1.5"),
-        Seq("age"))
-      op(
-        op.attrs,
-        VertexAttributeToJSValue.seq(g.age)).result.attr
-    }
+    val ageTimes1_5 = DeriveScala.derive[Double](
+      "age * 1.5",
+      Seq("age" -> g.age.entity))
     // intervals should be: [2, 3], [18.2, 27.3], [20.3, 30.45], [50.3, 75.45]
     val bucketing = {
       val op = IntervalBucketing(bucketWidth = 10.0, overlap = false)
@@ -101,14 +90,9 @@ class BucketingTest extends FunSuite with TestGraphOp {
 
   test("example graph by age intervals with overlap") {
     val g = ExampleGraph()().result
-    val ageTimes1_5 = {
-      val op = DeriveJSDouble(
-        JavaScript("age * 1.5"),
-        Seq("age"))
-      op(
-        op.attrs,
-        VertexAttributeToJSValue.seq(g.age)).result.attr
-    }
+    val ageTimes1_5 = DeriveScala.derive[Double](
+      "age * 1.5",
+      Seq("age" -> g.age.entity))
     // intervals should be: [2, 3], [18.2, 27.3], [20.3, 30.45], [50.3, 75.45]
     val bucketing = {
       val op = IntervalBucketing(bucketWidth = 10.0, overlap = true)

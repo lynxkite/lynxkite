@@ -1,13 +1,13 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import scala.collection.mutable
-
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.graph_operations.InducedEdgeBundle
 
 class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
   import Operation.Context
@@ -182,6 +182,12 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
           (source.kind == VertexAttributeKind) && (source.projectEditor.segmentationNames.nonEmpty)
       }
 
+      private def edgesCanBeCarriedOver = {
+        (target.kind == VertexAttributeKind) &&
+          (source.kind == VertexAttributeKind) &&
+          (source.projectEditor.hasEdgeBundle.enabled)
+      }
+
       if (compatible && attributesAreAvailable) {
         params += TagList("attrs", "Attributes", FEOption.list(source.names.toList))
       }
@@ -189,44 +195,101 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         params += TagList("segs", "Segmentations", FEOption.list(source.projectEditor.segmentationNames.toList))
       }
 
+      if (compatible && edgesCanBeCarriedOver) {
+        params += Choice("edge", "Copy edges", FEOption.list("no", "yes"))
+      }
+
       def enabled = (FEStatus(hasTargetIdSet, "No target input")
         && FEStatus(hasSourceIdSet, "No source input")
         && FEStatus(compatible, "Inputs are not compatible"))
+
+      private def copyAttributesViaCommonAncestor(target: AttributeEditor,
+                                                  source: AttributeEditor,
+                                                  fromSourceToAncestor: Seq[EdgeBundle],
+                                                  fromAncestorToTarget: Seq[EdgeBundle],
+                                                  attributeNames: Seq[String]): Unit = {
+        for (attrName <- attributeNames) {
+          val attr = source.attributes(attrName)
+          val note = source.getElementNote(attrName)
+          val attrCommonAncestor =
+            fromSourceToAncestor.foldLeft(attr) {
+              (a, b) =>
+                val eb = b.reverse
+                graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, eb)
+            }
+          val newAttr =
+            fromAncestorToTarget.foldLeft(attrCommonAncestor) {
+              (a, b) =>
+                graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, b)
+            }
+          target.newAttribute(attrName, newAttr, note)
+        }
+      }
 
       def apply() {
         val fromSourceToAncestor = chain.get.chain2
         val fromAncestorToTarget = chain.get.chain1.reverse
         if (attributesAreAvailable) {
-          for (attrName <- splitParam("attrs")) {
-            val attr = source.attributes(attrName)
-            val note = source.getElementNote(attrName)
-            val attrCommonAncestor =
-              fromSourceToAncestor.foldLeft(attr) {
-                (a, b) =>
-                  val eb = graph_operations.ReverseEdges.run(b)
-                  graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, eb)
-              }
-            val newAttr =
-              fromAncestorToTarget.foldLeft(attrCommonAncestor) {
-                (a, b) =>
-                  graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, b)
-              }
-
-            target.newAttribute(attrName, newAttr, note)
-          }
+          copyAttributesViaCommonAncestor(target, source,
+            fromSourceToAncestor, fromAncestorToTarget, splitParam("attrs"))
         }
+
         if (segmentationsAreAvailable) {
           for (segmName <- splitParam("segs")) {
-            val leftEditor = target.projectEditor
-            val rightEditor = source.projectEditor
-            if (leftEditor.segmentationNames.contains(segmName)) {
-              leftEditor.deleteSegmentation(segmName)
+            val targetEditor = target.projectEditor
+            val sourceEditor = source.projectEditor
+            if (targetEditor.segmentationNames.contains(segmName)) {
+              targetEditor.deleteSegmentation(segmName)
             }
-            val rightSegm = rightEditor.existingSegmentation(segmName)
-            val leftSegm = leftEditor.segmentation(segmName)
-            leftSegm.segmentationState = rightSegm.segmentationState
+            val sourceSegmentation = sourceEditor.existingSegmentation(segmName)
+            val targetSegmentation = targetEditor.segmentation(segmName)
+            val originalBelongsTo = sourceSegmentation.belongsTo
+            val commonAncestorBelongsTo = fromSourceToAncestor.foldLeft(originalBelongsTo) {
+              (currentBelongsTo, nextBelongsTo) =>
+                val op = InducedEdgeBundle(induceDst = false)
+                op(op.srcMapping, nextBelongsTo)(op.edges, currentBelongsTo).result.induced
+            }
+            val newBelongsTo = fromAncestorToTarget.foldLeft(commonAncestorBelongsTo) {
+              (currentBelongsTo, nextBelongsTo) =>
+                val reversed = nextBelongsTo.reverse
+                val op = InducedEdgeBundle(induceDst = false)
+                op(op.srcMapping, reversed)(op.edges, currentBelongsTo).result.induced
+            }
+            targetSegmentation.segmentationState = sourceSegmentation.segmentationState
+            targetSegmentation.belongsTo = newBelongsTo
           }
         }
+
+        if (edgesCanBeCarriedOver && params("edge") == "yes") {
+          val targetEditor = target.projectEditor
+          val sourceEditor = source.projectEditor
+          val sourceEdges = sourceEditor.edgeBundle
+
+          val commonAncestorEdges = fromSourceToAncestor.foldLeft(sourceEdges) {
+            (graphEdges, chainBundle) =>
+              val op = InducedEdgeBundle(induceSrc = true, induceDst = true)
+              op(op.srcMapping, chainBundle)(op.dstMapping, chainBundle)(op.edges, graphEdges).result.induced
+          }
+          val newEdges = fromAncestorToTarget.foldLeft(commonAncestorEdges) {
+            (graphEdges, chainBundle) =>
+              val op = InducedEdgeBundle(induceSrc = true, induceDst = true)
+              val reversed = chainBundle.reverse
+              op(op.srcMapping, reversed)(op.dstMapping, reversed)(op.edges, graphEdges).result.induced
+          }
+          val sourceEdgeEditor = new EdgeAttributeEditor(sourceEditor)
+          val targetEdgeEditor = new EdgeAttributeEditor(targetEditor)
+          targetEdgeEditor.projectEditor.edgeBundle = newEdges
+          val edgeChain = computeChains(sourceEdgeEditor.idSet.get, targetEdgeEditor.idSet.get)
+          assert(edgeChain.isDefined) // This should not hit us, right? We have just created a path.
+          copyAttributesViaCommonAncestor(
+            targetEdgeEditor,
+            sourceEdgeEditor,
+            edgeChain.get.chain1,
+            edgeChain.get.chain2.reverse,
+            sourceEdgeEditor.names
+          )
+        }
+
         project.state = target.projectEditor.rootEditor.state
       }
     }
@@ -386,8 +449,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         params.validate()
         val sql = params("sql")
         val protoTables = this.getInputTables()
-        val tables = ProtoTable.minimize(sql, protoTables).mapValues(_.toTable)
-        val result = graph_operations.ExecuteSQL.run(sql, tables)
+        val result = graph_operations.ExecuteSQL.run(sql, protoTables)
         makeOutput(result)
       }
     })

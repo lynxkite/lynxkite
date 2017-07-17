@@ -86,7 +86,7 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
 
   test("list and search workspace") {
     wc.createWorkspace(user, CreateWorkspaceRequest(name = "foo/bar"))
-    val bar = Seq(FEEntryListElement("foo/bar", "workspace"))
+    val bar = Seq(FEEntryListElement("foo/bar", "workspace", "workspace"))
     assert(list("").directories == Seq("foo"))
     assert(list("foo").directories.isEmpty)
     assert(list("foo").objects == bar)

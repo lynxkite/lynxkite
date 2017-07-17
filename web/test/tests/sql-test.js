@@ -134,9 +134,8 @@ module.exports = function(fw) {
       table.close();
       lib.workspace.addBox({
         id: 'new_attr', name: 'Derive vertex attribute', x: 400, y: 150, after: 'eg0', params: {
-          expr: 'income === 1000 ? \'apple\' : \'orange\'',
+          expr: 'if (income == 1000) "apple" else "orange"',
           output: 'new_attr',
-          type: 'String',
         }
       });
       lib.workspace.connectBoxes('new_attr', 'project', 'sql', 'input');

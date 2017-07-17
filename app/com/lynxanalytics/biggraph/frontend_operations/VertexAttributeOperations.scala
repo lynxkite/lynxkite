@@ -136,7 +136,6 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
   register("Derive vertex attribute")(new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
-      Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
       Code("expr", "Value", defaultValue = "", language = "javascript"))
@@ -150,24 +149,14 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       assert(params("output").nonEmpty, "Please set an output attribute name.")
       val expr = params("expr")
       val vertexSet = project.vertexSet
-      val namedAttributes = JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
-      val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val namedAttributes =
+        ScalaUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
+      val namedScalars = ScalaUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val onlyOnDefinedAttrs = params("defined_attrs").toBoolean
 
-      val result = params("type") match {
-        case "String" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](
-            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
-        case "Double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](
-            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
-        case "Vector of Strings" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Vector[String]](
-            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
-        case "Vector of Doubles" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Vector[Double]](
-            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
-      }
+      val result = graph_operations.DeriveScala.deriveAndInferReturnType(
+        expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
+
       project.newVertexAttribute(params("output"), result, expr + help)
     }
   })

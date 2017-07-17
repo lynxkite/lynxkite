@@ -35,7 +35,8 @@ object FEOperationParameterMeta {
     "imported-table", // A table importing button.
     "parameters", // A whole section defining the parameters of an operation.
     "segmentation", // One of the segmentations of the current project.
-    "visualization") // Describes a two-sided visualization UI state.
+    "visualization", // Describes a two-sided visualization UI state.
+    "dummy") // A piece of text without an input field.
 }
 
 case class FEOperationParameterMeta(
@@ -78,7 +79,7 @@ case class FEOperationSpec(
   parameters: Map[String, String])
 
 case class FEOperationCategory(
-  title: String, icon: String, color: String)
+  title: String, icon: String, color: String, browseByDir: Boolean)
 
 abstract class OperationParameterMeta {
   val id: String
@@ -103,6 +104,8 @@ trait Operation {
   def summary: String
   def getOutputs: Map[BoxOutput, BoxOutputState]
   def toFE: FEOperationMeta
+  // Custom logic for operations to remove certain parameters.
+  def cleanParameters(params: Map[String, String]): Map[String, String]
 }
 object Operation {
   case class Category(
@@ -110,12 +113,14 @@ object Operation {
     color: String, // A color class from web/app/styles/operation-toolbox.scss.
     visible: Boolean = true,
     icon: String = "", // Icon class name, or empty for first letter of title.
-    sortKey: String = null) // Categories are ordered by this. The title is used by default.
+    index: Int, // Categories are listed in this order on the UI.
+    // Browse operations in this category using the dir structure. If true, the UI will display the
+    // operations in a tree structure using the '/' character in the operation id as path separator.
+    browseByDir: Boolean = false)
       extends Ordered[Category] {
-    private val safeSortKey = Option(sortKey).getOrElse(title)
-    def compare(that: Category) = this.safeSortKey compare that.safeSortKey
+    def compare(that: Category) = this.index compare that.index
     def toFE: FEOperationCategory =
-      FEOperationCategory(title, addClass(icon), color)
+      FEOperationCategory(title, addClass(icon), color, browseByDir)
     // Add main CSS class. E.g. "fa-superpowers" => "fa fa-superpowers".
     private def addClass(cls: String): String = {
       val parts = cls.split("-", 2)
@@ -263,7 +268,11 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   }
 
   private val customBoxesCategory = Operation.Category(
-    Workspace.customBoxesCategory, "yellow", icon = "fa-superpowers", sortKey = "zzz")
+    Workspace.customBoxesCategory,
+    "yellow",
+    icon = "fa-superpowers",
+    index = 999,
+    browseByDir = true)
 
   def getCategories(user: serving.User): List[FEOperationCategory] = {
     (atomicCategories.values.toList :+ customBoxesCategory)
@@ -296,6 +305,16 @@ abstract class SimpleOperation(protected val context: Operation.Context) extends
     context.meta.categoryId,
     FEStatus.enabled)
   def getOutputs(): Map[BoxOutput, BoxOutputState] = ???
+  // The common logic for cleaning box params for every operation.
+  // We discard the recorded parameters that are not present among the parameter metas. (It would
+  // be confusing to keep these, since they do not show up on the UI.) The unknown parameters can
+  // be, for example, left over from when the box was previously connected to a different input.
+  def cleanParameters(params: Map[String, String]): Map[String, String] = {
+    val paramsMeta = this.params.getMetaMap
+    cleanParametersImpl(params.filter { case (k, v) => paramsMeta.contains(k) })
+  }
+  // Custom hook for cleaning params for operations to override.
+  def cleanParametersImpl(params: Map[String, String]): Map[String, String] = params
 }
 
 // Adds a lot of conveniences for working with projects and tables.

@@ -181,6 +181,12 @@ Workspace.prototype = {
     }
   },
 
+  addBoxFromSelector: function(boxName) {
+    browser.actions()
+      .sendKeys('/' + boxName + K.ENTER + K.ESCAPE)
+      .perform();
+  },
+
   addBox: function(boxData) {
     var id = boxData.id;
     var after = boxData.after;
@@ -234,6 +240,10 @@ Workspace.prototype = {
 
   expectNumSelectedBoxes: function(n) {
     return expect($$('g.box.selected').count()).toEqual(n);
+  },
+
+  expectNumBoxes: function(n) {
+    return expect($$('g.box').count()).toEqual(n);
   },
 
   deleteBoxes: function(boxIds) {
@@ -343,8 +353,14 @@ Workspace.prototype = {
         .mouseUp()
         .perform();
     this.expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId);
-  }
+  },
 
+  getCustomBoxBrowserTree: function() {
+    this.selector.element(by.css('div[drop-tooltip="Custom boxes"]')).click();
+    return this.selector
+      .element(by.css('operation-tree'))
+      .element(by.css('operation-tree-node[id="root"]'));
+  },
 };
 
 function PopupBase() {

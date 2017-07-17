@@ -127,11 +127,11 @@
 
 <div
     id="workspace-drawing-board"
-    ng-mousemove="onMouseMove($event)"
-    ng-mouseup="onMouseUp($event)"
-    ng-mousedown="onMouseDown($event)"
     ng-show="!workspace.error">
-  <svg>
+  <svg
+      ng-mousemove="onMouseMove($event)"
+      ng-mouseup="onMouseUp($event)"
+      ng-mousedown="onMouseDown($event)">
     <defs>
       <!-- The filters to apply colors to the grayscale icons. -->
       <filter ng-repeat="(id, matrix) in ::filters" id="{{ ::id | id }}">
