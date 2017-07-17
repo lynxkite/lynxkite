@@ -1,0 +1,13 @@
+### Rename edge attributes
+
+Changes the name of an edge attribute.
+
+This operation is more easily accessed from the attribute's dropdown menu in the project view.
+
+====
+[[title]] Attributes::
+Edge attributes of the project.
+
+[[title2]] Rename to:: The new name. If it is empty,
+then the attribute will be discarded.
+====

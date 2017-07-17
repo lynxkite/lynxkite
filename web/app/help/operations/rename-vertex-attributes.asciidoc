@@ -7,5 +7,5 @@ Changes the name of vertex attributes.
 Vertex attributes of the project.
 
 [[title2]] Rename to:: The new name. If it is empty,
-then the attribute will be discarded.
+the attribute will be discarded.
 ====
