@@ -169,7 +169,6 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       }
     })
 
-
   register("Merge two edge attributes")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "New attribute name", defaultValue = ""),

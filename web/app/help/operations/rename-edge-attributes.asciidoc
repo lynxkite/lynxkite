@@ -2,8 +2,6 @@
 
 Changes the name of an edge attribute.
 
-This operation is more easily accessed from the attribute's dropdown menu in the project view.
-
 ====
 [[title]] Attributes::
 Edge attributes of the project.
