@@ -249,7 +249,7 @@ include::expose-internal-edge-id.asciidoc[]
 
 include::expose-internal-vertex-id.asciidoc[]
 
-include::fill-edge-attributes-with-constant-default-value.asciidoc[]
+include::fill-edge-attributes-with-constant-default-values.asciidoc[]
 
 include::fill-vertex-attributes-with-constant-default-values.asciidoc[]
 
