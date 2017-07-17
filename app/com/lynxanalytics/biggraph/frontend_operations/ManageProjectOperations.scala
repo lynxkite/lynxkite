@@ -271,22 +271,32 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
   })
 
-  register("Set edge attribute icon")(new ProjectTransformation(_) {
-    params ++= List(
-      Choice("name", "Name", options = project.edgeAttrList),
-      Param("icon", "Icon name"))
-    def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No vertex attributes")
+  register("Set edge attribute icons")(new ProjectTransformation(_) {
+    params += DummyParam("text", "Attributes:", "Icon names:")
+    params ++= project.edgeAttrList.map {
+      attr => Param(s"icon_for_${attr.id}", attr.id)
+    }
+    def enabled = FEStatus.assert(
+      (project.edgeAttrList[String] ++ project.edgeAttrList[Double]).nonEmpty,
+      "No edge attributes.")
+    val attrParams: Map[String, String] = params.toMap.collect {
+      case (name, value) if name.startsWith("icon_for_") => {
+        (name.stripPrefix("icon_for_"), value)
+      }
+    }
     override def summary = {
-      val name = params("name")
-      val icon = if (params("icon").nonEmpty) params("icon") else "nothing"
-      s"Set icon for $name to $icon"
+      val parts = attrParams.map {
+        case (name, icon) => s"${name} to ${icon}"
+      }
+      s"Set icon for ${parts.mkString(", ")}"
     }
     def apply() = {
-      val name = params("name")
-      val icon = params("icon")
-      project.setElementMetadata(
-        EdgeAttributeKind, name, MetadataNames.Icon,
-        if (icon.nonEmpty) icon else null)
+      for ((name, icon) <- attrParams.toMap) {
+        val attr = project.edgeAttributes(name)
+        project.setElementMetadata(
+          EdgeAttributeKind, name, MetadataNames.Icon,
+          if (icon.nonEmpty) icon else null)
+      }
     }
   })
 
