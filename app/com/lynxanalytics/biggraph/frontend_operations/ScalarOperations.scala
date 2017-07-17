@@ -32,6 +32,7 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
         project.scalars(name) = result
       }
     }
+    override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
   })
 
   register("Weighted aggregate edge attribute globally")(new ProjectTransformation(_) {
@@ -54,6 +55,7 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
         project.scalars(name) = result
       }
     }
+    override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
   })
 
   register("Aggregate vertex attribute globally")(new ProjectTransformation(_) {
@@ -69,6 +71,7 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
         project.scalars(name) = result
       }
     }
+    override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
   })
 
   register("Weighted aggregate vertex attribute globally")(new ProjectTransformation(_) {
@@ -89,6 +92,7 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
         project.scalars(name) = result
       }
     }
+    override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
   })
 
   register("Compare segmentation edges")(new ProjectTransformation(_) {
