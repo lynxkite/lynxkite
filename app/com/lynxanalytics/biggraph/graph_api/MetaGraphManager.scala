@@ -288,13 +288,21 @@ object BuiltIns {
     for ((file, json) <- loadBuiltIns(builtInsLocalDir)) {
       try {
         val entry = DirectoryEntry.fromName("built-ins/" + file)
-        // Overwrite existing built-ins with the ones from the disk.
-        if (entry.exists) {
+        val newWS = json.as[Workspace]
+        def createNewWS(): Unit = {
           entry.remove()
+          entry.asNewWorkspaceFrame(newWS.checkpoint())
         }
-        val frame = entry.asNewWorkspaceFrame()
-        val cp = json.as[Workspace].checkpoint()
-        frame.setCheckpoint(cp)
+        if (entry.exists && entry.isWorkspace) {
+          val existingWS = entry.asWorkspaceFrame.workspace
+          // If the workspace from the disk is the same as the existing one, leave it alone.
+          // This way we don't keep creating new checkpoints whenever LynxKite restarts.
+          if (existingWS != newWS) {
+            createNewWS() // Overwrite existing built-ins with the ones from the disk.
+          }
+        } else {
+          createNewWS() // Create new built-in workspace.
+        }
       } catch {
         case e: Throwable => throw new Exception(s"Failed to create built-in for file $file.", e)
       }
