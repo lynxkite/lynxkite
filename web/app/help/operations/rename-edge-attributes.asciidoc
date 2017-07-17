@@ -9,5 +9,5 @@ This operation is more easily accessed from the attribute's dropdown menu in the
 Edge attributes of the project.
 
 [[title2]] Rename to:: The new name. If it is empty,
-then the attribute will be discarded.
+the attribute will be discarded.
 ====
