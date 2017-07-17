@@ -5,7 +5,7 @@ for the vertices where it was not defined.
 
 ====
 [[title]] Attributes::
-The vertex attributes in this project.
+Vertex attributes of the project.
 
 [[title2]]  Default values::
 The value to set for vertices where the attribute is not defined. No change for

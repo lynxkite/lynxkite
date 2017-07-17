@@ -138,7 +138,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
   })
 
   register(
-    "Fill edge attribute with constant default value")(new ProjectTransformation(_) {
+    "Fill edge attributes with constant default values")(new ProjectTransformation(_) {
       params += DummyParam("text", "Attributes:", "Default values:")
       params ++= project.edgeAttrList.map {
         attr => Param(s"fill_${attr.id}", attr.id)
@@ -161,7 +161,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
           val op: graph_operations.AddConstantAttribute[_] =
             graph_operations.AddConstantAttribute.doubleOrString(
               isDouble = attr.is[Double], const)
-          val default = op(op.vs, project.edgeSet).result
+          val default = op(op.vs, project.edgeBundle.idSet).result
           project.newEdgeAttribute(
             name, unifyAttribute(attr, default.attr.entity),
             project.viewer.getEdgeAttributeNote(name) + s" (filled with default $const)" + help)
