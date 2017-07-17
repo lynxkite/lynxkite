@@ -1,4 +1,11 @@
 ### Rename vertex attributes
 
-Changes the name of vertex attributes. If the new name is empty
+Changes the name of vertex attributes.
+
+====
+[[title]] Attributes ::
+Vertex attributes of the project.
+
+[[title2]] Rename to:: The new name. If it is empty,
 then the attribute will be discarded.
+====

@@ -172,6 +172,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register(
     "Fill vertex attributes with constant default values")(new ProjectTransformation(_) {
+      params += DummyParam("text", "Attributes:", "Default values:")
       params ++= project.vertexAttrList.map {
         attr => Param(s"fill_${attr.id}", attr.id)
       }
@@ -185,7 +186,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
         val fillStrings = attrParams.map {
           case (name, const) => s"${name} with ${const}"
         }
-        s"Filled ${fillStrings.mkString(", ")}"
+        s"Fill ${fillStrings.mkString(", ")}"
       }
       def apply() = {
         for ((name, const) <- attrParams.toMap) {

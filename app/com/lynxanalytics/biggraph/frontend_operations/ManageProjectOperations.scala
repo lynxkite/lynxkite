@@ -184,6 +184,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
   })
 
   register("Rename vertex attributes")(new ProjectTransformation(_) {
+    params += DummyParam("text", "Attributes:", "Rename to:")
     params ++= project.vertexAttrList.map {
       attr => Param(s"change_${attr.id}", attr.id, defaultValue = attr.id)
     }
