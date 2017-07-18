@@ -3,16 +3,17 @@ package com.lynxanalytics.sandbox
 import java.io.FilePermission
 import java.net.NetPermission
 import java.security.Permission
+import java.util.UUID
 import javax.script._
 
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
 import com.lynxanalytics.biggraph.graph_api.TypeTagUtil
 import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, Timestamp }
+import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark.sql.DataFrame
 
-import scala.collection.mutable.HashMap
 import scala.concurrent.duration.Duration
 import scala.reflect.runtime.universe._
 import scala.tools.nsc.interpreter.IMain
@@ -189,17 +190,14 @@ object ScalaScript {
 
   // Inferring the type for the exact same code and parameters is expected to happen often,
   // so it is better to use a cache.
-  private val codeReturnTypeCache = new HashMap[Int, ScalaType]()
+  private val codeReturnTypeCache = new SoftHashMap[UUID, ScalaType]()
 
   def compileAndGetType(
     code: String, paramTypes: Map[String, TypeTag[_]], paramsToOption: Boolean): ScalaType = {
     val funcCode = evalFuncString(code, convert(paramTypes, paramsToOption))
-    val hash = funcCode.hashCode()
+    val id = UUID.nameUUIDFromBytes(funcCode.getBytes())
     codeReturnTypeCache.synchronized {
-      if (!codeReturnTypeCache.contains(hash)) {
-        codeReturnTypeCache(hash) = ScalaType(inferType(funcCode))
-      }
-      codeReturnTypeCache(hash)
+      codeReturnTypeCache.getOrElseUpdate(id, ScalaType(inferType(funcCode)))
     }
   }
 
