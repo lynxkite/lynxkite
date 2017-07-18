@@ -74,10 +74,10 @@ object ProtoTable {
 
   private def getRequiredFields(plan: LogicalPlan): Seq[(String, Seq[NamedExpression])] =
     plan match {
-      case SubqueryAlias(name, Project(projectList, _), _) =>
+      case SubqueryAlias(name, Project(projectList, LocalRelation(_, _)), _) =>
         List((name, projectList))
-      case u: SubqueryAlias =>
-        List((u.alias, Seq(UnresolvedStar(target = None))))
+      case SubqueryAlias(name, LocalRelation(_, _), _) =>
+        List((name, Seq(UnresolvedStar(target = None))))
       case l: LeafNode =>
         bigGraphLogger.info(s"$l ignored in ProtoTable minimalization")
         List()
