@@ -20,7 +20,9 @@ module.exports = function(fw) {
       lib.workspace.clickBox('rename-vertex-attrs');
     }, function() {
       lib.expectElement($('#text-title'));
+      lib.expectElement($('#text-title #help-button'));
       lib.expectElement($('#text #title2'));
+      lib.expectElement($('#text #title2 #help-button'));
     }
   );
 };
