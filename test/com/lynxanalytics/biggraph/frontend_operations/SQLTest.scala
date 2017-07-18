@@ -1,8 +1,12 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
+import com.lynxanalytics.biggraph.graph_api.{ DataManager, ThreadUtil }
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
+import com.lynxanalytics.biggraph.graph_operations.UnresolvedColumnException
+import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import org.apache.spark
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.{ DataFrame, Row, SQLContext }
 
 class SQLTest extends OperationsTestBase {
   private def toSeq(row: spark.sql.Row): Seq[Any] = {
@@ -62,7 +66,7 @@ class SQLTest extends OperationsTestBase {
       .box("Find connected components")
       .box("SQL1", Map("sql" -> """
         select base_name, segment_id, segment_size
-        from `connected_components|belongs_to` order by base_id"""))
+        from `connected_components.belongs_to` order by base_id"""))
       .table
     assert(table.schema.map(_.name) == Seq("base_name", "segment_id", "segment_size"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
@@ -113,9 +117,9 @@ class SQLTest extends OperationsTestBase {
     val three = box("Create example graph")
     val table = box("SQL3", Map("sql" -> """
       select one.edge_comment, two.name, three.name
-      from `one|edges` as one
-      join `two|vertices` as two
-      join `three|vertices` as three
+      from `one.edges` as one
+      join `two.vertices` as two
+      join `three.vertices` as three
       where one.src_name = two.name and one.dst_name = three.name
       """), Seq(one, two, three)).table
     assert(table.schema.map(_.name) == Seq("edge_comment", "name", "name"))
@@ -125,6 +129,55 @@ class SQLTest extends OperationsTestBase {
       Seq("Eve loves Adam", "Eve", "Adam"),
       Seq("Adam loves Eve", "Adam", "Eve"),
       Seq("Bob loves Eve", "Bob", "Eve")))
+  }
+
+  test("union") {
+    val one = box("Create example graph")
+    val two = box("Create example graph")
+    val table = box("SQL2", Map("sql" -> """
+      select * from (select edge_comment
+      from `one.edges`
+      union all
+      select edge_comment
+      from `two.edges`)
+      order by edge_comment
+      """), Seq(one, two)).table
+    assert(table.schema.map(_.name) == Seq("edge_comment"))
+    val data = table.df.collect.toSeq.map(row => toSeq(row))
+    assert(data == Seq(
+      Seq("Adam loves Eve"),
+      Seq("Adam loves Eve"),
+      Seq("Bob envies Adam"),
+      Seq("Bob envies Adam"),
+      Seq("Bob loves Eve"),
+      Seq("Bob loves Eve"),
+      Seq("Eve loves Adam"),
+      Seq("Eve loves Adam")))
+  }
+
+  test("group by") {
+    val table = box("Create example graph")
+      .box("SQL1", Map("sql" -> "select id, count(*) as count from vertices group by id"))
+      .table
+    assert(table.schema.map(_.name) == Seq("id", "count"))
+  }
+
+  test("no table") {
+    val table = box("Create example graph")
+      .box("SQL1", Map("sql" -> "select 1 as one, int(null) as n"))
+      .table
+    assert(table.schema.map(_.name) == Seq("one", "n"))
+  }
+
+  test("missing column") {
+    intercept[AssertionError] {
+      val table = box("Create example graph")
+        .box("SQL1", Map("sql" -> "select nonexistent from vertices"))
+        .table
+    } match {
+      case a: AssertionError =>
+        println(a.getMessage.contains("column cannot be found"))
+    }
   }
 
   test("alias") {
@@ -140,4 +193,58 @@ class SQLTest extends OperationsTestBase {
       .table
     assert(table.schema.map(_.name) == Seq("age"))
   }
+
+  test("Thread safe sql even for the same SQL context") {
+    val columnName = "col"
+    val tableName = "table"
+    val schema = StructType(Seq(StructField("column", IntegerType)))
+    def getTinyDfWithConstantValue(ctx: SQLContext, value: Int): DataFrame = {
+      import scala.collection.JavaConverters._
+      val data = List(Row(value)).asJava
+      ctx.createDataFrame(data, schema).toDF(columnName)
+    }
+
+    val numWorkers = 60
+    val maxParalellism = 20
+    implicit val sqlTestExecutionContext =
+      ThreadUtil.limitedExecutionContext("ThreadSafeSQL", maxParallelism = maxParalellism)
+    val sqlTestingThreads = new ControlledFutures()(sqlTestExecutionContext)
+
+    // Ideally, worker w should only write resultPoolForEachWorker(w), thus
+    // resultPoolForEachWorker should contain only 1's, since each worker runs
+    // once. But this is not the case when the race condition hits, then workers
+    // begin to use each other's data frames.
+    val resultPoolForEachWorker = Array.fill(numWorkers)(new java.util.concurrent.atomic.AtomicInteger(0))
+
+    val sqlCtx = dataManager.newSQLContext
+    for (workerId <- (0 until numWorkers)) {
+      val df = List((tableName, getTinyDfWithConstantValue(sqlCtx, workerId)))
+      sqlTestingThreads.register {
+        val resultThatIsSupposedToBeEqualToWorkerId =
+          DataManager.sql(sqlCtx, s"select AVG($columnName) from $tableName", df)
+            .collect().toList.take(1).head.getDouble(0)
+        val idx = resultThatIsSupposedToBeEqualToWorkerId.toInt
+        // We could say assert(workerId == resultThatIsSupposedToBeEqualToWorkerId) here,
+        // but this is running on a different thread using SafeFuture,
+        // and the test would pass despite the assertion. Anyway, using the resultPoolForEachWorker array
+        // gives us a nicer way to see what exactly went wrong.
+        if (0 <= idx && idx < numWorkers) {
+          resultPoolForEachWorker(idx).getAndIncrement()
+        }
+      }
+    }
+
+    sqlTestingThreads.waitAllFutures()
+    val resultMap = (0 until numWorkers).map(n => (n, resultPoolForEachWorker(n).get()))
+    val badResults = resultMap.filter(_._2 != 1).toList
+    // Failure here would result in outputs like these:
+    //
+    // List((9,2), (10,0), (14,0), (16,2)) was not empty (SQLTest.scala:194)
+    //
+    // This would (probably) mean that worker 9 overwrote the data frame registered by
+    // worker 10, and worker 16 overwrote the data frame registered by worker 14.
+    // (All workers use the same name when registering their data frames.)
+    assert(badResults.isEmpty)
+  }
+
 }

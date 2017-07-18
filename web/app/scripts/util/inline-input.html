@@ -1,6 +1,10 @@
 <div class="inline-input closed" ng-class="{ closed: !open }">
   <form ng-submit="done()">
-    <input placeholder="{{ placeholder }}" ng-model="input" ng-disabled="!enabled">
+    <input
+      placeholder="{{ placeholder }}"
+      ng-model="input"
+      ng-disabled="!enabled"
+      ng-focus="$event.target.select()">
     <button
       id="ok"
       type="submit"

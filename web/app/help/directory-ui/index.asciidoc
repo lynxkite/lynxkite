@@ -13,3 +13,5 @@ include::projects.asciidoc[]
 include::global-sql-box.asciidoc[]
 
 include::views.asciidoc[]
+
+include::built-ins.asciidoc[]

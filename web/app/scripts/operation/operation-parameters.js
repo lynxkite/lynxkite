@@ -67,6 +67,19 @@ angular.module('biggraph').directive('operationParameters', function(util) {
           highlightActiveLine: false,
           maxLines: 50,
         });
+        editor.commands.addCommand({
+          name: 'blur',
+          bindKey: {
+            win: 'Ctrl-Enter',
+            mac: 'Command-Enter',
+            sender: 'editor|cli'
+          },
+          exec: function() {
+            scope.$apply(function() {
+              scope.onBlur();
+            });
+          }
+        });
       };
 
       scope.isVisualizationParam = function(param) {

@@ -128,7 +128,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(
         op.parameters.find(_.id == "weights").get.options.map(_.id) == Seq("!no weight", "weight"))
       assert(
-        op.parameters.find(_.id == "apply_to_project").get.options.map(_.id) == Seq("", "|cc"))
+        op.parameters.find(_.id == "apply_to_project").get.options.map(_.id) == Seq("", ".cc"))
     }
   }
 
@@ -141,11 +141,11 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         Map("attr" -> "ordinal"), 0, 0, Map("project" -> blanks.output("project")))
       val srcs = Box(
         "srcs", "Derive vertex attribute",
-        Map("output" -> "src", "type" -> "String", "expr" -> "ordinal == 0 ? 'Adam' : 'Eve'"),
+        Map("output" -> "src", "expr" -> "if (ordinal == 0) \"Adam\" else \"Eve\""),
         0, 0, Map("project" -> convert.output("project")))
       val dsts = Box(
         "dsts", "Derive vertex attribute",
-        Map("output" -> "dst", "type" -> "String", "expr" -> "ordinal == 0 ? 'Eve' : 'Bob'"),
+        Map("output" -> "dst", "expr" -> "if (ordinal == 0) \"Eve\" else \"Bob\""),
         0, 0, Map("project" -> srcs.output("project")))
       val combine = Box(
         "combine", "Use table as edges",
@@ -322,6 +322,46 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         // Providing a specific parameter value.
         val ws = Workspace.from(eg, cb.copy(parameters = Map("param1" -> "xyz")))
         context(ws).allStates(cb.output("out1")).project.vertexAttributes.contains("pr_xyz")
+      })
+    }
+  }
+
+  test("custom box with aggregation") {
+    using("test-custom-box") {
+      val anchor = anchorWithParams()
+      val inputBox = Box("input", "Input", Map("name" -> "in1"), 0, 0, Map())
+      val aggr = {
+        val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+        val aggr = Box("aggr", "Aggregate edge attribute globally",
+          Map("prefix" -> "", "aggregate_weight" -> "sum", "aggregate_comment" -> ""), 0, 0,
+          Map("project" -> eg.output("project")))
+        // This removes the comment aggregator. In reality the UI calls this after every change.
+        set("test-custom-box", Workspace(List(anchor, eg, aggr)))
+        // We connect aggr to the inputBox instead of eg0.
+        get("test-custom-box").workspace.boxes.find(_.id == "aggr").get
+          .copy(inputs = Map("project" -> inputBox.output("input")))
+      }
+
+      // Let's create a custom box.
+      val outputBox = Box(
+        "output", "Output", Map("name" -> "out1"), 0, 0, Map("output" -> aggr.output("project")))
+      set("test-custom-box", Workspace(List(anchor, inputBox, aggr, outputBox)))
+
+      // Now use "test-custom-box" as a custom box.
+      val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+      val cb1 = Box("cb1", "test-custom-box", Map(), 0, 0, Map("in1" -> eg.output("project")))
+      assert({
+        val ws = Workspace.from(eg, cb1)
+        context(ws).allStates(cb1.output("out1")).project.scalars.contains("weight_sum")
+      })
+
+      // Remove the comment edge attribute and see if the custom box still works.
+      val dea = Box("d", "Discard edge attributes", Map("name" -> "comment"), 0, 0,
+        Map("project" -> eg.output("project")))
+      val cb2 = Box("cb2", "test-custom-box", Map(), 0, 0, Map("in1" -> dea.output("project")))
+      assert({
+        val ws = Workspace.from(eg, dea, cb2)
+        context(ws).allStates(cb2.output("out1")).project.scalars.contains("weight_sum")
       })
     }
   }

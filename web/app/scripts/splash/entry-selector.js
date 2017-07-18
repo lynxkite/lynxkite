@@ -13,7 +13,7 @@ angular.module('biggraph').directive('entrySelector',
       link: function(scope, element) {
         scope.util = util;
         function defaultSettings() {
-          return { privacy: 'private' };
+          return { privacy: 'public-read' };
         }
         scope.newWorkspace = {};
         scope.newDirectory = defaultSettings();

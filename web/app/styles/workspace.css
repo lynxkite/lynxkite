@@ -16,7 +16,6 @@ span#workspace-name {
 }
 
 #workspace-drawing-board {
-  user-select: none;
   height: 100%;
   width: 100%;
   float: left;
@@ -30,7 +29,12 @@ span#workspace-name {
   overflow: auto; /* Allow scrolling category list, if necessary. */
 }
 
+workspace-drawing-board > display-error > * {
+  padding: 20px;
+}
+
 #workspace-drawing-board > svg {
+  user-select: none;
   display: block;
   width: 100%;
   height: 100%;
@@ -176,6 +180,7 @@ div.popup-head {
   height: 35px;
   line-height: 35px;
   cursor: default;
+  user-select: none;
 }
 
 .popup-type-plug div.popup-head {
