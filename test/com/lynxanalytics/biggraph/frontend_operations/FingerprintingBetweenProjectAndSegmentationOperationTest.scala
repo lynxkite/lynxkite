@@ -11,17 +11,17 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       .box("Use other project as segmentation", Map(
         "name" -> "eg2"), Seq(box("Create example graph")))
       .box("Use table as segmentation links", Map(
-        "apply_to_project" -> "|eg2",
+        "apply_to_project" -> ".eg2",
         "base_id_attr" -> "name",
         "base_id_column" -> "src",
         "seg_id_attr" -> "name",
         "seg_id_column" -> "dst"), Seq(importCSV("fingerprint-example-connections.csv")))
       .box("Link project and segmentation by fingerprint", Map(
-        "apply_to_project" -> "|eg2",
+        "apply_to_project" -> ".eg2",
         "mo" -> "1",
         "ms" -> "0.5"))
       .box("Aggregate from segmentation", Map(
-        "apply_to_project" -> "|eg2",
+        "apply_to_project" -> ".eg2",
         "prefix" -> "seg",
         "aggregate_age" -> "average"))
       .project
@@ -53,14 +53,14 @@ class FingerprintingBetweenProjectAndSegmentationOperationTest extends Operation
       .box("Use other project as segmentation", Map(
         "name" -> "other"), Seq(other))
       .box("Define segmentation links from matching attributes", Map(
-        "apply_to_project" -> "|other",
+        "apply_to_project" -> ".other",
         "base_id_attr" -> "stringId",
         "seg_id_attr" -> "link"))
     def seg(box: TestBox) = box.project.segmentation("other")
     def belongsTo(box: TestBox) = seg(box).belongsTo.toPairSeq
     assert(belongsTo(golden).size == 6)
     val fingerprinted = golden.box("Link project and segmentation by fingerprint", Map(
-      "apply_to_project" -> "|other",
+      "apply_to_project" -> ".other",
       "mo" -> "0",
       "ms" -> "0"))
     assert(belongsTo(fingerprinted).size == 6)
