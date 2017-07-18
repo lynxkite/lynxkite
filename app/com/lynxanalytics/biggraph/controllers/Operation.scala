@@ -167,7 +167,7 @@ object Operation {
       protected def segmentationsRecursively(
         editor: ProjectEditor, prefix: String = ""): Seq[String] = {
         prefix +: editor.segmentationNames.flatMap { seg =>
-          segmentationsRecursively(editor.segmentation(seg), prefix + "|" + seg)
+          segmentationsRecursively(editor.segmentation(seg), prefix + "." + seg)
         }
       }
       def segmentationsRecursively: List[FEOption] =
@@ -190,7 +190,7 @@ object Operation {
           case (inputName, state) if state.isTable => Seq(inputName -> ProtoTable(state.table))
           case (inputName, state) if state.isProject => state.project.viewer.getProtoTables.map {
             case (tableName, proto) =>
-              val prefix = if (bindInputName) s"$inputName|" else ""
+              val prefix = if (bindInputName) s"$inputName." else ""
               s"$prefix$tableName" -> proto
           }
         }

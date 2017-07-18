@@ -131,7 +131,7 @@ case class DiscardEntryRequest(name: String)
 // A request for the execution of a FE operation on a specific project. The project might be
 // a non-root project, that is a segmentation (or segmentation of segmentation, etc) of a root
 // project. In this case, the project parameter has the format:
-// rootProjectName|childSegmentationName|grandChildSegmentationName|...
+// rootProjectName.childSegmentationName.grandChildSegmentationName.greatChild..
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
 // Represents an operation executed on a subproject. It is only meaningful in the context of
 // a root project. path specifies the offspring project in question, e.g. it could be sg like:
