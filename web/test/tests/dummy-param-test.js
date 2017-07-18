@@ -21,6 +21,6 @@ module.exports = function(fw) {
     }, function() {
       lib.expectElement($('#text-title'));
       lib.expectElement($('#text #title2'));
-    }, 1
+    }
   );
 };
