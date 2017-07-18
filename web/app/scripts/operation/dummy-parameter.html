@@ -5,6 +5,7 @@
   <help-popup href="{{htmlId + '-' + 'title'}}"></help-popup>
 </div>
 <div
+  id="{{param.id + '-title'}}"
   class="col-sm-4 right-aligned-dummy"
   ng-if="param.payload.title2">
   {{param.title}}
@@ -16,6 +17,7 @@
     }"
     id="{{param.id}}">
   <div
+    id="title2"
     class="left-aligned-dummy"
     ng-if="param.payload.title2">
     {{param.payload.title2}}

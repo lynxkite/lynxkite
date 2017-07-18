@@ -298,9 +298,9 @@ class JoinTest extends OperationsTestBase {
         Map(
           "apply_to_project" -> "|bucketing",
           "aggregate_name" -> "first"))
-      .box("Rename vertex attribute",
+      .box("Rename vertex attributes",
         Map("apply_to_project" -> "|bucketing",
-          "before" -> "name_first", "after" -> "name"))
+          "change_name_first" -> "name"))
     val join = box("Project rejoin",
       Map(
         "segs" -> "bucketing"
@@ -334,4 +334,3 @@ class JoinTest extends OperationsTestBase {
   }
 
 }
-
