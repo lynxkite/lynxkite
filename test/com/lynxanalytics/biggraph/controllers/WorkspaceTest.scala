@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.controllers
 
 import org.scalatest.FunSuite
+
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.graph_api.BuiltIns
