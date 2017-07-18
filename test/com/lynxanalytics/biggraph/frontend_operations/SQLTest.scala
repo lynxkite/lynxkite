@@ -171,9 +171,9 @@ class SQLTest extends OperationsTestBase {
 
   test("subquery") {
     val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select * from (select * from vertices) as sub"))
+      .box("SQL1", Map("sql" -> "select id from (select * from vertices) as sub"))
       .table
-    assert(table.schema.map(_.name) == Seq("id", "count"))
+    assert(table.schema.map(_.name) == Seq("id"))
   }
 
   test("no table") {
