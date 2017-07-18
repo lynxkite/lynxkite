@@ -359,12 +359,13 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       }
     },
 
-    pasteFromClipboard: function(clipboard, currentPosition) {
+    pasteFromData: function(boxes, currentPosition) {
       var mapping = {};
       var newBoxes = [];
-      for (var i = 0; i < clipboard.length; ++i) {
-        var box = clipboard[i].instance;
-        var diffX = clipboard[i].width;
+      for (var i = 0; i < boxes.length; ++i) {
+        var box = boxes[i];
+        var wrapper = new BoxWrapper(this, this._boxCatalogMap[box.operationId], box);
+        var diffX = wrapper.width;
         var createdBox = this._addBox(
           box.operationId,
           currentPosition.logicalX + box.x + 1.1 * diffX,
@@ -374,8 +375,8 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         mapping[box.id] = createdBox;
         newBoxes.push(createdBox);
       }
-      for (i = 0; i < clipboard.length; ++i) {
-        var oldBox = clipboard[i].instance;
+      for (i = 0; i < boxes.length; ++i) {
+        var oldBox = boxes[i];
         var newBox = mapping[oldBox.id];
         for (var key in oldBox.inputs) {
           if (!oldBox.inputs.hasOwnProperty(key)) {

@@ -19,7 +19,6 @@ angular.module('biggraph')
       link: function(scope, element) {
         scope.workspace = undefined;
         scope.selection = new SelectionModel();
-        scope.clipboard = [];
         scope.dragMode = window.localStorage.getItem('drag_mode') || 'pan';
         scope.selectedBoxIds = [];
         scope.movedBoxes = undefined;
@@ -444,15 +443,38 @@ angular.module('biggraph')
           }
         };
 
-        scope.copyBoxes = function() {
-          scope.clipboard = angular.copy(scope.selectedBoxes());
+        scope.copyBoxes = function(e) {
+          // The svg tag cannot be focused apparently, but we don't want to copy paste events
+          // from things like input fields.
+          if (document.activeElement.tagName !== "BODY") {
+            return;
+          }
+          var data = JSON.stringify(scope.selectedBoxes()
+            .map(function(box) { return box.instance;}));
+          e.clipboardData.setData('text/plain', data);
+          e.preventDefault();
         };
 
-        scope.pasteBoxes = function() {
+        scope.pasteBoxes = function(e) {
+          // The svg tag cannot be focused apparently, but we don't want to steal paste events
+          // from things like input fields.
+          if (document.activeElement.tagName !== "BODY") {
+            return;
+          }
+          var data = e.clipboardData.getData('Text');
+          try {
+            var boxes = JSON.parse(data);
+          } catch (err) {
+            util.error('Cannot create boxes from clipboard. (Not in JSON format)',
+              {clipboard: data});
+          }
           var pos = addLogicalMousePosition({ pageX: 0, pageY: 0});
-          var added = scope.workspace.pasteFromClipboard(scope.clipboard, pos);
+          var added = scope.workspace.pasteFromData(boxes, pos);
           scope.selectedBoxIds = added.map(function(box) { return box.id; });
         };
+
+        window.addEventListener('copy', scope.copyBoxes);
+        window.addEventListener('paste', scope.pasteBoxes);
 
         scope.deleteBoxes = function(boxIds) {
           var popups = scope.popups.slice();
@@ -490,14 +512,13 @@ angular.module('biggraph')
           scope.selectedBoxIds = [b.customBox.id];
           b.promise.then(success, error);
         };
-
         var hk = hotkeys.bindTo(scope);
         hk.add({
           combo: 'mod+c', description: 'Copy boxes',
-          callback: function() { scope.copyBoxes(); } });
+          callback: function() { } }); // Only here for the tooltip.
         hk.add({
           combo: 'mod+v', description: 'Paste boxes',
-          callback: function() { scope.pasteBoxes(); } });
+          callback: function() { } }); // Only here for the tooltip.
         hk.add({
           combo: 'mod+z', description: 'Undo',
           callback: function() { scope.workspace.undo(); } });
