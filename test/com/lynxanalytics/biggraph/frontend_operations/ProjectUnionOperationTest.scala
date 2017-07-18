@@ -7,7 +7,7 @@ class ProjectUnionOperationTest extends OperationsTestBase {
     val a = box("Create example graph")
     val b = box("Create example graph")
       .box("Rename vertex attributes", Map("change_age" -> "newage"))
-      .box("Rename edge attribute", Map("before" -> "comment", "after" -> "newcomment"))
+      .box("Rename edge attributes", Map("change_comment" -> "newcomment"))
     val union = box("Project union", Map("id_attr" -> "new_id"), Seq(a, b))
     val project = union.project
 
