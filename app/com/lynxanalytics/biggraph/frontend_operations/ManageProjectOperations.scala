@@ -108,6 +108,18 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
   })
 
+  register("Discard segmentation")(new ProjectTransformation(_) {
+    params += Choice("name", "Name", options = project.segmentationList)
+    def enabled = FEStatus.assert(project.segmentationList.nonEmpty, "No segmentations")
+    override def summary = {
+      val name = params("name")
+      s"Discard segmentation: $name"
+    }
+    def apply() = {
+      project.deleteSegmentation(params("name"))
+    }
+  })
+
   register("Discard vertex attributes")(new ProjectTransformation(_) {
     params += Choice("name", "Name", options = project.vertexAttrList, multipleChoice = true)
     def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
@@ -119,18 +131,6 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       for (param <- splitParam("name")) {
         project.deleteVertexAttribute(param)
       }
-    }
-  })
-
-  register("Discard segmentation")(new ProjectTransformation(_) {
-    params += Choice("name", "Name", options = project.segmentationList)
-    def enabled = FEStatus.assert(project.segmentationList.nonEmpty, "No segmentations")
-    override def summary = {
-      val name = params("name")
-      s"Discard segmentation: $name"
-    }
-    def apply() = {
-      project.deleteSegmentation(params("name"))
     }
   })
 
