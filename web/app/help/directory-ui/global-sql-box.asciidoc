@@ -5,14 +5,14 @@ There is a SQL interface on the workspace browser page that can be expanded by c
 button and which can be used to make queries to all available snapshots in the current folder
 (those in subfolders included). To refer to the table you want to access, you first need to
 provide the path from your current folder to the snapshot, then in case of project snapshots
-use `|` to specify the table you want to access. The table reference must be enclosed between two
+use `.` to specify the table you want to access. The table reference must be enclosed between two
 `{backtick}` characters (_see example below_).
 
 For example, let's say you are in your private folder where you have a subfolder called
 `Premier_League`, in which you have a project snapshot named `Arsenal`. If you want to access the
 vertices table of the Arsenal project snapshot from your private folder, you need to refer to it by
-`{backtick}Premier_League/Arsenal|vertices{backtick}`. In case you are already in the
-`Premier_League` folder, the reference shortens to `{backtick}Arsenal|vertices{backtick}`
+`{backtick}Premier_League/Arsenal.vertices{backtick}`. In case you are already in the
+`Premier_League` folder, the reference shortens to `{backtick}Arsenal.vertices{backtick}`
 
 The SQL interface on the workspace browser page can also be used to reference table snapshots.
 For example, let's say you have a table snapshot called `Players` which has the data of all

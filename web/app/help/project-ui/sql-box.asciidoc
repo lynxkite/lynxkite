@@ -30,12 +30,12 @@ and `segment_` respectively.
 Example (work on the segment side): `select * from belongs_to`
 +
 The tables of segmentations can also be accessed using the
-`{backtick}segmentation name|table name{backtick}` syntax from the base side.
+`{backtick}segmentation name.table name{backtick}` syntax from the base side.
 +
 Examples (work on the base side):
 
- * `select count(*) from {backtick}communities|belongs_to{backtick} group by segment_id`
- * `select base_name from {backtick}communities|belongs_to{backtick} where segment_name = "COOKING"`
+ * `select count(*) from {backtick}communities.belongs_to{backtick} group by segment_id`
+ * `select base_name from {backtick}communities.belongs_to{backtick} where segment_name = "COOKING"`
 
 +
 The backticks are used for escaping the table name with special characters.

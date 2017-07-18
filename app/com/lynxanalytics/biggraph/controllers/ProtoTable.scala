@@ -5,7 +5,31 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL.Alias
+import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL.TableName
+import org.apache.spark.sql.catalyst.analysis.Analyzer
+import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
+import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
+import org.apache.spark.sql.catalyst.analysis.UnresolvedStar
+import org.apache.spark.sql.catalyst.catalog.InMemoryCatalog
+import org.apache.spark.sql.catalyst.catalog.SessionCatalog
+import org.apache.spark.sql.catalyst.expressions.AttributeReference
+import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.catalyst.expressions.NamedExpression
+import org.apache.spark.sql.catalyst.optimizer.Optimizer
+import org.apache.spark.sql.catalyst.plans.logical.BinaryNode
+import org.apache.spark.sql.catalyst.plans.logical.LeafNode
+import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.catalyst.plans.logical.Project
+import org.apache.spark.sql.catalyst.plans.logical.SubqueryAlias
+import org.apache.spark.sql.catalyst.plans.logical.UnaryNode
+import org.apache.spark.sql.catalyst.plans.logical.Union
+import org.apache.spark.sql.execution.SparkSqlParser
+import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types
+
+import scala.collection.mutable
 
 // A kind of wrapper for Tables that can be used for trimming unused dependencies from table
 // operations like ExecuteSQL.
@@ -26,10 +50,43 @@ object ProtoTable {
 
   // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
   // necessary to support the query.
-  def minimize(sql: String, protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
-    // TODO: Minimize the ProtoTables using SQLHelper.getInputColumns or SparkSqlParser.
-    protoTables
+  def minimize(optimizedPlan: LogicalPlan,
+               protoTables: Map[Alias, (TableName, ProtoTable)]): Map[TableName, ProtoTable] = {
+    val tables = getRequiredFields(optimizedPlan)
+    val selectedTables = tables.map(f => {
+      val (name, table) = protoTables(f._1)
+      val columns = f._2.flatMap(parseExpression)
+      val selectedTable = if (columns.contains("*")) {
+        table
+      } else {
+        table.maybeSelect(columns)
+      }
+      name -> selectedTable
+    }).toMap
+    selectedTables
   }
+
+  private def parseExpression(expression: Expression): Seq[String] = expression match {
+    case u: AttributeReference => Seq(u.name)
+    case u: UnresolvedStar => Seq("*")
+    case exp: Expression => exp.children.flatMap(parseExpression)
+  }
+
+  private def getRequiredFields(plan: LogicalPlan): Seq[(String, Seq[NamedExpression])] =
+    plan match {
+      case SubqueryAlias(name, Project(projectList, _), _) =>
+        List((name, projectList))
+      case u: SubqueryAlias =>
+        List((u.alias, Seq(UnresolvedStar(target = None))))
+      case l: LeafNode =>
+        bigGraphLogger.info(s"$l ignored in ProtoTable minimalization")
+        List()
+      case s: UnaryNode => getRequiredFields(s.child)
+      case s: BinaryNode =>
+        getRequiredFields(s.left) ++ getRequiredFields(s.right)
+      case s: Union =>
+        s.children.flatMap(getRequiredFields)
+    }
 }
 
 class TableWrappingProtoTable(table: Table) extends ProtoTable {

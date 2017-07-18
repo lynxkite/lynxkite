@@ -6,7 +6,7 @@ var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
 
-  var snapshotName = 'This is a snapshot.';
+  var snapshotName = 'This is a snapshot!';
 
   fw.transitionTest(
     'test-example workspace with example graph',

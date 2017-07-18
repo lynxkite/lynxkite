@@ -191,11 +191,12 @@ sealed trait ProjectViewer {
   def toListElementFE(name: String, objectType: String, details: Option[json.JsObject])(
     implicit epm: EntityProgressManager): FEEntryListElement = {
     FEEntryListElement(
-      name,
-      objectType,
-      state.notes,
-      feScalar("!vertex_count"),
-      feScalar("!edge_count"),
+      name = name,
+      objectType = objectType,
+      icon = objectType,
+      notes = state.notes,
+      vertexCount = feScalar("!vertex_count"),
+      edgeCount = feScalar("!edge_count"),
       details = details)
   }
 
@@ -270,14 +271,14 @@ sealed trait ProjectViewer {
   def getProtoTables: Iterable[(String, ProtoTable)] = {
     val childProtoTables = sortedSegmentations.flatMap { segmentation =>
       segmentation.getLocalProtoTables.map {
-        case (name, table) => segmentation.segmentationName + "|" + name -> table
+        case (name, table) => segmentation.segmentationName + "." + name -> table
       }
     }
     getLocalProtoTables ++ childProtoTables
   }
 
   def getSingleProtoTable(tablePath: String): ProtoTable = {
-    val splittedPath = tablePath.split('|')
+    val splittedPath = tablePath.split('.')
     val (segPath, tableName) = (splittedPath.dropRight(1), splittedPath.last)
     val segViewer = offspringViewer(segPath)
     segViewer.getSingleLocalProtoTable(tableName)
@@ -980,7 +981,7 @@ class ProjectFrame(path: SymbolPath)(
   override def copy(to: DirectoryEntry): ProjectFrame = super.copy(to).asProjectFrame
 }
 object ProjectFrame {
-  val separator = "|"
+  val separator = "."
   val quotedSeparator = java.util.regex.Pattern.quote(ProjectFrame.separator)
   val reservedWords = Set(
     "readACL", "writeACL",
@@ -1011,7 +1012,7 @@ object ProjectFrame {
 // representing the named root project and a sequence of segmentation names which show how one
 // should climb down the project tree.
 // When referring to SubProjects via a single string, we use the format:
-//   RootProjectName|Seg1Name|Seg2Name|...
+//   RootProjectName.Seg1Name.Seg2Name.Seg3...
 case class SubProject(val frame: ProjectFrame, val path: Seq[String]) {
   def viewer = frame.viewer.offspringViewer(path)
   def fullName = (frame.name +: path).mkString(ProjectFrame.separator)
@@ -1065,6 +1066,7 @@ class SnapshotFrame(path: SymbolPath)(
       FEEntryListElement(
         name = name,
         objectType = objectType,
+        icon = getState().kind,
         details = details)
     } catch {
       case ex: Throwable =>
@@ -1072,6 +1074,7 @@ class SnapshotFrame(path: SymbolPath)(
         FEEntryListElement(
           name = name,
           objectType = objectType,
+          icon = getState().kind,
           error = Some(ex.getMessage)
         )
     }
@@ -1132,6 +1135,7 @@ abstract class ObjectFrame(path: SymbolPath)(
         FEEntryListElement(
           name = name,
           objectType = objectType,
+          icon = objectType,
           error = Some(ex.getMessage)
         )
     }
@@ -1355,7 +1359,7 @@ object DirectoryEntry {
 
   def fromPath(path: SymbolPath)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
     val entry = new DirectoryEntry(path)
-    val nonDirParent = entry.parents.find(_.hasCheckpoint)
+    val nonDirParent = entry.parents.find(e => e.exists && !e.isDirectory)
     assert(
       nonDirParent.isEmpty,
       s"Invalid path: $path. Parent ${nonDirParent.get} is not a directory.")

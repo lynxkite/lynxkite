@@ -6,8 +6,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   // content: Description of content to render.
   // x, y, width, height: Location and size of the popup.
   // owner: Owning object. It should have an owner.popups
-  //        list of all popups. And owner.movedPopup a pointer
-  //        to the currently moved popup, if any.
+  //        list of all popups. And owner.startMovingPopup(p) to route onMouseMove() calls.
   function PopupModel(id, title, content, x, y, width, height, owner) {
     this.id = id;
     this.title = title;
@@ -31,8 +30,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     var leftButton = event.buttons & 1;
     // Protractor omits button data from simulated mouse events.
     if (leftButton) {
-      // Enter 'moving mode', i.e. movedPopup is defined.
-      this.owner.movedPopup = this;
+      this.owner.startMovingPopup(this);
       this.moveOffsetX = this.x - event.pageX;
       this.moveOffsetY = this.y - event.pageY;
     }

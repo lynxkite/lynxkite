@@ -9,11 +9,11 @@ class CopyEdgesToBaseProjectTest extends OperationsTestBase {
       .box("Use base project as segmentation", Map("name" -> "copy"))
       .box(
         "Create random edges",
-        Map("degree" -> "5", "seed" -> "0", "apply_to_project" -> "|copy"))
+        Map("degree" -> "5", "seed" -> "0", "apply_to_project" -> ".copy"))
       .box(
         "Add constant edge attribute",
-        Map("name" -> "const", "value" -> "1", "type" -> "Double", "apply_to_project" -> "|copy"))
-      .box("Copy edges to base project", Map("apply_to_project" -> "|copy"))
+        Map("name" -> "const", "value" -> "1", "type" -> "Double", "apply_to_project" -> ".copy"))
+      .box("Copy edges to base project", Map("apply_to_project" -> ".copy"))
       .project
     assert(project.edgeBundle.toPairSeq.size == 21)
     assert(project.edgeAttributes("const").rdd.count == 21)

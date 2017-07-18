@@ -102,16 +102,16 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       val expr = params("expr")
       val edgeBundle = project.edgeBundle
       val idSet = project.edgeBundle.idSet
-      val namedEdgeAttributes = JSUtilities.collectIdentifiers[Attribute[_]](project.edgeAttributes, expr)
+      val namedEdgeAttributes = ScalaUtilities.collectIdentifiers[Attribute[_]](project.edgeAttributes, expr)
       val namedSrcVertexAttributes =
-        JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "src$")
+        ScalaUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "src$")
           .map {
             case (name, attr) =>
               "src$" + name -> graph_operations.VertexToEdgeAttribute.srcAttribute(attr, edgeBundle)
           }
-      val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val namedScalars = ScalaUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val namedDstVertexAttributes =
-        JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "dst$")
+        ScalaUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr, "dst$")
           .map {
             case (name, attr) =>
               "dst$" + name -> graph_operations.VertexToEdgeAttribute.dstAttribute(attr, edgeBundle)
@@ -121,20 +121,9 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
         namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
       val onlyOnDefinedAttrs = params("defined_attrs").toBoolean
 
-      val result = params("type") match {
-        case "String" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](
-            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
-        case "Double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](
-            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
-        case "Vector of Strings" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Vector[String]](
-            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
-        case "Vector of Doubles" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Vector[Double]](
-            expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
-      }
+      val result = graph_operations.DeriveScala.deriveAndInferReturnType(
+        expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
+
       project.newEdgeAttribute(params("output"), result, expr + help)
     }
   })

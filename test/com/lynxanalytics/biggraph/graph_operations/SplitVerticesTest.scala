@@ -4,7 +4,6 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_operations.DoubleAttributeToLong._
 
 class SplitVerticesTest extends FunSuite with TestGraphOp {
@@ -33,14 +32,11 @@ class SplitVerticesTest extends FunSuite with TestGraphOp {
   }
 
   test("Zero drops vertices - one hundred lonely guys") {
-    val expr = "name == 'Isolated Joe' ? 100.0 : 0.0"
+    val expr = "if (name == \"Isolated Joe\") 100.0 else 0.0"
     val g = ExampleGraph()().result
-    val op = DeriveJSDouble(
-      JavaScript(expr),
-      Seq("name"))
-    val derived = op(
-      op.attrs,
-      VertexAttributeToJSValue.seq(g.name.entity)).result.attr
+    val derived = DeriveScala.derive[Double](
+      expr,
+      Seq("name" -> g.name.entity))
     val splitOp = SplitVertices()
     val longAttr = DoubleAttributeToLong.run(derived)
     val res = splitOp(splitOp.attr, longAttr).result

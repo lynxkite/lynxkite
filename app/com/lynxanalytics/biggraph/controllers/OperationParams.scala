@@ -192,6 +192,26 @@ object OperationParams {
   }
 }
 
+case class DummyParam(
+    id: String,
+    title: String,
+    title2: String = "" // If title2 is not empty, title will appear among
+    // the other parameter titles and title2 will appear among the parameter
+    // input fields.
+    // If title2 is empty, title will fill the whole line.
+    ) extends OperationParameterMeta {
+  val kind = "dummy"
+  val options = List()
+  val multipleChoice = false
+  val defaultValue = ""
+  def validate(value: String): Unit = {}
+  override val payload = Some(
+    json.Json.obj(
+      "title2" -> title2
+    )
+  )
+}
+
 // A special parameter payload to describe applicable models on the UI.
 case class ModelsPayload(
   models: List[model.FEModelMeta],
