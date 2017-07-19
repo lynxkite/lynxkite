@@ -352,6 +352,13 @@ class LynxKite:
       with open('myfile.csv') as f:
         view = lk.import_csv(lk.upload(f))
 
+    The above doesn't work with python3.4; see https://bugs.python.org/issue21057
+    In such environment, do a read on the file; this is only slightly more compex::
+
+      with open('myfile.csv') as f:
+        view = lk.import_csv(lk.upload(f.read()))
+
+
     Or to upload even smaller datasets right from Python::
 
       view = lk.import_csv(lk.upload('id,name\\n1,Bob'))
