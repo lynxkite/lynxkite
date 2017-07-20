@@ -54,6 +54,7 @@ case class PSOGenerator(externalDegree: Int, internalDegree: Int,
     val masterRandom = new Random(seed)
     val numVertices = vs.count
     val logNumVertices: Double = math.log(numVertices.toDouble)
+    // Adds the necessary attributes for the calculations to come
     val reorderedID = vs.zipWithIndex.map { case ((key, nothing), reID) => (key, reID + 1) }
     val radialAdded = reorderedID.map { case (key, reID) => (key, (reID, 2 * math.log(reID.toDouble))) }
     val radial = radialAdded.map { case (key, (reID, radial)) => (key, radial) }
@@ -64,6 +65,7 @@ case class PSOGenerator(externalDegree: Int, internalDegree: Int,
         (math.round(logNumVertices * totalExpectedEPSO(exponent, externalDegree, internalDegree, numVertices, reID))).toInt))
     }
     // key | reorderedID | radial | angular | (expectedDegree)
+    // This replaces the double-linked list found in the local implementation
     // Groups the samples for each vertex into a list. The first element of these are the vertices, then 
     // angular samples from cloclwise-most to counterclockwise-most, then radial samples.
     // Note: sample list will include the node itself in the middle.
@@ -95,6 +97,7 @@ case class PSOGenerator(externalDegree: Int, internalDegree: Int,
       }
       resultList
     }
+    // Selects the expectedDegree smallest distance edges from possibility bundles
     val possibilities = sc.parallelize(possibilityList)
     val edges = sc.parallelize(possibilities.map {
       case (data) =>
@@ -106,14 +109,14 @@ case class PSOGenerator(externalDegree: Int, internalDegree: Int,
           val srcTuple = data.head
           // hyperbolicDistance | src key | dst key
           //TODO instead of a maxheap look into using rdd.top(numSelections)?
-          // How do you define a complex ordering for RDDs? It might only sort by keys.
+          // RDD orders by keys though.
           val maxHeap = PriorityQueue.empty(Ordering.by[(Double, Long, Long), Double](_._1))
           def heapElement(srcTuple: (Long, Long, Double, Double, Int),
                           dstTuple: (Long, Long, Double, Double, Int)): (Double, Long, Long) = {
             (-hyperbolicDistance(srcTuple._3, dstTuple._3, srcTuple._4, dstTuple._4),
               srcTuple._1, dstTuple._1)
           }
-          //This technically could be parallelized and 'for' probably doesn't do it.
+          //This could be parallelized and 'for' probably doesn't do it.
           for (dstTuple <- data.tail) {
             if (srcTuple != dstTuple) maxHeap += heapElement(srcTuple, dstTuple)
           }
@@ -124,8 +127,7 @@ case class PSOGenerator(externalDegree: Int, internalDegree: Int,
           resultEdges
         }
     }.reduce(_ ++ _).map { case (edge1, edge2) => Edge(edge1, edge2) })
-    //TODO turn output things into lynxanalytics.EdgeBundleRDD
-    // optional: discard parallel edges? EdgeSet?
+    // TODO will this contain parallel edges? The algorithm generates them but does sortUnique eliminate?
     output(o.radial, radial.sortUnique(inputs.vs.rdd.partitioner.get))
     output(o.angular, angular.sortUnique(inputs.vs.rdd.partitioner.get))
     output(o.edges, edges.randomNumbered(inputs.vs.rdd.partitioner.get))
