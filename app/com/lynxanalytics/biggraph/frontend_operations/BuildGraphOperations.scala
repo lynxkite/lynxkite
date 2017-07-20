@@ -95,6 +95,36 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     }
   })
 
+  register("Create high clustering scale-free edges", List(projectInput))(new ProjectTransformation(_) {
+    params ++= List(
+      NonNegInt("externalDegree", "Average number of links a node estabilishes upon appearance",
+        default = 2),
+      NonNegInt("internalDegree",
+        "Average number of links other nodes estabilish to an already existing node", default = 2),
+      NonNegDouble(
+        "exponent",
+        "Exponent of edge distribution; 0.5 - 1.0 endpoints excluded",
+        defaultValue = "0.6"),
+      NonNegDouble(
+        "temperature",
+        "Clustering strength; maximal when approaching 0 - cannot be 0 - and asymptotically 0 at 1 and above",
+        defaultValue = "0.45"),
+      RandomSeed("seed", "Seed"))
+    def enabled = project.hasVertexSet
+    def apply() = {
+      val op = graph_operations.PSOGenerator(
+        params("externalDegree").toInt,
+        params("internalDegree").toInt,
+        params("exponent").toDouble,
+        params("temperature").toDouble,
+        params("seed").toLong)
+      //TODO the output
+      project.edgeBundle = op(op.vs, project.vertexSet).result.edges
+      project.newVertexAttribute("radial", op.result.radial)
+      project.newVertexAttribute("angular", op.result.angular)
+    }
+  })
+
   registerProjectCreatingOp("Create vertices")(new ProjectOutputOperation(_) {
     params += NonNegInt("size", "Vertex set size", default = 10)
     def enabled = FEStatus.enabled
