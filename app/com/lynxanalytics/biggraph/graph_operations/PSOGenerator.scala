@@ -20,8 +20,8 @@ object PSOGenerator extends OpFromJson {
     val (vertices, edges) = graph
     val radial = vertexAttribute[Double](vertices)
     val angular = vertexAttribute[Double](vertices)
-    val reorderedID = vertexAttribute[Int](vertices)
-    val edgeProbability = edgeAttribute[Double](edges)
+    //val reorderedID = vertexAttribute[Int](vertices)
+    //val edgeProbability = edgeAttribute[Double](edges)
   }
   def fromJson(j: JsValue) = PSOGenerator(
     (j \ "externalDegree").as[Int],
@@ -49,14 +49,17 @@ case class PSOGenerator(externalDegree: Int, internalDegree: Int,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    val sc = rc.sparkContext
     val vs = inputs.vs.rdd
     val masterRandom = new Random(seed)
     val numVertices = vs.count
     val logNumVertices: Double = math.log(numVertices.toDouble)
     val reorderedID = vs.zipWithIndex.map { case ((key, nothing), reID) => (key, reID + 1) }
-    val radial = reorderedID.map { case (key, reID) => (key, (reID, 2 * math.log(reID.toDouble))) }
-    val angular = radial.map({ case (key, (reID, rad)) => (key, (reID, rad, masterRandom.nextDouble * math.Pi * 2)) })
-    val expectedSamples = angular.map {
+    val radialAdded = reorderedID.map { case (key, reID) => (key, (reID, 2 * math.log(reID.toDouble))) }
+    val radial = radialAdded.map { case (key, (reID, radial)) => (key, radial) }
+    val angularAdded = radialAdded.map({ case (key, (reID, rad)) => (key, (reID, rad, masterRandom.nextDouble * math.Pi * 2)) })
+    val angular = angularAdded.map { case (key, (reID, radial, angular)) => (key, angular) }
+    val expectedSamples = angularAdded.map {
       case (key, (reID, rad, ang)) => (key, (reID, rad, ang,
         (math.round(logNumVertices * totalExpectedEPSO(exponent, externalDegree, internalDegree, numVertices, reID))).toInt))
     }
@@ -64,7 +67,6 @@ case class PSOGenerator(externalDegree: Int, internalDegree: Int,
     // Groups the samples for each vertex into a list. The first element of these are the vertices, then 
     // angular samples from cloclwise-most to counterclockwise-most, then radial samples.
     // Note: sample list will include the node itself in the middle.
-    //TODO add radial samples as well
     val allVerticesList: List[(Long, Long, Double, Double, Int)] = expectedSamples.map {
       case (key, (reID, rad, ang, eSam)) => (key, reID, rad, ang, eSam)
     }.collect().toList
@@ -84,7 +86,8 @@ case class PSOGenerator(externalDegree: Int, internalDegree: Int,
 
         if (remainderList.isEmpty) remainderList = allVerticesList.take(numFirstSamples)
         if (!angularSampleList.isEmpty) angularSampleList = angularSampleList.take(vertex._5 * 2)
-        angularSampleList = remainderList.head :: angularSampleList
+        // Small modification if clause to keep the sample list centered on 'vertex'
+        if (vertex._5 >= remainderList.head._5) angularSampleList = remainderList.head :: angularSampleList
         remainderList = remainderList.tail
 
         val vertexResult = vertex :: (angularSampleList ++ radialSampleList)
@@ -92,14 +95,13 @@ case class PSOGenerator(externalDegree: Int, internalDegree: Int,
       }
       resultList
     }
-    val possibilities = possibilityList //.rdd
-    //TODO serialize possibilityList, which is a list of lists. Using flatMap?
-    val edges = possibilities.map {
+    val possibilities = sc.parallelize(possibilityList)
+    val edges = sc.parallelize(possibilities.map {
       case (data) =>
         {
-          var resultEdges: List[Long, Long] = Nil
+          var resultEdges: List[(Long, Long)] = Nil
           val numSelections: Double = totalExpectedEPSO(exponent, externalDegree, internalDegree,
-            numVertices, data._1)
+            numVertices, data.head._1)
           val numSamples: Int = (math.log(numVertices) * numSelections).toInt
           val srcTuple = data.head
           // hyperbolicDistance | src key | dst key
@@ -111,22 +113,22 @@ case class PSOGenerator(externalDegree: Int, internalDegree: Int,
             (-hyperbolicDistance(srcTuple._3, dstTuple._3, srcTuple._4, dstTuple._4),
               srcTuple._1, dstTuple._1)
           }
-          data.tail.foreach {
-            if (srcTuple != _) maxHeap += heapElement(srcTuple, _)
+          //This technically could be parallelized and 'for' probably doesn't do it.
+          for (dstTuple <- data.tail) {
+            if (srcTuple != dstTuple) maxHeap += heapElement(srcTuple, dstTuple)
           }
           for (j <- 0 until numSelections.toInt) {
             val result = maxHeap.dequeue
             resultEdges = (result._2, result._3) :: resultEdges
           }
+          resultEdges
         }
-        resultEdges
-    }
-    //TODO this contains a bunch of separate lists each making an edge. Can I somehow combine them into one edgeBundle?
-    // optional: discard parallel edges? EdgeSet probably takes care of that?
-    edges = numberedFirsts.sortedJoin(numberedSeconds)
-      .mapValues { case (edge1, edge2) => Edge(edge1.src, edge2.dst) }
-      .values
-    output(o.edges, edges)
+    }.reduce(_ ++ _).map { case (edge1, edge2) => Edge(edge1, edge2) })
+    //TODO turn output things into lynxanalytics.EdgeBundleRDD
+    // optional: discard parallel edges? EdgeSet?
+    output(o.radial, radial.sortUnique(inputs.vs.rdd.partitioner.get))
+    output(o.angular, angular.sortUnique(inputs.vs.rdd.partitioner.get))
+    output(o.edges, edges.randomNumbered(inputs.vs.rdd.partitioner.get))
   }
   // Returns hyperbolic distance.
   def hyperbolicDistance(rad1: Double, rad2: Double, ang1: Double, ang2: Double): Double = {
