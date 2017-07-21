@@ -79,7 +79,7 @@ class SRDDRelation(
   // PrunedScan
   def buildScan(requiredColumns: Array[String]): spark.rdd.RDD[spark.sql.Row] = {
     val usedColumns = inputDatas.scalars
-    val rdds = requiredColumns.toSeq.map(name => usedColumns(Symbol(name))).map(_.value)
+    val rdds = requiredColumns.toSeq.map(name => usedColumns(Symbol(name)).value)
     val row = Row.fromSeq(rdds)
 
     val rdd: RDD[Any] = sqlContext.sparkContext.parallelize(Seq(1)) // creates one row
