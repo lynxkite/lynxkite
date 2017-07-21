@@ -1,4 +1,6 @@
-// Generates scale-free graph based on probability x similarity model
+// Generates scale-free graph based on probability x similarity model.
+// The degree distribution of the resuting graph will be scale-free and
+// it will have high average clustering.
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.math
@@ -54,7 +56,7 @@ case class PSOGenerator(size: Long, externalDegree: Int, internalDegree: Int, ex
     val masterRandom = new Random(seed)
     val numVertices = vertices.count
     val logNumVertices: Double = math.log(numVertices.toDouble)
-    // Adds the necessary attributes for the calculations to come
+    // Adds the necessary attributes for later calculations.
     val reorderedID = vertices.zipWithIndex.map { case ((key, nothing), reID) => (key, reID + 1) }
     val radialAdded = reorderedID.map { case (key, reID) => (key, (reID, 2 * math.log(reID.toDouble))) }
     val radial = radialAdded.map { case (key, (reID, radial)) => (key, radial) }
@@ -65,13 +67,13 @@ case class PSOGenerator(size: Long, externalDegree: Int, internalDegree: Int, ex
         (math.round(logNumVertices * totalExpectedEPSO(exponent, externalDegree, internalDegree, numVertices, reID))).toInt))
     }
     // key | reorderedID | radial | angular | expectedDegree
-    // This replaces the double-linked list found in the local implementation.
+    // This next part replaces the double-linked list found in the local implementation.
     // Groups the samples for each vertex into a list. The first element of these are the vertices, then 
     // angular samples from cloclwise-most to counterclockwise-most, then radial samples.
     // Note: sample list will include the node itself in the middle.
     val allVerticesList: List[(Long, Long, Double, Double, Int)] = expectedSamples.map {
       case (key, (reID, rad, ang, eSam)) => (key, reID, rad, ang, eSam)
-    }.collect().toList
+    }.sortBy(_._4).collect().toList
     val possibilityList: List[List[(Long, Long, Double, Double, Int)]] = {
       val numFirstSamples: Int = allVerticesList.head._5
       val endofVerticesList = allVerticesList.reverse.take(numFirstSamples)
@@ -87,9 +89,10 @@ case class PSOGenerator(size: Long, externalDegree: Int, internalDegree: Int, ex
           if (!radialSampleList.isEmpty) radialSampleList = radialSampleList.take(vertex._5)
           radialSampleList = vertex :: radialSampleList
 
+          // Once remainderList reaches the end makes it circular by sampling the beginning again.
           if (remainderList.isEmpty) remainderList = allVerticesList.take(numFirstSamples)
           if (!angularSampleList.isEmpty) angularSampleList = angularSampleList.take(vertex._5 * 2)
-          // Small modification if clause to keep the sample list centered on 'vertex'
+          // Keeps the sample list centered on 'vertex'.
           if (vertex._5 >= remainderList.head._5) angularSampleList = remainderList.head :: angularSampleList
           remainderList = remainderList.tail
 
@@ -99,7 +102,7 @@ case class PSOGenerator(size: Long, externalDegree: Int, internalDegree: Int, ex
       }
       resultList
     }
-    // Selects the expectedDegree smallest distance edges from possibility bundles
+    // Selects the expectedDegree smallest distance edges from possibility bundles.
     val possibilities = sc.parallelize(possibilityList)
     val es = sc.parallelize(possibilities.map {
       case (data) =>
