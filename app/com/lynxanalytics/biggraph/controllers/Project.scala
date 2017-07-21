@@ -263,10 +263,10 @@ sealed trait ProjectViewer {
 
   def getLocalProtoTables: Iterable[(String, ProtoTable)] = {
     import ProjectViewer._
-    maybeProtoTable(1, ScalarTableName) ++
-      maybeProtoTable(vertexSet, VertexTableName) ++
+    maybeProtoTable(vertexSet, VertexTableName) ++
       maybeProtoTable(edgeBundle, EdgeAttributeTableName) ++
-      maybeProtoTable(edgeBundle, EdgeTableName)
+      maybeProtoTable(edgeBundle, EdgeTableName) ++
+      maybeProtoTable(1, ScalarTableName)
   }
 
   def getProtoTables: Iterable[(String, ProtoTable)] = {
