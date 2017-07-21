@@ -62,6 +62,16 @@ object SQLHelper {
     types.StructType(fields.toSeq)
   }
 
+  def dataFrameSchemaScalar(columns: Iterable[(String, Scalar[_])]): types.StructType = {
+    val fields = columns.map {
+      case (name, scalar) =>
+        types.StructField(
+          name = name,
+          dataType = typeTagToDataType(scalar.typeTag))
+    }
+    types.StructType(fields.toSeq)
+  }
+
   private def supportedDataType[T: TypeTag]: Option[types.DataType] = {
     try {
       Some(spark.sql.catalyst.ScalaReflection.schemaFor(typeTag[T]).dataType)

@@ -7,6 +7,8 @@ import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL.Alias
 import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL.TableName
+import com.lynxanalytics.biggraph.spark_util.SQLHelper
+import org.apache.spark
 import org.apache.spark.sql.catalyst.analysis.Analyzer
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
@@ -28,6 +30,7 @@ import org.apache.spark.sql.catalyst.plans.logical.Union
 import org.apache.spark.sql.execution.SparkSqlParser
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types
+import org.apache.spark.sql.types.StructType
 
 import scala.collection.mutable
 
@@ -47,6 +50,8 @@ object ProtoTable {
   def apply(table: Table) = new TableWrappingProtoTable(table)
   def apply(attributes: Iterable[(String, Attribute[_])])(implicit m: MetaGraphManager) =
     new AttributesProtoTable(attributes)
+  def scalar(scalars: Iterable[(String, Scalar[_])])(implicit m: MetaGraphManager) =
+    new ScalarsProtoTable(scalars)
 
   // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
   // necessary to support the query.
@@ -104,4 +109,19 @@ class AttributesProtoTable(
     new AttributesProtoTable(attributes.filter { case (name, attr) => keep.contains(name) })
   }
   def toTable = graph_operations.AttributesToTable.run(attributes)
+}
+
+class ScalarsProtoTable(
+    scalars: Iterable[(String, Scalar[_])])(implicit m: MetaGraphManager) extends ProtoTable {
+  lazy val schema = spark_util.SQLHelper.dataFrameSchemaScalar(scalars)
+
+  def maybeSelect(columns: Iterable[String]) = {
+    val keep = columns.toSet
+    new ScalarsProtoTable(scalars.filter { case (name, attr) => keep.contains(name) })
+  }
+
+  def toTable: Table = {
+    val x: StructType = SQLHelper.dataFrameSchemaScalar(scalars)
+    graph_operations.ScalarsToTable.run(scalars)
+  }
 }
