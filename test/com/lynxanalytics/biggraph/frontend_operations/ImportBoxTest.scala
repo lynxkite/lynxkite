@@ -87,8 +87,16 @@ class ImportBoxTest extends OperationsTestBase {
       List("vertexId", "name", "age"),
       infer = false)
     val impBoxWithStaleSettings = impBox.changeParameterSettings(Map("infer" -> "yes"))
-    val success = impBoxWithStaleSettings.output("table").success.enabled
-    assert(!success, "Stale settings should result an error in the output")
+    val feStatus = impBoxWithStaleSettings.output("table").success
+    assert(!feStatus.enabled, "Stale settings should result an error in the output")
+
+    val errorMessage = feStatus.disabledReason
+    val errorMessageShouldBe =
+      "assertion failed: The following import settings are stale: infer (no). Please click on " +
+        "the import button to apply the changed settings or reset the changed settings to " +
+        "their original values."
+    assert(errorMessage == errorMessageShouldBe,
+      "Stale settings error should list the stale parameters and their original value.")
   }
 
   val sqliteURL = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"

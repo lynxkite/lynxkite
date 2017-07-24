@@ -515,16 +515,22 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
 
   protected def areSettingsStaleReplyMessage(): String = {
     if (areSettingsStale()) {
-      "Import settings are stale. " +
-        "Please click on the import button to apply the changed settings."
+      val lastSettings = getLastSettings
+      val current = currentSettings
+      val changedSettings = lastSettings.filter {
+        case (k, v) => v != current(k)
+      }
+      val changedSettingsListed = changedSettings.map { case (k, v) => s"$k ($v)" }.mkString(", ")
+      s"The following import settings are stale: $changedSettingsListed. " +
+        "Please click on the import button to apply the changed settings or reset the changed " +
+        "settings to their original values."
     } else { "" }
   }
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     params.validate()
     assert(params("imported_table").nonEmpty, "You have to import the data first.")
-    assert(!areSettingsStale, "Import settings are stale. " +
-      "Please click on the import button to apply the changed settings.")
+    assert(!areSettingsStale, areSettingsStaleReplyMessage)
     makeOutput(tableFromGuid(params("imported_table")))
   }
 
