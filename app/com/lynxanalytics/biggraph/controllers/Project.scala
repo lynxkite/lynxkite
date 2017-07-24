@@ -299,9 +299,9 @@ sealed trait ProjectViewer {
         val dstAttrs = vertexAttributes.map {
           case (name, attr) => s"dst_$name" -> dstAttribute(attr, edgeBundle)
         }
-        ProtoTable(vertexSet, (edgeAttrs ++ srcAttrs ++ dstAttrs).toSeq.sortBy(_._1))
+        ProtoTable(edgeBundle.idSet, (edgeAttrs ++ srcAttrs ++ dstAttrs).toSeq.sortBy(_._1))
       }
-      case EdgeAttributeTableName => ProtoTable(vertexSet, edgeAttributes.toSeq.sortBy(_._1))
+      case EdgeAttributeTableName => ProtoTable(edgeBundle.idSet, edgeAttributes.toSeq.sortBy(_._1))
       case BelongsToTableName =>
         throw new AssertionError("Only segmentations have a BelongsTo table")
       case _ => {
@@ -466,7 +466,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
         val segAttrs = vertexAttributes.map {
           case (name, attr) => s"segment_$name" -> dstAttribute(attr, belongsTo)
         }
-        ProtoTable(vertexSet, (baseAttrs ++ segAttrs).toSeq.sortBy(_._1))
+        ProtoTable(belongsTo.idSet, (baseAttrs ++ segAttrs).toSeq.sortBy(_._1))
       }
       case _ => super.getSingleLocalProtoTable(tableName)
     }
