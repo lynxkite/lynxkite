@@ -119,11 +119,11 @@ class LynxKite:
       self._pid = os.getpid()
     return self._session
 
-  def _post(self, endpoint, **kwargs):
+  def _method(self, method, endpoint, **kwargs):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
     max_tries = 3
     for i in range(max_tries):
-      r = self._get_session().post(
+      r = getattr(self._get_session(), method)(
           self.address().rstrip('/') + '/' + endpoint.lstrip('/'),
           verify=self.certfile(),
           allow_redirects=False,
@@ -138,6 +138,12 @@ class LynxKite:
       else:
         r.raise_for_status()
 
+  def _post(self, endpoint, **kwargs):
+    return self._method('post', endpoint, **kwargs)
+
+  def _get(self, endpoint, **kwargs):
+    return self._method('get', endpoint, **kwargs)
+
   def _request(self, endpoint, payload={}):
     '''Sends an HTTP JSON request to LynxKite and returns the response when it arrives.'''
     data = json.dumps(payload)
@@ -145,12 +151,19 @@ class LynxKite:
 
   def _send(self, command, payload={}, raw=False):
     '''Sends a command to LynxKite and returns the response when it arrives.'''
-    data = self._request('/remote/' + command, payload).text
+    data = self._request('/ajax/' + command, payload).text
     if raw:
       r = json.loads(data)
     else:
       r = json.loads(data, object_hook=_asobject)
     return r
+
+  def _ask(self, command, payload={}):
+    resp = self._get(
+        '/ajax/' + command,
+        params=dict(q=json.dumps(payload)),
+        headers={'X-Requested-With': 'XMLHttpRequest'})
+    return json.loads(resp.text, object_hook=_asobject)
 
   def sql(self, query, **mapping):
     '''Runs global level SQL query and returns a :class:`View` for the results.
@@ -369,6 +382,11 @@ class LynxKite:
   def clean_file_system(self):
     """Deletes the data files which are not referenced anymore."""
     self._send('cleanFileSystem')
+
+  def run(self, boxes, parameters=dict()):
+    res = self._send(
+        'runWorkspace', dict(workspace=dict(boxes=boxes), parameters=parameters))
+    return res.outputs
 
 
 class Table:
