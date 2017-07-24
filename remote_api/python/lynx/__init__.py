@@ -352,19 +352,18 @@ class LynxKite:
       with open('myfile.csv', 'rb') as f:
         view = lk.import_csv(lk.upload(f))
 
-    The above doesn't work with python3.4; see https://bugs.python.org/issue21057
-    In such environment, do a read on the file; this is only slightly more compex::
-
-      with open('myfile.csv') as f:
-        view = lk.import_csv(lk.upload(f.read()))
-
-
     Or to upload even smaller datasets right from Python::
 
       view = lk.import_csv(lk.upload('id,name\\n1,Bob'))
     '''
     if name is None:
       name = 'remote-api-upload'  # A hash will be added anyway.
+
+    # Python3.4 cannot directly use the TextIOWrapper object deep down in the post; Python 3.5 can.
+    # See https://bugs.python.org/issue21057
+    # But doing a read() on the object always works.
+    if hasattr(data, 'read'):
+      data = data.read()
     return self._post('/ajax/upload', files=dict(file=(name, data))).text
 
   def clean_file_system(self):
