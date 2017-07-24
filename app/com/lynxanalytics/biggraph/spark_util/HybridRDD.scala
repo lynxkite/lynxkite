@@ -114,7 +114,6 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   val resultPartitioner = smallKeysRDD.partitioner.get
   override val partitioner = if (isSkewed) None else Some(resultPartitioner)
 
-  assert(smallKeysRDD.partitions.size == resultPartitioner.numPartitions)
   if (isSkewed) {
     assert(largeKeysRDD.get.partitions.size == resultPartitioner.numPartitions)
   }
