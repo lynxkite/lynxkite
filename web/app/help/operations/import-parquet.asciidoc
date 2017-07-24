@@ -3,11 +3,6 @@
 https://parquet.apache.org/[Apache Parquet] is a columnar data storage format.
 
 ====
-[[last_settings]] The settings are ..::
-Operations which import data from external source are executed only when the _Run import_ button
-is clicked. This field makes it easy to see if the settings are in sync with
-the output of the box.
-
 [[filename]] File::
 The distributed file-system path of the file. See <<prefixed-paths>> for more details on specifying
 paths.

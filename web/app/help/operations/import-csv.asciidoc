@@ -5,11 +5,6 @@ is on a separate line and fields of the record are simply separated with a comma
 CSV does not store data types, so all fields become strings when importing from this format.
 
 ====
-[[last_settings]] The settings are ..::
-Operations which import data from external source are executed only when the _Run import_ button
-is clicked. This field makes it easy to see if the settings are in sync with
-the output of the box.
-
 [[filename]] File::
 Upload a file by clicking the
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-cloud-upload"></i></label>+++ button

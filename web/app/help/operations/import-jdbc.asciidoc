@@ -5,11 +5,6 @@ JDBC is used to connect to relational databases such as MySQL. See <<jdbc-detail
 required for connecting to a database.
 
 ====
-[[last_settings]] The settings are ..::
-Operations which import data from external source are executed only when the _Run import_ button
-is clicked. This field makes it easy to see if the settings are in sync with
-the output of the box.
-
 [[jdbc_url]] JDBC URL::
 The connection URL for the database. This typically includes the username and password. The exact
 syntax entirely depends on the database type. Please consult the documentation of the database.
