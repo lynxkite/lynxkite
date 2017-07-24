@@ -110,12 +110,6 @@
       on-ui-state-changed="onBlur()"
       project-state-id="box.outputs[0].stateId">
     </visualization-parameter>
-    <staleness-check
-      ng-if="param.kind === 'staleness-check' && pflags[param.id] !== true"
-      box="box"
-      param="param"
-      on-blur="onBlur()">
-    </staleness-check>
     <i class="fa fa-dollar parametric-switch"
       drop-tooltip="Parametric: {{ pflags[param.id] ? 'yes' : 'no' }}"
       drop-tooltip-position="top center"
