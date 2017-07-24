@@ -1,10 +1,15 @@
 <!-- This has to be inside a <form class="form-horizontal">. -->
 <div class="form-group" ng-repeat="param in meta.parameters">
   <label for="{{param.id}}" class="col-sm-4 control-label"
-      ng-if="!isVisualizationParam(param)">
+      ng-if="!isVisualizationParam(param) && param.kind !== 'dummy'">
     {{param.title}}
     <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
   </label>
+  <dummy-parameter
+    ng-if="param.kind === 'dummy'"
+    param="param"
+    html-id="meta.htmlId">
+  </dummy-parameter>
   <div ng-class="{
         'col-sm-8': !isVisualizationParam(param),
         'operation-parameter-input': true,
@@ -115,7 +120,8 @@
       drop-tooltip="Parametric: {{ pflags[param.id] ? 'yes' : 'no' }}"
       drop-tooltip-position="top center"
       ng-class="{ active: pflags[param.id] === true }"
-      ng-click="pflags[param.id] = !pflags[param.id]">
+      ng-click="pflags[param.id] = !pflags[param.id]"
+      ng-if="param.kind !== 'dummy'">
     </i>
   </div>
 </div>

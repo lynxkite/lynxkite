@@ -25,9 +25,8 @@
 .entry-list .entry > .icon,
 .entry-list .entry-nohover > .icon {
   position: absolute;
-  padding: 10px;
-  margin-left: -40px;
-  margin-top: 6px;
+  padding: 6px;
+  margin-left: -34px;
 }
 
 .entry-list .entry .open-in-new-tab-icon {
@@ -65,3 +64,9 @@
   cursor: pointer;
   user-select: none;
 }
+
+.disabled {
+  color: darkgrey !important;
+  background: white !important;
+}
+

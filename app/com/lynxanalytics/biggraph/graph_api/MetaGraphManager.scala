@@ -276,28 +276,35 @@ object MetaGraphManager {
 
 object BuiltIns {
   def createBuiltIns(implicit manager: MetaGraphManager) = {
-    if (!builtInsDirectoryExists) {
-      log.info("Loading built-ins from disk...")
-      val builtInsLocalDir = getBuiltInsLocalDirectory()
-      import com.lynxanalytics.biggraph.controllers.WorkspaceJsonFormatters._
-      for ((file, j) <- loadBuiltIns(builtInsLocalDir)) {
-        try {
-          val ws = j.as[Workspace]
-          val entry = DirectoryEntry.fromName("built-ins/" + file).asNewWorkspaceFrame()
-          val cp = ws.checkpoint()
-          entry.setCheckpoint(cp)
-        } catch {
-          case e: Throwable => throw new Exception(s"failed to load $file.", e)
-        }
-      }
-      log.info("Built-ins loaded from disk.")
+    val builtInsDir = DirectoryEntry.fromName("built-ins")
+    if (!builtInsDir.exists) {
+      builtInsDir.asNewDirectory()
+      builtInsDir.readACL = "*"
+      builtInsDir.writeACL = ""
     }
+    log.info("Loading built-ins from disk...")
+    val builtInsLocalDir = getBuiltInsLocalDirectory()
+    import com.lynxanalytics.biggraph.controllers.WorkspaceJsonFormatters._
+    for ((file, json) <- loadBuiltIns(builtInsLocalDir)) {
+      try {
+        val entry = DirectoryEntry.fromName("built-ins/" + file)
+        val newWS = json.as[Workspace]
+        // If the workspace from the disk is the same as the existing one, leave it alone.
+        // This way we don't keep creating new checkpoints whenever LynxKite restarts.
+        if (!entry.exists || !entry.isWorkspace || entry.asWorkspaceFrame.workspace != newWS) {
+          entry.remove()
+          entry.asNewWorkspaceFrame(newWS.checkpoint())
+        }
+      } catch {
+        case e: Throwable => throw new Exception(s"Failed to create built-in for file $file.", e)
+      }
+    }
+    log.info("Built-ins loaded from disk.")
   }
 
   private def getBuiltInsLocalDirectory(): String = {
     val stageDir = scala.util.Properties.envOrNone("KITE_STAGE_DIR")
-    // In the backend-tests because there we don't have the KITE_STAGE_DIR environment variable
-    // set.
+    // In the backend-tests we don't have the KITE_STAGE_DIR environment variable set.
     stageDir.getOrElse("stage")
   }
 
@@ -306,12 +313,12 @@ object BuiltIns {
     if (opdir.exists) {
       val files = opdir.listFiles.sortBy(_.getName)
       files.map { f =>
-        f.getName() -> Json.parse(FileUtils.readFileToString(f, "utf8"))
+        try {
+          f.getName() -> Json.parse(FileUtils.readFileToString(f, "utf8"))
+        } catch {
+          case e: Throwable => throw new Exception(s"Failed to load built-in file $f.", e)
+        }
       }
     } else Iterable()
-  }
-
-  private def builtInsDirectoryExists(implicit manager: MetaGraphManager): Boolean = {
-    DirectoryEntry.fromName("built-ins").exists
   }
 }

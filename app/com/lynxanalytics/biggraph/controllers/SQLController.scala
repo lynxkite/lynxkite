@@ -68,7 +68,7 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
       // Maps the relative table names used in the sql query with the global name
       val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
       val pathAndTableName = tableNames.mapValues(wholePath => {
-        val split = wholePath.split('|')
+        val split = wholePath.split('.')
         (split.head, split.tail)
       })
       val snapshotsAndInternalTables = pathAndTableName.mapValues {
@@ -82,7 +82,7 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
         case (name, (state, tablePath)) if state.isTable => (name, ProtoTable(state.table))
         case (name, (state, tablePath)) if state.isProject =>
           val rootViewer = state.project.viewer
-          val protoTable = rootViewer.getSingleProtoTable(tablePath.mkString("|"))
+          val protoTable = rootViewer.getSingleProtoTable(tablePath.mkString("."))
           (name, protoTable)
       }
       val result = ExecuteSQL.run(sql, protoTables)
@@ -286,7 +286,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
         getProjectTables(frame.path, state.project.viewer, pathTail)
       } else {
         // The path identifies a table within a snapshot of a project kind.
-        val protoTable = state.project.viewer.getSingleProtoTable(pathTail.mkString("|"))
+        val protoTable = state.project.viewer.getSingleProtoTable(pathTail.mkString("."))
         getColumnsFromSchema(protoTable.schema)
       }
     } else {
@@ -303,7 +303,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val implicitTables = viewer.getProtoTables.map(_._1).toSeq.map {
       name =>
         TableBrowserNode(
-          absolutePath = (Seq(path.toString) ++ subPath ++ Seq(name)).mkString("|"),
+          absolutePath = (Seq(path.toString) ++ subPath ++ Seq(name)).mkString("."),
           name = name,
           objectType = "table")
     }
@@ -311,7 +311,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
       segmentation =>
         TableBrowserNode(
           absolutePath =
-            (Seq(path.toString) ++ subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
+            (Seq(path.toString) ++ subPath ++ Seq(segmentation.segmentationName)).mkString("."),
           name = segmentation.segmentationName,
           objectType = "segmentation"
         )

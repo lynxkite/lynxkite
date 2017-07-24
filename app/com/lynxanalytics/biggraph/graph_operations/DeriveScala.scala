@@ -4,8 +4,6 @@ package com.lynxanalytics.biggraph.graph_operations
 import scala.reflect._
 import scala.reflect.runtime.universe._
 
-import com.lynxanalytics.biggraph.JavaScript
-import com.lynxanalytics.biggraph.JavaScriptEvaluator
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
@@ -28,6 +26,31 @@ object DeriveScala extends OpFromJson {
     derive[Double]("-x", Seq("x" -> x))
   }
 
+  // Same as below but infers T from the input parameters and the script.
+  def deriveAndInferReturnType(
+    exprString: String,
+    attributes: Seq[(String, Attribute[_])],
+    vertexSet: VertexSet,
+    scalars: Seq[(String, Scalar[_])] = Seq(),
+    onlyOnDefinedAttrs: Boolean = true)(
+      implicit manager: MetaGraphManager): Attribute[_] = {
+
+    val paramTypes = (
+      attributes.map { case (k, v) => k -> v.typeTag } ++
+      scalars.map { case (k, v) => k -> v.typeTag }).toMap[String, TypeTag[_]]
+
+    val t = ScalaScript.compileAndGetType(
+      exprString, paramTypes, paramsToOption = !onlyOnDefinedAttrs).payloadType
+    val tt = SerializableType(t).typeTag
+
+    derive(
+      exprString,
+      attributes,
+      scalars,
+      onlyOnDefinedAttrs,
+      Some(vertexSet))(tt, manager)
+  }
+
   // Derives a new AttributeRDD using the Scala expression (expr) and the input attribute and scalar
   // values. The expression may return T or Option[T]. In the latter case the result RDD will be
   // partially defined exactly where the expression returned Some[T]. The expression should never
@@ -42,51 +65,31 @@ object DeriveScala extends OpFromJson {
     onlyOnDefinedAttrs: Boolean = true,
     vertexSet: Option[VertexSet] = None)(
       implicit manager: MetaGraphManager): Attribute[T] = {
+
     assert(attributes.nonEmpty || vertexSet.nonEmpty,
       "There should be either at least one attribute or vertexSet defined.")
-    val attr = deriveAndInferReturnType(
-      exprString,
-      attributes,
-      vertexSet.getOrElse(attributes.head._2.vertexSet),
-      scalars,
-      onlyOnDefinedAttrs)
-    assert(attr.typeTag.tpe =:= typeOf[T])
-    attr.runtimeSafeCast[T]
-  }
-
-  // Same as above but infers T from the input parameters and the script.
-  def deriveAndInferReturnType(
-    exprString: String,
-    namedAttributes: Seq[(String, Attribute[_])],
-    vertexSet: VertexSet,
-    namedScalars: Seq[(String, Scalar[_])] = Seq(),
-    onlyOnDefinedAttrs: Boolean = true)(
-      implicit manager: MetaGraphManager): Attribute[_] = {
 
     // Check name collision between scalars and attributes
     val common =
-      namedAttributes.map(_._1).toSet & namedScalars.map(_._1).toSet
+      attributes.map(_._1).toSet & scalars.map(_._1).toSet
     assert(common.isEmpty, {
       val collisions = common.mkString(",")
       s"Identical scalar and attribute name: $collisions." +
         s" Please rename either the scalar or the attribute."
     })
 
-    val attrTypes = namedAttributes.map { case (k, v) => k -> v.typeTag }
-    val scalarTypes = namedScalars.map { case (k, v) => k -> v.typeTag }
+    val attrTypes = attributes.map { case (k, v) => k -> v.typeTag }
+    val scalarTypes = scalars.map { case (k, v) => k -> v.typeTag }
     val paramTypes = (attrTypes ++ scalarTypes).toMap[String, TypeTag[_]]
-    checkInputTypes(paramTypes)
+    checkInputTypes(paramTypes, exprString)
 
-    val t = ScalaScript.compileAndGetType(
-      exprString, paramTypes, paramsToOption = !onlyOnDefinedAttrs).payLoadType
-
-    val tt = SerializableType(t).typeTag
+    val tt = SerializableType(typeTag[T]).typeTag // Throws an error if T is not SerializableType.
     val op = DeriveScala(exprString, attrTypes, scalarTypes, onlyOnDefinedAttrs)(tt)
 
     import Scripting._
-    op(op.vs, vertexSet)(
-      op.attrs, namedAttributes.map(_._2))(
-        op.scalars, namedScalars.map(_._2)).result.attr
+    op(op.vs, vertexSet.getOrElse(attributes.head._2.vertexSet))(
+      op.attrs, attributes.map(_._2))(
+        op.scalars, scalars.map(_._2)).result.attr.runtimeSafeCast[T]
   }
 
   def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
@@ -107,20 +110,19 @@ object DeriveScala extends OpFromJson {
     j.as[List[JsValue]].map { p => (p \ "name").as[String] -> SerializableType.fromJson(p \ "type").typeTag }
   }
 
-  def checkInputTypes(paramTypes: Map[String, TypeTag[_]]): Unit = {
+  def checkInputTypes(paramTypes: Map[String, TypeTag[_]], expr: String): Unit = {
     paramTypes.foreach {
       case (k, t) =>
         try {
           SerializableType(t)
         } catch {
           case e: AssertionError => throw new AssertionError(
-            s"Unsupported type $t for input parameter $k. Please don't use this parameter or change its type.")
+            s"Unsupported type $t for input parameter $k in expression $expr.", e)
         }
     }
   }
 }
 
-// Using this constructor directly is discouraged, please use the functions above.
 import DeriveScala._
 case class DeriveScala[T: TypeTag] private[graph_operations] (
   expr: String, // The Scala expression to evaluate.
@@ -180,8 +182,8 @@ case class DeriveScala[T: TypeTag] private[graph_operations] (
     val paramTypes = (attrParams ++ scalarParams).toMap[String, TypeTag[_]]
 
     val t = ScalaScript.compileAndGetType(expr, paramTypes, paramsToOption = !onlyOnDefinedAttrs)
-    assert(t.payLoadType =:= tt.tpe, // PayLoadType should always match T.
-      s"Scala script returns wrong type: expected ${tt.tpe} but got ${t.payLoadType} instead.")
+    assert(t.payloadType =:= tt.tpe, // PayloadType should always match T.
+      s"Scala script returns wrong type: expected ${tt.tpe} but got ${t.payloadType} instead.")
 
     val returnsOptionType = t.isOptionType
     val derived = joined.mapPartitions({ it =>

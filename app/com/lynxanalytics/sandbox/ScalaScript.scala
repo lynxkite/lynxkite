@@ -3,12 +3,14 @@ package com.lynxanalytics.sandbox
 import java.io.FilePermission
 import java.net.NetPermission
 import java.security.Permission
+import java.util.UUID
 import javax.script._
 
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
 import com.lynxanalytics.biggraph.graph_api.TypeTagUtil
 import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, Timestamp }
+import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark.sql.DataFrame
 
@@ -179,35 +181,35 @@ object ScalaScript {
     // Whether the expression returns an Option or not.
     def isOptionType = TypeTagUtil.isSubtypeOf[Option[_]](returnType)
     // The type argument for Options otherwise the return type.
-    def payLoadType = if (isOptionType) {
+    def payloadType = if (isOptionType) {
       returnType.typeArgs(0)
     } else {
       returnType
     }
   }
 
+  // Inferring the type for the exact same code and parameters is expected to happen often,
+  // so it is better to use a cache.
+  private val codeReturnTypeCache = new SoftHashMap[UUID, ScalaType]()
+
   def compileAndGetType(
     code: String, paramTypes: Map[String, TypeTag[_]], paramsToOption: Boolean): ScalaType = {
-    ScalaType(inferType(code, paramTypes, paramsToOption))
+    val funcCode = evalFuncString(code, convert(paramTypes, paramsToOption))
+    val id = UUID.nameUUIDFromBytes(funcCode.getBytes())
+    codeReturnTypeCache.synchronized {
+      codeReturnTypeCache.getOrElseUpdate(id, ScalaType(inferType(funcCode)))
+    }
   }
 
-  private def inferType(
-    code: String,
-    paramTypes: Map[String, TypeTag[_]],
-    paramsToOption: Boolean): TypeTag[_] = synchronized {
-    val paramString = convert(paramTypes, paramsToOption).map {
-      case (k, v) => s"`$k`: ${v.tpe}"
-    }.mkString(", ")
+  private def inferType(func: String): TypeTag[_] = synchronized {
     val fullCode = s"""
     import scala.reflect.runtime.universe._
     def typeTagOf[T: TypeTag](t: T) = typeTag[T]
-    def eval($paramString) = {
-      $code
-    }
+    $func
     typeTagOf(eval _)
     """
     withContextClassLoader {
-      val compiledCode = engine.compile(fullCode)
+      val compiledCode = compile(fullCode)
       val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
         compiledCode.eval()
       }
@@ -215,10 +217,42 @@ object ScalaScript {
     }
   }
 
+  // Both type inference and evaluation should use this function.
+  private def evalFuncString(
+    code: String,
+    convertedParamTypes: Map[String, TypeTag[_]]): String = {
+    val paramString = convertedParamTypes.map {
+      case (k, v) => s"`$k`: ${v.tpe}"
+    }.mkString(", ")
+    s"""
+    def eval($paramString) = {
+      $code
+    }
+    """
+  }
+
+  // Compiles the fullCode using the engine, and throws a ScriptException with a meaningful
+  // error message in case of a compilation error.
+  private def compile(fullCode: String) = {
+    // The Scala compiler doesn't include the compilation error message, but prints it to the
+    // console, so we need to capture the console.
+    val os = new java.io.ByteArrayOutputStream
+    try {
+      Console.withOut(os) {
+        engine.compile(fullCode)
+      }
+    } catch {
+      case e: javax.script.ScriptException =>
+        throw new javax.script.ScriptException(new String(os.toByteArray(), "UTF-8"))
+    }
+  }
+
   // A wrapper class to call the compiled function with the parameter Map.
   case class Evaluator(evalFunc: Function1[Map[String, Any], AnyRef]) {
     def evaluate(params: Map[String, Any]): AnyRef = {
-      evalFunc.apply(params)
+      ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
+        evalFunc.apply(params)
+      }
     }
   }
 
@@ -228,18 +262,24 @@ object ScalaScript {
     paramsToOption: Boolean): Evaluator = synchronized {
     // Parameters are back quoted and taken out from the Map. The input argument is one Map to
     // make the calling of the compiled function easier (otherwise we had varying number of args).
-    val paramsString = convert(paramTypes, paramsToOption).map {
+    val convertedParamTypes = convert(paramTypes, paramsToOption)
+    val paramsString = convertedParamTypes.map {
       case (k, t) => s"""val `$k` = params("$k").asInstanceOf[${t.tpe}]"""
     }.mkString("\n")
+    val callParams = convertedParamTypes.map {
+      case (k, _) => s"`$k`"
+    }.mkString(", ")
+    val func = evalFuncString(code, convertedParamTypes)
     val fullCode = s"""
-    def eval(params: Map[String, Any]) = {
+    $func
+    def evalWrapper(params: Map[String, Any]) = {
       $paramsString
-      $code
+      eval($callParams)
     }
-    eval _
+    evalWrapper _
     """
     withContextClassLoader {
-      val compiledCode = engine.compile(fullCode)
+      val compiledCode = compile(fullCode)
       val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
         compiledCode.eval()
       }

@@ -2,7 +2,6 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
@@ -219,6 +218,11 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
         }
         TagList(s"aggregate_$name", name, options = options)
     }
+  }
+
+  // Aggregation parameters which are empty - i.e. no aggregator was defined - should be removed.
+  protected def cleanAggregateParams(params: Map[String, String]): Map[String, String] = {
+    params.filter { case (k, v) => !k.startsWith("aggregate_") || v.nonEmpty }
   }
 
   // Performs AggregateAttributeToScalar.
