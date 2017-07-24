@@ -347,9 +347,9 @@ class LynxKite:
   def upload(self, data, name=None):
     '''Uploads a file that can then be used in import methods.
 
-    Use it to upload small test datasets from local files::
+    Use it to upload small test datasets from local files; binary read mode is strongly recommended::
 
-      with open('myfile.csv') as f:
+      with open('myfile.csv', 'rb') as f:
         view = lk.import_csv(lk.upload(f))
 
     The above doesn't work with python3.4; see https://bugs.python.org/issue21057
