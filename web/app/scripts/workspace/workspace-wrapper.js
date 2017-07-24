@@ -35,7 +35,6 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     // request:
     this.backendRequest = undefined;
     this.backendState = undefined;
-    this._updateBoxCatalog();
   }
 
   WorkspaceWrapper.prototype = {

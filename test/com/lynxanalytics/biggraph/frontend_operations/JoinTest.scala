@@ -52,14 +52,14 @@ class JoinTest extends OperationsTestBase {
       .box(
         "Create random edges",
         Map(
-          "apply_to_project" -> "|bucketing",
+          "apply_to_project" -> ".bucketing",
           "degree" -> "10",
           "seed" -> "31415"
         ))
       .box(
         "Add constant edge attribute",
         Map(
-          "apply_to_project" -> "|bucketing",
+          "apply_to_project" -> ".bucketing",
           "name" -> "ten",
           "value" -> "10",
           "type" -> "Double"))
@@ -180,20 +180,20 @@ class JoinTest extends OperationsTestBase {
       .box("Segment by Double attribute",
         Map("name" -> "seg", "attr" -> "ordinal", "interval_size" -> "1", "overlap" -> "no"))
       .box("Add constant vertex attribute",
-        Map("name" -> "const1", "value" -> "1", "type" -> "Double", "apply_to_project" -> "|seg"))
+        Map("name" -> "const1", "value" -> "1", "type" -> "Double", "apply_to_project" -> ".seg"))
       .box("Connect vertices on attribute",
-        Map("fromAttr" -> "const1", "toAttr" -> "const1", "apply_to_project" -> "|seg"))
+        Map("fromAttr" -> "const1", "toAttr" -> "const1", "apply_to_project" -> ".seg"))
     val target =
       root.box("Add random edge attribute",
         Map("name" -> "random",
-          "apply_to_project" -> "|seg",
+          "apply_to_project" -> ".seg",
           "dist" -> "Standard Uniform",
           "seed" -> "32421341"))
         .box("Filter by attributes",
           Map(
             "filterea_random" -> ">0.5",
-            "apply_to_project" -> "|seg"))
-    val source = root.box("Take segmentation as base project", Map("apply_to_project" -> "|seg"))
+            "apply_to_project" -> ".seg"))
+    val source = root.box("Take segmentation as base project", Map("apply_to_project" -> ".seg"))
       .box("Add random edge attribute",
         Map("name" -> "random2",
           "dist" -> "Standard Uniform",
@@ -203,14 +203,14 @@ class JoinTest extends OperationsTestBase {
 
     val join = box("Project rejoin",
       Map(
-        "apply_to_target" -> "|seg!edges",
+        "apply_to_target" -> ".seg!edges",
         "apply_to_source" -> "!edges",
         "attrs" -> "random2"
       ), Seq(target, source))
 
     val random2Defined =
       join.box("SQL1",
-        Map("sql" -> "select COUNT(*) from `seg|edges` where edge_random2 is not null"))
+        Map("sql" -> "select COUNT(*) from `seg.edges` where edge_random2 is not null"))
         .table.df.collect.take(1).head.getLong(0)
 
     import org.scalactic.TolerantNumerics
@@ -219,7 +219,7 @@ class JoinTest extends OperationsTestBase {
 
     val random2NotDefined =
       join.box("SQL1",
-        Map("sql" -> "select COUNT(*) from `seg|edges` where edge_random2 is null"))
+        Map("sql" -> "select COUNT(*) from `seg.edges` where edge_random2 is null"))
         .table.df.collect.take(1).head.getLong(0)
 
     assert(random2NotDefined.toDouble / numEdges.toDouble === 0.25)
@@ -296,10 +296,10 @@ class JoinTest extends OperationsTestBase {
       ))
       .box("Aggregate to segmentation",
         Map(
-          "apply_to_project" -> "|bucketing",
+          "apply_to_project" -> ".bucketing",
           "aggregate_name" -> "first"))
       .box("Rename vertex attribute",
-        Map("apply_to_project" -> "|bucketing",
+        Map("apply_to_project" -> ".bucketing",
           "before" -> "name_first", "after" -> "name"))
     val join = box("Project rejoin",
       Map(
@@ -309,12 +309,29 @@ class JoinTest extends OperationsTestBase {
     val result =
       join.box("Aggregate from segmentation",
         Map(
-          "apply_to_project" -> "|bucketing",
+          "apply_to_project" -> ".bucketing",
           "aggregate_name" -> "first"))
         .box("SQL1",
           Map("sql" -> "select name,bucketing_name_first from `vertices`"))
         .table.df.collect.toList.sortBy(_.getString(0))
     assert(result == List(Row("Adam", "Adam"), Row("Eve", "Eve"), Row("Isolated Joe", null)))
   }
+
+  test("Edges can be copied over") {
+    val (target, sourceRoot) = getTargetSource()
+    val source = sourceRoot.box("Replace edges with triadic closure", Map())
+      .box("Derive edge attribute",
+        Map("type" -> "String", "output" -> "edge_attr",
+          "expr" -> "src$name + '_' + dst$name"))
+    val result = box("Project rejoin",
+      Map(
+        "edge" -> "yes"
+      ), Seq(target, source))
+      .box("SQL1",
+        Map("sql" -> "select edge_edge_attr from `edges`"))
+      .table.df.collect.toList.sortBy(_.getString(0))
+    assert(result == List(Row("Adam_Adam"), Row("Eve_Eve")))
+  }
+
 }
 

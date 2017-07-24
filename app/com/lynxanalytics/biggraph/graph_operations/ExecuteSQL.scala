@@ -15,6 +15,9 @@ import org.apache.spark.sql.types.StructType
 
 import scala.collection.mutable
 
+case class UnresolvedColumnException(message: String, trace: Throwable)
+  extends Exception(message, trace)
+
 object ExecuteSQL extends OpFromJson {
   type Alias = String
   type TableName = String
@@ -46,7 +49,12 @@ object ExecuteSQL extends OpFromJson {
       val analyzer = new Analyzer(catalog, sqlConf)
       val analyzedPlan = analyzer.execute(planResolved)
       val optimizer = new SchemaInferencingOptimizer(catalog, sqlConf)
-      new OptimizedPlanWithLookup(optimizer.execute(analyzedPlan), aliasTableLookup.toMap)
+      try {
+        new OptimizedPlanWithLookup(optimizer.execute(analyzedPlan), aliasTableLookup.toMap)
+      } catch {
+        case e: UnresolvedException[_] =>
+          throw UnresolvedColumnException(s"${e.treeString} column cannot be found.", e)
+      }
     }
   }
 

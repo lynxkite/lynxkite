@@ -13,7 +13,7 @@ class ProtoTableTest extends BigGraphControllerTestBase {
 
   private def compareProto(expected: Map[String, Set[String]], actual: Map[String, ProtoTable]) = {
     assert(expected.size == actual.size)
-    for ( (table, attributes) <- expected) {
+    for ((table, attributes) <- expected) {
       assert(attributes == actual(table).schema.map(_.name).toSet)
     }
   }
@@ -31,10 +31,10 @@ class ProtoTableTest extends BigGraphControllerTestBase {
     ("select o.a, two.c from one o inner join two on o.b=two.b where o.a=1",
       Map("one" -> Set("a", "b"), "two" -> Set("c", "b")))
   ).foreach(f => {
-    test(f._1) {
-      val planWithLookup = OptimizedPlanWithLookup(f._1, protoTables)
-      val minimizedTables = ProtoTable.minimize(planWithLookup.plan, planWithLookup.lookup)
-      compareProto(f._2, minimizedTables)
-    }
-  })
+      test(f._1) {
+        val planWithLookup = OptimizedPlanWithLookup(f._1, protoTables)
+        val minimizedTables = ProtoTable.minimize(planWithLookup.plan, planWithLookup.lookup)
+        compareProto(f._2, minimizedTables)
+      }
+    })
 }

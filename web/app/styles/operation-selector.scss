@@ -1,12 +1,17 @@
+.operation-selector {
+  margin-left: -35px;
+  float: left;
+}
+
 .operation-selector .box {
-  right: 35px;
   background: rgba(0, 0, 0, 0.75);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  position: absolute;
+  right: 35px;
+  top: 50px; /* The workspace header, on a good day. */
   padding: 0;
   max-width: 40%; /* Avoid very long lines and very sparse forms. */
   margin-bottom: 20px;
   max-height: 90%;
-  position: absolute;
   margin-left: 35px;
   overflow-y: auto;
   z-index: 4; /* This has to be over the state view and the box editor panels. */
@@ -17,24 +22,26 @@
   color: black;
 }
 
-
 .operation-selector .categories {
-  background: rgba(0, 0, 0, 0.75);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
   font-weight: bold;
   cursor: pointer;
   user-select: none;
-  width: 35px;
   padding: 0;
   z-index: 4;
-}
-.operation-toolbox.open .categories {
-  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap-reverse;
+  height: calc(100vh - 50px);
+  /* 50px is the workspace header minimum size. If the header is bigger (e.g. due to line breaks)
+   * the bottom may extend beyond the screen. TODO: Any ideas for a fix? */
 }
 .operation-selector .category {
   padding: 10px;
   text-align: center;
   font: 15px Arial;
+  width: 35px;
+  height: 35px;
+  background: rgba(0, 0, 0, 0.75);
 }
 .operation-selector .category.active {
   padding-left: 9px;

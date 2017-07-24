@@ -3,7 +3,6 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import scala.reflect.runtime.universe._
 
-import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
 
 import com.lynxanalytics.sandbox.ScalaScript
@@ -17,28 +16,30 @@ object DeriveScalaScalar extends OpFromJson {
     val sc = scalar[T]
   }
 
-  def derive[T: TypeTag](
-    exprString: String,
-    namedScalars: Seq[(String, Scalar[_])])(implicit manager: MetaGraphManager): Scalar[T] = {
-    val scalar = deriveAndInferReturnType(exprString, namedScalars)
-    assert(scalar.typeTag.tpe =:= typeOf[T])
-    scalar.runtimeSafeCast[T]
-  }
-
   def deriveAndInferReturnType(
     exprString: String,
     namedScalars: Seq[(String, Scalar[_])])(implicit manager: MetaGraphManager): Scalar[_] = {
 
-    val paramTypes = namedScalars.map { case (k, v) => k -> v.typeTag }
-    val paramTypesMap = paramTypes.toMap[String, TypeTag[_]]
-    DeriveScala.checkInputTypes(paramTypesMap)
+    val paramTypesMap = namedScalars.map { case (k, v) => k -> v.typeTag }.toMap[String, TypeTag[_]]
     val t = ScalaScript.compileAndGetType(
       exprString, paramTypesMap, paramsToOption = false).returnType
+
     val tt = SerializableType(t).typeTag
+    derive(exprString, namedScalars)(tt, manager)
+  }
+
+  def derive[T: TypeTag](
+    exprString: String,
+    namedScalars: Seq[(String, Scalar[_])])(implicit manager: MetaGraphManager): Scalar[T] = {
+
+    val paramTypes = namedScalars.map { case (k, v) => k -> v.typeTag }
+    DeriveScala.checkInputTypes(paramTypes.toMap[String, TypeTag[_]], exprString)
+
+    val tt = SerializableType(typeTag[T]).typeTag // Throws an error if T is not SerializableType.
     val op = DeriveScalaScalar(exprString, paramTypes)(tt)
 
     import Scripting._
-    op(op.scalars, namedScalars.map(_._2)).result.sc
+    op(op.scalars, namedScalars.map(_._2)).result.sc.runtimeSafeCast[T]
   }
 
   def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
