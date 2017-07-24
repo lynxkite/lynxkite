@@ -97,15 +97,10 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
 
   registerProjectCreatingOp("Create Probability x Similarity optimized graph")(new ProjectOutputOperation(_) {
     params ++= List(
-      NonNegInt("size", "Number of vertices to generate", default = 100),
-      NonNegInt("externalDegree", "Average number of links a node estabilishes upon appearance",
-        default = 2),
-      NonNegInt("internalDegree",
-        "Average number of links other nodes estabilish to an already existing node", default = 2),
-      NonNegDouble(
-        "exponent",
-        "Exponent of edge distribution; 0.5 - 1.0 endpoints excluded",
-        defaultValue = "0.6"),
+      NonNegInt("size", "Number of vertices", default = 100),
+      NonNegInt("externalDegree", "Constant vertex degree", default = 2),
+      NonNegInt("internalDegree", "Scaling vertex degree", default = 2),
+      NonNegDouble("exponent", "Exponent", defaultValue = "0.6"),
       RandomSeed("seed", "Seed"))
     def enabled = FEStatus.enabled
     def apply() = {
