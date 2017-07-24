@@ -443,38 +443,56 @@ angular.module('biggraph')
           }
         };
 
+        scope.drawingBoardHasFocus = function() {
+          // The svg tag cannot be focused apparently, but we don't want to hijack copy and paste
+          // events from things like input fields.
+          return document.activeElement.tagName === "BODY";
+        };
+
         scope.copyBoxes = function(e) {
-          // The svg tag cannot be focused apparently, but we don't want to copy paste events
-          // from things like input fields.
-          if (document.activeElement.tagName !== "BODY") {
+          if (!scope.drawingBoardHasFocus()) {
             return;
           }
           var data = JSON.stringify(scope.selectedBoxes()
-            .map(function(box) { return box.instance;}));
+            .map(function(box) { return box.instance; }));
           e.clipboardData.setData('text/plain', data);
           e.preventDefault();
         };
 
         scope.pasteBoxes = function(e) {
-          // The svg tag cannot be focused apparently, but we don't want to steal paste events
-          // from things like input fields.
-          if (document.activeElement.tagName !== "BODY") {
+          if (!scope.drawingBoardHasFocus()) {
             return;
           }
           var data = e.clipboardData.getData('Text');
           try {
             var boxes = JSON.parse(data);
           } catch (err) {
-            util.error('Cannot create boxes from clipboard. (Not in JSON format)',
-              {clipboard: data});
+            var jData = { clipboard: data };
+            var message = 'Cannot create boxes from clipboard. (Not in JSON format)';
+            util.error(message, jData);
+            /* eslint-disable no-console */
+            console.err(message, err);
+            return;
           }
           var pos = addLogicalMousePosition({ pageX: 0, pageY: 0});
-          var added = scope.workspace.pasteFromData(boxes, pos);
+          try {
+            var added = scope.workspace.pasteFromData(boxes, pos);
+          } catch (err) {
+            var someJson = { clipboard: data };
+            message = 'Cannot parse boxes from clipboard';
+            util.error(message, someJson);
+            /* eslint-disable no-console */
+            console.err(message, err);
+            return;
+          }
           scope.selectedBoxIds = added.map(function(box) { return box.id; });
         };
 
-        window.addEventListener('copy', scope.copyBoxes);
-        window.addEventListener('paste', scope.pasteBoxes);
+        var wrappedCopyBoxes = wrapCallback(scope.copyBoxes);
+        var wrappedPasteBoxes = wrapCallback(scope.pasteBoxes);
+
+        window.addEventListener('copy', wrappedCopyBoxes);
+        window.addEventListener('paste', wrappedPasteBoxes);
 
         scope.deleteBoxes = function(boxIds) {
           var popups = scope.popups.slice();
@@ -514,11 +532,9 @@ angular.module('biggraph')
         };
         var hk = hotkeys.bindTo(scope);
         hk.add({
-          combo: 'mod+c', description: 'Copy boxes',
-          callback: function() { } }); // Only here for the tooltip.
+          combo: 'mod+c', description: 'Copy boxes' }); // Only here for the tooltip.
         hk.add({
-          combo: 'mod+v', description: 'Paste boxes',
-          callback: function() { } }); // Only here for the tooltip.
+          combo: 'mod+v', description: 'Paste boxes' }); // Only here for the tooltip.
         hk.add({
           combo: 'mod+z', description: 'Undo',
           callback: function() { scope.workspace.undo(); } });
@@ -638,6 +654,8 @@ angular.module('biggraph')
 
         scope.$on('$destroy', function() {
           scope.workspace.stopProgressUpdate();
+          window.removeEventListener('copy', wrappedCopyBoxes);
+          window.removeEventListener('paste', wrappedPasteBoxes);
         });
 
         // TODO: We could generate these with tinycolor from the color names.
