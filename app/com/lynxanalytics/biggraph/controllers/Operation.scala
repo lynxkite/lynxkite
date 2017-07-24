@@ -36,7 +36,6 @@ object FEOperationParameterMeta {
     "parameters", // A whole section defining the parameters of an operation.
     "segmentation", // One of the segmentations of the current project.
     "visualization", // Describes a two-sided visualization UI state.
-    "staleness-check", // Used for checking staleness of parameters.
     "dummy") // A piece of text without an input field.
 }
 
