@@ -77,6 +77,11 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       new DirectoryEntry(SymbolPath.parse(name)).asNewSnapshotFrame(state)
     }
 
+    def changeParameterSettings(changedParameters: Map[String, String]): TestBox = {
+      val newParameters = parameters ++ changedParameters
+      TestBox(operationId, newParameters, parametricParameters, inputs)
+    }
+
     def box(operationId: String,
             parameters: Map[String, String] = Map(),
             otherInputs: Seq[TestBox] = Seq(),
