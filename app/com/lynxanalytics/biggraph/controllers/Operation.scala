@@ -84,7 +84,7 @@ case class FEOperationCategory(
 
 abstract class OperationParameterMeta {
   val id: String
-  val title: String
+  def title: String
   val kind: String
   val defaultValue: String
   val options: List[FEOption]
@@ -512,6 +512,13 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
     // assert if the "imported_table" is not empty. If the "last_settings" parameter is empty then
     // there was no import yet so the first assert on the "imported_table" already fails.
     lastSettings.nonEmpty && lastSettings != currentSettings
+  }
+
+  protected def areSettingsStaleReplyMessage(): String = {
+    if (areSettingsStale()) {
+      "Import settings are stale. " +
+        "Please click on the import button to apply the changed settings."
+    } else { "" }
   }
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
