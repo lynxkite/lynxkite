@@ -5,11 +5,6 @@ data types. Each line of the file in this format stores one record encoded as a
 https://en.wikipedia.org/wiki/JSON[JSON] object.
 
 ====
-[[last_settings]] The settings are ..::
-Operations which import data from external source are executed only when the _Run import_ button
-is clicked. This field makes it easy to see if the settings are in sync with
-the output of the box.
-
 [[filename]] File::
 Upload a file by clicking the
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-cloud-upload"></i></label>+++ button
