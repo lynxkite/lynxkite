@@ -29,10 +29,19 @@ object AttributesToTable extends OpFromJson {
     attribute: Attribute[T]) =
     builder(template.asInstanceOf[Input#VertexAttributeTemplate[T]], attribute)
 
+  def run(vs: VertexSet, attributes: Iterable[(String, Attribute[_])])(implicit m: MetaGraphManager): Table = {
+    val op = AttributesToTable(SQLHelper.dataFrameSchema(attributes))
+    op.attrs.zip(attributes).foldLeft(op(op.vs, vs)) {
+      case (builder, (template, (name, attribute))) =>
+        build(builder, template, attribute)
+    }.result.t
+  }
+
   def run(attributes: Iterable[(String, Attribute[_])])(implicit m: MetaGraphManager): Table = {
     val op = AttributesToTable(SQLHelper.dataFrameSchema(attributes))
     op.attrs.zip(attributes).foldLeft(InstanceBuilder(op)) {
-      case (builder, (template, (name, attribute))) => build(builder, template, attribute)
+      case (builder, (template, (name, attribute))) =>
+        build(builder, template, attribute)
     }.result.t
   }
 

@@ -244,15 +244,15 @@ class MetaGraphManager(val repositoryPath: String) {
       op,
       MetaDataSet(
         op.inputSig.vertexSets
-          .flatMap(n => inputs.get(n).map(guid => n -> vertexSet(guid))).toMap,
+          .map(n => n -> vertexSet(inputs(n))).toMap,
         op.inputSig.edgeBundles
-          .flatMap(n => inputs.get(n).map(guid => n -> edgeBundle(guid))).toMap,
+          .map(n => n -> edgeBundle(inputs(n))).toMap,
         op.inputSig.attributes
-          .flatMap(n => inputs.get(n).map(guid => n -> attribute(guid))).toMap,
+          .map(n => n -> attribute(inputs(n))).toMap,
         op.inputSig.scalars
-          .flatMap(n => inputs.get(n).map(guid => n -> scalar(guid))).toMap,
+          .map(n => n -> scalar(inputs(n))).toMap,
         op.inputSig.tables
-          .flatMap(n => inputs.get(n).map(guid => n -> table(guid))).toMap))
+          .map(n => n -> table(inputs(n))).toMap))
   }
 }
 object MetaGraphManager {

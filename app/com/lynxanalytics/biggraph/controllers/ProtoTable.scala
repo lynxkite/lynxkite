@@ -45,8 +45,8 @@ trait ProtoTable {
 
 object ProtoTable {
   def apply(table: Table) = new TableWrappingProtoTable(table)
-  def apply(attributes: Iterable[(String, Attribute[_])])(implicit m: MetaGraphManager) =
-    new AttributesProtoTable(attributes)
+  def apply(vs: VertexSet, attributes: Iterable[(String, Attribute[_])])(implicit m: MetaGraphManager) =
+    new AttributesProtoTable(vs, attributes)
 
   // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
   // necessary to support the query.
@@ -97,11 +97,12 @@ class TableWrappingProtoTable(table: Table) extends ProtoTable {
 }
 
 class AttributesProtoTable(
+    vs: VertexSet,
     attributes: Iterable[(String, Attribute[_])])(implicit m: MetaGraphManager) extends ProtoTable {
   lazy val schema = spark_util.SQLHelper.dataFrameSchema(attributes)
   def maybeSelect(columns: Iterable[String]) = {
     val keep = columns.toSet
-    new AttributesProtoTable(attributes.filter { case (name, attr) => keep.contains(name) })
+    new AttributesProtoTable(vs, attributes.filter { case (name, attr) => keep.contains(name) })
   }
-  def toTable = graph_operations.AttributesToTable.run(attributes)
+  def toTable = graph_operations.AttributesToTable.run(vs, attributes)
 }
