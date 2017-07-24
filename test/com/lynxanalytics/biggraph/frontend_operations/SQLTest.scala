@@ -77,7 +77,7 @@ class SQLTest extends OperationsTestBase {
 
   test("scalars table") {
     val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select `!edge_count`, `!vertex_count` from `scalars`"))
+      .box("SQL1", Map("sql" -> "select `!edge_count`, `!vertex_count` from scalars"))
       .table
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(table.schema.map(_.name) == Seq("!edge_count", "!vertex_count"))
@@ -86,7 +86,7 @@ class SQLTest extends OperationsTestBase {
 
   test("scalars table different column order") {
     val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select `greeting`, `!vertex_count`, `!edge_count` from `scalars`"))
+      .box("SQL1", Map("sql" -> "select greeting, `!vertex_count`, `!edge_count` from scalars"))
       .table
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(table.schema.map(_.name) == Seq("greeting", "!vertex_count", "!edge_count"))
