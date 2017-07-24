@@ -70,12 +70,12 @@ object HybridRDD {
 
     // True iff this HybridRDD has keys with large cardinalities.
     val isSkewed = !larges.isEmpty
+    val largeKeysSet = larges.map(_._1).toSet
 
     // The RDD containing only keys that are safe to use in sorted join.
     import Implicits._
     val smallKeysRDD: SortedRDD[K, T] = {
       if (isSkewed) {
-        val largeKeysSet = larges.map(_._1).toSet
         sourceRDD.filter { case (key, _) => !largeKeysSet.contains(key) }
       } else {
         sourceRDD
@@ -84,17 +84,18 @@ object HybridRDD {
     // The RDD to use with map lookup. It may contain keys with large cardinalities.
     val largeKeysRDD: Option[RDD[(K, T)]] = if (isSkewed) {
       // We need to guarantee that largeKeysRDD has the correct amount of partitions.
-      if (sourceRDD.partitions.size == partitioner.numPartitions) {
+      val largeKeysRDD = if (sourceRDD.partitions.size == partitioner.numPartitions) {
         // Let's not perform expensive repartitioning if avoidable.
-        Some(sourceRDD)
+        sourceRDD
       } else {
-        Some(sourceRDD.repartition(partitioner.numPartitions))
-      }
+        sourceRDD.repartition(partitioner.numPartitions)
+      }.filter { case (key, _) => largeKeysSet.contains(key) }
+      Some(largeKeysRDD)
     } else {
       None
     }
 
-    HybridRDD(largeKeysRDD, smallKeysRDD, larges, Some(partitioner))
+    HybridRDD(largeKeysRDD, smallKeysRDD, larges, partitioner)
   }
 }
 
@@ -107,16 +108,17 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   larges: Seq[(K, Long)],
   // A partitioner good enough for the smallKeysRDD. All RDDs used in the lookup methods
   // must have the same partitioner. This is an Option only for compatibility reasons.
-  override val partitioner: Option[spark.Partitioner]) extends RDD[(K, T)](
+  resultPartitioner: spark.Partitioner) extends RDD[(K, T)](
   smallKeysRDD.sparkContext,
   Seq(new spark.OneToOneDependency(smallKeysRDD)) ++ largeKeysRDD.map(new spark.OneToOneDependency(_))) {
 
   // True iff this HybridRDD has keys with large cardinalities.
   val isSkewed = !largeKeysRDD.isEmpty
+  override val partitioner = None
 
-  assert(smallKeysRDD.partitions.size == partitioner.get.numPartitions)
+  assert(smallKeysRDD.partitions.size == resultPartitioner.numPartitions)
   if (isSkewed) {
-    assert(largeKeysRDD.get.partitions.size == partitioner.get.numPartitions)
+    assert(largeKeysRDD.get.partitions.size == resultPartitioner.numPartitions)
   }
 
   override def getPartitions: Array[Partition] = smallKeysRDD.partitions
@@ -147,7 +149,7 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
     if (isSkewed) {
       // "ord = null" is a workaround for a Scala 2.11 compiler crash bug.
       // TODO: Remove when upgrading to 2.12.
-      result.repartition(partitioner.get.numPartitions)(ord = null)
+      result.repartition(resultPartitioner.numPartitions)(ord = null)
     } else {
       result
     }

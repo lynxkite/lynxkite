@@ -552,7 +552,7 @@ class HybridBundleIO(entity: HybridBundle, context: IOContext)
       HybridRDD(largeKeysRDD,
         smallKeysRDD.sort(partitioner),
         largeKeysSet,
-        Some(partitioner)),
+        partitioner),
       Some(count))
   }
 
