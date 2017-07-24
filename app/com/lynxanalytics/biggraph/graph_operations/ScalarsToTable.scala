@@ -11,10 +11,9 @@ import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark.rdd.RDD
 
 object ScalarsToTable extends OpFromJson {
-  class Input(scalars: Iterable[(String, TypeTag[_])]) extends MagicInputSignature {
-    private def sa[T: TypeTag](name: String) = scalar[T](Symbol(name))
-    val sclrs: Iterable[ScalarTemplate[_]] =
-      scalars.map { case (name, tt) => sa(name)(tt) }
+  class Input(namesAndTypes: Iterable[(String, TypeTag[_])]) extends MagicInputSignature {
+    val scalars: Iterable[ScalarTemplate[_]] =
+      namesAndTypes.map { case (name, tt) => scalar(Symbol(name)) }
   }
   class Output(schema: types.StructType)(
       implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
@@ -30,8 +29,8 @@ object ScalarsToTable extends OpFromJson {
     builder(template.asInstanceOf[Input#ScalarTemplate[T]], scalar)
 
   def run(scalars: Iterable[(String, Scalar[_])])(implicit m: MetaGraphManager): Table = {
-    val op: ScalarsToTable = ScalarsToTable(SQLHelper.dataFrameSchemaScalar(scalars))
-    op.sclrs.zip(scalars).foldLeft(InstanceBuilder(op)) {
+    val op = ScalarsToTable(SQLHelper.dataFrameSchemaScalar(scalars))
+    op.scalars.zip(scalars).foldLeft(InstanceBuilder(op)) {
       case (builder, (template, (name, scalar))) => build(builder, template, scalar)
     }.result.t
   }
@@ -59,12 +58,12 @@ case class ScalarsToTable(schema: types.StructType) extends TypedMetaGraphOp[Inp
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val df = new SRDDRelation(schema, inputDatas, rc.sqlContext).toDF
+    val df = new ScalarSRDDRelation(schema, inputDatas, rc.sqlContext).toDF
     output(o.t, df)
   }
 }
 
-class SRDDRelation(
+class ScalarSRDDRelation(
   val schema: types.StructType,
   val inputDatas: DataSet,
   val sqlContext: spark.sql.SQLContext)

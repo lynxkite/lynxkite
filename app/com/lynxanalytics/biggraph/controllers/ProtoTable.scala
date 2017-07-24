@@ -7,8 +7,6 @@ import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL.Alias
 import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL.TableName
-import com.lynxanalytics.biggraph.spark_util.SQLHelper
-import org.apache.spark
 import org.apache.spark.sql.catalyst.analysis.Analyzer
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
@@ -30,7 +28,6 @@ import org.apache.spark.sql.catalyst.plans.logical.Union
 import org.apache.spark.sql.execution.SparkSqlParser
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types
-import org.apache.spark.sql.types.StructType
 
 import scala.collection.mutable
 
@@ -121,7 +118,6 @@ class ScalarsProtoTable(
   }
 
   def toTable: Table = {
-    val x: StructType = SQLHelper.dataFrameSchemaScalar(scalars)
     graph_operations.ScalarsToTable.run(scalars)
   }
 }
