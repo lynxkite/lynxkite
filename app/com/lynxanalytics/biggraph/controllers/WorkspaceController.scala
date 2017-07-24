@@ -301,8 +301,12 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       val instr = instruments.head
       val state = states.last
       val meta = ops.getBoxMetadata(instr.operationId)
-      assert(meta.inputs.size == 1, s"${instr.operationId} has ${meta.inputs.size} inputs.")
-      assert(meta.outputs.size == 1, s"${instr.operationId} has ${meta.outputs.size} outputs.")
+      assert(
+        meta.inputs.size == 1,
+        s"${instr.operationId} has ${meta.inputs.size} inputs instead of 1.")
+      assert(
+        meta.outputs.size == 1,
+        s"${instr.operationId} has ${meta.outputs.size} outputs instead of 1.")
       val box = Box(
         "", instr.operationId, instr.parameters, 0, 0, Map(meta.inputs.head -> null),
         instr.parametricParameters)
