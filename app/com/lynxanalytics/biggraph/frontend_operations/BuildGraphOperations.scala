@@ -95,7 +95,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     }
   })
 
-  registerProjectCreatingOp("Create high clustering scale-free edges")(new ProjectOutputOperation(_) {
+  registerProjectCreatingOp("Create Probability x Similarity optimized graph")(new ProjectOutputOperation(_) {
     params ++= List(
       NonNegInt("size", "Number of vertices to generate", default = 100),
       NonNegInt("externalDegree", "Average number of links a node estabilishes upon appearance",
@@ -106,10 +106,6 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
         "exponent",
         "Exponent of edge distribution; 0.5 - 1.0 endpoints excluded",
         defaultValue = "0.6"),
-      NonNegDouble(
-        "temperature",
-        "Clustering strength; maximal when approaching 0 - cannot be 0 - and asymptotically 0 at 1 and above",
-        defaultValue = "0.45"),
       RandomSeed("seed", "Seed"))
     def enabled = FEStatus.enabled
     def apply() = {
@@ -118,7 +114,6 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
         params("externalDegree").toInt,
         params("internalDegree").toInt,
         params("exponent").toDouble,
-        params("temperature").toDouble,
         params("seed").toLong).result
       project.setVertexSet(result.vs, idAttr = "id")
       project.newVertexAttribute("radial", result.radial)
