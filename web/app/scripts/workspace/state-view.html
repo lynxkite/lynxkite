@@ -17,6 +17,7 @@
 
     <!-- TODO: Build instrument toolbar dynamically, allow any operation. -->
     <button
+      id="clear-instrument-{{ $index }}"
       ng-hide="$last"
       class="btn btn-default"
       ng-click="clearInstrument($index)"
@@ -25,6 +26,7 @@
       <i class="glyphicon glyphicon-remove"></i>
     </button>
     <button
+      id="instrument-{{ $index }}-to-sql"
       ng-show="state.kind === 'table' || state.kind === 'project'"
       ng-class="{ active: instruments[$index].operationId === 'SQL1' }"
       class="btn btn-default"
@@ -32,6 +34,7 @@
       SQL
     </button>
     <button
+      id="instrument-{{ $index }}-to-plot"
       ng-show="state.kind === 'table'"
       ng-class="{ active: instruments[$index].operationId === 'Custom plot' }"
       class="btn btn-default"
@@ -39,6 +42,7 @@
       Plot
     </button>
     <button
+      id="instrument-{{ $index }}-to-visualize"
       ng-show="state.kind === 'project'"
       ng-class="{ active: instruments[$index].operationId === 'Graph visualization' }"
       class="btn btn-default"

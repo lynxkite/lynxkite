@@ -440,6 +440,14 @@ function State(popup) {
 
 State.prototype = {
   __proto__: PopupBase.prototype,  // inherit PopupBase's methods
+
+  setInstrument: function(index, name) {
+    this.popup.$(`#instrument-${index}-to-${name}`).click();
+  },
+
+  clearInstrument: function(index) {
+    this.popup.$(`#clear-instrument-${index}`).click();
+  },
 };
 
 function PlotState(popup) {
