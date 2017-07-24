@@ -308,8 +308,14 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         meta.outputs.size == 1,
         s"${instr.operationId} has ${meta.outputs.size} outputs instead of 1.")
       val box = Box(
-        "", instr.operationId, instr.parameters, 0, 0, Map(meta.inputs.head -> null),
-        instr.parametricParameters)
+        id = "",
+        operationId = instr.operationId,
+        parameters = instr.parameters,
+        x = 0,
+        y = 0,
+        // It does not matter where the inputs come from. Using "null" for BoxOutput.
+        inputs = Map(meta.inputs.head -> null),
+        parametricParameters = instr.parametricParameters)
       val op = box.getOperation(ctx, Map(meta.inputs.head -> state))
       val newState = op.getOutputs(box.output(meta.outputs.head))
       Some((newState, op.toFE))
