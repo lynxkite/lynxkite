@@ -325,8 +325,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         None
     }
     next match {
-      case Some((state, meta)) =>
-        safeInstrumentStatesAndMetas(ctx, instruments.tail, states :+ state, opMetas :+ meta)
+      case Some((newState, newMeta)) =>
+        safeInstrumentStatesAndMetas(ctx, instruments.tail, states :+ newState, opMetas :+ newMeta)
       case None => (states, opMetas)
     }
   }
