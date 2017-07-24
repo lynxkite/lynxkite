@@ -511,7 +511,7 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
     // be empty. This doesn't cause problem in practice since in the getOutputs method we first
     // assert if the "imported_table" is not empty. If the "last_settings" parameter is empty then
     // there was no import yet so the first assert on the "imported_table" already fails.
-    lastSettings.isEmpty && lastSettings != currentSettings
+    lastSettings.nonEmpty && lastSettings != currentSettings
   }
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
