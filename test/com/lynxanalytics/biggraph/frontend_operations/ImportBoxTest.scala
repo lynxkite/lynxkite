@@ -9,16 +9,24 @@ class ImportBoxTest extends OperationsTestBase {
     "IMPORTGRAPHTEST$",
     getClass.getResource("/graph_operations/ImportGraphTest").toString)
 
-  def csvToProject(
+  def importCSVFile(
     file: String,
     columns: List[String],
     infer: Boolean,
-    limit: Option[Int] = None): ProjectEditor = {
+    limit: Option[Int] = None): TestBox = {
     importBox("Import CSV", Map(
       "filename" -> ("IMPORTGRAPHTEST$/" + file + "/part*"),
       "columns" -> columns.mkString(","),
       "infer" -> (if (infer) "yes" else "no"),
       "limit" -> limit.map(_.toString).getOrElse("")))
+  }
+
+  def csvToProject(
+    file: String,
+    columns: List[String],
+    infer: Boolean,
+    limit: Option[Int] = None): ProjectEditor = {
+    importCSVFile(file, columns, infer, limit)
       .box("Use table as vertices")
       .project
   }
@@ -71,6 +79,16 @@ class ImportBoxTest extends OperationsTestBase {
     assert(vattr[Int](p, "vertexId") == Seq(0, 1, 2))
     assert(vattr[String](p, "name") == Seq("Adam", "Bob", "Eve"))
     assert(vattr[Double](p, "age") == Seq(18.2, 20.3, 50.3))
+  }
+
+  test("stale settings warning") {
+    val impBox = importCSVFile(
+      "testgraph/vertex-data",
+      List("vertexId", "name", "age"),
+      infer = false)
+    val impBoxWithStaleSettings = impBox.changeParameterSettings(Map("infer" -> "yes"))
+    val success = impBoxWithStaleSettings.output("table").success.enabled
+    assert(!success, "Stale settings should result an error in the output")
   }
 
   val sqliteURL = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
