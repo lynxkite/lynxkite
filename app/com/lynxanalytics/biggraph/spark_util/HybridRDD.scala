@@ -95,7 +95,7 @@ object HybridRDD {
       None
     }
 
-    HybridRDD(largeKeysRDD, smallKeysRDD, larges, partitioner)
+    HybridRDD(largeKeysRDD, smallKeysRDD, larges)
   }
 }
 
@@ -105,16 +105,14 @@ case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
   // The large potentially skewed RDD to do joins on.
   largeKeysRDD: Option[RDD[(K, T)]],
   smallKeysRDD: SortedRDD[K, T],
-  larges: Seq[(K, Long)],
-  // A partitioner good enough for the smallKeysRDD. All RDDs used in the lookup methods
-  // must have the same partitioner. This is an Option only for compatibility reasons.
-  resultPartitioner: spark.Partitioner) extends RDD[(K, T)](
+  larges: Seq[(K, Long)]) extends RDD[(K, T)](
   smallKeysRDD.sparkContext,
   Seq(new spark.OneToOneDependency(smallKeysRDD)) ++ largeKeysRDD.map(new spark.OneToOneDependency(_))) {
 
   // True iff this HybridRDD has keys with large cardinalities.
   val isSkewed = !largeKeysRDD.isEmpty
-  override val partitioner = None
+  val resultPartitioner = smallKeysRDD.partitioner.get
+  override val partitioner = if (isSkewed) None else Some(resultPartitioner)
 
   assert(smallKeysRDD.partitions.size == resultPartitioner.numPartitions)
   if (isSkewed) {
