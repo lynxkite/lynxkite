@@ -53,7 +53,7 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
     implicit val runtimeContext = rc
     val es = inputs.bySrc.rdd
 
-    val partitioner = es.partitioner.get
+    val partitioner = es.resultPartitioner
     val withAttr = es.lookup(inputs.attr.rdd.sortedRepartition(partitioner))
     val byDst = withAttr.map {
       case (_, (dst, attr)) => dst -> attr
