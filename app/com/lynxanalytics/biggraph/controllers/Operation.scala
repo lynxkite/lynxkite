@@ -497,14 +497,14 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
   }
 
   private def getLastSettings = {
-    val lastSettingsString = params.toMap.getOrElse("last_settings", "")
+    val lastSettingsString = params("last_settings")
     if (lastSettingsString == "") { Map() }
     else {
       json.Json.parse(lastSettingsString).as[Map[String, String]]
     }
   }
 
-  protected def areSettingsStale(): Boolean = {
+  private def areSettingsStale(): Boolean = {
     val lastSettings = getLastSettings
     // For not needing to provide the last_settings parameter for testing we are also allowing it to
     // be empty. This doesn't cause problem in practice since in the getOutputs method we first
