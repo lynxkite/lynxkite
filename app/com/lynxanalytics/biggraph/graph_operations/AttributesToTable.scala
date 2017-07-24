@@ -38,11 +38,8 @@ object AttributesToTable extends OpFromJson {
   }
 
   def run(attributes: Iterable[(String, Attribute[_])])(implicit m: MetaGraphManager): Table = {
-    val op = AttributesToTable(SQLHelper.dataFrameSchema(attributes))
-    op.attrs.zip(attributes).foldLeft(InstanceBuilder(op)) {
-      case (builder, (template, (name, attribute))) =>
-        build(builder, template, attribute)
-    }.result.t
+    assert(attributes.nonEmpty, "Cannot infer vertexSet without attributes")
+    run(attributes.head._2.vertexSet, attributes)
   }
 
   def fromJson(j: JsValue) = {
