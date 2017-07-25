@@ -65,6 +65,28 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     }
   })
 
+  registerProjectCreatingOp("Create popularity x similarity optimized graph")(new ProjectOutputOperation(_) {
+    params ++= List(
+      NonNegInt("size", "Vertex set size", default = 100),
+      NonNegDouble("externaldegree", "External degree", defaultValue = "1.5"),
+      NonNegDouble("internaldegree", "Internal links", defaultValue = "1.5"),
+      NonNegDouble("exponent", "Exponent", defaultValue = "0.6"),
+      RandomSeed("seed", "Seed"))
+    def enabled = FEStatus.enabled
+    def apply() = {
+      val result = graph_operations.PSOGenerator(
+        params("size").toLong,
+        params("externaldegree").toDouble,
+        params("internaldegree").toDouble,
+        params("exponent").toDouble,
+        params("seed").toLong).result
+      project.setVertexSet(result.vs, idAttr = "id")
+      project.newVertexAttribute("radial", result.radial)
+      project.newVertexAttribute("angular", result.angular)
+      project.edgeBundle = result.es
+    }
+  })
+
   register("Create random edges", List(projectInput))(new ProjectTransformation(_) {
     params ++= List(
       NonNegDouble("degree", "Average degree", defaultValue = "10.0"),
@@ -92,28 +114,6 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
         params("seed").toLong,
         params("perIterationMultiplier").toDouble)
       project.edgeBundle = op(op.vs, project.vertexSet).result.es
-    }
-  })
-
-  registerProjectCreatingOp("Create Probability x Similarity optimized graph")(new ProjectOutputOperation(_) {
-    params ++= List(
-      NonNegInt("size", "Number of vertices", default = 100),
-      NonNegInt("externalDegree", "Constant vertex degree", default = 2),
-      NonNegInt("internalDegree", "Scaling vertex degree", default = 2),
-      NonNegDouble("exponent", "Exponent", defaultValue = "0.6"),
-      RandomSeed("seed", "Seed"))
-    def enabled = FEStatus.enabled
-    def apply() = {
-      val result = graph_operations.PSOGenerator(
-        params("size").toLong,
-        params("externalDegree").toInt,
-        params("internalDegree").toInt,
-        params("exponent").toDouble,
-        params("seed").toLong).result
-      project.setVertexSet(result.vs, idAttr = "id")
-      project.newVertexAttribute("radial", result.radial)
-      project.newVertexAttribute("angular", result.angular)
-      project.edgeBundle = result.es
     }
   })
 

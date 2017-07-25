@@ -14,6 +14,18 @@ import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
+case class HyperVertex(id: Long,
+                       ord: Long,
+                       radial: Double,
+                       angular: Double,
+                       expectedDegree: Double)
+
+class LinkedHyperVertex(val vertex: HyperVertex) {
+  var previous: LinkedHyperVertex = this
+  var next: LinkedHyperVertex = this
+  var radialPrevious: LinkedHyperVertex = this
+}
+
 object PSOGenerator extends OpFromJson {
 
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
@@ -24,13 +36,13 @@ object PSOGenerator extends OpFromJson {
   }
   def fromJson(j: JsValue) = PSOGenerator(
     (j \ "size").as[Long],
-    (j \ "externalDegree").as[Int],
-    (j \ "internalDegree").as[Int],
+    (j \ "externaldegree").as[Double],
+    (j \ "internaldegree").as[Double],
     (j \ "exponent").as[Double],
     (j \ "seed").as[Long])
 }
 import PSOGenerator._
-case class PSOGenerator(size: Long, externalDegree: Int, internalDegree: Int, exponent: Double,
+case class PSOGenerator(size: Long, externalDegree: Double, internalDegree: Double, exponent: Double,
                         seed: Long) extends TypedMetaGraphOp[NoInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new NoInput
@@ -38,8 +50,8 @@ case class PSOGenerator(size: Long, externalDegree: Int, internalDegree: Int, ex
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
   override def toJson = Json.obj(
     "size" -> size,
-    "externalDegree" -> externalDegree,
-    "internalDegree" -> internalDegree,
+    "externaldegree" -> externalDegree,
+    "internaldegree" -> internalDegree,
     "exponent" -> exponent,
     "seed" -> seed)
 
@@ -52,98 +64,80 @@ case class PSOGenerator(size: Long, externalDegree: Int, internalDegree: Int, ex
     val ordinals = rc.sparkContext.parallelize(0L until size,
       partitioner.numPartitions).randomNumbered(partitioner)
     val sc = rc.sparkContext
-    val masterRandom = new Random(seed)
-    val logSize: Double = math.log(size.toDouble)
+    val logSize = math.log(size)
     // Adds the necessary attributes for later calculations.
-    // reorderedID needs to be 1-indexed as log(0) will break things.
-    val reorderedID = ordinals.map { case (key, ordinal) => (key, ordinal + 1) }
-    val radialAdded = reorderedID.map {
-      case (key, reID) =>
-        (key, (reID, 2 * math.log(reID.toDouble)))
-    }
-    val radial = radialAdded.map { case (key, (reID, radial)) => (key, radial) }
-    val angularAdded = radialAdded.map({
-      case (key, (reID, rad)) =>
-        (key, (reID, rad, masterRandom.nextDouble * math.Pi * 2))
-    })
-    val angular = angularAdded.map { case (key, (reID, radial, angular)) => (key, angular) }
-    val expectedDegree = angularAdded.map {
-      case (key, (reID, rad, ang)) => (key, (reID, rad, ang,
-        totalExpectedEPSO(exponent, externalDegree, internalDegree, size, reID)))
+    // ord needs to be 1-indexed as log(0) will break things.
+    val vertices = ordinals.mapPartitionsWithIndex {
+      case (pid, iter) =>
+        val rnd = new Random((pid << 16) + seed)
+        iter.map {
+          case (id, ordinal) =>
+            HyperVertex(
+              id = id,
+              ord = ordinal + 1,
+              radial = math.log(ordinal + 1),
+              angular = rnd.nextDouble * math.Pi * 2,
+              expectedDegree = totalExpectedEPSO(exponent,
+                externalDegree, internalDegree, size, ordinal + 1))
+        }
     }
     // For each vertex: samples ~log(n) vertices with smallest angular coordinate difference, plus
     // preceding appearance (abstraction for higher popularity vertex; smaller radial coordinate).
-    // Groups the samples for each vertex into a list. The first element of these are the vertices
-    // then angular samples from clockwise-most to counterclockwise-most, then radial samples.
-    // Note: sample list will include the node itself in the middle.
-    val allVerticesList: List[HyperVertex] = expectedDegree.map {
-      case (key, (reID, rad, ang, eSam)) => HyperVertex(key, reID, rad, ang, eSam)
-    }.collect().sortBy(_.angular).toList
-    val possibilityList: List[List[HyperVertex]] = {
-      val numFirstSamples: Int = (math.round(logSize * allVerticesList.head.eDegree)).toInt
-      val endofVerticesList = allVerticesList.reverse.take(numFirstSamples)
-      var resultList: List[List[HyperVertex]] = Nil
-      var remainderList: List[HyperVertex] = allVerticesList
-      var i = numFirstSamples
-      while (i > 0 && !remainderList.isEmpty) {
-        remainderList = remainderList.tail
-        i -= 1
-      }
-      var angularSampleList = endofVerticesList ++ allVerticesList.take(numFirstSamples)
-      var radialSampleList = allVerticesList.head :: Nil
-      resultList = (allVerticesList.head :: angularSampleList) :: resultList
-      if (!allVerticesList.isEmpty) {
-        for (vertex <- allVerticesList.tail) {
-          val numCurrentSamples: Int = (math.round(logSize * vertex.eDegree)).toInt
-          if (!radialSampleList.isEmpty) {
-            radialSampleList = radialSampleList.take(numCurrentSamples)
-          }
-          radialSampleList = vertex :: radialSampleList
+    // Groups the samples for each vertex into a list.
+    val allVerticesList: List[HyperVertex] = vertices.collect().sortBy(_.angular).toList
+    // Constructs double linked dist by angular coordinates, single linked by ord
+    val lastLHV = new LinkedHyperVertex(allVerticesList.head)
+    var linkedList = lastLHV :: Nil
+    for (vertex <- allVerticesList.tail) {
+      val newLHV = new LinkedHyperVertex(vertex)
+      newLHV.previous = linkedList.head
+      linkedList.head.next = newLHV
+      linkedList = newLHV :: linkedList
+    }
+    lastLHV.previous = linkedList.head
+    linkedList.head.next = lastLHV
 
-          // Once remainderList reaches the end makes it circular by sampling the beginning again.
-          if (remainderList.isEmpty) remainderList = allVerticesList.take(numCurrentSamples)
-          if (!angularSampleList.isEmpty) {
-            angularSampleList = angularSampleList.take(numCurrentSamples * 2)
-          }
-          // Keeps the sample list centered on 'vertex'.
-          if (numCurrentSamples >= (math.round(logSize * remainderList.head.eDegree)).toInt) {
-            angularSampleList = remainderList.head :: angularSampleList
-          }
-          remainderList = remainderList.tail
-
-          val vertexResult = vertex :: (angularSampleList ++ radialSampleList)
-          resultList = vertexResult :: resultList
+    linkedList.sortBy(_.vertex.ord)
+    var radPrevTracker = linkedList.head
+    for (lhv <- linkedList.tail) {
+      lhv.radialPrevious = radPrevTracker
+      radPrevTracker = lhv
+    }
+    val possibilityList: List[List[HyperVertex]] = linkedList.map {
+      (lhv) =>
+        var sampleList: List[HyperVertex] = Nil
+        val numSamples = (logSize * lhv.vertex.expectedDegree).toInt
+        var ne = lhv.next
+        var pr = lhv.previous
+        var rapr = lhv.radialPrevious
+        for (i <- 0 until numSamples) {
+          sampleList = ne.vertex :: pr.vertex :: sampleList
+          if (rapr != lhv) sampleList = rapr.vertex :: sampleList
+          ne = ne.next
+          pr = pr.previous
+          rapr = rapr.radialPrevious
         }
-      }
-      resultList
+        lhv.vertex :: sampleList
     }
     // Selects the expectedDegree smallest distance edges from possibility bundles.
     val possibilities = sc.parallelize(possibilityList)
-    val es = possibilities.map {
-      case (data) =>
-        val numSelections: Int = data.head.eDegree.toInt
+    val es = possibilities.flatMap {
+      (data) =>
+        val numSelections: Int = data.head.expectedDegree.toInt
         val src = data.head
         val dst = data.tail.map {
-          case (dst) => (hyperbolicDistance(src, dst), Edge(src.key, dst.key))}.toMap
-        val sortedDst = SortedMap.empty[Double, Edge] ++ dst
-        // This will contain a src=dst pair with distance = -INF (coming from log(0)),
-        // then the numSelections next smallest distances.
+          (dst) => (hyperbolicDistance(src, dst), Edge(src.id, dst.id))
+        }
+        val sortedDst = dst.sorted
         sortedDst.take(numSelections + 1).map { case (key, value) => value }
-    }.flatMap(identity)
-      .flatMap { case (edge) => List(edge, Edge(edge.dst, edge.src)) }
-      .filter(edge => edge.src != edge.dst)
+    }.flatMap { (edge) => List(edge, Edge(edge.dst, edge.src)) }
       .distinct
 
     output(o.vs, ordinals.mapValues(_ => ()))
-    output(o.radial, radial.sortUnique(partitioner))
-    output(o.angular, angular.sortUnique(partitioner))
+    output(o.radial, vertices.map { v => (v.id, v.radial) }.sortUnique(partitioner))
+    output(o.angular, vertices.map { v => (v.id, v.angular) }.sortUnique(partitioner))
     output(o.es, es.randomNumbered(partitioner))
   }
-  case class HyperVertex(key: Long,
-                         reorderedID: Long,
-                         radial: Double,
-                         angular: Double,
-                         eDegree: Double)
   // Returns hyperbolic distance.
   def hyperbolicDistance(src: HyperVertex, dst: HyperVertex): Double = {
     src.radial + src.radial + 2 * math.log(phi(src.angular, dst.angular) / 2)
@@ -154,21 +148,21 @@ case class PSOGenerator(size: Long, externalDegree: Int, internalDegree: Int, ex
   }
   // Expected number of internal connections at given time in the E-PSO model.
   def internalConnectionsEPSO(exponent: Double,
-                              internalLinks: Int,
+                              internalLinks: Double,
                               maxNodes: Long,
-                              currentNodeID: Long): Double = {
-    val firstPart: Double = ((2 * internalLinks.toDouble * (1 - exponent)) /
+                              ord: Long): Double = {
+    val firstPart: Double = ((2 * internalLinks * (1 - exponent)) /
       (math.pow(1 - math.pow(maxNodes.toDouble, -(1 - exponent)), 2) * (2 * exponent - 1)))
-    val secondPart: Double = math.pow((maxNodes / currentNodeID.toDouble), 2 * exponent - 1) - 1
-    val thirdPart: Double = (1 - math.pow(currentNodeID.toDouble, -(1 - exponent)))
+    val secondPart: Double = math.pow((maxNodes / ord.toDouble), 2 * exponent - 1) - 1
+    val thirdPart: Double = (1 - math.pow(ord.toDouble, -(1 - exponent)))
     firstPart * secondPart * thirdPart
   }
   // Expected number of connections at given time in the E-PSO model.
   def totalExpectedEPSO(exponent: Double,
-                        externalLinks: Int,
-                        internalLinks: Int,
+                        externalLinks: Double,
+                        internalLinks: Double,
                         maxNodes: Long,
-                        currentNodeID: Long): Double = {
-    externalLinks + internalConnectionsEPSO(exponent, internalLinks, maxNodes, currentNodeID)
+                        ord: Long): Double = {
+    externalLinks + internalConnectionsEPSO(exponent, internalLinks, maxNodes, ord)
   }
 }
