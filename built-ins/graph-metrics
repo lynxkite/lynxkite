@@ -237,7 +237,7 @@
     }
     },
     "parametricParameters" : {
-    "sql" : "select \n  8 as ID, \n  \"Modular Clusternig\" as Attribute, \n  count(size) as Sum, \n  avg(size) as Avg, \n  percentile(size, 0) as Min, \n  percentile(size, 0.05) as `5% percentile`, \n  percentile(size, 0.5) as Med, \n  percentile(size, 0.95) as `95% percentile`, \n  percentile(size, 1) as Max, \n  percentile(size, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom\n(select max(size) as size from `modular_clusters.vertices` group by id) as comps\n"
+    "sql" : "select \n  8 as ID, \n  \"Modular Clusternig\" as Attribute, \n  count(size) as Sum, \n  avg(size) as Avg, \n  percentile(size, 0) as Min, \n  percentile(size, 0.05) as `5% percentile`, \n  percentile(size, 0.5) as Med, \n  percentile(size, 0.95) as `95% percentile`, \n  percentile(size, 1) as Max, \n  percentile(size, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom\n(select max(size) as size from `modular_clusters.vertices` group by id)\n"
     }
   }, {
     "id" : "SQL2_4",
@@ -245,8 +245,8 @@
     "parameters" : {
     "sql" : "select * from `one` \nUNION \nselect * from `two` "
     },
-    "x" : 521.1879398156011,
-    "y" : 1158.985986491442,
+    "x" : 520.0330557070763,
+    "y" : 1180.9287845534152,
     "inputs" : {
     "two" : {
       "boxId" : "SQL1_6",
@@ -347,7 +347,7 @@
     }
     },
     "parametricParameters" : {
-    "sql" : "select \n  7 as ID, \n  \"Connected Components\" as Attribute, \n  count(size) as Sum, \n  avg(size) as Avg, \n  percentile(size, 0) as Min, \n  percentile(size, 0.05) as `5% percentile`, \n  percentile(size, 0.5) as Med, \n  percentile(size, 0.95) as `95% percentile`, \n  percentile(size, 1) as Max, \n  percentile(size, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom\n(select max(size) as size from `connected_components.vertices` group by id) as comps\n"
+    "sql" : "select \n  7 as ID, \n  \"Connected Components\" as Attribute, \n  count(size) as Sum, \n  avg(size) as Avg, \n  percentile(size, 0) as Min, \n  percentile(size, 0.05) as `5% percentile`, \n  percentile(size, 0.5) as Med, \n  percentile(size, 0.95) as `95% percentile`, \n  percentile(size, 1) as Max, \n  percentile(size, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom\n(select max(size) as size from `connected_components.vertices` group by id)\n"
     }
   }, {
     "id" : "SQL1_8",
@@ -413,7 +413,7 @@
     "id" : "SQL1_9",
     "operationId" : "SQL1",
     "parameters" : {
-    "sql" : "select degrees, count(degrees)-0.01 as Vertices\nfrom\n(select max(adegree) as degrees \nfrom vertices\ngroup by id\norder by degrees desc) as deg\ngroup by degrees"
+    "sql" : "select degrees, count(degrees)-0.01 as Vertices\nfrom\n(select max(adegree) as degrees \nfrom vertices\ngroup by id\norder by degrees desc)\ngroup by degrees"
     },
     "x" : 297.6615920124063,
     "y" : -2.496960085144991,
