@@ -56,19 +56,7 @@ class CleanerController(environment: BigGraphEnvironment) {
       "Truly orphan entities. Cached entities can get orphaned e.g. when the kite meta directory" +
         " is deleted or during a Kite version upgrade. Deleting these should not have any side" +
         " effects.",
-      metaGraphContents),
-    CleanerMethod(
-      "notReferredFromProjectTransitively",
-      "Entities not associated with any project",
-      "We consider an entity associated with a project if it's either directly referred to from" +
-        " the project or it is used as an input to calculate another associated entity",
-      transitivelyReferredFromProject),
-    CleanerMethod(
-      "notReferredFromProject",
-      "Entities not referenced by any project",
-      "All entities except those that are vertex sets, edge bundles, attributes or scalars of" +
-        " a current project or segmentation",
-      referredFromProject))
+      metaGraphContents))
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
@@ -116,68 +104,10 @@ class CleanerController(environment: BigGraphEnvironment) {
     allFilesFromSourceOperation(environment.metaGraphManager.getOperationInstances())
   }
 
-  private def referredFromProject(): Set[String] = {
-    val operations = operationsFromAllProjects()
-    allFilesFromSourceOperation(operations)
-  }
-
-  private def transitivelyReferredFromProject(): Set[String] = {
-    var operations = operationsFromAllProjects()
-    val toExpand = new Queue[UUID] ++ operations.keys
-    val ops = manager.getOperationInstances()
-    while (!toExpand.isEmpty) {
-      val op = ops(toExpand.dequeue)
-      for (input <- op.inputs.all.values) {
-        val dependentOp = input.source
-        val dependentId = dependentOp.gUID
-        if (!(operations isDefinedAt dependentId)) {
-          operations += (dependentId -> dependentOp)
-          toExpand.enqueue(dependentId)
-        }
-      }
-    }
-    allFilesFromSourceOperation(operations.toMap)
-  }
-
-  private def operationsFromAllProjects()(
-    implicit manager: MetaGraphManager): Map[UUID, MetaGraphOperationInstance] = {
-    val operations = new HashMap[UUID, MetaGraphOperationInstance]
-    for (project <- allObjects) {
-      operations ++= operationsFromProject(project.viewer)
-    }
-    operations.toMap
-  }
-
   private def allObjects(implicit manager: MetaGraphManager): Seq[ObjectFrame] = {
     val objects = DirectoryEntry.rootDirectory.listObjectsRecursively
     // Do not list internal project names (starting with "!").
     objects.filterNot(_.name.startsWith("!"))
-  }
-
-  // Returns the operations mapped by their ID strings which created
-  // the vertices, edges, attributes and scalars of this project.
-  private def operationsFromProject(
-    project: ProjectViewer): Map[UUID, MetaGraphOperationInstance] = {
-    val operations = new HashMap[UUID, MetaGraphOperationInstance]
-    if (project.vertexSet != null) {
-      operations += operationWithId(project.vertexSet.source)
-    }
-    if (project.edgeBundle != null) {
-      operations += operationWithId(project.edgeBundle.source)
-    }
-    operations ++= project.scalars.map {
-      case (_, s) => operationWithId(s.source)
-    }
-    operations ++= project.vertexAttributes.map {
-      case (_, a) => operationWithId(a.source)
-    }
-    operations ++= project.edgeAttributes.map {
-      case (_, a) => operationWithId(a.source)
-    }
-    for (segmentation <- project.segmentationMap.values) {
-      operations ++= operationsFromProject(segmentation)
-    }
-    operations.toMap
   }
 
   private def operationWithId(
