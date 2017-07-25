@@ -101,11 +101,9 @@ class TestWorkspace(unittest.TestCase):
     workspace_json = IMPORT_SQL_EXPORT
     workspace_json = workspace_json.replace('<SQL QUERY>', 'select a, b + c as sum from input')
     workspace_json = workspace_json.replace('<FILENAME>', csv_path)
-    import_result = lk._send('/ajax/importBox', json.loads(workspace_json)[1])
-    workspace_json = workspace_json.replace('<TABLE GUID>', import_result.guid)
-    workspace_json = workspace_json.replace(
-        '"<LAST SETTINGS>"', json.dumps(import_result.parameterSettings))
-    outputs = lk.run(json.loads(workspace_json))
+    boxes = json.loads(workspace_json)
+    boxes = lk.import_box(boxes, 'Import-CSV_1')
+    outputs = lk.run(boxes)
     # Check table.
     output = outputs['SQL1_1', 'table']
     table = lk.get_table(output.stateId)
