@@ -12,9 +12,11 @@ Example usage::
 
     import lynx
     lk = lynx.LynxKite()
-    p = lk.new_project()
-    p.newVertexSet(size=100)
-    print(p.scalar('!vertex_count'))
+    lk.run(json.loads(WORKSPACE_COPIED_FROM_UI))
+    state = outputs['Create-example-graph_1', 'project'].stateId
+    project = lk.get_project(state)
+    scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
+    print(scalars['!vertex_count'].double)
 
 The list of operations is not documented, but you can copy the invocation from a LynxKite project
 history.
@@ -154,7 +156,7 @@ class LynxKite:
 
   def _send(self, command, payload={}, raw=False):
     '''Sends a command to LynxKite and returns the response when it arrives.'''
-    data = self._request('/ajax/' + command, payload).text
+    data = self._request(command, payload).text
     if raw:
       r = json.loads(data)
     else:
@@ -163,7 +165,7 @@ class LynxKite:
 
   def _ask(self, command, payload={}):
     resp = self._get(
-        '/ajax/' + command,
+        command,
         params=dict(q=json.dumps(payload)),
         headers={'X-Requested-With': 'XMLHttpRequest'})
     return json.loads(resp.text, object_hook=_asobject)
@@ -388,11 +390,17 @@ class LynxKite:
 
   def run(self, boxes, parameters=dict()):
     res = self._send(
-        'runWorkspace', dict(workspace=dict(boxes=boxes), parameters=parameters))
-    return res.outputs
+        '/ajax/runWorkspace', dict(workspace=dict(boxes=boxes), parameters=parameters))
+    return {(o.boxOutput.boxId, o.boxOutput.id): o for o in res.outputs}
 
   def get_scalar(self, guid):
-    return self._ask('scalarValue', dict(scalarId=guid))
+    return self._ask('/ajax/scalarValue', dict(scalarId=guid))
+
+  def get_project(self, state, path=''):
+    return self._ask('/ajax/getProjectOutput', dict(id=state, path=path))
+
+  def get_export_result(self, state):
+    return self._ask('/ajax/getExportResultOutput', dict(stateId=state))
 
 
 class Table:
