@@ -3,9 +3,74 @@ import lynx
 import json
 
 ANCHOR_AND_EXAMPLE = '''
-  [{"id":"anchor","operationId":"Anchor","parameters":{},"x":0,"y":0,"inputs":{},
-  "parametricParameters":{}},{"id":"eg0","operationId":"Create example graph","parameters":{},
-  "x":100,"y":100,"inputs":{},"parametricParameters":{}}]'''
+  [{
+    "id": "anchor",
+    "operationId": "Anchor",
+    "parameters": {},
+    "x": 0, "y": 0,
+    "inputs": {},
+    "parametricParameters": {}
+  }, {
+    "id": "eg0",
+    "operationId": "Create example graph",
+    "parameters": {},
+    "x": 100, "y": 100,
+    "inputs": {},
+    "parametricParameters": {}
+  }]'''
+
+IMPORT_SQL_EXPORT = '''
+  [{
+    "id": "anchor",
+    "operationId": "Anchor",
+    "parameters": {},
+    "x": 0, "y": 0,
+    "inputs": {},
+    "parametricParameters": {}
+  },
+  {
+    "id": "Import-CSV_1",
+    "operationId": "Import CSV",
+    "parameters": {
+      "sql": "",
+      "infer": "no",
+      "imported_table": "<TABLE GUID>",
+      "last_settings": "<LAST SETTINGS>",
+      "imported_columns": "",
+      "columns": "",
+      "filename": "<FILENAME>",
+      "error_handling": "FAILFAST",
+      "limit": "",
+      "delimiter": ","
+    },
+    "x": 381, "y": 419,
+    "inputs": {},
+    "parametricParameters": {}
+  },
+  {
+    "id": "SQL1_1",
+    "operationId": "SQL1",
+    "parameters": {
+      "sql": "<SQL QUERY>"
+    },
+    "x": 590, "y": 357,
+    "inputs": { "input": { "boxId": "Import-CSV_1", "id": "table" } },
+    "parametricParameters": {}
+  },
+  {
+    "id": "Export-to-CSV_1",
+    "operationId": "Export to CSV",
+    "parameters": {
+      "path": "<auto>",
+      "quote": "",
+      "version": "0",
+      "header": "yes",
+      "delimiter": ","
+    },
+    "x": 794, "y": 401,
+    "inputs": { "table": { "boxId": "SQL1_1", "id": "table" } },
+    "parametricParameters": {}
+  }]'''
 
 
 class TestWorkspace(unittest.TestCase):
@@ -33,20 +98,7 @@ class TestWorkspace(unittest.TestCase):
   def test_import_sql_export(self):
     lk = lynx.LynxKite()
     csv_path = lk.upload('a,b,c\n1,2,3\n4,5,6\n')
-    workspace_json = '''
-    [{"id":"anchor","operationId":"Anchor","parameters":{},"x":0,"y":0,"inputs":{},
-    "parametricParameters":{}},
-    {"id":"Import-CSV_1","operationId":"Import CSV",
-    "parameters":{"sql":"","infer":"no","imported_table":"<TABLE GUID>",
-    "last_settings":"<LAST SETTINGS>", "imported_columns":"","columns":"","filename":"<FILENAME>",
-    "error_handling":"FAILFAST","limit":"","delimiter":","},"x":381,"y":419,"inputs":{},
-    "parametricParameters":{}},
-    {"id":"SQL1_1","operationId":"SQL1","parameters":{
-    "sql":"<SQL QUERY>"},"x":590,"y":357,"inputs":{"input":{"boxId":
-    "Import-CSV_1","id":"table"}},"parametricParameters":{}},
-    {"id":"Export-to-CSV_1","operationId":"Export to CSV","parameters":{"path":"<auto>","quote":"",
-    "version":"0","header":"yes","delimiter":","},"x":794,"y":401,
-    "inputs":{"table":{"boxId":"SQL1_1","id":"table"}},"parametricParameters":{}}]'''
+    workspace_json = IMPORT_SQL_EXPORT
     workspace_json = workspace_json.replace('<SQL QUERY>', 'select a, b + c as sum from input')
     workspace_json = workspace_json.replace('<FILENAME>', csv_path)
     import_result = lk._send('/ajax/importBox', json.loads(workspace_json)[1])
