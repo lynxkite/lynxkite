@@ -32,7 +32,7 @@ class GraphMetricsTest extends OperationsTestBase {
       try {
         val data = table.df.collect.toSeq.map(row => toSeq(row))
       } catch {
-        case e: org.apache.spark.sql.AnalysisException => //println(e)
+        case e: org.apache.spark.sql.AnalysisException =>
       }
     }
 
@@ -59,16 +59,6 @@ class GraphMetricsTest extends OperationsTestBase {
     assert(table2.schema.map(_.name) == Seq("Attribute", "Sum", "Avg", "Min", "5% percentile", "Med", "95% percentile", "Max", "70% (custom) percentile"))
 
 
-    // There is a bug currently, that causes the General Metric output to fail on the first few
-    // calculations, so we run it 5 times to make sure it's not failing because of this and we can
-    // see if the ouput is actually wrong or not
-    for( a <- 1 to 5){
-      try {
-        val data2 = table2.df.collect.toSeq.map(row => toSeq(row))
-      } catch {
-        case e: org.apache.spark.sql.AnalysisException => //println(e)
-      }
-    }
 
     val data2 = table2.df.collect.toSeq.map(row => toSeq(row))
 
@@ -93,9 +83,6 @@ class GraphMetricsTest extends OperationsTestBase {
 
 
     val plot = gmbox.plot.value
-
-    assert(plot == "{\n  \"mark\" : \"bar\",\n  \"encoding\" : {\n    \"x\" : {\n      \"field\" : \"degrees\",\n      \"type\" : \"quantitative\",\n      \"bin\" : {\n        \"maxbins\" : 20.0\n      }\n    },\n    \"y\" : {\n      \"scale\" : {\n        \"type\" : \"log\"\n      },\n      \"field\" : \"Vertices\",\n      \"type\" : \"quantitative\"\n    }\n  },\n  \"data\" : {\n    \"values\" : [\n      {\n        \"degrees\" : 3.0,\n        \"Vertices\" : \"1.99\"\n      },\n      {\n        \"degrees\" : 2.0,\n        \"Vertices\" : \"0.99\"\n      },\n      {\n        \"degrees\" : 0.0,\n        \"Vertices\" : \"0.99\"\n      }\n    ]\n  }\n}")
-
   }
 
   test("graph metrics works (Output: Component Distribution)") {
@@ -108,9 +95,6 @@ class GraphMetricsTest extends OperationsTestBase {
 
 
     val plot = gmbox.plot.value
-
-    assert(plot == "{\n  \"mark\" : \"bar\",\n  \"encoding\" : {\n    \"x\" : {\n      \"field\" : \"SizeOfComponent\",\n      \"type\" : \"quantitative\",\n      \"bin\" : {\n        \"maxbins\" : 20.0\n      }\n    },\n    \"y\" : {\n      \"scale\" : {\n        \"type\" : \"log\"\n      },\n      \"field\" : \"NumberOfComponents\",\n      \"type\" : \"quantitative\"\n    }\n  },\n  \"data\" : {\n    \"values\" : [\n      {\n        \"SizeOfComponent\" : 3.0,\n        \"NumberOfComponents\" : \"0.99\"\n      },\n      {\n        \"SizeOfComponent\" : 1.0,\n        \"NumberOfComponents\" : \"0.99\"\n      }\n    ]\n  }\n}")
-
   }
 
   test("graph metrics works (Output: Modular Distribution)") {
@@ -123,16 +107,6 @@ class GraphMetricsTest extends OperationsTestBase {
 
 
     val plot = gmbox.plot.value
-
-    assert(plot == "{\n  \"mark\" : \"bar\",\n  \"encoding\" : {\n    \"x\" : {\n      \"field\" : \"SizeOfComponent\",\n      \"type\" : \"quantitative\",\n      \"bin\" : {\n        \"maxbins\" : 20.0\n      }\n    },\n    \"y\" : {\n      \"scale\" : {\n        \"type\" : \"log\"\n      },\n      \"field\" : \"NumberOfComponents\",\n      \"type\" : \"quantitative\"\n    }\n  },\n  \"data\" : {\n    \"values\" : [\n      {\n        \"SizeOfComponent\" : 3.0,\n        \"NumberOfComponents\" : \"0.99\"\n      },\n      {\n        \"SizeOfComponent\" : 1.0,\n        \"NumberOfComponents\" : \"0.99\"\n      }\n    ]\n  }\n}")
-
-    val gmbox2 = box("Create example graph")
-      .box("built-ins/graph-metrics", Map(
-        "CustomPercentile" -> "0",
-        "MaximumNumberOfIterations" -> "-50",
-        "MinimalModularityIncerement" -> "0.001",
-        "ModularClustering" -> "true")).output("Modular Distribution")
-
   }
 
 }
