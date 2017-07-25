@@ -6,7 +6,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import scala.math
 import scala.util.Random
-import scala.collection.mutable.PriorityQueue
+import scala.collection.immutable.SortedMap
 import org.apache.spark.rdd.RDD
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
@@ -55,7 +55,7 @@ case class PSOGenerator(size: Long, externalDegree: Int, internalDegree: Int, ex
     val masterRandom = new Random(seed)
     val logSize: Double = math.log(size.toDouble)
     // Adds the necessary attributes for later calculations.
-    // reorderedID needs to be 1-indexed as log(0) will break things
+    // reorderedID needs to be 1-indexed as log(0) will break things.
     val reorderedID = ordinals.map { case (key, ordinal) => (key, ordinal + 1) }
     val radialAdded = reorderedID.map {
       case (key, reID) =>
@@ -71,20 +71,15 @@ case class PSOGenerator(size: Long, externalDegree: Int, internalDegree: Int, ex
       case (key, (reID, rad, ang)) => (key, (reID, rad, ang,
         totalExpectedEPSO(exponent, externalDegree, internalDegree, size, reID)))
     }
-    case class HyperVertex(key: Long, 
-                           reorderedID: Long, 
-                           radial: Double, 
-                           angular: Double, 
-                           eDegree: Double)
-    // Samples ~log(n) vertices with the smallest angular coordinate difference as well as
-    // preceding appearance (abstraction for higher popularity vertex; smaller radial coordinate)
+    // For each vertex: samples ~log(n) vertices with smallest angular coordinate difference, plus
+    // preceding appearance (abstraction for higher popularity vertex; smaller radial coordinate).
     // Groups the samples for each vertex into a list. The first element of these are the vertices
-    // then angular samples from cloclwise-most to counterclockwise-most, then radial samples.
+    // then angular samples from clockwise-most to counterclockwise-most, then radial samples.
     // Note: sample list will include the node itself in the middle.
     val allVerticesList: List[HyperVertex] = expectedDegree.map {
       case (key, (reID, rad, ang, eSam)) => HyperVertex(key, reID, rad, ang, eSam)
     }.collect().sortBy(_.angular).toList
-    val possibilityList: List[List[(Long, Long, Double, Double, Double)]] = {
+    val possibilityList: List[List[HyperVertex]] = {
       val numFirstSamples: Int = (math.round(logSize * allVerticesList.head.eDegree)).toInt
       val endofVerticesList = allVerticesList.reverse.take(numFirstSamples)
       var resultList: List[List[HyperVertex]] = Nil
@@ -93,7 +88,7 @@ case class PSOGenerator(size: Long, externalDegree: Int, internalDegree: Int, ex
       while (i > 0 && !remainderList.isEmpty) {
         remainderList = remainderList.tail
         i -= 1
-        } 
+      }
       var angularSampleList = endofVerticesList ++ allVerticesList.take(numFirstSamples)
       var radialSampleList = allVerticesList.head :: Nil
       resultList = (allVerticesList.head :: angularSampleList) :: resultList
@@ -126,34 +121,32 @@ case class PSOGenerator(size: Long, externalDegree: Int, internalDegree: Int, ex
     val possibilities = sc.parallelize(possibilityList)
     val es = possibilities.map {
       case (data) =>
-        var resultEdges: List[Edge] = Nil
         val numSelections: Int = data.head.eDegree.toInt
-        val numSamples: Int = (math.round(logSize * data.eDegree)).toInt
         val src = data.head
-        //TODO instead of a maxheap look into using rdd.top(numSelections)?
-        // RDD orders by keys though. Make probability the key?
-        val maxHeap = PriorityQueue.empty(Ordering.by[(Double, Long, Long), Double](_._1))
-        def heapElement(src: HyperVertex,
-                        dst: HyperVertex): (Double, (Long, Long)) = {
-          (-hyperbolicDistance(src, dst), (src.key, dst.key))
-        }
-        //This could be parallelized and 'for' probably doesn't do it.
-        if (!data.tail.isEmpty) {
-          for (dstTuple <- data.tail) {
-            if (srcTuple != dstTuple) maxHeap += heapElement(srcTuple, dstTuple)
-          }
-        }
-        for (j <- 0 until numSelections) {
-          val result = maxHeap.dequeue
-          resultEdges = Edge(result._2, result._3) :: Edge(result._3, result._2) :: resultEdges
-        }
-        resultEdges
-    }.flatMap(identity).distinct
+        val dst = data.tail.map {
+          case (dst) =>
+            val result: (Double, Edge) = (hyperbolicDistance(src, dst), Edge(src.key, dst.key))
+            result
+        }.toMap
+        val sortedDst = SortedMap.empty[Double, Edge] ++ dst
+        // This will contain a src=dst pair with distance = -INF (coming from log(0)),
+        // then the numSelections next smallest distances.
+        sortedDst.take(numSelections + 1).toList.map { case (key, value) => value }
+    }.flatMap(identity)
+      .flatMap { case (edge) => List(edge, Edge(edge.dst, edge.src)) }
+      .filter(edge => edge.src != edge.dst)
+      .distinct
+
     output(o.vs, ordinals.mapValues(_ => ()))
     output(o.radial, radial.sortUnique(partitioner))
     output(o.angular, angular.sortUnique(partitioner))
     output(o.es, es.randomNumbered(partitioner))
   }
+  case class HyperVertex(key: Long,
+                         reorderedID: Long,
+                         radial: Double,
+                         angular: Double,
+                         eDegree: Double)
   // Returns hyperbolic distance.
   def hyperbolicDistance(src: HyperVertex, dst: HyperVertex): Double = {
     src.radial + src.radial + 2 * math.log(phi(src.angular, dst.angular) / 2)
