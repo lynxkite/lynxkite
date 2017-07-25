@@ -246,6 +246,9 @@ class LynxKite:
   def get_export_result(self, state):
     return self._ask('/ajax/getExportResultOutput', dict(stateId=state))
 
+  def get_table(self, state, rows=-1):
+    return self._ask('/ajax/getTableOutput', dict(id=state, sampleRows=rows))
+
 
 class LynxException(Exception):
   '''Raised when LynxKite indicates that an error has occured while processing a command.'''

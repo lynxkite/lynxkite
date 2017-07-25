@@ -54,6 +54,12 @@ class TestWorkspace(unittest.TestCase):
     workspace_json = workspace_json.replace(
         '"<LAST SETTINGS>"', json.dumps(import_result.parameterSettings))
     outputs = lk.run(json.loads(workspace_json))
+    # Check table.
+    output = outputs['SQL1_1', 'table']
+    table = lk.get_table(output.stateId)
+    self.assertEqual([c.name for c in table.header], ['a', 'sum'])
+    self.assertEqual([[f.string for f in row] for row in table.data], [['1', '5'], ['4', '11']])
+    # Check export.
     output = outputs['Export-to-CSV_1', 'exported']
     self.assertEqual(output.kind, 'exportResult')
     self.assertTrue(output.success.enabled)
