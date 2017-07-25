@@ -21,6 +21,7 @@ object AggregateByEdgeBundle extends OpFromJson {
     val src = vertexSet
     val dst = vertexSet
     val connection = edgeBundle(src, dst)
+    val connectionBySrc = hybridBundle(connection)
     val attr = vertexAttribute[From](src)
   }
   class Output[From, To: TypeTag](implicit instance: MetaGraphOperationInstance,
@@ -50,28 +51,20 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
     implicit val ftt = inputs.attr.data.typeTag
     implicit val fct = inputs.attr.data.classTag
     implicit val runtimeContext = rc
+    val es = inputs.connectionBySrc.rdd
 
+    val partitioner = es.resultPartitioner
+    val withAttr = es.lookup(inputs.attr.rdd.sortedRepartition(partitioner))
+    val byDst = withAttr.map {
+      case (_, (dst, attr)) => dst -> attr
+    }
     aggregator match {
       case aggregator: Aggregator[From, _, To] =>
         // Scalable aggregation for non-local Aggregators.
-        val partitioner = inputs.connection.rdd.partitioner.get
-        val withAttr = HybridRDD(inputs.connection.rdd.map {
-          case (id, edge) => edge.src -> edge.dst
-        }, partitioner, even = true).lookup(inputs.attr.rdd.sortedRepartition(partitioner))
-        val byDst = withAttr.map {
-          case (_, (dst, attr)) => dst -> attr
-        }
         val aggregated = aggregator.aggregateRDD(byDst, inputs.dst.rdd.partitioner.get)
         output(o.attr, aggregated)
       case _ =>
         // Regular aggregation for local Aggregators.
-        val bySrc = inputs.connection.rdd.map {
-          case (id, edge) => edge.src -> edge.dst
-        }.groupBySortedKey(inputs.src.rdd.partitioner.get)
-        val withAttr = bySrc.sortedJoin(inputs.attr.rdd)
-        val byDst = withAttr.flatMap {
-          case (src, (dsts, attr)) => dsts.map(_ -> attr)
-        }
         val grouped = byDst.groupBySortedKey(inputs.dst.rdd.partitioner.get)
         val aggregated = grouped.mapValues(aggregator.aggregate(_))
         output(o.attr, aggregated)

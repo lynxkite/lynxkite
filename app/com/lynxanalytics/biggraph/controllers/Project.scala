@@ -420,15 +420,17 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
 
   lazy val belongsToAttribute: Attribute[Vector[ID]] = {
     val segmentationIds = graph_operations.IdAsAttribute.run(vertexSet)
-    val reversedBelongsTo = graph_operations.ReverseEdges.run(belongsTo)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
-    aop(aop.connection, reversedBelongsTo)(aop.attr, segmentationIds).result.attr
+    aop(aop.connectionBySrc, graph_operations.HybridEdgeBundle.byDst(belongsTo))(
+      aop.attr, segmentationIds).result.attr
   }
 
   lazy val membersAttribute: Attribute[Vector[ID]] = {
     val parentIds = graph_operations.IdAsAttribute.run(parent.vertexSet)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
-    aop(aop.connection, belongsTo)(aop.attr, parentIds).result.attr
+    aop(
+      aop.connectionBySrc, graph_operations.HybridEdgeBundle.bySrc(belongsTo))(
+        aop.attr, parentIds).result.attr
   }
 
   override protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] =

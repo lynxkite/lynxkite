@@ -22,6 +22,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
+import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 trait EntityProgressManager {
@@ -61,6 +62,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
     entity match {
       case vs: VertexSet => new io.VertexSetIO(vs, context)
       case eb: EdgeBundle => new io.EdgeBundleIO(eb, context)
+      case eb: HybridBundle => new io.HybridBundleIO(eb, context)
       case va: Attribute[_] => new io.AttributeIO(va, context)
       case sc: Scalar[_] => new io.ScalarIO(sc, context)
       case tb: Table => new io.TableIO(tb, context)
@@ -315,6 +317,11 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
     entityCache(edgeBundle.gUID).map(_.asInstanceOf[EdgeBundleData])
   }
 
+  def getFuture(hybridBundle: HybridBundle): SafeFuture[HybridBundleData] = {
+    loadOrExecuteIfNecessary(hybridBundle)
+    entityCache(hybridBundle.gUID).map(_.asInstanceOf[HybridBundleData])
+  }
+
   def getFuture[T](attribute: Attribute[T]): SafeFuture[AttributeData[T]] = {
     loadOrExecuteIfNecessary(attribute)
     implicit val tagForT = attribute.typeTag
@@ -336,6 +343,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
     entity match {
       case vs: VertexSet => getFuture(vs)
       case eb: EdgeBundle => getFuture(eb)
+      case hb: HybridBundle => getFuture(hb)
       case va: Attribute[_] => getFuture(va)
       case sc: Scalar[_] => getFuture(sc)
       case tb: Table => getFuture(tb)
@@ -352,6 +360,9 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
   }
   def get(edgeBundle: EdgeBundle): EdgeBundleData = {
     getFuture(edgeBundle).awaitResult(Duration.Inf)
+  }
+  def get(hybridBundle: HybridBundle): HybridBundleData = {
+    getFuture(hybridBundle).awaitResult(Duration.Inf)
   }
   def get[T](attribute: Attribute[T]): AttributeData[T] = {
     getFuture(attribute).awaitResult(Duration.Inf)
@@ -402,6 +413,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
             case eb: EdgeBundle =>
               coLocatedFuture(getFuture(eb), eb.idSet)
                 .map { case (rdd, count) => new EdgeBundleData(eb, rdd, count) }
+            case heb: HybridBundle => getFuture(heb).map(_.cached)
             case va: Attribute[_] =>
               coLocatedFuture(getFuture(va), va.vertexSet)(va.classTag)
                 .map { case (rdd, count) => new AttributeData(va, rdd, count) }
