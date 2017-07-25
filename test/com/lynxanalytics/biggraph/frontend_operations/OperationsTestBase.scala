@@ -80,6 +80,11 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       new DirectoryEntry(SymbolPath.parse(name)).asNewSnapshotFrame(state)
     }
 
+    def changeParameterSettings(changedParameters: Map[String, String]): TestBox = {
+      val newParameters = parameters ++ changedParameters
+      TestBox(operationId, newParameters, parametricParameters, inputs)
+    }
+
     def box(operationId: String,
             parameters: Map[String, String] = Map(),
             otherInputs: Seq[TestBox] = Seq(),
@@ -99,8 +104,10 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
                 parameters: Map[String, String] = Map()): TestBox = {
     val b = box(operationId, parameters)
     val guidFuture = sql.importBox(user, b.realBox)
-    val guid = concurrent.Await.result(guidFuture, concurrent.duration.Duration.Inf)
-    box(operationId, parameters + ("imported_table" -> guid))
+    val response = concurrent.Await.result(guidFuture, concurrent.duration.Duration.Inf)
+    val guid = response.guid
+    val settings = response.parameterSettings
+    box(operationId, parameters + ("imported_table" -> guid) + ("last_settings" -> settings))
   }
 
   def importCSV(filename: String, options: Map[String, String] = Map()): TestBox =

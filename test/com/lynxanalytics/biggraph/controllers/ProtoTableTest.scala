@@ -7,8 +7,8 @@ import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL.OptimizedPlanWithL
 class ProtoTableTest extends BigGraphControllerTestBase {
   private def attr(name: String): (String, Attribute[_]) =
     (name, Attribute[String](null, Symbol(name), null))
-  val one = ProtoTable(Seq(attr("a"), attr("b"), attr("c"), attr("d")))
-  val two = ProtoTable(Seq(attr("a"), attr("b"), attr("c"), attr("d")))
+  val one = ProtoTable(null, Seq(attr("a"), attr("b"), attr("c"), attr("d")))
+  val two = ProtoTable(null, Seq(attr("a"), attr("b"), attr("c"), attr("d")))
   val protoTables = Map("one" -> one, "two" -> two)
 
   private def compareProto(expected: Map[String, Set[String]], actual: Map[String, ProtoTable]) = {
