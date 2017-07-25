@@ -110,13 +110,6 @@ class TestWorkspace(unittest.TestCase):
     self.assertEqual([c.name for c in table.header], ['a', 'sum'])
     self.assertEqual([[f.string for f in row] for row in table.data], [['1', '5'], ['4', '11']])
     # Check export.
-    output = outputs['Export-to-CSV_1', 'exported']
-    self.assertEqual(output.kind, 'exportResult')
-    self.assertTrue(output.success.enabled)
-    export = lk.get_export_result(output.stateId)
-    scalar = lk.get_scalar(export.result.id)
-    self.assertEqual(scalar.string, 'Export done.')
-    data = lk._get(
-        'downloadFile',
-        params=dict(q=json.dumps(dict(path=export.parameters.path, stripHeaders=False)))).content
+    export = lk.export_box(outputs, 'Export-to-CSV_1')
+    data = lk.download_file(export.parameters.path)
     self.assertEqual(data, b'a,sum\n1,5.0\n4,11.0\n')

@@ -261,6 +261,24 @@ class LynxKite:
         return boxes
     raise KeyError(box_id)
 
+  def export_box(self, outputs, box_id):
+    '''Equivalent to triggering the export. Returns the exportResult output.'''
+    output = outputs[box_id, 'exported']
+    assert output.kind == 'exportResult', 'Output is {}, not "exportResult"'.format(output.kind)
+    assert output.success.enabled, 'Output has failed: {}'.format(output.success.disabledReason)
+    export = self.get_export_result(output.stateId)
+    if export.result.computeProgress != 1:
+      scalar = self.get_scalar(export.result.id)
+      assert scalar.string == 'Export done.', scalar.string
+      export = self.get_export_result(output.stateId)
+      assert export.result.computeProgress == 1, 'Failed to compute export result scalar.'
+    return export
+
+  def download_file(self, path):
+    return self._get(
+        'downloadFile',
+        params=dict(q=json.dumps(dict(path=path, stripHeaders=False)))).content
+
 
 class LynxException(Exception):
   '''Raised when LynxKite indicates that an error has occured while processing a command.'''
