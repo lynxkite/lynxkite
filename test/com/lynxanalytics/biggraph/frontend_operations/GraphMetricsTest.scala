@@ -22,19 +22,8 @@ class GraphMetricsTest extends OperationsTestBase {
 
 
     val table = gmbox.table
-    assert(table.schema.map(_.name) == Seq("Attribute", "Sum", "Avg", "Min", "5% percentile", "Med", "95% percentile", "Max", "0% (custom) percentile"))
-
-
-    // There is a bug currently, that causes the General Metric output to fail on the first few
-    // calculations, so we run it 5 times to make sure it's not failing because of this and we can
-    // see if the ouput is actually wrong or not
-    for( a <- 1 to 5){
-      try {
-        val data = table.df.collect.toSeq.map(row => toSeq(row))
-      } catch {
-        case e: org.apache.spark.sql.AnalysisException =>
-      }
-    }
+    assert(table.schema.map(_.name) == Seq("Attribute", "Sum", "Avg", "Min", "5% percentile", "Med",
+      "95% percentile", "Max", "0% (custom) percentile"))
 
     val data = table.df.collect.toSeq.map(row => toSeq(row))
 
