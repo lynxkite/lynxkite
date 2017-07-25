@@ -1,5 +1,5 @@
 import unittest
-import lynx
+import lynx.kite
 import json
 
 ANCHOR_AND_EXAMPLE = '''
@@ -76,7 +76,7 @@ IMPORT_SQL_EXPORT = '''
 class TestWorkspace(unittest.TestCase):
 
   def test_example_graph(self):
-    lk = lynx.LynxKite()
+    lk = lynx.kite.LynxKite()
     outputs = lk.run(json.loads(ANCHOR_AND_EXAMPLE))
     self.assertEqual(1, len(outputs))
     o = outputs['eg0', 'project']
@@ -86,7 +86,7 @@ class TestWorkspace(unittest.TestCase):
     self.assertTrue(o.success.enabled)
 
   def test_state_access(self):
-    lk = lynx.LynxKite()
+    lk = lynx.kite.LynxKite()
     outputs = lk.run(json.loads(ANCHOR_AND_EXAMPLE))
     state = outputs['eg0', 'project'].stateId
     project = lk.get_project(state)
@@ -96,7 +96,7 @@ class TestWorkspace(unittest.TestCase):
     self.assertEqual(scalars['greeting'].string, 'Hello world! 😀 ')
 
   def test_import_sql_export(self):
-    lk = lynx.LynxKite()
+    lk = lynx.kite.LynxKite()
     csv_path = lk.upload('a,b,c\n1,2,3\n4,5,6\n')
     workspace_json = IMPORT_SQL_EXPORT
     workspace_json = workspace_json.replace('<SQL QUERY>', 'select a, b + c as sum from input')
