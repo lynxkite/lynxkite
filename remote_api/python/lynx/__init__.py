@@ -391,6 +391,9 @@ class LynxKite:
         'runWorkspace', dict(workspace=dict(boxes=boxes), parameters=parameters))
     return res.outputs
 
+  def get_scalar(self, guid):
+    return self._ask('scalarValue', dict(scalarId=guid))
+
 
 class Table:
 
