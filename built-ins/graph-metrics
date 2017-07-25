@@ -362,13 +362,13 @@
     }
     },
     "parametricParameters" : {
-    "sql" : "select \n  1 as ID, \n  \"Vertices\" as Attribute, \n  count(*) as Sum, \n  double(null) as Avg, \n  int(null) as Min, \n  int(null) as `5% percentile`, \n  int(null) as Med, \n  int(null) as `95% percentile`, \n  int(null) as Max, \n  int(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile` \nfrom vertices"
+    "sql" : "select \n  1 as ID, \n  \"Vertices\" as Attribute, \n  scalars.`!vertex_count` as Sum, \n  double(null) as Avg, \n  int(null) as Min, \n  int(null) as `5% percentile`, \n  int(null) as Med, \n  int(null) as `95% percentile`, \n  int(null) as Max, \n  int(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile` \nfrom scalars"
     }
   }, {
     "id" : "SQL1_7",
     "operationId" : "SQL1",
     "parameters" : {
-    "sql" : "select \n  2 as ID, \n  \"Edges\" as Attribute, \n  count(*) as Sum, \n  double(null) as Avg, \n  int(null) as Min, \n  int(null) as `5% percentile`, \n  int(null) as Med, \n  int(null) as `95% percentile`, \n  int(null) as Max, \n  int(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile` \nfrom edges"
+    "sql" : "select \n  2 as ID, \n  \"Edges\" as Attribute, \n  scalars.`!edge_count` as Sum, \n  double(null) as Avg, \n  int(null) as Min, \n  int(null) as `5% percentile`, \n  int(null) as Med, \n  int(null) as `95% percentile`, \n  int(null) as Max, \n  int(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile` \nfrom scalars"
     },
     "x" : 284.0,
     "y" : 647.0,
@@ -400,7 +400,7 @@
     "parameters" : {
     "plot_code" : "Vegas()\n  .withData(table)\n  .encodeX(\"degrees\", Quant, bin=Bin(maxbins=20.0))\n  .encodeY(\"Vertices\", Quant,  scale= new vegas.spec.Spec.Scale(`type` = Some(ScaleType.Log)) )\n  .mark(Bar)"
     },
-    "x" : 615.5458141593629,
+    "x" : 631.0940838335453,
     "y" : 3.5922531942784133,
     "inputs" : {
     "table" : {
