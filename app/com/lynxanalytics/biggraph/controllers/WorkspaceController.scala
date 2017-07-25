@@ -82,7 +82,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         (cws, op.getParams, op.context.box.operationId)
     }
     lazy val frame = getWorkspaceFrame(user, name)
-    lazy val context = ws.context(user, ops, params)
   }
 
   def getWorkspace(
@@ -272,7 +271,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   private def getOperation(user: serving.User, request: GetOperationMetaRequest): Operation = {
-    val ctx = ResolvedWorkspaceReference(user, request.workspace).context
+    val ref = ResolvedWorkspaceReference(user, request.workspace)
+    val ctx = ref.ws.context(user, ops, ref.params)
     ctx.getOperation(request.box)
   }
 }
