@@ -10,9 +10,9 @@ variables::
 
 Example usage::
 
-    import lynx
-    lk = lynx.LynxKite()
-    lk.run(json.loads(WORKSPACE_COPIED_FROM_UI))
+    import lynx.kite
+    lk = lynx.kite.LynxKite()
+    outputs = lk.run(json.loads(WORKSPACE_COPIED_FROM_UI))
     state = outputs['Create-example-graph_1', 'project'].stateId
     project = lk.get_project(state)
     scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
