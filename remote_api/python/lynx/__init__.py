@@ -173,7 +173,7 @@ class LynxKite:
 
   def get_directory_entry(self, path):
     '''Returns details about a LynxKite path. The returned object has the following fields:
-    ``exists``, ``isProject``, ``isTable``, ``isView``
+    ``exists``, ``isWorkspace``, ``isSnapshot``, ``isDirectory``
     '''
     return self._send('/remote/getDirectoryEntry', dict(path=path))
 
@@ -196,8 +196,7 @@ class LynxKite:
     self._send('/remote/removeName', dict(name=name))
 
   def change_acl(self, file, readACL, writeACL):
-    '''Sets the read and write access control list for a path (directory, project, etc) in LynxKite.
-    '''
+    '''Sets the read and write access control list for a path in LynxKite.'''
     self._send('/remote/changeACL',
                dict(project=file, readACL=readACL, writeACL=writeACL))
 
