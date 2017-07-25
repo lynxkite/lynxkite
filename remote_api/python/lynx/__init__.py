@@ -122,7 +122,8 @@ class LynxKite:
     return self._session
 
   def __del__(self):
-    self._session.close()
+    if self._session:
+      self._session.close()
 
   def _method(self, method, endpoint, **kwargs):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
