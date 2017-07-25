@@ -22,6 +22,7 @@ The list of operations is not documented, but you can copy the invocation from a
 history.
 '''
 import collections
+import copy
 import json
 import os
 import requests
@@ -248,6 +249,17 @@ class LynxKite:
 
   def get_table(self, state, rows=-1):
     return self._ask('/ajax/getTableOutput', dict(id=state, sampleRows=rows))
+
+  def import_box(self, boxes, box_id):
+    '''Equivalent to clicking the import button for an import box. Returns the updated boxes.'''
+    boxes = copy.deepcopy(boxes)
+    for box in boxes:
+      if box['id'] == box_id:
+        import_result = self._send('/ajax/importBox', box)
+        box['parameters']['imported_table'] = import_result.guid
+        box['parameters']['last_settings'] = import_result.parameterSettings
+        return boxes
+    raise KeyError(box_id)
 
 
 class LynxException(Exception):
