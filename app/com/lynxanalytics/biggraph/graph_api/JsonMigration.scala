@@ -44,8 +44,13 @@ object JsonMigration {
 
   private def className(o: Any) = o.getClass.getName.replace("$", "")
   val current = new JsonMigration(
-    Map().withDefaultValue(0),
-    Map())
+    Map(
+      className(graph_operations.ExampleGraph) -> 1,
+      className(graph_operations.EnhancedExampleGraph) -> 1)
+      .withDefaultValue(0),
+    Map(
+      (className(graph_operations.ExampleGraph), 0) -> identity,
+      (className(graph_operations.EnhancedExampleGraph), 0) -> identity))
 }
 import JsonMigration._
 class JsonMigration(
