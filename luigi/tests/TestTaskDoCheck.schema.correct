@@ -1,0 +1,14 @@
+# This is a YAML file, describing the required schema for test_schema_enforcement.py
+schema:
+- dataType: BooleanType
+  name: zero
+  nullable: false
+- dataType: IntegerType
+  name: one
+  nullable: false
+- dataType: DecimalType(2,1)
+  name: two
+  nullable: false
+- dataType: StringType
+  name: three
+  nullable: false
