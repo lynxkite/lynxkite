@@ -166,6 +166,7 @@ class LynxKite:
     return r
 
   def _ask(self, command, payload={}):
+    '''Sends a JSON GET request.'''
     resp = self._get(
         command,
         params=dict(q=json.dumps(payload)),
