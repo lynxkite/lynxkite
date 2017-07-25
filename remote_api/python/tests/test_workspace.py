@@ -14,7 +14,7 @@ class TestWorkspace(unittest.TestCase):
     lk = lynx.LynxKite()
     outputs = lk.run(json.loads(ANCHOR_AND_EXAMPLE))
     self.assertEqual(1, len(outputs))
-    o = outputs[0]
+    o = outputs['eg0', 'project']
     self.assertEqual(o.boxOutput.boxId, 'eg0')
     self.assertEqual(o.boxOutput.id, 'project')
     self.assertEqual(o.kind, 'project')
@@ -23,8 +23,8 @@ class TestWorkspace(unittest.TestCase):
   def test_state_access(self):
     lk = lynx.LynxKite()
     outputs = lk.run(json.loads(ANCHOR_AND_EXAMPLE))
-    state = outputs[0].stateId
-    project = lk._ask('getProjectOutput', dict(id=state, path=''))
+    state = outputs['eg0', 'project'].stateId
+    project = lk.get_project(state)
     scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
     self.assertEqual(scalars['!vertex_count'].double, 4.0)
     self.assertEqual(scalars['!edge_count'].double, 4.0)
@@ -49,16 +49,15 @@ class TestWorkspace(unittest.TestCase):
     "inputs":{"table":{"boxId":"SQL1_1","id":"table"}},"parametricParameters":{}}]'''
     workspace_json = workspace_json.replace('<SQL QUERY>', 'select a, b + c as sum from input')
     workspace_json = workspace_json.replace('<FILENAME>', csv_path)
-    import_result = lk._send('importBox', json.loads(workspace_json)[1])
+    import_result = lk._send('/ajax/importBox', json.loads(workspace_json)[1])
     workspace_json = workspace_json.replace('<TABLE GUID>', import_result.guid)
     workspace_json = workspace_json.replace(
         '"<LAST SETTINGS>"', json.dumps(import_result.parameterSettings))
     outputs = lk.run(json.loads(workspace_json))
-    outputs = {o.boxOutput.boxId: o for o in outputs}
-    output = outputs['Export-to-CSV_1']
+    output = outputs['Export-to-CSV_1', 'exported']
     self.assertEqual(output.kind, 'exportResult')
     self.assertTrue(output.success.enabled)
-    export = lk._ask('getExportResultOutput', dict(stateId=output.stateId))
+    export = lk.get_export_result(output.stateId)
     scalar = lk.get_scalar(export.result.id)
     self.assertEqual(scalar.string, 'Export done.')
     data = lk._get(
