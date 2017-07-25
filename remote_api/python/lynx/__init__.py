@@ -119,6 +119,9 @@ class LynxKite:
       self._pid = os.getpid()
     return self._session
 
+  def __del__(self):
+    self._session.close()
+
   def _method(self, method, endpoint, **kwargs):
     '''Sends an HTTP request to LynxKite and returns the response when it arrives.'''
     max_tries = 3
