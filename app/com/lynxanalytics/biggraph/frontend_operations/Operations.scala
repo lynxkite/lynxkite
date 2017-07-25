@@ -234,7 +234,7 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
     attributeWithAggregator: AttributeWithLocalAggregator[From, To]): Attribute[To] = {
     val op = graph_operations.AggregateByEdgeBundle(attributeWithAggregator.aggregator)
     op(
-      op.bySrc, graph_operations.HybridEdgeBundle.bySrc(connection))(
+      op.connectionBySrc, graph_operations.HybridEdgeBundle.bySrc(connection))(
         op.attr, attributeWithAggregator.attr).result.attr
   }
   private def mergeEdgesWithKey[T](edgesAsAttr: Attribute[(ID, ID)], keyAttr: Attribute[T]) = {

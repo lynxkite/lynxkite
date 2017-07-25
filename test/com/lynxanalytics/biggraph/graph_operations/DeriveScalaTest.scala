@@ -188,11 +188,11 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
     val g = ExampleGraph()().result
     val ages = {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[Double]())
-      op(op.bySrc, HybridEdgeBundle.bySrc(g.edges))(op.attr, g.age).result.attr
+      op(op.connectionBySrc, HybridEdgeBundle.bySrc(g.edges))(op.attr, g.age).result.attr
     }
     val genders = {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[String]())
-      op(op.bySrc, HybridEdgeBundle.bySrc(g.edges))(op.attr, g.gender).result.attr
+      op(op.connectionBySrc, HybridEdgeBundle.bySrc(g.edges))(op.attr, g.gender).result.attr
     }
     checkScala("ages.toString()", "ages", ages,
       Set(0 -> "Vector(18.2, 50.3)", 1 -> "Vector(20.3, 50.3)"))
@@ -213,11 +213,11 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
     val age = AddVertexAttribute.run(g.vs, Map(0 -> "10", 1 -> "20", 2 -> "30"))
     val ages = {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[String]())
-      op(op.bySrc, HybridEdgeBundle.bySrc(g.es))(op.attr, age).result.attr
+      op(op.connectionBySrc, HybridEdgeBundle.bySrc(g.es))(op.attr, age).result.attr
     }
     val agess = {
       val op = AggregateByEdgeBundle(Aggregator.AsVector[Vector[String]]())
-      op(op.bySrc, HybridEdgeBundle.bySrc(g.es))(op.attr, ages).result.attr
+      op(op.connectionBySrc, HybridEdgeBundle.bySrc(g.es))(op.attr, ages).result.attr
     }
     checkScala("agess.length.toString()", "agess", agess, Set(0 -> "2", 1 -> "2", 2 -> "2"))
     checkScala("agess.toString()", "agess", agess, Set(

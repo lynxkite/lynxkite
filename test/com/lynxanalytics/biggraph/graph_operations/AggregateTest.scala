@@ -15,7 +15,7 @@ class AggregateTest extends FunSuite with TestGraphOp {
     def run[Attr, Res](
       agg: LocalAggregator[Attr, Res], attr: Attribute[Attr]) = {
       val op = AggregateByEdgeBundle(agg)
-      op(op.bySrc, HybridEdgeBundle.bySrc(components.belongsTo))(op.attr, attr)
+      op(op.connectionBySrc, HybridEdgeBundle.bySrc(components.belongsTo))(op.attr, attr)
         .result.attr.rdd.collect.toMap
     }
     assert(run(Aggregator.AsSet[String](), example.name) ==

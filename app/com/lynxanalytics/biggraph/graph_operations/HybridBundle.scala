@@ -15,6 +15,7 @@ object HybridEdgeBundle extends OpFromJson {
     val es = edgeBundle(vsA, vsB)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+    // The output is hybrid bundle built from the src->dst mapping.
     val sb = hybridBundle(inputs.es.entity)
   }
   def fromJson(j: JsValue) = HybridEdgeBundle()
@@ -29,6 +30,7 @@ object HybridEdgeBundle extends OpFromJson {
     op(op.es, ReverseEdges.run(connection)).result.sb
   }
 }
+// Creates the src->dst HybridBundle mapping from an EdgeBundle.
 import HybridEdgeBundle._
 case class HybridEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
