@@ -19,7 +19,6 @@ angular.module('biggraph')
       link: function(scope, element) {
         scope.workspace = undefined;
         scope.selection = new SelectionModel();
-        scope.clipboard = [];
         scope.dragMode = window.localStorage.getItem('drag_mode') || 'pan';
         scope.selectedBoxIds = [];
         scope.movedBoxes = undefined;
@@ -444,15 +443,56 @@ angular.module('biggraph')
           }
         };
 
-        scope.copyBoxes = function() {
-          scope.clipboard = angular.copy(scope.selectedBoxes());
+        scope.drawingBoardHasFocus = function() {
+          // The svg tag cannot be focused apparently, but we don't want to hijack copy and paste
+          // events from things like input fields.
+          return document.activeElement.tagName === "BODY";
         };
 
-        scope.pasteBoxes = function() {
+        scope.copyBoxes = function(e) {
+          if (!scope.drawingBoardHasFocus()) {
+            return;
+          }
+          var data = JSON.stringify(scope.selectedBoxes()
+            .map(function(box) { return box.instance; }));
+          e.clipboardData.setData('text/plain', data);
+          e.preventDefault();
+        };
+
+        scope.pasteBoxes = function(e) {
+          if (!scope.drawingBoardHasFocus()) {
+            return;
+          }
+          var data = e.clipboardData.getData('Text');
+          try {
+            var boxes = JSON.parse(data);
+          } catch (err) {
+            var jData = { clipboard: data };
+            var message = 'Cannot create boxes from clipboard. (Not in JSON format)';
+            util.error(message, jData);
+            /* eslint-disable no-console */
+            console.err(message, err);
+            return;
+          }
           var pos = addLogicalMousePosition({ pageX: 0, pageY: 0});
-          var added = scope.workspace.pasteFromClipboard(scope.clipboard, pos);
+          try {
+            var added = scope.workspace.pasteFromData(boxes, pos);
+          } catch (err) {
+            var someJson = { clipboard: data };
+            message = 'Cannot parse boxes from clipboard';
+            util.error(message, someJson);
+            /* eslint-disable no-console */
+            console.err(message, err);
+            return;
+          }
           scope.selectedBoxIds = added.map(function(box) { return box.id; });
         };
+
+        var wrappedCopyBoxes = wrapCallback(scope.copyBoxes);
+        var wrappedPasteBoxes = wrapCallback(scope.pasteBoxes);
+
+        window.addEventListener('copy', wrappedCopyBoxes);
+        window.addEventListener('paste', wrappedPasteBoxes);
 
         scope.deleteBoxes = function(boxIds) {
           var popups = scope.popups.slice();
@@ -490,14 +530,11 @@ angular.module('biggraph')
           scope.selectedBoxIds = [b.customBox.id];
           b.promise.then(success, error);
         };
-
         var hk = hotkeys.bindTo(scope);
         hk.add({
-          combo: 'mod+c', description: 'Copy boxes',
-          callback: function() { scope.copyBoxes(); } });
+          combo: 'mod+c', description: 'Copy boxes' }); // Only here for the tooltip.
         hk.add({
-          combo: 'mod+v', description: 'Paste boxes',
-          callback: function() { scope.pasteBoxes(); } });
+          combo: 'mod+v', description: 'Paste boxes' }); // Only here for the tooltip.
         hk.add({
           combo: 'mod+z', description: 'Undo',
           callback: function() { scope.workspace.undo(); } });
@@ -585,8 +622,9 @@ angular.module('biggraph')
           uploadFile(file).then(function(filename) {
             box.parameters.filename = filename;
             return util.post('/ajax/importBox', box);
-          }).then(function(guid) {
-            box.parameters.imported_table = guid;
+          }).then(function(response) {
+            box.parameters.imported_table = response.guid;
+            box.parameters.last_settings = response.parameterSettings;
             scope.workspace.saveWorkspace();
           }).catch(function() {
             scope.workspace.deleteBoxes([box.id]);
@@ -617,6 +655,8 @@ angular.module('biggraph')
 
         scope.$on('$destroy', function() {
           scope.workspace.stopProgressUpdate();
+          window.removeEventListener('copy', wrappedCopyBoxes);
+          window.removeEventListener('paste', wrappedPasteBoxes);
         });
 
         // TODO: We could generate these with tinycolor from the color names.

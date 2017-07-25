@@ -347,9 +347,9 @@ class LynxKite:
   def upload(self, data, name=None):
     '''Uploads a file that can then be used in import methods.
 
-    Use it to upload small test datasets from local files::
+    Use it to upload small test datasets from local files; binary read mode is strongly recommended::
 
-      with open('myfile.csv') as f:
+      with open('myfile.csv', 'rb') as f:
         view = lk.import_csv(lk.upload(f))
 
     Or to upload even smaller datasets right from Python::
@@ -358,6 +358,12 @@ class LynxKite:
     '''
     if name is None:
       name = 'remote-api-upload'  # A hash will be added anyway.
+
+    # Python3.4 cannot directly use the TextIOWrapper object deep down in the post; Python 3.5 can.
+    # See https://bugs.python.org/issue21057
+    # But doing a read() on the object always works.
+    if hasattr(data, 'read'):
+      data = data.read()
     return self._post('/ajax/upload', files=dict(file=(name, data))).text
 
   def clean_file_system(self):

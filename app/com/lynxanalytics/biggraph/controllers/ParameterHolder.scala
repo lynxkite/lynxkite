@@ -19,6 +19,8 @@
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import play.api.libs.json.JsObject
+
 import scala.util._
 
 class ParameterHolder(context: Operation.Context) {
