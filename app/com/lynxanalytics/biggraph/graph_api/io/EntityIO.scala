@@ -358,7 +358,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
   // The subclasses know the specific type and can thus make a safer cast.
   def castData(data: EntityData): EntityRDDData[T]
 
-  def write(data: EntityData, dir: HadoopFile): (Long, String)
+  def write(data: EntityData, dir: HadoopFile) = dir.saveEntityRDD(castData(data).rdd, valueTypeTag)
 
   def valueTypeTag: TypeTag[T] // The TypeTag of the values we write out.
 
@@ -487,8 +487,6 @@ class VertexSetIO(entity: VertexSet, context: IOContext)
 
   def castData(data: EntityData) = data.asInstanceOf[VertexSetData]
 
-  def write(data: EntityData, dir: HadoopFile) = dir.saveEntityRDD(castData(data).rdd, valueTypeTag)
-
   def valueTypeTag = typeTag[Unit]
 }
 
@@ -516,8 +514,6 @@ class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
   }
 
   def castData(data: EntityData) = data.asInstanceOf[EdgeBundleData]
-
-  def write(data: EntityData, dir: HadoopFile) = dir.saveEntityRDD(castData(data).rdd, valueTypeTag)
 
   def valueTypeTag = typeTag[Edge]
 }
@@ -550,12 +546,12 @@ class HybridBundleIO(entity: HybridBundle, context: IOContext)
     new HybridBundleData(
       entity,
       HybridRDD(largeKeysRDD,
-        smallKeysRDD.sort(partitioner),
+        smallKeysRDD.asSortedRDD(partitioner),
         largeKeysSet),
       Some(count))
   }
 
-  def write(data: EntityData, dir: HadoopFile): (Long, String) = {
+  override def write(data: EntityData, dir: HadoopFile): (Long, String) = {
     val hybridRDD = castData(data).rdd
     val linesSmallKeys = (dir / "small_keys_rdd")
       .saveEntityRDD(hybridRDD.smallKeysRDD, valueTypeTag)._1
@@ -601,8 +597,6 @@ class AttributeIO[T](entity: Attribute[T], context: IOContext)
 
   def castData(data: EntityData) =
     data.asInstanceOf[AttributeData[_]].runtimeSafeCast(valueTypeTag)
-
-  def write(data: EntityData, dir: HadoopFile) = dir.saveEntityRDD(castData(data).rdd, valueTypeTag)
 
   def valueTypeTag = entity.typeTag
 }
