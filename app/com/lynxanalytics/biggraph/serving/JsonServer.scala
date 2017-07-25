@@ -324,6 +324,7 @@ object FrontendJson {
   implicit val wSQLColumn = json.Json.writes[SQLColumn]
   implicit val wSQLQueryResult = json.Json.writes[SQLQueryResult]
   implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
+  implicit val wImportBoxResponse = json.Json.writes[ImportBoxResponse]
 
   implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
 
