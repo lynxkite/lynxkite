@@ -562,7 +562,7 @@ abstract class ExportOperation(context: Operation.Context) extends SmartOperatio
     context.meta.inputs == List("table"),
     s"An ExportOperation must input a single table. $context")
   assert(
-    context.meta.outputs == List("exportResult"),
+    context.meta.outputs == List("exported"),
     s"An ExportOperation must output an ExportResult. $context"
   )
 
