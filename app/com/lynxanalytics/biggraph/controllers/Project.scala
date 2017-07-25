@@ -288,8 +288,9 @@ sealed trait ProjectViewer {
   protected def getSingleLocalProtoTable(tableName: String): ProtoTable = {
     import ProjectViewer._
     val protoTable = tableName match {
-      case VertexTableName => ProtoTable(vertexAttributes.toSeq.sortBy(_._1))
+      case VertexTableName => ProtoTable(vertexSet, vertexAttributes.toSeq.sortBy(_._1))
       case ScalarTableName => ProtoTable.scalar(scalars.toSeq.sortBy(_._1))
+
       case EdgeTableName => {
         import graph_operations.VertexToEdgeAttribute._
         val edgeAttrs = edgeAttributes.map {
@@ -301,9 +302,9 @@ sealed trait ProjectViewer {
         val dstAttrs = vertexAttributes.map {
           case (name, attr) => s"dst_$name" -> dstAttribute(attr, edgeBundle)
         }
-        ProtoTable((edgeAttrs ++ srcAttrs ++ dstAttrs).toSeq.sortBy(_._1))
+        ProtoTable(edgeBundle.idSet, (edgeAttrs ++ srcAttrs ++ dstAttrs).toSeq.sortBy(_._1))
       }
-      case EdgeAttributeTableName => ProtoTable(edgeAttributes.toSeq.sortBy(_._1))
+      case EdgeAttributeTableName => ProtoTable(edgeBundle.idSet, edgeAttributes.toSeq.sortBy(_._1))
       case BelongsToTableName =>
         throw new AssertionError("Only segmentations have a BelongsTo table")
       case _ => {
@@ -469,7 +470,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
         val segAttrs = vertexAttributes.map {
           case (name, attr) => s"segment_$name" -> dstAttribute(attr, belongsTo)
         }
-        ProtoTable((baseAttrs ++ segAttrs).toSeq.sortBy(_._1))
+        ProtoTable(belongsTo.idSet, (baseAttrs ++ segAttrs).toSeq.sortBy(_._1))
       }
       case _ => super.getSingleLocalProtoTable(tableName)
     }
@@ -1292,6 +1293,10 @@ class DirectoryEntry(val path: SymbolPath)(
     res
   }
 
+  def asWorkspaceFrame(): WorkspaceFrame = {
+    assert(isInstanceOf[WorkspaceFrame], s"Entry '$path' is not a workspace.")
+    asInstanceOf[WorkspaceFrame]
+  }
   def asNewWorkspaceFrame(): WorkspaceFrame = {
     assert(!exists, s"Entry '$path' already exists.")
     val res = new WorkspaceFrame(path)
