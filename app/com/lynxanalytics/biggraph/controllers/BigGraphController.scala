@@ -172,9 +172,9 @@ object BigGraphController {
     val objects = dir
       .listObjectsRecursively
       .filter(_.readAllowedFrom(user))
-      .filter { project =>
-        val baseName = project.path.last.name
-        val notes = if (project.isSnapshot) "" else project.viewer.state.notes
+      .filter { entry =>
+        val baseName = entry.path.last.name
+        val notes = "" // TODO: Maybe look at workspace description.
         terms.forall {
           term =>
             baseName.toLowerCase.contains(term) ||

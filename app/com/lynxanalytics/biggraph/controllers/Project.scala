@@ -1,25 +1,7 @@
-// Projects are the top-level entities on the UI.
-//
-// A project has a vertex set, an edge bundle, and any number of attributes,
-// scalars and segmentations. A segmentation itself can also be looked at as a project.
-// It has its own vertex set, edge bundle, attributes, scalars and is connected to the
-// base project via belongsTo edge bundle.
-//
-// The complete state of a root project - a project which is not a segmentation of a base project -
-// is completely represented by the immutable RootProjectState class.
-//
-// We can optionally store a RootProjectState as a checkpoint. Checkpoints are globally unique
-// (within a Kite instance) identifiers that can be used to recall a project state. Checkpointed
-// project states also encapsulate the full operation history of the state as they have references
-// to their parent state checkpoint and the operation that was used to get from the parent to the
-// child. Thus checkpoints form a directed tree.
-//
-// Project frames represent named project states. Basically each project on the UI is
-// represented via a project frame. A project frame is uniquely identified by a project name
-// and contains informations like the checkpoint representing the current state of the project and
-// high level state independent meta information like access control. Project frames are persisted
-// using tags. ProjectFrame instances are short-lived, they are just a rich interface for
-// querying and manipulating the underlying tag tree.
+// Projects are a complex type of box output state. They hold graphs and segmentations.
+// This file also contains the classes for the LynxKite directory structure.
+// (Directories came later than projects. But since LynxKite 2.0 projects are no longer stored.
+// TODO: Split into separate files for clarity.)
 
 package com.lynxanalytics.biggraph.controllers
 
@@ -72,21 +54,11 @@ object CommonProjectState {
     None, Map(), None, Map(), Map(), Map(), "", Some(Map()), Some(Map()))
 }
 
-// Complete state of a root project.
-case class RootProjectState(
-    state: CommonProjectState,
-    checkpoint: Option[String],
-    previousCheckpoint: Option[String],
-    lastOperationDesc: String,
-    // This will be set exactly when previousCheckpoint is set.
-    lastOperationRequest: Option[SubProjectOperation],
-    viewRecipe: Option[JsObject],
-    workspace: Option[Workspace]) {
-}
-object RootProjectState {
-  val emptyState = RootProjectState(
-    CommonProjectState.emptyState, Some(""), None, "", None, None, None)
-}
+// This gets written into a checkpoint.
+case class CheckpointObject(
+  workspace: Workspace,
+  checkpoint: Option[String] = None,
+  previousCheckpoint: Option[String] = None)
 
 // Complete state of segmentation.
 case class SegmentationState(
@@ -98,7 +70,7 @@ object SegmentationState {
 
 // Rich interface for looking at project states.
 sealed trait ProjectViewer {
-  val rootState: RootProjectState
+  val rootState: CommonProjectState
   val state: CommonProjectState
   implicit val manager: MetaGraphManager
 
@@ -173,7 +145,6 @@ sealed trait ProjectViewer {
     else segmentation(path.head).offspringViewer(path.tail)
 
   def editor: ProjectEditor
-  def rootCheckpoint: String = rootState.checkpoint.get
 
   val isSegmentation: Boolean
   def asSegmentation: SegmentationViewer
@@ -186,18 +157,6 @@ sealed trait ProjectViewer {
     } else {
       None
     }
-  }
-
-  def toListElementFE(name: String, objectType: String, details: Option[json.JsObject])(
-    implicit epm: EntityProgressManager): FEEntryListElement = {
-    FEEntryListElement(
-      name = name,
-      objectType = objectType,
-      icon = objectType,
-      notes = state.notes,
-      vertexCount = feScalar("!vertex_count"),
-      edgeCount = feScalar("!edge_count"),
-      details = details)
   }
 
   // Returns the FE attribute representing the seq of members for
@@ -236,7 +195,7 @@ sealed trait ProjectViewer {
       vertexAttributes = feAttributeList(vertexAttributes, VertexAttributeKind) ++ getFEMembers,
       edgeAttributes = feAttributeList(edgeAttributes, EdgeAttributeKind),
       segmentations = sortedSegmentations.map(_.toFESegmentation(projectName)),
-      // To be set by the ProjectFrame for root projects.
+      // TODO: Remove these.
       undoOp = "",
       redoOp = "",
       readACL = "",
@@ -249,7 +208,7 @@ sealed trait ProjectViewer {
     sortedSegmentations.flatMap { segmentation =>
       segmentation.toFESegmentation(rootName, rootRelativePath) +:
         segmentation.allOffspringFESegmentations(
-          rootName, rootRelativePath + segmentation.segmentationName + ProjectFrame.separator)
+          rootName, rootRelativePath + segmentation.segmentationName + SubProject.separator)
     }
   }
 
@@ -378,20 +337,18 @@ object ProjectViewer {
   }
 }
 
-// Specialized ProjectViewer for RootProjectStates.
-class RootProjectViewer(val rootState: RootProjectState)(implicit val manager: MetaGraphManager)
+// ProjectViewer for the root state.
+class RootProjectViewer(val rootState: CommonProjectState)(implicit val manager: MetaGraphManager)
     extends ProjectViewer {
-  val state = rootState.state
+  val state = rootState
   def rootViewer = this
-  def editor: RootProjectEditor = new RootProjectEditor(rootState)
+  def editor: RootProjectEditor = new RootProjectEditor(state)
 
   val isSegmentation = false
   def asSegmentation: SegmentationViewer = ???
   def offspringPath: Seq[String] = Nil
 
   protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] = None
-
-  def viewRecipe = rootState.viewRecipe.map(TypedJson.read[ViewRecipe])
 }
 
 // Specialized ProjectViewer for SegmentationStates.
@@ -445,7 +402,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
       else belongsTo.gUID.toString
     FESegmentation(
       rootRelativePath + segmentationName,
-      rootName + ProjectFrame.separator + rootRelativePath + segmentationName,
+      rootName + SubProject.separator + rootRelativePath + segmentationName,
       bt,
       equivalentUIAttribute)
   }
@@ -496,17 +453,17 @@ object CheckpointRepository {
         "belongsToGUID" -> o.belongsToGUID)
   }
   import WorkspaceJsonFormatters._
+  implicit val fCheckpointObject = Json.format[CheckpointObject]
   implicit val fCommonProjectState = Json.format[CommonProjectState]
-  implicit val fRootProjectState = Json.format[RootProjectState]
 
   private def commonProjectStateToJSon(state: CommonProjectState): json.JsValue = Json.toJson(state)
   private def jsonToCommonProjectState(j: json.JsValue): CommonProjectState =
     j.as[CommonProjectState]
 
-  val startingState = RootProjectState.emptyState
+  val startingState = CheckpointObject(Workspace.from())
 }
 class CheckpointRepository(val baseDir: String) {
-  import CheckpointRepository.fRootProjectState
+  import CheckpointRepository.fCheckpointObject
   import CheckpointRepository.checkpointFilePrefix
 
   val baseDirFile = new File(baseDir)
@@ -515,7 +472,7 @@ class CheckpointRepository(val baseDir: String) {
   def checkpointFileName(checkpoint: String): File =
     new File(baseDirFile, s"${checkpointFilePrefix}${checkpoint}")
 
-  def allCheckpoints: Map[String, RootProjectState] =
+  def allCheckpoints: Map[String, CheckpointObject] =
     baseDirFile
       .list
       .filter(_.startsWith(checkpointFilePrefix))
@@ -523,7 +480,7 @@ class CheckpointRepository(val baseDir: String) {
       .map(cp => cp -> readCheckpoint(cp))
       .toMap
 
-  def saveCheckpointedState(checkpoint: String, state: RootProjectState): Unit = {
+  def saveCheckpointedState(checkpoint: String, state: CheckpointObject): Unit = {
     val dumpFile = new File(baseDirFile, s"dump-$checkpoint")
     val finalFile = checkpointFileName(checkpoint)
     FileUtils.writeStringToFile(
@@ -533,7 +490,7 @@ class CheckpointRepository(val baseDir: String) {
     dumpFile.renameTo(finalFile)
   }
 
-  def checkpointState(state: RootProjectState, prevCheckpoint: String): RootProjectState = {
+  def checkpointState(state: CheckpointObject, prevCheckpoint: String): CheckpointObject = {
     if (state.checkpoint.nonEmpty) {
       // Already checkpointed.
       state
@@ -545,14 +502,14 @@ class CheckpointRepository(val baseDir: String) {
     }
   }
 
-  val cache = new SoftHashMap[String, RootProjectState]()
-  def readCheckpoint(checkpoint: String): RootProjectState = {
+  val cache = new SoftHashMap[String, CheckpointObject]()
+  def readCheckpoint(checkpoint: String): CheckpointObject = {
     if (checkpoint == "") {
       CheckpointRepository.startingState
     } else synchronized {
       cache.getOrElseUpdate(checkpoint,
         Json.parse(FileUtils.readFileToString(checkpointFileName(checkpoint), "utf8"))
-          .as[RootProjectState].copy(checkpoint = Some(checkpoint)))
+          .as[CheckpointObject].copy(checkpoint = Some(checkpoint)))
     }
   }
 }
@@ -578,7 +535,7 @@ abstract class StateMapHolder[T <: MetaGraphEntity] extends collection.Map[Strin
   }
 
   def update(name: String, entity: T) = {
-    ProjectFrame.validateName(name)
+    SubProject.validateName(name)
     set(name, entity)
   }
 
@@ -601,8 +558,7 @@ sealed trait ProjectEditor {
 
   def viewer: ProjectViewer
 
-  def rootState: RootProjectState
-  def rootCheckpoint: String = rootState.checkpoint.get
+  def rootState: CommonProjectState
 
   def vertexSet = viewer.vertexSet
   def vertexSet_=(e: VertexSet): Unit = {
@@ -826,48 +782,25 @@ sealed trait ProjectEditor {
           op.edges, origBelongsTo.get).result.induced
     }
   }
-
-  def setLastOperationDesc(n: String): Unit
-  def setLastOperationRequest(n: SubProjectOperation): Unit
 }
 
-// Specialized project editor for a RootProjectState.
+// Editor that holds the state.
 class RootProjectEditor(
-    initialState: RootProjectState)(
+    initialState: CommonProjectState)(
         implicit val manager: MetaGraphManager) extends ProjectEditor {
-  var rootState: RootProjectState = initialState.copy(checkpoint = None)
+  var rootState = initialState
 
-  def state = rootState.state
+  def state = rootState
   def state_=(newState: CommonProjectState): Unit = {
-    rootState = rootState.copy(state = newState)
+    rootState = newState
   }
 
-  def viewer = new RootProjectViewer(rootState)
+  def viewer = new RootProjectViewer(state)
 
   def rootEditor: RootProjectEditor = this
 
-  def checkpoint = rootState.checkpoint
-  def checkpoint_=(n: Option[String]) =
-    rootState = rootState.copy(checkpoint = n)
-
-  def lastOperationDesc = rootState.lastOperationDesc
-  def lastOperationDesc_=(n: String) =
-    rootState = rootState.copy(lastOperationDesc = n)
-  def setLastOperationDesc(n: String) = lastOperationDesc = n
-
-  def lastOperationRequest = rootState.lastOperationRequest
-  def lastOperationRequest_=(n: SubProjectOperation) =
-    rootState = rootState.copy(lastOperationRequest = Option(n))
-  def setLastOperationRequest(n: SubProjectOperation) = lastOperationRequest = n
-
   val isSegmentation = false
   def asSegmentation: SegmentationEditor = ???
-
-  def viewRecipe_=[T <: ViewRecipe: json.Writes](r: T) = {
-    val js = TypedJson.createFromWriter(r).as[json.JsObject]
-    rootState = rootState.copy(viewRecipe = Some(js))
-  }
-  def viewRecipe = viewer.viewRecipe
 }
 
 // Specialized editor for a SegmentationState.
@@ -882,7 +815,7 @@ class SegmentationEditor(
     // create the corresponding SegmentationState in the project state's segmentations field.
     val oldSegs = parent.state.segmentations
     if (!oldSegs.contains(segmentationName)) {
-      ProjectFrame.validateName(segmentationName)
+      SubProject.validateName(segmentationName)
       parent.state = parent.state.copy(
         segmentations = oldSegs + (segmentationName -> SegmentationState.emptyState))
     }
@@ -923,29 +856,28 @@ class SegmentationEditor(
       belongsTo = op(op.src, parent.vertexSet)(op.dst, e).result.eb
     }
   }
-
-  def setLastOperationDesc(n: String) =
-    parent.setLastOperationDesc(s"$n on $segmentationName")
-
-  def setLastOperationRequest(n: SubProjectOperation) =
-    parent.setLastOperationRequest(n.copy(path = segmentationName +: n.path))
 }
 
-// Represents a mutable, named project. It can be seen as a modifiable pointer into the
-// checkpoint tree with some additional metadata. ProjectFrame's data is persisted using tags.
-class ProjectFrame(path: SymbolPath)(
+// Represents a mutable, named workspace. It can be seen as a modifiable pointer into the
+// checkpoint tree with some additional metadata. WorkspaceFrame's data is persisted using tags.
+class WorkspaceFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
+  protected def getCheckpointState(checkpoint: String): CheckpointObject =
+    manager.checkpointRepo.readCheckpoint(checkpoint)
+
+  def currentState: CheckpointObject = getCheckpointState(checkpoint)
+
   // The farthest checkpoint available in the current redo sequence
-  private def farthestCheckpoint: String = get(rootDir / "farthestCheckpoint")
-  private def farthestCheckpoint_=(x: String): Unit = set(rootDir / "farthestCheckpoint", x)
+  private def farthestCheckpoint: String = get(rootDir / "!farthestCheckpoint")
+  private def farthestCheckpoint_=(x: String): Unit = set(rootDir / "!farthestCheckpoint", x)
 
   // The next checkpoint in the current redo sequence if a redo is available
-  def nextCheckpoint: Option[String] = get(rootDir / "nextCheckpoint") match {
+  def nextCheckpoint: Option[String] = get(rootDir / "!nextCheckpoint") match {
     case "" => None
     case x => Some(x)
   }
   private def nextCheckpoint_=(x: Option[String]): Unit =
-    set(rootDir / "nextCheckpoint", x.getOrElse(""))
+    set(rootDir / "!nextCheckpoint", x.getOrElse(""))
 
   def undo(): Unit = manager.synchronized {
     nextCheckpoint = Some(checkpoint)
@@ -972,91 +904,38 @@ class ProjectFrame(path: SymbolPath)(
     checkpoint = ""
     nextCheckpoint = None
     farthestCheckpoint = ""
+    set(rootDir / "!objectType", "workspace")
   }
 
-  def nextState: Option[RootProjectState] = nextCheckpoint.map(getCheckpointState(_))
+  def nextState: Option[CheckpointObject] = nextCheckpoint.map(getCheckpointState(_))
 
-  def subproject = SubProject(this, Seq())
+  override def copy(to: DirectoryEntry): WorkspaceFrame = super.copy(to).asWorkspaceFrame
 
-  override def copy(to: DirectoryEntry): ProjectFrame = super.copy(to).asProjectFrame
+  def workspace: Workspace = currentState.workspace
 }
-object ProjectFrame {
-  val separator = "."
-  val quotedSeparator = java.util.regex.Pattern.quote(ProjectFrame.separator)
-  val reservedWords = Set(
-    "readACL", "writeACL",
-    "checkpoint", "nextCheckpoint",
-    "farthestCheckpoint",
-    "objectType", "details")
-  // Do not add to the set above, begin internal names with '!'.
-
-  def validateName(name: String, what: String = "Name",
-                   allowSlash: Boolean = false,
-                   allowEmpty: Boolean = false): Unit = {
-    assert(allowEmpty || name.nonEmpty, s"$what cannot be empty.")
-    assert(!name.startsWith("!"), s"$what ($name) cannot start with '!'.")
-    assert(!name.contains(separator), s"$what ($name) cannot contain '$separator'.")
-    assert(allowSlash || !name.contains("/"), s"$what ($name) cannot contain '/'.")
-    val path = SymbolPath.parse(name)
-    if (path.nonEmpty) {
-      val name = path.last.name
-      assert(!reservedWords.contains(name), s"$name is a reserved word")
-    }
-  }
+object WorkspaceFrame {
 
   def fromName(name: String)(implicit manager: MetaGraphManager) =
-    DirectoryEntry.fromName(name).asProjectFrame
+    DirectoryEntry.fromName(name).asWorkspaceFrame
 }
 
-// Represents a named but not necessarily root project. A SubProject is identified by a ProjectFrame
-// representing the named root project and a sequence of segmentation names which show how one
-// should climb down the project tree.
-// When referring to SubProjects via a single string, we use the format:
-//   RootProjectName.Seg1Name.Seg2Name.Seg3...
-case class SubProject(val frame: ProjectFrame, val path: Seq[String]) {
-  def viewer = frame.viewer.offspringViewer(path)
-  def fullName = (frame.name +: path).mkString(ProjectFrame.separator)
-  def toFE()(implicit epm: EntityProgressManager): FEProject = {
-    val raw = viewer.toFE(fullName)
-    if (path.isEmpty) {
-      raw.copy(
-        undoOp = frame.currentState.lastOperationDesc,
-        redoOp = frame.nextState.map(_.lastOperationDesc).getOrElse(""),
-        readACL = frame.readACL,
-        writeACL = frame.writeACL)
-    } else raw
-  }
-}
 object SubProject {
-  def splitPipedPath(pipedPath: String) = pipedPath.split(ProjectFrame.quotedSeparator, -1)
-  def parsePath(projectName: String)(implicit metaManager: MetaGraphManager): SubProject = {
-    val nameElements = splitPipedPath(projectName)
-    new SubProject(ProjectFrame.fromName(nameElements.head), nameElements.tail)
-  }
-}
+  val separator = "."
+  val quotedSeparator = java.util.regex.Pattern.quote(separator)
+  def splitPipedPath(pipedPath: String) = pipedPath.split(quotedSeparator, -1)
 
-class ViewFrame(path: SymbolPath)(
-    implicit manager: MetaGraphManager) extends ObjectFrame(path) {
-  def initializeFromConfig[T <: ViewRecipe: json.Writes](
-    recipe: T, notes: String): Unit = manager.synchronized {
-    initializeFromCheckpoint(ViewRecipe.saveAsCheckpoint(recipe, notes))
-    details = TypedJson.createFromWriter(recipe).as[json.JsObject]
+  def validateName(name: String, what: String = "Name") = {
+    assert(name.nonEmpty, s"$what cannot be empty.")
+    assert(!name.startsWith("!"), s"$what ($name) cannot start with '!'.")
+    assert(!name.contains(separator), s"$what ($name) cannot contain '$separator'.")
   }
-
-  def initializeFromCheckpoint(cp: String): Unit = manager.synchronized {
-    set(rootDir / "objectType", "view")
-    checkpoint = cp
-  }
-
-  override def isDirectory: Boolean = false
-  def getRecipe: ViewRecipe = viewer.viewRecipe.get
 }
 
 class SnapshotFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
 
   def initialize(state: BoxOutputState) = {
-    set(rootDir / "objectType", "snapshot")
+    set(rootDir / "!objectType", "snapshot")
     import WorkspaceJsonFormatters.fBoxOutputState
     details = json.Json.toJson(state).as[JsObject]
   }
@@ -1088,57 +967,32 @@ class SnapshotFrame(path: SymbolPath)(
   override def isDirectory: Boolean = false
 }
 
-class WorkspaceFrame(path: SymbolPath)(
-    implicit manager: MetaGraphManager) extends ProjectFrame(path) {
-  override def initialize(): Unit = manager.synchronized {
-    super.initialize()
-    set(rootDir / "objectType", "workspace")
-  }
-  override def subproject = ???
-  def workspace: Workspace = viewer.rootState.workspace.getOrElse(Workspace.from())
-}
-
 abstract class ObjectFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends DirectoryEntry(path) {
   val name = path.toString
-  assert(!name.contains(ProjectFrame.separator), s"Invalid project name: $name")
+  assert(!name.contains(SubProject.separator), s"Invalid project name: $name")
 
   // Current checkpoint of the project
   def checkpoint: String = {
     assert(exists, s"$this does not exist.")
-    get(rootDir / "checkpoint")
+    get(rootDir / "!checkpoint")
   }
-  protected def checkpoint_=(x: String): Unit = set(rootDir / "checkpoint", x)
-
-  protected def getCheckpointState(checkpoint: String): RootProjectState =
-    manager.checkpointRepo.readCheckpoint(checkpoint)
-
-  def currentState: RootProjectState = getCheckpointState(checkpoint)
+  protected def checkpoint_=(x: String): Unit = set(rootDir / "!checkpoint", x)
 
   def details: Option[json.JsObject] = {
-    val path = rootDir / "details"
+    val path = rootDir / "!details"
     existing(path).map(get).map(s => json.Json.parse(s).as[json.JsObject])
   }
 
-  protected def details_=(x: json.JsObject): Unit = set(rootDir / "details", json.Json.stringify(x))
-
-  def viewer = new RootProjectViewer(currentState)
-
-  def objectType: String = get(rootDir / "objectType", "project")
+  protected def details_=(x: json.JsObject): Unit = {
+    set(rootDir / "!details", json.Json.stringify(x))
+  }
 
   def toListElementFE()(implicit epm: EntityProgressManager) = {
-    try {
-      viewer.toListElementFE(name, objectType, details)
-    } catch {
-      case ex: Throwable =>
-        log.warn(s"Could not list $name:", ex)
-        FEEntryListElement(
-          name = name,
-          objectType = objectType,
-          icon = objectType,
-          error = Some(ex.getMessage)
-        )
-    }
+    FEEntryListElement(
+      name = name,
+      objectType = objectType,
+      icon = objectType)
   }
 
   override def copy(to: DirectoryEntry): ObjectFrame = super.copy(to).asObjectFrame
@@ -1197,11 +1051,11 @@ class DirectoryEntry(val path: SymbolPath)(
     existing(tag).map(manager.getTag(_)).getOrElse(default)
   }
 
-  def readACL: String = get(rootDir / "readACL", "*")
-  def readACL_=(x: String): Unit = set(rootDir / "readACL", x)
+  def readACL: String = get(rootDir / "!readACL", "*")
+  def readACL_=(x: String): Unit = set(rootDir / "!readACL", x)
 
-  def writeACL: String = get(rootDir / "writeACL", "*")
-  def writeACL_=(x: String): Unit = set(rootDir / "writeACL", x)
+  def writeACL: String = get(rootDir / "!writeACL", "*")
+  def writeACL_=(x: String): Unit = set(rootDir / "!writeACL", x)
 
   // Some simple ACL definitions for object creation.
   def setupACL(privacy: String, user: User): Unit = {
@@ -1263,31 +1117,11 @@ class DirectoryEntry(val path: SymbolPath)(
   }
   def parents: Iterable[Directory] = parent ++ parent.toSeq.flatMap(_.parents)
 
-  def hasCheckpoint = manager.tagExists(rootDir / "checkpoint")
-  def hasObjectType = manager.tagExists(rootDir / "objectType")
-  def isTable = get(rootDir / "objectType", "") == "table"
-  def isProject = hasCheckpoint && !isView && !isWorkspace
-  def isDirectory = exists && !hasCheckpoint && !hasObjectType
-  def isView = get(rootDir / "objectType", "") == "view"
-  def isWorkspace = get(rootDir / "objectType", "") == "workspace"
-  def isSnapshot = get(rootDir / "objectType", "") == "snapshot"
-  def getObjectType = get(rootDir / "objectType", "")
-
-  def asProjectFrame: ProjectFrame = {
-    assert(isInstanceOf[ProjectFrame], s"Entry '$path' is not a project.")
-    asInstanceOf[ProjectFrame]
-  }
-  def asNewProjectFrame(): ProjectFrame = {
-    assert(!exists, s"Entry '$path' already exists.")
-    val res = new ProjectFrame(path)
-    res.initialize()
-    res
-  }
-  def asNewProjectFrame(checkpoint: String): ProjectFrame = {
-    val res = asNewProjectFrame()
-    res.setCheckpoint(checkpoint)
-    res
-  }
+  def hasObjectType = manager.tagExists(rootDir / "!objectType")
+  def isDirectory = exists && !hasObjectType
+  def isWorkspace = objectType == "workspace"
+  def isSnapshot = objectType == "snapshot"
+  def objectType = get(rootDir / "!objectType", "")
 
   def asWorkspaceFrame(): WorkspaceFrame = {
     assert(isInstanceOf[WorkspaceFrame], s"Entry '$path' is not a workspace.")
@@ -1322,23 +1156,6 @@ class DirectoryEntry(val path: SymbolPath)(
     res
   }
 
-  def asViewFrame(): ViewFrame = {
-    assert(isInstanceOf[ViewFrame], s"Entry '$path' is not a view")
-    asInstanceOf[ViewFrame]
-  }
-
-  def asNewViewFrame[T <: ViewRecipe: json.Writes](recipe: T, notes: String): ViewFrame = {
-    assert(!exists, s"Entry '$path' already exists")
-    val res = new ViewFrame(path)
-    res.initializeFromConfig(recipe, notes)
-    res
-  }
-  def asNewViewFrame(checkpoint: String): ViewFrame = {
-    val res = new ViewFrame(path)
-    res.initializeFromCheckpoint(checkpoint)
-    res
-  }
-
   def asNewSnapshotFrame(calculatedState: BoxOutputState): SnapshotFrame = {
     assert(!exists, s"Entry '$path' already exists")
     val snapshot = new SnapshotFrame(path)
@@ -1356,8 +1173,15 @@ object DirectoryEntry {
 
   def rootDirectory(implicit metaManager: MetaGraphManager) = new Directory(SymbolPath())
 
+  def validateName(name: String, what: String = "Name") = {
+    val path = SymbolPath.parse(name)
+    for (e <- path) {
+      SubProject.validateName(e.name, what)
+    }
+  }
+
   def fromName(path: String)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
-    ProjectFrame.validateName(path, "Name", allowSlash = true, allowEmpty = true)
+    validateName(path)
     fromPath(SymbolPath.parse(path))
   }
 
@@ -1368,11 +1192,7 @@ object DirectoryEntry {
       nonDirParent.isEmpty,
       s"Invalid path: $path. Parent ${nonDirParent.get} is not a directory.")
     if (entry.exists) {
-      if (entry.isProject) {
-        new ProjectFrame(entry.path)
-      } else if (entry.isView) {
-        new ViewFrame(entry.path)
-      } else if (entry.isWorkspace) {
+      if (entry.isWorkspace) {
         new WorkspaceFrame(entry.path)
       } else if (entry.isSnapshot) {
         new SnapshotFrame(entry.path)

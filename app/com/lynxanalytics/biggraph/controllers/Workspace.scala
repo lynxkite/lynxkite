@@ -58,7 +58,7 @@ case class Workspace(
 
   def checkpoint(previous: String = null)(implicit manager: graph_api.MetaGraphManager): String = {
     manager.checkpointRepo.checkpointState(
-      RootProjectState.emptyState.copy(checkpoint = None, workspace = Some(this)),
+      CheckpointObject(workspace = this),
       previous).checkpoint.get
   }
   case class Dependencies(topologicalOrder: List[Box], withCircularDependency: List[Box])
@@ -280,7 +280,7 @@ object BoxOutputState {
   // Cannot call these "apply" due to the JSON formatter macros.
   def from(project: ProjectEditor): BoxOutputState = {
     import CheckpointRepository._ // For JSON formatters.
-    BoxOutputState(BoxOutputKind.Project, Some(json.Json.toJson(project.rootState.state)))
+    BoxOutputState(BoxOutputKind.Project, Some(json.Json.toJson(project.rootState)))
   }
 
   def from(table: graph_api.Table): BoxOutputState = {
@@ -308,7 +308,7 @@ object BoxOutputState {
       BoxOutputKind.Visualization,
       Some(json.Json.obj(
         "uiStatus" -> v.uiStatus,
-        "project" -> json.Json.toJson(v.project.rootState.state))
+        "project" -> json.Json.toJson(v.project.rootState))
       ))
   }
 }
@@ -333,8 +333,7 @@ case class BoxOutputState(
     import CheckpointRepository.fCommonProjectState
     assert(isProject, s"Tried to access '$kind' as 'project'.")
     val p = state.get.as[CommonProjectState]
-    val rps = RootProjectState.emptyState.copy(state = p)
-    new RootProjectEditor(rps)
+    new RootProjectEditor(p)
   }
 
   def table(implicit manager: graph_api.MetaGraphManager): graph_api.Table = {
@@ -363,10 +362,9 @@ case class BoxOutputState(
     import CheckpointRepository.fCommonProjectState
     assert(isVisualization, s"Tried to access '$kind' as 'visualization'.")
     val projectState = (state.get \ "project").as[CommonProjectState]
-    val rootProjectState = RootProjectState.emptyState.copy(state = projectState)
     VisualizationState(
       (state.get \ "uiStatus").as[TwoSidedUIStatus],
-      new RootProjectEditor(rootProjectState)
+      new RootProjectEditor(projectState)
     )
   }
 }
