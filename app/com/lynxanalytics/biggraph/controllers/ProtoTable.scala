@@ -47,6 +47,9 @@ object ProtoTable {
   def apply(table: Table) = new TableWrappingProtoTable(table)
   def apply(vs: VertexSet, attributes: Iterable[(String, Attribute[_])])(implicit m: MetaGraphManager) =
     new AttributesProtoTable(vs, attributes)
+  def scalar(scalars: Iterable[(String, Scalar[_])])(implicit m: MetaGraphManager) =
+    new ScalarsProtoTable(scalars)
+
 
   // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
   // necessary to support the query.
@@ -105,4 +108,18 @@ class AttributesProtoTable(
     new AttributesProtoTable(vs, attributes.filter { case (name, attr) => keep.contains(name) })
   }
   def toTable = graph_operations.AttributesToTable.run(vs, attributes)
+}
+
+class ScalarsProtoTable(
+    scalars: Iterable[(String, Scalar[_])])(implicit m: MetaGraphManager) extends ProtoTable {
+  lazy val schema = spark_util.SQLHelper.dataFrameSchemaScalar(scalars)
+
+  def maybeSelect(columns: Iterable[String]) = {
+    val keep = columns.toSet
+    new ScalarsProtoTable(scalars.filter { case (name, attr) => keep.contains(name) })
+  }
+
+  def toTable: Table = {
+    graph_operations.ScalarsToTable.run(scalars)
+  }
 }

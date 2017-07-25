@@ -265,7 +265,8 @@ sealed trait ProjectViewer {
     import ProjectViewer._
     maybeProtoTable(vertexSet, VertexTableName) ++
       maybeProtoTable(edgeBundle, EdgeAttributeTableName) ++
-      maybeProtoTable(edgeBundle, EdgeTableName)
+      maybeProtoTable(edgeBundle, EdgeTableName) ++
+      maybeProtoTable(1, ScalarTableName)
   }
 
   def getProtoTables: Iterable[(String, ProtoTable)] = {
@@ -288,6 +289,8 @@ sealed trait ProjectViewer {
     import ProjectViewer._
     val protoTable = tableName match {
       case VertexTableName => ProtoTable(vertexSet, vertexAttributes.toSeq.sortBy(_._1))
+      case ScalarTableName => ProtoTable.scalar(scalars.toSeq.sortBy(_._1))
+
       case EdgeTableName => {
         import graph_operations.VertexToEdgeAttribute._
         val edgeAttrs = edgeAttributes.map {
@@ -305,7 +308,7 @@ sealed trait ProjectViewer {
       case BelongsToTableName =>
         throw new AssertionError("Only segmentations have a BelongsTo table")
       case _ => {
-        val correctTableNames = List(VertexTableName, EdgeTableName, EdgeAttributeTableName,
+        val correctTableNames = List(ScalarTableName, VertexTableName, EdgeTableName, EdgeAttributeTableName,
           BelongsToTableName).mkString(", ")
         throw new AssertionError("Not recognized table name. Correct table names: " +
           s"$correctTableNames")
@@ -316,6 +319,7 @@ sealed trait ProjectViewer {
 }
 
 object ProjectViewer {
+  val ScalarTableName = "scalars"
   val VertexTableName = "vertices"
   val EdgeTableName = "edges"
   val EdgeAttributeTableName = "edge_attributes"
