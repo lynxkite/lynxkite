@@ -124,14 +124,11 @@ case class PSOGenerator(size: Long, externalDegree: Int, internalDegree: Int, ex
         val numSelections: Int = data.head.eDegree.toInt
         val src = data.head
         val dst = data.tail.map {
-          case (dst) =>
-            val result: (Double, Edge) = (hyperbolicDistance(src, dst), Edge(src.key, dst.key))
-            result
-        }.toMap
+          case (dst) => (hyperbolicDistance(src, dst), Edge(src.key, dst.key))}.toMap
         val sortedDst = SortedMap.empty[Double, Edge] ++ dst
         // This will contain a src=dst pair with distance = -INF (coming from log(0)),
         // then the numSelections next smallest distances.
-        sortedDst.take(numSelections + 1).toList.map { case (key, value) => value }
+        sortedDst.take(numSelections + 1).map { case (key, value) => value }
     }.flatMap(identity)
       .flatMap { case (edge) => List(edge, Edge(edge.dst, edge.src)) }
       .filter(edge => edge.src != edge.dst)
