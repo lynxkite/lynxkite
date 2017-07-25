@@ -162,6 +162,20 @@ class SQLTest extends OperationsTestBase {
     assert(table.schema.map(_.name) == Seq("id", "count"))
   }
 
+  test("no group by count(*)") {
+    val table = box("Create example graph")
+      .box("SQL1", Map("sql" -> "select count(*) as Sum from vertices"))
+      .table
+    assert(table.schema.map(_.name) == Seq("Sum"))
+  }
+
+  test("subquery") {
+    val table = box("Create example graph")
+      .box("SQL1", Map("sql" -> "select id from (select * from vertices) as sub"))
+      .table
+    assert(table.schema.map(_.name) == Seq("id"))
+  }
+
   test("no table") {
     val table = box("Create example graph")
       .box("SQL1", Map("sql" -> "select 1 as one, int(null) as n"))
