@@ -195,6 +195,8 @@ include::create-edges-from-set-overlaps.asciidoc[]
 
 include::create-example-graph.asciidoc[]
 
+include::create-popularity-x-similarity-optimized-graph.asciidoc[]
+
 include::create-random-edges.asciidoc[]
 
 include::create-scale-free-random-edges.asciidoc[]
