@@ -64,7 +64,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       ctx.allStates(realBox.output("project")).project
 
     lazy val exportResult: Scalar[String] =
-      ctx.allStates(realBox.output("exportResult")).exportResult
+      ctx.allStates(realBox.output("exported")).exportResult
 
     lazy val table: Table =
       ctx.allStates(realBox.output("table")).table
