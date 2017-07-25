@@ -563,7 +563,7 @@ abstract class ExportOperation(context: Operation.Context) extends SmartOperatio
     s"An ExportOperation must input a single table. $context")
   assert(
     context.meta.outputs == List("exported"),
-    s"An ExportOperation must output an ExportResult. $context"
+    s"An ExportOperation must have a single output called 'exported'. $context"
   )
 
   protected lazy val table = tableInput("table")
