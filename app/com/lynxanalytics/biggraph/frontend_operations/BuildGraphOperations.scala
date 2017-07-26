@@ -65,6 +65,28 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     }
   })
 
+  register("Add popularity x similarity optimized edges")(new ProjectTransformation(_) {
+    params ++= List(
+      NonNegDouble("externaldegree", "External degree", defaultValue = "1.5"),
+      NonNegDouble("internaldegree", "Internal degree", defaultValue = "1.5"),
+      NonNegDouble("exponent", "Exponent", defaultValue = "0.6"),
+      RandomSeed("seed", "Seed"))
+    def enabled = FEStatus.enabled
+    def apply() = {
+      val result = {
+        val op = graph_operations.PSOGenerator(
+          params("externaldegree").toDouble,
+          params("internaldegree").toDouble,
+          params("exponent").toDouble,
+          params("seed").toLong)
+        op(op.vs, project.vertexSet).result
+      }
+      project.newVertexAttribute("radial", result.radial)
+      project.newVertexAttribute("angular", result.angular)
+      project.edgeBundle = result.es
+    }
+  })
+
   register("Create random edges", List(projectInput))(new ProjectTransformation(_) {
     params ++= List(
       NonNegDouble("degree", "Average degree", defaultValue = "10.0"),
