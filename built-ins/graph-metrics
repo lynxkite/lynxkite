@@ -3,8 +3,8 @@
   "id" : "anchor",
     "operationId" : "Anchor",
     "parameters" : {
-    "description" : "Calculates the general metrics of a graph like \naverage degree, etc.\n\nAlso shows information about the Modular Clustering and Connected Components as well as distribution histograms.\n",
-    "parameters" : "[{\"kind\":\"text\",\"id\":\"CustomPercentile\",\"defaultValue\":\"0.8\",\"$$hashKey\":\"object:1753\"},{\"kind\":\"text\",\"id\":\"ModularClusteringIterations\",\"defaultValue\":\"30\",\"$$hashKey\":\"object:11352\"},{\"kind\":\"text\",\"id\":\"ModularClusteringIncrement\",\"defaultValue\":\"0.001\",\"$$hashKey\":\"object:15778\"},{\"kind\":\"boolean\",\"id\":\"ModularClustering\",\"defaultValue\":\"true\",\"$$hashKey\":\"object:19098\"}]",
+    "description" : "Calculates the general metrics of a graph like \naverage degree, etc.\n\nAlso shows information about the Connected Components as well as distribution histograms.\n",
+    "parameters" : "[{\"kind\":\"text\",\"id\":\"CustomPercentile\",\"defaultValue\":\"0.8\",\"$$hashKey\":\"object:1753\"}]",
     "icon" : "/images/icons/black_medium_square.png"
     },
     "x" : -405.9499642976487,
@@ -122,26 +122,6 @@
     },
     "parametricParameters" : { }
   }, {
-    "id" : "Find-modular-clustering_1",
-    "operationId" : "Find modular clustering",
-    "parameters" : {
-    "name" : "modular_clusters",
-    "apply_to_project" : "",
-    "weights" : "!no weight"
-    },
-    "x" : -65.22726115459464,
-    "y" : 1242.1323038695032,
-    "inputs" : {
-    "project" : {
-      "boxId" : "input-project",
-      "id" : "input"
-    }
-    },
-    "parametricParameters" : {
-    "max_iterations" : "${if(ModularClustering.equals(\"true\")) {ModularClusteringIterations} else {\"1\"}}",
-    "min_increment_per_iteration" : "$ModularClusteringIncrement"
-    }
-  }, {
     "id" : "SQL1_2",
     "operationId" : "SQL1",
     "parameters" : { },
@@ -211,8 +191,8 @@
     "parameters" : {
     "sql" : "select * from `one` \nUNION \nselect * from `two` "
     },
-    "x" : 514.709677440453,
-    "y" : 840.0725379175859,
+    "x" : 524.3051786163214,
+    "y" : 864.061290857257,
     "inputs" : {
     "one" : {
       "boxId" : "SQL1_3",
@@ -220,40 +200,6 @@
     },
     "two" : {
       "boxId" : "SQL1_4",
-      "id" : "table"
-    }
-    },
-    "parametricParameters" : { }
-  }, {
-    "id" : "SQL1_6",
-    "operationId" : "SQL1",
-    "parameters" : { },
-    "x" : 276.3488256410726,
-    "y" : 1247.179213458144,
-    "inputs" : {
-    "input" : {
-      "boxId" : "Find-modular-clustering_1",
-      "id" : "project"
-    }
-    },
-    "parametricParameters" : {
-    "sql" : "select \n  8 as ID, \n  \"Modular Clusternig\" as Attribute, \n  count(size) as Sum, \n  avg(size) as Avg, \n  percentile(size, 0) as Min, \n  percentile(size, 0.05) as `5% percentile`, \n  percentile(size, 0.5) as Med, \n  percentile(size, 0.95) as `95% percentile`, \n  percentile(size, 1) as Max, \n  percentile(size, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom\n(select max(size) as size from `modular_clusters.vertices` group by id)\n"
-    }
-  }, {
-    "id" : "SQL2_4",
-    "operationId" : "SQL2",
-    "parameters" : {
-    "sql" : "select * from `one` \nUNION \nselect * from `two` "
-    },
-    "x" : 520.0330557070763,
-    "y" : 1180.9287845534152,
-    "inputs" : {
-    "two" : {
-      "boxId" : "SQL1_6",
-      "id" : "table"
-    },
-    "one" : {
-      "boxId" : "SQL1_5",
       "id" : "table"
     }
     },
@@ -305,12 +251,12 @@
     "x" : 731.0822844109917,
     "y" : 994.8172620739106,
     "inputs" : {
-    "two" : {
-      "boxId" : "SQL2_4",
-      "id" : "table"
-    },
     "one" : {
       "boxId" : "SQL2_2",
+      "id" : "table"
+    },
+    "two" : {
+      "boxId" : "SQL1_5",
       "id" : "table"
     }
     },
@@ -362,13 +308,13 @@
     }
     },
     "parametricParameters" : {
-    "sql" : "select \n  1 as ID, \n  \"Vertices\" as Attribute, \n  scalars.`!vertex_count` as Sum, \n  double(null) as Avg, \n  int(null) as Min, \n  int(null) as `5% percentile`, \n  int(null) as Med, \n  int(null) as `95% percentile`, \n  int(null) as Max, \n  int(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile` \nfrom scalars"
+    "sql" : "select \n  1 as ID, \n  \"Vertices\" as Attribute, \n  scalars.`!vertex_count` as Sum, \n  double(null) as Avg, \n  double(null) as Min, \n  double(null) as `5% percentile`, \n  double(null) as Med, \n  double(null) as `95% percentile`, \n  double(null) as Max, \n  double(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile` \nfrom scalars"
     }
   }, {
     "id" : "SQL1_7",
     "operationId" : "SQL1",
     "parameters" : {
-    "sql" : "select \n  2 as ID, \n  \"Edges\" as Attribute, \n  scalars.`!edge_count` as Sum, \n  double(null) as Avg, \n  int(null) as Min, \n  int(null) as `5% percentile`, \n  int(null) as Med, \n  int(null) as `95% percentile`, \n  int(null) as Max, \n  int(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile` \nfrom scalars"
+    "sql" : "select \n  2 as ID, \n  \"Edges\" as Attribute, \n  scalars.`!edge_count` as Sum, \n  double(null) as Avg, \n  double(null) as Min, \n  double(null) as `5% percentile`, \n  double(null) as Med, \n  double(null) as `95% percentile`, \n  double(null) as Max, \n  double(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile` \nfrom scalars"
     },
     "x" : 284.0,
     "y" : 647.0,
@@ -413,7 +359,7 @@
     "id" : "SQL1_9",
     "operationId" : "SQL1",
     "parameters" : {
-    "sql" : "select degrees, count(degrees)-0.01 as Vertices\nfrom\n(select max(adegree) as degrees \nfrom vertices\ngroup by id\norder by degrees desc)\ngroup by degrees"
+    "sql" : "select degrees, count(degrees)-0.01 as Vertices\nfrom\n(select adegree as degrees\nfrom vertices\norder by degrees desc)\ngroup by degrees"
     },
     "x" : 297.6615920124063,
     "y" : -2.496960085144991,
@@ -440,43 +386,13 @@
     },
     "parametricParameters" : { }
   }, {
-    "id" : "SQL1_10",
-    "operationId" : "SQL1",
-    "parameters" : {
-    "sql" : "select size as SizeOfComponent, count(size)-0.01 as NumberOfComponents\nfrom\n(select max(size) as size from `modular_clusters.vertices` group by id)\ngroup by size"
-    },
-    "x" : 177.48202740140937,
-    "y" : 1769.8561938137486,
-    "inputs" : {
-    "input" : {
-      "boxId" : "Find-modular-clustering_1",
-      "id" : "project"
-    }
-    },
-    "parametricParameters" : { }
-  }, {
-    "id" : "Custom-plot_2",
-    "operationId" : "Custom plot",
-    "parameters" : {
-    "plot_code" : "Vegas()\n  .withData(table)\n  .encodeX(\"SizeOfComponent\", Quant, bin=Bin(maxbins=20.0))\n  .encodeY(\"NumberOfComponents\", Quant,  scale= new vegas.spec.Spec.Scale(`type` = Some(ScaleType.Log)) )\n  .mark(Bar)"
-    },
-    "x" : 482.8840281840454,
-    "y" : 1782.9028096684815,
-    "inputs" : {
-    "table" : {
-      "boxId" : "SQL1_10",
-      "id" : "table"
-    }
-    },
-    "parametricParameters" : { }
-  }, {
     "id" : "SQL1_11",
     "operationId" : "SQL1",
     "parameters" : {
     "sql" : "select size as SizeOfComponent, count(size)-0.01 as NumberOfComponents\nfrom\n(select max(size) as size from `connected_components.vertices` group by id)\ngroup by size"
     },
-    "x" : 183.92819583026187,
-    "y" : 1526.1437369374041,
+    "x" : 266.0080512028443,
+    "y" : 1281.1292432879043,
     "inputs" : {
     "input" : {
       "boxId" : "Find-connected-components_1",
@@ -490,8 +406,8 @@
     "parameters" : {
     "plot_code" : "Vegas()\n  .withData(table)\n  .encodeX(\"SizeOfComponent\", Quant, bin=Bin(maxbins=20.0))\n  .encodeY(\"NumberOfComponents\", Quant,  scale= new vegas.spec.Spec.Scale(`type` = Some(ScaleType.Log)) )\n  .mark(Bar)"
     },
-    "x" : 480.6803680632522,
-    "y" : 1528.878779999459,
+    "x" : 555.4097886263496,
+    "y" : 1277.7389240087218,
     "inputs" : {
     "table" : {
       "boxId" : "SQL1_11",
@@ -505,8 +421,8 @@
     "parameters" : {
     "name" : "Component Distribution"
     },
-    "x" : 1396.919793851748,
-    "y" : 1527.5112584684314,
+    "x" : 1365.6940437843361,
+    "y" : 1267.7958951999615,
     "inputs" : {
     "output" : {
       "boxId" : "Custom-plot_3",
@@ -514,20 +430,6 @@
     }
     },
     "parametricParameters" : { }
-  }, {
-    "id" : "Output_3",
-    "operationId" : "Output",
-    "parameters" : {
-    "name" : "Modular Distribution"
-    },
-    "x" : 1398.2873153827754,
-    "y" : 1784.605306301621,
-    "inputs" : {
-    "output" : {
-      "boxId" : "Custom-plot_2",
-      "id" : "plot"
-    }
-    },
-    "parametricParameters" : { }
   } ]
   }
+    
