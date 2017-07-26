@@ -317,7 +317,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         inputs = Map(meta.inputs.head -> null),
         parametricParameters = instr.parametricParameters)
       val op = box.getOperation(ctx, Map(meta.inputs.head -> state))
-      val newState = op.getOutputs(box.output(meta.outputs.head))
+      val newState = box.orErrors(meta) { op.getOutputs }(box.output(meta.outputs.head))
       Some((newState, op.toFE))
     } catch {
       case t: Throwable =>
