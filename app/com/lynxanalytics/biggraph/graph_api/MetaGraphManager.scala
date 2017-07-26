@@ -308,7 +308,7 @@ object BuiltIns {
   private def getBuiltInsLocalDirectory(): String = {
     val stageDir = scala.util.Properties.envOrNone("KITE_STAGE_DIR")
     // In the backend-tests we don't have the KITE_STAGE_DIR environment variable set.
-    stageDir.getOrElse("stage")
+    stageDir.getOrElse(".")
   }
 
   private def loadBuiltIns(repo: String): Iterable[(String, json.JsValue)] = {
