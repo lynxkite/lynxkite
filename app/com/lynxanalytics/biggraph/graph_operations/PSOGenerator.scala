@@ -1,6 +1,5 @@
-// Generates scale-free graph based on probability x similarity model.
-// The degree distribution of the resulting graph will be scale-free and
-// it will have high average clustering.
+// Adds scale-free edges to a graph based on the popularity x similarity model.
+// The added eges will be scale-free and have high average clustering.
 // Based on paper: https://www.caida.org/publications/papers/2015/network_mapping_replaying_hyperbolic/network_mapping_replaying_hyperbolic.pdf
 package com.lynxanalytics.biggraph.graph_operations
 
