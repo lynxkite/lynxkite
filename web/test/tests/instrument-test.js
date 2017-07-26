@@ -38,7 +38,8 @@ module.exports = function(fw) {
       var popup = lib.workspace.openStateView('eg0', 'project');
       popup.setInstrument(0, 'sql');
       tableIsGood(popup.table);
-      popup.setInstrument(1, 'plot');
+      popup.setInstrument(1, 'sql', { sql: 'select * from input' });
+      popup.setInstrument(2, 'plot');
       popup.plot.expectBarHeightsToBe(['118', '106', '294', '12']);
       popup.clearInstrument(1);
       tableIsGood(popup.table);
