@@ -529,5 +529,4 @@ object ProductionJsonServer extends JsonServer {
 
   Ammonite.maybeStart()
   implicit val metaManager = workspaceController.metaManager
-  BuiltIns.createBuiltIns(metaManager)
 }
