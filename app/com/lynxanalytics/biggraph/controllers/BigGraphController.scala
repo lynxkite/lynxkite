@@ -81,10 +81,7 @@ case class FEEntryListElement(
     notes: String = "",
     vertexCount: Option[FEScalar] = None, // Whether the project has vertices defined.
     edgeCount: Option[FEScalar] = None, // Whether the project has edges defined.
-    error: Option[String] = None, // If set the project could not be opened.
-    // The contents of this depend on the element, e.g. table uses it to
-    // store import configuration
-    details: Option[json.JsObject] = None) {
+    error: Option[String] = None) { // If set the project could not be opened.
 
   assert(
     objectType == "table" || objectType == "project" ||

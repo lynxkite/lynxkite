@@ -40,15 +40,28 @@ object MetadataNames {
 
 // Captures the part of the state that is common for segmentations and root projects.
 case class CommonProjectState(
-  vertexSetGUID: Option[UUID],
-  vertexAttributeGUIDs: Map[String, UUID],
-  edgeBundleGUID: Option[UUID],
-  edgeAttributeGUIDs: Map[String, UUID],
-  scalarGUIDs: Map[String, UUID],
-  segmentations: Map[String, SegmentationState],
-  notes: String,
-  elementNotes: Option[Map[String, String]], // Option for compatibility.
-  elementMetadata: Option[Map[String, Map[String, String]]]) // Option for compatibility.
+    vertexSetGUID: Option[UUID],
+    vertexAttributeGUIDs: Map[String, UUID],
+    edgeBundleGUID: Option[UUID],
+    edgeAttributeGUIDs: Map[String, UUID],
+    scalarGUIDs: Map[String, UUID],
+    segmentations: Map[String, SegmentationState],
+    notes: String,
+    elementNotes: Option[Map[String, String]], // Option for compatibility.
+    elementMetadata: Option[Map[String, Map[String, String]]]) { // Option for compatibility.
+  def mapGuids(change: UUID => UUID): CommonProjectState = {
+    CommonProjectState(
+      vertexSetGUID.map(change),
+      vertexAttributeGUIDs.mapValues(change),
+      edgeBundleGUID.map(change),
+      edgeAttributeGUIDs.mapValues(change),
+      scalarGUIDs.mapValues(change),
+      segmentations.mapValues(_.mapGuids(change)),
+      notes,
+      elementNotes,
+      elementMetadata)
+  }
+}
 object CommonProjectState {
   val emptyState = CommonProjectState(
     None, Map(), None, Map(), Map(), Map(), "", Some(Map()), Some(Map()))
@@ -56,14 +69,21 @@ object CommonProjectState {
 
 // This gets written into a checkpoint.
 case class CheckpointObject(
-  workspace: Workspace,
+  workspace: Option[Workspace] = None,
+  snapshot: Option[BoxOutputState] = None,
   checkpoint: Option[String] = None,
   previousCheckpoint: Option[String] = None)
 
 // Complete state of segmentation.
 case class SegmentationState(
-  state: CommonProjectState,
-  belongsToGUID: Option[UUID])
+    state: CommonProjectState,
+    belongsToGUID: Option[UUID]) {
+  def mapGuids(change: UUID => UUID): SegmentationState = {
+    SegmentationState(
+      state.mapGuids(change),
+      belongsToGUID.map(change))
+  }
+}
 object SegmentationState {
   val emptyState = SegmentationState(CommonProjectState.emptyState, None)
 }
@@ -459,8 +479,6 @@ object CheckpointRepository {
   private def commonProjectStateToJSon(state: CommonProjectState): json.JsValue = Json.toJson(state)
   private def jsonToCommonProjectState(j: json.JsValue): CommonProjectState =
     j.as[CommonProjectState]
-
-  val startingState = CheckpointObject(Workspace.from())
 }
 class CheckpointRepository(val baseDir: String) {
   import CheckpointRepository.fCheckpointObject
@@ -505,7 +523,7 @@ class CheckpointRepository(val baseDir: String) {
   val cache = new SoftHashMap[String, CheckpointObject]()
   def readCheckpoint(checkpoint: String): CheckpointObject = {
     if (checkpoint == "") {
-      CheckpointRepository.startingState
+      CheckpointObject()
     } else synchronized {
       cache.getOrElseUpdate(checkpoint,
         Json.parse(FileUtils.readFileToString(checkpointFileName(checkpoint), "utf8"))
@@ -862,11 +880,6 @@ class SegmentationEditor(
 // checkpoint tree with some additional metadata. WorkspaceFrame's data is persisted using tags.
 class WorkspaceFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
-  protected def getCheckpointState(checkpoint: String): CheckpointObject =
-    manager.checkpointRepo.readCheckpoint(checkpoint)
-
-  def currentState: CheckpointObject = getCheckpointState(checkpoint)
-
   // The farthest checkpoint available in the current redo sequence
   private def farthestCheckpoint: String = get(rootDir / "!farthestCheckpoint")
   private def farthestCheckpoint_=(x: String): Unit = set(rootDir / "!farthestCheckpoint", x)
@@ -911,7 +924,7 @@ class WorkspaceFrame(path: SymbolPath)(
 
   override def copy(to: DirectoryEntry): WorkspaceFrame = super.copy(to).asWorkspaceFrame
 
-  def workspace: Workspace = currentState.workspace
+  def workspace: Workspace = currentState.workspace.getOrElse(Workspace.from())
 }
 object WorkspaceFrame {
 
@@ -936,8 +949,8 @@ class SnapshotFrame(path: SymbolPath)(
 
   def initialize(state: BoxOutputState) = {
     set(rootDir / "!objectType", "snapshot")
-    import WorkspaceJsonFormatters.fBoxOutputState
-    details = json.Json.toJson(state).as[JsObject]
+    checkpoint = manager.checkpointRepo.checkpointState(
+      CheckpointObject(snapshot = Some(state)), prevCheckpoint = "").checkpoint.get
   }
 
   override def toListElementFE()(implicit epm: EntityProgressManager) = {
@@ -945,8 +958,7 @@ class SnapshotFrame(path: SymbolPath)(
       FEEntryListElement(
         name = name,
         objectType = objectType,
-        icon = getState().kind,
-        details = details)
+        icon = getState().kind)
     } catch {
       case ex: Throwable =>
         log.warn(s"Could not list $name:", ex)
@@ -959,12 +971,7 @@ class SnapshotFrame(path: SymbolPath)(
     }
   }
 
-  def getState(): BoxOutputState = {
-    import WorkspaceJsonFormatters.fBoxOutputState
-    details.get.as[BoxOutputState]
-  }
-
-  override def isDirectory: Boolean = false
+  def getState(): BoxOutputState = currentState.snapshot.get
 }
 
 abstract class ObjectFrame(path: SymbolPath)(
@@ -979,14 +986,10 @@ abstract class ObjectFrame(path: SymbolPath)(
   }
   protected def checkpoint_=(x: String): Unit = set(rootDir / "!checkpoint", x)
 
-  def details: Option[json.JsObject] = {
-    val path = rootDir / "!details"
-    existing(path).map(get).map(s => json.Json.parse(s).as[json.JsObject])
-  }
+  protected def getCheckpointState(checkpoint: String): CheckpointObject =
+    manager.checkpointRepo.readCheckpoint(checkpoint)
 
-  protected def details_=(x: json.JsObject): Unit = {
-    set(rootDir / "!details", json.Json.stringify(x))
-  }
+  def currentState: CheckpointObject = getCheckpointState(checkpoint)
 
   def toListElementFE()(implicit epm: EntityProgressManager) = {
     FEEntryListElement(

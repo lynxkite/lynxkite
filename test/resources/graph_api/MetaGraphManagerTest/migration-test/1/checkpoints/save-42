@@ -1,4 +1,5 @@
 {
+  "snapshot": { "kind": "project", "success": { "enabled": true, "disabledReason": "" },
   "state" : {
     "vertexSetGUID" : "00000000-0000-0000-0000-000000000000",
     "vertexAttributeGUIDs" : {
@@ -23,16 +24,6 @@
       }
     },
     "notes" : ""
-  },
-  "previousCheckpoint" : "",
-  "lastOperationDesc" : "Some magical FE operation",
-  "lastOperationRequest" : {
-    "path" : [ ],
-    "op" : {
-      "id" : "Some-magical-FE-operation",
-      "parameters" : {
-        "useless" : "value"
-      }
-    }
-  }
+  }},
+  "previousCheckpoint" : ""
 }
