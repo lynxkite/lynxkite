@@ -27,28 +27,29 @@ class LinkedHyperVertex(val vertex: HyperVertex) {
 }
 
 object PSOGenerator extends OpFromJson {
-
-  class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
-    val (vs, es) = graph
-    val radial = vertexAttribute[Double](vs)
-    val angular = vertexAttribute[Double](vs)
+  class Input extends MagicInputSignature {
+    val vs = vertexSet
+  }
+  class Output(
+      implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+    val es = edgeBundle(inputs.vs.entity, inputs.vs.entity)
+    val radial = vertexAttribute[Double](inputs.vs.entity)
+    val angular = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = PSOGenerator(
-    (j \ "size").as[Long],
     (j \ "externaldegree").as[Double],
     (j \ "internaldegree").as[Double],
     (j \ "exponent").as[Double],
     (j \ "seed").as[Long])
 }
 import PSOGenerator._
-case class PSOGenerator(size: Long, externalDegree: Double, internalDegree: Double,
-                        exponent: Double, seed: Long) extends TypedMetaGraphOp[NoInput, Output] {
+case class PSOGenerator(externalDegree: Double, internalDegree: Double,
+                        exponent: Double, seed: Long) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
-  @transient override lazy val inputs = new NoInput
+  @transient override lazy val inputs = new Input
 
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
-    "size" -> size,
     "externaldegree" -> externalDegree,
     "internaldegree" -> internalDegree,
     "exponent" -> exponent,
@@ -58,9 +59,10 @@ case class PSOGenerator(size: Long, externalDegree: Double, internalDegree: Doub
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    val partitioner = rc.partitionerForNRows(size)
-    val ordinals = rc.sparkContext.parallelize(0L until size,
-      partitioner.numPartitions).randomNumbered(partitioner)
+    implicit val id = inputDatas
+    val partitioner = inputs.vs.rdd.partitioner.get
+    val size = inputs.vs.data.count.getOrElse(inputs.vs.rdd.count)
+    val ordinals = inputs.vs.rdd.keys.zipWithIndex
     val sc = rc.sparkContext
     val logSize = math.log(size)
     // Adds the necessary attributes for later calculations.
@@ -130,7 +132,6 @@ case class PSOGenerator(size: Long, externalDegree: Double, internalDegree: Doub
     }.flatMap { (edge) => List(edge, Edge(edge.dst, edge.src)) }
       .distinct
 
-    output(o.vs, ordinals.mapValues(_ => ()))
     output(o.radial, vertices.map { v => (v.id, v.radial) }.sortUnique(partitioner))
     output(o.angular, vertices.map { v => (v.id, v.angular) }.sortUnique(partitioner))
     output(o.es, es.randomNumbered(partitioner))
