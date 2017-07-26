@@ -103,7 +103,7 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
       radPrevTracker = lhv
     }
     val possibilityList: List[List[HyperVertex]] = linkedList.map {
-      (lhv) =>
+      lhv =>
         var sampleList: List[HyperVertex] = Nil
         val numSamples = (logSize * lhv.vertex.expectedDegree).toInt
         var ne = lhv.next
@@ -121,14 +121,14 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
     // Selects the expectedDegree smallest distance edges from possibility bundles.
     val possibilities = sc.parallelize(possibilityList)
     val es = possibilities.flatMap {
-      (data) =>
+      data =>
         val numSelections: Int = data.head.expectedDegree.toInt
         val src = data.head
         val dst = data.tail.map {
-          (dst) => (hyperbolicDistance(src, dst), Edge(src.id, dst.id))
+          dst => (hyperbolicDistance(src, dst), Edge(src.id, dst.id))
         }.sortBy(_._1)
         dst.take(numSelections + 1).map { case (key, value) => value }
-    }.flatMap { (edge) => List(edge, Edge(edge.dst, edge.src)) }
+    }.flatMap { edge => List(edge, Edge(edge.dst, edge.src)) }
       .distinct
 
     output(o.radial, vertices.map { v => (v.id, v.radial) }.sortUnique(partitioner))
