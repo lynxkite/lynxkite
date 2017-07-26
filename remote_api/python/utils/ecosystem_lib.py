@@ -101,6 +101,11 @@ arg_parser.add_argument(
     '--applications',
     help='''Applications to start on the cluster like Hive, Hue, Pig... as
   a comma separated list. (e.g. "Hive,Hue").''')
+arg_parser.add_argument(
+    '--env_variables',
+    help='''The environment variables which are to be set to be the same on the master
+  machine as on the local machine. Takes a comma separated list.
+  (e.g. "INPUT_FOLDER,OUTPUT_FOLDER").''')
 
 
 class Ecosystem:
@@ -134,6 +139,7 @@ class Ecosystem:
         's3_metadata_dir': '',
         'tasks': args.with_tasks,
         'extra_python_dependencies': args.python_dependencies,
+        'env_variables': args.env_variables,
     }
     self.cluster = None
     self.instances = []
@@ -202,6 +208,9 @@ class Ecosystem:
     self.start_monitoring_on_extra_nodes_native(conf['ec2_key_file'])
     if lk_conf['tasks']:
       self.upload_tasks(src=lk_conf['tasks'])
+    if lk_conf['env_variables']:
+      variables = lk_conf['env_variables'].split(',')
+      self.copy_environment_variables(variables)
     self.start_supervisor_native()
     print('LynxKite ecosystem was started by supervisor.')
 
@@ -422,6 +431,22 @@ EOF
       cd /mnt/lynx/spark/conf/
       sed -i -e 's#<value>tez</value>#<value>mr</value>#g' hive-site.xml
     ''')
+
+  def set_environment_variables(self, variables_dict):
+    setting_variables_list = ['export {variable}={value}'.format(
+        variable=self.safe_value(variable), value=self.safe_value(value))
+        for variable, value in variables_dict.items()]
+    setting_variables_string = '\n'.join(setting_variables_list)
+    self.cluster.ssh('echo "{}" >> ~/.bashrc'.format(setting_variables_string))
+
+  def safe_value(self, value):
+    from shlex import quote
+    # quote can not seem to handle None value.
+    return quote(value) if value else ''
+
+  def copy_environment_variables(self, variables):
+    variables_dict = {var: os.environ.get(var) for var in variables}
+    self.set_environment_variables(variables_dict)
 
   def start_monitoring_on_extra_nodes_native(self, keyfile):
     cluster_keyfile = 'cluster_key.pem'
