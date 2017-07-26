@@ -158,16 +158,10 @@ case class WorkspaceExecutionContext(
     box: Box, inputStates: Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
     val meta = ops.getBoxMetadata(box.operationId)
 
-    def allOutputsWithError(msg: String): Map[BoxOutput, BoxOutputState] = {
-      meta.outputs.map {
-        o => box.output(o) -> BoxOutputState.error(msg)
-      }.toMap
-    }
-
     val unconnectedInputs = meta.inputs.filterNot(conn => box.inputs.contains(conn))
     if (unconnectedInputs.nonEmpty) {
       val list = unconnectedInputs.mkString(", ")
-      allOutputsWithError(s"Input $list is not connected.")
+      box.allOutputsWithError(meta, s"Input $list is not connected.")
     } else if (meta.outputs.isEmpty) {
       Map() // No reason to execute the box if it has no outputs.
     } else {
@@ -175,20 +169,9 @@ case class WorkspaceExecutionContext(
       val inputErrors = inputs.filter(_._2.isError)
       if (inputErrors.nonEmpty) {
         val list = inputErrors.keys.mkString(", ")
-        allOutputsWithError(s"Input $list has an error.")
+        box.allOutputsWithError(meta, s"Input $list has an error.")
       } else {
-        val outputStates = try {
-          box.execute(this, inputs)
-        } catch {
-          case ex: Throwable =>
-            log.info(s"Failed to execute $box:", ex)
-            val msg = ex match {
-              case ae: AssertionError => ae.getMessage
-              case _ => ex.toString
-            }
-            allOutputsWithError(msg)
-        }
-        outputStates
+        box.orErrors(meta) { box.execute(this, inputs) }
       }
     }
   }
@@ -235,6 +218,25 @@ case class Box(
     val op = getOperation(ctx, inputStates)
     val outputStates = op.getOutputs
     outputStates
+  }
+
+  def allOutputsWithError(meta: BoxMetadata, msg: String): Map[BoxOutput, BoxOutputState] = {
+    meta.outputs.map {
+      o => output(o) -> BoxOutputState.error(msg)
+    }.toMap
+  }
+
+  def orErrors(meta: BoxMetadata)(
+    f: => Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
+    try f catch {
+      case ex: Throwable =>
+        log.info(s"Failed to execute $this:", ex)
+        val msg = ex match {
+          case ae: AssertionError => ae.getMessage
+          case _ => ex.toString
+        }
+        allOutputsWithError(meta, msg)
+    }
   }
 }
 
