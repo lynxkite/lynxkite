@@ -103,6 +103,8 @@ include::add-constant-edge-attribute.asciidoc[]
 
 include::add-constant-vertex-attribute.asciidoc[]
 
+include::add-popularity-x-similarity-optimized-edges.asciidoc[]
+
 include::add-random-edge-attribute.asciidoc[]
 
 include::add-random-vertex-attribute.asciidoc[]
@@ -194,8 +196,6 @@ include::create-edges-from-co-occurrence.asciidoc[]
 include::create-edges-from-set-overlaps.asciidoc[]
 
 include::create-example-graph.asciidoc[]
-
-include::create-popularity-x-similarity-optimized-graph.asciidoc[]
 
 include::create-random-edges.asciidoc[]
 
