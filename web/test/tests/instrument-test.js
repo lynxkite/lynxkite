@@ -38,9 +38,10 @@ module.exports = function(fw) {
       var popup = lib.workspace.openStateView('eg0', 'project');
       popup.setInstrument(0, 'sql');
       tableIsGood(popup.table);
-      popup.setInstrument(1, 'sql', { sql: 'select * from input' });
+      popup.setInstrument(1, 'sql', {
+        sql: 'select gender, mean(age) as age from input group by gender' });
       popup.setInstrument(2, 'plot');
-      popup.plot.expectBarHeightsToBe(['118', '106', '294', '12']);
+      popup.plot.expectBarHeightsToBe(['225', '299']);
       popup.clearInstrument(1);
       tableIsGood(popup.table);
       popup.close();
