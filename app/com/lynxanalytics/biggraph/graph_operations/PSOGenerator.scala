@@ -125,7 +125,7 @@ case class PSOGenerator(size: Long, externalDegree: Double, internalDegree: Doub
         val src = data.head
         val dst = data.tail.map {
           (dst) => (hyperbolicDistance(src, dst), Edge(src.id, dst.id))
-        }.sorted
+        }.sortBy(_._1)
         dst.take(numSelections + 1).map { case (key, value) => value }
     }.flatMap { (edge) => List(edge, Edge(edge.dst, edge.src)) }
       .distinct
