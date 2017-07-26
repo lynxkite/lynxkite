@@ -69,7 +69,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     params ++= List(
       NonNegInt("size", "Vertex set size", default = 100),
       NonNegDouble("externaldegree", "External degree", defaultValue = "1.5"),
-      NonNegDouble("internaldegree", "Internal links", defaultValue = "1.5"),
+      NonNegDouble("internaldegree", "Internal degree", defaultValue = "1.5"),
       NonNegDouble("exponent", "Exponent", defaultValue = "0.6"),
       RandomSeed("seed", "Seed"))
     def enabled = FEStatus.enabled
