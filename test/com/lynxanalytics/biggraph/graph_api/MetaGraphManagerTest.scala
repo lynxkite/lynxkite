@@ -5,6 +5,8 @@ import java.util.UUID
 import org.apache.commons.io.FileUtils
 import org.scalatest.FunSuite
 
+import com.lynxanalytics.biggraph.controllers.DirectoryEntry
+
 class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
   test("Basic application flow works as expected.") {
     val manager = cleanMetaManager
@@ -99,7 +101,6 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     assert(instance1 eq instance2)
   }
 
-  /*
   test("JSON version migration") {
     val dir = cleanMetaManagerDir
     val template = new File(getClass.getResource("/graph_api/MetaGraphManagerTest/migration-test").toURI)
@@ -129,7 +130,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
     // The old projects point to the successfully migrated entities.
-    val p = ProjectFrame.fromName("alma")(m).viewer
+    val p = DirectoryEntry.fromName("alma")(m).asSnapshotFrame.getState.project(m)
     assert(p.vertexSet.toStringStruct.toString ==
       "vertices of (CreateSomeGraph of arg=migrated)")
     assert(p.edgeBundle.toStringStruct.toString ==
@@ -188,13 +189,12 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
     // The old projects point to the successfully migrated entities.
-    val p = ProjectFrame.fromName("alma")(m).viewer
+    val p = DirectoryEntry.fromName("alma")(m).asSnapshotFrame.getState.project(m)
     assert(p.vertexSet.toStringStruct.toString ==
       "vertices of (CreateSomeGraph of arg=migrated)")
     assert(p.segmentation("ms").belongsTo.toStringStruct.toString ==
       "links of (FromVertexAttr of inputAttr=(vattr of (CreateSomeGraph of arg=migrated)))")
   }
-  */
 
   test("JSON read errors are correctly reported") {
     val dir = cleanMetaManagerDir

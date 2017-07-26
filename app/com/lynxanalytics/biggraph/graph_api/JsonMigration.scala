@@ -10,8 +10,7 @@ import play.api.libs.json.Json
 
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.controllers.CommonProjectState
-import com.lynxanalytics.biggraph.controllers.SegmentationState
+import com.lynxanalytics.biggraph.controllers._
 
 // This file is responsible for the metadata compatibility between versions.
 //
@@ -146,15 +145,39 @@ object MetaRepositoryManager {
     srcVersion: VersionMap, // Source version map.
     migration: JsonMigration // JsonMigration for the current version.
     ): Unit = {
+    // A mapping for entity GUIDs (from old to new) that have changed in the new version.
+    val guidMapping = collection.mutable.Map[String, String]()
     // Manager will write to "dst".
     val mm = new MetaGraphManager(dst)
     // We will read from "src", convert, and feed into the manager.
-    // Currently there is nothing to convert.
+
+    // Operations.
+    for ((file, j) <- MetaGraphManager.loadOperations(src)) {
+      try {
+        applyOperation(mm, j, guidMapping, srcVersion, migration)
+      } catch {
+        case e: Throwable => throw new Exception(s"Failed to load $file.", e)
+      }
+    }
 
     // Checkpoints.
+    val finalGuidMapping = guidMapping.map {
+      case (key, value) =>
+        UUID.fromString(key) -> UUID.fromString(value)
+    }
+    def newGUID(old: UUID): UUID = finalGuidMapping.getOrElse(old, old)
+
+    def updatedCheckpoint(cp: CheckpointObject) = {
+      if (cp.snapshot.isDefined) {
+        cp.copy(snapshot = Some(cp.snapshot.get.mapGuids(newGUID)))
+      } else {
+        cp
+      }
+    }
+
     val oldRepo = MetaGraphManager.getCheckpointRepo(src)
     for ((checkpoint, state) <- oldRepo.allCheckpoints) {
-      mm.checkpointRepo.saveCheckpointedState(checkpoint, state)
+      mm.checkpointRepo.saveCheckpointedState(checkpoint, updatedCheckpoint(state))
     }
 
     // Tags.
