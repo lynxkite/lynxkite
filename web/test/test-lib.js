@@ -441,12 +441,19 @@ function State(popup) {
 State.prototype = {
   __proto__: PopupBase.prototype,  // inherit PopupBase's methods
 
-  setInstrument: function(index, name) {
-    this.popup.$(`#instrument-${index}-to-${name}`).click();
+  setInstrument: function(index, name, params) {
+    var state = this.popup.$(`#state-${index}`);
+    state.$(`#instrument-with-${name}`).click();
+    params = params || {};
+    for (var key in params) {
+      var param = state.$(`operation-parameters #${key} .operation-attribute-entry`);
+      testLib.setParameter(param, params[key]);
+    }
+    $('#workspace-name').click(); // Make sure the parameters are not focused.
   },
 
   clearInstrument: function(index) {
-    this.popup.$(`#clear-instrument-${index}`).click();
+    this.popup.$(`#state-${index} #clear-instrument`).click();
   },
 };
 
