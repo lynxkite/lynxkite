@@ -29,7 +29,6 @@ class LinkedHyperVertex(val vertex: HyperVertex) {
 object PSOGenerator extends OpFromJson {
 
   class Output(implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
-
     val (vs, es) = graph
     val radial = vertexAttribute[Double](vs)
     val angular = vertexAttribute[Double](vs)
@@ -42,8 +41,8 @@ object PSOGenerator extends OpFromJson {
     (j \ "seed").as[Long])
 }
 import PSOGenerator._
-case class PSOGenerator(size: Long, externalDegree: Double, internalDegree: Double, exponent: Double,
-                        seed: Long) extends TypedMetaGraphOp[NoInput, Output] {
+case class PSOGenerator(size: Long, externalDegree: Double, internalDegree: Double,
+                        exponent: Double, seed: Long) extends TypedMetaGraphOp[NoInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new NoInput
 
@@ -59,7 +58,6 @@ case class PSOGenerator(size: Long, externalDegree: Double, internalDegree: Doub
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
-    implicit val id = inputDatas
     val partitioner = rc.partitionerForNRows(size)
     val ordinals = rc.sparkContext.parallelize(0L until size,
       partitioner.numPartitions).randomNumbered(partitioner)
@@ -85,7 +83,7 @@ case class PSOGenerator(size: Long, externalDegree: Double, internalDegree: Doub
     // preceding appearance (abstraction for higher popularity vertex; smaller radial coordinate).
     // Groups the samples for each vertex into a list.
     val allVerticesList: List[HyperVertex] = vertices.collect().sortBy(_.angular).toList
-    // Constructs double linked dist by angular coordinates, single linked by ord
+    // Constructs list double linked by angular, single linked by ord/radial
     val lastLHV = new LinkedHyperVertex(allVerticesList.head)
     var linkedList = lastLHV :: Nil
     for (vertex <- allVerticesList.tail) {
@@ -127,9 +125,8 @@ case class PSOGenerator(size: Long, externalDegree: Double, internalDegree: Doub
         val src = data.head
         val dst = data.tail.map {
           (dst) => (hyperbolicDistance(src, dst), Edge(src.id, dst.id))
-        }
-        val sortedDst = dst.sorted
-        sortedDst.take(numSelections + 1).map { case (key, value) => value }
+        }.sorted
+        dst.take(numSelections + 1).map { case (key, value) => value }
     }.flatMap { (edge) => List(edge, Edge(edge.dst, edge.src)) }
       .distinct
 
