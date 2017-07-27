@@ -4,7 +4,7 @@
 angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util) {
   return {
     restrict: 'E',
-    scope: { menu: '=', name: '@', type: '@', shortName: '@', config: '=?' },
+    scope: { menu: '=', name: '@', type: '@', shortName: '@' },
     templateUrl: 'scripts/splash/item-name-and-menu.html',
     link: function(scope, element) {
       scope.util = util;
@@ -30,10 +30,6 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util)
 
       scope.duplicate = function() {
         scope.menu.duplicate(scope.type, scope.name);
-      };
-
-      scope.editConfig = function() {
-        scope.menu.editConfig(scope.name, scope.config, scope.type);
       };
     },
   };
