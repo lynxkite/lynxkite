@@ -8,13 +8,13 @@ import subprocess
 import unicodedata
 
 
-def povray(output_file, caption, shadow_pass):
+def povray(output_file, font, caption, shadow_pass):
   with open('tmp.pov', 'w') as f:
     f.write('''
 #version 3.7;
 #include "scene.pov"
-Statue("{}")
-'''.format(caption))
+Statue("{}", "{}")
+'''.format(font, caption))
   subprocess.run([
       'povray',
       '+A0.05',  # Anti-aliasing.
@@ -29,12 +29,12 @@ Statue("{}")
   os.remove('tmp.pov')
 
 
-def compose(output_file, caption):
+def compose(output_file, font, caption):
   output_file = '../app/images/icons/' + output_file
   if os.path.exists(output_file):
     return
-  povray('obj.png', caption, shadow_pass=0)
-  povray('shadow.png', caption, shadow_pass=1)
+  povray('obj.png', font, caption, shadow_pass=0)
+  povray('shadow.png', font, caption, shadow_pass=1)
   obj = PIL.Image.open('obj.png')
   shadow = PIL.Image.open('shadow.png').convert('L')
   # Make shadow render a bit brighter so that unshadowed parts are perfectly white.
@@ -50,8 +50,24 @@ def compose(output_file, caption):
   os.remove('shadow.png')
 
 
-def render(character):
-  compose(character.replace(' ', '_') + '.png', unicodedata.lookup(character.upper()))
+def lookup_material_codepoint(name, registry={}):
+  if not registry:
+    for line in open('codepoints'):
+      line = line.strip()
+      if line:
+        k, v = line.split()
+        registry[k] = chr(int(v, 16))
+  return registry[name]
+
+
+def render(name):
+  try:
+    font = 'NotoSansSymbols-Regular.ttf'
+    character = unicodedata.lookup(name.upper())
+  except KeyError:  # Not a Unicode character name.
+    font = 'MaterialIcons-Regular.ttf'
+    character = lookup_material_codepoint(name.lower())
+  compose(name.replace(' ', '_') + '.png', font, character)
 
 
 def main():
@@ -69,6 +85,16 @@ def main():
         'NotoSansSymbols-Regular.ttf',
     ]).check_returncode()
     os.remove('NotoSansSymbols-unhinted.zip')
+  if not os.path.exists('MaterialIcons-Regular.ttf'):
+    subprocess.run([
+        'wget',
+        'https://raw.githubusercontent.com/google/material-design-icons/master/iconfont/MaterialIcons-Regular.ttf',
+    ]).check_returncode()
+  if not os.path.exists('codepoints'):
+    subprocess.run([
+        'wget',
+        'https://raw.githubusercontent.com/google/material-design-icons/master/iconfont/codepoints',
+    ]).check_returncode()
   render('anchor')
   render('apl functional symbol quad up caret')
   render('black down-pointing triangle')
@@ -77,6 +103,7 @@ def main():
   render('black truck')
   render('black up-pointing triangle')
   render('fountain')
+  render('timeline')
 
 
 if __name__ == '__main__':
