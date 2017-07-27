@@ -17,9 +17,6 @@ Example usage::
     project = lk.get_project(state)
     scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
     print(scalars['!vertex_count'].double)
-
-The list of operations is not documented, but you can copy the invocation from a LynxKite project
-history.
 '''
 import copy
 import json
