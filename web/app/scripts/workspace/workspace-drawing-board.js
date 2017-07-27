@@ -584,6 +584,8 @@ angular.module('biggraph')
           scope.$apply(function() {
             var z1 = zoomToScale(workspaceZoom);
             workspaceZoom -= delta;
+            workspaceZoom = Math.min(workspaceZoom, 1000 * Math.log(4 / 3));
+            workspaceZoom = Math.max(workspaceZoom, 1000 * Math.log(1 / 50));
             var z2 = zoomToScale(workspaceZoom);
             // Maintain screen-coordinates of logical point under the mouse.
             workspaceX = mouseX - (mouseX - workspaceX) * z2 / z1;
