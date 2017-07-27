@@ -120,13 +120,7 @@ object Operation {
       extends Ordered[Category] {
     def compare(that: Category) = this.index compare that.index
     def toFE: FEOperationCategory =
-      FEOperationCategory(title, addClass(icon), color, browseByDir)
-    // Add main CSS class. E.g. "fa-superpowers" => "fa fa-superpowers".
-    private def addClass(cls: String): String = {
-      val parts = cls.split("-", 2)
-      if (parts.length == 1) cls
-      else s"${parts.head} $cls"
-    }
+      FEOperationCategory(title, icon, color, browseByDir)
   }
 
   type Factory = Context => Operation
@@ -207,7 +201,7 @@ trait OperationRegistry {
   val categories = mutable.Map[String, Operation.Category]()
 
   // Default icon for operations.
-  val defaultIcon = "black_medium_square"
+  def defaultIcon = "black_medium_square"
 
   def registerOp(
     id: String,
@@ -270,7 +264,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   private val customBoxesCategory = Operation.Category(
     Workspace.customBoxesCategory,
     "yellow",
-    icon = "fa-superpowers",
+    icon = "superpowers",
     index = 999,
     browseByDir = true)
 

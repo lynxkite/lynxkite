@@ -41,29 +41,35 @@ object Categories {
   var lastIdx = 0
   def idx = { lastIdx += 1; lastIdx }
 
-  val ImportOperations = Category("Import", "green", icon = "glyphicon-import", index = idx)
-  val BuildGraphOperations = Category("Build graph", "blue", index = idx)
-  val SubgraphOperations = Category("Subgraph", "blue", index = idx)
+  val ImportOperations = Category("Import", "green", icon = "upload", index = idx)
+  val BuildGraphOperations = Category("Build graph", "green", icon = "gavel", index = idx)
+  val SubgraphOperations = Category("Subgraph", "green", icon = "filter", index = idx)
   val BuildSegmentationOperations =
-    Category("Build segmentation", "blue", icon = "glyphicon-th-large", index = idx)
-  val UseSegmentationOperations = Category("Use segmentation", "blue", index = idx)
+    Category("Build segmentation", "green", icon = "th-large", index = idx)
+  val UseSegmentationOperations =
+    Category("Use segmentation", "yellow", icon = "th-large", index = idx)
   val StructureOperations =
-    Category("Structure", "blue", icon = "glyphicon-asterisk", index = idx)
-  val ScalarOperations = Category("Scalars", "blue", icon = "glyphicon-globe", index = idx)
-  val VertexAttributeOperations = Category("Vertex attributes", "blue", index = idx)
-  val EdgeAttributeOperations = Category("Edge attributes", "blue", index = idx)
+    Category("Structure", "yellow", icon = "asterisk", index = idx)
+  val ScalarOperations =
+    Category("Scalars", "yellow", icon = "globe", index = idx)
+  val VertexAttributeOperations =
+    Category("Vertex attributes", "yellow", icon = "circle", index = idx)
+  val EdgeAttributeOperations =
+    Category("Edge attributes", "yellow", icon = "share-alt", index = idx)
   val AttributePropagationOperations =
-    Category("Attribute propagation", "blue", icon = "glyphicon-fullscreen", index = idx)
+    Category("Attribute propagation", "yellow", icon = "podcast", index = idx)
   val GraphComputationOperations =
-    Category("Graph computation", "blue", icon = "glyphicon-stats", index = idx)
+    Category("Graph computation", "blue", icon = "sitemap", index = idx)
   val MachineLearningOperations =
-    Category("Machine learning", "blue", icon = "glyphicon-knight", index = idx)
-  val WorkflowOperations = Category("Workflow", "blue", index = idx)
+    Category("Machine learning", "blue", icon = "android", index = idx)
+  val WorkflowOperations =
+    Category("Workflow", "blue", icon = "paw", index = idx)
   val ManageProjectOperations =
-    Category("Manage project", "blue", icon = "glyphicon-wrench", index = idx)
-  val VisualizationOperations = Category("Visualization operations", "blue", index = idx)
+    Category("Manage project", "pink", icon = "wrench", index = idx)
+  val VisualizationOperations =
+    Category("Visualization operations", "purple", icon = "eye", index = idx)
   val ExportOperations =
-    Category("Export operations", "blue", icon = "glyphicon-export", index = idx)
+    Category("Export operations", "purple", icon = "download", index = idx)
   val HiddenOperations = Category("Hidden operations", "yellow", visible = false, index = idx)
 }
 
@@ -71,6 +77,7 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
   import Operation.Context
 
   val category: Operation.Category
+  override def defaultIcon = category.icon
 
   implicit lazy val manager = env.metaGraphManager
 
@@ -89,11 +96,8 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
     registerOp(id, defaultIcon, category, inputs, List(projectOutput), factory)
   }
 
-  def register(id: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
-    registerOp(id, defaultIcon, category, inputs, outputs, factory)
-  }
-
-  def register(id: String, icon: String, inputs: List[String], outputs: List[String])(factory: Context => Operation): Unit = {
+  def register(id: String, inputs: List[String], outputs: List[String], icon: String = defaultIcon)(
+    factory: Context => Operation): Unit = {
     registerOp(id, icon, category, inputs, outputs, factory)
   }
 
