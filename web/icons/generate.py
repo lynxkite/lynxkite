@@ -118,7 +118,7 @@ def main():
   render('eye')
   render('superpowers')
   render('sitemap')
-  render('paw')
+  render('cogs')
 
 
 if __name__ == '__main__':
