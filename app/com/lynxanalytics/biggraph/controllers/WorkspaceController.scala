@@ -339,7 +339,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def getInstrumentedState(
     user: serving.User, request: GetInstrumentedStateRequest): GetInstrumentedStateResponse = {
-    val ctx = ResolvedWorkspaceReference(user, request.workspace).context
+    val ref = ResolvedWorkspaceReference(user, request.workspace)
+    val ctx = ref.ws.context(user, ops, ref.params)
     val inputState = getOutput(user, request.inputStateId)
     var (states, opMetas) = safeInstrumentStatesAndMetas(
       ctx, request.instruments, List(inputState), List[FEOperationMeta]())
