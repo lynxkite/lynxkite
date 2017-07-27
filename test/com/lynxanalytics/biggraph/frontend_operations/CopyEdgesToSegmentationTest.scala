@@ -13,11 +13,11 @@ class CopyEdgesToSegmentationTest extends OperationsTestBase {
     assert(project1.edgeBundle.toPairSeq.size == 21)
     val cliques = project1.segmentation("cliques")
     assert(cliques.vertexSet.toSeq.size == 2)
-    val next = base.box("Copy edges to segmentation", Map("apply_to_project" -> "|cliques"))
+    val next = base.box("Copy edges to segmentation", Map("apply_to_project" -> ".cliques"))
     val seg1 = next.project.segmentation("cliques")
     assert(seg1.edgeBundle.toPairSeq.size == 56)
     assert(seg1.edgeAttributes("const").rdd.count == 56)
-    val seg2 = next.box("Merge parallel edges", Map("apply_to_project" -> "|cliques"))
+    val seg2 = next.box("Merge parallel edges", Map("apply_to_project" -> ".cliques"))
       .project.segmentation("cliques")
     assert(seg2.edgeBundle.toPairSeq.size == 4)
   }

@@ -18,7 +18,7 @@ case class Bucketing[T: Ordering: reflect.ClassTag](
   private val segToValue = attrIdsToBuckets.values.distinct.randomNumbered(partitioner)
   private val vToSeg = {
     val valueToSeg = segToValue.map(_.swap).sortUnique(partitioner)
-    HybridRDD(attrIdsToBuckets.map(_.swap), partitioner, even)
+    HybridRDD.of(attrIdsToBuckets.map(_.swap), partitioner, even)
       .lookup(valueToSeg)
       .map { case (value, (v, seg)) => (v, seg) }
   }

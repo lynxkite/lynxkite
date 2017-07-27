@@ -27,6 +27,7 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
         project.newVertexAttribute(s"${attr}_${choice}", result)
       }
     }
+    override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
   })
 
   register(
@@ -49,6 +50,7 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
           project.newVertexAttribute(s"${attr}_${choice}_by_${weightName}", result)
         }
       }
+      override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
     })
 
   register("Aggregate from segmentation")(new ProjectTransformation(_) with SegOp {
@@ -69,6 +71,7 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
         seg.parent.newVertexAttribute(s"${prefix}${attr}_${choice}", result)
       }
     }
+    override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
   })
 
   register(
@@ -92,6 +95,7 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
           seg.parent.newVertexAttribute(s"${prefix}${attr}_${choice}_by_${weightName}", result)
         }
       }
+      override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
     })
 
   register("Aggregate on neighbors")(new ProjectTransformation(_) {
@@ -111,6 +115,7 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
         project.newVertexAttribute(s"${prefix}${attr}_${choice}", result)
       }
     }
+    override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
   })
 
   register("Weighted aggregate on neighbors")(new ProjectTransformation(_) {
@@ -135,6 +140,7 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
         project.newVertexAttribute(s"${prefix}${name}_${choice}_by_${weightName}", result)
       }
     }
+    override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
   })
 
   register("Aggregate edge attribute to vertices")(new ProjectTransformation(_) {
@@ -156,6 +162,7 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
         project.newVertexAttribute(s"${prefix}${attr}_${choice}", result)
       }
     }
+    override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
   })
 
   register(
@@ -184,6 +191,7 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
           project.newVertexAttribute(s"${prefix}${attr}_${choice}_by_${weightName}", result)
         }
       }
+      override def cleanParametersImpl(params: Map[String, String]) = cleanAggregateParams(params)
     })
 
   register("Copy vertex attributes from segmentation")(new ProjectTransformation(_) with SegOp {

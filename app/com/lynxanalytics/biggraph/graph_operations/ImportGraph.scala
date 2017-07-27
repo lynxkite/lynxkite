@@ -1,8 +1,6 @@
 // Operations and other classes for importing data in general and from CSV files.
 package com.lynxanalytics.biggraph.graph_operations
 
-import com.lynxanalytics.biggraph.JavaScript
-import com.lynxanalytics.biggraph.JavaScriptEvaluator
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.protection.Limitations
@@ -75,122 +73,6 @@ trait RowInput extends ToJson {
   def fields: Seq[String]
   def lines(rc: RuntimeContext): UniqueSortedRDD[ID, Seq[String]]
   val mayHaveNulls: Boolean
-}
-
-@deprecated("Replaced by table-based importing.", "1.7.0")
-object CSV extends FromJson[CSV] {
-  private val omitFieldsParameter = NewParameter("omitFields", Set[String]())
-  private val allowCorruptLinesParameter = NewParameter("allowCorruptLines", true)
-  def fromJson(j: JsValue): CSV = {
-    val header = (j \ "header").as[String]
-    val delimiter = (j \ "delimiter").as[String]
-    val omitFields = omitFieldsParameter.fromJson(j)
-    val allowCorruptLines = allowCorruptLinesParameter.fromJson(j)
-    val fields = getFields(delimiter, header)
-    new CSV(
-      HadoopFile((j \ "file").as[String], true),
-      delimiter,
-      header,
-      fields,
-      omitFields,
-      JavaScript((j \ "filter").as[String]),
-      allowCorruptLines)
-  }
-
-  def getFields(delimiter: String, header: String): Seq[String] = {
-    val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
-    ImportUtil.split(header, unescapedDelimiter).map(_.trim)
-  }
-
-  def apply(file: HadoopFile,
-            delimiter: String,
-            header: String,
-            omitFields: Set[String] = Set(),
-            filter: JavaScript = JavaScript(""),
-            allowCorruptLines: Boolean = true): CSV = {
-    val fields = getFields(delimiter, header)
-    assert(
-      fields.forall(_.nonEmpty),
-      s"CSV column with empty name is not allowed. Column names were: $fields")
-    assert(
-      (fields.toSet.size == fields.size),
-      s"Duplicate CSV column name is not allowed. Column names were: $fields")
-    assert(file.list.nonEmpty, s"$file does not exist.")
-    assert(
-      omitFields.forall(fields.contains(_)),
-      {
-        val missingColumns = omitFields.filter(!fields.contains(_)).mkString(", ")
-        s"Column(s) $missingColumns that you asked to omit are not actually columns."
-      })
-    new CSV(file, delimiter, header, fields, omitFields, filter, allowCorruptLines)
-  }
-}
-@deprecated("Replaced by table-based importing.", "1.7.0")
-case class CSV private (file: HadoopFile,
-                        delimiter: String,
-                        header: String,
-                        allFields: Seq[String],
-                        omitFields: Set[String],
-                        filter: JavaScript,
-                        allowCorruptLines: Boolean) extends RowInput {
-  val unescapedDelimiter = StringEscapeUtils.unescapeJava(delimiter)
-  val fields = allFields.filter(field => !omitFields.contains(field))
-  override def toJson = {
-    Json.obj(
-      "file" -> file.symbolicName,
-      "delimiter" -> delimiter,
-      "header" -> header,
-      "filter" -> filter.expression) ++
-      CSV.omitFieldsParameter.toJson(omitFields) ++
-      CSV.allowCorruptLinesParameter.toJson(allowCorruptLines)
-  }
-
-  def lines(rc: RuntimeContext): UniqueSortedRDD[ID, Seq[String]] = {
-    val lines = file.loadTextFile(rc.sparkContext)
-    val numRows = lines.count()
-    val partitioner = rc.partitionerForNRows(numRows)
-    val numPartitions = partitioner.numPartitions
-    log.info(s"Reading $file ($numRows lines) into $numPartitions partitions.")
-
-    val fullRows = lines
-      .filter(_ != header)
-      .map(ImportUtil.split(_, unescapedDelimiter))
-      .filter(checkNumberOfFields(_))
-      .mapPartitions({ it =>
-        val evaluator = filter.evaluator
-        it.filter(jsFilter(_, evaluator))
-      }, preservesPartitioning = true)
-    val keptFields = if (omitFields.nonEmpty) {
-      val keptIndices = allFields.zipWithIndex.filter(x => !omitFields.contains(x._1)).map(_._2)
-      fullRows.map(fullRow => keptIndices.map(idx => fullRow(idx)))
-    } else {
-      fullRows
-    }
-    keptFields.randomNumbered(partitioner)
-  }
-
-  val mayHaveNulls = false
-
-  private def jsFilter(line: Seq[String], evaluator: JavaScriptEvaluator): Boolean = {
-    if (filter.isEmpty) {
-      true
-    } else {
-      evaluator.evaluateBoolean(allFields.zip(line).toMap).getOrElse(false)
-    }
-  }
-
-  private def checkNumberOfFields(line: Seq[String]): Boolean = {
-    if (line.length != allFields.length) {
-      val msg =
-        s"Input cannot be parsed: $line (contains ${line.length} fields, " +
-          s"should be: ${allFields.length})"
-      log.info(msg)
-      assert(allowCorruptLines, msg +
-        " You can set parameter 'Tolerate ill-formed lines' to 'yes' to skip all such lines.")
-      return false;
-    }
-    return true;
-  }
 }
 
 @deprecated("Replaced by table-based importing.", "1.7.0")
@@ -375,11 +257,11 @@ class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
     val edgesBySrc = edgeSrcDst(columns).map {
       case (edgeId, (src, dst)) => src -> (edgeId, dst)
     }
-    val srcResolvedByDst = HybridRDD(edgesBySrc, maxPartitioner, even = true)
+    val srcResolvedByDst = HybridRDD.of(edgesBySrc, maxPartitioner, even = true)
       .lookupAndRepartition(nameToId)
       .map { case (src, ((edgeId, dst), sid)) => dst -> (edgeId, sid) }
 
-    val edges = HybridRDD(srcResolvedByDst, maxPartitioner, even = true)
+    val edges = HybridRDD.of(srcResolvedByDst, maxPartitioner, even = true)
       .lookup(nameToId)
       .map { case (dst, ((edgeId, sid), did)) => edgeId -> Edge(sid, did) }
       .sortUnique(edgePartitioner)

@@ -122,18 +122,16 @@ case class WorkspaceExecutionContext(
     this.dropUnknownParameters
   }
 
-  // For boxes that are able to provide their parameter list, we discard the recorded parameters
-  // that are not in the list. (It would be confusing to keep these, since they do not show up on
-  // the UI.) The unknown parameters can be, for example, left over from when the box was previously
-  // connected to a different input.
+  // Drop certain parameters from the box based on the logic implemented in the corresponding op.
   protected def dropUnknownParameters: Workspace = {
     val states = allStates
     ws.copy(boxes = ws.boxes.map { box =>
       try {
         val op = getOperationForStates(box, states)
-        val params = op.toFE.parameters.map(_.id).toSet
-        box.copy(parameters = box.parameters.filter { case (k, v) => params.contains(k) })
-      } catch { case t: Throwable => box }
+        box.copy(parameters = op.cleanParameters(box.parameters))
+      } catch {
+        case t: Throwable => box
+      }
     })
   }
 
@@ -356,7 +354,7 @@ case class BoxOutputState(
   }
 
   def exportResult(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
-    assert(isExportResult, s"Tried to access '$kind' as 'exportResult.")
+    assert(isExportResult, s"Tried to access '$kind' as 'exportResult'.")
     assert(success.enabled, success.disabledReason)
     import graph_api.MetaGraphManager.StringAsUUID
     manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)

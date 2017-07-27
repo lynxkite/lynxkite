@@ -1,6 +1,7 @@
 // Package-level types and type aliases.
 package com.lynxanalytics.biggraph
 
+import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 package object graph_api {
@@ -11,6 +12,8 @@ package object graph_api {
   type AttributeRDD[T] = UniqueSortedRDD[ID, T]
 
   type EdgeBundleRDD = UniqueSortedRDD[ID, Edge]
+
+  type HybridBundleRDD = HybridRDD[ID, ID]
 }
 
 package graph_api {

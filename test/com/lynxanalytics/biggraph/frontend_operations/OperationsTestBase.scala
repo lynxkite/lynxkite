@@ -9,6 +9,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.PrefixRepository
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.serving
+import com.lynxanalytics.biggraph.graph_api.BuiltIns
 
 trait OperationsTestBase extends FunSuite with TestGraphOp {
   val res = getClass.getResource("/controllers/OperationsTest/").toString
@@ -16,6 +17,8 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
   val ops = new Operations(this)
   val sql = new SQLController(this, ops)
   val user = serving.User.fake
+  BuiltIns.createBuiltIns(metaGraphManager)
+
 
   case class TestBox(
       operationId: String,
@@ -64,7 +67,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       ctx.allStates(realBox.output("project")).project
 
     lazy val exportResult: Scalar[String] =
-      ctx.allStates(realBox.output("exportResult")).exportResult
+      ctx.allStates(realBox.output("exported")).exportResult
 
     lazy val table: Table =
       ctx.allStates(realBox.output("table")).table
@@ -75,6 +78,11 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     def snapshotOutput(name: String, output: String): SnapshotFrame = {
       val state = ctx.allStates(realBox.output(output))
       new DirectoryEntry(SymbolPath.parse(name)).asNewSnapshotFrame(state)
+    }
+
+    def changeParameterSettings(changedParameters: Map[String, String]): TestBox = {
+      val newParameters = parameters ++ changedParameters
+      TestBox(operationId, newParameters, parametricParameters, inputs)
     }
 
     def box(operationId: String,
@@ -96,8 +104,10 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
                 parameters: Map[String, String] = Map()): TestBox = {
     val b = box(operationId, parameters)
     val guidFuture = sql.importBox(user, b.realBox)
-    val guid = concurrent.Await.result(guidFuture, concurrent.duration.Duration.Inf)
-    box(operationId, parameters + ("imported_table" -> guid))
+    val response = concurrent.Await.result(guidFuture, concurrent.duration.Duration.Inf)
+    val guid = response.guid
+    val settings = response.parameterSettings
+    box(operationId, parameters + ("imported_table" -> guid) + ("last_settings" -> settings))
   }
 
   def importCSV(filename: String, options: Map[String, String] = Map()): TestBox =
