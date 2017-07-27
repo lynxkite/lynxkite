@@ -23,12 +23,14 @@
             "edgeAttributeGUIDs" : { },
             "scalarGUIDs" : { },
             "segmentations" : { },
-            "notes" : "Some magical segments"
+            "notes" : "Some magical segments",
+            "elementMetadata" : {}
           },
           "belongsToGUID" : "55555555-5555-5555-5555-555555555555"
         }
       },
-      "notes" : ""
+      "notes" : "",
+      "elementMetadata" : {}
     }
   },
   "previousCheckpoint" : ""
