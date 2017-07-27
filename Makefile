@@ -62,7 +62,7 @@ chronomaster-test: .build/chronomaster-test-passed
 .PHONY: remote_api-test
 remote_api-test: .build/remote_api-python-test-passed
 .PHONY: ecosystem-test
-ecosystem-test: # TEMPORARILY DISABLED FOR "BOXES" # chronomaster-test remote_api-test
+ecosystem-test: chronomaster-test remote_api-test # TODO: Luigi tests.
 .PHONY: test
 test: backend-test frontend-test ecosystem-test
 .PHONY: big-data-test

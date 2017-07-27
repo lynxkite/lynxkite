@@ -363,22 +363,23 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   // TODO: Remove code duplication
-  def getTableSample(table: Table, sampleRows: Int = 10) = async[GetTableOutputResponse] {
+  def getTableSample(table: Table, sampleRows: Int) = async[GetTableOutputResponse] {
     val columns = table.schema.toList.map { field =>
       field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
     }
     import Scripting._
     val df = table.df
-    GetTableOutputResponse(
-      header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) },
-      data = SQLHelper.toSeqRDD(df).take(sampleRows).map {
-        row =>
-          row.toSeq.toList.zip(columns).map {
-            case (null, field) => DynamicValue("null", defined = false)
-            case (item, (name, tt)) => DynamicValue.convert(item)(tt)
-          }
-      }.toList
-    )
+    val header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) }
+    val rdd = SQLHelper.toSeqRDD(df)
+    val local = if (sampleRows < 0) rdd.collect else rdd.take(sampleRows)
+    val data = local.map {
+      row =>
+        row.toSeq.toList.zip(columns).map {
+          case (null, field) => DynamicValue("null", defined = false)
+          case (item, (name, tt)) => DynamicValue.convert(item)(tt)
+        }
+    }.toList
+    GetTableOutputResponse(header, data)
   }
 
   def exportSQLQueryToTable(
