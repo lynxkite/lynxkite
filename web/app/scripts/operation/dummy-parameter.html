@@ -1,0 +1,24 @@
+<div
+  class="col-sm-12 left-aligned-dummy"
+  ng-if="!param.payload.title2">
+  {{param.title}}
+  <help-popup href="{{htmlId + '-' + 'title'}}"></help-popup>
+</div>
+<div
+  class="col-sm-4 right-aligned-dummy"
+  ng-if="param.payload.title2">
+  {{param.title}}
+  <help-popup href="{{htmlId + '-' + 'title'}}"></help-popup>
+</div>
+<div ng-class="{
+      'col-sm-8': !isVisualizationParam(param),
+      'operation-parameter-input': true,
+    }"
+    id="{{param.id}}">
+  <div
+    class="left-aligned-dummy"
+    ng-if="param.payload.title2">
+    {{param.payload.title2}}
+    <help-popup href="{{htmlId + '-' + 'title2'}}"></help-popup>
+  </div>
+</div>

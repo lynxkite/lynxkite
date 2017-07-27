@@ -298,7 +298,7 @@ angular.module('biggraph')
       return this.parentProjects().length !== 0;
     };
     Side.prototype.parentProject = function() {
-      return this.parentProjects().join('|');
+      return this.parentProjects().join('.');
     };
 
     // Side.reload makes an unconditional, uncached Ajax request.

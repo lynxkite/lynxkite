@@ -24,7 +24,7 @@ clean:
 $(pip): python_requirements.txt
 	pip3 install --user -r python_requirements.txt && touch $@
 .build/backend-done: \
-	$(shell $(find) app project lib conf) tools/call_spark_submit.sh build.sbt .build/gulp-done
+	$(shell $(find) app project lib conf built-ins) tools/call_spark_submit.sh build.sbt .build/gulp-done
 	sbt stage && touch $@
 .build/backend-test-passed: $(shell $(find) app test project conf) build.sbt
 	./.test_backend.sh && touch $@
@@ -62,7 +62,7 @@ chronomaster-test: .build/chronomaster-test-passed
 .PHONY: remote_api-test
 remote_api-test: .build/remote_api-python-test-passed
 .PHONY: ecosystem-test
-ecosystem-test: # TEMPORARILY DISABLED FOR "BOXES" # chronomaster-test remote_api-test
+ecosystem-test: chronomaster-test remote_api-test # TODO: Luigi tests.
 .PHONY: test
 test: backend-test frontend-test ecosystem-test
 .PHONY: big-data-test

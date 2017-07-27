@@ -190,6 +190,27 @@ object OperationParams {
     val multipleChoice = false
     val options = List()
   }
+
+  class DummyParam(
+      val id: String,
+      changeableTitle: => String,
+      val changeableTitle2: String = "" // If title2 is not empty, title will appear among
+      // the other parameter titles and title2 will appear among the parameter
+      // input fields.
+      // If title2 is empty, title will fill the whole line.
+      ) extends OperationParameterMeta {
+    def title = changeableTitle
+    val kind = "dummy"
+    val options = List()
+    val multipleChoice = false
+    val defaultValue = ""
+    def validate(value: String): Unit = {}
+    override val payload = Some(
+      json.Json.obj(
+        "title2" -> changeableTitle2
+      )
+    )
+  }
 }
 
 // A special parameter payload to describe applicable models on the UI.

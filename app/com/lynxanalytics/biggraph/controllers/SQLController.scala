@@ -20,6 +20,8 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 import play.api.libs.json
 
+case class ImportBoxResponse(guid: String, parameterSettings: String)
+
 // FrameSettings holds details for creating an ObjectFrame.
 trait FrameSettings {
   def name: String
@@ -66,7 +68,7 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
       // Maps the relative table names used in the sql query with the global name
       val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
       val pathAndTableName = tableNames.mapValues(wholePath => {
-        val split = wholePath.split('|')
+        val split = wholePath.split('.')
         (split.head, split.tail)
       })
       val snapshotsAndInternalTables = pathAndTableName.mapValues {
@@ -80,12 +82,10 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
         case (name, (state, tablePath)) if state.isTable => (name, ProtoTable(state.table))
         case (name, (state, tablePath)) if state.isProject =>
           val rootViewer = state.project.viewer
-          val protoTable = rootViewer.getSingleProtoTable(tablePath.mkString("|"))
+          val protoTable = rootViewer.getSingleProtoTable(tablePath.mkString("."))
           (name, protoTable)
       }
-      val minimizedProtoTables = ProtoTable.minimize(sql, protoTables)
-      val tables = minimizedProtoTables.mapValues(protoTable => protoTable.toTable)
-      val result = ExecuteSQL.run(sql, tables)
+      val result = ExecuteSQL.run(sql, protoTables)
       import Scripting._
       result.df
     }
@@ -197,13 +197,15 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
-  def importBox(user: serving.User, box: Box) = async[String] {
+  def importBox(user: serving.User, box: Box) = async[ImportBoxResponse] {
     val op = ops.opForBox(
       user, box, inputs = null, workspaceParameters = null).asInstanceOf[ImportOperation]
+    val parameterSettings = op.settingsString()
     val df = op.getDataFrame(SQLController.defaultContext(user))
     val table = ImportDataFrame.run(df)
     dataManager.getFuture(table) // Start importing in the background.
-    table.gUID.toString
+    val guid = table.gUID.toString
+    ImportBoxResponse(guid, parameterSettings)
   }
 
   def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
@@ -284,7 +286,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
         getProjectTables(frame.path, state.project.viewer, pathTail)
       } else {
         // The path identifies a table within a snapshot of a project kind.
-        val protoTable = state.project.viewer.getSingleProtoTable(pathTail.mkString("|"))
+        val protoTable = state.project.viewer.getSingleProtoTable(pathTail.mkString("."))
         getColumnsFromSchema(protoTable.schema)
       }
     } else {
@@ -301,7 +303,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val implicitTables = viewer.getProtoTables.map(_._1).toSeq.map {
       name =>
         TableBrowserNode(
-          absolutePath = (Seq(path.toString) ++ subPath ++ Seq(name)).mkString("|"),
+          absolutePath = (Seq(path.toString) ++ subPath ++ Seq(name)).mkString("."),
           name = name,
           objectType = "table")
     }
@@ -309,7 +311,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
       segmentation =>
         TableBrowserNode(
           absolutePath =
-            (Seq(path.toString) ++ subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
+            (Seq(path.toString) ++ subPath ++ Seq(segmentation.segmentationName)).mkString("."),
           name = segmentation.segmentationName,
           objectType = "segmentation"
         )
@@ -361,22 +363,23 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   // TODO: Remove code duplication
-  def getTableSample(table: Table, sampleRows: Int = 10) = async[GetTableOutputResponse] {
+  def getTableSample(table: Table, sampleRows: Int) = async[GetTableOutputResponse] {
     val columns = table.schema.toList.map { field =>
       field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
     }
     import Scripting._
     val df = table.df
-    GetTableOutputResponse(
-      header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) },
-      data = SQLHelper.toSeqRDD(df).take(sampleRows).map {
-        row =>
-          row.toSeq.toList.zip(columns).map {
-            case (null, field) => DynamicValue("null", defined = false)
-            case (item, (name, tt)) => DynamicValue.convert(item)(tt)
-          }
-      }.toList
-    )
+    val header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) }
+    val rdd = SQLHelper.toSeqRDD(df)
+    val local = if (sampleRows < 0) rdd.collect else rdd.take(sampleRows)
+    val data = local.map {
+      row =>
+        row.toSeq.toList.zip(columns).map {
+          case (null, field) => DynamicValue("null", defined = false)
+          case (item, (name, tt)) => DynamicValue.convert(item)(tt)
+        }
+    }.toList
+    GetTableOutputResponse(header, data)
   }
 
   def exportSQLQueryToTable(

@@ -191,11 +191,12 @@ sealed trait ProjectViewer {
   def toListElementFE(name: String, objectType: String, details: Option[json.JsObject])(
     implicit epm: EntityProgressManager): FEEntryListElement = {
     FEEntryListElement(
-      name,
-      objectType,
-      state.notes,
-      feScalar("!vertex_count"),
-      feScalar("!edge_count"),
+      name = name,
+      objectType = objectType,
+      icon = objectType,
+      notes = state.notes,
+      vertexCount = feScalar("!vertex_count"),
+      edgeCount = feScalar("!edge_count"),
       details = details)
   }
 
@@ -264,20 +265,21 @@ sealed trait ProjectViewer {
     import ProjectViewer._
     maybeProtoTable(vertexSet, VertexTableName) ++
       maybeProtoTable(edgeBundle, EdgeAttributeTableName) ++
-      maybeProtoTable(edgeBundle, EdgeTableName)
+      maybeProtoTable(edgeBundle, EdgeTableName) ++
+      maybeProtoTable(1, ScalarTableName)
   }
 
   def getProtoTables: Iterable[(String, ProtoTable)] = {
     val childProtoTables = sortedSegmentations.flatMap { segmentation =>
       segmentation.getLocalProtoTables.map {
-        case (name, table) => segmentation.segmentationName + "|" + name -> table
+        case (name, table) => segmentation.segmentationName + "." + name -> table
       }
     }
     getLocalProtoTables ++ childProtoTables
   }
 
   def getSingleProtoTable(tablePath: String): ProtoTable = {
-    val splittedPath = tablePath.split('|')
+    val splittedPath = tablePath.split('.')
     val (segPath, tableName) = (splittedPath.dropRight(1), splittedPath.last)
     val segViewer = offspringViewer(segPath)
     segViewer.getSingleLocalProtoTable(tableName)
@@ -286,7 +288,9 @@ sealed trait ProjectViewer {
   protected def getSingleLocalProtoTable(tableName: String): ProtoTable = {
     import ProjectViewer._
     val protoTable = tableName match {
-      case VertexTableName => ProtoTable(vertexAttributes.toSeq.sortBy(_._1))
+      case VertexTableName => ProtoTable(vertexSet, vertexAttributes.toSeq.sortBy(_._1))
+      case ScalarTableName => ProtoTable.scalar(scalars.toSeq.sortBy(_._1))
+
       case EdgeTableName => {
         import graph_operations.VertexToEdgeAttribute._
         val edgeAttrs = edgeAttributes.map {
@@ -298,13 +302,13 @@ sealed trait ProjectViewer {
         val dstAttrs = vertexAttributes.map {
           case (name, attr) => s"dst_$name" -> dstAttribute(attr, edgeBundle)
         }
-        ProtoTable((edgeAttrs ++ srcAttrs ++ dstAttrs).toSeq.sortBy(_._1))
+        ProtoTable(edgeBundle.idSet, (edgeAttrs ++ srcAttrs ++ dstAttrs).toSeq.sortBy(_._1))
       }
-      case EdgeAttributeTableName => ProtoTable(edgeAttributes.toSeq.sortBy(_._1))
+      case EdgeAttributeTableName => ProtoTable(edgeBundle.idSet, edgeAttributes.toSeq.sortBy(_._1))
       case BelongsToTableName =>
         throw new AssertionError("Only segmentations have a BelongsTo table")
       case _ => {
-        val correctTableNames = List(VertexTableName, EdgeTableName, EdgeAttributeTableName,
+        val correctTableNames = List(ScalarTableName, VertexTableName, EdgeTableName, EdgeAttributeTableName,
           BelongsToTableName).mkString(", ")
         throw new AssertionError("Not recognized table name. Correct table names: " +
           s"$correctTableNames")
@@ -315,6 +319,7 @@ sealed trait ProjectViewer {
 }
 
 object ProjectViewer {
+  val ScalarTableName = "scalars"
   val VertexTableName = "vertices"
   val EdgeTableName = "edges"
   val EdgeAttributeTableName = "edge_attributes"
@@ -415,15 +420,17 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
 
   lazy val belongsToAttribute: Attribute[Vector[ID]] = {
     val segmentationIds = graph_operations.IdAsAttribute.run(vertexSet)
-    val reversedBelongsTo = graph_operations.ReverseEdges.run(belongsTo)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
-    aop(aop.connection, reversedBelongsTo)(aop.attr, segmentationIds).result.attr
+    aop(aop.connectionBySrc, graph_operations.HybridEdgeBundle.byDst(belongsTo))(
+      aop.attr, segmentationIds).result.attr
   }
 
   lazy val membersAttribute: Attribute[Vector[ID]] = {
     val parentIds = graph_operations.IdAsAttribute.run(parent.vertexSet)
     val aop = graph_operations.AggregateByEdgeBundle(graph_operations.Aggregator.AsVector[ID]())
-    aop(aop.connection, belongsTo)(aop.attr, parentIds).result.attr
+    aop(
+      aop.connectionBySrc, graph_operations.HybridEdgeBundle.bySrc(belongsTo))(
+        aop.attr, parentIds).result.attr
   }
 
   override protected def getFEMembers()(implicit epm: EntityProgressManager): Option[FEAttribute] =
@@ -465,7 +472,7 @@ class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String
         val segAttrs = vertexAttributes.map {
           case (name, attr) => s"segment_$name" -> dstAttribute(attr, belongsTo)
         }
-        ProtoTable((baseAttrs ++ segAttrs).toSeq.sortBy(_._1))
+        ProtoTable(belongsTo.idSet, (baseAttrs ++ segAttrs).toSeq.sortBy(_._1))
       }
       case _ => super.getSingleLocalProtoTable(tableName)
     }
@@ -980,7 +987,7 @@ class ProjectFrame(path: SymbolPath)(
   override def copy(to: DirectoryEntry): ProjectFrame = super.copy(to).asProjectFrame
 }
 object ProjectFrame {
-  val separator = "|"
+  val separator = "."
   val quotedSeparator = java.util.regex.Pattern.quote(ProjectFrame.separator)
   val reservedWords = Set(
     "readACL", "writeACL",
@@ -1011,7 +1018,7 @@ object ProjectFrame {
 // representing the named root project and a sequence of segmentation names which show how one
 // should climb down the project tree.
 // When referring to SubProjects via a single string, we use the format:
-//   RootProjectName|Seg1Name|Seg2Name|...
+//   RootProjectName.Seg1Name.Seg2Name.Seg3...
 case class SubProject(val frame: ProjectFrame, val path: Seq[String]) {
   def viewer = frame.viewer.offspringViewer(path)
   def fullName = (frame.name +: path).mkString(ProjectFrame.separator)
@@ -1065,6 +1072,7 @@ class SnapshotFrame(path: SymbolPath)(
       FEEntryListElement(
         name = name,
         objectType = objectType,
+        icon = getState().kind,
         details = details)
     } catch {
       case ex: Throwable =>
@@ -1072,6 +1080,7 @@ class SnapshotFrame(path: SymbolPath)(
         FEEntryListElement(
           name = name,
           objectType = objectType,
+          icon = getState().kind,
           error = Some(ex.getMessage)
         )
     }
@@ -1132,6 +1141,7 @@ abstract class ObjectFrame(path: SymbolPath)(
         FEEntryListElement(
           name = name,
           objectType = objectType,
+          icon = objectType,
           error = Some(ex.getMessage)
         )
     }
@@ -1285,6 +1295,10 @@ class DirectoryEntry(val path: SymbolPath)(
     res
   }
 
+  def asWorkspaceFrame(): WorkspaceFrame = {
+    assert(isInstanceOf[WorkspaceFrame], s"Entry '$path' is not a workspace.")
+    asInstanceOf[WorkspaceFrame]
+  }
   def asNewWorkspaceFrame(): WorkspaceFrame = {
     assert(!exists, s"Entry '$path' already exists.")
     val res = new WorkspaceFrame(path)

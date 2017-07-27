@@ -2,7 +2,6 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
@@ -113,14 +112,9 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
       seg.belongsTo,
       AttributeWithLocalAggregator(parent.vertexSet.idAttribute, "count")
     )
-    val sizeSquare: Attribute[Double] = {
-      val op = graph_operations.DeriveJSDouble(
-        JavaScript("size * size"),
-        Seq("size"))
-      op(
-        op.attrs,
-        graph_operations.VertexAttributeToJSValue.seq(size)).result.attr
-    }
+    val sizeSquare = graph_operations.DeriveScala.derive[Double](
+      "size * size",
+      Seq("size" -> size))
     aggregate(AttributeWithAggregator(sizeSquare, "sum"))
   }
 
@@ -132,14 +126,9 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
     )
     val srcSize = graph_operations.VertexToEdgeAttribute.srcAttribute(size, seg.edgeBundle)
     val dstSize = graph_operations.VertexToEdgeAttribute.dstAttribute(size, seg.edgeBundle)
-    val sizeProduct: Attribute[Double] = {
-      val op = graph_operations.DeriveJSDouble(
-        JavaScript("src_size * dst_size"),
-        Seq("src_size", "dst_size"))
-      op(
-        op.attrs,
-        graph_operations.VertexAttributeToJSValue.seq(srcSize, dstSize)).result.attr
-    }
+    val sizeProduct = graph_operations.DeriveScala.derive[Double](
+      "src_size * dst_size",
+      Seq("src_size" -> srcSize, "dst_size" -> dstSize))
     aggregate(AttributeWithAggregator(sizeProduct, "sum"))
   }
 
@@ -231,6 +220,11 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
     }
   }
 
+  // Aggregation parameters which are empty - i.e. no aggregator was defined - should be removed.
+  protected def cleanAggregateParams(params: Map[String, String]): Map[String, String] = {
+    params.filter { case (k, v) => !k.startsWith("aggregate_") || v.nonEmpty }
+  }
+
   // Performs AggregateAttributeToScalar.
   protected def aggregate[From, Intermediate, To](
     attributeWithAggregator: AttributeWithAggregator[From, Intermediate, To]): Scalar[To] = {
@@ -243,7 +237,9 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
     connection: EdgeBundle,
     attributeWithAggregator: AttributeWithLocalAggregator[From, To]): Attribute[To] = {
     val op = graph_operations.AggregateByEdgeBundle(attributeWithAggregator.aggregator)
-    op(op.connection, connection)(op.attr, attributeWithAggregator.attr).result.attr
+    op(
+      op.connectionBySrc, graph_operations.HybridEdgeBundle.bySrc(connection))(
+        op.attr, attributeWithAggregator.attr).result.attr
   }
   private def mergeEdgesWithKey[T](edgesAsAttr: Attribute[(ID, ID)], keyAttr: Attribute[T]) = {
     val edgesAndKey: Attribute[((ID, ID), T)] = edgesAsAttr.join(keyAttr)
@@ -391,39 +387,29 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
   }
 }
 
-object JSUtilities {
-  // Listing the valid characters for JS variable names. The \\p{*} syntax is for specifying
-  // Unicode categories for scala regex.
-  // For more information about the valid variable names in JS please consult:
-  // http://es5.github.io/x7.html#x7.6
-  val validJSCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\p{Mn}" +
-    "\\p{Mc}\\p{Nd}\\p{Pc}\\u200C\\u200D\\\\"
-  val validJSFirstCharacters = "_$\\p{Lu}\\p{Ll}\\p{Lt}\\p{Lm}\\p{Lo}\\p{Nl}\\\\"
+object ScalaUtilities {
+  val simpleVariableChar = "a-zA-Z0-9_\\$"
+  val quoteChar = "\"'"
+  val simpleIdent = s"[a-z][$simpleVariableChar]*"
 
   def collectIdentifiers[T <: MetaGraphEntity](
     holder: StateMapHolder[T],
     expr: String,
     prefix: String = ""): IndexedSeq[(String, T)] = {
     holder.filter {
-      case (name, _) => containsIdentifierJS(expr, prefix + name)
+      case (name, _) => containsIdentifier(expr, prefix + name)
     }.toIndexedSeq
   }
 
-  // Whether a string can be a JavaScript identifier.
-  def canBeValidJSIdentifier(identifier: String): Boolean = {
-    val re = s"^[${validJSFirstCharacters}][${validJSCharacters}]*$$"
-    identifier.matches(re)
-  }
-
-  // Whether a JavaScript expression contains a given identifier.
-  // It's a best-effort implementation with no guarantees of correctness.
-  def containsIdentifierJS(expr: String, identifier: String): Boolean = {
-    if (!canBeValidJSIdentifier(identifier)) {
-      false
-    } else {
-      val quotedIdentifer = java.util.regex.Pattern.quote(identifier)
-      val re = s"(?s)(^|.*[^$validJSCharacters])${quotedIdentifer}($$|[^$validJSCharacters].*)"
-      expr.matches(re)
-    }
+  // Whether a Scala expression contains a given identifier. All back quoted identifiers are found.
+  // Implementation for simple identifiers is not guaranteed to be 100% correct.
+  def containsIdentifier(expr: String, identifier: String): Boolean = {
+    val escapedIdent = identifier.replace("$", "\\$")
+    // The algorithm finds every identifier within back quotes.
+    expr.contains("`" + identifier + "`") ||
+      // Try to match simple identifiers if they are not between quotes nor substrings of the actual
+      // identifier. The rule is quite crude, both false positives and negatives are possible.
+      (identifier.matches(simpleIdent) && (" " + expr + " ").matches(
+        s"(?s).*[^$simpleVariableChar$quoteChar]$escapedIdent[^$simpleVariableChar$quoteChar].*"))
   }
 }
