@@ -42,9 +42,9 @@ plane {
 
 #include "shapes.inc"
 
-#macro Statue(Caption)
+#macro Statue(Font, Caption)
 Center_Object(text {
-  ttf "NotoSansSymbols-Regular.ttf" Caption 0.2, 0
+  ttf Font Caption 0.2, 0
   rotate <90, 0, 0>
   scale 2
   #if (shadow_pass = 1)
