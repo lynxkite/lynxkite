@@ -3,97 +3,57 @@
 // Viewer of a state at an output of a box.
 
 angular.module('biggraph')
-  .directive('stateView', function(util, WorkspaceWrapper) {
+  .directive('stateView', function(util) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/state-view.html',
       scope: {
         workspace: '=',
-        boxId: '=',
-        plugId: '=',
+        plug: '=',
         popupModel: '=',
       },
       link: function(scope) {
-        scope.instrument = undefined;
+        scope.instruments = [];
+        scope.$watch('plug.stateId', update);
+        util.deepWatch(scope, 'instruments', update);
 
-        scope.$watch(function() {
-          if (scope.boxId && scope.plugId && scope.workspace) {
-            scope.plug = scope.workspace.getOutputPlug(scope.boxId, scope.plugId);
-            return scope.plug.stateId;
+        function update() {
+          if (scope.instruments.length > 0) {
+            scope.result = util.get('/ajax/getInstrumentedState', {
+              workspace: scope.workspace.ref(),
+              inputStateId: scope.plug.stateId,
+              instruments: scope.instruments });
           } else {
-            scope.plug = undefined;
-            return undefined;
+            scope.result = { states: [scope.plug], metas: [] };
           }
-        });
+        }
 
         scope.getDefaultSnapshotName = function() {
           return scope.workspace.name + '-' + scope.plugId;
         };
 
-        scope.createSnapshot = function(saveAsName, success, error) {
+        scope.setInstrument = function(index, operationId) {
+          scope.instruments.splice(index);
+          scope.instruments.push({
+            operationId: operationId,
+            parameters: {},
+            parametricParameters: {},
+          });
+          update();
+        };
+
+        scope.clearInstrument = function(index) {
+          scope.instruments.splice(index);
+          update();
+        };
+
+        scope.createSnapshot = function(stateId, saveAsName, success, error) {
           var postOpts = { reportErrors: false };
           util.post('/ajax/createSnapshot', {
             name: saveAsName,
-            id: scope.plug.stateId,
+            id: stateId,
           }, postOpts).then(success, error);
         };
-
-        scope.$watch('instrument', function(instrument) {
-          if (!instrument) {
-            return;
-          }
-          // We add the instrument box to a copy of the current workspace saved in the "tmp"
-          // directory. TODO: Do this without temporary workspace.
-          var ws = scope.workspace;
-          var tmpBox = instrument + ' ' + Date();
-          var tmpWS = 'tmp/' + ws.name + '/' + tmpBox;
-          var boxes = ws.backendState.boxes.slice();
-          var box = {
-            id: tmpBox,
-            operationId: instrument,
-            x: 500,
-            y: 500,
-            inputs: {},
-            parameters: {},
-            parametricParameters: {}
-          };
-          var inputName = ws._boxCatalogMap[instrument].inputs[0];
-          var outputName = ws._boxCatalogMap[instrument].outputs[0];
-          box.inputs[inputName] = {
-            boxId: scope.boxId,
-            id: scope.plugId,
-          };
-          boxes.push(box);
-
-          util.post('/ajax/createWorkspace', {
-            name: tmpWS,
-          }).then(function success() {
-            return util.post('/ajax/setWorkspace', {
-              reference: { top: tmpWS, customBoxStack: [] },
-              workspace: { boxes: boxes },
-            });
-          }).then(function success() {
-            scope.instrumentWorkspace = new WorkspaceWrapper(tmpWS, ws.boxCatalog);
-            scope.instrumentWorkspace.loadWorkspace();
-            scope.instrumentBoxId = tmpBox;
-            scope.instrumentPlugId = outputName;
-          });
-        });
-
-        scope.$watch(function() {
-          if (scope.instrumentWorkspace) {
-            var box = scope.instrumentWorkspace.getBox(scope.instrumentBoxId);
-            if (box) {
-              return box.outputMap[scope.instrumentPlugId].stateId;
-            }
-          }
-        }, function(stateId) {
-          if (stateId) {
-            scope.instrumentStateId = stateId;
-            var box = scope.instrumentWorkspace.getBox(scope.instrumentBoxId);
-            scope.instrumentStateKind = box.outputMap[scope.instrumentPlugId].kind;
-          }
-        });
       },
     };
   });

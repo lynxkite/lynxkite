@@ -50,7 +50,6 @@ object ProtoTable {
   def scalar(scalars: Iterable[(String, Scalar[_])])(implicit m: MetaGraphManager) =
     new ScalarsProtoTable(scalars)
 
-
   // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
   // necessary to support the query.
   def minimize(optimizedPlan: LogicalPlan,
