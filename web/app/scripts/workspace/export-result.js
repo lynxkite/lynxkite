@@ -3,7 +3,7 @@
 // Viewer of an exportResult state.
 
 angular.module('biggraph')
- .directive('exportResult', function(util, $window) {
+ .directive('exportResult', function(util) {
    return {
      restrict: 'E',
      templateUrl: 'scripts/workspace/export-result.html',
@@ -31,13 +31,12 @@ angular.module('biggraph')
          });
        });
 
-       scope.download = function () {
-         $window.location =
-               '/downloadFile?q=' + encodeURIComponent(JSON.stringify(
-                 {
-                   path: scope.parameters.path,
-                   stripHeaders: false
-                 }));
+       scope.downloadLink = function () {
+         return '/downloadFile?q=' + encodeURIComponent(JSON.stringify(
+           {
+             path: scope.parameters.path,
+             stripHeaders: false
+           }));
        };
      },
    };

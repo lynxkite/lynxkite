@@ -453,8 +453,10 @@ angular.module('biggraph')
           if (!scope.drawingBoardHasFocus()) {
             return;
           }
-          var data = JSON.stringify(scope.selectedBoxes()
-            .map(function(box) { return box.instance; }));
+          var data = JSON.stringify(
+            scope.selectedBoxes().map(function(box) { return box.instance; }),
+            null,
+            2);
           e.clipboardData.setData('text/plain', data);
           e.preventDefault();
         };
