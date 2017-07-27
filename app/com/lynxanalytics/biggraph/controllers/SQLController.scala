@@ -135,20 +135,6 @@ case class SQLExportToJdbcRequest(
   assert(validModes.contains(mode), s"Mode ($mode) must be one of $validModes.")
 }
 case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
-case class SQLCreateViewRequest(
-    name: String, privacy: String, dfSpec: DataFrameSpec, overwrite: Boolean) extends ViewRecipe with FrameSettings {
-  override def createDataFrame(
-    user: User, context: SQLContext)(
-      implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame =
-    dfSpec.createDataFrame(user, context)
-
-  override def notes: String = dfSpec.sql
-}
-
-object SQLCreateViewRequest extends FromJson[SQLCreateViewRequest] {
-  import com.lynxanalytics.biggraph.serving.FrontendJson.fSQLCreateView
-  override def fromJson(j: JsValue): SQLCreateViewRequest = json.Json.fromJson(j).get
-}
 
 object FileImportValidator {
   def checkFileHasContents(hadoopFile: HadoopFile): Unit = {
@@ -187,15 +173,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
 
-  def saveView[T <: ViewRecipe with FrameSettings: json.Writes](
-    user: serving.User, recipe: T): FEOption = {
-    SQLController.saveView(
-      recipe.notes,
-      user,
-      recipe.name,
-      recipe.privacy, recipe.overwrite, recipe)
-  }
-
   import com.lynxanalytics.biggraph.serving.FrontendJson._
   def importBox(user: serving.User, box: Box) = async[ImportBoxResponse] {
     val op = ops.opForBox(
@@ -207,8 +184,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val guid = table.gUID.toString
     ImportBoxResponse(guid, parameterSettings)
   }
-
-  def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
 
   def getTableBrowserNodesForBox(
     user: serving.User, inputTables: Map[String, ProtoTable], path: String): TableBrowserNodeResponse = {
@@ -381,83 +356,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     }.toList
     GetTableOutputResponse(header, data)
   }
-
-  def exportSQLQueryToTable(
-    user: serving.User, request: SQLExportToTableRequest) = async[Unit] {
-    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
-    SQLController.saveTable(
-      df, s"From ${request.dfSpec.project} by running ${request.dfSpec.sql}",
-      user, request.table, request.privacy, request.overwrite,
-      importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
-  }
-
-  def exportSQLQueryToCSV(
-    user: serving.User, request: SQLExportToCSVRequest) = async[SQLExportToFileResult] {
-    downloadableExportToFile(
-      user,
-      request.dfSpec,
-      request.path,
-      "csv",
-      Map(
-        "delimiter" -> request.delimiter,
-        "quote" -> request.quote,
-        "nullValue" -> "",
-        "header" -> (if (request.header) "true" else "false")),
-      stripHeaders = request.header)
-  }
-
-  def exportSQLQueryToJson(
-    user: serving.User, request: SQLExportToJsonRequest) = async[SQLExportToFileResult] {
-    downloadableExportToFile(user, request.dfSpec, request.path, "json")
-  }
-
-  def exportSQLQueryToParquet(
-    user: serving.User, request: SQLExportToParquetRequest) = async[Unit] {
-    exportToFile(user, request.dfSpec, HadoopFile(request.path), "parquet")
-  }
-
-  def exportSQLQueryToORC(
-    user: serving.User, request: SQLExportToORCRequest) = async[Unit] {
-    exportToFile(user, request.dfSpec, HadoopFile(request.path), "orc")
-  }
-
-  def exportSQLQueryToJdbc(
-    user: serving.User, request: SQLExportToJdbcRequest) = async[Unit] {
-    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
-    df.write.mode(request.mode).jdbc(request.jdbcUrl, request.table, new java.util.Properties)
-  }
-
-  private def downloadableExportToFile(
-    user: serving.User,
-    dfSpec: DataFrameSpec,
-    path: String,
-    format: String,
-    options: Map[String, String] = Map(),
-    stripHeaders: Boolean = false): SQLExportToFileResult = {
-    val file = if (path == "<download>") {
-      dataManager.repositoryPath / "exports" / Timestamp.toString + "." + format
-    } else {
-      HadoopFile(path)
-    }
-    exportToFile(user, dfSpec, file, format, options)
-    val download =
-      if (path == "<download>") Some(serving.DownloadFileRequest(file.symbolicName, stripHeaders))
-      else None
-    SQLExportToFileResult(download)
-  }
-
-  private def exportToFile(
-    user: serving.User,
-    dfSpec: DataFrameSpec,
-    file: HadoopFile,
-    format: String,
-    options: Map[String, String] = Map()): Unit = {
-    val df = dfSpec.createDataFrame(user, SQLController.defaultContext(user))
-    // TODO: #2889 (special characters in S3 passwords).
-    file.assertWriteAllowedFrom(user)
-    df.write.format(format).options(options).save(file.resolvedName)
-  }
-
 }
 object SQLController {
   def stringOnlySchema(columns: Seq[String]) = {
@@ -474,26 +372,6 @@ object SQLController {
     val entry = DirectoryEntry.fromName(tableName)
     entry.assertParentWriteAllowedFrom(user)
     entry
-  }
-
-  def saveTable(
-    df: spark.sql.DataFrame,
-    notes: String,
-    user: serving.User,
-    tableName: String,
-    privacy: String,
-    overwrite: Boolean = false,
-    importConfig: Option[json.JsObject] = None)(
-      implicit metaManager: MetaGraphManager,
-      dataManager: DataManager): FEOption = metaManager.synchronized {
-    ???
-  }
-
-  def saveView[T <: ViewRecipe: json.Writes](
-    notes: String, user: serving.User, name: String, privacy: String, overwrite: Boolean, recipe: T)(
-      implicit metaManager: MetaGraphManager,
-      dataManager: DataManager) = {
-    ???
   }
 
   // Every query runs in its own SQLContext for isolation.

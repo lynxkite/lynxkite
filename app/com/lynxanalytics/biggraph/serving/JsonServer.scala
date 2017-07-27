@@ -311,7 +311,6 @@ object FrontendJson {
   implicit val wGetExportResultResponse = json.Json.writes[GetExportResultResponse]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
-  implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
   implicit val rSQLTableBrowserNodeRequest = json.Json.reads[TableBrowserNodeRequest]
   implicit val rTableBrowserNodeForBoxRequest = json.Json.reads[TableBrowserNodeForBoxRequest]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
@@ -441,14 +440,7 @@ object ProductionJsonServer extends JsonServer {
   val sqlController = new SQLController(BigGraphProductionEnvironment, workspaceController.ops)
   def getTableBrowserNodes = jsonGet(sqlController.getTableBrowserNodes)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
-  def exportSQLQueryToTable = jsonFuturePost(sqlController.exportSQLQueryToTable)
-  def exportSQLQueryToCSV = jsonFuturePost(sqlController.exportSQLQueryToCSV)
-  def exportSQLQueryToJson = jsonFuturePost(sqlController.exportSQLQueryToJson)
-  def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)
-  def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
-  def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
   def importBox = jsonFuturePost(sqlController.importBox)
-  def createViewDFSpec = jsonPost(sqlController.createViewDFSpec)
 
   def getTableOutput = jsonFuture(getTableOutputData)
   def getTableOutputData(user: serving.User, request: GetTableOutputRequest): Future[GetTableOutputResponse] = {

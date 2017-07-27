@@ -389,7 +389,7 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
         case BoxOutputKind.Table =>
           import graph_util.Scripting._
           val t = tableInput(name).toAttributes
-          val project = new RootProjectEditor(RootProjectState.emptyState)
+          val project = new RootProjectEditor(CommonProjectState.emptyState)
           project.vertexSet = t.ids
           project.vertexAttributes = t.columns.mapValues(_.entity)
           project
@@ -423,7 +423,7 @@ abstract class ProjectOutputOperation(context: Operation.Context) extends SmartO
   assert(
     context.meta.outputs == List("project"),
     s"A ProjectOperation must output a project. $context")
-  protected lazy val project: ProjectEditor = new RootProjectEditor(RootProjectState.emptyState)
+  protected lazy val project: ProjectEditor = new RootProjectEditor(CommonProjectState.emptyState)
 
   protected def makeOutput(project: ProjectEditor): Map[BoxOutput, BoxOutputState] = {
     Map(context.box.output(context.meta.outputs(0)) -> BoxOutputState.from(project))
