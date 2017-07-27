@@ -8,52 +8,47 @@ is enabled.
 
 ### Access control lists
 
-Access rights are controlled at three levels: the project level, the folder level,
+Access rights are controlled at two levels: the folder level 
 and the file prefix level. The latter is only relevant to administrators
-and described in the Admin Manual; the first two are described below.
+and described in the Admin Manual; the first is described below.
 
-A project or a folder has two access control lists: one for reading
+A folder has two access control lists: one for reading
 and one for writing. A user has read
-access to a project or a folder if he is on it's access control list and has read
+access to a folder if he is on it's access control list and has read
 access to the parent folders recursively. Similarly, write access requires being on the
-write access control list plus _read_ access for all parents. Being on the write access
+write access control list plus read access for all parents. Being on the write access
 control list implies being on the read access list on every local level.
 
 - The users with read access to a folder can view it's contents.
-- The users with write access to a folder can create, delete and rename projects and
-subfolders. Note that renaming requires write access on both the original and the
-target folder if those two are different. Similarly, copying (duplicating) a project or
+- The users with write access to a folder can create, delete and rename workspaces and
+subfolders, see every workspace and make any change (including modifying the writing list). Note that renaming requires write access on both the original and the
+target folder if those two are different. Similarly, copying (duplicating) a workspace or
 a folder requires write access to the target folder.
-- The users with read access to a project can see everything in the project but
-cannot make changes.
-- The users with write access to a project can see everything and make any change
-(including modifying the writing list).
 
-The access control lists can be modified in the project or folder settings
+The access control lists can be modified in the folder settings
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-cog"></i></label>+++.
 The lists are comma-delimited and `+*+` (asterisk) can be used as a wildcard. `+*+`
 means all logged in users. `+*@lynxanalytics.com+`, for example, means all users with
 user names matching that pattern.
 
-When creating a project or a folder, you have the choice of setting it to _private_,
+When creating a folder, you have the choice of setting it to _private_,
 _publicly readable_ or _publicly writable_. These options provide different default
 access control lists, but the lists can be freely modified later.
 
-If a user has no read access to a project or a folder, they will not show up for them
-in the project list.
+If a user has no read access to a folder, they will not show up for them
+in the folder list.
 
-If a user has read-only access to a project, they can always create a copy of the
-project and make changes to the copy.
+If a user has read-only access to a folder, they can always create copies of the
+workspaces and make changes to the copies.
 
-To protect your projects from other users you have to put it in a folder writable only
-by you. Remember, deleting a project requires write access to it's parent folder, not
-the project itself.
+To protect your workspaces from other users you have to put it in a folder writable only
+by you.
 
 ### Administrator users
 
 Administrator users have special privileges:
 
-- Administrators can read and write all projects and folders, regardless of the access
+- Administrators can read and write all folders, regardless of the access
 control lists. They can also change these access control lists.
 - Administrators can create new users, including new administrators. The users are
 managed through the `/users` page.
