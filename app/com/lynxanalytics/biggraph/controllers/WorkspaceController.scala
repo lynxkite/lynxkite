@@ -54,10 +54,10 @@ case class InstrumentState(
 case class GetInstrumentedStateRequest(
   workspace: WorkspaceReference,
   inputStateId: String, // State at the start of the instrument chain.
-  instruments: List[Instrument]) // Instrument chain.
+  instruments: List[Instrument]) // Instrument chain. (N instruments.)
 case class GetInstrumentedStateResponse(
-  metas: List[FEOperationMeta], // Metadata for each instrument.
-  states: List[InstrumentState]) // Initial state followed by the output state of each instrument.
+  metas: List[FEOperationMeta], // Metadata for each instrument. (N metadatas.)
+  states: List[InstrumentState]) // Initial state + the output of each instrument. (N+1 states.)
 
 class WorkspaceController(env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -294,16 +294,15 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     ctx.getOperation(request.box)
   }
 
-  // "Safe" because if an instrument fails to execute it only returns the results up to there.
   @annotation.tailrec
-  private def safeInstrumentStatesAndMetas(
+  private def instrumentStatesAndMetas(
     ctx: WorkspaceExecutionContext,
     instruments: List[Instrument],
     states: List[BoxOutputState],
     opMetas: List[FEOperationMeta]): (List[BoxOutputState], List[FEOperationMeta]) = {
     val next = if (instruments.isEmpty) {
       None
-    } else try {
+    } else {
       val instr = instruments.head
       val state = states.last
       val meta = ops.getBoxMetadata(instr.operationId)
@@ -325,14 +324,13 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       val op = box.getOperation(ctx, Map(meta.inputs.head -> state))
       val newState = box.orErrors(meta) { op.getOutputs }(box.output(meta.outputs.head))
       Some((newState, op.toFE))
-    } catch {
-      case t: Throwable =>
-        log.error(s"Could not execute instrument ${instruments.head}.", t)
-        None
     }
     next match {
+      case Some((newState, newMeta)) if newState.isError =>
+        // Pretend there are no more instruments. This allows the error state to be seen.
+        (states :+ newState, opMetas :+ newMeta)
       case Some((newState, newMeta)) =>
-        safeInstrumentStatesAndMetas(ctx, instruments.tail, states :+ newState, opMetas :+ newMeta)
+        instrumentStatesAndMetas(ctx, instruments.tail, states :+ newState, opMetas :+ newMeta)
       case None => (states, opMetas)
     }
   }
@@ -342,7 +340,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val ref = ResolvedWorkspaceReference(user, request.workspace)
     val ctx = ref.ws.context(user, ops, ref.params)
     val inputState = getOutput(user, request.inputStateId)
-    var (states, opMetas) = safeInstrumentStatesAndMetas(
+    var (states, opMetas) = instrumentStatesAndMetas(
       ctx, request.instruments, List(inputState), List[FEOperationMeta]())
     val instrumentStates = calculatedStates.synchronized {
       states.map { state =>
