@@ -6,6 +6,7 @@ import PIL.ImageChops
 import PIL.ImageOps
 import subprocess
 import unicodedata
+import yaml
 
 
 def povray(output_file, font, caption, shadow_pass):
@@ -50,23 +51,23 @@ def compose(output_file, font, caption):
   os.remove('shadow.png')
 
 
-def lookup_material_codepoint(name, registry={}):
+def lookup_fontawesome_codepoint(name, registry={}):
   if not registry:
-    for line in open('codepoints'):
-      line = line.strip()
-      if line:
-        k, v = line.split()
-        registry[k] = chr(int(v, 16))
+    with open('icons.yml') as f:
+      fa = yaml.load(f.read())
+    for i in fa['icons']:
+      ch = chr(int(i['unicode'], 16))
+      registry[i['id']] = ch
   return registry[name]
 
 
 def render(name):
   try:
+    font = 'fontawesome-webfont.ttf'
+    character = lookup_fontawesome_codepoint(name)
+  except KeyError:  # Not a Font Awesome character name.
     font = 'NotoSansSymbols-Regular.ttf'
     character = unicodedata.lookup(name.upper())
-  except KeyError:  # Not a Unicode character name.
-    font = 'MaterialIcons-Regular.ttf'
-    character = lookup_material_codepoint(name.lower())
   compose(name.replace(' ', '_') + '.png', font, character)
 
 
@@ -85,25 +86,38 @@ def main():
         'NotoSansSymbols-Regular.ttf',
     ]).check_returncode()
     os.remove('NotoSansSymbols-unhinted.zip')
-  if not os.path.exists('MaterialIcons-Regular.ttf'):
+  if not os.path.exists('fontawesome-webfont.ttf'):
     subprocess.run([
         'wget',
-        'https://raw.githubusercontent.com/google/material-design-icons/master/iconfont/MaterialIcons-Regular.ttf',
+        'https://raw.githubusercontent.com/FortAwesome/Font-Awesome/v4.7.0/fonts/fontawesome-webfont.ttf',
     ]).check_returncode()
-  if not os.path.exists('codepoints'):
+  if not os.path.exists('icons.yml'):
     subprocess.run([
         'wget',
-        'https://raw.githubusercontent.com/google/material-design-icons/master/iconfont/codepoints',
+        'https://raw.githubusercontent.com/FortAwesome/Font-Awesome/v4.7.0/src/icons.yml',
     ]).check_returncode()
   render('anchor')
-  render('apl functional symbol quad up caret')
   render('black down-pointing triangle')
+  render('black up-pointing triangle')
   render('black medium square')
   render('black question mark ornament')
-  render('black truck')
-  render('black up-pointing triangle')
-  render('fountain')
-  render('timeline')
+  render('truck')
+  render('download')
+  render('upload')
+  render('gavel')
+  render('filter')
+  render('th-large')
+  render('globe')
+  render('asterisk')
+  render('circle')
+  render('share-alt')
+  render('podcast')
+  render('signal')
+  render('android')
+  render('wrench')
+  render('eye')
+  render('superpowers')
+  render('sitemap')
 
 
 if __name__ == '__main__':
