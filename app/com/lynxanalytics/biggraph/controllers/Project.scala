@@ -47,8 +47,7 @@ case class CommonProjectState(
     scalarGUIDs: Map[String, UUID],
     segmentations: Map[String, SegmentationState],
     notes: String,
-    elementNotes: Option[Map[String, String]], // Option for compatibility.
-    elementMetadata: Option[Map[String, Map[String, String]]]) { // Option for compatibility.
+    elementMetadata: Map[String, Map[String, String]]) {
   def mapGuids(change: UUID => UUID): CommonProjectState = {
     CommonProjectState(
       vertexSetGUID.map(change),
@@ -58,13 +57,12 @@ case class CommonProjectState(
       scalarGUIDs.mapValues(change),
       segmentations.mapValues(_.mapGuids(change)),
       notes,
-      elementNotes,
       elementMetadata)
   }
 }
 object CommonProjectState {
   val emptyState = CommonProjectState(
-    None, Map(), None, Map(), Map(), Map(), "", Some(Map()), Some(Map()))
+    None, Map(), None, Map(), Map(), Map(), "", Map())
 }
 
 // This gets written into a checkpoint.
@@ -155,9 +153,9 @@ sealed trait ProjectViewer {
   def getEdgeAttributeNote(name: String) = getElementNote(EdgeAttributeKind, name)
   def getScalarNote(name: String) = getElementNote(ScalarKind, name)
   def getElementNote(kind: ElementKind, name: String) =
-    state.elementNotes.getOrElse(Map()).getOrElse(kind / name, "")
+    getElementMetadata(kind, name).getOrElse("note", "")
   def getElementMetadata(kind: ElementKind, name: String): Map[String, String] =
-    state.elementMetadata.getOrElse(Map()).getOrElse(kind / name, Map())
+    state.elementMetadata.getOrElse(kind / name, Map())
 
   def offspringPath: Seq[String]
   def offspringViewer(path: Seq[String]): ProjectViewer =
@@ -652,23 +650,18 @@ sealed trait ProjectEditor {
   }
 
   def setElementNote(kind: ElementKind, name: String, note: String) = {
-    val notes = state.elementNotes.getOrElse(Map())
-    if (note == null) {
-      state = state.copy(elementNotes = Some(notes - kind / name))
-    } else {
-      state = state.copy(elementNotes = Some(notes + (kind / name -> note)))
-    }
+    setElementMetadata(kind, name, "note", note)
   }
 
   def setElementMetadata(kind: ElementKind, name: String, key: String, value: String) = {
-    val allMeta = state.elementMetadata.getOrElse(Map())
+    val allMeta = state.elementMetadata
     val kindName = kind / name
     val meta = allMeta.getOrElse(kindName, Map())
     val newMeta =
       if (value == null) meta - key else meta + (key -> value)
     val newAllMeta =
       if (newMeta.isEmpty) allMeta - kindName else allMeta + (kindName -> newMeta)
-    state = state.copy(elementMetadata = Some(newAllMeta))
+    state = state.copy(elementMetadata = newAllMeta)
   }
 
   def vertexAttributes =
