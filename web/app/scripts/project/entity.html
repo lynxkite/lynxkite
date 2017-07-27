@@ -4,7 +4,7 @@
   <span class="title"> {{ title() }} </span>
   <img ng-show="entity.metadata.icon"
        class="emoji"
-       src="/images/emoji/{{ entity.metadata.icon }}.png">
+       ng-attr-src="/images/emoji/{{ entity.metadata.icon }}.png">
   <value class="subtoken"
          ng-if="isScalar()"
          id="scalar-value-{{ title() | id }}"
