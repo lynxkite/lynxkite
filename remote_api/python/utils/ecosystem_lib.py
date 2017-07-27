@@ -436,7 +436,7 @@ EOF
     setting_variables_list = ['export {variable}={value}'.format(
         variable=self.safe_value(variable), value=self.safe_value(value))
         for variable, value in variables_dict.items()]
-    setting_variables_string = '\n'.join(setting_variables_list)
+    setting_variables_string = '\n'.join([''] + setting_variables_list)
     self.cluster.ssh('echo "{}" >> ~/.bashrc'.format(setting_variables_string))
 
   def safe_value(self, value):
