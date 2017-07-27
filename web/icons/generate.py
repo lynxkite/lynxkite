@@ -118,6 +118,7 @@ def main():
   render('eye')
   render('superpowers')
   render('sitemap')
+  render('paw')
 
 
 if __name__ == '__main__':
