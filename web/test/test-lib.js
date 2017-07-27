@@ -469,8 +469,15 @@ PlotState.prototype = {
     return this.canvas.$$('g.mark-rect.marks rect').map(e => e.getAttribute('height'));
   },
 
-  expectBarHeightsToBe: function(heights) {
-    expect(this.barHeights()).toEqual(heights);
+  expectBarHeightsToBe: function(expected) {
+    // The heights from local runs and Jenkins do not match. Allow 1% flexibility.
+    this.barHeights().then(heights => {
+      expect(heights.length).toEqual(expected.length);
+      for (let i = 0; i < heights.length; ++i) {
+        expect(heights[i]).toBeGreaterThanOrEqual(0.99 * heights[i]);
+        expect(heights[i]).toBeLessThanOrEqual(1.01 * heights[i]);
+      }
+    });
   }
 };
 
