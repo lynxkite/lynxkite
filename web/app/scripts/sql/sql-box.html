@@ -50,9 +50,6 @@ instead of ng-model="sql" -->
     </label>
     <div class="col-sm-8">
       <select class="form-control" id="exportFormat" ng-model="exportFormat">
-        <option value="table">LynxKite table</option>
-        <option value="view">LynxKite view</option>
-        <option ng-if="!isGlobal" value="segmentation">Segmentation</option>
         <option value="csv">CSV</option>
         <option value="json">JSON</option>
         <option value="parquet">Parquet</option>

@@ -187,15 +187,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
 
-  def saveView[T <: ViewRecipe with FrameSettings: json.Writes](
-    user: serving.User, recipe: T): FEOption = {
-    SQLController.saveView(
-      recipe.notes,
-      user,
-      recipe.name,
-      recipe.privacy, recipe.overwrite, recipe)
-  }
-
   import com.lynxanalytics.biggraph.serving.FrontendJson._
   def importBox(user: serving.User, box: Box) = async[ImportBoxResponse] {
     val op = ops.opForBox(
@@ -207,8 +198,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val guid = table.gUID.toString
     ImportBoxResponse(guid, parameterSettings)
   }
-
-  def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
 
   def getTableBrowserNodesForBox(
     user: serving.User, inputTables: Map[String, ProtoTable], path: String): TableBrowserNodeResponse = {
@@ -380,15 +369,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
         }
     }.toList
     GetTableOutputResponse(header, data)
-  }
-
-  def exportSQLQueryToTable(
-    user: serving.User, request: SQLExportToTableRequest) = async[Unit] {
-    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
-    SQLController.saveTable(
-      df, s"From ${request.dfSpec.project} by running ${request.dfSpec.sql}",
-      user, request.table, request.privacy, request.overwrite,
-      importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
   }
 
   def exportSQLQueryToCSV(
