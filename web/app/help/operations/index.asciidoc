@@ -103,6 +103,8 @@ include::add-constant-edge-attribute.asciidoc[]
 
 include::add-constant-vertex-attribute.asciidoc[]
 
+include::add-popularity-x-similarity-optimized-edges.asciidoc[]
+
 include::add-random-edge-attribute.asciidoc[]
 
 include::add-random-vertex-attribute.asciidoc[]
