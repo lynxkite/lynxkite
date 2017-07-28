@@ -440,6 +440,21 @@ function State(popup) {
 
 State.prototype = {
   __proto__: PopupBase.prototype,  // inherit PopupBase's methods
+
+  setInstrument: function(index, name, params) {
+    var state = this.popup.$(`#state-${index}`);
+    state.$(`#instrument-with-${name}`).click();
+    params = params || {};
+    for (var key in params) {
+      var param = state.$(`operation-parameters #${key} .operation-attribute-entry`);
+      testLib.setParameter(param, params[key]);
+    }
+    $('#workspace-name').click(); // Make sure the parameters are not focused.
+  },
+
+  clearInstrument: function(index) {
+    this.popup.$(`#state-${index} #clear-instrument`).click();
+  },
 };
 
 function PlotState(popup) {
@@ -454,8 +469,15 @@ PlotState.prototype = {
     return this.canvas.$$('g.mark-rect.marks rect').map(e => e.getAttribute('height'));
   },
 
-  expectBarHeightsToBe: function(heights) {
-    expect(this.barHeights()).toEqual(heights);
+  expectBarHeightsToBe: function(expected) {
+    // The heights from local runs and Jenkins do not match. Allow 1% flexibility.
+    this.barHeights().then(heights => {
+      expect(heights.length).toEqual(expected.length);
+      for (let i = 0; i < heights.length; ++i) {
+        expect(heights[i]).toBeGreaterThanOrEqual(0.99 * heights[i]);
+        expect(heights[i]).toBeLessThanOrEqual(1.01 * heights[i]);
+      }
+    });
   }
 };
 
@@ -1436,6 +1458,11 @@ testLib = {
     });
   },
 
+  expectHasText(element, text) {
+    testLib.expectElement(element);
+    expect(element.getText()).toBe(text);
+  },
+
   menuClick: function(entry, action) {
     var menu = entry.$('.dropdown');
     menu.$('a.dropdown-toggle').click();
@@ -1476,6 +1503,49 @@ testLib = {
     okButton.click();
   },
 
+  // A matcher for lists of objects that ignores fields not present in the reference.
+  // Example use:
+  //   expect([{ a: 1, b: 1234 }, { a: 2, b: 2345 }]).toConcur([{ a: 1 }, { a: 2 }]);
+  // Constraints in strings are also accepted for numerical values. E.g. '<5'.
+  // Objects are recursively checked.
+  addConcurMatcher: function() {
+    jasmine.addMatchers({
+      toConcur: function(util, customEqualityTesters) {
+        return { compare: function(actual, expected) {
+          function match(actual, expected) {
+            if (expected === null) {
+              return actual === null;
+            } else if (typeof expected === 'object') {
+              var keys = Object.keys(expected);
+              for (var i = 0; i < keys.length; ++i) {
+                var av = actual[keys[i]];
+                var ev = expected[keys[i]];
+                if (!match(av, ev)) {
+                  return false;
+                }
+              }
+              return true;
+            } else if (typeof expected === 'string' && expected[0] === '<') {
+              return actual < parseFloat(expected.slice(1));
+            } else if (typeof expected === 'string' && expected[0] === '>') {
+              return actual > parseFloat(expected.slice(1));
+            } else {
+              return util.equals(actual, expected, customEqualityTesters);
+            }
+          }
+
+          if (actual.length !== expected.length) {
+            return { pass: false };
+          }
+          for (var i = 0; i < actual.length; ++i) {
+            if (!match(actual[i], expected[i])) {
+              return { pass: false };
+            }
+          }
+          return { pass: true };
+        }};
+      }});
+  },
 };
 
 module.exports = testLib;

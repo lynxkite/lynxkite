@@ -135,20 +135,6 @@ case class SQLExportToJdbcRequest(
   assert(validModes.contains(mode), s"Mode ($mode) must be one of $validModes.")
 }
 case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
-case class SQLCreateViewRequest(
-    name: String, privacy: String, dfSpec: DataFrameSpec, overwrite: Boolean) extends ViewRecipe with FrameSettings {
-  override def createDataFrame(
-    user: User, context: SQLContext)(
-      implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame =
-    dfSpec.createDataFrame(user, context)
-
-  override def notes: String = dfSpec.sql
-}
-
-object SQLCreateViewRequest extends FromJson[SQLCreateViewRequest] {
-  import com.lynxanalytics.biggraph.serving.FrontendJson.fSQLCreateView
-  override def fromJson(j: JsValue): SQLCreateViewRequest = json.Json.fromJson(j).get
-}
 
 object FileImportValidator {
   def checkFileHasContents(hadoopFile: HadoopFile): Unit = {
@@ -437,7 +423,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     file.assertWriteAllowedFrom(user)
     df.write.format(format).options(options).save(file.resolvedName)
   }
-
 }
 object SQLController {
   def stringOnlySchema(columns: Seq[String]) = {
@@ -454,26 +439,6 @@ object SQLController {
     val entry = DirectoryEntry.fromName(tableName)
     entry.assertParentWriteAllowedFrom(user)
     entry
-  }
-
-  def saveTable(
-    df: spark.sql.DataFrame,
-    notes: String,
-    user: serving.User,
-    tableName: String,
-    privacy: String,
-    overwrite: Boolean = false,
-    importConfig: Option[json.JsObject] = None)(
-      implicit metaManager: MetaGraphManager,
-      dataManager: DataManager): FEOption = metaManager.synchronized {
-    ???
-  }
-
-  def saveView[T <: ViewRecipe: json.Writes](
-    notes: String, user: serving.User, name: String, privacy: String, overwrite: Boolean, recipe: T)(
-      implicit metaManager: MetaGraphManager,
-      dataManager: DataManager) = {
-    ???
   }
 
   // Every query runs in its own SQLContext for isolation.

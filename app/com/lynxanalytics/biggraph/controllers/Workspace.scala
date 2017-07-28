@@ -6,6 +6,7 @@ import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
+import graph_api.MetaGraphManager.StringAsUUID
 
 import scala.annotation.tailrec
 
@@ -58,7 +59,7 @@ case class Workspace(
 
   def checkpoint(previous: String = null)(implicit manager: graph_api.MetaGraphManager): String = {
     manager.checkpointRepo.checkpointState(
-      RootProjectState.emptyState.copy(checkpoint = None, workspace = Some(this)),
+      CheckpointObject(workspace = Some(this)),
       previous).checkpoint.get
   }
   case class Dependencies(topologicalOrder: List[Box], withCircularDependency: List[Box])
@@ -156,16 +157,10 @@ case class WorkspaceExecutionContext(
     box: Box, inputStates: Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
     val meta = ops.getBoxMetadata(box.operationId)
 
-    def allOutputsWithError(msg: String): Map[BoxOutput, BoxOutputState] = {
-      meta.outputs.map {
-        o => box.output(o) -> BoxOutputState.error(msg)
-      }.toMap
-    }
-
     val unconnectedInputs = meta.inputs.filterNot(conn => box.inputs.contains(conn))
     if (unconnectedInputs.nonEmpty) {
       val list = unconnectedInputs.mkString(", ")
-      allOutputsWithError(s"Input $list is not connected.")
+      box.allOutputsWithError(meta, s"Input $list is not connected.")
     } else if (meta.outputs.isEmpty) {
       Map() // No reason to execute the box if it has no outputs.
     } else {
@@ -173,20 +168,9 @@ case class WorkspaceExecutionContext(
       val inputErrors = inputs.filter(_._2.isError)
       if (inputErrors.nonEmpty) {
         val list = inputErrors.keys.mkString(", ")
-        allOutputsWithError(s"Input $list has an error.")
+        box.allOutputsWithError(meta, s"Input $list has an error.")
       } else {
-        val outputStates = try {
-          box.execute(this, inputs)
-        } catch {
-          case ex: Throwable =>
-            log.info(s"Failed to execute $box:", ex)
-            val msg = ex match {
-              case ae: AssertionError => ae.getMessage
-              case _ => ex.toString
-            }
-            allOutputsWithError(msg)
-        }
-        outputStates
+        box.orErrors(meta) { box.execute(this, inputs) }
       }
     }
   }
@@ -234,6 +218,25 @@ case class Box(
     val outputStates = op.getOutputs
     outputStates
   }
+
+  def allOutputsWithError(meta: BoxMetadata, msg: String): Map[BoxOutput, BoxOutputState] = {
+    meta.outputs.map {
+      o => output(o) -> BoxOutputState.error(msg)
+    }.toMap
+  }
+
+  def orErrors(meta: BoxMetadata)(
+    f: => Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
+    try f catch {
+      case ex: Throwable =>
+        log.info(s"Failed to execute $this:", ex)
+        val msg = ex match {
+          case ae: AssertionError => ae.getMessage
+          case _ => ex.toString
+        }
+        allOutputsWithError(meta, msg)
+    }
+  }
 }
 
 case class BoxOutput(
@@ -278,10 +281,11 @@ object VisualizationState {
 
 object BoxOutputState {
   // Cannot call these "apply" due to the JSON formatter macros.
-  def from(project: ProjectEditor): BoxOutputState = {
+  def from(project: CommonProjectState): BoxOutputState = {
     import CheckpointRepository._ // For JSON formatters.
-    BoxOutputState(BoxOutputKind.Project, Some(json.Json.toJson(project.rootState.state)))
+    BoxOutputState(BoxOutputKind.Project, Some(json.Json.toJson(project)))
   }
+  def from(project: ProjectEditor): BoxOutputState = from(project.rootState)
 
   def from(table: graph_api.Table): BoxOutputState = {
     BoxOutputState(BoxOutputKind.Table, Some(json.Json.obj("guid" -> table.gUID)))
@@ -308,7 +312,7 @@ object BoxOutputState {
       BoxOutputKind.Visualization,
       Some(json.Json.obj(
         "uiStatus" -> v.uiStatus,
-        "project" -> json.Json.toJson(v.project.rootState.state))
+        "project" -> json.Json.toJson(v.project.rootState))
       ))
   }
 }
@@ -328,33 +332,32 @@ case class BoxOutputState(
   def isExportResult = kind == BoxOutputKind.ExportResult
   def isVisualization = kind == BoxOutputKind.Visualization
 
-  def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
+  def projectState: CommonProjectState = {
     assert(success.enabled, success.disabledReason)
     import CheckpointRepository.fCommonProjectState
     assert(isProject, s"Tried to access '$kind' as 'project'.")
-    val p = state.get.as[CommonProjectState]
-    val rps = RootProjectState.emptyState.copy(state = p)
-    new RootProjectEditor(rps)
+    state.get.as[CommonProjectState]
+  }
+
+  def project(implicit m: graph_api.MetaGraphManager): RootProjectEditor = {
+    new RootProjectEditor(projectState)
   }
 
   def table(implicit manager: graph_api.MetaGraphManager): graph_api.Table = {
     assert(success.enabled, success.disabledReason)
     assert(isTable, s"Tried to access '$kind' as 'table'.")
-    import graph_api.MetaGraphManager.StringAsUUID
     manager.table((state.get \ "guid").as[String].asUUID)
   }
 
   def plot(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
     assert(isPlot, s"Tried to access '$kind' as 'Plot'.")
     assert(success.enabled, success.disabledReason)
-    import graph_api.MetaGraphManager.StringAsUUID
     manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)
   }
 
   def exportResult(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
     assert(isExportResult, s"Tried to access '$kind' as 'exportResult'.")
     assert(success.enabled, success.disabledReason)
-    import graph_api.MetaGraphManager.StringAsUUID
     manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)
   }
 
@@ -363,11 +366,29 @@ case class BoxOutputState(
     import CheckpointRepository.fCommonProjectState
     assert(isVisualization, s"Tried to access '$kind' as 'visualization'.")
     val projectState = (state.get \ "project").as[CommonProjectState]
-    val rootProjectState = RootProjectState.emptyState.copy(state = projectState)
     VisualizationState(
       (state.get \ "uiStatus").as[TwoSidedUIStatus],
-      new RootProjectEditor(rootProjectState)
+      new RootProjectEditor(projectState)
     )
+  }
+
+  // JsonMigration may want to update GUIDs of updated operations.
+  def mapGuids(change: java.util.UUID => java.util.UUID): BoxOutputState = {
+    kind match {
+      case BoxOutputKind.Project => BoxOutputState.from(projectState.mapGuids(change))
+      case BoxOutputKind.Table => defaultGuidMapper(change)
+      case BoxOutputKind.Plot => defaultGuidMapper(change)
+      case BoxOutputKind.ExportResult => defaultGuidMapper(change)
+      case BoxOutputKind.Visualization => this // Contains no GUIDs.
+    }
+  }
+
+  private def defaultGuidMapper(change: java.util.UUID => java.util.UUID): BoxOutputState = {
+    val oldState = state.get
+    val oldGuid = (oldState \ "guid").as[String].asUUID
+    val newGuid = change(oldGuid).toString
+    val newState = oldState.as[json.JsObject] ++ json.Json.obj("guid" -> newGuid)
+    this.copy(state = Some(newState))
   }
 }
 

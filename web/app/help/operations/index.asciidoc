@@ -251,9 +251,9 @@ include::expose-internal-edge-id.asciidoc[]
 
 include::expose-internal-vertex-id.asciidoc[]
 
-include::fill-edge-attribute-with-constant-default-value.asciidoc[]
+include::fill-edge-attributes-with-constant-default-values.asciidoc[]
 
-include::fill-vertex-attribute-with-constant-default-value.asciidoc[]
+include::fill-vertex-attributes-with-constant-default-values.asciidoc[]
 
 include::filter-by-attributes.asciidoc[]
 
@@ -327,13 +327,13 @@ include::pull-segmentation-one-level-up.asciidoc[]
 
 include::reduce-vertex-attributes-to-two-dimensions.asciidoc[]
 
-include::rename-edge-attribute.asciidoc[]
+include::rename-edge-attributes.asciidoc[]
 
 include::rename-scalar.asciidoc[]
 
 include::rename-segmentation.asciidoc[]
 
-include::rename-vertex-attribute.asciidoc[]
+include::rename-vertex-attributes.asciidoc[]
 
 include::replace-edges-with-triadic-closure.asciidoc[]
 
@@ -357,13 +357,13 @@ include::segment-by-string-attribute.asciidoc[]
 
 include::segment-by-vector-attribute.asciidoc[]
 
-include::set-edge-attribute-icon.asciidoc[]
+include::set-edge-attribute-icons.asciidoc[]
 
 include::set-scalar-icon.asciidoc[]
 
 include::set-segmentation-icon.asciidoc[]
 
-include::set-vertex-attribute-icon.asciidoc[]
+include::set-vertex-attribute-icons.asciidoc[]
 
 include::snowball-sample.asciidoc[]
 

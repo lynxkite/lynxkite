@@ -309,9 +309,12 @@ object FrontendJson {
   implicit val rCreateSnapshotRequest = json.Json.reads[CreateSnapshotRequest]
   implicit val rGetExportResultRequest = json.Json.reads[GetExportResultRequest]
   implicit val wGetExportResultResponse = json.Json.writes[GetExportResultResponse]
+  implicit val rInstrument = json.Json.reads[Instrument]
+  implicit val rGetInstrumentedStateRequest = json.Json.reads[GetInstrumentedStateRequest]
+  implicit val wInstrumentState = json.Json.writes[InstrumentState]
+  implicit val wGetInstrumentedStateResponse = json.Json.writes[GetInstrumentedStateResponse]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
-  implicit val fSQLCreateView = json.Json.format[SQLCreateViewRequest]
   implicit val rSQLTableBrowserNodeRequest = json.Json.reads[TableBrowserNodeRequest]
   implicit val rTableBrowserNodeForBoxRequest = json.Json.reads[TableBrowserNodeForBoxRequest]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
@@ -437,15 +440,18 @@ object ProductionJsonServer extends JsonServer {
   import UIStatusSerialization.fTwoSidedUIStatus
   def getVisualizationOutput = jsonGet(workspaceController.getVisualizationOutput)
   def getExportResultOutput = jsonGet(workspaceController.getExportResultOutput)
+  def getInstrumentedState = jsonGet(workspaceController.getInstrumentedState)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment, workspaceController.ops)
   def getTableBrowserNodes = jsonGet(sqlController.getTableBrowserNodes)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
+
   def exportSQLQueryToCSV = jsonFuturePost(sqlController.exportSQLQueryToCSV)
   def exportSQLQueryToJson = jsonFuturePost(sqlController.exportSQLQueryToJson)
   def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)
   def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
+
   def importBox = jsonFuturePost(sqlController.importBox)
 
   def getTableOutput = jsonFuture(getTableOutputData)

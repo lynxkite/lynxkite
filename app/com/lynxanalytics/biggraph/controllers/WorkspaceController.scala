@@ -38,9 +38,26 @@ case class BoxCatalogResponse(boxes: List[BoxMetadata], categories: List[FEOpera
 case class CreateSnapshotRequest(name: String, id: String)
 case class GetExportResultRequest(stateId: String)
 case class GetExportResultResponse(parameters: Map[String, String], result: FEScalar)
-
 case class RunWorkspaceRequest(workspace: Workspace, parameters: Map[String, String])
 case class RunWorkspaceResponse(outputs: List[BoxOutputInfo], summaries: Map[String, String])
+
+// An instrument is like a box. But we do not want to place it and save it in the workspace.
+// It always has 1 input and 1 output, so the connections do not need to be expressed either.
+case class Instrument(
+  operationId: String,
+  parameters: Map[String, String],
+  parametricParameters: Map[String, String])
+case class InstrumentState(
+  stateId: String,
+  kind: String,
+  error: String)
+case class GetInstrumentedStateRequest(
+  workspace: WorkspaceReference,
+  inputStateId: String, // State at the start of the instrument chain.
+  instruments: List[Instrument]) // Instrument chain. (N instruments.)
+case class GetInstrumentedStateResponse(
+  metas: List[FEOperationMeta], // Metadata for each instrument. (N metadatas.)
+  states: List[InstrumentState]) // Initial state + the output of each instrument. (N+1 states.)
 
 class WorkspaceController(env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -275,5 +292,63 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val ref = ResolvedWorkspaceReference(user, request.workspace)
     val ctx = ref.ws.context(user, ops, ref.params)
     ctx.getOperation(request.box)
+  }
+
+  @annotation.tailrec
+  private def instrumentStatesAndMetas(
+    ctx: WorkspaceExecutionContext,
+    instruments: List[Instrument],
+    states: List[BoxOutputState],
+    opMetas: List[FEOperationMeta]): (List[BoxOutputState], List[FEOperationMeta]) = {
+    val next = if (instruments.isEmpty) {
+      None
+    } else {
+      val instr = instruments.head
+      val state = states.last
+      val meta = ops.getBoxMetadata(instr.operationId)
+      assert(
+        meta.inputs.size == 1,
+        s"${instr.operationId} has ${meta.inputs.size} inputs instead of 1.")
+      assert(
+        meta.outputs.size == 1,
+        s"${instr.operationId} has ${meta.outputs.size} outputs instead of 1.")
+      val box = Box(
+        id = "",
+        operationId = instr.operationId,
+        parameters = instr.parameters,
+        x = 0,
+        y = 0,
+        // It does not matter where the inputs come from. Using "null" for BoxOutput.
+        inputs = Map(meta.inputs.head -> null),
+        parametricParameters = instr.parametricParameters)
+      val op = box.getOperation(ctx, Map(meta.inputs.head -> state))
+      val newState = box.orErrors(meta) { op.getOutputs }(box.output(meta.outputs.head))
+      Some((newState, op.toFE))
+    }
+    next match {
+      case Some((newState, newMeta)) if newState.isError =>
+        // Pretend there are no more instruments. This allows the error state to be seen.
+        (states :+ newState, opMetas :+ newMeta)
+      case Some((newState, newMeta)) =>
+        instrumentStatesAndMetas(ctx, instruments.tail, states :+ newState, opMetas :+ newMeta)
+      case None => (states, opMetas)
+    }
+  }
+
+  def getInstrumentedState(
+    user: serving.User, request: GetInstrumentedStateRequest): GetInstrumentedStateResponse = {
+    val ref = ResolvedWorkspaceReference(user, request.workspace)
+    val ctx = ref.ws.context(user, ops, ref.params)
+    val inputState = getOutput(user, request.inputStateId)
+    var (states, opMetas) = instrumentStatesAndMetas(
+      ctx, request.instruments, List(inputState), List[FEOperationMeta]())
+    val instrumentStates = calculatedStates.synchronized {
+      states.map { state =>
+        val id = Timestamp.toString
+        calculatedStates(id) = state
+        InstrumentState(id, state.kind, state.success.disabledReason)
+      }
+    }
+    GetInstrumentedStateResponse(opMetas, instrumentStates)
   }
 }
