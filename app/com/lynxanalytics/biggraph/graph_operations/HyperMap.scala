@@ -1,4 +1,7 @@
-// Gives vertices of a graph hyperbolic coordinates
+// Gives vertices of a graph hyperbolic coordinates.
+// These can later be used to evaluate edge strength or
+// predict new links in the graph.
+// Based on paper: https://www.caida.org/publications/papers/2015/network_mapping_replaying_hyperbolic/network_mapping_replaying_hyperbolic.pdf
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.math
@@ -11,19 +14,13 @@ import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-case class HyperVertex(id: Long,
-                       ord: Long,
-                       radial: Double,
-                       angular: Double,
-                       expectedDegree: Double)
-
 object HyperMap extends OpFromJson {
   class Input extends MagicInputSignature {
-    val (vertices, edges) = graph
+    val (vs, es) = graph
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
-    val radial = vertexAttribute[Double](inputs.vertices.entity)
-    val angular = vertexAttribute[Double](inputs.vertices.entity)
+    val radial = vertexAttribute[Double](inputs.vs.entity)
+    val angular = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = HyperMap(
     (j \ "avgExpectedDegree").as[Int],
@@ -44,31 +41,30 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
     "temperature" -> temperature,
     "seed" -> seed)
 
-  //TODO avgExpectedDegree automatic setting has been left out
   def execute(inputDatas: DataSet,
               o: Output,
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val vs = inputs.vertices.rdd
-    val es = inputs.edges.rdd
-    val size = inputs.vertices.data.count.getOrElse(inputs.vertices.rdd.count)
+    val vertices = inputs.vs.rdd
+    val edges = inputs.es.rdd
+    val sc = rc.sparkContext
+    val size = inputs.vs.data.count.getOrElse(inputs.vs.rdd.count)
     val logSize = math.log(size)
-    val vertexPartitioner = vs.partitioner.get
-    val edgePartitioner = es.partitioner.get
-
-    val filteredEdges = es.filter { case (id, e) => e.src != e.dst }
+    val vertexPartitioner = vertices.partitioner.get
+    val edgePartitioner = edges.partitioner.get
+    // Order vertices by descending degree to place higher-degree vertices first.
+    val filteredEdges = edges.filter { case (id, e) => e.src != e.dst }.distinct
     val degreeWithoutIsolatedVertices = filteredEdges.flatMap {
       case (id, e) => Seq(e.src -> 1.0, e.dst -> 1.0)
-    }.reduceBySortedKey(vertexPartitioner, _ + _)
-    //val dwiw = degreeWithoutIsolatedVertices.sortUnique
-    val degree = vs.sortedLeftOuterJoin(degreeWithoutIsolatedVertices).
+    }.reduceBySortedKey(edgePartitioner, _ + _)
+    val degree = vertices.sortedLeftOuterJoin(degreeWithoutIsolatedVertices).
       mapValues(_._2.getOrElse(0.0))
-
     val degreeOrdered = degree.sortBy(_._2, false).zipWithIndex.map {
       case ((id, degree), ord) =>
         (id, degree, ord + 1)
     }
+    // Collect ~log(n) samples to compare to, with earlier vertices being more likely.
     val collectedSamples = degreeOrdered.mapPartitionsWithIndex {
       case (pid, iter) =>
         val rnd = new Random((pid << 16) + seed)
@@ -77,23 +73,41 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
             ordinal < 3
         }
     }.collect.toList
-    val sampleList: List[HyperVertex] = collectedSamples.map { currentSample =>
-      HyperVertex(
+    // Place down the first vertex with a random angular coordinate.
+    val rndFirstVertex = new Random(seed)
+    var sampleList = new HyperVertex(
+      id = collectedSamples.head._1,
+      ord = collectedSamples.head._3,
+      radial = 2 * math.log(collectedSamples.head._3 * 2),
+      angular = 2 * math.Pi * rndFirstVertex.nextDouble,
+      expectedDegree = 0) :: Nil
+    // Place down the rest of vertices in sampleList.
+    for (currentSample <- collectedSamples.tail) {
+      val newHyperVertex = HyperVertex(
         id = currentSample._1,
         ord = currentSample._3,
         radial = 2 * math.log(currentSample._3 * 2),
-        angular = maximumLikelihoodAngular(currentSample._3,
-          sampleList, exponent, temperature, avgExpectedDegree, logSize),
+        angular = maximumLikelihoodAngular(currentSample._1, currentSample._3, sampleList,
+          filteredEdges, exponent, temperature, avgExpectedDegree, logSize),
         expectedDegree = 0)
+      sampleList = newHyperVertex :: sampleList
     }
+    // Broadcast the sample vertex list for fast comparisons.
+    val bcSampleList = sc.broadcast(sampleList)
+    val sampleVertexIDs = bcSampleList.value.map(vertex => vertex.id)
+    // Filter out and broadcast the edges that go to a vertex in sampleList so that
+    // checking whether two vertices are connected will take less time.
+    val edgesToSamples = filteredEdges.filter { case (id, e) => sampleVertexIDs.contains(e.dst) }
+    val bcEdgesToSamples = sc.broadcast(edgesToSamples)
+    // Place down the rest of the vertices simultaneously.
     val hyperVertices = degreeOrdered.map {
       case (id, degree, ord) =>
         HyperVertex(
           id = id,
           ord = ord,
           radial = 2 * math.log(ord),
-          angular = maximumLikelihoodAngular(ord, sampleList,
-            exponent, temperature, avgExpectedDegree, logSize),
+          angular = maximumLikelihoodAngular(id, ord, bcSampleList.value,
+            bcEdgesToSamples.value, exponent, temperature, avgExpectedDegree, logSize),
           expectedDegree = 0)
     }
 
@@ -102,19 +116,21 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
   }
 
   // Calculates the likelihood function for a node with a given angular coordinate.
-  def likelihood(ord: Long,
+  def likelihood(vertexID: Long,
+                 ord: Long,
                  angular: Double,
                  samples: List[HyperVertex],
+                 sampleEdges: RDD[(Long, Edge)],
                  exponent: Double,
                  temperature: Double,
                  avgExpectedDegree: Double): Double = {
     var product: Double = 1
     val radial = 2 * math.log(ord)
     for (otherVertex <- samples if otherVertex.ord < ord) {
-      val prob: Double = probability(radial, otherVertex.radial, angular, otherVertex.angular, ord, exponent, temperature, avgExpectedDegree)
+      val prob: Double = probability(radial, otherVertex.radial, angular, otherVertex.angular,
+        ord, exponent, temperature, avgExpectedDegree)
       if (prob != 1 && prob != 0) {
-        //TODO how to replace this one below?
-        if (currentNode.edgesTo.contains(otherNode)) {
+        if (!sampleEdges.filter { case (id, e) => e.src == vertexID }.isEmpty) {
           product *= prob
         } else {
           product *= (1 - prob)
@@ -127,8 +143,10 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
   // Calculates the likelihood that the mapped graph is similar to a PSO-grown graph, O(log n).
   // Divides 0 - 2Pi ( + offset) in half. Takes center point /random point of each, does a comparison. Higher one stays.
   // Divides half as wide angle into two halves again and repeat.
-  def maximumLikelihoodAngular(ord: Long,
+  def maximumLikelihoodAngular(vertexID: Long,
+                               ord: Long,
                                samples: List[HyperVertex],
+                               sampleEdges: RDD[(Long, Edge)],
                                exponent: Double,
                                temperature: Double,
                                avgExpectedDegree: Double,
@@ -141,10 +159,10 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
       val angleBound: Double = cwBound - ccwBound
       val topQuarterPoint: Double = cwBound - angleBound / 4
       val bottomQuarterPoint: Double = ccwBound + angleBound / 4
-      val topValue: Double = likelihood(ord, topQuarterPoint, samples,
-        exponent, temperature, avgExpectedDegree)
-      val bottomValue: Double = likelihood(ord, bottomQuarterPoint, samples,
-        exponent, temperature, avgExpectedDegree)
+      val topValue: Double = likelihood(vertexID, ord, topQuarterPoint, samples,
+        sampleEdges, exponent, temperature, avgExpectedDegree)
+      val bottomValue: Double = likelihood(vertexID, ord, bottomQuarterPoint, samples,
+        sampleEdges, exponent, temperature, avgExpectedDegree)
       if (topValue > bottomValue) {
         maxAngular = topQuarterPoint
         ccwBound = cwBound - angleBound / 2
@@ -160,7 +178,7 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
   def hyperbolicDistance(rad1: Double, rad2: Double, ang1: Double, ang2: Double): Double = {
     rad1 + rad2 + 2 * math.log(phi(ang1, ang2) / 2)
   }
-  // Returns angular component for hyperbolic distance calculation.
+  // Returns angular component for hyperbolic distance.
   def phi(ang1: Double, ang2: Double): Double = {
     math.Pi - math.abs(math.Pi - math.abs(ang1 - ang2))
   }
@@ -168,7 +186,7 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
   def inverseExponent(ord: Long, exponent: Double): Double = {
     (1 / (1 - exponent)) * (1 - math.pow(ord, -(1 - exponent)))
   }
-  // Expected number of connections for a vertex.
+  // Expected number of connections for a vertex, used in calculating angular.
   def expectedConnections(rad1: Double,
                           ord: Long,
                           exponent: Double,

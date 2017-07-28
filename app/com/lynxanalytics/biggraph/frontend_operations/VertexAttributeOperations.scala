@@ -254,6 +254,27 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
     }
   })
 
+  register("Map hyperbolic coordinates")(new ProjectTransformation(_) {
+    params ++= List(
+      NonNegDouble("avgExpectedDegree", "Average expected degree", defaultValue = "1.5"),
+      NonNegDouble("exponent", "Exponent", defaultValue = "0.6"),
+      NonNegDouble("temperature", "Temperature", defaultValue = "0.45"),
+      RandomSeed("seed", "Seed"))
+    def enabled = project.hasVertexSet
+    def apply() = {
+      val result = {
+        val op = graph_operations.HyperMap(
+          params("avgExpectedDegree").toDouble,
+          params("exponent").toDouble,
+          params("temperature").toDouble,
+          params("seed").toLong)
+        op(op.vs, project.vertexSet)(op.es, project.edgeBundle).result
+      }
+      project.newVertexAttribute("radial", result.radial)
+      project.newVertexAttribute("angular", result.angular)
+    }
+  })
+
   register("Merge two vertex attributes")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "New attribute name", defaultValue = ""),
