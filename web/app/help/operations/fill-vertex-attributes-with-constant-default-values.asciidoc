@@ -1,0 +1,14 @@
+### Fill vertex attributes with constant default values
+
+An attribute may not be defined on every vertex. This operation sets a default value
+for the vertices where it was not defined.
+
+====
+[[title]] Attributes::
+Vertex attributes of the project.
+
+[[title2]]  Default values::
+The value to set for vertices where the attribute is not defined. No change for
+attributes for which the default value is left empty. The default value
+must be numeric for `Double` attributes.
+====

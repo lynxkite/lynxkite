@@ -74,7 +74,6 @@ class SQLTest extends OperationsTestBase {
       Seq("Adam", 0, 3.0), Seq("Eve", 0, 3.0), Seq("Bob", 0, 3.0), Seq("Isolated Joe", 3, 1.0)))
   }
 
-
   test("scalars table") {
     val table = box("Create example graph")
       .box("SQL1", Map("sql" -> "select `!edge_count`, `!vertex_count` from scalars"))

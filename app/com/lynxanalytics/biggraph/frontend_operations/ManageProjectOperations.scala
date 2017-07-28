@@ -134,19 +134,51 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
   })
 
-  register("Rename edge attribute")(new ProjectTransformation(_) {
-    params ++= List(
-      Choice("before", "Old name", options = project.edgeAttrList),
-      Param("after", "New name"))
+  register("Rename edge attributes")(new ProjectTransformation(_) {
+    params += new DummyParam("text", "Attributes:", "Rename to:")
+    params ++= project.edgeAttrList.map {
+      attr => Param(s"change_${attr.id}", attr.id, defaultValue = attr.id)
+    }
     def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No edge attributes")
+    val attrParams = params.toMap.collect {
+      case (before, after) if before.startsWith("change_") => (before.stripPrefix("change_"), after)
+    }
+    val deletedAttrs = attrParams.toMap.filter {
+      case (before, after) => after.isEmpty
+    }
+    val renamedAttrs = attrParams.toMap.filter {
+      case (before, after) => after.nonEmpty && before != after
+    }
     override def summary = {
-      val from = params("before")
-      val to = params("after")
-      s"Rename edge attribute $from to $to"
+      val renameStrings = renamedAttrs.map {
+        case (before, after) =>
+          s"${before} to ${after}"
+      }
+      val deleteStrings = deletedAttrs.keys
+      val renameSummary = {
+        if (renameStrings.isEmpty) "" else s"Rename ${renameStrings.mkString(", ")}. "
+      }
+      val deleteSummary = {
+        if (deleteStrings.isEmpty) "" else s"Delete " + deleteStrings.mkString(", ")
+      }
+      renameSummary + deleteSummary
     }
     def apply() = {
-      project.edgeAttributes(params("after")) = project.edgeAttributes(params("before"))
-      project.edgeAttributes(params("before")) = null
+      renamedAttrs.foreach {
+        case (before, after) => {
+          project.newEdgeAttribute(
+            after,
+            project.edgeAttributes(before),
+            project.viewer.getEdgeAttributeNote(before)
+          )
+          project.edgeAttributes(before) = null
+        }
+      }
+      deletedAttrs.foreach {
+        case (before, after) => {
+          project.deleteEdgeAttribute(before)
+        }
+      }
     }
   })
 
@@ -183,41 +215,80 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
   })
 
-  register("Rename vertex attribute")(new ProjectTransformation(_) {
-    params ++= List(
-      Choice("before", "Old name", options = project.vertexAttrList),
-      Param("after", "New name"))
+  register("Rename vertex attributes")(new ProjectTransformation(_) {
+    params += new DummyParam("text", "Attributes:", "Rename to:")
+    params ++= project.vertexAttrList.map {
+      attr => Param(s"change_${attr.id}", attr.id, defaultValue = attr.id)
+    }
     def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
+    val attrParams = params.toMap.collect {
+      case (before, after) if before.startsWith("change_") => (before.stripPrefix("change_"), after)
+    }
+    val deletedAttrs = attrParams.toMap.filter {
+      case (before, after) => after.isEmpty
+    }
+    val renamedAttrs = attrParams.toMap.filter {
+      case (before, after) => after.nonEmpty && before != after
+    }
     override def summary = {
-      val before = params("before")
-      val after = params("after")
-      s"Rename vertex attribute $before to $after"
+      val renameStrings = renamedAttrs.map {
+        case (before, after) =>
+          s"${before} to ${after}"
+      }
+      val deleteStrings = deletedAttrs.keys
+      val renameSummary = {
+        if (renameStrings.isEmpty) "" else s"Rename ${renameStrings.mkString(", ")}. "
+      }
+      val deleteSummary = {
+        if (deleteStrings.isEmpty) "" else s"Delete " + deleteStrings.mkString(", ")
+      }
+      renameSummary + deleteSummary
     }
     def apply() = {
-      assert(params("after").nonEmpty, "Please set the new attribute name.")
-      project.newVertexAttribute(
-        params("after"), project.vertexAttributes(params("before")),
-        project.viewer.getVertexAttributeNote(params("before")))
-      project.vertexAttributes(params("before")) = null
+      renamedAttrs.foreach {
+        case (before, after) => {
+          project.newVertexAttribute(
+            after,
+            project.vertexAttributes(before),
+            project.viewer.getVertexAttributeNote(before)
+          )
+          project.vertexAttributes(before) = null
+        }
+      }
+      deletedAttrs.foreach {
+        case (before, after) => {
+          project.deleteVertexAttribute(before)
+        }
+      }
     }
   })
 
-  register("Set edge attribute icon")(new ProjectTransformation(_) {
-    params ++= List(
-      Choice("name", "Name", options = project.edgeAttrList),
-      Param("icon", "Icon name"))
-    def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty, "No vertex attributes")
+  register("Set edge attribute icons")(new ProjectTransformation(_) {
+    params += new DummyParam("text", "Attributes:", "Icon names:")
+    params ++= project.edgeAttrList.map {
+      attr => Param(s"icon_for_${attr.id}", attr.id)
+    }
+    def enabled = FEStatus.assert(
+      (project.edgeAttrList[String] ++ project.edgeAttrList[Double]).nonEmpty,
+      "No edge attributes.")
+    val attrParams: Map[String, String] = params.toMap.collect {
+      case (name, value) if name.startsWith("icon_for_") => {
+        (name.stripPrefix("icon_for_"), value)
+      }
+    }
     override def summary = {
-      val name = params("name")
-      val icon = if (params("icon").nonEmpty) params("icon") else "nothing"
-      s"Set icon for $name to $icon"
+      val parts = attrParams.collect {
+        case (name, icon) if icon.nonEmpty => s"${name} to ${icon}"
+      }
+      s"Set icon for ${parts.mkString(", ")}"
     }
     def apply() = {
-      val name = params("name")
-      val icon = params("icon")
-      project.setElementMetadata(
-        EdgeAttributeKind, name, MetadataNames.Icon,
-        if (icon.nonEmpty) icon else null)
+      for ((name, icon) <- attrParams.toMap) {
+        val attr = project.edgeAttributes(name)
+        project.setElementMetadata(
+          EdgeAttributeKind, name, MetadataNames.Icon,
+          if (icon.nonEmpty) icon else null)
+      }
     }
   })
 
@@ -259,22 +330,32 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
     }
   })
 
-  register("Set vertex attribute icon")(new ProjectTransformation(_) {
-    params ++= List(
-      Choice("name", "Name", options = project.vertexAttrList),
-      Param("icon", "Icon name"))
-    def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
+  register("Set vertex attribute icons")(new ProjectTransformation(_) {
+    params += new DummyParam("text", "Attributes:", "Icon names:")
+    params ++= project.vertexAttrList.map {
+      attr => Param(s"icon_for_${attr.id}", attr.id)
+    }
+    def enabled = FEStatus.assert(
+      (project.vertexAttrList[String] ++ project.vertexAttrList[Double]).nonEmpty,
+      "No vertex attributes.")
+    val attrParams: Map[String, String] = params.toMap.collect {
+      case (name, value) if name.startsWith("icon_for_") => {
+        (name.stripPrefix("icon_for_"), value)
+      }
+    }
     override def summary = {
-      val name = params("name")
-      val icon = if (params("icon").nonEmpty) params("icon") else "nothing"
-      s"Set icon for $name to $icon"
+      val parts = attrParams.collect {
+        case (name, icon) if icon.nonEmpty => s"${name} to ${icon}"
+      }
+      s"Set icon for ${parts.mkString(", ")}"
     }
     def apply() = {
-      val name = params("name")
-      val icon = params("icon")
-      project.setElementMetadata(
-        VertexAttributeKind, name, MetadataNames.Icon,
-        if (icon.nonEmpty) icon else null)
+      for ((name, icon) <- attrParams.toMap) {
+        val attr = project.vertexAttributes(name)
+        project.setElementMetadata(
+          VertexAttributeKind, name, MetadataNames.Icon,
+          if (icon.nonEmpty) icon else null)
+      }
     }
   })
 }

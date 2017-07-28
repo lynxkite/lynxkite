@@ -17,42 +17,16 @@ Example usage::
     project = lk.get_project(state)
     scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
     print(scalars['!vertex_count'].double)
-
-The list of operations is not documented, but you can copy the invocation from a LynxKite project
-history.
 '''
-import collections
 import copy
 import json
 import os
 import requests
-import ssl
 import sys
 import types
-import yaml
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
-
-default_sql_limit = 1000
-default_privacy = 'public-read'
-
-
-class DirectoryEntry:
-  '''name: str
-
-  type: (``'project'``, ``'view'``, ``'table'``, or ``'directory'``)
-
-  checkpoint: str
-
-  object: the Python API object representing each entry. Directories have a ``list`` convenience
-  method for easier directory traversal.'''
-
-  def __init__(self, name, type, object, checkpoint):
-    self.name = name
-    self.type = type
-    self.object = object
-    self.checkpoint = checkpoint
 
 
 class LynxKite:
@@ -203,8 +177,7 @@ class LynxKite:
                dict(project=file, readACL=readACL, writeACL=writeACL))
 
   def list_dir(self, dir=''):
-    '''List the objects in a directory.
-    Returns a list of :class:`DirectoryEntry` objects.'''
+    '''List the objects in a directory.'''
 
     return self._send('/remote/list', dict(path=dir)).entries
 

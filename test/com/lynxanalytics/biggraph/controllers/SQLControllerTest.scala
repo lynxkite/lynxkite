@@ -123,8 +123,8 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
   // This should work, whether we choose to implement case sensitive or case insensitive
   // SQL in the future.
   test("global sql with upper case attribute name") {
-    val eg = box("Create example graph").box("Rename vertex attribute",
-      Map("before" -> "name", "after" -> "NAME"))
+    val eg = box("Create example graph").box("Rename vertex attributes",
+      Map("change_name" -> "NAME"))
     eg.snapshotOutput("test_dir/people", "project")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
