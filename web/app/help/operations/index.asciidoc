@@ -297,6 +297,8 @@ include::lookup-region.asciidoc[]
 
 include::make-all-segments-empy.asciidoc[]
 
+include::map-hyperbolic-coordinates.asciidoc[]
+
 include::merge-parallel-edges-by-attribute.asciidoc[]
 
 include::merge-parallel-edges.asciidoc[]

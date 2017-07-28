@@ -71,7 +71,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
       NonNegDouble("internaldegree", "Internal degree", defaultValue = "1.5"),
       NonNegDouble("exponent", "Exponent", defaultValue = "0.6"),
       RandomSeed("seed", "Seed"))
-    def enabled = FEStatus.enabled
+    def enabled = project.hasVertexSet
     def apply() = {
       val result = {
         val op = graph_operations.PSOGenerator(
