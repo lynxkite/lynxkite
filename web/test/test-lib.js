@@ -1458,6 +1458,11 @@ testLib = {
     });
   },
 
+  expectHasText(element, text) {
+    testLib.expectElement(element);
+    expect(element.getText()).toBe(text);
+  },
+
   menuClick: function(entry, action) {
     var menu = entry.$('.dropdown');
     menu.$('a.dropdown-toggle').click();
