@@ -190,7 +190,7 @@
         <image
           class="box-main"
           filter="{{ ::filters[box.metadata.color] ? 'url(#' + box.metadata.color + ')' : '' }}"
-          href="{{ ::box.metadata.icon }}" x="-25" y="-25" width="150" height="150"></image>
+          ng-attr-href="{{ ::box.metadata.icon }}" x="-25" y="-25" width="150" height="150"></image>
 
         <text x="50" y="105" class="summary backdrop">
           {{box.summary}}

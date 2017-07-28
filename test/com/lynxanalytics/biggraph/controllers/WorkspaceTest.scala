@@ -4,11 +4,13 @@ import org.scalatest.FunSuite
 
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
+import com.lynxanalytics.biggraph.graph_api.BuiltIns
 
 class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   val controller = new WorkspaceController(this)
   val bigGraphController = new BigGraphController(this)
   val ops = new frontend_operations.Operations(this)
+  BuiltIns.createBuiltIns(metaGraphManager)
   val user = serving.User.fake
   def context(ws: Workspace, params: (String, String)*) = ws.context(user, ops, params.toMap)
 

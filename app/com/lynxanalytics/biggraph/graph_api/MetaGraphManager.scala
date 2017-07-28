@@ -53,6 +53,7 @@ class MetaGraphManager(val repositoryPath: String) {
 
   def vertexSet(gUID: UUID): VertexSet = entities(gUID).asInstanceOf[VertexSet]
   def edgeBundle(gUID: UUID): EdgeBundle = entities(gUID).asInstanceOf[EdgeBundle]
+  def hybridBundle(gUID: UUID): HybridBundle = entities(gUID).asInstanceOf[HybridBundle]
   def attribute(gUID: UUID): Attribute[_] =
     entities(gUID).asInstanceOf[Attribute[_]]
   def attributeOf[T: TypeTag](gUID: UUID): Attribute[T] =
@@ -247,6 +248,8 @@ class MetaGraphManager(val repositoryPath: String) {
           .map(n => n -> vertexSet(inputs(n))).toMap,
         op.inputSig.edgeBundles
           .map(n => n -> edgeBundle(inputs(n))).toMap,
+        op.inputSig.hybridBundles
+          .map(n => n -> hybridBundle(inputs(n))).toMap,
         op.inputSig.attributes
           .map(n => n -> attribute(inputs(n))).toMap,
         op.inputSig.scalars
@@ -288,13 +291,13 @@ object BuiltIns {
     for ((file, json) <- loadBuiltIns(builtInsLocalDir)) {
       try {
         val entry = DirectoryEntry.fromName("built-ins/" + file)
-        // Overwrite existing built-ins with the ones from the disk.
-        if (entry.exists) {
+        val newWS = json.as[Workspace]
+        // If the workspace from the disk is the same as the existing one, leave it alone.
+        // This way we don't keep creating new checkpoints whenever LynxKite restarts.
+        if (!entry.exists || !entry.isWorkspace || entry.asWorkspaceFrame.workspace != newWS) {
           entry.remove()
+          entry.asNewWorkspaceFrame(newWS.checkpoint())
         }
-        val frame = entry.asNewWorkspaceFrame()
-        val cp = json.as[Workspace].checkpoint()
-        frame.setCheckpoint(cp)
       } catch {
         case e: Throwable => throw new Exception(s"Failed to create built-in for file $file.", e)
       }
@@ -305,7 +308,7 @@ object BuiltIns {
   private def getBuiltInsLocalDirectory(): String = {
     val stageDir = scala.util.Properties.envOrNone("KITE_STAGE_DIR")
     // In the backend-tests we don't have the KITE_STAGE_DIR environment variable set.
-    stageDir.getOrElse("stage")
+    stageDir.getOrElse(".")
   }
 
   private def loadBuiltIns(repo: String): Iterable[(String, json.JsValue)] = {

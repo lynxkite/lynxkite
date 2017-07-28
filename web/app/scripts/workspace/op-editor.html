@@ -1,0 +1,31 @@
+<a href
+   ng-show="boxMeta.htmlId || boxMeta.description"
+   id="help-toggle"
+   ng-click="showHelp = !showHelp">
+  <i class="glyphicon glyphicon-question-sign"></i>
+  {{ showHelp ? 'Less' : 'More' }} about "{{ boxMeta.id }}"</a>
+<!-- For documented operations. -->
+<p ng-if="showHelp && boxMeta.htmlId && !boxMeta.description"
+   help-id="{{ boxMeta.htmlId }}"
+   remove-header="yes"
+   scalars="scalars"
+   class="description"></p>
+<!-- For custom boxes. -->
+<p ng-if="showHelp && boxMeta.description" class="description"> {{ boxMeta.description }} </p>
+<p ng-if="boxMeta.parameters.length === 0" class="text-center">
+  No parameters
+</p>
+<div class="{{ halfSize ? 'operation-params-size-half' : '' }}">
+  <form ng-if="boxMeta.parameters" class="form-horizontal" ng-submit="onBlur()">
+    <operation-parameters
+        box="box"
+        meta="boxMeta"
+        output="plainParamValues"
+        parametric="parametricParamValues"
+        pflags="parametricFlags"
+        editable="true"
+        on-blur="onBlur()">
+    </operation-parameters>
+    <input type="submit" ng-show="false"><!-- For ng-submit. -->
+  </form>
+</div>

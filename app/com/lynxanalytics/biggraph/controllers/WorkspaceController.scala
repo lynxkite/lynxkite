@@ -38,12 +38,33 @@ case class BoxCatalogResponse(boxes: List[BoxMetadata], categories: List[FEOpera
 case class CreateSnapshotRequest(name: String, id: String)
 case class GetExportResultRequest(stateId: String)
 case class GetExportResultResponse(parameters: Map[String, String], result: FEScalar)
+case class RunWorkspaceRequest(workspace: Workspace, parameters: Map[String, String])
+case class RunWorkspaceResponse(outputs: List[BoxOutputInfo], summaries: Map[String, String])
+
+// An instrument is like a box. But we do not want to place it and save it in the workspace.
+// It always has 1 input and 1 output, so the connections do not need to be expressed either.
+case class Instrument(
+  operationId: String,
+  parameters: Map[String, String],
+  parametricParameters: Map[String, String])
+case class InstrumentState(
+  stateId: String,
+  kind: String,
+  error: String)
+case class GetInstrumentedStateRequest(
+  workspace: WorkspaceReference,
+  inputStateId: String, // State at the start of the instrument chain.
+  instruments: List[Instrument]) // Instrument chain. (N instruments.)
+case class GetInstrumentedStateResponse(
+  metas: List[FEOperationMeta], // Metadata for each instrument. (N metadatas.)
+  states: List[InstrumentState]) // Initial state + the output of each instrument. (N+1 states.)
 
 class WorkspaceController(env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val entityProgressManager: EntityProgressManager = env.entityProgressManager
 
   val ops = new Operations(env)
+  BuiltIns.createBuiltIns(env.metaGraphManager)
 
   private def assertNameNotExists(name: String) = {
     assert(!DirectoryEntry.fromName(name).exists, s"Entry '$name' already exists.")
@@ -79,51 +100,53 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         (cws, op.getParams, op.context.box.operationId)
     }
     lazy val frame = getWorkspaceFrame(user, name)
-    lazy val context = ws.context(user, ops, params)
   }
 
   def getWorkspace(
     user: serving.User, request: WorkspaceReference): GetWorkspaceResponse = {
-    val res = ResolvedWorkspaceReference(user, request)
-    val (stateInfo, summaries) = try {
-      val context = res.context
-      val states = context.allStates
-      val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
-      calculatedStates.synchronized {
-        for ((_, (boxOutputState, id)) <- statesWithId) {
-          calculatedStates(id) = boxOutputState
-        }
-      }
-      val stateInfo = statesWithId.toList.map {
-        case (boxOutput, (boxOutputState, stateId)) =>
-          BoxOutputInfo(boxOutput, stateId, boxOutputState.success, boxOutputState.kind)
-      }
-      def crop(s: String): String = {
-        val maxLength = 50
-        if (s.length > maxLength) { s.substring(0, maxLength - 3) + "..." } else { s }
-      }
-      val summaries = res.ws.boxes.map(
-        box => box.id -> crop(
-          try { context.getOperationForStates(box, states).summary }
-          catch {
-            case t: Throwable =>
-              log.error(s"Error while generating summary for $box in $request.", t)
-              box.operationId
-          }
-        )
-      ).toMap
-      (stateInfo, summaries)
-    } catch {
+    val ref = ResolvedWorkspaceReference(user, request)
+    val run = try runWorkspace(user, RunWorkspaceRequest(ref.ws, ref.params)) catch {
       case t: Throwable =>
         log.error(s"Could not execute $request", t)
         // We can still return the "cold" data that is available without execution.
         // This makes it at least possible to press Undo.
-        (List[BoxOutputInfo](), Map[String, String]())
+        RunWorkspaceResponse(List(), Map())
     }
     GetWorkspaceResponse(
-      res.name, res.ws, stateInfo, summaries,
-      canUndo = res.frame.currentState.previousCheckpoint.nonEmpty,
-      canRedo = res.frame.nextCheckpoint.nonEmpty)
+      ref.name, ref.ws, run.outputs, run.summaries,
+      canUndo = ref.frame.currentState.previousCheckpoint.nonEmpty,
+      canRedo = ref.frame.nextCheckpoint.nonEmpty)
+  }
+
+  def runWorkspace(
+    user: serving.User, request: RunWorkspaceRequest): RunWorkspaceResponse = {
+    val context = request.workspace.context(user, ops, request.parameters)
+    val states = context.allStates
+    val statesWithId = states.mapValues((_, Timestamp.toString)).view.force
+    calculatedStates.synchronized {
+      for ((_, (boxOutputState, id)) <- statesWithId) {
+        calculatedStates(id) = boxOutputState
+      }
+    }
+    val stateInfo = statesWithId.toList.map {
+      case (boxOutput, (boxOutputState, stateId)) =>
+        BoxOutputInfo(boxOutput, stateId, boxOutputState.success, boxOutputState.kind)
+    }
+    def crop(s: String): String = {
+      val maxLength = 50
+      if (s.length > maxLength) { s.substring(0, maxLength - 3) + "..." } else { s }
+    }
+    val summaries = request.workspace.boxes.map(
+      box => box.id -> crop(
+        try { context.getOperationForStates(box, states).summary }
+        catch {
+          case t: Throwable =>
+            log.error(s"Error while generating summary for $box in $request.", t)
+            box.operationId
+        }
+      )
+    ).toMap
+    RunWorkspaceResponse(stateInfo, summaries)
   }
 
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
@@ -266,7 +289,66 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   private def getOperation(user: serving.User, request: GetOperationMetaRequest): Operation = {
-    val ctx = ResolvedWorkspaceReference(user, request.workspace).context
+    val ref = ResolvedWorkspaceReference(user, request.workspace)
+    val ctx = ref.ws.context(user, ops, ref.params)
     ctx.getOperation(request.box)
+  }
+
+  @annotation.tailrec
+  private def instrumentStatesAndMetas(
+    ctx: WorkspaceExecutionContext,
+    instruments: List[Instrument],
+    states: List[BoxOutputState],
+    opMetas: List[FEOperationMeta]): (List[BoxOutputState], List[FEOperationMeta]) = {
+    val next = if (instruments.isEmpty) {
+      None
+    } else {
+      val instr = instruments.head
+      val state = states.last
+      val meta = ops.getBoxMetadata(instr.operationId)
+      assert(
+        meta.inputs.size == 1,
+        s"${instr.operationId} has ${meta.inputs.size} inputs instead of 1.")
+      assert(
+        meta.outputs.size == 1,
+        s"${instr.operationId} has ${meta.outputs.size} outputs instead of 1.")
+      val box = Box(
+        id = "",
+        operationId = instr.operationId,
+        parameters = instr.parameters,
+        x = 0,
+        y = 0,
+        // It does not matter where the inputs come from. Using "null" for BoxOutput.
+        inputs = Map(meta.inputs.head -> null),
+        parametricParameters = instr.parametricParameters)
+      val op = box.getOperation(ctx, Map(meta.inputs.head -> state))
+      val newState = box.orErrors(meta) { op.getOutputs }(box.output(meta.outputs.head))
+      Some((newState, op.toFE))
+    }
+    next match {
+      case Some((newState, newMeta)) if newState.isError =>
+        // Pretend there are no more instruments. This allows the error state to be seen.
+        (states :+ newState, opMetas :+ newMeta)
+      case Some((newState, newMeta)) =>
+        instrumentStatesAndMetas(ctx, instruments.tail, states :+ newState, opMetas :+ newMeta)
+      case None => (states, opMetas)
+    }
+  }
+
+  def getInstrumentedState(
+    user: serving.User, request: GetInstrumentedStateRequest): GetInstrumentedStateResponse = {
+    val ref = ResolvedWorkspaceReference(user, request.workspace)
+    val ctx = ref.ws.context(user, ops, ref.params)
+    val inputState = getOutput(user, request.inputStateId)
+    var (states, opMetas) = instrumentStatesAndMetas(
+      ctx, request.instruments, List(inputState), List[FEOperationMeta]())
+    val instrumentStates = calculatedStates.synchronized {
+      states.map { state =>
+        val id = Timestamp.toString
+        calculatedStates(id) = state
+        InstrumentState(id, state.kind, state.success.disabledReason)
+      }
+    }
+    GetInstrumentedStateResponse(opMetas, instrumentStates)
   }
 }

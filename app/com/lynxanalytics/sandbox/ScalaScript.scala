@@ -3,12 +3,14 @@ package com.lynxanalytics.sandbox
 import java.io.FilePermission
 import java.net.NetPermission
 import java.security.Permission
+import java.util.UUID
 import javax.script._
 
 import com.lynxanalytics.biggraph.graph_api.SafeFuture
 import com.lynxanalytics.biggraph.graph_api.ThreadUtil
 import com.lynxanalytics.biggraph.graph_api.TypeTagUtil
 import com.lynxanalytics.biggraph.graph_util.{ LoggedEnvironment, Timestamp }
+import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark.sql.DataFrame
 
@@ -186,9 +188,33 @@ object ScalaScript {
     }
   }
 
+  // Inferring the type for the exact same code and parameters is expected to happen often,
+  // so it is better to use a cache.
+  private val codeReturnTypeCache = new SoftHashMap[UUID, ScalaType]()
+
   def compileAndGetType(
     code: String, paramTypes: Map[String, TypeTag[_]], paramsToOption: Boolean): ScalaType = {
-    ScalaType(inferType(code, paramTypes, paramsToOption))
+    val funcCode = evalFuncString(code, convert(paramTypes, paramsToOption))
+    val id = UUID.nameUUIDFromBytes(funcCode.getBytes())
+    codeReturnTypeCache.synchronized {
+      codeReturnTypeCache.getOrElseUpdate(id, ScalaType(inferType(funcCode)))
+    }
+  }
+
+  private def inferType(func: String): TypeTag[_] = synchronized {
+    val fullCode = s"""
+    import scala.reflect.runtime.universe._
+    def typeTagOf[T: TypeTag](t: T) = typeTag[T]
+    $func
+    typeTagOf(eval _)
+    """
+    withContextClassLoader {
+      val compiledCode = compile(fullCode)
+      val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
+        compiledCode.eval()
+      }
+      result.asInstanceOf[TypeTag[_]] // We cannot use asInstanceOf within the SecurityManager.
+    }
   }
 
   // Both type inference and evaluation should use this function.
@@ -218,26 +244,6 @@ object ScalaScript {
     } catch {
       case e: javax.script.ScriptException =>
         throw new javax.script.ScriptException(new String(os.toByteArray(), "UTF-8"))
-    }
-  }
-
-  private def inferType(
-    code: String,
-    paramTypes: Map[String, TypeTag[_]],
-    paramsToOption: Boolean): TypeTag[_] = synchronized {
-    val func = evalFuncString(code, convert(paramTypes, paramsToOption))
-    val fullCode = s"""
-    import scala.reflect.runtime.universe._
-    def typeTagOf[T: TypeTag](t: T) = typeTag[T]
-    $func
-    typeTagOf(eval _)
-    """
-    withContextClassLoader {
-      val compiledCode = compile(fullCode)
-      val result = ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
-        compiledCode.eval()
-      }
-      result.asInstanceOf[TypeTag[_]] // We cannot use asInstanceOf within the SecurityManager.
     }
   }
 

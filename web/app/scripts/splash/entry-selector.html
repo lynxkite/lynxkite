@@ -111,8 +111,7 @@
         menu="menu"
         name="{{object.name}}"
         short-name="{{pathInside(object.name)}}"
-        type="{{object.objectType}}"
-        config="object.details">
+        type="{{object.objectType}}">
       </item-name-and-menu>
       <a ng-if="isWorkspace(object)" href="#/workspace/{{object.name}}" target="_blank"
         ng-hide="object.error" ng-click="util.captureClick($event)" class="open-in-new-tab-icon">
