@@ -135,7 +135,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
   })
 
   register("Rename edge attributes")(new ProjectTransformation(_) {
-    params += DummyParam("text", "Attributes:", "Rename to:")
+    params += new DummyParam("text", "Attributes:", "Rename to:")
     params ++= project.edgeAttrList.map {
       attr => Param(s"change_${attr.id}", attr.id, defaultValue = attr.id)
     }
@@ -156,14 +156,10 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       }
       val deleteStrings = deletedAttrs.keys
       val renameSummary = {
-        if (renameStrings.nonEmpty) {
-          s"Rename ${renameStrings.mkString(", ")}. "
-        } else ""
+        if (renameStrings.isEmpty) "" else s"Rename ${renameStrings.mkString(", ")}. "
       }
       val deleteSummary = {
-        if (deleteStrings.nonEmpty) {
-          s"Delete " + deleteStrings.mkString(", ")
-        } else ""
+        if (deleteStrings.isEmpty) "" else s"Delete " + deleteStrings.mkString(", ")
       }
       renameSummary + deleteSummary
     }
@@ -220,7 +216,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
   })
 
   register("Rename vertex attributes")(new ProjectTransformation(_) {
-    params += DummyParam("text", "Attributes:", "Rename to:")
+    params += new DummyParam("text", "Attributes:", "Rename to:")
     params ++= project.vertexAttrList.map {
       attr => Param(s"change_${attr.id}", attr.id, defaultValue = attr.id)
     }
@@ -241,14 +237,10 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       }
       val deleteStrings = deletedAttrs.keys
       val renameSummary = {
-        if (renameStrings.nonEmpty) {
-          s"Rename ${renameStrings.mkString(", ")}. "
-        } else ""
+        if (renameStrings.isEmpty) "" else s"Rename ${renameStrings.mkString(", ")}. "
       }
       val deleteSummary = {
-        if (deleteStrings.nonEmpty) {
-          s"Delete " + deleteStrings.mkString(", ")
-        } else ""
+        if (deleteStrings.isEmpty) "" else s"Delete " + deleteStrings.mkString(", ")
       }
       renameSummary + deleteSummary
     }
@@ -272,7 +264,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
   })
 
   register("Set edge attribute icons")(new ProjectTransformation(_) {
-    params += DummyParam("text", "Attributes:", "Icon names:")
+    params += new DummyParam("text", "Attributes:", "Icon names:")
     params ++= project.edgeAttrList.map {
       attr => Param(s"icon_for_${attr.id}", attr.id)
     }
@@ -339,7 +331,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
   })
 
   register("Set vertex attribute icons")(new ProjectTransformation(_) {
-    params += DummyParam("text", "Attributes:", "Icon names:")
+    params += new DummyParam("text", "Attributes:", "Icon names:")
     params ++= project.vertexAttrList.map {
       attr => Param(s"icon_for_${attr.id}", attr.id)
     }
