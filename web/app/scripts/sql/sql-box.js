@@ -168,12 +168,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
       };
 
       scope.$watch('exportFormat', function(exportFormat) {
-        if (exportFormat === 'table' ||
-            exportFormat === 'view') {
-          scope.exportKiteTable = scope.exportKiteTable || scope.offerWithPath();
-        } else if (exportFormat === 'segmentation') {
-          scope.exportSegmentation = scope.exportSegmentation || '';
-        } else if (exportFormat === 'csv') {
+        if (exportFormat === 'csv') {
           scope.exportPath = '<download>';
           scope.exportDelimiter = ',';
           scope.exportQuote = '"';
@@ -206,21 +201,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
         scope.inProgress += 1;
         var result;
         var postOpts = { reportErrors: false };
-        if (scope.exportFormat === 'table') {
-          req.table = scope.exportKiteTable;
-          req.privacy = 'public-read';
-          result = util.post('/ajax/exportSQLQueryToTable', req, postOpts);
-        } else if (scope.exportFormat === 'segmentation') {
-          result = scope.side.applyOp(
-            'Create-segmentation-from-SQL', {
-              name: scope.exportSegmentation,
-              sql: scope.sql
-            });
-        } else if (scope.exportFormat === 'view') {
-          req.name = scope.exportKiteTable;
-          req.privacy = 'public-read';
-          result = util.post('/ajax/createViewDFSpec', req, postOpts);
-        } else if (scope.exportFormat === 'csv') {
+        if (scope.exportFormat === 'csv') {
           req.path = scope.exportPath;
           req.delimiter = scope.exportDelimiter;
           req.quote = scope.exportQuote;
