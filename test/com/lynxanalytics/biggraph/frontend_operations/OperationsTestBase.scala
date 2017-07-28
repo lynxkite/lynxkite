@@ -19,7 +19,6 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
   val user = serving.User.fake
   BuiltIns.createBuiltIns(metaGraphManager)
 
-
   case class TestBox(
       operationId: String,
       parameters: Map[String, String],
