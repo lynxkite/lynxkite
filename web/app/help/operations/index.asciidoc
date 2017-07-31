@@ -313,6 +313,8 @@ include::output.asciidoc[]
 
 include::predict-attribute-by-viral-modeling.asciidoc[]
 
+include::predict-edges-with-hyperbolic-positions.asciidoc[]
+
 include::predict-vertex-attribute.asciidoc[]
 
 include::predict-with-a-neural-network-experimental.asciidoc[]

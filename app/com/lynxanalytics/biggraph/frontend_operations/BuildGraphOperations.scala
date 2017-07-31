@@ -127,6 +127,29 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     }
   })
 
+  register("Predict edges with hyperbolic positions",
+    List(projectInput))(new ProjectTransformation(_) {
+      params ++= List(
+        NonNegInt("size", "Number of predictions", default = 100),
+        Choice("method", "Prediction method", options = FEOption.list("pso", "pivot")),
+        NonNegDouble("exponent", "Exponent", defaultValue = "0.6"),
+        RandomSeed("seed", "Seed"))
+      def enabled = FEStatus.assert(
+        project.vertexAttrList[Double].size >= 2, "Not enough vertex attributes.")
+      def apply() = {
+        val op = graph_operations.HyperbolicPrediction(
+          params("size").toInt,
+          params("method"),
+          params("exponent").toDouble,
+          params("seed").toLong)
+        project.edgeBundle = op(op.vs, project.vertexSet
+        )(op.es, project.edgeBundle
+        )(op.radial, project.vertexAttributes("radial").runtimeSafeCast[Double]
+        )(op.angular, project.vertexAttributes("angular").runtimeSafeCast[Double])
+          .result.predictedEdges
+      }
+    })
+
   register(
     "Use table as vertices", List("table"))(factory = new ProjectOutputOperation(_) {
       lazy val vertices = tableLikeInput("table").asProject
