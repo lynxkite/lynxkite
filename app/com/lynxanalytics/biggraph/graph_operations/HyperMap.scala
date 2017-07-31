@@ -25,7 +25,7 @@ object HyperMap extends OpFromJson {
     val angular = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = HyperMap(
-    (j \ "avgExpectedDegree").as[Double],
+    (j \ "avgexpecteddegree").as[Double],
     (j \ "exponent").as[Double],
     (j \ "temperature").as[Double],
     (j \ "seed").as[Long])
@@ -38,7 +38,7 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
-    "avgExpectedDegree" -> avgExpectedDegree,
+    "avgexpecteddegree" -> avgExpectedDegree,
     "exponent" -> exponent,
     "temperature" -> temperature,
     "seed" -> seed)

@@ -74,7 +74,7 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
             HyperVertex(
               id = id,
               ord = ordinal + 1,
-              radial = math.log(ordinal + 1),
+              radial = 2 * math.log(ordinal + 1),
               angular = rnd.nextDouble * math.Pi * 2,
               expectedDegree = totalExpectedEPSO(exponent,
                 externalDegree, internalDegree, size, ordinal + 1))
@@ -127,7 +127,7 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
         val dst = data.tail.map {
           dst => (hyperbolicDistance(src, dst), Edge(src.id, dst.id))
         }.sortBy(_._1)
-        dst.take(numSelections + 1).map { case (key, value) => value }
+        dst.take(numSelections).map { case (key, value) => value }
     }.flatMap { edge => List(edge, Edge(edge.dst, edge.src)) }
       .distinct
 
