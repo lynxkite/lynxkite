@@ -23,7 +23,7 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
   // Takes a Project as input and returns a Visualization as output.
   register(
     "Graph visualization",
-    "black_question_mark_ornament",
+    category.icon,
     List("project"),
     List("visualization"))(new SimpleOperation(_) {
 
@@ -53,7 +53,7 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
 
   register(
     "Custom plot",
-    "apl_functional_symbol_quad_up_caret",
+    "signal",
     List("table"),
     List("plot"))(new PlotOperation(_))
 

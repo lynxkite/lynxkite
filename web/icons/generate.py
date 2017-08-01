@@ -6,15 +6,16 @@ import PIL.ImageChops
 import PIL.ImageOps
 import subprocess
 import unicodedata
+import yaml
 
 
-def povray(output_file, caption, shadow_pass):
+def povray(output_file, font, caption, shadow_pass):
   with open('tmp.pov', 'w') as f:
     f.write('''
 #version 3.7;
 #include "scene.pov"
-Statue("{}")
-'''.format(caption))
+Statue("{}", "{}")
+'''.format(font, caption))
   subprocess.run([
       'povray',
       '+A0.05',  # Anti-aliasing.
@@ -29,12 +30,12 @@ Statue("{}")
   os.remove('tmp.pov')
 
 
-def compose(output_file, caption):
+def compose(output_file, font, caption):
   output_file = '../app/images/icons/' + output_file
   if os.path.exists(output_file):
     return
-  povray('obj.png', caption, shadow_pass=0)
-  povray('shadow.png', caption, shadow_pass=1)
+  povray('obj.png', font, caption, shadow_pass=0)
+  povray('shadow.png', font, caption, shadow_pass=1)
   obj = PIL.Image.open('obj.png')
   shadow = PIL.Image.open('shadow.png').convert('L')
   # Make shadow render a bit brighter so that unshadowed parts are perfectly white.
@@ -50,8 +51,24 @@ def compose(output_file, caption):
   os.remove('shadow.png')
 
 
-def render(character):
-  compose(character.replace(' ', '_') + '.png', unicodedata.lookup(character.upper()))
+def lookup_fontawesome_codepoint(name, registry={}):
+  if not registry:
+    with open('icons.yml') as f:
+      fa = yaml.load(f.read())
+    for i in fa['icons']:
+      ch = chr(int(i['unicode'], 16))
+      registry[i['id']] = ch
+  return registry[name]
+
+
+def render(name):
+  try:
+    font = 'fontawesome-webfont.ttf'
+    character = lookup_fontawesome_codepoint(name)
+  except KeyError:  # Not a Font Awesome character name.
+    font = 'NotoSansSymbols-Regular.ttf'
+    character = unicodedata.lookup(name.upper())
+  compose(name.replace(' ', '_') + '.png', font, character)
 
 
 def main():
@@ -69,14 +86,39 @@ def main():
         'NotoSansSymbols-Regular.ttf',
     ]).check_returncode()
     os.remove('NotoSansSymbols-unhinted.zip')
+  if not os.path.exists('fontawesome-webfont.ttf'):
+    subprocess.run([
+        'wget',
+        'https://raw.githubusercontent.com/FortAwesome/Font-Awesome/v4.7.0/fonts/fontawesome-webfont.ttf',
+    ]).check_returncode()
+  if not os.path.exists('icons.yml'):
+    subprocess.run([
+        'wget',
+        'https://raw.githubusercontent.com/FortAwesome/Font-Awesome/v4.7.0/src/icons.yml',
+    ]).check_returncode()
   render('anchor')
-  render('apl functional symbol quad up caret')
   render('black down-pointing triangle')
+  render('black up-pointing triangle')
   render('black medium square')
   render('black question mark ornament')
-  render('black truck')
-  render('black up-pointing triangle')
-  render('fountain')
+  render('truck')
+  render('download')
+  render('upload')
+  render('gavel')
+  render('filter')
+  render('th-large')
+  render('globe')
+  render('asterisk')
+  render('circle')
+  render('share-alt')
+  render('podcast')
+  render('signal')
+  render('android')
+  render('wrench')
+  render('eye')
+  render('superpowers')
+  render('snowflake-o')
+  render('cogs')
 
 
 if __name__ == '__main__':

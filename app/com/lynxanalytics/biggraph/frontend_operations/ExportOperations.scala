@@ -8,7 +8,7 @@ import com.lynxanalytics.biggraph.controllers._
 class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   implicit lazy val manager = env.metaGraphManager
 
-  override val defaultIcon = "black_truck"
+  override val defaultIcon = "upload"
 
   import Operation.Context
 
