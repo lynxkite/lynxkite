@@ -53,15 +53,13 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
     val edges = inputs.es.rdd
     val sc = rc.sparkContext
     val size = inputs.vs.data.count.getOrElse(inputs.vs.rdd.count)
-    // "log" used by scala.math is log_e. It can also do log_10 but that would give too few
-    // samples.
+    // "log" used by scala.math is log_e. It can also do log_10 but that would be too few samples.
     val logSize = math.log(size)
     val vertexPartitioner = vertices.partitioner.get
     val edgePartitioner = edges.partitioner.get
     // Order vertices by descending degree to place higher-degree vertices first.
     val noLoopEdges = edges.filter { case (id, e) => e.src != e.dst }
-    val degreeOp = OutDegree()
-    val degree = noLoopEdges.OutDegree.result.outDegree
+    val degree = inputs.degree.rdd
     val degreeOrdered = degree.sortBy(_._2, false).zipWithIndex.map {
       case ((id, degree), ord) =>
         (id, degree, ord + 1)
