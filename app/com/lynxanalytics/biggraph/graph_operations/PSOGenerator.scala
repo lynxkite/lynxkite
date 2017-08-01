@@ -1,6 +1,6 @@
 // Adds scale-free edges to a graph based on the popularity x similarity model.
 // The added eges will be scale-free and have high average clustering.
-// Based on paper: https://www.caida.org/publications/papers/2015/network_mapping_replaying_hyperbolic/network_mapping_replaying_hyperbolic.pdf
+// Based on paper: https://arxiv.org/abs/1205.4384
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.math
