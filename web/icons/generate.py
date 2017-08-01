@@ -117,7 +117,7 @@ def main():
   render('wrench')
   render('eye')
   render('superpowers')
-  render('sitemap')
+  render('snowflake-o')
   render('cogs')
 
 
