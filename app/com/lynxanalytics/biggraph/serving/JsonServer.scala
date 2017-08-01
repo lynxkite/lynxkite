@@ -445,6 +445,13 @@ object ProductionJsonServer extends JsonServer {
   val sqlController = new SQLController(BigGraphProductionEnvironment, workspaceController.ops)
   def getTableBrowserNodes = jsonGet(sqlController.getTableBrowserNodes)
   def runSQLQuery = jsonFuture(sqlController.runSQLQuery)
+
+  def exportSQLQueryToCSV = jsonFuturePost(sqlController.exportSQLQueryToCSV)
+  def exportSQLQueryToJson = jsonFuturePost(sqlController.exportSQLQueryToJson)
+  def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)
+  def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
+  def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
+
   def importBox = jsonFuturePost(sqlController.importBox)
 
   def getTableOutput = jsonFuture(getTableOutputData)

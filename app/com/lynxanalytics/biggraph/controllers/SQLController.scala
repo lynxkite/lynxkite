@@ -356,6 +356,73 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     }.toList
     GetTableOutputResponse(header, data)
   }
+
+  def exportSQLQueryToCSV(
+    user: serving.User, request: SQLExportToCSVRequest) = async[SQLExportToFileResult] {
+    downloadableExportToFile(
+      user,
+      request.dfSpec,
+      request.path,
+      "csv",
+      Map(
+        "delimiter" -> request.delimiter,
+        "quote" -> request.quote,
+        "nullValue" -> "",
+        "header" -> (if (request.header) "true" else "false")),
+      stripHeaders = request.header)
+  }
+
+  def exportSQLQueryToJson(
+    user: serving.User, request: SQLExportToJsonRequest) = async[SQLExportToFileResult] {
+    downloadableExportToFile(user, request.dfSpec, request.path, "json")
+  }
+
+  def exportSQLQueryToParquet(
+    user: serving.User, request: SQLExportToParquetRequest) = async[Unit] {
+    exportToFile(user, request.dfSpec, HadoopFile(request.path), "parquet")
+  }
+
+  def exportSQLQueryToORC(
+    user: serving.User, request: SQLExportToORCRequest) = async[Unit] {
+    exportToFile(user, request.dfSpec, HadoopFile(request.path), "orc")
+  }
+
+  def exportSQLQueryToJdbc(
+    user: serving.User, request: SQLExportToJdbcRequest) = async[Unit] {
+    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
+    df.write.mode(request.mode).jdbc(request.jdbcUrl, request.table, new java.util.Properties)
+  }
+
+  private def downloadableExportToFile(
+    user: serving.User,
+    dfSpec: DataFrameSpec,
+    path: String,
+    format: String,
+    options: Map[String, String] = Map(),
+    stripHeaders: Boolean = false): SQLExportToFileResult = {
+    val file = if (path == "<download>") {
+      dataManager.repositoryPath / "exports" / Timestamp.toString + "." + format
+    } else {
+      HadoopFile(path)
+    }
+    exportToFile(user, dfSpec, file, format, options)
+    val download =
+      if (path == "<download>") Some(serving.DownloadFileRequest(file.symbolicName, stripHeaders))
+      else None
+    SQLExportToFileResult(download)
+  }
+
+  private def exportToFile(
+    user: serving.User,
+    dfSpec: DataFrameSpec,
+    file: HadoopFile,
+    format: String,
+    options: Map[String, String] = Map()): Unit = {
+    val df = dfSpec.createDataFrame(user, SQLController.defaultContext(user))
+    // TODO: #2889 (special characters in S3 passwords).
+    file.assertWriteAllowedFrom(user)
+    df.write.format(format).options(options).save(file.resolvedName)
+  }
 }
 object SQLController {
   def stringOnlySchema(columns: Seq[String]) = {
