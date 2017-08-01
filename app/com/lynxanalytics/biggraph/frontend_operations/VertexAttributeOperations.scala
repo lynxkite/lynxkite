@@ -260,7 +260,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       NonNegDouble("exponent", "Exponent", defaultValue = "0.6"),
       NonNegDouble("temperature", "Temperature", defaultValue = "0.45"),
       RandomSeed("seed", "Seed"))
-    def enabled = project.hasVertexSet
+    def enabled = project.hasEdgeBundle
     def apply() = {
       val result = {
         val op = graph_operations.HyperMap(
@@ -268,7 +268,10 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
           params("exponent").toDouble,
           params("temperature").toDouble,
           params("seed").toLong)
-        op(op.vs, project.vertexSet)(op.es, project.edgeBundle).result
+        val direction = Direction("all neighbors", project.edgeBundle)
+        val degreeOp = outDegree()
+        val degree = degreeOp(degreeOp.es, direction.edgeBundle).result.outDegree
+        op(op.vs, project.vertexSet)(op.es, direction.edgeBundle).result
       }
       project.newVertexAttribute("radial", result.radial)
       project.newVertexAttribute("angular", result.angular)
