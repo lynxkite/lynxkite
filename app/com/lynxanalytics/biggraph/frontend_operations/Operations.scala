@@ -59,7 +59,7 @@ object Categories {
   val AttributePropagationOperations =
     Category("Attribute propagation", "yellow", icon = "podcast", index = idx)
   val GraphComputationOperations =
-    Category("Graph computation", "blue", icon = "sitemap", index = idx)
+    Category("Graph computation", "blue", icon = "snowflake-o", index = idx)
   val MachineLearningOperations =
     Category("Machine learning", "blue", icon = "android", index = idx)
   val WorkflowOperations =
