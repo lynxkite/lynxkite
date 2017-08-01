@@ -2,7 +2,7 @@
 // These can later be used to evaluate edge strength or
 // predict new links in the graph.
 // Works on undirected graph.
-// Based on paper: https://www.caida.org/publications/papers/2015/network_mapping_replaying_hyperbolic/network_mapping_replaying_hyperbolic.pdf
+// Based on paper: https://arxiv.org/abs/1205.4384
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.math
@@ -60,7 +60,7 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
     // Order vertices by descending degree to place higher-degree vertices first.
     val noLoopEdges = edges.filter { case (id, e) => e.src != e.dst }
     val degree = inputs.degree.rdd
-    val degreeOrdered = degree.sortBy(_._2, false).zipWithIndex.map {
+    val degreeOrdered = degree.sortBy(_._2, ascending = false).zipWithIndex.map {
       case ((id, degree), ord) =>
         (id, degree, ord + 1)
     }
@@ -83,7 +83,7 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
       expectedDegree = 0) :: Nil
     // Get the edges for building the remainder of sampleList.
     val collectedEdges = noLoopEdges.collect.toList
-    var edgeListForSamples = collectedEdges.filter { case (id, e) => sampleList.head.id == e.dst }
+    var edgesToSamples = collectedEdges.filter { case (id, e) => sampleList.head.id == e.dst }
     // Place down the rest of vertices in sampleList and get edges to them for later vertices.
     for (currentSample <- collectedSamples.tail) {
       val newHyperVertex = HyperVertex(
@@ -91,18 +91,13 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
         ord = currentSample._3,
         radial = 2 * math.log(currentSample._3 * 2),
         angular = maximumLikelihoodAngular(currentSample._1, currentSample._3, sampleList,
-          edgeListForSamples, exponent, temperature, avgExpectedDegree, logSize),
+          edgesToSamples, exponent, temperature, avgExpectedDegree, logSize),
         expectedDegree = 0)
       sampleList = newHyperVertex :: sampleList
-      edgeListForSamples = collectedEdges.filter { case (id, e) => sampleList.head.id == e.dst } ++
-        edgeListForSamples
+      edgesToSamples = collectedEdges.filter { case (id, e) => sampleList.head.id == e.dst } ++
+        edgesToSamples
     }
-    // Broadcast the sample vertex list for fast comparisons.
-    val bcSampleList = sc.broadcast(sampleList)
-    val sampleVertexIDs = bcSampleList.value.map(vertex => vertex.id)
-    // Broadcast the edges that go to a vertex in sampleList so that
-    // checking whether two vertices are connected will take less time.
-    val bcEdgesToSamples = sc.broadcast(edgeListForSamples)
+    val sampleVertexIDs = sampleList.map(vertex => vertex.id)
     // Place down the rest of the vertices simultaneously.
     val hyperVertices = degreeOrdered.map {
       case (id, degree, ord) =>
@@ -110,8 +105,8 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
           id = id,
           ord = ord,
           radial = 2 * math.log(ord),
-          angular = maximumLikelihoodAngular(id, ord, bcSampleList.value,
-            bcEdgesToSamples.value, exponent, temperature, avgExpectedDegree, logSize),
+          angular = maximumLikelihoodAngular(id, ord, sampleList,
+            edgesToSamples, exponent, temperature, avgExpectedDegree, logSize),
           expectedDegree = 0)
     }
 
@@ -128,20 +123,16 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
                  exponent: Double,
                  temperature: Double,
                  avgExpectedDegree: Double): Double = {
-    var product: Double = 1
     val radial = 2 * math.log(ord)
-    for (otherVertex <- samples if otherVertex.ord < ord) {
-      val prob: Double = probability(radial, otherVertex.radial, angular, otherVertex.angular,
-        ord, exponent, temperature, avgExpectedDegree)
-      if (prob != 1 && prob != 0) {
-        if (!sampleEdges.filter { case (id, e) => e.src == vertexID && e.dst == otherVertex.id }.isEmpty) {
-          product *= prob
-        } else {
-          product *= (1 - prob)
-        }
-      }
-    }
-    product
+    samples.filter { v => v.ord < ord }
+    samples.foldLeft(1.0)((product, otherVertex) =>
+      if (!sampleEdges.filter { case (id, e) => e.src == vertexID && e.dst == otherVertex.id }.isEmpty) {
+        product * probability(radial, otherVertex.radial, angular, otherVertex.angular,
+          ord, exponent, temperature, avgExpectedDegree)
+      } else {
+        product * (1 - probability(radial, otherVertex.radial, angular, otherVertex.angular,
+          ord, exponent, temperature, avgExpectedDegree))
+      })
   }
   // Returns the optimal angular coordinate for a node.
   // Calculates the likelihood that the mapped graph is similar to a PSO-grown graph.
