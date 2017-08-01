@@ -584,7 +584,9 @@ angular.module('biggraph')
           scope.$apply(function() {
             var z1 = zoomToScale(workspaceZoom);
             workspaceZoom -= delta;
+            // Enforce a maximal zoom where the icons are not yet pixelated.
             workspaceZoom = Math.min(workspaceZoom, 1000 * Math.log(4 / 3));
+            // Enforce a minimal zoom where boxes are still visible.
             workspaceZoom = Math.max(workspaceZoom, 1000 * Math.log(1 / 50));
             var z2 = zoomToScale(workspaceZoom);
             // Maintain screen-coordinates of logical point under the mouse.
@@ -663,8 +665,10 @@ angular.module('biggraph')
           window.removeEventListener('paste', wrappedPasteBoxes);
         });
 
+        // Box colors come as strings from the backend. We map them to feColorMatrix matrices that
+        // get applied to the grayscale icon images. This function builds the mapping.
         function makeFilters() {
-          // TODO: We could generate these with tinycolor from the color names.
+          // The red, green, blue factors.
           var colors = [
             ['black', 0.2, 0.2, 0.2],
             ['blue', 0, 0.4, 0.6],
@@ -683,6 +687,7 @@ angular.module('biggraph')
                 (g + ' ').repeat(3) + '0 0 ' +
                 (b + ' ').repeat(3) + '0 0   0 0 0 1 0');
           }
+          // The "natural" filter leaves the colors alone. This is used for user-specified images.
           filters.natural = '1 0 0 0 0   0 1 0 0 0   0 0 1 0 0   0 0 0 1 0';
           return filters;
         }
