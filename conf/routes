@@ -37,6 +37,13 @@ GET  /ajax/center      com.lynxanalytics.biggraph.serving.ProductionJsonServer.c
 GET  /ajax/getTableBrowserNodes     com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableBrowserNodes
 GET  /ajax/getTableBrowserNodesForBox     com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableBrowserNodesForBox
 GET  /ajax/runSQLQuery      com.lynxanalytics.biggraph.serving.ProductionJsonServer.runSQLQuery
+
+POST /ajax/exportSQLQueryToCSV     com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToCSV
+POST /ajax/exportSQLQueryToJson    com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToJson
+POST /ajax/exportSQLQueryToParquet com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToParquet
+POST /ajax/exportSQLQueryToORC     com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToORC
+POST /ajax/exportSQLQueryToJdbc    com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToJdbc
+
 POST /ajax/importBox         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importBox
 
 GET  /ajax/demoModeStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.demoModeStatus
