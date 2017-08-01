@@ -1,9 +1,6 @@
 // Predicts edges in a graph that has hyperbolic coordinate attributes.
-// Contains 2 methods. Both take the top X most likely edges and apply distinct.
-// 1, Runs PSOGenerator with the already existing coordinates, but higher degrees.
-// 2, Selects the two most likely edges from each vertex and links them if they are not connected.
-// First method is better for large-scale predictions, second for more predictions about
-// the smaller-degree vertices.
+// Runs PSOGenerator with the already existing coordinates, but higher degrees.
+// Takes the top X most likely edges and applies distinct.
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.math
@@ -28,12 +25,11 @@ object HyperbolicPrediction extends OpFromJson {
   }
   def fromJson(j: JsValue) = HyperbolicPrediction(
     (j \ "size").as[Int],
-    (j \ "method").as[String],
     (j \ "exponent").as[Double],
     (j \ "seed").as[Long])
 }
 import HyperbolicPrediction._
-case class HyperbolicPrediction(size: Int, method: String,
+case class HyperbolicPrediction(size: Int,
                                 exponent: Double, seed: Long) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
@@ -41,7 +37,6 @@ case class HyperbolicPrediction(size: Int, method: String,
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
     "size" -> size,
-    "method" -> method,
     "exponent" -> exponent,
     "seed" -> seed)
 
@@ -60,10 +55,9 @@ case class HyperbolicPrediction(size: Int, method: String,
       .sortBy(_._2)
       .zipWithIndex
       .map { case ((id, rad, ang), ord) => (id, rad, ang, ord) }
-    val internalDegree = (edgeBundleSize / vertexSetSize.toDouble / 2) *
+    val internalDegree = (edgeBundleSize / vertexSetSize.toDouble / 4) *
       ((edgeBundleSize + size) / edgeBundleSize.toDouble)
     val externalDegree = internalDegree
-    // TODO add pivot predictions
     val vertices = ordinals.map {
       case (id, radi, angu, ordi) =>
         HyperVertex(
@@ -74,80 +68,65 @@ case class HyperbolicPrediction(size: Int, method: String,
           expectedDegree = totalExpectedEPSO(exponent,
             externalDegree, internalDegree, size, ordi + 1))
     }
-    val extraEdges = {
-      if (method == "pso") {
-        // For each vertex: samples ~log(n) vertices with smallest angular coordinate difference, plus
-        // preceding appearance (abstraction for higher popularity vertex; smaller radial coordinate).
-        // Groups the samples for each vertex into a list.
-        val allVerticesList: List[HyperVertex] = vertices.collect().sortBy(_.angular).toList
-        // Constructs list double linked by angular, single linked by ord/radial.
-        val lastLHV = new LinkedHyperVertex(allVerticesList.head)
-        var linkedList = lastLHV :: Nil
-        for (vertex <- allVerticesList.tail) {
-          val newLHV = new LinkedHyperVertex(vertex)
-          newLHV.previous = linkedList.head
-          linkedList.head.next = newLHV
-          linkedList = newLHV :: linkedList
-        }
-        lastLHV.previous = linkedList.head
-        linkedList.head.next = lastLHV
-
-        linkedList.sortBy(_.vertex.ord)
-        var radPrevTracker = linkedList.head
-        for (lhv <- linkedList.tail) {
-          lhv.radialPrevious = radPrevTracker
-          radPrevTracker = lhv
-        }
-        val possibilityList: List[List[HyperVertex]] = linkedList.map {
-          lhv =>
-            var sampleList: List[HyperVertex] = Nil
-            val numSamples = (logVertexSetSize * lhv.vertex.expectedDegree).toInt
-            var ne = lhv.next
-            var pr = lhv.previous
-            var rapr = lhv.radialPrevious
-            for (i <- 0 until numSamples) {
-              sampleList = ne.vertex :: pr.vertex :: sampleList
-              if (rapr != lhv) sampleList = rapr.vertex :: sampleList
-              ne = ne.next
-              pr = pr.previous
-              rapr = rapr.radialPrevious
-            }
-            lhv.vertex :: sampleList
-        }
-        // Selects the expectedDegree smallest distance edges from possibility bundles.
-        // Takes the $size most probable edges from all generated edges and adds them.
-        val possibilities = sc.parallelize(possibilityList)
-        possibilities.flatMap {
-          data =>
-            val numSelections: Int = data.head.expectedDegree.toInt
-            val src = data.head
-            val dst = data.tail.map {
-              dst =>
-                (probability(src, dst, exponent, 0.45, externalDegree),
-                  Edge(src.id, dst.id))
-            }.sortBy(_._1)
-            dst.take(numSelections)
-        }.top(size)
-      } else {
-        vertices.map { vertex =>
-          val edgesFromVertex = inputs.es.rdd.filter { case (id, edge) => edge.src == vertex.id }
-            .map { case (id, e) => (probability(e.src, e.dst, exponent, 0.45, externalDegree), e) }
-          val neighbourhood = edgesFromVertex.map { case (prob, edge) => edge.dst }
-          val edgesInNeighbourhood = inputs.es.rdd.filter {
-            case (id, edge) =>
-              neighbourhood.contains(edge.src) || neighbourhood.contains(edge.dst)
-          }
-
-          // TODO issue: I'd need a second round of filtering edges to check whether the endpoints
-          // are already connected. Any way around this? Seems tough.
-        }.top(size)
-      }
+    // For each vertex: samples ~log(n) vertices with smallest angular coordinate difference, plus
+    // preceding appearance (abstraction for higher popularity vertex; smaller radial coordinate).
+    // Groups the samples for each vertex into a list.
+    val allVerticesList: List[HyperVertex] = vertices.collect().sortBy(_.angular).toList
+    // Constructs list double linked by angular, single linked by ord/radial.
+    val lastLHV = new LinkedHyperVertex(allVerticesList.head)
+    var linkedList = lastLHV :: Nil
+    for (vertex <- allVerticesList.tail) {
+      val newLHV = new LinkedHyperVertex(vertex)
+      newLHV.previous = linkedList.head
+      linkedList.head.next = newLHV
+      linkedList = newLHV :: linkedList
     }
-    val predictedEdges = (inputs.es.rdd.map { case (id, edge) => edge }
-      ++ sc.parallelize(extraEdges) flatMap {
-        case (prob, edge) =>
-          List(edge, Edge(edge.dst, edge.src))
-      }).distinct
+    lastLHV.previous = linkedList.head
+    linkedList.head.next = lastLHV
+
+    linkedList.sortBy(_.vertex.ord)
+    var radPrevTracker = linkedList.head
+    for (lhv <- linkedList.tail) {
+      lhv.radialPrevious = radPrevTracker
+      radPrevTracker = lhv
+    }
+    val possibilityList: List[List[HyperVertex]] = linkedList.map {
+      lhv =>
+        var sampleList: List[HyperVertex] = Nil
+        val numSamples = (logVertexSetSize * lhv.vertex.expectedDegree).toInt
+        var ne = lhv.next
+        var pr = lhv.previous
+        var rapr = lhv.radialPrevious
+        for (i <- 0 until numSamples) {
+          sampleList = ne.vertex :: pr.vertex :: sampleList
+          if (rapr != lhv) sampleList = rapr.vertex :: sampleList
+          ne = ne.next
+          pr = pr.previous
+          rapr = rapr.radialPrevious
+        }
+        lhv.vertex :: sampleList
+    }
+    // Selects the expectedDegree smallest distance edges from possibility bundles.
+    // Takes the $size most probable edges from all generated edges and adds them.
+    val possibilities = sc.parallelize(possibilityList)
+    val extraEdges = possibilities.flatMap {
+      data =>
+        val numSelections: Int = data.head.expectedDegree.toInt
+        val src = data.head
+        val dst = data.tail.map {
+          dst =>
+            (probability(src, dst, exponent, 0.45, externalDegree),
+              Edge(src.id, dst.id))
+        }.sortBy(_._1)
+        dst.take(numSelections)
+    }.map { case (prob, edge) => edge }
+      .top(size)
+    val edgesWithoutIDs = inputs.es.rdd.map { case (id, edge) => edge }
+    val edgesPlusNew = edgesWithoutIDs ++ sc.parallelize(extraEdges)
+    val predictedEdges = edgesPlusNew.flatMap {
+      case (edge) =>
+        List(edge, Edge(edge.dst, edge.src))
+    }.distinct
     output(o.predictedEdges, predictedEdges.randomNumbered(partitioner))
 
   }
