@@ -2,26 +2,19 @@
 
 Creates additional edges in a graph based on
 hyperbolic distances between vertices. 
-It contains two methods:
-1, "pso" creates probability x similarity optimized edges in addition
-to already existing ones. The number of new edges will be slightly less than _size_.
-2, "pivot" further increases clustering. It searches for unconnected pairs
-of vertices that both have an edge to a given vertex. For each "pivot" vertex, 
-the "triangle" with the shortest sides is the prediction.
-
+Creates probability x similarity optimized edges in addition
+to already existing ones. The number of new edges will be 
+slightly less than _2 * size_ as added edges are undirected.
 Vertices must have vertex attributes "radial" and "angular".
 
 ====
 [[size]] Number of predictions::
-The number of predicted to generate. Actual number will be slightly less
-because .distinct is applied to the edges.
-
-[[method]] Prediction method::
-"pso" is better for large-scale predictions, "pivot" more easily gives predictions for
-smaller-degree vertices.
+The number of predicted to generate. Actual number will be 
+slightly less because .distinct is applied to the edges.
 
 [[exponent]] Exponent::
-The exponent of the power-law degree distribution. Values can be 0.5 - 1, endpoints excluded.
+The exponent of the power-law degree distribution. 
+Values can be 0.5 - 1, endpoints excluded.
 
 [[seed]] Seed::
 The random seed.

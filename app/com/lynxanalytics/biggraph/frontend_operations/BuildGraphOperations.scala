@@ -131,7 +131,6 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     List(projectInput))(new ProjectTransformation(_) {
       params ++= List(
         NonNegInt("size", "Number of predictions", default = 100),
-        Choice("method", "Prediction method", options = FEOption.list("pso", "pivot")),
         NonNegDouble("exponent", "Exponent", defaultValue = "0.6"),
         RandomSeed("seed", "Seed"))
       def enabled = FEStatus.assert(
@@ -139,7 +138,6 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
       def apply() = {
         val op = graph_operations.HyperbolicPrediction(
           params("size").toInt,
-          params("method"),
           params("exponent").toDouble,
           params("seed").toLong)
         project.edgeBundle = op(op.vs, project.vertexSet
