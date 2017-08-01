@@ -269,9 +269,10 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
           params("temperature").toDouble,
           params("seed").toLong)
         val direction = Direction("all neighbors", project.edgeBundle)
-        val degreeOp = outDegree()
+        val degreeOp = graph_operations.OutDegree()
         val degree = degreeOp(degreeOp.es, direction.edgeBundle).result.outDegree
-        op(op.vs, project.vertexSet)(op.es, direction.edgeBundle).result
+        op(op.vs, project.vertexSet)(op.es, direction.edgeBundle
+        )(op.degree, degree).result
       }
       project.newVertexAttribute("radial", result.radial)
       project.newVertexAttribute("angular", result.angular)
