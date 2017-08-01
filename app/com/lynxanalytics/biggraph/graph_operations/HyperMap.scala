@@ -18,6 +18,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 object HyperMap extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, es) = graph
+    val degree = vertexAttribute[Double](vs)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
@@ -52,16 +53,15 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
     val edges = inputs.es.rdd
     val sc = rc.sparkContext
     val size = inputs.vs.data.count.getOrElse(inputs.vs.rdd.count)
+    // "log" used by scala.math is log_e. It can also do log_10 but that would give too few
+    // samples.
     val logSize = math.log(size)
     val vertexPartitioner = vertices.partitioner.get
     val edgePartitioner = edges.partitioner.get
     // Order vertices by descending degree to place higher-degree vertices first.
-    val filteredEdges = edges.filter { case (id, e) => e.src != e.dst }.distinct
-    val degreeWithoutIsolatedVertices = filteredEdges.flatMap {
-      case (id, e) => Seq(e.src -> 1.0, e.dst -> 1.0)
-    }.reduceBySortedKey(vertexPartitioner, _ + _)
-    val degree = vertices.sortedLeftOuterJoin(degreeWithoutIsolatedVertices).
-      mapValues(_._2.getOrElse(0.0))
+    val noLoopEdges = edges.filter { case (id, e) => e.src != e.dst }
+    val degreeOp = OutDegree()
+    val degree = noLoopEdges.OutDegree.result.outDegree
     val degreeOrdered = degree.sortBy(_._2, false).zipWithIndex.map {
       case ((id, degree), ord) =>
         (id, degree, ord + 1)
@@ -84,7 +84,7 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
       angular = 2 * math.Pi * rndFirstVertex.nextDouble,
       expectedDegree = 0) :: Nil
     // Get the edges for building the remainder of sampleList.
-    val collectedEdges = filteredEdges.collect.toList
+    val collectedEdges = noLoopEdges.collect.toList
     var edgeListForSamples = collectedEdges.filter { case (id, e) => sampleList.head.id == e.dst }
     // Place down the rest of vertices in sampleList and get edges to them for later vertices.
     for (currentSample <- collectedSamples.tail) {

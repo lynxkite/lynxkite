@@ -1,6 +1,6 @@
 ### Map hyperbolic coordinates
 
-Map an undirected graph to a hyperbolic surface. Vertices get two edge attributes called
+Map an undirected graph to a hyperbolic surface. Vertices get two attributes called
 "radial" and "angular" that can be used for edge strength evaluation or link prediction.
 Algorithm based on https://www.caida.org/publications/papers/2015/network_mapping_replaying_hyperbolic/network_mapping_replaying_hyperbolic.pdf[paper].
 
