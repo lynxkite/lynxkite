@@ -14,7 +14,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   import Categories.ImportOperations
 
-  override val defaultIcon = "fountain"
+  override val defaultIcon = "download"
 
   def register(id: String)(factory: Context => ImportOperation): Unit = {
     registerOp(id, defaultIcon, ImportOperations, List(), List("table"), factory)

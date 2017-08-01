@@ -584,6 +584,10 @@ angular.module('biggraph')
           scope.$apply(function() {
             var z1 = zoomToScale(workspaceZoom);
             workspaceZoom -= delta;
+            // Enforce a maximal zoom where the icons are not yet pixelated.
+            workspaceZoom = Math.min(workspaceZoom, 1000 * Math.log(4 / 3));
+            // Enforce a minimal zoom where boxes are still visible.
+            workspaceZoom = Math.max(workspaceZoom, 1000 * Math.log(1 / 50));
             var z2 = zoomToScale(workspaceZoom);
             // Maintain screen-coordinates of logical point under the mouse.
             workspaceX = mouseX - (mouseX - workspaceX) * z2 / z1;
@@ -661,18 +665,33 @@ angular.module('biggraph')
           window.removeEventListener('paste', wrappedPasteBoxes);
         });
 
-        // TODO: We could generate these with tinycolor from the color names.
-        scope.filters = {
-          black: '0.2 0.2 0.2 0 0   0.2 0.2 0.2 0 0   0.2 0.2 0.2 0 0   0 0 0 1 0',
-          blue: '0 0 0 0 0   0.4 0.4 0.4 0 0   0.6 0.6 0.6 0 0   0 0 0 1 0',
-          green: '0.2 0.2 0.2 0 0   0.4 0.4 0.4 0 0   0 0 0 0 0   0 0 0 1 0',
-          lightblue: '0.2 0.2 0.2 0 0   0.6 0.6 0.6 0 0   0.8 0.8 0.8 0 0   0 0 0 1 0',
-          magenta: '0.5 0.5 0.5 0 0   0 0 0 0 0   0.5 0.5 0.5 0 0   0 0 0 1 0',
-          natural: '1 0 0 0 0   0 1 0 0 0   0 0 1 0 0   0 0 0 1 0',
-          pink: '0.8 0.8 0.8 0 0   0.4 0.4 0.4 0 0   0.4 0.4 0.4 0 0   0 0 0 1 0',
-          red: '0.6 0.6 0.6 0 0   0 0 0 0 0   0 0 0 0 0   0 0 0 1 0',
-          yellow: '0.6 0.6 0.6 0 0   0.4 0.4 0.4 0 0   0 0 0 0 0   0 0 0 1 0',
-        };
+        // Box colors come as strings from the backend. We map them to feColorMatrix matrices that
+        // get applied to the grayscale icon images. This function builds the mapping.
+        function makeFilters() {
+          // The red, green, blue factors.
+          var colors = [
+            ['black', 0.2, 0.2, 0.2],
+            ['blue', 0, 0.4, 0.6],
+            ['green', 0.2, 0.4, 0],
+            ['pink', 0.7, 0.3, 0.4],
+            ['orange', 0.6, 0.2, 0],
+            ['purple', 0.3, 0.1, 0.9],
+            ['yellow', 0.6, 0.4, 0],
+          ];
+          var filters = {};
+          for (var i = 0; i < colors.length; ++i) {
+            var c = colors[i];
+            var name = c[0]; var r = c[1]; var g = c[2]; var b = c[3];
+            filters[name] = (
+                (r + ' ').repeat(3) + '0 0 ' +
+                (g + ' ').repeat(3) + '0 0 ' +
+                (b + ' ').repeat(3) + '0 0   0 0 0 1 0');
+          }
+          // The "natural" filter leaves the colors alone. This is used for user-specified images.
+          filters.natural = '1 0 0 0 0   0 1 0 0 0   0 0 1 0 0   0 0 0 1 0';
+          return filters;
+        }
+        scope.filters = makeFilters();
 
         scope.bezier = function(x1, y1, x2, y2) {
           return ['M', x1, y1, 'C', x1 + 100, y1, ',', x2 - 100, y2, ',', x2, y2].join(' ');

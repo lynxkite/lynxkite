@@ -42,19 +42,24 @@ plane {
 
 #include "shapes.inc"
 
-#macro Statue(Caption)
-Center_Object(text {
-  ttf "NotoSansSymbols-Regular.ttf" Caption 0.2, 0
-  rotate <90, 0, 0>
-  scale 2
-  #if (shadow_pass = 1)
-    no_image
-  #end
-  texture {
-    pigment { color rgb 0.8 }
-    finish {
-      diffuse 1
+#macro Statue(Font, Caption)
+Center_Object(
+  intersection {
+    text {
+      ttf Font Caption 0.2, 0
+      rotate <90, 0, 0>
+      translate 0.1 * z
+      scale 2
+      #if (shadow_pass = 1)
+        no_image
+      #end
     }
-  }
-}, x + y)
+    box { <-10, -10, 0>, <10, 10, 10> }
+    texture {
+      pigment { color rgb 0.8 }
+      finish {
+        diffuse 1
+      }
+    }
+  }, x + y)
 #end

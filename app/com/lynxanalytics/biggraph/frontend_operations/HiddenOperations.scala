@@ -15,7 +15,7 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
-  register("Anchor", "anchor", List(), List())(new DecoratorOperation(_) {
+  register("Anchor", List(), List(), "anchor")(new DecoratorOperation(_) {
     params += Code("description", "Description", language = "plain_text")
     params += Param("icon", "Icon URL")
     params += ParametersParam("parameters", "Parameters")

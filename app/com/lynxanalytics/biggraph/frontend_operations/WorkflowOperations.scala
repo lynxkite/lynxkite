@@ -21,13 +21,13 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     params += Code("comment", "Comment", language = "plain_text")
   })
 
-  register("Input", "black_down-pointing_triangle", List(), List("input"))(
+  register("Input", List(), List("input"), "black_down-pointing_triangle")(
     new SimpleOperation(_) {
       params += Param("name", "Name")
       override def summary = s"Input ${params("name")}"
     })
 
-  register("Output", "black_up-pointing_triangle", List("output"), List())(
+  register("Output", List("output"), List(), "black_up-pointing_triangle")(
     new SimpleOperation(_) {
       params += Param("name", "Name")
       override def summary = s"Output ${params("name")}"
