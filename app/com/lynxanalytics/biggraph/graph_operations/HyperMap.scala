@@ -26,21 +26,17 @@ object HyperMap extends OpFromJson {
     val angular = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = HyperMap(
-    (j \ "avgexpecteddegree").as[Double],
-    (j \ "exponent").as[Double],
     (j \ "temperature").as[Double],
     (j \ "seed").as[Long])
 }
 import HyperMap._
-case class HyperMap(avgExpectedDegree: Double, exponent: Double,
+case class HyperMap(exponent: Double,
                     temperature: Double, seed: Long) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
-    "avgexpecteddegree" -> avgExpectedDegree,
-    "exponent" -> exponent,
     "temperature" -> temperature,
     "seed" -> seed)
 
@@ -59,24 +55,36 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
     val edgePartitioner = edges.partitioner.get
     // Order vertices by descending degree to place higher-degree vertices first.
     val noLoopEdges = edges.filter { case (id, e) => e.src != e.dst }
-    val degree = inputs.degree.rdd
-    val degreeOrdered = degree.sortBy(_._2, ascending = false).zipWithIndex.map {
-      case ((id, degree), ord) =>
-        (id, degree, ord + 1)
+    val degree = inputs.degree.rdd.map { case (id, degree) => (degree, id) }
+    val avgExpectedDegree = degree.map { case (deg, id) => deg }.reduce(_ + _) / size
+    val degreeOrdered = degree.sortBy(_._1, ascending = false).zipWithIndex.map {
+      case ((degree, id), ord) =>
+        (degree, id, ord + 1)
+    }
+    // Attempt to infer exponent by drawing a log-log plot line between the
+    // highest-degree vertex and the lowest-degree vertices.
+    val highestDegree = degreeOrdered.first._1
+    val bottomDegree = degree.filter { case (deg, id) => deg != 0 }.sortBy(_._1, ascending = true).first._1
+    val bottomCount = degreeOrdered.filter { case (deg, id, ord) => deg == bottomDegree }.count
+    val gamma = math.log(bottomCount) / (math.log(highestDegree) - math.log(bottomDegree))
+    // If it's outside the range of usual scale-free graphs, set it to a base value.
+    val exponent = {
+      if (2 < gamma && gamma < 3) 1 / (gamma - 1)
+      else 0.6
     }
     // Collect ~log(n) samples to compare to, with earlier vertices being more likely.
     val collectedSamples = degreeOrdered.mapPartitionsWithIndex {
       case (pid, iter) =>
         val rnd = new Random((pid << 16) + seed)
         iter.filter {
-          case (id, degree, ordinal) => rnd.nextDouble * ordinal < math.log(ordinal) ||
+          case (degree, id, ordinal) => rnd.nextDouble * ordinal < math.log(ordinal) ||
             ordinal < 3
         }
     }.collect.toList
     // Place down the first vertex with a random angular coordinate.
     val rndFirstVertex = new Random(seed)
     val firstSampleList = new HyperVertex(
-      id = collectedSamples.head._1,
+      id = collectedSamples.head._2,
       ord = collectedSamples.head._3,
       radial = 2 * math.log(collectedSamples.head._3 * 2),
       angular = 2 * math.Pi * rndFirstVertex.nextDouble,
@@ -88,34 +96,22 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
     val sampleTuple: (List[HyperVertex], List[(Long, Edge)]) =
       collectedSamples.tail.foldLeft(firstSampleList, firstEdgesToSamples) {
         case ((currentSampleList, currentEdgesToSamples), currentSample) =>
-          (HyperVertex(id = currentSample._1,
+          (HyperVertex(id = currentSample._2,
             ord = currentSample._3,
             radial = 2 * math.log(currentSample._3 * 2),
-            angular = maximumLikelihoodAngular(currentSample._1, currentSample._3,
+            angular = maximumLikelihoodAngular(currentSample._2, currentSample._3,
               currentSampleList, currentEdgesToSamples, exponent,
               temperature, avgExpectedDegree, logSize),
             expectedDegree = 0) :: currentSampleList,
-            collectedEdges.filter { case (id, e) => currentSample._1 == e.dst } ++
+            collectedEdges.filter { case (id, e) => currentSample._2 == e.dst } ++
             currentEdgesToSamples)
       }
     val sampleList = sampleTuple._1
     val edgesToSamples = sampleTuple._2
-    /*for (currentSample <- collectedSamples.tail) {
-      val newHyperVertex = HyperVertex(
-        id = currentSample._1,
-        ord = currentSample._3,
-        radial = 2 * math.log(currentSample._3 * 2),
-        angular = maximumLikelihoodAngular(currentSample._1, currentSample._3, sampleList,
-          edgesToSamples, exponent, temperature, avgExpectedDegree, logSize),
-        expectedDegree = 0)
-      sampleList = newHyperVertex :: sampleList
-      edgesToSamples = collectedEdges.filter { case (id, e) => sampleList.head.id == e.dst } ++
-        edgesToSamples
-    }*/
     val sampleVertexIDs = sampleList.map(vertex => vertex.id)
     // Place down the rest of the vertices simultaneously.
     val hyperVertices = degreeOrdered.map {
-      case (id, degree, ord) =>
+      case (degree, id, ord) =>
         HyperVertex(
           id = id,
           ord = ord,
