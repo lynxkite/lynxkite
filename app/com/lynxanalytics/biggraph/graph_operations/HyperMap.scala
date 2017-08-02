@@ -19,6 +19,7 @@ object HyperMap extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, es) = graph
     val degree = vertexAttribute[Double](vs)
+    val clustering = vertexAttribute[Double](vs)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
@@ -26,19 +27,15 @@ object HyperMap extends OpFromJson {
     val angular = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = HyperMap(
-    (j \ "temperature").as[Double],
     (j \ "seed").as[Long])
 }
 import HyperMap._
-case class HyperMap(exponent: Double,
-                    temperature: Double, seed: Long) extends TypedMetaGraphOp[Input, Output] {
+case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj(
-    "temperature" -> temperature,
-    "seed" -> seed)
+  override def toJson = Json.obj("seed" -> seed)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -53,7 +50,7 @@ case class HyperMap(exponent: Double,
     val logSize = math.log(size)
     val vertexPartitioner = vertices.partitioner.get
     val edgePartitioner = edges.partitioner.get
-    // Order vertices by descending degree to place higher-degree vertices first.
+    // Orders vertices by descending degree to place higher-degree vertices first.
     val noLoopEdges = edges.filter { case (id, e) => e.src != e.dst }
     val degree = inputs.degree.rdd.map { case (id, degree) => (degree, id) }
     val avgExpectedDegree = degree.map { case (deg, id) => deg }.reduce(_ + _) / size
@@ -61,13 +58,22 @@ case class HyperMap(exponent: Double,
       case ((degree, id), ord) =>
         (degree, id, ord + 1)
     }
-    // Attempt to infer exponent by drawing a log-log plot line between the
+    // Attempts to infer temperature from clustering coefficient.
+    // This is very much a guess. However, research paper states that the algorithm
+    // is fairly resilient to differing temperature values. Their method of calculating it
+    // is by running HyperMap multiple times and selecting the best fit for the edge
+    // probability graph - not viable for larger data sets.
+    val avgClustering = inputs.clustering.rdd.map { case (id, clus) => clus }
+      .reduce(_ + _) / size
+    val temperature = (1 - avgClustering) * 0.9
+    // Attempts to infer exponent by drawing a log-log plot line between the
     // highest-degree vertex and the lowest-degree vertices.
     val highestDegree = degreeOrdered.first._1
-    val bottomDegree = degree.filter { case (deg, id) => deg != 0 }.sortBy(_._1, ascending = true).first._1
+    val bottomDegree = degree.filter { case (deg, id) => deg != 0 }
+      .sortBy(_._1, ascending = true).first._1
     val bottomCount = degreeOrdered.filter { case (deg, id, ord) => deg == bottomDegree }.count
     val gamma = math.log(bottomCount) / (math.log(highestDegree) - math.log(bottomDegree))
-    // If it's outside the range of usual scale-free graphs, set it to a base value.
+    // If exponent is outside the range of usual scale-free graphs, set it to a base value.
     val exponent = {
       if (2 < gamma && gamma < 3) 1 / (gamma - 1)
       else 0.6
@@ -91,7 +97,8 @@ case class HyperMap(exponent: Double,
       expectedDegree = 0) :: Nil
     // Get the edges for building the remainder of sampleList.
     val collectedEdges = noLoopEdges.collect.toList
-    val firstEdgesToSamples = collectedEdges.filter { case (id, e) => firstSampleList.head.id == e.dst }
+    val firstEdgesToSamples = collectedEdges
+      .filter { case (id, e) => firstSampleList.head.id == e.dst }
     // Place down the rest of vertices in sampleList and get edges to them for later vertices.
     val sampleTuple: (List[HyperVertex], List[(Long, Edge)]) =
       collectedSamples.tail.foldLeft(firstSampleList, firstEdgesToSamples) {
@@ -137,7 +144,10 @@ case class HyperMap(exponent: Double,
     val radial = 2 * math.log(ord)
     samples.filter { v => v.ord < ord }
     samples.foldLeft(1.0)((product, otherVertex) =>
-      if (!sampleEdges.filter { case (id, e) => e.src == vertexID && e.dst == otherVertex.id }.isEmpty) {
+      if (!sampleEdges.filter {
+        case (id, e) => e.src == vertexID &&
+          e.dst == otherVertex.id
+      }.isEmpty) {
         product * probability(radial, otherVertex.radial, angular, otherVertex.angular,
           ord, exponent, temperature, avgExpectedDegree)
       } else {

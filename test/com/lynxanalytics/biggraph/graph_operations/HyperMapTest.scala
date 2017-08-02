@@ -12,8 +12,11 @@ class HyperMapTest extends FunSuite with TestGraphOp {
       2 -> Seq(0, 1), 3 -> Seq(0), 4 -> Seq()))().result
     val degreeOp = OutDegree()
     val degree = degreeOp(degreeOp.es, g.es).result.outDegree
-    val op = HyperMap(1.5, 0.6, 0.45, 42)
-    val out = op(op.vs, g.vs)(op.es, g.es)(op.degree, degree).result
+    val clusterOp = ApproxClusteringCoefficient(8)
+    val clus = clusterOp(clusterOp.vs, g.vs)(clusterOp.es, g.es).result.clustering
+    val op = HyperMap(42)
+    val out = op(op.vs, g.vs)(op.es, g.es)(
+      op.degree, degree)(op.clustering, clus).result
     val angulars = out.angular.rdd.collect.toMap
     // Isolated Joe really is isolated
     assert(math.abs(angulars.get(4).get - angulars.get(1).get) > 1 &&
