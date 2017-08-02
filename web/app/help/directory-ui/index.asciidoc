@@ -1,17 +1,15 @@
-# Project browser
+# Workspace browser
 
-The project browser is the interface that welcomes you when you navigate to LynxKite in a browser.
+The workspace browser is the interface that welcomes you when you navigate to LynxKite in a browser.
 Like a file browser, it makes it possible to navigate a folder structure and delete or move
-items. It also allows creating new folders, projects, and tables -- commonly referred to as entries.
+items. It also allows creating new folders, workspaces, and tables -- commonly referred to as entries.
 
-To make navigation easier the project browser remembers the last folder that was open.
+To make navigation easier the workspace browser remembers the last folder that was open.
 
 include::directories.asciidoc[]
 
-include::projects.asciidoc[]
+include::workspaces.asciidoc[]
 
 include::global-sql-box.asciidoc[]
-
-include::views.asciidoc[]
 
 include::built-ins.asciidoc[]
