@@ -1,8 +1,8 @@
 ## Folders
 
-Folders make it possible to keep the projects and other items in LynxKite organized. A common way to
-group the items is by user: so the projects of one user would be in a separate folder from the
-projects of another. This organization is encouraged by assigning a private folder to each user
+Folders make it possible to keep the workspaces and other items in LynxKite organized. A common way to
+group the items is by user: so the workspaces and snaphots of one user would be in a separate folder from the
+workspaces and snapshots of another. This organization is encouraged by assigning a private folder to each user
 inside the `Users` folder.
 
 Folders can have access control settings. A list of users who can read or write the folder contents
@@ -23,7 +23,7 @@ Click +++
 </span>
 +++ to create a new folder inside the current folder.
 
-Access the dropdown menu for a folder in the project browser
+Access the dropdown menu for a folder in the workspace browser
 (+++<a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>+++)
 to discard, duplicate, or rename the folder. The rename command also makes it possible to move the
 folder to a different path.
