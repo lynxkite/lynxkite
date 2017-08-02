@@ -2,7 +2,7 @@
 
 The workspace browser is the interface that welcomes you when you navigate to LynxKite in a browser.
 Like a file browser, it makes it possible to navigate a folder structure and delete or move
-items. It also allows creating new folders, workspaces, and tables -- commonly referred to as entries.
+items. It also allows creating new folders and workspaces -- commonly referred to as entries.
 
 To make navigation easier the workspace browser remembers the last folder that was open.
 
