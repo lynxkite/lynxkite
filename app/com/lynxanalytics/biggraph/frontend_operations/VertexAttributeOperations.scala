@@ -256,19 +256,19 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register("Map hyperbolic coordinates")(new ProjectTransformation(_) {
     params ++= List(
-      NonNegDouble("temperature", "Temperature", defaultValue = "0.45"),
       RandomSeed("seed", "Seed"))
     def enabled = project.hasEdgeBundle
     def apply() = {
       val result = {
-        val op = graph_operations.HyperMap(
-          params("temperature").toDouble,
-          params("seed").toLong)
         val direction = Direction("all neighbors", project.edgeBundle)
+        val clusterOp = graph_operations.ApproxClusteringCoefficient(8)
         val degreeOp = graph_operations.OutDegree()
         val degree = degreeOp(degreeOp.es, direction.edgeBundle).result.outDegree
+        val clus = clusterOp(clusterOp.vs, project.vertexSet)(
+          clusterOp.es, direction.edgeBundle).result.clustering
+        val op = graph_operations.HyperMap(params("seed").toLong)
         op(op.vs, project.vertexSet)(op.es, direction.edgeBundle
-        )(op.degree, degree).result
+        )(op.degree, degree)(op.clustering, clus).result
       }
       project.newVertexAttribute("radial", result.radial)
       project.newVertexAttribute("angular", result.angular)
