@@ -75,7 +75,7 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
     }.collect.toList
     // Place down the first vertex with a random angular coordinate.
     val rndFirstVertex = new Random(seed)
-    var sampleList = new HyperVertex(
+    val firstSampleList = new HyperVertex(
       id = collectedSamples.head._1,
       ord = collectedSamples.head._3,
       radial = 2 * math.log(collectedSamples.head._3 * 2),
@@ -83,9 +83,24 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
       expectedDegree = 0) :: Nil
     // Get the edges for building the remainder of sampleList.
     val collectedEdges = noLoopEdges.collect.toList
-    var edgesToSamples = collectedEdges.filter { case (id, e) => sampleList.head.id == e.dst }
+    val firstEdgesToSamples = collectedEdges.filter { case (id, e) => firstSampleList.head.id == e.dst }
     // Place down the rest of vertices in sampleList and get edges to them for later vertices.
-    for (currentSample <- collectedSamples.tail) {
+    val sampleTuple: (List[HyperVertex], List[(Long, Edge)]) =
+      collectedSamples.tail.foldLeft(firstSampleList, firstEdgesToSamples) {
+        case ((currentSampleList, currentEdgesToSamples), currentSample) =>
+          (HyperVertex(id = currentSample._1,
+            ord = currentSample._3,
+            radial = 2 * math.log(currentSample._3 * 2),
+            angular = maximumLikelihoodAngular(currentSample._1, currentSample._3,
+              currentSampleList, currentEdgesToSamples, exponent,
+              temperature, avgExpectedDegree, logSize),
+            expectedDegree = 0) :: currentSampleList,
+            collectedEdges.filter { case (id, e) => currentSample._1 == e.dst } ++
+            currentEdgesToSamples)
+      }
+    val sampleList = sampleTuple._1
+    val edgesToSamples = sampleTuple._2
+    /*for (currentSample <- collectedSamples.tail) {
       val newHyperVertex = HyperVertex(
         id = currentSample._1,
         ord = currentSample._3,
@@ -96,7 +111,7 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
       sampleList = newHyperVertex :: sampleList
       edgesToSamples = collectedEdges.filter { case (id, e) => sampleList.head.id == e.dst } ++
         edgesToSamples
-    }
+    }*/
     val sampleVertexIDs = sampleList.map(vertex => vertex.id)
     // Place down the rest of the vertices simultaneously.
     val hyperVertices = degreeOrdered.map {
@@ -146,31 +161,54 @@ case class HyperMap(avgExpectedDegree: Double, exponent: Double,
                                temperature: Double,
                                avgExpectedDegree: Double,
                                logSize: Double): Double = {
-    var i: Int = (math.ceil(logSize)).toInt + 3
-    var cwBound: Double = math.Pi * 2
-    var ccwBound: Double = 0
-    var maxAngular: Double = 0
+    val iterations: Int = (math.ceil(logSize)).toInt + 3
+    val firstcwBound: Double = math.Pi * 2
+    val firstccwBound: Double = 0
     val localRandom = new Random((vertexID << 16) + seed)
     val offset: Double = math.Pi * 2 * Random.nextDouble
-    while (i > 0) {
-      val angleBound: Double = cwBound - ccwBound
-      val topQuarterPoint: Double = cwBound - angleBound / 4
-      val bottomQuarterPoint: Double = ccwBound + angleBound / 4
-      val topValue: Double = likelihood(vertexID, ord, normalizeAngular(topQuarterPoint + offset),
-        samples, sampleEdges, exponent, temperature, avgExpectedDegree)
-      val bottomValue: Double = likelihood(vertexID, ord,
-        normalizeAngular(bottomQuarterPoint + offset),
-        samples, sampleEdges, exponent, temperature, avgExpectedDegree)
-      if (topValue > bottomValue) {
-        maxAngular = normalizeAngular(topQuarterPoint + offset)
-        ccwBound = cwBound - angleBound / 2
-      } else {
-        maxAngular = normalizeAngular(bottomQuarterPoint + offset)
-        cwBound = ccwBound + angleBound / 2
-      }
-      i -= 1
+    maximumLikelihoodRecursion(iterations,
+      firstcwBound, firstccwBound, offset,
+      vertexID, ord, samples, sampleEdges,
+      exponent, temperature, avgExpectedDegree, logSize)
+  }
+  @annotation.tailrec
+  private final def maximumLikelihoodRecursion(remainingIterations: Int,
+                                               cwBound: Double,
+                                               ccwBound: Double,
+                                               offset: Double,
+                                               vertexID: Long,
+                                               ord: Long,
+                                               samples: List[HyperVertex],
+                                               sampleEdges: List[(Long, Edge)],
+                                               exponent: Double,
+                                               temperature: Double,
+                                               avgExpectedDegree: Double,
+                                               logSize: Double): Double = {
+    val angleBound: Double = cwBound - ccwBound
+    val topQuarterPoint: Double = cwBound - angleBound / 4
+    val bottomQuarterPoint: Double = ccwBound + angleBound / 4
+    val topValue: Double = likelihood(vertexID, ord, normalizeAngular(topQuarterPoint + offset),
+      samples, sampleEdges, exponent, temperature, avgExpectedDegree)
+    val bottomValue: Double = likelihood(vertexID, ord,
+      normalizeAngular(bottomQuarterPoint + offset),
+      samples, sampleEdges, exponent, temperature, avgExpectedDegree)
+    val newcwBound = {
+      if (topValue > bottomValue) cwBound
+      else ccwBound + angleBound / 2
     }
-    maxAngular
+    val newccwBound = {
+      if (topValue > bottomValue) cwBound - angleBound / 2
+      else ccwBound
+    }
+    val maxAngular = {
+      if (topValue > bottomValue) normalizeAngular(topQuarterPoint + offset)
+      else normalizeAngular(bottomQuarterPoint + offset)
+    }
+    if (remainingIterations == 0) maxAngular
+    else maximumLikelihoodRecursion(remainingIterations - 1,
+      newcwBound, newccwBound, offset,
+      vertexID, ord, samples, sampleEdges,
+      exponent, temperature, avgExpectedDegree, logSize)
   }
   def normalizeAngular(ang: Double): Double = {
     if (ang > math.Pi * 2) ang - math.Pi * 2
