@@ -256,16 +256,12 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register("Map hyperbolic coordinates")(new ProjectTransformation(_) {
     params ++= List(
-      NonNegDouble("avgexpecteddegree", "Average expected degree", defaultValue = "1.5"),
-      NonNegDouble("exponent", "Exponent", defaultValue = "0.6"),
       NonNegDouble("temperature", "Temperature", defaultValue = "0.45"),
       RandomSeed("seed", "Seed"))
     def enabled = project.hasEdgeBundle
     def apply() = {
       val result = {
         val op = graph_operations.HyperMap(
-          params("avgexpecteddegree").toDouble,
-          params("exponent").toDouble,
           params("temperature").toDouble,
           params("seed").toLong)
         val direction = Direction("all neighbors", project.edgeBundle)
