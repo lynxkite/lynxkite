@@ -15,9 +15,4 @@ slightly less because .distinct is applied to the edges.
 [[exponent]] Exponent::
 The exponent of the power-law degree distribution. 
 Values can be 0.5 - 1, endpoints excluded.
-
-[[seed]] Seed::
-The random seed.
-+
-include::{g}[tag=random-seed]
 ====
