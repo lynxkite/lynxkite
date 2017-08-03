@@ -1,18 +1,33 @@
-.big-brand {
-  margin: 0;
-  padding: 50px;
-  text-align: center;
-  background: black url(/lynx-background.jpg) top center;
+#splash {
+  background-color: #004165;
+  min-height: 100vh;
 }
 
-.big-brand h1 {
-  font-weight: bold;
-  font-size: 50px;
+#splash .version {
   color: white;
 }
 
-.big-brand h2 {
+.big-brand {
+  margin: 0;
+  text-align: center;
+  background: #004165;
+  position: relative;
+}
+
+.big-brand #lynx-logo {
+  height: 50px;
+  position: absolute;
+  left: 10px;
+  top: 5px;
+}
+
+.big-brand #lynxkite-logo {
+  margin-top: 50px;
+  max-width: 100%;
+}
+
+.big-brand #tagline {
   font-size: 18px;
   margin-top: -10px;
-  color: rgba(0, 182, 255, 0.9);
+  color: #39bcf3;
 }
