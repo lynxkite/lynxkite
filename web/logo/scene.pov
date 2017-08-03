@@ -14,12 +14,12 @@ global_settings {
 #end
 
 camera {
-  location <0, -6, 3>
+  location <0, -12, 5>
   up z
   sky z
   look_at <0, 0, 0.5>
   right x*(image_width/image_height)
-  angle 50
+  angle 25
 }
 
 light_source {
