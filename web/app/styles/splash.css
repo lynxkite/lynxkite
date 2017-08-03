@@ -11,18 +11,15 @@
   margin: 0;
   text-align: center;
   background: #004165;
-  position: relative;
 }
 
 .big-brand #lynx-logo {
   height: 50px;
-  position: absolute;
-  left: 10px;
-  top: 5px;
+  display: block;
+  margin-top: 5px;
 }
 
 .big-brand #lynxkite-logo {
-  margin-top: 50px;
   max-width: 100%;
 }
 
