@@ -5,8 +5,24 @@
   width: 100%;
 }
 
-.entry-list {
+.entry-list-wrapper {
   padding: 0;
+}
+
+.entry-list {
+  width: 100%;
+  margin: auto;
+  background-color: white;
+}
+@media (min-width: 768px) {
+  .entry-list {
+    width: 768px;
+  }
+}
+@media (min-width: 960px) {
+  .entry-list {
+    width: 80%;
+  }
 }
 
 .entry-list .path {
@@ -42,7 +58,6 @@
 .entry-list .entry,
 .entry-list .entry-nohover {
   position: relative;
-  padding: 10px;
   padding-left: 40px;
   border-bottom: 1px solid whitesmoke;
   color: #428BCA;
