@@ -1,6 +1,6 @@
 // Adds scale-free edges to a graph based on the popularity x similarity model.
 // The added eges will be scale-free and have high average clustering.
-// Based on paper: https://www.caida.org/publications/papers/2015/network_mapping_replaying_hyperbolic/network_mapping_replaying_hyperbolic.pdf
+// Based on paper: https://arxiv.org/abs/1205.4384
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.math
@@ -74,7 +74,7 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
             HyperVertex(
               id = id,
               ord = ordinal + 1,
-              radial = math.log(ordinal + 1),
+              radial = 2 * math.log(ordinal + 1),
               angular = rnd.nextDouble * math.Pi * 2,
               expectedDegree = totalExpectedEPSO(exponent,
                 externalDegree, internalDegree, size, ordinal + 1))
@@ -127,7 +127,7 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
         val dst = data.tail.map {
           dst => (hyperbolicDistance(src, dst), Edge(src.id, dst.id))
         }.sortBy(_._1)
-        dst.take(numSelections + 1).map { case (key, value) => value }
+        dst.take(numSelections).map { case (key, value) => value }
     }.flatMap { edge => List(edge, Edge(edge.dst, edge.src)) }
       .distinct
 
