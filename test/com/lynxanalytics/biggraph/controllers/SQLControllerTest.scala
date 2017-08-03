@@ -4,6 +4,7 @@ import com.lynxanalytics.biggraph.frontend_operations.OperationsTestBase
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util
+import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving
 
 import scala.concurrent.Await
@@ -135,6 +136,24 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     assert(result.header == List(SQLColumn("NAME", "String")))
     val resultStrings = SQLResultToStrings(result.data)
     assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
+  }
+
+  test("Export result of global SQL box") {
+    val eg = box("Create example graph")
+    eg.snapshotOutput("test_dir/people", "project")
+
+    val dfSpec = DataFrameSpec.global(directory = "test_dir",
+      sql = "select name from `people.vertices` where age < 40")
+    val path = "IMPORTGRAPHTEST$/global-sql-export-test.csv"
+    val request = SQLExportToCSVRequest(dfSpec, path, true, ",", "\"")
+
+    val exportTarget = HadoopFile(path)
+    exportTarget.deleteIfExists()
+
+    val result = await(sqlController.exportSQLQueryToCSV(user, request))
+
+    exportTarget.deleteIfExists()
+
   }
 
   // TODO: Depends on https://app.asana.com/0/194476945034319/354006072569797.
