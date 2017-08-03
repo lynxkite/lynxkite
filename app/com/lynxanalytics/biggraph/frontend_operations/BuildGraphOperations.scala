@@ -131,15 +131,13 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     List(projectInput))(new ProjectTransformation(_) {
       params ++= List(
         NonNegInt("size", "Number of predictions", default = 100),
-        NonNegDouble("exponent", "Exponent", defaultValue = "0.6"),
-        RandomSeed("seed", "Seed"))
+        NonNegDouble("exponent", "Exponent", defaultValue = "0.6"))
       def enabled = FEStatus.assert(
         project.vertexAttrList[Double].size >= 2, "Not enough vertex attributes.")
       def apply() = {
         val op = graph_operations.HyperbolicPrediction(
           params("size").toInt,
-          params("exponent").toDouble,
-          params("seed").toLong)
+          params("exponent").toDouble)
         project.edgeBundle = op(op.vs, project.vertexSet
         )(op.es, project.edgeBundle
         )(op.radial, project.vertexAttributes("radial").runtimeSafeCast[Double]

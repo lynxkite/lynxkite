@@ -4,7 +4,7 @@ Creates additional edges in a graph based on
 hyperbolic distances between vertices. 
 Creates probability x similarity optimized edges in addition
 to already existing ones. The number of new edges will be 
-slightly less than _2 * size_ as added edges are undirected.
+slightly less than _2 * size_; added edges are undirected.
 Vertices must have vertex attributes "radial" and "angular".
 
 ====
