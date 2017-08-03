@@ -25,20 +25,18 @@ object HyperbolicPrediction extends OpFromJson {
   }
   def fromJson(j: JsValue) = HyperbolicPrediction(
     (j \ "size").as[Int],
-    (j \ "exponent").as[Double],
-    (j \ "seed").as[Long])
+    (j \ "exponent").as[Double])
 }
 import HyperbolicPrediction._
 case class HyperbolicPrediction(size: Int,
-                                exponent: Double, seed: Long) extends TypedMetaGraphOp[Input, Output] {
+                                exponent: Double) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
     "size" -> size,
-    "exponent" -> exponent,
-    "seed" -> seed)
+    "exponent" -> exponent)
 
   def execute(inputDatas: DataSet,
               o: Output,
@@ -51,11 +49,11 @@ case class HyperbolicPrediction(size: Int,
     val sc = rc.sparkContext
     val logVertexSetSize = math.log(vertexSetSize)
     val ordinals = inputs.radial.rdd.sortedLeftOuterJoin(inputs.angular.rdd)
-      .map { case (id, (rad, ang)) => (id, rad, ang) }
+      .map { case (id, (rad, ang)) => (id, rad, ang.getOrElse(0.0)) }
       .sortBy(_._2)
       .zipWithIndex
       .map { case ((id, rad, ang), ord) => (id, rad, ang, ord) }
-    val internalDegree = (edgeBundleSize / vertexSetSize.toDouble / 4) *
+    val internalDegree = (edgeBundleSize / vertexSetSize.toDouble / 2) *
       ((edgeBundleSize + size) / edgeBundleSize.toDouble)
     val externalDegree = internalDegree
     val vertices = ordinals.map {
@@ -64,7 +62,7 @@ case class HyperbolicPrediction(size: Int,
           id = id,
           ord = ordi,
           radial = radi,
-          angular = angu.getOrElse(0),
+          angular = angu,
           expectedDegree = totalExpectedEPSO(exponent,
             externalDegree, internalDegree, size, ordi + 1))
     }
@@ -117,10 +115,10 @@ case class HyperbolicPrediction(size: Int,
           dst =>
             (probability(src, dst, exponent, 0.45, externalDegree),
               Edge(src.id, dst.id))
-        }.sortBy(_._1)
+        }.sortBy(-_._1)
         dst.take(numSelections)
-    }.map { case (prob, edge) => edge }
-      .top(size)
+    }.top(size)
+      .map { case (prob, edge) => edge }
     val edgesWithoutIDs = inputs.es.rdd.map { case (id, edge) => edge }
     val edgesPlusNew = edgesWithoutIDs ++ sc.parallelize(extraEdges)
     val predictedEdges = edgesPlusNew.flatMap {
