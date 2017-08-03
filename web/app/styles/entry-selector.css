@@ -62,14 +62,14 @@
   position: relative;
   padding-left: 40px;
   border-bottom: 1px solid whitesmoke;
-  color: #428BCA;
+  color: #004165;
   cursor: pointer;
   user-select: none;
 }
 .entry-list .entry:hover,
 .entry-list .entry:focus {
   text-decoration: none;
-  background: #428BCA;
+  background: #39bcf3;
   color: white;
 }
 .entry-list .entry.error {
@@ -83,6 +83,9 @@
 }
 .entry-list .entry:last-child {
   border-bottom: none;
+}
+.entry-list .entry a.open-in-new-tab-icon {
+  color: #004165;
 }
 
 .disabled {
