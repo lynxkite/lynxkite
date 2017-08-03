@@ -13,6 +13,8 @@
   width: 100%;
   margin: auto;
   background-color: white;
+  border-radius: 10px;
+  padding: 5px 0;
 }
 @media (min-width: 768px) {
   .entry-list {
@@ -78,6 +80,9 @@
 .entry-list .entry.error a {
   cursor: pointer;
   user-select: none;
+}
+.entry-list .entry:last-child {
+  border-bottom: none;
 }
 
 .disabled {
