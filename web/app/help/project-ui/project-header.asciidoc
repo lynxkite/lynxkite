@@ -1,14 +1,12 @@
 [[project-header]]
 ## Workspace header bar
 
-The workspace title bar looks something like this:
+The workspace title contains the name of the workspace and buttons to various program functions. It looks something like this:
 
-image::images/project-header.png[Project Header Screenshot]
-
-It contains the name of the workspace and buttons to various program functions.
+image::images/workspace-header.png[Project Header Screenshot]
 
 [[project-header-buttons]]
-### Project header buttons
+### Workspace header buttons
 
 Not all the buttons listed here are accessible at all times, please see the details below on when each function is
 available.
