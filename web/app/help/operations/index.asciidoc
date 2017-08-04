@@ -12,14 +12,48 @@ All operations can be undone, so they are safe to experiment with.
 
 There are several ways to invoke an operation. If you know its name, typing the slash
 key (`/`) will bring up the search menu, where operations can be found by name. The same menu
-can be accessed via the magnifier icon
+can also be accessed via the magnifier icon
 (+++<i class="glyphicon glyphicon-search"></i>+++).
 Some find it the most convenient way to access the desired operation.
 
 In case you do not know the name of the operation, functional groups called "categories" will help
 you find what you need. These categories are listed below, along with their toolbox icon.
 
-### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category blue">V</div></div></div>+++ Vertex attribute operations
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category green"><i class="fa fa-upload"></i></div></div></div>+++ Import operations
+
+These operations import external data to LynxKite. Example: <<Import CSV>>.
+
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category green"><i class="fa fa-gavel"></i></div></div></div>+++ Build graph
+
+These operations can build graphs - without importing data to LynxKite. Example: <<Create example graph>>.
+
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category green"><i class="fa fa-filter"></i></div></div></div>+++ Subgraph
+
+These operations create subgraphs - a graph formed from a subset of the vertices and edges of the original graph. Example: <<Filter by attributes>>.
+
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category green"><i class="glyphicon glyphicon-th-large"></i></div></div></div>+++ Build segmentation
+
+These operations create <<segmentations>>.
+Example: <<Find connected components>>.
+
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="glyphicon glyphicon-th-large"></i></div></div></div>+++ Use segmentation
+
+These operations modify <<segmentations>>.
+Example: <<Copy edges to base project>>. 
+
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="glyphicon glyphicon-asterisk"></i></div></div></div>+++ Structure
+
+The operations in this category can change the overall graph structure by adding or
+discarding vertices and/or edges. Examples: <<Add reversed edges>>, and <<Merge vertices by attribute>>.
+
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="glyphicon glyphicon-globe"></i></div></div></div>+++ Scalars
+
+The operations in this category manipulate global graph attributes (aka scalars). For example, <<correlate-two-attributes>>
+computes the Pearson-correlation coefficient of two attributes, and stores the result
+in a scalar.
+
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="fa fa-circle"></i></div></div></div>+++ Vertex attributes
+
 
 These operations manipulate (create, discard, convert etc.) vertex attributes.
 These operations perform their task without looking at other
@@ -27,49 +61,13 @@ edges or vertices and they are not available if the graph has no vertices.
 Example: <<add-constant-vertex-attribute>>.
 
 
-### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category blue">E</div></div></div>+++ Edge attribute operations
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="fa fa-share-alt"></i></div></div></div>+++ Edge attributes
 
 These operations are similar to vertex attribute operations, but they manipulate
 edge attributes. They are not available if the graph has no edges.
 Example: <<add-random-edge-attribute>>.
 
-
-### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category green"><i class="glyphicon glyphicon-th-large"></i></div></div></div>+++ Create segmentation
-
-These operations create <<segmentations>>.
-Example: <<connected-components>>.
-
-### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category magenta"><i class="glyphicon glyphicon-globe"></i></div></div></div>+++ Global operations
-
-Operations in this category manipulate global graph attributes (aka scalars). For example,
-<<discard-scalar>> removes such global attributes, whereas <<correlate-two-attributes>>
-computes the Pearson correlation coefficient of two attributes, and stores the result
-in a scalar.
-
-### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category green"><i class="glyphicon glyphicon-stats"></i></div></div></div>+++ Graph metrics
-
-Graph metrics operations are similar to the vertex (or edge) attribute operations inasmuch
-as they compute new attributes for each vertex (or edge). However, they are somewhat more
-complex, since they are not restricted to that single vertex (or edge) in their computation. For example,
-<<degree>> creates a vertex attribute that depends on how many neighbors a given vertex has, so
-it depends on the neighborhood of the vertex. A more complex example is <<pagerank>>, which
-is not even restricted on the immediate neighborhood of a vertex: it depends on the entire graph.
-One might say that this category is about metrics that describe the graph structure in some way.
-
-
-### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="glyphicon glyphicon-import"></i></div></div></div>+++ Import operations
-
-These operations import external data to LynxKite. Example: <<import-edge-attributes>>.
-
-
-### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category pink"><i class="glyphicon glyphicon-knight"></i></div></div></div>+++ Machine learning operations
-
-These operations perform machine learning. A machine learning model is trained on a set of data, and
-it can perform prediction or classification on a new set of data. For example, a logistic regression
-model can be trained by the operation <<train-a-logistic-regression-model>> and it can classify new
-data with the operation <<classify-vertices-with-a-model>>.
-
-### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category green"><i class="glyphicon glyphicon-fullscreen"></i></div></div></div>+++ Propagation operations
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="fa fa-podcast"></i></div></div></div>+++ Attribute propagation
 
 These operations compute vertex attributes from attributes of their neighboring elements.
 They only differ in how we define "neighboring elements". For example, in operation
@@ -80,19 +78,45 @@ the "neighboring elements" are the edges that leave or enter the vertex. Yet ano
 example is <<aggregate-on-neighbors>>; the "neighboring elements" here are the other
 vertices connected to the vertex.
 
-### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category green"><i class="glyphicon glyphicon-book"></i></div></div></div>+++ Speciality operations
 
-These operations implement algorithms that were specially designed for LynxKite. Examples:
-<<fingerprinting-between-project-and-segmentation>>, and <<viral-modeling>>.
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category blue"><i class="fa fa-snowflake-o"></i></div></div></div>+++ Graph computation
 
-### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category pink"><i class="glyphicon glyphicon-asterisk"></i></div></div></div>+++ Structure operations
+Graph computation operations are similar to the vertex (or edge) attribute operations inasmuch
+as they compute new attributes for each vertex (or edge). However, they are somewhat more
+complex, since they are not restricted to that single vertex (or edge) in their computation. For example,
+<<Compute degree>> creates a vertex attribute that depends on how many neighbors a given vertex has, so
+it depends on the neighborhood of the vertex. A more complex example is <<Compute PageRank>>, which
+is not even restricted on the immediate neighborhood of a vertex: it depends on the entire graph.
+One might say that this category is about metrics that describe the graph structure in some way.
 
-The operations in this category can change the overall graph structure by adding or
-discarding vertices and/or edges. Examples: <<add-reversed-edges>>, and <<new-vertex-set>>.
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category blue"><i class="fa fa-android"></i></div></div></div>+++ Machine learning operations
 
-### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category pink">U</div></div></div>+++ Workflow operations
+These operations perform machine learning. A machine learning model is trained on a set of data, and
+it can perform prediction or classification on a new set of data. For example, a logistic regression
+model can be trained by the operation <<train-a-logistic-regression-model>> and it can classify new
+data with the operation <<Classify with model>>.
 
-This is where the workflows defined by the users can be found.
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category blue"><i class="fa fa-cogs"></i></div></div></div>+++ Workflow
+
+Utility features to efficiently manage workfows. Examples: Users can add a <<Comment>> or create a <<Project union>>.
+
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category pink"><i class="fa fa-wrench"></i></div></div></div>+++ Manage project
+
+Utility features to manage and personalize projects by manipulating (discarding, copying, renaming, etc.) attributes, scalars and segmentations. Example:
+<<Rename edge attributes>>.
+
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category purple"><i class="fa fa-eye"></i></div></div></div>+++ Visualization operations
+
+Visualization features. Examples: users can create charts with
+<<Custom plot>>, or visualize a subset of the graph with <<Graph visualization>>.
+
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category purple"><i class="fa fa-download"></i></div></div></div>+++ Export operations
+
+These operations export data from LynxKite. Example: <<Export to CSV>>.
+
+### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="fa fa-superpowers"></i></div></div></div>+++ Custom boxes
+
+Users can add previosly created custom boxes or <<built-ins>> to their workflow by selecting them from the Custom box menu.
 
 
 ## The list of operations
