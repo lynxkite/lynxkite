@@ -523,7 +523,7 @@ object ProductionJsonServer extends JsonServer {
       hasAuth = productionMode,
       authMethods = getAuthMethods,
       title = LoggedEnvironment.envOrElse("KITE_TITLE", "LynxKite"),
-      tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics for the brave"),
+      tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics evolved"),
       workspaceParameterKinds = CustomOperationParameterMeta.validKinds,
       version = version,
       defaultUIStatus = UIStatus.default)

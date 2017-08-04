@@ -5,8 +5,27 @@
   width: 100%;
 }
 
-.entry-list {
+.entry-list-wrapper {
   padding: 0;
+}
+
+.entry-list {
+  width: 100%;
+  margin: 40px auto;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0px 2px 4px;
+  padding: 5px 0;
+}
+@media (min-width: 768px) {
+  .entry-list {
+    width: 768px;
+  }
+}
+@media (min-width: 960px) {
+  .entry-list {
+    width: 80%;
+  }
 }
 
 .entry-list .path {
@@ -42,17 +61,16 @@
 .entry-list .entry,
 .entry-list .entry-nohover {
   position: relative;
-  padding: 10px;
   padding-left: 40px;
   border-bottom: 1px solid whitesmoke;
-  color: #428BCA;
+  color: #004165;
   cursor: pointer;
   user-select: none;
 }
 .entry-list .entry:hover,
 .entry-list .entry:focus {
   text-decoration: none;
-  background: #428BCA;
+  background: #39bcf3;
   color: white;
 }
 .entry-list .entry.error {
@@ -63,6 +81,12 @@
 .entry-list .entry.error a {
   cursor: pointer;
   user-select: none;
+}
+.entry-list .entry:last-child {
+  border-bottom: none;
+}
+.entry-list .entry a.open-in-new-tab-icon {
+  color: #004165;
 }
 
 .disabled {
