@@ -109,8 +109,9 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     '--upload',
     help='''Files or folders to be upload after all the usual uploads are done but before LynxKite
-  is started. Can be used to override config files for testing. Takes a comma separated list of
-  source:destination pairs.''')
+  is started. Can be used to override config files (e.g. prefix_definitions.txt) for testing. Takes
+  a comma separated list of source:destination pairs.
+  E.g.: ${TEST_CONFIGS}/prefix_definitions.txt:/mnt/lynx/config/prefix_definitions.txt,...''')
 
 
 class Ecosystem:
