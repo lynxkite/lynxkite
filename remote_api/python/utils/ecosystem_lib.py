@@ -106,6 +106,11 @@ arg_parser.add_argument(
     help='''The environment variables which are to be set to be the same on the master
   machine as on the local machine. Takes a comma separated list.
   (e.g. "INPUT_FOLDER,OUTPUT_FOLDER").''')
+arg_parser.add_argument(
+    '--upload',
+    help='''Files or folders to be upload after all the usual uploads are done but before LynxKite
+  is started. Can be used to override config files for testing. Takes a comma separated list of
+  source:destination pairs.''')
 
 
 class Ecosystem:
@@ -140,6 +145,7 @@ class Ecosystem:
         'tasks': args.with_tasks,
         'extra_python_dependencies': args.python_dependencies,
         'env_variables': args.env_variables,
+        'upload': args.upload,
     }
     self.cluster = None
     self.instances = []
@@ -211,6 +217,10 @@ class Ecosystem:
     if lk_conf['env_variables']:
       variables = lk_conf['env_variables'].split(',')
       self.copy_environment_variables(variables)
+    if lk_conf['upload']:
+      split = lk_conf['upload'].split(',')
+      uploads_map = {i.split(':')[0]: i.split(':')[1] for i in split}
+      self.upload_specified(uploads_map)
     self.start_supervisor_native()
     print('LynxKite ecosystem was started by supervisor.')
 
@@ -307,6 +317,10 @@ class Ecosystem:
     self.cluster.ssh('mkdir -p ' + target_dir)
     self.cluster.rsync_up('ecosystem/native/tools/', target_dir)
     self.cluster.rsync_up('tools/performance_collection/', target_dir)
+
+  def upload_specified(self, uploads_map):
+    for src, dst in uploads_map.items():
+      self.cluster.rsync_up(src, dst)
 
   def install_lynx_stuff(self, lynx_release_dir, lynx_version, releases_dir):
     if lynx_version:
