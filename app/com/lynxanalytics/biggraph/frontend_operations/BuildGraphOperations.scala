@@ -131,18 +131,39 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     List(projectInput))(new ProjectTransformation(_) {
       params ++= List(
         NonNegInt("size", "Number of predictions", default = 100),
-        NonNegDouble("exponent", "Exponent", defaultValue = "0.6"))
+        NonNegDouble("externaldegree", "External degree", defaultValue = "1.5"),
+        NonNegDouble("internaldegree", "Internal degree", defaultValue = "1.5"),
+        NonNegDouble("exponent", "Exponent", defaultValue = "0.6"),
+        Choice("radial", "Radial coordinate",
+          options = FEOption.unset +: project.vertexAttrList[Double]),
+        Choice("angular", "Angular coordinate",
+          options = FEOption.unset +: project.vertexAttrList[Double]))
       def enabled = FEStatus.assert(
         project.vertexAttrList[Double].size >= 2, "Not enough vertex attributes.")
       def apply() = {
         val op = graph_operations.HyperbolicPrediction(
           params("size").toInt,
+          params("externaldegree").toDouble,
+          params("internaldegree").toDouble,
           params("exponent").toDouble)
-        project.edgeBundle = op(op.vs, project.vertexSet
-        )(op.es, project.edgeBundle
-        )(op.radial, project.vertexAttributes("radial").runtimeSafeCast[Double]
-        )(op.angular, project.vertexAttributes("angular").runtimeSafeCast[Double])
-          .result.predictedEdges
+        val radAttr = project.vertexAttributes(params("radial"))
+        val angAttr = project.vertexAttributes(params("angular"))
+        assert(params("radial") != FEOption.unset.id, "The radial parameter must be set.")
+        assert(params("angular") != FEOption.unset.id, "The angular parameter must be set.")
+        val result = op(op.vs, project.vertexSet)(
+          op.radial, radAttr.runtimeSafeCast[Double])(
+            op.angular, angAttr.runtimeSafeCast[Double]).result
+        if (project.hasEdgeBundle.enabled) {
+          val oldBundle = project.edgeBundle
+          project.edgeBundle = result.predictedEdges
+          project.newEdgeAttribute("hyperbolic_edge_probability", result.edgeProbability,
+            "hyperbolic edge probability")
+          project.edgeBundle = generalEdgeBundleUnion(oldBundle, project.edgeBundle)
+        } else {
+          project.edgeBundle = result.predictedEdges
+          project.newEdgeAttribute("hyperbolic_edge_probability", result.edgeProbability,
+            "hyperbolic edge probability")
+        }
       }
     })
 

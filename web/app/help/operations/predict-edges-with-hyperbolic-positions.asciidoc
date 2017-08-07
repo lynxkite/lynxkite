@@ -2,17 +2,34 @@
 
 Creates additional edges in a graph based on
 hyperbolic distances between vertices. 
-Creates probability x similarity optimized edges in addition
-to already existing ones. The number of new edges will be 
-slightly less than _2 * size_; added edges are undirected.
-Vertices must have vertex attributes "radial" and "angular".
+ _2 * size_ edges will be added because 
+the new edges are undirected.
+Vertices must have two _Double_ vertex attributes to be 
+used as radial and angular coordinates.
 
 ====
 [[size]] Number of predictions::
-The number of predicted to generate. Actual number will be 
-slightly less because .distinct is applied to the edges.
+The number of edges to generate.
+The total number will be _2 * size_ because every
+edge is added in two directions.
+
+[[externaldegree]] External degree::
+The number of edges a vertex creates from itself
+ upon addition to the growth simulation graph.
+
+[[internaldegree]] Internal degree::
+The average number of edges created between older vertices whenever 
+a new vertex is added to the growth simulation graph.
 
 [[exponent]] Exponent::
 The exponent of the power-law degree distribution. 
 Values can be 0.5 - 1, endpoints excluded.
+
+[[radial]] Radial::
+The vertex attribute to be used as radial coordinates.
+Should not contain negative values.
+
+[[angular]] Angular::
+The vertex attribute to be used as angular coordinates.
+Values should be 0 - 2 * Pi.
 ====
