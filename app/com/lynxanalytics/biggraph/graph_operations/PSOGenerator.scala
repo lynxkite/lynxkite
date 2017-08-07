@@ -76,7 +76,7 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
               ord = ordinal + 1,
               radial = math.log(ordinal + 1),
               angular = rnd.nextDouble * math.Pi * 2,
-              expectedDegree = totalExpectedEPSO(exponent,
+              expectedDegree = HyperDistance.totalExpectedEPSO(exponent,
                 externalDegree, internalDegree, size, ordinal + 1))
         }
     }
@@ -104,7 +104,7 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
     }
     val possibilityList: List[List[HyperVertex]] = linkedList.map {
       lhv =>
-        linkedListSampler((logSize * lhv.vertex.expectedDegree).toInt,
+        HyperDistance.linkedListSampler((logSize * lhv.vertex.expectedDegree).toInt,
           lhv, lhv.previous, lhv.next, lhv.radialPrevious, Nil)
     }
     // Selects the expectedDegree smallest distance edges from possibility bundles.
@@ -114,7 +114,7 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
         val numSelections: Int = data.head.expectedDegree.toInt
         val src = data.head
         val dst = data.tail.map {
-          dst => (hyperbolicDistance(src, dst), Edge(src.id, dst.id))
+          dst => (HyperDistance.hyperbolicDistance(src, dst), Edge(src.id, dst.id))
         }.sortBy(_._1)
         dst.take(numSelections + 1).map { case (key, value) => value }
     }.flatMap { edge => List(edge, Edge(edge.dst, edge.src)) }
@@ -124,6 +124,8 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
     output(o.angular, vertices.map { v => (v.id, v.angular) }.sortUnique(partitioner))
     output(o.es, es.randomNumbered(partitioner))
   }
+}
+object HyperDistance {
   // Returns hyperbolic distance.
   def hyperbolicDistance(src: HyperVertex, dst: HyperVertex): Double = {
     src.radial + src.radial + 2 * math.log(phi(src.angular, dst.angular) / 2)
@@ -176,12 +178,12 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
       expectedConnections(first, exponent, temperature, externalLinks))))
   }
   @annotation.tailrec
-  private final def linkedListSampler(remainingIterations: Int,
-                                      starter: LinkedHyperVertex,
-                                      previous: LinkedHyperVertex,
-                                      next: LinkedHyperVertex,
-                                      radialPrevious: LinkedHyperVertex,
-                                      samplesSoFar: List[HyperVertex]): List[HyperVertex] = {
+  final def linkedListSampler(remainingIterations: Int,
+                              starter: LinkedHyperVertex,
+                              previous: LinkedHyperVertex,
+                              next: LinkedHyperVertex,
+                              radialPrevious: LinkedHyperVertex,
+                              samplesSoFar: List[HyperVertex]): List[HyperVertex] = {
     val newSamplesSoFar = {
       if (radialPrevious != starter) {
         radialPrevious.vertex :: next.vertex :: previous.vertex :: samplesSoFar
@@ -195,4 +197,3 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
       newNext, newRadialPrevious, newSamplesSoFar)
   }
 }
-

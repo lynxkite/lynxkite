@@ -64,7 +64,7 @@ case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegre
           ord = ordi,
           radial = radi,
           angular = angu,
-          expectedDegree = totalExpectedEPSO(exponent,
+          expectedDegree = HyperDistance.totalExpectedEPSO(exponent,
             externalDegree, internalDegree, vertexSetSize, ordi))
     }
     // For each vertex: samples ~log(n) vertices with smallest angular coordinate difference, plus
@@ -90,7 +90,7 @@ case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegre
     }
     val possibilityList: List[List[HyperVertex]] = linkedList.map {
       lhv =>
-        linkedListSampler((logVertexSetSize * lhv.vertex.expectedDegree).toInt,
+        HyperDistance.linkedListSampler((logVertexSetSize * lhv.vertex.expectedDegree).toInt,
           lhv, lhv.previous, lhv.next, lhv.radialPrevious, Nil)
     }
     // Selects the expectedDegree smallest distance edges from possibility bundles.
@@ -105,7 +105,7 @@ case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegre
         val src = data.head
         val dst = data.tail.map {
           dst =>
-            (probability(src, dst, exponent, 0.45, externalDegree),
+            (HyperDistance.probability(src, dst, exponent, 0.45, externalDegree),
               Edge(src.id, dst.id))
         }.sortBy(-_._1)
         dst.take(numSelections)
@@ -118,76 +118,6 @@ case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegre
     val randomNumberedEdges = predictedEdges.randomNumbered(partitioner)
     output(o.predictedEdges, randomNumberedEdges.map { case (id, (e, prob)) => (id, e) }.sortUnique(partitioner))
     output(o.edgeProbability, randomNumberedEdges.map { case (id, (e, prob)) => (id, prob) }.sortUnique(partitioner))
-  }
-  // Returns hyperbolic distance.
-  def hyperbolicDistance(src: HyperVertex, dst: HyperVertex): Double = {
-    src.radial + src.radial + 2 * math.log(phi(src.angular, dst.angular) / 2)
-  }
-  // Returns angular component for hyperbolic distance calculation.
-  def phi(ang1: Double, ang2: Double): Double = {
-    math.Pi - math.abs(math.Pi - math.abs(ang1 - ang2))
-  }
-  // Expected number of internal connections at given time in the E-PSO model.
-  def internalConnectionsEPSO(exponent: Double,
-                              internalLinks: Double,
-                              maxNodes: Long,
-                              ord: Long): Double = {
-    val firstPart: Double = ((2 * internalLinks * (1 - exponent)) /
-      (math.pow(1 - math.pow(maxNodes.toDouble, -(1 - exponent)), 2) * (2 * exponent - 1)))
-    val secondPart: Double = math.pow((maxNodes / ord.toDouble), 2 * exponent - 1) - 1
-    val thirdPart: Double = (1 - math.pow(ord.toDouble, -(1 - exponent)))
-    firstPart * secondPart * thirdPart
-  }
-  // Expected number of connections at given time in the E-PSO model.
-  def totalExpectedEPSO(exponent: Double,
-                        externalLinks: Double,
-                        internalLinks: Double,
-                        maxNodes: Long,
-                        ord: Long): Double = {
-    externalLinks + internalConnectionsEPSO(exponent, internalLinks, maxNodes, ord)
-  }
-  // Equation for parameter denoted I_i in the HyperMap paper.
-  def inverseExponent(ord: Long, exponent: Double): Double = {
-    (1 / (1 - exponent)) * (1 - math.pow(ord, -(1 - exponent)))
-  }
-  // Expected number of connections for a vertex, used in calculating angular.
-  def expectedConnections(vertex: HyperVertex,
-                          exponent: Double,
-                          temperature: Double,
-                          externalLinks: Double): Double = {
-    val firstPart: Double = (2 * temperature) / math.sin(temperature * math.Pi)
-    val secondPart: Double = inverseExponent(vertex.ord, exponent) / externalLinks
-    val logged: Double = math.log(firstPart * secondPart)
-    vertex.radial - (2 * logged)
-  }
-  // Connection probability.
-  def probability(first: HyperVertex,
-                  second: HyperVertex,
-                  exponent: Double,
-                  temperature: Double,
-                  externalLinks: Double): Double = {
-    val dist: Double = hyperbolicDistance(first, second)
-    1 / (1 + math.exp((1 / (2 * temperature)) * (dist -
-      expectedConnections(first, exponent, temperature, externalLinks))))
-  }
-  @annotation.tailrec
-  private final def linkedListSampler(remainingIterations: Int,
-                                      starter: LinkedHyperVertex,
-                                      previous: LinkedHyperVertex,
-                                      next: LinkedHyperVertex,
-                                      radialPrevious: LinkedHyperVertex,
-                                      samplesSoFar: List[HyperVertex]): List[HyperVertex] = {
-    val newSamplesSoFar = {
-      if (radialPrevious != starter) {
-        radialPrevious.vertex :: next.vertex :: previous.vertex :: samplesSoFar
-      } else next.vertex :: previous.vertex :: samplesSoFar
-    }
-    val newPrevious = previous.previous
-    val newNext = next.next
-    val newRadialPrevious = radialPrevious.radialPrevious
-    if (remainingIterations < 1) starter.vertex :: samplesSoFar
-    else linkedListSampler(remainingIterations - 1, starter, newPrevious,
-      newNext, newRadialPrevious, newSamplesSoFar)
   }
 }
 
