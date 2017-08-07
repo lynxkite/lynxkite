@@ -5,7 +5,7 @@ graph in the base project. The vertices of the segmentation are also called "seg
 A set of edges exists between the base project and its segmentation, representing membership
 in a segment. (To distinguish these special edges we also call them "links".)
 
-For example the <<maximal-cliques>> operation creates a new segmentation, in which each segment
+For example the <<find-maximal-cliques>> operation creates a new segmentation, in which each segment
 represents a clique in the base project. Vertices of the base project are linked to the segments
 which represent cliques that they belong to.
 
