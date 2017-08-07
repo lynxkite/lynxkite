@@ -17,8 +17,6 @@ include::filter-syntax.asciidoc[]
 
 include::scala-guide.asciidoc[]
 
-include::project-history.asciidoc[]
-
 include::sql-box.asciidoc[]
 
 include::spark-ui.asciidoc[]
