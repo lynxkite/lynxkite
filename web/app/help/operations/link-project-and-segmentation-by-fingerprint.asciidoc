@@ -20,7 +20,7 @@ calculation.
 
 Project M is an MSISDN graph based on call data. Project F is a Facebook
 graph. A CSV file contains a number of MSISDN{to}Facebook ID mappings, a many-to-many
-relationship. Connect the two projects with <<Use project as segmentation>> and
+relationship. Connect the two projects with <<Use other project as segmentation>> and
 <<Use table as segmentation links>>, then use the
 fingerprinting operation to turn the mapping into a high-quality one-to-one relationship.
 

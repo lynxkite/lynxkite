@@ -32,9 +32,10 @@ There are lots of ways you can create attributes:
 * when importing vertices/edges from a CSV every column will automatically become an attribute
 * you can also import attributes for existing vertices from a CSV file
 * you can compute various graph metrics on the vertices/edges (just to name a few, you can compute
-<<degree>>, <<clustering-coefficient>> for vertices and <<dispersion>> for edges)
-* you can derive more attributes from existing ones using the <<derived-vertex-attribute>>
-and <<derived-edge-attribute>> operation
+<<compute-degree>>, <<compute-clustering-coefficient>> for vertices and <<compute-dispersion>> for
+edges)
+* you can derive more attributes from existing ones using the <<derive-vertex-attribute>>
+and <<derive-edge-attribute>> operation
 * you can spread attributes via edges in various ways, e.g. by <<aggregate-on-neighbors>>
 * etc.
 
@@ -69,7 +70,7 @@ the expression if some of the inputs are undefined.
 
 Although you cannot directly set up a filter that matches undefined values, there
 is a way to accomplish this. It relies on operation
-<<fill-vertex-attribute-with-constant-default-value>>, which will change any undefined value to
+<<fill-vertex-attributes-with-constant-default-values>>, which will change any undefined value to
 whatever is specified in the operation's parameter.  If it is also necessary to keep the original
 values to be undefined, you can make a copy of the attribute and run the operation on the copy.
 
@@ -146,13 +147,13 @@ Position::
 Available on attributes of type `(Double, Double)`. The attribute will be interpreted as (X, Y)
 coordinates on the plane and vertices will be laid out on the screen based on these coordinates.
 (You can create a `(Double, Double)` attribute from two Double attributes using the
-<<vertex-attributes-to-position>> operation.)
+<<convert-vertex-attributes-to-position>> operation.)
 
 Geo coordinates::
 Available on attributes of type `(Double, Double)`. The attribute will be interpreted as a
 latitude-longitude coordinate and the vertices will be put on a world map based on this coordinate.
 (You can create a `(Double, Double)` attribute from two Double attributes using the
-<<vertex-attributes-to-position>> operation.)
+<<convert-vertex-attributes-to-position>> operation.)
 
 #### Edge visualizations
 
