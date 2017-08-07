@@ -1,0 +1,24 @@
+## Workspaces
+
+Workspaces allow users to describe complex computation flows visually. For a detailed description see the
+<<workspace-user-interface>> section.
+
+Click +++
+<span class="entry-list" style="display: inline-block;">
+  <span class="entry" style="display: block;">
+    <span style="display: block;" class="icon glyphicon glyphicon-plus"></span>
+    <span class="lead">New workspace</span>
+  </span>
+</span>
++++ to create a new, empty workspace inside the current folder. The workspace immediately opens when
+created and you can start importing data into it.
+
+Access the dropdown menu for a workspace in the workspace browser
+(+++<a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>+++)
+to discard, duplicate, or rename the workspace. The rename command also makes it possible to move the
+workspace to a different path.
+
+Discarding a workspace moves it to the _Trash_ folder in your home folder. This provides means to
+undo a deletion: just navigate to _Trash_ and move the workspace back to its original location.
+Discarding a workspace that is already inside _Trash_ deletes it irretrievably. Delete _Trash_ to
+discard everything inside permanently.
