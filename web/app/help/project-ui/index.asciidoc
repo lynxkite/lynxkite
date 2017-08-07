@@ -3,7 +3,7 @@
 A workspace can be opened from the <<workspace-browser>>. This section describes the user interface of a
 workspace.
 
-include::project-header.asciidoc[]
+include::workspace-header.asciidoc[]
 
 include::graph-attributes.asciidoc[]
 
