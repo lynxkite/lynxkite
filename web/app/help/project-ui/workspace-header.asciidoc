@@ -3,7 +3,7 @@
 
 The workspace title bar contains the name of the workspace, its full path (the folders they are in) and buttons to various program functions. It looks something like this:
 
-image::images/workspace-header.png[Project Header Screenshot]
+image::images/workspace-header.png[Workspace header screenshot]
 
 If the workspace is in the Root folder, it will only show the name of the workspace, as seen above. When users dive into a custom box, the workspace title changes and shows the custom box's name and path.
 
