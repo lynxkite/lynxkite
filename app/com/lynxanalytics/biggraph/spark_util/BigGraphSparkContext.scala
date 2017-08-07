@@ -278,7 +278,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[scala.math.Ordering$Double$])
     kryo.register(classOf[scala.math.LowPriorityOrderingImplicits$$anon$6])
     kryo.register(classOf[scala.Predef$$anon$1])
-    
+
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
     // Z = Boolean, B = Byte, C = Char, D = Double, F = Float, I = Int, J = Long, S = Short.

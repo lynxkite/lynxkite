@@ -20,14 +20,16 @@ class HyperbolicPredictionTest extends FunSuite with TestGraphOp {
       2 -> (math.Pi * 2 - 1.0),
       3 -> 0.5,
       4 -> math.Pi)
-    val op = HyperbolicPrediction(8, 0.6)
+    val op = HyperbolicPrediction(8, 1.5, 2, 0.6)
     val radial = AddVertexAttribute.run(g.vs, radialMap)
     val angular = AddVertexAttribute.run(g.vs, angularMap)
-    val out = op(op.vs, g.vs)(op.es, g.es)(op.radial, radial
+    val out = op(op.vs, g.vs)(op.radial, radial
     )(op.angular, angular).result.predictedEdges
     val resultEdges = out.rdd.collect.map { case (id, edge) => edge }
-    assert(!resultEdges.filter { e => e.src == 1 && e.dst == 2 }.isEmpty)
-    assert(!resultEdges.filter { e => e.src == 3 && e.dst == 0 }.isEmpty)
+    // Original edges are actually discarded here, not everything is included from
+    // frontend operation. But it does predict the likely - albeit existing - edges.
+    assert(!resultEdges.filter { e => e.src == 1 && e.dst == 0 }.isEmpty)
+    assert(!resultEdges.filter { e => e.src == 2 && e.dst == 0 }.isEmpty)
     assert(!resultEdges.filter { e => e.src == 3 && e.dst == 1 }.isEmpty)
   }
 }
