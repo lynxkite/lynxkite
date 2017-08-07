@@ -1,6 +1,6 @@
 ## Workspaces
 
-Workspaces make it possible to work with graphs. For a detailed description see the
+Workspaces allow users to describe complex computation flows visually. For a detailed description see the
 <<workspace-user-interface>> section.
 
 Click +++
