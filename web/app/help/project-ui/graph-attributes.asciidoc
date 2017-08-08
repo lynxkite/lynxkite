@@ -1,6 +1,6 @@
 ## Graph attributes
 
-Graph attributes -- also often referred to as scalars -- show data that corresponds to the
+Graph attributes -- also often referred to as scalars -- show data that correspond to the
 whole graph.
 
 For example, you can compute the average of any numeric vertex attribute and then this average will

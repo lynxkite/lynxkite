@@ -5,6 +5,8 @@ workspace.
 
 include::workspace-header.asciidoc[]
 
+include::boxes-and-arrows.asciidoc[]
+
 include::graph-attributes.asciidoc[]
 
 include::model-details.asciidoc[]
@@ -16,8 +18,6 @@ include::segmentations.asciidoc[]
 include::filter-syntax.asciidoc[]
 
 include::scala-guide.asciidoc[]
-
-include::project-history.asciidoc[]
 
 include::sql-box.asciidoc[]
 
