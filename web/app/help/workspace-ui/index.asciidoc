@@ -1,0 +1,26 @@
+# Workspace user interface
+
+A workspace can be opened from the <<workspace-browser>>. This section describes the user interface of a
+workspace.
+
+include::workspace-header.asciidoc[]
+
+include::boxes-and-arrows.asciidoc[]
+
+include::graph-attributes.asciidoc[]
+
+include::model-details.asciidoc[]
+
+include::attributes.asciidoc[]
+
+include::segmentations.asciidoc[]
+
+include::filter-syntax.asciidoc[]
+
+include::scala-guide.asciidoc[]
+
+include::sql-box.asciidoc[]
+
+include::spark-ui.asciidoc[]
+
+include::hotkeys.asciidoc[]

@@ -1,0 +1,27 @@
+## Segmentations
+
+Segmentations are connected sub-projects. The segmentation of a project is a graph, just like the
+graph in the base project. The vertices of the segmentation are also called "segments".
+A set of edges exists between the base project and its segmentation, representing membership
+in a segment. (To distinguish these special edges we also call them "links".)
+
+For example the <<maximal-cliques>> operation creates a new segmentation, in which each segment
+represents a clique in the base project. Vertices of the base project are linked to the segments
+which represent cliques that they belong to.
+
+Segmentations serve as the foundation of many advanced operations. For example the average age
+for each clique can be calculated using the <<aggregate-to-segmentation>> operation and the
+average size of the cliques that a person belongs to can be calculated with
+<<aggregate-from-segmentation>>.
+
+Segmentations can be opened on the right hand side by clicking them and choosing _"Open"_ in the
+menu. They can be visualized the usual way. The links are displayed when both the base project
+and its segmentation are visualized. This works when both sides are visualized as bucketed graphs,
+when they are visualized as concrete vertices, or even when one side is bucketed and the other is
+concrete. This can be used to gain unique insights about the structure of relationships in the
+graph.
+
+Segmentations act much like projects, and you can even import existing projects to act as
+segmentations. (In this case it is possible that the links will represent a relationship other
+than membership.) Segmentations, however, do not have their own operation history. Their history
+is part of the base project's history. This also affects the undo button.
