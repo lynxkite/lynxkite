@@ -1,0 +1,48 @@
+## Box parameters popup
+
+Clicking on a box opens its box parameters popup. This popup allows you to set the parameters of the
+box. A faint trail connects the popup to the box it controls. Click the box again, or click on the
++++<i class="glyphicon glyphicon-remove"></i>+++ in the top right corner to close the popup.
+
+image::images/box-parameters.png[Box parameters popup screenshot]
+
+Click +++<i class="glyphicon glyphicon-question-sign"></i>+++ _More about "..."_ to expand the help
+page for the box. It can be useful to review the help page when using a box for the first time.
+
+The short description for each parameter can also be accessed by clicking or hovering over the
++++<i class="glyphicon glyphicon-question-sign"></i>+++ icons by each parameter.
+
+### Applying boxes to segmentations
+
+What if you wanted to compute PageRank for the communities in the graph?
+
+If you want to apply a box to a segmentation, first add the box as normal. Then in the box
+parameters popup adjust the special _Apply to_ parameter to pick the segmentation. This special
+parameter is added for all project-typed inputs, making it possible to work with segmentations
+inside projects.
+
+### Parametric parameters
+
+Parametric parameters can reference <<anchor, workspace parameters>>.
+
+For example, consider a workspace with two <<Import CSV>> boxes, one importing `accounts-2017.csv`
+and the other importing `transactions-2017.csv`. You could add a workspace parameter called `date`
+with default value `2017`. Make the file name parameter of the import boxes parametric by clicking
+the +++<i class="fa fa-dollar"></i>+++ icon to the right of the parameter input. Change the file
+name parameters to `accounts-$date.csv` and `transactions-$date.csv`. Now `2017` will be substituted
+for `$date`, importing the same files as before.
+
+One benefit of this is that you can change the date in a single place (on the anchor box) instead of
+having to update multiple boxes when the time comes.
+
+Another benefit is that if your workspace is used as a custom box in another workspace, the
+workspace parameters are specified by the user. Parametric parameters allow you to pass these
+user-specified parameters on to boxes in the workspace.
+
+Even complex parameters, like a list of vertex attributes, can be toggled to become parametric. In
+this case the original input field is replaced by a simple text field.
+
+Parametric parameters are evaluated using
+http://docs.scala-lang.org/overviews/core/string-interpolation.html[Scala string interpolation].
+This means that Scala expressions can be embedded in these parameters. For example, you could write
+`accounts-${date.toInt + 1}.csv`.
