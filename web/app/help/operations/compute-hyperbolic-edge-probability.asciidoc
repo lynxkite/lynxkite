@@ -5,7 +5,7 @@ hyperbolic distances between vertices. This indicates
 how likely that edge would be to exist if the input graph was
 probability x similarity-grown.
 On a general level it is a metric of *edge strength*.
-Probabilities are guaranteed to be 0 <= p <= 1 .
+Probabilities are guaranteed to be 0 =< p =< 1 .
 Vertices must have two _Double_ vertex attributes to be 
 used as radial and angular coordinates.
 
