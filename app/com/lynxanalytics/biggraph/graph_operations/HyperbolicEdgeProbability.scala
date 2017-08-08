@@ -50,7 +50,8 @@ case class HyperbolicEdgeProbability() extends TypedMetaGraphOp[Input, Output] {
     // Attempts to infer exponent by drawing a log-log plot line between the
     // highest-degree vertex and the lowest-degree vertices.
     val degree = inputs.degree.rdd
-    val avgExpectedDegree = degree.map { case (id, deg) => deg }.reduce(_ + _) / vertexSetSize.toDouble
+    val avgExpectedDegree = degree.map { case (id, deg) => deg }.reduce(_ + _) /
+      vertexSetSize.toDouble
     val degreeOrdered = degree.sortBy(_._2, ascending = false)
     val highestDegree = degreeOrdered.first._2
     val bottomDegree = degree.filter { case (id, deg) => deg != 0 }
