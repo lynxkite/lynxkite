@@ -5,6 +5,8 @@ workspace.
 
 include::workspace-header.asciidoc[]
 
+include::box-parameters.asciidoc[]
+
 include::graph-attributes.asciidoc[]
 
 include::model-details.asciidoc[]
