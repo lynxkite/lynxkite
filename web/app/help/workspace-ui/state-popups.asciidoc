@@ -1,0 +1,88 @@
+## State popups
+
+Click on an output of a box to open that output state in a popup.
+Click the output again, or click on the +++<i class="glyphicon glyphicon-remove"></i>+++ in the top
+right corner to close the popup.
+
+image::images/project-state.png[Project state screenshot]
+
+Different output types have different data and features available in their popups.
+But some things they all have in common.
+
+
+### Snapshots
+
+The toolbar at the top of the state popup always contains a
++++<i class="glyphicon glyphicon-camera"></i>+++ icon, for saving the state as a _snapshot_. The
+snapshot will be saved outside of the workspace, in the directory tree. Snapshots are independent of
+the workspaces from which they were saved. Use them to share final results, or record intermediate
+results for comparison.
+
+Snapshots can be loaded back into a project with a <<Import snapshot>> box.
+
+
+### Instruments
+
+Boxes like <<Graph visualization>>, <<SQL1>>, <<Custom plot>> are essential for looking at your
+data. It is very natural to want to take a quick look at the data in the middle of a complex
+workspace.
+
+One option is to quickly create and attach a <<Graph visualization>> box, see what the
+graph looks like at that point, then delete the box.
+Instruments are effectively the same, except no temporary box is added to the workspace. This means
+instruments can be used even on read-only workspaces.
+
+The instrument buttons are in the popup toolbar. For example, in the last screenshot the buttons for
+**SQL** and **Visualize** are visible, corresponding to the <<SQL1>> and <<Graph visualization>>
+boxes. If you click on **SQL**, the popup contents are replaced by the _box
+parameters_ of the <<SQL1>> box at the top and the _output state_ of the <<SQL1>> box
+at the bottom.
+
+The output state of the instrument once again has a toolbar for snapshotting and applying
+instruments. This makes it possible to apply one instrument after the other:
+
+image::images/nested-instruments.png[Nested instruments screenshot]
+
+Instruments are not saved into the workspace. But they are built from regular boxes, so the same
+calculations can always be reproduced using conventional boxes.
+
+
+### Project state
+
+image::images/project-state.png[Project state screenshot]
+
+A "project" is a rich type that represents graphs and their segmentations in one bundle. The popup
+for a project output makes it possible to see basic information about the graph, such as the number
+of vertices and edges, and the list of scalars, attributes, and segmentations. Scalar values are
+displayed, attribute histograms are available on click, and segmentations can be opened to dig
+deeper.
+
+
+### Table state
+
+image::images/table-state.png[Table state screenshot]
+
+Tables are the same in LynxKite as in relational databases and spreadsheet programs: they are a
+matrix of columns and rows. Tables are the input and output of SQL queries. Projects can be built
+from tables via <<Use table as vertices>>, <<Use table as edges>>, and similar operations.
+
+
+### Plot state
+
+image::images/plot-state.png[Plot state screenshot]
+
+The plot state is a data visualization created via the <<Custom plot>> box, or one of the built-in
+plotting boxes.
+
+
+### Export state
+
+image::images/export-state.png[Export state screenshot]
+
+Export boxes, such as <<Export to CSV>>, allow you to configure an export operation. The output of
+these boxes is an export state. It is the export state which actually allows triggering the often
+resource-intensive computation of creating the output files.
+
+This two-step process avoids accidental exports while editing the workspace. It also provides
+metadata information about the output file, such as its path. To trigger the export, click on the
++++<i class="glyphicon glyphicon-play"></i>+++ icon.
