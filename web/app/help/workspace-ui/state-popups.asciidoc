@@ -2,7 +2,7 @@
 
 Click on an output of a box to open that output state in a popup.
 Click the output again, or click on the +++<i class="glyphicon glyphicon-remove"></i>+++ in the top
-right corner to close the popup.
+right corner to close the popup. You can also press ESC to close the last used popup.
 
 image::images/project-state.png[Project state screenshot]
 
