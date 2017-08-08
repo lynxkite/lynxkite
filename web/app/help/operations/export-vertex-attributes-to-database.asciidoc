@@ -1,7 +1,0 @@
-### Export vertex attributes to database
-
-Creates a new database table and writes the selected vertex attributes into it.
-
-====
-include::{g}[tag=database-export]
-====
