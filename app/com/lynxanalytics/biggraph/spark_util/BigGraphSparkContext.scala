@@ -274,10 +274,10 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[com.lynxanalytics.biggraph.graph_operations.HyperVertex])
     kryo.register(classOf[Array[com.lynxanalytics.biggraph.graph_operations.HyperVertex]])
     kryo.register(classOf[Array[List[_]]])
-    kryo.register(classOf[scala.math.Ordering$$anon$11])
+    kryo.register(classOf[scala.math.Ordering$$anon$9])
+    kryo.register(classOf[scala.math.Ordering$$anonfun$by$1])
+    kryo.register(classOf[com.lynxanalytics.biggraph.graph_operations.HyperbolicPrediction$$anonfun$14])
     kryo.register(classOf[scala.math.Ordering$Double$])
-    kryo.register(classOf[scala.math.LowPriorityOrderingImplicits$$anon$6])
-    kryo.register(classOf[scala.Predef$$anon$1])
 
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!

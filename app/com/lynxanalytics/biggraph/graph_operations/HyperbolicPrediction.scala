@@ -109,7 +109,7 @@ case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegre
               Edge(src.id, dst.id))
         }.sortBy(-_._1)
         dst.take(numSelections)
-    }.top(size)
+    }.top(size)(Ordering.by[(Double, Edge), Double](_._1))
     val extraEdgesRDD = sc.parallelize(extraEdges)
     val predictedEdges = extraEdgesRDD.flatMap {
       case (probability, edge) =>
