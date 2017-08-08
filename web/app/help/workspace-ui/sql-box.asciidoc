@@ -1,0 +1,178 @@
+[[sql-box]]
+## SQL interface
+
+There is a SQL interface at the bottom of project pages that
+makes it possible to run SQL queries over the data in the project and export the results.
+
+The following tables are available for SQL access:
+
+ - All the vertex attributes can be accessed in the `vertices` table.
++
+Example: `select count(*) from vertices where age < 30`
+
+ - All the edge attributes can be accessed in the `edge_attributes` table.
++
+Example: `select max(weight) from edge_attributes`
+
+ - All the Scalars can be accessed in the `scalars` table.
++
+Example: `select `!vertex_count` from scalars`
++
+You can not query the `edge_attributes` table if there are no edge attributes, even if the edges
+themselves are defined.
+
+ - All the edge and vertex attributes can be accessed in the `edges` table. Each row of this
+table represents an edge. The attributes of the edge are prefixed with `edge_`, while the attributes
+of the source and destination vertices are prefixed with `src_` and `dst_` respectively.
++
+Example: `select max(edge_weight) from edges where src_age < dst_age`
+
+ - The `belongs_to` table is defined for each segmentation of a project or a segmentation. It contains
+the vertex attributes for the connected pairs of base and segmentation vertices prefixed with `base_`
+and `segment_` respectively.
++
+Example (work on the segment side): `select * from belongs_to`
++
+The tables of segmentations can also be accessed using the
+`{backtick}segmentation name.table name{backtick}` syntax from the base side.
++
+Examples (work on the base side):
+
+ * `select count(*) from {backtick}communities.belongs_to{backtick} group by segment_id`
+ * `select base_name from {backtick}communities.belongs_to{backtick} where segment_name = "COOKING"`
+
++
+The backticks are used for escaping the table name with special characters.
+
+Click the +++<label class="btn btn-primary">Show results</label>+++ button or press Ctrl-Enter to
+run the query.
+The result will be limited to the first 10 lines by default, but you can also set this size limit
+explicitly.
+
+Every query you run is saved locally, and the 100 most recent queries are also saved in your
+browser's local storage thus preserving them between different tabs, windows, and even sessions.
+You can navigate in the query history by pressing Ctrl+Up and Ctrl+Down
+(Command+Up and Command+Down on Mac) in the text area of the SQL interface.
+
+You can browse the list of available tables and columns by clicking on the
++++<label class="btn btn-primary">Tables ⏵</label>+++
+button.
+
+## Exporting data
+
+The <<sql-box>> is the way to export data from LynxKite to files and databases.
+
+Click the +++<label class="btn btn-primary">Save results...</label>+++ button and configure the
+output file format or database then press the
++++<label class="btn btn-primary">Save results</label>+++ button.
+
+The supported output formats and their respective options are described in the following sections.
+LynxKite fully interoperates with all of these formats. (Both import and export are supported.)
+
+[[export-csv]]
+### CSV
+
+CSV stands for comma-separated values. It is a common human-readable file format where each record
+is on a separate line and fields of the record are simply separated with a comma or other delimiter.
+CSV does not store data types, so all fields become strings when exporting to this format.
+
+====
+[[path]] Path::
+The distributed file-system path of the output file. It defaults to `<download>`, in which case the
+output file will be downloaded through the browser. This is the simplest option for small data sets.
+
+[[delimiter]] Delimiter::
+The delimiter separating the fields in each line.
+
+[[quote]] Quote::
+The character used for quoting strings that contain the delimiter. If the string also contains the
+quote character, it will be escaped with a backslash (`{backslash}`).
+
+[[header]] Include header::
+Whether or not to include the header in the CSV file. If the data is exported as multiple CSV files
+the header will be included in each of them. When such a data set is directly downloaded, the header
+will appear multiple times in the resulting file.
+====
+
+[[export-json]]
+### JSON
+
+JSON is a rich human-readable data format. It produces larger files than CSV but can represent
+data types. Each line of the file stores one record encoded as a
+https://en.wikipedia.org/wiki/JSON[JSON] object.
+
+====
+[[path]] Path::
+The distributed file-system path of the output file. It defaults to `<download>`, in which case the
+output file will be downloaded through the browser. This is the simplest option for small data sets.
+====
+
+[[export-parquet]]
+### Apache Parquet
+
+https://parquet.apache.org/[Apache Parquet] is a columnar data storage format.
+
+====
+[[path]] Path::
+The distributed file-system path of the output file.
+====
+
+[[export-orc]]
+### Apache ORC
+
+https://orc.apache.org/[Apache ORC] is a columnar data storage format.
+
+====
+[[path]] Path::
+The distributed file-system path of the output file.
+====
+
+[[export-jdbc]]
+### JDBC
+
+JDBC is used to connect to relational databases such as MySQL. See <<jdbc-details>> for setup steps
+required for connecting to a database.
+
+====
+[[url]] JDBC URL::
+The connection URL for the database. This typically includes the username and password. The exact
+syntax entirely depends on the database type. Please consult the documentation of the database.
+
+[[table]] Table::
+The name of the database table to export to.
+
+[[mode]] Mode::
+Describes whether LynxKite should expect a table to already exist and how to handle this case.
++
+**The table must not exist** means the table will be created and it is an error if it already
+exists.
++
+**Drop the table if it already exists** means the table will be deleted and re-created if
+it already exists. Use this mode with great care.
++
+**Insert into an existing table** requires the
+table to already exist and it will add the exported data at the end of the existing table.
+====
+
+[[export-lynxkite-table]]
+### LynxKite table
+
+The results of a query can also be saved as a LynxKite table. This makes it possible to make further
+use of the data via any of the import operations in a project.
+
+====
+[[table]] Table::
+The full path of the table to be created.
+====
+
+[[export-lynxkite-view]]
+### LynxKite view
+
+The results of a query can also be saved as a LynxKite view. This is very similar to a table, but the
+values are obtained dynamically, i.e. if you export as view, then change data that is referred to by
+the view, further queries on the view will return updated results. See <<views>> for further details.
+
+[[export-segmentation-shorthand]]
+### Segmentation
+In case of a project, the export functionality can also be used to invoke the <<create-segmentation-from-sql>>
+operation.

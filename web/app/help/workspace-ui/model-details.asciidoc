@@ -1,0 +1,79 @@
+[[model-details]]
+## Machine learning models
+
+Machine learning models are one of the graph attribute types.
+They are created by a machine learning operation (for example <<train-linear-regression-model>>)
+and used for prediction with the <<Predict with model>> operation or for classification with the
+<<Classify with model>> operation.
+
+Press the plus button
+(+++<label class="btn btn-default"><i class="glyphicon glyphicon-plus"></i></label>+++)
+to access detailed information about a machine learning model.
+
+### Method
+
+The machine learning algorithm used to create this model.
+
+### Label
+
+The name of the attribute that this model is trained to predict. (The dependent variable.)
+
+This will not appear for unsupervised machine learning models.
+
+### Scaling
+
+Details about the pre-processing scaling step applied to the features before training. The two
+phases are centering and scaling. The first phase (centering) centers the data with mean before scaling,
+i.e., the mean is subtracted from all elements. The data set acquired this way has a mean of 0.
+The second phase (scaling) is acquired by dividing all the elements by the standard deviation.
+The means and deviations in these steps are computed columnwise.
+
+Suppose we have an original data item (a, b). After these two steps, the data item that
+is used for the training will be ((a-m1)/d1, (b-m2)/d2), where m1 and d1 are the mean
+and the standard deviation for the first column (the a's) and m2 and d2 are the mean
+and the standard deviation for the second column (the b's).
+
+Note that both steps are optional: it depends on the model, whether they are applied or not.
+
+### Features
+
+The list of the feature attributes that this model uses for predictions.
+(The independent variables.)
+
+### Details
+
+For decision tree classification model:
+
+* The i-th element of `support` is the number of occurrences of the i-th class
+in the training data divided by the size of the training data.
+
+For linear regression and logistic regression models:
+
+* `intercept` is the constant parameter in the regression equation of the model.
+* `coefficients` are the coefficients in the regression equation of the model.
+
+For linear regression model:
+
+* `https://en.wikipedia.org/wiki/Coefficient_of_determination[R-squared]` is the coefficient of
+determination, an index of the linear correlation between the features and the label.
+* `https://en.wikipedia.org/wiki/Mean_absolute_percentage_error[MAPE]` is the mean absolute percentage
+error, a measure of prediction accuracy.
+* `https://en.wikipedia.org/wiki/T-statistic[T-values]` can be used for the hypothesis test of coefficient
+ significances. This will not appear for the lasso model.
+
+For logistic regression model:
+
+* `https://en.wikipedia.org/wiki/Z-test[Z-values]` can be used for the hypothesis test of coefficient
+significances.
+* `http://www.ats.ucla.edu/stat/mult_pkg/faq/general/Psuedo_RSquareds.htm[psuedo R-squared]`, or McFadden's
+R-squared in our case, is an index of the logistic correlation between the features and the label.
+* `threshold` is the probability threshold for binary classification. If the outcome probability of the label
+1.0 is greater than the threshold, the model will predict the classification label as 1.0. The threshold is
+obtained by maximizing the F-score.
+* `https://en.wikipedia.org/wiki/F1_score[F-score]` is a measure of test accuracy for binary classifications.
+
+For KMeans clustering model:
+
+* `cluster centers` are the vectors of the KMeans cluster centers.
+* `cost` is the k-means cost (sum of squared distances of points to their nearest center) for this model on
+the training data.

@@ -1,0 +1,19 @@
+## Apache Spark status
+
+LynxKite uses Apache Spark as its distributed computation backend.
+The status of the backend is reflected by the elements in the bottom right corner of the page.
+
+A single LynxKite operation is often performed as a sequence of multiple Spark stages.
+A single Spark stage is further subdivided into Spark tasks. Tasks are the smallest
+unit of work. Each task is assigned to one of the machines in the cluster.
+
+The rotating cogwheel in the bottom right indicates that Spark is calculating something.
+
+The _Stop calculation_ button appears when you hover over the cogwheel. It sends an interruption
+signal to Spark. This signal aborts work on all Spark stages. The tasks that are in progress will
+still be finished, but the outstanding tasks and stages will be cancelled.
+The button cancels all Spark stages, not just the ones initiated by the user pressing the button.
+For this reason the button is restricted to admin users.
+
+The little colorful rectangles represent Spark stages. The height of the rectangle indicates
+the percentage of tasks completed in the stage. The color corresponds to the type of work it does.
