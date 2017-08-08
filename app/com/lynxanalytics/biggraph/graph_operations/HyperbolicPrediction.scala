@@ -120,4 +120,3 @@ case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegre
     output(o.edgeProbability, randomNumberedEdges.map { case (id, (e, prob)) => (id, prob) }.sortUnique(partitioner))
   }
 }
-
