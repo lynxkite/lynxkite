@@ -158,7 +158,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
           project.edgeBundle = result.predictedEdges
           project.newEdgeAttribute("hyperbolic_edge_probability", result.edgeProbability,
             "hyperbolic edge probability")
-          project.edgeBundle = generalEdgeBundleUnion(oldBundle, project.edgeBundle)
+          project.edgeBundle = parallelEdgeBundleUnion(oldBundle, project.edgeBundle)
         } else {
           project.edgeBundle = result.predictedEdges
           project.newEdgeAttribute("hyperbolic_edge_probability", result.edgeProbability,
