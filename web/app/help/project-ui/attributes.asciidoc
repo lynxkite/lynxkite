@@ -32,9 +32,10 @@ There are lots of ways you can create attributes:
 * when importing vertices/edges from a CSV every column will automatically become an attribute
 * you can also import attributes for existing vertices from a CSV file
 * you can compute various graph metrics on the vertices/edges (just to name a few, you can compute
-<<degree>>, <<clustering-coefficient>> for vertices and <<dispersion>> for edges)
-* you can derive more attributes from existing ones using the <<derived-vertex-attribute>>
-and <<derived-edge-attribute>> operation
+<<compute-degree>>, <<compute-clustering-coefficient>> for vertices and <<compute-dispersion>> for
+edges)
+* you can derive more attributes from existing ones using the <<derive-vertex-attribute>>
+and <<derive-edge-attribute>> operation
 * you can spread attributes via edges in various ways, e.g. by <<aggregate-on-neighbors>>
 * etc.
 
@@ -44,7 +45,7 @@ Sometimes a vertex (or an edge) does not have any value for a particular attribu
 in a Facebook graph, the user's hometown might or might not be given. In such a case, we say that this
 attribute is _undefined_ for that particular vertex (or edge). Usually, an undefined value
 represents the fact that the information is unknown. Indeed, some algorithms (e.g.,
-<<viral-modeling>>) work on undefined attribute values, and their job is
+<<predict-attribute-by-viral-modeling>>) work on undefined attribute values, and their job is
 to fill them in with reasonable estimates.
 
 Note that an empty string and an undefined value are two different concepts.
@@ -64,15 +65,14 @@ straightforward way to filter the data to undefined values. In contrast,
 the following filter matches the empty strings: `regex(^$)`. (Further useful regular expressions:
 `regex(.)` will match non-empty strings; `regex(.*)` will match defined strings;
 see <<attribute-filter-syntax>>.)
-* Operations <<derived-edge-attribute>> and <<derived-vertex-attribute>> compute the
-new attribute value for the given vertex or edge only if all the attributes occurring
-in their JavaScript expression are defined for that vertex or edge.
+* <<derive-edge-attribute>> and <<derive-vertex-attribute>> allow you to choose whether to evaluate
+the expression if some of the inputs are undefined.
 
 Although you cannot directly set up a filter that matches undefined values, there
-is a way to accomplish this. It relies on operation <<fill-with-constant-default-value>>,
-which will change any undefined value to whatever is specified in the operation's parameter.
-If it is also necessary to keep the original values to be undefined,
-you can make a copy of the attribute and run the operation on the copy.
+is a way to accomplish this. It relies on operation
+<<fill-vertex-attributes-with-constant-default-values>>, which will change any undefined value to
+whatever is specified in the operation's parameter.  If it is also necessary to keep the original
+values to be undefined, you can make a copy of the attribute and run the operation on the copy.
 
 #### CSV export/import and undefined
 
@@ -101,11 +101,11 @@ to CSV files. (Database export and import do not suffer from this limitation.)
 It might be necessary to create attributes that are undefined for certain
 vertices/edges. (An example use case is when you want to create input
 for a fingerprinting or a viral modelling operation.) This can be done
-with a <<derived-vertex-attribute>> (or a <<derived-edge-attribute>>)
-operation. For example, the JavaScript expression
+with <<derive-vertex-attribute>> (or <<derive-edge-attribute>>)
+operation. For example, the Scala expression
 
 ----
-attr > 0 ? attr : undefined
+if (attr > 0) Some(attr) else None
 ----
 
 will return `attr` whenever its value is positive, and undefined otherwise.
@@ -147,13 +147,13 @@ Position::
 Available on attributes of type `(Double, Double)`. The attribute will be interpreted as (X, Y)
 coordinates on the plane and vertices will be laid out on the screen based on these coordinates.
 (You can create a `(Double, Double)` attribute from two Double attributes using the
-<<vertex-attributes-to-position>> operation.)
+<<convert-vertex-attributes-to-position>> operation.)
 
 Geo coordinates::
 Available on attributes of type `(Double, Double)`. The attribute will be interpreted as a
 latitude-longitude coordinate and the vertices will be put on a world map based on this coordinate.
 (You can create a `(Double, Double)` attribute from two Double attributes using the
-<<vertex-attributes-to-position>> operation.)
+<<convert-vertex-attributes-to-position>> operation.)
 
 #### Edge visualizations
 

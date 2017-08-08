@@ -6,8 +6,8 @@ This operation modifies this segmentation by growing each segment with the neigh
 For example if vertex A is a member of segment X and edge A{to}B exists in the original graph
 then B also becomes the member of X (depending on the value of the direction parameter).
 
-This operation can be used together with <<Copy graph into a segmentation>> to create a segmentation
-of neighborhoods.
+This operation can be used together with <<Use base project as segmentation>> to create a
+segmentation of neighborhoods.
 
 ====
 [[direction]] Direction::
