@@ -5,7 +5,7 @@ The workspace title bar contains the name of the workspace, its full path (the f
 
 image::images/workspace-header.png[Workspace header screenshot]
 
-If the workspace is in the Root folder, it will only show the name of the workspace, as seen above. When users dive into a custom box, the workspace title changes and shows the custom box's name and path.
+If the workspace is in the Root folder, it will only show the name of the workspace, as seen above. When you dive into a custom box, the workspace title changes and shows the custom box's name and path.
 
 [[project-header-buttons]]
 ### Workspace header buttons
@@ -32,7 +32,7 @@ Closes the custom box workspace and returns to the main workspace. Only availabl
 Opens the selected custom box as a workspace. Only available if a custom box is selected.
 
 +++<label class="btn btn-default"><i class="fa fa-mouse-pointer"></i></label>+++ Select boxes on drag::
-If this mode is enabled, boxes can be selected by dragging a selection rectangle. Users can still  pan (move the viewport) by clicking and dragging while holding Shift, or select boxes individually (and add boxes to the selection by holding Ctrl).
+If this mode is enabled, boxes can be selected by dragging a selection rectangle. You can still  pan (move the viewport) by clicking and dragging while holding Shift, or select boxes individually (and add boxes to the selection by holding Ctrl).
 
 +++<label class="btn btn-default"><i class="fa fa-hand-paper-o"></i></label>+++ Pan workspace on drag::
 If this mode is enabled, clicking and dragging will move the viewport. Boxes can be selected two ways: individually, when additional  boxes can be added to the selection by holding Ctrl or by dragging a selection rectangle while holding Shift.
@@ -45,7 +45,7 @@ Redoes the last undone change. Only available if you haven't performed any new c
 since the last undo.
 
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-floppy-disk"></i></label>+++ Save workspace as::
-Makes a copy of the current workspace with a new name. Users will have write permissions to the
+Makes a copy of the current workspace with a new name. You will have write permissions to the
 new copy even if they didn't have for the original.
 
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-remove"></i></label>+++ Close workspace::
