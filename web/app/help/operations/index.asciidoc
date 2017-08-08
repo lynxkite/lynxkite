@@ -179,6 +179,8 @@ include::compute-distance-via-shortest-path.asciidoc[]
 
 include::compute-embeddedness.asciidoc[]
 
+include::compute-hyperbolic-edge-probability.asciidoc[]
+
 include::compute-pagerank.asciidoc[]
 
 include::connect-vertices-on-attribute.asciidoc[]
