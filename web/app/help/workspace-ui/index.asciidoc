@@ -17,8 +17,6 @@ include::filter-syntax.asciidoc[]
 
 include::scala-guide.asciidoc[]
 
-include::sql-box.asciidoc[]
-
 include::spark-ui.asciidoc[]
 
 include::hotkeys.asciidoc[]
