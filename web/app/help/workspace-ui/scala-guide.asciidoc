@@ -7,7 +7,7 @@ http://docs.scala-lang.org/tutorials/tour/tour-of-scala.html
 ### Getting started
 
 The simplest way of using Scala to derive attributes is to just provide a one-liner expression
-in <<derived-vertex-attribute>> or <<derived-edge-attribute>>. The examples below are for deriving
+in <<derive-vertex-attribute>> or <<derive-edge-attribute>>. The examples below are for deriving
 vertex attributes. The only difference from deriving edge attributes is the way vertex attributes can be
 accessed.
 
@@ -52,8 +52,5 @@ both input (the type of vertex and edge attributes the script can use) and resul
 * Any Vector combined from the above types
 
 Values of other types need to be manually converted before returning from the Scala script.
-For input types, you can use for example one of the following operations to convert:
-<<vertex-attribute-to-string>> or <<vertex-attribute-to-double>>.
-Converting to Double will of course cause precision loss for large numbers, but
-converting to String will not.
-
+For input types, you can use, for example, either of
+<<convert-vertex-attribute-to-string>> or <<convert-vertex-attribute-to-double>>.

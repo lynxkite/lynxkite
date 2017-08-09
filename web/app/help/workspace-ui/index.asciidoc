@@ -5,6 +5,10 @@ workspace.
 
 include::workspace-header.asciidoc[]
 
+include::box-parameters.asciidoc[]
+
+include::state-popups.asciidoc[]
+
 include::graph-attributes.asciidoc[]
 
 include::model-details.asciidoc[]
@@ -16,10 +20,6 @@ include::segmentations.asciidoc[]
 include::filter-syntax.asciidoc[]
 
 include::scala-guide.asciidoc[]
-
-include::project-history.asciidoc[]
-
-include::sql-box.asciidoc[]
 
 include::spark-ui.asciidoc[]
 

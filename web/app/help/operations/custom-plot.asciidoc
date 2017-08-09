@@ -1,25 +1,101 @@
 ### Custom plot
 
 Creates a plot from the input table. The plot can be defined using the
-https://github.com/vegas-viz/Vegas[Vegas] plot description language.
+https://github.com/vegas-viz/Vegas[Vegas] plotting API in Scala. This API makes
+it easy to define https://vega.github.io/vega-lite/[Vega-Lite] plots in code.
+
+You code has to evaluate to a `vegas.Vegas` object. For your convenience `vegas._` is already
+imported. An example of a simple plot would be:
+
+```
+Vegas()
+  .withData(table)
+  .encodeX("name", Nom)
+  .encodeY("age", Quant)
+  .encodeColor("gender", Nom)
+  .mark(Bar)
+```
+
+`Vegas()` is the entry point to the plotting API. You can provide a title if you like: `Vegas("My
+Favorite Plot")`.
+
+LynxKite fetches a sample of up to 10,000 rows from your table for the purpose of the plot. This
+data is made available in the `table` variable (as `Seq[Map[String, Any]]`). `.withData(table)`
+binds this data to the plot. You can transform the data before plotting if necessary:
+
+```
+val doubled = table.map(row =>
+  row.updated("age", row("age").asInstanceOf[Double] * 2))
+
+Vegas()
+  .withData(doubled)
+  .encodeX("name", Nom)
+  .encodeY("age", Quant)
+```
+
+(The goals of this trivial example would be better achieved by other means. But the same approach
+can be used to build very intelligent graphs.)
+
+`.encodeX()` and `.encodeY()` specify which fields of the table to visualize, and how to visualize
+them. `X`, `Y`, and `Color` are the most basic examples, but there are several more. See the
+Vega-Lite docs on https://vega.github.io/vega-lite/docs/encoding.html[Encodings] for details.
+
+At the simplest, you have the specify the data type of the field: `Quantitative` (for numbers),
+`Temporal` (for dates), `Ordinal` (for ranking), or `Nominal` (for categories).`
+
+You can also specify details of the axis, such as switching it to logarithmic scale:
+
+```
+Vegas()
+  .withData(table)
+  .encodeX("age", Quant, scale=Scale(scaleType=ScaleType.Log))
+```
+
+By default each row in the table results in one visual element in the visualization. This is great
+for scatter plots, where you want to display each row as a dot. But it is not suitable for
+histograms, where you want each bar to represent the count of rows that fall within a range of
+values (a bin). This can also be specified as part of the encoding! For example, for a simple
+histogram by `age`:
+
+```
+Vegas()
+  .withData(table)
+  .encodeX("age", Quant, bin=Bin(maxbins=10.0))
+  .encodeY(field="*", Quantitative, aggregate=AggOps.Count)
+  .mark(Bar)
+```
+
+`.mark(Bar)` specifies the visual element to use. The default is `Circle`.  `Line`, `Area`, and more
+are available and documented in the Vega-Lite docs on
+https://vega.github.io/vega-lite/docs/mark.html[Marks].
+
+For inspiration take a look at the https://vega.github.io/vega-lite/examples/[Vega-Lite Example
+Gallery]. Most of these can be easily reproduced in LynxKite. For example
+https://vega.github.io/editor/#/examples/vega-lite/trellis_barley[Becker’s Barley Trellis
+Plot] can be specified as:
+
+```
+Vegas()
+  .withData(table)
+  .encodeRow("site", Ordinal)
+  .encodeColor("year", Nom)
+  .encodeX("yield", Quant,
+    aggregate=AggOps.Median, scale=Scale(zero=false))
+  .encodeY("variety", Ordinal,
+    sortField=Sort("yield", op=AggOps.Median), scale=Scale(bandSize=12))
+  .mark(Point)
+```
+
+LynxKite comes with several <<built-ins>>, many of them based on the Custom plot box. You can dive
+into these custom boxes to see the code used to build them.
+
+For details about the Scala API see the
+https://github.com/vegas-viz/Vegas/tree/v0.3.9/core/src/main/scala/vegas/DSL[Vegas 0.3.9 DSL
+specification] or review
+http://nbviewer.jupyter.org/github/aishfenton/Vegas/blob/v0.3.9/notebooks/jupyter_example.ipynb[a
+collection of examples].
 
 ====
 [[plot_code]] Plot code::
-Scala code for defining the plot. The code always has to be started as
-```
-Vegas("Some custom title").
-withData(Data).
-```
-A simple example of a line chart:
-```
-Vegas("GDP growth year by year").
-withData(Data).
-mark(Line).
-encodeX("year", Ordinal).
-encodeY("gdp_growth", Quantitative)
-```
-For more examples see
-http://nbviewer.jupyter.org/github/aishfenton/Vegas/blob/master/notebooks/jupyter_example.ipynb[this Jupyter notebook].
-For understanding the Vega-Lite plot grammar (the JSON plot format used by Vegas) see
-https://vega.github.io/vega-lite/docs/[the Vega-Lite documentation].
+Scala code for defining the plot.
 ====
