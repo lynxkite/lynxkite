@@ -6,8 +6,6 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
-### 2.0.0
-
  - Replaced LynxKite projects with more powerful and flexible workspaces. Workspaces allow you to
    express full workflows, structure your work, re-use components, and easily navigate your
    experiments.
