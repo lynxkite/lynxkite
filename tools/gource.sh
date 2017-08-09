@@ -17,6 +17,7 @@ gource \
   --hide filenames \
   --camera-mode overview \
   --highlight-dirs \
+  --dir-name-depth 3 \
   --highlight-users \
   --key \
   --padding 1.5 \
