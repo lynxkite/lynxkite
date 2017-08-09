@@ -937,14 +937,14 @@ object SubProject {
   def splitPipedPath(pipedPath: String) = pipedPath.split(quotedSeparator, -1)
 
   def validateName(name: String, what: String = "Name") = {
-    assert(name.nonEmpty, s"$what cannot be empty.")
-    assert(!name.startsWith("!"), s"$what ($name) cannot start with '!'.")
+    DirectoryEntry.validateName(name, what)
     assert(!name.contains(separator), s"$what ($name) cannot contain '$separator'.")
   }
 }
 
 class SnapshotFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends ObjectFrame(path) {
+  SubProject.validateName(path.last.name)
 
   def initialize(state: BoxOutputState) = {
     set(rootDir / "!objectType", "snapshot")
@@ -1176,14 +1176,20 @@ object DirectoryEntry {
   def rootDirectory(implicit metaManager: MetaGraphManager) = new Directory(SymbolPath())
 
   def validateName(name: String, what: String = "Name") = {
+    assert(name.nonEmpty, s"$what cannot be empty.")
+    assert(!name.startsWith("!"), s"$what ($name) cannot start with '!'.")
+    assert(!name.contains("/"), s"$what ($name) cannot contain '/'.")
+  }
+
+  def validatePath(name: String, what: String = "Name") = {
     val path = SymbolPath.parse(name)
     for (e <- path) {
-      SubProject.validateName(e.name, what)
+      validateName(e.name, what)
     }
   }
 
   def fromName(path: String)(implicit metaManager: MetaGraphManager): DirectoryEntry = {
-    validateName(path)
+    validatePath(path)
     fromPath(SymbolPath.parse(path))
   }
 
