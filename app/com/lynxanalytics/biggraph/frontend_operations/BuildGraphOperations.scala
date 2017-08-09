@@ -155,11 +155,6 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
           op.radial, radAttr.runtimeSafeCast[Double])(
             op.angular, angAttr.runtimeSafeCast[Double]).result
         if (project.hasEdgeBundle.enabled) {
-          /* val oldBundle = project.edgeBundle
-          project.edgeBundle = result.predictedEdges
-          project.newEdgeAttribute("hyperbolic_edge_probability", result.edgeProbability,
-            "hyperbolic edge probability")
-          project.edgeBundle = generalEdgeBundleUnion(oldBundle, project.edgeBundle)*/
           val addOp = AddEdgesWithDoubleAttribute(-1.0)
           val addResult = addOp(addOp.vs, project.vertexSet)(
             addOp.es, project.edgeBundle)(
@@ -168,7 +163,6 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
           project.edgeBundle = addResult.union
           project.newEdgeAttribute("hyperbolic_edge_probability", addResult.newAttr,
             "hyperbolic edge probability")
-          //TODO maybe project.edgeBundle.idSet????????????????????????????????????????,
         } else {
           project.edgeBundle = result.predictedEdges
           project.newEdgeAttribute("hyperbolic_edge_probability", result.edgeProbability,
