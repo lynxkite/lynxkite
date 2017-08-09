@@ -107,7 +107,11 @@ latitude-longitude coordinate and the vertices will be put on a world map based 
 <<Convert vertex attributes to position>> operation.)
 
 Slider::
-Colors veritices based on this attribute. After selecting this visualization, a slider appears, which ranges from the minimum to the maximum value of the attribute. Using the slider changes the colors of the vertices: every vertex that is less than the selected value is red, they are yellow if it's the exact same value and green if it's more. This is only available for `Double` attributes.
+Colors veritices based on this attribute. After selecting this visualization, a slider appears,
+which ranges from the minimum to the maximum value of the attribute. Using the slider changes the
+colors of the vertices: vertices below the slider value are green, vertices at the slider value
+are yellow, and vertices above the slider value are red. This is only available for `Double`
+attributes.
 
 #### Edge visualizations
 
