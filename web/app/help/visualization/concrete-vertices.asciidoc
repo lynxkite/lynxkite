@@ -49,7 +49,7 @@ Center count:: The number of centers to be picked. (Default: 1)
 
 Restrictions narrow down the potential set of candidates that will be
 chosen when you click on the _Pick_ button. They have the same syntax as
-filters (see  <<attribute-filter-syntax>>). There are two ways to specify them:
+filters. (See <<Filter by attributes>>.) There are two ways to specify them:
 
 Use project attribute filters::
 (Default.) Use the currently set vertex attribute filters as restrictions.

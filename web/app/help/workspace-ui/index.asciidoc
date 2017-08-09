@@ -9,18 +9,6 @@ include::box-parameters.asciidoc[]
 
 include::state-popups.asciidoc[]
 
-include::graph-attributes.asciidoc[]
-
-include::model-details.asciidoc[]
-
-include::attributes.asciidoc[]
-
-include::segmentations.asciidoc[]
-
-include::filter-syntax.asciidoc[]
-
 include::scala-guide.asciidoc[]
 
 include::spark-ui.asciidoc[]
-
-include::hotkeys.asciidoc[]
