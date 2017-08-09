@@ -86,7 +86,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
     }
   })
 
-  register("Predict with a neural network (EXPERIMENTAL)")(new ProjectTransformation(_) {
+  register("Predict with a graph neural network")(new ProjectTransformation(_) {
     params ++= List(
       Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]),
       Param("output", "Save as"),
