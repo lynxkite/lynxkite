@@ -116,7 +116,9 @@ case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegre
         List((edge, probability), (Edge(edge.dst, edge.src), probability))
     }
     val randomNumberedEdges = predictedEdges.randomNumbered(partitioner)
-    output(o.predictedEdges, randomNumberedEdges.map { case (id, (e, prob)) => (id, e) }.sortUnique(partitioner))
-    output(o.edgeProbability, randomNumberedEdges.map { case (id, (e, prob)) => (id, prob) }.sortUnique(partitioner))
+    output(o.predictedEdges, randomNumberedEdges.map { case (id, (e, prob)) =>
+     (id, e) }.sortUnique(partitioner))
+    output(o.edgeProbability, randomNumberedEdges.map { case (id, (e, prob)) =>
+     (id, prob) }.sortUnique(partitioner))
   }
 }
