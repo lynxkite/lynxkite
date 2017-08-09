@@ -1,9 +1,8 @@
 # Graph visualizations
 
-Clicking on the _"Visualize"_ button in the <<State popups>> opens the project visualization screen. You can choose to open the <<Concrete vertices view>> or the <<Bucketed view>>.
+You can create graph visualizations by adding the operation <<Graph visualization>> to your workflows or by clicking on the _"Visualize"_ button in the <<State popups>>.
 
-There are multiple types of graph visualizations, but in every case you see some objects connected by
-some arcs.
+There are multiple types of graph visualizations, but in every case you see some objects connected by some arcs. You can choose to open the <<Concrete vertices view>> or the <<Bucketed view>>.
 
 Visualized objects can represent vertices or groups of vertices of the graph.
 The same way arcs on the screen might represent multiple edges in the graph.
