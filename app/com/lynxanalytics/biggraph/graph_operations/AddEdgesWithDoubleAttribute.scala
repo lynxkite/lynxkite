@@ -1,6 +1,6 @@
-// Predicts edges in a graph that has hyperbolic coordinate attributes.
-// Runs PSOGenerator with the already existing coordinates.
-// Takes the top X most likely edges.
+// Hidden helper operation for HyperbolicPrediction's frontend op in BuildGraphOperations
+// Unions 2 edge bundles while keeping a Double edge attribute of the newEdges bundles
+// Fills the edges of es with a defaultValue edge attribute
 package com.lynxanalytics.biggraph.graph_operations
 
 import scala.collection.immutable.SortedMap
