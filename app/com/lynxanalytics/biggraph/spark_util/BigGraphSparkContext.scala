@@ -276,7 +276,6 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Array[List[_]]])
     kryo.register(classOf[scala.math.Ordering$$anon$9])
     kryo.register(classOf[scala.math.Ordering$$anonfun$by$1])
-    kryo.register(classOf[com.lynxanalytics.biggraph.graph_operations.HyperbolicPrediction$$anonfun$14])
     kryo.register(classOf[scala.math.Ordering$Double$])
 
     // Add new stuff just above this line! Thanks.

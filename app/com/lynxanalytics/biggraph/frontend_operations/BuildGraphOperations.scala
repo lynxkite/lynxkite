@@ -5,6 +5,7 @@ import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
+import com.lynxanalytics.biggraph.graph_operations.AddEdgesWithDoubleAttribute
 import com.lynxanalytics.biggraph.graph_util.Scripting._
 import com.lynxanalytics.biggraph.controllers._
 
@@ -154,20 +155,20 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
           op.radial, radAttr.runtimeSafeCast[Double])(
             op.angular, angAttr.runtimeSafeCast[Double]).result
         if (project.hasEdgeBundle.enabled) {
-          val oldBundle = project.edgeBundle
+          /* val oldBundle = project.edgeBundle
           project.edgeBundle = result.predictedEdges
           project.newEdgeAttribute("hyperbolic_edge_probability", result.edgeProbability,
             "hyperbolic edge probability")
-          project.edgeBundle = generalEdgeBundleUnion(oldBundle, project.edgeBundle)
-          /*val addOp = AddEdgesWithDoubleAttribute(-1.0)
+          project.edgeBundle = generalEdgeBundleUnion(oldBundle, project.edgeBundle)*/
+          val addOp = AddEdgesWithDoubleAttribute(-1.0)
           val addResult = addOp(addOp.vs, project.vertexSet)(
             addOp.es, project.edgeBundle)(
               addOp.newEdges, result.predictedEdges)(
                 addOp.attr, result.edgeProbability).result
-          project.edgeBundle = addOp.union
-          project.newEdgeAttribute("hyperbolic_edge_probability", addOp.newAttr,
-            "hyperbolic edge probability")*/
-            //TODO maybe project.edgeBundle.idSet????????????????????????????????????????,
+          project.edgeBundle = addResult.union
+          project.newEdgeAttribute("hyperbolic_edge_probability", addResult.newAttr,
+            "hyperbolic edge probability")
+          //TODO maybe project.edgeBundle.idSet????????????????????????????????????????,
         } else {
           project.edgeBundle = result.predictedEdges
           project.newEdgeAttribute("hyperbolic_edge_probability", result.edgeProbability,
