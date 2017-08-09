@@ -10,7 +10,7 @@ Different output types have different data and features available in their popup
 But some things they all have in common.
 
 
-### Snapshots
+### Saving snapshots
 
 The toolbar at the top of the state popup always contains a
 +++<i class="glyphicon glyphicon-camera"></i>+++ icon, for saving the state as a _snapshot_. The
@@ -18,7 +18,7 @@ snapshot will be saved outside of the workspace, in the directory tree. Snapshot
 the workspaces from which they were saved. Use them to share final results, or record intermediate
 results for comparison.
 
-Snapshots can be loaded back into a project with a <<Import snapshot>> box.
+Snapshots can be loaded back into a workspace with an <<Import snapshot>> box.
 
 
 ### Instruments

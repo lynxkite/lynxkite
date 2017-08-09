@@ -1,0 +1,7 @@
+## Snapshots
+
+Snapshots are saved box output states from workspaces. Once a snapshot is saved (see
+<<saving-snapshots>>) they are detached from all workspaces. A snapshot can be of any type that a
+box output can, such as a <<Project state, project>> or a <<Table state, table>>.
+
+Snapshots can be loaded back into a workspace with an <<Import snapshot>> box.
