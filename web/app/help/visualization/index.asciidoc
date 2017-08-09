@@ -1,8 +1,8 @@
 # Graph visualizations
 
-When you click the output of a <<create-visualization>> operation, a visualization screen opens.
+Clicking on the _"Visualize"_ button in the <<State popups>> opens the project visualization screen. You can choose to open the <<Concrete vertices view>> or the <<Bucketed view>>.
 
-There are multiple types of visualizations, but in every case you see some objects connected by
+There are multiple types of graph visualizations, but in every case you see some objects connected by
 some arcs.
 
 Visualized objects can represent vertices or groups of vertices of the graph.
