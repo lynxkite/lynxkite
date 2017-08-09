@@ -21,6 +21,8 @@ tables in project snapshots: e.g. you can list all Arsenal players with `select 
 {backtick}Players{backtick} where team = "Arsenal"`. Notice that you still need to enclose the
 name of the snapshot between two `{backtick}` symbols.
 
+For details about querying project snapshots, see the documentation for the <<sql1>> box.
+
 ### The table browser
 
 The table browser helps to find available table and column names for the global SQL box or for
