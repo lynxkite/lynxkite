@@ -1,8 +1,8 @@
 ## State popups
 
 Click on an output of a box to open that output state in a popup.
-Click the output again, or click on the +++<i class="glyphicon glyphicon-remove"></i>+++ in the top
-right corner to close the popup. You can also press ESC to close the last used popup.
+Click the output again, or click on the +++<i class="glyphicon glyphicon-remove"></i>+++ icon in the
+top right corner to close the popup. You can also press ESC to close the last used popup.
 
 image::images/project-state.png[Project state screenshot]
 
@@ -28,9 +28,9 @@ data. It is very natural to want to take a quick look at the data in the middle 
 workspace.
 
 One option is to quickly create and attach a <<Graph visualization>> box, see what the
-graph looks like at that point, then delete the box.
-Instruments are effectively the same, except no temporary box is added to the workspace. This means
-instruments can be used even on read-only workspaces.
+graph looks like at that point, and then delete the box.
+Instruments are effectively the same, except that no temporary box is added to the workspace. This
+means instruments can be used even on read-only workspaces.
 
 The instrument buttons are in the popup toolbar. For example, in the last screenshot the buttons for
 **SQL** and **Visualize** are visible, corresponding to the <<SQL1>> and <<Graph visualization>>
@@ -52,10 +52,9 @@ calculations can always be reproduced using conventional boxes.
 image::images/project-state.png[Project state screenshot]
 
 A "project" is a rich type that represents graphs and their segmentations in one bundle. The popup
-for a project output makes it possible to see basic information about the graph, such as the number
-of vertices and edges, and the list of scalars, attributes, and segmentations. Scalar values are
-displayed, attribute histograms are available on click, and segmentations can be opened to dig
-deeper.
+for a project output shows basic information about the graph, such as the number of vertices and
+edges. It lists the scalars, attributes, and segmentations. Scalar values are displayed, attribute
+histograms are available on click, and segmentations can be opened to dig deeper.
 
 
 ### Table state
@@ -84,5 +83,5 @@ these boxes is an export state. It is the export state which actually allows tri
 resource-intensive computation of creating the output files.
 
 This two-step process avoids accidental exports while editing the workspace. It also provides
-metadata information about the output file, such as its path. To trigger the export, click on the
+metadata information about the output, for example a file path. To trigger the export, click on the
 +++<i class="glyphicon glyphicon-play"></i>+++ icon.
