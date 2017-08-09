@@ -1,23 +1,29 @@
-// Operation descriptions.
-
 # Operations
 
-LynxKite's operations make it possible to modify a graph. There are operations for adding new
+Each box in a workspace represents a LynxKite operation. There are operations for adding new
 attributes (such as <<Compute PageRank>>), changing the graph structure (such as
 <<reverse-edge-direction>>), importing and exporting data, and for creating <<segmentations>>.
 
-All operations can be undone, so they are safe to experiment with.
 
 ## The operation toolbox
 
-There are several ways to invoke an operation. If you know its name, typing the slash
+There are several ways to add a box to the workspace. If you know its name, typing the slash
 key (`/`) will bring up the search menu, where operations can be found by name. The same menu
 can also be accessed via the magnifier icon
 (+++<i class="glyphicon glyphicon-search"></i>+++).
-Some find it the most convenient way to access the desired operation.
 
 In case you do not know the name of the operation, functional groups called "categories" will help
 you find what you need. These categories are listed below, along with their toolbox icon.
+
+Once you have found the operation, drag it to the workspace with the mouse to create a box for it.
+As you drag, you can touch its inputs to other boxes to set up its connections with one motion. (Or
+you can add the connections later. See <<boxes-and-arrows>>.)
+
+Alternatively, you can press Enter on the operation to add its box at the current mouse position.
+This allows you to search for and add multiple operations in quick succession.
+
+
+## Categories
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category green"><i class="fa fa-upload"></i></div></div></div>+++ Import operations
 
@@ -39,7 +45,7 @@ Example: <<Find connected components>>.
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="glyphicon glyphicon-th-large"></i></div></div></div>+++ Use segmentation
 
 These operations modify <<segmentations>>.
-Example: <<Copy edges to base project>>. 
+Example: <<Copy edges to base project>>.
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="glyphicon glyphicon-asterisk"></i></div></div></div>+++ Structure
 
@@ -53,7 +59,6 @@ computes the Pearson-correlation coefficient of two attributes, and stores the r
 in a scalar.
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="fa fa-circle"></i></div></div></div>+++ Vertex attributes
-
 
 These operations manipulate (create, discard, convert etc.) vertex attributes.
 These operations perform their task without looking at other
@@ -116,7 +121,26 @@ These operations export data from LynxKite. Example: <<Export to CSV>>.
 
 ### +++<div class="operation-toolbox" style="display: inline-block;"><div class="categories"><div class="category yellow"><i class="fa fa-superpowers"></i></div></div></div>+++ Custom boxes
 
-Users can add previosly created custom boxes or <<built-ins>> to their workflow by selecting them from the Custom box menu.
+Users can add previously created custom boxes or <<built-ins>> to their workflow by selecting them from the Custom box menu.
+
+
+[[experimental-operation]]
+## Experimental operations
+
+LynxKite includes cutting-edge algorithms that are under active scientific research. Most of these
+algorithms are already ready for production use on large datasets. But some of the most recent
+algorithms are not yet able to handle very large datasets efficiently. Their implementation is
+subject to future change.
+
+They are marked with the following line:
+
+____
++++<i class="fa fa-warning"></i>+++ *Warning! Experimental operation.*
+____
+
+These experimental operations are included in LynxKite as a preview. Feedback on them is very much
+appreciated. If you find them useful, let the development team know, so we can prioritize them for
+improved scalability.
 
 
 ## The list of operations
@@ -193,8 +217,6 @@ include::convert-vertex-attribute-to-string.asciidoc[]
 
 include::convert-vertex-attributes-to-position.asciidoc[]
 
-include::convert-vertices-into-edges.asciidoc[]
-
 include::copy-edge-attribute.asciidoc[]
 
 include::copy-edges-to-base-project.asciidoc[]
@@ -249,14 +271,6 @@ include::discard-segmentation.asciidoc[]
 
 include::discard-vertex-attributes.asciidoc[]
 
-include::export-edge-attributes-to-database.asciidoc[]
-
-include::export-edge-attributes-to-file.asciidoc[]
-
-include::export-segmentation-to-database.asciidoc[]
-
-include::export-segmentation-to-file.asciidoc[]
-
 include::export-to-csv.asciidoc[]
 
 include::export-to-jdbc.asciidoc[]
@@ -266,10 +280,6 @@ include::export-to-json.asciidoc[]
 include::export-to-orc.asciidoc[]
 
 include::export-to-parquet.asciidoc[]
-
-include::export-vertex-attributes-to-database.asciidoc[]
-
-include::export-vertex-attributes-to-file.asciidoc[]
 
 include::expose-internal-edge-id.asciidoc[]
 
@@ -341,7 +351,7 @@ include::predict-attribute-by-viral-modeling.asciidoc[]
 
 include::predict-vertex-attribute.asciidoc[]
 
-include::predict-with-a-neural-network-experimental.asciidoc[]
+include::predict-with-a-graph-neural-network.asciidoc[]
 
 include::predict-with-model.asciidoc[]
 

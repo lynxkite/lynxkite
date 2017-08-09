@@ -1,0 +1,6 @@
+## Scalars
+
+Scalars are data that correspond to the whole graph.
+
+For example, you can compute the average of any numeric vertex attribute and then this average will
+show up as a scalar.

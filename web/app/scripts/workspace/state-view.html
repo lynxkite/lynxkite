@@ -51,13 +51,15 @@
     </button>
   </div>
 
-  <!-- "box" is faked just enough to serve <visualization-parameter>. -->
-  <op-editor
-    ng-if="!$last"
-    box="{ outputs: [{ stateId: result.states[$index + 1].stateId }] }"
-    box-meta="result.metas[$index]"
-    parameters="instruments[$index].parameters"
-    parametric-parameters="instruments[$index].parametricParameters"></op-editor>
+  <div class="container-fluid">
+    <!-- "box" is faked just enough to serve <visualization-parameter>. -->
+    <op-editor
+      ng-if="!$last"
+      box="{ outputs: [{ stateId: result.states[$index + 1].stateId }] }"
+      box-meta="result.metas[$index]"
+      parameters="instruments[$index].parameters"
+      parametric-parameters="instruments[$index].parametricParameters"></op-editor>
+  </div>
 
   <div ng-if="$last">
     <project-state-view

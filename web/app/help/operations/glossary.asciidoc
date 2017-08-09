@@ -191,3 +191,51 @@ The available aggregators are:
  ** `count` (number of cases where the attribute is defined)
  ** `set` (all the unique values, as a `Set` attribute)
 end::local-aggregators[]
+
+tag::sql-box[]
+
+The following tables are available for SQL access for project inputs:
+
+ - All the vertex attributes can be accessed in the `vertices` table.
++
+Example: `select count(*) from {maybe-tick}{prefix}vertices{maybe-tick} where age < 30`
+
+ - All the edge attributes can be accessed in the `edge_attributes` table.
++
+Example: `select max(weight) from {maybe-tick}{prefix}edge_attributes{maybe-tick}`
++
+You can not query the `edge_attributes` table if there are no edge attributes, even if the edges
+themselves are defined.
+
+ - All the scalars can be accessed in the `scalars` table.
++
+Example: `select {backtick}!vertex_count{backtick} from {maybe-tick}{prefix}scalars{maybe-tick}`
+
+ - All the edge and vertex attributes can be accessed in the `edges` table. Each row of this
+table represents an edge. The attributes of the edge are prefixed with `edge_`, while the attributes
+of the source and destination vertices are prefixed with `src_` and `dst_` respectively.
++
+Example:
+`select max(edge_weight) from {maybe-tick}{prefix}edges{maybe-tick} where src_age < dst_age`
+
+ - The `belongs_to` table is defined for each segmentation of a project or a segmentation. It
+contains the vertex attributes for the connected pairs of base and segmentation vertices prefixed
+with `base_` and `segment_` respectively.
++
+Examples:
+
+ * `select count(*) from {backtick}{prefix}communities.belongs_to{backtick} group by segment_id`
+ * `select base_name from {backtick}{prefix}communities.belongs_to{backtick} where segment_name =
+ "COOKING"`
+
+Backticks (`{backtick}`) are used for escaping table and column names with special characters.
+
+You can browse the list of available tables and columns by clicking on the
++++<label class="btn btn-primary">Tables ⏵</label>+++
+button.
+
+====
+[[sql]] SQL query::
+The query. Press Ctrl-Enter to save your changes while staying in the editor.
+====
+end::sql-box[]

@@ -1,6 +1,6 @@
-### Predict with a neural network (EXPERIMENTAL)
+### Predict with a graph neural network
 
-*Warning! Experimental operation.*
+<<experimental-operation,+++<i class="fa fa-warning"></i>+++ *Warning! Experimental operation.*>>
 
 Trains a neural network using the graph's vertex attributes and edges. Then uses
 this trained neural network to make a prediction on the same graph.
