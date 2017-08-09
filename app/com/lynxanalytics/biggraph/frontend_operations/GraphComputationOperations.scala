@@ -136,8 +136,8 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
         }
         val clus = {
           val op = graph_operations.ApproxClusteringCoefficient(8)
-          op(clusterOp.vs, project.vertexSet)(
-          clusterOp.es, project.edgeBundle).result.clustering
+          op(op.vs, project.vertexSet)(
+            op.es, project.edgeBundle).result.clustering
         }
         assert(params("radial") != FEOption.unset.id, "The radial parameter must be set.")
         assert(params("angular") != FEOption.unset.id, "The angular parameter must be set.")
@@ -292,8 +292,8 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
         }
         val clus = {
           val op = graph_operations.ApproxClusteringCoefficient(8)
-          op(clusterOp.vs, project.vertexSet)(
-          clusterOp.es, project.edgeBundle).result.clustering
+          op(op.vs, project.vertexSet)(
+            op.es, project.edgeBundle).result.clustering
         }
         val op = graph_operations.HyperMap(params("seed").toLong)
         op(op.vs, project.vertexSet)(op.es, direction.edgeBundle
