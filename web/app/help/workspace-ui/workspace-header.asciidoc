@@ -46,7 +46,7 @@ since the last undo.
 
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-floppy-disk"></i></label>+++ Save workspace as::
 Makes a copy of the current workspace with a new name. You will have write permissions to the
-new copy even if they didn't have for the original.
+new copy even if you did not have for the original.
 
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-remove"></i></label>+++ Close workspace::
 Closes the workspace.
