@@ -2,32 +2,27 @@
 
 Workspaces allow users to describe complex computation flows visually by creating workflows
 represented by boxes and arrows. How it works: boxes represent operations and they are connected by
-arrows. Basically it shows the sequence of the operations that are applied to  the data, on a path
+arrows. Basically the sequence of operations applied to  the data are shown, on a path
 determined by the arrows.
 
-After creating a new workspace the viewport is empty, besides the <<Anchor>> located in the left
+After creating a new workspace the viewport is empty, except for the <<Anchor>> located in the left
 corner. The anchor can be used to explain the overall purpose of the workspace. You can add a
 description, an image and set parameters (more details: <<Parametric parameters>>). The URL to an
 image is useful when you want to reuse the workflow as a custom box in another workspace: in that
 case the image will serve as the custom box's icon. Preferably this should be a link to a local
-image, like `/images/icons/anchor.png`
+image, like `/images/icons/anchor.png`.
 
 You can add boxes to the viewport by selecting an operation from <<The operation toolbox>>. Clicking
 on the box opens its <<Box parameters popup>>, which allows you to set the parameters.
 
-A box can have:
-
-* One or more input
-* One or more output
-
-Please note that some boxes don't have inputs (for example: <<Create example graph>>) or outputs
+A box can have: inputs (on its left) and outputs (on its right). Some boxes don't have inputs (for example: <<Create example graph>>) or outputs
 (for example: <<Export to CSV>>). A box will indicate the number of boxes that can be connected to
 it and the type of the required input or output (for example: project, table).
 
 You can add arrows to the viewport by connecting the boxes. Boxes can be connected two ways:
 
-* Automatically, by hovering the input of one box over the output of another
-* Manually, by clicking on the output of one box, then dragging the arrow to the input of another
+* Automatically, by hovering the input of one box over the output of another.
+* Manually, by clicking on the output of one box, then dragging the arrow to the input of another.
 
 When two boxes are connected, the computation of the selected operation starts. The color of the
 output will indicate the status:
