@@ -5,6 +5,8 @@ workspace.
 
 include::workspace-header.asciidoc[]
 
+include::boxes-and-arrows.asciidoc[]
+
 include::box-parameters.asciidoc[]
 
 include::state-popups.asciidoc[]
