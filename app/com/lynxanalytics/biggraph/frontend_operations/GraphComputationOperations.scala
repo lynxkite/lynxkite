@@ -130,15 +130,19 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       project.vertexAttrList[Double].size >= 2, "Not enough vertex attributes.")
     def apply() = {
       val result = {
-        val clusterOp = graph_operations.ApproxClusteringCoefficient(8)
-        val degreeOp = graph_operations.OutDegree()
-        val degree = degreeOp(degreeOp.es, project.edgeBundle).result.outDegree
-        val clus = clusterOp(clusterOp.vs, project.vertexSet)(
+        val degree = {
+          val op = graph_operations.OutDegree()
+          op(op.es, project.edgeBundle).result.outDegree
+        }
+        val clus = {
+          val op = graph_operations.ApproxClusteringCoefficient(8)
+          op(clusterOp.vs, project.vertexSet)(
           clusterOp.es, project.edgeBundle).result.clustering
-        val radAttr = project.vertexAttributes(params("radial"))
-        val angAttr = project.vertexAttributes(params("angular"))
+        }
         assert(params("radial") != FEOption.unset.id, "The radial parameter must be set.")
         assert(params("angular") != FEOption.unset.id, "The angular parameter must be set.")
+        val radAttr = project.vertexAttributes(params("radial"))
+        val angAttr = project.vertexAttributes(params("angular"))
         val op = graph_operations.HyperbolicEdgeProbability()
         op(op.vs, project.vertexSet)(op.es, project.edgeBundle
         )(op.radial, radAttr.runtimeSafeCast[Double]
@@ -282,11 +286,15 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     def apply() = {
       val result = {
         val direction = Direction("all neighbors", project.edgeBundle)
-        val clusterOp = graph_operations.ApproxClusteringCoefficient(8)
-        val degreeOp = graph_operations.OutDegree()
-        val degree = degreeOp(degreeOp.es, direction.edgeBundle).result.outDegree
-        val clus = clusterOp(clusterOp.vs, project.vertexSet)(
-          clusterOp.es, direction.edgeBundle).result.clustering
+        val degree = {
+          val op = graph_operations.OutDegree()
+          op(op.es, project.edgeBundle).result.outDegree
+        }
+        val clus = {
+          val op = graph_operations.ApproxClusteringCoefficient(8)
+          op(clusterOp.vs, project.vertexSet)(
+          clusterOp.es, project.edgeBundle).result.clustering
+        }
         val op = graph_operations.HyperMap(params("seed").toLong)
         op(op.vs, project.vertexSet)(op.es, direction.edgeBundle
         )(op.degree, degree)(op.clustering, clus).result

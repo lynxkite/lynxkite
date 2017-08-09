@@ -1,4 +1,5 @@
 ### Compute hyperbolic edge probability
+<<experimental-operation,+++<i class="fa fa-warning"></i>+++ *Warning! Experimental operation.*>>
 
 Adds edge attribute _hyperbolic edge probability_ based on
 hyperbolic distances between vertices. This indicates
