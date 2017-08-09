@@ -14,14 +14,8 @@ Administrator users have access to everything and can fine-tune the access contr
 up any desired system of permissions. This is recommended as part of the LynxKite installation
 procedure.
 
-Click +++
-<span class="entry-list" style="display: inline-block;">
-  <span class="entry" style="display: block;">
-    <span style="display: block;" class="icon glyphicon glyphicon-plus"></span>
-    <span class="lead">New folder</span>
-  </span>
-</span>
-+++ to create a new folder inside the current folder.
+Click +++<span class="icon glyphicon glyphicon-plus"></span>+++ _New folder_
+to create a new folder inside the current folder.
 
 Access the dropdown menu for a folder in the workspace browser
 (+++<a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>+++)
