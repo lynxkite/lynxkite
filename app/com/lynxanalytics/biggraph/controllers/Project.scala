@@ -976,7 +976,6 @@ class SnapshotFrame(path: SymbolPath)(
 abstract class ObjectFrame(path: SymbolPath)(
     implicit manager: MetaGraphManager) extends DirectoryEntry(path) {
   val name = path.toString
-  assert(!name.contains(SubProject.separator), s"Invalid project name: $name")
 
   // Current checkpoint of the project
   def checkpoint: String = {
