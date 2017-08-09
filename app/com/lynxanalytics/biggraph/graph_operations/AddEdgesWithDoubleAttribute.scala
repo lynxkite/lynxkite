@@ -3,8 +3,6 @@
 // Takes the top X most likely edges.
 package com.lynxanalytics.biggraph.graph_operations
 
-import scala.math
-import scala.util.Random
 import scala.collection.immutable.SortedMap
 import org.apache.spark.rdd.RDD
 import com.lynxanalytics.biggraph.spark_util.SortedRDD
@@ -28,7 +26,8 @@ object AddEdgesWithDoubleAttribute extends OpFromJson {
     (j \ "defaultvalue").as[Double])
 }
 import AddEdgesWithDoubleAttribute._
-case class AddEdgesWithDoubleAttribute(defaultValue: Double) extends TypedMetaGraphOp[Input, Output] {
+case class AddEdgesWithDoubleAttribute(defaultValue: Double)
+    extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 
@@ -41,25 +40,24 @@ case class AddEdgesWithDoubleAttribute(defaultValue: Double) extends TypedMetaGr
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val edgePartitioner = inputs.es.rdd.partitioner.get
+    val edgePartitioner = inputs.attr.rdd.partitioner.get
     val newIDsWithAttr = (inputs.es.rdd ++ inputs.newEdges.rdd)
       .map { case (oldid, e) => oldid -> (oldid, e) }
       .randomNumbered(edgePartitioner)
       .map { case (newid, (oldid, edge)) => oldid -> (newid, edge) }
-      .sortUnique(edgePartitioner)
+      .sortUnique(edgePartitioner) //TODO this kills the thing
       .sortedLeftOuterJoin(inputs.attr.rdd)
+    println("where the")
     val defaultFillWithNewIDs = newIDsWithAttr.map {
       case (oldidtoo, ((oldid, (newid, edge)), attr)) =>
         newid -> (edge, attr.getOrElse(defaultValue))
     }
-    output(o.union, defaultFillWithNewIDs.map {
-      case (id, (e, attr)) =>
-        (id, e)
-    }.sortUnique(edgePartitioner))
-    output(o.newAttr, defaultFillWithNewIDs.map {
-      case (id, (e, attr)) =>
-        (id, attr)
-    }.sortUnique(edgePartitioner))
+    val bundleUnion = defaultFillWithNewIDs.map { case (id, (e, attr)) => (id, e) }
+      .sortUnique(edgePartitioner)
+    output(o.union, bundleUnion)
+    val attrUnion = defaultFillWithNewIDs.map { case (id, (e, attr)) => (id, attr) }
+      .sortUnique(edgePartitioner)
+    output(o.newAttr, attrUnion)
   }
 }
 
