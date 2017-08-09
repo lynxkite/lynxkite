@@ -1,5 +1,0 @@
-## Hotkeys
-
-For faster navigation you can also access certain program features via hotkeys. The keys available
-depend on where you are in the program. But you can always see the list of currently available
-hotkeys by pressing the `?` button.
