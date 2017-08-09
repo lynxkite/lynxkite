@@ -1,5 +1,7 @@
 ### Add popularity x similarity optimized edges
 
+<<experimental-operation,+++<i class="fa fa-warning"></i>+++ *Warning! Experimental operation.*>>
+
 Creates a graph with given amount of vertices and average degrees. The edges
 will follow a power-law - also known as scale-free - distribution and have
 high clustering. Vertices get two edge attributes called "radial" and
