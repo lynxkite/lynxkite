@@ -7,7 +7,7 @@ selected by the user.
 The first line shows the _"Visualization settings"_:
 
 [[concrete-view-settings]]
-Display+::
+Display::
 The first button lets you select between 2D and 3D visualization. 3D allows for showing more vertices efficiently but
 that mode has less features. You cannot (yet) visualize attributes in 3D mode and cannot select and
 move around vertices.
@@ -33,8 +33,7 @@ Neutral::: Degree is not factored into the layout.
 
 Centers::
 Lists "center" vertex IDs, that is the vertices whose neighborhood we are displaying. You can change
-this list manually, using the <<pick-button,Pick button>>, or using the
-<<context-menu,context menu>> of already displayed vertices.
+this list manually, using the <<pick-button,Pick button>>.
 
 Radius::
 You can set the neighborhood radius from 0 to 10. 0 means center vertices only. 1 means center
@@ -98,14 +97,17 @@ The size of vertices will be set based on this attribute. Only available for num
 Position::
 Available on attributes of type `(Double, Double)`. The attribute will be interpreted as (X, Y)
 coordinates on the plane and vertices will be laid out on the screen based on these coordinates.
-(You can create a `(Double, Double)` attribute from two Double attributes using the
-<<vertex-attributes-to-position>> operation.)
+(You can create a `(Double, Double)` from two Double attributes using the
+<<Convert vertex attributes to position>> operation.)
 
 Geo coordinates::
 Available on attributes of type `(Double, Double)`. The attribute will be interpreted as a
 latitude-longitude coordinate and the vertices will be put on a world map based on this coordinate.
 (You can create a `(Double, Double)` attribute from two Double attributes using the
-<<vertex-attributes-to-position>> operation.)
+<<Convert vertex attributes to position>> operation.)
+
+Slider::
+Colors veritices based on this attribute. After selecting this visualization, a slider appears, which ranges from the minimum to the maximum value of the attribute. Using the slider changes the colors of the vertices: every vertex that is less than the selected value is red, they are yellow if it's the exact same value and green if it's more. This is only available for `Double` attributes.
 
 #### Edge visualizations
 
