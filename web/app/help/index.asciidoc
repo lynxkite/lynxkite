@@ -28,6 +28,8 @@ include::directory-ui/index.asciidoc[]
 
 include::workspace-ui/index.asciidoc[]
 
+include::project-ui/index.asciidoc[]
+
 include::visualization/index.asciidoc[]
 
 include::internals/index.asciidoc[]
