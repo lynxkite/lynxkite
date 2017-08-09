@@ -7,6 +7,10 @@ include::workspace-header.asciidoc[]
 
 include::boxes-and-arrows.asciidoc[]
 
+include::box-parameters.asciidoc[]
+
+include::state-popups.asciidoc[]
+
 include::graph-attributes.asciidoc[]
 
 include::model-details.asciidoc[]

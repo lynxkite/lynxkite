@@ -1,6 +1,6 @@
 # Graph visualizations
 
-When you click the output of a <<create-visualization>> operation, a visualization screen opens.
+When you click the output of a <<graph-visualization>> operation, a visualization screen opens.
 
 There are multiple types of visualizations, but in every case you see some objects connected by
 some arcs.
