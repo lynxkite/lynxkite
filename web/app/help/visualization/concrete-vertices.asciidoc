@@ -4,17 +4,16 @@ Shows some selected [[center-vertices]]center vertices and their neighborhood wi
 among these vertices. The set of the center vertices and the size of the neighborhood can be
 selected by the user.
 
-When this mode is selected the user is presented with a set of extra controls below the
-<<project-header>>:
+The first line shows the _"Visualization settings"_:
 
 [[concrete-view-settings]]
-Display::
-You can select between 2D and 3D visualization. 3D allows for showing more vertices efficiently but
+Display+::
+The first button lets you select between 2D and 3D visualization. 3D allows for showing more vertices efficiently but
 that mode has less features. You cannot (yet) visualize attributes in 3D mode and cannot select and
 move around vertices.
 
 Layout animation::
-(Only in 2D mode) If enabled, layout animation will continuously do a physical simulation on the
+(Only in 2D mode) If the second butten is enabled, layout animation will continuously do a physical simulation on the
 displayed graph as if edges were springs. You can move vertices around and the graph will
 reorganize itself.
 
@@ -66,22 +65,57 @@ in a deterministic order. You can skip to an arbitrary sample by clicking on the
 button. There you can manually enter a position in the sequence and pick it by clicking on
  _Pick by offset_.
 
-### Context menu
-When clicking a vertex in a concrete vertex visualization you can see a context menu with possible
-operations related to the vertex. Here are the possible menu elements:
+### Concrete visualization options
 
-Add to centers::
-This action will add the selected vertex to the centers.
+#### Vertex visualizations
 
-Set as only center::
-This action will set this vertex as the only center so that only this vertex and its neighborhood
-will be shown.
+Label::
+Shows the value of the attribute as a label on the displayed vertices.
 
-Filter segmentation to this vertex::
-It will setup a filter on the segmentation
-graph such that only segments that contain this vertex are selected. This menu is only available if
-a segmentation is open on the right side.
+Color::
+Colors vertices based on this attribute. A different color will be selected for each value
+of the attribute. If the attribute is numeric, the selected color will be a continuous function of
+the attribute value. This is available for `String` and `Double` attributes.
 
-Freeze/unfreeze::
-If using layout animation, freeze fixes the position of this particular vertex. Unfreeze lets
-the vertex move free again.
+Opacity::
+Changes the opacity of vertices based on this attribute. The higher the value of the
+attribute the more opaque the vertex will get.
+
+Icon::
+Displays each vertex by an icon based on the value of this attribute.
+The available icons are "circle", "square", "hexagon", "female", "male", "person", "phone", "home",
+"triangle", "pentagon", "star", "sim", "radio". If the value of the attribute is one of the above strings,
+then the corresponding icon will be selected. For other values we select arbitrary icons. When we run out of
+icons, we fall back to circle. This is only available for `String` attributes.
+
+Image::
+Interprets the value of the attribute as an image URL and displays the referenced image in place of
+the vertex. This can be used e.g. to show facebook profile pictures.
+
+Size::
+The size of vertices will be set based on this attribute. Only available for numeric attributes.
+
+Position::
+Available on attributes of type `(Double, Double)`. The attribute will be interpreted as (X, Y)
+coordinates on the plane and vertices will be laid out on the screen based on these coordinates.
+(You can create a `(Double, Double)` attribute from two Double attributes using the
+<<vertex-attributes-to-position>> operation.)
+
+Geo coordinates::
+Available on attributes of type `(Double, Double)`. The attribute will be interpreted as a
+latitude-longitude coordinate and the vertices will be put on a world map based on this coordinate.
+(You can create a `(Double, Double)` attribute from two Double attributes using the
+<<vertex-attributes-to-position>> operation.)
+
+#### Edge visualizations
+
+Edge label::
+Will show the value of the attribute as a label on each edge.
+
+Edge color::
+Will color edges based on this attribute. A different color will be selected for each value
+of the attribute. If the attribute is numeric, the selected color will be a continuous function of
+the attribute value. Coloring is available for `String` and `Double` attributes.
+
+Width::
+The width of edge will be set based on this attribute. Only available for numeric attributes.
