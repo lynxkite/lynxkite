@@ -92,22 +92,22 @@ g.box.selected .plug circle {
 g.box #inputs .plug text {
   text-anchor: end;
 }
-g.box .plug circle {
+.plug circle {
   stroke-width: 1;
   stroke: black;
-  fill-opacity: 0;
+  fill: transparent;
   mix-blend-mode: darken; /* Allow arrow to be visible even if it is below. */
 }
-g.box #inputs .plug text {
+#inputs .plug text {
   text-anchor: end;
 }
-g.box .plug text.lonely {
+.plug text.lonely {
   display: none;
 }
 g.box:hover .plug text.lonely {
   display: inherit;
 }
-g.box .plug circle.pulled-plug-hover {
+.plug circle.pulled-plug-hover {
   stroke-width: 5;
 }
 
@@ -117,29 +117,33 @@ rect.selection-box {
   stroke-dasharray: 5,5;
 }
 
-g.box circle.io-circle.colored-output {
-  fill-opacity: 1;
+circle.plug-progress-not-complete {
+  fill: #0089c4;  /* Brand color. */
+}
+circle.plug-progress-complete {
+  fill: #69be28;  /* Brand color. */
+}
+circle.plug-progress-error {
+  fill: #d52b1e;  /* Brand color. */
 }
 
 @keyframes in-progress-indication {
   0% {
-    fill-opacity: 1;
+    r: 8;
   }
-
   50% {
-    fill-opacity: 0;
+    r: 10;
   }
-
   100% {
-    fill-opacity: 1;
+    r: 8;
   }
 }
 
-g.box circle.io-circle.in-progress {
+circle.plug-progress-in-progress {
+  fill: #ffa700;  /* Brand color. */
   animation-name: in-progress-indication;
   animation-duration: 2s;
   animation-iteration-count: infinite;
-  fill: yellow;
 }
 
 path.arrow {
