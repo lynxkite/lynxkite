@@ -12,32 +12,25 @@ Clicking on a vertex or edge attribute opens a menu with the for following infor
 * The type of the attribute (e.g. `String`, `Double`, ...).
 * A short description of how the attribute was created, if available, with link to a relevant help
 page.
-* A filter box where you can specify a filtering criterion on the attribute's value. Once you defined
-a filter for an attribute then all UI visualizations (histograms, graph
-visualization) will only consider vertices/edges that pass your filter.
-See <<attribute-filter-syntax>> for details. Active filters are also displayed when the menu is
-closed.
 * A histogram of the attribute, if the attribute is already computed. A menu item to compute the
 histogram otherwise. By default, for performance reasons, histograms are only computed on a
 sample of all the available data. Click the _"precise"_
 checkbox to request a computation using all the data. Click the _"logarithmic"_ checkbox, to use a
 logarithmic X-axis with logarithmic buckets. (Useful when the distribution is strongly skewed.)
-* Controls for adding the attribute to the current visualization, if <<concrete-vertices-view>> or
+* If you are viewing the project in a <<Graph visualization>> box: Controls for adding the attribute
+* to the current visualization, if <<concrete-vertices-view>> or
 <<bucketed-view>> is enabled. See details in <<concrete-visualization-options>>.
-* The _"Set icon"_ menu for visually distinguishing an attribute.
-* Options for discarding, renaming, and duplicating the attribute.
 
 There are lots of ways you can create attributes:
 
-* when importing vertices/edges from a CSV every column will automatically become an attribute
-* you can also import attributes for existing vertices from a CSV file
-* you can compute various graph metrics on the vertices/edges (just to name a few, you can compute
+* When importing vertices/edges from a CSV every column will automatically become an attribute.
+* You can also import attributes for existing vertices from a CSV file.
+* You can compute various graph metrics on the vertices/edges. (Just to name a few, you can compute
 <<compute-degree>>, <<compute-clustering-coefficient>> for vertices and <<compute-dispersion>> for
-edges)
-* you can derive more attributes from existing ones using the <<derive-vertex-attribute>>
-and <<derive-edge-attribute>> operation
-* you can spread attributes via edges in various ways, e.g. by <<aggregate-on-neighbors>>
-* etc.
+edges.)
+* You can derive more attributes from existing ones using the <<derive-vertex-attribute>>
+and <<derive-edge-attribute>> operations.
+* You can spread attributes via edges in various ways, e.g. by <<aggregate-on-neighbors>>.
 
 ### Undefined values
 
@@ -55,24 +48,16 @@ empty string (meaning that the person in question has no middle name), or it cou
 undefined (meaning that their middle name is not known). Thus, the empty string is
 treated as an ordinary String attribute.
 
-#### Differences between undefined and defined values
+Differences between undefined and defined values:
 
 * In histograms, undefined values are not counted, whereas defined values
-(including the empty string)  are counted.
-* Filters work only on defined attributes. Thus, setting a filter such as `weight < 30` restricts
-the data to elements whose `weight` attribute is both defined and less than 30. So, there is no
-straightforward way to filter the data to undefined values. In contrast,
-the following filter matches the empty strings: `regex(^$)`. (Further useful regular expressions:
-`regex(.)` will match non-empty strings; `regex(.*)` will match defined strings;
-see <<attribute-filter-syntax>>.)
+(including the empty string) are counted.
+* Filters work only on defined attributes. (See <<Filter by attributes>>.)
 * <<derive-edge-attribute>> and <<derive-vertex-attribute>> allow you to choose whether to evaluate
 the expression if some of the inputs are undefined.
 
-Although you cannot directly set up a filter that matches undefined values, there
-is a way to accomplish this. It relies on operation
-<<fill-vertex-attributes-with-constant-default-values>>, which will change any undefined value to
-whatever is specified in the operation's parameter.  If it is also necessary to keep the original
-values to be undefined, you can make a copy of the attribute and run the operation on the copy.
+<<fill-vertex-attributes-with-constant-default-values>> can be used to replace undefined values with
+a constant. By replacing them with a special value, they can be made part of histograms or filters.
 
 #### CSV export/import and undefined
 
@@ -94,7 +79,7 @@ Note, however, that importing this data from a CSV file will treat undefined val
 as empty strings. So, in this case, the distinction between undefined values
 and empty strings is lost. One way to overcome this difficulty is to replace
 empty strings with another, unique string (e.g., `"@"`) before exporting
-to CSV files. (Database export and import do not suffer from this limitation.)
+to CSV files. (Other export and import formats do not suffer from this limitation.)
 
 #### Creating undefined values
 
@@ -109,5 +94,3 @@ if (attr > 0) Some(attr) else None
 ----
 
 will return `attr` whenever its value is positive, and undefined otherwise.
-
-// TODO: Examples using embeds.

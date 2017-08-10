@@ -56,6 +56,8 @@ for a project output shows basic information about the graph, such as the number
 edges. It lists the scalars, attributes, and segmentations. Scalar values are displayed, attribute
 histograms are available on click, and segmentations can be opened to dig deeper.
 
+The <<Projects>> chapter gives a more in-depth description of projects.
+
 
 ### Table state
 
