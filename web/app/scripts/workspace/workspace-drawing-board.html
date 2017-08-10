@@ -209,13 +209,11 @@
               ng-attr-transform="{{ plug.posTransform }}"
               class="plug"
               id="{{ ::plug.id | id }}">
-            <circle ng-attr-r="{{ plug.radius }}"
-                  class="io-circle"
+            <circle
+                  ng-attr-r="{{ plug.radius }}"
+                  class="{{ direction }}-plug plug-progress-{{ plug.error ? 'error' : plug.progress }}"
                   ng-class="{
-                    'in-progress': plug.inProgress,
-                    'colored-output': plug.progressColor || plug.error,
                     'pulled-plug-hover': pulledPlug && pulledPlug.direction !== direction && mouseOnThisPlug }"
-                  ng-attr-fill="{{ plug.error ? 'red' : plug.progressColor }}"
                   ng-attr-drop-tooltip="{{ plug.error }}"
                   ng-mousedown="onMouseDownOnPlug(plug, $event)"
                   ng-mouseup="onMouseUpOnPlug(plug, $event)"
