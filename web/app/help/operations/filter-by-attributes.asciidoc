@@ -1,4 +1,66 @@
 ### Filter by attributes
 
-Keeps only vertices and edges that match the filters.
-For more details see <<attribute-filter-syntax>>.
+Keeps only vertices and edges that match the specified filters.
+
+You can specify filters for multiple attributes at the same time, in which case you will be left
+with vertices/edges that match all of your filters.
+
+Regardless of the exact the filter, whenever you specify a filter for an attribute you always
+restrict to those edges/vertices where the attribute is defined. E.g. if say you have a filter
+requiring age > 10, then you will only keep vertices where age attribute is defined and the value of
+age is more than ten.
+
+The filtering syntax depends on the type of the attribute in most cases.
+
+* For every attribute type `*` matches all defined values. This is useful for discarding
+vertices/edges where a specific attribute is undefined.
+
+* For `String` and `Long` types the filter is a comma-separated list of values you want to match.
+For example `medium,high` would be a String filter to match these two values only, e.g. it would
+exclude `low` values.
+
+* For `String` attributes, regex filters can also be applied. The following tips and examples
+can be useful:
+** `regex(xyz)` for finding strings that contain `xyz`.
+** `regex(^Abc)` for strings that start with `Abc`.
+** `regex(Abc$)` for strings that end with `Abc`.
+** `regex((.)\1)` for strings with double letters, like `abbc`.
+** `regex(\d)` or `regex([0-9])` for strings that contain a digit, like `a2c`.
+** `regex(^\d+$)` for strings that are valid integer numbers, like `123`.
+** `regex(A|B)` for strings that contain either `A` or `B`.
+** Regex is case sensitive.
+** For a more detailed explanation see https://en.wikipedia.org/wiki/Regular_expression
+
+* For the `Double` type multiple options are available.
+** You can enter a simple number to match values exactly.
+For example `3` would select only the values that are exactly 3.0.
+** You can specify bounds, with the `<`, `>`, `&lt;=`, `>=` operators.
+For example `>=12.5` will match values no less than 12.5.
+** `=` and `==` are also accepted as operators, providing exact matching.
+** Intervals can be specified with brackets. The parenthesis (`( )`) denotes an exclusive boundary
+and the square bracket (`[ ]`) denotes an inclusive boundary. The lower and upper boundaries can be
+both inclusive or exclusive, or they can be different.
+For example, `[0,10)` will match _x_ if 0 &le; _x_ < 10.
+
+* For the `(Double, Double)` type, you can use interval filters to filter the first and second
+coordinates.
+** List the intervals for the first and second coordinates separated with a comma.
+Intervals can be specified with brackets, just like for the simple ``Double``s above.
+For example `[0,2), [3,4]` will match (x, y) if 0 &le; x < 2 and 3 &le; y &le; 4.
+
+* For the `Vector` type the following options are available.
+** `all(...)` will match the `Vector` only when the internal filter matches all elements of the
+`Vector`.  `forall` and `Ɐ` are synonyms of all. For example `all(<0)` for a `Vector[Double]` will
+match when the `Vector` contains no positive items. (This would include empty `Vector` values.)
+** `any(...)` will match the `Vector` only when the internal filter matches at least one element of
+the `Vector`. `exists`, `some`, and `∃` are synonyms of `any`.
+For example `any(male)` for a `Vector[String]` will match when the Vector contains at least one
+`male`.  (This would not include empty vectors, but would include those where all elements are
+`male`.)
+
+Any filter can be prefixed with `!` to negate it. For example `!medium` will exclude
+`medium` values. Another typical usecase for this is specifying `!` (a single exclamation mark
+character) as the filter for a String attribute. This is interpreted as non-empty, so it will
+restrict to those vertices/edges where the String attribute is defined and its value is not empty
+string. Remember, all filters work on defined values only, so `!*` will not match any
+vertices/edges.
