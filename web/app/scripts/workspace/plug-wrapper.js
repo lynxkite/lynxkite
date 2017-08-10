@@ -7,14 +7,8 @@
 // and values to bind with Angular to SVG elements.
 
 angular.module('biggraph').factory('PlugWrapper', function() {
-  function progressToColor(progressRatio) {
-    /* global tinycolor */
-    return tinycolor.mix('blue', 'green', progressRatio * 100).toHexString();
-  }
-
   function PlugWrapper(workspace, id, index, direction, box) {
     this.workspace = workspace;
-    var radius = 8;
     this.rx = direction === 'outputs' ? box.width : 0;
     var count = box.metadata[direction].length;
     this.ry = box.height - 20 * (count - index);
@@ -23,10 +17,9 @@ angular.module('biggraph').factory('PlugWrapper', function() {
     this.boxInstance = box.instance;
     this.id = id;
     this.direction = direction;
-    this.radius = radius;
+    this.radius = 8;
     this.posTransform = 'translate(' + this.rx + ', ' + this.ry + ')';
-    this.inProgress = false;
-    this.progressColor = undefined;
+    this.progress = 'unknown';
     this.error = undefined;
   }
 
@@ -35,24 +28,15 @@ angular.module('biggraph').factory('PlugWrapper', function() {
     cy: function() { return this.ry + this.box.instance.y; },
 
     updateProgress: function(progress) {
-      var all = 0;
-      for (var p in progress) {
-        if (progress.hasOwnProperty(p)) {
-          all += progress[p];
-        }
-      }
-      if (all) {
-        var progressPercentage = progress.computed / all;
-        this.progressColor = progressToColor(progressPercentage);
-        this.inProgress = progress.inProgress > 0;
+      if (progress.inProgress) {
+        this.progress = 'in-progress';
+      } else if (progress.failed) {
+        this.progress = 'error';
+      } else if (progress.notYetStarted) {
+        this.progress = 'not-complete';
       } else {
-        this.clearProgress();
+        this.progress = 'complete';
       }
-    },
-
-    clearProgress: function() {
-      this.inProgress = false;
-      this.progressColor = undefined;
     },
 
     setHealth: function(success) {
