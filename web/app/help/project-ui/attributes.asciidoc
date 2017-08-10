@@ -51,10 +51,13 @@ treated as an ordinary String attribute.
 Differences between undefined and defined values:
 
 * In histograms, undefined values are not counted, whereas defined values
-(including the empty string)  are counted.
+(including the empty string) are counted.
 * Filters work only on defined attributes. (See <<Filter by attributes>>.)
 * <<derive-edge-attribute>> and <<derive-vertex-attribute>> allow you to choose whether to evaluate
 the expression if some of the inputs are undefined.
+
+<<fill-vertex-attributes-with-constant-default-values>> can be used to replace undefined values with
+a constant. By replacing them with a special value, they can be made part of histograms or filters.
 
 #### CSV export/import and undefined
 
