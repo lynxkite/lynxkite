@@ -155,14 +155,26 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
           op.radial, radAttr.runtimeSafeCast[Double])(
             op.angular, angAttr.runtimeSafeCast[Double]).result
         if (project.hasEdgeBundle.enabled) {
-          val addOp = AddEdgesWithDoubleAttribute(-1.0)
-          val addResult = addOp(addOp.vs, project.vertexSet)(
-            addOp.es, project.edgeBundle)(
-              addOp.newEdges, result.predictedEdges)(
-                addOp.attr, result.edgeProbability).result
-          project.edgeBundle = addResult.union
-          project.newEdgeAttribute("hyperbolic_edge_probability", addResult.newAttr,
+          val idSetUnion = {
+            val op = graph_operations.VertexSetUnion(2)
+            op(op.vss, Seq(project.edgeBundle.idSet, result.predictedEdges.idSet)).result
+          }
+          val oldProjection = idSetUnion.injections(0).reverse
+          val newProjection = idSetUnion.injections(1).reverse
+          val ebUnion = {
+            val op = graph_operations.EdgeBundleUnion(2)
+            op(op.ebs, Seq(project.edgeBundle, result.predictedEdges.entity))(
+              op.injections, idSetUnion.injections.map(_.entity)).result
+          }
+          val oldAttrs = project.edgeAttributes.toIndexedSeq
+          project.edgeBundle = ebUnion.union
+          project.newEdgeAttribute(
+            "hyperbolic_edge_probability",
+            result.edgeProbability.pullVia(newProjection),
             "hyperbolic edge probability")
+          for ((name, attr) <- oldAttrs) {
+            project.edgeAttributes(name) = attr.pullVia(oldProjection)
+          }
         } else {
           project.edgeBundle = result.predictedEdges
           project.newEdgeAttribute("hyperbolic_edge_probability", result.edgeProbability,
