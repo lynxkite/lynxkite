@@ -120,6 +120,40 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
+  register("Compute hyperbolic edge probability")(new ProjectTransformation(_) {
+    params ++= List(
+      Choice("radial", "Radial coordinate",
+        options = FEOption.unset +: project.vertexAttrList[Double]),
+      Choice("angular", "Angular coordinate",
+        options = FEOption.unset +: project.vertexAttrList[Double]))
+    def enabled = project.hasEdgeBundle && FEStatus.assert(
+      project.vertexAttrList[Double].size >= 2, "Not enough vertex attributes.")
+    def apply() = {
+      val result = {
+        val degree = {
+          val op = graph_operations.OutDegree()
+          op(op.es, project.edgeBundle).result.outDegree
+        }
+        val clus = {
+          val op = graph_operations.ApproxClusteringCoefficient(8)
+          op(op.vs, project.vertexSet)(
+            op.es, project.edgeBundle).result.clustering
+        }
+        assert(params("radial") != FEOption.unset.id, "The radial parameter must be set.")
+        assert(params("angular") != FEOption.unset.id, "The angular parameter must be set.")
+        val radAttr = project.vertexAttributes(params("radial"))
+        val angAttr = project.vertexAttributes(params("angular"))
+        val op = graph_operations.HyperbolicEdgeProbability()
+        op(op.vs, project.vertexSet)(op.es, project.edgeBundle
+        )(op.radial, radAttr.runtimeSafeCast[Double]
+        )(op.angular, angAttr.runtimeSafeCast[Double]
+        )(op.degree, degree)(op.clustering, clus).result
+      }
+      project.newEdgeAttribute("hyperbolic_edge_probability", result.edgeProbability,
+        "hyperbolic edge probability")
+    }
+  })
+
   register("Compute PageRank")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Attribute name", defaultValue = "page_rank"),
@@ -242,6 +276,31 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
         params("leftName") + " similarity score", fingerprinting.leftSimilarities)
       project.newVertexAttribute(
         params("rightName") + " similarity score", fingerprinting.rightSimilarities)
+    }
+  })
+
+  register("Map hyperbolic coordinates")(new ProjectTransformation(_) {
+    params ++= List(
+      RandomSeed("seed", "Seed"))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val result = {
+        val direction = Direction("all neighbors", project.edgeBundle)
+        val degree = {
+          val op = graph_operations.OutDegree()
+          op(op.es, project.edgeBundle).result.outDegree
+        }
+        val clus = {
+          val op = graph_operations.ApproxClusteringCoefficient(8)
+          op(op.vs, project.vertexSet)(
+            op.es, project.edgeBundle).result.clustering
+        }
+        val op = graph_operations.HyperMap(params("seed").toLong)
+        op(op.vs, project.vertexSet)(op.es, direction.edgeBundle
+        )(op.degree, degree)(op.clustering, clus).result
+      }
+      project.newVertexAttribute("radial", result.radial)
+      project.newVertexAttribute("angular", result.angular)
     }
   })
 
