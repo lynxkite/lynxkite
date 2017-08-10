@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Brand colors used in several new places, for consistent styling.
+
 ### 2.0.0
 
  - Replaced LynxKite projects with more powerful and flexible workspaces. Workspaces allow you to
