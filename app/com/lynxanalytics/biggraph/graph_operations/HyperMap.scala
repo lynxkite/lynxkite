@@ -53,7 +53,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     // Orders vertices by descending degree to place higher-degree vertices first.
     val noLoopEdges = edges.filter { case (id, e) => e.src != e.dst }
     val degree = inputs.degree.rdd.map { case (id, degree) => (degree, id) }
-    val avgExpectedDegree = degree.map { case (deg, id) => deg }.reduce(_ + _) / size
+    val avgExpectedDegree = degree.map { case (deg, id) => deg }.reduce(_ + _) / size.toDouble
     val degreeOrdered = degree.sortBy(_._1, ascending = false).zipWithIndex.map {
       case ((degree, id), ord) =>
         (degree, id, ord + 1)
