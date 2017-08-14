@@ -45,15 +45,16 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     val vertices = inputs.vs.rdd
     val edges = inputs.es.rdd
     val sc = rc.sparkContext
-    val size = inputs.vs.data.count.getOrElse(inputs.vs.rdd.count)
+    val vertexSetSize = inputs.vs.data.count.getOrElse(inputs.vs.rdd.count)
     // "log" used by scala.math is log_e. It can also do log_10 but that would be too few samples.
-    val logSize = math.log(size)
+    val logVertexSetSize = math.log(vertexSetSize)
     val vertexPartitioner = vertices.partitioner.get
     val edgePartitioner = edges.partitioner.get
     // Orders vertices by descending degree to place higher-degree vertices first.
     val noLoopEdges = edges.filter { case (id, e) => e.src != e.dst }
     val degree = inputs.degree.rdd.map { case (id, degree) => (degree, id) }
-    val avgExpectedDegree = degree.map { case (deg, id) => deg }.reduce(_ + _) / size.toDouble
+    val avgExpectedDegree = degree.map { case (deg, id) => deg }.reduce(_ + _) /
+     vertexSetSize.toDouble
     val degreeOrdered = degree.sortBy(_._1, ascending = false).zipWithIndex.map {
       case ((degree, id), ord) =>
         (degree, id, ord + 1)
@@ -217,7 +218,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
       exponent, temperature, avgExpectedDegree, logSize)
   }
   def normalizeAngular(ang: Double): Double = {
-    if (ang > math.Pi * 2) ang % math.Pi * 2
+    if (ang > math.Pi * 2) ang - math.Pi * 2
     else ang
   }
   // HyperMap uses this data before HyperVertices are constructed.
@@ -232,9 +233,9 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
                          temperature: Double,
                          externalLinks: Double): Double = {
     val firstVertex = HyperVertex(id = 1, ord = ord, radial = rad1,
-     angular = ang1, expectedDegree = 2)
+      angular = ang1, expectedDegree = 2)
     val secondVertex = HyperVertex(id = 3, ord = 4, radial = rad2,
-     angular = ang2, expectedDegree = 5)
+      angular = ang2, expectedDegree = 5)
     HyperDistance.probability(firstVertex, secondVertex, exponent, temperature, externalLinks)
   }
 }
