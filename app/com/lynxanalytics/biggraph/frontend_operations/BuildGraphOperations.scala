@@ -127,6 +127,61 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     }
   })
 
+  register("Predict edges with hyperbolic positions",
+    List(projectInput))(new ProjectTransformation(_) {
+      params ++= List(
+        NonNegInt("size", "Number of predictions", default = 100),
+        NonNegDouble("externaldegree", "External degree", defaultValue = "1.5"),
+        NonNegDouble("internaldegree", "Internal degree", defaultValue = "1.5"),
+        NonNegDouble("exponent", "Exponent", defaultValue = "0.6"),
+        Choice("radial", "Radial coordinate",
+          options = FEOption.unset +: project.vertexAttrList[Double]),
+        Choice("angular", "Angular coordinate",
+          options = FEOption.unset +: project.vertexAttrList[Double]))
+      def enabled = FEStatus.assert(
+        project.vertexAttrList[Double].size >= 2, "Not enough vertex attributes.")
+      def apply() = {
+        val op = graph_operations.HyperbolicPrediction(
+          params("size").toInt,
+          params("externaldegree").toDouble,
+          params("internaldegree").toDouble,
+          params("exponent").toDouble)
+        val radAttr = project.vertexAttributes(params("radial"))
+        val angAttr = project.vertexAttributes(params("angular"))
+        assert(params("radial") != FEOption.unset.id, "The radial parameter must be set.")
+        assert(params("angular") != FEOption.unset.id, "The angular parameter must be set.")
+        val result = op(op.vs, project.vertexSet)(
+          op.radial, radAttr.runtimeSafeCast[Double])(
+            op.angular, angAttr.runtimeSafeCast[Double]).result
+        if (project.hasEdgeBundle.enabled) {
+          val idSetUnion = {
+            val op = graph_operations.VertexSetUnion(2)
+            op(op.vss, Seq(project.edgeBundle.idSet, result.predictedEdges.idSet)).result
+          }
+          val oldProjection = idSetUnion.injections(0).reverse
+          val newProjection = idSetUnion.injections(1).reverse
+          val ebUnion = {
+            val op = graph_operations.EdgeBundleUnion(2)
+            op(op.ebs, Seq(project.edgeBundle, result.predictedEdges.entity))(
+              op.injections, idSetUnion.injections.map(_.entity)).result
+          }
+          val oldAttrs = project.edgeAttributes.toIndexedSeq
+          project.edgeBundle = ebUnion.union
+          project.newEdgeAttribute(
+            "hyperbolic_edge_probability",
+            result.edgeProbability.pullVia(newProjection),
+            "hyperbolic edge probability")
+          for ((name, attr) <- oldAttrs) {
+            project.edgeAttributes(name) = attr.pullVia(oldProjection)
+          }
+        } else {
+          project.edgeBundle = result.predictedEdges
+          project.newEdgeAttribute("hyperbolic_edge_probability", result.edgeProbability,
+            "hyperbolic edge probability")
+        }
+      }
+    })
+
   register(
     "Use table as vertices", List("table"))(factory = new ProjectOutputOperation(_) {
       lazy val vertices = tableLikeInput("table").asProject
