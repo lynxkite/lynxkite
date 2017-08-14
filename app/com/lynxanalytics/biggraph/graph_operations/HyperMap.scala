@@ -54,7 +54,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     val noLoopEdges = edges.filter { case (id, e) => e.src != e.dst }
     val degree = inputs.degree.rdd.map { case (id, degree) => (degree, id) }
     val avgExpectedDegree = degree.map { case (deg, id) => deg }.reduce(_ + _) /
-     vertexSetSize.toDouble
+      vertexSetSize.toDouble
     val degreeOrdered = degree.sortBy(_._1, ascending = false).zipWithIndex.map {
       case ((degree, id), ord) =>
         (degree, id, ord + 1)
