@@ -65,7 +65,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     // is by running HyperMap multiple times and selecting the best fit for the edge
     // probability graph - not viable for larger data sets.
     val avgClustering = inputs.clustering.rdd.map { case (id, clus) => clus }
-      .reduce(_ + _) / size
+      .reduce(_ + _) / vertexSetSize
     val temperature = (1 - avgClustering) * 0.9
     // Attempts to infer exponent by drawing a log-log plot line between the
     // highest-degree vertex and the lowest-degree vertices.
@@ -109,7 +109,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
             radial = 2 * math.log(currentSample._3 * 2),
             angular = maximumLikelihoodAngular(currentSample._2, currentSample._3,
               currentSampleList, currentEdgesToSamples, exponent,
-              temperature, avgExpectedDegree, logSize),
+              temperature, avgExpectedDegree, logVertexSetSize),
             expectedDegree = 0) :: currentSampleList,
             collectedEdges.filter { case (id, e) => currentSample._2 == e.dst } ++
             currentEdgesToSamples)
@@ -125,7 +125,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
           ord = ord,
           radial = 2 * math.log(ord),
           angular = maximumLikelihoodAngular(id, ord, sampleList,
-            edgesToSamples, exponent, temperature, avgExpectedDegree, logSize),
+            edgesToSamples, exponent, temperature, avgExpectedDegree, logVertexSetSize),
           expectedDegree = 0)
     }
 
@@ -167,8 +167,8 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
                                exponent: Double,
                                temperature: Double,
                                avgExpectedDegree: Double,
-                               logSize: Double): Double = {
-    val iterations: Int = (math.ceil(logSize)).toInt + 3
+                               logVertexSetSize: Double): Double = {
+    val iterations: Int = (math.ceil(logVertexSetSize)).toInt + 3
     val firstcwBound: Double = math.Pi * 2
     val firstccwBound: Double = 0
     val localRandom = new Random((vertexID << 16) + seed)
@@ -176,7 +176,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     maximumLikelihoodRecursion(iterations,
       firstcwBound, firstccwBound, offset,
       vertexID, ord, samples, sampleEdges,
-      exponent, temperature, avgExpectedDegree, logSize)
+      exponent, temperature, avgExpectedDegree, logVertexSetSize)
   }
   @annotation.tailrec
   private final def maximumLikelihoodRecursion(remainingIterations: Int,
@@ -190,7 +190,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
                                                exponent: Double,
                                                temperature: Double,
                                                avgExpectedDegree: Double,
-                                               logSize: Double): Double = {
+                                               logVertexSetSize: Double): Double = {
     val angleBound: Double = cwBound - ccwBound
     val topQuarterPoint: Double = cwBound - angleBound / 4
     val bottomQuarterPoint: Double = ccwBound + angleBound / 4
@@ -215,7 +215,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     else maximumLikelihoodRecursion(remainingIterations - 1,
       newcwBound, newccwBound, offset,
       vertexID, ord, samples, sampleEdges,
-      exponent, temperature, avgExpectedDegree, logSize)
+      exponent, temperature, avgExpectedDegree, logVertexSetSize)
   }
   def normalizeAngular(ang: Double): Double = {
     if (ang > math.Pi * 2) ang - math.Pi * 2
