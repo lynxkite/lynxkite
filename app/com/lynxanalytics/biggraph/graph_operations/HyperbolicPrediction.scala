@@ -109,16 +109,23 @@ case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegre
               Edge(src.id, dst.id))
         }.sortBy(-_._1)
         dst.take(numSelections)
-    }.top(size)(Ordering.by[(Double, Edge), Double](_._1))
+    }.top(size)(ProbabilityOrdering)
     val extraEdgesRDD = sc.parallelize(extraEdges)
     val predictedEdges = extraEdgesRDD.flatMap {
       case (probability, edge) =>
         List((edge, probability), (Edge(edge.dst, edge.src), probability))
     }
     val randomNumberedEdges = predictedEdges.randomNumbered(partitioner)
-    output(o.predictedEdges, randomNumberedEdges.map { case (id, (e, prob)) =>
-     (id, e) }.sortUnique(partitioner))
-    output(o.edgeProbability, randomNumberedEdges.map { case (id, (e, prob)) =>
-     (id, prob) }.sortUnique(partitioner))
+    output(o.predictedEdges, randomNumberedEdges.map {
+      case (id, (e, prob)) =>
+        (id, e)
+    }.sortUnique(partitioner))
+    output(o.edgeProbability, randomNumberedEdges.map {
+      case (id, (e, prob)) =>
+        (id, prob)
+    }.sortUnique(partitioner))
   }
+}
+object ProbabilityOrdering extends Ordering[(Double, Edge)] {
+  def compare(a: (Double, Edge), b: (Double, Edge)) = a._1 compare b._1
 }
