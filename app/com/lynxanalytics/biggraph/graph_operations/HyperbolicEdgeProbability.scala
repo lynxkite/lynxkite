@@ -95,42 +95,9 @@ case class HyperbolicEdgeProbability() extends TypedMetaGraphOp[Input, Output] {
     val edgesJoined = srcGrouped.sortedLeftOuterJoin(dstGrouped)
     val edgeProbability = edgesJoined.map {
       case (eid, (srcVertex, dstVertex)) =>
-        (eid,
-          probability(srcVertex, dstVertex.get, exponent, temperature, avgExpectedDegree))
+        (eid, HyperDistance.probability(srcVertex, dstVertex.get,
+          exponent, temperature, avgExpectedDegree))
     }
     output(o.edgeProbability, edgeProbability.sortUnique(partitioner))
   }
-  // Returns hyperbolic distance.
-  def hyperbolicDistance(src: HyperVertex, dst: HyperVertex): Double = {
-    src.radial + src.radial + 2 * math.log(phi(src.angular, dst.angular) / 2)
-  }
-  // Returns angular component for hyperbolic distance calculation.
-  def phi(ang1: Double, ang2: Double): Double = {
-    math.Pi - math.abs(math.Pi - math.abs(ang1 - ang2))
-  }
-  // Equation for parameter denoted I_i in the HyperMap paper.
-  def inverseExponent(ord: Long, exponent: Double): Double = {
-    (1 / (1 - exponent)) * (1 - math.pow(ord, -(1 - exponent)))
-  }
-  // Expected number of connections for a vertex, used in calculating angular.
-  def expectedConnections(vertex: HyperVertex,
-                          exponent: Double,
-                          temperature: Double,
-                          externalLinks: Double): Double = {
-    val firstPart: Double = (2 * temperature) / math.sin(temperature * math.Pi)
-    val secondPart: Double = inverseExponent(vertex.ord, exponent) / externalLinks
-    val logged: Double = math.log(firstPart * secondPart)
-    vertex.radial - (2 * logged)
-  }
-  // Connection probability.
-  def probability(first: HyperVertex,
-                  second: HyperVertex,
-                  exponent: Double,
-                  temperature: Double,
-                  externalLinks: Double): Double = {
-    val dist: Double = hyperbolicDistance(first, second)
-    1 / (1 + math.exp((1 / (2 * temperature)) * (dist -
-      expectedConnections(first, exponent, temperature, externalLinks))))
-  }
 }
-

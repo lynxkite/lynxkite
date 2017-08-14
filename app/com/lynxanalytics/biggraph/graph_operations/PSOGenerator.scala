@@ -128,7 +128,7 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
 object HyperDistance {
   // Returns hyperbolic distance.
   def hyperbolicDistance(src: HyperVertex, dst: HyperVertex): Double = {
-    src.radial + src.radial + 2 * math.log(phi(src.angular, dst.angular) / 2)
+    src.radial + dst.radial + 2 * math.log(phi(src.angular, dst.angular) / 2)
   }
   // Returns angular component for hyperbolic distance calculation.
   def phi(ang1: Double, ang2: Double): Double = {
