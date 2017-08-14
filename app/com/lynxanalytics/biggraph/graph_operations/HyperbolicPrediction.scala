@@ -13,6 +13,10 @@ import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
+case class ProbabilityOrdering() extends Ordering[(Double, Edge)] {
+  def compare(a: (Double, Edge), b: (Double, Edge)) = a._1 compare b._1
+}
+
 object HyperbolicPrediction extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
@@ -109,7 +113,7 @@ case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegre
               Edge(src.id, dst.id))
         }.sortBy(-_._1)
         dst.take(numSelections)
-    }.top(size)(ProbabilityOrdering)
+    }.top(size)(ProbabilityOrdering())
     val extraEdgesRDD = sc.parallelize(extraEdges)
     val predictedEdges = extraEdgesRDD.flatMap {
       case (probability, edge) =>
@@ -125,7 +129,4 @@ case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegre
         (id, prob)
     }.sortUnique(partitioner))
   }
-}
-object ProbabilityOrdering extends Ordering[(Double, Edge)] {
-  def compare(a: (Double, Edge), b: (Double, Edge)) = a._1 compare b._1
 }
