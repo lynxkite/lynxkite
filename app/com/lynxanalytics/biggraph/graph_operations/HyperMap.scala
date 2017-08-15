@@ -157,7 +157,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
   }
   // Returns the optimal angular coordinate for a node.
   // Calculates the likelihood that the mapped graph is similar to a PSO-grown graph.
-  // Divides 0 - 2Pi ( + offset) in half. Takes center point /random point of each, does a 
+  // Divides 0 - 2Pi ( + offset) in half. Takes center point /random point of each, does a
   // comparison. Higher one stays. Divides half as wide angle into two halves again and repeat.
   def maximumLikelihoodAngular(vertexID: Long,
                                ord: Long,
@@ -171,7 +171,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     val firstcwBound: Double = math.Pi * 2
     val firstccwBound: Double = 0
     val localRandom = new Random((vertexID << 16) + seed)
-    val offset: Double = math.Pi * 2 * Random.nextDouble
+    val offset: Double = math.Pi * 2 * localRandom.nextDouble
     maximumLikelihoodRecursion(iterations,
       firstcwBound, firstccwBound, offset,
       vertexID, ord, samples, sampleEdges,
