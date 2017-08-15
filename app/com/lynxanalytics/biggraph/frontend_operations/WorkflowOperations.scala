@@ -457,7 +457,9 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
 
   registerSQLOp("SQL1", List("input"))
 
-  for (inputs <- 2 to 3) {
-    registerSQLOp(s"SQL$inputs", List("one", "two", "three").take(inputs))
+  for (inputs <- 2 to 10) {
+    val numbers =
+      List("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")
+    registerSQLOp(s"SQL$inputs", numbers.take(inputs))
   }
 }

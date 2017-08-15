@@ -1,0 +1,21 @@
+### SQL7
+
+Executes an SQL query on its seven inputs, which can be either projects or tables. Outputs a table.
+The inputs are available in the query as `one`, `two`, `three`, `four`, `five`, `six`, `seven`.
+For example:
+
+```
+select * from one
+union select * from two
+union select * from three
+union select * from four
+union select * from five
+union select * from six
+union select * from seven
+```
+
+:prefix: one.
+:maybe-tick: {backtick}
+include::{g}[tag=sql-box]
+:prefix!:
+:maybe-tick!:
