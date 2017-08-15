@@ -241,5 +241,10 @@ can make the workspace easier to understand.
 
 [[sql]] SQL query::
 The query. Press Ctrl-Enter to save your changes while staying in the editor.
+
+[[persist]] Persist result::
+If enabled, the output table will be saved to disk once it is calculated. If disabled, the query
+will be re-executed each time its output is used. Persistance can improve performance at the cost of
+disk space.
 ====
 end::sql-box[]
