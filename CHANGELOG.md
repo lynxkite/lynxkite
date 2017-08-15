@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Added SQL box variants with up to 10 inputs. (The long-term plan is to have a single box that can
+   take any number of inputs.)
  - Brand colors used in several new places, for consistent styling.
 
 ### 2.0.0
