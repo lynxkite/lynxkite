@@ -442,8 +442,10 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
   def registerSQLOp(name: String, inputs: List[String]): Unit = {
     registerOp(name, defaultIcon, category, inputs, List("table"), new TableOutputOperation(_) {
       override val params = new ParameterHolder(context) // No "apply_to" parameters.
+      params += Param("summary", "Summary", defaultValue = "SQL")
       params += Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql",
         enableTableBrowser = true)
+      override def summary = params("summary")
       def enabled = FEStatus.enabled
       override def getOutputs() = {
         params.validate()
