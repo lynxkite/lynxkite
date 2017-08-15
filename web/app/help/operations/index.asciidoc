@@ -415,9 +415,23 @@ include::split-vertices.asciidoc[]
 
 include::sql1.asciidoc[]
 
+include::sql10.asciidoc[]
+
 include::sql2.asciidoc[]
 
 include::sql3.asciidoc[]
+
+include::sql4.asciidoc[]
+
+include::sql5.asciidoc[]
+
+include::sql6.asciidoc[]
+
+include::sql7.asciidoc[]
+
+include::sql8.asciidoc[]
+
+include::sql9.asciidoc[]
 
 include::take-edges-as-vertices.asciidoc[]
 
