@@ -31,6 +31,8 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   def simpleFileName(name: String): String = {
     // Drop the hash if this is an upload.
     if (name.startsWith("UPLOAD$")) name.split("/", -1).last.split("\\.", 2).last
+    // Include the directory if the filename is a wildcard.
+    else if (name.split("/", -1).last.contains("*")) name.split("/", -1).takeRight(2).mkString("/")
     else name.split("/", -1).last
   }
 
