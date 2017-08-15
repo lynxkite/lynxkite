@@ -45,15 +45,16 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     val vertices = inputs.vs.rdd
     val edges = inputs.es.rdd
     val sc = rc.sparkContext
-    val size = inputs.vs.data.count.getOrElse(inputs.vs.rdd.count)
+    val vertexSetSize = inputs.vs.data.count.getOrElse(inputs.vs.rdd.count)
     // "log" used by scala.math is log_e. It can also do log_10 but that would be too few samples.
-    val logSize = math.log(size)
+    val logVertexSetSize = math.log(vertexSetSize)
     val vertexPartitioner = vertices.partitioner.get
     val edgePartitioner = edges.partitioner.get
     // Orders vertices by descending degree to place higher-degree vertices first.
     val noLoopEdges = edges.filter { case (id, e) => e.src != e.dst }
     val degree = inputs.degree.rdd.map { case (id, degree) => (degree, id) }
-    val avgExpectedDegree = degree.map { case (deg, id) => deg }.reduce(_ + _) / size.toDouble
+    val avgExpectedDegree = degree.map { case (deg, id) => deg }.reduce(_ + _) /
+      vertexSetSize.toDouble
     val degreeOrdered = degree.sortBy(_._1, ascending = false).zipWithIndex.map {
       case ((degree, id), ord) =>
         (degree, id, ord + 1)
@@ -64,7 +65,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     // is by running HyperMap multiple times and selecting the best fit for the edge
     // probability graph - not viable for larger data sets.
     val avgClustering = inputs.clustering.rdd.map { case (id, clus) => clus }
-      .reduce(_ + _) / size
+      .reduce(_ + _) / vertexSetSize
     val temperature = (1 - avgClustering) * 0.9
     // Attempts to infer exponent by drawing a log-log plot line between the
     // highest-degree vertex and the lowest-degree vertices.
@@ -108,7 +109,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
             radial = 2 * math.log(currentSample._3 * 2),
             angular = maximumLikelihoodAngular(currentSample._2, currentSample._3,
               currentSampleList, currentEdgesToSamples, exponent,
-              temperature, avgExpectedDegree, logSize),
+              temperature, avgExpectedDegree, logVertexSetSize),
             expectedDegree = 0) :: currentSampleList,
             collectedEdges.filter { case (id, e) => currentSample._2 == e.dst } ++
             currentEdgesToSamples)
@@ -124,7 +125,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
           ord = ord,
           radial = 2 * math.log(ord),
           angular = maximumLikelihoodAngular(id, ord, sampleList,
-            edgesToSamples, exponent, temperature, avgExpectedDegree, logSize),
+            edgesToSamples, exponent, temperature, avgExpectedDegree, logVertexSetSize),
           expectedDegree = 0)
     }
 
@@ -148,10 +149,10 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
         case (id, e) => e.src == vertexID &&
           e.dst == otherVertex.id
       }.isEmpty) {
-        product * probability(radial, otherVertex.radial, angular, otherVertex.angular,
+        product * probabilityWrapper(radial, otherVertex.radial, angular, otherVertex.angular,
           ord, exponent, temperature, avgExpectedDegree)
       } else {
-        product * (1 - probability(radial, otherVertex.radial, angular, otherVertex.angular,
+        product * (1 - probabilityWrapper(radial, otherVertex.radial, angular, otherVertex.angular,
           ord, exponent, temperature, avgExpectedDegree))
       })
   }
@@ -166,8 +167,8 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
                                exponent: Double,
                                temperature: Double,
                                avgExpectedDegree: Double,
-                               logSize: Double): Double = {
-    val iterations: Int = (math.ceil(logSize)).toInt + 3
+                               logVertexSetSize: Double): Double = {
+    val iterations: Int = (math.ceil(logVertexSetSize)).toInt + 3
     val firstcwBound: Double = math.Pi * 2
     val firstccwBound: Double = 0
     val localRandom = new Random((vertexID << 16) + seed)
@@ -175,7 +176,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     maximumLikelihoodRecursion(iterations,
       firstcwBound, firstccwBound, offset,
       vertexID, ord, samples, sampleEdges,
-      exponent, temperature, avgExpectedDegree, logSize)
+      exponent, temperature, avgExpectedDegree, logVertexSetSize)
   }
   @annotation.tailrec
   private final def maximumLikelihoodRecursion(remainingIterations: Int,
@@ -189,7 +190,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
                                                exponent: Double,
                                                temperature: Double,
                                                avgExpectedDegree: Double,
-                                               logSize: Double): Double = {
+                                               logVertexSetSize: Double): Double = {
     val angleBound: Double = cwBound - ccwBound
     val topQuarterPoint: Double = cwBound - angleBound / 4
     val bottomQuarterPoint: Double = ccwBound + angleBound / 4
@@ -214,46 +215,27 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     else maximumLikelihoodRecursion(remainingIterations - 1,
       newcwBound, newccwBound, offset,
       vertexID, ord, samples, sampleEdges,
-      exponent, temperature, avgExpectedDegree, logSize)
+      exponent, temperature, avgExpectedDegree, logVertexSetSize)
   }
   def normalizeAngular(ang: Double): Double = {
     if (ang > math.Pi * 2) ang - math.Pi * 2
     else ang
   }
-  // Returns hyperbolic distance.
-  def hyperbolicDistance(rad1: Double, rad2: Double, ang1: Double, ang2: Double): Double = {
-    rad1 + rad2 + 2 * math.log(phi(ang1, ang2) / 2)
-  }
-  // Returns angular component for hyperbolic distance.
-  def phi(ang1: Double, ang2: Double): Double = {
-    math.Pi - math.abs(math.Pi - math.abs(ang1 - ang2))
-  }
-  // Equation for parameter denoted I_i in the HyperMap paper.
-  def inverseExponent(ord: Long, exponent: Double): Double = {
-    (1 / (1 - exponent)) * (1 - math.pow(ord, -(1 - exponent)))
-  }
-  // Expected number of connections for a vertex, used in calculating angular.
-  def expectedConnections(rad1: Double,
-                          ord: Long,
-                          exponent: Double,
-                          temperature: Double,
-                          externalLinks: Double): Double = {
-    val firstPart: Double = (2 * temperature) / math.sin(temperature * math.Pi)
-    val secondPart: Double = inverseExponent(ord, exponent) / externalLinks
-    val logged: Double = math.log(firstPart * secondPart)
-    rad1 - (2 * logged)
-  }
-  // Connection probability.
-  def probability(rad1: Double,
-                  rad2: Double,
-                  ang1: Double,
-                  ang2: Double,
-                  ord: Long,
-                  exponent: Double,
-                  temperature: Double,
-                  externalLinks: Double): Double = {
-    val dist: Double = hyperbolicDistance(rad1, rad2, ang1, ang2)
-    1 / (1 + math.exp((1 / (2 * temperature)) * (dist -
-      expectedConnections(rad1, ord, exponent, temperature, externalLinks))))
+  // HyperMap uses this data before HyperVertices are constructed.
+  // Data that is currently irrelevant is given arbitrary values for the duration
+  // of using these utilities from PSOGenerator.
+  def probabilityWrapper(rad1: Double,
+                         rad2: Double,
+                         ang1: Double,
+                         ang2: Double,
+                         ord: Long,
+                         exponent: Double,
+                         temperature: Double,
+                         externalLinks: Double): Double = {
+    val firstVertex = HyperVertex(id = 1, ord = ord, radial = rad1,
+      angular = ang1, expectedDegree = 2)
+    val secondVertex = HyperVertex(id = 3, ord = 4, radial = rad2,
+      angular = ang2, expectedDegree = 5)
+    HyperDistance.probability(firstVertex, secondVertex, exponent, temperature, externalLinks)
   }
 }
