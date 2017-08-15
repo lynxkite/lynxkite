@@ -235,6 +235,10 @@ You can browse the list of available tables and columns by clicking on the
 button.
 
 ====
+[[summary]] Summary::
+This summary will be displayed below the box in the workspace. Distinguishing SQL boxes this way
+can make the workspace easier to understand.
+
 [[sql]] SQL query::
 The query. Press Ctrl-Enter to save your changes while staying in the editor.
 ====
