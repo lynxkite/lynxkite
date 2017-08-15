@@ -8,6 +8,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
  - Brand colors used in several new places, for consistent styling.
  - Users can now set SQL box summaries.
+ - SQL boxes can optionally persist their outputs.
 
 ### 2.0.0
 

@@ -445,6 +445,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       params += Param("summary", "Summary", defaultValue = "SQL")
       params += Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql",
         enableTableBrowser = true)
+      params += Choice("persist", "Persist result", options = FEOption.noyes)
       override def summary = params("summary")
       def enabled = FEStatus.enabled
       override def getOutputs() = {
@@ -452,7 +453,8 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         val sql = params("sql")
         val protoTables = this.getInputTables()
         val result = graph_operations.ExecuteSQL.run(sql, protoTables)
-        makeOutput(result)
+        if (params("persist") == "yes") makeOutput(result.saved)
+        else makeOutput(result)
       }
     })
   }
