@@ -119,6 +119,7 @@ def main():
   render('superpowers')
   render('snowflake-o')
   render('cogs')
+  render('commenting')
 
 
 if __name__ == '__main__':
