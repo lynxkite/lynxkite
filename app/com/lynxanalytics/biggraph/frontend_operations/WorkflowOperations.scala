@@ -17,7 +17,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
-  register("Comment", List(), List())(new DecoratorOperation(_) {
+  register("Comment", List(), List(), icon = "commenting")(new DecoratorOperation(_) {
     params += Code("comment", "Comment", language = "plain_text")
   })
 
