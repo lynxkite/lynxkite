@@ -14,6 +14,7 @@ module.exports = {
         .service('environment', function() {
           this.protractor = true;
         });
+      document.body.className += ' notransition'; // Disable CSS transitions.
     });
   },
 };
