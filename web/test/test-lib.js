@@ -1254,10 +1254,6 @@ testLib = {
     return browser.controlFlow().execute(sendRequest);
   },
 
-  navigateToProject: function(name) {
-    browser.get('/#/project/' + name);
-  },
-
   helpPopup: function(helpId) {
     return $('div[help-id="' + helpId + '"]');
   },
@@ -1496,10 +1492,7 @@ testLib = {
   submitInlineInput: function(element, text) {
     var inputBox = element.$('input');
     var okButton = element.$('#ok');
-    // Wait for CSS animation.
-    testLib.waitUntilClickable(inputBox);
     inputBox.sendKeys(text);
-    testLib.waitUntilClickable(okButton);
     okButton.click();
   },
 
