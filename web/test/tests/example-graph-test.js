@@ -57,15 +57,18 @@ module.exports = function(fw) {
 
   fw.statePreservingTest(
     'test-example workspace with reverse edges',
-    'states has correct fill color',
+    'plugs have color',
     function() {
       let outPlugFirstEG = lib.workspace.getOutputPlug('eg0');
       let outPlugReversedEdges = lib.workspace.getOutputPlug('reversed-edges');
       let outPlugSecondEG = lib.workspace.getOutputPlug('eg1');
       // progress is updated every 2 seconds, so we may need to wait
-      browser.wait(() => outPlugReversedEdges.getAttribute('fill'), 1000 * 3);
-      expect(outPlugFirstEG.getAttribute('fill')).not.toBeNull();
-      expect(outPlugSecondEG.getAttribute('fill')).not.toBeNull();
+      lib.wait(() => outPlugReversedEdges.getAttribute('class').then(cls =>
+            cls.indexOf('plug-progress-unknown') === -1));
+      expect(outPlugFirstEG.getAttribute('class').then(cls =>
+            cls.indexOf('plug-progress-unknown') === -1)).toBeTruthy();
+      expect(outPlugSecondEG.getAttribute('class').then(cls =>
+            cls.indexOf('plug-progress-unknown') === -1)).toBeTruthy();
     });
 
 };
