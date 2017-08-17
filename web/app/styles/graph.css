@@ -1,5 +1,9 @@
 /* Common styles. */
 
+.notransition * { /* For Protractor tests. */
+  transition: none !important;
+}
+
 @media print {
   a[href]:after {
     content: "";
