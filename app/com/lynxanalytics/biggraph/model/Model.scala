@@ -74,13 +74,13 @@ private[biggraph] class DecisionTreeClassificationModelImpl(
         n.split match {
           case s: ContinuousSplit =>
             val feature = featureNames(s.featureIndex)
-            val leftStr = printNode(n.leftChild, featureNames, indent + 4)
-            val rightStr = printNode(n.rightChild, featureNames, indent + 4)
+            val leftStr = printNode(n.leftChild, featureNames, indent + 2)
+            val rightStr = printNode(n.rightChild, featureNames, indent + 2)
             val indentStr = " " * indent
             s"""${indentStr}CASE
-${indentStr}  WHEN $feature <= ${s.threshold} THEN
+${indentStr} WHEN $feature <= ${s.threshold} THEN
 $leftStr
-${indentStr}  ELSE
+${indentStr} ELSE
 $rightStr
 ${indentStr}END"""
           case s: CategoricalSplit => throw new AssertionError("CategoricalSplit is not supported.")
