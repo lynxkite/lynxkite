@@ -20,6 +20,7 @@ trait ModelImplementation {
   // A transformation of dataframe with the model.
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame
   def details: String
+  def toSQL(labelName: Option[String], featureNames: List[String]): String = ""
 }
 
 // Helper classes to provide a common abstraction for various types of models.
@@ -59,6 +60,36 @@ private[biggraph] class DecisionTreeClassificationModelImpl(
     statistics: String) extends ModelImplementation {
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame = m.transform(data)
   def details: String = statistics
+
+  import org.apache.spark.ml.tree._
+  override def toSQL(labelName: Option[String], featureNames: List[String]): String = {
+    val caseStr = printNode(m.rootNode, featureNames, 0)
+    val alias = labelName.map(s => s" AS $s").getOrElse("")
+    s"${caseStr}${alias}"
+  }
+
+  private def printNode(node: Node, featureNames: List[String], indent: Int): String = {
+    node match {
+      case n: InternalNode =>
+        n.split match {
+          case s: ContinuousSplit =>
+            val feature = featureNames(s.featureIndex)
+            val leftStr = printNode(n.leftChild, featureNames, indent + 2)
+            val rightStr = printNode(n.rightChild, featureNames, indent + 2)
+            val indentStr = " " * indent
+            s"""${indentStr}CASE
+${indentStr} WHEN $feature <= ${s.threshold} THEN
+$leftStr
+${indentStr} ELSE
+$rightStr
+${indentStr}END"""
+          case s: CategoricalSplit => throw new AssertionError("CategoricalSplit is not supported.")
+        }
+      case n: LeafNode =>
+        val indentStr = " " * indent
+        s"${indentStr}${n.prediction}"
+    }
+  }
 }
 
 case class Model(
@@ -109,6 +140,10 @@ case class Model(
         new DecisionTreeClassificationModelImpl(
           ml.classification.DecisionTreeClassificationModel.load(path), statistics.get)
     }
+  }
+
+  def toSQL(sc: spark.SparkContext): String = {
+    load(sc).toSQL(labelName, featureNames)
   }
 }
 
