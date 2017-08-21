@@ -30,5 +30,21 @@ class TrainDecisionTreeClassifierTest extends ModelTestBase {
 
 Accuracy: 0.875
 Support: [0.375, 0.375, 0.25]""")
+    assert(m.value.toSQL(sparkContext) == """CASE
+  WHEN rain <= 0.0 THEN
+    CASE
+      WHEN temperature <= 20.0 THEN
+        CASE
+          WHEN temperature <= -15.0 THEN
+            1.0
+          ELSE
+            2.0
+        END
+      ELSE
+        1.0
+    END
+  ELSE
+    0.0
+END AS length of the walk""")
   }
 }
