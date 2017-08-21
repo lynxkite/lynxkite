@@ -7,6 +7,8 @@ angular.module('biggraph').directive('modelDetails', function(util) {
     scope: { scalarId: '=' },
     templateUrl: 'scripts/project/model-details.html',
     link: function(scope) {
+      scope.showSQL = false;
+
       scope.model = util.get('/ajax/model', {
         scalarId: scope.scalarId,
       });

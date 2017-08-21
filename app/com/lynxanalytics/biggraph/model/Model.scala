@@ -160,11 +160,15 @@ object Model extends FromJson[Model] {
   def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(
     modelName, modelMeta.isClassification, modelMeta.generatesProbability, modelMeta.featureNames)
 
-  def toFE(m: Model, sc: spark.SparkContext): FEModel = FEModel(
-    method = m.method,
-    labelName = m.labelName,
-    featureNames = m.featureNames,
-    details = m.load(sc).details)
+  def toFE(m: Model, sc: spark.SparkContext): FEModel = {
+    val modelImpl = m.load(sc)
+    FEModel(
+      method = m.method,
+      labelName = m.labelName,
+      featureNames = m.featureNames,
+      details = modelImpl.details,
+      sql = modelImpl.toSQL(m.labelName, m.featureNames))
+  }
 
   def newModelFile: HadoopFile = {
     HadoopFile("DATA$") / io.ModelsDir / Timestamp.toString
@@ -243,7 +247,8 @@ case class FEModel(
   method: String,
   labelName: Option[String],
   featureNames: List[String],
-  details: String)
+  details: String,
+  sql: String)
 
 trait ModelMeta {
   def isClassification: Boolean
