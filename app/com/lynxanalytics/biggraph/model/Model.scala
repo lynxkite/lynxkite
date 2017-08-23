@@ -104,9 +104,10 @@ case class Model(
   symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
   labelName: Option[String], // Name of the label attribute used to train this model.
   labelType: Option[String] = None,
+  labelMapping: Option[Map[_, Double]] = None,
   featureNames: List[String], // The name of the feature attributes used to train this model.
   featureTypes: Option[List[String]] = None,
-  featureConverters: Option[List[String]] = None,
+  featureMappings: Option[Map[String, Map[_, Double]]] = None,
   statistics: Option[String]) // For the details that require training data
     extends ToJson with Equals {
 
@@ -130,9 +131,10 @@ case class Model(
       "symbolicPath" -> symbolicPath,
       "labelName" -> labelName,
       "labelType" -> labelType,
+      "labelMapping" -> labelMapping,
       "featureNames" -> featureNames,
       "featureTypes" -> featureTypes,
-      "featureConverters" -> featureConverters,
+      "featureMappings" -> featureMappings,
       "statistics" -> statistics
     )
   }
@@ -167,9 +169,10 @@ object Model extends FromJson[Model] {
       (j \ "symbolicPath").as[String],
       (j \ "labelName").as[Option[String]],
       (j \ "labelType").as[Option[String]],
+      (j \ "labelConverter").as[Option[Map[_, Double]]],
       (j \ "featureNames").as[List[String]],
       (j \ "featureTypes").as[Option[List[String]]],
-      (j \ "featureConverters").as[Option[List[String]]],
+      (j \ "featureMappings").as[Option[Map[String, Map[_, Double]]]],
       (j \ "statistics").as[Option[String]]
     )
   }
@@ -193,13 +196,13 @@ object Model extends FromJson[Model] {
   def toDoubleDF(
     sqlContext: spark.sql.SQLContext,
     vertices: VertexSetRDD,
-    featuresArray: Array[com.lynxanalytics.biggraph.graph_api.MagicInputSignature#RuntimeTypedVATemplate],
+    attrsArray: Array[com.lynxanalytics.biggraph.graph_api.MagicInputSignature#RuntimeTypedVATemplate],
     mappingsCollector: mutable.Map[String, Map[_, Double]])(
       implicit dataSet: DataSet): spark.sql.DataFrame = {
-    toDF(sqlContext, vertices, featuresArray.map { featureRDD =>
-      val (rdd, mapping) = toDoubleRDD(featureRDD)
+    toDF(sqlContext, vertices, attrsArray.map { attr =>
+      val (rdd, mapping) = toDoubleRDD(attr)
       if (mapping.nonEmpty) {
-        mappingsCollector(featureRDD.name.name) = mapping.get
+        mappingsCollector(attr.name.name) = mapping.get
       }
       rdd
     })
