@@ -1,12 +1,19 @@
 // A helper class to handle machine learning models.
 package com.lynxanalytics.biggraph.model
 
+import scala.reflect.runtime.universe._
+
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util._
 import org.apache.spark.ml
 import org.apache.spark
 import play.api.libs.json
+
+import scala.collection.mutable
+
+import org.apache.spark.ml.feature.StringIndexer
 
 object Implicits {
   // Easy access to the ModelMeta class from Scalar[Model].
@@ -97,6 +104,8 @@ case class Model(
   symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
   labelName: Option[String], // Name of the label attribute used to train this model.
   featureNames: List[String], // The name of the feature attributes used to train this model.
+  featureTypes: Option[List[String]] = None,
+  featureConverters: Option[List[String]] = None,
   statistics: Option[String]) // For the details that require training data
     extends ToJson with Equals {
 
@@ -120,6 +129,8 @@ case class Model(
       "symbolicPath" -> symbolicPath,
       "labelName" -> labelName,
       "featureNames" -> featureNames,
+      "featureTypes" -> featureTypes,
+      "featureConverters" -> featureConverters,
       "statistics" -> statistics
     )
   }
@@ -154,6 +165,8 @@ object Model extends FromJson[Model] {
       (j \ "symbolicPath").as[String],
       (j \ "labelName").as[Option[String]],
       (j \ "featureNames").as[List[String]],
+      (j \ "featureTypes").as[Option[List[String]]],
+      (j \ "featureConverters").as[Option[List[String]]],
       (j \ "statistics").as[Option[String]]
     )
   }
@@ -174,19 +187,51 @@ object Model extends FromJson[Model] {
     HadoopFile("DATA$") / io.ModelsDir / Timestamp.toString
   }
 
+  def toDoubleDF(
+    sqlContext: spark.sql.SQLContext,
+    vertices: VertexSetRDD,
+    featuresArray: Array[com.lynxanalytics.biggraph.graph_api.MagicInputSignature#RuntimeTypedVATemplate],
+    mappingsCollector: mutable.Map[String, Map[_, Double]])(
+      implicit dataSet: DataSet): spark.sql.DataFrame = {
+    toDF(sqlContext, vertices, featuresArray.map { featureRDD =>
+      val (rdd, mapping) = toDoubleRDD(featureRDD)
+      if (mapping.nonEmpty) {
+        mappingsCollector(featureRDD.name.name) = mapping.get
+      }
+      rdd
+    })
+  }
+
+  def toDoubleRDD(
+    attr: com.lynxanalytics.biggraph.graph_api.MagicInputSignature#RuntimeTypedVATemplate)(
+      implicit dataSet: DataSet): (AttributeRDD[Double], Option[Map[_, Double]]) = {
+    attr match {
+      case f if f.tt.tpe =:= typeOf[Double] => (f.rdd.mapValues(v => v.asInstanceOf[Double]), None)
+      case f if f.tt.tpe =:= typeOf[String] =>
+        val rdd = f.rdd.mapValues(v => v.asInstanceOf[String])
+        val mapping = rdd.values.distinct.collect.sorted.zipWithIndex.map { case (k, v) => k -> v.toDouble }.toMap
+        (rdd.mapValues(v => mapping(v)), Some(mapping))
+      case _ => throw new AssertionError()
+    }
+  }
+
   // Transforms features to an MLlib DataFrame with "id" and "features" columns.
   def toDF(
     sqlContext: spark.sql.SQLContext,
     vertices: VertexSetRDD,
     featuresArray: Array[AttributeRDD[Double]]): spark.sql.DataFrame = {
-    val emptyArrays = vertices.mapValues(l => new Array[Double](featuresArray.size))
     val numberedFeatures = featuresArray.zipWithIndex
+    val emptyArrays = vertices.mapValues(l => new Array[Double](featuresArray.size))
     val fullArrays = numberedFeatures.foldLeft(emptyArrays) {
       case (a, (f, i)) =>
         a.sortedJoin(f).mapValues {
           case (a, f) => a(i) = f; a
         }
     }
+    import org.apache.spark.sql._
+    import org.apache.spark.sql.types._
+    val st = StructType(featuresArray.map(f => StructField(f.name, IntegerType, false)))
+    val rowRDD = fullArrays.map { case (k, v) => Row.fromSeq(Seq(k) ++ v) }
     val featureRDD = fullArrays.mapValues(a => new ml.linalg.DenseVector(a): ml.linalg.Vector)
     import sqlContext.implicits._
     featureRDD.toDF("id", "features")

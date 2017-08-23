@@ -291,7 +291,7 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
     def rdd(implicit dataSet: DataSet) = data.rdd
   }
 
-  class RuntimeTypedVATemplate(vsF: => Symbol, nameOpt: Option[Symbol], tt: TypeTag[_])
+  class RuntimeTypedVATemplate(vsF: => Symbol, nameOpt: Option[Symbol], val tt: TypeTag[_])
       extends ET[Attribute[_]](nameOpt) {
     lazy val vs = vsF
     override def set(target: MetaDataSet, va: Attribute[_]): MetaDataSet = {
