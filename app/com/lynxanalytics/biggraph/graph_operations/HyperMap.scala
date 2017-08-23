@@ -109,7 +109,6 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     val sampleTuple: (List[HyperVertex], List[(Long, Edge)]) =
       collectedSamples.tail.foldLeft(firstSampleList, firstEdgesToSamples) {
         case ((currentSampleList, currentEdgesToSamples), currentSample) =>
-          var localRandom = new Random((currentSample._2 << 16) + seed)
           (HyperVertex(id = currentSample._2,
             ord = currentSample._3,
             radial = 2 * math.log(currentSample._3),
