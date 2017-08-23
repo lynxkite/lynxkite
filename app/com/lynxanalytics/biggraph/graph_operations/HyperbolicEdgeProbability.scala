@@ -46,7 +46,11 @@ case class HyperbolicEdgeProbability() extends TypedMetaGraphOp[Input, Output] {
     // Attempts to infer temperature from clustering coefficient.
     val avgClustering = inputs.clustering.rdd.map { case (id, clus) => clus }
       .reduce(_ + _) / vertexSetSize
-    val temperature = (1 - avgClustering) * 0.9
+    val temperature = {
+      val temperatureGuess = (0.9 - avgClustering) * 4 + 0.1
+      if (temperatureGuess > 0 && temperatureGuess < 0.85) temperatureGuess
+      else 0.85
+    }
     // Attempts to infer exponent by drawing a log-log plot line between the
     // highest-degree vertex and the lowest-degree vertices.
     val degree = inputs.degree.rdd

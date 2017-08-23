@@ -31,8 +31,7 @@ class HyperbolicEdgeProbabilityTest extends FunSuite with TestGraphOp {
     val out = op(op.vs, g.vs)(op.es, g.es)(op.radial, radial
     )(op.angular, angular)(op.degree, degree)(op.clustering, clus).result
     val probs = out.edgeProbability.rdd
-
-    assert(probs.filter { case (id, prob) => prob < 0.8 }.isEmpty)
+    assert(probs.filter { case (id, prob) => prob < 0.35 }.collect.toList.length < 2)
   }
   test("lateral connections with low probability") {
     val g = SmallTestGraph(Map(0 -> Seq(), 1 -> Seq(2, 3),
@@ -58,7 +57,6 @@ class HyperbolicEdgeProbabilityTest extends FunSuite with TestGraphOp {
     val out = op(op.vs, g.vs)(op.es, g.es)(op.radial, radial
     )(op.angular, angular)(op.degree, degree)(op.clustering, clus).result
     val probs = out.edgeProbability.rdd
-
-    assert(probs.filter { case (id, prob) => prob > 0.2 }.isEmpty)
+    assert(probs.filter { case (id, prob) => prob > 0.1 }.isEmpty)
   }
 }
