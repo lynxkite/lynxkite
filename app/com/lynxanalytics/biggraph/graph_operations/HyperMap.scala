@@ -113,8 +113,8 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
             ord = currentSample._3,
             radial = 2 * math.log(currentSample._3),
             angular = maximumLikelihoodAngular(currentSample._2, currentSample._3,
-                currentSampleList, currentEdgesToSamples, exponent,
-                temperature, avgExpectedDegree, logVertexSetSize),
+              currentSampleList, currentEdgesToSamples, exponent,
+              temperature, avgExpectedDegree, logVertexSetSize),
             expectedDegree = 0) :: currentSampleList,
             collectedEdges.filter { case (id, e) => currentSample._2 == e.dst } ++
             currentEdgesToSamples)
@@ -127,12 +127,13 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
       case (degree, id, ord) =>
         if (sampleVertexIDs.contains(id)) {
           sampleList.filter(_.id == id).head
-        } else { HyperVertex(
+        } else {
+          HyperVertex(
             id = id,
             ord = ord,
             radial = 2 * math.log(ord),
             angular = maximumLikelihoodAngular(id, ord, sampleList, edgesToSamples,
-             exponent, temperature, avgExpectedDegree, logVertexSetSize),
+              exponent, temperature, avgExpectedDegree, logVertexSetSize),
             expectedDegree = 0)
         }
     }
