@@ -57,7 +57,8 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
       vertexSetSize.toDouble
     val degreeOrdered = degree.sortBy(_._1, ascending = false).zipWithIndex.map {
       case ((degree, id), ord) =>
-        (degree, id, ord + 1)
+        // +log instead of +1 is to account for popularity fading without correction steps
+        (degree, id, ord + logVertexSetSize.toInt)
     }
     // Attempts to infer temperature from clustering coefficient.
     // This is very much a guess. However, research paper states that the algorithm
@@ -66,7 +67,11 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     // probability graph - not viable for larger data sets.
     val avgClustering = inputs.clustering.rdd.map { case (id, clus) => clus }
       .reduce(_ + _) / vertexSetSize
-    val temperature = (1 - avgClustering) * 0.9
+    val temperature = {
+      val temperatureGuess = (0.9 - avgClustering) * 4 + 0.1
+      if (temperatureGuess > 0 && temperatureGuess < 0.85) temperatureGuess
+      else 0.85
+    }
     // Attempts to infer exponent by drawing a log-log plot line between the
     // highest-degree vertex and the lowest-degree vertices.
     val highestDegree = degreeOrdered.first._1
@@ -85,7 +90,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
         val rnd = new Random((pid << 16) + seed)
         iter.filter {
           case (degree, id, ordinal) => rnd.nextDouble * ordinal < math.log(ordinal) ||
-            ordinal < 3
+            ordinal < logVertexSetSize * 2
         }
     }.collect.toList
     // Place down the first vertex with a random angular coordinate.
@@ -93,7 +98,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     val firstSampleList = new HyperVertex(
       id = collectedSamples.head._2,
       ord = collectedSamples.head._3,
-      radial = 2 * math.log(collectedSamples.head._3 * 2),
+      radial = 2 * math.log(collectedSamples.head._3),
       angular = 2 * math.Pi * rndFirstVertex.nextDouble,
       expectedDegree = 0) :: Nil
     // Get the edges for building the remainder of sampleList.
@@ -104,12 +109,15 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     val sampleTuple: (List[HyperVertex], List[(Long, Edge)]) =
       collectedSamples.tail.foldLeft(firstSampleList, firstEdgesToSamples) {
         case ((currentSampleList, currentEdgesToSamples), currentSample) =>
+          var localRandom = new Random((currentSample._2 << 16) + seed)
           (HyperVertex(id = currentSample._2,
             ord = currentSample._3,
-            radial = 2 * math.log(currentSample._3 * 2),
-            angular = maximumLikelihoodAngular(currentSample._2, currentSample._3,
-              currentSampleList, currentEdgesToSamples, exponent,
-              temperature, avgExpectedDegree, logVertexSetSize),
+            radial = 2 * math.log(currentSample._3),
+            angular = {
+              maximumLikelihoodAngular(currentSample._2, currentSample._3,
+                currentSampleList, currentEdgesToSamples, exponent,
+                temperature, avgExpectedDegree, logVertexSetSize)
+            },
             expectedDegree = 0) :: currentSampleList,
             collectedEdges.filter { case (id, e) => currentSample._2 == e.dst } ++
             currentEdgesToSamples)
@@ -120,13 +128,17 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     // Place down the rest of the vertices simultaneously.
     val hyperVertices = degreeOrdered.map {
       case (degree, id, ord) =>
-        HyperVertex(
-          id = id,
-          ord = ord,
-          radial = 2 * math.log(ord),
-          angular = maximumLikelihoodAngular(id, ord, sampleList,
-            edgesToSamples, exponent, temperature, avgExpectedDegree, logVertexSetSize),
-          expectedDegree = 0)
+        if (sampleVertexIDs.contains(id)) {
+          sampleList.filter(_.id == id).head
+        } else {
+          HyperVertex(
+            id = id,
+            ord = ord,
+            radial = 2 * math.log(ord),
+            angular = maximumLikelihoodAngular(id, ord, sampleList,
+              edgesToSamples, exponent, temperature, avgExpectedDegree, logVertexSetSize),
+            expectedDegree = 0)
+        }
     }
 
     output(o.radial, hyperVertices.map { v => (v.id, v.radial) }.sortUnique(vertexPartitioner))
@@ -168,7 +180,7 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
                                temperature: Double,
                                avgExpectedDegree: Double,
                                logVertexSetSize: Double): Double = {
-    val iterations: Int = (math.ceil(logVertexSetSize)).toInt + 3
+    val iterations: Int = (math.ceil(logVertexSetSize)).toInt
     val firstcwBound: Double = math.Pi * 2
     val firstccwBound: Double = 0
     val localRandom = new Random((vertexID << 16) + seed)

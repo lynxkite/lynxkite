@@ -61,9 +61,10 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
     implicit val id = inputDatas
     val partitioner = inputs.vs.rdd.partitioner.get
     val size = inputs.vs.data.count.getOrElse(inputs.vs.rdd.count)
-    val ordinals = inputs.vs.rdd.keys.zipWithIndex
-    val sc = rc.sparkContext
     val logSize = math.log(size)
+    // +logSize instead of +1 to account for popularity fading
+    val ordinals = inputs.vs.rdd.keys.zipWithIndex.map { case (id, ordinal) => (id, ordinal + logSize.toInt) }
+    val sc = rc.sparkContext
     // Adds the necessary attributes for later calculations.
     // ord needs to be 1-indexed as log(0) will break things.
     val vertices = ordinals.mapPartitionsWithIndex {
@@ -73,11 +74,11 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
           case (id, ordinal) =>
             HyperVertex(
               id = id,
-              ord = ordinal + 1,
-              radial = 2 * math.log(ordinal + 1),
+              ord = ordinal,
+              radial = 2 * math.log(ordinal),
               angular = rnd.nextDouble * math.Pi * 2,
               expectedDegree = HyperDistance.totalExpectedEPSO(exponent,
-                externalDegree, internalDegree, size, ordinal + 1))
+                externalDegree, internalDegree, size, ordinal))
         }
     }
     // For each vertex: samples ~log(n) vertices with smallest angular coordinate difference, plus
