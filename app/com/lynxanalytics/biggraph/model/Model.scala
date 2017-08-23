@@ -103,6 +103,7 @@ case class Model(
   method: String, // The training method used to create this model.
   symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
   labelName: Option[String], // Name of the label attribute used to train this model.
+  labelType: Option[String] = None,
   featureNames: List[String], // The name of the feature attributes used to train this model.
   featureTypes: Option[List[String]] = None,
   featureConverters: Option[List[String]] = None,
@@ -128,6 +129,7 @@ case class Model(
       "method" -> method,
       "symbolicPath" -> symbolicPath,
       "labelName" -> labelName,
+      "labelType" -> labelType,
       "featureNames" -> featureNames,
       "featureTypes" -> featureTypes,
       "featureConverters" -> featureConverters,
@@ -164,6 +166,7 @@ object Model extends FromJson[Model] {
       (j \ "method").as[String],
       (j \ "symbolicPath").as[String],
       (j \ "labelName").as[Option[String]],
+      (j \ "labelType").as[Option[String]],
       (j \ "featureNames").as[List[String]],
       (j \ "featureTypes").as[Option[List[String]]],
       (j \ "featureConverters").as[Option[List[String]]],
@@ -220,18 +223,14 @@ object Model extends FromJson[Model] {
     sqlContext: spark.sql.SQLContext,
     vertices: VertexSetRDD,
     featuresArray: Array[AttributeRDD[Double]]): spark.sql.DataFrame = {
-    val numberedFeatures = featuresArray.zipWithIndex
     val emptyArrays = vertices.mapValues(l => new Array[Double](featuresArray.size))
+    val numberedFeatures = featuresArray.zipWithIndex
     val fullArrays = numberedFeatures.foldLeft(emptyArrays) {
       case (a, (f, i)) =>
         a.sortedJoin(f).mapValues {
           case (a, f) => a(i) = f; a
         }
     }
-    import org.apache.spark.sql._
-    import org.apache.spark.sql.types._
-    val st = StructType(featuresArray.map(f => StructField(f.name, IntegerType, false)))
-    val rowRDD = fullArrays.map { case (k, v) => Row.fromSeq(Seq(k) ++ v) }
     val featureRDD = fullArrays.mapValues(a => new ml.linalg.DenseVector(a): ml.linalg.Vector)
     import sqlContext.implicits._
     featureRDD.toDF("id", "features")
