@@ -9,14 +9,15 @@
   <div class="model-parameter">Bind the features of the model</div>
   <table style="width: 100%;">
     <tr ng-repeat="feature in activeModel.featureNames track by $index" class="model-parameter">
-      <td>Attribute {{ feature }}:</td>
+      <td>Attribute {{ feature }}</td>
+      <td>({{ activeModel.featureTypes[$index] }})</td>
       <td>
         <select
           id="model-feature-{{feature}}"
           ng-disabled="!editable"
           class="form-control"
           ng-model="binding[feature]"
-          ng-options="attr.id as attr.title for attr in param.payload.attrs">
+          ng-options="attr.id as attr.title for attr in getParamsWithMatchingType(activeModel.featureTypes[$index])">
         </select>
       </td>
     </tr>

@@ -30,6 +30,7 @@ case class RegressionModelTrainer(
     featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   val isClassification = false
   val isBinary = false
+  def featureTypes = (0 until featureNames.size).map(_ => SerializableType.double).toList
   override val isHeavy = true
   @transient override lazy val inputs = new Input(featureNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

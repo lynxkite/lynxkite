@@ -103,11 +103,11 @@ case class Model(
   method: String, // The training method used to create this model.
   symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
   labelName: Option[String], // Name of the label attribute used to train this model.
-  labelType: Option[String] = None,
-  labelMapping: Option[Map[_, Double]] = None,
+  labelType: Option[SerializableType[_]] = None,
+  labelMapping: Option[Map[Double, String]] = None,
   featureNames: List[String], // The name of the feature attributes used to train this model.
-  featureTypes: Option[List[String]] = None,
-  featureMappings: Option[Map[String, Map[_, Double]]] = None,
+  featureTypes: Option[List[SerializableType[_]]] = None,
+  featureMappings: Option[Map[String, Map[String, Double]]] = None,
   statistics: Option[String]) // For the details that require training data
     extends ToJson with Equals {
 
@@ -130,10 +130,10 @@ case class Model(
       "method" -> method,
       "symbolicPath" -> symbolicPath,
       "labelName" -> labelName,
-      "labelType" -> labelType,
-      "labelMapping" -> labelMapping,
+      "labelType" -> labelType.map(_.toJson),
+      "labelMapping" -> labelMapping.map(_.map { case (k, v) => k.toString -> v }),
       "featureNames" -> featureNames,
-      "featureTypes" -> featureTypes,
+      "featureTypes" -> featureTypes.map(_.map(_.toJson)),
       "featureMappings" -> featureMappings,
       "statistics" -> statistics
     )
@@ -168,16 +168,20 @@ object Model extends FromJson[Model] {
       (j \ "method").as[String],
       (j \ "symbolicPath").as[String],
       (j \ "labelName").as[Option[String]],
-      (j \ "labelType").as[Option[String]],
-      (j \ "labelConverter").as[Option[Map[_, Double]]],
+      (j \ "labelType").as[Option[JsValue]].map(json => SerializableType.fromJson(json)),
+      (j \ "labelMapping").as[Option[Map[String, String]]].map(_.map { case (k, v) => k.toDouble -> v }),
       (j \ "featureNames").as[List[String]],
-      (j \ "featureTypes").as[Option[List[String]]],
-      (j \ "featureMappings").as[Option[Map[String, Map[_, Double]]]],
+      (j \ "featureTypes").as[Option[List[JsValue]]].map(_.map(json => SerializableType.fromJson(json))),
+      (j \ "featureMappings").as[Option[Map[String, Map[String, Double]]]],
       (j \ "statistics").as[Option[String]]
     )
   }
   def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(
-    modelName, modelMeta.isClassification, modelMeta.generatesProbability, modelMeta.featureNames)
+    modelName,
+    modelMeta.isClassification,
+    modelMeta.generatesProbability,
+    modelMeta.featureNames,
+    modelMeta.featureTypes.map(_.typeTag.tpe.toString))
 
   def toFE(m: Model, sc: spark.SparkContext): FEModel = {
     val modelImpl = m.load(sc)
@@ -185,6 +189,7 @@ object Model extends FromJson[Model] {
       method = m.method,
       labelName = m.labelName,
       featureNames = m.featureNames,
+      featureTypes = m.featureTypes.get.map(_.typeTag.toString),
       details = modelImpl.details,
       sql = modelImpl.toSQL(m.labelName, m.featureNames))
   }
@@ -197,7 +202,7 @@ object Model extends FromJson[Model] {
     sqlContext: spark.sql.SQLContext,
     vertices: VertexSetRDD,
     attrsArray: Array[com.lynxanalytics.biggraph.graph_api.MagicInputSignature#RuntimeTypedVATemplate],
-    mappingsCollector: mutable.Map[String, Map[_, Double]])(
+    mappingsCollector: mutable.Map[String, Map[String, Double]])(
       implicit dataSet: DataSet): spark.sql.DataFrame = {
     toDF(sqlContext, vertices, attrsArray.map { attr =>
       val (rdd, mapping) = toDoubleRDD(attr)
@@ -210,7 +215,7 @@ object Model extends FromJson[Model] {
 
   def toDoubleRDD(
     attr: com.lynxanalytics.biggraph.graph_api.MagicInputSignature#RuntimeTypedVATemplate)(
-      implicit dataSet: DataSet): (AttributeRDD[Double], Option[Map[_, Double]]) = {
+      implicit dataSet: DataSet): (AttributeRDD[Double], Option[Map[String, Double]]) = {
     attr match {
       case f if f.tt.tpe =:= typeOf[Double] => (f.rdd.mapValues(v => v.asInstanceOf[Double]), None)
       case f if f.tt.tpe =:= typeOf[String] =>
@@ -219,6 +224,22 @@ object Model extends FromJson[Model] {
         (rdd.mapValues(v => mapping(v)), Some(mapping))
       case _ => throw new AssertionError()
     }
+  }
+
+  def toDF(
+    sqlContext: spark.sql.SQLContext,
+    vertices: VertexSetRDD,
+    attrsArray: Array[com.lynxanalytics.biggraph.graph_api.MagicInputSignature#RuntimeTypedVATemplate],
+    mappings: Map[String, Map[String, Double]])(
+      implicit dataSet: DataSet): spark.sql.DataFrame = {
+    toDF(sqlContext, vertices, attrsArray.map(attr => attr match {
+      case f if f.tt.tpe =:= typeOf[Double] => f.rdd.mapValues(v => v.asInstanceOf[Double])
+      case f if f.tt.tpe =:= typeOf[String] =>
+        val rdd = f.rdd.mapValues(v => v.asInstanceOf[String])
+        val mapping = mappings(attr.name.name)
+        rdd.mapValues(v => mapping(v))
+      case _ => throw new AssertionError()
+    }))
   }
 
   // Transforms features to an MLlib DataFrame with "id" and "features" columns.
@@ -288,12 +309,14 @@ case class FEModelMeta(
   name: String,
   isClassification: Boolean,
   generatesProbability: Boolean,
-  featureNames: List[String])
+  featureNames: List[String],
+  featureTypes: List[String])
 
 case class FEModel(
   method: String,
   labelName: Option[String],
   featureNames: List[String],
+  featureTypes: List[String],
   details: String,
   sql: String)
 
@@ -302,4 +325,5 @@ trait ModelMeta {
   def isBinary: Boolean
   def generatesProbability: Boolean = false
   def featureNames: List[String]
+  def featureTypes: List[SerializableType[_]]
 }

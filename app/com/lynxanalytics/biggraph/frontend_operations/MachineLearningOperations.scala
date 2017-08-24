@@ -16,13 +16,15 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
   register("Classify with model")(new ProjectTransformation(_) {
+    def attrs = project.vertexAttrList[Double] ++ project.vertexAttrList[String]
     def models = project.viewer.models.filter(_._2.isClassification)
     params ++= List(
       Param("name", "The name of the attribute of the classifications"),
-      ModelParams("model", "The parameters of the model", models, project.vertexAttrList[Double]))
+      ModelParams("model", "The parameters of the model", models, attrs,
+        attrs.map(a => project.vertexAttributes(a.title).typeTag.tpe.toString)))
     def enabled =
       FEStatus.assert(models.nonEmpty, "No classification models.") &&
-        FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
+        FEStatus.assert(attrs.nonEmpty, "No numeric vertex attributes.")
     def apply() = {
       assert(params("name").nonEmpty, "Please set the name of attribute.")
       assert(params("model").nonEmpty, "Please select a model.")
@@ -30,13 +32,12 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val p = json.Json.parse(params("model"))
       val modelName = (p \ "modelName").as[String]
       val modelValue: Scalar[model.Model] = project.scalars(modelName).runtimeSafeCast[model.Model]
-      val features = (p \ "features").as[List[String]].map {
-        name => project.vertexAttributes(name).runtimeSafeCast[Double]
-      }
+      val features = (p \ "features").as[List[String]].map(name => project.vertexAttributes(name))
+      val featureTypes = features.map(f => SerializableType(f.typeTag))
       import model.Implicits._
       val generatesProbability = modelValue.modelMeta.generatesProbability
       val isBinary = modelValue.modelMeta.isBinary
-      val op = graph_operations.ClassifyWithModel(features.size)
+      val op = graph_operations.ClassifyWithModel(featureTypes)
       val result = op(op.model, modelValue)(op.features, features).result
       val classifiedAttribute = result.classification
       project.newVertexAttribute(name, classifiedAttribute,
@@ -61,10 +62,12 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
   })
 
   register("Predict with model")(new ProjectTransformation(_) {
+    def attrs = project.vertexAttrList[Double]
     def models = project.viewer.models.filterNot(_._2.isClassification)
     params ++= List(
       Param("name", "The name of the attribute of the predictions"),
-      ModelParams("model", "The parameters of the model", models, project.vertexAttrList[Double]))
+      ModelParams("model", "The parameters of the model", models, attrs,
+        attrs.map(a => project.vertexAttributes(a.title).typeTag.tpe.toString)))
     def enabled =
       FEStatus.assert(models.nonEmpty, "No regression models.") &&
         FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")

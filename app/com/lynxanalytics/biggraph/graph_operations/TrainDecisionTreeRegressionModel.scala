@@ -41,6 +41,7 @@ case class TrainDecisionTreeRegressor(
     seed: Int) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   val isClassification = false
   val isBinary = false
+  def featureTypes = (0 until featureNames.size).map(_ => SerializableType.double).toList
   override val generatesProbability = true
   override val isHeavy = true
   @transient override lazy val inputs = new Input(featureNames.size)

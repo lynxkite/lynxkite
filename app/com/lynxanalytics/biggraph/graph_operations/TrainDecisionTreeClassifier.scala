@@ -80,7 +80,7 @@ case class TrainDecisionTreeClassifier(
 
     val (labelRDD, labelMapping) = Model.toDoubleRDD(inputs.label)
     val labelDF = labelRDD.toDF("id", "label")
-    val featuresMapping = scala.collection.mutable.Map[String, Map[_, Double]]()
+    val featuresMapping = scala.collection.mutable.Map[String, Map[String, Double]]()
     val featuresDF = Model.toDoubleDF(sqlContext, inputs.vertices.rdd, inputs.features.toArray, featuresMapping)
     val labeledFeaturesDF = featuresDF.join(labelDF, "id")
     assert(!labeledFeaturesDF.rdd.isEmpty, "Training is not possible with empty data set.")
@@ -111,12 +111,15 @@ case class TrainDecisionTreeClassifier(
     val support = labelDF.groupBy("label").count().orderBy(sortCol = "label").map(
       row => (row.getAs[Long]("count").toDouble / dataSize)).collectAsList()
     val statistics = s"$treeDescription\nAccuracy: $accuracy\nSupport: $support"
-    // TODO add types and converters for features and label
     output(o.model, Model(
       method = "Decision tree classification",
       symbolicPath = file.symbolicName,
       labelName = Some(labelName),
+      labelType = labelType,
+      labelMapping = labelMapping.map(_.map { case (k, v) => v -> k }.toMap),
       featureNames = featureNames,
+      featureTypes = Some(featureTypes),
+      featureMappings = Some(featuresMapping.toMap),
       statistics = Some(statistics)))
   }
 }
