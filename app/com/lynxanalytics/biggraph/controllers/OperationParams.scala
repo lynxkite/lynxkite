@@ -132,7 +132,8 @@ object OperationParams {
       id: String,
       title: String,
       models: Map[String, model.ModelMeta],
-      attrs: List[FEOption]) extends OperationParameterMeta {
+      attrs: List[FEOption],
+      attrTypes: List[String]) extends OperationParameterMeta {
     val defaultValue = ""
     val kind = "model"
     val multipleChoice = false
@@ -142,7 +143,8 @@ object OperationParams {
     implicit val wModelsPayload = json.Json.writes[ModelsPayload]
     override val payload = Some(json.Json.toJson(ModelsPayload(
       models = models.toList.map { case (k, v) => model.Model.toMetaFE(k, v) },
-      attrs = attrs)))
+      attrs = attrs,
+      attrTypes = attrTypes)))
     def validate(value: String): Unit = {}
   }
 
@@ -216,4 +218,5 @@ object OperationParams {
 // A special parameter payload to describe applicable models on the UI.
 case class ModelsPayload(
   models: List[model.FEModelMeta],
-  attrs: List[FEOption])
+  attrs: List[FEOption],
+  attrTypes: List[String])

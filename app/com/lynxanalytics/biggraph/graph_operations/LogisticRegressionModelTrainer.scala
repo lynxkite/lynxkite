@@ -73,6 +73,7 @@ case class LogisticRegressionModelTrainer(
   val isClassification = true
   override val isBinary = true
   override val generatesProbability = true
+  override def featureTypes = (0 until featureNames.size).map(_ => SerializableType.double).toList
   override val isHeavy = true
   @transient override lazy val inputs = new Input(featureNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

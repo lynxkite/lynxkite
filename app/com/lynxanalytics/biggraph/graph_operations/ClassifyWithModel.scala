@@ -8,36 +8,40 @@ import com.lynxanalytics.biggraph.model.Implicits._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.ml.linalg.DenseVector
 
+import scala.reflect.runtime.universe._
+import scala.reflect._
+
 object ClassifyWithModel extends OpFromJson {
-  class Input(numFeatures: Int) extends MagicInputSignature {
+  class Input(featureTypes: Seq[SerializableType[_]]) extends MagicInputSignature {
     val vertices = vertexSet
-    val features = (0 until numFeatures).map {
-      i => vertexAttribute[Double](vertices, Symbol(s"feature-$i"))
+    val features = (0 until featureTypes.size).map {
+      i => runtimeTypedVertexAttribute(vertices, Symbol(s"feature-$i"), featureTypes(i).typeTag)
     }
     val model = scalar[Model]
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output[T: TypeTag](implicit instance: MetaGraphOperationInstance,
+                           inputs: Input) extends MagicOutput(instance) {
     val probability = {
       val modelMeta = inputs.model.entity.modelMeta
       if (modelMeta.generatesProbability) {
         vertexAttribute[Double](inputs.vertices.entity)
       } else { null }
     }
-    val classification = vertexAttribute[Double](inputs.vertices.entity)
+    val classification = vertexAttribute[T](inputs.vertices.entity)
   }
-  def fromJson(j: JsValue) = ClassifyWithModel((j \ "numFeatures").as[Int])
+  def fromJson(j: JsValue) = ClassifyWithModel(
+    (j \ "featureTypes").as[List[JsValue]].map(json => SerializableType.fromJson(json)))
 }
 import ClassifyWithModel._
-case class ClassifyWithModel(numFeatures: Int)
-    extends TypedMetaGraphOp[Input, Output] {
-  @transient override lazy val inputs = new Input(numFeatures)
+case class ClassifyWithModel[T: TypeTag: ClassTag](featureTypes: List[SerializableType[_]])
+    extends TypedMetaGraphOp[Input, Output[T]] {
+  @transient override lazy val inputs = new Input(featureTypes)
   override val isHeavy = true
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  override def toJson = Json.obj("numFeatures" -> numFeatures)
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(typeTag[T], instance, inputs)
+  override def toJson = Json.obj("featureTypes" -> featureTypes.map(f => f.toJson))
 
   def execute(inputDatas: DataSet,
-              o: Output,
+              o: Output[T],
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
@@ -45,15 +49,28 @@ case class ClassifyWithModel(numFeatures: Int)
     import sqlContext.implicits._
 
     val modelValue = inputs.model.value
-    val rddArray = inputs.features.toArray.map(_.rdd)
-    val inputDF = Model.toDF(sqlContext, inputs.vertices.rdd, rddArray)
     val partitioner = inputs.vertices.rdd.partitioner.get
     val classificationModel = modelValue.load(rc.sparkContext)
+    val inputDF = Model.toDF(
+      sqlContext,
+      inputs.vertices.rdd,
+      inputs.features.toArray,
+      modelValue.featureMappings.getOrElse(Map()))
+
     // Transform data to an attributeRDD with the attribute (probability, classification)
     val transformation = classificationModel.transformDF(inputDF)
     val classification = transformation.select("ID", "classification").map { row =>
       (row.getAs[ID]("ID"), row.getAs[java.lang.Number]("classification").doubleValue)
-    }.rdd.sortUnique(partitioner)
+    }.rdd
+      .mapValues { v =>
+        if (modelValue.labelMapping.nonEmpty) {
+          val mapping = modelValue.labelMapping.get
+          mapping(v).asInstanceOf[T]
+        } else {
+          v.asInstanceOf[T]
+        }
+      }
+      .sortUnique(partitioner)
     // Output the probability corresponded to the classification labels.
     if (o.probability != null) {
       val probability = transformation.select("ID", "probability", "classification").map { row =>
