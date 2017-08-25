@@ -54,6 +54,7 @@ case class TrainDecisionTreeClassifier(
   val isBinary = false
   override val generatesProbability = true
   override val isHeavy = true
+  def getLabelType = labelType.get
   @transient override lazy val inputs = new Input(
     labelType.get,
     featureTypes)

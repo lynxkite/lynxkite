@@ -33,7 +33,7 @@ object ClassifyWithModel extends OpFromJson {
     (j \ "featureTypes").as[List[JsValue]].map(json => SerializableType.fromJson(json)))
 }
 import ClassifyWithModel._
-case class ClassifyWithModel[T: TypeTag: ClassTag](featureTypes: List[SerializableType[_]])
+case class ClassifyWithModel[T: TypeTag](featureTypes: List[SerializableType[_]])
     extends TypedMetaGraphOp[Input, Output[T]] {
   @transient override lazy val inputs = new Input(featureTypes)
   override val isHeavy = true
@@ -45,6 +45,7 @@ case class ClassifyWithModel[T: TypeTag: ClassTag](featureTypes: List[Serializab
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
+    implicit val ct = RuntimeSafeCastable.classTagFromTypeTag[T]
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
@@ -59,12 +60,13 @@ case class ClassifyWithModel[T: TypeTag: ClassTag](featureTypes: List[Serializab
 
     // Transform data to an attributeRDD with the attribute (probability, classification)
     val transformation = classificationModel.transformDF(inputDF)
+    val labelMapping = modelValue.labelMapping
     val classification = transformation.select("ID", "classification").map { row =>
       (row.getAs[ID]("ID"), row.getAs[java.lang.Number]("classification").doubleValue)
     }.rdd
       .mapValues { v =>
-        if (modelValue.labelMapping.nonEmpty) {
-          val mapping = modelValue.labelMapping.get
+        if (labelMapping.nonEmpty) {
+          val mapping = labelMapping.get
           mapping(v).asInstanceOf[T]
         } else {
           v.asInstanceOf[T]
