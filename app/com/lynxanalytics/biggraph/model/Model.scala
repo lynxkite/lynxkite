@@ -104,7 +104,7 @@ case class Model(
   symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
   labelName: Option[String], // Name of the label attribute used to train this model.
   labelType: Option[SerializableType[_]] = None,
-  labelMapping: Option[Map[Double, String]] = None,
+  labelReverseMapping: Option[Map[Double, String]] = None,
   featureNames: List[String], // The name of the feature attributes used to train this model.
   featureTypes: Option[List[SerializableType[_]]] = None,
   featureMappings: Option[Map[String, Map[String, Double]]] = None,
@@ -131,7 +131,7 @@ case class Model(
       "symbolicPath" -> symbolicPath,
       "labelName" -> labelName,
       "labelType" -> labelType.map(_.toJson),
-      "labelMapping" -> labelMapping.map(_.map { case (k, v) => k.toString -> v }),
+      "labelReverseMapping" -> labelReverseMapping.map(_.map { case (k, v) => k.toString -> v }),
       "featureNames" -> featureNames,
       "featureTypes" -> featureTypes.map(_.map(_.toJson)),
       "featureMappings" -> featureMappings,
@@ -169,7 +169,7 @@ object Model extends FromJson[Model] {
       (j \ "symbolicPath").as[String],
       (j \ "labelName").as[Option[String]],
       (j \ "labelType").as[Option[JsValue]].map(json => SerializableType.fromJson(json)),
-      (j \ "labelMapping").as[Option[Map[String, String]]].map(_.map { case (k, v) => k.toDouble -> v }),
+      (j \ "labelReverseMapping").as[Option[Map[String, String]]].map(_.map { case (k, v) => k.toDouble -> v }),
       (j \ "featureNames").as[List[String]],
       (j \ "featureTypes").as[Option[List[JsValue]]].map(_.map(json => SerializableType.fromJson(json))),
       (j \ "featureMappings").as[Option[Map[String, Map[String, Double]]]],
@@ -201,20 +201,21 @@ object Model extends FromJson[Model] {
   def toDoubleDF(
     sqlContext: spark.sql.SQLContext,
     vertices: VertexSetRDD,
-    attrsArray: Array[com.lynxanalytics.biggraph.graph_api.MagicInputSignature#RuntimeTypedVATemplate],
-    mappingsCollector: mutable.Map[String, Map[String, Double]])(
-      implicit dataSet: DataSet): spark.sql.DataFrame = {
-    toDF(sqlContext, vertices, attrsArray.map { attr =>
+    attrsArray: Array[MagicInputSignature#RuntimeTypedVATemplate])(
+      implicit dataSet: DataSet): (spark.sql.DataFrame, Map[String, Map[String, Double]]) = {
+    val mappingsCollector = mutable.Map[String, Map[String, Double]]()
+    val df = toDF(sqlContext, vertices, attrsArray.map { attr =>
       val (rdd, mapping) = toDoubleRDD(attr)
       if (mapping.nonEmpty) {
         mappingsCollector(attr.name.name) = mapping.get
       }
       rdd
     })
+    (df, mappingsCollector.toMap)
   }
 
   def toDoubleRDD(
-    attr: com.lynxanalytics.biggraph.graph_api.MagicInputSignature#RuntimeTypedVATemplate)(
+    attr: MagicInputSignature#RuntimeTypedVATemplate)(
       implicit dataSet: DataSet): (AttributeRDD[Double], Option[Map[String, Double]]) = {
     attr match {
       case f if f.tt.tpe =:= typeOf[Double] => (f.rdd.mapValues(v => v.asInstanceOf[Double]), None)
@@ -229,7 +230,7 @@ object Model extends FromJson[Model] {
   def toDF(
     sqlContext: spark.sql.SQLContext,
     vertices: VertexSetRDD,
-    attrsArray: Array[com.lynxanalytics.biggraph.graph_api.MagicInputSignature#RuntimeTypedVATemplate],
+    attrsArray: Array[MagicInputSignature#RuntimeTypedVATemplate],
     mappings: Map[String, Map[String, Double]])(
       implicit dataSet: DataSet): spark.sql.DataFrame = {
     toDF(sqlContext, vertices, attrsArray.map(attr => attr match {
@@ -324,7 +325,7 @@ trait ModelMeta {
   def isClassification: Boolean
   def isBinary: Boolean
   def generatesProbability: Boolean = false
-  def getLabelType: SerializableType[_]
+  def labelType: SerializableType[_]
   def featureNames: List[String]
   def featureTypes: List[SerializableType[_]]
 }

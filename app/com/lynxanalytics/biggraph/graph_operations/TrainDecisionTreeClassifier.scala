@@ -21,11 +21,12 @@ object TrainDecisionTreeClassifier extends OpFromJson {
                inputs: Input) extends MagicOutput(instance) {
     val model = scalar[Model]
   }
-  def fromJson(j: JsValue) = {
+  def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
+    val labelType = SerializableType.fromJson(j \ "labelType")
     val featureNames = (j \ "featureNames").as[List[String]]
     TrainDecisionTreeClassifier(
       (j \ "labelName").as[String],
-      Some(SerializableType.fromJson(j \ "labelType")),
+      labelType,
       featureNames,
       (j \ "featureTypes").as[List[JsValue]]
         .map(json => SerializableType.fromJson(json)),
@@ -39,9 +40,9 @@ object TrainDecisionTreeClassifier extends OpFromJson {
 }
 
 import TrainDecisionTreeClassifier._
-case class TrainDecisionTreeClassifier(
+case class TrainDecisionTreeClassifier[T: TypeTag](
     labelName: String,
-    labelType: Option[SerializableType[_]],
+    labelType: SerializableType[T],
     featureNames: List[String],
     featureTypes: List[SerializableType[_]],
     impurity: String,
@@ -54,14 +55,11 @@ case class TrainDecisionTreeClassifier(
   val isBinary = false
   override val generatesProbability = true
   override val isHeavy = true
-  def getLabelType = labelType.get
-  @transient override lazy val inputs = new Input(
-    labelType.get,
-    featureTypes)
+  @transient override lazy val inputs = new Input(labelType, featureTypes)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
     "labelName" -> labelName,
-    "labelType" -> labelType.get.toJson,
+    "labelType" -> labelType.toJson,
     "featureNames" -> featureNames,
     "featureTypes" -> featureTypes.map(f => f.toJson),
     "impurity" -> impurity,
@@ -81,8 +79,7 @@ case class TrainDecisionTreeClassifier(
 
     val (labelRDD, labelMapping) = Model.toDoubleRDD(inputs.label)
     val labelDF = labelRDD.toDF("id", "label")
-    val featuresMapping = scala.collection.mutable.Map[String, Map[String, Double]]()
-    val featuresDF = Model.toDoubleDF(sqlContext, inputs.vertices.rdd, inputs.features.toArray, featuresMapping)
+    val (featuresDF, featuresMapping) = Model.toDoubleDF(sqlContext, inputs.vertices.rdd, inputs.features.toArray)
     val labeledFeaturesDF = featuresDF.join(labelDF, "id")
     assert(!labeledFeaturesDF.rdd.isEmpty, "Training is not possible with empty data set.")
 
@@ -116,11 +113,11 @@ case class TrainDecisionTreeClassifier(
       method = "Decision tree classification",
       symbolicPath = file.symbolicName,
       labelName = Some(labelName),
-      labelType = labelType,
-      labelMapping = labelMapping.map(_.map { case (k, v) => v -> k }.toMap),
+      labelType = Some(labelType),
+      labelReverseMapping = labelMapping.map(_.map { case (k, v) => v -> k }.toMap),
       featureNames = featureNames,
       featureTypes = Some(featureTypes),
-      featureMappings = Some(featuresMapping.toMap),
+      featureMappings = Some(featuresMapping),
       statistics = Some(statistics)))
   }
 }
