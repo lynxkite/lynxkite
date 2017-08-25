@@ -358,11 +358,6 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       }
     },
 
-    getWidthFromInstance: function(box) {
-      var wrapper = new BoxWrapper(this, this._boxCatalogMap[box.operationId], box);
-      return wrapper.width;
-    },
-
     pasteFromData: function(boxes, currentPosition) {
       var minX = Infinity;
       var minY = Infinity;
