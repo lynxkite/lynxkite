@@ -2,7 +2,7 @@
 // (Effectively this is the same as a select[multiple], just with a different, horizontal design.)
 'use strict';
 
-angular.module('biggraph').directive('tagList', function() {
+angular.module('biggraph').directive('tagList', function(util) {
   return {
     restrict: 'E',
     scope: {
@@ -24,17 +24,24 @@ angular.module('biggraph').directive('tagList', function() {
           scope.onBlur();
         }
       };
-      scope.getTags = function() {
+      function getTags() {
         var tagsById = {};
         for (var i = 0; i < scope.options.length; ++i) {
           tagsById[scope.options[i].id] = scope.options[i];
         }
         var tags = [];
         for (i = 0; i < scope.model.length; ++i) {
-          tags.push(tagsById[scope.model[i]]);
+          var id = scope.model[i];
+          if (tagsById[id] !== undefined) {
+            tags.push(tagsById[id]);
+          } else {
+            tags.push({ id: id, title: id, unknown: true });
+          }
         }
         return tags;
       };
+      util.deepWatch(scope, 'model', function() { scope.tags = getTags(); });
+      util.deepWatch(scope, 'options', function() { scope.tags = getTags(); });
     },
   };
 });
