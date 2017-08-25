@@ -324,6 +324,7 @@ trait ModelMeta {
   def isClassification: Boolean
   def isBinary: Boolean
   def generatesProbability: Boolean = false
+  def getLabelType: SerializableType[_]
   def featureNames: List[String]
   def featureTypes: List[SerializableType[_]]
 }

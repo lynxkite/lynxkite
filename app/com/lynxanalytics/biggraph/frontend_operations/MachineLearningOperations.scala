@@ -8,6 +8,9 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.model
 import play.api.libs.json
 
+import scala.reflect.runtime.universe._
+import scala.reflect._
+
 class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
   import Operation.Implicits._
 
@@ -37,7 +40,8 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       import model.Implicits._
       val generatesProbability = modelValue.modelMeta.generatesProbability
       val isBinary = modelValue.modelMeta.isBinary
-      val op = graph_operations.ClassifyWithModel(featureTypes)
+      import scala.language.existentials
+      val op = graph_operations.ClassifyWithModel(featureTypes)(modelValue.modelMeta.getLabelType.typeTag)
       val result = op(op.model, modelValue)(op.features, features).result
       val classifiedAttribute = result.classification
       project.newVertexAttribute(name, classifiedAttribute,
