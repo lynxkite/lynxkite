@@ -46,7 +46,7 @@ class ModelTestBase extends FunSuite with TestGraphOp {
       case "Decision tree classification" =>
         val op = TrainDecisionTreeClassifier(
           labelName,
-          Some(labelType),
+          labelType,
           featureNames,
           featureTypes.getOrElse(featureNames.map(_ => SerializableType.double).toList),
           impurity = "gini",

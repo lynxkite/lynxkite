@@ -18,13 +18,16 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
+  private def typesOf(attrs: List[FEOption], project: ProjectEditor): List[String] = {
+    attrs.map(a => project.vertexAttributes(a.id).typeTag.tpe.toString)
+  }
+
   register("Classify with model")(new ProjectTransformation(_) {
     def attrs = project.vertexAttrList[Double] ++ project.vertexAttrList[String]
     def models = project.viewer.models.filter(_._2.isClassification)
     params ++= List(
       Param("name", "The name of the attribute of the classifications"),
-      ModelParams("model", "The parameters of the model", models, attrs,
-        attrs.map(a => project.vertexAttributes(a.title).typeTag.tpe.toString)))
+      ModelParams("model", "The parameters of the model", models, attrs, typesOf(attrs, project)))
     def enabled =
       FEStatus.assert(models.nonEmpty, "No classification models.") &&
         FEStatus.assert(attrs.nonEmpty, "No numeric vertex attributes.")
@@ -41,7 +44,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val generatesProbability = modelValue.modelMeta.generatesProbability
       val isBinary = modelValue.modelMeta.isBinary
       import scala.language.existentials
-      val op = graph_operations.ClassifyWithModel(featureTypes)(modelValue.modelMeta.getLabelType.typeTag)
+      val op = graph_operations.ClassifyWithModel(featureTypes)(modelValue.modelMeta.labelType.typeTag)
       val result = op(op.model, modelValue)(op.features, features).result
       val classifiedAttribute = result.classification
       project.newVertexAttribute(name, classifiedAttribute,
@@ -70,8 +73,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
     def models = project.viewer.models.filterNot(_._2.isClassification)
     params ++= List(
       Param("name", "The name of the attribute of the predictions"),
-      ModelParams("model", "The parameters of the model", models, attrs,
-        attrs.map(a => project.vertexAttributes(a.title).typeTag.tpe.toString)))
+      ModelParams("model", "The parameters of the model", models, attrs, typesOf(attrs, project)))
     def enabled =
       FEStatus.assert(models.nonEmpty, "No regression models.") &&
         FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
@@ -254,7 +256,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val model = {
         val op = graph_operations.TrainDecisionTreeClassifier(
           labelName = labelName,
-          labelType = Some(SerializableType(label.typeTag)),
+          labelType = SerializableType(label.typeTag),
           featureNames = featureNames.toList,
           featureTypes = features.map(f => SerializableType(f.typeTag)).toList,
           impurity = params("impurity"),
