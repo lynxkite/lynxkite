@@ -76,7 +76,8 @@ case class TrainTypedDecisionTreeClassifier[T: TypeTag](
 
     val (labelRDD, labelMapping) = Model.toDoubleRDD(inputs.label.data)
     val labelDF = labelRDD.toDF("id", "label")
-    val (featuresDF, featuresMapping) = Model.toDoubleDF(sqlContext, inputs.vertices.rdd, inputs.features.toArray.map(_.data))
+    val (featuresDF, featureMappings) =
+      Model.toDoubleDF(sqlContext, inputs.vertices.rdd, inputs.features.toArray.map(_.data))
     val labeledFeaturesDF = featuresDF.join(labelDF, "id")
     assert(!labeledFeaturesDF.rdd.isEmpty, "Training is not possible with empty data set.")
 
@@ -114,7 +115,7 @@ case class TrainTypedDecisionTreeClassifier[T: TypeTag](
       labelReverseMapping = labelMapping.map(_.map { case (k, v) => v -> k }.toMap),
       featureNames = featureNames,
       featureTypes = Some(featureTypes),
-      featureMappings = Some(featuresMapping),
+      featureMappings = Some(featureMappings),
       statistics = Some(statistics)))
   }
 }

@@ -27,7 +27,7 @@ class ModelJsonSerializationTest extends ModelTestBase {
       Some(Map(1.0 -> "a")),
       List[String]("four", "five"),
       Some(List(SerializableType.double)),
-      Some(Map("x" -> Map("1" -> 2.0))),
+      Some(Map(0 -> Map("1" -> 2.0))),
       None)
     val out = m1.toJson
     val m2 = Model.fromJson(out)
@@ -43,7 +43,7 @@ class ModelJsonSerializationTest extends ModelTestBase {
       Some(Map(1.0 -> "a")),
       List[String]("four", "five"),
       Some(List(SerializableType.double)),
-      Some(Map("x" -> Map("1" -> 2.0))),
+      Some(Map(0 -> Map("1" -> 2.0))),
       None)
     val out = m1.toJson
     val m2 = Model.fromJson(out)
@@ -59,7 +59,7 @@ class ModelJsonSerializationTest extends ModelTestBase {
       Some(Map(1.0 -> "a")),
       List[String]("four", "five"),
       Some(List(SerializableType.double)),
-      Some(Map("x" -> Map("1" -> 2.0))),
+      Some(Map(0 -> Map("1" -> 2.0))),
       Some(""))
     val out = m1.toJson
     val m2 = Model.fromJson(out)
