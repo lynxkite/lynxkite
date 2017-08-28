@@ -11,7 +11,7 @@ import org.apache.spark.ml.linalg.DenseVector
 import scala.reflect.runtime.universe._
 import scala.reflect._
 
-object ClassifyWithModel extends OpFromJson {
+object ClassifyWithTypedModel extends OpFromJson {
   class Input(featureTypes: Seq[SerializableType[_]]) extends MagicInputSignature {
     val vertices = vertexSet
     val features = (0 until featureTypes.size).map {
@@ -29,11 +29,11 @@ object ClassifyWithModel extends OpFromJson {
     }
     val classification = vertexAttribute[T](inputs.vertices.entity)
   }
-  def fromJson(j: JsValue) = ClassifyWithModel(
+  def fromJson(j: JsValue) = ClassifyWithTypedModel(
     (j \ "featureTypes").as[List[JsValue]].map(json => SerializableType.fromJson(json)))
 }
-import ClassifyWithModel._
-case class ClassifyWithModel[T: TypeTag](featureTypes: List[SerializableType[_]])
+import ClassifyWithTypedModel._
+case class ClassifyWithTypedModel[T: TypeTag](featureTypes: List[SerializableType[_]])
     extends TypedMetaGraphOp[Input, Output[T]] {
   @transient override lazy val inputs = new Input(featureTypes)
   override val isHeavy = true
@@ -78,5 +78,43 @@ case class ClassifyWithModel[T: TypeTag](featureTypes: List[SerializableType[_]]
       output(o.probability, probability)
     }
     output(o.classification, classification)
+  }
+}
+
+object ClassifyWithModel extends OpFromJson {
+  class Input(numFeatures: Int) extends MagicInputSignature {
+    val vertices = vertexSet
+    val features = (0 until numFeatures).map {
+      i => vertexAttribute[Double](vertices, Symbol(s"feature-$i"))
+    }
+    val model = scalar[Model]
+  }
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input) extends MagicOutput(instance) {
+    val probability = {
+      val modelMeta = inputs.model.entity.modelMeta
+      if (modelMeta.generatesProbability) {
+        vertexAttribute[Double](inputs.vertices.entity)
+      } else { null }
+    }
+    val classification = vertexAttribute[Double](inputs.vertices.entity)
+  }
+  def fromJson(j: JsValue) = ClassifyWithModel((j \ "numFeatures").as[Int])
+}
+import ClassifyWithModel._
+@deprecated("ClassifyWithModel is deprecated, use ClassifyWithTypedModel", "2.0.0")
+case class ClassifyWithModel(numFeatures: Int)
+    extends TypedMetaGraphOp[ClassifyWithModel.Input, ClassifyWithModel.Output] {
+  @transient override lazy val inputs = new ClassifyWithModel.Input(numFeatures)
+  override val isHeavy = true
+  def outputMeta(instance: MetaGraphOperationInstance) = new ClassifyWithModel.Output()(instance, inputs)
+  override def toJson = Json.obj("numFeatures" -> numFeatures)
+
+  def execute(inputDatas: DataSet,
+              o: ClassifyWithModel.Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    throw new AssertionError(
+      "ClassifyWithModel is deprecated. Use ClassifyWithTypedModel.")
   }
 }
