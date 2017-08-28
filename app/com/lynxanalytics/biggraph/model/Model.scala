@@ -109,8 +109,8 @@ case class Model(
   featureNames: List[String], // The name of the feature attributes used to train this model.
   // The type of the model features in the same order as the featureNames.
   featureTypes: Option[List[SerializableType[_]]] = None,
-  // Mappings for non Double features from their type to Double, identified by the feature name.
-  featureMappings: Option[Map[String, Map[String, Double]]] = None,
+  // Mappings for non Double features from their type to Double, identified by the feature's index.
+  featureMappings: Option[Map[Int, Map[String, Double]]] = None,
   statistics: Option[String]) // For the details that require training data
     extends ToJson with Equals {
 
@@ -137,7 +137,7 @@ case class Model(
       "labelReverseMapping" -> labelReverseMapping.map(_.map { case (k, v) => k.toString -> v }),
       "featureNames" -> featureNames,
       "featureTypes" -> featureTypes.map(_.map(_.toJson)),
-      "featureMappings" -> featureMappings,
+      "featureMappings" -> featureMappings.map(_.map { case (k, v) => k.toString -> v }),
       "statistics" -> statistics
     )
   }
@@ -175,7 +175,7 @@ object Model extends FromJson[Model] {
       (j \ "labelReverseMapping").as[Option[Map[String, String]]].map(_.map { case (k, v) => k.toDouble -> v }),
       (j \ "featureNames").as[List[String]],
       (j \ "featureTypes").as[Option[List[JsValue]]].map(_.map(json => SerializableType.fromJson(json))),
-      (j \ "featureMappings").as[Option[Map[String, Map[String, Double]]]],
+      (j \ "featureMappings").as[Option[Map[String, Map[String, Double]]]].map(_.map { case (k, v) => k.toInt -> v }),
       (j \ "statistics").as[Option[String]]
     )
   }
@@ -202,19 +202,20 @@ object Model extends FromJson[Model] {
   }
 
   // Converts the input attributes of various types to a DataFrame of Doubles. Returns a
-  // mapping for each non-Double attribute from their type to Double.
+  // mapping by index for each non-Double attribute from their type to Double.
   def toDoubleDF(
     sqlContext: spark.sql.SQLContext,
     vertices: VertexSetRDD,
     attrsArray: Array[AttributeData[_]])(
-      implicit dataSet: DataSet): (spark.sql.DataFrame, Map[String, Map[String, Double]]) = {
-    val mappingsCollector = mutable.Map[String, Map[String, Double]]()
-    val df = toDF(sqlContext, vertices, attrsArray.map { attr =>
-      val (rdd, mapping) = toDoubleRDD(attr)
-      if (mapping.nonEmpty) {
-        mappingsCollector(attr.entity.name.name) = mapping.get
-      }
-      rdd
+      implicit dataSet: DataSet): (spark.sql.DataFrame, Map[Int, Map[String, Double]]) = {
+    val mappingsCollector = mutable.Map[Int, Map[String, Double]]()
+    val df = toDF(sqlContext, vertices, attrsArray.zipWithIndex.map {
+      case (attr, i) =>
+        val (rdd, mapping) = toDoubleRDD(attr)
+        if (mapping.nonEmpty) {
+          mappingsCollector(i) = mapping.get
+        }
+        rdd
     })
     (df, mappingsCollector.toMap)
   }
@@ -240,16 +241,18 @@ object Model extends FromJson[Model] {
     sqlContext: spark.sql.SQLContext,
     vertices: VertexSetRDD,
     attrsArray: Array[AttributeData[_]],
-    mappings: Map[String, Map[String, Double]])(
+    mappings: Map[Int, Map[String, Double]])(
       implicit dataSet: DataSet): spark.sql.DataFrame = {
-    toDF(sqlContext, vertices, attrsArray.map(attr => attr match {
-      case a if a.is[Double] => a.runtimeSafeCast[Double].rdd
-      case a if a.is[String] =>
-        val rdd = a.runtimeSafeCast[String].rdd
-        val mapping = mappings(attr.entity.name.name)
-        rdd.mapValues(v => mapping(v))
-      case _ => throw new AssertionError()
-    }))
+    toDF(sqlContext, vertices, attrsArray.zipWithIndex.map {
+      case (attr, i) => attr match {
+        case a if a.is[Double] => a.runtimeSafeCast[Double].rdd
+        case a if a.is[String] =>
+          val rdd = a.runtimeSafeCast[String].rdd
+          val mapping = mappings(i)
+          rdd.mapValues(v => mapping(v))
+        case _ => throw new AssertionError()
+      }
+    })
   }
 
   // Transforms features to an MLlib DataFrame with "id" and "features" columns.
