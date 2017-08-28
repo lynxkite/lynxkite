@@ -39,7 +39,7 @@ angular.module('biggraph').directive('tagList', function(util) {
           }
         }
         return tags;
-      };
+      }
       util.deepWatch(scope, 'model', function() { scope.tags = getTags(); });
       util.deepWatch(scope, 'options', function() { scope.tags = getTags(); });
     },
