@@ -358,21 +358,22 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       }
     },
 
-    getWidthFromInstance: function(box) {
-      var wrapper = new BoxWrapper(this, this._boxCatalogMap[box.operationId], box);
-      return wrapper.width;
-    },
-
     pasteFromData: function(boxes, currentPosition) {
-      var mapping = {};
-      var newBoxes = [];
+      var minX = Infinity;
+      var minY = Infinity;
       for (var i = 0; i < boxes.length; ++i) {
         var box = boxes[i];
-        var diffX = this.getWidthFromInstance(box);
+        if (box.x < minX) { minX = box.x; }
+        if (box.y < minY) { minY = box.y; }
+      }
+      var mapping = {};
+      var newBoxes = [];
+      for (i = 0; i < boxes.length; ++i) {
+        box = boxes[i];
         var createdBox = this._addBox(
           box.operationId,
-          currentPosition.logicalX + box.x + 1.1 * diffX,
-          currentPosition.logicalY + box.y + 10);
+          currentPosition.x + box.x - minX,
+          currentPosition.y + box.y - minY);
         createdBox.parameters = box.parameters;
         createdBox.parametricParameters = box.parametricParameters;
         mapping[box.id] = createdBox;

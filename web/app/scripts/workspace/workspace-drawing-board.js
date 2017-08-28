@@ -28,7 +28,7 @@ angular.module('biggraph')
         scope.pulledPlug = undefined;
         // The last known position of the mouse, expressed in logical
         // workspace coordinates.
-        scope.mouseLogical = undefined;
+        scope.mouseLogical = { x: 300, y: 300 };
         scope.popups = [];
         scope.movedPopup = undefined;
 
@@ -54,8 +54,8 @@ angular.module('biggraph')
         var workspaceX = 0;
         var workspaceY = 0;
         var workspaceZoom = 0;
-        var mouseX = 0;
-        var mouseY = 0;
+        var mouseX = 300;
+        var mouseY = 300;
         var svgElement = element.find('svg');
         var svgOffset = svgElement.offset();
         function zoomToScale(z) { return Math.exp(z * 0.001); }
@@ -476,15 +476,14 @@ angular.module('biggraph')
             console.err(message, err);
             return;
           }
-          var pos = addLogicalMousePosition({ pageX: 0, pageY: 0});
           try {
-            var added = scope.workspace.pasteFromData(boxes, pos);
+            var added = scope.workspace.pasteFromData(boxes, getMouseLogical(-50, -50));
           } catch (err) {
             var someJson = { clipboard: data };
             message = 'Cannot parse boxes from clipboard';
             util.error(message, someJson);
             /* eslint-disable no-console */
-            console.err(message, err);
+            console.error(message, err);
             return;
           }
           scope.selectedBoxIds = added.map(function(box) { return box.id; });
@@ -534,9 +533,11 @@ angular.module('biggraph')
         };
         var hk = hotkeys.bindTo(scope);
         hk.add({
-          combo: 'mod+c', description: 'Copy boxes' }); // Only here for the tooltip.
+          // Only here for the tooltip.
+          combo: 'mod+c', description: 'Copy boxes', callback: function() {} });
         hk.add({
-          combo: 'mod+v', description: 'Paste boxes' }); // Only here for the tooltip.
+          // Only here for the tooltip.
+          combo: 'mod+v', description: 'Paste boxes', callback: function() {} });
         hk.add({
           combo: 'mod+z', description: 'Undo',
           callback: function() { scope.workspace.undo(); } });
@@ -612,6 +613,8 @@ angular.module('biggraph')
           event = event.originalEvent;
           event.preventDefault();
           addLogicalMousePosition(event);
+          event.logicalX -= 50;
+          event.logicalY -= 50;
           var file = event.dataTransfer.files[0];
           var op = 'Import CSV';
           if (file.name.match(/\.json$/i)) {
@@ -714,14 +717,19 @@ angular.module('biggraph')
 
         scope.$on('create box under mouse', createBoxUnderMouse);
         function createBoxUnderMouse(event, operationId) {
-          addAndSelectBox(operationId, {logicalX: mouseX - 50, logicalY: mouseY - 50});
+          addAndSelectBox(operationId, getMouseLogical(-50, -50));
         }
 
         // This is separate from scope.addOperation because we don't have a mouse event here,
         // which makes using the onMouseDown function pretty difficult.
-        function addAndSelectBox(id, location, options) {
-          var box = scope.workspace.addBox(id, location, options);
+        function addAndSelectBox(id, pos, options) {
+          var box = scope.workspace.addBox(id, { logicalX: pos.x, logicalY: pos.y }, options);
           scope.selectedBoxIds = [box.id];
+        }
+
+        function getMouseLogical(offx, offy) {
+          var z = zoomToScale(workspaceZoom);
+          return { x: (mouseX - workspaceX) / z + offx, y: (mouseY - workspaceY) / z + offy };
         }
       }
     };
