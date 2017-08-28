@@ -55,7 +55,7 @@ case class ClassifyWithModel[T: TypeTag](featureTypes: List[SerializableType[_]]
     val inputDF = Model.toDF(
       sqlContext,
       inputs.vertices.rdd,
-      inputs.features.toArray,
+      inputs.features.toArray.map(_.data),
       modelValue.featureMappings.getOrElse(Map()))
 
     // Transform data to an attributeRDD with the attribute (probability, classification)
@@ -64,7 +64,9 @@ case class ClassifyWithModel[T: TypeTag](featureTypes: List[SerializableType[_]]
     val classification = transformation.select("ID", "classification").map { row =>
       (row.getAs[ID]("ID"), row.getAs[java.lang.Number]("classification").doubleValue)
     }.rdd
-      .mapValues { v => labelReverseMapping.getOrElse(Map(v -> v))(v).asInstanceOf[T] }
+      .mapValues {
+        v => { if (labelReverseMapping.nonEmpty) labelReverseMapping.get(v) else v }.asInstanceOf[T]
+      }
       .sortUnique(partitioner)
     // Output the probability corresponded to the classification labels.
     if (o.probability != null) {
