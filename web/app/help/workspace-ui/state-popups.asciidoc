@@ -29,7 +29,8 @@ workspace.
 
 One option is to quickly create and attach a <<Graph visualization>> box, see what the
 graph looks like at that point, and then delete the box.
-Instruments are effectively the same, except that no temporary box is added to the workspace.
+Instruments are effectively the same, except that no temporary box is added to the workspace. This
+means instruments can be used even on read-only workspaces.
 
 The instrument buttons are in the popup toolbar. For example, in the last screenshot the buttons for
 **SQL** and **Visualize** are visible, corresponding to the <<SQL1>> and <<Graph visualization>>
