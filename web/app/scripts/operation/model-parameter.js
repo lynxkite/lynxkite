@@ -14,15 +14,13 @@ angular.module('biggraph').directive('modelParameter', function(util) {
       scope.activeModel = undefined;
       // Feature name to attribute name. Matching names are added by default.
       scope.binding = {};
-      scope.attrTypes = {};
       for (var j = 0; j < scope.param.payload.attrs.length; ++j) {
         var id = scope.param.payload.attrs[j].id;
         scope.binding[id] = id;
-        scope.attrTypes[id] = scope.param.payload.attrTypes[j];
       }
       scope.getParamsWithMatchingType = function(type) {
-        return scope.param.payload.attrs.filter(function(attr) {
-          return scope.attrTypes[attr.id] === type;
+        return scope.param.payload.attrs.filter(function(attr, index) {
+          return scope.param.payload.attrTypes[index] === type;
         });
       };
 

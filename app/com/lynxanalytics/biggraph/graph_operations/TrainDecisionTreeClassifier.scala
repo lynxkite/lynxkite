@@ -15,7 +15,7 @@ object TrainDecisionTreeClassifier extends OpFromJson {
     val features = (0 until featureTypes.size).map {
       i => runtimeTypedVertexAttribute(vertices, Symbol(s"feature-$i"), featureTypes(i).typeTag)
     }
-    val label = runtimeTypedVertexAttribute(vertices, Symbol("label"), labelType.typeTag)
+    val label = runtimeTypedVertexAttribute(vertices, 'label, labelType.typeTag)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
@@ -77,9 +77,9 @@ case class TrainDecisionTreeClassifier[T: TypeTag](
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
-    val (labelRDD, labelMapping) = Model.toDoubleRDD(inputs.label)
+    val (labelRDD, labelMapping) = Model.toDoubleRDD(inputs.label.data)
     val labelDF = labelRDD.toDF("id", "label")
-    val (featuresDF, featuresMapping) = Model.toDoubleDF(sqlContext, inputs.vertices.rdd, inputs.features.toArray)
+    val (featuresDF, featuresMapping) = Model.toDoubleDF(sqlContext, inputs.vertices.rdd, inputs.features.toArray.map(_.data))
     val labeledFeaturesDF = featuresDF.join(labelDF, "id")
     assert(!labeledFeaturesDF.rdd.isEmpty, "Training is not possible with empty data set.")
 

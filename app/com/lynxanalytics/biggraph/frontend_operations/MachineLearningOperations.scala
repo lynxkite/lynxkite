@@ -30,7 +30,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       ModelParams("model", "The parameters of the model", models, attrs, typesOf(attrs, project)))
     def enabled =
       FEStatus.assert(models.nonEmpty, "No classification models.") &&
-        FEStatus.assert(attrs.nonEmpty, "No numeric vertex attributes.")
+        FEStatus.assert(attrs.nonEmpty, "No numeric or string vertex attributes.")
     def apply() = {
       assert(params("name").nonEmpty, "Please set the name of attribute.")
       assert(params("model").nonEmpty, "Please select a model.")

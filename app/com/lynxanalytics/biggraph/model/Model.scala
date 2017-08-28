@@ -103,10 +103,13 @@ case class Model(
   method: String, // The training method used to create this model.
   symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
   labelName: Option[String], // Name of the label attribute used to train this model.
-  labelType: Option[SerializableType[_]] = None,
+  labelType: Option[SerializableType[_]] = None, // The type of the predicted label.
+  // Optional mapping from the model output (always Double) to the correct label type.
   labelReverseMapping: Option[Map[Double, String]] = None,
   featureNames: List[String], // The name of the feature attributes used to train this model.
+  // The type of the model features in the same order as the featureNames.
   featureTypes: Option[List[SerializableType[_]]] = None,
+  // Mappings for non Double features from their type to Double, identified by the feature name.
   featureMappings: Option[Map[String, Map[String, Double]]] = None,
   statistics: Option[String]) // For the details that require training data
     extends ToJson with Equals {
@@ -198,46 +201,52 @@ object Model extends FromJson[Model] {
     HadoopFile("DATA$") / io.ModelsDir / Timestamp.toString
   }
 
+  // Converts the input attributes of various types to a DataFrame of Doubles. Returns a
+  // mapping for each non-Double attribute from their type to Double.
   def toDoubleDF(
     sqlContext: spark.sql.SQLContext,
     vertices: VertexSetRDD,
-    attrsArray: Array[MagicInputSignature#RuntimeTypedVATemplate])(
+    attrsArray: Array[AttributeData[_]])(
       implicit dataSet: DataSet): (spark.sql.DataFrame, Map[String, Map[String, Double]]) = {
     val mappingsCollector = mutable.Map[String, Map[String, Double]]()
     val df = toDF(sqlContext, vertices, attrsArray.map { attr =>
       val (rdd, mapping) = toDoubleRDD(attr)
       if (mapping.nonEmpty) {
-        mappingsCollector(attr.name.name) = mapping.get
+        mappingsCollector(attr.entity.name.name) = mapping.get
       }
       rdd
     })
     (df, mappingsCollector.toMap)
   }
 
+  // Converts the input attribute of a certain type to an RDD of Doubles. Optionally returns a
+  // mapping for the attribute from its type - if not Double - to Double.
   def toDoubleRDD(
-    attr: MagicInputSignature#RuntimeTypedVATemplate)(
+    attr: AttributeData[_])(
       implicit dataSet: DataSet): (AttributeRDD[Double], Option[Map[String, Double]]) = {
     attr match {
-      case f if f.tt.tpe =:= typeOf[Double] => (f.rdd.mapValues(v => v.asInstanceOf[Double]), None)
-      case f if f.tt.tpe =:= typeOf[String] =>
-        val rdd = f.rdd.mapValues(v => v.asInstanceOf[String])
+      case a if a.is[Double] => (a.runtimeSafeCast[Double].rdd, None)
+      case a if a.is[String] =>
+        val rdd = a.runtimeSafeCast[String].rdd
         val mapping = rdd.values.distinct.collect.sorted.zipWithIndex.map { case (k, v) => k -> v.toDouble }.toMap
         (rdd.mapValues(v => mapping(v)), Some(mapping))
       case _ => throw new AssertionError()
     }
   }
 
+  // Converts the input attributes of various types to a DataFrame of Doubles. Mappings for non-Double
+  // attributes have to be provided.
   def toDF(
     sqlContext: spark.sql.SQLContext,
     vertices: VertexSetRDD,
-    attrsArray: Array[MagicInputSignature#RuntimeTypedVATemplate],
+    attrsArray: Array[AttributeData[_]],
     mappings: Map[String, Map[String, Double]])(
       implicit dataSet: DataSet): spark.sql.DataFrame = {
     toDF(sqlContext, vertices, attrsArray.map(attr => attr match {
-      case f if f.tt.tpe =:= typeOf[Double] => f.rdd.mapValues(v => v.asInstanceOf[Double])
-      case f if f.tt.tpe =:= typeOf[String] =>
-        val rdd = f.rdd.mapValues(v => v.asInstanceOf[String])
-        val mapping = mappings(attr.name.name)
+      case a if a.is[Double] => a.runtimeSafeCast[Double].rdd
+      case a if a.is[String] =>
+        val rdd = a.runtimeSafeCast[String].rdd
+        val mapping = mappings(attr.entity.name.name)
         rdd.mapValues(v => mapping(v))
       case _ => throw new AssertionError()
     }))
