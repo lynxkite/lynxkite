@@ -8,9 +8,8 @@ angular.module('biggraph').directive('operationParameters', function(util) {
     scope: {
       box: '=',
       meta: '=',
-      output: '=',
-      parametric: '=',
-      pflags: '=',
+      parameters: '=',
+      parametricParameters: '=',
       onBlur: '&',
       busy: '=?',
     },
@@ -22,39 +21,56 @@ angular.module('biggraph').directive('operationParameters', function(util) {
         scope.busy = count !== 0;
       });
 
+      scope.isParametric = function(param) {
+        return param in scope.parametricParameters;
+      };
 
-      util.deepWatch(scope, 'pflags', function(flags) {
-        for (var v in flags) {
-          if (flags[v] === true) {
-            util.move(v, scope.output, scope.parametric);
-          } else {
-            util.move(v, scope.parametric, scope.output);
-          }
+      scope.toggleParametric = function(param) {
+        if (param in scope.parametricParameters) {
+          util.move(param, scope.parametricParameters, scope.parameters);
+        } else {
+          util.move(param, scope.parameters, scope.parametricParameters);
         }
         scope.onBlur();
-      });
+      };
 
       // Translate between arrays and comma-separated strings for multiselects.
-      scope.multiOutput = {};
-      util.deepWatch(scope, 'output', function(output) {
+      scope.listParameters = {};
+      util.deepWatch(scope, 'parameters', function(parameters) {
         for (var i = 0; i < scope.meta.parameters.length; ++i) {
           var param = scope.meta.parameters[i];
           if (param.options.length > 0 && param.multipleChoice) {
-            var flat = output[param.id];
+            var flat = parameters[param.id];
             if (flat !== undefined && flat.length > 0) {
-              scope.multiOutput[param.id] = flat.split(',');
+              scope.listParameters[param.id] = flat.split(',');
             } else {
-              scope.multiOutput[param.id] = [];
+              scope.listParameters[param.id] = [];
             }
           }
         }
       });
 
-      util.deepWatch(scope, 'multiOutput', function(multiOutput) {
+      util.deepWatch(scope, 'meta', function(meta) {
+        for (var i = 0; i < meta.parameters.length; ++i) {
+          var param = meta.parameters[i];
+          // Fill in default values.
+          if (param.id in scope.parameters || param.id in scope.parametricParameters) {
+            // Explicitly set.
+          } else if (param.options.length === 0) {
+            scope.parameters[param.id] = param.defaultValue;
+          } else if (param.multipleChoice) {
+            scope.parameters[param.id] = '';
+          } else {
+            scope.parameters[param.id] = param.options[0].id;
+          }
+        }
+      });
+
+      util.deepWatch(scope, 'listParameters', function(listParameters) {
         for (var i = 0; i < scope.meta.parameters.length; ++i) {
           var param = scope.meta.parameters[i];
           if (param.options.length > 0 && param.multipleChoice) {
-            scope.output[param.id] = (multiOutput[param.id] || []).join(',');
+            scope.parameters[param.id] = (listParameters[param.id] || []).join(',');
           }
         }
       });
@@ -82,7 +98,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       };
 
       scope.isVisualizationParam = function(param) {
-        return param.kind === 'visualization' && !scope.pflags[param.id];
+        return param.kind === 'visualization' && !scope.parametricParameters[param.id];
       };
     }
   };
