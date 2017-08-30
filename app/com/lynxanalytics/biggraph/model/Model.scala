@@ -1,12 +1,19 @@
 // A helper class to handle machine learning models.
 package com.lynxanalytics.biggraph.model
 
+import scala.reflect.runtime.universe._
+
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util._
 import org.apache.spark.ml
 import org.apache.spark
 import play.api.libs.json
+
+import scala.collection.mutable
+
+import org.apache.spark.ml.feature.StringIndexer
 
 object Implicits {
   // Easy access to the ModelMeta class from Scalar[Model].
@@ -96,7 +103,14 @@ case class Model(
   method: String, // The training method used to create this model.
   symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
   labelName: Option[String], // Name of the label attribute used to train this model.
+  labelType: Option[SerializableType[_]] = None, // The type of the predicted label.
+  // Optional mapping from the model output (always Double) to the correct label type.
+  labelReverseMapping: Option[Map[Double, String]] = None,
   featureNames: List[String], // The name of the feature attributes used to train this model.
+  // The type of the model features in the same order as the featureNames.
+  featureTypes: Option[List[SerializableType[_]]] = None,
+  // Mappings for non Double features from their type to Double, identified by the feature's index.
+  featureMappings: Option[Map[Int, Map[String, Double]]] = None,
   statistics: Option[String]) // For the details that require training data
     extends ToJson with Equals {
 
@@ -119,7 +133,11 @@ case class Model(
       "method" -> method,
       "symbolicPath" -> symbolicPath,
       "labelName" -> labelName,
+      "labelType" -> labelType.map(_.toJson),
+      "labelReverseMapping" -> labelReverseMapping.map(_.map { case (k, v) => k.toString -> v }),
       "featureNames" -> featureNames,
+      "featureTypes" -> featureTypes.map(_.map(_.toJson)),
+      "featureMappings" -> featureMappings.map(_.map { case (k, v) => k.toString -> v }),
       "statistics" -> statistics
     )
   }
@@ -153,12 +171,20 @@ object Model extends FromJson[Model] {
       (j \ "method").as[String],
       (j \ "symbolicPath").as[String],
       (j \ "labelName").as[Option[String]],
+      (j \ "labelType").as[Option[JsValue]].map(json => SerializableType.fromJson(json)),
+      (j \ "labelReverseMapping").as[Option[Map[String, String]]].map(_.map { case (k, v) => k.toDouble -> v }),
       (j \ "featureNames").as[List[String]],
+      (j \ "featureTypes").as[Option[List[JsValue]]].map(_.map(json => SerializableType.fromJson(json))),
+      (j \ "featureMappings").as[Option[Map[String, Map[String, Double]]]].map(_.map { case (k, v) => k.toInt -> v }),
       (j \ "statistics").as[Option[String]]
     )
   }
   def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(
-    modelName, modelMeta.isClassification, modelMeta.generatesProbability, modelMeta.featureNames)
+    modelName,
+    modelMeta.isClassification,
+    modelMeta.generatesProbability,
+    modelMeta.featureNames,
+    modelMeta.featureTypes.map(_.typeTag.tpe.toString))
 
   def toFE(m: Model, sc: spark.SparkContext): FEModel = {
     val modelImpl = m.load(sc)
@@ -166,12 +192,67 @@ object Model extends FromJson[Model] {
       method = m.method,
       labelName = m.labelName,
       featureNames = m.featureNames,
+      featureTypes = m.featureTypes.get.map(_.typeTag.toString),
       details = modelImpl.details,
       sql = modelImpl.toSQL(m.labelName, m.featureNames))
   }
 
   def newModelFile: HadoopFile = {
     HadoopFile("DATA$") / io.ModelsDir / Timestamp.toString
+  }
+
+  // Converts the input attributes of various types to a DataFrame of Doubles. Returns a
+  // mapping by index for each non-Double attribute from their type to Double.
+  def toDoubleDF(
+    sqlContext: spark.sql.SQLContext,
+    vertices: VertexSetRDD,
+    attrsArray: Array[AttributeData[_]])(
+      implicit dataSet: DataSet): (spark.sql.DataFrame, Map[Int, Map[String, Double]]) = {
+    val mappingsCollector = mutable.Map[Int, Map[String, Double]]()
+    val df = toDF(sqlContext, vertices, attrsArray.zipWithIndex.map {
+      case (attr, i) =>
+        val (rdd, mapping) = toDoubleRDD(attr)
+        if (mapping.nonEmpty) {
+          mappingsCollector(i) = mapping.get
+        }
+        rdd
+    })
+    (df, mappingsCollector.toMap)
+  }
+
+  // Converts the input attribute of a certain type to an RDD of Doubles. Optionally returns a
+  // mapping for the attribute from its type - if not Double - to Double.
+  def toDoubleRDD(
+    attr: AttributeData[_])(
+      implicit dataSet: DataSet): (AttributeRDD[Double], Option[Map[String, Double]]) = {
+    attr match {
+      case a if a.is[Double] => (a.runtimeSafeCast[Double].rdd, None)
+      case a if a.is[String] =>
+        val rdd = a.runtimeSafeCast[String].rdd
+        val mapping = rdd.values.distinct.collect.sorted.zipWithIndex.map { case (k, v) => k -> v.toDouble }.toMap
+        (rdd.mapValues(v => mapping(v)), Some(mapping))
+      case _ => throw new AssertionError()
+    }
+  }
+
+  // Converts the input attributes of various types to a DataFrame of Doubles. Mappings for non-Double
+  // attributes have to be provided.
+  def toDF(
+    sqlContext: spark.sql.SQLContext,
+    vertices: VertexSetRDD,
+    attrsArray: Array[AttributeData[_]],
+    mappings: Map[Int, Map[String, Double]])(
+      implicit dataSet: DataSet): spark.sql.DataFrame = {
+    toDF(sqlContext, vertices, attrsArray.zipWithIndex.map {
+      case (attr, i) => attr match {
+        case a if a.is[Double] => a.runtimeSafeCast[Double].rdd
+        case a if a.is[String] =>
+          val rdd = a.runtimeSafeCast[String].rdd
+          val mapping = mappings(i)
+          rdd.mapValues(v => mapping(v))
+        case _ => throw new AssertionError()
+      }
+    })
   }
 
   // Transforms features to an MLlib DataFrame with "id" and "features" columns.
@@ -241,12 +322,14 @@ case class FEModelMeta(
   name: String,
   isClassification: Boolean,
   generatesProbability: Boolean,
-  featureNames: List[String])
+  featureNames: List[String],
+  featureTypes: List[String])
 
 case class FEModel(
   method: String,
   labelName: Option[String],
   featureNames: List[String],
+  featureTypes: List[String],
   details: String,
   sql: String)
 
@@ -254,5 +337,7 @@ trait ModelMeta {
   def isClassification: Boolean
   def isBinary: Boolean
   def generatesProbability: Boolean = false
+  def labelType: SerializableType[_]
   def featureNames: List[String]
+  def featureTypes: List[SerializableType[_]]
 }

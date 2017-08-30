@@ -18,6 +18,11 @@ angular.module('biggraph').directive('modelParameter', function(util) {
         var id = scope.param.payload.attrs[j].id;
         scope.binding[id] = id;
       }
+      scope.getParamsWithMatchingType = function(type) {
+        return scope.param.payload.attrs.filter(function(attr, index) {
+          return scope.param.payload.attrTypes[index] === type;
+        });
+      };
 
       // React to external changes to model.
       util.deepWatch(scope, 'modelJson', function(modelJson) {
