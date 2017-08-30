@@ -254,7 +254,7 @@ object Model extends FromJson[Model] {
         rdd
     })
     val mappings = mappingsCollector.toMap
-    (dfStruct(df, attrsArray.size, mappings), mappings)
+    (markCategoricalVariablesInDFSchema(df, attrsArray.size, mappings), mappings)
   }
 
   // Converts the input attribute of a certain type to an RDD of Doubles. Optionally returns a
@@ -280,7 +280,7 @@ object Model extends FromJson[Model] {
     attrsArray: Array[AttributeData[_]],
     mappings: Map[Int, Map[String, Double]])(
       implicit dataSet: DataSet): spark.sql.DataFrame = {
-    dfStruct(toDF(sqlContext, vertices, attrsArray.zipWithIndex.map {
+    markCategoricalVariablesInDFSchema(toDF(sqlContext, vertices, attrsArray.zipWithIndex.map {
       case (attr, i) => attr match {
         case a if a.is[Double] => a.runtimeSafeCast[Double].rdd
         case a if a.is[String] =>
@@ -292,7 +292,8 @@ object Model extends FromJson[Model] {
     }), attrsArray.size, mappings)
   }
 
-  def dfStruct(df: spark.sql.DataFrame, numFeatures: Int, mappings: Map[Int, Map[String, Double]]) = {
+  private def markCategoricalVariablesInDFSchema(
+    df: spark.sql.DataFrame, numFeatures: Int, mappings: Map[Int, Map[String, Double]]) = {
     if (mappings.isEmpty) {
       df
     } else {
