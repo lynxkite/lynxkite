@@ -27,7 +27,11 @@ trait ModelImplementation {
   // A transformation of dataframe with the model.
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame
   def details: String
-  def toSQL(labelName: Option[String], featureNames: List[String]): String = ""
+  def toSQL(
+    labelName: Option[String],
+    featureNames: List[String],
+    featureReverseMappings: Option[Map[Int, Map[Double, String]]],
+    labelReverseMapping: Option[Map[Double, String]]): String = ""
 }
 
 // Helper classes to provide a common abstraction for various types of models.
@@ -69,32 +73,56 @@ private[biggraph] class DecisionTreeClassificationModelImpl(
   def details: String = statistics
 
   import org.apache.spark.ml.tree._
-  override def toSQL(labelName: Option[String], featureNames: List[String]): String = {
-    val caseStr = printNode(m.rootNode, featureNames, 0)
+  override def toSQL(
+    labelName: Option[String],
+    featureNames: List[String],
+    featureReverseMappings: Option[Map[Int, Map[Double, String]]],
+    labelReverseMapping: Option[Map[Double, String]]): String = {
+    val caseStr = printNode(m.rootNode, featureNames, featureReverseMappings, labelReverseMapping, 0)
     val alias = labelName.map(s => s" AS $s").getOrElse("")
     s"${caseStr}${alias}"
   }
 
-  private def printNode(node: Node, featureNames: List[String], indent: Int): String = {
+  private def printNode(
+    node: Node,
+    featureNames: List[String],
+    featureRM: Option[Map[Int, Map[Double, String]]],
+    labelRM: Option[Map[Double, String]],
+    indent: Int): String = {
+    val indentStr = " " * indent
     node match {
       case n: InternalNode =>
+        val leftStr = printNode(n.leftChild, featureNames, featureRM, labelRM, indent + 2)
+        val rightStr = printNode(n.rightChild, featureNames, featureRM, labelRM, indent + 2)
         n.split match {
           case s: ContinuousSplit =>
             val feature = featureNames(s.featureIndex)
-            val leftStr = printNode(n.leftChild, featureNames, indent + 2)
-            val rightStr = printNode(n.rightChild, featureNames, indent + 2)
-            val indentStr = " " * indent
             s"""${indentStr}CASE
 ${indentStr} WHEN $feature <= ${s.threshold} THEN
 $leftStr
 ${indentStr} ELSE
 $rightStr
 ${indentStr}END"""
-          case s: CategoricalSplit => throw new AssertionError("CategoricalSplit is not supported.")
+          case s: CategoricalSplit =>
+            val feature = featureNames(s.featureIndex)
+            val leftCategoriesStr = if (featureRM.nonEmpty && featureRM.get.contains(s.featureIndex)) {
+              s.leftCategories.map { category =>
+                featureRM.get(s.featureIndex)(category)
+              }.mkString("'", "', '", "'") // 'a', 'b', 'c' ...
+            } else {
+              s.leftCategories.mkString(", ") // 0.0, 1.0, 2.0 ...
+            }
+            s"""${indentStr}CASE
+${indentStr} WHEN $feature IN (${leftCategoriesStr}) THEN
+$leftStr
+${indentStr} ELSE
+$rightStr
+${indentStr}END"""
         }
       case n: LeafNode =>
-        val indentStr = " " * indent
-        s"${indentStr}${n.prediction}"
+        val prediction = labelRM.map(mapping => s"'${mapping(n.prediction)}'") // 'a'
+          .getOrElse(n.prediction) // 1.0
+        s"${indentStr}${prediction}"
     }
   }
 }
@@ -161,7 +189,11 @@ case class Model(
   }
 
   def toSQL(sc: spark.SparkContext): String = {
-    load(sc).toSQL(labelName, featureNames)
+    load(sc).toSQL(
+      labelName,
+      featureNames,
+      featureMappings.map(_.mapValues(m => m.map { case (k, v) => v -> k }.toMap)),
+      labelReverseMapping)
   }
 }
 
@@ -194,7 +226,11 @@ object Model extends FromJson[Model] {
       featureNames = m.featureNames,
       featureTypes = m.featureTypes.get.map(_.typeTag.toString),
       details = modelImpl.details,
-      sql = modelImpl.toSQL(m.labelName, m.featureNames))
+      sql = modelImpl.toSQL(
+        m.labelName,
+        m.featureNames,
+        m.featureMappings.map(_.mapValues(m => m.map { case (k, v) => v -> k }.toMap)),
+        m.labelReverseMapping))
   }
 
   def newModelFile: HadoopFile = {
@@ -217,7 +253,8 @@ object Model extends FromJson[Model] {
         }
         rdd
     })
-    (df, mappingsCollector.toMap)
+    val mappings = mappingsCollector.toMap
+    (dfStruct(df, attrsArray.size, mappings), mappings)
   }
 
   // Converts the input attribute of a certain type to an RDD of Doubles. Optionally returns a
@@ -243,7 +280,7 @@ object Model extends FromJson[Model] {
     attrsArray: Array[AttributeData[_]],
     mappings: Map[Int, Map[String, Double]])(
       implicit dataSet: DataSet): spark.sql.DataFrame = {
-    toDF(sqlContext, vertices, attrsArray.zipWithIndex.map {
+    dfStruct(toDF(sqlContext, vertices, attrsArray.zipWithIndex.map {
       case (attr, i) => attr match {
         case a if a.is[Double] => a.runtimeSafeCast[Double].rdd
         case a if a.is[String] =>
@@ -252,7 +289,29 @@ object Model extends FromJson[Model] {
           rdd.mapValues(v => mapping(v))
         case _ => throw new AssertionError()
       }
-    })
+    }), attrsArray.size, mappings)
+  }
+
+  def dfStruct(df: spark.sql.DataFrame, numFeatures: Int, mappings: Map[Int, Map[String, Double]]) = {
+    if (mappings.isEmpty) {
+      df
+    } else {
+      import org.apache.spark.ml.attribute._
+      val newField = {
+        val featureAttributes: Array[Attribute] =
+          (0 until numFeatures).map {
+            i =>
+              if (mappings.contains(i)) {
+                org.apache.spark.ml.attribute.AttributeHelper.nominalAttribute(index = i, values = mappings(i).keys.toArray)
+              } else {
+                org.apache.spark.ml.attribute.AttributeHelper.numericAttribute(index = i)
+              }
+          }.toArray
+        val newAttributeGroup = new AttributeGroup("features", featureAttributes)
+        newAttributeGroup.toStructField()
+      }
+      org.apache.spark.sql.SQLHelperHelper.dfWithColumnMetadata(df, "features", df("features"), newField.metadata)
+    }
   }
 
   // Transforms features to an MLlib DataFrame with "id" and "features" columns.
