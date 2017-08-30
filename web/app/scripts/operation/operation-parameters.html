@@ -30,13 +30,11 @@
       }"
       class="form-control operation-attribute-entry"
       ng-if="pflags[param.id] === true"
-      ng-model="parametric[param.id]"
-      ng-disabled="!editable"></div>
+      ng-model="parametric[param.id]"></div>
     <input ng-if="param.kind === 'default' && pflags[param.id] !== true"
         class="form-control operation-attribute-entry"
         ng-model="output[param.id]"
-        ng-submit="onBlur()"
-        ng-disabled="!editable">
+        ng-submit="onBlur()">
     <div
       ui-ace="{
         mode: '{{ param.payload.language }}',
@@ -52,10 +50,8 @@
       }"
       class="form-control operation-attribute-entry"
       ng-if="param.kind === 'code'  && pflags[param.id] !== true"
-      ng-model="output[param.id]"
-      ng-disabled="!editable"></div>
+      ng-model="output[param.id]"></div>
     <file-parameter ng-if="param.kind === 'file' && pflags[param.id] !== true"
-        editable="editable"
         model="output[param.id]"
         on-blur="onBlur()"
         file-uploads="fileUploads.count"
@@ -63,7 +59,6 @@
     </file-parameter>
     <model-parameter ng-if="param.kind === 'model' && pflags[param.id] !== true"
         param="param"
-        editable="editable"
         model-json="output[param.id]"
         class="operation-attribute-entry">
     </model-parameter>
@@ -77,7 +72,6 @@
       class="operation-attribute-entry">
     </table-kind>
     <select
-      ng-disabled="!editable"
       ng-if="((param.kind === 'choice' && !param.multipleChoice) || (param.kind === 'segmentation'))
         && pflags[param.id] !== true"
       class="form-control operation-attribute-entry"
@@ -85,7 +79,6 @@
       ng-change="onBlur()"
       ng-options="option.id as option.title for option in param.options"></select>
     <select
-      ng-disabled="!editable"
       ng-if="param.kind === 'choice' && param.multipleChoice && pflags[param.id] !== true"
       multiple
       ng-attr-size="{{ param.options.length }}"
@@ -94,7 +87,6 @@
       ng-change="onBlur()"
       ng-options="option.id as option.title for option in param.options"></select>
     <tag-list
-      editable="editable"
       ng-if="param.kind === 'tag-list' && pflags[param.id] !== true"
       model="multiOutput[param.id]"
       on-blur="onBlur()"

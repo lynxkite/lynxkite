@@ -9,8 +9,6 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
       filename: '=model',
       // The number of ongoing uploads. It is incremented by 1 while an upload is in progress.
       fileUploadCount: '=',
-      // Enable/disable the control.
-      editable: '=',
       // Function to call on "blur".
       onBlur: '&',
     },
