@@ -1,7 +1,6 @@
 <div class="model-parameter">The name of the model</div>
 <select
       id="model-name"
-      ng-disabled="!editable"
       class="form-control"
       ng-model="activeModel"
       ng-options="model as model.name for model in param.payload.models"></select>
@@ -13,7 +12,6 @@
       <td>
         <select
           id="model-feature-{{feature}}"
-          ng-disabled="!editable"
           class="form-control"
           ng-model="binding[feature]"
           ng-options="attr.id as attr.title for attr in param.payload.attrs">

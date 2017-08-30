@@ -13,7 +13,6 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       pflags: '=',
       onBlur: '&',
       busy: '=?',
-      editable: '=',
     },
     templateUrl: 'scripts/operation/operation-parameters.html',
     link: function(scope, element) {
