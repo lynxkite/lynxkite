@@ -76,7 +76,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val entry = DirectoryEntry.fromName(request.name)
     entry.assertParentWriteAllowedFrom(user)
     val w = entry.asNewWorkspaceFrame()
-    w.setupACL("public-write", user)
   }
 
   private def getWorkspaceFrame(
