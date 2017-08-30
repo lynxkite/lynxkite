@@ -29,11 +29,12 @@
         onLoad: onLoad,
       }"
       class="form-control operation-attribute-entry"
-      ng-if="pflags[param.id] === true"
-      ng-model="parametric[param.id]"></div>
-    <input ng-if="param.kind === 'default' && pflags[param.id] !== true"
+      ng-if="isParametric(param.id)"
+      ng-model="parametricParameters[param.id]"></div>
+    <div ng-if="!isParametric(param.id)">
+    <input ng-if="param.kind === 'default'"
         class="form-control operation-attribute-entry"
-        ng-model="output[param.id]"
+        ng-model="parameters[param.id]"
         ng-submit="onBlur()">
     <div
       ui-ace="{
@@ -49,37 +50,36 @@
         onLoad: onLoad,
       }"
       class="form-control operation-attribute-entry"
-      ng-if="param.kind === 'code'  && pflags[param.id] !== true"
-      ng-model="output[param.id]"></div>
-    <file-parameter ng-if="param.kind === 'file' && pflags[param.id] !== true"
-        model="output[param.id]"
+      ng-if="param.kind === 'code'"
+      ng-model="parameters[param.id]"></div>
+    <file-parameter ng-if="param.kind === 'file'"
+        model="parameters[param.id]"
         on-blur="onBlur()"
         file-uploads="fileUploads.count"
         class="operation-attribute-entry">
     </file-parameter>
-    <model-parameter ng-if="param.kind === 'model' && pflags[param.id] !== true"
+    <model-parameter ng-if="param.kind === 'model'"
         param="param"
-        model-json="output[param.id]"
+        model-json="parameters[param.id]"
         class="operation-attribute-entry">
     </model-parameter>
     <table-kind
-      ng-if="param.kind === 'imported-table' && pflags[param.id] !== true"
+      ng-if="param.kind === 'imported-table'"
       box="box"
-      params="output"
-      guid="output[param.id]"
+      params="parameters"
+      guid="parameters[param.id]"
       on-blur="onBlur()"
       file-uploads="fileUploads.count"
       class="operation-attribute-entry">
     </table-kind>
     <select
-      ng-if="((param.kind === 'choice' && !param.multipleChoice) || (param.kind === 'segmentation'))
-        && pflags[param.id] !== true"
+      ng-if="(param.kind === 'choice' && !param.multipleChoice) || (param.kind === 'segmentation')"
       class="form-control operation-attribute-entry"
-      ng-model="output[param.id]"
+      ng-model="parameters[param.id]"
       ng-change="onBlur()"
       ng-options="option.id as option.title for option in param.options"></select>
     <select
-      ng-if="param.kind === 'choice' && param.multipleChoice && pflags[param.id] !== true"
+      ng-if="param.kind === 'choice' && param.multipleChoice"
       multiple
       ng-attr-size="{{ param.options.length }}"
       class="form-control operation-attribute-entry"
@@ -87,26 +87,27 @@
       ng-change="onBlur()"
       ng-options="option.id as option.title for option in param.options"></select>
     <tag-list
-      ng-if="param.kind === 'tag-list' && pflags[param.id] !== true"
+      ng-if="param.kind === 'tag-list'"
       model="multiOutput[param.id]"
       on-blur="onBlur()"
       options="param.options"
       class="operation-attribute-entry"></tag-list>
     <parameters-parameter
       ng-if="param.kind === 'parameters'"
-      model="output[param.id]"
+      model="parameters[param.id]"
       class="operation-attribute-entry"></parameters-parameter>
     <visualization-parameter
-      ng-if="param.kind === 'visualization' && pflags[param.id] !== true"
-      ui-state="output[param.id]"
+      ng-if="param.kind === 'visualization'"
+      ui-state="parameters[param.id]"
       on-ui-state-changed="onBlur()"
       project-state-id="box.outputs[0].stateId">
     </visualization-parameter>
+    </div>
     <i class="fa fa-dollar parametric-switch"
-      drop-tooltip="Parametric: {{ pflags[param.id] ? 'yes' : 'no' }}"
+      drop-tooltip="Parametric: {{ isParametric(param.id) ? 'yes' : 'no' }}"
       drop-tooltip-position="top center"
-      ng-class="{ active: pflags[param.id] === true }"
-      ng-click="pflags[param.id] = !pflags[param.id]"
+      ng-class="{ active: isParametric(param.id) }"
+      ng-click="toggleParametric(param.id)"
       ng-if="param.kind !== 'dummy'">
     </i>
   </div>
