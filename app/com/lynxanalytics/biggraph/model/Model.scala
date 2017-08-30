@@ -292,6 +292,12 @@ object Model extends FromJson[Model] {
     }), attrsArray.size, mappings)
   }
 
+  // Returns the same DataFrame if mappings is empty. Otherwise creates a new DataFrame with the
+  // same values, but with new metadata for the "features" vector column. Every index of the
+  // vector (corresponding to a feature) which is present in mapping is made a NominalAttribute.
+  // The rest is made a NumericAttribute, equivalent to the original case.
+  // This information is used by the ML algorithms to identify features as categorical (nominal) or
+  // numerical features.
   private def markCategoricalVariablesInDFSchema(
     df: spark.sql.DataFrame, numFeatures: Int, mappings: Map[Int, Map[String, Double]]) = {
     if (mappings.isEmpty) {
