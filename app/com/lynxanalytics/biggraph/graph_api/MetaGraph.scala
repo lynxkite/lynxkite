@@ -295,8 +295,8 @@ abstract class MagicInputSignature extends InputSignatureProvider with FieldNami
       extends ET[Attribute[_]](nameOpt) {
     lazy val vs = vsF
     override def set(target: MetaDataSet, va: Attribute[_]): MetaDataSet = {
-      assert(va.typeTag.tpe =:= tt.tpe,
-        s"Attribute type ${va.typeTag.tpe} does not match required type ${tt.tpe}.")
+      assert(va.typeTag.tpe =:= tt.tpe, s"Attribute type ${va.typeTag.tpe} does not match " +
+        "required type ${tt.tpe} for attribute '${name}'.")
       val withVs =
         templatesByName(vs).asInstanceOf[VertexSetTemplate].set(target, va.vertexSet)
       super.set(withVs, va)

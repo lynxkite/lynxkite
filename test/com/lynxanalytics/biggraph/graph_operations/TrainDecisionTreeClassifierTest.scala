@@ -51,14 +51,16 @@ END AS length of the walk""")
 
   test("train a decision tree classifier - string values") {
     val m = {
-      val g = graph(trainingDataString.vertexNumber)
-      val l = AddVertexAttribute.run(g.vs, trainingDataString.label)
-      val features = trainingDataString.attrs.map(attr => AddVertexAttribute.run(g.vs, attr))
+      val g = graph(typedTrainingData.vertexNumber)
+      val l = AddVertexAttribute.run(g.vs, typedTrainingData.label)
+      val features =
+        typedTrainingData.stringAttrs.map(attr => AddVertexAttribute.run(g.vs, attr)) ++
+          typedTrainingData.doubleAttrs.map(attr => AddVertexAttribute.run(g.vs, attr))
       val op = TrainTypedDecisionTreeClassifier(
-        trainingDataString.labelName,
+        typedTrainingData.labelName,
         SerializableType.string,
-        trainingDataString.featureNames,
-        List(SerializableType.string, SerializableType.string),
+        typedTrainingData.featureNames,
+        List(SerializableType.string, SerializableType.double),
         impurity = "gini",
         maxBins = 32,
         maxDepth = 5,
@@ -72,7 +74,7 @@ END AS length of the walk""")
     assert(m.value.featureNames.sorted == List("rain", "temperature"))
     val s = m.value.statistics.get
     assert(s == """DecisionTreeClassificationModel of depth 3 with 7 nodes
-  If (rain in {0.0})
+  If (rain <= 0.0)
    If (temperature in {0.0,1.0})
     If (temperature in {0.0})
      Predict: 1.0
@@ -80,13 +82,13 @@ END AS length of the walk""")
      Predict: 1.0
    Else (temperature not in {0.0,1.0})
     Predict: 2.0
-  Else (rain not in {0.0})
+  Else (rain > 0.0)
    Predict: 0.0
 
 Accuracy: 0.875
 Support: [0.375, 0.375, 0.25]""")
     assert(m.value.toSQL(sparkContext) == """CASE
- WHEN rain IN ('0') THEN
+ WHEN rain <= 0.0 THEN
   CASE
    WHEN temperature IN ('high', 'low') THEN
     CASE

@@ -1,3 +1,4 @@
+// Hack to access some private ML methods.
 package org.apache.spark.ml.attribute
 
 object AttributeHelper {
