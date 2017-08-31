@@ -58,7 +58,8 @@
       box="{ outputs: [{ stateId: result.states[$index + 1].stateId }] }"
       box-meta="result.metas[$index]"
       parameters="instruments[$index].parameters"
-      parametric-parameters="instruments[$index].parametricParameters"></op-editor>
+      parametric-parameters="instruments[$index].parametricParameters"
+      on-blur="onBlur()"></op-editor>
   </div>
 
   <div ng-if="$last">

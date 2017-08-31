@@ -15,7 +15,6 @@ angular.module('biggraph')
       link: function(scope) {
         scope.instruments = [];
         scope.$watch('plug.stateId', update);
-        util.deepWatch(scope, 'instruments', update);
 
         function update() {
           if (scope.instruments.length > 0) {
@@ -27,6 +26,7 @@ angular.module('biggraph')
             scope.result = { states: [scope.plug], metas: [] };
           }
         }
+        scope.onBlur = update;
 
         scope.getDefaultSnapshotName = function() {
           return scope.workspace.name + '-' + scope.plugId;
