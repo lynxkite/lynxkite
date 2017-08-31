@@ -22,14 +22,11 @@ object TrainDecisionTreeClassifier extends OpFromJson {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
-    val labelType = SerializableType.fromJson(j \ "labelType")
-    val featureNames = (j \ "featureNames").as[List[String]]
     TrainDecisionTreeClassifier(
       (j \ "labelName").as[String],
-      labelType,
-      featureNames,
-      (j \ "featureTypes").as[List[JsValue]]
-        .map(json => SerializableType.fromJson(json)),
+      SerializableType.fromJson(j \ "labelType"),
+      (j \ "featureNames").as[List[String]],
+      (j \ "featureTypes").as[List[JsValue]].map(json => SerializableType.fromJson(json)),
       (j \ "impurity").as[String],
       (j \ "maxBins").as[Int],
       (j \ "maxDepth").as[Int],
