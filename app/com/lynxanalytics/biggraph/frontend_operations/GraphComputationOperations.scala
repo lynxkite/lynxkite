@@ -288,12 +288,12 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
         val direction = Direction("all neighbors", project.edgeBundle)
         val degree = {
           val op = graph_operations.OutDegree()
-          op(op.es, project.edgeBundle).result.outDegree
+          op(op.es, direction.edgeBundle).result.outDegree
         }
         val clus = {
           val op = graph_operations.ApproxClusteringCoefficient(8)
           op(op.vs, project.vertexSet)(
-            op.es, project.edgeBundle).result.clustering
+            op.es, direction.edgeBundle).result.clustering
         }
         val op = graph_operations.HyperMap(params("seed").toLong)
         op(op.vs, project.vertexSet)(op.es, direction.edgeBundle
