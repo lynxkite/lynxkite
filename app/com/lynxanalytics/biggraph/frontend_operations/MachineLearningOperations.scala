@@ -44,7 +44,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val generatesProbability = modelValue.modelMeta.generatesProbability
       val isBinary = modelValue.modelMeta.isBinary
       import scala.language.existentials
-      val op = graph_operations.ClassifyWithModel(featureTypes)(modelValue.modelMeta.labelType.typeTag)
+      val op = graph_operations.ClassifyWithModel(modelValue.modelMeta.labelType, featureTypes)
       val result = op(op.model, modelValue)(op.features, features).result
       val classifiedAttribute = result.classification
       project.newVertexAttribute(name, classifiedAttribute,
