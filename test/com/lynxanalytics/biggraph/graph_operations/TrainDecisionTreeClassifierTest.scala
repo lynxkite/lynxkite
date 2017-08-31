@@ -56,7 +56,7 @@ END AS length of the walk""")
       val features =
         typedTrainingData.stringAttrs.map(attr => AddVertexAttribute.run(g.vs, attr)) ++
           typedTrainingData.doubleAttrs.map(attr => AddVertexAttribute.run(g.vs, attr))
-      val op = TrainTypedDecisionTreeClassifier(
+      val op = TrainDecisionTreeClassifier(
         typedTrainingData.labelName,
         SerializableType.string,
         typedTrainingData.featureNames,

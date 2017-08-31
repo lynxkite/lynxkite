@@ -3,7 +3,7 @@
 // Viewer of a state at an output of a box.
 
 angular.module('biggraph')
-  .directive('stateView', function(util) {
+  .directive('stateView', function(util, $timeout) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/state-view.html',
@@ -15,18 +15,26 @@ angular.module('biggraph')
       link: function(scope) {
         scope.instruments = [];
         scope.$watch('plug.stateId', update);
-        util.deepWatch(scope, 'instruments', update);
+        var lastJson;
 
         function update() {
           if (scope.instruments.length > 0) {
-            scope.result = util.get('/ajax/getInstrumentedState', {
+            var query = {
               workspace: scope.workspace.ref(),
               inputStateId: scope.plug.stateId,
-              instruments: scope.instruments });
+              instruments: scope.instruments };
+            var json = JSON.stringify(query);
+            if (json !== lastJson) {
+              scope.result = util.get('/ajax/getInstrumentedState', query);
+              lastJson = json;
+            }
           } else {
             scope.result = { states: [scope.plug], metas: [] };
           }
         }
+        scope.onBlur = function() {
+          $timeout(update); // Allow for changes to propagate to local scope.
+        };
 
         scope.getDefaultSnapshotName = function() {
           return scope.workspace.name + '-' + scope.plugId;

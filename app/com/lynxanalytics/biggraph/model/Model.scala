@@ -202,13 +202,13 @@ object Model extends FromJson[Model] {
     Model(
       (j \ "method").as[String],
       (j \ "symbolicPath").as[String],
-      (j \ "labelName").as[Option[String]],
-      (j \ "labelType").as[Option[JsValue]].map(json => SerializableType.fromJson(json)),
-      (j \ "labelReverseMapping").as[Option[Map[String, String]]].map(_.map { case (k, v) => k.toDouble -> v }),
+      (j \ "labelName").asOpt[String],
+      (j \ "labelType").asOpt[JsValue].map(json => SerializableType.fromJson(json)),
+      (j \ "labelReverseMapping").asOpt[Map[String, String]].map(_.map { case (k, v) => k.toDouble -> v }),
       (j \ "featureNames").as[List[String]],
-      (j \ "featureTypes").as[Option[List[JsValue]]].map(_.map(json => SerializableType.fromJson(json))),
-      (j \ "featureMappings").as[Option[Map[String, Map[String, Double]]]].map(_.map { case (k, v) => k.toInt -> v }),
-      (j \ "statistics").as[Option[String]]
+      (j \ "featureTypes").asOpt[List[JsValue]].map(_.map(json => SerializableType.fromJson(json))),
+      (j \ "featureMappings").asOpt[Map[String, Map[String, Double]]].map(_.map { case (k, v) => k.toInt -> v }),
+      (j \ "statistics").asOpt[String]
     )
   }
   def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(
@@ -220,11 +220,13 @@ object Model extends FromJson[Model] {
 
   def toFE(m: Model, sc: spark.SparkContext): FEModel = {
     val modelImpl = m.load(sc)
+    val featureTypes =
+      m.featureTypes.map(_.map(_.typeTag.toString)).getOrElse(m.featureNames.map(_ => "Double"))
     FEModel(
       method = m.method,
       labelName = m.labelName,
       featureNames = m.featureNames,
-      featureTypes = m.featureTypes.get.map(_.typeTag.toString),
+      featureTypes = featureTypes,
       details = modelImpl.details,
       sql = modelImpl.toSQL(
         m.labelName,
