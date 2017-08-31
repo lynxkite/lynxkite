@@ -16,7 +16,9 @@ class ClassifyWithModelTest extends ModelTestBase {
     val g = graph(numVertices = 4)
     val attrs = (0 until numAttr).map(_ => Map(0 -> 100.0, 1 -> 96.0, 2 -> 5.0, 3 -> 1.0))
     val features = attrs.map(attr => AddVertexAttribute.run[Double](g.vs, attr))
-    val op = ClassifyWithModel[Double]((0 until numAttr).map(_ => SerializableType.double).toList)
+    val op = ClassifyWithModel(
+      SerializableType.double,
+      (0 until numAttr).map(_ => SerializableType.double).toList)
     val result = op(op.features, features)(op.model, m).result
     val clustering = result.classification.rdd.values.collect
     assert(clustering.size == 4)
@@ -39,7 +41,7 @@ class ClassifyWithModelTest extends ModelTestBase {
     val g = graph(numVertices = 4)
     val attrs = (0 until 1).map(_ => Map(0 -> 15.0, 1 -> 20.0, 2 -> 50.0, 3 -> 60.0))
     val features = attrs.map(attr => AddVertexAttribute.run[Double](g.vs, attr))
-    val op = ClassifyWithModel[Double](List(SerializableType.double))
+    val op = ClassifyWithModel(SerializableType.double, List(SerializableType.double))
     val result = op(op.features, features)(op.model, m).result
     val classification = result.classification.rdd.values.collect
     assert(classification.size == 4)
@@ -71,7 +73,8 @@ class ClassifyWithModelTest extends ModelTestBase {
     val features = attrs.map(attr => {
       AddVertexAttribute.run[Double](g.vs, attr.mapValues(_.asInstanceOf[Double]))
     })
-    val op = ClassifyWithModel[Double](
+    val op = ClassifyWithModel(
+      SerializableType.double,
       (0 until testDataForClassification.featureNames.size).map(_ => SerializableType.double).toList)
     val result = op(op.features, features)(op.model, m).result
     val classification = result.classification.rdd.collect.toMap
@@ -109,8 +112,10 @@ class ClassifyWithModelTest extends ModelTestBase {
     val features = attrs.map(attr => {
       AddVertexAttribute.run[String](g.vs, attr)
     })
-    val op = ClassifyWithModel[String](
-      (0 until testDataForClassificationString.featureNames.size).map(_ => SerializableType.string).toList)
+    val op = ClassifyWithModel(
+      SerializableType.string,
+      (0 until testDataForClassificationString.featureNames.size).map(
+        _ => SerializableType.string).toList)
     val result = op(op.features, features)(op.model, m).result
     val classification = result.classification.rdd.collect.toMap
     assert(classification.size == testDataForClassificationString.vertexNumber)
