@@ -997,6 +997,15 @@ abstract class ObjectFrame(path: SymbolPath)(
   }
 
   override def copy(to: DirectoryEntry): ObjectFrame = super.copy(to).asObjectFrame
+
+  // ObjectFrames (workspaces and snapshots) do not have ACLs on their own right, they use their
+  // parent's ACL.
+  override def readAllowedFrom(user: User): Boolean = {
+    parent.get.readAllowedFrom(user)
+  }
+  override def writeAllowedFrom(user: User): Boolean = {
+    parent.get.writeAllowedFrom(user)
+  }
 }
 
 class Directory(path: SymbolPath)(

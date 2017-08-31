@@ -16,7 +16,7 @@ class ClassifyWithModelTest extends ModelTestBase {
     val g = graph(numVertices = 4)
     val attrs = (0 until numAttr).map(_ => Map(0 -> 100.0, 1 -> 96.0, 2 -> 5.0, 3 -> 1.0))
     val features = attrs.map(attr => AddVertexAttribute.run[Double](g.vs, attr))
-    val op = ClassifyWithModel(numAttr)
+    val op = ClassifyWithTypedModel[Double]((0 until numAttr).map(_ => SerializableType.double).toList)
     val result = op(op.features, features)(op.model, m).result
     val clustering = result.classification.rdd.values.collect
     assert(clustering.size == 4)
@@ -39,7 +39,7 @@ class ClassifyWithModelTest extends ModelTestBase {
     val g = graph(numVertices = 4)
     val attrs = (0 until 1).map(_ => Map(0 -> 15.0, 1 -> 20.0, 2 -> 50.0, 3 -> 60.0))
     val features = attrs.map(attr => AddVertexAttribute.run[Double](g.vs, attr))
-    val op = ClassifyWithModel(1)
+    val op = ClassifyWithTypedModel[Double](List(SerializableType.double))
     val result = op(op.features, features)(op.model, m).result
     val classification = result.classification.rdd.values.collect
     assert(classification.size == 4)
@@ -69,14 +69,53 @@ class ClassifyWithModelTest extends ModelTestBase {
     val g = graph(testDataForClassification.vertexNumber)
     val attrs = testDataForClassification.attrs
     val features = attrs.map(attr => {
-      AddVertexAttribute.run[Double](g.vs, attr)
+      AddVertexAttribute.run[Double](g.vs, attr.mapValues(_.asInstanceOf[Double]))
     })
-    val op = ClassifyWithModel(testDataForClassification.featureNames.size)
+    val op = ClassifyWithTypedModel[Double](
+      (0 until testDataForClassification.featureNames.size).map(_ => SerializableType.double).toList)
     val result = op(op.features, features)(op.model, m).result
     val classification = result.classification.rdd.collect.toMap
     assert(classification.size == testDataForClassification.vertexNumber)
     assert(classification == testDataForClassification.label)
     val probability = result.probability.rdd.collect.toMap
     assertRoughlyEquals(probability, testDataForClassification.probability, 0.1)
+  }
+
+  test("test the decision tree classification model - string attributes") {
+    import com.lynxanalytics.biggraph.graph_operations.DataForDecisionTreeTests.{
+      trainingDataString,
+      testDataForClassificationString
+    }
+    val m = {
+      val g = graph(trainingDataString.vertexNumber)
+      val l = AddVertexAttribute.run(g.vs, trainingDataString.label)
+      val features = trainingDataString.attrs.map(attr => AddVertexAttribute.run(g.vs, attr))
+      val op = TrainTypedDecisionTreeClassifier(
+        trainingDataString.labelName,
+        SerializableType.string,
+        trainingDataString.featureNames,
+        List(SerializableType.string, SerializableType.string),
+        impurity = "gini",
+        maxBins = 32,
+        maxDepth = 5,
+        minInfoGain = 0,
+        minInstancesPerNode = 1,
+        seed = 1234567)
+      op(op.features, features)(op.label, l).result.model
+    }
+
+    val g = graph(testDataForClassificationString.vertexNumber)
+    val attrs = testDataForClassificationString.attrs
+    val features = attrs.map(attr => {
+      AddVertexAttribute.run[String](g.vs, attr)
+    })
+    val op = ClassifyWithTypedModel[String](
+      (0 until testDataForClassificationString.featureNames.size).map(_ => SerializableType.string).toList)
+    val result = op(op.features, features)(op.model, m).result
+    val classification = result.classification.rdd.collect.toMap
+    assert(classification.size == testDataForClassificationString.vertexNumber)
+    assert(classification == testDataForClassificationString.label)
+    val probability = result.probability.rdd.collect.toMap
+    assertRoughlyEquals(probability, testDataForClassificationString.probability, 0.1)
   }
 }

@@ -17,7 +17,9 @@ class ModelTestBase extends FunSuite with TestGraphOp {
     label: Map[Int, Double],
     featureNames: List[String],
     attrs: Seq[Map[Int, Double]],
-    graph: SmallTestGraph.Output): Scalar[Model] = {
+    graph: SmallTestGraph.Output,
+    labelType: SerializableType[_] = SerializableType.double,
+    featureTypes: Option[List[SerializableType[_]]] = None): Scalar[Model] = {
     val l = AddVertexAttribute.run(graph.vs, label)
     val features = attrs.map(attr => AddVertexAttribute.run(graph.vs, attr))
     method match {
@@ -42,9 +44,11 @@ class ModelTestBase extends FunSuite with TestGraphOp {
           featureNames)
         op(op.features, features)(op.label, l).result.model
       case "Decision tree classification" =>
-        val op = TrainDecisionTreeClassifier(
+        val op = TrainTypedDecisionTreeClassifier(
           labelName,
+          labelType,
           featureNames,
+          featureTypes.getOrElse(featureNames.map(_ => SerializableType.double).toList),
           impurity = "gini",
           maxBins = 32,
           maxDepth = 5,
