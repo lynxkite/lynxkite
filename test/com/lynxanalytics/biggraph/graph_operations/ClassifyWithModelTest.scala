@@ -90,7 +90,7 @@ class ClassifyWithModelTest extends ModelTestBase {
       val g = graph(trainingDataString.vertexNumber)
       val l = AddVertexAttribute.run(g.vs, trainingDataString.label)
       val features = trainingDataString.attrs.map(attr => AddVertexAttribute.run(g.vs, attr))
-      val op = TrainTypedDecisionTreeClassifier(
+      val op = TrainDecisionTreeClassifier(
         trainingDataString.labelName,
         SerializableType.string,
         trainingDataString.featureNames,
@@ -109,7 +109,7 @@ class ClassifyWithModelTest extends ModelTestBase {
     val features = attrs.map(attr => {
       AddVertexAttribute.run[String](g.vs, attr)
     })
-    val op = ClassifyWithTypedModel[String](
+    val op = ClassifyWithModel[String](
       (0 until testDataForClassificationString.featureNames.size).map(_ => SerializableType.string).toList)
     val result = op(op.features, features)(op.model, m).result
     val classification = result.classification.rdd.collect.toMap
