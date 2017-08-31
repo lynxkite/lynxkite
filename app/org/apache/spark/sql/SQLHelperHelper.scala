@@ -14,8 +14,4 @@ object SQLHelperHelper {
   }
 
   def newSQLConf = new org.apache.spark.sql.internal.SQLConf()
-
-  def dfWithColumnMetadata(df: DataFrame, colName: String, col: Column, metadata: org.apache.spark.sql.types.Metadata): DataFrame = {
-    df.withColumn(colName, col, metadata)
-  }
 }

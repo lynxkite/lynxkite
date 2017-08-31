@@ -322,7 +322,7 @@ object Model extends FromJson[Model] {
         val newAttributeGroup = new AttributeGroup("features", featureAttributes)
         newAttributeGroup.toStructField()
       }
-      org.apache.spark.sql.SQLHelperHelper.dfWithColumnMetadata(df, "features", df("features"), newField.metadata)
+      df.withColumn("features", df("features").as("features", newField.metadata))
     }
   }
 
