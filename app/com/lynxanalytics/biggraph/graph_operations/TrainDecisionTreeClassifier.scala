@@ -1,38 +1,47 @@
 // Trains a decision tree classification model.
 package com.lynxanalytics.biggraph.graph_operations
 
+import scala.reflect._
+import scala.reflect.runtime.universe._
+
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
 import org.apache.spark.ml
 import org.apache.spark.sql
 
-object TrainDecisionTreeClassifier extends OpFromJson {
-  class Input(numFeatures: Int) extends MagicInputSignature {
+object TrainTypedDecisionTreeClassifier extends OpFromJson {
+  class Input(labelType: SerializableType[_], featureTypes: Seq[SerializableType[_]]) extends MagicInputSignature {
     val vertices = vertexSet
-    val features = (0 until numFeatures).map {
-      i => vertexAttribute[Double](vertices, Symbol(s"feature-$i"))
+    val features = (0 until featureTypes.size).map {
+      i => runtimeTypedVertexAttribute(vertices, Symbol(s"feature-$i"), featureTypes(i).typeTag)
     }
-    val label = vertexAttribute[Double](vertices)
+    val label = runtimeTypedVertexAttribute(vertices, 'label, labelType.typeTag)
   }
   class Output(implicit instance: MetaGraphOperationInstance,
                inputs: Input) extends MagicOutput(instance) {
     val model = scalar[Model]
   }
-  def fromJson(j: JsValue) = TrainDecisionTreeClassifier(
-    (j \ "labelName").as[String],
-    (j \ "featureNames").as[List[String]],
-    (j \ "impurity").as[String],
-    (j \ "maxBins").as[Int],
-    (j \ "maxDepth").as[Int],
-    (j \ "minInfoGain").as[Double],
-    (j \ "minInstancesPerNode").as[Int],
-    (j \ "seed").as[Int])
+  def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
+    TrainTypedDecisionTreeClassifier(
+      (j \ "labelName").as[String],
+      SerializableType.fromJson(j \ "labelType"),
+      (j \ "featureNames").as[List[String]],
+      (j \ "featureTypes").as[List[JsValue]].map(json => SerializableType.fromJson(json)),
+      (j \ "impurity").as[String],
+      (j \ "maxBins").as[Int],
+      (j \ "maxDepth").as[Int],
+      (j \ "minInfoGain").as[Double],
+      (j \ "minInstancesPerNode").as[Int],
+      (j \ "seed").as[Int])
+  }
 }
 
-import TrainDecisionTreeClassifier._
-case class TrainDecisionTreeClassifier(
+import TrainTypedDecisionTreeClassifier._
+case class TrainTypedDecisionTreeClassifier[T: TypeTag](
     labelName: String,
+    labelType: SerializableType[T],
     featureNames: List[String],
+    featureTypes: List[SerializableType[_]],
     impurity: String,
     maxBins: Int,
     maxDepth: Int,
@@ -43,11 +52,13 @@ case class TrainDecisionTreeClassifier(
   val isBinary = false
   override val generatesProbability = true
   override val isHeavy = true
-  @transient override lazy val inputs = new Input(featureNames.size)
+  @transient override lazy val inputs = new Input(labelType, featureTypes)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
     "labelName" -> labelName,
+    "labelType" -> labelType.toJson,
     "featureNames" -> featureNames,
+    "featureTypes" -> featureTypes.map(f => f.toJson),
     "impurity" -> impurity,
     "maxBins" -> maxBins,
     "maxDepth" -> maxDepth,
@@ -63,9 +74,10 @@ case class TrainDecisionTreeClassifier(
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 
-    val featuresRddArray = inputs.features.toArray.map(_.rdd)
-    val labelDF = inputs.label.rdd.toDF("id", "label")
-    val featuresDF = Model.toDF(sqlContext, inputs.vertices.rdd, featuresRddArray)
+    val (labelRDD, labelMapping) = Model.toDoubleRDD(inputs.label.data)
+    val labelDF = labelRDD.toDF("id", "label")
+    val (featuresDF, featureMappings) =
+      Model.toDoubleDF(sqlContext, inputs.vertices.rdd, inputs.features.toArray.map(_.data))
     val labeledFeaturesDF = featuresDF.join(labelDF, "id")
     assert(!labeledFeaturesDF.rdd.isEmpty, "Training is not possible with empty data set.")
 
@@ -99,7 +111,72 @@ case class TrainDecisionTreeClassifier(
       method = "Decision tree classification",
       symbolicPath = file.symbolicName,
       labelName = Some(labelName),
+      labelType = Some(labelType),
+      labelReverseMapping = labelMapping.map(_.map { case (k, v) => v -> k }.toMap),
       featureNames = featureNames,
+      featureTypes = Some(featureTypes),
+      featureMappings = Some(featureMappings),
       statistics = Some(statistics)))
+  }
+}
+
+object TrainDecisionTreeClassifier extends OpFromJson {
+  class Input(numFeatures: Int) extends MagicInputSignature {
+    val vertices = vertexSet
+    val features = (0 until numFeatures).map {
+      i => vertexAttribute[Double](vertices, Symbol(s"feature-$i"))
+    }
+    val label = vertexAttribute[Double](vertices)
+  }
+  class Output(implicit instance: MetaGraphOperationInstance,
+               inputs: Input) extends MagicOutput(instance) {
+    val model = scalar[Model]
+  }
+  def fromJson(j: JsValue) = TrainDecisionTreeClassifier(
+    (j \ "labelName").as[String],
+    (j \ "featureNames").as[List[String]],
+    (j \ "impurity").as[String],
+    (j \ "maxBins").as[Int],
+    (j \ "maxDepth").as[Int],
+    (j \ "minInfoGain").as[Double],
+    (j \ "minInstancesPerNode").as[Int],
+    (j \ "seed").as[Int])
+}
+
+import TrainDecisionTreeClassifier._
+@deprecated("TrainDecisionTreeClassifier is deprecated, use TrainTypedDecisionTreeClassifier", "2.0.0")
+case class TrainDecisionTreeClassifier(
+    labelName: String,
+    featureNames: List[String],
+    impurity: String,
+    maxBins: Int,
+    maxDepth: Int,
+    minInfoGain: Double,
+    minInstancesPerNode: Int,
+    seed: Int) extends TypedMetaGraphOp[TrainDecisionTreeClassifier.Input, TrainDecisionTreeClassifier.Output] with ModelMeta {
+  val isClassification = true
+  val isBinary = false
+  override val generatesProbability = true
+  override val isHeavy = true
+  def featureTypes = (0 until featureNames.size).map(_ => SerializableType.double).toList
+  def labelType = SerializableType.double
+  @transient override lazy val inputs = new TrainDecisionTreeClassifier.Input(featureNames.size)
+  def outputMeta(instance: MetaGraphOperationInstance) = new TrainDecisionTreeClassifier.Output()(instance, inputs)
+  override def toJson = Json.obj(
+    "labelName" -> labelName,
+    "featureNames" -> featureNames,
+    "impurity" -> impurity,
+    "maxBins" -> maxBins,
+    "maxDepth" -> maxDepth,
+    "minInfoGain" -> minInfoGain,
+    "minInstancesPerNode" -> minInstancesPerNode,
+    "seed" -> seed)
+
+  def execute(inputDatas: DataSet,
+              o: TrainDecisionTreeClassifier.Output,
+              output: OutputBuilder,
+              rc: RuntimeContext): Unit = {
+    throw new AssertionError(
+      "TrainDecisionTreeClassifier is deprecated. Use TrainTypedDecisionTreeClassifier.")
   }
 }

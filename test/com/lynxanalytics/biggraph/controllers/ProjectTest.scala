@@ -97,6 +97,17 @@ class ProjectTest extends FunSuite with TestGraphOp {
     assertWriters(p3)("y")("x")
   }
 
+  test("Access control with Workspaces") {
+    implicit val mm = cleanMetaManager
+    val p1 = DirectoryEntry.fromName("p1")(mm).asNewDirectory()
+    p1.readACL = "x,y"
+    p1.writeACL = "x"
+    val ws = DirectoryEntry.fromName("p1/ws")(mm).asNewWorkspaceFrame()
+    // Workspace ACLs are the same as the parent folder's ACLs.
+    assertReaders(ws)("x", "y")("z")
+    assertWriters(ws)("x")("y")
+  }
+
   test("Invalid path error message") {
     implicit val mm = cleanMetaManager
     DirectoryEntry.fromName("dir")(mm).asNewDirectory()

@@ -13,6 +13,13 @@ object DataForDecisionTreeTests {
     attrs: Seq[Map[Int, Double]],
     probability: Map[Int, Double] = Map(),
     vertexNumber: Int)
+  case class GraphDataString(
+    labelName: String,
+    label: Map[Int, String],
+    featureNames: List[String],
+    attrs: Seq[Map[Int, String]],
+    probability: Map[Int, Double] = Map(),
+    vertexNumber: Int)
 
   val trainingData = GraphData(
     labelName = "length of the walk",
@@ -21,12 +28,27 @@ object DataForDecisionTreeTests {
     attrs = Seq(Map(0 -> -15, 1 -> 20, 2 -> -10, 3 -> 20, 4 -> 35, 5 -> 40, 6 -> -15, 7 -> -15),
       Map(0 -> 0, 1 -> 1, 2 -> 1, 3 -> 0, 4 -> 0, 5 -> 1, 6 -> 0, 7 -> 0)),
     vertexNumber = 8)
+  val trainingDataString = GraphDataString(
+    labelName = "destination",
+    label = Map(0 -> "y", 1 -> "x", 2 -> "x", 3 -> "z", 4 -> "y", 5 -> "x", 6 -> "y", 7 -> "z"),
+    featureNames = List("temperature", "rain"),
+    attrs = Seq(Map(0 -> "low", 1 -> "medium", 2 -> "low", 3 -> "medium", 4 -> "high", 5 -> "high", 6 -> "low", 7 -> "low"),
+      Map(0 -> "0", 1 -> "1", 2 -> "1", 3 -> "0", 4 -> "0", 5 -> "1", 6 -> "0", 7 -> "0")),
+    vertexNumber = 8)
   val testDataForClassification = GraphData(
     labelName = "length of the walk",
     label = Map(0 -> 2, 1 -> 0, 2 -> 1, 3 -> 1, 4 -> 0, 5 -> 0),
     featureNames = List("temperature", "rain"),
     attrs = Seq(Map(0 -> 20.0, 1 -> 42.0, 2 -> 38.0, 3 -> -16.0, 4 -> -20.0, 5 -> 20.0),
       Map(0 -> 0.0, 1 -> 1.0, 2 -> 0.0, 3 -> 0.0, 4 -> 1.0, 5 -> 1.0)),
+    probability = Map(0 -> 1, 1 -> 1, 2 -> 1, 3 -> 0.6667, 4 -> 1, 5 -> 1),
+    vertexNumber = 6)
+  val testDataForClassificationString = GraphDataString(
+    labelName = "destination",
+    label = Map(0 -> "z", 1 -> "x", 2 -> "y", 3 -> "y", 4 -> "x", 5 -> "x"),
+    featureNames = List("temperature", "rain"),
+    attrs = Seq(Map(0 -> "medium", 1 -> "high", 2 -> "high", 3 -> "low", 4 -> "low", 5 -> "medium"),
+      Map(0 -> "0", 1 -> "1", 2 -> "0", 3 -> "0", 4 -> "1", 5 -> "1")),
     probability = Map(0 -> 1, 1 -> 1, 2 -> 1, 3 -> 0.6667, 4 -> 1, 5 -> 1),
     vertexNumber = 6)
   val testDataForRegression = GraphData(

@@ -4,15 +4,14 @@
       <input
         ng-hide="uploading"
         class="form-control"
-        ng-model="filename"
-        ng-disabled="!editable">
+        ng-model="filename">
       <progressbar ng-show="uploading" value="progress">
         {{progress}}%
       </progressbar>
     </td>
     <td>
       <span class="clicky glyphicon glyphicon-cloud-upload"
-        ng-show="editable" tooltip="Upload" ng-click="dialog()"></span>
+        tooltip="Upload" ng-click="dialog()"></span>
     </td>
   </tr>
 </table>
