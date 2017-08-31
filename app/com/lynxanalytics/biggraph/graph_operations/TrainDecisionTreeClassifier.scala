@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.model._
 import org.apache.spark.ml
 import org.apache.spark.sql
 
-object TrainTypedDecisionTreeClassifier extends OpFromJson {
+object TrainDecisionTreeClassifier extends OpFromJson {
   class Input(labelType: SerializableType[_], featureTypes: Seq[SerializableType[_]]) extends MagicInputSignature {
     val vertices = vertexSet
     val features = (0 until featureTypes.size).map {
@@ -22,11 +22,14 @@ object TrainTypedDecisionTreeClassifier extends OpFromJson {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
-    TrainTypedDecisionTreeClassifier(
+    val labelType = SerializableType.fromJson(j \ "labelType")
+    val featureNames = (j \ "featureNames").as[List[String]]
+    TrainDecisionTreeClassifier(
       (j \ "labelName").as[String],
-      SerializableType.fromJson(j \ "labelType"),
-      (j \ "featureNames").as[List[String]],
-      (j \ "featureTypes").as[List[JsValue]].map(json => SerializableType.fromJson(json)),
+      labelType,
+      featureNames,
+      (j \ "featureTypes").as[List[JsValue]]
+        .map(json => SerializableType.fromJson(json)),
       (j \ "impurity").as[String],
       (j \ "maxBins").as[Int],
       (j \ "maxDepth").as[Int],
@@ -36,8 +39,8 @@ object TrainTypedDecisionTreeClassifier extends OpFromJson {
   }
 }
 
-import TrainTypedDecisionTreeClassifier._
-case class TrainTypedDecisionTreeClassifier[T: TypeTag](
+import TrainDecisionTreeClassifier._
+case class TrainDecisionTreeClassifier[T: TypeTag](
     labelName: String,
     labelType: SerializableType[T],
     featureNames: List[String],
@@ -117,66 +120,5 @@ case class TrainTypedDecisionTreeClassifier[T: TypeTag](
       featureTypes = Some(featureTypes),
       featureMappings = Some(featureMappings),
       statistics = Some(statistics)))
-  }
-}
-
-object TrainDecisionTreeClassifier extends OpFromJson {
-  class Input(numFeatures: Int) extends MagicInputSignature {
-    val vertices = vertexSet
-    val features = (0 until numFeatures).map {
-      i => vertexAttribute[Double](vertices, Symbol(s"feature-$i"))
-    }
-    val label = vertexAttribute[Double](vertices)
-  }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
-    val model = scalar[Model]
-  }
-  def fromJson(j: JsValue) = TrainDecisionTreeClassifier(
-    (j \ "labelName").as[String],
-    (j \ "featureNames").as[List[String]],
-    (j \ "impurity").as[String],
-    (j \ "maxBins").as[Int],
-    (j \ "maxDepth").as[Int],
-    (j \ "minInfoGain").as[Double],
-    (j \ "minInstancesPerNode").as[Int],
-    (j \ "seed").as[Int])
-}
-
-import TrainDecisionTreeClassifier._
-@deprecated("TrainDecisionTreeClassifier is deprecated, use TrainTypedDecisionTreeClassifier", "2.0.0")
-case class TrainDecisionTreeClassifier(
-    labelName: String,
-    featureNames: List[String],
-    impurity: String,
-    maxBins: Int,
-    maxDepth: Int,
-    minInfoGain: Double,
-    minInstancesPerNode: Int,
-    seed: Int) extends TypedMetaGraphOp[TrainDecisionTreeClassifier.Input, TrainDecisionTreeClassifier.Output] with ModelMeta {
-  val isClassification = true
-  val isBinary = false
-  override val generatesProbability = true
-  override val isHeavy = true
-  def featureTypes = (0 until featureNames.size).map(_ => SerializableType.double).toList
-  def labelType = SerializableType.double
-  @transient override lazy val inputs = new TrainDecisionTreeClassifier.Input(featureNames.size)
-  def outputMeta(instance: MetaGraphOperationInstance) = new TrainDecisionTreeClassifier.Output()(instance, inputs)
-  override def toJson = Json.obj(
-    "labelName" -> labelName,
-    "featureNames" -> featureNames,
-    "impurity" -> impurity,
-    "maxBins" -> maxBins,
-    "maxDepth" -> maxDepth,
-    "minInfoGain" -> minInfoGain,
-    "minInstancesPerNode" -> minInstancesPerNode,
-    "seed" -> seed)
-
-  def execute(inputDatas: DataSet,
-              o: TrainDecisionTreeClassifier.Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
-    throw new AssertionError(
-      "TrainDecisionTreeClassifier is deprecated. Use TrainTypedDecisionTreeClassifier.")
   }
 }
