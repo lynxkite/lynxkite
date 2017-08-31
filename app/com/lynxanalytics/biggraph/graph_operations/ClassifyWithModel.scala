@@ -29,23 +29,47 @@ object ClassifyWithModel extends OpFromJson {
     }
     val classification = vertexAttribute[T](inputs.vertices.entity)
   }
-  def fromJson(j: JsValue) = ClassifyWithModel(
-    (j \ "featureTypes").as[List[JsValue]].map(json => SerializableType.fromJson(json)))
+  def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
+    (j \ "numFeatures").asOpt[Int]
+      .map(numFeatures =>
+        // Compatibility with operations saved before typing was added.
+        ClassifyWithModel[Double](
+          SerializableType.double,
+          (1 to numFeatures).map(_ => SerializableType.double).toList))
+      .getOrElse(
+        // "Any" is used to effectively disable type checks. (This generally happens by itself in
+        // "fromJson" methods when we just don't specify a type parameter, but here we need to align
+        // the "labelType" parameter with the type parameter.)
+        ClassifyWithModel[Any](
+          SerializableType.fromJson(j \ "labelType").asInstanceOf[SerializableType[Any]],
+          (j \ "featureTypes").as[List[JsValue]].map(json => SerializableType.fromJson(json))))
+  }
 }
 import ClassifyWithModel._
-case class ClassifyWithModel[T: TypeTag](featureTypes: List[SerializableType[_]])
+case class ClassifyWithModel[T](
+  labelType: SerializableType[T],
+  featureTypes: List[SerializableType[_]])
     extends TypedMetaGraphOp[Input, Output[T]] {
   @transient override lazy val inputs = new Input(featureTypes)
   override val isHeavy = true
-  def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(typeTag[T], instance, inputs)
-  override def toJson = Json.obj("featureTypes" -> featureTypes.map(f => f.toJson))
+  def outputMeta(instance: MetaGraphOperationInstance) =
+    new Output[T]()(labelType.typeTag, instance, inputs)
+  override def toJson =
+    if (labelType == SerializableType.double && featureTypes.forall(_ == SerializableType.double))
+      // Store types only if different from the default.
+      // This avoids a GUID change on operations saved before typing was added.
+      Json.obj("numFeatures" -> featureTypes.size)
+    else
+      Json.obj(
+        "labelType" -> labelType.toJson,
+        "featureTypes" -> featureTypes.map(f => f.toJson))
 
   def execute(inputDatas: DataSet,
               o: Output[T],
               output: OutputBuilder,
               rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    implicit val ct = RuntimeSafeCastable.classTagFromTypeTag[T]
+    implicit val ct = labelType.classTag
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
 

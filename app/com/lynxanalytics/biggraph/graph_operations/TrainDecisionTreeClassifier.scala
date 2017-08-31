@@ -22,11 +22,15 @@ object TrainDecisionTreeClassifier extends OpFromJson {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
+    val doubleType = SerializableType.double
+    val featureNames = (j \ "featureNames").as[List[String]]
     TrainDecisionTreeClassifier(
       (j \ "labelName").as[String],
-      SerializableType.fromJson(j \ "labelType"),
-      (j \ "featureNames").as[List[String]],
-      (j \ "featureTypes").as[List[JsValue]].map(json => SerializableType.fromJson(json)),
+      (j \ "labelType").asOpt[JsValue].map(SerializableType.fromJson(_)).getOrElse(doubleType),
+      featureNames,
+      (j \ "featureTypes").asOpt[List[JsValue]]
+        .map(_.map(json => SerializableType.fromJson(json)))
+        .getOrElse(featureNames.map(_ => doubleType)),
       (j \ "impurity").as[String],
       (j \ "maxBins").as[Int],
       (j \ "maxDepth").as[Int],
@@ -56,15 +60,19 @@ case class TrainDecisionTreeClassifier[T: TypeTag](
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
     "labelName" -> labelName,
-    "labelType" -> labelType.toJson,
     "featureNames" -> featureNames,
-    "featureTypes" -> featureTypes.map(f => f.toJson),
     "impurity" -> impurity,
     "maxBins" -> maxBins,
     "maxDepth" -> maxDepth,
     "minInfoGain" -> minInfoGain,
     "minInstancesPerNode" -> minInstancesPerNode,
-    "seed" -> seed)
+    "seed" -> seed) ++
+    // Store types only if different from the default.
+    // This avoids a GUID change on operations saved before typing was added.
+    (if (labelType == SerializableType.double) Json.obj() else Json.obj(
+      "labelType" -> labelType.toJson)) ++
+    (if (featureTypes.forall(_ == SerializableType.double)) Json.obj() else Json.obj(
+      "featureTypes" -> featureTypes.map(f => f.toJson)))
 
   def execute(inputDatas: DataSet,
               o: Output,
