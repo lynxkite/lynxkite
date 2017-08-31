@@ -192,7 +192,7 @@ case class Model(
     load(sc).toSQL(
       labelName,
       featureNames,
-      featureMappings.map(_.mapValues(m => m.map { case (k, v) => v -> k }.toMap)),
+      featureMappings.map(_.mapValues(m => m.map(_.swap))),
       labelReverseMapping)
   }
 }
@@ -229,7 +229,7 @@ object Model extends FromJson[Model] {
       sql = modelImpl.toSQL(
         m.labelName,
         m.featureNames,
-        m.featureMappings.map(_.mapValues(m => m.map { case (k, v) => v -> k }.toMap)),
+        m.featureMappings.map(_.mapValues(m => m.map(_.swap))),
         m.labelReverseMapping))
   }
 
@@ -309,9 +309,14 @@ object Model extends FromJson[Model] {
           (0 until numFeatures).map {
             i =>
               if (mappings.contains(i)) {
-                org.apache.spark.ml.attribute.AttributeHelper.nominalAttribute(index = i, values = mappings(i).keys.toArray)
+                NominalAttribute
+                  .defaultAttr
+                  .withIndex(i)
+                  .withValues(mappings(i).keys.toArray)
               } else {
-                org.apache.spark.ml.attribute.AttributeHelper.numericAttribute(index = i)
+                NumericAttribute
+                  .defaultAttr
+                  .withIndex(i)
               }
           }.toArray
         val newAttributeGroup = new AttributeGroup("features", featureAttributes)
