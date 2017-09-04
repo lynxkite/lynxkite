@@ -1,35 +1,42 @@
 ### Derive edge attribute
 
 Generates a new attribute based on existing attributes. The value expression can be
-an arbitrary JavaScript expression, and it can refer to existing attributes on the edge as if
+an arbitrary Scala expression, and it can refer to existing attributes on the edge as if
 they were local variables. It can also refer to attributes of the source and destination
 vertex of the edge using the format `src$attribute` and `dst$attribute`.
 
-For example you can write `weight * Math.abs(src$age - dst$age)` to generate a new
+For example you can write `weight * scala.math.abs(src$age - dst$age)` to generate a new
 attribute that is the weighted age difference of the two endpoints of the edge.
-For more details see <<javascript-guide>>.
 
-You can also refer to graph attributes (aka scalars) in the JS expression. For example,
+You can also refer to graph attributes (aka scalars) in the Scala expression. For example,
 assuming that you have a graph attribute _age_average_, you can use the expression
-`src$age < age_average/2 && dst$age > age_average*2 ? 1.0 : 0.0`
+`if (src$age < age_average / 2 && dst$age > age_average * 2) 1.0 else 0.0`
 to identify connections between relatively young and relatively old people.
 
-JavaScript arrays like `[1, 2, 3]` are automatically converted back to vectors (if the result type
-is set accordingly). Vectors can not contain `undefined` elements.
+Back quotes can be used to refer to attribute names that are not valid Scala identifiers.
+
+The Scala expression can only return specific types:
+- `Double`,
+- `String`,
+- `Int`,
+- `Long`,
+- `Vector`s combined from the above. 
+
+In case you do not want to define the expression for every input, you can return an `Option`
+created from the above types. E.g. `if (income > 1000) Some(age) else None`.
 
 ====
 [[output]] Save as::
 The new attribute will be created under this name.
 
-[[type]] Result type::
-The type (`Double`, `String`, `Vector of Doubles` or `Vector of Strings`) of the created attribute.
-
 [[defined_attrs]] Only run on defined attributes::
 - `true`: The new attribute will only be defined on edges for which all the attributes used in the
   expression are defined.
-- `false`: The new attribute is defined on all edges. In this case the JavaScript expression needs
-  to be prepared to handle undefined input attribute values.
+- `false`: The new attribute is defined on all edges. In this case the Scala expression does not
+  pass the attributes using their original types, but wraps them into `Option`s. E.g. if you have
+  an attribute `income: Double` you would see it as `income: Option[Double]` making
+  `income.getOrElse(0.0)` a valid expression.
 
 [[expr]] Value::
-The JavaScript expression. You can enter multiple lines in the editor.
+The Scala expression. You can enter multiple lines in the editor.
 ====

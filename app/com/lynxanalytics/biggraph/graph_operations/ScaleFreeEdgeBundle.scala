@@ -1,6 +1,6 @@
 // Creates a random-generated edge bundle so that the resulting graph is scale-free.
 //
-// The degree distribution is hoped to follow a power low. We achieve this by a form of
+// The degree distribution is hoped to follow a power law. We achieve this by a form of
 // preferential attachment, that is a process where vertices with high degree are likely to
 // receive even more edges. We do this by an iterative process. In each iteration we choose
 // random pairs of edges from the previous iteration and we connect the src vertex of one to

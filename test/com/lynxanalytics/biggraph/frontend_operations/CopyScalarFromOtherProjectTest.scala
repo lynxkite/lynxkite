@@ -8,7 +8,6 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
     val other = box("Create example graph")
       .box("Derive scalar", Map(
         "output" -> "scalar_val",
-        "type" -> "Double",
         "expr" -> "42.0"))
     val project = box("Create example graph")
       .box("Copy scalar from other project", Map(
@@ -31,13 +30,12 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
         "name" -> "seg",
         "overlap" -> "no"))
       .box("Derive scalar", Map(
-        "apply_to_project" -> "|seg",
+        "apply_to_project" -> ".seg",
         "output" -> "scalar_val",
-        "type" -> "String",
-        "expr" -> "'myvalue'"))
+        "expr" -> "\"myvalue\""))
     val project = box("Create example graph")
       .box("Copy scalar from other project", Map(
-        "apply_to_scalar" -> "|seg",
+        "apply_to_scalar" -> ".seg",
         "scalar" -> "scalar_val",
         "save_as" -> "my_scalar_2"), Seq(other))
       .project
@@ -57,24 +55,23 @@ class CopyScalarFromOtherProjectTest extends OperationsTestBase {
         "name" -> "seg",
         "overlap" -> "no"))
       .box("Add random vertex attribute", Map(
-        "apply_to_project" -> "|seg",
+        "apply_to_project" -> ".seg",
         "dist" -> "Standard Normal",
         "name" -> "rnd2",
         "seed" -> "1474343267"))
       .box("Segment by Double attribute", Map(
-        "apply_to_project" -> "|seg",
+        "apply_to_project" -> ".seg",
         "attr" -> "rnd2",
         "interval_size" -> "0.1",
         "name" -> "seg2",
         "overlap" -> "no"))
       .box("Derive scalar", Map(
-        "apply_to_project" -> "|seg|seg2",
+        "apply_to_project" -> ".seg.seg2",
         "output" -> "deep_scalar",
-        "type" -> "String",
-        "expr" -> "'deep value'"))
+        "expr" -> "\"deep value\""))
     val project = box("Create example graph")
       .box("Copy scalar from other project", Map(
-        "apply_to_scalar" -> s"|seg|seg2",
+        "apply_to_scalar" -> s".seg.seg2",
         "scalar" -> "deep_scalar",
         "save_as" -> "my_scalar_3"), Seq(other))
       .project

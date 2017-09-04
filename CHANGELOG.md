@@ -6,13 +6,15 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - Upgraded to _Apache Spark 2.1.1_ to get the fix for SPARK-19857.
+ - Added SQL box variants with up to 10 inputs. (The long-term plan is to have a single box that can
+   take any number of inputs.)
+ - Brand colors used in several new places, for consistent styling.
+ - Users can now set SQL box summaries.
+ - SQL boxes can optionally persist their outputs.
+ - Train a decision tree classification model can use String attributes.
+ - A number of minor bugfixes and improvements. Thanks for the feedback!
 
-### 2.0-beta-3
-
- - _Add rank attribute_ can be used on String attributes.
-
-### 2.0-beta-1
+### 2.0.0
 
  - Replaced LynxKite projects with more powerful and flexible workspaces. Workspaces allow you to
    express full workflows, structure your work, re-use components, and easily navigate your
@@ -20,10 +22,13 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - LynxKite 2.0 is incompatible with the 1.x series in the sense that 1.x instances can only be
    upgraded to 2.0 with the loss of all LynxKite state. (External data, such as Parquet files on
    HDFS, would survive.)
- - The remote API is temporarily not available.
- - Renamed several operations to have uniform imperative names. E.g. _"Example graph"_ became
-   _"Create example graph"_.
- - New operation _"Segment by Vector attribute"_ is added.
+ - The remote API has completely changed.
+ - The list of operations has changed. Several new operations have been added, many have been
+   renamed, and some have been deleted.
+
+### 1.14.1
+
+ - Upgraded to _Apache Spark 2.1.1_ to get the fix for SPARK-19857.
 
 ### 1.14.0
 

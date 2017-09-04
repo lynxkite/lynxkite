@@ -1,8 +1,16 @@
 ### SQL1
 
-Executes an SQL query on its input, which can be either a project or a table. Outputs a table.
+Executes a SQL query on a single input, which can be either a project or a table. Outputs a table.
+If the input is a table, it is available in the query as `input`. For example:
 
-====
-[[sql]] SQL query::
-The query. For the syntax see the section on <<sql-box>>.
-====
+```
+select * from input
+```
+
+If the input is a project, its internal tables are available directly.
+
+:prefix:
+:maybe-tick:
+include::{g}[tag=sql-box]
+:prefix!:
+:maybe-tick!:

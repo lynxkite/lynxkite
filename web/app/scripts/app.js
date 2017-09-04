@@ -92,7 +92,7 @@ angular
       // (The injector is used to avoid the circular dependency detection.)
       $injector.get('util').post('/ajax/jsError', {
         url: window.location.href,
-        stack: error.stack,
+        stack: error.stack || '',
       });
     };
   })

@@ -19,7 +19,6 @@ angular.module('biggraph')
       link: function(scope, element) {
         scope.workspace = undefined;
         scope.selection = new SelectionModel();
-        scope.clipboard = [];
         scope.dragMode = window.localStorage.getItem('drag_mode') || 'pan';
         scope.selectedBoxIds = [];
         scope.movedBoxes = undefined;
@@ -29,7 +28,7 @@ angular.module('biggraph')
         scope.pulledPlug = undefined;
         // The last known position of the mouse, expressed in logical
         // workspace coordinates.
-        scope.mouseLogical = undefined;
+        scope.mouseLogical = { x: 300, y: 300 };
         scope.popups = [];
         scope.movedPopup = undefined;
 
@@ -55,8 +54,8 @@ angular.module('biggraph')
         var workspaceX = 0;
         var workspaceY = 0;
         var workspaceZoom = 0;
-        var mouseX = 0;
-        var mouseY = 0;
+        var mouseX = 300;
+        var mouseY = 300;
         var svgElement = element.find('svg');
         var svgOffset = svgElement.offset();
         function zoomToScale(z) { return Math.exp(z * 0.001); }
@@ -444,15 +443,57 @@ angular.module('biggraph')
           }
         };
 
-        scope.copyBoxes = function() {
-          scope.clipboard = angular.copy(scope.selectedBoxes());
+        scope.drawingBoardHasFocus = function() {
+          // The svg tag cannot be focused apparently, but we don't want to hijack copy and paste
+          // events from things like input fields.
+          return document.activeElement.tagName === "BODY";
         };
 
-        scope.pasteBoxes = function() {
-          var pos = addLogicalMousePosition({ pageX: 0, pageY: 0});
-          var added = scope.workspace.pasteFromClipboard(scope.clipboard, pos);
+        scope.copyBoxes = function(e) {
+          if (!scope.drawingBoardHasFocus()) {
+            return;
+          }
+          var data = JSON.stringify(
+            scope.selectedBoxes().map(function(box) { return box.instance; }),
+            null,
+            2);
+          e.clipboardData.setData('text/plain', data);
+          e.preventDefault();
+        };
+
+        scope.pasteBoxes = function(e) {
+          if (!scope.drawingBoardHasFocus()) {
+            return;
+          }
+          var data = e.clipboardData.getData('Text');
+          try {
+            var boxes = JSON.parse(data);
+          } catch (err) {
+            var jData = { clipboard: data };
+            var message = 'Cannot create boxes from clipboard. (Not in JSON format)';
+            util.error(message, jData);
+            /* eslint-disable no-console */
+            console.err(message, err);
+            return;
+          }
+          try {
+            var added = scope.workspace.pasteFromData(boxes, getMouseLogical(-50, -50));
+          } catch (err) {
+            var someJson = { clipboard: data };
+            message = 'Cannot parse boxes from clipboard';
+            util.error(message, someJson);
+            /* eslint-disable no-console */
+            console.error(message, err);
+            return;
+          }
           scope.selectedBoxIds = added.map(function(box) { return box.id; });
         };
+
+        var wrappedCopyBoxes = wrapCallback(scope.copyBoxes);
+        var wrappedPasteBoxes = wrapCallback(scope.pasteBoxes);
+
+        window.addEventListener('copy', wrappedCopyBoxes);
+        window.addEventListener('paste', wrappedPasteBoxes);
 
         scope.deleteBoxes = function(boxIds) {
           var popups = scope.popups.slice();
@@ -490,14 +531,13 @@ angular.module('biggraph')
           scope.selectedBoxIds = [b.customBox.id];
           b.promise.then(success, error);
         };
-
         var hk = hotkeys.bindTo(scope);
         hk.add({
-          combo: 'mod+c', description: 'Copy boxes',
-          callback: function() { scope.copyBoxes(); } });
+          // Only here for the tooltip.
+          combo: 'mod+c', description: 'Copy boxes', callback: function() {} });
         hk.add({
-          combo: 'mod+v', description: 'Paste boxes',
-          callback: function() { scope.pasteBoxes(); } });
+          // Only here for the tooltip.
+          combo: 'mod+v', description: 'Paste boxes', callback: function() {} });
         hk.add({
           combo: 'mod+z', description: 'Undo',
           callback: function() { scope.workspace.undo(); } });
@@ -545,6 +585,10 @@ angular.module('biggraph')
           scope.$apply(function() {
             var z1 = zoomToScale(workspaceZoom);
             workspaceZoom -= delta;
+            // Enforce a maximal zoom where the icons are not yet pixelated.
+            workspaceZoom = Math.min(workspaceZoom, 1000 * Math.log(4 / 3));
+            // Enforce a minimal zoom where boxes are still visible.
+            workspaceZoom = Math.max(workspaceZoom, 1000 * Math.log(1 / 50));
             var z2 = zoomToScale(workspaceZoom);
             // Maintain screen-coordinates of logical point under the mouse.
             workspaceX = mouseX - (mouseX - workspaceX) * z2 / z1;
@@ -569,6 +613,8 @@ angular.module('biggraph')
           event = event.originalEvent;
           event.preventDefault();
           addLogicalMousePosition(event);
+          event.logicalX -= 50;
+          event.logicalY -= 50;
           var file = event.dataTransfer.files[0];
           var op = 'Import CSV';
           if (file.name.match(/\.json$/i)) {
@@ -585,8 +631,9 @@ angular.module('biggraph')
           uploadFile(file).then(function(filename) {
             box.parameters.filename = filename;
             return util.post('/ajax/importBox', box);
-          }).then(function(guid) {
-            box.parameters.imported_table = guid;
+          }).then(function(response) {
+            box.parameters.imported_table = response.guid;
+            box.parameters.last_settings = response.parameterSettings;
             scope.workspace.saveWorkspace();
           }).catch(function() {
             scope.workspace.deleteBoxes([box.id]);
@@ -617,20 +664,37 @@ angular.module('biggraph')
 
         scope.$on('$destroy', function() {
           scope.workspace.stopProgressUpdate();
+          window.removeEventListener('copy', wrappedCopyBoxes);
+          window.removeEventListener('paste', wrappedPasteBoxes);
         });
 
-        // TODO: We could generate these with tinycolor from the color names.
-        scope.filters = {
-          black: '0.2 0.2 0.2 0 0   0.2 0.2 0.2 0 0   0.2 0.2 0.2 0 0   0 0 0 1 0',
-          blue: '0 0 0 0 0   0.4 0.4 0.4 0 0   0.6 0.6 0.6 0 0   0 0 0 1 0',
-          green: '0.2 0.2 0.2 0 0   0.4 0.4 0.4 0 0   0 0 0 0 0   0 0 0 1 0',
-          lightblue: '0.2 0.2 0.2 0 0   0.6 0.6 0.6 0 0   0.8 0.8 0.8 0 0   0 0 0 1 0',
-          magenta: '0.5 0.5 0.5 0 0   0 0 0 0 0   0.5 0.5 0.5 0 0   0 0 0 1 0',
-          natural: '1 0 0 0 0   0 1 0 0 0   0 0 1 0 0   0 0 0 1 0',
-          pink: '0.8 0.8 0.8 0 0   0.4 0.4 0.4 0 0   0.4 0.4 0.4 0 0   0 0 0 1 0',
-          red: '0.6 0.6 0.6 0 0   0 0 0 0 0   0 0 0 0 0   0 0 0 1 0',
-          yellow: '0.6 0.6 0.6 0 0   0.4 0.4 0.4 0 0   0 0 0 0 0   0 0 0 1 0',
-        };
+        // Box colors come as strings from the backend. We map them to feColorMatrix matrices that
+        // get applied to the grayscale icon images. This function builds the mapping.
+        function makeFilters() {
+          // The red, green, blue factors.
+          var colors = [
+            ['black', 0.2, 0.2, 0.2],
+            ['blue', 0, 0.4, 0.6],
+            ['green', 0.2, 0.4, 0],
+            ['pink', 0.7, 0.3, 0.4],
+            ['orange', 0.6, 0.2, 0],
+            ['purple', 0.3, 0.1, 0.9],
+            ['yellow', 0.6, 0.4, 0],
+          ];
+          var filters = {};
+          for (var i = 0; i < colors.length; ++i) {
+            var c = colors[i];
+            var name = c[0]; var r = c[1]; var g = c[2]; var b = c[3];
+            filters[name] = (
+                (r + ' ').repeat(3) + '0 0 ' +
+                (g + ' ').repeat(3) + '0 0 ' +
+                (b + ' ').repeat(3) + '0 0   0 0 0 1 0');
+          }
+          // The "natural" filter leaves the colors alone. This is used for user-specified images.
+          filters.natural = '1 0 0 0 0   0 1 0 0 0   0 0 1 0 0   0 0 0 1 0';
+          return filters;
+        }
+        scope.filters = makeFilters();
 
         scope.bezier = function(x1, y1, x2, y2) {
           return ['M', x1, y1, 'C', x1 + 100, y1, ',', x2 - 100, y2, ',', x2, y2].join(' ');
@@ -653,14 +717,19 @@ angular.module('biggraph')
 
         scope.$on('create box under mouse', createBoxUnderMouse);
         function createBoxUnderMouse(event, operationId) {
-          addAndSelectBox(operationId, {logicalX: mouseX - 50, logicalY: mouseY - 50});
+          addAndSelectBox(operationId, getMouseLogical(-50, -50));
         }
 
         // This is separate from scope.addOperation because we don't have a mouse event here,
         // which makes using the onMouseDown function pretty difficult.
-        function addAndSelectBox(id, location, options) {
-          var box = scope.workspace.addBox(id, location, options);
+        function addAndSelectBox(id, pos, options) {
+          var box = scope.workspace.addBox(id, { logicalX: pos.x, logicalY: pos.y }, options);
           scope.selectedBoxIds = [box.id];
+        }
+
+        function getMouseLogical(offx, offy) {
+          var z = zoomToScale(workspaceZoom);
+          return { x: (mouseX - workspaceX) / z + offx, y: (mouseY - workspaceY) / z + offy };
         }
       }
     };

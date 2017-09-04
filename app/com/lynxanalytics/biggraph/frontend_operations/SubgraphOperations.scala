@@ -30,7 +30,7 @@ class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       }
 
       // Creating derived attribute based on rnd and ratio parameter.
-      val startingDistance = rnd.deriveX[Double](s"x < ${ratio} ? 0.0 : undefined")
+      val startingDistance = rnd.deriveX[Double](s"if (x < ${ratio}) Some(0.0) else None")
 
       // Constant unit length for all edges.
       val edgeLength = project.edgeBundle.const(1.0)

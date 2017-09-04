@@ -229,24 +229,6 @@ angular.module('biggraph').directive('entrySelector',
                   { from: p, to: trashDir + '/' + p, overwrite: true }).then(scope.reload);
             }
           },
-          editConfig: function(name, config, type) {
-            if (config.class.includes('SQL')) {
-              scope.showSQL = true;
-              $anchorScroll('global-sql-box');
-              $timeout(function () {
-                scope.$broadcast('fill sql-box from config and clear sql result', name, config, type);
-              });
-              return;
-            } else {
-              scope.startTableImport();
-              $timeout(function () {
-                $anchorScroll('import-table');
-                var fullName = name.split('/');
-                var relativeName = fullName[fullName.length - 1];
-                scope.$broadcast('fill import from config', config, relativeName, type);
-              });
-            }
-          },
           renameMenuItemLabel: 'Rename or move...'
         };
 

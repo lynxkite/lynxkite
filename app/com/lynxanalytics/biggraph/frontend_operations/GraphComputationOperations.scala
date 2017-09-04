@@ -1,7 +1,6 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
-import com.lynxanalytics.biggraph.JavaScript
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.graph_operations
@@ -102,11 +101,9 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       }
       // http://arxiv.org/pdf/1310.6753v1.pdf
       val normalizedDispersion = {
-        val op = graph_operations.DeriveJSDouble(
-          JavaScript("Math.pow(disp, 0.61) / (emb + 5)"),
-          Seq("disp", "emb"))
-        op(op.attrs, graph_operations.VertexAttributeToJSValue.seq(
-          dispersion, embeddedness)).result.attr.entity
+        graph_operations.DeriveScala.derive[Double](
+          "math.pow(disp, 0.61) / (emb + 5)",
+          Seq("disp" -> dispersion, "emb" -> embeddedness))
       }
       // TODO: recursive dispersion
       project.newEdgeAttribute(params("name"), dispersion, help)
@@ -120,6 +117,40 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     def apply() = {
       val op = graph_operations.Embeddedness()
       project.newEdgeAttribute(params("name"), op(op.es, project.edgeBundle).result.embeddedness, help)
+    }
+  })
+
+  register("Compute hyperbolic edge probability")(new ProjectTransformation(_) {
+    params ++= List(
+      Choice("radial", "Radial coordinate",
+        options = FEOption.unset +: project.vertexAttrList[Double]),
+      Choice("angular", "Angular coordinate",
+        options = FEOption.unset +: project.vertexAttrList[Double]))
+    def enabled = project.hasEdgeBundle && FEStatus.assert(
+      project.vertexAttrList[Double].size >= 2, "Not enough vertex attributes.")
+    def apply() = {
+      val result = {
+        val degree = {
+          val op = graph_operations.OutDegree()
+          op(op.es, project.edgeBundle).result.outDegree
+        }
+        val clus = {
+          val op = graph_operations.ApproxClusteringCoefficient(8)
+          op(op.vs, project.vertexSet)(
+            op.es, project.edgeBundle).result.clustering
+        }
+        assert(params("radial") != FEOption.unset.id, "The radial parameter must be set.")
+        assert(params("angular") != FEOption.unset.id, "The angular parameter must be set.")
+        val radAttr = project.vertexAttributes(params("radial"))
+        val angAttr = project.vertexAttributes(params("angular"))
+        val op = graph_operations.HyperbolicEdgeProbability()
+        op(op.vs, project.vertexSet)(op.es, project.edgeBundle
+        )(op.radial, radAttr.runtimeSafeCast[Double]
+        )(op.angular, angAttr.runtimeSafeCast[Double]
+        )(op.degree, degree)(op.clustering, clus).result
+      }
+      project.newEdgeAttribute("hyperbolic_edge_probability", result.edgeProbability,
+        "hyperbolic edge probability")
     }
   })
 
@@ -248,6 +279,31 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
+  register("Map hyperbolic coordinates")(new ProjectTransformation(_) {
+    params ++= List(
+      RandomSeed("seed", "Seed"))
+    def enabled = project.hasEdgeBundle
+    def apply() = {
+      val result = {
+        val direction = Direction("all neighbors", project.edgeBundle)
+        val degree = {
+          val op = graph_operations.OutDegree()
+          op(op.es, direction.edgeBundle).result.outDegree
+        }
+        val clus = {
+          val op = graph_operations.ApproxClusteringCoefficient(8)
+          op(op.vs, project.vertexSet)(
+            op.es, direction.edgeBundle).result.clustering
+        }
+        val op = graph_operations.HyperMap(params("seed").toLong)
+        op(op.vs, project.vertexSet)(op.es, direction.edgeBundle
+        )(op.degree, degree)(op.clustering, clus).result
+      }
+      project.newVertexAttribute("radial", result.radial)
+      project.newVertexAttribute("angular", result.angular)
+    }
+  })
+
   register(
     "Predict attribute by viral modeling")(new ProjectTransformation(_) with SegOp {
       def addSegmentationParameters = params ++= List(
@@ -294,8 +350,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
         parent.scalars(s"$prefix $targetName coverage initial") = coverage
 
         var timeOfDefinition = {
-          val op = graph_operations.DeriveJSDouble(JavaScript("0"), Seq("attr"))
-          op(op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr.entity
+          graph_operations.DeriveScala.derive[Double]("0.0", Seq("attr" -> train))
         }
 
         // iterative prediction
@@ -319,18 +374,16 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
               .runtimeSafeCast[Double]
           }
           val segStdDevDefined = {
-            val op = graph_operations.DeriveJSDouble(
-              JavaScript(s"""
-                deviation <= $maxDeviation &&
-                defined / ids >= ${params("min_ratio_defined")} &&
-                defined >= ${params("min_num_defined")}
-                ? deviation
-                : undefined"""),
-              Seq("deviation", "ids", "defined"))
-            op(
-              op.attrs,
-              graph_operations.VertexAttributeToJSValue.seq(segStdDev, segSizes, segTargetCount))
-              .result.attr
+            graph_operations.DeriveScala.derive[Double](
+              s"""
+                if (deviation <= $maxDeviation &&
+                  defined / ids >= ${params("min_ratio_defined")} &&
+                  defined >= ${params("min_num_defined")}) {
+                  Some(deviation)
+                } else {
+                  None
+                }""",
+              Seq("deviation" -> segStdDev, "ids" -> segSizes, "defined" -> segTargetCount))
           }
           project.newVertexAttribute(
             s"${prefix}_${targetName}_standard_deviation_after_iteration_$i",
@@ -350,12 +403,9 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
             op(op.attr, train)(op.role, roles).result
           }
           val error = {
-            val op = graph_operations.DeriveJSDouble(
-              JavaScript("Math.abs(test - train)"), Seq("test", "train"))
-            val mae = op(
-              op.attrs,
-              graph_operations.VertexAttributeToJSValue.seq(
-                parted.test.entity, partedTrain.test.entity)).result.attr
+            val mae = graph_operations.DeriveScala.derive[Double](
+              "math.abs(test - train)",
+              Seq("test" -> parted.test, "train" -> partedTrain.test))
             aggregate(AttributeWithAggregator(mae, "average"))
           }
           val coverage = {
@@ -369,10 +419,8 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
             error
 
           timeOfDefinition = {
-            val op = graph_operations.DeriveJSDouble(
-              JavaScript(i.toString), Seq("attr"))
-            val newDefinitions = op(
-              op.attrs, graph_operations.VertexAttributeToJSValue.seq(train)).result.attr
+            val newDefinitions = graph_operations.DeriveScala.derive[Double](
+              s"$i.0", Seq("attr" -> train))
             unifyAttributeT(timeOfDefinition, newDefinitions)
           }
         }

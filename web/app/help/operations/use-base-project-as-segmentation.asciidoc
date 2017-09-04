@@ -1,4 +1,4 @@
-### "Use base project as segmentation
+### Use base project as segmentation
 
 Creates a new segmentation which is a copy of the base project. Also creates segmentation links
 between the original vertices and their corresponding vertices in the segmentation.

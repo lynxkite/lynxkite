@@ -80,7 +80,7 @@ object AttributeWithWeightedAggregator {
         graph_operations.Aggregator.MaxByDouble[T]())
       case "by_min_weight" => AttributeWithAggregator(
         graph_operations.JoinAttributes.run(
-          graph_operations.DeriveJS.negative(weight), attr),
+          graph_operations.DeriveScala.negative(weight), attr),
         graph_operations.Aggregator.MaxByDouble[T]())
       case "weighted_sum" => AttributeWithAggregator(
         graph_operations.JoinAttributes.run(

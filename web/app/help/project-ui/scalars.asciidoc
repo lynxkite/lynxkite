@@ -1,0 +1,7 @@
+## Scalars
+
+Scalars are data that correspond to the whole graph.
+
+For example, you can compute the average of any numeric vertex attribute with
+<<aggregate-vertex-attribute-globally>>. This average will show up as a scalar in the output
+project.

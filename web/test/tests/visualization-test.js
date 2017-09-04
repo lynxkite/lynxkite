@@ -1,55 +1,9 @@
 'use strict';
 
-module.exports = function() {};
-
 var fs = require('fs');
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
-  // A matcher for lists of objects that ignores fields not present in the reference.
-  // Example use:
-  //   expect([{ a: 1, b: 1234 }, { a: 2, b: 2345 }]).toConcur([{ a: 1 }, { a: 2 }]);
-  // Constraints in strings are also accepted for numerical values. E.g. '<5'.
-  // Objects are recursively checked.
-  function addConcurMatcher() {
-    jasmine.addMatchers({
-      toConcur: function(util, customEqualityTesters) {
-        return { compare: function(actual, expected) {
-          function match(actual, expected) {
-            if (expected === null) {
-              return actual === null;
-            } else if (typeof expected === 'object') {
-              var keys = Object.keys(expected);
-              for (var i = 0; i < keys.length; ++i) {
-                var av = actual[keys[i]];
-                var ev = expected[keys[i]];
-                if (!match(av, ev)) {
-                  return false;
-                }
-              }
-              return true;
-            } else if (typeof expected === 'string' && expected[0] === '<') {
-              return actual < parseFloat(expected.slice(1));
-            } else if (typeof expected === 'string' && expected[0] === '>') {
-              return actual > parseFloat(expected.slice(1));
-            } else {
-              return util.equals(actual, expected, customEqualityTesters);
-            }
-          }
-
-          if (actual.length !== expected.length) {
-            return { pass: false };
-          }
-          for (var i = 0; i < actual.length; ++i) {
-            if (!match(actual[i], expected[i])) {
-              return { pass: false };
-            }
-          }
-          return { pass: true };
-        }};
-      }});
-  }
-
   // Moves all positions horizontally so that the x coordinate of the leftmost
   // position becomes zero. (Inputs and outputs string lists.)
   // Shifts in the x coordinate can happen when a second visualization is added, or due to
@@ -126,7 +80,7 @@ module.exports = function(fw) {
     'test-example workspace with visualization open',
     'sampled mode attribute visualizations',
     function() {
-      addConcurMatcher();
+      lib.addConcurMatcher();
       //editor.left.toggleSampledVisualization();
 
       var expectedEdges = [
@@ -328,7 +282,7 @@ module.exports = function(fw) {
     'test-example workspace with visualization open',
     'visualize as slider',
     function() {
-      addConcurMatcher();
+      lib.addConcurMatcher();
       name.visualizeAs('label');
       age.visualizeAs('slider');
       var RED = 'rgb(161, 53, 53)';
@@ -404,7 +358,7 @@ module.exports = function(fw) {
     'test-example workspace with visualization open',
     'bucketed mode attribute visualizations',
     function() {
-      addConcurMatcher();
+      lib.addConcurMatcher();
       editor.left.toggleBucketedVisualization();
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur([{ src: 0, dst: 0 }]);
@@ -446,7 +400,7 @@ module.exports = function(fw) {
     'test-example workspace with visualization open',
     'visualization for two open projects',
     function() {
-      addConcurMatcher();
+      lib.addConcurMatcher();
       name.visualizeAs('label');
       var leftPositions;
       visualization.graphData().then(function(graph) {
@@ -504,7 +458,7 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'visualization context menu',
     function() {
-      addConcurMatcher();
+      lib.addConcurMatcher();
       lib.left.toggleSampledVisualization();
       name.visualizeAs('label');
       lib.visualization.elementByLabel('Eve').click();
@@ -543,7 +497,7 @@ module.exports = function(fw) {
     'test-example project with example graph',
     'visualization save/restore',
     function() {
-      addConcurMatcher();
+      lib.addConcurMatcher();
       lib.left.toggleSampledVisualization();
       // Set centers count to a non-default value.
       centersToken.click();

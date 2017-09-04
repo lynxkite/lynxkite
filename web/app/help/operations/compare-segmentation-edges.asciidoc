@@ -3,7 +3,7 @@
 Compares the edge sets of two segmentations and computes _precision_ and _recall_.
 In order to make this work, the edges of the both segmentation graphs should be
 matchable against each other. Therefore, this operation only allows comparing
-segmentations which were created using the <<Copy graph into a segmentation>> operation
+segmentations which were created using the <<Use base project as segmentation>> operation
 from the same project. (More precisely, a one to one correspondence is needed between
 the vertices of both segmentations and the base project.)
 

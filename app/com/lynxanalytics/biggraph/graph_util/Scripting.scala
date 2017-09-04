@@ -98,8 +98,8 @@ object Scripting {
     }
 
     def deriveX[S: TypeTag](expression: String): Attribute[S] = {
-      graph_operations.DeriveJS.deriveFromAttributes[S](
-        expression, Seq("x" -> self), self.vertexSet)
+      graph_operations.DeriveScala.deriveAndInferReturnType(
+        expression, Seq("x" -> self), self.vertexSet).runtimeSafeCast[S]
     }
   }
 
@@ -143,6 +143,8 @@ object Scripting {
   implicit class RichTable(self: Table)(implicit manager: MetaGraphManager) {
     def toAttributes =
       graph_operations.TableToAttributes.run(self)
+    def saved =
+      graph_operations.SaveTable.run(self)
   }
 
   // Take the union of edge bundles that are parallel, that is that are going between the same

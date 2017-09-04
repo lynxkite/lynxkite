@@ -6,7 +6,7 @@ class SegmentByVectorAttributeOperationTest extends OperationsTestBase {
   test("Segment by vector attribute - vector of doubles") {
     val project = box("Create example graph")
       .box("Derive vertex attribute",
-        Map("type" -> "Vector of Doubles", "output" -> "vector", "expr" -> "[1, 2]"))
+        Map("output" -> "vector", "expr" -> "Vector(1.0, 2.0)"))
       .box("Segment by Vector attribute", Map(
         "name" -> "segment",
         "attr" -> "vector")).project
@@ -18,7 +18,7 @@ class SegmentByVectorAttributeOperationTest extends OperationsTestBase {
   test("Segment by vector attribute - vector of strings") {
     val project = box("Create example graph")
       .box("Derive vertex attribute",
-        Map("type" -> "Vector of Strings", "output" -> "vector", "expr" -> "[name]"))
+        Map("output" -> "vector", "expr" -> "Vector(name)"))
       .box("Segment by Vector attribute", Map(
         "name" -> "segment",
         "attr" -> "vector")).project

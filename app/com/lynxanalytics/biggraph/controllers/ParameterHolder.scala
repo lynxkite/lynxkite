@@ -19,12 +19,14 @@
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import play.api.libs.json.JsObject
+
 import scala.util._
 
 class ParameterHolder(context: Operation.Context) {
-  val metas = collection.mutable.Buffer[OperationParameterMeta]()
-  val metaMap = collection.mutable.Map[String, OperationParameterMeta]()
-  val errors = collection.mutable.Buffer[Throwable]()
+  private val metas = collection.mutable.Buffer[OperationParameterMeta]()
+  private val metaMap = collection.mutable.Map[String, OperationParameterMeta]()
+  private val errors = collection.mutable.Buffer[Throwable]()
 
   def apply(name: String): String = {
     if (context.box.parametricParameters.contains(name)) {
@@ -79,7 +81,7 @@ class ParameterHolder(context: Operation.Context) {
     assert(dups.isEmpty, s"Duplicate parameter: ${dups.mkString(", ")}")
     val paramIds = metaMap.keySet
     val keys = context.box.parameters.keySet.union(context.box.parametricParameters.keySet)
-    val extraIds = keys &~ paramIds
+    val extraIds = keys &~ paramIds // keys diff paramIds
     assert(extraIds.isEmpty,
       s"""Extra parameters found: ${extraIds.mkString(", ")} is not in ${paramIds.mkString(", ")}""")
     for (meta <- metas) {
@@ -93,4 +95,6 @@ class ParameterHolder(context: Operation.Context) {
     assertNoErrors()
     metas.map(m => m.id -> this(m.id)).toMap
   }
+
+  def getMetaMap = metaMap.toMap
 }

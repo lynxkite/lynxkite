@@ -1,7 +1,0 @@
-### Export edge attributes to database
-
-Creates a new database table and writes the selected edge attributes into it.
-
-====
-include::{g}[tag=database-export]
-====

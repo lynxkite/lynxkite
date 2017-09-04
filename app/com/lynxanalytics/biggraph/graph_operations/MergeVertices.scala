@@ -74,7 +74,7 @@ case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], 
     segmentIdToAttr.persist(spark.storage.StorageLevel.DISK_ONLY)
     val attrToSegmentId = segmentIdToAttr.map(_.swap).sortUnique(partitioner)
     // Join the segment ids with the original vertex ids using the attribute.
-    val matching = HybridRDD(byAttr, partitioner, even = true).lookup(attrToSegmentId).map {
+    val matching = HybridRDD.of(byAttr, partitioner, even = true).lookup(attrToSegmentId).map {
       case (_, (vid, groupId)) => vid -> Edge(vid, groupId)
     }.sortUnique(partitioner)
 

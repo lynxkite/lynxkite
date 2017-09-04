@@ -20,6 +20,8 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 import play.api.libs.json
 
+case class ImportBoxResponse(guid: String, parameterSettings: String)
+
 // FrameSettings holds details for creating an ObjectFrame.
 trait FrameSettings {
   def name: String
@@ -66,7 +68,7 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
       // Maps the relative table names used in the sql query with the global name
       val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
       val pathAndTableName = tableNames.mapValues(wholePath => {
-        val split = wholePath.split('|')
+        val split = wholePath.split('.')
         (split.head, split.tail)
       })
       val snapshotsAndInternalTables = pathAndTableName.mapValues {
@@ -80,12 +82,10 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
         case (name, (state, tablePath)) if state.isTable => (name, ProtoTable(state.table))
         case (name, (state, tablePath)) if state.isProject =>
           val rootViewer = state.project.viewer
-          val protoTable = rootViewer.getSingleProtoTable(tablePath.mkString("|"))
+          val protoTable = rootViewer.getSingleProtoTable(tablePath.mkString("."))
           (name, protoTable)
       }
-      val minimizedProtoTables = ProtoTable.minimize(sql, protoTables)
-      val tables = minimizedProtoTables.mapValues(protoTable => protoTable.toTable)
-      val result = ExecuteSQL.run(sql, tables)
+      val result = ExecuteSQL.run(sql, protoTables)
       import Scripting._
       result.df
     }
@@ -135,20 +135,6 @@ case class SQLExportToJdbcRequest(
   assert(validModes.contains(mode), s"Mode ($mode) must be one of $validModes.")
 }
 case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
-case class SQLCreateViewRequest(
-    name: String, privacy: String, dfSpec: DataFrameSpec, overwrite: Boolean) extends ViewRecipe with FrameSettings {
-  override def createDataFrame(
-    user: User, context: SQLContext)(
-      implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame =
-    dfSpec.createDataFrame(user, context)
-
-  override def notes: String = dfSpec.sql
-}
-
-object SQLCreateViewRequest extends FromJson[SQLCreateViewRequest] {
-  import com.lynxanalytics.biggraph.serving.FrontendJson.fSQLCreateView
-  override def fromJson(j: JsValue): SQLCreateViewRequest = json.Json.fromJson(j).get
-}
 
 object FileImportValidator {
   def checkFileHasContents(hadoopFile: HadoopFile): Unit = {
@@ -187,26 +173,17 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
 
-  def saveView[T <: ViewRecipe with FrameSettings: json.Writes](
-    user: serving.User, recipe: T): FEOption = {
-    SQLController.saveView(
-      recipe.notes,
-      user,
-      recipe.name,
-      recipe.privacy, recipe.overwrite, recipe)
-  }
-
   import com.lynxanalytics.biggraph.serving.FrontendJson._
-  def importBox(user: serving.User, box: Box) = async[String] {
+  def importBox(user: serving.User, box: Box) = async[ImportBoxResponse] {
     val op = ops.opForBox(
       user, box, inputs = null, workspaceParameters = null).asInstanceOf[ImportOperation]
+    val parameterSettings = op.settingsString()
     val df = op.getDataFrame(SQLController.defaultContext(user))
     val table = ImportDataFrame.run(df)
     dataManager.getFuture(table) // Start importing in the background.
-    table.gUID.toString
+    val guid = table.gUID.toString
+    ImportBoxResponse(guid, parameterSettings)
   }
-
-  def createViewDFSpec(user: serving.User, spec: SQLCreateViewRequest) = saveView(user, spec)
 
   def getTableBrowserNodesForBox(
     user: serving.User, inputTables: Map[String, ProtoTable], path: String): TableBrowserNodeResponse = {
@@ -284,7 +261,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
         getProjectTables(frame.path, state.project.viewer, pathTail)
       } else {
         // The path identifies a table within a snapshot of a project kind.
-        val protoTable = state.project.viewer.getSingleProtoTable(pathTail.mkString("|"))
+        val protoTable = state.project.viewer.getSingleProtoTable(pathTail.mkString("."))
         getColumnsFromSchema(protoTable.schema)
       }
     } else {
@@ -301,7 +278,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val implicitTables = viewer.getProtoTables.map(_._1).toSeq.map {
       name =>
         TableBrowserNode(
-          absolutePath = (Seq(path.toString) ++ subPath ++ Seq(name)).mkString("|"),
+          absolutePath = (Seq(path.toString) ++ subPath ++ Seq(name)).mkString("."),
           name = name,
           objectType = "table")
     }
@@ -309,7 +286,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
       segmentation =>
         TableBrowserNode(
           absolutePath =
-            (Seq(path.toString) ++ subPath ++ Seq(segmentation.segmentationName)).mkString("|"),
+            (Seq(path.toString) ++ subPath ++ Seq(segmentation.segmentationName)).mkString("."),
           name = segmentation.segmentationName,
           objectType = "segmentation"
         )
@@ -361,31 +338,23 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   // TODO: Remove code duplication
-  def getTableSample(table: Table, sampleRows: Int = 10) = async[GetTableOutputResponse] {
+  def getTableSample(table: Table, sampleRows: Int) = async[GetTableOutputResponse] {
     val columns = table.schema.toList.map { field =>
       field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
     }
     import Scripting._
     val df = table.df
-    GetTableOutputResponse(
-      header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) },
-      data = SQLHelper.toSeqRDD(df).take(sampleRows).map {
-        row =>
-          row.toSeq.toList.zip(columns).map {
-            case (null, field) => DynamicValue("null", defined = false)
-            case (item, (name, tt)) => DynamicValue.convert(item)(tt)
-          }
-      }.toList
-    )
-  }
-
-  def exportSQLQueryToTable(
-    user: serving.User, request: SQLExportToTableRequest) = async[Unit] {
-    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
-    SQLController.saveTable(
-      df, s"From ${request.dfSpec.project} by running ${request.dfSpec.sql}",
-      user, request.table, request.privacy, request.overwrite,
-      importConfig = Some(TypedJson.createFromWriter(request).as[json.JsObject]))
+    val header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) }
+    val rdd = SQLHelper.toSeqRDD(df)
+    val local = if (sampleRows < 0) rdd.collect else rdd.take(sampleRows)
+    val data = local.map {
+      row =>
+        row.toSeq.toList.zip(columns).map {
+          case (null, field) => DynamicValue("null", defined = false)
+          case (item, (name, tt)) => DynamicValue.convert(item)(tt)
+        }
+    }.toList
+    GetTableOutputResponse(header, data)
   }
 
   def exportSQLQueryToCSV(
@@ -454,7 +423,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     file.assertWriteAllowedFrom(user)
     df.write.format(format).options(options).save(file.resolvedName)
   }
-
 }
 object SQLController {
   def stringOnlySchema(columns: Seq[String]) = {
@@ -471,26 +439,6 @@ object SQLController {
     val entry = DirectoryEntry.fromName(tableName)
     entry.assertParentWriteAllowedFrom(user)
     entry
-  }
-
-  def saveTable(
-    df: spark.sql.DataFrame,
-    notes: String,
-    user: serving.User,
-    tableName: String,
-    privacy: String,
-    overwrite: Boolean = false,
-    importConfig: Option[json.JsObject] = None)(
-      implicit metaManager: MetaGraphManager,
-      dataManager: DataManager): FEOption = metaManager.synchronized {
-    ???
-  }
-
-  def saveView[T <: ViewRecipe: json.Writes](
-    notes: String, user: serving.User, name: String, privacy: String, overwrite: Boolean, recipe: T)(
-      implicit metaManager: MetaGraphManager,
-      dataManager: DataManager) = {
-    ???
   }
 
   // Every query runs in its own SQLContext for isolation.

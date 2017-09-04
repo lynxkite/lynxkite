@@ -136,7 +136,6 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
   register("Derive vertex attribute")(new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
-      Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
       Code("expr", "Value", defaultValue = "", language = "javascript"))
@@ -150,24 +149,14 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       assert(params("output").nonEmpty, "Please set an output attribute name.")
       val expr = params("expr")
       val vertexSet = project.vertexSet
-      val namedAttributes = JSUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
-      val namedScalars = JSUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
+      val namedAttributes =
+        ScalaUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
+      val namedScalars = ScalaUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val onlyOnDefinedAttrs = params("defined_attrs").toBoolean
 
-      val result = params("type") match {
-        case "String" =>
-          graph_operations.DeriveJS.deriveFromAttributes[String](
-            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
-        case "Double" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Double](
-            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
-        case "Vector of Strings" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Vector[String]](
-            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
-        case "Vector of Doubles" =>
-          graph_operations.DeriveJS.deriveFromAttributes[Vector[Double]](
-            expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
-      }
+      val result = graph_operations.DeriveScala.deriveAndInferReturnType(
+        expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
+
       project.newVertexAttribute(params("output"), result, expr + help)
     }
   })
@@ -182,29 +171,34 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
   })
 
   register(
-    "Fill vertex attribute with constant default value")(new ProjectTransformation(_) {
-      params ++= List(
-        Choice(
-          "attr", "Vertex attribute",
-          options = project.vertexAttrList[String] ++ project.vertexAttrList[Double]),
-        Param("def", "Default value"))
+    "Fill vertex attributes with constant default values")(new ProjectTransformation(_) {
+      params += new DummyParam("text", "Attributes:", "Default values:")
+      params ++= project.vertexAttrList.map {
+        attr => Param(s"fill_${attr.id}", attr.id)
+      }
       def enabled = FEStatus.assert(
         (project.vertexAttrList[String] ++ project.vertexAttrList[Double]).nonEmpty,
         "No vertex attributes.")
+      val attrParams: Map[String, String] = params.toMap.collect {
+        case (name, value) if name.startsWith("fill_") && value.nonEmpty => (name.stripPrefix("fill_"), value)
+      }
       override def summary = {
-        val name = params("attr")
-        s"Fill vertex attribute '$name' with constant default value"
+        val fillStrings = attrParams.map {
+          case (name, const) => s"${name} with ${const}"
+        }
+        s"Fill ${fillStrings.mkString(", ")}"
       }
       def apply() = {
-        val attr = project.vertexAttributes(params("attr"))
-        val paramDef = params("def")
-        val op: graph_operations.AddConstantAttribute[_] =
-          graph_operations.AddConstantAttribute.doubleOrString(
-            isDouble = attr.is[Double], paramDef)
-        val default = op(op.vs, project.vertexSet).result
-        project.newVertexAttribute(
-          params("attr"), unifyAttribute(attr, default.attr.entity),
-          project.viewer.getVertexAttributeNote(params("attr")) + s" (filled with default $paramDef)" + help)
+        for ((name, const) <- attrParams.toMap) {
+          val attr = project.vertexAttributes(name)
+          val op: graph_operations.AddConstantAttribute[_] =
+            graph_operations.AddConstantAttribute.doubleOrString(
+              isDouble = attr.is[Double], const)
+          val default = op(op.vs, project.vertexSet).result
+          project.newVertexAttribute(
+            name, unifyAttribute(attr, default.attr.entity),
+            project.viewer.getVertexAttributeNote(name) + s" (filled with default $const)" + help)
+        }
       }
     })
 

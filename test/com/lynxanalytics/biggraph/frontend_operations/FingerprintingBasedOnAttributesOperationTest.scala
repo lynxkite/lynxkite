@@ -11,15 +11,13 @@ class FingerprintingBasedOnAttributesOperationTest extends OperationsTestBase {
       "attr" -> "id",
       "src" -> "src",
       "dst" -> "dst"), Seq(vertices, edges))
-      // Turn empty strings into "undefined".
+      // Turn empty strings into None.
       .box("Derive vertex attribute", Map(
         "output" -> "email",
-        "type" -> "String",
-        "expr" -> "email ? email : undefined"))
+        "expr" -> "if (email.nonEmpty) Some(email) else None"))
       .box("Derive vertex attribute", Map(
         "output" -> "name",
-        "type" -> "String",
-        "expr" -> "name ? name : undefined"))
+        "expr" -> "if (name.nonEmpty) Some(name) else None"))
       .box("Fingerprint based on attributes", Map(
         "leftName" -> "email",
         "rightName" -> "name",

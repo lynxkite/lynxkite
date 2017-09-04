@@ -22,6 +22,7 @@ object TypeTagUtil {
 
   def optionTypeTag[T: TypeTag] = typeTag[Option[T]]
   def arrayTypeTag[T: TypeTag] = typeTag[Array[T]]
+  def vectorTypeTag[T: TypeTag] = typeTag[Vector[T]]
   def tuple2TypeTag[T1: TypeTag, T2: TypeTag] = typeTag[Tuple2[T1, T2]]
   // Call mapTypeTag with explicit parameters to make sure the key and value are not switched.
   def mapTypeTag[K, V](implicit kt: TypeTag[K], vt: TypeTag[V]) = typeTag[Map[K, V]]
