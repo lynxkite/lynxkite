@@ -259,7 +259,7 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
     val e = intercept[org.apache.spark.SparkException] {
       derived.rdd.collect
     }
-    assert(e.getCause.getMessage ==
-      """access denied ("java.util.PropertyPermission" "user.dir" "read")""")
+    assert(e.getCause.getMessage.contains(
+      """access denied ("java.util.PropertyPermission" "user.dir" "read")"""))
   }
 }
