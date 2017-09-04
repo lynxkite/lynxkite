@@ -425,7 +425,7 @@ abstract class ProjectOutputOperation(context: Operation.Context) extends SmartO
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     params.validate()
-    assert(enabled.enabled, enabled.disabledReason)
+    enabled.check()
     apply()
     makeOutput(project)
   }
@@ -441,7 +441,7 @@ abstract class ProjectTransformation(
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     params.validate()
     val before = project.rootEditor.viewer
-    assert(enabled.enabled, enabled.disabledReason)
+    enabled.check()
     apply()
     updateDeltas(project.rootEditor, before)
     makeOutput(project)
