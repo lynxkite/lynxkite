@@ -277,6 +277,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[com.lynxanalytics.biggraph.graph_operations.ProbabilityOrdering])
     kryo.register(Class.forName("[Lorg.apache.spark.sql.types.Metadata;"))
     kryo.register(classOf[org.apache.spark.ml.tree.CategoricalSplit])
+    kryo.register(classOf[org.apache.spark.sql.execution.datasources.FileFormatWriter$WriteTaskResult])
 
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
