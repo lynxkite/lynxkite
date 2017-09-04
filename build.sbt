@@ -3,7 +3,6 @@ import com.typesafe.sbt.packager.Keys.bashScriptExtraDefines
 name := "biggraph"
 
 javaOptions in Test := Seq(
-  "-Dsun.io.serialization.extendedDebugInfo=true",
   "-Dbiggraph.default.partitions.per.core=1",
   "-Djava.security.policy=conf/security.policy",
   "-XX:PermSize=256M")
