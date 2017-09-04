@@ -227,7 +227,7 @@ object FrontendJson {
   }
   implicit val fDownloadFileRequest = json.Json.format[DownloadFileRequest]
 
-  implicit val fFEStatus = json.Json.format[FEStatus]
+  implicit val fFEStatus = FEStatus.format
   implicit val fFEOption = json.Json.format[FEOption]
   implicit val wFEOperationParameterMeta = json.Json.writes[FEOperationParameterMeta]
   implicit val fCustomOperationParameterMeta = json.Json.format[CustomOperationParameterMeta]

@@ -10,15 +10,34 @@ import play.api.libs.json
 
 import scala.collection.mutable
 
-case class FEStatus(enabled: Boolean, disabledReason: String = "") {
+case class FEStatus(
+    enabled: Boolean,
+    disabledReason: String = "",
+    exception: Option[Throwable] = None) {
+  assert(enabled == exception.isEmpty, toString)
   def ||(other: => FEStatus) = if (enabled) this else other
   def &&(other: => FEStatus) = if (enabled) other else this
+  def check(): Unit = exception match {
+    case Some(exception) => throw new AssertionError(disabledReason, exception)
+    case None => assert(enabled, disabledReason)
+  }
 }
 object FEStatus {
   val enabled = FEStatus(true)
   def disabled(disabledReason: String) = FEStatus(false, disabledReason)
+  def from(t: Throwable) = FEStatus(false, t match {
+    case ae: AssertionError => ae.getMessage
+    case _ => t.toString
+  }, Some(t))
   def assert(condition: Boolean, disabledReason: => String) =
     if (condition) enabled else disabled(disabledReason)
+  implicit val format = new json.Format[FEStatus] {
+    // Lose the exception reference in serialization.
+    def reads(j: json.JsValue): json.JsResult[FEStatus] =
+      json.JsSuccess(FEStatus((j \ "enabled").as[Boolean], (j \ "disabledReason").as[String]))
+    def writes(s: FEStatus): json.JsValue =
+      json.Json.obj("enabled" -> s.enabled, "disabledReason" -> s.disabledReason)
+  }
 }
 
 // Something with a display name and an internal ID.

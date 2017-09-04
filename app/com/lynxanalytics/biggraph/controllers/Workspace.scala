@@ -230,11 +230,9 @@ case class Box(
     try f catch {
       case ex: Throwable =>
         log.info(s"Failed to execute $this:", ex)
-        val msg = ex match {
-          case ae: AssertionError => ae.getMessage
-          case _ => ex.toString
-        }
-        allOutputsWithError(meta, msg)
+        meta.outputs.map {
+          o => output(o) -> BoxOutputState(BoxOutputKind.Error, None, FEStatus.from(ex))
+        }.toMap
     }
   }
 }
@@ -333,8 +331,8 @@ case class BoxOutputState(
   def isVisualization = kind == BoxOutputKind.Visualization
 
   def projectState: CommonProjectState = {
-    assert(success.enabled, success.disabledReason)
     import CheckpointRepository.fCommonProjectState
+    success.check()
     assert(isProject, s"Tried to access '$kind' as 'project'.")
     state.get.as[CommonProjectState]
   }
@@ -344,26 +342,27 @@ case class BoxOutputState(
   }
 
   def table(implicit manager: graph_api.MetaGraphManager): graph_api.Table = {
-    assert(success.enabled, success.disabledReason)
+    success.check()
     assert(isTable, s"Tried to access '$kind' as 'table'.")
     manager.table((state.get \ "guid").as[String].asUUID)
   }
 
   def plot(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
+    success.check()
     assert(isPlot, s"Tried to access '$kind' as 'Plot'.")
-    assert(success.enabled, success.disabledReason)
     manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)
   }
 
   def exportResult(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[String] = {
+    success.check()
     assert(isExportResult, s"Tried to access '$kind' as 'exportResult'.")
-    assert(success.enabled, success.disabledReason)
     manager.scalarOf[String]((state.get \ "guid").as[String].asUUID)
   }
 
   def visualization(implicit manager: graph_api.MetaGraphManager): VisualizationState = {
     import UIStatusSerialization.fTwoSidedUIStatus
     import CheckpointRepository.fCommonProjectState
+    success.check()
     assert(isVisualization, s"Tried to access '$kind' as 'visualization'.")
     val projectState = (state.get \ "project").as[CommonProjectState]
     VisualizationState(
@@ -393,7 +392,7 @@ case class BoxOutputState(
 }
 
 object WorkspaceJsonFormatters {
-  implicit val fFEStatus = json.Json.format[FEStatus]
+  implicit val fFEStatus = FEStatus.format
   implicit val fBoxOutput = json.Json.format[BoxOutput]
   implicit val fBoxOutputState = json.Json.format[BoxOutputState]
   implicit val fBox = json.Json.format[Box]
