@@ -41,6 +41,11 @@ trait ProtoTable {
   protected def maybeSelect(columns: Iterable[String]): ProtoTable
   // Creates the promised table.
   def toTable: Table
+  // For Spark SQL plans.
+  def getRelation: LocalRelation = {
+    val fields = schema.fields
+    LocalRelation(fields.head, fields.tail: _*)
+  }
 }
 
 object ProtoTable {
@@ -53,18 +58,19 @@ object ProtoTable {
   // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
   // necessary to support the query.
   def minimize(optimizedPlan: LogicalPlan,
-               protoTables: Map[Alias, (TableName, ProtoTable)]): Map[TableName, ProtoTable] = {
+               protoTables: Map[TableName, ProtoTable]): Map[TableName, ProtoTable] = {
     val tables = getRequiredFields(optimizedPlan)
-    val selectedTables = tables.map(f => {
-      val (name, table) = protoTables(f._1)
-      val columns = f._2.flatMap(parseExpression)
-      val selectedTable = if (columns.contains("*")) {
-        table
-      } else {
-        table.maybeSelect(columns)
-      }
-      name -> selectedTable
-    }).toMap
+    val selectedTables = tables.map {
+      case (name, expressions) =>
+        val table = protoTables(name)
+        val columns = expressions.flatMap(parseExpression)
+        val selectedTable = if (columns.contains("*")) {
+          table
+        } else {
+          table.maybeSelect(columns)
+        }
+        name -> selectedTable
+    }.toMap
     selectedTables
   }
 
