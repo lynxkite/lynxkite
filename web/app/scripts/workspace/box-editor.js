@@ -28,10 +28,6 @@ angular.module('biggraph')
               scope.loadBoxMeta(scope.boxId);
             });
 
-        scope.plainParamValues = {};
-        scope.parametricParamValues = {};
-        scope.parametricFlags = {};
-
         scope.loadBoxMeta = function(boxId) {
           if (!scope.workspace) {
             return;
@@ -107,56 +103,16 @@ angular.module('biggraph')
             scope.boxMeta = boxMeta;
           }
           scope.error = undefined;
-          if (!box) {
-            return;
-          }
-
-          // Make a copy of the parameter values.
-          var paramValues = Object.assign({}, box.instance.parameters);
-          var parametricParamValues = Object.assign({}, box.instance.parametricParameters);
-          var parametricFlags = {};
-
-          // Copy defaults for unset parameters.
-          for (var i = 0; i < boxMeta.parameters.length; ++i) {
-            var p = boxMeta.parameters[i];
-            var id = p.id;
-            if (paramValues[id] !== undefined ||
-                parametricParamValues[id] !== undefined) {
-              // Parameter p is not unset
-            } else if (p.options.length === 0) {
-              paramValues[id] = p.defaultValue;
-            } else if (p.multipleChoice) {
-              paramValues[id] = '';
-            } else {
-              paramValues[id] = p.options[0].id;
-            }
-          }
-
-          // Re-establish parametric flags.
-          for (var k = 0; k < boxMeta.parameters.length; ++k) {
-            var id2 = boxMeta.parameters[k].id;
-            if (parametricParamValues[id2] !== undefined) {
-              parametricFlags[id2] = true;
-            } else {
-              parametricFlags[id2] = false;
-            }
-          }
-
-          if (!angular.equals(paramValues, scope.paramValues) ||
-              !angular.equals(parametricParamValues, scope.parametricParamValues) ||
-              !angular.equals(parametricFlags, scope.parametricFlags)) {
-            scope.plainParamValues = paramValues;
-            scope.parametricParamValues = parametricParamValues;
-            scope.parametricFlags = parametricFlags;
-          }
+          scope.parameters = angular.copy(scope.box.instance.parameters);
+          scope.parametricParameters = angular.copy(scope.box.instance.parametricParameters);
         };
 
         function onBlurNow() {
           if (scope.box) {
             scope.workspace.updateBox(
-                scope.box.instance.id,
-                scope.plainParamValues,
-                scope.parametricParamValues);
+                scope.boxId,
+                scope.parameters,
+                scope.parametricParameters);
           }
         }
 

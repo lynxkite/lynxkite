@@ -7,7 +7,7 @@ the edges can be attached to them.
 *Example use case*
 
 If you have one table for the vertices (e.g. subscribers) and another
-for the edges (e.g., calls), you import the first table with the <<Import vertices>>
+for the edges (e.g., calls), you import the first table with the <<Use table as vertices>>
 operation and then use this operation to add the edges.
 
 *Parameters*

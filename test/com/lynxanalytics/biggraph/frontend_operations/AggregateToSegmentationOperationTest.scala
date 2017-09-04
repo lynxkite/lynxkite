@@ -9,7 +9,7 @@ class AggregateToSegmentationOperationTest extends OperationsTestBase {
       .box("Find connected components", Map("name" -> "cc", "directions" -> "require both directions"))
       .box("Aggregate to segmentation",
         Map(
-          "apply_to_project" -> "|cc",
+          "apply_to_project" -> ".cc",
           "aggregate_age" -> "average", "aggregate_name" -> "count", "aggregate_gender" -> "majority_100",
           "aggregate_id" -> "", "aggregate_location" -> "", "aggregate_income" -> ""))
       .project.segmentation("cc")

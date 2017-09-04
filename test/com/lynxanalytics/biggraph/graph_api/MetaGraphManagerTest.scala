@@ -5,7 +5,7 @@ import java.util.UUID
 import org.apache.commons.io.FileUtils
 import org.scalatest.FunSuite
 
-import com.lynxanalytics.biggraph.controllers.ProjectFrame
+import com.lynxanalytics.biggraph.controllers.DirectoryEntry
 
 class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
   test("Basic application flow works as expected.") {
@@ -111,10 +111,10 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     // Load the test data using a fake JsonMigration class.
     val m = MetaRepositoryManager(dir, new JsonMigration(
       Map(
-        "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 1,
+        "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 1,
         "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 3).withDefaultValue(0),
       Map(
-        "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 0 -> identity,
+        "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 0 -> identity,
         // The input data has version 1. The upgrader for version 0 will not be called.
         "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
         // From version 1 to version 2 we added the "arg" argument.
@@ -130,7 +130,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
     // The old projects point to the successfully migrated entities.
-    val p = ProjectFrame.fromName("alma")(m).viewer
+    val p = DirectoryEntry.fromName("alma")(m).asSnapshotFrame.getState.project(m)
     assert(p.vertexSet.toStringStruct.toString ==
       "vertices of (CreateSomeGraph of arg=migrated)")
     assert(p.edgeBundle.toStringStruct.toString ==
@@ -157,10 +157,10 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     val ex = intercept[Exception] {
       MetaRepositoryManager(dir, new JsonMigration(
         Map(
-          "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 1,
+          "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 1,
           "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0),
         Map(
-          "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 0 -> identity,
+          "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 0 -> identity,
           // The input data has version 1. The upgrader for version 0 will not be called.
           "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
           // Bad migration from version 1 to version 2.
@@ -175,10 +175,10 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     // Try again with a corrected upgrader.
     val m = MetaRepositoryManager(dir, new JsonMigration(
       Map(
-        "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 1,
+        "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 1,
         "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 2).withDefaultValue(0),
       Map(
-        "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 0 -> identity,
+        "com.lynxanalytics.biggraph.graph_api.WorkspaceFrame" -> 0 -> identity,
         // The input data has version 1. The upgrader for version 0 will not be called.
         "com.lynxanalytics.biggraph.graph_api.CreateSomeGraph" -> 0 -> { j => ??? },
         // Correct migration from version 1 to version 2.
@@ -189,7 +189,7 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
     assert(new File(dir, "2").exists)
     assert(new File(dir, "2/version").exists)
     // The old projects point to the successfully migrated entities.
-    val p = ProjectFrame.fromName("alma")(m).viewer
+    val p = DirectoryEntry.fromName("alma")(m).asSnapshotFrame.getState.project(m)
     assert(p.vertexSet.toStringStruct.toString ==
       "vertices of (CreateSomeGraph of arg=migrated)")
     assert(p.segmentation("ms").belongsTo.toStringStruct.toString ==

@@ -17,17 +17,17 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
-  register("Comment", List(), List())(new DecoratorOperation(_) {
+  register("Comment", List(), List(), icon = "commenting")(new DecoratorOperation(_) {
     params += Code("comment", "Comment", language = "plain_text")
   })
 
-  register("Input", "black_down-pointing_triangle", List(), List("input"))(
+  register("Input", List(), List("input"), "black_down-pointing_triangle")(
     new SimpleOperation(_) {
       params += Param("name", "Name")
       override def summary = s"Input ${params("name")}"
     })
 
-  register("Output", "black_up-pointing_triangle", List("output"), List())(
+  register("Output", List("output"), List(), "black_up-pointing_triangle")(
     new SimpleOperation(_) {
       params += Param("name", "Name")
       override def summary = s"Output ${params("name")}"
@@ -84,7 +84,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       private def withoutEdgeMarker(s: String) = s.stripSuffix(edgeMarker)
 
       // We're using the same project editor for both
-      // |segmentation and |segmentation!edges
+      // .segmentation and .segmentation!edges
       protected def attributeEditor(input: String): AttributeEditor = {
         val fullInputDesc = params("apply_to_" + input)
         val edgeEditor = fullInputDesc.endsWith(edgeMarker)
@@ -182,6 +182,12 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
           (source.kind == VertexAttributeKind) && (source.projectEditor.segmentationNames.nonEmpty)
       }
 
+      private def edgesCanBeCarriedOver = {
+        (target.kind == VertexAttributeKind) &&
+          (source.kind == VertexAttributeKind) &&
+          (source.projectEditor.hasEdgeBundle.enabled)
+      }
+
       if (compatible && attributesAreAvailable) {
         params += TagList("attrs", "Attributes", FEOption.list(source.names.toList))
       }
@@ -189,31 +195,43 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         params += TagList("segs", "Segmentations", FEOption.list(source.projectEditor.segmentationNames.toList))
       }
 
+      if (compatible && edgesCanBeCarriedOver) {
+        params += Choice("edge", "Copy edges", FEOption.list("no", "yes"))
+      }
+
       def enabled = (FEStatus(hasTargetIdSet, "No target input")
         && FEStatus(hasSourceIdSet, "No source input")
         && FEStatus(compatible, "Inputs are not compatible"))
+
+      private def copyAttributesViaCommonAncestor(target: AttributeEditor,
+                                                  source: AttributeEditor,
+                                                  fromSourceToAncestor: Seq[EdgeBundle],
+                                                  fromAncestorToTarget: Seq[EdgeBundle],
+                                                  attributeNames: Seq[String]): Unit = {
+        for (attrName <- attributeNames) {
+          val attr = source.attributes(attrName)
+          val note = source.getElementNote(attrName)
+          val attrCommonAncestor =
+            fromSourceToAncestor.foldLeft(attr) {
+              (a, b) =>
+                val eb = b.reverse
+                graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, eb)
+            }
+          val newAttr =
+            fromAncestorToTarget.foldLeft(attrCommonAncestor) {
+              (a, b) =>
+                graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, b)
+            }
+          target.newAttribute(attrName, newAttr, note)
+        }
+      }
 
       def apply() {
         val fromSourceToAncestor = chain.get.chain2
         val fromAncestorToTarget = chain.get.chain1.reverse
         if (attributesAreAvailable) {
-          for (attrName <- splitParam("attrs")) {
-            val attr = source.attributes(attrName)
-            val note = source.getElementNote(attrName)
-            val attrCommonAncestor =
-              fromSourceToAncestor.foldLeft(attr) {
-                (a, b) =>
-                  val eb = b.reverse
-                  graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, eb)
-              }
-            val newAttr =
-              fromAncestorToTarget.foldLeft(attrCommonAncestor) {
-                (a, b) =>
-                  graph_operations.PulledOverVertexAttribute.pullAttributeVia(a, b)
-              }
-
-            target.newAttribute(attrName, newAttr, note)
-          }
+          copyAttributesViaCommonAncestor(target, source,
+            fromSourceToAncestor, fromAncestorToTarget, splitParam("attrs"))
         }
 
         if (segmentationsAreAvailable) {
@@ -241,6 +259,37 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
             targetSegmentation.belongsTo = newBelongsTo
           }
         }
+
+        if (edgesCanBeCarriedOver && params("edge") == "yes") {
+          val targetEditor = target.projectEditor
+          val sourceEditor = source.projectEditor
+          val sourceEdges = sourceEditor.edgeBundle
+
+          val commonAncestorEdges = fromSourceToAncestor.foldLeft(sourceEdges) {
+            (graphEdges, chainBundle) =>
+              val op = InducedEdgeBundle(induceSrc = true, induceDst = true)
+              op(op.srcMapping, chainBundle)(op.dstMapping, chainBundle)(op.edges, graphEdges).result.induced
+          }
+          val newEdges = fromAncestorToTarget.foldLeft(commonAncestorEdges) {
+            (graphEdges, chainBundle) =>
+              val op = InducedEdgeBundle(induceSrc = true, induceDst = true)
+              val reversed = chainBundle.reverse
+              op(op.srcMapping, reversed)(op.dstMapping, reversed)(op.edges, graphEdges).result.induced
+          }
+          val sourceEdgeEditor = new EdgeAttributeEditor(sourceEditor)
+          val targetEdgeEditor = new EdgeAttributeEditor(targetEditor)
+          targetEdgeEditor.projectEditor.edgeBundle = newEdges
+          val edgeChain = computeChains(sourceEdgeEditor.idSet.get, targetEdgeEditor.idSet.get)
+          assert(edgeChain.isDefined) // This should not hit us, right? We have just created a path.
+          copyAttributesViaCommonAncestor(
+            targetEdgeEditor,
+            sourceEdgeEditor,
+            edgeChain.get.chain1,
+            edgeChain.get.chain2.reverse,
+            sourceEdgeEditor.names
+          )
+        }
+
         project.state = target.projectEditor.rootEditor.state
       }
     }
@@ -393,23 +442,28 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
   def registerSQLOp(name: String, inputs: List[String]): Unit = {
     registerOp(name, defaultIcon, category, inputs, List("table"), new TableOutputOperation(_) {
       override val params = new ParameterHolder(context) // No "apply_to" parameters.
+      params += Param("summary", "Summary", defaultValue = "SQL")
       params += Code("sql", "SQL", defaultValue = "select * from vertices", language = "sql",
         enableTableBrowser = true)
+      params += Choice("persist", "Persist result", options = FEOption.noyes)
+      override def summary = params("summary")
       def enabled = FEStatus.enabled
       override def getOutputs() = {
         params.validate()
         val sql = params("sql")
         val protoTables = this.getInputTables()
-        val tables = ProtoTable.minimize(sql, protoTables).mapValues(_.toTable)
-        val result = graph_operations.ExecuteSQL.run(sql, tables)
-        makeOutput(result)
+        val result = graph_operations.ExecuteSQL.run(sql, protoTables)
+        if (params("persist") == "yes") makeOutput(result.saved)
+        else makeOutput(result)
       }
     })
   }
 
   registerSQLOp("SQL1", List("input"))
 
-  for (inputs <- 2 to 3) {
-    registerSQLOp(s"SQL$inputs", List("one", "two", "three").take(inputs))
+  for (inputs <- 2 to 10) {
+    val numbers =
+      List("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")
+    registerSQLOp(s"SQL$inputs", numbers.take(inputs))
   }
 }

@@ -1,0 +1,22 @@
+### Compute hyperbolic edge probability
+<<experimental-operation,+++<i class="fa fa-warning"></i>+++ *Warning! Experimental operation.*>>
+
+Adds edge attribute _hyperbolic edge probability_ based on
+hyperbolic distances between vertices. This indicates
+how likely that edge would be to exist if the input graph was
+probability x similarity-grown.
+On a general level it is a metric of *edge strength*.
+Probabilities are guaranteed to be 0 =< p =< 1 .
+Vertices must have two _Double_ vertex attributes to be 
+used as radial and angular coordinates.
+
+====
+[[radial]] Radial::
+The vertex attribute to be used as radial coordinates.
+Should not contain negative values.
+
+[[angular]] Angular::
+The vertex attribute to be used as angular coordinates.
+Values should be 0 - 2 * Pi.
+====
+

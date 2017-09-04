@@ -167,4 +167,39 @@ module.exports = function(fw) {
       lib.workspace.expectConnected('my-custom-box_1', 'project-2', 'pr3', 'project');
     },
     function() {});
+
+  fw.transitionTest(
+    'empty splash',
+    'browse-custom-box',
+    function() {
+      lib.splash.newDirectory('browse-custom-box-dir');
+      lib.splash.popDirectory();
+      lib.splash.openNewWorkspace('browse-custom-box-ws');
+
+      lib.workspace.addBox({
+        id: 'eg1', name: 'Create example graph', x: 0, y: 200 });
+      lib.workspace.selectBoxes(['eg1']);
+      $('#save-selection-as-custom-box').click();
+      lib.submitInlineInput($('#save-selection-as-custom-box-input'),
+        'my-custom-box-to-browse-1');
+
+      lib.workspace.addBox({
+        id: 'eg2', name: 'Create example graph', x: 0, y: 400 });
+      lib.workspace.selectBoxes(['eg2']);
+      $('#save-selection-as-custom-box').click();
+      lib.submitInlineInput($('#save-selection-as-custom-box-input'),
+        'browse-custom-box-dir/my-custom-box-to-browse-2');
+
+      // Check top level elements.
+      var root = lib.workspace.getCustomBoxBrowserTree();
+      var dir = root.$('#browse-custom-box-dir');
+      lib.expectElement(dir);
+      lib.expectElement(root.$('#my-custom-box-to-browse-1'));
+
+      // Test that the custom box in the dir is only present after click.
+      lib.expectNotElement(dir.$('#my-custom-box-to-browse-2'));
+      dir.click();
+      lib.expectElement(dir.$('#my-custom-box-to-browse-2'));
+    },
+    function() {});
 };

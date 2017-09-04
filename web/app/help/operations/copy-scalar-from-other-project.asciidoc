@@ -13,8 +13,8 @@ The name of the other project from where we want to copy a scalar.
 [[sourcescalarname]] Name of the scalar in the other project::
 The name of the scalar in the other project. If it is a simple string, then
 the scalar with that name has to be in the root of the other project. If it is
-a `|`-separated string, then it means a scalar in a segmentation of the other project.
-The syntax for this case is: `seg_1|seg_2|...|seg_n|scalar`.
+a `.`-separated string, then it means a scalar in a segmentation of the other project.
+The syntax for this case is: `seg_1.seg_2.....seg_n.scalar`.
 
 [[destscalarname]] Name for the scalar in this project::
 This will be the name of the copied scalar in this project.

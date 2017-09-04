@@ -1,18 +1,18 @@
 [[global-sql-box]]
-## SQL interface on the workspace browser page
+## SQL for snapshots
 
 There is a SQL interface on the workspace browser page that can be expanded by clicking on the plus
-button and which can be used to make queries to all available snapshots in the current folder
-(those in subfolders included). To refer to the table you want to access, you first need to
+button. It can be used to make queries to all available snapshots in the current folder,
+those in subfolders included. To refer to the table you want to access, you first need to
 provide the path from your current folder to the snapshot, then in case of project snapshots
-use `|` to specify the table you want to access. The table reference must be enclosed between two
+use `.` to specify the table you want to access. The table reference must be enclosed between two
 `{backtick}` characters (_see example below_).
 
 For example, let's say you are in your private folder where you have a subfolder called
 `Premier_League`, in which you have a project snapshot named `Arsenal`. If you want to access the
 vertices table of the Arsenal project snapshot from your private folder, you need to refer to it by
-`{backtick}Premier_League/Arsenal|vertices{backtick}`. In case you are already in the
-`Premier_League` folder, the reference shortens to `{backtick}Arsenal|vertices{backtick}`
+`{backtick}Premier_League/Arsenal.vertices{backtick}`. In case you are already in the
+`Premier_League` folder, the reference shortens to `{backtick}Arsenal.vertices{backtick}`
 
 The SQL interface on the workspace browser page can also be used to reference table snapshots.
 For example, let's say you have a table snapshot called `Players` which has the data of all
@@ -21,9 +21,8 @@ tables in project snapshots: e.g. you can list all Arsenal players with `select 
 {backtick}Players{backtick} where team = "Arsenal"`. Notice that you still need to enclose the
 name of the snapshot between two `{backtick}` symbols.
 
-See the section on <<sql-box>> for more details on the usage of the SQL interface.
+For details about querying project snapshots, see the documentation for the <<sql1>> box.
 
-[[table-browser]]
 ### The table browser
 
 The table browser helps to find available table and column names for the global SQL box or for
@@ -33,4 +32,9 @@ SQL boxes in the workspace. The following hints help with usage:
 * Double click on names works too with the global SQL editor.
 * Click on the icon to expand a directory, a snapshot or a table.
 
+### Exporting results
 
+The first few rows of query results can be inspected in the browser. The full results can be
+exported into files. LynxKite provides a range of export formats. For details about the available
+formats, see the documentation of the <<export-to-csv>>, <<export-to-jdbc>>, <<export-to-json>>,
+<<export-to-orc>>, and <<export-to-parquet>> operations.

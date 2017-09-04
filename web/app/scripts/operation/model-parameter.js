@@ -6,7 +6,6 @@ angular.module('biggraph').directive('modelParameter', function(util) {
     restrict: 'E',
     scope: {
       param: '=', // Parameters of the available models.
-      editable: '=', // Whether this input is editable.
       modelJson: '=', // Input/output: Model configuration in JSON.
     },
     templateUrl: 'scripts/operation/model-parameter.html',
@@ -18,6 +17,11 @@ angular.module('biggraph').directive('modelParameter', function(util) {
         var id = scope.param.payload.attrs[j].id;
         scope.binding[id] = id;
       }
+      scope.getParamsWithMatchingType = function(type) {
+        return scope.param.payload.attrs.filter(function(attr, index) {
+          return scope.param.payload.attrTypes[index] === type;
+        });
+      };
 
       // React to external changes to model.
       util.deepWatch(scope, 'modelJson', function(modelJson) {

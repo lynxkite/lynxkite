@@ -122,10 +122,10 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       if (props.isFunction) {
         // If the mapping has no duplicates we can use the safer hybridLookup.
         if (repartition) {
-          InducedRDD(HybridRDD(inducedRDD.rdd, partitioner, even = true)
+          InducedRDD(HybridRDD.of(inducedRDD.rdd, partitioner, even = true)
             .lookupAndRepartition(mapping.asUniqueSortedRDD), partitioner)
         } else {
-          InducedRDD(HybridRDD(inducedRDD.rdd, partitioner, even = true)
+          InducedRDD(HybridRDD.of(inducedRDD.rdd, partitioner, even = true)
             .lookup(mapping.asUniqueSortedRDD), partitioner)
         }
       } else {

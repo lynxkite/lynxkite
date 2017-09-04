@@ -18,7 +18,7 @@ class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
       val op = AddRandomAttribute(1, "Standard Uniform")
       op(op.vs, vs1).result.attr
     }
-    val personIdAttr = personAttr.deriveX[String](s"(x * ${numPersons}).toFixed()")
+    val personIdAttr = personAttr.deriveX[String](s"(x * ${numPersons}).round.toString")
     val segmentation1 = {
       val op = DoubleBucketing(0.1, true)
       op(op.attr, timeAttr).result

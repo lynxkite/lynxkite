@@ -8,6 +8,9 @@ import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.model
 import play.api.libs.json
 
+import scala.reflect.runtime.universe._
+import scala.reflect._
+
 class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperations(env) {
   import Operation.Implicits._
 
@@ -15,14 +18,19 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   import com.lynxanalytics.biggraph.controllers.OperationParams._
 
+  private def typesOf(attrs: List[FEOption], project: ProjectEditor): List[String] = {
+    attrs.map(a => project.vertexAttributes(a.id).typeTag.tpe.toString)
+  }
+
   register("Classify with model")(new ProjectTransformation(_) {
+    def attrs = project.vertexAttrList[Double] ++ project.vertexAttrList[String]
     def models = project.viewer.models.filter(_._2.isClassification)
     params ++= List(
       Param("name", "The name of the attribute of the classifications"),
-      ModelParams("model", "The parameters of the model", models, project.vertexAttrList[Double]))
+      ModelParams("model", "The parameters of the model", models, attrs, typesOf(attrs, project)))
     def enabled =
       FEStatus.assert(models.nonEmpty, "No classification models.") &&
-        FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
+        FEStatus.assert(attrs.nonEmpty, "No numeric or string vertex attributes.")
     def apply() = {
       assert(params("name").nonEmpty, "Please set the name of attribute.")
       assert(params("model").nonEmpty, "Please select a model.")
@@ -30,13 +38,13 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       val p = json.Json.parse(params("model"))
       val modelName = (p \ "modelName").as[String]
       val modelValue: Scalar[model.Model] = project.scalars(modelName).runtimeSafeCast[model.Model]
-      val features = (p \ "features").as[List[String]].map {
-        name => project.vertexAttributes(name).runtimeSafeCast[Double]
-      }
+      val features = (p \ "features").as[List[String]].map(name => project.vertexAttributes(name))
+      val featureTypes = features.map(f => SerializableType(f.typeTag))
       import model.Implicits._
       val generatesProbability = modelValue.modelMeta.generatesProbability
       val isBinary = modelValue.modelMeta.isBinary
-      val op = graph_operations.ClassifyWithModel(features.size)
+      import scala.language.existentials
+      val op = graph_operations.ClassifyWithModel(modelValue.modelMeta.labelType, featureTypes)
       val result = op(op.model, modelValue)(op.features, features).result
       val classifiedAttribute = result.classification
       project.newVertexAttribute(name, classifiedAttribute,
@@ -46,14 +54,13 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
         project.newVertexAttribute(name + "_certainty", certainty,
           s"probability of predicted class according to ${modelName}")
         if (isBinary) {
-          val probabilityOf0 = graph_operations.DeriveJS.deriveFromAttributes[Double](
-            "classification == 0 ? certainty : 1 - certainty",
-            Seq("certainty" -> certainty, "classification" -> classifiedAttribute),
-            project.vertexSet)
+          val probabilityOf0 = graph_operations.DeriveScala.derive[Double](
+            "if (classification == 0) certainty else 1 - certainty",
+            Seq("certainty" -> certainty, "classification" -> classifiedAttribute))
           project.newVertexAttribute(name + "_probability_of_0", probabilityOf0,
             s"probability of class 0 according to ${modelName}")
-          val probabilityOf1 = graph_operations.DeriveJS.deriveFromAttributes[Double](
-            "1 - probabilityOf0", Seq("probabilityOf0" -> probabilityOf0), project.vertexSet)
+          val probabilityOf1 = graph_operations.DeriveScala.derive[Double](
+            "1 - probabilityOf0", Seq("probabilityOf0" -> probabilityOf0))
           project.newVertexAttribute(name + "_probability_of_1", probabilityOf1,
             s"probability of class 1 according to ${modelName}")
         }
@@ -62,10 +69,11 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
   })
 
   register("Predict with model")(new ProjectTransformation(_) {
+    def attrs = project.vertexAttrList[Double]
     def models = project.viewer.models.filterNot(_._2.isClassification)
     params ++= List(
       Param("name", "The name of the attribute of the predictions"),
-      ModelParams("model", "The parameters of the model", models, project.vertexAttrList[Double]))
+      ModelParams("model", "The parameters of the model", models, attrs, typesOf(attrs, project)))
     def enabled =
       FEStatus.assert(models.nonEmpty, "No regression models.") &&
         FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
@@ -87,7 +95,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
     }
   })
 
-  register("Predict with a neural network (EXPERIMENTAL)")(new ProjectTransformation(_) {
+  register("Predict with a graph neural network")(new ProjectTransformation(_) {
     params ++= List(
       Choice("label", "Attribute to predict", options = project.vertexAttrList[Double]),
       Param("output", "Save as"),
@@ -223,10 +231,11 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
   })
 
   register("Train a decision tree classification model")(new ProjectTransformation(_) {
+    def attrs = project.vertexAttrList[Double] ++ project.vertexAttrList[String]
     params ++= List(
       Param("name", "The name of the model"),
-      Choice("label", "Label", options = project.vertexAttrList[Double]),
-      Choice("features", "Features", options = project.vertexAttrList[Double], multipleChoice = true),
+      Choice("label", "Label", options = attrs),
+      Choice("features", "Features", options = attrs, multipleChoice = true),
       Choice("impurity", "Impurity", options = FEOption.list("entropy", "gini")),
       NonNegInt("maxBins", "Maximum number of bins", default = 32),
       NonNegInt("maxDepth", "Maximum depth of tree", default = 5),
@@ -234,20 +243,22 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       NonNegInt("minInstancesPerNode", "Minimum size of children after splits", default = 1),
       RandomSeed("seed", "Seed"))
     def enabled =
-      FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
+      FEStatus.assert(attrs.nonEmpty, "No numeric or string vertex attributes.")
     def apply() = {
       assert(params("name").nonEmpty, "Please set the name of the model.")
       assert(params("features").nonEmpty, "Please select at least one feature.")
       val labelName = params("label")
       val featureNames = params("features").split(",", -1).sorted
-      val label = project.vertexAttributes(labelName).runtimeSafeCast[Double]
+      val label = project.vertexAttributes(labelName)
       val features = featureNames.map {
-        name => project.vertexAttributes(name).runtimeSafeCast[Double]
+        name => project.vertexAttributes(name)
       }
       val model = {
         val op = graph_operations.TrainDecisionTreeClassifier(
           labelName = labelName,
+          labelType = SerializableType(label.typeTag),
           featureNames = featureNames.toList,
+          featureTypes = features.map(f => SerializableType(f.typeTag)).toList,
           impurity = params("impurity"),
           maxBins = params("maxBins").toInt,
           maxDepth = params("maxDepth").toInt,

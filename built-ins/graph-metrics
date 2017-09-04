@@ -1,0 +1,435 @@
+{
+  "boxes" : [ {
+  "id" : "anchor",
+    "operationId" : "Anchor",
+    "parameters" : {
+    "description" : "Calculates the general metrics of a graph like \naverage degree, etc.\n\nAlso shows information about the Connected Components as well as distribution histograms.\n",
+    "parameters" : "[{\"kind\":\"text\",\"id\":\"CustomPercentile\",\"defaultValue\":\"0.8\",\"$$hashKey\":\"object:1753\"}]",
+    "icon" : "/images/icons/black_medium_square.png"
+    },
+    "x" : -405.9499642976487,
+    "y" : 0.0,
+    "inputs" : { },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Compute-degree_1",
+    "operationId" : "Compute degree",
+    "parameters" : {
+    "apply_to_project" : "",
+    "name" : "odegree",
+    "direction" : "outgoing edges"
+    },
+    "x" : -67.11468696817506,
+    "y" : 762.746548242263,
+    "inputs" : {
+    "project" : {
+      "boxId" : "input-project",
+      "id" : "input"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "input-project",
+    "operationId" : "Input",
+    "parameters" : {
+    "name" : "project"
+    },
+    "x" : -496.140485410232,
+    "y" : 738.2951266670741,
+    "inputs" : { },
+    "parametricParameters" : { }
+  }, {
+    "id" : "output-project",
+    "operationId" : "Output",
+    "parameters" : {
+    "name" : "General Metrics"
+    },
+    "x" : 1351.7726706800315,
+    "y" : 718.1548460520909,
+    "inputs" : {
+    "output" : {
+      "boxId" : "SQL2_7",
+      "id" : "table"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Compute-degree_2",
+    "operationId" : "Compute degree",
+    "parameters" : {
+    "apply_to_project" : "",
+    "name" : "idegree",
+    "direction" : "incoming edges"
+    },
+    "x" : -63.014210089099336,
+    "y" : 410.62527446546426,
+    "inputs" : {
+    "project" : {
+      "boxId" : "input-project",
+      "id" : "input"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Compute-degree_3",
+    "operationId" : "Compute degree",
+    "parameters" : {
+    "apply_to_project" : "",
+    "name" : "adegree",
+    "direction" : "all edges"
+    },
+    "x" : -52.649701021202354,
+    "y" : 280.3149738993578,
+    "inputs" : {
+    "project" : {
+      "boxId" : "input-project",
+      "id" : "input"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Compute-degree_4",
+    "operationId" : "Compute degree",
+    "parameters" : {
+    "apply_to_project" : "",
+    "name" : "sdegree",
+    "direction" : "symmetric edges"
+    },
+    "x" : -60.85872800683232,
+    "y" : 886.684672116515,
+    "inputs" : {
+    "project" : {
+      "boxId" : "input-project",
+      "id" : "input"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Find-connected-components_1",
+    "operationId" : "Find connected components",
+    "parameters" : {
+    "apply_to_project" : "",
+    "name" : "connected_components",
+    "directions" : "ignore directions"
+    },
+    "x" : -56.71762706820966,
+    "y" : 1055.2937490781696,
+    "inputs" : {
+    "project" : {
+      "boxId" : "input-project",
+      "id" : "input"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL1_2",
+    "operationId" : "SQL1",
+    "parameters" : { },
+    "x" : 288.5808923185381,
+    "y" : 411.1482270299063,
+    "inputs" : {
+    "input" : {
+      "boxId" : "Compute-degree_2",
+      "id" : "project"
+    }
+    },
+    "parametricParameters" : {
+    "sql" : "select \n  4 as ID, \n  \"In Degree\" as Attribute, \n  sum(idegree) as Sum, \n  avg(idegree) as Avg, \n  percentile(idegree, 0) as Min, \n  percentile(idegree, 0.05) as `5% percentile`, \n  percentile(idegree, 0.5) as Med, \n  percentile(idegree, 0.95) as `95% percentile`, \n  percentile(idegree, 1) as Max, \n  percentile(idegree, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom vertices"
+    }
+  }, {
+    "id" : "SQL2_1",
+    "operationId" : "SQL2",
+    "parameters" : {
+    "sql" : "select * from `one` \nUNION \nselect * from `two` "
+    },
+    "x" : 529.8522063838773,
+    "y" : 342.3706143027851,
+    "inputs" : {
+    "two" : {
+      "boxId" : "SQL1_2",
+      "id" : "table"
+    },
+    "one" : {
+      "boxId" : "SQL1_1",
+      "id" : "table"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL1_3",
+    "operationId" : "SQL1",
+    "parameters" : { },
+    "x" : 283.9361472871557,
+    "y" : 782.3574700141047,
+    "inputs" : {
+    "input" : {
+      "boxId" : "Compute-degree_1",
+      "id" : "project"
+    }
+    },
+    "parametricParameters" : {
+    "sql" : "select \n  4 as ID, \n  \"Out Degree\" as Attribute, \n  sum(odegree) as Sum, \n  avg(odegree) as Avg, \n  percentile(odegree, 0) as Min, \n  percentile(odegree, 0.05) as `5% percentile`, \n  percentile(odegree, 0.5) as Med, \n  percentile(odegree, 0.95) as `95% percentile`, \n  percentile(odegree, 1) as Max, \n  percentile(odegree, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom vertices"
+    }
+  }, {
+    "id" : "SQL1_4",
+    "operationId" : "SQL1",
+    "parameters" : { },
+    "x" : 277.8776277603912,
+    "y" : 900.7189825281388,
+    "inputs" : {
+    "input" : {
+      "boxId" : "Compute-degree_4",
+      "id" : "project"
+    }
+    },
+    "parametricParameters" : {
+    "sql" : "select \n  6 as ID, \n  \"Sym Degree\" as Attribute, \n  sum(sdegree) as Sum, \n  avg(sdegree) as Avg, \n  percentile(sdegree, 0) as Min, \n  percentile(sdegree, 0.05) as `5% percentile`, \n  percentile(sdegree, 0.5) as Med, \n  percentile(sdegree, 0.95) as `95% percentile`, \n  percentile(sdegree, 1) as Max, \n  percentile(sdegree, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile` \nfrom vertices"
+    }
+  }, {
+    "id" : "SQL2_2",
+    "operationId" : "SQL2",
+    "parameters" : {
+    "sql" : "select * from `one` \nUNION \nselect * from `two` "
+    },
+    "x" : 524.3051786163214,
+    "y" : 864.061290857257,
+    "inputs" : {
+    "one" : {
+      "boxId" : "SQL1_3",
+      "id" : "table"
+    },
+    "two" : {
+      "boxId" : "SQL1_4",
+      "id" : "table"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL2_3",
+    "operationId" : "SQL2",
+    "parameters" : {
+    "sql" : "select * from `one` \nUNION \nselect * from `two` "
+    },
+    "x" : 522.7602206745829,
+    "y" : 571.2720456358218,
+    "inputs" : {
+    "one" : {
+      "boxId" : "SQL1_8",
+      "id" : "table"
+    },
+    "two" : {
+      "boxId" : "SQL1_7",
+      "id" : "table"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL2_5",
+    "operationId" : "SQL2",
+    "parameters" : {
+    "sql" : "select * from `one` \nUNION \nselect * from `two` "
+    },
+    "x" : 753.5063910735081,
+    "y" : 461.820195494299,
+    "inputs" : {
+    "one" : {
+      "boxId" : "SQL2_1",
+      "id" : "table"
+    },
+    "two" : {
+      "boxId" : "SQL2_3",
+      "id" : "table"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL2_6",
+    "operationId" : "SQL2",
+    "parameters" : {
+    "sql" : "select * from `one` \nUNION \nselect * from `two` "
+    },
+    "x" : 731.0822844109917,
+    "y" : 994.8172620739106,
+    "inputs" : {
+    "one" : {
+      "boxId" : "SQL2_2",
+      "id" : "table"
+    },
+    "two" : {
+      "boxId" : "SQL1_5",
+      "id" : "table"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL2_7",
+    "operationId" : "SQL2",
+    "parameters" : { },
+    "x" : 999.6602666584771,
+    "y" : 720.2817648585165,
+    "inputs" : {
+    "one" : {
+      "boxId" : "SQL2_5",
+      "id" : "table"
+    },
+    "two" : {
+      "boxId" : "SQL2_6",
+      "id" : "table"
+    }
+    },
+    "parametricParameters" : {
+    "sql" : "select Attribute, Sum, Avg, Min, `5% percentile`, Med, `95% percentile`, Max, `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom(\nselect * from `one` \nUNION \nselect * from `two`\n)\norder by ID"
+    }
+  }, {
+    "id" : "SQL1_5",
+    "operationId" : "SQL1",
+    "parameters" : { },
+    "x" : 265.65531490680087,
+    "y" : 1096.0622660356826,
+    "inputs" : {
+    "input" : {
+      "boxId" : "Find-connected-components_1",
+      "id" : "project"
+    }
+    },
+    "parametricParameters" : {
+    "sql" : "select \n  7 as ID, \n  \"Connected Components\" as Attribute, \n  count(size) as Sum, \n  avg(size) as Avg, \n  percentile(size, 0) as Min, \n  percentile(size, 0.05) as `5% percentile`, \n  percentile(size, 0.5) as Med, \n  percentile(size, 0.95) as `95% percentile`, \n  percentile(size, 1) as Max, \n  percentile(size, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom\n(select max(size) as size from `connected_components.vertices` group by id)\n"
+    }
+  }, {
+    "id" : "SQL1_8",
+    "operationId" : "SQL1",
+    "parameters" : { },
+    "x" : 293.0,
+    "y" : 532.0,
+    "inputs" : {
+    "input" : {
+      "boxId" : "input-project",
+      "id" : "input"
+    }
+    },
+    "parametricParameters" : {
+    "sql" : "select \n  1 as ID, \n  \"Vertices\" as Attribute, \n  scalars.`!vertex_count` as Sum, \n  double(null) as Avg, \n  double(null) as Min, \n  double(null) as `5% percentile`, \n  double(null) as Med, \n  double(null) as `95% percentile`, \n  double(null) as Max, \n  double(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile` \nfrom scalars"
+    }
+  }, {
+    "id" : "SQL1_7",
+    "operationId" : "SQL1",
+    "parameters" : {
+    "sql" : "select \n  2 as ID, \n  \"Edges\" as Attribute, \n  scalars.`!edge_count` as Sum, \n  double(null) as Avg, \n  double(null) as Min, \n  double(null) as `5% percentile`, \n  double(null) as Med, \n  double(null) as `95% percentile`, \n  double(null) as Max, \n  double(null) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile` \nfrom scalars"
+    },
+    "x" : 284.0,
+    "y" : 647.0,
+    "inputs" : {
+    "input" : {
+      "boxId" : "input-project",
+      "id" : "input"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL1_1",
+    "operationId" : "SQL1",
+    "parameters" : { },
+    "x" : 288.0,
+    "y" : 279.0,
+    "inputs" : {
+    "input" : {
+      "boxId" : "Compute-degree_3",
+      "id" : "project"
+    }
+    },
+    "parametricParameters" : {
+    "sql" : "select \n  3 as ID, \n  \"Degree\" as Attribute, \n  sum(adegree) as Sum, \n  avg(adegree) as Avg, \n  percentile(adegree, 0) as Min, \n  percentile(adegree, 0.05) as `5% percentile`, \n  percentile(adegree, 0.5) as Med, \n  percentile(adegree, 0.95) as `95% percentile`, \n  percentile(adegree, 1) as Max, \n  percentile(adegree, $CustomPercentile) as `${scala.math.round(CustomPercentile.toDouble*100)}% (custom) percentile`\nfrom vertices"
+    }
+  }, {
+    "id" : "Custom-plot_1",
+    "operationId" : "Custom plot",
+    "parameters" : {
+    "plot_code" : "Vegas()\n  .withData(table)\n  .encodeX(\"degrees\", Quant, bin=Bin(maxbins=20.0))\n  .encodeY(\"Vertices\", Quant,  scale= new vegas.spec.Spec.Scale(`type` = Some(ScaleType.Log)) )\n  .mark(Bar)"
+    },
+    "x" : 631.0940838335453,
+    "y" : 3.5922531942784133,
+    "inputs" : {
+    "table" : {
+      "boxId" : "SQL1_9",
+      "id" : "table"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL1_9",
+    "operationId" : "SQL1",
+    "parameters" : {
+    "sql" : "select degrees, count(degrees)-0.01 as Vertices\nfrom\n(select adegree as degrees\nfrom vertices\norder by degrees desc)\ngroup by degrees"
+    },
+    "x" : 297.6615920124063,
+    "y" : -2.496960085144991,
+    "inputs" : {
+    "input" : {
+      "boxId" : "Compute-degree_3",
+      "id" : "project"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Output_1",
+    "operationId" : "Output",
+    "parameters" : {
+    "name" : "Degree Distribution"
+    },
+    "x" : 1325.9873484696325,
+    "y" : 2.050507680113853,
+    "inputs" : {
+    "output" : {
+      "boxId" : "Custom-plot_1",
+      "id" : "plot"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "SQL1_11",
+    "operationId" : "SQL1",
+    "parameters" : {
+    "sql" : "select size as SizeOfComponent, count(size)-0.01 as NumberOfComponents\nfrom\n(select max(size) as size from `connected_components.vertices` group by id)\ngroup by size"
+    },
+    "x" : 266.0080512028443,
+    "y" : 1281.1292432879043,
+    "inputs" : {
+    "input" : {
+      "boxId" : "Find-connected-components_1",
+      "id" : "project"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Custom-plot_3",
+    "operationId" : "Custom plot",
+    "parameters" : {
+    "plot_code" : "Vegas()\n  .withData(table)\n  .encodeX(\"SizeOfComponent\", Quant, bin=Bin(maxbins=20.0))\n  .encodeY(\"NumberOfComponents\", Quant,  scale= new vegas.spec.Spec.Scale(`type` = Some(ScaleType.Log)) )\n  .mark(Bar)"
+    },
+    "x" : 555.4097886263496,
+    "y" : 1277.7389240087218,
+    "inputs" : {
+    "table" : {
+      "boxId" : "SQL1_11",
+      "id" : "table"
+    }
+    },
+    "parametricParameters" : { }
+  }, {
+    "id" : "Output_2",
+    "operationId" : "Output",
+    "parameters" : {
+    "name" : "Component Distribution"
+    },
+    "x" : 1365.6940437843361,
+    "y" : 1267.7958951999615,
+    "inputs" : {
+    "output" : {
+      "boxId" : "Custom-plot_3",
+      "id" : "plot"
+    }
+    },
+    "parametricParameters" : { }
+  } ]
+  }
+    

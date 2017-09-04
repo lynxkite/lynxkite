@@ -12,17 +12,19 @@ Loading export state...
         </value>
     </div>
     <div>
-    <table class="table table-striped table-bordered">
+      <table class="table table-striped table-bordered">
         <tr ng-repeat="(stat, value) in parameters">
             <th> {{ stat }} </th>
             <td>{{ value }}</td>
         </tr>
-    </table>
-    <button  class="col-sm-6 col-sm-offset-3" ng-click="download()"
-             ng-show="status.value.$resolved && !status.value.$error && downloadable"
-             drop-tooltip="Download exported file through browser">
-        Download <i class="glyphicon glyphicon-download"></i>
-    </button>
+      </table>
+      <p class="text-center"
+         ng-show="status.value.$resolved && !status.value.$error && downloadable"
+         drop-tooltip="Download exported file through browser">
+        <a href="{{ downloadLink() }}">
+          Download <i class="glyphicon glyphicon-download"></i>
+        </a>
+      </p>
     </div>
     <display-error caption="Cannot download export." request="status.value"></display-error>
 </div>

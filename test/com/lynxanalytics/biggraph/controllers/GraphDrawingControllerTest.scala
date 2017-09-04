@@ -85,7 +85,7 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
   test("edge diagram with incomplete edge attribute as weight") {
     val g = graph_operations.ExampleGraph()().result
     val incomplete =
-      g.comment.deriveX[Double]("x.indexOf('love') == -1 ? undefined : 1").gUID.toString
+      g.comment.deriveX[Double]("if (x.indexOf(\"love\") == -1) None else Some(1.0)").gUID.toString
     val req = FEGraphRequest(
       vertexSets = Seq(VertexDiagramSpec(
         vertexSetId = g.vertices.gUID.toString,

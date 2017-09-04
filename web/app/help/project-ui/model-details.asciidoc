@@ -1,10 +1,10 @@
 [[model-details]]
 ## Machine learning models
 
-Machine learning models are one of the graph attribute types.
+Machine learning models are one type of scalar.
 They are created by a machine learning operation (for example <<train-linear-regression-model>>)
-and used for prediction with the <<predict-from-model>> operation or for classification with the
-<<classify-vertices-with-a-model>> operation.
+and used for prediction with the <<predict-with-model>> operation or for classification with the
+<<classify-with-model>> operation.
 
 Press the plus button
 (+++<label class="btn btn-default"><i class="glyphicon glyphicon-plus"></i></label>+++)

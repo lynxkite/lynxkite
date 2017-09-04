@@ -35,7 +35,6 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     // request:
     this.backendRequest = undefined;
     this.backendState = undefined;
-    this._updateBoxCatalog();
   }
 
   WorkspaceWrapper.prototype = {
@@ -359,23 +358,29 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       }
     },
 
-    pasteFromClipboard: function(clipboard, currentPosition) {
+    pasteFromData: function(boxes, currentPosition) {
+      var minX = Infinity;
+      var minY = Infinity;
+      for (var i = 0; i < boxes.length; ++i) {
+        var box = boxes[i];
+        if (box.x < minX) { minX = box.x; }
+        if (box.y < minY) { minY = box.y; }
+      }
       var mapping = {};
       var newBoxes = [];
-      for (var i = 0; i < clipboard.length; ++i) {
-        var box = clipboard[i].instance;
-        var diffX = clipboard[i].width;
+      for (i = 0; i < boxes.length; ++i) {
+        box = boxes[i];
         var createdBox = this._addBox(
           box.operationId,
-          currentPosition.logicalX + box.x + 1.1 * diffX,
-          currentPosition.logicalY + box.y + 10);
+          currentPosition.x + box.x - minX,
+          currentPosition.y + box.y - minY);
         createdBox.parameters = box.parameters;
         createdBox.parametricParameters = box.parametricParameters;
         mapping[box.id] = createdBox;
         newBoxes.push(createdBox);
       }
-      for (i = 0; i < clipboard.length; ++i) {
-        var oldBox = clipboard[i].instance;
+      for (i = 0; i < boxes.length; ++i) {
+        var oldBox = boxes[i];
         var newBox = mapping[oldBox.id];
         for (var key in oldBox.inputs) {
           if (!oldBox.inputs.hasOwnProperty(key)) {

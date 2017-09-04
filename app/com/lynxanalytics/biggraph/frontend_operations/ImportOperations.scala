@@ -14,7 +14,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   import Categories.ImportOperations
 
-  override val defaultIcon = "fountain"
+  override val defaultIcon = "upload"
 
   def register(id: String)(factory: Context => ImportOperation): Unit = {
     registerOp(id, defaultIcon, ImportOperations, List(), List("table"), factory)
@@ -31,11 +31,14 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   def simpleFileName(name: String): String = {
     // Drop the hash if this is an upload.
     if (name.startsWith("UPLOAD$")) name.split("/", -1).last.split("\\.", 2).last
+    // Include the directory if the filename is a wildcard.
+    else if (name.split("/", -1).last.contains("*")) name.split("/", -1).takeRight(2).mkString("/")
     else name.split("/", -1).last
   }
 
   register("Import CSV")(new ImportOperation(_) {
     params ++= List(
+      new DummyParam("last_settings", areSettingsStaleReplyMessage()),
       FileParam("filename", "File"),
       Param("columns", "Columns in file"),
       Param("delimiter", "Delimiter", defaultValue = ","),
@@ -85,6 +88,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import JDBC")(new ImportOperation(_) {
     params ++= List(
+      new DummyParam("last_settings", areSettingsStaleReplyMessage()),
       Param("jdbc_url", "JDBC URL"),
       Param("jdbc_table", "JDBC table"),
       Param("key_column", "Key column"),
@@ -95,6 +99,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("connection_properties", "Connection properties"),
       Code("sql", "SQL", language = "sql"),
       ImportedTableParam("imported_table", "Table GUID"))
+
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       JDBCUtil.read(
         context,
@@ -115,6 +120,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   abstract class FileWithSchema(context: Context) extends ImportOperation(context) {
     val format: String
     params ++= List(
+      new DummyParam("last_settings", areSettingsStaleReplyMessage()),
       FileParam("filename", "File"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
@@ -140,6 +146,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
 
   register("Import from Hive")(new ImportOperation(_) {
     params ++= List(
+      new DummyParam("last_settings", areSettingsStaleReplyMessage()),
       FileParam("hive_table", "Hive table"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),

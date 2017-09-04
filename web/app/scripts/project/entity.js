@@ -125,7 +125,9 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
         scope.histogram = util.get('/ajax/histo', q);
         $timeout(function() {
           // The popup may need to move.
-          drop.position();
+          if (drop) {
+            drop.position();
+          }
         }, 0, false);
       }
 

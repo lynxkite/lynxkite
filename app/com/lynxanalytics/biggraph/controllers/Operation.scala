@@ -35,7 +35,8 @@ object FEOperationParameterMeta {
     "imported-table", // A table importing button.
     "parameters", // A whole section defining the parameters of an operation.
     "segmentation", // One of the segmentations of the current project.
-    "visualization") // Describes a two-sided visualization UI state.
+    "visualization", // Describes a two-sided visualization UI state.
+    "dummy") // A piece of text without an input field.
 }
 
 case class FEOperationParameterMeta(
@@ -78,16 +79,16 @@ case class FEOperationSpec(
   parameters: Map[String, String])
 
 case class FEOperationCategory(
-  title: String, icon: String, color: String)
+  title: String, icon: String, color: String, browseByDir: Boolean)
 
 abstract class OperationParameterMeta {
   val id: String
-  val title: String
+  def title: String
   val kind: String
   val defaultValue: String
   val options: List[FEOption]
   val multipleChoice: Boolean
-  val payload: Option[json.JsValue] = None
+  def payload: Option[json.JsValue] = None
 
   // Asserts that the value is valid, otherwise throws an AssertionException.
   def validate(value: String): Unit
@@ -103,6 +104,8 @@ trait Operation {
   def summary: String
   def getOutputs: Map[BoxOutput, BoxOutputState]
   def toFE: FEOperationMeta
+  // Custom logic for operations to remove certain parameters.
+  def cleanParameters(params: Map[String, String]): Map[String, String]
 }
 object Operation {
   case class Category(
@@ -110,18 +113,14 @@ object Operation {
     color: String, // A color class from web/app/styles/operation-toolbox.scss.
     visible: Boolean = true,
     icon: String = "", // Icon class name, or empty for first letter of title.
-    sortKey: String = null) // Categories are ordered by this. The title is used by default.
+    index: Int, // Categories are listed in this order on the UI.
+    // Browse operations in this category using the dir structure. If true, the UI will display the
+    // operations in a tree structure using the '/' character in the operation id as path separator.
+    browseByDir: Boolean = false)
       extends Ordered[Category] {
-    private val safeSortKey = Option(sortKey).getOrElse(title)
-    def compare(that: Category) = this.safeSortKey compare that.safeSortKey
+    def compare(that: Category) = this.index compare that.index
     def toFE: FEOperationCategory =
-      FEOperationCategory(title, addClass(icon), color)
-    // Add main CSS class. E.g. "fa-superpowers" => "fa fa-superpowers".
-    private def addClass(cls: String): String = {
-      val parts = cls.split("-", 2)
-      if (parts.length == 1) cls
-      else s"${parts.head} $cls"
-    }
+      FEOperationCategory(title, icon, color, browseByDir)
   }
 
   type Factory = Context => Operation
@@ -162,7 +161,7 @@ object Operation {
       protected def segmentationsRecursively(
         editor: ProjectEditor, prefix: String = ""): Seq[String] = {
         prefix +: editor.segmentationNames.flatMap { seg =>
-          segmentationsRecursively(editor.segmentation(seg), prefix + "|" + seg)
+          segmentationsRecursively(editor.segmentation(seg), prefix + "." + seg)
         }
       }
       def segmentationsRecursively: List[FEOption] =
@@ -185,7 +184,7 @@ object Operation {
           case (inputName, state) if state.isTable => Seq(inputName -> ProtoTable(state.table))
           case (inputName, state) if state.isProject => state.project.viewer.getProtoTables.map {
             case (tableName, proto) =>
-              val prefix = if (bindInputName) s"$inputName|" else ""
+              val prefix = if (bindInputName) s"$inputName." else ""
               s"$prefix$tableName" -> proto
           }
         }
@@ -202,7 +201,7 @@ trait OperationRegistry {
   val categories = mutable.Map[String, Operation.Category]()
 
   // Default icon for operations.
-  val defaultIcon = "black_medium_square"
+  def defaultIcon = "black_medium_square"
 
   def registerOp(
     id: String,
@@ -263,7 +262,11 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
   }
 
   private val customBoxesCategory = Operation.Category(
-    Workspace.customBoxesCategory, "yellow", icon = "fa-superpowers", sortKey = "zzz")
+    Workspace.customBoxesCategory,
+    "yellow",
+    icon = "superpowers",
+    index = 999,
+    browseByDir = true)
 
   def getCategories(user: serving.User): List[FEOperationCategory] = {
     (atomicCategories.values.toList :+ customBoxesCategory)
@@ -296,6 +299,16 @@ abstract class SimpleOperation(protected val context: Operation.Context) extends
     context.meta.categoryId,
     FEStatus.enabled)
   def getOutputs(): Map[BoxOutput, BoxOutputState] = ???
+  // The common logic for cleaning box params for every operation.
+  // We discard the recorded parameters that are not present among the parameter metas. (It would
+  // be confusing to keep these, since they do not show up on the UI.) The unknown parameters can
+  // be, for example, left over from when the box was previously connected to a different input.
+  def cleanParameters(params: Map[String, String]): Map[String, String] = {
+    val paramsMeta = this.params.getMetaMap
+    cleanParametersImpl(params.filter { case (k, v) => paramsMeta.contains(k) })
+  }
+  // Custom hook for cleaning params for operations to override.
+  def cleanParametersImpl(params: Map[String, String]): Map[String, String] = params
 }
 
 // Adds a lot of conveniences for working with projects and tables.
@@ -370,7 +383,7 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
         case BoxOutputKind.Table =>
           import graph_util.Scripting._
           val t = tableInput(name).toAttributes
-          val project = new RootProjectEditor(RootProjectState.emptyState)
+          val project = new RootProjectEditor(CommonProjectState.emptyState)
           project.vertexSet = t.ids
           project.vertexAttributes = t.columns.mapValues(_.entity)
           project
@@ -404,7 +417,7 @@ abstract class ProjectOutputOperation(context: Operation.Context) extends SmartO
   assert(
     context.meta.outputs == List("project"),
     s"A ProjectOperation must output a project. $context")
-  protected lazy val project: ProjectEditor = new RootProjectEditor(RootProjectState.emptyState)
+  protected lazy val project: ProjectEditor = new RootProjectEditor(CommonProjectState.emptyState)
 
   protected def makeOutput(project: ProjectEditor): Map[BoxOutput, BoxOutputState] = {
     Map(context.box.output(context.meta.outputs(0)) -> BoxOutputState.from(project))
@@ -460,12 +473,59 @@ abstract class TableOutputOperation(context: Operation.Context) extends SmartOpe
 
 abstract class ImportOperation(context: Operation.Context) extends TableOutputOperation(context) {
   import MetaGraphManager.StringAsUUID
-  protected def tableFromParam(name: String): Table = manager.table(params(name).asUUID)
+  protected def tableFromGuid(guid: String): Table = manager.table(guid.asUUID)
+
+  // The set of those parameters that affect the resulting table of the import operation.
+  // The last_settings parameter is only used to check if the settings are stale. The
+  // imported_table is generated from the other parameters and is populated in the frontend so
+  // it is easier to also exclude it.
+  private def currentSettings = params.toMap - "last_settings" - "imported_table"
+
+  // When the /ajax/importBox is called then the response contains the guid of the resulting table
+  // and also this string describing the settings at the moment of the import. On the frontend the
+  // table-kind directive gets this response and uses these two strings to populate the
+  // "imported_table" and "last_settings" parameters respectively.
+  def settingsString(): String = {
+    val realParamsJson = json.Json.toJson(currentSettings)
+    json.Json.prettyPrint(realParamsJson)
+  }
+
+  private def getLastSettings = {
+    val lastSettingsString = params("last_settings")
+    if (lastSettingsString == "") { Map() }
+    else {
+      json.Json.parse(lastSettingsString).as[Map[String, String]]
+    }
+  }
+
+  private def areSettingsStale(): Boolean = {
+    val lastSettings = getLastSettings
+    // For not needing to provide the last_settings parameter for testing we are also allowing it to
+    // be empty. This doesn't cause problem in practice since in the getOutputs method we first
+    // assert if the "imported_table" is not empty. If the "last_settings" parameter is empty then
+    // there was no import yet so the first assert on the "imported_table" already fails.
+    lastSettings.nonEmpty && lastSettings != currentSettings
+  }
+
+  protected def areSettingsStaleReplyMessage(): String = {
+    if (areSettingsStale()) {
+      val lastSettings = getLastSettings
+      val current = currentSettings
+      val changedSettings = lastSettings.filter {
+        case (k, v) => v != current(k)
+      }
+      val changedSettingsListed = changedSettings.map { case (k, v) => s"$k ($v)" }.mkString(", ")
+      s"The following import settings are stale: $changedSettingsListed. " +
+        "Please click on the import button to apply the changed settings or reset the changed " +
+        "settings to their original values."
+    } else { "" }
+  }
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     params.validate()
     assert(params("imported_table").nonEmpty, "You have to import the data first.")
-    makeOutput(tableFromParam("imported_table"))
+    assert(!areSettingsStale, areSettingsStaleReplyMessage)
+    makeOutput(tableFromGuid(params("imported_table")))
   }
 
   def enabled = FEStatus.enabled // Useful default.
@@ -496,8 +556,8 @@ abstract class ExportOperation(context: Operation.Context) extends SmartOperatio
     context.meta.inputs == List("table"),
     s"An ExportOperation must input a single table. $context")
   assert(
-    context.meta.outputs == List("exportResult"),
-    s"An ExportOperation must output an ExportResult. $context"
+    context.meta.outputs == List("exported"),
+    s"An ExportOperation must have a single output called 'exported'. $context"
   )
 
   protected lazy val table = tableInput("table")

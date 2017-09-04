@@ -57,10 +57,10 @@ case class ApproxEmbeddedness(bits: Int) extends TypedMetaGraphOp[GraphInput, Ou
 
     // Join the HLL of neighbors on both the dsts and srcs of the non loop edges.
     val bySrc = nonLoopEdges.map { case (eid, e) => e.src -> (e.dst, eid) }
-    val bySrcHLLs = HybridRDD(bySrc, partitioner, even = true)
+    val bySrcHLLs = HybridRDD.of(bySrc, partitioner, even = true)
       .lookupAndRepartition(allNeighborHLLs)
     val byDst = bySrcHLLs.map { case (src, ((dst, eid), srcHLL)) => dst -> (src, eid, srcHLL) }
-    val byDstHLLs = HybridRDD(byDst, partitioner, even = true)
+    val byDstHLLs = HybridRDD.of(byDst, partitioner, even = true)
       .lookup(allNeighborHLLs)
     // Embeddedness is the size of the intersect of the src and dst HLLs.
     val embeddedness = byDstHLLs.map {

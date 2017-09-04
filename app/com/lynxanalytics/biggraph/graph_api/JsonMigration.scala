@@ -10,9 +10,7 @@ import play.api.libs.json.Json
 
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.controllers.CommonProjectState
-import com.lynxanalytics.biggraph.controllers.RootProjectState
-import com.lynxanalytics.biggraph.controllers.SegmentationState
+import com.lynxanalytics.biggraph.controllers._
 
 // This file is responsible for the metadata compatibility between versions.
 //
@@ -46,44 +44,12 @@ object JsonMigration {
   private def className(o: Any) = o.getClass.getName.replace("$", "")
   val current = new JsonMigration(
     Map(
-      className(graph_operations.CreateUIStatusScalar) -> 2,
-      className(graph_operations.CreateVertexSet) -> 1,
-      className(graph_operations.DoubleBucketing) -> 1,
       className(graph_operations.ExampleGraph) -> 1,
-      className(graph_operations.EnhancedExampleGraph) -> 1,
-      className(graph_operations.FastRandomEdgeBundle) -> 1,
-      className(graph_operations.SampledView) -> 1,
-      className(graph_operations.VertexBucketGrid) -> 1,
-      className(graph_operations.RegressionModelTrainer) -> 1,
-      className(graph_util.HadoopFile) -> 1,
-      // Forces a migration due to switch to v2 tags.
-      "com.lynxanalytics.biggraph.graph_api.ProjectFrame" -> 1)
+      className(graph_operations.EnhancedExampleGraph) -> 1)
       .withDefaultValue(0),
     Map(
-      ("com.lynxanalytics.biggraph.graph_api.ProjectFrame", 0) -> identity,
-      (className(graph_operations.CreateUIStatusScalar), 1) -> {
-        j =>
-          val value = JsonMigration.replaceJson(
-            j \ "value",
-            "customVisualizationFilters" -> Json.toJson(true))
-          JsonMigration.replaceJson(j, "value" -> value)
-      },
-      (className(graph_operations.CreateUIStatusScalar), 0) -> {
-        j =>
-          val default = json.JsString("neutral")
-          val animate = JsonMigration.replaceJson(j \ "value" \ "animate", "style" -> default)
-          val value = JsonMigration.replaceJson(j \ "value", "animate" -> animate)
-          JsonMigration.replaceJson(j, "value" -> value)
-      },
-      (className(graph_operations.CreateVertexSet), 0) -> identity,
-      (className(graph_operations.DoubleBucketing), 0) -> identity,
       (className(graph_operations.ExampleGraph), 0) -> identity,
-      (className(graph_operations.EnhancedExampleGraph), 0) -> identity,
-      (className(graph_operations.FastRandomEdgeBundle), 0) -> identity,
-      (className(graph_operations.SampledView), 0) -> identity,
-      (className(graph_operations.VertexBucketGrid), 0) -> identity,
-      (className(graph_operations.RegressionModelTrainer), 0) -> identity,
-      (className(graph_util.HadoopFile), 0) -> identity))
+      (className(graph_operations.EnhancedExampleGraph), 0) -> identity))
 }
 import JsonMigration._
 class JsonMigration(
@@ -200,49 +166,23 @@ object MetaRepositoryManager {
         UUID.fromString(key) -> UUID.fromString(value)
     }
     def newGUID(old: UUID): UUID = finalGuidMapping.getOrElse(old, old)
-    def updatedProject(state: CommonProjectState): CommonProjectState =
-      CommonProjectState(
-        state.vertexSetGUID.map(newGUID),
-        state.vertexAttributeGUIDs.mapValues(newGUID),
-        state.edgeBundleGUID.map(newGUID),
-        state.edgeAttributeGUIDs.mapValues(newGUID),
-        state.scalarGUIDs.mapValues(newGUID),
-        state.segmentations.mapValues(updatedSegmentation),
-        state.notes,
-        state.elementNotes,
-        state.elementMetadata)
-    def updatedSegmentation(segmentation: SegmentationState): SegmentationState =
-      SegmentationState(
-        updatedProject(segmentation.state),
-        segmentation.belongsToGUID.map(newGUID))
 
-    def updatedRootProject(rootState: RootProjectState) =
-      RootProjectState(
-        updatedProject(rootState.state),
-        rootState.checkpoint,
-        rootState.previousCheckpoint,
-        rootState.lastOperationDesc,
-        rootState.lastOperationRequest,
-        rootState.viewRecipe,
-        rootState.workspace)
+    def updatedCheckpoint(cp: CheckpointObject) = {
+      if (cp.snapshot.isDefined) {
+        cp.copy(snapshot = Some(cp.snapshot.get.mapGuids(newGUID)))
+      } else {
+        cp
+      }
+    }
 
     val oldRepo = MetaGraphManager.getCheckpointRepo(src)
     for ((checkpoint, state) <- oldRepo.allCheckpoints) {
-      mm.checkpointRepo.saveCheckpointedState(checkpoint, updatedRootProject(state))
+      mm.checkpointRepo.saveCheckpointedState(checkpoint, updatedCheckpoint(state))
     }
 
     // Tags.
     val oldTags = TagRoot.loadFromRepo(src)
-    val projectVersion = srcVersion("com.lynxanalytics.biggraph.graph_api.ProjectFrame")
-    projectVersion match {
-      case 1 =>
-        // We already use version 1 tags that are GUID agnostic. All we need to do is copy the tags.
-        mm.setTags(oldTags)
-      case 0 =>
-        throw new AssertionError(s"Project version $projectVersion is no longer supported")
-      case _ =>
-        assert(false, s"Unknown project version $projectVersion")
-    }
+    mm.setTags(oldTags)
   }
 
   // Applies the operation from JSON, performing the required migrations.

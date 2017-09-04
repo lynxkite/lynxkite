@@ -134,9 +134,8 @@ module.exports = function(fw) {
       table.close();
       lib.workspace.addBox({
         id: 'new_attr', name: 'Derive vertex attribute', x: 400, y: 150, after: 'eg0', params: {
-          expr: 'income === 1000 ? \'apple\' : \'orange\'',
+          expr: 'if (income == 1000) "apple" else "orange"',
           output: 'new_attr',
-          type: 'String',
         }
       });
       lib.workspace.connectBoxes('new_attr', 'project', 'sql', 'input');
@@ -175,7 +174,7 @@ module.exports = function(fw) {
       lib.workspace.connectBoxes('copy', 'project', 'sql', 'input');
       lib.workspace.openStateView('sql', 'table');
       var table = runSQL(
-        'select sum(base_random / segment_random) as sum from `self_as_segmentation|belongs_to`');
+        'select sum(base_random / segment_random) as sum from `self_as_segmentation.belongs_to`');
       table.expect(['sum'], ['Double'], [['100']]);
     }, function() {});
 
@@ -192,15 +191,16 @@ module.exports = function(fw) {
       tableBrowser.toggle();
       tableBrowser.expectNode([0], 'edge_attributes', '`edge_attributes`');
       tableBrowser.expectNode([1], 'edges', '`edges`');
-      tableBrowser.expectNode([2], 'vertices', '`vertices`');
-      tableBrowser.toggleNode([2]);
-      tableBrowser.expectNode([2, 0], '*ALL*');
-      tableBrowser.expectNode([2, 1], 'age (Double)', '`age`');
+      tableBrowser.expectNode([2], 'scalars', '`scalars`');
+      tableBrowser.expectNode([3], 'vertices', '`vertices`');
+      tableBrowser.toggleNode([3]);
+      tableBrowser.expectNode([3, 0], '*ALL*');
+      tableBrowser.expectNode([3, 1], 'age (Double)', '`age`');
 
       tableBrowser.toggleFullyQualify();
-      tableBrowser.expectNode([2, 1], 'age (Double)', '`vertices`.`age`');
+      tableBrowser.expectNode([3, 1], 'age (Double)', '`vertices`.`age`');
       tableBrowser.expectNode(
-          [2, 0],
+          [3, 0],
           '*ALL*',
           '`vertices`.`age`,\n' +
               '`vertices`.`gender`,\n' +
@@ -224,15 +224,17 @@ module.exports = function(fw) {
       var se = lib.workspace.openBoxEditor('sql');
       var tableBrowser = se.getTableBrowser();
       tableBrowser.toggle();
-      tableBrowser.expectNode([0], 'one|edge_attributes', '`one|edge_attributes`');
-      tableBrowser.expectNode([1], 'one|edges', '`one|edges`');
-      tableBrowser.expectNode([2], 'one|vertices', '`one|vertices`');
-      tableBrowser.expectNode([3], 'two|edge_attributes', '`two|edge_attributes`');
-      tableBrowser.expectNode([4], 'two|edges', '`two|edges`');
-      tableBrowser.expectNode([5], 'two|vertices', '`two|vertices`');
-      tableBrowser.toggleNode([2]);
-      tableBrowser.expectNode([2, 0], '*ALL*');
-      tableBrowser.expectNode([2, 1], 'age (Double)', '`age`');
+      tableBrowser.expectNode([0], 'one.edge_attributes', '`one.edge_attributes`');
+      tableBrowser.expectNode([1], 'one.edges', '`one.edges`');
+      tableBrowser.expectNode([2], 'one.scalars', '`one.scalars`');
+      tableBrowser.expectNode([3], 'one.vertices', '`one.vertices`');
+      tableBrowser.expectNode([4], 'two.edge_attributes', '`two.edge_attributes`');
+      tableBrowser.expectNode([5], 'two.edges', '`two.edges`');
+      tableBrowser.expectNode([6], 'two.scalars', '`two.scalars`');
+      tableBrowser.expectNode([7], 'two.vertices', '`two.vertices`');
+      tableBrowser.toggleNode([3]);
+      tableBrowser.expectNode([3, 0], '*ALL*');
+      tableBrowser.expectNode([3, 1], 'age (Double)', '`age`');
     });
 
   /*

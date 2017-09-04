@@ -77,13 +77,11 @@ case class FEScalar(
 case class FEEntryListElement(
     name: String,
     objectType: String,
+    icon: String,
     notes: String = "",
     vertexCount: Option[FEScalar] = None, // Whether the project has vertices defined.
     edgeCount: Option[FEScalar] = None, // Whether the project has edges defined.
-    error: Option[String] = None, // If set the project could not be opened.
-    // The contents of this depend on the element, e.g. table uses it to
-    // store import configuration
-    details: Option[json.JsObject] = None) {
+    error: Option[String] = None) { // If set the project could not be opened.
 
   assert(
     objectType == "table" || objectType == "project" ||
@@ -130,7 +128,7 @@ case class DiscardEntryRequest(name: String)
 // A request for the execution of a FE operation on a specific project. The project might be
 // a non-root project, that is a segmentation (or segmentation of segmentation, etc) of a root
 // project. In this case, the project parameter has the format:
-// rootProjectName|childSegmentationName|grandChildSegmentationName|...
+// rootProjectName.childSegmentationName.grandChildSegmentationName.greatChild..
 case class ProjectOperationRequest(project: String, op: FEOperationSpec)
 // Represents an operation executed on a subproject. It is only meaningful in the context of
 // a root project. path specifies the offspring project in question, e.g. it could be sg like:
@@ -171,9 +169,9 @@ object BigGraphController {
     val objects = dir
       .listObjectsRecursively
       .filter(_.readAllowedFrom(user))
-      .filter { project =>
-        val baseName = project.path.last.name
-        val notes = if (project.isSnapshot) "" else project.viewer.state.notes
+      .filter { entry =>
+        val baseName = entry.path.last.name
+        val notes = "" // TODO: Maybe look at workspace description.
         terms.forall {
           term =>
             baseName.toLowerCase.contains(term) ||

@@ -12,31 +12,25 @@ Clicking on a vertex or edge attribute opens a menu with the for following infor
 * The type of the attribute (e.g. `String`, `Double`, ...).
 * A short description of how the attribute was created, if available, with link to a relevant help
 page.
-* A filter box where you can specify a filtering criterion on the attribute's value. Once you defined
-a filter for an attribute then all UI visualizations (histograms, graph
-visualization) will only consider vertices/edges that pass your filter.
-See <<attribute-filter-syntax>> for details. Active filters are also displayed when the menu is
-closed.
 * A histogram of the attribute, if the attribute is already computed. A menu item to compute the
 histogram otherwise. By default, for performance reasons, histograms are only computed on a
 sample of all the available data. Click the _"precise"_
 checkbox to request a computation using all the data. Click the _"logarithmic"_ checkbox, to use a
 logarithmic X-axis with logarithmic buckets. (Useful when the distribution is strongly skewed.)
-* Controls for adding the attribute to the current visualization, if <<concrete-vertices-view>> or
+* If you are viewing the project in a <<Graph visualization>> box: Controls for adding the attribute
+* to the current visualization, if <<concrete-vertices-view>> or
 <<bucketed-view>> is enabled. See details in <<concrete-visualization-options>>.
-* The _"Set icon"_ menu for visually distinguishing an attribute.
-* Options for discarding, renaming, and duplicating the attribute.
 
 There are lots of ways you can create attributes:
 
-* when importing vertices/edges from a CSV every column will automatically become an attribute
-* you can also import attributes for existing vertices from a CSV file
-* you can compute various graph metrics on the vertices/edges (just to name a few, you can compute
-<<degree>>, <<clustering-coefficient>> for vertices and <<dispersion>> for edges)
-* you can derive more attributes from existing ones using the <<derived-vertex-attribute>>
-and <<derived-edge-attribute>> operation
-* you can spread attributes via edges in various ways, e.g. by <<aggregate-on-neighbors>>
-* etc.
+* When importing vertices/edges from a CSV every column will automatically become an attribute.
+* You can also import attributes for existing vertices from a CSV file.
+* You can compute various graph metrics on the vertices/edges. (Just to name a few, you can compute
+<<compute-degree>>, <<compute-clustering-coefficient>> for vertices and <<compute-dispersion>> for
+edges.)
+* You can derive more attributes from existing ones using the <<derive-vertex-attribute>>
+and <<derive-edge-attribute>> operations.
+* You can spread attributes via edges in various ways, e.g. by <<aggregate-on-neighbors>>.
 
 ### Undefined values
 
@@ -44,7 +38,7 @@ Sometimes a vertex (or an edge) does not have any value for a particular attribu
 in a Facebook graph, the user's hometown might or might not be given. In such a case, we say that this
 attribute is _undefined_ for that particular vertex (or edge). Usually, an undefined value
 represents the fact that the information is unknown. Indeed, some algorithms (e.g.,
-<<viral-modeling>>) work on undefined attribute values, and their job is
+<<predict-attribute-by-viral-modeling>>) work on undefined attribute values, and their job is
 to fill them in with reasonable estimates.
 
 Note that an empty string and an undefined value are two different concepts.
@@ -54,25 +48,16 @@ empty string (meaning that the person in question has no middle name), or it cou
 undefined (meaning that their middle name is not known). Thus, the empty string is
 treated as an ordinary String attribute.
 
-#### Differences between undefined and defined values
+Differences between undefined and defined values:
 
 * In histograms, undefined values are not counted, whereas defined values
-(including the empty string)  are counted.
-* Filters work only on defined attributes. Thus, setting a filter such as `weight < 30` restricts
-the data to elements whose `weight` attribute is both defined and less than 30. So, there is no
-straightforward way to filter the data to undefined values. In contrast,
-the following filter matches the empty strings: `regex(^$)`. (Further useful regular expressions:
-`regex(.)` will match non-empty strings; `regex(.*)` will match defined strings;
-see <<attribute-filter-syntax>>.)
-* Operations <<derived-edge-attribute>> and <<derived-vertex-attribute>> compute the
-new attribute value for the given vertex or edge only if all the attributes occurring
-in their JavaScript expression are defined for that vertex or edge.
+(including the empty string) are counted.
+* Filters work only on defined attributes. (See <<Filter by attributes>>.)
+* <<derive-edge-attribute>> and <<derive-vertex-attribute>> allow you to choose whether to evaluate
+the expression if some of the inputs are undefined.
 
-Although you cannot directly set up a filter that matches undefined values, there
-is a way to accomplish this. It relies on operation <<fill-with-constant-default-value>>,
-which will change any undefined value to whatever is specified in the operation's parameter.
-If it is also necessary to keep the original values to be undefined,
-you can make a copy of the attribute and run the operation on the copy.
+<<fill-vertex-attributes-with-constant-default-values>> can be used to replace undefined values with
+a constant. By replacing them with a special value, they can be made part of histograms or filters.
 
 #### CSV export/import and undefined
 
@@ -94,76 +79,18 @@ Note, however, that importing this data from a CSV file will treat undefined val
 as empty strings. So, in this case, the distinction between undefined values
 and empty strings is lost. One way to overcome this difficulty is to replace
 empty strings with another, unique string (e.g., `"@"`) before exporting
-to CSV files. (Database export and import do not suffer from this limitation.)
+to CSV files. (Other export and import formats do not suffer from this limitation.)
 
 #### Creating undefined values
 
 It might be necessary to create attributes that are undefined for certain
 vertices/edges. (An example use case is when you want to create input
 for a fingerprinting or a viral modelling operation.) This can be done
-with a <<derived-vertex-attribute>> (or a <<derived-edge-attribute>>)
-operation. For example, the JavaScript expression
+with <<derive-vertex-attribute>> (or <<derive-edge-attribute>>)
+operation. For example, the Scala expression
 
 ----
-attr > 0 ? attr : undefined
+if (attr > 0) Some(attr) else None
 ----
 
 will return `attr` whenever its value is positive, and undefined otherwise.
-
-
-### Concrete visualization options
-
-// TODO: Examples using embeds.
-
-#### Vertex visualizations
-
-Label::
-Shows the value of the attribute as a label on the displayed vertices.
-
-Color::
-Colors vertices based on this attribute. A different color will be selected for each value
-of the attribute. If the attribute is numeric, the selected color will be a continuous function of
-the attribute value. This is available for `String` and `Double` attributes.
-
-Opacity::
-Changes the opacity of vertices based on this attribute. The higher the value of the
-attribute the more opaque the vertex will get.
-
-Icon::
-Displays each vertex by an icon based on the value of this attribute.
-The available icons are "circle", "square", "hexagon", "female", "male", "person", "phone", "home",
-"triangle", "pentagon", "star", "sim", "radio". If the value of the attribute is one of the above strings,
-then the corresponding icon will be selected. For other values we select arbitrary icons. When we run out of
-icons, we fall back to circle. This is only available for `String` attributes.
-
-Image::
-Interprets the value of the attribute as an image URL and displays the referenced image in place of
-the vertex. This can be used e.g. to show facebook profile pictures.
-
-Size::
-The size of vertices will be set based on this attribute. Only available for numeric attributes.
-
-Position::
-Available on attributes of type `(Double, Double)`. The attribute will be interpreted as (X, Y)
-coordinates on the plane and vertices will be laid out on the screen based on these coordinates.
-(You can create a `(Double, Double)` attribute from two Double attributes using the
-<<vertex-attributes-to-position>> operation.)
-
-Geo coordinates::
-Available on attributes of type `(Double, Double)`. The attribute will be interpreted as a
-latitude-longitude coordinate and the vertices will be put on a world map based on this coordinate.
-(You can create a `(Double, Double)` attribute from two Double attributes using the
-<<vertex-attributes-to-position>> operation.)
-
-#### Edge visualizations
-
-Edge label::
-Will show the value of the attribute as a label on each edge.
-
-Edge color::
-Will color edges based on this attribute. A different color will be selected for each value
-of the attribute. If the attribute is numeric, the selected color will be a continuous function of
-the attribute value. Coloring is available for `String` and `Double` attributes.
-
-Width::
-The width of edge will be set based on this attribute. Only available for numeric attributes.

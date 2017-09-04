@@ -1,7 +1,5 @@
 # Introduction
 
-// Somewhat based on http://lynxanalytics.com/products/product/6. But much better.
-
 LynxKite from http://lynxanalytics.com/[Lynx Analytics] is a graph analytics platform.
 It can ingest vast amounts of data, interpret it
 as huge graphs (aka networks) and enable its users to turn the immense information hidden as
@@ -16,3 +14,9 @@ it can scale up to any size of data.
 
 But don't just believe us -- try it! We hope this user guide will be a good companion in your
 journey of network data mining and you will strike gold for your enterprise with LynxKite!
+
+### Hotkeys
+
+For faster navigation you can access certain LynxKite features via hotkeys. The keys available
+depend on where you are in the program. You can always see the list of currently available
+hotkeys by pressing the `?` key.

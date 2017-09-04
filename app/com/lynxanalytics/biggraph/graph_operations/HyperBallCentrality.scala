@@ -123,7 +123,7 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     val loopEdges = vs.map { case (id, _) => (id, id) }
     val distinctEdges = (originalEdges ++ loopEdges)
       .distinct(partitioner.numPartitions)
-    val edges = HybridRDD(
+    val edges = HybridRDD.of(
       distinctEdges,
       partitioner,
       even = true) // The RDD should be even after distinct.
