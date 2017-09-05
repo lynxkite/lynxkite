@@ -5,8 +5,6 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL.Alias
-import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL.TableName
 import org.apache.spark.sql.catalyst.analysis.Analyzer
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
@@ -58,11 +56,13 @@ object ProtoTable {
   // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
   // necessary to support the query.
   def minimize(optimizedPlan: LogicalPlan,
-               protoTables: Map[TableName, ProtoTable]): Map[TableName, ProtoTable] = {
+               protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
+    // The table names we get back from the case-insensitive parser will be lowercase.
+    val lowerProtoTables = protoTables.map { case (k, v) => k.toLowerCase -> v }
     val tables = getRequiredFields(optimizedPlan)
     val selectedTables = tables.map {
       case (name, expressions) =>
-        val table = protoTables(name)
+        val table = lowerProtoTables(name)
         val columns = expressions.flatMap(parseExpression)
         val selectedTable = if (columns.contains("*")) {
           table
