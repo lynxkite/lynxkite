@@ -19,10 +19,8 @@ case class UnresolvedColumnException(message: String, trace: Throwable)
   extends Exception(message, trace)
 
 object ExecuteSQL extends OpFromJson {
-  type Alias = String
-  type TableName = String
   def getLogicalPlan(sqlQuery: String,
-                     protoTables: Map[TableName, ProtoTable]): LogicalPlan = {
+                     protoTables: Map[String, ProtoTable]): LogicalPlan = {
     import spark.sql.catalyst.analysis._
     import spark.sql.catalyst.catalog._
     import spark.sql.catalyst.expressions._
@@ -60,7 +58,7 @@ object ExecuteSQL extends OpFromJson {
   }
 
   private def run(sqlQuery: String, outputSchema: StructType,
-                  tables: Map[TableName, Table])(implicit m: MetaGraphManager): Table = {
+                  tables: Map[String, Table])(implicit m: MetaGraphManager): Table = {
     import Scripting._
     val op = ExecuteSQL(sqlQuery, tables.keySet, outputSchema)
     op.tables.foldLeft(InstanceBuilder(op)) {
