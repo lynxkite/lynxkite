@@ -30,7 +30,9 @@ object ExecuteSQL extends OpFromJson {
     val parsedPlan = parser.parsePlan(sqlQuery)
     val catalog = new SessionCatalog(new InMemoryCatalog, FunctionRegistry.builtin, sqlConf)
     catalog.createDatabase(
-      CatalogDatabase("default", "", new java.net.URI("loc"), Map.empty),
+      CatalogDatabase(
+        name = "default", description = "", locationUri = new java.net.URI("loc"),
+        properties = Map.empty),
       ignoreIfExists = false)
     for ((name, table) <- protoTables) {
       catalog.createTempView(name, table.getRelation, overrideIfExists = true)
