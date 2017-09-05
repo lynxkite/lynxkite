@@ -45,39 +45,39 @@ REGION_2_CODE = {
     'EU (Ireland)': 'eu-west-1',
     'EU (London)': 'eu-west-2',
     'South America (Sao Paulo)': 'sa-east-1',
-    }
+}
 
 
 def get_dic_value(d):
-    return next(iter(d.values()))
+  return next(iter(d.values()))
 
 
-def jsonable_key(str1,str2):
-    'Hack to create a string key from what is basically a tuple'
-    assert('@' not in str1)
-    assert('@' not in str2)
-    return str1 + '@' + str2
+def jsonable_key(str1, str2):
+  'Hack to create a string key from what is basically a tuple'
+  assert('@' not in str1)
+  assert('@' not in str2)
+  return str1 + '@' + str2
 
 output = {}
 for k in products.keys():
-    v = products[k]
-    if v['productFamily'] == 'Compute Instance':
-        attr = v['attributes']
-        if attr['operatingSystem'] == 'Linux' and attr['tenancy'] == 'Shared':
-            location = attr['location']
-            if location != 'AWS GovCloud (US)':
-                loc_code = REGION_2_CODE[location]
-                instance_type = attr['instanceType'];
-                key = jsonable_key(loc_code, instance_type)
-                assert(key not in output)
-                sku = v['sku']
-                term = onDemand[sku];
-                priceDimensions = get_dic_value(term)['priceDimensions']
-                priceInfo = get_dic_value(priceDimensions)
-                assert(priceInfo['unit'] == 'Hrs')
-                price = priceInfo['pricePerUnit']
-                usd = price['USD']
-                output[key] = usd
+  v = products[k]
+  if v['productFamily'] == 'Compute Instance':
+    attr = v['attributes']
+    if attr['operatingSystem'] == 'Linux' and attr['tenancy'] == 'Shared':
+      location = attr['location']
+      if location != 'AWS GovCloud (US)':
+        loc_code = REGION_2_CODE[location]
+        instance_type = attr['instanceType']
+        key = jsonable_key(loc_code, instance_type)
+        assert(key not in output)
+        sku = v['sku']
+        term = onDemand[sku]
+        priceDimensions = get_dic_value(term)['priceDimensions']
+        priceInfo = get_dic_value(priceDimensions)
+        assert(priceInfo['unit'] == 'Hrs')
+        price = priceInfo['pricePerUnit']
+        usd = price['USD']
+        output[key] = usd
 
 
-print (json.dumps(output, indent=2, sort_keys=True))
+print(json.dumps(output, indent=2, sort_keys=True))
