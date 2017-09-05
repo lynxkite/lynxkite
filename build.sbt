@@ -44,7 +44,6 @@ libraryDependencies ++= Seq(
   "org.apache.commons" % "commons-lang3" % "3.5",
   "org.apache.commons" % "commons-math3" % "3.4.1",  // Match Spark 2.2.0.
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
-  "org.mozilla" % "rhino" % "1.7.7",
   "org.scalatest" %% "scalatest" % "2.2.6" % "test",
   // For accessing S3 fs from local instance.
   "org.apache.hadoop" % "hadoop-aws" % "2.7.3" excludeAll(
