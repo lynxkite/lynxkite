@@ -14,7 +14,7 @@ case class FEStatus(
     enabled: Boolean,
     disabledReason: String = "",
     exception: Option[Throwable] = None) {
-  assert(enabled == exception.isEmpty, toString)
+  if (enabled) assert(exception.isEmpty, toString)
   def ||(other: => FEStatus) = if (enabled) this else other
   def &&(other: => FEStatus) = if (enabled) other else this
   def check(): Unit = exception match {
