@@ -165,10 +165,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val state = getOutput(user, request.id)
     val pathSeq = SubProject.splitPipedPath(request.path).filter(_ != "")
     val project =
-      if (state.isProject) state.project
-      else if (state.isVisualization) state.visualization.project
-      else if (state.isError) throw new AssertionError(state.success.disabledReason)
-      else throw new AssertionError(s"Not a project: $state")
+      if (state.isVisualization) state.visualization.project
+      else state.project
     val viewer = project.viewer.offspringViewer(pathSeq)
     viewer.toFE(request.path)
   }
