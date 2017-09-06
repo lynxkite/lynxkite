@@ -256,12 +256,13 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     if (state.isTable) {
       getColumnsFromSchema(state.table.schema)
     } else if (state.isProject) {
-      if (pathTail.isEmpty) {
-        // The last path segment is the frame, therefore the state is really a project.
-        getProjectTables(frame.path, state.project.viewer, pathTail)
+      val viewer = state.project.viewer
+      if (viewer.hasOffspring(pathTail)) {
+        // The path identifies a project or a segment.
+        getProjectTables(frame.path, viewer, pathTail)
       } else {
         // The path identifies a table within a snapshot of a project kind.
-        val protoTable = state.project.viewer.getSingleProtoTable(pathTail.mkString("."))
+        val protoTable = viewer.getSingleProtoTable(pathTail.mkString("."))
         getColumnsFromSchema(protoTable.schema)
       }
     } else {
