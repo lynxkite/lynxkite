@@ -19,43 +19,27 @@ case class UnresolvedColumnException(message: String, trace: Throwable)
   extends Exception(message, trace)
 
 object ExecuteSQL extends OpFromJson {
-  type Alias = String
-  type TableName = String
-  case class OptimizedPlanWithLookup(plan: LogicalPlan, lookup: Map[Alias, (TableName, ProtoTable)])
-  object OptimizedPlanWithLookup {
-    def apply(sqlQuery: String,
-              protoTables: Map[TableName, ProtoTable]): OptimizedPlanWithLookup = {
-      import spark.sql.catalyst.analysis._
-      import spark.sql.catalyst.catalog._
-      import spark.sql.catalyst.expressions._
-      import spark.sql.catalyst.plans.logical._
-      val sqlConf = spark.sql.SQLHelperHelper.newSQLConf
-      val parser = new SparkSqlParser(sqlConf)
-      val unanalyzedPlan = parser.parsePlan(sqlQuery)
-      val aliasTableLookup = new mutable.HashMap[String, (TableName, ProtoTable)]()
-      val planResolved = unanalyzedPlan.resolveOperators {
-        case u: UnresolvedRelation =>
-          assert(protoTables.contains(u.tableName), s"No such table: ${u.tableName}")
-          val protoTable = protoTables(u.tableName)
-          val attributes = protoTable.schema.map {
-            f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()
-          }
-          val rel = LocalRelation(attributes)
-          val name = u.alias.getOrElse(u.tableIdentifier.table)
-          aliasTableLookup(name) = (u.tableIdentifier.table, protoTable)
-          SubqueryAlias(name, rel, Some(u.tableIdentifier))
-      }
-      val catalog = new SessionCatalog(new InMemoryCatalog, FunctionRegistry.builtin, sqlConf)
-      val analyzer = new Analyzer(catalog, sqlConf)
-      val analyzedPlan = analyzer.execute(planResolved)
-      val optimizer = new SchemaInferencingOptimizer(catalog, sqlConf)
-      try {
-        new OptimizedPlanWithLookup(optimizer.execute(analyzedPlan), aliasTableLookup.toMap)
-      } catch {
-        case e: UnresolvedException[_] =>
-          throw UnresolvedColumnException(s"${e.treeString} column cannot be found.", e)
-      }
+  def getLogicalPlan(sqlQuery: String,
+                     protoTables: Map[String, ProtoTable]): LogicalPlan = {
+    import spark.sql.catalyst.analysis._
+    import spark.sql.catalyst.catalog._
+    import spark.sql.catalyst.expressions._
+    import spark.sql.catalyst.plans.logical._
+    val sqlConf = new spark.sql.internal.SQLConf()
+    val parser = new SparkSqlParser(sqlConf)
+    val parsedPlan = parser.parsePlan(sqlQuery)
+    val catalog = new SessionCatalog(new InMemoryCatalog, FunctionRegistry.builtin, sqlConf)
+    catalog.createDatabase(
+      CatalogDatabase(
+        name = "default", description = "", locationUri = new java.net.URI("loc"),
+        properties = Map.empty),
+      ignoreIfExists = false)
+    for ((name, table) <- protoTables) {
+      catalog.createTempView(name, table.getRelation, overrideIfExists = true)
     }
+    val analyzer = new Analyzer(catalog, sqlConf)
+    val analyzedPlan = analyzer.execute(parsedPlan)
+    new SchemaInferencingOptimizer(catalog, sqlConf).execute(analyzedPlan)
   }
 
   class Input(inputTables: Set[String]) extends MagicInputSignature {
@@ -76,7 +60,7 @@ object ExecuteSQL extends OpFromJson {
   }
 
   private def run(sqlQuery: String, outputSchema: StructType,
-                  tables: Map[TableName, Table])(implicit m: MetaGraphManager): Table = {
+                  tables: Map[String, Table])(implicit m: MetaGraphManager): Table = {
     import Scripting._
     val op = ExecuteSQL(sqlQuery, tables.keySet, outputSchema)
     op.tables.foldLeft(InstanceBuilder(op)) {
@@ -86,10 +70,10 @@ object ExecuteSQL extends OpFromJson {
 
   def run(sqlQuery: String,
           protoTables: Map[String, ProtoTable])(implicit m: MetaGraphManager): Table = {
-    val planWithLookup = OptimizedPlanWithLookup(sqlQuery, protoTables)
-    val minimizedProtoTables = ProtoTable.minimize(planWithLookup.plan, planWithLookup.lookup)
+    val plan = getLogicalPlan(sqlQuery, protoTables)
+    val minimizedProtoTables = ProtoTable.minimize(plan, protoTables)
     val tables = minimizedProtoTables.mapValues(protoTable => protoTable.toTable)
-    ExecuteSQL.run(sqlQuery, planWithLookup.plan.schema, tables)
+    ExecuteSQL.run(sqlQuery, plan.schema, tables)
   }
 
 }

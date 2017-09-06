@@ -5,8 +5,6 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL.Alias
-import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL.TableName
 import org.apache.spark.sql.catalyst.analysis.Analyzer
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
@@ -41,6 +39,11 @@ trait ProtoTable {
   protected def maybeSelect(columns: Iterable[String]): ProtoTable
   // Creates the promised table.
   def toTable: Table
+  // For Spark SQL plans.
+  def getRelation: LocalRelation = {
+    val fields = schema.fields
+    LocalRelation(fields.head, fields.tail: _*)
+  }
 }
 
 object ProtoTable {
@@ -53,18 +56,21 @@ object ProtoTable {
   // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
   // necessary to support the query.
   def minimize(optimizedPlan: LogicalPlan,
-               protoTables: Map[Alias, (TableName, ProtoTable)]): Map[TableName, ProtoTable] = {
+               protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
+    // The table names we get back from the case-insensitive parser will be lowercase.
+    val lowerProtoTables = protoTables.map { case (k, v) => k.toLowerCase -> v }
     val tables = getRequiredFields(optimizedPlan)
-    val selectedTables = tables.map(f => {
-      val (name, table) = protoTables(f._1)
-      val columns = f._2.flatMap(parseExpression)
-      val selectedTable = if (columns.contains("*")) {
-        table
-      } else {
-        table.maybeSelect(columns)
-      }
-      name -> selectedTable
-    }).toMap
+    val selectedTables = tables.map {
+      case (name, expressions) =>
+        val table = lowerProtoTables(name)
+        val columns = expressions.flatMap(parseExpression)
+        val selectedTable = if (columns.contains("*")) {
+          table
+        } else {
+          table.maybeSelect(columns)
+        }
+        name -> selectedTable
+    }.toMap
     selectedTables
   }
 
@@ -76,9 +82,9 @@ object ProtoTable {
 
   private def getRequiredFields(plan: LogicalPlan): Seq[(String, Seq[NamedExpression])] =
     plan match {
-      case SubqueryAlias(name, Project(projectList, LocalRelation(_, _)), _) =>
+      case SubqueryAlias(name, Project(projectList, LocalRelation(_, _))) =>
         List((name, projectList))
-      case SubqueryAlias(name, LocalRelation(_, _), _) =>
+      case SubqueryAlias(name, LocalRelation(_, _)) =>
         List((name, Seq(UnresolvedStar(target = None))))
       case l: LeafNode =>
         bigGraphLogger.info(s"$l ignored in ProtoTable minimalization")

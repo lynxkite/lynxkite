@@ -42,12 +42,12 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
       .encodeY("level", Quantitative)
       .mark(Bar)
       """
-    val JSONString = ScalaScript.runVegas(code, df)
-    assert(JSONString contains """"mark" : "bar"""")
-    assert(JSONString contains "encoding")
-    assert(JSONString contains "description")
-    assert(JSONString contains "My plot test")
-    assert(JSONString contains """"name" : "Felix",""")
+    val jsonString = ScalaScript.runVegas(code, df)
+    assert(jsonString.contains(""""mark" : "bar""""))
+    assert(jsonString.contains("encoding"))
+    assert(jsonString.contains("description"))
+    assert(jsonString.contains("My plot test"))
+    assert(jsonString.contains(""""name" : "Felix","""))
   }
 
   test("Scala multiline string works in plot code") {
@@ -66,8 +66,7 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
       .mark(Bar)
       .filter(\"\"\"$filterRule\"\"\")
       """
-    val JSONString = ScalaScript.runVegas(code, df)
-    println(JSONString)
+    val jsonString = ScalaScript.runVegas(code, df)
   }
 
   test("Security manager disables file access") {
