@@ -214,12 +214,25 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   def getTableBrowserNodes(user: serving.User, request: TableBrowserNodeRequest): TableBrowserNodeResponse =
     metaManager.synchronized {
       val pathParts = SubProject.splitPipedPath(request.path)
-      val entry = DirectoryEntry.fromName(pathParts.head)
+
+      val entryFull = DirectoryEntry.fromName(request.path)
+      val pathToWalk = if (entryFull.isDirectory) {
+        List(request.path)
+      } else {
+        val parts = entryFull.path.toSeq.map(x => x.name).toList
+        val spl = SubProject.splitPipedPath(parts.last)
+        val entryPathList = parts.init ++ List(spl.head)
+        val entryPath = entryPathList.mkString("/")
+        List(entryPath) ++ spl.tail
+      }
+
+      println("new >>", pathToWalk)
+      val entry = DirectoryEntry.fromName(pathToWalk.head)
       entry.assertReadAllowedFrom(user)
       if (entry.isDirectory) {
         getDirectory(user, entry.asDirectory, request.query)
       } else if (entry.isSnapshot) {
-        getSnapshot(user, entry.asSnapshotFrame, pathParts.tail)
+        getSnapshot(user, entry.asSnapshotFrame, pathToWalk.tail)
       } else {
         throw new AssertionError(
           s"Table browser nodes are only available for snapshots and directories (${entry.path}).")
