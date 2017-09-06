@@ -292,8 +292,8 @@ sealed trait ProjectViewer {
       case _ => {
         val correctTableNames = List(ScalarTableName, VertexTableName, EdgeTableName, EdgeAttributeTableName,
           BelongsToTableName).mkString(", ")
-        throw new AssertionError(s"Not recognized table name '$tableName'. Correct table names: " +
-          s"$correctTableNames")
+        throw new AssertionError(
+          s"Not recognized table name '$tableName'. Correct table names: $correctTableNames")
       }
     }
     protoTable
