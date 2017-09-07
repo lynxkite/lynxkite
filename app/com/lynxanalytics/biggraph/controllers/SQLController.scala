@@ -222,7 +222,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
       } else {
         // The path 'd1/d2/d3/sn.s1.s2.verices' is converted into
         // List('d1/d2/d3/sn', 's1', 's2', 'verices')
-        // Parts d1, d2, d3, .. can contain dots, but sn doen't.
+        // Parts d1, d2, d3, .. can contain dots, but sn doesn't.
         val parts = entryFull.path.map(x => x.name).toList
         val split = SubProject.splitPipedPath(parts.last)
         val entryPathList = parts.init :+ split.head
