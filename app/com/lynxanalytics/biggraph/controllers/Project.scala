@@ -162,6 +162,11 @@ sealed trait ProjectViewer {
     if (path.isEmpty) this
     else segmentation(path.head).offspringViewer(path.tail)
 
+  def hasOffspring(path: Seq[String]): Boolean =
+    if (path.isEmpty) true
+    else if (segmentationMap.contains(path.head)) segmentation(path.head).hasOffspring(path.tail)
+    else false
+
   def editor: ProjectEditor
 
   val isSegmentation: Boolean
@@ -287,8 +292,8 @@ sealed trait ProjectViewer {
       case _ => {
         val correctTableNames = List(ScalarTableName, VertexTableName, EdgeTableName, EdgeAttributeTableName,
           BelongsToTableName).mkString(", ")
-        throw new AssertionError("Not recognized table name. Correct table names: " +
-          s"$correctTableNames")
+        throw new AssertionError(
+          s"Not recognized table name '$tableName'. Correct table names: $correctTableNames")
       }
     }
     protoTable
