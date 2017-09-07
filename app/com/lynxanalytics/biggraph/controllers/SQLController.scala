@@ -223,15 +223,14 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
         // The path 'd1/d2/d3/sn.s1.s2.verices' is converted into
         // List('d1/d2/d3/sn', 's1', 's2', 'verices')
         // Parts d1, d2, d3, .. can contain dots, but sn doen't.
-        val parts = entryFull.path.toSeq.map(x => x.name).toList
-        val splitted = SubProject.splitPipedPath(parts.last)
-        val entryPathList = parts.init ++ List(splitted.head)
+        val parts = entryFull.path.map(x => x.name).toList
+        val split = SubProject.splitPipedPath(parts.last)
+        val entryPathList = parts.init :+ split.head
         val entryPath = entryPathList.mkString("/")
-        val pathParts = List(entryPath) ++ splitted.tail
-        val entry = DirectoryEntry.fromName(pathParts.head)
+        val entry = DirectoryEntry.fromName(entryPath)
         entry.assertReadAllowedFrom(user)
         if (entry.isSnapshot) {
-          getSnapshot(user, entry.asSnapshotFrame, pathParts.tail)
+          getSnapshot(user, entry.asSnapshotFrame, split.tail)
         } else {
           throw new AssertionError(
             s"Table browser nodes are only available for snapshots and directories (${entry.path}).")
