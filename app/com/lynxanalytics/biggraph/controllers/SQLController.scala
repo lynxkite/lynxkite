@@ -213,29 +213,29 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   // - columns of a table kind snapshot
   def getTableBrowserNodes(user: serving.User, request: TableBrowserNodeRequest): TableBrowserNodeResponse =
     metaManager.synchronized {
-      val pathParts = SubProject.splitPipedPath(request.path)
-
       val entryFull = DirectoryEntry.fromName(request.path)
-      val pathToWalk = if (entryFull.isDirectory) {
-        List(request.path)
+      if (entryFull.isDirectory) {
+        // If it is a directory, we don't want to split directory
+        // names which contain dots.
+        entryFull.assertReadAllowedFrom(user)
+        getDirectory(user, entryFull.asDirectory, request.query)
       } else {
+        // The path 'd1/d2/d3/sn.s1.s2.verices' is converted into
+        // List('d1/d2/d3/sn', 's1', 's2', 'verices')
+        // Parts d1, d2, d3, .. can contain dots, but sn doen't.
         val parts = entryFull.path.toSeq.map(x => x.name).toList
-        val spl = SubProject.splitPipedPath(parts.last)
-        val entryPathList = parts.init ++ List(spl.head)
+        val splitted = SubProject.splitPipedPath(parts.last)
+        val entryPathList = parts.init ++ List(splitted.head)
         val entryPath = entryPathList.mkString("/")
-        List(entryPath) ++ spl.tail
-      }
-
-      println("new >>", pathToWalk)
-      val entry = DirectoryEntry.fromName(pathToWalk.head)
-      entry.assertReadAllowedFrom(user)
-      if (entry.isDirectory) {
-        getDirectory(user, entry.asDirectory, request.query)
-      } else if (entry.isSnapshot) {
-        getSnapshot(user, entry.asSnapshotFrame, pathToWalk.tail)
-      } else {
-        throw new AssertionError(
-          s"Table browser nodes are only available for snapshots and directories (${entry.path}).")
+        val pathParts = List(entryPath) ++ splitted.tail
+        val entry = DirectoryEntry.fromName(pathParts.head)
+        entry.assertReadAllowedFrom(user)
+        if (entry.isSnapshot) {
+          getSnapshot(user, entry.asSnapshotFrame, pathParts.tail)
+        } else {
+          throw new AssertionError(
+            s"Table browser nodes are only available for snapshots and directories (${entry.path}).")
+        }
       }
     }
 
