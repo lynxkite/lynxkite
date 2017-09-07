@@ -213,16 +213,28 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   // - columns of a table kind snapshot
   def getTableBrowserNodes(user: serving.User, request: TableBrowserNodeRequest): TableBrowserNodeResponse =
     metaManager.synchronized {
-      val pathParts = SubProject.splitPipedPath(request.path)
-      val entry = DirectoryEntry.fromName(pathParts.head)
-      entry.assertReadAllowedFrom(user)
-      if (entry.isDirectory) {
-        getDirectory(user, entry.asDirectory, request.query)
-      } else if (entry.isSnapshot) {
-        getSnapshot(user, entry.asSnapshotFrame, pathParts.tail)
+      val entryFull = DirectoryEntry.fromName(request.path)
+      if (entryFull.isDirectory) {
+        // If it is a directory, we don't want to split directory
+        // names which contain dots.
+        entryFull.assertReadAllowedFrom(user)
+        getDirectory(user, entryFull.asDirectory, request.query)
       } else {
-        throw new AssertionError(
-          s"Table browser nodes are only available for snapshots and directories (${entry.path}).")
+        // The path 'd1/d2/d3/sn.s1.s2.vertices' is converted into
+        // List('d1/d2/d3/sn', 's1', 's2', 'vertices')
+        // Parts d1, d2, d3, .. can contain dots, but sn doesn't.
+        val parts = entryFull.path.map(x => x.name).toList
+        val split = SubProject.splitPipedPath(parts.last)
+        val entryPathList = parts.init :+ split.head
+        val entryPath = entryPathList.mkString("/")
+        val entry = DirectoryEntry.fromName(entryPath)
+        entry.assertReadAllowedFrom(user)
+        if (entry.isSnapshot) {
+          getSnapshot(user, entry.asSnapshotFrame, split.tail)
+        } else {
+          throw new AssertionError(
+            s"Table browser nodes are only available for snapshots and directories (${entry.path}).")
+        }
       }
     }
 
