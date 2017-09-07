@@ -38,7 +38,9 @@
   </div>
 
   <div ng-show="searching" class="panel box yellow">
-    <h1><input id="filter" ng-model="opFilter" ng-keyup="filterKey($event)"></h1>
+    <h1>
+      <input id="filter" ng-model="opFilter" ng-keyup="filterKey($event)" autocomplete="off">
+    </h1>
     <operation-selector-entry ng-repeat="op in filterAndSort(boxes, opFilter)"
         op="op"
         name="op.operationId"
