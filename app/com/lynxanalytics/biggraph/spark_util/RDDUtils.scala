@@ -437,10 +437,14 @@ object Implicits {
       }
     }
 
+    private def samePartitioner(partitioner: spark.Partitioner): Boolean = {
+      self.partitioner.isDefined && (self.partitioner.get eq partitioner)
+    }
+
     def groupBySortedKey(partitioner: spark.Partitioner)(
       implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, Iterable[V]] = {
 
-      if (self.isInstanceOf[SortedRDD[K, V]]) {
+      if (self.isInstanceOf[SortedRDD[K, V]] && samePartitioner(partitioner)) {
         self.asInstanceOf[SortedRDD[K, V]].groupByKey()
       } else {
         val rawRDD = self.groupByKey(partitioner)
@@ -451,7 +455,7 @@ object Implicits {
     def reduceBySortedKey(partitioner: spark.Partitioner, f: (V, V) => V)(
       implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
 
-      if (self.isInstanceOf[SortedRDD[K, V]]) {
+      if (self.isInstanceOf[SortedRDD[K, V]] && samePartitioner(partitioner)) {
         self.asInstanceOf[SortedRDD[K, V]].reduceByKey(f)
       } else {
         val rawRDD = self.reduceByKey(partitioner, f)
