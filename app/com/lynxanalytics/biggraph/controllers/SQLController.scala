@@ -220,8 +220,8 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
         entryFull.assertReadAllowedFrom(user)
         getDirectory(user, entryFull.asDirectory, request.query)
       } else {
-        // The path 'd1/d2/d3/sn.s1.s2.verices' is converted into
-        // List('d1/d2/d3/sn', 's1', 's2', 'verices')
+        // The path 'd1/d2/d3/sn.s1.s2.vertices' is converted into
+        // List('d1/d2/d3/sn', 's1', 's2', 'vertices')
         // Parts d1, d2, d3, .. can contain dots, but sn doesn't.
         val parts = entryFull.path.map(x => x.name).toList
         val split = SubProject.splitPipedPath(parts.last)
