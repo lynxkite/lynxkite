@@ -49,9 +49,6 @@ Install Inkscape:
 
     sudo apt-get install inkscape
 
-Install wkhtmltopdf (0.12.3 or newer).
-Just download from http://wkhtmltopdf.org/downloads.html and copy the binary to `/usr/local/bin`.
-
 Install LaTex:
 
     sudo apt-get install texlive-latex-recommended
