@@ -9,11 +9,13 @@ const puppeteer = require('puppeteer');
 const html_name = process.argv[2];
 const pdf_name = process.argv[3];
 
-(async () => {
-  const browser = await puppeteer.launch({headless: true});
-  const page = await browser.newPage();
-  await page.goto(html_name, {waitUntil: 'networkidle'});
-  await page.pdf({path: pdf_name, format: 'A4', margin: {top: '5cm'}, displayHeaderFooter: false}); //displayHeaderFooter doesn't seem to do anything, but fortunately it defaults to false.
+puppeteer.launch({headless: true})
+  .then((browser) =>
+    browser.newPage().then((page) =>
+      page.goto(html_name, {waitUntil: 'networkidle'})
+        .then(
+          // displayHeaderFooter doesn't seem to do anything, but fortunately it defaults to false.
+          () => page.pdf({path: pdf_name, format: 'A4', margin: {top: '5cm'}, displayHeaderFooter: false})
+        )
+        .then(() => browser.close())));
 
-  browser.close();
-})();
