@@ -22,10 +22,11 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
     return comment ? md.render(comment) : undefined;
   }
 
-  function BoxWrapper(workspace, metadata, instance) {
+  function BoxWrapper(workspace, metadata, instance, isDirty) {
     this.workspace = workspace;
     this.metadata = metadata;
     this.instance = instance;
+    this.isDirty = isDirty;
     this.summary = metadata.operationId;
     this.inputs = [];
     this.outputs = [];
@@ -56,6 +57,7 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
       var newY = event.logicalY + this.yOffset;
       if (newX !== this.instance.x || newY !== this.instance.y) {
         this.workspace._requestInvalidated = true;
+        this.isDirty = true;
         this.instance.x = newX;
         this.instance.y = newY;
       }

@@ -60,12 +60,12 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       this.boxes = [];
       this.boxMap = {};
       for (var i = 0; i < this.state.boxes.length; ++i) {
-        this._addBoxWrapper(this.state.boxes[i]);
+        this._addBoxWrapper(this.state.boxes[i], /*isDirty =*/ false);
       }
     },
 
-    _addBoxWrapper: function(rawBox) {
-      var box = new BoxWrapper(this, this._boxCatalogMap[rawBox.operationId], rawBox);
+    _addBoxWrapper: function(rawBox, isDirty) {
+      var box = new BoxWrapper(this, this._boxCatalogMap[rawBox.operationId], rawBox, isDirty);
       this.boxes.push(box);
       this.boxMap[rawBox.id] = box;
     },
@@ -228,7 +228,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         parametricParameters: {}
       };
       this.state.boxes.push(box);
-      this._addBoxWrapper(box);
+      this._addBoxWrapper(box, /*isDirty =*/ true);
       return box;
     },
 
@@ -395,6 +395,15 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       }
       this.saveWorkspace();
       return newBoxes;
+    },
+
+    saveIfBoxesDirty: function() {
+      for (var i = 0; i < this.boxes.length; i++) {
+        if (this.boxes[i].isDirty) {
+          this.saveWorkspace();
+          break;
+        }
+      }
     },
 
     getBox: function(id) {

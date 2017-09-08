@@ -273,7 +273,7 @@ angular.module('biggraph')
         }
 
         scope.onMouseUpOnBox = function(box, event) {
-          if (box.isMoved || scope.pulledPlug || scope.selection.isActive()) {
+          if (box.isDirty || scope.pulledPlug || scope.selection.isActive()) {
             return;
           }
           var leftButton = event.button === 0;
@@ -357,7 +357,7 @@ angular.module('biggraph')
           removeDragListeners();
           scope.selection.remove();
           if (scope.movedBoxes) {
-            scope.workspace.saveWorkspace();
+            scope.workspace.saveIfBoxesDirty();
           }
           scope.movedBoxes = undefined;
           scope.pulledPlug = undefined;
