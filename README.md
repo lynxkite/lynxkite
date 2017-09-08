@@ -49,6 +49,10 @@ Install Inkscape:
 
     sudo apt-get install inkscape
 
+Install Puppeteer 0.10.2 or newer.
+
+    npm install -g puppeteer
+
 Install LaTex:
 
     sudo apt-get install texlive-latex-recommended
