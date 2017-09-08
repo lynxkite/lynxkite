@@ -357,7 +357,7 @@ angular.module('biggraph')
           removeDragListeners();
           scope.selection.remove();
           if (scope.movedBoxes) {
-            scope.workspace.saveIfBoxesMoved();
+            scope.workspace.saveWorkspace();
           }
           scope.movedBoxes = undefined;
           scope.pulledPlug = undefined;

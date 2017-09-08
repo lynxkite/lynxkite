@@ -397,15 +397,6 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       return newBoxes;
     },
 
-    saveIfBoxesMoved: function() {
-      for (var i = 0; i < this.boxes.length; i++) {
-        if (this.boxes[i].isMoved) {
-          this.saveWorkspace();
-          break;
-        }
-      }
-    },
-
     getBox: function(id) {
       return this.boxMap[id];
     },
