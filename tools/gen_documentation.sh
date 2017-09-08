@@ -3,7 +3,7 @@
 
 CHROME_MAIN_VERSION=$(google-chrome --version | grep -oE " [0-9]+")
 NODE_MAIN_VERSION=$(node --version | grep -oE "v[0-9]+" | tr -d 'v')
-NODE_SUB_VERSION=$(node --version | grep -oE ".[0-9]+" | tr -d '.')
+NODE_SUB_VERSION=$(node --version | grep -oE "\.[0-9]+\." | tr -d '.')
 if (( CHROME_MAIN_VERSION < 59 )); then
   >&2 echo 'Please install Google Chrome 59 or newer or set google-chrome to point to the binary.'
   exit 1
