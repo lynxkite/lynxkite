@@ -25,15 +25,12 @@ tools/wait_for_port.sh 9090
 echo # Add new-line after Grunt output.
 
 echo 'Generating User Manual...'
-"$WKHTMLTOPDF" $WKHTML_OPT \
-  'http://localhost:9090/pdf-help' 'LynxKite-User-Manual.pdf'
+tools/chrome_print_pdf.sh 'http://localhost:9090/pdf-help' 'LynxKite-User-Manual.pdf'
 
 echo 'Generating Admin Manual...'
-"$WKHTMLTOPDF" $WKHTML_OPT \
-  'http://localhost:9090/pdf-admin-manual' 'LynxKite-Administrator-Manual.pdf'
+tools/chrome_print_pdf.sh 'http://localhost:9090/pdf-admin-manual' 'LynxKite-Administrator-Manual.pdf'
 
 echo 'Generating Academy...'
-"$WKHTMLTOPDF" $WKHTML_OPT \
-  'http://localhost:9090/pdf-academy' 'LynxKite-Academy.pdf'
+tools/chrome_print_pdf.sh 'http://localhost:9090/pdf-academy' 'LynxKite-Academy.pdf'
 
 echo 'LynxKite documentation generated successfully.'
