@@ -12,7 +12,6 @@ if (( $NODE_MAIN_VERSION < 6 || $NODE_MAIN_VERSION == 6 && $NODE_SUB_VERSION < 4
   >&2 echo 'Please install Node 6.4.0 or newer or set node to point to the binary.'
   exit 1
 fi
-WKHTML_OPT='--lowquality --footer-center [page] --margin-top 20mm --margin-bottom 20mm'
 
 echo 'Starting LynxKite...'
 cd "$(dirname $0)/../web"
