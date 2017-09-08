@@ -40,6 +40,7 @@ object DataFrameSpec extends FromJson[DataFrameSpec] {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fDataFrameSpec
   override def fromJson(j: JsValue): DataFrameSpec = json.Json.fromJson(j).get
 }
+
 case class DataFrameSpec(directory: Option[String], project: Option[String], sql: String) {
   assert(directory.isDefined ^ project.isDefined,
     "Exactly one of directory and project should be defined")
@@ -67,13 +68,9 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
       val givenTableNames = findTablesFromQuery(sql)
       // Maps the relative table names used in the sql query with the global name
       val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
-      val pathAndTableName = tableNames.mapValues(wholePath => {
-        val split = wholePath.split('.')
-        (split.head, split.tail)
-      })
-      val snapshotsAndInternalTables = pathAndTableName.mapValues {
-        case (snapshotPath, tablePath) => (DirectoryEntry.fromName(snapshotPath), tablePath)
-      }
+      val snapshotsAndInternalTables =
+        tableNames.mapValues(wholePath => SQLController.parseTablePath(wholePath))
+
       val goodSnapshotStates = snapshotsAndInternalTables.collect {
         case (name, (snapshot, tablePath)) if snapshot.isSnapshot && snapshot.readAllowedFrom(user) =>
           (name, (snapshot.asSnapshotFrame.getState(), tablePath))
@@ -220,17 +217,10 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
         entryFull.assertReadAllowedFrom(user)
         getDirectory(user, entryFull.asDirectory, request.query)
       } else {
-        // The path 'd1/d2/d3/sn.s1.s2.vertices' is converted into
-        // List('d1/d2/d3/sn', 's1', 's2', 'vertices')
-        // Parts d1, d2, d3, .. can contain dots, but sn doesn't.
-        val parts = entryFull.path.map(x => x.name).toList
-        val split = SubProject.splitPipedPath(parts.last)
-        val entryPathList = parts.init :+ split.head
-        val entryPath = entryPathList.mkString("/")
-        val entry = DirectoryEntry.fromName(entryPath)
+        val (entry, path) = SQLController.parseTablePath(request.path)
         entry.assertReadAllowedFrom(user)
         if (entry.isSnapshot) {
-          getSnapshot(user, entry.asSnapshotFrame, split.tail)
+          getSnapshot(user, entry.asSnapshotFrame, path)
         } else {
           throw new AssertionError(
             s"Table browser nodes are only available for snapshots and directories (${entry.path}).")
@@ -458,4 +448,18 @@ object SQLController {
   def defaultContext(user: User)(implicit dataManager: DataManager): SQLContext = {
     dataManager.newSQLContext()
   }
+
+  // Splits a table path into a snapshot entry and an internal table path.
+  def parseTablePath(path: String)(implicit metaManager: MetaGraphManager): (DirectoryEntry, Seq[String]) = {
+    // The path 'd1/d2/d3/sn.s1.s2.vertices' is converted into
+    // (DirectoryEntry for 'd1/d2/d3/sn', Array('s1', 's2', 'vertices'))
+    // Parts d1, d2, d3, .. can contain dots, but sn doesn't.
+    val parts = DirectoryEntry.fromName(path).path.map(x => x.name).toList
+    val split = SubProject.splitPipedPath(parts.last)
+    val entryPathList = parts.init :+ split.head
+    val entryPath = entryPathList.mkString("/")
+    val entry = DirectoryEntry.fromName(entryPath)
+    (entry, split.tail)
+  }
+
 }
