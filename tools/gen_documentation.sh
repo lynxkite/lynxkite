@@ -9,7 +9,7 @@ if (( CHROME_MAIN_VERSION < 59 )); then
   exit 1
 fi
 if (( $NODE_MAIN_VERSION < 6 || $NODE_MAIN_VERSION == 6 && $NODE_SUB_VERSION < 4)); then
-  >&2 echo 'Please install Google Chrome 59 or newer or set google-chrome to point to the binary.'
+  >&2 echo 'Please install Node 6.4.0 or newer or set node to point to the binary.'
   exit 1
 fi
 WKHTML_OPT='--lowquality --footer-center [page] --margin-top 20mm --margin-bottom 20mm'
