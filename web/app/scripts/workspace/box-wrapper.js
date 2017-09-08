@@ -33,7 +33,6 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
     this.width = 100;
     this.height = 100;
     this.comment = getComment(metadata, instance);
-    this.isMoved = false;
 
     var i;
     for (i = 0; i < metadata.inputs.length; ++i) {
@@ -57,7 +56,6 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
       var newY = event.logicalY + this.yOffset;
       if (newX !== this.instance.x || newY !== this.instance.y) {
         this.workspace._requestInvalidated = true;
-        this.isMoved = true;
         this.instance.x = newX;
         this.instance.y = newY;
       }
