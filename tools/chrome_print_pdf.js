@@ -15,7 +15,7 @@ puppeteer.launch({headless: true})
       page.goto(html_name, {waitUntil: 'networkidle'})
         .then(
           // displayHeaderFooter doesn't seem to do anything, but fortunately it defaults to false.
-          () => page.pdf({path: pdf_name, format: 'A4', margin: {top: '5cm'}, displayHeaderFooter: false})
+          () => page.pdf({path: pdf_name, format: 'A4', margin: {top: '20mm', bottom: '20mm'}, displayHeaderFooter: false})
         )
         .then(() => browser.close())));
 
