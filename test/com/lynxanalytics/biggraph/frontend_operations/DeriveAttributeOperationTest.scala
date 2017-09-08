@@ -156,6 +156,12 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     assert(false == ScalaUtilities.containsIdentifier("'name", "name"))
   }
 
+  test("ScalaUtilities error on reserved Scala keyword") {
+    intercept[AssertionError] {
+      ScalaUtilities.containsIdentifier("if (type == 'abc') {1} else {0}", "type")
+    }
+  }
+
   test("Derive vertex attribute with substring conflict (#1676)") {
     val project = box("Create example graph")
       .box("Rename vertex attributes", Map("change_income" -> "nam"))

@@ -395,6 +395,12 @@ object ScalaUtilities {
   val simpleVariableChar = "a-zA-Z0-9_\\$"
   val quoteChar = "\"'"
   val simpleIdent = s"[a-z][$simpleVariableChar]*"
+  // From https://www.scala-lang.org/files/archive/spec/2.11/01-lexical-syntax.html#identifiers.
+  val reservedWords = Set("abstract", "case", "catch", "class", "def", "do", "else", "extends",
+    "false", "final", "finally", "for", "forSome", "if", "implicit", "import", "lazy", "macro",
+    "match", "new", "null", "object", "override", "package", "private", "protected", "return",
+    "sealed", "super", "this", "throw", "trait", "try", "true", "type", "val", "var", "while",
+    "with", "yield")
 
   def collectIdentifiers[T <: MetaGraphEntity](
     holder: StateMapHolder[T],
@@ -410,10 +416,19 @@ object ScalaUtilities {
   def containsIdentifier(expr: String, identifier: String): Boolean = {
     val escapedIdent = identifier.replace("$", "\\$")
     // The algorithm finds every identifier within back quotes.
-    expr.contains("`" + identifier + "`") ||
+    if (expr.contains("`" + identifier + "`")) {
+      true
+    } else {
       // Try to match simple identifiers if they are not between quotes nor substrings of the actual
       // identifier. The rule is quite crude, both false positives and negatives are possible.
-      (identifier.matches(simpleIdent) && (" " + expr + " ").matches(
-        s"(?s).*[^$simpleVariableChar$quoteChar]$escapedIdent[^$simpleVariableChar$quoteChar].*"))
+      if (identifier.matches(simpleIdent) && (" " + expr + " ").matches(
+        s"(?s).*[^$simpleVariableChar$quoteChar]$escapedIdent[^$simpleVariableChar$quoteChar].*")) {
+        assert(!reservedWords.contains(identifier), s"Cannot use Scala reserved word $identifier " +
+          s"as a variable identifier. Please use backticks: `$identifier`.")
+        true
+      } else {
+        false
+      }
+    }
   }
 }
