@@ -157,12 +157,12 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     assert(true == ScalaUtilities.containsIdentifier("age_v2", "age_v2"))
     assert(true == ScalaUtilities.containsIdentifier("age.toString", "age"))
     assert(true == ScalaUtilities.containsIdentifier("age\n1.0", "age"))
+    assert(true == ScalaUtilities.containsIdentifier("Name", "Name"))
 
     assert(false == ScalaUtilities.containsIdentifier("name", "nam"))
     assert(false == ScalaUtilities.containsIdentifier("name", "ame"))
     assert(false == ScalaUtilities.containsIdentifier("nam", "name"))
     assert(false == ScalaUtilities.containsIdentifier("ame", "name"))
-    assert(false == ScalaUtilities.containsIdentifier("Name", "Name"))
     assert(false == ScalaUtilities.containsIdentifier("\"name\"", "name"))
     assert(false == ScalaUtilities.containsIdentifier("'name", "name"))
   }
