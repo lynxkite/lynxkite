@@ -49,8 +49,9 @@ Install Inkscape:
 
     sudo apt-get install inkscape
 
-Install wkhtmltopdf (0.12.3 or newer).
-Just download from http://wkhtmltopdf.org/downloads.html and copy the binary to `/usr/local/bin`.
+Install Puppeteer 0.10.2 or newer.
+
+    npm install -g puppeteer
 
 Install LaTex:
 
