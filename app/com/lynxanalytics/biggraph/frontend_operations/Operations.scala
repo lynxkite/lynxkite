@@ -394,7 +394,7 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
 object ScalaUtilities {
   val simpleVariableChar = "a-zA-Z0-9_\\$"
   val quoteChar = "\"'"
-  val simpleIdent = s"[a-z][$simpleVariableChar]*"
+  val simpleIdent = s"[a-zA-Z_][$simpleVariableChar]*"
 
   def collectIdentifiers[T <: MetaGraphEntity](
     holder: StateMapHolder[T],
