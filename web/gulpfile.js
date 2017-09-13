@@ -223,7 +223,7 @@ gulp.task('test:serve', ['webdriver-update'], function(done) {
 gulp.task('default', function(callback) {
   runSequence(
     ['eslint', 'clean:tmp', 'clean:dist'],
-    ['asciidoctor', 'genTemplates', 'html'],
+    ['dist'],
     callback);
 });
 
