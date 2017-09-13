@@ -84,12 +84,12 @@
         multiple
         ng-attr-size="{{ param.options.length }}"
         class="form-control operation-attribute-entry"
-        ng-model="multiOutput[param.id]"
+        ng-model="listParameters[param.id]"
         ng-change="onBlur()"
         ng-options="option.id as option.title for option in param.options"></select>
       <tag-list
         ng-if="param.kind === 'tag-list'"
-        model="multiOutput[param.id]"
+        model="listParameters[param.id]"
         on-blur="onBlur()"
         options="param.options"
         class="operation-attribute-entry"></tag-list>
