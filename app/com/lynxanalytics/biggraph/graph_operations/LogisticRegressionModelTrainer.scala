@@ -60,7 +60,7 @@ object LogisticRegressionModelTrainer extends OpFromJson {
       // whose diagonal elements are probability_i * (1 - probability_i).
       val covariance = breeze.linalg.inv(matrix * matrixCost * matrix.t)
       val coefficientsStdErr = breeze.linalg.diag(covariance).map(Math.sqrt)
-      val zValues = breeze.linalg.DenseVector(coefficientsAndIntercept) :/ coefficientsStdErr
+      val zValues = breeze.linalg.DenseVector(coefficientsAndIntercept) /:/ coefficientsStdErr
       zValues.toArray
     }
   }
@@ -73,6 +73,8 @@ case class LogisticRegressionModelTrainer(
   val isClassification = true
   override val isBinary = true
   override val generatesProbability = true
+  override def featureTypes = (0 until featureNames.size).map(_ => SerializableType.double).toList
+  def labelType = SerializableType.double
   override val isHeavy = true
   @transient override lazy val inputs = new Input(featureNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

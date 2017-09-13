@@ -121,6 +121,20 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
+  test("global sql with dot in the folder name") {
+    val eg = box("Create example graph")
+    eg.snapshotOutput("test_dir/firstname.lastname@lynx.com/eg", "project")
+
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(directory = "test_dir",
+        sql = "select name from `firstname.lastname@lynx.com/eg.vertices` where age < 40"),
+      maxRows = 10)))
+
+    assert(result.header == List(SQLColumn("name", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings == List(List("Adam"), List("Eve"), List("Isolated Joe")))
+  }
+
   // This should work, whether we choose to implement case sensitive or case insensitive
   // SQL in the future.
   test("global sql with upper case attribute name") {

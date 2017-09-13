@@ -40,6 +40,7 @@ object DataFrameSpec extends FromJson[DataFrameSpec] {
   import com.lynxanalytics.biggraph.serving.FrontendJson.fDataFrameSpec
   override def fromJson(j: JsValue): DataFrameSpec = json.Json.fromJson(j).get
 }
+
 case class DataFrameSpec(directory: Option[String], project: Option[String], sql: String) {
   assert(directory.isDefined ^ project.isDefined,
     "Exactly one of directory and project should be defined")
@@ -67,13 +68,9 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
       val givenTableNames = findTablesFromQuery(sql)
       // Maps the relative table names used in the sql query with the global name
       val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
-      val pathAndTableName = tableNames.mapValues(wholePath => {
-        val split = wholePath.split('.')
-        (split.head, split.tail)
-      })
-      val snapshotsAndInternalTables = pathAndTableName.mapValues {
-        case (snapshotPath, tablePath) => (DirectoryEntry.fromName(snapshotPath), tablePath)
-      }
+      val snapshotsAndInternalTables =
+        tableNames.mapValues(wholePath => SQLController.parseTablePath(wholePath))
+
       val goodSnapshotStates = snapshotsAndInternalTables.collect {
         case (name, (snapshot, tablePath)) if snapshot.isSnapshot && snapshot.readAllowedFrom(user) =>
           (name, (snapshot.asSnapshotFrame.getState(), tablePath))
@@ -213,16 +210,21 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   // - columns of a table kind snapshot
   def getTableBrowserNodes(user: serving.User, request: TableBrowserNodeRequest): TableBrowserNodeResponse =
     metaManager.synchronized {
-      val pathParts = SubProject.splitPipedPath(request.path)
-      val entry = DirectoryEntry.fromName(pathParts.head)
-      entry.assertReadAllowedFrom(user)
-      if (entry.isDirectory) {
-        getDirectory(user, entry.asDirectory, request.query)
-      } else if (entry.isSnapshot) {
-        getSnapshot(user, entry.asSnapshotFrame, pathParts.tail)
+      val entryFull = DirectoryEntry.fromName(request.path)
+      if (entryFull.isDirectory) {
+        // If it is a directory, we don't want to split directory
+        // names which contain dots.
+        entryFull.assertReadAllowedFrom(user)
+        getDirectory(user, entryFull.asDirectory, request.query)
       } else {
-        throw new AssertionError(
-          s"Table browser nodes are only available for snapshots and directories (${entry.path}).")
+        val (entry, path) = SQLController.parseTablePath(request.path)
+        entry.assertReadAllowedFrom(user)
+        if (entry.isSnapshot) {
+          getSnapshot(user, entry.asSnapshotFrame, path)
+        } else {
+          throw new AssertionError(
+            s"Table browser nodes are only available for snapshots and directories (${entry.path}).")
+        }
       }
     }
 
@@ -256,12 +258,13 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     if (state.isTable) {
       getColumnsFromSchema(state.table.schema)
     } else if (state.isProject) {
-      if (pathTail.isEmpty) {
-        // The last path segment is the frame, therefore the state is really a project.
-        getProjectTables(frame.path, state.project.viewer, pathTail)
+      val viewer = state.project.viewer
+      if (viewer.hasOffspring(pathTail)) {
+        // The path identifies a project or a segment.
+        getProjectTables(frame.path, viewer, pathTail)
       } else {
         // The path identifies a table within a snapshot of a project kind.
-        val protoTable = state.project.viewer.getSingleProtoTable(pathTail.mkString("."))
+        val protoTable = viewer.getSingleProtoTable(pathTail.mkString("."))
         getColumnsFromSchema(protoTable.schema)
       }
     } else {
@@ -445,4 +448,18 @@ object SQLController {
   def defaultContext(user: User)(implicit dataManager: DataManager): SQLContext = {
     dataManager.newSQLContext()
   }
+
+  // Splits a table path into a snapshot entry and an internal table path.
+  def parseTablePath(path: String)(implicit metaManager: MetaGraphManager): (DirectoryEntry, Seq[String]) = {
+    // The path 'd1/d2/d3/sn.s1.s2.vertices' is converted into
+    // (DirectoryEntry for 'd1/d2/d3/sn', Array('s1', 's2', 'vertices'))
+    // Parts d1, d2, d3, .. can contain dots, but sn doesn't.
+    val parts = DirectoryEntry.fromName(path).path.map(x => x.name).toList
+    val split = SubProject.splitPipedPath(parts.last)
+    val entryPathList = parts.init :+ split.head
+    val entryPath = entryPathList.mkString("/")
+    val entry = DirectoryEntry.fromName(entryPath)
+    (entry, split.tail)
+  }
+
 }
