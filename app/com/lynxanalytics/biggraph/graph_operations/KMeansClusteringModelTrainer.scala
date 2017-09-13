@@ -30,6 +30,8 @@ case class KMeansClusteringModelTrainer(
     featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
   val isClassification = true
   val isBinary = false
+  def featureTypes = (0 until featureNames.size).map(_ => SerializableType.double).toList
+  def labelType = SerializableType.double
   override val isHeavy = true
   @transient override lazy val inputs = new Input(featureNames.size)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

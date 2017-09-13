@@ -123,10 +123,9 @@ class SQLTest extends OperationsTestBase {
     val file = getClass.getResource("/controllers/noread.csv").toString
     val ws = box("Create example graph")
       .box("SQL1", Map("sql" -> s"select * from csv.`$file`"))
-    val e = intercept[AssertionError] {
+    intercept[AssertionError] {
       ws.table
     }
-    assert(e.getMessage.contains("No such table: csv."))
   }
 
   test("three inputs") {

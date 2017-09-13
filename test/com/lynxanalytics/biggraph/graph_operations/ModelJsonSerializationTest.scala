@@ -1,5 +1,6 @@
 package com.lynxanalytics.biggraph.graph_operations
 
+import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.model._
 import org.apache.spark.mllib.feature.StandardScalerModel
 import org.apache.spark.mllib.linalg.DenseVector
@@ -22,7 +23,11 @@ class ModelJsonSerializationTest extends ModelTestBase {
       "one",
       "two",
       Some("three"),
+      Some(SerializableType.double),
+      Some(Map(1.0 -> "a")),
       List[String]("four", "five"),
+      Some(List(SerializableType.double)),
+      Some(Map(0 -> Map("1" -> 2.0))),
       None)
     val out = m1.toJson
     val m2 = Model.fromJson(out)
@@ -34,7 +39,11 @@ class ModelJsonSerializationTest extends ModelTestBase {
       "one",
       "two",
       Some("three"),
+      Some(SerializableType.double),
+      Some(Map(1.0 -> "a")),
       List[String]("four", "five"),
+      Some(List(SerializableType.double)),
+      Some(Map(0 -> Map("1" -> 2.0))),
       None)
     val out = m1.toJson
     val m2 = Model.fromJson(out)
@@ -46,7 +55,11 @@ class ModelJsonSerializationTest extends ModelTestBase {
       "one",
       "two",
       None,
+      Some(SerializableType.double),
+      Some(Map(1.0 -> "a")),
       List[String]("four", "five"),
+      Some(List(SerializableType.double)),
+      Some(Map(0 -> Map("1" -> 2.0))),
       Some(""))
     val out = m1.toJson
     val m2 = Model.fromJson(out)

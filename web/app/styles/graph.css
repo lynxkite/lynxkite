@@ -62,6 +62,8 @@ h6 {
   color: darkred;
   /* Wrap lines, but keep whitespace otherwise. Good for console-oriented errors. */
   white-space: pre-wrap;
+  /* Monospace font is also good for console-oriented (esp. Scala Compiler) errors. */
+  font-family: monospace;
 }
 
 /*
