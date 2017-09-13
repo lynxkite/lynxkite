@@ -392,9 +392,12 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
 }
 
 object ScalaUtilities {
-  val simpleVariableChar = "a-zA-Z0-9_\\$"
+  // "Letters" as defined in the Scala spec:
+  // https://www.scala-lang.org/files/archive/spec/2.11/01-lexical-syntax.html
+  val letters = "\\p{Ll}\\p{Lu}\\p{Lt}\\p{Lo}\\p{Nl}$_"
+  val simpleVariableChar = "0-9" + letters
   val quoteChar = "\"'"
-  val simpleIdent = s"[a-z][$simpleVariableChar]*"
+  val simpleIdent = s"[$letters][$simpleVariableChar]*"
 
   def collectIdentifiers[T <: MetaGraphEntity](
     holder: StateMapHolder[T],
