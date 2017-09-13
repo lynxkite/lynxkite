@@ -48,4 +48,26 @@ module.exports = function(fw) {
       lib.workspace.editBox('pr1', {direction: 'outgoing edges'});
       lib.workspace.editBox('pr2', {direction: 'incoming edges'});
     });
+
+  fw.transitionTest(
+    'empty test-example workspace',
+    'multi-select',
+    function() {
+      lib.workspace.addBox({id: 'ex', name: 'Create example graph', x: 100, y: 100});
+      lib.workspace.addBox({
+        id: 'discard', name: 'Discard vertex attributes', x: 100, y: 200, after: 'ex'});
+      const box = lib.workspace.openBoxEditor('discard');
+      const state = lib.workspace.openStateView('discard', 'project');
+      function attrs() {
+        return state.left.side.$$('entity[kind="vertex-attribute"]').map(e => e.getText());
+      }
+      expect(attrs()).toEqual(['gender', 'id', 'income', 'location', 'name']);
+      box.populateOperation({ name: ['income'] });
+      expect(attrs()).toEqual(['age', 'gender', 'id', 'location', 'name']);
+      box.populateOperation({ name: ['income', 'location'] });
+      expect(attrs()).toEqual(['age', 'gender', 'id', 'name']);
+      box.populateOperation({ name: [] });
+      expect(attrs()).toEqual(['age', 'gender', 'id', 'income', 'location', 'name']);
+    },
+    function() {});
 };
