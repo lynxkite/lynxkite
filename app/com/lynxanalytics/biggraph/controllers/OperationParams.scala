@@ -24,7 +24,7 @@ object OperationParams {
       multipleChoice: Boolean = false,
       allowUnknownOption: Boolean = false) extends OperationParameterMeta {
     val kind = "choice"
-    val defaultValue = options.headOption.map(_.id).getOrElse("")
+    val defaultValue = if (multipleChoice) "" else options.headOption.map(_.id).getOrElse("")
     def validate(value: String): Unit = {
       if (!allowUnknownOption) {
         val possibleValues = options.map { x => x.id }.toSet
