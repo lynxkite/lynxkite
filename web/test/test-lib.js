@@ -1296,24 +1296,9 @@ testLib = {
           } else if (kind === 'choice') {
             e.$('option[label="' + value + '"]').click();
           } else if (kind === 'multi-choice') {
-            if (value.length === 0) {
-              // Click the first element then Ctrl-click it to deselect.
-              browser.actions()
-                .mouseMove(e.$('option:first-child'))
-                .click()
-                .keyDown(CTRL)
-                .click()
-                .keyUp(CTRL)
-                .perform();
-            } else {
-              let actions = browser.actions()
-                .mouseMove(e.$('option[label="' + value[0] + '"]'))
-                .click()
-                .keyDown(CTRL);
-              for (let i = 1; i < value.length; ++i) {
-                actions = actions.mouseMove(e.$('option[label="' + value[i] + '"]')).click();
-              }
-              actions.keyUp(CTRL).perform();
+            e.$$('option:checked').click();
+            for (let i = 0; i < value.length; ++i) {
+              e.$('option[label="' + value[i] + '"]').click();
             }
           } else {
             e.sendKeys(testLib.selectAllKey + value);
