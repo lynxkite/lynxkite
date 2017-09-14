@@ -61,7 +61,7 @@ module.exports = function(fw) {
       function attrs() {
         return state.left.side.$$('entity[kind="vertex-attribute"]').map(e => e.getText());
       }
-      expect(attrs()).toEqual(['gender', 'id', 'income', 'location', 'name']);
+      expect(attrs()).toEqual(['age', 'gender', 'id', 'income', 'location', 'name']);
       box.populateOperation({ name: ['income'] });
       expect(attrs()).toEqual(['age', 'gender', 'id', 'location', 'name']);
       box.populateOperation({ name: ['income', 'location'] });
