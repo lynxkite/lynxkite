@@ -88,7 +88,6 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
   register("Derive edge attribute")(new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
-      Choice("type", "Result type", options = FEOption.jsDataTypes),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
       Code("expr", "Value", defaultValue = "", language = "javascript"))
