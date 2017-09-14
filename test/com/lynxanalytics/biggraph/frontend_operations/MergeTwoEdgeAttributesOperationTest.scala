@@ -6,7 +6,7 @@ class MergeTwoEdgeAttributesOperationTest extends OperationsTestBase {
   test("Merge two edge attributes") {
     val project = box("Create example graph")
       .box("Derive edge attribute",
-        Map("type" -> "Double", "output" -> "income_edge", "expr" -> "src$income"))
+        Map("output" -> "income_edge", "expr" -> "src$income"))
       .box("Merge two edge attributes",
         Map("name" -> "merged", "attr1" -> "income_edge", "attr2" -> "weight"))
       .project
@@ -14,4 +14,3 @@ class MergeTwoEdgeAttributesOperationTest extends OperationsTestBase {
     assert(merged.rdd.values.collect.toSeq.sorted == Seq(2.0, 1000.0, 2000.0, 2000.0))
   }
 }
-
