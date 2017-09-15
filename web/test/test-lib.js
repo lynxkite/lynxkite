@@ -29,6 +29,7 @@ function isMacOS() {
   // Mac is 'darwin': https://nodejs.org/api/process.html#process_process_platform
   return process.platform === 'darwin';
 }
+const CTRL = isMacOS() ? K.META : K.CONTROL;
 
 Entity.prototype = {
 
@@ -168,17 +169,10 @@ Workspace.prototype = {
   },
 
   duplicate: function() {
-    if (isMacOS()) {
-      browser.actions()
-        .sendKeys(K.chord(K.META, 'c'))
-        .sendKeys(K.chord(K.META, 'v'))
-        .perform();
-    } else {
-      browser.actions()
-        .sendKeys(K.chord(K.CONTROL, 'c'))
-        .sendKeys(K.chord(K.CONTROL, 'v'))
-        .perform();
-    }
+    browser.actions()
+      .sendKeys(K.chord(CTRL, 'c'))
+      .sendKeys(K.chord(CTRL, 'v'))
+      .perform();
   },
 
   addBoxFromSelector: function(boxName) {
@@ -214,14 +208,14 @@ Workspace.prototype = {
   },
 
   selectBoxes: function(boxIds) {
-    browser.actions().keyDown(protractor.Key.CONTROL).perform();
+    browser.actions().keyDown(CTRL).perform();
     // Unselect all.
     $$('g.box.selected').click();
     // Select given boxes.
     for (var i = 0; i < boxIds.length; ++i) {
       this.clickBox(boxIds[i]);
     }
-    browser.actions().keyUp(protractor.Key.CONTROL).perform();
+    browser.actions().keyUp(CTRL).perform();
   },
 
   // Protractor mouseMove only takes offsets, so first we set the mouse position to a box based on
@@ -230,11 +224,11 @@ Workspace.prototype = {
     let box = this.getBox(startBoxId);
     browser.actions()
       .mouseMove(box, point1)
-      .keyDown(protractor.Key.SHIFT)
+      .keyDown(K.SHIFT)
       .mouseDown()
       .mouseMove(point2)
       .mouseUp()
-      .keyUp(protractor.Key.SHIFT)
+      .keyUp(K.SHIFT)
       .perform();
   },
 
@@ -1274,7 +1268,7 @@ testLib = {
 
   setParameter: function(e, value) {
     // Special parameter types need different handling.
-    e.evaluate('param.kind').then(
+    e.evaluate('(param.multipleChoice ? "multi-" : "") + param.kind').then(
         function(kind) {
           if (kind === 'code') {
             testLib.sendKeysToACE(e, testLib.selectAllKey + value);
@@ -1301,6 +1295,11 @@ testLib = {
             }
           } else if (kind === 'choice') {
             e.$('option[label="' + value + '"]').click();
+          } else if (kind === 'multi-choice') {
+            e.$$('option:checked').click();
+            for (let i = 0; i < value.length; ++i) {
+              e.$('option[label="' + value[i] + '"]').click();
+            }
           } else {
             e.sendKeys(testLib.selectAllKey + value);
           }
