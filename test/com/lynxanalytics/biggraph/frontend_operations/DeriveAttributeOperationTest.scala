@@ -158,7 +158,7 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
 
   test("ScalaUtilities error on reserved Scala keyword") {
     intercept[AssertionError] {
-      ScalaUtilities.containsIdentifier("if (type == 'abc') {1} else {0}", "type")
+      ScalaUtilities.containsIdentifier("if (type == \"abc\") 1 else 0", "type")
     }
   }
 
