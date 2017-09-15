@@ -29,6 +29,7 @@ var spawn = require('child_process').spawn;
 var del = require('del');
 var glob = require('glob');
 var gulp = require('gulp');
+var runSequence = require('run-sequence');
 var fs = require('fs');
 var httpProxy = require('http-proxy');
 var lazypipe = require('lazypipe');
@@ -70,7 +71,7 @@ gulp.task('html', ['css', 'js'], function () {
 // Performs the final slow steps for creating the ultimate files that are included in LynxKite.
 // All the other tasks create intermediate outputs in .tmp. This task takes files from app and .tmp,
 // optimizes them, and saves them in dist.
-gulp.task('dist', ['clean:dist', 'asciidoctor', 'genTemplates', 'html'], function () {
+gulp.task('dist', ['asciidoctor', 'genTemplates', 'html'], function () {
   var beforeConcat = lazypipe().pipe($.sourcemaps.init, { loadMaps: true });
   var dynamicFiles = gulp.src('.tmp/**/*.html')
     .pipe($.useref({}, beforeConcat))
@@ -127,9 +128,12 @@ gulp.task('eslint', function() {
     .pipe($.eslint.failAfterError());
 });
 
-// Deletes dist.
+// Cleanup tasks.
 gulp.task('clean:dist', function() {
   return del('dist');
+});
+gulp.task('clean:tmp', function() {
+  return del('.tmp');
 });
 
 // Generates template files from AsciiDoc.
@@ -215,8 +219,13 @@ gulp.task('test:serve', ['webdriver-update'], function(done) {
   runProtractor(ProxyURL, done);
 });
 
-// The default task builds dist.
-gulp.task('default', ['eslint', 'dist']);
+// The default task when you just run "gulp".
+gulp.task('default', function(callback) {
+  runSequence(
+    ['eslint', 'clean:tmp', 'clean:dist'],
+    ['dist'],
+    callback);
+});
 
 // A quicker build that populates .tmp.
 gulp.task('quick', ['eslint', 'html', 'asciidoctor']);
