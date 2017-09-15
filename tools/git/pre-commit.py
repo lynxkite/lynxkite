@@ -20,7 +20,7 @@ def warn(msg):
 def get_hashes(files):
   hashes = []
   for f in files:
-    with open(f) as file:
+    with open(f, 'rb') as file:
       hashes.append(hashlib.md5(file.read()).hexdigest())
   return hashes
 
