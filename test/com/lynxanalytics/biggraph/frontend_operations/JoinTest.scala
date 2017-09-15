@@ -321,7 +321,7 @@ class JoinTest extends OperationsTestBase {
     val (target, sourceRoot) = getTargetSource()
     val source = sourceRoot.box("Replace edges with triadic closure", Map())
       .box("Derive edge attribute",
-        Map("type" -> "String", "output" -> "edge_attr",
+        Map("output" -> "edge_attr",
           "expr" -> "src$name + '_' + dst$name"))
     val result = box("Project rejoin",
       Map(

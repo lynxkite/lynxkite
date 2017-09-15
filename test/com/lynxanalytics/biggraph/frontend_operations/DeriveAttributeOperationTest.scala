@@ -33,6 +33,17 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     assert(attr.rdd.collect.toMap == Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0, 3 -> 0.0))
   }
 
+  test("Derive vertex attribute - uppercase attribute") {
+    val project = box("Create example graph")
+      .box("Add constant vertex attribute",
+        Map("name" -> "UPPERCASE", "type" -> "Double", "value" -> "0.0"))
+      .box("Derive vertex attribute",
+        Map("output" -> "output", "expr" -> "UPPERCASE"))
+      .project
+    val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
+    assert(attr.rdd.collect.toMap == Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0, 3 -> 0.0))
+  }
+
   test("Multi-line function") {
     val project = box("Create example graph")
       .box("Derive vertex attribute",
@@ -146,12 +157,12 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     assert(true == ScalaUtilities.containsIdentifier("age_v2", "age_v2"))
     assert(true == ScalaUtilities.containsIdentifier("age.toString", "age"))
     assert(true == ScalaUtilities.containsIdentifier("age\n1.0", "age"))
+    assert(true == ScalaUtilities.containsIdentifier("Name", "Name"))
 
     assert(false == ScalaUtilities.containsIdentifier("name", "nam"))
     assert(false == ScalaUtilities.containsIdentifier("name", "ame"))
     assert(false == ScalaUtilities.containsIdentifier("nam", "name"))
     assert(false == ScalaUtilities.containsIdentifier("ame", "name"))
-    assert(false == ScalaUtilities.containsIdentifier("Name", "Name"))
     assert(false == ScalaUtilities.containsIdentifier("\"name\"", "name"))
     assert(false == ScalaUtilities.containsIdentifier("'name", "name"))
   }

@@ -27,7 +27,7 @@ $(pip): python_requirements.txt
 	$(shell $(find) app project lib conf built-ins) tools/call_spark_submit.sh build.sbt .build/gulp-done
 	./tools/install_spark.sh && sbt stage && touch $@
 .build/backend-test-passed: $(shell $(find) app test project conf) build.sbt
-	./.test_backend.sh && touch $@
+	./tools/install_spark.sh && ./.test_backend.sh && touch $@
 .build/frontend-test-passed: \
 		$(shell $(find) web/test) build.sbt .build/backend-done \
 		.build/documentation-verified .build/gulp-done
