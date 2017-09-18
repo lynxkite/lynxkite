@@ -22,11 +22,11 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
     return comment ? md.render(comment) : undefined;
   }
 
-  function BoxWrapper(workspace, metadata, instance, isDirty) {
+  function BoxWrapper(workspace, metadata, instance, opts) {
     this.workspace = workspace;
     this.metadata = metadata;
     this.instance = instance;
-    this.isDirty = isDirty;
+    this.isDirty = opts.isDirty;
     this.summary = metadata.operationId;
     this.inputs = [];
     this.outputs = [];
