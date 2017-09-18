@@ -43,7 +43,7 @@ def compose(output_file, font, caption):
   # Turn grayscale shadow into full black with alpha.
   unshadow = PIL.ImageChops.invert(shadow)
   black = unshadow.copy()
-  black.paste(0)
+  black.paste(0, (0, 0) + black.size)
   shadow = PIL.Image.merge('RGBA', (black, black, black, unshadow))
   # Composite alpha shadow under the object.
   PIL.Image.alpha_composite(shadow, obj).save(output_file, 'png')
