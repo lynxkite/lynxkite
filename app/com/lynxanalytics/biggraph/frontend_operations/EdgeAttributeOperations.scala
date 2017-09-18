@@ -185,7 +185,8 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       assert(name.nonEmpty, "You must specify a name for the new attribute.")
       val attr1 = project.edgeAttributes(params("attr1"))
       val attr2 = project.edgeAttributes(params("attr2"))
-      assert(attr1.typeTag.tpe =:= attr2.typeTag.tpe,
+      assert(
+        attr1.typeTag.tpe =:= attr2.typeTag.tpe,
         "The two attributes must have the same type.")
       project.newEdgeAttribute(name, unifyAttribute(attr1, attr2), s"primary: $attr1, secondary: $attr2" + help)
     }
@@ -222,7 +223,8 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
         }
         val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
         for ((name, attr) <- attributes.vertexAttributes) {
-          assert(!projectAttrNames.contains(prefix + name),
+          assert(
+            !projectAttrNames.contains(prefix + name),
             s"Cannot import column `${prefix + name}`. Attribute already exists.")
           project.newEdgeAttribute(prefix + name, attr.pullVia(edges), "imported")
         }

@@ -115,7 +115,8 @@ object SegmentByEventSequence extends OpFromJson {
     val eventBelongsToLocation = edgeBundle(eventVs, locationVs)
   }
   class Output(
-      implicit instance: MetaGraphOperationInstance,
+      implicit
+      instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
     val segments = vertexSet
     val segmentDescription = vertexAttribute[String](segments)
@@ -133,11 +134,11 @@ object SegmentByEventSequence extends OpFromJson {
 }
 import SegmentByEventSequence._
 case class SegmentByEventSequence(
-  algorithm: String,
-  sequenceLength: Int,
-  timeWindowStep: Double,
-  timeWindowLength: Double)
-    extends TypedMetaGraphOp[Input, Output] {
+    algorithm: String,
+    sequenceLength: Int,
+    timeWindowStep: Double,
+    timeWindowLength: Double)
+  extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
@@ -154,7 +155,8 @@ case class SegmentByEventSequence(
     output: OutputBuilder,
     rc: RuntimeContext,
     segmentGenerator: TimeLineSegmentGenerator[T])(
-      implicit ct: ClassTag[T], ordering: Ordering[T]): Unit = {
+    implicit
+    ct: ClassTag[T], ordering: Ordering[T]): Unit = {
 
     implicit val id = inputDatas
     val eventTimeAttributeRdd = inputs.eventTimeAttribute.rdd
@@ -163,8 +165,7 @@ case class SegmentByEventSequence(
     val partitioner = new HashPartitioner(
       eventTimeAttributeRdd.partitions.length +
         personBelongsToEventRdd.partitions.length +
-        eventBelongsToLocationRdd.partitions.length
-    )
+        eventBelongsToLocationRdd.partitions.length)
     val eventToLocationAndTime = eventBelongsToLocationRdd
       .map { case (edgeId, Edge(eventId, locationId)) => (eventId, locationId) }
       .sort(partitioner)
@@ -211,10 +212,11 @@ case class SegmentByEventSequence(
       })
   }
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     algorithm match {
       case "continuous" =>
         executeWithAlgorithm(

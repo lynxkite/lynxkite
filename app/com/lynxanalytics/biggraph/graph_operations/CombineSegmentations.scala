@@ -12,8 +12,9 @@ object CombineSegmentations extends OpFromJson {
     val belongsTo1 = edgeBundle(vs, seg1)
     val belongsTo2 = edgeBundle(vs, seg2)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val segments = vertexSet
     private val EBP = EdgeBundleProperties // Short alias.
     val belongsTo = {
@@ -31,15 +32,16 @@ object CombineSegmentations extends OpFromJson {
 }
 import CombineSegmentations._
 case class CombineSegmentations()
-    extends TypedMetaGraphOp[Input, Output] {
+  extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vp = inputs.vs.rdd.partitioner.get
     val belongsTo1 = inputs.belongsTo1.rdd.values.map(e => e.src -> e.dst)

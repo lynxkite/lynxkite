@@ -13,11 +13,12 @@ object RuntimeContext {
     new spark.HashPartitioner(1)
 }
 
-case class RuntimeContext(sparkContext: spark.SparkContext,
-                          sqlContext: spark.sql.SQLContext,
-                          ioContext: io.IOContext,
-                          broadcastDirectory: HadoopFile,
-                          dataManager: DataManager) {
+case class RuntimeContext(
+    sparkContext: spark.SparkContext,
+    sqlContext: spark.sql.SQLContext,
+    ioContext: io.IOContext,
+    broadcastDirectory: HadoopFile,
+    dataManager: DataManager) {
   def partitionerForNRows(n: Long) = RuntimeContext.partitionerForNRows(n)
   def onePartitionPartitioner = RuntimeContext.onePartitionPartitioner
 

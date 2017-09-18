@@ -196,15 +196,16 @@ object OpTriggeringTestOperation extends OpFromJson {
   }
 }
 case class OpTriggeringTestOperation()
-    extends TypedMetaGraphOp[graph_operations.NoInput, OpTriggeringTestOperation.Output] {
+  extends TypedMetaGraphOp[graph_operations.NoInput, OpTriggeringTestOperation.Output] {
   var sideChannelVS: VertexSet = null
   @transient override lazy val inputs = new graph_operations.NoInput
   def outputMeta(instance: MetaGraphOperationInstance) =
     new OpTriggeringTestOperation.Output()(instance)
-  def execute(inputDatas: DataSet,
-              o: OpTriggeringTestOperation.Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: OpTriggeringTestOperation.Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     println(rc.dataManager.get(sideChannelVS).rdd.collect)
   }
 }

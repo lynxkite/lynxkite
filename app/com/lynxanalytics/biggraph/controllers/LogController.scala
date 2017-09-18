@@ -12,9 +12,9 @@ import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 case class FileDescriptor(
-  name: String,
-  length: Long,
-  lastModified: String)
+    name: String,
+    length: Long,
+    lastModified: String)
 
 case class LogFiles(files: List[FileDescriptor])
 

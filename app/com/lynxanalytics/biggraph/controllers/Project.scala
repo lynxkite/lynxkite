@@ -67,10 +67,10 @@ object CommonProjectState {
 
 // This gets written into a checkpoint.
 case class CheckpointObject(
-  workspace: Option[Workspace] = None,
-  snapshot: Option[BoxOutputState] = None,
-  checkpoint: Option[String] = None,
-  previousCheckpoint: Option[String] = None)
+    workspace: Option[Workspace] = None,
+    snapshot: Option[BoxOutputState] = None,
+    checkpoint: Option[String] = None,
+    previousCheckpoint: Option[String] = None)
 
 // Complete state of segmentation.
 case class SegmentationState(
@@ -227,7 +227,8 @@ sealed trait ProjectViewer {
 
   def allOffspringFESegmentations(
     rootName: String, rootRelativePath: String = "")(
-      implicit epm: EntityProgressManager): List[FESegmentation] = {
+    implicit
+    epm: EntityProgressManager): List[FESegmentation] = {
     sortedSegmentations.flatMap { segmentation =>
       segmentation.toFESegmentation(rootName, rootRelativePath) +:
         segmentation.allOffspringFESegmentations(
@@ -359,14 +360,13 @@ object ProjectViewer {
       isInternal,
       state.computeProgress,
       state.error.map(Utils.formatThrowable(_)),
-      state.value.map(graph_operations.DynamicValue.convert(_))
-    )
+      state.value.map(graph_operations.DynamicValue.convert(_)))
   }
 }
 
 // ProjectViewer for the root state.
 class RootProjectViewer(val rootState: CommonProjectState)(implicit val manager: MetaGraphManager)
-    extends ProjectViewer {
+  extends ProjectViewer {
   val state = rootState
   def rootViewer = this
   def editor: RootProjectEditor = new RootProjectEditor(state)
@@ -380,7 +380,7 @@ class RootProjectViewer(val rootState: CommonProjectState)(implicit val manager:
 
 // Specialized ProjectViewer for SegmentationStates.
 class SegmentationViewer(val parent: ProjectViewer, val segmentationName: String)
-    extends ProjectViewer {
+  extends ProjectViewer {
 
   implicit val manager = parent.manager
   val rootState = parent.rootState
@@ -534,7 +534,8 @@ class CheckpointRepository(val baseDir: String) {
     if (checkpoint == "") {
       CheckpointObject()
     } else synchronized {
-      cache.getOrElseUpdate(checkpoint,
+      cache.getOrElseUpdate(
+        checkpoint,
         Json.parse(FileUtils.readFileToString(checkpointFileName(checkpoint), "utf8"))
           .as[CheckpointObject].copy(checkpoint = Some(checkpoint)))
     }
@@ -745,11 +746,14 @@ sealed trait ProjectEditor {
     newEdgeBundle: EdgeBundle,
     pullBundle: EdgeBundle): Unit = {
 
-    assert(pullBundle.properties.compliesWith(EdgeBundleProperties.partialFunction),
+    assert(
+      pullBundle.properties.compliesWith(EdgeBundleProperties.partialFunction),
       s"Not a partial function: $pullBundle")
-    assert(pullBundle.srcVertexSet.gUID == newEdgeBundle.idSet.gUID,
+    assert(
+      pullBundle.srcVertexSet.gUID == newEdgeBundle.idSet.gUID,
       s"Wrong source: $pullBundle")
-    assert(pullBundle.dstVertexSet.gUID == origEdgeBundle.idSet.gUID,
+    assert(
+      pullBundle.dstVertexSet.gUID == origEdgeBundle.idSet.gUID,
       s"Wrong destination: $pullBundle")
 
     edgeBundle = newEdgeBundle
@@ -761,9 +765,11 @@ sealed trait ProjectEditor {
   }
 
   def pullBack(pullBundle: EdgeBundle): Unit = {
-    assert(pullBundle.properties.compliesWith(EdgeBundleProperties.partialFunction),
+    assert(
+      pullBundle.properties.compliesWith(EdgeBundleProperties.partialFunction),
       s"Not a partial function: $pullBundle")
-    assert(pullBundle.dstVertexSet.gUID == vertexSet.gUID,
+    assert(
+      pullBundle.dstVertexSet.gUID == vertexSet.gUID,
       s"Wrong destination: $pullBundle")
     val origVAttrs = vertexAttributes.toIndexedSeq
     val origEB = edgeBundle
@@ -809,7 +815,8 @@ sealed trait ProjectEditor {
 // Editor that holds the state.
 class RootProjectEditor(
     initialState: CommonProjectState)(
-        implicit val manager: MetaGraphManager) extends ProjectEditor {
+    implicit
+    val manager: MetaGraphManager) extends ProjectEditor {
   var rootState = initialState
 
   def state = rootState
@@ -883,7 +890,8 @@ class SegmentationEditor(
 // Represents a mutable, named workspace. It can be seen as a modifiable pointer into the
 // checkpoint tree with some additional metadata. WorkspaceFrame's data is persisted using tags.
 class WorkspaceFrame(path: SymbolPath)(
-    implicit manager: MetaGraphManager) extends ObjectFrame(path) {
+    implicit
+    manager: MetaGraphManager) extends ObjectFrame(path) {
   // The farthest checkpoint available in the current redo sequence
   private def farthestCheckpoint: String = get(rootDir / "!farthestCheckpoint")
   private def farthestCheckpoint_=(x: String): Unit = set(rootDir / "!farthestCheckpoint", x)
@@ -948,7 +956,8 @@ object SubProject {
 }
 
 class SnapshotFrame(path: SymbolPath)(
-    implicit manager: MetaGraphManager) extends ObjectFrame(path) {
+    implicit
+    manager: MetaGraphManager) extends ObjectFrame(path) {
   SubProject.validateName(path.last.name)
 
   def initialize(state: BoxOutputState) = {
@@ -970,8 +979,7 @@ class SnapshotFrame(path: SymbolPath)(
           name = name,
           objectType = objectType,
           icon = getState().kind,
-          error = Some(ex.getMessage)
-        )
+          error = Some(ex.getMessage))
     }
   }
 
@@ -979,7 +987,8 @@ class SnapshotFrame(path: SymbolPath)(
 }
 
 abstract class ObjectFrame(path: SymbolPath)(
-    implicit manager: MetaGraphManager) extends DirectoryEntry(path) {
+    implicit
+    manager: MetaGraphManager) extends DirectoryEntry(path) {
   val name = path.toString
 
   // Current checkpoint of the project
@@ -1014,7 +1023,8 @@ abstract class ObjectFrame(path: SymbolPath)(
 }
 
 class Directory(path: SymbolPath)(
-    implicit manager: MetaGraphManager) extends DirectoryEntry(path) {
+    implicit
+    manager: MetaGraphManager) extends DirectoryEntry(path) {
   // Returns the list of all directories contained in this directory.
   def listDirectoriesRecursively: Seq[Directory] = {
     val dirs = list.filter(_.isDirectory).map(_.asDirectory)
@@ -1046,7 +1056,8 @@ object Directory {
 
 // May be a directory a project frame or a table.
 class DirectoryEntry(val path: SymbolPath)(
-    implicit manager: MetaGraphManager) extends AccessControl {
+    implicit
+    manager: MetaGraphManager) extends AccessControl {
 
   override def toString = path.toString
   override def equals(p: Any) =

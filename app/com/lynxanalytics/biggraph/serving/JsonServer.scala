@@ -53,7 +53,7 @@ abstract class JsonServer extends mvc.Controller {
   def jsonPostCommon[I: json.Reads, R](
     user: User,
     request: mvc.Request[json.JsValue], logRequest: Boolean = true)(
-      handler: (User, I) => R): R = {
+    handler: (User, I) => R): R = {
     val t0 = System.currentTimeMillis
     if (logRequest) {
       log.info(s"$user POST ${request.path} ${request.body}")
@@ -110,7 +110,8 @@ abstract class JsonServer extends mvc.Controller {
 
   def jsonGet[I: json.Reads, O: json.Writes](handler: (User, I) => O) = {
     action(parse.anyContent) { (user, request) =>
-      assert(request.headers.get("X-Requested-With") == Some("XMLHttpRequest"),
+      assert(
+        request.headers.get("X-Requested-With") == Some("XMLHttpRequest"),
         "Rejecting request because 'X-Requested-With: XMLHttpRequest' header is missing.")
       jsonQuery(user, request) { (user: User, i: I) =>
         Ok(json.Json.toJson(handler(user, i)))
@@ -128,7 +129,8 @@ abstract class JsonServer extends mvc.Controller {
 
   def jsonFuture[I: json.Reads, O: json.Writes](handler: (User, I) => Future[O]) = {
     asyncAction(parse.anyContent) { (user, request) =>
-      assert(request.headers.get("X-Requested-With") == Some("XMLHttpRequest"),
+      assert(
+        request.headers.get("X-Requested-With") == Some("XMLHttpRequest"),
         "Rejecting request because 'X-Requested-With: XMLHttpRequest' header is missing.")
       jsonQuery(user, request) { (user: User, i: I) =>
         handler(user, i).map(o => Ok(json.Json.toJson(o)))
@@ -148,13 +150,13 @@ case class Empty()
 case class AuthMethod(id: String, name: String)
 
 case class GlobalSettings(
-  hasAuth: Boolean,
-  authMethods: List[AuthMethod],
-  title: String,
-  tagline: String,
-  workspaceParameterKinds: List[String],
-  version: String,
-  defaultUIStatus: UIStatus)
+    hasAuth: Boolean,
+    authMethods: List[AuthMethod],
+    title: String,
+    tagline: String,
+    workspaceParameterKinds: List[String],
+    version: String,
+    defaultUIStatus: UIStatus)
 
 object AssertLicenseNotExpired {
   def apply() = {

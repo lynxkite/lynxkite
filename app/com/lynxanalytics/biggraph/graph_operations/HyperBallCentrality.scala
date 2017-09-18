@@ -27,8 +27,9 @@ object HyperBallCentrality extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, es) = graph
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val centrality = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = HyperBallCentrality(
@@ -38,7 +39,7 @@ object HyperBallCentrality extends OpFromJson {
 }
 import HyperBallCentrality._
 case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
-    extends TypedMetaGraphOp[Input, Output] {
+  extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
@@ -47,10 +48,11 @@ case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
     algorithmParameter.toJson(algorithm) ++
     bitsParameter.toJson(bits)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val centralities = algorithm match {

@@ -12,8 +12,9 @@ object PartitionAttribute extends OpFromJson {
     val attr = vertexAttribute[T](vs)
     val role = vertexAttribute[String](vs)
   }
-  class Output[T](implicit instance: MetaGraphOperationInstance,
-                  inputs: Input[T]) extends MagicOutput(instance) {
+  class Output[T](implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input[T]) extends MagicOutput(instance) {
     implicit val tt = inputs.attr.typeTag
     val test = vertexAttribute[T](inputs.vs.entity)
     val train = vertexAttribute[T](inputs.vs.entity)
@@ -26,10 +27,11 @@ case class PartitionAttribute[T]() extends TypedMetaGraphOp[Input[T], Output[T]]
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output[T],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output[T],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
     val attr = inputs.attr.rdd
     val role = inputs.role.rdd

@@ -17,23 +17,23 @@ import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 case class DataFilesStats(
-  id: String = "",
-  name: String = "",
-  desc: String = "",
-  fileCount: Long,
-  totalSize: Long)
+    id: String = "",
+    name: String = "",
+    desc: String = "",
+    fileCount: Long,
+    totalSize: Long)
 
 case class DataFilesStatus(
-  freeSpace: Long,
-  total: DataFilesStats,
-  trash: DataFilesStats,
-  methods: List[DataFilesStats])
+    freeSpace: Long,
+    total: DataFilesStats,
+    trash: DataFilesStats,
+    methods: List[DataFilesStats])
 
 case class CleanerMethod(
-  id: String,
-  name: String,
-  desc: String,
-  filesToKeep: () => Set[String])
+    id: String,
+    name: String,
+    desc: String,
+    filesToKeep: () => Set[String])
 
 case class MoveToTrashRequest(method: String)
 
@@ -148,7 +148,8 @@ class CleanerController(environment: BigGraphEnvironment) {
 
   def moveToCleanerTrash(user: serving.User, req: MoveToTrashRequest): Unit = synchronized {
     assert(user.isAdmin, "Only administrators can move data files to trash.")
-    assert(methods.map { m => m.id } contains req.method,
+    assert(
+      methods.map { m => m.id } contains req.method,
       s"Unknown data file trashing method: ${req.method}")
     log.info(s"${user.email} attempting to move data files to trash using '${req.method}'.")
     val files = getAllFiles(trash = false)

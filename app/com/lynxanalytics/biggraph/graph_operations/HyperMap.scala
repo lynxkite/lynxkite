@@ -21,8 +21,9 @@ object HyperMap extends OpFromJson {
     val degree = vertexAttribute[Double](vs)
     val clustering = vertexAttribute[Double](vs)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val radial = vertexAttribute[Double](inputs.vs.entity)
     val angular = vertexAttribute[Double](inputs.vs.entity)
   }
@@ -37,10 +38,11 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("seed" -> seed)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vertices = inputs.vs.rdd
     val edges = inputs.es.rdd
@@ -109,7 +111,8 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
     val sampleTuple: (List[HyperVertex], List[(Long, Edge)]) =
       collectedSamples.tail.foldLeft(firstSampleList, firstEdgesToSamples) {
         case ((currentSampleList, currentEdgesToSamples), currentSample) =>
-          (HyperVertex(id = currentSample._2,
+          (HyperVertex(
+            id = currentSample._2,
             ord = currentSample._3,
             radial = 2 * math.log(currentSample._3),
             angular = maximumLikelihoodAngular(currentSample._2, currentSample._3,
@@ -143,14 +146,15 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
   }
 
   // Calculates the likelihood function for a node with a given angular coordinate.
-  def likelihood(vertexID: Long,
-                 ord: Long,
-                 angular: Double,
-                 samples: List[HyperVertex],
-                 sampleEdges: List[(Long, Edge)],
-                 exponent: Double,
-                 temperature: Double,
-                 avgExpectedDegree: Double): Double = {
+  def likelihood(
+    vertexID: Long,
+    ord: Long,
+    angular: Double,
+    samples: List[HyperVertex],
+    sampleEdges: List[(Long, Edge)],
+    exponent: Double,
+    temperature: Double,
+    avgExpectedDegree: Double): Double = {
     val radial = 2 * math.log(ord)
     samples.filter { v => v.ord < ord }
     samples.foldLeft(1.0)((product, otherVertex) =>
@@ -169,37 +173,40 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
   // Calculates the likelihood that the mapped graph is similar to a PSO-grown graph.
   // Divides 0 - 2Pi ( + offset) in half. Takes center point /random point of each, does a
   // comparison. Higher one stays. Divides half as wide angle into two halves again and repeat.
-  def maximumLikelihoodAngular(vertexID: Long,
-                               ord: Long,
-                               samples: List[HyperVertex],
-                               sampleEdges: List[(Long, Edge)],
-                               exponent: Double,
-                               temperature: Double,
-                               avgExpectedDegree: Double,
-                               logVertexSetSize: Double): Double = {
+  def maximumLikelihoodAngular(
+    vertexID: Long,
+    ord: Long,
+    samples: List[HyperVertex],
+    sampleEdges: List[(Long, Edge)],
+    exponent: Double,
+    temperature: Double,
+    avgExpectedDegree: Double,
+    logVertexSetSize: Double): Double = {
     val iterations: Int = (math.ceil(logVertexSetSize)).toInt
     val firstcwBound: Double = math.Pi * 2
     val firstccwBound: Double = 0
     val localRandom = new Random((vertexID << 16) + seed)
     val offset: Double = math.Pi * 2 * localRandom.nextDouble
-    maximumLikelihoodRecursion(iterations,
+    maximumLikelihoodRecursion(
+      iterations,
       firstcwBound, firstccwBound, offset,
       vertexID, ord, samples, sampleEdges,
       exponent, temperature, avgExpectedDegree, logVertexSetSize)
   }
   @annotation.tailrec
-  private final def maximumLikelihoodRecursion(remainingIterations: Int,
-                                               cwBound: Double,
-                                               ccwBound: Double,
-                                               offset: Double,
-                                               vertexID: Long,
-                                               ord: Long,
-                                               samples: List[HyperVertex],
-                                               sampleEdges: List[(Long, Edge)],
-                                               exponent: Double,
-                                               temperature: Double,
-                                               avgExpectedDegree: Double,
-                                               logVertexSetSize: Double): Double = {
+  private final def maximumLikelihoodRecursion(
+    remainingIterations: Int,
+    cwBound: Double,
+    ccwBound: Double,
+    offset: Double,
+    vertexID: Long,
+    ord: Long,
+    samples: List[HyperVertex],
+    sampleEdges: List[(Long, Edge)],
+    exponent: Double,
+    temperature: Double,
+    avgExpectedDegree: Double,
+    logVertexSetSize: Double): Double = {
     val angleBound: Double = cwBound - ccwBound
     val topQuarterPoint: Double = cwBound - angleBound / 4
     val bottomQuarterPoint: Double = ccwBound + angleBound / 4
@@ -221,7 +228,8 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
       else normalizeAngular(bottomQuarterPoint + offset)
     }
     if (remainingIterations == 0) maxAngular
-    else maximumLikelihoodRecursion(remainingIterations - 1,
+    else maximumLikelihoodRecursion(
+      remainingIterations - 1,
       newcwBound, newccwBound, offset,
       vertexID, ord, samples, sampleEdges,
       exponent, temperature, avgExpectedDegree, logVertexSetSize)
@@ -233,14 +241,15 @@ case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
   // HyperMap uses this data before HyperVertices are constructed.
   // Data that is currently irrelevant is given arbitrary values for the duration
   // of using these utilities from PSOGenerator.
-  def probabilityWrapper(rad1: Double,
-                         rad2: Double,
-                         ang1: Double,
-                         ang2: Double,
-                         ord: Long,
-                         exponent: Double,
-                         temperature: Double,
-                         externalLinks: Double): Double = {
+  def probabilityWrapper(
+    rad1: Double,
+    rad2: Double,
+    ang1: Double,
+    ang2: Double,
+    ord: Long,
+    exponent: Double,
+    temperature: Double,
+    externalLinks: Double): Double = {
     val firstVertex = HyperVertex(id = 1, ord = ord, radial = rad1,
       angular = ang1, expectedDegree = 2)
     val secondVertex = HyperVertex(id = 3, ord = 4, radial = rad2,

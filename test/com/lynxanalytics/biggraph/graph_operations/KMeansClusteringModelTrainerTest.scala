@@ -18,7 +18,7 @@ class KMeansClusteringModelTrainerTest extends ModelTestBase {
       featureNames)
     val m = op(op.features, features).result.model.value
 
-    // Load the model class and check each of its fields. 
+    // Load the model class and check each of its fields.
     val symbolicPath = m.symbolicPath
     val path = HadoopFile(symbolicPath).resolvedName
     assert(m.method == "KMeans clustering")

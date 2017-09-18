@@ -111,11 +111,11 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
   import OperationParams._
 
   protected def segmentationSizesSquareSum(seg: SegmentationEditor, parent: ProjectEditor)(
-    implicit manager: MetaGraphManager): Scalar[_] = {
+    implicit
+    manager: MetaGraphManager): Scalar[_] = {
     val size = aggregateViaConnection(
       seg.belongsTo,
-      AttributeWithLocalAggregator(parent.vertexSet.idAttribute, "count")
-    )
+      AttributeWithLocalAggregator(parent.vertexSet.idAttribute, "count"))
     val sizeSquare = graph_operations.DeriveScala.derive[Double](
       "size * size",
       Seq("size" -> size))
@@ -123,11 +123,11 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
   }
 
   protected def segmentationSizesProductSum(seg: SegmentationEditor, parent: ProjectEditor)(
-    implicit manager: MetaGraphManager): Scalar[_] = {
+    implicit
+    manager: MetaGraphManager): Scalar[_] = {
     val size = aggregateViaConnection(
       seg.belongsTo,
-      AttributeWithLocalAggregator(parent.vertexSet.idAttribute, "count")
-    )
+      AttributeWithLocalAggregator(parent.vertexSet.idAttribute, "count"))
     val srcSize = graph_operations.VertexToEdgeAttribute.srcAttribute(size, seg.edgeBundle)
     val dstSize = graph_operations.VertexToEdgeAttribute.dstAttribute(size, seg.edgeBundle)
     val sizeProduct = graph_operations.DeriveScala.derive[Double](
@@ -138,7 +138,8 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
 
   protected def getShapeFilePath(params: ParameterHolder): String = {
     val shapeFilePath = params("shapefile")
-    assert(listShapefiles().exists(f => f.id == shapeFilePath),
+    assert(
+      listShapefiles().exists(f => f.id == shapeFilePath),
       "Shapefile deleted, please choose another.")
     shapeFilePath
   }
@@ -290,7 +291,8 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
     if (byKey) {
       val key = params("key")
       project.edgeAttributes(key) =
-        aggregateViaConnection(mergedResult.belongsTo,
+        aggregateViaConnection(
+          mergedResult.belongsTo,
           AttributeWithLocalAggregator(oldAttrs(key), "most_common"))
     }
   }
@@ -328,8 +330,7 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
       "in-neighbors" -> "incoming edges",
       "out-neighbors" -> "outgoing edges",
       "all neighbors" -> "all edges",
-      "symmetric neighbors" -> "symmetric edges"
-    )
+      "symmetric neighbors" -> "symmetric edges")
   }
   case class Direction(direction: String, origEB: EdgeBundle, reversed: Boolean = false) {
     val unchangedOut: (EdgeBundle, Option[EdgeBundle]) = (origEB, None)

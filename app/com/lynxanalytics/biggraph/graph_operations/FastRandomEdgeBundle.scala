@@ -18,7 +18,7 @@ object FastRandomEdgeBundle extends OpFromJson {
     val vs = vertexSet
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
-      extends MagicOutput(instance) {
+    extends MagicOutput(instance) {
     val es = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
   def fromJson(j: JsValue) = FastRandomEdgeBundle(
@@ -27,7 +27,7 @@ object FastRandomEdgeBundle extends OpFromJson {
 }
 import FastRandomEdgeBundle._
 case class FastRandomEdgeBundle(seed: Int, averageDegree: Double)
-    extends TypedMetaGraphOp[Input, Output] {
+  extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 
@@ -35,10 +35,11 @@ case class FastRandomEdgeBundle(seed: Int, averageDegree: Double)
     new Output()(instance, inputs)
   override def toJson = Json.obj("seed" -> seed, "averageDegree" -> averageDegree)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val vs = inputs.vs.rdd

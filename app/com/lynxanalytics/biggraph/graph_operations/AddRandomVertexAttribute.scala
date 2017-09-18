@@ -11,8 +11,9 @@ object AddGaussianVertexAttribute extends OpFromJson {
   class Input extends MagicInputSignature {
     val vertices = vertexSet
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val attr = vertexAttribute[Double](inputs.vertices.entity)
   }
   def fromJson(j: JsValue) = AddGaussianVertexAttribute((j \ "seed").as[Int])
@@ -22,7 +23,7 @@ object AddGaussianVertexAttribute extends OpFromJson {
 import AddGaussianVertexAttribute._
 @deprecated("Use AddRandomAttribute instead.", "1.7.0")
 class AddGaussianVertexAttribute(val seed: Int)
-    extends TypedMetaGraphOp[Input, Output] with Serializable {
+  extends TypedMetaGraphOp[Input, Output] with Serializable {
   override def equals(o: Any) =
     o.isInstanceOf[AddGaussianVertexAttribute] &&
       o.asInstanceOf[AddGaussianVertexAttribute].seed == seed
@@ -31,10 +32,11 @@ class AddGaussianVertexAttribute(val seed: Int)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("seed" -> seed)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
     val vertices = inputs.vertices.rdd
     output(o.attr, vertices.mapPartitionsWithIndex(

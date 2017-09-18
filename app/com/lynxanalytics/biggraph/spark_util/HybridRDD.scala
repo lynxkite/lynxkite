@@ -24,7 +24,8 @@ object HybridRDD {
   // that each key has only so many instances that we can handle all of them in a single partition.
   private def joinLookup[K: Ordering: ClassTag, T: ClassTag, S](
     leftRDD: SortedRDD[K, T], lookupRDD: UniqueSortedRDD[K, S]): RDD[(K, (T, S))] = {
-    assert(leftRDD.partitioner.get eq lookupRDD.partitioner.get,
+    assert(
+      leftRDD.partitioner.get eq lookupRDD.partitioner.get,
       "LeftRDD and lookupRDD must have the same partitioner.")
     leftRDD.sortedJoin(lookupRDD)
   }
@@ -48,7 +49,8 @@ object HybridRDD {
     even: Boolean,
     // The threshold to decide whether this HybridRDD is skewed.
     threshold: Int = HybridRDD.hybridLookupThreshold)(
-      implicit rc: RuntimeContext): HybridRDD[K, T] = {
+    implicit
+    rc: RuntimeContext): HybridRDD[K, T] = {
 
     val larges = {
       val numPartitions = sourceRDD.partitions.size
@@ -102,10 +104,10 @@ object HybridRDD {
 // A wrapping class for potentially skewed RDDs. Skewed means the cardinality of keys
 // is extremely unevenly distributed.
 case class HybridRDD[K: Ordering: ClassTag, T: ClassTag](
-  // The large potentially skewed RDD to do joins on.
-  largeKeysRDD: Option[RDD[(K, T)]],
-  smallKeysRDD: SortedRDD[K, T],
-  larges: Seq[(K, Long)]) extends RDD[(K, T)](
+    // The large potentially skewed RDD to do joins on.
+    largeKeysRDD: Option[RDD[(K, T)]],
+    smallKeysRDD: SortedRDD[K, T],
+    larges: Seq[(K, Long)]) extends RDD[(K, T)](
   smallKeysRDD.sparkContext,
   Seq(new spark.OneToOneDependency(smallKeysRDD)) ++ largeKeysRDD.map(new spark.OneToOneDependency(_))) {
 

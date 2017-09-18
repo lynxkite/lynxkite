@@ -17,7 +17,8 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
     def addSegmentationParameters = params ++= aggregateParams(parent.vertexAttributes)
     def enabled =
       project.assertSegmentation &&
-        FEStatus.assert(parent.vertexAttributes.nonEmpty,
+        FEStatus.assert(
+          parent.vertexAttributes.nonEmpty,
           "No vertex attributes on parent")
     def apply() = {
       for ((attr, choice) <- parseAggregateParams(params)) {
@@ -38,7 +39,8 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
       }
       def enabled =
         project.assertSegmentation &&
-          FEStatus.assert(parent.vertexAttributeNames[Double].nonEmpty,
+          FEStatus.assert(
+            parent.vertexAttributeNames[Double].nonEmpty,
             "No numeric vertex attributes on parent")
       def apply() = {
         val weightName = params("weight")
@@ -201,7 +203,8 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
       project.assertSegmentation &&
         FEStatus.assert(project.vertexAttrList.size > 0, "No vertex attributes") &&
         FEStatus.assert(parent.vertexSet != null, s"No vertices on $parent") &&
-        FEStatus.assert(seg.belongsTo.properties.isFunction,
+        FEStatus.assert(
+          seg.belongsTo.properties.isFunction,
           s"Vertices in base project are not guaranteed to be contained in only one segment")
     def apply() = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
@@ -219,9 +222,11 @@ class AttributePropagationOperations(env: SparkFreeEnvironment) extends ProjectO
     def enabled =
       project.assertSegmentation &&
         project.hasVertexSet &&
-        FEStatus.assert(parent.vertexAttributes.size > 0,
+        FEStatus.assert(
+          parent.vertexAttributes.size > 0,
           s"Parent $parent has no vertex attributes") &&
-          FEStatus.assert(seg.belongsTo.properties.isReversedFunction,
+          FEStatus.assert(
+            seg.belongsTo.properties.isReversedFunction,
             "Segments are not guaranteed to contain only one vertex")
     def apply() = {
       val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""

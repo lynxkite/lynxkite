@@ -23,8 +23,9 @@ object SegmentByGeographicalProximity extends OpFromJson {
     val vertices = vertexSet
     val coordinates = vertexAttribute[Tuple2[Double, Double]](vertices)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val segments = vertexSet
     val belongsTo = edgeBundle(inputs.vertices.entity, segments)
     val attributes = inputs.attrNames.map(
@@ -54,10 +55,11 @@ case class SegmentByGeographicalProximity(
     "ignoreUnsupportedShapes" -> ignoreUnsupportedShapes)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
 
     val sf = Shapefile(shapefile)
@@ -68,8 +70,7 @@ case class SegmentByGeographicalProximity(
         feature.getDefaultGeometryProperty.getValue,
         sf.attrNames.zipWithIndex.map {
           case (a, i) => Option(feature.getAttribute(a)).map(_.toString)
-        }.toVector
-      )).toVector.zipWithIndex.map { case ((g, a), i) => (i.toLong, g, a) }
+        }.toVector)).toVector.zipWithIndex.map { case ((g, a), i) => (i.toLong, g, a) }
     sf.close()
 
     val partitioner = rc.partitionerForNRows(geometries.size)

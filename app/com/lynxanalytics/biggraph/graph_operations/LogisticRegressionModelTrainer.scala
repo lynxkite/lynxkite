@@ -16,8 +16,9 @@ object LogisticRegressionModelTrainer extends OpFromJson {
     }
     val label = vertexAttribute[Double](vertices)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = LogisticRegressionModelTrainer(
@@ -83,10 +84,11 @@ case class LogisticRegressionModelTrainer(
     "labelName" -> labelName,
     "featureNames" -> featureNames)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
@@ -114,8 +116,7 @@ case class LogisticRegressionModelTrainer(
     val table = Tabulator.getTable(
       headers = Array("", ""),
       rowNames = Array("pseudo R-squared:", "threshold:", "F-score:"),
-      columnData = Array(Array(mcfaddenR2, threshold, fMeasure))
-    )
+      columnData = Array(Array(mcfaddenR2, threshold, fMeasure)))
     val statistics = coefficientsTable + table
     // "%18s".format("threshold: ") +
     // f"$threshold%1.6f\n" + "%18s".format("F-score: ") + f"$fMeasure%1.6f\n"
@@ -166,16 +167,16 @@ case class LogisticRegressionModelTrainer(
     }
   }
   // Helper method to get the table of coefficients and Z-values.
-  private def getCoefficientsTable(model: ml.classification.LogisticRegressionModel,
-                                   predictions: sql.DataFrame,
-                                   featureNames: List[String]): String = {
+  private def getCoefficientsTable(
+    model: ml.classification.LogisticRegressionModel,
+    predictions: sql.DataFrame,
+    featureNames: List[String]): String = {
     val coefficientsAndIntercept = model.coefficients.toArray :+ model.intercept
     val zValues: Array[Double] = computeZValues(coefficientsAndIntercept, predictions)
     val table = Tabulator.getTable(
       headers = Array("names", "estimates", "Z-values"),
       rowNames = featureNames.toArray :+ "intercept",
-      columnData = Array(coefficientsAndIntercept, zValues)
-    )
+      columnData = Array(coefficientsAndIntercept, zValues))
     s"coefficients:\n$table\n"
   }
 }

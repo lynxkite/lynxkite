@@ -13,12 +13,14 @@ case class FEVertexAttributeFilter(
     val valueSpec: String) {
 
   def attribute(
-    implicit manager: MetaGraphManager): Attribute[_] = {
+    implicit
+    manager: MetaGraphManager): Attribute[_] = {
     manager.attribute(attributeId.asUUID)
   }
 
   def toFilteredAttribute(
-    implicit manager: MetaGraphManager): FilteredAttribute[_] = {
+    implicit
+    manager: MetaGraphManager): FilteredAttribute[_] = {
     toFilteredAttributeFromAttribute(attribute)
   }
 
@@ -32,15 +34,18 @@ case class FEVertexAttributeFilter(
 object FEFilters {
   def filter(
     vertexSet: VertexSet, filters: Seq[FEVertexAttributeFilter])(
-      implicit metaManager: MetaGraphManager): VertexSet = {
+    implicit
+    metaManager: MetaGraphManager): VertexSet = {
     filterFA(vertexSet, filters.map(_.toFilteredAttribute))
   }
 
   def filterFA(
     vertexSet: VertexSet, filters: Seq[FilteredAttribute[_]])(
-      implicit metaManager: MetaGraphManager): VertexSet = {
+    implicit
+    metaManager: MetaGraphManager): VertexSet = {
     for (f <- filters) {
-      assert(f.attribute.vertexSet == vertexSet,
+      assert(
+        f.attribute.vertexSet == vertexSet,
         s"Filter $f does not match vertex set $vertexSet")
     }
     if (filters.isEmpty) return vertexSet
@@ -49,7 +54,8 @@ object FEFilters {
 
   def localFilter(
     vertices: Set[ID], filters: Seq[FEVertexAttributeFilter])(
-      implicit metaManager: MetaGraphManager, dataManager: DataManager): Set[ID] = {
+    implicit
+    metaManager: MetaGraphManager, dataManager: DataManager): Set[ID] = {
     filters.foldLeft(vertices) { (vs, filter) =>
       localFilter(vs, filter.attribute, filter.valueSpec)
     }
@@ -57,7 +63,8 @@ object FEFilters {
 
   def localFilter[T](
     vertices: Set[ID], attr: Attribute[T], spec: String)(
-      implicit metaManager: MetaGraphManager, dataManager: DataManager): Set[ID] = {
+    implicit
+    metaManager: MetaGraphManager, dataManager: DataManager): Set[ID] = {
     implicit val tt = attr.typeTag
     val filter = filterFromSpec[T](spec)
     val values = RestrictAttributeToIds.run(attr, vertices).value
@@ -66,13 +73,15 @@ object FEFilters {
 
   def embedFilteredVertices(
     base: VertexSet, filters: Seq[FEVertexAttributeFilter], heavy: Boolean = false)(
-      implicit metaManager: MetaGraphManager): EdgeBundle = {
+    implicit
+    metaManager: MetaGraphManager): EdgeBundle = {
     embedFilteredVerticesFA(base, filters.map(_.toFilteredAttribute), heavy)
   }
 
   def embedFilteredVerticesFA(
     base: VertexSet, filters: Seq[FilteredAttribute[_]], heavy: Boolean = false)(
-      implicit metaManager: MetaGraphManager): EdgeBundle = {
+    implicit
+    metaManager: MetaGraphManager): EdgeBundle = {
     for (v <- filters) {
       assert(v.attribute.vertexSet == base, s"Filter mismatch: ${v.attribute} and $base")
     }
@@ -80,13 +89,15 @@ object FEFilters {
   }
 
   def filterMore(filtered: VertexSet, moreFilters: Seq[FEVertexAttributeFilter])(
-    implicit metaManager: MetaGraphManager): VertexSet = {
+    implicit
+    metaManager: MetaGraphManager): VertexSet = {
     embedFilteredVertices(filtered, moreFilters).srcVertexSet
   }
 
   private def applyFilter[T](
     fa: FilteredAttribute[T])(
-      implicit metaManager: MetaGraphManager): VertexSet = {
+    implicit
+    metaManager: MetaGraphManager): VertexSet = {
     import Scripting._
     val op = VertexAttributeFilter(fa.filter)
     return op(op.attr, fa.attribute).result.fvs
@@ -94,7 +105,8 @@ object FEFilters {
 
   private def intersectionEmbedding(
     filteredVss: Seq[VertexSet], heavy: Boolean = false)(
-      implicit metaManager: MetaGraphManager): EdgeBundle = {
+    implicit
+    metaManager: MetaGraphManager): EdgeBundle = {
 
     val op = VertexSetIntersection(filteredVss.size, heavy)
     op(op.vss, filteredVss).result.firstEmbedding

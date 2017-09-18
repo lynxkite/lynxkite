@@ -16,8 +16,7 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
     7 -> Seq(0),
     8 -> Seq(0),
     9 -> Seq(0),
-    10 -> Seq(0)
-  )).result
+    10 -> Seq(0))).result
   val numOfNodes = 11
   val numOfEdges = 16
 
@@ -40,8 +39,7 @@ class RandomWalkSampleTest extends FunSuite with TestGraphOp {
       0 -> Seq(1),
       1 -> Seq(0),
       2 -> Seq(3),
-      3 -> Seq(2)
-    )).result
+      3 -> Seq(2))).result
     val (vs, es) = run(RandomWalkSample(1, 100, 0.5, 0), unconnectedG)
     val visitedNodes = vs.map(_._1)
     val traversedEdges = es.map(_._1)

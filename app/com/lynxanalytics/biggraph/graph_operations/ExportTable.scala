@@ -9,8 +9,9 @@ object ExportTable {
     val t = table
   }
 
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val exportResult = scalar[String]
   }
 }
@@ -21,10 +22,11 @@ abstract class ExportTable extends TypedMetaGraphOp[Input, Output] {
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
     implicit val dataManager = rc.dataManager
     val df = inputs.t.df
@@ -44,8 +46,8 @@ object ExportTableToCSV extends OpFromJson {
 }
 
 case class ExportTableToCSV(path: String, header: Boolean,
-                            delimiter: String, quote: String, version: Int)
-    extends ExportTable {
+    delimiter: String, quote: String, version: Int)
+  extends ExportTable {
   override def toJson = Json.obj(
     "path" -> path, "header" -> header,
     "delimiter" -> delimiter, "quote" -> quote, "version" -> version)
@@ -68,7 +70,7 @@ object ExportTableToStructuredFile extends OpFromJson {
 }
 
 case class ExportTableToStructuredFile(path: String, format: String, version: Int)
-    extends ExportTable {
+  extends ExportTable {
 
   override def toJson = Json.obj(
     "path" -> path, "format" -> format, "version" -> version)
@@ -85,7 +87,7 @@ object ExportTableToJdbc extends OpFromJson {
 }
 
 case class ExportTableToJdbc(jdbcUrl: String, table: String, mode: String)
-    extends ExportTable {
+  extends ExportTable {
 
   override def toJson = Json.obj("jdbc_url" -> jdbcUrl, "jdbc_table" -> table, "mode" -> mode)
 

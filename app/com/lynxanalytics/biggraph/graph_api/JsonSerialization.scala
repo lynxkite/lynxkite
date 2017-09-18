@@ -149,15 +149,16 @@ object SerializableType {
   }
 }
 class SerializableType[T] private[graph_api] (
-    typename: String)(implicit val classTag: ClassTag[T],
-                      val format: play.api.libs.json.Format[T],
-                      val ordering: Ordering[T],
-                      val typeTag: TypeTag[T]) extends ToJson with Serializable {
+    typename: String)(implicit
+    val classTag: ClassTag[T],
+    val format: play.api.libs.json.Format[T],
+    val ordering: Ordering[T],
+    val typeTag: TypeTag[T]) extends ToJson with Serializable {
   override def toJson = Json.obj("typename" -> typename)
   def getTypename = typename
 }
 class VectorSerializableType[T: TypeTag] private[graph_api] (
-  typename: String) extends SerializableType[Vector[T]](typename)(
+    typename: String) extends SerializableType[Vector[T]](typename)(
   classTag = RuntimeSafeCastable.classTagFromTypeTag(typeTag),
   format = TypeTagToFormat.vectorToFormat(typeTag),
   ordering = new SerializableType.MockVectorOrdering()(typeTag),

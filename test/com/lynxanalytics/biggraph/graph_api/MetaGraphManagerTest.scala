@@ -215,8 +215,9 @@ class MetaGraphManagerTest extends FunSuite with TestMetaGraphManager {
 private object CreateSomeGraph extends OpFromJson {
   class Input extends MagicInputSignature {
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val (vertices, edges) = graph
     val vattr = vertexAttribute[Long](vertices)
     val eattr = edgeAttribute[String](edges)
@@ -227,7 +228,7 @@ private object CreateSomeGraph extends OpFromJson {
   }
 }
 private case class CreateSomeGraph(arg: String = "not set")
-    extends TypedMetaGraphOp[CreateSomeGraph.Input, CreateSomeGraph.Output] {
+  extends TypedMetaGraphOp[CreateSomeGraph.Input, CreateSomeGraph.Output] {
   import CreateSomeGraph._
 
   @transient override lazy val inputs = new Input()
@@ -237,10 +238,11 @@ private case class CreateSomeGraph(arg: String = "not set")
 
   override def toJson = Json.obj("arg" -> arg)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = ???
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = ???
 }
 
 private object FromVertexAttr extends OpFromJson {
@@ -248,15 +250,16 @@ private object FromVertexAttr extends OpFromJson {
     val inputVertices = vertexSet
     val inputAttr = vertexAttribute[Long](inputVertices)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val attrValues = vertexSet
     val links = edgeBundle(attrValues, inputs.inputVertices.entity)
   }
   def fromJson(j: play.api.libs.json.JsValue) = FromVertexAttr()
 }
 private case class FromVertexAttr()
-    extends TypedMetaGraphOp[FromVertexAttr.Input, FromVertexAttr.Output] {
+  extends TypedMetaGraphOp[FromVertexAttr.Input, FromVertexAttr.Output] {
   import FromVertexAttr._
 
   @transient override lazy val inputs = new Input()
@@ -264,8 +267,9 @@ private case class FromVertexAttr()
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = ???
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = ???
 }

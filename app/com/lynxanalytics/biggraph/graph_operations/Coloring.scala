@@ -11,8 +11,9 @@ object Coloring extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, es) = graph
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val coloring = vertexAttribute[Double](inputs.vs.entity)
 
   }
@@ -20,16 +21,17 @@ object Coloring extends OpFromJson {
 }
 import Coloring._
 case class Coloring()
-    extends TypedMetaGraphOp[Input, Output] {
+  extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val edges = inputs.es.rdd
     val vertices = inputs.vs.rdd
@@ -99,7 +101,7 @@ case class Coloring()
      */
     @annotation.tailrec
     def findBetterColoring(oldColoring: AttributeRDD[Double], currentNumberOfColors: Double,
-                           iterationsLeft: Int): AttributeRDD[Double] = {
+      iterationsLeft: Int): AttributeRDD[Double] = {
       if (iterationsLeft > 0) {
         val newOrdering = oldColoring.mapValues(c => if (c % 2 == 0) c + currentNumberOfColors else c)
         val directedEdges = directEdgesFromOrdering(newOrdering)
@@ -132,7 +134,8 @@ case class Coloring()
       val vertexCount = vertices.count()
       val startingColoring = vertices.mapValues(_ => 1.0)
       val directedEdgesToDegreeOrdering = directEdgesFromOrdering(degree)
-      val (numberOfColorsSoFar, coloringByDegreeOrdering) = pertColoring(directedEdgesToDegreeOrdering,
+      val (numberOfColorsSoFar, coloringByDegreeOrdering) = pertColoring(
+        directedEdgesToDegreeOrdering,
         startingColoring, 2, vertexCount + 1).result.get
 
       findBetterColoring(coloringByDegreeOrdering, numberOfColorsSoFar, iteration)

@@ -17,10 +17,11 @@ abstract class CreateScalar[T] extends TypedMetaGraphOp[NoInput, Output[T]] {
   val value: T
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, tt)
-  def execute(inputDatas: DataSet,
-              o: Output[T],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output[T],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     output(o.created, value)
   }
 }

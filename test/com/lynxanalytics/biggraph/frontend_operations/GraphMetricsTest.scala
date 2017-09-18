@@ -27,7 +27,8 @@ class GraphMetricsTest extends OperationsTestBase {
       "95% percentile", "Max", "0% (custom) percentile"))
 
     val data = table1.df.collect.toSeq.map(row => toSeq(row))
-    assert(data == Seq(Seq("Vertices", 4.0, null, null, null, null, null, null, null),
+    assert(data == Seq(
+      Seq("Vertices", 4.0, null, null, null, null, null, null, null),
       Seq("Edges", 4.0, null, null, null, null, null, null, null),
       Seq("Degree", 8.0, 2.0, 0.0, 0.30000000000000004, 2.5, 3.0, 3.0, 0.0),
       Seq("In Degree", 4.0, 1.0, 0.0, 0.0, 1.0, 2.0, 2.0, 0.0),
@@ -44,7 +45,8 @@ class GraphMetricsTest extends OperationsTestBase {
     assert(table2.schema.apply(8).name.equals("70% (custom) percentile"))
 
     val data2 = table2.df.collect.toSeq.map(row => toSeq(row))
-    assert(data2 == Seq(Seq("Vertices", 4.0, null, null, null, null, null, null, null),
+    assert(data2 == Seq(
+      Seq("Vertices", 4.0, null, null, null, null, null, null, null),
       Seq("Edges", 4.0, null, null, null, null, null, null, null),
       Seq("Degree", 8.0, 2.0, 0.0, 0.30000000000000004, 2.5, 3.0, 3.0, 3.0),
       Seq("In Degree", 4.0, 1.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0),

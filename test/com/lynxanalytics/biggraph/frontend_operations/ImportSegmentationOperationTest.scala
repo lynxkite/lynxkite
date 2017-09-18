@@ -18,7 +18,8 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
 
   test("Use table as segmentation for example graph") {
     val project = box("Create example graph")
-      .box("Use table as segmentation",
+      .box(
+        "Use table as segmentation",
         Map(
           "name" -> "imported",
           "base_id_attr" -> "name",
@@ -31,7 +32,8 @@ class ImportSegmentationOperationTest extends OperationsTestBase {
 
   test("Use table as segmentation links for example graph") {
     val project = box("Create example graph")
-      .box("Use table as segmentation",
+      .box(
+        "Use table as segmentation",
         Map(
           "name" -> "imported",
           "base_id_attr" -> "name",

@@ -10,8 +10,9 @@ object CreatePlot extends OpFromJson {
   class Input extends MagicInputSignature {
     val t = table
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val plot = scalar[String]
   }
   def fromJson(j: JsValue) = CreatePlot((j \ "plotCode").as[String])
@@ -19,17 +20,18 @@ object CreatePlot extends OpFromJson {
 
 import CreatePlot._
 case class CreatePlot(plotCode: String)
-    extends TypedMetaGraphOp[Input, Output] {
+  extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("plotCode" -> plotCode)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val runtimeContext = rc
     val df = inputs.t.df

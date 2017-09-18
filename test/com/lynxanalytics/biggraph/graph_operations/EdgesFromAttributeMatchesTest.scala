@@ -30,7 +30,8 @@ class EdgesFromUniqueBipartiteAttributeMatchesTest extends FunSuite with TestGra
   test("import attributes for existing vertex set from table") {
     val table = SmallTestGraph(
       Map(1 -> Seq(), 2 -> Seq(), 3 -> Seq(), 4 -> Seq()))().result
-    val idColumn = AddVertexAttribute.run(table.vs,
+    val idColumn = AddVertexAttribute.run(
+      table.vs,
       Map(1 -> "Eve", 2 -> "Adam", 5 -> "Isolated Joe", 6 -> "John"))
 
     val graph = {

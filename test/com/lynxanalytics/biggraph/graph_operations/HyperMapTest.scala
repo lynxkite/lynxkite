@@ -23,7 +23,8 @@ class HyperMapTest extends FunSuite with TestGraphOp {
       math.abs(2 * math.Pi - math.abs(angulars.get(4).get
         - angulars.get(1).get)) > 1)
     // Radial coordinates are correct
-    assert(out.radial.rdd.collect.toMap == Map(0 -> 2 * math.log(1),
+    assert(out.radial.rdd.collect.toMap == Map(
+      0 -> 2 * math.log(1),
       1 -> 2 * math.log(2),
       2 -> 2 * math.log(3),
       3 -> 2 * math.log(4),

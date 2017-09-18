@@ -13,8 +13,9 @@ object SplitEdges extends OpFromJson {
     val (vs, es) = graph
     val attr = edgeAttribute[Long](es)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
 
     val newEdges = edgeBundle(inputs.vs.entity, inputs.vs.entity)
     val belongsTo = edgeBundle(
@@ -31,10 +32,11 @@ case class SplitEdges() extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val edges = inputs.es.rdd
@@ -52,13 +54,16 @@ case class SplitEdges() extends TypedMetaGraphOp[Input, Output] {
         .randomNumbered(partitioner)
         .persist(spark.storage.StorageLevel.DISK_ONLY)
 
-    output(o.newEdges,
+    output(
+      o.newEdges,
       newIdAndOldIdAndEdgeAndZeroBasedIndex
         .mapValues { case (_, (edge, _)) => edge })
-    output(o.belongsTo,
+    output(
+      o.belongsTo,
       newIdAndOldIdAndEdgeAndZeroBasedIndex
         .mapValuesWithKeys { case (newId, (oldId, (_, idx))) => Edge(newId, oldId) })
-    output(o.indexAttr,
+    output(
+      o.indexAttr,
       newIdAndOldIdAndEdgeAndZeroBasedIndex
         .mapValues { case (_, (_, idx)) => idx })
   }

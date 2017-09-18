@@ -18,9 +18,10 @@ object Modularity extends OpFromJson {
     val belongsTo = edgeBundle(
       vs, segments, requiredProperties = EdgeBundleProperties.partialFunction)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input)
-      extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input)
+    extends MagicOutput(instance) {
     val modularity = scalar[Double]
   }
   def fromJson(j: JsValue) = Modularity()
@@ -30,10 +31,11 @@ case class Modularity() extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vPart = inputs.vs.rdd.partitioner.get
     val vToS = inputs.belongsTo.rdd.map { case (eid, e) => (e.src, e.dst) }.sortUnique(vPart)

@@ -6,7 +6,7 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object MakeEdgeBundleSymmetric extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
-      extends MagicOutput(instance) {
+    extends MagicOutput(instance) {
     val symmetric = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
   def fromJson(j: JsValue) = MakeEdgeBundleSymmetric()
@@ -19,10 +19,11 @@ case class MakeEdgeBundleSymmetric() extends TypedMetaGraphOp[GraphInput, Output
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val es = inputs.es.rdd
 

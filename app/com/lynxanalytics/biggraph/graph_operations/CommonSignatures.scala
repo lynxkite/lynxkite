@@ -18,9 +18,10 @@ class GraphInput extends MagicInputSignature {
 }
 
 class Segmentation(
-  vs: VertexSet, belongsToProperties: EdgeBundleProperties = EdgeBundleProperties.default)(
-    implicit instance: MetaGraphOperationInstance)
-    extends MagicOutput(instance) {
+    vs: VertexSet, belongsToProperties: EdgeBundleProperties = EdgeBundleProperties.default)(
+    implicit
+    instance: MetaGraphOperationInstance)
+  extends MagicOutput(instance) {
   val segments = vertexSet
   val belongsTo = edgeBundle(vs, segments, belongsToProperties)
 }

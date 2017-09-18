@@ -5,7 +5,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class AddRankAttributeOperationTest extends OperationsTestBase {
   test("Rank attribute for string ascending") {
     val project = box("Create example graph")
-      .box("Add rank attribute",
+      .box(
+        "Add rank attribute",
         Map("rankattr" -> "ranking", "keyattr" -> "name", "order" -> "ascending"))
       .project
     val attr = project.vertexAttributes("ranking").runtimeSafeCast[Double]
@@ -13,7 +14,8 @@ class AddRankAttributeOperationTest extends OperationsTestBase {
   }
   test("Rank attribute for string descending") {
     val project = box("Create example graph")
-      .box("Add rank attribute",
+      .box(
+        "Add rank attribute",
         Map("rankattr" -> "ranking", "keyattr" -> "name", "order" -> "descending"))
       .project
     val attr = project.vertexAttributes("ranking").runtimeSafeCast[Double]
@@ -22,7 +24,8 @@ class AddRankAttributeOperationTest extends OperationsTestBase {
   test("Rank attribute for string undefined") {
     val project = box("Create example graph")
       .box("Convert vertex attribute to String", Map("attr" -> "income"))
-      .box("Add rank attribute",
+      .box(
+        "Add rank attribute",
         Map("rankattr" -> "ranking", "keyattr" -> "income", "order" -> "ascending"))
       .project
     val attr = project.vertexAttributes("ranking").runtimeSafeCast[Double]
@@ -30,7 +33,8 @@ class AddRankAttributeOperationTest extends OperationsTestBase {
   }
   test("Rank attribute for double ascending") {
     val project = box("Create example graph")
-      .box("Add rank attribute",
+      .box(
+        "Add rank attribute",
         Map("rankattr" -> "ranking", "keyattr" -> "age", "order" -> "ascending"))
       .project
     val attr = project.vertexAttributes("ranking").runtimeSafeCast[Double]
@@ -38,7 +42,8 @@ class AddRankAttributeOperationTest extends OperationsTestBase {
   }
   test("Rank attribute for double descending") {
     val project = box("Create example graph")
-      .box("Add rank attribute",
+      .box(
+        "Add rank attribute",
         Map("rankattr" -> "ranking", "keyattr" -> "age", "order" -> "descending"))
       .project
     val attr = project.vertexAttributes("ranking").runtimeSafeCast[Double]

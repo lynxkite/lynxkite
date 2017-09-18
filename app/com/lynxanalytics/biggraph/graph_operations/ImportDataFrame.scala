@@ -25,16 +25,17 @@ object ImportDataFrame extends OpFromJson {
   }
 
   class Output(schema: types.StructType)(
-      implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+      implicit
+      instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val t = table(schema)
   }
 }
 
 class ImportDataFrame private (
-  val schema: types.StructType,
-  inputFrame: Option[DataFrame],
-  val timestamp: String)
-    extends TypedMetaGraphOp[NoInput, ImportDataFrame.Output] {
+    val schema: types.StructType,
+    inputFrame: Option[DataFrame],
+    val timestamp: String)
+  extends TypedMetaGraphOp[NoInput, ImportDataFrame.Output] {
 
   for (df <- inputFrame) {
     // If the DataFrame is backed by LynxKite operations, we need to trigger these now. Triggering
@@ -57,10 +58,11 @@ class ImportDataFrame private (
     "schema" -> schema.prettyJson,
     "timestamp" -> timestamp)
 
-  def execute(inputDatas: DataSet,
-              o: ImportDataFrame.Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: ImportDataFrame.Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     inputFrame match {
       case None =>
         throw new AssertionError(

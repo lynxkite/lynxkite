@@ -12,7 +12,8 @@ object VertexSetUnion extends OpFromJson {
     }.toList
   }
   class Output(numVertexSets: Int)(
-      implicit instance: MetaGraphOperationInstance,
+      implicit
+      instance: MetaGraphOperationInstance,
       input: Input) extends MagicOutput(instance) {
 
     val union = vertexSet
@@ -24,7 +25,7 @@ object VertexSetUnion extends OpFromJson {
   def fromJson(j: JsValue) = VertexSetUnion((j \ "numVertexSets").as[Int])
 }
 case class VertexSetUnion(numVertexSets: Int)
-    extends TypedMetaGraphOp[VertexSetUnion.Input, VertexSetUnion.Output] {
+  extends TypedMetaGraphOp[VertexSetUnion.Input, VertexSetUnion.Output] {
   import VertexSetUnion._
 
   override val isHeavy = true
@@ -35,10 +36,11 @@ case class VertexSetUnion(numVertexSets: Int)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(numVertexSets)(instance, inputs)
   override def toJson = Json.obj("numVertexSets" -> numVertexSets)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vss = inputs.vss.map(_.rdd)
 
@@ -81,14 +83,15 @@ object EdgeBundleUnion extends OpFromJson {
     }.toList
   }
   class Output(numEdgeBundles: Int)(
-      implicit instance: MetaGraphOperationInstance,
+      implicit
+      instance: MetaGraphOperationInstance,
       input: Input) extends MagicOutput(instance) {
     val union = edgeBundle(input.src.entity, input.dst.entity, idSet = input.idSetUnion.entity)
   }
   def fromJson(j: JsValue) = EdgeBundleUnion((j \ "numEdgeBundles").as[Int])
 }
 case class EdgeBundleUnion(numEdgeBundles: Int)
-    extends TypedMetaGraphOp[EdgeBundleUnion.Input, EdgeBundleUnion.Output] {
+  extends TypedMetaGraphOp[EdgeBundleUnion.Input, EdgeBundleUnion.Output] {
   import EdgeBundleUnion._
 
   override val isHeavy = true
@@ -100,10 +103,11 @@ case class EdgeBundleUnion(numEdgeBundles: Int)
     new Output(numEdgeBundles)(instance, inputs)
   override def toJson = Json.obj("numEdgeBundles" -> numEdgeBundles)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val idSetUnion = inputs.idSetUnion.rdd
     val reIdedEbs = Range(0, numEdgeBundles).map { i =>

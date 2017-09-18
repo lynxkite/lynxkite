@@ -324,11 +324,14 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
           val baseColumnName = params("base_id_column")
           val segColumnName = params("seg_id_column")
           val baseAttrName = params("base_id_attr")
-          assert(baseColumnName != FEOption.unset.id,
+          assert(
+            baseColumnName != FEOption.unset.id,
             "The identifying column parameter must be set for the base project.")
-          assert(segColumnName != FEOption.unset.id,
+          assert(
+            segColumnName != FEOption.unset.id,
             "The identifying column parameter must be set for the segmentation.")
-          assert(baseAttrName != FEOption.unset.id,
+          assert(
+            baseAttrName != FEOption.unset.id,
             "The base ID attribute parameter must be set.")
           val baseColumn = segTable.vertexAttributes(baseColumnName)
           val segColumn = segTable.vertexAttributes(segColumnName)
@@ -399,13 +402,17 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
         val segColumnName = params("seg_id_column")
         val baseAttrName = params("base_id_attr")
         val segAttrName = params("seg_id_attr")
-        assert(baseColumnName != FEOption.unset.id,
+        assert(
+          baseColumnName != FEOption.unset.id,
           "The identifying column parameter must be set for the base project.")
-        assert(segColumnName != FEOption.unset.id,
+        assert(
+          segColumnName != FEOption.unset.id,
           "The identifying column parameter must be set for the segmentation.")
-        assert(baseAttrName != FEOption.unset.id,
+        assert(
+          baseAttrName != FEOption.unset.id,
           "The base ID attribute parameter must be set.")
-        assert(segAttrName != FEOption.unset.id,
+        assert(
+          segAttrName != FEOption.unset.id,
           "The segmentation ID attribute parameter must be set.")
         val imp = graph_operations.ImportEdgesForExistingVertices.runtimeSafe(
           parent.vertexAttributes(baseAttrName),

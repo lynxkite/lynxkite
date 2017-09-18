@@ -22,8 +22,7 @@ class UniformDistribution(seed: Int) extends RandomDistribution(seed) {
 object RandomDistribution {
   val distributions = Map[String, Int => RandomDistribution](
     "Standard Normal" -> { new NormalDistribution(_) },
-    "Standard Uniform" -> { new UniformDistribution(_) }
-  )
+    "Standard Uniform" -> { new UniformDistribution(_) })
   def getNames: List[String] = distributions.keys.toList
 
   def apply(distribution: String, seed: Int): RandomDistribution = {
@@ -36,8 +35,9 @@ object AddRandomAttribute extends OpFromJson {
     val vs = vertexSet
   }
 
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val attr = vertexAttribute[Double](inputs.vs.entity)
   }
 
@@ -47,17 +47,19 @@ object AddRandomAttribute extends OpFromJson {
 }
 
 import AddRandomAttribute._
-case class AddRandomAttribute(seed: Int,
-                              distribution: String) extends TypedMetaGraphOp[Input, Output] {
+case class AddRandomAttribute(
+    seed: Int,
+    distribution: String) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("seed" -> seed, "distribution" -> distribution)
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
     val vertices = inputs.vs.rdd
     output(o.attr, vertices.mapPartitionsWithIndex(

@@ -200,7 +200,8 @@ case class Network private (
     size: Int, outputs: Map[String, VectorGate],
     initialTrainables: Iterable[(String, DoubleMatrix)] = Iterable(),
     adagradMemory: Map[String, DoubleMatrix] = Map())(
-        implicit r: RandBasis) {
+    implicit
+    r: RandBasis) {
   val trainables = collection.mutable.Map(initialTrainables.toSeq: _*)
   def +(other: Network): Network = this.copy(
     initialTrainables = trainables.map {
@@ -387,10 +388,10 @@ abstract class Layout(networkSize: Int, gradientCheckOn: Boolean, radius: Int)(i
         }).toMap
       } { case (a, b) => block(a, b) }(outputGate)
     }
-    Network(clipGradients = !gradientCheckOn,
+    Network(
+      clipGradients = !gradientCheckOn,
       size = networkSize,
-      Map("final state" -> finalState)
-    )
+      Map("final state" -> finalState))
   }
 }
 object Shorthands {

@@ -20,8 +20,9 @@ object IndexPairCounter extends OpFromJson {
     val weights = vertexAttribute[Double](original)
     val originalCount = scalar[Long]
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val counts = scalar[Map[(Int, Int), Double]]
   }
   def fromJson(j: JsValue) = IndexPairCounter()
@@ -32,10 +33,11 @@ case class IndexPairCounter() extends TypedMetaGraphOp[Input, Output] {
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val xIndices = inputs.xIndices.rdd
     val yIndices = inputs.yIndices.rdd

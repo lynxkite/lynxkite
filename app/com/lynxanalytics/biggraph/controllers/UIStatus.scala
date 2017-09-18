@@ -8,44 +8,44 @@ import play.api.libs.json
  * should convert between the two.
  */
 case class UIFilterStatus(
-  vertex: Map[String, String],
-  edge: Map[String, String])
+    vertex: Map[String, String],
+    edge: Map[String, String])
 case class UIAttributeAxisOptions(
-  logarithmic: Boolean)
+    logarithmic: Boolean)
 case class UIAxisOptions(
-  vertex: Map[String, UIAttributeAxisOptions],
-  edge: Map[String, UIAttributeAxisOptions])
+    vertex: Map[String, UIAttributeAxisOptions],
+    edge: Map[String, UIAttributeAxisOptions])
 case class UIAnimation(
-  enabled: Boolean,
-  style: String,
-  labelAttraction: Double)
+    enabled: Boolean,
+    style: String,
+    labelAttraction: Double)
 case class UIAttributeFilter(
-  val attributeName: String,
-  val valueSpec: String)
+    val attributeName: String,
+    val valueSpec: String)
 case class UICenterRequest(
-  count: Int,
-  filters: Seq[UIAttributeFilter],
-  offset: Option[Int])
+    count: Int,
+    filters: Seq[UIAttributeFilter],
+    offset: Option[Int])
 
 case class UIStatus(
-  projectPath: Option[String],
-  graphMode: Option[String],
-  display: String,
-  filters: UIFilterStatus,
-  bucketCount: Int,
-  preciseBucketSizes: Option[Boolean],
-  relativeEdgeDensity: Option[Boolean],
-  axisOptions: UIAxisOptions,
-  sampleRadius: Int,
-  attributeTitles: Map[String, String],
-  animate: UIAnimation,
-  // For explicit center ids entered by the user, this will be set.
-  centers: Option[Seq[String]],
-  // For centers set by a getCenter request, the following parameters will be set
-  // so that we can redo the getCenter request.
-  lastCentersRequest: Option[UICenterRequest],
-  customVisualizationFilters: Option[Boolean],
-  sliderPos: Option[Double])
+    projectPath: Option[String],
+    graphMode: Option[String],
+    display: String,
+    filters: UIFilterStatus,
+    bucketCount: Int,
+    preciseBucketSizes: Option[Boolean],
+    relativeEdgeDensity: Option[Boolean],
+    axisOptions: UIAxisOptions,
+    sampleRadius: Int,
+    attributeTitles: Map[String, String],
+    animate: UIAnimation,
+    // For explicit center ids entered by the user, this will be set.
+    centers: Option[Seq[String]],
+    // For centers set by a getCenter request, the following parameters will be set
+    // so that we can redo the getCenter request.
+    lastCentersRequest: Option[UICenterRequest],
+    customVisualizationFilters: Option[Boolean],
+    sliderPos: Option[Double])
 object UIStatus {
   val default = UIStatus(
     projectPath = None,
@@ -65,8 +65,8 @@ object UIStatus {
 }
 
 case class TwoSidedUIStatus(
-  left: UIStatus,
-  right: UIStatus)
+    left: UIStatus,
+    right: UIStatus)
 object UIStatusSerialization {
   implicit val fUIFilterStatus = json.Json.format[UIFilterStatus]
   implicit val fUIAttributeAxisOptions = json.Json.format[UIAttributeAxisOptions]

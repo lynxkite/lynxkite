@@ -276,7 +276,8 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       assert(name.nonEmpty, "You must specify a name for the new attribute.")
       val attr1 = project.vertexAttributes(params("attr1"))
       val attr2 = project.vertexAttributes(params("attr2"))
-      assert(attr1.typeTag.tpe =:= attr2.typeTag.tpe,
+      assert(
+        attr1.typeTag.tpe =:= attr2.typeTag.tpe,
         "The two attributes must have the same type.")
       project.newVertexAttribute(name, unifyAttribute(attr1, attr2), s"primary: $attr1, secondary: $attr2" + help)
     }
@@ -314,7 +315,8 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
         }
         val prefix = if (params("prefix").nonEmpty) params("prefix") + "_" else ""
         for ((name, attr) <- attributes.vertexAttributes) {
-          assert(!projectAttrNames.contains(prefix + name),
+          assert(
+            !projectAttrNames.contains(prefix + name),
             s"Cannot import column `${prefix + name}`. Attribute already exists.")
           project.newVertexAttribute(prefix + name, attr.pullVia(edges), "imported")
         }

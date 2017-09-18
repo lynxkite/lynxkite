@@ -19,8 +19,9 @@ object LookupRegion extends OpFromJson {
     val vertices = vertexSet
     val coordinates = vertexAttribute[Tuple2[Double, Double]](vertices)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val attribute = vertexAttribute[String](inputs.vertices.entity)
   }
   def fromJson(j: JsValue) = LookupRegion(
@@ -44,10 +45,11 @@ case class LookupRegion(
     LookupRegion.ignoreUnsupportedShapesParameter.toJson(ignoreUnsupportedShapes)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
 
     val sf = Shapefile(shapefile)
@@ -59,9 +61,7 @@ case class LookupRegion(
           feature.getDefaultGeometryProperty.getBounds,
           feature.getDefaultGeometryProperty.getValue,
           // A feature may not have the specified attribute.
-          Option(feature.getAttribute(attribute)).map(_.toString())
-        )
-      ).filter(_._3.nonEmpty).map { case (b, g, a) => (b, g, a.get) }.toVector
+          Option(feature.getAttribute(attribute)).map(_.toString()))).filter(_._3.nonEmpty).map { case (b, g, a) => (b, g, a.get) }.toVector
     sf.close()
 
     val factory = new com.vividsolutions.jts.geom.GeometryFactory()

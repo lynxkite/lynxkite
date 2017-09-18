@@ -7,8 +7,9 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 object EnhancedExampleGraph extends OpFromJson {
   class Input extends MagicInputSignature {
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val (vertices, edges) = graph
     val name = vertexAttribute[String](vertices)
     val age = vertexAttribute[Double](vertices)
@@ -72,10 +73,11 @@ case class EnhancedExampleGraph() extends TypedMetaGraphOp[Input, Output] {
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: EnhancedExampleGraph.Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: EnhancedExampleGraph.Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     executionCounter += 1
 
     val sc = rc.sparkContext

@@ -13,13 +13,14 @@ import org.apache.spark
 
 object DeriveScala extends OpFromJson {
   class Input(a: Seq[(String, SerializableType[_])], s: Seq[(String, SerializableType[_])])
-      extends MagicInputSignature {
+    extends MagicInputSignature {
     val vs = vertexSet
     val attrs = a.map(i => runtimeTypedVertexAttribute(vs, Symbol(i._1), i._2.typeTag))
     val scalars = s.map(i => runtimeTypedScalar(Symbol(i._1), i._2.typeTag))
   }
-  class Output[T](implicit instance: MetaGraphOperationInstance,
-                  inputs: Input, tt: TypeTag[T]) extends MagicOutput(instance) {
+  class Output[T](implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input, tt: TypeTag[T]) extends MagicOutput(instance) {
     val attr = vertexAttribute[T](inputs.vs.entity)
   }
   def negative(x: Attribute[Double])(implicit manager: MetaGraphManager): Attribute[Double] = {
@@ -33,7 +34,8 @@ object DeriveScala extends OpFromJson {
     vertexSet: VertexSet,
     scalars: Seq[(String, Scalar[_])] = Seq(),
     onlyOnDefinedAttrs: Boolean = true)(
-      implicit manager: MetaGraphManager): Attribute[_] = {
+    implicit
+    manager: MetaGraphManager): Attribute[_] = {
 
     val paramTypes = (
       attributes.map { case (k, v) => k -> v.typeTag } ++
@@ -64,9 +66,11 @@ object DeriveScala extends OpFromJson {
     scalars: Seq[(String, Scalar[_])] = Seq(),
     onlyOnDefinedAttrs: Boolean = true,
     vertexSet: Option[VertexSet] = None)(
-      implicit manager: MetaGraphManager): Attribute[T] = {
+    implicit
+    manager: MetaGraphManager): Attribute[T] = {
 
-    assert(attributes.nonEmpty || vertexSet.nonEmpty,
+    assert(
+      attributes.nonEmpty || vertexSet.nonEmpty,
       "There should be either at least one attribute or vertexSet defined.")
 
     // Check name collision between scalars and attributes
@@ -125,11 +129,11 @@ object DeriveScala extends OpFromJson {
 
 import DeriveScala._
 case class DeriveScala[T: TypeTag] private[graph_operations] (
-  expr: String, // The Scala expression to evaluate.
-  attrParams: Seq[(String, TypeTag[_])], // Input attributes to substitute.
-  scalarParams: Seq[(String, TypeTag[_])] = Seq(), // Input scalars to substitute.
-  onlyOnDefinedAttrs: Boolean = true)
-    extends TypedMetaGraphOp[Input, Output[T]] {
+    expr: String, // The Scala expression to evaluate.
+    attrParams: Seq[(String, TypeTag[_])], // Input attributes to substitute.
+    scalarParams: Seq[(String, TypeTag[_])] = Seq(), // Input scalars to substitute.
+    onlyOnDefinedAttrs: Boolean = true)
+  extends TypedMetaGraphOp[Input, Output[T]] {
 
   def tt = typeTag[T]
   def st = SerializableType(tt)
@@ -149,10 +153,11 @@ case class DeriveScala[T: TypeTag] private[graph_operations] (
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output[T]()(instance, inputs, tt)
 
-  def execute(inputDatas: DataSet,
-              o: Output[T],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output[T],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val joined: spark.rdd.RDD[(ID, Array[Any])] = {
       val noAttrs = inputs.vs.rdd.mapValues(_ => new Array[Any](attrParams.size))
@@ -182,7 +187,8 @@ case class DeriveScala[T: TypeTag] private[graph_operations] (
     val paramTypes = (attrParams ++ scalarParams).toMap[String, TypeTag[_]]
 
     val t = ScalaScript.compileAndGetType(expr, paramTypes, paramsToOption = !onlyOnDefinedAttrs)
-    assert(t.payloadType =:= tt.tpe, // PayloadType should always match T.
+    assert(
+      t.payloadType =:= tt.tpe, // PayloadType should always match T.
       s"Scala script returns wrong type: expected ${tt.tpe} but got ${t.payloadType} instead.")
 
     val returnsOptionType = t.isOptionType
