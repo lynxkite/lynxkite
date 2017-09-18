@@ -27,9 +27,9 @@ import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 trait EntityProgressManager {
   case class ScalarComputationState[T](
-    computeProgress: Double,
-    value: Option[T],
-    error: Option[Throwable])
+      computeProgress: Double,
+      value: Option[T],
+      error: Option[Throwable])
   // Returns an indication of whether the entity has already been computed.
   // 0 means it is not computed.
   // 1 means it is computed.
@@ -41,11 +41,13 @@ trait EntityProgressManager {
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
 }
 
-class DataManager(val sparkSession: spark.sql.SparkSession,
-                  val repositoryPath: HadoopFile,
-                  val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
+class DataManager(
+    val sparkSession: spark.sql.SparkSession,
+    val repositoryPath: HadoopFile,
+    val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
   implicit val executionContext =
-    ThreadUtil.limitedExecutionContext("DataManager",
+    ThreadUtil.limitedExecutionContext(
+      "DataManager",
       maxParallelism = LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
   private var executingOperation =
     new ThreadLocal[Option[MetaGraphOperationInstance]] { override def initialValue() = None }
@@ -133,8 +135,9 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
     }
   }
 
-  private def execute(instance: MetaGraphOperationInstance,
-                      logger: OperationLogger): SafeFuture[Map[UUID, EntityData]] = {
+  private def execute(
+    instance: MetaGraphOperationInstance,
+    logger: OperationLogger): SafeFuture[Map[UUID, EntityData]] = {
     val inputs = instance.inputs
     val futureInputs = SafeFuture.sequence(
       inputs.all.toSeq.map {
@@ -183,8 +186,9 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
     }
   }
 
-  private def saveOutputs(instance: MetaGraphOperationInstance,
-                          outputs: Iterable[EntityData]): Unit = {
+  private def saveOutputs(
+    instance: MetaGraphOperationInstance,
+    outputs: Iterable[EntityData]): Unit = {
     for (output <- outputs) {
       saveToDisk(output)
     }
@@ -194,8 +198,9 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
     (EntityIO.operationPath(dataRoot, instance) / io.Success).forWriting.createFromStrings("")
   }
 
-  private def validateOutput(instance: MetaGraphOperationInstance,
-                             output: Map[UUID, EntityData]): Unit = {
+  private def validateOutput(
+    instance: MetaGraphOperationInstance,
+    output: Map[UUID, EntityData]): Unit = {
     // Make sure attributes re-use the partitioners from their vertex sets.
     // An identity check is used to catch the case where the same number of partitions is used
     // accidentally (as is often the case in tests), but the code does not guarantee this.
@@ -215,7 +220,8 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
           assert(entityCache(vs.gUID).value.get.isSuccess, s"$vs, vertex set of $entity, failed")
           entityCache(vs.gUID).value.get.get.asInstanceOf[VertexSetData]
       }
-      assert(vsd.rdd.partitioner.get eq entityd.rdd.partitioner.get,
+      assert(
+        vsd.rdd.partitioner.get eq entityd.rdd.partitioner.get,
         s"The partitioner of $entity does not match the partitioner of $vs.")
     }
   }
@@ -455,8 +461,7 @@ class DataManager(val sparkSession: spark.sql.SparkSession,
   private def registerUDFs(sqlContext: SQLContext) = {
     sqlContext.udf.register(
       "hash",
-      (string: String, salt: String) => graph_operations.HashVertexAttribute.hash(string, salt)
-    )
+      (string: String, salt: String) => graph_operations.HashVertexAttribute.hash(string, salt))
   }
 }
 

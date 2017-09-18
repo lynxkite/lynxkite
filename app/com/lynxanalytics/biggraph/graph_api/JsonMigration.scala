@@ -103,7 +103,8 @@ object MetaRepositoryManager {
       if ((newest.version == current.version) && !forcedMigration) newest.dir
       else {
         val supported = versions.find(_.version <= current.version)
-        assert(newest.version < current.version,
+        assert(
+          newest.version < current.version,
           supported match {
             case Some(supported) =>
               s"The repository data in ${newest.dir} is newer than the current version." +
@@ -144,7 +145,7 @@ object MetaRepositoryManager {
     dst: String, // Directory to write to.
     srcVersion: VersionMap, // Source version map.
     migration: JsonMigration // JsonMigration for the current version.
-    ): Unit = {
+  ): Unit = {
     // A mapping for entity GUIDs (from old to new) that have changed in the new version.
     val guidMapping = collection.mutable.Map[String, String]()
     // Manager will write to "dst".

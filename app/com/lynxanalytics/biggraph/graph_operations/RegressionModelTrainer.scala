@@ -14,8 +14,9 @@ object RegressionModelTrainer extends OpFromJson {
     }
     val label = vertexAttribute[Double](vertices)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = RegressionModelTrainer(
@@ -40,10 +41,11 @@ case class RegressionModelTrainer(
     "labelName" -> labelName,
     "featureNames" -> featureNames)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._
@@ -79,8 +81,7 @@ case class RegressionModelTrainer(
       symbolicPath = file.symbolicName,
       labelName = Some(labelName),
       featureNames = featureNames,
-      statistics = Some(statistics))
-    )
+      statistics = Some(statistics)))
   }
   // Helper method to compute more complex statistics.
   private def getStatistics(
@@ -110,8 +111,7 @@ case class RegressionModelTrainer(
     val table = Tabulator.getTable(
       headers = Array("", ""),
       rowNames = Array("R-squared:", "MAPE:"),
-      columnData = Array(Array(r2, MAPE))
-    )
+      columnData = Array(Array(r2, MAPE)))
     s"coefficients: \n$coefficientsTable\n$table"
   }
 }

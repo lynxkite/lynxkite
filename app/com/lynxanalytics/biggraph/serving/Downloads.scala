@@ -31,8 +31,7 @@ object Downloads extends play.api.http.HeaderNames {
       header = mvc.ResponseHeader(200, Map(
         CONTENT_LENGTH -> length.toString,
         CONTENT_DISPOSITION -> s"attachment; filename=$name.csv")),
-      body = play.api.libs.iteratee.Enumerator.fromStream(stream)
-    )
+      body = play.api.libs.iteratee.Enumerator.fromStream(stream))
   }
 
   // Downloads all the files in directory concatenated into one.
@@ -53,15 +52,14 @@ object Downloads extends play.api.http.HeaderNames {
       header = mvc.ResponseHeader(200, Map(
         CONTENT_LENGTH -> length.toString,
         CONTENT_DISPOSITION -> s"attachment; filename=${request.name}")),
-      body = play.api.libs.iteratee.Enumerator.fromStream(stream)
-    )
+      body = play.api.libs.iteratee.Enumerator.fromStream(stream))
   }
 }
 
 // This is for reading multiple CSV files with headers as a single CSV file with a header.
 // The first line of the first file is considered the header, and is stripped from subsequent files.
 class HeaderSkippingStreamIterator(path: String, streams: Iterator[InputStream])
-    extends Iterator[InputStream] {
+  extends Iterator[InputStream] {
   var header: Array[Byte] = null
 
   def hasNext = streams.hasNext

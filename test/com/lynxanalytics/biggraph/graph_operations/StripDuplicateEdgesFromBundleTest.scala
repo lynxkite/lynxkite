@@ -13,8 +13,7 @@ class StripDuplicateEdgesFromBundleTest extends FunSuite with TestGraphOp {
       1 -> Seq(0, 0),
       2 -> Seq(0, 3),
       3 -> Seq(4, 4, 4),
-      4 -> Seq()
-    )).result
+      4 -> Seq())).result
     val op = StripDuplicateEdgesFromBundle()
     val out = op(op.es, g.es).result
     assert(out.unique.toPairSeq().sorted == Seq(0 -> 1, 0 -> 2, 1 -> 0, 2 -> 0, 2 -> 3, 3 -> 4))

@@ -51,7 +51,8 @@ class ProjectUnionOperationTest extends OperationsTestBase {
     val a = box("Create example graph")
     val b = box("Create example graph")
       .box("Rename vertex attributes", Map("change_age" -> "newage"))
-      .box("Add constant vertex attribute",
+      .box(
+        "Add constant vertex attribute",
         Map("name" -> "age", "value" -> "dummy", "type" -> "String"))
     val ex = intercept[java.lang.AssertionError] {
       val union = box("Project union", Map("id_attr" -> "new_id"), Seq(a, b))

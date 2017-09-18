@@ -20,8 +20,9 @@ object PredictViaNNOnGraphV1 extends OpFromJson {
     val features = (0 until featureCount).map(
       i => vertexAttribute[Double](vertices, Symbol("feature-" + i)))
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val prediction = vertexAttribute[Double](inputs.vertices.entity)
   }
   def fromJson(j: JsValue) = PredictViaNNOnGraphV1(
@@ -81,10 +82,11 @@ case class PredictViaNNOnGraphV1(
     "gradientCheckOn" -> gradientCheckOn,
     "networkLayout" -> networkLayout)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val isolatedVertices: Map[ID, Seq[ID]] = inputs.vertices.rdd.keys.collect.map(id => id -> Seq()).toMap
     val edges: Seq[Edge] = inputs.edges.rdd.values.collect
@@ -131,7 +133,8 @@ case class PredictViaNNOnGraphV1(
         })
     }
     val prediction = predict(data.collect.iterator, edgeLists, network, layout).toSeq
-    output(o.prediction,
+    output(
+      o.prediction,
       rc.sparkContext.parallelize(prediction).sortUnique(inputs.vertices.rdd.partitioner.get))
   }
 
@@ -309,8 +312,7 @@ case class PredictViaNNOnGraphV1(
               epsilonMatrix(row, col) = epsilon
               //Increase trainable and predict with it.
               val partialIncreasedTrainables = t + (name -> (t(name) + epsilonMatrix))
-              val outputsWithIncreased = initialNetwork.copy(initialTrainables = partialIncreasedTrainables
-              ).forward(vertices, edges, (layout.ownStateInputs.map(i => i -> initialState) ++
+              val outputsWithIncreased = initialNetwork.copy(initialTrainables = partialIncreasedTrainables).forward(vertices, edges, (layout.ownStateInputs.map(i => i -> initialState) ++
                 (layout.neighborsStateInputs.map(i => i -> trueState))): _*)
               val finalOutputWithIncreased = outputsWithIncreased("final state")
               val errorsWithIncreased = trueState.map {
@@ -321,8 +323,7 @@ case class PredictViaNNOnGraphV1(
               //Decrease trainable and predict with it.
               val partialDecreasedTrainables = t + (name -> (t(name) - epsilonMatrix))
 
-              val outputsWithDecreased = initialNetwork.copy(initialTrainables = partialDecreasedTrainables
-              ).forward(vertices, edges, (layout.ownStateInputs.map(i => i -> initialState) ++
+              val outputsWithDecreased = initialNetwork.copy(initialTrainables = partialDecreasedTrainables).forward(vertices, edges, (layout.ownStateInputs.map(i => i -> initialState) ++
                 (layout.neighborsStateInputs.map(i => i -> trueState))): _*)
               val finalOutputWithDecreased = outputsWithDecreased("final state")
               val errorsWithDecreased = trueState.map {
@@ -366,9 +367,9 @@ case class PredictViaNNOnGraphV1(
     }
 
     case class DataForGradientCheck(
-      trainables: List[Map[String, neural.DoubleMatrix]],
-      gradients: List[Map[String, neural.DoubleMatrix]],
-      trueState: neural.VectorGraph,
-      initialStates: List[neural.VectorGraph])
+        trainables: List[Map[String, neural.DoubleMatrix]],
+        gradients: List[Map[String, neural.DoubleMatrix]],
+        trueState: neural.VectorGraph,
+        initialStates: List[neural.VectorGraph])
   }
 }

@@ -12,7 +12,7 @@ object DeriveScalaScalar extends OpFromJson {
     val scalars = s.map(i => runtimeTypedScalar(Symbol(i._1), i._2.typeTag))
   }
   class Output[T: TypeTag](implicit instance: MetaGraphOperationInstance)
-      extends MagicOutput(instance) {
+    extends MagicOutput(instance) {
     val sc = scalar[T]
   }
 
@@ -51,9 +51,9 @@ object DeriveScalaScalar extends OpFromJson {
 }
 import DeriveScalaScalar._
 case class DeriveScalaScalar[T: TypeTag](
-  expr: String,
-  scalarParams: Seq[(String, TypeTag[_])])
-    extends TypedMetaGraphOp[Input, Output[T]] {
+    expr: String,
+    scalarParams: Seq[(String, TypeTag[_])])
+  extends TypedMetaGraphOp[Input, Output[T]] {
 
   def tt = typeTag[T]
   def st = SerializableType(tt)
@@ -68,16 +68,18 @@ case class DeriveScalaScalar[T: TypeTag](
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(tt, instance)
 
-  def execute(inputDatas: DataSet,
-              o: Output[T],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output[T],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val scalarValues = inputs.scalars.map(_.value)
     val paramTypes = scalarParams.toMap[String, TypeTag[_]]
 
     val t = ScalaScript.compileAndGetType(expr, paramTypes, paramsToOption = false)
-    assert(t.returnType =:= tt.tpe,
+    assert(
+      t.returnType =:= tt.tpe,
       s"Scala script returns wrong type: expected ${tt.tpe} but got ${t.returnType} instead.")
 
     val evaluator = ScalaScript.compileAndGetEvaluator(expr, paramTypes, paramsToOption = false)

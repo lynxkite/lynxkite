@@ -14,7 +14,8 @@ import scala.reflect.runtime.universe._
 
 object MergeVertices extends OpFromJson {
   class Output(
-      implicit instance: MetaGraphOperationInstance,
+      implicit
+      instance: MetaGraphOperationInstance,
       inputs: VertexAttributeInput[_]) extends MagicOutput(instance) {
 
     val segments = vertexSet
@@ -35,8 +36,9 @@ case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], 
   def groupByMerge(
     attr: spark.rdd.RDD[(ID, T)],
     o: Output,
-    output: OutputBuilder)(implicit rc: RuntimeContext,
-                           inputDatas: DataSet): Unit = {
+    output: OutputBuilder)(implicit
+    rc: RuntimeContext,
+    inputDatas: DataSet): Unit = {
     implicit val ct = inputs.attr.data.classTag
     val partitioner = attr.partitioner.get
     val byAttr = attr.map(_.swap)
@@ -65,8 +67,9 @@ case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], 
   def efficientMerge[V: Ordering: ClassTag](
     attr: spark.rdd.RDD[(ID, V)],
     o: Output,
-    output: OutputBuilder)(implicit rc: RuntimeContext,
-                           inputDatas: DataSet): Unit = {
+    output: OutputBuilder)(implicit
+    rc: RuntimeContext,
+    inputDatas: DataSet): Unit = {
     val partitioner = attr.partitioner.get
 
     val byAttr = attr.map(_.swap)
@@ -83,10 +86,11 @@ case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], 
     output(o.belongsTo, matching)
   }
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val tt = inputs.attr.data.typeTag
     implicit val runtimeContext = rc

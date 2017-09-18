@@ -50,8 +50,7 @@ object TypeTagToFormat {
     def writes(v: (A, B)): json.JsValue = {
       json.Json.obj(
         "first" -> v._1,
-        "second" -> v._2
-      )
+        "second" -> v._2)
     }
   }
 
@@ -70,8 +69,7 @@ object TypeTagToFormat {
         case (key, value) =>
           json.Json.obj(
             "key" -> json.Json.toJson(key),
-            "val" -> json.Json.toJson(value)
-          )
+            "val" -> json.Json.toJson(value))
       }.toSeq
       JsArray(sss)
     }
@@ -86,8 +84,7 @@ object TypeTagToFormat {
         else json.Json.toJson(v.sample.toMap)
       json.Json.obj(
         "counts" -> json.Json.toJson(v.counts.toMap),
-        "sample" -> sampleOut
-      )
+        "sample" -> sampleOut)
     }
     def reads(j: json.JsValue): json.JsSuccess[IDBuckets[T]] = {
       val immutableCounts = (j \ "counts").as[Map[T, Long]]

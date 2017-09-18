@@ -12,8 +12,9 @@ object KMeansClusteringModelTrainer extends OpFromJson {
       i => vertexAttribute[Double](vertices, Symbol(s"feature-$i"))
     }
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue) = KMeansClusteringModelTrainer(
@@ -41,10 +42,11 @@ case class KMeansClusteringModelTrainer(
     "seed" -> seed,
     "featureNames" -> featureNames)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sqlContext = rc.dataManager.newSQLContext()
 
@@ -69,7 +71,6 @@ case class KMeansClusteringModelTrainer(
       labelName = None,
       symbolicPath = file.symbolicName,
       featureNames = featureNames,
-      statistics = Some(s"cost: ${cost}"))
-    )
+      statistics = Some(s"cost: ${cost}")))
   }
 }

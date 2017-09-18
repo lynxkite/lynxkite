@@ -150,8 +150,9 @@ object ImportCommon {
 
 @deprecated("Replaced by table-based importing.", "1.7.0")
 object ImportVertexList extends OpFromJson {
-  class Output(implicit instance: MetaGraphOperationInstance,
-               fields: Seq[String]) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      fields: Seq[String]) extends MagicOutput(instance) {
     val vertices = vertexSet
     val attrs = fields.map {
       f => f -> vertexAttribute[String](vertices, ImportCommon.toSymbol(f))
@@ -163,7 +164,7 @@ object ImportVertexList extends OpFromJson {
 }
 @deprecated("Replaced by table-based importing.", "1.7.0")
 class ImportVertexList(val input: RowInput) extends ImportCommon
-    with TypedMetaGraphOp[NoInput, ImportVertexList.Output] with Serializable {
+  with TypedMetaGraphOp[NoInput, ImportVertexList.Output] with Serializable {
   override def equals(o: Any) =
     o.isInstanceOf[ImportVertexList] && o.asInstanceOf[ImportVertexList].input == input
   import ImportVertexList._
@@ -173,10 +174,11 @@ class ImportVertexList(val input: RowInput) extends ImportCommon
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, input.fields)
   override def toJson = Json.obj("input" -> input.toTypedJson)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     val entities = o.attrs.values.map(_.entity)
     val entitiesByName = entities.map(e => e.name -> e).toMap
     val inOrder = input.fields.map(f => entitiesByName(ImportCommon.toSymbol(f)))
@@ -193,9 +195,10 @@ trait ImportEdges extends ImportCommon {
   mustHaveField(src)
   mustHaveField(dst)
 
-  def putEdgeAttributes(columns: Columns,
-                        oattr: Map[String, EntityContainer[Attribute[String]]],
-                        output: OutputBuilder): Unit = {
+  def putEdgeAttributes(
+    columns: Columns,
+    oattr: Map[String, EntityContainer[Attribute[String]]],
+    output: OutputBuilder): Unit = {
     for ((field, rdd) <- columns.singleColumns) {
       output(oattr(field), rdd)
     }
@@ -206,9 +209,10 @@ trait ImportEdges extends ImportCommon {
 
 @deprecated("Replaced by table-based importing.", "1.7.0")
 object ImportEdgeList extends OpFromJson {
-  class Output(implicit instance: MetaGraphOperationInstance,
-               fields: Seq[String])
-      extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      fields: Seq[String])
+    extends MagicOutput(instance) {
     val (vertices, edges) = graph
     val attrs = fields.map {
       f => f -> edgeAttribute[String](edges, ImportCommon.toSymbol(f))
@@ -222,8 +226,8 @@ object ImportEdgeList extends OpFromJson {
 }
 @deprecated("Replaced by table-based importing.", "1.7.0")
 class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
-    extends ImportEdges
-    with TypedMetaGraphOp[NoInput, ImportEdgeList.Output] with Serializable {
+  extends ImportEdges
+  with TypedMetaGraphOp[NoInput, ImportEdgeList.Output] with Serializable {
   override def equals(o: Any) = {
     o.isInstanceOf[ImportEdgeList] && {
       val other = o.asInstanceOf[ImportEdgeList]
@@ -236,10 +240,11 @@ class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, input.fields)
   override def toJson = Json.obj("input" -> input.toTypedJson, "src" -> src, "dst" -> dst)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val runtimeContext = rc
     val columns = readColumns(rc, input, Set(src, dst))
     val edgePartitioner = columns(src).partitioner.get
@@ -280,10 +285,11 @@ object ImportEdgeListForExistingVertexSet extends OpFromJson {
     val srcVidAttr = vertexAttribute[String](sources)
     val dstVidAttr = vertexAttribute[String](destinations)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input,
-               fields: Seq[String])
-      extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input,
+      fields: Seq[String])
+    extends MagicOutput(instance) {
     val edges = edgeBundle(inputs.sources.entity, inputs.destinations.entity)
     val attrs = fields.map {
       f => f -> edgeAttribute[String](edges, ImportCommon.toSymbol(f))
@@ -297,9 +303,9 @@ object ImportEdgeListForExistingVertexSet extends OpFromJson {
 }
 @deprecated("Replaced by table-based importing.", "1.7.0")
 class ImportEdgeListForExistingVertexSet(val input: RowInput, val src: String, val dst: String)
-    extends ImportEdges
-    with TypedMetaGraphOp[ImportEdgeListForExistingVertexSet.Input, ImportEdgeListForExistingVertexSet.Output]
-    with Serializable {
+  extends ImportEdges
+  with TypedMetaGraphOp[ImportEdgeListForExistingVertexSet.Input, ImportEdgeListForExistingVertexSet.Output]
+  with Serializable {
   override def equals(o: Any) = {
     o.isInstanceOf[ImportEdgeListForExistingVertexSet] && {
       val other = o.asInstanceOf[ImportEdgeListForExistingVertexSet]
@@ -312,10 +318,11 @@ class ImportEdgeListForExistingVertexSet(val input: RowInput, val src: String, v
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs, input.fields)
   override def toJson = Json.obj("input" -> input.toTypedJson, "src" -> src, "dst" -> dst)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val runtimeContext = rc
     val columns = readColumns(rc, input, Set(src, dst))
@@ -336,10 +343,11 @@ object ImportAttributesForExistingVertexSet extends OpFromJson {
     val vs = vertexSet
     val idAttr = vertexAttribute[String](vs)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input,
-               fields: Set[String])
-      extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input,
+      fields: Set[String])
+    extends MagicOutput(instance) {
     val attrs = fields.map {
       f => f -> vertexAttribute[String](inputs.vs.entity, ImportCommon.toSymbol(f))
     }.toMap
@@ -352,9 +360,9 @@ object ImportAttributesForExistingVertexSet extends OpFromJson {
 }
 @deprecated("Replaced by table-based importing.", "1.7.0")
 class ImportAttributesForExistingVertexSet(val input: RowInput, val idField: String)
-    extends ImportCommon
-    with TypedMetaGraphOp[ImportAttributesForExistingVertexSet.Input, ImportAttributesForExistingVertexSet.Output]
-    with Serializable {
+  extends ImportCommon
+  with TypedMetaGraphOp[ImportAttributesForExistingVertexSet.Input, ImportAttributesForExistingVertexSet.Output]
+  with Serializable {
   override def equals(o: Any) = {
     o.isInstanceOf[ImportAttributesForExistingVertexSet] && {
       val other = o.asInstanceOf[ImportAttributesForExistingVertexSet]
@@ -371,10 +379,11 @@ class ImportAttributesForExistingVertexSet(val input: RowInput, val idField: Str
     new Output()(instance, inputs, input.fields.toSet - idField)
   override def toJson = Json.obj("input" -> input.toTypedJson, "idField" -> idField)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val partitioner = inputs.vs.rdd.partitioner.get
     val lines = input.lines(rc).values

@@ -24,8 +24,9 @@ object SampleEdgesFromSegmentation extends OpFromJson {
     val seg = vertexSet
     val belongsTo = edgeBundle(vs, seg)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               input: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      input: Input) extends MagicOutput(instance) {
     val es = edgeBundle(input.vs.entity, input.vs.entity)
     val multiplicity = edgeAttribute[Double](es)
   }
@@ -35,15 +36,14 @@ object SampleEdgesFromSegmentation extends OpFromJson {
 }
 import SampleEdgesFromSegmentation._
 case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
-    extends TypedMetaGraphOp[Input, Output] {
+  extends TypedMetaGraphOp[Input, Output] {
 
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj(
     "prob" -> prob,
-    "seed" -> seed
-  )
+    "seed" -> seed)
 
   // Takes a random sample of size numToGet from the pairs of values
   // from the vertices list. Assumes that the members of vertices are distinct.
@@ -219,10 +219,11 @@ case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
       .map { case ((src, dst), _) => src -> dst }
   }
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val seedGenerator = new Random(seed)

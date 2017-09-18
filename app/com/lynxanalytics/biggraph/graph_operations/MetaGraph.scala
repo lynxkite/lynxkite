@@ -22,7 +22,7 @@ object MetaGraph extends OpFromJson {
 }
 import MetaGraph._
 case class MetaGraph(timestamp: String, env: Option[SparkFreeEnvironment])
-    extends TypedMetaGraphOp[NoInput, Output] {
+  extends TypedMetaGraphOp[NoInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
@@ -38,10 +38,11 @@ case class MetaGraph(timestamp: String, env: Option[SparkFreeEnvironment])
 
   private def shortClass(o: Any) = o.getClass.getName.split('.').last
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     assert(env.nonEmpty, "You cannot rerun a MetaGraph operation.")
     val ops = env.get.metaGraphManager.getOperationInstances.toSeq
 

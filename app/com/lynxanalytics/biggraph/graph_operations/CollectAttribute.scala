@@ -5,7 +5,8 @@ import com.lynxanalytics.biggraph.graph_api._
 
 object CollectAttribute extends OpFromJson {
   class Output[T](
-      implicit instance: MetaGraphOperationInstance,
+      implicit
+      instance: MetaGraphOperationInstance,
       inputs: VertexAttributeInput[T]) extends MagicOutput(instance) {
     implicit val tt = inputs.attr.typeTag
     val idToAttr = scalar[Map[ID, T]]

@@ -27,7 +27,7 @@ class SplitVerticesTest extends FunSuite with TestGraphOp {
         0, // id 0 (weight 1.0) has 1 copy
         1, 1,
         2, 2, 2,
-        3, 3, 3, 3 // id 3 (weight 4.0) has 4 copies 
+        3, 3, 3, 3 // id 3 (weight 4.0) has 4 copies
       ))
   }
 

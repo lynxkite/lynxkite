@@ -27,10 +27,11 @@ object ValidateOperationsTest {
     @transient override lazy val inputs = new NoInput
     def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
     override def toJson = Json.obj("seed" -> seed)
-    def execute(inputDatas: DataSet,
-                o: Output,
-                output: OutputBuilder,
-                rc: RuntimeContext): Unit = ???
+    def execute(
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = ???
   }
   object TestOperation extends OpFromJson {
     def fromJson(j: JsValue) = TestOperation()
@@ -38,10 +39,11 @@ object ValidateOperationsTest {
   case class TestOperation() extends TypedMetaGraphOp[Input, Output] {
     @transient override lazy val inputs = new Input
     def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
-    def execute(inputDatas: DataSet,
-                o: Output,
-                output: OutputBuilder,
-                rc: RuntimeContext): Unit = ???
+    def execute(
+      inputDatas: DataSet,
+      o: Output,
+      output: OutputBuilder,
+      rc: RuntimeContext): Unit = ???
   }
 }
 

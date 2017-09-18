@@ -22,8 +22,7 @@ class JDBCUtilTest extends FunSuite {
     val r = JDBCUtil.stringPartitionClauses("c", "ablak", "zsiraf", 2)
     assert(r == Seq(
       "c < \"nEkDfK  0t\"",
-      "\"nEkDfK  0t\" <= c"
-    ))
+      "\"nEkDfK  0t\" <= c"))
   }
 
   test("String partitioning: tight range") {
@@ -31,8 +30,7 @@ class JDBCUtilTest extends FunSuite {
     assert(r == Seq(
       "c < \"ablak1K 02\"",
       "\"ablak1K 02\" <= c AND c < \"ablak1f 1B\"",
-      "\"ablak1f 1B\" <= c"
-    ))
+      "\"ablak1f 1B\" <= c"))
   }
 
   test("String partitioning: Unicode characters") {

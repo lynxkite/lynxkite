@@ -20,28 +20,31 @@ class SetOverlapTest extends FunSuite with TestGraphOp {
   }
 
   test("triangle") {
-    val overlaps = getOverlaps(Seq(
-      Seq(1, 2) -> 10,
-      Seq(2, 3) -> 20,
-      Seq(1, 3) -> 30),
+    val overlaps = getOverlaps(
+      Seq(
+        Seq(1, 2) -> 10,
+        Seq(2, 3) -> 20,
+        Seq(1, 3) -> 30),
       minOverlap = 1)
     assert(overlaps === Map((10, 20) -> 1, (10, 30) -> 1, (20, 10) -> 1, (20, 30) -> 1, (30, 10) -> 1, (30, 20) -> 1))
   }
 
   test("unsorted sets") {
-    val overlaps = getOverlaps(Seq(
-      Seq(2, 1) -> 10,
-      Seq(3, 2) -> 20,
-      Seq(3, 1) -> 30),
+    val overlaps = getOverlaps(
+      Seq(
+        Seq(2, 1) -> 10,
+        Seq(3, 2) -> 20,
+        Seq(3, 1) -> 30),
       minOverlap = 1)
     assert(overlaps === Map((10, 20) -> 1, (10, 30) -> 1, (20, 10) -> 1, (20, 30) -> 1, (30, 10) -> 1, (30, 20) -> 1))
   }
 
   test("minOverlap too high") {
-    val overlaps = getOverlaps(Seq(
-      Seq(1, 2) -> 10,
-      Seq(2, 3) -> 20,
-      Seq(1, 3) -> 30),
+    val overlaps = getOverlaps(
+      Seq(
+        Seq(1, 2) -> 10,
+        Seq(2, 3) -> 20,
+        Seq(1, 3) -> 30),
       minOverlap = 2)
     assert(overlaps === Map())
   }

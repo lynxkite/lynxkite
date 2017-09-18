@@ -22,10 +22,11 @@ case class EdgeGraph() extends TypedMetaGraphOp[GraphInput, Output] {
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sc = rc.sparkContext
     val edges = inputs.es.rdd

@@ -33,8 +33,7 @@ class SegmentByEventSequenceTest extends FunSuite with TestGraphOp {
       List((1.0, 1L), (1.3, 3L)),
       List((1.1, 2L), (1.2, 3L)),
       List((1.1, 2L), (1.3, 3L)),
-      List((1.2, 3L), (1.3, 3L))
-    ).sorted)
+      List((1.2, 3L), (1.3, 3L))).sorted)
   }
 
   test("ConinuousEventsSegmentGenerator") {

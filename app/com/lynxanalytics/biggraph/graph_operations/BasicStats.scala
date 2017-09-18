@@ -27,17 +27,18 @@ object CountVertices extends OpFromJson {
   def fromJson(j: JsValue) = CountVertices()
 }
 case class CountVertices()
-    extends TypedMetaGraphOp[CountVertices.Input, CountVertices.Output] {
+  extends TypedMetaGraphOp[CountVertices.Input, CountVertices.Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new CountVertices.Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new CountVertices.Output()(instance)
 
-  def execute(inputDatas: DataSet,
-              o: CountVertices.Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: CountVertices.Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vs = inputs.vertices.data
     output(o.count, vs.count.getOrElse(vs.rdd.count))
@@ -68,10 +69,11 @@ class CountEdges extends TypedMetaGraphOp[CountEdges.Input, CountEdges.Output] w
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val es = inputs.edges.data
     output(o.count, es.count.getOrElse(es.rdd.count))
@@ -89,17 +91,18 @@ object CountAttributes extends OpFromJson {
   def fromJson(j: JsValue) = CountAttributes()
 }
 case class CountAttributes[T]()
-    extends TypedMetaGraphOp[CountAttributes.Input[T], CountAttributes.Output] {
+  extends TypedMetaGraphOp[CountAttributes.Input[T], CountAttributes.Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new CountAttributes.Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new CountAttributes.Output()(instance)
 
-  def execute(inputDatas: DataSet,
-              o: CountAttributes.Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: CountAttributes.Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val attr = inputs.attribute.data
     output(o.count, attr.count.getOrElse(attr.rdd.count))
@@ -111,8 +114,9 @@ object ComputeMinMaxMinPositive {
     val vertices = vertexSet
     val attribute = vertexAttribute[T](vertices)
   }
-  class Output[T](implicit instance: MetaGraphOperationInstance,
-                  inputs: Input[T]) extends MagicOutput(instance) {
+  class Output[T](implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input[T]) extends MagicOutput(instance) {
     implicit val tt = inputs.attribute.typeTag
     val min = scalar[Option[T]]
     val max = scalar[Option[T]]
@@ -120,7 +124,7 @@ object ComputeMinMaxMinPositive {
   }
 }
 abstract class ComputeMinMaxMinPositive[T: Numeric]
-    extends TypedMetaGraphOp[ComputeMinMaxMinPositive.Input[T], ComputeMinMaxMinPositive.Output[T]] {
+  extends TypedMetaGraphOp[ComputeMinMaxMinPositive.Input[T], ComputeMinMaxMinPositive.Output[T]] {
   override val isHeavy = true
   @transient override lazy val inputs = new ComputeMinMaxMinPositive.Input[T]
   private lazy val num = implicitly[Numeric[T]]
@@ -142,10 +146,11 @@ abstract class ComputeMinMaxMinPositive[T: Numeric]
     }
   }
 
-  def execute(inputDatas: DataSet,
-              o: ComputeMinMaxMinPositive.Output[T],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: ComputeMinMaxMinPositive.Output[T],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attribute.data.classTag
     import num.mkOrderingOps
@@ -153,13 +158,15 @@ abstract class ComputeMinMaxMinPositive[T: Numeric]
       .aggregate((None: Option[T], None: Option[T], None: Option[T]))(
         {
           case ((min, max, minpos), next) =>
-            (smaller(min, Some(next)),
+            (
+              smaller(min, Some(next)),
               bigger(max, Some(next)),
               if (next > num.zero) smaller(minpos, Some(next)) else minpos)
         },
         {
           case ((min1, max1, minpos1), (min2, max2, minpos2)) =>
-            (smaller(min1, min2),
+            (
+              smaller(min1, min2),
               bigger(max1, max2),
               smaller(minpos1, minpos2))
         })
@@ -177,8 +184,9 @@ object ComputeMinMaxDouble extends OpFromJson {
     val vertices = vertexSet
     val attribute = vertexAttribute[Double](vertices)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     implicit val tt = inputs.attribute.typeTag
     val min = scalar[Double]
     val max = scalar[Double]
@@ -188,16 +196,17 @@ object ComputeMinMaxDouble extends OpFromJson {
 }
 @deprecated("Use ComputeMinMaxMinPositive instead.", since = "1.6.0")
 class ComputeMinMaxDouble
-    extends TypedMetaGraphOp[ComputeMinMaxDouble.Input, ComputeMinMaxDouble.Output]
-    with Serializable {
+  extends TypedMetaGraphOp[ComputeMinMaxDouble.Input, ComputeMinMaxDouble.Output]
+  with Serializable {
   override def equals(o: Any) = o.isInstanceOf[ComputeMinMaxDouble]
   @transient override lazy val inputs = new ComputeMinMaxDouble.Input
   def outputMeta(instance: MetaGraphOperationInstance) =
     new ComputeMinMaxDouble.Output()(instance, inputs)
-  def execute(inputDatas: DataSet,
-              o: ComputeMinMaxDouble.Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = ???
+  def execute(
+    inputDatas: DataSet,
+    o: ComputeMinMaxDouble.Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = ???
 }
 
 object ComputeMinMaxMinPositiveDouble extends OpFromJson {
@@ -210,8 +219,9 @@ object ComputeTopValues extends OpFromJson {
     val vertices = vertexSet
     val attribute = vertexAttribute[T](vertices)
   }
-  class Output[T](implicit instance: MetaGraphOperationInstance,
-                  inputs: Input[T]) extends MagicOutput(instance) {
+  class Output[T](implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input[T]) extends MagicOutput(instance) {
     implicit val tt = inputs.attribute.typeTag
     val topValues = scalar[Seq[(T, Int)]]
   }
@@ -225,7 +235,7 @@ object ComputeTopValues extends OpFromJson {
     ComputeTopValues((j \ "numTopValues").as[Int], (j \ "sampleSize").as[Int])
 }
 case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)
-    extends TypedMetaGraphOp[ComputeTopValues.Input[T], ComputeTopValues.Output[T]] {
+  extends TypedMetaGraphOp[ComputeTopValues.Input[T], ComputeTopValues.Output[T]] {
   override val isHeavy = true
   override def toJson =
     Json.obj("numTopValues" -> numTopValues, "sampleSize" -> sampleSize)
@@ -234,10 +244,11 @@ case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)
   def outputMeta(instance: MetaGraphOperationInstance) =
     new ComputeTopValues.Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: ComputeTopValues.Output[T],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: ComputeTopValues.Output[T],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attribute.data.classTag
     val ordering = new ComputeTopValues.PairOrdering[T]
@@ -245,7 +256,8 @@ case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)
     val sampled =
       if (sampleSize > 0) attribute.coalesce(rc).takeFirstNValuesOrSo(sampleSize)
       else attribute
-    output(o.topValues,
+    output(
+      o.topValues,
       sampled
         .map { case (id, value) => (value, 1) }
         .reduceByKey(_ + _)
@@ -273,15 +285,16 @@ object Coverage extends OpFromJson {
   }
 }
 case class Coverage()
-    extends TypedMetaGraphOp[Coverage.Input, Coverage.Output] {
+  extends TypedMetaGraphOp[Coverage.Input, Coverage.Output] {
   import Coverage._
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val srcs = inputs.edges.rdd.values.map(_.src)
     val dsts = inputs.edges.rdd.values.map(_.dst)

@@ -52,17 +52,23 @@ class RegressionTest extends FunSuite with TestGraphOp {
       val g = ExampleGraph()().result
       predict(method, g.income, Seq(g.age))
     }
-    assertRoughly(incomes("Linear regression"),
+    assertRoughly(
+      incomes("Linear regression"),
       Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 390.0), maxError = 5)
-    assertRoughly(incomes("Ridge regression"),
+    assertRoughly(
+      incomes("Ridge regression"),
       Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 390.0), maxError = 5)
-    assertRoughly(incomes("Lasso"),
+    assertRoughly(
+      incomes("Lasso"),
       Map(0L -> 1000.0, 1L -> 930.0, 2L -> 2000.0, 3L -> 390.0), maxError = 5)
-    assertRoughly(incomes("Decision tree"),
+    assertRoughly(
+      incomes("Decision tree"),
       Map(0L -> 1000.0, 1L -> 1000.0, 2L -> 2000.0, 3L -> 1000.0), maxError = 5)
-    assertRoughly(incomes("Random forest"),
+    assertRoughly(
+      incomes("Random forest"),
       Map(0L -> 950.0, 1L -> 950.0, 2L -> 1350.0, 3L -> 950.0), maxError = 5)
-    assertRoughly(incomes("Gradient-boosted trees"),
+    assertRoughly(
+      incomes("Gradient-boosted trees"),
       Map(0L -> 1000.0, 1L -> 1000.0, 2L -> 2000.0, 3L -> 1000.0), maxError = 5)
   }
 
@@ -74,21 +80,29 @@ class RegressionTest extends FunSuite with TestGraphOp {
       val gender = g.gender.deriveX[Double]("if (x == \"Male\") 1.0 else 0.0")
       predict(method, gender, Seq(g.age))
     }
-    assertRoughly(gender("Linear regression"),
+    assertRoughly(
+      gender("Linear regression"),
       Map(0L -> 0.7, 1L -> 0.7, 2L -> 0.8, 3L -> 0.7), maxError = 0.1)
-    assertRoughly(gender("Ridge regression"),
+    assertRoughly(
+      gender("Ridge regression"),
       Map(0L -> 0.7, 1L -> 0.7, 2L -> 0.8, 3L -> 0.7), maxError = 0.1)
-    assertRoughly(gender("Lasso"),
+    assertRoughly(
+      gender("Lasso"),
       Map(0L -> 0.7, 1L -> 0.7, 2L -> 0.8, 3L -> 0.7), maxError = 0.1)
-    assertRoughly(gender("Logistic regression"),
+    assertRoughly(
+      gender("Logistic regression"),
       Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0))
-    assertRoughly(gender("Naive Bayes"),
+    assertRoughly(
+      gender("Naive Bayes"),
       Map(0L -> 1.0, 1L -> 1.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.1)
-    assertRoughly(gender("Decision tree"),
+    assertRoughly(
+      gender("Decision tree"),
       Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.1)
-    assertRoughly(gender("Random forest"),
+    assertRoughly(
+      gender("Random forest"),
       Map(0L -> 0.9, 1L -> 0.5, 2L -> 0.9, 3L -> 0.8), maxError = 0.1)
-    assertRoughly(gender("Gradient-boosted trees"),
+    assertRoughly(
+      gender("Gradient-boosted trees"),
       Map(0L -> 1.0, 1L -> 0.0, 2L -> 1.0, 3L -> 1.0), maxError = 0.1)
   }
 
@@ -98,7 +112,8 @@ class RegressionTest extends FunSuite with TestGraphOp {
       val young = g.age.deriveX[Double]("if (x < 19.0) 1.0 else 0.0")
       predict("Logistic regression", young, Seq(g.age))
     }
-    assertRoughly(prediction,
+    assertRoughly(
+      prediction,
       Map(0L -> 0.0, 1L -> 1.0, 2L -> 0.0, 3L -> 1.0))
   }
 

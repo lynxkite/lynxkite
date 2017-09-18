@@ -19,7 +19,8 @@ object AttributeWithLocalAggregator {
   }
   def apply[T](
     attr: Attribute[T], choice: String)(
-      implicit manager: MetaGraphManager): AttributeWithLocalAggregator[_, _] = {
+    implicit
+    manager: MetaGraphManager): AttributeWithLocalAggregator[_, _] = {
     choice match {
       case "majority_50" =>
         AttributeWithLocalAggregator(
@@ -36,14 +37,15 @@ object AttributeWithLocalAggregator {
 }
 
 case class AttributeWithAggregator[From, Intermediate, To](
-  val attr: Attribute[From],
-  val aggregator: graph_operations.Aggregator[From, Intermediate, To])
-    extends AttributeWithLocalAggregator[From, To]
+    val attr: Attribute[From],
+    val aggregator: graph_operations.Aggregator[From, Intermediate, To])
+  extends AttributeWithLocalAggregator[From, To]
 
 object AttributeWithAggregator {
   def apply[T](
     attr: Attribute[T], choice: String)(
-      implicit manager: MetaGraphManager): AttributeWithAggregator[_, _, _] = {
+    implicit
+    manager: MetaGraphManager): AttributeWithAggregator[_, _, _] = {
 
     choice match {
       case "sum" =>
@@ -72,7 +74,8 @@ object AttributeWithWeightedAggregator {
     weight: Attribute[Double],
     attr: Attribute[T],
     choice: String)(
-      implicit manager: MetaGraphManager): AttributeWithAggregator[_, _, _] = {
+    implicit
+    manager: MetaGraphManager): AttributeWithAggregator[_, _, _] = {
 
     choice match {
       case "by_max_weight" => AttributeWithAggregator(

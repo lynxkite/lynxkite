@@ -24,15 +24,16 @@ object AggregateByEdgeBundle extends OpFromJson {
     val connectionBySrc = hybridBundle(connection)
     val attr = vertexAttribute[From](src)
   }
-  class Output[From, To: TypeTag](implicit instance: MetaGraphOperationInstance,
-                                  inputs: Input[From]) extends MagicOutput(instance) {
+  class Output[From, To: TypeTag](implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input[From]) extends MagicOutput(instance) {
     val attr = vertexAttribute[To](inputs.dst.entity)
   }
   def fromJson(j: JsValue) =
     AggregateByEdgeBundle(TypedJson.read[LocalAggregator[_, _]](j \ "aggregator"))
 }
 case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To])
-    extends TypedMetaGraphOp[AggregateByEdgeBundle.Input[From], AggregateByEdgeBundle.Output[From, To]] {
+  extends TypedMetaGraphOp[AggregateByEdgeBundle.Input[From], AggregateByEdgeBundle.Output[From, To]] {
   import AggregateByEdgeBundle._
   override val isHeavy = true
   @transient override lazy val inputs = new Input[From]
@@ -43,10 +44,11 @@ case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To]
   }
   override def toJson = Json.obj("aggregator" -> aggregator.toTypedJson)
 
-  def execute(inputDatas: DataSet,
-              o: Output[From, To],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output[From, To],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ftt = inputs.attr.data.typeTag
     implicit val fct = inputs.attr.data.classTag
@@ -79,15 +81,16 @@ object AggregateFromEdges extends OpFromJson {
     val edges = edgeBundle(src, dst)
     val eattr = edgeAttribute[From](edges)
   }
-  class Output[From, To: TypeTag](implicit instance: MetaGraphOperationInstance,
-                                  inputs: Input[From]) extends MagicOutput(instance) {
+  class Output[From, To: TypeTag](implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input[From]) extends MagicOutput(instance) {
     val dstAttr = vertexAttribute[To](inputs.dst.entity)
   }
   def fromJson(j: JsValue) =
     AggregateFromEdges(TypedJson.read[LocalAggregator[_, _]](j \ "aggregator"))
 }
 case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
-    extends TypedMetaGraphOp[AggregateFromEdges.Input[From], AggregateFromEdges.Output[From, To]] {
+  extends TypedMetaGraphOp[AggregateFromEdges.Input[From], AggregateFromEdges.Output[From, To]] {
   import AggregateFromEdges._
   override val isHeavy = true
   @transient override lazy val inputs = new Input[From]
@@ -98,10 +101,11 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
   }
   override def toJson = Json.obj("aggregator" -> aggregator.toTypedJson)
 
-  def execute(inputDatas: DataSet,
-              o: Output[From, To],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output[From, To],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ftt = inputs.eattr.data.typeTag
     implicit val fct = inputs.eattr.data.classTag
@@ -119,7 +123,8 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
         output(o.dstAttr, aggregator.aggregateRDD(byDst, inputs.dst.rdd.partitioner.get))
       case _ =>
         // Regular aggregation for local Aggregators.
-        output(o.dstAttr,
+        output(
+          o.dstAttr,
           byDst.groupBySortedKey(dst.partitioner.get).mapValues(aggregator.aggregate(_)))
     }
   }
@@ -127,7 +132,8 @@ case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
 
 object AggregateAttributeToScalar extends OpFromJson {
   class Output[To: TypeTag](
-      implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+      implicit
+      instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
 
     val aggregated = scalar[To]
   }
@@ -135,8 +141,8 @@ object AggregateAttributeToScalar extends OpFromJson {
     AggregateAttributeToScalar(TypedJson.read[Aggregator[_, _, _]](j \ "aggregator"))
 }
 case class AggregateAttributeToScalar[From, Intermediate, To](
-  aggregator: Aggregator[From, Intermediate, To])
-    extends TypedMetaGraphOp[VertexAttributeInput[From], AggregateAttributeToScalar.Output[To]] {
+    aggregator: Aggregator[From, Intermediate, To])
+  extends TypedMetaGraphOp[VertexAttributeInput[From], AggregateAttributeToScalar.Output[To]] {
   import AggregateAttributeToScalar._
   override val isHeavy = true
   @transient override lazy val inputs = new VertexAttributeInput[From]
@@ -147,10 +153,11 @@ case class AggregateAttributeToScalar[From, Intermediate, To](
   }
   override def toJson = Json.obj("aggregator" -> aggregator.toTypedJson)
 
-  def execute(inputDatas: DataSet,
-              o: Output[To],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output[To],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val attr = inputs.attr.rdd
     implicit val ftt = inputs.attr.data.typeTag
@@ -245,7 +252,7 @@ trait SimpleAggregator[From, To] extends ItemAggregator[From, To, To] {
 // This is a trait instead of an abstract class because otherwise the case
 // class will not be serializable ("no valid constructor").
 trait CompoundAggregator[From, Intermediate1, Intermediate2, To1, To2, To]
-    extends ItemAggregator[From, (Intermediate1, Intermediate2), To] {
+  extends ItemAggregator[From, (Intermediate1, Intermediate2), To] {
   val agg1: ItemAggregator[From, Intermediate1, To1]
   val agg2: ItemAggregator[From, Intermediate2, To2]
   def zero = (agg1.zero, agg2.zero)
@@ -264,7 +271,7 @@ trait CompoundAggregator[From, Intermediate1, Intermediate2, To1, To2, To]
 }
 // A convenient shorthand.
 trait CompoundDoubleAggregator[From]
-    extends CompoundAggregator[From, Double, Double, Double, Double, Double] {
+  extends CompoundAggregator[From, Double, Double, Double, Double, Double] {
   def outputTypeTag(inputTypeTag: TypeTag[From]) = typeTag[Double]
 }
 
@@ -316,7 +323,7 @@ object Aggregator {
   }
 
   abstract class MaxBy[Weight: Ordering, Value]
-      extends ItemAggregator[(Weight, Value), Option[(Weight, Value)], Value] with Serializable {
+    extends ItemAggregator[(Weight, Value), Option[(Weight, Value)], Value] with Serializable {
     import Ordering.Implicits._
     def intermediateTypeTag(inputTypeTag: TypeTag[(Weight, Value)]) = {
       implicit val tt = inputTypeTag

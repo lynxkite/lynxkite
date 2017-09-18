@@ -29,8 +29,9 @@ case class Bucketing[T: Ordering: reflect.ClassTag](
 
 // Creates a segmentation where each segment represents a distinct value of the attribute.
 object StringBucketing extends OpFromJson {
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: VertexAttributeInput[String]) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: VertexAttributeInput[String]) extends MagicOutput(instance) {
     val segments = vertexSet
     val belongsTo = edgeBundle(inputs.vs.entity, segments, EdgeBundleProperties.partialFunction)
     val label = vertexAttribute[String](segments)
@@ -38,16 +39,17 @@ object StringBucketing extends OpFromJson {
   def fromJson(j: JsValue) = StringBucketing()
 }
 case class StringBucketing()
-    extends TypedMetaGraphOp[VertexAttributeInput[String], StringBucketing.Output] {
+  extends TypedMetaGraphOp[VertexAttributeInput[String], StringBucketing.Output] {
   import StringBucketing._
   override val isHeavy = true
   @transient override lazy val inputs = new VertexAttributeInput[String]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.meta.classTag
     implicit val runtimeContext = rc
@@ -68,7 +70,8 @@ object DoubleBucketing extends OpFromJson {
     val attr = vertexAttribute[Double](vs)
   }
   class Output(properties: EdgeBundleProperties)(
-      implicit instance: MetaGraphOperationInstance,
+      implicit
+      instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
     val segments = vertexSet
     val belongsTo = edgeBundle(inputs.vs.entity, segments, properties)
@@ -80,7 +83,7 @@ object DoubleBucketing extends OpFromJson {
     DoubleBucketing((j \ "bucketWidth").as[Double], (j \ "overlap").as[Boolean])
 }
 case class DoubleBucketing(bucketWidth: Double, overlap: Boolean)
-    extends TypedMetaGraphOp[DoubleBucketing.Input, DoubleBucketing.Output] {
+  extends TypedMetaGraphOp[DoubleBucketing.Input, DoubleBucketing.Output] {
   import DoubleBucketing._
   override val isHeavy = true
   @transient override lazy val inputs = new DoubleBucketing.Input
@@ -90,10 +93,11 @@ case class DoubleBucketing(bucketWidth: Double, overlap: Boolean)
   }
   override def toJson = Json.obj("bucketWidth" -> bucketWidth, "overlap" -> overlap)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.meta.classTag
     implicit val runtimeContext = rc
@@ -123,7 +127,8 @@ object IntervalBucketing extends OpFromJson {
     val endAttr = vertexAttribute[Double](vs)
   }
   class Output(properties: EdgeBundleProperties)(
-      implicit instance: MetaGraphOperationInstance,
+      implicit
+      instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
     val segments = vertexSet
     val belongsTo = edgeBundle(inputs.vs.entity, segments, properties)
@@ -135,7 +140,7 @@ object IntervalBucketing extends OpFromJson {
     IntervalBucketing((j \ "bucketWidth").as[Double], (j \ "overlap").as[Boolean])
 }
 case class IntervalBucketing(bucketWidth: Double, overlap: Boolean)
-    extends TypedMetaGraphOp[IntervalBucketing.Input, IntervalBucketing.Output] {
+  extends TypedMetaGraphOp[IntervalBucketing.Input, IntervalBucketing.Output] {
   import IntervalBucketing._
   override val isHeavy = true
   @transient override lazy val inputs = new IntervalBucketing.Input
@@ -145,10 +150,11 @@ case class IntervalBucketing(bucketWidth: Double, overlap: Boolean)
   }
   override def toJson = Json.obj("bucketWidth" -> bucketWidth, "overlap" -> overlap)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val runtimeContext = rc
     val bucketStep = if (overlap) bucketWidth / 2 else bucketWidth

@@ -12,8 +12,9 @@ object AddRankingAttribute extends OpFromJson {
     val vertices = vertexSet
     val sortKey = vertexAttribute[T](vertices)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input[_]) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input[_]) extends MagicOutput(instance) {
     val ordinal = vertexAttribute[Long](inputs.vertices.entity)
   }
 
@@ -43,10 +44,11 @@ case class AddRankingAttribute[T: SerializableType](
     "type" -> implicitly[SerializableType[T]].toJson)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     import SerializableType.Implicits._
     implicit val ds = inputDatas
     val sortKey = inputs.sortKey.rdd

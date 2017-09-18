@@ -27,8 +27,9 @@ object RandomWalkSample extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, es) = graph
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val vertexFirstVisited = vertexAttribute[Double](inputs.vs.entity)
     val edgeFirstTraversed = edgeAttribute[Double](inputs.es.entity)
   }
@@ -40,11 +41,13 @@ object RandomWalkSample extends OpFromJson {
 }
 import RandomWalkSample._
 case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
-                            walkAbortionProbability: Double, seed: Int)
-    extends TypedMetaGraphOp[Input, Output] {
-  assert(walkAbortionProbability < 1.0,
+    walkAbortionProbability: Double, seed: Int)
+  extends TypedMetaGraphOp[Input, Output] {
+  assert(
+    walkAbortionProbability < 1.0,
     "The probability of aborting a walk at RandomWalkSample must be smaller than 1.0")
-  assert(walkAbortionProbability >= 0.01,
+  assert(
+    walkAbortionProbability >= 0.01,
     "The probability of aborting a walk at RandomWalkSample can not be lower than 0.01")
 
   override val isHeavy = true
@@ -65,10 +68,11 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
   private type RemainingSteps = Int
   private type WalkState = (ID, (StepIdx, RemainingSteps))
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val runtimeContext = rc
     val nodes = inputs.vs.rdd
@@ -117,7 +121,8 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
       val (nextState, edgesTraversed) = step(multiWalkState, rnd.nextInt())
       nextState.persist(StorageLevel.DISK_ONLY)
 
-      stepIdxWhenNodeFirstVisited = minByKey(stepIdxWhenNodeFirstVisited,
+      stepIdxWhenNodeFirstVisited = minByKey(
+        stepIdxWhenNodeFirstVisited,
         nextState.map { case (node, (idx, _)) => (node, idx) })
       stepIdxWhenEdgeFirstTraversed = minByKey(stepIdxWhenEdgeFirstTraversed, edgesTraversed)
 
@@ -182,8 +187,9 @@ case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
   private def randomNodes(nodes: VertexSetRDD, n: Int, seed: Long) =
     nodes.takeSample(withReplacement = false, n, seed).map(_._1)
 
-  private def minByKey(keyValue1: RDD[(ID, StepIdx)],
-                       keyValue2: RDD[(ID, StepIdx)]): RDD[(ID, StepIdx)] = {
+  private def minByKey(
+    keyValue1: RDD[(ID, StepIdx)],
+    keyValue2: RDD[(ID, StepIdx)]): RDD[(ID, StepIdx)] = {
     val x = keyValue2.reduceByKey(_ min _)
     keyValue1.leftOuterJoin(x).mapValues {
       case (oldIdx, newIdxOpt) => oldIdx min newIdxOpt.getOrElse(StepIdx.MaxValue)

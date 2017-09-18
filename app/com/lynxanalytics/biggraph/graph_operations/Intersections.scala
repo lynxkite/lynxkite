@@ -12,7 +12,8 @@ object VertexSetIntersection extends OpFromJson {
     }.toList
   }
   class Output(
-      implicit instance: MetaGraphOperationInstance,
+      implicit
+      instance: MetaGraphOperationInstance,
       input: Input) extends MagicOutput(instance) {
 
     val intersection = vertexSet
@@ -25,7 +26,7 @@ object VertexSetIntersection extends OpFromJson {
     (j \ "heavy").as[Boolean])
 }
 case class VertexSetIntersection(numVertexSets: Int, heavy: Boolean = false)
-    extends TypedMetaGraphOp[VertexSetIntersection.Input, VertexSetIntersection.Output] {
+  extends TypedMetaGraphOp[VertexSetIntersection.Input, VertexSetIntersection.Output] {
 
   import VertexSetIntersection._
 
@@ -37,10 +38,11 @@ case class VertexSetIntersection(numVertexSets: Int, heavy: Boolean = false)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("numVertexSets" -> numVertexSets, "heavy" -> heavy)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val intersection = inputs.vss.map(_.rdd)

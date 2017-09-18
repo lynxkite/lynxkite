@@ -28,10 +28,11 @@ case class FindMaxCliques(
     "minCliqueSize" -> minCliqueSize,
     "needsBothDirections" -> needsBothDirections)
 
-  def execute(inputDatas: DataSet,
-              o: Segmentation,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Segmentation,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val inputPartitioner = inputs.vs.rdd.partitioner.get
     val cug = CompactUndirectedGraph(rc, inputs.es.data, needsBothDirections)
@@ -62,10 +63,11 @@ case class FindMaxCliques(
    * are in neighbors back to markedCandidates starting at position end.
    * Extends markedCandidates if necessary. Returns the new end position.
    */
-  private def SmartIntersectNA(markedCandidates: mutable.ArrayBuffer[(ID, Boolean)],
-                               start: Int,
-                               end: Int,
-                               neighbours: Seq[ID]): Int = {
+  private def SmartIntersectNA(
+    markedCandidates: mutable.ArrayBuffer[(ID, Boolean)],
+    start: Int,
+    end: Int,
+    neighbours: Seq[ID]): Int = {
     var source = start
     var target = end
     val nit = neighbours.iterator.buffered
@@ -99,13 +101,14 @@ case class FindMaxCliques(
    * end. Basically the single ArrayBuffer is used as a stack to store the
    * state of the recursion.
    */
-  private def SmartBKNA(currentClique: List[ID],
-                        markedCandidates: mutable.ArrayBuffer[(ID, Boolean)],
-                        start: Int,
-                        end: Int,
-                        fullGraph: CompactUndirectedGraph,
-                        cliqueCollector: mutable.ArrayBuffer[List[ID]],
-                        minCliqueSize: Int) {
+  private def SmartBKNA(
+    currentClique: List[ID],
+    markedCandidates: mutable.ArrayBuffer[(ID, Boolean)],
+    start: Int,
+    end: Int,
+    fullGraph: CompactUndirectedGraph,
+    cliqueCollector: mutable.ArrayBuffer[List[ID]],
+    minCliqueSize: Int) {
     if (start == end) {
       if (currentClique.size >= minCliqueSize) cliqueCollector += currentClique
       return
@@ -136,11 +139,12 @@ case class FindMaxCliques(
     }
   }
 
-  private def computeCliques(g: VertexSetData,
-                             fullGraph: CompactUndirectedGraph,
-                             rc: RuntimeContext,
-                             minCliqueSize: Int,
-                             numTasks: Int): rdd.RDD[List[ID]] = {
+  private def computeCliques(
+    g: VertexSetData,
+    fullGraph: CompactUndirectedGraph,
+    rc: RuntimeContext,
+    minCliqueSize: Int,
+    numTasks: Int): rdd.RDD[List[ID]] = {
     g.rdd.keys.repartition(numTasks).flatMap(
       v => {
         val markedCandidates =
@@ -155,7 +159,6 @@ case class FindMaxCliques(
           collector,
           minCliqueSize)
         collector
-      }
-    )
+      })
   }
 }

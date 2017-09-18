@@ -69,18 +69,19 @@ object OperationParams {
   }
 
   case class Ratio(id: String, title: String, defaultValue: String = "")
-      extends OperationParameterMeta {
+    extends OperationParameterMeta {
     val kind = "default"
     val options = List()
     val multipleChoice = false
     def validate(value: String): Unit = {
-      assert((value matches """\d+(\.\d+)?""") && (value.toDouble <= 1.0),
+      assert(
+        (value matches """\d+(\.\d+)?""") && (value.toDouble <= 1.0),
         s"$title ($value) has to be a ratio, a number between 0.0 and 1.0")
     }
   }
 
   case class NonNegInt(id: String, title: String, default: Int)
-      extends OperationParameterMeta {
+    extends OperationParameterMeta {
     val kind = "default"
     val defaultValue = default.toString
     val options = List()
@@ -91,7 +92,7 @@ object OperationParams {
   }
 
   case class NonNegDouble(id: String, title: String, defaultValue: String = "")
-      extends OperationParameterMeta {
+    extends OperationParameterMeta {
     val kind = "default"
     val options = List()
     val multipleChoice = false
@@ -112,8 +113,7 @@ object OperationParams {
     override val payload = Some(
       json.Json.obj(
         "language" -> language,
-        "enableTableBrowser" -> enableTableBrowser
-      ))
+        "enableTableBrowser" -> enableTableBrowser))
     def validate(value: String): Unit = {}
   }
 
@@ -197,10 +197,10 @@ object OperationParams {
       val id: String,
       changeableTitle: => String,
       val changeableTitle2: String = "" // If title2 is not empty, title will appear among
-      // the other parameter titles and title2 will appear among the parameter
-      // input fields.
-      // If title2 is empty, title will fill the whole line.
-      ) extends OperationParameterMeta {
+  // the other parameter titles and title2 will appear among the parameter
+  // input fields.
+  // If title2 is empty, title will fill the whole line.
+  ) extends OperationParameterMeta {
     def title = changeableTitle
     val kind = "dummy"
     val options = List()
@@ -209,14 +209,12 @@ object OperationParams {
     def validate(value: String): Unit = {}
     override val payload = Some(
       json.Json.obj(
-        "title2" -> changeableTitle2
-      )
-    )
+        "title2" -> changeableTitle2))
   }
 }
 
 // A special parameter payload to describe applicable models on the UI.
 case class ModelsPayload(
-  models: List[model.FEModelMeta],
-  attrs: List[FEOption],
-  attrTypes: List[String])
+    models: List[model.FEModelMeta],
+    attrs: List[FEOption],
+    attrTypes: List[String])

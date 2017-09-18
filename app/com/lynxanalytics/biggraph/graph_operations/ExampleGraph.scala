@@ -35,10 +35,11 @@ case class ExampleGraph() extends TypedMetaGraphOp[NoInput, Output] {
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
 
-  def execute(inputDatas: DataSet,
-              o: ExampleGraph.Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: ExampleGraph.Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     executionCounter += 1
 
     val sc = rc.sparkContext
