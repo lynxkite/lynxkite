@@ -145,7 +145,13 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
         val radAttr = project.vertexAttributes(params("radial"))
         val angAttr = project.vertexAttributes(params("angular"))
         val op = graph_operations.HyperbolicEdgeProbability()
-        op(op.vs, project.vertexSet)(op.es, project.edgeBundle)(op.radial, radAttr.runtimeSafeCast[Double])(op.angular, angAttr.runtimeSafeCast[Double])(op.degree, degree)(op.clustering, clus).result
+        op(
+          op.vs, project.vertexSet)(
+            op.es, project.edgeBundle)(
+              op.radial, radAttr.runtimeSafeCast[Double])(
+                op.angular, angAttr.runtimeSafeCast[Double])(
+                  op.degree, degree)(
+                    op.clustering, clus).result
       }
       project.newEdgeAttribute("hyperbolic_edge_probability", result.edgeProbability,
         "hyperbolic edge probability")
@@ -295,7 +301,11 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
             op.es, direction.edgeBundle).result.clustering
         }
         val op = graph_operations.HyperMap(params("seed").toLong)
-        op(op.vs, project.vertexSet)(op.es, direction.edgeBundle)(op.degree, degree)(op.clustering, clus).result
+        op(
+          op.vs, project.vertexSet)(
+            op.es, direction.edgeBundle)(
+              op.degree, degree)(
+                op.clustering, clus).result
       }
       project.newVertexAttribute("radial", result.radial)
       project.newVertexAttribute("angular", result.angular)
