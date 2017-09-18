@@ -22,10 +22,11 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
     return comment ? md.render(comment) : undefined;
   }
 
-  function BoxWrapper(workspace, metadata, instance) {
+  function BoxWrapper(workspace, metadata, instance, opts) {
     this.workspace = workspace;
     this.metadata = metadata;
     this.instance = instance;
+    this.isDirty = opts.isDirty;
     this.summary = metadata.operationId;
     this.inputs = [];
     this.outputs = [];
@@ -33,7 +34,6 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
     this.width = 100;
     this.height = 100;
     this.comment = getComment(metadata, instance);
-    this.isMoved = false;
 
     var i;
     for (i = 0; i < metadata.inputs.length; ++i) {
@@ -57,7 +57,7 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
       var newY = event.logicalY + this.yOffset;
       if (newX !== this.instance.x || newY !== this.instance.y) {
         this.workspace._requestInvalidated = true;
-        this.isMoved = true;
+        this.isDirty = true;
         this.instance.x = newX;
         this.instance.y = newY;
       }
