@@ -110,12 +110,6 @@ commands += myStage
 // Save logs to a file. Do not run benchmarks by default. (Use "sbt bench:test" to run them.)
 testOptions in Test := Seq(Tests.Argument("-fWDF", "logs/sbttest.out", "-l", "Benchmark"))
 
-scalariformSettings
-
-ScalariformKeys.preferences := ScalariformKeys.preferences.value
-  .setPreference(scalariform.formatter.preferences.AlignParameters, true)
-  .setPreference(scalariform.formatter.preferences.DoubleIndentClassDeclaration, true)
-
 // Separate config for benchmarks.
 lazy val Benchmark = (config("bench") extend Test)
 
