@@ -81,10 +81,11 @@ case class ClusteringCoefficient() extends TypedMetaGraphOp[GraphInput, Output] 
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val nonLoopEdges = inputs.es.rdd.filter { case (_, e) => e.src != e.dst }
     val edgePartitioner = inputs.es.rdd.partitioner.get

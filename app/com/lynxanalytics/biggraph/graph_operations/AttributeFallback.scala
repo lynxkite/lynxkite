@@ -21,10 +21,11 @@ case class AttributeFallback[T]() extends TypedMetaGraphOp[Input[T], Output[T]] 
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output[T],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output[T],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     output(
       o.defaultedAttr,

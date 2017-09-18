@@ -10,8 +10,9 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
-case class CSVData(val header: Seq[String],
-                   val data: rdd.RDD[Seq[String]]) {
+case class CSVData(
+    val header: Seq[String],
+    val data: rdd.RDD[Seq[String]]) {
   override def toString: String =
     CSVData.lineToString(header) + data.map(CSVData.lineToString(_)).collect.mkString
 
@@ -49,15 +50,15 @@ object CSVExport {
     attributes: Seq[(String, Attribute[_])])(implicit dataManager: DataManager): CSVData = {
 
     for ((name, attr) <- attributes) {
-      assert(attr.vertexSet == edgeBundle.idSet,
+      assert(
+        attr.vertexSet == edgeBundle.idSet,
         s"Incorrect vertex set for attribute $name.")
     }
     val base = edgeBundle.rdd.mapValues(_ => Seq[String]())
     val (names, data) = attributes.toList.unzip
     CSVData(
       names.map(quoteString),
-      attachAttributeData(base, data).values
-    )
+      attachAttributeData(base, data).values)
   }
 
   private def addRDDs(base: UniqueSortedRDD[ID, Seq[String]], rdds: Seq[UniqueSortedRDD[ID, String]]) = {

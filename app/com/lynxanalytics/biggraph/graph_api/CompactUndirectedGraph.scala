@@ -32,16 +32,18 @@ object CompactUndirectedGraph {
       .unzip
   }
 
-  def apply(rc: RuntimeContext,
-            edges: EdgeBundleData,
-            needsBothDirections: Boolean): CompactUndirectedGraph = {
+  def apply(
+    rc: RuntimeContext,
+    edges: EdgeBundleData,
+    needsBothDirections: Boolean): CompactUndirectedGraph = {
     assert(edges.edgeBundle.isLocal, "Cannot create CUG from cross-graph edges.")
     apply(rc, edges.rdd, needsBothDirections)
   }
 
-  def apply(rc: RuntimeContext,
-            edgesRDD: EdgeBundleRDD,
-            needsBothDirections: Boolean): CompactUndirectedGraph = {
+  def apply(
+    rc: RuntimeContext,
+    edgesRDD: EdgeBundleRDD,
+    needsBothDirections: Boolean): CompactUndirectedGraph = {
     val path = rc.broadcastDirectory / scala.util.Random.alphanumeric.take(10).mkString.toLowerCase
     val outEdges = edgesRDD.map {
       case (id, edge) => (edge.src, edge.dst)

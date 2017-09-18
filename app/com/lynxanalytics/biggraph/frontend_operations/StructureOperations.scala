@@ -53,7 +53,8 @@ class StructureOperations(env: SparkFreeEnvironment) extends ProjectOperations(e
   register("Merge parallel edges by attribute")(new ProjectTransformation(_) {
     params += Choice("key", "Merge by", options = project.edgeAttrList)
     params ++= aggregateParams(project.edgeAttributes)
-    def enabled = FEStatus.assert(project.edgeAttrList.nonEmpty,
+    def enabled = FEStatus.assert(
+      project.edgeAttrList.nonEmpty,
       "There must be at least one edge attribute")
 
     def apply() = {

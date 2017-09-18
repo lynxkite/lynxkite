@@ -17,7 +17,8 @@ object AttributesToTable extends OpFromJson {
       attributes.map { case (name, tt) => va(name)(tt) }
   }
   class Output(schema: types.StructType)(
-      implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+      implicit
+      instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val t = table(schema)
   }
 
@@ -60,10 +61,11 @@ case class AttributesToTable(schema: types.StructType) extends TypedMetaGraphOp[
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(schema)(instance)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val columnRDDs: Map[String, AttributeRDD[_]] = inputs.attrs.map { attr =>
       attr.name.name -> attr.rdd
@@ -74,13 +76,13 @@ case class AttributesToTable(schema: types.StructType) extends TypedMetaGraphOp[
 }
 
 class RDDRelation(
-  val schema: types.StructType,
-  vertexSetRDD: VertexSetRDD,
-  columnRDDs: Map[String, AttributeRDD[_]],
-  val sqlContext: spark.sql.SQLContext)
-    extends spark.sql.sources.BaseRelation
-    with spark.sql.sources.TableScan
-    with spark.sql.sources.PrunedScan {
+    val schema: types.StructType,
+    vertexSetRDD: VertexSetRDD,
+    columnRDDs: Map[String, AttributeRDD[_]],
+    val sqlContext: spark.sql.SQLContext)
+  extends spark.sql.sources.BaseRelation
+  with spark.sql.sources.TableScan
+  with spark.sql.sources.PrunedScan {
   def toDF = sqlContext.baseRelationToDataFrame(this)
 
   // TableScan

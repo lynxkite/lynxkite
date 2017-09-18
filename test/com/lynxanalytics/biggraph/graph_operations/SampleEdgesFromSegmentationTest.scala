@@ -61,8 +61,7 @@ class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
       (4l, Edge(3, 101)),
       (5l, Edge(4, 101)),
       (6l, Edge(4, 101)),
-      (7l, Edge(4, 102))
-    )).sortUnique(p)
+      (7l, Edge(4, 102)))).sortUnique(p)
     val selectedEdges = sparkContext.parallelize(
       Seq((1l, 2l), (6l, 4l))).sort(p)
     val restrictedBelongsTo =
@@ -76,8 +75,7 @@ class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
       (2, 101),
       // edge no. 4 (3, 101) is filtered out because vertex 3 is not part of selectedEdges
       (4, 101),
-      (4, 102)
-    ))
+      (4, 102)))
   }
   test("getEdgeMultiplicities") {
     val p = new spark.HashPartitioner(2)
@@ -93,8 +91,7 @@ class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
       (7l, Edge(3, 101)),
       (8l, Edge(3, 101)),
       (9l, Edge(4, 101)),
-      (10l, Edge(4, 102))
-    )).sortUnique(p)
+      (10l, Edge(4, 102)))).sortUnique(p)
     val selectedEdges = sparkContext.parallelize(
       Seq((1l, 2l), (1l, 2l), (2l, 1l), (3l, 4l))).sort(p)
     val edgeCounts = sampler.getEdgeMultiplicities(
@@ -104,8 +101,7 @@ class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
     assert(edgeCounts == Map(
       (1, 2) -> 2,
       (2, 1) -> 2,
-      (3, 4) -> 1
-    ))
+      (3, 4) -> 1))
   }
 
   test("getEdgeMultiplicities - sum of edge multiplicities should be equal to the total distinct edge count") {
@@ -116,8 +112,7 @@ class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
       val op = EdgesFromSegmentation()
       op(
         op.belongsTo,
-        segmentationBelongsTo
-      ).result.es
+        segmentationBelongsTo).result.es
     }
     val partitioner = allPossibleEdges.rdd.partitioner.get
     val allPossibleEdgesCount = segmentationBelongsTo.rdd
@@ -131,8 +126,7 @@ class SampleEdgesFromSegmentationTest extends FunSuite with TestGraphOp {
     val edgesWithCounts = op.getEdgeMultiplicities(
       allPossibleEdges.rdd.values.map { e => e.src -> e.dst },
       op.getVsToSegDistinct(segmentationBelongsTo.rdd),
-      partitioner
-    )
+      partitioner)
     assert(allPossibleEdgesCount == edgesWithCounts.values.reduce { case (a, b) => a + b })
   }
 

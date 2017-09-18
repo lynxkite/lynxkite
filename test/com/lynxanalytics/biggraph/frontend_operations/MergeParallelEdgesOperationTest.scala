@@ -16,8 +16,7 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
         "key" -> "call",
         "aggregate_src" -> "",
         "aggregate_dst" -> "",
-        "aggregate_call" -> ""
-      ))
+        "aggregate_call" -> ""))
       .project
     val call = project.edgeAttributes("call").runtimeSafeCast[String]
     assert(call.rdd.values.collect.toSeq.sorted == Seq(
@@ -36,8 +35,7 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
     val project = load("merge-parallel-edges-double.csv")
       .box("Convert edge attribute to Double", Map("attr" -> "call"))
       .box("Merge parallel edges by attribute", Map(
-        "key" -> "call"
-      ))
+        "key" -> "call"))
       .project
     val call = project.edgeAttributes("call").runtimeSafeCast[Double]
     assert(call.rdd.values.collect.toSeq.sorted == Seq(
@@ -55,8 +53,7 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
   test("Merge parallel edges works") {
     val project = load("merge-parallel-edges.csv")
       .box("Merge parallel edges", Map(
-        "aggregate_call" -> "count"
-      ))
+        "aggregate_call" -> "count"))
       .project
     val call = project.edgeAttributes("call_count").runtimeSafeCast[Double]
     assert(call.rdd.values.collect.toSeq.sorted == Seq(3.0, 5.0))
@@ -71,8 +68,7 @@ class MergeParallelEdgesOperationTest extends OperationsTestBase {
       .box("Merge parallel edges", Map(
         "aggregate_src" -> "most_common",
         "aggregate_dst" -> "most_common",
-        "aggregate_call" -> "max"
-      ))
+        "aggregate_call" -> "max"))
       .project
     val call = project.edgeAttributes("call_max").runtimeSafeCast[Double]
     assert(call.rdd.values.collect.toSeq.sorted == Seq(6.0))

@@ -24,7 +24,8 @@ object ConnectedComponentsTest {
       val c1 = comp1(k)
       val c2 = comp2(k)
       if (mapping.contains(c1)) {
-        assert(mapping(c1) == c2,
+        assert(
+          mapping(c1) == c2,
           s"Unable to match components $c1 and $c2\ncomp1: ${comp1.toSeq.sorted}\ncomp2: ${comp2.toSeq.sorted}")
       } else {
         mapping(c1) = c2

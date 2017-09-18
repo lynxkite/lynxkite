@@ -35,8 +35,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val op = graph_operations.ExportTableToCSV(
         path, header,
         params("delimiter"), params("quote"),
-        params("version").toInt
-      )
+        params("version").toInt)
       op(op.t, table).result.exportResult
     }
   })
@@ -60,8 +59,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val op = graph_operations.ExportTableToJdbc(
         params("jdbc_url"),
         params("jdbc_table"),
-        mode
-      )
+        mode)
       op(op.t, table).result.exportResult
     }
   })
@@ -80,8 +78,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val path = generatePathIfNeeded(params("path"))
       def exportResult = {
         val op = graph_operations.ExportTableToStructuredFile(
-          path, format, params("version").toInt
-        )
+          path, format, params("version").toInt)
         op(op.t, table).result.exportResult
       }
     })

@@ -10,8 +10,9 @@ import scala.concurrent.ExecutionContextExecutorService
 
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
-class OperationLogger(instance: MetaGraphOperationInstance,
-                      implicit val ec: ExecutionContextExecutorService) {
+class OperationLogger(
+    instance: MetaGraphOperationInstance,
+    implicit val ec: ExecutionContextExecutorService) {
   private val marker = "OPERATION_LOGGER_MARKER"
   case class OutputInfo(name: String, gUID: String, partitions: Int, count: Option[Long])
   case class InputInfo(name: String, gUID: String, partitions: Int, count: Option[Long])
@@ -80,8 +81,7 @@ class OperationLogger(instance: MetaGraphOperationInstance,
         val instanceProperties = json.Json.obj(
           "kiteVersion" -> KiteInstanceInfo.kiteVersion,
           "sparkVersion" -> KiteInstanceInfo.sparkVersion,
-          "instanceName" -> KiteInstanceInfo.instanceName
-        )
+          "instanceName" -> KiteInstanceInfo.instanceName)
 
         val out = json.Json.obj(
           "instanceProperties" -> instanceProperties,
@@ -90,8 +90,7 @@ class OperationLogger(instance: MetaGraphOperationInstance,
           "guid" -> instance.operation.gUID.toString,
           "elapsedMs" -> elapsedMs(),
           "inputs" -> inputInfoList.synchronized { inputInfoList.sortBy(_.name) },
-          "outputs" -> outputs.sortBy(_.name)
-        )
+          "outputs" -> outputs.sortBy(_.name))
         log.info(s"$marker $out")
       } catch {
         case t: Throwable =>

@@ -95,9 +95,10 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         else new VertexAttributeEditor(editor)
       }
 
-      private def attributeEditorParameter(titlePrefix: String,
-                                           input: String,
-                                           title: String): OperationParams.SegmentationParam = {
+      private def attributeEditorParameter(
+        titlePrefix: String,
+        input: String,
+        title: String): OperationParams.SegmentationParam = {
         val param = titlePrefix + input
         val vertexAttributeEditors =
           context.inputs(input).project.segmentationsRecursively
@@ -152,8 +153,9 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       // Wrapper class to represent paths that lead to a common ancestor
       case class PathsToCommonAncestor(chain1: Seq[EdgeBundle], chain2: Seq[EdgeBundle])
 
-      def computeChains(a: VertexSet,
-                        b: VertexSet): Option[PathsToCommonAncestor] = {
+      def computeChains(
+        a: VertexSet,
+        b: VertexSet): Option[PathsToCommonAncestor] = {
         val aPaths = getReachableAncestors(a)
         val bPaths = getReachableAncestors(b)
         val possibleCommonAncestors = aPaths.keys.toSet & bPaths.keys.toSet
@@ -203,11 +205,12 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         && FEStatus(hasSourceIdSet, "No source input")
         && FEStatus(compatible, "Inputs are not compatible"))
 
-      private def copyAttributesViaCommonAncestor(target: AttributeEditor,
-                                                  source: AttributeEditor,
-                                                  fromSourceToAncestor: Seq[EdgeBundle],
-                                                  fromAncestorToTarget: Seq[EdgeBundle],
-                                                  attributeNames: Seq[String]): Unit = {
+      private def copyAttributesViaCommonAncestor(
+        target: AttributeEditor,
+        source: AttributeEditor,
+        fromSourceToAncestor: Seq[EdgeBundle],
+        fromAncestorToTarget: Seq[EdgeBundle],
+        attributeNames: Seq[String]): Unit = {
         for (attrName <- attributeNames) {
           val attr = source.attributes(attrName)
           val note = source.getElementNote(attrName)
@@ -286,14 +289,12 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
             sourceEdgeEditor,
             edgeChain.get.chain1,
             edgeChain.get.chain2.reverse,
-            sourceEdgeEditor.names
-          )
+            sourceEdgeEditor.names)
         }
 
         project.state = target.projectEditor.rootEditor.state
       }
-    }
-  )
+    })
 
   register("Project union", List("a", "b"), List(projectOutput))(new ProjectOutputOperation(_) {
     override lazy val project = projectInput("a")
@@ -308,7 +309,8 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       for (name <- commonAttributeNames) {
         val a1 = project.vertexAttributes(name)
         val a2 = other.vertexAttributes(name)
-        assert(a1.typeTag.tpe =:= a2.typeTag.tpe,
+        assert(
+          a1.typeTag.tpe =:= a2.typeTag.tpe,
           s"Attribute '$name' has conflicting types in the two projects: " +
             s"(${a1.typeTag.tpe} and ${a2.typeTag.tpe})")
       }
@@ -362,7 +364,8 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
               op.ebs, Seq(ebInduced.get.induced.entity, otherEbInduced.get.induced.entity))(
                 op.injections, idUnion.injections.map(_.entity)).result.union
           }
-          (ebUnion,
+          (
+            ebUnion,
             idUnion.injections(0).reverse.concat(ebInduced.get.embedding),
             idUnion.injections(1).reverse.concat(otherEbInduced.get.embedding))
         } else {

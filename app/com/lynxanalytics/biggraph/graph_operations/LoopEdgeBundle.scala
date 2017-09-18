@@ -7,8 +7,9 @@ object LoopEdgeBundle extends OpFromJson {
   class Input extends MagicInputSignature {
     val vs = vertexSet
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val eb = edgeBundle(
       inputs.vs.entity,
       inputs.vs.entity,
@@ -24,10 +25,11 @@ case class LoopEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val iLoveScalaImplicits = inputDatas
 
     val vertexIdPlusUnit = inputs.vs.rdd

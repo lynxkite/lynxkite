@@ -11,16 +11,16 @@ import com.lynxanalytics.biggraph.serving
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 case class WorkspaceReference(
-  top: String, // The name of the top-level workspace.
-  customBoxStack: List[String] = List()) // The ID of the custom boxes we have "dived" into.
+    top: String, // The name of the top-level workspace.
+    customBoxStack: List[String] = List()) // The ID of the custom boxes we have "dived" into.
 case class BoxOutputInfo(boxOutput: BoxOutput, stateId: String, success: FEStatus, kind: String)
 case class GetWorkspaceResponse(
-  name: String,
-  workspace: Workspace,
-  outputs: List[BoxOutputInfo],
-  summaries: Map[String, String],
-  canUndo: Boolean,
-  canRedo: Boolean)
+    name: String,
+    workspace: Workspace,
+    outputs: List[BoxOutputInfo],
+    summaries: Map[String, String],
+    canUndo: Boolean,
+    canRedo: Boolean)
 case class SetWorkspaceRequest(reference: WorkspaceReference, workspace: Workspace)
 case class GetOperationMetaRequest(workspace: WorkspaceReference, box: String)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
@@ -44,20 +44,20 @@ case class RunWorkspaceResponse(outputs: List[BoxOutputInfo], summaries: Map[Str
 // An instrument is like a box. But we do not want to place it and save it in the workspace.
 // It always has 1 input and 1 output, so the connections do not need to be expressed either.
 case class Instrument(
-  operationId: String,
-  parameters: Map[String, String],
-  parametricParameters: Map[String, String])
+    operationId: String,
+    parameters: Map[String, String],
+    parametricParameters: Map[String, String])
 case class InstrumentState(
-  stateId: String,
-  kind: String,
-  error: String)
+    stateId: String,
+    kind: String,
+    error: String)
 case class GetInstrumentedStateRequest(
-  workspace: WorkspaceReference,
-  inputStateId: String, // State at the start of the instrument chain.
-  instruments: List[Instrument]) // Instrument chain. (N instruments.)
+    workspace: WorkspaceReference,
+    inputStateId: String, // State at the start of the instrument chain.
+    instruments: List[Instrument]) // Instrument chain. (N instruments.)
 case class GetInstrumentedStateResponse(
-  metas: List[FEOperationMeta], // Metadata for each instrument. (N metadatas.)
-  states: List[InstrumentState]) // Initial state + the output of each instrument. (N+1 states.)
+    metas: List[FEOperationMeta], // Metadata for each instrument. (N metadatas.)
+    states: List[InstrumentState]) // Initial state + the output of each instrument. (N+1 states.)
 
 class WorkspaceController(env: SparkFreeEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -142,9 +142,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
           case t: Throwable =>
             log.error(s"Error while generating summary for $box in $request.", t)
             box.operationId
-        }
-      )
-    ).toMap
+        })).toMap
     RunWorkspaceResponse(stateInfo, summaries)
   }
 
@@ -227,9 +225,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         computed = progressList.count(_ == 1.0),
         inProgress = progressList.count(x => x < 1.0 && x > 0.0),
         notYetStarted = progressList.count(_ == 0.0),
-        failed = progressList.count(_ < 0.0)
-      ))
-    ).view.force
+        failed = progressList.count(_ < 0.0)))).view.force
     GetProgressResponse(progress)
   }
 

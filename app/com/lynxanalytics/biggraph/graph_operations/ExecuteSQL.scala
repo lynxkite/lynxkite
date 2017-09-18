@@ -19,8 +19,9 @@ case class UnresolvedColumnException(message: String, trace: Throwable)
   extends Exception(message, trace)
 
 object ExecuteSQL extends OpFromJson {
-  def getLogicalPlan(sqlQuery: String,
-                     protoTables: Map[String, ProtoTable]): LogicalPlan = {
+  def getLogicalPlan(
+    sqlQuery: String,
+    protoTables: Map[String, ProtoTable]): LogicalPlan = {
     import spark.sql.catalyst.analysis._
     import spark.sql.catalyst.catalog._
     import spark.sql.catalyst.expressions._
@@ -46,7 +47,8 @@ object ExecuteSQL extends OpFromJson {
     val tables = inputTables.map(name => table(Symbol(name)))
   }
   class Output(schema: types.StructType)(
-      implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+      implicit
+      instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val t = table(schema)
   }
 
@@ -55,12 +57,11 @@ object ExecuteSQL extends OpFromJson {
       (j \ "sqlQuery").as[String],
       (j \ "inputTables").as[Set[String]],
       types.DataType.fromJson((j \ "outputSchema").as[String])
-        .asInstanceOf[types.StructType]
-    )
+        .asInstanceOf[types.StructType])
   }
 
   private def run(sqlQuery: String, outputSchema: StructType,
-                  tables: Map[String, Table])(implicit m: MetaGraphManager): Table = {
+    tables: Map[String, Table])(implicit m: MetaGraphManager): Table = {
     import Scripting._
     val op = ExecuteSQL(sqlQuery, tables.keySet, outputSchema)
     op.tables.foldLeft(InstanceBuilder(op)) {
@@ -68,8 +69,9 @@ object ExecuteSQL extends OpFromJson {
     }.result.t
   }
 
-  def run(sqlQuery: String,
-          protoTables: Map[String, ProtoTable])(implicit m: MetaGraphManager): Table = {
+  def run(
+    sqlQuery: String,
+    protoTables: Map[String, ProtoTable])(implicit m: MetaGraphManager): Table = {
     val plan = getLogicalPlan(sqlQuery, protoTables)
     val minimizedProtoTables = ProtoTable.minimize(plan, protoTables)
     val tables = minimizedProtoTables.mapValues(protoTable => protoTable.toTable)
@@ -91,10 +93,11 @@ case class ExecuteSQL(
     "inputTables" -> inputTables,
     "outputSchema" -> outputSchema.prettyJson)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sqlContext = rc.dataManager.masterSQLContext // TODO: Use a newSQLContext() instead.
     val dfs = inputs.tables.map { t => t.name.name -> t.df }
@@ -109,9 +112,9 @@ case class ExecuteSQL(
 // select a from b where c=d, the projection pushdown would make sure that we only request
 // a, b, c, and d from our data source (ProtoTables in our case).
 class SchemaInferencingOptimizer(
-  catalog: SessionCatalog,
-  conf: SQLConf)
-    extends Optimizer(catalog, conf) {
+    catalog: SessionCatalog,
+    conf: SQLConf)
+  extends Optimizer(catalog, conf) {
   val weDontWant = Set("Finish Analysis", "LocalRelation")
   override def batches: Seq[Batch] = super.batches
     .filter(b => !weDontWant.contains(b.name))

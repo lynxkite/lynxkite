@@ -63,10 +63,10 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
       TestUtils.withRestoreGlobals(
         tolerance = 1.0,
         verticesPerPartition = numVerticesInExampleGraph / p) {
-          dataManager.get(vertices)
-          dataManager.get(weight) // This line invokes both EdgeBundle and Attribute[double] loads
-          dataManager.waitAllFutures()
-        }
+        dataManager.get(vertices)
+        dataManager.get(weight) // This line invokes both EdgeBundle and Attribute[double] loads
+        dataManager.waitAllFutures()
+      }
     }
   }
 
@@ -90,14 +90,15 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     }
   }
 
-  case class EntityScenario(partitionedConfig: Map[Int, EntityDirStatus.Value],
-                            legacyConfig: EntityDirStatus.Value = EntityDirStatus.NONEXISTENT,
-                            metaExists: Boolean = true,
-                            partitionedExists: Boolean = true,
-                            opExists: Boolean = true,
-                            numPartitions: Int = 1,
-                            parentPartitionDir: Int = 1,
-                            tolerance: Double = 2.0) {
+  case class EntityScenario(
+      partitionedConfig: Map[Int, EntityDirStatus.Value],
+      legacyConfig: EntityDirStatus.Value = EntityDirStatus.NONEXISTENT,
+      metaExists: Boolean = true,
+      partitionedExists: Boolean = true,
+      opExists: Boolean = true,
+      numPartitions: Int = 1,
+      parentPartitionDir: Int = 1,
+      tolerance: Double = 2.0) {
     // Create at least one partition so that we would have an operation.
     val partitionsToCreate = partitionedConfig.keySet + 1
     val mpfs = new MultiPartitionedFileStructure(partitionsToCreate.toSeq)
@@ -150,11 +151,11 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     TestUtils.withRestoreGlobals(
       tolerance = tolerance,
       verticesPerPartition = numVerticesInExampleGraph / numPartitions) {
-        val dataManager = new DataManager(sparkSession, repo)
-        val data = dataManager.get(mpfs.vertices)
-        assert(data.rdd.collect.toSeq.sorted == (0 until numVerticesInExampleGraph).map(_ -> (())))
-        dataManager.waitAllFutures()
-      }
+      val dataManager = new DataManager(sparkSession, repo)
+      val data = dataManager.get(mpfs.vertices)
+      assert(data.rdd.collect.toSeq.sorted == (0 until numVerticesInExampleGraph).map(_ -> (())))
+      dataManager.waitAllFutures()
+    }
     val executionCounter = mpfs.operation.executionCounter
   }
 
@@ -165,48 +166,54 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
   }
 
   test("We can migrate old data without recalculation") {
-    val es = EntityScenario(Map(),
+    val es = EntityScenario(
+      Map(),
       legacyConfig = EntityDirStatus.VALID)
     assert(es.executionCounter == 0)
   }
 
   test("We don't migrate old data if operation was not finished") {
-    val es = EntityScenario(Map(),
+    val es = EntityScenario(
+      Map(),
       legacyConfig = EntityDirStatus.VALID,
       opExists = false)
     assert(es.executionCounter == 1)
   }
 
   test("We don't migrate incomplete old data; we recalculate instead") {
-    val es = EntityScenario(Map(),
+    val es = EntityScenario(
+      Map(),
       legacyConfig = EntityDirStatus.NOSUCCESS)
     assert(es.executionCounter == 1)
   }
 
   test("We read from the partitioned directory even if there's available data in legacy") {
-    val es = EntityScenario(Map(
-      1 -> EntityDirStatus.VALID,
-      2 -> EntityDirStatus.CORRUPT,
-      4 -> EntityDirStatus.CORRUPT),
+    val es = EntityScenario(
+      Map(
+        1 -> EntityDirStatus.VALID,
+        2 -> EntityDirStatus.CORRUPT,
+        4 -> EntityDirStatus.CORRUPT),
       legacyConfig = EntityDirStatus.CORRUPT)
     assert(es.executionCounter == 0)
   }
 
   test("We read from the partitioned directory even if there's available data in legacy - from partition 2") {
-    val es = EntityScenario(Map(
-      1 -> EntityDirStatus.CORRUPT,
-      2 -> EntityDirStatus.VALID,
-      4 -> EntityDirStatus.CORRUPT),
+    val es = EntityScenario(
+      Map(
+        1 -> EntityDirStatus.CORRUPT,
+        2 -> EntityDirStatus.VALID,
+        4 -> EntityDirStatus.CORRUPT),
       legacyConfig = EntityDirStatus.CORRUPT,
       numPartitions = 2)
     assert(es.executionCounter == 0)
   }
 
   test("After recalculation, stale files are deleted") {
-    val es = EntityScenario(Map(
-      1 -> EntityDirStatus.VALID,
-      2 -> EntityDirStatus.VALID,
-      4 -> EntityDirStatus.VALID),
+    val es = EntityScenario(
+      Map(
+        1 -> EntityDirStatus.VALID,
+        2 -> EntityDirStatus.VALID,
+        4 -> EntityDirStatus.VALID),
       legacyConfig = EntityDirStatus.VALID,
       opExists = false)
     assert(es.executionCounter == 1)
@@ -217,32 +224,36 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
   }
 
   test("Missing metafile triggers recalculation") {
-    val es = EntityScenario(Map(
-      1 -> EntityDirStatus.VALID),
+    val es = EntityScenario(
+      Map(
+        1 -> EntityDirStatus.VALID),
       metaExists = false)
     assert(es.executionCounter == 1)
   }
 
   test("Re-partitioning uses the right source partition (for 2)") {
-    val es = EntityScenario(Map(
-      1 -> EntityDirStatus.VALID,
-      8 -> EntityDirStatus.CORRUPT),
+    val es = EntityScenario(
+      Map(
+        1 -> EntityDirStatus.VALID,
+        8 -> EntityDirStatus.CORRUPT),
       numPartitions = 2)
     assert(es.executionCounter == 0)
   }
 
   test("Re-partitioning uses the right source partition (for 4)") {
-    val es = EntityScenario(Map(
-      1 -> EntityDirStatus.CORRUPT,
-      8 -> EntityDirStatus.VALID),
+    val es = EntityScenario(
+      Map(
+        1 -> EntityDirStatus.CORRUPT,
+        8 -> EntityDirStatus.VALID),
       numPartitions = 4)
     assert(es.executionCounter == 0)
   }
 
   test("Re-partitioning doesn't happen if there's a candidate within the given tolerance") {
-    val es = EntityScenario(Map(
-      1 -> EntityDirStatus.VALID,
-      8 -> EntityDirStatus.VALID),
+    val es = EntityScenario(
+      Map(
+        1 -> EntityDirStatus.VALID,
+        8 -> EntityDirStatus.VALID),
       numPartitions = 2,
       tolerance = 3.0)
     assert(es.executionCounter == 0)

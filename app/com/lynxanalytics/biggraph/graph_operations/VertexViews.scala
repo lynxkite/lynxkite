@@ -30,7 +30,8 @@ class BucketedAttribute[T] private (
   def toHistogram(
     filtered: VertexSet,
     sampleSize: Int)(
-      implicit manager: MetaGraphManager): graph_operations.AttributeHistogram.Output = {
+    implicit
+    manager: MetaGraphManager): graph_operations.AttributeHistogram.Output = {
     val originalCount = graph_operations.Count.run(attribute.vertexSet)
     val op = graph_operations.AttributeHistogram[T](bucketer, sampleSize)
     op(op.attr, attribute)(op.filtered, filtered)(op.originalCount, originalCount).result
@@ -94,25 +95,26 @@ private class FilteredAttributeSerialized(json: String) extends Serializable {
  *  - the process used to assign a bucket index to a vertex
  */
 case class VertexView(
-  vertexSet: VertexSet,
-  // The indexing of a vertex view happens as a "product" of per attribute bucketers. This means
-  // that the final index of a vertex v is:
-  // indexingSeq(n-1).whichBucket(v) + indexingSeq(n-1).numBuckets * (
-  //   indexingSeq(n-2).whichBucket(v) + indexingSeq(n-2).numBuckets * (
-  //     ...
-  //               indexingSeq(0).whichBucket(v)
-  //     ...
-  //   )
-  // )
-  indexingSeq: Seq[BucketedAttribute[_]],
-  // In case the set of vertices used to create this view is small, then this is set to a local map
-  // telling the bucket index of each vertex used. Otherwise this is None.
-  vertexIndices: Option[Map[ID, Int]],
-  // Filtering in a vertex view has to be a conjunction of per attribute filters.
-  filters: Seq[FilteredAttribute[_]]) extends Serializable
+    vertexSet: VertexSet,
+    // The indexing of a vertex view happens as a "product" of per attribute bucketers. This means
+    // that the final index of a vertex v is:
+    // indexingSeq(n-1).whichBucket(v) + indexingSeq(n-1).numBuckets * (
+    //   indexingSeq(n-2).whichBucket(v) + indexingSeq(n-2).numBuckets * (
+    //     ...
+    //               indexingSeq(0).whichBucket(v)
+    //     ...
+    //   )
+    // )
+    indexingSeq: Seq[BucketedAttribute[_]],
+    // In case the set of vertices used to create this view is small, then this is set to a local map
+    // telling the bucket index of each vertex used. Otherwise this is None.
+    vertexIndices: Option[Map[ID, Int]],
+    // Filtering in a vertex view has to be a conjunction of per attribute filters.
+    filters: Seq[FilteredAttribute[_]]) extends Serializable
 object VertexView {
   def fromDiagram(diagram: Scalar[_])(
-    implicit metaManager: MetaGraphManager, dataManager: DataManager): VertexView = {
+    implicit
+    metaManager: MetaGraphManager, dataManager: DataManager): VertexView = {
 
     val indexerInstance = diagram.source
     assert(

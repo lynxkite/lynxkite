@@ -42,8 +42,8 @@ object FEStatus {
 
 // Something with a display name and an internal ID.
 case class FEOption(
-  id: String,
-  title: String)
+    id: String,
+    title: String)
 object FEOption {
   def regular(optionTitleAndId: String): FEOption = FEOption(optionTitleAndId, optionTitleAndId)
   def special(specialId: String): FEOption = specialOpt(specialId).get
@@ -70,28 +70,28 @@ object FEOption {
 }
 
 case class FEAttribute(
-  id: String,
-  title: String,
-  typeName: String,
-  note: String,
-  metadata: Map[String, String],
-  canBucket: Boolean,
-  canFilter: Boolean,
-  isNumeric: Boolean,
-  isInternal: Boolean,
-  computeProgress: Double)
+    id: String,
+    title: String,
+    typeName: String,
+    note: String,
+    metadata: Map[String, String],
+    canBucket: Boolean,
+    canFilter: Boolean,
+    isNumeric: Boolean,
+    isInternal: Boolean,
+    computeProgress: Double)
 
 case class FEScalar(
-  id: String,
-  title: String,
-  typeName: String,
-  note: String,
-  metadata: Map[String, String],
-  isNumeric: Boolean,
-  isInternal: Boolean,
-  computeProgress: Double,
-  errorMessage: Option[String],
-  computedValue: Option[graph_operations.DynamicValue])
+    id: String,
+    title: String,
+    typeName: String,
+    note: String,
+    metadata: Map[String, String],
+    isNumeric: Boolean,
+    isInternal: Boolean,
+    computeProgress: Double,
+    errorMessage: Option[String],
+    computedValue: Option[graph_operations.DynamicValue])
 
 case class FEEntryListElement(
     name: String,
@@ -109,38 +109,38 @@ case class FEEntryListElement(
 }
 
 case class FEProject(
-  name: String,
-  undoOp: String = "", // Name of last operation. Empty if there is nothing to undo.
-  redoOp: String = "", // Name of next operation. Empty if there is nothing to redo.
-  readACL: String = "",
-  writeACL: String = "",
-  vertexSet: String = "",
-  edgeBundle: String = "",
-  notes: String = "",
-  scalars: List[FEScalar] = List(),
-  vertexAttributes: List[FEAttribute] = List(),
-  edgeAttributes: List[FEAttribute] = List(),
-  segmentations: List[FESegmentation] = List())
+    name: String,
+    undoOp: String = "", // Name of last operation. Empty if there is nothing to undo.
+    redoOp: String = "", // Name of next operation. Empty if there is nothing to redo.
+    readACL: String = "",
+    writeACL: String = "",
+    vertexSet: String = "",
+    edgeBundle: String = "",
+    notes: String = "",
+    scalars: List[FEScalar] = List(),
+    vertexAttributes: List[FEAttribute] = List(),
+    edgeAttributes: List[FEAttribute] = List(),
+    segmentations: List[FESegmentation] = List())
 
 case class FESegmentation(
-  name: String,
-  fullName: String,
-  // The connecting edge bundle's GUID.
-  belongsTo: String,
-  // A Vector[ID] vertex attribute, that contains for each vertex
-  // the vector of ids of segments the vertex belongs to.
-  equivalentAttribute: FEAttribute)
+    name: String,
+    fullName: String,
+    // The connecting edge bundle's GUID.
+    belongsTo: String,
+    // A Vector[ID] vertex attribute, that contains for each vertex
+    // the vector of ids of segments the vertex belongs to.
+    equivalentAttribute: FEAttribute)
 case class EntryListRequest(path: String)
 case class EntrySearchRequest(
-  basePath: String, // We only search for entries contained (recursively) in this.
-  query: String,
-  includeNotes: Boolean)
+    basePath: String, // We only search for entries contained (recursively) in this.
+    query: String,
+    includeNotes: Boolean)
 case class EntryList(
-  path: String,
-  readACL: String,
-  writeACL: String,
-  directories: List[String],
-  objects: List[FEEntryListElement])
+    path: String,
+    readACL: String,
+    writeACL: String,
+    directories: List[String],
+    objects: List[FEEntryListElement])
 case class CreateDirectoryRequest(name: String, privacy: String)
 case class DiscardEntryRequest(name: String)
 
@@ -156,9 +156,9 @@ case class SubProjectOperation(path: Seq[String], op: FEOperationSpec)
 
 case class ProjectAttributeFilter(attributeName: String, valueSpec: String)
 case class ProjectFilterRequest(
-  project: String,
-  vertexFilters: List[ProjectAttributeFilter],
-  edgeFilters: List[ProjectAttributeFilter])
+    project: String,
+    vertexFilters: List[ProjectAttributeFilter],
+    edgeFilters: List[ProjectAttributeFilter])
 case class ForkEntryRequest(from: String, to: String)
 case class RenameEntryRequest(from: String, to: String, overwrite: Boolean)
 case class ACLSettingsRequest(project: String, readACL: String, writeACL: String)
@@ -303,7 +303,8 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val p = DirectoryEntry.fromName(request.project)
     p.assertWriteAllowedFrom(user)
     // To avoid accidents, a user cannot remove themselves from the write ACL.
-    assert(user.isAdmin || p.aclContains(request.writeACL, user),
+    assert(
+      user.isAdmin || p.aclContains(request.writeACL, user),
       s"You cannot forfeit your write access to project $p.")
     // Checking that we only give access to users with read access to all parent directories
     val gotReadAccess = request.readACL.replace(" ", "").split(",").toSet
@@ -313,7 +314,8 @@ class BigGraphController(val env: SparkFreeEnvironment) {
       if (p.parent.isEmpty) Set()
       else union.map(email => serving.User(email, false)).filter(!p.parent.get.readAllowedFrom(_))
 
-    assert(notAllowed.isEmpty,
+    assert(
+      notAllowed.isEmpty,
       s"The following users don't have read access to all of the parent folders: ${notAllowed.mkString(", ")}")
 
     p.readACL = request.readACL

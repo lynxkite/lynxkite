@@ -27,18 +27,18 @@ object RemoteAPIProtocol {
 
   case class TableResult(rows: List[Map[String, json.JsValue]])
   case class DirectoryEntryRequest(
-    path: String)
+      path: String)
   case class DirectoryEntryResult(
-    exists: Boolean,
-    isDirectory: Boolean,
-    isWorkspace: Boolean,
-    isSnapshot: Boolean,
-    isReadAllowed: Boolean,
-    isWriteAllowed: Boolean)
+      exists: Boolean,
+      isDirectory: Boolean,
+      isWorkspace: Boolean,
+      isSnapshot: Boolean,
+      isReadAllowed: Boolean,
+      isWriteAllowed: Boolean)
   case class PrefixedPathRequest(
-    path: String)
+      path: String)
   case class PrefixedPathResult(
-    exists: Boolean, resolved: String)
+      exists: Boolean, resolved: String)
   case class ListElement(name: String, checkpoint: String, objectType: String)
   case class ListResult(entries: List[ListElement])
 
@@ -111,8 +111,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
       isWorkspace = entry.isWorkspace,
       isSnapshot = entry.isSnapshot,
       isReadAllowed = entry.readAllowedFrom(user),
-      isWriteAllowed = entry.writeAllowedFrom(user)
-    )
+      isWriteAllowed = entry.writeAllowedFrom(user))
   }
 
   def getPrefixedPath(user: User, request: PrefixedPathRequest): PrefixedPathResult = {
@@ -168,8 +167,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
       footers.asScala.flatMap { f =>
         val blocks = f.getParquetMetadata().getBlocks().asScala
         blocks.map(_.getRowCount())
-      }.sum
-    )
+      }.sum)
   }
 
   def changeACL(user: User, request: ACLSettingsRequest) = {
@@ -184,8 +182,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
           ListElement(
             e.name,
             controllers.DirectoryEntry.fromName(e.name).asObjectFrame.checkpoint,
-            e.objectType))
-    )
+            e.objectType)))
   }
 
   def cleanFileSystem(user: User, request: Empty) = {

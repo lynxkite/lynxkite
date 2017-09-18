@@ -11,8 +11,9 @@ object EmptyEdgeBundle extends OpFromJson {
     val src = vertexSet
     val dst = vertexSet
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val eb = edgeBundle(inputs.src.entity, inputs.dst.entity)
   }
   def fromJson(j: JsValue) = EmptyEdgeBundle()
@@ -23,10 +24,11 @@ case class EmptyEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     output(o.eb, rc.sparkContext.emptyRDD[(ID, Edge)].sortUnique(new HashPartitioner(1)))
   }
 }

@@ -13,11 +13,12 @@ import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
-case class HyperVertex(id: Long,
-                       ord: Long,
-                       radial: Double,
-                       angular: Double,
-                       expectedDegree: Double)
+case class HyperVertex(
+    id: Long,
+    ord: Long,
+    radial: Double,
+    angular: Double,
+    expectedDegree: Double)
 
 class LinkedHyperVertex(val vertex: HyperVertex) {
   var previous: LinkedHyperVertex = this
@@ -30,7 +31,8 @@ object PSOGenerator extends OpFromJson {
     val vs = vertexSet
   }
   class Output(
-      implicit instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
+      implicit
+      instance: MetaGraphOperationInstance, inputs: Input) extends MagicOutput(instance) {
     val es = edgeBundle(inputs.vs.entity, inputs.vs.entity)
     val radial = vertexAttribute[Double](inputs.vs.entity)
     val angular = vertexAttribute[Double](inputs.vs.entity)
@@ -43,7 +45,7 @@ object PSOGenerator extends OpFromJson {
 }
 import PSOGenerator._
 case class PSOGenerator(externalDegree: Double, internalDegree: Double,
-                        exponent: Double, seed: Long) extends TypedMetaGraphOp[Input, Output] {
+    exponent: Double, seed: Long) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 
@@ -54,10 +56,11 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
     "exponent" -> exponent,
     "seed" -> seed)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val partitioner = inputs.vs.rdd.partitioner.get
     val size = inputs.vs.data.count.getOrElse(inputs.vs.rdd.count)
@@ -77,7 +80,8 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
               ord = ordinal,
               radial = 2 * math.log(ordinal),
               angular = rnd.nextDouble * math.Pi * 2,
-              expectedDegree = HyperDistance.totalExpectedEPSO(exponent,
+              expectedDegree = HyperDistance.totalExpectedEPSO(
+                exponent,
                 externalDegree, internalDegree, size, ordinal))
         }
     }
@@ -105,7 +109,8 @@ case class PSOGenerator(externalDegree: Double, internalDegree: Double,
     }
     val possibilityList: List[List[HyperVertex]] = linkedList.map {
       lhv =>
-        HyperDistance.linkedListSampler((logSize * lhv.vertex.expectedDegree).toInt,
+        HyperDistance.linkedListSampler(
+          (logSize * lhv.vertex.expectedDegree).toInt,
           lhv, lhv.previous, lhv.next, lhv.radialPrevious, Nil)
     }
     // Selects the expectedDegree smallest distance edges from possibility bundles.
@@ -136,10 +141,11 @@ object HyperDistance {
     math.Pi - math.abs(math.Pi - math.abs(ang1 - ang2))
   }
   // Expected number of internal connections at given time in the E-PSO model.
-  def internalConnectionsEPSO(exponent: Double,
-                              internalLinks: Double,
-                              maxNodes: Long,
-                              ord: Long): Double = {
+  def internalConnectionsEPSO(
+    exponent: Double,
+    internalLinks: Double,
+    maxNodes: Long,
+    ord: Long): Double = {
     val firstPart: Double = ((2 * internalLinks * (1 - exponent)) /
       (math.pow(1 - math.pow(maxNodes.toDouble, -(1 - exponent)), 2) * (2 * exponent - 1)))
     val secondPart: Double = math.pow((maxNodes / ord.toDouble), 2 * exponent - 1) - 1
@@ -147,11 +153,12 @@ object HyperDistance {
     firstPart * secondPart * thirdPart
   }
   // Expected number of connections at given time in the E-PSO model.
-  def totalExpectedEPSO(exponent: Double,
-                        externalLinks: Double,
-                        internalLinks: Double,
-                        maxNodes: Long,
-                        ord: Long): Double = {
+  def totalExpectedEPSO(
+    exponent: Double,
+    externalLinks: Double,
+    internalLinks: Double,
+    maxNodes: Long,
+    ord: Long): Double = {
     externalLinks + internalConnectionsEPSO(exponent, internalLinks, maxNodes, ord)
   }
   // Equation for parameter denoted I_i in the HyperMap paper.
@@ -159,32 +166,35 @@ object HyperDistance {
     (1 / (1 - exponent)) * (1 - math.pow(ord, -(1 - exponent)))
   }
   // Expected number of connections for a vertex, used in calculating angular.
-  def expectedConnections(vertex: HyperVertex,
-                          exponent: Double,
-                          temperature: Double,
-                          externalLinks: Double): Double = {
+  def expectedConnections(
+    vertex: HyperVertex,
+    exponent: Double,
+    temperature: Double,
+    externalLinks: Double): Double = {
     val firstPart: Double = (2 * temperature) / math.sin(temperature * math.Pi)
     val secondPart: Double = inverseExponent(vertex.ord, exponent) / externalLinks
     val logged: Double = math.log(firstPart * secondPart)
     vertex.radial - (2 * logged)
   }
   // Connection probability.
-  def probability(first: HyperVertex,
-                  second: HyperVertex,
-                  exponent: Double,
-                  temperature: Double,
-                  externalLinks: Double): Double = {
+  def probability(
+    first: HyperVertex,
+    second: HyperVertex,
+    exponent: Double,
+    temperature: Double,
+    externalLinks: Double): Double = {
     val dist: Double = hyperbolicDistance(first, second)
     1 / (1 + math.exp((1 / (2 * temperature)) * (dist -
       expectedConnections(first, exponent, temperature, externalLinks))))
   }
   @annotation.tailrec
-  final def linkedListSampler(remainingIterations: Int,
-                              starter: LinkedHyperVertex,
-                              previous: LinkedHyperVertex,
-                              next: LinkedHyperVertex,
-                              radialPrevious: LinkedHyperVertex,
-                              samplesSoFar: List[HyperVertex]): List[HyperVertex] = {
+  final def linkedListSampler(
+    remainingIterations: Int,
+    starter: LinkedHyperVertex,
+    previous: LinkedHyperVertex,
+    next: LinkedHyperVertex,
+    radialPrevious: LinkedHyperVertex,
+    samplesSoFar: List[HyperVertex]): List[HyperVertex] = {
     val newSamplesSoFar = {
       if (radialPrevious != starter) {
         radialPrevious.vertex :: next.vertex :: previous.vertex :: samplesSoFar

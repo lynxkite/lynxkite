@@ -13,8 +13,9 @@ object GrowSegmentation extends OpFromJson {
     val esG = edgeBundle(vsG, vsG)
     val esGS = edgeBundle(vsG, vsS)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val esGS = edgeBundle(inputs.vsG.entity, inputs.vsS.entity, EdgeBundleProperties.default)
   }
   def fromJson(j: JsValue) = GrowSegmentation()
@@ -27,10 +28,11 @@ case class GrowSegmentation() extends TypedMetaGraphOp[Input, Output] {
 
   override val isHeavy = true
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val partitioner = RDDUtils.maxPartitioner(
       inputs.esGS.rdd.partitioner.get, inputs.esG.rdd.partitioner.get)

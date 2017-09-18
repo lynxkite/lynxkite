@@ -6,7 +6,8 @@ class SplitToTrainAndTestSet extends OperationsTestBase {
   test("Split to train and test sets") {
     val source = "age"
     val project = box("Create example graph")
-      .box("Split to train and test set",
+      .box(
+        "Split to train and test set",
         Map("source" -> s"$source", "test_set_ratio" -> "0.25", "seed" -> "16"))
       .project
     val trainRDD = project.vertexAttributes(s"${source}_train").rdd

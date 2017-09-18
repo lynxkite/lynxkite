@@ -375,16 +375,19 @@ object BigGraphSparkContext {
 
     val versionFound = KiteInstanceInfo.sparkVersion
     val versionRequired = scala.io.Source.fromURL(getClass.getResource("/SPARK_VERSION")).mkString.trim
-    assert(versionFound == versionRequired,
+    assert(
+      versionFound == versionRequired,
       s"Needs Apache Spark version $versionRequired. Found $versionFound.")
 
     var sparkConf = new spark.SparkConf()
       .setAppName(appName)
       .set("spark.memory.useLegacyMode", "true")
       .set("spark.io.compression.codec", "lz4")
-      .set("spark.executor.memory",
+      .set(
+        "spark.executor.memory",
         LoggedEnvironment.envOrElse("EXECUTOR_MEMORY", "1700m"))
-      .set("spark.akka.threads",
+      .set(
+        "spark.akka.threads",
         LoggedEnvironment.envOrElse("AKKA_THREADS", "4")) // set it to number of cores on master
       .set("spark.local.dir", LoggedEnvironment.envOrElse("KITE_LOCAL_TMP", "/tmp"))
       // Speculative execution will start extra copies of tasks to eliminate long tail latency.

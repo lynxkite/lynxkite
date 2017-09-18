@@ -25,8 +25,9 @@ object CompareSegmentationEdges extends OpFromJson {
     val goldenEdges = edgeBundle(goldenVs, goldenVs)
     val testEdges = edgeBundle(testVs, testVs)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val precision = scalar[Double]
     val recall = scalar[Double]
     // An attribute on the test edges. It is assigned 1.0 if there is a corresponding
@@ -40,16 +41,17 @@ object CompareSegmentationEdges extends OpFromJson {
 }
 import CompareSegmentationEdges._
 case class CompareSegmentationEdges()
-    extends TypedMetaGraphOp[Input, Output] {
+  extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val golden = inputs.goldenEdges.rdd
     val test = inputs.testEdges.rdd

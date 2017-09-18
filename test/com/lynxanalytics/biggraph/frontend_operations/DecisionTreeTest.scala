@@ -5,11 +5,15 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class DecisionTreeTest extends OperationsTestBase {
   test("train and predict with a decision tree classification model") {
     val project = box("Create example graph")
-      .box("Derive vertex attribute",
-        Map("output" -> "label",
+      .box(
+        "Derive vertex attribute",
+        Map(
+          "output" -> "label",
           "expr" -> "if (age > 30) 2.0 else if (age > 15) 1.0 else 0.0 "))
-      .box("Train a decision tree classification model",
-        Map("name" -> "model",
+      .box(
+        "Train a decision tree classification model",
+        Map(
+          "name" -> "model",
           "label" -> "label",
           "features" -> "age",
           "impurity" -> "gini",
@@ -18,7 +22,8 @@ class DecisionTreeTest extends OperationsTestBase {
           "minInfoGain" -> "0",
           "minInstancesPerNode" -> "1",
           "seed" -> "1234567"))
-      .box("Classify with model",
+      .box(
+        "Classify with model",
         Map(
           "name" -> "classification",
           "model" -> """{
@@ -39,13 +44,18 @@ class DecisionTreeTest extends OperationsTestBase {
 
   test("train and predict with a decision tree regression model") {
     val project = box("Create example graph")
-      .box("Derive vertex attribute",
+      .box(
+        "Derive vertex attribute",
         Map("output" -> "isJoe", "expr" -> "if (name == \"Isolated Joe\") 1.0 else 0.0"))
-      .box("Derive vertex attribute",
-        Map("output" -> "gender01",
+      .box(
+        "Derive vertex attribute",
+        Map(
+          "output" -> "gender01",
           "expr" -> "if (gender == \"Male\") 0.0 else 1.0 "))
-      .box("Train a decision tree regression model",
-        Map("name" -> "model",
+      .box(
+        "Train a decision tree regression model",
+        Map(
+          "name" -> "model",
           "label" -> "age",
           "features" -> "gender01,isJoe",
           "maxBins" -> "32",
@@ -53,7 +63,8 @@ class DecisionTreeTest extends OperationsTestBase {
           "minInfoGain" -> "0",
           "minInstancesPerNode" -> "1",
           "seed" -> "1234567"))
-      .box("Predict with model",
+      .box(
+        "Predict with model",
         Map(
           "name" -> "prediction",
           "model" -> """{

@@ -13,24 +13,26 @@ object PredictFromModel extends OpFromJson {
     }
     val model = scalar[Model]
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val prediction = vertexAttribute[Double](inputs.vertices.entity)
   }
   def fromJson(j: JsValue) = PredictFromModel((j \ "numFeatures").as[Int])
 }
 import PredictFromModel._
 case class PredictFromModel(numFeatures: Int)
-    extends TypedMetaGraphOp[Input, Output] {
+  extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input(numFeatures)
   override val isHeavy = true
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("numFeatures" -> numFeatures)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._

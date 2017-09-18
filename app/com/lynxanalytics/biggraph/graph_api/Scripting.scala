@@ -60,39 +60,50 @@ object Scripting {
 
   implicit def buildInstance[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     builder: InstanceBuilder[IS, OMDS])(
-      implicit manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] =
+    implicit
+    manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] =
     builder.toInstance(manager)
 
   implicit def getData(entity: EntityContainer[VertexSet])(
-    implicit dataManager: DataManager): VertexSetData =
+    implicit
+    dataManager: DataManager): VertexSetData =
     dataManager.get(entity.entity)
   implicit def getData(entity: EntityContainer[EdgeBundle])(
-    implicit dataManager: DataManager): EdgeBundleData =
+    implicit
+    dataManager: DataManager): EdgeBundleData =
     dataManager.get(entity.entity)
   implicit def getData[T](entity: EntityContainer[Attribute[T]])(
-    implicit dataManager: DataManager): AttributeData[T] =
+    implicit
+    dataManager: DataManager): AttributeData[T] =
     dataManager.get(entity.entity)
   implicit def getData[T](entity: EntityContainer[Scalar[T]])(
-    implicit dataManager: DataManager): ScalarData[T] =
+    implicit
+    dataManager: DataManager): ScalarData[T] =
     dataManager.get(entity.entity)
   implicit def getData(entity: EntityContainer[Table])(
-    implicit dataManager: DataManager): TableData =
+    implicit
+    dataManager: DataManager): TableData =
     dataManager.get(entity.entity)
 
   implicit def getData(entity: VertexSet)(
-    implicit dataManager: DataManager): VertexSetData =
+    implicit
+    dataManager: DataManager): VertexSetData =
     dataManager.get(entity)
   implicit def getData(entity: EdgeBundle)(
-    implicit dataManager: DataManager): EdgeBundleData =
+    implicit
+    dataManager: DataManager): EdgeBundleData =
     dataManager.get(entity)
   implicit def getData[T](entity: Attribute[T])(
-    implicit dataManager: DataManager): AttributeData[T] =
+    implicit
+    dataManager: DataManager): AttributeData[T] =
     dataManager.get(entity)
   implicit def getData[T](entity: Scalar[T])(
-    implicit dataManager: DataManager): ScalarData[T] =
+    implicit
+    dataManager: DataManager): ScalarData[T] =
     dataManager.get(entity)
   implicit def getData(entity: Table)(
-    implicit dataManager: DataManager): TableData =
+    implicit
+    dataManager: DataManager): TableData =
     dataManager.get(entity)
 
   implicit def toInput[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
@@ -100,6 +111,7 @@ object Scripting {
 
   implicit def emptyInputInstance[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     op: TypedMetaGraphOp[IS, OMDS])(
-      implicit manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] =
+    implicit
+    manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] =
     manager.apply(op, MetaDataSet())
 }

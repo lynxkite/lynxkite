@@ -15,7 +15,8 @@ object ReduceDimensions extends OpFromJson {
     }
   }
   class Output(properties: EdgeBundleProperties)(
-      implicit instance: MetaGraphOperationInstance,
+      implicit
+      instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
     val attr1 = vertexAttribute[Double](inputs.vs.entity)
     val attr2 = vertexAttribute[Double](inputs.vs.entity)
@@ -25,7 +26,7 @@ object ReduceDimensions extends OpFromJson {
 }
 
 case class ReduceDimensions(numFeatures: Int)
-    extends TypedMetaGraphOp[ReduceDimensions.Input, ReduceDimensions.Output] {
+  extends TypedMetaGraphOp[ReduceDimensions.Input, ReduceDimensions.Output] {
   import ReduceDimensions._
   @transient override lazy val inputs = new Input(numFeatures)
   def outputMeta(instance: MetaGraphOperationInstance) = {
@@ -33,10 +34,11 @@ case class ReduceDimensions(numFeatures: Int)
   }
   override def toJson = Json.obj("numFeatures" -> numFeatures)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._

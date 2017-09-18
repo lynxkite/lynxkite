@@ -16,8 +16,8 @@ import com.lynxanalytics.biggraph.graph_api._
 
 // A container for storing ID counts per bucket and a sample.
 class IDBuckets[T](
-  val counts: mutable.Map[T, Long] = mutable.Map[T, Long]().withDefaultValue(0))
-    extends Serializable with Equals {
+    val counts: mutable.Map[T, Long] = mutable.Map[T, Long]().withDefaultValue(0))
+  extends Serializable with Equals {
   var sample = mutable.Map[ID, T]() // May be null!
   def add(id: ID, t: T): Unit = {
     counts(t) += 1
@@ -379,35 +379,42 @@ object Implicits {
   implicit class PairRDDUtils[K: Ordering, V](self: RDD[(K, V)]) extends Serializable {
     // Trust that the RDD is sorted. Check the partitioner.
     def asSortedRDD(partitioner: spark.Partitioner)(
-      implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
-      assert(self.partitions.size == partitioner.numPartitions,
+      implicit
+      ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
+      assert(
+        self.partitions.size == partitioner.numPartitions,
         s"Cannot apply partitioner of size ${partitioner.numPartitions}" +
           s" to RDD of size ${self.partitions.size}: $self")
       new AlreadyPartitionedRDD(self, partitioner).asSortedRDD
     }
     // Trust that this RDD is partitioned and sorted.
     def asSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
-      assert(self.partitioner.isDefined,
+      assert(
+        self.partitioner.isDefined,
         s"Cannot cast to unique RDD if there is no partitioner specified")
       new AlreadySortedRDD(self)
     }
     // Trust that this RDD is partitioned and sorted and has unique keys.
     // Make sure it uses the given partitioner.
     def asUniqueSortedRDD(partitioner: spark.Partitioner)(
-      implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
-      assert(self.partitions.size == partitioner.numPartitions,
+      implicit
+      ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
+      assert(
+        self.partitions.size == partitioner.numPartitions,
         s"Cannot apply partitioner of size ${partitioner.numPartitions}" +
           s" to RDD of size ${self.partitions.size}: $self")
       new AlreadyPartitionedRDD(self, partitioner).asUniqueSortedRDD
     }
     def asUniqueSortedRDD(implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
-      assert(self.partitioner.isDefined,
+      assert(
+        self.partitioner.isDefined,
         s"Cannot cast to unique RDD if there is no partitioner specified")
       new AlreadySortedRDD(self) with UniqueSortedRDD[K, V]
     }
     // Sorts each partition of the RDD in isolation.
     def sort(partitioner: spark.Partitioner)(
-      implicit ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
+      implicit
+      ck: ClassTag[K], cv: ClassTag[V]): SortedRDD[K, V] = {
       self match {
         case self: SortedRDD[K, V] if partitioner eq self.partitioner.get =>
           self
@@ -422,7 +429,8 @@ object Implicits {
 
     // Sorts each partition of the RDD in isolation and trusts that keys are unique.
     def sortUnique(partitioner: spark.Partitioner)(
-      implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
+      implicit
+      ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
       self match {
         case self: UniqueSortedRDD[K, V] if partitioner eq self.partitioner.get =>
           self
@@ -442,7 +450,8 @@ object Implicits {
     }
 
     def groupBySortedKey(partitioner: spark.Partitioner)(
-      implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, Iterable[V]] = {
+      implicit
+      ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, Iterable[V]] = {
 
       if (self.isInstanceOf[SortedRDD[K, V]] && samePartitioner(partitioner)) {
         self.asInstanceOf[SortedRDD[K, V]].groupByKey()
@@ -453,7 +462,8 @@ object Implicits {
       }
     }
     def reduceBySortedKey(partitioner: spark.Partitioner, f: (V, V) => V)(
-      implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
+      implicit
+      ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] = {
 
       if (self.isInstanceOf[SortedRDD[K, V]] && samePartitioner(partitioner)) {
         self.asInstanceOf[SortedRDD[K, V]].reduceByKey(f)
@@ -464,7 +474,8 @@ object Implicits {
       }
     }
     def aggregateBySortedKey[U](zeroValue: U, partitioner: spark.Partitioner)(seqOp: (U, V) => U, combOp: (U, U) => U)(
-      implicit ck: ClassTag[K], cv: ClassTag[V], cu: ClassTag[U]): UniqueSortedRDD[K, U] = {
+      implicit
+      ck: ClassTag[K], cv: ClassTag[V], cu: ClassTag[U]): UniqueSortedRDD[K, U] = {
 
       // TODO: efficient implementation for SortedRDDs.
       val rawRDD = self.aggregateByKey(zeroValue, partitioner)(seqOp, combOp)
@@ -479,11 +490,13 @@ object Implicits {
     // Returns the RDD unchanged. Fails if the RDD does not have unique
     // keys.
     def assertUniqueKeys(partitioner: spark.Partitioner)(
-      implicit ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] =
+      implicit
+      ck: ClassTag[K], cv: ClassTag[V]): UniqueSortedRDD[K, V] =
       self.groupBySortedKey(partitioner)
         .mapValuesWithKeys {
           case (key, id) =>
-            assert(id.size == 1,
+            assert(
+              id.size == 1,
               s"The ID attribute must contain unique keys. $key appears ${
                 id.size
               } times.")

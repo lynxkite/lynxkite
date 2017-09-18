@@ -82,7 +82,8 @@ class ParameterHolder(context: Operation.Context) {
     val paramIds = metaMap.keySet
     val keys = context.box.parameters.keySet.union(context.box.parametricParameters.keySet)
     val extraIds = keys &~ paramIds // keys diff paramIds
-    assert(extraIds.isEmpty,
+    assert(
+      extraIds.isEmpty,
       s"""Extra parameters found: ${extraIds.mkString(", ")} is not in ${paramIds.mkString(", ")}""")
     for (meta <- metas) {
       meta.validate(this(meta.id))

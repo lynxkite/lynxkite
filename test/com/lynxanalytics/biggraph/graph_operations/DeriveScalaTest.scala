@@ -99,7 +99,8 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
       Seq(0 -> "Adam".hashCode.toDouble, 1 -> "Eve".hashCode.toDouble,
         2 -> "Bob".hashCode.toDouble, 3 -> "Isolated Joe".hashCode.toDouble))
 
-    val rndSum = DeriveScala.deriveAndInferReturnType("""
+    val rndSum = DeriveScala.deriveAndInferReturnType(
+      """
       var rnd = new scala.util.Random(income.toLong)
       rnd.nextDouble() + rnd.nextDouble()""",
       Seq("income" -> g.income),

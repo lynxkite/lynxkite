@@ -13,8 +13,9 @@ object AddReversedEdges extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, es) = graph
   }
-  class Output(addIsNewAttr: Boolean)(implicit instance: MetaGraphOperationInstance,
-                                      inputs: Input) extends MagicOutput(instance) {
+  class Output(addIsNewAttr: Boolean)(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val esPlus = edgeBundle(inputs.vs.entity, inputs.vs.entity)
     val newToOriginal = edgeBundle(
       esPlus.idSet, inputs.es.idSet,
@@ -27,8 +28,7 @@ object AddReversedEdges extends OpFromJson {
       else null
   }
   def fromJson(j: JsValue) = AddReversedEdges(
-    addIsNewAttrParameter.fromJson(j)
-  )
+    addIsNewAttrParameter.fromJson(j))
 }
 import AddReversedEdges._
 case class AddReversedEdges(addIsNewAttr: Boolean = false) extends TypedMetaGraphOp[Input, Output] {
@@ -39,10 +39,11 @@ case class AddReversedEdges(addIsNewAttr: Boolean = false) extends TypedMetaGrap
 
   override def toJson = addIsNewAttrParameter.toJson(addIsNewAttr)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val es = inputs.es.rdd
     val reverseAdded: SortedRDD[ID, (Edge, Double)] =
@@ -59,7 +60,8 @@ case class AddReversedEdges(addIsNewAttr: Boolean = false) extends TypedMetaGrap
         case (newId, (oldId, (e, _))) => Edge(newId, oldId)
       })
     if (addIsNewAttr) {
-      output(o.isNew,
+      output(
+        o.isNew,
         renumbered.mapValues {
           case (oldId, (e, attr)) => attr
         })

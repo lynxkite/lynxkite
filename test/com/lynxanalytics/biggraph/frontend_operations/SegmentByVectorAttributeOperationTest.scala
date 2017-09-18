@@ -5,7 +5,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class SegmentByVectorAttributeOperationTest extends OperationsTestBase {
   test("Segment by vector attribute - vector of doubles") {
     val project = box("Create example graph")
-      .box("Derive vertex attribute",
+      .box(
+        "Derive vertex attribute",
         Map("output" -> "vector", "expr" -> "Vector(1.0, 2.0)"))
       .box("Segment by Vector attribute", Map(
         "name" -> "segment",
@@ -17,7 +18,8 @@ class SegmentByVectorAttributeOperationTest extends OperationsTestBase {
 
   test("Segment by vector attribute - vector of strings") {
     val project = box("Create example graph")
-      .box("Derive vertex attribute",
+      .box(
+        "Derive vertex attribute",
         Map("output" -> "vector", "expr" -> "Vector(name)"))
       .box("Segment by Vector attribute", Map(
         "name" -> "segment",

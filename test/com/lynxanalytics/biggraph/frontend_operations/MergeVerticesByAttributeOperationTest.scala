@@ -6,7 +6,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class MergeVerticesByAttributeOperationTest extends OperationsTestBase {
   test("Merge vertices by attribute") {
     val project = box("Create example graph")
-      .box("Merge vertices by attribute",
+      .box(
+        "Merge vertices by attribute",
         Map("key" -> "gender", "aggregate_age" -> "average", "aggregate_name" -> "count",
           "aggregate_id" -> "", "aggregate_location" -> "", "aggregate_gender" -> "", "aggregate_income" -> ""))
       .project
@@ -26,7 +27,8 @@ class MergeVerticesByAttributeOperationTest extends OperationsTestBase {
     val base = box("Create example graph")
       .box("Discard edges")
     assert(base.project.edgeBundle == null)
-    val project = base.box("Merge vertices by attribute",
+    val project = base.box(
+      "Merge vertices by attribute",
       Map("key" -> "gender", "aggregate_age" -> "average", "aggregate_id" -> "", "aggregate_name" -> "",
         "aggregate_location" -> "", "aggregate_gender" -> "", "aggregate_income" -> "")).project
     val age = project.vertexAttributes("age_average").runtimeSafeCast[Double]

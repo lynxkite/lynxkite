@@ -16,8 +16,7 @@ class EnumerateTrianglesTest extends FunSuite with TestGraphOp {
       3 -> Seq(4),
       4 -> Seq(5),
       5 -> Seq(6),
-      6 -> Seq(3)
-    )).result
+      6 -> Seq(3))).result
     val op = EnumerateTriangles(needsBothDirections = false)
     val ftOut = op(op.vs, g.vs)(op.es, g.es).result
     assert(ftOut.segments.rdd.count == 0)
@@ -27,8 +26,7 @@ class EnumerateTrianglesTest extends FunSuite with TestGraphOp {
     val g = SmallTestGraph(Map(
       0 -> Seq(1, 1),
       1 -> Seq(0, 2, 2),
-      2 -> Seq(0, 0, 1)
-    )).result
+      2 -> Seq(0, 0, 1))).result
     val op = EnumerateTriangles(needsBothDirections = true)
     val ftOut = op(op.vs, g.vs)(op.es, g.es).result
     assert(ftOut.segments.rdd.count == 0)
@@ -38,8 +36,7 @@ class EnumerateTrianglesTest extends FunSuite with TestGraphOp {
     val g = SmallTestGraph(Map(
       0 -> Seq(1, 1, 1, 1, 1, 2),
       1 -> Seq(2, 2, 2, 0, 0),
-      2 -> Seq(0, 0, 1, 1)
-    )).result
+      2 -> Seq(0, 0, 1, 1))).result
     val opF = EnumerateTriangles(needsBothDirections = false)
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
     val opT = EnumerateTriangles(needsBothDirections = true)
@@ -56,8 +53,7 @@ class EnumerateTrianglesTest extends FunSuite with TestGraphOp {
       1 -> Seq(2, 3, 4),
       2 -> Seq(3, 4),
       3 -> Seq(4),
-      4 -> Seq()
-    )).result
+      4 -> Seq())).result
     val opF = EnumerateTriangles(needsBothDirections = false)
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
     val opT = EnumerateTriangles(needsBothDirections = true)
@@ -76,8 +72,7 @@ class EnumerateTrianglesTest extends FunSuite with TestGraphOp {
       1 -> Seq(0, 2, 3, 4),
       2 -> Seq(0, 1, 3, 4),
       3 -> Seq(0, 1, 2, 4),
-      4 -> Seq(0, 1, 2, 3)
-    )).result
+      4 -> Seq(0, 1, 2, 3))).result
     val opF = EnumerateTriangles(needsBothDirections = false)
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
     val opT = EnumerateTriangles(needsBothDirections = true)
@@ -97,8 +92,7 @@ class EnumerateTrianglesTest extends FunSuite with TestGraphOp {
       2 -> Seq(0, 1, 3),
       3 -> Seq(1, 2, 4, 5),
       4 -> Seq(3, 5),
-      5 -> Seq(3, 4)
-    )).result
+      5 -> Seq(3, 4))).result
     val opF = EnumerateTriangles(needsBothDirections = false)
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
     val opT = EnumerateTriangles(needsBothDirections = true)
@@ -122,8 +116,7 @@ class EnumerateTrianglesTest extends FunSuite with TestGraphOp {
       8 -> Seq(6, 7),
       9 -> Seq(10, 11),
       10 -> Seq(),
-      11 -> Seq(10)
-    )).result
+      11 -> Seq(10))).result
     val opF = EnumerateTriangles(needsBothDirections = false)
     val ftFOut = opF(opF.vs, g.vs)(opF.es, g.es).result
     val opT = EnumerateTriangles(needsBothDirections = true)
@@ -145,10 +138,11 @@ class EnumerateTrianglesTest extends FunSuite with TestGraphOp {
     testPerformance(100000, 0.7, 10, 200)
   }
 
-  def testPerformance(n: Int,
-                      ratio: Double,
-                      lowDegree: Int,
-                      highDegree: Int): Unit = {
+  def testPerformance(
+    n: Int,
+    ratio: Double,
+    lowDegree: Int,
+    highDegree: Int): Unit = {
     val random = new Random(19910306)
     val adjacencyArray = mutable.Map[Int, Seq[Int]]()
     for (i <- 1 to n) {

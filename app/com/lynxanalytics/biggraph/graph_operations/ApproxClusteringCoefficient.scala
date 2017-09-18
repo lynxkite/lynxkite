@@ -11,7 +11,7 @@ import org.apache.spark
 
 object ApproxClusteringCoefficient extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
-      extends MagicOutput(instance) {
+    extends MagicOutput(instance) {
     val clustering = vertexAttribute[Double](inputs.vs.entity)
   }
   def fromJson(j: JsValue) = ApproxClusteringCoefficient((j \ "bits").as[Int])
@@ -23,10 +23,11 @@ case class ApproxClusteringCoefficient(bits: Int) extends TypedMetaGraphOp[Graph
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("bits" -> bits)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val runtimeContext = rc
     val edges = inputs.es.rdd

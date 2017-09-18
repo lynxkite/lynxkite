@@ -17,8 +17,9 @@ object VertexBucketGrid extends OpFromJson {
     val filtered = vertexSet
     val originalCount = scalar[Long]
   }
-  class Output[S, T](implicit instance: MetaGraphOperationInstance,
-                     inputs: Input[S, T]) extends MagicOutput(instance) {
+  class Output[S, T](implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input[S, T]) extends MagicOutput(instance) {
     val buckets = scalar[IDBuckets[(Int, Int)]]
     val xBuckets = vertexAttribute[Int](inputs.filtered.entity)
     val yBuckets = vertexAttribute[Int](inputs.filtered.entity)
@@ -31,13 +32,14 @@ object VertexBucketGrid extends OpFromJson {
     sampleSizeParameter.fromJson(j))
 }
 import VertexBucketGrid._
-case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
-                                  yBucketer: Bucketer[T],
-                                  // specifies the number of data points to use for estimating the number of
-                                  // elements in buckets. A negative value turns sampling off and all the
-                                  // data points will be used.
-                                  sampleSize: Int)
-    extends TypedMetaGraphOp[Input[S, T], Output[S, T]] {
+case class VertexBucketGrid[S, T](
+    xBucketer: Bucketer[S],
+    yBucketer: Bucketer[T],
+    // specifies the number of data points to use for estimating the number of
+    // elements in buckets. A negative value turns sampling off and all the
+    // data points will be used.
+    sampleSize: Int)
+  extends TypedMetaGraphOp[Input[S, T], Output[S, T]] {
 
   @transient override lazy val inputs = new Input[S, T](
     xBucketer.nonEmpty, yBucketer.nonEmpty)
@@ -50,10 +52,11 @@ case class VertexBucketGrid[S, T](xBucketer: Bucketer[S],
     "yBucketer" -> yBucketer.toTypedJson) ++
     sampleSizeParameter.toJson(sampleSize)
 
-  def execute(inputDatas: DataSet,
-              o: Output[S, T],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output[S, T],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val instance = output.instance
     val filtered = inputs.filtered.rdd

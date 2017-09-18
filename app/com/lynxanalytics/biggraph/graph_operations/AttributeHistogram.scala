@@ -28,17 +28,18 @@ import AttributeHistogram._
  * A negative value turns sampling off and all the data points will be used.
  */
 case class AttributeHistogram[T](bucketer: Bucketer[T], sampleSize: Int)
-    extends TypedMetaGraphOp[Input[T], Output] {
+  extends TypedMetaGraphOp[Input[T], Output] {
   @transient override lazy val inputs = new Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
   override def toJson = Json.obj("bucketer" -> bucketer.toTypedJson) ++
     sampleSizeParameter.toJson(sampleSize)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val attrMeta = inputs.attr.meta
     implicit val ct = attrMeta.classTag

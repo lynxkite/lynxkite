@@ -23,10 +23,11 @@ case class CorrelateAttributes() extends TypedMetaGraphOp[Input, Output] {
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val attrA = inputs.attrA.rdd
     val attrB = inputs.attrB.rdd

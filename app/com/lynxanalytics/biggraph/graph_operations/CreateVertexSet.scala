@@ -19,10 +19,11 @@ case class CreateVertexSet(size: Long) extends TypedMetaGraphOp[NoInput, Output]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
   override def toJson = Json.obj("size" -> size)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     // NumericRanges are special-cased in parallelize so that only the range bounds are transmitted
     // for each partition.
     // https://github.com/apache/spark/blob/v1.3.0/core/src/main/scala/org/apache/spark/rdd/ParallelCollectionRDD.scala#L142

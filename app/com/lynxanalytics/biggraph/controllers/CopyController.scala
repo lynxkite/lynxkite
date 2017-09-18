@@ -8,9 +8,9 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving
 
 case class BackupSettings(
-  dataDir: String,
-  ephemeralDataDir: Option[String],
-  metadataRootDir: String)
+    dataDir: String,
+    ephemeralDataDir: Option[String],
+    metadataRootDir: String)
 
 case class BackupVersion(timestamp: String)
 
@@ -82,7 +82,8 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
       val srcFiles = lsRec(ephemeralPath)
       val copies = srcFiles.map { src =>
         val relative = {
-          assert(src.symbolicName.startsWith(ephemeralPath.symbolicName),
+          assert(
+            src.symbolicName.startsWith(ephemeralPath.symbolicName),
             s"$src is not in $ephemeralPath")
           src.symbolicName.drop(ephemeralPath.symbolicName.size)
         }

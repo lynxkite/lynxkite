@@ -148,15 +148,17 @@ class HadoopFileTest extends FunSuite {
     }
   }
 
-  def checkPathRules(prefixResolution: String,
-                     relativePathsAndExpectedOutputs: List[Tuple2[String, String]]) = {
+  def checkPathRules(
+    prefixResolution: String,
+    relativePathsAndExpectedOutputs: List[Tuple2[String, String]]) = {
     val prefixSymbol = TestUtils.getDummyPrefixName(prefixResolution, false)
     relativePathsAndExpectedOutputs.foreach { checkOne(prefixSymbol, _) }
   }
 
   test("Dangerous concatenations get caught") {
 
-    checkPathRules("",
+    checkPathRules(
+      "",
       List(
         ("a", "a"),
         ("/haha", "/haha"),
@@ -165,7 +167,8 @@ class HadoopFileTest extends FunSuite {
         ("b///", "b/"),
         ("/user/../trick", "ASSERT")))
 
-    checkPathRules("x:b",
+    checkPathRules(
+      "x:b",
       List(
         ("a", "ASSERT"),
         ("/haha", "x:b/haha"),
@@ -174,7 +177,8 @@ class HadoopFileTest extends FunSuite {
         ("b///", "ASSERT"),
         ("/user/../trick", "ASSERT")))
 
-    checkPathRules("x:b/",
+    checkPathRules(
+      "x:b/",
       List(
         ("a", "x:b/a"),
         ("/haha", "x:b/haha"),
@@ -183,27 +187,29 @@ class HadoopFileTest extends FunSuite {
         ("b///", "x:b/b/"),
         ("/user/../trick", "ASSERT")))
 
-    checkPathRules("s3n://key:secret@",
+    checkPathRules(
+      "s3n://key:secret@",
       List(
         ("a", "s3n://key:secret@a"),
         ("///b", "s3n://key:secret@b"),
-        ("/hello..", "ASSERT")
-      ))
+        ("/hello..", "ASSERT")))
 
-    checkPathRules("x:alma.",
+    checkPathRules(
+      "x:alma.",
       List(
         ("a", "ASSERT"),
         ("///b", "x:alma./b"),
-        (".trick", "ASSERT")
-      ))
+        (".trick", "ASSERT")))
 
-    checkPathRules("file:/home",
+    checkPathRules(
+      "file:/home",
       List(
         ("/user", "file:/home/user"),
         ("//user", "file:/home/user"),
         ("user", "ASSERT")))
 
-    checkPathRules("x:/home",
+    checkPathRules(
+      "x:/home",
       List(
         ("/user", "x:/home/user"),
         ("//user", "x:/home/user"),
@@ -259,8 +265,7 @@ class HadoopFileTest extends FunSuite {
     val pairs = PrefixRepositoryImpl.parseInput(
       List(
         "PATH=\"hdfs://pathnode/\"  ",
-        "PATH2=\"hdfs://pathnode2/\"\t\t \t")
-    )
+        "PATH2=\"hdfs://pathnode2/\"\t\t \t"))
     val expected = List(
       "PATH" -> "hdfs://pathnode/",
       "PATH2" -> "hdfs://pathnode2/")

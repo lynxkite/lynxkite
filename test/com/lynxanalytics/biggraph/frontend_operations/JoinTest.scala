@@ -47,15 +47,13 @@ class JoinTest extends OperationsTestBase {
           "name" -> "bucketing",
           "attr" -> "age",
           "interval_size" -> "1",
-          "overlap" -> "no"
-        ))
+          "overlap" -> "no"))
       .box(
         "Create random edges",
         Map(
           "apply_to_project" -> ".bucketing",
           "degree" -> "10",
-          "seed" -> "31415"
-        ))
+          "seed" -> "31415"))
       .box(
         "Add constant edge attribute",
         Map(
@@ -63,13 +61,12 @@ class JoinTest extends OperationsTestBase {
           "name" -> "ten",
           "value" -> "10",
           "type" -> "Double"))
-    val project = box("Project rejoin",
+    val project = box(
+      "Project rejoin",
       Map(
         "apply_to_target" -> "",
         "apply_to_source" -> "",
-        "segs" -> "bucketing"
-      ), Seq(target, source)
-    ).project
+        "segs" -> "bucketing"), Seq(target, source)).project
 
     val segm = project.existingSegmentation("bucketing")
     val values = segm.edgeAttributes("ten").rdd.collect.toMap.values.toSeq
@@ -85,13 +82,12 @@ class JoinTest extends OperationsTestBase {
         "Take edges as vertices",
         Map())
 
-    val project = box("Project rejoin",
+    val project = box(
+      "Project rejoin",
       Map(
         "apply_to_target" -> "!edges",
         "apply_to_source" -> "",
-        "attrs" -> "dst_name,dst_gender"
-      ), Seq(target, source)
-    ).project
+        "attrs" -> "dst_name,dst_gender"), Seq(target, source)).project
 
     val names = project.edgeAttributes("dst_name")
       .rdd.collect.toMap.values.toList.map(_.asInstanceOf[String]).sorted
@@ -105,10 +101,12 @@ class JoinTest extends OperationsTestBase {
     val root = box("Create example graph")
     val target = root
     val source = root
-      .box("Filter by attributes",
+      .box(
+        "Filter by attributes",
         Map("filterva_age" -> "> -10")) // Dummy segmentation
 
-      .box("Filter by attributes",
+      .box(
+        "Filter by attributes",
         Map("filterva_age" -> "> 40")) // Keep only Bob
       .box(
         "Add constant vertex attribute",
@@ -130,9 +128,11 @@ class JoinTest extends OperationsTestBase {
     val root = box("Create example graph")
     val target = root
     val source = root
-      .box("Filter by attributes",
+      .box(
+        "Filter by attributes",
         Map("filterea_weight" -> ">-1"))
-      .box("Filter by attributes",
+      .box(
+        "Filter by attributes",
         Map("filterva_age" -> "", "filterea_weight" -> ">1"))
       .box(
         "Add constant edge attribute",
@@ -153,18 +153,19 @@ class JoinTest extends OperationsTestBase {
     val root = box("Create example graph")
     val source =
       root.box("Add constant edge attribute")
-        .box("Add constant edge attribute",
+        .box(
+          "Add constant edge attribute",
           Map("name" -> "const1", "value" -> "1", "type" -> "Double"))
     val target =
-      root.box("Filter by attributes",
+      root.box(
+        "Filter by attributes",
         Map("filterea_weight" -> ">2"))
-    val project = box("Project rejoin",
+    val project = box(
+      "Project rejoin",
       Map(
         "apply_to_target" -> "!edges",
         "apply_to_source" -> "!edges",
-        "attrs" -> "const1"
-      ), Seq(target, source)
-    ).project
+        "attrs" -> "const1"), Seq(target, source)).project
 
     val joinedAttributes = project.edgeAttributes("const1")
       .rdd.collect.toMap.values.toList.map(_.asInstanceOf[Double])
@@ -175,41 +176,52 @@ class JoinTest extends OperationsTestBase {
     val numVertices = 50
     val numEdges = numVertices * (numVertices - 1)
     val root = box("Create vertices", Map("size" -> s"$numVertices"))
-      .box("Convert vertex attribute to Double",
+      .box(
+        "Convert vertex attribute to Double",
         Map("attr" -> "ordinal"))
-      .box("Segment by Double attribute",
+      .box(
+        "Segment by Double attribute",
         Map("name" -> "seg", "attr" -> "ordinal", "interval_size" -> "1", "overlap" -> "no"))
-      .box("Add constant vertex attribute",
+      .box(
+        "Add constant vertex attribute",
         Map("name" -> "const1", "value" -> "1", "type" -> "Double", "apply_to_project" -> ".seg"))
-      .box("Connect vertices on attribute",
+      .box(
+        "Connect vertices on attribute",
         Map("fromAttr" -> "const1", "toAttr" -> "const1", "apply_to_project" -> ".seg"))
     val target =
-      root.box("Add random edge attribute",
-        Map("name" -> "random",
+      root.box(
+        "Add random edge attribute",
+        Map(
+          "name" -> "random",
           "apply_to_project" -> ".seg",
           "dist" -> "Standard Uniform",
           "seed" -> "32421341"))
-        .box("Filter by attributes",
+        .box(
+          "Filter by attributes",
           Map(
             "filterea_random" -> ">0.5",
             "apply_to_project" -> ".seg"))
     val source = root.box("Take segmentation as base project", Map("apply_to_project" -> ".seg"))
-      .box("Add random edge attribute",
-        Map("name" -> "random2",
+      .box(
+        "Add random edge attribute",
+        Map(
+          "name" -> "random2",
           "dist" -> "Standard Uniform",
           "seed" -> "10101221"))
-      .box("Filter by attributes",
+      .box(
+        "Filter by attributes",
         Map("filterea_random2" -> ">0.5"))
 
-    val join = box("Project rejoin",
+    val join = box(
+      "Project rejoin",
       Map(
         "apply_to_target" -> ".seg!edges",
         "apply_to_source" -> "!edges",
-        "attrs" -> "random2"
-      ), Seq(target, source))
+        "attrs" -> "random2"), Seq(target, source))
 
     val random2Defined =
-      join.box("SQL1",
+      join.box(
+        "SQL1",
         Map("sql" -> "select COUNT(*) from `seg.edges` where edge_random2 is not null"))
         .table.df.collect.take(1).head.getLong(0)
 
@@ -218,7 +230,8 @@ class JoinTest extends OperationsTestBase {
     assert(random2Defined.toDouble / numEdges.toDouble === 0.25)
 
     val random2NotDefined =
-      join.box("SQL1",
+      join.box(
+        "SQL1",
         Map("sql" -> "select COUNT(*) from `seg.edges` where edge_random2 is null"))
         .table.df.collect.take(1).head.getLong(0)
 
@@ -229,42 +242,51 @@ class JoinTest extends OperationsTestBase {
 
     val root =
       box("Create vertices", Map("size" -> "10"))
-        .box("Add constant vertex attribute",
+        .box(
+          "Add constant vertex attribute",
           Map("name" -> "const1", "value" -> "1", "type" -> "Double"))
         .box("Connect vertices on attribute", Map("fromAttr" -> "const1", "toAttr" -> "const1"))
-        .box("Convert vertex attribute to Double",
+        .box(
+          "Convert vertex attribute to Double",
           Map("attr" -> "ordinal"))
     // Now split, filter, edges to vertices, and then filter again.
     val source = root
-      .box("Derive edge attribute",
-        Map("output" -> "keep1",
+      .box(
+        "Derive edge attribute",
+        Map(
+          "output" -> "keep1",
           "expr" -> "if (src$ordinal % 2 == dst$ordinal % 2) 1.0 else 0.0"))
-      .box("Filter by attributes",
+      .box(
+        "Filter by attributes",
         Map("filterea_keep1" -> ">0.5"))
       .box("Take edges as vertices")
-      .box("Derive vertex attribute",
-        Map("output" -> "keep2",
+      .box(
+        "Derive vertex attribute",
+        Map(
+          "output" -> "keep2",
           "expr" -> "if (dst_ordinal < src_ordinal) 1.0 else 0.0"))
-      .box("Filter by attributes",
-        Map("filterva_keep2" -> ">0.5"
-        )
-      )
-      .box("Derive vertex attribute",
-        Map("output" -> "newattr",
+      .box(
+        "Filter by attributes",
+        Map("filterva_keep2" -> ">0.5"))
+      .box(
+        "Derive vertex attribute",
+        Map(
+          "output" -> "newattr",
           "expr" -> "dst_ordinal.toString + \"_\" + src_ordinal.toString"))
     // The target should also undergo some filtering:
     val target = root
-      .box("Filter by attributes",
+      .box(
+        "Filter by attributes",
         Map("filterva_ordinal" -> "< 8"))
-      .box("Filter by attributes",
+      .box(
+        "Filter by attributes",
         Map("filterva_ordinal" -> "> 2"))
-    val project = box("Project rejoin",
+    val project = box(
+      "Project rejoin",
       Map(
         "apply_to_target" -> "!edges",
         "apply_to_source" -> "",
-        "attrs" -> "newattr"
-      ), Seq(target, source)
-    ).project
+        "attrs" -> "newattr"), Seq(target, source)).project
 
     val newEdgeAttributes = project.edgeAttributes("newattr")
       .rdd.collect.toMap.values.toList.map(_.asInstanceOf[String]).sorted
@@ -275,10 +297,12 @@ class JoinTest extends OperationsTestBase {
   // target has no Bob, source has no Isolated Joe
   def getTargetSource(): (TestBox, TestBox) = {
     val root = box("Create example graph")
-    val target = root.box("Filter by attributes",
+    val target = root.box(
+      "Filter by attributes",
       Map("filterva_age" -> "> -1")) // Make chain longer
       .box("Filter by attributes", Map("filterva_age" -> "<40")) // Discard Bob
-    val source = root.box("Filter by attributes",
+    val source = root.box(
+      "Filter by attributes",
       Map("filterva_age" -> "> -2")) // Make chain longer
       .box("Filter by attributes", Map("filterva_age" -> ">10")) // Discard Joe
     (target, source)
@@ -292,26 +316,30 @@ class JoinTest extends OperationsTestBase {
         "name" -> "bucketing",
         "attr" -> "age",
         "interval_size" -> "1",
-        "overlap" -> "no"
-      ))
-      .box("Aggregate to segmentation",
+        "overlap" -> "no"))
+      .box(
+        "Aggregate to segmentation",
         Map(
           "apply_to_project" -> ".bucketing",
           "aggregate_name" -> "first"))
-      .box("Rename vertex attributes",
-        Map("apply_to_project" -> ".bucketing",
+      .box(
+        "Rename vertex attributes",
+        Map(
+          "apply_to_project" -> ".bucketing",
           "change_name_first" -> "name"))
-    val join = box("Project rejoin",
+    val join = box(
+      "Project rejoin",
       Map(
-        "segs" -> "bucketing"
-      ), Seq(target, source))
+        "segs" -> "bucketing"), Seq(target, source))
 
     val result =
-      join.box("Aggregate from segmentation",
+      join.box(
+        "Aggregate from segmentation",
         Map(
           "apply_to_project" -> ".bucketing",
           "aggregate_name" -> "first"))
-        .box("SQL1",
+        .box(
+          "SQL1",
           Map("sql" -> "select name,bucketing_name_first from `vertices`"))
         .table.df.collect.toList.sortBy(_.getString(0))
     assert(result == List(Row("Adam", "Adam"), Row("Eve", "Eve"), Row("Isolated Joe", null)))
@@ -320,14 +348,17 @@ class JoinTest extends OperationsTestBase {
   test("Edges can be copied over") {
     val (target, sourceRoot) = getTargetSource()
     val source = sourceRoot.box("Replace edges with triadic closure", Map())
-      .box("Derive edge attribute",
-        Map("output" -> "edge_attr",
+      .box(
+        "Derive edge attribute",
+        Map(
+          "output" -> "edge_attr",
           "expr" -> "src$name + '_' + dst$name"))
-    val result = box("Project rejoin",
+    val result = box(
+      "Project rejoin",
       Map(
-        "edge" -> "yes"
-      ), Seq(target, source))
-      .box("SQL1",
+        "edge" -> "yes"), Seq(target, source))
+      .box(
+        "SQL1",
         Map("sql" -> "select edge_edge_attr from `edges`"))
       .table.df.collect.toList.sortBy(_.getString(0))
     assert(result == List(Row("Adam_Adam"), Row("Eve_Eve")))

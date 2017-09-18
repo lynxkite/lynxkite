@@ -25,7 +25,6 @@ object ThreadUtil {
             nextIndex += 1
             t
           }
-        }
-      ))
+        }))
   }
 }

@@ -9,7 +9,8 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object SplitVertices extends OpFromJson {
   class Output(
-      implicit instance: MetaGraphOperationInstance,
+      implicit
+      instance: MetaGraphOperationInstance,
       inputs: VertexAttributeInput[Long]) extends MagicOutput(instance) {
 
     val newVertices = vertexSet
@@ -29,10 +30,11 @@ case class SplitVertices() extends TypedMetaGraphOp[VertexAttributeInput[Long], 
     new Output()(instance, inputs)
   }
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val repetitionAttr = inputs.attr.rdd
@@ -47,13 +49,16 @@ case class SplitVertices() extends TypedMetaGraphOp[VertexAttributeInput[Long], 
         .randomNumbered(partitioner)
         .persist(spark.storage.StorageLevel.DISK_ONLY)
 
-    output(o.newVertices,
+    output(
+      o.newVertices,
       newIdAndOldIdAndZeroBasedIndex
         .mapValues(_ => ()))
-    output(o.belongsTo,
+    output(
+      o.belongsTo,
       newIdAndOldIdAndZeroBasedIndex
         .mapValuesWithKeys { case (newId, (oldId, idx)) => Edge(newId, oldId) })
-    output(o.indexAttr,
+    output(
+      o.indexAttr,
       newIdAndOldIdAndZeroBasedIndex
         .mapValues { case (_, idx) => idx })
   }

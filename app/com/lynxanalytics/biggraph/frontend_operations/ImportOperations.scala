@@ -110,7 +110,8 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         splitParam("partition_predicates").toList,
         splitParam("connection_properties").map { e =>
           val eq = e.indexOf("=")
-          assert(eq != -1,
+          assert(
+            eq != -1,
             s"Invalid connection property definition: ${params("connection_properties")}")
           e.take(eq) -> e.drop(eq + 1)
         }.toMap)

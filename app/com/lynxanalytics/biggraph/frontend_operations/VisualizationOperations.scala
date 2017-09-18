@@ -64,8 +64,7 @@ class VisualizationOperations(env: SparkFreeEnvironment) extends OperationRegist
       s"A PlotOperation must input a single table. $context")
     assert(
       context.meta.outputs == List("plot"),
-      s"A PlotOperation must output a Plot. $context"
-    )
+      s"A PlotOperation must output a Plot. $context")
 
     protected val table = tableLikeInput("table").asTable
 

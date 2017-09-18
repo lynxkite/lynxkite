@@ -128,19 +128,19 @@ ${indentStr}END"""
 }
 
 case class Model(
-  method: String, // The training method used to create this model.
-  symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
-  labelName: Option[String], // Name of the label attribute used to train this model.
-  labelType: Option[SerializableType[_]] = None, // The type of the predicted label.
-  // Optional mapping from the model output (always Double) to the correct label type.
-  labelReverseMapping: Option[Map[Double, String]] = None,
-  featureNames: List[String], // The name of the feature attributes used to train this model.
-  // The type of the model features in the same order as the featureNames.
-  featureTypes: Option[List[SerializableType[_]]] = None,
-  // Mappings for non Double features from their type to Double, identified by the feature's index.
-  featureMappings: Option[Map[Int, Map[String, Double]]] = None,
-  statistics: Option[String]) // For the details that require training data
-    extends ToJson with Equals {
+    method: String, // The training method used to create this model.
+    symbolicPath: String, // The symbolic name of the HadoopFile where this model is saved.
+    labelName: Option[String], // Name of the label attribute used to train this model.
+    labelType: Option[SerializableType[_]] = None, // The type of the predicted label.
+    // Optional mapping from the model output (always Double) to the correct label type.
+    labelReverseMapping: Option[Map[Double, String]] = None,
+    featureNames: List[String], // The name of the feature attributes used to train this model.
+    // The type of the model features in the same order as the featureNames.
+    featureTypes: Option[List[SerializableType[_]]] = None,
+    // Mappings for non Double features from their type to Double, identified by the feature's index.
+    featureMappings: Option[Map[Int, Map[String, Double]]] = None,
+    statistics: Option[String]) // For the details that require training data
+  extends ToJson with Equals {
 
   override def equals(other: Any) = {
     if (canEqual(other)) {
@@ -166,8 +166,7 @@ case class Model(
       "featureNames" -> featureNames,
       "featureTypes" -> featureTypes.map(_.map(_.toJson)),
       "featureMappings" -> featureMappings.map(_.map { case (k, v) => k.toString -> v }),
-      "statistics" -> statistics
-    )
+      "statistics" -> statistics)
   }
 
   // Loads the previously created model from the file system.
@@ -208,8 +207,7 @@ object Model extends FromJson[Model] {
       (j \ "featureNames").as[List[String]],
       (j \ "featureTypes").asOpt[List[JsValue]].map(_.map(json => SerializableType.fromJson(json))),
       (j \ "featureMappings").asOpt[Map[String, Map[String, Double]]].map(_.map { case (k, v) => k.toInt -> v }),
-      (j \ "statistics").asOpt[String]
-    )
+      (j \ "statistics").asOpt[String])
   }
   def toMetaFE(modelName: String, modelMeta: ModelMeta): FEModelMeta = FEModelMeta(
     modelName,
@@ -245,7 +243,8 @@ object Model extends FromJson[Model] {
     sqlContext: spark.sql.SQLContext,
     vertices: VertexSetRDD,
     attrsArray: Array[AttributeData[_]])(
-      implicit dataSet: DataSet): (spark.sql.DataFrame, Map[Int, Map[String, Double]]) = {
+    implicit
+    dataSet: DataSet): (spark.sql.DataFrame, Map[Int, Map[String, Double]]) = {
     val mappingsCollector = mutable.Map[Int, Map[String, Double]]()
     val df = toDF(sqlContext, vertices, attrsArray.zipWithIndex.map {
       case (attr, i) =>
@@ -263,7 +262,8 @@ object Model extends FromJson[Model] {
   // mapping for the attribute from its type - if not Double - to Double.
   def toDoubleRDD(
     attr: AttributeData[_])(
-      implicit dataSet: DataSet): (AttributeRDD[Double], Option[Map[String, Double]]) = {
+    implicit
+    dataSet: DataSet): (AttributeRDD[Double], Option[Map[String, Double]]) = {
     attr match {
       case a if a.is[Double] => (a.runtimeSafeCast[Double].rdd, None)
       case a if a.is[String] =>
@@ -281,7 +281,8 @@ object Model extends FromJson[Model] {
     vertices: VertexSetRDD,
     attrsArray: Array[AttributeData[_]],
     mappings: Map[Int, Map[String, Double]])(
-      implicit dataSet: DataSet): spark.sql.DataFrame = {
+    implicit
+    dataSet: DataSet): spark.sql.DataFrame = {
     markCategoricalVariablesInDFSchema(toDF(sqlContext, vertices, attrsArray.zipWithIndex.map {
       case (attr, i) => attr match {
         case a if a.is[Double] => a.runtimeSafeCast[Double].rdd
@@ -371,10 +372,12 @@ object Tabulator {
     headers: Array[String],
     rowNames: Array[String],
     columnData: Array[Array[Double]]): String = {
-    assert(rowNames.size == columnData(0).size,
+    assert(
+      rowNames.size == columnData(0).size,
       s"Size mismatch: rowNames (${rowNames.size}) != columnData[0] (${columnData(0).size})")
     val tails = rowNames +: columnData.map(_.map(x => f"$x%1.6f"))
-    assert(headers.size == tails.size,
+    assert(
+      headers.size == tails.size,
       s"Size mismatch: headers (${headers.size}) != 1 + columnData (${columnData.size})")
     format(headers +: tails.transpose)
   }
@@ -392,19 +395,19 @@ object Tabulator {
 }
 
 case class FEModelMeta(
-  name: String,
-  isClassification: Boolean,
-  generatesProbability: Boolean,
-  featureNames: List[String],
-  featureTypes: List[String])
+    name: String,
+    isClassification: Boolean,
+    generatesProbability: Boolean,
+    featureNames: List[String],
+    featureTypes: List[String])
 
 case class FEModel(
-  method: String,
-  labelName: Option[String],
-  featureNames: List[String],
-  featureTypes: List[String],
-  details: String,
-  sql: String)
+    method: String,
+    labelName: Option[String],
+    featureNames: List[String],
+    featureTypes: List[String],
+    details: String,
+    sql: String)
 
 trait ModelMeta {
   def isClassification: Boolean
