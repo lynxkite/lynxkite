@@ -148,7 +148,6 @@ class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
           val attr = project.edgeAttributes(name)
           FEVertexAttributeFilter(attr.gUID.toString, filter)
       }.toSeq
-      assert(vertexFilters.nonEmpty || edgeFilters.nonEmpty, "No filters specified.")
       if (edgeFilters.nonEmpty) {
         val edgeEmbedding = FEFilters.embedFilteredVertices(
           project.edgeBundle.idSet, edgeFilters, heavy = true)
