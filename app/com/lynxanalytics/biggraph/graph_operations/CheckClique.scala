@@ -26,7 +26,7 @@ object CheckClique extends OpFromJson {
 }
 import CheckClique._
 case class CheckClique(cliquesToCheck: Option[Set[ID]] = None, needsBothDirections: Boolean = false)
-    extends TypedMetaGraphOp[Input, Output] {
+  extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -36,10 +36,11 @@ case class CheckClique(cliquesToCheck: Option[Set[ID]] = None, needsBothDirectio
     "cliquesToCheck" -> cliquesToCheck.getOrElse(Set()).toSeq,
     "needsBothDirections" -> needsBothDirections)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
 
     val vertexPartitioner = inputs.vs.rdd.partitioner.get

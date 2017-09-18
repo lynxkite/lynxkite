@@ -15,7 +15,7 @@ object SetOverlap extends OpFromJson {
     val belongsTo = edgeBundle(vs, segments)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
-      extends MagicOutput(instance) {
+    extends MagicOutput(instance) {
     val overlaps = edgeBundle(inputs.segments.entity, inputs.segments.entity)
     val overlapSize = edgeAttribute[Int](overlaps)
   }
@@ -35,10 +35,11 @@ case class SetOverlap(minOverlap: Int) extends TypedMetaGraphOp[Input, Output] {
     new Output()(instance, inputs)
   override def toJson = Json.obj("minOverlap" -> minOverlap)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val belongsTo = inputs.belongsTo.rdd
     val partitioner = belongsTo.partitioner.get

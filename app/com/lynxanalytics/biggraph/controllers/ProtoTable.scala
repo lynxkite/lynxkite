@@ -55,8 +55,9 @@ object ProtoTable {
 
   // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
   // necessary to support the query.
-  def minimize(optimizedPlan: LogicalPlan,
-               protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
+  def minimize(
+    optimizedPlan: LogicalPlan,
+    protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
     // The table names we get back from the case-insensitive parser will be lowercase.
     val lowerProtoTables = protoTables.map { case (k, v) => k.toLowerCase -> v }
     val tables = getRequiredFields(optimizedPlan)

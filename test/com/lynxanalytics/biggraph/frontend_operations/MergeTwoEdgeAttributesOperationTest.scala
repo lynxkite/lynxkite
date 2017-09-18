@@ -5,9 +5,11 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class MergeTwoEdgeAttributesOperationTest extends OperationsTestBase {
   test("Merge two edge attributes") {
     val project = box("Create example graph")
-      .box("Derive edge attribute",
+      .box(
+        "Derive edge attribute",
         Map("output" -> "income_edge", "expr" -> "src$income"))
-      .box("Merge two edge attributes",
+      .box(
+        "Merge two edge attributes",
         Map("name" -> "merged", "attr1" -> "income_edge", "attr2" -> "weight"))
       .project
     val merged = project.edgeAttributes("merged").runtimeSafeCast[Double]

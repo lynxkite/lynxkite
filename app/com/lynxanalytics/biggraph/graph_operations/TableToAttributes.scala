@@ -40,7 +40,7 @@ object TableToAttributes extends OpFromJson {
   }
 
   class Output(schema: types.StructType)(implicit instance: MetaGraphOperationInstance)
-      extends MagicOutput(instance) {
+    extends MagicOutput(instance) {
     // Methods for listing the output entities for metagraph building purposes.
     private def attributeFromTypeTag[T: TypeTag](
       ids: => EntityContainer[VertexSet], name: scala.Symbol): EntityContainer[Attribute[T]] =
@@ -82,13 +82,15 @@ case class TableToAttributes() extends TypedMetaGraphOp[Input, Output] {
     new Output(schema)(instance)
   }
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val t = inputs.t.data
-    assert(t.entity.schema == t.df.schema,
+    assert(
+      t.entity.schema == t.df.schema,
       s"Schema mismatch: ${t.entity.schema} != ${t.df.schema}")
     o.populateOutput(rc, t.df.schema, t.df)
   }

@@ -169,8 +169,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
           project.newEdgeAttribute(
             after,
             project.edgeAttributes(before),
-            project.viewer.getEdgeAttributeNote(before)
-          )
+            project.viewer.getEdgeAttributeNote(before))
           project.edgeAttributes(before) = null
         }
       }
@@ -250,8 +249,7 @@ class ManageProjectOperations(env: SparkFreeEnvironment) extends ProjectOperatio
           project.newVertexAttribute(
             after,
             project.vertexAttributes(before),
-            project.viewer.getVertexAttributeNote(before)
-          )
+            project.viewer.getVertexAttributeNote(before))
           project.vertexAttributes(before) = null
         }
       }

@@ -10,7 +10,8 @@ object EdgeBundleAsAttribute extends OpFromJson {
     val edges = edgeBundle(src, dst)
   }
   class Output(
-      implicit instance: MetaGraphOperationInstance,
+      implicit
+      instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
     val attr = edgeAttribute[(ID, ID)](inputs.edges.entity)
   }
@@ -23,10 +24,11 @@ case class EdgeBundleAsAttribute() extends TypedMetaGraphOp[Input, Output] {
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
     output(o.attr, inputs.edges.rdd.mapValues(edge => (edge.src, edge.dst)))
   }

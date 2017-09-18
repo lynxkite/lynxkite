@@ -30,10 +30,12 @@ object HadoopFile {
     val (prefixSymbol, relativePath) = PrefixRepository.splitSymbolicPattern(str, legacyMode)
     val prefixResolution = PrefixRepository.getPrefixInfo(prefixSymbol)
     val normalizedFullPath = PathNormalizer.normalize(prefixResolution + relativePath)
-    assert(normalizedFullPath.startsWith(prefixResolution),
+    assert(
+      normalizedFullPath.startsWith(prefixResolution),
       s"$str is not inside $prefixSymbol")
     val normalizedRelativePath = normalizedFullPath.drop(prefixResolution.length)
-    assert(!hasDangerousEnd(prefixResolution) || !hasDangerousStart(relativePath),
+    assert(
+      !hasDangerousEnd(prefixResolution) || !hasDangerousStart(relativePath),
       s"The path following $prefixSymbol has to start with a slash (/)")
     new HadoopFile(prefixSymbol, normalizedRelativePath, parentLazyFS)
   }
@@ -98,7 +100,8 @@ class HadoopFile private (
   private def computeRelativePathFromHadoopOutput(hadoopOutput: String): String = {
     val hadoopOutputWithCredentials = reinstateCredentialsIfNeeded(hadoopOutput)
     val resolution = PrefixRepository.getPrefixInfo(prefixSymbol)
-    assert(hadoopOutputWithCredentials.startsWith(resolution),
+    assert(
+      hadoopOutputWithCredentials.startsWith(resolution),
       s"Bad prefix match: $hadoopOutputWithCredentials ($hadoopOutput) should start with $resolution")
     hadoopOutputWithCredentials.drop(resolution.length)
   }
@@ -302,7 +305,7 @@ class HadoopFile private (
 
 // A SequenceFile loader that creates one partition per file.
 private[graph_util] class WholeSequenceFileInputFormat[K, V]
-    extends hadoop.mapreduce.lib.input.SequenceFileInputFormat[K, V] {
+  extends hadoop.mapreduce.lib.input.SequenceFileInputFormat[K, V] {
 
   // Do not allow splitting/combining files.
   override protected def isSplitable(

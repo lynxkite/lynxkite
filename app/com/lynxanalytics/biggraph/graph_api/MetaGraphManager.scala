@@ -179,7 +179,8 @@ class MetaGraphManager(val repositoryPath: String) {
     val j = serializeOperation(inst)
     // Validate the serialized operation by trying to reload it.
     val i = deserializeOperation(j)
-    assert(inst == i,
+    assert(
+      inst == i,
       s"Operation reloaded after serialization was not identical: $inst vs $i\n\n$j")
     try {
       saveOperation(j)

@@ -27,9 +27,11 @@ class ReduceDimensionsTest extends FunSuite with TestGraphOp {
     val result = op(op.features, features).result
     val attr1 = result.attr1.rdd
     val attr2 = result.attr2.rdd
-    assert((attr1.lookup(500)(0) - 0.0).abs <= 1E-6,
+    assert(
+      (attr1.lookup(500)(0) - 0.0).abs <= 1E-6,
       "the principal component shall center at the origin")
-    assert(attr1.partitioner.get.numPartitions == 10,
+    assert(
+      attr1.partitioner.get.numPartitions == 10,
       "numbers of partitions shall remain the same")
     assert(attr1.count == 1001)
     assert(attr2.count == 1001)

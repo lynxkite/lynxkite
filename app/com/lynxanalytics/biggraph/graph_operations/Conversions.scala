@@ -12,11 +12,11 @@ import com.lynxanalytics.biggraph.model
 // Dynamic values wrap various types into a combined type that we unwrap on FE side
 // The combined type helps us joining arbitrary number of different typed attributes.
 case class DynamicValue(
-  string: String = "",
-  defined: Boolean = true,
-  double: Option[Double] = None,
-  x: Option[Double] = None,
-  y: Option[Double] = None)
+    string: String = "",
+    defined: Boolean = true,
+    double: Option[Double] = None,
+    x: Option[Double] = None,
+    y: Option[Double] = None)
 object DynamicValue {
   val df = new java.text.DecimalFormat("#.#####")
   def converter[T: TypeTag]: (T => DynamicValue) = {
@@ -76,13 +76,15 @@ object DynamicValue {
 }
 
 object VertexAttributeToString extends OpFromJson {
-  class Output[T](implicit instance: MetaGraphOperationInstance,
-                  inputs: VertexAttributeInput[T])
-      extends MagicOutput(instance) {
+  class Output[T](implicit
+      instance: MetaGraphOperationInstance,
+      inputs: VertexAttributeInput[T])
+    extends MagicOutput(instance) {
     val attr = vertexAttribute[String](inputs.vs.entity)
   }
   def run[T](attr: Attribute[T])(
-    implicit manager: MetaGraphManager): Attribute[String] = {
+    implicit
+    manager: MetaGraphManager): Attribute[String] = {
 
     import Scripting._
     val op = VertexAttributeToString[T]()
@@ -91,15 +93,16 @@ object VertexAttributeToString extends OpFromJson {
   def fromJson(j: JsValue) = VertexAttributeToString()
 }
 case class VertexAttributeToString[T]()
-    extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeToString.Output[T]] {
+  extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeToString.Output[T]] {
   import VertexAttributeToString._
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output[T],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output[T],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.data.classTag
     output(o.attr, inputs.attr.rdd.mapValues(_.toString))
@@ -107,13 +110,15 @@ case class VertexAttributeToString[T]()
 }
 
 object VertexAttributeToDouble extends OpFromJson {
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: VertexAttributeInput[String])
-      extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: VertexAttributeInput[String])
+    extends MagicOutput(instance) {
     val attr = vertexAttribute[Double](inputs.vs.entity)
   }
   def run(attr: Attribute[String])(
-    implicit manager: MetaGraphManager): Attribute[Double] = {
+    implicit
+    manager: MetaGraphManager): Attribute[Double] = {
 
     import Scripting._
     val op = VertexAttributeToDouble()
@@ -122,15 +127,16 @@ object VertexAttributeToDouble extends OpFromJson {
   def fromJson(j: JsValue) = VertexAttributeToDouble()
 }
 case class VertexAttributeToDouble()
-    extends TypedMetaGraphOp[VertexAttributeInput[String], VertexAttributeToDouble.Output] {
+  extends TypedMetaGraphOp[VertexAttributeInput[String], VertexAttributeToDouble.Output] {
   import VertexAttributeToDouble._
   @transient override lazy val inputs = new VertexAttributeInput[String]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     output(o.attr, inputs.attr.rdd.flatMapOptionalValues(str =>
       if (str.nonEmpty) Some(str.toDouble) else None))
@@ -138,13 +144,15 @@ case class VertexAttributeToDouble()
 }
 
 object LongAttributeToDouble extends OpFromJson {
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: VertexAttributeInput[Long])
-      extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: VertexAttributeInput[Long])
+    extends MagicOutput(instance) {
     val attr = vertexAttribute[Double](inputs.vs.entity)
   }
   def run(attr: Attribute[Long])(
-    implicit manager: MetaGraphManager): Attribute[Double] = {
+    implicit
+    manager: MetaGraphManager): Attribute[Double] = {
 
     import Scripting._
     val op = LongAttributeToDouble()
@@ -153,28 +161,31 @@ object LongAttributeToDouble extends OpFromJson {
   def fromJson(j: JsValue) = LongAttributeToDouble()
 }
 case class LongAttributeToDouble()
-    extends TypedMetaGraphOp[VertexAttributeInput[Long], LongAttributeToDouble.Output] {
+  extends TypedMetaGraphOp[VertexAttributeInput[Long], LongAttributeToDouble.Output] {
   import LongAttributeToDouble._
   @transient override lazy val inputs = new VertexAttributeInput[Long]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     output(o.attr, inputs.attr.rdd.mapValues(_.toDouble))
   }
 }
 
 object DoubleAttributeToLong extends OpFromJson {
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: VertexAttributeInput[Double])
-      extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: VertexAttributeInput[Double])
+    extends MagicOutput(instance) {
     val attr = vertexAttribute[Long](inputs.vs.entity)
   }
   def run(attr: Attribute[Double])(
-    implicit manager: MetaGraphManager): Attribute[Long] = {
+    implicit
+    manager: MetaGraphManager): Attribute[Long] = {
 
     import Scripting._
     val op = DoubleAttributeToLong()
@@ -183,28 +194,31 @@ object DoubleAttributeToLong extends OpFromJson {
   def fromJson(j: JsValue) = DoubleAttributeToLong()
 }
 case class DoubleAttributeToLong()
-    extends TypedMetaGraphOp[VertexAttributeInput[Double], DoubleAttributeToLong.Output] {
+  extends TypedMetaGraphOp[VertexAttributeInput[Double], DoubleAttributeToLong.Output] {
   import DoubleAttributeToLong._
   @transient override lazy val inputs = new VertexAttributeInput[Double]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     output(o.attr, inputs.attr.rdd.mapValues(_.round))
   }
 }
 
 object IntAttributeToLong extends OpFromJson {
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: VertexAttributeInput[Int])
-      extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: VertexAttributeInput[Int])
+    extends MagicOutput(instance) {
     val attr = vertexAttribute[Long](inputs.vs.entity)
   }
   def run(attr: Attribute[Int])(
-    implicit manager: MetaGraphManager): Attribute[Long] = {
+    implicit
+    manager: MetaGraphManager): Attribute[Long] = {
 
     import Scripting._
     val op = IntAttributeToLong()
@@ -213,28 +227,31 @@ object IntAttributeToLong extends OpFromJson {
   def fromJson(j: JsValue) = IntAttributeToLong()
 }
 case class IntAttributeToLong()
-    extends TypedMetaGraphOp[VertexAttributeInput[Int], IntAttributeToLong.Output] {
+  extends TypedMetaGraphOp[VertexAttributeInput[Int], IntAttributeToLong.Output] {
   import IntAttributeToLong._
   @transient override lazy val inputs = new VertexAttributeInput[Int]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     output(o.attr, inputs.attr.rdd.mapValues(_.toLong))
   }
 }
 
 object IntAttributeToDouble extends OpFromJson {
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: VertexAttributeInput[Int])
-      extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: VertexAttributeInput[Int])
+    extends MagicOutput(instance) {
     val attr = vertexAttribute[Double](inputs.vs.entity)
   }
   def run(attr: Attribute[Int])(
-    implicit manager: MetaGraphManager): Attribute[Double] = {
+    implicit
+    manager: MetaGraphManager): Attribute[Double] = {
 
     import Scripting._
     val op = IntAttributeToDouble()
@@ -243,28 +260,31 @@ object IntAttributeToDouble extends OpFromJson {
   def fromJson(j: JsValue) = IntAttributeToDouble()
 }
 case class IntAttributeToDouble()
-    extends TypedMetaGraphOp[VertexAttributeInput[Int], IntAttributeToDouble.Output] {
+  extends TypedMetaGraphOp[VertexAttributeInput[Int], IntAttributeToDouble.Output] {
   import IntAttributeToDouble._
   @transient override lazy val inputs = new VertexAttributeInput[Int]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     output(o.attr, inputs.attr.rdd.mapValues(_.toDouble))
   }
 }
 
 object VertexAttributeToDynamicValue extends OpFromJson {
-  class Output[T](implicit instance: MetaGraphOperationInstance,
-                  inputs: VertexAttributeInput[T])
-      extends MagicOutput(instance) {
+  class Output[T](implicit
+      instance: MetaGraphOperationInstance,
+      inputs: VertexAttributeInput[T])
+    extends MagicOutput(instance) {
     val attr = vertexAttribute[DynamicValue](inputs.vs.entity)
   }
   def run[T](attr: Attribute[T])(
-    implicit manager: MetaGraphManager): Attribute[DynamicValue] = {
+    implicit
+    manager: MetaGraphManager): Attribute[DynamicValue] = {
 
     import Scripting._
     val op = VertexAttributeToDynamicValue[T]()
@@ -273,15 +293,16 @@ object VertexAttributeToDynamicValue extends OpFromJson {
   def fromJson(j: JsValue) = VertexAttributeToDynamicValue()
 }
 case class VertexAttributeToDynamicValue[T]()
-    extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeToDynamicValue.Output[T]] {
+  extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeToDynamicValue.Output[T]] {
   import VertexAttributeToDynamicValue._
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output[T],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output[T],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.data.classTag
     implicit val tt = inputs.attr.data.typeTag
@@ -293,22 +314,24 @@ case class VertexAttributeToDynamicValue[T]()
 
 object AttributeCast {
   class Output[From, To: TypeTag](
-    implicit instance: MetaGraphOperationInstance, inputs: VertexAttributeInput[From])
-      extends MagicOutput(instance) {
+      implicit
+      instance: MetaGraphOperationInstance, inputs: VertexAttributeInput[From])
+    extends MagicOutput(instance) {
     val attr = vertexAttribute[To](inputs.vs.entity)
   }
 }
 abstract class AttributeCast[From, To]()
-    extends TypedMetaGraphOp[VertexAttributeInput[From], AttributeCast.Output[From, To]] {
+  extends TypedMetaGraphOp[VertexAttributeInput[From], AttributeCast.Output[From, To]] {
   import AttributeCast._
   @transient override lazy val inputs = new VertexAttributeInput[From]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[From, To]()(tt, instance, inputs)
   def tt: TypeTag[To]
 
-  def execute(inputDatas: DataSet,
-              o: Output[From, To],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output[From, To],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.data.classTag
     output(o.attr, inputs.attr.rdd.mapValues(_.asInstanceOf[To]))

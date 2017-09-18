@@ -34,37 +34,37 @@ object DrawingThresholds {
 }
 
 case class VertexDiagramSpec(
-  vertexSetId: String,
-  filters: Seq[FEVertexAttributeFilter],
-  mode: String, // For now, one of "bucketed", "sampled".
+    vertexSetId: String,
+    filters: Seq[FEVertexAttributeFilter],
+    mode: String, // For now, one of "bucketed", "sampled".
 
-  // ** Parameters for bucketed view **
-  // Empty string means no bucketing on that axis.
-  xBucketingAttributeId: String = "",
-  xNumBuckets: Int = 1,
-  xAxisOptions: AxisOptions = AxisOptions(),
-  yBucketingAttributeId: String = "",
-  yNumBuckets: Int = 1,
-  yAxisOptions: AxisOptions = AxisOptions(),
-  sampleSize: Int = DrawingThresholds.BucketSampling,
+    // ** Parameters for bucketed view **
+    // Empty string means no bucketing on that axis.
+    xBucketingAttributeId: String = "",
+    xNumBuckets: Int = 1,
+    xAxisOptions: AxisOptions = AxisOptions(),
+    yBucketingAttributeId: String = "",
+    yNumBuckets: Int = 1,
+    yAxisOptions: AxisOptions = AxisOptions(),
+    sampleSize: Int = DrawingThresholds.BucketSampling,
 
-  // ** Parameters for sampled view **
-  centralVertexIds: Seq[String] = Seq(),
-  // Edge bundle used to find neighborhood of the central vertex.
-  sampleSmearEdgeBundleId: String = "",
-  attrs: Seq[String] = Seq(),
-  radius: Int = 1,
-  maxSize: Int = DrawingThresholds.MaxSampledViewVertices)
+    // ** Parameters for sampled view **
+    centralVertexIds: Seq[String] = Seq(),
+    // Edge bundle used to find neighborhood of the central vertex.
+    sampleSmearEdgeBundleId: String = "",
+    attrs: Seq[String] = Seq(),
+    radius: Int = 1,
+    maxSize: Int = DrawingThresholds.MaxSampledViewVertices)
 
 case class FEVertex(
-  // For bucketed view:
-  size: Double = 0.0,
-  x: Int = 0,
-  y: Int = 0,
+    // For bucketed view:
+    size: Double = 0.0,
+    x: Int = 0,
+    y: Int = 0,
 
-  // For sampled view:
-  id: String = "",
-  attrs: Map[String, DynamicValue] = Map())
+    // For sampled view:
+    id: String = "",
+    attrs: Map[String, DynamicValue] = Map())
 
 case class VertexDiagramResponse(
     val diagramId: String,
@@ -83,45 +83,45 @@ case class VertexDiagramResponse(
 }
 
 case class AggregatedAttribute(
-  // The GUID of the attribute.
-  attributeId: String,
-  // The aggregation we want to apply on it.
-  aggregator: String)
+    // The GUID of the attribute.
+    attributeId: String,
+    // The aggregation we want to apply on it.
+    aggregator: String)
 
 case class EdgeDiagramSpec(
-  // In the context of an FEGraphRequest "idx[4]" means the diagram requested by vertexSets(4).
-  // Otherwise a UUID obtained by a previous vertex diagram request.
-  srcDiagramId: String,
-  dstDiagramId: String,
-  // These are copied verbatim to the response, used by the FE to identify EdgeDiagrams.
-  srcIdx: Int,
-  dstIdx: Int,
-  // The GUID of the edge bundle to plot.
-  edgeBundleId: String,
-  // Specification of filters that should be applied to attributes of the edge bundle.
-  filters: Seq[FEVertexAttributeFilter],
-  // If not set, we use constant 1 as weight.
-  edgeWeightId: String = "",
-  // Whether to generate 3D coordinates for the vertices.
-  layout3D: Boolean,
-  //whether to normalize the thickness of the edges shown on the bucketed graph according to the relative density
-  relativeEdgeDensity: Boolean,
-  // Attributes to be returned together with the edges. As one visualized edge can correspond to
-  // many actual edges, clients always have to specify an aggregator as well. For now, this only
-  // works for small edge set visualizations (i.e. sampled mode).
-  attrs: Seq[AggregatedAttribute] = Seq(),
-  maxSize: Int = DrawingThresholds.MaxSampledViewEdges)
+    // In the context of an FEGraphRequest "idx[4]" means the diagram requested by vertexSets(4).
+    // Otherwise a UUID obtained by a previous vertex diagram request.
+    srcDiagramId: String,
+    dstDiagramId: String,
+    // These are copied verbatim to the response, used by the FE to identify EdgeDiagrams.
+    srcIdx: Int,
+    dstIdx: Int,
+    // The GUID of the edge bundle to plot.
+    edgeBundleId: String,
+    // Specification of filters that should be applied to attributes of the edge bundle.
+    filters: Seq[FEVertexAttributeFilter],
+    // If not set, we use constant 1 as weight.
+    edgeWeightId: String = "",
+    // Whether to generate 3D coordinates for the vertices.
+    layout3D: Boolean,
+    //whether to normalize the thickness of the edges shown on the bucketed graph according to the relative density
+    relativeEdgeDensity: Boolean,
+    // Attributes to be returned together with the edges. As one visualized edge can correspond to
+    // many actual edges, clients always have to specify an aggregator as well. For now, this only
+    // works for small edge set visualizations (i.e. sampled mode).
+    attrs: Seq[AggregatedAttribute] = Seq(),
+    maxSize: Int = DrawingThresholds.MaxSampledViewEdges)
 
 case class BundleSequenceStep(bundle: String, reversed: Boolean)
 
 case class FEEdge(
-  // idx of source vertex in the vertices Seq in the corresponding VertexDiagramResponse.
-  a: Int,
-  // idx of destination vertex in the vertices Seq in the corresponding VertexDiagramResponse.
-  b: Int,
-  size: Double,
-  // Keys are composed as attributeId:aggregator.
-  attrs: Map[String, DynamicValue] = Map())
+    // idx of source vertex in the vertices Seq in the corresponding VertexDiagramResponse.
+    a: Int,
+    // idx of destination vertex in the vertices Seq in the corresponding VertexDiagramResponse.
+    b: Int,
+    size: Double,
+    // Keys are composed as attributeId:aggregator.
+    attrs: Map[String, DynamicValue] = Map())
 
 case class FE3DPosition(x: Double, y: Double, z: Double)
 
@@ -142,46 +142,47 @@ case class EdgeDiagramResponse(
 }
 
 case class FEGraphRequest(
-  vertexSets: Seq[VertexDiagramSpec],
-  edgeBundles: Seq[EdgeDiagramSpec])
+    vertexSets: Seq[VertexDiagramSpec],
+    edgeBundles: Seq[EdgeDiagramSpec])
 
 case class FEGraphResponse(
-  vertexSets: Seq[VertexDiagramResponse],
-  edgeBundles: Seq[EdgeDiagramResponse])
+    vertexSets: Seq[VertexDiagramResponse],
+    edgeBundles: Seq[EdgeDiagramResponse])
 
 case class AxisOptions(
-  logarithmic: Boolean = false)
+    logarithmic: Boolean = false)
 
 case class HistogramSpec(
-  attributeId: String,
-  vertexFilters: Seq[FEVertexAttributeFilter],
-  numBuckets: Int,
-  axisOptions: AxisOptions,
-  // Set only if we ask for an edge attribute histogram and provided vertexFilters should be
-  // applied on the end-vertices of edges.
-  edgeBundleId: String = "",
-  edgeFilters: Seq[FEVertexAttributeFilter] = Seq(),
-  sampleSize: Int)
+    attributeId: String,
+    vertexFilters: Seq[FEVertexAttributeFilter],
+    numBuckets: Int,
+    axisOptions: AxisOptions,
+    // Set only if we ask for an edge attribute histogram and provided vertexFilters should be
+    // applied on the end-vertices of edges.
+    edgeBundleId: String = "",
+    edgeFilters: Seq[FEVertexAttributeFilter] = Seq(),
+    sampleSize: Int)
 
 case class HistogramResponse(
     labelType: String,
     labels: Seq[String],
     sizes: Seq[Long]) {
   val validLabelTypes = Seq("between", "bucket")
-  assert(validLabelTypes.contains(labelType),
+  assert(
+    validLabelTypes.contains(labelType),
     s"$labelType is not a valid label type. They are: $validLabelTypes")
 }
 
 case class ScalarValueRequest(
-  scalarId: String)
+    scalarId: String)
 
 case class CenterRequest(
-  vertexSetId: String,
-  count: Int,
-  filters: Seq[FEVertexAttributeFilter])
+    vertexSetId: String,
+    count: Int,
+    filters: Seq[FEVertexAttributeFilter])
 
 case class CenterResponse(
-  val centers: Seq[String])
+    val centers: Seq[String])
 
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
@@ -353,9 +354,10 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     return res
   }
 
-  private def mappedAttribute[T](mapping: Attribute[Array[ID]],
-                                 attr: Attribute[T],
-                                 target: EdgeBundle): Attribute[T] = {
+  private def mappedAttribute[T](
+    mapping: Attribute[Array[ID]],
+    attr: Attribute[T],
+    target: EdgeBundle): Attribute[T] = {
     val op = new graph_operations.VertexToEdgeAttribute[T]()
     val res = op(op.mapping, mapping)(op.original, attr)(op.target, target).result.mappedAttribute
     dataManager.cache(res)
@@ -469,10 +471,12 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       weights.vertexSet == edgeBundle.idSet,
       "The requested edge weight attribute does not belong to the requested edge bundle.\n" +
         s"Edge bundle: $edgeBundle\nWeight attribute: $weights")
-    assert(srcView.vertexSet.gUID == edgeBundle.srcVertexSet.gUID,
+    assert(
+      srcView.vertexSet.gUID == edgeBundle.srcVertexSet.gUID,
       "Source vertex set does not match edge bundle source." +
         s"\nSource: ${srcView.vertexSet}\nEdge bundle source: ${edgeBundle.srcVertexSet}")
-    assert(dstView.vertexSet.gUID == edgeBundle.dstVertexSet.gUID,
+    assert(
+      dstView.vertexSet.gUID == edgeBundle.dstVertexSet.gUID,
       "Destination vertex set does not match edge bundle destination." +
         s"\nSource: ${dstView.vertexSet}\nEdge bundle destination: ${edgeBundle.dstVertexSet}")
 
@@ -623,9 +627,9 @@ class GraphDrawingController(env: BigGraphEnvironment) {
   }
 
   private case class FilteredEdges(
-    ids: VertexSet,
-    srcTripletMapping: Attribute[Array[ID]],
-    dstTripletMapping: Attribute[Array[ID]])
+      ids: VertexSet,
+      srcTripletMapping: Attribute[Array[ID]],
+      dstTripletMapping: Attribute[Array[ID]])
 
   private def getFilteredEdgeIds(
     edgeBundle: EdgeBundle,

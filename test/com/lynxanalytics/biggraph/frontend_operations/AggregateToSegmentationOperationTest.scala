@@ -7,7 +7,8 @@ class AggregateToSegmentationOperationTest extends OperationsTestBase {
   test("Aggregate to segmentation") {
     val seg = box("Create example graph")
       .box("Find connected components", Map("name" -> "cc", "directions" -> "require both directions"))
-      .box("Aggregate to segmentation",
+      .box(
+        "Aggregate to segmentation",
         Map(
           "apply_to_project" -> ".cc",
           "aggregate_age" -> "average", "aggregate_name" -> "count", "aggregate_gender" -> "majority_100",

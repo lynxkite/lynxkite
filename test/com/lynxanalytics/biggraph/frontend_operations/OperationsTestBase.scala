@@ -27,8 +27,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
 
     private def projectRec(boxes: scala.collection.mutable.ListBuffer[Box]): String = {
       val inputNames = inputs.map(
-        input => input.projectRec(boxes)
-      )
+        input => input.projectRec(boxes))
       val name = s"${operationId} ${boxes.length}"
       val inputIds = meta.inputs
       assert(inputNames.size == inputIds.size, s"for $name")
@@ -44,8 +43,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
         operationId,
         parameters, 0, 0,
         inputBoxOutputs,
-        parametricParameters
-      )
+        parametricParameters)
       boxes += box
       name
     }
@@ -84,23 +82,26 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       TestBox(operationId, newParameters, parametricParameters, inputs)
     }
 
-    def box(operationId: String,
-            parameters: Map[String, String] = Map(),
-            otherInputs: Seq[TestBox] = Seq(),
-            parametricParameters: Map[String, String] = Map()): TestBox = {
+    def box(
+      operationId: String,
+      parameters: Map[String, String] = Map(),
+      otherInputs: Seq[TestBox] = Seq(),
+      parametricParameters: Map[String, String] = Map()): TestBox = {
       TestBox(operationId, parameters, parametricParameters, this +: otherInputs)
     }
   }
 
-  def box(operationId: String,
-          parameters: Map[String, String] = Map(),
-          inputs: Seq[TestBox] = Seq(),
-          parametricParameters: Map[String, String] = Map()): TestBox = {
+  def box(
+    operationId: String,
+    parameters: Map[String, String] = Map(),
+    inputs: Seq[TestBox] = Seq(),
+    parametricParameters: Map[String, String] = Map()): TestBox = {
     TestBox(operationId, parameters, parametricParameters, inputs)
   }
 
-  def importBox(operationId: String,
-                parameters: Map[String, String] = Map()): TestBox = {
+  def importBox(
+    operationId: String,
+    parameters: Map[String, String] = Map()): TestBox = {
     val b = box(operationId, parameters)
     val guidFuture = sql.importBox(user, b.realBox)
     val response = concurrent.Await.result(guidFuture, concurrent.duration.Duration.Inf)

@@ -28,7 +28,8 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     eg.snapshotOutput("test_dir/people", "project")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.global(directory = "test_dir",
+      DataFrameSpec.global(
+        directory = "test_dir",
         sql = "select name from `people.vertices` where age < 40"),
       maxRows = 10)))
 
@@ -42,7 +43,8 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     eg.snapshotOutput("test_dir/people", "project")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.global(directory = "test_dir",
+      DataFrameSpec.global(
+        directory = "test_dir",
         sql = "select src_name, dst_name from `people.edges` where edge_weight = 1"),
       maxRows = 10)))
 
@@ -56,7 +58,8 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     eg.snapshotOutput("test_dir/people", "project")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.global(directory = "test_dir",
+      DataFrameSpec.global(
+        directory = "test_dir",
         sql = "select comment from `people.edge_attributes` where weight = 1"),
       maxRows = 10)))
 
@@ -66,12 +69,14 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
   }
 
   test("global sql on segmentation's belongs_to") {
-    val egSeg = box("Create example graph").box("Segment by String attribute",
+    val egSeg = box("Create example graph").box(
+      "Segment by String attribute",
       Map("name" -> "gender_seg", "attr" -> "gender"))
     egSeg.snapshotOutput("test_dir/people", "project")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.global(directory = "test_dir",
+      DataFrameSpec.global(
+        directory = "test_dir",
         sql = "select base_gender from `people.gender_seg.belongs_to` where segment_size = 1"),
       maxRows = 10)))
 
@@ -85,7 +90,8 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     eg.snapshotOutput("test_dir/people", "project")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.global(directory = "",
+      DataFrameSpec.global(
+        directory = "",
         sql = "select name from `test_dir/people.vertices` where age < 40"),
       maxRows = 10)))
 
@@ -98,7 +104,8 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     val eg = box("Create example graph")
     eg.snapshotOutput("test_dir/people", "project")
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.global(directory = "test_dir",
+      DataFrameSpec.global(
+        directory = "test_dir",
         sql = "select `name` from `people.vertices` where age < 40"),
       maxRows = 10)))
 
@@ -112,7 +119,8 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     eg.snapshotOutput("test_dir/PEOPLE", "project")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.global(directory = "test_dir",
+      DataFrameSpec.global(
+        directory = "test_dir",
         sql = "select name from `PEOPLE.vertices` where age < 40"),
       maxRows = 10)))
 
@@ -126,7 +134,8 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     eg.snapshotOutput("test_dir/firstname.lastname@lynx.com/eg", "project")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.global(directory = "test_dir",
+      DataFrameSpec.global(
+        directory = "test_dir",
         sql = "select name from `firstname.lastname@lynx.com/eg.vertices` where age < 40"),
       maxRows = 10)))
 
@@ -138,12 +147,14 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
   // This should work, whether we choose to implement case sensitive or case insensitive
   // SQL in the future.
   test("global sql with upper case attribute name") {
-    val eg = box("Create example graph").box("Rename vertex attributes",
+    val eg = box("Create example graph").box(
+      "Rename vertex attributes",
       Map("change_name" -> "NAME"))
     eg.snapshotOutput("test_dir/people", "project")
 
     val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
-      DataFrameSpec.global(directory = "test_dir",
+      DataFrameSpec.global(
+        directory = "test_dir",
         sql = "select NAME from `people.vertices` where age < 40"),
       maxRows = 10)))
 
@@ -156,7 +167,8 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     val eg = box("Create example graph")
     eg.snapshotOutput("test_dir/people", "project")
 
-    val dfSpec = DataFrameSpec.global(directory = "test_dir",
+    val dfSpec = DataFrameSpec.global(
+      directory = "test_dir",
       sql = "select name from `people.vertices` where age < 40")
     val path = "IMPORTGRAPHTEST$/global-sql-export-test.csv"
     val request = SQLExportToCSVRequest(dfSpec, path, true, ",", "\"")

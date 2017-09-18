@@ -15,14 +15,14 @@ import scala.collection.mutable
 import scala.reflect.runtime.universe._
 
 case class FEOperationMeta(
-  id: String,
-  htmlId: String,
-  parameters: List[FEOperationParameterMeta],
-  visibleScalars: List[FEScalar],
-  category: String = "",
-  status: FEStatus = FEStatus.enabled,
-  color: Option[String] = None,
-  description: Option[String] = None)
+    id: String,
+    htmlId: String,
+    parameters: List[FEOperationParameterMeta],
+    visibleScalars: List[FEScalar],
+    category: String = "",
+    status: FEStatus = FEStatus.enabled,
+    color: Option[String] = None,
+    description: Option[String] = None)
 
 object FEOperationParameterMeta {
   val validKinds = Seq(
@@ -75,11 +75,11 @@ object CustomOperationParameterMeta {
 }
 
 case class FEOperationSpec(
-  id: String,
-  parameters: Map[String, String])
+    id: String,
+    parameters: Map[String, String])
 
 case class FEOperationCategory(
-  title: String, icon: String, color: String, browseByDir: Boolean)
+    title: String, icon: String, color: String, browseByDir: Boolean)
 
 abstract class OperationParameterMeta {
   val id: String
@@ -109,15 +109,15 @@ trait Operation {
 }
 object Operation {
   case class Category(
-    title: String,
-    color: String, // A color class from web/app/styles/operation-toolbox.scss.
-    visible: Boolean = true,
-    icon: String = "", // Icon class name, or empty for first letter of title.
-    index: Int, // Categories are listed in this order on the UI.
-    // Browse operations in this category using the dir structure. If true, the UI will display the
-    // operations in a tree structure using the '/' character in the operation id as path separator.
-    browseByDir: Boolean = false)
-      extends Ordered[Category] {
+      title: String,
+      color: String, // A color class from web/app/styles/operation-toolbox.scss.
+      visible: Boolean = true,
+      icon: String = "", // Icon class name, or empty for first letter of title.
+      index: Int, // Categories are listed in this order on the UI.
+      // Browse operations in this category using the dir structure. If true, the UI will display the
+      // operations in a tree structure using the '/' character in the operation id as path separator.
+      browseByDir: Boolean = false)
+    extends Ordered[Category] {
     def compare(that: Category) = this.index compare that.index
     def toFE: FEOperationCategory =
       FEOperationCategory(title, icon, color, browseByDir)
@@ -125,13 +125,13 @@ object Operation {
 
   type Factory = Context => Operation
   case class Context(
-    user: serving.User,
-    ops: OperationRepository,
-    box: Box,
-    meta: BoxMetadata,
-    inputs: Map[String, BoxOutputState],
-    workspaceParameters: Map[String, String],
-    manager: MetaGraphManager)
+      user: serving.User,
+      ops: OperationRepository,
+      box: Box,
+      meta: BoxMetadata,
+      inputs: Map[String, BoxOutputState],
+      workspaceParameters: Map[String, String],
+      manager: MetaGraphManager)
 
   // Turns an operation name into a valid HTML identifier.
   def htmlId(name: String) = name.toLowerCase.replaceAll("\\W+", "-").replaceFirst("-+$", "")
@@ -153,9 +153,11 @@ object Operation {
       def hasVertexSet = FEStatus.assert(project.vertexSet != null, "No vertices.")
       def hasEdgeBundle = FEStatus.assert(project.edgeBundle != null, "No edges.")
       def hasSegmentation = FEStatus.assert(project.segmentations.nonEmpty, "No segmentations.")
-      def assertNotSegmentation = FEStatus.assert(!project.isSegmentation,
+      def assertNotSegmentation = FEStatus.assert(
+        !project.isSegmentation,
         "This operation is not available for segmentations.")
-      def assertSegmentation = FEStatus.assert(project.isSegmentation,
+      def assertSegmentation = FEStatus.assert(
+        project.isSegmentation,
         "This operation is only available for segmentations.")
 
       protected def segmentationsRecursively(
@@ -557,8 +559,7 @@ abstract class ExportOperation(context: Operation.Context) extends SmartOperatio
     s"An ExportOperation must input a single table. $context")
   assert(
     context.meta.outputs == List("exported"),
-    s"An ExportOperation must have a single output called 'exported'. $context"
-  )
+    s"An ExportOperation must have a single output called 'exported'. $context")
 
   protected lazy val table = tableInput("table")
 
@@ -583,7 +584,7 @@ abstract class ExportOperation(context: Operation.Context) extends SmartOperatio
 }
 
 abstract class ExportOperationToFile(context: Operation.Context)
-    extends ExportOperation(context) {
+  extends ExportOperation(context) {
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     assertWriteAllowed(params("path"))

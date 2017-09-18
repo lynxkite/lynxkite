@@ -11,8 +11,9 @@ object FakePull extends OpFromJson {
     // Assumed to be ExampleGraph
     val vs = vertexSet
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val pull = edgeBundle(inputs.vs.entity, inputs.vs.entity, EdgeBundleProperties.partialFunction)
   }
   def fromJson(j: play.api.libs.json.JsValue) = FakePull()
@@ -23,10 +24,11 @@ case class FakePull() extends TypedMetaGraphOp[FakePull.Input, FakePull.Output] 
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     output(
       o.pull,

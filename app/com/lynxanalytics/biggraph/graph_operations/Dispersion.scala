@@ -7,7 +7,7 @@ import com.lynxanalytics.biggraph.graph_api._
 
 object Dispersion extends OpFromJson {
   class Output(implicit instance: MetaGraphOperationInstance, inputs: GraphInput)
-      extends MagicOutput(instance) {
+    extends MagicOutput(instance) {
     val dispersion = edgeAttribute[Double](inputs.es.entity)
   }
 
@@ -51,10 +51,11 @@ case class Dispersion() extends TypedMetaGraphOp[GraphInput, Output] {
   @transient override lazy val inputs = new GraphInput
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val edges = inputs.es.rdd
     val nonLoopEdges = edges.filter { case (_, e) => e.src != e.dst }

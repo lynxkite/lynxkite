@@ -28,8 +28,7 @@ class ProtoTableTest extends BigGraphControllerTestBase {
     ("select a from (select * from one)", Map("one" -> Set("a"))),
     ("select a from (select * from one) where b=11", Map("one" -> Set("a", "b"))),
     ("select o.a, two.c from one o inner join two on o.b=two.b where o.a=1",
-      Map("one" -> Set("a", "b"), "two" -> Set("c", "b")))
-  ).foreach {
+      Map("one" -> Set("a", "b"), "two" -> Set("c", "b")))).foreach {
       case (query, expected) =>
         test(query) {
           val plan = ExecuteSQL.getLogicalPlan(query, protoTables)

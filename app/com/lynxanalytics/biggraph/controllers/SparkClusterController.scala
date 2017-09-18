@@ -9,24 +9,24 @@ import com.lynxanalytics.biggraph.serving
 
 // Long-poll request for changes in the "busy" state of Spark.
 case class SparkStatusRequest(
-  syncedUntil: Long) // Client requests to be notified only of events after this time.
+    syncedUntil: Long) // Client requests to be notified only of events after this time.
 
 case class SparkStatusResponse(
-  timestamp: Long, // This is the status at the given time.
-  activeStages: List[StageInfo],
-  pastStages: List[StageInfo],
-  activeExecutorNum: Option[Int],
-  configedExecutorNum: Option[Int],
-  sparkWorking: Boolean,
-  kiteCoreWorking: Boolean)
+    timestamp: Long, // This is the status at the given time.
+    activeStages: List[StageInfo],
+    pastStages: List[StageInfo],
+    activeExecutorNum: Option[Int],
+    configedExecutorNum: Option[Int],
+    sparkWorking: Boolean,
+    kiteCoreWorking: Boolean)
 
 case class StageInfo(
-  id: String, // Stage ID with attempt ID.
-  hash: Long, // Two stages that do the same thing are expected to have the same hash.
-  size: Int, // Number of tasks.
-  var tasksCompleted: Int = 0, // Number of tasks already done.
-  var lastTaskTime: Long = 0, // Timestamp of last task completion.
-  var failed: Boolean = false)
+    id: String, // Stage ID with attempt ID.
+    hash: Long, // Two stages that do the same thing are expected to have the same hash.
+    size: Int, // Number of tasks.
+    var tasksCompleted: Int = 0, // Number of tasks already done.
+    var lastTaskTime: Long = 0, // Timestamp of last task completion.
+    var failed: Boolean = false)
 
 // This listener is used for long polling on /ajax/spark-status.
 // The response is delayed until there is an update.
@@ -338,10 +338,10 @@ object InternalWatchdogThread {
   val CheckPeriodMillis = 1000
 }
 class InternalWatchdogThread(
-  shutdownTimeoutSecs: Int,
-  listener: KiteListener,
-  controller: SparkClusterController)
-    extends Thread("internal-watchdog-thread") {
+    shutdownTimeoutSecs: Int,
+    listener: KiteListener,
+    controller: SparkClusterController)
+  extends Thread("internal-watchdog-thread") {
 
   val warningTimeoutSecs = shutdownTimeoutSecs / 2
 
@@ -415,7 +415,8 @@ class SparkClusterController(environment: BigGraphEnvironment) {
   }
 
   def sparkStatus(user: serving.User, req: SparkStatusRequest)(
-    implicit ec: concurrent.ExecutionContext): concurrent.Future[SparkStatusResponse] = {
+    implicit
+    ec: concurrent.ExecutionContext): concurrent.Future[SparkStatusResponse] = {
     val res = listener.future(req.syncedUntil)
     if (!getForceReportHealthy) {
       res

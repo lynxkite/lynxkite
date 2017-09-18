@@ -95,7 +95,8 @@ class ImportBoxTest extends OperationsTestBase {
       "assertion failed: The following import settings are stale: infer (no). Please click on " +
         "the import button to apply the changed settings or reset the changed settings to " +
         "their original values."
-    assert(errorMessage == errorMessageShouldBe,
+    assert(
+      errorMessage == errorMessageShouldBe,
       "Stale settings error should list the stale parameters and their original value.")
   }
 

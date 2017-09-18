@@ -15,9 +15,10 @@ object FindModularPartitioning extends OpFromJson {
     val (vs, edges) = graph
     val weights = edgeAttribute[Double](edges)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input)
-      extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input)
+    extends MagicOutput(instance) {
     val partitions = vertexSet
     val belongsTo = edgeBundle(
       inputs.vs.entity, partitions, properties = EdgeBundleProperties.partialFunction)
@@ -163,10 +164,11 @@ case class FindModularPartitioning() extends TypedMetaGraphOp[Input, Output] {
     }
   }
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vs = inputs.vs.rdd
     val vPart = vs.partitioner.get

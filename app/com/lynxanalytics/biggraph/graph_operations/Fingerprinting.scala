@@ -29,7 +29,7 @@ object Fingerprinting extends OpFromJson {
     val rightEdgeWeights = edgeAttribute[Double](rightEdges)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
-      extends MagicOutput(instance) {
+    extends MagicOutput(instance) {
     // A subset of "candidates", which make up a strong matching.
     val matching = edgeBundle(
       inputs.left.entity, inputs.right.entity, EdgeBundleProperties.matching)
@@ -47,11 +47,11 @@ object Fingerprinting extends OpFromJson {
   val maxIterations = 30
 }
 case class Fingerprinting(
-  minimumOverlap: Int,
-  minimumSimilarity: Double,
-  weightingMode: String = "InverseInDegree",
-  multiNeighborsPreference: Double = 0.0)
-    extends TypedMetaGraphOp[Fingerprinting.Input, Fingerprinting.Output] {
+    minimumOverlap: Int,
+    minimumSimilarity: Double,
+    weightingMode: String = "InverseInDegree",
+    multiNeighborsPreference: Double = 0.0)
+  extends TypedMetaGraphOp[Fingerprinting.Input, Fingerprinting.Output] {
   import Fingerprinting._
   override val isHeavy = true
   @transient override lazy val inputs = new Input
@@ -61,10 +61,11 @@ case class Fingerprinting(
       weightingModeParameter.toJson(weightingMode) ++
       multiNeighborsPreferenceParameter.toJson(multiNeighborsPreference)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val leftPartitioner = inputs.left.rdd.partitioner.get
     val rightPartitioner = inputs.right.rdd.partitioner.get
@@ -200,8 +201,9 @@ case class Fingerprinting(
   }
 
   // "ladies" is the smaller set. Returns a mapping from "gentlemen" to "ladies".
-  def findStableMarriage(ladiesScores: SortedRDD[ID, (ID, Double)],
-                         gentlemenScores: SortedRDD[ID, (ID, Double)]): UniqueSortedRDD[ID, ID] = {
+  def findStableMarriage(
+    ladiesScores: SortedRDD[ID, (ID, Double)],
+    gentlemenScores: SortedRDD[ID, (ID, Double)]): UniqueSortedRDD[ID, ID] = {
     val ladiesPartitioner = ladiesScores.partitioner.get
     val gentlemenPartitioner = gentlemenScores.partitioner.get
     val gentlemenPreferences: UniqueSortedRDD[ID, Iterable[ID]] = gentlemenScores
@@ -258,30 +260,32 @@ object FingerprintingCandidates extends OpFromJson {
     val rightName = vertexAttribute[String](vs)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
-      extends MagicOutput(instance) {
+    extends MagicOutput(instance) {
     val candidates = edgeBundle(inputs.vs.entity, inputs.vs.entity)
   }
   def fromJson(j: JsValue) = FingerprintingCandidates()
 }
 case class FingerprintingCandidates()
-    extends TypedMetaGraphOp[FingerprintingCandidates.Input, FingerprintingCandidates.Output] {
+  extends TypedMetaGraphOp[FingerprintingCandidates.Input, FingerprintingCandidates.Output] {
   import FingerprintingCandidates._
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vertexPartitioner = inputs.vs.rdd.partitioner.get
     val edges = inputs.es.rdd.filter { case (_, e) => e.src != e.dst }
     val outEdges = edges.map { case (_, e) => e.src -> e.dst }.sort(vertexPartitioner)
 
     // Returns the lines from the first attribute where the second attribute is undefined.
-    def definedUndefined(defined: UniqueSortedRDD[ID, String],
-                         undefined: UniqueSortedRDD[ID, String]): UniqueSortedRDD[ID, String] = {
+    def definedUndefined(
+      defined: UniqueSortedRDD[ID, String],
+      undefined: UniqueSortedRDD[ID, String]): UniqueSortedRDD[ID, String] = {
       defined.sortedLeftOuterJoin(undefined).flatMapOptionalValues {
         case (_, Some(_)) => None
         case (name, None) => Some(name)
@@ -300,7 +304,8 @@ case class FingerprintingCandidates()
       .join(rightNeighbors)
       .values.distinct
 
-    output(o.candidates,
+    output(
+      o.candidates,
       candidates
         .map { case (left, right) => Edge(left, right) }
         .randomNumbered(inputs.es.rdd.partitioner.get))
@@ -319,22 +324,23 @@ object FingerprintingCandidatesFromCommonNeighbors extends OpFromJson {
     val rightEdges = edgeBundle(right, target)
   }
   class Output(implicit instance: MetaGraphOperationInstance, inputs: Input)
-      extends MagicOutput(instance) {
+    extends MagicOutput(instance) {
     val candidates = edgeBundle(inputs.left.entity, inputs.right.entity)
   }
   def fromJson(j: JsValue) = FingerprintingCandidatesFromCommonNeighbors()
 }
 case class FingerprintingCandidatesFromCommonNeighbors()
-    extends TypedMetaGraphOp[FingerprintingCandidatesFromCommonNeighbors.Input, FingerprintingCandidatesFromCommonNeighbors.Output] {
+  extends TypedMetaGraphOp[FingerprintingCandidatesFromCommonNeighbors.Input, FingerprintingCandidatesFromCommonNeighbors.Output] {
   import FingerprintingCandidatesFromCommonNeighbors._
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val neighborsPartitioner = new HashPartitioner(
       inputs.rightEdges.rdd.partitions.size + inputs.leftEdges.rdd.partitions.size)

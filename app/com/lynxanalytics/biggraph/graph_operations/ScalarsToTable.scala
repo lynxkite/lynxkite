@@ -16,7 +16,8 @@ object ScalarsToTable extends OpFromJson {
       namesAndTypes.map { case (name, tt) => scalar(Symbol(name)) }
   }
   class Output(schema: types.StructType)(
-      implicit instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
+      implicit
+      instance: MetaGraphOperationInstance) extends MagicOutput(instance) {
     val t = table(schema)
   }
 
@@ -53,10 +54,11 @@ case class ScalarsToTable(schema: types.StructType) extends TypedMetaGraphOp[Inp
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(schema)(instance)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val df = new ScalarSRDDRelation(schema, inputDatas, rc.sqlContext).toDF
     output(o.t, df)
@@ -64,12 +66,12 @@ case class ScalarsToTable(schema: types.StructType) extends TypedMetaGraphOp[Inp
 }
 
 class ScalarSRDDRelation(
-  val schema: types.StructType,
-  val inputDatas: DataSet,
-  val sqlContext: spark.sql.SQLContext)
-    extends spark.sql.sources.BaseRelation
-    with spark.sql.sources.TableScan
-    with spark.sql.sources.PrunedScan {
+    val schema: types.StructType,
+    val inputDatas: DataSet,
+    val sqlContext: spark.sql.SQLContext)
+  extends spark.sql.sources.BaseRelation
+  with spark.sql.sources.TableScan
+  with spark.sql.sources.PrunedScan {
   def toDF = sqlContext.baseRelationToDataFrame(this)
 
   // TableScan

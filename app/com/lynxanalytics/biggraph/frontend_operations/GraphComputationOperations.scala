@@ -53,7 +53,8 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       val name = params("name")
       val algorithm = params("algorithm")
       assert(name.nonEmpty, "Please set an attribute name.")
-      val es = Direction(params("direction"),
+      val es = Direction(
+        params("direction"),
         project.edgeBundle, reversed = true).edgeBundle
       val op = graph_operations.HyperBallCentrality(
         params("maxDiameter").toInt, algorithm, params("bits").toInt)
@@ -144,10 +145,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
         val radAttr = project.vertexAttributes(params("radial"))
         val angAttr = project.vertexAttributes(params("angular"))
         val op = graph_operations.HyperbolicEdgeProbability()
-        op(op.vs, project.vertexSet)(op.es, project.edgeBundle
-        )(op.radial, radAttr.runtimeSafeCast[Double]
-        )(op.angular, angAttr.runtimeSafeCast[Double]
-        )(op.degree, degree)(op.clustering, clus).result
+        op(op.vs, project.vertexSet)(op.es, project.edgeBundle)(op.radial, radAttr.runtimeSafeCast[Double])(op.angular, angAttr.runtimeSafeCast[Double])(op.degree, degree)(op.clustering, clus).result
       }
       project.newEdgeAttribute("hyperbolic_edge_probability", result.edgeProbability,
         "hyperbolic edge probability")
@@ -168,7 +166,8 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       assert(params("name").nonEmpty, "Please set an attribute name.")
       val op = graph_operations.PageRank(params("damping").toDouble, params("iterations").toInt)
       val weightsName = params("weights")
-      val direction = Direction(params("direction"),
+      val direction = Direction(
+        params("direction"),
         project.edgeBundle, reversed = true)
       val es = direction.edgeBundle
       val weights =
@@ -296,8 +295,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
             op.es, direction.edgeBundle).result.clustering
         }
         val op = graph_operations.HyperMap(params("seed").toLong)
-        op(op.vs, project.vertexSet)(op.es, direction.edgeBundle
-        )(op.degree, degree)(op.clustering, clus).result
+        op(op.vs, project.vertexSet)(op.es, direction.edgeBundle)(op.degree, degree)(op.clustering, clus).result
       }
       project.newVertexAttribute("radial", result.radial)
       project.newVertexAttribute("angular", result.angular)
@@ -320,7 +318,8 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       def enabled =
         project.assertSegmentation &&
           project.hasVertexSet &&
-          FEStatus.assert(FEOption.list(parentDoubleAttributes).nonEmpty,
+          FEStatus.assert(
+            FEOption.list(parentDoubleAttributes).nonEmpty,
             "No numeric vertex attributes.")
       def apply() = {
         // partition target attribute to test and train sets

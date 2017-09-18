@@ -40,7 +40,8 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
       val toAttrName = params("toAttr")
       val fromAttr = project.vertexAttributes(fromAttrName)
       val toAttr = project.vertexAttributes(toAttrName)
-      assert(fromAttr.typeTag.tpe =:= toAttr.typeTag.tpe,
+      assert(
+        fromAttr.typeTag.tpe =:= toAttr.typeTag.tpe,
         s"$fromAttrName and $toAttrName are not of the same type.")
       applyAB(fromAttr, toAttr)
     }
@@ -127,7 +128,8 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
     }
   })
 
-  register("Predict edges with hyperbolic positions",
+  register(
+    "Predict edges with hyperbolic positions",
     List(projectInput))(new ProjectTransformation(_) {
       params ++= List(
         NonNegInt("size", "Number of predictions", default = 100),

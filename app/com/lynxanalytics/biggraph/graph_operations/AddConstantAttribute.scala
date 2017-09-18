@@ -8,9 +8,10 @@ object AddConstantAttribute {
   class Input extends MagicInputSignature {
     val vs = vertexSet
   }
-  class Output[T](implicit instance: MetaGraphOperationInstance,
-                  inputs: Input,
-                  typeTag: TypeTag[T]) extends MagicOutput(instance) {
+  class Output[T](implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input,
+      typeTag: TypeTag[T]) extends MagicOutput(instance) {
     val attr = vertexAttribute[T](inputs.vs.entity)
   }
 
@@ -42,7 +43,7 @@ object AddConstantAttribute {
 }
 import AddConstantAttribute._
 abstract class AddConstantAttribute[T]
-    extends TypedMetaGraphOp[Input, Output[T]] {
+  extends TypedMetaGraphOp[Input, Output[T]] {
 
   implicit def tt: TypeTag[T]
   val value: T
@@ -52,10 +53,11 @@ abstract class AddConstantAttribute[T]
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output()(instance, inputs, tt)
 
-  def execute(inputDatas: DataSet,
-              o: Output[T],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output[T],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
     output(o.attr, inputs.vs.rdd.mapValues(_ => value))
   }
@@ -65,7 +67,7 @@ object AddConstantDoubleAttribute extends OpFromJson {
   def fromJson(j: JsValue) = AddConstantDoubleAttribute((j \ "value").as[Double])
 }
 case class AddConstantDoubleAttribute(value: Double)
-    extends AddConstantAttribute[Double] {
+  extends AddConstantAttribute[Double] {
   @transient lazy val tt = typeTag[Double]
   override def toJson = Json.obj("value" -> value)
 }
@@ -74,7 +76,7 @@ object AddConstantIntAttribute extends OpFromJson {
   def fromJson(j: JsValue) = AddConstantIntAttribute((j \ "value").as[Int])
 }
 case class AddConstantIntAttribute(value: Int)
-    extends AddConstantAttribute[Int] {
+  extends AddConstantAttribute[Int] {
   @transient lazy val tt = typeTag[Int]
   override def toJson = Json.obj("value" -> value)
 }
@@ -83,7 +85,7 @@ object AddConstantStringAttribute extends OpFromJson {
   def fromJson(j: JsValue) = AddConstantStringAttribute((j \ "value").as[String])
 }
 case class AddConstantStringAttribute(value: String)
-    extends AddConstantAttribute[String] {
+  extends AddConstantAttribute[String] {
   @transient lazy val tt = typeTag[String]
   override def toJson = Json.obj("value" -> value)
 }

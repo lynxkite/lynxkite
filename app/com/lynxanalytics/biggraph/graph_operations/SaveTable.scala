@@ -7,8 +7,9 @@ object SaveTable extends OpFromJson {
   class Input extends MagicInputSignature {
     val t = table
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val t = table(inputs.t.entity.schema)
   }
 
@@ -26,10 +27,11 @@ case class SaveTable() extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     output(o.t, inputs.t.df)
   }

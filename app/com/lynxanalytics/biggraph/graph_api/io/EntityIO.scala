@@ -189,7 +189,7 @@ abstract class EntityIO(val entity: MetaGraphEntity, context: IOContext) {
 }
 
 class ScalarIO[T](entity: Scalar[T], context: IOContext)
-    extends EntityIO(entity, context) {
+  extends EntityIO(entity, context) {
 
   def read(parent: Option[VertexSetData]): ScalarData[T] = {
     assert(parent == None, s"Scalar read called with parent $parent")
@@ -228,7 +228,8 @@ class TableIO(entity: Table, context: IOContext) extends EntityIO(entity, contex
     log.info(s"PERF Loading table $entity from disk")
     val parquet = context.sparkSession.read.parquet(path.forReading.resolvedName)
     val df = columnsFromParquet(parquet)
-    assert(SQLHelper.allNullable(df.schema) == SQLHelper.allNullable(entity.schema),
+    assert(
+      SQLHelper.allNullable(df.schema) == SQLHelper.allNullable(entity.schema),
       s"Schema mismatch on read for $entity." +
         s"${df.schema.treeString} vs ${entity.schema.treeString}")
     log.info(s"PERF Loaded table $entity from disk")
@@ -296,9 +297,10 @@ case class RatioSorter(elements: Seq[Int], desired: Int) {
   }
 }
 
-abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEntity,
-                                                            context: IOContext)
-    extends EntityIO(entity, context) {
+abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](
+    entity: MetaGraphEntity,
+    context: IOContext)
+  extends EntityIO(entity, context) {
 
   // This class reflects the current state of the disk during the read operation
   case class EntityLocationSnapshot(availablePartitions: Map[Int, HadoopFile]) {
@@ -307,7 +309,8 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     val hasPartitionedData = hasPartitionedDirs && metaPathExists
 
     val legacyPathExists = (legacyPath / io.Success).forReading.exists
-    assert(hasPartitionedData || legacyPathExists,
+    assert(
+      hasPartitionedData || legacyPathExists,
       s"Legacy path ${legacyPath.forReading} does not exist," +
         s" and there seems to be no valid data in ${partitionedPath.forReading}")
 
@@ -340,7 +343,8 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
 
     val dataRead = finalRead(
       file, entityLocation.numVertices, serialization, partitioner, parent)
-    assert(dataRead.rdd.partitions.size == pn,
+    assert(
+      dataRead.rdd.partitions.size == pn,
       s"finalRead mismatch: ${dataRead.rdd.partitions.size} != $pn")
     dataRead
   }
@@ -389,18 +393,20 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
   // The parent VertexSetData is given for EdgeBundleData and AttributeData[T] so that
   // the corresponding data will be co-located.
   // A partitioner is also passed, because we don't want to create another one for VertexSetData
-  protected def finalRead(path: HadoopFile,
-                          count: Long,
-                          serialization: String,
-                          partitioner: spark.Partitioner,
-                          parent: Option[VertexSetData] = None): DT
+  protected def finalRead(
+    path: HadoopFile,
+    count: Long,
+    serialization: String,
+    partitioner: spark.Partitioner,
+    parent: Option[VertexSetData] = None): DT
 
   protected def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, T]
 
   private def bestPartitionedSource(
     entityLocation: EntityLocationSnapshot,
     desiredPartitionNumber: Int) = {
-    assert(entityLocation.availablePartitions.nonEmpty,
+    assert(
+      entityLocation.availablePartitions.nonEmpty,
       s"There should be valid sub directories in $partitionedPath")
     val ratioSorter =
       RatioSorter(entityLocation.availablePartitions.map(_._1).toSeq, desiredPartitionNumber)
@@ -408,8 +414,9 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
   }
 
   // Returns the file and the serialization format.
-  private def repartitionTo(entityLocation: EntityLocationSnapshot,
-                            partitioner: spark.Partitioner): (HadoopFile, String) = {
+  private def repartitionTo(
+    entityLocation: EntityLocationSnapshot,
+    partitioner: spark.Partitioner): (HadoopFile, String) = {
     if (entityLocation.hasPartitionedData)
       repartitionFromPartitionedRDD(entityLocation, partitioner)
     else
@@ -426,7 +433,8 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     val newRDD = oldRDD.sort(partitioner)
     val newFile = targetDir(pn)
     val lines = newFile.saveEntityRawRDD(newRDD)
-    assert(entityLocation.numVertices == lines,
+    assert(
+      entityLocation.numVertices == lines,
       s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
     (newFile, entityLocation.serialization)
   }
@@ -435,7 +443,8 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
   private def repartitionFromLegacyRDD(
     entityLocation: EntityLocationSnapshot,
     partitioner: spark.Partitioner): (HadoopFile, String) = {
-    assert(entityLocation.legacyPathExists,
+    assert(
+      entityLocation.legacyPathExists,
       s"There should be a valid legacy path at $legacyPath")
     val pn = partitioner.numPartitions
     val oldRDD = legacyRDD
@@ -443,7 +452,8 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
     val newRDD = oldRDD.sort(partitioner)
     val newFile = targetDir(pn)
     val (lines, serialization) = newFile.saveEntityRDD[T](newRDD, valueTypeTag)
-    assert(entityLocation.numVertices == lines,
+    assert(
+      entityLocation.numVertices == lines,
       s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
     val metadata = EntityMetadata(lines, Some(serialization))
     metadata.write(partitionedPath.forWriting)
@@ -469,17 +479,18 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](entity: MetaGraphEnt
 }
 
 class VertexSetIO(entity: VertexSet, context: IOContext)
-    extends PartitionedDataIO[Unit, VertexSetData](entity, context) {
+  extends PartitionedDataIO[Unit, VertexSetData](entity, context) {
 
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, Unit] = {
     path.loadLegacyEntityRDD[Unit](sc)
   }
 
-  def finalRead(path: HadoopFile,
-                count: Long,
-                serialization: String,
-                partitioner: spark.Partitioner,
-                parent: Option[VertexSetData]): VertexSetData = {
+  def finalRead(
+    path: HadoopFile,
+    count: Long,
+    serialization: String,
+    partitioner: spark.Partitioner,
+    parent: Option[VertexSetData]): VertexSetData = {
     assert(parent == None, s"finalRead for $entity should not take a parent option")
     val rdd = path.loadEntityRDD[Unit](sc, serialization)
     new VertexSetData(entity, rdd.asUniqueSortedRDD(partitioner), Some(count))
@@ -491,7 +502,7 @@ class VertexSetIO(entity: VertexSet, context: IOContext)
 }
 
 class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
-    extends PartitionedDataIO[Edge, EdgeBundleData](entity, context) {
+  extends PartitionedDataIO[Edge, EdgeBundleData](entity, context) {
 
   override def correspondingVertexSet = Some(entity.idSet)
 
@@ -499,12 +510,14 @@ class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
     path.loadLegacyEntityRDD[Edge](sc)
   }
 
-  def finalRead(path: HadoopFile,
-                count: Long,
-                serialization: String,
-                partitioner: spark.Partitioner,
-                parent: Option[VertexSetData]): EdgeBundleData = {
-    assert(partitioner eq parent.get.rdd.partitioner.get,
+  def finalRead(
+    path: HadoopFile,
+    count: Long,
+    serialization: String,
+    partitioner: spark.Partitioner,
+    parent: Option[VertexSetData]): EdgeBundleData = {
+    assert(
+      partitioner eq parent.get.rdd.partitioner.get,
       s"Partitioner mismatch for $entity.")
     val rdd = path.loadEntityRDD[Edge](sc, serialization)
     new EdgeBundleData(
@@ -519,7 +532,7 @@ class EdgeBundleIO(entity: EdgeBundle, context: IOContext)
 }
 
 class HybridBundleIO(entity: HybridBundle, context: IOContext)
-    extends PartitionedDataIO[ID, HybridBundleData](entity, context) {
+  extends PartitionedDataIO[ID, HybridBundleData](entity, context) {
 
   override def correspondingVertexSet = None
 
@@ -527,11 +540,12 @@ class HybridBundleIO(entity: HybridBundle, context: IOContext)
     throw new Exception("Unsupported")
   }
 
-  def finalRead(path: HadoopFile,
-                count: Long,
-                serialization: String,
-                partitioner: spark.Partitioner,
-                parent: Option[VertexSetData]): HybridBundleData = {
+  def finalRead(
+    path: HadoopFile,
+    count: Long,
+    serialization: String,
+    partitioner: spark.Partitioner,
+    parent: Option[VertexSetData]): HybridBundleData = {
     import scala.reflect._
     implicit val cv = classTag[ID]
     val idSerializer = EntitySerializer.forType(typeTag[ID]).name
@@ -545,7 +559,8 @@ class HybridBundleIO(entity: HybridBundle, context: IOContext)
     }
     new HybridBundleData(
       entity,
-      HybridRDD(largeKeysRDD,
+      HybridRDD(
+        largeKeysRDD,
         smallKeysRDD.asSortedRDD(partitioner),
         largeKeysSet),
       Some(count))
@@ -571,7 +586,7 @@ class HybridBundleIO(entity: HybridBundle, context: IOContext)
 }
 
 class AttributeIO[T](entity: Attribute[T], context: IOContext)
-    extends PartitionedDataIO[T, AttributeData[T]](entity, context) {
+  extends PartitionedDataIO[T, AttributeData[T]](entity, context) {
   override def correspondingVertexSet = Some(entity.vertexSet)
 
   def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, T] = {
@@ -579,12 +594,14 @@ class AttributeIO[T](entity: Attribute[T], context: IOContext)
     path.loadLegacyEntityRDD[T](sc)
   }
 
-  def finalRead(path: HadoopFile,
-                count: Long,
-                serialization: String,
-                partitioner: spark.Partitioner,
-                parent: Option[VertexSetData]): AttributeData[T] = {
-    assert(partitioner eq parent.get.rdd.partitioner.get,
+  def finalRead(
+    path: HadoopFile,
+    count: Long,
+    serialization: String,
+    partitioner: spark.Partitioner,
+    parent: Option[VertexSetData]): AttributeData[T] = {
+    assert(
+      partitioner eq parent.get.rdd.partitioner.get,
       s"Partitioner mismatch for $entity.")
     implicit val ct = entity.classTag
     implicit val tt = entity.typeTag

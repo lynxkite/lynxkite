@@ -39,8 +39,8 @@ abstract class EnumBucketer[T](options: Seq[T], hasOther: Boolean) extends Bucke
 }
 
 abstract class NumericBucketer[T: Numeric](
-  min: T, max: T, desiredBuckets: Int)
-    extends Bucketer[T] {
+    min: T, max: T, desiredBuckets: Int)
+  extends Bucketer[T] {
   protected val num: Numeric[T] = implicitly[Numeric[T]]
   import num.mkNumericOps
   import num.mkOrderingOps
@@ -65,7 +65,7 @@ abstract class NumericBucketer[T: Numeric](
 }
 
 abstract class FractionalBucketer[T: Fractional](min: T, max: T, desiredBuckets: Int)
-    extends NumericBucketer[T](min, max, desiredBuckets) {
+  extends NumericBucketer[T](min, max, desiredBuckets) {
   private val frac: Fractional[T] = implicitly[Fractional[T]]
   private implicit val fops = frac.mkNumericOps _
   override val bucketSize: T = (max - min) / num.fromInt(actualBuckets)
@@ -76,7 +76,7 @@ object StringBucketer extends FromJson[StringBucketer] {
     StringBucketer((j \ "options").as[Seq[String]], (j \ "hasOther").as[Boolean])
 }
 case class StringBucketer(options: Seq[String], hasOther: Boolean)
-    extends EnumBucketer[String](options, hasOther) {
+  extends EnumBucketer[String](options, hasOther) {
   val labelType = "bucket"
   override def toJson = Json.obj("options" -> options, "hasOther" -> hasOther)
   override def bucketFilters = {
@@ -88,7 +88,7 @@ case class StringBucketer(options: Seq[String], hasOther: Boolean)
 }
 
 abstract class DoubleBucketer(min: Double, max: Double, desiredBuckets: Int)
-    extends FractionalBucketer[Double](min, max, desiredBuckets) {
+  extends FractionalBucketer[Double](min, max, desiredBuckets) {
   val labelType = "between"
 
   def fmt(num: Double, decimals: Int): String =
@@ -132,7 +132,7 @@ object DoubleLinearBucketer extends FromJson[DoubleLinearBucketer] {
     DoubleLinearBucketer((j \ "min").as[Double], (j \ "max").as[Double], (j \ "numBuckets").as[Int])
 }
 case class DoubleLinearBucketer(min: Double, max: Double, desiredBuckets: Int)
-    extends DoubleBucketer(min, max, desiredBuckets) {
+  extends DoubleBucketer(min, max, desiredBuckets) {
   override def toJson = Json.obj(
     "min" -> min, "max" -> max, "numBuckets" -> desiredBuckets)
 }
@@ -150,8 +150,8 @@ object DoubleLogBucketer extends FromJson[DoubleLogBucketer] {
   }
 }
 case class DoubleLogBucketer(
-  min: Double, max: Double, minPositive: Option[Double], desiredBuckets: Int)
-    extends DoubleBucketer(min, max, desiredBuckets) {
+    min: Double, max: Double, minPositive: Option[Double], desiredBuckets: Int)
+  extends DoubleBucketer(min, max, desiredBuckets) {
   for (minPositive <- minPositive) {
     assert(minPositive > 0, s"Cannot take the logarithm of $minPositive.")
   }
@@ -188,7 +188,7 @@ object LongBucketer extends FromJson[LongBucketer] {
     LongBucketer((j \ "min").as[Long], (j \ "max").as[Long], (j \ "numBuckets").as[Int])
 }
 case class LongBucketer(min: Long, max: Long, desiredBuckets: Int)
-    extends NumericBucketer[Long](min, max, desiredBuckets) {
+  extends NumericBucketer[Long](min, max, desiredBuckets) {
   override def toJson = Json.obj(
     "min" -> min, "max" -> max, "numBuckets" -> desiredBuckets)
   val labelType = if ((max - min) / desiredBuckets == 0) "bucket" else "between"

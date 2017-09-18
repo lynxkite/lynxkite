@@ -11,7 +11,7 @@ import com.lynxanalytics.biggraph.graph_operations
 object Scripting {
 
   implicit class RichContainedVertexSet(
-    p: EntityContainer[VertexSet])(implicit m: MetaGraphManager) extends RichVertexSet(p.entity)
+      p: EntityContainer[VertexSet])(implicit m: MetaGraphManager) extends RichVertexSet(p.entity)
   implicit class RichVertexSet(self: VertexSet)(implicit manager: MetaGraphManager) {
     def const(value: String): Attribute[String] =
       graph_operations.AddConstantAttribute.run(self, value)
@@ -44,7 +44,7 @@ object Scripting {
   }
 
   implicit class RichContainedEdgeBundle(
-    p: EntityContainer[EdgeBundle])(implicit m: MetaGraphManager) extends RichEdgeBundle(p.entity)
+      p: EntityContainer[EdgeBundle])(implicit m: MetaGraphManager) extends RichEdgeBundle(p.entity)
   implicit class RichEdgeBundle(self: EdgeBundle)(implicit manager: MetaGraphManager) {
     def const(value: String): Attribute[String] =
       graph_operations.AddConstantAttribute.run(self.idSet, value)
@@ -74,8 +74,8 @@ object Scripting {
   }
 
   implicit class RichContainedAttribute[T](
-    p: EntityContainer[Attribute[T]])(implicit m: MetaGraphManager)
-      extends RichAttribute[T](p.entity)
+      p: EntityContainer[Attribute[T]])(implicit m: MetaGraphManager)
+    extends RichAttribute[T](p.entity)
   implicit class RichAttribute[T](self: Attribute[T])(implicit manager: MetaGraphManager) {
     def countScalar: Scalar[Long] = // Named to distinguish from EntityRDDData.count.
       graph_operations.Count.run(self.vertexSet)
@@ -104,32 +104,32 @@ object Scripting {
   }
 
   implicit class RichContainedStringAttribute(
-    p: EntityContainer[Attribute[String]])(implicit m: MetaGraphManager)
-      extends RichStringAttribute(p.entity)
+      p: EntityContainer[Attribute[String]])(implicit m: MetaGraphManager)
+    extends RichStringAttribute(p.entity)
   implicit class RichStringAttribute(self: Attribute[String])(implicit manager: MetaGraphManager) {
     def asDouble: Attribute[Double] =
       graph_operations.VertexAttributeToDouble.run(self)
   }
 
   implicit class RichContainedDoubleAttribute(
-    p: EntityContainer[Attribute[Double]])(implicit m: MetaGraphManager)
-      extends RichDoubleAttribute(p.entity)
+      p: EntityContainer[Attribute[Double]])(implicit m: MetaGraphManager)
+    extends RichDoubleAttribute(p.entity)
   implicit class RichDoubleAttribute(self: Attribute[Double])(implicit manager: MetaGraphManager) {
     def asLong: Attribute[Long] =
       graph_operations.DoubleAttributeToLong.run(self)
   }
 
   implicit class RichContainedLongAttribute(
-    p: EntityContainer[Attribute[Long]])(implicit m: MetaGraphManager)
-      extends RichLongAttribute(p.entity)
+      p: EntityContainer[Attribute[Long]])(implicit m: MetaGraphManager)
+    extends RichLongAttribute(p.entity)
   implicit class RichLongAttribute(self: Attribute[Long])(implicit manager: MetaGraphManager) {
     def asDouble: Attribute[Double] =
       graph_operations.LongAttributeToDouble.run(self)
   }
 
   implicit class RichContainedIntAttribute(
-    p: EntityContainer[Attribute[Int]])(implicit m: MetaGraphManager)
-      extends RichIntAttribute(p.entity)
+      p: EntityContainer[Attribute[Int]])(implicit m: MetaGraphManager)
+    extends RichIntAttribute(p.entity)
   implicit class RichIntAttribute(self: Attribute[Int])(implicit manager: MetaGraphManager) {
     def asLong: Attribute[Long] =
       graph_operations.IntAttributeToLong.run(self)
@@ -138,8 +138,8 @@ object Scripting {
   }
 
   implicit class RichContainedTable(
-    p: EntityContainer[Table])(implicit m: MetaGraphManager)
-      extends RichTable(p.entity)
+      p: EntityContainer[Table])(implicit m: MetaGraphManager)
+    extends RichTable(p.entity)
   implicit class RichTable(self: Table)(implicit manager: MetaGraphManager) {
     def toAttributes =
       graph_operations.TableToAttributes.run(self)
@@ -151,7 +151,8 @@ object Scripting {
   // two vertex sets.
   def parallelEdgeBundleUnion(
     first: EdgeBundle, others: EdgeBundle*)(
-      implicit m: MetaGraphManager): EdgeBundle = {
+    implicit
+    m: MetaGraphManager): EdgeBundle = {
     if (others.isEmpty) first
     else {
       others.foreach { other =>
@@ -159,7 +160,8 @@ object Scripting {
           first.srcVertexSet.gUID == other.srcVertexSet.gUID,
           s"Source vertex set of $first does not match that of $other so" +
             " they cannot be used together in a parallelEdgeBundleUnion")
-        assert(first.dstVertexSet.gUID == other.dstVertexSet.gUID,
+        assert(
+          first.dstVertexSet.gUID == other.dstVertexSet.gUID,
           s"Destination vertex set of $first does not match that of $other so" +
             " they cannot be used together in a parallelEdgeBundleUnion")
       }
@@ -184,7 +186,8 @@ object Scripting {
   // vertex sets represent disjoint mathematical sets.
   def generalEdgeBundleUnion(
     first: EdgeBundle, others: EdgeBundle*)(
-      implicit m: MetaGraphManager): EdgeBundle = {
+    implicit
+    m: MetaGraphManager): EdgeBundle = {
     if (others.isEmpty) first
     else {
       val all = first +: others

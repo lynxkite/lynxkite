@@ -110,7 +110,8 @@ object JDBCUtil {
     // Make sure we did not mess up.
     assert(order == order.sorted, s"Unexpected error while partitioning from $minKey to $maxKey.")
     // Make sure the same bound is not used twice. That would lead to duplicate data.
-    assert(bounds.size == bounds.toSet.size,
+    assert(
+      bounds.size == bounds.toSet.size,
       s"Could not split the range between $minKey and $maxKey into $numPartitions partitions.")
     if (bounds.isEmpty) {
       assert(numPartitions == 1, s"Unexpected partition count: $numPartitions")
@@ -140,10 +141,10 @@ object KeyTypes extends Enumeration {
 }
 
 case class TableStats(
-  count: Long,
-  keyType: KeyTypes.Value,
-  minLongKey: Option[Long] = None, maxLongKey: Option[Long] = None,
-  minStringKey: Option[String] = None, maxStringKey: Option[String] = None)
+    count: Long,
+    keyType: KeyTypes.Value,
+    minLongKey: Option[Long] = None, maxLongKey: Option[Long] = None,
+    minStringKey: Option[String] = None, maxStringKey: Option[String] = None)
 object TableStats {
   // Runs a query on the JDBC table to learn the TableStats values.
   def apply(url: String, table: String, keyColumn: String): TableStats = {

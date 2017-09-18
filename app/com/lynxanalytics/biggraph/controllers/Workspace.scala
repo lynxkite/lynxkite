@@ -75,8 +75,9 @@ case class Workspace(
     // Determines the topological order by selecting a node without in-edges, removing the node and
     // its connections and calling itself on the remaining graph.
     @tailrec
-    def discover(reversedTopologicalOrder: List[Box],
-                 remainingBoxInDegrees: List[(Box, Int)]): Dependencies =
+    def discover(
+      reversedTopologicalOrder: List[Box],
+      remainingBoxInDegrees: List[(Box, Int)]): Dependencies =
       if (remainingBoxInDegrees.isEmpty) {
         Dependencies(reversedTopologicalOrder.reverse, List())
       } else {
@@ -84,8 +85,7 @@ case class Workspace(
         if (lowestDegree > 0) {
           Dependencies(
             topologicalOrder = reversedTopologicalOrder.reverse,
-            withCircularDependency = remainingBoxInDegrees.map(_._1)
-          )
+            withCircularDependency = remainingBoxInDegrees.map(_._1))
         } else {
           val dependants = outEdges.getOrElse(nextBox.id, Seq())
           val updatedInDegrees = remainingBoxInDegrees.withFilter(_._1 != nextBox)
@@ -238,18 +238,18 @@ case class Box(
 }
 
 case class BoxOutput(
-  boxId: String,
-  id: String)
+    boxId: String,
+    id: String)
 
 case class BoxMetadata(
-  categoryId: String,
-  icon: String,
-  color: String,
-  operationId: String,
-  inputs: List[String],
-  outputs: List[String],
-  description: Option[String] = None,
-  htmlId: Option[String] = None)
+    categoryId: String,
+    icon: String,
+    color: String,
+    operationId: String,
+    inputs: List[String],
+    outputs: List[String],
+    description: Option[String] = None,
+    htmlId: Option[String] = None)
 
 object BoxOutputKind {
   val Project = "project"
@@ -265,8 +265,8 @@ object BoxOutputKind {
 }
 
 case class VisualizationState(
-  uiStatus: TwoSidedUIStatus,
-  project: RootProjectEditor)
+    uiStatus: TwoSidedUIStatus,
+    project: RootProjectEditor)
 object VisualizationState {
   def fromString(uiStatus: String, project: RootProjectEditor): VisualizationState = {
     import UIStatusSerialization.fTwoSidedUIStatus
@@ -293,8 +293,9 @@ object BoxOutputState {
     BoxOutputState(BoxOutputKind.Plot, Some(json.Json.obj("guid" -> plot.gUID)))
   }
 
-  def from(exportResult: graph_api.Scalar[String],
-           params: Map[String, String]): BoxOutputState = {
+  def from(
+    exportResult: graph_api.Scalar[String],
+    params: Map[String, String]): BoxOutputState = {
     BoxOutputState(BoxOutputKind.ExportResult, Some(json.Json.obj(
       "guid" -> exportResult.gUID, "parameters" -> params)))
   }
@@ -310,8 +311,7 @@ object BoxOutputState {
       BoxOutputKind.Visualization,
       Some(json.Json.obj(
         "uiStatus" -> v.uiStatus,
-        "project" -> json.Json.toJson(v.project.rootState))
-      ))
+        "project" -> json.Json.toJson(v.project.rootState))))
   }
 }
 
@@ -320,7 +320,8 @@ case class BoxOutputState(
     state: Option[json.JsValue],
     success: FEStatus = FEStatus.enabled) {
   BoxOutputKind.assertKind(kind)
-  assert(success.enabled ^ (state.isEmpty || state.get == null),
+  assert(
+    success.enabled ^ (state.isEmpty || state.get == null),
     "State should be present iff computation was successful")
 
   def isError = !success.enabled
@@ -367,8 +368,7 @@ case class BoxOutputState(
     val projectState = (state.get \ "project").as[CommonProjectState]
     VisualizationState(
       (state.get \ "uiStatus").as[TwoSidedUIStatus],
-      new RootProjectEditor(projectState)
-    )
+      new RootProjectEditor(projectState))
   }
 
   // JsonMigration may want to update GUIDs of updated operations.

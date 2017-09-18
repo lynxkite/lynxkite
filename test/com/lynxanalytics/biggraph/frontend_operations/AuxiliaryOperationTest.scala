@@ -40,7 +40,8 @@ class AuxiliaryOperationTest extends OperationsTestBase {
 
   test("Parametric parameters work") {
     val fiftyFives = box("Create example graph")
-      .box("Add constant vertex attribute",
+      .box(
+        "Add constant vertex attribute",
         Map("name" -> "const55", "type" -> "Double"),
         Seq(),
         Map("value" -> "${ (1 to 10).sum }"))

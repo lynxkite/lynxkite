@@ -17,8 +17,9 @@ object TrainDecisionTreeClassifier extends OpFromJson {
     }
     val label = runtimeTypedVertexAttribute(vertices, 'label, labelType.typeTag)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val model = scalar[Model]
   }
   def fromJson(j: JsValue): TypedMetaGraphOp.Type = {
@@ -74,10 +75,11 @@ case class TrainDecisionTreeClassifier[T: TypeTag](
     (if (featureTypes.forall(_ == SerializableType.double)) Json.obj() else Json.obj(
       "featureTypes" -> featureTypes.map(f => f.toJson)))
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val sqlContext = rc.dataManager.newSQLContext()
     import sqlContext.implicits._

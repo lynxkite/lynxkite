@@ -23,8 +23,9 @@ object FindModularClusteringByTweaks extends OpFromJson {
     val (vs, edges) = graph
     val weights = edgeAttribute[Double](edges)
   }
-  class Output(implicit instance: MetaGraphOperationInstance,
-               inputs: Input) extends MagicOutput(instance) {
+  class Output(implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input) extends MagicOutput(instance) {
     val clusters = vertexSet
     val belongsTo = edgeBundle(
       inputs.vs.entity, clusters, properties = EdgeBundleProperties.partialFunction)
@@ -220,7 +221,8 @@ object FindModularClusteringByTweaks extends OpFromJson {
       val asPlusMinus = eigenVector.map(x => if (x < 0) -1.0 else 1.0)
       val modularityDelta = dot(asPlusMinus, multiply(asPlusMinus)) / totalDegreeSum / 2.0
       val withGroupLabels = indexedIds.zip(asPlusMinus)
-      (withGroupLabels.filter(_._2 > 0).map(_._1).toSet,
+      (
+        withGroupLabels.filter(_._2 > 0).map(_._1).toSet,
         withGroupLabels.filter(_._2 < 0).map(_._1).toSet,
         modularityDelta)
     }
@@ -265,7 +267,8 @@ object FindModularClusteringByTweaks extends OpFromJson {
       .map {
         case (id, connection) =>
           (id,
-            (mergeModularityChange(totalDegreeSum, cluster, clusters(id), connection),
+            (
+              mergeModularityChange(totalDegreeSum, cluster, clusters(id), connection),
               connection))
       }
       .toMap
@@ -525,10 +528,11 @@ case class FindModularClusteringByTweaks(
     maxIterationsParameter.toJson(maxIterations) ++
       minIncrementPerIterationParameter.toJson(minIncrementPerIteration)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val vs = inputs.vs.rdd
     val vPart = vs.partitioner.get

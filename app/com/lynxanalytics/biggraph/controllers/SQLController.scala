@@ -42,10 +42,12 @@ object DataFrameSpec extends FromJson[DataFrameSpec] {
 }
 
 case class DataFrameSpec(directory: Option[String], project: Option[String], sql: String) {
-  assert(directory.isDefined ^ project.isDefined,
+  assert(
+    directory.isDefined ^ project.isDefined,
     "Exactly one of directory and project should be defined")
   def createDataFrame(user: User, context: SQLContext)(
-    implicit dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
+    implicit
+    dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
     if (project.isDefined) ??? // TODO: Delete this method.
     else globalSQL(user, context)
   }
@@ -58,9 +60,11 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
 
   // Creates a DataFrame from a global level SQL query.
   private def globalSQL(user: serving.User, context: SQLContext)(
-    implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame =
+    implicit
+    dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame =
     metaManager.synchronized {
-      assert(project.isEmpty,
+      assert(
+        project.isEmpty,
         "The project field in the DataFrameSpec must be empty for global SQL queries.")
 
       val directoryName = directory.get
@@ -90,7 +94,8 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
   private def queryTables(
     sql: String,
     tables: Iterable[(String, Table)])(
-      implicit dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame = {
+    implicit
+    dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame = {
     import Scripting._
     val dfs = tables.map { case (name, table) => name -> table.df }
     DataManager.sql(dataManager.newSQLContext, sql, dfs.toList)
@@ -101,25 +106,25 @@ case class SQLColumn(name: String, dataType: String)
 case class SQLQueryResult(header: List[SQLColumn], data: List[List[DynamicValue]])
 
 case class SQLExportToTableRequest(
-  dfSpec: DataFrameSpec,
-  table: String,
-  privacy: String,
-  overwrite: Boolean)
+    dfSpec: DataFrameSpec,
+    table: String,
+    privacy: String,
+    overwrite: Boolean)
 case class SQLExportToCSVRequest(
-  dfSpec: DataFrameSpec,
-  path: String,
-  header: Boolean,
-  delimiter: String,
-  quote: String)
+    dfSpec: DataFrameSpec,
+    path: String,
+    header: Boolean,
+    delimiter: String,
+    quote: String)
 case class SQLExportToJsonRequest(
-  dfSpec: DataFrameSpec,
-  path: String)
+    dfSpec: DataFrameSpec,
+    path: String)
 case class SQLExportToParquetRequest(
-  dfSpec: DataFrameSpec,
-  path: String)
+    dfSpec: DataFrameSpec,
+    path: String)
 case class SQLExportToORCRequest(
-  dfSpec: DataFrameSpec,
-  path: String)
+    dfSpec: DataFrameSpec,
+    path: String)
 case class SQLExportToJdbcRequest(
     dfSpec: DataFrameSpec,
     jdbcUrl: String,
@@ -135,7 +140,8 @@ case class SQLExportToFileResult(download: Option[serving.DownloadFileRequest])
 
 object FileImportValidator {
   def checkFileHasContents(hadoopFile: HadoopFile): Unit = {
-    assert(hadoopFile.list.map(f => f.getContentSummary.getSpaceConsumed).sum > 0,
+    assert(
+      hadoopFile.list.map(f => f.getContentSummary.getSpaceConsumed).sum > 0,
       s"No data was found at '${hadoopFile.symbolicName}' (no or empty files).")
   }
 }
@@ -147,20 +153,20 @@ object FileImportValidator {
 // isImplictTable = true. (Implicit tables are the vertices, edge_attributes,
 // and etc. tables that are automatically parts of projects.)
 case class TableBrowserNodeRequest(
-  path: String,
-  query: Option[String],
-  isImplicitTable: Boolean = false)
+    path: String,
+    query: Option[String],
+    isImplicitTable: Boolean = false)
 
 case class TableBrowserNode(
-  absolutePath: String,
-  name: String,
-  objectType: String,
-  columnType: String = "")
+    absolutePath: String,
+    name: String,
+    objectType: String,
+    columnType: String = "")
 case class TableBrowserNodeResponse(list: Seq[TableBrowserNode])
 
 case class TableBrowserNodeForBoxRequest(
-  operationRequest: GetOperationMetaRequest,
-  path: String)
+    operationRequest: GetOperationMetaRequest,
+    path: String)
 
 class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   implicit val metaManager = env.metaGraphManager
@@ -247,10 +253,8 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
         TableBrowserNode(
           absolutePath = frame.path.toString,
           name = frame.path.name.name,
-          objectType = getObjectType(frame)
-        )
-      }
-    ).toList)
+          objectType = getObjectType(frame))
+      }).toList)
   }
 
   private def getSnapshot(user: serving.User, frame: SnapshotFrame, pathTail: Seq[String]): TableBrowserNodeResponse = {
@@ -291,8 +295,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
           absolutePath =
             (Seq(path.toString) ++ subPath ++ Seq(segmentation.segmentationName)).mkString("."),
           name = segmentation.segmentationName,
-          objectType = "segmentation"
-        )
+          objectType = "segmentation")
     }
 
     TableBrowserNodeResponse(list = implicitTables ++ subProjects)
@@ -306,8 +309,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
           name = field.name,
           objectType = "column",
           columnType = ProjectViewer.feTypeName(
-            SQLHelper.typeTagFromDataType(field.dataType))
-        )
+            SQLHelper.typeTagFromDataType(field.dataType)))
       })
   }
 
@@ -336,8 +338,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
             case (null, field) => DynamicValue("null", defined = false)
             case (item, (name, tt)) => DynamicValue.convert(item)(tt)
           }
-      }.toList
-    )
+      }.toList)
   }
 
   // TODO: Remove code duplication

@@ -15,8 +15,9 @@ object SegmentByVectorAttribute extends OpFromJson {
     val vs = vertexSet
     val attr = vertexAttribute[Vector[T]](vs)
   }
-  class Output[T: TypeTag](implicit instance: MetaGraphOperationInstance,
-                           inputs: Input[T]) extends MagicOutput(instance) {
+  class Output[T: TypeTag](implicit
+      instance: MetaGraphOperationInstance,
+      inputs: Input[T]) extends MagicOutput(instance) {
     val segments = vertexSet
     val belongsTo = edgeBundle(inputs.vs.entity, segments, EdgeBundleProperties.partialFunction)
     val label = vertexAttribute[T](segments)
@@ -31,17 +32,18 @@ object SegmentByVectorAttribute extends OpFromJson {
 import SegmentByVectorAttribute._
 import SerializableType.Implicits._
 case class SegmentByVectorAttribute[T: SerializableType]()
-    extends TypedMetaGraphOp[Input[T], Output[T]] {
+  extends TypedMetaGraphOp[Input[T], Output[T]] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input[T]()
   def outputMeta(instance: MetaGraphOperationInstance) =
     new Output[T]()(implicitly[SerializableType[T]].typeTag, instance, inputs)
   override def toJson = Json.obj("type" -> implicitly[SerializableType[T]].toJson)
 
-  def execute(inputDatas: DataSet,
-              o: Output[T],
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output[T],
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = inputs.attr.meta.classTag
     implicit val paramCT = RuntimeSafeCastable.classTagFromTypeTag[T]

@@ -75,7 +75,7 @@ case class InducedRDD[T: ClassTag](rdd: RDD[T], partitioner: Partitioner) {
 
 import InducedEdgeBundle._
 case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = true)
-    extends TypedMetaGraphOp[Input, Output] {
+  extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input(induceSrc, induceDst)
 
@@ -83,10 +83,11 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
     new Output(induceSrc, induceDst)(instance, inputs)
   override def toJson = Json.obj("induceSrc" -> induceSrc, "induceDst" -> induceDst)
 
-  def execute(inputDatas: DataSet,
-              o: Output,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val instance = output.instance
     implicit val runtimeContext = rc
@@ -161,7 +162,8 @@ case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = tru
       // A non-function mapping can introduce duplicates. We need to generate new IDs.
       val renumbered = dstInduced.rdd.randomNumbered(dstInduced.partitioner)
       output(o.induced, renumbered.mapValues { case (oldId, edge) => edge })
-      output(o.embedding,
+      output(
+        o.embedding,
         renumbered.mapValuesWithKeys { case (newId, (oldId, edge)) => Edge(newId, oldId) })
     }
   }

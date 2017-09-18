@@ -46,11 +46,13 @@ class PrefixACLs {
     assert(diffWrite.isEmpty, s"WRITE_ACL defined for non existing prefixes: $diffWrite")
 
     val diffWriteRead = writeACLs.keys.toSet &~ readACLs.keys.toSet
-    assert(diffWriteRead.isEmpty,
+    assert(
+      diffWriteRead.isEmpty,
       s"No READ_ACL is defined for these prefixes: $diffWriteRead")
 
     val diffReadWrite = readACLs.keys.toSet &~ writeACLs.keys.toSet
-    assert(diffReadWrite.isEmpty,
+    assert(
+      diffReadWrite.isEmpty,
       s"No WRITE_ACL is defined for these prefixes: $diffWriteRead")
   }
 }
@@ -87,7 +89,8 @@ object PrefixRepositoryImpl {
   }
 
   private def checkPathSanity(path: String) = {
-    assert(path.isEmpty || path.endsWith("@") || path.endsWith("/"),
+    assert(
+      path.isEmpty || path.endsWith("@") || path.endsWith("/"),
       s"path: $path should either be empty or end with a @ or with a slash.")
     // Only local clusters can reference local files
     assert(

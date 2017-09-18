@@ -17,7 +17,7 @@ object ConnectedComponents extends OpFromJson {
   def fromJson(j: JsValue) = ConnectedComponents((j \ "maxEdgesProcessedLocally").as[Int])
 }
 case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
-    extends TypedMetaGraphOp[GraphInput, Segmentation] {
+  extends TypedMetaGraphOp[GraphInput, Segmentation] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 
@@ -32,10 +32,11 @@ case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
   }
   override def toJson = Json.obj("maxEdgesProcessedLocally" -> maxEdgesProcessedLocally)
 
-  def execute(inputDatas: DataSet,
-              o: Segmentation,
-              output: OutputBuilder,
-              rc: RuntimeContext): Unit = {
+  def execute(
+    inputDatas: DataSet,
+    o: Segmentation,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val inputEdges = inputs.es.rdd.values
       .map(edge => (edge.src, edge.dst))

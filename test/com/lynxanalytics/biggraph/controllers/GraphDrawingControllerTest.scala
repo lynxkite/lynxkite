@@ -204,13 +204,11 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       srcIdx = 0,
       dstIdx = 0,
       edges = Seq(FEEdge(0, 1, 1.0), FEEdge(0, 2, 1.0), FEEdge(1, 2, 1.0), FEEdge(1, 3, 1.0)),
-      layout3D = Map()
-    )
+      layout3D = Map())
     val vd = VertexDiagramResponse(
       diagramId = "vertexDiagramId",
       vertices = Seq(FEVertex(1.0, 0, 0), FEVertex(5.0, 0, 1), FEVertex(10.0, 1, 0), FEVertex(2.0, 1, 1)),
-      mode = "bucketed"
-    )
+      mode = "bucketed")
     val res = controller.relativeEdgeDensity(ed, vd, vd)
     val edgeSizes = res.edges.map(_.size)
     assert(edgeSizes == Seq(0.2, 0.1, 0.02, 0.1))
@@ -223,13 +221,11 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
       srcIdx = 0,
       dstIdx = 0,
       edges = Seq(FEEdge(0, 1, 1.0), FEEdge(0, 2, 1.0), FEEdge(1, 2, 1.0), FEEdge(1, 3, 1.0)),
-      layout3D = Map()
-    )
+      layout3D = Map())
     val vd = VertexDiagramResponse(
       diagramId = "vertexDiagramId",
       vertices = Seq(FEVertex(0.0, 0, 0), FEVertex(5.0, 0, 1), FEVertex(10.0, 1, 0), FEVertex(2.0, 1, 1)),
-      mode = "bucketed"
-    )
+      mode = "bucketed")
     val res = controller.relativeEdgeDensity(ed, vd, vd)
     val edgeSizes = res.edges.map(_.size)
     assert(edgeSizes == Seq(0.0, 0.0, 0.02, 0.1))
