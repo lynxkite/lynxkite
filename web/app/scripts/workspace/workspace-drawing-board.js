@@ -450,7 +450,7 @@ angular.module('biggraph')
         };
 
         scope.copyBoxes = function(e) {
-          if (!scope.drawingBoardHasFocus() || scope.popups.length > 0) {
+          if (!scope.drawingBoardHasFocus() || window.getSelection().toString()) {
             return;
           }
           var data = JSON.stringify(
