@@ -29,12 +29,6 @@ sys.path.append('remote_api/python')
 from utils.ecosystem_lib import Ecosystem
 from utils.ecosystem_lib import arg_parser
 
-arg_parser.add_argument(
-    '--emr_instance_count',
-    type=int,
-    default=3,
-    help='Number of instances on EMR cluster, including master.')
-
 
 def main(args):
   # We don't want to stop a cluster which was just started.

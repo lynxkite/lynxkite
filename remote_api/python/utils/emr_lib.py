@@ -9,6 +9,8 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib
+import json
 
 
 def call_cmd(cmd_list, input=None, print_output=True, assert_successful=True):
@@ -52,6 +54,66 @@ def call_cmd(cmd_list, input=None, print_output=True, assert_successful=True):
     return result, proc.returncode
 
 
+def get_on_demand_costs():
+  """
+  Returns a dictionary that specifies the on demand price for (region,instance_type) tuples,
+  like this:
+
+  {
+    ...
+    ('us-west-1', 'i3.4xlarge'): '1.3760000000',
+    ...
+  }
+  """
+  ec2_url = 'https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/index.json'
+  ec2_json = urllib.request.urlopen(ec2_url)
+  data = ec2_json.read().decode('UTF-8')
+  costs = json.loads(data)
+  on_demand = costs['terms']['OnDemand']
+  products = costs['products']
+  region_2_code = {
+      'US East (Ohio)': 'us-east-2',
+      'US East (N. Virginia)': 'us-east-1',
+      'US West (N. California)': 'us-west-1',
+      'US West (Oregon)': 'us-west-2',
+      'Asia Pacific (Mumbai)': 'ap-south-1',
+      'Asia Pacific (Seoul)': 'ap-northeast-2',
+      'Asia Pacific (Singapore)': 'ap-southeast-1',
+      'Asia Pacific (Sydney)': 'ap-southeast-2',
+      'Asia Pacific (Tokyo)': 'ap-northeast-1',
+      'Canada (Central)': 'ca-central-1',
+      'EU (Frankfurt)': 'eu-central-1',
+      'EU (Ireland)': 'eu-west-1',
+      'EU (London)': 'eu-west-2',
+      'South America (Sao Paulo)': 'sa-east-1',
+  }
+
+  def get_dic_value(d):
+    return next(iter(d.values()))
+
+  output = {}
+  for k in products.keys():
+    v = products[k]
+    if v['productFamily'] == 'Compute Instance':
+      attr = v['attributes']
+      if attr['operatingSystem'] == 'Linux' and attr['tenancy'] == 'Shared':
+        location = attr['location']
+        if location != 'AWS GovCloud (US)':
+          loc_code = region_2_code[location]
+          instance_type = attr['instanceType']
+          key = (loc_code, instance_type)
+          assert(key not in output)
+          sku = v['sku']
+          term = on_demand[sku]
+          price_dimensions = get_dic_value(term)['priceDimensions']
+          price_info = get_dic_value(price_dimensions)
+          assert(price_info['unit'] == 'Hrs')
+          price = price_info['pricePerUnit']
+          usd = price['USD']
+          output[key] = usd
+  return output
+
+
 class EMRLib:
 
   def __init__(self, ec2_key_file, ec2_key_name, region='us-east-1'):
@@ -62,6 +124,8 @@ class EMRLib:
     self.rds_client = boto3.client('rds', region_name=region)
     self.s3_client = boto3.client('s3', region_name=region)
     _, self.ssh_tmp_hosts_file = tempfile.mkstemp()
+    self.region = region
+    self.on_demand_costs = None
 
   def wait_for_services(self, services):
     '''Waits and pools until all the items in 'services' have is_ready() == True'''
@@ -91,11 +155,34 @@ class EMRLib:
           return
       time.sleep(15)
 
+  def create_instance_description(self, spot, instance_type, instance_count, master):
+    assert(not master or instance_count == 1)
+    market = 'SPOT' if spot else 'ON DEMAND'
+    role = 'MASTER' if master else 'CORE'
+    name = role + ' instance group'
+    desc = {
+        'InstanceRole': role,
+        'Market': market,
+        'Name': name,
+        'InstanceType': instance_type,
+        'InstanceCount': instance_count
+    }
+    if spot:
+      if not self.on_demand_costs:
+        self.on_demand_costs = get_on_demand_costs()
+      region_instance = (self.region, instance_type)
+      on_demand_price = self.on_demand_costs[region_instance]
+      desc['BidPrice'] = on_demand_price.rstrip('0')
+    return desc
+
   def create_or_connect_to_emr_cluster(
           self, name, log_uri, owner, expiry,
           instance_count=2,
           hdfs_replication='2',
-          applications=''):
+          applications='',
+          core_instance_type='m3.2xlarge',
+          master_instance_type='m3.2xlarge',
+          spot=False):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
@@ -115,17 +202,18 @@ class EMRLib:
     emr_applications = []
     if applications:
       emr_applications = [{'Name': app} for app in applications.split(',')]
+    master_desc = self.create_instance_description(spot, master_instance_type, 1, master=True)
+    core_desc = self.create_instance_description(
+        spot, core_instance_type, instance_count - 1, master=False)
     res = self.emr_client.run_job_flow(
         Name=name,
         LogUri=log_uri,
         ReleaseLabel='emr-5.2.0',
         Instances={
-            'MasterInstanceType': 'm3.2xlarge',
-            'SlaveInstanceType': 'm3.2xlarge',
-            'InstanceCount': instance_count,
             'Ec2KeyName': self.ec2_key_name,
             'KeepJobFlowAliveWhenNoSteps': True,
-            'TerminationProtected': True
+            'TerminationProtected': True,
+            'InstanceGroups': [master_desc, core_desc]
         },
         Configurations=[
             {
