@@ -89,6 +89,12 @@
   color: #004165;
 }
 
+.path-element:hover,
+.path-element:focus {
+  background: white;
+  cursor: pointer;
+}
+
 .disabled {
   color: darkgrey !important;
   background: white !important;
