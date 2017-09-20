@@ -2,7 +2,6 @@ from utils.emr_lib import EMRLib
 import os
 import argparse
 import datetime
-import boto3
 
 arg_parser = argparse.ArgumentParser()
 
@@ -112,6 +111,23 @@ arg_parser.add_argument(
   is started. Can be used to override config files (e.g. prefix_definitions.txt) for testing. Takes
   a comma separated list of source:destination pairs.
   E.g.: ${TEST_CONFIGS}/prefix_definitions.txt:/mnt/lynx/config/prefix_definitions.txt,...''')
+arg_parser.add_argument(
+    '--master_instance_type',
+    help='''The type of the instance that will run the LynxKite driver. (E.g., m3.xlarge)''',
+    default='m3.2xlarge')
+arg_parser.add_argument(
+    '--core_instance_type',
+    help='''The type of the instance that will run the executors. (E.g., m3.xlarge)''',
+    default='m3.2xlarge')
+arg_parser.add_argument(
+    '--emr_instance_count',
+    type=int,
+    default=3,
+    help='Number of instances on EMR cluster, including master.')
+arg_parser.add_argument(
+    '--spot',
+    action='store_true',
+    help='Use spot instances instead of on demand instances. Bid for the same price as an on demand instance')
 
 
 class Ecosystem:
@@ -129,9 +145,12 @@ class Ecosystem:
         'with_rds': args.with_rds,
         'with_jupyter': args.with_jupyter,
         'rm': args.rm,
+        'spot': args.spot,
         'owner': args.owner,
         'expiry': args.expiry,
         'applications': args.applications,
+        'master_instance_type': args.master_instance_type,
+        'core_instance_type': args.core_instance_type,
     }
     self.lynxkite_config = {
         'biggraph_releases_dir': args.biggraph_releases_dir,
@@ -170,6 +189,9 @@ class Ecosystem:
         instance_count=conf['emr_instance_count'],
         hdfs_replication=conf['hdfs_replication'],
         applications=conf['applications'],
+        core_instance_type=conf['core_instance_type'],
+        master_instance_type=conf['master_instance_type'],
+        spot=conf['spot'],
     )
     self.instances = [self.cluster]
     # Spin up a mysql RDS instance only if requested.
