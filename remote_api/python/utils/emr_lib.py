@@ -91,10 +91,11 @@ def get_on_demand_costs():
   def get_dic_value(d):
     return next(iter(d.values()))
 
+  uncharted_regions = set()
   output = {}
   for k in products.keys():
     v = products[k]
-    if v['productFamily'] == 'Compute Instance':
+    if ('productFamily' in v) and (v['productFamily'] == 'Compute Instance'):
       attr = v['attributes']
       if attr['operatingSystem'] == 'Linux' and attr['tenancy'] == 'Shared':
         location = attr['location']
@@ -111,6 +112,10 @@ def get_on_demand_costs():
           price = price_info['pricePerUnit']
           usd = price['USD']
           output[key] = usd
+        else:
+          uncharted_regions.add(location)
+  for ur in uncharted_regions:
+    print('Skipped region: ' + ur)
   return output
 
 
