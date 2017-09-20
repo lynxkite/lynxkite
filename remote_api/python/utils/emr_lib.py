@@ -54,7 +54,7 @@ def call_cmd(cmd_list, input=None, print_output=True, assert_successful=True):
     return result, proc.returncode
 
 
-def get_on_demand_costs():
+def get_on_demand_costs_and_print_skipped_regions():
   """
   Returns a dictionary that specifies the on demand price for (region,instance_type) tuples,
   like this:
@@ -95,7 +95,7 @@ def get_on_demand_costs():
   output = {}
   for k in products.keys():
     v = products[k]
-    if ('productFamily' in v) and (v['productFamily'] == 'Compute Instance'):
+    if v.get('productFamily') == 'Compute Instance':
       attr = v['attributes']
       if attr['operatingSystem'] == 'Linux' and attr['tenancy'] == 'Shared':
         location = attr['location']
@@ -174,7 +174,7 @@ class EMRLib:
     }
     if spot:
       if not self.on_demand_costs:
-        self.on_demand_costs = get_on_demand_costs()
+        self.on_demand_costs = get_on_demand_costs_and_print_skipped_regions()
       on_demand_price = self.on_demand_costs[self.region, instance_type]
       desc['BidPrice'] = '{:.3f}'.format(float(on_demand_price))
     return desc

@@ -25,9 +25,9 @@ import json
 os.chdir(os.path.dirname(__file__))
 sys.path.append('../remote_api/python')
 
-from utils.emr_lib import get_on_demand_costs
+from utils.emr_lib import get_on_demand_costs_and_print_skipped_regions
 
-costs = get_on_demand_costs()
+costs = get_on_demand_costs_and_print_skipped_regions()
 
 
 def jsonable_key(str1, str2):
