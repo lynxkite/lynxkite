@@ -13,6 +13,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Users can now set SQL box summaries.
  - SQL boxes can optionally persist their outputs.
  - _Train a decision tree classification model_ can use String attributes.
+ - Nagivate directories by clicking on the path segments on the splash page.
  - A number of minor bugfixes and improvements. Thanks for the feedback!
 
 ### 2.0.0

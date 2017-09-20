@@ -1052,6 +1052,10 @@ Selector.prototype = {
     element(by.id('pop-directory-icon')).click();
   },
 
+  setDirectory: function(n) {
+    $('#current-directory > span.lead > span:nth-child(' + n + ') > span.path-element').click();
+  },
+
   renameWorkspace: function(name, newName) {
     var workspace = this.workspace(name);
     testLib.menuClick(workspace, 'rename');
