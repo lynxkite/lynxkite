@@ -156,4 +156,18 @@ module.exports = function(fw) {
       lib.splash.expectNumDirectories(1);
       lib.splash.popDirectory();
     });
+
+  fw.statePreservingTest(
+    'empty splash',
+    'navigate dirs by clicking on path segment',
+    function() {
+      lib.splash.newDirectory('red');
+      lib.splash.newDirectory('green');
+      lib.splash.newDirectory('blue');
+      lib.splash.setDirectory(2);
+      lib.splash.expectDirectoryListed('blue');
+      lib.splash.setDirectory(1);
+      lib.splash.expectDirectoryListed('green');
+      lib.splash.popDirectory();
+    });
 };
