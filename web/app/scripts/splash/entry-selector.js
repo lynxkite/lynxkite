@@ -198,6 +198,11 @@ angular.module('biggraph').directive('entrySelector',
           scope.searchQuery = '';
         };
 
+        scope.setDirectory = function(index) {
+          scope.path = scope.path.split('/').slice(0, index + 1).join('/');
+          scope.searchQuery = '';
+        };
+
         scope.pathElements = function() {
           return scope.path.split('/');
         };

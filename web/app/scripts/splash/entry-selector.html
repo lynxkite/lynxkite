@@ -49,8 +49,10 @@
     <div class="description">{{ path ? 'Current folder:' : 'Root folder' }}</div>
     <span class="lead" ng-show="path">
       <!-- Make sure there is no whitespace around the slash, so it can still be copied. -->
-      <span ng-repeat="dir in pathElements() track by $index"
-        >{{ dir }}<span ng-hide="$last" class="slash">/</span></span>
+      <span ng-repeat="dir in pathElements() track by $index">
+        <span ng-click="setDirectory($index)" class="path-element">{{ dir }}</span>
+        <span ng-hide="$last" class="slash">/</span>
+      </span>
     </span>
     <span class="clicky glyphicon glyphicon-chevron-left" ng-click="popDirectory()" id="pop-directory-icon" ng-show="path"></span>
     <span class="clicky glyphicon glyphicon-cog"
