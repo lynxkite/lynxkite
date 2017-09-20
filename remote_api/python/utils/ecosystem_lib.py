@@ -191,7 +191,7 @@ class Ecosystem:
         applications=conf['applications'],
         core_instance_type=conf['core_instance_type'],
         master_instance_type=conf['master_instance_type'],
-        spot=conf['spot']
+        spot=conf['spot'],
     )
     self.instances = [self.cluster]
     # Spin up a mysql RDS instance only if requested.

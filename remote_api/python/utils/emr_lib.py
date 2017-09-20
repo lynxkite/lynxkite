@@ -98,7 +98,7 @@ def get_on_demand_costs():
       attr = v['attributes']
       if attr['operatingSystem'] == 'Linux' and attr['tenancy'] == 'Shared':
         location = attr['location']
-        if location != 'AWS GovCloud (US)':
+        if location in region_2_code:
           loc_code = region_2_code[location]
           instance_type = attr['instanceType']
           key = (loc_code, instance_type)
@@ -170,9 +170,8 @@ class EMRLib:
     if spot:
       if not self.on_demand_costs:
         self.on_demand_costs = get_on_demand_costs()
-      region_instance = (self.region, instance_type)
-      on_demand_price = self.on_demand_costs[region_instance]
-      desc['BidPrice'] = on_demand_price.rstrip('0')
+      on_demand_price = self.on_demand_costs[self.region, instance_type]
+      desc['BidPrice'] = '{:.3f}'.format(float(on_demand_price))
     return desc
 
   def create_or_connect_to_emr_cluster(
