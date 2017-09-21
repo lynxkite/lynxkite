@@ -1,4 +1,5 @@
-<div class="popup popup-type-{{ popupModel.content.type }}"
+<div
+    class="popup popup-type-{{ popupModel.content.type }}{{ popupModel.flipped ? '-flipped' : '' }}"
     ng-mousedown="popupModel.bringToFront(); $event.stopPropagation();"
     id="{{ popupModel.id | id }}"
     ng-style="{
@@ -15,16 +16,28 @@
         id="close-popup"
         drop-tooltip="Close&nbsp;popup">
     </div>
+    <div
+        class="clicky pull-right glyphicon glyphicon-{{ popupModel.flipped ? 'arrow-left' : 'cog' }}"
+        ng-if="popupModel.content.type === 'box'"
+        ng-click="popupModel.flip(); event.stopPropagation();"
+        ng-mousedown="$event.stopPropagation()"
+        id="flip-popup"
+        drop-tooltip="{{ popupModel.flipped ? 'Change&nbsp;parameters' : 'Change&nbsp;metadata' }}">
+    </div>
   </div>
   <div class="popup-content"
     ng-style="{
         'width': popupModel.width + 'px',
         'height': popupModel.height + 'px',
     }">
-    <box-editor ng-if="popupModel.content.type === 'box'"
+    <box-editor ng-if="popupModel.content.type === 'box' && !popupModel.flipped"
         workspace="workspace"
         box-id="popupModel.content.boxId">
     </box-editor>
+    <box-metaeditor ng-if="popupModel.content.type === 'box' && popupModel.flipped"
+        workspace="workspace"
+        box-id="popupModel.content.boxId">
+    </box-metaeditor>
     <state-view ng-if="popupModel.content.type === 'plug'"
         workspace="workspace"
         plug="workspace.getOutputPlug(popupModel.content.boxId, popupModel.content.plugId)"
