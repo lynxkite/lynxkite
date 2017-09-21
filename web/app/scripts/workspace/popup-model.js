@@ -14,7 +14,8 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     this.x = x;
     this.y = y;
     this.width = width;
-    this.height = height;
+    this.height = undefined;
+    this.maxHeight = height;
     this.owner = owner;
     this.element = undefined;
   }
@@ -23,7 +24,11 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     var popupElement = this.element.find('.popup-content')[0];
     // Save width and height of the popup. Remove 'px' from the end.
     this.width = parseInt(popupElement.style.width.slice(0, -2));
-    this.height = parseInt(popupElement.style.height.slice(0, -2));
+    var newHeight = parseInt(popupElement.style.height.slice(0, -2));
+    if (newHeight) {
+      this.height = newHeight;
+      this.maxHeight = Math.max(this.maxHeight, newHeight + 10);
+    }
   };
 
   PopupModel.prototype.onMouseDown = function(event) {
