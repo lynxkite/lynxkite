@@ -61,7 +61,7 @@ angular.module('biggraph')
               });
         };
 
-        // Invoked when an error happens after the user selected a new operation.
+        // Invoked when an error happens while loading the metadata.
         scope.boxError = function(error) {
           onBlurNow();
           scope.box = undefined;

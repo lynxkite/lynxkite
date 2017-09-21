@@ -179,6 +179,10 @@ div.popup-head {
   user-select: none;
 }
 
+.popup-type-box-flipped div.popup-content {
+  background: lightblue;
+}
+
 .popup-type-plug div.popup-head {
   background: bisque;
 }
