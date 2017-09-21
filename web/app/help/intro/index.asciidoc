@@ -15,7 +15,7 @@ it can scale up to any size of data.
 But don't just believe us -- try it! We hope this user guide will be a good companion in your
 journey of network data mining and you will strike gold for your enterprise with LynxKite!
 
-### Hotkeys
+## Hotkeys
 
 For faster navigation you can access certain LynxKite features via hotkeys. The keys available
 depend on where you are in the program. You can always see the list of currently available
