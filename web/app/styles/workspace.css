@@ -190,6 +190,7 @@ div.popup-head {
 div.popup-content {
   resize: both;
   overflow: auto;
+  padding-bottom: 10px;  /* Make sure resize handle can be grabbed. */
 }
 
 polygon.popup-trail {
