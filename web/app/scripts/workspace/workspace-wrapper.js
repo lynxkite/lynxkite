@@ -16,7 +16,8 @@
 //    in the previous point plus what the server has changed).
 // 5. this._build() is invoked again
 
-angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util, $interval) {
+angular.module('biggraph')
+.factory('WorkspaceWrapper', function(BoxWrapper, PlugWrapper, util, $interval) {
   function WorkspaceWrapper(name, boxCatalog) {
     this._progressUpdater = undefined;
     this.boxCatalog = boxCatalog;  // Updated for the sake of the operation palette.
@@ -80,29 +81,28 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       this.boxMap[rawBox.id] = box;
     },
 
-    _lookupArrowEndpoint: function(list, id) {
+    _lookupArrowEndpoint: function(box, direction, id) {
+      var list = box[direction];
       for (var i = 0; i < list.length; ++i) {
         if (list[i].id === id) {
           return list[i];
         }
       }
-      return undefined;
+      var plug = new PlugWrapper(this, id, i, 'outputs', box);
+      plug.progress = 'missing';
+      list.push(plug);
+      return plug;
     },
 
     _createArrow: function(srcPlug, dstPlug) {
-      if (srcPlug && dstPlug) {
-        return {
-          src: srcPlug,
-          dst: dstPlug,
-          x1: function() { return srcPlug.cx(); },
-          y1: function() { return srcPlug.cy(); },
-          x2: function() { return dstPlug.cx(); },
-          y2: function() { return dstPlug.cy(); },
-        };
-      } else {
-        // TODO: Add some kind of visual indicator to direct the user's attention to the erroneous plugs.
-        return undefined;
-      }
+      return {
+        src: srcPlug,
+        dst: dstPlug,
+        x1: function() { return srcPlug.cx(); },
+        y1: function() { return srcPlug.cy(); },
+        x2: function() { return dstPlug.cx(); },
+        y2: function() { return dstPlug.cy(); },
+      };
     },
 
     _buildArrows: function() {
@@ -116,9 +116,9 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
             var src = this.boxMap[input.boxId];
             if (src) {
               var srcPlug = this._lookupArrowEndpoint(
-                src.outputs, input.id);
+                src, 'outputs', input.id);
               var dstPlug = this._lookupArrowEndpoint(
-                dst.inputs, inputName);
+                dst, 'inputs', inputName);
               this.arrows.push(this._createArrow(
                 srcPlug, dstPlug));
             }
