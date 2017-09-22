@@ -27,7 +27,8 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     var newHeight = parseInt(popupElement.style.height.slice(0, -2));
     if (newHeight) {
       this.height = newHeight;
-      this.maxHeight = Math.max(this.maxHeight, newHeight + 10);
+      // max-height limits the initial automatic sizing. We unset it so manual sizing is unlimited.
+      this.maxHeight = undefined;
     }
   };
 
