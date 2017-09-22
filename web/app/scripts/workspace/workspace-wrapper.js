@@ -65,7 +65,17 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     },
 
     _addBoxWrapper: function(rawBox, opts) {
-      var box = new BoxWrapper(this, this._boxCatalogMap[rawBox.operationId], rawBox, opts);
+      var meta = this._boxCatalogMap[rawBox.operationId] || {
+        // Defaults for unknown operations.
+        categoryId: '',
+        icon: '/images/icons/black_question_mark_ornament.png',
+        color: 'natural',
+        operationId: rawBox.operationId,
+        inputs: Object.keys(rawBox.inputs),
+        outputs: [],
+        description: '',
+      };
+      var box = new BoxWrapper(this, meta, rawBox, opts);
       this.boxes.push(box);
       this.boxMap[rawBox.id] = box;
     },
