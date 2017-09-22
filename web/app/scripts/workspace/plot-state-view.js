@@ -19,7 +19,7 @@ angular.module('biggraph')
 
         // We leave some more empty space for the header.
         scope.getPlotHeight = function () {
-          return scope.popupModel.height - 100;
+          return (scope.popupModel.height || scope.popupModel.maxHeight) - 100;
         };
 
         scope.updatePlotSpec = function () {
