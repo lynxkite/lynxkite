@@ -33,3 +33,17 @@ output will indicate the status:
 * Green: computed
 
 Clicking on the output of a box will open <<State popups>>.
+
+
+### Advanced workflow
+
+Instead of clicking on the search bar, you can use the `/` button. After finding the coveted box,
+you can press `Enter` to place the box under your mouse. You can place multiple boxes without leaving
+the search bar.
+
+Boxes and connected box sequences can be copy-pasted, even to different workspaces and LynxKite
+instances. A limitation here is that the custom boxes are not copied, so they have to be present
+on the target instance too.
+
+The copy-paste mechanism is implemented via serializing to YAML, a human-readable and editable
+textual format, so you can even save box sequences to text files or share them via email.
