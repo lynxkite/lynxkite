@@ -304,14 +304,14 @@ Workspace.prototype = {
 
   getBoxEditor: function(boxId) {
     var popup = this.board.$('.popup#' + boxId);
-    return popup;
+    return new BoxEditor(popup);
   },
 
   openBoxEditor: function(boxId) {
     this.clickBox(boxId);
-    var popup = this.getBoxEditor(boxId);
-    expect(popup.isDisplayed()).toBe(true);
-    return new BoxEditor(popup);
+    var editor = this.getBoxEditor(boxId);
+    expect(editor.popup.isDisplayed()).toBe(true);
+    return editor;
   },
 
   openStateView: function(boxId, plugId) {
@@ -327,8 +327,8 @@ Workspace.prototype = {
   },
 
   getVisualizationEditor(boxId) {
-    var popup = this.getBoxEditor(boxId);
-    return new State(popup);
+    var editor = this.getBoxEditor(boxId);
+    return new State(editor.popup);
   },
 
   expectConnected: function(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
@@ -386,6 +386,10 @@ function BoxEditor(popup) {
 
 BoxEditor.prototype = {
   __proto__: PopupBase.prototype,  // inherit PopupBase's methods
+
+  operationId: function() {
+    return this.popup.$('.popup-head').getText();
+  },
 
   operationParameter: function(param) {
     return this.element.$(
