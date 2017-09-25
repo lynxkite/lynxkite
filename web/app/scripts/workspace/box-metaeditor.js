@@ -9,6 +9,7 @@ angular.module('biggraph')
       scope: {
         workspace: '=',
         boxId: '=',
+        popupModel: '=',
       },
       link: function(scope, element) {
         element.on('focusout', function() { scope.onBlur(); });
@@ -36,17 +37,13 @@ angular.module('biggraph')
             scope.workspace._buildArrows();
             // Update this editor.
             scope.boxId = newId;
-            // Update popup. (This is ugly.)
-            var pm = scope.$parent.$parent.popupModel;
-            if (!pm) {
-              /* eslint-disable no-console */
-              console.error('Cannot find popup model.');
-            } else {
-              pm.content.boxId = newId;
-            }
           }
           if (changed) {
             scope.workspace.saveWorkspace();
+            // Update the popup.
+            scope.popupModel.id = scope.metadata.id;
+            scope.popupModel.title = scope.metadata.operationId;
+            scope.popupModel.content.boxId = scope.metadata.id;
           }
         }
 
