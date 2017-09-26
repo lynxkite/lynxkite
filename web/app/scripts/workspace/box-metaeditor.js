@@ -24,6 +24,7 @@ angular.module('biggraph')
           if (box.instance.id !== scope.metadata.id) {
             changed = true;
             var newId = scope.metadata.id;
+            box.id = newId;
             box.instance.id = newId;
             // Update connections.
             for (var i = 0; i < box.outputs.length; ++i) {
