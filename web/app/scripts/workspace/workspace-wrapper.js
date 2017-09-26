@@ -72,7 +72,7 @@ angular.module('biggraph')
         icon: '/images/icons/black_question_mark_ornament.png',
         color: 'natural',
         operationId: rawBox.operationId,
-        inputs: Object.keys(rawBox.inputs),
+        inputs: [],
         outputs: [],
         description: '',
       };
@@ -88,7 +88,7 @@ angular.module('biggraph')
           return list[i];
         }
       }
-      var plug = new PlugWrapper(this, id, i, 'outputs', box);
+      var plug = new PlugWrapper(this, id, i, direction, box);
       plug.progress = 'missing';
       list.push(plug);
       return plug;
