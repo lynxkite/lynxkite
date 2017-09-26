@@ -631,6 +631,12 @@ angular.module('biggraph')
         });
     },
 
+    deleteArrow: function(arrow) {
+      this.arrows = this.arrows.filter(a => a !== arrow);
+      delete arrow.dst.boxInstance.inputs[arrow.dst.id];
+      this.saveWorkspace();
+    },
+
   };
 
   return WorkspaceWrapper;

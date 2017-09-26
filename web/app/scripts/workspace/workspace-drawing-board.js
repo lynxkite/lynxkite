@@ -731,6 +731,10 @@ angular.module('biggraph')
           var z = zoomToScale(workspaceZoom);
           return { x: (mouseX - workspaceX) / z + offx, y: (mouseY - workspaceY) / z + offy };
         }
+
+        scope.deleteArrow = function(arrow) {
+          scope.workspace.deleteArrow(arrow);
+        };
       }
     };
   });
