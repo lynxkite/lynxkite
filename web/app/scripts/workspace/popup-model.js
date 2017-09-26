@@ -18,6 +18,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     this.maxHeight = height;
     this.owner = owner;
     this.element = undefined;
+    this.meta = false;  // Whether the metadata editor is active.
   }
 
   PopupModel.prototype.updateSize = function() {
@@ -137,8 +138,8 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     return anchorL.x + ',' + anchorL.y + ' ' + aL.x + ',' + aL.y + ' ' + bL.x + ',' + bL.y;
   };
 
-  PopupModel.prototype.flip = function() {
-    this.flipped = !this.flipped;
+  PopupModel.prototype.toggleMeta = function() {
+    this.meta = !this.meta;
   };
 
   return PopupModel;
