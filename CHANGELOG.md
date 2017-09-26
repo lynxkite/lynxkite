@@ -15,6 +15,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - _Train a decision tree classification model_ can use String attributes.
  - Navigate directories by clicking on the path segments on the splash page.
  - Popups can be more flexibly resized.
+ - Arrows can be deleted by clicking on them.
  - A number of minor bugfixes and improvements. Thanks for the feedback!
 
 ### 2.0.0

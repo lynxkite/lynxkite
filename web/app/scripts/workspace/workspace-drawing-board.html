@@ -147,7 +147,8 @@
       <g ng-repeat="arrow in arrows()">
         <path class="arrow"
             id="{{ ::arrow.src.boxId | id }}-{{ ::arrow.src.id | id }}-{{ ::arrow.dst.boxId | id }}-{{ ::arrow.dst.id | id }}"
-            ng-attr-d="{{ bezier(arrow.x1(), arrow.y1(), arrow.x2(), arrow.y2()) }}"></path>
+            ng-attr-d="{{ bezier(arrow.x1(), arrow.y1(), arrow.x2(), arrow.y2()) }}"
+            ng-click="deleteArrow(arrow)"></path>
       </g>
       <!-- end arrow -->
 

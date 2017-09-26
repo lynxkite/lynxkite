@@ -153,7 +153,6 @@ path.arrow {
   fill: transparent;
   stroke-width: 2px;
   stroke: black;
-  pointer-events: none; /* Pass events through, so arrows do not block plugs. */
   marker-start: url(#arrow-root);
   marker-end: url(#arrow-head);
 }
@@ -161,6 +160,9 @@ path.pulled-arrow {
   stroke-dasharray: 2;
   pointer-events: none;
   z-index: -1;
+}
+path.arrow:hover {
+  stroke-dasharray: 10;
 }
 
 div.popup {
