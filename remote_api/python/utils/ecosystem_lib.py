@@ -30,6 +30,11 @@ arg_parser.add_argument(
     default='s3://test-ecosystem-log',
     help='URI of the S3 bucket where the EMR logs will be written.')
 arg_parser.add_argument(
+    '--no_emr_log',
+    action='store_true',
+    help='If this is set, no EMR logs will be written to S3 (regardless of --emr_log_uri)'
+)
+arg_parser.add_argument(
     '--with_rds',
     action='store_true',
     help='Spin up a mysql RDS instance to test database operations.')
@@ -149,6 +154,7 @@ arg_parser.add_argument(
 class Ecosystem:
 
   def __init__(self, args):
+    log_uri = None if args.no_emr_log else args.emr_log_uri
     self.cluster_config = {
         'cluster_name': args.cluster_name,
         'public_ip': args.public_ip,
@@ -156,7 +162,7 @@ class Ecosystem:
         'ec2_key_name': args.ec2_key_name,
         'emr_region': args.emr_region,
         'emr_instance_count': args.emr_instance_count,
-        'emr_log_uri': args.emr_log_uri,
+        'emr_log_uri': log_uri,
         'hdfs_replication': '1',
         'with_rds': args.with_rds,
         'with_jupyter': args.with_jupyter,
@@ -558,7 +564,7 @@ EOF
   def install_and_setup_jupyter(self):
     self.cluster.ssh('''
       sudo pip-3.4 install --upgrade jupyter sklearn matplotlib
-      sudo pip-3.4 install --upgrade pandas seaborn
+      sudo pip-3.4 install --upgrade pandas seaborn statsmodels
     ''')
     self.cluster.ssh_nohup('''
       mkdir -p /mnt/lynx/notebooks
