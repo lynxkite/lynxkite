@@ -25,22 +25,6 @@
     <i class="fa fa-superpowers"></i>
   </button>
   <button class="btn btn-default"
-       id="copy-boxes"
-       ng-click="copyBoxes()"
-       ng-disabled="selectedBoxIds.length === 0 || workspace.error"
-       drop-tooltip="Copy&nbsp;boxes (Ctrl-C)"
-       drop-tooltip-placement="bottom">
-    <i class="fa fa-copy"></i>
-  </button>
-  <button class="btn btn-default"
-       id="paste-boxes"
-       ng-click="pasteBoxes()"
-       drop-tooltip="Paste&nbsp;boxes (Ctrl-V)"
-       drop-tooltip-placement="bottom"
-       ng-disabled="workspace.error">
-    <i class="fa fa-paste"></i>
-  </button>
-  <button class="btn btn-default"
        id="delete-selected-boxes"
        ng-click="deleteSelectedBoxes()"
        ng-disabled="selectedBoxIds.length === 0 || workspace.error"

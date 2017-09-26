@@ -141,8 +141,7 @@ case class WorkspaceExecutionContext(
     val statesWithoutCircularDependency = dependencies.topologicalOrder
       .foldLeft(Map[BoxOutput, BoxOutputState]()) {
         (states, box) =>
-          val newOutputStates = outputStatesOfBox(box, states)
-          newOutputStates ++ states
+          util.Try(outputStatesOfBox(box, states)).getOrElse(Map()) ++ states
       }
     val statesWithCircularDependency = dependencies.withCircularDependency.flatMap { box =>
       val meta = ops.getBoxMetadata(box.operationId)
