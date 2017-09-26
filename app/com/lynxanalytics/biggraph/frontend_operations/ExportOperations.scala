@@ -25,7 +25,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     params ++= List(
       Param("path", "Path", defaultValue = "<auto>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
-      Param("quote", "Quote", defaultValue = ""),
+      Param("quote", "Quote", defaultValue = "\""),
       Choice("header", "Include header", FEOption.list("yes", "no")),
       NonNegInt("version", "Version", default = 0))
 
