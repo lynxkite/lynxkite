@@ -632,7 +632,7 @@ angular.module('biggraph')
     },
 
     deleteArrow: function(arrow) {
-      this.arrows = this.arrows.filter(a => a !== arrow);
+      this.arrows = this.arrows.filter(function(a) { return a !== arrow; });
       delete arrow.dst.boxInstance.inputs[arrow.dst.id];
       this.saveWorkspace();
     },
