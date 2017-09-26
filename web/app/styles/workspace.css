@@ -126,6 +126,9 @@ circle.plug-progress-complete {
 circle.plug-progress-error {
   fill: #d52b1e;  /* Brand color. */
 }
+circle.plug-progress-missing {
+  display: none;
+}
 
 @keyframes in-progress-indication {
   0% {

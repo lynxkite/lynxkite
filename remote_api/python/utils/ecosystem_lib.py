@@ -2,6 +2,7 @@ from utils.emr_lib import EMRLib
 import os
 import argparse
 import datetime
+import sys
 
 arg_parser = argparse.ArgumentParser()
 
@@ -128,6 +129,21 @@ arg_parser.add_argument(
     '--spot',
     action='store_true',
     help='Use spot instances instead of on demand instances. Bid for the same price as an on demand instance')
+arg_parser.add_argument(
+    '--kite_master_memory_mb',
+    default=8000,
+    help='Set KITE_MASTER_MEMORY_MB in kiterc'
+)
+arg_parser.add_argument(
+    '--executor_memory',
+    default='18g',
+    help='Set EXECUTOR_MEMORY in kiterc'
+)
+arg_parser.add_argument(
+    '--num_cores_per_executor',
+    default=8,
+    help='Set NUM_CORES_PER_EXECUTOR in kiterc'
+)
 
 
 class Ecosystem:
@@ -166,6 +182,9 @@ class Ecosystem:
         'extra_python_dependencies': args.python_dependencies,
         'env_variables': args.env_variables,
         'upload': args.upload,
+        'num_cores_per_executor': args.num_cores_per_executor,
+        'executor_memory': args.executor_memory,
+        'kite_master_memory_mb': args.kite_master_memory_mb,
     }
     self.cluster = None
     self.instances = []
@@ -228,7 +247,10 @@ class Ecosystem:
     self.config_and_prepare_native(
         lk_conf['s3_data_dir'],
         lk_conf['kite_instance_name'],
-        conf['emr_instance_count'])
+        conf['emr_instance_count'],
+        lk_conf['num_cores_per_executor'],
+        lk_conf['executor_memory'],
+        lk_conf['kite_master_memory_mb'])
     self.config_aws_s3_native()
     if conf['with_jupyter']:
       self.install_and_setup_jupyter()
@@ -382,7 +404,12 @@ class Ecosystem:
     mysql -uroot -proot -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root'"
     ''')
 
-  def config_and_prepare_native(self, s3_data_dir, kite_instance_name, emr_instance_count):
+  def config_and_prepare_native(self, s3_data_dir,
+                                kite_instance_name,
+                                emr_instance_count,
+                                num_cores_per_executor,
+                                executor_memory,
+                                kite_master_memory_mb):
     hdfs_path = 'hdfs://$HOSTNAME:8020/user/$USER/lynxkite/'
     if s3_data_dir:
       data_dir_config = '''
@@ -393,6 +420,7 @@ class Ecosystem:
       data_dir_config = '''
         export KITE_DATA_DIR={}
       '''.format(hdfs_path)
+    progname = os.path.basename(sys.argv[0])
     self.cluster.ssh('''
       cd /mnt/lynx
       echo 'Setting up environment variables.'
@@ -402,14 +430,14 @@ class Ecosystem:
         sed -i '1s;^;export HADOOP_CONF_DIR=/etc/hadoop/conf\\n;' config/central
       fi
       # Removes the given and following lines so config/central does not grow constantly.
-      sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  config/central
+      sed -i -n '/# ---- the below lines were added by {progname} ----/q;p'  config/central
       cat >>config/central <<'EOF'
-# ---- the below lines were added by test_ecosystem.py ----
+# ---- the below lines were added by {progname} ----
         export KITE_INSTANCE={kite_instance_name}
-        export KITE_MASTER_MEMORY_MB=8000
+        export KITE_MASTER_MEMORY_MB={kite_master_memory_mb}
         export NUM_EXECUTORS={num_executors}
-        export EXECUTOR_MEMORY=18g
-        export NUM_CORES_PER_EXECUTOR=8
+        export EXECUTOR_MEMORY={executor_memory}
+        export NUM_CORES_PER_EXECUTOR={num_cores_per_executor}
         # port differs from the one used in central/config
         export HDFS_ROOT=hdfs://$HOSTNAME:8020/user/$USER
         {data_dir_config}
@@ -428,6 +456,10 @@ EOF
       sudo mkdir -p /tasks_data
       sudo chmod a+rwx /tasks_data
     '''.format(
+        num_cores_per_executor=num_cores_per_executor,
+        kite_master_memory_mb=kite_master_memory_mb,
+        executor_memory=executor_memory,
+        progname=progname,
         kite_instance_name=kite_instance_name,
         num_executors=emr_instance_count - 1,
         data_dir_config=data_dir_config))

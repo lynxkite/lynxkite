@@ -18,7 +18,8 @@ Statue("{}", "{}")
 '''.format(font, caption))
   subprocess.run([
       'povray',
-      '+A0.05',  # Anti-aliasing.
+      '+A0.01',  # Anti-aliasing.
+      '+AM2',  # Anti-aliasing method 2.
       '+W500',  # Width.
       '+H100',  # Height.
       '+UA',  # Output alpha.
@@ -43,7 +44,7 @@ def compose(output_file, font, caption):
   # Turn grayscale shadow into full black with alpha.
   unshadow = PIL.ImageChops.invert(shadow)
   black = unshadow.copy()
-  black.paste(0)
+  black.paste(0, (0, 0) + black.size)
   shadow = PIL.Image.merge('RGBA', (black, black, black, unshadow))
   # Composite alpha shadow under the object.
   PIL.Image.alpha_composite(shadow, obj).save(output_file, 'png')
@@ -59,7 +60,7 @@ def main():
         'wget',
         'https://raw.githubusercontent.com/google/fonts/master/ofl/exo2/Exo2-Bold.ttf',
     ]).check_returncode()
-  compose('logo.png', 'Exo2-Bold.ttf', 'LynxKite 2.0')
+  compose('logo.png', 'Exo2-Bold.ttf', 'LynxKite 2.1')
 
 
 if __name__ == '__main__':
