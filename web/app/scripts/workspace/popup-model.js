@@ -18,6 +18,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     this.maxHeight = height;
     this.owner = owner;
     this.element = undefined;
+    this.meta = false;  // Whether the metadata editor is active.
   }
 
   PopupModel.prototype.updateSize = function() {
@@ -100,6 +101,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   PopupModel.prototype.trail = function(pageToLogical, logicalToPage, workspace) {
     // "L" variables are in logical coordinates, P variables are in page coordinates.
     var anchor = this.contentObject(workspace);
+    if (!anchor) { return; }
     var anchorL = {
       x: anchor.cx(),
       y: anchor.cy() };
@@ -134,6 +136,10 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
       y: attachP.y + nx * HALF_WIDTH };
     var bL = pageToLogical(bP);
     return anchorL.x + ',' + anchorL.y + ' ' + aL.x + ',' + aL.y + ' ' + bL.x + ',' + bL.y;
+  };
+
+  PopupModel.prototype.toggleMeta = function() {
+    this.meta = !this.meta;
   };
 
   return PopupModel;

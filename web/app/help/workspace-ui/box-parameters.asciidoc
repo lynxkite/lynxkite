@@ -46,3 +46,22 @@ Parametric parameters are evaluated using
 http://docs.scala-lang.org/overviews/core/string-interpolation.html[Scala string interpolation].
 This means that Scala expressions can be embedded in these parameters. For example, you could write
 `accounts-${date.toInt + 1}.csv`.
+
+### Box metadata
+
+Click the +++<i class="glyphicon glyphicon-cog"></i>+++ icon in the popup header to access the box
+metadata.
+Click the +++<i class="glyphicon glyphicon-arrow-left"></i>+++ icon to return to the parameter
+editor.
+
+image::images/box-metadata.png[Box metadata popup screenshot]
+
+====
+[[id]] Box ID::
+The internal identifier of this box within the workspace. This is only visible when storing the box
+in a text format.
+
+[[operation-id]] Operation::
+The operation that this box represents. You can edit this to change the type of the box. For example
+you could turn an <<Import CSV>> box into an <<Import Parquet>> box.
+====

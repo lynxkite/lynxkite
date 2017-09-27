@@ -1,4 +1,5 @@
-<div class="popup popup-type-{{ popupModel.content.type }}"
+<div
+    class="popup popup-type-{{ popupModel.content.type }}{{ popupModel.meta ? '-meta' : '' }}"
     ng-mousedown="popupModel.bringToFront(); $event.stopPropagation();"
     id="{{ popupModel.id | id }}"
     ng-style="{
@@ -15,6 +16,14 @@
         id="close-popup"
         drop-tooltip="Close&nbsp;popup">
     </div>
+    <div
+        class="clicky pull-right glyphicon glyphicon-{{ popupModel.meta ? 'arrow-left' : 'cog' }}"
+        ng-if="popupModel.content.type === 'box'"
+        ng-click="popupModel.toggleMeta(); event.stopPropagation();"
+        ng-mousedown="$event.stopPropagation()"
+        id="toggle-meta"
+        drop-tooltip="{{ popupModel.meta ? 'Change&nbsp;parameters' : 'Change&nbsp;metadata' }}">
+    </div>
   </div>
   <div class="popup-content"
     ng-style="{
@@ -22,10 +31,15 @@
         'height': popupModel.height + 'px',
         'max-height': popupModel.maxHeight + 'px',
     }">
-    <box-editor ng-if="popupModel.content.type === 'box'"
+    <box-editor ng-if="popupModel.content.type === 'box' && !popupModel.meta"
         workspace="workspace"
         box-id="popupModel.content.boxId">
     </box-editor>
+    <box-metaeditor ng-if="popupModel.content.type === 'box' && popupModel.meta"
+        popup-model="popupModel"
+        workspace="workspace"
+        box-id="popupModel.content.boxId">
+    </box-metaeditor>
     <state-view ng-if="popupModel.content.type === 'plug'"
         workspace="workspace"
         plug="workspace.getOutputPlug(popupModel.content.boxId, popupModel.content.plugId)"
