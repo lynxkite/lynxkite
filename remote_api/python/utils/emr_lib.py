@@ -162,7 +162,7 @@ class EMRLib:
 
   def create_instance_description(self, spot, instance_type, instance_count, master):
     assert(not master or instance_count == 1)
-    market = 'SPOT' if spot else 'ON DEMAND'
+    market = 'SPOT' if spot else 'ON_DEMAND'
     role = 'MASTER' if master else 'CORE'
     name = role + ' instance group'
     desc = {
