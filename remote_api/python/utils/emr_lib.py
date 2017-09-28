@@ -209,17 +209,17 @@ class EMRLib:
     master_desc = self.create_instance_description(spot, master_instance_type, 1, master=True)
     core_desc = self.create_instance_description(
         spot, core_instance_type, instance_count - 1, master=False)
-    res = self.emr_client.run_job_flow(
-        Name=name,
-        LogUri=log_uri,
-        ReleaseLabel='emr-5.2.0',
-        Instances={
+
+    run_job_flow_args = {
+        'Name': name,
+        'ReleaseLabel': 'emr-5.2.0',
+        'Instances': {
             'Ec2KeyName': self.ec2_key_name,
             'KeepJobFlowAliveWhenNoSteps': True,
             'TerminationProtected': True,
             'InstanceGroups': [master_desc, core_desc]
         },
-        Configurations=[
+        'Configurations': [
             {
                 'Classification': 'mapred-site',
                 'Properties': {
@@ -252,11 +252,11 @@ class EMRLib:
                 }
             }
         ],
-        Applications=emr_applications,
-        JobFlowRole="EMR_EC2_DefaultRole",
-        VisibleToAllUsers=True,
-        ServiceRole="EMR_DefaultRole",
-        Tags=[{
+        'Applications': emr_applications,
+        'JobFlowRole': "EMR_EC2_DefaultRole",
+        'VisibleToAllUsers': True,
+        'ServiceRole': "EMR_DefaultRole",
+        'Tags': [{
             'Key': 'owner',
             'Value': owner
         }, {
@@ -265,7 +265,12 @@ class EMRLib:
         }, {
             'Key': 'name',
             'Value': name
-        }])
+        }]
+    }
+
+    if log_uri:
+      run_job_flow_args['LogUri'] = log_uri
+    res = self.emr_client.run_job_flow(**run_job_flow_args)
     return EMRCluster(res['JobFlowId'], self)
 
   def create_or_connect_to_rds_instance(self, name):
