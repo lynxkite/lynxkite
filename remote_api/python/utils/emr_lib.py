@@ -256,6 +256,7 @@ class EMRLib:
         'JobFlowRole': "EMR_EC2_DefaultRole",
         'VisibleToAllUsers': True,
         'ServiceRole': "EMR_DefaultRole",
+        'AutoScalingRole': "EMR_AutoScaling_DefaultRole",
         'Tags': [{
             'Key': 'owner',
             'Value': owner
