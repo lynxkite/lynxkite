@@ -7,12 +7,6 @@ import sys
 arg_parser = argparse.ArgumentParser()
 
 
-def positive_float(f):
-  posfloat = float(f)
-  if posfloat <= 0:
-    raise argparse.ArgumentTypeError("{posfloat} should be positive".format(posfloat=posfloat))
-  return posfloat
-
 arg_parser.add_argument(
     '--cluster_name',
     default=os.environ['USER'] + '-ecosystem-test',
@@ -144,7 +138,7 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     '--spot_bid_multiplier',
     default=1.0,
-    type=positive_float,
+    type=float,
     help='''Set the spot bid price for the instances to SPOT_BID_MULTIPLIER times the on demand price.
     The default is 1.0, as recommended by AWS, but for short-lived, important instances you
     can raise this quantity to reduce the possibility of losing your work. (E.g., setting this to
