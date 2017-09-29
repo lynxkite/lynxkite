@@ -135,6 +135,10 @@ arg_parser.add_argument(
     action='store_true',
     help='Use spot instances instead of on demand instances. Bid for the same price as an on demand instance')
 arg_parser.add_argument(
+    '--autoscaling_role',
+    action='store_true',
+    help='Use this option to enable Auto Scaling.')
+arg_parser.add_argument(
     '--kite_master_memory_mb',
     default=8000,
     help='Set KITE_MASTER_MEMORY_MB in kiterc'
@@ -168,6 +172,7 @@ class Ecosystem:
         'with_jupyter': args.with_jupyter,
         'rm': args.rm,
         'spot': args.spot,
+        'autoscaling_role': args.autoscaling_role,
         'owner': args.owner,
         'expiry': args.expiry,
         'applications': args.applications,
@@ -217,6 +222,7 @@ class Ecosystem:
         core_instance_type=conf['core_instance_type'],
         master_instance_type=conf['master_instance_type'],
         spot=conf['spot'],
+        autoscaling_role=conf['autoscaling_role'],
     )
     self.instances = [self.cluster]
     # Spin up a mysql RDS instance only if requested.
