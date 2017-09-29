@@ -155,7 +155,8 @@ class EMRLib:
           return
       time.sleep(15)
 
-  def create_instance_description(self, spot, instance_type, instance_count, master):
+  def create_instance_description(self, spot, spot_bid_multiplier,
+                                  instance_type, instance_count, master):
     assert(not master or instance_count == 1)
     market = 'SPOT' if spot else 'ON_DEMAND'
     role = 'MASTER' if master else 'CORE'
@@ -170,8 +171,9 @@ class EMRLib:
     if spot:
       if not self.on_demand_costs:
         self.on_demand_costs = get_on_demand_costs()
-      on_demand_price = self.on_demand_costs[self.region, instance_type]
-      desc['BidPrice'] = '{:.3f}'.format(float(on_demand_price))
+      on_demand_price = float(self.on_demand_costs[self.region, instance_type])
+      our_bid = on_demand_price * spot_bid_multiplier
+      desc['BidPrice'] = '{:.3f}'.format(our_bid)
     return desc
 
   def create_or_connect_to_emr_cluster(
@@ -181,7 +183,8 @@ class EMRLib:
           applications='',
           core_instance_type='m3.2xlarge',
           master_instance_type='m3.2xlarge',
-          spot=False):
+          spot=False,
+          spot_bid_multiplier=1.0):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
@@ -201,9 +204,10 @@ class EMRLib:
     emr_applications = []
     if applications:
       emr_applications = [{'Name': app} for app in applications.split(',')]
-    master_desc = self.create_instance_description(spot, master_instance_type, 1, master=True)
+    master_desc = self.create_instance_description(
+        spot, spot_bid_multiplier, master_instance_type, 1, master=True)
     core_desc = self.create_instance_description(
-        spot, core_instance_type, instance_count - 1, master=False)
+        spot, spot_bid_multiplier, core_instance_type, instance_count - 1, master=False)
 
     run_job_flow_args = {
         'Name': name,
