@@ -54,7 +54,7 @@ def call_cmd(cmd_list, input=None, print_output=True, assert_successful=True):
     return result, proc.returncode
 
 
-def get_on_demand_costs_and_print_skipped_regions():
+def get_on_demand_costs():
   """
   Returns a dictionary that specifies the on demand price for (region,instance_type) tuples,
   like this:
@@ -91,7 +91,6 @@ def get_on_demand_costs_and_print_skipped_regions():
   def get_dic_value(d):
     return next(iter(d.values()))
 
-  uncharted_regions = set()
   output = {}
   for k in products.keys():
     v = products[k]
@@ -112,10 +111,6 @@ def get_on_demand_costs_and_print_skipped_regions():
           price = price_info['pricePerUnit']
           usd = price['USD']
           output[key] = usd
-        else:
-          uncharted_regions.add(location)
-  for ur in uncharted_regions:
-    print('Skipped region: ' + ur)
   return output
 
 
@@ -174,7 +169,7 @@ class EMRLib:
     }
     if spot:
       if not self.on_demand_costs:
-        self.on_demand_costs = get_on_demand_costs_and_print_skipped_regions()
+        self.on_demand_costs = get_on_demand_costs()
       on_demand_price = self.on_demand_costs[self.region, instance_type]
       desc['BidPrice'] = '{:.3f}'.format(float(on_demand_price))
     return desc
