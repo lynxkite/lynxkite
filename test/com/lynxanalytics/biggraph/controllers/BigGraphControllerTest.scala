@@ -102,6 +102,22 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
     assert(list("foo").directories.isEmpty)
   }
 
+  test("attempt to probe private directory") {
+    val nonAdmin = User("nonAdmin", isAdmin = false)
+    controller.createDirectory(user, CreateDirectoryRequest(
+      name = "foo", privacy = "private"))
+    controller.createDirectory(user, CreateDirectoryRequest(
+      name = "foo/bar", privacy = "private"))
+    val e = intercept[java.lang.AssertionError] {
+      controller.createDirectory(nonAdmin, CreateDirectoryRequest(
+        name = "foo/bar", privacy = "private"))
+    }
+    // Showing a 'bar already exists' message would reveal information about
+    // the contents of a private directory.
+    assert(e.getMessage.contains(
+      "User nonAdmin does not have write access to entry 'foo'."))
+  }
+
   val wc = new WorkspaceController(this)
 
   test("list and search workspace") {
