@@ -257,7 +257,6 @@ class EMRLib:
         'JobFlowRole': "EMR_EC2_DefaultRole",
         'VisibleToAllUsers': True,
         'ServiceRole': "EMR_DefaultRole",
-        'AutoScalingRole': "EMR_AutoScaling_DefaultRole",
         'Tags': [{
             'Key': 'owner',
             'Value': owner
@@ -273,7 +272,7 @@ class EMRLib:
     if log_uri:
       run_job_flow_args['LogUri'] = log_uri
     if autoscaling_role:
-      run_job_flow_args['AutoScalingRole'] = EMR_AutoScaling_DefaultRole
+      run_job_flow_args['AutoScalingRole'] = 'EMR_AutoScaling_DefaultRole'
     res = self.emr_client.run_job_flow(**run_job_flow_args)
     return EMRCluster(res['JobFlowId'], self)
 
