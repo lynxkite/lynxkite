@@ -186,7 +186,8 @@ class EMRLib:
           applications='',
           core_instance_type='m3.2xlarge',
           master_instance_type='m3.2xlarge',
-          spot=False):
+          spot=False,
+          autoscaling_role=False):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
@@ -270,6 +271,8 @@ class EMRLib:
 
     if log_uri:
       run_job_flow_args['LogUri'] = log_uri
+    if autoscaling_role:
+      run_job_flow_args['AutoScalingRole'] = 'EMR_AutoScaling_DefaultRole'
     res = self.emr_client.run_job_flow(**run_job_flow_args)
     return EMRCluster(res['JobFlowId'], self)
 
