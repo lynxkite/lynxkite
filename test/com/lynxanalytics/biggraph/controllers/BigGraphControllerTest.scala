@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.serving.User
 
 class BigGraphControllerTest extends BigGraphControllerTestBase {
   // TODO: Depends on #5874.
@@ -80,6 +81,25 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
     assert(list("foo").directories == Seq("foo/bar"))
     controller.discardEntry(user, DiscardEntryRequest(name = "foo"))
     assert(list("").directories.isEmpty)
+  }
+
+  test("try to create directory without authorization") {
+    val nonAdmin = User("nonAdmin", isAdmin = false)
+    controller.createDirectory(user, CreateDirectoryRequest(
+      name = "foo", privacy = "public-read"))
+    try {
+      controller.createDirectory(nonAdmin, CreateDirectoryRequest(
+        name = "foo/bar", privacy = "public-read"))
+    } catch {
+      case _: java.lang.AssertionError => // This is the required behavior.
+    }
+    try {
+      controller.createDirectory(nonAdmin, CreateDirectoryRequest(
+        name = "foo/bar/sub-bar", privacy = "public-read"))
+    } catch {
+      case _: java.lang.AssertionError => // This is the required behavior.
+    }
+    assert(list("foo").directories.isEmpty)
   }
 
   val wc = new WorkspaceController(this)
