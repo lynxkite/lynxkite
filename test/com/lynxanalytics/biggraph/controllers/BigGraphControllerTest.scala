@@ -83,22 +83,22 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
     assert(list("").directories.isEmpty)
   }
 
-  test("try to create directory without authorization") {
+  test("attempt to create directory without authorization") {
     val nonAdmin = User("nonAdmin", isAdmin = false)
     controller.createDirectory(user, CreateDirectoryRequest(
       name = "foo", privacy = "public-read"))
-    try {
+    val e1 = intercept[java.lang.AssertionError] {
       controller.createDirectory(nonAdmin, CreateDirectoryRequest(
         name = "foo/bar", privacy = "public-read"))
-    } catch {
-      case _: java.lang.AssertionError => // This is the required behavior.
     }
-    try {
+    assert(e1.getMessage.contains(
+      "User nonAdmin does not have write access to entry 'foo'."))
+    val e2 = intercept[java.lang.AssertionError] {
       controller.createDirectory(nonAdmin, CreateDirectoryRequest(
         name = "foo/bar/sub-bar", privacy = "public-read"))
-    } catch {
-      case _: java.lang.AssertionError => // This is the required behavior.
     }
+    assert(e2.getMessage.contains(
+      "User nonAdmin does not have write access to entry 'foo/bar'."))
     assert(list("foo").directories.isEmpty)
   }
 
