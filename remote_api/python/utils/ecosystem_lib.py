@@ -144,7 +144,10 @@ arg_parser.add_argument(
     can raise this quantity to reduce the possibility of losing your work. (E.g., setting this to
     3.0 means that the instances will not be terminated until the spot price rises above
     three times the on demand price.''')
-
+arg_parser.add_argument(
+    '--autoscaling_role',
+    action='store_true',
+    help='Use this option to enable Auto Scaling.')
 arg_parser.add_argument(
     '--kite_master_memory_mb',
     default=8000,
@@ -180,6 +183,7 @@ class Ecosystem:
         'rm': args.rm,
         'spot': args.spot,
         'spot_bid_multiplier': args.spot_bid_multiplier,
+        'autoscaling_role': args.autoscaling_role,
         'owner': args.owner,
         'expiry': args.expiry,
         'applications': args.applications,
@@ -230,6 +234,7 @@ class Ecosystem:
         master_instance_type=conf['master_instance_type'],
         spot=conf['spot'],
         spot_bid_multiplier=conf['spot_bid_multiplier'],
+        autoscaling_role=conf['autoscaling_role'],
     )
     self.instances = [self.cluster]
     # Spin up a mysql RDS instance only if requested.
