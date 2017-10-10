@@ -71,7 +71,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
       NonNegDouble("externaldegree", "External degree", defaultValue = "1.5"),
       NonNegDouble("internaldegree", "Internal degree", defaultValue = "1.5"),
       NonNegDouble("exponent", "Exponent", defaultValue = "0.6"),
-      RandomSeed("seed", "Seed"))
+      RandomSeed("seed", "Seed", context.box))
     def enabled = project.hasVertexSet
     def apply() = {
       val result = {
@@ -91,7 +91,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
   register("Create random edges", List(projectInput))(new ProjectTransformation(_) {
     params ++= List(
       NonNegDouble("degree", "Average degree", defaultValue = "10.0"),
-      RandomSeed("seed", "Seed"))
+      RandomSeed("seed", "Seed", context.box))
     def enabled = project.hasVertexSet
     def apply() = {
       val op = graph_operations.FastRandomEdgeBundle(
@@ -107,7 +107,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
         "perIterationMultiplier",
         "Per iteration edge number multiplier",
         defaultValue = "1.3"),
-      RandomSeed("seed", "Seed"))
+      RandomSeed("seed", "Seed", context.box))
     def enabled = project.hasVertexSet
     def apply() = {
       val op = graph_operations.ScaleFreeEdgeBundle(
