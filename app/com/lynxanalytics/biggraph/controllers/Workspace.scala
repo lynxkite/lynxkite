@@ -118,24 +118,6 @@ case class WorkspaceExecutionContext(
     ops: OperationRepository,
     workspaceParameters: Map[String, String]) {
 
-  // Enforces some invariants.
-  def repairedWorkspace: Workspace = {
-    this.dropUnknownParameters
-  }
-
-  // Drop certain parameters from the box based on the logic implemented in the corresponding op.
-  protected def dropUnknownParameters: Workspace = {
-    val states = allStates
-    ws.copy(boxes = ws.boxes.map { box =>
-      try {
-        val op = getOperationForStates(box, states)
-        box.copy(parameters = op.cleanParameters(box.parameters))
-      } catch {
-        case t: Throwable => box
-      }
-    })
-  }
-
   def allStates: Map[BoxOutput, BoxOutputState] = {
     val dependencies = ws.discoverDependencies
     val statesWithoutCircularDependency = dependencies.topologicalOrder
