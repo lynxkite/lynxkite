@@ -19,7 +19,7 @@ class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       Ratio("ratio", "Fraction of vertices to use as starting points", defaultValue = "0.0001"),
       NonNegInt("radius", "Radius", default = 3),
       Param("attrName", "Attribute name", defaultValue = "distance_from_start_point"),
-      RandomSeed("seed", "Seed"))
+      RandomSeed("seed", "Seed", context.box))
     def enabled = project.hasVertexSet && project.hasEdgeBundle
     def apply() = {
       val ratio = params("ratio")
@@ -61,7 +61,7 @@ class SubgraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       Ratio("walkAbortionProbability", "Walk abortion probability", defaultValue = "0.15"),
       Param("vertexAttrName", "Save vertex indices as", defaultValue = "first_reached"),
       Param("edgeAttrName", "Save edge indices as", defaultValue = "first_traversed"),
-      RandomSeed("seed", "Seed"))
+      RandomSeed("seed", "Seed", context.box))
     def enabled = project.hasVertexSet && project.hasEdgeBundle
 
     def apply() = {

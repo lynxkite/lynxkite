@@ -286,7 +286,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
 
   register("Map hyperbolic coordinates")(new ProjectTransformation(_) {
     params ++= List(
-      RandomSeed("seed", "Seed"))
+      RandomSeed("seed", "Seed", context.box))
     def enabled = project.hasEdgeBundle
     def apply() = {
       val result = {
@@ -319,7 +319,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
         Choice("target", "Target attribute",
           options = FEOption.list(parentDoubleAttributes)),
         Ratio("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
-        RandomSeed("seed", "Random seed for test set selection"),
+        RandomSeed("seed", "Random seed for test set selection", context.box),
         NonNegDouble("max_deviation", "Maximal segment deviation", defaultValue = "1.0"),
         NonNegInt("min_num_defined", "Minimum number of defined attributes in a segment", default = 3),
         Ratio("min_ratio_defined", "Minimal ratio of defined attributes in a segment", defaultValue = "0.25"),
