@@ -120,7 +120,7 @@ object OperationParams {
   // A random number to be used as default value for random seed parameters.
   // The default seed is picked based on properties of the box.
   case class RandomSeed(id: String, title: String, box: Box) extends OperationParameterMeta {
-    val defaultValue = box.copy(x = 0, y = 0).hashCode.toString
+    val defaultValue = box.id.hashCode.toString
     val kind = "default"
     val options = List()
     val multipleChoice = false
