@@ -34,25 +34,11 @@ angular.module('biggraph').directive('operationParameters', function(util) {
         scope.onBlur();
       };
 
-      // Translate between arrays and comma-separated strings for multiselects.
       scope.listParameters = {};
-      util.deepWatch(scope, 'parameters', function(parameters) {
-        for (var i = 0; i < scope.meta.parameters.length; ++i) {
-          var param = scope.meta.parameters[i];
-          if (param.options.length > 0 && param.multipleChoice) {
-            var flat = parameters[param.id];
-            if (flat !== undefined && flat.length > 0) {
-              scope.listParameters[param.id] = flat.split(',');
-            } else {
-              scope.listParameters[param.id] = [];
-            }
-          }
-        }
-      });
-
-      util.deepWatch(scope, 'meta', function(meta) {
-        for (var i = 0; i < meta.parameters.length; ++i) {
-          var param = meta.parameters[i];
+      util.deepWatch(scope, '[parameters, meta]', function() {
+        var i, param;
+        for (i = 0; i < scope.meta.parameters.length; ++i) {
+          param = scope.meta.parameters[i];
           // Fill in default values.
           if (param.id in scope.parameters || param.id in scope.parametricParameters) {
             // Explicitly set.
@@ -62,6 +48,19 @@ angular.module('biggraph').directive('operationParameters', function(util) {
             scope.parameters[param.id] = '';
           } else {
             scope.parameters[param.id] = param.options[0].id;
+          }
+        }
+
+        for (i = 0; i < scope.meta.parameters.length; ++i) {
+          param = scope.meta.parameters[i];
+          // Translate between arrays and comma-separated strings for multiselects.
+          if (param.options.length > 0 && param.multipleChoice) {
+            var flat = scope.parameters[param.id];
+            if (flat !== undefined && flat.length > 0) {
+              scope.listParameters[param.id] = flat.split(',');
+            } else {
+              scope.listParameters[param.id] = [];
+            }
           }
         }
       });
