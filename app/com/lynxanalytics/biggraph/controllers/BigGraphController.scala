@@ -236,9 +236,9 @@ class BigGraphController(val env: SparkFreeEnvironment) {
   }
 
   def createDirectory(user: serving.User, request: CreateDirectoryRequest): Unit = metaManager.synchronized {
-    assertNameNotExists(request.name)
     val entry = DirectoryEntry.fromName(request.name)
     entry.assertParentWriteAllowedFrom(user)
+    assertNameNotExists(request.name)
     val dir = entry.asNewDirectory()
     dir.setupACL(request.privacy, user)
   }
