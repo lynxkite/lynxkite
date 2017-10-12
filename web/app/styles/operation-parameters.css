@@ -59,3 +59,11 @@ table-kind import-wizard form {
   margin-bottom: 5px;
   text-align: right;
 }
+
+.unexpected-parameters {
+  text-align: center;
+  color: darkred;
+}
+.unexpected-parameter {
+  color: darkred;
+}
