@@ -47,6 +47,20 @@ http://docs.scala-lang.org/overviews/core/string-interpolation.html[Scala string
 This means that Scala expressions can be embedded in these parameters. For example, you could write
 `accounts-${date.toInt + 1}.csv`.
 
+### Unexpected parameters
+
+Unexpected parameters are parameters that have been set at some point on the box, but are no longer
+recognized.
+
+The list of parameters for many boxes is determined dynamically. For example in
+<<Aggregate on neighbors>> there is one parameter for each vertex attribute. If you have configured
+an aggregation for attribute `X` but then changed the input to no longer have an attribute called
+`X`, then the parameter that sets aggregation on `X` becomes an unexpected parameter.
+
+Unexpected parameters are treated as errors. You can click the +++<i class="fa fa-remove"></i>+++
+icon to the right to remove the unexpected parameter. Or you can change the input so that the
+parameter becomes recognized again.
+
 ### Box metadata
 
 Click the +++<i class="glyphicon glyphicon-cog"></i>+++ icon in the popup header to access the box

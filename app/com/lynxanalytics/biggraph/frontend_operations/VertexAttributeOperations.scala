@@ -44,7 +44,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
     params ++= List(
       Param("name", "Attribute name", defaultValue = "random"),
       Choice("dist", "Distribution", options = FEOption.list(graph_operations.RandomDistribution.getNames)),
-      RandomSeed("seed", "Seed"))
+      RandomSeed("seed", "Seed", context.box))
     def enabled = project.hasVertexSet
     override def summary = {
       val dist = params("dist").toLowerCase
