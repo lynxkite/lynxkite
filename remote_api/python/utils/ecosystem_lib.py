@@ -543,7 +543,8 @@ EOF
 
   def start_monitoring_on_extra_nodes_native(self, keyfile):
     cluster_keyfile = 'cluster_key.pem'
-    self.cluster.rsync_up(src=keyfile, dst='/home/hadoop/.ssh/' + cluster_keyfile)
+    cluster_keypath = '/home/hadoop/.ssh/' + cluster_keyfile
+    self.cluster.rsync_up(src=keyfile, dst=cluster_keypath)
     ssh_options = '''-o UserKnownHostsFile=/dev/null \
       -o CheckHostIP=no \
       -o StrictHostKeyChecking=no \
@@ -561,6 +562,9 @@ EOF
         ssh {options} hadoop@${{node}} tar xf other_nodes.tgz
         ssh {options} hadoop@${{node}} "sh -c 'nohup ./run.sh >run.stdout 2> run.stderr &'"
       done'''.format(options=ssh_options))
+
+    # We no longer need the key file on the master
+    self.cluster.ssh('shred -u {key}'.format(key=cluster_keypath))
 
     # Uncomment services in configs
     self.cluster.ssh('''
