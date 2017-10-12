@@ -36,9 +36,8 @@ angular.module('biggraph').directive('operationParameters', function(util) {
 
       scope.listParameters = {};
       util.deepWatch(scope, '[parameters, meta]', function() {
-        var i, param;
-        for (i = 0; i < scope.meta.parameters.length; ++i) {
-          param = scope.meta.parameters[i];
+        for (var i = 0; i < scope.meta.parameters.length; ++i) {
+          var param = scope.meta.parameters[i];
           // Fill in default values.
           if (param.id in scope.parameters || param.id in scope.parametricParameters) {
             // Explicitly set.
@@ -49,10 +48,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
           } else {
             scope.parameters[param.id] = param.options[0].id;
           }
-        }
 
-        for (i = 0; i < scope.meta.parameters.length; ++i) {
-          param = scope.meta.parameters[i];
           // Translate between arrays and comma-separated strings for multiselects.
           if (param.options.length > 0 && param.multipleChoice) {
             var flat = scope.parameters[param.id];
@@ -61,6 +57,25 @@ angular.module('biggraph').directive('operationParameters', function(util) {
             } else {
               scope.listParameters[param.id] = [];
             }
+          }
+        }
+
+        // Find unexpected parameters.
+        var paramIds = Object.keys(scope.parameters);
+        paramIds.sort();
+        scope.unexpectedParameters = scope.unexpectedParameters || [];
+        scope.unexpectedParameters.length = 0;
+        for (i = 0; i < paramIds.length; ++i) {
+          var paramId = paramIds[i];
+          var expected = false;
+          for (var j = 0; j < scope.meta.parameters.length; ++j) {
+            if (scope.meta.parameters[j].id === paramId) {
+              expected = true;
+              break;
+            }
+          }
+          if (!expected) {
+            scope.unexpectedParameters.push(paramId);
           }
         }
       });
@@ -98,6 +113,11 @@ angular.module('biggraph').directive('operationParameters', function(util) {
 
       scope.isVisualizationParam = function(param) {
         return param.kind === 'visualization' && !scope.parametricParameters[param.id];
+      };
+
+      scope.removeParameter = function(paramId) {
+        delete scope.parameters[paramId];
+        scope.onBlur();
       };
     }
   };
