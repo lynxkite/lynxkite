@@ -310,7 +310,7 @@ Workspace.prototype = {
   openBoxEditor: function(boxId) {
     this.clickBox(boxId);
     var editor = this.getBoxEditor(boxId);
-    expect(editor.popup.isDisplayed()).toBe(true);
+    testLib.expectElement(editor.popup);
     return editor;
   },
 
@@ -398,6 +398,10 @@ BoxEditor.prototype = {
 
   parametricSwitch: function(param) {
     return this.element.$('operation-parameters #' + param + ' .parametric-switch');
+  },
+
+  removeParameter: function(param) {
+    return this.element.$('operation-parameters #' + param + ' .remove-parameter').click();
   },
 
   populateOperation: function(params) {
@@ -1307,6 +1311,11 @@ testLib = {
             e.$$('option:checked').click();
             for (let i = 0; i < value.length; ++i) {
               e.$('option[label="' + value[i] + '"]').click();
+            }
+          } else if (kind === 'multi-tag-list') {
+            for (let i = 0; i < value.length; ++i) {
+              e.$('.glyphicon-plus').click();
+              e.$('a#' + value[i]).click();
             }
           } else {
             e.sendKeys(testLib.selectAllKey + value);
