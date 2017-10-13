@@ -90,7 +90,7 @@ module.exports = function(fw) {
         { src: 2, dst: 1 },
       ];
       var savedPositions;
-      var GRAY = 'rgb(107, 107, 107)';
+      var DEFAULT = 'rgb(57, 188, 243)';  // Brand color.
       var BLUE = 'rgb(53, 53, 161)';
       var RED = 'rgb(161, 53, 53)';
       // No attributes visualized.
@@ -103,9 +103,9 @@ module.exports = function(fw) {
           { color: '', label: '', width: '>2' },
         ]);
         expect(graph.vertices).toConcur([
-          { color: GRAY, icon: 'circle', label: '' },
-          { color: GRAY, icon: 'circle', label: '' },
-          { color: GRAY, icon: 'circle', label: '' },
+          { color: DEFAULT, icon: 'circle', label: '' },
+          { color: DEFAULT, icon: 'circle', label: '' },
+          { color: DEFAULT, icon: 'circle', label: '' },
         ]);
         savedPositions = positions(graph);
       });
@@ -136,7 +136,7 @@ module.exports = function(fw) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
           { color: BLUE },
-          { color: GRAY },
+          { color: DEFAULT },
           { color: RED },
         ]);
         checkGraphPositions(positions(graph), savedPositions);
