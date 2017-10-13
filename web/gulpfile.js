@@ -92,7 +92,10 @@ gulp.task('dist', ['asciidoctor', 'genTemplates', 'html'], function () {
   var fontAwesomeFonts = gulp.src([
     'node_modules/font-awesome/fonts/*',
   ], {base: 'node_modules/font-awesome'});
-  return merge(dynamicFiles, staticFiles, bootstrapFonts, fontAwesomeFonts)
+  var typefaces = gulp.src([
+    'node_modules/typeface-exo-2/files/*',
+  ], {base: 'node_modules/font-exo-2'});
+  return merge(dynamicFiles, staticFiles, bootstrapFonts, fontAwesomeFonts, typefaces)
     .pipe(gulp.dest('dist'));
 });
 

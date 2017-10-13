@@ -6,10 +6,7 @@
 }
 
 .popup .flat-toolbar {
-  background-color: lightblue;
-}
-.popup.popup-type-plug .flat-toolbar {
-  background-color: bisque;
+  background-color: #002a4c; /* Brand color. */
 }
 
 .flat-toolbar-title {
@@ -21,17 +18,21 @@
   border-radius: 0;
   border: none;
   background-color: transparent;
-  color: #444;
+  color: #39bcf3; /* Brand color. */
   font-weight: bold;
   margin: 0;
   margin-left: 5px;
 }
-.flat-toolbar .btn:hover {
-  color: black;
+.flat-toolbar .btn[disabled] {
+  color: rgba(255, 255, 255, 0.5);
 }
 .flat-toolbar .btn.active {
-  background-color: rgba(250, 250, 250, 0.9);
+  background-color: #39bcf3; /* Brand color. */
+  color: #002a4c; /* Brand color. */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.flat-toolbar .btn:hover {
+  color: white;
 }
 
 .flat-toolbar .inline-input {
