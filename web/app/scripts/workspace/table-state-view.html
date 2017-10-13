@@ -8,10 +8,10 @@
            step="1"
            id="sample-rows"
            ng-model="sampleRows">
-    <button class="btn btn-primary" id="get-sample-button" ng-click="getSample()">
-      Show sample
+    <button class="btn btn-secondary btn-xs" id="get-sample-button" ng-click="getSample()">
+      OK
     </button>
-    <button class="btn btn-primary" id="more-rows-button" ng-click="showMoreRows()">
+    <button class="btn btn-secondary btn-xs" id="more-rows-button" ng-click="showMoreRows()">
       + {{ showMoreRowsIncrement() }} rows
     </button>
     <span id="table-sample-spinner" class="glyphicon glyphicon-cog" ng-if="!table.$resolved"></span>

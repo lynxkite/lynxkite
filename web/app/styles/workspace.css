@@ -5,14 +5,16 @@
 }
 
 #workspace-header {
-  border-bottom: 1px solid lightgray;
+  background: #002a4c; /* Brand color. */
+  color: white;
+  min-height: 60px;
 }
 #workspace-header .flat-toolbar-title {
   padding: 5px 10px;
 }
 
 span#workspace-name {
-  font: bold 2.5em serif;
+  font: bold 2.5em 'Exo 2'; /* Brand font. */
 }
 
 #workspace-drawing-board {
@@ -30,7 +32,7 @@ workspace-drawing-board > display-error > * {
   display: block;
   width: 100%;
   height: 100%;
-  background-color: hsl(30, 40%, 95%);
+  background-color: white;
 }
 
 #workspace-drawing-board svg text {
@@ -70,8 +72,12 @@ g.box #click-target {
   stroke: transparent;
   fill: transparent;
 }
-g.box.selected #click-target {
-  fill: rgba(80, 0, 0, 0.1);
+g.box .pedestal {
+  fill: transparent;
+}
+g.box.selected .pedestal {
+  fill: url(#pedestal-gradient);
+  mix-blend-mode: darken; /* Allow arrow to be visible even if it is below. */
 }
 
 g.box .summary {
@@ -79,14 +85,7 @@ g.box .summary {
 }
 g.box .backdrop {
   stroke-width: 5;
-  stroke: hsl(30, 40%, 95%);
-}
-g.box.selected .backdrop {
-  stroke: #e7dad6;
-}
-g.box.selected .plug circle {
-  stroke-width: 3;
-  stroke: #e7dad6;
+  stroke: white;
 }
 
 g.box #inputs .plug text {
@@ -168,28 +167,30 @@ path.arrow:hover {
 div.popup {
   display: inline-block;  /* This element "shrink-wraps" around .popup-content */
   position: absolute;
-  border: 1px solid darkgray;
+  box-shadow: 0px 5px 50px 0px rgba(0, 0, 0, 0.3);
   z-index: 3;
   background: white;
 }
 
 div.popup-head {
   width: 100%;
-  background: lightblue;
+  background: #ff8800; /* Brand color. */
   font-weight: bold;
-  padding-left: 10px;
   height: 35px;
   line-height: 35px;
   cursor: default;
   user-select: none;
+  height: 50px;
+  padding: 8px;
+  padding-left: 16px;
 }
 
 .popup-type-box-meta div.popup-content {
-  background: lightblue;
+  background: #ff8800; /* Brand color. */
 }
 
 .popup-type-plug div.popup-head {
-  background: bisque;
+  background: #39bcf3; /* Brand color. */
 }
 
 div.popup-content {
@@ -199,14 +200,12 @@ div.popup-content {
 }
 
 polygon.popup-trail {
-  fill: lightblue;
-  stroke: black;
-  stroke-width: 0.5px;
+  fill: #ff8800; /* Brand color. */
   opacity: 0.5;
   pointer-events: none; /* Let mouse events through so we do not block clicks. */
 }
 polygon.popup-trail.popup-type-plug {
-  fill: bisque;
+  fill: #39bcf3; /* Brand color. */
 }
 
 .popup #help-toggle {
@@ -222,5 +221,24 @@ polygon.popup-trail.popup-type-plug {
 }
 
 .plot-header {
+  padding-top: 10px;
+}
+
+state-view display-error > div {
+  padding-top: 10px;
+}
+
+export-result > div {
+  padding-top: 10px;
+}
+export-result .token {
+  margin-bottom: 10px;
+}
+
+plot-state-view > div {
+  padding-top: 15px;
+}
+
+op-editor > :first-child {
   padding-top: 10px;
 }

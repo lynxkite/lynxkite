@@ -1,5 +1,5 @@
 .project-name {
-  font: bold 3em serif;
+  font: bold 3em 'Exo 2'; /* Brand font. */
 }
 input[type=range] {
   vertical-align: middle;
@@ -284,6 +284,7 @@ label {
 
 .side {
   padding: 0;
+  padding-top: 10px;
 }
 .side .panel {
   border-top: none;
