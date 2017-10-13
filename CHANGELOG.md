@@ -9,7 +9,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Upgraded to _Apache Spark 2.2.0_.
  - Added SQL box variants with up to 10 inputs. (The long-term plan is to have a single box that can
    take any number of inputs.)
- - Brand colors used in several new places, for consistent styling.
+ - Lynx-branded design applied to most of the user interface.
  - Users can now set SQL box summaries.
  - SQL boxes can optionally persist their outputs.
  - _Train a decision tree classification model_ can use String attributes.
