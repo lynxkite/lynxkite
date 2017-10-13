@@ -28,7 +28,7 @@ Opens the selected custom box as a workspace. Only available if a custom box is 
 +++<label class="btn btn-default"><i class="fa fa-mouse-pointer"></i></label>+++ Select boxes on drag::
 If this mode is enabled, boxes can be selected by dragging a selection rectangle. You can still  pan (move the viewport) by clicking and dragging while holding Shift, or select boxes individually (and add boxes to the selection by holding Ctrl).
 
-+++<label class="btn btn-default"><i class="fa fa-hand-paper-o"></i></label>+++ Pan workspace on drag::
++++<label class="btn btn-default"><i class="fa fa-arrows"></i></label>+++ Pan workspace on drag::
 If this mode is enabled, clicking and dragging will move the viewport. Boxes can be selected two ways: individually, when additional  boxes can be added to the selection by holding Ctrl or by dragging a selection rectangle while holding Shift.
 
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-backward"></i></label>+++ Undo::
