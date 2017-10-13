@@ -223,7 +223,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   };
 
   var graphToSVGRatio = 0.8;  // Leave some margin.
-  var UNCOLORED = 'hsl(0,0%,42%)';
+  var UNCOLORED = '#39bcf3';  // Brand color.
 
   GraphView.prototype.addGroup = function(className, clipper) {
     var group;

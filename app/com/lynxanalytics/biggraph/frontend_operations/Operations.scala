@@ -47,17 +47,17 @@ object Categories {
   val BuildSegmentationOperations =
     Category("Build segmentation", "green", icon = "th-large", index = idx)
   val UseSegmentationOperations =
-    Category("Use segmentation", "yellow", icon = "th-large", index = idx)
+    Category("Use segmentation", "orange", icon = "th-large", index = idx)
   val StructureOperations =
-    Category("Structure", "yellow", icon = "asterisk", index = idx)
+    Category("Structure", "orange", icon = "asterisk", index = idx)
   val ScalarOperations =
-    Category("Scalars", "yellow", icon = "globe", index = idx)
+    Category("Scalars", "orange", icon = "globe", index = idx)
   val VertexAttributeOperations =
-    Category("Vertex attributes", "yellow", icon = "circle", index = idx)
+    Category("Vertex attributes", "orange", icon = "circle", index = idx)
   val EdgeAttributeOperations =
-    Category("Edge attributes", "yellow", icon = "share-alt", index = idx)
+    Category("Edge attributes", "orange", icon = "share-alt", index = idx)
   val AttributePropagationOperations =
-    Category("Attribute propagation", "yellow", icon = "podcast", index = idx)
+    Category("Attribute propagation", "orange", icon = "podcast", index = idx)
   val GraphComputationOperations =
     Category("Graph computation", "blue", icon = "snowflake-o", index = idx)
   val MachineLearningOperations =
@@ -65,12 +65,12 @@ object Categories {
   val WorkflowOperations =
     Category("Workflow", "blue", icon = "cogs", index = idx)
   val ManageProjectOperations =
-    Category("Manage project", "pink", icon = "wrench", index = idx)
+    Category("Manage project", "blue", icon = "wrench", index = idx)
   val VisualizationOperations =
     Category("Visualization operations", "purple", icon = "eye", index = idx)
   val ExportOperations =
     Category("Export operations", "purple", icon = "download", index = idx)
-  val HiddenOperations = Category("Hidden operations", "yellow", visible = false, index = idx)
+  val HiddenOperations = Category("Hidden operations", "orange", visible = false, index = idx)
 }
 
 abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationRegistry {

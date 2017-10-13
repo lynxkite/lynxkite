@@ -1,7 +1,7 @@
 <div class="operation-selector" ng-class="{ open: category || searching }">
   <div class="categories">
     <!-- The real category buttons: -->
-    <div class="category yellow"
+    <div class="category blue"
       ng-class="{ active: searching }"
       id="operation-search"
       drop-tooltip="Search"
@@ -37,7 +37,7 @@
     </operation-tree>
   </div>
 
-  <div ng-show="searching" class="panel box yellow">
+  <div ng-show="searching" class="panel box blue">
     <h1>
       <input id="filter" ng-model="opFilter" ng-keyup="filterKey($event)" autocomplete="off">
     </h1>

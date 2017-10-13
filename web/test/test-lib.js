@@ -15,6 +15,11 @@ function toId(x) {
   return x.toLowerCase().replace(/ /g, '-');
 }
 
+// Same as element.getText() except work on offscreen elements.
+function textOf(element) {
+  return element.getAttribute('textContent').then(s => s.trim());
+}
+
 
 function Entity(side, kind, name) {
   this.side = side;
@@ -524,7 +529,7 @@ TableState.prototype = {
   },
 
   getRowAsArray: function(row) {
-    return row.$$('td').map(e => e.getText());
+    return row.$$('td').map(textOf);
   },
 
   rows: function() {
