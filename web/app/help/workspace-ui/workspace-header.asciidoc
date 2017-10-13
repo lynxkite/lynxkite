@@ -1,4 +1,3 @@
-[[workspace-header]]
 ## Workspace header bar
 
 The workspace title bar contains the name of the workspace, its full path (the folders they are in) and buttons to various program functions. It looks something like this:
