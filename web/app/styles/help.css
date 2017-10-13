@@ -2,6 +2,14 @@
   font-weight: bold;
 }
 
+.help .popup {
+  /* For displaying screenshots like popups. */
+  position: static;
+  display: block;
+  width: min-content;
+  margin: 20px auto;
+}
+
 #toc {
   float: right;
 }
@@ -74,7 +82,7 @@
 
 /* Single-page help documents. */
 .documentation {
-  background: #004165;
+  background: #002a4c; /* Brand color. */
   padding-top: 20px;
   padding-bottom: 20px;
 }

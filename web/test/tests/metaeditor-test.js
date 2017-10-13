@@ -34,5 +34,7 @@ module.exports = function(fw) {
       operation().sendKeys(lib.selectAllKey + 'Create example graph');
       toggle();
       expect(box.operationId()).toBe('Create example graph');
+
+      box.close();
     });
 };

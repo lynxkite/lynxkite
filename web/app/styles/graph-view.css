@@ -7,7 +7,7 @@ svg.graph-view {
   position: absolute;
   width: 100%;
   height: 100%;
-  background: #222 !important; /* Make sure it shows in print. */
+  background: #001b31 /* Brand color. */ !important; /* Make sure it shows in print. */
   user-select: none;
 }
 svg.graph-view.loading {
@@ -36,14 +36,14 @@ svg text.clicky {
 
 svg .edge {
   fill: none;
-  stroke: #444;
+  stroke: #0089c4; /* Brand color. */
   transition: opacity 0.25s;
 }
 svg .edge.invisible-edge {
  opacity: 0;
 }
 svg #arrow {
-  fill: #444;
+  fill: #0089c4; /* Brand color. */
 }
 svg #arrow-highlight-out {
   fill: white;
@@ -52,13 +52,13 @@ svg .edge.highlight-out {
   stroke: white;
 }
 svg .edge.highlight-out text {
-  fill: #888;
+  fill: #39bcf3; /* Brand color. */
 }
 svg #arrow-highlight-in {
-  fill: #888;
+  fill: #39bcf3; /* Brand color. */
 }
 svg .edge.highlight-in {
-  stroke: #888;
+  stroke: #39bcf3; /* Brand color. */
 }
 svg .edge.highlight-in text {
   fill: white;
@@ -97,7 +97,7 @@ svg .vertex.sampled .icon {
   fill-rule: evenodd;  /* Allow hollow shapes. */
 }
 svg .vertex.center .icon {
-  stroke: #ddd;
+  stroke: white;
   stroke-width: 3;
 }
 
@@ -113,7 +113,7 @@ svg.fade-non-opaque .vertex.opaque {
 
 svg .bucket {
   font-size: 12px;
-  fill: #888;
+  fill: #39bcf3; /* Brand color. */
   text-anchor: middle;
 }
 svg .bucket.highlight {
@@ -129,11 +129,11 @@ svg .bucket.axis-label {
   text-anchor: middle;
   font-size: 18px;
   font-weight: bold;
-  fill: #444;
+  fill: #0089c4; /* Brand color. */
 }
 
 svg .legend {
-  fill: #888;
+  fill: #39bcf3; /* Brand color. */
 }
 svg .legend text {
   font-size: 12px;
@@ -141,7 +141,7 @@ svg .legend text {
 }
 
 svg .loading {
-  fill: #444;
+  fill: #0089c4; /* Brand color. */
 }
 svg text.error {
   font-size: 20px;
