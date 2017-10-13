@@ -27,7 +27,7 @@ module.exports = function(fw) {
     'snapshot created',
     'SQL table browser - global SQL box - dot in the folder name',
     function() {
-      lib.splash.newDirectory('firtsname.lastname@lynx.com');
+      lib.splash.newDirectory('firstname.lastname@lynx.com');
       lib.splash.newDirectory('dir.v01');
       lib.splash.newDirectory('inner');
       lib.splash.popDirectory();
