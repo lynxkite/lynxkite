@@ -367,7 +367,7 @@ class Ecosystem:
   def install_extra_python_dependencies(self, requirements):
     self.cluster.rsync_up(requirements, '.')
     file_name = os.path.basename(requirements)
-    self.cluster.ssh('sudo pip-3.4 install --upgrade -r {}'.format(file_name))
+    self.cluster.ssh('sudo env "PATH=$PATH" pip3 install --upgrade -r {}'.format(file_name))
 
   def upload_tasks(self, src, dst='/mnt/lynx/luigi_tasks/'):
     self.cluster.ssh('mkdir -p ' + dst)
@@ -415,11 +415,14 @@ class Ecosystem:
     self.cluster.ssh('''
     set -x
     cd /mnt/lynx
-    sudo yum install -y python34-pip mysql-server gcc libffi-devel
+    sudo yum install -y mysql-server gcc libffi-devel
+    curl https://bootstrap.pypa.io/get-pip.py > /mnt/lynx/get-pip.py
+    sudo python3 /mnt/lynx/get-pip.py
+    sudo python /mnt/lynx/get-pip.py
     # Removes the given and following lines so only the necessary modules will be installed.
     sed -i -n '/# Dependencies for developing and testing/q;p'  python_requirements.txt
-    sudo pip-3.4 install --upgrade -r python_requirements.txt
-    sudo pip-2.6 install --upgrade requests[security] supervisor
+    sudo env "PATH=$PATH" pip3 install --upgrade -r python_requirements.txt
+    sudo env "PATH=$PATH" pip install --upgrade requests[security] supervisor
     # mysql setup
     sudo service mysqld start
     mysqladmin  -u root password 'root' || true  # (May be set already.)
@@ -585,8 +588,8 @@ EOF
 
   def install_and_setup_jupyter(self):
     self.cluster.ssh('''
-      sudo pip-3.4 install --upgrade jupyter sklearn matplotlib
-      sudo pip-3.4 install --upgrade pandas seaborn statsmodels
+      sudo env "PATH=$PATH" pip3 install --upgrade jupyter sklearn matplotlib
+      sudo env "PATH=$PATH" pip3 install --upgrade pandas seaborn statsmodels
     ''')
     self.cluster.ssh_nohup('''
       mkdir -p /mnt/lynx/notebooks
