@@ -59,7 +59,7 @@ box-editor table-browser {
 }
 
 .box-error {
-  color: red;
+  color: #9b2016; /* Brand color. */
   margin-top: 8px;
 }
 
