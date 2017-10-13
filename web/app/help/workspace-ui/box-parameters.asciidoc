@@ -4,6 +4,7 @@ Clicking on a box opens its box parameters popup. This popup allows you to set t
 box. A faint trail connects the popup to the box it controls. Click the box again, or click on the
 +++<i class="glyphicon glyphicon-remove"></i>+++ in the top right corner to close the popup.
 
+[.popup]
 image::images/box-parameters.png[Box parameters popup screenshot]
 
 Click +++<i class="glyphicon glyphicon-question-sign"></i>+++ _More about "..."_ to expand the help
@@ -54,6 +55,7 @@ metadata.
 Click the +++<i class="glyphicon glyphicon-arrow-left"></i>+++ icon to return to the parameter
 editor.
 
+[.popup]
 image::images/box-metadata.png[Box metadata popup screenshot]
 
 ====

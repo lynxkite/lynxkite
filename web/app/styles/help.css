@@ -2,6 +2,14 @@
   font-weight: bold;
 }
 
+.help .popup {
+  /* For displaying screenshots like popups. */
+  position: static;
+  display: block;
+  width: min-content;
+  margin: 20px auto;
+}
+
 #toc {
   float: right;
 }

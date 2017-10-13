@@ -4,6 +4,7 @@ Click on an output of a box to open that output state in a popup.
 Click the output again, or click on the +++<i class="glyphicon glyphicon-remove"></i>+++ icon in the
 top right corner to close the popup. You can also press ESC to close the last used popup.
 
+[.popup]
 image::images/project-state.png[Project state screenshot]
 
 Different output types have different data and features available in their popups.
@@ -41,6 +42,7 @@ at the bottom.
 The output state of the instrument once again has a toolbar for snapshotting and applying
 instruments. This makes it possible to apply one instrument after the other:
 
+[.popup]
 image::images/nested-instruments.png[Nested instruments screenshot]
 
 Instruments are not saved into the workspace. But they are built from regular boxes, so the same
@@ -49,6 +51,7 @@ calculations can always be reproduced using conventional boxes.
 
 ### Project state
 
+[.popup]
 image::images/project-state.png[Project state screenshot]
 
 A "project" is a rich type that represents graphs and their segmentations in one bundle. The popup
@@ -61,6 +64,7 @@ The <<Projects>> chapter gives a more in-depth description of projects.
 
 ### Table state
 
+[.popup]
 image::images/table-state.png[Table state screenshot]
 
 Tables are the same in LynxKite as in relational databases and spreadsheet programs: they are a
@@ -70,6 +74,7 @@ from tables via <<Use table as vertices>>, <<Use table as edges>>, and similar o
 
 ### Plot state
 
+[.popup]
 image::images/plot-state.png[Plot state screenshot]
 
 The plot state is a data visualization created via the <<Custom plot>> box, or one of the built-in
@@ -78,6 +83,7 @@ plotting boxes.
 
 ### Export state
 
+[.popup]
 image::images/export-state.png[Export state screenshot]
 
 Export boxes, such as <<Export to CSV>>, allow you to configure an export operation. The output of
