@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 2.1.0
+
  - Upgraded to _Apache Spark 2.2.0_.
  - Added SQL box variants with up to 10 inputs. (The long-term plan is to have a single box that can
    take any number of inputs.)
