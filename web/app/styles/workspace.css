@@ -76,7 +76,12 @@ g.box .pedestal {
   fill: transparent;
 }
 g.box.selected .pedestal {
-  fill: url(#pedestal-gradient);
+  stroke-width: 2;
+  stroke: black;
+  stroke-opacity: 0.5;
+  stroke-dasharray: 5,5;
+  fill: #39bcf3; /* Brand color. */
+  fill-opacity: 0.1;
   mix-blend-mode: darken; /* Allow arrow to be visible even if it is below. */
 }
 
