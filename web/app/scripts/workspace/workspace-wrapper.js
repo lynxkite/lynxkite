@@ -194,6 +194,7 @@ angular.module('biggraph')
       request
         .then(
           function onSuccess(response) {
+            that.loaded = true;
             if (request === that._lastLoadRequest && !that._requestInvalidated) {
               that._init(response);
             }

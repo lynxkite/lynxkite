@@ -17,10 +17,24 @@ span#workspace-name {
   font: bold 2.5em 'Exo 2'; /* Brand font. */
 }
 
+#workspace-loading,
 #workspace-drawing-board {
   height: 100%;
   width: 100%;
   float: left;
+}
+
+#workspace-loading {
+  pointer-events: none;
+  position: absolute;
+  background-color: #002a4c; /* Brand color. */
+  transition: background-color 0.2s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#workspace-loading.done {
+  background-color: transparent;
 }
 
 workspace-drawing-board > display-error > * {
