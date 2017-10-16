@@ -419,6 +419,7 @@ class Ecosystem:
     # Removes the given and following lines so only the necessary modules will be installed.
     sed -i -n '/# Dependencies for developing and testing/q;p'  python_requirements.txt
     sudo pip-3.4 install --upgrade -r python_requirements.txt
+    sudo pip-2.6 install --upgrade setuptools
     sudo pip-2.6 install --upgrade requests[security] supervisor
     # mysql setup
     sudo service mysqld start
