@@ -42,7 +42,11 @@ trait ProtoTable {
   // For Spark SQL plans.
   def getRelation: LocalRelation = {
     val fields = schema.fields
-    LocalRelation(fields.head, fields.tail: _*)
+    if (fields.nonEmpty) {
+      LocalRelation(fields.head, fields.tail: _*)
+    } else {
+      LocalRelation()
+    }
   }
 }
 

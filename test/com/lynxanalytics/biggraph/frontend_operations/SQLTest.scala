@@ -225,6 +225,16 @@ class SQLTest extends OperationsTestBase {
     assert(table.schema.map(_.name) == Seq("age"))
   }
 
+  test("no edge attributes") {
+    val noEdges = box("Create example graph")
+      .box("Discard edge attributes", Map("name" -> "comment,weight"))
+    assert(noEdges.project.edgeAttributes.size == 0)
+    val table = noEdges
+      .box("SQL1", Map("sql" -> "select * from vertices"))
+      .table
+    assert(table.schema.map(_.name) == Seq("age", "gender", "id", "income", "location", "name"))
+  }
+
   test("Thread safe sql even for the same SQL context") {
     val columnName = "col"
     val tableName = "table"
