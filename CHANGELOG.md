@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Bug fixes. Thanks for all bug reports!
+
 ### 2.1.0
 
  - Upgraded to _Apache Spark 2.2.0_.
