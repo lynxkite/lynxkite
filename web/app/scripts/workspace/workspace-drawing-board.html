@@ -244,3 +244,10 @@
 </div>
 <operation-selector box-catalog="boxCatalog" ondrag="addOperation(op, $event)">
 </operation-selector>
+<div
+  id="workspace-loading"
+  ng-class="{ done: workspace.error || workspace.loaded }">
+  <img
+    src="/images/progress.svg"
+    ng-hide="workspace.error || workspace.loaded">
+</div>
