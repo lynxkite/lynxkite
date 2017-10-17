@@ -28,6 +28,9 @@
          from="0 100 100"
          to="-360 100 100"
          dur="2.5s"
+         keySplines="0.5 0.1 0.5 0.9"
+         keyTimes="0;1"
+         calcMode="spline"
          repeatCount="indefinite"/>
   </path>
   <path
@@ -40,6 +43,9 @@
          from="0 150 120"
          to="360 150 120"
          dur="3s"
+         keySplines="0.5 0.1 0.5 0.9"
+         keyTimes="0;1"
+         calcMode="spline"
          repeatCount="indefinite"/>
   </path>
   <path
@@ -52,6 +58,9 @@
          from="0 150 100"
          to="360 150 100"
          dur="2.2s"
+         keySplines="0.5 0.1 0.5 0.9"
+         keyTimes="0;1"
+         calcMode="spline"
          repeatCount="indefinite"/>
   </path>
   <path
@@ -64,6 +73,9 @@
          from="0 220 120"
          to="360 220 120"
          dur="2s"
+         keySplines="0.5 0.1 0.5 0.9"
+         keyTimes="0;1"
+         calcMode="spline"
          repeatCount="indefinite"/>
   </path>
 </svg>
