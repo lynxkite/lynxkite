@@ -39,24 +39,27 @@ abstract class ExportTable extends TypedMetaGraphOp[Input, Output] {
 }
 
 object ExportTableToCSV extends OpFromJson {
+  val quoteAllParameter = NewParameter("quoteAll", false)
   def fromJson(j: JsValue) = ExportTableToCSV(
     (j \ "path").as[String], (j \ "header").as[Boolean],
     (j \ "delimiter").as[String], (j \ "quote").as[String],
-    (j \ "version").as[Int])
+    quoteAllParameter.fromJson(j), (j \ "version").as[Int])
 }
 
 case class ExportTableToCSV(path: String, header: Boolean,
-    delimiter: String, quote: String, version: Int)
+    delimiter: String, quote: String, quoteAll: Boolean, version: Int)
   extends ExportTable {
   override def toJson = Json.obj(
     "path" -> path, "header" -> header,
-    "delimiter" -> delimiter, "quote" -> quote, "version" -> version)
+    "delimiter" -> delimiter, "quote" -> quote,
+    "version" -> version) ++ ExportTableToCSV.quoteAllParameter.toJson(quoteAll)
 
   def exportDataFrame(df: spark.sql.DataFrame) = {
     val file = HadoopFile(path)
     val options = Map(
       "delimiter" -> delimiter,
       "quote" -> quote,
+      "quoteAll" -> (if (quoteAll) "true" else "false"),
       "nullValue" -> "",
       "header" -> (if (header) "true" else "false"))
     df.write.format("csv").options(options).save(file.resolvedName)
