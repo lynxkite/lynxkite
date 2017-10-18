@@ -451,13 +451,10 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       params += Choice("persist", "Persist result", options = FEOption.noyes)
       override def summary = params("summary")
       def enabled = FEStatus.enabled
-      def defaultTableName: String = {
-        val tableNames = this.getInputTables().keys.toList
-        // Use tables which contain the first input if possible.
-        var filteredTableNames = tableNames.filter(_.contains(inputs(0)))
-        if (filteredTableNames.isEmpty) filteredTableNames = tableNames
-        // If any table name contains "vertices" use that, otherwise the first available table.
-        filteredTableNames.find(_.contains("vertices")).getOrElse(filteredTableNames(0))
+      def defaultTableName = {
+        val tableNames = this.getInputTables().keySet
+        Seq("vertices", "input", "one", "one.vertices").find(tableNames.contains(_))
+          .getOrElse(tableNames.head)
       }
       override def getOutputs() = {
         params.validate()
