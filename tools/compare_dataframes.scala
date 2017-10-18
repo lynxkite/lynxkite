@@ -11,15 +11,13 @@ import util.{ Try, Success, Failure }
 def frameHashCode(dataFrame: DataFrame): Int =
   dataFrame.map(_.hashCode).reduce(_ + _)
 
-def compareDataFrames(df1: DataFrame, df2: DataFrame): Try[Unit] = {
+def compareDataFrames(df1: DataFrame, df2: DataFrame): Unit = {
   val df1Schema = df1.schema.toString.toLowerCase
   val df2Schema = df2.schema.toString.toLowerCase
-  Try({
-    assert(df1Schema == df2Schema, "schema mismatch")
-    assert(df1.count == df2.count, "count mismatch")
-    assert(df1.count != 0, "both emtpy")
-    assert(frameHashCode(df1) == frameHashCode(df2), "hash mismatch")
-  })
+  assert(df1Schema == df2Schema, "schema mismatch")
+  assert(df1.count == df2.count, "count mismatch")
+  assert(df1.count != 0, "both emtpy")
+  assert(frameHashCode(df1) == frameHashCode(df2), "hash mismatch")
 }
 
 // spark is the spark context in the spark-shell, it should be available here
@@ -28,7 +26,9 @@ def readParquet(path: String) = spark.read.parquet(path)
 def compareAll(whatToWhat: Map[String, (String, String)]): Map[String, Try[Unit]] =
   whatToWhat.mapValues {
     case (path1, path2) =>
-      val df1 = readParquet(path1)
-      val df2 = readParquet(path2)
-      compareDataFrames(df1, df2)
+      Try {
+        val df1 = readParquet(path1)
+        val df2 = readParquet(path2)
+        compareDataFrames(df1, df2)
+      }
   }
