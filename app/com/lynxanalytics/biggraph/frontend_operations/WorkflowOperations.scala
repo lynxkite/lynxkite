@@ -452,9 +452,9 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       override def summary = params("summary")
       def enabled = FEStatus.enabled
       def defaultTableName = {
-        val tableNames = this.getInputTables().keySet
+        val tableNames = this.getInputTables().keySet.toList.sorted
         Seq("vertices", "input", "one", "one.vertices").find(tableNames.contains(_))
-          .getOrElse(tableNames.toList.sorted.head)
+          .getOrElse(tableNames.head)
       }
       override def getOutputs() = {
         params.validate()
