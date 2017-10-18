@@ -454,7 +454,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       def defaultTableName = {
         val tableNames = this.getInputTables().keySet
         Seq("vertices", "input", "one", "one.vertices").find(tableNames.contains(_))
-          .getOrElse(tableNames.head)
+          .getOrElse(tableNames.toList.sorted.head)
       }
       override def getOutputs() = {
         params.validate()
