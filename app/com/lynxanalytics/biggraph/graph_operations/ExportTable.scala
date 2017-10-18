@@ -58,7 +58,7 @@ case class ExportTableToCSV(path: String, header: Boolean,
     val options = Map(
       "delimiter" -> delimiter,
       "quote" -> quote,
-      "quoteAll" -> quoteAll.toString,
+      "quoteAll" -> (if (quoteAll) "true" else "false"),
       "nullValue" -> "",
       "header" -> (if (header) "true" else "false"))
     df.write.format("csv").options(options).save(file.resolvedName)
