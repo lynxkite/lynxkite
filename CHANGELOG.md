@@ -6,6 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Optionally quote all string values in _Export to CSV_.
  - Bug fixes. Thanks for all bug reports!
 
 ### 2.1.0
