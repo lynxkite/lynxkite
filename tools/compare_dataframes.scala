@@ -24,11 +24,11 @@ def compareDataFrames(df1: DataFrame, df2: DataFrame): Unit = {
 def readParquet(path: String) = spark.read.parquet(path)
 
 def compareAll(whatToWhat: Map[String, (String, String)]): Map[String, Try[Unit]] =
-  whatToWhat.mapValues {
-    case (path1, path2) =>
+  whatToWhat.map {
+    case (name, (path1, path2)) =>
       Try {
         val df1 = readParquet(path1)
         val df2 = readParquet(path2)
-        compareDataFrames(df1, df2)
+        name -> compareDataFrames(df1, df2)
       }
   }
