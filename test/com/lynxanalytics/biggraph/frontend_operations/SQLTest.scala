@@ -235,6 +235,23 @@ class SQLTest extends OperationsTestBase {
     assert(table.schema.map(_.name) == Seq("age", "gender", "id", "income", "location", "name"))
   }
 
+  test("set type attribute") {
+    val table = box("Create example graph")
+      .box("Aggregate edge attribute to vertices", Map(
+        "prefix" -> "edge",
+        "direction" -> "all edges",
+        "aggregate_weight" -> "set"))
+      .box("SQL1", Map("sql" -> "select edge_weight_set from vertices"))
+      .table
+    val data = table.df.collect.toSeq.map(row => toSeq(row))
+    assert(table.schema.map(_.name) == Seq("edge_weight_set"))
+    assert(data == Seq(
+      Seq("Set(3.0, 1.0, 2.0)"),
+      Seq("Set(4.0, 2.0, 1.0)"),
+      Seq("Set(4.0, 3.0)"),
+      Seq(null)))
+  }
+
   test("Thread safe sql even for the same SQL context") {
     val columnName = "col"
     val tableName = "table"
@@ -287,5 +304,4 @@ class SQLTest extends OperationsTestBase {
     // (All workers use the same name when registering their data frames.)
     assert(badResults.isEmpty)
   }
-
 }
