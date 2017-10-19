@@ -68,7 +68,12 @@ case class AttributesToTable(schema: types.StructType) extends TypedMetaGraphOp[
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     val columnRDDs: Map[String, AttributeRDD[_]] = inputs.attrs.map { attr =>
-      attr.name.name -> attr.rdd
+      schema(attr.name.name).dataType match {
+        case _: types.StringType =>
+          // Since StringType is the default attribute type the data may need to be converted.
+          attr.name.name -> attr.rdd.mapValues(_.toString)
+        case _ => attr.name.name -> attr.rdd
+      }
     }.toMap
     val df = new RDDRelation(schema, inputs.vs.rdd, columnRDDs, rc.sqlContext).toDF
     output(o.t, df)
