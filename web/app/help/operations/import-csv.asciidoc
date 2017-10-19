@@ -18,6 +18,33 @@ be read from the file. (Use this if the file has a header.)
 [[delimiter]] Delimiter::
 The delimiter separating the fields in each line.
 
+[[quote]] Quote character::
+The character used for escaping quoted values where the delimiter can be part of the value.
+
+[[escape]] Escape character::
+The character used for escaping quotes inside an already quoted value.
+
+[[null_value]] Null value::
+The string representation of a `null` value.
+
+[[date_format]] Date format::
+The string that indicates a date format. Custom date formats follow the formats at
+`java.text.SimpleDateFormat`.
+
+[[timestamp_format]] Timestamp format::
+The string that indicates a timestamp format. Custom date formats follow the formats at
+`java.text.SimpleDateFormat`.
+
+[[ignore_leading_white_space]] Ignore Leading White Space::
+A flag indicating whether or not leading whitespaces from values being written should be skipped.
+
+[[ignore_trailing_white_space]] Ignore Trailing White Space::
+A flag indicating defines whether or not trailing whitespaces from values being written should be
+skipped.
+
+[[comment]] Comment character::
+The character used for skipping lines beginning with this character.
+
 [[error_handling]] Error handling::
 What should happen if a line has more or less fields than the number of columns?
 +
