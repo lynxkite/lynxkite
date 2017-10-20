@@ -10,7 +10,7 @@ angular.module('biggraph').directive('modelParameter', function(util) {
     },
     templateUrl: 'scripts/operation/model-parameter.html',
     link: function(scope) {
-      scope.activeModel = undefined;
+      scope.activeModel = scope.param.payload.models[0];
       // Feature name to attribute name. Matching names are added by default.
       scope.binding = {};
       for (var j = 0; j < scope.param.payload.attrs.length; ++j) {
