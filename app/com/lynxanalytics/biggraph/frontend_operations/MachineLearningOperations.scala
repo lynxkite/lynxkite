@@ -233,7 +233,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
   register("Train a decision tree classification model")(new ProjectTransformation(_) {
     def attrs = project.vertexAttrList[Double] ++ project.vertexAttrList[String]
     params ++= List(
-      Param("name", "The name of the model"),
+      Param("name", "The name of the model", defaultValue = "model"),
       Choice("label", "Label", options = attrs),
       Choice("features", "Features", options = attrs, multipleChoice = true),
       Choice("impurity", "Impurity", options = FEOption.list("entropy", "gini")),
@@ -274,7 +274,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register("Train a decision tree regression model")(new ProjectTransformation(_) {
     params ++= List(
-      Param("name", "The name of the model"),
+      Param("name", "The name of the model", defaultValue = "model"),
       Choice("label", "Label", options = project.vertexAttrList[Double]),
       Choice("features", "Features", options = project.vertexAttrList[Double], multipleChoice = true),
       NonNegInt("maxBins", "Maximum number of bins", default = 32),
@@ -312,7 +312,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register("Train a k-means clustering model")(new ProjectTransformation(_) {
     params ++= List(
-      Param("name", "The name of the model"),
+      Param("name", "The name of the model", defaultValue = "model"),
       Choice(
         "features", "Attributes",
         options = project.vertexAttrList[Double], multipleChoice = true),
@@ -347,7 +347,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register("Train a logistic regression model")(new ProjectTransformation(_) {
     params ++= List(
-      Param("name", "The name of the model"),
+      Param("name", "The name of the model", defaultValue = "model"),
       Choice("label", "Label", options = project.vertexAttrList[Double]),
       Choice("features", "Features", options = project.vertexAttrList[Double], multipleChoice = true),
       NonNegInt("max_iter", "Maximum number of iterations", default = 20))
@@ -375,7 +375,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register("Train linear regression model")(new ProjectTransformation(_) {
     params ++= List(
-      Param("name", "The name of the model"),
+      Param("name", "The name of the model", defaultValue = "model"),
       Choice("label", "Label", options = project.vertexAttrList[Double]),
       Choice("features", "Features", options = project.vertexAttrList[Double], multipleChoice = true),
       Choice("method", "Method", options = FEOption.list(
