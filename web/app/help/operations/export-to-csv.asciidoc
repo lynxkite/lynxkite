@@ -17,6 +17,9 @@ The delimiter separating the fields in each line.
 The character used for quoting strings that contain the delimiter. If the string also contains the
 quote character, it will be escaped with a backslash (`{backslash}`).
 
+[[quote_all]] Quote all strings::
+Quotes all string values if set. Only quotes in the necessary cases otherwise. 
+
 [[header]] Include header::
 Whether or not to include the header in the CSV file. If the data is exported as multiple CSV files
 the header will be included in each of them. When such a data set is directly downloaded, the header

@@ -15,6 +15,11 @@ function toId(x) {
   return x.toLowerCase().replace(/ /g, '-');
 }
 
+// Same as element.getText() except work on offscreen elements.
+function textOf(element) {
+  return element.getAttribute('textContent').then(s => s.trim());
+}
+
 
 function Entity(side, kind, name) {
   this.side = side;
@@ -304,14 +309,14 @@ Workspace.prototype = {
 
   getBoxEditor: function(boxId) {
     var popup = this.board.$('.popup#' + boxId);
-    return popup;
+    return new BoxEditor(popup);
   },
 
   openBoxEditor: function(boxId) {
     this.clickBox(boxId);
-    var popup = this.getBoxEditor(boxId);
-    expect(popup.isDisplayed()).toBe(true);
-    return new BoxEditor(popup);
+    var editor = this.getBoxEditor(boxId);
+    testLib.expectElement(editor.popup);
+    return editor;
   },
 
   openStateView: function(boxId, plugId) {
@@ -327,8 +332,8 @@ Workspace.prototype = {
   },
 
   getVisualizationEditor(boxId) {
-    var popup = this.getBoxEditor(boxId);
-    return new State(popup);
+    var editor = this.getBoxEditor(boxId);
+    return new State(editor.popup);
   },
 
   expectConnected: function(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
@@ -387,6 +392,10 @@ function BoxEditor(popup) {
 BoxEditor.prototype = {
   __proto__: PopupBase.prototype,  // inherit PopupBase's methods
 
+  operationId: function() {
+    return this.popup.$('.popup-head').getText();
+  },
+
   operationParameter: function(param) {
     return this.element.$(
         'operation-parameters #' + param + ' .operation-attribute-entry');
@@ -394,6 +403,10 @@ BoxEditor.prototype = {
 
   parametricSwitch: function(param) {
     return this.element.$('operation-parameters #' + param + ' .parametric-switch');
+  },
+
+  removeParameter: function(param) {
+    return this.element.$('operation-parameters #' + param + ' .remove-parameter').click();
   },
 
   populateOperation: function(params) {
@@ -516,7 +529,7 @@ TableState.prototype = {
   },
 
   getRowAsArray: function(row) {
-    return row.$$('td').map(e => e.getText());
+    return row.$$('td').map(textOf);
   },
 
   rows: function() {
@@ -1303,6 +1316,11 @@ testLib = {
             e.$$('option:checked').click();
             for (let i = 0; i < value.length; ++i) {
               e.$('option[label="' + value[i] + '"]').click();
+            }
+          } else if (kind === 'multi-tag-list') {
+            for (let i = 0; i < value.length; ++i) {
+              e.$('.glyphicon-plus').click();
+              e.$('a#' + value[i]).click();
             }
           } else {
             e.sendKeys(testLib.selectAllKey + value);

@@ -14,16 +14,23 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     this.x = x;
     this.y = y;
     this.width = width;
-    this.height = height;
+    this.height = undefined;
+    this.maxHeight = height;
     this.owner = owner;
     this.element = undefined;
+    this.meta = false;  // Whether the metadata editor is active.
   }
 
   PopupModel.prototype.updateSize = function() {
     var popupElement = this.element.find('.popup-content')[0];
     // Save width and height of the popup. Remove 'px' from the end.
     this.width = parseInt(popupElement.style.width.slice(0, -2));
-    this.height = parseInt(popupElement.style.height.slice(0, -2));
+    var newHeight = parseInt(popupElement.style.height.slice(0, -2));
+    if (newHeight) {
+      this.height = newHeight;
+      // max-height limits the initial automatic sizing. We unset it so manual sizing is unlimited.
+      this.maxHeight = undefined;
+    }
   };
 
   PopupModel.prototype.onMouseDown = function(event) {
@@ -94,6 +101,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   PopupModel.prototype.trail = function(pageToLogical, logicalToPage, workspace) {
     // "L" variables are in logical coordinates, P variables are in page coordinates.
     var anchor = this.contentObject(workspace);
+    if (!anchor) { return; }
     var anchorL = {
       x: anchor.cx(),
       y: anchor.cy() };
@@ -128,6 +136,10 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
       y: attachP.y + nx * HALF_WIDTH };
     var bL = pageToLogical(bP);
     return anchorL.x + ',' + anchorL.y + ' ' + aL.x + ',' + aL.y + ' ' + bL.x + ',' + bL.y;
+  };
+
+  PopupModel.prototype.toggleMeta = function() {
+    this.meta = !this.meta;
   };
 
   return PopupModel;

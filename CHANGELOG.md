@@ -6,14 +6,23 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Optionally quote all string values in _Export to CSV_.
+ - Bug fixes. Thanks for all bug reports!
+
+### 2.1.0
+
  - Upgraded to _Apache Spark 2.2.0_.
  - Added SQL box variants with up to 10 inputs. (The long-term plan is to have a single box that can
    take any number of inputs.)
- - Brand colors used in several new places, for consistent styling.
+ - Lynx-branded design applied to most of the user interface.
  - Users can now set SQL box summaries.
  - SQL boxes can optionally persist their outputs.
  - _Train a decision tree classification model_ can use String attributes.
  - Navigate directories by clicking on the path segments on the splash page.
+ - The new box metadata editor makes it possible to change the type of a box and fix broken custom
+   box references.
+ - Popups can be more flexibly resized.
+ - Arrows can be deleted by clicking on them.
  - A number of minor bugfixes and improvements. Thanks for the feedback!
 
 ### 2.0.0

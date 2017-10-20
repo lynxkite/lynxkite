@@ -10,7 +10,7 @@ angular.module('biggraph').factory('PlugWrapper', function() {
   function PlugWrapper(workspace, id, index, direction, box) {
     this.workspace = workspace;
     this.rx = direction === 'outputs' ? box.width : 0;
-    var count = box.metadata[direction].length;
+    var count = box.metadata[direction].length || 1;
     this.ry = box.height - 20 * (count - index);
     this.box = box;
     this.boxId = box.instance.id;

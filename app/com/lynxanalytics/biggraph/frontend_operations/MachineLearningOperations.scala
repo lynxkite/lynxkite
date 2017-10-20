@@ -112,7 +112,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       NonNegInt("minTrainingVertices", "Minimum training subgraph size", default = 10),
       NonNegInt("maxTrainingVertices", "Maximum training subgraph size", default = 20),
       NonNegInt("trainingRadius", "Radius for training subgraphs", default = 3),
-      RandomSeed("seed", "Seed"),
+      RandomSeed("seed", "Seed", context.box),
       NonNegDouble("learningRate", "Learning rate", defaultValue = "0.1"))
     def enabled = project.hasEdgeBundle && FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No vertex attributes.")
     def apply() = {
@@ -207,7 +207,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       Choice("source", "Source attribute",
         options = project.vertexAttrList),
       Ratio("test_set_ratio", "Test set ratio", defaultValue = "0.1"),
-      RandomSeed("seed", "Random seed for test set selection"))
+      RandomSeed("seed", "Random seed for test set selection", context.box))
     def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes")
     def apply() = {
       val sourceName = params("source")
@@ -241,7 +241,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       NonNegInt("maxDepth", "Maximum depth of tree", default = 5),
       NonNegDouble("minInfoGain", "Minimum information gain for splits", defaultValue = "0.0"),
       NonNegInt("minInstancesPerNode", "Minimum size of children after splits", default = 1),
-      RandomSeed("seed", "Seed"))
+      RandomSeed("seed", "Seed", context.box))
     def enabled =
       FEStatus.assert(attrs.nonEmpty, "No numeric or string vertex attributes.")
     def apply() = {
@@ -281,7 +281,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
       NonNegInt("maxDepth", "Maximum depth of tree", default = 5),
       NonNegDouble("minInfoGain", "Minimum information gain for splits", defaultValue = "0.0"),
       NonNegInt("minInstancesPerNode", "Minimum size of children after splits", default = 1),
-      RandomSeed("seed", "Seed"))
+      RandomSeed("seed", "Seed", context.box))
     def enabled =
       FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
     def apply() = {
@@ -318,7 +318,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
         options = project.vertexAttrList[Double], multipleChoice = true),
       NonNegInt("k", "Number of clusters", default = 2),
       NonNegInt("max_iter", "Maximum number of iterations", default = 20),
-      RandomSeed("seed", "Seed"))
+      RandomSeed("seed", "Seed", context.box))
     def enabled =
       FEStatus.assert(project.vertexAttrList[Double].nonEmpty, "No numeric vertex attributes.")
     override def summary = {

@@ -30,14 +30,16 @@ table-kind import-wizard form {
   margin-top: 15px;
 }
 
-.parametric-switch {
+.parametric-switch,
+.remove-parameter {
   position: absolute;
   right: 5px;
   top: 10px;
   opacity: 0.2;
   cursor: pointer;
 }
-.parametric-switch:hover {
+.parametric-switch:hover,
+.remove-parameter:hover {
   opacity: 0.5;
 }
 .parametric-switch.active,
@@ -58,4 +60,12 @@ table-kind import-wizard form {
   margin-top: 5px;
   margin-bottom: 5px;
   text-align: right;
+}
+
+.unexpected-parameters {
+  text-align: center;
+  color: darkred;
+}
+.unexpected-parameter {
+  color: darkred;
 }

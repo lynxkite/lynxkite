@@ -25,7 +25,7 @@ $(pip): python_requirements.txt
 	pip3 install --user -r python_requirements.txt && touch $@
 .build/backend-done: \
 	$(shell $(find) app project lib conf built-ins) tools/call_spark_submit.sh build.sbt .build/gulp-done
-	./tools/install_spark.sh && sbt stage && touch $@
+	./tools/install_spark.sh && sbt stage < /dev/null && touch $@
 .build/backend-test-passed: $(shell $(find) app test project conf) build.sbt
 	./tools/install_spark.sh && ./.test_backend.sh && touch $@
 .build/frontend-test-passed: \
@@ -44,7 +44,7 @@ $(pip): python_requirements.txt
 	ecosystem/native/tools/build-monitoring.sh && ecosystem/native/bundle.sh && touch $@
 .build/statter-done: \
 		$(shell $(find) tools/statter/src) tools/statter/build.sbt tools/statter/project/plugins.sbt
-	cd tools/statter && sbt stage && cd - && touch $@
+	cd tools/statter && sbt stage < /dev/null && cd - && touch $@
 
 # Short aliases for command-line use.
 .PHONY: backend

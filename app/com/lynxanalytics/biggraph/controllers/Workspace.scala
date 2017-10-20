@@ -34,12 +34,12 @@ case class Workspace(
   // This workspace as a custom box.
   def getBoxMetadata(name: String): BoxMetadata = {
     val description = anchor.parameters.getOrElse("description", "")
-    val icon = anchor.parameters.getOrElse("icon", "/images/icons/superpowers.png")
+    val icon = anchor.parameters.getOrElse("icon", "")
     val inputs = boxes.filter(_.operationId == "Input").flatMap(b => b.parameters.get("name"))
     val outputs = boxes.filter(_.operationId == "Output").flatMap(b => b.parameters.get("name"))
     BoxMetadata(
       categoryId = Workspace.customBoxesCategory,
-      icon = icon,
+      icon = if (icon.nonEmpty) icon else "/images/icons/superpowers.png",
       color = "natural",
       operationId = name,
       inputs = inputs,
@@ -118,31 +118,12 @@ case class WorkspaceExecutionContext(
     ops: OperationRepository,
     workspaceParameters: Map[String, String]) {
 
-  // Enforces some invariants.
-  def repairedWorkspace: Workspace = {
-    this.dropUnknownParameters
-  }
-
-  // Drop certain parameters from the box based on the logic implemented in the corresponding op.
-  protected def dropUnknownParameters: Workspace = {
-    val states = allStates
-    ws.copy(boxes = ws.boxes.map { box =>
-      try {
-        val op = getOperationForStates(box, states)
-        box.copy(parameters = op.cleanParameters(box.parameters))
-      } catch {
-        case t: Throwable => box
-      }
-    })
-  }
-
   def allStates: Map[BoxOutput, BoxOutputState] = {
     val dependencies = ws.discoverDependencies
     val statesWithoutCircularDependency = dependencies.topologicalOrder
       .foldLeft(Map[BoxOutput, BoxOutputState]()) {
         (states, box) =>
-          val newOutputStates = outputStatesOfBox(box, states)
-          newOutputStates ++ states
+          util.Try(outputStatesOfBox(box, states)).getOrElse(Map()) ++ states
       }
     val statesWithCircularDependency = dependencies.withCircularDependency.flatMap { box =>
       val meta = ops.getBoxMetadata(box.operationId)

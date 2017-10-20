@@ -4,10 +4,10 @@
 }
 
 .operation-selector .box {
-  background: rgba(0, 0, 0, 0.75);
+  background: #001424; /* Brand color. */
   position: absolute;
   right: 35px;
-  top: 50px; /* The workspace header, on a good day. */
+  top: 60px; /* The workspace header, on a good day. */
   padding: 0;
   max-width: 40%; /* Avoid very long lines and very sparse forms. */
   margin-bottom: 20px;
@@ -31,8 +31,8 @@
   display: flex;
   flex-direction: column;
   flex-wrap: wrap-reverse;
-  height: calc(100vh - 50px);
-  /* 50px is the workspace header minimum size. If the header is bigger (e.g. due to line breaks)
+  height: calc(100vh - 60px);
+  /* 60px is the workspace header minimum size. If the header is bigger (e.g. due to line breaks)
    * the bottom may extend beyond the screen. TODO: Any ideas for a fix? */
 }
 .operation-selector .category {
@@ -41,7 +41,7 @@
   font: 15px Arial;
   width: 35px;
   height: 35px;
-  background: rgba(0, 0, 0, 0.75);
+  background: #001424; /* Brand color. */
 }
 .operation-selector .category.active {
   padding-left: 9px;
@@ -67,12 +67,10 @@
   }
 }
 
-@include make-color("blue", aqua);
-@include make-color("green", greenyellow);
-@include make-color("purple", #a8f);
-@include make-color("pink", pink);
-@include make-color("orange", orange);
-@include make-color("yellow", gold);
+@include make-color("blue", #39bcf3); /* Brand color. */
+@include make-color("green", #6fdb11); /* Brand color. */
+@include make-color("purple", #bf45e8); /* Brand color. */
+@include make-color("orange", #ff8800); /* Brand color. */
 
 
 operation-selector-entry div {
@@ -85,7 +83,7 @@ operation-selector-entry:hover div {
   background: black !important;
 }
 operation-selector-entry.highlight div {
-  color: gold !important;
+  color: #39bcf3 !important; /* Brand color. */
   background: black !important;
 }
 operation-selectory-entry div.disabled {

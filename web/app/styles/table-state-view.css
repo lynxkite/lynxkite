@@ -2,6 +2,10 @@ table-state-view {
   overflow: auto;
 }
 
+table-state-view > div {
+  padding-top: 10px;
+}
+
 input.form-control#sample-rows {
   width: 65px;
   display: inline-block;
@@ -49,6 +53,3 @@ input.form-control#sample-rows {
   color: darkred;
   margin-top: 10px;
 }
-
-
-

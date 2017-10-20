@@ -1,15 +1,28 @@
 .top-alerts {
   position: fixed;
   z-index: 10;
-  top: 0;
+  top: 50px;
   left: 0;
 }
 
 .top-alert {
   margin: 20px;
   padding: 10px;
-  background: #ffa700;
-  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.6);
+  background: #efb1ad; /* Brand color. */
+  color: #9b2016; /* Brand color. */
+  box-shadow: 0 5px 50px 0 rgba(0, 0, 0, 0.3);
+  border-radius: 5px;
+}
+
+.top-alert .fa-exclamation-triangle {
+  padding: 5px;
+  font-size: 30px;
+  position: absolute;
+}
+
+.top-alert-message {
+  padding: 10px;
+  margin-left: 35px;
 }
 
 .top-alert .clicky {
@@ -22,8 +35,7 @@
 }
 
 .top-alert-footer a {
-  font-style: italic;
-  color: black;
+  color: #9b2016; /* Brand color. */
   opacity: 0.6;
 }
 

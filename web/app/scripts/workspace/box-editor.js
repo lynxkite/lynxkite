@@ -61,7 +61,7 @@ angular.module('biggraph')
               });
         };
 
-        // Invoked when an error happens after the user selected a new operation.
+        // Invoked when an error happens while loading the metadata.
         scope.boxError = function(error) {
           onBlurNow();
           scope.box = undefined;
@@ -109,9 +109,17 @@ angular.module('biggraph')
 
         function onBlurNow() {
           if (scope.box) {
+            var minimized = angular.copy(scope.parameters);
+            for (var i = 0; i < scope.boxMeta.parameters.length; ++i) {
+              var param = scope.boxMeta.parameters[i];
+              if (minimized[param.id] === param.defaultValue) {
+                // Do not record parameter values that match the default.
+                delete minimized[param.id];
+              }
+            }
             scope.workspace.updateBox(
                 scope.boxId,
-                scope.parameters,
+                minimized,
                 scope.parametricParameters);
           }
         }

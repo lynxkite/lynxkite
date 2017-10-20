@@ -89,7 +89,7 @@ class UseSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOperat
   register("Sample edges from co-occurrence")(new ProjectTransformation(_) with SegOp {
     def addSegmentationParameters = params ++= List(
       NonNegDouble("probability", "Vertex pair selection probability", defaultValue = "0.001"),
-      RandomSeed("seed", "Random seed"))
+      RandomSeed("seed", "Random seed", context.box))
     override def visibleScalars =
       if (project.isSegmentation) {
         val scalar = segmentationSizesSquareSum(seg, parent)

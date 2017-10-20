@@ -75,7 +75,7 @@
 }
 .entry-list .entry.error {
   color: maroon;
-  background: white;
+  background: transparent;
   cursor: not-allowed;
 }
 .entry-list .entry.error a {
@@ -95,8 +95,8 @@
   cursor: pointer;
 }
 
-.disabled {
+.entry-list .disabled {
   color: darkgrey !important;
-  background: white !important;
+  background: transparent !important;
 }
 

@@ -25,16 +25,18 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     params ++= List(
       Param("path", "Path", defaultValue = "<auto>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
-      Param("quote", "Quote", defaultValue = ""),
+      Param("quote", "Quote", defaultValue = "\""),
+      Choice("quote_all", "Quote all strings", FEOption.list("no", "yes")),
       Choice("header", "Include header", FEOption.list("yes", "no")),
       NonNegInt("version", "Version", default = 0))
 
     def exportResult() = {
       val header = if (params("header") == "yes") true else false
+      val quoteAll = if (params("quote_all") == "yes") true else false
       val path = generatePathIfNeeded(params("path"))
       val op = graph_operations.ExportTableToCSV(
         path, header,
-        params("delimiter"), params("quote"),
+        params("delimiter"), params("quote"), quoteAll,
         params("version").toInt)
       op(op.t, table).result.exportResult
     }

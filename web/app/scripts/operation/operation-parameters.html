@@ -113,3 +113,25 @@
     </i>
   </div>
 </div>
+<div class="form-group col-sm-12 unexpected-parameters" ng-show="unexpectedParameters.length">
+  Unexpected parameters
+  <help-popup href="unexpected-parameters"></help-popup>
+</div>
+<div class="form-group" ng-repeat="paramId in unexpectedParameters">
+  <label for="{{ paramId }}" class="col-sm-4 control-label unexpected-parameter">
+    {{ paramId }}
+  </label>
+  <div class="col-sm-8 operation-parameter-input" id="{{ paramId }}">
+    <div>
+      <input
+          class="form-control operation-attribute-entry unexpected-parameter"
+          ng-model="parameters[paramId]"
+          ng-submit="onBlur()">
+    </div>
+    <i class="fa fa-remove remove-parameter"
+      drop-tooltip="Remove unexpected parameter"
+      drop-tooltip-position="top center"
+      ng-click="removeParameter(paramId)">
+    </i>
+  </div>
+</div>

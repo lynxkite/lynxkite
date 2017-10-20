@@ -92,8 +92,13 @@ gulp.task('dist', ['asciidoctor', 'genTemplates', 'html'], function () {
   var fontAwesomeFonts = gulp.src([
     'node_modules/font-awesome/fonts/*',
   ], {base: 'node_modules/font-awesome'});
-  return merge(dynamicFiles, staticFiles, bootstrapFonts, fontAwesomeFonts)
-    .pipe(gulp.dest('dist'));
+  var typefaces = gulp.src([
+    'node_modules/typeface-exo-2/files/*',
+  ], {base: 'node_modules/typeface-exo-2'});
+  return merge(
+    merge(dynamicFiles, staticFiles, bootstrapFonts, fontAwesomeFonts)
+      .pipe(gulp.dest('dist')),
+    typefaces.pipe(gulp.dest('dist/styles')));
 });
 
 // Compiles SCSS files into CSS.

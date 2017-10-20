@@ -35,7 +35,7 @@ angular.module('biggraph')
          return '/downloadFile?q=' + encodeURIComponent(JSON.stringify(
            {
              path: scope.parameters.path,
-             stripHeaders: false
+             stripHeaders: scope.parameters.header === 'yes',
            }));
        };
      },
