@@ -223,7 +223,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   };
 
   var graphToSVGRatio = 0.8;  // Leave some margin.
-  var UNCOLORED = 'hsl(0,0%,42%)';
+  var UNCOLORED = '#39bcf3';  // Brand color.
 
   GraphView.prototype.addGroup = function(className, clipper) {
     var group;
@@ -316,6 +316,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
             offsetter = oldVertices[i].offsetter.inherit();
             if (oldVertices[i].halfColumnWidth !== halfColumnWidth) {
               offsetter.xOff = xOff;
+              offsetter.xMin = xMin;
+              offsetter.xMax = xMax;
             }
           } else {
             offsetter = new Offsetter(xOff, yOff, zoom, zoom, menu, xMin, xMax, i);

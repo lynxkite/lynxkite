@@ -16,7 +16,8 @@
 //    in the previous point plus what the server has changed).
 // 5. this._build() is invoked again
 
-angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util, $interval) {
+angular.module('biggraph')
+.factory('WorkspaceWrapper', function(BoxWrapper, PlugWrapper, util, $interval) {
   function WorkspaceWrapper(name, boxCatalog) {
     this._progressUpdater = undefined;
     this.boxCatalog = boxCatalog;  // Updated for the sake of the operation palette.
@@ -65,34 +66,43 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
     },
 
     _addBoxWrapper: function(rawBox, opts) {
-      var box = new BoxWrapper(this, this._boxCatalogMap[rawBox.operationId], rawBox, opts);
+      var meta = this._boxCatalogMap[rawBox.operationId] || {
+        // Defaults for unknown operations.
+        categoryId: '',
+        icon: '/images/icons/black_question_mark_ornament.png',
+        color: 'natural',
+        operationId: rawBox.operationId,
+        inputs: [],
+        outputs: [],
+        description: '',
+      };
+      var box = new BoxWrapper(this, meta, rawBox, opts);
       this.boxes.push(box);
       this.boxMap[rawBox.id] = box;
     },
 
-    _lookupArrowEndpoint: function(list, id) {
+    _lookupArrowEndpoint: function(box, direction, id) {
+      var list = box[direction];
       for (var i = 0; i < list.length; ++i) {
         if (list[i].id === id) {
           return list[i];
         }
       }
-      return undefined;
+      var plug = new PlugWrapper(this, id, i, direction, box);
+      plug.progress = 'missing';
+      list.push(plug);
+      return plug;
     },
 
     _createArrow: function(srcPlug, dstPlug) {
-      if (srcPlug && dstPlug) {
-        return {
-          src: srcPlug,
-          dst: dstPlug,
-          x1: function() { return srcPlug.cx(); },
-          y1: function() { return srcPlug.cy(); },
-          x2: function() { return dstPlug.cx(); },
-          y2: function() { return dstPlug.cy(); },
-        };
-      } else {
-        // TODO: Add some kind of visual indicator to direct the user's attention to the erroneous plugs.
-        return undefined;
-      }
+      return {
+        src: srcPlug,
+        dst: dstPlug,
+        x1: function() { return srcPlug.cx(); },
+        y1: function() { return srcPlug.cy(); },
+        x2: function() { return dstPlug.cx(); },
+        y2: function() { return dstPlug.cy(); },
+      };
     },
 
     _buildArrows: function() {
@@ -106,9 +116,9 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
             var src = this.boxMap[input.boxId];
             if (src) {
               var srcPlug = this._lookupArrowEndpoint(
-                src.outputs, input.id);
+                src, 'outputs', input.id);
               var dstPlug = this._lookupArrowEndpoint(
-                dst.inputs, inputName);
+                dst, 'inputs', inputName);
               this.arrows.push(this._createArrow(
                 srcPlug, dstPlug));
             }
@@ -184,6 +194,7 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
       request
         .then(
           function onSuccess(response) {
+            that.loaded = true;
             if (request === that._lastLoadRequest && !that._requestInvalidated) {
               that._init(response);
             }
@@ -619,6 +630,12 @@ angular.module('biggraph').factory('WorkspaceWrapper', function(BoxWrapper, util
         }).then(function() {
           window.location = '#/workspace/' + newName;
         });
+    },
+
+    deleteArrow: function(arrow) {
+      this.arrows = this.arrows.filter(function(a) { return a !== arrow; });
+      delete arrow.dst.boxInstance.inputs[arrow.dst.id];
+      this.saveWorkspace();
     },
 
   };

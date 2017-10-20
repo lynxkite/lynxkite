@@ -54,7 +54,7 @@ def call_cmd(cmd_list, input=None, print_output=True, assert_successful=True):
     return result, proc.returncode
 
 
-def get_on_demand_costs_and_print_skipped_regions():
+def get_on_demand_costs():
   """
   Returns a dictionary that specifies the on demand price for (region,instance_type) tuples,
   like this:
@@ -91,7 +91,6 @@ def get_on_demand_costs_and_print_skipped_regions():
   def get_dic_value(d):
     return next(iter(d.values()))
 
-  uncharted_regions = set()
   output = {}
   for k in products.keys():
     v = products[k]
@@ -112,10 +111,6 @@ def get_on_demand_costs_and_print_skipped_regions():
           price = price_info['pricePerUnit']
           usd = price['USD']
           output[key] = usd
-        else:
-          uncharted_regions.add(location)
-  for ur in uncharted_regions:
-    print('Skipped region: ' + ur)
   return output
 
 
@@ -160,9 +155,10 @@ class EMRLib:
           return
       time.sleep(15)
 
-  def create_instance_description(self, spot, instance_type, instance_count, master):
+  def create_instance_description(self, spot, spot_bid_multiplier,
+                                  instance_type, instance_count, master):
     assert(not master or instance_count == 1)
-    market = 'SPOT' if spot else 'ON DEMAND'
+    market = 'SPOT' if spot else 'ON_DEMAND'
     role = 'MASTER' if master else 'CORE'
     name = role + ' instance group'
     desc = {
@@ -174,9 +170,10 @@ class EMRLib:
     }
     if spot:
       if not self.on_demand_costs:
-        self.on_demand_costs = get_on_demand_costs_and_print_skipped_regions()
-      on_demand_price = self.on_demand_costs[self.region, instance_type]
-      desc['BidPrice'] = '{:.3f}'.format(float(on_demand_price))
+        self.on_demand_costs = get_on_demand_costs()
+      on_demand_price = float(self.on_demand_costs[self.region, instance_type])
+      our_bid = on_demand_price * spot_bid_multiplier
+      desc['BidPrice'] = '{:.3f}'.format(our_bid)
     return desc
 
   def create_or_connect_to_emr_cluster(
@@ -186,7 +183,9 @@ class EMRLib:
           applications='',
           core_instance_type='m3.2xlarge',
           master_instance_type='m3.2xlarge',
-          spot=False):
+          spot=False,
+          spot_bid_multiplier=1.0,
+          autoscaling_role=False):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
@@ -206,20 +205,21 @@ class EMRLib:
     emr_applications = []
     if applications:
       emr_applications = [{'Name': app} for app in applications.split(',')]
-    master_desc = self.create_instance_description(spot, master_instance_type, 1, master=True)
+    master_desc = self.create_instance_description(
+        spot, spot_bid_multiplier, master_instance_type, 1, master=True)
     core_desc = self.create_instance_description(
-        spot, core_instance_type, instance_count - 1, master=False)
-    res = self.emr_client.run_job_flow(
-        Name=name,
-        LogUri=log_uri,
-        ReleaseLabel='emr-5.2.0',
-        Instances={
+        spot, spot_bid_multiplier, core_instance_type, instance_count - 1, master=False)
+
+    run_job_flow_args = {
+        'Name': name,
+        'ReleaseLabel': 'emr-5.2.0',
+        'Instances': {
             'Ec2KeyName': self.ec2_key_name,
             'KeepJobFlowAliveWhenNoSteps': True,
             'TerminationProtected': True,
             'InstanceGroups': [master_desc, core_desc]
         },
-        Configurations=[
+        'Configurations': [
             {
                 'Classification': 'mapred-site',
                 'Properties': {
@@ -252,11 +252,11 @@ class EMRLib:
                 }
             }
         ],
-        Applications=emr_applications,
-        JobFlowRole="EMR_EC2_DefaultRole",
-        VisibleToAllUsers=True,
-        ServiceRole="EMR_DefaultRole",
-        Tags=[{
+        'Applications': emr_applications,
+        'JobFlowRole': "EMR_EC2_DefaultRole",
+        'VisibleToAllUsers': True,
+        'ServiceRole': "EMR_DefaultRole",
+        'Tags': [{
             'Key': 'owner',
             'Value': owner
         }, {
@@ -265,7 +265,14 @@ class EMRLib:
         }, {
             'Key': 'name',
             'Value': name
-        }])
+        }]
+    }
+
+    if log_uri:
+      run_job_flow_args['LogUri'] = log_uri
+    if autoscaling_role:
+      run_job_flow_args['AutoScalingRole'] = 'EMR_AutoScaling_DefaultRole'
+    res = self.emr_client.run_job_flow(**run_job_flow_args)
     return EMRCluster(res['JobFlowId'], self)
 
   def create_or_connect_to_rds_instance(self, name):

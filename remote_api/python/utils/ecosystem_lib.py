@@ -2,8 +2,10 @@ from utils.emr_lib import EMRLib
 import os
 import argparse
 import datetime
+import sys
 
 arg_parser = argparse.ArgumentParser()
+
 
 arg_parser.add_argument(
     '--cluster_name',
@@ -28,6 +30,11 @@ arg_parser.add_argument(
     '--emr_log_uri',
     default='s3://test-ecosystem-log',
     help='URI of the S3 bucket where the EMR logs will be written.')
+arg_parser.add_argument(
+    '--no_emr_log',
+    action='store_true',
+    help='If this is set, no EMR logs will be written to S3 (regardless of --emr_log_uri)'
+)
 arg_parser.add_argument(
     '--with_rds',
     action='store_true',
@@ -127,12 +134,41 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     '--spot',
     action='store_true',
-    help='Use spot instances instead of on demand instances. Bid for the same price as an on demand instance')
+    help='Use spot instances instead of on demand instances.')
+arg_parser.add_argument(
+    '--spot_bid_multiplier',
+    default=1.0,
+    type=float,
+    help='''Set the spot bid price for the instances to SPOT_BID_MULTIPLIER times the on demand price.
+    The default is 1.0, as recommended by AWS, but for short-lived, important instances you
+    can raise this quantity to reduce the possibility of losing your work. (E.g., setting this to
+    3.0 means that the instances will not be terminated until the spot price rises above
+    three times the on demand price.''')
+arg_parser.add_argument(
+    '--autoscaling_role',
+    action='store_true',
+    help='Use this option to enable Auto Scaling.')
+arg_parser.add_argument(
+    '--kite_master_memory_mb',
+    default=8000,
+    help='Set KITE_MASTER_MEMORY_MB in kiterc'
+)
+arg_parser.add_argument(
+    '--executor_memory',
+    default='18g',
+    help='Set EXECUTOR_MEMORY in kiterc'
+)
+arg_parser.add_argument(
+    '--num_cores_per_executor',
+    default=8,
+    help='Set NUM_CORES_PER_EXECUTOR in kiterc'
+)
 
 
 class Ecosystem:
 
   def __init__(self, args):
+    log_uri = None if args.no_emr_log else args.emr_log_uri
     self.cluster_config = {
         'cluster_name': args.cluster_name,
         'public_ip': args.public_ip,
@@ -140,12 +176,14 @@ class Ecosystem:
         'ec2_key_name': args.ec2_key_name,
         'emr_region': args.emr_region,
         'emr_instance_count': args.emr_instance_count,
-        'emr_log_uri': args.emr_log_uri,
+        'emr_log_uri': log_uri,
         'hdfs_replication': '1',
         'with_rds': args.with_rds,
         'with_jupyter': args.with_jupyter,
         'rm': args.rm,
         'spot': args.spot,
+        'spot_bid_multiplier': args.spot_bid_multiplier,
+        'autoscaling_role': args.autoscaling_role,
         'owner': args.owner,
         'expiry': args.expiry,
         'applications': args.applications,
@@ -166,6 +204,9 @@ class Ecosystem:
         'extra_python_dependencies': args.python_dependencies,
         'env_variables': args.env_variables,
         'upload': args.upload,
+        'num_cores_per_executor': args.num_cores_per_executor,
+        'executor_memory': args.executor_memory,
+        'kite_master_memory_mb': args.kite_master_memory_mb,
     }
     self.cluster = None
     self.instances = []
@@ -192,6 +233,8 @@ class Ecosystem:
         core_instance_type=conf['core_instance_type'],
         master_instance_type=conf['master_instance_type'],
         spot=conf['spot'],
+        spot_bid_multiplier=conf['spot_bid_multiplier'],
+        autoscaling_role=conf['autoscaling_role'],
     )
     self.instances = [self.cluster]
     # Spin up a mysql RDS instance only if requested.
@@ -228,7 +271,10 @@ class Ecosystem:
     self.config_and_prepare_native(
         lk_conf['s3_data_dir'],
         lk_conf['kite_instance_name'],
-        conf['emr_instance_count'])
+        conf['emr_instance_count'],
+        lk_conf['num_cores_per_executor'],
+        lk_conf['executor_memory'],
+        lk_conf['kite_master_memory_mb'])
     self.config_aws_s3_native()
     if conf['with_jupyter']:
       self.install_and_setup_jupyter()
@@ -373,6 +419,7 @@ class Ecosystem:
     # Removes the given and following lines so only the necessary modules will be installed.
     sed -i -n '/# Dependencies for developing and testing/q;p'  python_requirements.txt
     sudo pip-3.4 install --upgrade -r python_requirements.txt
+    sudo pip-2.6 install --upgrade setuptools
     sudo pip-2.6 install --upgrade requests[security] supervisor
     # mysql setup
     sudo service mysqld start
@@ -382,7 +429,12 @@ class Ecosystem:
     mysql -uroot -proot -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root'"
     ''')
 
-  def config_and_prepare_native(self, s3_data_dir, kite_instance_name, emr_instance_count):
+  def config_and_prepare_native(self, s3_data_dir,
+                                kite_instance_name,
+                                emr_instance_count,
+                                num_cores_per_executor,
+                                executor_memory,
+                                kite_master_memory_mb):
     hdfs_path = 'hdfs://$HOSTNAME:8020/user/$USER/lynxkite/'
     if s3_data_dir:
       data_dir_config = '''
@@ -393,6 +445,7 @@ class Ecosystem:
       data_dir_config = '''
         export KITE_DATA_DIR={}
       '''.format(hdfs_path)
+    progname = os.path.basename(sys.argv[0])
     self.cluster.ssh('''
       cd /mnt/lynx
       echo 'Setting up environment variables.'
@@ -402,14 +455,14 @@ class Ecosystem:
         sed -i '1s;^;export HADOOP_CONF_DIR=/etc/hadoop/conf\\n;' config/central
       fi
       # Removes the given and following lines so config/central does not grow constantly.
-      sed -i -n '/# ---- the below lines were added by test_ecosystem.py ----/q;p'  config/central
+      sed -i -n '/# ---- the below lines were added by {progname} ----/q;p'  config/central
       cat >>config/central <<'EOF'
-# ---- the below lines were added by test_ecosystem.py ----
+# ---- the below lines were added by {progname} ----
         export KITE_INSTANCE={kite_instance_name}
-        export KITE_MASTER_MEMORY_MB=8000
+        export KITE_MASTER_MEMORY_MB={kite_master_memory_mb}
         export NUM_EXECUTORS={num_executors}
-        export EXECUTOR_MEMORY=18g
-        export NUM_CORES_PER_EXECUTOR=8
+        export EXECUTOR_MEMORY={executor_memory}
+        export NUM_CORES_PER_EXECUTOR={num_cores_per_executor}
         # port differs from the one used in central/config
         export HDFS_ROOT=hdfs://$HOSTNAME:8020/user/$USER
         {data_dir_config}
@@ -428,6 +481,10 @@ EOF
       sudo mkdir -p /tasks_data
       sudo chmod a+rwx /tasks_data
     '''.format(
+        num_cores_per_executor=num_cores_per_executor,
+        kite_master_memory_mb=kite_master_memory_mb,
+        executor_memory=executor_memory,
+        progname=progname,
         kite_instance_name=kite_instance_name,
         num_executors=emr_instance_count - 1,
         data_dir_config=data_dir_config))
@@ -487,7 +544,8 @@ EOF
 
   def start_monitoring_on_extra_nodes_native(self, keyfile):
     cluster_keyfile = 'cluster_key.pem'
-    self.cluster.rsync_up(src=keyfile, dst='/home/hadoop/.ssh/' + cluster_keyfile)
+    cluster_keypath = '/home/hadoop/.ssh/' + cluster_keyfile
+    self.cluster.rsync_up(src=keyfile, dst=cluster_keypath)
     ssh_options = '''-o UserKnownHostsFile=/dev/null \
       -o CheckHostIP=no \
       -o StrictHostKeyChecking=no \
@@ -505,6 +563,9 @@ EOF
         ssh {options} hadoop@${{node}} tar xf other_nodes.tgz
         ssh {options} hadoop@${{node}} "sh -c 'nohup ./run.sh >run.stdout 2> run.stderr &'"
       done'''.format(options=ssh_options))
+
+    # We no longer need the key file on the master
+    self.cluster.ssh('shred -u {key}'.format(key=cluster_keypath))
 
     # Uncomment services in configs
     self.cluster.ssh('''
@@ -526,7 +587,7 @@ EOF
   def install_and_setup_jupyter(self):
     self.cluster.ssh('''
       sudo pip-3.4 install --upgrade jupyter sklearn matplotlib
-      sudo pip-3.4 install --upgrade pandas seaborn
+      sudo pip-3.4 install --upgrade pandas seaborn statsmodels
     ''')
     self.cluster.ssh_nohup('''
       mkdir -p /mnt/lynx/notebooks

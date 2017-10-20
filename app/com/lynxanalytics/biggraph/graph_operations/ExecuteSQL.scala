@@ -85,7 +85,7 @@ case class ExecuteSQL(
     sqlQuery: String,
     inputTables: Set[String],
     outputSchema: types.StructType) extends TypedMetaGraphOp[Input, Output] {
-  override val isHeavy = false // Optimize for the case where the user just wants to see a sample.
+  override val isHeavy = false
   @transient override lazy val inputs = new Input(inputTables)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(outputSchema)(instance)
   override def toJson = Json.obj(

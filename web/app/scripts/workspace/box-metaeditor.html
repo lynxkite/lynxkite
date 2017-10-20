@@ -1,0 +1,25 @@
+<form class="form-horizontal container-fluid" ng-submit="onBlur()">
+  <div class="form-group">
+    <label for="id" class="col-sm-4 control-label">
+      Box ID <help-popup href="box-metadata-id"></help-popup>
+    </label>
+    <div class="col-sm-8" id="id">
+      <input
+          class="form-control operation-attribute-entry"
+          ng-model="metadata.id"
+          ng-submit="onBlur()">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="operation-id" class="col-sm-4 control-label">
+      Operation <help-popup href="box-metadata-operation-id"></help-popup>
+    </label>
+    <div class="col-sm-8" id="operation-id">
+      <input
+          class="form-control operation-attribute-entry"
+          ng-model="metadata.operationId"
+          ng-submit="onBlur()">
+    </div>
+  </div>
+  <input type="submit" ng-show="false"><!-- For ng-submit. -->
+</form>

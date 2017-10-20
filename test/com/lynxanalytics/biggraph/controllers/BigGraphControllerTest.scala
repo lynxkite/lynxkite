@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.serving.User
 
 class BigGraphControllerTest extends BigGraphControllerTestBase {
   // TODO: Depends on #5874.
@@ -80,6 +81,41 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
     assert(list("foo").directories == Seq("foo/bar"))
     controller.discardEntry(user, DiscardEntryRequest(name = "foo"))
     assert(list("").directories.isEmpty)
+  }
+
+  test("attempt to create directory without authorization") {
+    val nonAdmin = User("nonAdmin", isAdmin = false)
+    controller.createDirectory(user, CreateDirectoryRequest(
+      name = "foo", privacy = "public-read"))
+    val e1 = intercept[java.lang.AssertionError] {
+      controller.createDirectory(nonAdmin, CreateDirectoryRequest(
+        name = "foo/bar", privacy = "public-read"))
+    }
+    assert(e1.getMessage.contains(
+      "User nonAdmin does not have write access to entry 'foo'."))
+    val e2 = intercept[java.lang.AssertionError] {
+      controller.createDirectory(nonAdmin, CreateDirectoryRequest(
+        name = "foo/bar/sub-bar", privacy = "public-read"))
+    }
+    assert(e2.getMessage.contains(
+      "User nonAdmin does not have write access to entry 'foo/bar'."))
+    assert(list("foo").directories.isEmpty)
+  }
+
+  test("attempt to probe private directory") {
+    val nonAdmin = User("nonAdmin", isAdmin = false)
+    controller.createDirectory(user, CreateDirectoryRequest(
+      name = "foo", privacy = "private"))
+    controller.createDirectory(user, CreateDirectoryRequest(
+      name = "foo/bar", privacy = "private"))
+    val e = intercept[java.lang.AssertionError] {
+      controller.createDirectory(nonAdmin, CreateDirectoryRequest(
+        name = "foo/bar", privacy = "private"))
+    }
+    // Showing a 'bar already exists' message would reveal information about
+    // the contents of a private directory.
+    assert(e.getMessage.contains(
+      "User nonAdmin does not have write access to entry 'foo'."))
   }
 
   val wc = new WorkspaceController(this)

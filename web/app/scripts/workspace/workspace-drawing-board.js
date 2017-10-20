@@ -671,24 +671,22 @@ angular.module('biggraph')
         // Box colors come as strings from the backend. We map them to feColorMatrix matrices that
         // get applied to the grayscale icon images. This function builds the mapping.
         function makeFilters() {
-          // The red, green, blue factors.
+          // Brand colors.
           var colors = [
-            ['black', 0.2, 0.2, 0.2],
-            ['blue', 0, 0.4, 0.6],
-            ['green', 0.2, 0.4, 0],
-            ['pink', 0.7, 0.3, 0.4],
-            ['orange', 0.6, 0.2, 0],
-            ['purple', 0.3, 0.1, 0.9],
-            ['yellow', 0.6, 0.4, 0],
+            ['blue', '#39bcf3'],
+            ['green', '#6fdb11'],
+            ['orange', '#ff8800'],
+            ['purple', '#bf45e8'],
           ];
           var filters = {};
           for (var i = 0; i < colors.length; ++i) {
-            var c = colors[i];
-            var name = c[0]; var r = c[1]; var g = c[2]; var b = c[3];
+            var name = colors[i][0];
+            /* global tinycolor */
+            var c = tinycolor(colors[i][1]).toRgb();
             filters[name] = (
-                (r + ' ').repeat(3) + '0 0 ' +
-                (g + ' ').repeat(3) + '0 0 ' +
-                (b + ' ').repeat(3) + '0 0   0 0 0 1 0');
+                (c.r / 255 / 2.3 + ' ').repeat(3) + '0 0 ' +
+                (c.g / 255 / 2.3 + ' ').repeat(3) + '0 0 ' +
+                (c.b / 255 / 2.3 + ' ').repeat(3) + '0 0   0 0 0 1 0');
           }
           // The "natural" filter leaves the colors alone. This is used for user-specified images.
           filters.natural = '1 0 0 0 0   0 1 0 0 0   0 0 1 0 0   0 0 0 1 0';
@@ -731,6 +729,10 @@ angular.module('biggraph')
           var z = zoomToScale(workspaceZoom);
           return { x: (mouseX - workspaceX) / z + offx, y: (mouseY - workspaceY) / z + offy };
         }
+
+        scope.deleteArrow = function(arrow) {
+          scope.workspace.deleteArrow(arrow);
+        };
       }
     };
   });

@@ -1,5 +1,8 @@
 <div id="workspace-header" class="flat-toolbar">
   <div class="flat-toolbar-title">
+    <img src="/images/Lynx-logo-main-blue-rev-web-500px.png"
+         height="50"
+         style="margin: -10px 10px 0 0;">
     <span id="workspace-directory">
       {{ getDirectoryPart(workspace.name) }}
     </span>
@@ -25,28 +28,12 @@
     <i class="fa fa-superpowers"></i>
   </button>
   <button class="btn btn-default"
-       id="copy-boxes"
-       ng-click="copyBoxes()"
-       ng-disabled="selectedBoxIds.length === 0 || workspace.error"
-       drop-tooltip="Copy&nbsp;boxes (Ctrl-C)"
-       drop-tooltip-placement="bottom">
-    <i class="fa fa-copy"></i>
-  </button>
-  <button class="btn btn-default"
-       id="paste-boxes"
-       ng-click="pasteBoxes()"
-       drop-tooltip="Paste&nbsp;boxes (Ctrl-V)"
-       drop-tooltip-placement="bottom"
-       ng-disabled="workspace.error">
-    <i class="fa fa-paste"></i>
-  </button>
-  <button class="btn btn-default"
        id="delete-selected-boxes"
        ng-click="deleteSelectedBoxes()"
        ng-disabled="selectedBoxIds.length === 0 || workspace.error"
        drop-tooltip="Delete&nbsp;selected&nbsp;boxes (Delete)"
        drop-tooltip-placement="bottom">
-    <i class="fa fa-trash-o"></i>
+    <i class="fa fa-trash"></i>
   </button>
   <button class="btn btn-default"
        id="dive-up"
@@ -82,7 +69,7 @@
        drop-tooltip="Pan&nbsp;workspace&nbsp;on&nbsp;drag"
        drop-tooltip-placement="bottom"
        ng-disabled="workspace.error">
-    <i class="fa fa-hand-paper-o"></i>
+    <i class="fa fa-arrows"></i>
   </button>
   <button class="btn btn-default"
        id="undo"
@@ -135,7 +122,11 @@
     <defs>
       <!-- The filters to apply colors to the grayscale icons. -->
       <filter ng-repeat="(id, matrix) in ::filters" id="{{ ::id | id }}">
-        <feColorMatrix in="SourceGraphic" type="matrix" ng-attr-values="{{ ::matrix }}"></feColorMatrix>
+        <feColorMatrix
+          in="SourceGraphic"
+          type="matrix"
+          ng-attr-values="{{ ::matrix }}"
+          color-interpolation-filters="sRGB"></feColorMatrix>
       </filter>
 
       <marker id="arrow-head" orient="auto" markerWidth="6" markerHeight="6" viewBox="-8 -5 10 10">
@@ -163,7 +154,8 @@
       <g ng-repeat="arrow in arrows()">
         <path class="arrow"
             id="{{ ::arrow.src.boxId | id }}-{{ ::arrow.src.id | id }}-{{ ::arrow.dst.boxId | id }}-{{ ::arrow.dst.id | id }}"
-            ng-attr-d="{{ bezier(arrow.x1(), arrow.y1(), arrow.x2(), arrow.y2()) }}"></path>
+            ng-attr-d="{{ bezier(arrow.x1(), arrow.y1(), arrow.x2(), arrow.y2()) }}"
+            ng-click="deleteArrow(arrow)"></path>
       </g>
       <!-- end arrow -->
 
@@ -184,6 +176,7 @@
           class="box"
           id="{{ ::box.instance.id | id }}"
           ng-class="{ 'selected': selectedBoxIds.includes(box.instance.id) }">
+        <ellipse class="pedestal" cx="50" cy="80" rx="75" ry="30"></ellipse>
         <circle id="click-target" cx="50" cy="60" r="50"></circle>
 
         <!-- Icon. The filter applies color according to the metadata. -->
@@ -251,3 +244,10 @@
 </div>
 <operation-selector box-catalog="boxCatalog" ondrag="addOperation(op, $event)">
 </operation-selector>
+<div
+  id="workspace-loading"
+  ng-class="{ done: workspace.error || workspace.loaded }">
+  <img
+    src="/images/progress.svg"
+    ng-hide="workspace.error || workspace.loaded">
+</div>
