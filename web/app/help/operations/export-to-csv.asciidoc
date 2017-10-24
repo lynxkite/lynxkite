@@ -29,7 +29,8 @@ will appear multiple times in the resulting file.
 The character used for escaping quotes inside an already quoted value.
 
 [[null_value]] Null value::
-The string representation of a `null` value.
+The string representation of a `null` value. This is how `null`-s are going to be written in
+the CSV file.
 
 [[date_format]] Date format::
 The string that indicates a date format. Custom date formats follow the formats at
@@ -37,14 +38,13 @@ The string that indicates a date format. Custom date formats follow the formats 
 
 [[timestamp_format]] Timestamp format::
 The string that indicates a timestamp format. Custom date formats follow the formats at
-`java.text.SimpleDateFormat`.
+https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html[java.text.SimpleDateFormat].
 
-[[ignore_leading_white_space]] Ignore Leading White Space::
+[[drop_leading_white_space]] Drop leading white space::
 A flag indicating whether or not leading whitespaces from values being written should be skipped.
 
-[[ignore_trailing_white_space]] Ignore Trailing White Space::
-A flag indicating defines whether or not trailing whitespaces from values being written should be
-skipped.
+[[drop_trailing_white_space]] Drop trailing white space::
+A flag indicating whether or not trailing whitespaces from values being written should be skipped.
 
 [[version]] Version::
 Version is the version number of the result of the export operation. It is a non negative integer.
