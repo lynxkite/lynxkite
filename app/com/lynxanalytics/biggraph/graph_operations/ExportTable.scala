@@ -44,8 +44,8 @@ object ExportTableToCSV extends OpFromJson {
   val nullValueParameter = NewParameter("nullValue", "")
   val dateFormatParameter = NewParameter("dateFormat", "yyyy-MM-dd")
   val timestampFormatParameter = NewParameter("timestampFormat", "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
-  val dropLeadingWhiteSpaceParameter = NewParameter("ignoreLeadingWhiteSpace", false)
-  val dropTrailingWhiteSpaceParameter = NewParameter("ignoreTrailingWhiteSpace", false)
+  val dropLeadingWhiteSpaceParameter = NewParameter("dropLeadingWhiteSpace", false)
+  val dropTrailingWhiteSpaceParameter = NewParameter("dropTrailingWhiteSpace", false)
   def fromJson(j: JsValue) = ExportTableToCSV(
     (j \ "path").as[String], (j \ "header").as[Boolean],
     (j \ "delimiter").as[String], (j \ "quote").as[String],
