@@ -45,7 +45,7 @@ A flag indicating whether or not trailing whitespaces from values being read sho
 
 [[comment]] Comment character::
 Every line beginning with this character is skipped, if set. For example if the comment character is
-`#` the following line is ignored in the CSF file: `# This is a comment.`
+`#` the following line is ignored in the CSV file: `# This is a comment.`
 
 [[error_handling]] Error handling::
 What should happen if a line has more or less fields than the number of columns?
