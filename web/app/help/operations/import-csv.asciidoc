@@ -35,7 +35,7 @@ https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html[java.t
 
 [[timestamp_format]] Timestamp format::
 The string that indicates a timestamp format. Custom date formats follow the formats at
-`java.text.SimpleDateFormat`.
+https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html[java.text.SimpleDateFormat].
 
 [[ignore_leading_white_space]] Ignore leading white space::
 A flag indicating whether or not leading whitespaces from values being read should be skipped.
@@ -45,10 +45,7 @@ A flag indicating whether or not trailing whitespaces from values being read sho
 
 [[comment]] Comment character::
 Every line beginning with this character is skipped, if set. For example if the commen character is
-`#` the following line is ignored in the CSF file:
-```
-# This is a comment.
-```
+`#` the following line is ignored in the CSF file: `# This is a comment.`
 
 [[error_handling]] Error handling::
 What should happen if a line has more or less fields than the number of columns?
