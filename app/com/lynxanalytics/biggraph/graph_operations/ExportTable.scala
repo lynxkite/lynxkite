@@ -44,8 +44,8 @@ object ExportTableToCSV extends OpFromJson {
   val nullValueParameter = NewParameter("nullValue", "")
   val dateFormatParameter = NewParameter("dateFormat", "yyyy-MM-dd")
   val timestampFormatParameter = NewParameter("timestampFormat", "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
-  val ignoreLeadingWhiteSpaceParameter = NewParameter("ignoreLeadingWhiteSpace", true)
-  val ignoreTrailingWhiteSpaceParameter = NewParameter("ignoreTrailingWhiteSpace", true)
+  val dropLeadingWhiteSpaceParameter = NewParameter("ignoreLeadingWhiteSpace", false)
+  val dropTrailingWhiteSpaceParameter = NewParameter("ignoreTrailingWhiteSpace", false)
   def fromJson(j: JsValue) = ExportTableToCSV(
     (j \ "path").as[String], (j \ "header").as[Boolean],
     (j \ "delimiter").as[String], (j \ "quote").as[String],
@@ -54,15 +54,15 @@ object ExportTableToCSV extends OpFromJson {
     nullValueParameter.fromJson(j),
     dateFormatParameter.fromJson(j),
     timestampFormatParameter.fromJson(j),
-    ignoreLeadingWhiteSpaceParameter.fromJson(j),
-    ignoreTrailingWhiteSpaceParameter.fromJson(j),
+    dropLeadingWhiteSpaceParameter.fromJson(j),
+    dropTrailingWhiteSpaceParameter.fromJson(j),
     (j \ "version").as[Int])
 }
 
 case class ExportTableToCSV(path: String, header: Boolean,
     delimiter: String, quote: String, quoteAll: Boolean,
     escape: String, nullValue: String, dateFormat: String, timestampFormat: String,
-    ignoreLeadingWhiteSpace: Boolean, ignoreTrailingWhiteSpace: Boolean,
+    dropLeadingWhiteSpace: Boolean, dropTrailingWhiteSpace: Boolean,
     version: Int)
   extends ExportTable {
   override def toJson = Json.obj(
@@ -74,8 +74,8 @@ case class ExportTableToCSV(path: String, header: Boolean,
     ExportTableToCSV.nullValueParameter.toJson(nullValue) ++
     ExportTableToCSV.dateFormatParameter.toJson(dateFormat) ++
     ExportTableToCSV.timestampFormatParameter.toJson(timestampFormat) ++
-    ExportTableToCSV.ignoreLeadingWhiteSpaceParameter.toJson(ignoreLeadingWhiteSpace) ++
-    ExportTableToCSV.ignoreTrailingWhiteSpaceParameter.toJson(ignoreTrailingWhiteSpace)
+    ExportTableToCSV.dropLeadingWhiteSpaceParameter.toJson(dropLeadingWhiteSpace) ++
+    ExportTableToCSV.dropTrailingWhiteSpaceParameter.toJson(dropTrailingWhiteSpace)
 
   def exportDataFrame(df: spark.sql.DataFrame) = {
     val file = HadoopFile(path)
@@ -87,8 +87,8 @@ case class ExportTableToCSV(path: String, header: Boolean,
       "nullValue" -> nullValue,
       "dateFormat" -> dateFormat,
       "timestampFormat" -> timestampFormat,
-      "ignoreLeadingWhiteSpace" -> (if (ignoreLeadingWhiteSpace) "true" else "false"),
-      "ignoreTrailingWhiteSpaces" -> (if (ignoreTrailingWhiteSpace) "true" else "false"),
+      "ignoreLeadingWhiteSpace" -> (if (dropLeadingWhiteSpace) "true" else "false"),
+      "ignoreTrailingWhiteSpaces" -> (if (dropTrailingWhiteSpace) "true" else "false"),
       "header" -> (if (header) "true" else "false"))
     df.write.format("csv").options(options).save(file.resolvedName)
   }

@@ -25,25 +25,30 @@ The character used for escaping quoted values where the delimiter can be part of
 The character used for escaping quotes inside an already quoted value.
 
 [[null_value]] Null value::
-The string representation of a `null` value.
+The string representation of a `null` value in the CSV file. For example if set to `undefined`,
+every `undefined` value in the CSV file will be converted to Scala `null`-s.
+By default this is an empty string, so empty strings are converted to `null`-s upon import.
 
 [[date_format]] Date format::
 The string that indicates a date format. Custom date formats follow the formats at
-`java.text.SimpleDateFormat`.
+https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html[java.text.SimpleDateFormat].
 
 [[timestamp_format]] Timestamp format::
 The string that indicates a timestamp format. Custom date formats follow the formats at
 `java.text.SimpleDateFormat`.
 
-[[ignore_leading_white_space]] Ignore Leading White Space::
-A flag indicating whether or not leading whitespaces from values being written should be skipped.
+[[ignore_leading_white_space]] Ignore leading white space::
+A flag indicating whether or not leading whitespaces from values being read should be skipped.
 
-[[ignore_trailing_white_space]] Ignore Trailing White Space::
-A flag indicating defines whether or not trailing whitespaces from values being written should be
-skipped.
+[[ignore_trailing_white_space]] Ignore trailing white space::
+A flag indicating whether or not trailing whitespaces from values being read should be skipped.
 
 [[comment]] Comment character::
-The character used for skipping lines beginning with this character.
+Every line beginning with this character is skipped, if set. For example if the commen character is
+`#` the following line is ignored in the CSF file:
+```
+# This is a comment.
+```
 
 [[error_handling]] Error handling::
 What should happen if a line has more or less fields than the number of columns?

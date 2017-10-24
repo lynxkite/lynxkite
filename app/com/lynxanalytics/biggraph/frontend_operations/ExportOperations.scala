@@ -32,15 +32,15 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("null_value", "Null value", defaultValue = ""),
       Param("date_format", "Date format", defaultValue = "yyyy-MM-dd"),
       Param("timestamp_format", "Timestamp format", defaultValue = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"),
-      Choice("ignore_leading_white_space", "Ignore leading white space", FEOption.yesno),
-      Choice("ignore_trailing_white_space", "Ignore trailing white space", FEOption.yesno),
+      Choice("drop_leading_white_space", "Drop leading white space", FEOption.noyes),
+      Choice("drop_trailing_white_space", "Drop trailing white space", FEOption.noyes),
       NonNegInt("version", "Version", default = 0))
 
     def exportResult() = {
       val header = if (params("header") == "yes") true else false
       val quoteAll = if (params("quote_all") == "yes") true else false
-      val ignoreLeadingWhiteSpace = if (params("ignore_leading_white_space") == "yes") true else false
-      val ignoreTrailingWhiteSpace = if (params("ignore_trailing_white_space") == "yes") true else false
+      val dropLeadingWhiteSpace = if (params("drop_leading_white_space") == "yes") true else false
+      val dropTrailingWhiteSpace = if (params("drop_trailing_white_space") == "yes") true else false
       val path = generatePathIfNeeded(params("path"))
       val op = graph_operations.ExportTableToCSV(
         path = path,
@@ -52,8 +52,8 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         nullValue = params("null_value"),
         dateFormat = params("date_format"),
         timestampFormat = params("timestamp_format"),
-        ignoreLeadingWhiteSpace = ignoreLeadingWhiteSpace,
-        ignoreTrailingWhiteSpace = ignoreTrailingWhiteSpace,
+        dropLeadingWhiteSpace = dropLeadingWhiteSpace,
+        dropTrailingWhiteSpace = dropTrailingWhiteSpace,
         version = params("version").toInt)
       op(op.t, table).result.exportResult
     }
