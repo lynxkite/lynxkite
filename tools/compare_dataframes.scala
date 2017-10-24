@@ -17,9 +17,9 @@ def roundDoubleValues(dataFrame: DataFrame, precision: Int): DataFrame = {
   val x = math.pow(10, precision)
   val round = udf { d: Double => math.rint(d * x) / x }
   val doubleColumns = dataFrame.schema.filter(_.dataType == DoubleType).map(_.name)
-  doubleColumns.scanLeft(dataFrame) {
+  doubleColumns.foldLeft(dataFrame) {
     case (df, columnName) => df.withColumn(columnName, round(df(columnName)))
-  }.last
+  }
 }
 
 def compareDataFrames(df1: DataFrame, df2: DataFrame, precision: Int): Unit = {
