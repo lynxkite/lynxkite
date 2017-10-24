@@ -26,7 +26,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
     def attrs = project.vertexAttrList[Double] ++ project.vertexAttrList[String]
     def models = project.viewer.models.filter(_._2.isClassification)
     params ++= List(
-      Param("name", "The name of the attribute of the classifications"),
+      Param("name", "The name of the attribute of the classifications", defaultValue = "prediction"),
       ModelParams("model", "The parameters of the model", models, attrs, typesOf(attrs, project)))
     def enabled =
       FEStatus.assert(models.nonEmpty, "No classification models.") &&
@@ -72,7 +72,7 @@ class MachineLearningOperations(env: SparkFreeEnvironment) extends ProjectOperat
     def attrs = project.vertexAttrList[Double]
     def models = project.viewer.models.filterNot(_._2.isClassification)
     params ++= List(
-      Param("name", "The name of the attribute of the predictions"),
+      Param("name", "The name of the attribute of the predictions", defaultValue = "prediction"),
       ModelParams("model", "The parameters of the model", models, attrs, typesOf(attrs, project)))
     def enabled =
       FEStatus.assert(models.nonEmpty, "No regression models.") &&
