@@ -26,18 +26,35 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("path", "Path", defaultValue = "<auto>"),
       Param("delimiter", "Delimiter", defaultValue = ","),
       Param("quote", "Quote", defaultValue = "\""),
-      Choice("quote_all", "Quote all strings", FEOption.list("no", "yes")),
-      Choice("header", "Include header", FEOption.list("yes", "no")),
+      Choice("quote_all", "Quote all strings", FEOption.noyes),
+      Choice("header", "Include header", FEOption.yesno),
+      Param("escape", "Escape character", defaultValue = "\\"),
+      Param("null_value", "Null value", defaultValue = ""),
+      Param("date_format", "Date format", defaultValue = "yyyy-MM-dd"),
+      Param("timestamp_format", "Timestamp format", defaultValue = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"),
+      Choice("drop_leading_white_space", "Drop leading white space", FEOption.noyes),
+      Choice("drop_trailing_white_space", "Drop trailing white space", FEOption.noyes),
       NonNegInt("version", "Version", default = 0))
 
     def exportResult() = {
       val header = if (params("header") == "yes") true else false
       val quoteAll = if (params("quote_all") == "yes") true else false
+      val dropLeadingWhiteSpace = if (params("drop_leading_white_space") == "yes") true else false
+      val dropTrailingWhiteSpace = if (params("drop_trailing_white_space") == "yes") true else false
       val path = generatePathIfNeeded(params("path"))
       val op = graph_operations.ExportTableToCSV(
-        path, header,
-        params("delimiter"), params("quote"), quoteAll,
-        params("version").toInt)
+        path = path,
+        header = header,
+        delimiter = params("delimiter"),
+        quote = params("quote"),
+        quoteAll = quoteAll,
+        escape = params("escape"),
+        nullValue = params("null_value"),
+        dateFormat = params("date_format"),
+        timestampFormat = params("timestamp_format"),
+        dropLeadingWhiteSpace = dropLeadingWhiteSpace,
+        dropTrailingWhiteSpace = dropTrailingWhiteSpace,
+        version = params("version").toInt)
       op(op.t, table).result.exportResult
     }
   })
