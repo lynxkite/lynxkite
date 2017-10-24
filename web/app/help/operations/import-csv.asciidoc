@@ -44,7 +44,7 @@ A flag indicating whether or not leading whitespaces from values being read shou
 A flag indicating whether or not trailing whitespaces from values being read should be skipped.
 
 [[comment]] Comment character::
-Every line beginning with this character is skipped, if set. For example if the commen character is
+Every line beginning with this character is skipped, if set. For example if the comment character is
 `#` the following line is ignored in the CSF file: `# This is a comment.`
 
 [[error_handling]] Error handling::
