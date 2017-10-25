@@ -449,11 +449,12 @@ angular.module('biggraph')
           return document.activeElement.tagName === "BODY";
         };
 
+        /* global jsyaml */
         scope.copyBoxes = function(e) {
           if (!scope.drawingBoardHasFocus() || window.getSelection().toString()) {
             return;
           }
-          var data = JSON.stringify(
+          var data = jsyaml.safeDump(
             scope.selectedBoxes().map(function(box) { return box.instance; }),
             null,
             2);
@@ -467,13 +468,13 @@ angular.module('biggraph')
           }
           var data = e.clipboardData.getData('Text');
           try {
-            var boxes = JSON.parse(data);
+            var boxes = jsyaml.safeLoad(data);
           } catch (err) {
             var jData = { clipboard: data };
             var message = 'Cannot create boxes from clipboard. (Not in JSON format)';
             util.error(message, jData);
             /* eslint-disable no-console */
-            console.err(message, err);
+            console.error(message, err);
             return;
           }
           try {
