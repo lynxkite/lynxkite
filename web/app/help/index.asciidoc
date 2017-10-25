@@ -1,8 +1,5 @@
 // Main structure file that builds the full documentation from its parts.
 
-= LynxKite User Manual
-Lynx Analytics
-
 :sectlinks:
 :sectanchors:
 :toc: macro
