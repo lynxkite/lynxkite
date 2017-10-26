@@ -7,6 +7,7 @@ angular.module('biggraph').directive('modelParameter', function(util) {
     scope: {
       param: '=', // Parameters of the available models.
       modelJson: '=', // Input/output: Model configuration in JSON.
+      onBlur: '&', // Function to call on changes.
     },
     templateUrl: 'scripts/operation/model-parameter.html',
     link: function(scope) {
