@@ -37,6 +37,8 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-core" % "2.6.5",
   "com.fasterxml.jackson.core" % "jackson-annotations" % "2.6.5",
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.5",
+  // This one is just for reading YAML.
+  "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml" % "2.6.5",
   // The below dep is needed to avoid jar version conflict when running in Amazon EMR.
   // (There we use a Hadoop-less Spark build and use Hadoop libs provided by Amazon.
   // This way we get s3 consistent view support.)
