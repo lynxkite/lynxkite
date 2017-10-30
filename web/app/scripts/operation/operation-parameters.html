@@ -60,6 +60,7 @@
       </file-parameter>
       <model-parameter ng-if="param.kind === 'model'"
           param="param"
+          on-blur="onBlur()"
           model-json="parameters[param.id]"
           class="operation-attribute-entry">
       </model-parameter>
