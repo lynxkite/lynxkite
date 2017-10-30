@@ -135,8 +135,13 @@ object OperationParams {
       models: Map[String, model.ModelMeta],
       attrs: List[FEOption],
       attrTypes: List[String]) extends OperationParameterMeta {
-    val feModels = models.toList.map { case (k, v) => model.Model.toMetaFE(k, v) }
-    val defaultValue = s"""{"modelName": "${feModels.head.name}"}"""
+    val feModels = models.toList.sortBy(_._1).map { case (k, v) => model.Model.toMetaFE(k, v) }
+    val defaultValue = {
+      val m = feModels.head
+      json.Json.obj(
+        "modelName" -> m.name,
+        "features" -> m.featureNames).toString
+    }
     val kind = "model"
     val multipleChoice = false
     val options = List()
