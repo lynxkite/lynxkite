@@ -180,7 +180,7 @@ instead of ng-model="sql" -->
             <span class="sql-type">{{col.dataType}}</span>
             <span class="ordering">
               <i ng-show="sort.column === $index.toString()"
-                class="glyphicon glyphicon-triangle-{{ sort.reverse ? 'top' : 'bottom' }}"></i>
+                class="glyphicon glyphicon-sort-by-attributes{{ sort.reverse ? '-alt' : '' }}"></i>
             </span>
           </span>
         </th>
