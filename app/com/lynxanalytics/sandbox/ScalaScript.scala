@@ -115,7 +115,7 @@ object ScalaScript {
     """
 
     withContextClassLoader {
-      val compiledCode = engine.compile(fullCode)
+      val compiledCode = compile(fullCode)
       withTimeout(timeoutInSeconds) {
         ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
           compiledCode.eval().toString
@@ -155,7 +155,7 @@ object ScalaScript {
       }
       plot.toJson.toString
       """
-      val compiledCode = engine.compile(fullCode)
+      val compiledCode = compile(fullCode)
       withTimeout(timeoutInSeconds) {
         ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
           compiledCode.eval().toString

@@ -42,6 +42,14 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       FileParam("filename", "File"),
       Param("columns", "Columns in file"),
       Param("delimiter", "Delimiter", defaultValue = ","),
+      Param("quote", "Quote character", defaultValue = "\""),
+      Param("escape", "Escape character", defaultValue = "\\"),
+      Param("null_value", "Null value", defaultValue = ""),
+      Param("date_format", "Date format", defaultValue = "yyyy-MM-dd"),
+      Param("timestamp_format", "Timestamp format", defaultValue = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"),
+      Choice("ignore_leading_white_space", "Ignore leading white space", options = FEOption.noyes),
+      Choice("ignore_trailing_white_space", "Ignore trailing white space", options = FEOption.noyes),
+      Param("comment", "Comment character", defaultValue = ""),
       Choice("error_handling", "Error handling", List(
         FEOption("FAILFAST", "Fail on any malformed line"),
         FEOption("DROPMALFORMED", "Ignore malformed lines"),
@@ -60,6 +68,8 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       val errorHandling = params("error_handling")
       val infer = params("infer") == "yes"
+      val ignoreLeadingWhiteSpace = params("ignore_leading_white_space") == "yes"
+      val ignoreTrailingWhiteSpace = params("ignore_trailing_white_space") == "yes"
       val columns = params("columns")
       assert(
         Set("PERMISSIVE", "DROPMALFORMED", "FAILFAST").contains(errorHandling),
@@ -69,10 +79,16 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         .read
         .format("csv")
         .option("mode", errorHandling)
-        .option("delimiter", params("delimiter"))
+        .option("sep", params("delimiter"))
+        .option("quote", params("quote"))
+        .option("escape", params("escape"))
+        .option("nullValue", params("null_value"))
+        .option("dateFormat", params("date_format"))
+        .option("timestampFormat", params("timestamp_format"))
+        .option("ignoreLeadingWhiteSpace", if (ignoreLeadingWhiteSpace) "true" else "false")
+        .option("ignoreTrailingWhiteSpace", if (ignoreTrailingWhiteSpace) "true" else "false")
+        .option("comment", params("comment"))
         .option("inferSchema", if (infer) "true" else "false")
-        // We don't want to skip lines starting with #.
-        .option("comment", null)
       val readerWithSchema = if (columns.nonEmpty) {
         reader.schema(SQLController.stringOnlySchema(columns.split(",", -1)))
       } else {

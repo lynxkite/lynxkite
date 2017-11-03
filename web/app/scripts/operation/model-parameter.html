@@ -3,6 +3,7 @@
       id="model-name"
       class="form-control"
       ng-model="activeModel"
+      ng-change="onBlur()"
       ng-options="model as model.name for model in param.payload.models"></select>
 <div ng-if="activeModel">
   <div class="model-parameter">Bind the features of the model</div>
@@ -15,6 +16,7 @@
           id="model-feature-{{feature}}"
           class="form-control"
           ng-model="binding[feature]"
+          ng-change="onBlur()"
           ng-options="attr.id as attr.title for attr in getParamsWithMatchingType(activeModel.featureTypes[$index])">
         </select>
       </td>

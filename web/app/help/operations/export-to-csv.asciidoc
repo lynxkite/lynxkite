@@ -25,6 +25,27 @@ Whether or not to include the header in the CSV file. If the data is exported as
 the header will be included in each of them. When such a data set is directly downloaded, the header
 will appear multiple times in the resulting file.
 
+[[escape]] Escape character::
+The character used for escaping quotes inside an already quoted value.
+
+[[null_value]] Null value::
+The string representation of a `null` value. This is how `null`-s are going to be written in
+the CSV file.
+
+[[date_format]] Date format::
+The string that indicates a date format. Custom date formats follow the formats at
+https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html[java.text.SimpleDateFormat].
+
+[[timestamp_format]] Timestamp format::
+The string that indicates a timestamp format. Custom date formats follow the formats at
+https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html[java.text.SimpleDateFormat].
+
+[[drop_leading_white_space]] Drop leading white space::
+A flag indicating whether or not leading whitespaces from values being written should be skipped.
+
+[[drop_trailing_white_space]] Drop trailing white space::
+A flag indicating whether or not trailing whitespaces from values being written should be skipped.
+
 [[version]] Version::
 Version is the version number of the result of the export operation. It is a non negative integer.
 LynxKite treats export operations as other operations: it remembers the result (which in this case
