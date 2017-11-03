@@ -1,3 +1,7 @@
+# Several tools depend on the format of this
+# file, so do not change it! In the first part
+# come the runtime dependencies, the second part
+# contains the dependencies for developing and testing.
 # Dependecies for running LynxKite and ecosystem
 croniter
 flask

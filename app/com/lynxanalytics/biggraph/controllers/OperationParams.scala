@@ -135,7 +135,13 @@ object OperationParams {
       models: Map[String, model.ModelMeta],
       attrs: List[FEOption],
       attrTypes: List[String]) extends OperationParameterMeta {
-    val defaultValue = ""
+    val feModels = models.toList.sortBy(_._1).map { case (k, v) => model.Model.toMetaFE(k, v) }
+    val defaultValue = {
+      val m = feModels.head
+      json.Json.obj(
+        "modelName" -> m.name,
+        "features" -> m.featureNames).toString
+    }
     val kind = "model"
     val multipleChoice = false
     val options = List()
@@ -143,7 +149,7 @@ object OperationParams {
     import FrontendJson.fFEOption
     implicit val wModelsPayload = json.Json.writes[ModelsPayload]
     override val payload = Some(json.Json.toJson(ModelsPayload(
-      models = models.toList.map { case (k, v) => model.Model.toMetaFE(k, v) },
+      models = feModels,
       attrs = attrs,
       attrTypes = attrTypes)))
     def validate(value: String): Unit = {}

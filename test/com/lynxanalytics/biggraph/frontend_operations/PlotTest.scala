@@ -55,4 +55,13 @@ class PlotTest extends OperationsTestBase {
   }
 }""")
   }
+
+  test("Plot compile error message") {
+    val error = intercept[javax.script.ScriptException] {
+      box("Create example graph")
+        .box("Custom plot", Map("plot_code" -> "This will not compile for sure!"))
+        .output("plot").plot.value
+    }
+    assert(error.getMessage.contains("This will not compile for sure!"))
+  }
 }

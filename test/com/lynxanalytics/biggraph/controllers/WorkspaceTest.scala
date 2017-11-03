@@ -380,7 +380,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(op.parameters.map(_.id) == Seq("apply_to_project"))
       // The error is reported by marking the operation as disabled.
       // Also the output carries an error.
-      assert(op.status.disabledReason == "compile-time error")
+      assert(op.status.disabledReason.contains("not found: value x"))
       assert(project.isError)
     }
   }
