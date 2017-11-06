@@ -456,8 +456,7 @@ angular.module('biggraph')
           }
           var data = jsyaml.safeDump(
             scope.selectedBoxes().map(function(box) { return box.instance; }),
-            null,
-            2);
+            { noCompatMode: true });
           e.clipboardData.setData('text/plain', data);
           e.preventDefault();
         };
