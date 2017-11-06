@@ -47,3 +47,5 @@ on the target instance too.
 
 The copy-paste mechanism is implemented via serializing to YAML, a human-readable and editable
 textual format, so you can even save box sequences to text files or share them via email.
+
+Hold SHIFT while moving a box to align it to a grid.

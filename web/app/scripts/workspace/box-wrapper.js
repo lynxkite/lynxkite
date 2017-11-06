@@ -55,6 +55,11 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
     onMouseMove: function(event) {
       var newX = event.logicalX + this.xOffset;
       var newY = event.logicalY + this.yOffset;
+      if (event.shiftKey) {
+        var G = 50; // Snap grid size.
+        newX = G * Math.round(newX / G);
+        newY = G * Math.round(newY / G);
+      }
       if (newX !== this.instance.x || newY !== this.instance.y) {
         this.workspace._requestInvalidated = true;
         this.isDirty = true;
