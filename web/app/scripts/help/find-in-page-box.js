@@ -182,7 +182,7 @@ angular.module('biggraph').directive('findInPageBox', function() {
       scope.$watch('text', function() {
         unhighlight();
         if (scope.text && scope.text.length >= 3) {
-          numMatches = highlight(document.body, scope.text);
+          numMatches = highlight($('#whole-help')[0], scope.text);
           focusedResultPos = 0;
           if (numMatches > 0) {
             focusResult(0);
