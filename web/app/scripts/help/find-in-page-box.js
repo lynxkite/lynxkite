@@ -174,9 +174,12 @@ angular.module('biggraph').directive('findInPageBox', function() {
       $('#find-in-page-text').bind(
         'keydown keypress',
         function (event) {
-          if (event.keyCode === 13) {
+          if (event.keyCode === 13) { // ENTER
             findNext();
             event.preventDefault();
+          } else if (event.keyCode === 27) { // ESC
+            scope.text = '';
+            scope.$digest();
           }
         });
       scope.$watch('text', function() {
