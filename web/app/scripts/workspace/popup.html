@@ -1,6 +1,6 @@
 <div
     class="popup popup-type-{{ popupModel.content.type }}{{ popupModel.meta ? '-meta' : '' }}"
-    ng-mousedown="popupModel.bringToFront(); $event.stopPropagation();"
+    ng-mousedown="popupModel.bringToFront($event); $event.stopPropagation();"
     id="{{ popupModel.id | id }}"
     ng-style="{
         'left': popupModel.x + 'px',
