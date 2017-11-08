@@ -304,4 +304,19 @@ class SQLTest extends OperationsTestBase {
     // (All workers use the same name when registering their data frames.)
     assert(badResults.isEmpty)
   }
+
+  test("no required attribute") {
+    val table = box("Create example graph")
+      .box("SQL1", Map("sql" -> "select 1 from (select age from vertices) limit 2"))
+      .table
+    assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq(Seq(1), Seq(1)))
+  }
+
+  test("multi-alias") {
+    val table = box("Create example graph")
+      .box("SQL1", Map("sql" ->
+        "select blah from (select age as blah from vertices) order by blah limit 2"))
+      .table
+    assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq(Seq(2.0), Seq(18.2)))
+  }
 }
