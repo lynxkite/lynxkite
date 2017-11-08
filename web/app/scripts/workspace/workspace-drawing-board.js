@@ -445,8 +445,7 @@ angular.module('biggraph')
 
         function inputBoxFocused() {
           // We don't want to hijack copy and paste events from input fields.
-          return (document.activeElement.tagName === 'INPUT' ||
-            document.activeElement.tagName === 'TEXTAREA');
+          return ['INPUT', 'TEXTAREA'].indexOf(document.activeElement.tagName) !== -1;
         }
 
         /* global jsyaml */
