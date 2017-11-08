@@ -95,6 +95,7 @@ case class NewParameter[T: Writes: Reads](paramName: String, defaultValue: T) {
 
 object SerializableType {
   val vectorPattern = "Vector\\[(.*)\\]".r
+  val tuple2Pattern = "Tuple2\\[(.*),(.*)\\]".r
   def fromJson(j: json.JsValue): SerializableType[_] = {
     typeFromString((j \ "typename").as[String])
   }
@@ -105,7 +106,8 @@ object SerializableType {
       case "Double" => double
       case "Long" => long
       case "Int" => int
-      case "Position" => position
+      case tuple2Pattern(innerTypeString1, innerTypeString2) => tuple2TypeFromString(
+        innerTypeString1, innerTypeString2)
       case vectorPattern(innerTypeString) => vectorTypeFromString(innerTypeString)
     }
   }
@@ -115,11 +117,16 @@ object SerializableType {
     vector(innerType)
   }
 
+  def tuple2TypeFromString(s1: String, s2: String): SerializableType[_] = {
+    val innerType1 = typeFromString(s1)
+    val innerType2 = typeFromString(s2)
+    tuple2(innerType1, innerType2)
+  }
+
   val string = new SerializableType[String]("String")
   val double = new SerializableType[Double]("Double")
   val long = new SerializableType[Long]("Long")
   val int = new SerializableType[Int]("Int")
-  val position = new PositionSerializableType()
 
   // Every serializable type defines an ordering here, but we never use it for vectors.
   class MockVectorOrdering[T: TypeTag] extends Ordering[Vector[T]] with Serializable {
@@ -127,12 +134,17 @@ object SerializableType {
   }
 
   // Every serializable type defines an ordering here, but we never use it for positions.
-  class MockPositionOrdering extends Ordering[(Double, Double)] with Serializable {
-    def compare(x: (Double, Double), y: (Double, Double)): Int = ???
+  class MockTuple2Ordering[T1: TypeTag, T2: TypeTag] extends Ordering[(T1, T2)] with Serializable {
+    def compare(x: (T1, T2), y: (T1, T2)): Int = ???
   }
 
   def vector(innerType: SerializableType[_]): SerializableType[_] = {
     new VectorSerializableType(s"Vector[${innerType.getTypename}]")(innerType.typeTag)
+  }
+
+  def tuple2(innerType1: SerializableType[_], innerType2: SerializableType[_]): SerializableType[_] = {
+    new Tuple2SerializableType(s"Tuple2[${innerType1.getTypename},${innerType2.getTypename}]")(
+      innerType1.typeTag, innerType2.typeTag)
   }
 
   def apply[T: TypeTag]: SerializableType[T] = {
@@ -144,7 +156,9 @@ object SerializableType {
     else if (t =:= typeOf[Double]) double
     else if (t =:= typeOf[Long]) long
     else if (t =:= typeOf[Int]) int
-    else if (t =:= typeOf[(Double, Double)]) position
+    else if (TypeTagUtil.isOfKind2[Tuple2](t)) tuple2(
+      apply(t.asInstanceOf[TypeRefApi].args(0)),
+      apply(t.asInstanceOf[TypeRefApi].args(1)))
     else if (TypeTagUtil.isOfKind1[Vector](t)) vector(apply(t.asInstanceOf[TypeRefApi].args(0)))
     else throw new AssertionError(s"Unsupported type: $t")
   }
@@ -172,9 +186,10 @@ class VectorSerializableType[T: TypeTag] private[graph_api] (
   ordering = new SerializableType.MockVectorOrdering()(typeTag),
   typeTag = TypeTagUtil.vectorTypeTag(typeTag)) {
 }
-class PositionSerializableType private[graph_api] () extends SerializableType[(Double, Double)]("Position")(
+class Tuple2SerializableType[T1: TypeTag, T2: TypeTag] private[graph_api] (
+    typename: String) extends SerializableType[(T1, T2)](typename)(
   classTag = RuntimeSafeCastable.classTagFromTypeTag(typeTag),
-  format = TypeTagToFormat.pairToFormat(typeTag[Double], typeTag[Double]),
-  ordering = new SerializableType.MockPositionOrdering(),
-  typeTag = TypeTagUtil.tuple2TypeTag(typeTag[Double], typeTag[Double])) {
+  format = TypeTagToFormat.pairToFormat(typeTag[T1], typeTag[T2]),
+  ordering = new SerializableType.MockTuple2Ordering()(typeTag[T1], typeTag[T2]),
+  typeTag = TypeTagUtil.tuple2TypeTag(typeTag[T1], typeTag[T2])) {
 }
