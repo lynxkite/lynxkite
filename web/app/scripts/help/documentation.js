@@ -14,8 +14,16 @@ angular.module('biggraph').factory('documentation', function($http) {
     var html = $http.get('/' + name + '.html', { cache: true });
     var dom = html.then(function success(response) {
       /* global $ */
-      var dom = $($.parseHTML('<div><div id="whole-help">' + response.data + '</div></div>'));
+      var dom = $($.parseHTML(
+            '<div id="help-container"><div id="whole-help">' + response.data + '</div></div>'));
 
+      // Move TOC outside and spruce it up.
+      dom.find('#toc').each(function(i, div) {
+        div = angular.element(div);
+        div.prepend('<find-in-page-box></find-in-page-box>');
+        div.prepend('<img src="/images/logo.png" id="lynxkite-logo">');
+        dom.prepend(div);
+      });
       // Move heading IDs to sectionbody divs.
       var sectSelector = 'div.sect1,div.sect2,div.sect3,div.sect4,div.sect5,div.sect6';
       dom.find(sectSelector).each(function(i, div) {
@@ -50,12 +58,15 @@ angular.module('biggraph').factory('documentation', function($http) {
   return documentation;
 });
 
-angular.module('biggraph').directive('documentation', function(documentation) {
+angular.module('biggraph').directive('documentation', function(documentation, $compile) {
   return {
     scope: { documentation: '@' },
     link: function(scope, element) {
       documentation(scope.documentation).then(function(content) {
-        element.html(content);
+        element.empty();
+        element.append(content);
+        // Activate Angular contents.
+        $compile(content)(scope.$new());
       });
     },
   };

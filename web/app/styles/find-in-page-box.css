@@ -1,17 +1,21 @@
-find-in-page-box {
-  position: fixed;
-  top: 0px;
-  right: 0px;
+find-in-page-box > div {
+  margin: 0 20px;
 }
 
-find-in-page-box input {
+find-in-page-box .btn {
+  border: 0;
+  padding: 5px;
+  border-radius: 100px;
+  font-size: 10px;
 }
 
 span.find-highlight {
-  background: yellow;
+  background: #39bcf3; /* Brand color. */
+  color: white;
 }
 span.find-highlight-current {
-  background: orange;
+  background: #ff8800; /* Brand color. */
+  color: white;
 }
 
 @media print {
