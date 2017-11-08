@@ -105,6 +105,7 @@ object SerializableType {
       case "Double" => double
       case "Long" => long
       case "Int" => int
+      case "Position" => position
       case vectorPattern(innerTypeString) => vectorTypeFromString(innerTypeString)
     }
   }
@@ -118,10 +119,16 @@ object SerializableType {
   val double = new SerializableType[Double]("Double")
   val long = new SerializableType[Long]("Long")
   val int = new SerializableType[Int]("Int")
+  val position = new PositionSerializableType()
 
   // Every serializable type defines an ordering here, but we never use it for vectors.
   class MockVectorOrdering[T: TypeTag] extends Ordering[Vector[T]] with Serializable {
     def compare(x: Vector[T], y: Vector[T]): Int = ???
+  }
+
+  // Every serializable type defines an ordering here, but we never use it for positions.
+  class MockPositionOrdering extends Ordering[(Double, Double)] with Serializable {
+    def compare(x: (Double, Double), y: (Double, Double)): Int = ???
   }
 
   def vector(innerType: SerializableType[_]): SerializableType[_] = {
@@ -137,6 +144,7 @@ object SerializableType {
     else if (t =:= typeOf[Double]) double
     else if (t =:= typeOf[Long]) long
     else if (t =:= typeOf[Int]) int
+    else if (t =:= typeOf[(Double, Double)]) position
     else if (TypeTagUtil.isOfKind1[Vector](t)) vector(apply(t.asInstanceOf[TypeRefApi].args(0)))
     else throw new AssertionError(s"Unsupported type: $t")
   }
@@ -163,4 +171,10 @@ class VectorSerializableType[T: TypeTag] private[graph_api] (
   format = TypeTagToFormat.vectorToFormat(typeTag),
   ordering = new SerializableType.MockVectorOrdering()(typeTag),
   typeTag = TypeTagUtil.vectorTypeTag(typeTag)) {
+}
+class PositionSerializableType private[graph_api] () extends SerializableType[(Double, Double)]("Position")(
+  classTag = RuntimeSafeCastable.classTagFromTypeTag(typeTag),
+  format = TypeTagToFormat.pairToFormat(typeTag[Double], typeTag[Double]),
+  ordering = new SerializableType.MockPositionOrdering(),
+  typeTag = TypeTagUtil.tuple2TypeTag(typeTag[Double], typeTag[Double])) {
 }
