@@ -133,7 +133,7 @@ object SerializableType {
     def compare(x: Vector[T], y: Vector[T]): Int = ???
   }
 
-  // Every serializable type defines an ordering here, but we never use it for positions.
+  // Every serializable type defines an ordering here, but we never use it for tuple2s.
   class MockTuple2Ordering[T1: TypeTag, T2: TypeTag] extends Ordering[(T1, T2)] with Serializable {
     def compare(x: (T1, T2), y: (T1, T2)): Int = ???
   }
