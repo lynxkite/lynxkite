@@ -5,10 +5,8 @@ angular.module('biggraph').directive('findInPageBox', function() {
     restrict: 'E',
     scope: {},
     templateUrl: 'scripts/help/find-in-page-box.html',
-    link: function(scope, element) {
-      // DOM root node where to do the searching.
-      // Currently this is hard-wired to the parent.
-      var doc = element.parent();
+    link: function(scope) {
+      /* globals document, $ */
       // The position of the found result which is focused.
       // (Orange color, scrolled into view.)
       var focusedResultPos = 0;
@@ -144,31 +142,15 @@ angular.module('biggraph').directive('findInPageBox', function() {
         }).end();
       }
 
-      /* globals document, $ */
-      function scrollTo(element) {
-        var body = $('html, body');
-        var windowTop = document.documentElement.scrollTop ||
-          document.body.scrollTop;
-        var height = $(window).height();
-        var windowBottom = windowTop + height;
-        var elementTop = element.offset().top;
-        var elementBottom = elementTop + element.height();
-
-        if (elementTop < windowTop || elementBottom > windowBottom) {
-          body.scrollTop(element.offset().top - height / 2.0);
-        }
-
-      }
-
       function focusResult(pos) {
-        var next = doc.find('span.find-highlight-' + pos);
-        angular.element(next).addClass('find-highlight-current');
-        scrollTo(angular.element(next));
+        var next = $('span.find-highlight-' + pos);
+        next.addClass('find-highlight-current');
+        next[0].scrollIntoView({});
       }
 
       function unFocusResult(pos) {
-        var current = doc.find('span.find-highlight-' + pos);
-        angular.element(current).removeClass('find-highlight-current');
+        var current = $('span.find-highlight-' + pos);
+        $(current).removeClass('find-highlight-current');
       }
 
       function findNext() {
@@ -192,15 +174,18 @@ angular.module('biggraph').directive('findInPageBox', function() {
       $('#find-in-page-text').bind(
         'keydown keypress',
         function (event) {
-          if (event.keyCode === 13) {
+          if (event.keyCode === 13) { // ENTER
             findNext();
             event.preventDefault();
+          } else if (event.keyCode === 27) { // ESC
+            scope.text = '';
+            scope.$digest();
           }
         });
       scope.$watch('text', function() {
-        unhighlight(doc);
+        unhighlight();
         if (scope.text && scope.text.length >= 3) {
-          numMatches = highlight(doc[0], scope.text);
+          numMatches = highlight($('#whole-help')[0], scope.text);
           focusedResultPos = 0;
           if (numMatches > 0) {
             focusResult(0);
