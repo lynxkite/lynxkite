@@ -115,7 +115,7 @@ class SchemaInferencingOptimizer(
     catalog: SessionCatalog,
     conf: SQLConf)
   extends Optimizer(catalog, conf) {
-  val weDontWant = Set("Finish Analysis", "LocalRelation")
+  val weDontWant = Set("Finish Analysis")
   override def batches: Seq[Batch] = super.batches
     .filter(b => !weDontWant.contains(b.name))
 }
