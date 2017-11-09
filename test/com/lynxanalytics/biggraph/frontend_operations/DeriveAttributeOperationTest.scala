@@ -286,4 +286,14 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
       2 -> Vector((1.352083, 103.819836)),
       3 -> Vector((-33.8674869, 151.2069902))))
   }
+
+  test("Nested Tuple2") {
+    val project = box("Create example graph")
+      .box(
+        "Derive vertex attribute",
+        Map("output" -> "output", "expr" -> "(1.0, (2.0, 3.0))"))
+      .project
+    val attr = project.vertexAttributes("output").runtimeSafeCast[(Double, (Double, Double))]
+    assert(attr.rdd.values.collect.head == (1.0, (2.0, 3.0)))
+  }
 }
