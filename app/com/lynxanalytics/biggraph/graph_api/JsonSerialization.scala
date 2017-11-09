@@ -94,33 +94,28 @@ case class NewParameter[T: Writes: Reads](paramName: String, defaultValue: T) {
 }
 
 object SerializableType {
-  val vectorPattern = "Vector\\[(.*)\\]".r
-  val tuple2Pattern = "Tuple2\\[(.*),(.*)\\]".r
-  def fromJson(j: json.JsValue): SerializableType[_] = {
-    typeFromString((j \ "typename").as[String])
-  }
-
-  def typeFromString(s: String): SerializableType[_] = {
-    s match {
-      case "String" => string
-      case "Double" => double
-      case "Long" => long
-      case "Int" => int
-      case tuple2Pattern(innerTypeString1, innerTypeString2) => tuple2TypeFromString(
-        innerTypeString1, innerTypeString2)
-      case vectorPattern(innerTypeString) => vectorTypeFromString(innerTypeString)
+  object TypeParser {
+    import fastparse.all._
+    type PS = P[SerializableType[_]]
+    val string = P("String").map(_ => SerializableType.string)
+    val double = P("Double").map(_ => SerializableType.double)
+    val long = P("Long").map(_ => SerializableType.long)
+    val int = P("Int").map(_ => SerializableType.int)
+    val primitive = P(string | double | long | int)
+    val vector: PS = P("Vector[" ~ stype ~ "]").map {
+      inner => SerializableType.vector(inner)
+    }
+    val tuple2: PS = P("Tuple2[" ~ stype ~ "," ~ stype ~ "]").map {
+      case (inner1, inner2) => SerializableType.tuple2(inner1, inner2)
+    }
+    val stype: PS = P(primitive | vector | tuple2)
+    def parse(s: String) = {
+      val fastparse.core.Parsed.Success(result, _) = stype.parse(s)
+      result
     }
   }
-
-  def vectorTypeFromString(s: String): SerializableType[_] = {
-    val innerType = typeFromString(s)
-    vector(innerType)
-  }
-
-  def tuple2TypeFromString(s1: String, s2: String): SerializableType[_] = {
-    val innerType1 = typeFromString(s1)
-    val innerType2 = typeFromString(s2)
-    tuple2(innerType1, innerType2)
+  def fromJson(j: json.JsValue): SerializableType[_] = {
+    TypeParser.parse((j \ "typename").as[String])
   }
 
   val string = new SerializableType[String]("String")
