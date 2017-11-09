@@ -62,7 +62,7 @@ libraryDependencies ++= Seq(
   "org.kohsuke" % "groovy-sandbox" % "1.10",
   "com.lihaoyi" % "ammonite-sshd" % "0.5.7" cross CrossVersion.full,
   // A dependency of Ammonite and included directly for our parsing needs.
-  "com.lihaoyi" % "fastparse" % "1.0.0"
+  "com.lihaoyi" %% "fastparse" % "0.3.7",
   // Hive import seems to need this.
   "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.17",
   // For SPARK-10306.
