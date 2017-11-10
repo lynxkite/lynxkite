@@ -65,17 +65,18 @@ object ProtoTable {
     // The table names we get back from the case-insensitive parser will be lowercase.
     val lowerProtoTables = protoTables.map { case (k, v) => k.toLowerCase -> v }
     val tables = getRequiredFields(optimizedPlan)
-    val selectedTables = tables.map {
-      case (name, expressions) =>
+
+    val selectedTables = tables.groupBy(_._1).map {
+      case (name, expressionsList) =>
         val table = lowerProtoTables(name)
-        val columns = expressions.flatMap(parseExpression)
+        val columns = expressionsList.flatMap(_._2).flatMap(parseExpression)
         val selectedTable = if (columns.contains("*")) {
           table
         } else {
           table.maybeSelect(columns)
         }
         name -> selectedTable
-    }.toMap
+    }
     selectedTables
   }
 
