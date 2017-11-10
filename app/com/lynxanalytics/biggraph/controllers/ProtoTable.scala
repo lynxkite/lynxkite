@@ -69,7 +69,7 @@ object ProtoTable {
     val selectedTables = tables.groupBy(_._1).map {
       case (name, expressionsList) =>
         val table = lowerProtoTables(name)
-        val columns = expressionsList.flatMap(_._2).flatMap(parseExpression)
+        val columns = expressionsList.flatMap(_._2).flatMap(parseExpression).distinct
         val selectedTable = if (columns.contains("*")) {
           table
         } else {
