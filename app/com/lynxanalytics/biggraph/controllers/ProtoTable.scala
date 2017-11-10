@@ -5,14 +5,12 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.graph_api._
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.analysis.Analyzer
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.sql.catalyst.analysis.UnresolvedStar
 import org.apache.spark.sql.catalyst.catalog.InMemoryCatalog
 import org.apache.spark.sql.catalyst.catalog.SessionCatalog
-import org.apache.spark.sql.catalyst.expressions
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.expressions.NamedExpression
@@ -45,11 +43,9 @@ trait ProtoTable {
   def getRelation: LocalRelation = {
     val fields = schema.fields
     if (fields.nonEmpty) {
-      val tmp = LocalRelation(fields.head, fields.tail: _*)
-      val rows = Seq(Row(tmp.output.map(x => null): _*))
-      LocalRelation.fromExternalRows(tmp.output, rows)
+      LocalRelation(fields.head, fields.tail: _*)
     } else {
-      LocalRelation.fromExternalRows(Seq.empty[expressions.Attribute], Seq(Row()))
+      LocalRelation()
     }
   }
 }
