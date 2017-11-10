@@ -312,6 +312,14 @@ class SQLTest extends OperationsTestBase {
     assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq(Seq(1), Seq(1)))
   }
 
+  test("table reuse") {
+    val select = (s: String) => s"(select $s from vertices limit 1)"
+    val table = box("Create example graph")
+      .box("SQL1", Map("sql" -> s"${select("age")} union ${select("name")}"))
+      .table
+    assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq(Seq("20.3"), Seq("Adam")))
+  }
+
   test("multi-alias") {
     val table = box("Create example graph")
       .box("SQL1", Map("sql" ->
