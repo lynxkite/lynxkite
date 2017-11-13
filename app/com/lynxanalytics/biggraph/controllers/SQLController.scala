@@ -168,6 +168,8 @@ case class TableBrowserNodeForBoxRequest(
     operationRequest: GetOperationMetaRequest,
     path: String)
 
+case class ImportBoxRequest(box: Box, workspaceParameters: Map[String, String])
+
 class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager: DataManager = env.dataManager
@@ -177,9 +179,9 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   def async[T](func: => T): Future[T] = Future(func)
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
-  def importBox(user: serving.User, box: Box) = async[ImportBoxResponse] {
+  def importBox(user: serving.User, request: ImportBoxRequest) = async[ImportBoxResponse] {
     val op = ops.opForBox(
-      user, box, inputs = null, workspaceParameters = null).asInstanceOf[ImportOperation]
+      user, request.box, inputs = null, workspaceParameters = request.workspaceParameters).asInstanceOf[ImportOperation]
     val parameterSettings = op.settingsString()
     val df = op.getDataFrame(SQLController.defaultContext(user))
     val table = ImportDataFrame.run(df)

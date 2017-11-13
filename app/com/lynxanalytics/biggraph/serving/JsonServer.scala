@@ -319,6 +319,7 @@ object FrontendJson {
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val rSQLTableBrowserNodeRequest = json.Json.reads[TableBrowserNodeRequest]
   implicit val rTableBrowserNodeForBoxRequest = json.Json.reads[TableBrowserNodeForBoxRequest]
+  implicit val rImportBoxRequest = json.Json.reads[ImportBoxRequest]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
   implicit val fSQLExportToTableRequest = json.Json.format[SQLExportToTableRequest]
   implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
