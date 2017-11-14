@@ -216,7 +216,7 @@ class LynxKite:
     boxes = copy.deepcopy(boxes)
     for box in boxes:
       if box['id'] == box_id:
-        import_result = self._send('/ajax/importBox', box, workspace_reference)
+        import_result = self._send('/ajax/importBox', {'box': box})
         box['parameters']['imported_table'] = import_result.guid
         box['parameters']['last_settings'] = import_result.parameterSettings
         return boxes
