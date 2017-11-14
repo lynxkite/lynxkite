@@ -19,8 +19,8 @@ angular.module('biggraph').directive('tableKind', function(util) {
         var box = angular.copy(scope.box.instance);
         box.parameters = scope.params;
         util.post('/ajax/importBox', {
-          "box": box,
-          "ref": scope.workspaceReference(),
+          box: box,
+          ref: scope.workspaceReference(),
         }).then(function success(response) {
           scope.guid = response.guid;
           scope.params['last_settings'] = response.parameterSettings;
