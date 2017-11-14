@@ -211,7 +211,7 @@ class LynxKite:
   def get_table(self, state, rows=-1):
     return self._ask('/ajax/getTableOutput', dict(id=state, sampleRows=rows))
 
-  def import_box(self, boxes, box_id, workspace_reference):
+  def import_box(self, boxes, box_id):
     '''Equivalent to clicking the import button for an import box. Returns the updated boxes.'''
     boxes = copy.deepcopy(boxes)
     for box in boxes:
