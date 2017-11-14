@@ -319,6 +319,7 @@ object FrontendJson {
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val rSQLTableBrowserNodeRequest = json.Json.reads[TableBrowserNodeRequest]
   implicit val rTableBrowserNodeForBoxRequest = json.Json.reads[TableBrowserNodeForBoxRequest]
+  implicit val rImportBoxRequest = json.Json.reads[ImportBoxRequest]
   implicit val rSQLQueryRequest = json.Json.reads[SQLQueryRequest]
   implicit val fSQLExportToTableRequest = json.Json.format[SQLExportToTableRequest]
   implicit val rSQLExportToCSVRequest = json.Json.reads[SQLExportToCSVRequest]
@@ -454,7 +455,14 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
 
-  def importBox = jsonFuturePost(sqlController.importBox)
+  def importBox = jsonFuturePost(importBoxExec)
+  def importBoxExec(user: serving.User, request: ImportBoxRequest): Future[ImportBoxResponse] = {
+    val workspaceParams = if (request.ref.nonEmpty) {
+      val wsRef = workspaceController.ResolvedWorkspaceReference(user, request.ref.get)
+      wsRef.ws.workspaceExecutionContextParameters(wsRef.params)
+    } else Map[String, String]()
+    sqlController.importBox(user, request.box, workspaceParams)
+  }
 
   def getTableOutput = jsonFuture(getTableOutputData)
   def getTableOutputData(user: serving.User, request: GetTableOutputRequest): Future[GetTableOutputResponse] = {

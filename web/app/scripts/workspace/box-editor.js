@@ -134,6 +134,10 @@ angular.module('biggraph')
           return scope.workspace.boxMap[scope.boxId];
         };
 
+        scope.workspaceReference = function() {
+          return scope.workspace.ref();
+        };
+
         // Returns true iff the boxMeta has at least one SQL code type parameter.
         scope.withTableBrowser = function() {
           if (!scope.boxMeta) {

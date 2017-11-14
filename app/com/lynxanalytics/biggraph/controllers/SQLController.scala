@@ -177,9 +177,9 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   def async[T](func: => T): Future[T] = Future(func)
 
   import com.lynxanalytics.biggraph.serving.FrontendJson._
-  def importBox(user: serving.User, box: Box) = async[ImportBoxResponse] {
+  def importBox(user: serving.User, box: Box, workspaceParameters: Map[String, String]) = async[ImportBoxResponse] {
     val op = ops.opForBox(
-      user, box, inputs = null, workspaceParameters = null).asInstanceOf[ImportOperation]
+      user, box, inputs = null, workspaceParameters = workspaceParameters).asInstanceOf[ImportOperation]
     val parameterSettings = op.settingsString()
     val df = op.getDataFrame(SQLController.defaultContext(user))
     val table = ImportDataFrame.run(df)
