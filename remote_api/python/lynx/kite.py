@@ -240,6 +240,13 @@ class LynxKite:
         'downloadFile',
         params=dict(q=json.dumps(dict(path=path, stripHeaders=False)))).content
 
+  def save_workspace(self, path, boxes, overwrite=True):
+    if not overwrite or not self.get_directory_entry(path).exists:
+      self._send('/ajax/createWorkspace', dict(name=path))
+    return self._send(
+        '/ajax/setWorkspace',
+        dict(reference=dict(top=path, customBoxStack=[]), workspace=dict(boxes=boxes)))
+
 
 class LynxException(Exception):
   '''Raised when LynxKite indicates that an error has occured while processing a command.'''
