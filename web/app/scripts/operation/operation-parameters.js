@@ -10,7 +10,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       meta: '=',
       parameters: '=',
       parametricParameters: '=',
-      workspaceParameters: '=',
+      workspaceReference: '&',
       onBlur: '&',
       busy: '=?',
     },

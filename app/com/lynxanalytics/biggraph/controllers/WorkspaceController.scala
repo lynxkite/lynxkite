@@ -40,6 +40,7 @@ case class GetExportResultRequest(stateId: String)
 case class GetExportResultResponse(parameters: Map[String, String], result: FEScalar)
 case class RunWorkspaceRequest(workspace: Workspace, parameters: Map[String, String])
 case class RunWorkspaceResponse(outputs: List[BoxOutputInfo], summaries: Map[String, String])
+case class ImportBoxRequest(box: Box, ref: WorkspaceReference)
 
 // An instrument is like a box. But we do not want to place it and save it in the workspace.
 // It always has 1 input and 1 output, so the connections do not need to be expressed either.

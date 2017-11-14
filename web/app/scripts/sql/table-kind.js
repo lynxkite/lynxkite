@@ -8,7 +8,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
       params: '=',
       guid: '=',
       fileUploads: '=',
-      workspaceParameters: '=',
+      workspaceReference: '&',
       onBlur: '&',
     },
     templateUrl: 'scripts/sql/table-kind.html',
@@ -20,7 +20,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
         box.parameters = scope.params;
         util.post('/ajax/importBox', {
           "box": box,
-          "workspaceParameters": scope.workspaceParameters,
+          "ref": scope.workspaceReference(),
         }).then(function success(response) {
           scope.guid = response.guid;
           scope.params['last_settings'] = response.parameterSettings;
