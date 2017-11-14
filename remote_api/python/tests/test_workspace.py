@@ -116,4 +116,4 @@ class TestWorkspace(unittest.TestCase):
 
   def test_save_workspace(self):
     lk = lynx.kite.LynxKite()
-    lk.set_workspace('set_workspace_test', json.loads(ANCHOR_AND_EXAMPLE))
+    lk.save_workspace('set_workspace_test', json.loads(ANCHOR_AND_EXAMPLE))
