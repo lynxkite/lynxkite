@@ -442,7 +442,8 @@ angular.module('biggraph')
 
     saveAsCustomBox: function(ids, name, description) {
       var i, j, box, input;
-      var workspaceParameters = JSON.parse(this.boxMap['anchor'].instance.parameters.parameters || '[]');
+      var workspaceParameters =
+        JSON.parse(this.boxMap['anchor'].instance.parameters.parameters || '[]');
       var boxes = [{
         id: 'anchor',
         operationId: 'Anchor',

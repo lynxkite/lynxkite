@@ -104,7 +104,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     parameters: Map[String, String] = Map(),
     parametricParameters: Map[String, String] = Map()): TestBox = {
     val b = box(operationId, parameters)
-    val guidFuture = sql.importBox(user, ImportBoxRequest(b.realBox, Map()))
+    val guidFuture = sql.importBox(user, b.realBox, Map())
     val response = concurrent.Await.result(guidFuture, concurrent.duration.Duration.Inf)
     val guid = response.guid
     val settings = response.parameterSettings
