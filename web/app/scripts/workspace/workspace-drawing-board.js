@@ -629,7 +629,10 @@ angular.module('biggraph')
           }
           uploadFile(file).then(function(filename) {
             box.parameters.filename = filename;
-            return util.post('/ajax/importBox', box);
+            return util.post('/ajax/importBox', {
+              box: box,
+              ref: scope.workspace.ref(),
+            });
           }).then(function(response) {
             box.parameters.imported_table = response.guid;
             box.parameters.last_settings = response.parameterSettings;
