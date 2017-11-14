@@ -455,7 +455,12 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
 
-  def importBox = jsonFuturePost(sqlController.importBox)
+  def importBox = jsonFuturePost(importBoxExec)
+  def importBoxExec(user: serving.User, request: ImportBoxRequest): Future[ImportBoxResponse] = {
+    val wsRef = workspaceController.ResolvedWorkspaceReference(user, request.ref)
+    val workspaceParams = wsRef.ws.workspaceExecutionContextParameters(wsRef.params)
+    sqlController.importBox(user, request.box, workspaceParams)
+  }
 
   def getTableOutput = jsonFuture(getTableOutputData)
   def getTableOutputData(user: serving.User, request: GetTableOutputRequest): Future[GetTableOutputResponse] = {

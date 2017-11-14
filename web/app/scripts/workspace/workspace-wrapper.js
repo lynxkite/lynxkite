@@ -440,13 +440,9 @@ angular.module('biggraph')
       that.loadWorkspace(util.post('/ajax/redoWorkspace', that.ref()));
     },
 
-    workspaceParameters: function() {
-      return JSON.parse(this.boxMap['anchor'].instance.parameters.parameters || '[]');
-    },
-
     saveAsCustomBox: function(ids, name, description) {
       var i, j, box, input;
-      var workspaceParameters = workspaceParameters();
+      var workspaceParameters = JSON.parse(this.boxMap['anchor'].instance.parameters.parameters || '[]');
       var boxes = [{
         id: 'anchor',
         operationId: 'Anchor',

@@ -11,7 +11,7 @@ angular.module('biggraph')
         boxMeta: '=',
         parameters: '=',
         parametricParameters: '=',
-        workspaceParameters: '=',
+        workspaceReference: '&',
         halfSize: '=?',
         onBlur: '&?',
       },
