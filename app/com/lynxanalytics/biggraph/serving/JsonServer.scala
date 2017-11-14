@@ -457,8 +457,10 @@ object ProductionJsonServer extends JsonServer {
 
   def importBox = jsonFuturePost(importBoxExec)
   def importBoxExec(user: serving.User, request: ImportBoxRequest): Future[ImportBoxResponse] = {
-    val wsRef = workspaceController.ResolvedWorkspaceReference(user, request.ref)
-    val workspaceParams = wsRef.ws.workspaceExecutionContextParameters(wsRef.params)
+    val workspaceParams = if (request.ref.nonEmpty) {
+      val wsRef = workspaceController.ResolvedWorkspaceReference(user, request.ref.get)
+      wsRef.ws.workspaceExecutionContextParameters(wsRef.params)
+    } else Map[String, String]()
     sqlController.importBox(user, request.box, workspaceParams)
   }
 
