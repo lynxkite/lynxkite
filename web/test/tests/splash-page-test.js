@@ -170,4 +170,19 @@ module.exports = function(fw) {
       lib.splash.expectDirectoryListed('green');
       lib.splash.popDirectory();
     });
+
+  fw.transitionTest(
+    'empty splash',
+    'selected directory path does not contain spaces',
+    function() {
+      lib.splash.newDirectory('first');
+      lib.splash.newDirectory('second');
+      lib.splash.newDirectory('last');
+      lib.splash.expectSelectedCurrentDirectory('first/second/last');
+      lib.splash.popDirectory();
+      lib.splash.popDirectory();
+      lib.splash.popDirectory();
+    },
+    function () {
+    });
 };
