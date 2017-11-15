@@ -9,6 +9,8 @@ module.exports = function(fw) {
     'empty splash',
     function() {
       lib.discardAll();
+      browser.executeScript('window.localStorage.setItem(\'last_selector_path\',\'\');');
+      browser.executeScript('window.sessionStorage.setItem(\'last_selector_path\',\'\');');
       if (fs.existsSync(lib.protractorDownloads)) {
         fs.readdirSync(lib.protractorDownloads).map(function(file) {
           fs.unlinkSync(lib.protractorDownloads + '/' + file);
