@@ -119,7 +119,7 @@ def main():
   render('superpowers')
   render('snowflake-o')
   render('cogs')
-  render('commenting')
+  render('user-circle-o')
 
 
 if __name__ == '__main__':

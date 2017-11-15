@@ -2,4 +2,12 @@
 
 Adds a comment to the workspace. As with any box, you can freely place your comment anywhere on the
 workspace. Adding comments does not have any effect on the computation but can potentially make your
-workflow easier to understand for others - or even for your future self.
+workflow easier to understand for others -- or even for your future self.
+
+https://en.wikipedia.org/wiki/Markdown#Example[Markdown] can be used to present formatted text or
+embed links and images.
+
+====
+[[comment]] Comment::
+Markdown text to be displayed in the workspace.
+====

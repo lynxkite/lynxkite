@@ -10,6 +10,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Workspace copy-paste uses more readable the YAML instead of JSON. (You can still paste old JSON
    workspaces if you have any lying around.)
  - Hold SHIFT while dragging boxes to align them on a grid.
+ - Nicer comment box presentation.
  - Bug fixes. Thanks for all bug reports!
 
 ### 2.1.0
