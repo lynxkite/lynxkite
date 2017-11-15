@@ -1,17 +1,28 @@
 .top-alerts {
   position: fixed;
   z-index: 10;
-  top: 50px;
-  left: 0;
+  bottom: 0;
+  left: 25%;
+  width: 50%;
+  text-align: center;
+}
+
+.top-alert-wrapper {
+  margin: 20px 0;
 }
 
 .top-alert {
-  margin: 20px;
+  text-align: left;
+  display: inline-block;
   padding: 10px;
   background: #efb1ad; /* Brand color. */
   color: #9b2016; /* Brand color. */
   box-shadow: 0 5px 50px 0 rgba(0, 0, 0, 0.3);
   border-radius: 5px;
+}
+
+.top-alert-body {
+  display: flex;
 }
 
 .top-alert .fa-exclamation-triangle {
