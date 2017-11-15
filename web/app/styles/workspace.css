@@ -261,3 +261,7 @@ plot-state-view > div {
 op-editor > :first-child {
   padding-top: 10px;
 }
+
+.workspace-comment > :first-child {
+  margin-top: 0;
+}
