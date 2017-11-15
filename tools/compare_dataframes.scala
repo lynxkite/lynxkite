@@ -25,16 +25,17 @@ def compareDataFrames(df1: DataFrame, df2: DataFrame): Unit = {
   assert(df1Schema.toString.toLowerCase == df2Schema.toString.toLowerCase, "schema mismatch")
   assert(df1.count == df2.count, "count mismatch")
   assert(df1.count != 0, "both emtpy")
-  df1Schema.foreach { col =>
+  val mismatchingColumns = df1Schema.filter { col =>
     val colName = col.name
     if (col.dataType == DoubleType) {
       val df1Sum = doubleColSum(df1, colName)
       val df2Sum = doubleColSum(df2, colName)
-      assert(isClose(df1Sum, df2Sum), s"$colName sum mismatch")
+      isClose(df1Sum, df2Sum)
     } else {
-      assert(columnHash(df1, colName) == columnHash(df2, colName), s"$colName hash mismatch")
+      columnHash(df1, colName) == columnHash(df2, colName)
     }
-  }
+  }.map(_.name)
+  assert(mismatchingColumns.isEmpty, s"column mismatch: ${mismatchingColumns.mkString(sep=", ")}")
 }
 
 // spark is the spark context in the spark-shell, it should be available here
