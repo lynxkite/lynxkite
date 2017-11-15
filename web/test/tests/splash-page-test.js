@@ -175,10 +175,13 @@ module.exports = function(fw) {
     'empty splash',
     'selected directory path does not contain spaces',
     function() {
-      lib.splash.newDirectory('red');
-      lib.splash.newDirectory('green');
-      lib.splash.newDirectory('blue');
-      lib.splash.expectSelectedCurrentDirectory('red/green/blue');
+      lib.splash.newDirectory('first');
+      lib.splash.newDirectory('second');
+      lib.splash.newDirectory('last');
+      lib.splash.expectSelectedCurrentDirectory('first/second/last');
+      lib.splash.popDirectory();
+      lib.splash.popDirectory();
+      lib.splash.popDirectory();
     },
     function () {
     });
