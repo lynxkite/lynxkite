@@ -42,7 +42,7 @@ angular.module('biggraph')
           // Desired plot size
           computeSpec.spec.width = scope.getPlotWidth();
           computeSpec.spec.height = scope.getPlotHeight();
-          var plotElement = element.find("#hidden-plot-div")[0];
+          var plotElement = element.find('#hidden-plot-div')[0];
           /* global vg */
           vg.embed(plotElement, computeSpec, function() {
             var svg = element.find('#hidden-plot-div .vega svg')[0];
@@ -64,7 +64,7 @@ angular.module('biggraph')
           if (scope.diffX !== undefined && scope.diffY !== undefined) {
             scope.embedSpec.spec.width = scope.getPlotWidth() + scope.diffX;
             scope.embedSpec.spec.height = scope.getPlotHeight() + scope.diffY;
-            var plotElement = element.find("#plot-div")[0];
+            var plotElement = element.find('#plot-div')[0];
             /* global vg */
             vg.embed(plotElement, scope.embedSpec, function() {});
           }

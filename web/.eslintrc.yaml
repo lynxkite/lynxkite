@@ -17,6 +17,7 @@ rules:
   no-multi-spaces: [error]
   no-sequences: [error]
   no-trailing-spaces: [error]
+  quotes: [error, single]
   semi: [error, always]
   space-before-blocks: [error]
   space-in-parens: [error]
