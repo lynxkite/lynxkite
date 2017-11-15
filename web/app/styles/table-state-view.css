@@ -7,7 +7,7 @@ table-state-view > div {
 }
 
 input.form-control#sample-rows {
-  width: 65px;
+  text-align: right;
   display: inline-block;
   vertical-align: middle;
 }
