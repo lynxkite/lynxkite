@@ -25,7 +25,7 @@ def compareDataFrames(df1: DataFrame, df2: DataFrame): Unit = {
   assert(df1Schema.toString.toLowerCase == df2Schema.toString.toLowerCase, "schema mismatch")
   assert(df1.count == df2.count, "count mismatch")
   assert(df1.count != 0, "both emtpy")
-  val mismatchingColumns = df1Schema.filter { col =>
+  val mismatchingColumns = df1Schema.filterNot { col =>
     val colName = col.name
     if (col.dataType == DoubleType) {
       val df1Sum = doubleColSum(df1, colName)
