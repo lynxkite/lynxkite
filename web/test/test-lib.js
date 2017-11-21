@@ -155,6 +155,10 @@ Workspace.prototype = {
     // TODO: check that workspace is error-free
   },
 
+  expectCurrentWorkspaceDirectoryIs: function(name) {
+    expect(this.main.element(by.id('workspace-directory')).getText()).toBe(name);
+  },
+
   close: function() {
     this.main.element(by.id('close-workspace')).click();
   },
@@ -360,6 +364,20 @@ Workspace.prototype = {
       .element(by.css('operation-tree'))
       .element(by.css('operation-tree-node[id="root"]'));
   },
+
+  saveWorkspaceAs: function(newName) {
+    this.main.$('#save-workspace-as-starter-button').click();
+    this.main.$('#save-workspace-as-input input').sendKeys(testLib.selectAllKey + newName);
+    this.main.$('#save-workspace-as-input #ok').click();
+  },
+
+  resetSaveWorkspaceAsButton: function() {
+    // This is needed until https://github.com/biggraph/biggraph/issues/6840
+    // resolved.
+    this.main.$('#save-workspace-as-starter-button').click();
+    this.main.$('#save-workspace-as-input #close').click();
+  },
+
 };
 
 function PopupBase() {
