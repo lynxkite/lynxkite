@@ -51,9 +51,9 @@ libraryDependencies ++= Seq(
   "org.apache.hadoop" % "hadoop-aws" % "2.7.3" excludeAll(
     // But we still want to take Hadoop from Spark.
     ExclusionRule(organization = "org.apache.hadoop", name = "hadoop-common")),
+  "net.java.dev.jets3t" % "jets3t" % "0.9.4",
   // Provides HyperLogLogPlus counters. Must be the same version that is
   // used by Spark.
-  "net.java.dev.jets3t" % "jets3t" % "0.9.4",
   "com.clearspring.analytics" % "stream" % "2.7.0",
   // JDBC drivers.
   "mysql" % "mysql-connector-java" % "5.1.34",
