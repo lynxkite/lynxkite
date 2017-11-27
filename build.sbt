@@ -43,12 +43,12 @@ libraryDependencies ++= Seq(
   // (There we use a Hadoop-less Spark build and use Hadoop libs provided by Amazon.
   // This way we get s3 consistent view support.)
   "org.apache.httpcomponents" % "httpclient" % "4.5.1",
-  "org.apache.commons" % "commons-lang3" % "3.5",
+  "org.apache.commons" % "commons-lang3" % "3.7",
   "org.apache.commons" % "commons-math3" % "3.4.1",  // Match Spark 2.2.0.
   "org.mindrot" % "jbcrypt" % "0.3m",  // For password hashing.
   "org.scalatest" %% "scalatest" % "2.2.6" % "test",
   // For accessing S3 fs from local instance.
-  "org.apache.hadoop" % "hadoop-aws" % "2.7.3" excludeAll(
+  "org.apache.hadoop" % "hadoop-aws" % "2.9.0" excludeAll(
     // But we still want to take Hadoop from Spark.
     ExclusionRule(organization = "org.apache.hadoop", name = "hadoop-common")),
   // Provides HyperLogLogPlus counters. Must be the same version that is
