@@ -98,7 +98,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val hadoopFile = graph_util.HadoopFile(params("filename"))
       hadoopFile.assertReadAllowedFrom(user)
       FileImportValidator.checkFileHasContents(hadoopFile)
-      readerWithSchema.load(hadoopFile.resolvedNameWithNoCredentials)
+      readerWithSchema.load(hadoopFile.resolvedName)
     }
   })
 
@@ -153,7 +153,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val hadoopFile = graph_util.HadoopFile(params("filename"))
       hadoopFile.assertReadAllowedFrom(user)
       FileImportValidator.checkFileHasContents(hadoopFile)
-      context.read.format(format).load(hadoopFile.resolvedNameWithNoCredentials)
+      context.read.format(format).load(hadoopFile.resolvedName)
     }
   }
 
