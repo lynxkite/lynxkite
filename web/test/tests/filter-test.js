@@ -39,6 +39,6 @@ module.exports = function(fw) {
       var state = lib.workspace.openStateView('filter0', 'project');
       expect(state.left.vertexCount()).toEqual(2);
       expect(state.left.edgeCount()).toEqual(1);
-    }, 'solo');
+    });
 
 };
