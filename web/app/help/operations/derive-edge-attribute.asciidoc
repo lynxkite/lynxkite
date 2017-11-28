@@ -39,4 +39,9 @@ The new attribute will be created under this name.
 
 [[expr]] Value::
 The Scala expression. You can enter multiple lines in the editor.
+
+[[persist]] Persist result::
+If enabled, the output attribute will be saved to disk once it is calculated. If disabled, the
+attribute will be re-computed each time its output is used. Persistance can improve performance
+at the cost of disk space.
 ====
