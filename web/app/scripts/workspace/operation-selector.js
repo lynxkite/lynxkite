@@ -106,7 +106,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
             distance: 100,
             maxPatternLength: 32,
             minMatchCharLength: 1,
-            keys: [ "operationId" ]
+            keys: [ 'operationId' ]
           };
           var fuse = new Fuse(boxes, options);
           return fuse.search(opFilter);

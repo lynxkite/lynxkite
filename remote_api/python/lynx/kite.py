@@ -216,7 +216,7 @@ class LynxKite:
     boxes = copy.deepcopy(boxes)
     for box in boxes:
       if box['id'] == box_id:
-        import_result = self._send('/ajax/importBox', box)
+        import_result = self._send('/ajax/importBox', {'box': box})
         box['parameters']['imported_table'] = import_result.guid
         box['parameters']['last_settings'] = import_result.parameterSettings
         return boxes
@@ -239,6 +239,13 @@ class LynxKite:
     return self._get(
         'downloadFile',
         params=dict(q=json.dumps(dict(path=path, stripHeaders=False)))).content
+
+  def save_workspace(self, path, boxes, overwrite=True):
+    if not overwrite or not self.get_directory_entry(path).exists:
+      self._send('/ajax/createWorkspace', dict(name=path))
+    return self._send(
+        '/ajax/setWorkspace',
+        dict(reference=dict(top=path, customBoxStack=[]), workspace=dict(boxes=boxes)))
 
 
 class LynxException(Exception):

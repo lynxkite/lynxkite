@@ -176,25 +176,33 @@
           class="box"
           id="{{ ::box.instance.id | id }}"
           ng-class="{ 'selected': selectedBoxIds.includes(box.instance.id) }">
-        <ellipse class="pedestal" cx="50" cy="80" rx="75" ry="30"></ellipse>
-        <circle id="click-target" cx="50" cy="60" r="50"></circle>
+        <ellipse class="pedestal" cx="50" cy="80" rx="75" ry="30" ng-if="!box.comment"></ellipse>
+        <ellipse class="pedestal" cx="50" cy="60" rx="20" ry="8" ng-if="box.comment"></ellipse>
+        <circle id="click-target" cx="50" cy="60" r="50" ng-if="!box.comment"></circle>
+        <circle id="click-target" cx="50" cy="50" r="15" ng-if="box.comment"></circle>
 
         <!-- Icon. The filter applies color according to the metadata. -->
         <image
           class="box-main"
           filter="{{ ::filters[box.metadata.color] ? 'url(#' + box.metadata.color + ')' : '' }}"
+          ng-if="!box.comment"
           ng-attr-href="{{ ::box.metadata.icon }}" x="-25" y="-25" width="150" height="150"></image>
+        <image
+          class="box-main"
+          filter="{{ ::filters[box.metadata.color] ? 'url(#' + box.metadata.color + ')' : '' }}"
+          ng-if="box.comment"
+          ng-attr-href="{{ ::box.metadata.icon }}" x="25" y="25" width="50" height="50"></image>
 
-        <text x="50" y="105" class="summary backdrop">
+        <text x="50" y="105" class="summary backdrop" ng-if="!box.comment">
           {{box.summary}}
         </text>
-        <text x="50" y="105" class="summary text">
+        <text x="50" y="105" class="summary text" ng-if="!box.comment">
           {{box.summary}}
         </text>
 
-        <foreignObject x="-20" y="115" width="200" height="1000" ng-if="box.comment">
+        <foreignObject x="80" y="35" width="400" height="1000" ng-if="box.comment">
           <body xmlns="http://www.w3.org/1999/xhtml">
-            <span trusted-html="box.comment"></span>
+            <span class="workspace-comment" trusted-html="box.comment"></span>
           </body>
         </foreignObject>
         <g ng-repeat="direction in ['inputs', 'outputs']" id="{{ direction | id }}">

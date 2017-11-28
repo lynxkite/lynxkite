@@ -79,7 +79,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     }
   };
 
-  PopupModel.prototype.bringToFront = function() {
+  PopupModel.prototype.bringToFront = function(event) {
     var leftButton = event.buttons & 1;
     // Protractor omits button data from simulated mouse events.
     if (leftButton || environment.protractor) {

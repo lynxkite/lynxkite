@@ -443,15 +443,14 @@ angular.module('biggraph')
           }
         };
 
-        scope.drawingBoardHasFocus = function() {
-          // The svg tag cannot be focused apparently, but we don't want to hijack copy and paste
-          // events from things like input fields.
-          return document.activeElement.tagName === "BODY";
-        };
+        function inputBoxFocused() {
+          // We don't want to hijack copy and paste events from input fields.
+          return ['INPUT', 'TEXTAREA'].indexOf(document.activeElement.tagName) !== -1;
+        }
 
         /* global jsyaml */
         scope.copyBoxes = function(e) {
-          if (!scope.drawingBoardHasFocus() || window.getSelection().toString()) {
+          if (inputBoxFocused() || window.getSelection().toString()) {
             return;
           }
           var data = jsyaml.safeDump(
@@ -462,7 +461,7 @@ angular.module('biggraph')
         };
 
         scope.pasteBoxes = function(e) {
-          if (!scope.drawingBoardHasFocus()) {
+          if (inputBoxFocused()) {
             return;
           }
           var data = e.clipboardData.getData('Text');
@@ -630,7 +629,10 @@ angular.module('biggraph')
           }
           uploadFile(file).then(function(filename) {
             box.parameters.filename = filename;
-            return util.post('/ajax/importBox', box);
+            return util.post('/ajax/importBox', {
+              box: box,
+              ref: scope.workspace.ref(),
+            });
           }).then(function(response) {
             box.parameters.imported_table = response.guid;
             box.parameters.last_settings = response.parameterSettings;

@@ -206,7 +206,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
     params ++= List(
       Choice("attr", "Vertex attribute", options = project.vertexAttrList, multipleChoice = true),
       Param("salt", "Salt",
-        defaultValue = graph_operations.HashVertexAttribute.makeSecret(nextString(15))))
+        defaultValue = graph_operations.HashVertexAttribute.makeSecret("")))
     def enabled = FEStatus.assert(project.vertexAttrList.nonEmpty, "No vertex attributes.")
 
     def apply() = {
@@ -221,18 +221,6 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
         project.newVertexAttribute(
           attribute, op(op.vs, project.vertexSet)(op.attr, attr).result.hashed, "hashed")
       }
-    }
-
-    // To have a more secure default salt value than just using Random.nextInt.toString
-    def nextString(length: Int): String = {
-      val validCharacters: Array[Char] = (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9')).toArray
-      val srand: java.security.SecureRandom = new java.security.SecureRandom()
-      val rand: java.util.Random = new java.util.Random()
-
-      rand.setSeed(srand.nextLong())
-
-      val chars: Array[Char] = new Array[Char](length)
-      chars.map(_ => validCharacters(rand.nextInt(validCharacters.length))).mkString("")
     }
   })
 

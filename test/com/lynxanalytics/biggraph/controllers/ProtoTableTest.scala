@@ -24,7 +24,7 @@ class ProtoTableTest extends BigGraphControllerTestBase {
     ("select o.a, t.c from one o cross join two t",
       Map("one" -> Set("a"), "two" -> Set("c"))),
     ("select o.a, t.c from one o cross join one t",
-      Map("one" -> Set("a"), "one" -> Set("c"))),
+      Map("one" -> Set("a", "c"))),
     ("select a from (select * from one)", Map("one" -> Set("a"))),
     ("select a from (select * from one) where b=11", Map("one" -> Set("a", "b"))),
     ("select o.a, two.c from one o inner join two on o.b=two.b where o.a=1",

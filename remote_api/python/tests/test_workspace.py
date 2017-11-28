@@ -113,3 +113,7 @@ class TestWorkspace(unittest.TestCase):
     export = lk.export_box(outputs, 'Export-to-CSV_1')
     data = lk.download_file(export.parameters.path)
     self.assertEqual(data, b'a,sum\n1,5.0\n4,11.0\n')
+
+  def test_save_workspace(self):
+    lk = lynx.kite.LynxKite()
+    lk.save_workspace('set_workspace_test', json.loads(ANCHOR_AND_EXAMPLE))

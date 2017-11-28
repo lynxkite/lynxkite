@@ -1,16 +1,19 @@
-<div class="top-alerts col-lg-6">
-  <div class="top-alert" ng-repeat="alert in alerts">
-    <i class="fa fa-exclamation-triangle"></i>
-    <div
-      id="close-alert-button"
-      class="pull-right clicky glyphicon glyphicon-remove"
-      ng-click="close($index)"></div>
-    <div class="top-alert-message"> {{alert.message}}
+<div class="top-alerts">
+  <div class="top-alert-wrapper" ng-repeat="alert in alerts">
+    <div class="top-alert">
+      <div class="top-alert-body">
+        <i class="fa fa-exclamation-triangle"></i>
+        <div class="top-alert-message"> {{alert.message}} </div>
+        <div
+          id="close-alert-button"
+          class="clicky glyphicon glyphicon-remove"
+          ng-click="close($index)"></div>
+      </div>
+      <div class="top-alert-footer">
+        <a href ng-click="reportError(alert)">
+          <i class="fa fa-envelope-o"></i> report
+        </a>
+      </div>
     </div>
-    <div class="top-alert-footer">
-      <a href ng-click="reportError(alert)">
-        <i class="fa fa-envelope-o"></i> report
-      </a>
-    </div>
-  <div>
+  </div>
 </div>
