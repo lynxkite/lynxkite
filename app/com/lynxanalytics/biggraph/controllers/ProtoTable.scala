@@ -65,17 +65,18 @@ object ProtoTable {
     // The table names we get back from the case-insensitive parser will be lowercase.
     val lowerProtoTables = protoTables.map { case (k, v) => k.toLowerCase -> v }
     val tables = getRequiredFields(optimizedPlan)
-    val selectedTables = tables.map {
-      case (name, expressions) =>
+
+    val selectedTables = tables.groupBy(_._1).map {
+      case (name, expressionsList) =>
         val table = lowerProtoTables(name)
-        val columns = expressions.flatMap(parseExpression)
+        val columns = expressionsList.flatMap(_._2).flatMap(parseExpression).distinct
         val selectedTable = if (columns.contains("*")) {
           table
         } else {
           table.maybeSelect(columns)
         }
         name -> selectedTable
-    }.toMap
+    }
     selectedTables
   }
 
@@ -87,8 +88,10 @@ object ProtoTable {
 
   private def getRequiredFields(plan: LogicalPlan): Seq[(String, Seq[NamedExpression])] =
     plan match {
-      case SubqueryAlias(name, Project(projectList, LocalRelation(_, _))) =>
-        List((name, projectList))
+      case SubqueryAlias(name, Project(projectList, LocalRelation(output, _))) =>
+        // The projection list can be empty e.g. in select 1 from one. In this case we still
+        // have to calculate the number of rows of the table, so we're calculating the first col.
+        if (projectList.nonEmpty) List((name, projectList)) else List((name, Seq(output.head)))
       case SubqueryAlias(name, LocalRelation(_, _)) =>
         List((name, Seq(UnresolvedStar(target = None))))
       case l: LeafNode =>

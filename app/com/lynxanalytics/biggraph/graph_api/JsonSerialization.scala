@@ -94,24 +94,28 @@ case class NewParameter[T: Writes: Reads](paramName: String, defaultValue: T) {
 }
 
 object SerializableType {
-  val vectorPattern = "Vector\\[(.*)\\]".r
-  def fromJson(j: json.JsValue): SerializableType[_] = {
-    typeFromString((j \ "typename").as[String])
-  }
-
-  def typeFromString(s: String): SerializableType[_] = {
-    s match {
-      case "String" => string
-      case "Double" => double
-      case "Long" => long
-      case "Int" => int
-      case vectorPattern(innerTypeString) => vectorTypeFromString(innerTypeString)
+  object TypeParser {
+    import fastparse.all._
+    type PS = P[SerializableType[_]]
+    val string = P("String").map(_ => SerializableType.string)
+    val double = P("Double").map(_ => SerializableType.double)
+    val long = P("Long").map(_ => SerializableType.long)
+    val int = P("Int").map(_ => SerializableType.int)
+    val primitive = P(string | double | long | int)
+    val vector: PS = P("Vector[" ~ stype ~ "]").map {
+      inner => SerializableType.vector(inner)
+    }
+    val tuple2: PS = P("Tuple2[" ~ stype ~ "," ~ stype ~ "]").map {
+      case (inner1, inner2) => SerializableType.tuple2(inner1, inner2)
+    }
+    val stype: PS = P(primitive | vector | tuple2)
+    def parse(s: String) = {
+      val fastparse.core.Parsed.Success(result, _) = stype.parse(s)
+      result
     }
   }
-
-  def vectorTypeFromString(s: String): SerializableType[_] = {
-    val innerType = typeFromString(s)
-    vector(innerType)
+  def fromJson(j: json.JsValue): SerializableType[_] = {
+    TypeParser.parse((j \ "typename").as[String])
   }
 
   val string = new SerializableType[String]("String")
@@ -124,8 +128,18 @@ object SerializableType {
     def compare(x: Vector[T], y: Vector[T]): Int = ???
   }
 
+  // Every serializable type defines an ordering here, but we never use it for tuple2s.
+  class MockTuple2Ordering[T1: TypeTag, T2: TypeTag] extends Ordering[(T1, T2)] with Serializable {
+    def compare(x: (T1, T2), y: (T1, T2)): Int = ???
+  }
+
   def vector(innerType: SerializableType[_]): SerializableType[_] = {
     new VectorSerializableType(s"Vector[${innerType.getTypename}]")(innerType.typeTag)
+  }
+
+  def tuple2(innerType1: SerializableType[_], innerType2: SerializableType[_]): SerializableType[_] = {
+    new Tuple2SerializableType(s"Tuple2[${innerType1.getTypename},${innerType2.getTypename}]")(
+      innerType1.typeTag, innerType2.typeTag)
   }
 
   def apply[T: TypeTag]: SerializableType[T] = {
@@ -137,6 +151,9 @@ object SerializableType {
     else if (t =:= typeOf[Double]) double
     else if (t =:= typeOf[Long]) long
     else if (t =:= typeOf[Int]) int
+    else if (TypeTagUtil.isOfKind2[Tuple2](t)) tuple2(
+      apply(t.asInstanceOf[TypeRefApi].args(0)),
+      apply(t.asInstanceOf[TypeRefApi].args(1)))
     else if (TypeTagUtil.isOfKind1[Vector](t)) vector(apply(t.asInstanceOf[TypeRefApi].args(0)))
     else throw new AssertionError(s"Unsupported type: $t")
   }
@@ -163,4 +180,11 @@ class VectorSerializableType[T: TypeTag] private[graph_api] (
   format = TypeTagToFormat.vectorToFormat(typeTag),
   ordering = new SerializableType.MockVectorOrdering()(typeTag),
   typeTag = TypeTagUtil.vectorTypeTag(typeTag)) {
+}
+class Tuple2SerializableType[T1: TypeTag, T2: TypeTag] private[graph_api] (
+    typename: String) extends SerializableType[(T1, T2)](typename)(
+  classTag = RuntimeSafeCastable.classTagFromTypeTag(typeTag),
+  format = TypeTagToFormat.pairToFormat(typeTag[T1], typeTag[T2]),
+  ordering = new SerializableType.MockTuple2Ordering()(typeTag[T1], typeTag[T2]),
+  typeTag = TypeTagUtil.tuple2TypeTag(typeTag[T1], typeTag[T2])) {
 }

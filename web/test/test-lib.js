@@ -968,6 +968,10 @@ Selector.prototype = {
     return expect($$('.directory-entry').count()).toEqual(n);
   },
 
+  expectSelectedCurrentDirectory: function(path) {
+    return expect($('#current-directory > span.lead').getText()).toEqual(path);
+  },
+
   expectNumTables: function(n) {
     return expect($$('.table-entry').count()).toEqual(n);
   },

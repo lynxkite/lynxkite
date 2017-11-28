@@ -47,14 +47,18 @@ case class Workspace(
       description = Some(description))
   }
 
-  def context(
-    user: serving.User, ops: OperationRepository, workspaceParameters: Map[String, String]) = {
+  def workspaceExecutionContextParameters(workspaceParameters: Map[String, String]) = {
     val pm = parametersMeta
     val defaultParameters = pm.map(p => p.id -> p.defaultValue).toMap
     val unrecognized = workspaceParameters.keySet -- pm.map(_.id).toSet
     assert(unrecognized.isEmpty, s"Unrecognized parameter: ${unrecognized.mkString(", ")}")
+    defaultParameters ++ workspaceParameters
+  }
+
+  def context(
+    user: serving.User, ops: OperationRepository, workspaceParameters: Map[String, String]) = {
     WorkspaceExecutionContext(
-      this, user, ops, defaultParameters ++ workspaceParameters)
+      this, user, ops, workspaceExecutionContextParameters(workspaceParameters))
   }
 
   def checkpoint(previous: String = null)(implicit manager: graph_api.MetaGraphManager): String = {

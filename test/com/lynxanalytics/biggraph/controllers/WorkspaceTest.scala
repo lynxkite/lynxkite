@@ -299,6 +299,39 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     }.getMessage.contains("Unrecognized parameter: p3"))
   }
 
+  test("parametric parameters - import CSV") {
+    val anchor = anchorWithParams(("PREFIX", "text", "IMPORTGRAPHTEST$"))
+    val csv = {
+      val csv = Box("csv", "Import CSV", Map(), 0, 0, Map(),
+        Map("filename" -> ("$PREFIX/testgraph/vertex-header")))
+      val ws = Workspace(List(anchor, csv))
+      val resourceDir = getClass.getResource("/graph_operations/ImportGraphTest").toString
+      println(resourceDir)
+      graph_util.PrefixRepository.registerPrefix("IMPORTGRAPHTEST$", resourceDir)
+      create("test-parametric-parameters-import-CSV")
+      set("test-parametric-parameters-import-CSV", ws)
+      val wsRef = controller.ResolvedWorkspaceReference(
+        user, WorkspaceReference("test-parametric-parameters-import-CSV"))
+      val workspaceParams = wsRef.ws.workspaceExecutionContextParameters(wsRef.params)
+      val ops = new com.lynxanalytics.biggraph.frontend_operations.Operations(this)
+      val sql = new SQLController(this, ops)
+      val guidFuture = sql.importBox(user, csv, workspaceParams)
+      val response = concurrent.Await.result(guidFuture, concurrent.duration.Duration.Inf)
+      val guid = response.guid
+      val settings = response.parameterSettings
+      csv.copy(parameters = csv.parameters + ("imported_table" -> guid) + ("last_settings" -> settings))
+    }
+    val vs = Box(
+      "vs", "Use table as vertices",
+      Map(), 0, 20, Map("table" -> csv.output("table")),
+      Map())
+    val ws = Workspace(List(anchor, csv, vs))
+    val attrs = context(ws).allStates(vs.output("project")).project.vertexAttributes
+    assert(attrs.contains("vertexId"))
+    assert(attrs.contains("name"))
+    assert(attrs.contains("age"))
+  }
+
   test("custom box") {
     using("test-custom-box") {
       val anchor = anchorWithParams(("param1", "text", "def1"))

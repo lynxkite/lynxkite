@@ -51,6 +51,7 @@ libraryDependencies ++= Seq(
   "org.apache.hadoop" % "hadoop-aws" % "2.7.3" excludeAll(
     // But we still want to take Hadoop from Spark.
     ExclusionRule(organization = "org.apache.hadoop", name = "hadoop-common")),
+  "net.java.dev.jets3t" % "jets3t" % "0.9.4",
   // Provides HyperLogLogPlus counters. Must be the same version that is
   // used by Spark.
   "com.clearspring.analytics" % "stream" % "2.7.0",
@@ -61,6 +62,8 @@ libraryDependencies ++= Seq(
   // Groovy is used for workflows and the batch API.
   "org.kohsuke" % "groovy-sandbox" % "1.10",
   "com.lihaoyi" % "ammonite-sshd" % "0.5.7" cross CrossVersion.full,
+  // A dependency of Ammonite and included directly for our parsing needs.
+  "com.lihaoyi" %% "fastparse" % "0.3.7",
   // Hive import seems to need this.
   "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.17",
   // For SPARK-10306.

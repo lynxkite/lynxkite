@@ -9,6 +9,8 @@ module.exports = function(fw) {
     'empty splash',
     function() {
       lib.discardAll();
+      browser.executeScript('window.localStorage.setItem(\'last_selector_path\',\'\');');
+      browser.executeScript('window.sessionStorage.setItem(\'last_selector_path\',\'\');');
       if (fs.existsSync(lib.protractorDownloads)) {
         fs.readdirSync(lib.protractorDownloads).map(function(file) {
           fs.unlinkSync(lib.protractorDownloads + '/' + file);
@@ -169,5 +171,20 @@ module.exports = function(fw) {
       lib.splash.setDirectory(1);
       lib.splash.expectDirectoryListed('green');
       lib.splash.popDirectory();
+    });
+
+  fw.transitionTest(
+    'empty splash',
+    'selected directory path does not contain spaces',
+    function() {
+      lib.splash.newDirectory('first');
+      lib.splash.newDirectory('second');
+      lib.splash.newDirectory('last');
+      lib.splash.expectSelectedCurrentDirectory('first/second/last');
+      lib.splash.popDirectory();
+      lib.splash.popDirectory();
+      lib.splash.popDirectory();
+    },
+    function () {
     });
 };
