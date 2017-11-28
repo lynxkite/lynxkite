@@ -43,12 +43,28 @@ class HadoopFileTest extends FunSuite {
     }
   }
 
-  test("Password setting works") {
+  test("Password setting works - s3n") {
     val dummy = TestUtils.getDummyPrefixName("s3n://access:secret@lynx-bnw-test2")
     val dataFile = HadoopFile(dummy + "/somedir/somefile")
     val conf = dataFile.hadoopConfiguration()
     assert(conf.get("fs.s3n.awsAccessKeyId") == "access")
     assert(conf.get("fs.s3n.awsSecretAccessKey") == "secret")
+  }
+
+  test("Password setting works - s3") {
+    val dummy = TestUtils.getDummyPrefixName("s3://access:secret@lynx-bnw-test2")
+    val dataFile = HadoopFile(dummy + "/somedir/somefile")
+    val conf = dataFile.hadoopConfiguration()
+    assert(conf.get("fs.s3.awsAccessKeyId") == "access")
+    assert(conf.get("fs.s3.awsSecretAccessKey") == "secret")
+  }
+
+  test("Password setting works - s3a") {
+    val dummy = TestUtils.getDummyPrefixName("s3a://access:secret@lynx-bnw-test2")
+    val dataFile = HadoopFile(dummy + "/somedir/somefile")
+    val conf = dataFile.hadoopConfiguration()
+    assert(conf.get("fs.s3a.access.key") == "access")
+    assert(conf.get("fs.s3a.secret.key") == "secret")
   }
 
   test("Path concatenation works") {

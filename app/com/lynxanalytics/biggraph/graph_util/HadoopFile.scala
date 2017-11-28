@@ -41,8 +41,8 @@ object HadoopFile {
   }
 
   lazy val defaultFs = hadoop.fs.FileSystem.get(SparkHadoopUtil.get.conf)
-  private val s3nWithCredentialsPattern = "(s3n?)://(.+):(.+)@(.+)".r
-  private val s3nNoCredentialsPattern = "(s3n?)://(.+)".r
+  private val s3nWithCredentialsPattern = "(s3[na]?)://(.+):(.+)@(.+)".r
+  private val s3nNoCredentialsPattern = "(s3[na]?)://(.+)".r
 
   // We want to avoid creating a FileSystem object for each HadoopFile. But we also don't want to
   // create the FileSystem object unnecessarily. Both desires are fulfilled by LazySharedFileSystem.
@@ -66,11 +66,13 @@ class HadoopFile private (
   val symbolicName = prefixSymbol + normalizedRelativePath
   val resolvedName = PrefixRepository.getPrefixInfo(prefixSymbol) + normalizedRelativePath
 
-  val (resolvedNameWithNoCredentials, awsId, awsSecret) = resolvedName match {
+  val (scheme, resolvedNameWithNoCredentials, awsId, awsSecret) = resolvedName match {
     case HadoopFile.s3nWithCredentialsPattern(scheme, key, secret, relPath) =>
-      (scheme + "://" + relPath, key, secret)
+      (scheme, scheme + "://" + relPath, key, secret)
+    case HadoopFile.s3nNoCredentialsPattern(scheme, relPath) =>
+      (scheme, scheme + "://" + relPath, "", "")
     case _ =>
-      (resolvedName, "", "")
+      ("", resolvedName, "", "")
   }
 
   private def hasCredentials = awsId.nonEmpty
@@ -80,8 +82,17 @@ class HadoopFile private (
   def hadoopConfiguration(): hadoop.conf.Configuration = {
     val conf = SparkHadoopUtil.get.conf
     if (hasCredentials) {
-      conf.set("fs.s3n.awsAccessKeyId", awsId)
-      conf.set("fs.s3n.awsSecretAccessKey", awsSecret)
+      scheme match {
+        case "s3n" =>
+          conf.set("fs.s3n.awsAccessKeyId", awsId)
+          conf.set("fs.s3n.awsSecretAccessKey", awsSecret)
+        case "s3" =>
+          conf.set("fs.s3.awsAccessKeyId", awsId)
+          conf.set("fs.s3.awsSecretAccessKey", awsSecret)
+        case "s3a" =>
+          conf.set("fs.s3a.access.key", awsId)
+          conf.set("fs.s3a.secret.key", awsSecret)
+      }
     }
     return conf
   }
