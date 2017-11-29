@@ -33,7 +33,7 @@ module.exports = function(fw) {
         'filterea_weight': '!1'
       });
       lib.workspace.closeLastPopup();
-      var state = lib.workspace.openStateView('filter0', 'project');
+      lib.workspace.openStateView('filter0', 'project');
     },
     function() {
       var state = lib.workspace.getStateView('filter0', 'project');
