@@ -25,18 +25,18 @@ module.exports = function(fw) {
       lib.workspace.addBox({
         id: 'filter0',
         name: 'Filter by attributes',
-        x: 100, y: 400
-      });
+        x: 100, y: 400});
       lib.workspace.connectBoxes('eg0', 'project', 'filter0', 'project');
       lib.workspace.openBoxEditor('filter0').populateOperation({
         'filterva_age': '<40',
         'filterva_name': 'Adam,Eve,Bob',
         'filterea_weight': '!1'
       });
-    },
-    function() {
       lib.workspace.closeLastPopup();
       var state = lib.workspace.openStateView('filter0', 'project');
+    },
+    function() {
+      var state = lib.workspace.getStateView('filter0', 'project');
       expect(state.left.vertexCount()).toEqual(2);
       expect(state.left.edgeCount()).toEqual(1);
     });

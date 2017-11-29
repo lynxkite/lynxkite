@@ -23,8 +23,7 @@ module.exports = function(fw) {
       lib.workspace.addBox({
         id: 'utv',
         name: 'Use table as vertices',
-        x: 100, y: 200
-      });
+        x: 100, y: 200});
       lib.workspace.connectBoxes('ib0', 'table', 'utv', 'table');
     },
     function() {
@@ -41,18 +40,16 @@ module.exports = function(fw) {
       lib.workspace.addBox({
         id: 'con0',
         name: 'Convert vertex attribute to Double',
-        x: 100, y: 300
-      });
+        x: 100, y: 300});
       lib.workspace.connectBoxes('utv', 'project', 'con0', 'project');
       lib.workspace.openBoxEditor('con0').populateOperation({
-        'attr': ['age','yob']
+        'attr': ['age', 'yob']
       });
       lib.workspace.closeLastPopup();
       lib.workspace.addBox({
         id: 'train0',
         name: 'Train linear regression model',
-        x: 100, y: 400
-      });
+        x: 100, y: 400});
       lib.workspace.connectBoxes('con0', 'project', 'train0', 'project');
       lib.workspace.openBoxEditor('train0').populateOperation({
         'name': 'age_from_yob',
@@ -82,8 +79,7 @@ module.exports = function(fw) {
       lib.workspace.addBox({
         id: 'pred0',
         name: 'Predict with model',
-        x: 300, y: 430
-      });
+        x: 300, y: 430});
       lib.workspace.connectBoxes('train0', 'project', 'pred0', 'project');
       // The default value for feature is good this time.
       lib.workspace.openBoxEditor('pred0').populateOperation({
@@ -94,8 +90,7 @@ module.exports = function(fw) {
       lib.workspace.addBox({
         id: 'derive0',
         name: 'Derive vertex attribute',
-        x: 450, y: 430
-      });
+        x: 450, y: 430});
       lib.workspace.connectBoxes('pred0', 'project', 'derive0', 'project');
       lib.workspace.openBoxEditor('derive0').populateOperation({
         'output': 'age_prediction_string',

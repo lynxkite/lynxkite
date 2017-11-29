@@ -7,9 +7,6 @@ module.exports = function(fw) {
   var name = state.left.vertexAttribute('name');
   var income = state.left.vertexAttribute('income');
   var weight = state.left.edgeAttribute('weight');
-  var filteredState = lib.workspace.getStateView('filter0', 'project');
-  var filteredName = filteredState.left.vertexAttribute('name');
-  var filteredWeight = filteredState.left.edgeAttribute('weight');
 
 
   fw.statePreservingTest(
@@ -122,6 +119,8 @@ module.exports = function(fw) {
     'example graph with filters applied',
     'hard filters are applied to string vertex histogram',
     function() {
+      var filteredState = lib.workspace.getStateView('filter0', 'project');
+      var filteredName = filteredState.left.vertexAttribute('name');
       expect(filteredName.getHistogramValues().then(lib.sortHistogramValues)).toEqual([
         { title: 'Adam', size: 100, value: 1 },
         { title: 'Eve', size: 100, value: 1 },
@@ -132,6 +131,8 @@ module.exports = function(fw) {
     'example graph with filters applied',
     'hard filters are applied to double edge histogram',
     function() {
+      var filteredState = lib.workspace.getStateView('filter0', 'project');
+      var filteredWeight = filteredState.left.edgeAttribute('weight');
       expect(filteredWeight.getHistogramValues()).toEqual([
         { title: '2.00-2.00', size: 100, value: 1 },
       ]);
