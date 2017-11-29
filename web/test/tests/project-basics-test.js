@@ -39,7 +39,7 @@ module.exports = function(fw) {
       lib.workspace.saveWorkspaceAs('test-example');
       expect(lib.error()).toEqual('Entry \'test-example\' already exists.');
       lib.closeErrors();
-      // TODO: remove it when input field issue is resolved.
+      // TODO: remove it when the input field issue is resolved.
       lib.workspace.resetSaveWorkspaceAsButton();
     });
 };
