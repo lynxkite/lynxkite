@@ -494,7 +494,6 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
   })
 
   registerOp("Derive column", defaultIcon, category, List("input"), List("table"), new TableOutputOperation(_) {
-    def paramNames = tableInput("input").schema.fieldNames
     params ++= List(
       Param("name", "Column name"),
       Code("value", s"Column value", language = "sql", enableTableBrowser = false))
