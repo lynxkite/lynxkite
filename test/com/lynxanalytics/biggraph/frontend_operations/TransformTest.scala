@@ -5,20 +5,13 @@ import org.apache.spark
 import org.apache.spark.sql.Row
 
 class TransformTest extends OperationsTestBase {
-  private def toSeq(row: spark.sql.Row): Seq[Any] = {
-    row.toSeq.map {
-      case r: spark.sql.Row => toSeq(r)
-      case x => x
-    }
-  }
-
   test("transform table") {
     val table = box("Create example graph")
       .box("SQL1", Map("sql" -> "select * from vertices"))
       .box("Transform", Map("age" -> "age * 2"))
       .table
     assert(table.schema.map(_.name) == Seq("age", "gender", "id", "income", "location", "name"))
-    val data = table.df.collect.toSeq.map(row => toSeq(row))
+    val data = table.df.collect.toSeq.map(row => SQLTest.toSeq(row))
     assert(data == Seq(
       Seq(40.6, "Male", 0, 1000.0, Seq(40.71448, -74.00598), "Adam"),
       Seq(36.4, "Female", 1, null, Seq(47.5269674, 19.0323968), "Eve"),
