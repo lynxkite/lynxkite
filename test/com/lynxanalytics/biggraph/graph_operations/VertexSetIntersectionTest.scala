@@ -15,7 +15,7 @@ class VertexSetIntersectionTest extends FunSuite with TestGraphOp {
   }
 
   def agedBetween(lo: Double, hi: Double) = {
-    val filter = AndFilter(DoubleGE(lo), DoubleLE(hi))
+    val filter = AndFilter(GE(lo), LE(hi))
     val op = VertexAttributeFilter(filter)
     op(op.attr, age).result.fvs
   }

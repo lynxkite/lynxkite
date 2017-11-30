@@ -94,44 +94,76 @@ case class AndFilter[T](filters: Filter[T]*) extends Filter[T] {
   }
 }
 
-object DoubleEQ extends FromJson[DoubleEQ] {
-  def fromJson(j: JsValue) = DoubleEQ((j \ "exact").as[Double])
-}
-case class DoubleEQ(exact: Double) extends Filter[Double] {
-  def matches(value: Double) = value == exact
-  override def toJson = Json.obj("exact" -> exact)
+object EQ extends FromJson[EQ[_]] {
+  def fromJson(j: JsValue) = EQ(TypedJson.read(j \ "exact"))
 }
 
-object DoubleLT extends FromJson[DoubleLT] {
-  def fromJson(j: JsValue) = DoubleLT((j \ "bound").as[Double])
-}
-case class DoubleLT(bound: Double) extends Filter[Double] {
-  def matches(value: Double) = value < bound
-  override def toJson = Json.obj("bound" -> bound)
+case class EQ[T](exact: T) extends Filter[T] {
+  def matches(value: T) = value == exact
+  override def toJson = Json.obj("exact" -> TypedJson(exact))
 }
 
-object DoubleLE extends FromJson[DoubleLE] {
-  def fromJson(j: JsValue) = DoubleLE((j \ "bound").as[Double])
-}
-case class DoubleLE(bound: Double) extends Filter[Double] {
-  def matches(value: Double) = value <= bound
-  override def toJson = Json.obj("bound" -> bound)
+object DoubleEQ extends FromJson[EQ[Double]] { // Backward compatibility
+  def fromJson(j: JsValue) = EQ((j \ "exact").as[Double])
 }
 
-object DoubleGT extends FromJson[DoubleGT] {
-  def fromJson(j: JsValue) = DoubleGT((j \ "bound").as[Double])
-}
-case class DoubleGT(bound: Double) extends Filter[Double] {
-  def matches(value: Double) = value > bound
-  override def toJson = Json.obj("bound" -> bound)
+abstract class ComparatorFilter[T](base: T) extends Filter[T] {
+  def lt(value: T): Boolean = {
+    if (base.isInstanceOf[Double]) value.asInstanceOf[Double] < base.asInstanceOf[Double]
+    else if (base.isInstanceOf[String]) value.asInstanceOf[String] < base.asInstanceOf[String]
+    else if (base.isInstanceOf[Long]) value.asInstanceOf[Long] < base.asInstanceOf[Long]
+    else throw new AssertionError(s"Value $value cannot be compared in a filter")
+  }
+  lt(base) // Type check as soon as created
+  def lte(value: T) = lt(value) || value == base
+  def gt(value: T) = !lte(value)
+  def gte(value: T) = !lt(value)
 }
 
-object DoubleGE extends FromJson[DoubleGE] {
-  def fromJson(j: JsValue) = DoubleGE((j \ "bound").as[Double])
+object LT extends FromJson[LT[_]] {
+  def fromJson(j: JsValue) = LT(TypedJson.read((j \ "bound")))
 }
-case class DoubleGE(bound: Double) extends Filter[Double] {
-  def matches(value: Double) = value >= bound
-  override def toJson = Json.obj("bound" -> bound)
+
+case class LT[T](bound: T) extends ComparatorFilter[T](bound) {
+  def matches(value: T) = lt(value)
+  override def toJson = Json.obj("bound" -> TypedJson(bound))
+}
+
+object DoubleLT extends FromJson[LT[Double]] { // Backward compatibility
+  def fromJson(j: JsValue) = LT((j \ "bound").as[Double])
+}
+
+object LE extends FromJson[LE[_]] {
+  def fromJson(j: JsValue) = LE(TypedJson.read((j \ "bound")))
+}
+case class LE[T](bound: T) extends ComparatorFilter[T](bound) {
+  def matches(value: T) = lte(value)
+  override def toJson = Json.obj("bound" -> TypedJson(bound))
+}
+object DoubleLE extends FromJson[LE[Double]] { // Backward compatibility
+  def fromJson(j: JsValue) = LE((j \ "bound").as[Double])
+}
+
+object GT extends FromJson[GT[_]] {
+  def fromJson(j: JsValue) = GT(TypedJson.read((j \ "bound")))
+}
+case class GT[T](bound: T) extends ComparatorFilter[T](bound) {
+  def matches(value: T) = gt(value)
+  override def toJson = Json.obj("bound" -> TypedJson(bound))
+}
+object DoubleGT extends FromJson[GT[Double]] { // Backward compatibility
+  def fromJson(j: JsValue) = GT((j \ "bound").as[Double])
+}
+
+object GE extends FromJson[GE[_]] {
+  def fromJson(j: JsValue) = GE(TypedJson.read((j \ "bound")))
+}
+case class GE[T](bound: T) extends ComparatorFilter[T](bound) {
+  def matches(value: T) = gte(value)
+  override def toJson = Json.obj("bound" -> TypedJson(bound))
+}
+object DoubleGE extends FromJson[GE[Double]] { // Backward compatibility
+  def fromJson(j: JsValue) = GE((j \ "bound").as[Double])
 }
 
 object PairFilter extends FromJson[PairFilter[_, _]] {
