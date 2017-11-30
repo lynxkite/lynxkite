@@ -35,7 +35,7 @@ def compareDataFrames(df1: DataFrame, df2: DataFrame): Unit = {
       columnHash(df1, colName) == columnHash(df2, colName)
     }
   }.map(_.name)
-  assert(mismatchingColumns.isEmpty, s"column mismatch: ${mismatchingColumns.mkString(sep=", ")}")
+  assert(mismatchingColumns.isEmpty, s"column mismatch: ${mismatchingColumns.mkString(sep = ", ")}")
 }
 
 // spark is the spark context in the spark-shell, it should be available here
