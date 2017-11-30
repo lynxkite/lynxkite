@@ -45,12 +45,20 @@ object JsonMigration {
   val current = new JsonMigration(
     Map(
       className(graph_operations.ExampleGraph) -> 1,
-//      className(graph_operations.DoubleLT) -> 1,
+      className(graph_operations.DoubleLT) -> 1,
+      className(graph_operations.DoubleLE) -> 1,
+      className(graph_operations.DoubleEQ) -> 1,
+      className(graph_operations.DoubleGE) -> 1,
+      className(graph_operations.DoubleGT) -> 1,
       className(graph_operations.EnhancedExampleGraph) -> 1)
       .withDefaultValue(0),
     Map(
       (className(graph_operations.ExampleGraph), 0) -> identity,
-//      (className(graph_operations.DoubleLT), 0) -> identity,
+      (className(graph_operations.DoubleLT), 0) -> identity,
+      (className(graph_operations.DoubleLE), 0) -> identity,
+      (className(graph_operations.DoubleEQ), 0) -> identity,
+      (className(graph_operations.DoubleGE), 0) -> identity,
+      (className(graph_operations.DoubleGT), 0) -> identity,
       (className(graph_operations.EnhancedExampleGraph), 0) -> identity))
 }
 import JsonMigration._
