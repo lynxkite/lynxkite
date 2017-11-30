@@ -21,10 +21,13 @@ class FilterByAttributeOperationTest extends OperationsTestBase {
           Map("name" -> "e", "value" -> "0.0", "type" -> "Double"))
         .box(
           "Add constant vertex attribute",
+          Map("name" -> "name", "value" -> "Eve", "type" -> "String"))
+        .box(
+          "Add constant vertex attribute",
           Map("name" -> "v", "value" -> "0.0", "type" -> "Double"))
         .box(
           "Filter by attributes",
-          Map("filterva_v" -> "> 0.0", "filterea_e" -> "> 1.0"))
+          Map("filterva_v" -> "> 0.0", "filterea_e" -> "> 1.0", "filterva_name" -> "!==Adam"))
         .project
       project.scalars("!edge_count").value
     }

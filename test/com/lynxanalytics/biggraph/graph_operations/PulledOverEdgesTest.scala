@@ -10,7 +10,7 @@ class PulledOverEdgesTest extends FunSuite with TestGraphOp {
   test("works with filters") {
     val g = ExampleGraph()().result
 
-    val fop = VertexAttributeFilter(DoubleGT(2))
+    val fop = VertexAttributeFilter(GT(2.0))
     val fopRes = fop(fop.attr, g.weight).result
 
     val pop = PulledOverEdges()

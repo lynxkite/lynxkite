@@ -42,7 +42,7 @@ class PulledOverAttributeTest extends FunSuite with TestGraphOp {
   test("works with filters") {
     val g = ExampleGraph()().result
 
-    val fop = VertexAttributeFilter(DoubleGT(10))
+    val fop = VertexAttributeFilter(GT(10.0))
     val fopRes = fop(fop.attr, g.age).result
 
     val pop = PulledOverVertexAttribute[String]()

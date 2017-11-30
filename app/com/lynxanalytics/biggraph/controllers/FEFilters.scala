@@ -112,20 +112,66 @@ object FEFilters {
     op(op.vss, filteredVss).result.firstEmbedding
   }
 
+  private def comparisonFilter[T: TypeTag](spec: String, converter: String => T): Option[Filter[T]] = {
+    spec match {
+      case numberRE(num) => Some(EQ(converter(num)))
+      case intervalOpenOpenRE(a, b) =>
+        Some(AndFilter(GT(converter(a)), LT(converter(b))))
+      case intervalOpenCloseRE(a, b) =>
+        Some(AndFilter(GT(converter(a)), LE(converter(b))))
+      case intervalCloseOpenRE(a, b) =>
+        Some(AndFilter(GE(converter(a)), LT(converter(b))))
+      case intervalCloseCloseRE(a, b) =>
+        Some(AndFilter(GE(converter(a)), LE(converter(b))))
+      case boundRE(comparator, valueString) =>
+        val value = converter(valueString)
+        comparator match {
+          case "=" => Some(EQ(value))
+          case "==" => Some(EQ(value))
+          case "<" => Some(LT(value))
+          case ">" => Some(GT(value))
+          case "<=" => Some(LE(value))
+          case ">=" => Some(GE(value))
+          case _ => None
+        }
+      case _ => None
+    }
+  }
+
+  private def doubleFilter(spec: String): Filter[Double] = {
+    val doubleFilter = comparisonFilter[Double](spec, _.toDouble)
+    doubleFilter.getOrElse {
+      throw new AssertionError(s"Not a valid filter: $spec")
+    }
+  }
+
+  private def longFilter(spec: String): Filter[Long] = {
+    val cmp = comparisonFilter[Long](spec, _.toLong)
+    cmp.getOrElse {
+      OneOf(spec.split(",", -1).map(_.trim.toLong).toSet)
+    }
+  }
+
+  def stringFilter(spec: String): Filter[String] = {
+    val cmp = comparisonFilter[String](spec, _.toString)
+    cmp.getOrElse {
+      val stringFilter = spec match {
+        case regexRE(re) => RegexFilter(re)
+        case csv => OneOf(csv.split(",", -1).map(_.trim).toSet)
+      }
+      stringFilter
+    }
+  }
+
   def filterFromSpec[T: TypeTag](spec: String): Filter[T] = {
     if (spec.startsWith("!")) {
       NotFilter(filterFromSpec(spec.drop(1)))
     } else if (spec == "*") {
       MatchAllFilter()
     } else if (typeOf[T] =:= typeOf[String]) {
-      val stringFilter = spec match {
-        case regexRE(re) => RegexFilter(re)
-        case csv => OneOf(csv.split(",", -1).map(_.trim).toSet)
-      }
-      stringFilter.asInstanceOf[Filter[T]]
+      stringFilter(spec).asInstanceOf[Filter[T]]
     } else if (typeOf[T] =:= typeOf[Long]) {
-      OneOf(spec.split(",", -1).map(_.trim.toLong).toSet)
-        .asInstanceOf[Filter[T]]
+      longFilter(spec).asInstanceOf[Filter[T]]
     } else if (typeOf[T] =:= typeOf[(Double, Double)]) {
       spec match {
         case geoRE(xInterval, yInterval) =>
@@ -134,26 +180,7 @@ object FEFilters {
         case filter => throw new AssertionError(s"Not a valid filter: $filter.")
       }
     } else if (typeOf[T] =:= typeOf[Double]) {
-      val doubleFilter = spec match {
-        case numberRE(num) => DoubleEQ(num.toDouble)
-        case intervalOpenOpenRE(a, b) => AndFilter(DoubleGT(a.toDouble), DoubleLT(b.toDouble))
-        case intervalOpenCloseRE(a, b) => AndFilter(DoubleGT(a.toDouble), DoubleLE(b.toDouble))
-        case intervalCloseOpenRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLT(b.toDouble))
-        case intervalCloseCloseRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLE(b.toDouble))
-        case boundRE(comparator, valueString) =>
-          val value = valueString.toDouble
-          comparator match {
-            case "=" => DoubleEQ(value)
-            case "==" => DoubleEQ(value)
-            case "<" => DoubleLT(value)
-            case ">" => DoubleGT(value)
-            case "<=" => DoubleLE(value)
-            case ">=" => DoubleGE(value)
-            case comparator => throw new AssertionError(s"Not a valid comparator: $comparator")
-          }
-        case filter => throw new AssertionError(s"Not a valid filter: $filter")
-      }
-      doubleFilter.asInstanceOf[Filter[T]]
+      doubleFilter(spec).asInstanceOf[Filter[T]]
     } else if (typeOf[T] =:= typeOf[(ID, ID)]) {
       spec match {
         case "=" => PairEquals[ID]().asInstanceOf[Filter[T]]
@@ -172,18 +199,21 @@ object FEFilters {
     } else ???
   }
 
+  private val comparableStuff = "[^]),=][^]),]*"
+  private val comparableStuffPattern = s"\\s*($comparableStuff)\\s*"
+
   private val number = "-?\\d*(?:\\.\\d*)?"
   private val numberWithSpaces = s"\\s*$number\\s*"
   private val numberPattern = s"\\s*($number)\\s*"
   private val numberRE = numberPattern.r
-  private val intervalOpenOpenRE = s"\\s*\\($numberPattern,$numberPattern\\)\\s*".r
-  private val intervalOpenCloseRE = s"\\s*\\($numberPattern,$numberPattern\\]\\s*".r
-  private val intervalCloseOpenRE = s"\\s*\\[$numberPattern,$numberPattern\\)\\s*".r
-  private val intervalCloseCloseRE = s"\\s*\\[$numberPattern,$numberPattern\\]\\s*".r
+  private val intervalOpenOpenRE = s"\\s*\\($comparableStuffPattern,$comparableStuffPattern\\)\\s*".r
+  private val intervalOpenCloseRE = s"\\s*\\($comparableStuffPattern,$comparableStuffPattern\\]\\s*".r
+  private val intervalCloseOpenRE = s"\\s*\\[$comparableStuffPattern,$comparableStuffPattern\\)\\s*".r
+  private val intervalCloseCloseRE = s"\\s*\\[$comparableStuffPattern,$comparableStuffPattern\\]\\s*".r
   private val intervalPattern = s"\\s*([\\(\\[]$numberWithSpaces,$numberWithSpaces[\\)\\]])\\s*"
   private val geoRE = s"$intervalPattern,$intervalPattern".r
   private val comparatorPattern = "\\s*(<|>|==?|<=|>=)\\s*"
-  private val boundRE = s"$comparatorPattern$numberPattern".r
+  private val boundRE = s"$comparatorPattern$comparableStuffPattern".r
   private val forallRE = "\\s*(?:forall|all|Ɐ)\\((.*)\\)\\s*".r
   private val existsRE = "\\s*(?:exists|any|some|∃)\\((.*)\\)\\s*".r
   private val regexRE = "\\s*regexp?\\((.*)\\)\\s*".r
