@@ -255,6 +255,8 @@ include::custom-plot.asciidoc[]
 
 include::define-segmentation-links-from-matching-attributes.asciidoc[]
 
+include::derive-column.asciidoc[]
+
 include::derive-edge-attribute.asciidoc[]
 
 include::derive-scalar.asciidoc[]
