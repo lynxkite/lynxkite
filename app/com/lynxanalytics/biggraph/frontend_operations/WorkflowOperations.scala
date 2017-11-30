@@ -474,4 +474,21 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       List("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")
     registerSQLOp(s"SQL$inputs", numbers.take(inputs))
   }
+
+  registerOp("Transform", defaultIcon, category, List("input"), List("table"), new TableOutputOperation(_) {
+    def paramNames = tableInput("input").schema.fieldNames
+    params ++= paramNames.map {
+      name => Code(s"$name", s"$name", defaultValue = s"$name", language = "sql", enableTableBrowser = false)
+    }
+    override def summary = params("transform")
+    def enabled = FEStatus.enabled
+    override def getOutputs() = {
+      params.validate()
+      val transformations = paramNames.map(name => s"${params(name)} as $name").mkString(", ")
+      val sql = s"select $transformations from `input`"
+      val protoTables = this.getInputTables()
+      val result = graph_operations.ExecuteSQL.run(sql, protoTables)
+      makeOutput(result)
+    }
+  })
 }
