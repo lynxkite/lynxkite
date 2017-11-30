@@ -104,10 +104,7 @@ case class EQ[T](exact: T) extends Filter[T] {
 }
 
 object DoubleEQ extends FromJson[EQ[Double]] { // Backward compatibility
-  def fromJson(j: JsValue) = {
-    println(s"EQ Giving back $j")
-    EQ((j \ "exact").as[Double])
-  }
+  def fromJson(j: JsValue) = EQ((j \ "exact").as[Double])
 }
 
 abstract class ComparatorFilter[T](base: T) extends Filter[T] {
@@ -133,10 +130,7 @@ case class LT[T](bound: T) extends ComparatorFilter[T](bound) {
 }
 
 object DoubleLT extends FromJson[LT[Double]] { // Backward compatibility
-  def fromJson(j: JsValue) = {
-    println(s"LT Giving back $j")
-    LT((j \ "bound").as[Double])
-  }
+  def fromJson(j: JsValue) = LT((j \ "bound").as[Double])
 }
 
 object LE extends FromJson[LE[_]] {
@@ -147,10 +141,8 @@ case class LE[T](bound: T) extends ComparatorFilter[T](bound) {
   override def toJson = Json.obj("bound" -> TypedJson(bound))
 }
 object DoubleLE extends FromJson[LE[Double]] { // Backward compatibility
-  def fromJson(j: JsValue) = {
-    println(s"LE Giving back $j")
-    LE((j \ "bound").as[Double])
-  }
+  def fromJson(j: JsValue) = LE((j \ "bound").as[Double])
+
 }
 
 object GT extends FromJson[GT[_]] {
@@ -161,10 +153,7 @@ case class GT[T](bound: T) extends ComparatorFilter[T](bound) {
   override def toJson = Json.obj("bound" -> TypedJson(bound))
 }
 object DoubleGT extends FromJson[GT[Double]] { // Backward compatibility
-  def fromJson(j: JsValue) = {
-    println(s"GT Giving back $j")
-    GT((j \ "bound").as[Double])
-  }
+  def fromJson(j: JsValue) = GT((j \ "bound").as[Double])
 }
 
 object GE extends FromJson[GE[_]] {
@@ -175,10 +164,7 @@ case class GE[T](bound: T) extends ComparatorFilter[T](bound) {
   override def toJson = Json.obj("bound" -> TypedJson(bound))
 }
 object DoubleGE extends FromJson[GE[Double]] { // Backward compatibility
-  def fromJson(j: JsValue) = {
-    println(s"GE Giving back $j")
-    GE((j \ "bound").as[Double])
-  }
+  def fromJson(j: JsValue) = GE((j \ "bound").as[Double])
 }
 
 object PairFilter extends FromJson[PairFilter[_, _]] {
