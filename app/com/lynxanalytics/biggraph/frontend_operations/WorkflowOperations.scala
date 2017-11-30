@@ -480,12 +480,31 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     params ++= paramNames.map {
       name => Code(s"$name", s"$name", defaultValue = s"$name", language = "sql", enableTableBrowser = false)
     }
-    override def summary = params("transform")
+    def transformedColumns = paramNames.filter(name => params(name) != name).mkString(", ")
+    override def summary = s"Transform $transformedColumns"
     def enabled = FEStatus.enabled
     override def getOutputs() = {
       params.validate()
-      val transformations = paramNames.map(name => s"${params(name)} as $name").mkString(", ")
+      val transformations = paramNames.map(name => s"${params(name)} as `$name`").mkString(", ")
       val sql = s"select $transformations from `input`"
+      val protoTables = this.getInputTables()
+      val result = graph_operations.ExecuteSQL.run(sql, protoTables)
+      makeOutput(result)
+    }
+  })
+
+  registerOp("Derive column", defaultIcon, category, List("input"), List("table"), new TableOutputOperation(_) {
+    def paramNames = tableInput("input").schema.fieldNames
+    params ++= List(
+      Param("name", "Column name"),
+      Code("value", s"Column value", language = "sql", enableTableBrowser = false))
+    def name = params("name")
+    def value = params("value")
+    override def summary = s"Derive $name = $value"
+    def enabled = FEStatus.enabled
+    override def getOutputs() = {
+      params.validate()
+      val sql = s"select t.*, $value as `$name` from `input` t"
       val protoTables = this.getInputTables()
       val result = graph_operations.ExecuteSQL.run(sql, protoTables)
       makeOutput(result)

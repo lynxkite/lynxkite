@@ -12,6 +12,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Hold SHIFT while dragging boxes to align them on a grid.
  - Nicer comment box presentation.
  - Bug fixes. Thanks for all bug reports!
+ - Add Transform and Derive column operations for easier table manipulation.
 
 ### 2.1.0
 
