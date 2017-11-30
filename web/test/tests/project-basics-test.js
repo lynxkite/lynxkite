@@ -1,48 +1,45 @@
 'use strict';
 
-module.exports = function() {};
 
-/*
 var lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   fw.transitionTest(
-    'test-example project with example graph',
-    'test-example project with example graph saved as apple',
+    'test-example workspace with example graph',
+    'test-example workspace with example graph saved as apple',
     function() {
-      lib.left.saveProjectAs('apple');
+      lib.workspace.saveWorkspaceAs('apple');
     },
     function() {
-      // We are now in a project with the new name.
-      lib.left.expectCurrentProjectIs('apple');
-      // We also kept the contents of the project.
-      expect(lib.left.vertexCount()).toEqual(4);
-      expect(lib.left.edgeCount()).toEqual(4);
-      expect(lib.left.attributeCount()).toEqual(8);
+      // We are now in a workspace with the new name.
+      lib.workspace.expectCurrentWorkspaceIs('apple');
+      // We also kept the contents of the workspace.
+      // The example graph box was created with boxId=eg0.
+      expect(lib.workspace.boxExists('eg0')).toEqual(true);
     });
 
   fw.transitionTest(
-    'test-example project with example graph saved as apple',
-    'test-example project with example graph saved as pear/apple',
+    'test-example workspace with example graph saved as apple',
+    'test-example workspace with example graph saved as pear/apple',
     function() {
-      lib.left.saveProjectAs('pear/apple');
+      lib.workspace.saveWorkspaceAs('pear/apple');
     },
     function() {
-      // We are now in a project with the new name.
-      lib.left.expectCurrentProjectIs('pear/apple');
+      // We are now in a workspace with the new name.
+      lib.workspace.expectCurrentWorkspaceDirectoryIs('pear/');
+      lib.workspace.expectCurrentWorkspaceIs('apple');
       // We also kept the contents of the project.
-      expect(lib.left.vertexCount()).toEqual(4);
-      expect(lib.left.edgeCount()).toEqual(4);
-      expect(lib.left.attributeCount()).toEqual(8);
+      expect(lib.workspace.boxExists('eg0')).toEqual(true);
     });
 
   fw.statePreservingTest(
-    'test-example project with example graph saved as apple',
-    'cant save as to existing project',
+    'test-example workspace with example graph saved as apple',
+    'cant save as to existing workspace',
     function() {
-      lib.left.saveProjectAs('test-example');
+      lib.workspace.saveWorkspaceAs('test-example');
       expect(lib.error()).toEqual('Entry \'test-example\' already exists.');
       lib.closeErrors();
+      // TODO: remove it when the input field issue is resolved.
+      lib.workspace.resetSaveWorkspaceAsButton();
     });
 };
-*/

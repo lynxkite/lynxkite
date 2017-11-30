@@ -138,7 +138,8 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       Param("output", "Save as"),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
-      Code("expr", "Value", defaultValue = "", language = "javascript"))
+      Code("expr", "Value", defaultValue = "", language = "javascript"),
+      Choice("persist", "Persist result", options = FEOption.bools)) // Default is true.
     def enabled = project.hasVertexSet
     override def summary = {
       val name = params("output")
@@ -153,9 +154,10 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
         ScalaUtilities.collectIdentifiers[Attribute[_]](project.vertexAttributes, expr)
       val namedScalars = ScalaUtilities.collectIdentifiers[Scalar[_]](project.scalars, expr)
       val onlyOnDefinedAttrs = params("defined_attrs").toBoolean
+      val persist = params("persist").toBoolean
 
       val result = graph_operations.DeriveScala.deriveAndInferReturnType(
-        expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs)
+        expr, namedAttributes, vertexSet, namedScalars, onlyOnDefinedAttrs, persist)
 
       project.newVertexAttribute(params("output"), result, expr + help)
     }

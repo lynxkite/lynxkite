@@ -12,6 +12,7 @@ import com.lynxanalytics.sandbox.ScalaScript
 import org.apache.spark
 
 object DeriveScala extends OpFromJson {
+  val persistParameter = NewParameter("persist", true)
   class Input(a: Seq[(String, SerializableType[_])], s: Seq[(String, SerializableType[_])])
     extends MagicInputSignature {
     val vs = vertexSet
@@ -33,7 +34,8 @@ object DeriveScala extends OpFromJson {
     attributes: Seq[(String, Attribute[_])],
     vertexSet: VertexSet,
     scalars: Seq[(String, Scalar[_])] = Seq(),
-    onlyOnDefinedAttrs: Boolean = true)(
+    onlyOnDefinedAttrs: Boolean = true,
+    persist: Boolean = true)(
     implicit
     manager: MetaGraphManager): Attribute[_] = {
 
@@ -50,6 +52,7 @@ object DeriveScala extends OpFromJson {
       attributes,
       scalars,
       onlyOnDefinedAttrs,
+      persist,
       Some(vertexSet))(tt, manager)
   }
 
@@ -65,6 +68,7 @@ object DeriveScala extends OpFromJson {
     attributes: Seq[(String, Attribute[_])],
     scalars: Seq[(String, Scalar[_])] = Seq(),
     onlyOnDefinedAttrs: Boolean = true,
+    persist: Boolean = true,
     vertexSet: Option[VertexSet] = None)(
     implicit
     manager: MetaGraphManager): Attribute[T] = {
@@ -88,7 +92,7 @@ object DeriveScala extends OpFromJson {
     checkInputTypes(paramTypes, exprString)
 
     val tt = SerializableType(typeTag[T]).typeTag // Throws an error if T is not SerializableType.
-    val op = DeriveScala(exprString, attrTypes, scalarTypes, onlyOnDefinedAttrs)(tt)
+    val op = DeriveScala(exprString, attrTypes, scalarTypes, onlyOnDefinedAttrs, persist)(tt)
 
     import Scripting._
     op(op.vs, vertexSet.getOrElse(attributes.head._2.vertexSet))(
@@ -102,7 +106,8 @@ object DeriveScala extends OpFromJson {
       (j \ "expr").as[String],
       jsonToParams(j \ "attrNames"),
       jsonToParams(j \ "scalarNames"),
-      (j \ "onlyOnDefinedAttrs").as[Boolean])
+      (j \ "onlyOnDefinedAttrs").as[Boolean],
+      persistParameter.fromJson(j))
   }
 
   import play.api.libs.json.Json
@@ -132,7 +137,8 @@ case class DeriveScala[T: TypeTag] private[graph_operations] (
     expr: String, // The Scala expression to evaluate.
     attrParams: Seq[(String, TypeTag[_])], // Input attributes to substitute.
     scalarParams: Seq[(String, TypeTag[_])] = Seq(), // Input scalars to substitute.
-    onlyOnDefinedAttrs: Boolean = true)
+    onlyOnDefinedAttrs: Boolean = true,
+    persist: Boolean = true)
   extends TypedMetaGraphOp[Input, Output[T]] {
 
   def tt = typeTag[T]
@@ -144,9 +150,10 @@ case class DeriveScala[T: TypeTag] private[graph_operations] (
     "expr" -> expr,
     "attrNames" -> DeriveScala.paramsToJson(attrParams),
     "scalarNames" -> DeriveScala.paramsToJson(scalarParams),
-    "onlyOnDefinedAttrs" -> onlyOnDefinedAttrs)
+    "onlyOnDefinedAttrs" -> onlyOnDefinedAttrs) ++
+    persistParameter.toJson(persist)
 
-  override val isHeavy = true
+  override val isHeavy = persist
   @transient override lazy val inputs = new Input(
     attrParams.map { case (k, v) => k -> SerializableType(v) },
     scalarParams.map { case (k, v) => k -> SerializableType(v) })

@@ -90,7 +90,8 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       Param("output", "Save as"),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
-      Code("expr", "Value", defaultValue = "", language = "javascript"))
+      Code("expr", "Value", defaultValue = "", language = "javascript"),
+      Choice("persist", "Persist result", options = FEOption.bools)) // Default is true.
     def enabled = project.hasEdgeBundle
     override def summary = {
       val name = params("output")
@@ -119,9 +120,10 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
       val namedAttributes =
         namedEdgeAttributes ++ namedSrcVertexAttributes ++ namedDstVertexAttributes
       val onlyOnDefinedAttrs = params("defined_attrs").toBoolean
+      val persist = params("persist").toBoolean
 
       val result = graph_operations.DeriveScala.deriveAndInferReturnType(
-        expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs)
+        expr, namedAttributes, idSet, namedScalars, onlyOnDefinedAttrs, persist)
 
       project.newEdgeAttribute(params("output"), result, expr + help)
     }

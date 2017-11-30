@@ -8,6 +8,7 @@ module.exports = function(fw) {
   var income = state.left.vertexAttribute('income');
   var weight = state.left.edgeAttribute('weight');
 
+
   fw.statePreservingTest(
     'test-example workspace with example graph state open',
     'string vertex histogram looks good',
@@ -73,7 +74,7 @@ module.exports = function(fw) {
         { title: '3.85-4.00', size: 100, value: 1 },
       ]);
     });
-/*
+
   fw.statePreservingTest(
     'example graph with filters set',
     'soft filters are applied to string vertex histogram',
@@ -85,6 +86,7 @@ module.exports = function(fw) {
         { title: 'Isolated Joe', size: 0, value: 0 },
       ]);
     });
+
   fw.statePreservingTest(
     'example graph with filters set',
     'soft filters are applied to double edge histogram',
@@ -112,23 +114,29 @@ module.exports = function(fw) {
         { title: '3.85-4.00', size: 0, value: 0 },
       ]);
     });
+
   fw.statePreservingTest(
     'example graph with filters applied',
     'hard filters are applied to string vertex histogram',
     function() {
-      expect(name.getHistogramValues().then(lib.sortHistogramValues)).toEqual([
+      var filteredState = lib.workspace.getStateView('filter0', 'project');
+      var filteredName = filteredState.left.vertexAttribute('name');
+      expect(filteredName.getHistogramValues().then(lib.sortHistogramValues)).toEqual([
         { title: 'Adam', size: 100, value: 1 },
         { title: 'Eve', size: 100, value: 1 },
       ]);
     });
+
   fw.statePreservingTest(
     'example graph with filters applied',
     'hard filters are applied to double edge histogram',
     function() {
-      expect(weight.getHistogramValues()).toEqual([
+      var filteredState = lib.workspace.getStateView('filter0', 'project');
+      var filteredWeight = filteredState.left.edgeAttribute('weight');
+      expect(filteredWeight.getHistogramValues()).toEqual([
         { title: '2.00-2.00', size: 100, value: 1 },
       ]);
-    });*/
+    });
 
   fw.transitionTest(
     'empty test-example workspace',
@@ -149,4 +157,3 @@ module.exports = function(fw) {
     function() {});
 
 };
-
