@@ -6,6 +6,7 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations._
 import com.lynxanalytics.biggraph.graph_util._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import play.api.libs.json
 
 class FEFiltersTest extends FunSuite with TestGraphOp {
 
@@ -58,6 +59,21 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
     assert(!filter2.matches("alma"))
     assert(filter2.matches("barack"))
     assert(!filter2.matches("narancs"))
+  }
+
+  test("We're backward compatible") {
+    def readOld[T](classpath: String, varName: String): T = {
+      val oldJson = json.Json.obj(
+        "class" -> ("com.lynxanalytics.biggraph.graph_operations." + classpath),
+        "data" -> json.Json.obj(varName -> 0.0))
+      com.lynxanalytics.biggraph.graph_api.TypedJson.read[T](oldJson)
+    }
+
+    assert(readOld[LT[Double]]("DoubleLT", "bound") == LT[Double](0.0))
+    assert(readOld[LE[Double]]("DoubleLE", "bound") == LE[Double](0.0))
+    assert(readOld[GT[Double]]("DoubleGT", "bound") == GT[Double](0.0))
+    assert(readOld[GE[Double]]("DoubleGE", "bound") == GE[Double](0.0))
+    assert(readOld[EQ[Double]]("DoubleEQ", "exact") == EQ[Double](0.0))
   }
 
   test("position test") {
