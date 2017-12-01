@@ -8,7 +8,7 @@ class TransformTest extends OperationsTestBase {
   test("transform table") {
     val table = box("Create example graph")
       .box("SQL1", Map("sql" -> "select * from vertices"))
-      .box("Transform", Map("age" -> "age * 2"))
+      .box("Transform", Map("new_age" -> "age * 2"))
       .table
     assert(table.schema.map(_.name) == Seq("age", "gender", "id", "income", "location", "name"))
     val data = table.df.collect.toSeq.map(row => SQLTest.toSeq(row))

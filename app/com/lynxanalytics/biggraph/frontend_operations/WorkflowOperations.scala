@@ -478,15 +478,18 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
   registerOp("Transform", defaultIcon, category, List("input"), List("table"), new TableOutputOperation(_) {
     def paramNames = tableInput("input").schema.fieldNames
     params ++= paramNames.map {
-      name => Code(s"$name", s"$name", defaultValue = s"$name", language = "sql", enableTableBrowser = false)
+      name => Code(s"new_$name", s"$name", defaultValue = s"$name", language = "sql", enableTableBrowser = false)
     }
     def transformedColumns = paramNames.filter(name => params(name) != name).mkString(", ")
     override def summary = s"Transform $transformedColumns"
     def enabled = FEStatus.enabled
     override def getOutputs() = {
       params.validate()
-      val transformations = paramNames.map(name => s"${params(name)} as `$name`").mkString(", ")
-      val sql = s"select $transformations from `input`"
+      val transformations = paramNames.map { name =>
+        val newName = s"new_$name"
+        s"${params(newName)} as `$name`"
+      }.mkString(", ")
+      val sql = s"select $transformations from input"
       val protoTables = this.getInputTables()
       val result = graph_operations.ExecuteSQL.run(sql, protoTables)
       makeOutput(result)
@@ -494,6 +497,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
   })
 
   registerOp("Derive column", defaultIcon, category, List("input"), List("table"), new TableOutputOperation(_) {
+    def paramNames = tableInput("input").schema.fieldNames
     params ++= List(
       Param("name", "Column name"),
       Code("value", s"Column value", language = "sql", enableTableBrowser = false))
@@ -503,7 +507,9 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     def enabled = FEStatus.enabled
     override def getOutputs() = {
       params.validate()
-      val sql = s"select t.*, $value as `$name` from `input` t"
+      // SparkSQL allows multiple columns with the same name, so we have to remove it manually.
+      val paramsStr = paramNames.filter(_ != name).mkString(", ")
+      val sql = s"select $paramsStr, $value as `$name` from input"
       val protoTables = this.getInputTables()
       val result = graph_operations.ExecuteSQL.run(sql, protoTables)
       makeOutput(result)
