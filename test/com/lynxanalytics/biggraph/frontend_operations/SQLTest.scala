@@ -16,8 +16,8 @@ object SQLTest {
     }
   }
 }
+import SQLTest._
 class SQLTest extends OperationsTestBase {
-  def toSeq = SQLTest.toSeq _
   test("vertices table") {
     val table = box("Create example graph")
       .box("SQL1", Map("sql" -> "select * from vertices order by id"))
