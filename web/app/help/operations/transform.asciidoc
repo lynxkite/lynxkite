@@ -1,0 +1,6 @@
+### Transform
+
+Transforms all columns of a table input via SQL expressions. Outputs a table.
+
+An input parameter is generated for every table column. The parameters are
+SQL expressions interpreted on the input table. The default value leaves the column alone.

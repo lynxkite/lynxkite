@@ -474,4 +474,45 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       List("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")
     registerSQLOp(s"SQL$inputs", numbers.take(inputs))
   }
+
+  registerOp("Transform", defaultIcon, category, List("input"), List("table"), new TableOutputOperation(_) {
+    def paramNames = tableInput("input").schema.fieldNames
+    params ++= paramNames.map {
+      name => Code(s"new_$name", s"$name", defaultValue = s"$name", language = "sql", enableTableBrowser = false)
+    }
+    def transformedColumns = paramNames.filter(name => params(name) != name).mkString(", ")
+    override def summary = s"Transform $transformedColumns"
+    def enabled = FEStatus.enabled
+    override def getOutputs() = {
+      params.validate()
+      val transformations = paramNames.map { name =>
+        val newName = s"new_$name"
+        s"${params(newName)} as `$name`"
+      }.mkString(", ")
+      val sql = s"select $transformations from input"
+      val protoTables = this.getInputTables()
+      val result = graph_operations.ExecuteSQL.run(sql, protoTables)
+      makeOutput(result)
+    }
+  })
+
+  registerOp("Derive column", defaultIcon, category, List("input"), List("table"), new TableOutputOperation(_) {
+    def paramNames = tableInput("input").schema.fieldNames
+    params ++= List(
+      Param("name", "Column name"),
+      Code("value", s"Column value", language = "sql", enableTableBrowser = false))
+    def name = params("name")
+    def value = params("value")
+    override def summary = s"Derive $name = $value"
+    def enabled = FEStatus.enabled
+    override def getOutputs() = {
+      params.validate()
+      // SparkSQL allows multiple columns with the same name, so we have to remove it manually.
+      val paramsStr = paramNames.filter(_ != name).mkString(", ")
+      val sql = s"select $paramsStr, $value as `$name` from input"
+      val protoTables = this.getInputTables()
+      val result = graph_operations.ExecuteSQL.run(sql, protoTables)
+      makeOutput(result)
+    }
+  })
 }
