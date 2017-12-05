@@ -243,7 +243,8 @@ object BoxOutputKind {
   val Plot = "plot"
   val Error = "error"
   val Visualization = "visualization"
-  val validKinds = Set(Project, Table, Error, ExportResult, Plot, Visualization)
+  val Compute = "compute"
+  val validKinds = Set(Project, Table, Error, ExportResult, Plot, Visualization, Compute)
 
   def assertKind(kind: String): Unit =
     assert(validKinds.contains(kind), s"Unknown connection type: $kind")
@@ -276,6 +277,10 @@ object BoxOutputState {
 
   def plot(plot: graph_api.Scalar[String]) = {
     BoxOutputState(BoxOutputKind.Plot, Some(json.Json.obj("guid" -> plot.gUID)))
+  }
+
+  def compute(guids: graph_api.Scalar[List[String]]) = {
+    BoxOutputState(BoxOutputKind.Compute, Some(json.Json.obj("guids" -> guids.gUID)))
   }
 
   def from(
@@ -315,6 +320,7 @@ case class BoxOutputState(
   def isPlot = kind == BoxOutputKind.Plot
   def isExportResult = kind == BoxOutputKind.ExportResult
   def isVisualization = kind == BoxOutputKind.Visualization
+  def isCompute = kind == BoxOutputKind.Compute
 
   def projectState: CommonProjectState = {
     import CheckpointRepository.fCommonProjectState
@@ -356,6 +362,12 @@ case class BoxOutputState(
       new RootProjectEditor(projectState))
   }
 
+  def compute(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[List[String]] = {
+    success.check()
+    assert(isCompute, s"Tried to access '$kind' as 'compute'.")
+    manager.scalarOf[List[String]]((state.get \ "guid").as[String].asUUID)
+  }
+
   // JsonMigration may want to update GUIDs of updated operations.
   def mapGuids(change: java.util.UUID => java.util.UUID): BoxOutputState = {
     kind match {
@@ -364,6 +376,7 @@ case class BoxOutputState(
       case BoxOutputKind.Plot => defaultGuidMapper(change)
       case BoxOutputKind.ExportResult => defaultGuidMapper(change)
       case BoxOutputKind.Visualization => this // Contains no GUIDs.
+      case BoxOutputKind.Compute => defaultGuidMapper(change)
     }
   }
 

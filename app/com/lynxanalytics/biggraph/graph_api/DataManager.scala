@@ -39,6 +39,7 @@ trait EntityProgressManager {
   // /web/app/script/util.js
   def computeProgress(entity: MetaGraphEntity): Double
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
+  def compute(guids: List[java.util.UUID]): SafeFuture[List[String]]
 }
 
 class DataManager(

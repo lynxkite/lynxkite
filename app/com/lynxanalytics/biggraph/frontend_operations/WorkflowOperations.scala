@@ -392,6 +392,20 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     }
   })
 
+  register("Compute box", List("input"), List("guids"))(new ComputeBoxOperation(_) {
+    override def apply() = {
+      val input = context.inputs("input")
+      val guids = input.kind match {
+        case BoxOutputKind.Project =>
+          projectInput("input").vertexAttributes.map { case (n, a) => a.gUID.toString }.toList
+        case BoxOutputKind.Table =>
+          tableInput("input").toAttributes.columns.map { case (n, a) => a.gUID.toString }.toList
+      }
+      val op = graph_operations.CreateStringListScalar(guids)
+      makeOutput(op.result.created)
+    }
+  })
+
   register("Take segmentation as base project")(new ProjectTransformation(_) with SegOp {
     def addSegmentationParameters = {}
     def enabled = FEStatus.enabled

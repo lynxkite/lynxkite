@@ -41,6 +41,8 @@ case class GetExportResultResponse(parameters: Map[String, String], result: FESc
 case class RunWorkspaceRequest(workspace: Workspace, parameters: Map[String, String])
 case class RunWorkspaceResponse(outputs: List[BoxOutputInfo], summaries: Map[String, String])
 case class ImportBoxRequest(box: Box, ref: Option[WorkspaceReference])
+case class ComputeBoxRequest(stateId: String)
+case class ComputeBoxResponse(guids: List[String])
 
 // An instrument is like a box. But we do not want to place it and save it in the workspace.
 // It always has 1 input and 1 output, so the connections do not need to be expressed either.
@@ -196,6 +198,21 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         val parameters = (state.state.get \ "parameters").as[Map[String, String]]
         GetExportResultResponse(parameters, feScalar)
     }
+  }
+
+  def getComputeBoxResult(user: serving.User, request: ComputeBoxRequest): ComputeBoxResponse = {
+    val state = getOutput(user, request.stateId)
+    state.kind match {
+      case BoxOutputKind.Compute =>
+        entityProgressManager.compute(state.compute)
+    }
+  }
+
+  def compute(guids: List[java.util.UUID]): SafeFuture[List[String]] = {
+    scala.concurrent.Future.sequence(guids.map { gUID =>
+      val entity = metaManager.entity(gUID)
+      entityProgressManager.compute(entity).future.map(_.gUID.toString)
+    })
   }
 
   def getProgress(user: serving.User, request: GetProgressRequest): GetProgressResponse = {
