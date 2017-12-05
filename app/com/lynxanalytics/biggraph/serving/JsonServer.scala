@@ -315,6 +315,8 @@ object FrontendJson {
   implicit val rGetInstrumentedStateRequest = json.Json.reads[GetInstrumentedStateRequest]
   implicit val wInstrumentState = json.Json.writes[InstrumentState]
   implicit val wGetInstrumentedStateResponse = json.Json.writes[GetInstrumentedStateResponse]
+  implicit val rComputeBoxRequest = json.Json.reads[ComputeBoxRequest]
+  implicit val wComputeBoxResponse = json.Json.writes[ComputeBoxResponse]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val rSQLTableBrowserNodeRequest = json.Json.reads[TableBrowserNodeRequest]
@@ -463,6 +465,8 @@ object ProductionJsonServer extends JsonServer {
     } else Map[String, String]()
     sqlController.importBox(user, request.box, workspaceParams)
   }
+
+  def getComputeBoxResult = jsonGet(workspaceController.getComputeBoxResult)
 
   def getTableOutput = jsonFuture(getTableOutputData)
   def getTableOutputData(user: serving.User, request: GetTableOutputRequest): Future[GetTableOutputResponse] = {

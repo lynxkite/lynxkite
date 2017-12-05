@@ -610,6 +610,17 @@ abstract class ExportOperationToFile(context: Operation.Context)
     ("format" -> format, "path" -> generatePathIfNeeded(params("path")))
 }
 
+abstract class ComputeBoxOperation(context: Operation.Context) extends SmartOperation(context) {
+  override val params = new ParameterHolder(context) // No automatically generated parameters.
+  def apply: Unit = ???
+  def enabled = FEStatus.enabled
+  override def getOutputs = Map()
+
+  protected def makeOutput(guids: Scalar[List[String]]): Map[BoxOutput, BoxOutputState] = {
+    Map(context.box.output(context.meta.outputs(0)) -> BoxOutputState.compute(guids))
+  }
+}
+
 class CustomBoxOperation(
     workspace: Workspace, override val context: Operation.Context) extends SmartOperation(context) {
   override val params = new ParameterHolder(context) // No automatically generated parameters.

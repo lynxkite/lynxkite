@@ -34,6 +34,14 @@ case class CreateStringScalar(value: String) extends CreateScalar[String] {
   override def toJson = Json.obj("value" -> value)
 }
 
+object CreateStringListScalar extends OpFromJson {
+  def fromJson(j: JsValue) = CreateStringListScalar((j \ "value").as[List[String]])
+}
+case class CreateStringListScalar(value: List[String]) extends CreateScalar[List[String]] {
+  @transient lazy val tt = typeTag[List[String]]
+  override def toJson = Json.obj("value" -> value)
+}
+
 object CreateUIStatusScalar extends OpFromJson {
   import com.lynxanalytics.biggraph.controllers.UIStatusSerialization._
   def fromJson(j: JsValue) = CreateUIStatusScalar(
