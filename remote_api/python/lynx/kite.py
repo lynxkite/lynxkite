@@ -29,6 +29,18 @@ if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
 
 
+def _python_name(name):
+  '''Transform a space separated string into a camelCase format.
+
+  The operation `Use base project as segmentation` will be called as
+  `useBaseProjectAsSegmentation`.
+  '''
+  name = name.replace('-', '')
+  return ''.join(
+      [x.lower() for x in name.split()][:1] +
+      [x.lower().capitalize() for x in name.split()][1:])
+
+
 class LynxKite:
   '''A connection to a LynxKite instance.
 
@@ -50,11 +62,30 @@ class LynxKite:
     self._oauth_token = oauth_token
     self._session = None
     self._operation_names = None
+    self._box_catalog = None
 
   def operation_names(self):
     if not self._operation_names:
-      self._operation_names = self._send('/remote/getOperationNames').names
+      self._operation_names = [key for key, _ in self.box_catalog().items()]
     return self._operation_names
+
+  def box_catalog(self):
+    if not self._box_catalog:
+      bc = self._ask('/ajax/boxCatalog').boxes
+      self._box_catalog = {}
+      for box in bc:
+        # TODO: What is the Python name of a custom box???
+        self._box_catalog[_python_name(box.operationId)] = box
+    return self._box_catalog
+
+  def __dir__(self):
+    return super().__dir__() + self.operation_names()
+
+  def __getattr__(self, name):
+    def f(**kwargs):
+      print('My box operation id is "{}"'.format(self.box_catalog()[name].operationId))
+    assert name in self.operation_names(), 'Invalid box name: {}'.format(name)
+    return f
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
