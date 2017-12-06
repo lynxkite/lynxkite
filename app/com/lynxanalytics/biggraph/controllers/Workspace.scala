@@ -279,8 +279,8 @@ object BoxOutputState {
     BoxOutputState(BoxOutputKind.Plot, Some(json.Json.obj("guid" -> plot.gUID)))
   }
 
-  def compute(guids: graph_api.Scalar[List[String]]) = {
-    BoxOutputState(BoxOutputKind.Compute, Some(json.Json.obj("guids" -> guids.gUID)))
+  def compute(guids: List[String]) = {
+    BoxOutputState(BoxOutputKind.Compute, Some(json.Json.obj("guids" -> guids)))
   }
 
   def from(
@@ -362,10 +362,10 @@ case class BoxOutputState(
       new RootProjectEditor(projectState))
   }
 
-  def compute(implicit manager: graph_api.MetaGraphManager): graph_api.Scalar[List[String]] = {
+  def compute(implicit manager: graph_api.MetaGraphManager): List[java.util.UUID] = {
     success.check()
     assert(isCompute, s"Tried to access '$kind' as 'compute'.")
-    manager.scalarOf[List[String]]((state.get \ "guid").as[String].asUUID)
+    (state.get \ "guids").as[List[String]].map(_.asUUID)
   }
 
   // JsonMigration may want to update GUIDs of updated operations.

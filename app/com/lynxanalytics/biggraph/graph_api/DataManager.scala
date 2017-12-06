@@ -39,7 +39,8 @@ trait EntityProgressManager {
   // /web/app/script/util.js
   def computeProgress(entity: MetaGraphEntity): Double
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
-  def compute(guids: List[java.util.UUID]): SafeFuture[List[String]]
+  def compute(entities: List[MetaGraphEntity]): SafeFuture[List[java.util.UUID]]
+  def executionContext: scala.concurrent.ExecutionContext
 }
 
 class DataManager(
@@ -463,6 +464,12 @@ class DataManager(
     sqlContext.udf.register(
       "hash",
       (string: String, salt: String) => graph_operations.HashVertexAttribute.hash(string, salt))
+  }
+
+  def compute(entities: List[MetaGraphEntity]): SafeFuture[List[java.util.UUID]] = {
+    SafeFuture.sequence(entities.map { entity =>
+      getFuture(entity).map(_.gUID)
+    }).map(_.toList)
   }
 }
 

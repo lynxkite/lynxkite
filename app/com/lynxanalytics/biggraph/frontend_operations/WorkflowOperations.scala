@@ -393,16 +393,18 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
   })
 
   register("Compute box", List("input"), List("guids"))(new ComputeBoxOperation(_) {
-    override def apply() = {
+    override def getOutputs() = {
+      params.validate()
       val input = context.inputs("input")
-      val guids = input.kind match {
+      val guids = (input.kind match {
         case BoxOutputKind.Project =>
-          projectInput("input").vertexAttributes.map { case (n, a) => a.gUID.toString }.toList
+          val project = projectInput("input")
+          project.vertexAttributes.map { case (n, a) => a.gUID.toString }.toList ++
+            project.edgeAttributes.map { case (n, a) => a.gUID.toString }.toList
         case BoxOutputKind.Table =>
           tableInput("input").toAttributes.columns.map { case (n, a) => a.gUID.toString }.toList
-      }
-      val op = graph_operations.CreateStringListScalar(guids)
-      makeOutput(op.result.created)
+      })
+      makeOutput(guids)
     }
   })
 

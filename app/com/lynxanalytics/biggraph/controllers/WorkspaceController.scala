@@ -200,19 +200,15 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
   }
 
-  def getComputeBoxResult(user: serving.User, request: ComputeBoxRequest): ComputeBoxResponse = {
+  def getComputeBoxResult(user: serving.User, request: ComputeBoxRequest): scala.concurrent.Future[ComputeBoxResponse] = {
     val state = getOutput(user, request.stateId)
-    state.kind match {
+    val guidsFuture = state.kind match {
       case BoxOutputKind.Compute =>
-        entityProgressManager.compute(state.compute)
+        val entities = state.compute.map { guid => metaManager.entity(guid) }
+        entityProgressManager.compute(entities)
     }
-  }
-
-  def compute(guids: List[java.util.UUID]): SafeFuture[List[String]] = {
-    scala.concurrent.Future.sequence(guids.map { gUID =>
-      val entity = metaManager.entity(gUID)
-      entityProgressManager.compute(entity).future.map(_.gUID.toString)
-    })
+    implicit val executionContext = entityProgressManager.executionContext
+    guidsFuture.future.map { guids => ComputeBoxResponse(guids.map(_.toString)) }
   }
 
   def getProgress(user: serving.User, request: GetProgressRequest): GetProgressResponse = {
@@ -232,6 +228,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
               val progress = entityProgressManager.computeProgress(state.exportResult)
               stateId -> Some(List(progress))
             case BoxOutputKind.Visualization =>
+              stateId -> Some(List(1.0))
+            case BoxOutputKind.Compute =>
               stateId -> Some(List(1.0))
             case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }
