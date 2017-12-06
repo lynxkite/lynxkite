@@ -376,7 +376,7 @@ case class BoxOutputState(
       case BoxOutputKind.Plot => defaultGuidMapper(change)
       case BoxOutputKind.ExportResult => defaultGuidMapper(change)
       case BoxOutputKind.Visualization => this // Contains no GUIDs.
-      case BoxOutputKind.Compute => defaultGuidMapper(change)
+      case BoxOutputKind.Compute => this
     }
   }
 
