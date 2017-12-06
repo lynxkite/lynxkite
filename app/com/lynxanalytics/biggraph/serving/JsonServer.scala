@@ -466,7 +466,7 @@ object ProductionJsonServer extends JsonServer {
     sqlController.importBox(user, request.box, workspaceParams)
   }
 
-  def getComputeBoxResult = jsonGet(workspaceController.getComputeBoxResult)
+  def getComputeBoxResult = jsonFuture(workspaceController.getComputeBoxResult)
 
   def getTableOutput = jsonFuture(getTableOutputData)
   def getTableOutputData(user: serving.User, request: GetTableOutputRequest): Future[GetTableOutputResponse] = {

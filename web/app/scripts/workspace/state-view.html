@@ -85,6 +85,11 @@
       popup-model="popupModel"
       ng-if="state.kind === 'visualization'">
     </visualization-state-view>
+    <compute-state-view
+      state-id="state.stateId"
+      popup-model="popupModel"
+      ng-if="state.kind === 'compute'">
+    </compute-state-view>
     <display-error
       class="col-sm-12"
       ng-if="state.kind === 'error'"
