@@ -400,13 +400,18 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       Map()
     }
 
+    private def getGUIDsForProject(project: ProjectEditor): List[java.util.UUID] = {
+      project.scalars.map { case (_, a) => a.gUID }.toList ++
+        project.vertexAttributes.map { case (_, a) => a.gUID }.toList ++
+        project.edgeAttributes.map { case (_, a) => a.gUID }.toList ++
+        project.segmentations.flatMap(s => getGUIDsForProject(s))
+    }
+
     override def getGUIDs() = {
       val input = context.inputs("input")
       input.kind match {
         case BoxOutputKind.Project =>
-          val project = projectInput("input")
-          project.vertexAttributes.map { case (n, a) => a.gUID }.toList ++
-            project.edgeAttributes.map { case (n, a) => a.gUID }.toList
+          getGUIDsForProject(projectInput("input"))
         case BoxOutputKind.Table =>
           tableInput("input").toAttributes.columns.map { case (n, a) => a.gUID }.toList
       }

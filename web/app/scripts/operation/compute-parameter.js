@@ -8,6 +8,8 @@ angular.module('biggraph').directive('computeParameter', function(util) {
     },
     templateUrl: 'scripts/operation/compute-parameter.html',
     link: function(scope) {
+      scope.disabled = false;
+      scope.computed = false;
       scope.compute = function() {
         scope.disabled = true;
         scope.computed = false;
