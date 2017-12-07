@@ -39,8 +39,6 @@ trait EntityProgressManager {
   // /web/app/script/util.js
   def computeProgress(entity: MetaGraphEntity): Double
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
-  def compute(entities: List[MetaGraphEntity]): SafeFuture[List[java.util.UUID]]
-  def executionContext: scala.concurrent.ExecutionContext
 }
 
 class DataManager(

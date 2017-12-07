@@ -184,7 +184,10 @@ case class CenterRequest(
 case class CenterResponse(
     val centers: Seq[String])
 
-class GraphDrawingController(env: BigGraphEnvironment) {
+case class ComputeBoxRequest(box: Box, ws: WorkspaceReference)
+case class ComputeBoxResponse(guids: List[String])
+
+class GraphDrawingController(env: BigGraphEnvironment, ops: OperationRepository) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
   import dataManager.executionContext
@@ -717,6 +720,12 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       .getFuture(m)
       .map(scalar => model.Model.toFE(scalar.value, dataManager.runtimeContext.sparkContext))
       .future
+  }
+
+  def getComputeBoxResult(op: ComputeBoxOperation): scala.concurrent.Future[ComputeBoxResponse] = {
+    val entities = op.getGUIDs.map { guid => metaManager.entity(guid) }
+    val guidsFuture = dataManager.compute(entities)
+    guidsFuture.future.map { guids => ComputeBoxResponse(guids.map(_.toString)) }
   }
 
   private def dynamicValue[T](scalar: ScalarData[T]) = {
