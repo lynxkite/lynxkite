@@ -1,4 +1,4 @@
-// UI for the "table" parameter kind.
+// UI for the "compute" parameter kind.
 'use strict';
 
 angular.module('biggraph').directive('computeParameter', function(util) {
