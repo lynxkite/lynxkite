@@ -493,14 +493,7 @@ object ProductionJsonServer extends JsonServer {
   def getComputeBoxResult = jsonFuture(getComputeBoxResultExec)
   def getComputeBoxResultExec(
     user: serving.User, request: ComputeBoxRequest): Future[ComputeBoxResponse] = {
-    val ops = workspaceController.ops
-    val wsRef = workspaceController.ResolvedWorkspaceReference(user, request.ws)
-    val states: Map[BoxOutput, BoxOutputState] = wsRef.ws.context(user, ops, Map()).allStates
-    val inputs: Map[String, BoxOutputState] = request.box.inputs.map {
-      case (key, input) => key -> states(input)
-    }
-    val op = ops.opForBox(
-      user, request.box, inputs, workspaceParameters = Map()).asInstanceOf[ComputeBoxOperation]
+    val op = workspaceController.opForBox(user, request.box, request.ref).asInstanceOf[ComputeBoxOperation]
     drawingController.getComputeBoxResult(op)
   }
 

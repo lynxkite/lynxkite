@@ -184,7 +184,7 @@ case class CenterRequest(
 case class CenterResponse(
     val centers: Seq[String])
 
-case class ComputeBoxRequest(box: Box, ws: WorkspaceReference)
+case class ComputeBoxRequest(box: Box, ref: WorkspaceReference)
 case class ComputeBoxResponse(guids: List[String])
 
 class GraphDrawingController(env: BigGraphEnvironment) {
