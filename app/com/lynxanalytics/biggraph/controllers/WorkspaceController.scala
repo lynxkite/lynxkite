@@ -41,8 +41,6 @@ case class GetExportResultResponse(parameters: Map[String, String], result: FESc
 case class RunWorkspaceRequest(workspace: Workspace, parameters: Map[String, String])
 case class RunWorkspaceResponse(outputs: List[BoxOutputInfo], summaries: Map[String, String])
 case class ImportBoxRequest(box: Box, ref: Option[WorkspaceReference])
-case class ComputeBoxRequest(stateId: String)
-case class ComputeBoxResponse(guids: List[String])
 
 // An instrument is like a box. But we do not want to place it and save it in the workspace.
 // It always has 1 input and 1 output, so the connections do not need to be expressed either.
@@ -200,17 +198,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
   }
 
-  def getComputeBoxResult(user: serving.User, request: ComputeBoxRequest): scala.concurrent.Future[ComputeBoxResponse] = {
-    val state = getOutput(user, request.stateId)
-    val guidsFuture = state.kind match {
-      case BoxOutputKind.Compute =>
-        val entities = state.compute.map { guid => metaManager.entity(guid) }
-        entityProgressManager.compute(entities)
-    }
-    implicit val executionContext = entityProgressManager.executionContext
-    guidsFuture.future.map { guids => ComputeBoxResponse(guids.map(_.toString)) }
-  }
-
   def getProgress(user: serving.User, request: GetProgressRequest): GetProgressResponse = {
     val states = request.stateIds.map(stateId => stateId -> getOutput(user, stateId)).toMap
     val progress = states.map {
@@ -228,8 +215,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
               val progress = entityProgressManager.computeProgress(state.exportResult)
               stateId -> Some(List(progress))
             case BoxOutputKind.Visualization =>
-              stateId -> Some(List(1.0))
-            case BoxOutputKind.Compute =>
               stateId -> Some(List(1.0))
             case _ => throw new AssertionError(s"Unknown kind ${state.kind}")
           }

@@ -466,8 +466,6 @@ object ProductionJsonServer extends JsonServer {
     sqlController.importBox(user, request.box, workspaceParams)
   }
 
-  def getComputeBoxResult = jsonFuture(workspaceController.getComputeBoxResult)
-
   def getTableOutput = jsonFuture(getTableOutputData)
   def getTableOutputData(user: serving.User, request: GetTableOutputRequest): Future[GetTableOutputResponse] = {
     implicit val metaManager = workspaceController.metaManager
@@ -486,12 +484,25 @@ object ProductionJsonServer extends JsonServer {
   def sparkCancelJobs = jsonPost(sparkClusterController.sparkCancelJobs)
   def sparkHealthCheck = healthCheck(sparkClusterController.checkSparkOperational)
 
-  val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)
+  val drawingController = new GraphDrawingController(BigGraphProductionEnvironment, workspaceController.ops)
   def complexView = jsonGet(drawingController.getComplexView)
   def center = jsonFuture(drawingController.getCenter)
   def histo = jsonFuture(drawingController.getHistogram)
   def scalarValue = jsonFuture(drawingController.getScalarValue)
   def model = jsonFuture(drawingController.getModel)
+  def getComputeBoxResult = jsonFuture(getComputeBoxResultExec)
+  def getComputeBoxResultExec(
+    user: serving.User, request: ComputeBoxRequest): Future[ComputeBoxResponse] = {
+    val ops = workspaceController.ops
+    val wsRef = workspaceController.ResolvedWorkspaceReference(user, request.ws)
+    val states: Map[BoxOutput, BoxOutputState] = wsRef.ws.context(user, ops, Map()).allStates
+    val inputs: Map[String, BoxOutputState] = request.box.inputs.map {
+      case (key, input) => key -> states(input)
+    }
+    val op = ops.opForBox(
+      user, request.box, inputs, workspaceParameters = Map()).asInstanceOf[ComputeBoxOperation]
+    drawingController.getComputeBoxResult(op)
+  }
 
   val demoModeController = new DemoModeController(BigGraphProductionEnvironment)
   def demoModeStatus = jsonGet(demoModeController.demoModeStatus)
