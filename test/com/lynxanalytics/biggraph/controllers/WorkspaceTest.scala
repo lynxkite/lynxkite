@@ -341,7 +341,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val ws = Workspace(List(anchor, eg, seg, compute))
     set("test-compute-box-project", ws)
     val op = controller.opForBox(user, compute, WorkspaceReference("test-compute-box-project"))
-    assert(op.asInstanceOf[ComputeBoxOperation].getGUIDs.size == 18)
+    assert(op.asInstanceOf[ComputeBoxOperation].getGUIDs.size == 22)
   }
 
   test("compute box - table") {
@@ -354,7 +354,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     set("test-compute-box-table", ws)
     val op = controller.opForBox(user, compute, WorkspaceReference("test-compute-box-table"))
     // ExampleGraph has 6 vertex attributes including ID.
-    assert(op.asInstanceOf[ComputeBoxOperation].getGUIDs.size == 6)
+    assert(op.asInstanceOf[ComputeBoxOperation].getGUIDs.size == 1)
   }
 
   test("custom box") {

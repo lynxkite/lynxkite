@@ -401,10 +401,17 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     }
 
     private def getGUIDsForProject(project: ProjectEditor): List[java.util.UUID] = {
-      project.scalars.map { case (_, a) => a.gUID }.toList ++
+      List() ++
+        Option(project.vertexSet).map(_.gUID) ++
+        Option(project.edgeBundle).map(_.gUID) ++
+        project.scalars.map { case (_, a) => a.gUID }.toList ++
         project.vertexAttributes.map { case (_, a) => a.gUID }.toList ++
         project.edgeAttributes.map { case (_, a) => a.gUID }.toList ++
-        project.segmentations.flatMap(s => getGUIDsForProject(s))
+        project.segmentations.flatMap(s => getGUIDsForSegment(s))
+    }
+
+    private def getGUIDsForSegment(segment: SegmentationEditor): List[java.util.UUID] = {
+      getGUIDsForProject(segment) ++ Option(segment.belongsTo).map(_.gUID)
     }
 
     override def getGUIDs() = {
@@ -413,7 +420,9 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         case BoxOutputKind.Project =>
           getGUIDsForProject(projectInput("input"))
         case BoxOutputKind.Table =>
-          tableInput("input").toAttributes.columns.map { case (n, a) => a.gUID }.toList
+          List(tableInput("input").gUID)
+        case _ => throw new AssertionError(
+          s"Cannot use '${input.kind}' as input. Only 'table' and 'project' kinds are supported.")
       }
     }
   })
