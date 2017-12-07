@@ -30,15 +30,90 @@ if sys.version_info.major < 3:
 
 
 def _python_name(name):
-  '''Transform a space separated string into a camelCase format.
+  '''Transforms a space separated string into a camelCase format.
 
   The operation `Use base project as segmentation` will be called as
-  `useBaseProjectAsSegmentation`.
+  `useBaseProjectAsSegmentation`. Dashes are ommitted.
   '''
   name = name.replace('-', '')
   return ''.join(
       [x.lower() for x in name.split()][:1] +
       [x.lower().capitalize() for x in name.split()][1:])
+
+
+class State:
+  '''Represents a named output plug of a box.
+
+  It can recursively store the boxes which are connected to the input plugs of
+  the box of this state.
+  '''
+
+  def __init__(self, box_catalog, name, output, parameters={}):
+    self.bc = box_catalog
+    self.output_plug_name = output
+    self.box = Box(self.bc, name, parameters)
+
+  def to_json(self):
+    ''' Converts the workspace segment ending in this state into json format
+    which can be used in `lk.run()`
+    '''
+    pass
+
+  def __getattr__(self, name):
+
+    def f(**kwargs):
+      inputs = self.bc.inputs(name)
+      # This chaining syntax only allowed for boxes with exactly one input.
+      assert len(inputs) > 0, '{} does not have an input'.format(name)
+      assert len(inputs) < 2, '{} has more than one input'.format(name)
+      plug = inputs[0]
+      output_plug = self.bc.outputs(name)[0]  # Only single output for now.
+      s = State(self.bc, name, output_plug, kwargs)
+      s.box.inputs[plug] = self
+      return s
+
+    assert name in self.bc.box_names(), 'Invalid box name: {}'.format(name)
+    return f
+
+  def __dir__(self):
+    return super().__dir__() + self.bc.box_names()
+
+
+class Box:
+  '''Represents a box in a workspace segment.
+
+  It can store workspace segments, connected to its input plugs.
+  '''
+
+  def __init__(self, box_catalog, name, parameters):
+    self.bc = box_catalog
+    self.operationId = self.bc.operation_id(name)
+    input_names = self.bc.inputs(name)
+    self.inputs = {key: None for key in input_names}  # Input states will be connected here.
+    self.parameters = parameters
+    self.id = None  # Computed at workspace creation time
+
+
+class BoxCatalog:
+  '''Stores box metadata.
+
+  Offers utility functions to query box metadata information.
+  '''
+
+  def __init__(self, boxes):
+    self.bc = boxes  # Dictionary, the keys are the Python names of the boxes.
+
+  def inputs(self, name):
+    return self.bc[name].inputs
+
+  def outputs(self, name):
+    return self.bc[name].outputs
+
+  def operation_id(self, name):
+    return self.bc[name].operationId
+
+  def box_names(self):
+    return list(self.bc.keys())
 
 
 class LynxKite:
@@ -66,24 +141,28 @@ class LynxKite:
 
   def operation_names(self):
     if not self._operation_names:
-      self._operation_names = [key for key, _ in self.box_catalog().items()]
+      self._operation_names = self.box_catalog().box_names()
     return self._operation_names
 
   def box_catalog(self):
     if not self._box_catalog:
       bc = self._ask('/ajax/boxCatalog').boxes
-      self._box_catalog = {}
+      boxes = {}
       for box in bc:
         # TODO: What is the Python name of a custom box???
-        self._box_catalog[_python_name(box.operationId)] = box
+        boxes[_python_name(box.operationId)] = box
+      self._box_catalog = BoxCatalog(boxes)
     return self._box_catalog
 
   def __dir__(self):
     return super().__dir__() + self.operation_names()
 
   def __getattr__(self, name):
+
     def f(**kwargs):
-      print('My box operation id is "{}"'.format(self.box_catalog()[name].operationId))
+      output_plug = self.bc.outputs(name)[0]  # Only single output for now.
+      return State(self.box_catalog(), name, output_plug, kwargs)
+
     assert name in self.operation_names(), 'Invalid box name: {}'.format(name)
     return f
 
