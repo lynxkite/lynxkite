@@ -57,7 +57,19 @@ class State:
     ''' Converts the workspace segment ending in this state into json format
     which can be used in `lk.run()`
     '''
-    pass
+    box_counter = {key: 0 for key in self.bc.box_names()}
+    generated = []
+
+    def generate(state):
+      for input_state in list(state.box.inputs.values()):
+        if input_state:
+          generate(input_state)
+      state.box.id = state.box.operationId.replace(
+          ' ', '-') + '_{}'.format(box_counter[state.box.name])
+      generated.append(state.box.to_json())
+      box_counter[state.box.name] = box_counter[state.box.name] + 1
+    generate(self)
+    return generated
 
   def __getattr__(self, name):
 
@@ -87,11 +99,32 @@ class Box:
 
   def __init__(self, box_catalog, name, parameters):
     self.bc = box_catalog
+    self.name = name
     self.operationId = self.bc.operation_id(name)
     input_names = self.bc.inputs(name)
     self.inputs = {key: None for key in input_names}  # Input states will be connected here.
     self.parameters = parameters
     self.id = None  # Computed at workspace creation time
+    self.x = 0  # Updated at workspace creation time
+    self.y = 0  # Updated at workspace creation time
+    self.parametric_parameters = {}  # TODO: implement it (separate simple and parametric)
+
+  def to_json(self):
+    '''Creates the json representation of a box in a workspace.
+
+    The inputs have to be connected, and all the attributes have to be
+    defined when we call this.
+    '''
+    def input_state(state):
+      return {'boxId': state.box.operationId, 'id': state.box.id}
+
+    return {
+        'id': self.id,
+        'operationId': self.operationId,
+        'parameters': self.parameters,
+        'x': self.x, 'y': self.y,
+        'inputs': {plug: input_state(state) for plug, state in self.inputs.items()},
+        'parametricParameters': self.parametric_parameters}
 
 
 class BoxCatalog:
@@ -160,7 +193,7 @@ class LynxKite:
   def __getattr__(self, name):
 
     def f(**kwargs):
-      output_plug = self.bc.outputs(name)[0]  # Only single output for now.
+      output_plug = self.box_catalog().outputs(name)[0]  # Only single output for now.
       return State(self.box_catalog(), name, output_plug, kwargs)
 
     assert name in self.operation_names(), 'Invalid box name: {}'.format(name)
