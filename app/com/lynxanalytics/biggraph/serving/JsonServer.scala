@@ -484,7 +484,7 @@ object ProductionJsonServer extends JsonServer {
   def sparkCancelJobs = jsonPost(sparkClusterController.sparkCancelJobs)
   def sparkHealthCheck = healthCheck(sparkClusterController.checkSparkOperational)
 
-  val drawingController = new GraphDrawingController(BigGraphProductionEnvironment, workspaceController.ops)
+  val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)
   def complexView = jsonGet(drawingController.getComplexView)
   def center = jsonFuture(drawingController.getCenter)
   def histo = jsonFuture(drawingController.getHistogram)

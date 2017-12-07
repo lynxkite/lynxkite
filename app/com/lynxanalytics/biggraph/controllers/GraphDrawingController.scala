@@ -187,7 +187,7 @@ case class CenterResponse(
 case class ComputeBoxRequest(box: Box, ws: WorkspaceReference)
 case class ComputeBoxResponse(guids: List[String])
 
-class GraphDrawingController(env: BigGraphEnvironment, ops: OperationRepository) {
+class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
   import dataManager.executionContext

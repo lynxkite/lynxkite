@@ -81,7 +81,7 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   val ops = new frontend_operations.Operations(env)
   val sqlController = new SQLController(env, ops)
   val bigGraphController = new BigGraphController(env)
-  val graphDrawingController = new GraphDrawingController(env, ops)
+  val graphDrawingController = new GraphDrawingController(env)
 
   def normalize(operation: String) = operation.replace(" ", "").toLowerCase
   def camelize(operation: String) = {
