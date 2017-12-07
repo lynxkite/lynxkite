@@ -41,6 +41,16 @@ def _python_name(name):
       [x.lower().capitalize() for x in name.split()][1:])
 
 
+_anchor_box = {
+    'id': 'anchor',
+    'operationId': 'Anchor',
+    'parameters': {},
+    'x': 0, 'y': 0,
+    'inputs': {},
+    'parametricParameters': {}
+}
+
+
 class State:
   '''Represents a named output plug of a box.
 
@@ -68,8 +78,9 @@ class State:
           ' ', '-') + '_{}'.format(box_counter[state.box.name])
       generated.append(state.box.to_json())
       box_counter[state.box.name] = box_counter[state.box.name] + 1
+
     generate(self)
-    return generated
+    return generated + [_anchor_box]
 
   def __getattr__(self, name):
 
@@ -116,7 +127,7 @@ class Box:
     defined when we call this.
     '''
     def input_state(state):
-      return {'boxId': state.box.operationId, 'id': state.box.id}
+      return {'boxId': state.box.id, 'id': state.output_plug_name}
 
     return {
         'id': self.id,
