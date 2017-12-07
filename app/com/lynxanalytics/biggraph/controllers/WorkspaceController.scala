@@ -343,4 +343,13 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
     GetInstrumentedStateResponse(opMetas, instrumentStates)
   }
+
+  def opForBox(user: serving.User, box: Box, ref: WorkspaceReference): Operation = {
+    val wsRef = ResolvedWorkspaceReference(user, ref)
+    val states = wsRef.ws.context(user, ops, wsRef.params).allStates
+    val inputs = box.inputs.map {
+      case (key, input) => key -> states(input)
+    }
+    ops.opForBox(user, box, inputs, wsRef.params)
+  }
 }
