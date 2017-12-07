@@ -57,7 +57,9 @@ object OperationParams {
     val options = List()
     val multipleChoice = false
     val defaultValue = ""
-    def validate(value: String): Unit = {}
+    def validate(value: String): Unit = {
+      assert(value == "")
+    }
   }
 
   case class TagList(
