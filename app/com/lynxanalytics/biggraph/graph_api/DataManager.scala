@@ -464,10 +464,10 @@ class DataManager(
       (string: String, salt: String) => graph_operations.HashVertexAttribute.hash(string, salt))
   }
 
-  def compute(entities: List[MetaGraphEntity]): SafeFuture[List[java.util.UUID]] = {
+  def compute(entities: List[MetaGraphEntity]): SafeFuture[Unit] = {
     SafeFuture.sequence(entities.map { entity =>
       getFuture(entity).map(_.gUID)
-    }).map(_.toList)
+    }).map(_ => ())
   }
 }
 

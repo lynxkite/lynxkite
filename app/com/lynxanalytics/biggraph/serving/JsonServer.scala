@@ -315,7 +315,6 @@ object FrontendJson {
   implicit val rGetInstrumentedStateRequest = json.Json.reads[GetInstrumentedStateRequest]
   implicit val wInstrumentState = json.Json.writes[InstrumentState]
   implicit val wGetInstrumentedStateResponse = json.Json.writes[GetInstrumentedStateResponse]
-  implicit val rComputeBoxRequest = json.Json.reads[ComputeBoxRequest]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val rSQLTableBrowserNodeRequest = json.Json.reads[TableBrowserNodeRequest]
