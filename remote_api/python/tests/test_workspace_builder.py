@@ -18,7 +18,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
 
   def test_simple_chain(self):
     lk = lynx.kite.LynxKite()
-    state = lk.createExampleGraph().computePagerank().sql1(sql='select page_rank from `vertices`')
+    state = lk.createExampleGraph().computePagerank().sql1(sql='select page_rank from vertices')
     outputs = lk.run(state.to_json())
     table_state = lk.run(state.to_json())['SQL1_0', 'table'].stateId
     table = lk.get_table(table_state)
@@ -30,9 +30,8 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_simple_sql_chain(self):
     lk = lynx.kite.LynxKite()
     state = (lk.createExampleGraph()
-             .sql1(sql='select * from `vertices` where age < 30')
-             .sql1(sql='select name from `input` where age > 2'))
-    outputs = lk.run(state.to_json())
+             .sql1(sql='select * from vertices where age < 30')
+             .sql1(sql='select name from input where age > 2'))
     table_state = lk.run(state.to_json())['SQL1_1', 'table'].stateId
     table = lk.get_table(table_state)
     values = [row[0].string for row in table.data]
@@ -41,5 +40,5 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_wrong_chain_with_multiple_inputs(self):
     lk = lynx.kite.LynxKite()
     with self.assertRaises(Exception) as context:
-      state = lk.createExampleGraph().sql2(sql='select * from `vertices`')
+      state = lk.createExampleGraph().sql2(sql='select * from vertices')
     self.assertTrue('sql2 has more than one input' in str(context.exception))
