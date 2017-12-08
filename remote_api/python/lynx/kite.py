@@ -32,10 +32,10 @@ if sys.version_info.major < 3:
 def _python_name(name):
   '''Transforms a space separated string into a camelCase format.
 
-  The operation `Use base project as segmentation` will be called as
-  `useBaseProjectAsSegmentation`. Dashes are ommitted.
+  The operation "Use base project as segmentation" will be called as
+  ``useBaseProjectAsSegmentation``. Dashes are ommitted.
   '''
-  name = name.replace('-', '')
+  name = ''.join([c if c.isalnum() or c == ' ' else '' for c in name])
   return ''.join(
       [x.lower() for x in name.split()][:1] +
       [x.lower().capitalize() for x in name.split()][1:])
@@ -65,7 +65,7 @@ class State:
 
   def to_json(self):
     ''' Converts the workspace segment ending in this state into json format
-    which can be used in `lk.run()`
+    which can be used in ``lk.run()``
     '''
     box_counter = {key: 0 for key in self.bc.box_names()}
     generated = []
@@ -95,7 +95,8 @@ class State:
       s.box.inputs[plug] = self
       return s
 
-    assert name in self.bc.box_names(), 'Invalid box name: {}'.format(name)
+    if not name in self.bc.box_names():
+      raise AttributeError('{} is not defined'.format(name))
     return f
 
   def __dir__(self):
@@ -193,8 +194,8 @@ class LynxKite:
       bc = self._ask('/ajax/boxCatalog').boxes
       boxes = {}
       for box in bc:
-        # TODO: What is the Python name of a custom box???
-        boxes[_python_name(box.operationId)] = box
+        if box.categoryId != 'Custom boxes':
+          boxes[_python_name(box.operationId)] = box
       self._box_catalog = BoxCatalog(boxes)
     return self._box_catalog
 
@@ -207,7 +208,8 @@ class LynxKite:
       output_plug = self.box_catalog().outputs(name)[0]  # Only single output for now.
       return State(self.box_catalog(), name, output_plug, kwargs)
 
-    assert name in self.operation_names(), 'Invalid box name: {}'.format(name)
+    if not name in self.operation_names():
+      raise AttributeError('{} is not defined'.format(name))
     return f
 
   def address(self):
