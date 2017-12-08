@@ -400,25 +400,11 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       Map()
     }
 
-    private def getGUIDsForProject(project: ProjectEditor): List[java.util.UUID] = {
-      List() ++
-        Option(project.vertexSet).map(_.gUID) ++
-        Option(project.edgeBundle).map(_.gUID) ++
-        project.scalars.map { case (_, a) => a.gUID }.toList ++
-        project.vertexAttributes.map { case (_, a) => a.gUID }.toList ++
-        project.edgeAttributes.map { case (_, a) => a.gUID }.toList ++
-        project.segmentations.flatMap(s => getGUIDsForSegment(s))
-    }
-
-    private def getGUIDsForSegment(segment: SegmentationEditor): List[java.util.UUID] = {
-      getGUIDsForProject(segment) ++ Option(segment.belongsTo).map(_.gUID)
-    }
-
     override def getGUIDs() = {
       val input = context.inputs("input")
       input.kind match {
         case BoxOutputKind.Project =>
-          getGUIDsForProject(projectInput("input"))
+          projectInput("input").allEntityGUIDs
         case BoxOutputKind.Table =>
           List(tableInput("input").gUID)
         case _ => throw new AssertionError(

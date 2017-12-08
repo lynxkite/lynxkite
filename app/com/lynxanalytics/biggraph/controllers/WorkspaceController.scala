@@ -280,7 +280,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     getOperation(user, request).getInputTables()
   }
 
-  private def getOperation(user: serving.User, request: GetOperationMetaRequest): Operation = {
+  def getOperation(user: serving.User, request: GetOperationMetaRequest): Operation = {
     val ref = ResolvedWorkspaceReference(user, request.workspace)
     val ctx = ref.ws.context(user, ops, ref.params)
     ctx.getOperation(request.box)
@@ -342,14 +342,5 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       }
     }
     GetInstrumentedStateResponse(opMetas, instrumentStates)
-  }
-
-  def opForBox(user: serving.User, box: Box, ref: WorkspaceReference): Operation = {
-    val wsRef = ResolvedWorkspaceReference(user, ref)
-    val states = wsRef.ws.context(user, ops, wsRef.params).allStates
-    val inputs = box.inputs.map {
-      case (key, input) => key -> states(input)
-    }
-    ops.opForBox(user, box, inputs, wsRef.params)
   }
 }
