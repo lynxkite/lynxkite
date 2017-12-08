@@ -29,6 +29,33 @@ if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
 
 
+class TableSnapshotSequence:
+  '''A snapshot sequence representing a list of tables in LynxKite.
+  '''
+
+  def __init__(self, location=None, date_format=None):
+    self._location = location
+    self._date_format = date_format
+
+  def tables(self, lk, from_date, to_date):
+    t = []
+    self._tables_for_dir(lk, from_date, to_date, self._location, t)
+    return t
+
+  def _tables_for_dir(self, lk, from_date, to_date, root_dir, t):
+    entries = lk.list_dir(root_dir)
+    sorted_entries = sorted(entries, key=lambda e: e.name)
+    for entry in sorted_entries:
+      date = entry.name[len(self._location) + 1:]
+      if date >= from_date[:len(date)] and date <= to_date[:len(date)]:
+        if len(date) == len(self._date_format):
+          assert entry.objectType == 'snapshot'
+          t.append(entry)
+        else:
+          assert entry.objectType == 'directory'
+          self._tables_for_dir(lk, from_date, to_date, entry.name, t)
+
+
 class LynxKite:
   '''A connection to a LynxKite instance.
 

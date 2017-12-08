@@ -39,7 +39,7 @@ object RemoteAPIProtocol {
       path: String)
   case class PrefixedPathResult(
       exists: Boolean, resolved: String)
-  case class ListElement(name: String, checkpoint: String, objectType: String)
+  case class ListElement(name: String, checkpoint: String, objectType: String, icon: String)
   case class ListResult(entries: List[ListElement])
 
   import WorkspaceJsonFormatters._
@@ -177,12 +177,13 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   def list(user: User, request: EntryListRequest) = {
     val list = bigGraphController.entryList(user, request)
     ListResult(
-      list.directories.map(d => ListElement(d, "", "directory")) ++
+      list.directories.map(d => ListElement(d, "", "directory", "")) ++
         list.objects.map(e =>
           ListElement(
             e.name,
             controllers.DirectoryEntry.fromName(e.name).asObjectFrame.checkpoint,
-            e.objectType)))
+            e.objectType,
+            e.icon)))
   }
 
   def cleanFileSystem(user: User, request: Empty) = {
