@@ -14,10 +14,9 @@ angular.module('biggraph').directive('computeParameter', function(util) {
         scope.disabled = true;
         scope.computed = false;
         scope.error = undefined;
-        var box = angular.copy(scope.box.instance);
         util.get('/ajax/getComputeBoxResult', {
-          box: box,
-          ref: scope.box.workspace.ref(),
+          workspace: scope.box.workspace.ref(),
+          box: scope.box.instance.id,
         }).then(function success() {
           scope.computed = true;
         }, function error(error) {

@@ -316,7 +316,6 @@ object FrontendJson {
   implicit val wInstrumentState = json.Json.writes[InstrumentState]
   implicit val wGetInstrumentedStateResponse = json.Json.writes[GetInstrumentedStateResponse]
   implicit val rComputeBoxRequest = json.Json.reads[ComputeBoxRequest]
-  implicit val wComputeBoxResponse = json.Json.writes[ComputeBoxResponse]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val rSQLTableBrowserNodeRequest = json.Json.reads[TableBrowserNodeRequest]
@@ -492,8 +491,8 @@ object ProductionJsonServer extends JsonServer {
   def model = jsonFuture(drawingController.getModel)
   def getComputeBoxResult = jsonFuture(getComputeBoxResultExec)
   def getComputeBoxResultExec(
-    user: serving.User, request: ComputeBoxRequest): Future[ComputeBoxResponse] = {
-    val op = workspaceController.opForBox(user, request.box, request.ref).asInstanceOf[ComputeBoxOperation]
+    user: serving.User, request: GetOperationMetaRequest): Future[Unit] = {
+    val op = workspaceController.getOperation(user, request).asInstanceOf[ComputeBoxOperation]
     drawingController.getComputeBoxResult(op)
   }
 
