@@ -56,6 +56,138 @@ class TableSnapshotSequence:
           self._tables_for_dir(lk, from_date, to_date, entry.name, t)
 
 
+def _python_name(name):
+  '''Transforms a space separated string into a camelCase format.
+
+  The operation "Use base project as segmentation" will be called as
+  ``useBaseProjectAsSegmentation``. Dashes are ommitted.
+  '''
+  name = ''.join([c if c.isalnum() or c == ' ' else '' for c in name])
+  return ''.join(
+      [x.lower() for x in name.split()][:1] +
+      [x.lower().capitalize() for x in name.split()][1:])
+
+
+_anchor_box = {
+    'id': 'anchor',
+    'operationId': 'Anchor',
+    'parameters': {},
+    'x': 0, 'y': 0,
+    'inputs': {},
+    'parametricParameters': {}
+}
+
+
+class State:
+  '''Represents a named output plug of a box.
+
+  It can recursively store the boxes which are connected to the input plugs of
+  the box of this state.
+  '''
+
+  def __init__(self, box_catalog, name, output, parameters={}):
+    self.bc = box_catalog
+    self.output_plug_name = output
+    self.box = Box(self.bc, name, parameters)
+
+  def to_json(self):
+    ''' Converts the workspace segment ending in this state into json format
+    which can be used in ``lk.run()``
+    '''
+    box_counter = {key: 0 for key in self.bc.box_names()}
+    generated = []
+
+    def generate(state):
+      for input_state in list(state.box.inputs.values()):
+        if input_state:
+          generate(input_state)
+      state.box.id = state.box.operationId.replace(
+          ' ', '-') + '_{}'.format(box_counter[state.box.name])
+      generated.append(state.box.to_json())
+      box_counter[state.box.name] = box_counter[state.box.name] + 1
+
+    generate(self)
+    return generated + [_anchor_box]
+
+  def __getattr__(self, name):
+
+    def f(**kwargs):
+      inputs = self.bc.inputs(name)
+      # This chaining syntax only allowed for boxes with exactly one input.
+      assert len(inputs) > 0, '{} does not have an input'.format(name)
+      assert len(inputs) < 2, '{} has more than one input'.format(name)
+      plug = inputs[0]
+      output_plug = self.bc.outputs(name)[0]  # Only single output for now.
+      s = State(self.bc, name, output_plug, kwargs)
+      s.box.inputs[plug] = self
+      return s
+
+    if not name in self.bc.box_names():
+      raise AttributeError('{} is not defined'.format(name))
+    return f
+
+  def __dir__(self):
+    return super().__dir__() + self.bc.box_names()
+
+
+class Box:
+  '''Represents a box in a workspace segment.
+
+  It can store workspace segments, connected to its input plugs.
+  '''
+
+  def __init__(self, box_catalog, name, parameters):
+    self.bc = box_catalog
+    self.name = name
+    self.operationId = self.bc.operation_id(name)
+    input_names = self.bc.inputs(name)
+    self.inputs = {key: None for key in input_names}  # Input states will be connected here.
+    self.parameters = parameters
+    self.id = None  # Computed at workspace creation time
+    self.x = 0  # Updated at workspace creation time
+    self.y = 0  # Updated at workspace creation time
+    self.parametric_parameters = {}  # TODO: implement it (separate simple and parametric)
+
+  def to_json(self):
+    '''Creates the json representation of a box in a workspace.
+
+    The inputs have to be connected, and all the attributes have to be
+    defined when we call this.
+    '''
+    def input_state(state):
+      return {'boxId': state.box.id, 'id': state.output_plug_name}
+
+    return {
+        'id': self.id,
+        'operationId': self.operationId,
+        'parameters': self.parameters,
+        'x': self.x, 'y': self.y,
+        'inputs': {plug: input_state(state) for plug, state in self.inputs.items()},
+        'parametricParameters': self.parametric_parameters}
+
+
+class BoxCatalog:
+  '''Stores box metadata.
+
+  Offers utility functions to query box metadata information.
+  '''
+
+  def __init__(self, boxes):
+    self.bc = boxes  # Dictionary, the keys are the Python names of the boxes.
+
+  def inputs(self, name):
+    return self.bc[name].inputs
+
+  def outputs(self, name):
+    return self.bc[name].outputs
+
+  def operation_id(self, name):
+    return self.bc[name].operationId
+
+  def box_names(self):
+    return list(self.bc.keys())
+
+
 class LynxKite:
   '''A connection to a LynxKite instance.
 
@@ -77,11 +209,35 @@ class LynxKite:
     self._oauth_token = oauth_token
     self._session = None
     self._operation_names = None
+    self._box_catalog = None
 
   def operation_names(self):
     if not self._operation_names:
-      self._operation_names = self._send('/remote/getOperationNames').names
+      self._operation_names = self.box_catalog().box_names()
     return self._operation_names
+
+  def box_catalog(self):
+    if not self._box_catalog:
+      bc = self._ask('/ajax/boxCatalog').boxes
+      boxes = {}
+      for box in bc:
+        if box.categoryId != 'Custom boxes':
+          boxes[_python_name(box.operationId)] = box
+      self._box_catalog = BoxCatalog(boxes)
+    return self._box_catalog
+
+  def __dir__(self):
+    return super().__dir__() + self.operation_names()
+
+  def __getattr__(self, name):
+
+    def f(**kwargs):
+      output_plug = self.box_catalog().outputs(name)[0]  # Only single output for now.
+      return State(self.box_catalog(), name, output_plug, kwargs)
+
+    if not name in self.operation_names():
+      raise AttributeError('{} is not defined'.format(name))
+    return f
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
