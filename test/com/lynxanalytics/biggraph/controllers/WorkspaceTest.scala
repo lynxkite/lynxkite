@@ -464,4 +464,19 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(project.isError)
     }
   }
+
+  test("workspace reduction") {
+    val eg1 = Box("eg1", "Create example graph", Map(), 0, 0, Map())
+    val eg2 = Box("eg2", "Create example graph", Map(), 0, 0, Map())
+    val pr = Box(
+      "pr", "Compute PageRank", Map(
+        "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
+        "direction" -> "all edges"),
+      0, 100, Map("project" -> eg1.output("project")),
+      Map("iterations" -> "$x"))
+    val ws = Workspace.from(eg1, eg2, pr)
+    val ctx = context(ws)
+    assert(ctx.ws.boxes.size == 4)
+    assert(ctx.reduced(pr).ws.boxes.size == 3)
+  }
 }
