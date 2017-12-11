@@ -475,6 +475,11 @@ class LynxKite:
         '/ajax/createSnapshot',
         dict(name=path, id=stateId))
 
+  def create_dir(self, path, privacy='public-read'):
+    return self._send(
+        '/ajax/createDirectory',
+        dict(name=path, privacy=privacy))
+
 
 class LynxException(Exception):
   '''Raised when LynxKite indicates that an error has occured while processing a command.'''
