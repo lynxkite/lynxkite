@@ -11,8 +11,8 @@ class TestSnapshotSequence(unittest.TestCase):
 
     # TODO: Set up test dirs and snapshots.
 
-    tss = lynx.kite.TableSnapshotSequence('test_snapshot_sequence/1', 'yyyy/MM')
-    tables = tss.tables(lk, '2017/11', '2017/12')
+    tss = lynx.kite.TableSnapshotSequence('test_snapshot_sequence/1')
+    tables = tss.tables_monthly(lk, '2017/11', '2017/12')
     self.assertEqual(len(tables), 2)
     self.assertEqual('test_snapshot_sequence/1/2017/11', tables[0].name)
     self.assertEqual('test_snapshot_sequence/1/2017/12', tables[1].name)

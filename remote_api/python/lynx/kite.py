@@ -33,27 +33,67 @@ class TableSnapshotSequence:
   '''A snapshot sequence representing a list of tables in LynxKite.
   '''
 
-  def __init__(self, location=None, date_format=None):
+  def __init__(self, location=None):
     self._location = location
-    self._date_format = date_format
 
-  def tables(self, lk, from_date, to_date):
+  def _entries_yearly(self, lk, from_date, to_date, object_type):
+    from_year = int(from_date[:4])
+    to_year = int(to_date[:4])
+    years = [str(year) for year in range(from_year, to_year + 1)]
+    return self._entries_in_dir(lk, self._location, years, object_type)
+
+  def tables_yearly(self, lk, from_date, to_date):
+    return self._entries_yearly(lk, from_date, to_date, 'snapshot')
+
+  def _entries_monthly(self, lk, from_date, to_date, object_type):
     t = []
-    self._tables_for_dir(lk, from_date, to_date, self._location, t)
+    entry_years = self._entries_yearly(lk, from_date, to_date, 'directory')
+    from_yearmonth = from_date[:7]
+    to_yearmonth = to_date[:7]
+    for entry_year in entry_years:
+      expected_months = []
+      year = entry_year.name[-4:]
+      for m in range(1, 13):
+        month = '%02d' % m
+        date = year + '/' + month
+        if date >= from_yearmonth and date <= to_yearmonth:
+          expected_months.append(month)
+      for entry in self._entries_in_dir(
+              lk, self._location + '/' + year, expected_months, object_type):
+        t.append(entry)
     return t
 
-  def _tables_for_dir(self, lk, from_date, to_date, root_dir, t):
+  def tables_monthly(self, lk, from_date, to_date):
+    return self._entries_monthly(lk, from_date, to_date, 'snapshot')
+
+  def tables_daily(self, lk, from_date, to_date):
+    t = []
+    entry_months = self._entries_monthly(lk, from_date, to_date, 'directory')
+    for entry_month in entry_months:
+      expected_days = []
+      yearmonth = entry_month.name[-7:]
+      for d in calendar.itermonthdates(int(yearmonth[:4]), int(yearmonth[5:])):
+        day = '%02d' % d
+        date = yearmonth + '/' + day
+        if date >= from_date and date <= to_date:
+          expected_days.append(day)
+      for entry in self._entries_in_dir(
+              lk, self._location + '/' + yearmonth, expected_days, 'snapshot'):
+        t.append(entry)
+    return t
+
+  def _entries_in_dir(self, lk, root_dir, expected_names, expected_object_type):
     entries = lk.list_dir(root_dir)
     sorted_entries = sorted(entries, key=lambda e: e.name)
-    for entry in sorted_entries:
-      date = entry.name[len(self._location) + 1:]
-      if date >= from_date[:len(date)] and date <= to_date[:len(date)]:
-        if len(date) == len(self._date_format):
-          assert entry.objectType == 'snapshot'
-          t.append(entry)
-        else:
-          assert entry.objectType == 'directory'
-          self._tables_for_dir(lk, from_date, to_date, entry.name, t)
+    entry_map = {e.name[e.name.rfind('/') + 1:]: e for e in sorted_entries}
+    t = []
+    for name in expected_names:
+      assert name in entry_map, "missing entry %s/%s" % (root_dir, name)
+      entry = entry_map[name]
+      assert entry.objectType == expected_object_type, "expected an entry of %s, but got %s" % (
+          expected_object_type, entry.objectType)
+      t.append(entry)
+    return t
 
 
 def _python_name(name):
