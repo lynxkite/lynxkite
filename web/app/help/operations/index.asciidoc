@@ -191,6 +191,8 @@ include::comment.asciidoc[]
 
 include::compare-segmentation-edges.asciidoc[]
 
+include::compute-box.asciidoc[]
+
 include::compute-centrality.asciidoc[]
 
 include::compute-clustering-coefficient.asciidoc[]
