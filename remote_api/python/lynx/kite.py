@@ -51,6 +51,25 @@ _anchor_box = {
 }
 
 
+def state_to_json(state):
+  ''' Converts the workspace segment ending in this state into json format
+  which can be used in ``lk.run()``
+  '''
+  box_counter = {key: 0 for key in state.box.bc.box_names()}
+  generated = []
+
+  def generate(state):
+    for input_state in list(state.box.inputs.values()):
+      generate(input_state)
+    state.box.id = state.box.operationId.replace(
+        ' ', '-') + '_{}'.format(box_counter[state.box.name])
+    generated.append(state.box.to_json())
+    box_counter[state.box.name] = box_counter[state.box.name] + 1
+
+  generate(state)
+  return generated + [_anchor_box]
+
+
 class State:
   '''Represents a named output plug of a box.
 
@@ -58,49 +77,36 @@ class State:
   the box of this state.
   '''
 
-  def __init__(self, box_catalog, name, output, parameters={}):
-    self.bc = box_catalog
-    self.output_plug_name = output
-    self.box = Box(self.bc, name, parameters)
-
-  def to_json(self):
-    ''' Converts the workspace segment ending in this state into json format
-    which can be used in ``lk.run()``
-    '''
-    box_counter = {key: 0 for key in self.bc.box_names()}
-    generated = []
-
-    def generate(state):
-      for input_state in list(state.box.inputs.values()):
-        if input_state:
-          generate(input_state)
-      state.box.id = state.box.operationId.replace(
-          ' ', '-') + '_{}'.format(box_counter[state.box.name])
-      generated.append(state.box.to_json())
-      box_counter[state.box.name] = box_counter[state.box.name] + 1
-
-    generate(self)
-    return generated + [_anchor_box]
+  def __init__(self, box, output_plug_name):
+    self.output_plug_name = output_plug_name
+    self.box = box
 
   def __getattr__(self, name):
 
     def f(**kwargs):
-      inputs = self.bc.inputs(name)
+      inputs = self.box.bc.inputs(name)
       # This chaining syntax only allowed for boxes with exactly one input.
       assert len(inputs) > 0, '{} does not have an input'.format(name)
       assert len(inputs) < 2, '{} has more than one input'.format(name)
-      plug = inputs[0]
-      output_plug = self.bc.outputs(name)[0]  # Only single output for now.
-      s = State(self.bc, name, output_plug, kwargs)
-      s.box.inputs[plug] = self
-      return s
+      [input_name] = inputs
+      return new_box(
+          self.box.bc, name, inputs={input_name: self}, parameters=kwargs)
 
     if not name in self.bc.box_names():
       raise AttributeError('{} is not defined'.format(name))
     return f
 
   def __dir__(self):
-    return super().__dir__() + self.bc.box_names()
+    return super().__dir__() + self.box.bc.box_names()
+
+
+def new_box(bc, name, inputs, parameters):
+  outputs = bc.outputs(name)
+  if len(outputs) == 1:
+    # Special case: single output boxes function as state as well.
+    return SingleOutputBox(bc, name, outputs[0], inputs, parameters)
+  else:
+    return Box(bc, name, inputs, parameters)
 
 
 class Box:
@@ -109,17 +115,22 @@ class Box:
   It can store workspace segments, connected to its input plugs.
   '''
 
-  def __init__(self, box_catalog, name, parameters):
+  def __init__(self, box_catalog, name, inputs, parameters):
     self.bc = box_catalog
     self.name = name
     self.operationId = self.bc.operation_id(name)
-    input_names = self.bc.inputs(name)
-    self.inputs = {key: None for key in input_names}  # Input states will be connected here.
+    exp_inputs = set(self.bc.inputs(name))
+    got_inputs = inputs.keys()
+    assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
+        got_inputs, exp_inputs)
+    self.inputs = inputs
     self.parameters = parameters
+    # TODO: I want this to become an immutable class. Solve this without state.
     self.id = None  # Computed at workspace creation time
     self.x = 0  # Updated at workspace creation time
     self.y = 0  # Updated at workspace creation time
     self.parametric_parameters = {}  # TODO: implement it (separate simple and parametric)
+    self.outputs = set(self.bc.outputs(name))
 
   def to_json(self):
     '''Creates the json representation of a box in a workspace.
@@ -137,6 +148,18 @@ class Box:
         'x': self.x, 'y': self.y,
         'inputs': {plug: input_state(state) for plug, state in self.inputs.items()},
         'parametricParameters': self.parametric_parameters}
+
+  def __getitem__(self, index):
+    if index not in self.outputs:
+      raise KeyError(index)
+    return State(self, index)
+
+
+class SingleOutputBox(Box, State):
+
+  def __init__(self, box_catalog, name, output_name, inputs, parameters):
+    Box.__init__(self, box_catalog, name, inputs, parameters)
+    State.__init__(self, self, output_name)
 
 
 class BoxCatalog:
@@ -204,9 +227,9 @@ class LynxKite:
 
   def __getattr__(self, name):
 
-    def f(**kwargs):
-      output_plug = self.box_catalog().outputs(name)[0]  # Only single output for now.
-      return State(self.box_catalog(), name, output_plug, kwargs)
+    def f(*args, **kwargs):
+      inputs = dict(zip(self.box_catalog().inputs(name), args))
+      return new_box(self.box_catalog(), name, inputs=inputs, parameters=kwargs)
 
     if not name in self.operation_names():
       raise AttributeError('{} is not defined'.format(name))
@@ -354,6 +377,10 @@ class LynxKite:
     res = self._send(
         '/ajax/runWorkspace', dict(workspace=dict(boxes=boxes), parameters=parameters))
     return {(o.boxOutput.boxId, o.boxOutput.id): o for o in res.outputs}
+
+  def get_state_id(self, state):
+    return self.run(state_to_json(state))[
+        state.box.id, state.output_plug_name].stateId
 
   def get_scalar(self, guid):
     return self._ask('/ajax/scalarValue', dict(scalarId=guid))
