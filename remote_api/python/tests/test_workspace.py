@@ -125,3 +125,10 @@ class TestWorkspace(unittest.TestCase):
     lk.save_snapshot('save_snapshot_test', state)
     entries = lk.list_dir('')
     self.assertTrue('save_snapshot_test' in [entry.name for entry in entries])
+
+  def test_create_dir(self):
+    lk = lynx.kite.LynxKite()
+    lk.create_dir('my_dir')
+    lk.create_dir('my_dir/sub_dir')
+    entries = lk.list_dir('my_dir')
+    self.assertEqual('my_dir/sub_dir', entries[0].name)
