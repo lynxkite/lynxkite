@@ -61,8 +61,9 @@ def state_to_json(state):
   def generate(state):
     for input_state in list(state.box.inputs.values()):
       generate(input_state)
-    state.box.id = state.box.operationId.replace(
-        ' ', '-') + '_{}'.format(box_counter[state.box.name])
+    state.box.id = '{}_{}'.format(
+        state.box.operationId.replace(' ', '-'),
+        box_counter[state.box.name])
     generated.append(state.box.to_json())
     box_counter[state.box.name] = box_counter[state.box.name] + 1
 
