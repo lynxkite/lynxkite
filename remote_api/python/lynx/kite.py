@@ -403,6 +403,11 @@ class LynxKite:
         '/ajax/setWorkspace',
         dict(reference=dict(top=path, customBoxStack=[]), workspace=dict(boxes=boxes)))
 
+  def save_snapshot(self, path, stateId):
+    return self._send(
+        '/ajax/createSnapshot',
+        dict(name=path, id=stateId))
+
 
 class LynxException(Exception):
   '''Raised when LynxKite indicates that an error has occured while processing a command.'''
