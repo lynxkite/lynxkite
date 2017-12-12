@@ -40,6 +40,7 @@ class TestSnapshotSequence(unittest.TestCase):
     lk.create_dir('test_snapshot_sequence/1')
     outputs = lk.run(json.loads(ANCHOR_EXAMPLE_AND_SQL))
     state = outputs['SQL1_1', 'table'].stateId
+
     lk.save_snapshot('test_snapshot_sequence/1/2010', state)
     lk.save_snapshot('test_snapshot_sequence/1/2011', state)
     lk.save_snapshot('test_snapshot_sequence/1/2012', state)
