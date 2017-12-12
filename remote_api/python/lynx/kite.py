@@ -34,9 +34,9 @@ class TableSnapshotSequence:
   '''A snapshot sequence representing a list of tables in LynxKite.
   '''
 
-  def __init__(self, location=None):
+  def __init__(self, location, frequency):
     self._location = location
-    self._cal = calendar.Calendar()
+    self._frequency = frequency
 
   def _entries_yearly(self, lk, from_date, to_date, object_type):
     from_year = int(from_date[:4])
@@ -44,7 +44,7 @@ class TableSnapshotSequence:
     years = [str(year) for year in range(from_year, to_year + 1)]
     return self._entries_in_dir(lk, self._location, years, object_type)
 
-  def tables_yearly(self, lk, from_date, to_date):
+  def _snapshots_yearly(self, lk, from_date, to_date):
     return self._entries_yearly(lk, from_date, to_date, 'snapshot')
 
   def _entries_monthly(self, lk, from_date, to_date, object_type):
@@ -65,10 +65,10 @@ class TableSnapshotSequence:
         t.append(entry)
     return t
 
-  def tables_monthly(self, lk, from_date, to_date):
+  def _snapshots_monthly(self, lk, from_date, to_date):
     return self._entries_monthly(lk, from_date, to_date, 'snapshot')
 
-  def tables_daily(self, lk, from_date, to_date):
+  def _snapshots_daily(self, lk, from_date, to_date):
     t = []
     entry_months = self._entries_monthly(lk, from_date, to_date, 'directory')
     for entry_month in entry_months:
@@ -98,7 +98,18 @@ class TableSnapshotSequence:
       t.append(entry)
     return t
 
-  def table(self, lk, entries):
+  def snapshots(self, lk, from_date, to_date):
+    if self._frequency == 'daily':
+      return self._snapshots_daily(lk, from_date, to_date)
+    elif self._frequency == 'monthly':
+      return self._snapshots_monthly(lk, from_date, to_date)
+    elif self._frequency == 'yearly':
+      return self._snapshots_yearly(lk, from_date, to_date)
+    else:
+      raise Exception('Frequency has to be daily, monthly or yearly.')
+
+  def table(self, lk, from_date, to_date):
+    entries = self.snapshots(lk, from_date, to_date)
     chain = None
     for entry in entries:
       snapshot = lk.importSnapshot(path=entry.name)
