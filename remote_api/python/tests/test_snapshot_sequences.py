@@ -37,6 +37,13 @@ class TestSnapshotSequence(unittest.TestCase):
     for path in paths:
       lk.save_snapshot('test_snapshot_sequence/' + path, state)
 
+  def _table_count(self, lk, tss, tables):
+    sequence = tss.table(lk, tables)
+    state = sequence.sql1(sql='select count(1) from input')
+    table_state = lk.get_state_id(state)
+    table = lk.get_table(table_state)
+    return table.data[0][0].double
+
   def test_tables_yearly(self):
     lk = lynx.kite.LynxKite()
 
@@ -55,6 +62,7 @@ class TestSnapshotSequence(unittest.TestCase):
     self.assertEqual('test_snapshot_sequence/1/2011', tables[1].name)
     self.assertEqual('table', tables[0].icon)
     self.assertEqual('table', tables[1].icon)
+    self.assertEqual(8.0, self._table_count(lk, tss, tables))
 
     self._save_snapshots(lk, ['2/2015/' + '%02d' % m for m in range(1, 13)], state)
     self._save_snapshots(lk, ['2/2016/' + '%02d' % m for m in range(1, 13)], state)
@@ -66,6 +74,7 @@ class TestSnapshotSequence(unittest.TestCase):
     self.assertEqual('test_snapshot_sequence/2/2016/10', tables[17].name)
     self.assertEqual('table', tables[0].icon)
     self.assertEqual('table', tables[1].icon)
+    self.assertEqual(72.0, self._table_count(lk, tss, tables))
 
     self._save_snapshots(lk, ['3/2017/03/' + '%02d' % d for d in range(1, 32)], state)
     self._save_snapshots(lk, ['3/2017/04/' + '%02d' % d for d in range(1, 31)], state)
@@ -77,3 +86,4 @@ class TestSnapshotSequence(unittest.TestCase):
     self.assertEqual('test_snapshot_sequence/3/2017/04/15', tables[31].name)
     self.assertEqual('table', tables[0].icon)
     self.assertEqual('table', tables[1].icon)
+    self.assertEqual(128.0, self._table_count(lk, tss, tables))
