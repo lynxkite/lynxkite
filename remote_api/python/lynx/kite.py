@@ -98,6 +98,17 @@ class TableSnapshotSequence:
       t.append(entry)
     return t
 
+  def table(self, lk, entries):
+    chain = None
+    for entry in entries:
+      snapshot = lk.importSnapshot(path=entry.name)
+      if chain:
+        chain = lk.sql2(
+            chain, snapshot, sql='select * from one union all select * from two')
+      else:
+        chain = snapshot.sql1(sql='select * from input')
+    return chain
+
 
 def _python_name(name):
   '''Transforms a space separated string into a camelCase format.
