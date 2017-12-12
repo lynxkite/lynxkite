@@ -117,3 +117,18 @@ class TestWorkspace(unittest.TestCase):
   def test_save_workspace(self):
     lk = lynx.kite.LynxKite()
     lk.save_workspace('set_workspace_test', json.loads(ANCHOR_AND_EXAMPLE))
+
+  def test_save_snapshot(self):
+    lk = lynx.kite.LynxKite()
+    outputs = lk.run(json.loads(ANCHOR_AND_EXAMPLE))
+    state = outputs['eg0', 'project'].stateId
+    lk.save_snapshot('save_snapshot_test', state)
+    entries = lk.list_dir('')
+    self.assertTrue('save_snapshot_test' in [entry.name for entry in entries])
+
+  def test_create_dir(self):
+    lk = lynx.kite.LynxKite()
+    lk.create_dir('my_dir')
+    lk.create_dir('my_dir/sub_dir')
+    entries = lk.list_dir('my_dir')
+    self.assertEqual('my_dir/sub_dir', entries[0].name)
