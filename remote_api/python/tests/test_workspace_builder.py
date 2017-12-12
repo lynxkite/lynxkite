@@ -46,6 +46,16 @@ class TestWorkspaceBuilder(unittest.TestCase):
     self.assertEqual(scalars['!vertex_count'].double, 4.0)
     self.assertEqual(scalars['!edge_count'].double, 3.0)
 
+  def test_pedestrian_custom_box(self):
+    lk = lynx.kite.LynxKite()
+    i = lk.input(name='graph')
+    o = i.sql1(sql='select name from vertices').output(name='vtable')
+    ws = lynx.kite.Workspace('allvs', [o], [i])
+    table_state = lk.get_state_id(ws(lk.createExampleGraph()))
+    table = lk.get_table(table_state)
+    values = [row[0].string for row in table.data]
+    self.assertEqual(values, ['Adam', 'Eve', 'Bob', 'Isolated Joe'])
+
   def test_wrong_chain_with_multiple_inputs(self):
     lk = lynx.kite.LynxKite()
     with self.assertRaises(Exception) as context:

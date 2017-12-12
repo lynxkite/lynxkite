@@ -22,6 +22,7 @@ import copy
 import json
 import os
 import queue
+import random
 import requests
 import sys
 import types
@@ -85,13 +86,16 @@ class State:
     return "Output {} of box {}".format(self.output_plug_name, self.box)
 
 
-def new_box(bc, name, inputs, parameters):
-  outputs = bc.outputs(name)
+def new_box(bc, operation, inputs, parameters):
+  if isinstance(operation, str):
+    outputs = bc.outputs(operation)
+  else:
+    outputs = operation.outputs()
   if len(outputs) == 1:
     # Special case: single output boxes function as state as well.
-    return SingleOutputBox(bc, name, outputs[0], inputs, parameters)
+    return SingleOutputBox(bc, operation, outputs[0], inputs, parameters)
   else:
-    return Box(bc, name, inputs, parameters)
+    return Box(bc, operation, inputs, parameters)
 
 
 class Box:
@@ -100,20 +104,24 @@ class Box:
   It can store workspace segments, connected to its input plugs.
   '''
 
-  def __init__(self, box_catalog, name, inputs, parameters):
+  def __init__(self, box_catalog, operation, inputs, parameters):
     self.bc = box_catalog
-    self.name = name
-    self.operationId = self.bc.operation_id(name)
-    exp_inputs = set(self.bc.inputs(name))
+    self.operation = operation
+    if isinstance(operation, str):
+      exp_inputs = set(self.bc.inputs(operation))
+      self.outputs = set(self.bc.outputs(operation))
+    else:
+      assert isinstance(operation, Workspace), "{} is not string or workspace".format(operation)
+      exp_inputs = set(operation.inputs())
+      self.outputs = set(operation.outputs())
     got_inputs = inputs.keys()
     assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
         got_inputs, exp_inputs)
     self.inputs = inputs
     self.parameters = parameters
     self.parametric_parameters = {}  # TODO: implement it (separate simple and parametric)
-    self.outputs = set(self.bc.outputs(name))
 
-  def to_json(self, id_resolver):
+  def to_json(self, id_resolver, workspace_root):
     '''Creates the json representation of a box in a workspace.
 
     The inputs have to be connected, and all the attributes have to be
@@ -122,9 +130,13 @@ class Box:
     def input_state(state):
       return {'boxId': id_resolver(state.box), 'id': state.output_plug_name}
 
+    if isinstance(self.operation, str):
+      operationId = self.bc.operation_id(self.operation)
+    else:
+      operationId = workspace_root + self.operation.name()
     return {
         'id': id_resolver(self),
-        'operationId': self.operationId,
+        'operationId': operationId,
         'parameters': self.parameters,
         'x': 0, 'y': 0,
         'inputs': {plug: input_state(state) for plug, state in self.inputs.items()},
@@ -144,8 +156,8 @@ class Box:
 
 class SingleOutputBox(Box, State):
 
-  def __init__(self, box_catalog, name, output_name, inputs, parameters):
-    Box.__init__(self, box_catalog, name, inputs, parameters)
+  def __init__(self, box_catalog, operation, output_name, inputs, parameters):
+    Box.__init__(self, box_catalog, operation, inputs, parameters)
     State.__init__(self, self, output_name)
 
 
@@ -174,11 +186,19 @@ class BoxCatalog:
 class Workspace:
   '''Immutable class representing a LynxKite workspace'''
 
-  def __init__(self, terminal_boxes):
+  def __init__(self, name, terminal_boxes, input_boxes=[]):
+    self._name = name
     self._all_boxes = set()
     self._box_ids = dict()
     self._next_id = 0
+    self._inputs = [inp.parameters['name'] for inp in input_boxes]
+    self._outputs = [
+        outp.parameters['name'] for outp in terminal_boxes
+        if outp.operation == 'output']
+    self._bc = terminal_boxes[0].bc
 
+    # We enumerate and add all upsteam boxes for terminal_boxes via a simple
+    # BFS.
     to_process = queue.Queue()
     for box in terminal_boxes:
       to_process.put(box)
@@ -199,9 +219,28 @@ class Workspace:
   def id_of(self, box):
     return self._box_ids[box]
 
-  def to_json(self):
-    normal_boxes = [box.to_json(self.id_of) for box in self._all_boxes]
+  def to_json(self, workspace_root):
+    normal_boxes = [
+        box.to_json(self.id_of, workspace_root) for box in self._all_boxes]
     return [_anchor_box] + normal_boxes
+
+  def required_workspaces(self):
+    return [
+        box.operation for box in self._all_boxes
+        if isinstance(box.operation, Workspace)]
+
+  def inputs(self):
+    return list(self._inputs)
+
+  def outputs(self):
+    return list(self._outputs)
+
+  def name(self):
+    return self._name
+
+  def __call__(self, *args, **kwargs):
+    inputs = dict(zip(self.inputs(), args))
+    return new_box(self._bc, self, inputs=inputs, parameters=kwargs)
 
 
 class LynxKite:
@@ -398,9 +437,28 @@ class LynxKite:
         '/ajax/runWorkspace', dict(workspace=dict(boxes=boxes), parameters=parameters))
     return {(o.boxOutput.boxId, o.boxOutput.id): o for o in res.outputs}
 
+  def run_workspace(self, ws, save_under_root=None):
+    ws_root = save_under_root
+    if ws_root is None:
+      ws_root = 'tmp_{}/'.format(''.join(random.choice('0123456789ABCDEF') for i in range(16)))
+    needed_ws = set()
+    ws_queue = queue.Queue()
+    ws_queue.put(ws)
+    while not ws_queue.empty():
+      nws = ws_queue.get()
+      for rws in nws.required_workspaces():
+        if rws not in needed_ws:
+          needed_ws.add(rws)
+          ws_queue.put(rws)
+    for rws in needed_ws:
+      self.save_workspace(ws_root + rws.name(), rws.to_json(ws_root))
+    return self.run(ws.to_json(ws_root))
+    # TODO: clean up saved workspaces if save_under_root is not set. And
+    # also save main workspace if it is set.
+
   def get_state_id(self, state):
-    ws = Workspace([state.box])
-    workspace_outputs = self.run(ws.to_json())
+    ws = Workspace('Anonymous', [state.box])
+    workspace_outputs = self.run_workspace(ws)
     return workspace_outputs[
         ws.id_of(state.box), state.output_plug_name].stateId
 
