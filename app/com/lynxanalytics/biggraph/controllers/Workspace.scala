@@ -191,8 +191,8 @@ case class WorkspaceExecutionContext(
         getUpstream(inputs -- visited, inputs ++ visited)
       }
     }
-    val upstreamBoxes = getUpstream(Set(box), Set(box)).toList
-    this.copy(ws = Workspace(ws.anchor +: upstreamBoxes))
+    val upstreamBoxes = getUpstream(Set(box), Set(box, ws.anchor)).toList
+    this.copy(ws = Workspace(upstreamBoxes))
   }
 }
 
