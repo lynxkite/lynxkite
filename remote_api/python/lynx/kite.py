@@ -347,9 +347,9 @@ class LynxKite:
     r = self._send('/remote/getParquetMetadata', dict(path=path))
     return r
 
-  def remove_name(self, name):
+  def remove_name(self, name, force=False):
     '''Removes an object named ``name``.'''
-    self._send('/remote/removeName', dict(name=name))
+    self._send('/remote/removeName', dict(name=name, force=force))
 
   def change_acl(self, file, readACL, writeACL):
     '''Sets the read and write access control list for a path in LynxKite.'''
