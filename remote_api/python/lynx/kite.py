@@ -24,6 +24,7 @@ import os
 import requests
 import sys
 import types
+import calendar
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
@@ -35,6 +36,7 @@ class TableSnapshotSequence:
 
   def __init__(self, location=None):
     self._location = location
+    self._cal = calendar.Calendar()
 
   def _entries_yearly(self, lk, from_date, to_date, object_type):
     from_year = int(from_date[:4])
@@ -72,7 +74,8 @@ class TableSnapshotSequence:
     for entry_month in entry_months:
       expected_days = []
       yearmonth = entry_month.name[-7:]
-      for d in calendar.itermonthdates(int(yearmonth[:4]), int(yearmonth[5:])):
+      num_days = calendar.monthrange(int(yearmonth[:4]), int(yearmonth[5:]))[1]
+      for d in range(1, num_days + 1):
         day = '%02d' % d
         date = yearmonth + '/' + day
         if date >= from_date and date <= to_date:
