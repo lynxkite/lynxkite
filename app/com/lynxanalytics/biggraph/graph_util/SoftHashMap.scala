@@ -12,4 +12,7 @@ class SoftHashMap[Key, Value <: AnyRef] {
       case None => val v = op; cache(key) = new SoftReference(v); v
     }
   }
+  def syncGetOrElseUpdate(key: Key, op: => Value): Value = synchronized {
+    getOrElseUpdate(key, op)
+  }
 }
