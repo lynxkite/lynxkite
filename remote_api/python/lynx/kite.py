@@ -25,6 +25,8 @@ import requests
 import sys
 import types
 import calendar
+from croniter import croniter
+import datetime
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
@@ -34,82 +36,30 @@ class TableSnapshotSequence:
   '''A snapshot sequence representing a list of tables in LynxKite.
   '''
 
-  def __init__(self, location, frequency):
+  def __init__(self, location, cron_str, from_date, to_date):
     self._location = location
-    self._frequency = frequency
+    self._cron_str = cron_str
+    self._from_date = from_date
+    self._to_date = to_date
 
-  def _entries_yearly(self, lk, from_date, to_date, object_type):
-    from_year = int(from_date[:4])
-    to_year = int(to_date[:4])
-    years = [str(year) for year in range(from_year, to_year + 1)]
-    return self._entries_in_dir(lk, self._location, years, object_type)
-
-  def _snapshots_yearly(self, lk, from_date, to_date):
-    return self._entries_yearly(lk, from_date, to_date, 'snapshot')
-
-  def _entries_monthly(self, lk, from_date, to_date, object_type):
+  def snapshots(self, lk):
+    i = croniter(self._cron_str, self._from_date - datetime.timedelta(seconds=1))
+    entries = lk.list_dir(self._location)
+    entry_map = {e.name[e.name.rfind('/') + 1:]: e for e in entries}
     t = []
-    entry_years = self._entries_yearly(lk, from_date, to_date, 'directory')
-    from_yearmonth = from_date[:7]
-    to_yearmonth = to_date[:7]
-    for entry_year in entry_years:
-      expected_months = []
-      year = entry_year.name[-4:]
-      for m in range(1, 13):
-        month = '%02d' % m
-        date = year + '/' + month
-        if date >= from_yearmonth and date <= to_yearmonth:
-          expected_months.append(month)
-      for entry in self._entries_in_dir(
-              lk, self._location + '/' + year, expected_months, object_type):
-        t.append(entry)
-    return t
-
-  def _snapshots_monthly(self, lk, from_date, to_date):
-    return self._entries_monthly(lk, from_date, to_date, 'snapshot')
-
-  def _snapshots_daily(self, lk, from_date, to_date):
-    t = []
-    entry_months = self._entries_monthly(lk, from_date, to_date, 'directory')
-    for entry_month in entry_months:
-      expected_days = []
-      yearmonth = entry_month.name[-7:]
-      num_days = calendar.monthrange(int(yearmonth[:4]), int(yearmonth[5:]))[1]
-      for d in range(1, num_days + 1):
-        day = '%02d' % d
-        date = yearmonth + '/' + day
-        if date >= from_date and date <= to_date:
-          expected_days.append(day)
-      for entry in self._entries_in_dir(
-              lk, self._location + '/' + yearmonth, expected_days, 'snapshot'):
-        t.append(entry)
-    return t
-
-  def _entries_in_dir(self, lk, root_dir, expected_names, expected_object_type):
-    entries = lk.list_dir(root_dir)
-    sorted_entries = sorted(entries, key=lambda e: e.name)
-    entry_map = {e.name[e.name.rfind('/') + 1:]: e for e in sorted_entries}
-    t = []
-    for name in expected_names:
-      assert name in entry_map, "missing entry %s/%s" % (root_dir, name)
+    while True:
+      dt = i.get_next(datetime.datetime)
+      if dt > self._to_date:
+        break
+      name = str(dt)
+      assert name in entry_map, "missing entry %s/%s" % (self._location, name)
       entry = entry_map[name]
-      assert entry.objectType == expected_object_type, "expected an entry of %s, but got %s" % (
-          expected_object_type, entry.objectType)
+      assert entry.objectType == 'snapshot', "expected an entry of snapshot, but got %s" % entry.objectType
       t.append(entry)
     return t
 
-  def snapshots(self, lk, from_date, to_date):
-    if self._frequency == 'daily':
-      return self._snapshots_daily(lk, from_date, to_date)
-    elif self._frequency == 'monthly':
-      return self._snapshots_monthly(lk, from_date, to_date)
-    elif self._frequency == 'yearly':
-      return self._snapshots_yearly(lk, from_date, to_date)
-    else:
-      raise Exception('Frequency has to be daily, monthly or yearly.')
-
-  def table(self, lk, from_date, to_date):
-    entries = self.snapshots(lk, from_date, to_date)
+  def table(self, lk):
+    entries = self.snapshots(lk)
     chain = None
     for entry in entries:
       snapshot = lk.importSnapshot(path=entry.name)
