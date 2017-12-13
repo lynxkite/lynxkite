@@ -2,7 +2,7 @@ import unittest
 import lynx.kite
 import json
 import test_workspace
-
+from datetime import datetime
 
 ANCHOR_EXAMPLE_AND_SQL = '''
   [{
@@ -52,37 +52,50 @@ class TestSnapshotSequence(unittest.TestCase):
     outputs = lk.run(json.loads(ANCHOR_EXAMPLE_AND_SQL))
     state = outputs['SQL1_1', 'table'].stateId
 
-    self._save_snapshots(lk, ['1/' + y for y in ['2010', '2011', '2012']], state)
+    self._save_snapshots(lk, ['1/' + y for y in ['2010-01-01 00:00:00',
+                                                 '2011-01-01 00:00:00', '2012-01-01 00:00:00']], state)
 
-    tss = lynx.kite.TableSnapshotSequence('test_snapshot_sequence/1', 'yearly')
-    snapshots = tss.snapshots(lk, '2010', '2011')
+    tss = lynx.kite.TableSnapshotSequence(
+        'test_snapshot_sequence/1',
+        '0 0 1 1 *',
+        datetime(2010, 1, 1, 0, 0),
+        datetime(2011, 1, 1, 0, 0))
+    snapshots = tss.snapshots(lk)
     self.assertEqual(len(snapshots), 2)
-    self.assertEqual('test_snapshot_sequence/1/2010', snapshots[0].name)
-    self.assertEqual('test_snapshot_sequence/1/2011', snapshots[1].name)
+    self.assertEqual('test_snapshot_sequence/1/2010-01-01 00:00:00', snapshots[0].name)
+    self.assertEqual('test_snapshot_sequence/1/2011-01-01 00:00:00', snapshots[1].name)
     self.assertEqual('table', snapshots[0].icon)
     self.assertEqual('table', snapshots[1].icon)
-    self.assertEqual(8.0, self._table_count(lk, tss.table(lk, '2010', '2011')))
+    self.assertEqual(8.0, self._table_count(lk, tss.table(lk)))
 
-    self._save_snapshots(lk, ['2/2015/' + '%02d' % m for m in range(1, 13)], state)
-    self._save_snapshots(lk, ['2/2016/' + '%02d' % m for m in range(1, 13)], state)
+    self._save_snapshots(lk, ['2/2015-%02d-01 00:00:00' % m for m in range(1, 13)], state)
+    self._save_snapshots(lk, ['2/2016-%02d-01 00:00:00' % m for m in range(1, 13)], state)
 
-    tss = lynx.kite.TableSnapshotSequence('test_snapshot_sequence/2', 'monthly')
-    snapshots = tss.snapshots(lk, '2015/05', '2016/10')
+    tss = lynx.kite.TableSnapshotSequence(
+        'test_snapshot_sequence/2',
+        '0 0 1 * *',
+        datetime(2015, 5, 1, 0, 0),
+        datetime(2016, 10, 1, 0, 0))
+    snapshots = tss.snapshots(lk)
     self.assertEqual(len(snapshots), 18)
-    self.assertEqual('test_snapshot_sequence/2/2015/05', snapshots[0].name)
-    self.assertEqual('test_snapshot_sequence/2/2016/10', snapshots[17].name)
+    self.assertEqual('test_snapshot_sequence/2/2015-05-01 00:00:00', snapshots[0].name)
+    self.assertEqual('test_snapshot_sequence/2/2016-10-01 00:00:00', snapshots[17].name)
     self.assertEqual('table', snapshots[0].icon)
     self.assertEqual('table', snapshots[1].icon)
-    self.assertEqual(72.0, self._table_count(lk, tss.table(lk, '2015/05', '2016/10')))
+    self.assertEqual(72.0, self._table_count(lk, tss.table(lk)))
 
-    self._save_snapshots(lk, ['3/2017/03/' + '%02d' % d for d in range(1, 32)], state)
-    self._save_snapshots(lk, ['3/2017/04/' + '%02d' % d for d in range(1, 31)], state)
+    self._save_snapshots(lk, ['3/2017-03-%02d 00:00:00' % d for d in range(1, 32)], state)
+    self._save_snapshots(lk, ['3/2017-04-%02d 00:00:00' % d for d in range(1, 31)], state)
 
-    tss = lynx.kite.TableSnapshotSequence('test_snapshot_sequence/3', 'daily')
-    snapshots = tss.snapshots(lk, '2017/03/15', '2017/04/15')
+    tss = lynx.kite.TableSnapshotSequence(
+        'test_snapshot_sequence/3',
+        '0 0 * * *',
+        datetime(2017, 3, 15, 0, 0),
+        datetime(2017, 4, 15, 0, 0))
+    snapshots = tss.snapshots(lk)
     self.assertEqual(len(snapshots), 32)
-    self.assertEqual('test_snapshot_sequence/3/2017/03/15', snapshots[0].name)
-    self.assertEqual('test_snapshot_sequence/3/2017/04/15', snapshots[31].name)
+    self.assertEqual('test_snapshot_sequence/3/2017-03-15 00:00:00', snapshots[0].name)
+    self.assertEqual('test_snapshot_sequence/3/2017-04-15 00:00:00', snapshots[31].name)
     self.assertEqual('table', snapshots[0].icon)
     self.assertEqual('table', snapshots[1].icon)
-    self.assertEqual(128.0, self._table_count(lk, tss.table(lk, '2017/03/15', '2017/04/15')))
+    self.assertEqual(128.0, self._table_count(lk, tss.table(lk)))
