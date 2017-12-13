@@ -8,14 +8,16 @@ import org.apache.spark
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{ DataFrame, Row, SQLContext }
 
-class SQLTest extends OperationsTestBase {
-  private def toSeq(row: spark.sql.Row): Seq[Any] = {
+object SQLTest {
+  def toSeq(row: spark.sql.Row): Seq[Any] = {
     row.toSeq.map {
       case r: spark.sql.Row => toSeq(r)
       case x => x
     }
   }
-
+}
+import SQLTest._
+class SQLTest extends OperationsTestBase {
   test("vertices table") {
     val table = box("Create example graph")
       .box("SQL1", Map("sql" -> "select * from vertices order by id"))

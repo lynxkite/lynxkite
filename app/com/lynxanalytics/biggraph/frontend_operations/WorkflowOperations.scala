@@ -392,6 +392,27 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     }
   })
 
+  register("Compute box", List("input"), List())(new ComputeBoxOperation(_) {
+    params += ComputeParam("compute", "Compute input GUIDs")
+
+    override def getOutputs() = {
+      params.validate()
+      Map()
+    }
+
+    override def getGUIDs() = {
+      val input = context.inputs("input")
+      input.kind match {
+        case BoxOutputKind.Project =>
+          projectInput("input").allEntityGUIDs
+        case BoxOutputKind.Table =>
+          List(tableInput("input").gUID)
+        case _ => throw new AssertionError(
+          s"Cannot use '${input.kind}' as input. Only 'table' and 'project' kinds are supported.")
+      }
+    }
+  })
+
   register("Take segmentation as base project")(new ProjectTransformation(_) with SegOp {
     def addSegmentationParameters = {}
     def enabled = FEStatus.enabled
@@ -474,4 +495,45 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       List("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")
     registerSQLOp(s"SQL$inputs", numbers.take(inputs))
   }
+
+  registerOp("Transform", defaultIcon, category, List("input"), List("table"), new TableOutputOperation(_) {
+    def paramNames = tableInput("input").schema.fieldNames
+    params ++= paramNames.map {
+      name => Code(s"new_$name", s"$name", defaultValue = s"$name", language = "sql", enableTableBrowser = false)
+    }
+    def transformedColumns = paramNames.filter(name => params(name) != name).mkString(", ")
+    override def summary = s"Transform $transformedColumns"
+    def enabled = FEStatus.enabled
+    override def getOutputs() = {
+      params.validate()
+      val transformations = paramNames.map { name =>
+        val newName = s"new_$name"
+        s"${params(newName)} as `$name`"
+      }.mkString(", ")
+      val sql = s"select $transformations from input"
+      val protoTables = this.getInputTables()
+      val result = graph_operations.ExecuteSQL.run(sql, protoTables)
+      makeOutput(result)
+    }
+  })
+
+  registerOp("Derive column", defaultIcon, category, List("input"), List("table"), new TableOutputOperation(_) {
+    def paramNames = tableInput("input").schema.fieldNames
+    params ++= List(
+      Param("name", "Column name"),
+      Code("value", s"Column value", language = "sql", enableTableBrowser = false))
+    def name = params("name")
+    def value = params("value")
+    override def summary = s"Derive $name = $value"
+    def enabled = FEStatus.enabled
+    override def getOutputs() = {
+      params.validate()
+      // SparkSQL allows multiple columns with the same name, so we have to remove it manually.
+      val paramsStr = paramNames.filter(_ != name).mkString(", ")
+      val sql = s"select $paramsStr, $value as `$name` from input"
+      val protoTables = this.getInputTables()
+      val result = graph_operations.ExecuteSQL.run(sql, protoTables)
+      makeOutput(result)
+    }
+  })
 }

@@ -299,6 +299,20 @@ sealed trait ProjectViewer {
     }
     protoTable
   }
+
+  def allEntityGUIDs: List[java.util.UUID] = {
+    List() ++
+      Option(vertexSet).map(_.gUID) ++
+      Option(edgeBundle).map(_.gUID) ++
+      scalars.map { case (_, a) => a.gUID }.toList ++
+      vertexAttributes.map { case (_, a) => a.gUID }.toList ++
+      edgeAttributes.map { case (_, a) => a.gUID }.toList ++
+      segmentationMap.values.flatMap(s => allEntityGUIDsForSegment(s))
+  }
+
+  private def allEntityGUIDsForSegment(segment: SegmentationViewer): List[java.util.UUID] = {
+    segment.allEntityGUIDs ++ Option(segment.belongsTo).map(_.gUID)
+  }
 }
 
 object ProjectViewer {
@@ -810,6 +824,8 @@ sealed trait ProjectEditor {
           op.edges, origBelongsTo.get).result.induced
     }
   }
+
+  def allEntityGUIDs: List[java.util.UUID] = viewer.allEntityGUIDs
 }
 
 // Editor that holds the state.

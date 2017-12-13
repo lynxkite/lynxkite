@@ -719,6 +719,11 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       .future
   }
 
+  def getComputeBoxResult(op: ComputeBoxOperation): scala.concurrent.Future[Unit] = {
+    val entities = op.getGUIDs.map { guid => metaManager.entity(guid) }
+    dataManager.compute(entities).future
+  }
+
   private def dynamicValue[T](scalar: ScalarData[T]) = {
     implicit val tt = scalar.typeTag
     graph_operations.DynamicValue.convert(scalar.value)

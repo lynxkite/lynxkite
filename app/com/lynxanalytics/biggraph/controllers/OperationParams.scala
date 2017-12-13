@@ -50,6 +50,18 @@ object OperationParams {
     def validate(value: String): Unit = {}
   }
 
+  case class ComputeParam(
+      id: String,
+      title: String) extends OperationParameterMeta {
+    val kind = "compute"
+    val options = List()
+    val multipleChoice = false
+    val defaultValue = ""
+    def validate(value: String): Unit = {
+      assert(value == "")
+    }
+  }
+
   case class TagList(
       id: String,
       title: String,

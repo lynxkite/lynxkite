@@ -98,10 +98,11 @@ object ScalaScript {
   settings.usejavacp.value = true
   settings.embeddedDefaults[ScalaScriptSecurityManager]
 
+  private val runCache = new SoftHashMap[String, String]()
   def run(
     code: String,
     bindings: Map[String, String] = Map(),
-    timeoutInSeconds: Long = 10L): String = synchronized {
+    timeoutInSeconds: Long = 10L): String = {
     import org.apache.commons.lang.StringEscapeUtils
     val binds = bindings.map {
       case (k, v) => s"""val $k: String = "${StringEscapeUtils.escapeJava(v)}" """
@@ -113,15 +114,16 @@ object ScalaScript {
     }.toString
     result
     """
-
-    withContextClassLoader {
-      val compiledCode = compile(fullCode)
-      withTimeout(timeoutInSeconds) {
-        ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
-          compiledCode.eval().toString
+    runCache.syncGetOrElseUpdate(fullCode, synchronized {
+      withContextClassLoader {
+        val compiledCode = compile(fullCode)
+        withTimeout(timeoutInSeconds) {
+          ScalaScriptSecurityManager.restrictedSecurityManager.checkedRun {
+            compiledCode.eval().toString
+          }
         }
       }
-    }
+    })
   }
 
   // Helper function to convert a DataFrame to a Seq of Maps
@@ -196,9 +198,7 @@ object ScalaScript {
     code: String, paramTypes: Map[String, TypeTag[_]], paramsToOption: Boolean): ScalaType = {
     val funcCode = evalFuncString(code, convert(paramTypes, paramsToOption))
     val id = UUID.nameUUIDFromBytes(funcCode.getBytes())
-    codeReturnTypeCache.synchronized {
-      codeReturnTypeCache.getOrElseUpdate(id, ScalaType(inferType(funcCode)))
-    }
+    codeReturnTypeCache.syncGetOrElseUpdate(id, ScalaType(inferType(funcCode)))
   }
 
   private def inferType(func: String): TypeTag[_] = synchronized {

@@ -74,6 +74,11 @@
         workspace-reference="workspaceReference()"
         class="operation-attribute-entry">
       </table-kind>
+      <compute-parameter
+        ng-if="param.kind === 'compute'"
+        box="box"
+        class="operation-attribute-entry">
+      </compute-parameter>
       <select
         ng-if="
           (param.kind === 'choice' && !param.multipleChoice) || (param.kind === 'segmentation')"

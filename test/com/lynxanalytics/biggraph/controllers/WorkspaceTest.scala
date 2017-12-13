@@ -332,6 +332,31 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     assert(attrs.contains("age"))
   }
 
+  test("compute box - project") {
+    val anchor = anchorWithParams()
+    val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+    val seg = Box("seg", "Segment by String attribute", Map(), 0, 0, Map("project" -> eg.output("project")))
+    val compute = Box("compute", "Compute box", Map(), 0, 0, Map("input" -> seg.output("project")))
+    create("test-compute-box-project")
+    val ws = Workspace(List(anchor, eg, seg, compute))
+    set("test-compute-box-project", ws)
+    val op = controller.getOperation(user, GetOperationMetaRequest(WorkspaceReference("test-compute-box-project"), compute.id))
+    assert(op.asInstanceOf[ComputeBoxOperation].getGUIDs.size == 22)
+  }
+
+  test("compute box - table") {
+    val anchor = anchorWithParams()
+    val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+    val sql = Box("sql", "SQL1", Map(), 0, 0, Map("input" -> eg.output("project")))
+    val compute = Box("compute", "Compute box", Map(), 0, 0, Map("input" -> sql.output("table")))
+    create("test-compute-box-table")
+    val ws = Workspace(List(anchor, eg, sql, compute))
+    set("test-compute-box-table", ws)
+    val op = controller.getOperation(user, GetOperationMetaRequest(WorkspaceReference("test-compute-box-table"), compute.id))
+    // ExampleGraph has 6 vertex attributes including ID.
+    assert(op.asInstanceOf[ComputeBoxOperation].getGUIDs.size == 1)
+  }
+
   test("custom box") {
     using("test-custom-box") {
       val anchor = anchorWithParams(("param1", "text", "def1"))
@@ -438,5 +463,20 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       // The output carries an error.
       assert(project.isError)
     }
+  }
+
+  test("workspace reduction") {
+    val eg1 = Box("eg1", "Create example graph", Map(), 0, 0, Map())
+    val eg2 = Box("eg2", "Create example graph", Map(), 0, 0, Map())
+    val pr = Box(
+      "pr", "Compute PageRank", Map(
+        "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
+        "direction" -> "all edges"),
+      0, 100, Map("project" -> eg1.output("project")),
+      Map("iterations" -> "$x"))
+    val ws = Workspace.from(eg1, eg2, pr)
+    val ctx = context(ws)
+    assert(ctx.ws.boxes.size == 4)
+    assert(ctx.reduced(pr).ws.boxes.size == 3)
   }
 }
