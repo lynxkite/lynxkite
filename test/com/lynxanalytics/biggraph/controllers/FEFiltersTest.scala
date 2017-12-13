@@ -9,9 +9,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import play.api.libs.json
 
 class FEFiltersTest extends FunSuite with TestGraphOp {
-
   test("specific value for string") {
-    assert(FEFilters.filterFromSpec[String]("asd") == OneOf(Set("asd")))
+    assert(FEFilters.filterFromSpec[String]("asd") == EQ("asd"))
   }
   test("multiple values for string") {
     assert(FEFilters.filterFromSpec[String]("asd,qwe") == OneOf(Set("asd", "qwe")))
@@ -61,6 +60,10 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
     assert(!filter2.matches("narancs"))
   }
 
+  test("Regex") {
+    assert(FEFilters.filterFromSpec[String]("regexp(abc)") == RegexFilter("abc"))
+  }
+
   test("We're backward compatible") {
     def readOld[T](classpath: String, varName: String): T = {
       val oldJson = json.Json.obj(
@@ -88,8 +91,9 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
     assert(FEFilters.filterFromSpec[(Double, Double)]("(12,34),(1,1.5]").matches((13, 1.5)))
     // Make sure spaces are okay.
     assert(
-      FEFilters.filterFromSpec[(Double, Double)](" ( 12 , 34 ) , ( 1 , 1.5 ] ").matches((13, 1.5)))
+      FEFilters.filterFromSpec[(Double, Double)]("( 12 , 34 ) ,( 1 , 1.5 ]").matches((13, 1.5)))
   }
+
   test("syntax error") {
     intercept[AssertionError] {
       FEFilters.filterFromSpec[Double]("asd")
@@ -100,4 +104,5 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
     assert(FEFilters.filterFromSpec[Double]("!!123") == NotFilter(NotFilter(EQ(123.0))))
     assert(FEFilters.filterFromSpec[Double]("!!!123") == NotFilter(NotFilter(NotFilter(EQ(123.0)))))
   }
+
 }
