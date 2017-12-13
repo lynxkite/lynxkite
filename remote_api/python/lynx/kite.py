@@ -43,26 +43,22 @@ class TableSnapshotSequence:
     self._to_date = to_date
 
   def snapshots(self, lk):
+    # We want to include the from_date if it matches the cron format.
     i = croniter(self._cron_str, self._from_date - datetime.timedelta(seconds=1))
-    entries = lk.list_dir(self._location)
-    entry_map = {e.name[e.name.rfind('/') + 1:]: e for e in entries}
     t = []
     while True:
       dt = i.get_next(datetime.datetime)
       if dt > self._to_date:
         break
       name = str(dt)
-      assert name in entry_map, "missing entry %s/%s" % (self._location, name)
-      entry = entry_map[name]
-      assert entry.objectType == 'snapshot', "expected an entry of snapshot, but got %s" % entry.objectType
-      t.append(entry)
+      t.append(self._location + '/' + name)
     return t
 
   def table(self, lk):
-    entries = self.snapshots(lk)
+    paths = self.snapshots(lk)
     chain = None
-    for entry in entries:
-      snapshot = lk.importSnapshot(path=entry.name)
+    for path in paths:
+      snapshot = lk.importSnapshot(path=path)
       if chain:
         chain = lk.sql2(
             chain, snapshot, sql='select * from one union all select * from two')
