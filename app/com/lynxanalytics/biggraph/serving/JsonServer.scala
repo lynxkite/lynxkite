@@ -488,6 +488,12 @@ object ProductionJsonServer extends JsonServer {
   def histo = jsonFuture(drawingController.getHistogram)
   def scalarValue = jsonFuture(drawingController.getScalarValue)
   def model = jsonFuture(drawingController.getModel)
+  def getComputeBoxResult = jsonFuture(getComputeBoxResultExec)
+  def getComputeBoxResultExec(
+    user: serving.User, request: GetOperationMetaRequest): Future[Unit] = {
+    val op = workspaceController.getOperation(user, request).asInstanceOf[ComputeBoxOperation]
+    drawingController.getComputeBoxResult(op)
+  }
 
   val demoModeController = new DemoModeController(BigGraphProductionEnvironment)
   def demoModeStatus = jsonGet(demoModeController.demoModeStatus)

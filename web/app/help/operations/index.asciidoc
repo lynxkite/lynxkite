@@ -191,6 +191,8 @@ include::comment.asciidoc[]
 
 include::compare-segmentation-edges.asciidoc[]
 
+include::compute-box.asciidoc[]
+
 include::compute-centrality.asciidoc[]
 
 include::compute-clustering-coefficient.asciidoc[]
@@ -254,6 +256,8 @@ include::create-vertices.asciidoc[]
 include::custom-plot.asciidoc[]
 
 include::define-segmentation-links-from-matching-attributes.asciidoc[]
+
+include::derive-column.asciidoc[]
 
 include::derive-edge-attribute.asciidoc[]
 
@@ -448,6 +452,8 @@ include::train-a-kmeans-clustering-model.asciidoc[]
 include::train-a-logistic-regression-model.asciidoc[]
 
 include::train-linear-regression-model.asciidoc[]
+
+include::transform.asciidoc[]
 
 include::use-base-project-as-segmentation.asciidoc[]
 

@@ -23,7 +23,7 @@ object RemoteAPIProtocol {
   case class OperationNamesResponse(names: List[String])
   case class BoxMetadatasResponse(boxes: List[BoxMetadata])
   case class LoadNameRequest(name: String)
-  case class RemoveNameRequest(name: String)
+  case class RemoveNameRequest(name: String, force: Boolean)
 
   case class TableResult(rows: List[Map[String, json.JsValue]])
   case class DirectoryEntryRequest(
@@ -125,7 +125,9 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     user: User,
     request: RemoveNameRequest): Unit = {
     val entry = controllers.DirectoryEntry.fromName(request.name)
-    assert(entry.exists, s"Entry '$entry' does not exist.")
+    if (!request.force) {
+      assert(entry.exists, s"Entry '$entry' does not exist.")
+    }
     entry.remove()
   }
 

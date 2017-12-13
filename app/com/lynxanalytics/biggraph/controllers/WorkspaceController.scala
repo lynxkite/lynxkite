@@ -280,7 +280,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     getOperation(user, request).getInputTables()
   }
 
-  private def getOperation(user: serving.User, request: GetOperationMetaRequest): Operation = {
+  def getOperation(user: serving.User, request: GetOperationMetaRequest): Operation = {
     val ref = ResolvedWorkspaceReference(user, request.workspace)
     val ctx = ref.ws.context(user, ops, ref.params)
     ctx.getOperation(request.box)
