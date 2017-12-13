@@ -1,0 +1,13 @@
+### Import table snapshots
+
+Makes a set of previously saved table snapshots accessible from the workspace as a single table.
+
+====
+[[paths]] Paths::
+The comma separated set of full paths to the snapshots in LynxKite's virtual filesystem.
+
+ - Each path has to refer to a table snapshot.
+ - The tables have to have the same schema.
+ - The output table will union the input tables in the same order as defined here. 
+
+====
