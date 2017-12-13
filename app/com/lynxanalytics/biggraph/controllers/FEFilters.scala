@@ -32,6 +32,7 @@ case class FEVertexAttributeFilter(
 }
 
 object FEFilters {
+
   def filter(
     vertexSet: VertexSet, filters: Seq[FEVertexAttributeFilter])(
     implicit
@@ -163,24 +164,118 @@ object FEFilters {
     }
   }
 
+  import fastparse.all._
+  val quote = '"'
+  val backslash = '\\'
+
+  val quoteStr = s"${quote}"
+  val backslashStr = s"${backslash}"
+  val charsNotInSimpleString: String = s"${quote},()[]"
+
+  val notEscaped: Parser[Char] = P(CharPred(c => c != backslash && c != quote))
+    .!.map(x => x(0)) // Make it a Char
+  val escapeSeq: Parser[Char] = P((backslashStr ~ quoteStr) | (backslashStr ~ backslashStr))
+    .!.map(x => x(1)) // Strip the backslash from the front and make it a Char
+  val escapedString: Parser[String] = P(quoteStr ~ (notEscaped | escapeSeq).rep() ~ quoteStr)
+    .map(x => x.mkString("")) // Assemble the Chars into a String
+  val simpleString: Parser[String] = P(CharPred(c => !charsNotInSimpleString.contains(c)).rep(1)).!
+
+  val ws = P(" ".rep())
+  val token: Parser[String] = P(ws ~ (escapedString | simpleString) ~ ws)
+
+  // Parser for brackets
+  def bracketed1[T: TypeTag](fromStringConverter: String => T): Parser[AndFilter[T]] = {
+    val openOpen = P("(" ~ token ~ "," ~ token ~ ")").map {
+      x => AndFilter(GT(fromStringConverter(x._1)), LT(fromStringConverter(x._2)))
+    }
+    val openClose = P("(" ~ token ~ "," ~ token ~ "]").map {
+      x => AndFilter(GT(fromStringConverter(x._1)), LE(fromStringConverter(x._2)))
+    }
+    val closeOpen = P("[" ~ token ~ "," ~ token ~ ")").map {
+      x => AndFilter(GE(fromStringConverter(x._1)), LT(fromStringConverter(x._2)))
+    }
+    val closeClose = P("[" ~ token ~ "," ~ token ~ "]").map {
+      x => AndFilter(GE(fromStringConverter(x._1)), LE(fromStringConverter(x._2)))
+    }
+
+    P(openOpen | openClose | closeOpen | closeClose)
+  }
+
+  // Parser for comma separated lists
+  def lst1[T: TypeTag](fromStringConverter: String => T): Parser[Filter[T]] = {
+    val lst = P(token.rep(sep = ",", min = 1)).map {
+      x =>
+        if (x.size == 1) EQ(fromStringConverter(x.head))
+        else OneOf(x.map(fromStringConverter).toSet).asInstanceOf[Filter[T]]
+    }
+    lst
+  }
+
+  def comparison1[T: TypeTag](fromStringConverter: String => T): Parser[Filter[T]] = {
+    val eq = P(("==" | "=") ~ token.!).map(x => EQ(fromStringConverter(x)))
+    val lt = P("<" ~ !"=" ~ token.!).map(x => LT(fromStringConverter(x)))
+    val le = P("<=" ~ token.!).map(x => LE(fromStringConverter(x)))
+    val gt = P(">" ~ !"=" ~ token.!).map(x => GT(fromStringConverter(x)))
+    val ge = P(">=" ~ token.!).map(x => GE(fromStringConverter(x)))
+
+    val comparison = P(eq | lt | le | gt | ge)
+    comparison
+  }
+
+  def geo1[T: TypeTag](fromStringConverter: String => T): Parser[Filter[T]] = {
+    val brac = bracketed1(fromStringConverter)
+    val geo = P(ws ~ brac ~ ws ~ "," ~ ws ~ brac ~ ws).map {
+      x => PairFilter(x._1, x._2).asInstanceOf[Filter[T]]
+    }
+    geo
+  }
+
+  def regex1[T: TypeTag](fromStringConverter: String => T): Parser[Filter[T]] = {
+    P(("regex(" | "regexp(") ~ token ~ ")").map {
+      x =>
+        RegexFilter(x).asInstanceOf[Filter[T]]
+    }
+  }
+
+  def grammar[T: TypeTag](
+    spec: String,
+    fromStringConverter: String => T,
+    possibleExpressions: Seq[(String => T) => Parser[Filter[T]]]): Parser[Filter[T]] = {
+    val q = possibleExpressions.map { x => x(fromStringConverter) }
+    val inner = q.reduceLeft(_ | _)
+    return P(Start ~ (inner) ~ End)
+  }
+
+  private def cmpFilter[T: TypeTag](
+    spec: String,
+    fromStringConverter: String => T): Filter[T] = {
+
+    val bracketed = bracketed1(fromStringConverter)
+    val lst = lst1(fromStringConverter)
+    val comparison = comparison1(fromStringConverter)
+    val geo = geo1(fromStringConverter)
+    val regex = regex1(fromStringConverter)
+
+    val expr = P(Start ~ (geo | comparison | regex | lst | bracketed) ~ End)
+    import fastparse.core.Parsed
+    val Parsed.Success(filter, _) = expr.parse(spec)
+    filter
+  }
+
   def filterFromSpec[T: TypeTag](spec: String): Filter[T] = {
     if (spec.startsWith("!")) {
       NotFilter(filterFromSpec(spec.drop(1)))
     } else if (spec == "*") {
       MatchAllFilter()
     } else if (typeOf[T] =:= typeOf[String]) {
-      stringFilter(spec).asInstanceOf[Filter[T]]
+      val tag = typeOf[String]
+      cmpFilter(spec, _.toString)
     } else if (typeOf[T] =:= typeOf[Long]) {
-      longFilter(spec).asInstanceOf[Filter[T]]
-    } else if (typeOf[T] =:= typeOf[(Double, Double)]) {
-      spec match {
-        case geoRE(xInterval, yInterval) =>
-          PairFilter(filterFromSpec[Double](xInterval), filterFromSpec[Double](yInterval))
-            .asInstanceOf[Filter[T]]
-        case filter => throw new AssertionError(s"Not a valid filter: $filter.")
-      }
+      cmpFilter(spec, _.toLong)
     } else if (typeOf[T] =:= typeOf[Double]) {
-      doubleFilter(spec).asInstanceOf[Filter[T]]
+      cmpFilter(spec, _.toDouble)
+    } else if (typeOf[T] =:= typeOf[(Double, Double)]) {
+      cmpFilter(spec, _.toDouble)
     } else if (typeOf[T] =:= typeOf[(ID, ID)]) {
       spec match {
         case "=" => PairEquals[ID]().asInstanceOf[Filter[T]]
