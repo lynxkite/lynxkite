@@ -173,7 +173,27 @@ case class WorkspaceExecutionContext(
     box.getOperation(this, inputs)
   }
 
-  def getOperation(boxId: String): Operation = getOperationForStates(ws.findBox(boxId), allStates)
+  def getOperation(boxId: String): Operation = {
+    val box = ws.findBox(boxId)
+    getOperationForStates(box, reduced(box).allStates)
+  }
+
+  // A WorkspaceExecutionContext that contains only the box and its upstream boxes.
+  def reduced(box: Box): WorkspaceExecutionContext = {
+    @tailrec
+    def getUpstream(added: Set[Box], visited: Set[Box]): Set[Box] = {
+      if (added.isEmpty) {
+        visited
+      } else {
+        val inputs = added.flatMap {
+          box => box.inputs.values.map(output => ws.findBox(output.boxId)).toSet
+        }
+        getUpstream(inputs -- visited, inputs ++ visited)
+      }
+    }
+    val upstreamBoxes = getUpstream(Set(box), Set(box, ws.anchor)).toList
+    this.copy(ws = Workspace(upstreamBoxes))
+  }
 }
 
 case class Box(
