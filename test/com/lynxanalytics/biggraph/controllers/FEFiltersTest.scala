@@ -110,7 +110,7 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
     assert(FEFilters.filterFromSpec[(Double, Double)]("(12,34),(1,1.5]").matches((13, 1.5)))
     // Make sure spaces are okay.
     assert(
-      FEFilters.filterFromSpec[(Double, Double)]("( 12 , 34 ) ,( 1 , 1.5 ]").matches((13, 1.5)))
+      FEFilters.filterFromSpec[(Double, Double)](" ( 12 , 34 ) , ( 1 , 1.5 ] ").matches((13, 1.5)))
   }
 
   test("syntax error") {
@@ -132,4 +132,12 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
     assert(FEFilters.filterFromSpec[Vector[Double]]("forall (<10.0)").matches(v))
   }
 
+  test("Escaped strings") { // "ab\\cd\"ef" == ab\cd"ef
+    val quote = '"'
+    val backslash = '\\'
+
+    val str = s"${quote}ab${backslash}${backslash}cd${backslash}${quote}ef${quote}"
+    val expected = s"ab${backslash}cd${quote}ef"
+    assert(FEFilters.filterFromSpec[String](str) == EQ[String](expected))
+  }
 }
