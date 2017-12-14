@@ -197,7 +197,7 @@ class Workspace:
         if outp.operation == 'output']
     self._bc = terminal_boxes[0].bc
 
-    # We enumerate and add all upsteam boxes for terminal_boxes via a simple
+    # We enumerate and add all upstream boxes for terminal_boxes via a simple
     # BFS.
     to_process = queue.Queue()
     for box in terminal_boxes:
