@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 import com.lynxanalytics.biggraph.controllers._
@@ -182,6 +183,20 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     override def getOutputs() = {
       val snapshot = DirectoryEntry.fromName(params("path")).asSnapshotFrame
       Map(context.box.output("state") -> snapshot.getState)
+    }
+  })
+
+  register("Import union of table snapshots", List(), List("table"))(new SimpleOperation(_) {
+    params += Param("paths", "Paths")
+    override def getOutputs() = {
+      val paths = params("paths").split(",")
+      val tables = paths.map { path => DirectoryEntry.fromName(path).asSnapshotFrame.getState().table }
+      val schema = tables.head.schema
+      tables.foreach { table => assert(table.schema == schema) }
+      val protoTables = tables.zipWithIndex.map { case (table, i) => i.toString -> ProtoTable(table) }.toMap
+      val sql = (0 until protoTables.size).map { i => s"select * from `$i`" }.mkString(" union all ")
+      val result = graph_operations.ExecuteSQL.run(sql, protoTables)
+      Map(context.box.output("table") -> BoxOutputState.from(result))
     }
   })
 }
