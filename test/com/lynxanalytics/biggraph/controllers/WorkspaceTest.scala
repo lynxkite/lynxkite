@@ -464,4 +464,37 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       assert(project.isError)
     }
   }
+
+  test("workspace reduction") {
+    val eg1 = Box("eg1", "Create example graph", Map(), 0, 0, Map())
+    val eg2 = Box("eg2", "Create example graph", Map(), 0, 0, Map())
+    val pr = Box(
+      "pr", "Compute PageRank", Map(
+        "name" -> "pagerank", "damping" -> "0.85", "weights" -> "!no weight",
+        "direction" -> "all edges"),
+      0, 100, Map("project" -> eg1.output("project")),
+      Map("iterations" -> "$x"))
+    val ws = Workspace.from(eg1, eg2, pr)
+    val ctx = context(ws)
+    assert(ctx.ws.boxes.size == 4)
+    assert(ctx.reduced(pr).ws.boxes.size == 3)
+  }
+
+  test("import union of table snapshots") {
+    val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+    val sql = Box("sql", "SQL1", Map(), 0, 0, Map("input" -> eg.output("project")))
+    create("import_table_snapshot")
+    set("import_table_snapshot", Workspace.from(eg, sql))
+    val outputs = getOutputIds("import_table_snapshot")
+    val stateId = outputs(sql.output("table"))
+    controller.createSnapshot(user, CreateSnapshotRequest("import_table_snapshot_1", stateId))
+    controller.createSnapshot(user, CreateSnapshotRequest("import_table_snapshot_2", stateId))
+    val is = Box("is", "Import union of table snapshots",
+      Map("paths" -> "import_table_snapshot_1,import_table_snapshot_2"), 0, 0, Map())
+    val sql2 = Box("sql2", "SQL1",
+      Map("sql" -> "select count(1) from input"), 0, 0, Map("input" -> is.output("table")))
+    val table = context(Workspace.from(is, sql2)).allStates(sql2.output("table")).table
+    import graph_api.Scripting._
+    assert(table.df.head().getLong(0) == 8)
+  }
 }

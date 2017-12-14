@@ -329,6 +329,8 @@ include::import-parquet.asciidoc[]
 
 include::import-snapshot.asciidoc[]
 
+include::import-union-of-table-snapshots.asciidoc[]
+
 include::input.asciidoc[]
 
 include::link-project-and-segmentation-by-fingerprint.asciidoc[]
