@@ -33,9 +33,9 @@ ANCHOR_EXAMPLE_AND_SQL = '''
 
 class TestSnapshotSequence(unittest.TestCase):
 
-  def _save_snapshots(self, lk, paths, state):
-    for path in paths:
-      lk.save_snapshot('test_snapshot_sequence/' + path, state)
+  def _save_snapshots(self, lk, tss, datetimes, state):
+    for datetime in datetimes:
+      tss.save_to_sequence(lk, state, datetime)
 
   def _table_count(self, lk, input_table):
     state = input_table.sql1(sql='select count(1) from input')
@@ -43,53 +43,56 @@ class TestSnapshotSequence(unittest.TestCase):
     table = lk.get_table(table_state)
     return table.data[0][0].double
 
-  def test_tables_yearly(self):
-    lk = lynx.kite.LynxKite()
-
+  def _get_state(self, lk):
     lk.remove_name('test_snapshot_sequence', force=True)
     lk.create_dir('test_snapshot_sequence')
-    lk.create_dir('test_snapshot_sequence/1')
     outputs = lk.run(json.loads(ANCHOR_EXAMPLE_AND_SQL))
-    state = outputs['SQL1_1', 'table'].stateId
+    return outputs['SQL1_1', 'table'].stateId
 
-    self._save_snapshots(lk, ['1/' + y for y in ['2010-01-01 00:00:00',
-                                                 '2011-01-01 00:00:00', '2012-01-01 00:00:00']], state)
+  def test_read_interval(self):
+    lk = lynx.kite.LynxKite()
+    state = self._get_state(lk)
 
-    tss = lynx.kite.TableSnapshotSequence(
-        'test_snapshot_sequence/1',
-        '0 0 1 1 *',
-        datetime(2010, 1, 1, 0, 0),
-        datetime(2011, 1, 1, 0, 0))
-    snapshots = tss.snapshots(lk)
+    tss = lynx.kite.TableSnapshotSequence('test_snapshot_sequence/1', '0 0 1 1 *')
+    self._save_snapshots(lk, tss, [datetime(y, 1, 1, 0, 0) for y in [2010, 2011, 2012]], state)
+
+    fd = datetime(2010, 1, 1, 0, 0)
+    td = datetime(2011, 1, 1, 0, 0)
+    snapshots = tss.snapshots(lk, fd, td)
     self.assertEqual(len(snapshots), 2)
     self.assertEqual('test_snapshot_sequence/1/2010-01-01 00:00:00', snapshots[0])
     self.assertEqual('test_snapshot_sequence/1/2011-01-01 00:00:00', snapshots[1])
-    self.assertEqual(8.0, self._table_count(lk, tss.table(lk)))
+    self.assertEqual(8.0, self._table_count(lk, tss.read_interval(lk, fd, td)))
 
-    self._save_snapshots(lk, ['2/2015-%02d-01 00:00:00' % m for m in range(1, 13)], state)
-    self._save_snapshots(lk, ['2/2016-%02d-01 00:00:00' % m for m in range(1, 13)], state)
+    tss = lynx.kite.TableSnapshotSequence('test_snapshot_sequence/2', '0 0 1 * *')
+    self._save_snapshots(lk, tss,
+                         [datetime(2015, m, 1, 0, 0) for m in range(1, 13)] +
+                         [datetime(2016, m, 1, 0, 0) for m in range(1, 13)], state)
 
-    tss = lynx.kite.TableSnapshotSequence(
-        'test_snapshot_sequence/2',
-        '0 0 1 * *',
-        datetime(2015, 5, 1, 0, 0),
-        datetime(2016, 10, 1, 0, 0))
-    snapshots = tss.snapshots(lk)
+    fd = datetime(2015, 5, 1, 0, 0)
+    td = datetime(2016, 10, 1, 0, 0)
+    snapshots = tss.snapshots(lk, fd, td)
     self.assertEqual(len(snapshots), 18)
     self.assertEqual('test_snapshot_sequence/2/2015-05-01 00:00:00', snapshots[0])
     self.assertEqual('test_snapshot_sequence/2/2016-10-01 00:00:00', snapshots[17])
-    self.assertEqual(72.0, self._table_count(lk, tss.table(lk)))
+    self.assertEqual(72.0, self._table_count(lk, tss.read_interval(lk, fd, td)))
 
-    self._save_snapshots(lk, ['3/2017-03-%02d 00:00:00' % d for d in range(1, 32)], state)
-    self._save_snapshots(lk, ['3/2017-04-%02d 00:00:00' % d for d in range(1, 31)], state)
+    tss = lynx.kite.TableSnapshotSequence('test_snapshot_sequence/3', '0 0 * * *')
+    self._save_snapshots(lk, tss,
+                         [datetime(2017, 3, d, 0, 0) for d in range(1, 32)] +
+                         [datetime(2017, 4, d, 0, 0) for d in range(1, 31)], state)
 
-    tss = lynx.kite.TableSnapshotSequence(
-        'test_snapshot_sequence/3',
-        '0 0 * * *',
-        datetime(2017, 3, 15, 0, 0),
-        datetime(2017, 4, 15, 0, 0))
-    snapshots = tss.snapshots(lk)
+    fd = datetime(2017, 3, 15, 0, 0)
+    td = datetime(2017, 4, 15, 0, 0)
+    snapshots = tss.snapshots(lk, fd, td)
     self.assertEqual(len(snapshots), 32)
     self.assertEqual('test_snapshot_sequence/3/2017-03-15 00:00:00', snapshots[0])
     self.assertEqual('test_snapshot_sequence/3/2017-04-15 00:00:00', snapshots[31])
-    self.assertEqual(128.0, self._table_count(lk, tss.table(lk)))
+    self.assertEqual(128.0, self._table_count(lk, tss.read_interval(lk, fd, td)))
+
+  def test_invalid_save_to_sequence(self):
+    lk = lynx.kite.LynxKite()
+    state = self._get_state(lk)
+
+    tss = lynx.kite.TableSnapshotSequence('test_snapshot_sequence/4', '0 0 1 * *')
+    self.assertRaises(AssertionError, tss.save_to_sequence, lk, state, datetime(2015, 6, 15, 0, 0))

@@ -35,38 +35,38 @@ if sys.version_info.major < 3:
 
 
 class TableSnapshotSequence:
-  '''A snapshot sequence representing a list of tables in LynxKite.
-  '''
+  '''A snapshot sequence representing a list of table type snapshots in LynxKite.
 
-  def __init__(self, location, cron_str, from_date, to_date):
+  Attributes:
+    location (str): the LynxKite root directory this snapshot sequence is stored under.
+    cron_str (str): the Cron format defining the valid timestamps and frequency.'''
+
+  def __init__(self, location, cron_str):
     self._location = location
     self._cron_str = cron_str
-    self._from_date = from_date
-    self._to_date = to_date
 
-  def snapshots(self, lk):
+  def snapshots(self, lk, from_date, to_date):
     # We want to include the from_date if it matches the cron format.
-    i = croniter(self._cron_str, self._from_date - datetime.timedelta(seconds=1))
+    i = croniter(self._cron_str, from_date - datetime.timedelta(seconds=1))
     t = []
     while True:
       dt = i.get_next(datetime.datetime)
-      if dt > self._to_date:
+      if dt > to_date:
         break
       name = str(dt)
       t.append(self._location + '/' + name)
     return t
 
-  def table(self, lk):
-    paths = self.snapshots(lk)
-    chain = None
-    for path in paths:
-      snapshot = lk.importSnapshot(path=path)
-      if chain:
-        chain = lk.sql2(
-            chain, snapshot, sql='select * from one union all select * from two')
-      else:
-        chain = snapshot.sql1(sql='select * from input')
-    return chain
+  def read_interval(self, lk, from_date, to_date):
+    paths = ','.join(self.snapshots(lk, from_date, to_date))
+    return lk.importUnionOfTableSnapshots(paths=paths)
+
+  def save_to_sequence(self, lk, table_state, dt):
+    # Assert that dt is valid according to the cron_str format.
+    i = croniter(self._cron_str, dt - datetime.timedelta(seconds=1))
+    assert i.get_next(datetime.datetime) == dt, "Datetime %s does not match cron format %s." % (
+        dt, self._cron_str)
+    lk.save_snapshot(self._location + '/' + str(dt), table_state)
 
 
 def _python_name(name):
