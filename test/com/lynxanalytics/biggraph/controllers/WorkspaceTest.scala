@@ -489,8 +489,10 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val stateId = outputs(sql.output("table"))
     controller.createSnapshot(user, CreateSnapshotRequest("import_table_snapshot_1", stateId))
     controller.createSnapshot(user, CreateSnapshotRequest("import_table_snapshot_2", stateId))
-    val is = Box("is", "Import table snapshots", Map("paths" -> "import_table_snapshot_1,import_table_snapshot_2"), 0, 0, Map())
-    val sql2 = Box("sql2", "SQL1", Map("sql" -> "select count(1) from input"), 0, 0, Map("input" -> is.output("table")))
+    val is = Box("is", "Import union of table snapshots",
+      Map("paths" -> "import_table_snapshot_1,import_table_snapshot_2"), 0, 0, Map())
+    val sql2 = Box("sql2", "SQL1",
+      Map("sql" -> "select count(1) from input"), 0, 0, Map("input" -> is.output("table")))
     val table = context(Workspace.from(is, sql2)).allStates(sql2.output("table")).table
     import graph_api.Scripting._
     assert(table.df.head().getLong(0) == 8)
