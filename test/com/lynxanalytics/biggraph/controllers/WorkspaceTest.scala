@@ -480,7 +480,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     assert(ctx.reduced(pr).ws.boxes.size == 3)
   }
 
-  test("import table snapshots") {
+  test("import union of table snapshots") {
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val sql = Box("sql", "SQL1", Map(), 0, 0, Map("input" -> eg.output("project")))
     create("import_table_snapshot")
