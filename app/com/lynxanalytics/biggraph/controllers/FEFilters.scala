@@ -32,7 +32,6 @@ case class FEVertexAttributeFilter(
 }
 
 object FEFilters {
-
   def filter(
     vertexSet: VertexSet, filters: Seq[FEVertexAttributeFilter])(
     implicit
@@ -114,25 +113,25 @@ object FEFilters {
   }
 
   import fastparse.all._
-  val quote = '"'
-  val backslash = '\\'
+  private val quote = '"'
+  private val backslash = '\\'
 
-  val quoteStr = s"${quote}"
-  val backslashStr = s"${backslash}"
-  val charsNotInSimpleString: String = s"${quote},()[]"
+  private val quoteStr = s"${quote}"
+  private val backslashStr = s"${backslash}"
+  private val charsNotInSimpleString: String = s"${quote},()[]"
 
-  val notEscaped: Parser[Char] = P(CharPred(c => c != backslash && c != quote))
+  private val notEscaped: Parser[Char] = P(CharPred(c => c != backslash && c != quote))
     .!.map(x => x(0)) // Make it a Char
-  val escapeSeq: Parser[Char] = P((backslashStr ~ quoteStr) | (backslashStr ~ backslashStr))
+  private val escapeSeq: Parser[Char] = P((backslashStr ~ quoteStr) | (backslashStr ~ backslashStr))
     .!.map(x => x(1)) // Strip the backslash from the front and make it a Char
-  val escapedString: Parser[String] = P(quoteStr ~ (notEscaped | escapeSeq).rep() ~ quoteStr)
+  private val escapedString: Parser[String] = P(quoteStr ~ (notEscaped | escapeSeq).rep() ~ quoteStr)
     .map(x => x.mkString("")) // Assemble the Chars into a String
-  val simpleString: Parser[String] = P(CharPred(c => !charsNotInSimpleString.contains(c)).rep(1)).!
+  private val simpleString: Parser[String] = P(CharPred(c => !charsNotInSimpleString.contains(c)).rep(1)).!
 
-  val ws = P(" ".rep())
-  val token: Parser[String] = P(ws ~ (escapedString | simpleString) ~ ws)
+  private val ws = P(" ".rep())
+  private val token: Parser[String] = P(ws ~ (escapedString | simpleString) ~ ws)
 
-  private def cmpFilter[T: TypeTag](
+  private def parseSpec[T: TypeTag](
     tag: Type,
     spec: String,
     fromStringConverter: String => T): Filter[T] = {
@@ -198,13 +197,13 @@ object FEFilters {
     } else if (spec == "*") {
       MatchAllFilter()
     } else if (typeOf[T] =:= typeOf[String]) {
-      cmpFilter(typeOf[T], spec, _.toString)
+      parseSpec(typeOf[T], spec, _.toString)
     } else if (typeOf[T] =:= typeOf[Long]) {
-      cmpFilter(typeOf[T], spec, _.toLong)
+      parseSpec(typeOf[T], spec, _.toLong)
     } else if (typeOf[T] =:= typeOf[Double]) {
-      cmpFilter(typeOf[T], spec, _.toDouble)
+      parseSpec(typeOf[T], spec, _.toDouble)
     } else if (typeOf[T] =:= typeOf[(Double, Double)]) {
-      cmpFilter(typeOf[T], spec, _.toDouble)
+      parseSpec(typeOf[T], spec, _.toDouble)
     } else if (typeOf[T] <:< typeOf[Vector[Any]]) {
       val elementTypeTag = TypeTagUtil.typeArgs(typeTag[T]).head
       val forall =
@@ -225,25 +224,4 @@ object FEFilters {
       }
     } else ???
   }
-
-  /*
-  private val comparableStuff = "[^]),=][^]),]*"
-  private val comparableStuffPattern = s"\\s*($comparableStuff)\\s*"
-
-  private val number = "-?\\d*(?:\\.\\d*)?"
-  private val numberWithSpaces = s"\\s*$number\\s*"
-  private val numberPattern = s"\\s*($number)\\s*"
-  private val numberRE = numberPattern.r
-  private val intervalOpenOpenRE = s"\\s*\\($comparableStuffPattern,$comparableStuffPattern\\)\\s*".r
-  private val intervalOpenCloseRE = s"\\s*\\($comparableStuffPattern,$comparableStuffPattern\\]\\s*".r
-  private val intervalCloseOpenRE = s"\\s*\\[$comparableStuffPattern,$comparableStuffPattern\\)\\s*".r
-  private val intervalCloseCloseRE = s"\\s*\\[$comparableStuffPattern,$comparableStuffPattern\\]\\s*".r
-  private val intervalPattern = s"\\s*([\\(\\[]$numberWithSpaces,$numberWithSpaces[\\)\\]])\\s*"
-  private val geoRE = s"$intervalPattern,$intervalPattern".r
-  private val comparatorPattern = "\\s*(<|>|==?|<=|>=)\\s*"
-  private val boundRE = s"$comparatorPattern$comparableStuffPattern".r
-  private val forallRE = "\\s*(?:forall|all|Ɐ)\\((.*)\\)\\s*".r
-  private val existsRE = "\\s*(?:exists|any|some|∃)\\((.*)\\)\\s*".r
-  private val regexRE = "\\s*regexp?\\((.*)\\)\\s*".r
-  */
 }
