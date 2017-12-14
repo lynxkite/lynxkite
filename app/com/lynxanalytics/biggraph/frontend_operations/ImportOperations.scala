@@ -186,7 +186,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
-  register("Import table snapshots", List(), List("table"))(new SimpleOperation(_) {
+  register("Import union of table snapshots", List(), List("table"))(new SimpleOperation(_) {
     params += Param("paths", "Paths")
     override def getOutputs() = {
       val paths = params("paths").split(",")
