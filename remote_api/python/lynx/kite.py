@@ -21,6 +21,8 @@ Example usage::
 import copy
 import json
 import os
+import queue
+import random
 import requests
 import sys
 import types
@@ -51,26 +53,6 @@ _anchor_box = {
 }
 
 
-def state_to_json(state):
-  ''' Converts the workspace segment ending in this state into json format
-  which can be used in ``lk.run()``
-  '''
-  box_counter = {key: 0 for key in state.box.bc.box_names()}
-  generated = []
-
-  def generate(state):
-    for input_state in list(state.box.inputs.values()):
-      generate(input_state)
-    state.box.id = '{}_{}'.format(
-        state.box.operationId.replace(' ', '-'),
-        box_counter[state.box.name])
-    generated.append(state.box.to_json())
-    box_counter[state.box.name] = box_counter[state.box.name] + 1
-
-  generate(state)
-  return generated + [_anchor_box]
-
-
 class State:
   '''Represents a named output plug of a box.
 
@@ -93,21 +75,27 @@ class State:
       return new_box(
           self.box.bc, name, inputs={input_name: self}, parameters=kwargs)
 
-    if not name in self.bc.box_names():
-      raise AttributeError('{} is not defined'.format(name))
+    if not name in self.box.bc.box_names():
+      raise AttributeError('{} is not defined on {}'.format(name, self))
     return f
 
   def __dir__(self):
     return super().__dir__() + self.box.bc.box_names()
 
+  def __str__(self):
+    return "Output {} of box {}".format(self.output_plug_name, self.box)
 
-def new_box(bc, name, inputs, parameters):
-  outputs = bc.outputs(name)
+
+def new_box(bc, operation, inputs, parameters):
+  if isinstance(operation, str):
+    outputs = bc.outputs(operation)
+  else:
+    outputs = operation.outputs()
   if len(outputs) == 1:
     # Special case: single output boxes function as state as well.
-    return SingleOutputBox(bc, name, outputs[0], inputs, parameters)
+    return SingleOutputBox(bc, operation, outputs[0], inputs, parameters)
   else:
-    return Box(bc, name, inputs, parameters)
+    return Box(bc, operation, inputs, parameters)
 
 
 class Box:
@@ -116,37 +104,41 @@ class Box:
   It can store workspace segments, connected to its input plugs.
   '''
 
-  def __init__(self, box_catalog, name, inputs, parameters):
+  def __init__(self, box_catalog, operation, inputs, parameters):
     self.bc = box_catalog
-    self.name = name
-    self.operationId = self.bc.operation_id(name)
-    exp_inputs = set(self.bc.inputs(name))
+    self.operation = operation
+    if isinstance(operation, str):
+      exp_inputs = set(self.bc.inputs(operation))
+      self.outputs = set(self.bc.outputs(operation))
+    else:
+      assert isinstance(operation, Workspace), "{} is not string or workspace".format(operation)
+      exp_inputs = set(operation.inputs())
+      self.outputs = set(operation.outputs())
     got_inputs = inputs.keys()
     assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
         got_inputs, exp_inputs)
     self.inputs = inputs
     self.parameters = parameters
-    # TODO: I want this to become an immutable class. Solve this without state.
-    self.id = None  # Computed at workspace creation time
-    self.x = 0  # Updated at workspace creation time
-    self.y = 0  # Updated at workspace creation time
     self.parametric_parameters = {}  # TODO: implement it (separate simple and parametric)
-    self.outputs = set(self.bc.outputs(name))
 
-  def to_json(self):
+  def to_json(self, id_resolver, workspace_root):
     '''Creates the json representation of a box in a workspace.
 
     The inputs have to be connected, and all the attributes have to be
     defined when we call this.
     '''
     def input_state(state):
-      return {'boxId': state.box.id, 'id': state.output_plug_name}
+      return {'boxId': id_resolver(state.box), 'id': state.output_plug_name}
 
+    if isinstance(self.operation, str):
+      operationId = self.bc.operation_id(self.operation)
+    else:
+      operationId = workspace_root + self.operation.name()
     return {
-        'id': self.id,
-        'operationId': self.operationId,
+        'id': id_resolver(self),
+        'operationId': operationId,
         'parameters': self.parameters,
-        'x': self.x, 'y': self.y,
+        'x': 0, 'y': 0,
         'inputs': {plug: input_state(state) for plug, state in self.inputs.items()},
         'parametricParameters': self.parametric_parameters}
 
@@ -155,11 +147,17 @@ class Box:
       raise KeyError(index)
     return State(self, index)
 
+  def __str__(self):
+    return "Operation {} with parameters {} and inputs {}".format(
+        self.operationId,
+        self.parameters,
+        self.inputs)
+
 
 class SingleOutputBox(Box, State):
 
-  def __init__(self, box_catalog, name, output_name, inputs, parameters):
-    Box.__init__(self, box_catalog, name, inputs, parameters)
+  def __init__(self, box_catalog, operation, output_name, inputs, parameters):
+    Box.__init__(self, box_catalog, operation, inputs, parameters)
     State.__init__(self, self, output_name)
 
 
@@ -183,6 +181,66 @@ class BoxCatalog:
 
   def box_names(self):
     return list(self.bc.keys())
+
+
+class Workspace:
+  '''Immutable class representing a LynxKite workspace'''
+
+  def __init__(self, name, terminal_boxes, input_boxes=[]):
+    self._name = name
+    self._all_boxes = set()
+    self._box_ids = dict()
+    self._next_id = 0
+    self._inputs = [inp.parameters['name'] for inp in input_boxes]
+    self._outputs = [
+        outp.parameters['name'] for outp in terminal_boxes
+        if outp.operation == 'output']
+    self._bc = terminal_boxes[0].bc
+
+    # We enumerate and add all upstream boxes for terminal_boxes via a simple
+    # BFS.
+    to_process = queue.Queue()
+    for box in terminal_boxes:
+      to_process.put(box)
+      self._add_box(box)
+    while not to_process.empty():
+      box = to_process.get()
+      for input_state in box.inputs.values():
+        parent_box = input_state.box
+        if parent_box not in self._all_boxes:
+          self._add_box(parent_box)
+          to_process.put(parent_box)
+
+  def _add_box(self, box):
+    self._all_boxes.add(box)
+    self._box_ids[box] = "box_{}".format(self._next_id)
+    self._next_id += 1
+
+  def id_of(self, box):
+    return self._box_ids[box]
+
+  def to_json(self, workspace_root):
+    normal_boxes = [
+        box.to_json(self.id_of, workspace_root) for box in self._all_boxes]
+    return [_anchor_box] + normal_boxes
+
+  def required_workspaces(self):
+    return [
+        box.operation for box in self._all_boxes
+        if isinstance(box.operation, Workspace)]
+
+  def inputs(self):
+    return list(self._inputs)
+
+  def outputs(self):
+    return list(self._outputs)
+
+  def name(self):
+    return self._name
+
+  def __call__(self, *args, **kwargs):
+    inputs = dict(zip(self.inputs(), args))
+    return new_box(self._bc, self, inputs=inputs, parameters=kwargs)
 
 
 class LynxKite:
@@ -379,9 +437,30 @@ class LynxKite:
         '/ajax/runWorkspace', dict(workspace=dict(boxes=boxes), parameters=parameters))
     return {(o.boxOutput.boxId, o.boxOutput.id): o for o in res.outputs}
 
+  def run_workspace(self, ws, save_under_root=None):
+    ws_root = save_under_root
+    if ws_root is None:
+      ws_root = 'tmp_{}/'.format(''.join(random.choice('0123456789ABCDEF') for i in range(16)))
+    needed_ws = set()
+    ws_queue = queue.Queue()
+    ws_queue.put(ws)
+    while not ws_queue.empty():
+      nws = ws_queue.get()
+      for rws in nws.required_workspaces():
+        if rws not in needed_ws:
+          needed_ws.add(rws)
+          ws_queue.put(rws)
+    for rws in needed_ws:
+      self.save_workspace(ws_root + rws.name(), rws.to_json(ws_root))
+    return self.run(ws.to_json(ws_root))
+    # TODO: clean up saved workspaces if save_under_root is not set. And
+    # also save main workspace if it is set.
+
   def get_state_id(self, state):
-    return self.run(state_to_json(state))[
-        state.box.id, state.output_plug_name].stateId
+    ws = Workspace('Anonymous', [state.box])
+    workspace_outputs = self.run_workspace(ws)
+    return workspace_outputs[
+        ws.id_of(state.box), state.output_plug_name].stateId
 
   def get_scalar(self, guid):
     return self._ask('/ajax/scalarValue', dict(scalarId=guid))
