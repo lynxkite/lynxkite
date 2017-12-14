@@ -60,8 +60,27 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
     assert(!filter2.matches("narancs"))
   }
 
-  test("Regex") {
-    assert(FEFilters.filterFromSpec[String]("regexp(abc)") == RegexFilter("abc"))
+  test("Regex type error") {
+    intercept[AssertionError] {
+      FEFilters.filterFromSpec[Double]("regexp(123.0)")
+    }
+  }
+
+  test("Geofilter type error") {
+    intercept[AssertionError] {
+      FEFilters.filterFromSpec[String]("(alma,narancs), (alma,narancs)")
+    }
+  }
+
+  test("Regex gets parsed") {
+    val complexRegex = "\"(a) | (b)\""
+    val expectedAfterParse = "(a) | (b)"
+    assert(FEFilters.filterFromSpec[String](s"regexp($complexRegex)")
+      == RegexFilter(expectedAfterParse))
+
+    val simpleRegex = "abc.*"
+    assert(FEFilters.filterFromSpec[String](s"regexp($simpleRegex)")
+      == RegexFilter(simpleRegex))
   }
 
   test("We're backward compatible") {
@@ -95,14 +114,22 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
   }
 
   test("syntax error") {
-    intercept[AssertionError] {
-      FEFilters.filterFromSpec[Double]("asd")
+    intercept[scala.MatchError] {
+      FEFilters.filterFromSpec[Double]("(asd")
     }
   }
   test("negation") {
     assert(FEFilters.filterFromSpec[Double]("!123") == NotFilter(EQ(123.0)))
     assert(FEFilters.filterFromSpec[Double]("!!123") == NotFilter(NotFilter(EQ(123.0))))
     assert(FEFilters.filterFromSpec[Double]("!!!123") == NotFilter(NotFilter(NotFilter(EQ(123.0)))))
+  }
+
+  test("vectors work") {
+    val v = List(1.0, 2.0, 3.0).toVector
+    assert(FEFilters.filterFromSpec[Vector[Double]]("exists(==2.0)").matches(v))
+    assert(!FEFilters.filterFromSpec[Vector[Double]]("exists(==4.0)").matches(v))
+    assert(!FEFilters.filterFromSpec[Vector[Double]]("forall (==2.0)").matches(v))
+    assert(FEFilters.filterFromSpec[Vector[Double]]("forall (<10.0)").matches(v))
   }
 
 }
