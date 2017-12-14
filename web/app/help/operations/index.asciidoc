@@ -329,7 +329,7 @@ include::import-parquet.asciidoc[]
 
 include::import-snapshot.asciidoc[]
 
-include::import-table-snapshots.asciidoc[]
+include::import-union-of-table-snapshots.asciidoc[]
 
 include::input.asciidoc[]
 

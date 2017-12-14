@@ -1,6 +1,7 @@
-### Import table snapshots
+### Import union of table snapshots
 
-Makes a set of previously saved table snapshots accessible from the workspace as a single table.
+Makes the union of a set of previously saved table snapshots accessible from the workspace
+as a single table.
 
 ====
 [[paths]] Paths::
