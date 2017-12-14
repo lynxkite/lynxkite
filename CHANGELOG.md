@@ -13,6 +13,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Nicer comment box presentation.
  - Bug fixes and performance improvements. Thanks for all bug reports!
  - Add _Transform_ and _Derive column_ operations for easier table manipulation.
+ - Add _Import union of table snapshots_ operation to import multiple snapshots at the same time.
 
 ### 2.1.0
 
