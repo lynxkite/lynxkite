@@ -6,13 +6,14 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - Make _Export to CSV_ and _Import CSV_ operations more flexible.
+ - Made _Export to CSV_ and _Import CSV_ operations more flexible.
  - Workspace copy-paste uses more readable the YAML instead of JSON. (You can still paste old JSON
    workspaces if you have any lying around.)
  - Hold SHIFT while dragging boxes to align them on a grid.
  - Nicer comment box presentation.
- - Bug fixes. Thanks for all bug reports!
- - Add Transform and Derive column operations for easier table manipulation.
+ - Bug fixes and performance improvements. Thanks for all bug reports!
+ - Add _Transform_ and _Derive column_ operations for easier table manipulation.
+ - Add _Import union of table snapshots_ operation to import multiple snapshots at the same time.
 
 ### 2.1.0
 
