@@ -207,10 +207,10 @@ object FEFilters {
     } else if (typeOf[T] <:< typeOf[Vector[Any]]) {
       val elementTypeTag = TypeTagUtil.typeArgs(typeTag[T]).head
       val forall =
-        P(("forall" | " all" | "Ɐ") ~ ws ~ "(" ~ token.! ~ ")").map(
+        P(("forall" | "all" | "Ɐ") ~ ws ~ "(" ~ token.! ~ ")").map(
           x => ForAll(filterFromSpec(x)(elementTypeTag)).asInstanceOf[Filter[T]])
       val exists =
-        P(("exists" | " some" | "any" | "∃") ~ ws ~ "(" ~ token.! ~ ")").map(
+        P(("exists" | "some" | "any" | "∃") ~ ws ~ "(" ~ token.! ~ ")").map(
           x => Exists(filterFromSpec(x)(elementTypeTag)).asInstanceOf[Filter[T]])
       val expr = P(Start ~ (forall | exists) ~ End)
       import fastparse.core.Parsed
