@@ -91,6 +91,26 @@ _anchor_box = {
 }
 
 
+class ParametricParameter:
+  '''Represents a parametric parameter value.
+
+  It should be a string.
+  '''
+
+  def __init__(self, parametric_expr):
+    assert isinstance(parametric_expr, str), '{} is not a string'.format(parametric_expr)
+    # Assert for '$' also?
+    self._value = parametric_expr
+
+  def __str__(self):
+    return self._value
+
+
+def pp(parametric_expr):
+  '''Just an abbreviation'''
+  return ParametricParameter(parametric_expr)
+
+
 class State:
   '''Represents a named output plug of a box.
 
@@ -156,8 +176,15 @@ class Box:
     assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
         got_inputs, exp_inputs)
     self.inputs = inputs
-    self.parameters = parameters
-    self.parametric_parameters = {}  # TODO: implement it (separate simple and parametric)
+    self.parameters = {}
+    self.parametric_parameters = {}
+    # We separate normal and parametric parameters here.
+    # Parametric parameters can be specified as `name=PP('parametric value')`
+    for key, value in parameters.items():
+      if isinstance(value, ParametricParameter):
+        self.parametric_parameters[key] = str(value)
+      else:
+        self.parameters[key] = value
 
   def to_json(self, id_resolver, workspace_root):
     '''Creates the json representation of a box in a workspace.
@@ -224,7 +251,7 @@ class BoxCatalog:
 class Workspace:
   '''Immutable class representing a LynxKite workspace'''
 
-  def __init__(self, name, terminal_boxes, input_boxes=[]):  # TODO, parameter_declarations
+  def __init__(self, name, terminal_boxes, input_boxes=[], ws_parameters={}):
     self._name = name
     self._all_boxes = set()
     self._box_ids = dict()
@@ -234,6 +261,7 @@ class Workspace:
         outp.parameters['name'] for outp in terminal_boxes
         if outp.operation == 'output']
     self._bc = terminal_boxes[0].bc
+    self._ws_parameters = ws_parameters
 
     # We enumerate and add all upstream boxes for terminal_boxes via a simple
     # BFS.
@@ -260,8 +288,21 @@ class Workspace:
   def to_json(self, workspace_root):
     normal_boxes = [
         box.to_json(self.id_of, workspace_root) for box in self._all_boxes]
-    # TODO Use parameter declarations to customize _anchor_box.
-    return [_anchor_box] + normal_boxes
+    # Use ws_parameters to customize _anchor_box.
+    ab = copy.deepcopy(_anchor_box)
+
+    if len(self._ws_parameters.keys()) > 0:
+      param_list = []
+      for key, value in self._ws_parameters.items():
+        param_list.append(
+            '{' +
+            '"kind":"text","id":"{}","defaultValue":"{}"'.format(
+                key,
+                value) +
+            '}')
+      param_str = '[' + ','.join(param_list) + ']'
+      ab['parameters'] = dict(parameters=param_str)
+    return [ab] + normal_boxes
 
   def required_workspaces(self):
     return [
@@ -288,6 +329,7 @@ def workspace(name=None, parameter_declarations={}):
     # name if not set then name of builder_fn
     # outputs from returned dictinary used as final states for Workspace(..)
     # return the constructed workspace object
+    pass
   return inner
 
 
