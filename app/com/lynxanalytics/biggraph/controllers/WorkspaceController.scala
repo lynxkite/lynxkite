@@ -240,6 +240,13 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     entry.asNewSnapshotFrame(calculatedState)
   }
 
+  def saveToSnapshot(user: serving.User, request: GetOperationMetaRequest): Unit = {
+    val op = getOperation(user, request).asInstanceOf[SaveToSnapshotOperation]
+    val entry = DirectoryEntry.fromName(op.getPath)
+    entry.assertWriteAllowedFrom(user)
+    entry.asNewSnapshotFrame(op.getState)
+  }
+
   def setWorkspace(
     user: serving.User, request: SetWorkspaceRequest): GetWorkspaceResponse = metaManager.synchronized {
     val f = getWorkspaceFrame(user, ResolvedWorkspaceReference(user, request.reference).name)

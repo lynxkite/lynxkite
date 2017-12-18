@@ -357,6 +357,20 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     assert(op.asInstanceOf[ComputeBoxOperation].getGUIDs.size == 1)
   }
 
+  test("save to snapshot") {
+    val anchor = anchorWithParams()
+    val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+    val sts = Box("sts", "Save to snapshot",
+      Map("path" -> "test-save-to-snapshot_snapshot"), 0, 0, Map("state" -> eg.output("project")))
+    create("test-save-to-snapshot")
+    val ws = Workspace(List(anchor, eg, sts))
+    set("test-save-to-snapshot", ws)
+    controller.saveToSnapshot(user, GetOperationMetaRequest(WorkspaceReference("test-save-to-snapshot"), sts.id))
+    val entry = DirectoryEntry.fromName("test-save-to-snapshot_snapshot")
+    assert(entry.exists)
+    assert(entry.asInstanceOf[SnapshotFrame].getState.kind == "project")
+  }
+
   test("custom box") {
     using("test-custom-box") {
       val anchor = anchorWithParams(("param1", "text", "def1"))

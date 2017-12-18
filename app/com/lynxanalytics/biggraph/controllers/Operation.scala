@@ -36,7 +36,7 @@ object FEOperationParameterMeta {
     "parameters", // A whole section defining the parameters of an operation.
     "segmentation", // One of the segmentations of the current project.
     "visualization", // Describes a two-sided visualization UI state.
-    "compute", // A computation triggering button.
+    "trigger", // A computation triggering button.
     "dummy") // A piece of text without an input field.
 }
 
@@ -615,6 +615,13 @@ abstract class ComputeBoxOperation(context: Operation.Context) extends SmartOper
   def apply: Unit = ???
   def enabled = FEStatus.enabled
   def getGUIDs(): List[java.util.UUID]
+}
+
+abstract class SaveToSnapshotOperation(context: Operation.Context) extends SmartOperation(context) {
+  def apply: Unit = ???
+  def enabled = FEStatus.enabled
+  def getPath(): String
+  def getState(): BoxOutputState
 }
 
 class CustomBoxOperation(

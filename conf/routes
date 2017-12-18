@@ -28,6 +28,7 @@ GET  /ajax/boxCatalog              com.lynxanalytics.biggraph.serving.Production
 GET  /ajax/getExportResultOutput   com.lynxanalytics.biggraph.serving.ProductionJsonServer.getExportResultOutput
 GET  /ajax/getInstrumentedState    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getInstrumentedState
 GET  /ajax/getComputeBoxResult     com.lynxanalytics.biggraph.serving.ProductionJsonServer.getComputeBoxResult
+GET  /ajax/saveToSnapshot          com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveToSnapshot
 
 GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView
 GET  /ajax/histo       com.lynxanalytics.biggraph.serving.ProductionJsonServer.histo

@@ -391,6 +391,8 @@ include::sample-edges-from-co-occurrence.asciidoc[]
 
 include::sample-graph-by-random-walks.asciidoc[]
 
+include::save-to-snapshot.asciidoc[]
+
 include::segment-by-double-attribute.asciidoc[]
 
 include::segment-by-event-sequence.asciidoc[]

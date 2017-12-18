@@ -102,5 +102,24 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
   }
+
+  registerOp("Save to snapshot", defaultIcon, ExportOperations, List("state"), List(), new SaveToSnapshotOperation(_) {
+    params ++= List(
+      Param("path", "Path"),
+      TriggerBoxParam("save", "Save to snapshot", "saveToSnapshot"))
+
+    override def getOutputs() = {
+      params.validate()
+      Map()
+    }
+
+    override def getPath() = {
+      params("path")
+    }
+
+    override def getState() = {
+      context.inputs("state")
+    }
+  })
 }
 

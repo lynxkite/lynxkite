@@ -393,7 +393,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
   })
 
   register("Compute box", List("input"), List())(new ComputeBoxOperation(_) {
-    params += ComputeParam("compute", "Compute input GUIDs")
+    params += TriggerBoxParam("compute", "Compute input GUIDs", "getComputeBoxResult")
 
     override def getOutputs() = {
       params.validate()

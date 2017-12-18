@@ -50,16 +50,18 @@ object OperationParams {
     def validate(value: String): Unit = {}
   }
 
-  case class ComputeParam(
+  case class TriggerBoxParam(
       id: String,
-      title: String) extends OperationParameterMeta {
-    val kind = "compute"
+      title: String,
+      url: String) extends OperationParameterMeta {
+    val kind = "trigger"
     val options = List()
     val multipleChoice = false
     val defaultValue = ""
     def validate(value: String): Unit = {
       assert(value == "")
     }
+    override val payload = Some(json.Json.obj("url" -> url))
   }
 
   case class TagList(
