@@ -454,6 +454,7 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)
   def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
+  def saveToSnapshot = jsonGet(workspaceController.saveToSnapshot)
 
   def importBox = jsonFuturePost(importBoxExec)
   def importBoxExec(user: serving.User, request: ImportBoxRequest): Future[ImportBoxResponse] = {
