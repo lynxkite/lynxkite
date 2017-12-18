@@ -1,4 +1,4 @@
-GET  /ajax/spark-status com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkStatus
+GET  /ajax/long-poll com.lynxanalytics.biggraph.serving.ProductionJsonServer.longPoll
 POST /ajax/spark-cancel-jobs com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkCancelJobs
 POST /ajax/jsError     com.lynxanalytics.biggraph.serving.ProductionJsonServer.jsError
 
@@ -22,7 +22,6 @@ GET  /ajax/getProjectOutput        com.lynxanalytics.biggraph.serving.Production
 GET  /ajax/getTableOutput          com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableOutput
 GET  /ajax/getPlotOutput           com.lynxanalytics.biggraph.serving.ProductionJsonServer.getPlotOutput
 GET  /ajax/getVisualizationOutput  com.lynxanalytics.biggraph.serving.ProductionJsonServer.getVisualizationOutput
-GET  /ajax/getProgress             com.lynxanalytics.biggraph.serving.ProductionJsonServer.getProgress
 GET  /ajax/getOperationMeta        com.lynxanalytics.biggraph.serving.ProductionJsonServer.getOperationMeta
 GET  /ajax/boxCatalog              com.lynxanalytics.biggraph.serving.ProductionJsonServer.boxCatalog
 GET  /ajax/getExportResultOutput   com.lynxanalytics.biggraph.serving.ProductionJsonServer.getExportResultOutput

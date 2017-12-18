@@ -8,8 +8,8 @@ angular.module('biggraph')
     scope: {},
     templateUrl: 'scripts/util/spark-status.html',
     link: function(scope) {
-      scope.status = longPoll.lastUpdate;
-      scope.$on('long poll update', function(event, status) { scope.status = status; });
+      scope.status = longPoll.lastUpdate.sparkStatus;
+      longPoll.onUpdate(scope, function(status) { scope.status = status.sparkStatus; });
 
       scope.kill = function() {
         util.post('/ajax/spark-cancel-jobs', { fake: 1 });
