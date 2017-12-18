@@ -224,7 +224,7 @@ class BoxCatalog:
 class Workspace:
   '''Immutable class representing a LynxKite workspace'''
 
-  def __init__(self, name, terminal_boxes, input_boxes=[]):
+  def __init__(self, name, terminal_boxes, input_boxes=[]):  # TODO, parameter_declarations
     self._name = name
     self._all_boxes = set()
     self._box_ids = dict()
@@ -260,6 +260,7 @@ class Workspace:
   def to_json(self, workspace_root):
     normal_boxes = [
         box.to_json(self.id_of, workspace_root) for box in self._all_boxes]
+    # TODO Use parameter declarations to customize _anchor_box.
     return [_anchor_box] + normal_boxes
 
   def required_workspaces(self):
@@ -279,6 +280,15 @@ class Workspace:
   def __call__(self, *args, **kwargs):
     inputs = dict(zip(self.inputs(), args))
     return new_box(self._bc, self, inputs=inputs, parameters=kwargs)
+
+
+def workspace(name=None, parameter_declarations={}):
+  def inner(builder_fn):
+    # Inputs from builder_fn params
+    # name if not set then name of builder_fn
+    # outputs from returned dictinary used as final states for Workspace(..)
+    # return the constructed workspace object
+  return inner
 
 
 class LynxKite:
