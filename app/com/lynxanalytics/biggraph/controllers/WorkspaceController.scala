@@ -19,6 +19,7 @@ case class GetWorkspaceResponse(
     workspace: Workspace,
     outputs: List[BoxOutputInfo],
     summaries: Map[String, String],
+    progress: Map[String, Option[Progress]],
     canUndo: Boolean,
     canRedo: Boolean)
 case class SetWorkspaceRequest(reference: WorkspaceReference, workspace: Workspace)
@@ -39,7 +40,10 @@ case class CreateSnapshotRequest(name: String, id: String)
 case class GetExportResultRequest(stateId: String)
 case class GetExportResultResponse(parameters: Map[String, String], result: FEScalar)
 case class RunWorkspaceRequest(workspace: Workspace, parameters: Map[String, String])
-case class RunWorkspaceResponse(outputs: List[BoxOutputInfo], summaries: Map[String, String])
+case class RunWorkspaceResponse(
+    outputs: List[BoxOutputInfo],
+    summaries: Map[String, String],
+    progress: Map[String, Option[Progress]])
 case class ImportBoxRequest(box: Box, ref: Option[WorkspaceReference])
 
 // An instrument is like a box. But we do not want to place it and save it in the workspace.
@@ -110,10 +114,10 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         log.error(s"Could not execute $request", t)
         // We can still return the "cold" data that is available without execution.
         // This makes it at least possible to press Undo.
-        RunWorkspaceResponse(List(), Map())
+        RunWorkspaceResponse(List(), Map(), Map())
     }
     GetWorkspaceResponse(
-      ref.name, ref.ws, run.outputs, run.summaries,
+      ref.name, ref.ws, run.outputs, run.summaries, run.progress,
       canUndo = ref.frame.currentState.previousCheckpoint.nonEmpty,
       canRedo = ref.frame.nextCheckpoint.nonEmpty)
   }
@@ -144,7 +148,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
             log.error(s"Error while generating summary for $box in $request.", t)
             box.operationId
         })).toMap
-    RunWorkspaceResponse(stateInfo, summaries)
+    val progress = getProgress(user, statesWithId.values.map(_._2).toSeq)
+    RunWorkspaceResponse(stateInfo, summaries, progress)
   }
 
   // This is for storing the calculated BoxOutputState objects, so the same states can be referenced later.
@@ -198,9 +203,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     }
   }
 
-  def getProgress(user: serving.User, request: GetProgressRequest): GetProgressResponse = {
-    val states = request.stateIds.map(stateId => stateId -> getOutput(user, stateId)).toMap
-    val progress = states.map {
+  def getProgress(user: serving.User, stateIds: Seq[String]): Map[String, Option[Progress]] = {
+    val states = stateIds.map(stateId => stateId -> getOutput(user, stateId)).toMap
+    states.map {
       case (stateId, state) =>
         if (state.success.enabled) {
           state.kind match {
@@ -227,7 +232,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         inProgress = progressList.count(x => x < 1.0 && x > 0.0),
         notYetStarted = progressList.count(_ == 0.0),
         failed = progressList.count(_ < 0.0)))).view.force
-    GetProgressResponse(progress)
   }
 
   def createSnapshot(

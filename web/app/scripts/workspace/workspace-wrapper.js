@@ -17,7 +17,7 @@
 // 5. this._build() is invoked again
 
 angular.module('biggraph')
-.factory('WorkspaceWrapper', function(BoxWrapper, PlugWrapper, util, $interval) {
+.factory('WorkspaceWrapper', function(BoxWrapper, PlugWrapper, util, longPoll) {
   function WorkspaceWrapper(name, boxCatalog) {
     this._progressUpdater = undefined;
     this.boxCatalog = boxCatalog;  // Updated for the sake of the operation palette.
@@ -146,40 +146,9 @@ angular.module('biggraph')
       this._build();
       this._assignStateInfoToPlugs(response.outputs);
       this._assignSummaryInfoToBoxes(response.summaries);
+      this.updateProgress(response.progress);
     },
 
-    _startProgressUpdate: function() {
-      this.stopProgressUpdate();
-      var that = this;
-      this._progressUpdater = $interval(function() {
-        that._getAndUpdateProgress();
-      }, 2000);
-    },
-
-    stopProgressUpdate: function() {
-      if (this._progressUpdater) {
-        $interval.cancel(this._progressUpdater);
-        this._progressUpdater = undefined;
-      }
-    },
-
-    _getAndUpdateProgress: function() {
-      if (this.knownStateIds) {
-        var that = this;
-        var lastProgressRequest = that.lastProgressRequest = util.nocache('/ajax/getProgress', {
-          stateIds: that.knownStateIds,
-        }).then(
-          function onSuccess(response) {
-            if (lastProgressRequest === that.lastProgressRequest) {
-              that.updateProgress(response.progress);
-            }
-          },
-          function onError(error) {
-            /* eslint-disable no-console */
-            console.error('Couldn\'t get progress information.', error);
-          });
-      }
-    },
     _lastLoadRequest: undefined,
     _requestInvalidated: false,
     loadWorkspace: function(workspaceStateRequest) {
@@ -201,10 +170,7 @@ angular.module('biggraph')
           },
           function onError(error) {
             that.error = util.responseToErrorMessage(error);
-          })
-        .then(function() {
-          that._startProgressUpdate();
-        });
+          });
     },
 
     saveWorkspace: function() {
@@ -305,13 +271,13 @@ angular.module('biggraph')
     },
 
     _assignStateInfoToPlugs: function(stateInfo) {
-      this.knownStateIds = [];
+      var knownStateIds = [];
       this.stateId2Plug = {};
       for (var i = 0; i < stateInfo.length; i++) {
         var item = stateInfo[i];
         var boxOutput = item.boxOutput;
         var stateId = item.stateId;
-        this.knownStateIds.push(stateId);
+        knownStateIds.push(stateId);
         var box = this.boxMap[boxOutput.boxId];
         var plug = box.outputMap[boxOutput.id];
         plug.stateId = stateId;
@@ -319,6 +285,7 @@ angular.module('biggraph')
         plug.kind = item.kind;
         this.stateId2Plug[stateId] = plug;
       }
+      longPoll.setStateIds(knownStateIds);
     },
 
     _assignSummaryInfoToBoxes: function(summaries) {
@@ -500,6 +467,7 @@ angular.module('biggraph')
         for (j = 0; j < inputs.length; ++j) {
           input = box.instance.inputs[inputs[j]];
           if (input.boxId) {
+            /* eslint-disable no-console */
             console.assert(!input.boxId.includes(SEPARATOR) && !input.id.includes(SEPARATOR));
             var key = input.boxId + SEPARATOR + input.id;
             externallyUsedOutputCounts[key] = (externallyUsedOutputCounts[key] || 0) + 1;
@@ -509,6 +477,7 @@ angular.module('biggraph')
       for (i = 0; i < ids.length; ++i) {
         box = this.boxMap[ids[i]];
         // "input-" and "output-" IDs will be used for the input and output boxes.
+        /* eslint-disable no-console */
         console.assert(box.instance.id.indexOf('input-') !== 0);
         console.assert(box.instance.id.indexOf('output-') !== 0);
         if (ids[i] === 'anchor') { continue; }  // Ignore anchor.
@@ -522,6 +491,7 @@ angular.module('biggraph')
           input = box.instance.inputs[inputName];
           // Record internally used output.
           if (input.boxId) {
+            /* eslint-disable no-console */
             console.assert(!input.boxId.includes(SEPARATOR) && !input.id.includes(SEPARATOR));
             externallyUsedOutputCounts[input.boxId + SEPARATOR + input.id] -= 1;
             internallyUsedOutputs[input.boxId + SEPARATOR + input.id] = true;
