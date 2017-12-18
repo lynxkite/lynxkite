@@ -113,13 +113,9 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Map()
     }
 
-    override def getPath() = {
-      params("path")
-    }
+    override def getPath() = params("path")
 
-    override def getState() = {
-      context.inputs("state")
-    }
+    override def getState() = context.inputs("state")
   })
 }
 
