@@ -285,23 +285,24 @@ class Workspace:
   def id_of(self, box):
     return self._box_ids[box]
 
+  def _ws_parameters_to_str(self):
+    param_list = []
+    for key, value in self._ws_parameters.items():
+      param_list.append(
+          '{' +
+          '"kind":"text","id":"{}","defaultValue":"{}"'.format(
+              key,
+              value) +
+          '}')
+    return '[' + ','.join(param_list) + ']'
+
   def to_json(self, workspace_root):
     normal_boxes = [
         box.to_json(self.id_of, workspace_root) for box in self._all_boxes]
-    # Use ws_parameters to customize _anchor_box.
+    # We use ws_parameters to customize _anchor_box.
     ab = copy.deepcopy(_anchor_box)
-
     if len(self._ws_parameters.keys()) > 0:
-      param_list = []
-      for key, value in self._ws_parameters.items():
-        param_list.append(
-            '{' +
-            '"kind":"text","id":"{}","defaultValue":"{}"'.format(
-                key,
-                value) +
-            '}')
-      param_str = '[' + ','.join(param_list) + ']'
-      ab['parameters'] = dict(parameters=param_str)
+      ab['parameters'] = dict(parameters=self._ws_parameters_to_str())
     return [ab] + normal_boxes
 
   def required_workspaces(self):
@@ -546,8 +547,8 @@ class LynxKite:
     # TODO: clean up saved workspaces if save_under_root is not set. And
     # also save main workspace if it is set.
 
-  def get_state_id(self, state):
-    ws = Workspace('Anonymous', [state.box])
+  def get_state_id(self, state, ws_parameters={}):
+    ws = Workspace('Anonymous', [state.box], input_boxes=[], ws_parameters=ws_parameters)
     workspace_outputs = self.run_workspace(ws)
     return workspace_outputs[
         ws.id_of(state.box), state.output_plug_name].stateId
