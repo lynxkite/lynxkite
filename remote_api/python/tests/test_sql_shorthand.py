@@ -3,7 +3,7 @@ import lynx.kite
 import json
 
 
-class TestWorkspaceBuilder(unittest.TestCase):
+class TestSQLShorthand(unittest.TestCase):
 
   def test_sql_with_two_inputs(self):
     lk = lynx.kite.LynxKite()
