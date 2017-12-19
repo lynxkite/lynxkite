@@ -98,17 +98,12 @@ class ParametricParameter:
   '''
 
   def __init__(self, parametric_expr):
-    assert isinstance(parametric_expr, str), '{} is not a string'.format(parametric_expr)
-    # Assert for '$' also?
     self._value = parametric_expr
 
   def __str__(self):
     return self._value
 
-
-def pp(parametric_expr):
-  '''Just an abbreviation'''
-  return ParametricParameter(parametric_expr)
+pp = ParametricParameter
 
 
 class State:
