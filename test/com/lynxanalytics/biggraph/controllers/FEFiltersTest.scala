@@ -9,7 +9,6 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import play.api.libs.json
 
 class FEFiltersTest extends FunSuite with TestGraphOp {
-
   test("specific value for string") {
     assert(FEFilters.filterFromSpec[String]("asd") == EQ("asd"))
   }
@@ -67,7 +66,7 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
     }
   }
 
-  test("Geofilter type error") {
+  test("Geofilter syntax error") {
     intercept[MatchError] {
       FEFilters.filterFromSpec[String]("(alma,narancs), (alma,narancs)")
     }
@@ -123,6 +122,9 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
     assert(FEFilters.filterFromSpec[Double]("!123") == NotFilter(EQ(123.0)))
     assert(FEFilters.filterFromSpec[Double]("!!123") == NotFilter(NotFilter(EQ(123.0))))
     assert(FEFilters.filterFromSpec[Double]("!!!123") == NotFilter(NotFilter(NotFilter(EQ(123.0)))))
+    assert(FEFilters.filterFromSpec[Double]("!!!*") == NotFilter(NotFilter(NotFilter(MatchAllFilter()))))
+    assert(FEFilters.filterFromSpec[String]("!\"well\"") == NotFilter(EQ("well")))
+    assert(FEFilters.filterFromSpec[Double]("!1.0,2.0") == NotFilter(OneOf(Set(1.0, 2.0))))
   }
 
   test("vectors work") {
@@ -131,8 +133,17 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
     assert(!FEFilters.filterFromSpec[Vector[Double]]("exists(==4.0)").matches(v))
     assert(!FEFilters.filterFromSpec[Vector[Double]]("forall (==2.0)").matches(v))
     assert(FEFilters.filterFromSpec[Vector[Double]]("forall (<10.0)").matches(v))
-  }
 
+  }
+  test("more complex vector tests") {
+    val v = List(1.0, 2.0, 3.0).toVector
+    assert(FEFilters.filterFromSpec[Vector[Double]]("exists(!>1.0)").matches(v))
+    assert(!FEFilters.filterFromSpec[Vector[Double]]("exists(!>=1.0)").matches(v))
+    assert(!FEFilters.filterFromSpec[Vector[Double]]("!exists(>1.0)").matches(v))
+    assert(!FEFilters.filterFromSpec[Vector[Double]]("!exists(!>1.0)").matches(v))
+    assert(FEFilters.filterFromSpec[Vector[String]]("!!all(!!*)") ==
+      NotFilter(NotFilter(ForAll(NotFilter(NotFilter(MatchAllFilter()))))))
+  }
   test("Escaped strings") { // "ab\\cd\"ef" == ab\cd"ef
     val quote = '"'
     val backslash = '\\'
