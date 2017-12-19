@@ -386,6 +386,15 @@ class LynxKite:
       raise AttributeError('{} is not defined'.format(name))
     return f
 
+  def sql(self, *args, **kwargs):
+    '''Shorthand for sql1, sql2, ..., sql10 boxes'''
+    num_inputs = len(args)
+    assert num_inputs > 0, 'SQL needs at least one input.'
+    assert num_inputs < 11, 'SQL can have at most ten inputs.'
+    name = 'sql{}'.format(num_inputs)
+    inputs = dict(zip(self.box_catalog().inputs(name), args))
+    return new_box(self.box_catalog(), name, inputs=inputs, parameters=kwargs)
+
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
 
