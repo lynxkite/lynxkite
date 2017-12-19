@@ -1,6 +1,6 @@
 {{ guid }}
 <span class="error">{{ error }}</span>
-<span ng-show="computed">Computation finished.</span>
-<button ng-click="trigger()" drop-tooltip="param.title" ng-disabled="disabled">
+<span ng-show="computed">{{ param.payload.successMessage }}</span>
+<button ng-click="trigger()" drop-tooltip="{{ param.title }}" ng-disabled="disabled">
   <i class="glyphicon glyphicon-play"></i>
 </button>
