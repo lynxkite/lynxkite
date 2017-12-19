@@ -62,10 +62,9 @@ module.exports = function(fw) {
       let outPlugFirstEG = lib.workspace.getOutputPlug('eg0');
       let outPlugReversedEdges = lib.workspace.getOutputPlug('reversed-edges');
       let outPlugSecondEG = lib.workspace.getOutputPlug('eg1');
-      // progress is updated every 2 seconds, so we may need to wait
-      lib.wait(() => outPlugReversedEdges.getAttribute('class').then(cls =>
-            cls.indexOf('plug-progress-unknown') === -1));
       expect(outPlugFirstEG.getAttribute('class').then(cls =>
+            cls.indexOf('plug-progress-unknown') === -1)).toBeTruthy();
+      expect(outPlugReversedEdges.getAttribute('class').then(cls =>
             cls.indexOf('plug-progress-unknown') === -1)).toBeTruthy();
       expect(outPlugSecondEG.getAttribute('class').then(cls =>
             cls.indexOf('plug-progress-unknown') === -1)).toBeTruthy();
