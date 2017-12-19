@@ -85,18 +85,18 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
   }
 
   test("We're backward compatible") {
-    def readOld[T](classpath: String, varName: String): T = {
+    def readOld(classpath: String, varName: String) = {
       val oldJson = json.Json.obj(
         "class" -> ("com.lynxanalytics.biggraph.graph_operations." + classpath),
         "data" -> json.Json.obj(varName -> 0.0))
-      com.lynxanalytics.biggraph.graph_api.TypedJson.read[T](oldJson)
+      com.lynxanalytics.biggraph.graph_api.TypedJson.read[Any](oldJson)
     }
 
-    assert(readOld[Any]("DoubleLT", "bound") == LT[Double](0.0))
-    assert(readOld[Any]("DoubleLE", "bound") == LE[Double](0.0))
-    assert(readOld[Any]("DoubleGT", "bound") == GT[Double](0.0))
-    assert(readOld[Any]("DoubleGE", "bound") == GE[Double](0.0))
-    assert(readOld[Any]("DoubleEQ", "exact") == EQ[Double](0.0))
+    assert(readOld("DoubleLT", "bound") == LT[Double](0.0))
+    assert(readOld("DoubleLE", "bound") == LE[Double](0.0))
+    assert(readOld("DoubleGT", "bound") == GT[Double](0.0))
+    assert(readOld("DoubleGE", "bound") == GE[Double](0.0))
+    assert(readOld("DoubleEQ", "exact") == EQ[Double](0.0))
   }
 
   test("position test") {
