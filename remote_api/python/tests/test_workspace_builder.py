@@ -56,6 +56,16 @@ class TestWorkspaceBuilder(unittest.TestCase):
     values = [row[0].string for row in table.data]
     self.assertEqual(values, ['Adam', 'Eve', 'Bob', 'Isolated Joe'])
 
+  def test_parametric_parameters(self):
+    from lynx.kite import pp
+    lk = lynx.kite.LynxKite()
+    state = lk.createExampleGraph().sql1(
+        sql=pp('select name from `vertices` where age < $ap'))
+    state_id = lk.get_state_id(state, ws_parameters={'ap': '30'})
+    table = lk.get_table(state_id)
+    values = [row[0].string for row in table.data]
+    self.assertEqual(values, ['Adam', 'Eve', 'Isolated Joe'])
+
   def test_wrong_chain_with_multiple_inputs(self):
     lk = lynx.kite.LynxKite()
     with self.assertRaises(Exception) as context:
