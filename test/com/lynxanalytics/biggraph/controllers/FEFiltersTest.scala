@@ -9,6 +9,7 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import play.api.libs.json
 
 class FEFiltersTest extends FunSuite with TestGraphOp {
+
   test("specific value for string") {
     assert(FEFilters.filterFromSpec[String]("asd") == EQ("asd"))
   }
@@ -61,13 +62,13 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
   }
 
   test("Regex type error") {
-    intercept[AssertionError] {
+    intercept[NumberFormatException] {
       FEFilters.filterFromSpec[Double]("regexp(123.0)")
     }
   }
 
   test("Geofilter type error") {
-    intercept[AssertionError] {
+    intercept[MatchError] {
       FEFilters.filterFromSpec[String]("(alma,narancs), (alma,narancs)")
     }
   }
@@ -91,11 +92,11 @@ class FEFiltersTest extends FunSuite with TestGraphOp {
       com.lynxanalytics.biggraph.graph_api.TypedJson.read[T](oldJson)
     }
 
-    assert(readOld[LT[Double]]("DoubleLT", "bound") == LT[Double](0.0))
-    assert(readOld[LE[Double]]("DoubleLE", "bound") == LE[Double](0.0))
-    assert(readOld[GT[Double]]("DoubleGT", "bound") == GT[Double](0.0))
-    assert(readOld[GE[Double]]("DoubleGE", "bound") == GE[Double](0.0))
-    assert(readOld[EQ[Double]]("DoubleEQ", "exact") == EQ[Double](0.0))
+    assert(readOld[Any]("DoubleLT", "bound") == LT[Double](0.0))
+    assert(readOld[Any]("DoubleLE", "bound") == LE[Double](0.0))
+    assert(readOld[Any]("DoubleGT", "bound") == GT[Double](0.0))
+    assert(readOld[Any]("DoubleGE", "bound") == GE[Double](0.0))
+    assert(readOld[Any]("DoubleEQ", "exact") == EQ[Double](0.0))
   }
 
   test("position test") {
