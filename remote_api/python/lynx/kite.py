@@ -344,7 +344,8 @@ class LynxKite:
   ``LYNXKITE_PUBLIC_SSL_CERT``, ``LYNXKITE_OAUTH_TOKEN``.
   '''
 
-  def __init__(self, username=None, password=None, address=None, certfile=None, oauth_token=None):
+  def __init__(self, username=None, password=None, address=None,
+               certfile=None, oauth_token=None, box_catalog=None):
     '''Creates a connection object.'''
     # Authentication and querying environment variables is deferred until the
     # first request.
@@ -355,7 +356,7 @@ class LynxKite:
     self._oauth_token = oauth_token
     self._session = None
     self._operation_names = None
-    self._box_catalog = None
+    self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
   def operation_names(self):
     if not self._operation_names:
