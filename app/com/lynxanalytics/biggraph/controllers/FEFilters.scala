@@ -130,6 +130,7 @@ object FEFilters {
     val simpleString: Parser[String] = P(CharPred(c => !charsNotInSimpleString.contains(c)).rep(1)).!
 
     val ws = P(" ".rep())
+    val notWs = P(CharPred(c => c != " ").rep())
     val token: Parser[String] = P(ws ~ (escapedString | simpleString) ~ ws)
   }
 
@@ -174,7 +175,9 @@ object FEFilters {
 
     def parse(spec: String) = {
       import fastparse.core.Parsed
-      val notFilter = P(Start ~ "!" ~ token.! ~ End).map(x => NotFilter(filterFromSpec(x)))
+      val notFilter = P(Start ~ "!" ~ notWs.! ~ End).map { x =>
+        NotFilter(filterFromSpec(x))
+      }
       val allFilter = P(Start ~ "*" ~ End).map(_ => MatchAllFilter())
       val expr = P(notFilter | allFilter | filter)
       val Parsed.Success(result, _) = expr.parse(spec)
@@ -214,7 +217,12 @@ object FEFilters {
       P(("exists" | "some" | "any" | "∃") ~ ws ~ "(" ~ token.! ~ ")").map(
         x => Exists(filterFromSpec(x)(typeTag[T])).asInstanceOf[Filter[T]])
     def parse[T: TypeTag](spec: String): Filter[T] = {
-      val expr = P(Start ~ (forall | exists) ~ End)
+      val outerNotFilter = P(Start ~ "!" ~ notWs.! ~ End).map { x =>
+        NotFilter(filterFromSpec(x)(typeTag[Vector[T]]).asInstanceOf[Filter[T]])
+      }
+      val matchAllFilter = P(Start ~ "*" ~ End).map(_ => MatchAllFilter().asInstanceOf[Filter[T]])
+      val vec = P(Start ~ (forall | exists) ~ End)
+      val expr = P(outerNotFilter | matchAllFilter | vec)
       import fastparse.core.Parsed
       val Parsed.Success(filter, _) = expr.parse(spec)
       filter
