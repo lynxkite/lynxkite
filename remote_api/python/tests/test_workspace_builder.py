@@ -68,8 +68,20 @@ class TestWorkspaceBuilder(unittest.TestCase):
     from lynx.kite import pp, text
     lk = lynx.kite.LynxKite()
     state = lk.createExampleGraph().sql1(
-        sql=pp('select name from `vertices` where age = $ap'))
-    state_id = lk.get_state_id(state, ws_parameters=[text('ap', '18.2')])
+        sql=pp('select name from `vertices` where age = $ap')).output(name='table')
+    ws = lynx.kite.Workspace('ws params', [state], ws_parameters=[text('ap', '18.2')])
+    state_id = lk.get_state_id(ws())
+    table = lk.get_table(state_id)
+    values = [row[0].string for row in table.data]
+    self.assertEqual(values, ['Eve'])
+
+  def test_parametric_parameters_with_workspace_parameters(self):
+    from lynx.kite import pp, text
+    lk = lynx.kite.LynxKite()
+    state = lk.createExampleGraph().sql1(
+        sql=pp('select name from `vertices` where age = $ap')).output(name='table')
+    ws = lynx.kite.Workspace('ws params', [state], ws_parameters=[text('ap')])
+    state_id = lk.get_state_id(ws(ap='18.2'))
     table = lk.get_table(state_id)
     values = [row[0].string for row in table.data]
     self.assertEqual(values, ['Eve'])
