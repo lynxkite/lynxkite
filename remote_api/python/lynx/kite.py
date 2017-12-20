@@ -154,6 +154,9 @@ class State:
   def __str__(self):
     return "Output {} of box {}".format(self.output_plug_name, self.box)
 
+  def sql(self, **kwargs):
+    return new_box(self.box.bc, 'sql1', inputs={'input': self}, parameters=kwargs)
+
 
 def new_box(bc, operation, inputs, parameters):
   if isinstance(operation, str):
