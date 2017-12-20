@@ -94,13 +94,13 @@ _anchor_box = {
 class WorkspaceParameter:
   ''' Represents a workspace parameter declaration.'''
 
-  def __init__(self, name, kind, default_value=None):
+  def __init__(self, name, kind, default_value=''):
     self.name = name
     self.kind = kind
     self.default_value = default_value
 
 
-def text(name, default=None):
+def text(name, default=''):
   '''Helper function to make it easy to define a text kind ws parameter.'''
   return WorkspaceParameter(name, 'text', default_value=default)
 
@@ -566,8 +566,8 @@ class LynxKite:
     # TODO: clean up saved workspaces if save_under_root is not set. And
     # also save main workspace if it is set.
 
-  def get_state_id(self, state, ws_parameters={}):
-    ws = Workspace('Anonymous', [state.box], input_boxes=[], ws_parameters=ws_parameters)
+  def get_state_id(self, state):
+    ws = Workspace('Anonymous', [state.box])
     workspace_outputs = self.run_workspace(ws)
     return workspace_outputs[
         ws.id_of(state.box), state.output_plug_name].stateId
