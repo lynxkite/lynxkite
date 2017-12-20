@@ -341,7 +341,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val ws = Workspace(List(anchor, eg, seg, compute))
     set("test-compute-box-project", ws)
     val op = controller.getOperation(user, GetOperationMetaRequest(WorkspaceReference("test-compute-box-project"), compute.id))
-    assert(op.asInstanceOf[ComputeBoxOperation].getGUIDs.size == 22)
+    assert(op.asInstanceOf[TriggerableOperation].getGUIDs("input").size == 22)
   }
 
   test("compute box - table") {
@@ -354,7 +354,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     set("test-compute-box-table", ws)
     val op = controller.getOperation(user, GetOperationMetaRequest(WorkspaceReference("test-compute-box-table"), compute.id))
     // ExampleGraph has 6 vertex attributes including ID.
-    assert(op.asInstanceOf[ComputeBoxOperation].getGUIDs.size == 1)
+    assert(op.asInstanceOf[TriggerableOperation].getGUIDs("input").size == 1)
   }
 
   test("save to snapshot") {
@@ -366,8 +366,9 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val ws = Workspace(List(anchor, eg, sts))
     set("test-save-to-snapshot", ws)
     val op = controller.getOperation(user, GetOperationMetaRequest(
-      WorkspaceReference("test-save-to-snapshot"), sts.id)).asInstanceOf[SaveToSnapshotOperation]
-    controller.createSnapshotFromState(user, op.getPath, op.getState)
+      WorkspaceReference("test-save-to-snapshot"), sts.id)).asInstanceOf[TriggerableOperation]
+    val gdc = new GraphDrawingController(this) // Triggerable ops need this to compute entity data.
+    op.trigger(controller, gdc)
     val entry = DirectoryEntry.fromName("test-save-to-snapshot_snapshot")
     assert(entry.exists)
     assert(entry.asInstanceOf[SnapshotFrame].getState.kind == "project")

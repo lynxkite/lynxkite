@@ -491,13 +491,8 @@ object ProductionJsonServer extends JsonServer {
   def triggerBox = jsonFuture(triggerBoxExec)
   def triggerBoxExec(
     user: serving.User, request: GetOperationMetaRequest): Future[Unit] = {
-    val op = workspaceController.getOperation(user, request)
-    op match {
-      case computeBoxOp: ComputeBoxOperation => drawingController.getComputeBoxResult(computeBoxOp)
-      case snapshotBox: SaveToSnapshotOperation => Future { // Need to wrap in Future for consistency.
-        workspaceController.createSnapshotFromState(user, snapshotBox.getPath, snapshotBox.getState)
-      }
-    }
+    workspaceController.getOperation(user, request).asInstanceOf[TriggerableOperation]
+      .trigger(workspaceController, drawingController)
   }
 
   val demoModeController = new DemoModeController(BigGraphProductionEnvironment)

@@ -611,17 +611,30 @@ abstract class ExportOperationToFile(context: Operation.Context)
     ("format" -> format, "path" -> generatePathIfNeeded(params("path")))
 }
 
-abstract class ComputeBoxOperation(context: Operation.Context) extends SmartOperation(context) {
+// A special operation with side effects and no outputs.
+abstract class TriggerableOperation(override val context: Operation.Context) extends SmartOperation(context) {
   def apply: Unit = ???
   def enabled = FEStatus.enabled
-  def getGUIDs(): List[java.util.UUID]
-}
+  // Triggers the side effects of this operation.
+  def trigger(wc: WorkspaceController, gdc: GraphDrawingController): scala.concurrent.Future[Unit]
 
-abstract class SaveToSnapshotOperation(context: Operation.Context) extends SmartOperation(context) {
-  def apply: Unit = ???
-  def enabled = FEStatus.enabled
-  def getPath(): String
-  def getState(): BoxOutputState
+  override def getOutputs() = {
+    params.validate()
+    Map()
+  }
+
+  // Helper method to get all gUIDs for an input state.
+  def getGUIDs(inputName: String) = {
+    val input = context.inputs(inputName)
+    input.kind match {
+      case BoxOutputKind.Project =>
+        projectInput(inputName).allEntityGUIDs
+      case BoxOutputKind.Table =>
+        List(tableInput(inputName).gUID)
+      case _ => throw new AssertionError(
+        s"Cannot use '${input.kind}' as input. Only 'table' and 'project' kinds are supported.")
+    }
+  }
 }
 
 class CustomBoxOperation(
