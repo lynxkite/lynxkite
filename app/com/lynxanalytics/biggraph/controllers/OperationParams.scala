@@ -53,7 +53,6 @@ object OperationParams {
   case class TriggerBoxParam(
       id: String,
       title: String,
-      url: String,
       successMessage: String) extends OperationParameterMeta {
     val kind = "trigger"
     val options = List()
@@ -63,7 +62,6 @@ object OperationParams {
       assert(value == "")
     }
     override val payload = Some(json.Json.obj(
-      "url" -> url,
       "successMessage" -> successMessage))
   }
 
