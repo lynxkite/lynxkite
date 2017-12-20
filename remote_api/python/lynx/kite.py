@@ -91,11 +91,27 @@ _anchor_box = {
 }
 
 
-class ParametricParameter:
-  '''Represents a parametric parameter value.
+class WorkspaceParameter:
+  ''' Represents a workspace parameter declaration.'''
 
-  It should be a string.
-  '''
+  def __init__(self, name, kind, default_value=None):
+    self.name = name
+    self.kind = kind
+    self.default_value = default_value
+
+
+def text(name, default=None):
+  '''Helper function to make it easy to define a text kind ws parameter.'''
+  return WorkspaceParameter(name, 'text', default_value=default)
+
+'''
+Workspace parameter declarations as a list:
+``wp_params = [text('alma'), text('korte', 'defaultkorte')]``
+'''
+
+
+class ParametricParameter:
+  '''Represents a parametric parameter value. It should be a string.'''
 
   def __init__(self, parametric_expr):
     self._value = parametric_expr
@@ -246,7 +262,7 @@ class BoxCatalog:
 class Workspace:
   '''Immutable class representing a LynxKite workspace'''
 
-  def __init__(self, name, terminal_boxes, input_boxes=[], ws_parameters={}):
+  def __init__(self, name, terminal_boxes, input_boxes=[], ws_parameters=[]):
     self._name = name
     self._all_boxes = set()
     self._box_ids = dict()
@@ -282,21 +298,19 @@ class Workspace:
 
   def _ws_parameters_to_str(self):
     param_list = []
-    for key, value in self._ws_parameters.items():
-      param_list.append(
-          '{' +
-          '"kind":"text","id":"{}","defaultValue":"{}"'.format(
-              key,
-              value) +
-          '}')
-    return '[' + ','.join(param_list) + ']'
+    for param in self._ws_parameters:
+      param_list.append(dict(
+          id=param.name,
+          kind=param.kind,
+          defaultValue=param.default_value))
+    return json.dumps(param_list)
 
   def to_json(self, workspace_root):
     normal_boxes = [
         box.to_json(self.id_of, workspace_root) for box in self._all_boxes]
     # We use ws_parameters to customize _anchor_box.
     ab = copy.deepcopy(_anchor_box)
-    if len(self._ws_parameters.keys()) > 0:
+    if len(self._ws_parameters) > 0:
       ab['parameters'] = dict(parameters=self._ws_parameters_to_str())
     return [ab] + normal_boxes
 

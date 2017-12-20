@@ -59,9 +59,17 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_parametric_parameters(self):
     from lynx.kite import pp
     lk = lynx.kite.LynxKite()
+    state = lk.createExampleGraph().deriveScalar(output='pi', expr=pp('${2+1.14}'))
+    project = lk.get_project(lk.get_state_id(state))
+    scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
+    self.assertEqual(scalars['pi'].string, '3.14')
+
+  def test_parametric_parameters_with_defaults(self):
+    from lynx.kite import pp, text
+    lk = lynx.kite.LynxKite()
     state = lk.createExampleGraph().sql1(
         sql=pp('select name from `vertices` where age = $ap'))
-    state_id = lk.get_state_id(state, ws_parameters={'ap': '18.2'})
+    state_id = lk.get_state_id(state, ws_parameters=[text('ap', '18.2')])
     table = lk.get_table(state_id)
     values = [row[0].string for row in table.data]
     self.assertEqual(values, ['Eve'])
