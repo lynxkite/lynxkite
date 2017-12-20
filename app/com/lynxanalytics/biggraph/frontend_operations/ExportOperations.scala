@@ -103,19 +103,17 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     })
   }
 
-  registerOp("Save to snapshot", defaultIcon, ExportOperations, List("state"), List(), new SaveToSnapshotOperation(_) {
+  registerOp("Save to snapshot", defaultIcon, ExportOperations, List("state"), List(), new TriggerableOperation(_) {
     params ++= List(
       Param("path", "Path"),
       TriggerBoxParam("save", "Save to snapshot", "Snapshot created."))
 
-    override def getOutputs() = {
-      params.validate()
-      Map()
+    private def getState() = context.inputs("state")
+
+    override def trigger(wc: WorkspaceController, gdc: GraphDrawingController) = {
+      wc.createSnapshotFromState(user, params("path"), getState)
+      gdc.getComputeBoxResult(getGUIDs("state"))
     }
-
-    override def getPath() = params("path")
-
-    override def getState() = context.inputs("state")
   })
 }
 
