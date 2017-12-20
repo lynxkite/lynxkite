@@ -27,8 +27,7 @@ GET  /ajax/getOperationMeta        com.lynxanalytics.biggraph.serving.Production
 GET  /ajax/boxCatalog              com.lynxanalytics.biggraph.serving.ProductionJsonServer.boxCatalog
 GET  /ajax/getExportResultOutput   com.lynxanalytics.biggraph.serving.ProductionJsonServer.getExportResultOutput
 GET  /ajax/getInstrumentedState    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getInstrumentedState
-GET  /ajax/getComputeBoxResult     com.lynxanalytics.biggraph.serving.ProductionJsonServer.getComputeBoxResult
-GET  /ajax/saveToSnapshot          com.lynxanalytics.biggraph.serving.ProductionJsonServer.saveToSnapshot
+GET  /ajax/triggerBox              com.lynxanalytics.biggraph.serving.ProductionJsonServer.triggerBox
 
 GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView
 GET  /ajax/histo       com.lynxanalytics.biggraph.serving.ProductionJsonServer.histo
@@ -36,9 +35,9 @@ GET  /ajax/scalarValue com.lynxanalytics.biggraph.serving.ProductionJsonServer.s
 GET  /ajax/model       com.lynxanalytics.biggraph.serving.ProductionJsonServer.model
 GET  /ajax/center      com.lynxanalytics.biggraph.serving.ProductionJsonServer.center
 
-GET  /ajax/getTableBrowserNodes     com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableBrowserNodes
-GET  /ajax/getTableBrowserNodesForBox     com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableBrowserNodesForBox
-GET  /ajax/runSQLQuery      com.lynxanalytics.biggraph.serving.ProductionJsonServer.runSQLQuery
+GET  /ajax/getTableBrowserNodes        com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableBrowserNodes
+GET  /ajax/getTableBrowserNodesForBox  com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableBrowserNodesForBox
+GET  /ajax/runSQLQuery                 com.lynxanalytics.biggraph.serving.ProductionJsonServer.runSQLQuery
 
 POST /ajax/exportSQLQueryToCSV     com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToCSV
 POST /ajax/exportSQLQueryToJson    com.lynxanalytics.biggraph.serving.ProductionJsonServer.exportSQLQueryToJson

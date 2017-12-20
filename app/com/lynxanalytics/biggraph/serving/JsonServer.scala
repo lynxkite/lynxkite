@@ -454,7 +454,6 @@ object ProductionJsonServer extends JsonServer {
   def exportSQLQueryToParquet = jsonFuturePost(sqlController.exportSQLQueryToParquet)
   def exportSQLQueryToORC = jsonFuturePost(sqlController.exportSQLQueryToORC)
   def exportSQLQueryToJdbc = jsonFuturePost(sqlController.exportSQLQueryToJdbc)
-  def saveToSnapshot = jsonGet(workspaceController.saveToSnapshot)
 
   def importBox = jsonFuturePost(importBoxExec)
   def importBoxExec(user: serving.User, request: ImportBoxRequest): Future[ImportBoxResponse] = {
@@ -489,11 +488,16 @@ object ProductionJsonServer extends JsonServer {
   def histo = jsonFuture(drawingController.getHistogram)
   def scalarValue = jsonFuture(drawingController.getScalarValue)
   def model = jsonFuture(drawingController.getModel)
-  def getComputeBoxResult = jsonFuture(getComputeBoxResultExec)
-  def getComputeBoxResultExec(
+  def triggerBox = jsonFuture(triggerBoxExec)
+  def triggerBoxExec(
     user: serving.User, request: GetOperationMetaRequest): Future[Unit] = {
-    val op = workspaceController.getOperation(user, request).asInstanceOf[ComputeBoxOperation]
-    drawingController.getComputeBoxResult(op)
+    val op = workspaceController.getOperation(user, request)
+    op match {
+      case computeBoxOp: ComputeBoxOperation => drawingController.getComputeBoxResult(computeBoxOp)
+      case snapshotBox: SaveToSnapshotOperation => Future { // Need to wrap in Future for consistency.
+        workspaceController.createSnapshotFromState(user, snapshotBox.getPath, snapshotBox.getState)
+      }
+    }
   }
 
   val demoModeController = new DemoModeController(BigGraphProductionEnvironment)

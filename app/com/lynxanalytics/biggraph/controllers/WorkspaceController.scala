@@ -235,15 +235,10 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     def calculatedState() = calculatedStates.synchronized {
       calculatedStates(request.id)
     }
-    createSnapshot(user, request.name, calculatedState)
+    createSnapshotFromState(user, request.name, calculatedState)
   }
 
-  def saveToSnapshot(user: serving.User, request: GetOperationMetaRequest): Unit = {
-    val op = getOperation(user, request).asInstanceOf[SaveToSnapshotOperation]
-    createSnapshot(user, op.getPath, op.getState)
-  }
-
-  private def createSnapshot(user: serving.User, path: String, state: () => BoxOutputState): Unit = {
+  def createSnapshotFromState(user: serving.User, path: String, state: () => BoxOutputState): Unit = {
     val entry = DirectoryEntry.fromName(path)
     entry.assertWriteAllowedFrom(user)
     entry.asNewSnapshotFrame(state())
