@@ -99,15 +99,13 @@ class WorkspaceParameter:
     self.kind = kind
     self.default_value = default_value
 
+  def to_json(self):
+    return dict(id=self.name, kind=self.kind, defaultValue=self.default_value)
+
 
 def text(name, default=''):
   '''Helper function to make it easy to define a text kind ws parameter.'''
   return WorkspaceParameter(name, 'text', default_value=default)
-
-'''
-Workspace parameter declarations as a list:
-``wp_params = [text('alma'), text('korte', 'defaultkorte')]``
-'''
 
 
 class ParametricParameter:
@@ -154,8 +152,8 @@ class State:
   def __str__(self):
     return "Output {} of box {}".format(self.output_plug_name, self.box)
 
-  def sql(self, **kwargs):
-    return new_box(self.box.bc, 'sql1', inputs={'input': self}, parameters=kwargs)
+  def sql(self, sql, **kwargs):
+    return self.sql1(sql=sql, **kwargs)
 
 
 def new_box(bc, operation, inputs, parameters):
@@ -266,6 +264,9 @@ class Workspace:
   '''Immutable class representing a LynxKite workspace'''
 
   def __init__(self, name, terminal_boxes, input_boxes=[], ws_parameters=[]):
+    '''The workspace parameter declarations can be specified as a list:
+    ``ws_parameters = [text('alma'), text('korte', 'default_for_korte')]``
+    '''
     self._name = name
     self._all_boxes = set()
     self._box_ids = dict()
@@ -300,21 +301,14 @@ class Workspace:
     return self._box_ids[box]
 
   def _ws_parameters_to_str(self):
-    param_list = []
-    for param in self._ws_parameters:
-      param_list.append(dict(
-          id=param.name,
-          kind=param.kind,
-          defaultValue=param.default_value))
-    return json.dumps(param_list)
+    return json.dumps([param.to_json() for param in self._ws_parameters])
 
   def to_json(self, workspace_root):
     normal_boxes = [
         box.to_json(self.id_of, workspace_root) for box in self._all_boxes]
     # We use ws_parameters to customize _anchor_box.
     ab = copy.deepcopy(_anchor_box)
-    if len(self._ws_parameters) > 0:
-      ab['parameters'] = dict(parameters=self._ws_parameters_to_str())
+    ab['parameters'] = dict(parameters=self._ws_parameters_to_str())
     return [ab] + normal_boxes
 
   def required_workspaces(self):
@@ -398,13 +392,14 @@ class LynxKite:
       raise AttributeError('{} is not defined'.format(name))
     return f
 
-  def sql(self, *args, **kwargs):
+  def sql(self, sql, *args, **kwargs):
     '''Shorthand for sql1, sql2, ..., sql10 boxes'''
     num_inputs = len(args)
     assert num_inputs > 0, 'SQL needs at least one input.'
     assert num_inputs < 11, 'SQL can have at most ten inputs.'
     name = 'sql{}'.format(num_inputs)
     inputs = dict(zip(self.box_catalog().inputs(name), args))
+    kwargs['sql'] = sql
     return new_box(self.box_catalog(), name, inputs=inputs, parameters=kwargs)
 
   def address(self):
