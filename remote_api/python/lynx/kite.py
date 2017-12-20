@@ -553,7 +553,8 @@ class LynxKite:
   def run_workspace(self, ws, save_under_root=None):
     ws_root = save_under_root
     if ws_root is None:
-      ws_root = 'tmp_{}/'.format(''.join(random.choice('0123456789ABCDEF') for i in range(16)))
+      ws_root = 'tmp_workspaces/{}/'.format(''.join(random.choice('0123456789ABCDEF')
+                                                    for i in range(16)))
     needed_ws = set()
     ws_queue = queue.Queue()
     ws_queue.put(ws)
