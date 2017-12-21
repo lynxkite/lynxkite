@@ -331,17 +331,6 @@ class Workspace:
     return new_box(self._bc, self, inputs=inputs, parameters=kwargs)
 
 
-def workspace(ws_name=None, ws_parameters=[]):
-  def ws_decorator(builder_fn):
-    real_ws_name = builder_fn.__name__ if not ws_name else ws_name
-    lk = LynxKite()
-    inputs = [lk.input(name=name) for name in inspect.signature(builder_fn).parameters.keys()]
-    results = builder_fn(*inputs)
-    outputs = [state.output(name=name) for name, state in results.items()]
-    return Workspace(real_ws_name, outputs, inputs, ws_parameters)
-  return ws_decorator
-
-
 class LynxKite:
   '''A connection to a LynxKite instance.
 
@@ -630,6 +619,19 @@ class LynxKite:
     return self._send(
         '/ajax/createDirectory',
         dict(name=path, privacy=privacy))
+
+
+_default_lk = LynxKite()
+
+
+def workspace(lk=_default_lk, ws_name=None, ws_parameters=[]):
+  def ws_decorator(builder_fn):
+    real_ws_name = builder_fn.__name__ if not ws_name else ws_name
+    inputs = [lk.input(name=name) for name in inspect.signature(builder_fn).parameters.keys()]
+    results = builder_fn(*inputs)
+    outputs = [state.output(name=name) for name, state in results.items()]
+    return Workspace(real_ws_name, outputs, inputs, ws_parameters)
+  return ws_decorator
 
 
 class LynxException(Exception):
