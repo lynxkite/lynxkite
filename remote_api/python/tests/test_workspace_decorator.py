@@ -25,3 +25,17 @@ class TestWorkspaceDecorator(unittest.TestCase):
         ('Isolated Joe', '20.3'), ('Isolated Joe', '18.2'),
         ('Isolated Joe', '50.3'), ('Isolated Joe', '2')]
     self.assertEqual(values, expected_result)
+
+  def test_ws_decorator_with_ws_parameters(self):
+    lk = lynx.kite.LynxKite()
+
+    @workspace(ws_parameters=[text('a'), text('b'), text('c')])
+    def add_ws():
+      o = (lk.createVertices(size='5')
+             .deriveScalar(output='total', expr=pp('${a.toInt+b.toInt+c.toInt}')))
+      return dict(sc=o)
+
+    state = lk.get_state_id(add_ws(a='2', b='3', c='4'))
+    project = lk.get_project(state)
+    scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
+    self.assertEqual(scalars['total'].string, '9')
