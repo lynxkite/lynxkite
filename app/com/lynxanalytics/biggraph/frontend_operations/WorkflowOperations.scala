@@ -392,24 +392,11 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     }
   })
 
-  register("Compute box", List("input"), List())(new ComputeBoxOperation(_) {
-    params += ComputeParam("compute", "Compute input GUIDs")
+  register("Compute box", List("input"), List())(new TriggerableOperation(_) {
+    params += TriggerBoxParam("compute", "Compute input GUIDs", "Computation finished.")
 
-    override def getOutputs() = {
-      params.validate()
-      Map()
-    }
-
-    override def getGUIDs() = {
-      val input = context.inputs("input")
-      input.kind match {
-        case BoxOutputKind.Project =>
-          projectInput("input").allEntityGUIDs
-        case BoxOutputKind.Table =>
-          List(tableInput("input").gUID)
-        case _ => throw new AssertionError(
-          s"Cannot use '${input.kind}' as input. Only 'table' and 'project' kinds are supported.")
-      }
+    override def trigger(wc: WorkspaceController, gdc: GraphDrawingController) = {
+      gdc.getComputeBoxResult(getGUIDs("input"))
     }
   })
 

@@ -488,11 +488,11 @@ object ProductionJsonServer extends JsonServer {
   def histo = jsonFuture(drawingController.getHistogram)
   def scalarValue = jsonFuture(drawingController.getScalarValue)
   def model = jsonFuture(drawingController.getModel)
-  def getComputeBoxResult = jsonFuture(getComputeBoxResultExec)
-  def getComputeBoxResultExec(
+  def triggerBox = jsonFuture(triggerBoxExec)
+  def triggerBoxExec(
     user: serving.User, request: GetOperationMetaRequest): Future[Unit] = {
-    val op = workspaceController.getOperation(user, request).asInstanceOf[ComputeBoxOperation]
-    drawingController.getComputeBoxResult(op)
+    workspaceController.getOperation(user, request).asInstanceOf[TriggerableOperation]
+      .trigger(workspaceController, drawingController)
   }
 
   val demoModeController = new DemoModeController(BigGraphProductionEnvironment)

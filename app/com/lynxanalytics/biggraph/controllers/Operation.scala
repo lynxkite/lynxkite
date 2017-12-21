@@ -36,7 +36,7 @@ object FEOperationParameterMeta {
     "parameters", // A whole section defining the parameters of an operation.
     "segmentation", // One of the segmentations of the current project.
     "visualization", // Describes a two-sided visualization UI state.
-    "compute", // A computation triggering button.
+    "trigger", // A computation triggering button.
     "dummy") // A piece of text without an input field.
 }
 
@@ -611,10 +611,30 @@ abstract class ExportOperationToFile(context: Operation.Context)
     ("format" -> format, "path" -> generatePathIfNeeded(params("path")))
 }
 
-abstract class ComputeBoxOperation(context: Operation.Context) extends SmartOperation(context) {
+// A special operation with side effects and no outputs.
+abstract class TriggerableOperation(override val context: Operation.Context) extends SmartOperation(context) {
   def apply: Unit = ???
   def enabled = FEStatus.enabled
-  def getGUIDs(): List[java.util.UUID]
+  // Triggers the side effects of this operation.
+  def trigger(wc: WorkspaceController, gdc: GraphDrawingController): scala.concurrent.Future[Unit]
+
+  override def getOutputs() = {
+    params.validate()
+    Map()
+  }
+
+  // Helper method to get all gUIDs for an input state.
+  def getGUIDs(inputName: String) = {
+    val input = context.inputs(inputName)
+    input.kind match {
+      case BoxOutputKind.Project =>
+        projectInput(inputName).allEntityGUIDs
+      case BoxOutputKind.Table =>
+        List(tableInput(inputName).gUID)
+      case _ => throw new AssertionError(
+        s"Cannot use '${input.kind}' as input. Only 'table' and 'project' kinds are supported.")
+    }
+  }
 }
 
 class CustomBoxOperation(

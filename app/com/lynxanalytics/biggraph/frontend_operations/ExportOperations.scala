@@ -102,5 +102,19 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       }
     })
   }
+
+  registerOp("Save to snapshot", defaultIcon, ExportOperations, List("state"), List(), new TriggerableOperation(_) {
+    params ++= List(
+      Param("path", "Path"),
+      TriggerBoxParam("save", "Save to snapshot", "Snapshot created."))
+
+    private def getState() = context.inputs("state")
+
+    override def trigger(wc: WorkspaceController, gdc: GraphDrawingController) = {
+      import scala.concurrent.ExecutionContext.Implicits.global
+      gdc.getComputeBoxResult(getGUIDs("state"))
+        .map(_ => wc.createSnapshotFromState(user, params("path"), getState))
+    }
+  })
 }
 
