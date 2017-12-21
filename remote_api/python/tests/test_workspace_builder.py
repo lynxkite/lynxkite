@@ -15,6 +15,13 @@ class TestWorkspaceBuilder(unittest.TestCase):
     self.assertEqual(scalars['!edge_count'].double, 4.0)
     self.assertEqual(scalars['greeting'].string, 'Hello world! 😀 ')
 
+  def test_numeric_box_parameter(self):
+    lk = lynx.kite.LynxKite()
+    s = lk.createVertices(size=6)
+    res = lk.get_state_id(s)
+    scalars = {s.title: lk.get_scalar(s.id) for s in lk.get_project(res).scalars}
+    self.assertEqual(scalars['!vertex_count'].double, 6.0)
+
   def test_simple_chain(self):
     lk = lynx.kite.LynxKite()
     state = lk.createExampleGraph().computePagerank().sql('select page_rank from vertices')
