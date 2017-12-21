@@ -90,7 +90,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_parametric_parameters_with_workspace_parameters(self):
     lk = lynx.kite.LynxKite()
     ws = self.parametric_ws()
-    state_id = lk.get_state_id(ws(ap='20.3'))
+    state_id = lk.get_state_id(ws(ap=20.3))
     table = lk.get_table(state_id)
     values = [row[0].string for row in table.data]
     self.assertEqual(values, ['Adam'])
