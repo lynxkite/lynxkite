@@ -358,6 +358,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   }
 
   test("save to snapshot") {
+    import scala.concurrent._
+    import scala.concurrent.duration._
     val anchor = anchorWithParams()
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val sts = Box("sts", "Save to snapshot",
@@ -368,7 +370,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val op = controller.getOperation(user, GetOperationMetaRequest(
       WorkspaceReference("test-save-to-snapshot"), sts.id)).asInstanceOf[TriggerableOperation]
     val gdc = new GraphDrawingController(this) // Triggerable ops need this to compute entity data.
-    op.trigger(controller, gdc)
+    Await.ready(op.trigger(controller, gdc), Duration.Inf)
     val entry = DirectoryEntry.fromName("test-save-to-snapshot_snapshot")
     assert(entry.exists)
     assert(entry.asInstanceOf[SnapshotFrame].getState.kind == "project")

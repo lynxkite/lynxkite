@@ -111,8 +111,9 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     private def getState() = context.inputs("state")
 
     override def trigger(wc: WorkspaceController, gdc: GraphDrawingController) = {
-      wc.createSnapshotFromState(user, params("path"), getState)
+      import scala.concurrent.ExecutionContext.Implicits.global
       gdc.getComputeBoxResult(getGUIDs("state"))
+        .map(_ => wc.createSnapshotFromState(user, params("path"), getState))
     }
   })
 }
