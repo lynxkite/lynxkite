@@ -719,8 +719,8 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       .future
   }
 
-  def getComputeBoxResult(op: ComputeBoxOperation): scala.concurrent.Future[Unit] = {
-    val entities = op.getGUIDs.map { guid => metaManager.entity(guid) }
+  def getComputeBoxResult(gUIDs: List[java.util.UUID]): scala.concurrent.Future[Unit] = {
+    val entities = gUIDs.map { guid => metaManager.entity(guid) }
     dataManager.compute(entities).future
   }
 
