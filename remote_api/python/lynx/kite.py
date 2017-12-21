@@ -29,6 +29,7 @@ import types
 import calendar
 from croniter import croniter
 import datetime
+import inspect
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
@@ -330,14 +331,15 @@ class Workspace:
     return new_box(self._bc, self, inputs=inputs, parameters=kwargs)
 
 
-def workspace(name=None, parameter_declarations={}):
-  def inner(builder_fn):
-    # Inputs from builder_fn params
-    # name if not set then name of builder_fn
-    # outputs from returned dictinary used as final states for Workspace(..)
-    # return the constructed workspace object
-    pass
-  return inner
+def workspace(ws_name=None, ws_parameters=[]):
+  def ws_decorator(builder_fn):
+    real_ws_name = builder_fn.__name__ if not ws_name else ws_name
+    lk = LynxKite()
+    inputs = [lk.input(name=name) for name in inspect.signature(builder_fn).parameters.keys()]
+    results = builder_fn(*inputs)
+    outputs = [state.output(name=name) for name, state in results.items()]
+    return Workspace(real_ws_name, outputs, inputs, ws_parameters)
+  return ws_decorator
 
 
 class LynxKite:
