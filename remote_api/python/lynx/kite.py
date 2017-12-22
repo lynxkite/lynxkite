@@ -197,7 +197,7 @@ class Box:
       if isinstance(value, ParametricParameter):
         self.parametric_parameters[key] = str(value)
       else:
-        self.parameters[key] = value
+        self.parameters[key] = str(value)
 
   def to_json(self, id_resolver, workspace_root):
     '''Creates the json representation of a box in a workspace.
