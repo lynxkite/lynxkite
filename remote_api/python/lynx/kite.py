@@ -331,6 +331,38 @@ class Workspace:
     return new_box(self._bc, self, inputs=inputs, parameters=kwargs)
 
 
+class WorkspaceSequence:
+  '''Represents a workspace sequence.
+
+  It can be used in automation to create instances of a workspace for
+  timestamps, wrapped in a workspace which can get inputs, and saves outputs.
+  The wrapped ws has to have a ``dt`` workspace parameter.
+  '''
+
+  def __init__(self, ws, schedule, start_date, params, lk_root, dfs_root, inputs):
+    self.ws = ws
+    self.schedule = schedule
+    self.start_date = start_date
+    self.params = params
+    self.lk_root = lk_root
+    self.dfs_root = dfs_root
+    self.inputs = inputs
+
+  def ws_for_date(self, dt):
+    self.params['dt'] = dt
+
+    @workspace()
+    def wrapper():
+      # TODO: handle inputs, add save snapshots
+      return self.ws(**params)
+
+    return wrapper
+
+  def run_for_date(self, lk, dt):
+    # TODO: check if dt is a member of the schedule sequence
+    return lk.run_workspace(self.ws_for_date(dt))
+
+
 class LynxKite:
   '''A connection to a LynxKite instance.
 
