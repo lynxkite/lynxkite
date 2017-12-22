@@ -39,3 +39,29 @@ class TestWorkspaceDecorator(unittest.TestCase):
     project = lk.get_project(state)
     scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
     self.assertEqual(scalars['total'].string, '9')
+
+  def test_multiple_ws_decorators(self):
+    lk = lynx.kite.LynxKite()
+
+    @workspace(ws_parameters=[text('field'), text('limit')])
+    def filter_table(table):
+      query = pp('select name, income from input where ${field} > ${limit}')
+      out = table.sql(query)
+      return dict(table=out)
+
+    @workspace()
+    def graph_to_table(graph):
+      return dict(table=graph.sql('select * from vertices'))
+
+    @workspace()
+    def full_workflow():
+      return dict(
+          result=filter_table(
+              graph_to_table(lk.createExampleGraph()),
+              field='income',
+              limit=500))
+
+    state = lk.get_state_id(full_workflow())
+    table = lk.get_table(state)
+    values = [(row[0].string, row[1].string) for row in lk.get_table(state).data]
+    self.assertEqual(values, [('Adam', '1000'), ('Bob', '2000')])
