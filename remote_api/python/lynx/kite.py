@@ -62,11 +62,14 @@ class TableSnapshotSequence:
     paths = ','.join(self.snapshots(lk, from_date, to_date))
     return lk.importUnionOfTableSnapshots(paths=paths)
 
+  def match(self, dt):
+    '''Checks whether ``dt`` is valid according to the cron format of the tss'''
+    i = croniter(self._cron_str, dt - datetime.timedelta(seconds=1))
+    return i.get_next(datetime.datetime) == dt
+
   def save_to_sequence(self, lk, table_state, dt):
     # Assert that dt is valid according to the cron_str format.
-    i = croniter(self._cron_str, dt - datetime.timedelta(seconds=1))
-    assert i.get_next(datetime.datetime) == dt, "Datetime %s does not match cron format %s." % (
-        dt, self._cron_str)
+    assert self.match(dt), "Datetime %s does not match cron format %s." % (dt, self._cron_str)
     lk.save_snapshot(self._location + '/' + str(dt), table_state)
 
 
