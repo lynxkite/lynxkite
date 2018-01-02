@@ -61,9 +61,10 @@ libraryDependencies ++= Seq(
   "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
   // Groovy is used for workflows and the batch API.
   "org.kohsuke" % "groovy-sandbox" % "1.10",
-  "com.lihaoyi" % "ammonite-sshd" % "1.0.3" cross CrossVersion.full,
-  // A dependency of Ammonite and included directly for our parsing needs.
-  "com.lihaoyi" %% "fastparse" % "0.3.7",
+  "com.lihaoyi" % "ammonite-sshd" % "1.0.3" cross CrossVersion.full excludeAll(
+    ExclusionRule(organization="org.specs2", name="specs2_2.11")),
+  // Required because of Ammonite using a different scalaz version than the Play framework
+  "org.specs2" %% "specs2-junit" % "3.7",
   // Hive import seems to need this.
   "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.17",
   // For SPARK-10306.
