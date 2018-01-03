@@ -488,7 +488,7 @@ object ProductionJsonServer extends JsonServer {
   def histo = jsonFuture(drawingController.getHistogram)
   def scalarValue = jsonFuture(drawingController.getScalarValue)
   def model = jsonFuture(drawingController.getModel)
-  def triggerBox = jsonFuture(triggerBoxExec)
+  def triggerBox = jsonFuturePost(triggerBoxExec)
   def triggerBoxExec(
     user: serving.User, request: GetOperationMetaRequest): Future[Unit] = {
     workspaceController.getOperation(user, request).asInstanceOf[TriggerableOperation]
