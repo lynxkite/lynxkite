@@ -15,7 +15,7 @@ angular.module('biggraph').directive('triggerParameter', function(util) {
         scope.disabled = true;
         scope.computed = false;
         scope.error = undefined;
-        util.get('/ajax/triggerBox', {
+        util.nocache('/ajax/triggerBox', {
           workspace: scope.box.workspace.ref(),
           box: scope.box.instance.id,
         }).then(function success() {
