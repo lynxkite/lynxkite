@@ -35,6 +35,12 @@ if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
 
 
+def valid(dt, cron_str):
+  '''Checks whether ``dt`` is valid according to cron_str.'''
+  i = croniter(cron_str, dt - datetime.timedelta(seconds=1))
+  return i.get_next(datetime.datetime) == dt
+
+
 class TableSnapshotSequence:
   '''A snapshot sequence representing a list of table type snapshots in LynxKite.
 
@@ -62,14 +68,10 @@ class TableSnapshotSequence:
     paths = ','.join(self.snapshots(lk, from_date, to_date))
     return lk.importUnionOfTableSnapshots(paths=paths)
 
-  def match(self, dt):
-    '''Checks whether ``dt`` is valid according to the cron format of the tss'''
-    i = croniter(self._cron_str, dt - datetime.timedelta(seconds=1))
-    return i.get_next(datetime.datetime) == dt
-
   def save_to_sequence(self, lk, table_state, dt):
     # Assert that dt is valid according to the cron_str format.
-    assert self.match(dt), "Datetime %s does not match cron format %s." % (dt, self._cron_str)
+    assert valid(dt, self._cron_str), "Datetime %s does not match cron format %s." % (
+        dt, self._cron_str)
     lk.save_snapshot(self._location + '/' + str(dt), table_state)
 
 
@@ -362,7 +364,8 @@ class WorkspaceSequence:
     return wrapper
 
   def run_for_date(self, lk, dt):
-    # TODO: check if dt is a member of the schedule sequence
+    assert valid(dt, self.schedule), "{} is not valid according to {}".format(
+        dt, self.schedule)
     return lk.run_workspace(self.ws_for_date(dt))
 
 
