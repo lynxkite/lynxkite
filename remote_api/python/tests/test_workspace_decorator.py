@@ -1,6 +1,6 @@
 import unittest
 import lynx.kite
-from lynx.kite import workspace, pp, text
+from lynx.kite import pp, text
 
 
 class TestWorkspaceDecorator(unittest.TestCase):
@@ -8,7 +8,7 @@ class TestWorkspaceDecorator(unittest.TestCase):
   def test_ws_decorator_without_arguments(self):
     lk = lynx.kite.LynxKite()
 
-    @workspace(lk)
+    @lk.workspace()
     def join_ws(x, y):
       return dict(xjoin=lk.sql('select * from one cross join two', x, y))
 
@@ -29,7 +29,7 @@ class TestWorkspaceDecorator(unittest.TestCase):
   def test_ws_decorator_with_ws_parameters(self):
     lk = lynx.kite.LynxKite()
 
-    @workspace(lk, parameters=[text('a'), text('b'), text('c')])
+    @lk.workspace(parameters=[text('a'), text('b'), text('c')])
     def add_ws():
       o = (lk.createVertices(size='5')
              .deriveScalar(output='total', expr=pp('${a.toInt+b.toInt+c.toInt}')))
@@ -43,17 +43,17 @@ class TestWorkspaceDecorator(unittest.TestCase):
   def test_multiple_ws_decorators(self):
     lk = lynx.kite.LynxKite()
 
-    @workspace(lk, parameters=[text('field'), text('limit')])
+    @lk.workspace(parameters=[text('field'), text('limit')])
     def filter_table(table):
       query = pp('select name, income from input where ${field} > ${limit}')
       out = table.sql(query)
       return dict(table=out)
 
-    @workspace(lk)
+    @lk.workspace()
     def graph_to_table(graph):
       return dict(table=graph.sql('select * from vertices'))
 
-    @workspace(lk)
+    @lk.workspace()
     def full_workflow():
       return dict(
           result=filter_table(
