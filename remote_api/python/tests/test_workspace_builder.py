@@ -123,3 +123,21 @@ class TestWorkspaceBuilder(unittest.TestCase):
     lk.trigger_box('trigger-folder/trigger-test', 'box_0')
     entries = lk.list_dir('')
     self.assertTrue('this_is_my_snapshot' in [e.name for e in entries])
+
+  def test_trigger_box_with_multiple_snapshot_boxes(self):
+    lk = lynx.kite.LynxKite()
+    eg = lk.createExampleGraph()
+    o1 = eg.sql('select name from vertices').saveToSnapshot(path='names_snapshot')
+    o2 = eg.sql('select age from vertices').saveToSnapshot(path='ages_snapshot')
+    lk.remove_name('names_snapshot', force=True)
+    lk.remove_name('ages_snapshot', force=True)
+    lk.remove_name('trigger-folder', force=True)
+    ws = lynx.kite.Workspace('multi-trigger-test', [o1, o2])
+    lk.run_workspace(ws, 'trigger-folder/')
+    for box_id in [box['id']
+                   for box in ws.to_json('trigger-folder/')
+                   if box['operationId'] == 'Save to snapshot']:
+      lk.trigger_box('trigger-folder/multi-trigger-test', box_id)
+    entries = lk.list_dir('')
+    self.assertTrue('names_snapshot' in [e.name for e in entries])
+    self.assertTrue('ages_snapshot' in [e.name for e in entries])
