@@ -672,6 +672,14 @@ class LynxKite:
       return Workspace(real_name, outputs, inputs, parameters)
     return ws_decorator
 
+  def trigger_box(self, workspace_name, box_id):
+    '''Trigger the computation of all the GUIDs in the box which is in the
+    saved workspace named ``workspace_name`` and has ``boxID=box_id``.
+    '''
+    return self._send(
+        '/ajax/triggerBox',
+        dict(workspace=dict(top=workspace_name, customBoxStack=[]), box=box_id))
+
 
 class LynxException(Exception):
   '''Raised when LynxKite indicates that an error has occured while processing a command.'''
