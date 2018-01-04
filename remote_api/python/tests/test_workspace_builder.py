@@ -63,6 +63,15 @@ class TestWorkspaceBuilder(unittest.TestCase):
     values = [row[0].string for row in table.data]
     self.assertEqual(values, ['Adam', 'Eve', 'Bob', 'Isolated Joe'])
 
+  def test_save_under_root(self):
+    lk = lynx.kite.LynxKite()
+    state = lk.createExampleGraph().sql('select name from vertices')
+    ws = lynx.kite.Workspace('eg_names', [state])
+    lk.remove_name('save_it_under_this_folder/eg_names', force=True)
+    lk.run_workspace(ws, 'save_it_under_this_folder/')
+    entries = lk.list_dir('save_it_under_this_folder')
+    self.assertEqual('save_it_under_this_folder/eg_names', entries[0].name)
+
   def test_parametric_parameters(self):
     from lynx.kite import pp
     lk = lynx.kite.LynxKite()

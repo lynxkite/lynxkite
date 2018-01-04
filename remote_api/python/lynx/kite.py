@@ -273,7 +273,7 @@ class Workspace:
     '''The workspace parameter declarations can be specified as a list:
     ``ws_parameters = [text('alma'), text('korte', 'default_for_korte')]``
     '''
-    self._name = name
+    self._name = name if name else 'Anonymous'
     self._all_boxes = set()
     self._box_ids = dict()
     self._next_id = 0
@@ -590,9 +590,10 @@ class LynxKite:
           ws_queue.put(rws)
     for rws in needed_ws:
       self.save_workspace(ws_root + rws.name(), rws.to_json(ws_root))
+    if save_under_root:
+      self.save_workspace(save_under_root + ws.name(), ws.to_json(save_under_root))
     return self.run(ws.to_json(ws_root))
-    # TODO: clean up saved workspaces if save_under_root is not set. And
-    # also save main workspace if it is set.
+    # TODO: clean up saved workspaces if save_under_root is not set.
 
   def get_state_id(self, state):
     ws = Workspace('Anonymous', [state.box])
