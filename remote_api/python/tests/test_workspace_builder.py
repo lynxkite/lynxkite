@@ -70,7 +70,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     lk.remove_name('save_it_under_this_folder/eg_names', force=True)
     lk.run_workspace(ws, 'save_it_under_this_folder/')
     entries = lk.list_dir('save_it_under_this_folder')
-    self.assertEqual('save_it_under_this_folder/eg_names', entries[0].name)
+    self.assertTrue('save_it_under_this_folder/eg_names' in [e.name for e in entries])
 
   def test_parametric_parameters(self):
     from lynx.kite import pp
