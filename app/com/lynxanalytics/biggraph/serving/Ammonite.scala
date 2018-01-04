@@ -49,7 +49,7 @@ Drive responsibly.""")
         // We only listen on the local interface.
         address = "localhost",
         port = ammonitePort.toInt,
-        passwordAuthenticator = Some(new Authenticator(
+        passwordAuthenticator = Some(new AmmoniteAuthenticator(
           LoggedEnvironment.envOrElse("KITE_AMMONITE_USER", "lynx"),
           LoggedEnvironment.envOrElse("KITE_AMMONITE_PASSWD", "kite", confidential = true)))),
 
@@ -82,7 +82,7 @@ println("${help}")
   }
 }
 
-class Authenticator(username: String, password: String) extends PasswordAuthenticator {
+class AmmoniteAuthenticator(username: String, password: String) extends PasswordAuthenticator {
   override def authenticate(username: String, password: String, session: ServerSession): Boolean = {
     this.username == username && this.password == password
   }
