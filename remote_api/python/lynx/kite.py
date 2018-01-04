@@ -52,6 +52,10 @@ class TableSnapshotSequence:
     self._location = location
     self._cron_str = cron_str
 
+  def snapshot_name(self, dt):
+    # TODO: make it timezone independent
+    return self._location + '/' + str(dt)
+
   def snapshots(self, lk, from_date, to_date):
     # We want to include the from_date if it matches the cron format.
     i = croniter(self._cron_str, from_date - datetime.timedelta(seconds=1))
@@ -60,8 +64,7 @@ class TableSnapshotSequence:
       dt = i.get_next(datetime.datetime)
       if dt > to_date:
         break
-      name = str(dt)
-      t.append(self._location + '/' + name)
+      t.append(self.snapshot_name(dt))
     return t
 
   def read_interval(self, lk, from_date, to_date):
@@ -72,7 +75,7 @@ class TableSnapshotSequence:
     # Assert that dt is valid according to the cron_str format.
     assert valid(dt, self._cron_str), "Datetime %s does not match cron format %s." % (
         dt, self._cron_str)
-    lk.save_snapshot(self._location + '/' + str(dt), table_state)
+    lk.save_snapshot(self.snapshot_name(dt), table_state)
 
 
 def _python_name(name):
