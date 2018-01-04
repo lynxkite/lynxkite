@@ -109,3 +109,17 @@ class TestWorkspaceBuilder(unittest.TestCase):
     with self.assertRaises(Exception) as context:
       state = lk.createExampleGraph().sql2(sql='select * from vertices')
     self.assertTrue('sql2 has more than one input' in str(context.exception))
+
+  def test_trigger_box_with_save_snapshot(self):
+    lk = lynx.kite.LynxKite()
+    state = (lk.createExampleGraph()
+             .sql('select name from vertices')
+             .saveToSnapshot(path='this_is_my_snapshot'))
+    lk.remove_name('trigger-folder', force=True)
+    lk.remove_name('this_is_my_snapshot', force=True)
+    ws = lynx.kite.Workspace('trigger-test', [state])
+    lk.run_workspace(ws, 'trigger-folder/')
+    # The boxId of the "Save to snapshot box" is box_0
+    lk.trigger_box('trigger-folder/trigger-test', 'box_0')
+    entries = lk.list_dir('')
+    self.assertTrue('this_is_my_snapshot' in [e.name for e in entries])
