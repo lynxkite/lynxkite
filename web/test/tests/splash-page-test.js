@@ -9,6 +9,7 @@ module.exports = function(fw) {
     'empty splash',
     function() {
       lib.discardAll();
+      browser.get('/#/');
       browser.executeScript('window.localStorage.setItem(\'last_selector_path\',\'\');');
       browser.executeScript('window.sessionStorage.setItem(\'last_selector_path\',\'\');');
       if (fs.existsSync(lib.protractorDownloads)) {
@@ -18,7 +19,6 @@ module.exports = function(fw) {
         fs.rmdirSync(lib.protractorDownloads);
       }
       fs.mkdirSync(lib.protractorDownloads);
-      browser.get('/#/');
     },
     function() {
     });
