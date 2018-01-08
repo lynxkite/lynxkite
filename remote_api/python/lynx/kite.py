@@ -35,7 +35,7 @@ if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
 
 
-def valid(dt, cron_str):
+def timestamp_is_valid(dt, cron_str):
   '''Checks whether ``dt`` is valid according to cron_str.'''
   i = croniter(cron_str, dt - datetime.timedelta(seconds=1))
   return i.get_next(datetime.datetime) == dt
@@ -73,7 +73,7 @@ class TableSnapshotSequence:
 
   def save_to_sequence(self, lk, table_state, dt):
     # Assert that dt is valid according to the cron_str format.
-    assert valid(dt, self._cron_str), "Datetime %s does not match cron format %s." % (
+    assert timestamp_is_valid(dt, self._cron_str), "Datetime %s does not match cron format %s." % (
         dt, self._cron_str)
     lk.save_snapshot(self.snapshot_name(dt), table_state)
 
@@ -356,19 +356,19 @@ class WorkspaceSequence:
     self.dfs_root = dfs_root
     self.inputs = inputs
 
-  def ws_for_date(self, dt):
-    self.params['dt'] = dt
+  def ws_for_date(self, lk, execution_date):
+    assert timestamp_is_valid(
+        execution_date, self.schedule), "{} is not valid according to {}".format(dt, self.schedule)
 
-    @workspace()
+    @lk.workspace()
     def wrapper():
       # TODO: handle inputs, add save snapshots
-      return self.ws(**params)
+      return self.ws(**params, execution_date=execution_date)
 
     return wrapper
 
   def run_for_date(self, lk, dt):
-    assert valid(dt, self.schedule), "{} is not valid according to {}".format(
-        dt, self.schedule)
+    # TODO: here "run" should mean really run, like triggering the final snapshot boxes
     return lk.run_workspace(self.ws_for_date(dt))
 
 
