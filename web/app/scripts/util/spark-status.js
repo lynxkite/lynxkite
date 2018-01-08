@@ -2,13 +2,14 @@
 'use strict';
 
 angular.module('biggraph')
-.directive('sparkStatus', function(util, sparkStatusUpdater) {
+.directive('sparkStatus', function(util, longPoll) {
   return {
     restrict: 'E',
     scope: {},
     templateUrl: 'scripts/util/spark-status.html',
     link: function(scope) {
-      sparkStatusUpdater.bind(scope, 'status');
+      scope.status = longPoll.lastUpdate.sparkStatus;
+      longPoll.onUpdate(scope, function(status) { scope.status = status.sparkStatus; });
 
       scope.kill = function() {
         util.post('/ajax/spark-cancel-jobs', { fake: 1 });
@@ -67,31 +68,5 @@ angular.module('biggraph')
         return tooltip + '.';
       };
     },
-  };
-})
-// The status is updated in a "long poll". The server delays the response until
-// there is an update. It is implemented in a service so that tests can mock it out.
-.service('sparkStatusUpdater', function($timeout, util) {
-  this.bind = function(scope, name) {
-    scope[name] = { timestamp: 0, activeStages: [], pastStages: [] };
-    var update;
-    function load() {
-      update = util.nocache('/ajax/spark-status', { syncedUntil: scope[name].timestamp });
-    }
-    function onUpdate() {
-      if (update && update.$resolved) {
-        if (update.$error) {
-          scope[name].error = update.$error;
-          $timeout(load, 10000);  // Try again in a bit.
-        } else {
-          update.received = Date.now();
-          scope[name] = update;
-          load();
-        }
-      }
-    }
-    load();
-    scope.$watch(function() { return update; }, onUpdate);
-    scope.$watch(function() { return update.$resolved; }, onUpdate);
   };
 });
