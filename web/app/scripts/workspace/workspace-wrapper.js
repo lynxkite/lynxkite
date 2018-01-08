@@ -19,7 +19,6 @@
 angular.module('biggraph')
 .factory('WorkspaceWrapper', function(BoxWrapper, PlugWrapper, util, longPoll) {
   function WorkspaceWrapper(name, boxCatalog) {
-    this._progressUpdater = undefined;
     this.boxCatalog = boxCatalog;  // Updated for the sake of the operation palette.
     this._boxCatalogMap = undefined;
     this.name = name;

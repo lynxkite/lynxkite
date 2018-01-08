@@ -5,6 +5,7 @@ module.exports = {
       angular.module('biggraph')
         .service('longPoll', function() {
           this.onUpdate = function() {};
+          this.setStateIds = function() {};
           this.lastUpdate = {
             sparkStatus: { timestamp: 0, activeStages: [], pastStages: [] },
             progress: {},
