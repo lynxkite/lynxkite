@@ -344,7 +344,7 @@ class WorkspaceSequence:
 
   It can be used in automation to create instances of a workspace for
   timestamps, wrapped in a workspace which can get inputs, and saves outputs.
-  The wrapped ws has to have a ``dt`` workspace parameter.
+  The wrapped ws has to have a ``date`` workspace parameter.
   '''
 
   def __init__(self, ws, schedule, start_date, params, lk_root, dfs_root, inputs):
@@ -356,20 +356,20 @@ class WorkspaceSequence:
     self.dfs_root = dfs_root
     self.inputs = inputs
 
-  def ws_for_date(self, lk, execution_date):
+  def ws_for_date(self, lk, date):
     assert timestamp_is_valid(
-        execution_date, self.schedule), "{} is not valid according to {}".format(dt, self.schedule)
+        date, self.schedule), "{} is not valid according to {}".format(dt, self.schedule)
 
     @lk.workspace()
     def wrapper():
       # TODO: handle inputs, add save snapshots
-      return self.ws(**params, execution_date=execution_date)
+      return self.ws(**params, date=date)
 
     return wrapper
 
-  def run_for_date(self, lk, dt):
+  def run_for_date(self, lk, date):
     # TODO: here "run" should mean really run, like triggering the final snapshot boxes
-    return lk.run_workspace(self.ws_for_date(dt))
+    return lk.run_workspace(self.ws_for_date(date))
 
 
 class LynxKite:
