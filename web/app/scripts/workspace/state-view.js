@@ -26,10 +26,17 @@ angular.module('biggraph')
             var json = JSON.stringify(query);
             if (json !== lastJson) {
               scope.result = util.get('/ajax/getInstrumentedState', query);
+              var currentRequest = scope.result;
+              currentRequest.then(function(res) {
+                if (scope.result === currentRequest) {
+                  scope.lastState = res.states[res.states.length - 1];
+                }
+              });
               lastJson = json;
             }
           } else {
             scope.result = { states: [scope.plug], metas: [] };
+            scope.lastState = scope.plug;
           }
         }
         scope.onBlur = function() {
