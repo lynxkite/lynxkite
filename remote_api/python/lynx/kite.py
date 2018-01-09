@@ -397,7 +397,7 @@ class TableSnapshotRecipe(InputRecipe):
     return r.exists and r.isSnapshot
 
   def build_boxes(self, lk, date):
-    pass
+    return self.tss.read_interval(lk, date, date)
 
 
 class LynxKite:
