@@ -52,9 +52,9 @@ class TableSnapshotSequence:
     self._location = location
     self._cron_str = cron_str
 
-  def snapshot_name(self, dt):
+  def snapshot_name(self, date):
     # TODO: make it timezone independent
-    return self._location + '/' + str(dt)
+    return self._location + '/' + str(date)
 
   def snapshots(self, lk, from_date, to_date):
     # We want to include the from_date if it matches the cron format.
@@ -370,6 +370,34 @@ class WorkspaceSequence:
   def run_for_date(self, lk, date):
     # TODO: here "run" should mean really run, like triggering the final snapshot boxes
     return lk.run_workspace(self.ws_for_date(date))
+
+
+class InputRecipe:
+  '''Base class for input recipes.
+
+  Can check whether an input is available, and can build a workspace segment which
+  loads the input into a workspace.
+  '''
+
+  def is_ready(self, lk, date):
+    raise NotImplementedError()
+
+  def build_boxes(self, lk, date):
+    raise NotImplementedError()
+
+
+class TableSnapshotRecipe(InputRecipe):
+  '''Input recipe for a table snapshot sequence'''
+
+  def __init__(self, tss):
+    self.tss = tss
+
+  def is_ready(self, lk, date):
+    r = lk.get_directory_entry(self.tss.snapshot_name(date))
+    return r.exists and r.isSnapshot
+
+  def build_boxes(self, lk, date):
+    pass
 
 
 class LynxKite:
