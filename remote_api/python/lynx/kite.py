@@ -347,29 +347,40 @@ class WorkspaceSequence:
   The wrapped ws has to have a ``date`` workspace parameter.
   '''
 
-  def __init__(self, ws, schedule, start_date, params, lk_root, dfs_root, inputs):
+  def __init__(self, ws, schedule, start_date, params, lk_root, dfs_root, input_recipes):
     self.ws = ws
     self.schedule = schedule
     self.start_date = start_date
     self.params = params
     self.lk_root = lk_root
     self.dfs_root = dfs_root
-    self.inputs = inputs
+    self.input_recipes = input_recipes
+
+  def wrapper_name(self, date):
+    return '{}_wrapper_for_{}'.format(self.ws._name, date)
 
   def ws_for_date(self, lk, date):
+    assert date >= self.start_date, "{} preceeds start date = {}".format(date, self.start_date)
     assert timestamp_is_valid(
-        date, self.schedule), "{} is not valid according to {}".format(dt, self.schedule)
-
-    @lk.workspace()
-    def wrapper():
-      # TODO: handle inputs, add save snapshots
-      return self.ws(**params, date=date)
-
-    return wrapper
+        date, self.schedule), "{} is not valid according to {}".format(date, self.schedule)
+    inputs = [input_boxes.build_boxes(lk, date) for input_boxes in self.input_recipes]
+    ws_with_inputs = self.ws(*inputs, **self.params, date=date)
+    terminal_boxes = []
+    for output in self.ws.outputs():
+      tss = TableSnapshotSequence(self.lk_root + output, self.schedule)
+      out_path = tss.snapshot_name(date)
+      terminal_boxes.append(ws_with_inputs[output].saveToSnapshot(path=out_path))
+    return Workspace(self.wrapper_name(date), terminal_boxes)
 
   def run_for_date(self, lk, date):
-    # TODO: here "run" should mean really run, like triggering the final snapshot boxes
-    return lk.run_workspace(self.ws_for_date(date))
+    ws_for_date = self.ws_for_date(lk, date)
+    ws_name = self.lk_root + self.ws_for_date(lk, date)._name
+    outputs = lk.run_workspace(ws_for_date, self.lk_root)
+    # TODO: trigger all side-effect boxes
+    for box_id in [box['id']
+                   for box in ws_for_date.to_json(self.lk_root)
+                   if box['operationId'] == 'Save to snapshot']:
+      lk.trigger_box(ws_name, box_id)
 
 
 class InputRecipe:
