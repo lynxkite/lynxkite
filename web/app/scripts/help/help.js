@@ -76,7 +76,8 @@ angular.module('biggraph')
       restrict: 'E',
       scope: {
         helpId: '@href',
-        fallbackText: '@'
+        fallbackText: '@',
+        container: '@',
       },
       templateUrl: 'scripts/help/help-popup.html',
       link: function(scope, element) {
@@ -100,7 +101,7 @@ angular.module('biggraph')
           tetherOptions: {
             // Keep within the page.
             constraints: [{
-              to: 'window',
+              to: scope.container ? document.querySelector(scope.container) : 'window',
               pin: true,
               attachment: 'together',
             }],
