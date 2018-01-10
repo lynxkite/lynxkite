@@ -16,5 +16,8 @@ puppeteer.launch({headless: true})
         .then(
           () => page.pdf({path: pdf_name, format: 'A4', margin: {top: '20mm', bottom: '20mm'}, displayHeaderFooter: false})
         )
-        .then(() => browser.close())));
-
+        .then(() => browser.close())))
+        .catch((err) => {
+          console.error(err);
+          process.exit(1)
+        });
