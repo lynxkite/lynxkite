@@ -28,7 +28,7 @@ angular.module('biggraph')
               scope.result = util.get('/ajax/getInstrumentedState', query);
               var currentRequest = scope.result;
               currentRequest.then(function(res) {
-                if (scope.result === currentRequest) {
+                if (scope.result === currentRequest) { // It is not an abandoned request.
                   scope.lastState = res.states[res.states.length - 1];
                 }
               });
