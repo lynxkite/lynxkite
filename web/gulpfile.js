@@ -39,7 +39,7 @@ var $ = require('gulp-load-plugins')();
 // Builds HTML files from AsciiDoctor documentation.
 gulp.task('asciidoctor', function () {
   // eslint-disable camelcase
-  var docs = ['academy', 'admin-manual', 'help'];
+  var docs = ['admin-manual', 'help'];
   var streams = [];
   for (var i = 0; i < docs.length; ++i) {
     var doc = docs[i];
