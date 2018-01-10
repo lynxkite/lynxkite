@@ -392,7 +392,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     }
   })
 
-  register("Compute box", List("input"), List())(new TriggerableOperation(_) {
+  register("Compute inputs", List("input"), List())(new TriggerableOperation(_) {
     params += TriggerBoxParam("compute", "Compute input GUIDs", "Computation finished.")
 
     override def trigger(wc: WorkspaceController, gdc: GraphDrawingController) = {
