@@ -148,13 +148,3 @@ code {
 .operation-toolbox .help-only {
   display: none;
 }
-
-.academy-task {
-  font-style: italic;
-  border-left: 1em solid #48a;
-  margin: 1em 0;
-  overflow: auto; /* Avoid margin collapse. */
-}
-.academy-task p {
-  margin: 1em;
-}
