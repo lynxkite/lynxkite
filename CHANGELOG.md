@@ -11,9 +11,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    workspaces if you have any lying around.)
  - Hold SHIFT while dragging boxes to align them on a grid.
  - Nicer comment box presentation.
+ - Added _Transform_ and _Derive column_ operations for easier table manipulation.
+ - Added _Import union of table snapshots_ operation to import multiple snapshots at the same time.
+ - Added _Save to snapshot_ and _Compute inputs_ operations, mostly for automation purposes.
  - Bug fixes and performance improvements. Thanks for all bug reports!
- - Add _Transform_ and _Derive column_ operations for easier table manipulation.
- - Add _Import union of table snapshots_ operation to import multiple snapshots at the same time.
 
 ### 2.1.0
 
