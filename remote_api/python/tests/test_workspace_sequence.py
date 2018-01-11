@@ -43,3 +43,7 @@ class TestWorkspaceSequence(unittest.TestCase):
     table_state = lk.get_state_id(d_result_tss.read_interval(lk, test_date, test_date))
     table_raw = lk.get_table(table_state)
     self.assertEqual(table_raw.data[0][0].string, '2018-01-02 00:00:00')
+    early_date = datetime(2017, 12, 31)
+    with self.assertRaises(Exception) as context:
+      early_instance = wss.ws_for_date(lk, early_date)
+    self.assertTrue('preceeds start date' in str(context.exception))
