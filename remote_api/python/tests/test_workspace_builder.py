@@ -112,13 +112,13 @@ class TestWorkspaceBuilder(unittest.TestCase):
 
   def test_trigger_box_with_save_snapshot(self):
     lk = lynx.kite.LynxKite()
-    state = (lk.createExampleGraph()
+    box = (lk.createExampleGraph()
              .sql('select name from vertices')
              .saveToSnapshot(path='this_is_my_snapshot'))
     lk.remove_name('trigger-folder', force=True)
     lk.remove_name('this_is_my_snapshot', force=True)
-    ws = lynx.kite.Workspace('trigger-test', [state])
-    lk.run_workspace(ws, 'trigger-folder/')
+    ws = lynx.kite.Workspace('trigger-test', [box])
+    lk.save_workspace_recursively(ws, 'trigger-folder/')
     # The boxId of the "Save to snapshot box" is box_0
     lk.trigger_box('trigger-folder/trigger-test', 'box_0')
     entries = lk.list_dir('')
