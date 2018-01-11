@@ -6,11 +6,6 @@ from datetime import datetime
 
 class TestWorkspaceSequence(unittest.TestCase):
 
-  def _entry_exists(self, lk, location, name):
-    entries = lk.list_dir(location)
-    entry_names = [e.name for e in entries]
-    return location + '/' + name in entry_names
-
   def test_one_date(self):
     lk = lynx.kite.LynxKite()
     lk.remove_name('eg_table_seq', force=True)
@@ -19,7 +14,7 @@ class TestWorkspaceSequence(unittest.TestCase):
     @lk.workspace(name='sequence', parameters=[text('date')])
     def builder(table):
       o1 = table.sql('select count(*) as cnt from input')
-      o2 = table.sql('select "${date}" as d from input')
+      o2 = table.sql(pp('select "${date}" as d from input'))
       return dict(cnt=o1, d=o2)
 
     test_date = datetime(2018, 1, 2)
@@ -40,7 +35,11 @@ class TestWorkspaceSequence(unittest.TestCase):
     wss_instance.run(lk)
     for output_sequence in wss.output_sequences().values():
       self.assertTrue(lynx.kite.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
-    result_tss = wss.output_sequences()['cnt']
-    table_state = lk.get_state_id(result_tss.read_interval(lk, test_date, test_date))
+    cnt_result_tss = wss.output_sequences()['cnt']
+    table_state = lk.get_state_id(cnt_result_tss.read_interval(lk, test_date, test_date))
     table_raw = lk.get_table(table_state)
     self.assertEqual(table_raw.data[0][0].string, '4')
+    d_result_tss = wss.output_sequences()['d']
+    table_state = lk.get_state_id(d_result_tss.read_interval(lk, test_date, test_date))
+    table_raw = lk.get_table(table_state)
+    self.assertEqual(table_raw.data[0][0].string, '2018-01-02 00:00:00')
