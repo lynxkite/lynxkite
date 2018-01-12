@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 2.2.0
+
  - Made _Export to CSV_ and _Import CSV_ operations more flexible.
  - Workspace copy-paste uses more readable the YAML instead of JSON. (You can still paste old JSON
    workspaces if you have any lying around.)
