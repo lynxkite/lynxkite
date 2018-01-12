@@ -145,8 +145,11 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_do_import(self):
     lk = lynx.kite.LynxKite()
     csv_path = lk.upload('a,b,c\n1,2,3\n4,5,6\n')
-    state = lk.importCsv(filename=csv_path).do_import(lk).sql('select * from input')
+    state = lk.importCsv(filename=csv_path).run_import().sql('select * from input')
     table_state = lk.get_state_id(state)
     table = lk.get_table(table_state)
     self.assertEqual([[f.string for f in row]
                       for row in table.data], [['1', '2', '3'], ['4', '5', '6']])
+    with self.assertRaises(Exception) as context:
+      wrong_state = lk.createExampleGraph().run_import()
+    self.assertTrue('It is not an import box.' in str(context.exception))

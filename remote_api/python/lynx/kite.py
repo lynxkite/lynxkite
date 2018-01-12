@@ -228,11 +228,12 @@ class Box:
         'inputs': {plug: input_state(state) for plug, state in self.inputs.items()},
         'parametricParameters': self.parametric_parameters}
 
-  def do_import(self, lk):
+  def run_import(self):
     '''Update an import box after triggering the import.'''
-    # TODO: box type checking maybe?
-    box_json = self.to_json(lambda _: 'untriggered_import_box', '')
-    import_result = lk._send('/ajax/importBox', {'box': box_json})
+    assert isinstance(self.operation, str), 'It is not an import box.'
+    assert 'import' in self.bc.operation_id(self.operation).lower(), 'It is not an import box.'
+    box_json = self.to_json(id_resolver=lambda _: 'untriggered_import_box', workspace_root='')
+    import_result = self.bc.lk._send('/ajax/importBox', {'box': box_json})
     self.parameters['imported_table'] = import_result.guid
     self.parameters['last_settings'] = import_result.parameterSettings
     return self
@@ -262,8 +263,9 @@ class BoxCatalog:
   Offers utility functions to query box metadata information.
   '''
 
-  def __init__(self, boxes):
+  def __init__(self, boxes, lk=None):
     self.bc = boxes  # Dictionary, the keys are the Python names of the boxes.
+    self.lk = lk
 
   def inputs(self, name):
     return self.bc[name].inputs
@@ -485,7 +487,7 @@ class LynxKite:
       for box in bc:
         if box.categoryId != 'Custom boxes':
           boxes[_python_name(box.operationId)] = box
-      self._box_catalog = BoxCatalog(boxes)
+      self._box_catalog = BoxCatalog(boxes, self)
     return self._box_catalog
 
   def __dir__(self):
