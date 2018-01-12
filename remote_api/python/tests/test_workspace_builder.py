@@ -141,3 +141,12 @@ class TestWorkspaceBuilder(unittest.TestCase):
     entries = lk.list_dir('')
     self.assertTrue('names_snapshot' in [e.name for e in entries])
     self.assertTrue('ages_snapshot' in [e.name for e in entries])
+
+  def test_do_import(self):
+    lk = lynx.kite.LynxKite()
+    csv_path = lk.upload('a,b,c\n1,2,3\n4,5,6\n')
+    state = lk.importCsv(filename=csv_path).do_import(lk).sql('select * from input')
+    table_state = lk.get_state_id(state)
+    table = lk.get_table(table_state)
+    self.assertEqual([[f.string for f in row]
+                      for row in table.data], [['1', '2', '3'], ['4', '5', '6']])
