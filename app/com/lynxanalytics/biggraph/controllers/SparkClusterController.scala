@@ -8,8 +8,13 @@ import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.serving
 
 // Long-poll request for changes in the "busy" state of Spark.
-case class SparkStatusRequest(
-    syncedUntil: Long) // Client requests to be notified only of events after this time.
+case class LongPollRequest(
+    syncedUntil: Long, // Client requests to be notified only of events after this time.
+    stateIds: List[String]) // Client is interested in progress on these states.
+
+case class LongPollResponse(
+    sparkStatus: SparkStatusResponse,
+    progress: Map[String, Option[Progress]])
 
 case class SparkStatusResponse(
     timestamp: Long, // This is the status at the given time.
@@ -377,7 +382,7 @@ class InternalWatchdogThread(
   setDaemon(true)
 }
 
-class SparkClusterController(environment: BigGraphEnvironment) {
+class SparkClusterController(environment: BigGraphEnvironment, ws: WorkspaceController) {
   // The health checks are always running, but if the below flag is true, then their results
   // are going to be ignored.
   private var forceReportHealthy = false
@@ -414,15 +419,16 @@ class SparkClusterController(environment: BigGraphEnvironment) {
     forceReportHealthy
   }
 
-  def sparkStatus(user: serving.User, req: SparkStatusRequest)(
+  def longPoll(user: serving.User, req: LongPollRequest)(
     implicit
-    ec: concurrent.ExecutionContext): concurrent.Future[SparkStatusResponse] = {
+    ec: concurrent.ExecutionContext): concurrent.Future[LongPollResponse] = {
     val res = listener.future(req.syncedUntil)
-    if (!getForceReportHealthy) {
+    val patched = if (!getForceReportHealthy) {
       res
     } else {
       res.map { _.copy(kiteCoreWorking = true, sparkWorking = true) }
     }
+    patched.map { ss => LongPollResponse(ss, ws.getProgress(user, req.stateIds)) }
   }
 
   def sparkCancelJobs(user: serving.User, req: serving.Empty): Unit = {

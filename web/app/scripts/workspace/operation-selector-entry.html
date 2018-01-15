@@ -1,4 +1,7 @@
 <div class="operation" ng-mousedown="ondrag({ $event: $event })">
+  <help-popup
+    href="{{op.htmlId}}"
+    fallback-text="{{op.description}}"
+    container="#workspace-entry-point"></help-popup>
   {{name}}
-  <help-popup href="{{op.htmlId}}" fallback-text="{{op.description}}"></help-popup>
 </div>

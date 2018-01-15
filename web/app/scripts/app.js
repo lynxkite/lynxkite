@@ -67,7 +67,7 @@ angular
       });
 
     // Register routing for documentation pages.
-    var docs = ['academy', 'admin-manual', 'help'];
+    var docs = ['admin-manual', 'help'];
     for (var i = 0; i < docs.length; ++i) {
       $routeProvider.when('/' + docs[i], docTemplate(docs[i]));
     }

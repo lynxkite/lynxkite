@@ -184,7 +184,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val prStateId = stateIds(prOutput)
       val progressBeforePR = controller.getProgress(
         user,
-        GetProgressRequest(List(prStateId))).progress(prStateId).get
+        List(prStateId))(prStateId).get
       assert(progressBeforePR.inProgress == 0)
       assert(progressBeforePR.computed + progressBeforePR.inProgress
         + progressBeforePR.notYetStarted + progressBeforePR.failed > 0)
@@ -195,7 +195,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         .rdd.values.collect
       val progressAfterPR = controller.getProgress(
         user,
-        GetProgressRequest(List(prStateId))).progress(prStateId).get
+        List(prStateId))(prStateId).get
       val computedAfterPR = progressAfterPR.computed
       assert(computedAfterPR > computedBeforePR)
     }
@@ -212,7 +212,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val prStateId = stateIds(prOutput)
       val progress = controller.getProgress(
         user,
-        GetProgressRequest(List(prStateId))).progress(prStateId)
+        List(prStateId))(prStateId)
       assert(progress.isEmpty)
     }
   }
@@ -336,7 +336,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val anchor = anchorWithParams()
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val seg = Box("seg", "Segment by String attribute", Map(), 0, 0, Map("project" -> eg.output("project")))
-    val compute = Box("compute", "Compute box", Map(), 0, 0, Map("input" -> seg.output("project")))
+    val compute = Box("compute", "Compute inputs", Map(), 0, 0, Map("input" -> seg.output("project")))
     create("test-compute-box-project")
     val ws = Workspace(List(anchor, eg, seg, compute))
     set("test-compute-box-project", ws)
@@ -348,7 +348,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val anchor = anchorWithParams()
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val sql = Box("sql", "SQL1", Map(), 0, 0, Map("input" -> eg.output("project")))
-    val compute = Box("compute", "Compute box", Map(), 0, 0, Map("input" -> sql.output("table")))
+    val compute = Box("compute", "Compute inputs", Map(), 0, 0, Map("input" -> sql.output("table")))
     create("test-compute-box-table")
     val ws = Workspace(List(anchor, eg, sql, compute))
     set("test-compute-box-table", ws)
