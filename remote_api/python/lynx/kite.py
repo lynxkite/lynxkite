@@ -228,16 +228,6 @@ class Box:
         'inputs': {plug: input_state(state) for plug, state in self.inputs.items()},
         'parametricParameters': self.parametric_parameters}
 
-  def run_import(self):
-    '''Update an import box after triggering the import.'''
-    assert isinstance(self.operation, str), 'It is not an import box.'
-    assert 'import' in self.bc.operation_id(self.operation).lower(), 'It is not an import box.'
-    box_json = self.to_json(id_resolver=lambda _: 'untriggered_import_box', workspace_root='')
-    import_result = self.bc.lk._send('/ajax/importBox', {'box': box_json})
-    self.parameters['imported_table'] = import_result.guid
-    self.parameters['last_settings'] = import_result.parameterSettings
-    return self
-
   def __getitem__(self, index):
     if index not in self.outputs:
       raise KeyError(index)
