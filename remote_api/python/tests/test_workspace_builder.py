@@ -63,6 +63,15 @@ class TestWorkspaceBuilder(unittest.TestCase):
     values = [row[0].string for row in table.data]
     self.assertEqual(values, ['Adam', 'Eve', 'Bob', 'Isolated Joe'])
 
+  def test_save_under_root(self):
+    lk = lynx.kite.LynxKite()
+    state = lk.createExampleGraph().sql('select name from vertices')
+    ws = lynx.kite.Workspace('eg_names', [state])
+    lk.remove_name('save_it_under_this_folder/eg_names', force=True)
+    lk.run_workspace(ws, 'save_it_under_this_folder/')
+    entries = lk.list_dir('save_it_under_this_folder')
+    self.assertTrue('save_it_under_this_folder/eg_names' in [e.name for e in entries])
+
   def test_parametric_parameters(self):
     from lynx.kite import pp
     lk = lynx.kite.LynxKite()
@@ -100,3 +109,35 @@ class TestWorkspaceBuilder(unittest.TestCase):
     with self.assertRaises(Exception) as context:
       state = lk.createExampleGraph().sql2(sql='select * from vertices')
     self.assertTrue('sql2 has more than one input' in str(context.exception))
+
+  def test_trigger_box_with_save_snapshot(self):
+    lk = lynx.kite.LynxKite()
+    box = (lk.createExampleGraph()
+             .sql('select name from vertices')
+             .saveToSnapshot(path='this_is_my_snapshot'))
+    lk.remove_name('trigger-folder', force=True)
+    lk.remove_name('this_is_my_snapshot', force=True)
+    ws = lynx.kite.Workspace('trigger-test', [box])
+    lk.save_workspace_recursively(ws, 'trigger-folder/')
+    # The boxId of the "Save to snapshot box" is box_0
+    lk.trigger_box('trigger-folder/trigger-test', 'box_0')
+    entries = lk.list_dir('')
+    self.assertTrue('this_is_my_snapshot' in [e.name for e in entries])
+
+  def test_trigger_box_with_multiple_snapshot_boxes(self):
+    lk = lynx.kite.LynxKite()
+    eg = lk.createExampleGraph()
+    o1 = eg.sql('select name from vertices').saveToSnapshot(path='names_snapshot')
+    o2 = eg.sql('select age from vertices').saveToSnapshot(path='ages_snapshot')
+    lk.remove_name('names_snapshot', force=True)
+    lk.remove_name('ages_snapshot', force=True)
+    lk.remove_name('trigger-folder', force=True)
+    ws = lynx.kite.Workspace('multi-trigger-test', [o1, o2])
+    lk.run_workspace(ws, 'trigger-folder/')
+    for box_id in [box['id']
+                   for box in ws.to_json('trigger-folder/')
+                   if box['operationId'] == 'Save to snapshot']:
+      lk.trigger_box('trigger-folder/multi-trigger-test', box_id)
+    entries = lk.list_dir('')
+    self.assertTrue('names_snapshot' in [e.name for e in entries])
+    self.assertTrue('ages_snapshot' in [e.name for e in entries])
