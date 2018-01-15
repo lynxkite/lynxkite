@@ -253,9 +253,8 @@ class BoxCatalog:
   Offers utility functions to query box metadata information.
   '''
 
-  def __init__(self, boxes, lk):
+  def __init__(self, boxes):
     self.bc = boxes  # Dictionary, the keys are the Python names of the boxes.
-    self.lk = lk
 
   def inputs(self, name):
     return self.bc[name].inputs
@@ -478,7 +477,7 @@ class LynxKite:
       for box in bc:
         if box.categoryId != 'Custom boxes':
           boxes[_python_name(box.operationId)] = box
-      self._box_catalog = BoxCatalog(boxes, self)
+      self._box_catalog = BoxCatalog(boxes)
     return self._box_catalog
 
   def __dir__(self):
