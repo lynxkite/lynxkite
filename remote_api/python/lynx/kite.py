@@ -263,7 +263,7 @@ class BoxCatalog:
   Offers utility functions to query box metadata information.
   '''
 
-  def __init__(self, boxes, lk=None):
+  def __init__(self, boxes, lk):
     self.bc = boxes  # Dictionary, the keys are the Python names of the boxes.
     self.lk = lk
 
