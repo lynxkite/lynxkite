@@ -152,7 +152,7 @@ class State:
           self.box.bc, name, inputs={input_name: self}, parameters=kwargs)
 
     if not name in self.box.bc.box_names():
-      raise AttributeError('{} is not defined on {}'.format(name, self))
+      raise AttributeError('{} is not defined'.format(name))
     return f
 
   def __dir__(self):
