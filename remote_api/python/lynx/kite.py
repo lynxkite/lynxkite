@@ -87,7 +87,7 @@ def _python_name(name):
   name = ''.join([c if c.isalnum() or c == ' ' else '' for c in name])
   return ''.join(
       [x.lower() for x in name.split()][:1] +
-      [x.lower().capitalize() for x in name.split()][1:])
+      [x[:1].upper() + x[1:] for x in name.split()][1:])
 
 
 _anchor_box = {

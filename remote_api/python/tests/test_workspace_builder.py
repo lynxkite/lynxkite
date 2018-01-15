@@ -24,7 +24,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
 
   def test_simple_chain(self):
     lk = lynx.kite.LynxKite()
-    state = lk.createExampleGraph().computePagerank().sql('select page_rank from vertices')
+    state = lk.createExampleGraph().computePageRank().sql('select page_rank from vertices')
     table_state = lk.get_state_id(state)
     table = lk.get_table(table_state)
     self.assertEqual(table.header[0].dataType, 'Double')
@@ -142,10 +142,10 @@ class TestWorkspaceBuilder(unittest.TestCase):
     self.assertTrue('names_snapshot' in [e.name for e in entries])
     self.assertTrue('ages_snapshot' in [e.name for e in entries])
 
-  def test_do_import(self):
+  def test_run_import(self):
     lk = lynx.kite.LynxKite()
     csv_path = lk.upload('a,b,c\n1,2,3\n4,5,6\n')
-    state = lk.importCsv(filename=csv_path).run_import().sql('select * from input')
+    state = lk.importCSV(filename=csv_path).run_import().sql('select * from input')
     table_state = lk.get_state_id(state)
     table = lk.get_table(table_state)
     self.assertEqual([[f.string for f in row]
