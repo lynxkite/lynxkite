@@ -141,3 +141,11 @@ class TestWorkspaceBuilder(unittest.TestCase):
     entries = lk.list_dir('')
     self.assertTrue('names_snapshot' in [e.name for e in entries])
     self.assertTrue('ages_snapshot' in [e.name for e in entries])
+
+  def test_missing_function(self):
+    lk = lynx.kite.LynxKite()
+    with self.assertRaises(AttributeError) as cm:
+      lk.createExampleGraph().notExists()
+    self.assertEqual(
+      str(cm.exception),
+      "notExists is not defined on Operation createExampleGraph with parameters {} and inputs {}")
