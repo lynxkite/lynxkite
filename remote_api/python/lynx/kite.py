@@ -498,7 +498,19 @@ class LynxKite:
 
     def f(*args, **kwargs):
       inputs = dict(zip(self.box_catalog().inputs(name), args))
-      return new_box(self.box_catalog(), name, inputs=inputs, parameters=kwargs)
+      box = new_box(self.box_catalog(), name, inputs=inputs, parameters=kwargs)
+      # If it is an import box, we trigger the import here.
+      import_box_names = ['importCSV', 'importJSON', 'importFromHive',
+                          'importParquet', 'importORC', 'importJDBC']
+      if name in import_box_names:
+        modified_box = copy.deepcopy(box)
+        box_json = box.to_json(id_resolver=lambda _: 'untriggered_import_box', workspace_root='')
+        import_result = self._send('/ajax/importBox', {'box': box_json})
+        modified_box.parameters['imported_table'] = import_result.guid
+        modified_box.parameters['last_settings'] = import_result.parameterSettings
+        return modified_box
+      else:
+        return box
 
     if not name in self.operation_names():
       raise AttributeError('{} is not defined'.format(name))
