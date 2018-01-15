@@ -1,4 +1,4 @@
-### Compute box
+### Compute inputs
 
 Triggers the computations for all entities associated with its input.
 

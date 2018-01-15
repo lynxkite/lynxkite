@@ -239,10 +239,6 @@ object FrontendJson {
 
   implicit val rFEOperationSpec = json.Json.reads[FEOperationSpec]
 
-  implicit val rSparkStatusRequest = json.Json.reads[SparkStatusRequest]
-  implicit val wStageInfo = json.Json.writes[StageInfo]
-  implicit val wSparkStatusResponse = json.Json.writes[SparkStatusResponse]
-
   implicit val rFEVertexAttributeFilter = json.Json.reads[FEVertexAttributeFilter]
   implicit val rAxisOptions = json.Json.reads[AxisOptions]
   implicit val rVertexDiagramSpec = json.Json.reads[VertexDiagramSpec]
@@ -297,8 +293,6 @@ object FrontendJson {
   implicit val wRunWorkspaceResponse = json.Json.writes[RunWorkspaceResponse]
   implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
   implicit val rGetOperationMetaRequest = json.Json.reads[GetOperationMetaRequest]
-  implicit val rGetProgressRequest = json.Json.reads[GetProgressRequest]
-  implicit val rGetProgressResponse = json.Json.writes[GetProgressResponse]
   implicit val rGetProjectOutputRequest = json.Json.reads[GetProjectOutputRequest]
   implicit val rGetTableOutputRequest = json.Json.reads[GetTableOutputRequest]
   implicit val wTableColumn = json.Json.writes[TableColumn]
@@ -315,6 +309,11 @@ object FrontendJson {
   implicit val rGetInstrumentedStateRequest = json.Json.reads[GetInstrumentedStateRequest]
   implicit val wInstrumentState = json.Json.writes[InstrumentState]
   implicit val wGetInstrumentedStateResponse = json.Json.writes[GetInstrumentedStateResponse]
+
+  implicit val rLongPollRequest = json.Json.reads[LongPollRequest]
+  implicit val wStageInfo = json.Json.writes[StageInfo]
+  implicit val wSparkStatusResponse = json.Json.writes[SparkStatusResponse]
+  implicit val wLongPollResponse = json.Json.writes[LongPollResponse]
 
   implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
   implicit val rSQLTableBrowserNodeRequest = json.Json.reads[TableBrowserNodeRequest]
@@ -433,7 +432,6 @@ object ProductionJsonServer extends JsonServer {
   def runWorkspace = jsonPost(workspaceController.runWorkspace)
   def createSnapshot = jsonPost(workspaceController.createSnapshot)
   def getProjectOutput = jsonGet(workspaceController.getProjectOutput)
-  def getProgress = jsonGet(workspaceController.getProgress)
   def getOperationMeta = jsonGet(workspaceController.getOperationMeta)
   def setWorkspace = jsonPost(workspaceController.setWorkspace)
   def undoWorkspace = jsonPost(workspaceController.undoWorkspace)
@@ -477,8 +475,9 @@ object ProductionJsonServer extends JsonServer {
     sqlController.getTableBrowserNodesForBox(user, inputTables, request.path)
   }
 
-  val sparkClusterController = new SparkClusterController(BigGraphProductionEnvironment)
-  def sparkStatus = jsonFuture(sparkClusterController.sparkStatus)
+  val sparkClusterController =
+    new SparkClusterController(BigGraphProductionEnvironment, workspaceController)
+  def longPoll = jsonFuture(sparkClusterController.longPoll)
   def sparkCancelJobs = jsonPost(sparkClusterController.sparkCancelJobs)
   def sparkHealthCheck = healthCheck(sparkClusterController.checkSparkOperational)
 

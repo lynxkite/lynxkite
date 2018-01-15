@@ -31,8 +31,8 @@ class TestWorkspaceSequence(unittest.TestCase):
         dfs_root='',
         input_recipes=[input_recipe])
     wss_instance = wss.ws_for_date(lk, test_date)
-    wss_instance.save(lk)
-    wss_instance.run(lk)
+    wss_instance.save()
+    wss_instance.run()
     for output_sequence in wss.output_sequences().values():
       self.assertTrue(lynx.kite.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
     cnt_result_tss = wss.output_sequences()['cnt']

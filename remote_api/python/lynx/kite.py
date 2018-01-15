@@ -389,16 +389,7 @@ class WorkspaceSequence:
     assert date >= self._start_date, "{} preceeds start date = {}".format(date, self._start_date)
     assert timestamp_is_valid(
         date, self._schedule), "{} is not valid according to {}".format(date, self._schedule)
-    inputs = [input_recipe.build_boxes(lk, date) for input_recipe in self._input_recipes]
-    ws_as_box = (
-        self._ws(*inputs, **self._params, date=date) if self._ws.has_date_parameter()
-        else self._ws(*inputs, **self._params))
-    terminal_boxes = []
-    for output in self._ws.outputs():
-      out_path = self._output_sequences[output].snapshot_name(date)
-      terminal_boxes.append(ws_as_box[output].saveToSnapshot(path=out_path))
-    ws = Workspace(self._wrapper_name(date), terminal_boxes)
-    return WorkspaceSequenceInstance(self, date, ws)
+    return WorkspaceSequenceInstance(self, lk, date)
 
   def lk_root(self):
     return self._lk_root
@@ -406,21 +397,31 @@ class WorkspaceSequence:
 
 class WorkspaceSequenceInstance:
 
-  def __init__(self, wss, date, ws_for_date):
+  def __init__(self, wss, lk, date):
     self._wss = wss
+    self._lk = lk
     self._date = date
-    self._ws_for_date = ws_for_date
     self._ws_full_name = None
+    inputs = [input_recipe.build_boxes(lk, date) for input_recipe in wss._input_recipes]
+    ws_as_box = (
+        wss._ws(*inputs, **wss._params, date=date) if wss._ws.has_date_parameter()
+        else wss._ws(*inputs, **wss._params))
+    terminal_boxes = []
+    for output in wss._ws.outputs():
+      out_path = wss._output_sequences[output].snapshot_name(date)
+      terminal_boxes.append(ws_as_box[output].saveToSnapshot(path=out_path))
+    ws = Workspace(wss._wrapper_name(date), terminal_boxes)
+    self._ws_for_date = ws
 
-  def save(self, lk):
-    lk.save_workspace_recursively(self._ws_for_date, self._wss.lk_root())
-    self._ws_full_name = self._wss.lk_root() + self._ws_for_date.name()
+  def save(self):
+    _, full_name = self._lk.save_workspace_recursively(self._ws_for_date, self._wss.lk_root())
+    self._ws_full_name = full_name
 
-  def run(self, lk):
+  def run(self):
     '''We trigger all the terminal boxes of the wrapped ws.'''
     assert self._ws_full_name, 'WorkspaceSequenceInstance has to be saved to be able to run.'
     for box_id in self._ws_for_date.terminal_box_ids():
-      lk.trigger_box(self._ws_full_name, box_id)
+      self._lk.trigger_box(self._ws_full_name, box_id)
 
 
 class InputRecipe:
@@ -674,10 +675,11 @@ class LynxKite:
       self.save_workspace(ws_root + rws.name(), rws.to_json(ws_root))
     if save_under_root:
       self.save_workspace(save_under_root + ws.name(), ws.to_json(save_under_root))
-    return ws_root
+    # If saved, we return the full name of the main workspace also.
+    return ws_root, save_under_root and save_under_root + ws.name()
 
   def run_workspace(self, ws, save_under_root=None):
-    ws_root = self.save_workspace_recursively(ws, save_under_root)
+    ws_root, _ = self.save_workspace_recursively(ws, save_under_root)
     return self.run(ws.to_json(ws_root))
     # TODO: clean up saved workspaces if save_under_root is not set.
 
