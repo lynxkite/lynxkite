@@ -142,7 +142,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     self.assertTrue('names_snapshot' in [e.name for e in entries])
     self.assertTrue('ages_snapshot' in [e.name for e in entries])
 
-  def test_run_import(self):
+  def test_builder_import(self):
     lk = lynx.kite.LynxKite()
     csv_path = lk.upload('a,b,c\n1,2,3\n4,5,6\n')
     state = lk.importCSV(filename=csv_path).sql('select * from input')
@@ -150,9 +150,6 @@ class TestWorkspaceBuilder(unittest.TestCase):
     table = lk.get_table(table_state)
     self.assertEqual([[f.string for f in row]
                       for row in table.data], [['1', '2', '3'], ['4', '5', '6']])
-    with self.assertRaises(Exception) as context:
-      wrong_state = lk.createExampleGraph().run_import()
-    self.assertTrue('It is not an import box.' in str(context.exception))
 
   def test_missing_function(self):
     lk = lynx.kite.LynxKite()
