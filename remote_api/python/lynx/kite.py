@@ -403,8 +403,8 @@ class WorkspaceSequenceInstance:
     self._ws_for_date = ws
 
   def save(self):
-    self._lk.save_workspace_recursively(self._ws_for_date, self._wss.lk_root())
-    self._ws_full_name = self._wss.lk_root() + self._ws_for_date.name()
+    _, full_name = self._lk.save_workspace_recursively(self._ws_for_date, self._wss.lk_root())
+    self._ws_full_name = full_name
 
   def run(self):
     '''We trigger all the terminal boxes of the wrapped ws.'''
@@ -664,10 +664,11 @@ class LynxKite:
       self.save_workspace(ws_root + rws.name(), rws.to_json(ws_root))
     if save_under_root:
       self.save_workspace(save_under_root + ws.name(), ws.to_json(save_under_root))
-    return ws_root
+    # If saved, we return the full name of the main workspace also.
+    return ws_root, save_under_root and save_under_root + ws.name()
 
   def run_workspace(self, ws, save_under_root=None):
-    ws_root = self.save_workspace_recursively(ws, save_under_root)
+    ws_root, _ = self.save_workspace_recursively(ws, save_under_root)
     return self.run(ws.to_json(ws_root))
     # TODO: clean up saved workspaces if save_under_root is not set.
 
