@@ -245,7 +245,7 @@ class Box:
 
   def __str__(self):
     return "Operation {} with parameters {} and inputs {}".format(
-        self.operationId,
+        self.operation,
         self.parameters,
         self.inputs)
 

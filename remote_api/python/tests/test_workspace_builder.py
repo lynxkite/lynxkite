@@ -153,3 +153,11 @@ class TestWorkspaceBuilder(unittest.TestCase):
     with self.assertRaises(Exception) as context:
       wrong_state = lk.createExampleGraph().run_import()
     self.assertTrue('It is not an import box.' in str(context.exception))
+
+  def test_missing_function(self):
+    lk = lynx.kite.LynxKite()
+    with self.assertRaises(AttributeError) as cm:
+      lk.createExampleGraph().notExists()
+    self.assertEqual(
+        str(cm.exception),
+        "notExists is not defined on Operation createExampleGraph with parameters {} and inputs {}")
