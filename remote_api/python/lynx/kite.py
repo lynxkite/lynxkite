@@ -152,7 +152,7 @@ class State:
           self.box.bc, name, inputs={input_name: self}, parameters=kwargs)
 
     if not name in self.box.bc.box_names():
-      raise AttributeError('{} is not defined'.format(name))
+      raise AttributeError('{} is not defined on {}'.format(name, self))
     return f
 
   def __dir__(self):
@@ -235,7 +235,7 @@ class Box:
 
   def __str__(self):
     return "Operation {} with parameters {} and inputs {}".format(
-        self.operationId,
+        self.operation,
         self.parameters,
         self.inputs)
 
