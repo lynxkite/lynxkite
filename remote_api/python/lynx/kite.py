@@ -752,7 +752,7 @@ class LynxKite:
       layout_manager = LayoutManager('topological')
     for rws in needed_ws:
       self.save_workspace(
-          ws_root + rws.name(), layout_manager.compute_coordinates(ws.to_json(ws_root)))
+          ws_root + rws.name(), layout_manager.compute_coordinates(rws.to_json(ws_root)))
     if save_under_root:
       self.save_workspace(
           save_under_root + ws.name(), layout_manager.compute_coordinates(ws.to_json(save_under_root)))
