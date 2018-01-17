@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 2.2.1
+
 ### 2.2.0
 
  - Made _Export to CSV_ and _Import CSV_ operations more flexible.
