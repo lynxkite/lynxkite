@@ -8,6 +8,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### 2.2.1
 
+ - Fixed a frontend issue where the browser's connection pool would be exhausted.
+
 ### 2.2.0
 
  - Made _Export to CSV_ and _Import CSV_ operations more flexible.
