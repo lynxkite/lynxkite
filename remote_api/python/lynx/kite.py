@@ -402,8 +402,11 @@ class WorkspaceSequenceInstance:
     ws = Workspace(wss._wrapper_name(date), terminal_boxes)
     self._ws_for_date = ws
 
-  def save(self):
-    _, full_name = self._lk.save_workspace_recursively(self._ws_for_date, self._wss.lk_root())
+  def save(self, layout_manager=None):
+    _, full_name = self._lk.save_workspace_recursively(
+        self._ws_for_date,
+        self._wss.lk_root(),
+        layout_manager=layout_manager)
     self._ws_full_name = full_name
 
   def run(self):
@@ -439,6 +442,81 @@ class TableSnapshotRecipe(InputRecipe):
 
   def build_boxes(self, lk, date):
     return self.tss.read_interval(lk, date, date)
+
+
+class LayoutManager:
+
+  def __init__(self, layout):
+    assert layout in ['dummy', 'random', 'topological'], '{} layout is not defined'.format(layout)
+    self._layout = layout
+    # "Grid" sizing
+    self._dx = 200
+    self._dy = 200
+    self._ox = 150
+    self._oy = 150
+    self.box_info = {}
+    self.max_level = 0
+
+  def traverse_workspace(self, boxes):
+    '''Computes the ``level`` of the boxes. Termnal boxes have level=0.'''
+    self.box_info = {
+        box['id']: dict(box=box, root=True, level=0, next_boxes=[], visited=False)
+        for box in boxes}
+    for box in boxes:
+      parent = box['id']
+      for name, inp in box['inputs'].items():
+        child = inp['boxId']
+        self.box_info[parent]['root'] = False
+        self.box_info[child]['next_boxes'].append(parent)
+    box_id_queue = queue.Queue()
+    for box in boxes:
+      actual = box['id']
+      if self.box_info[actual]['root']:
+        box_id_queue.put(actual)
+        self.box_info[actual]['visited'] = True
+    while not box_id_queue.empty():
+      actual = box_id_queue.get()
+      level = self.box_info[actual]['level']
+      for next_box in self.box_info[actual]['next_boxes']:
+        if not self.box_info[next_box]['visited']:
+          self.box_info[next_box]['visited'] = True
+          self.box_info[next_box]['level'] = level + 1
+          box_id_queue.put(next_box)
+          if level + 1 > self.max_level:
+            self.max_level = level + 1
+
+  def random_layout(self, boxes):
+    ''' Mainly for testing purposes'''
+    import random
+
+    def rnd_coord(box):
+      if box['id'] != 'anchor':
+        box['x'] = self._ox + self._dx * random.randint(0, 5)
+        box['y'] = self._oy + self._dy * random.randint(0, 5)
+      return box
+
+    return [rnd_coord(box) for box in boxes]
+
+  def topological_layout(self, boxes):
+    '''Roots are aligned to the left.'''
+    self.traverse_workspace(boxes)
+    level_counter = [0] * (self.max_level + 1)
+    boxes_with_coordinates = []
+    for box in boxes:
+      if box['id'] != 'anchor':
+        level = self.box_info[box['id']]['level']
+        box['x'] = self._ox + level * self._dx
+        box['y'] = self._oy + level_counter[level] * self._dy
+        level_counter[level] = level_counter[level] + 1
+      boxes_with_coordinates.append(box)
+    return boxes_with_coordinates
+
+  def compute_coordinates(self, boxes):
+    if self._layout == 'random':
+      return self.random_layout(boxes)
+    if self._layout == 'topological':
+      return self.topological_layout(boxes)
+    return boxes
 
 
 class LynxKite:
@@ -655,7 +733,7 @@ class LynxKite:
         '/ajax/runWorkspace', dict(workspace=dict(boxes=boxes), parameters=parameters))
     return {(o.boxOutput.boxId, o.boxOutput.id): o for o in res.outputs}
 
-  def save_workspace_recursively(self, ws, save_under_root=None):
+  def save_workspace_recursively(self, ws, save_under_root=None, layout_manager=None):
     ws_root = save_under_root
     if ws_root is None:
       ws_root = 'tmp_workspaces/{}/'.format(''.join(random.choice('0123456789ABCDEF')
@@ -669,10 +747,15 @@ class LynxKite:
         if rws not in needed_ws:
           needed_ws.add(rws)
           ws_queue.put(rws)
+    if not layout_manager:
+      # Default layout manager
+      layout_manager = LayoutManager('topological')
     for rws in needed_ws:
-      self.save_workspace(ws_root + rws.name(), rws.to_json(ws_root))
+      self.save_workspace(
+          ws_root + rws.name(), layout_manager.compute_coordinates(ws.to_json(ws_root)))
     if save_under_root:
-      self.save_workspace(save_under_root + ws.name(), ws.to_json(save_under_root))
+      self.save_workspace(
+          save_under_root + ws.name(), layout_manager.compute_coordinates(ws.to_json(save_under_root)))
     # If saved, we return the full name of the main workspace also.
     return ws_root, save_under_root and save_under_root + ws.name()
 
