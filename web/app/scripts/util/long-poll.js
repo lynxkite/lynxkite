@@ -27,14 +27,15 @@ angular.module('biggraph')
   that._stateIds = [];
   that._interrupt = function() {}; // Sends a new request immedately.
   function load() {
-    var interrupt = new Promise(function(resolve) {
-      that._interrupt = function() {
-        resolve(that.lastUpdate);
-      };
-    });
     var req = util.nocache('/ajax/long-poll', {
       syncedUntil: that.lastUpdate.sparkStatus.timestamp,
       stateIds: that._stateIds,
+    });
+    var interrupt = new Promise(function(resolve) {
+      that._interrupt = function() {
+        req.$abandon();
+        resolve(that.lastUpdate);
+      };
     });
     // Wait until either we get a response or _interrupt() is called.
     Promise.race([req, interrupt])
