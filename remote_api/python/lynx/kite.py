@@ -463,17 +463,16 @@ def layout(boxes):
       yield next_group
       deps = {box_id: dep - next_group for box_id, dep in deps.items() if box_id not in next_group}
 
-  '''Computes the ``level`` of the boxes. Boxes without dependencies have level=0.'''
   dependencies = {box['id']: set() for box in boxes}
-  level = {box['id']: 0 for box in boxes}
+  level = {}
   for box in boxes:
-    parent = box['id']
+    current_box = box['id']
     for name, inp in box['inputs'].items():
-      child = inp['boxId']
-      dependencies[parent].add(child)
+      input_box = inp['boxId']
+      dependencies[current_box].add(input_box)
 
   cur_level = 0
-  groups = [g for g in topological_sort(dependencies)]
+  groups = list(topological_sort(dependencies))
   for group in groups:
     for box_id in group:
       level[box_id] = cur_level
