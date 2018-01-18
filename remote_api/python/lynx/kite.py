@@ -478,14 +478,14 @@ def layout(boxes):
       level[box_id] = cur_level
     cur_level = cur_level + 1
 
-  level_counter = [0] * (len(groups) + 1)
+  num_boxes_on_level = [0] * (len(groups) + 1)
   boxes_with_coordinates = []
   for box in boxes:
     if box['id'] != 'anchor':
       box_level = level[box['id']]
       box['x'] = ox + box_level * dx
-      box['y'] = oy + level_counter[box_level] * dy
-      level_counter[box_level] = level_counter[box_level] + 1
+      box['y'] = oy + num_boxes_on_level[box_level] * dy
+      num_boxes_on_level[box_level] = num_boxes_on_level[box_level] + 1
     boxes_with_coordinates.append(box)
   return boxes_with_coordinates
 
