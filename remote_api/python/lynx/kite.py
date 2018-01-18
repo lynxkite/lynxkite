@@ -463,48 +463,39 @@ def layout(boxes):
   oy = 150
 
   def topological_sort(dependencies):
-    # From https://bitbucket.org/ericvsmith/toposort
     # We have all the boxes as keys in the parameter,
     # dependencies[box_id] = {}, if box_id does not depend on anything.
-    if len(dependencies) == 0:
-      return
     deps = dependencies.copy()
-    # Ignore self dependencies
-    for k, v in deps.items():
-      v.discard(k)
     while True:
       next_group = set(box_id for box_id, dep in deps.items() if len(dep) == 0)
       if not next_group:
         break
       yield next_group
       deps = {box_id: dep - next_group for box_id, dep in deps.items() if box_id not in next_group}
-    if len(deps) != 0:
-      raise Exception('Circular dependency in the workspace!')
 
-  '''Computes the ``level`` of the boxes. Boxes without dependencies have level=0.'''
   dependencies = {box['id']: set() for box in boxes}
-  level = {box['id']: 0 for box in boxes}
+  level = {}
   for box in boxes:
-    parent = box['id']
+    current_box = box['id']
     for name, inp in box['inputs'].items():
-      child = inp['boxId']
-      dependencies[parent].add(child)
+      input_box = inp['boxId']
+      dependencies[current_box].add(input_box)
 
   cur_level = 0
-  groups = [g for g in topological_sort(dependencies)]
+  groups = list(topological_sort(dependencies))
   for group in groups:
     for box_id in group:
       level[box_id] = cur_level
     cur_level = cur_level + 1
 
-  level_counter = [0] * (len(groups) + 1)
+  num_boxes_on_level = [0] * (len(groups) + 1)
   boxes_with_coordinates = []
   for box in boxes:
     if box['id'] != 'anchor':
       box_level = level[box['id']]
       box['x'] = ox + box_level * dx
-      box['y'] = oy + level_counter[box_level] * dy
-      level_counter[box_level] = level_counter[box_level] + 1
+      box['y'] = oy + num_boxes_on_level[box_level] * dy
+      num_boxes_on_level[box_level] = num_boxes_on_level[box_level] + 1
     boxes_with_coordinates.append(box)
   return boxes_with_coordinates
 
