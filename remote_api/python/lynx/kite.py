@@ -441,6 +441,64 @@ class TableSnapshotRecipe(InputRecipe):
     return self.tss.read_interval(lk, date, date)
 
 
+def layout(boxes):
+  '''Compute coordinates of boxes in a workspace.
+
+  The workspace is given as a list of boxes. The return value is a list of
+  new boxes, where the coordinates are filled in.
+  '''
+  dx = 200
+  dy = 200
+  ox = 150
+  oy = 150
+
+  def topological_sort(dependencies):
+    # From https://bitbucket.org/ericvsmith/toposort
+    # We have all the boxes as keys in the parameter,
+    # dependencies[box_id] = {}, if box_id does not depend on anything.
+    if len(dependencies) == 0:
+      return
+    deps = dependencies.copy()
+    # Ignore self dependencies
+    for k, v in deps.items():
+      v.discard(k)
+    while True:
+      next_group = set(box_id for box_id, dep in deps.items() if len(dep) == 0)
+      if not next_group:
+        break
+      yield next_group
+      deps = {box_id: dep - next_group for box_id, dep in deps.items() if box_id not in next_group}
+    if len(deps) != 0:
+      raise Exception('Circular dependency in the workspace!')
+
+  '''Computes the ``level`` of the boxes. Boxes without dependencies have level=0.'''
+  dependencies = {box['id']: set() for box in boxes}
+  level = {box['id']: 0 for box in boxes}
+  for box in boxes:
+    parent = box['id']
+    for name, inp in box['inputs'].items():
+      child = inp['boxId']
+      dependencies[parent].add(child)
+
+  cur_level = 0
+  groups = [g for g in topological_sort(dependencies)]
+  for group in groups:
+    for box_id in group:
+      level[box_id] = cur_level
+    cur_level = cur_level + 1
+
+  level_counter = [0] * (len(groups) + 1)
+  boxes_with_coordinates = []
+  for box in boxes:
+    if box['id'] != 'anchor':
+      box_level = level[box['id']]
+      box['x'] = ox + box_level * dx
+      box['y'] = oy + level_counter[box_level] * dy
+      level_counter[box_level] = level_counter[box_level] + 1
+    boxes_with_coordinates.append(box)
+  return boxes_with_coordinates
+
+
 class LynxKite:
   '''A connection to a LynxKite instance.
 
@@ -670,9 +728,11 @@ class LynxKite:
           needed_ws.add(rws)
           ws_queue.put(rws)
     for rws in needed_ws:
-      self.save_workspace(ws_root + rws.name(), rws.to_json(ws_root))
+      self.save_workspace(
+          ws_root + rws.name(), layout(rws.to_json(ws_root)))
     if save_under_root:
-      self.save_workspace(save_under_root + ws.name(), ws.to_json(save_under_root))
+      self.save_workspace(
+          save_under_root + ws.name(), layout(ws.to_json(save_under_root)))
     # If saved, we return the full name of the main workspace also.
     return ws_root, save_under_root and save_under_root + ws.name()
 
