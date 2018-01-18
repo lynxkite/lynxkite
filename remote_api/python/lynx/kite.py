@@ -471,7 +471,7 @@ def layout(boxes):
     if len(deps) != 0:
       raise Exception('Circular dependency in the workspace!')
 
-  '''Computes the ``level`` of the boxes. Termnal boxes have level=0.'''
+  '''Computes the ``level`` of the boxes. Boxes without dependencies have level=0.'''
   dependencies = {box['id']: set() for box in boxes}
   level = {box['id']: 0 for box in boxes}
   for box in boxes:
@@ -479,8 +479,7 @@ def layout(boxes):
     for name, inp in box['inputs'].items():
       child = inp['boxId']
       dependencies[parent].add(child)
-  # # debug
-  # print('deps', dependencies)
+
   cur_level = 0
   groups = [g for g in topological_sort(dependencies)]
   for group in groups:
@@ -488,9 +487,6 @@ def layout(boxes):
       level[box_id] = cur_level
     cur_level = cur_level + 1
 
-  # # debug
-  # print('top groups', groups)
-  # print('levels', level)
   level_counter = [0] * (len(groups) + 1)
   boxes_with_coordinates = []
   for box in boxes:
