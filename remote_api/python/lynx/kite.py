@@ -167,11 +167,11 @@ class State:
 
   def df(self, lk):
     '''Returns a Pandas DataFrame if this state is a table.'''
+    import pandas
     table = lk.get_table(lk.get_state_id(self))
     header = [c.name for c in table.header]
     data = [dict((h, getattr(c, 'double', c.string))
                  for (h, c) in zip(header, r)) for r in table.data]
-    import pandas
     return pandas.DataFrame(data)
 
 
