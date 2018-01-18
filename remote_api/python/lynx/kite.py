@@ -402,11 +402,8 @@ class WorkspaceSequenceInstance:
     ws = Workspace(wss._wrapper_name(date), terminal_boxes)
     self._ws_for_date = ws
 
-  def save(self, layout_manager=None):
-    _, full_name = self._lk.save_workspace_recursively(
-        self._ws_for_date,
-        self._wss.lk_root(),
-        layout_manager=layout_manager)
+  def save(self):
+    _, full_name = self._lk.save_workspace_recursively(self._ws_for_date, self._wss.lk_root())
     self._ws_full_name = full_name
 
   def run(self):
@@ -444,79 +441,66 @@ class TableSnapshotRecipe(InputRecipe):
     return self.tss.read_interval(lk, date, date)
 
 
-class LayoutManager:
+def layout(boxes):
+  '''Compute coordinates of boxes in a workspace.
 
-  def __init__(self, layout):
-    assert layout in ['dummy', 'random', 'topological'], '{} layout is not defined'.format(layout)
-    self._layout = layout
-    # "Grid" sizing
-    self._dx = 200
-    self._dy = 200
-    self._ox = 150
-    self._oy = 150
-    self.box_info = {}
-    self.max_level = 0
+  The workspace is given as a list of boxes. The return value is a list of
+  new boxes, where the coordinates are filled in.
+  '''
+  dx = 200
+  dy = 200
+  ox = 150
+  oy = 150
 
-  def traverse_workspace(self, boxes):
-    '''Computes the ``level`` of the boxes. Termnal boxes have level=0.'''
-    self.box_info = {
-        box['id']: dict(box=box, root=True, level=0, next_boxes=[], visited=False)
-        for box in boxes}
-    for box in boxes:
-      parent = box['id']
-      for name, inp in box['inputs'].items():
-        child = inp['boxId']
-        self.box_info[parent]['root'] = False
-        self.box_info[child]['next_boxes'].append(parent)
-    box_id_queue = queue.Queue()
-    for box in boxes:
-      actual = box['id']
-      if self.box_info[actual]['root']:
-        box_id_queue.put(actual)
-        self.box_info[actual]['visited'] = True
-    while not box_id_queue.empty():
-      actual = box_id_queue.get()
-      level = self.box_info[actual]['level']
-      for next_box in self.box_info[actual]['next_boxes']:
-        if not self.box_info[next_box]['visited']:
-          self.box_info[next_box]['visited'] = True
-          self.box_info[next_box]['level'] = level + 1
-          box_id_queue.put(next_box)
-          if level + 1 > self.max_level:
-            self.max_level = level + 1
+  def topological_sort(dependencies):
+    # From https://bitbucket.org/ericvsmith/toposort
+    # We have all the boxes as keys in the parameter,
+    # dependencies[box_id] = {}, if box_id does not depend on anything.
+    if len(dependencies) == 0:
+      return
+    deps = dependencies.copy()
+    # Ignore self dependencies
+    for k, v in deps.items():
+      v.discard(k)
+    while True:
+      next_group = set(box_id for box_id, dep in deps.items() if len(dep) == 0)
+      if not next_group:
+        break
+      yield next_group
+      deps = {box_id: dep - next_group for box_id, dep in deps.items() if box_id not in next_group}
+    if len(deps) != 0:
+      raise Exception('Circular dependency in the workspace!')
 
-  def random_layout(self, boxes):
-    ''' Mainly for testing purposes'''
-    import random
+  '''Computes the ``level`` of the boxes. Termnal boxes have level=0.'''
+  dependencies = {box['id']: set() for box in boxes}
+  level = {box['id']: 0 for box in boxes}
+  for box in boxes:
+    parent = box['id']
+    for name, inp in box['inputs'].items():
+      child = inp['boxId']
+      dependencies[parent].add(child)
+  # # debug
+  # print('deps', dependencies)
+  cur_level = 0
+  groups = [g for g in topological_sort(dependencies)]
+  for group in groups:
+    for box_id in group:
+      level[box_id] = cur_level
+    cur_level = cur_level + 1
 
-    def rnd_coord(box):
-      if box['id'] != 'anchor':
-        box['x'] = self._ox + self._dx * random.randint(0, 5)
-        box['y'] = self._oy + self._dy * random.randint(0, 5)
-      return box
-
-    return [rnd_coord(box) for box in boxes]
-
-  def topological_layout(self, boxes):
-    '''Roots are aligned to the left.'''
-    self.traverse_workspace(boxes)
-    level_counter = [0] * (self.max_level + 1)
-    boxes_with_coordinates = []
-    for box in boxes:
-      if box['id'] != 'anchor':
-        level = self.box_info[box['id']]['level']
-        box['x'] = self._ox + level * self._dx
-        box['y'] = self._oy + level_counter[level] * self._dy
-        level_counter[level] = level_counter[level] + 1
-      boxes_with_coordinates.append(box)
-    return boxes_with_coordinates
-
-  def compute_coordinates(self, boxes):
-    if self._layout == 'random':
-      return self.random_layout(boxes)
-    if self._layout == 'topological':
-      return self.topological_layout(boxes)
-    return boxes
+  # # debug
+  # print('top groups', groups)
+  # print('levels', level)
+  level_counter = [0] * (len(groups) + 1)
+  boxes_with_coordinates = []
+  for box in boxes:
+    if box['id'] != 'anchor':
+      box_level = level[box['id']]
+      box['x'] = ox + box_level * dx
+      box['y'] = oy + level_counter[box_level] * dy
+      level_counter[box_level] = level_counter[box_level] + 1
+    boxes_with_coordinates.append(box)
+  return boxes_with_coordinates
 
 
 class LynxKite:
@@ -733,7 +717,7 @@ class LynxKite:
         '/ajax/runWorkspace', dict(workspace=dict(boxes=boxes), parameters=parameters))
     return {(o.boxOutput.boxId, o.boxOutput.id): o for o in res.outputs}
 
-  def save_workspace_recursively(self, ws, save_under_root=None, layout_manager=None):
+  def save_workspace_recursively(self, ws, save_under_root=None):
     ws_root = save_under_root
     if ws_root is None:
       ws_root = 'tmp_workspaces/{}/'.format(''.join(random.choice('0123456789ABCDEF')
@@ -747,15 +731,12 @@ class LynxKite:
         if rws not in needed_ws:
           needed_ws.add(rws)
           ws_queue.put(rws)
-    if not layout_manager:
-      # Default layout manager
-      layout_manager = LayoutManager('topological')
     for rws in needed_ws:
       self.save_workspace(
-          ws_root + rws.name(), layout_manager.compute_coordinates(rws.to_json(ws_root)))
+          ws_root + rws.name(), layout(rws.to_json(ws_root)))
     if save_under_root:
       self.save_workspace(
-          save_under_root + ws.name(), layout_manager.compute_coordinates(ws.to_json(save_under_root)))
+          save_under_root + ws.name(), layout(ws.to_json(save_under_root)))
     # If saved, we return the full name of the main workspace also.
     return ws_root, save_under_root and save_under_root + ws.name()
 
