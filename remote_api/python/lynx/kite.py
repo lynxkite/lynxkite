@@ -170,9 +170,8 @@ class State:
     import pandas
     table = lk.get_table(lk.get_state_id(self))
     header = [c.name for c in table.header]
-    data = [dict((h, getattr(c, 'double', c.string))
-                 for (h, c) in zip(header, r)) for r in table.data]
-    return pandas.DataFrame(data)
+    data = [[getattr(c, 'double', c.string) for c in r] for r in table.data]
+    return pandas.DataFrame(data, columns=header)
 
 
 def new_box(bc, operation, inputs, parameters):
