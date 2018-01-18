@@ -453,23 +453,15 @@ def layout(boxes):
   oy = 150
 
   def topological_sort(dependencies):
-    # From https://bitbucket.org/ericvsmith/toposort
     # We have all the boxes as keys in the parameter,
     # dependencies[box_id] = {}, if box_id does not depend on anything.
-    if len(dependencies) == 0:
-      return
     deps = dependencies.copy()
-    # Ignore self dependencies
-    for k, v in deps.items():
-      v.discard(k)
     while True:
       next_group = set(box_id for box_id, dep in deps.items() if len(dep) == 0)
       if not next_group:
         break
       yield next_group
       deps = {box_id: dep - next_group for box_id, dep in deps.items() if box_id not in next_group}
-    if len(deps) != 0:
-      raise Exception('Circular dependency in the workspace!')
 
   '''Computes the ``level`` of the boxes. Boxes without dependencies have level=0.'''
   dependencies = {box['id']: set() for box in boxes}
