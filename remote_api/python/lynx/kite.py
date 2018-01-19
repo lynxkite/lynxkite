@@ -168,7 +168,7 @@ class State:
   def df(self, lk):
     '''Returns a Pandas DataFrame if this state is a table.'''
     import pandas
-    table = self.get_table()
+    table = self.get_table(lk)
     header = [c.name for c in table.header]
     data = [[getattr(c, 'double', c.string) for c in r] for r in table.data]
     return pandas.DataFrame(data, columns=header)
