@@ -190,7 +190,7 @@ class SQLTest extends OperationsTestBase {
         .table
     } match {
       case a: AssertionError =>
-        println(a.getMessage.contains("column cannot be found"))
+        assert(a.getMessage.contains("column cannot be found"))
     }
   }
 
@@ -301,4 +301,10 @@ class SQLTest extends OperationsTestBase {
       "select blah from (select age as blah from vertices) order by blah limit 2")
     assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq(Seq(2.0), Seq(18.2)))
   }
+
+  Vector(
+    "select gender from (select age + age, gender from (select age, gender from vertices))").foreach(query => test(query) {
+      val table = runQueryOnExampleGraph(query)
+      assert(table.df.collect().length == 4)
+    })
 }
