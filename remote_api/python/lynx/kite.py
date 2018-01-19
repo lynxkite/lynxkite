@@ -175,7 +175,7 @@ class State:
 
   def get_table_data(self, limit=-1):
     '''Returns the "raw" table data if this state is a table.'''
-    return self.box.lk.get_table(self.box.lk.get_state_id(self), limit)
+    return self.box.lk.get_table_data(self.box.lk.get_state_id(self), limit)
 
   def get_project(self):
     '''Returns the project metadata if this state is a project.'''
