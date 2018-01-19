@@ -45,3 +45,19 @@ class TestSQLShorthand(unittest.TestCase):
         ['Eve', 18.2],
         ['Isolated Joe', 2],
     ], columns=['name', 'age'])))
+
+  def test_limit(self):
+    lk = lynx.kite.LynxKite()
+    table = lk.createVertices(size=15).sql('select * from vertices').get_table_sample(lk)
+    self.assertEqual(len(table.data), 15)
+    small_table = lk.createExampleGraph().sql('select * from vertices').get_table_sample(lk, limit=2)
+    self.assertEqual(len(small_table.data), 2)
+    eg_table = lk.createExampleGraph().sql('select * from vertices').get_table_sample(lk, limit=8)
+    self.assertEqual(len(eg_table.data), 4)
+    import pandas as pd
+    df = lk.createExampleGraph().sql('select name, age from vertices order by name').df(lk, limit=3)
+    self.assertTrue(df.equals(pd.DataFrame([
+        ['Adam', 20.3],
+        ['Bob', 50.3],
+        ['Eve', 18.2],
+    ], columns=['name', 'age'])))
