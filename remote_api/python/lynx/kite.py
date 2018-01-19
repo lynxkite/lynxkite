@@ -168,12 +168,12 @@ class State:
   def df(self, limit=-1):
     '''Returns a Pandas DataFrame if this state is a table.'''
     import pandas
-    table = self.get_table_sample(limit)
+    table = self.get_table_data(limit)
     header = [c.name for c in table.header]
     data = [[getattr(c, 'double', c.string) for c in r] for r in table.data]
     return pandas.DataFrame(data, columns=header)
 
-  def get_table_sample(self, limit=-1):
+  def get_table_data(self, limit=-1):
     '''Returns the "raw" table data if this state is a table.'''
     return self.box.lk.get_table(self.box.lk.get_state_id(self), limit)
 
@@ -766,7 +766,7 @@ class LynxKite:
   def get_export_result(self, state):
     return self._ask('/ajax/getExportResultOutput', dict(stateId=state))
 
-  def get_table(self, state, limit=-1):
+  def get_table_data(self, state, limit=-1):
     return self._ask('/ajax/getTableOutput', dict(id=state, sampleRows=limit))
 
   def import_box(self, boxes, box_id):

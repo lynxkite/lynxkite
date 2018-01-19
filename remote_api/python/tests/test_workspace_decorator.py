@@ -15,7 +15,7 @@ class TestWorkspaceDecorator(unittest.TestCase):
     eg = lk.createExampleGraph()
     names = eg.sql('select name from vertices')
     ages = eg.sql('select age from vertices')
-    table = join_ws(names, ages).get_table_sample()
+    table = join_ws(names, ages).get_table_data()
     values = [(row[0].string, row[1].string) for row in table.data]
     self.assertEqual(len(values), 16)
     expected_result = [
@@ -60,6 +60,6 @@ class TestWorkspaceDecorator(unittest.TestCase):
               field='income',
               limit=500))
 
-    table = full_workflow().get_table_sample()
+    table = full_workflow().get_table_data()
     values = [(row[0].string, row[1].string) for row in table.data]
     self.assertEqual(values, [('Adam', '1000'), ('Bob', '2000')])

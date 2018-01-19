@@ -38,7 +38,7 @@ class TestSnapshotSequence(unittest.TestCase):
       tss.save_to_sequence(lk, state, datetime)
 
   def _table_count(self, lk, input_table):
-    table = input_table.sql1(sql='select count(1) from input').get_table_sample()
+    table = input_table.sql1(sql='select count(1) from input').get_table_data()
     return table.data[0][0].double
 
   def _get_state(self, lk):
