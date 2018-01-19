@@ -18,10 +18,12 @@ object SQLTest {
 }
 import SQLTest._
 class SQLTest extends OperationsTestBase {
+  private def runQueryOnExampleGraph(sql: String) = {
+    box("Create example graph").box("SQL1", Map("sql" -> sql)).table
+  }
+
   test("vertices table") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select * from vertices order by id"))
-      .table
+    val table = runQueryOnExampleGraph("select * from vertices order by id")
     assert(table.schema.map(_.name) == Seq("age", "gender", "id", "income", "location", "name"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
@@ -32,9 +34,7 @@ class SQLTest extends OperationsTestBase {
   }
 
   test("edges table") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select * from edges order by edge_comment"))
-      .table
+    val table = runQueryOnExampleGraph("select * from edges order by edge_comment")
     assert(table.schema.map(_.name) == Seq("dst_age", "dst_gender", "dst_id", "dst_income",
       "dst_location", "dst_name", "edge_comment", "edge_weight", "src_age", "src_gender", "src_id",
       "src_income", "src_location", "src_name"))
@@ -51,9 +51,7 @@ class SQLTest extends OperationsTestBase {
   }
 
   test("edge_attributes table") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select * from edge_attributes order by comment"))
-      .table
+    val table = runQueryOnExampleGraph("select * from edge_attributes order by comment")
     assert(table.schema.map(_.name) == Seq("comment", "weight"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
@@ -77,45 +75,36 @@ class SQLTest extends OperationsTestBase {
   }
 
   test("scalars table") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select `!edge_count`, `!vertex_count` from scalars"))
-      .table
+    val table = runQueryOnExampleGraph("select `!edge_count`, `!vertex_count` from scalars")
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(table.schema.map(_.name) == Seq("!edge_count", "!vertex_count"))
     assert(data == Seq(Seq(4.0, 4.0)))
   }
 
   test("scalars table different column order") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select greeting, `!vertex_count`, `!edge_count` from scalars"))
-      .table
+    val table = runQueryOnExampleGraph(
+      "select greeting, `!vertex_count`, `!edge_count` from scalars")
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(table.schema.map(_.name) == Seq("greeting", "!vertex_count", "!edge_count"))
     assert(data == Seq(Seq("Hello world! 😀 ", 4.0, 4.0)))
   }
 
   test("functions") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select avg(age) as avg_age from vertices"))
-      .table
+    val table = runQueryOnExampleGraph("select avg(age) as avg_age from vertices")
     assert(table.schema.map(_.name) == Seq("avg_age"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(Seq(22.7)))
   }
 
   test("sql on vertices") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select name from vertices where age < 40"))
-      .table
+    val table = runQueryOnExampleGraph("select name from vertices where age < 40")
     assert(table.schema.map(_.name) == Seq("name"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == List(List("Adam"), List("Eve"), List("Isolated Joe")))
   }
 
   test("sql with empty results") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select id from vertices where id = 11"))
-      .table
+    val table = runQueryOnExampleGraph("select id from vertices where id = 11")
     assert(table.schema.map(_.name) == Seq("id"))
     val data = table.df.collect.toSeq
     assert(data == List())
@@ -175,30 +164,22 @@ class SQLTest extends OperationsTestBase {
   }
 
   test("group by") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select id, count(*) as count from vertices group by id"))
-      .table
+    val table = runQueryOnExampleGraph("select id, count(*) as count from vertices group by id")
     assert(table.schema.map(_.name) == Seq("id", "count"))
   }
 
   test("no group by count(*)") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select count(*) as Sum from vertices"))
-      .table
+    val table = runQueryOnExampleGraph("select count(*) as Sum from vertices")
     assert(table.schema.map(_.name) == Seq("Sum"))
   }
 
   test("subquery") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select id from (select * from vertices) as sub"))
-      .table
+    val table = runQueryOnExampleGraph("select id from (select * from vertices) as sub")
     assert(table.schema.map(_.name) == Seq("id"))
   }
 
   test("no table") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select 1 as one, int(null) as n"))
-      .table
+    val table = runQueryOnExampleGraph("select 1 as one, int(null) as n")
     assert(table.schema.map(_.name) == Seq("one", "n"))
   }
 
@@ -214,16 +195,12 @@ class SQLTest extends OperationsTestBase {
   }
 
   test("alias") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select v.age from vertices v"))
-      .table
+    val table = runQueryOnExampleGraph("select v.age from vertices v")
     assert(table.schema.map(_.name) == Seq("age"))
   }
 
   test("name reference") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select vertices.age from vertices"))
-      .table
+    val table = runQueryOnExampleGraph("select vertices.age from vertices")
     assert(table.schema.map(_.name) == Seq("age"))
   }
 
@@ -308,25 +285,20 @@ class SQLTest extends OperationsTestBase {
   }
 
   test("no required attribute") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> "select 1 from (select age from vertices) limit 2"))
-      .table
+    val table = runQueryOnExampleGraph(
+      "select 1 from (select age, gender from vertices) limit 2")
     assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq(Seq(1), Seq(1)))
   }
 
   test("table reuse") {
     val select = (s: String) => s"(select $s from vertices limit 1)"
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" -> s"${select("age")} union ${select("name")}"))
-      .table
+    val table = runQueryOnExampleGraph(s"${select("age")} union ${select("name")}")
     assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq(Seq("20.3"), Seq("Adam")))
   }
 
   test("multi-alias") {
-    val table = box("Create example graph")
-      .box("SQL1", Map("sql" ->
-        "select blah from (select age as blah from vertices) order by blah limit 2"))
-      .table
+    val table = runQueryOnExampleGraph(
+      "select blah from (select age as blah from vertices) order by blah limit 2")
     assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq(Seq(2.0), Seq(18.2)))
   }
 }
