@@ -37,7 +37,7 @@ object ExecuteSQL extends OpFromJson {
         properties = Map.empty),
       ignoreIfExists = false)
     for ((name, table) <- protoTables) {
-      catalog.createTempView(name, table.getRelation, overrideIfExists = true)
+      catalog.createTempView(name, table.relation, overrideIfExists = true)
     }
     val analyzer = new Analyzer(catalog, sqlConf)
     analyzer.execute(parsedPlan)
