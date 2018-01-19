@@ -165,17 +165,17 @@ class State:
   def sql(self, sql, **kwargs):
     return self.sql1(sql=sql, **kwargs)
 
-  def df(self, lk):
+  def df(self, lk, limit=-1):
     '''Returns a Pandas DataFrame if this state is a table.'''
     import pandas
-    table = self.get_table(lk)
+    table = self.get_table_sample(lk, limit)
     header = [c.name for c in table.header]
     data = [[getattr(c, 'double', c.string) for c in r] for r in table.data]
     return pandas.DataFrame(data, columns=header)
 
-  def get_table(self, lk):
+  def get_table_sample(self, lk, limit=-1):
     '''Returns the "raw" table data if this state is a table.'''
-    return lk.get_table(lk.get_state_id(self))
+    return lk.get_table(lk.get_state_id(self), limit)
 
   def get_project(self, lk):
     '''Returns the project metadata if this state is a project.'''
@@ -764,8 +764,8 @@ class LynxKite:
   def get_export_result(self, state):
     return self._ask('/ajax/getExportResultOutput', dict(stateId=state))
 
-  def get_table(self, state, rows=-1):
-    return self._ask('/ajax/getTableOutput', dict(id=state, sampleRows=rows))
+  def get_table(self, state, limit=-1):
+    return self._ask('/ajax/getTableOutput', dict(id=state, sampleRows=limit))
 
   def import_box(self, boxes, box_id):
     '''Equivalent to clicking the import button for an import box. Returns the updated boxes.'''

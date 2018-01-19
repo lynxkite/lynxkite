@@ -11,7 +11,7 @@ class TestSQLShorthand(unittest.TestCase):
                  from `one.vertices` cross join `two.vertices`''',
                  lk.createExampleGraph(),
                  lk.createExampleGraph())
-    table = res.get_table(lk)
+    table = res.get_table_sample(lk)
     values = [row[0].double for row in table.data]
     self.assertEqual(values, [16.0])
 
@@ -25,13 +25,13 @@ class TestSQLShorthand(unittest.TestCase):
                  from one, two, three
                  where one.age=two.age and two.income=three.income''',
                  t1, t2, t3)
-    table = res.get_table(lk)
+    table = res.get_table_sample(lk)
     values = [[row[0].string, row[1].string] for row in table.data]
     self.assertEqual(values, [['Adam', '20.3']])
 
   def test_sql1_on_state(self):
     lk = lynx.kite.LynxKite()
-    table = lk.createExampleGraph().sql('select name from vertices where age < 20').get_table(lk)
+    table = lk.createExampleGraph().sql('select name from vertices where age < 20').get_table_sample(lk)
     values = [row[0].string for row in table.data]
     self.assertEqual(values, ['Eve', 'Isolated Joe'])
 

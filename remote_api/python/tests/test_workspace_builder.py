@@ -24,7 +24,8 @@ class TestWorkspaceBuilder(unittest.TestCase):
 
   def test_simple_chain(self):
     lk = lynx.kite.LynxKite()
-    table = lk.createExampleGraph().computePageRank().sql('select page_rank from vertices').get_table(lk)
+    table = lk.createExampleGraph().computePageRank().sql(
+        'select page_rank from vertices').get_table_sample(lk)
     self.assertEqual(table.header[0].dataType, 'Double')
     self.assertEqual(table.header[0].name, 'page_rank')
     values = [row[0].string for row in table.data]
@@ -35,7 +36,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     state = (lk.createExampleGraph()
              .sql('select * from vertices where age < 30')
              .sql('select name from input where age > 2'))
-    table = state.get_table(lk)
+    table = state.get_table_sample(lk)
     values = [row[0].string for row in table.data]
     self.assertEqual(values, ['Adam', 'Eve'])
 
@@ -55,7 +56,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     i = lk.input(name='graph')
     o = i.sql('select name from vertices').output(name='vtable')
     ws = lynx.kite.Workspace('allvs', [o], [i])
-    table = ws(lk.createExampleGraph()).get_table(lk)
+    table = ws(lk.createExampleGraph()).get_table_sample(lk)
     values = [row[0].string for row in table.data]
     self.assertEqual(values, ['Adam', 'Eve', 'Bob', 'Isolated Joe'])
 
@@ -87,14 +88,14 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_parametric_parameters_with_defaults(self):
     lk = lynx.kite.LynxKite()
     ws = self.parametric_ws()
-    table = ws().get_table(lk)
+    table = ws().get_table_sample(lk)
     values = [row[0].string for row in table.data]
     self.assertEqual(values, ['Eve'])
 
   def test_parametric_parameters_with_workspace_parameters(self):
     lk = lynx.kite.LynxKite()
     ws = self.parametric_ws()
-    table = ws(ap=20.3).get_table(lk)
+    table = ws(ap=20.3).get_table_sample(lk)
     values = [row[0].string for row in table.data]
     self.assertEqual(values, ['Adam'])
 
@@ -139,7 +140,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_builder_import(self):
     lk = lynx.kite.LynxKite()
     csv_path = lk.upload('a,b,c\n1,2,3\n4,5,6\n')
-    table = lk.importCSV(filename=csv_path).sql('select * from input').get_table(lk)
+    table = lk.importCSV(filename=csv_path).sql('select * from input').get_table_sample(lk)
     self.assertEqual([[f.string for f in row]
                       for row in table.data], [['1', '2', '3'], ['4', '5', '6']])
 
