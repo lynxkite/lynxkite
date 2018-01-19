@@ -15,7 +15,7 @@ class TestWorkspaceDecorator(unittest.TestCase):
     eg = lk.createExampleGraph()
     names = eg.sql('select name from vertices')
     ages = eg.sql('select age from vertices')
-    table = join_ws(names, ages).get_table_sample(lk)
+    table = join_ws(names, ages).get_table_sample()
     values = [(row[0].string, row[1].string) for row in table.data]
     self.assertEqual(len(values), 16)
     expected_result = [
@@ -35,7 +35,7 @@ class TestWorkspaceDecorator(unittest.TestCase):
              .deriveScalar(output='total', expr=pp('${a.toInt+b.toInt+c.toInt}')))
       return dict(sc=o)
 
-    project = add_ws(a='2', b='3', c='4').get_project(lk)
+    project = add_ws(a='2', b='3', c='4').get_project()
     scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
     self.assertEqual(scalars['total'].string, '9')
 
@@ -60,6 +60,6 @@ class TestWorkspaceDecorator(unittest.TestCase):
               field='income',
               limit=500))
 
-    table = full_workflow().get_table_sample(lk)
+    table = full_workflow().get_table_sample()
     values = [(row[0].string, row[1].string) for row in table.data]
     self.assertEqual(values, [('Adam', '1000'), ('Bob', '2000')])

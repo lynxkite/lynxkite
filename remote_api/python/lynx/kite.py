@@ -150,7 +150,7 @@ class State:
       assert len(inputs) < 2, '{} has more than one input'.format(name)
       [input_name] = inputs
       return new_box(
-          self.box.bc, name, inputs={input_name: self}, parameters=kwargs)
+          self.box.bc, self.box.lk, name, inputs={input_name: self}, parameters=kwargs)
 
     if not name in self.box.bc.box_names():
       raise AttributeError('{} is not defined on {}'.format(name, self))
@@ -165,33 +165,33 @@ class State:
   def sql(self, sql, **kwargs):
     return self.sql1(sql=sql, **kwargs)
 
-  def df(self, lk, limit=-1):
+  def df(self, limit=-1):
     '''Returns a Pandas DataFrame if this state is a table.'''
     import pandas
-    table = self.get_table_sample(lk, limit)
+    table = self.get_table_sample(limit)
     header = [c.name for c in table.header]
     data = [[getattr(c, 'double', c.string) for c in r] for r in table.data]
     return pandas.DataFrame(data, columns=header)
 
-  def get_table_sample(self, lk, limit=-1):
+  def get_table_sample(self, limit=-1):
     '''Returns the "raw" table data if this state is a table.'''
-    return lk.get_table(lk.get_state_id(self), limit)
+    return self.box.lk.get_table(self.box.lk.get_state_id(self), limit)
 
-  def get_project(self, lk):
+  def get_project(self):
     '''Returns the project metadata if this state is a project.'''
-    return lk.get_project(lk.get_state_id(self))
+    return self.box.lk.get_project(self.box.lk.get_state_id(self))
 
 
-def new_box(bc, operation, inputs, parameters):
+def new_box(bc, lk, operation, inputs, parameters):
   if isinstance(operation, str):
     outputs = bc.outputs(operation)
   else:
     outputs = operation.outputs()
   if len(outputs) == 1:
     # Special case: single output boxes function as state as well.
-    return SingleOutputBox(bc, operation, outputs[0], inputs, parameters)
+    return SingleOutputBox(bc, lk, operation, outputs[0], inputs, parameters)
   else:
-    return Box(bc, operation, inputs, parameters)
+    return Box(bc, lk, operation, inputs, parameters)
 
 
 class Box:
@@ -200,8 +200,9 @@ class Box:
   It can store workspace segments, connected to its input plugs.
   '''
 
-  def __init__(self, box_catalog, operation, inputs, parameters):
+  def __init__(self, box_catalog, lk, operation, inputs, parameters):
     self.bc = box_catalog
+    self.lk = lk
     self.operation = operation
     if isinstance(operation, str):
       exp_inputs = set(self.bc.inputs(operation))
@@ -259,8 +260,8 @@ class Box:
 
 class SingleOutputBox(Box, State):
 
-  def __init__(self, box_catalog, operation, output_name, inputs, parameters):
-    Box.__init__(self, box_catalog, operation, inputs, parameters)
+  def __init__(self, box_catalog, lk, operation, output_name, inputs, parameters):
+    Box.__init__(self, box_catalog, lk, operation, inputs, parameters)
     State.__init__(self, self, output_name)
 
 
@@ -304,6 +305,7 @@ class Workspace:
     self._bc = terminal_boxes[0].bc
     self._ws_parameters = ws_parameters
     self._terminal_boxes = terminal_boxes
+    self._lk = terminal_boxes[0].lk
 
     # We enumerate and add all upstream boxes for terminal_boxes via a simple
     # BFS.
@@ -360,7 +362,7 @@ class Workspace:
 
   def __call__(self, *args, **kwargs):
     inputs = dict(zip(self.inputs(), args))
-    return new_box(self._bc, self, inputs=inputs, parameters=kwargs)
+    return new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
 
 
 class WorkspaceSequence:
@@ -553,7 +555,7 @@ class LynxKite:
 
     def f(*args, **kwargs):
       inputs = dict(zip(self.box_catalog().inputs(name), args))
-      box = new_box(self.box_catalog(), name, inputs=inputs, parameters=kwargs)
+      box = new_box(self.box_catalog(), self, name, inputs=inputs, parameters=kwargs)
       # If it is an import box, we trigger the import here.
       import_box_names = ['importCSV', 'importJSON', 'importFromHive',
                           'importParquet', 'importORC', 'importJDBC']
@@ -576,7 +578,7 @@ class LynxKite:
     name = 'sql{}'.format(num_inputs)
     inputs = dict(zip(self.box_catalog().inputs(name), args))
     kwargs['sql'] = sql
-    return new_box(self.box_catalog(), name, inputs=inputs, parameters=kwargs)
+    return new_box(self.box_catalog(), self, name, inputs=inputs, parameters=kwargs)
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
