@@ -168,11 +168,19 @@ class State:
   def df(self, lk):
     '''Returns a Pandas DataFrame if this state is a table.'''
     import pandas
-    table = lk.get_table(lk.get_state_id(self))
+    table = self.get_table()
     header = [c.name for c in table.header]
     data = [dict((h, getattr(c, 'double', c.string))
                  for (h, c) in zip(header, r)) for r in table.data]
     return pandas.DataFrame(data)
+
+  def get_table(self, lk):
+    '''Returns the "raw" table data if this state is a table.'''
+    return lk.get_table(lk.get_state_id(self))
+
+  def get_project(self, lk):
+    '''Returns the project metadata if this state is a project.'''
+    return lk.get_project(lk.get_state_id(self))
 
 
 def new_box(bc, operation, inputs, parameters):

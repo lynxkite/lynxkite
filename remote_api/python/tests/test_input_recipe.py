@@ -27,7 +27,5 @@ class TestInputRecipe(unittest.TestCase):
     lk.remove_name(tss.snapshot_name(date), force=True)
     tss.save_to_sequence(lk, table_state, date)
     input_boxes = input_recipe.build_boxes(lk, date)
-    final = input_boxes.sql('select sum(age) as sum_age from input')
-    table_state = lk.get_state_id(final)
-    table = lk.get_table(table_state)
+    table = input_boxes.sql('select sum(age) as sum_age from input').get_table(lk)
     self.assertEqual(table.data[0][0].string, '90.8')
