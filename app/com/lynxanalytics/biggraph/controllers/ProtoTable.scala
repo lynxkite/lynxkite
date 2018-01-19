@@ -23,6 +23,7 @@ import org.apache.spark.sql.catalyst.plans.logical.Project
 import org.apache.spark.sql.catalyst.plans.logical.SubqueryAlias
 import org.apache.spark.sql.catalyst.plans.logical.UnaryNode
 import org.apache.spark.sql.catalyst.plans.logical.Union
+import org.apache.spark.sql.catalyst.plans.logical.Filter
 import org.apache.spark.sql.execution.SparkSqlParser
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types
@@ -88,10 +89,10 @@ object ProtoTable {
 
   private def getRequiredFields(plan: LogicalPlan): Seq[(String, Seq[NamedExpression])] =
     plan match {
-      case SubqueryAlias(name, Project(projectList, LocalRelation(output, _))) =>
-        // The projection list can be empty e.g. in select 1 from one. In this case we still
-        // have to calculate the number of rows of the table, so we're calculating the first col.
-        if (projectList.nonEmpty) List((name, projectList)) else List((name, Seq(output.head)))
+      case Project(projectList, Filter(exp, SubqueryAlias(name, LocalRelation(output, _)))) =>
+        List((name, exp.references.toSeq ++ projectList))
+      case Project(projectList, SubqueryAlias(name, LocalRelation(output, _))) =>
+        List((name, projectList))
       case SubqueryAlias(name, LocalRelation(_, _)) =>
         List((name, Seq(UnresolvedStar(target = None))))
       case l: LeafNode =>

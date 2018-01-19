@@ -4,6 +4,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.controllers.ProtoTable
 import com.lynxanalytics.biggraph.graph_api._
 import org.apache.spark
+import org.apache.spark.sql.catalyst.analysis.UnresolvedException
 import org.apache.spark.sql.catalyst.catalog.SessionCatalog
 import org.apache.spark.sql.catalyst.optimizer.Optimizer
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
@@ -39,8 +40,7 @@ object ExecuteSQL extends OpFromJson {
       catalog.createTempView(name, table.getRelation, overrideIfExists = true)
     }
     val analyzer = new Analyzer(catalog, sqlConf)
-    val analyzedPlan = analyzer.execute(parsedPlan)
-    new SchemaInferencingOptimizer(catalog, sqlConf).execute(analyzedPlan)
+    analyzer.execute(parsedPlan)
   }
 
   class Input(inputTables: Set[String]) extends MagicInputSignature {
@@ -75,7 +75,13 @@ object ExecuteSQL extends OpFromJson {
     val plan = getLogicalPlan(sqlQuery, protoTables)
     val minimizedProtoTables = ProtoTable.minimize(plan, protoTables)
     val tables = minimizedProtoTables.mapValues(protoTable => protoTable.toTable)
-    ExecuteSQL.run(sqlQuery, plan.schema, tables)
+    try {
+      ExecuteSQL.run(sqlQuery, plan.schema, tables)
+    } catch {
+      // The exception is thrown on the plan.schema call
+      case a: UnresolvedException[_] =>
+        throw UnresolvedColumnException(s"${a.treeString} column cannot be found", a)
+    }
   }
 
 }
@@ -104,18 +110,4 @@ case class ExecuteSQL(
     val df = DataManager.sql(sqlContext, sqlQuery, dfs.toList)
     output(o.t, df)
   }
-}
-
-// We don't use this optimizer to process data (that's taken care of by Spark).
-// The optimizer minimizes the calculations needed to get the results. The only part that we need
-// from this is that projections get pushed down as much as possible, i.e. with the query
-// select a from b where c=d, the projection pushdown would make sure that we only request
-// a, b, c, and d from our data source (ProtoTables in our case).
-class SchemaInferencingOptimizer(
-    catalog: SessionCatalog,
-    conf: SQLConf)
-  extends Optimizer(catalog, conf) {
-  val weDontWant = Set("Finish Analysis", "LocalRelation")
-  override def batches: Seq[Batch] = super.batches
-    .filter(b => !weDontWant.contains(b.name))
 }

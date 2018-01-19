@@ -6,8 +6,10 @@ import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL
 class ProtoTableTest extends BigGraphControllerTestBase {
   private def attr(name: String): (String, Attribute[_]) =
     (name, Attribute[String](null, Symbol(name), null))
-  val one = ProtoTable(null, Seq(attr("a"), attr("b"), attr("c"), attr("d")))
-  val two = ProtoTable(null, Seq(attr("a"), attr("b"), attr("c"), attr("d")))
+  val allColumns = Set("a", "b", "c", "d")
+  val attrs = allColumns.map(attr)
+  val one = ProtoTable(null, attrs)
+  val two = ProtoTable(null, attrs)
   val protoTables = Map("one" -> one, "two" -> two)
 
   private def compareProto(expected: Map[String, Set[String]], actual: Map[String, ProtoTable]) = {
@@ -22,13 +24,15 @@ class ProtoTableTest extends BigGraphControllerTestBase {
     ("select * from one", Map("one" -> Set("a", "b", "c", "d"))),
     ("select a from one where b < 3", Map("one" -> Set("a", "b"))),
     ("select o.a, t.c from one o cross join two t",
-      Map("one" -> Set("a"), "two" -> Set("c"))),
+      Map("one" -> allColumns, "two" -> allColumns)),
     ("select o.a, t.c from one o cross join one t",
-      Map("one" -> Set("a", "c"))),
-    ("select a from (select * from one)", Map("one" -> Set("a"))),
-    ("select a from (select * from one) where b=11", Map("one" -> Set("a", "b"))),
-    ("select o.a, two.c from one o inner join two on o.b=two.b where o.a=1",
-      Map("one" -> Set("a", "b"), "two" -> Set("c", "b")))).foreach {
+      Map("one" -> allColumns)),
+    ("select a from (select * from one)", Map("one" -> allColumns)),
+    ("select a from (select a, b from one)", Map("one" -> Set("a", "b"))),
+    ("select 1 from (select b from one)", Map("one" -> Set("b"))),
+    ("select a from (select * from one) where b=11", Map("one" -> allColumns)),
+    ("select o.a, two.c from one o inner join two on o.b=two.b cross join two where o.a=1",
+      Map("one" -> allColumns, "two" -> allColumns))).foreach {
       case (query, expected) =>
         test(query) {
           val plan = ExecuteSQL.getLogicalPlan(query, protoTables)
