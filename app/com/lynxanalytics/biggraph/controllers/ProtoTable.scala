@@ -5,30 +5,21 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.graph_api._
-import org.apache.spark.sql.catalyst.analysis.Analyzer
-import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
-import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.sql.catalyst.analysis.UnresolvedStar
-import org.apache.spark.sql.catalyst.catalog.InMemoryCatalog
-import org.apache.spark.sql.catalyst.catalog.SessionCatalog
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.expressions.NamedExpression
-import org.apache.spark.sql.catalyst.optimizer.Optimizer
 import org.apache.spark.sql.catalyst.plans.logical.BinaryNode
 import org.apache.spark.sql.catalyst.plans.logical.LeafNode
 import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.Project
-import org.apache.spark.sql.catalyst.plans.logical.SubqueryAlias
 import org.apache.spark.sql.catalyst.plans.logical.UnaryNode
 import org.apache.spark.sql.catalyst.plans.logical.Union
 import org.apache.spark.sql.catalyst.plans.logical.Filter
-import org.apache.spark.sql.execution.SparkSqlParser
-import org.apache.spark.sql.internal.SQLConf
-import org.apache.spark.sql.types
+import org.apache.spark.sql.catalyst.plans.logical.Join
 
-import scala.collection.mutable
+import org.apache.spark.sql.types
 
 // A kind of wrapper for Tables that can be used for trimming unused dependencies from table
 // operations like ExecuteSQL.
@@ -41,8 +32,8 @@ trait ProtoTable {
   // Creates the promised table.
   def toTable: Table
   // For Spark SQL plans.
-  def getRelation: LocalRelation = {
-    val fields = schema.fields
+  val relation: LocalRelation = {
+    val fields = schema.fields.map(f => f.withComment(s"dont fuck with $this"))
     if (fields.nonEmpty) {
       LocalRelation(fields.head, fields.tail: _*)
     } else {
@@ -64,20 +55,12 @@ object ProtoTable {
     optimizedPlan: LogicalPlan,
     protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
     // The table names we get back from the case-insensitive parser will be lowercase.
-    val lowerProtoTables = protoTables.map { case (k, v) => k.toLowerCase -> v }
-    val tables = getRequiredFields(optimizedPlan)
-
-    val selectedTables = tables.groupBy(_._1).map {
-      case (name, expressionsList) =>
-        val table = lowerProtoTables(name)
-        val columns = expressionsList.flatMap(_._2).flatMap(parseExpression).distinct
-        val selectedTable = if (columns.contains("*")) {
-          table
-        } else {
-          table.maybeSelect(columns)
-        }
-        name -> selectedTable
-    }
+    val fields = getRequiredFields(optimizedPlan).map(f => (f.name, f.metadata))
+    val selectedTables = protoTables.mapValues(
+      f => {
+        val newSchema = fields.intersect(f.relation.output.map(f => (f.name, f.metadata)))
+        f.maybeSelect(newSchema.map(s => s._1))
+      }).filter(_._2.schema.length > 0)
     selectedTables
   }
 
@@ -87,17 +70,20 @@ object ProtoTable {
     case exp: Expression => exp.children.flatMap(parseExpression)
   }
 
-  private def getRequiredFields(plan: LogicalPlan): Seq[(String, Seq[NamedExpression])] =
+  private def getRequiredFields(plan: LogicalPlan): Seq[NamedExpression] =
     plan match {
-      case Project(projectList, Filter(exp, SubqueryAlias(name, LocalRelation(output, _)))) =>
-        List((name, exp.references.toSeq ++ projectList))
-      case Project(projectList, SubqueryAlias(name, LocalRelation(output, _))) =>
-        List((name, projectList))
-      case SubqueryAlias(name, LocalRelation(_, _)) =>
-        List((name, Seq(UnresolvedStar(target = None))))
+      case Project(projectList, child) =>
+        projectList ++ getRequiredFields(child)
+      case Filter(expression, child) =>
+        expression.references.toSeq ++ getRequiredFields(child)
+      case Join(left, right, _, condition) =>
+        (condition match {
+          case Some(exp) => exp.references.toSeq
+          case None => Seq()
+        }) ++ getRequiredFields(left) ++ getRequiredFields(right)
       case l: LeafNode =>
         bigGraphLogger.info(s"$l ignored in ProtoTable minimalization")
-        List()
+        Seq()
       case s: UnaryNode => getRequiredFields(s.child)
       case s: BinaryNode =>
         getRequiredFields(s.left) ++ getRequiredFields(s.right)

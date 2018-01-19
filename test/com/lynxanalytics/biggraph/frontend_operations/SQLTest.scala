@@ -1,8 +1,8 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
+import com.lynxanalytics.biggraph.controllers.SQLTestCases
 import com.lynxanalytics.biggraph.graph_api.{ DataManager, ThreadUtil }
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_operations.UnresolvedColumnException
 import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import org.apache.spark
 import org.apache.spark.sql.types._
@@ -302,9 +302,10 @@ class SQLTest extends OperationsTestBase {
     assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq(Seq(2.0), Seq(18.2)))
   }
 
-  Vector(
-    "select gender from (select age + age, gender from (select age, gender from vertices))").foreach(query => test(query) {
-      val table = runQueryOnExampleGraph(query)
-      assert(table.df.collect().length == 4)
-    })
+  SQLTestCases.list.foreach(query => test(query._1) {
+    val one = box("Create example graph")
+    val two = box("Create example graph")
+    val graphQuery = query._1.replace("one", "`one.vertices`").replace("two", "`two.vertices`")
+    box("SQL2", Map("sql" -> graphQuery), Seq(one, two)).table.df.collect()
+  })
 }
