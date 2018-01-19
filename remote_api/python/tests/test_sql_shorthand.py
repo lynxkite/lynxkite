@@ -34,3 +34,14 @@ class TestSQLShorthand(unittest.TestCase):
     table = lk.createExampleGraph().sql('select name from vertices where age < 20').get_table(lk)
     values = [row[0].string for row in table.data]
     self.assertEqual(values, ['Eve', 'Isolated Joe'])
+
+  def test_table_to_pandas(self):
+    import pandas as pd
+    lk = lynx.kite.LynxKite()
+    df = lk.createExampleGraph().sql('select name, age from vertices order by name').df(lk)
+    self.assertTrue(df.equals(pd.DataFrame([
+        ['Adam', 20.3],
+        ['Bob', 50.3],
+        ['Eve', 18.2],
+        ['Isolated Joe', 2],
+    ], columns=['name', 'age'])))
