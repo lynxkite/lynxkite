@@ -106,7 +106,7 @@ class TestWorkspace(unittest.TestCase):
     outputs = lk.run(boxes)
     # Check table.
     output = outputs['SQL1_1', 'table']
-    table = lk.get_table(output.stateId)
+    table = lk.get_table_data(output.stateId)
     self.assertEqual([c.name for c in table.header], ['a', 'sum'])
     self.assertEqual([[f.string for f in row] for row in table.data], [['1', '5'], ['4', '11']])
     # Check export.
