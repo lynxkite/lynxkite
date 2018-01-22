@@ -144,9 +144,8 @@ class TestWorkspaceBuilder(unittest.TestCase):
     self.assertEqual([[f.string for f in row]
                       for row in table.data], [['1', '2', '3'], ['4', '5', '6']])
 
-  def test_builder_export(self):
+  def test_builder_export_csv_with_generated_path(self):
     lk = lynx.kite.LynxKite()
-    # CSV export test
     eg_table = (lk.createExampleGraph()
                 .sql('select name, age, income from vertices')
                 .exportToCSV())
@@ -154,8 +153,10 @@ class TestWorkspaceBuilder(unittest.TestCase):
     data = lk.download_file(path)
     self.assertEqual(
         data, b'name,age,income\nAdam,20.3,1000.0\nEve,18.2,\nBob,50.3,2000.0\nIsolated Joe,2.0,\n')
-    # JSON export test
-    path = 'DATA$tests/name_and_age_json'
+
+  def test_builder_export_json_with_path_parameter(self):
+    lk = lynx.kite.LynxKite()
+    path = 'DATA$/export_tests/name_and_age_json'
     name_and_age = (lk.createExampleGraph()
                     .sql('select name, age from vertices where age < 30')
                     .exportToJSON(path=path))
@@ -163,7 +164,9 @@ class TestWorkspaceBuilder(unittest.TestCase):
     data = lk.download_file(path)
     self.assertEqual(
         data, b'{"name":"Adam","age":20.3}\n{"name":"Eve","age":18.2}\n{"name":"Isolated Joe","age":2.0}\n')
-    # Export is idempotent
+
+  def test_builder_export_idempotent(self):
+    lk = lynx.kite.LynxKite()
     eg = lk.createExampleGraph().sql('select * from vertices').exportToJSON()
     path = eg.run_export()
     path2 = eg.run_export()
