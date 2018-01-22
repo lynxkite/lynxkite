@@ -75,23 +75,10 @@ object ProtoTable {
 
   private def getRequiredFields(plan: LogicalPlan): Seq[NamedExpression] =
     plan match {
-      case p: Project =>
-        p.references.toSeq ++ getRequiredFields(p.child)
-      case Filter(expression, child) =>
-        expression.references.toSeq ++ getRequiredFields(child)
-      case Join(left, right, _, condition) =>
-        (condition match {
-          case Some(exp) => exp.references.toSeq
-          case None => Seq()
-        }) ++ getRequiredFields(left) ++ getRequiredFields(right)
       case l: LeafNode =>
-        bigGraphLogger.info(s"$l ignored in ProtoTable minimalization")
         Seq()
-      case s: UnaryNode => getRequiredFields(s.child)
-      case s: BinaryNode =>
-        getRequiredFields(s.left) ++ getRequiredFields(s.right)
-      case s: Union =>
-        s.children.flatMap(getRequiredFields)
+      case l: LogicalPlan =>
+        l.references.toSeq ++ l.children.flatMap(getRequiredFields)
     }
 }
 
