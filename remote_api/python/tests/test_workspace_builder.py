@@ -172,6 +172,16 @@ class TestWorkspaceBuilder(unittest.TestCase):
     path2 = eg.run_export()
     self.assertEqual(path, path2)
 
+  def test_builder_export_wrong_prefix(self):
+    lk = lynx.kite.LynxKite()
+    path = 'WRONG_PREFIX$/table'
+    names = (lk.createExampleGraph()
+             .sql('select name from vertices')
+             .exportToCSV(path=path))
+    with self.assertRaises(AssertionError) as cm:
+      names.run_export()
+    self.assertTrue('Unknown prefix symbol: WRONG_PREFIX$' in str(cm.exception))
+
   def test_missing_function(self):
     lk = lynx.kite.LynxKite()
     with self.assertRaises(AttributeError) as cm:
