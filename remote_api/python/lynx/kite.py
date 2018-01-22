@@ -769,8 +769,9 @@ class LynxKite:
   def get_state_id(self, state):
     ws = Workspace('Anonymous', [state.box])
     workspace_outputs = self.run_workspace(ws)
-    return workspace_outputs[
-        ws.id_of(state.box), state.output_plug_name].stateId
+    state = workspace_outputs[ws.id_of(state.box), state.output_plug_name]
+    assert state.success.enabled, 'Output has failed: {}'.format(state.success.disabledReason)
+    return state.stateId
 
   def get_scalar(self, guid):
     return self._ask('/ajax/scalarValue', dict(scalarId=guid))
