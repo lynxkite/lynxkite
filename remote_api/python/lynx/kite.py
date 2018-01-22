@@ -181,6 +181,17 @@ class State:
     '''Returns the project metadata if this state is a project.'''
     return self.box.lk.get_project(self.box.lk.get_state_id(self))
 
+  def run_export(self):
+    '''Triggers the export if this state is an ``exportResult``.'''
+    lk = self.box.lk
+    state_id = lk.get_state_id(self)
+    export = lk.get_export_result(state_id)
+    if export.result.computeProgress != 1:
+      scalar = lk.get_scalar(export.result.id)
+      assert scalar.string == 'Export done.', scalar.string
+      export = lk.get_export_result(state_id)
+      assert export.result.computeProgress == 1, 'Failed to compute export result scalar.'
+
 
 def new_box(bc, lk, operation, inputs, parameters):
   if isinstance(operation, str):
