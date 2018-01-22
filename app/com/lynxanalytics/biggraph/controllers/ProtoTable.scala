@@ -54,22 +54,29 @@ object ProtoTable {
   // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
   // necessary to support the query.
   def minimize(
-    optimizedPlan: LogicalPlan,
+    plan: LogicalPlan,
     protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
     // Match tables to ProtoTables based on the comment added in ProtoTable.relation
-    val fields = getRequiredFields(optimizedPlan).map(f => (f.name, f.metadata))
+    val protoStrings = plan.collectLeaves().flatMap(_.output.map(_.metadata.getString("comment")))
+    val fields = getRequiredFields(plan).map(f => (f.name, f.metadata))
     val selectedTables = protoTables.mapValues {
       f =>
-        val newSchema = fields.intersect(f.relation.output.map(f => (f.name, f.metadata)))
-        f.maybeSelect(newSchema.map(s => s._1))
+        val output = f.relation.output
+        val newSchema = fields.intersect(output.map(f => (f.name, f.metadata)))
+        if (newSchema.nonEmpty)
+          f.maybeSelect(newSchema.map(_._1))
+        else if (protoStrings.contains(f.toString))
+          f.maybeSelect(Seq(output.map(_.name).head))
+        else
+          f.maybeSelect(Seq())
     }.filter(_._2.schema.length > 0)
     selectedTables
   }
 
   private def getRequiredFields(plan: LogicalPlan): Seq[NamedExpression] =
     plan match {
-      case Project(projectList, child) =>
-        projectList ++ getRequiredFields(child)
+      case p: Project =>
+        p.references.toSeq ++ getRequiredFields(p.child)
       case Filter(expression, child) =>
         expression.references.toSeq ++ getRequiredFields(child)
       case Join(left, right, _, condition) =>

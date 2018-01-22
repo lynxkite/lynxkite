@@ -6,7 +6,10 @@ import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL
 object SQLTestCases {
   val allColumns = Set("age", "gender", "income", "location")
   val list: Seq[(String, Map[String, Set[String]])] = Seq(
-    ("select age from one", Map("one" -> Set("age"))),
+    ("select age as notage from one", Map("one" -> Set("age"))),
+    ("select count(age) from one", Map("one" -> Set("age"))),
+    ("select count(*) from one", Map("one" -> Set("age"))),
+    ("select count(*) from one cross join two", Map("one" -> Set("age"), "two" -> Set("age"))),
     ("select * from one", Map("one" -> Set("age", "gender", "income", "location"))),
     ("select age from one where gender < 3", Map("one" -> Set("age", "gender"))),
     ("select o.age, t.income from one o cross join two t",
