@@ -117,6 +117,8 @@ object SQLHelper {
     dataFrame.rdd.map(processDataFrameRow(tupleColumnIdList))
   }
 
+  // Make every column nullable. Nullability is not stored in Parquet.
+  // Remove comments. We use them during optimization, but they break deserialization.
   def stripped(schema: types.StructType): types.StructType =
     types.StructType(schema.map(f => f.copy(
       nullable = true,

@@ -33,7 +33,9 @@ trait ProtoTable {
   def toTable: Table
   // For Spark SQL plans.
   val relation: LocalRelation = {
-    val fields = schema.fields.map(f => f.withComment(s"dont fuck with $this"))
+    // We use the hashcode of the ProtoTable for comparison. The optimizer modifies other fields,
+    // but we can still match each column to the ProtoTable based on each hashcode.
+    val fields = schema.fields.map(f => f.withComment(s"$this"))
     if (fields.nonEmpty) {
       LocalRelation(fields.head, fields.tail: _*)
     } else {
@@ -54,13 +56,13 @@ object ProtoTable {
   def minimize(
     optimizedPlan: LogicalPlan,
     protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
-    // The table names we get back from the case-insensitive parser will be lowercase.
+    // Match tables to ProtoTables based on the comment added in ProtoTable.relation
     val fields = getRequiredFields(optimizedPlan).map(f => (f.name, f.metadata))
-    val selectedTables = protoTables.mapValues(
-      f => {
+    val selectedTables = protoTables.mapValues {
+      f =>
         val newSchema = fields.intersect(f.relation.output.map(f => (f.name, f.metadata)))
         f.maybeSelect(newSchema.map(s => s._1))
-      }).filter(_._2.schema.length > 0)
+    }.filter(_._2.schema.length > 0)
     selectedTables
   }
 
