@@ -64,12 +64,6 @@ object ProtoTable {
     selectedTables
   }
 
-  private def parseExpression(expression: Expression): Seq[String] = expression match {
-    case u: AttributeReference => Seq(u.name)
-    case u: UnresolvedStar => Seq("*")
-    case exp: Expression => exp.children.flatMap(parseExpression)
-  }
-
   private def getRequiredFields(plan: LogicalPlan): Seq[NamedExpression] =
     plan match {
       case Project(projectList, child) =>

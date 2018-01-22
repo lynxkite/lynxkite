@@ -16,7 +16,7 @@ object ImportDataFrame extends OpFromJson {
     (j \ "timestamp").as[String])
 
   def apply(df: DataFrame) = {
-    new ImportDataFrame(SQLHelper.allNullable(df.schema), Some(df), Timestamp.toString)
+    new ImportDataFrame(SQLHelper.stripped(df.schema), Some(df), Timestamp.toString)
   }
 
   def run(df: DataFrame)(implicit mm: MetaGraphManager): Table = {
