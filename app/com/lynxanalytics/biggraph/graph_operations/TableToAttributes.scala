@@ -90,7 +90,7 @@ case class TableToAttributes() extends TypedMetaGraphOp[Input, Output] {
     implicit val id = inputDatas
     val t = inputs.t.data
     assert(
-      t.entity.schema == t.df.schema,
+      SQLHelper.stripped(t.entity.schema) == SQLHelper.stripped(t.df.schema),
       s"Schema mismatch: ${t.entity.schema} != ${t.df.schema}")
     o.populateOutput(rc, t.df.schema, t.df)
   }
