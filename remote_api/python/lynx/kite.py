@@ -182,7 +182,10 @@ class State:
     return self.box.lk.get_project(self.box.lk.get_state_id(self))
 
   def run_export(self):
-    '''Triggers the export if this state is an ``exportResult``.'''
+    '''Triggers the export if this state is an ``exportResult``.
+
+    Returns the prefixed path of the exported file.
+    '''
     lk = self.box.lk
     state_id = lk.get_state_id(self)
     export = lk.get_export_result(state_id)
@@ -191,6 +194,7 @@ class State:
       assert scalar.string == 'Export done.', scalar.string
       export = lk.get_export_result(state_id)
       assert export.result.computeProgress == 1, 'Failed to compute export result scalar.'
+    return export.parameters.path
 
 
 def new_box(bc, lk, operation, inputs, parameters):
