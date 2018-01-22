@@ -59,17 +59,15 @@ object ProtoTable {
     // Match tables to ProtoTables based on the comment added in ProtoTable.relation
     val protoStrings = plan.collectLeaves().flatMap(_.output.map(_.metadata.getString("comment")))
     val fields = getRequiredFields(plan).map(f => (f.name, f.metadata))
-    val selectedTables = protoTables.mapValues {
+    val selectedTables = protoTables.filter(k => protoStrings.contains(k._2.toString)).mapValues {
       f =>
         val output = f.relation.output
         val newSchema = fields.intersect(output.map(f => (f.name, f.metadata)))
         if (newSchema.nonEmpty)
           f.maybeSelect(newSchema.map(_._1))
-        else if (protoStrings.contains(f.toString))
-          f.maybeSelect(Seq(output.map(_.name).head))
         else
-          f.maybeSelect(Seq())
-    }.filter(_._2.schema.length > 0)
+          f.maybeSelect(Seq(output.map(_.name).head))
+    }
     selectedTables
   }
 
