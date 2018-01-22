@@ -20,6 +20,7 @@ import scala.reflect.runtime.universe._
 import java.util.UUID
 
 import org.apache.spark.sql.types.Metadata
+import org.apache.spark.sql.types.MetadataBuilder
 
 object SQLHelper {
   private def toSymbol(field: types.StructField) = Symbol("imported_column_" + field.name)
@@ -116,10 +117,9 @@ object SQLHelper {
     dataFrame.rdd.map(processDataFrameRow(tupleColumnIdList))
   }
 
-  // Make every column nullable. Nullability is not stored in Parquet.
-  def allNullable(schema: types.StructType): types.StructType =
-    types.StructType(schema.map(_.copy(nullable = true)))
-
-  def stripForCompare(schema: types.StructType): types.StructType =
-    types.StructType(schema.map(_.copy(nullable = true, metadata = Metadata.empty)))
+  def stripped(schema: types.StructType): types.StructType =
+    types.StructType(schema.map(f => f.copy(
+      nullable = true,
+      metadata = new MetadataBuilder()
+        .withMetadata(f.metadata).remove("comment").build())))
 }
