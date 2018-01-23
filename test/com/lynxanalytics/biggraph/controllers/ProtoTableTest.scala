@@ -8,6 +8,7 @@ object SQLTestCases {
   val list: Seq[(String, Map[String, Set[String]])] = Seq(
     ("select age as notage from one", Map("one" -> Set("age"))),
     ("select count(gender) from one", Map("one" -> Set("gender"))),
+    ("select * from one", Map("one" -> allColumns)),
     ("select count(*) from one", Map("one" -> Set("age"))),
     ("select sin((sqrt(age) * 0.3) + 1) from one", Map("one" -> Set("age"))),
     ("select count(*) from one cross join two", Map("one" -> Set("age"), "two" -> Set("age"))),
