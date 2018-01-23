@@ -63,7 +63,9 @@ object ProtoTable {
       f =>
         val output = f.relation.output
         val newSchema = fields.intersect(output.map(f => (f.name, f.metadata)))
-        if (newSchema.nonEmpty)
+        if (newSchema.map(_._1) == output.map(_.name))
+          f
+        else if (newSchema.nonEmpty)
           f.maybeSelect(newSchema.map(_._1))
         else
           f.maybeSelect(Seq(output.map(_.name).head))
