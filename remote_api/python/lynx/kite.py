@@ -150,7 +150,7 @@ class State:
       assert len(inputs) < 2, '{} has more than one input'.format(name)
       [input_name] = inputs
       return new_box(
-          self.box.bc, name, inputs={input_name: self}, parameters=kwargs)
+          self.box.bc, self.box.lk, name, inputs={input_name: self}, parameters=kwargs)
 
     if not name in self.box.bc.box_names():
       raise AttributeError('{} is not defined on {}'.format(name, self))
@@ -165,26 +165,48 @@ class State:
   def sql(self, sql, **kwargs):
     return self.sql1(sql=sql, **kwargs)
 
-  def df(self, lk):
+  def df(self, limit=-1):
     '''Returns a Pandas DataFrame if this state is a table.'''
     import pandas
-    table = lk.get_table(lk.get_state_id(self))
+    table = self.get_table_data(limit)
     header = [c.name for c in table.header]
-    data = [dict((h, getattr(c, 'double', c.string))
-                 for (h, c) in zip(header, r)) for r in table.data]
-    return pandas.DataFrame(data)
+    data = [[getattr(c, 'double', c.string) for c in r] for r in table.data]
+    return pandas.DataFrame(data, columns=header)
+
+  def get_table_data(self, limit=-1):
+    '''Returns the "raw" table data if this state is a table.'''
+    return self.box.lk.get_table_data(self.box.lk.get_state_id(self), limit)
+
+  def get_project(self):
+    '''Returns the project metadata if this state is a project.'''
+    return self.box.lk.get_project(self.box.lk.get_state_id(self))
+
+  def run_export(self):
+    '''Triggers the export if this state is an ``exportResult``.
+
+    Returns the prefixed path of the exported file.
+    '''
+    lk = self.box.lk
+    state_id = lk.get_state_id(self)
+    export = lk.get_export_result(state_id)
+    if export.result.computeProgress != 1:
+      scalar = lk.get_scalar(export.result.id)
+      assert scalar.string == 'Export done.', scalar.string
+      export = lk.get_export_result(state_id)
+      assert export.result.computeProgress == 1, 'Failed to compute export result scalar.'
+    return export.parameters.path
 
 
-def new_box(bc, operation, inputs, parameters):
+def new_box(bc, lk, operation, inputs, parameters):
   if isinstance(operation, str):
     outputs = bc.outputs(operation)
   else:
     outputs = operation.outputs()
   if len(outputs) == 1:
     # Special case: single output boxes function as state as well.
-    return SingleOutputBox(bc, operation, outputs[0], inputs, parameters)
+    return SingleOutputBox(bc, lk, operation, outputs[0], inputs, parameters)
   else:
-    return Box(bc, operation, inputs, parameters)
+    return Box(bc, lk, operation, inputs, parameters)
 
 
 class Box:
@@ -193,8 +215,9 @@ class Box:
   It can store workspace segments, connected to its input plugs.
   '''
 
-  def __init__(self, box_catalog, operation, inputs, parameters):
+  def __init__(self, box_catalog, lk, operation, inputs, parameters):
     self.bc = box_catalog
+    self.lk = lk
     self.operation = operation
     if isinstance(operation, str):
       exp_inputs = set(self.bc.inputs(operation))
@@ -252,8 +275,8 @@ class Box:
 
 class SingleOutputBox(Box, State):
 
-  def __init__(self, box_catalog, operation, output_name, inputs, parameters):
-    Box.__init__(self, box_catalog, operation, inputs, parameters)
+  def __init__(self, box_catalog, lk, operation, output_name, inputs, parameters):
+    Box.__init__(self, box_catalog, lk, operation, inputs, parameters)
     State.__init__(self, self, output_name)
 
 
@@ -297,6 +320,7 @@ class Workspace:
     self._bc = terminal_boxes[0].bc
     self._ws_parameters = ws_parameters
     self._terminal_boxes = terminal_boxes
+    self._lk = terminal_boxes[0].lk
 
     # We enumerate and add all upstream boxes for terminal_boxes via a simple
     # BFS.
@@ -353,7 +377,7 @@ class Workspace:
 
   def __call__(self, *args, **kwargs):
     inputs = dict(zip(self.inputs(), args))
-    return new_box(self._bc, self, inputs=inputs, parameters=kwargs)
+    return new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
 
 
 class WorkspaceSequence:
@@ -463,48 +487,39 @@ def layout(boxes):
   oy = 150
 
   def topological_sort(dependencies):
-    # From https://bitbucket.org/ericvsmith/toposort
     # We have all the boxes as keys in the parameter,
     # dependencies[box_id] = {}, if box_id does not depend on anything.
-    if len(dependencies) == 0:
-      return
     deps = dependencies.copy()
-    # Ignore self dependencies
-    for k, v in deps.items():
-      v.discard(k)
     while True:
       next_group = set(box_id for box_id, dep in deps.items() if len(dep) == 0)
       if not next_group:
         break
       yield next_group
       deps = {box_id: dep - next_group for box_id, dep in deps.items() if box_id not in next_group}
-    if len(deps) != 0:
-      raise Exception('Circular dependency in the workspace!')
 
-  '''Computes the ``level`` of the boxes. Boxes without dependencies have level=0.'''
   dependencies = {box['id']: set() for box in boxes}
-  level = {box['id']: 0 for box in boxes}
+  level = {}
   for box in boxes:
-    parent = box['id']
+    current_box = box['id']
     for name, inp in box['inputs'].items():
-      child = inp['boxId']
-      dependencies[parent].add(child)
+      input_box = inp['boxId']
+      dependencies[current_box].add(input_box)
 
   cur_level = 0
-  groups = [g for g in topological_sort(dependencies)]
+  groups = list(topological_sort(dependencies))
   for group in groups:
     for box_id in group:
       level[box_id] = cur_level
     cur_level = cur_level + 1
 
-  level_counter = [0] * (len(groups) + 1)
+  num_boxes_on_level = [0] * (len(groups) + 1)
   boxes_with_coordinates = []
   for box in boxes:
     if box['id'] != 'anchor':
       box_level = level[box['id']]
       box['x'] = ox + box_level * dx
-      box['y'] = oy + level_counter[box_level] * dy
-      level_counter[box_level] = level_counter[box_level] + 1
+      box['y'] = oy + num_boxes_on_level[box_level] * dy
+      num_boxes_on_level[box_level] = num_boxes_on_level[box_level] + 1
     boxes_with_coordinates.append(box)
   return boxes_with_coordinates
 
@@ -555,7 +570,7 @@ class LynxKite:
 
     def f(*args, **kwargs):
       inputs = dict(zip(self.box_catalog().inputs(name), args))
-      box = new_box(self.box_catalog(), name, inputs=inputs, parameters=kwargs)
+      box = new_box(self.box_catalog(), self, name, inputs=inputs, parameters=kwargs)
       # If it is an import box, we trigger the import here.
       import_box_names = ['importCSV', 'importJSON', 'importFromHive',
                           'importParquet', 'importORC', 'importJDBC']
@@ -578,7 +593,7 @@ class LynxKite:
     name = 'sql{}'.format(num_inputs)
     inputs = dict(zip(self.box_catalog().inputs(name), args))
     kwargs['sql'] = sql
-    return new_box(self.box_catalog(), name, inputs=inputs, parameters=kwargs)
+    return new_box(self.box_catalog(), self, name, inputs=inputs, parameters=kwargs)
 
   def address(self):
     return self._address or os.environ['LYNXKITE_ADDRESS']
@@ -754,8 +769,12 @@ class LynxKite:
   def get_state_id(self, state):
     ws = Workspace('Anonymous', [state.box])
     workspace_outputs = self.run_workspace(ws)
-    return workspace_outputs[
-        ws.id_of(state.box), state.output_plug_name].stateId
+    box_id = ws.id_of(state.box)
+    plug = state.output_plug_name
+    output = workspace_outputs[box_id, plug]
+    assert output.success.enabled, 'Output `{}` of `{}` has failed: {}'.format(
+        plug, box_id, output.success.disabledReason)
+    return output.stateId
 
   def get_scalar(self, guid):
     return self._ask('/ajax/scalarValue', dict(scalarId=guid))
@@ -766,8 +785,8 @@ class LynxKite:
   def get_export_result(self, state):
     return self._ask('/ajax/getExportResultOutput', dict(stateId=state))
 
-  def get_table(self, state, rows=-1):
-    return self._ask('/ajax/getTableOutput', dict(id=state, sampleRows=rows))
+  def get_table_data(self, state, limit=-1):
+    return self._ask('/ajax/getTableOutput', dict(id=state, sampleRows=limit))
 
   def import_box(self, boxes, box_id):
     '''Equivalent to clicking the import button for an import box. Returns the updated boxes.'''
