@@ -305,8 +305,6 @@ class SQLTest extends OperationsTestBase {
   test("same guid for same sequence") {
     val x = runQueryOnExampleGraph("select * from vertices")
     val y = runQueryOnExampleGraph("select * from vertices")
-    println(x.source)
-    println(y.source)
     assert(x.gUID == y.gUID)
   }
 
