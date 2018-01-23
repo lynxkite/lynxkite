@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.controllers.ProtoTable
 import com.lynxanalytics.biggraph.graph_api._
+import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark
 import org.apache.spark.sql.catalyst.analysis.UnresolvedException
 import org.apache.spark.sql.catalyst.catalog.SessionCatalog
@@ -76,7 +77,7 @@ object ExecuteSQL extends OpFromJson {
     val minimizedProtoTables = ProtoTable.minimize(plan, protoTables)
     val tables = minimizedProtoTables.mapValues(protoTable => protoTable.toTable)
     try {
-      ExecuteSQL.run(sqlQuery, plan.schema, tables)
+      ExecuteSQL.run(sqlQuery, SQLHelper.stripped(plan.schema), tables)
     } catch {
       // The exception is thrown on the plan.schema call
       case a: UnresolvedException[_] =>

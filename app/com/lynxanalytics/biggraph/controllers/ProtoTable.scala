@@ -33,8 +33,10 @@ trait ProtoTable {
   def toTable: Table
   // For Spark SQL plans.
   val relation: LocalRelation = {
-    // We use the hashcode of the ProtoTable for comparison. The optimizer modifies other fields,
-    // but we can still match each column to the ProtoTable based on each hashcode.
+    // When the relations go through the analyzer, it's not trivial to match their columns to the
+    // originals. We work around this by putting a string inside the metadata of each field that is
+    // unique to the ProtoTable. This breaks a couple of things down the line, so we have to strip
+    // it out when this relation is used anywhere else, which might not be trivial.
     val fields = schema.fields.map(f => f.withComment(s"$this"))
     if (fields.nonEmpty) {
       LocalRelation(fields.head, fields.tail: _*)

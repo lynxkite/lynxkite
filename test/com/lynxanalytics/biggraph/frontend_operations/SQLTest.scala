@@ -302,6 +302,14 @@ class SQLTest extends OperationsTestBase {
     assert(table.df.collect.toSeq.map(row => toSeq(row)) == Seq(Seq(2.0), Seq(18.2)))
   }
 
+  test("same guid for same sequence") {
+    val x = runQueryOnExampleGraph("select * from vertices")
+    val y = runQueryOnExampleGraph("select * from vertices")
+    println(x.source)
+    println(y.source)
+    assert(x.gUID == y.gUID)
+  }
+
   SQLTestCases.list.foreach(query => test(query._1) {
     val one = box("Create example graph")
     val two = box("Create example graph")
