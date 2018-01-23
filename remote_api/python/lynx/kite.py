@@ -56,19 +56,25 @@ class TableSnapshotSequence:
     # TODO: make it timezone independent
     return self._location + '/' + str(date)
 
-  def snapshots(self, lk, from_date, to_date):
+  def exists(self, lk):
+    return lk.get_directory_entry(self._location).exists
+
+  def num_tables(self, lk):
+    return len(lk.list_dir(self._location))
+
+  def snapshots(self, lk, from_date, to_date, to_date_inclusive):
     # We want to include the from_date if it matches the cron format.
     i = croniter(self._cron_str, from_date - datetime.timedelta(seconds=1))
     t = []
     while True:
       dt = i.get_next(datetime.datetime)
-      if dt > to_date:
+      if (to_date_inclusive and dt > to_date) or (not to_date_inclusive and dt >= to_date):
         break
       t.append(self.snapshot_name(dt))
     return t
 
-  def read_interval(self, lk, from_date, to_date):
-    paths = ','.join(self.snapshots(lk, from_date, to_date))
+  def read_interval(self, lk, from_date, to_date, to_date_inclusive=True):
+    paths = ','.join(self.snapshots(lk, from_date, to_date, to_date_inclusive))
     return lk.importUnionOfTableSnapshots(paths=paths)
 
   def save_to_sequence(self, lk, table_state, dt):
