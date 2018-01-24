@@ -59,8 +59,8 @@ class TableSnapshotSequence:
   def exists(self, lk):
     return lk.get_directory_entry(self._location).exists
 
-  def num_tables(self, lk):
-    return len(lk.list_dir(self._location))
+  def is_empty(self, lk):
+    return len(lk.list_dir(self._location)) == 0
 
   def snapshots(self, lk, from_date, to_date, to_date_inclusive):
     # We want to include the from_date if it matches the cron format.
