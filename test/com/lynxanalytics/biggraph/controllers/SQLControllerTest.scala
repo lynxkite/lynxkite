@@ -68,6 +68,25 @@ class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBa
     assert(resultStrings == List(List("Adam loves Eve")))
   }
 
+  test("global sql with subquery on edges") {
+    val eg = box("Create example graph")
+    eg.snapshotOutput("test_dir/people", "project")
+
+    val result = await(sqlController.runSQLQuery(user, SQLQueryRequest(
+      DataFrameSpec.global(
+        directory = "test_dir",
+        sql = """select edge_comment
+                 from (select edge_comment, edge_weight, avg(dst_age) avg_dst_age
+                       from `people.edges`
+                       group by 1,2)
+                 where avg_dst_age > 20"""),
+      maxRows = 10)))
+
+    assert(result.header == List(SQLColumn("edge_comment", "String")))
+    val resultStrings = SQLResultToStrings(result.data)
+    assert(resultStrings.flatten.sorted == List(List("Bob envies Adam"), List("Eve loves Adam")).flatten.sorted)
+  }
+
   test("global sql on segmentation's belongs_to") {
     val egSeg = box("Create example graph").box(
       "Segment by String attribute",
