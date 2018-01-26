@@ -479,6 +479,11 @@ object ProductionJsonServer extends JsonServer {
     new SparkClusterController(BigGraphProductionEnvironment, workspaceController)
   def longPoll = jsonFuture(sparkClusterController.longPoll)
   def sparkCancelJobs = jsonPost(sparkClusterController.sparkCancelJobs)
+  def restartApplication = jsonPost { (user, request: Empty) =>
+    assert(user.isAdmin, "Restart is restricted to administrator users.")
+    log.error(s"Shutdown requested by $user.")
+    System.exit(1)
+  }
   def sparkHealthCheck = healthCheck(sparkClusterController.checkSparkOperational)
 
   val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)

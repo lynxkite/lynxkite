@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Administrators can now restart LynxKite from the user menu.
+
 ### 2.2.1
 
  - Fixed a frontend issue where the browser's connection pool would be exhausted.
