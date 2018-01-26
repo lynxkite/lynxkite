@@ -481,7 +481,8 @@ object ProductionJsonServer extends JsonServer {
   def sparkCancelJobs = jsonPost(sparkClusterController.sparkCancelJobs)
   def restartApplication = jsonPost { (user, request: Empty) =>
     assert(user.isAdmin, "Restart is restricted to administrator users.")
-    log.error(s"Shutdown requested by $user.")
+    log.error(s"Restart requested by $user. Shutting down.")
+    // Docker or Supervisor or a while loop is expected to start us up again after we exit.
     System.exit(1)
   }
   def sparkHealthCheck = healthCheck(sparkClusterController.checkSparkOperational)
