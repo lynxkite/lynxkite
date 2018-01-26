@@ -69,6 +69,16 @@ class TestWorkspaceBuilder(unittest.TestCase):
     entries = lk.list_dir('save_it_under_this_folder')
     self.assertTrue('save_it_under_this_folder/eg_names' in [e.name for e in entries])
 
+  def test_save_under_root_with_empty_string(self):
+    lk = lynx.kite.LynxKite()
+    eg = lk.createExampleGraph()
+    lk.remove_name('just the eg', force=True)
+    ws = lynx.kite.Workspace('just the eg', [eg])
+    # Saving to the "root" directory
+    lk.save_workspace_recursively(ws, '')
+    entries = lk.list_dir('')
+    self.assertTrue('just the eg' in [e.name for e in entries])
+
   def test_parametric_parameters(self):
     from lynx.kite import pp
     lk = lynx.kite.LynxKite()
