@@ -67,7 +67,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     lk.remove_name('save_it_under_this_folder/eg_names', force=True)
     lk.run_workspace(ws, 'save_it_under_this_folder/')
     entries = lk.list_dir('save_it_under_this_folder')
-    self.assertTrue('save_it_under_this_folder/eg_names' in [e.name for e in entries])
+    self.assertTrue('save_it_under_this_folder/eg_names' in {e.name for e in entries})
 
   def test_save_under_root_with_empty_string(self):
     lk = lynx.kite.LynxKite()
@@ -77,7 +77,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     # Saving to the "root" directory
     lk.save_workspace_recursively(ws, '')
     entries = lk.list_dir('')
-    self.assertTrue('just the eg' in [e.name for e in entries])
+    self.assertTrue('just the eg' in {e.name for e in entries})
 
   def test_parametric_parameters(self):
     from lynx.kite import pp
@@ -127,7 +127,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     # The boxId of the "Save to snapshot box" is box_0
     lk.trigger_box('trigger-folder/trigger-test', 'box_0')
     entries = lk.list_dir('')
-    self.assertTrue('this_is_my_snapshot' in [e.name for e in entries])
+    self.assertTrue('this_is_my_snapshot' in {e.name for e in entries})
 
   def test_trigger_box_with_multiple_snapshot_boxes(self):
     lk = lynx.kite.LynxKite()
@@ -144,8 +144,8 @@ class TestWorkspaceBuilder(unittest.TestCase):
                    if box['operationId'] == 'Save to snapshot']:
       lk.trigger_box('trigger-folder/multi-trigger-test', box_id)
     entries = lk.list_dir('')
-    self.assertTrue('names_snapshot' in [e.name for e in entries])
-    self.assertTrue('ages_snapshot' in [e.name for e in entries])
+    self.assertTrue('names_snapshot' in {e.name for e in entries})
+    self.assertTrue('ages_snapshot' in {e.name for e in entries})
 
   def test_builder_import(self):
     lk = lynx.kite.LynxKite()
