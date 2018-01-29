@@ -761,11 +761,11 @@ class LynxKite:
     for rws in needed_ws:
       self.save_workspace(
           ws_root + rws.name(), layout(rws.to_json(ws_root)))
-    if save_under_root:
+    if save_under_root is not None:
       self.save_workspace(
           save_under_root + ws.name(), layout(ws.to_json(save_under_root)))
     # If saved, we return the full name of the main workspace also.
-    return ws_root, save_under_root and save_under_root + ws.name()
+    return ws_root, (save_under_root is not None) and save_under_root + ws.name()
 
   def run_workspace(self, ws, save_under_root=None):
     ws_root, _ = self.save_workspace_recursively(ws, save_under_root)

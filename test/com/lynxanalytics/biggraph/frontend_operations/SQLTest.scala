@@ -163,6 +163,21 @@ class SQLTest extends OperationsTestBase {
       Seq("Eve loves Adam")))
   }
 
+  test("union and sum of counts") {
+    val one = box("Create example graph")
+    val two = box("Create example graph")
+    val table = box("SQL2", Map("sql" -> """
+      select sum(cnt) as cnt from (
+      select count(age) as cnt from `one.vertices`
+      union all
+      select count(income) as cnt from `two.vertices`
+      )
+      """), Seq(one, two)).table
+    assert(table.schema.map(_.name) == Seq("cnt"))
+    val data = table.df.collect.toSeq.map(row => toSeq(row))
+    assert(data == Seq(Seq(6)))
+  }
+
   test("group by") {
     val table = runQueryOnExampleGraph("select id, count(*) as count from vertices group by id")
     assert(table.schema.map(_.name) == Seq("id", "count"))

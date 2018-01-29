@@ -44,9 +44,14 @@
           <i class="glyphicon glyphicon-hdd"></i> cleaner
         </a>
       </li>
-       <li ng-if="util.user.isAdmin">
+      <li ng-if="util.user.isAdmin">
         <a href="#/backup">
           <i class="glyphicon glyphicon-floppy-save"></i> backup
+        </a>
+      </li>
+      <li ng-if="util.user.isAdmin">
+        <a href ng-click="restartApplication()">
+          <i class="glyphicon glyphicon-off"></i> restart
         </a>
       </li>
       <li>
