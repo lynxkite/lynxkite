@@ -170,7 +170,7 @@ class State:
     import pandas
     table = self.get_table_data(limit)
     header = [c.name for c in table.header]
-    data = [[getattr(c, 'double', c.string) for c in r] for r in table.data]
+    data = [[getattr(c, 'double', c.string) if c.defined else None for c in r] for r in table.data]
     return pandas.DataFrame(data, columns=header)
 
   def get_table_data(self, limit=-1):
