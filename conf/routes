@@ -1,5 +1,6 @@
 GET  /ajax/long-poll com.lynxanalytics.biggraph.serving.ProductionJsonServer.longPoll
 POST /ajax/spark-cancel-jobs com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkCancelJobs
+POST /ajax/restartApplication com.lynxanalytics.biggraph.serving.ProductionJsonServer.restartApplication
 POST /ajax/jsError     com.lynxanalytics.biggraph.serving.ProductionJsonServer.jsError
 
 POST /ajax/createDirectory         com.lynxanalytics.biggraph.serving.ProductionJsonServer.createDirectory

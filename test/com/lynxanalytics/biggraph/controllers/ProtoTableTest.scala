@@ -24,7 +24,9 @@ object SQLTestCases {
     ("select o.age, two.income from one o inner join two on o.gender=two.gender where o.age=1",
       Map("one" -> Set("age", "gender"), "two" -> Set("gender", "income"))),
     ("select age from (select gender + gender, age from (select gender, age from one))",
-      Map("one" -> Set("age", "gender"))))
+      Map("one" -> Set("age", "gender"))),
+    ("select sum(cnt) as cnt from (select count(age) as cnt from one union all select count(income) as cnt from two)",
+      Map("one" -> Set("age"), "two" -> Set("income"))))
 }
 
 class ProtoTableTest extends BigGraphControllerTestBase {

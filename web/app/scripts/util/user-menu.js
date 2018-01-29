@@ -18,6 +18,11 @@ angular.module('biggraph').directive('userMenu', function($window, util) {
           details: scope.info });
       };
 
+      scope.restartApplication = function() {
+        util.post('/ajax/restartApplication', {})
+          .finally(function() { $window.location.reload(); });
+      };
+
       scope.logout = function() {
         util.post('/logout', {}).then(function() {
           $window.location.href = '/';
