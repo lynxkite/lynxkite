@@ -62,7 +62,7 @@ class TableSnapshotSequence:
     t = []
     while True:
       dt = i.get_next(datetime.datetime)
-      if dt > to_date:
+      if (dt > to_date):
         break
       t.append(self.snapshot_name(dt))
     return t
@@ -473,6 +473,27 @@ class TableSnapshotRecipe(InputRecipe):
 
   def build_boxes(self, lk, date):
     return self.tss.read_interval(lk, date, date)
+
+
+class TableSnapshotRecipeWithDefault(InputRecipe):
+  '''Input recipe for a table snapshot sequence'''
+
+  def __init__(self, start_date, tss, default_box):
+    self.tss = tss
+    self.default_box = default_box
+    self.start_date = start_date
+
+  def is_ready(self, lk, date):
+    return true
+
+  def build_boxes(self, lk, date):
+    from datetime import datetime, timedelta
+    if (date <= self.start_date):
+      return self.default_box
+    else:
+      # Here we would need to use croniter somehow.
+      d = date - timedelta(days=1)
+      return self.tss.read_interval(lk, self.start_date, d)
 
 
 def layout(boxes):
