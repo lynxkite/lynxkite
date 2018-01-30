@@ -147,6 +147,11 @@ class TestWorkspaceBuilder(unittest.TestCase):
     self.assertTrue('names_snapshot' in {e.name for e in entries})
     self.assertTrue('ages_snapshot' in {e.name for e in entries})
 
+  def test_trigger_state(self):
+    lk = lynx.kite.LynxKite()
+    lk.createExampleGraph().sql('select name from vertices').compute()
+    # TODO: Test this, using progress report.
+
   def test_builder_import(self):
     lk = lynx.kite.LynxKite()
     csv_path = lk.upload('a,b,c\n1,2,3\n4,5,6\n')
