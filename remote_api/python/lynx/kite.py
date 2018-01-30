@@ -41,6 +41,19 @@ def timestamp_is_valid(dt, cron_str):
   return i.get_next(datetime.datetime) == dt
 
 
+def step_back(cron_str, date, delta):
+  cron = croniter(cron_str, date)
+  start_date = date
+  for _ in range(delta):
+    start_date = cron.get_prev(datetime.datetime)
+  return start_date
+
+
+def random_ws_folder():
+  return 'tmp_workspaces/{}'.format(
+      ''.join(random.choice('0123456789ABCDEF') for i in range(16)))
+
+
 class TableSnapshotSequence:
   '''A snapshot sequence representing a list of table type snapshots in LynxKite.
 
@@ -50,7 +63,7 @@ class TableSnapshotSequence:
 
   def __init__(self, location, cron_str):
     self._location = location
-    self._cron_str = cron_str
+    self.cron_str = cron_str
 
   def snapshot_name(self, date):
     # TODO: make it timezone independent
@@ -64,7 +77,7 @@ class TableSnapshotSequence:
 
   def snapshots(self, lk, from_date, to_date, to_date_inclusive):
     # We want to include the from_date if it matches the cron format.
-    i = croniter(self._cron_str, from_date - datetime.timedelta(seconds=1))
+    i = croniter(self.cron_str, from_date - datetime.timedelta(seconds=1))
     t = []
     while True:
       dt = i.get_next(datetime.datetime)
@@ -79,8 +92,8 @@ class TableSnapshotSequence:
 
   def save_to_sequence(self, lk, table_state, dt):
     # Assert that dt is valid according to the cron_str format.
-    assert timestamp_is_valid(dt, self._cron_str), "Datetime %s does not match cron format %s." % (
-        dt, self._cron_str)
+    assert timestamp_is_valid(dt, self.cron_str), "Datetime %s does not match cron format %s." % (
+        dt, self.cron_str)
     lk.save_snapshot(self.snapshot_name(dt), table_state)
 
 
@@ -176,7 +189,7 @@ class State:
     import pandas
     table = self.get_table_data(limit)
     header = [c.name for c in table.header]
-    data = [[getattr(c, 'double', c.string) for c in r] for r in table.data]
+    data = [[getattr(c, 'double', c.string) if c.defined else None for c in r] for r in table.data]
     return pandas.DataFrame(data, columns=header)
 
   def get_table_data(self, limit=-1):
@@ -201,6 +214,22 @@ class State:
       export = lk.get_export_result(state_id)
       assert export.result.computeProgress == 1, 'Failed to compute export result scalar.'
     return export.parameters.path
+
+  def compute(self):
+    '''Triggers the computation of this state.
+
+    Uses a temporary folder to save a temporary workspace for this computation.
+    '''
+    folder = random_ws_folder()
+    folder_with_slash = folder + '/'
+    name = 'tmp_ws_name'
+    box = self.computeInputs()
+    lk = self.box.lk
+    ws = Workspace(name, [box])
+    lk.save_workspace_recursively(ws, folder_with_slash)
+    lk.trigger_box(folder_with_slash + name, 'box_0')
+    # We need the folder name without the trailing '/'.
+    lk.remove_name(folder, force=True)
 
 
 def new_box(bc, lk, operation, inputs, parameters):
@@ -466,19 +495,66 @@ class InputRecipe:
   def build_boxes(self, lk, date):
     raise NotImplementedError()
 
+  def validate(self, date):
+    raise NotImplementedError()
+
 
 class TableSnapshotRecipe(InputRecipe):
-  '''Input recipe for a table snapshot sequence'''
+  '''Input recipe for a table snapshot sequence.
+     @param: tss: The TableSnapshotSequence used by this recipe. Can be None, but has to be
+             set via set_tss before using this class.
+     @param: delta: Steps back delta in time according to the cron string of the tss. Optional,
+             if not set this recipe uses the date parameter.'''
 
-  def __init__(self, tss):
+  def __init__(self, tss=None, delta=0):
+    self.tss = tss
+    self.delta = delta
+
+  def set_tss(self, tss):
+    assert self.tss is None
     self.tss = tss
 
+  def validate(self, date):
+    assert self.tss, 'TableSnapshotSequence needs to be set.'
+    assert timestamp_is_valid(
+        date, self.tss.cron_str), f'{date} does not match {self.tss.cron_str}.'
+
   def is_ready(self, lk, date):
-    r = lk.get_directory_entry(self.tss.snapshot_name(date))
+    self.validate(date)
+    adjusted_date = step_back(self.tss.cron_str, date, self.delta)
+    r = lk.get_directory_entry(self.tss.snapshot_name(adjusted_date))
     return r.exists and r.isSnapshot
 
   def build_boxes(self, lk, date):
-    return self.tss.read_interval(lk, date, date)
+    self.validate(date)
+    adjusted_date = step_back(self.tss.cron_str, date, self.delta)
+    return self.tss.read_interval(lk, adjusted_date, adjusted_date)
+
+
+class RecipeWithDefault(InputRecipe):
+  '''Input recipe with a default value.
+     @param: src_recipe: The source recipe to use if possible.
+     @param: default_date: Provide the default box for this date and src_recipe for later dates.
+     @param: default_box: Provide this box for dates earlier than the default date.'''
+
+  def __init__(self, src_recipe, default_date, default_box):
+    self.src_recipe = src_recipe
+    self.default_date = default_date
+    self.default_box = default_box
+
+  def validate(self, date):
+    assert date >= self.default_date, f'{date} is before {self.default_date}.'
+
+  def is_ready(self, lk, date):
+    self.validate(date)
+    return date == self.default_date or self.src_recipe.is_ready(lk, date)
+
+  def build_boxes(self, lk, date):
+    self.validate(date)
+    if date == self.default_date:
+      return self.default_box
+    else:
+      return self.src_recipe.build_boxes(lk, date)
 
 
 def layout(boxes):
@@ -747,8 +823,7 @@ class LynxKite:
   def save_workspace_recursively(self, ws, save_under_root=None):
     ws_root = save_under_root
     if ws_root is None:
-      ws_root = 'tmp_workspaces/{}/'.format(''.join(random.choice('0123456789ABCDEF')
-                                                    for i in range(16)))
+      ws_root = random_ws_folder() + '/'
     needed_ws = set()
     ws_queue = queue.Queue()
     ws_queue.put(ws)
