@@ -41,6 +41,11 @@ def timestamp_is_valid(dt, cron_str):
   return i.get_next(datetime.datetime) == dt
 
 
+def random_ws_folder():
+  return 'tmp_workspaces/{}/'.format(
+      ''.join(random.choice('0123456789ABCDEF') for i in range(16)))
+
+
 class TableSnapshotSequence:
   '''A snapshot sequence representing a list of table type snapshots in LynxKite.
 
@@ -195,6 +200,21 @@ class State:
       export = lk.get_export_result(state_id)
       assert export.result.computeProgress == 1, 'Failed to compute export result scalar.'
     return export.parameters.path
+
+  def compute(self):
+    '''Triggers the computation of this state.
+
+    Uses a temporary folder to save a temporary workspace for this computation.
+    '''
+    folder = random_ws_folder()
+    name = 'tmp_ws_name'
+    box = self.computeInputs()
+    lk = self.box.lk
+    ws = Workspace(name, [box])
+    lk.save_workspace_recursively(ws, folder)
+    lk.trigger_box(folder + name, 'box_0')
+    # We need the folder name without the trailing '/'.
+    lk.remove_name(folder[:-1], force=True)
 
 
 def new_box(bc, lk, operation, inputs, parameters):
@@ -741,8 +761,7 @@ class LynxKite:
   def save_workspace_recursively(self, ws, save_under_root=None):
     ws_root = save_under_root
     if ws_root is None:
-      ws_root = 'tmp_workspaces/{}/'.format(''.join(random.choice('0123456789ABCDEF')
-                                                    for i in range(16)))
+      ws_root = random_ws_folder()
     needed_ws = set()
     ws_queue = queue.Queue()
     ws_queue.put(ws)
