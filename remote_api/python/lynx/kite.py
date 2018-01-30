@@ -49,6 +49,11 @@ def step_back(cron_str, date, delta):
   return start_date
 
 
+def random_ws_folder():
+  return 'tmp_workspaces/{}'.format(
+      ''.join(random.choice('0123456789ABCDEF') for i in range(16)))
+
+
 class TableSnapshotSequence:
   '''A snapshot sequence representing a list of table type snapshots in LynxKite.
 
@@ -178,7 +183,7 @@ class State:
     import pandas
     table = self.get_table_data(limit)
     header = [c.name for c in table.header]
-    data = [[getattr(c, 'double', c.string) for c in r] for r in table.data]
+    data = [[getattr(c, 'double', c.string) if c.defined else None for c in r] for r in table.data]
     return pandas.DataFrame(data, columns=header)
 
   def get_table_data(self, limit=-1):
@@ -203,6 +208,22 @@ class State:
       export = lk.get_export_result(state_id)
       assert export.result.computeProgress == 1, 'Failed to compute export result scalar.'
     return export.parameters.path
+
+  def compute(self):
+    '''Triggers the computation of this state.
+
+    Uses a temporary folder to save a temporary workspace for this computation.
+    '''
+    folder = random_ws_folder()
+    folder_with_slash = folder + '/'
+    name = 'tmp_ws_name'
+    box = self.computeInputs()
+    lk = self.box.lk
+    ws = Workspace(name, [box])
+    lk.save_workspace_recursively(ws, folder_with_slash)
+    lk.trigger_box(folder_with_slash + name, 'box_0')
+    # We need the folder name without the trailing '/'.
+    lk.remove_name(folder, force=True)
 
 
 def new_box(bc, lk, operation, inputs, parameters):
@@ -796,8 +817,7 @@ class LynxKite:
   def save_workspace_recursively(self, ws, save_under_root=None):
     ws_root = save_under_root
     if ws_root is None:
-      ws_root = 'tmp_workspaces/{}/'.format(''.join(random.choice('0123456789ABCDEF')
-                                                    for i in range(16)))
+      ws_root = random_ws_folder() + '/'
     needed_ws = set()
     ws_queue = queue.Queue()
     ws_queue.put(ws)
