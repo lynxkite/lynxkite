@@ -150,7 +150,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_trigger_state(self):
     lk = lynx.kite.LynxKite()
     lk.createExampleGraph().sql('select name from vertices').compute()
-    # How to test this?
+    # TODO: Test this, using progress report.
 
   def test_builder_import(self):
     lk = lynx.kite.LynxKite()
