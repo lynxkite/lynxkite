@@ -517,7 +517,7 @@ class TableSnapshotRecipe(InputRecipe):
   def validate(self, date):
     assert self.tss, 'TableSnapshotSequence needs to be set.'
     assert timestamp_is_valid(
-        date, self.tss.cron_str), f'{date} does not match {self.tss.cron_str}.'
+        date, self.tss.cron_str), '{} does not match {}.'.format(date, self.tss.cron_str)
 
   def is_ready(self, lk, date):
     self.validate(date)
@@ -543,7 +543,7 @@ class RecipeWithDefault(InputRecipe):
     self.default_box = default_box
 
   def validate(self, date):
-    assert date >= self.default_date, f'{date} is before {self.default_date}.'
+    assert date >= self.default_date, '{} is before {}.'.format(date, self.default_date)
 
   def is_ready(self, lk, date):
     self.validate(date)
