@@ -52,12 +52,13 @@ class TestWorkspaceSequence(unittest.TestCase):
 
     @lk.workspace(name='sequence_2')
     def builder(table):
-      o = table.sql('select sum(summa) as summa from input')
+      o = table.sql('select summa * 2 as summa from input')
       return dict(summa=o)
 
     initial_box = lk.createExampleGraph().sql('select count(1) as summa from vertices')
-    tss = lynx.kite.TableSnapshotSequence('ws_test_seq_2/summa', '0 0 * * *')
-    input_recipe = lynx.kite.TableSnapshotRecipeWithDefault(datetime(2018, 1, 1), tss, initial_box)
+    summa_as_input = lynx.kite.TableSnapshotRecipe(None, delta=1)
+    summa_with_default = lynx.kite.RecipeWithDefault(
+        summa_as_input, datetime(2018, 1, 1), initial_box)
     wss = lynx.kite.WorkspaceSequence(
         ws=builder,
         schedule='0 0 * * *',
@@ -65,7 +66,8 @@ class TestWorkspaceSequence(unittest.TestCase):
         params={},
         lk_root='ws_test_seq_2/',
         dfs_root='',
-        input_recipes=[input_recipe])
+        input_recipes=[summa_with_default])
+    summa_as_input.set_tss(wss.output_sequences()['summa'])
 
     def run_ws(test_date, summa):
       wss_instance = wss.ws_for_date(lk, test_date)
@@ -77,7 +79,7 @@ class TestWorkspaceSequence(unittest.TestCase):
       table_raw = summa_result_tss.read_interval(lk, test_date, test_date).get_table_data()
       self.assertEqual(table_raw.data[0][0].string, str(summa))
 
-    run_ws(datetime(2018, 1, 1), '4')
-    run_ws(datetime(2018, 1, 2), '4')
-    run_ws(datetime(2018, 1, 3), '8')
-    run_ws(datetime(2018, 1, 4), '16')
+    run_ws(datetime(2018, 1, 1), '8')
+    run_ws(datetime(2018, 1, 2), '16')
+    run_ws(datetime(2018, 1, 3), '32')
+    run_ws(datetime(2018, 1, 4), '64')

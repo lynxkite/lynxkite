@@ -41,6 +41,14 @@ def timestamp_is_valid(dt, cron_str):
   return i.get_next(datetime.datetime) == dt
 
 
+def step_back(cron_str, date, delta):
+  cron = croniter(cron_str, date)
+  start_date = date
+  for _ in range(delta):
+    start_date = cron.get_prev(datetime.datetime)
+  return start_date
+
+
 class TableSnapshotSequence:
   '''A snapshot sequence representing a list of table type snapshots in LynxKite.
 
@@ -50,7 +58,7 @@ class TableSnapshotSequence:
 
   def __init__(self, location, cron_str):
     self._location = location
-    self._cron_str = cron_str
+    self.cron_str = cron_str
 
   def snapshot_name(self, date):
     # TODO: make it timezone independent
@@ -58,11 +66,11 @@ class TableSnapshotSequence:
 
   def snapshots(self, lk, from_date, to_date):
     # We want to include the from_date if it matches the cron format.
-    i = croniter(self._cron_str, from_date - datetime.timedelta(seconds=1))
+    i = croniter(self.cron_str, from_date - datetime.timedelta(seconds=1))
     t = []
     while True:
       dt = i.get_next(datetime.datetime)
-      if (dt > to_date):
+      if dt > to_date:
         break
       t.append(self.snapshot_name(dt))
     return t
@@ -73,8 +81,8 @@ class TableSnapshotSequence:
 
   def save_to_sequence(self, lk, table_state, dt):
     # Assert that dt is valid according to the cron_str format.
-    assert timestamp_is_valid(dt, self._cron_str), "Datetime %s does not match cron format %s." % (
-        dt, self._cron_str)
+    assert timestamp_is_valid(dt, self.cron_str), "Datetime %s does not match cron format %s." % (
+        dt, self.cron_str)
     lk.save_snapshot(self.snapshot_name(dt), table_state)
 
 
@@ -460,40 +468,58 @@ class InputRecipe:
   def build_boxes(self, lk, date):
     raise NotImplementedError()
 
+  def validate(self, date):
+    raise NotImplementedError()
+
 
 class TableSnapshotRecipe(InputRecipe):
   '''Input recipe for a table snapshot sequence'''
 
-  def __init__(self, tss):
+  def __init__(self, tss=None, delta=0):
+    self.tss = tss
+    self.delta = delta
+
+  def set_tss(self, tss):
+    assert self.tss is None
     self.tss = tss
 
+  def validate(self, date):
+    assert self.tss, 'TableSnapshotSequence needs to be set.'
+    assert timestamp_is_valid(
+        date, self.tss.cron_str), f'{date} does not match {self.tss.cron_str}.'
+
   def is_ready(self, lk, date):
+    self.validate(date)
     r = lk.get_directory_entry(self.tss.snapshot_name(date))
     return r.exists and r.isSnapshot
 
   def build_boxes(self, lk, date):
-    return self.tss.read_interval(lk, date, date)
+    self.validate(date)
+    adjusted_date = step_back(self.tss.cron_str, date, self.delta)
+    return self.tss.read_interval(lk, adjusted_date, adjusted_date)
 
 
-class TableSnapshotRecipeWithDefault(InputRecipe):
+class RecipeWithDefault(InputRecipe):
   '''Input recipe for a table snapshot sequence'''
 
-  def __init__(self, start_date, tss, default_box):
-    self.tss = tss
+  def __init__(self, src_recipe, default_date, default_box):
+    self.src_recipe = src_recipe
     self.default_box = default_box
-    self.start_date = start_date
+    self.default_date = default_date
+
+  def validate(self, date):
+    assert date >= self.default_date, f'{date} is before {self.default_date}.'
 
   def is_ready(self, lk, date):
-    return true
+    self.validate(date)
+    return date == self.default_date or self.src_recipe.is_ready(lk, date)
 
   def build_boxes(self, lk, date):
-    from datetime import datetime, timedelta
-    if (date <= self.start_date):
+    self.validate(date)
+    if date == self.default_date:
       return self.default_box
     else:
-      # Here we would need to use croniter somehow.
-      d = date - timedelta(days=1)
-      return self.tss.read_interval(lk, self.start_date, d)
+      return self.src_recipe.build_boxes(lk, date)
 
 
 def layout(boxes):
