@@ -473,7 +473,11 @@ class InputRecipe:
 
 
 class TableSnapshotRecipe(InputRecipe):
-  '''Input recipe for a table snapshot sequence'''
+  '''Input recipe for a table snapshot sequence.
+     @param: tss: The TableSnapshotSequence used by this recipe. Can be None, but has to be
+             set via set_tss before using this class.
+     @param: delta: Steps back delta in time according to the cron string of the tss. Optional,
+             if not set this recipe uses the date parameter.'''
 
   def __init__(self, tss=None, delta=0):
     self.tss = tss
@@ -490,7 +494,8 @@ class TableSnapshotRecipe(InputRecipe):
 
   def is_ready(self, lk, date):
     self.validate(date)
-    r = lk.get_directory_entry(self.tss.snapshot_name(date))
+    adjusted_date = step_back(self.tss.cron_str, date, self.delta)
+    r = lk.get_directory_entry(self.tss.snapshot_name(adjusted_date))
     return r.exists and r.isSnapshot
 
   def build_boxes(self, lk, date):
@@ -500,12 +505,15 @@ class TableSnapshotRecipe(InputRecipe):
 
 
 class RecipeWithDefault(InputRecipe):
-  '''Input recipe for a table snapshot sequence'''
+  '''Input recipe with a default value.
+     @param: src_recipe: The source recipe to use if possible.
+     @param: default_date: Provide the default box for this date and src_recipe for later dates.
+     @param: default_box: Provide this box for dates earlier than the default date.'''
 
   def __init__(self, src_recipe, default_date, default_box):
     self.src_recipe = src_recipe
-    self.default_box = default_box
     self.default_date = default_date
+    self.default_box = default_box
 
   def validate(self, date):
     assert date >= self.default_date, f'{date} is before {self.default_date}.'
