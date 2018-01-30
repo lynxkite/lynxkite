@@ -42,7 +42,7 @@ def timestamp_is_valid(dt, cron_str):
 
 
 def random_ws_folder():
-  return 'tmp_workspaces/{}/'.format(
+  return 'tmp_workspaces/{}'.format(
       ''.join(random.choice('0123456789ABCDEF') for i in range(16)))
 
 
@@ -207,14 +207,15 @@ class State:
     Uses a temporary folder to save a temporary workspace for this computation.
     '''
     folder = random_ws_folder()
+    folder_with_slash = folder + '/'
     name = 'tmp_ws_name'
     box = self.computeInputs()
     lk = self.box.lk
     ws = Workspace(name, [box])
-    lk.save_workspace_recursively(ws, folder)
-    lk.trigger_box(folder + name, 'box_0')
+    lk.save_workspace_recursively(ws, folder_with_slash)
+    lk.trigger_box(folder_with_slash + name, 'box_0')
     # We need the folder name without the trailing '/'.
-    lk.remove_name(folder[:-1], force=True)
+    lk.remove_name(folder, force=True)
 
 
 def new_box(bc, lk, operation, inputs, parameters):
@@ -761,7 +762,7 @@ class LynxKite:
   def save_workspace_recursively(self, ws, save_under_root=None):
     ws_root = save_under_root
     if ws_root is None:
-      ws_root = random_ws_folder()
+      ws_root = random_ws_folder() + '/'
     needed_ws = set()
     ws_queue = queue.Queue()
     ws_queue.put(ws)
