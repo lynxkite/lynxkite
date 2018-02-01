@@ -4,14 +4,18 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime, timedelta
 from os import path
+import subprocess
 import random
 import lynx.kite
+
+test_folder = path.dirname(path.realpath(__file__)) + '/prod_cons_test/'
+subprocess.check_call(['mkdir', '-p', test_folder])
 
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime.now() - timedelta(minutes=10),
-    'local_src_folder': path.expanduser('~/test/src/'),
+    'local_src_folder': test_folder,
     'lk_src_folder': 'test/src',
     'lk_dst_folder': 'test/dst',
 }
