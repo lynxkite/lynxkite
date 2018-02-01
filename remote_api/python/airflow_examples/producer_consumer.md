@@ -17,6 +17,13 @@ in the Python file as you like.
 1. Turn on the `producer_consumer_tasks` DAG on the Airflow UI
 1. Check the result snapshots in LynxKite
 
-**Warning**:  the Airflow scheduler will backfill from `start_date`, so
-it can create a lot of snaphots if `start_date` is way before the date
-of the test run.
+## Expected behavior
+
+The example creates `/prod_cons_test/` folder under `$AIRFLOW_HOME/dags`
+and put a csv file into it, in every 2 minutes. Also a LK snapshot is created
+in every two minutes, with the same schema as the CSV's. A third task loads
+the CSV and the snapshot, and save a new snapshot, which is the union of the
+two sources.
+
+The LK path of the created snapshots is `test/dst`, the snapshots are named
+based on the execution date.
