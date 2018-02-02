@@ -1172,7 +1172,10 @@ class DirectoryEntry(val path: SymbolPath)(
   def isSnapshot = objectType == "snapshot"
   def objectType = get(rootDir / "!objectType", "")
 
+  def assertExists(): Unit = assert(exists, s"Entry '$path' does not exist.")
+
   def asWorkspaceFrame(): WorkspaceFrame = {
+    assertExists()
     assert(isInstanceOf[WorkspaceFrame], s"Entry '$path' is not a workspace.")
     asInstanceOf[WorkspaceFrame]
   }
@@ -1189,11 +1192,13 @@ class DirectoryEntry(val path: SymbolPath)(
   }
 
   def asObjectFrame: ObjectFrame = {
+    assertExists()
     assert(isInstanceOf[ObjectFrame], s"Entry '$path' is not an object")
     asInstanceOf[ObjectFrame]
   }
 
   def asDirectory: Directory = {
+    assertExists()
     assert(isInstanceOf[Directory], s"Entry '$path' is not a directory")
     asInstanceOf[Directory]
   }
@@ -1212,6 +1217,7 @@ class DirectoryEntry(val path: SymbolPath)(
     snapshot
   }
   def asSnapshotFrame: SnapshotFrame = {
+    assertExists()
     assert(isInstanceOf[SnapshotFrame], s"Entry '$path' is not a snapshot.")
     asInstanceOf[SnapshotFrame]
   }
