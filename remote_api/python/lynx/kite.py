@@ -512,6 +512,7 @@ class TableSnapshotRecipe(InputRecipe):
     assert self.tss, 'TableSnapshotSequence needs to be set.'
     assert timestamp_is_valid(
         date, self.tss.cron_str), '{} does not match {}.'.format(date, self.tss.cron_str)
+    return True
 
   def is_ready(self, lk, date):
     self.validate(date)
@@ -529,15 +530,16 @@ class RecipeWithDefault(InputRecipe):
   '''Input recipe with a default value.
      @param: src_recipe: The source recipe to use if possible.
      @param: default_date: Provide the default box for this date and src_recipe for later dates.
-     @param: default_box: Provide this box for dates earlier than the default date.'''
+     @param: default_state: Provide this State for dates earlier than the default date.'''
 
-  def __init__(self, src_recipe, default_date, default_box):
+  def __init__(self, src_recipe, default_date, default_state):
     self.src_recipe = src_recipe
     self.default_date = default_date
-    self.default_box = default_box
+    self.default_state = default_state
 
   def validate(self, date):
-    assert date >= self.default_date, '{} is before {}.'.format(date, self.default_date)
+    assert (date == self.default_date) or self.src_recipe.validate(date)
+    return True
 
   def is_ready(self, lk, date):
     self.validate(date)
@@ -546,7 +548,7 @@ class RecipeWithDefault(InputRecipe):
   def build_boxes(self, lk, date):
     self.validate(date)
     if date == self.default_date:
-      return self.default_box
+      return self.default_state
     else:
       return self.src_recipe.build_boxes(lk, date)
 

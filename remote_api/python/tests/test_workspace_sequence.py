@@ -55,10 +55,10 @@ class TestWorkspaceSequence(unittest.TestCase):
       o = table.sql('select summa * 2 as summa from input')
       return dict(summa=o)
 
-    initial_box = lk.createExampleGraph().sql('select count(1) as summa from vertices')
+    initial_state = lk.createExampleGraph().sql('select count(1) as summa from vertices')
     summa_as_input = lynx.kite.TableSnapshotRecipe(None, delta=1)
     summa_with_default = lynx.kite.RecipeWithDefault(
-        summa_as_input, datetime(2018, 1, 1), initial_box)
+        summa_as_input, datetime(2018, 1, 1), initial_state)
     wss = lynx.kite.WorkspaceSequence(
         ws=builder,
         schedule='0 0 * * *',
