@@ -138,6 +138,13 @@ case class WorkspaceExecutionContext(
     statesWithoutCircularDependency ++ statesWithCircularDependency
   }
 
+  private def listErrors(boxes: Map[String, BoxOutputState]): String = {
+    boxes.map {
+      case (id, output) =>
+        s"id: ${output.success.exception.get.getMessage}"
+    }.mkString("\n")
+  }
+
   private def outputStatesOfBox(
     box: Box, inputStates: Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
     val meta = ops.getBoxMetadata(box.operationId)
@@ -153,7 +160,8 @@ case class WorkspaceExecutionContext(
       val inputErrors = inputs.filter(_._2.isError)
       if (inputErrors.nonEmpty) {
         val list = inputErrors.keys.mkString(", ")
-        box.allOutputsWithError(meta, s"Input $list has an error.")
+        val details = listErrors(inputErrors)
+        box.allOutputsWithError(meta, s"Input $list has an error.\n$details")
       } else {
         box.orErrors(meta) { box.execute(this, inputs) }
       }
