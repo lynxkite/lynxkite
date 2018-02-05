@@ -17,3 +17,6 @@ restart LynxKite.
 The database for import/export operations is specified via a connection URL. The driver is
 responsible for interpreting the connection URL. Please consult the documentation for the JDBC
 driver for the connection URL syntax.
+
+If you are in a controlled network environment, make sure that the LynxKite application and all the
+Spark executors are allowed to connect to the database server.

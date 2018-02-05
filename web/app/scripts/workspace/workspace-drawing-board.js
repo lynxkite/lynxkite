@@ -8,7 +8,7 @@ angular.module('biggraph')
   'workspaceDrawingBoard',
   function(
     environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope, $q,
-    $location, util) {
+    $location, util, longPoll) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -664,8 +664,11 @@ angular.module('biggraph')
           return defer.promise;
         }
 
+        longPoll.onUpdate(scope, function(status) {
+          scope.workspace.updateProgress(status.progress);
+        });
+
         scope.$on('$destroy', function() {
-          scope.workspace.stopProgressUpdate();
           window.removeEventListener('copy', wrappedCopyBoxes);
           window.removeEventListener('paste', wrappedPasteBoxes);
         });

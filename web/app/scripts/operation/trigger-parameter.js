@@ -1,20 +1,21 @@
-// UI for the "compute" parameter kind.
+// UI for the "trigger" parameter kind.
 'use strict';
 
-angular.module('biggraph').directive('computeParameter', function(util) {
+angular.module('biggraph').directive('triggerParameter', function(util) {
   return {
     scope: {
       box: '=',
+      param: '=',
     },
-    templateUrl: 'scripts/operation/compute-parameter.html',
+    templateUrl: 'scripts/operation/trigger-parameter.html',
     link: function(scope) {
       scope.disabled = false;
       scope.computed = false;
-      scope.compute = function() {
+      scope.trigger = function() {
         scope.disabled = true;
         scope.computed = false;
         scope.error = undefined;
-        util.get('/ajax/getComputeBoxResult', {
+        util.post('/ajax/triggerBox', {
           workspace: scope.box.workspace.ref(),
           box: scope.box.instance.id,
         }).then(function success() {

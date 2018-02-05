@@ -30,7 +30,7 @@ $SSH \
     --agree-tos"
 $SSH "sudo chmod -R 755 /etc/letsencrypt"
 
-gcloud compute copy-files \
+gcloud compute scp --recurse \
   "$INSTANCE:/etc/letsencrypt/live/local.lynxkite.com" \
   '/tmp/local.lynxkite.com' \
   --zone $ZONE

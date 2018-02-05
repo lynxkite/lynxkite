@@ -12,9 +12,12 @@ const pdf_name = process.argv[3];
 puppeteer.launch({headless: true})
   .then((browser) =>
     browser.newPage().then((page) =>
-      page.goto(html_name, {waitUntil: 'networkidle'})
+      page.goto(html_name, {waitUntil: 'networkidle0'})
         .then(
           () => page.pdf({path: pdf_name, format: 'A4', margin: {top: '20mm', bottom: '20mm'}, displayHeaderFooter: false})
         )
-        .then(() => browser.close())));
-
+        .then(() => browser.close())))
+        .catch((err) => {
+          console.error(err);
+          process.exit(1)
+        });
