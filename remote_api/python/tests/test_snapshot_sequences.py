@@ -56,7 +56,7 @@ class TestSnapshotSequence(unittest.TestCase):
 
     fd = datetime(2010, 1, 1, 0, 0)
     td = datetime(2011, 1, 1, 0, 0)
-    snapshots = tss.snapshots(lk, fd, td, to_date_inclusive=True)
+    snapshots = tss.snapshots(lk, fd, td)
     self.assertEqual(len(snapshots), 2)
     self.assertEqual('test_snapshot_sequence/1/2010-01-01 00:00:00', snapshots[0])
     self.assertEqual('test_snapshot_sequence/1/2011-01-01 00:00:00', snapshots[1])
@@ -69,7 +69,7 @@ class TestSnapshotSequence(unittest.TestCase):
 
     fd = datetime(2015, 5, 1, 0, 0)
     td = datetime(2016, 10, 1, 0, 0)
-    snapshots = tss.snapshots(lk, fd, td, to_date_inclusive=True)
+    snapshots = tss.snapshots(lk, fd, td)
     self.assertEqual(len(snapshots), 18)
     self.assertEqual('test_snapshot_sequence/2/2015-05-01 00:00:00', snapshots[0])
     self.assertEqual('test_snapshot_sequence/2/2016-10-01 00:00:00', snapshots[17])
@@ -82,7 +82,7 @@ class TestSnapshotSequence(unittest.TestCase):
 
     fd = datetime(2017, 3, 15, 0, 0)
     td = datetime(2017, 4, 15, 0, 0)
-    snapshots = tss.snapshots(lk, fd, td, to_date_inclusive=True)
+    snapshots = tss.snapshots(lk, fd, td)
     self.assertEqual(len(snapshots), 32)
     self.assertEqual('test_snapshot_sequence/3/2017-03-15 00:00:00', snapshots[0])
     self.assertEqual('test_snapshot_sequence/3/2017-04-15 00:00:00', snapshots[31])
