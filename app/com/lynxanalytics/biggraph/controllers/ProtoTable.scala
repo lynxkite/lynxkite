@@ -5,29 +5,21 @@ package com.lynxanalytics.biggraph.controllers
 
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.graph_api._
-import org.apache.spark.sql.catalyst.analysis.Analyzer
-import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
-import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.sql.catalyst.analysis.UnresolvedStar
-import org.apache.spark.sql.catalyst.catalog.InMemoryCatalog
-import org.apache.spark.sql.catalyst.catalog.SessionCatalog
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.expressions.NamedExpression
-import org.apache.spark.sql.catalyst.optimizer.Optimizer
 import org.apache.spark.sql.catalyst.plans.logical.BinaryNode
 import org.apache.spark.sql.catalyst.plans.logical.LeafNode
 import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.Project
-import org.apache.spark.sql.catalyst.plans.logical.SubqueryAlias
 import org.apache.spark.sql.catalyst.plans.logical.UnaryNode
 import org.apache.spark.sql.catalyst.plans.logical.Union
-import org.apache.spark.sql.execution.SparkSqlParser
-import org.apache.spark.sql.internal.SQLConf
-import org.apache.spark.sql.types
+import org.apache.spark.sql.catalyst.plans.logical.Filter
+import org.apache.spark.sql.catalyst.plans.logical.Join
 
-import scala.collection.mutable
+import org.apache.spark.sql.types
 
 // A kind of wrapper for Tables that can be used for trimming unused dependencies from table
 // operations like ExecuteSQL.
@@ -40,8 +32,12 @@ trait ProtoTable {
   // Creates the promised table.
   def toTable: Table
   // For Spark SQL plans.
-  def getRelation: LocalRelation = {
-    val fields = schema.fields
+  val relation: LocalRelation = {
+    // When the relations go through the analyzer, it's not trivial to match their columns to the
+    // originals. We work around this by putting a string inside the metadata of each field that is
+    // unique to the ProtoTable. This breaks a couple of things down the line, so we have to strip
+    // it out when this relation is used anywhere else, which might not be trivial.
+    val fields = schema.fields.map(f => f.withComment(s"$this"))
     if (fields.nonEmpty) {
       LocalRelation(fields.head, fields.tail: _*)
     } else {
@@ -60,48 +56,29 @@ object ProtoTable {
   // Analyzes the given query and restricts the given ProtoTables to their minimal subsets that is
   // necessary to support the query.
   def minimize(
-    optimizedPlan: LogicalPlan,
+    plan: LogicalPlan,
     protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
-    // The table names we get back from the case-insensitive parser will be lowercase.
-    val lowerProtoTables = protoTables.map { case (k, v) => k.toLowerCase -> v }
-    val tables = getRequiredFields(optimizedPlan)
-
-    val selectedTables = tables.groupBy(_._1).map {
-      case (name, expressionsList) =>
-        val table = lowerProtoTables(name)
-        val columns = expressionsList.flatMap(_._2).flatMap(parseExpression).distinct
-        val selectedTable = if (columns.contains("*")) {
-          table
-        } else {
-          table.maybeSelect(columns)
-        }
-        name -> selectedTable
+    // Match tables to ProtoTables based on the comment added in ProtoTable.relation
+    val protoStrings = plan.collectLeaves().flatMap(_.output.map(_.metadata.getString("comment")))
+    val fields = getRequiredFields(plan).map(f => (f.name, f.metadata))
+    val selectedTables = protoTables.filter(k => protoStrings.contains(k._2.toString)).mapValues {
+      f =>
+        val output = f.relation.output
+        val newSchema = fields.intersect(output.map(f => (f.name, f.metadata)))
+        if (newSchema.nonEmpty)
+          f.maybeSelect(newSchema.map(_._1))
+        else
+          f.maybeSelect(Seq(output.map(_.name).head))
     }
     selectedTables
   }
 
-  private def parseExpression(expression: Expression): Seq[String] = expression match {
-    case u: AttributeReference => Seq(u.name)
-    case u: UnresolvedStar => Seq("*")
-    case exp: Expression => exp.children.flatMap(parseExpression)
-  }
-
-  private def getRequiredFields(plan: LogicalPlan): Seq[(String, Seq[NamedExpression])] =
+  private def getRequiredFields(plan: LogicalPlan): Seq[NamedExpression] =
     plan match {
-      case SubqueryAlias(name, Project(projectList, LocalRelation(output, _))) =>
-        // The projection list can be empty e.g. in select 1 from one. In this case we still
-        // have to calculate the number of rows of the table, so we're calculating the first col.
-        if (projectList.nonEmpty) List((name, projectList)) else List((name, Seq(output.head)))
-      case SubqueryAlias(name, LocalRelation(_, _)) =>
-        List((name, Seq(UnresolvedStar(target = None))))
       case l: LeafNode =>
-        bigGraphLogger.info(s"$l ignored in ProtoTable minimalization")
-        List()
-      case s: UnaryNode => getRequiredFields(s.child)
-      case s: BinaryNode =>
-        getRequiredFields(s.left) ++ getRequiredFields(s.right)
-      case s: Union =>
-        s.children.flatMap(getRequiredFields)
+        Seq()
+      case l: LogicalPlan =>
+        l.references.toSeq ++ l.children.flatMap(getRequiredFields)
     }
 }
 

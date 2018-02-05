@@ -184,7 +184,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val prStateId = stateIds(prOutput)
       val progressBeforePR = controller.getProgress(
         user,
-        GetProgressRequest(List(prStateId))).progress(prStateId).get
+        List(prStateId))(prStateId).get
       assert(progressBeforePR.inProgress == 0)
       assert(progressBeforePR.computed + progressBeforePR.inProgress
         + progressBeforePR.notYetStarted + progressBeforePR.failed > 0)
@@ -195,7 +195,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
         .rdd.values.collect
       val progressAfterPR = controller.getProgress(
         user,
-        GetProgressRequest(List(prStateId))).progress(prStateId).get
+        List(prStateId))(prStateId).get
       val computedAfterPR = progressAfterPR.computed
       assert(computedAfterPR > computedBeforePR)
     }
@@ -212,7 +212,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       val prStateId = stateIds(prOutput)
       val progress = controller.getProgress(
         user,
-        GetProgressRequest(List(prStateId))).progress(prStateId)
+        List(prStateId))(prStateId)
       assert(progress.isEmpty)
     }
   }
@@ -336,25 +336,44 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val anchor = anchorWithParams()
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val seg = Box("seg", "Segment by String attribute", Map(), 0, 0, Map("project" -> eg.output("project")))
-    val compute = Box("compute", "Compute box", Map(), 0, 0, Map("input" -> seg.output("project")))
+    val compute = Box("compute", "Compute inputs", Map(), 0, 0, Map("input" -> seg.output("project")))
     create("test-compute-box-project")
     val ws = Workspace(List(anchor, eg, seg, compute))
     set("test-compute-box-project", ws)
     val op = controller.getOperation(user, GetOperationMetaRequest(WorkspaceReference("test-compute-box-project"), compute.id))
-    assert(op.asInstanceOf[ComputeBoxOperation].getGUIDs.size == 22)
+    assert(op.asInstanceOf[TriggerableOperation].getGUIDs("input").size == 22)
   }
 
   test("compute box - table") {
     val anchor = anchorWithParams()
     val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
     val sql = Box("sql", "SQL1", Map(), 0, 0, Map("input" -> eg.output("project")))
-    val compute = Box("compute", "Compute box", Map(), 0, 0, Map("input" -> sql.output("table")))
+    val compute = Box("compute", "Compute inputs", Map(), 0, 0, Map("input" -> sql.output("table")))
     create("test-compute-box-table")
     val ws = Workspace(List(anchor, eg, sql, compute))
     set("test-compute-box-table", ws)
     val op = controller.getOperation(user, GetOperationMetaRequest(WorkspaceReference("test-compute-box-table"), compute.id))
     // ExampleGraph has 6 vertex attributes including ID.
-    assert(op.asInstanceOf[ComputeBoxOperation].getGUIDs.size == 1)
+    assert(op.asInstanceOf[TriggerableOperation].getGUIDs("input").size == 1)
+  }
+
+  test("save to snapshot") {
+    import scala.concurrent._
+    import scala.concurrent.duration._
+    val anchor = anchorWithParams()
+    val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+    val sts = Box("sts", "Save to snapshot",
+      Map("path" -> "test-save-to-snapshot_snapshot"), 0, 0, Map("state" -> eg.output("project")))
+    create("test-save-to-snapshot")
+    val ws = Workspace(List(anchor, eg, sts))
+    set("test-save-to-snapshot", ws)
+    val op = controller.getOperation(user, GetOperationMetaRequest(
+      WorkspaceReference("test-save-to-snapshot"), sts.id)).asInstanceOf[TriggerableOperation]
+    val gdc = new GraphDrawingController(this) // Triggerable ops need this to compute entity data.
+    Await.ready(op.trigger(controller, gdc), Duration.Inf)
+    val entry = DirectoryEntry.fromName("test-save-to-snapshot_snapshot")
+    assert(entry.exists)
+    assert(entry.asInstanceOf[SnapshotFrame].getState.kind == "project")
   }
 
   test("custom box") {
@@ -478,5 +497,23 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val ctx = context(ws)
     assert(ctx.ws.boxes.size == 4)
     assert(ctx.reduced(pr).ws.boxes.size == 3)
+  }
+
+  test("import union of table snapshots") {
+    val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
+    val sql = Box("sql", "SQL1", Map(), 0, 0, Map("input" -> eg.output("project")))
+    create("import_table_snapshot")
+    set("import_table_snapshot", Workspace.from(eg, sql))
+    val outputs = getOutputIds("import_table_snapshot")
+    val stateId = outputs(sql.output("table"))
+    controller.createSnapshot(user, CreateSnapshotRequest("import_table_snapshot_1", stateId))
+    controller.createSnapshot(user, CreateSnapshotRequest("import_table_snapshot_2", stateId))
+    val is = Box("is", "Import union of table snapshots",
+      Map("paths" -> "import_table_snapshot_1,import_table_snapshot_2"), 0, 0, Map())
+    val sql2 = Box("sql2", "SQL1",
+      Map("sql" -> "select count(1) from input"), 0, 0, Map("input" -> is.output("table")))
+    val table = context(Workspace.from(is, sql2)).allStates(sql2.output("table")).table
+    import graph_api.Scripting._
+    assert(table.df.head().getLong(0) == 8)
   }
 }

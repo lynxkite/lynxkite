@@ -49,9 +49,12 @@ Install Inkscape:
 
     sudo apt-get install inkscape
 
-Install Puppeteer 0.10.2 or newer.
+Install Puppeteer 0.13 or newer.
 
-    npm install -g puppeteer
+    sudo npm install -g puppeteer
+    # Make sure everyone can execute Chromium.
+    sudo chmod -R o=u /usr/lib/node_modules/puppeteer/.local-chromium/
+    sudo chmod -R o-w /usr/lib/node_modules/puppeteer/.local-chromium/
 
 Install LaTex:
 

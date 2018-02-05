@@ -33,7 +33,4 @@ node tools/chrome_print_pdf.js 'http://localhost:9090/pdf-help' 'LynxKite-User-M
 echo 'Generating Admin Manual...'
 node tools/chrome_print_pdf.js 'http://localhost:9090/pdf-admin-manual' 'LynxKite-Administrator-Manual.pdf'
 
-echo 'Generating Academy...'
-node tools/chrome_print_pdf.js 'http://localhost:9090/pdf-academy' 'LynxKite-Academy.pdf'
-
 echo 'LynxKite documentation generated successfully.'

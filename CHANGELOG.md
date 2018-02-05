@@ -6,13 +6,23 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Administrators can now restart LynxKite from the user menu.
+
+### 2.2.1
+
+ - Fixed a frontend issue where the browser's connection pool would be exhausted.
+
+### 2.2.0
+
  - Made _Export to CSV_ and _Import CSV_ operations more flexible.
  - Workspace copy-paste uses more readable the YAML instead of JSON. (You can still paste old JSON
    workspaces if you have any lying around.)
  - Hold SHIFT while dragging boxes to align them on a grid.
  - Nicer comment box presentation.
+ - Added _Transform_ and _Derive column_ operations for easier table manipulation.
+ - Added _Import union of table snapshots_ operation to import multiple snapshots at the same time.
+ - Added _Save to snapshot_ and _Compute inputs_ operations, mostly for automation purposes.
  - Bug fixes and performance improvements. Thanks for all bug reports!
- - Add _Transform_ and _Derive column_ operations for easier table manipulation.
 
 ### 2.1.0
 

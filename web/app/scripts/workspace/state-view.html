@@ -61,38 +61,36 @@
       parametric-parameters="instruments[$index].parametricParameters"
       on-blur="onBlur()"></op-editor>
   </div>
-
-  <div ng-if="$last">
-    <project-state-view
-      state-id="state.stateId"
-      ng-if="state.kind === 'project'">
-    </project-state-view>
-    <export-result
-      state-id="state.stateId"
-      ng-if="state.kind === 'exportResult'">
-    </export-result>
-    <table-state-view
-      state-id="state.stateId"
-      ng-if="state.kind === 'table'">
-    </table-state-view>
-    <plot-state-view
-      state-id="state.stateId"
-      popup-model="popupModel"
-      ng-if="state.kind === 'plot'">
-    </plot-state-view>
-    <visualization-state-view
-      state-id="state.stateId"
-      popup-model="popupModel"
-      ng-if="state.kind === 'visualization'">
-    </visualization-state-view>
-    <display-error
-      class="col-sm-12"
-      ng-if="state.kind === 'error'"
-      caption="Failed to generate output state."
-      error="state.error">
-    </display-error>
-    <progressbar
-      ng-if="state.stateId === undefined" value="100" class="progress-striped active">
-    </progressbar>
-  </div>
 </div>
+
+<project-state-view
+  state-id="lastState.stateId"
+  ng-if="lastState.kind === 'project'">
+</project-state-view>
+<export-result
+  state-id="lastState.stateId"
+  ng-if="lastState.kind === 'exportResult'">
+</export-result>
+<table-state-view
+  state-id="lastState.stateId"
+  ng-if="lastState.kind === 'table'">
+</table-state-view>
+<plot-state-view
+  state-id="lastState.stateId"
+  popup-model="popupModel"
+  ng-if="lastState.kind === 'plot'">
+</plot-state-view>
+<visualization-state-view
+  state-id="lastState.stateId"
+  popup-model="popupModel"
+  ng-if="lastState.kind === 'visualization'">
+</visualization-state-view>
+<display-error
+  class="col-sm-12"
+  ng-if="lastState.kind === 'error'"
+  caption="Failed to generate output state."
+  error="lastState.error">
+</display-error>
+<progressbar
+  ng-if="lastState.stateId === undefined" value="100" class="progress-striped active">
+</progressbar>

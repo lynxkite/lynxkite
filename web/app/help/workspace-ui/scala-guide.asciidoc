@@ -42,14 +42,16 @@ getNumFriends() / getAge()
 ### Allowed types
 
 LynxKite uses Scala data types internally, so there is no need for type conversion between LynxKite
-and the derivations script. However, for performance and stability reasons the available types for
-both input (the type of vertex and edge attributes the script can use) and result are restricted.
+and the derivations script. However, to support persistence, the available types for
+both input (the type of vertex and edge attributes the script can use) and result are restricted to
+the following.
 
-* Double
-* String
-* Int
-* Long
-* Any Vector combined from the above types
+* `Double`
+* `String`
+* `Int`
+* `Long`
+* `Vector[X]` where `X` is a supported type
+* `(X, Y)` where `X` and `Y` are supported types
 
 Values of other types need to be manually converted before returning from the Scala script.
 For input types, you can use, for example, either of

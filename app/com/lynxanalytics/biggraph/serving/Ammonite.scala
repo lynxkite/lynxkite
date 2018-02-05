@@ -6,6 +6,8 @@ import org.apache.spark
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
+import org.apache.sshd.server.auth.password.PasswordAuthenticator
+import org.apache.sshd.server.session.ServerSession
 
 object Ammonite {
   val env = BigGraphProductionEnvironment
@@ -41,18 +43,19 @@ Remember, any of the above can be used to easily destroy the running server or e
 Drive responsibly.""")
 
   private val replServer = LoggedEnvironment.envOrNone("KITE_AMMONITE_PORT").map { ammonitePort =>
-    import ammonite.repl.Bind
+    import ammonite.util.Bind
     new ammonite.sshd.SshdRepl(
       ammonite.sshd.SshServerConfig(
         // We only listen on the local interface.
         address = "localhost",
         port = ammonitePort.toInt,
-        username = LoggedEnvironment.envOrElse("KITE_AMMONITE_USER", "lynx"),
-        password = LoggedEnvironment.envOrElse("KITE_AMMONITE_PASSWD", "kite", confidential = true)),
+        passwordAuthenticator = Some(new AmmoniteAuthenticator(
+          LoggedEnvironment.envOrElse("KITE_AMMONITE_USER", "lynx"),
+          LoggedEnvironment.envOrElse("KITE_AMMONITE_PASSWD", "kite", confidential = true)))),
+
       predef = s"""
-repl.frontEnd() = ammonite.repl.frontend.FrontEnd.JLineUnix
+repl.frontEnd() = ammonite.repl.FrontEnd.JLineUnix
 import com.lynxanalytics.biggraph._
-Console.setOut(System.out)
 println("${help}")
 """,
       replArgs = Seq(
@@ -76,5 +79,11 @@ println("${help}")
       s.stop()
       log.info("Ammonite sshd stopped.")
     }
+  }
+}
+
+class AmmoniteAuthenticator(username: String, password: String) extends PasswordAuthenticator {
+  override def authenticate(username: String, password: String, session: ServerSession): Boolean = {
+    this.username == username && this.password == password
   }
 }
