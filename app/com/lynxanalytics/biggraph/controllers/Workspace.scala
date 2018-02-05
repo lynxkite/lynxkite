@@ -141,7 +141,7 @@ case class WorkspaceExecutionContext(
   private def listErrors(boxes: Map[String, BoxOutputState]): String = {
     boxes.map {
       case (id, output) =>
-        s"id: ${output.success.exception.get.getMessage}"
+        s"  $id: ${output.success.disabledReason}"
     }.mkString("\n")
   }
 
@@ -175,8 +175,10 @@ case class WorkspaceExecutionContext(
     }
     val inputs = box.inputs.map { case (id, output) => id -> states(output) }
     assert(!inputs.exists(_._2.isError), {
-      val errors = inputs.filter(_._2.isError).map(_._1).mkString(", ")
-      s"Input $errors has an error."
+      val errors = inputs.filter(_._2.isError)
+      val list = errors.map(_._1).mkString(", ")
+      val details = listErrors(errors)
+      s"Input $list has an error\n$details."
     })
     box.getOperation(this, inputs)
   }

@@ -89,7 +89,8 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val ex1 = intercept[AssertionError] { p1.project }
     val ex2 = intercept[AssertionError] { p2.project }
     assert(ex1.getMessage.contains("Input project is not connected."))
-    assert(ex2.getMessage.contains("Input project has an error."))
+    assert(ex2.getMessage.contains("""Input project has an error.
+  project: Input project is not connected."""))
   }
 
   test("getProjectOutput") {
