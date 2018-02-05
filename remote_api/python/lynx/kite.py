@@ -90,6 +90,10 @@ class TableSnapshotSequence:
     paths = ','.join(self.snapshots(lk, from_date, to_date, to_date_inclusive))
     return lk.importUnionOfTableSnapshots(paths=paths)
 
+  def read_date(self, lk, date):
+    path = self.snapshots(lk, date, date, to_date_inclusive=True)[0]
+    return lk.importSnapshot(path=path)
+
   def save_to_sequence(self, lk, table_state, dt):
     # Assert that dt is valid according to the cron_str format.
     assert timestamp_is_valid(dt, self.cron_str), "Datetime %s does not match cron format %s." % (
