@@ -178,7 +178,7 @@ case class WorkspaceExecutionContext(
       val errors = inputs.filter(_._2.isError)
       val list = errors.map(_._1).mkString(", ")
       val details = listErrors(errors)
-      s"Input $list has an error\n$details."
+      s"Input $list has an error.\n$details"
     })
     box.getOperation(this, inputs)
   }
