@@ -445,27 +445,43 @@ class WorkspaceSequenceInstance:
     self._wss = wss
     self._lk = lk
     self._date = date
-    self._ws_full_name = None
-    inputs = [input_recipe.build_boxes(lk, date) for input_recipe in wss._input_recipes]
-    ws_as_box = (
-        wss._ws(*inputs, **wss._params, date=date) if wss._ws.has_date_parameter()
-        else wss._ws(*inputs, **wss._params))
-    terminal_boxes = []
-    for output in wss._ws.outputs():
-      out_path = wss._output_sequences[output].snapshot_name(date)
-      terminal_boxes.append(ws_as_box[output].saveToSnapshot(path=out_path))
-    ws = Workspace(wss._wrapper_name(date), terminal_boxes)
-    self._ws_for_date = ws
+
+  def full_name(self):
+    return self._wss.lk_root() + self._wss._wrapper_name(self._date)
+
+  def is_saved(self):
+    path = self.full_name()
+    r = self._lk.get_directory_entry(path)
+    return r.exists and r.isWorkspace
 
   def save(self):
-    _, full_name = self._lk.save_workspace_recursively(self._ws_for_date, self._wss.lk_root())
-    self._ws_full_name = full_name
+    '''I also runs the imports.'''
+    assert not self.is_saved(), 'WorkspaceSequenceInstance is already saved.'
+    inputs = [
+        input_recipe.build_boxes(self._lk, self._date)
+        for input_recipe in self._wss._input_recipes]
+    ws_as_box = (
+        self._wss._ws(*inputs, **self._wss._params, date=self._date) if self._wss._ws.has_date_parameter()
+        else self._wss._ws(*inputs, **self._wss._params))
+    terminal_boxes = []
+    for output in self._wss._ws.outputs():
+      out_path = self._wss._output_sequences[output].snapshot_name(self._date)
+      terminal_boxes.append(ws_as_box[output].saveToSnapshot(path=out_path))
+    ws = Workspace(self._wss._wrapper_name(self._date), terminal_boxes)
+    self._lk.save_workspace_recursively(ws, self._wss.lk_root())
 
   def run(self):
-    '''We trigger all the terminal boxes of the wrapped ws.'''
-    assert self._ws_full_name, 'WorkspaceSequenceInstance has to be saved to be able to run.'
-    for box_id in self._ws_for_date.terminal_box_ids():
-      self._lk.trigger_box(self._ws_full_name, box_id)
+    '''We trigger all the terminal boxes of the wrapped ws.
+
+    First we just trigger ``saveToSnapshot`` boxes.
+    '''
+    assert self.is_saved(), 'WorkspaceSequenceInstance has to be saved to be able to run.'
+    operations_to_trigger = ['saveToSnapshot']  # TODO: add compute and exports
+    full_name = self.full_name()
+    boxes = self._lk.get_workspace(full_name)
+    terminal_box_ids = [box.id for box in boxes if box.operationId in operations_to_trigger]
+    for box_id in terminal_box_ids:
+      self._lk.trigger_box(full_name, box_id)
 
 
 class InputRecipe:
@@ -807,6 +823,10 @@ class LynxKite:
 
   def get_table_data(self, state, limit=-1):
     return self._ask('/ajax/getTableOutput', dict(id=state, sampleRows=limit))
+
+  def get_workspace(self, path):
+    response = self._ask('/ajax/getWorkspace', dict(top=path, customBoxStack=[]))
+    return response.workspace.boxes
 
   def import_box(self, boxes, box_id):
     '''Equivalent to clicking the import button for an import box. Returns the updated boxes.'''
