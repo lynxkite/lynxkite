@@ -63,12 +63,6 @@ test_sets = {
 
 
 arg_parser.add_argument(
-    '--emr_instance_count',
-    type=int,
-    default=0,
-    help='Number of instances on EMR cluster, including master.' +
-    ' Set according to dataset and test_sets by default.')
-arg_parser.add_argument(
     '--rm',
     action='store_true',
     help='''Delete the cluster after completion.''')
