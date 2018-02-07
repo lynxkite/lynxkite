@@ -31,7 +31,6 @@ class TestWorkspaceSequence(unittest.TestCase):
         dfs_root='',
         input_recipes=[input_recipe])
     wss_instance = wss.ws_for_date(lk, test_date)
-    wss_instance.save()
     wss_instance.run()
     for output_sequence in wss.output_sequences().values():
       self.assertTrue(lynx.kite.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
@@ -46,10 +45,10 @@ class TestWorkspaceSequence(unittest.TestCase):
       early_instance = wss.ws_for_date(lk, early_date)
     self.assertTrue('preceeds start date' in str(context.exception))
 
-  def test_save_run_order(self):
+  def test_multiple_save(self):
     lk = lynx.kite.LynxKite()
-    lk.remove_name('eg_table_seq', force=True)
-    lk.remove_name('ws_test_seq', force=True)
+    lk.remove_name('eg_cnt_seq', force=True)
+    lk.remove_name('eg_cnt', force=True)
 
     @lk.workspace(name='counter')
     def builder(table):
@@ -70,10 +69,6 @@ class TestWorkspaceSequence(unittest.TestCase):
         dfs_root='',
         input_recipes=[input_recipe])
     wss_instance = wss.ws_for_date(lk, test_date)
-    with self.assertRaises(Exception) as context:
-      wss_instance.run()
-    self.assertTrue(
-        'WorkspaceSequenceInstance has to be saved to be able to run.' in str(context.exception))
     wss_instance.save()
     with self.assertRaises(Exception) as context:
       wss_instance.save()
@@ -105,7 +100,6 @@ class TestWorkspaceSequence(unittest.TestCase):
 
     def run_ws(test_date, summa):
       wss_instance = wss.ws_for_date(lk, test_date)
-      wss_instance.save()
       wss_instance.run()
       for output_sequence in wss.output_sequences().values():
         self.assertTrue(lynx.kite.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
