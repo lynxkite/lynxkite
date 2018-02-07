@@ -1516,8 +1516,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
       // Size labelBackground here, because we may not know the label size earlier.
       this.labelBackground.attr({
-        width: this.label.width() + 4,
-        height: this.label.height(),
+        width: this.label[0].getBoundingClientRect().width + 4,
+        height: this.label[0].getBoundingClientRect().height,
         style: 'fill: ' + this.highlight,
       });
       this.reDraw();
