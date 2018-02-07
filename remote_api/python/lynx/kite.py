@@ -483,7 +483,8 @@ class WorkspaceSequenceInstance:
 
     First we just trigger ``saveToSnapshot`` boxes.
     '''
-    assert self.is_saved(), 'WorkspaceSequenceInstance has to be saved to be able to run.'
+    if not self.is_saved():  # WorkspaceSequenceInstance has to be saved to be able to run.
+      self.save()
     operations_to_trigger = ['Save to snapshot']  # TODO: add compute and exports
     full_name = self.full_name()
     boxes = self._lk.get_workspace(full_name)
