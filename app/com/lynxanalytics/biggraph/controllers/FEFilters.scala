@@ -135,6 +135,7 @@ object FEFilters {
   }
 
   abstract class BaseTypedParser[T: TypeTag](fromStringConverter: Option[String => T]) extends TokenParser {
+    implicit val st = SerializableType(typeTag[T])
 
     protected lazy val fromString = fromStringConverter.get
     val interval = {
@@ -184,6 +185,8 @@ object FEFilters {
       result
     }
   }
+
+  import SerializableType._
 
   object StringParser extends BaseTypedParser[String](Some(_.toString)) {
     val regex = P(("regex(" | "regexp(") ~ token ~ ")").map {
