@@ -235,6 +235,13 @@ class State:
     state_id = lk.get_state_id(self)
     lk.save_snapshot(path, state_id)
 
+  def save_to_sequence(self, tss, date):
+    '''Save this state to the ``tss`` TableSnapshotSequence with ``date`` as
+    the date of the snapshot.'''
+    lk = self.box.lk
+    state_id = lk.get_state_id(self)
+    tss.save_to_sequence(lk, state_id, date)
+
 
 def new_box(bc, lk, operation, inputs, parameters):
   if isinstance(operation, str):

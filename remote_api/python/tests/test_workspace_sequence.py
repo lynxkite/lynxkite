@@ -19,8 +19,7 @@ class TestWorkspaceSequence(unittest.TestCase):
 
     test_date = datetime(2018, 1, 2)
     tss = lynx.kite.TableSnapshotSequence('eg_table_seq', '0 0 * * *')
-    table_state = lk.get_state_id(lk.createExampleGraph().sql('select * from vertices'))
-    tss.save_to_sequence(lk, table_state, test_date)
+    lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, test_date)
     input_recipe = lynx.kite.TableSnapshotRecipe(tss)
     wss = lynx.kite.WorkspaceSequence(
         ws=builder,
@@ -57,8 +56,7 @@ class TestWorkspaceSequence(unittest.TestCase):
 
     test_date = datetime(2018, 1, 2)
     tss = lynx.kite.TableSnapshotSequence('eg_cnt_seq', '0 0 * * *')
-    table_state = lk.get_state_id(lk.createExampleGraph().sql('select * from vertices'))
-    tss.save_to_sequence(lk, table_state, test_date)
+    lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, test_date)
     input_recipe = lynx.kite.TableSnapshotRecipe(tss)
     wss = lynx.kite.WorkspaceSequence(
         ws=builder,
