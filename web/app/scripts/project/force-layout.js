@@ -75,17 +75,17 @@ var FORCE_LAYOUT = (function() {
           dx = Math.random();
           dy = Math.random();
         }
-        var d2 = dx * dx + dy * dy;
+        var d3 = Math.max(1, Math.abs(dx * dx * dx) + Math.abs(dy * dy * dy));
         var repulsion = this.opts.repulsion;
         if (a.text !== undefined && b.text !== undefined && a.text === b.text) {
           // Apply reduced repulsion between vertices that have the same label.
           // This causes the vertices to cluster a bit by label.
           repulsion *= 1.0 - this.opts.labelAttraction;
         }
-        a.x += repulsion * dx / d2 / a.forceMass;
-        a.y += repulsion * dy / d2 / a.forceMass;
-        b.x -= repulsion * dx / d2 / b.forceMass;
-        b.y -= repulsion * dy / d2 / b.forceMass;
+        a.x += repulsion * dx / d3 / a.forceMass;
+        a.y += repulsion * dy / d3 / a.forceMass;
+        b.x -= repulsion * dx / d3 / b.forceMass;
+        b.y -= repulsion * dy / d3 / b.forceMass;
       }
     }
     var totalChange = 0;
