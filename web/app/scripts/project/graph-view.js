@@ -1207,11 +1207,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         e.dst.degree += 1;
       }
     }
-    var scale = this.svg.height();
     var engine = new FORCE_LAYOUT.Engine({
-      attraction: 0.01,
-      repulsion: scale,
-      gravity: 0.05,
+      attraction: 0.1,
+      repulsion: 1,
+      gravity: 0,
       drag: 0.2,
       labelAttraction: vertices.side.animate.labelAttraction,
       style: vertices.side.animate.style,
