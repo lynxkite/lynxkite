@@ -61,6 +61,7 @@ class TypeTagToFormatTest extends FunSuite {
   }
 
   test("TypeTag -> json conversions (JsonTraits)") {
+    implicit val d = SerializableType.double
     val filter = VertexAttributeFilter[Double](GT(2.0))
     testTag(filter)
   }

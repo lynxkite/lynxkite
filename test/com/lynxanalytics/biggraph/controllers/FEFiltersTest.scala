@@ -9,6 +9,10 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 import play.api.libs.json
 
 class FEFiltersTest extends FunSuite with TestGraphOp {
+  implicit val d = SerializableType.double
+  implicit val i = SerializableType.int
+  implicit val s = SerializableType.string
+  implicit val l = SerializableType.long
   test("specific value for string") {
     assert(FEFilters.filterFromSpec[String]("asd") == EQ("asd"))
   }
