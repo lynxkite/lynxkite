@@ -32,6 +32,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       util.deepWatch(scope, 'graph.right.vertexAttrs', scope.updateGraph);
       util.deepWatch(scope, 'graph.left.edgeAttrs', scope.updateGraph);
       util.deepWatch(scope, 'graph.right.edgeAttrs', scope.updateGraph);
+      scope.$on('$destroy', function() { scope.gv.clear(); });
       handleResizeEvents(scope);
     },
   };
@@ -320,7 +321,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
               offsetter.xMax = xMax;
             }
           } else {
-            offsetter = new Offsetter(xOff, yOff, zoom, zoom, menu, xMin, xMax, i);
+            offsetter = new Offsetter(xOff, yOff, zoom, 300, menu, xMin, xMax, i);
           }
           if (dataVs.mode === 'sampled') {
             vs = this.addSampledVertices(dataVs, offsetter, sides[i], this.vertexGroups[vsi], i);
@@ -672,8 +673,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       var radius = 0.1 * Math.sqrt(size);
       var v = new Vertex(vertices,
                          vertex,
-                         Math.random() * 400 - 200,
-                         Math.random() * 400 - 200,
+                         Math.random() - 0.5,
+                         Math.random() - 0.5,
                          radius,
                          label,
                          labelSize,
@@ -1023,6 +1024,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         ratio < 0.1 || ratio > 10 ||
         !newPan.acceptable(offsetter.xOff, offsetter.yOff)) {
       offsetter.zoom = newZoom;
+      offsetter.thickness = 1000 / Math.sqrt(vertices.vs.length);
       // Recalculate with the new zoom.
       newPan = panFor(xb, yb, newZoom, width, height, vertices.xMin);
       offsetter.xOff = newPan.xOff;
@@ -1205,11 +1207,10 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         e.dst.degree += 1;
       }
     }
-    var scale = this.svg.height();
     var engine = new FORCE_LAYOUT.Engine({
-      attraction: 0.01,
-      repulsion: scale,
-      gravity: 0.05,
+      attraction: 0.1,
+      repulsion: 1,
+      gravity: 0,
       drag: 0.2,
       labelAttraction: vertices.side.animate.labelAttraction,
       style: vertices.side.animate.style,
@@ -1515,8 +1516,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
       // Size labelBackground here, because we may not know the label size earlier.
       this.labelBackground.attr({
-        width: this.label.width() + 4,
-        height: this.label.height(),
+        width: this.label[0].getBoundingClientRect().width + 4,
+        height: this.label[0].getBoundingClientRect().height,
         style: 'fill: ' + this.highlight,
       });
       this.reDraw();
