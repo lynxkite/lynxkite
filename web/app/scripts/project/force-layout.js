@@ -102,7 +102,7 @@ var FORCE_LAYOUT = (function() {
       v.y += (1 - this.opts.drag) * (v.forceOY - ooy);
       totalChange += Math.abs(v.x - oox) + Math.abs(v.y - ooy);
     }
-    return 0.0001 < totalChange / vertices.vs.length / maxDist;
+    return 0.001 < totalChange / vertices.vs.length / maxDist;
   };
   lib.Engine.prototype.apply = function(vertices) {
     for (var i = 0; i < vertices.vs.length; ++i) {
