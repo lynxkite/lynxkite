@@ -149,6 +149,11 @@ arg_parser.add_argument(
     action='store_true',
     help='Use this option to enable Auto Scaling.')
 arg_parser.add_argument(
+    '--ebs_volume_size',
+    type=int,
+    default=0,
+    help='Size of EBS volume to be attached to the core instance.')
+arg_parser.add_argument(
     '--kite_master_memory_mb',
     default=8000,
     help='Set KITE_MASTER_MEMORY_MB in kiterc'
@@ -189,6 +194,7 @@ class Ecosystem:
         'applications': args.applications,
         'master_instance_type': args.master_instance_type,
         'core_instance_type': args.core_instance_type,
+        'ebs_volume_size': args.ebs_volume_size,
     }
     self.lynxkite_config = {
         'biggraph_releases_dir': args.biggraph_releases_dir,
@@ -235,6 +241,7 @@ class Ecosystem:
         spot=conf['spot'],
         spot_bid_multiplier=conf['spot_bid_multiplier'],
         autoscaling_role=conf['autoscaling_role'],
+        ebs_volume_size=conf['ebs_volume_size']
     )
     self.instances = [self.cluster]
     # Spin up a mysql RDS instance only if requested.
