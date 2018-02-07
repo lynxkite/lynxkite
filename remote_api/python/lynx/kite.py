@@ -229,6 +229,12 @@ class State:
     # We need the folder name without the trailing '/'.
     lk.remove_name(folder, force=True)
 
+  def save_snapshot(self, path):
+    '''Save this state as a snapshot under path.'''
+    lk = self.box.lk
+    state_id = lk.get_state_id(self)
+    lk.save_snapshot(path, state_id)
+
 
 def new_box(bc, lk, operation, inputs, parameters):
   if isinstance(operation, str):
