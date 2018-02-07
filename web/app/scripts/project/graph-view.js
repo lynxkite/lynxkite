@@ -32,6 +32,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       util.deepWatch(scope, 'graph.right.vertexAttrs', scope.updateGraph);
       util.deepWatch(scope, 'graph.left.edgeAttrs', scope.updateGraph);
       util.deepWatch(scope, 'graph.right.edgeAttrs', scope.updateGraph);
+      scope.$on('$destroy', function() { scope.gv.clear(); });
       handleResizeEvents(scope);
     },
   };
