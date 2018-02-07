@@ -321,7 +321,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
               offsetter.xMax = xMax;
             }
           } else {
-            offsetter = new Offsetter(xOff, yOff, zoom, zoom, menu, xMin, xMax, i);
+            offsetter = new Offsetter(xOff, yOff, zoom, 300, menu, xMin, xMax, i);
           }
           if (dataVs.mode === 'sampled') {
             vs = this.addSampledVertices(dataVs, offsetter, sides[i], this.vertexGroups[vsi], i);
@@ -673,8 +673,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       var radius = 0.1 * Math.sqrt(size);
       var v = new Vertex(vertices,
                          vertex,
-                         Math.random() * 400 - 200,
-                         Math.random() * 400 - 200,
+                         Math.random() - 0.5,
+                         Math.random() - 0.5,
                          radius,
                          label,
                          labelSize,
@@ -1024,6 +1024,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         ratio < 0.1 || ratio > 10 ||
         !newPan.acceptable(offsetter.xOff, offsetter.yOff)) {
       offsetter.zoom = newZoom;
+      offsetter.thickness = 1000 / Math.sqrt(vertices.vs.length);
       // Recalculate with the new zoom.
       newPan = panFor(xb, yb, newZoom, width, height, vertices.xMin);
       offsetter.xOff = newPan.xOff;
