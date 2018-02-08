@@ -146,9 +146,9 @@ module.exports = function(fw) {
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
-          { size: '<30' },
-          { size: '<30' },
-          { size: '>30' },
+          { size: '<50' },
+          { size: '<50' },
+          { size: '>50' },
         ]);
         checkGraphPositions(positions(graph), savedPositions);
       });
@@ -219,10 +219,10 @@ module.exports = function(fw) {
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.edges).toConcur([
-          { width: '<12' },
-          { width: '<12' },
-          { width: '>12' },
-          { width: '>12' },
+          { width: '<20' },
+          { width: '<20' },
+          { width: '>20' },
+          { width: '>20' },
         ]);
         checkGraphPositions(positions(graph), savedPositions);
       });
@@ -368,9 +368,9 @@ module.exports = function(fw) {
       gender.visualizeAs('x');
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur([
-          { src: 0, dst: 1, width: '<12' },
-          { src: 1, dst: 0, width: '>12' },
-          { src: 1, dst: 1, width: '<12' },
+          { src: 0, dst: 1, width: '<10' },
+          { src: 1, dst: 0, width: '>10' },
+          { src: 1, dst: 1, width: '<10' },
         ]);
         expect(graph.vertices).toConcur([
           { label: '1' },
@@ -428,16 +428,16 @@ module.exports = function(fw) {
           expect(found).toBe(true);
         }
         expect(graph.edges).toConcur([
-          { src: 0, dst: 1, width: '<12' },
-          { src: 0, dst: 4, width: '<12' },
-          { src: 1, dst: 0, width: '<12' },
-          { src: 1, dst: 3, width: '<12' },
-          { src: 2, dst: 0, width: '<12' },
-          { src: 2, dst: 1, width: '<12' },
-          { src: 2, dst: 4, width: '<12' },
-          { src: 3, dst: 4, width: '<12' },
-          { src: 4, dst: 3, width: '>12' },
-          { src: 4, dst: 4, width: '<12' },
+          { src: 0, dst: 1, width: '>10' },
+          { src: 0, dst: 4, width: '<10' },
+          { src: 1, dst: 0, width: '>10' },
+          { src: 1, dst: 3, width: '<10' },
+          { src: 2, dst: 0, width: '>10' },
+          { src: 2, dst: 1, width: '>10' },
+          { src: 2, dst: 4, width: '<10' },
+          { src: 3, dst: 4, width: '<10' },
+          { src: 4, dst: 3, width: '>10' },
+          { src: 4, dst: 4, width: '<10' },
         ]);
         expect(graph.vertices).toConcur([
           { label: 'Adam' },
