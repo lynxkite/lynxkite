@@ -375,6 +375,10 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
     context.inputs(input).table
   }
 
+  protected def exportResultInput(input: String): Scalar[String] = {
+    context.inputs(input).exportResult
+  }
+
   protected def tableLikeInput(input: String) = new TableLikeInput(input)
 
   class TableLikeInput(name: String) {
@@ -631,8 +635,10 @@ abstract class TriggerableOperation(override val context: Operation.Context) ext
         projectInput(inputName).allEntityGUIDs
       case BoxOutputKind.Table =>
         List(tableInput(inputName).gUID)
+      case BoxOutputKind.ExportResult =>
+        List(exportResultInput(inputName).gUID)
       case _ => throw new AssertionError(
-        s"Cannot use '${input.kind}' as input. Only 'table' and 'project' kinds are supported.")
+        s"Cannot use '${input.kind}' as input. Only 'table', 'project' and 'exportResult' kinds are supported.")
     }
   }
 }
