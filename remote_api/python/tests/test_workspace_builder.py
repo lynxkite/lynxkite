@@ -204,3 +204,11 @@ class TestWorkspaceBuilder(unittest.TestCase):
     self.assertEqual(
         str(cm.exception),
         "notExists is not defined on Operation createExampleGraph with parameters {} and inputs {}")
+
+  def test_state_save_snapshot(self):
+    lk = lynx.kite.LynxKite()
+    eg = lk.createExampleGraph().sql('select name, income, gender from vertices')
+    lk.remove_name('names_income_gender_snapshot', force=True)
+    eg.save_snapshot('names_income_gender_snapshot')
+    entries = lk.list_dir('')
+    self.assertTrue('names_income_gender_snapshot' in {e.name for e in entries})

@@ -8,6 +8,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
  - Administrators can now restart LynxKite from the user menu.
  - String attributes now support lexicographic filtering
+ - Improved layout in graph visualizations.
 
 ### 2.2.1
 
