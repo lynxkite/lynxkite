@@ -152,7 +152,7 @@ arg_parser.add_argument(
     '--ebs_volume_size',
     type=int,
     default=0,
-    help='Size of EBS volume to be attached to the core instance.')
+    help='Size of EBS volume (In GB) to be attached to the core instance.')
 arg_parser.add_argument(
     '--kite_master_memory_mb',
     default=8000,
