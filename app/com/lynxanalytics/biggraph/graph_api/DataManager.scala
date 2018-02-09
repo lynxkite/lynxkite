@@ -459,9 +459,7 @@ class DataManager(
   }
 
   private def registerUDFs(sqlContext: SQLContext) = {
-    sqlContext.udf.register(
-      "hash",
-      (string: String, salt: String) => graph_operations.HashVertexAttribute.hash(string, salt))
+    UDF.register(sqlContext)
   }
 
   def compute(entities: List[MetaGraphEntity]): SafeFuture[Unit] = {
