@@ -196,16 +196,16 @@ class EMRLib:
     """
     If the availability zones for the current region include anything on our blacklist,
     we return a placement specification that makes sure that any blacklisted item is avoided.
-    Otherwise, we return none and let AWS decide the zone for us.
+    Otherwise, we return None and let AWS decide the zone for us.
     """
     blacklisted = set(['ap-southeast-1c'])
     available_struct = self.ec2_client.describe_availability_zones()['AvailabilityZones']
     available = set([x['ZoneName'] for x in available_struct])
-    if blacklisted & available == set():
+    if len(blacklisted & available) == 0:
       return None
     else:
       possible_choices = available - blacklisted
-      assert len(possible_choices) > 0
+      assert len(possible_choices) > 0, "All possible availability zones are blacklisted!"
       choice = list(possible_choices)[0]
       return {'AvailabilityZone': choice}
 
