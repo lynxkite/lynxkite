@@ -192,6 +192,23 @@ class EMRLib:
       desc['BidPrice'] = '{:.3f}'.format(our_bid)
     return desc
 
+  def get_placement(self):
+    """
+    If the availability zones for the current region include anything on our blacklist,
+    we return a placement specification that makes sure that any blacklisted item is avoided.
+    Otherwise, we return none and let AWS decide the zone for us.
+    """
+    blacklisted = set(['ap-southeast-1c'])
+    available_struct = self.ec2_client.describe_availability_zones()['AvailabilityZones']
+    available = set([x['ZoneName'] for x in available_struct])
+    if blacklisted & available == set():
+      return None
+    else:
+      possible_choices = available - blacklisted
+      assert len(possible_choices) > 0
+      choice = list(possible_choices)[0]
+      return {'AvailabilityZone': choice}
+
   def create_or_connect_to_emr_cluster(
           self, name, log_uri, owner, expiry,
           instance_count=2,
@@ -284,7 +301,9 @@ class EMRLib:
             'Value': name
         }]
     }
-
+    placement = self.get_placement()
+    if placement:
+      run_job_flow_args['Instances'].update({'Placement': placement})
     if log_uri:
       run_job_flow_args['LogUri'] = log_uri
     if autoscaling_role:
