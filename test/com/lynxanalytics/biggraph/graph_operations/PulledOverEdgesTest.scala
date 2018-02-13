@@ -9,8 +9,8 @@ import com.lynxanalytics.biggraph.graph_api.Scripting._
 class PulledOverEdgesTest extends FunSuite with TestGraphOp {
   test("works with filters") {
     val g = ExampleGraph()().result
-
-    val fop = VertexAttributeFilter(DoubleGT(2))
+    implicit val d = SerializableType.double
+    val fop = VertexAttributeFilter(GT(2.0))
     val fopRes = fop(fop.attr, g.weight).result
 
     val pop = PulledOverEdges()

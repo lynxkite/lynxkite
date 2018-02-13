@@ -2,11 +2,10 @@
 package com.lynxanalytics.biggraph.controllers
 
 import scala.reflect.runtime.universe._
-
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.MetaGraphManager.StringAsUUID
 import com.lynxanalytics.biggraph.graph_api.Scripting._
-import com.lynxanalytics.biggraph.graph_operations._
+import com.lynxanalytics.biggraph.graph_operations.{ Filter, _ }
 
 case class FEVertexAttributeFilter(
     val attributeId: String,
@@ -112,79 +111,145 @@ object FEFilters {
     op(op.vss, filteredVss).result.firstEmbedding
   }
 
-  def filterFromSpec[T: TypeTag](spec: String): Filter[T] = {
-    if (spec.startsWith("!")) {
-      NotFilter(filterFromSpec(spec.drop(1)))
-    } else if (spec == "*") {
-      MatchAllFilter()
-    } else if (typeOf[T] =:= typeOf[String]) {
-      val stringFilter = spec match {
-        case regexRE(re) => RegexFilter(re)
-        case csv => OneOf(csv.split(",", -1).map(_.trim).toSet)
-      }
-      stringFilter.asInstanceOf[Filter[T]]
-    } else if (typeOf[T] =:= typeOf[Long]) {
-      OneOf(spec.split(",", -1).map(_.trim.toLong).toSet)
-        .asInstanceOf[Filter[T]]
-    } else if (typeOf[T] =:= typeOf[(Double, Double)]) {
-      spec match {
-        case geoRE(xInterval, yInterval) =>
-          PairFilter(filterFromSpec[Double](xInterval), filterFromSpec[Double](yInterval))
-            .asInstanceOf[Filter[T]]
-        case filter => throw new AssertionError(s"Not a valid filter: $filter.")
-      }
-    } else if (typeOf[T] =:= typeOf[Double]) {
-      val doubleFilter = spec match {
-        case numberRE(num) => DoubleEQ(num.toDouble)
-        case intervalOpenOpenRE(a, b) => AndFilter(DoubleGT(a.toDouble), DoubleLT(b.toDouble))
-        case intervalOpenCloseRE(a, b) => AndFilter(DoubleGT(a.toDouble), DoubleLE(b.toDouble))
-        case intervalCloseOpenRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLT(b.toDouble))
-        case intervalCloseCloseRE(a, b) => AndFilter(DoubleGE(a.toDouble), DoubleLE(b.toDouble))
-        case boundRE(comparator, valueString) =>
-          val value = valueString.toDouble
-          comparator match {
-            case "=" => DoubleEQ(value)
-            case "==" => DoubleEQ(value)
-            case "<" => DoubleLT(value)
-            case ">" => DoubleGT(value)
-            case "<=" => DoubleLE(value)
-            case ">=" => DoubleGE(value)
-            case comparator => throw new AssertionError(s"Not a valid comparator: $comparator")
-          }
-        case filter => throw new AssertionError(s"Not a valid filter: $filter")
-      }
-      doubleFilter.asInstanceOf[Filter[T]]
-    } else if (typeOf[T] =:= typeOf[(ID, ID)]) {
-      spec match {
-        case "=" => PairEquals[ID]().asInstanceOf[Filter[T]]
-        case filter =>
-          throw new AssertionError(s"Not a valid filter: $filter (The only valid filter is '='.)")
-      }
-    } else if (typeOf[T] <:< typeOf[Vector[Any]]) {
-      val elementTypeTag = TypeTagUtil.typeArgs(typeTag[T]).head
-      spec match {
-        case existsRE(elementSpec) =>
-          Exists(filterFromSpec(elementSpec)(elementTypeTag)).asInstanceOf[Filter[T]]
-        case forallRE(elementSpec) =>
-          ForAll(filterFromSpec(elementSpec)(elementTypeTag)).asInstanceOf[Filter[T]]
-        case filter => throw new AssertionError(s"Not a valid filter: $filter")
-      }
-    } else ???
+  import fastparse.all._
+
+  class TokenParser {
+    val quote = '"'
+    val backslash = '\\'
+
+    val quoteStr = s"${quote}"
+    val backslashStr = s"${backslash}"
+    val charsNotInSimpleString: String = s"${quote},()[]"
+
+    val notEscaped: Parser[Char] = P(CharPred(c => c != backslash && c != quote))
+      .!.map(x => x(0)) // Make it a Char
+    val escapeSeq: Parser[Char] = P((backslashStr ~ quoteStr) | (backslashStr ~ backslashStr))
+      .!.map(x => x(1)) // Strip the backslash from the front and make it a Char
+    val escapedString: Parser[String] = P(quoteStr ~ (notEscaped | escapeSeq).rep() ~ quoteStr)
+      .map(x => x.mkString("")) // Assemble the Chars into a String
+    val simpleString: Parser[String] = P(CharPred(c => !charsNotInSimpleString.contains(c)).rep(1)).!
+
+    val ws = P(" ".rep())
+    val notWs = P(CharPred(c => c != " ").rep())
+    val token: Parser[String] = P(ws ~ (escapedString | simpleString) ~ ws)
   }
 
-  private val number = "-?\\d*(?:\\.\\d*)?"
-  private val numberWithSpaces = s"\\s*$number\\s*"
-  private val numberPattern = s"\\s*($number)\\s*"
-  private val numberRE = numberPattern.r
-  private val intervalOpenOpenRE = s"\\s*\\($numberPattern,$numberPattern\\)\\s*".r
-  private val intervalOpenCloseRE = s"\\s*\\($numberPattern,$numberPattern\\]\\s*".r
-  private val intervalCloseOpenRE = s"\\s*\\[$numberPattern,$numberPattern\\)\\s*".r
-  private val intervalCloseCloseRE = s"\\s*\\[$numberPattern,$numberPattern\\]\\s*".r
-  private val intervalPattern = s"\\s*([\\(\\[]$numberWithSpaces,$numberWithSpaces[\\)\\]])\\s*"
-  private val geoRE = s"$intervalPattern,$intervalPattern".r
-  private val comparatorPattern = "\\s*(<|>|==?|<=|>=)\\s*"
-  private val boundRE = s"$comparatorPattern$numberPattern".r
-  private val forallRE = "\\s*(?:forall|all|Ɐ)\\((.*)\\)\\s*".r
-  private val existsRE = "\\s*(?:exists|any|some|∃)\\((.*)\\)\\s*".r
-  private val regexRE = "\\s*regexp?\\((.*)\\)\\s*".r
+  abstract class BaseTypedParser[T: TypeTag](fromStringConverter: Option[String => T]) extends TokenParser {
+    implicit val st = SerializableType(typeTag[T])
+
+    protected lazy val fromString = fromStringConverter.get
+    val interval = {
+      val openOpen = P("(" ~ token ~ "," ~ token ~ ")").map {
+        x => AndFilter(GT(fromString(x._1)), LT(fromString(x._2)))
+      }
+      val openClose = P("(" ~ token ~ "," ~ token ~ "]").map {
+        x => AndFilter(GT(fromString(x._1)), LE(fromString(x._2)))
+      }
+      val closeOpen = P("[" ~ token ~ "," ~ token ~ ")").map {
+        x => AndFilter(GE(fromString(x._1)), LT(fromString(x._2)))
+      }
+      val closeClose = P("[" ~ token ~ "," ~ token ~ "]").map {
+        x => AndFilter(GE(fromString(x._1)), LE(fromString(x._2)))
+      }
+      P(openOpen | openClose | closeOpen | closeClose)
+    }
+
+    val commaSeparatedList = {
+      P(token.rep(sep = ",", min = 1)).map {
+        x =>
+          if (x.size == 1) EQ(fromString(x.head))
+          else OneOf(x.map(fromString).toSet).asInstanceOf[Filter[T]]
+      }
+    }
+
+    val comparison = {
+      val eq = P(("==" | "=") ~ token.!).map(x => EQ(fromString(x)))
+      val lt = P("<" ~ !"=" ~ token.!).map(x => LT(fromString(x)))
+      val le = P("<=" ~ token.!).map(x => LE(fromString(x)))
+      val gt = P(">" ~ !"=" ~ token.!).map(x => GT(fromString(x)))
+      val ge = P(">=" ~ token.!).map(x => GE(fromString(x)))
+
+      P(eq | lt | le | gt | ge)
+    }
+
+    val filter: P[Filter[T]]
+
+    def parse(spec: String) = {
+      import fastparse.core.Parsed
+      val notFilter = P(Start ~ "!" ~ notWs.! ~ End).map { x =>
+        NotFilter(filterFromSpec(x))
+      }
+      val allFilter = P(Start ~ "*" ~ End).map(_ => MatchAllFilter())
+      val expr = P(notFilter | allFilter | filter)
+      val Parsed.Success(result, _) = expr.parse(spec)
+      result
+    }
+  }
+
+  import SerializableType._
+
+  object StringParser extends BaseTypedParser[String](Some(_.toString)) {
+    val regex = P(("regex(" | "regexp(") ~ token ~ ")").map {
+      x =>
+        RegexFilter(x).asInstanceOf[Filter[String]]
+    }
+    val filter = P(Start ~ (comparison | regex | commaSeparatedList | interval) ~ End)
+  }
+
+  object LongParser extends BaseTypedParser[Long](Some(_.toLong)) {
+    val filter = P(Start ~ (comparison | commaSeparatedList | interval) ~ End)
+  }
+
+  object DoubleParser extends BaseTypedParser[Double](Some(_.toDouble)) {
+    val filter = P(Start ~ (comparison | commaSeparatedList | interval) ~ End)
+  }
+
+  object GeoParser extends BaseTypedParser[(Double, Double)](None) {
+    val geo = P(ws ~ DoubleParser.interval ~ ws ~ "," ~ ws ~ DoubleParser.interval ~ ws).map {
+      x =>
+        PairFilter(x._1, x._2).asInstanceOf[Filter[(Double, Double)]]
+    }
+    val filter = P(Start ~ geo ~ End)
+  }
+
+  class VectorParser extends TokenParser {
+    def forall[T: TypeTag] =
+      P(("forall" | "all" | "Ɐ") ~ ws ~ "(" ~ token.! ~ ")").map(
+        x => ForAll(filterFromSpec(x)(typeTag[T])).asInstanceOf[Filter[T]])
+    def exists[T: TypeTag] =
+      P(("exists" | "some" | "any" | "∃") ~ ws ~ "(" ~ token.! ~ ")").map(
+        x => Exists(filterFromSpec(x)(typeTag[T])).asInstanceOf[Filter[T]])
+    def parse[T: TypeTag](spec: String): Filter[T] = {
+      val outerNotFilter = P(Start ~ "!" ~ notWs.! ~ End).map { x =>
+        NotFilter(filterFromSpec(x)(typeTag[Vector[T]]).asInstanceOf[Filter[T]])
+      }
+      val matchAllFilter = P(Start ~ "*" ~ End).map(_ => MatchAllFilter().asInstanceOf[Filter[T]])
+      val vec = P(Start ~ (forall | exists) ~ End)
+      val expr = P(outerNotFilter | matchAllFilter | vec)
+      import fastparse.core.Parsed
+      val Parsed.Success(filter, _) = expr.parse(spec)
+      filter
+    }
+  }
+
+  object IdIdParser extends BaseTypedParser[(ID, ID)](None) {
+    val filter = P(Start ~ "=" ~ End).!.map(_ => PairEquals[ID]())
+  }
+
+  def filterFromSpec[T: TypeTag](spec: String): Filter[T] = {
+    if (typeOf[T] =:= typeOf[String]) {
+      StringParser.parse(spec).asInstanceOf[Filter[T]]
+    } else if (typeOf[T] =:= typeOf[Long]) {
+      LongParser.parse(spec).asInstanceOf[Filter[T]]
+    } else if (typeOf[T] =:= typeOf[Double]) {
+      DoubleParser.parse(spec).asInstanceOf[Filter[T]]
+    } else if (typeOf[T] =:= typeOf[(Double, Double)]) {
+      GeoParser.parse(spec).asInstanceOf[Filter[T]]
+    } else if (typeOf[T] <:< typeOf[Vector[Any]]) {
+      val elementTypeTag = TypeTagUtil.typeArgs(typeTag[T]).head
+      new VectorParser().parse(spec)(elementTypeTag).asInstanceOf[Filter[T]]
+    } else if (typeOf[T] =:= typeOf[(ID, ID)]) {
+      IdIdParser.parse(spec).asInstanceOf[Filter[T]]
+    } else ???
+  }
 }

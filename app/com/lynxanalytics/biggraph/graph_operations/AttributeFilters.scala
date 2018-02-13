@@ -94,44 +94,76 @@ case class AndFilter[T](filters: Filter[T]*) extends Filter[T] {
   }
 }
 
-object DoubleEQ extends FromJson[DoubleEQ] {
-  def fromJson(j: JsValue) = DoubleEQ((j \ "exact").as[Double])
-}
-case class DoubleEQ(exact: Double) extends Filter[Double] {
-  def matches(value: Double) = value == exact
-  override def toJson = Json.obj("exact" -> exact)
+object EQ extends FromJson[EQ[_]] {
+  def fromJson(j: JsValue) = EQ(TypedJson.read(j \ "exact"))
 }
 
-object DoubleLT extends FromJson[DoubleLT] {
-  def fromJson(j: JsValue) = DoubleLT((j \ "bound").as[Double])
-}
-case class DoubleLT(bound: Double) extends Filter[Double] {
-  def matches(value: Double) = value < bound
-  override def toJson = Json.obj("bound" -> bound)
+case class EQ[T](exact: T) extends Filter[T] {
+  def matches(value: T) = value == exact
+  override def toJson = Json.obj("exact" -> TypedJson(exact))
 }
 
-object DoubleLE extends FromJson[DoubleLE] {
-  def fromJson(j: JsValue) = DoubleLE((j \ "bound").as[Double])
-}
-case class DoubleLE(bound: Double) extends Filter[Double] {
-  def matches(value: Double) = value <= bound
-  override def toJson = Json.obj("bound" -> bound)
+object DoubleEQ extends FromJson[EQ[Double]] { // Backward compatibility
+  def fromJson(j: JsValue) = EQ((j \ "exact").as[Double])
 }
 
-object DoubleGT extends FromJson[DoubleGT] {
-  def fromJson(j: JsValue) = DoubleGT((j \ "bound").as[Double])
+import SerializableType.Implicits._
+
+trait ComparatorFilterObject[Comp] extends FromJson[Comp] {
+  def fromJson(j: JsValue) = {
+    fromType(j)(SerializableType.fromJson((j \ "type")))
+  }
+  private def fromType[Inner](j: JsValue)(implicit st: SerializableType[Inner]) = {
+    import st._
+    fromBound((j \ "bound").as[Inner])
+  }
+  def fromBound[Inner: SerializableType](bound: Inner): Comp
 }
-case class DoubleGT(bound: Double) extends Filter[Double] {
-  def matches(value: Double) = value > bound
-  override def toJson = Json.obj("bound" -> bound)
+abstract class ComparatorFilter[T: SerializableType](bound: T) extends Filter[T] {
+  val st = implicitly[SerializableType[T]]
+  implicit val ops = st.ordering.mkOrderingOps _
+  def matches(value: T): Boolean
+  override def toJson = Json.obj("bound" -> bound, "type" -> implicitly[SerializableType[T]].toJson)
 }
 
-object DoubleGE extends FromJson[DoubleGE] {
-  def fromJson(j: JsValue) = DoubleGE((j \ "bound").as[Double])
+object LT extends ComparatorFilterObject[LT[_]] {
+  override def fromBound[Inner: SerializableType](bound: Inner) = LT(bound)
 }
-case class DoubleGE(bound: Double) extends Filter[Double] {
-  def matches(value: Double) = value >= bound
-  override def toJson = Json.obj("bound" -> bound)
+case class LT[T: SerializableType](bound: T) extends ComparatorFilter[T](bound) {
+  def matches(value: T) = value < bound
+}
+object DoubleLT extends FromJson[LT[Double]] { // Backward compatibility
+  def fromJson(j: JsValue) = LT((j \ "bound").as[Double])(SerializableType[Double])
+}
+
+object LE extends ComparatorFilterObject[LE[_]] {
+  override def fromBound[Inner: SerializableType](bound: Inner) = LE(bound)
+}
+case class LE[T: SerializableType](bound: T) extends ComparatorFilter[T](bound) {
+  def matches(value: T) = value <= bound
+}
+object DoubleLE extends FromJson[LE[Double]] { // Backward compatibility
+  def fromJson(j: JsValue) = LE((j \ "bound").as[Double])(SerializableType[Double])
+}
+
+object GT extends ComparatorFilterObject[GT[_]] {
+  override def fromBound[Inner: SerializableType](bound: Inner) = GT(bound)
+}
+case class GT[T: SerializableType](bound: T) extends ComparatorFilter[T](bound) {
+  def matches(value: T) = value > bound
+}
+object DoubleGT extends FromJson[GT[Double]] { // Backward compatibility
+  def fromJson(j: JsValue) = GT((j \ "bound").as[Double])(SerializableType[Double])
+}
+
+object GE extends ComparatorFilterObject[GE[_]] {
+  override def fromBound[Inner: SerializableType](bound: Inner) = GE(bound)
+}
+case class GE[T: SerializableType](bound: T) extends ComparatorFilter[T](bound) {
+  def matches(value: T) = value >= bound
+}
+object DoubleGE extends FromJson[GE[Double]] { // Backward compatibility
+  def fromJson(j: JsValue) = GE((j \ "bound").as[Double])(SerializableType[Double])
 }
 
 object PairFilter extends FromJson[PairFilter[_, _]] {

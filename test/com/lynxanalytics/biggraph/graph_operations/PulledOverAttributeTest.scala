@@ -41,8 +41,8 @@ case class FakePull() extends TypedMetaGraphOp[FakePull.Input, FakePull.Output] 
 class PulledOverAttributeTest extends FunSuite with TestGraphOp {
   test("works with filters") {
     val g = ExampleGraph()().result
-
-    val fop = VertexAttributeFilter(DoubleGT(10))
+    implicit val d = SerializableType.double
+    val fop = VertexAttributeFilter(GT(10.0))
     val fopRes = fop(fop.attr, g.age).result
 
     val pop = PulledOverVertexAttribute[String]()

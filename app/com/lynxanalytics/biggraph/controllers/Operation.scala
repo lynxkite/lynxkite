@@ -13,6 +13,7 @@ import org.apache.spark
 
 import scala.collection.mutable
 import scala.reflect.runtime.universe._
+import java.util.UUID
 
 case class FEOperationMeta(
     id: String,
@@ -375,6 +376,10 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
     context.inputs(input).table
   }
 
+  protected def exportResultInput(input: String): Scalar[String] = {
+    context.inputs(input).exportResult
+  }
+
   protected def tableLikeInput(input: String) = new TableLikeInput(input)
 
   class TableLikeInput(name: String) {
@@ -554,7 +559,7 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
 }
 
 // An ExportOperation takes a Table as input and returns an ExportResult as output.
-abstract class ExportOperation(context: Operation.Context) extends SmartOperation(context) {
+abstract class ExportOperation(context: Operation.Context) extends TriggerableOperation(context) {
   assert(
     context.meta.inputs == List("table"),
     s"An ExportOperation must input a single table. $context")
@@ -564,7 +569,7 @@ abstract class ExportOperation(context: Operation.Context) extends SmartOperatio
 
   protected lazy val table = tableInput("table")
 
-  def apply() = ???
+  override def apply() = ???
   def exportResult: Scalar[String]
   val format: String
 
@@ -576,12 +581,16 @@ abstract class ExportOperation(context: Operation.Context) extends SmartOperatio
       context.meta.outputs(0)) -> BoxOutputState.from(exportResult, paramsToDisplay))
   }
 
-  override def getOutputs() = {
+  override def trigger(wc: WorkspaceController, gdc: GraphDrawingController) = {
+    gdc.getComputeBoxResult(List(exportResult.gUID))
+  }
+
+  override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     params.validate()
     makeOutput(exportResult)
   }
 
-  def enabled = FEStatus.enabled
+  override def enabled = FEStatus.enabled
 }
 
 abstract class ExportOperationToFile(context: Operation.Context)
@@ -618,21 +627,23 @@ abstract class TriggerableOperation(override val context: Operation.Context) ext
   // Triggers the side effects of this operation.
   def trigger(wc: WorkspaceController, gdc: GraphDrawingController): scala.concurrent.Future[Unit]
 
-  override def getOutputs() = {
+  override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     params.validate()
     Map()
   }
 
   // Helper method to get all gUIDs for an input state.
-  def getGUIDs(inputName: String) = {
+  def getGUIDs(inputName: String): List[UUID] = {
     val input = context.inputs(inputName)
     input.kind match {
       case BoxOutputKind.Project =>
         projectInput(inputName).allEntityGUIDs
       case BoxOutputKind.Table =>
         List(tableInput(inputName).gUID)
+      case BoxOutputKind.ExportResult =>
+        List(exportResultInput(inputName).gUID)
       case _ => throw new AssertionError(
-        s"Cannot use '${input.kind}' as input. Only 'table' and 'project' kinds are supported.")
+        s"Cannot use '${input.kind}' as input. Only 'table', 'project' and 'exportResult' kinds are supported.")
     }
   }
 }
