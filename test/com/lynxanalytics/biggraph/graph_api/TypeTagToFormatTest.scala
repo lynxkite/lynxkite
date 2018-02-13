@@ -1,7 +1,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import com.lynxanalytics.biggraph.controllers._
-import com.lynxanalytics.biggraph.graph_operations.{ DynamicValue, DoubleGT, VertexAttributeFilter }
+import com.lynxanalytics.biggraph.graph_operations.{ DynamicValue, GT, VertexAttributeFilter }
 import com.lynxanalytics.biggraph.spark_util.IDBuckets
 import org.scalatest.FunSuite
 
@@ -61,7 +61,8 @@ class TypeTagToFormatTest extends FunSuite {
   }
 
   test("TypeTag -> json conversions (JsonTraits)") {
-    val filter = VertexAttributeFilter[Double](DoubleGT(2))
+    implicit val d = SerializableType.double
+    val filter = VertexAttributeFilter[Double](GT(2.0))
     testTag(filter)
   }
 

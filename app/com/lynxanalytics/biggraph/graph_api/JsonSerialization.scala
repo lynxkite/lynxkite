@@ -133,11 +133,11 @@ object SerializableType {
     def compare(x: (T1, T2), y: (T1, T2)): Int = ???
   }
 
-  def vector(innerType: SerializableType[_]): SerializableType[_] = {
+  def vector[T](innerType: SerializableType[T]): SerializableType[Vector[T]] = {
     new VectorSerializableType(s"Vector[${innerType.getTypename}]")(innerType.typeTag)
   }
 
-  def tuple2(innerType1: SerializableType[_], innerType2: SerializableType[_]): SerializableType[_] = {
+  def tuple2[A, B](innerType1: SerializableType[A], innerType2: SerializableType[B]): SerializableType[(A, B)] = {
     new Tuple2SerializableType(s"Tuple2[${innerType1.getTypename},${innerType2.getTypename}]")(
       innerType1.typeTag, innerType2.typeTag)
   }
@@ -168,7 +168,8 @@ object SerializableType {
 class SerializableType[T] private[graph_api] (
     typename: String)(implicit
     val classTag: ClassTag[T],
-    val format: play.api.libs.json.Format[T],
+    // @transient drops this non-serializable field when sending to the executors.
+    @transient val format: play.api.libs.json.Format[T],
     val ordering: Ordering[T],
     val typeTag: TypeTag[T]) extends ToJson with Serializable {
   override def toJson = Json.obj("typename" -> typename)

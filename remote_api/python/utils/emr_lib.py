@@ -156,7 +156,7 @@ class EMRLib:
       time.sleep(15)
 
   def create_instance_description(self, spot, spot_bid_multiplier,
-                                  instance_type, instance_count, master):
+                                  instance_type, instance_count, master, ebs_volume_size=0):
     assert(not master or instance_count == 1)
     market = 'SPOT' if spot else 'ON_DEMAND'
     role = 'MASTER' if master else 'CORE'
@@ -168,6 +168,22 @@ class EMRLib:
         'InstanceType': instance_type,
         'InstanceCount': instance_count
     }
+
+    if ebs_volume_size > 0:
+      ebs_config = {
+          "EbsBlockDeviceConfigs": [
+              {
+                  "VolumeSpecification": {
+                      "SizeInGB": ebs_volume_size,
+                      "VolumeType": "gp2"
+                  },
+                  "VolumesPerInstance": 1
+              }
+          ],
+          "EbsOptimized": False
+      }
+      desc["EbsConfiguration"] = ebs_config
+
     if spot:
       if not self.on_demand_costs:
         self.on_demand_costs = get_on_demand_costs()
@@ -175,6 +191,23 @@ class EMRLib:
       our_bid = on_demand_price * spot_bid_multiplier
       desc['BidPrice'] = '{:.3f}'.format(our_bid)
     return desc
+
+  def get_placement(self):
+    """
+    If the availability zones for the current region include anything on our blacklist,
+    we return a placement specification that makes sure that any blacklisted item is avoided.
+    Otherwise, we return None and let AWS decide the zone for us.
+    """
+    blacklisted = set(['ap-southeast-1c'])
+    available_struct = self.ec2_client.describe_availability_zones()['AvailabilityZones']
+    available = set([x['ZoneName'] for x in available_struct])
+    if len(blacklisted & available) == 0:
+      return None
+    else:
+      possible_choices = available - blacklisted
+      assert len(possible_choices) > 0, "All possible availability zones are blacklisted!"
+      choice = list(possible_choices)[0]
+      return {'AvailabilityZone': choice}
 
   def create_or_connect_to_emr_cluster(
           self, name, log_uri, owner, expiry,
@@ -185,7 +218,8 @@ class EMRLib:
           master_instance_type='m3.2xlarge',
           spot=False,
           spot_bid_multiplier=1.0,
-          autoscaling_role=False):
+          autoscaling_role=False,
+          ebs_volume_size=0):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
@@ -208,7 +242,7 @@ class EMRLib:
     master_desc = self.create_instance_description(
         spot, spot_bid_multiplier, master_instance_type, 1, master=True)
     core_desc = self.create_instance_description(
-        spot, spot_bid_multiplier, core_instance_type, instance_count - 1, master=False)
+        spot, spot_bid_multiplier, core_instance_type, instance_count - 1, master=False, ebs_volume_size=ebs_volume_size)
 
     run_job_flow_args = {
         'Name': name,
@@ -267,7 +301,9 @@ class EMRLib:
             'Value': name
         }]
     }
-
+    placement = self.get_placement()
+    if placement:
+      run_job_flow_args['Instances'].update({'Placement': placement})
     if log_uri:
       run_job_flow_args['LogUri'] = log_uri
     if autoscaling_role:
