@@ -28,10 +28,14 @@ object ExecuteSQL extends OpFromJson {
     import spark.sql.catalyst.catalog._
     import spark.sql.catalyst.expressions._
     import spark.sql.catalyst.plans.logical._
+    import spark.sql._
     val sqlConf = new spark.sql.internal.SQLConf()
     val parser = new SparkSqlParser(sqlConf)
     val parsedPlan = parser.parsePlan(sqlQuery)
-    val catalog = new SessionCatalog(new InMemoryCatalog, FunctionRegistry.builtin, sqlConf)
+    val fr = FunctionRegistry.builtin
+    val reg = UDFHelper.udfRegistration(fr)
+    UDF.register(reg)
+    val catalog = new SessionCatalog(new InMemoryCatalog, fr, sqlConf)
     catalog.createDatabase(
       CatalogDatabase(
         name = "default", description = "", locationUri = new java.net.URI("loc"),
