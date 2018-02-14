@@ -246,7 +246,7 @@ class EMRLib:
 
     run_job_flow_args = {
         'Name': name,
-        'ReleaseLabel': 'emr-5.2.0',
+        'ReleaseLabel': 'emr-5.11.1',
         'Instances': {
             'Ec2KeyName': self.ec2_key_name,
             'KeepJobFlowAliveWhenNoSteps': True,
