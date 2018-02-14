@@ -323,6 +323,36 @@ class SQLTest extends OperationsTestBase {
     assert(x.gUID == y.gUID)
   }
 
+  test("user defined functions - hash") {
+    val t = runQueryOnExampleGraph("select hash(name, 'salt') from vertices")
+    assert(t.df.collect.toSeq.map(row => toSeq(row)) == Seq(
+      Seq("22B5B6740450B367DEDADC0EF5142F42E3BBAFAA19F8FDA1016E3DA0389CB0D8"),
+      Seq("FE3DA8E41069BE8068ACCD8AA32788D1037898114CBF213E851BD1DCDD15F092"),
+      Seq("11D690C14A747559DFFF9B63ACA0F894F338D3EEBEACCBDF7C6FFCABAEEAF6F0"),
+      Seq("33D6D5B65AC19814812586FAF9D1399DFB70D16EEB66702B62AB001B38CE3259")))
+  }
+
+  test("user defined functions - geodistance") {
+    val t = box("Create example graph")
+      .box("Derive vertex attribute", Map("output" -> "lat", "expr" -> "location._1"))
+      .box("Derive vertex attribute", Map("output" -> "lon", "expr" -> "location._2"))
+      .box("SQL1", Map("sql" -> "select geodistance(src_lat, src_lon, dst_lat, dst_lon) from edges")).table
+    assert(t.df.collect.toSeq.map(row => toSeq(row)) == Seq(
+      Seq(7023993.307994277), // New York / Budapest ~7k kilometers.
+      Seq(7023993.307994277),
+      Seq(1.5340398666732997E7), // New York / Singapore ~15k kilometers.
+      Seq(9507129.781908857))) // Budapest / Singapore ~ 9.5k kilometers.
+  }
+
+  test("user defined functions - dayofweek") {
+    val t = runQueryOnExampleGraph("""select
+      dayofweek('2018-01-01'),
+      dayofweek('2018-01-06'),
+      dayofweek('2018-01-07') from vertices""")
+    val s = t.df.collect.toSeq
+    assert(s(0) == List(2, 7, 1)) // Monday, Saturday, Sunday.
+  }
+
   SQLTestCases.list.foreach(query => test(query._1) {
     val one = box("Create example graph")
     val two = box("Create example graph")
