@@ -78,6 +78,7 @@ libraryDependencies ++= Seq(
   // The Google Cloud Storage connector for Spark and Hive
   "com.google.cloud.bigdataoss" % "gcs-connector" % "1.6.1-hadoop2",
   "org.geotools" % "gt-shapefile" % "16.1",
+  "org.geotools" % "gt-epsg-hsql" % "2.5.6",
   // Plot drawing
   "org.vegas-viz" %% "vegas" % "0.3.9",
   "org.vegas-viz" %% "vegas-spark" % "0.3.9")
