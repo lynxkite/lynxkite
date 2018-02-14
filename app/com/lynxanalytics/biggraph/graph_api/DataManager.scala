@@ -54,7 +54,11 @@ class DataManager(
   private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
-  lazy val masterSQLContext = sparkSession.sqlContext
+  lazy val masterSQLContext = {
+    val sqlContext = sparkSession.sqlContext
+    UDF.register(sqlContext.udf)
+    sqlContext
+  }
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
@@ -454,12 +458,8 @@ class DataManager(
 
   def newSQLContext(): SQLContext = {
     val sqlContext = masterSQLContext.newSession()
-    registerUDFs(sqlContext)
+    UDF.register(sqlContext.udf)
     sqlContext
-  }
-
-  private def registerUDFs(sqlContext: SQLContext) = {
-    UDF.register(sqlContext)
   }
 
   def compute(entities: List[MetaGraphEntity]): SafeFuture[Unit] = {
