@@ -350,7 +350,7 @@ class SQLTest extends OperationsTestBase {
       dayofweek('2018-01-06'),
       dayofweek('2018-01-07') from vertices""")
     val s = t.df.collect.toSeq
-    assert(s(0) == List(2, 7, 1)) // Monday, Saturday, Sunday.
+    assert(s(0).toSeq == Seq(2, 7, 1)) // Monday, Saturday, Sunday.
   }
 
   SQLTestCases.list.foreach(query => test(query._1) {
