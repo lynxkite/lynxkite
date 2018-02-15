@@ -67,7 +67,9 @@ object UDF {
     }
 
     override def evaluate(buffer: Row): Any = {
-      buffer.getAs[Map[String, Long]](0).maxBy(_._2)._1
+      // Select the max key by value first then key. This still yields deterministic results
+      // in case we have multiple elements with the same frequency.
+      buffer.getAs[Map[String, Long]](0).maxBy(_.swap)._1
     }
   }
   def register(reg: UDFRegistration): Unit = {
