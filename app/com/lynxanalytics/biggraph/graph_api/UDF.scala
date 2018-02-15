@@ -34,6 +34,12 @@ object UDF {
   }
 
   import org.apache.spark.sql.expressions.UserDefinedAggregateFunction
+  /**
+   * Custom aggregator for SQL queries.
+   *
+   * Computes the most frequent value in a String column.
+   * Null values are not counted.
+   */
   class MostCommon extends UserDefinedAggregateFunction {
     import org.apache.spark.sql.expressions.MutableAggregationBuffer
     import org.apache.spark.sql.Row
