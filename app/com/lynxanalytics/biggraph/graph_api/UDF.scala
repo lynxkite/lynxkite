@@ -54,8 +54,11 @@ object UDF {
 
     override def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
       val map = buffer.getAs[Map[String, Long]](0)
-      val key = input.getString(0)
-      buffer(0) = map + (key -> (map.getOrElse(key, 0L) + 1L))
+      Option(input.getString(0)) match {
+        case Some(key) =>
+          buffer(0) = map + (key -> (map.getOrElse(key, 0L) + 1L))
+        case None =>
+      }
     }
 
     override def merge(buffer1: MutableAggregationBuffer, buffer2: Row): Unit = {
@@ -65,7 +68,11 @@ object UDF {
     override def evaluate(buffer: Row): Any = {
       // Select the max key by value first then key. This still yields deterministic results
       // in case we have multiple elements with the same frequency.
-      buffer.getAs[Map[String, Long]](0).maxBy(_.swap)._1
+      if (!buffer.getAs[Map[String, Long]](0).isEmpty) {
+        buffer.getAs[Map[String, Long]](0).maxBy(_.swap)._1
+      } else {
+        null
+      }
     }
   }
 
