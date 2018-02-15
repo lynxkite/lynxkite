@@ -68,8 +68,9 @@ object UDF {
     override def evaluate(buffer: Row): Any = {
       // Select the max key by value first then key. This still yields deterministic results
       // in case we have multiple elements with the same frequency.
-      if (!buffer.getAs[Map[String, Long]](0).isEmpty) {
-        buffer.getAs[Map[String, Long]](0).maxBy(_.swap)._1
+      val map = buffer.getAs[Map[String, Long]](0)
+      if (!map.isEmpty) {
+        map.maxBy(_.swap)._1
       } else {
         null
       }
