@@ -353,6 +353,11 @@ class SQLTest extends OperationsTestBase {
     assert(s(0).toSeq == Seq(2, 7, 1)) // Monday, Saturday, Sunday.
   }
 
+  test("user defined aggr functions - most_common") {
+    val t = runQueryOnExampleGraph("select most_common(gender) from vertices")
+    assert(t.df.collect.toSeq.map(row => toSeq(row)) == Seq(Seq("Male")))
+  }
+
   SQLTestCases.list.foreach(query => test(query._1) {
     val one = box("Create example graph")
     val two = box("Create example graph")
