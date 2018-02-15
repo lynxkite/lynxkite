@@ -49,17 +49,13 @@ object UDF {
     override def deterministic: Boolean = true
 
     override def initialize(buffer: MutableAggregationBuffer): Unit = {
-      buffer(0) = Map()
+      buffer(0) = Map[String, Long]()
     }
 
     override def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
       val map = buffer.getAs[Map[String, Long]](0)
       val key = input.getString(0)
-      if (map.contains(key)) {
-        buffer(0) = map + (key -> (map(key) + 1L))
-      } else {
-        buffer(0) = map + (key -> 1L)
-      }
+      buffer(0) = map + (key -> (map.getOrElse(key, 0L) + 1L))
     }
 
     override def merge(buffer1: MutableAggregationBuffer, buffer2: Row): Unit = {
@@ -72,6 +68,7 @@ object UDF {
       buffer.getAs[Map[String, Long]](0).maxBy(_.swap)._1
     }
   }
+
   def register(reg: UDFRegistration): Unit = {
     reg.register("hash", hash _)
     reg.register("dayofweek", dayofweek _)
