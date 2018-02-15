@@ -113,6 +113,7 @@ case class ExecuteSQL(
     val sqlContext = rc.dataManager.masterSQLContext // TODO: Use a newSQLContext() instead.
     val dfs = inputs.tables.map { t => t.name.name -> t.df }
     val df = DataManager.sql(sqlContext, sqlQuery, dfs.toList)
+    print(sqlQuery)
     output(o.t, df)
   }
 }
