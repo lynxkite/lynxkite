@@ -54,6 +54,13 @@ def random_ws_folder():
       ''.join(random.choice('0123456789ABCDEF') for i in range(16)))
 
 
+def path_join(folder, name):
+  '''Creates a LynxKite path from the base folder and the name.'''
+  if folder == '':  # Absolute paths do not start with '/' in LK.
+    return name
+  return folder + name if folder[-1:] == '/' else folder + '/' + name
+
+
 class TableSnapshotSequence:
   '''A snapshot sequence representing a list of table type snapshots in LynxKite.
 
@@ -219,14 +226,13 @@ class State:
     Uses a temporary folder to save a temporary workspace for this computation.
     '''
     folder = random_ws_folder()
-    folder_with_slash = folder + '/'
     name = 'tmp_ws_name'
+    full_path = path_join(folder, name)
     box = self.computeInputs()
     lk = self.box.lk
     ws = Workspace(name, [box])
-    lk.save_workspace_recursively(ws, folder_with_slash)
-    lk.trigger_box(folder_with_slash + name, 'box_0')
-    # We need the folder name without the trailing '/'.
+    lk.save_workspace_recursively(ws, folder)
+    lk.trigger_box(full_path, 'box_0')
     lk.remove_name(folder, force=True)
 
   def save_snapshot(self, path):
@@ -298,7 +304,7 @@ class Box:
     if isinstance(self.operation, str):
       operationId = self.bc.operation_id(self.operation)
     else:
-      operationId = workspace_root + self.operation.name()
+      operationId = path_join(workspace_root, self.operation.name())
     return {
         'id': id_resolver(self),
         'operationId': operationId,
@@ -853,7 +859,7 @@ class LynxKite:
   def save_workspace_recursively(self, ws, save_under_root=None):
     ws_root = save_under_root
     if ws_root is None:
-      ws_root = random_ws_folder() + '/'
+      ws_root = random_ws_folder()
     needed_ws = set()
     ws_queue = queue.Queue()
     ws_queue.put(ws)
@@ -865,12 +871,12 @@ class LynxKite:
           ws_queue.put(rws)
     for rws in needed_ws:
       self.save_workspace(
-          ws_root + rws.name(), layout(rws.to_json(ws_root)))
+          path_join(ws_root, rws.name()), layout(rws.to_json(ws_root)))
     if save_under_root is not None:
       self.save_workspace(
-          save_under_root + ws.name(), layout(ws.to_json(save_under_root)))
+          path_join(save_under_root, ws.name()), layout(ws.to_json(save_under_root)))
     # If saved, we return the full name of the main workspace also.
-    return ws_root, (save_under_root is not None) and save_under_root + ws.name()
+    return ws_root, (save_under_root is not None) and path_join(save_under_root, ws.name())
 
   def run_workspace(self, ws, save_under_root=None):
     ws_root, _ = self.save_workspace_recursively(ws, save_under_root)
