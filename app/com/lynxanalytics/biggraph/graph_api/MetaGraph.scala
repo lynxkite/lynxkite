@@ -667,6 +667,7 @@ class TableData(
     val entity: Table,
     val df: spark.sql.DataFrame)
   extends EntityData {
+  lazy val count: Option[Long] = Some(df.rdd.count)
   val table = entity
 }
 

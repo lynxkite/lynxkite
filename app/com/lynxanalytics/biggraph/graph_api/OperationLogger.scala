@@ -14,8 +14,8 @@ class OperationLogger(
     instance: MetaGraphOperationInstance,
     implicit val ec: ExecutionContextExecutorService) {
   private val marker = "OPERATION_LOGGER_MARKER"
-  case class OutputInfo(name: String, gUID: String, partitions: Option[Int], count: Option[Long])
-  case class InputInfo(name: String, gUID: String, partitions: Option[Int], count: Option[Long])
+  case class OutputInfo(name: String, gUID: String, partitions: Int, count: Option[Long])
+  case class InputInfo(name: String, gUID: String, partitions: Int, count: Option[Long])
 
   private val outputInfoList = scala.collection.mutable.Queue[SafeFuture[OutputInfo]]()
   private val inputInfoList = scala.collection.mutable.Queue[InputInfo]()
@@ -36,10 +36,14 @@ class OperationLogger(
             OutputInfo(
               rddData.entity.name.name,
               rddData.entity.gUID.toString,
-              Some(rddData.rdd.partitions.size),
+              rddData.rdd.partitions.size,
               rddData.count)
           case table: TableData =>
-            OutputInfo(table.entity.name.name, table.entity.gUID.toString, None, None)
+            OutputInfo(
+              table.entity.name.name,
+              table.entity.gUID.toString,
+              table.df.rdd.partitions.size,
+              table.count)
           case _ => throw new AssertionError(s"Cannot add output: $output")
         }
     }
@@ -61,10 +65,15 @@ class OperationLogger(
           InputInfo(
             name,
             rddData.entity.gUID.toString,
-            Some(rddData.rdd.partitions.size),
+            rddData.rdd.partitions.size,
             rddData.count)
-      case tableData: TableData =>
-        inputInfoList += InputInfo(name, tableData.entity.gUID.toString, None, None)
+      case table: TableData =>
+        inputInfoList +=
+          InputInfo(
+            name,
+            table.entity.gUID.toString,
+            table.df.rdd.partitions.size,
+            table.count
       case _ => // Ignore scalars
     }
   }
