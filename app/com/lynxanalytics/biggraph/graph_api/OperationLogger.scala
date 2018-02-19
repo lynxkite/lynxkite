@@ -73,7 +73,7 @@ class OperationLogger(
             name,
             table.entity.gUID.toString,
             table.df.rdd.partitions.size,
-            table.count
+            table.count)
       case _ => // Ignore scalars
     }
   }
