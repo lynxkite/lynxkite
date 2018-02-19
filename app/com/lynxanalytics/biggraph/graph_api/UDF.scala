@@ -33,6 +33,11 @@ object UDF {
     gc.getOrthodromicDistance()
   }
 
+  // Returns the intersection of the sets of Strings.
+  def string_intersect(set1: Seq[String], set2: Seq[String]): Seq[String] = {
+    for (v <- set1 if set2 contains v) yield v
+  }
+
   import org.apache.spark.sql.expressions.UserDefinedAggregateFunction
   /**
    * Custom aggregator for SQL queries.
@@ -87,6 +92,7 @@ object UDF {
     reg.register("hash", hash _)
     reg.register("dayofweek", dayofweek _)
     reg.register("geodistance", geodistance _)
+    reg.register("string_intersect", string_intersect _)
     reg.register("most_common", new MostCommon)
   }
 }
