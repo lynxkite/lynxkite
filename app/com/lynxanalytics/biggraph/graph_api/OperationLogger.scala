@@ -28,7 +28,7 @@ class OperationLogger(
     stopTime - startTime
   }
 
-  def addOutput(output: SafeFuture[EntityData]): Unit = outputInfoList.synchronized {
+  def addOutput(output: SafeFuture[EntityData]): Unit = {
     outputInfoList += output.map {
       o =>
         o match {
