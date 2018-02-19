@@ -353,6 +353,30 @@ class SQLTest extends OperationsTestBase {
     assert(s(0).toSeq == Seq(2, 7, 1)) // Monday, Saturday, Sunday.
   }
 
+  test("user defined functions - string_intersect") {
+    val one = box("Create example graph").box(
+      "SQL1",
+      Map("sql" -> """select collect_set(name) as names
+                      from `vertices`
+                      where gender = 'Male'"""))
+    val two = box("Create example graph").box(
+      "SQL1",
+      Map("sql" -> """select collect_set(name) as names
+                      from `vertices`
+                      where income > 0"""))
+    val table = box("SQL2", Map("sql" -> """
+      select string_intersect(one.names, two.names) as si
+      from one cross join two
+      """), Seq(one, two)).table
+    assert(table.schema.map(_.name) == Seq("si"))
+    val data = table.df.collect.toSeq.map(row => toSeq(row))
+    def flatten(ls: Seq[Any]): Seq[Any] = ls flatMap {
+      case i: Seq[_] => flatten(i)
+      case e => Seq(e)
+    }
+    assert(flatten(data).toSet == Set("Adam", "Bob"))
+  }
+
   test("user defined aggr functions - most_common") {
     val t = runQueryOnExampleGraph("select most_common(gender) from vertices")
     assert(t.df.collect.toSeq.map(row => toSeq(row)) == Seq(Seq("Male")))
