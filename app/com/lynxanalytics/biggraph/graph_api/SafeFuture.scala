@@ -8,6 +8,8 @@ package com.lynxanalytics.biggraph.graph_api
 import scala.concurrent._
 import scala.util._
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+
 object SafeFuture {
   def apply[T](func: => T)(implicit ec: ExecutionContext) =
     new SafeFuture(unwrapException(Future { wrapException(func) }))
@@ -27,7 +29,9 @@ object SafeFuture {
 
   private def wrapException[A, B](func: A => B): A => B = { a =>
     try func(a) catch {
-      case t: Throwable => throw new Wrapper(t)
+      case t: Throwable =>
+        log.error(s"SafeFuture failed:", t)
+        throw new Wrapper(t)
     }
   }
 
