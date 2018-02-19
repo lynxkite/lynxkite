@@ -14,8 +14,8 @@ class OperationLogger(
     instance: MetaGraphOperationInstance,
     implicit val ec: ExecutionContextExecutorService) {
   private val marker = "OPERATION_LOGGER_MARKER"
-  case class OutputInfo(name: String, gUID: String, partitions: Int, count: Option[Long])
-  case class InputInfo(name: String, gUID: String, partitions: Int, count: Option[Long])
+  case class OutputInfo(name: String, gUID: String, partitions: Option[Int], count: Option[Long])
+  case class InputInfo(name: String, gUID: String, partitions: Option[Int], count: Option[Long])
 
   private val outputInfoList = scala.collection.mutable.Queue[SafeFuture[OutputInfo]]()
   private val inputInfoList = scala.collection.mutable.Queue[InputInfo]()
@@ -28,15 +28,20 @@ class OperationLogger(
     stopTime - startTime
   }
 
-  def addOutput(output: SafeFuture[EntityData]): Unit = {
+  def addOutput(output: SafeFuture[EntityData]): Unit = outputInfoList.synchronized {
     outputInfoList += output.map {
       o =>
-        val rddData = o.asInstanceOf[EntityRDDData[_]]
-        OutputInfo(
-          rddData.entity.name.name,
-          rddData.entity.gUID.toString,
-          rddData.rdd.partitions.size,
-          rddData.count)
+        o match {
+          case rddData: EntityRDDData[_] =>
+            OutputInfo(
+              rddData.entity.name.name,
+              rddData.entity.gUID.toString,
+              Some(rddData.rdd.partitions.size),
+              rddData.count)
+          case table: TableData =>
+            OutputInfo(table.entity.name.name, table.entity.gUID.toString, None, None)
+          case _ => throw new AssertionError(s"Cannot add output: $output")
+        }
     }
   }
 
@@ -56,8 +61,10 @@ class OperationLogger(
           InputInfo(
             name,
             rddData.entity.gUID.toString,
-            rddData.rdd.partitions.size,
+            Some(rddData.rdd.partitions.size),
             rddData.count)
+      case tableData: TableData =>
+        inputInfoList += InputInfo(name, tableData.entity.gUID.toString, None, None)
       case _ => // Ignore scalars
     }
   }
