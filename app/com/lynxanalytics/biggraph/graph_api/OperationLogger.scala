@@ -80,12 +80,12 @@ class OperationLogger(
 
   def logWhenReady(controlledFutures: ControlledFutures): Unit = {
     val outputsFuture = SafeFuture.sequence(outputInfoList)
-    outputsFuture.map {
-      outputs =>
-        controlledFutures.register {
-          dump(outputs)
-        }
+    for (outputs <- outputsFuture) {
+      controlledFutures.register {
+        dump(outputs)
+      }
     }
+    outputsFuture.logFailure
   }
 
   private def dump(outputs: Seq[OutputInfo]): Unit = {
