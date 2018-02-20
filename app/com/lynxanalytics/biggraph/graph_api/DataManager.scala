@@ -475,8 +475,7 @@ class DataManager(
   // (if needed) with the usual Spark/LynxKite caching and parallelism mechanisms.
   def computeSequentially(entities: List[MetaGraphEntity]): SafeFuture[Unit] = {
     entities.foldLeft(SafeFuture(()))((f: SafeFuture[Unit], e: MetaGraphEntity) => {
-      getFuture(e).awaitResult(Duration.Inf)
-      f
+      f.map(_ => getFuture(e).awaitResult(Duration.Inf))
     })
   }
 }
