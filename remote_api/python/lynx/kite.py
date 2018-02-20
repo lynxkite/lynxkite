@@ -30,6 +30,7 @@ import calendar
 from croniter import croniter
 import datetime
 import inspect
+import re
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
@@ -54,11 +55,9 @@ def random_ws_folder():
       ''.join(random.choice('0123456789ABCDEF') for i in range(16)))
 
 
-def path_join(folder, name):
-  '''Creates a LynxKite path from the base folder and the name.'''
-  if folder == '':  # Absolute paths do not start with '/' in LK.
-    return name
-  return folder + name if folder[-1:] == '/' else folder + '/' + name
+def normalize_path(path):
+  '''Removes leading, trailing slashes and slash-duplicates.'''
+  return re.sub('/+', '/', path).lstrip('/').rstrip('/')
 
 
 class TableSnapshotSequence:
@@ -227,7 +226,7 @@ class State:
     '''
     folder = random_ws_folder()
     name = 'tmp_ws_name'
-    full_path = path_join(folder, name)
+    full_path = folder + '/' + name
     box = self.computeInputs()
     lk = self.box.lk
     ws = Workspace(name, [box])
@@ -304,7 +303,8 @@ class Box:
     if isinstance(self.operation, str):
       operationId = self.bc.operation_id(self.operation)
     else:
-      operationId = path_join(workspace_root, self.operation.name())
+      # path//custom_box is not a valid name
+      operationId = normalize_path(workspace_root + '/' + self.operation.name())
     return {
         'id': id_resolver(self),
         'operationId': operationId,
@@ -449,7 +449,8 @@ class WorkspaceSequence:
     self._input_recipes = input_recipes
     self._output_sequences = {}
     for output in self._ws.outputs():
-      self._output_sequences[output] = TableSnapshotSequence(self._lk_root + output, self._schedule)
+      location = normalize_path(self._lk_root + '/' + output)
+      self._output_sequences[output] = TableSnapshotSequence(location, self._schedule)
 
   def output_sequences(self):
     '''Returns the output sequences of hte workspace sequence as a dict.'''
@@ -478,7 +479,8 @@ class WorkspaceSequenceInstance:
     self._date = date
 
   def full_name(self):
-    return self._wss.lk_root() + self._wss._wrapper_name(self._date)
+    name = self._wss.lk_root() + '/' + self._wss._wrapper_name(self._date)
+    return normalize_path(name)
 
   def is_saved(self):
     path = self.full_name()
@@ -871,12 +873,13 @@ class LynxKite:
           ws_queue.put(rws)
     for rws in needed_ws:
       self.save_workspace(
-          path_join(ws_root, rws.name()), layout(rws.to_json(ws_root)))
+          ws_root + '/' + rws.name(), layout(rws.to_json(ws_root)))
     if save_under_root is not None:
       self.save_workspace(
-          path_join(save_under_root, ws.name()), layout(ws.to_json(save_under_root)))
+          save_under_root + '/' + ws.name(), layout(ws.to_json(save_under_root)))
     # If saved, we return the full name of the main workspace also.
-    return ws_root, (save_under_root is not None) and path_join(save_under_root, ws.name())
+    return ws_root, (save_under_root is not None) and normalize_path(
+        save_under_root + '/' + ws.name())
 
   def run_workspace(self, ws, save_under_root=None):
     ws_root, _ = self.save_workspace_recursively(ws, save_under_root)
@@ -939,6 +942,7 @@ class LynxKite:
         params=dict(q=json.dumps(dict(path=path, stripHeaders=False)))).content
 
   def save_workspace(self, path, boxes, overwrite=True):
+    path = normalize_path(path)
     if not overwrite or not self.get_directory_entry(path).exists:
       self._send('/ajax/createWorkspace', dict(name=path))
     return self._send(
