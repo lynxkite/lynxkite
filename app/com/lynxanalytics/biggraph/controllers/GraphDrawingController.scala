@@ -721,7 +721,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
   def getComputeBoxResult(gUIDs: List[java.util.UUID]): scala.concurrent.Future[Unit] = {
     val entities = gUIDs.map { guid => metaManager.entity(guid) }
-    dataManager.compute(entities).future
+    dataManager.computeSequentially(entities).future
   }
 
   private def dynamicValue[T](scalar: ScalarData[T]) = {
