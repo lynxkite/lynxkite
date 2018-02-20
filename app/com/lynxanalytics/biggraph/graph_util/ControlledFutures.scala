@@ -9,21 +9,23 @@ import scala.concurrent.ExecutionContextExecutorService
 import scala.concurrent.duration.Duration
 
 class ControlledFutures(implicit val executionContext: ExecutionContextExecutorService) {
-  private val controlledFutures = collection.mutable.Map[Object, SafeFuture[Unit]]()
+  private val controlledFutures = collection.mutable.Map[Object, SafeFuture[Any]]()
 
-  def register(func: => Unit): Unit = synchronized {
+  def registerFuture(future: SafeFuture[Any]): Unit = synchronized {
     val key = new Object
-
-    val future = SafeFuture {
-      try {
-        func
-      } catch {
-        case t: Throwable => log.error("Future failed: ", t)
-      } finally synchronized {
+    controlledFutures.put(key, future)
+    future.onFailure {
+      case t: Throwable => log.error("Future failed: ", t)
+    }
+    future.onComplete { result =>
+      synchronized {
         controlledFutures.remove(key)
       }
     }
-    controlledFutures.put(key, future)
+  }
+
+  def register(func: => Unit): Unit = {
+    registerFuture(SafeFuture { func })
   }
 
   def waitAllFutures() = {
