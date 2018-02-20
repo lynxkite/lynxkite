@@ -26,6 +26,7 @@ class TestWorkspaceSequence(unittest.TestCase):
         schedule='0 0 * * *',
         start_date=datetime(2018, 1, 1),
         params={},
+        # Test if trailing slash is duplicated or not.
         lk_root='ws_test_seq/',
         dfs_root='',
         input_recipes=[input_recipe])
@@ -63,7 +64,7 @@ class TestWorkspaceSequence(unittest.TestCase):
         schedule='0 0 * * *',
         start_date=datetime(2018, 1, 1),
         params={},
-        lk_root='eg_cnt/',
+        lk_root='eg_cnt',
         dfs_root='',
         input_recipes=[input_recipe])
     wss_instance = wss.ws_for_date(lk, test_date)
@@ -91,7 +92,7 @@ class TestWorkspaceSequence(unittest.TestCase):
         schedule='0 0 * * *',
         start_date=datetime(2018, 1, 1),
         params={},
-        lk_root='ws_test_seq_2/',
+        lk_root='ws_test_seq_2',
         dfs_root='',
         input_recipes=[summa_with_default])
     summa_as_input.set_tss(wss.output_sequences()['summa'])
