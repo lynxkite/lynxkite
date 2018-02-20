@@ -462,20 +462,13 @@ class DataManager(
     sqlContext
   }
 
-  // Returns a SafeFuture which computes the data for all entities parallel.
-  def computeParallel(entities: List[MetaGraphEntity]): SafeFuture[Unit] = {
-    SafeFuture.sequence(entities.map { entity =>
-      getFuture(entity)
-    }).map(_ => ())
-  }
-
   // Returns a SafeFuture which computes the data for all entities sequentially.
   // This means, that the computation for one entity gets triggered only after the computation for
   // the previous one is completed, but dependencies of these entities are still computed
   // (if needed) with the usual Spark/LynxKite caching and parallelism mechanisms.
   def computeSequentially(entities: List[MetaGraphEntity]): SafeFuture[Unit] = {
     entities.foldLeft(SafeFuture(()))((f: SafeFuture[Unit], e: MetaGraphEntity) => {
-      f.map(_ => getFuture(e).awaitResult(Duration.Inf))
+      f.flatMap(_ => getFuture(e)).map(_ => ())
     })
   }
 }
