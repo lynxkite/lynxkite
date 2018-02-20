@@ -29,9 +29,7 @@ object SafeFuture {
 
   private def wrapException[A, B](func: A => B): A => B = { a =>
     try func(a) catch {
-      case t: Throwable =>
-        log.error(s"SafeFuture failed:", t)
-        throw new Wrapper(t)
+      case t: Throwable => throw new Wrapper(t)
     }
   }
 
@@ -67,4 +65,9 @@ class SafeFuture[+T] private (val future: Future[T]) {
 
   def zip[U](other: SafeFuture[U]): SafeFuture[(T, U)] =
     new SafeFuture(future.zip(other.future))
+
+  // Convenience method for logging exceptions.
+  def logFailure()(implicit ec: ExecutionContext) = onFailure {
+    case t: Throwable => log.error("SafeFuture failed:", t)
+  }
 }
