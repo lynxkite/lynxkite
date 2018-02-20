@@ -3,7 +3,7 @@
 
 if [ -n "${HTTPS_PORT:-}" ]; then
   export LYNXKITE_ADDRESS="https://localhost:$HTTPS_PORT/"
-  export LYNXKITE_PUBLIC_SSL_CERT='../../test/localhost.self-signed.cert.pub'
+  export LYNXKITE_PUBLIC_SSL_CERT="../../test/localhost.self-signed.cert.pub"
 else
   export LYNXKITE_ADDRESS="http://localhost:${PORT:-2200}/"
 fi

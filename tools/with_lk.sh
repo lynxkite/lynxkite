@@ -9,6 +9,9 @@ if [ ! -f "$(dirname $0)/../stage.sh" ]; then
   exit 1
 fi
 
+# Existing /tmp/kite_pipe throws an error on Mac OS.
+rm -f /tmp/kite_pipe_
+
 # Make sure Spark is installed.
 $(dirname $0)/install_spark.sh
 
