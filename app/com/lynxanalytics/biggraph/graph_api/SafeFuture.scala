@@ -53,6 +53,8 @@ class SafeFuture[+T] private (val future: Future[T]) {
   def awaitReady(atMost: duration.Duration): Unit = Await.ready(future, atMost)
 
   // Simple forwarding for methods that do not create a new Future.
+  def onComplete[U](f: Try[T] => U)(implicit ec: ExecutionContext) =
+    future.onComplete(f)
   def onFailure[U](pf: PartialFunction[Throwable, U])(implicit ec: ExecutionContext) =
     future.onFailure(pf)
 
@@ -65,9 +67,4 @@ class SafeFuture[+T] private (val future: Future[T]) {
 
   def zip[U](other: SafeFuture[U]): SafeFuture[(T, U)] =
     new SafeFuture(future.zip(other.future))
-
-  // Convenience method for logging exceptions.
-  def logFailure()(implicit ec: ExecutionContext) = onFailure {
-    case t: Throwable => log.error("SafeFuture failed:", t)
-  }
 }
