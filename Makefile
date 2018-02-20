@@ -36,6 +36,8 @@ $(pip): python_requirements.txt
 	chronomaster/test.sh && touch $@
 .build/remote_api-python-test-passed: $(shell $(find) remote_api/python) .build/backend-done $(pip)
 	tools/with_lk.sh remote_api/python/test.sh && touch $@
+.build/mobile-prepaid-scv-test-passed: $(shell $(find) mobile-prepaid-scv/tests) .build/backend-done $(pip)
+	tools/with_lk.sh mobile-prepaid-scv/tests/unit_test.sh && touch $@
 .build/documentation-done-${VERSION}: $(shell $(find) ecosystem/documentation remote_api/python) python_requirements.txt
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
