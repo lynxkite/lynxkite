@@ -57,7 +57,7 @@ def random_ws_folder():
 
 def normalize_path(path):
   '''Removes leading, trailing slashes and slash-duplicates.'''
-  return re.sub('/+', '/', path).lstrip('/').rstrip('/')
+  return re.sub('/+', '/', path).strip('/')
 
 
 class TableSnapshotSequence:
