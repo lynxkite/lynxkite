@@ -219,7 +219,8 @@ class EMRLib:
           spot=False,
           spot_bid_multiplier=1.0,
           autoscaling_role=False,
-          ebs_volume_size=0):
+          master_ebs_volume_size=0,
+          core_ebs_volume_size=0):
     list = self.emr_client.list_clusters(
         ClusterStates=['RUNNING', 'WAITING'])
     for cluster in list['Clusters']:
@@ -240,9 +241,13 @@ class EMRLib:
     if applications:
       emr_applications = [{'Name': app} for app in applications.split(',')]
     master_desc = self.create_instance_description(
-        spot, spot_bid_multiplier, master_instance_type, 1, master=True)
+        spot, spot_bid_multiplier, master_instance_type, 1, master=True,
+        ebs_volume_size=master_ebs_volume_size
+    )
     core_desc = self.create_instance_description(
-        spot, spot_bid_multiplier, core_instance_type, instance_count - 1, master=False, ebs_volume_size=ebs_volume_size)
+        spot, spot_bid_multiplier, core_instance_type, instance_count - 1, master=False,
+        ebs_volume_size=core_ebs_volume_size
+    )
 
     run_job_flow_args = {
         'Name': name,
