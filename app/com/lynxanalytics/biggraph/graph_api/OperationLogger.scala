@@ -43,7 +43,7 @@ class OperationLogger(
               table.entity.name.name,
               table.entity.gUID.toString,
               table.df.rdd.partitions.size,
-              table.count)
+              None)
           case _ => throw new AssertionError(s"Cannot add output: $output")
         }
     }
@@ -73,7 +73,7 @@ class OperationLogger(
             name,
             table.entity.gUID.toString,
             table.df.rdd.partitions.size,
-            table.count)
+            None)
       case _ => // Ignore scalars
     }
   }
