@@ -66,7 +66,7 @@ remote_api-test: .build/remote_api-python-test-passed
 .PHONY: mobile-prepaid-scv-test
 mobile-prepaid-scv-test: .build/mobile-prepaid-scv-test-passed
 .PHONY: ecosystem-test
-ecosystem-test: remote_api-test mobile-prepaid-scv-test # TODO: Luigi tests.
+ecosystem-test: remote_api-test mobile-prepaid-scv-test
 .PHONY: test
 test: backend-test frontend-test ecosystem-test
 .PHONY: big-data-test

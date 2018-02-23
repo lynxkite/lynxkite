@@ -41,7 +41,7 @@ if [ -f "${KITE_SITE_CONFIG_OVERRIDES}" ]; then
 fi
 
 randomString () {
-    echo `cat /dev/urandom | od -x --read-bytes=16  --address-radix=n | tr -d " \n"`
+  python -c "import os,binascii;print(binascii.b2a_hex(os.urandom(16)))"
 }
 
 if [ -n "$KITE_APPLICATION_SECRET" ]; then
