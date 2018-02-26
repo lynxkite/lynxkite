@@ -31,12 +31,21 @@ class OperationLogger(
   def addOutput(output: SafeFuture[EntityData]): Unit = {
     outputInfoList += output.map {
       o =>
-        val rddData = o.asInstanceOf[EntityRDDData[_]]
-        OutputInfo(
-          rddData.entity.name.name,
-          rddData.entity.gUID.toString,
-          rddData.rdd.partitions.size,
-          rddData.count)
+        o match {
+          case rddData: EntityRDDData[_] =>
+            OutputInfo(
+              rddData.entity.name.name,
+              rddData.entity.gUID.toString,
+              rddData.rdd.partitions.size,
+              rddData.count)
+          case table: TableData =>
+            OutputInfo(
+              table.entity.name.name,
+              table.entity.gUID.toString,
+              table.df.rdd.partitions.size,
+              None)
+          case _ => throw new AssertionError(s"Cannot add output: $output")
+        }
     }
   }
 
@@ -58,17 +67,23 @@ class OperationLogger(
             rddData.entity.gUID.toString,
             rddData.rdd.partitions.size,
             rddData.count)
+      case table: TableData =>
+        inputInfoList +=
+          InputInfo(
+            name,
+            table.entity.gUID.toString,
+            table.df.rdd.partitions.size,
+            None)
       case _ => // Ignore scalars
     }
   }
 
   def logWhenReady(controlledFutures: ControlledFutures): Unit = {
     val outputsFuture = SafeFuture.sequence(outputInfoList)
-    outputsFuture.map {
-      outputs =>
-        controlledFutures.register {
-          dump(outputs)
-        }
+    controlledFutures.registerFuture {
+      outputsFuture.map {
+        outputs => dump(outputs)
+      }
     }
   }
 
