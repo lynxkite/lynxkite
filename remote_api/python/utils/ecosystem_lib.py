@@ -381,7 +381,7 @@ class Ecosystem:
   def install_extra_python_dependencies(self, requirements):
     self.cluster.rsync_up(requirements, '.')
     file_name = os.path.basename(requirements)
-    self.cluster.ssh('sudo pip-3.4 install --upgrade -r {}'.format(file_name))
+    self.cluster.ssh('sudo pip-3.6 install --upgrade -r {}'.format(file_name))
 
   def upload_tasks(self, src, dst='/mnt/lynx/luigi_tasks/'):
     self.cluster.ssh('mkdir -p ' + dst)
@@ -429,10 +429,10 @@ class Ecosystem:
     self.cluster.ssh('''
     set -x
     cd /mnt/lynx
-    sudo yum install -y python34-pip mysql-server gcc libffi-devel
+    sudo yum install -y python36 python36-devel python36-pip mysql-server gcc libffi-devel
     # Removes the given and following lines so only the necessary modules will be installed.
     sed -i -n '/# Dependencies for developing and testing/q;p'  python_requirements.txt
-    sudo pip-3.4 install --upgrade -r python_requirements.txt
+    sudo pip-3.6 install --upgrade -r python_requirements.txt
     sudo pip-2.7 install --upgrade setuptools
     sudo pip-2.7 install --upgrade requests[security] supervisor
     # mysql setup
@@ -521,8 +521,6 @@ export SPARK_DIST_CLASSPATH=$SPARK_DIST_CLASSPATH:${AWS_CLASSPATH_ALL::-1}
 EOF
       chmod a+x spark/conf/spark-env.sh
     ''')
-
-  def hive_patch(self):
     #  This is needed because of a Spark 2 - EMR - YARN - jersey conflict
     #  Disables timeline service in yarn.
     #  https://issues.apache.org/jira/browse/SPARK-15343
@@ -532,6 +530,8 @@ EOF
 spark.hadoop.yarn.timeline-service.enabled false
 EOF
     ''')
+
+  def hive_patch(self):
     # Configure Hive with Spark:
     # execution engine = mr
     self.cluster.ssh('''
