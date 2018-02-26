@@ -8,6 +8,8 @@ package com.lynxanalytics.biggraph.graph_api
 import scala.concurrent._
 import scala.util._
 
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+
 object SafeFuture {
   def apply[T](func: => T)(implicit ec: ExecutionContext) =
     new SafeFuture(unwrapException(Future { wrapException(func) }))
@@ -51,6 +53,8 @@ class SafeFuture[+T] private (val future: Future[T]) {
   def awaitReady(atMost: duration.Duration): Unit = Await.ready(future, atMost)
 
   // Simple forwarding for methods that do not create a new Future.
+  def onComplete[U](f: Try[T] => U)(implicit ec: ExecutionContext) =
+    future.onComplete(f)
   def onFailure[U](pf: PartialFunction[Throwable, U])(implicit ec: ExecutionContext) =
     future.onFailure(pf)
 
