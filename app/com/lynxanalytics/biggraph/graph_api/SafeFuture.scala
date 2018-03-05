@@ -49,12 +49,13 @@ class SafeFuture[+T] private (val future: Future[T]) {
   def flatMap[U](func: T => SafeFuture[U])(implicit ec: ExecutionContext) =
     new SafeFuture(future.flatMap(t => func(t).future))
 
+  def andThen[U](pf: PartialFunction[Try[T], U])(implicit ec: ExecutionContext) =
+    new SafeFuture(future.andThen(pf))
+
   def awaitResult(atMost: duration.Duration) = Await.result(future, atMost)
   def awaitReady(atMost: duration.Duration): Unit = Await.ready(future, atMost)
 
   // Simple forwarding for methods that do not create a new Future.
-  def onComplete[U](f: Try[T] => U)(implicit ec: ExecutionContext) =
-    future.onComplete(f)
   def onFailure[U](pf: PartialFunction[Throwable, U])(implicit ec: ExecutionContext) =
     future.onFailure(pf)
 
