@@ -61,9 +61,8 @@ def normalize_path(path):
 
 
 def escape(s):
-  '''Tries to sanitize a string for injecting into a generated SQL query.'''
-  import shlex
-  return shlex.quote(s)
+  '''Sanitizes a string for injecting into a generated SQL query.'''
+  return s.replace('\\', '\\\\').replace('"', '\\"').replace("'", "\\'")
 
 
 class TableSnapshotSequence:
