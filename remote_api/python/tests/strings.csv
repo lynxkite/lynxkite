@@ -1,9 +1,9 @@
-test_id,test_name,raw_value
-1,single quote,lynx'kite
-2,double quote,Data is the new "oil"
-3,mixed quotes,Don't ever try this at "home"!
-4,backslash,My path is \home\user\remote_api\python\lynx\string.csv
-5,multiple backslashes,Multiple \\\ backslashes \\ and more \ \\ \\\...
-6,quotes with backslashes,\'\\"\''\\\'"''"""\\\"
-7,non-ascii utf8 characters,😀😀😀
-8,backticks,Is it a `table name` or just a pair of `?
+single quote,lynx'kite
+double quote,Data is the new "oil"
+mixed quotes,Don't ever try this at "home"!
+backslash,My path is \home\user\remote_api\python\lynx\string.csv
+multiple backslashes,Multiple \\\ backslashes \\ and more \ \\ \\\...
+escaped quotes,\' \" \\
+quotes with backslashes,\'\\"\''\\\'"''"""\\\"
+non-ascii utf8 characters,😀😀😀
+backticks,Is it a `table name` or just a pair of `?
