@@ -1,6 +1,5 @@
 import unittest
 import lynx.kite
-import shlex
 
 
 class TestEscapingStrings(unittest.TestCase):
