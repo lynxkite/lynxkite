@@ -32,4 +32,4 @@ class TestEscapingStrings(unittest.TestCase):
 
     original = self.import_test_data().df()
     escaped = lk.createExampleGraph().sql(result_query).df()
-    print(original.equals(escaped))
+    self.assertTrue(original.equals(escaped))
