@@ -60,6 +60,12 @@ def normalize_path(path):
   return re.sub('/+', '/', path).strip('/')
 
 
+def escape(s):
+  '''Tries to sanitize a string for injecting into a generated SQL query.'''
+  import shlex
+  return shlex.quote(s)
+
+
 class TableSnapshotSequence:
   '''A snapshot sequence representing a list of table type snapshots in LynxKite.
 
