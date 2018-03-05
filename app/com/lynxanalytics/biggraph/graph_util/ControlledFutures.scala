@@ -13,15 +13,11 @@ class ControlledFutures(implicit val executionContext: ExecutionContextExecutorS
 
   def registerFuture(future: SafeFuture[Any]): Unit = synchronized {
     val key = new Object
-    controlledFutures.put(key, future)
-    future.onFailure {
-      case t: Throwable => log.error("Future failed: ", t)
-    }
-    future.onComplete { result =>
-      synchronized {
-        controlledFutures.remove(key)
-      }
-    }
+    controlledFutures.put(key, future.andThen {
+      case scala.util.Failure(t) => log.error("Future failed: ", t)
+    } andThen {
+      case _ => synchronized { controlledFutures.remove(key) }
+    })
   }
 
   def register(func: => Unit): Unit = {
