@@ -21,7 +21,7 @@ class TestEscapingStrings(unittest.TestCase):
     import csv
     with open(self.name_of_test_data()) as f:
       csv_reader = csv.reader(f, delimiter=',')
-      for i, row in enumerate(csv_reader):
+      for row in csv_reader:
         test_name, test_raw = row[:2]
         sql = '''select
           '{}' as test_name,
