@@ -193,7 +193,7 @@ gulp.task('webdriver-update', function(done) {
   fs.access('test/' + protractorConfig.chromeDriver, (err) => {
     if (err) {
       spawn(
-        protractorDir + 'bin/webdriver-manager', ['update', '--versions.chrome=2.29'],
+        protractorDir + 'bin/webdriver-manager', ['update', '--versions.chrome=2.35'],
         { stdio: 'inherit' }).once('close', done);
     } else {
       done();
