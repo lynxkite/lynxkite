@@ -96,8 +96,8 @@ dependencyClasspath in Compile ++= sparkJars(sparkVersion.value)
 dependencyClasspath in Test ++= sparkJars(sparkVersion.value)
 
 resolvers ++= Seq(
-  "Twitter Repository" at "http://maven.twttr.com",
-  "Geospatial Foundation Repository" at "http://download.osgeo.org/webdav/geotools/")
+  "Twitter Repository" at "https://maven.twttr.com",
+  "Geospatial Foundation Repository" at "https://download.osgeo.org/webdav/geotools/")
 
 // Runs "stage", then creates the "stage/version" file.
 def myStage = Command.command("stage") { state =>
