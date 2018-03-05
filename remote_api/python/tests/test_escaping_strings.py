@@ -17,18 +17,18 @@ class TestEscapingStrings(unittest.TestCase):
 
   def test_escaped_query(self):
     lk = lynx.kite.LynxKite()
-    query = {}
-    box = {}
+    query = []
     import csv
     with open(self.name_of_test_data()) as f:
       csv_reader = csv.reader(f, delimiter=',')
       for i, row in enumerate(csv_reader):
         test_name, test_raw = row[:2]
-        query[i] = '''select
+        sql = '''select
           '{}' as test_name,
           '{}' as raw_value
           '''.format(test_name, lynx.kite.escape(test_raw))
-    result_query = ' union all '.join([q for key, q in query.items()])
+        query.append(sql)
+    result_query = ' union all '.join(query)
 
     original = self.import_test_data().df()
     escaped = lk.createExampleGraph().sql(result_query).df()
