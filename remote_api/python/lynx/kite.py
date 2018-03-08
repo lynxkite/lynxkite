@@ -67,12 +67,12 @@ def escape(s: str) -> str:
 
 
 class ParametricParameter:
-  '''Represents a parametric parameter value. It should be a string.'''
+  '''Represents a parametric parameter value. The short alias `pp` is defined for this type.'''
 
-  def __init__(self, parametric_expr):
+  def __init__(self, parametric_expr: str) -> None:
     self._value = parametric_expr
 
-  def __str__(self):
+  def __str__(self) -> str:
     return self._value
 
 
