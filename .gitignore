@@ -2,6 +2,7 @@
 *.log
 *.pyc
 __pycache__
+.mypy_cache
 
 # sbt specific
 .cache
