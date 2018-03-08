@@ -32,7 +32,7 @@ import datetime
 import inspect
 import re
 import itertools
-from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, cast
+from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, cast, NewType
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
@@ -116,6 +116,9 @@ class BoxCatalog:
 
   def box_names(self) -> List[str]:
     return list(self.bc.keys())
+
+
+SerializedBox = NewType('SerializedBox', Dict[str, Any])
 
 
 class LynxKite:
@@ -328,7 +331,7 @@ class LynxKite:
     """Deletes the data files which are not referenced anymore."""
     self._send('/remote/cleanFileSystem')
 
-  def fetch_states(self, boxes: List[Dict[str, Any]],
+  def fetch_states(self, boxes: List[SerializedBox],
                    parameters: Dict = dict()) -> Dict[Tuple[str, str], types.SimpleNamespace]:
     res = self._send(
         '/ajax/runWorkspace', dict(workspace=dict(boxes=boxes), parameters=parameters))
@@ -392,7 +395,7 @@ class LynxKite:
     return response.workspace.boxes
 
   # TODO: deprecate?
-  def import_box(self, boxes: List[Dict[str, Any]], box_id: str) -> List[Dict[str, Any]]:
+  def import_box(self, boxes: List[SerializedBox], box_id: str) -> List[SerializedBox]:
     '''Equivalent to clicking the import button for an import box. Returns the updated boxes.'''
     boxes = copy.deepcopy(boxes)
     for box in boxes:
@@ -423,7 +426,7 @@ class LynxKite:
         'downloadFile',
         params=dict(q=json.dumps(dict(path=path, stripHeaders=False)))).content
 
-  def save_workspace(self, path: str, boxes: List[Dict[str, Any]], overwrite: bool = True):
+  def save_workspace(self, path: str, boxes: List[SerializedBox], overwrite: bool = True):
     path = normalize_path(path)
     if not overwrite or not self.get_directory_entry(path).exists:
       self._send('/ajax/createWorkspace', dict(name=path))
@@ -631,7 +634,7 @@ class Box:
       else:
         self.parameters[key] = str(value)
 
-  def to_json(self, id_resolver: Callable[['Box'], str], workspace_root: str) -> Dict[str, Any]:
+  def to_json(self, id_resolver: Callable[['Box'], str], workspace_root: str) -> SerializedBox:
     '''Creates the json representation of a box in a workspace.
 
     The inputs have to be connected, and all the attributes have to be
@@ -645,13 +648,13 @@ class Box:
     else:
       # path//custom_box is not a valid name
       operationId = normalize_path(workspace_root + '/' + self.operation.name())
-    return {
+    return SerializedBox({
         'id': id_resolver(self),
         'operationId': operationId,
         'parameters': self.parameters,
         'x': 0, 'y': 0,
         'inputs': {plug: input_state(state) for plug, state in self.inputs.items()},
-        'parametricParameters': self.parametric_parameters}
+        'parametricParameters': self.parametric_parameters})
 
   def __getitem__(self, index: str) -> State:
     if index not in self.outputs:
@@ -754,11 +757,11 @@ class Workspace:
   def _ws_parameters_to_str(self):
     return json.dumps([param.to_json() for param in self._ws_parameters])
 
-  def to_json(self, workspace_root: str) -> List[Dict[str, Any]]:
+  def to_json(self, workspace_root: str) -> List[SerializedBox]:
     normal_boxes = [
         box.to_json(self.id_of, workspace_root) for box in self._all_boxes]
     # We use ws_parameters to customize _anchor_box.
-    ab = copy.deepcopy(_anchor_box)
+    ab = SerializedBox(copy.deepcopy(_anchor_box))
     ab['parameters'] = dict(parameters=self._ws_parameters_to_str())
     return [ab] + normal_boxes
 
@@ -953,7 +956,7 @@ class WorkspaceSequenceInstance:
       self._lk.trigger_box(full_name, box_id)
 
 
-def layout(boxes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
   '''Compute coordinates of boxes in a workspace.
 
   The workspace is given as a list of boxes. The return value is a list of
