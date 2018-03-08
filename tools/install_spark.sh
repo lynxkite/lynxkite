@@ -10,7 +10,9 @@ LINK="${1:-spark-${VERSION}}"
 HADOOP='2.7'
 cd $HOME
 if [[ ! -x "$LINK" ]]; then
-  wget --quiet "http://d3kbcqa49mib13.cloudfront.net/spark-${VERSION}-bin-hadoop${HADOOP}.tgz"
+  wget -nv \
+    "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-$VERSION/spark-${VERSION}-bin-hadoop2.7.tgz" \
+    -O "spark-${VERSION}-bin-hadoop${HADOOP}.tgz"
   tar xf "spark-${VERSION}-bin-hadoop${HADOOP}.tgz"
   rm "spark-${VERSION}-bin-hadoop${HADOOP}.tgz"
   ln -s "$HOME/spark-${VERSION}-bin-hadoop${HADOOP}" "$LINK"
