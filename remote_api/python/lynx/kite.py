@@ -32,7 +32,6 @@ import datetime
 import inspect
 import re
 import itertools
-import collections
 from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, cast
 
 if sys.version_info.major < 3:
@@ -977,7 +976,7 @@ def layout(boxes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
       yield next_group
       deps = {box_id: dep - next_group for box_id, dep in deps.items() if box_id not in next_group}
 
-  dependencies = collections.defaultdict(set)  # type: Dict[State, Set[State]]
+  dependencies = {box['id']: set() for box in boxes}  # type: Dict[str, Set[str]]
   level = {}
   for box in boxes:
     current_box = box['id']
