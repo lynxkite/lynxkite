@@ -12,7 +12,7 @@ Example usage::
 
     import lynx.kite
     lk = lynx.kite.LynxKite()
-    outputs = lk.run(json.loads(WORKSPACE_COPIED_FROM_UI))
+    outputs = lk.fetch_states(json.loads(WORKSPACE_COPIED_FROM_UI))
     state = outputs['Create-example-graph_1', 'project'].stateId
     project = lk.get_project(state)
     scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
@@ -328,9 +328,8 @@ class LynxKite:
     """Deletes the data files which are not referenced anymore."""
     self._send('/remote/cleanFileSystem')
 
-  # TODO: rename to something more meaningful
-  def run(self, boxes: List[Dict[str, Any]],
-          parameters: Dict = dict()) -> Dict[Tuple[str, str], types.SimpleNamespace]:
+  def fetch_states(self, boxes: List[Dict[str, Any]],
+                   parameters: Dict = dict()) -> Dict[Tuple[str, str], types.SimpleNamespace]:
     res = self._send(
         '/ajax/runWorkspace', dict(workspace=dict(boxes=boxes), parameters=parameters))
     return {(o.boxOutput.boxId, o.boxOutput.id): o for o in res.outputs}
@@ -360,15 +359,15 @@ class LynxKite:
     return ws_root, (save_under_root is not None) and normalize_path(
         save_under_root + '/' + ws.name())
 
-  def run_workspace(self, ws: 'Workspace',
-                    save_under_root: str = None) -> Dict[Tuple[str, str], types.SimpleNamespace]:
+  def fetch_workspace_output_states(self, ws: 'Workspace',
+                                    save_under_root: str = None) -> Dict[Tuple[str, str], types.SimpleNamespace]:
     ws_root, _ = self.save_workspace_recursively(ws, save_under_root)
-    return self.run(ws.to_json(ws_root))
+    return self.fetch_states(ws.to_json(ws_root))
     # TODO: clean up saved workspaces if save_under_root is not set.
 
   def get_state_id(self, state: 'State') -> str:
     ws = Workspace('Anonymous', [state.box])
-    workspace_outputs = self.run_workspace(ws)
+    workspace_outputs = self.fetch_workspace_output_states(ws)
     box_id = ws.id_of(state.box)
     plug = state.output_plug_name
     output = workspace_outputs[box_id, plug]
