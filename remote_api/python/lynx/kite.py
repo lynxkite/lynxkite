@@ -32,7 +32,7 @@ import datetime
 import inspect
 import re
 import itertools
-from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, cast, NewType
+from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
@@ -164,7 +164,7 @@ class LynxKite:
   def __dir__(self) -> Iterable[str]:
     return itertools.chain(super().__dir__(), self.operation_names())
 
-  def __getattr__(self, name) -> Callable[..., 'Box']:
+  def __getattr__(self, name) -> Callable:
 
     def f(*args, **kwargs):
       inputs = dict(zip(self.box_catalog().inputs(name), args))
@@ -494,7 +494,7 @@ class TableSnapshotSequence:
   def read_interval(self, lk: LynxKite, from_date: datetime.datetime,
                     to_date: datetime.datetime) -> 'State':
     paths = ','.join(self.snapshots(lk, from_date, to_date))
-    return cast('State', lk.importUnionOfTableSnapshots(paths=paths))
+    return lk.importUnionOfTableSnapshots(paths=paths)
 
   def read_date(self, lk: LynxKite, date: datetime.datetime) -> 'Box':
     path = self.snapshots(lk, date, date)[0]
