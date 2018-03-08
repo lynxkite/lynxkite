@@ -691,7 +691,7 @@ _anchor_box = {
     'parameters': {},
     'x': 0, 'y': 0,
     'inputs': {},
-    'parametricParameters': {}
+    'parametricParameters': {},
 }
 
 
