@@ -64,7 +64,7 @@ class KiteListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener
   def isSparkActive: Boolean = synchronized { activeStages.nonEmpty }
 
   private def fullId(stage: org.apache.spark.scheduler.StageInfo): String =
-    s"${stage.stageId}.${stage.attemptId}"
+    s"${stage.stageId}.${stage.attemptNumber}"
 
   override def onStageCompleted(
     stageCompleted: spark.scheduler.SparkListenerStageCompleted): Unit = synchronized {
