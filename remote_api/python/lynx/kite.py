@@ -489,9 +489,9 @@ class TableSnapshotSequence:
     return t
 
   def read_interval(self, lk: LynxKite, from_date: datetime.datetime,
-                    to_date: datetime.datetime) -> 'SingleOutputBox':
+                    to_date: datetime.datetime) -> 'State':
     paths = ','.join(self.snapshots(lk, from_date, to_date))
-    return cast('SingleOutputBox', lk.importUnionOfTableSnapshots(paths=paths))
+    return cast('State', lk.importUnionOfTableSnapshots(paths=paths))
 
   def read_date(self, lk: LynxKite, date: datetime.datetime) -> 'Box':
     path = self.snapshots(lk, date, date)[0]
@@ -797,7 +797,7 @@ class InputRecipe:
   def is_ready(self, lk: LynxKite, date: datetime.datetime) -> bool:
     raise NotImplementedError()
 
-  def build_boxes(self, lk: LynxKite, date: datetime.datetime) -> SingleOutputBox:
+  def build_boxes(self, lk: LynxKite, date: datetime.datetime) -> State:
     raise NotImplementedError()
 
   def validate(self, date: datetime.datetime) -> bool:
@@ -831,7 +831,7 @@ class TableSnapshotRecipe(InputRecipe):
     r = lk.get_directory_entry(self.tss.snapshot_name(adjusted_date))
     return r.exists and r.isSnapshot
 
-  def build_boxes(self, lk: LynxKite, date: datetime.datetime) -> SingleOutputBox:
+  def build_boxes(self, lk: LynxKite, date: datetime.datetime) -> State:
     self.validate(date)
     adjusted_date = step_back(self.tss.cron_str, date, self.delta)
     return self.tss.read_interval(lk, adjusted_date, adjusted_date)
@@ -844,7 +844,7 @@ class RecipeWithDefault(InputRecipe):
      @param: default_state: Provide this State for dates earlier than the default date.'''
 
   def __init__(self, src_recipe: InputRecipe, default_date: datetime.datetime,
-               default_state: SingleOutputBox) -> None:
+               default_state: State) -> None:
     self.src_recipe = src_recipe
     self.default_date = default_date
     self.default_state = default_state
@@ -857,7 +857,7 @@ class RecipeWithDefault(InputRecipe):
     self.validate(date)
     return date == self.default_date or self.src_recipe.is_ready(lk, date)
 
-  def build_boxes(self, lk: LynxKite, date: datetime.datetime) -> SingleOutputBox:
+  def build_boxes(self, lk: LynxKite, date: datetime.datetime) -> State:
     self.validate(date)
     if date == self.default_date:
       return self.default_state
