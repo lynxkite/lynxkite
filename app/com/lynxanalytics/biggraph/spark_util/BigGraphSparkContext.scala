@@ -30,6 +30,7 @@ class DeadClass9
 class DeadClass10
 class DeadClass11
 class DeadClass12
+class DeadClass13
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
 
@@ -194,9 +195,9 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[DeadClass11])
     kryo.register(Class.forName("org.apache.spark.sql.types.ArrayType"))
     kryo.register(Class.forName("org.apache.spark.ml.classification.MultiClassSummarizer"))
-    kryo.register(Class.forName("org.apache.spark.ml.classification.LogisticAggregator"))
+    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LogisticAggregator"))
     kryo.register(Class.forName("org.apache.spark.ml.optim.WeightedLeastSquares$Aggregator"))
-    kryo.register(Class.forName("org.apache.spark.ml.regression.LeastSquaresAggregator"))
+    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LeastSquaresAggregator"))
     kryo.register(Class.forName("org.apache.spark.util.StatCounter"))
     kryo.register(Class.forName("org.apache.spark.mllib.clustering.VectorWithNorm"))
     kryo.register(Class.forName("[Lorg.apache.spark.mllib.clustering.VectorWithNorm;"))
@@ -261,7 +262,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("org.apache.spark.sql.execution.columnar.CachedBatch"))
     kryo.register(Class.forName("org.apache.spark.broadcast.TorrentBroadcast"))
     kryo.register(classOf[org.apache.spark.internal.io.FileCommitProtocol$TaskCommitMessage])
-    kryo.register(classOf[org.apache.spark.ml.tree.RandomForestParams$$anonfun$5])
+    kryo.register(classOf[DeadClass13])
     kryo.register(classOf[org.apache.spark.storage.BroadcastBlockId])
     kryo.register(Class.forName("org.apache.spark.ml.linalg.MatrixUDT"))
     kryo.register(classOf[org.apache.spark.ml.linalg.Vector])
@@ -278,6 +279,9 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(Class.forName("[Lorg.apache.spark.sql.types.Metadata;"))
     kryo.register(classOf[org.apache.spark.ml.tree.CategoricalSplit])
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.FileFormatWriter$WriteTaskResult])
+    kryo.register(classOf[org.apache.spark.ml.tree.TreeEnsembleParams$$anonfun$6])
+    kryo.register(classOf[org.apache.spark.sql.execution.datasources.ExecutedWriteSummary])
+    kryo.register(classOf[org.apache.spark.sql.execution.datasources.BasicWriteTaskStats])
 
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
