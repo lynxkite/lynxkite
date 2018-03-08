@@ -688,14 +688,14 @@ def _python_name(name: str) -> str:
       [x[:1].upper() + x[1:] for x in name.split()][1:])
 
 
-_anchor_box = {
+_anchor_box = SerializedBox({
     'id': 'anchor',
     'operationId': 'Anchor',
     'parameters': {},
     'x': 0, 'y': 0,
     'inputs': {},
     'parametricParameters': {},
-}
+})
 
 
 def new_box(bc: BoxCatalog, lk: LynxKite, operation: Union[str, 'Workspace'],
@@ -761,7 +761,7 @@ class Workspace:
     normal_boxes = [
         box.to_json(self.id_of, workspace_root) for box in self._all_boxes]
     # We use ws_parameters to customize _anchor_box.
-    ab = SerializedBox(copy.deepcopy(_anchor_box))
+    ab = copy.deepcopy(_anchor_box)
     ab['parameters'] = dict(parameters=self._ws_parameters_to_str())
     return [ab] + normal_boxes
 
