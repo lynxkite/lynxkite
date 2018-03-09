@@ -468,8 +468,8 @@ class TableSnapshotSequence:
   '''A snapshot sequence representing a list of table type snapshots in LynxKite.
 
   Attributes:
-    location (str): the LynxKite root directory this snapshot sequence is stored under.
-    cron_str (str): the Cron format defining the valid timestamps and frequency.'''
+    location: the LynxKite root directory this snapshot sequence is stored under.
+    cron_str: the Cron format defining the valid timestamps and frequency.'''
 
   def __init__(self, location: str, cron_str: str) -> None:
     self._location = location
@@ -716,9 +716,6 @@ class Workspace:
 
   def __init__(self, name: str, terminal_boxes: List[Box], input_boxes: List[Box] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
-    '''The workspace parameter declarations can be specified as a list:
-    ``ws_parameters = [text('alma'), text('korte', 'default_for_korte')]``
-    '''
     self._name = name or 'Anonymous'
     self._all_boxes = set()  # type: Set[Box]
     self._box_ids = dict()  # type: Dict[Box, str]
@@ -957,11 +954,7 @@ class WorkspaceSequenceInstance:
 
 
 def layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
-  '''Compute coordinates of boxes in a workspace.
-
-  The workspace is given as a list of boxes. The return value is a list of
-  new boxes, where the coordinates are filled in.
-  '''
+  '''Compute coordinates of boxes in a workspace.'''
   dx = 200
   dy = 200
   ox = 150
