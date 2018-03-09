@@ -138,13 +138,6 @@ case class WorkspaceExecutionContext(
     statesWithoutCircularDependency ++ statesWithCircularDependency
   }
 
-  private def listErrors(boxes: Map[String, BoxOutputState]): String = {
-    boxes.map {
-      case (id, output) =>
-        s"  $id: ${output.success.disabledReason}"
-    }.mkString("\n")
-  }
-
   private def outputStatesOfBox(
     box: Box, inputStates: Map[BoxOutput, BoxOutputState]): Map[BoxOutput, BoxOutputState] = {
     val meta = ops.getBoxMetadata(box.operationId)
@@ -152,18 +145,14 @@ case class WorkspaceExecutionContext(
     val unconnectedInputs = meta.inputs.filterNot(conn => box.inputs.contains(conn))
     if (unconnectedInputs.nonEmpty) {
       val list = unconnectedInputs.mkString(", ")
-      box.allOutputsWithError(meta, s"Input $list is not connected.")
+      box.allOutputsWithError(meta, s"Input $list of box ${box.id} is not connected.")
     } else if (meta.outputs.isEmpty) {
       Map() // No reason to execute the box if it has no outputs.
     } else {
       val inputs = box.inputs.map { case (id, output) => id -> inputStates(output) }
-      val inputErrors = inputs.filter(_._2.isError)
-      if (inputErrors.nonEmpty) {
-        val list = inputErrors.keys.mkString(", ")
-        val details = listErrors(inputErrors)
-        box.allOutputsWithError(meta, s"Input $list has an error.\n$details")
-      } else {
-        box.orErrors(meta) { box.execute(this, inputs) }
+      box.getError(meta, inputs) match {
+        case None => box.orErrors(meta) { box.execute(this, inputs) }
+        case Some(error) => box.allOutputsWithError(meta, error.getMessage, Some(error))
       }
     }
   }
@@ -171,15 +160,10 @@ case class WorkspaceExecutionContext(
   def getOperationForStates(box: Box, states: Map[BoxOutput, BoxOutputState]): Operation = {
     val meta = ops.getBoxMetadata(box.operationId)
     for (i <- meta.inputs) {
-      assert(box.inputs.contains(i), s"Input $i is not connected.")
+      assert(box.inputs.contains(i), s"Input $i of box ${box.id} is not connected.")
     }
     val inputs = box.inputs.map { case (id, output) => id -> states(output) }
-    assert(!inputs.exists(_._2.isError), {
-      val errors = inputs.filter(_._2.isError)
-      val list = errors.map(_._1).mkString(", ")
-      val details = listErrors(errors)
-      s"Input $list has an error.\n$details"
-    })
+    for (error <- box.getError(meta, inputs)) throw error
     box.getOperation(this, inputs)
   }
 
@@ -234,9 +218,11 @@ case class Box(
     outputStates
   }
 
-  def allOutputsWithError(meta: BoxMetadata, msg: String): Map[BoxOutput, BoxOutputState] = {
+  def allOutputsWithError(
+    meta: BoxMetadata, msg: String,
+    exception: Option[Throwable] = None): Map[BoxOutput, BoxOutputState] = {
     meta.outputs.map {
-      o => output(o) -> BoxOutputState.error(msg)
+      o => output(o) -> BoxOutputState.error(msg, exception.orElse(Some(new Exception(msg))))
     }.toMap
   }
 
@@ -248,6 +234,34 @@ case class Box(
         meta.outputs.map {
           o => output(o) -> BoxOutputState(BoxOutputKind.Error, None, FEStatus.from(ex))
         }.toMap
+    }
+  }
+
+  // Returns an exception that includes the stack traces of the listed exceptions and adds none of
+  // its own.
+  private def exceptionBundle(msg: String, es: List[Throwable]): Throwable = {
+    val b = new Exception(msg)
+    b.setStackTrace(Array())
+    for (e <- es) {
+      b.addSuppressed(e)
+    }
+    b
+  }
+
+  def getError(meta: BoxMetadata, inputs: Map[String, BoxOutputState]): Option[Throwable] = {
+    val inputErrors = inputs.filter(_._2.isError)
+    if (inputErrors.isEmpty) None
+    else {
+      val order = meta.inputs.filter(inputErrors.contains(_))
+      val details = order.map {
+        // Include the input errors in our output error, indented two spaces deeper.
+        id => s"  $id: ${inputErrors(id).success.disabledReason.replace("\n", "\n  ")}"
+      }.mkString("\n")
+      val list = order.mkString(", ")
+      val msg =
+        if (inputErrors.size == 1) s"Input $list of box $id has an error:\n$details"
+        else s"Inputs $list of box $id have errors:\n$details"
+      Some(exceptionBundle(msg, order.flatMap(inputErrors(_).success.exception)))
     }
   }
 }
@@ -315,8 +329,11 @@ object BoxOutputState {
       "guid" -> exportResult.gUID, "parameters" -> params)))
   }
 
-  def error(msg: String): BoxOutputState = {
-    BoxOutputState(BoxOutputKind.Error, None, FEStatus.disabled(msg))
+  def error(msg: String, exception: Option[Throwable] = None): BoxOutputState = {
+    BoxOutputState(
+      kind = BoxOutputKind.Error,
+      state = None,
+      success = FEStatus(enabled = false, disabledReason = msg, exception = exception))
   }
 
   def visualization(v: VisualizationState): BoxOutputState = {

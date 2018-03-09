@@ -82,15 +82,23 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   test("errors") {
     val pr1 = Box("pr1", "Compute PageRank", pagerankParams, 0, 20, Map())
     val pr2 = pr1.copy(id = "pr2", inputs = Map("project" -> pr1.output("project")))
-    val ws = Workspace.from(pr1, pr2)
+    val pr3 = pr1.copy(id = "pr3", inputs = Map("project" -> pr2.output("project")))
+    val sql = Box(
+      "sql", "SQL2", Map(), 0, 100,
+      Map("one" -> pr2.output("project"), "two" -> pr3.output("project")))
+    val ws = Workspace.from(pr1, pr2, pr3, sql)
     val allStates = context(ws).allStates
     val p1 = allStates(pr1.output("project"))
-    val p2 = allStates(pr2.output("project"))
+    val p2 = allStates(sql.output("table"))
     val ex1 = intercept[AssertionError] { p1.project }
     val ex2 = intercept[AssertionError] { p2.project }
-    assert(ex1.getMessage.contains("Input project is not connected."))
-    assert(ex2.getMessage.contains("""Input project has an error.
-  project: Input project is not connected."""))
+    assert(ex1.getMessage == "Input project of box pr1 is not connected.")
+    assert(ex2.getMessage == """Inputs one, two of box sql have errors:
+  one: Input project of box pr2 has an error:
+    project: Input project of box pr1 is not connected.
+  two: Input project of box pr3 has an error:
+    project: Input project of box pr2 has an error:
+      project: Input project of box pr1 is not connected.""")
   }
 
   test("getProjectOutput") {
