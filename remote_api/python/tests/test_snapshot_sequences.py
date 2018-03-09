@@ -44,7 +44,7 @@ class TestSnapshotSequence(unittest.TestCase):
   def _get_state(self, lk):
     lk.remove_name('test_snapshot_sequence', force=True)
     lk.create_dir('test_snapshot_sequence')
-    outputs = lk.run(json.loads(ANCHOR_EXAMPLE_AND_SQL))
+    outputs = lk.fetch_states(json.loads(ANCHOR_EXAMPLE_AND_SQL))
     return outputs['SQL1_1', 'table'].stateId
 
   def test_read_interval(self):
