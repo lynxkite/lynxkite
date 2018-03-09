@@ -120,6 +120,7 @@ class BuildGraphOperations(env: SparkFreeEnvironment) extends ProjectOperations(
 
   registerProjectCreatingOp("Create vertices")(new ProjectOutputOperation(_) {
     params += NonNegInt("size", "Vertex set size", default = 10)
+    override def summary = s"Create ${params("size")} vertices"
     def enabled = FEStatus.enabled
     def apply() = {
       val result = graph_operations.CreateVertexSet(params("size").toLong)().result
