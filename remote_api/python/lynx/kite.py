@@ -849,8 +849,8 @@ class RecipeWithDefault(InputRecipe):
     self.default_state = default_state
 
   def validate(self, date: datetime.datetime) -> None:
-    assert (date == self.default_date)
-    self.src_recipe.validate(date)
+    if date != self.default_date:
+      self.src_recipe.validate(date)
 
   def is_ready(self, lk: LynxKite, date: datetime.datetime) -> bool:
     self.validate(date)
