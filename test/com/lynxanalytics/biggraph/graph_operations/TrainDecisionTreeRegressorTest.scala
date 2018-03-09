@@ -14,15 +14,15 @@ class TrainDecisionTreeRegressorTest extends ModelTestBase {
       graph(trainingData.vertexNumber))
     val s = m.value.statistics.get
     assert(s == """DecisionTreeRegressionModel of depth 3 with 7 nodes
-  If (rain <= 0.0)
-   If (temperature <= 20.0)
-    If (temperature <= -15.0)
+  If (rain <= 0.5)
+   If (temperature <= 27.5)
+    If (temperature <= -12.5)
      Predict: 1.3333333333333333
-    Else (temperature > -15.0)
+    Else (temperature > -12.5)
      Predict: 2.0
-   Else (temperature > 20.0)
+   Else (temperature > 27.5)
     Predict: 1.0
-  Else (rain > 0.0)
+  Else (rain > 0.5)
    Predict: 0.0
 
 Root mean squared error: 0.28867513459481287

@@ -72,6 +72,10 @@ case class AttributesToTable(schema: types.StructType) extends TypedMetaGraphOp[
         case _: types.StringType =>
           // Since StringType is the default attribute type the data may need to be converted.
           attr.name.name -> attr.rdd.mapValues(_.toString)
+        case _: types.ArrayType if attr.data.entity.typeTag.tpe <:< typeOf[Set[_]] =>
+          // Sets are represented by Spark as arrays. (Introduced in SPARK-21204.)
+          // runtimeSafeCast does not know about covariance so we do an unsafe cast.
+          attr.name.name -> attr.data.asInstanceOf[AttributeData[Set[_]]].rdd.mapValues(_.toSeq)
         case _ => attr.name.name -> attr.rdd
       }
     }.toMap
