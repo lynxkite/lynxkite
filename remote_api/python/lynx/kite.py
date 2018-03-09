@@ -34,6 +34,8 @@ import re
 import itertools
 from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType
 
+import traceback
+
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
 
@@ -333,6 +335,8 @@ class LynxKite:
 
   def fetch_states(self, boxes: List[SerializedBox],
                    parameters: Dict = dict()) -> Dict[Tuple[str, str], types.SimpleNamespace]:
+    traceback.print_stack()
+
     res = self._send(
         '/ajax/runWorkspace', dict(workspace=dict(boxes=boxes), parameters=parameters))
     return {(o.boxOutput.boxId, o.boxOutput.id): o for o in res.outputs}
@@ -391,6 +395,8 @@ class LynxKite:
     return self._ask('/ajax/getTableOutput', dict(id=state, sampleRows=limit))
 
   def get_workspace(self, path: str) -> List[types.SimpleNamespace]:
+    traceback.print_stack()
+
     response = self._ask('/ajax/getWorkspace', dict(top=path, customBoxStack=[]))
     return response.workspace.boxes
 
