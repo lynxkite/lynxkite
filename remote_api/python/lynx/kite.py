@@ -712,7 +712,7 @@ def new_box(bc: BoxCatalog, lk: LynxKite, operation: Union[str, 'Workspace'],
 
 
 class Workspace:
-  '''Immutable class representing a LynxKite workspace'''
+  '''Immutable class representing a LynxKite workspace.'''
 
   def __init__(self, name: str, terminal_boxes: List[Box], input_boxes: List[Box] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
