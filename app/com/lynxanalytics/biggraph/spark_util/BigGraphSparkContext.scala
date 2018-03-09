@@ -31,6 +31,8 @@ class DeadClass10
 class DeadClass11
 class DeadClass12
 class DeadClass13
+class DeadClass14
+class DeadClass15
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
 
@@ -195,9 +197,9 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[DeadClass11])
     kryo.register(Class.forName("org.apache.spark.sql.types.ArrayType"))
     kryo.register(Class.forName("org.apache.spark.ml.classification.MultiClassSummarizer"))
-    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LogisticAggregator"))
+    kryo.register(classOf[DeadClass14])
     kryo.register(Class.forName("org.apache.spark.ml.optim.WeightedLeastSquares$Aggregator"))
-    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LeastSquaresAggregator"))
+    kryo.register(classOf[DeadClass15])
     kryo.register(Class.forName("org.apache.spark.util.StatCounter"))
     kryo.register(Class.forName("org.apache.spark.mllib.clustering.VectorWithNorm"))
     kryo.register(Class.forName("[Lorg.apache.spark.mllib.clustering.VectorWithNorm;"))
@@ -282,6 +284,8 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[org.apache.spark.ml.tree.TreeEnsembleParams$$anonfun$6])
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.ExecutedWriteSummary])
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.BasicWriteTaskStats])
+    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LogisticAggregator"))
+    kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LeastSquaresAggregator"))
 
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
