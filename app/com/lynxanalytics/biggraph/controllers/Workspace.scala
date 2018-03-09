@@ -254,6 +254,7 @@ case class Box(
     else {
       val order = meta.inputs.filter(inputErrors.contains(_))
       val details = order.map {
+        // Include the input errors in our output error, indented two spaces deeper.
         id => s"  $id: ${inputErrors(id).success.disabledReason.replace("\n", "\n  ")}"
       }.mkString("\n")
       val list = order.mkString(", ")
@@ -329,7 +330,10 @@ object BoxOutputState {
   }
 
   def error(msg: String, exception: Option[Throwable] = None): BoxOutputState = {
-    BoxOutputState(BoxOutputKind.Error, None, FEStatus(false, msg, exception))
+    BoxOutputState(
+      kind = BoxOutputKind.Error,
+      state = None,
+      success = FEStatus(enabled = false, disabledReason = msg, exception = exception))
   }
 
   def visualization(v: VisualizationState): BoxOutputState = {
