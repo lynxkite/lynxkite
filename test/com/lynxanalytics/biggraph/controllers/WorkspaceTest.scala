@@ -92,7 +92,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val p2 = allStates(sql.output("table"))
     val ex1 = intercept[AssertionError] { p1.project }
     val ex2 = intercept[AssertionError] { p2.project }
-    assert(ex1.getMessage == "assertion failed: Input project of box pr1 is not connected.")
+    assert(ex1.getMessage == "Input project of box pr1 is not connected.")
     assert(ex2.getMessage == """Inputs one, two of box sql have errors:
   one: Input project of box pr2 has an error:
     project: Input project of box pr1 is not connected.
