@@ -222,7 +222,7 @@ case class Box(
     meta: BoxMetadata, msg: String,
     exception: Option[Throwable] = None): Map[BoxOutput, BoxOutputState] = {
     meta.outputs.map {
-      o => output(o) -> BoxOutputState.error(msg, exception)
+      o => output(o) -> BoxOutputState.error(msg, exception.orElse(Some(new Exception(msg))))
     }.toMap
   }
 
