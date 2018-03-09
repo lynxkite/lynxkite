@@ -25,6 +25,10 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     new SimpleOperation(_) {
       params += Param("name", "Name")
       override def summary = s"Input ${params("name")}"
+      override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
+        print(context)
+        Map(context.box.output(context.meta.outputs(0)) -> context.inputs("input"))
+      }
     })
 
   register("Output", List("output"), List(), "black_up-pointing_triangle")(
