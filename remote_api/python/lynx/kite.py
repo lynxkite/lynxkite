@@ -143,7 +143,7 @@ class LynxKite:
     self._certfile = certfile
     self._oauth_token = oauth_token
     self._session = None
-    self._operation_names = None  # type: List[str]
+    self._operation_names: List[str] = None
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
   def operation_names(self) -> List[str]:
@@ -343,8 +343,8 @@ class LynxKite:
       ws_root = random_ws_folder()
     else:
       ws_root = save_under_root
-    needed_ws = set()  # type: Set[Workspace]
-    ws_queue = queue.Queue()  # type: queue.Queue[Workspace]
+    needed_ws: Set[Workspace] = set()
+    ws_queue: queue.Queue[Workspace] = queue.Queue()
     ws_queue.put(ws)
     while not ws_queue.empty():
       nws = ws_queue.get()
@@ -624,8 +624,8 @@ class Box:
     assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
         got_inputs, exp_inputs)
     self.inputs = inputs
-    self.parameters = {}  # type: Dict[str, str]
-    self.parametric_parameters = {}  # type: Dict[str, str]
+    self.parameters: Dict[str, str] = {}
+    self.parametric_parameters: Dict[str, str] = {}
     # We separate normal and parametric parameters here.
     # Parametric parameters can be specified as `name=PP('parametric value')`
     for key, value in parameters.items():
@@ -717,8 +717,8 @@ class Workspace:
   def __init__(self, name: str, terminal_boxes: List[Box], input_boxes: List[Box] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
     self._name = name or 'Anonymous'
-    self._all_boxes = set()  # type: Set[Box]
-    self._box_ids = dict()  # type: Dict[Box, str]
+    self._all_boxes: Set[Box] = set()
+    self._box_ids: Dict[Box, str] = dict()
     self._next_id = 0
     self._inputs = [inp.parameters['name'] for inp in input_boxes]
     self._outputs = [
@@ -731,7 +731,7 @@ class Workspace:
 
     # We enumerate and add all upstream boxes for terminal_boxes via a simple
     # BFS.
-    to_process = queue.Queue()  # type: queue.Queue[Box]
+    to_process: queue.Queue[Box] = queue.Queue()
     for box in terminal_boxes:
       to_process.put(box)
       self._add_box(box)
@@ -882,7 +882,7 @@ class WorkspaceSequence:
     self._lk_root = lk_root
     self._dfs_root = dfs_root
     self._input_recipes = input_recipes
-    self._output_sequences = {}  # type: Dict[str, TableSnapshotSequence]
+    self._output_sequences: Dict[str, TableSnapshotSequence] = {}
     for output in self._ws.outputs():
       location = normalize_path(self._lk_root + '/' + output)
       self._output_sequences[output] = TableSnapshotSequence(location, self._schedule)
@@ -971,7 +971,7 @@ def layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
       yield next_group
       deps = {box_id: dep - next_group for box_id, dep in deps.items() if box_id not in next_group}
 
-  dependencies = {box['id']: set() for box in boxes}  # type: Dict[str, Set[str]]
+  dependencies: Dict[str, Set[str]] = {box['id']: set() for box in boxes}
   level = {}
   for box in boxes:
     current_box = box['id']
