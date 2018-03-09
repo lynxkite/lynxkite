@@ -800,7 +800,7 @@ class InputRecipe:
   def build_boxes(self, lk: LynxKite, date: datetime.datetime) -> State:
     raise NotImplementedError()
 
-  def validate(self, date: datetime.datetime) -> bool:
+  def validate(self, date: datetime.datetime) -> None:
     raise NotImplementedError()
 
 
@@ -819,11 +819,10 @@ class TableSnapshotRecipe(InputRecipe):
     assert self.tss is None
     self.tss = tss
 
-  def validate(self, date: datetime.datetime) -> bool:
+  def validate(self, date: datetime.datetime) -> None:
     assert self.tss, 'TableSnapshotSequence needs to be set.'
     assert timestamp_is_valid(
         date, self.tss.cron_str), '{} does not match {}.'.format(date, self.tss.cron_str)
-    return True
 
   def is_ready(self, lk: LynxKite, date: datetime.datetime) -> bool:
     self.validate(date)
@@ -849,9 +848,9 @@ class RecipeWithDefault(InputRecipe):
     self.default_date = default_date
     self.default_state = default_state
 
-  def validate(self, date: datetime.datetime) -> bool:
-    assert (date == self.default_date) or self.src_recipe.validate(date)
-    return True
+  def validate(self, date: datetime.datetime) -> None:
+    assert (date == self.default_date)
+    self.src_recipe.validate(date)
 
   def is_ready(self, lk: LynxKite, date: datetime.datetime) -> bool:
     self.validate(date)
@@ -888,7 +887,7 @@ class WorkspaceSequence:
       self._output_sequences[output] = TableSnapshotSequence(location, self._schedule)
 
   def output_sequences(self) -> Dict[str, TableSnapshotSequence]:
-    '''Returns the output sequences of hte workspace sequence as a dict.'''
+    '''Returns the output sequences of the workspace sequence as a dict.'''
     return self._output_sequences
 
   def _wrapper_name(self, date):
@@ -923,7 +922,7 @@ class WorkspaceSequenceInstance:
     return r.exists and r.isWorkspace
 
   def save(self) -> None:
-    '''I also runs the imports.'''
+    '''It also runs the imports.'''
     assert not self.is_saved(), 'WorkspaceSequenceInstance is already saved.'
     inputs = [
         input_recipe.build_boxes(self._lk, self._date)
