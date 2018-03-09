@@ -77,7 +77,7 @@ class TestWorkspace(unittest.TestCase):
 
   def test_example_graph(self):
     lk = lynx.kite.LynxKite()
-    outputs = lk.run(json.loads(ANCHOR_AND_EXAMPLE))
+    outputs = lk.fetch_states(json.loads(ANCHOR_AND_EXAMPLE))
     self.assertEqual(1, len(outputs))
     o = outputs['eg0', 'project']
     self.assertEqual(o.boxOutput.boxId, 'eg0')
@@ -87,7 +87,7 @@ class TestWorkspace(unittest.TestCase):
 
   def test_state_access(self):
     lk = lynx.kite.LynxKite()
-    outputs = lk.run(json.loads(ANCHOR_AND_EXAMPLE))
+    outputs = lk.fetch_states(json.loads(ANCHOR_AND_EXAMPLE))
     state = outputs['eg0', 'project'].stateId
     project = lk.get_project(state)
     scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
@@ -103,7 +103,7 @@ class TestWorkspace(unittest.TestCase):
     workspace_json = workspace_json.replace('<FILENAME>', csv_path)
     boxes = json.loads(workspace_json)
     boxes = lk.import_box(boxes, 'Import-CSV_1')
-    outputs = lk.run(boxes)
+    outputs = lk.fetch_states(boxes)
     # Check table.
     output = outputs['SQL1_1', 'table']
     table = lk.get_table_data(output.stateId)
@@ -121,7 +121,7 @@ class TestWorkspace(unittest.TestCase):
 
   def test_save_snapshot(self):
     lk = lynx.kite.LynxKite()
-    outputs = lk.run(json.loads(ANCHOR_AND_EXAMPLE))
+    outputs = lk.fetch_states(json.loads(ANCHOR_AND_EXAMPLE))
     state = outputs['eg0', 'project'].stateId
     lk.remove_name('save_snapshot_test', force=True)
     lk.save_snapshot('save_snapshot_test', state)

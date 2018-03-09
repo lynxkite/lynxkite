@@ -65,7 +65,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     state = lk.createExampleGraph().sql('select name from vertices')
     ws = lynx.kite.Workspace('eg_names', [state])
     lk.remove_name('save_it_under_this_folder/eg_names', force=True)
-    lk.run_workspace(ws, 'save_it_under_this_folder')
+    lk.fetch_workspace_output_states(ws, 'save_it_under_this_folder')
     entries = lk.list_dir('save_it_under_this_folder')
     self.assertTrue('save_it_under_this_folder/eg_names' in {e.name for e in entries})
 
@@ -138,7 +138,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     lk.remove_name('ages_snapshot', force=True)
     lk.remove_name('trigger-folder', force=True)
     ws = lynx.kite.Workspace('multi-trigger-test', [o1, o2])
-    lk.run_workspace(ws, 'trigger-folder')
+    lk.fetch_workspace_output_states(ws, 'trigger-folder')
     for box_id in [box['id']
                    for box in ws.to_json('trigger-folder/')
                    if box['operationId'] == 'Save to snapshot']:
