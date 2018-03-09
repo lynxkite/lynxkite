@@ -18,25 +18,25 @@ class TrainDecisionTreeClassifierTest extends ModelTestBase {
     assert(m.value.featureNames.sorted == List("rain", "temperature"))
     val s = m.value.statistics.get
     assert(s == """DecisionTreeClassificationModel of depth 3 with 7 nodes
-  If (rain <= 0.0)
-   If (temperature <= 20.0)
-    If (temperature <= -15.0)
+  If (rain <= 0.5)
+   If (temperature <= 27.5)
+    If (temperature <= -12.5)
      Predict: 1.0
-    Else (temperature > -15.0)
+    Else (temperature > -12.5)
      Predict: 2.0
-   Else (temperature > 20.0)
+   Else (temperature > 27.5)
     Predict: 1.0
-  Else (rain > 0.0)
+  Else (rain > 0.5)
    Predict: 0.0
 
 Accuracy: 0.875
 Support: [0.375, 0.375, 0.25]""")
     assert(m.value.toSQL(sparkContext) == """CASE
- WHEN rain <= 0.0 THEN
+ WHEN rain <= 0.5 THEN
   CASE
-   WHEN temperature <= 20.0 THEN
+   WHEN temperature <= 27.5 THEN
     CASE
-     WHEN temperature <= -15.0 THEN
+     WHEN temperature <= -12.5 THEN
       1.0
      ELSE
       2.0
@@ -74,7 +74,7 @@ END AS length of the walk""")
     assert(m.value.featureNames.sorted == List("rain", "temperature"))
     val s = m.value.statistics.get
     assert(s == """DecisionTreeClassificationModel of depth 3 with 7 nodes
-  If (rain <= 0.0)
+  If (rain <= 0.5)
    If (temperature in {0.0,1.0})
     If (temperature in {0.0})
      Predict: 1.0
@@ -82,13 +82,13 @@ END AS length of the walk""")
      Predict: 1.0
    Else (temperature not in {0.0,1.0})
     Predict: 2.0
-  Else (rain > 0.0)
+  Else (rain > 0.5)
    Predict: 0.0
 
 Accuracy: 0.875
 Support: [0.375, 0.375, 0.25]""")
     assert(m.value.toSQL(sparkContext) == """CASE
- WHEN rain <= 0.0 THEN
+ WHEN rain <= 0.5 THEN
   CASE
    WHEN temperature IN ('high', 'low') THEN
     CASE

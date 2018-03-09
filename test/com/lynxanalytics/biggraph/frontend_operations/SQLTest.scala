@@ -240,9 +240,9 @@ class SQLTest extends OperationsTestBase {
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(table.schema.map(_.name) == Seq("edge_weight_set"))
     assert(data == Seq(
-      Seq("Set(3.0, 1.0, 2.0)"),
-      Seq("Set(4.0, 2.0, 1.0)"),
-      Seq("Set(4.0, 3.0)"),
+      Seq(Seq(3.0, 1.0, 2.0)),
+      Seq(Seq(4.0, 2.0, 1.0)),
+      Seq(Seq(4.0, 3.0)),
       Seq(null)))
   }
 

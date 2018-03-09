@@ -4,7 +4,7 @@ cd `dirname $0`
 
 mkdir -p logs
 rm -f logs/test-*
-sbt test
+sbt test < /dev/null
 
 # We'll check if the logfile contains 'future failed' lines; these
 # indicate errors that the test framework cannot catch. In case such
