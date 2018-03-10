@@ -1,0 +1,26 @@
+# SQL syntax
+
+SQL is a rich language for expressing database queries. A simple example of such a query is:
+
+    select last_age + (2018 - last_update_year) as age_in_2018 from input
+
+For a concise description of the query syntax see
+https://docs.databricks.com/spark/latest/spark-sql/language-manual/select.html[Databrick's documentation for `SELECT` queries].
+
+SQL also comes with a variety of built-in functions. See the
+https://spark.apache.org/docs/latest/api/sql/[list of built-in functions] in the Apache Spark SQL
+documentation.
+
+LynxKite adds the following built-in functions:
+
+`geodistance(lat1, lon1, lat2, lon2)`::
+Computes the geographic distance between two points defined by their GPS coordinates.
+
+`hash(string, salt)`::
+Computes a cryptographic hash of `string`. See <<Hash vertex attribute>>
+
+`most_common(column)`::
+Returns the most common value for a string column.
+
+`string_intersect(set1, set2)`::
+For two sets of strings (as returned by `collect_set()`) returns the common subset.
