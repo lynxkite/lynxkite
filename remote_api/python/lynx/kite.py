@@ -143,8 +143,7 @@ class LynxKite:
     self._certfile = certfile
     self._oauth_token = oauth_token
     self._session = None
-    self._operation_names:
-      List[str] = None
+    self._operation_names: List[str] = None
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
   def operation_names(self) -> List[str]:
@@ -344,10 +343,8 @@ class LynxKite:
       ws_root = random_ws_folder()
     else:
       ws_root = save_under_root
-    needed_ws:
-      Set[Workspace] = set()
-    ws_queue:
-      queue.Queue[Workspace] = queue.Queue()
+    needed_ws: Set[Workspace] = set()
+    ws_queue: queue.Queue[Workspace] = queue.Queue()
     ws_queue.put(ws)
     while not ws_queue.empty():
       nws = ws_queue.get()
@@ -458,18 +455,13 @@ class LynxKite:
       return Workspace(real_name, outputs, inputs, parameters)
     return ws_decorator
 
-  def trigger_box(self,
-                  workspace_name: str,
-                  box_id: str,
-                  custom_box_stack: List[str]=[]):
-    '''Triggers the computation of all the GUIDs in the box which is in the
-    saved workspace named ``workspace_name`` and has ``boxID=box_id`` If
-    cutom_box_stack is not empty, it specifies the custom box inside the
-    workspace which contains the box with the given box_id.
+  def trigger_box(self, workspace_name: str, box_id: str):
+    '''Trigger the computation of all the GUIDs in the box which is in the
+    saved workspace named ``workspace_name`` and has ``boxID=box_id``.
     '''
     return self._send(
         '/ajax/triggerBox',
-        dict(workspace=dict(top=workspace_name, customBoxStack=custom_box_stack), box=box_id))
+        dict(workspace=dict(top=workspace_name, customBoxStack=[]), box=box_id))
 
 
 class TableSnapshotSequence:
@@ -632,10 +624,8 @@ class Box:
     assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
         got_inputs, exp_inputs)
     self.inputs = inputs
-    self.parameters:
-      Dict[str, str] = {}
-    self.parametric_parameters:
-      Dict[str, str] = {}
+    self.parameters: Dict[str, str] = {}
+    self.parametric_parameters: Dict[str, str] = {}
     # We separate normal and parametric parameters here.
     # Parametric parameters can be specified as `name=PP('parametric value')`
     for key, value in parameters.items():
@@ -727,10 +717,8 @@ class Workspace:
   def __init__(self, name: str, terminal_boxes: List[Box], input_boxes: List[Box] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
     self._name = name or 'Anonymous'
-    self._all_boxes:
-      Set[Box] = set()
-    self._box_ids:
-      Dict[Box, str] = dict()
+    self._all_boxes: Set[Box] = set()
+    self._box_ids: Dict[Box, str] = dict()
     self._next_id = 0
     self._inputs = [inp.parameters['name'] for inp in input_boxes]
     self._outputs = [
@@ -743,8 +731,7 @@ class Workspace:
 
     # We enumerate and add all upstream boxes for terminal_boxes via a simple
     # BFS.
-    to_process:
-      queue.Queue[Box] = queue.Queue()
+    to_process: queue.Queue[Box] = queue.Queue()
     for box in terminal_boxes:
       to_process.put(box)
       self._add_box(box)
@@ -894,8 +881,7 @@ class WorkspaceSequence:
     self._lk_root = lk_root
     self._dfs_root = dfs_root
     self._input_recipes = input_recipes
-    self._output_sequences:
-      Dict[str, TableSnapshotSequence] = {}
+    self._output_sequences: Dict[str, TableSnapshotSequence] = {}
     for output in self._ws.outputs():
       location = normalize_path(self._lk_root + '/' + output)
       self._output_sequences[output] = TableSnapshotSequence(location, self._schedule)
@@ -984,8 +970,7 @@ def layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
       yield next_group
       deps = {box_id: dep - next_group for box_id, dep in deps.items() if box_id not in next_group}
 
-  dependencies:
-    Dict[str, Set[str]] = {box['id']: set() for box in boxes}
+  dependencies: Dict[str, Set[str]] = {box['id']: set() for box in boxes}
   level = {}
   for box in boxes:
     current_box = box['id']
