@@ -444,7 +444,9 @@ class LynxKite:
         '/ajax/createDirectory',
         dict(name=path, privacy=privacy))
 
-  def workspace(self, name: str = None, parameters: List[WorkspaceParameter] = []
+  def workspace(self,
+                name: str = None,
+                parameters: List[WorkspaceParameter] = []
                 ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
     def ws_decorator(builder_fn):
       real_name = builder_fn.__name__ if not name else name
@@ -467,6 +469,18 @@ class LynxKite:
     return self._send(
         '/ajax/triggerBox',
         dict(workspace=dict(top=workspace_name, customBoxStack=custom_box_stack), box=box_id))
+
+  def workspace_with_side_effect(self, name=None, parameters=[]):
+    sec = SideEffectCollector()
+
+    def ws_decorator(builder_fn):
+      real_name = builder_fn.__name__ if not name else name
+      inputs = [self.input(name=name)
+                for name in list(inspect.signature(builder_fn).parameters.keys())[1:]]
+      results = builder_fn(sec, *inputs)
+      outputs = [state.output(name=name) for name, state in results.items()]
+      return WorkspaceWithSideEffect(real_name, outputs, sec, inputs, parameters)
+    return ws_decorator
 
 
 class TableSnapshotSequence:
@@ -733,11 +747,13 @@ class Workspace:
     self._ws_parameters = ws_parameters
     self._terminal_boxes = terminal_boxes
     self._lk = terminal_boxes[0].lk
+    self.add_boxes(terminal_boxes)
 
+  def add_boxes(self, boxes):
     # We enumerate and add all upstream boxes for terminal_boxes via a simple
     # BFS.
     to_process: queue.Queue[Box] = queue.Queue()
-    for box in terminal_boxes:
+    for box in boxes:
       to_process.put(box)
       self._add_box(box)
     while not to_process.empty():
@@ -788,6 +804,45 @@ class Workspace:
     return [self.id_of(box) for box in self._terminal_boxes]
 
   def __call__(self, *args, **kwargs) -> Box:
+    inputs = dict(zip(self.inputs(), args))
+    return new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
+
+
+class BoxToTrigger:
+  def __init__(self, box, prefixes):
+    self.box = box
+    self.prefixes = prefixes
+
+  def add_prefix(self, box_id):
+    return BoxToTrigger(box, [box_id] + self.prefixes)
+
+
+class SideEffectCollector:
+  def __init__(self):
+    self.side_effects = []
+
+  def add(self, box_to_trigger):
+    self.side_effects.append(box_to_trigger)
+
+  def boxes(self):
+    '''Returns the box objects to trigger.'''
+    return [btt.box for btt in self.side_effects]
+
+  def update(self, box_id):
+    '''Prepends box_id to all side effects.'''
+    self.side_effects = [se.add_prefix(box_id) for se in self.side_effects]
+
+
+class WorkspaceWithSideEffect(Workspace):
+  def __init__(self, name, terminal_boxes, side_effects, input_boxes=[], ws_parameters=[]):
+    super().__init__(name, terminal_boxes, input_boxes, ws_parameters)
+    self.side_effects = side_effects
+    side_effect_boxes = side_effects.boxes()
+    self.add_boxes(side_effect_boxes)
+
+  def __call__(self, sec, *args, **kwargs):
+    # TODO compute box_id of self at call time????
+    # ??? self.side_effects.update(sec)
     inputs = dict(zip(self.inputs(), args))
     return new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
 
