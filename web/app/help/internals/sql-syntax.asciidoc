@@ -17,7 +17,7 @@ LynxKite adds the following built-in functions:
 Computes the geographic distance between two points defined by their GPS coordinates.
 
 `hash(string, salt)`::
-Computes a cryptographic hash of `string`. See <<Hash vertex attribute>>
+Computes a cryptographic hash of `string`. See <<Hash vertex attribute>>.
 
 `most_common(column)`::
 Returns the most common value for a string column.
