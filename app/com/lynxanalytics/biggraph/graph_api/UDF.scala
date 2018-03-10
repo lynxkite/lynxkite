@@ -134,6 +134,5 @@ object UDF {
   def register(reg: UDFRegistration): Unit = {
     reg.register("hash", hash _)
     reg.register("dayofweek", dayofweek _)
-    reg.register("geodistance", geodistance _)
-  }
+    reg.register("geodistance", geodistance _)  }
 }
