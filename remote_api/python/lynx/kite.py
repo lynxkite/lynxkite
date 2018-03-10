@@ -809,59 +809,63 @@ class Workspace:
 
 
 class BoxToTrigger:
-  '''The last prefix is the id of the box itself, the previous ids are
-  the box ids of the (nested) custom boxes which contain the box to trigger.
+  '''List of Boxes. The last element is the box we want to trigger.
+  The previous elements form the cutom box stack into which the box is embedded.
+
+  This is mutable.
   '''
 
-  def __init__(self, box, prefixes):
-    self.box = box
-    self.prefixes = prefixes
+  def __init__(self, box):
+    self.box_stack: List[Box] = [box]
 
-  def add_prefix(self, box_id):
-    return BoxToTrigger(box, [box_id] + self.prefixes)
+  def add_box_as_prefix(self, box):
+    return BoxToTrigger([box] + self.box_stack)
 
 
 class SideEffectCollector:
   def __init__(self):
-    self.side_effects: Dict[Box, BoxToTrigger] = {}
+    self.built_side_effects: List[BoxtoTrigger] = []
+    self.side_effects: List[BoxtoTrigger] = []
 
   def add_box(self, box):
-    self.side_effects[box] = BoxToTrigger(box, [])
+    self.side_effects.append(BoxToTrigger(box))
 
-  def unresolved_boxes(self):
-    '''Returns the box objects to trigger which are not resolved
-    (by assigning a box_id to it).'''
-    boxes = self.side_effects.keys()
-    return [box in boxes if self.side_effects[box].prefixes == []]
+  def unbuilt_boxes(self):
+    '''Returns the box objects to trigger which are not built
+    (by added to the all_boxes of a Workspace).'''
+    return [btt.box_stack[-1] for btt in self.side_effects]
 
-  def update_box_with_prefix(self, box, box_id):
-    self.side_effects[box] = self.side_effects[box].add_prefix(box_id)
+  def move_to_built(self):
+    '''After we added side effect boxes to a Workspace, we can call it.'''
+    for btt in self.side_effects:
+      self.built_side_effects.append(btt)
+    self.side_effects = []
 
-  def update_all(self, box_id):
-    '''Prepends box_id to all side effects.'''
-    self.side_effects = {box: self.side_effects[box].add_prefix(box_id)
-                         for box in self.side_effects.keys()}
-
-  def extend(self, other):
-    '''Copy all the boxes to trigger from the other SideEffectCollector.'''
-    pass
+  def extend(self, other_sec, box):
+    '''Copy all the boxes to trigger from the other SideEffectCollector, prefixed
+    with the box. The copied boxes are already built in the custom box from which
+    they are inherited.'''
+    for btt in other_sec.built_side_effects:
+      self.built_side_effects.append(btt.add_box_as_prefix(box))
 
 
 class WorkspaceWithSideEffect(Workspace):
   def __init__(self, name, terminal_boxes, side_effects, input_boxes=[], ws_parameters=[]):
     super().__init__(name, terminal_boxes, input_boxes, ws_parameters)
     self.side_effects = side_effects
-    unresolved_side_effect_boxes = side_effects.unresolved_boxes()
-    self.add_boxes(unresolved_side_effect_boxes)
-    # Now we can add the box ids of the boxes to trigger
-    for box in unresolved_side_effect_boxes:
-      self.side_effects.update_box_with_prefix(box, self.id_of(box))
+    # We add the side effect boxes to the box set of this Workspace.
+    # But only the ones which were not already added inside a custom box.
+    unbuilt_boxes = self.side_effects.unbuilt_boxes()
+    self.add_boxes(unbuilt_boxes)
+    # Now they are built.
+    self.side_effects.move_to_built()
 
   def __call__(self, sec, *args, **kwargs):
-    # TODO compute box_id of self at call time????
-    # ??? self.side_effects.update(sec)
     inputs = dict(zip(self.inputs(), args))
-    return new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
+    workspace_as_box = new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
+    # The caller will "inherit" the side effects of this custom box.
+    sec.extend(self.side_effects, workspace_as_box)
+    return workspace_as_box
 
 
 class InputRecipe:
