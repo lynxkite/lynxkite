@@ -82,16 +82,6 @@ Set up web build tools:
     cd web
     yarn
 
-## Extra steps for macOS
-
-Some of the shell utilities are not readily available on macOS. These extra steps are required
-in order to develop on a MacBook.
-
-Install [flock](https://github.com/discoteq/flock):
-
-    brew tap discoteq/discoteq
-    brew install flock
-
 ## Configure .kiterc
 
     cp conf/kiterc_template ~/.kiterc
