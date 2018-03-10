@@ -828,9 +828,11 @@ class SideEffectCollector:
   def add_box(self, box):
     self.side_effects[box] = BoxToTrigger(box, [])
 
-  def boxes(self):
-    '''Returns the box objects to trigger.'''
-    return self.side_effects.keys()
+  def unresolved_boxes(self):
+    '''Returns the box objects to trigger which are not resolved
+    (by assigning a box_id to it).'''
+    boxes = self.side_effects.keys()
+    return [box in boxes if self.side_effects[box].prefixes == []]
 
   def update_box_with_prefix(self, box, box_id):
     self.side_effects[box] = self.side_effects[box].add_prefix(box_id)
@@ -840,15 +842,19 @@ class SideEffectCollector:
     self.side_effects = {box: self.side_effects[box].add_prefix(box_id)
                          for box in self.side_effects.keys()}
 
+  def extend(self, other):
+    '''Copy all the boxes to trigger from the other SideEffectCollector.'''
+    pass
+
 
 class WorkspaceWithSideEffect(Workspace):
   def __init__(self, name, terminal_boxes, side_effects, input_boxes=[], ws_parameters=[]):
     super().__init__(name, terminal_boxes, input_boxes, ws_parameters)
     self.side_effects = side_effects
-    side_effect_boxes = side_effects.boxes()
-    self.add_boxes(side_effect_boxes)
+    unresolved_side_effect_boxes = side_effects.unresolved_boxes()
+    self.add_boxes(unresolved_side_effect_boxes)
     # Now we can add the box ids of the boxes to trigger
-    for box in side_effect_boxes:
+    for box in unresolved_side_effect_boxes:
       self.side_effects.update_box_with_prefix(box, self.id_of(box))
 
   def __call__(self, sec, *args, **kwargs):
