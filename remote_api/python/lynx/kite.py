@@ -809,6 +809,10 @@ class Workspace:
 
 
 class BoxToTrigger:
+  '''The last prefix is the id of the box itself, the previous ids are
+  the box ids of the (nested) custom boxes which contain the box to trigger.
+  '''
+
   def __init__(self, box, prefixes):
     self.box = box
     self.prefixes = prefixes
@@ -819,18 +823,22 @@ class BoxToTrigger:
 
 class SideEffectCollector:
   def __init__(self):
-    self.side_effects = []
+    self.side_effects: Dict[Box, BoxToTrigger] = {}
 
-  def add(self, box_to_trigger):
-    self.side_effects.append(box_to_trigger)
+  def add_box(self, box):
+    self.side_effects[box] = BoxToTrigger(box, [])
 
   def boxes(self):
     '''Returns the box objects to trigger.'''
-    return [btt.box for btt in self.side_effects]
+    return self.side_effects.keys()
 
-  def update(self, box_id):
+  def update_box_with_prefix(self, box, box_id):
+    self.side_effects[box] = self.side_effects[box].add_prefix(box_id)
+
+  def update_all(self, box_id):
     '''Prepends box_id to all side effects.'''
-    self.side_effects = [se.add_prefix(box_id) for se in self.side_effects]
+    self.side_effects = {box: self.side_effects[box].add_prefix(box_id)
+                         for box in self.side_effects.keys()}
 
 
 class WorkspaceWithSideEffect(Workspace):
@@ -839,6 +847,9 @@ class WorkspaceWithSideEffect(Workspace):
     self.side_effects = side_effects
     side_effect_boxes = side_effects.boxes()
     self.add_boxes(side_effect_boxes)
+    # Now we can add the box ids of the boxes to trigger
+    for box in side_effect_boxes:
+      self.side_effects.update_box_with_prefix(box, self.id_of(box))
 
   def __call__(self, sec, *args, **kwargs):
     # TODO compute box_id of self at call time????
