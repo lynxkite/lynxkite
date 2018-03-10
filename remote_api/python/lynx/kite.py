@@ -478,7 +478,10 @@ class LynxKite:
       inputs = [self.input(name=name)
                 for name in list(inspect.signature(builder_fn).parameters.keys())[1:]]
       results = builder_fn(sec, *inputs)
-      outputs = [state.output(name=name) for name, state in results.items()]
+      if results:
+        outputs = [state.output(name=name) for name, state in results.items()]
+      else:
+        outputs = []
       return WorkspaceWithSideEffect(real_name, outputs, sec, inputs, parameters)
     return ws_decorator
 
@@ -815,8 +818,8 @@ class BoxToTrigger:
   This is mutable.
   '''
 
-  def __init__(self, box):
-    self.box_stack: List[Box] = [box]
+  def __init__(self, box_list):
+    self.box_stack: List[Box] = box_list
 
   def add_box_as_prefix(self, box):
     return BoxToTrigger([box] + self.box_stack)
@@ -828,7 +831,7 @@ class SideEffectCollector:
     self.side_effects: List[BoxtoTrigger] = []
 
   def add_box(self, box):
-    self.side_effects.append(BoxToTrigger(box))
+    self.side_effects.append(BoxToTrigger([box]))
 
   def unbuilt_boxes(self):
     '''Returns the box objects to trigger which are not built
@@ -851,7 +854,26 @@ class SideEffectCollector:
 
 class WorkspaceWithSideEffect(Workspace):
   def __init__(self, name, terminal_boxes, side_effects, input_boxes=[], ws_parameters=[]):
-    super().__init__(name, terminal_boxes, input_boxes, ws_parameters)
+    self._name = name or 'Anonymous'
+    self._all_boxes: Set[Box] = set()
+    self._box_ids: Dict[Box, str] = dict()
+    self._next_id = 0
+    self._inputs = [inp.parameters['name'] for inp in input_boxes]
+    self._outputs = [
+        outp.parameters['name'] for outp in terminal_boxes
+        if outp.operation == 'output']
+    if len(terminal_boxes) > 0:
+      self._bc = terminal_boxes[0].bc
+      self._lk = terminal_boxes[0].lk
+    else:
+      boxes = side_effects.built_side_effects + side_effects.side_effects
+      print('Debug boxes', boxes)
+      print('Debug boxes[0].box_stack', boxes[0].box_stack)
+      self._bc = boxes[0].box_stack[-1].bc
+      self._lk = boxes[0].box_stack[-1].lk
+    self._ws_parameters = ws_parameters
+    self._terminal_boxes = terminal_boxes
+    self.add_boxes(terminal_boxes)
     self.side_effects = side_effects
     # We add the side effect boxes to the box set of this Workspace.
     # But only the ones which were not already added inside a custom box.
