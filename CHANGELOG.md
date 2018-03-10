@@ -10,7 +10,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Administrators can now restart LynxKite from the user menu.
  - String attributes now support lexicographic filtering
  - Improved layout in graph visualizations.
- - LynxKite-specific function added to SQL: `geodistance(lat1, lon1, lat2, lon2)`.
+ - LynxKite-specific functions added to SQL: `geodistance()`, `most_common()` and
+   `string_intersect()`. See the documentation for details.
  - Bug fixes and improvements focusing on supporting the new Python API (coming soon).
 
 ### 2.2.1
