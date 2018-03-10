@@ -859,6 +859,7 @@ class WorkspaceWithSideEffect(Workspace):
     self.add_boxes(unbuilt_boxes)
     # Now they are built.
     self.side_effects.move_to_built()
+    self.full_path = None
 
   def __call__(self, sec, *args, **kwargs):
     inputs = dict(zip(self.inputs(), args))
@@ -866,6 +867,19 @@ class WorkspaceWithSideEffect(Workspace):
     # The caller will "inherit" the side effects of this custom box.
     sec.extend(self.side_effects, workspace_as_box)
     return workspace_as_box
+
+  def save(self, folder, lk):
+    _, self.full_path = lk.save_workspace_recursively(self, folder)
+
+  def is_saved(self, lk):
+    if not self.full_path:
+      return False
+    r = lk.get_directory_entry(self.full_path)
+    return r.exists and r.isWorkspace
+
+  def trigger_all_side_effects(self, lk):
+    assert self.is_saved(lk), 'Workspace has to be saved before it can be run.'
+    # TODO resolve box_stacks and trigger boxes.
 
 
 class InputRecipe:
