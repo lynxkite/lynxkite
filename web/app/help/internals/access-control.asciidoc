@@ -8,7 +8,7 @@ is enabled.
 
 ### Access control lists
 
-Access rights are controlled at two levels: the folder level 
+Access rights are controlled at two levels: the folder level
 and the file prefix level. The latter is only relevant to administrators
 and described in the Admin Manual; the first is described below.
 
