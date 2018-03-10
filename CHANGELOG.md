@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 2.3.0
+
  - Upgraded to _Apache Spark 2.3.0_.
  - Administrators can now restart LynxKite from the user menu.
  - String attributes now support lexicographic filtering.
