@@ -8,18 +8,6 @@ object UDF {
 
   def hash(string: String, salt: String): String = graph_operations.HashVertexAttribute.hash(string, salt)
 
-  // Returns the day of the week of the given argument as an integer value in the range 1-7,
-  // where 1 represents Sunday.
-  // TODO: remove this once we migrate to Spark 2.3.
-  def dayofweek(date: String): Int = {
-    import java.time.LocalDate
-    import java.time.format.DateTimeFormatter
-    val df = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    // Java's LocalDate returns the ISO standard (Monday: 1, Sunday: 7) but we need to convert to
-    // Sunday: 1, Saturday: 7 to match Spark 2.3's dayofweek.
-    LocalDate.parse(date, df).getDayOfWeek.getValue() % 7 + 1
-  }
-
   val crs = org.geotools.referencing.CRS.decode("EPSG:4326")
 
   // Returns the geodetic distance between two lat/long coordinates in meters.
@@ -89,10 +77,9 @@ object UDF {
   }
 
   def register(reg: UDFRegistration): Unit = {
-    reg.register("hash", hash _)
-    reg.register("dayofweek", dayofweek _)
     reg.register("geodistance", geodistance _)
-    reg.register("string_intersect", string_intersect _)
+    reg.register("hash", hash _)
     reg.register("most_common", new MostCommon)
+    reg.register("string_intersect", string_intersect _)
   }
 }
