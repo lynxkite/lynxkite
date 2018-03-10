@@ -156,13 +156,14 @@ object MetaRepositoryManager {
     srcVersion: VersionMap, // Source version map.
     migration: JsonMigration // JsonMigration for the current version.
   ): Unit = {
+    log.info(s"Migrating from $src to $dst.")
     // A mapping for entity GUIDs (from old to new) that have changed in the new version.
     val guidMapping = collection.mutable.Map[String, String]()
     // Manager will write to "dst".
     val mm = new MetaGraphManager(dst)
     // We will read from "src", convert, and feed into the manager.
 
-    // Operations.
+    log.info("Migrating operations.")
     for ((file, j) <- MetaGraphManager.loadOperations(src)) {
       try {
         applyOperation(mm, j, guidMapping, srcVersion, migration)
@@ -171,7 +172,7 @@ object MetaRepositoryManager {
       }
     }
 
-    // Checkpoints.
+    log.info("Migrating checkpoints.")
     val finalGuidMapping = guidMapping.map {
       case (key, value) =>
         UUID.fromString(key) -> UUID.fromString(value)
@@ -191,7 +192,7 @@ object MetaRepositoryManager {
       mm.checkpointRepo.saveCheckpointedState(checkpoint, updatedCheckpoint(state))
     }
 
-    // Tags.
+    log.info("Migrating tags.")
     val oldTags = TagRoot.loadFromRepo(src)
     mm.setTags(oldTags)
   }
