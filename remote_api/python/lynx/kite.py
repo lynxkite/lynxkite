@@ -455,13 +455,18 @@ class LynxKite:
       return Workspace(real_name, outputs, inputs, parameters)
     return ws_decorator
 
-  def trigger_box(self, workspace_name: str, box_id: str):
-    '''Trigger the computation of all the GUIDs in the box which is in the
-    saved workspace named ``workspace_name`` and has ``boxID=box_id``.
+  def trigger_box(self,
+                  workspace_name: str,
+                  box_id: str,
+                  custom_box_stack: List[str]=[]):
+    '''Triggers the computation of all the GUIDs in the box which is in the
+    saved workspace named ``workspace_name`` and has ``boxID=box_id`` If
+    cutom_box_stack is not empty, it specifies the custom box inside the
+    workspace which contains the box with the given box_id.
     '''
     return self._send(
         '/ajax/triggerBox',
-        dict(workspace=dict(top=workspace_name, customBoxStack=[]), box=box_id))
+        dict(workspace=dict(top=workspace_name, customBoxStack=custom_box_stack), box=box_id))
 
 
 class TableSnapshotSequence:
