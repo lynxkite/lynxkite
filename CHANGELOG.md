@@ -6,9 +6,12 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Upgraded to _Apache Spark 2.3.0_.
  - Administrators can now restart LynxKite from the user menu.
  - String attributes now support lexicographic filtering
  - Improved layout in graph visualizations.
+ - LynxKite-specific function added to SQL: `geodistance(lat1, lon1, lat2, lon2)`.
+ - Bug fixes and improvements focusing on supporting the new Python API (coming soon).
 
 ### 2.2.1
 
