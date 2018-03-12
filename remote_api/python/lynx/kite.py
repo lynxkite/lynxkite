@@ -914,7 +914,6 @@ class WorkspaceWithSideEffect(Workspace):
       # If the last box is a custom box, it won't be triggered directly.
       # (Custom boxes are not triggerable)
       if not isinstance(btt.box_stack[-1].operation, Workspace):
-        print(self.full_path, box_ids[-1], box_ids[:-1])
         lk.trigger_box(self.full_path, box_ids[-1], box_ids[:-1])
 
 
