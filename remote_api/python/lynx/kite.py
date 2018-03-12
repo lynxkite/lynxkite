@@ -462,8 +462,8 @@ class LynxKite:
                   box_id: str,
                   custom_box_stack: List[str]=[]):
     '''Triggers the computation of all the GUIDs in the box which is in the
-    saved workspace named ``workspace_name`` and has ``boxID=box_id`` If
-    cutom_box_stack is not empty, it specifies the custom box inside the
+    saved workspace named ``workspace_name`` and has ``boxID=box_id``. If
+    custom_box_stack is not empty, it specifies the custom box inside the
     workspace which contains the box with the given box_id.
     '''
     return self._send(
@@ -813,7 +813,7 @@ class Workspace:
 
 class BoxToTrigger:
   '''List of Boxes. The last element is the box we want to trigger.
-  The previous elements form the cutom box stack into which the box is embedded.
+  The previous elements form the custom box stack into which the box is embedded.
   '''
 
   def __init__(self, box_list):
