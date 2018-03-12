@@ -838,8 +838,7 @@ class SideEffectCollector:
 
   def move_to_built(self):
     '''After we added side effect boxes to a Workspace, we can call it.'''
-    for btt in self.side_effects:
-      self.built_side_effects.append(btt)
+    self.built_side_effects.extend(self.side_effects)
     self.side_effects = []
 
   def extend(self, other_sec, box):
