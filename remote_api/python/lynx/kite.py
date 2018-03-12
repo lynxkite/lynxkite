@@ -867,8 +867,6 @@ class WorkspaceWithSideEffect(Workspace):
       self._lk = terminal_boxes[0].lk
     else:
       boxes = side_effects.built_side_effects + side_effects.side_effects
-      print('Debug boxes', boxes)
-      print('Debug boxes[0].box_stack', boxes[0].box_stack)
       self._bc = boxes[0].box_stack[-1].bc
       self._lk = boxes[0].box_stack[-1].lk
     self._ws_parameters = ws_parameters
