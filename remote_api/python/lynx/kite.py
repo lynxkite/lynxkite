@@ -814,8 +814,6 @@ class Workspace:
 class BoxToTrigger:
   '''List of Boxes. The last element is the box we want to trigger.
   The previous elements form the cutom box stack into which the box is embedded.
-
-  This is mutable.
   '''
 
   def __init__(self, box_list):
@@ -902,11 +900,11 @@ class WorkspaceWithSideEffect(Workspace):
 
     def btt_to_box_ids(btt):
       box_stack = btt.box_stack
-      cur_box = box_stack[0]
-      box_ids = [self.id_of(cur_box)]
-      for box in box_stack[1:]:
-        box_ids.append(cur_box.operation.id_of(box))
-        cur_box = box
+      current_box = box_stack[0]
+      box_ids = [self.id_of(current_box)]
+      for next_box in box_stack[1:]:
+        box_ids.append(current_box.operation.id_of(next_box))
+        current_box = next_box
       return box_ids
 
     for btt in self.side_effects.built_side_effects:
