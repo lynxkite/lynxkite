@@ -6,9 +6,15 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 2.3.0
+
+ - Upgraded to _Apache Spark 2.3.0_.
  - Administrators can now restart LynxKite from the user menu.
- - String attributes now support lexicographic filtering
+ - String attributes now support lexicographic filtering.
  - Improved layout in graph visualizations.
+ - LynxKite-specific functions added to SQL: `geodistance()`, `most_common()` and
+   `string_intersect()`. See the documentation for details.
+ - Bug fixes and improvements focusing on supporting the new Python API (coming soon).
 
 ### 2.2.1
 

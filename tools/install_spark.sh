@@ -7,10 +7,6 @@ VERSION=$(cat conf/SPARK_VERSION)
 # Link to the given name or spark-$VERSION by default.
 LINK="${1:-spark-${VERSION}}"
 
-LOCK=/tmp/install_spark_${LINK}
-exec 200>$LOCK
-flock 200
-
 HADOOP='2.7'
 cd $HOME
 if [[ ! -x "$LINK" ]]; then

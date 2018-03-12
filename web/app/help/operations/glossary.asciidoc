@@ -194,6 +194,8 @@ end::local-aggregators[]
 
 tag::sql-box[]
 
+See the <<SQL syntax>> section for more.
+
 The following tables are available for SQL access for project inputs:
 
  - All the vertex attributes can be accessed in the `vertices` table.
