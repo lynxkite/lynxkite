@@ -3,65 +3,10 @@ package com.lynxanalytics.biggraph.graph_api
 import org.apache.spark.sql.UDFRegistration
 import org.apache.spark.sql.SQLContext
 import com.lynxanalytics.biggraph.graph_operations
-import org.apache.spark.sql.expressions.MutableAggregationBuffer
-import org.apache.spark.sql.expressions.UserDefinedAggregateFunction
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.types._
-
-class GeometricMean extends UserDefinedAggregateFunction {
-  // This is the input fields for your aggregate function.
-  override def inputSchema: org.apache.spark.sql.types.StructType =
-    StructType(StructField("value", DoubleType) :: Nil)
-
-  // This is the internal fields you keep for computing your aggregate.
-  override def bufferSchema: StructType = StructType(
-    StructField("count", LongType) ::
-      StructField("product", DoubleType) :: Nil)
-
-  // This is the output type of your aggregatation function.
-  override def dataType: DataType = DoubleType
-
-  override def deterministic: Boolean = true
-
-  // This is the initial value for your buffer schema.
-  override def initialize(buffer: MutableAggregationBuffer): Unit = {
-    buffer(0) = 0L
-    buffer(1) = 1.0
-  }
-
-  // This is how to update your buffer schema given an input.
-  override def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
-    buffer(0) = buffer.getAs[Long](0) + 1
-    buffer(1) = buffer.getAs[Double](1) * input.getAs[Double](0)
-  }
-
-  // This is how to merge two objects with the bufferSchema type.
-  override def merge(buffer1: MutableAggregationBuffer, buffer2: Row): Unit = {
-    buffer1(0) = buffer1.getAs[Long](0) + buffer2.getAs[Long](0)
-    buffer1(1) = buffer1.getAs[Double](1) * buffer2.getAs[Double](1)
-  }
-
-  // This is where you output the final value, given the final value of your bufferSchema.
-  override def evaluate(buffer: Row): Any = {
-    math.pow(buffer.getDouble(1), 1.toDouble / buffer.getLong(0))
-  }
-}
 
 object UDF {
 
   def hash(string: String, salt: String): String = graph_operations.HashVertexAttribute.hash(string, salt)
-
-  // Returns the day of the week of the given argument as an integer value in the range 1-7,
-  // where 1 represents Sunday.
-  // TODO: remove this once we migrate to Spark 2.3.
-  def dayofweek(date: String): Int = {
-    import java.time.LocalDate
-    import java.time.format.DateTimeFormatter
-    val df = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    // Java's LocalDate returns the ISO standard (Monday: 1, Sunday: 7) but we need to convert to
-    // Sunday: 1, Saturday: 7 to match Spark 2.3's dayofweek.
-    LocalDate.parse(date, df).getDayOfWeek.getValue() % 7 + 1
-  }
 
   val crs = org.geotools.referencing.CRS.decode("EPSG:4326")
 
@@ -132,7 +77,9 @@ object UDF {
   }
 
   def register(reg: UDFRegistration): Unit = {
+    reg.register("geodistance", geodistance _)
     reg.register("hash", hash _)
-    reg.register("dayofweek", dayofweek _)
-    reg.register("geodistance", geodistance _)  }
+    reg.register("most_common", new MostCommon)
+    reg.register("string_intersect", string_intersect _)
+  }
 }
