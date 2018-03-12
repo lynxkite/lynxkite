@@ -899,7 +899,23 @@ class WorkspaceWithSideEffect(Workspace):
 
   def trigger_all_side_effects(self, lk):
     assert self.is_saved(lk), 'Workspace has to be saved before it can be run.'
-    # TODO resolve box_stacks and trigger boxes.
+
+    def btt_to_box_ids(btt):
+      box_stack = btt.box_stack
+      cur_box = box_stack[0]
+      box_ids = [self.id_of(cur_box)]
+      for box in box_stack[1:]:
+        box_ids.append(cur_box.operation.id_of(box))
+        cur_box = box
+      return box_ids
+
+    for btt in self.side_effects.built_side_effects:
+      box_ids = btt_to_box_ids(btt)
+      # If the last box is a custom box, it won't be triggered directly.
+      # (Custom boxes are not triggerable)
+      if not isinstance(btt.box_stack[-1].operation, Workspace):
+        print(self.full_path, box_ids[-1], box_ids[:-1])
+        lk.trigger_box(self.full_path, box_ids[-1], box_ids[:-1])
 
 
 class InputRecipe:
