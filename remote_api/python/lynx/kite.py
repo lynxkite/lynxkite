@@ -471,18 +471,18 @@ class LynxKite:
         dict(workspace=dict(top=workspace_name, customBoxStack=custom_box_stack), box=box_id))
 
   def workspace_with_side_effect(self, name=None, parameters=[]):
-    sec = SideEffectCollector()
+    se_collector = SideEffectCollector()
 
     def ws_decorator(builder_fn):
       real_name = builder_fn.__name__ if not name else name
       inputs = [self.input(name=name)
                 for name in list(inspect.signature(builder_fn).parameters.keys())[1:]]
-      results = builder_fn(sec, *inputs)
+      results = builder_fn(se_collector, *inputs)
       if results:
         outputs = [state.output(name=name) for name, state in results.items()]
       else:
         outputs = []
-      return WorkspaceWithSideEffect(real_name, outputs, sec, inputs, parameters)
+      return WorkspaceWithSideEffect(real_name, outputs, se_collector, inputs, parameters)
     return ws_decorator
 
 
@@ -841,11 +841,11 @@ class SideEffectCollector:
     self.built_side_effects.extend(self.side_effects)
     self.side_effects = []
 
-  def extend(self, other_sec, box):
+  def extend(self, other_se_collector, box):
     '''Copy all the boxes to trigger from the other SideEffectCollector, prefixed
     with the box. The copied boxes are already built in the custom box from which
     they are inherited.'''
-    for btt in other_sec.built_side_effects:
+    for btt in other_se_collector.built_side_effects:
       self.built_side_effects.append(btt.add_box_as_prefix(box))
 
 
@@ -878,11 +878,11 @@ class WorkspaceWithSideEffect(Workspace):
     self.side_effects.move_to_built()
     self.full_path = None
 
-  def __call__(self, sec, *args, **kwargs):
+  def __call__(self, se_collector, *args, **kwargs):
     inputs = dict(zip(self.inputs(), args))
     workspace_as_box = new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
     # The caller will "inherit" the side effects of this custom box.
-    sec.extend(self.side_effects, workspace_as_box)
+    se_collector.extend(self.side_effects, workspace_as_box)
     return workspace_as_box
 
   def save(self, folder, lk):
