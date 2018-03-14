@@ -23,7 +23,6 @@ case class GetWorkspaceResponse(
     canUndo: Boolean,
     canRedo: Boolean)
 case class SetWorkspaceRequest(reference: WorkspaceReference, workspace: Workspace)
-case class SetAndGetWorkspaceRequest(reference: WorkspaceReference, workspace: Workspace)
 case class GetOperationMetaRequest(workspace: WorkspaceReference, box: String)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
 case class GetProjectOutputRequest(id: String, path: String)
