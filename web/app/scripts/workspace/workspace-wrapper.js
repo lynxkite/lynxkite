@@ -175,7 +175,7 @@ angular.module('biggraph')
     saveWorkspace: function() {
       var that = this;
       that.loadWorkspace(
-        util.post('/ajax/setWorkspace', { reference: that.ref(), workspace: that.state }));
+        util.post('/ajax/setAndGetWorkspace', { reference: that.ref(), workspace: that.state }));
     },
 
     getUniqueId: function(operationId) {
