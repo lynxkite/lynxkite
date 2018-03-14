@@ -23,6 +23,7 @@ case class GetWorkspaceResponse(
     canUndo: Boolean,
     canRedo: Boolean)
 case class SetWorkspaceRequest(reference: WorkspaceReference, workspace: Workspace)
+case class SetAndGetWorkspaceRequest(reference: WorkspaceReference, workspace: Workspace)
 case class GetOperationMetaRequest(workspace: WorkspaceReference, box: String)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
 case class GetProjectOutputRequest(id: String, path: String)
@@ -247,6 +248,14 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def setWorkspace(
+    user: serving.User, request: SetWorkspaceRequest): Unit = metaManager.synchronized {
+    val f = getWorkspaceFrame(user, ResolvedWorkspaceReference(user, request.reference).name)
+    f.assertWriteAllowedFrom(user)
+    val cp = request.workspace.checkpoint(previous = f.checkpoint)
+    f.setCheckpoint(cp)
+  }
+
+  def setAndGetWorkspace(
     user: serving.User, request: SetWorkspaceRequest): GetWorkspaceResponse = metaManager.synchronized {
     val f = getWorkspaceFrame(user, ResolvedWorkspaceReference(user, request.reference).name)
     f.assertWriteAllowedFrom(user)

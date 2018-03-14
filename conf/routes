@@ -14,6 +14,7 @@ POST /ajax/renameEntry             com.lynxanalytics.biggraph.serving.Production
 POST /ajax/changeACLSettings       com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeACLSettings
 POST /ajax/createWorkspace         com.lynxanalytics.biggraph.serving.ProductionJsonServer.createWorkspace
 POST /ajax/setWorkspace            com.lynxanalytics.biggraph.serving.ProductionJsonServer.setWorkspace
+POST /ajax/setAndGetWorkspace      com.lynxanalytics.biggraph.serving.ProductionJsonServer.setAndGetWorkspace
 GET  /ajax/getWorkspace            com.lynxanalytics.biggraph.serving.ProductionJsonServer.getWorkspace
 POST /ajax/runWorkspace            com.lynxanalytics.biggraph.serving.ProductionJsonServer.runWorkspace
 POST /ajax/undoWorkspace           com.lynxanalytics.biggraph.serving.ProductionJsonServer.undoWorkspace
