@@ -133,7 +133,7 @@ class BigGraphControllerTest extends BigGraphControllerTestBase {
   test("list and search snapshot") {
     wc.createWorkspace(user, CreateWorkspaceRequest(name = "foo/bar"))
     val ws = Workspace.from(Box("eg", "Create example graph", Map(), 0, 0, Map()))
-    val stateId = wc.setWorkspace(user, SetWorkspaceRequest(WorkspaceReference("foo/bar"), ws))
+    val stateId = wc.setAndGetWorkspace(user, SetWorkspaceRequest(WorkspaceReference("foo/bar"), ws))
       .outputs(0).stateId
     wc.createSnapshot(user, CreateSnapshotRequest("foo/snapshot", stateId))
 

@@ -434,6 +434,7 @@ object ProductionJsonServer extends JsonServer {
   def getProjectOutput = jsonGet(workspaceController.getProjectOutput)
   def getOperationMeta = jsonGet(workspaceController.getOperationMeta)
   def setWorkspace = jsonPost(workspaceController.setWorkspace)
+  def setAndGetWorkspace = jsonPost(workspaceController.setAndGetWorkspace)
   def undoWorkspace = jsonPost(workspaceController.undoWorkspace)
   def redoWorkspace = jsonPost(workspaceController.redoWorkspace)
   def boxCatalog = jsonGet(workspaceController.boxCatalog)
