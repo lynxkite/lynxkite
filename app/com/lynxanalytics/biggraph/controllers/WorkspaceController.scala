@@ -247,11 +247,16 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   }
 
   def setWorkspace(
-    user: serving.User, request: SetWorkspaceRequest): GetWorkspaceResponse = metaManager.synchronized {
+    user: serving.User, request: SetWorkspaceRequest): Unit = metaManager.synchronized {
     val f = getWorkspaceFrame(user, ResolvedWorkspaceReference(user, request.reference).name)
     f.assertWriteAllowedFrom(user)
     val cp = request.workspace.checkpoint(previous = f.checkpoint)
     f.setCheckpoint(cp)
+  }
+
+  def setAndGetWorkspace(
+    user: serving.User, request: SetWorkspaceRequest): GetWorkspaceResponse = metaManager.synchronized {
+    setWorkspace(user, request)
     getWorkspace(user, request.reference)
   }
 
