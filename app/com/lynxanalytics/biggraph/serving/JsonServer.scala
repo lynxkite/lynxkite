@@ -292,7 +292,6 @@ object FrontendJson {
   implicit val rRunWorkspaceRequest = json.Json.reads[RunWorkspaceRequest]
   implicit val wRunWorkspaceResponse = json.Json.writes[RunWorkspaceResponse]
   implicit val rSetWorkspaceRequest = json.Json.reads[SetWorkspaceRequest]
-  implicit val rSetAndGetWorkspaceRequest = json.Json.reads[SetAndGetWorkspaceRequest]
   implicit val rGetOperationMetaRequest = json.Json.reads[GetOperationMetaRequest]
   implicit val rGetProjectOutputRequest = json.Json.reads[GetProjectOutputRequest]
   implicit val rGetTableOutputRequest = json.Json.reads[GetTableOutputRequest]
