@@ -430,27 +430,7 @@ def start_tests_native(cluster, jdbc_url, args):
       hadoop fs -rm -r /user/hadoop/lynxkite
       sudo rm -Rf metadata/lynxkite/*
       supervisorctl restart lynxkite
-      ./reload_luigi_tasks.sh
-      echo 'Waiting for the ecosystem to start...'
-      rm -f /tasks_data/smoke_test_marker.txt
-      rm -Rf /tmp/luigi/
-      touch /mnt/lynx/luigi_tasks/test_tasks/__init__.py
-      while [[ $(cat /tasks_data/smoke_test_marker.txt 2>/dev/null) != "done" ]]; do
-        luigi --module test_tasks.smoke_test SmokeTest
-        sleep 1
-      done
-      echo 'Ecosystem started.'
-      JDBC_URL='{jdbc_url}' DATASET={dataset} \
-      python3 /mnt/lynx/luigi_tasks/test_runner.py \
-          --module {luigi_module} \
-          --task {luigi_task} \
-          --result_file /home/hadoop/test_results.txt
-  '''.format(
-      luigi_module=args.task_module,
-      luigi_task=args.task,
-      jdbc_url=jdbc_url,
-      dataset=bigdata_test_set(args)['data'],
-  ))
+  ''')
 
 
 def run_tests_native(cluster, jdbc_url, args):
