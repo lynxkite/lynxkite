@@ -40,11 +40,8 @@ $(pip): python_requirements.txt
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
 		$(shell $(find) ecosystem/native remote_api ecosystem/release/lynx/luigi_tasks) \
-		.build/backend-done .build/documentation-done-${VERSION} .build/statter-done
+		.build/backend-done .build/documentation-done-${VERSION}
 	ecosystem/native/tools/build-monitoring.sh && ecosystem/native/bundle.sh && touch $@
-.build/statter-done: \
-		$(shell $(find) tools/statter/src) tools/statter/build.sbt tools/statter/project/plugins.sbt
-	cd tools/statter && sbt stage < /dev/null && cd - && touch $@
 
 # Short aliases for command-line use.
 .PHONY: backend
@@ -68,5 +65,3 @@ test: backend-test frontend-test ecosystem-test
 .PHONY: big-data-test
 big-data-test: .build/ecosystem-done
 	./test_big_data.py --test_set_size ${TEST_SET_SIZE} --rm
-.PHONY: statter
-statter: .build/statter-done
