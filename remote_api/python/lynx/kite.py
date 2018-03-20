@@ -32,7 +32,8 @@ import datetime
 import inspect
 import re
 import itertools
-from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType
+import collections
+from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
@@ -711,6 +712,22 @@ def new_box(bc: BoxCatalog, lk: LynxKite, operation: Union[str, 'Workspace'],
     return Box(bc, lk, operation, inputs, parameters)
 
 
+def bfs_on_boxes(roots: List[Box]) -> Iterator[Box]:
+  to_process: queue.Queue[Box] = queue.Queue()
+  for box in roots:
+    to_process.put(box)
+    yield box
+  processed = set(roots)
+  while not to_process.empty():
+    box = to_process.get()
+    for input_state in box.inputs.values():
+      parent_box = input_state.box
+      if parent_box not in processed:
+        processed.add(parent_box)
+        to_process.put(parent_box)
+        yield parent_box
+
+
 class Workspace:
   '''Immutable class representing a LynxKite workspace.'''
 
@@ -729,19 +746,8 @@ class Workspace:
     self._terminal_boxes = terminal_boxes
     self._lk = terminal_boxes[0].lk
 
-    # We enumerate and add all upstream boxes for terminal_boxes via a simple
-    # BFS.
-    to_process: queue.Queue[Box] = queue.Queue()
-    for box in terminal_boxes:
-      to_process.put(box)
+    for box in bfs_on_boxes(terminal_boxes):
       self._add_box(box)
-    while not to_process.empty():
-      box = to_process.get()
-      for input_state in box.inputs.values():
-        parent_box = input_state.box
-        if parent_box not in self._all_boxes:
-          self._add_box(parent_box)
-          to_process.put(parent_box)
 
   def _add_box(self, box):
     self._all_boxes.add(box)
@@ -785,6 +791,25 @@ class Workspace:
   def __call__(self, *args, **kwargs) -> Box:
     inputs = dict(zip(self.inputs(), args))
     return new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
+
+  def dependency_graph(self) -> Dict[Box, Set[Box]]:
+    def parent_of_triggerable(box):
+      input_state = list(box.inputs.values())[0]  # triggerable boxes have a single input
+      return input_state.box
+
+    parents_of_triggerable = {b: parent_of_triggerable(b) for b in self._terminal_boxes}
+    dependencies = {b: bfs_on_boxes([b]) for b in set(parents_of_triggerable.values())}
+    dependencies_between_triggerables: Dict[Box, Set[Box]] = {
+        b: set() for b in self._terminal_boxes
+    }
+    for b1 in self._terminal_boxes:
+      p1 = parents_of_triggerable[b1]
+      deps = dependencies[p1]
+      for b2 in self._terminal_boxes:
+        p2 = parents_of_triggerable[b2]
+        if p2 in deps:
+          dependencies_between_triggerables[b1].add(b2)
+    return dependencies_between_triggerables
 
 
 class InputRecipe:
