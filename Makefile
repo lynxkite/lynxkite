@@ -32,8 +32,6 @@ $(pip): python_requirements.txt
 		$(shell $(find) web/test) build.sbt .build/backend-done \
 		.build/documentation-verified .build/gulp-done
 	./.test_frontend.sh && touch $@
-.build/chronomaster-test-passed: $(shell $(find) chronomaster remote_api/python) $(pip)
-	chronomaster/test.sh && touch $@
 .build/remote_api-python-test-passed: $(shell $(find) remote_api/python) .build/backend-done $(pip)
 	tools/with_lk.sh remote_api/python/test.sh && touch $@
 .build/mobile-prepaid-scv-test-passed: $(shell $(find) mobile-prepaid-scv) .build/backend-done $(pip)
@@ -41,7 +39,7 @@ $(pip): python_requirements.txt
 .build/documentation-done-${VERSION}: $(shell $(find) ecosystem/documentation remote_api/python) python_requirements.txt
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
-		$(shell $(find) ecosystem/native remote_api chronomaster ecosystem/release/lynx/luigi_tasks) \
+		$(shell $(find) ecosystem/native remote_api ecosystem/release/lynx/luigi_tasks) \
 		.build/backend-done .build/documentation-done-${VERSION} .build/statter-done
 	ecosystem/native/tools/build-monitoring.sh && ecosystem/native/bundle.sh && touch $@
 .build/statter-done: \
@@ -59,8 +57,6 @@ ecosystem: .build/ecosystem-done
 backend-test: .build/backend-test-passed
 .PHONY: frontend-test
 frontend-test: .build/frontend-test-passed
-.PHONY: chronomaster-test
-chronomaster-test: .build/chronomaster-test-passed
 .PHONY: remote_api-test
 remote_api-test: .build/remote_api-python-test-passed
 .PHONY: mobile-prepaid-scv-test
