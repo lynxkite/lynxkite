@@ -712,11 +712,12 @@ def new_box(bc: BoxCatalog, lk: LynxKite, operation: Union[str, 'Workspace'],
     return Box(bc, lk, operation, inputs, parameters)
 
 
-def bfs_on_boxes(roots: List[Box]) -> Iterator[Box]:
+def reverse_bfs_on_boxes(roots: List[Box], list_roots: bool = True) -> Iterator[Box]:
   to_process: queue.Queue[Box] = queue.Queue()
   for box in roots:
     to_process.put(box)
-    yield box
+    if list_roots:
+      yield box
   processed = set(roots)
   while not to_process.empty():
     box = to_process.get()
@@ -746,7 +747,7 @@ class Workspace:
     self._terminal_boxes = terminal_boxes
     self._lk = terminal_boxes[0].lk
 
-    for box in bfs_on_boxes(terminal_boxes):
+    for box in reverse_bfs_on_boxes(terminal_boxes):
       self._add_box(box)
 
   def _add_box(self, box):
@@ -792,23 +793,28 @@ class Workspace:
     inputs = dict(zip(self.inputs(), args))
     return new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
 
+  def triggerable_boxes(self) -> List[Box]:
+    return [outp for outp in self._terminal_boxes if outp.operation == 'output']
+
   def dependency_graph(self) -> Dict[Box, Set[Box]]:
     def parent_of_triggerable(box):
       input_state = list(box.inputs.values())[0]  # triggerable boxes have a single input
       return input_state.box
 
-    parents_of_triggerable = {b: parent_of_triggerable(b) for b in self._terminal_boxes}
-    dependencies = {b: bfs_on_boxes([b]) for b in set(parents_of_triggerable.values())}
-    dependencies_between_triggerables: Dict[Box, Set[Box]] = {
-        b: set() for b in self._terminal_boxes
+    triggerables = self.triggerable_boxes()
+    parent_of_triggerables = {b: parent_of_triggerable(b) for b in triggerables}
+    dependencies = {
+        b: list(reverse_bfs_on_boxes([b], list_roots=False))
+        for b in set(parent_of_triggerables.values())
     }
-    for b1 in self._terminal_boxes:
-      p1 = parents_of_triggerable[b1]
+    dependencies_between_triggerables: Dict[Box, Set[Box]] = {b: set() for b in triggerables}
+    for t1 in triggerables:
+      p1 = parent_of_triggerables[t1]
       deps = dependencies[p1]
-      for b2 in self._terminal_boxes:
-        p2 = parents_of_triggerable[b2]
+      for t2 in triggerables:
+        p2 = parent_of_triggerables[t2]
         if p2 in deps:
-          dependencies_between_triggerables[b1].add(b2)
+          dependencies_between_triggerables[t1].add(t2)
     return dependencies_between_triggerables
 
 
