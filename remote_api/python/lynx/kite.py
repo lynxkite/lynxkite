@@ -32,7 +32,6 @@ import datetime
 import inspect
 import re
 import itertools
-import collections
 from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator
 
 if sys.version_info.major < 3:
