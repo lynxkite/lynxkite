@@ -32,7 +32,7 @@ import datetime
 import inspect
 import re
 import itertools
-from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator
+from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator, TypeVar
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
@@ -982,23 +982,26 @@ class WorkspaceSequenceInstance:
       self._lk.trigger_box(full_name, box_id)
 
 
+T = TypeVar('T')
+
+
+def topological_sort(dependencies: Dict[T, Set[T]]) -> Iterable[Set[T]]:
+  # dependencies[x] = set(), if x does not depend on anything.
+  deps = dependencies.copy()
+  while True:
+    next_group = set(box_id for box_id, dep in deps.items() if len(dep) == 0)
+    if not next_group:
+      break
+    yield next_group
+    deps = {box_id: dep - next_group for box_id, dep in deps.items() if box_id not in next_group}
+
+
 def layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
   '''Compute coordinates of boxes in a workspace.'''
   dx = 200
   dy = 200
   ox = 150
   oy = 150
-
-  def topological_sort(dependencies):
-    # We have all the boxes as keys in the parameter,
-    # dependencies[box_id] = {}, if box_id does not depend on anything.
-    deps = dependencies.copy()
-    while True:
-      next_group = set(box_id for box_id, dep in deps.items() if len(dep) == 0)
-      if not next_group:
-        break
-      yield next_group
-      deps = {box_id: dep - next_group for box_id, dep in deps.items() if box_id not in next_group}
 
   dependencies: Dict[str, Set[str]] = {box['id']: set() for box in boxes}
   level = {}
@@ -1025,6 +1028,28 @@ def layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
       num_boxes_on_level[box_level] = num_boxes_on_level[box_level] + 1
     boxes_with_coordinates.append(box)
   return boxes_with_coordinates
+
+
+def minimal_dag(g: Dict[T, Set[T]]) -> Dict[T, Set[T]]:
+  transitive_closure: Dict[T, Set[T]] = dict()
+  for group in topological_sort(g):
+    for elem in group:
+      deps = g[elem]
+      transitive_closure[elem] = deps
+      for d in deps:
+        transitive_closure[elem] = transitive_closure[elem] | transitive_closure[d]
+  min_dag: Dict[T, Set[T]] = {n: set() for n in g}
+  for n in g:
+    deps = g[n]
+    for m in deps:
+      is_direct_dependency = True
+      for o in deps:
+        if m in transitive_closure[o]:
+          is_direct_dependency = False
+          break
+      if is_direct_dependency:
+        min_dag[n].add(m)
+  return min_dag
 
 
 class LynxException(Exception):
