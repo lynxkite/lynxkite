@@ -81,4 +81,4 @@ class TestWorkspaceDecorator(unittest.TestCase):
     ws = lynx.kite.Workspace('Wrapper', [res])
     with self.assertRaises(Exception) as cm:
       lk.save_workspace_recursively(ws, f'test-ws-name-conflict')
-    self.assertTrue('Duplicate workspace name: names_above_threshold' in str(cm.exception))
+    self.assertTrue("Duplicate custom box name(s): ['names_above_threshold']" in str(cm.exception))
