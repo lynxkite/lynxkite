@@ -352,12 +352,13 @@ class LynxKite:
         if rws not in needed_ws:
           needed_ws.add(rws)
           ws_queue.put(rws)
+    # Check name duplication in required workspaces
+    if len(needed_ws) != len(set(rws.name() for rws in needed_ws)):
+      names = list(rws.name() for rws in needed_ws)
+      duplicates = [x for n, x in enumerate(names) if x in names[:n]]
+      raise Exception(f'Duplicate custom box name(s): {duplicates}')
     for rws in needed_ws:
-      path = normalize_path(ws_root + '/' + rws.name())
-      entry = self.get_directory_entry(path)
-      if entry.exists:
-        raise Exception(f'Duplicate workspace name: {rws.name()}')
-      self.save_workspace(path, layout(rws.to_json(ws_root)))
+      self.save_workspace(ws_root + '/' + rws.name(), layout(rws.to_json(ws_root)))
     if save_under_root is not None:
       self.save_workspace(
           save_under_root + '/' + ws.name(), layout(ws.to_json(save_under_root)))
