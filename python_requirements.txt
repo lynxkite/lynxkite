@@ -3,7 +3,6 @@
 # come the runtime dependencies, the second part
 # contains the dependencies for developing and testing.
 # Dependecies for running LynxKite and ecosystem
-# TODO: Is everything needed here?
 croniter
 flask
 mysqlclient
