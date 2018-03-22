@@ -84,11 +84,9 @@ parser.add_argument(
          native code is ecosystem/native/dist.''')
 parser.add_argument(
     '--task_module',
-#TODO airflow
     default='test_tasks.bigdata_tests',
     help='Module of the task which will run on the cluster.')
 parser.add_argument(
-#TODO airflow
     '--task',
     default='DefaultTests',
     help='Task to run when the cluster is started.')
@@ -260,7 +258,6 @@ def upload_installer_script(cluster, args):
 
 
 def upload_tasks(cluster):
-  # TODO airflow
   pass
 
 
