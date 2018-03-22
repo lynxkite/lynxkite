@@ -63,3 +63,30 @@ class TestWorkspaceDecorator(unittest.TestCase):
     table = full_workflow().get_table_data()
     values = [(row[0].string, row[1].string) for row in table.data]
     self.assertEqual(values, [('Adam', '1000'), ('Bob', '2000')])
+
+  def test_ws_name_conflict(self):
+    lk = lynx.kite.LynxKite()
+
+    def factory(lk, threshold):
+      query = f'''select name from vertices where income > {threshold}'''
+
+      @lk.workspace()
+      def names_above_threshold():
+        return dict(names=lk.createExampleGraph().sql(query))
+      return names_above_threshold
+
+    results = set()
+    for i in range(10):
+      n1 = factory(lk, 100)()
+      n2 = factory(lk, 1000)()
+      res = lk.sql(
+          'select * from one cross join two',
+          n1,
+          n2).saveToSnapshot(
+          path='ws-name-conflict-result')
+      ws = lynx.kite.Workspace('Wrapper', [res])
+      lk.save_workspace_recursively(ws, f'test-ws-name-conflict{i}')
+      lk.remove_name('ws-name-conflict-result', force=True)
+      lk.trigger_box(f'test-ws-name-conflict{i}/Wrapper', 'box_0')
+      results.add(len(lk.importSnapshot(path='ws-name-conflict-result').get_table_data().data))
+    self.assertEqual(results, {1, 4})
