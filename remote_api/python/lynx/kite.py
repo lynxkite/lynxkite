@@ -893,9 +893,6 @@ class WorkspaceSequence:
     '''Returns the output sequences of the workspace sequence as a dict.'''
     return self._output_sequences
 
-  def _wrapper_name(self, date):
-    return '{}_wrapper_for_{}'.format(self._ws.name(), date)
-
   def ws_for_date(self, lk: LynxKite, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
     ``date`` parameter of this method as a value to pass to the workspace. '''
@@ -915,8 +912,17 @@ class WorkspaceSequenceInstance:
     self._lk = lk
     self._date = date
 
+  def wrapper_name(self) -> str:
+    return 'wrapper_for_{}'.format(self._date)
+
+  def folder_name(self) -> str:
+    return 'workspaces_for_{}'.format(self._date)
+
+  def wrapper_folder_name(self) -> str:
+    return '/'.join([self._wss.lk_root(), self.folder_name()])
+
   def full_name(self) -> str:
-    name = self._wss.lk_root() + '/' + self._wss._wrapper_name(self._date)
+    name = '/'.join([self.wrapper_folder_name(), self.wrapper_name()])
     return normalize_path(name)
 
   def is_saved(self) -> bool:
@@ -937,8 +943,8 @@ class WorkspaceSequenceInstance:
     for output in self._wss._ws.outputs():
       out_path = self._wss._output_sequences[output].snapshot_name(self._date)
       terminal_boxes.append(ws_as_box[output].saveToSnapshot(path=out_path))
-    ws = Workspace(self._wss._wrapper_name(self._date), terminal_boxes)
-    self._lk.save_workspace_recursively(ws, self._wss.lk_root())
+    ws = Workspace(self.wrapper_name(), terminal_boxes)
+    self._lk.save_workspace_recursively(ws, self.wrapper_folder_name())
 
   def run(self) -> None:
     '''We trigger all the terminal boxes of the wrapped ws.
