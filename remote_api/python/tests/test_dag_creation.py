@@ -28,10 +28,19 @@ class TestDagCreation(unittest.TestCase):
     self.assertEqual(dep_counts[1], 2)
 
   def test_minimal_dag_on_full_graph(self):
-    size = 4
-    g = {i: set(range(i + 1, size)) for i in range(size)}
-    expected = {i: {i + 1} if i < size - 1 else set() for i in range(size)}
-    min_dag = lynx.kite.minimal_dag(g)
+    g = {
+        1: {2, 3, 4},
+        2: {3, 4},
+        3: {4},
+        4: set(),
+    }
+    expected = {
+        1: {2},
+        2: {3},
+        3: {4},
+        4: set(),
+    }
+    min_dag = lynx.kite._minimal_dag(g)
     self.assertEqual(min_dag, expected)
 
   def test_minimal_dag_on_two_paths(self):
@@ -41,5 +50,5 @@ class TestDagCreation(unittest.TestCase):
         3: {4},
         4: set(),
     }
-    min_dag = lynx.kite.minimal_dag(g)
+    min_dag = lynx.kite._minimal_dag(g)
     self.assertEqual(min_dag, g)
