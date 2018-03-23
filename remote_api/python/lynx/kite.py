@@ -1038,8 +1038,13 @@ def _layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
 
 def _minimal_dag(g: Dict[T, Set[T]]) -> Dict[T, Set[T]]:
   '''
-  Returns a new graph that has the same transitive closure as the input but is
-  minimal for edge exclusion.
+  g = (V, E)
+  g' = (V, E')
+  If g' = _minimal_dag(g) then
+    - TC(g') = TC(g)
+    - ∀ e ∈ E: TC((V, E' - e)) != TC(g)
+  where TC(g) (the transitive closure of g) is defined as (V, E*) and
+  ∀ (v, v') ∈ VxV: (v, v') ∈ E* ⇔ there is a directed path from v to v' in g
   '''
   transitive_closure: Dict[T, Set[T]] = dict()
   for group in _topological_sort(g):
