@@ -354,13 +354,16 @@ class LynxKite:
           needed_ws.add(rws)
           ws_queue.put(rws)
     # Check name duplication in required workspaces
+    names = list(rws.name() for rws in needed_ws)
     if len(needed_ws) != len(set(rws.name() for rws in needed_ws)):
-      names = list(rws.name() for rws in needed_ws)
       duplicates = [k for k, v in Counter(names).items() if v > 1]
       raise Exception(f'Duplicate custom box name(s): {duplicates}')
     for rws in needed_ws:
       self.save_workspace(ws_root + '/' + rws.name(), layout(rws.to_json(ws_root)))
     if save_under_root is not None:
+      # Check if the "main" ws name conflicts with one of the custom box names
+      if ws.name() in names:
+        raise Exception(f'Duplicate name: {ws.name()}')
       self.save_workspace(
           save_under_root + '/' + ws.name(), layout(ws.to_json(save_under_root)))
     # If saved, we return the full name of the main workspace also.
