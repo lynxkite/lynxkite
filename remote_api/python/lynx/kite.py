@@ -32,6 +32,7 @@ import datetime
 import inspect
 import re
 import itertools
+from collections import Counter
 from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType
 
 if sys.version_info.major < 3:
@@ -355,7 +356,7 @@ class LynxKite:
     # Check name duplication in required workspaces
     if len(needed_ws) != len(set(rws.name() for rws in needed_ws)):
       names = list(rws.name() for rws in needed_ws)
-      duplicates = [x for n, x in enumerate(names) if x in names[:n]]
+      duplicates = [k for k, v in Counter(names).items() if v > 1]
       raise Exception(f'Duplicate custom box name(s): {duplicates}')
     for rws in needed_ws:
       self.save_workspace(ws_root + '/' + rws.name(), layout(rws.to_json(ws_root)))
