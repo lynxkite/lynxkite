@@ -5,7 +5,6 @@
 # Dependecies for running LynxKite and ecosystem
 croniter
 flask
-luigi==2.3.2
 mysqlclient
 prometheus_client
 python-dateutil
