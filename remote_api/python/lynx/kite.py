@@ -797,8 +797,11 @@ class Workspace:
     return [outp for outp in self._terminal_boxes if outp.operation == 'output']
 
   def dependency_graph(self) -> Dict[Box, Set[Box]]:
+    ''' Returns all the triggerable boxes and the dependencies between them '''
     def parent_of_triggerable(box):
-      input_state = list(box.inputs.values())[0]  # triggerable boxes have a single input
+      input_states = list(box.inputs.values())
+      assert len(input_states) == 1, 'Triggerable boxes should have exactly one input'
+      input_state = input_states[0]
       return input_state.box
 
     triggerables = self.triggerable_boxes()
