@@ -23,9 +23,12 @@ class TestDagCreation(unittest.TestCase):
     ws = self.get_test_workspace()
     g = ws.dependency_graph()
     self.assertEqual(len(g), 3)
-    dep_counts = Counter(len(deps) for deps in g.values())
-    self.assertEqual(dep_counts[0], 1)
-    self.assertEqual(dep_counts[1], 2)
+    boxes_with_zero_dependency = [b for b, deps in g.items() if len(deps) == 0]
+    self.assertEqual(len(boxes_with_zero_dependency), 1)
+    age = boxes_with_zero_dependency[0]
+    other_boxes = (b for b in g if b != age)
+    for box in other_boxes:
+      self.assertEqual(g[box], {age})
 
   def test_minimal_dag_on_full_graph(self):
     g = {
