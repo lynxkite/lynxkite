@@ -81,3 +81,28 @@ class TestWorkspaceDecorator(unittest.TestCase):
 
     eg_exports.save('side effect example folder', lk)
     eg_exports.trigger_all_side_effects(lk)
+
+  def test_ws_name_conflict(self):
+    lk = lynx.kite.LynxKite()
+
+    def factory(lk, threshold):
+      query = f'''select name from vertices where income > {threshold}'''
+
+      @lk.workspace()
+      def names_above_threshold():
+        return dict(names=lk.createExampleGraph().sql(query))
+      return names_above_threshold
+
+    n1 = factory(lk, 100)()
+    n2 = factory(lk, 1000)()
+    res = lk.sql('select * from one cross join two', n1, n2)
+
+    ws = lynx.kite.Workspace('Wrapper', [res])
+    with self.assertRaises(Exception) as cm:
+      lk.save_workspace_recursively(ws, 'test-ws-name-conflict')
+    self.assertTrue("Duplicate custom box name(s): ['names_above_threshold']" in str(cm.exception))
+
+    ws2 = lynx.kite.Workspace('names_above_threshold', [n1])
+    with self.assertRaises(Exception) as cm2:
+      lk.save_workspace_recursively(ws2, 'test-ws-name-conflict-2')
+    self.assertTrue("Duplicate name: names_above_threshold" in str(cm2.exception))
