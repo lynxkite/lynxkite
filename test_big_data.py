@@ -2,7 +2,7 @@
 """
 Command-line utility to spin up an EMR cluster
 (optionally with an RDS database), and run
-Luigi task based performance tests on it.
+performance tests on it.
 
 Examples:
 
@@ -67,14 +67,6 @@ arg_parser.add_argument(
     action='store_true',
     help='''Delete the cluster after completion.''')
 arg_parser.add_argument(
-    '--task_module',
-    default='test_tasks.bigdata_tests',
-    help='Module of the luigi task which will run on the cluster.')
-arg_parser.add_argument(
-    '--task',
-    default='DefaultTests',
-    help='Luigi task to run when the cluster is started.')
-arg_parser.add_argument(
     '--results_dir',
     default='./ecosystem/tests/results/',
     help='Test results are downloaded to this directory.')
@@ -92,7 +84,6 @@ def main(args):
   # Test configuration
   test_config = {
       'task_module': args.task_module,
-      'task': args.task,
       'dataset': test_sets[args.test_set_size]['data'],
       'results_local_dir': results_local_dir(args),
       'results_name': "/{task}-result.txt".format(task=args.task)}

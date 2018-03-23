@@ -145,17 +145,6 @@ LynxKite it calls `test_big_data.py`. You can also call `test_big_data.py` manua
 don't forget to build your currently checked out branch (`make ecosystem` or `ecosystem/native/build.sh`),
 or use a release. In the later case you need to update your `biggraph_releases` repo.
 
-The performance tests are implemented as Luigi tasks and they use the Python Remote API to
-run LynxKite operations on the test data. There are two wrapper tasks `AllTests` and `DefaultTests` which
- can be used to run predefined test sets. You can also pick a single test task to run.
-
-You can find detailed examples in `test_big_data.py` about how to specify parameters of this script for
- fine tuning the performance tests. Here are some examples:
-
-        ./test_big_data.py --task AllTests
-        ./test_big_data.py --lynx_version native-1.10.0 --test_set_size large --task ModularClustering
-        ./test_big_data.py --emr_instance_count 8 --test_size xlarge --task DefaultTests
-
 ## Test results on Jenkins
 
 To see the details of the automatic tests, click on `Details` link on GitHub in the box that is
