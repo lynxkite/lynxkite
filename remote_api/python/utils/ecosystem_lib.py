@@ -98,9 +98,6 @@ arg_parser.add_argument(
   After this date the 'owner' will be asked if the cluster can
   be shut down.''')
 arg_parser.add_argument(
-    '--with_tasks',
-    help='If specified, the Luigi tasks are copied to the cluster')
-arg_parser.add_argument(
     '--python_dependencies',
     help='Install Python dependencies in the specified file')
 arg_parser.add_argument(
@@ -212,7 +209,6 @@ class Ecosystem:
         'restore_metadata': args.restore_metadata,
         's3_metadata_version': args.s3_metadata_version,
         's3_metadata_dir': '',
-        'tasks': args.with_tasks,
         'extra_python_dependencies': args.python_dependencies,
         'env_variables': args.env_variables,
         'upload': args.upload,
@@ -383,18 +379,6 @@ class Ecosystem:
     file_name = os.path.basename(requirements)
     self.cluster.ssh('sudo pip-3.6 install --upgrade -r {}'.format(file_name))
 
-  def upload_tasks(self, src, dst='/mnt/lynx/luigi_tasks/'):
-    self.cluster.ssh('mkdir -p ' + dst)
-    self.cluster.rsync_up(src, dst)
-
-  def upload_test_tasks(self):
-    self.upload_tasks('ecosystem/tests/', '/mnt/lynx/luigi_tasks/test_tasks')
-    self.cluster.ssh('''
-        set -x
-        cd /mnt/lynx/luigi_tasks/test_tasks
-        mv test_runner.py /mnt/lynx/luigi_tasks
-        ''')
-
   def upload_tools(self):
     target_dir = '/mnt/lynx/tools'
     self.cluster.ssh('mkdir -p ' + target_dir)
@@ -481,7 +465,7 @@ class Ecosystem:
         export HDFS_ROOT=hdfs://$HOSTNAME:8020/user/$USER
         {data_dir_config}
         export LYNXKITE_ADDRESS=https://localhost:$KITE_HTTPS_PORT/
-        export PYTHONPATH=/mnt/lynx/apps/remote_api/python/:/mnt/lynx/luigi_tasks
+        export PYTHONPATH=/mnt/lynx/apps/remote_api/python
         export LYNX=/mnt/lynx
         # for tests with mysql server on master
         export DATA_DB=jdbc:mysql://$HOSTNAME:3306/'db?user=root&password=root&rewriteBatchedStatements=true'
