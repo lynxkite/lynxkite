@@ -868,11 +868,9 @@ class SideEffectCollector:
 
   def add_box(self, box):
     self.boxes_to_build.append(box)
+    # Only "normal" boxes are triggerable.
     if isinstance(box.operation, str):
       self.boxes_to_trigger.append(BoxToTrigger([box]))
-    else:
-      pass
-      # self.boxes_to_trigger.extend(box.operation.side_effects.boxes_to_trigger)
 
   def extend(self, other_se_collector, box):
     '''Copy all the boxes to trigger from the other SideEffectCollector, prefixed
@@ -932,10 +930,7 @@ class WorkspaceWithSideEffect(Workspace):
 
     for btt in self.side_effects.boxes_to_trigger:
       box_ids = btt_to_box_ids(btt)
-      # If the last box is a custom box, it won't be triggered directly.
-      # (Custom boxes are not triggerable)
-      if not isinstance(btt.box_stack[-1].operation, Workspace):
-        lk.trigger_box(self.full_path, box_ids[-1], box_ids[:-1])
+      lk.trigger_box(self.full_path, box_ids[-1], box_ids[:-1])
 
 
 class InputRecipe:
