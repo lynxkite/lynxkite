@@ -863,28 +863,23 @@ class BoxToTrigger:
 
 class SideEffectCollector:
   def __init__(self):
-    self.built_side_effects: List[BoxtoTrigger] = []
-    self.side_effects: List[BoxtoTrigger] = []
+    self.boxes_to_build: List[Box] = []
+    self.boxes_to_trigger: List[BoxToTrigger] = []
 
   def add_box(self, box):
-    self.side_effects.append(BoxToTrigger([box]))
-
-  def unbuilt_boxes(self):
-    '''Returns the box objects to trigger which are not built
-    (by added to the all_boxes of a Workspace).'''
-    return [btt.box_stack[-1] for btt in self.side_effects]
-
-  def move_to_built(self):
-    '''After we added side effect boxes to a Workspace, we can call it.'''
-    self.built_side_effects.extend(self.side_effects)
-    self.side_effects = []
+    self.boxes_to_build.append(box)
+    if isinstance(box.operation, str):
+      self.boxes_to_trigger.append(BoxToTrigger([box]))
+    else:
+      pass
+      # self.boxes_to_trigger.extend(box.operation.side_effects.boxes_to_trigger)
 
   def extend(self, other_se_collector, box):
     '''Copy all the boxes to trigger from the other SideEffectCollector, prefixed
     with the box. The copied boxes are already built in the custom box from which
     they are inherited.'''
-    for btt in other_se_collector.built_side_effects:
-      self.built_side_effects.append(btt.add_box_as_prefix(box))
+    for btt in other_se_collector.boxes_to_trigger:
+      self.boxes_to_trigger.append(btt.add_box_as_prefix(box))
 
 
 class WorkspaceWithSideEffect(Workspace):
@@ -897,25 +892,14 @@ class WorkspaceWithSideEffect(Workspace):
     self._outputs = [
         outp.parameters['name'] for outp in terminal_boxes
         if outp.operation == 'output']
-    if len(terminal_boxes) > 0:
-      self._bc = terminal_boxes[0].bc
-      self._lk = terminal_boxes[0].lk
-    else:
-      boxes = side_effects.built_side_effects + side_effects.side_effects
-      self._bc = boxes[0].box_stack[-1].bc
-      self._lk = boxes[0].box_stack[-1].lk
+    boxes_to_build = terminal_boxes + side_effects.boxes_to_build
+    self._bc = boxes_to_build[0].bc
+    self._lk = boxes_to_build[0].lk
     self._ws_parameters = ws_parameters
     self._terminal_boxes = terminal_boxes
-    for box in _reverse_bfs_on_boxes(terminal_boxes):
-      self._add_box(box)
     self.side_effects = side_effects
-    # We add the side effect boxes to the box set of this Workspace.
-    # But only the ones which were not already added inside a custom box.
-    unbuilt_boxes = self.side_effects.unbuilt_boxes()
-    for box in _reverse_bfs_on_boxes(unbuilt_boxes):
+    for box in _reverse_bfs_on_boxes(boxes_to_build):
       self._add_box(box)
-    # Now they are built.
-    self.side_effects.move_to_built()
     self.full_path = None
 
   def __call__(self, se_collector, *args, **kwargs):
@@ -946,7 +930,7 @@ class WorkspaceWithSideEffect(Workspace):
         current_box = next_box
       return box_ids
 
-    for btt in self.side_effects.built_side_effects:
+    for btt in self.side_effects.boxes_to_trigger:
       box_ids = btt_to_box_ids(btt)
       # If the last box is a custom box, it won't be triggered directly.
       # (Custom boxes are not triggerable)
