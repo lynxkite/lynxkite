@@ -21,7 +21,6 @@ Example usage::
 import copy
 import json
 import os
-import queue
 import random
 import requests
 import sys
@@ -32,20 +31,20 @@ import datetime
 import inspect
 import re
 import itertools
-from collections import Counter
-from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType
+import collections
+from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator, TypeVar
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
 
 
-def timestamp_is_valid(dt: datetime.datetime, cron_str: str) -> bool:
+def _timestamp_is_valid(dt: datetime.datetime, cron_str: str) -> bool:
   '''Checks whether ``dt`` is valid according to cron_str.'''
   i = croniter(cron_str, dt - datetime.timedelta(seconds=1))
   return i.get_next(datetime.datetime) == dt
 
 
-def step_back(cron_str: str, date: datetime.datetime, delta: int) -> datetime.datetime:
+def _step_back(cron_str: str, date: datetime.datetime, delta: int) -> datetime.datetime:
   cron = croniter(cron_str, date)
   start_date = date
   for _ in range(delta):
@@ -53,11 +52,11 @@ def step_back(cron_str: str, date: datetime.datetime, delta: int) -> datetime.da
   return start_date
 
 
-def random_ws_folder() -> str:
+def _random_ws_folder() -> str:
   return 'tmp_workspaces/{}'.format(''.join(random.choices('0123456789ABCDEF', k=16)))
 
 
-def normalize_path(path: str) -> str:
+def _normalize_path(path: str) -> str:
   '''Removes leading, trailing slashes and slash-duplicates.'''
   return re.sub('/+', '/', path).strip('/')
 
@@ -169,7 +168,7 @@ class LynxKite:
 
     def f(*args, **kwargs):
       inputs = dict(zip(self.box_catalog().inputs(name), args))
-      box = new_box(self.box_catalog(), self, name, inputs=inputs, parameters=kwargs)
+      box = _new_box(self.box_catalog(), self, name, inputs=inputs, parameters=kwargs)
       # If it is an import box, we trigger the import here.
       import_box_names = ['importCSV', 'importJSON', 'importFromHive',
                           'importParquet', 'importORC', 'importJDBC']
@@ -192,7 +191,7 @@ class LynxKite:
     name = 'sql{}'.format(num_inputs)
     inputs = dict(zip(self.box_catalog().inputs(name), args))
     kwargs['sql'] = sql
-    return new_box(self.box_catalog(), self, name, inputs=inputs, parameters=kwargs)
+    return _new_box(self.box_catalog(), self, name, inputs=inputs, parameters=kwargs)
 
   def address(self) -> str:
     return self._address or os.environ['LYNXKITE_ADDRESS']
@@ -341,33 +340,32 @@ class LynxKite:
   def save_workspace_recursively(self, ws: 'Workspace',
                                  save_under_root: str = None) -> Tuple[str, Union[bool, str]]:
     if save_under_root is None:
-      ws_root = random_ws_folder()
+      ws_root = _random_ws_folder()
     else:
       ws_root = save_under_root
     needed_ws: Set[Workspace] = set()
-    ws_queue: queue.Queue[Workspace] = queue.Queue()
-    ws_queue.put(ws)
-    while not ws_queue.empty():
-      nws = ws_queue.get()
+    ws_queue = collections.deque([ws])
+    while len(ws_queue):
+      nws = ws_queue.pop()
       for rws in nws.required_workspaces():
         if rws not in needed_ws:
           needed_ws.add(rws)
-          ws_queue.put(rws)
+          ws_queue.append(rws)
     # Check name duplication in required workspaces
     names = list(rws.name() for rws in needed_ws)
     if len(needed_ws) != len(set(rws.name() for rws in needed_ws)):
-      duplicates = [k for k, v in Counter(names).items() if v > 1]
+      duplicates = [k for k, v in collections.Counter(names).items() if v > 1]
       raise Exception(f'Duplicate custom box name(s): {duplicates}')
     for rws in needed_ws:
-      self.save_workspace(ws_root + '/' + rws.name(), layout(rws.to_json(ws_root)))
+      self.save_workspace(ws_root + '/' + rws.name(), _layout(rws.to_json(ws_root)))
     if save_under_root is not None:
       # Check if the "main" ws name conflicts with one of the custom box names
       if ws.name() in names:
         raise Exception(f'Duplicate name: {ws.name()}')
       self.save_workspace(
-          save_under_root + '/' + ws.name(), layout(ws.to_json(save_under_root)))
+          save_under_root + '/' + ws.name(), _layout(ws.to_json(save_under_root)))
     # If saved, we return the full name of the main workspace also.
-    return ws_root, (save_under_root is not None) and normalize_path(
+    return ws_root, (save_under_root is not None) and _normalize_path(
         save_under_root + '/' + ws.name())
 
   def fetch_workspace_output_states(self, ws: 'Workspace',
@@ -435,7 +433,7 @@ class LynxKite:
         params=dict(q=json.dumps(dict(path=path, stripHeaders=False)))).content
 
   def save_workspace(self, path: str, boxes: List[SerializedBox], overwrite: bool = True):
-    path = normalize_path(path)
+    path = _normalize_path(path)
     if not overwrite or not self.get_directory_entry(path).exists:
       self._send('/ajax/createWorkspace', dict(name=path))
     return self._send(
@@ -532,7 +530,7 @@ class TableSnapshotSequence:
 
   def save_to_sequence(self, lk: LynxKite, table_state: str, dt: datetime.datetime) -> None:
     # Assert that dt is valid according to the cron_str format.
-    assert timestamp_is_valid(dt, self.cron_str), "Datetime %s does not match cron format %s." % (
+    assert _timestamp_is_valid(dt, self.cron_str), "Datetime %s does not match cron format %s." % (
         dt, self.cron_str)
     lk.save_snapshot(self.snapshot_name(dt), table_state)
 
@@ -556,7 +554,7 @@ class State:
       assert len(inputs) > 0, '{} does not have an input'.format(name)
       assert len(inputs) < 2, '{} has more than one input'.format(name)
       [input_name] = inputs
-      return new_box(
+      return _new_box(
           self.box.bc, self.box.lk, name, inputs={input_name: self}, parameters=kwargs)
 
     if not name in self.box.bc.box_names():
@@ -608,7 +606,7 @@ class State:
 
     Uses a temporary folder to save a temporary workspace for this computation.
     '''
-    folder = random_ws_folder()
+    folder = _random_ws_folder()
     name = 'tmp_ws_name'
     full_path = folder + '/' + name
     box = self.computeInputs()
@@ -677,7 +675,7 @@ class Box:
       operationId = self.bc.operation_id(self.operation)
     else:
       # path//custom_box is not a valid name
-      operationId = normalize_path(workspace_root + '/' + self.operation.name())
+      operationId = _normalize_path(workspace_root + '/' + self.operation.name())
     return SerializedBox({
         'id': id_resolver(self),
         'operationId': operationId,
@@ -728,8 +726,8 @@ _anchor_box = SerializedBox({
 })
 
 
-def new_box(bc: BoxCatalog, lk: LynxKite, operation: Union[str, 'Workspace'],
-            inputs: Dict[str, State], parameters: Dict[str, Any]) -> Box:
+def _new_box(bc: BoxCatalog, lk: LynxKite, operation: Union[str, 'Workspace'],
+             inputs: Dict[str, State], parameters: Dict[str, Any]) -> Box:
   if isinstance(operation, str):
     outputs = bc.outputs(operation)
   else:
@@ -739,6 +737,25 @@ def new_box(bc: BoxCatalog, lk: LynxKite, operation: Union[str, 'Workspace'],
     return SingleOutputBox(bc, lk, operation, outputs[0], inputs, parameters)
   else:
     return Box(bc, lk, operation, inputs, parameters)
+
+
+def _reverse_bfs_on_boxes(roots: List[Box], list_roots: bool = True) -> Iterator[Box]:
+  '''
+  Lists all the dependencies of boxes in ``roots`` in a bfs way.
+  '''
+  to_process = collections.deque(roots)
+  if list_roots:
+    for box in roots:
+      yield box
+  processed = set(roots)
+  while len(to_process):
+    box = to_process.pop()
+    for input_state in box.inputs.values():
+      parent_box = input_state.box
+      if parent_box not in processed:
+        processed.add(parent_box)
+        to_process.append(parent_box)
+        yield parent_box
 
 
 class Workspace:
@@ -760,20 +777,8 @@ class Workspace:
     self._lk = terminal_boxes[0].lk
     self.add_boxes(terminal_boxes)
 
-  def add_boxes(self, boxes):
-    # We enumerate and add all upstream boxes for terminal_boxes via a simple
-    # BFS.
-    to_process: queue.Queue[Box] = queue.Queue()
-    for box in boxes:
-      to_process.put(box)
+    for box in _reverse_bfs_on_boxes(terminal_boxes):
       self._add_box(box)
-    while not to_process.empty():
-      box = to_process.get()
-      for input_state in box.inputs.values():
-        parent_box = input_state.box
-        if parent_box not in self._all_boxes:
-          self._add_box(parent_box)
-          to_process.put(parent_box)
 
   def _add_box(self, box):
     self._all_boxes.add(box)
@@ -816,7 +821,34 @@ class Workspace:
 
   def __call__(self, *args, **kwargs) -> Box:
     inputs = dict(zip(self.inputs(), args))
-    return new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
+    return _new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
+
+  def triggerable_boxes(self) -> List[Box]:
+    return [outp for outp in self._terminal_boxes if outp.operation == 'output']
+
+  def dependency_graph(self) -> Dict[Box, Set[Box]]:
+    ''' Returns all the triggerable boxes and the dependencies between them '''
+    def parent_of_triggerable(box):
+      input_states = list(box.inputs.values())
+      assert len(input_states) == 1, 'Triggerable boxes should have exactly one input'
+      input_state = input_states[0]
+      return input_state.box
+
+    triggerables = self.triggerable_boxes()
+    parent_of_triggerables = {b: parent_of_triggerable(b) for b in triggerables}
+    dependencies = {
+        b: list(_reverse_bfs_on_boxes([b], list_roots=False))
+        for b in set(parent_of_triggerables.values())
+    }
+    dependencies_between_triggerables: Dict[Box, Set[Box]] = {b: set() for b in triggerables}
+    for t1 in triggerables:
+      p1 = parent_of_triggerables[t1]
+      deps = dependencies[p1]
+      for t2 in triggerables:
+        p2 = parent_of_triggerables[t2]
+        if p2 in deps:
+          dependencies_between_triggerables[t1].add(t2)
+    return dependencies_between_triggerables
 
 
 class BoxToTrigger:
@@ -956,18 +988,18 @@ class TableSnapshotRecipe(InputRecipe):
 
   def validate(self, date: datetime.datetime) -> None:
     assert self.tss, 'TableSnapshotSequence needs to be set.'
-    assert timestamp_is_valid(
+    assert _timestamp_is_valid(
         date, self.tss.cron_str), '{} does not match {}.'.format(date, self.tss.cron_str)
 
   def is_ready(self, lk: LynxKite, date: datetime.datetime) -> bool:
     self.validate(date)
-    adjusted_date = step_back(self.tss.cron_str, date, self.delta)
+    adjusted_date = _step_back(self.tss.cron_str, date, self.delta)
     r = lk.get_directory_entry(self.tss.snapshot_name(adjusted_date))
     return r.exists and r.isSnapshot
 
   def build_boxes(self, lk: LynxKite, date: datetime.datetime) -> State:
     self.validate(date)
-    adjusted_date = step_back(self.tss.cron_str, date, self.delta)
+    adjusted_date = _step_back(self.tss.cron_str, date, self.delta)
     return self.tss.read_interval(lk, adjusted_date, adjusted_date)
 
 
@@ -1018,7 +1050,7 @@ class WorkspaceSequence:
     self._input_recipes = input_recipes
     self._output_sequences: Dict[str, TableSnapshotSequence] = {}
     for output in self._ws.outputs():
-      location = normalize_path(self._lk_root + '/' + output)
+      location = _normalize_path(self._lk_root + '/' + output)
       self._output_sequences[output] = TableSnapshotSequence(location, self._schedule)
 
   def output_sequences(self) -> Dict[str, TableSnapshotSequence]:
@@ -1029,7 +1061,7 @@ class WorkspaceSequence:
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
     ``date`` parameter of this method as a value to pass to the workspace. '''
     assert date >= self._start_date, "{} preceeds start date = {}".format(date, self._start_date)
-    assert timestamp_is_valid(
+    assert _timestamp_is_valid(
         date, self._schedule), "{} is not valid according to {}".format(date, self._schedule)
     return WorkspaceSequenceInstance(self, lk, date)
 
@@ -1055,7 +1087,7 @@ class WorkspaceSequenceInstance:
 
   def full_name(self) -> str:
     name = '/'.join([self.wrapper_folder_name(), self.wrapper_name()])
-    return normalize_path(name)
+    return _normalize_path(name)
 
   def is_saved(self) -> bool:
     path = self.full_name()
@@ -1093,23 +1125,31 @@ class WorkspaceSequenceInstance:
       self._lk.trigger_box(full_name, box_id)
 
 
-def layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
+T = TypeVar('T')
+
+
+def _topological_sort(dependencies: Dict[T, Set[T]]) -> Iterable[Set[T]]:
+  '''
+  Returns groups of Ts in a way, that elements in group_i depend only on elements in
+  group_j where j < i.
+
+  dependencies[x] = set(), if x does not depend on anything
+  '''
+  deps = dependencies
+  while True:
+    next_group = set(box_id for box_id, dep in deps.items() if len(dep) == 0)
+    if not next_group:
+      break
+    yield next_group
+    deps = {box_id: dep - next_group for box_id, dep in deps.items() if box_id not in next_group}
+
+
+def _layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
   '''Compute coordinates of boxes in a workspace.'''
   dx = 200
   dy = 200
   ox = 150
   oy = 150
-
-  def topological_sort(dependencies):
-    # We have all the boxes as keys in the parameter,
-    # dependencies[box_id] = {}, if box_id does not depend on anything.
-    deps = dependencies.copy()
-    while True:
-      next_group = set(box_id for box_id, dep in deps.items() if len(dep) == 0)
-      if not next_group:
-        break
-      yield next_group
-      deps = {box_id: dep - next_group for box_id, dep in deps.items() if box_id not in next_group}
 
   dependencies: Dict[str, Set[str]] = {box['id']: set() for box in boxes}
   level = {}
@@ -1120,7 +1160,7 @@ def layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
       dependencies[current_box].add(input_box)
 
   cur_level = 0
-  groups = list(topological_sort(dependencies))
+  groups = list(_topological_sort(dependencies))
   for group in groups:
     for box_id in group:
       level[box_id] = cur_level
@@ -1136,6 +1176,37 @@ def layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
       num_boxes_on_level[box_level] = num_boxes_on_level[box_level] + 1
     boxes_with_coordinates.append(box)
   return boxes_with_coordinates
+
+
+def _minimal_dag(g: Dict[T, Set[T]]) -> Dict[T, Set[T]]:
+  '''
+  g = (V, E)
+  g' = (V, E')
+  If g' = _minimal_dag(g) then
+    - TC(g') = TC(g)
+    - ∀ e ∈ E: TC((V, E' - e)) != TC(g)
+  where TC(g) (the transitive closure of g) is defined as (V, E*) and
+  ∀ (v, v') ∈ VxV: (v, v') ∈ E* ⇔ there is a directed path from v to v' in g
+  '''
+  transitive_closure: Dict[T, Set[T]] = dict()
+  for group in _topological_sort(g):
+    for elem in group:
+      deps = g[elem]
+      transitive_closure[elem] = deps
+      for d in deps:
+        transitive_closure[elem] = transitive_closure[elem] | transitive_closure[d]
+  min_dag: Dict[T, Set[T]] = {n: set() for n in g}
+  for n in g:
+    deps = g[n]
+    for m in deps:
+      is_direct_dependency = True
+      for o in deps:
+        if m in transitive_closure[o]:
+          is_direct_dependency = False
+          break
+      if is_direct_dependency:
+        min_dag[n].add(m)
+  return min_dag
 
 
 class LynxException(Exception):

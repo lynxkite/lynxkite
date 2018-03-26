@@ -2,7 +2,7 @@
 """
 Command-line utility to spin up an EMR cluster
 (optionally with an RDS database), and run
-Luigi task based performance tests on it.
+performance tests on it.
 
 Examples:
 
@@ -85,11 +85,11 @@ parser.add_argument(
 parser.add_argument(
     '--task_module',
     default='test_tasks.bigdata_tests',
-    help='Module of the luigi task which will run on the cluster.')
+    help='Module of the task which will run on the cluster.')
 parser.add_argument(
     '--task',
     default='DefaultTests',
-    help='Luigi task to run when the cluster is started.')
+    help='Task to run when the cluster is started.')
 parser.add_argument(
     '--ec2_key_file',
     default=os.environ['HOME'] + '/.ssh/lynx-cli.pem')
@@ -258,14 +258,7 @@ def upload_installer_script(cluster, args):
 
 
 def upload_tasks(cluster):
-  ecosystem_task_dir = '/mnt/lynx/luigi_tasks/test_tasks'
-  cluster.ssh('mkdir -p ' + ecosystem_task_dir)
-  cluster.rsync_up('ecosystem/tests/', ecosystem_task_dir)
-  cluster.ssh('''
-      set -x
-      cd /mnt/lynx/luigi_tasks/test_tasks
-      mv test_runner.py /mnt/lynx/luigi_tasks
-      ''')
+  pass
 
 
 def upload_tools(cluster):
@@ -338,7 +331,7 @@ def config_and_prepare_native(cluster, args):
       export HDFS_ROOT=hdfs://$HOSTNAME:8020/user/$USER
       {data_dir_config}
       export LYNXKITE_ADDRESS=https://localhost:$KITE_HTTPS_PORT/
-      export PYTHONPATH=/mnt/lynx/apps/remote_api/python/:/mnt/lynx/luigi_tasks
+      export PYTHONPATH=/mnt/lynx/apps/remote_api/python/
       export HADOOP_CONF_DIR=/etc/hadoop/conf
       export YARN_CONF_DIR=$HADOOP_CONF_DIR
       export LYNX=/mnt/lynx
