@@ -906,19 +906,21 @@ class WorkspaceWithSideEffect(Workspace):
       self._lk = boxes[0].box_stack[-1].lk
     self._ws_parameters = ws_parameters
     self._terminal_boxes = terminal_boxes
-    self.add_boxes(terminal_boxes)
+    for box in _reverse_bfs_on_boxes(terminal_boxes):
+      self._add_box(box)
     self.side_effects = side_effects
     # We add the side effect boxes to the box set of this Workspace.
     # But only the ones which were not already added inside a custom box.
     unbuilt_boxes = self.side_effects.unbuilt_boxes()
-    self.add_boxes(unbuilt_boxes)
+    for box in _reverse_bfs_on_boxes(unbuilt_boxes):
+      self._add_box(box)
     # Now they are built.
     self.side_effects.move_to_built()
     self.full_path = None
 
   def __call__(self, se_collector, *args, **kwargs):
     inputs = dict(zip(self.inputs(), args))
-    workspace_as_box = new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
+    workspace_as_box = _new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
     # The caller will "inherit" the side effects of this custom box.
     se_collector.extend(self.side_effects, workspace_as_box)
     return workspace_as_box
