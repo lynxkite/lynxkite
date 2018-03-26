@@ -775,8 +775,6 @@ class Workspace:
     self._ws_parameters = ws_parameters
     self._terminal_boxes = terminal_boxes
     self._lk = terminal_boxes[0].lk
-    self.add_boxes(terminal_boxes)
-
     for box in _reverse_bfs_on_boxes(terminal_boxes):
       self._add_box(box)
 
