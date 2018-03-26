@@ -165,7 +165,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Import from Hive")(new ImportOperation(_) {
     params ++= List(
       new DummyParam("last_settings", areSettingsStaleReplyMessage()),
-      FileParam("hive_table", "Hive table"),
+      Param("hive_table", "Hive table"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
       Code("sql", "SQL", language = "sql"),
