@@ -868,7 +868,8 @@ class SideEffectCollector:
 
   def add_box(self, box):
     self.boxes_to_build.append(box)
-    # Only "normal" boxes are triggerable.
+    # Only "normal" boxes are triggerable directly. Side effects in custom boxes
+    # are copied to the parent workspace's collector when they are called.
     if isinstance(box.operation, str):
       self.boxes_to_trigger.append(BoxToTrigger([box]))
 
@@ -890,13 +891,12 @@ class WorkspaceWithSideEffect(Workspace):
     self._outputs = [
         outp.parameters['name'] for outp in terminal_boxes
         if outp.operation == 'output']
-    boxes_to_build = terminal_boxes + side_effects.boxes_to_build
-    self._bc = boxes_to_build[0].bc
-    self._lk = boxes_to_build[0].lk
     self._ws_parameters = ws_parameters
-    self._terminal_boxes = terminal_boxes
     self.side_effects = side_effects
-    for box in _reverse_bfs_on_boxes(boxes_to_build):
+    self._terminal_boxes = terminal_boxes + side_effects.boxes_to_build
+    self._bc = self._terminal_boxes[0].bc
+    self._lk = self._terminal_boxes[0].lk
+    for box in _reverse_bfs_on_boxes(self._terminal_boxes):
       self._add_box(box)
     self.full_path = None
 
