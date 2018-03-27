@@ -1159,6 +1159,12 @@ def _layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
 
 def _minimal_dag(g: Dict[T, Set[T]]) -> Dict[T, Set[T]]:
   '''
+  This function creates another dependency graph which has the same implicit dependencies
+  as the original one (if a depends on b and b depends on c, a implicitly depends on c) but
+  is minimal for edge exclusion, i.e. with any explicit dependency deleted the resulting
+  graph will miss some implicit or explicit dependency from the original graph.
+
+  Formally:
   g = (V, E)
   g' = (V, E')
   If g' = _minimal_dag(g) then
