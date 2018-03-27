@@ -1182,6 +1182,15 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     if (geoAttr !== undefined) {
       map = new Map(this, vertices);
     }
+    var edgesOf = {};
+    if (vertices.edges !== undefined) {
+      // Build edge lists for easy traversal.
+      for (var j = 0; j < vertices.edges.length; ++j) {
+        var e = vertices.edges[j];
+        if (edgesOf[e.src.id] === undefined) { edgesOf[e.src.id] = []; }
+        edgesOf[e.src.id].push(e.dst);
+      }
+    }
     for (var i = 0; i < vertices.vs.length; ++i) {
       var v = vertices.vs[i];
       v.degree = 0;
@@ -1203,20 +1212,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       // Identify separate components. If the component ID is unset, this is the lowest ID vertex
       // in the component. Spread its ID to all connected vertices.
       if (v.component === undefined && vertices.edges !== undefined) {
-        var edgesOf = {};
-        for (var j = 0; j < vertices.edges.length; ++j) {
-          var e = vertices.edges[j];
-          if (edgesOf[e.src.id] === undefined) { edgesOf[e.src.id] = []; }
-          edgesOf[e.src.id].push(e.dst);
-        }
-        var q = [v];
-        for (j = 0; j < q.length; ++j) {
-          var w = q[j];
+        var queue = [v];
+        for (j = 0; j < queue.length; ++j) {
+          var w = queue[j];
           w.component = v.id;
           for (var k = 0; edgesOf[w.id] && k < edgesOf[w.id].length; ++k) {
             var u = edgesOf[w.id][k];
-            if (q.indexOf(u) === -1) {
-              q.push(u);
+            if (queue.indexOf(u) === -1) {
+              queue.push(u);
             }
           }
         }
