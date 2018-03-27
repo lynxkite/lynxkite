@@ -11,6 +11,7 @@ var FORCE_LAYOUT = (function() {
   //   drag:            force/speed ratio (fluid resistance)
   //   labelAttraction: attraction between matching labels, as fraction of repulsion
   //   style:           specifics of the force algorithm
+  //   componentRepulsionFraction: fraction of normal repulsion to apply between separate components
   lib.Engine = function(opts) {
     this.opts = opts;
   };
@@ -81,6 +82,9 @@ var FORCE_LAYOUT = (function() {
           // Apply reduced repulsion between vertices that have the same label.
           // This causes the vertices to cluster a bit by label.
           repulsion *= 1.0 - this.opts.labelAttraction;
+        }
+        if (a.component !== b.component) {
+          repulsion *= this.opts.componentRepulsionFraction;
         }
         a.x += repulsion * dx / d3 / a.forceMass;
         a.y += repulsion * dy / d3 / a.forceMass;

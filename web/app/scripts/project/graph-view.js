@@ -698,6 +698,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     if (data.vertices.length >= 5) {
       vertices.addLegendLine(data.vertices.length + ' vertices');
     }
+    vertices.vs.sort(function(a, b) { return a.id === b.id ? 0 : a.id < b.id ? -1 : 1; });
     return vertices;
   };
 
@@ -1199,10 +1200,31 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
       v.forceOX = v.x;
       v.forceOY = v.y;
+      // Identify separate components. If the component ID is unset, this is the lowest ID vertex
+      // in the component. Spread its ID to all connected vertices.
+      if (v.component === undefined && vertices.edges !== undefined) {
+        var edgesOf = {};
+        for (var j = 0; j < vertices.edges.length; ++j) {
+          var e = vertices.edges[j];
+          if (edgesOf[e.src.id] === undefined) { edgesOf[e.src.id] = []; }
+          edgesOf[e.src.id].push(e.dst);
+        }
+        var q = [v];
+        for (j = 0; j < q.length; ++j) {
+          var w = q[j];
+          w.component = v.id;
+          for (var k = 0; edgesOf[w.id] && k < edgesOf[w.id].length; ++k) {
+            var u = edgesOf[w.id][k];
+            if (q.indexOf(u) === -1) {
+              q.push(u);
+            }
+          }
+        }
+      }
     }
     if (vertices.edges !== undefined) {
       for (i = 0; i < vertices.edges.length; ++i) {
-        var e = vertices.edges[i];
+        e = vertices.edges[i];
         e.src.degree += 1;
         e.dst.degree += 1;
       }
@@ -1214,6 +1236,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       drag: 0.2,
       labelAttraction: vertices.side.animate.labelAttraction,
       style: vertices.side.animate.style,
+      componentRepulsionFraction: 0.02,
     });
     // Generate initial layout for 2 seconds or until it stabilizes.
     var t1 = Date.now();
