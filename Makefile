@@ -41,7 +41,8 @@ $(pip): python_requirements.txt
 .build/ecosystem-done: \
 		$(shell $(find) ecosystem/native remote_api ) \
 		.build/backend-done .build/documentation-done-${VERSION}
-	ecosystem/native/tools/build-monitoring.sh && ecosystem/native/bundle.sh && touch $@
+	ecosystem/native/tools/build-monitoring.sh && ecosystem/native/release-environment/build.sh  && \
+        ecosystem/native/bundle.sh && touch $@
 
 # Short aliases for command-line use.
 .PHONY: backend
