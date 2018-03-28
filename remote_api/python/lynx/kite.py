@@ -839,6 +839,16 @@ class Workspace:
   def id_of(self, box: Box) -> str:
     return self._box_ids[box]
 
+  def _box_to_trigger_to_box_ids(self, box_to_trigger: BoxToTrigger) -> List[str]:
+    '''Converts a BoxToTrigger object to the list of corresponding box ids in this Workspace.'''
+    box_stack = box_to_trigger.box_stack
+    current_box = box_stack[0]
+    box_ids = [self.id_of(current_box)]
+    for next_box in box_stack[1:]:
+      box_ids.append(current_box.operation.id_of(next_box))  # type: ignore
+      current_box = next_box
+    return box_ids
+
   def _ws_parameters_to_str(self):
     return json.dumps([param.to_json() for param in self._ws_parameters])
 
@@ -881,17 +891,32 @@ class Workspace:
     # TODO: replace it with real list of triggerables
     return [outp for outp in self._terminal_boxes if outp.operation == 'output']
 
+  def _save_if_needed(self, saved_under_folder: str) -> str:
+    lk = self._lk
+    if saved_under_folder:
+      full_path = _normalize_path(saved_under_folder + '/' + self._name)
+    else:
+      random_folder = _random_ws_folder()
+      _, full_path = lk.save_workspace_recursively(self, random_folder)  # type: ignore
+    return full_path
+
   def trigger(self, box_to_trigger: BoxToTrigger, saved_under_folder=None):
-    ''' Trigger one side effect.
+    ''' Triggers one side effect.
 
     If saved_under_folder is defined, it assumes the workspace is saved. If not,
     it saves under a generated folder.
     '''
-    pass
+    lk = self._lk
+    full_path = self._save_if_needed(saved_under_folder)
+    box_ids = self._box_to_trigger_to_box_ids(box_to_trigger)
+    # The last id is a "normal" box id, the rest are the custom box stack.
+    lk.trigger_box(full_path, box_ids[-1], box_ids[:-1])
 
   def trigger_all_side_effects(self, saved_under_folder=None):
-    ''' Trigger all side effects. '''
-    pass
+    ''' Triggers all side effects. '''
+    self._save_if_needed(saved_under_folder)
+    for btt in self._side_effects.boxes_to_trigger:
+      self.trigger(btt, saved_under_folder)
 
   def dependency_graph(self) -> Dict[Box, Set[Box]]:
     ''' Returns all the triggerable boxes and the dependencies between them '''
