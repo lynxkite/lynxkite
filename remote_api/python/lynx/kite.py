@@ -460,7 +460,11 @@ class LynxKite:
                 for name in inspect.signature(builder_fn).parameters.keys()]
       results = builder_fn(*inputs)
       outputs = [state.output(name=name) for name, state in results.items()]
-      return Workspace(real_name, outputs, inputs, parameters)
+      # SideEffectCollector will be empty by default
+      return Workspace(name=real_name,
+                       terminal_boxes=outputs,
+                       input_boxes=inputs,
+                       ws_parameters=parameters)
     return ws_decorator
 
   def trigger_box(self,
@@ -758,10 +762,45 @@ def _reverse_bfs_on_boxes(roots: List[Box], list_roots: bool = True) -> Iterator
         yield parent_box
 
 
+class BoxToTrigger:
+  '''List of Boxes. The last element is the box we want to trigger.
+  The previous elements form the custom box stack into which the box is embedded.
+  '''
+
+  def __init__(self, box_list):
+    self.box_stack: List[Box] = box_list
+
+  def add_box_as_prefix(self, box):
+    return BoxToTrigger([box] + self.box_stack)
+
+
+class SideEffectCollector:
+  def __init__(self):
+    self.boxes_to_build: List[Box] = []
+    self.boxes_to_trigger: List[BoxToTrigger] = []
+
+  def add_box(self, box):
+    self.boxes_to_build.append(box)
+    # Only "normal" boxes are triggerable directly. Side effects in custom boxes
+    # are copied to the parent workspace's collector when they are called.
+    if isinstance(box.operation, str):
+      self.boxes_to_trigger.append(BoxToTrigger([box]))
+
+  def extend(self, other_se_collector, box):
+    '''Copy all the boxes to trigger from the other SideEffectCollector, prefixed
+    with the box. The copied boxes are already built in the custom box from which
+    they are inherited.'''
+    for btt in other_se_collector.boxes_to_trigger:
+      self.boxes_to_trigger.append(btt.add_box_as_prefix(box))
+
+
 class Workspace:
   '''Immutable class representing a LynxKite workspace.'''
 
-  def __init__(self, name: str, terminal_boxes: List[Box], input_boxes: List[Box] = [],
+  def __init__(self, name: str,
+               terminal_boxes: List[Box],
+               side_effects: SideEffectCollector = SideEffectCollector(),
+               input_boxes: List[Box] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
     self._name = name or 'Anonymous'
     self._all_boxes: Set[Box] = set()
@@ -771,11 +810,12 @@ class Workspace:
     self._outputs = [
         outp.parameters['name'] for outp in terminal_boxes
         if outp.operation == 'output']
-    self._bc = terminal_boxes[0].bc
     self._ws_parameters = ws_parameters
-    self._terminal_boxes = terminal_boxes
-    self._lk = terminal_boxes[0].lk
-    for box in _reverse_bfs_on_boxes(terminal_boxes):
+    self._side_effects = side_effects
+    self._terminal_boxes = terminal_boxes + side_effects.boxes_to_build
+    self._bc = self._terminal_boxes[0].bc
+    self._lk = self._terminal_boxes[0].lk
+    for box in _reverse_bfs_on_boxes(self._terminal_boxes):
       self._add_box(box)
 
   def _add_box(self, box):
@@ -822,6 +862,7 @@ class Workspace:
     return _new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
 
   def triggerable_boxes(self) -> List[Box]:
+    # TODO: replace it with real list of triggerables
     return [outp for outp in self._terminal_boxes if outp.operation == 'output']
 
   def dependency_graph(self) -> Dict[Box, Set[Box]]:
@@ -847,38 +888,6 @@ class Workspace:
         if p2 in deps:
           dependencies_between_triggerables[t1].add(t2)
     return dependencies_between_triggerables
-
-
-class BoxToTrigger:
-  '''List of Boxes. The last element is the box we want to trigger.
-  The previous elements form the custom box stack into which the box is embedded.
-  '''
-
-  def __init__(self, box_list):
-    self.box_stack: List[Box] = box_list
-
-  def add_box_as_prefix(self, box):
-    return BoxToTrigger([box] + self.box_stack)
-
-
-class SideEffectCollector:
-  def __init__(self):
-    self.boxes_to_build: List[Box] = []
-    self.boxes_to_trigger: List[BoxToTrigger] = []
-
-  def add_box(self, box):
-    self.boxes_to_build.append(box)
-    # Only "normal" boxes are triggerable directly. Side effects in custom boxes
-    # are copied to the parent workspace's collector when they are called.
-    if isinstance(box.operation, str):
-      self.boxes_to_trigger.append(BoxToTrigger([box]))
-
-  def extend(self, other_se_collector, box):
-    '''Copy all the boxes to trigger from the other SideEffectCollector, prefixed
-    with the box. The copied boxes are already built in the custom box from which
-    they are inherited.'''
-    for btt in other_se_collector.boxes_to_trigger:
-      self.boxes_to_trigger.append(btt.add_box_as_prefix(box))
 
 
 class WorkspaceWithSideEffect(Workspace):
