@@ -943,58 +943,6 @@ class Workspace:
     return dependencies_between_triggerables
 
 
-class WorkspaceWithSideEffect(Workspace):
-  def __init__(self, name, terminal_boxes, side_effects, input_boxes=[], ws_parameters=[]):
-    self._name = name or 'Anonymous'
-    self._all_boxes: Set[Box] = set()
-    self._box_ids: Dict[Box, str] = dict()
-    self._next_id = 0
-    self._inputs = [inp.parameters['name'] for inp in input_boxes]
-    self._outputs = [
-        outp.parameters['name'] for outp in terminal_boxes
-        if outp.operation == 'output']
-    self._ws_parameters = ws_parameters
-    self.side_effects = side_effects
-    self._terminal_boxes = terminal_boxes + side_effects.boxes_to_build
-    self._bc = self._terminal_boxes[0].bc
-    self._lk = self._terminal_boxes[0].lk
-    for box in _reverse_bfs_on_boxes(self._terminal_boxes):
-      self._add_box(box)
-    self.full_path = None
-
-  def __call__(self, se_collector, *args, **kwargs):
-    inputs = dict(zip(self.inputs(), args))
-    workspace_as_box = _new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
-    # The caller will "inherit" the side effects of this custom box.
-    se_collector.extend(self.side_effects, workspace_as_box)
-    return workspace_as_box
-
-  def save(self, folder, lk):
-    _, self.full_path = lk.save_workspace_recursively(self, folder)
-
-  def is_saved(self, lk):
-    if not self.full_path:
-      return False
-    r = lk.get_directory_entry(self.full_path)
-    return r.exists and r.isWorkspace
-
-  def trigger_all_side_effects(self, lk):
-    assert self.is_saved(lk), 'Workspace has to be saved before it can be run.'
-
-    def btt_to_box_ids(btt):
-      box_stack = btt.box_stack
-      current_box = box_stack[0]
-      box_ids = [self.id_of(current_box)]
-      for next_box in box_stack[1:]:
-        box_ids.append(current_box.operation.id_of(next_box))
-        current_box = next_box
-      return box_ids
-
-    for btt in self.side_effects.boxes_to_trigger:
-      box_ids = btt_to_box_ids(btt)
-      lk.trigger_box(self.full_path, box_ids[-1], box_ids[:-1])
-
-
 class InputRecipe:
   '''Base class for input recipes.
 
