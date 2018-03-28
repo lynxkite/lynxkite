@@ -492,7 +492,7 @@ class LynxKite:
         outputs = [state.output(name=name) for name, state in results.items()]
       else:
         outputs = []
-      return WorkspaceWithSideEffect(real_name, outputs, se_collector, inputs, parameters)
+      return Workspace(real_name, outputs, se_collector, inputs, parameters)
     return ws_decorator
 
 
@@ -688,6 +688,12 @@ class Box:
         'inputs': {plug: input_state(state) for plug, state in self.inputs.items()},
         'parametricParameters': self.parametric_parameters})
 
+  def register(self, side_effect_collector):
+    if isinstance(self.operation, str):
+      side_effect_collector.add_normal_box(self)
+    else:
+      side_effect_collector.add_custom_box(self)
+
   def __getitem__(self, index: str) -> State:
     if index not in self.outputs:
       raise KeyError(index)
@@ -779,19 +785,26 @@ class SideEffectCollector:
     self.boxes_to_build: List[Box] = []
     self.boxes_to_trigger: List[BoxToTrigger] = []
 
-  def add_box(self, box):
+  def add_normal_box(self, box):
+    ''' Add a "normal" box to the collector. '''
     self.boxes_to_build.append(box)
-    # Only "normal" boxes are triggerable directly. Side effects in custom boxes
-    # are copied to the parent workspace's collector when they are called.
-    if isinstance(box.operation, str):
-      self.boxes_to_trigger.append(BoxToTrigger([box]))
+    self.boxes_to_trigger.append(BoxToTrigger([box]))
 
-  def extend(self, other_se_collector, box):
-    '''Copy all the boxes to trigger from the other SideEffectCollector, prefixed
+  def add_custom_box(self, box):
+    '''Add a custom box to the collector.
+    Copy all the boxes to trigger from the other SideEffectCollector, prefixed
     with the box. The copied boxes are already built in the custom box from which
     they are inherited.'''
+    self.boxes_to_build.append(box)
+    other_se_collector = box.operation.side_effects()
     for btt in other_se_collector.boxes_to_trigger:
       self.boxes_to_trigger.append(btt.add_box_as_prefix(box))
+
+  def __str__(self):
+    btb = 'To build ==> ' + str([b.operation for b in self.boxes_to_build])
+    btt = ' To trigger ==> ' + str([[b.operation for b in btt.box_stack]
+                                    for btt in self.boxes_to_trigger])
+    return btb + btt
 
 
 class Workspace:
@@ -851,6 +864,9 @@ class Workspace:
   def name(self) -> str:
     return self._name
 
+  def side_effects(self) -> SideEffectCollector:
+    return self._side_effects
+
   def has_date_parameter(self) -> bool:
     return 'date' in [p.name for p in self._ws_parameters]
 
@@ -864,6 +880,18 @@ class Workspace:
   def triggerable_boxes(self) -> List[Box]:
     # TODO: replace it with real list of triggerables
     return [outp for outp in self._terminal_boxes if outp.operation == 'output']
+
+  def trigger(self, box_to_trigger: BoxToTrigger, saved_under_folder=None):
+    ''' Trigger one side effect.
+
+    If saved_under_folder is defined, it assumes the workspace is saved. If not,
+    it saves under a generated folder.
+    '''
+    pass
+
+  def trigger_all_side_effects(self, saved_under_folder=None):
+    ''' Trigger all side effects. '''
+    pass
 
   def dependency_graph(self) -> Dict[Box, Set[Box]]:
     ''' Returns all the triggerable boxes and the dependencies between them '''

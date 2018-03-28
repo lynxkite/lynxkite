@@ -69,18 +69,18 @@ class TestWorkspaceDecorator(unittest.TestCase):
 
     @lk.workspace_with_side_effect(parameters=[text('export_path')])
     def csv_exporter(sec, table):
-      sec.add_box(table.exportToCSV(path=pp('$export_path')))
+      table.exportToCSV(path=pp('$export_path')).register(sec)
 
     @lk.workspace_with_side_effect('Example graph exports')
     def eg_exports(sec):
       eg = lk.createExampleGraph()
       t1 = eg.sql('select name, age from vertices')
       t2 = eg.sql('select name, income from vertices')
-      sec.add_box(csv_exporter(sec, t1, export_path='DATA$/exp/a'))
-      sec.add_box(csv_exporter(sec, t2, export_path='DATA$/exp/b'))
+      csv_exporter(t1, export_path='DATA$/exp/a').register(sec)
+      csv_exporter(t2, export_path='DATA$/exp/b').register(sec)
 
-    eg_exports.save('side effect example folder', lk)
-    eg_exports.trigger_all_side_effects(lk)
+    # eg_exports.save('side effect example folder', lk)
+    eg_exports.trigger_all_side_effects('side effect example folder')
 
   def test_ws_name_conflict(self):
     lk = lynx.kite.LynxKite()
