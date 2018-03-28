@@ -79,7 +79,7 @@ class TestWorkspaceDecorator(unittest.TestCase):
       csv_exporter(t1, export_path='DATA$/exp/a').register(sec)
       csv_exporter(t2, export_path='DATA$/exp/b').register(sec)
 
-    # eg_exports.save('side effect example folder', lk)
+    lk.save_workspace_recursively(eg_exports, 'side effect example folder')
     eg_exports.trigger_all_side_effects('side effect example folder')
 
   def test_ws_name_conflict(self):
