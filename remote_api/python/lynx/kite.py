@@ -785,18 +785,19 @@ class SideEffectCollector:
     self.boxes_to_build: List[Box] = []
     self.boxes_to_trigger: List[BoxToTrigger] = []
 
-  def add_normal_box(self, box):
+  def add_normal_box(self, box: Box):
     ''' Add a "normal" box to the collector. '''
     self.boxes_to_build.append(box)
     self.boxes_to_trigger.append(BoxToTrigger([box]))
 
-  def add_custom_box(self, box):
+  def add_custom_box(self, box: Box):
     '''Add a custom box to the collector.
-    Copy all the boxes to trigger from the other SideEffectCollector, prefixed
-    with the box. The copied boxes are already built in the custom box from which
-    they are inherited.'''
+
+    Copy all the boxes to trigger from the added custom box to this collector,
+    prefixed with the box.
+    '''
     self.boxes_to_build.append(box)
-    other_se_collector = box.operation.side_effects()
+    other_se_collector = box.operation.side_effects()  # type: ignore
     for btt in other_se_collector.boxes_to_trigger:
       self.boxes_to_trigger.append(btt.add_box_as_prefix(box))
 
@@ -824,7 +825,7 @@ class Workspace:
         outp.parameters['name'] for outp in terminal_boxes
         if outp.operation == 'output']
     self._ws_parameters = ws_parameters
-    self._side_effects = side_effects
+    self._side_effects: SideEffectCollector = side_effects
     self._terminal_boxes = terminal_boxes + side_effects.boxes_to_build
     self._bc = self._terminal_boxes[0].bc
     self._lk = self._terminal_boxes[0].lk
@@ -900,7 +901,7 @@ class Workspace:
       _, full_path = lk.save_workspace_recursively(self, random_folder)  # type: ignore
     return full_path
 
-  def trigger(self, box_to_trigger: BoxToTrigger, saved_under_folder=None):
+  def trigger(self, box_to_trigger: BoxToTrigger, saved_under_folder: str = None):
     ''' Triggers one side effect.
 
     If saved_under_folder is defined, it assumes the workspace is saved. If not,
@@ -912,7 +913,7 @@ class Workspace:
     # The last id is a "normal" box id, the rest are the custom box stack.
     lk.trigger_box(full_path, box_ids[-1], box_ids[:-1])
 
-  def trigger_all_side_effects(self, saved_under_folder=None):
+  def trigger_all_side_effects(self, saved_under_folder: str = None):
     ''' Triggers all side effects. '''
     self._save_if_needed(saved_under_folder)
     for btt in self._side_effects.boxes_to_trigger:
