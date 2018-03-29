@@ -26,3 +26,33 @@ class TestWorkspaceWithSideEffects(unittest.TestCase):
     i2 = lk.importCSV(filename='DATA$/side effect exports/b')
     self.assertEqual(i1.get_table_data().data[0][0].string, 'Isolated Joe')
     self.assertEqual(i2.get_table_data().data[0][0].string, 'Bob')
+
+  def test_side_effects_from_different_boxes(self):
+    lk = lynx.kite.LynxKite()
+
+    @lk.workspace_with_side_effect(parameters=[text('snapshot_path')])
+    def save_graph_to_snapshot(sec, graph):
+      graph.sql('select * from vertices').saveToSnapshot(path=pp('$snapshot_path')).register(sec)
+
+    @lk.workspace_with_side_effect(parameters=[text('snapshot_path')])
+    def save_and_return_graph(sec, graph):
+      graph.sql('select * from vertices').saveToSnapshot(path=pp('$snapshot_path')).register(sec)
+      return dict(graph=graph)
+
+    @lk.workspace_with_side_effect('Muliple graph snapshots')
+    def eg_snapshots(sec):
+      eg = lk.createExampleGraph()
+      save_graph_to_snapshot(eg, snapshot_path='side effect snapshots/a').register(sec)
+      first = save_and_return_graph(eg, snapshot_path='side effect snapshots/b')
+      first.register(sec)
+      save_graph_to_snapshot(first, snapshot_path='side effect snapshots/c').register(sec)
+
+    lk.save_workspace_recursively(eg_snapshots, 'side effect snapshots example folder')
+    lk.remove_name('side effect snapshots', force=True)
+    eg_snapshots.trigger_all_side_effects('side effect snapshots example folder')
+    entries = lk.list_dir('side effect snapshots')
+    expected = [
+        'side effect snapshots/a',
+        'side effect snapshots/b',
+        'side effect snapshots/c']
+    self.assertEqual([e.name for e in entries], expected)
