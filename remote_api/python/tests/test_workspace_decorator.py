@@ -64,24 +64,6 @@ class TestWorkspaceDecorator(unittest.TestCase):
     values = [(row[0].string, row[1].string) for row in table.data]
     self.assertEqual(values, [('Adam', '1000'), ('Bob', '2000')])
 
-  def test_ws_with_side_effects(self):
-    lk = lynx.kite.LynxKite()
-
-    @lk.workspace_with_side_effect(parameters=[text('export_path')])
-    def csv_exporter(sec, table):
-      table.exportToCSV(path=pp('$export_path')).register(sec)
-
-    @lk.workspace_with_side_effect('Example graph exports')
-    def eg_exports(sec):
-      eg = lk.createExampleGraph()
-      t1 = eg.sql('select name, age from vertices')
-      t2 = eg.sql('select name, income from vertices')
-      csv_exporter(t1, export_path='DATA$/exp/a').register(sec)
-      csv_exporter(t2, export_path='DATA$/exp/b').register(sec)
-
-    lk.save_workspace_recursively(eg_exports, 'side effect example folder')
-    eg_exports.trigger_all_side_effects('side effect example folder')
-
   def test_ws_name_conflict(self):
     lk = lynx.kite.LynxKite()
 
