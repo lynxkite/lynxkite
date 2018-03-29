@@ -32,7 +32,7 @@ import inspect
 import re
 import itertools
 import collections
-from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator, TypeVar
+from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator, TypeVar, Optional
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
@@ -773,8 +773,8 @@ class BoxToTrigger:
   The previous elements form the custom box stack into which the box is embedded.
   '''
 
-  def __init__(self, box_list):
-    self.box_stack: List[Box] = box_list
+  def __init__(self, box_list: List[Box]) -> None:
+    self.box_stack = box_list
 
   def add_box_as_prefix(self, box):
     return BoxToTrigger([box] + self.box_stack)
@@ -785,12 +785,11 @@ class SideEffectCollector:
     self.boxes_to_build: List[Box] = []
     self.boxes_to_trigger: List[BoxToTrigger] = []
 
-  def add_normal_box(self, box: Box):
-    ''' Add a "normal" box to the collector. '''
+  def add_normal_box(self, box: Box) -> None:
     self.boxes_to_build.append(box)
     self.boxes_to_trigger.append(BoxToTrigger([box]))
 
-  def add_custom_box(self, box: Box):
+  def add_custom_box(self, box: Box) -> None:
     '''Add a custom box to the collector.
 
     Copy all the boxes to trigger from the added custom box to this collector,
@@ -825,7 +824,7 @@ class Workspace:
         outp.parameters['name'] for outp in terminal_boxes
         if outp.operation == 'output']
     self._ws_parameters = ws_parameters
-    self._side_effects: SideEffectCollector = side_effects
+    self._side_effects = side_effects
     self._terminal_boxes = terminal_boxes + side_effects.boxes_to_build
     self._bc = self._terminal_boxes[0].bc
     self._lk = self._terminal_boxes[0].lk
@@ -892,7 +891,7 @@ class Workspace:
     # TODO: replace it with real list of triggerables
     return [outp for outp in self._terminal_boxes if outp.operation == 'output']
 
-  def _save_if_needed(self, saved_under_folder: str) -> Tuple[str, str]:
+  def _save_if_needed(self, saved_under_folder: Optional[str]) -> Tuple[str, str]:
     lk = self._lk
     if saved_under_folder:
       actual_folder = saved_under_folder
