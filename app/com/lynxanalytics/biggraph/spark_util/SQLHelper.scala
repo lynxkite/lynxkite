@@ -118,10 +118,18 @@ object SQLHelper {
   }
 
   // Make every column nullable. Nullability is not stored in Parquet.
+  def makeNullable(schema: types.StructType): types.StructType =
+    types.StructType(schema.map(f => f.dataType match {
+      case types.StructType(_) => f.copy(
+        nullable = true,
+        dataType = makeNullable(f.dataType.asInstanceOf[types.StructType]))
+      case _ => f.copy(nullable = true)
+    }))
+
   // Remove comments. We use them during optimization, but they break deserialization.
+  // Also make every column nullable.
   def stripped(schema: types.StructType): types.StructType =
-    types.StructType(schema.map(f => f.copy(
-      nullable = true,
+    types.StructType(makeNullable(schema).map(f => f.copy(
       metadata = new MetadataBuilder()
         .withMetadata(f.metadata).remove("comment").build())))
 }
