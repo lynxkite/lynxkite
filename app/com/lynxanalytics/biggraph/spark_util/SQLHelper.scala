@@ -120,9 +120,9 @@ object SQLHelper {
   // Make every column nullable. Nullability is not stored in Parquet.
   def makeNullable(schema: types.StructType): types.StructType =
     types.StructType(schema.map(f => f.dataType match {
-      case types.StructType(_) => f.copy(
+      case s: types.StructType => f.copy(
         nullable = true,
-        dataType = makeNullable(f.dataType.asInstanceOf[types.StructType]))
+        dataType = makeNullable(s))
       case _ => f.copy(nullable = true)
     }))
 
