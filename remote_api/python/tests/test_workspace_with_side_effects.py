@@ -56,3 +56,22 @@ class TestWorkspaceWithSideEffects(unittest.TestCase):
         'side effect snapshots/b',
         'side effect snapshots/c']
     self.assertEqual([e.name for e in entries], expected)
+
+  def test_side_effects_unsaved_workspaces(self):
+    lk = lynx.kite.LynxKite()
+
+    @lk.workspace_with_side_effect(parameters=[text('snapshot_path')])
+    def save_graph_to_snapshot(sec, graph):
+      graph.sql('select * from vertices').saveToSnapshot(path=pp('$snapshot_path')).register(sec)
+
+    @lk.workspace_with_side_effect()
+    def eg_snapshots(sec):
+      eg = lk.createExampleGraph()
+      save_graph_to_snapshot(eg, snapshot_path='unsaved/a').register(sec)
+      save_graph_to_snapshot(eg, snapshot_path='unsaved/b').register(sec)
+
+    lk.remove_name('unsaved', force=True)
+    eg_snapshots.trigger_all_side_effects()
+    entries = lk.list_dir('unsaved')
+    expected = ['unsaved/a', 'unsaved/b']
+    self.assertEqual([e.name for e in entries], expected)

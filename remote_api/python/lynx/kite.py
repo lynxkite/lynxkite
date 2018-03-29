@@ -892,14 +892,15 @@ class Workspace:
     # TODO: replace it with real list of triggerables
     return [outp for outp in self._terminal_boxes if outp.operation == 'output']
 
-  def _save_if_needed(self, saved_under_folder: str) -> str:
+  def _save_if_needed(self, saved_under_folder: str) -> Tuple[str, str]:
     lk = self._lk
     if saved_under_folder:
+      actual_folder = saved_under_folder
       full_path = _normalize_path(saved_under_folder + '/' + self._name)
     else:
       random_folder = _random_ws_folder()
-      _, full_path = lk.save_workspace_recursively(self, random_folder)  # type: ignore
-    return full_path
+      actual_folder, full_path = lk.save_workspace_recursively(self, random_folder)  # type: ignore
+    return actual_folder, full_path
 
   def trigger(self, box_to_trigger: BoxToTrigger, saved_under_folder: str = None):
     ''' Triggers one side effect.
@@ -908,16 +909,16 @@ class Workspace:
     it saves under a generated folder.
     '''
     lk = self._lk
-    full_path = self._save_if_needed(saved_under_folder)
+    _, full_path = self._save_if_needed(saved_under_folder)
     box_ids = self._box_to_trigger_to_box_ids(box_to_trigger)
     # The last id is a "normal" box id, the rest are the custom box stack.
     lk.trigger_box(full_path, box_ids[-1], box_ids[:-1])
 
   def trigger_all_side_effects(self, saved_under_folder: str = None):
     ''' Triggers all side effects. '''
-    self._save_if_needed(saved_under_folder)
+    actual_folder, _ = self._save_if_needed(saved_under_folder)
     for btt in self._side_effects.boxes_to_trigger:
-      self.trigger(btt, saved_under_folder)
+      self.trigger(btt, actual_folder)
 
   def dependency_graph(self) -> Dict[Box, Set[Box]]:
     ''' Returns all the triggerable boxes and the dependencies between them '''
