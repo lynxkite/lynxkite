@@ -1232,15 +1232,30 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         e.dst.degree += 1;
       }
     }
-    var engine = new FORCE_LAYOUT.Engine({
-      attraction: 0.1,
-      repulsion: 1,
-      gravity: 0,
-      drag: 0.2,
-      labelAttraction: vertices.side.animate.labelAttraction,
-      style: vertices.side.animate.style,
-      componentRepulsionFraction: 0.02,
-    });
+
+    function getLayoutOpts() {
+      var opts = {
+        attraction: 0.1,
+        repulsion: 1,
+        gravity: 0,
+        drag: 0.2,
+        labelAttraction: vertices.side.animate.labelAttraction,
+        style: vertices.side.animate.style,
+        componentRepulsionFraction: 0.02,
+        repulsionPower: 3,
+      };
+      if (['neutral', 'centralize', 'decentralize'].indexOf(vertices.side.animate.style) !== -1) {
+        // Use the old layout for old style settings.
+        opts.attraction = 0.01;
+        opts.repulsion = 300;
+        opts.gravity = 0.05;
+        opts.repulsionPower = 2;
+        opts.componentRepulsionFraction = 1;
+      }
+      return opts;
+    }
+
+    var engine = new FORCE_LAYOUT.Engine(getLayoutOpts());
     // Generate initial layout for 2 seconds or until it stabilizes.
     var t1 = Date.now();
     /* eslint-disable no-empty */
@@ -1259,8 +1274,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       // This also ends up getting called when the side is closed due to the deep watch.
       // Accept this silently.
       if (!animate) { return; }
-      engine.opts.labelAttraction = animate.labelAttraction;
-      engine.opts.style = animate.style;
+      engine.opts = getLayoutOpts();
       if (animating && animate.enabled && engine.step(vertices)) {
         window.requestAnimationFrame(vertices.step);
       } else {
