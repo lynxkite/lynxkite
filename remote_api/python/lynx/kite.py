@@ -768,26 +768,29 @@ def _reverse_bfs_on_boxes(roots: List[Box], list_roots: bool = True) -> Iterator
         yield parent_box
 
 
-class BoxToTrigger:
-  '''List of Boxes. The last element is the box we want to trigger.
-  The previous elements form the custom box stack into which the box is embedded.
+class BoxPath:
+  '''Represents a box (which can be inside (nested) custom boxes) as a list of Boxes.
+  It can be used for example to trigger boxes inside custom boxes.
+
+  The last element in the `boxt_stack` list is a "normal" box. The previous
+  elements are custom boxes.
   '''
 
   def __init__(self, box_list: List[Box]) -> None:
     self.box_stack = box_list
 
   def add_box_as_prefix(self, box):
-    return BoxToTrigger([box] + self.box_stack)
+    return BoxPath([box] + self.box_stack)
 
 
 class SideEffectCollector:
   def __init__(self):
     self.boxes_to_build: List[Box] = []
-    self.boxes_to_trigger: List[BoxToTrigger] = []
+    self.boxes_to_trigger: List[BoxPath] = []
 
   def add_normal_box(self, box: Box) -> None:
     self.boxes_to_build.append(box)
-    self.boxes_to_trigger.append(BoxToTrigger([box]))
+    self.boxes_to_trigger.append(BoxPath([box]))
 
   def add_custom_box(self, box: Box) -> None:
     '''Add a custom box to the collector.
@@ -839,8 +842,8 @@ class Workspace:
   def id_of(self, box: Box) -> str:
     return self._box_ids[box]
 
-  def _box_to_trigger_to_box_ids(self, box_to_trigger: BoxToTrigger) -> List[str]:
-    '''Converts a BoxToTrigger object to the list of corresponding box ids in this Workspace.'''
+  def _box_to_trigger_to_box_ids(self, box_to_trigger: BoxPath) -> List[str]:
+    '''Converts a BoxPath object to the list of corresponding box ids in this Workspace.'''
     box_stack = box_to_trigger.box_stack
     current_box = box_stack[0]
     box_ids = [self.id_of(current_box)]
@@ -901,7 +904,7 @@ class Workspace:
       actual_folder, full_path = lk.save_workspace_recursively(self, random_folder)  # type: ignore
     return actual_folder, full_path
 
-  def trigger(self, box_to_trigger: BoxToTrigger, saved_under_folder: str = None):
+  def trigger(self, box_to_trigger: BoxPath, saved_under_folder: str = None):
     ''' Triggers one side effect.
 
     If saved_under_folder is defined, it assumes the workspace is saved. If not,
