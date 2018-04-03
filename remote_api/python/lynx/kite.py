@@ -452,17 +452,29 @@ class LynxKite:
 
   def workspace(self,
                 name: str = None,
-                parameters: List[WorkspaceParameter] = []
+                parameters: List[WorkspaceParameter] = [],
+                with_side_effects: bool = False
                 ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
+    se_collector = SideEffectCollector()
+
     def ws_decorator(builder_fn):
       real_name = builder_fn.__name__ if not name else name
-      inputs = [self.input(name=name)
-                for name in inspect.signature(builder_fn).parameters.keys()]
-      results = builder_fn(*inputs)
-      outputs = [state.output(name=name) for name, state in results.items()]
-      # SideEffectCollector will be empty by default
+      if with_side_effects:
+        names = list(inspect.signature(builder_fn).parameters.keys())[1:]
+      else:
+        names = inspect.signature(builder_fn).parameters.keys()
+      inputs = [self.input(name=name) for name in names]
+      if with_side_effects:
+        results = builder_fn(se_collector, *inputs)
+      else:
+        results = builder_fn(*inputs)
+      if results:
+        outputs = [state.output(name=name) for name, state in results.items()]
+      else:
+        outputs = []
       return Workspace(name=real_name,
                        terminal_boxes=outputs,
+                       side_effects=se_collector,
                        input_boxes=inputs,
                        ws_parameters=parameters)
     return ws_decorator
@@ -479,21 +491,6 @@ class LynxKite:
     return self._send(
         '/ajax/triggerBox',
         dict(workspace=dict(top=workspace_name, customBoxStack=custom_box_stack), box=box_id))
-
-  def workspace_with_side_effect(self, name=None, parameters=[]):
-    se_collector = SideEffectCollector()
-
-    def ws_decorator(builder_fn):
-      real_name = builder_fn.__name__ if not name else name
-      inputs = [self.input(name=name)
-                for name in list(inspect.signature(builder_fn).parameters.keys())[1:]]
-      results = builder_fn(se_collector, *inputs)
-      if results:
-        outputs = [state.output(name=name) for name, state in results.items()]
-      else:
-        outputs = []
-      return Workspace(real_name, outputs, se_collector, inputs, parameters)
-    return ws_decorator
 
 
 class TableSnapshotSequence:
