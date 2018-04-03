@@ -8,11 +8,11 @@ class TestWorkspaceWithSideEffects(unittest.TestCase):
   def test_ws_with_side_effects(self):
     lk = lynx.kite.LynxKite()
 
-    @lk.workspace_with_side_effect(parameters=[text('export_path')])
+    @lk.workspace(parameters=[text('export_path')], with_side_effects=True)
     def csv_exporter(sec, table):
       table.exportToCSV(path=pp('$export_path')).register(sec)
 
-    @lk.workspace_with_side_effect('Example graph exports')
+    @lk.workspace('Example graph exports', with_side_effects=True)
     def eg_exports(sec):
       eg = lk.createExampleGraph()
       t1 = eg.sql('select name, age from vertices where age < 10')
@@ -30,16 +30,16 @@ class TestWorkspaceWithSideEffects(unittest.TestCase):
   def test_side_effects_from_different_boxes(self):
     lk = lynx.kite.LynxKite()
 
-    @lk.workspace_with_side_effect(parameters=[text('snapshot_path')])
+    @lk.workspace(parameters=[text('snapshot_path')], with_side_effects=True)
     def save_graph_to_snapshot(sec, graph):
       graph.sql('select * from vertices').saveToSnapshot(path=pp('$snapshot_path')).register(sec)
 
-    @lk.workspace_with_side_effect(parameters=[text('snapshot_path')])
+    @lk.workspace(parameters=[text('snapshot_path')], with_side_effects=True)
     def save_and_return_graph(sec, graph):
       graph.sql('select * from vertices').saveToSnapshot(path=pp('$snapshot_path')).register(sec)
       return dict(graph=graph)
 
-    @lk.workspace_with_side_effect('Muliple graph snapshots')
+    @lk.workspace('Muliple graph snapshots', with_side_effects=True)
     def eg_snapshots(sec):
       eg = lk.createExampleGraph()
       save_graph_to_snapshot(eg, snapshot_path='side effect snapshots/a').register(sec)
@@ -60,11 +60,11 @@ class TestWorkspaceWithSideEffects(unittest.TestCase):
   def test_side_effects_unsaved_workspaces(self):
     lk = lynx.kite.LynxKite()
 
-    @lk.workspace_with_side_effect(parameters=[text('snapshot_path')])
+    @lk.workspace(parameters=[text('snapshot_path')], with_side_effects=True)
     def save_graph_to_snapshot(sec, graph):
       graph.sql('select * from vertices').saveToSnapshot(path=pp('$snapshot_path')).register(sec)
 
-    @lk.workspace_with_side_effect()
+    @lk.workspace(with_side_effects=True)
     def eg_snapshots(sec):
       eg = lk.createExampleGraph()
       save_graph_to_snapshot(eg, snapshot_path='unsaved/a').register(sec)
