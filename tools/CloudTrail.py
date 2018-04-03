@@ -50,13 +50,12 @@ def parse_s3_cloudtrail(json_file_name):
   print("Parsing {} ...".format(json_file_name))
   with open(json_file_name) as json_file:
     json_data = json.load(json_file)
-    #print(json.dumps(json_data, indent=4))
     for record in json_data['Records']:
       print("  * {}:{} {} ({})".format(
-          record.get('eventTime'),
-          record.get('eventName'),
-          record.get('userAgent'),
-          record.get('userIdentity').get('arn', "na")
+          record.get("eventTime"),
+          record.get("eventName"),
+          record.get("userAgent"),
+          record.get("userIdentity").get("arn", "na")
       ))
   os.remove(json_file_name)
 
