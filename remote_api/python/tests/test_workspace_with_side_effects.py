@@ -20,8 +20,9 @@ class TestWorkspaceWithSideEffects(unittest.TestCase):
       csv_exporter(t1, export_path='DATA$/side effect exports/a').register(sec)
       csv_exporter(t2, export_path='DATA$/side effect exports/b').register(sec)
 
-    lk.save_workspace_recursively(eg_exports, 'side effect example folder')
-    eg_exports.trigger_all_side_effects('side effect example folder')
+    eg_exports.save('side effect example folder')
+    for btt in eg_exports.side_effects().boxes_to_trigger:
+      eg_exports.trigger_saved(btt, 'side effect example folder')
     i1 = lk.importCSV(filename='DATA$/side effect exports/a')
     i2 = lk.importCSV(filename='DATA$/side effect exports/b')
     self.assertEqual(i1.get_table_data().data[0][0].string, 'Isolated Joe')
@@ -47,9 +48,10 @@ class TestWorkspaceWithSideEffects(unittest.TestCase):
       first.register(sec)
       save_graph_to_snapshot(first, snapshot_path='side effect snapshots/c').register(sec)
 
-    lk.save_workspace_recursively(eg_snapshots, 'side effect snapshots example folder')
+    eg_snapshots.save('side effect snapshots example folder')
     lk.remove_name('side effect snapshots', force=True)
-    eg_snapshots.trigger_all_side_effects('side effect snapshots example folder')
+    for btt in eg_snapshots.side_effects().boxes_to_trigger:
+      eg_snapshots.trigger_saved(btt, 'side effect snapshots example folder')
     entries = lk.list_dir('side effect snapshots')
     expected = [
         'side effect snapshots/a',
@@ -57,7 +59,7 @@ class TestWorkspaceWithSideEffects(unittest.TestCase):
         'side effect snapshots/c']
     self.assertEqual([e.name for e in entries], expected)
 
-  def test_side_effects_unsaved_workspaces(self):
+  def test_side_effects_unsaved_workspace(self):
     lk = lynx.kite.LynxKite()
 
     @lk.workspace_with_side_effects(parameters=[text('snapshot_path')])
@@ -74,4 +76,24 @@ class TestWorkspaceWithSideEffects(unittest.TestCase):
     eg_snapshots.trigger_all_side_effects()
     entries = lk.list_dir('unsaved')
     expected = ['unsaved/a', 'unsaved/b']
+    self.assertEqual([e.name for e in entries], expected)
+
+  def test_trigger_single_side_effects_in_unsaved_workspace(self):
+    lk = lynx.kite.LynxKite()
+
+    @lk.workspace_with_side_effects(parameters=[text('snapshot_path')])
+    def save_graph_to_snapshot(sec, graph):
+      graph.sql('select * from vertices').saveToSnapshot(path=pp('$snapshot_path')).register(sec)
+
+    @lk.workspace_with_side_effects()
+    def snapshots(sec):
+      eg = lk.createExampleGraph()
+      save_graph_to_snapshot(eg, snapshot_path='single/a').register(sec)
+      save_graph_to_snapshot(eg, snapshot_path='single/b').register(sec)
+
+    lk.remove_name('single', force=True)
+    for btt in snapshots.side_effects().boxes_to_trigger:
+      snapshots.trigger(btt)
+    entries = lk.list_dir('single')
+    expected = ['single/a', 'single/b']
     self.assertEqual([e.name for e in entries], expected)
