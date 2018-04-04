@@ -698,7 +698,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     if (data.vertices.length >= 5) {
       vertices.addLegendLine(data.vertices.length + ' vertices');
     }
-    vertices.vs.sort(function(a, b) { return a.id === b.id ? 0 : a.id < b.id ? -1 : 1; });
     return vertices;
   };
 
@@ -1209,7 +1208,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
       v.forceOX = v.x;
       v.forceOY = v.y;
-      // Identify separate components. If the component ID is unset, this is the lowest ID vertex
+      // Identify separate components. If the component ID is unset, this is the first vertex
       // in the component. Spread its ID to all connected vertices.
       if (v.component === undefined && vertices.edges !== undefined) {
         var queue = [v];
