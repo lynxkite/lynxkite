@@ -163,14 +163,10 @@ case class AggregateAttributeToScalar[From, Intermediate, To](
     implicit val ftt = inputs.attr.data.typeTag
     implicit val fct = inputs.attr.data.classTag
     implicit val ict = RuntimeSafeCastable.classTagFromTypeTag(aggregator.intermediateTypeTag(ftt))
-    output(
-      o.aggregated,
-      aggregator.finalize(
-        attr
-          .values
-          .mapPartitions(it => Iterator(aggregator.aggregatePartition(it)))
-          .collect
-          .foldLeft(aggregator.zero)(aggregator.combine _)))
+    // Pretend it's all on a single vertex.
+    val aggregated = aggregator
+      .aggregateRDD(attr.map { case (k, v) => (0, v) }, attr.partitioner.get)
+    output(o.aggregated, aggregated.first._2)
   }
 }
 
@@ -194,9 +190,6 @@ trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
   def zero: Intermediate
   def combine(a: Intermediate, b: Intermediate): Intermediate
   def finalize(i: Intermediate): To
-  def aggregatePartition(values: Iterator[From]): Intermediate
-  def aggregate(values: Iterable[From]): To =
-    finalize(aggregatePartition(values.iterator))
   // Aggregates the RDD by key in a scalable (hotspot resistant) way.
   def aggregateRDD[K: Ordering: ClassTag](
     values: RDD[(K, From)], partitioner: spark.Partitioner)(implicit ftt: TypeTag[From]): UniqueSortedRDD[K, To]
@@ -205,8 +198,8 @@ trait Aggregator[From, Intermediate, To] extends LocalAggregator[From, To] {
 // The trivial extension of Aggregator.
 trait ItemAggregator[From, Intermediate, To] extends Aggregator[From, Intermediate, To] {
   def merge(a: Intermediate, b: From): Intermediate
-  def aggregatePartition(values: Iterator[From]): Intermediate =
-    values.foldLeft(zero)(merge _)
+  def aggregate(values: Iterable[From]): To =
+    finalize(values.foldLeft(zero)(merge _))
   // Aggregates the RDD by key in a scalable (hotspot resistant) way.
   def aggregateRDD[K: Ordering: ClassTag](
     values: RDD[(K, From)], partitioner: spark.Partitioner)(implicit ftt: TypeTag[From]): UniqueSortedRDD[K, To] = {
@@ -223,11 +216,10 @@ trait ItemAggregator[From, Intermediate, To] extends Aggregator[From, Intermedia
 // same result.
 trait CountAggregator[From, Intermediate, To] extends Aggregator[From, Intermediate, To] {
   def merge(a: Intermediate, b: (Double, From)): Intermediate
-  def aggregatePartition(values: Iterator[From]): Intermediate = values
-    .toIterable
-    .groupBy(identity)
-    .map { case (v, i) => (i.size.toDouble, v) }
-    .foldLeft(zero)(merge _)
+  def aggregate(values: Iterable[From]): To = {
+    val counts = values.groupBy(identity).map { case (v, list) => (list.size.toDouble, v) }
+    finalize(counts.foldLeft(zero)(merge _))
+  }
   // Aggregates the RDD by key in a scalable (hotspot resistant) way.
   def aggregateRDD[K: Ordering: ClassTag](
     values: RDD[(K, From)], partitioner: spark.Partitioner)(implicit ftt: TypeTag[From]): UniqueSortedRDD[K, To] = {
