@@ -971,7 +971,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
   GraphView.prototype.initSampled = function(vertices) {
     this.initLayout(vertices);
-    this.initView(vertices);
+    this.initView(vertices, 10);
     this.initSlider(vertices);
   };
 
@@ -1010,7 +1010,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   }
 
   // Pan/zoom the view (the offsetter) to fit the graph, if necessary.
-  GraphView.prototype.initView = function(vertices) {
+  GraphView.prototype.initView = function(vertices, tolerance) {
     var offsetter = vertices.offsetter;
     // Figure out zoom.
     var xb = common.minmax(vertices.vs.map(function(v) { return v.x; }));
@@ -1022,7 +1022,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     // Apply the calculated zoom if it is a new offsetter, or if the inherited zoom is way off.
     var ratio = newZoom / offsetter.zoom;
     if (!offsetter.inherited ||
-        ratio < 0.1 || ratio > 10 ||
+        ratio < 1 / tolerance || ratio > tolerance ||
         !newPan.acceptable(offsetter.xOff, offsetter.yOff)) {
       offsetter.zoom = newZoom;
       offsetter.thickness = 1000 / Math.sqrt(vertices.vs.length);
@@ -1232,20 +1232,32 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         e.dst.degree += 1;
       }
     }
-    var engine = new FORCE_LAYOUT.Engine({
-      attraction: 0.1,
-      repulsion: 1,
-      gravity: 0,
-      drag: 0.2,
-      labelAttraction: vertices.side.animate.labelAttraction,
-      style: vertices.side.animate.style,
-      componentRepulsionFraction: 0.02,
-    });
-    // Generate initial layout for 2 seconds or until it stabilizes.
-    var t1 = Date.now();
-    /* eslint-disable no-empty */
-    while (engine.calculate(vertices) && Date.now() - t1 <= 2000) {}
-    engine.apply(vertices);
+
+    function getLayoutOpts() {
+      var opts = {
+        attraction: 0.1,
+        repulsion: 1,
+        gravity: 0,
+        drag: 0.2,
+        labelAttraction: vertices.side.animate.labelAttraction,
+        style: vertices.side.animate.style,
+        componentRepulsionFraction: 0.02,
+        repulsionPower: 3,
+      };
+      if (['neutral', 'centralize', 'decentralize'].indexOf(opts.style) !== -1) {
+        // Use the old layout for old style settings.
+        opts.attraction = 0.01;
+        opts.repulsion = 300;
+        opts.gravity = 0.05;
+        opts.repulsionPower = 2;
+        opts.componentRepulsionFraction = 1;
+      }
+      return opts;
+    }
+
+    var engine = new FORCE_LAYOUT.Engine(getLayoutOpts());
+    var lastLayoutStyle = engine.opts.style;
+    engine.initForSeconds(vertices, 2);
     var animating = false;
     // Call vertices.animate() later to trigger interactive layout.
     vertices.animate = function() {
@@ -1254,13 +1266,27 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         window.requestAnimationFrame(vertices.step);
       }
     };
+    var that = this;
     vertices.step = function() {
       var animate = vertices.side.animate;
       // This also ends up getting called when the side is closed due to the deep watch.
       // Accept this silently.
       if (!animate) { return; }
-      engine.opts.labelAttraction = animate.labelAttraction;
-      engine.opts.style = animate.style;
+      engine.opts = getLayoutOpts();
+      if (engine.opts.style !== lastLayoutStyle) {
+        lastLayoutStyle = engine.opts.style;
+        // Re-seed the layout. All styles assume the same initialization, but they don't generally
+        // work well when started from each other's final states.
+        for (var i = 0; i < vertices.vs.length; ++i) {
+          var v = vertices.vs[i];
+          v.x = Math.random() - 0.5;
+          v.y = Math.random() - 0.5;
+          v.forceOX = v.x;
+          v.forceOY = v.y;
+        }
+        engine.initForSeconds(vertices, 2);
+        that.initView(vertices, 1);
+      }
       if (animating && animate.enabled && engine.step(vertices)) {
         window.requestAnimationFrame(vertices.step);
       } else {
