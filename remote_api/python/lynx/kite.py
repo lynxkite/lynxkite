@@ -450,11 +450,11 @@ class LynxKite:
         '/ajax/createDirectory',
         dict(name=path, privacy=privacy))
 
-  def workspace(self,
-                name: str = None,
-                parameters: List[WorkspaceParameter] = [],
-                with_side_effects: bool = False
-                ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
+  def _workspace(self,
+                 name: str = None,
+                 parameters: List[WorkspaceParameter] = [],
+                 with_side_effects: bool = False
+                 ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
     se_collector = SideEffectCollector()
 
     def ws_decorator(builder_fn):
@@ -478,6 +478,18 @@ class LynxKite:
                        input_boxes=inputs,
                        ws_parameters=parameters)
     return ws_decorator
+
+  def workspace(self,
+                name: str = None,
+                parameters: List[WorkspaceParameter] = []
+                ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
+    return self._workspace(name, parameters, with_side_effects=False)
+
+  def workspace_with_side_effects(self,
+                                  name: str = None,
+                                  parameters: List[WorkspaceParameter] = []
+                                  ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
+    return self._workspace(name, parameters, with_side_effects=True)
 
   def trigger_box(self,
                   workspace_name: str,
