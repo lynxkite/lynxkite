@@ -687,10 +687,6 @@ class Box:
 
   def register(self, side_effect_collector):
     side_effect_collector.add_box(self)
-    # if isinstance(self.operation, str):
-    #   side_effect_collector.add_normal_box(self)
-    # else:
-    #   side_effect_collector.add_custom_box(self)
 
   def __getitem__(self, index: str) -> State:
     if index not in self.outputs:
