@@ -1120,26 +1120,22 @@ class WorkspaceSequenceInstance:
     ws_as_box = (
         self._wss._ws(*inputs, **self._wss._params, date=self._date) if self._wss._ws.has_date_parameter()
         else self._wss._ws(*inputs, **self._wss._params))
-    terminal_boxes = []
+    se_collector = SideEffectCollector()
+    ws_as_box.register(se_collector)
     for output in self._wss._ws.outputs():
       out_path = self._wss._output_sequences[output].snapshot_name(self._date)
-      terminal_boxes.append(ws_as_box[output].saveToSnapshot(path=out_path))
-    ws = Workspace(self.wrapper_name(), terminal_boxes)
+      ws_as_box[output].saveToSnapshot(path=out_path).register(se_collector)
+    ws = Workspace(self.wrapper_name(), output_boxes=[], side_effects=se_collector)
     self._lk.save_workspace_recursively(ws, self.wrapper_folder_name())
+    self._ws = ws  # We store it to be able to trigger the side effects later.
 
   def run(self) -> None:
-    '''We trigger all the terminal boxes of the wrapped ws.
-
-    First we just trigger ``saveToSnapshot`` boxes.
-    '''
+    '''We trigger all the side effect boxes of the ws.'''
     if not self.is_saved():  # WorkspaceSequenceInstance has to be saved to be able to run.
       self.save()
-    operations_to_trigger = ['Save to snapshot']  # TODO: add compute and exports
-    full_name = self.full_name()
-    boxes = self._lk.get_workspace(full_name)
-    terminal_box_ids = [box.id for box in boxes if box.operationId in operations_to_trigger]
-    for box_id in terminal_box_ids:
-      self._lk.trigger_box(full_name, box_id)
+    saved_under_folder = self.wrapper_folder_name()
+    for btt in self._ws.side_effects().boxes_to_trigger:
+      self._ws.trigger_saved(btt, saved_under_folder)
 
 
 T = TypeVar('T')
