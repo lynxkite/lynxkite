@@ -74,7 +74,6 @@ if pythons:
     warn(', '.join(different))
 
 javascript = [fn for fn in files if fn.endswith('.js')]
-print(javascript)
 if javascript:
   try:
     subprocess.check_call(['eslint'] + javascript)
