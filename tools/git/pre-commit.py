@@ -73,5 +73,13 @@ if pythons:
     warn('Altered files:')
     warn(', '.join(different))
 
+javascript = [fn for fn in files if fn.endswith('.js')]
+print(javascript)
+if javascript:
+  try:
+    subprocess.check_call(['eslint'] + javascript)
+  except subprocess.CalledProcessError:
+    warn('Please fix the eslint errors and try again.')
+
 if warned:
   sys.exit(1)
