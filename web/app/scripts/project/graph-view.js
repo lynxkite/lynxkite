@@ -1257,11 +1257,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
     var engine = new FORCE_LAYOUT.Engine(getLayoutOpts());
     var lastLayoutStyle = engine.opts.style;
-    // Generate initial layout for 2 seconds or until it stabilizes.
-    var t1 = Date.now();
-    /* eslint-disable no-empty */
-    while (engine.calculate(vertices) && Date.now() - t1 <= 2000) {}
-    engine.apply(vertices);
+    engine.initForSeconds(vertices, 2);
     var animating = false;
     // Call vertices.animate() later to trigger interactive layout.
     vertices.animate = function() {
@@ -1288,8 +1284,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           v.forceOX = v.x;
           v.forceOY = v.y;
         }
-        var t1 = Date.now();
-        while (engine.calculate(vertices) && Date.now() - t1 <= 2000) {}
+        engine.initForSeconds(vertices, 2);
         that.initView(vertices, 1);
       }
       if (animating && animate.enabled && engine.step(vertices)) {

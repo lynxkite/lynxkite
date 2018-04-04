@@ -111,11 +111,21 @@ var FORCE_LAYOUT = (function() {
     }
     return 0.001 < totalChange / vertices.vs.length / maxDist;
   };
+
   lib.Engine.prototype.apply = function(vertices) {
     for (var i = 0; i < vertices.vs.length; ++i) {
       var v = vertices.vs[i];
       v.moveTo(v.x, v.y);
     }
   };
+
+  // Runs the simulation until it stabilizes or the timeout is hit.
+  lib.Engine.prototype.initForSeconds = function(vertices, seconds) {
+    var t0 = Date.now();
+    /* eslint-disable no-empty */
+    while (this.calculate(vertices) && Date.now() - t0 <= seconds * 1000) {}
+    this.apply(vertices);
+  };
+
   return lib;
 }());
