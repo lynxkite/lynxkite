@@ -43,9 +43,11 @@
 
     <div class="token"
          id="setting-layout"
-         ng-class="{ default: side.state.animate.style === 'neutral' }"
+         ng-class="{ default: side.state.animate.style === 'expand' }"
          tooltip="
          {{
+         side.state.animate.style === 'expand' ?
+         'Try to expand the graph as much as possible.' :
          side.state.animate.style === 'neutral' ?
          'Vertices with large degrees act as centers themselves.' :
          side.state.animate.style === 'centralize' ?
@@ -56,6 +58,7 @@
          }}">
       <span class="title">
         {{
+        side.state.animate.style === 'expand' ? 'expanded layout' :
         side.state.animate.style === 'neutral' ? 'neutral layout' :
         side.state.animate.style === 'centralize' ? 'centralized layout' :
         side.state.animate.style === 'decentralize' ? 'decentralized layout' :
@@ -64,7 +67,8 @@
       </span>
     </div>
     <div class="menu token-menu" id="menu-setting-layout">
-      <div class="menu-item default" ng-click="side.state.animate.style = 'neutral'"> Neutral </div>
+      <div class="menu-item default" ng-click="side.state.animate.style = 'expand'"> Expanded </div>
+      <div class="menu-item" ng-click="side.state.animate.style = 'neutral'"> Neutral </div>
       <div class="menu-item" ng-click="side.state.animate.style = 'centralize'"> Centralized </div>
       <div class="menu-item" ng-click="side.state.animate.style = 'decentralize'"> Decentralized </div>
     </div>
