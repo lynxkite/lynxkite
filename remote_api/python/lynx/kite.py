@@ -473,7 +473,7 @@ class LynxKite:
       else:
         outputs = []
       return Workspace(name=real_name,
-                       terminal_boxes=outputs,
+                       output_boxes=outputs,
                        side_effects=se_collector,
                        input_boxes=inputs,
                        ws_parameters=parameters)
@@ -485,8 +485,8 @@ class LynxKite:
                   custom_box_stack: List[str]=[]):
     '''Triggers the computation of all the GUIDs in the box which is in the
     saved workspace named ``workspace_name`` and has ``boxID=box_id``. If
-    custom_box_stack is not empty, it specifies the custom box inside the
-    workspace which contains the box with the given box_id.
+    custom_box_stack is not empty, it specifies the sequence of custom boxes
+    which leads to the workspace which contains the box with the given box_id.
     '''
     return self._send(
         '/ajax/triggerBox',
@@ -686,10 +686,11 @@ class Box:
         'parametricParameters': self.parametric_parameters})
 
   def register(self, side_effect_collector):
-    if isinstance(self.operation, str):
-      side_effect_collector.add_normal_box(self)
-    else:
-      side_effect_collector.add_custom_box(self)
+    side_effect_collector.add_box(self)
+    # if isinstance(self.operation, str):
+    #   side_effect_collector.add_normal_box(self)
+    # else:
+    #   side_effect_collector.add_custom_box(self)
 
   def __getitem__(self, index: str) -> State:
     if index not in self.outputs:
@@ -769,8 +770,9 @@ class BoxPath:
   '''Represents a box (which can be inside (nested) custom boxes) as a list of Boxes.
   It can be used for example to trigger boxes inside custom boxes.
 
-  The last element in the `boxt_stack` list is a "normal" box. The previous
-  elements are custom boxes.
+  The last element in the `box_stack` list is a "normal" box. The previous
+  elements are custom boxes. `box_stack[i+1]` is always a box contained by the
+  workspace referred by the custom box `box_stack[i]`.
   '''
 
   def __init__(self, box_list: List[Box]) -> None:
@@ -785,20 +787,25 @@ class SideEffectCollector:
     self.boxes_to_build: List[Box] = []
     self.boxes_to_trigger: List[BoxPath] = []
 
-  def add_normal_box(self, box: Box) -> None:
-    self.boxes_to_build.append(box)
+  def _add_normal_box(self, box: Box) -> None:
     self.boxes_to_trigger.append(BoxPath([box]))
 
-  def add_custom_box(self, box: Box) -> None:
+  def _add_custom_box(self, box: Box) -> None:
     '''Add a custom box to the collector.
 
     Copy all the boxes to trigger from the added custom box to this collector,
     prefixed with the box.
     '''
-    self.boxes_to_build.append(box)
     other_se_collector = box.operation.side_effects()  # type: ignore
     for btt in other_se_collector.boxes_to_trigger:
       self.boxes_to_trigger.append(btt.add_box_as_prefix(box))
+
+  def add_box(self, box: Box) -> None:
+    self.boxes_to_build.append(box)
+    if isinstance(box.operation, str):
+      self._add_normal_box(box)
+    else:
+      self._add_custom_box(box)
 
   def __str__(self):
     btb = 'To build ==> ' + str([b.operation for b in self.boxes_to_build])
@@ -811,7 +818,7 @@ class Workspace:
   '''Immutable class representing a LynxKite workspace.'''
 
   def __init__(self, name: str,
-               terminal_boxes: List[Box],
+               output_boxes: List[Box],
                side_effects: SideEffectCollector = SideEffectCollector(),
                input_boxes: List[Box] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
@@ -821,11 +828,11 @@ class Workspace:
     self._next_id = 0
     self._inputs = [inp.parameters['name'] for inp in input_boxes]
     self._outputs = [
-        outp.parameters['name'] for outp in terminal_boxes
+        outp.parameters['name'] for outp in output_boxes
         if outp.operation == 'output']
     self._ws_parameters = ws_parameters
     self._side_effects = side_effects
-    self._terminal_boxes = terminal_boxes + side_effects.boxes_to_build
+    self._terminal_boxes = output_boxes + side_effects.boxes_to_build
     self._bc = self._terminal_boxes[0].bc
     self._lk = self._terminal_boxes[0].lk
     for box in _reverse_bfs_on_boxes(self._terminal_boxes):
@@ -888,7 +895,8 @@ class Workspace:
     return _new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
 
   def triggerable_boxes(self) -> List[Box]:
-    # TODO: replace it with real list of triggerables
+    # TODO: replace it with real list of triggerables, collected in the
+    # side effect collector of the workspace.
     return [outp for outp in self._terminal_boxes if outp.operation == 'output']
 
   def _save_if_needed(self, saved_under_folder: Optional[str]) -> Tuple[str, str]:
