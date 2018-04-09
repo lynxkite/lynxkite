@@ -46,7 +46,9 @@ $(pip): python_requirements.txt
 .build/ecosystem-docker-done: \
 		.build/ecosystem-done $(shell $(find) ecosystem/ecosystem-docker)
 	ecosystem/ecosystem-docker/build.sh && touch $@
-
+.build/ecosystem-docker-release: \
+		.build/ecosystem-docker-done $(shell $(find) ecosystem/ecosystem-docker-release)
+	ecosystem/ecosystem-docker-release/build.sh && touch $@
 
 # Short aliases for command-line use.
 .PHONY: backend
@@ -55,8 +57,10 @@ backend: .build/backend-done
 frontend: .build/gulp-done
 .PHONY: ecosystem
 ecosystem: .build/ecosystem-done
-.PHONE: ecosystem-docker
+.PHONY: ecosystem-docker
 ecosystem-docker: .build/ecosystem-docker-done
+.PHONY: ecosystem-docker-release
+ecosystem-docker-release: .build/ecosystem-docker-release-done
 .PHONY: backend-test
 backend-test: .build/backend-test-passed
 .PHONY: frontend-test
