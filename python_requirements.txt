@@ -12,6 +12,7 @@ PyYAML
 requests
 sqlalchemy
 # Dependencies for developing and testing
+apache-airflow[mysql]
 autopep8
 awscli
 boto3
