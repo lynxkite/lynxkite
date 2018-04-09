@@ -1065,9 +1065,13 @@ class WorkspaceSequence:
     self._lk_root = lk_root
     self._dfs_root = dfs_root
     self._input_recipes = input_recipes
+    self._input_sequences: Dict[str, TableSnapshotSequence] = {}
+    for inp in self._ws.inputs():
+      location = _normalize_path(self._lk_root + '/inputs/' + inp)
+      self._input_sequences[inp] = TableSnapshotSequence(location, self._schedule)
     self._output_sequences: Dict[str, TableSnapshotSequence] = {}
     for output in self._ws.outputs():
-      location = _normalize_path(self._lk_root + '/' + output)
+      location = _normalize_path(self._lk_root + '/outputs/' + output)
       self._output_sequences[output] = TableSnapshotSequence(location, self._schedule)
 
   def output_sequences(self) -> Dict[str, TableSnapshotSequence]:
@@ -1100,7 +1104,7 @@ class WorkspaceSequenceInstance:
     return 'workspaces_for_{}'.format(self._date)
 
   def wrapper_folder_name(self) -> str:
-    return '/'.join([self._wss.lk_root(), self.folder_name()])
+    return '/'.join([self._wss.lk_root(), 'workspaces', self.folder_name()])
 
   def full_name(self) -> str:
     name = '/'.join([self.wrapper_folder_name(), self.wrapper_name()])
