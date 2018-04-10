@@ -3,6 +3,7 @@
 # come the runtime dependencies, the second part
 # contains the dependencies for developing and testing.
 # Dependecies for running LynxKite and ecosystem
+apache-airflow[mysql]
 croniter
 flask
 mysqlclient
@@ -12,7 +13,6 @@ PyYAML
 requests
 sqlalchemy
 # Dependencies for developing and testing
-apache-airflow[mysql]
 autopep8
 awscli
 boto3
