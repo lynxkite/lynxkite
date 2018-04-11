@@ -1064,9 +1064,10 @@ class WorkspaceSequence:
     self._params = params
     self._lk_root = lk_root
     self._dfs_root = dfs_root
-    self._input_recipes = input_recipes
+    self._input_names = self._ws.inputs()  # For the order of the inputs
+    self._input_recipes = dict(zip(self._input_names, input_recipes))
     self._input_sequences: Dict[str, TableSnapshotSequence] = {}
-    for inp in self._ws.inputs():
+    for inp in self._input_names:
       location = _normalize_path(self._lk_root + '/inputs/' + inp)
       self._input_sequences[inp] = TableSnapshotSequence(location, self._schedule)
     self._output_sequences: Dict[str, TableSnapshotSequence] = {}
@@ -1077,6 +1078,14 @@ class WorkspaceSequence:
   def output_sequences(self) -> Dict[str, TableSnapshotSequence]:
     '''Returns the output sequences of the workspace sequence as a dict.'''
     return self._output_sequences
+
+  def input_sequences(self) -> Dict[str, TableSnapshotSequence]:
+    '''Returns the input sequences of the workspace sequence as a dict.'''
+    return self._input_sequences
+
+  def input_names(self):
+    ''' The sorted list of the input names of the wrapped workspace.'''
+    return self._input_names
 
   def ws_for_date(self, lk: LynxKite, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
@@ -1119,8 +1128,10 @@ class WorkspaceSequenceInstance:
     '''It also runs the imports.'''
     assert not self.is_saved(), 'WorkspaceSequenceInstance is already saved.'
     inputs = [
-        input_recipe.build_boxes(self._lk, self._date)
-        for input_recipe in self._wss._input_recipes]
+        self._lk.importSnapshot(
+            path=self._wss._input_sequences[input_name].snapshot_name(
+                self._date))
+        for input_name in self._wss.input_names()]
     ws_as_box = (
         self._wss._ws(*inputs, **self._wss._params, date=self._date) if self._wss._ws.has_date_parameter()
         else self._wss._ws(*inputs, **self._wss._params))
@@ -1132,6 +1143,21 @@ class WorkspaceSequenceInstance:
     ws = Workspace(self.wrapper_name(), output_boxes=[], side_effects=se_collector)
     self._lk.save_workspace_recursively(ws, self.wrapper_folder_name())
     self._ws = ws  # We store it to be able to trigger the side effects later.
+
+  def run_input(self, input_name):
+    input_state = self._wss._input_recipes[input_name].build_boxes(self._lk, self._date)
+    box = input_state.saveToSnapshot(
+        path=self._wss._input_sequences[input_name].snapshot_name(self._date))
+    se_collector = SideEffectCollector()
+    se_collector.add_box(box)
+    ws_name = f'Workspace for {input_name} on {self._date}'
+    ws = Workspace(ws_name, output_boxes=[], side_effects=se_collector)
+    # TODO: Find out where to save the input workspaces.
+    ws.trigger_all_side_effects()
+
+  def run_all_inputs(self):
+    for input_name in self._wss.input_names():
+      self.run_input(input_name)
 
   def run(self) -> None:
     '''We trigger all the side effect boxes of the ws.'''
