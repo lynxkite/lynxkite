@@ -3,7 +3,7 @@
 # come the runtime dependencies, the second part
 # contains the dependencies for developing and testing.
 # Dependecies for running LynxKite and ecosystem
-apache-airflow[mysql]
+apache-airflow[mysql]==1.9.0
 croniter
 flask
 mysqlclient
