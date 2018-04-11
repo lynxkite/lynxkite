@@ -64,7 +64,8 @@ for proj in ['web', 'shell_ui']:
   if javascripts:
     before = get_hashes(javascripts)
     localpaths = [fn[len(prefix):] for fn in javascripts]
-    if subprocess.call(['npm', 'run', 'eslint', '--', '--fix', *localpaths], cwd=proj):
+    cmd = ['npm', 'run', 'eslint', '--', '--fix'] + localpaths
+    if subprocess.call(cmd, cwd=proj):
       warn('ESLint failed.')
     after = get_hashes(javascripts)
     different = [f[0] for f in zip(javascripts, before, after) if f[1] != f[2]]
