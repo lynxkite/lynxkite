@@ -60,10 +60,18 @@ if len(non_makefiles) > 0:
 
 for proj in ['web', 'shell_ui']:
   prefix = proj + '/'
-  javascripts = [fn[len(prefix):] for fn in files if fn.startswith(prefix) and fn.endswith('.js')]
+  javascripts = [fn for fn in files if fn.startswith(prefix) and fn.endswith('.js')]
   if javascripts:
-    if subprocess.call(['npm', 'run', 'eslint', *javascripts], cwd=proj):
-      warn('ESLint fails.')
+    before = get_hashes(javascripts)
+    localpaths = [fn[len(prefix):] for fn in javascripts]
+    if subprocess.call(['npm', 'run', 'eslint', '--', '--fix', *localpaths], cwd=proj):
+      warn('ESLint failed.')
+    after = get_hashes(javascripts)
+    different = [f[0] for f in zip(javascripts, before, after) if f[1] != f[2]]
+    if len(different) > 0:
+      warn('Files altered by eslint, please restage.')
+      warn('Altered files:')
+      warn(', '.join(different))
 
 pythons = [fn for fn in files if fn.endswith('.py')]
 if pythons:
