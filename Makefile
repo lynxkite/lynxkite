@@ -1,5 +1,5 @@
 # Can be set from the command line. E.g.:
-#   make ecosystem-release VERSION=2.0.0
+#   make ecosystem-docker-release VERSION=2.0.0
 export VERSION=snapshot
 export TEST_SET_SIZE=medium
 
@@ -48,8 +48,8 @@ $(pip): python_requirements.txt
 		.build/ecosystem-done $(shell $(find) ecosystem/docker/base)
 	ecosystem/docker/base/build.sh && touch $@
 .build/ecosystem-docker-release-done: \
-		.build/ecosystem-docker-base-done $(shell $(find) ecosystem/docker/release)
-	ecosystem/docker/release/build.sh && touch $@
+		.build/ecosystem-docker-base-done $(shell $(find) ecosystem/docker)
+	ecosystem/docker/release/build.sh && ecosystem/docker/release/bundle.sh $(VERSION) && touch $@
 
 # Short aliases for command-line use.
 .PHONY: backend
