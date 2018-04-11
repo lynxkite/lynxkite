@@ -42,6 +42,8 @@ $(pip): python_requirements.txt
 		$(shell $(find) ecosystem/native remote_api ) \
 		.build/backend-done .build/documentation-done-${VERSION}
 	ecosystem/native/tools/build-monitoring.sh && ecosystem/native/bundle.sh && touch $@
+.build/shell_ui-test-passed: $(shell $(find) shell_ui)
+	shell_ui/test.sh && touch $@
 
 # Short aliases for command-line use.
 .PHONY: backend
@@ -60,6 +62,8 @@ remote_api-test: .build/remote_api-python-test-passed
 mobile-prepaid-scv-test: .build/mobile-prepaid-scv-test-passed
 .PHONY: ecosystem-test
 ecosystem-test: remote_api-test mobile-prepaid-scv-test
+.PHONY: shell_ui-test
+shell_ui-test: .build/shell_ui-test-passed
 .PHONY: test
 test: backend-test frontend-test ecosystem-test
 .PHONY: big-data-test
