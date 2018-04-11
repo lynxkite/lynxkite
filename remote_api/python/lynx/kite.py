@@ -1152,7 +1152,7 @@ class WorkspaceSequenceInstance:
     se_collector.add_box(box)
     ws_name = f'Workspace for {input_name} on {self._date}'
     ws = Workspace(ws_name, output_boxes=[], side_effects=se_collector)
-    # TODO: Find out where to save the input workspaces.
+    # TODO: Find out where to save the input workspaces (if we want to save them).
     ws.trigger_all_side_effects()
 
   def run_all_inputs(self):
