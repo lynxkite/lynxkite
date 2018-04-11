@@ -1129,20 +1129,24 @@ class WorkspaceSequenceInstance:
     return r.exists and r.isWorkspace
 
   def wrapper_ws(self) -> Workspace:
-    inputs = [
-        self._lk.importSnapshot(
-            path=self._wss.input_sequences()[input_name].snapshot_name(
-                self._date))
-        for input_name in self._wss.input_names()]
-    ws_as_box = (
-        self._wss._ws(*inputs, **self._wss._params, date=self._date) if self._wss._ws.has_date_parameter()
-        else self._wss._ws(*inputs, **self._wss._params))
-    se_collector = SideEffectCollector()
-    ws_as_box.register(se_collector)
-    for output in self._wss._ws.outputs():
-      out_path = self._wss.output_sequences()[output].snapshot_name(self._date)
-      ws_as_box[output].saveToSnapshot(path=out_path).register(se_collector)
-    return Workspace(self.wrapper_name(), output_boxes=[], side_effects=se_collector)
+    lk = self._lk
+
+    @lk.workspace_with_side_effects(name=self.wrapper_name())
+    def ws_instance(se_collector):
+      inputs = [
+          self._lk.importSnapshot(
+              path=self._wss.input_sequences()[input_name].snapshot_name(
+                  self._date))
+          for input_name in self._wss.input_names()]
+      ws_as_box = (
+          self._wss._ws(*inputs, **self._wss._params, date=self._date) if self._wss._ws.has_date_parameter()
+          else self._wss._ws(*inputs, **self._wss._params))
+      ws_as_box.register(se_collector)
+      for output in self._wss._ws.outputs():
+        out_path = self._wss.output_sequences()[output].snapshot_name(self._date)
+        ws_as_box[output].saveToSnapshot(path=out_path).register(se_collector)
+
+    return ws_instance
 
   def save(self) -> None:
     '''It also runs the imports.'''
@@ -1151,15 +1155,18 @@ class WorkspaceSequenceInstance:
     self._lk.save_workspace_recursively(ws, self.wrapper_folder_name())
 
   def run_input(self, input_name):
-    input_state = self._wss.input_recipes()[input_name].build_boxes(self._lk, self._date)
-    box = input_state.saveToSnapshot(
-        path=self._wss.input_sequences()[input_name].snapshot_name(self._date))
-    se_collector = SideEffectCollector()
-    se_collector.add_box(box)
-    ws_name = f'Workspace for {input_name} on {self._date}'
-    ws = Workspace(ws_name, output_boxes=[], side_effects=se_collector)
-    # TODO: Find out where to save the input workspaces (if we want to save them).
-    ws.trigger_all_side_effects()
+    ws_name = f'Workspace for {self._date}'
+    lk = self._lk
+
+    @lk.workspace_with_side_effects(name=ws_name)
+    def input_ws(se_collector):
+      input_state = self._wss.input_recipes()[input_name].build_boxes(self._lk, self._date)
+      box = input_state.saveToSnapshot(
+          path=self._wss.input_sequences()[input_name].snapshot_name(self._date)).register(se_collector)
+
+    folder = _normalize_path('/'.join([self._wss.lk_root(), 'input workspaces', input_name]))
+    input_ws.save(folder)
+    input_ws.trigger_all_side_effects()
 
   def run_all_inputs(self):
     for input_name in self._wss.input_names():
