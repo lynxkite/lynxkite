@@ -1149,7 +1149,6 @@ class WorkspaceSequenceInstance:
     return ws_instance
 
   def save(self) -> None:
-    '''It also runs the imports.'''
     assert not self.is_saved(), 'WorkspaceSequenceInstance is already saved.'
     ws = self.wrapper_ws()
     self._lk.save_workspace_recursively(ws, self.wrapper_folder_name())
@@ -1173,7 +1172,10 @@ class WorkspaceSequenceInstance:
       self.run_input(input_name)
 
   def run(self) -> None:
-    '''We trigger all the side effect boxes of the ws.'''
+    '''We trigger all the side effect boxes of the ws.
+
+    This means all the side effects in the wrapped ws and the saving of
+    the outputs of the wrapped ws.'''
     if not self.is_saved():  # WorkspaceSequenceInstance has to be saved to be able to run.
       self.save()
     saved_under_folder = self.wrapper_folder_name()
