@@ -31,7 +31,6 @@ class TestWorkspaceSequence(unittest.TestCase):
         dfs_root='',
         input_recipes=[input_recipe])
     wss_instance = wss.ws_for_date(lk, test_date)
-    wss_instance.run_all_inputs()
     wss_instance.run()
     for output_sequence in wss.output_sequences().values():
       self.assertTrue(lynx.kite.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
@@ -100,7 +99,6 @@ class TestWorkspaceSequence(unittest.TestCase):
 
     def run_ws(test_date, summa):
       wss_instance = wss.ws_for_date(lk, test_date)
-      wss_instance.run_all_inputs()
       wss_instance.run()
       for output_sequence in wss.output_sequences().values():
         self.assertTrue(lynx.kite.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
@@ -138,7 +136,6 @@ class TestWorkspaceSequence(unittest.TestCase):
 
     def run_ws(test_date):
       wss_instance = wss.ws_for_date(lk, test_date)
-      wss_instance.run_all_inputs()
       wss_instance.run()
       for output_sequence in wss.output_sequences().values():
         self.assertTrue(lynx.kite.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
