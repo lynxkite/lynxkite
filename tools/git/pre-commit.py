@@ -58,9 +58,20 @@ if len(non_makefiles) > 0:
     for l in bad_lines:
       warn('  ' + l)
 
-if any(fn.endswith('.js') for fn in files):
-  if subprocess.call('cd web; gulp eslint', shell=True):
-    warn('ESLint fails.')
+for proj in ['web', 'shell_ui']:
+  prefix = proj + '/'
+  javascripts = [fn for fn in files if fn.startswith(prefix) and fn.endswith('.js')]
+  if javascripts:
+    before = get_hashes(javascripts)
+    localpaths = [fn[len(prefix):] for fn in javascripts]
+    if subprocess.call(['npm', 'run', 'eslint', '--', '--fix', *localpaths], cwd=proj):
+      warn('ESLint failed.')
+    after = get_hashes(javascripts)
+    different = [f[0] for f in zip(javascripts, before, after) if f[1] != f[2]]
+    if len(different) > 0:
+      warn('Files altered by eslint, please restage.')
+      warn('Altered files:')
+      warn(', '.join(different))
 
 pythons = [fn for fn in files if fn.endswith('.py')]
 if pythons:
@@ -72,13 +83,6 @@ if pythons:
     warn('Files altered by autopep8, please restage.')
     warn('Altered files:')
     warn(', '.join(different))
-
-javascript = [fn for fn in files if fn.endswith('.js')]
-if javascript:
-  try:
-    subprocess.check_call(['eslint'] + javascript)
-  except subprocess.CalledProcessError:
-    warn('Please fix the eslint errors and try again.')
 
 if warned:
   sys.exit(1)
