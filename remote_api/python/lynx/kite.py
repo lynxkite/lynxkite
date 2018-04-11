@@ -1178,6 +1178,8 @@ class WorkspaceSequenceInstance:
     the outputs of the wrapped ws.'''
     if not self.is_saved():  # WorkspaceSequenceInstance has to be saved to be able to run.
       self.save()
+    # Compute the inputs.
+    self.run_all_inputs()
     saved_under_folder = self.wrapper_folder_name()
     # We assume that the same box ids will be generated every time
     # we regenerate this workspace.
