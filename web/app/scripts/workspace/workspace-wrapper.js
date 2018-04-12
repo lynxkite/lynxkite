@@ -24,6 +24,7 @@ angular.module('biggraph')
     this.name = name;
     this.top = name;
     this.customBoxStack = [];
+    this.zoomAndPanStack = [];
     this.state = undefined;
     // The below data structures are generated from rawBoxes
     // by this.build(). These are the ones that interact with

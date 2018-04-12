@@ -515,13 +515,22 @@ angular.module('biggraph')
           scope.workspace.loadWorkspace();
           scope.popups = [];
           scope.selectedBoxIds = [id];
+          var viewSettings = scope.workspace.zoomAndPanStack.pop();
+          workspaceX = viewSettings.x;
+          workspaceY = viewSettings.y;
+          workspaceZoom = viewSettings.z;
         };
 
         scope.diveDown = function() {
           scope.workspace.customBoxStack.push(scope.selectedBoxIds[0]);
+          var viewSettings = {'x': workspaceX, 'y': workspaceY, 'z': workspaceZoom};
+          scope.workspace.zoomAndPanStack.push(viewSettings);
           scope.workspace.loadWorkspace();
           scope.popups = [];
           scope.selectedBoxIds = [];
+          workspaceX = 0;
+          workspaceY = 0;
+          workspaceZoom = 0;
         };
 
         scope.saveSelectionAsCustomBox = function(name, success, error) {
