@@ -34,7 +34,7 @@ $(pip): python_requirements.txt
 	./.test_frontend.sh && touch $@
 .build/remote_api-python-test-passed: $(shell $(find) remote_api/python) .build/backend-done $(pip)
 	tools/with_lk.sh remote_api/python/test.sh && touch $@
-.build/mobile-prepaid-scv-test-passed: $(shell $(find) mobile-prepaid-scv) .build/backend-done $(pip)
+.build/mobile-prepaid-scv-test-passed: $(shell $(find) remote_api/python mobile-prepaid-scv) .build/backend-done $(pip)
 	tools/with_lk.sh mobile-prepaid-scv/unit_test.sh && touch $@
 .build/documentation-done-${VERSION}: $(shell $(find) ecosystem/documentation remote_api/python) python_requirements.txt
 	ecosystem/documentation/build.sh native && touch $@
@@ -50,6 +50,8 @@ $(pip): python_requirements.txt
 .build/ecosystem-docker-release-done: \
 		.build/ecosystem-docker-base-done $(shell $(find) ecosystem/docker)
 	ecosystem/docker/release/build.sh && ecosystem/docker/release/bundle.sh $(VERSION) && touch $@
+.build/shell_ui-test-passed: $(shell $(find) shell_ui)
+	shell_ui/test.sh && touch $@
 
 # Short aliases for command-line use.
 .PHONY: backend
@@ -72,6 +74,8 @@ remote_api-test: .build/remote_api-python-test-passed
 mobile-prepaid-scv-test: .build/mobile-prepaid-scv-test-passed
 .PHONY: ecosystem-test
 ecosystem-test: remote_api-test mobile-prepaid-scv-test
+.PHONY: shell_ui-test
+shell_ui-test: .build/shell_ui-test-passed
 .PHONY: test
 test: backend-test frontend-test ecosystem-test
 .PHONY: big-data-test

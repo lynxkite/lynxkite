@@ -55,7 +55,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     lk = lynx.kite.LynxKite()
     i = lk.input(name='graph')
     o = i.sql('select name from vertices').output(name='vtable')
-    ws = lynx.kite.Workspace('allvs', [o], [i])
+    ws = lynx.kite.Workspace(name='allvs', output_boxes=[o], input_boxes=[i])
     table = ws(lk.createExampleGraph()).get_table_data()
     values = [row[0].string for row in table.data]
     self.assertEqual(values, ['Adam', 'Eve', 'Bob', 'Isolated Joe'])
