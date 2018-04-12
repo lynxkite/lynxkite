@@ -55,3 +55,18 @@ class TestDagCreation(unittest.TestCase):
     }
     min_dag = lynx.kite._minimal_dag(g)
     self.assertEqual(min_dag, g)
+
+  def test_atomic_parents(self):
+    lk = lynx.kite.LynxKite()
+
+    @lk.workspace()
+    def eg_table():
+      return {'eg': lk.createExampleGraph().sql('select name, age from vertices')}
+
+    @lk.workspace()
+    def multi_output():
+      eg = lk.createExampleGraph()
+      return dict(o1=eg, o2=eg.sql('select * from vertices'), o3=eg_table())
+
+    for box in multi_output.output_boxes():
+      print([bp.box_stack[-1] for bp in lynx.kite.BoxPath([box]).parents()])

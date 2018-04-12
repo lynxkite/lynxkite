@@ -814,8 +814,8 @@ class BoxPath:
 
   def parents(self) -> List['BoxPath']:
     box = self.atomic_box()
-    if len(box.inputs()) > 0:  # normal box with inputs
-      return [self.parent(inp) for inp in box.inputs().keys()]
+    if len(box.inputs) > 0:  # normal box with inputs
+      return [self.parent(inp) for inp in box.inputs.keys()]
     elif box.operation == 'input':  # input box
       if len(self.box_stack) == 1:  # top level input box
         return []
