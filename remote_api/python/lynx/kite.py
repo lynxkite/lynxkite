@@ -32,7 +32,7 @@ import inspect
 import re
 import itertools
 import collections
-from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator, TypeVar
+from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator, TypeVar, Optional
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
@@ -450,24 +450,59 @@ class LynxKite:
         '/ajax/createDirectory',
         dict(name=path, privacy=privacy))
 
-  def workspace(self, name: str = None, parameters: List[WorkspaceParameter] = []
-                ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
+  def _workspace(self,
+                 name: str = None,
+                 parameters: List[WorkspaceParameter] = [],
+                 with_side_effects: bool = False
+                 ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
+    se_collector = SideEffectCollector()
+
     def ws_decorator(builder_fn):
       real_name = builder_fn.__name__ if not name else name
-      inputs = [self.input(name=name)
-                for name in inspect.signature(builder_fn).parameters.keys()]
-      results = builder_fn(*inputs)
-      outputs = [state.output(name=name) for name, state in results.items()]
-      return Workspace(real_name, outputs, inputs, parameters)
+      if with_side_effects:
+        names = list(inspect.signature(builder_fn).parameters.keys())[1:]
+      else:
+        names = inspect.signature(builder_fn).parameters.keys()
+      inputs = [self.input(name=name) for name in names]
+      if with_side_effects:
+        results = builder_fn(se_collector, *inputs)
+      else:
+        results = builder_fn(*inputs)
+      if results:
+        outputs = [state.output(name=name) for name, state in results.items()]
+      else:
+        outputs = []
+      return Workspace(name=real_name,
+                       output_boxes=outputs,
+                       side_effects=se_collector,
+                       input_boxes=inputs,
+                       ws_parameters=parameters)
     return ws_decorator
 
-  def trigger_box(self, workspace_name: str, box_id: str):
-    '''Trigger the computation of all the GUIDs in the box which is in the
-    saved workspace named ``workspace_name`` and has ``boxID=box_id``.
+  def workspace(self,
+                name: str = None,
+                parameters: List[WorkspaceParameter] = []
+                ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
+    return self._workspace(name, parameters, with_side_effects=False)
+
+  def workspace_with_side_effects(self,
+                                  name: str = None,
+                                  parameters: List[WorkspaceParameter] = []
+                                  ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
+    return self._workspace(name, parameters, with_side_effects=True)
+
+  def trigger_box(self,
+                  workspace_name: str,
+                  box_id: str,
+                  custom_box_stack: List[str]=[]):
+    '''Triggers the computation of all the GUIDs in the box which is in the
+    saved workspace named ``workspace_name`` and has ``boxID=box_id``. If
+    custom_box_stack is not empty, it specifies the sequence of custom boxes
+    which leads to the workspace which contains the box with the given box_id.
     '''
     return self._send(
         '/ajax/triggerBox',
-        dict(workspace=dict(top=workspace_name, customBoxStack=[]), box=box_id))
+        dict(workspace=dict(top=workspace_name, customBoxStack=custom_box_stack), box=box_id))
 
 
 class TableSnapshotSequence:
@@ -662,6 +697,9 @@ class Box:
         'inputs': {plug: input_state(state) for plug, state in self.inputs.items()},
         'parametricParameters': self.parametric_parameters})
 
+  def register(self, side_effect_collector):
+    side_effect_collector.add_box(self)
+
   def __getitem__(self, index: str) -> State:
     if index not in self.outputs:
       raise KeyError(index)
@@ -736,10 +774,61 @@ def _reverse_bfs_on_boxes(roots: List[Box], list_roots: bool = True) -> Iterator
         yield parent_box
 
 
+class BoxPath:
+  '''Represents a box (which can be inside (nested) custom boxes) as a list of Boxes.
+  It can be used for example to trigger boxes inside custom boxes.
+
+  The last element in the `box_stack` list is a "normal" box. The previous
+  elements are custom boxes. `box_stack[i+1]` is always a box contained by the
+  workspace referred by the custom box `box_stack[i]`.
+  '''
+
+  def __init__(self, box_list: List[Box]) -> None:
+    self.box_stack = box_list
+
+  def add_box_as_prefix(self, box):
+    return BoxPath([box] + self.box_stack)
+
+
+class SideEffectCollector:
+  def __init__(self):
+    self.boxes_to_build: List[Box] = []
+    self.boxes_to_trigger: List[BoxPath] = []
+
+  def _add_normal_box(self, box: Box) -> None:
+    self.boxes_to_trigger.append(BoxPath([box]))
+
+  def _add_custom_box(self, box: Box) -> None:
+    '''Add a custom box to the collector.
+
+    Copy all the boxes to trigger from the added custom box to this collector,
+    prefixed with the box.
+    '''
+    other_se_collector = box.operation.side_effects()  # type: ignore
+    for btt in other_se_collector.boxes_to_trigger:
+      self.boxes_to_trigger.append(btt.add_box_as_prefix(box))
+
+  def add_box(self, box: Box) -> None:
+    self.boxes_to_build.append(box)
+    if isinstance(box.operation, str):
+      self._add_normal_box(box)
+    else:
+      self._add_custom_box(box)
+
+  def __str__(self):
+    btb = 'To build ==> ' + str([b.operation for b in self.boxes_to_build])
+    btt = ' To trigger ==> ' + str([[b.operation for b in btt.box_stack]
+                                    for btt in self.boxes_to_trigger])
+    return btb + btt
+
+
 class Workspace:
   '''Immutable class representing a LynxKite workspace.'''
 
-  def __init__(self, name: str, terminal_boxes: List[Box], input_boxes: List[Box] = [],
+  def __init__(self, name: str,
+               output_boxes: List[Box],
+               side_effects: SideEffectCollector = SideEffectCollector(),
+               input_boxes: List[Box] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
     self._name = name or 'Anonymous'
     self._all_boxes: Set[Box] = set()
@@ -747,14 +836,14 @@ class Workspace:
     self._next_id = 0
     self._inputs = [inp.parameters['name'] for inp in input_boxes]
     self._outputs = [
-        outp.parameters['name'] for outp in terminal_boxes
+        outp.parameters['name'] for outp in output_boxes
         if outp.operation == 'output']
-    self._bc = terminal_boxes[0].bc
     self._ws_parameters = ws_parameters
-    self._terminal_boxes = terminal_boxes
-    self._lk = terminal_boxes[0].lk
-
-    for box in _reverse_bfs_on_boxes(terminal_boxes):
+    self._side_effects = side_effects
+    self._terminal_boxes = output_boxes + side_effects.boxes_to_build
+    self._bc = self._terminal_boxes[0].bc
+    self._lk = self._terminal_boxes[0].lk
+    for box in _reverse_bfs_on_boxes(self._terminal_boxes):
       self._add_box(box)
 
   def _add_box(self, box):
@@ -764,6 +853,16 @@ class Workspace:
 
   def id_of(self, box: Box) -> str:
     return self._box_ids[box]
+
+  def _box_to_trigger_to_box_ids(self, box_to_trigger: BoxPath) -> List[str]:
+    '''Converts a BoxPath object to the list of corresponding box ids in this Workspace.'''
+    box_stack = box_to_trigger.box_stack
+    current_box = box_stack[0]
+    box_ids = [self.id_of(current_box)]
+    for next_box in box_stack[1:]:
+      box_ids.append(current_box.operation.id_of(next_box))  # type: ignore
+      current_box = next_box
+    return box_ids
 
   def _ws_parameters_to_str(self):
     return json.dumps([param.to_json() for param in self._ws_parameters])
@@ -790,6 +889,9 @@ class Workspace:
   def name(self) -> str:
     return self._name
 
+  def side_effects(self) -> SideEffectCollector:
+    return self._side_effects
+
   def has_date_parameter(self) -> bool:
     return 'date' in [p.name for p in self._ws_parameters]
 
@@ -801,7 +903,48 @@ class Workspace:
     return _new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
 
   def triggerable_boxes(self) -> List[Box]:
+    # TODO: replace it with real list of triggerables, collected in the
+    # side effect collector of the workspace.
     return [outp for outp in self._terminal_boxes if outp.operation == 'output']
+
+  def _trigger_box(self, box_to_trigger: BoxPath, full_path: str):
+    lk = self._lk
+    box_ids = self._box_to_trigger_to_box_ids(box_to_trigger)
+    # The last id is a "normal" box id, the rest are the custom box stack.
+    lk.trigger_box(full_path, box_ids[-1], box_ids[:-1])
+
+  def save(self, saved_under_folder: str) -> Tuple[str, str]:
+    lk = self._lk
+    return lk.save_workspace_recursively(self, saved_under_folder)  # type: ignore
+
+  def trigger_saved(self, box_to_trigger: BoxPath, saved_under_folder: str):
+    ''' Triggers one side effect.
+
+    Assumes the workspace is saved under `saved_under_root`.
+    '''
+    lk = self._lk
+    full_path = _normalize_path(saved_under_folder + '/' + self._name)
+    self._trigger_box(box_to_trigger, full_path)
+
+  def trigger(self, box_to_trigger: BoxPath):
+    ''' Triggers one side effect.
+
+    Assumes the workspace is not saved, so saves it under a random folder.
+    '''
+    lk = self._lk
+    random_folder = _random_ws_folder()
+    _, full_path = self.save(random_folder)
+    self._trigger_box(box_to_trigger, full_path)
+
+  def trigger_all_side_effects(self):
+    ''' Triggers all side effects.
+
+    Also saves the workspace under a temporary folder.
+    '''
+    temporary_folder = _random_ws_folder()
+    self.save(temporary_folder)
+    for btt in self._side_effects.boxes_to_trigger:
+      self.trigger_saved(btt, temporary_folder)
 
   def dependency_graph(self) -> Dict[Box, Set[Box]]:
     ''' Returns all the triggerable boxes and the dependencies between them '''
@@ -921,15 +1064,32 @@ class WorkspaceSequence:
     self._params = params
     self._lk_root = lk_root
     self._dfs_root = dfs_root
-    self._input_recipes = input_recipes
+    self._input_names = self._ws.inputs()  # For the order of the inputs
+    self._input_recipes = dict(zip(self._input_names, input_recipes))
+    self._input_sequences: Dict[str, TableSnapshotSequence] = {}
+    for inp in self._input_names:
+      location = _normalize_path(self._lk_root + '/inputs/' + inp)
+      self._input_sequences[inp] = TableSnapshotSequence(location, self._schedule)
     self._output_sequences: Dict[str, TableSnapshotSequence] = {}
     for output in self._ws.outputs():
-      location = _normalize_path(self._lk_root + '/' + output)
+      location = _normalize_path(self._lk_root + '/outputs/' + output)
       self._output_sequences[output] = TableSnapshotSequence(location, self._schedule)
 
   def output_sequences(self) -> Dict[str, TableSnapshotSequence]:
     '''Returns the output sequences of the workspace sequence as a dict.'''
     return self._output_sequences
+
+  def input_sequences(self) -> Dict[str, TableSnapshotSequence]:
+    '''Returns the input sequences of the workspace sequence as a dict.'''
+    return self._input_sequences
+
+  def input_names(self):
+    ''' The sorted list of the input names of the wrapped workspace.'''
+    return self._input_names
+
+  def input_recipes(self):
+    ''' Dict of input recipes, the keys are names.'''
+    return self._input_recipes
 
   def ws_for_date(self, lk: LynxKite, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
@@ -957,7 +1117,7 @@ class WorkspaceSequenceInstance:
     return 'workspaces_for_{}'.format(self._date)
 
   def wrapper_folder_name(self) -> str:
-    return '/'.join([self._wss.lk_root(), self.folder_name()])
+    return '/'.join([self._wss.lk_root(), 'workspaces', self.folder_name()])
 
   def full_name(self) -> str:
     name = '/'.join([self.wrapper_folder_name(), self.wrapper_name()])
@@ -968,35 +1128,64 @@ class WorkspaceSequenceInstance:
     r = self._lk.get_directory_entry(path)
     return r.exists and r.isWorkspace
 
+  def wrapper_ws(self) -> Workspace:
+    lk = self._lk
+
+    @lk.workspace_with_side_effects(name=self.wrapper_name())
+    def ws_instance(se_collector):
+      inputs = [
+          self._lk.importSnapshot(
+              path=self._wss.input_sequences()[input_name].snapshot_name(
+                  self._date))
+          for input_name in self._wss.input_names()]
+      ws_as_box = (
+          self._wss._ws(*inputs, **self._wss._params, date=self._date) if self._wss._ws.has_date_parameter()
+          else self._wss._ws(*inputs, **self._wss._params))
+      ws_as_box.register(se_collector)
+      for output in self._wss._ws.outputs():
+        out_path = self._wss.output_sequences()[output].snapshot_name(self._date)
+        ws_as_box[output].saveToSnapshot(path=out_path).register(se_collector)
+
+    return ws_instance
+
   def save(self) -> None:
-    '''It also runs the imports.'''
     assert not self.is_saved(), 'WorkspaceSequenceInstance is already saved.'
-    inputs = [
-        input_recipe.build_boxes(self._lk, self._date)
-        for input_recipe in self._wss._input_recipes]
-    ws_as_box = (
-        self._wss._ws(*inputs, **self._wss._params, date=self._date) if self._wss._ws.has_date_parameter()
-        else self._wss._ws(*inputs, **self._wss._params))
-    terminal_boxes = []
-    for output in self._wss._ws.outputs():
-      out_path = self._wss._output_sequences[output].snapshot_name(self._date)
-      terminal_boxes.append(ws_as_box[output].saveToSnapshot(path=out_path))
-    ws = Workspace(self.wrapper_name(), terminal_boxes)
+    ws = self.wrapper_ws()
     self._lk.save_workspace_recursively(ws, self.wrapper_folder_name())
 
-  def run(self) -> None:
-    '''We trigger all the terminal boxes of the wrapped ws.
+  def run_input(self, input_name):
+    ws_name = f'Workspace for {self._date}'
+    lk = self._lk
 
-    First we just trigger ``saveToSnapshot`` boxes.
-    '''
+    @lk.workspace_with_side_effects(name=ws_name)
+    def input_ws(se_collector):
+      input_state = self._wss.input_recipes()[input_name].build_boxes(self._lk, self._date)
+      box = input_state.saveToSnapshot(
+          path=self._wss.input_sequences()[input_name].snapshot_name(self._date)).register(se_collector)
+
+    folder = _normalize_path('/'.join([self._wss.lk_root(), 'input workspaces', input_name]))
+    input_ws.save(folder)
+    input_ws.trigger_all_side_effects()
+
+  def run_all_inputs(self):
+    for input_name in self._wss.input_names():
+      self.run_input(input_name)
+
+  def run(self) -> None:
+    '''We trigger all the side effect boxes of the ws.
+
+    This means all the side effects in the wrapped ws and the saving of
+    the outputs of the wrapped ws.'''
     if not self.is_saved():  # WorkspaceSequenceInstance has to be saved to be able to run.
       self.save()
-    operations_to_trigger = ['Save to snapshot']  # TODO: add compute and exports
-    full_name = self.full_name()
-    boxes = self._lk.get_workspace(full_name)
-    terminal_box_ids = [box.id for box in boxes if box.operationId in operations_to_trigger]
-    for box_id in terminal_box_ids:
-      self._lk.trigger_box(full_name, box_id)
+    # Compute the inputs.
+    self.run_all_inputs()
+    saved_under_folder = self.wrapper_folder_name()
+    # We assume that the same box ids will be generated every time
+    # we regenerate this workspace.
+    ws = self.wrapper_ws()
+    for btt in ws.side_effects().boxes_to_trigger:
+      ws.trigger_saved(btt, saved_under_folder)
 
 
 T = TypeVar('T')
