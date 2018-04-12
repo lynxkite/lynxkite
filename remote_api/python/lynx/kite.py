@@ -675,6 +675,10 @@ class Box:
       else:
         self.parameters[key] = str(value)
 
+  def is_normal_box(self):
+    '''Returns True iff this box is not a custom box.'''
+    return isinstance(self.operation, str)
+
   def to_json(self, id_resolver: Callable[['Box'], str], workspace_root: str) -> SerializedBox:
     '''Creates the json representation of a box in a workspace.
 
@@ -684,11 +688,11 @@ class Box:
     def input_state(state):
       return {'boxId': id_resolver(state.box), 'id': state.output_plug_name}
 
-    if isinstance(self.operation, str):
-      operationId = self.bc.operation_id(self.operation)
+    if self.is_normal_box():
+      operationId = self.bc.operation_id(self.operation)  # type: ignore
     else:
       # path//custom_box is not a valid name
-      operationId = _normalize_path(workspace_root + '/' + self.operation.name())
+      operationId = _normalize_path(workspace_root + '/' + self.operation.name())  # type: ignore
     return SerializedBox({
         'id': id_resolver(self),
         'operationId': operationId,
@@ -774,6 +778,17 @@ def _reverse_bfs_on_boxes(roots: List[Box], list_roots: bool = True) -> Iterator
         yield parent_box
 
 
+def _atomic_parent_of_state(box_list, state) -> 'BoxPath':
+  '''`state` is an output state of the last box of `box_list`.'''
+  parent_box = state.box
+  if parent_box.is_normal_box():
+    return BoxPath(box_list + [parent_box])
+  else:  # we need the proper output box of the custom box
+    output_box = [box for box in parent_box.operation.output_boxes()
+                  if box.parameters['name'] == state.output_plug_name][0]
+    return BoxPath(box_list + [parent_box, output_box])
+
+
 class BoxPath:
   '''Represents a box (which can be inside (nested) custom boxes) as a list of Boxes.
   It can be used for example to trigger boxes inside custom boxes.
@@ -788,6 +803,29 @@ class BoxPath:
 
   def add_box_as_prefix(self, box):
     return BoxPath([box] + self.box_stack)
+
+  def atomic_box(self):
+    return self.box_stack[-1]
+
+  def parent(self, input_name) -> 'BoxPath':
+    box = self.atomic_box()
+    parent_state = box.inputs[input_name]
+    return _atomic_parent_of_state(self.box_stack[:-1], parent_state)
+
+  def parents(self) -> List['BoxPath']:
+    box = self.atomic_box()
+    if len(box.inputs()) > 0:  # normal box with inputs
+      return [self.parent(inp) for inp in box.inputs().keys()]
+    elif box.operation == 'input':  # input box
+      if len(self.box_stack) == 1:  # top level input box
+        return []
+      else:  # input box of a nested custom box
+        containing_custom_box = self.box_stack[-2]
+        input_name = box.parameters['name']
+        parent_state = containing_custom_box.inputs[input_name]
+        return [_atomic_parent_of_state(self.box_stack[:-2], parent_state)]
+    else:  # no parents
+      return []
 
 
 class SideEffectCollector:
@@ -810,7 +848,7 @@ class SideEffectCollector:
 
   def add_box(self, box: Box) -> None:
     self.boxes_to_build.append(box)
-    if isinstance(box.operation, str):
+    if box.is_normal_box():
       self._add_normal_box(box)
     else:
       self._add_custom_box(box)
@@ -840,6 +878,7 @@ class Workspace:
         if outp.operation == 'output']
     self._ws_parameters = ws_parameters
     self._side_effects = side_effects
+    self._output_boxes = output_boxes
     self._terminal_boxes = output_boxes + side_effects.boxes_to_build
     self._bc = self._terminal_boxes[0].bc
     self._lk = self._terminal_boxes[0].lk
@@ -877,14 +916,17 @@ class Workspace:
 
   def required_workspaces(self) -> List['Workspace']:
     return [
-        box.operation for box in self._all_boxes
-        if isinstance(box.operation, Workspace)]
+        box.operation for box in self._all_boxes  # type: ignore
+        if not box.is_normal_box()]
 
   def inputs(self) -> List[str]:
     return list(self._inputs)
 
   def outputs(self) -> List[str]:
     return list(self._outputs)
+
+  def output_boxes(self) -> List[Box]:
+    return self._output_boxes
 
   def name(self) -> str:
     return self._name
