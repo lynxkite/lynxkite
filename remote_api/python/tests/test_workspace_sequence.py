@@ -110,3 +110,41 @@ class TestWorkspaceSequence(unittest.TestCase):
     run_ws(datetime(2018, 1, 2), '16')
     run_ws(datetime(2018, 1, 3), '32')
     run_ws(datetime(2018, 1, 4), '64')
+
+  def test_side_effects_in_sequence(self):
+    lk = lynx.kite.LynxKite()
+    lk.remove_name('ws_test_seq_3', force=True)
+    lk.remove_name('wsi_snapshots', force=True)
+
+    @lk.workspace_with_side_effects(name='eg_stats', parameters=[text('date')])
+    def builder(sec):
+      eg = lk.createExampleGraph()
+      o = eg.sql('select avg(age) as avg from vertices')
+      (eg.sql(pp('select income, "${date}" as d from vertices'))
+         .saveToSnapshot(path=pp('wsi_snapshots/${date}'))
+         .register(sec))
+      return dict(avg=o)
+
+    wss = lynx.kite.WorkspaceSequence(
+        ws=builder,
+        schedule='0 0 * * *',
+        start_date=datetime(2018, 4, 5),
+        params={},
+        lk_root='ws_test_seq_3',
+        dfs_root='',
+        input_recipes=[])
+
+    def run_ws(test_date):
+      wss_instance = wss.ws_for_date(lk, test_date)
+      wss_instance.run()
+      for output_sequence in wss.output_sequences().values():
+        self.assertTrue(lynx.kite.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
+      avg_result_tss = wss.output_sequences()['avg']
+      table_raw = avg_result_tss.read_interval(lk, test_date, test_date).get_table_data()
+      self.assertEqual(table_raw.data[0][0].string, '22.7')
+      entries = lk.list_dir('wsi_snapshots')
+      self.assertTrue(f'wsi_snapshots/{test_date}' in [e.name for e in entries])
+
+    run_ws(datetime(2018, 4, 5))
+    run_ws(datetime(2018, 4, 6))
+    run_ws(datetime(2018, 4, 7))

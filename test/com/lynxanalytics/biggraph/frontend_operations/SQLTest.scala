@@ -389,6 +389,23 @@ class SQLTest extends OperationsTestBase {
       row => toSeq(row)) == Seq(Seq("Female", null), Seq("Male", "2000.0")))
   }
 
+  test("columns in tuples are nullable") {
+    // With persist = "yes" the result is saved as parquet.
+    // To be able to use it in later operations, all columns have to
+    // be nullable in the schema. Even inside tuples, like "location".
+    val sql = "select name, location from input"
+    val t = box("Create example graph")
+      .box("SQL1", Map("sql" -> "select * from vertices", "persist" -> "yes"))
+      .box("SQL1", Map("sql" -> sql))
+      .table
+    assert(t.df.collect.toSeq.map(
+      row => toSeq(row)) == Seq(
+        Seq("Adam", Seq(40.71448, -74.00598)),
+        Seq("Eve", Seq(47.5269674, 19.0323968)),
+        Seq("Bob", Seq(1.352083, 103.819836)),
+        Seq("Isolated Joe", Seq(-33.8674869, 151.2069902))))
+  }
+
   SQLTestCases.list.foreach(query => test(query._1) {
     val one = box("Create example graph")
     val two = box("Create example graph")
