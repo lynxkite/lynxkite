@@ -11,6 +11,8 @@ var FORCE_LAYOUT = (function() {
   //   drag:            force/speed ratio (fluid resistance)
   //   labelAttraction: attraction between matching labels, as fraction of repulsion
   //   style:           specifics of the force algorithm
+  //   componentRepulsionFraction: fraction of normal repulsion to apply between separate components
+  //   repulsionPower:  the power of distance at which repulsion falls of
   lib.Engine = function(opts) {
     this.opts = opts;
   };
@@ -35,14 +37,14 @@ var FORCE_LAYOUT = (function() {
       if (this.opts.style === 'decentralize') {
         // Higher-degree vertices are lighter, so they get pushed to the periphery.
         v.forceMass = vertices.vs.length / (v.degree + 1);
-      } else if (this.opts.style === 'neutral') {
+      } else if (this.opts.style === 'centralize') {
+        // Higher-degree vertices are heavier, so they fall into the center.
+        v.forceMass = v.degree + 1;
+      } else {
         // All vertices have the same weight, so graph structure dominates the layout.
         // (Make the total mass match the "centralize" mode, so that the layout is
         // of a similar size.)
         v.forceMass = (2.0 * edgeCount + vertices.vs.length) / vertices.vs.length;
-      } else /* this.opts.style === 'centralize' */ {
-        // Higher-degree vertices are heavier, so they fall into the center.
-        v.forceMass = v.degree + 1;
       }
     }
     if (vertices.edges !== undefined) {
@@ -75,17 +77,22 @@ var FORCE_LAYOUT = (function() {
           dx = Math.random();
           dy = Math.random();
         }
-        var d3 = Math.max(1, Math.abs(dx * dx * dx) + Math.abs(dy * dy * dy));
+        var dxp = Math.abs(Math.pow(dx, this.opts.repulsionPower));
+        var dyp = Math.abs(Math.pow(dy, this.opts.repulsionPower));
+        var dp = Math.max(1, dxp, dyp);
         var repulsion = this.opts.repulsion;
         if (a.text !== undefined && b.text !== undefined && a.text === b.text) {
           // Apply reduced repulsion between vertices that have the same label.
           // This causes the vertices to cluster a bit by label.
           repulsion *= 1.0 - this.opts.labelAttraction;
         }
-        a.x += repulsion * dx / d3 / a.forceMass;
-        a.y += repulsion * dy / d3 / a.forceMass;
-        b.x -= repulsion * dx / d3 / b.forceMass;
-        b.y -= repulsion * dy / d3 / b.forceMass;
+        if (a.component !== b.component) {
+          repulsion *= this.opts.componentRepulsionFraction;
+        }
+        a.x += repulsion * dx / dp / a.forceMass;
+        a.y += repulsion * dy / dp / a.forceMass;
+        b.x -= repulsion * dx / dp / b.forceMass;
+        b.y -= repulsion * dy / dp / b.forceMass;
       }
     }
     var totalChange = 0;
@@ -104,11 +111,21 @@ var FORCE_LAYOUT = (function() {
     }
     return 0.001 < totalChange / vertices.vs.length / maxDist;
   };
+
   lib.Engine.prototype.apply = function(vertices) {
     for (var i = 0; i < vertices.vs.length; ++i) {
       var v = vertices.vs[i];
       v.moveTo(v.x, v.y);
     }
   };
+
+  // Runs the simulation until it stabilizes or the timeout is hit.
+  lib.Engine.prototype.initForSeconds = function(vertices, seconds) {
+    var t0 = Date.now();
+    /* eslint-disable no-empty */
+    while (this.calculate(vertices) && Date.now() - t0 <= seconds * 1000) {}
+    this.apply(vertices);
+  };
+
   return lib;
 }());

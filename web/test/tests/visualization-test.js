@@ -91,8 +91,8 @@ module.exports = function(fw) {
       ];
       var savedPositions;
       var DEFAULT = 'rgb(57, 188, 243)';  // Brand color.
-      var BLUE = 'rgb(53, 53, 161)';
-      var RED = 'rgb(161, 53, 53)';
+      var BLUE = 'rgb(54, 54, 161)';
+      var RED = 'rgb(161, 54, 54)';
       // No attributes visualized.
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
@@ -179,7 +179,7 @@ module.exports = function(fw) {
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
-          { labelColor: 'rgb(66, 53, 161)' },
+          { labelColor: 'rgb(68, 54, 161)' },
           { labelColor: BLUE },
           { labelColor: RED },
         ]);
@@ -232,8 +232,8 @@ module.exports = function(fw) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.edges).toConcur([
           { color: BLUE },
-          { color: 'rgb(125, 53, 161)' },
-          { color: 'rgb(161, 53, 125)' },
+          { color: 'rgb(125, 54, 161)' },
+          { color: 'rgb(161, 54, 125)' },
           { color: RED },
         ]);
         checkGraphPositions(positions(graph), savedPositions);
@@ -285,9 +285,9 @@ module.exports = function(fw) {
       lib.addConcurMatcher();
       name.visualizeAs('label');
       age.visualizeAs('slider');
-      var RED = 'rgb(161, 53, 53)';
+      var RED = 'rgb(161, 54, 54)';
       var YELLOW = 'rgb(184, 184, 46)';
-      var GREEN = 'rgb(53, 161, 53)';
+      var GREEN = 'rgb(54, 161, 54)';
       visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
           { label: 'Adam', color: GREEN },

@@ -57,7 +57,7 @@ object UIStatus {
     relativeEdgeDensity = Some(false),
     axisOptions = UIAxisOptions(vertex = Map(), edge = Map()),
     sampleRadius = 1,
-    attributeTitles = Map(), animate = UIAnimation(false, "neutral", 0),
+    attributeTitles = Map(), animate = UIAnimation(false, "expand", 0),
     centers = Some(Seq("auto")),
     lastCentersRequest = None,
     customVisualizationFilters = Some(false),

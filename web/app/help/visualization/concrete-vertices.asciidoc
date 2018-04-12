@@ -27,6 +27,7 @@ The different options can be useful depending on the structure of the network th
 +
 The available options are:
 +
+Expanded::: Try to expand the graph as much as possible.
 Centralized::: High-degree nodes in the center, low-degree nodes on the periphery.
 Decentralized::: Low-degree nodes in the center, high-degree nodes on the periphery.
 Neutral::: Degree is not factored into the layout.

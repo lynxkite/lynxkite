@@ -37,13 +37,21 @@ class AggregateTest extends FunSuite with TestGraphOp {
     assert(firsts.contains(0))
     assert(firsts - 0 == Map(2 -> "Bob", 3 -> "Isolated Joe"))
   }
-  test("example graph attribute aggregates") {
+  test("example graph global sum") {
     val example = ExampleGraph()().result
     val sumAge = {
       val op = AggregateAttributeToScalar(Aggregator.Sum())
       op(op.attr, example.age).result.aggregated.value
     }
     assert(sumAge == 90.8)
+  }
+  test("example graph global count distinct") {
+    val example = ExampleGraph()().result
+    val distinctNames = {
+      val op = AggregateAttributeToScalar(Aggregator.CountDistinct[String]())
+      op(op.attr, example.name).result.aggregated.value
+    }
+    assert(distinctNames == 4)
   }
   // TODO: this is not defined on isolated vertices
   test("example graph - weighted out degree") {
