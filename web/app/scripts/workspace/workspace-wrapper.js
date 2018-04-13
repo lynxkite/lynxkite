@@ -39,10 +39,7 @@ angular.module('biggraph')
 
   WorkspaceWrapper.prototype = {
     customBoxPath: function() {
-      var getId = function(x) {
-        return x.id;
-      };
-      return this.customBoxStack.map(getId);
+      return this.customBoxStack.map(function(x) { return x.id; });
     },
 
     ref: function() {  // Returns a WorkspaceReference object.
