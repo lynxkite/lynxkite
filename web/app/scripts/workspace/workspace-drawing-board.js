@@ -511,17 +511,29 @@ angular.module('biggraph')
         };
 
         scope.diveUp = function() {
-          var id = scope.workspace.customBoxStack.pop();
+          var boxSettings = scope.workspace.customBoxStack.pop();
           scope.workspace.loadWorkspace();
           scope.popups = [];
-          scope.selectedBoxIds = [id];
+          scope.selectedBoxIds = [boxSettings.id];
+          workspaceX = boxSettings.viewSettings.x;
+          workspaceY = boxSettings.viewSettings.y;
+          workspaceZoom = boxSettings.viewSettings.zoom;
         };
 
         scope.diveDown = function() {
-          scope.workspace.customBoxStack.push(scope.selectedBoxIds[0]);
+          var boxSettings = {
+            id: scope.selectedBoxIds[0],
+            viewSettings: {
+              x: workspaceX,
+              y: workspaceY,
+              zoom: workspaceZoom}};
+          scope.workspace.customBoxStack.push(boxSettings);
           scope.workspace.loadWorkspace();
           scope.popups = [];
           scope.selectedBoxIds = [];
+          workspaceX = 0;
+          workspaceY = 0;
+          workspaceZoom = 0;
         };
 
         scope.saveSelectionAsCustomBox = function(name, success, error) {

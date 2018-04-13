@@ -10,7 +10,7 @@
       {{ getLastPart(workspace.name) }}
     </span>
     <span id="custom-box-stack" ng-if="workspace.customBoxStack.length > 0">
-      (accessed as {{ workspace.top }} » {{ workspace.customBoxStack.join(' » ') }})
+      (accessed as {{ workspace.top }} » {{ workspace.customBoxPath().join(' » ') }})
     </span>
   </div>
 
@@ -39,7 +39,7 @@
        id="dive-up"
        ng-click="diveUp()"
        ng-disabled="workspace.customBoxStack.length === 0 || workspace.error"
-       drop-tooltip="Leave custom box {{ workspace.customBoxStack[workspace.customBoxStack.length - 1] }}"
+       drop-tooltip="Leave custom box {{ workspace.customBoxStack[workspace.customBoxStack.length - 1].id }}"
        drop-tooltip-placement="bottom">
     <i class="fa fa-level-up"></i>
   </button>
