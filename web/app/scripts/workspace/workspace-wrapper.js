@@ -24,7 +24,6 @@ angular.module('biggraph')
     this.name = name;
     this.top = name;
     this.customBoxStack = [];
-    this.zoomAndPanStack = [];
     this.state = undefined;
     // The below data structures are generated from rawBoxes
     // by this.build(). These are the ones that interact with
@@ -39,8 +38,15 @@ angular.module('biggraph')
   }
 
   WorkspaceWrapper.prototype = {
+    customBoxPath: function() {
+      var getId = function(x) {
+        return x.id;
+      };
+      return this.customBoxStack.map(getId);
+    },
+
     ref: function() {  // Returns a WorkspaceReference object.
-      return { top: this.top, customBoxStack: this.customBoxStack };
+      return { top: this.top, customBoxStack: this.customBoxPath() };
     },
 
     _updateBoxCatalog: function() {
