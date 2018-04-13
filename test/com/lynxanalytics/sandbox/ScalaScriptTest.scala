@@ -163,4 +163,21 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
     assert(ot3.funcType.tpe =:= typeOf[Boolean => Option[Double]])
     assert(ot3.payloadType =:= typeOf[Double])
   }
+
+  test("Compile returns null...") {
+    val inside = "{"
+    val evilCode = s"""
+    def eval() = {
+      $inside
+    }
+    """
+    intercept[javax.script.ScriptException] {
+      ScalaScript.run("{")
+    }
+  }
+
+  test("... but we prevail") {
+    ScalaScript.run("val a = 1; a")
+  }
+
 }
