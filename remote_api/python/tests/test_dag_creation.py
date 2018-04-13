@@ -57,16 +57,59 @@ class TestDagCreation(unittest.TestCase):
     self.assertEqual(min_dag, g)
 
   def test_atomic_parents(self):
+    # Builds the workspace specified here:
+    # https://docs.google.com/drawings/d/1YVGTdgrcjGuI-Z-jON7I3B6U3zOaFVUiT5lPnk2I7Kc/
     lk = lynx.kite.LynxKite()
 
     @lk.workspace()
-    def eg_table():
-      return {'eg': lk.createExampleGraph().sql('select name, age from vertices')}
+    def forker(table):
+      result = table.sql('select * from input')
+      return dict(fork1=result, fork2=result)
+
+    @lk.workspace_with_side_effects()
+    def snapshotter(se_collector, t1, t2):
+      t2.saveToSnapshot(path='SB1').register(se_collector)
+      tmp = forker(t1)
+      tmp['fork2'].saveToSnapshot(path='SB2').register(se_collector)
+      return dict(out=tmp['fork1'])
 
     @lk.workspace()
-    def multi_output():
-      eg = lk.createExampleGraph()
-      return dict(o1=eg, o2=eg.sql('select * from vertices'), o3=eg_table())
+    def trivial():
+      result = lk.createExampleGraph().sql('select * from vertices')
+      return dict(out=result)
 
-    for box in multi_output.output_boxes():
-      print([bp.box_stack[-1] for bp in lynx.kite.BoxPath([box]).parents()])
+    @lk.workspace()
+    def combiner(t1, t2):
+      tmp = t1.sql('select * from input')
+      tmp2 = lk.sql('select * from one cross join two', tmp, t2)
+      return dict(out1=tmp, out2=tmp2)
+
+    @lk.workspace_with_side_effects()
+    def main_workspace(se_collector, i1, i2, i3):
+      tmp = snapshotter(i1, i2)
+      tmp.register(se_collector)
+      internal = i3.sql('select * from input')
+      last = combiner(tmp, internal)
+      return dict(o1=last['out1'], o2=last['out2'], o3=trivial())
+
+    def box_path_desc(box_path):
+      op = box_path.box_stack[-1].operation
+      op_param = box_path.box_stack[-1].parameters
+      info = op + '(' + str(op_param) + ')'
+      if len(box_path.box_stack) > 1:
+        parent = box_path.box_stack[-2].operation.name()
+        info += ' inside ' + parent
+      return info
+
+    def endpoit_info(ep):
+      print('  Endpoint: ' + box_path_desc(ep))
+      print('    Parents of endpoint: ' + str([box_path_desc(bp) for bp in ep.parents()]))
+
+    print('Outputs')
+    for box in main_workspace.output_boxes():
+      ep = lynx.kite.BoxPath([box])
+      endpoit_info(ep)
+
+    print('Side effects')
+    for ep in main_workspace.side_effects().boxes_to_trigger:
+      endpoit_info(ep)
