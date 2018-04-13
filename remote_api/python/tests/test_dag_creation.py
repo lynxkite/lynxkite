@@ -93,23 +93,40 @@ class TestDagCreation(unittest.TestCase):
       return dict(o1=last['out1_comb'], o2=last['out2_comb'], o3=trivial())
 
     def box_path_desc(box_path):
+      parent = None
       op = box_path.box_stack[-1].operation
       op_param = box_path.box_stack[-1].parameters
-      info = op + '(' + str(op_param) + ')'
       if len(box_path.box_stack) > 1:
         parent = box_path.box_stack[-2].operation.name()
-        info += ' inside ' + parent
-      return info
+      return dict(operation=op, params=op_param, nested_in=parent)
 
-    def endpoit_info(ep):
-      print('  Endpoint: ' + box_path_desc(ep))
-      print('    Parents of endpoint: ' + str([box_path_desc(bp) for bp in ep.parents()]))
-
-    print('Outputs')
+    parents = {}
     for box in main_workspace.output_boxes():
       ep = lynx.kite.BoxPath([box])
-      endpoit_info(ep)
-
-    print('Side effects')
+      parents[str(box_path_desc(ep))] = [box_path_desc(bp) for bp in ep.parents()]
     for ep in main_workspace.side_effects().boxes_to_trigger:
-      endpoit_info(ep)
+      parents[str(box_path_desc(ep))] = [box_path_desc(bp) for bp in ep.parents()]
+
+    expected = {
+        "{'operation': 'output', 'params': {'name': 'o1'}, 'nested_in': None}":
+        [{'operation': 'output',
+          'params': {'name': 'out1_comb'},
+          'nested_in': 'combiner'}],
+        "{'operation': 'output', 'params': {'name': 'o2'}, 'nested_in': None}":
+        [{'operation': 'output',
+          'params': {'name': 'out2_comb'},
+          'nested_in': 'combiner'}],
+        "{'operation': 'output', 'params': {'name': 'o3'}, 'nested_in': None}":
+        [{'operation': 'output',
+          'params': {'name': 'out_triv'},
+          'nested_in': 'trivial'}],
+        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB1'}, 'nested_in': 'snapshotter'}":
+        [{'operation': 'input',
+          'params': {'name': 't2_snap'},
+          'nested_in': 'snapshotter'}],
+        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}":
+        [{'operation': 'output',
+          'params': {'name': 'fork2'},
+          'nested_in': 'forker'}]}
+
+    self.assertEqual(parents, expected)
