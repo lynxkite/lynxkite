@@ -675,7 +675,7 @@ class Box:
       else:
         self.parameters[key] = str(value)
 
-  def is_normal_box(self):
+  def is_atomic_box(self):
     '''Returns True iff this box is not a custom box.'''
     return isinstance(self.operation, str)
 
@@ -688,7 +688,7 @@ class Box:
     def input_state(state):
       return {'boxId': id_resolver(state.box), 'id': state.output_plug_name}
 
-    if self.is_normal_box():
+    if self.is_atomic_box():
       operationId = self.bc.operation_id(self.operation)  # type: ignore
     else:
       # path//custom_box is not a valid name
@@ -781,7 +781,7 @@ def _reverse_bfs_on_boxes(roots: List[Box], list_roots: bool = True) -> Iterator
 def _atomic_parent_of_state(box_list, state) -> 'BoxPath':
   '''`state` is an output state of the last box of `box_list`.'''
   parent_box = state.box
-  if parent_box.is_normal_box():
+  if parent_box.is_atomic_box():
     return BoxPath(box_list + [parent_box])
   else:  # we need the proper output box of the custom box
     output_box = [box for box in parent_box.operation.output_boxes()
@@ -833,7 +833,7 @@ class SideEffectCollector:
     self.boxes_to_build: List[Box] = []
     self.boxes_to_trigger: List[BoxPath] = []
 
-  def _add_normal_box(self, box: Box) -> None:
+  def _add_atomic_box(self, box: Box) -> None:
     self.boxes_to_trigger.append(BoxPath([box]))
 
   def _add_custom_box(self, box: Box) -> None:
@@ -848,8 +848,8 @@ class SideEffectCollector:
 
   def add_box(self, box: Box) -> None:
     self.boxes_to_build.append(box)
-    if box.is_normal_box():
-      self._add_normal_box(box)
+    if box.is_atomic_box():
+      self._add_atomic_box(box)
     else:
       self._add_custom_box(box)
 
@@ -907,17 +907,17 @@ class Workspace:
     return json.dumps([param.to_json() for param in self._ws_parameters])
 
   def to_json(self, workspace_root: str) -> List[SerializedBox]:
-    normal_boxes = [
+    non_anchor_boxes = [
         box.to_json(self.id_of, workspace_root) for box in self._all_boxes]
     # We use ws_parameters to customize _anchor_box.
     ab = copy.deepcopy(_anchor_box)
     ab['parameters'] = dict(parameters=self._ws_parameters_to_str())
-    return [ab] + normal_boxes
+    return [ab] + non_anchor_boxes
 
   def required_workspaces(self) -> List['Workspace']:
     return [
         box.operation for box in self._all_boxes  # type: ignore
-        if not box.is_normal_box()]
+        if not box.is_atomic_box()]
 
   def inputs(self) -> List[str]:
     return list(self._inputs)
