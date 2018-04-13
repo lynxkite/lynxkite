@@ -92,11 +92,17 @@ class ScalaScriptSecurityManager extends SecurityManager {
 }
 
 object ScalaScript {
-  private val engine = new ScriptEngineManager().getEngineByName("scala").asInstanceOf[IMain]
+  private def getEngine(): IMain = {
+    val e = new ScriptEngineManager().getEngineByName("scala").asInstanceOf[IMain]
+    val settings = e.settings
+    settings.usejavacp.value = true
+    settings.embeddedDefaults[ScalaScriptSecurityManager]
+    e
+  }
 
-  private val settings = engine.settings
-  settings.usejavacp.value = true
-  settings.embeddedDefaults[ScalaScriptSecurityManager]
+  private class MustRestart extends java.lang.RuntimeException {}
+
+  private var engine = getEngine()
 
   private val runCache = new SoftHashMap[String, String]()
   def run(
@@ -239,7 +245,11 @@ object ScalaScript {
     val os = new java.io.ByteArrayOutputStream
     try {
       Console.withOut(os) {
-        engine.compile(fullCode)
+        val script = engine.compile(fullCode)
+        if (script == null) {
+          throw new MustRestart
+        }
+        script
       }
     } catch {
       case e: javax.script.ScriptException =>
@@ -291,10 +301,16 @@ object ScalaScript {
     // IMAIN.compile changes the class loader and does not restore it.
     // https://issues.scala-lang.org/browse/SI-8521
     val cl = Thread.currentThread().getContextClassLoader
+    var restart = false
     try {
       func
+    } catch {
+      case _: MustRestart =>
+        restart = true
+        throw new ScriptException("Unspecified error")
     } finally {
       Thread.currentThread().setContextClassLoader(cl)
+      if (restart) engine = getEngine()
     }
   }
 
