@@ -100,6 +100,7 @@ class TestDagCreation(unittest.TestCase):
         parent = box_path.box_stack[-2].operation.name()
       return dict(operation=op, params=op_param, nested_in=parent)
 
+    # test parent of terminal boxes
     parents = {}
     for box in main_workspace.output_boxes():
       ep = lynx.kite.BoxPath([box])
@@ -130,3 +131,15 @@ class TestDagCreation(unittest.TestCase):
           'nested_in': 'forker'}]}
 
     self.assertEqual(parents, expected)
+
+    # test full traversal of one endpoint
+    start = lynx.kite.BoxPath(
+        [box for box in main_workspace.output_boxes()
+         if box.parameters['name'] == 'o1'])
+    up = start.parents()
+    last = start
+    while len(up) > 0:
+      last = up[0]
+      up = up[0].parents()
+    expected = {'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}
+    self.assertEqual(box_path_desc(last), expected)
