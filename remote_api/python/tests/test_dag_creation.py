@@ -67,22 +67,22 @@ class TestDagCreation(unittest.TestCase):
       return dict(fork1=result, fork2=result)
 
     @lk.workspace_with_side_effects()
-    def snapshotter(se_collector, t1, t2):
-      t2.saveToSnapshot(path='SB1').register(se_collector)
-      tmp = forker(t1)
+    def snapshotter(se_collector, t1_snap, t2_snap):
+      t2_snap.saveToSnapshot(path='SB1').register(se_collector)
+      tmp = forker(t1_snap)
       tmp['fork2'].saveToSnapshot(path='SB2').register(se_collector)
-      return dict(out=tmp['fork1'])
+      return dict(out_snap=tmp['fork1'])
 
     @lk.workspace()
     def trivial():
       result = lk.createExampleGraph().sql('select * from vertices')
-      return dict(out=result)
+      return dict(out_triv=result)
 
     @lk.workspace()
-    def combiner(t1, t2):
-      tmp = t1.sql('select * from input')
-      tmp2 = lk.sql('select * from one cross join two', tmp, t2)
-      return dict(out1=tmp, out2=tmp2)
+    def combiner(t1_comb, t2_comb):
+      tmp = t1_comb.sql('select * from input')
+      tmp2 = lk.sql('select * from one cross join two', tmp, t2_comb)
+      return dict(out1_comb=tmp, out2_comb=tmp2)
 
     @lk.workspace_with_side_effects()
     def main_workspace(se_collector, i1, i2, i3):
@@ -90,7 +90,7 @@ class TestDagCreation(unittest.TestCase):
       tmp.register(se_collector)
       internal = i3.sql('select * from input')
       last = combiner(tmp, internal)
-      return dict(o1=last['out1'], o2=last['out2'], o3=trivial())
+      return dict(o1=last['out1_comb'], o2=last['out2_comb'], o3=trivial())
 
     def box_path_desc(box_path):
       op = box_path.box_stack[-1].operation
