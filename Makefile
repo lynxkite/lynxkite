@@ -1,5 +1,5 @@
 # Can be set from the command line. E.g.:
-#   make ecosystem-release VERSION=2.0.0
+#   make ecosystem-docker-release VERSION=2.0.0
 export VERSION=snapshot
 export TEST_SET_SIZE=medium
 
@@ -40,8 +40,16 @@ $(pip): python_requirements.txt
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
 		$(shell $(find) ecosystem/native remote_api ) \
-		.build/backend-done .build/documentation-done-${VERSION}
-	ecosystem/native/tools/build-monitoring.sh && ecosystem/native/bundle.sh && touch $@
+		.build/backend-done .build/documentation-done-${VERSION} \
+		ecosystem/docker/run_in_docker.sh
+	ecosystem/native/tools/build-monitoring.sh && \
+	ecosystem/native/bundle.sh && touch $@
+.build/ecosystem-docker-base-done: \
+		.build/ecosystem-done $(shell $(find) ecosystem/docker/base)
+	ecosystem/docker/base/build.sh && touch $@
+.build/ecosystem-docker-release-done: \
+		.build/ecosystem-docker-base-done $(shell $(find) ecosystem/docker)
+	ecosystem/docker/release/build.sh && ecosystem/docker/release/bundle.sh $(VERSION) && touch $@
 .build/shell_ui-test-passed: $(shell $(find) shell_ui)
 	shell_ui/test.sh && touch $@
 
@@ -52,6 +60,10 @@ backend: .build/backend-done
 frontend: .build/gulp-done
 .PHONY: ecosystem
 ecosystem: .build/ecosystem-done
+.PHONY: ecosystem-docker-base
+ecosystem-docker-base: .build/ecosystem-docker-base-done
+.PHONY: ecosystem-docker-release
+ecosystem-docker-release: .build/ecosystem-docker-release-done
 .PHONY: backend-test
 backend-test: .build/backend-test-passed
 .PHONY: frontend-test
