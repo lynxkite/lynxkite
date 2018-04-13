@@ -165,12 +165,6 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
   }
 
   test("Compile returns null...") {
-    val inside = "{"
-    val evilCode = s"""
-    def eval() = {
-      $inside
-    }
-    """
     intercept[javax.script.ScriptException] {
       ScalaScript.run("{")
     }
