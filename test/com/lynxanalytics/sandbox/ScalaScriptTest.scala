@@ -174,13 +174,13 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
     ScalaScript.run("val a = 1; a")
   }
 
-  ignore("Thread-safety stress test") {
+  test("Thread-safety stress test") {
     implicit val executionContext =
       ThreadUtil.limitedExecutionContext("LoggedFuturesTest", maxParallelism = 5)
 
     val futures = new ControlledFutures()(executionContext)
     val rnd = new Random(19845782)
-    for (serialNumber <- 1 to 100) {
+    for (serialNumber <- 1 to 50) {
       def expression = s"val q$serialNumber = $serialNumber; q$serialNumber;"
       futures.register {
         if (rnd.nextBoolean) {
