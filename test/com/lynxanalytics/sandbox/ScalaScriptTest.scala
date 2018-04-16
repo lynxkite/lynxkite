@@ -164,13 +164,11 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
     assert(ot3.payloadType =:= typeOf[Double])
   }
 
-  test("Compile returns null...") {
+  test("Recover after compiler gets confused") {
+    // See https://app.asana.com/0/511843840287842/600211128708861
     intercept[javax.script.ScriptException] {
       ScalaScript.run("{")
     }
-  }
-
-  test("... but we prevail") {
     ScalaScript.run("val a = 1; a")
   }
 
