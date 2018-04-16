@@ -99,8 +99,7 @@ object ScalaScript {
     settings.embeddedDefaults[ScalaScriptSecurityManager]
     e
   }
-
-  private class MustRestart extends java.lang.RuntimeException {}
+  
 
   private var engine: IMain = null
 
