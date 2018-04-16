@@ -99,7 +99,6 @@ object ScalaScript {
     settings.embeddedDefaults[ScalaScriptSecurityManager]
     e
   }
-  
 
   private var engine: IMain = null
 
