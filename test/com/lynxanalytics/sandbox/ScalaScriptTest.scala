@@ -167,7 +167,7 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
   }
 
   test("Recover after compiler gets confused") {
-    // See https://app.asana.com/0/511843840287842/600211128708861
+    // See #7227
     intercept[javax.script.ScriptException] {
       ScalaScript.run("{")
     }

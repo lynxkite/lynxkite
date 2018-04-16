@@ -92,11 +92,10 @@ class ScalaScriptSecurityManager extends SecurityManager {
 }
 
 object ScalaScript {
-  private def getEngine(): IMain = {
+  private def createEngine(): IMain = {
     val e = new ScriptEngineManager().getEngineByName("scala").asInstanceOf[IMain]
-    val settings = e.settings
-    settings.usejavacp.value = true
-    settings.embeddedDefaults[ScalaScriptSecurityManager]
+    e.settings.usejavacp.value = true
+    e.settings.embeddedDefaults[ScalaScriptSecurityManager]
     e
   }
 
@@ -245,6 +244,8 @@ object ScalaScript {
     try {
       Console.withOut(os) {
         val script = engine.compile(fullCode)
+        // See #7227
+        // We re-create the engine if engine.compile() returns a null
         if (script == null) {
           engine = null
           throw new CompileReturnedNullError()
@@ -302,7 +303,7 @@ object ScalaScript {
   private def withContextClassLoader[T](func: => T): T = synchronized {
     // IMAIN.compile changes the class loader and does not restore it.
     // https://issues.scala-lang.org/browse/SI-8521
-    if (engine == null) engine = getEngine()
+    if (engine == null) engine = createEngine()
     val cl = Thread.currentThread().getContextClassLoader
     try {
       func
