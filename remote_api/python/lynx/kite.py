@@ -826,7 +826,7 @@ class BoxPath:
         containing_custom_box = self.box_stack[-2]
         input_name = box.parameters['name']
         source_state = containing_custom_box.inputs[input_name]
-        return [_atomic_source_of_state(self.box_stack[:-2], source_state.box)]
+        return [_atomic_source_of_state(self.box_stack[:-2], source_state)]
     else:  # no parents
       return []
 
