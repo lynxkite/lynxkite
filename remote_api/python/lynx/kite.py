@@ -778,15 +778,15 @@ def _reverse_bfs_on_boxes(roots: List[Box], list_roots: bool = True) -> Iterator
         yield parent_box
 
 
-def _atomic_upstream_of_state(box_list, state) -> 'BoxPath':
+def _atomic_source_of_state(box_list, state) -> 'BoxPath':
   '''`state` is an output state of the last box of `box_list`.'''
-  upstream_box = state.box
-  if upstream_box.is_atomic_box():
-    return BoxPath(box_list + [upstream_box])
+  source_box = state.box
+  if source_box.is_atomic_box():
+    return BoxPath(box_list + [source_box])
   else:  # we need the proper output box of the custom box
-    output_box = [box for box in upstream_box.operation.output_boxes()
+    output_box = [box for box in source_box.operation.output_boxes()
                   if box.parameters['name'] == state.output_plug_name][0]
-    return BoxPath(box_list + [upstream_box, output_box])
+    return BoxPath(box_list + [source_box, output_box])
 
 
 class BoxPath:
@@ -813,7 +813,7 @@ class BoxPath:
   def parent(self, input_name) -> 'BoxPath':
     box = self.atomic_box()
     parent_state = box.inputs[input_name]
-    return _atomic_upstream_of_state(self.prefix_of_atomic_box(), parent_state)
+    return _atomic_source_of_state(self.prefix_of_atomic_box(), parent_state)
 
   def parents(self) -> List['BoxPath']:
     box = self.atomic_box()
@@ -825,8 +825,8 @@ class BoxPath:
       else:  # input box of a nested custom box
         containing_custom_box = self.box_stack[-2]
         input_name = box.parameters['name']
-        parent_state = containing_custom_box.inputs[input_name]
-        return [_atomic_upstream_of_state(self.box_stack[:-2], parent_state)]
+        source_state = containing_custom_box.inputs[input_name]
+        return [_atomic_source_of_state(self.box_stack[:-2], source_state.box)]
     else:  # no parents
       return []
 
