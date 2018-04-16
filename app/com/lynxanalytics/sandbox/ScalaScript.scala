@@ -102,7 +102,7 @@ object ScalaScript {
 
   private class MustRestart extends java.lang.RuntimeException {}
 
-  private var engine = getEngine()
+  private var engine: IMain = null
 
   private val runCache = new SoftHashMap[String, String]()
   def run(
@@ -237,6 +237,7 @@ object ScalaScript {
     """
   }
 
+  private class CompileReturnedNullError() extends RuntimeException
   // Compiles the fullCode using the engine, and throws a ScriptException with a meaningful
   // error message in case of a compilation error.
   private def compile(fullCode: String) = {
@@ -247,13 +248,16 @@ object ScalaScript {
       Console.withOut(os) {
         val script = engine.compile(fullCode)
         if (script == null) {
-          throw new MustRestart
+          engine = null
+          throw new CompileReturnedNullError()
         }
         script
       }
     } catch {
-      case e: javax.script.ScriptException =>
+      case _: javax.script.ScriptException =>
         throw new javax.script.ScriptException(new String(os.toByteArray(), "UTF-8"))
+      case _: CompileReturnedNullError =>
+        throw new javax.script.ScriptException("Compile error")
     }
   }
 
@@ -297,20 +301,15 @@ object ScalaScript {
     }
   }
 
-  private def withContextClassLoader[T](func: => T): T = {
+  private def withContextClassLoader[T](func: => T): T = synchronized {
     // IMAIN.compile changes the class loader and does not restore it.
     // https://issues.scala-lang.org/browse/SI-8521
+    if (engine == null) engine = getEngine()
     val cl = Thread.currentThread().getContextClassLoader
-    var restart = false
     try {
       func
-    } catch {
-      case _: MustRestart =>
-        restart = true
-        throw new ScriptException("Unspecified error")
     } finally {
       Thread.currentThread().setContextClassLoader(cl)
-      if (restart) engine = getEngine()
     }
   }
 
