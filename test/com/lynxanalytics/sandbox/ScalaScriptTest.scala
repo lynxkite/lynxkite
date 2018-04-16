@@ -2,10 +2,12 @@ package com.lynxanalytics.sandbox
 
 import org.scalatest.FunSuite
 import java.security.AccessControlException
+import java.util.Random
 
 import com.lynxanalytics.biggraph.controllers.SQLController
-import com.lynxanalytics.biggraph.graph_api.{ Scripting, Table, TestGraphOp }
+import com.lynxanalytics.biggraph.graph_api.{ Scripting, Table, TestGraphOp, ThreadUtil }
 import com.lynxanalytics.biggraph.graph_operations.ImportDataFrameTest
+import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import org.apache.spark.sql.DataFrame
 
@@ -170,6 +172,28 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
       ScalaScript.run("{")
     }
     ScalaScript.run("val a = 1; a")
+  }
+
+  ignore("Thread-safety stress test") {
+    implicit val executionContext =
+      ThreadUtil.limitedExecutionContext("LoggedFuturesTest", maxParallelism = 5)
+
+    val futures = new ControlledFutures()(executionContext)
+    val rnd = new Random(19845782)
+    for (serialNumber <- 1 to 100) {
+      def expression = s"val q$serialNumber = $serialNumber; q$serialNumber;"
+      futures.register {
+        if (rnd.nextBoolean) {
+          val e = intercept[javax.script.ScriptException] {
+            ScalaScript.run(s"{$expression")
+          }
+          assert(e.getMessage == "Compile error")
+        } else {
+          ScalaScript.run(s"$expression")
+        }
+      }
+    }
+    futures.waitAllFutures()
   }
 
 }
