@@ -75,7 +75,7 @@ gulp.task('dist', ['asciidoctor', 'genTemplates', 'html'], function () {
   var beforeConcat = lazypipe().pipe($.sourcemaps.init, { loadMaps: true });
   var dynamicFiles = gulp.src('.tmp/**/*.html')
     .pipe($.useref({}, beforeConcat))
-    .pipe($.if('*.js', $.uglify()))
+    .pipe($.if('*.js', $.uglifyEs.default()))
     .pipe($.if(['**/*', '!**/*.html'], $.rev()))
     .pipe($.revReplace())
     .pipe($.size({ showFiles: true, gzip: true }))
