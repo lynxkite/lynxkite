@@ -676,7 +676,7 @@ class Box:
         self.parameters[key] = str(value)
 
   def is_atomic_box(self):
-    '''Returns True iff this box is not a custom box.'''
+    '''Returns `True` iff this box is not a custom box.'''
     return isinstance(self.operation, str)
 
   def to_json(self, id_resolver: Callable[['Box'], str], workspace_root: str) -> SerializedBox:
@@ -807,10 +807,13 @@ class BoxPath:
   def atomic_box(self):
     return self.box_stack[-1]
 
+  def prefix_of_atomic_box(self):
+    return self.box_stack[:-1]
+
   def parent(self, input_name) -> 'BoxPath':
     box = self.atomic_box()
     parent_state = box.inputs[input_name]
-    return _atomic_parent_of_state(self.box_stack[:-1], parent_state)
+    return _atomic_parent_of_state(self.prefix_of_atomic_box(), parent_state)
 
   def parents(self) -> List['BoxPath']:
     box = self.atomic_box()
