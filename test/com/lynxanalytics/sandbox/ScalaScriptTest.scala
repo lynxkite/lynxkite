@@ -176,7 +176,7 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
 
   test("Thread-safety stress test") {
     implicit val executionContext =
-      ThreadUtil.limitedExecutionContext("LoggedFuturesTest", maxParallelism = 5)
+      ThreadUtil.limitedExecutionContext("ScalaScriptParallellismTest", maxParallelism = 5)
 
     val futures = new ControlledFutures()(executionContext)
     val rnd = new Random(19845782)
