@@ -92,11 +92,14 @@ class ScalaScriptSecurityManager extends SecurityManager {
 }
 
 object ScalaScript {
-  private val engine = new ScriptEngineManager().getEngineByName("scala").asInstanceOf[IMain]
+  private def createEngine(): IMain = {
+    val e = new ScriptEngineManager().getEngineByName("scala").asInstanceOf[IMain]
+    e.settings.usejavacp.value = true
+    e.settings.embeddedDefaults[ScalaScriptSecurityManager]
+    e
+  }
 
-  private val settings = engine.settings
-  settings.usejavacp.value = true
-  settings.embeddedDefaults[ScalaScriptSecurityManager]
+  private var engine: IMain = null
 
   private val runCache = new SoftHashMap[String, String]()
   def run(
@@ -231,6 +234,7 @@ object ScalaScript {
     """
   }
 
+  private class CompileReturnedNullError() extends RuntimeException
   // Compiles the fullCode using the engine, and throws a ScriptException with a meaningful
   // error message in case of a compilation error.
   private def compile(fullCode: String) = {
@@ -239,11 +243,20 @@ object ScalaScript {
     val os = new java.io.ByteArrayOutputStream
     try {
       Console.withOut(os) {
-        engine.compile(fullCode)
+        val script = engine.compile(fullCode)
+        // See #7227
+        // We re-create the engine if engine.compile() returns a null
+        if (script == null) {
+          engine = null
+          throw new CompileReturnedNullError()
+        }
+        script
       }
     } catch {
-      case e: javax.script.ScriptException =>
+      case _: javax.script.ScriptException =>
         throw new javax.script.ScriptException(new String(os.toByteArray(), "UTF-8"))
+      case _: CompileReturnedNullError =>
+        throw new javax.script.ScriptException("Compile error")
     }
   }
 
@@ -287,9 +300,10 @@ object ScalaScript {
     }
   }
 
-  private def withContextClassLoader[T](func: => T): T = {
+  private def withContextClassLoader[T](func: => T): T = synchronized {
     // IMAIN.compile changes the class loader and does not restore it.
     // https://issues.scala-lang.org/browse/SI-8521
+    if (engine == null) engine = createEngine()
     val cl = Thread.currentThread().getContextClassLoader
     try {
       func
