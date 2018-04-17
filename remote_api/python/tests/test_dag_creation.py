@@ -136,4 +136,7 @@ class TestDagCreation(unittest.TestCase):
     expected = {'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}
     self.assertEqual(last.to_dict(), expected)
 
-    print(main_workspace.automation_dependencies())
+    for ep, deps in main_workspace.automation_dependencies().items():
+      print('Depenendencies of ' + str(ep.to_dict()))
+      for dep in deps:
+        print('   ' + str(dep.to_dict()))
