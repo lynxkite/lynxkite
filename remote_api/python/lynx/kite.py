@@ -833,6 +833,15 @@ class BoxPath:
     else:  # no parents
       return []
 
+  def to_dict(self):
+    '''Returns a (human readable) dict representation of this object.'''
+    parent = None
+    op = self.box_stack[-1].operation
+    op_param = self.box_stack[-1].parameters
+    if len(self.box_stack) > 1:
+      parent = self.box_stack[-2].operation.name()
+    return dict(operation=op, params=op_param, nested_in=parent)
+
 
 class SideEffectCollector:
   def __init__(self):
@@ -884,6 +893,7 @@ class Workspace:
         if outp.operation == 'output']
     self._ws_parameters = ws_parameters
     self._side_effects = side_effects
+    self._input_boxes = input_boxes
     self._output_boxes = output_boxes
     self._terminal_boxes = output_boxes + side_effects.boxes_to_build
     self._bc = self._terminal_boxes[0].bc
@@ -954,6 +964,36 @@ class Workspace:
     # TODO: replace it with real list of triggerables, collected in the
     # side effect collector of the workspace.
     return [outp for outp in self._terminal_boxes if outp.operation == 'output']
+
+  def automation_endpoints(self) -> List[BoxPath]:
+    '''Returns the boxes, relevant in automation, as `BoxPath`s.
+
+    The relevant boxes are: input boxes, output boxes, side effect boxes.
+    '''
+    # TODO: we can wrap the different type of endpoints with different
+    # wrapper classes to make it easier to generate callables for them.
+    inputs = [BoxPath([inp]) for inp in self._input_boxes]
+    outputs = [BoxPath([outp]) for outp in self._output_boxes]
+    side_effects = self._side_effects.boxes_to_trigger
+    return inputs + outputs + side_effects
+
+  def automation_dependencies(self) -> Dict[BoxPath, Set[BoxPath]]:
+    endpoints = self.automation_endpoints()
+    print('Endpoints: ', '\n'.join([str((ep, ep.to_dict())) for ep in endpoints]))
+    endpoint_dependencies: Dict[BoxPath, Set[BoxPath]] = {ep: set() for ep in endpoints}
+    for ep in endpoints:
+      print('Processing ', ep)
+      to_process = collections.deque(ep.parents())
+      while len(to_process) > 0:
+        print('==> TO process: ', to_process)
+        box_path = to_process.pop()
+        print('   Checking ', box_path, box_path.to_dict())
+        if box_path in endpoints:
+          print('FOUND', box_path.to_dict())
+          endpoint_dependencies[ep].add(box_path)
+        # We may visit the same node multiple (but finite) times.
+        to_process.extend(box_path.parents())
+    return endpoint_dependencies
 
   def _trigger_box(self, box_to_trigger: BoxPath, full_path: str):
     lk = self._lk
