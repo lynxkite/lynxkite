@@ -22,17 +22,19 @@ import copy
 import json
 import os
 import random
-import requests
 import sys
 import types
-import calendar
-from croniter import croniter
 import datetime
 import inspect
 import re
 import itertools
 import collections
-from typing import Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator, TypeVar, Optional
+from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
+                    TypeVar)
+
+import requests
+from croniter import croniter
+
 
 if sys.version_info.major < 3:
   raise Exception('At least Python version 3 is needed!')
@@ -143,6 +145,7 @@ class LynxKite:
     self._certfile = certfile
     self._oauth_token = oauth_token
     self._session = None
+    self._pid = None
     self._operation_names: List[str] = None
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
@@ -369,7 +372,8 @@ class LynxKite:
         save_under_root + '/' + ws.name())
 
   def fetch_workspace_output_states(self, ws: 'Workspace',
-                                    save_under_root: str = None) -> Dict[Tuple[str, str], types.SimpleNamespace]:
+                                    save_under_root: str = None,
+                                    ) -> Dict[Tuple[str, str], types.SimpleNamespace]:
     ws_root, _ = self.save_workspace_recursively(ws, save_under_root)
     return self.fetch_states(ws.to_json(ws_root))
     # TODO: clean up saved workspaces if save_under_root is not set.
@@ -494,7 +498,7 @@ class LynxKite:
   def trigger_box(self,
                   workspace_name: str,
                   box_id: str,
-                  custom_box_stack: List[str]=[]):
+                  custom_box_stack: List[str] = []):
     '''Triggers the computation of all the GUIDs in the box which is in the
     saved workspace named ``workspace_name`` and has ``boxID=box_id``. If
     custom_box_stack is not empty, it specifies the sequence of custom boxes
@@ -520,8 +524,7 @@ class TableSnapshotSequence:
     # TODO: make it timezone independent
     return self._location + '/' + str(date)
 
-  def snapshots(self, lk: LynxKite, from_date: datetime.datetime,
-                to_date: datetime.datetime) -> List[str]:
+  def snapshots(self, from_date: datetime.datetime, to_date: datetime.datetime) -> List[str]:
     # We want to include the from_date if it matches the cron format.
     i = croniter(self.cron_str, from_date - datetime.timedelta(seconds=1))
     t = []
@@ -534,11 +537,11 @@ class TableSnapshotSequence:
 
   def read_interval(self, lk: LynxKite, from_date: datetime.datetime,
                     to_date: datetime.datetime) -> 'State':
-    paths = ','.join(self.snapshots(lk, from_date, to_date))
+    paths = ','.join(self.snapshots(from_date, to_date))
     return lk.importUnionOfTableSnapshots(paths=paths)
 
   def read_date(self, lk: LynxKite, date: datetime.datetime) -> 'Box':
-    path = self.snapshots(lk, date, date)[0]
+    path = self.snapshots(date, date)[0]
     return lk.importSnapshot(path=path)
 
   def save_to_sequence(self, lk: LynxKite, table_state: str, dt: datetime.datetime) -> None:
@@ -967,7 +970,6 @@ class Workspace:
 
     Assumes the workspace is saved under `saved_under_root`.
     '''
-    lk = self._lk
     full_path = _normalize_path(saved_under_folder + '/' + self._name)
     self._trigger_box(box_to_trigger, full_path)
 
@@ -976,7 +978,6 @@ class Workspace:
 
     Assumes the workspace is not saved, so saves it under a random folder.
     '''
-    lk = self._lk
     random_folder = _random_ws_folder()
     _, full_path = self.save(random_folder)
     self._trigger_box(box_to_trigger, full_path)
@@ -1205,8 +1206,8 @@ class WorkspaceSequenceInstance:
     @lk.workspace_with_side_effects(name=ws_name)
     def input_ws(se_collector):
       input_state = self._wss.input_recipes()[input_name].build_boxes(self._lk, self._date)
-      box = input_state.saveToSnapshot(
-          path=self._wss.input_sequences()[input_name].snapshot_name(self._date)).register(se_collector)
+      input_state.saveToSnapshot(path=(self._wss.input_sequences()[input_name]
+                                       .snapshot_name(self._date))).register(se_collector)
 
     folder = _normalize_path('/'.join([self._wss.lk_root(), 'input workspaces', input_name]))
     input_ws.save(folder)
@@ -1263,7 +1264,7 @@ def _layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
   level = {}
   for box in boxes:
     current_box = box['id']
-    for name, inp in box['inputs'].items():
+    for inp in box['inputs'].values():
       input_box = inp['boxId']
       dependencies[current_box].add(input_box)
 
