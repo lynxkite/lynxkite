@@ -3,11 +3,8 @@ package com.lynxanalytics.sandbox
 import org.scalatest.FunSuite
 import java.security.AccessControlException
 
-import com.lynxanalytics.biggraph.controllers.SQLController
-import com.lynxanalytics.biggraph.graph_api.{ Scripting, Table, TestGraphOp }
+import com.lynxanalytics.biggraph.graph_api.TestGraphOp
 import com.lynxanalytics.biggraph.graph_operations.ImportDataFrameTest
-import com.lynxanalytics.biggraph.spark_util.SQLHelper
-import org.apache.spark.sql.DataFrame
 
 import scala.reflect.runtime.universe._
 
@@ -163,4 +160,13 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
     assert(ot3.funcType.tpe =:= typeOf[Boolean => Option[Double]])
     assert(ot3.payloadType =:= typeOf[Double])
   }
+
+  test("Recover after compiler gets confused") {
+    // See #7227
+    intercept[javax.script.ScriptException] {
+      ScalaScript.run("{")
+    }
+    ScalaScript.run("val a = 1; a")
+  }
+
 }
