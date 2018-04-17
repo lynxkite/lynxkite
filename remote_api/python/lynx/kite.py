@@ -31,6 +31,7 @@ import itertools
 import collections
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar)
+
 import requests
 from croniter import croniter
 
@@ -371,7 +372,7 @@ class LynxKite:
         save_under_root + '/' + ws.name())
 
   def fetch_workspace_output_states(self, ws: 'Workspace',
-                                    save_under_root: str = None
+                                    save_under_root: str = None,
                                     ) -> Dict[Tuple[str, str], types.SimpleNamespace]:
     ws_root, _ = self.save_workspace_recursively(ws, save_under_root)
     return self.fetch_states(ws.to_json(ws_root))
@@ -1263,7 +1264,7 @@ def _layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
   level = {}
   for box in boxes:
     current_box = box['id']
-    for _, inp in box['inputs'].items():
+    for inp in box['inputs'].values():
       input_box = inp['boxId']
       dependencies[current_box].add(input_box)
 
