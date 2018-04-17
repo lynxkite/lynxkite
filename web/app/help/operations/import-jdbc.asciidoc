@@ -20,9 +20,9 @@ The following formats may work depending on the type of the source database:
 * `SCHEMA_NAME.TABLE_NAME`
 * `(SELECT * FROM TABLE_NAME WHERE <filter condition>) TABLE_ALIAS`
 +
-The last example is called "predicate pushdown", because the query in the parentheses
-runs on the source database, before the import. It can dramatically reduce network
-traffic needed for the import operation and it makes possible to use data source 
+In the last example Spark tries to "push down" the filtering query to
+run on the source database, before the import. It can dramatically reduce network
+traffic needed for the import operation and it makes possible to use data source
 specific SQL dialects.
 
 [[key_column]] Key column::
