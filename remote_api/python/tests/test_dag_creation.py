@@ -92,21 +92,13 @@ class TestDagCreation(unittest.TestCase):
       last = combiner(tmp, internal)
       return dict(o1=last['out1_comb'], o2=last['out2_comb'], o3=trivial())
 
-    def box_path_desc(box_path):
-      parent = None
-      op = box_path.box_stack[-1].operation
-      op_param = box_path.box_stack[-1].parameters
-      if len(box_path.box_stack) > 1:
-        parent = box_path.box_stack[-2].operation.name()
-      return dict(operation=op, params=op_param, nested_in=parent)
-
     # test parent of terminal boxes
     parents = {}
     for box in main_workspace.output_boxes():
       ep = lynx.kite.BoxPath([box])
-      parents[str(box_path_desc(ep))] = [box_path_desc(bp) for bp in ep.parents()]
+      parents[str(ep.to_dict())] = [bp.to_dict() for bp in ep.parents()]
     for ep in main_workspace.side_effects().boxes_to_trigger:
-      parents[str(box_path_desc(ep))] = [box_path_desc(bp) for bp in ep.parents()]
+      parents[str(ep.to_dict())] = [bp.to_dict() for bp in ep.parents()]
 
     expected = {
         "{'operation': 'output', 'params': {'name': 'o1'}, 'nested_in': None}":
@@ -142,4 +134,6 @@ class TestDagCreation(unittest.TestCase):
       last = up[0]
       up = up[0].parents()
     expected = {'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}
-    self.assertEqual(box_path_desc(last), expected)
+    self.assertEqual(last.to_dict(), expected)
+
+    print(main_workspace.automation_dependencies())
