@@ -842,6 +842,12 @@ class BoxPath:
       parent = self.box_stack[-2].operation.name()
     return dict(operation=op, params=op_param, nested_in=parent)
 
+  def __hash__(self):
+    return hash(','.join([str(box) for box in self.box_stack]))
+
+  def __eq__(self, other):
+    return self.box_stack == other.box_stack
+
 
 class SideEffectCollector:
   def __init__(self):
@@ -979,17 +985,12 @@ class Workspace:
 
   def automation_dependencies(self) -> Dict[BoxPath, Set[BoxPath]]:
     endpoints = self.automation_endpoints()
-    print('Endpoints: ', '\n'.join([str((ep, ep.to_dict())) for ep in endpoints]))
     endpoint_dependencies: Dict[BoxPath, Set[BoxPath]] = {ep: set() for ep in endpoints}
     for ep in endpoints:
-      print('Processing ', ep)
       to_process = collections.deque(ep.parents())
       while len(to_process) > 0:
-        print('==> TO process: ', to_process)
         box_path = to_process.pop()
-        print('   Checking ', box_path, box_path.to_dict())
         if box_path in endpoints:
-          print('FOUND', box_path.to_dict())
           endpoint_dependencies[ep].add(box_path)
         # We may visit the same node multiple (but finite) times.
         to_process.extend(box_path.parents())
