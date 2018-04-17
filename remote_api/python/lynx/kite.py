@@ -341,7 +341,7 @@ class LynxKite:
     return {(o.boxOutput.boxId, o.boxOutput.id): o for o in res.outputs}
 
   def save_workspace_recursively(self, ws: 'Workspace',
-                                 save_under_root: str = None) -> Tuple[str, Union[bool, str]]:
+                                 save_under_root: str = None) -> Tuple[str, str]:
     if save_under_root is None:
       ws_root = _random_ws_folder()
     else:
@@ -368,8 +368,9 @@ class LynxKite:
       self.save_workspace(
           save_under_root + '/' + ws.name(), _layout(ws.to_json(save_under_root)))
     # If saved, we return the full name of the main workspace also.
-    return ws_root, (save_under_root is not None) and _normalize_path(
-        save_under_root + '/' + ws.name())
+    return (ws_root,
+            _normalize_path(save_under_root + '/' + ws.name())
+            if (save_under_root is not None) else '')
 
   def fetch_workspace_output_states(self, ws: 'Workspace',
                                     save_under_root: str = None,
@@ -963,7 +964,7 @@ class Workspace:
 
   def save(self, saved_under_folder: str) -> Tuple[str, str]:
     lk = self._lk
-    return lk.save_workspace_recursively(self, saved_under_folder)  # type: ignore
+    return lk.save_workspace_recursively(self, saved_under_folder)
 
   def trigger_saved(self, box_to_trigger: BoxPath, saved_under_folder: str):
     ''' Triggers one side effect.
