@@ -18,7 +18,12 @@ The following formats may work depending on the type of the source database:
 +
 * `TABLE_NAME`
 * `SCHEMA_NAME.TABLE_NAME`
-* `(SELECT * FROM TABLE_NAME) TABLE_ALIAS`
+* `(SELECT * FROM TABLE_NAME WHERE <filter condition>) TABLE_ALIAS`
++
+In the last example the filtering query runs on the source database,
+before the import. It can dramatically reduce network
+traffic needed for the import operation and it makes possible to use data source
+specific SQL dialects.
 
 [[key_column]] Key column::
 This column is used to partition the SQL query. The range from `min(key)` to `max(key)`
