@@ -703,6 +703,11 @@ class Box:
 
 
 class AtomicBox(Box):
+  '''
+  An ``AtomicBox`` is a ``Box`` that can not be further decomposed. It corresponds to a single
+  frontend operation.
+  '''
+
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, operation: str,
                inputs: Dict[str, State], parameters: Dict[str, Any]) -> None:
     super().__init__(box_catalog, lk, inputs, parameters)
@@ -727,6 +732,11 @@ class AtomicBox(Box):
 
 
 class SingleOutputAtomicBox(AtomicBox, State):
+  '''
+  An ``AtomicBox`` with a single output. This makes chaining multiple operations after each other
+  possible.
+  '''
+
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, operation: str,
                inputs: Dict[str, State], parameters: Dict[str, Any], output_name: str) -> None:
     AtomicBox.__init__(self, box_catalog, lk, operation, inputs, parameters)
@@ -734,6 +744,10 @@ class SingleOutputAtomicBox(AtomicBox, State):
 
 
 class CustomBox(Box):
+  '''
+  A ``CustomBox`` is a ``Box`` composed of multiple other boxes.
+  '''
+
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, workspace: 'Workspace',
                inputs: Dict[str, State], parameters: Dict[str, Any]) -> None:
     super().__init__(box_catalog, lk, inputs, parameters)
@@ -758,6 +772,11 @@ class CustomBox(Box):
 
 
 class SingleOutputCustomBox(CustomBox, State):
+  '''
+  An ``CustomBox`` with a single output. This makes chaining multiple operations after each other
+  possible.
+  '''
+
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, workspace: 'Workspace',
                inputs: Dict[str, State], parameters: Dict[str, Any], output_name: str) -> None:
     CustomBox.__init__(self, box_catalog, lk, workspace, inputs, parameters)
@@ -836,8 +855,8 @@ class BoxPath:
   '''Represents a box (which can be inside (nested) custom boxes).
   It can be used for example to trigger boxes inside custom boxes.
 
-  `stack[i+1]` is always a box contained by the workspace referred by the
-  custom box `stack[i]` and  `base` is a box contained by `stack[-1]`.
+  ``stack[i+1]`` is always a box contained by the workspace referred by the
+  custom box ``stack[i]`` and  ``base`` is a box contained by ``stack[-1]``.
   '''
 
   def __init__(self, base: AtomicBox, stack: List[CustomBox] = []) -> None:
@@ -943,9 +962,8 @@ class Workspace:
   def _box_to_trigger_to_box_ids(self, box_to_trigger: BoxPath) -> List[str]:
     '''Converts a BoxPath object to the list of corresponding box ids in this Workspace.'''
     box_ids: List[str] = []
-    stack = box_to_trigger.stack
     outer_ws = self
-    for box in stack:
+    for box in box_to_trigger.stack:
       box_ids.append(outer_ws.id_of(box))
       outer_ws = box.workspace
     box_ids.append(outer_ws.id_of(box_to_trigger.base))
