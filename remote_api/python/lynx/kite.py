@@ -674,7 +674,7 @@ class Box:
     raise NotImplementedError()
 
   def name(self) -> str:
-    '''Either the name in the box catalog or the name under the box is saved.'''
+    '''Either the name in the box catalog or the name under which the box is saved.'''
     raise NotImplementedError()
 
   def to_json(self, id_resolver: Callable[['Box'], str], workspace_root: str) -> SerializedBox:
