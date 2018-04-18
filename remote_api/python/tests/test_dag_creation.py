@@ -56,7 +56,7 @@ class TestDagCreation(unittest.TestCase):
     min_dag = lynx.kite._minimal_dag(g)
     self.assertEqual(min_dag, g)
 
-  def test_atomic_parents(self):
+  def create_complex_test_workspace(self):
     # Builds the workspace specified here:
     # https://docs.google.com/drawings/d/1YVGTdgrcjGuI-Z-jON7I3B6U3zOaFVUiT5lPnk2I7Kc/
     lk = lynx.kite.LynxKite()
@@ -92,7 +92,11 @@ class TestDagCreation(unittest.TestCase):
       last = combiner(tmp, internal)
       return dict(o1=last['out1_comb'], o2=last['out2_comb'], o3=trivial())
 
+    return main_workspace
+
+  def test_atomic_parents(self):
     # test parent of terminal boxes
+    main_workspace = self.create_complex_test_workspace()
     parents = {}
     for box in main_workspace.output_boxes():
       ep = lynx.kite.BoxPath([box])
@@ -124,7 +128,9 @@ class TestDagCreation(unittest.TestCase):
 
     self.assertEqual(parents, expected)
 
+  def test_upstream_of_one_endpoint(self):
     # test full traversal of one endpoint
+    main_workspace = self.create_complex_test_workspace()
     start = lynx.kite.BoxPath(
         [box for box in main_workspace.output_boxes()
          if box.parameters['name'] == 'o1'])
@@ -136,7 +142,48 @@ class TestDagCreation(unittest.TestCase):
     expected = {'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}
     self.assertEqual(last.to_dict(), expected)
 
-    for ep, deps in main_workspace.automation_dependencies().items():
-      print('Depenendencies of ' + str(ep.to_dict()))
+  def test_endpoint_dependencies(self):
+    main_workspace = self.create_complex_test_workspace()
+    raw_dep = main_workspace.automation_dependencies()
+    dependencies = {str(ep.to_dict()): set() for ep in raw_dep}
+    for ep, deps in raw_dep.items():
       for dep in deps:
-        print('   ' + str(dep.to_dict()))
+        dependencies[str(ep.to_dict())].add(str(dep.to_dict()))
+    expected_dependencies = {
+        "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}": set(),
+        "{'operation': 'input', 'params': {'name': 'i2'}, 'nested_in': None}": set(),
+        "{'operation': 'input', 'params': {'name': 'i3'}, 'nested_in': None}": set(),
+        "{'operation': 'output', 'params': {'name': 'o1'}, 'nested_in': None}":
+        {"{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}"},
+        "{'operation': 'output', 'params': {'name': 'o2'}, 'nested_in': None}":
+        {
+            "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}",
+            "{'operation': 'input', 'params': {'name': 'i3'}, 'nested_in': None}",
+        },
+        "{'operation': 'output', 'params': {'name': 'o3'}, 'nested_in': None}": set(),
+        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB1'}, 'nested_in': 'snapshotter'}":
+        {"{'operation': 'input', 'params': {'name': 'i2'}, 'nested_in': None}"},
+        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}":
+        {"{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}"}}
+    self.assertEqual(expected_dependencies, dependencies)
+
+  def test_box_path_hash(self):
+    lk = lynx.kite.LynxKite()
+    from lynx.kite import BoxPath
+    # eg1 and eg2 are different boxes, but with the same semantics.
+    # The hash of bp1 and bp2 are the same, but bp1 and bp2 are different.
+    eg1 = lk.createExampleGraph()
+    eg2 = lk.createExampleGraph()
+    bp1 = BoxPath([eg1])
+    bp2 = BoxPath([eg2])
+    bp3 = BoxPath([eg2])
+    self.assertTrue(bp1.__hash__() == bp2.__hash__())
+    self.assertTrue(bp1 != bp2)
+    # bp1 and bp2 should be two different dict keys (they have the same hash but
+    # they are not equal: we can have two different "Create Example Graph" boxes
+    # in the same Workspace).
+    d = {bp1: 'EG1', bp2: 'EG2'}
+    self.assertEqual(len(d), 2)
+    # bp2 and bp3 should be the same dict key, because they represent the same box.
+    dd = {bp2: 'EG2'}
+    self.assertEqual(dd[bp3], 'EG2')
