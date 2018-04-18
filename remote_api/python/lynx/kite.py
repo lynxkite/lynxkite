@@ -833,12 +833,11 @@ def _atomic_source_of_state(box_list, state) -> 'BoxPath':
 
 
 class BoxPath:
-  '''Represents a box (which can be inside (nested) custom boxes) as a list of Boxes.
+  '''Represents a box (which can be inside (nested) custom boxes).
   It can be used for example to trigger boxes inside custom boxes.
 
-  The last element in the `box_stack` list is a "normal" box. The previous
-  elements are custom boxes. `box_stack[i+1]` is always a box contained by the
-  workspace referred by the custom box `box_stack[i]`.
+  `stack[i+1]` is always a box contained by the workspace referred by the
+  custom box `stack[i]` and  `base` is a box contained by `stack[-1]`.
   '''
 
   def __init__(self, base: AtomicBox, stack: List[CustomBox] = []) -> None:
