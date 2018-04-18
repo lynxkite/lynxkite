@@ -824,7 +824,7 @@ class BoxPath:
       return [self.parent(inp) for inp in box.inputs.keys()]
     elif box.operation == 'input':  # input box
       if len(self.box_stack) == 1:  # top level input box
-        return []
+        return [FakeBoxPathForInputParent(box.parameters['name'])]
       else:  # input box of a nested custom box
         containing_custom_box = self.box_stack[-2]
         input_name = box.parameters['name']
@@ -841,12 +841,12 @@ class BoxPath:
     a box which computes something (so not an input box or an output box).
     '''
     def trivial(box_path) -> bool:
+      if isinstance(box_path, FakeBoxPathForInputParent):
+        return False
       box = box_path.atomic_box()
       return box.operation == 'output' or (box.operation == 'input' and len(box_path.box_stack) > 1)
 
     box = self.atomic_box()
-    assert len(box.outputs) == 0, 'This is not an endpoint.'
-    assert len(box.inputs) == 1, "Only single-input endpoints are supported."
     parent = self.parents()[0]
     while trivial(parent):
       parent = parent.parents()[0]
@@ -866,6 +866,46 @@ class BoxPath:
 
   def __eq__(self, other):
     return self.box_stack == other.box_stack
+
+
+class FakeBoxPathForInputParent(BoxPath):
+  '''For top level inputs we create a fake parent. With this, we can unify the
+  dependency computation of endpoints.
+  '''
+
+  def __init__(self, input_name) -> None:
+    self.box_stack = []
+    self.name = input_name
+
+  def add_box_as_prefix(self, box):
+    raise Exception('This is just a input parent fake box.')
+
+  def atomic_box(self):
+    raise Exception('This is just a input parent fake box.')
+
+  def prefix_of_atomic_box(self):
+    raise Exception('This is just a input parent fake box.')
+
+  def parent(self, input_name) -> 'BoxPath':
+    raise Exception('This is just a input parent fake box.')
+
+  def parents(self) -> List['BoxPath']:
+    return []
+
+  def non_trivial_parent_of_endpoint(self) -> 'BoxPath':
+    raise Exception('This is just a input parent fake box.')
+
+  def to_dict(self):
+    return dict(
+        operation='fake input parent',
+        params=dict(name=self.name),
+        nested_in=None)
+
+  def __hash__(self):
+    return hash(','.join(['fake input box', self.name]))
+
+  def __eq__(self, other):
+    return isinstance(other, FakeBoxPathForInputParent) and self.name == other.name
 
 
 class SideEffectCollector:
@@ -990,27 +1030,44 @@ class Workspace:
     # side effect collector of the workspace.
     return [outp for outp in self._terminal_boxes if outp.operation == 'output']
 
-  def automation_endpoints(self) -> List[BoxPath]:
+  def automation_endpoints(self) -> List[Dict[str, BoxPath]]:
     '''Returns the boxes, relevant in automation, as `BoxPath`s.
 
     The relevant boxes are: input boxes, output boxes, side effect boxes.
+    For all endpoints it also gives back the first non-trivial atomic parent,
+    which are needed to compute dependencies.
     '''
     # TODO: we can wrap the different type of endpoints with different
     # wrapper classes to make it easier to generate callables for them.
-    inputs = [BoxPath([inp]) for inp in self._input_boxes]
-    outputs = [BoxPath([outp]) for outp in self._output_boxes]
-    side_effects = self._side_effects.boxes_to_trigger
+    inputs = [{'endpoint': BoxPath([inp]),
+               'parent':BoxPath([inp]).non_trivial_parent_of_endpoint()}
+              for inp in self._input_boxes]
+    outputs = [{'endpoint': BoxPath([outp]),
+                'parent': BoxPath([outp]).non_trivial_parent_of_endpoint()}
+               for outp in self._output_boxes]
+    side_effects = [{'endpoint': se,
+                     'parent': se.non_trivial_parent_of_endpoint()}
+                    for se in self._side_effects.boxes_to_trigger]
     return inputs + outputs + side_effects
 
   def automation_dependencies(self) -> Dict[BoxPath, Set[BoxPath]]:
-    endpoints = self.automation_endpoints()
-    endpoint_dependencies: Dict[BoxPath, Set[BoxPath]] = {ep: set() for ep in endpoints}
-    for ep in endpoints:
-      to_process = collections.deque(ep.parents())
+    endpoints_with_ntap = self.automation_endpoints()
+    # One NTAP can belong to multiple endpoints
+    ntap_to_endpoints: Dict[BoxPath, Set[BoxPath]] = {
+        ep['parent']: set() for ep in endpoints_with_ntap}
+    for ep_with_ntap in endpoints_with_ntap:
+      ntap_to_endpoints[ep_with_ntap['parent']].add(ep_with_ntap['endpoint'])
+    ntaps = {ep['parent'] for ep in endpoints_with_ntap}
+    endpoint_dependencies: Dict[BoxPath, Set[BoxPath]] = {
+        ep['endpoint']: set() for ep in endpoints_with_ntap}
+
+    for ep in endpoints_with_ntap:
+      to_process = collections.deque(ep['parent'].parents())
       while len(to_process) > 0:
         box_path = to_process.pop()
-        if box_path in endpoints:
-          endpoint_dependencies[ep].add(box_path)
+        if box_path in ntaps:
+          for ep_of_ntap in ntap_to_endpoints[box_path]:
+            endpoint_dependencies[ep['endpoint']].add(ep_of_ntap)
         # We may visit the same node multiple (but finite) times.
         to_process.extend(box_path.parents())
     return endpoint_dependencies

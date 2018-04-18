@@ -173,7 +173,7 @@ class TestDagCreation(unittest.TestCase):
     while len(up) > 0:
       last = up[0]
       up = up[0].parents()
-    expected = {'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}
+    expected = {'operation': 'fake input parent', 'params': {'name': 'i1'}, 'nested_in': None}
     self.assertEqual(last.to_dict(), expected)
 
   def test_endpoint_dependencies(self):
@@ -190,23 +190,26 @@ class TestDagCreation(unittest.TestCase):
         "{'operation': 'output', 'params': {'name': 'o1'}, 'nested_in': None}":
         {
             "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}",
+            "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}"
         },
         "{'operation': 'output', 'params': {'name': 'o2'}, 'nested_in': None}":
         {
             "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}",
+            "{'operation': 'output', 'params': {'name': 'o1'}, 'nested_in': None}",
             "{'operation': 'input', 'params': {'name': 'i3'}, 'nested_in': None}",
+            "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}"
         },
         "{'operation': 'output', 'params': {'name': 'o3'}, 'nested_in': None}": set(),
         "{'operation': 'saveToSnapshot', 'params': {'path': 'SB1'}, 'nested_in': 'snapshotter'}":
         {
-            "{'operation': 'input', 'params': {'name': 'i2'}, 'nested_in': None}",
+            "{'operation': 'input', 'params': {'name': 'i2'}, 'nested_in': None}"
         },
         "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}":
         {
-            "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}",
+            "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}"
         },
     }
-    self.assertEqual(expected_dependencies, dependencies)
+    self.assertEqual(expected2, dependencies)
 
   def test_box_path_hash(self):
     lk = lynx.kite.LynxKite()
