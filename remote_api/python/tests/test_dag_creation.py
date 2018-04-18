@@ -209,7 +209,7 @@ class TestDagCreation(unittest.TestCase):
             "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}"
         },
     }
-    self.assertEqual(expected2, dependencies)
+    self.assertEqual(expected_dependencies, dependencies)
 
   def test_box_path_hash(self):
     lk = lynx.kite.LynxKite()
