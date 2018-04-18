@@ -584,7 +584,7 @@ class State:
   def __str__(self) -> str:
     return "Output {} of box {}".format(self.output_plug_name, self.box)
 
-  def sql(self, sql: str, **kwargs) -> 'SingleOutputBox':
+  def sql(self, sql: str, **kwargs) -> 'SingleOutputAtomicBox':
     return self.sql1(sql=sql, **kwargs)
 
   def df(self, limit: int = -1):
@@ -653,24 +653,14 @@ class Box:
   It can store workspace segments, connected to its input plugs.
   '''
 
-  def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, operation: Union[str, 'Workspace'],
+  def __init__(self, box_catalog: BoxCatalog, lk: LynxKite,
                inputs: Dict[str, State], parameters: Dict[str, Any]) -> None:
     self.bc = box_catalog
     self.lk = lk
-    self.operation = operation
-    if isinstance(operation, str):
-      exp_inputs = set(self.bc.inputs(operation))
-      self.outputs = set(self.bc.outputs(operation))
-    else:
-      assert isinstance(operation, Workspace), "{} is not string or workspace".format(operation)
-      exp_inputs = set(operation.inputs())
-      self.outputs = set(operation.outputs())
-    got_inputs = inputs.keys()
-    assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
-        got_inputs, exp_inputs)
     self.inputs = inputs
     self.parameters: Dict[str, str] = {}
     self.parametric_parameters: Dict[str, str] = {}
+    self.outputs: Set[str] = set()
     # We separate normal and parametric parameters here.
     # Parametric parameters can be specified as `name=PP('parametric value')`
     for key, value in parameters.items():
@@ -679,9 +669,11 @@ class Box:
       else:
         self.parameters[key] = str(value)
 
-  def is_atomic_box(self):
-    '''Returns `True` iff this box is not a custom box.'''
-    return isinstance(self.operation, str)
+  def operationId(self, workspace_root: str) -> str:
+    raise NotImplementedError()
+
+  def name(self) -> str:
+    raise NotImplementedError()
 
   def to_json(self, id_resolver: Callable[['Box'], str], workspace_root: str) -> SerializedBox:
     '''Creates the json representation of a box in a workspace.
@@ -692,11 +684,7 @@ class Box:
     def input_state(state):
       return {'boxId': id_resolver(state.box), 'id': state.output_plug_name}
 
-    if self.is_atomic_box():
-      operationId = self.bc.operation_id(self.operation)  # type: ignore
-    else:
-      # path//custom_box is not a valid name
-      operationId = _normalize_path(workspace_root + '/' + self.operation.name())  # type: ignore
+    operationId = self.operationId(workspace_root)
     return SerializedBox({
         'id': id_resolver(self),
         'operationId': operationId,
@@ -713,6 +701,24 @@ class Box:
       raise KeyError(index)
     return State(self, index)
 
+
+class AtomicBox(Box):
+  def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, operation: str,
+               inputs: Dict[str, State], parameters: Dict[str, Any]) -> None:
+    super().__init__(box_catalog, lk, inputs, parameters)
+    self.operation = operation
+    self.outputs = set(self.bc.outputs(operation))
+    exp_inputs = set(self.bc.inputs(operation))
+    got_inputs = inputs.keys()
+    assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
+        got_inputs, exp_inputs)
+
+  def operationId(self, workspace_root):
+    return self.bc.operation_id(self.operation)
+
+  def name(self):
+    return self.operation
+
   def __str__(self) -> str:
     return "Operation {} with parameters {} and inputs {}".format(
         self.operation,
@@ -720,11 +726,41 @@ class Box:
         self.inputs)
 
 
-class SingleOutputBox(Box, State):
+class SingleOutputAtomicBox(AtomicBox, State):
+  def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, operation: str,
+               inputs: Dict[str, State], parameters: Dict[str, Any], output_name: str) -> None:
+    AtomicBox.__init__(self, box_catalog, lk, operation, inputs, parameters)
+    State.__init__(self, self, output_name)
 
-  def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, operation: Union[str, 'Workspace'],
-               output_name: str, inputs: Dict[str, State], parameters: Dict[str, Any]) -> None:
-    Box.__init__(self, box_catalog, lk, operation, inputs, parameters)
+
+class CustomBox(Box):
+  def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, workspace: 'Workspace',
+               inputs: Dict[str, State], parameters: Dict[str, Any]) -> None:
+    super().__init__(box_catalog, lk, inputs, parameters)
+    self.workspace = workspace
+    self.outputs = set(workspace.outputs())
+    exp_inputs = set(workspace.inputs())
+    got_inputs = inputs.keys()
+    assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
+        got_inputs, exp_inputs)
+
+  def operationId(self, workspace_root):
+    return _normalize_path(workspace_root + '/' + self.workspace.name())
+
+  def name(self):
+    return self.workspace.name()
+
+  def __str__(self) -> str:
+    return "Custom box {} with parameters {} and inputs {}".format(
+        self.workspace,
+        self.parameters,
+        self.inputs)
+
+
+class SingleOutputCustomBox(CustomBox, State):
+  def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, workspace: 'Workspace',
+               inputs: Dict[str, State], parameters: Dict[str, Any], output_name: str) -> None:
+    CustomBox.__init__(self, box_catalog, lk, workspace, inputs, parameters)
     State.__init__(self, self, output_name)
 
 
@@ -754,13 +790,16 @@ def _new_box(bc: BoxCatalog, lk: LynxKite, operation: Union[str, 'Workspace'],
              inputs: Dict[str, State], parameters: Dict[str, Any]) -> Box:
   if isinstance(operation, str):
     outputs = bc.outputs(operation)
+    if len(outputs) == 1:
+      return SingleOutputAtomicBox(bc, lk, operation, inputs, parameters, outputs[0])
+    else:
+      return AtomicBox(bc, lk, operation, inputs, parameters)
   else:
     outputs = operation.outputs()
-  if len(outputs) == 1:
-    # Special case: single output boxes function as state as well.
-    return SingleOutputBox(bc, lk, operation, outputs[0], inputs, parameters)
-  else:
-    return Box(bc, lk, operation, inputs, parameters)
+    if len(outputs) == 1:
+      return SingleOutputCustomBox(bc, lk, operation, inputs, parameters, outputs[0])
+    else:
+      return CustomBox(bc, lk, operation, inputs, parameters)
 
 
 def _reverse_bfs_on_boxes(roots: List[Box], list_roots: bool = True) -> Iterator[Box]:
@@ -785,12 +824,12 @@ def _reverse_bfs_on_boxes(roots: List[Box], list_roots: bool = True) -> Iterator
 def _atomic_source_of_state(box_list, state) -> 'BoxPath':
   '''`state` is an output state of the last box of `box_list`.'''
   source_box = state.box
-  if source_box.is_atomic_box():
-    return BoxPath(box_list + [source_box])
+  if isinstance(source_box, AtomicBox):
+    return BoxPath(source_box, box_list)
   else:  # we need the proper output box of the custom box
-    output_box = [box for box in source_box.operation.output_boxes()
+    output_box = [box for box in source_box.workspace.output_boxes()
                   if box.parameters['name'] == state.output_plug_name][0]
-    return BoxPath(box_list + [source_box, output_box])
+    return BoxPath(output_box, box_list + [source_box])
 
 
 class BoxPath:
@@ -802,35 +841,35 @@ class BoxPath:
   workspace referred by the custom box `box_stack[i]`.
   '''
 
-  def __init__(self, box_list: List[Box]) -> None:
-    self.box_stack = box_list
+  def __init__(self, base: AtomicBox, stack: List[CustomBox] = []) -> None:
+    self.base = base
+    self.stack = stack
 
-  def add_box_as_prefix(self, box):
-    return BoxPath([box] + self.box_stack)
+  def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
+    return BoxPath(self.base, [box] + self.stack)
 
-  def atomic_box(self):
-    return self.box_stack[-1]
+  def atomic_box(self) -> AtomicBox:
+    return self.base
 
-  def prefix_of_atomic_box(self):
-    return self.box_stack[:-1]
+  def custom_box_stack(self) -> List[CustomBox]:
+    return self.stack
 
   def parent(self, input_name) -> 'BoxPath':
-    box = self.atomic_box()
-    parent_state = box.inputs[input_name]
-    return _atomic_source_of_state(self.prefix_of_atomic_box(), parent_state)
+    parent_state = self.base.inputs[input_name]
+    return _atomic_source_of_state(self.custom_box_stack(), parent_state)
 
   def parents(self) -> List['BoxPath']:
-    box = self.atomic_box()
-    if len(box.inputs) > 0:  # normal box with inputs
+    box = self.base
+    if box.inputs:  # normal box with inputs
       return [self.parent(inp) for inp in box.inputs.keys()]
     elif box.operation == 'input':  # input box
-      if len(self.box_stack) == 1:  # top level input box
+      if not self.stack:  # top level input box
         return []
       else:  # input box of a nested custom box
-        containing_custom_box = self.box_stack[-2]
+        containing_custom_box = self.stack[-1]
         input_name = box.parameters['name']
         source_state = containing_custom_box.inputs[input_name]
-        return [_atomic_source_of_state(self.box_stack[:-2], source_state)]
+        return [_atomic_source_of_state(self.stack[:-1], source_state)]
     else:  # no parents
       return []
 
@@ -840,29 +879,31 @@ class SideEffectCollector:
     self.boxes_to_build: List[Box] = []
     self.boxes_to_trigger: List[BoxPath] = []
 
-  def _add_atomic_box(self, box: Box) -> None:
-    self.boxes_to_trigger.append(BoxPath([box]))
+  def _add_atomic_box(self, box: AtomicBox) -> None:
+    self.boxes_to_trigger.append(BoxPath(box))
 
-  def _add_custom_box(self, box: Box) -> None:
+  def _add_custom_box(self, box: CustomBox) -> None:
     '''Add a custom box to the collector.
 
     Copy all the boxes to trigger from the added custom box to this collector,
     prefixed with the box.
     '''
-    other_se_collector = box.operation.side_effects()  # type: ignore
+    other_se_collector = box.workspace.side_effects()
     for btt in other_se_collector.boxes_to_trigger:
       self.boxes_to_trigger.append(btt.add_box_as_prefix(box))
 
   def add_box(self, box: Box) -> None:
     self.boxes_to_build.append(box)
-    if box.is_atomic_box():
+    if isinstance(box, AtomicBox):
       self._add_atomic_box(box)
-    else:
+    elif isinstance(box, CustomBox):
       self._add_custom_box(box)
+    else:
+      raise Exception(f'Unknown box type: ${type(box)}')
 
   def __str__(self):
-    btb = 'To build ==> ' + str([b.operation for b in self.boxes_to_build])
-    btt = ' To trigger ==> ' + str([[b.operation for b in btt.box_stack]
+    btb = 'To build ==> ' + str([b.name() for b in self.boxes_to_build])
+    btt = ' To trigger ==> ' + str([[b.name() for b in btt.box_stack]
                                     for btt in self.boxes_to_trigger])
     return btb + btt
 
@@ -882,7 +923,7 @@ class Workspace:
     self._inputs = [inp.parameters['name'] for inp in input_boxes]
     self._outputs = [
         outp.parameters['name'] for outp in output_boxes
-        if outp.operation == 'output']
+        if isinstance(outp, AtomicBox) and outp.operation == 'output']
     self._ws_parameters = ws_parameters
     self._side_effects = side_effects
     self._output_boxes = output_boxes
@@ -902,12 +943,13 @@ class Workspace:
 
   def _box_to_trigger_to_box_ids(self, box_to_trigger: BoxPath) -> List[str]:
     '''Converts a BoxPath object to the list of corresponding box ids in this Workspace.'''
-    box_stack = box_to_trigger.box_stack
-    current_box = box_stack[0]
-    box_ids = [self.id_of(current_box)]
-    for next_box in box_stack[1:]:
-      box_ids.append(current_box.operation.id_of(next_box))  # type: ignore
-      current_box = next_box
+    box_ids: List[str] = []
+    stack = box_to_trigger.stack
+    outer_ws = self
+    for box in stack:
+      box_ids.append(outer_ws.id_of(box))
+      outer_ws = box.workspace
+    box_ids.append(outer_ws.id_of(box_to_trigger.base))
     return box_ids
 
   def _ws_parameters_to_str(self):
@@ -923,8 +965,8 @@ class Workspace:
 
   def required_workspaces(self) -> List['Workspace']:
     return [
-        box.operation for box in self._all_boxes  # type: ignore
-        if not box.is_atomic_box()]
+        box.workspace for box in self._all_boxes
+        if isinstance(box, CustomBox)]
 
   def inputs(self) -> List[str]:
     return list(self._inputs)
@@ -954,7 +996,8 @@ class Workspace:
   def triggerable_boxes(self) -> List[Box]:
     # TODO: replace it with real list of triggerables, collected in the
     # side effect collector of the workspace.
-    return [outp for outp in self._terminal_boxes if outp.operation == 'output']
+    return [outp for outp in self._terminal_boxes
+            if isinstance(outp, AtomicBox) and outp.operation == 'output']
 
   def _trigger_box(self, box_to_trigger: BoxPath, full_path: str):
     lk = self._lk
