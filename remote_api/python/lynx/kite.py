@@ -833,6 +833,25 @@ class BoxPath:
     else:  # no parents
       return []
 
+  def non_trivial_parent_of_endpoint(self) -> 'BoxPath':
+    '''Computes the first  non-trivial atomic upstream BoxPath for this BoxPath.
+
+    It can only be used on "endpoints" (triggerables with no output).
+    The first non-trivial upstream box is either a top-level input box, or
+    a box which computes something (so not an input box or an output box).
+    '''
+    def trivial(box_path) -> bool:
+      box = box_path.atomic_box()
+      return box.operation == 'output' or (box.operation == 'input' and len(box_path.box_stack) > 1)
+
+    box = self.atomic_box()
+    assert len(box.outputs) == 0, 'This is not an endpoint.'
+    assert len(box.inputs) == 1, "Only single-input endpoints are supported."
+    parent = self.parents()[0]
+    while trivial(parent):
+      parent = parent.parents()[0]
+    return parent
+
   def to_dict(self):
     '''Returns a (human readable) dict representation of this object.'''
     parent = None

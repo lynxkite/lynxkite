@@ -128,6 +128,40 @@ class TestDagCreation(unittest.TestCase):
 
     self.assertEqual(parents, expected)
 
+  def test_non_trivial_atomic_parents(self):
+    # test non-trivial parents of terminal boxes
+    main_workspace = self.create_complex_test_workspace()
+    parents = {}
+    for box in main_workspace.output_boxes():
+      ep = lynx.kite.BoxPath([box])
+      parents[str(ep.to_dict())] = ep.non_trivial_parent_of_endpoint().to_dict()
+    for ep in main_workspace.side_effects().boxes_to_trigger:
+      parents[str(ep.to_dict())] = ep.non_trivial_parent_of_endpoint().to_dict()
+
+    expected = {
+        "{'operation': 'output', 'params': {'name': 'o1'}, 'nested_in': None}":
+        {'operation': 'sql1',
+         'params': {'sql': 'select * from input'},
+         'nested_in': 'combiner'},
+        "{'operation': 'output', 'params': {'name': 'o2'}, 'nested_in': None}":
+        {'operation': 'sql2',
+         'params': {'sql': 'select * from one cross join two'},
+         'nested_in': 'combiner'},
+        "{'operation': 'output', 'params': {'name': 'o3'}, 'nested_in': None}":
+        {'operation': 'sql1',
+         'params': {'sql': 'select * from vertices'},
+         'nested_in': 'trivial'},
+        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB1'}, 'nested_in': 'snapshotter'}":
+        {'operation': 'input',
+         'params': {'name': 'i2'},
+         'nested_in': None},
+        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}":
+        {'operation': 'sql1',
+         'params': {'sql': 'select * from input'},
+         'nested_in': 'forker'},
+    }
+    self.assertEqual(parents, expected)
+
   def test_upstream_of_one_endpoint(self):
     # test full traversal of one endpoint
     main_workspace = self.create_complex_test_workspace()
