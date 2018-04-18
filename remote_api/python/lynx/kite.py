@@ -669,10 +669,12 @@ class Box:
       else:
         self.parameters[key] = str(value)
 
-  def operationId(self, workspace_root: str) -> str:
+  def _operationId(self, workspace_root: str) -> str:
+    '''The id that we send to the backend to identify a box.'''
     raise NotImplementedError()
 
   def name(self) -> str:
+    '''Either the name in the box catalog or the name under the box is saved.'''
     raise NotImplementedError()
 
   def to_json(self, id_resolver: Callable[['Box'], str], workspace_root: str) -> SerializedBox:
@@ -684,7 +686,7 @@ class Box:
     def input_state(state):
       return {'boxId': id_resolver(state.box), 'id': state.output_plug_name}
 
-    operationId = self.operationId(workspace_root)
+    operationId = self._operationId(workspace_root)
     return SerializedBox({
         'id': id_resolver(self),
         'operationId': operationId,
@@ -718,7 +720,7 @@ class AtomicBox(Box):
     assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
         got_inputs, exp_inputs)
 
-  def operationId(self, workspace_root):
+  def _operationId(self, workspace_root):
     return self.bc.operation_id(self.operation)
 
   def name(self):
@@ -758,15 +760,15 @@ class CustomBox(Box):
     assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
         got_inputs, exp_inputs)
 
-  def operationId(self, workspace_root):
-    return _normalize_path(workspace_root + '/' + self.workspace.name())
+  def _operationId(self, workspace_root):
+    return _normalize_path(workspace_root + '/' + self.name())
 
   def name(self):
     return self.workspace.name()
 
   def __str__(self) -> str:
     return "Custom box {} with parameters {} and inputs {}".format(
-        self.workspace,
+        self.name(),
         self.parameters,
         self.inputs)
 
