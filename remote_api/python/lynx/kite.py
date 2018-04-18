@@ -914,7 +914,7 @@ class Workspace:
   def __init__(self, name: str,
                output_boxes: List[Box],
                side_effects: SideEffectCollector = SideEffectCollector(),
-               input_boxes: List[Box] = [],
+               input_boxes: List[AtomicBox] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
     self._name = name or 'Anonymous'
     self._all_boxes: Set[Box] = set()
