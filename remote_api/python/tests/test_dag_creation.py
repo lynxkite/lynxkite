@@ -94,16 +94,16 @@ class TestDagCreation(unittest.TestCase):
 
     def box_path_desc(box_path):
       parent = None
-      op = box_path.box_stack[-1].operation
-      op_param = box_path.box_stack[-1].parameters
-      if len(box_path.box_stack) > 1:
-        parent = box_path.box_stack[-2].operation.name()
+      op = box_path.base.operation
+      op_param = box_path.base.parameters
+      if box_path.stack:
+        parent = box_path.stack[-1].name()
       return dict(operation=op, params=op_param, nested_in=parent)
 
     # test parent of terminal boxes
     parents = {}
     for box in main_workspace.output_boxes():
-      ep = lynx.kite.BoxPath([box])
+      ep = lynx.kite.BoxPath(box)
       parents[str(box_path_desc(ep))] = [box_path_desc(bp) for bp in ep.parents()]
     for ep in main_workspace.side_effects().boxes_to_trigger:
       parents[str(box_path_desc(ep))] = [box_path_desc(bp) for bp in ep.parents()]
@@ -135,7 +135,7 @@ class TestDagCreation(unittest.TestCase):
     # test full traversal of one endpoint
     start = lynx.kite.BoxPath(
         [box for box in main_workspace.output_boxes()
-         if box.parameters['name'] == 'o1'])
+         if box.parameters['name'] == 'o1'][0])
     up = start.parents()
     last = start
     while len(up) > 0:
