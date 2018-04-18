@@ -154,7 +154,9 @@ class TestDagCreation(unittest.TestCase):
         "{'operation': 'input', 'params': {'name': 'i2'}, 'nested_in': None}": set(),
         "{'operation': 'input', 'params': {'name': 'i3'}, 'nested_in': None}": set(),
         "{'operation': 'output', 'params': {'name': 'o1'}, 'nested_in': None}":
-        {"{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}"},
+        {
+            "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}",
+        },
         "{'operation': 'output', 'params': {'name': 'o2'}, 'nested_in': None}":
         {
             "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}",
@@ -162,9 +164,14 @@ class TestDagCreation(unittest.TestCase):
         },
         "{'operation': 'output', 'params': {'name': 'o3'}, 'nested_in': None}": set(),
         "{'operation': 'saveToSnapshot', 'params': {'path': 'SB1'}, 'nested_in': 'snapshotter'}":
-        {"{'operation': 'input', 'params': {'name': 'i2'}, 'nested_in': None}"},
+        {
+            "{'operation': 'input', 'params': {'name': 'i2'}, 'nested_in': None}",
+        },
         "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}":
-        {"{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}"}}
+        {
+            "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}",
+        },
+    }
     self.assertEqual(expected_dependencies, dependencies)
 
   def test_box_path_hash(self):
