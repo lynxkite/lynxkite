@@ -630,7 +630,9 @@ class State:
     full_path = folder + '/' + name
     box = self.computeInputs()
     lk = self.box.lk
-    ws = Workspace(name, [box])
+    sc = SideEffectCollector()
+    sc.boxes_to_build.append(box)
+    ws = Workspace(name, [], side_effects=sc)
     lk.save_workspace_recursively(ws, folder)
     lk.trigger_box(full_path, 'box_0')
     lk.remove_name(folder, force=True)
@@ -1039,9 +1041,10 @@ class Workspace:
     self._all_boxes: Set[Box] = set()
     self._box_ids: Dict[Box, str] = dict()
     self._next_id = 0
+    assert all(b.operation == 'input' for b in input_boxes), 'Non-input box in input_boxes'
     self._inputs = [inp.parameters['name'] for inp in input_boxes]
-    self._outputs = [
-        outp.parameters['name'] for outp in output_boxes if outp.operation == 'output']
+    assert all(b.operation == 'output' for b in output_boxes), 'Non-output box in output_boxes'
+    self._outputs = [outp.parameters['name'] for outp in output_boxes]
     self._ws_parameters = ws_parameters
     self._side_effects = side_effects
     self._input_boxes = input_boxes
