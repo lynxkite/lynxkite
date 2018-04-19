@@ -88,7 +88,7 @@ class TestDagCreation(unittest.TestCase):
     main_workspace = self.create_complex_test_workspace()
     parents = {}
     for box in main_workspace.output_boxes():
-      ep = lynx.kite.BoxPath([box])
+      ep = lynx.kite.BoxPath(box)
       parents[str(ep.to_dict())] = [bp.to_dict() for bp in ep.parents()]
     for ep in main_workspace.side_effects().boxes_to_trigger:
       parents[str(ep.to_dict())] = [bp.to_dict() for bp in ep.parents()]
@@ -120,43 +120,40 @@ class TestDagCreation(unittest.TestCase):
   def test_non_trivial_atomic_parents(self):
     # test non-trivial parents of terminal boxes
     main_workspace = self.create_complex_test_workspace()
-    parents = {}
-    for box in main_workspace.output_boxes():
-      ep = lynx.kite.BoxPath([box])
-      parents[str(ep.to_dict())] = ep.non_trivial_parent_of_endpoint().to_dict()
-    for ep in main_workspace.side_effects().boxes_to_trigger:
-      parents[str(ep.to_dict())] = ep.non_trivial_parent_of_endpoint().to_dict()
-
-    expected = {
-        "{'operation': 'output', 'params': {'name': 'o1'}, 'nested_in': None}":
-        {'operation': 'sql1',
-         'params': {'sql': 'select * from input'},
-         'nested_in': 'combiner'},
-        "{'operation': 'output', 'params': {'name': 'o2'}, 'nested_in': None}":
-        {'operation': 'sql2',
-         'params': {'sql': 'select * from one cross join two'},
-         'nested_in': 'combiner'},
-        "{'operation': 'output', 'params': {'name': 'o3'}, 'nested_in': None}":
-        {'operation': 'sql1',
-         'params': {'sql': 'select * from vertices'},
-         'nested_in': 'trivial'},
-        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB1'}, 'nested_in': 'snapshotter'}":
-        {'operation': 'input',
-         'params': {'name': 'i2'},
-         'nested_in': None},
-        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}":
-        {'operation': 'sql1',
-         'params': {'sql': 'select * from input'},
-         'nested_in': 'forker'},
+    expected_ntp_of_outputs = {
+        'o1': {'operation': 'sql1',
+               'params': {'sql': 'select * from input'},
+               'nested_in': 'combiner', },
+        'o2': {'operation': 'sql2',
+               'params': {'sql': 'select * from one cross join two'},
+               'nested_in': 'combiner', },
+        'o3': {'operation': 'sql1',
+               'params': {'sql': 'select * from vertices'},
+               'nested_in': 'trivial', },
     }
-    self.assertEqual(parents, expected)
+    for box in main_workspace.output_boxes():
+      ep = lynx.kite.BoxPath(box)
+      expected = expected_ntp_of_outputs[ep.to_dict()['params']['name']]
+      self.assertEqual(ep.non_trivial_parent_of_endpoint().to_dict(), expected)
+
+    expected_ntp_of_side_effects = {
+        'SB1': {'operation': 'input',
+                'params': {'name': 'i2'},
+                'nested_in': None, },
+        'SB2': {'operation': 'sql1',
+                'params': {'sql': 'select * from input'},
+                'nested_in': 'forker', },
+    }
+    for ep in main_workspace.side_effects().boxes_to_trigger:
+      expected = expected_ntp_of_side_effects[ep.to_dict()['params']['path']]
+      self.assertEqual(ep.non_trivial_parent_of_endpoint().to_dict(), expected)
 
   def test_upstream_of_one_endpoint(self):
     # test full traversal of one endpoint
     main_workspace = self.create_complex_test_workspace()
     start = lynx.kite.BoxPath(
         [box for box in main_workspace.output_boxes()
-         if box.parameters['name'] == 'o1'])
+         if box.parameters['name'] == 'o1'][0])
     up = start.parents()
     last = start
     while len(up) > 0:
@@ -203,9 +200,9 @@ class TestDagCreation(unittest.TestCase):
     # The hash of bp1 and bp2 are the same, but bp1 and bp2 are different.
     eg1 = lk.createExampleGraph()
     eg2 = lk.createExampleGraph()
-    bp1 = BoxPath([eg1])
-    bp2 = BoxPath([eg2])
-    bp3 = BoxPath([eg2])
+    bp1 = BoxPath(eg1)
+    bp2 = BoxPath(eg2)
+    bp3 = BoxPath(eg2)
     self.assertTrue(bp1.__hash__() == bp2.__hash__())
     self.assertTrue(bp1 != bp2)
     # bp1 and bp2 should be two different dict keys (they have the same hash but
