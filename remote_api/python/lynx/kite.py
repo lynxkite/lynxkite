@@ -792,6 +792,23 @@ def _atomic_source_of_state(box_list, state) -> 'BoxPath':
     return BoxPath(box_list + [source_box, output_box])
 
 
+class Endpoint:
+  '''Represents an automation endpoint in a workspace.
+
+  Endpoints used in automation to trigger different parts of a pipeline. There
+  are three different types of endpoint: input, output and side effect
+  (typically exports).
+  '''
+
+  def __init__(self, endpoint_type: str, box_path: 'BoxPath') -> None:
+    self.type = endpoint_type
+    self.box_path = box_path
+    self.ntap = box_path.non_trivial_parent_of_endpoint()
+
+  def to_dict(self):
+    return self.box_path.to_dict()
+
+
 class BoxPath:
   '''Represents a box (which can be inside (nested) custom boxes) as a list of Boxes.
   It can be used for example to trigger boxes inside custom boxes.
@@ -836,9 +853,10 @@ class BoxPath:
   def non_trivial_parent_of_endpoint(self) -> 'BoxPath':
     '''Computes the first  non-trivial atomic upstream BoxPath for this BoxPath.
 
-    It can only be used on "endpoints" (triggerables with no output).
+    It can only be used on "endpoints" (triggerables with no output or top level inputs).
     The first non-trivial upstream box is either a top-level input box, or
     a box which computes something (so not an input box or an output box).
+    For top level inputs it is a fake box path, to unify the handling of endpoints.
     '''
     def trivial(box_path) -> bool:
       if isinstance(box_path, FakeBoxPathForInputParent):
@@ -847,9 +865,13 @@ class BoxPath:
       return box.operation == 'output' or (box.operation == 'input' and len(box_path.box_stack) > 1)
 
     box = self.atomic_box()
+    parents = self.parents()
+    assert len(parents) == 1, 'More than one parent.'
     parent = self.parents()[0]
     while trivial(parent):
-      parent = parent.parents()[0]
+      parents = parent.parents()
+      assert len(parents) == 1, 'More than one parent.'
+      parent = parents[0]
     return parent
 
   def to_dict(self):
@@ -902,7 +924,7 @@ class FakeBoxPathForInputParent(BoxPath):
         nested_in=None)
 
   def __hash__(self):
-    return hash(','.join(['fake input box', self.name]))
+    return hash(f'fake input box {self.name}')
 
   def __eq__(self, other):
     return isinstance(other, FakeBoxPathForInputParent) and self.name == other.name
@@ -1030,44 +1052,31 @@ class Workspace:
     # side effect collector of the workspace.
     return [outp for outp in self._terminal_boxes if outp.operation == 'output']
 
-  def automation_endpoints(self) -> List[Dict[str, BoxPath]]:
-    '''Returns the boxes, relevant in automation, as `BoxPath`s.
+  def automation_endpoints(self) -> List[Endpoint]:
+    '''Returns the endpoints, relevant in automation.
 
-    The relevant boxes are: input boxes, output boxes, side effect boxes.
-    For all endpoints it also gives back the first non-trivial atomic parent,
-    which are needed to compute dependencies.
+    The endpoints correspond to top level input boxes, top level output boxes and
+    side effect boxes.
     '''
-    # TODO: we can wrap the different type of endpoints with different
-    # wrapper classes to make it easier to generate callables for them.
-    inputs = [{'endpoint': BoxPath([inp]),
-               'parent':BoxPath([inp]).non_trivial_parent_of_endpoint()}
-              for inp in self._input_boxes]
-    outputs = [{'endpoint': BoxPath([outp]),
-                'parent': BoxPath([outp]).non_trivial_parent_of_endpoint()}
-               for outp in self._output_boxes]
-    side_effects = [{'endpoint': se,
-                     'parent': se.non_trivial_parent_of_endpoint()}
-                    for se in self._side_effects.boxes_to_trigger]
+    inputs = [Endpoint('input', BoxPath([inp])) for inp in self._input_boxes]
+    outputs = [Endpoint('output', BoxPath([outp])) for outp in self._output_boxes]
+    side_effects = [Endpoint('side effect', se) for se in self._side_effects.boxes_to_trigger]
     return inputs + outputs + side_effects
 
-  def automation_dependencies(self) -> Dict[BoxPath, Set[BoxPath]]:
-    endpoints_with_ntap = self.automation_endpoints()
-    # One NTAP can belong to multiple endpoints
-    ntap_to_endpoints: Dict[BoxPath, Set[BoxPath]] = {
-        ep['parent']: set() for ep in endpoints_with_ntap}
-    for ep_with_ntap in endpoints_with_ntap:
-      ntap_to_endpoints[ep_with_ntap['parent']].add(ep_with_ntap['endpoint'])
-    ntaps = {ep['parent'] for ep in endpoints_with_ntap}
-    endpoint_dependencies: Dict[BoxPath, Set[BoxPath]] = {
-        ep['endpoint']: set() for ep in endpoints_with_ntap}
-
-    for ep in endpoints_with_ntap:
-      to_process = collections.deque(ep['parent'].parents())
+  def automation_dependencies(self) -> Dict[Endpoint, Set[Endpoint]]:
+    endpoints = self.automation_endpoints()
+    # One NTAP (non-trivial atomic parent) can belong to multiple endpoints
+    ntap_to_endpoints: Dict[BoxPath, Set[Endpoint]] = collections.defaultdict(set)
+    for ep in endpoints:
+      ntap_to_endpoints[ep.ntap].add(ep)
+    ntaps = {ep.ntap for ep in endpoints}
+    endpoint_dependencies: Dict[Endpoint, Set[Endpoint]] = collections.defaultdict(set)
+    for ep in endpoints:
+      to_process = collections.deque(ep.ntap.parents())
       while len(to_process) > 0:
         box_path = to_process.pop()
         if box_path in ntaps:
-          for ep_of_ntap in ntap_to_endpoints[box_path]:
-            endpoint_dependencies[ep['endpoint']].add(ep_of_ntap)
+          endpoint_dependencies[ep].update(ntap_to_endpoints[box_path])
         # We may visit the same node multiple (but finite) times.
         to_process.extend(box_path.parents())
     return endpoint_dependencies
@@ -1108,30 +1117,6 @@ class Workspace:
     self.save(temporary_folder)
     for btt in self._side_effects.boxes_to_trigger:
       self.trigger_saved(btt, temporary_folder)
-
-  def dependency_graph(self) -> Dict[Box, Set[Box]]:
-    ''' Returns all the triggerable boxes and the dependencies between them '''
-    def parent_of_triggerable(box):
-      input_states = list(box.inputs.values())
-      assert len(input_states) == 1, 'Triggerable boxes should have exactly one input'
-      input_state = input_states[0]
-      return input_state.box
-
-    triggerables = self.triggerable_boxes()
-    parent_of_triggerables = {b: parent_of_triggerable(b) for b in triggerables}
-    dependencies = {
-        b: list(_reverse_bfs_on_boxes([b], list_roots=False))
-        for b in set(parent_of_triggerables.values())
-    }
-    dependencies_between_triggerables: Dict[Box, Set[Box]] = {b: set() for b in triggerables}
-    for t1 in triggerables:
-      p1 = parent_of_triggerables[t1]
-      deps = dependencies[p1]
-      for t2 in triggerables:
-        p2 = parent_of_triggerables[t2]
-        if p2 in deps:
-          dependencies_between_triggerables[t1].add(t2)
-    return dependencies_between_triggerables
 
 
 class InputRecipe:
