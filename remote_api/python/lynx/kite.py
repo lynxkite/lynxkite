@@ -1073,12 +1073,13 @@ class Workspace:
     endpoint_dependencies: Dict[Endpoint, Set[Endpoint]] = collections.defaultdict(set)
     for ep in endpoints:
       to_process = collections.deque(ep.ntap.parents())
+      visited: Set[BoxPath] = set()
       while len(to_process) > 0:
         box_path = to_process.pop()
+        visited.add(box_path)
         if box_path in ntaps:
           endpoint_dependencies[ep].update(ntap_to_endpoints[box_path])
-        # We may visit the same node multiple (but finite) times.
-        to_process.extend(box_path.parents())
+        to_process.extend([bp for bp in box_path.parents() if not bp in visited])
     return endpoint_dependencies
 
   def _trigger_box(self, box_to_trigger: BoxPath, full_path: str):
