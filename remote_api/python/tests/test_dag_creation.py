@@ -19,17 +19,6 @@ class TestDagCreation(unittest.TestCase):
     age2 = age.sql('select age + 2 as age2 from t').output(name='age2')
     return lynx.kite.Workspace(name='test', output_boxes=[age.output(name='age'), age1, age2])
 
-  def test_dependency_graph(self):
-    ws = self.get_test_workspace()
-    g = ws.dependency_graph()
-    self.assertEqual(len(g), 3)
-    boxes_with_zero_dependency = [b for b, deps in g.items() if len(deps) == 0]
-    self.assertEqual(len(boxes_with_zero_dependency), 1)
-    age = boxes_with_zero_dependency[0]
-    other_boxes = (b for b in g if b != age)
-    for box in other_boxes:
-      self.assertEqual(g[box], {age})
-
   def test_minimal_dag_on_full_graph(self):
     g = {
         1: {2, 3, 4},
@@ -184,9 +173,6 @@ class TestDagCreation(unittest.TestCase):
       for dep in deps:
         dependencies[str(ep.to_dict())].add(str(dep.to_dict()))
     expected_dependencies = {
-        "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}": set(),
-        "{'operation': 'input', 'params': {'name': 'i2'}, 'nested_in': None}": set(),
-        "{'operation': 'input', 'params': {'name': 'i3'}, 'nested_in': None}": set(),
         "{'operation': 'output', 'params': {'name': 'o1'}, 'nested_in': None}":
         {
             "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}",
@@ -199,7 +185,6 @@ class TestDagCreation(unittest.TestCase):
             "{'operation': 'input', 'params': {'name': 'i3'}, 'nested_in': None}",
             "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}"
         },
-        "{'operation': 'output', 'params': {'name': 'o3'}, 'nested_in': None}": set(),
         "{'operation': 'saveToSnapshot', 'params': {'path': 'SB1'}, 'nested_in': 'snapshotter'}":
         {
             "{'operation': 'input', 'params': {'name': 'i2'}, 'nested_in': None}"
