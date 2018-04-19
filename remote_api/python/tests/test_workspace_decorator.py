@@ -79,16 +79,12 @@ class TestWorkspaceDecorator(unittest.TestCase):
     n2 = factory(lk, 1000)()
     res = lk.sql('select * from one cross join two', n1, n2)
 
-    sc1 = lynx.kite.SideEffectCollector()
-    sc1.boxes_to_build.append(res)
-    ws = lynx.kite.Workspace('Wrapper', [], side_effects=sc1)
+    ws = lynx.kite.Workspace('Wrapper', other_terminal_boxes=[res])
     with self.assertRaises(Exception) as cm:
       lk.save_workspace_recursively(ws, 'test-ws-name-conflict')
     self.assertTrue("Duplicate custom box name(s): ['names_above_threshold']" in str(cm.exception))
 
-    sc2 = lynx.kite.SideEffectCollector()
-    sc2.boxes_to_build.append(n1)
-    ws2 = lynx.kite.Workspace('names_above_threshold', [], side_effects=sc2)
+    ws2 = lynx.kite.Workspace('names_above_threshold', other_terminal_boxes=[n2])
     with self.assertRaises(Exception) as cm2:
       lk.save_workspace_recursively(ws2, 'test-ws-name-conflict-2')
     self.assertTrue("Duplicate name: names_above_threshold" in str(cm2.exception))
