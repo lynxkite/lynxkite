@@ -800,8 +800,7 @@ class Endpoint:
   (typically exports).
   '''
 
-  def __init__(self, endpoint_type: str, box_path: 'BoxPath') -> None:
-    self.type = endpoint_type
+  def __init__(self, box_path: 'BoxPath') -> None:
     self.box_path = box_path
     self.ntap = box_path.non_trivial_parent_of_endpoint()
 
@@ -1058,9 +1057,9 @@ class Workspace:
     The endpoints correspond to top level input boxes, top level output boxes and
     side effect boxes.
     '''
-    inputs = [Endpoint('input', BoxPath([inp])) for inp in self._input_boxes]
-    outputs = [Endpoint('output', BoxPath([outp])) for outp in self._output_boxes]
-    side_effects = [Endpoint('side effect', se) for se in self._side_effects.boxes_to_trigger]
+    inputs = [Endpoint(BoxPath([inp])) for inp in self._input_boxes]
+    outputs = [Endpoint(BoxPath([outp])) for outp in self._output_boxes]
+    side_effects = [Endpoint(se) for se in self._side_effects.boxes_to_trigger]
     return inputs + outputs + side_effects
 
   def automation_dependencies(self) -> Dict[Endpoint, Set[Endpoint]]:
@@ -1069,7 +1068,6 @@ class Workspace:
     ntap_to_endpoints: Dict[BoxPath, Set[Endpoint]] = collections.defaultdict(set)
     for ep in endpoints:
       ntap_to_endpoints[ep.ntap].add(ep)
-    ntaps = {ep.ntap for ep in endpoints}
     endpoint_dependencies: Dict[Endpoint, Set[Endpoint]] = collections.defaultdict(set)
     for ep in endpoints:
       to_process = collections.deque(ep.ntap.parents())
@@ -1077,8 +1075,8 @@ class Workspace:
       while len(to_process) > 0:
         box_path = to_process.pop()
         visited.add(box_path)
-        if box_path in ntaps:
-          endpoint_dependencies[ep].update(ntap_to_endpoints[box_path])
+        if box_path in ntap_to_endpoints.keys():
+          endpoint_dependencies[ep].update(ntap_to_endpoints.get(box_path, []))
         to_process.extend([bp for bp in box_path.parents() if not bp in visited])
     return endpoint_dependencies
 
