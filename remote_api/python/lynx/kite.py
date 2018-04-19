@@ -30,7 +30,7 @@ import re
 import itertools
 import collections
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
-                    TypeVar)
+                    TypeVar, cast)
 
 import requests
 from croniter import croniter
@@ -380,7 +380,9 @@ class LynxKite:
     # TODO: clean up saved workspaces if save_under_root is not set.
 
   def get_state_id(self, state: 'State') -> str:
-    ws = Workspace('Anonymous', [state.box])
+    sc = SideEffectCollector()
+    sc.boxes_to_build.append(state.box)
+    ws = Workspace('Anonymous', [], side_effects=sc)
     workspace_outputs = self.fetch_workspace_output_states(ws)
     box_id = ws.id_of(state.box)
     plug = state.output_plug_name
@@ -919,7 +921,7 @@ class SideEffectCollector:
     elif isinstance(box, CustomBox):
       self._add_custom_box(box)
     else:
-      raise Exception(f'Unknown box type: ${type(box)}')
+      raise Exception(f'Unknown box type: {type(box)}')
 
   def __str__(self):
     btb = 'To build ==> ' + str([b.name() for b in self.boxes_to_build])
@@ -932,7 +934,7 @@ class Workspace:
   '''Immutable class representing a LynxKite workspace.'''
 
   def __init__(self, name: str,
-               output_boxes: List[Box],
+               output_boxes: List[AtomicBox],
                side_effects: SideEffectCollector = SideEffectCollector(),
                input_boxes: List[AtomicBox] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
@@ -942,12 +944,11 @@ class Workspace:
     self._next_id = 0
     self._inputs = [inp.parameters['name'] for inp in input_boxes]
     self._outputs = [
-        outp.parameters['name'] for outp in output_boxes
-        if isinstance(outp, AtomicBox) and outp.operation == 'output']
+        outp.parameters['name'] for outp in output_boxes if outp.operation == 'output']
     self._ws_parameters = ws_parameters
     self._side_effects = side_effects
     self._output_boxes = output_boxes
-    self._terminal_boxes = output_boxes + side_effects.boxes_to_build
+    self._terminal_boxes = cast(List[Box], output_boxes) + side_effects.boxes_to_build
     self._bc = self._terminal_boxes[0].bc
     self._lk = self._terminal_boxes[0].lk
     for box in _reverse_bfs_on_boxes(self._terminal_boxes):
@@ -993,7 +994,7 @@ class Workspace:
   def outputs(self) -> List[str]:
     return list(self._outputs)
 
-  def output_boxes(self) -> List[Box]:
+  def output_boxes(self) -> List[AtomicBox]:
     return self._output_boxes
 
   def name(self) -> str:
