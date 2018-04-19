@@ -216,3 +216,38 @@ class TestDagCreation(unittest.TestCase):
     # bp2 and bp3 should be the same dict key, because they represent the same box.
     dd = {bp2: 'EG2'}
     self.assertEqual(dd[bp3], 'EG2')
+
+  def test_dependency_computation_performance(self):
+    lk = lynx.kite.LynxKite()
+
+    @lk.workspace()
+    def multi_source():
+      eg = lk.createExampleGraph().sql('select * from vertices')
+      return dict(t1=eg, t2=eg, t3=eg, t4=eg, t5=eg, t6=eg, t7=eg, t8=eg, t9=eg)
+
+    @lk.workspace()
+    def table_multiplier(table):
+      return dict(t1=table, t2=table, t3=table,
+                  t4=table, t5=table, t6=table,
+                  t7=table, t8=table, t9=table)
+
+    @lk.workspace()
+    def reducer(t1, t2, t3, t4, t5, t6, t7, t8, t9):
+      return dict(res=lk.sql('select 1 as value', t1, t2, t3, t4, t5, t6, t7, t8, t9))
+
+    @lk.workspace()
+    def big_workspace():
+      source = multi_source()
+      depth = 15
+      layers = [{} for l in range(2 * depth)]
+      for i in range(1, 10):
+        layers[0][i] = table_multiplier(source[f't{i}'])
+        layers[1][i] = reducer(*[layers[0][i][f't{j}'] for j in range(1, 10)])
+        for d in range(1, depth):
+          layers[2 * d][i] = table_multiplier(layers[2 * d - 1][i]['res'])
+          layers[2 * d + 1][i] = reducer(*[layers[2 * d][i][f't{j}'] for j in range(1, 10)])
+      result = reducer(*[layers[2 * depth - 1][j] for j in range(1, 10)])
+      return dict(final=result)
+
+    big_workspace.save('big folder')
+    dep = big_workspace.automation_dependencies()
