@@ -380,9 +380,7 @@ class LynxKite:
     # TODO: clean up saved workspaces if save_under_root is not set.
 
   def get_state_id(self, state: 'State') -> str:
-    sc = SideEffectCollector()
-    sc.boxes_to_build.append(state.box)
-    ws = Workspace('Anonymous', [], side_effects=sc)
+    ws = Workspace('Anonymous', other_terminal_boxes=[state.box])
     workspace_outputs = self.fetch_workspace_output_states(ws)
     box_id = ws.id_of(state.box)
     plug = state.output_plug_name
@@ -630,9 +628,7 @@ class State:
     full_path = folder + '/' + name
     box = self.computeInputs()
     lk = self.box.lk
-    sc = SideEffectCollector()
-    sc.boxes_to_build.append(box)
-    ws = Workspace(name, [], side_effects=sc)
+    ws = Workspace(name, other_terminal_boxes=[box])
     lk.save_workspace_recursively(ws, folder)
     lk.trigger_box(full_path, 'box_0')
     lk.remove_name(folder, force=True)
@@ -1033,8 +1029,9 @@ class Workspace:
   '''Immutable class representing a LynxKite workspace.'''
 
   def __init__(self, name: str,
-               output_boxes: List[AtomicBox],
+               output_boxes: List[AtomicBox] = [],
                side_effects: SideEffectCollector = SideEffectCollector(),
+               other_terminal_boxes: List[Box] = [],
                input_boxes: List[AtomicBox] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
     self._name = name or 'Anonymous'
@@ -1049,7 +1046,8 @@ class Workspace:
     self._side_effects = side_effects
     self._input_boxes = input_boxes
     self._output_boxes = output_boxes
-    self._terminal_boxes = cast(List[Box], output_boxes) + side_effects.boxes_to_build
+    self._terminal_boxes = (cast(List[Box], output_boxes) + side_effects.boxes_to_build +
+                            other_terminal_boxes)
     self._bc = self._terminal_boxes[0].bc
     self._lk = self._terminal_boxes[0].lk
     for box in _reverse_bfs_on_boxes(self._terminal_boxes):
