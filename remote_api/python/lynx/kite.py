@@ -696,7 +696,7 @@ class Box:
         'parametricParameters': self.parametric_parameters})
 
   def register(self, side_effect_collector):
-    side_effect_collector.add_box(self)
+    side_effect_collector.direct_children.append(self)
 
   def __getitem__(self, index: str) -> State:
     if index not in self.outputs:
@@ -887,15 +887,12 @@ class BoxPath:
   def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
     return BoxPath(self.base, [box] + self.stack)
 
-  def atomic_box(self) -> AtomicBox:
-    return self.base
-
   def custom_box_stack(self) -> List[CustomBox]:
     return self.stack
 
   def parent(self, input_name) -> 'BoxPath':
     parent_state = self.base.inputs[input_name]
-    return _atomic_source_of_state(self.custom_box_stack(), parent_state)
+    return _atomic_source_of_state(self.stack, parent_state)
 
   def parents(self) -> List['BoxPath']:
     box = self.base
@@ -1011,9 +1008,6 @@ class SideEffectCollector:
     elif isinstance(box, CustomBox):
       for triggerable in box.workspace.trigger_paths():
         yield triggerable.add_box_as_prefix(box)
-
-  def add_box(self, box: Box) -> None:
-    self.direct_children.append(box)
 
   def __str__(self):
     btb = 'To build ==> ' + str([b.name() for b in self.direct_children])
