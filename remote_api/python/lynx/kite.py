@@ -993,35 +993,30 @@ class FakeBoxPathForInputParent(BoxPath):
 
 class SideEffectCollector:
   def __init__(self):
-    self.boxes_to_build: List[Box] = []
-    self.boxes_to_trigger: List[BoxPath] = []
+    self.direct_children: List[Box] = []
+    self.childrens_triggerables: List[BoxPath] = []
 
-  def _add_atomic_box(self, box: AtomicBox) -> None:
-    self.boxes_to_trigger.append(BoxPath(box))
+  def all_triggerables(self) -> Iterable[BoxPath]:
+    yield from self.childrens_triggerables
+    for box in self.direct_children:
+      yield from self._all_triggerables_in_box(box)
 
-  def _add_custom_box(self, box: CustomBox) -> None:
-    '''Add a custom box to the collector.
-
-    Copy all the boxes to trigger from the added custom box to this collector,
-    prefixed with the box.
-    '''
-    other_se_collector = box.workspace.side_effects()
-    for btt in other_se_collector.boxes_to_trigger:
-      self.boxes_to_trigger.append(btt.add_box_as_prefix(box))
+  @staticmethod
+  def _all_triggerables_in_box(box):
+    if isinstance(box, AtomicBox):
+      yield BoxPath(box)
+    elif isinstance(box, CustomBox):
+      triggerables = box.workspace.side_effects().all_triggerables()
+      for triggerable in triggerables:
+        yield triggerable.add_box_as_prefix(box)
 
   def add_box(self, box: Box) -> None:
-    self.boxes_to_build.append(box)
-    if isinstance(box, AtomicBox):
-      self._add_atomic_box(box)
-    elif isinstance(box, CustomBox):
-      self._add_custom_box(box)
-    else:
-      raise Exception(f'Unknown box type: {type(box)}')
+    self.direct_children.append(box)
 
   def __str__(self):
-    btb = 'To build ==> ' + str([b.name() for b in self.boxes_to_build])
+    btb = 'To build ==> ' + str([b.name() for b in self.direct_children])
     btt = ' To trigger ==> ' + str([[b.name() for b in btt.box_stack]
-                                    for btt in self.boxes_to_trigger])
+                                    for btt in self.childrens_triggerables])
     return btb + btt
 
 
@@ -1046,7 +1041,7 @@ class Workspace:
     self._side_effects = side_effects
     self._input_boxes = input_boxes
     self._output_boxes = output_boxes
-    self._terminal_boxes = (cast(List[Box], output_boxes) + side_effects.boxes_to_build +
+    self._terminal_boxes = (cast(List[Box], output_boxes) + side_effects.direct_children +
                             other_terminal_boxes)
     self._bc = self._terminal_boxes[0].bc
     self._lk = self._terminal_boxes[0].lk
@@ -1126,7 +1121,7 @@ class Workspace:
     '''
     inputs = [Endpoint(BoxPath(inp)) for inp in self._input_boxes]
     outputs = [Endpoint(BoxPath(outp)) for outp in self._output_boxes]
-    side_effects = [Endpoint(se) for se in self._side_effects.boxes_to_trigger]
+    side_effects = [Endpoint(se) for se in self._side_effects.all_triggerables()]
     return inputs + outputs + side_effects
 
   def automation_dependencies(self) -> Dict[Endpoint, Set[Endpoint]]:
@@ -1181,7 +1176,7 @@ class Workspace:
     '''
     temporary_folder = _random_ws_folder()
     self.save(temporary_folder)
-    for btt in self._side_effects.boxes_to_trigger:
+    for btt in self._side_effects.all_triggerables():
       self.trigger_saved(btt, temporary_folder)
 
 
@@ -1398,7 +1393,7 @@ class WorkspaceSequenceInstance:
     # We assume that the same box ids will be generated every time
     # we regenerate this workspace.
     ws = self.wrapper_ws()
-    for btt in ws.side_effects().boxes_to_trigger:
+    for btt in ws.side_effects().all_triggerables():
       ws.trigger_saved(btt, saved_under_folder)
 
 
