@@ -1349,4 +1349,5 @@ class PizzaBox(LynxKite):
 
   def __init__(self):
     super().__init__(address='https://pizzabox.lynxanalytics.com/')
-    assert self.signed_token(), 'Please set LYNXKITE_SIGNED_TOKEN.'
+    assert self.oauth_token() or self.signed_token(), \
+        'Please set LYNXKITE_OAUTH_TOKEN or LYNXKITE_SIGNED_TOKEN.'
