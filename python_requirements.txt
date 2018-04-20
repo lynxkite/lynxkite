@@ -8,6 +8,8 @@ requests
 # Dependencies for the ecosystem
 apache-airflow[mysql]==1.9.0
 mysqlclient
+prometheus_client
+sqlalchemy
 
 # Dependencies for developing and testing
 autopep8
