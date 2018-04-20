@@ -1,17 +1,14 @@
-# Several tools depend on the format of this
-# file, so do not change it! In the first part
-# come the runtime dependencies, the second part
-# contains the dependencies for developing and testing.
-# Dependecies for running LynxKite and ecosystem
-apache-airflow[mysql]==1.9.0
+# Several tools depend on the format of this file, so do not change it!
+
+# Dependencies for the Remote API
 croniter
-flask
-mysqlclient
-prometheus_client
-python-dateutil
 PyYAML
 requests
-sqlalchemy
+
+# Dependencies for the ecosystem
+apache-airflow[mysql]==1.9.0
+mysqlclient
+
 # Dependencies for developing and testing
 autopep8
 awscli
