@@ -117,12 +117,13 @@ class TestWorkspaceBuilder(unittest.TestCase):
 
   def test_trigger_box_with_save_snapshot(self):
     lk = lynx.kite.LynxKite()
-    box = (lk.createExampleGraph()
-           .sql('select name from vertices')
-           .saveToSnapshot(path='this_is_my_snapshot'))
+    sc = lynx.kite.SideEffectCollector()
+    (lk.createExampleGraph()
+     .sql('select name from vertices')
+     .saveToSnapshot(path='this_is_my_snapshot')).register(sc)
     lk.remove_name('trigger-folder', force=True)
     lk.remove_name('this_is_my_snapshot', force=True)
-    ws = lynx.kite.Workspace('trigger-test', other_terminal_boxes=[box])
+    ws = lynx.kite.Workspace('trigger-test', side_effects=sc)
     lk.save_workspace_recursively(ws, 'trigger-folder')
     # The boxId of the "Save to snapshot box" is box_0
     lk.trigger_box('trigger-folder/trigger-test', 'box_0')
@@ -132,12 +133,13 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_trigger_box_with_multiple_snapshot_boxes(self):
     lk = lynx.kite.LynxKite()
     eg = lk.createExampleGraph()
-    b1 = eg.sql('select name from vertices').saveToSnapshot(path='names_snapshot')
-    b2 = eg.sql('select age from vertices').saveToSnapshot(path='ages_snapshot')
+    sc = lynx.kite.SideEffectCollector()
+    eg.sql('select name from vertices').saveToSnapshot(path='names_snapshot').register(sc)
+    eg.sql('select age from vertices').saveToSnapshot(path='ages_snapshot').register(sc)
     lk.remove_name('names_snapshot', force=True)
     lk.remove_name('ages_snapshot', force=True)
     lk.remove_name('trigger-folder', force=True)
-    ws = lynx.kite.Workspace('multi-trigger-test', other_terminal_boxes=[b1, b2])
+    ws = lynx.kite.Workspace('multi-trigger-test', side_effects=sc)
     lk.fetch_workspace_output_states(ws, 'trigger-folder')
     for box_id in [box['id']
                    for box in ws.to_json('trigger-folder/')
