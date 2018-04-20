@@ -147,6 +147,9 @@ class LynxKite:
     self._operation_names: List[str] = None
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
+  def home(self) -> str:
+    return f'Users/{self.username()}/'
+
   def operation_names(self) -> List[str]:
     if not self._operation_names:
       self._operation_names = self.box_catalog().box_names()
@@ -198,7 +201,10 @@ class LynxKite:
     return self._address or os.environ['LYNXKITE_ADDRESS']
 
   def username(self) -> str:
-    return self._username or os.environ.get('LYNXKITE_USERNAME')
+    username = self._username or os.environ.get('LYNXKITE_USERNAME')
+    if not username and self.signed_token():
+      return self.signed_token().split('|')[0]
+    return username
 
   def password(self) -> str:
     return self._password or os.environ.get('LYNXKITE_PASSWORD')
