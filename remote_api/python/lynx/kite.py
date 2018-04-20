@@ -380,7 +380,7 @@ class LynxKite:
     # TODO: clean up saved workspaces if save_under_root is not set.
 
   def get_state_id(self, state: 'State') -> str:
-    ws = Workspace('Anonymous', other_terminal_boxes=[state.box])
+    ws = Workspace('Anonymous', [state.box])
     workspace_outputs = self.fetch_workspace_output_states(ws)
     box_id = ws.id_of(state.box)
     plug = state.output_plug_name
@@ -478,8 +478,8 @@ class LynxKite:
       else:
         outputs = []
       return Workspace(name=real_name,
-                       output_boxes=outputs,
-                       side_effects=se_collector,
+                       terminal_boxes=outputs + se_collector.direct_children,
+                       trigger_paths=list(se_collector.all_triggerables()),
                        input_boxes=inputs,
                        ws_parameters=parameters)
     return ws_decorator
@@ -628,7 +628,7 @@ class State:
     full_path = folder + '/' + name
     box = self.computeInputs()
     lk = self.box.lk
-    ws = Workspace(name, other_terminal_boxes=[box])
+    ws = Workspace(name, [box])
     lk.save_workspace_recursively(ws, folder)
     lk.trigger_box(full_path, 'box_0')
     lk.remove_name(folder, force=True)
@@ -881,6 +881,9 @@ class BoxPath:
     self.base = base
     self.stack = stack
 
+  def __str__(self) -> str:
+    return ' -> '.join([b.name() for b in cast(List[Box], self.stack) + [cast(Box, self.base)]])
+
   def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
     return BoxPath(self.base, [box] + self.stack)
 
@@ -1006,8 +1009,7 @@ class SideEffectCollector:
     if isinstance(box, AtomicBox):
       yield BoxPath(box)
     elif isinstance(box, CustomBox):
-      triggerables = box.workspace.side_effects().all_triggerables()
-      for triggerable in triggerables:
+      for triggerable in box.workspace.trigger_paths():
         yield triggerable.add_box_as_prefix(box)
 
   def add_box(self, box: Box) -> None:
@@ -1015,8 +1017,7 @@ class SideEffectCollector:
 
   def __str__(self):
     btb = 'To build ==> ' + str([b.name() for b in self.direct_children])
-    btt = ' To trigger ==> ' + str([[b.name() for b in btt.box_stack]
-                                    for btt in self.childrens_triggerables])
+    btt = ' To trigger ==> ' + str([btt for btt in self.all_triggerables()])
     return btb + btt
 
 
@@ -1024,9 +1025,8 @@ class Workspace:
   '''Immutable class representing a LynxKite workspace.'''
 
   def __init__(self, name: str,
-               output_boxes: List[AtomicBox] = [],
-               side_effects: SideEffectCollector = SideEffectCollector(),
-               other_terminal_boxes: List[Box] = [],
+               terminal_boxes: List[Box],
+               trigger_paths: List[BoxPath] = [],
                input_boxes: List[AtomicBox] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
     self._name = name or 'Anonymous'
@@ -1035,14 +1035,13 @@ class Workspace:
     self._next_id = 0
     assert all(b.operation == 'input' for b in input_boxes), 'Non-input box in input_boxes'
     self._inputs = [inp.parameters['name'] for inp in input_boxes]
-    assert all(b.operation == 'output' for b in output_boxes), 'Non-output box in output_boxes'
-    self._outputs = [outp.parameters['name'] for outp in output_boxes]
+    self._output_boxes = [box for box in terminal_boxes
+                          if isinstance(box, AtomicBox) and box.operation == 'output']
+    self._outputs = [outp.parameters['name'] for outp in self._output_boxes]
     self._ws_parameters = ws_parameters
-    self._side_effects = side_effects
+    self._trigger_paths = trigger_paths
     self._input_boxes = input_boxes
-    self._output_boxes = output_boxes
-    self._terminal_boxes = (cast(List[Box], output_boxes) + side_effects.direct_children +
-                            other_terminal_boxes)
+    self._terminal_boxes = terminal_boxes
     self._bc = self._terminal_boxes[0].bc
     self._lk = self._terminal_boxes[0].lk
     for box in _reverse_bfs_on_boxes(self._terminal_boxes):
@@ -1094,8 +1093,8 @@ class Workspace:
   def name(self) -> str:
     return self._name
 
-  def side_effects(self) -> SideEffectCollector:
-    return self._side_effects
+  def trigger_paths(self) -> List[BoxPath]:
+    return self._trigger_paths
 
   def has_date_parameter(self) -> bool:
     return 'date' in [p.name for p in self._ws_parameters]
@@ -1107,11 +1106,10 @@ class Workspace:
     inputs = dict(zip(self.inputs(), args))
     return _new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
 
-  def triggerable_boxes(self) -> List[Box]:
+  def triggerable_boxes(self) -> List[AtomicBox]:
     # TODO: replace it with real list of triggerables, collected in the
     # side effect collector of the workspace.
-    return [outp for outp in self._terminal_boxes
-            if isinstance(outp, AtomicBox) and outp.operation == 'output']
+    return self._output_boxes
 
   def automation_endpoints(self) -> List[Endpoint]:
     '''Returns the endpoints, relevant in automation.
@@ -1121,7 +1119,7 @@ class Workspace:
     '''
     inputs = [Endpoint(BoxPath(inp)) for inp in self._input_boxes]
     outputs = [Endpoint(BoxPath(outp)) for outp in self._output_boxes]
-    side_effects = [Endpoint(se) for se in self._side_effects.all_triggerables()]
+    side_effects = [Endpoint(se) for se in self._trigger_paths]
     return inputs + outputs + side_effects
 
   def automation_dependencies(self) -> Dict[Endpoint, Set[Endpoint]]:
@@ -1176,7 +1174,7 @@ class Workspace:
     '''
     temporary_folder = _random_ws_folder()
     self.save(temporary_folder)
-    for btt in self._side_effects.all_triggerables():
+    for btt in self._trigger_paths:
       self.trigger_saved(btt, temporary_folder)
 
 
@@ -1393,7 +1391,7 @@ class WorkspaceSequenceInstance:
     # We assume that the same box ids will be generated every time
     # we regenerate this workspace.
     ws = self.wrapper_ws()
-    for btt in ws.side_effects().all_triggerables():
+    for btt in ws.trigger_paths():
       ws.trigger_saved(btt, saved_under_folder)
 
 

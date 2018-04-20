@@ -21,7 +21,7 @@ class TestWorkspaceWithSideEffects(unittest.TestCase):
       csv_exporter(t2, export_path='DATA$/side effect exports/b').register(sec)
 
     eg_exports.save('side effect example folder')
-    for btt in eg_exports.side_effects().all_triggerables():
+    for btt in eg_exports.trigger_paths():
       eg_exports.trigger_saved(btt, 'side effect example folder')
     i1 = lk.importCSV(filename='DATA$/side effect exports/a')
     i2 = lk.importCSV(filename='DATA$/side effect exports/b')
@@ -50,7 +50,7 @@ class TestWorkspaceWithSideEffects(unittest.TestCase):
 
     eg_snapshots.save('side effect snapshots example folder')
     lk.remove_name('side effect snapshots', force=True)
-    for btt in eg_snapshots.side_effects().all_triggerables():
+    for btt in eg_snapshots.trigger_paths():
       eg_snapshots.trigger_saved(btt, 'side effect snapshots example folder')
     entries = lk.list_dir('side effect snapshots')
     expected = [
@@ -92,7 +92,7 @@ class TestWorkspaceWithSideEffects(unittest.TestCase):
       save_graph_to_snapshot(eg, snapshot_path='single/b').register(sec)
 
     lk.remove_name('single', force=True)
-    for btt in snapshots.side_effects().all_triggerables():
+    for btt in snapshots.trigger_paths():
       snapshots.trigger(btt)
     entries = lk.list_dir('single')
     expected = ['single/a', 'single/b']
