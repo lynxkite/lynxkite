@@ -478,7 +478,7 @@ class LynxKite:
       else:
         outputs = []
       return Workspace(name=real_name,
-                       terminal_boxes=outputs + se_collector.direct_children,
+                       terminal_boxes=outputs + se_collector.top_level_side_effects,
                        trigger_paths=list(se_collector.all_triggerables()),
                        input_boxes=inputs,
                        ws_parameters=parameters)
@@ -696,7 +696,7 @@ class Box:
         'parametricParameters': self.parametric_parameters})
 
   def register(self, side_effect_collector):
-    side_effect_collector.direct_children.append(self)
+    side_effect_collector.top_level_side_effects.append(self)
 
   def __getitem__(self, index: str) -> State:
     if index not in self.outputs:
@@ -993,12 +993,10 @@ class FakeBoxPathForInputParent(BoxPath):
 
 class SideEffectCollector:
   def __init__(self):
-    self.direct_children: List[Box] = []
-    self.childrens_triggerables: List[BoxPath] = []
+    self.top_level_side_effects: List[Box] = []
 
   def all_triggerables(self) -> Iterable[BoxPath]:
-    yield from self.childrens_triggerables
-    for box in self.direct_children:
+    for box in self.top_level_side_effects:
       yield from self._all_triggerables_in_box(box)
 
   @staticmethod
@@ -1010,7 +1008,7 @@ class SideEffectCollector:
         yield triggerable.add_box_as_prefix(box)
 
   def __str__(self):
-    btb = 'To build ==> ' + str([b.name() for b in self.direct_children])
+    btb = 'To build ==> ' + str([b.name() for b in self.top_level_side_effects])
     btt = ' To trigger ==> ' + str([btt for btt in self.all_triggerables()])
     return btb + btt
 
