@@ -96,7 +96,8 @@ def get_on_demand_costs():
     v = products[k]
     if v.get('productFamily') == 'Compute Instance':
       attr = v['attributes']
-      if attr['operatingSystem'] == 'Linux' and attr['tenancy'] == 'Shared':
+      if (attr['operatingSystem'] == 'Linux' and
+              attr['tenancy'] == 'Shared' and attr['preInstalledSw'] == 'NA'):
         location = attr['location']
         if location in region_2_code:
           loc_code = region_2_code[location]
