@@ -10,12 +10,11 @@ pip = .build/pip3-packages-installed
 .PHONY: all
 all: backend
 
-# Remove all ignored files. The ecosystem folder is ignored because of files created by
-# docker containers are owned by root and cannot be deleted by others.
-# Deleting the .idea folder messes with IntelliJ, so exclude that too.
+# Remove all ignored files. Deleting the .idea folder messes with IntelliJ, so exclude
+# that.
 .PHONY: clean
 clean:
-	git clean -f -X -d --exclude="!.idea/" --exclude="!ecosystem/**"
+	git clean -f -X -d --exclude="!.idea/"
 
 .build/gulp-done: $(shell $(find) web/app) web/gulpfile.js web/package.json
 	cd web && LC_ALL=C yarn --frozen-lockfile && gulp && cd - && touch $@
@@ -40,8 +39,7 @@ $(pip): python_requirements.txt
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
 		$(shell $(find) ecosystem/native remote_api ) \
-		.build/backend-done .build/documentation-done-${VERSION} \
-		ecosystem/docker/run_in_docker.sh
+		.build/backend-done .build/documentation-done-${VERSION}
 	ecosystem/native/tools/build-monitoring.sh && \
 	ecosystem/native/bundle.sh && touch $@
 .build/ecosystem-docker-base-done: \
