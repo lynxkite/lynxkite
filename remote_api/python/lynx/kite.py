@@ -130,11 +130,11 @@ class LynxKite:
   multiple LynxKite instances from the same session. If no arguments to the constructor are
   provided, then a connection is created using the following environment variables:
   ``LYNXKITE_ADDRESS``, ``LYNXKITE_USERNAME``, ``LYNXKITE_PASSWORD``,
-  ``LYNXKITE_PUBLIC_SSL_CERT``, ``LYNXKITE_OAUTH_TOKEN``.
+  ``LYNXKITE_PUBLIC_SSL_CERT``, ``LYNXKITE_OAUTH_TOKEN``, ``LYNXKITE_SIGNED_TOKEN``.
   '''
 
   def __init__(self, username: str = None, password: str = None, address: str = None,
-               certfile: str = None, oauth_token: str = None,
+               certfile: str = None, oauth_token: str = None, signed_token: str = None,
                box_catalog: BoxCatalog = None) -> None:
     '''Creates a connection object.'''
     # Authentication and querying environment variables is deferred until the
@@ -144,10 +144,14 @@ class LynxKite:
     self._password = password
     self._certfile = certfile
     self._oauth_token = oauth_token
+    self._signed_token = signed_token
     self._session = None
     self._pid = None
     self._operation_names: List[str] = None
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
+
+  def home(self) -> str:
+    return f'Users/{self.username()}/'
 
   def operation_names(self) -> List[str]:
     if not self._operation_names:
@@ -200,7 +204,10 @@ class LynxKite:
     return self._address or os.environ['LYNXKITE_ADDRESS']
 
   def username(self) -> str:
-    return self._username or os.environ.get('LYNXKITE_USERNAME')
+    username = self._username or os.environ.get('LYNXKITE_USERNAME')
+    if not username and self.signed_token():
+      return self.signed_token().split('|')[0]
+    return username
 
   def password(self) -> str:
     return self._password or os.environ.get('LYNXKITE_PASSWORD')
@@ -210,6 +217,9 @@ class LynxKite:
 
   def oauth_token(self) -> str:
     return self._oauth_token or os.environ.get('LYNXKITE_OAUTH_TOKEN')
+
+  def signed_token(self) -> str:
+    return self._signed_token or os.environ.get('LYNXKITE_SIGNED_TOKEN')
 
   def _login(self):
     if self.password():
@@ -224,6 +234,11 @@ class LynxKite:
       r = self._request(
           '/googleLogin',
           dict(id_token=self.oauth_token()))
+      r.raise_for_status()
+    elif self.signed_token():
+      r = self._request(
+          '/signedUsernameLogin',
+          dict(token=self.signed_token()))
       r.raise_for_status()
     else:
       raise Exception('No login credentials provided.')
@@ -1507,8 +1522,9 @@ def _asobject(dic):
   return types.SimpleNamespace(**dic)
 
 
-class PizzaKite(LynxKite):
+class PizzaBox(LynxKite):
 
   def __init__(self):
-    super().__init__(address='https://pizzakite.lynxanalytics.com/')
-    assert self.oauth_token(), 'Please set LYNXKITE_OAUTH_TOKEN.'
+    super().__init__(address='https://pizzabox.lynxanalytics.com/')
+    assert self.oauth_token() or self.signed_token(), \
+        'Please set LYNXKITE_OAUTH_TOKEN or LYNXKITE_SIGNED_TOKEN.'
