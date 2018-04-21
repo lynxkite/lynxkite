@@ -2,6 +2,7 @@ import unittest
 import lynx.kite
 import json
 from collections import Counter
+import time
 
 
 class TestDagCreation(unittest.TestCase):
@@ -247,4 +248,7 @@ class TestDagCreation(unittest.TestCase):
       return dict(final=result)
 
     big_workspace.save('big folder')
+    start_at = time.time()
     dep = big_workspace.automation_dependencies()
+    elapsed = time.time() - start_at
+    print(f'Dependency computation ran in {elapsed}s')
