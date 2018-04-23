@@ -122,7 +122,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
            .saveToSnapshot(path='this_is_my_snapshot'))
     lk.remove_name('trigger-folder', force=True)
     lk.remove_name('this_is_my_snapshot', force=True)
-    ws = lynx.kite.Workspace('trigger-test', [box], trigger_paths=[lynx.kite.BoxPath(box)])
+    ws = lynx.kite.Workspace('trigger-test', [box], side_effect_paths=[lynx.kite.BoxPath(box)])
     lk.save_workspace_recursively(ws, 'trigger-folder')
     # The boxId of the "Save to snapshot box" is box_0
     lk.trigger_box('trigger-folder/trigger-test', 'box_0')
@@ -138,7 +138,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     lk.remove_name('ages_snapshot', force=True)
     lk.remove_name('trigger-folder', force=True)
     ws = lynx.kite.Workspace('multi-trigger-test', [b1, b2],
-                             trigger_paths=[lynx.kite.BoxPath(b1), lynx.kite.BoxPath(b2)])
+                             side_effect_paths=[lynx.kite.BoxPath(b1), lynx.kite.BoxPath(b2)])
     lk.fetch_workspace_output_states(ws, 'trigger-folder')
     for box_id in [box['id']
                    for box in ws.to_json('trigger-folder/')

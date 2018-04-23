@@ -90,7 +90,7 @@ class TestDagCreation(unittest.TestCase):
     for box in main_workspace.output_boxes():
       ep = lynx.kite.BoxPath(box)
       parents[str(ep.to_dict())] = [bp.to_dict() for bp in ep.parents()]
-    for ep in main_workspace.trigger_paths():
+    for ep in main_workspace.side_effect_paths():
       parents[str(ep.to_dict())] = [bp.to_dict() for bp in ep.parents()]
 
     expected = {
@@ -144,7 +144,7 @@ class TestDagCreation(unittest.TestCase):
                 'params': {'sql': 'select * from input'},
                 'nested_in': 'forker', },
     }
-    for ep in main_workspace.trigger_paths():
+    for ep in main_workspace.side_effect_paths():
       expected = expected_ntp_of_side_effects[ep.to_dict()['params']['path']]
       self.assertEqual(ep.non_trivial_parent_of_endpoint().to_dict(), expected)
 
