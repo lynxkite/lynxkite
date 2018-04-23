@@ -479,7 +479,7 @@ class LynxKite:
         outputs = []
       return Workspace(name=real_name,
                        terminal_boxes=outputs + se_collector.top_level_side_effects,
-                       trigger_paths=list(se_collector.all_triggerables()),
+                       side_effect_paths=list(se_collector.all_triggerables()),
                        input_boxes=inputs,
                        ws_parameters=parameters)
     return ws_decorator
@@ -696,7 +696,7 @@ class Box:
         'parametricParameters': self.parametric_parameters})
 
   def register(self, side_effect_collector):
-    side_effect_collector.top_level_side_effects.append(self)
+    side_effect_collector.add_box(self)
 
   def __getitem__(self, index: str) -> State:
     if index not in self.outputs:
@@ -995,6 +995,9 @@ class SideEffectCollector:
   def __init__(self):
     self.top_level_side_effects: List[Box] = []
 
+  def add_box(self, box: Box) -> None:
+    self.top_level_side_effects.append(box)
+
   def all_triggerables(self) -> Iterable[BoxPath]:
     for box in self.top_level_side_effects:
       yield from self._all_triggerables_in_box(box)
@@ -1004,7 +1007,7 @@ class SideEffectCollector:
     if isinstance(box, AtomicBox):
       yield BoxPath(box)
     elif isinstance(box, CustomBox):
-      for triggerable in box.workspace.trigger_paths():
+      for triggerable in box.workspace.side_effect_paths():
         yield triggerable.add_box_as_prefix(box)
 
   def __str__(self):
@@ -1018,7 +1021,7 @@ class Workspace:
 
   def __init__(self, name: str,
                terminal_boxes: List[Box],
-               trigger_paths: List[BoxPath] = [],
+               side_effect_paths: List[BoxPath] = [],
                input_boxes: List[AtomicBox] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
     self._name = name or 'Anonymous'
@@ -1031,7 +1034,7 @@ class Workspace:
                           if isinstance(box, AtomicBox) and box.operation == 'output']
     self._outputs = [outp.parameters['name'] for outp in self._output_boxes]
     self._ws_parameters = ws_parameters
-    self._trigger_paths = trigger_paths
+    self._side_effect_paths = side_effect_paths
     self._input_boxes = input_boxes
     self._terminal_boxes = terminal_boxes
     self._bc = self._terminal_boxes[0].bc
@@ -1085,8 +1088,8 @@ class Workspace:
   def name(self) -> str:
     return self._name
 
-  def trigger_paths(self) -> List[BoxPath]:
-    return self._trigger_paths
+  def side_effect_paths(self) -> List[BoxPath]:
+    return self._side_effect_paths
 
   def has_date_parameter(self) -> bool:
     return 'date' in [p.name for p in self._ws_parameters]
@@ -1098,11 +1101,6 @@ class Workspace:
     inputs = dict(zip(self.inputs(), args))
     return _new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
 
-  def triggerable_boxes(self) -> List[AtomicBox]:
-    # TODO: replace it with real list of triggerables, collected in the
-    # side effect collector of the workspace.
-    return self._output_boxes
-
   def automation_endpoints(self) -> List[Endpoint]:
     '''Returns the endpoints, relevant in automation.
 
@@ -1111,7 +1109,7 @@ class Workspace:
     '''
     inputs = [Endpoint(BoxPath(inp)) for inp in self._input_boxes]
     outputs = [Endpoint(BoxPath(outp)) for outp in self._output_boxes]
-    side_effects = [Endpoint(se) for se in self._trigger_paths]
+    side_effects = [Endpoint(se) for se in self._side_effect_paths]
     return inputs + outputs + side_effects
 
   def automation_dependencies(self) -> Dict[Endpoint, Set[Endpoint]]:
@@ -1166,7 +1164,7 @@ class Workspace:
     '''
     temporary_folder = _random_ws_folder()
     self.save(temporary_folder)
-    for btt in self._trigger_paths:
+    for btt in self._side_effect_paths:
       self.trigger_saved(btt, temporary_folder)
 
 
@@ -1383,7 +1381,7 @@ class WorkspaceSequenceInstance:
     # We assume that the same box ids will be generated every time
     # we regenerate this workspace.
     ws = self.wrapper_ws()
-    for btt in ws.trigger_paths():
+    for btt in ws.side_effect_paths():
       ws.trigger_saved(btt, saved_under_folder)
 
 
