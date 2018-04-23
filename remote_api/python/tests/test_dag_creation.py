@@ -1,8 +1,10 @@
 import unittest
-import lynx.kite
-import json
-from collections import Counter
 import time
+import lynx.kite
+
+
+def boxPathToName(box_path):
+  return box_path.base.parameters['name']
 
 
 class TestDagCreation(unittest.TestCase):
@@ -53,32 +55,32 @@ class TestDagCreation(unittest.TestCase):
 
     @lk.workspace()
     def forker(table):
-      result = table.sql('select * from input')
+      result = table.sql('select * from input', name='forker-sql')
       return dict(fork1=result, fork2=result)
 
     @lk.workspace_with_side_effects()
     def snapshotter(se_collector, t1_snap, t2_snap):
-      t2_snap.saveToSnapshot(path='SB1').register(se_collector)
+      t2_snap.saveToSnapshot(path='SB1', name='SB1').register(se_collector)
       tmp = forker(t1_snap)
-      tmp['fork2'].saveToSnapshot(path='SB2').register(se_collector)
+      tmp['fork2'].saveToSnapshot(path='SB2', name='SB2').register(se_collector)
       return dict(out_snap=tmp['fork1'])
 
     @lk.workspace()
     def trivial():
-      result = lk.createExampleGraph().sql('select * from vertices')
+      result = lk.createExampleGraph().sql('select * from vertices', name='trivial-sql')
       return dict(out_triv=result)
 
     @lk.workspace()
     def combiner(t1_comb, t2_comb):
-      tmp = t1_comb.sql('select * from input')
-      tmp2 = lk.sql('select * from one cross join two', tmp, t2_comb)
+      tmp = t1_comb.sql('select * from input', name='combiner-select')
+      tmp2 = lk.sql('select * from one cross join two', tmp, t2_comb, name='combiner-join')
       return dict(out1_comb=tmp, out2_comb=tmp2)
 
     @lk.workspace_with_side_effects()
     def main_workspace(se_collector, i1, i2, i3):
       tmp = snapshotter(i1, i2)
       tmp.register(se_collector)
-      internal = i3.sql('select * from input')
+      internal = i3.sql('select * from input', name='main-select')
       last = combiner(tmp, internal)
       return dict(o1=last['out1_comb'], o2=last['out2_comb'], o3=trivial())
 
@@ -90,64 +92,37 @@ class TestDagCreation(unittest.TestCase):
     parents = {}
     for box in main_workspace.output_boxes():
       ep = lynx.kite.BoxPath(box)
-      parents[str(ep.to_dict())] = [bp.to_dict() for bp in ep.parents()]
+      parents[boxPathToName(ep)] = [boxPathToName(bp) for bp in ep.parents()]
     for ep in main_workspace.side_effect_paths():
-      parents[str(ep.to_dict())] = [bp.to_dict() for bp in ep.parents()]
+      parents[boxPathToName(ep)] = [boxPathToName(bp) for bp in ep.parents()]
 
     expected = {
-        "{'operation': 'output', 'params': {'name': 'o1'}, 'nested_in': None}":
-        [{'operation': 'output',
-          'params': {'name': 'out1_comb'},
-          'nested_in': 'combiner'}],
-        "{'operation': 'output', 'params': {'name': 'o2'}, 'nested_in': None}":
-        [{'operation': 'output',
-          'params': {'name': 'out2_comb'},
-          'nested_in': 'combiner'}],
-        "{'operation': 'output', 'params': {'name': 'o3'}, 'nested_in': None}":
-        [{'operation': 'output',
-          'params': {'name': 'out_triv'},
-          'nested_in': 'trivial'}],
-        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB1'}, 'nested_in': 'snapshotter'}":
-        [{'operation': 'input',
-          'params': {'name': 't2_snap'},
-          'nested_in': 'snapshotter'}],
-        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}":
-        [{'operation': 'output',
-          'params': {'name': 'fork2'},
-          'nested_in': 'forker'}]}
+        'o1': ['out1_comb'],
+        'o2': ['out2_comb'],
+        'o3': ['out_triv'],
+        'SB1': ['t2_snap'],
+        'SB2': ['fork2'],
+    }
 
     self.assertEqual(parents, expected)
 
   def test_non_trivial_atomic_parents(self):
     # test non-trivial parents of terminal boxes
     main_workspace = self.create_complex_test_workspace()
-    expected_ntp_of_outputs = {
-        'o1': {'operation': 'sql1',
-               'params': {'sql': 'select * from input'},
-               'nested_in': 'combiner', },
-        'o2': {'operation': 'sql2',
-               'params': {'sql': 'select * from one cross join two'},
-               'nested_in': 'combiner', },
-        'o3': {'operation': 'sql1',
-               'params': {'sql': 'select * from vertices'},
-               'nested_in': 'trivial', },
-    }
+    actual = dict()
     for box in main_workspace.output_boxes():
       ep = lynx.kite.BoxPath(box)
-      expected = expected_ntp_of_outputs[ep.to_dict()['params']['name']]
-      self.assertEqual(ep.non_trivial_parent_of_endpoint().to_dict(), expected)
-
-    expected_ntp_of_side_effects = {
-        'SB1': {'operation': 'input',
-                'params': {'name': 'i2'},
-                'nested_in': None, },
-        'SB2': {'operation': 'sql1',
-                'params': {'sql': 'select * from input'},
-                'nested_in': 'forker', },
-    }
+      actual[boxPathToName(ep)] = boxPathToName(ep.non_trivial_parent_of_endpoint())
     for ep in main_workspace.side_effect_paths():
-      expected = expected_ntp_of_side_effects[ep.to_dict()['params']['path']]
-      self.assertEqual(ep.non_trivial_parent_of_endpoint().to_dict(), expected)
+      actual[boxPathToName(ep)] = boxPathToName(ep.non_trivial_parent_of_endpoint())
+    expected = {
+        'o1': 'combiner-select',
+        'o2': 'combiner-join',
+        'o3': 'trivial-sql',
+        'SB1': 'i2',
+        'SB2': 'forker-sql',
+    }
+    self.assertEqual(actual, expected)
 
   def test_upstream_of_one_endpoint(self):
     # test full traversal of one endpoint
@@ -165,34 +140,19 @@ class TestDagCreation(unittest.TestCase):
 
   def test_endpoint_dependencies(self):
     main_workspace = self.create_complex_test_workspace()
-    raw_dep = main_workspace.automation_dependencies()
-    dependencies = {str(ep.to_dict()): set() for ep in raw_dep}
-    for ep, deps in raw_dep.items():
-      for dep in deps:
-        dependencies[str(ep.to_dict())].add(str(dep.to_dict()))
-    expected_dependencies = {
-        "{'operation': 'output', 'params': {'name': 'o1'}, 'nested_in': None}":
-        {
-            "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}",
-            "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}"
-        },
-        "{'operation': 'output', 'params': {'name': 'o2'}, 'nested_in': None}":
-        {
-            "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}",
-            "{'operation': 'output', 'params': {'name': 'o1'}, 'nested_in': None}",
-            "{'operation': 'input', 'params': {'name': 'i3'}, 'nested_in': None}",
-            "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}"
-        },
-        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB1'}, 'nested_in': 'snapshotter'}":
-        {
-            "{'operation': 'input', 'params': {'name': 'i2'}, 'nested_in': None}"
-        },
-        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}":
-        {
-            "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}"
-        },
+    dependencies = {boxPathToName(ep.box_path): sorted([boxPathToName(dep.box_path) for dep in deps])
+                    for ep, deps in main_workspace.automation_dependencies().items()}
+    expected = {
+        'i1': [],
+        'i2': [],
+        'i3': [],
+        'o1': ['SB2', 'i1'],
+        'o2': ['SB2', 'i1', 'i3', 'o1'],
+        'SB1': ['i2'],
+        'SB2': ['i1'],
+        'o3': [],
     }
-    self.assertEqual(expected_dependencies, dependencies)
+    self.assertEqual(dependencies, expected)
 
   def test_box_path_hash(self):
     lk = lynx.kite.LynxKite()

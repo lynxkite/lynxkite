@@ -880,6 +880,9 @@ class Endpoint:
     self.box_path = box_path
     self.ntap = box_path.non_trivial_parent_of_endpoint()
 
+  def __str__(self) -> str:
+    return str(self.box_path)
+
   def to_dict(self):
     return self.box_path.to_dict()
 
@@ -905,7 +908,7 @@ class BoxPath:
   def custom_box_stack(self) -> List[CustomBox]:
     return self.stack
 
-  def parent(self, input_name) -> 'BoxPath':
+  def parent(self, input_name: str) -> 'BoxPath':
     parent_state = self.base.inputs[input_name]
     return _atomic_source_of_state(self.stack, parent_state)
 
@@ -970,7 +973,7 @@ class FakeBoxPathForInputParent(BoxPath):
   dependency computation of endpoints.
   '''
 
-  def __init__(self, input_name) -> None:
+  def __init__(self, input_name: str) -> None:
     self.stack = []
     self.name = input_name
 
@@ -978,13 +981,10 @@ class FakeBoxPathForInputParent(BoxPath):
   def base(self):
     raise Exception('This is just a input parent fake box.')
 
-  def add_box_as_prefix(self, box):
+  def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
     raise Exception('This is just a input parent fake box.')
 
-  def atomic_box(self):
-    raise Exception('This is just a input parent fake box.')
-
-  def parent(self, input_name) -> 'BoxPath':
+  def parent(self, input_name: str) -> 'BoxPath':
     raise Exception('This is just a input parent fake box.')
 
   def parents(self) -> List['BoxPath']:
@@ -1133,7 +1133,7 @@ class Workspace:
     ntap_to_endpoints: Dict[BoxPath, Set[Endpoint]] = collections.defaultdict(set)
     for ep in endpoints:
       ntap_to_endpoints[ep.ntap].add(ep)
-    endpoint_dependencies: Dict[Endpoint, Set[Endpoint]] = collections.defaultdict(set)
+    endpoint_dependencies: Dict[Endpoint, Set[Endpoint]] = {ep: set() for ep in endpoints}
     for ep in endpoints:
       to_process = collections.deque(ep.ntap.parents())
       visited: Set[BoxPath] = set()
