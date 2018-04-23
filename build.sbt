@@ -11,6 +11,8 @@ scalacOptions ++= Seq(
   "-feature",
   "-deprecation",
   "-unchecked",
+  // Restrict file name length to support encrypted file systems.
+  "-Xmax-classfile-name", "120",
   // TODO: Suppress warnings as necessary and enable checks.
   // "-Ywarn-dead-code",
   // "-Ywarn-unused",
