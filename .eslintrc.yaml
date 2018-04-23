@@ -23,6 +23,7 @@ rules:
   space-before-blocks: [error]
   space-in-parens: [error]
   space-infix-ops: [error]
+  arrow-spacing: [error, {before: true, after: true}]
 parserOptions:
   ecmaVersion: 6
 globals:
