@@ -1091,6 +1091,9 @@ class Workspace:
         box.workspace for box in self._all_boxes
         if isinstance(box, CustomBox)]
 
+  def lk(self) -> LynxKite:
+    return self._lk
+
   def inputs(self) -> List[str]:
     return list(self._inputs)
 
@@ -1271,6 +1274,7 @@ class WorkspaceSequence:
                params: Dict[str, Any], lk_root: str, dfs_root: str,
                input_recipes: List[InputRecipe]) -> None:
     self._ws = ws
+    self._lk = self._ws.lk()
     self._schedule = schedule
     self._start_date = start_date
     self._params = params
@@ -1303,23 +1307,26 @@ class WorkspaceSequence:
     ''' Dict of input recipes, the keys are names.'''
     return self._input_recipes
 
-  def ws_for_date(self, lk: LynxKite, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
+  def ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
     ``date`` parameter of this method as a value to pass to the workspace. '''
     assert date >= self._start_date, "{} preceeds start date = {}".format(date, self._start_date)
     assert _timestamp_is_valid(
         date, self._schedule), "{} is not valid according to {}".format(date, self._schedule)
-    return WorkspaceSequenceInstance(self, lk, date)
+    return WorkspaceSequenceInstance(self, date)
 
   def lk_root(self) -> str:
     return self._lk_root
 
+  def lk(self) -> LynxKite:
+    return self._lk
+
 
 class WorkspaceSequenceInstance:
 
-  def __init__(self, wss: WorkspaceSequence, lk: LynxKite, date: datetime.datetime) -> None:
+  def __init__(self, wss: WorkspaceSequence, date: datetime.datetime) -> None:
     self._wss = wss
-    self._lk = lk
+    self._lk = self._wss.lk()
     self._date = date
 
   def wrapper_name(self) -> str:
