@@ -38,6 +38,10 @@ class TestDagCreation(unittest.TestCase):
     min_dag = lynx.kite._minimal_dag(g)
     self.assertEqual(min_dag, expected)
 
+    expected_order = [4, 3, 2, 1]
+    actual_order = [n for n in min_dag]
+    self.assertEqual(actual_order, expected_order)
+
   def test_minimal_dag_on_two_paths(self):
     g = {
         1: {2, 3},
@@ -47,6 +51,10 @@ class TestDagCreation(unittest.TestCase):
     }
     min_dag = lynx.kite._minimal_dag(g)
     self.assertEqual(min_dag, g)
+
+    order = [n for n in min_dag]
+    self.assertEqual(order[0], 4)
+    self.assertEqual(order[-1], 1)
 
   def create_complex_test_workspace(self):
     # Builds the workspace specified here:
