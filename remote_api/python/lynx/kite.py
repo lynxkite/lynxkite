@@ -868,25 +868,6 @@ def _atomic_source_of_state(box_list, state) -> 'BoxPath':
     return BoxPath(output_box, box_list + [source_box])
 
 
-class Endpoint:
-  '''Represents an automation endpoint in a workspace.
-
-  Endpoints used in automation to trigger different parts of a pipeline. There
-  are three different types of endpoint: input, output and side effect
-  (typically exports).
-  '''
-
-  def __init__(self, box_path: 'BoxPath') -> None:
-    self.box_path = box_path
-    self.ntap = box_path.non_trivial_parent_of_endpoint()
-
-  def __str__(self) -> str:
-    return str(self.box_path)
-
-  def to_dict(self):
-    return self.box_path.to_dict()
-
-
 class BoxPath:
   '''Represents a box (which can be inside (nested) custom boxes).
   It can be used for example to trigger boxes inside custom boxes.
@@ -1119,26 +1100,27 @@ class Workspace:
     inputs = dict(zip(self.inputs(), args))
     return _new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
 
-  def automation_endpoints(self) -> List[Endpoint]:
+  def automation_endpoints(self) -> List[BoxPath]:
     '''Returns the endpoints, relevant in automation.
 
     The endpoints correspond to top level input boxes, top level output boxes and
     side effect boxes.
     '''
-    inputs = [Endpoint(BoxPath(inp)) for inp in self._input_boxes]
-    outputs = [Endpoint(BoxPath(outp)) for outp in self._output_boxes]
-    side_effects = [Endpoint(se) for se in self._side_effect_paths]
+    inputs = [BoxPath(inp) for inp in self._input_boxes]
+    outputs = [BoxPath(outp) for outp in self._output_boxes]
+    side_effects = [se for se in self._side_effect_paths]
     return inputs + outputs + side_effects
 
-  def automation_dependencies(self) -> Dict[Endpoint, Set[Endpoint]]:
+  def automation_dependencies(self) -> Dict[BoxPath, Set[BoxPath]]:
     endpoints = self.automation_endpoints()
     # One NTAP (non-trivial atomic parent) can belong to multiple endpoints
-    ntap_to_endpoints: Dict[BoxPath, Set[Endpoint]] = collections.defaultdict(set)
+    endpoint_to_ntap = {ep: ep.non_trivial_parent_of_endpoint() for ep in endpoints}
+    ntap_to_endpoints: Dict[BoxPath, Set[BoxPath]] = collections.defaultdict(set)
     for ep in endpoints:
-      ntap_to_endpoints[ep.ntap].add(ep)
-    endpoint_dependencies: Dict[Endpoint, Set[Endpoint]] = {ep: set() for ep in endpoints}
+      ntap_to_endpoints[endpoint_to_ntap[ep]].add(ep)
+    endpoint_dependencies: Dict[BoxPath, Set[BoxPath]] = {ep: set() for ep in endpoints}
     for ep in endpoints:
-      to_process = collections.deque(ep.ntap.parents())
+      to_process = collections.deque(endpoint_to_ntap[ep].parents())
       visited: Set[BoxPath] = set()
       while to_process:
         box_path = to_process.pop()

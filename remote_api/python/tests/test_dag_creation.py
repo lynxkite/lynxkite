@@ -140,7 +140,7 @@ class TestDagCreation(unittest.TestCase):
 
   def test_endpoint_dependencies(self):
     main_workspace = self.create_complex_test_workspace()
-    dependencies = {boxPathToName(ep.box_path): sorted([boxPathToName(dep.box_path) for dep in deps])
+    dependencies = {boxPathToName(ep): sorted([boxPathToName(dep) for dep in deps])
                     for ep, deps in main_workspace.automation_dependencies().items()}
     expected = {
         'i1': [],
