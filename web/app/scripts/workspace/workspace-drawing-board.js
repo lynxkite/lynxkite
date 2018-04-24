@@ -510,6 +510,119 @@ angular.module('biggraph')
           this.selectedBoxIds = [];
         };
 
+        scope.saveSelectedBoxesAsPython = function() {
+
+          function snakeCase(boxId) {
+            return boxId.toLowerCase().replace(/-/g, '_');
+          }
+
+          function snakeInput(inp) {
+            return {
+              boxId: snakeCase(inp.boxId),
+              id: inp.id};
+          }
+
+          function snakeInputs(inputs) {
+            var snakeInps = {};
+            Object.keys(inputs).forEach(function(key) {
+              snakeInps[key] = snakeInput(inputs[key]);
+            });
+            return snakeInps;
+          }
+
+          function pythonName(opId) {
+            var cleaned = opId.replace(/[^\w_\s]+/g, '').split(' ');
+            const head = cleaned[0];
+            const tail = cleaned.slice(1);
+            return head.toLowerCase() + tail.map(x => x[0].toUpperCase() + x.slice(1)).join('');
+          }
+
+          function unconnected(boxes) {
+            var input_boxes = [];
+            for (var i = 0; i < boxes.length; i++) {
+              var box = boxes[i];
+              box.inputPlugs.forEach(function(plug) {
+                if (!box.inputs[plug]) {
+                  var input_id = 'input_' + plug + '_for_' + box.id;
+                  // Now we connect it to a dummy input.
+                  box.inputs[plug] = {boxId: input_id, id: 'input'};
+                  input_boxes.push({
+                    id: input_id,
+                    op: 'Input',
+                    pythonOp: 'input',
+                    parameters: {name: input_id},
+                    parametricParameters: {},
+                    inputs: {},
+                    inputPlugs: [],
+                    category: 'Workflow'});
+                }
+              });
+            }
+            return input_boxes;
+          }
+
+          function dependencies(boxes) {
+            var deps = {};
+            for (var i = 0; i < boxes.length; i++) {
+              var box = boxes[i];
+              var fromId = box.id;
+              deps[fromId] = [];
+              Object.keys(box.inputs).forEach(function(key) {
+                deps[fromId].push(box.inputs[key].boxId);
+              });
+            }
+            return deps;
+          }
+
+          function mapping(boxes) {
+            var map = {};
+            for (var i = 0; i < boxes.length; i++) {
+              map[boxes[i].id] = boxes[i];
+            }
+            return map;
+          }
+
+          function topsort(deps) {
+            // TODO: add real implementation
+            return Object.keys(deps);
+          }
+
+          function box_to_python(box) {
+            // TODO: add real implementation
+            return box.pythonOp;
+          }
+
+          // Custom boxes are not supported
+          // TODO: assert for selected custom boxes
+          var boxes = this.selectedBoxIds.map(x => this.workspace.getBox(x));
+          var prepared = boxes.map(x => ({
+            id: snakeCase(x.instance.id),
+            op: x.instance.operationId,
+            pythonOp: pythonName(x.instance.operationId),
+            parameters: x.instance.parameters,
+            parametricParameters: x.instance.parametricParameters,
+            inputs: snakeInputs(x.instance.inputs),
+            inputPlugs: x.metadata.inputs,
+            category: x.metadata.categoryId})
+          );
+
+          var unconnectedInputs = unconnected(prepared);
+          var boxesToGenerate = unconnectedInputs.concat(prepared);
+          var deps = dependencies(boxesToGenerate);
+          var boxMap = mapping(boxesToGenerate);
+          var sorted = topsort(deps);
+
+          var generatedCode = [];
+          sorted.forEach(function(boxId) {
+            var box = boxMap[boxId];
+            generatedCode.push(box_to_python(box));
+          });
+          var result = generatedCode.join('\n');
+
+          /* eslint-disable no-console */
+          console.log(result);
+        };
+
         scope.diveUp = function() {
           var boxSettings = scope.workspace.customBoxStack.pop();
           scope.workspace.loadWorkspace();
