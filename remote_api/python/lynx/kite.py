@@ -28,7 +28,7 @@ import datetime
 import inspect
 import re
 import itertools
-import collections
+from collections import deque, defaultdict, OrderedDict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar, cast)
 
@@ -362,7 +362,7 @@ class LynxKite:
     else:
       ws_root = save_under_root
     needed_ws: Set[Workspace] = set()
-    ws_queue = collections.deque([ws])
+    ws_queue = deque([ws])
     while len(ws_queue):
       nws = ws_queue.pop()
       for rws in nws.required_workspaces():
@@ -372,7 +372,7 @@ class LynxKite:
     # Check name duplication in required workspaces
     names = list(rws.name() for rws in needed_ws)
     if len(needed_ws) != len(set(rws.name() for rws in needed_ws)):
-      duplicates = [k for k, v in collections.Counter(names).items() if v > 1]
+      duplicates = [k for k, v in Counter(names).items() if v > 1]
       raise Exception(f'Duplicate custom box name(s): {duplicates}')
     for rws in needed_ws:
       self.save_workspace(ws_root + '/' + rws.name(), _layout(rws.to_json(ws_root)))
@@ -842,7 +842,7 @@ def _reverse_bfs_on_boxes(roots: List[Box], list_roots: bool = True) -> Iterator
   '''
   Lists all the dependencies of boxes in ``roots`` in a bfs way.
   '''
-  to_process = collections.deque(roots)
+  to_process = deque(roots)
   if list_roots:
     for box in roots:
       yield box
@@ -1115,12 +1115,12 @@ class Workspace:
     endpoints = self.automation_endpoints()
     # One NTAP (non-trivial atomic parent) can belong to multiple endpoints
     endpoint_to_ntap = {ep: ep.non_trivial_parent_of_endpoint() for ep in endpoints}
-    ntap_to_endpoints: Dict[BoxPath, Set[BoxPath]] = collections.defaultdict(set)
+    ntap_to_endpoints: Dict[BoxPath, Set[BoxPath]] = defaultdict(set)
     for ep in endpoints:
       ntap_to_endpoints[endpoint_to_ntap[ep]].add(ep)
     endpoint_dependencies: Dict[BoxPath, Set[BoxPath]] = {ep: set() for ep in endpoints}
     for ep in endpoints:
-      to_process = collections.deque(endpoint_to_ntap[ep].parents())
+      to_process = deque(endpoint_to_ntap[ep].parents())
       visited: Set[BoxPath] = set()
       while to_process:
         box_path = to_process.pop()
@@ -1245,6 +1245,71 @@ class RecipeWithDefault(InputRecipe):
       return self.src_recipe.build_boxes(lk, date)
 
 
+class Task:
+  def __init__(self, wss: 'WorkspaceSequence') -> None:
+    self._wss = wss
+
+  def _ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
+    return self._wss.ws_for_date(date)
+
+  def run(self, date: datetime.datetime) -> None:
+    '''
+    Trigger this endpoint in the workspace instance corresponding to the date parameter.
+    '''
+    raise NotImplementedError()
+
+
+class Input(Task):
+  def __init__(self, wss: 'WorkspaceSequence', box_path: BoxPath) -> None:
+    super().__init__(wss)
+    self._box_path = box_path
+
+  def _name(self):
+    return self._box_path.base.parameters['name']
+
+  def run(self, date: datetime.datetime) -> None:
+    wss_instance = self._ws_for_date(date)
+    wss_instance.run_input(self._name())
+
+
+class Output(Task):
+  def __init__(self, wss: 'WorkspaceSequence', box_path: BoxPath) -> None:
+    super().__init__(wss)
+    self._box_path = box_path
+
+  def _name(self):
+    return self._box_path.base.parameters['name']
+
+  def run(self, date: datetime.datetime) -> None:
+    wss_instance = self._ws_for_date(date)
+    wss_instance.run_output(self._name())
+
+
+class Triggerable(Task):
+  def __init__(self, wss: 'WorkspaceSequence', box_path: BoxPath) -> None:
+    super().__init__(wss)
+    self._box_path = box_path
+
+  def run(self, date: datetime.datetime) -> None:
+    wss_instance = self._ws_for_date(date)
+    wss_instance.trigger(self._box_path)
+
+
+class SaveWorkspace(Task):
+  def run(self, date: datetime.datetime) -> None:
+    self._ws_for_date(date).save()
+
+
+def _new_task(wss: 'WorkspaceSequence', box_path: BoxPath) -> Task:
+  op = box_path.base.operation
+  if op == 'input':
+    return Input(wss, box_path)
+  elif op == 'output':
+    return Output(wss, box_path)
+  else:
+    return Triggerable(wss, box_path)
+
+
 class WorkspaceSequence:
   '''Represents a workspace sequence.
 
@@ -1303,6 +1368,23 @@ class WorkspaceSequence:
   def lk(self) -> LynxKite:
     return self._lk
 
+  def to_dag(self) -> Dict[Task, Set[Task]]:
+    '''
+    Returns an ordered dict of the tasks and their dependencies to run this workspace
+    for a given date.
+    '''
+
+    def new_task(box_path): return _new_task(self, box_path)
+    endpoint_to_task = {ep: new_task(ep) for ep in self._ws.automation_endpoints()}
+    workspace_deps = {endpoint_to_task[ep]: {endpoint_to_task[dep] for dep in deps}
+                      for ep, deps in self._ws.automation_dependencies().items()}
+    save_ws = SaveWorkspace(self)
+    for task, deps in workspace_deps.items():
+      if not isinstance(task, Input):
+        deps.add(save_ws)
+    workspace_deps[save_ws] = set()
+    return _minimal_dag(workspace_deps)
+
 
 class WorkspaceSequenceInstance:
 
@@ -1329,6 +1411,9 @@ class WorkspaceSequenceInstance:
     r = self._lk.get_directory_entry(path)
     return r.exists and r.isWorkspace
 
+  def snapshot_path_for_output(self, output: str) -> str:
+    return self._wss.output_sequences()[output].snapshot_name(self._date)
+
   def wrapper_ws(self) -> Workspace:
     lk = self._lk
 
@@ -1344,7 +1429,7 @@ class WorkspaceSequenceInstance:
           else self._wss._ws(*inputs, **self._wss._params))
       ws_as_box.register(se_collector)
       for output in self._wss._ws.outputs():
-        out_path = self._wss.output_sequences()[output].snapshot_name(self._date)
+        out_path = self.snapshot_path_for_output(output)
         ws_as_box[output].saveToSnapshot(path=out_path).register(se_collector)
 
     return ws_instance
@@ -1354,7 +1439,7 @@ class WorkspaceSequenceInstance:
     ws = self.wrapper_ws()
     self._lk.save_workspace_recursively(ws, self.wrapper_folder_name())
 
-  def run_input(self, input_name):
+  def run_input(self, input_name: str) -> None:
     ws_name = f'Workspace for {self._date}'
     lk = self._lk
 
@@ -1368,9 +1453,22 @@ class WorkspaceSequenceInstance:
     input_ws.save(folder)
     input_ws.trigger_all_side_effects()
 
-  def run_all_inputs(self):
+  def run_all_inputs(self) -> None:
     for input_name in self._wss.input_names():
       self.run_input(input_name)
+
+  def run_output(self, name: str) -> None:
+    path = self.snapshot_path_for_output(name)
+    ws = self.wrapper_ws()
+    for box_path in ws.side_effect_paths():
+      if box_path.base.parameters['name'] == path:
+        ws.trigger_saved(box_path, self.wrapper_folder_name())
+        break
+    else:
+      raise Exception(f'No output with name {name}')
+
+  def trigger(self, box_path: BoxPath) -> None:
+    self.wrapper_ws().trigger_saved(box_path, self.wrapper_folder_name())
 
   def run(self) -> None:
     '''We trigger all the side effect boxes of the ws.
@@ -1447,7 +1545,8 @@ def _minimal_dag(g: Dict[T, Set[T]]) -> Dict[T, Set[T]]:
   This function creates another dependency graph which has the same implicit dependencies
   as the original one (if a depends on b and b depends on c, a implicitly depends on c) but
   is minimal for edge exclusion, i.e. with any explicit dependency deleted the resulting
-  graph will miss some implicit or explicit dependency from the original graph.
+  graph will miss some implicit or explicit dependency from the original graph. The result
+  list the nodes in topoligical order.
 
   Formally:
   g = (V, E)
@@ -1459,14 +1558,17 @@ def _minimal_dag(g: Dict[T, Set[T]]) -> Dict[T, Set[T]]:
   ∀ (v, v') ∈ VxV: (v, v') ∈ E* ⇔ there is a directed path from v to v' in g
   '''
   transitive_closure: Dict[T, Set[T]] = dict()
+  order: List[T] = []
   for group in _topological_sort(g):
+    order.extend(group)
     for elem in group:
       deps = g[elem]
       transitive_closure[elem] = deps
       for d in deps:
         transitive_closure[elem] = transitive_closure[elem] | transitive_closure[d]
-  min_dag: Dict[T, Set[T]] = {n: set() for n in g}
-  for n in g:
+  min_dag: Dict[T, Set[T]] = OrderedDict()
+  for n in order:
+    min_dag[n] = set()
     deps = g[n]
     for m in deps:
       is_direct_dependency = True
