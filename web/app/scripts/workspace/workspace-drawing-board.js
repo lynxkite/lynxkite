@@ -537,6 +537,19 @@ angular.module('biggraph')
             return head.toLowerCase() + tail.map(x => x[0].toUpperCase() + x.slice(1)).join('');
           }
 
+          function removeNonSelectedInputs(boxes) {
+            var selected = boxes.map(x => x.id);
+            for (var i = 0; i < boxes.length; i++) {
+              var box = boxes[i];
+              var inputKeys = Object.keys(box.inputs);
+              inputKeys.forEach(function(key) {
+                if (!selected.includes(box.inputs[key].boxId)) {
+                  delete box.inputs[key];
+                }
+              });
+            }
+          }
+
           function unconnected(boxes) {
             var input_boxes = [];
             for (var i = 0; i < boxes.length; i++) {
@@ -583,8 +596,23 @@ angular.module('biggraph')
           }
 
           function topsort(deps) {
-            // TODO: add real implementation
-            return Object.keys(deps);
+            var sorted = [];
+            /* eslint-disable no-constant-condition */
+            while (true) {
+              var next_group = Object.keys(deps).filter(x => deps[x].length === 0);
+              if (next_group.length === 0) {
+                break;
+              }
+              sorted.push.apply(sorted, next_group); // extend
+              var updated_deps = {};
+              Object.keys(deps).forEach(function(key) {
+                if (!next_group.includes(key)) {
+                  updated_deps[key] = deps[key].filter(x => !next_group.includes(x));
+                }
+              });
+              deps = updated_deps;
+            }
+            return sorted;
           }
 
           function box_to_python(box) {
@@ -605,7 +633,7 @@ angular.module('biggraph')
             inputPlugs: x.metadata.inputs,
             category: x.metadata.categoryId})
           );
-
+          removeNonSelectedInputs(prepared);
           var unconnectedInputs = unconnected(prepared);
           var boxesToGenerate = unconnectedInputs.concat(prepared);
           var deps = dependencies(boxesToGenerate);
