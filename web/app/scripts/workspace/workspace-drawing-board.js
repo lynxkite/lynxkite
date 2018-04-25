@@ -616,8 +616,48 @@ angular.module('biggraph')
           }
 
           function box_to_python(box) {
-            // TODO: add real implementation
-            return box.pythonOp;
+
+            function quoteParamValue(value) {
+              if (/\n/g.test(value)) {
+                return `'''${value}'''`;
+              } else {
+                return `'${value}'`;
+              }
+            }
+
+            function paramsToStr(params, isParametric) {
+              var paramStrings = [];
+              Object.keys(params).forEach(function(key) {
+                var quoted = quoteParamValue(params[key]);
+                if (isParametric) {
+                  paramStrings.push(`${key}=pp(${quoted})`);
+                } else {
+                  paramStrings.push(`${key}=${quoted}`);
+                }
+              });
+
+              return paramStrings.join(', ');
+            }
+
+            function parameters() {
+              return paramsToStr(box.parameters, false);
+            }
+
+            function parametricParameters() {
+              return paramsToStr(box.parametricParameters, true);
+            }
+
+            function inputs() {
+              // TODO: handle multioutput boxes
+              return box.inputPlugs.map(x => `${box.inputs[x].boxId}`).join(', ');
+            }
+
+            var i = inputs();
+            var p = parameters();
+            var pp = parametricParameters();
+            var args = [i, p, pp].filter(x => x);
+            var code = `${box.id} = lk.${box.pythonOp}(${args.join(', ')})`;
+            return code;
           }
 
           // Custom boxes are not supported
