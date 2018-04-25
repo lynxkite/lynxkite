@@ -249,3 +249,5 @@ class TestDagCreation(unittest.TestCase):
     self.assertEqual(sum(isinstance(t, lynx.kite.SaveWorkspace) for t in inputs_and_save), 1)
     for t in order:
       t.run(test_date)
+    for o in wss.output_sequences().values():
+      self.assertTrue(lynx.kite.TableSnapshotRecipe(o).is_ready(lk, test_date))
