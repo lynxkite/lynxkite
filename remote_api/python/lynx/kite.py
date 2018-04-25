@@ -1248,6 +1248,7 @@ class RecipeWithDefault(InputRecipe):
 class Task:
   def __init__(self, wss: 'WorkspaceSequence') -> None:
     self._wss = wss
+    self._lk = wss.lk()
 
   def _ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     return self._wss.ws_for_date(date)
@@ -1269,6 +1270,9 @@ class Input(Task):
 
   def run(self, date: datetime.datetime) -> None:
     wss_instance = self._ws_for_date(date)
+    self._lk.remove_name(_normalize_path(f'{wss_instance.inputs_folder_name()}/{self._name()}'),
+                         force=True)
+    self._lk.remove_name(wss_instance.snapshot_path_for_input(self._name()), force=True)
     wss_instance.run_input(self._name())
 
 
@@ -1282,6 +1286,7 @@ class Output(Task):
 
   def run(self, date: datetime.datetime) -> None:
     wss_instance = self._ws_for_date(date)
+    self._lk.remove_name(wss_instance.snapshot_path_for_output(self._name()), force=True)
     wss_instance.run_output(self._name())
 
 
@@ -1291,13 +1296,17 @@ class Triggerable(Task):
     self._box_path = box_path
 
   def run(self, date: datetime.datetime) -> None:
+    self._lk.remove_name(self._box_path.base.parameters['path'], force=True)
     wss_instance = self._ws_for_date(date)
     wss_instance.trigger(self._box_path)
 
 
 class SaveWorkspace(Task):
   def run(self, date: datetime.datetime) -> None:
-    self._ws_for_date(date).save()
+    ws_for_date = self._ws_for_date(date)
+    name = ws_for_date.full_name()
+    self._wss.lk().remove_name(name, force=True)
+    ws_for_date.save()
 
 
 def _new_task(wss: 'WorkspaceSequence', box_path: BoxPath) -> Task:
@@ -1331,11 +1340,11 @@ class WorkspaceSequence:
     self._input_recipes = dict(zip(self._input_names, input_recipes))
     self._input_sequences: Dict[str, TableSnapshotSequence] = {}
     for inp in self._input_names:
-      location = _normalize_path(self._lk_root + '/inputs/' + inp)
+      location = _normalize_path(self._lk_root + '/input-snapshots/' + inp)
       self._input_sequences[inp] = TableSnapshotSequence(location, self._schedule)
     self._output_sequences: Dict[str, TableSnapshotSequence] = {}
     for output in self._ws.outputs():
-      location = _normalize_path(self._lk_root + '/outputs/' + output)
+      location = _normalize_path(self._lk_root + '/outputs-snapshots/' + output)
       self._output_sequences[output] = TableSnapshotSequence(location, self._schedule)
 
   def output_sequences(self) -> Dict[str, TableSnapshotSequence]:
@@ -1393,18 +1402,17 @@ class WorkspaceSequenceInstance:
     self._lk = self._wss.lk()
     self._date = date
 
-  def wrapper_name(self) -> str:
-    return 'wrapper_for_{}'.format(self._date)
+  def base_folder_name(self):
+    return _normalize_path(f'{self._wss.lk_root()}/workspaces/{self._date}')
 
-  def folder_name(self) -> str:
-    return 'workspaces_for_{}'.format(self._date)
+  def inputs_folder_name(self):
+    return f'{self.base_folder_name()}/inputs'
 
-  def wrapper_folder_name(self) -> str:
-    return '/'.join([self._wss.lk_root(), 'workspaces', self.folder_name()])
+  def wrapper_folder_name(self):
+    return f'{self.base_folder_name()}/main'
 
   def full_name(self) -> str:
-    name = '/'.join([self.wrapper_folder_name(), self.wrapper_name()])
-    return _normalize_path(name)
+    return f'{self.wrapper_folder_name()}/main'
 
   def is_saved(self) -> bool:
     path = self.full_name()
@@ -1414,10 +1422,13 @@ class WorkspaceSequenceInstance:
   def snapshot_path_for_output(self, output: str) -> str:
     return self._wss.output_sequences()[output].snapshot_name(self._date)
 
+  def snapshot_path_for_input(self, name: str) -> str:
+    return self._wss.input_sequences()[name].snapshot_name(self._date)
+
   def wrapper_ws(self) -> Workspace:
     lk = self._lk
 
-    @lk.workspace_with_side_effects(name=self.wrapper_name())
+    @lk.workspace_with_side_effects(name='main')
     def ws_instance(se_collector):
       inputs = [
           self._lk.importSnapshot(
@@ -1440,17 +1451,15 @@ class WorkspaceSequenceInstance:
     self._lk.save_workspace_recursively(ws, self.wrapper_folder_name())
 
   def run_input(self, input_name: str) -> None:
-    ws_name = f'Workspace for {self._date}'
     lk = self._lk
 
-    @lk.workspace_with_side_effects(name=ws_name)
+    @lk.workspace_with_side_effects(name=input_name)
     def input_ws(se_collector):
       input_state = self._wss.input_recipes()[input_name].build_boxes(self._lk, self._date)
-      input_state.saveToSnapshot(path=(self._wss.input_sequences()[input_name]
-                                       .snapshot_name(self._date))).register(se_collector)
+      path = self.snapshot_path_for_input(input_name)
+      input_state.saveToSnapshot(path=path).register(se_collector)
 
-    folder = _normalize_path('/'.join([self._wss.lk_root(), 'input workspaces', input_name]))
-    input_ws.save(folder)
+    input_ws.save(self.inputs_folder_name())
     input_ws.trigger_all_side_effects()
 
   def run_all_inputs(self) -> None:

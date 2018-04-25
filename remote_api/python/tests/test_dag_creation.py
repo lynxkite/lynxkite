@@ -236,11 +236,12 @@ class TestDagCreation(unittest.TestCase):
     ws = self.create_complex_test_workspace()
     lk = ws.lk()
     test_date = datetime(2018, 1, 2)
+    lk.remove_name('eq_table_seq', force=True)
     tss = lynx.kite.TableSnapshotSequence('eq_table_seq', '0 0 * * *')
     lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, test_date)
     input_recipe = lynx.kite.TableSnapshotRecipe(tss)
     wss = lynx.kite.WorkspaceSequence(ws, schedule='0 0 * * *', start_date=datetime(2018, 1, 1),
-                                      lk_root='ws_test_dag', input_recipes=[input_recipe] * 3,
+                                      lk_root='ws_seqence_to_dag', input_recipes=[input_recipe] * 3,
                                       params={}, dfs_root='')
     tasks = wss.to_dag()
     order = [t for t in tasks]
@@ -251,3 +252,6 @@ class TestDagCreation(unittest.TestCase):
       t.run(test_date)
     for o in wss.output_sequences().values():
       self.assertTrue(lynx.kite.TableSnapshotRecipe(o).is_ready(lk, test_date))
+    # is everything idempotent?
+    for t in order:
+      t.run(test_date)
