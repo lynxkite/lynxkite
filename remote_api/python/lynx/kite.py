@@ -1316,6 +1316,7 @@ def _new_task(wss: 'WorkspaceSequence', box_path: BoxPath) -> Task:
   elif op == 'output':
     return Output(wss, box_path)
   else:
+    assert box_path.base.operation == 'saveToSnapshot', 'Unknown task type.'
     return Triggerable(wss, box_path)
 
 
