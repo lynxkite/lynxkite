@@ -1,10 +1,21 @@
 import unittest
 import time
+from datetime import datetime
 import lynx.kite
 
 
-def boxPathToName(box_path):
-  return box_path.base.parameters['name']
+def _box_path_to_str(box_path):
+  box = box_path.base
+  op = box.operation
+  p = box.parameters
+  if op in ['sql1', 'sql2']:
+    return f'sql {p["sql"]}'
+  elif op == 'saveToSnapshot':
+    return f'snapshot {p["path"]}'
+  elif op in ['input', 'output']:
+    return f'{op} {p["name"]}'
+  else:
+    raise NotImplementedError(f'No str conversion for {op}')
 
 
 class TestDagCreation(unittest.TestCase):
@@ -63,32 +74,32 @@ class TestDagCreation(unittest.TestCase):
 
     @lk.workspace()
     def forker(table):
-      result = table.sql('select * from input', name='forker-sql')
+      result = table.sql('select * from input')
       return dict(fork1=result, fork2=result)
 
     @lk.workspace_with_side_effects()
     def snapshotter(se_collector, t1_snap, t2_snap):
-      t2_snap.saveToSnapshot(path='SB1', name='SB1').register(se_collector)
+      t2_snap.saveToSnapshot(path='SB1').register(se_collector)
       tmp = forker(t1_snap)
-      tmp['fork2'].saveToSnapshot(path='SB2', name='SB2').register(se_collector)
+      tmp['fork2'].saveToSnapshot(path='SB2').register(se_collector)
       return dict(out_snap=tmp['fork1'])
 
     @lk.workspace()
     def trivial():
-      result = lk.createExampleGraph().sql('select * from vertices', name='trivial-sql')
+      result = lk.createExampleGraph().sql('select * from vertices')
       return dict(out_triv=result)
 
     @lk.workspace()
     def combiner(t1_comb, t2_comb):
-      tmp = t1_comb.sql('select * from input', name='combiner-select')
-      tmp2 = lk.sql('select * from one cross join two', tmp, t2_comb, name='combiner-join')
+      tmp = t1_comb.sql('select * from input')
+      tmp2 = lk.sql('select * from one cross join two', tmp, t2_comb)
       return dict(out1_comb=tmp, out2_comb=tmp2)
 
     @lk.workspace_with_side_effects()
     def main_workspace(se_collector, i1, i2, i3):
       tmp = snapshotter(i1, i2)
       tmp.register(se_collector)
-      internal = i3.sql('select * from input', name='main-select')
+      internal = i3.sql('select * from input')
       last = combiner(tmp, internal)
       return dict(o1=last['out1_comb'], o2=last['out2_comb'], o3=trivial())
 
@@ -100,16 +111,16 @@ class TestDagCreation(unittest.TestCase):
     parents = {}
     for box in main_workspace.output_boxes():
       ep = lynx.kite.BoxPath(box)
-      parents[boxPathToName(ep)] = [boxPathToName(bp) for bp in ep.parents()]
+      parents[_box_path_to_str(ep)] = [_box_path_to_str(bp) for bp in ep.parents()]
     for ep in main_workspace.side_effect_paths():
-      parents[boxPathToName(ep)] = [boxPathToName(bp) for bp in ep.parents()]
+      parents[_box_path_to_str(ep)] = [_box_path_to_str(bp) for bp in ep.parents()]
 
     expected = {
-        'o1': ['out1_comb'],
-        'o2': ['out2_comb'],
-        'o3': ['out_triv'],
-        'SB1': ['t2_snap'],
-        'SB2': ['fork2'],
+        'output o1': ['output out1_comb'],
+        'output o2': ['output out2_comb'],
+        'output o3': ['output out_triv'],
+        'snapshot SB1': ['input t2_snap'],
+        'snapshot SB2': ['output fork2'],
     }
 
     self.assertEqual(parents, expected)
@@ -120,15 +131,15 @@ class TestDagCreation(unittest.TestCase):
     actual = dict()
     for box in main_workspace.output_boxes():
       ep = lynx.kite.BoxPath(box)
-      actual[boxPathToName(ep)] = boxPathToName(ep.non_trivial_parent_of_endpoint())
+      actual[_box_path_to_str(ep)] = _box_path_to_str(ep.non_trivial_parent_of_endpoint())
     for ep in main_workspace.side_effect_paths():
-      actual[boxPathToName(ep)] = boxPathToName(ep.non_trivial_parent_of_endpoint())
+      actual[_box_path_to_str(ep)] = _box_path_to_str(ep.non_trivial_parent_of_endpoint())
     expected = {
-        'o1': 'combiner-select',
-        'o2': 'combiner-join',
-        'o3': 'trivial-sql',
-        'SB1': 'i2',
-        'SB2': 'forker-sql',
+        'output o1': 'sql select * from input',
+        'output o2': 'sql select * from one cross join two',
+        'output o3': 'sql select * from vertices',
+        'snapshot SB1': 'input i2',
+        'snapshot SB2': 'sql select * from input',
     }
     self.assertEqual(actual, expected)
 
@@ -148,17 +159,17 @@ class TestDagCreation(unittest.TestCase):
 
   def test_endpoint_dependencies(self):
     main_workspace = self.create_complex_test_workspace()
-    dependencies = {boxPathToName(ep): sorted([boxPathToName(dep) for dep in deps])
+    dependencies = {_box_path_to_str(ep): sorted([_box_path_to_str(dep) for dep in deps])
                     for ep, deps in main_workspace.automation_dependencies().items()}
     expected = {
-        'i1': [],
-        'i2': [],
-        'i3': [],
-        'o1': ['SB2', 'i1'],
-        'o2': ['SB2', 'i1', 'i3', 'o1'],
-        'SB1': ['i2'],
-        'SB2': ['i1'],
-        'o3': [],
+        'input i1': [],
+        'input i2': [],
+        'input i3': [],
+        'output o1': ['input i1', 'snapshot SB2'],
+        'output o2': ['input i1', 'input i3', 'output o1', 'snapshot SB2'],
+        'snapshot SB1': ['input i2'],
+        'snapshot SB2': ['input i1'],
+        'output o3': [],
     }
     self.assertEqual(dependencies, expected)
 
@@ -217,6 +228,24 @@ class TestDagCreation(unittest.TestCase):
 
     big_workspace.save('big folder')
     start_at = time.time()
-    dep = big_workspace.automation_dependencies()
+    big_workspace.automation_dependencies()
     elapsed = time.time() - start_at
     print(f'Dependency computation ran in {elapsed}s')
+
+  def test_workspace_sequence_to_dag(self):
+    ws = self.create_complex_test_workspace()
+    lk = ws.lk()
+    test_date = datetime(2018, 1, 2)
+    tss = lynx.kite.TableSnapshotSequence('eq_table_seq', '0 0 * * *')
+    lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, test_date)
+    input_recipe = lynx.kite.TableSnapshotRecipe(tss)
+    wss = lynx.kite.WorkspaceSequence(ws, schedule='0 0 * * *', start_date=datetime(2018, 1, 1),
+                                      lk_root='ws_test_dag', input_recipes=[input_recipe] * 3,
+                                      params={}, dfs_root='')
+    tasks = wss.to_dag()
+    order = [t for t in tasks]
+    inputs_and_save = order[:4]
+    self.assertEqual(sum(isinstance(t, lynx.kite.Input) for t in inputs_and_save), 3)
+    self.assertEqual(sum(isinstance(t, lynx.kite.SaveWorkspace) for t in inputs_and_save), 1)
+    for t in order:
+      t.run(test_date)
