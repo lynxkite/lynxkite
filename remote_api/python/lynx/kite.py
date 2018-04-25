@@ -1461,14 +1461,19 @@ class WorkspaceSequenceInstance:
     path = self.snapshot_path_for_output(name)
     ws = self.wrapper_ws()
     for box_path in ws.side_effect_paths():
-      if box_path.base.parameters['name'] == path:
+      if box_path.base.parameters['path'] == path:
         ws.trigger_saved(box_path, self.wrapper_folder_name())
         break
     else:
       raise Exception(f'No output with name {name}')
 
   def trigger(self, box_path: BoxPath) -> None:
-    self.wrapper_ws().trigger_saved(box_path, self.wrapper_folder_name())
+    '''``box_path`` is relative to the original workspace'''
+    wrapper_ws = self.wrapper_ws()
+    wrapped_ws_as_box = [bp.stack[0] for bp in wrapper_ws.side_effect_paths() if bp.stack][0]
+    full_box_path = box_path.add_box_as_prefix(wrapped_ws_as_box)
+    wrapper_ws.trigger_saved(full_box_path,
+                             self.wrapper_folder_name())
 
   def run(self) -> None:
     '''We trigger all the side effect boxes of the ws.
