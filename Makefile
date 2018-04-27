@@ -47,7 +47,7 @@ $(pip): python_requirements.txt
 	ecosystem/docker/base/build.sh $(VERSION) && touch $@
 .build/ecosystem-docker-release-done: \
 		.build/ecosystem-docker-base-done $(shell $(find) ecosystem/docker)
-	ecosystem/docker/release/build.sh $(VERSION) && ecosystem/docker/release/bundle.sh $(VERSION) && touch $@
+	ecosystem/docker/release/build.sh $(VERSION) && touch $@
 .build/shell_ui-test-passed: $(shell $(find) shell_ui)
 	shell_ui/test.sh && touch $@
 
