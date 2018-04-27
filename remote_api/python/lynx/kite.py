@@ -1270,7 +1270,7 @@ class Input(Task):
 
   def run(self, date: datetime.datetime) -> None:
     wss_instance = self._ws_for_date(date)
-    self._lk.remove_name(_normalize_path(f'{wss_instance.inputs_folder_name()}/{self._name()}'),
+    self._lk.remove_name(_normalize_path(f'{wss_instance.folder_of_input_workspaces()}/{self._name()}'),
                          force=True)
     self._lk.remove_name(wss_instance.snapshot_path_for_input(self._name()), force=True)
     wss_instance.run_input(self._name())
@@ -1316,7 +1316,7 @@ def _new_task(wss: 'WorkspaceSequence', box_path: BoxPath) -> Task:
   elif op == 'output':
     return Output(wss, box_path)
   else:
-    assert box_path.base.operation == 'saveToSnapshot', 'Unknown task type.'
+    assert op == 'saveToSnapshot', 'Unknown task type.'
     return Triggerable(wss, box_path)
 
 
@@ -1345,7 +1345,7 @@ class WorkspaceSequence:
       self._input_sequences[inp] = TableSnapshotSequence(location, self._schedule)
     self._output_sequences: Dict[str, TableSnapshotSequence] = {}
     for output in self._ws.outputs():
-      location = _normalize_path(self._lk_root + '/outputs-snapshots/' + output)
+      location = _normalize_path(self._lk_root + '/output-snapshots/' + output)
       self._output_sequences[output] = TableSnapshotSequence(location, self._schedule)
 
   def output_sequences(self) -> Dict[str, TableSnapshotSequence]:
@@ -1381,7 +1381,7 @@ class WorkspaceSequence:
   def to_dag(self) -> Dict[Task, Set[Task]]:
     '''
     Returns an ordered dict of the tasks and their dependencies to run this workspace
-    for a given date.
+    for a given date. The order of the dict is the topological order of the induced graph.
     '''
 
     def new_task(box_path): return _new_task(self, box_path)
@@ -1406,7 +1406,7 @@ class WorkspaceSequenceInstance:
   def base_folder_name(self):
     return _normalize_path(f'{self._wss.lk_root()}/workspaces/{self._date}')
 
-  def inputs_folder_name(self):
+  def folder_of_input_workspaces(self):
     return f'{self.base_folder_name()}/inputs'
 
   def wrapper_folder_name(self):
@@ -1460,7 +1460,7 @@ class WorkspaceSequenceInstance:
       path = self.snapshot_path_for_input(input_name)
       input_state.saveToSnapshot(path=path).register(se_collector)
 
-    input_ws.save(self.inputs_folder_name())
+    input_ws.save(self.folder_of_input_workspaces())
     input_ws.trigger_all_side_effects()
 
   def run_all_inputs(self) -> None:
@@ -1561,7 +1561,7 @@ def _minimal_dag(g: Dict[T, Set[T]]) -> Dict[T, Set[T]]:
   as the original one (if a depends on b and b depends on c, a implicitly depends on c) but
   is minimal for edge exclusion, i.e. with any explicit dependency deleted the resulting
   graph will miss some implicit or explicit dependency from the original graph. The result
-  list the nodes in topoligical order.
+  lists the nodes in topoligical order.
 
   Formally:
   g = (V, E)
