@@ -1260,44 +1260,32 @@ class Task:
     raise NotImplementedError()
 
 
-class Input(Task):
+class BoxTask(Task):
   def __init__(self, wss: 'WorkspaceSequence', box_path: BoxPath) -> None:
     super().__init__(wss)
     self._box_path = box_path
 
-  def _name(self):
-    return self._box_path.base.parameters['name']
+  def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
+    raise NotImplementedError()
 
   def run(self, date: datetime.datetime) -> None:
-    wss_instance = self._ws_for_date(date)
-    self._lk.remove_name(_normalize_path(f'{wss_instance.folder_of_input_workspaces()}/{self._name()}'),
-                         force=True)
-    self._lk.remove_name(wss_instance.snapshot_path_for_input(self._name()), force=True)
-    wss_instance.run_input(self._name())
+    self._run_on_instance(self._ws_for_date(date))
 
 
-class Output(Task):
-  def __init__(self, wss: 'WorkspaceSequence', box_path: BoxPath) -> None:
-    super().__init__(wss)
-    self._box_path = box_path
-
-  def _name(self):
-    return self._box_path.base.parameters['name']
-
-  def run(self, date: datetime.datetime) -> None:
-    wss_instance = self._ws_for_date(date)
-    self._lk.remove_name(wss_instance.snapshot_path_for_output(self._name()), force=True)
-    wss_instance.run_output(self._name())
+class Input(BoxTask):
+  def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
+    name = self._box_path.base.parameters['name']
+    wss_instance.run_input(name)
 
 
-class Triggerable(Task):
-  def __init__(self, wss: 'WorkspaceSequence', box_path: BoxPath) -> None:
-    super().__init__(wss)
-    self._box_path = box_path
+class Output(BoxTask):
+  def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
+    name = self._box_path.base.parameters['name']
+    wss_instance.run_output(name)
 
-  def run(self, date: datetime.datetime) -> None:
-    self._lk.remove_name(self._box_path.base.parameters['path'], force=True)
-    wss_instance = self._ws_for_date(date)
+
+class Triggerable(BoxTask):
+  def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
     wss_instance.trigger(self._box_path)
 
 
@@ -1460,6 +1448,9 @@ class WorkspaceSequenceInstance:
       path = self.snapshot_path_for_input(input_name)
       input_state.saveToSnapshot(path=path).register(se_collector)
 
+    path = f'{self.folder_of_input_workspaces()}/{input_name}'
+    lk.remove_name(_normalize_path(path), force=True)
+    lk.remove_name(self.snapshot_path_for_input(input_name), force=True)
     input_ws.save(self.folder_of_input_workspaces())
     input_ws.trigger_all_side_effects()
 
@@ -1469,6 +1460,7 @@ class WorkspaceSequenceInstance:
 
   def run_output(self, name: str) -> None:
     path = self.snapshot_path_for_output(name)
+    self._lk.remove_name(path, force=True)
     ws = self.wrapper_ws()
     for box_path in ws.side_effect_paths():
       if box_path.base.parameters['path'] == path:

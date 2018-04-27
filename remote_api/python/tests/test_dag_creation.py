@@ -252,6 +252,8 @@ class TestDagCreation(unittest.TestCase):
       t.run(test_date)
     for o in wss.output_sequences().values():
       self.assertTrue(lynx.kite.TableSnapshotRecipe(o).is_ready(lk, test_date))
-    # is everything idempotent?
+    # is everything idempotent apart from triggerables?
+    lk.remove_name('SB1')
+    lk.remove_name('SB2')
     for t in order:
       t.run(test_date)
