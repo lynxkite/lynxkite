@@ -87,6 +87,10 @@ Set up web build tools:
     cp conf/kiterc_template ~/.kiterc
     vi ~/.kiterc # Change defaults if necessary.
 
+## Alternative way to setup LynxKite using a docker container
+
+See [SETUP_DOCKER.md](SETUP_DOCKER.md).
+
 ## Run LynxKite
 
 To build and run LynxKite invoke the `run.sh` shell script.
