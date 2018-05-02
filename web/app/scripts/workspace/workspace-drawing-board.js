@@ -8,7 +8,7 @@ angular.module('biggraph')
   'workspaceDrawingBoard',
   function(
     environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope, $q,
-    $location, util, longPoll, pythonUtil) {
+    $location, util, longPoll, pythonCodeGenerator) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -511,8 +511,7 @@ angular.module('biggraph')
         };
 
         scope.saveSelectedBoxesAsPython = function() {
-          let p = new pythonUtil();
-          p.saveAsPython(this.workspace, this.selectedBoxIds);
+          pythonCodeGenerator.saveAsPython(this.workspace, this.selectedBoxIds);
         };
 
         scope.diveUp = function() {
