@@ -168,7 +168,9 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($modal) {
 
     const generatedCode = [];
     for (let boxId of sorted) {
-      generatedCode.push(boxToPython(boxMap[boxId]));
+      if (boxId !== 'anchor') {
+        generatedCode.push(boxToPython(boxMap[boxId]));
+      }
     }
     const pythonCode = generatedCode.join('\n');
 
