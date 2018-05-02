@@ -16,6 +16,10 @@ available.
 +++<label class="btn btn-default"><i class="fa fa-superpowers"></i></label>+++ Save selection as custom box::
 Creates a custom box of the selected boxes. Only available if at least one box is selected.
 
++++<label class="btn btn-default"><i class="fa fa-code"></i></label>+++ Save as Python code::
+Generates Python API code for the selected boxes. If nothing is selected,
+the whole workspace is used.
+
 +++<label class="btn btn-default"><i class="fa fa-trash-o"></i></label>+++ Delete selected boxes::
 Removes the selected boxes. Only available if at least one box is selected.
 
@@ -44,5 +48,3 @@ new copy even if you did not have for the original.
 
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-remove"></i></label>+++ Close workspace::
 Closes the workspace.
-
-
