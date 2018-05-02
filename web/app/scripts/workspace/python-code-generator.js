@@ -43,34 +43,25 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($modal) {
     }
 
     function unconnected(boxes) {
-      const inputBoxes = [];
+      const dummyInputs = [];
       for (let box of boxes) {
         for (let plug of box.inputPlugs) {
           if (!box.inputs[plug]) {
             const inputId = 'input_' + plug + '_for_' + box.id;
             // Now we connect it to a dummy input.
             box.inputs[plug] = {boxId: inputId, id: 'input'};
-            inputBoxes.push({
-              id: inputId,
-              op: 'Input',
-              pythonOp: 'input',
-              parameters: {name: inputId},
-              parametricParameters: {},
-              inputs: {},
-              inputPlugs: [],
-              outputPlugs: ['input'],
-              category: 'Workflow'});
+            dummyInputs.push(inputId);
           }
         }
       }
-      return inputBoxes;
+      return dummyInputs;
     }
 
-    function dependencies(boxes) {
+    function dependencies(boxes, dummyInputs) {
       const deps = {};
       for (let box of boxes) {
         const fromId = box.id;
-        deps[fromId] = Object.values(box.inputs).map(b => b.boxId);
+        deps[fromId] = Object.values(box.inputs).filter(x => !dummyInputs.includes(x.boxId)).map(x => x.boxId);
       }
       return deps;
     }
@@ -169,10 +160,9 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($modal) {
       category: x.metadata.categoryId})
     );
     removeNonSelectedInputs(prepared);
-    const unconnectedInputs = unconnected(prepared);
-    const boxesToGenerate = unconnectedInputs.concat(prepared);
-    const deps = dependencies(boxesToGenerate);
-    const boxMap = mapping(boxesToGenerate);
+    const dummyInputs = unconnected(prepared);
+    const deps = dependencies(prepared, dummyInputs);
+    const boxMap = mapping(prepared);
     const sorted = topsort(deps);
 
     const generatedCode = [];
