@@ -1,6 +1,6 @@
 import unittest
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import lynx.kite
 
 
@@ -105,14 +105,28 @@ class TestDagCreation(unittest.TestCase):
 
     return main_workspace
 
+  test_date = datetime(2018, 1, 2)
+
+  def complex_workspace_sequence(self):
+    ws = self.create_complex_test_workspace()
+    lk = ws.lk()
+    lk.remove_name('eq_table_seq', force=True)
+    tss = lynx.kite.TableSnapshotSequence('eq_table_seq', '0 0 * * *')
+    lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, self.test_date)
+    input_recipe = lynx.kite.TableSnapshotRecipe(tss)
+    day_before = self.test_date - timedelta(days=1)
+    return lynx.kite.WorkspaceSequence(ws, schedule='0 0 * * *', start_date=day_before,
+                                       lk_root='ws_seqence_to_dag', input_recipes=[input_recipe] * 3,
+                                       params={}, dfs_root='')
+
   def test_atomic_parents(self):
     # test parent of terminal boxes
-    main_workspace = self.create_complex_test_workspace()
+    main_workspace = self.complex_workspace_sequence()
     parents = {}
-    for box in main_workspace.output_boxes():
+    for box in main_workspace._ws.output_boxes():
       ep = lynx.kite.BoxPath(box)
       parents[_box_path_to_str(ep)] = [_box_path_to_str(bp) for bp in ep.parents()]
-    for ep in main_workspace.side_effect_paths():
+    for ep in main_workspace._ws.side_effect_paths():
       parents[_box_path_to_str(ep)] = [_box_path_to_str(bp) for bp in ep.parents()]
 
     expected = {
@@ -158,7 +172,7 @@ class TestDagCreation(unittest.TestCase):
     self.assertEqual(last.to_dict(), expected)
 
   def test_endpoint_dependencies(self):
-    main_workspace = self.create_complex_test_workspace()
+    main_workspace = self.complex_workspace_sequence()
     dependencies = {_box_path_to_str(ep): sorted([_box_path_to_str(dep) for dep in deps])
                     for ep, deps in main_workspace.automation_dependencies().items()}
     expected = {
@@ -226,34 +240,29 @@ class TestDagCreation(unittest.TestCase):
       result = reducer(*[layers[2 * depth - 1][j] for j in range(1, 10)])
       return dict(final=result)
 
-    big_workspace.save('big folder')
+    wss = lynx.kite.WorkspaceSequence(big_workspace, schedule='0 0 * * *',
+                                      start_date=datetime(2018, 1, 1),
+                                      lk_root='big folder', input_recipes=[],
+                                      params={}, dfs_root='')
     start_at = time.time()
-    big_workspace.automation_dependencies()
+    wss.automation_dependencies()
     elapsed = time.time() - start_at
     print(f'Dependency computation ran in {elapsed}s')
 
   def test_workspace_sequence_to_dag(self):
-    ws = self.create_complex_test_workspace()
-    lk = ws.lk()
-    test_date = datetime(2018, 1, 2)
-    lk.remove_name('eq_table_seq', force=True)
-    tss = lynx.kite.TableSnapshotSequence('eq_table_seq', '0 0 * * *')
-    lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, test_date)
-    input_recipe = lynx.kite.TableSnapshotRecipe(tss)
-    wss = lynx.kite.WorkspaceSequence(ws, schedule='0 0 * * *', start_date=datetime(2018, 1, 1),
-                                      lk_root='ws_seqence_to_dag', input_recipes=[input_recipe] * 3,
-                                      params={}, dfs_root='')
+    wss = self.complex_workspace_sequence()
+    lk = wss._lk
     tasks = wss.to_dag()
     order = [t for t in tasks]
     inputs_and_save = order[:4]
     self.assertEqual(sum(isinstance(t, lynx.kite.Input) for t in inputs_and_save), 3)
     self.assertEqual(sum(isinstance(t, lynx.kite.SaveWorkspace) for t in inputs_and_save), 1)
     for t in order:
-      t.run(test_date)
+      t.run(self.test_date)
     for o in wss.output_sequences().values():
-      self.assertTrue(lynx.kite.TableSnapshotRecipe(o).is_ready(lk, test_date))
+      self.assertTrue(lynx.kite.TableSnapshotRecipe(o).is_ready(lk, self.test_date))
     # is everything idempotent apart from triggerables?
     lk.remove_name('SB1')
     lk.remove_name('SB2')
     for t in order:
-      t.run(test_date)
+      t.run(self.test_date)

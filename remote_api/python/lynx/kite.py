@@ -1078,6 +1078,9 @@ class Workspace:
   def inputs(self) -> List[str]:
     return list(self._inputs)
 
+  def input_boxes(self) -> List[AtomicBox]:
+    return self._input_boxes
+
   def outputs(self) -> List[str]:
     return list(self._outputs)
 
@@ -1099,36 +1102,6 @@ class Workspace:
   def __call__(self, *args, **kwargs) -> Box:
     inputs = dict(zip(self.inputs(), args))
     return _new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
-
-  def automation_endpoints(self) -> List[BoxPath]:
-    '''Returns the endpoints, relevant in automation.
-
-    The endpoints correspond to top level input boxes, top level output boxes and
-    side effect boxes.
-    '''
-    inputs = [BoxPath(inp) for inp in self._input_boxes]
-    outputs = [BoxPath(outp) for outp in self._output_boxes]
-    side_effects = [se for se in self._side_effect_paths]
-    return inputs + outputs + side_effects
-
-  def automation_dependencies(self) -> Dict[BoxPath, Set[BoxPath]]:
-    endpoints = self.automation_endpoints()
-    # One NTAP (non-trivial atomic parent) can belong to multiple endpoints
-    endpoint_to_ntap = {ep: ep.non_trivial_parent_of_endpoint() for ep in endpoints}
-    ntap_to_endpoints: Dict[BoxPath, Set[BoxPath]] = defaultdict(set)
-    for ep in endpoints:
-      ntap_to_endpoints[endpoint_to_ntap[ep]].add(ep)
-    endpoint_dependencies: Dict[BoxPath, Set[BoxPath]] = {ep: set() for ep in endpoints}
-    for ep in endpoints:
-      to_process = deque(endpoint_to_ntap[ep].parents())
-      visited: Set[BoxPath] = set()
-      while to_process:
-        box_path = to_process.pop()
-        visited.add(box_path)
-        if box_path in ntap_to_endpoints.keys():
-          endpoint_dependencies[ep].update(ntap_to_endpoints.get(box_path, []))
-        to_process.extend([bp for bp in box_path.parents() if not bp in visited])
-    return endpoint_dependencies
 
   def _trigger_box(self, box_to_trigger: BoxPath, full_path: str):
     lk = self._lk
@@ -1366,6 +1339,36 @@ class WorkspaceSequence:
   def lk(self) -> LynxKite:
     return self._lk
 
+  def automation_endpoints(self) -> List[BoxPath]:
+    '''Returns the endpoints, relevant in automation.
+
+    The endpoints correspond to top level input boxes, top level output boxes and
+    side effect boxes.
+    '''
+    inputs = [BoxPath(inp) for inp in self._ws.input_boxes()]
+    outputs = [BoxPath(outp) for outp in self._ws.output_boxes()]
+    side_effects = [se for se in self._ws.side_effect_paths()]
+    return inputs + outputs + side_effects
+
+  def automation_dependencies(self) -> Dict[BoxPath, Set[BoxPath]]:
+    endpoints = self.automation_endpoints()
+    # One NTAP (non-trivial atomic parent) can belong to multiple endpoints
+    endpoint_to_ntap = {ep: ep.non_trivial_parent_of_endpoint() for ep in endpoints}
+    ntap_to_endpoints: Dict[BoxPath, Set[BoxPath]] = defaultdict(set)
+    for ep in endpoints:
+      ntap_to_endpoints[endpoint_to_ntap[ep]].add(ep)
+    endpoint_dependencies: Dict[BoxPath, Set[BoxPath]] = {ep: set() for ep in endpoints}
+    for ep in endpoints:
+      to_process = deque(endpoint_to_ntap[ep].parents())
+      visited: Set[BoxPath] = set()
+      while to_process:
+        box_path = to_process.pop()
+        visited.add(box_path)
+        if box_path in ntap_to_endpoints.keys():
+          endpoint_dependencies[ep].update(ntap_to_endpoints.get(box_path, []))
+        to_process.extend([bp for bp in box_path.parents() if not bp in visited])
+    return endpoint_dependencies
+
   def to_dag(self) -> Dict[Task, Set[Task]]:
     '''
     Returns an ordered dict of the tasks and their dependencies to run this workspace
@@ -1373,9 +1376,9 @@ class WorkspaceSequence:
     '''
 
     def new_task(box_path): return _new_task(self, box_path)
-    endpoint_to_task = {ep: new_task(ep) for ep in self._ws.automation_endpoints()}
+    endpoint_to_task = {ep: new_task(ep) for ep in self.automation_endpoints()}
     workspace_deps = {endpoint_to_task[ep]: {endpoint_to_task[dep] for dep in deps}
-                      for ep, deps in self._ws.automation_dependencies().items()}
+                      for ep, deps in self.automation_dependencies().items()}
     save_ws = SaveWorkspace(self)
     for task, deps in workspace_deps.items():
       if not isinstance(task, Input):
