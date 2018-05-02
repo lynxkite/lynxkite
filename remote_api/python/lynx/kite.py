@@ -1236,7 +1236,7 @@ class Task:
 class BoxTask(Task):
   def __init__(self, wss: 'WorkspaceSequence', box_path: BoxPath) -> None:
     super().__init__(wss)
-    self._box_path = box_path
+    self.box_path = box_path
 
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
     raise NotImplementedError()
@@ -1247,19 +1247,19 @@ class BoxTask(Task):
 
 class Input(BoxTask):
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
-    name = self._box_path.base.parameters['name']
+    name = self.box_path.base.parameters['name']
     wss_instance.run_input(name)
 
 
 class Output(BoxTask):
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
-    name = self._box_path.base.parameters['name']
+    name = self.box_path.base.parameters['name']
     wss_instance.run_output(name)
 
 
 class Triggerable(BoxTask):
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
-    wss_instance.trigger(self._box_path)
+    wss_instance.trigger(self.box_path)
 
 
 class SaveWorkspace(Task):
@@ -1268,17 +1268,6 @@ class SaveWorkspace(Task):
     name = ws_for_date.full_name()
     self._wss.lk().remove_name(name, force=True)
     ws_for_date.save()
-
-
-def _new_task(wss: 'WorkspaceSequence', box_path: BoxPath) -> Task:
-  op = box_path.base.operation
-  if op == 'input':
-    return Input(wss, box_path)
-  elif op == 'output':
-    return Output(wss, box_path)
-  else:
-    assert op == 'saveToSnapshot', 'Unknown task type.'
-    return Triggerable(wss, box_path)
 
 
 class WorkspaceSequence:
@@ -1339,35 +1328,44 @@ class WorkspaceSequence:
   def lk(self) -> LynxKite:
     return self._lk
 
-  def automation_endpoints(self) -> List[BoxPath]:
+  def _automation_tasks(self) -> List[Task]:
     '''Returns the endpoints, relevant in automation.
 
     The endpoints correspond to top level input boxes, top level output boxes and
     side effect boxes.
     '''
-    inputs = [BoxPath(inp) for inp in self._ws.input_boxes()]
-    outputs = [BoxPath(outp) for outp in self._ws.output_boxes()]
-    side_effects = [se for se in self._ws.side_effect_paths()]
-    return inputs + outputs + side_effects
+    inputs: List[Task] = [Input(self, BoxPath(inp)) for inp in self._ws.input_boxes()]
+    outputs: List[Task] = [Output(self, BoxPath(outp)) for outp in self._ws.output_boxes()]
+    side_effects: List[Task] = [Triggerable(self, se) for se in self._ws.side_effect_paths()]
+    save_ws: List[Task] = [SaveWorkspace(self)]
+    return inputs + outputs + side_effects + save_ws
 
-  def automation_dependencies(self) -> Dict[BoxPath, Set[BoxPath]]:
-    endpoints = self.automation_endpoints()
+  @staticmethod
+  def _add_box_based_dependencies(dag: Dict[Task, Set[Task]]) -> None:
+    box_tasks = [task for task in dag if isinstance(task, BoxTask)]
     # One NTAP (non-trivial atomic parent) can belong to multiple endpoints
-    endpoint_to_ntap = {ep: ep.non_trivial_parent_of_endpoint() for ep in endpoints}
-    ntap_to_endpoints: Dict[BoxPath, Set[BoxPath]] = defaultdict(set)
-    for ep in endpoints:
-      ntap_to_endpoints[endpoint_to_ntap[ep]].add(ep)
-    endpoint_dependencies: Dict[BoxPath, Set[BoxPath]] = {ep: set() for ep in endpoints}
-    for ep in endpoints:
-      to_process = deque(endpoint_to_ntap[ep].parents())
+    task_to_ntap = {task: task.box_path.non_trivial_parent_of_endpoint() for task in box_tasks}
+    ntap_to_tasks: Dict[BoxPath, Set[Task]] = defaultdict(set)
+    for task in box_tasks:
+      ntap_to_tasks[task_to_ntap[task]].add(task)
+    for task in box_tasks:
+      to_process = deque(task_to_ntap[task].parents())
       visited: Set[BoxPath] = set()
       while to_process:
         box_path = to_process.pop()
         visited.add(box_path)
-        if box_path in ntap_to_endpoints.keys():
-          endpoint_dependencies[ep].update(ntap_to_endpoints.get(box_path, []))
+        if box_path in ntap_to_tasks.keys():
+          dag[task].update(ntap_to_tasks[box_path])
         to_process.extend([bp for bp in box_path.parents() if not bp in visited])
-    return endpoint_dependencies
+
+  @staticmethod
+  def _add_save_workspace_deps(dag: Dict[Task, Set[Task]]) -> None:
+    save_ws_tasks = [task for task in dag if isinstance(task, SaveWorkspace)]
+    assert len(save_ws_tasks) == 1, 'Only one SaveWorkspace task is expected'
+    save_ws = save_ws_tasks[0]
+    for task, deps in dag.items():
+      if task != save_ws and not isinstance(task, Input):
+        deps.add(save_ws)
 
   def to_dag(self) -> Dict[Task, Set[Task]]:
     '''
@@ -1375,16 +1373,11 @@ class WorkspaceSequence:
     for a given date. The order of the dict is the topological order of the induced graph.
     '''
 
-    def new_task(box_path): return _new_task(self, box_path)
-    endpoint_to_task = {ep: new_task(ep) for ep in self.automation_endpoints()}
-    workspace_deps = {endpoint_to_task[ep]: {endpoint_to_task[dep] for dep in deps}
-                      for ep, deps in self.automation_dependencies().items()}
-    save_ws = SaveWorkspace(self)
-    for task, deps in workspace_deps.items():
-      if not isinstance(task, Input):
-        deps.add(save_ws)
-    workspace_deps[save_ws] = set()
-    return _minimal_dag(workspace_deps)
+    tasks = self._automation_tasks()
+    dag: Dict[Task, Set[Task]] = {task: set() for task in tasks}
+    self._add_box_based_dependencies(dag)
+    self._add_save_workspace_deps(dag)
+    return _minimal_dag(dag)
 
 
 class WorkspaceSequenceInstance:
