@@ -18,6 +18,15 @@ def _box_path_to_str(box_path):
     raise NotImplementedError(f'No str conversion for {op}')
 
 
+def _task_to_str(task):
+  if isinstance(task, lynx.kite.BoxTask):
+    return _box_path_to_str(task.box_path)
+  elif isinstance(task, lynx.kite.SaveWorkspace):
+    return 'save workspace'
+  else:
+    raise NotImplementedError(f'No str conversion for task {type(task)}')
+
+
 class TestDagCreation(unittest.TestCase):
 
   def get_test_workspace(self):
@@ -121,12 +130,12 @@ class TestDagCreation(unittest.TestCase):
 
   def test_atomic_parents(self):
     # test parent of terminal boxes
-    main_workspace = self.complex_workspace_sequence()
+    main_workspace = self.create_complex_test_workspace()
     parents = {}
-    for box in main_workspace._ws.output_boxes():
+    for box in main_workspace.output_boxes():
       ep = lynx.kite.BoxPath(box)
       parents[_box_path_to_str(ep)] = [_box_path_to_str(bp) for bp in ep.parents()]
-    for ep in main_workspace._ws.side_effect_paths():
+    for ep in main_workspace.side_effect_paths():
       parents[_box_path_to_str(ep)] = [_box_path_to_str(bp) for bp in ep.parents()]
 
     expected = {
@@ -171,10 +180,14 @@ class TestDagCreation(unittest.TestCase):
     expected = {'operation': 'fake input parent', 'params': {'name': 'i1'}, 'nested_in': None}
     self.assertEqual(last.to_dict(), expected)
 
-  def test_endpoint_dependencies(self):
-    main_workspace = self.complex_workspace_sequence()
-    dependencies = {_box_path_to_str(ep): sorted([_box_path_to_str(dep) for dep in deps])
-                    for ep, deps in main_workspace.automation_dependencies().items()}
+  def test_wss_box_dependencies(self):
+    self.maxDiff = None
+    wss = self.complex_workspace_sequence()
+    dag = {task: set() for task in wss._automation_tasks()
+           if not isinstance(task, lynx.kite.SaveWorkspace)}
+    wss._add_box_based_dependencies(dag)
+    dependencies = {_task_to_str(ep): sorted([_task_to_str(dep) for dep in deps])
+                    for ep, deps in dag.items()}
     expected = {
         'input i1': [],
         'input i2': [],
@@ -184,6 +197,23 @@ class TestDagCreation(unittest.TestCase):
         'snapshot SB1': ['input i2'],
         'snapshot SB2': ['input i1'],
         'output o3': [],
+    }
+    self.assertEqual(dependencies, expected)
+
+  def test_wss_to_dag(self):
+    dag = self.complex_workspace_sequence().to_dag()
+    dependencies = {_task_to_str(ep): sorted([_task_to_str(dep) for dep in deps])
+                    for ep, deps in dag.items()}
+    expected = {
+        'input i1': [],
+        'input i2': [],
+        'input i3': [],
+        'snapshot SB2': ['input i1', 'save workspace'],
+        'output o1': ['snapshot SB2'],
+        'snapshot SB1': ['input i2', 'save workspace'],
+        'output o2': ['input i3', 'output o1'],
+        'save workspace': [],
+        'output o3': ['save workspace'],
     }
     self.assertEqual(dependencies, expected)
 
@@ -245,24 +275,27 @@ class TestDagCreation(unittest.TestCase):
                                       lk_root='big folder', input_recipes=[],
                                       params={}, dfs_root='')
     start_at = time.time()
-    wss.automation_dependencies()
+    wss.to_dag()
     elapsed = time.time() - start_at
     print(f'Dependency computation ran in {elapsed}s')
 
-  def test_workspace_sequence_to_dag(self):
+  def test_wss_to_dag_order(self):
+    dag = self.complex_workspace_sequence().to_dag()
+    order = [t for t in dag]
+    for i, task in enumerate(order):
+      for previous in order[:i]:
+        self.assertFalse(task in dag[previous])
+
+  def test_wss_dag_is_runnable(self):
     wss = self.complex_workspace_sequence()
+    dag = wss.to_dag()
     lk = wss._lk
-    tasks = wss.to_dag()
-    order = [t for t in tasks]
-    inputs_and_save = order[:4]
-    self.assertEqual(sum(isinstance(t, lynx.kite.Input) for t in inputs_and_save), 3)
-    self.assertEqual(sum(isinstance(t, lynx.kite.SaveWorkspace) for t in inputs_and_save), 1)
-    for t in order:
+    for t in dag:
       t.run(self.test_date)
     for o in wss.output_sequences().values():
       self.assertTrue(lynx.kite.TableSnapshotRecipe(o).is_ready(lk, self.test_date))
     # is everything idempotent apart from triggerables?
     lk.remove_name('SB1')
     lk.remove_name('SB2')
-    for t in order:
+    for t in dag:
       t.run(self.test_date)
