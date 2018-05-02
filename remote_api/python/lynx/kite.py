@@ -1219,6 +1219,10 @@ class RecipeWithDefault(InputRecipe):
 
 
 class Task:
+  '''
+  The interface that represents a task used for automation.
+  '''
+
   def __init__(self, wss: 'WorkspaceSequence') -> None:
     self._wss = wss
     self._lk = wss.lk()
@@ -1234,6 +1238,10 @@ class Task:
 
 
 class BoxTask(Task):
+  '''
+  A task that is associated with a box on the workspace.
+  '''
+
   def __init__(self, wss: 'WorkspaceSequence', box_path: BoxPath) -> None:
     super().__init__(wss)
     self.box_path = box_path
@@ -1246,23 +1254,39 @@ class BoxTask(Task):
 
 
 class Input(BoxTask):
+  '''
+  A task associated with an input box.
+  '''
+
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
     name = self.box_path.base.parameters['name']
     wss_instance.run_input(name)
 
 
 class Output(BoxTask):
+  '''
+  A task associated with an output box.
+  '''
+
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
     name = self.box_path.base.parameters['name']
     wss_instance.run_output(name)
 
 
 class Triggerable(BoxTask):
+  '''
+  A task associated with a triggerable box.
+  '''
+
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
     wss_instance.trigger(self.box_path)
 
 
 class SaveWorkspace(Task):
+  '''
+  A task to save the worspace.
+  '''
+
   def run(self, date: datetime.datetime) -> None:
     ws_for_date = self._ws_for_date(date)
     name = ws_for_date.full_name()
@@ -1329,11 +1353,6 @@ class WorkspaceSequence:
     return self._lk
 
   def _automation_tasks(self) -> List[Task]:
-    '''Returns the endpoints, relevant in automation.
-
-    The endpoints correspond to top level input boxes, top level output boxes and
-    side effect boxes.
-    '''
     inputs: List[Task] = [Input(self, BoxPath(inp)) for inp in self._ws.input_boxes()]
     outputs: List[Task] = [Output(self, BoxPath(outp)) for outp in self._ws.output_boxes()]
     side_effects: List[Task] = [Triggerable(self, se) for se in self._ws.side_effect_paths()]
