@@ -97,10 +97,14 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($modal) {
     function boxToPython(box, boxMap) {
 
       function quoteParamValue(value) {
+        function addSlashes(str) {
+          return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
+        }
+
         if (/\n/g.test(value)) {
-          return `'''${value}'''`;
+          return `'''${addSlashes(value)}'''`;
         } else {
-          return `'${value}'`;
+          return `'${addSlashes(value)}'`;
         }
       }
 
