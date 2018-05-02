@@ -58,6 +58,7 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($modal) {
               parametricParameters: {},
               inputs: {},
               inputPlugs: [],
+              outputPlugs: ['input'],
               category: 'Workflow'});
           }
         }
@@ -102,7 +103,7 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($modal) {
       return sorted;
     }
 
-    function boxToPython(box) {
+    function boxToPython(box, boxMap) {
 
       function quoteParamValue(value) {
         if (/\n/g.test(value)) {
@@ -134,8 +135,15 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($modal) {
       }
 
       function inputs() {
-        // TODO: handle multioutput boxes
-        return box.inputPlugs.map(x => `${box.inputs[x].boxId}`).join(', ');
+        return box.inputPlugs.map(function(x) {
+          const inputBox = box.inputs[x].boxId;
+          const outputPlugOfInput = box.inputs[x].id;
+          if (boxMap[inputBox] && boxMap[inputBox].outputPlugs.length > 1) {
+            return `${inputBox}['${outputPlugOfInput}']`;
+          } else {
+            return `${inputBox}`;
+          }
+        }).join(', ');
       }
 
       const i = inputs();
@@ -157,6 +165,7 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($modal) {
       parametricParameters: x.instance.parametricParameters,
       inputs: snakeInputs(x.instance.inputs),
       inputPlugs: x.metadata.inputs,
+      outputPlugs: x.metadata.outputs,
       category: x.metadata.categoryId})
     );
     removeNonSelectedInputs(prepared);
@@ -169,7 +178,7 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($modal) {
     const generatedCode = [];
     for (let boxId of sorted) {
       if (boxId !== 'anchor') {
-        generatedCode.push(boxToPython(boxMap[boxId]));
+        generatedCode.push(boxToPython(boxMap[boxId], boxMap));
       }
     }
     const pythonCode = generatedCode.join('\n');
