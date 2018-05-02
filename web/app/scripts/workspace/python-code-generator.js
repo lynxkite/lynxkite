@@ -1,13 +1,9 @@
 // Generates Python API code for selected boxes or for the whole workspace.
 'use strict';
 
-angular.module('biggraph').factory('pythonUtil', function() {
+angular.module('biggraph').factory('pythonCodeGenerator', function($modal) {
 
-  function pythonUtil() {
-
-  }
-
-  pythonUtil.prototype.saveAsPython = function (workspace, selectedBoxIds) {
+  function saveAsPython (workspace, selectedBoxIds) {
 
     function snakeCase(boxId) {
       return boxId.toLowerCase().replace(/-/g, '_');
@@ -20,14 +16,15 @@ angular.module('biggraph').factory('pythonUtil', function() {
     }
 
     function snakeInputs(inputs) {
-      let snakeInps = {};
-      for (let key of Object.keys(inputs)) {
+      const snakeInps = {};
+      for (let key in inputs) {
         snakeInps[key] = snakeInput(inputs[key]);
       }
       return snakeInps;
     }
 
     function pythonName(opId) {
+      // This has to match with lynx.kite._python_name()
       const cleaned = opId.replace(/[^\w_\s]+/g, '').split(' ');
       const head = cleaned[0];
       const tail = cleaned.slice(1);
@@ -37,7 +34,7 @@ angular.module('biggraph').factory('pythonUtil', function() {
     function removeNonSelectedInputs(boxes) {
       const selected = boxes.map(x => x.id);
       for (let box of boxes) {
-        for (let key of Object.keys(box.inputs)) {
+        for (let key in box.inputs) {
           if (!selected.includes(box.inputs[key].boxId)) {
             delete box.inputs[key];
           }
@@ -46,18 +43,18 @@ angular.module('biggraph').factory('pythonUtil', function() {
     }
 
     function unconnected(boxes) {
-      let inputBoxes = [];
+      const inputBoxes = [];
       for (let box of boxes) {
         for (let plug of box.inputPlugs) {
           if (!box.inputs[plug]) {
-            const input_id = 'input_' + plug + '_for_' + box.id;
+            const inputId = 'input_' + plug + '_for_' + box.id;
             // Now we connect it to a dummy input.
-            box.inputs[plug] = {boxId: input_id, id: 'input'};
+            box.inputs[plug] = {boxId: inputId, id: 'input'};
             inputBoxes.push({
-              id: input_id,
+              id: inputId,
               op: 'Input',
               pythonOp: 'input',
-              parameters: {name: input_id},
+              parameters: {name: inputId},
               parametricParameters: {},
               inputs: {},
               inputPlugs: [],
@@ -69,7 +66,7 @@ angular.module('biggraph').factory('pythonUtil', function() {
     }
 
     function dependencies(boxes) {
-      let deps = {};
+      const deps = {};
       for (let box of boxes) {
         const fromId = box.id;
         deps[fromId] = Object.values(box.inputs).map(b => b.boxId);
@@ -78,7 +75,7 @@ angular.module('biggraph').factory('pythonUtil', function() {
     }
 
     function mapping(boxes) {
-      let map = {};
+      const map = {};
       for (let box of boxes) {
         map[box.id] = box;
       }
@@ -86,26 +83,26 @@ angular.module('biggraph').factory('pythonUtil', function() {
     }
 
     function topsort(deps) {
-      let sorted = [];
+      const sorted = [];
       /* eslint-disable no-constant-condition */
       while (true) {
-        const next_group = Object.keys(deps).filter(x => deps[x].length === 0);
-        if (next_group.length === 0) {
+        const nextGroup = Object.keys(deps).filter(x => deps[x].length === 0);
+        if (nextGroup.length === 0) {
           break;
         }
-        sorted.push.apply(sorted, next_group); // extend
-        let updated_deps = {};
-        for (let key of Object.keys(deps)) {
-          if (!next_group.includes(key)) {
-            updated_deps[key] = deps[key].filter(x => !next_group.includes(x));
+        sorted.push.apply(sorted, nextGroup); // extend
+        const updatedDeps = {};
+        for (let key in deps) {
+          if (!nextGroup.includes(key)) {
+            updatedDeps[key] = deps[key].filter(x => !nextGroup.includes(x));
           }
         }
-        deps = updated_deps;
+        deps = updatedDeps;
       }
       return sorted;
     }
 
-    function box_to_python(box) {
+    function boxToPython(box) {
 
       function quoteParamValue(value) {
         if (/\n/g.test(value)) {
@@ -116,7 +113,7 @@ angular.module('biggraph').factory('pythonUtil', function() {
       }
 
       function paramsToStr(params, isParametric) {
-        let paramStrings = [];
+        const paramStrings = [];
         for (let key of Object.keys(params)) {
           const quoted = quoteParamValue(params[key]);
           if (isParametric) {
@@ -152,7 +149,7 @@ angular.module('biggraph').factory('pythonUtil', function() {
     // Custom boxes are not supported
     // TODO: assert for selected custom boxes
     const boxes = selectedBoxIds.map(x => workspace.getBox(x));
-    let prepared = boxes.map(x => ({
+    const prepared = boxes.map(x => ({
       id: snakeCase(x.instance.id),
       op: x.instance.operationId,
       pythonOp: pythonName(x.instance.operationId),
@@ -169,16 +166,22 @@ angular.module('biggraph').factory('pythonUtil', function() {
     const boxMap = mapping(boxesToGenerate);
     const sorted = topsort(deps);
 
-    let generatedCode = [];
+    const generatedCode = [];
     for (let boxId of sorted) {
-      generatedCode.push(box_to_python(boxMap[boxId]));
+      generatedCode.push(boxToPython(boxMap[boxId]));
     }
-    const result = generatedCode.join('\n');
+    const pythonCode = generatedCode.join('\n');
 
-    /* eslint-disable no-console */
-    console.log(result);
+    $modal.open({
+      templateUrl: 'scripts/python-code.html',
+      controller: 'PythonCodeCtrl',
+      resolve: { code: function() { return pythonCode; } },
+      animation: false,  // Protractor does not like the animation.
+      size: 'lg',
+    }).result.then(function() {}, function() {});
 
-  };
 
-  return pythonUtil;
+  }
+
+  return { saveAsPython };
 });
