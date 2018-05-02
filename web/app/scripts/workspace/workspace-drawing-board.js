@@ -510,8 +510,15 @@ angular.module('biggraph')
           this.selectedBoxIds = [];
         };
 
-        scope.saveSelectedBoxesAsPython = function() {
-          pythonCodeGenerator.saveAsPython(this.workspace, this.selectedBoxIds);
+        scope.saveBoxesAsPython = function() {
+          if (this.selectedBoxIds.length === 0) { // Nothing is selected, use all boxes
+            const boxIds = this.workspace.boxes.map(b => b.instance.id);
+            // TODO: add parameter to signal whether decorator code is needed
+            pythonCodeGenerator.saveAsPython(this.workspace, boxIds);
+          } else {
+            pythonCodeGenerator.saveAsPython(this.workspace, this.selectedBoxIds);
+          }
+
         };
 
         scope.diveUp = function() {
