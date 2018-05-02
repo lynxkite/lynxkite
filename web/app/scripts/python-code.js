@@ -7,8 +7,4 @@ angular.module('biggraph').controller('PythonCodeCtrl', function($scope, $modalI
   $scope.close = function() {
     $modalInstance.dismiss('close');
   };
-
-  $scope.copyToClipboard = function() {
-
-  };
 });
