@@ -89,7 +89,7 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     '--expiry',
     default=(
-            datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y%m%d"),
+        datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y%m%d"),
     help='''The "expiration date" of this cluster in "YYYYmmdd" format.
   After this date the 'owner' will be asked if the cluster can
   be shut down.''')
@@ -167,157 +167,157 @@ arg_parser.add_argument(
 
 class Ecosystem:
 
-    def __init__(self, args):
-        log_uri = None if args.no_emr_log else args.emr_log_uri
-        self.cluster_config = {
-            'cluster_name': args.cluster_name,
-            'public_ip': args.public_ip,
-            'ec2_key_file': args.ec2_key_file,
-            'ec2_key_name': args.ec2_key_name,
-            'emr_region': args.emr_region,
-            'emr_instance_count': args.emr_instance_count,
-            'emr_log_uri': log_uri,
-            'hdfs_replication': '1',
-            'with_rds': args.with_rds,
-            'with_jupyter': args.with_jupyter,
-            'rm': args.rm,
-            'spot': args.spot,
-            'spot_bid_multiplier': args.spot_bid_multiplier,
-            'autoscaling_role': args.autoscaling_role,
-            'owner': args.owner,
-            'expiry': args.expiry,
-            'applications': args.applications,
-            'master_instance_type': args.master_instance_type,
-            'master_ebs_volume_size': args.master_ebs_volume_size,
-            'core_instance_type': args.core_instance_type,
-            'core_ebs_volume_size': args.core_ebs_volume_size,
-        }
-        self.lynxkite_config = {
-            'lynx_version': args.lynx_version,
-            'log_dir': args.log_dir,
-            'kite_instance_name': args.kite_instance_name,
-            's3_data_dir': args.s3_data_dir,
-            'restore_metadata': args.restore_metadata,
-            's3_metadata_version': args.s3_metadata_version,
-            's3_metadata_dir': '',
-            'env_variables': args.env_variables,
-            'upload': args.upload,
-            'num_cores_per_executor': args.num_cores_per_executor,
-            'executor_memory': args.executor_memory,
-            'kite_master_memory_mb': args.kite_master_memory_mb,
-        }
-        self.cluster = None
-        self.instances = []
-        self.jdbc_url = ''
-        self.s3_client = None
-        self.repo_url = None
-        self.ecr_client = ECRLib(self.cluster_config['emr_region'])
-        self.image_tag = args.lynx_version
+  def __init__(self, args):
+    log_uri = None if args.no_emr_log else args.emr_log_uri
+    self.cluster_config = {
+        'cluster_name': args.cluster_name,
+        'public_ip': args.public_ip,
+        'ec2_key_file': args.ec2_key_file,
+        'ec2_key_name': args.ec2_key_name,
+        'emr_region': args.emr_region,
+        'emr_instance_count': args.emr_instance_count,
+        'emr_log_uri': log_uri,
+        'hdfs_replication': '1',
+        'with_rds': args.with_rds,
+        'with_jupyter': args.with_jupyter,
+        'rm': args.rm,
+        'spot': args.spot,
+        'spot_bid_multiplier': args.spot_bid_multiplier,
+        'autoscaling_role': args.autoscaling_role,
+        'owner': args.owner,
+        'expiry': args.expiry,
+        'applications': args.applications,
+        'master_instance_type': args.master_instance_type,
+        'master_ebs_volume_size': args.master_ebs_volume_size,
+        'core_instance_type': args.core_instance_type,
+        'core_ebs_volume_size': args.core_ebs_volume_size,
+    }
+    self.lynxkite_config = {
+        'lynx_version': args.lynx_version,
+        'log_dir': args.log_dir,
+        'kite_instance_name': args.kite_instance_name,
+        's3_data_dir': args.s3_data_dir,
+        'restore_metadata': args.restore_metadata,
+        's3_metadata_version': args.s3_metadata_version,
+        's3_metadata_dir': '',
+        'env_variables': args.env_variables,
+        'upload': args.upload,
+        'num_cores_per_executor': args.num_cores_per_executor,
+        'executor_memory': args.executor_memory,
+        'kite_master_memory_mb': args.kite_master_memory_mb,
+    }
+    self.cluster = None
+    self.instances = []
+    self.jdbc_url = ''
+    self.s3_client = None
+    self.repo_url = None
+    self.ecr_client = ECRLib(self.cluster_config['emr_region'])
+    self.image_tag = args.lynx_version
 
-        if not args.uploading and not self.ecr_client.tag_exists_in_repo(self.image_tag):
-            raise BaseException("Image: {tag} does not exist in {ep}".format(
-                tag=self.image_tag,
-                ep=self.ecr_client.get_endpoint()))
+    if not args.uploading and not self.ecr_client.tag_exists_in_repo(self.image_tag):
+      raise BaseException("Image: {tag} does not exist in {ep}".format(
+          tag=self.image_tag,
+          ep=self.ecr_client.get_endpoint()))
 
-    def launch_cluster(self):
-        print('Launching an EMR cluster.')
-        # Create an EMR cluster.
-        conf = self.cluster_config
-        lib = EMRLib(
-            ec2_key_file=conf['ec2_key_file'],
-            ec2_key_name=conf['ec2_key_name'],
-            region=conf['emr_region'])
-        self.s3_client = lib.s3_client
-        self.cluster = lib.create_or_connect_to_emr_cluster(
-            name=conf['cluster_name'],
-            log_uri=conf['emr_log_uri'],
-            owner=conf['owner'],
-            expiry=conf['expiry'],
-            instance_count=conf['emr_instance_count'],
-            hdfs_replication=conf['hdfs_replication'],
-            applications=conf['applications'],
-            core_instance_type=conf['core_instance_type'],
-            master_instance_type=conf['master_instance_type'],
-            spot=conf['spot'],
-            spot_bid_multiplier=conf['spot_bid_multiplier'],
-            autoscaling_role=conf['autoscaling_role'],
-            master_ebs_volume_size=conf['master_ebs_volume_size'],
-            core_ebs_volume_size=conf['core_ebs_volume_size']
-        )
-        self.instances = [self.cluster]
-        # Spin up a mysql RDS instance only if requested.
-        if conf['with_rds']:
-            mysql_instance = lib.create_or_connect_to_rds_instance(
-                name=conf['cluster_name'] + '-mysql')
-            # Wait for startup of both.
-            self.instances = self.instances + [mysql_instance]
-            lib.wait_for_services(self.instances)
-            mysql_address = mysql_instance.get_address()
-            self.jdbc_url = 'jdbc:mysql://{mysql_address}/db?user=root&password=rootroot'.format(
-                mysql_address=mysql_address)
-        else:
-            lib.wait_for_services(self.instances)
-        if conf['public_ip']:
-            self.cluster.associate_address(conf['public_ip'])
+  def launch_cluster(self):
+    print('Launching an EMR cluster.')
+    # Create an EMR cluster.
+    conf = self.cluster_config
+    lib = EMRLib(
+        ec2_key_file=conf['ec2_key_file'],
+        ec2_key_name=conf['ec2_key_name'],
+        region=conf['emr_region'])
+    self.s3_client = lib.s3_client
+    self.cluster = lib.create_or_connect_to_emr_cluster(
+        name=conf['cluster_name'],
+        log_uri=conf['emr_log_uri'],
+        owner=conf['owner'],
+        expiry=conf['expiry'],
+        instance_count=conf['emr_instance_count'],
+        hdfs_replication=conf['hdfs_replication'],
+        applications=conf['applications'],
+        core_instance_type=conf['core_instance_type'],
+        master_instance_type=conf['master_instance_type'],
+        spot=conf['spot'],
+        spot_bid_multiplier=conf['spot_bid_multiplier'],
+        autoscaling_role=conf['autoscaling_role'],
+        master_ebs_volume_size=conf['master_ebs_volume_size'],
+        core_ebs_volume_size=conf['core_ebs_volume_size']
+    )
+    self.instances = [self.cluster]
+    # Spin up a mysql RDS instance only if requested.
+    if conf['with_rds']:
+      mysql_instance = lib.create_or_connect_to_rds_instance(
+          name=conf['cluster_name'] + '-mysql')
+      # Wait for startup of both.
+      self.instances = self.instances + [mysql_instance]
+      lib.wait_for_services(self.instances)
+      mysql_address = mysql_instance.get_address()
+      self.jdbc_url = 'jdbc:mysql://{mysql_address}/db?user=root&password=rootroot'.format(
+          mysql_address=mysql_address)
+    else:
+      lib.wait_for_services(self.instances)
+    if conf['public_ip']:
+      self.cluster.associate_address(conf['public_ip'])
 
-    def start(self):
-        print('Starting LynxKite on EMR cluster.')
-        conf = self.cluster_config
-        lk_conf = self.lynxkite_config
-        self.install_native_dependencies()
-        self.pull_image()
-        self.extract_volumes()
-        self.set_s3_metadata_dir(
-            lk_conf['s3_data_dir'],
-            lk_conf['s3_metadata_version'])
-        self.config_and_prepare_native(
-            lk_conf['s3_data_dir'],
-            lk_conf['kite_instance_name'],
-            conf['emr_instance_count'],
-            lk_conf['num_cores_per_executor'],
-            lk_conf['executor_memory'],
-            lk_conf['kite_master_memory_mb'])
-        self.config_aws_s3_native()
-        if conf['with_jupyter']:
-            self.install_and_setup_jupyter()
-        if conf['applications'] and 'hive' in [a.lower() for a in conf['applications'].split(',')]:
-            self.hive_patch()
-        self.start_monitoring_on_extra_nodes_native(conf['ec2_key_file'])
+  def start(self):
+    print('Starting LynxKite on EMR cluster.')
+    conf = self.cluster_config
+    lk_conf = self.lynxkite_config
+    self.install_native_dependencies()
+    self.pull_image()
+    self.extract_volumes()
+    self.set_s3_metadata_dir(
+        lk_conf['s3_data_dir'],
+        lk_conf['s3_metadata_version'])
+    self.config_and_prepare_native(
+        lk_conf['s3_data_dir'],
+        lk_conf['kite_instance_name'],
+        conf['emr_instance_count'],
+        lk_conf['num_cores_per_executor'],
+        lk_conf['executor_memory'],
+        lk_conf['kite_master_memory_mb'])
+    self.config_aws_s3_native()
+    if conf['with_jupyter']:
+      self.install_and_setup_jupyter()
+    if conf['applications'] and 'hive' in [a.lower() for a in conf['applications'].split(',')]:
+      self.hive_patch()
+    self.start_monitoring_on_extra_nodes_native(conf['ec2_key_file'])
 #        if lk_conf['tasks']:
 #            self.upload_tasks(src=lk_conf['tasks'])
-        if lk_conf['env_variables']:
-            variables = lk_conf['env_variables'].split(',')
-            self.copy_environment_variables(variables)
-        if lk_conf['upload']:
-            split = lk_conf['upload'].split(',')
-            uploads_map = {i.split(':')[0]: i.split(':')[1] for i in split}
-            self.upload_specified(uploads_map)
-        self.start_docker_image()
-        print('LynxKite ecosystem started')
+    if lk_conf['env_variables']:
+      variables = lk_conf['env_variables'].split(',')
+      self.copy_environment_variables(variables)
+    if lk_conf['upload']:
+      split = lk_conf['upload'].split(',')
+      uploads_map = {i.split(':')[0]: i.split(':')[1] for i in split}
+      self.upload_specified(uploads_map)
+    self.start_docker_image()
+    print('LynxKite ecosystem started')
 
-    def set_s3_metadata_dir(self, s3_bucket, metadata_version):
-        if s3_bucket and self.lynxkite_config['restore_metadata']:
-            # s3_bucket = 's3://bla/, bucket = 'bla'
-            bucket = s3_bucket.split('/')[2]
-            if not metadata_version:
-                # Gives back the "latest" version from the `s3_bucket/metadata_backup/`.
-                # http://boto3.readthedocs.io/en/latest/reference/services/s3.html#examples
-                paginator = self.s3_client.get_paginator('list_objects')
-                result = paginator.paginate(Bucket=bucket, Prefix='metadata_backup/', Delimiter='/')
-                # Name of the alphabetically last folder without the trailing slash.
-                # If 'metadata_backup' is missing or empty, the following line throws an exception.
-                version = sorted([prefix.get('Prefix')
-                                  for prefix in result.search('CommonPrefixes')])[-1][:-1]
-            else:
-                version = metadata_version
-            self.lynxkite_config['s3_metadata_dir'] = 's3://{buc}/{ver}/'.format(
-                buc=bucket,
-                ver=version)
+  def set_s3_metadata_dir(self, s3_bucket, metadata_version):
+    if s3_bucket and self.lynxkite_config['restore_metadata']:
+      # s3_bucket = 's3://bla/, bucket = 'bla'
+      bucket = s3_bucket.split('/')[2]
+      if not metadata_version:
+        # Gives back the "latest" version from the `s3_bucket/metadata_backup/`.
+        # http://boto3.readthedocs.io/en/latest/reference/services/s3.html#examples
+        paginator = self.s3_client.get_paginator('list_objects')
+        result = paginator.paginate(Bucket=bucket, Prefix='metadata_backup/', Delimiter='/')
+        # Name of the alphabetically last folder without the trailing slash.
+        # If 'metadata_backup' is missing or empty, the following line throws an exception.
+        version = sorted([prefix.get('Prefix')
+                          for prefix in result.search('CommonPrefixes')])[-1][:-1]
+      else:
+        version = metadata_version
+      self.lynxkite_config['s3_metadata_dir'] = 's3://{buc}/{ver}/'.format(
+          buc=bucket,
+          ver=version)
 
-    def restore_metadata(self):
-        s3_metadata_dir = self.lynxkite_config['s3_metadata_dir']
-        print('Restoring metadata from {dir}...'.format(dir=s3_metadata_dir))
-        self.cluster.ssh('''
+  def restore_metadata(self):
+    s3_metadata_dir = self.lynxkite_config['s3_metadata_dir']
+    print('Restoring metadata from {dir}...'.format(dir=s3_metadata_dir))
+    self.cluster.ssh('''
       set -x
       cd /mnt/lynx
       supervisorctl stop lynxkite
@@ -327,44 +327,44 @@ class Ecosystem:
       aws s3 sync {dir} metadata/lynxkite/ --exclude "*$folder$" --quiet
       supervisorctl start lynxkite
     '''.format(dir=s3_metadata_dir))
-        print('Metadata restored.')
+    print('Metadata restored.')
 
-    def run_tests(self, test_config):
-        conf = self.cluster_config
-        print('Running tests on EMR cluster.')
-        self.start_tests_native(
-            self.jdbc_url,
-            test_config['task_module'],
-            test_config['task'],
-            test_config['dataset'])
-        print('Tests are now running in the background. Waiting for results.')
-        self.cluster.fetch_output()
-        res_dir = test_config['results_local_dir']
-        res_name = test_config['results_name']
-        if not os.path.exists(res_dir):
-            os.makedirs(res_dir)
-        self.cluster.rsync_down(
-            '/home/hadoop/test_results.txt',
-            res_dir + res_name)
-        self.upload_perf_logs_to_gcloud(conf['cluster_name'])
+  def run_tests(self, test_config):
+    conf = self.cluster_config
+    print('Running tests on EMR cluster.')
+    self.start_tests_native(
+        self.jdbc_url,
+        test_config['task_module'],
+        test_config['task'],
+        test_config['dataset'])
+    print('Tests are now running in the background. Waiting for results.')
+    self.cluster.fetch_output()
+    res_dir = test_config['results_local_dir']
+    res_name = test_config['results_name']
+    if not os.path.exists(res_dir):
+      os.makedirs(res_dir)
+    self.cluster.rsync_down(
+        '/home/hadoop/test_results.txt',
+        res_dir + res_name)
+    self.upload_perf_logs_to_gcloud(conf['cluster_name'])
 
-    def cleanup(self):
-        lk_conf = self.lynxkite_config
-        print('Downloading logs and stopping EMR cluster.')
-        if lk_conf['log_dir']:
-            self.download_logs_native(lk_conf['log_dir'])
-        self.shut_down_instances()
+  def cleanup(self):
+    lk_conf = self.lynxkite_config
+    print('Downloading logs and stopping EMR cluster.')
+    if lk_conf['log_dir']:
+      self.download_logs_native(lk_conf['log_dir'])
+    self.shut_down_instances()
 
-    ###
-    ### ecosystem launch methods ###
-    ###
+  ###
+  ### ecosystem launch methods ###
+  ###
 
-    def upload_specified(self, uploads_map):
-        for src, dst in uploads_map.items():
-            self.cluster.rsync_up(src, dst)
+  def upload_specified(self, uploads_map):
+    for src, dst in uploads_map.items():
+      self.cluster.rsync_up(src, dst)
 
-    def install_native_dependencies(self):
-        self.cluster.ssh('''
+  def install_native_dependencies(self):
+    self.cluster.ssh('''
     set -x
     sudo yum install -y docker python36 python36-pip gcc python36-devel
     sudo pip-3.6 install boto3
@@ -373,9 +373,8 @@ class Ecosystem:
     sudo service docker start
     ''')
 
-
-    def pull_image(self):
-        code_that_waits_for_the_image='''#!/usr/bin/env python3
+  def pull_image(self):
+    code_that_waits_for_the_image = '''#!/usr/bin/env python3
 import boto3
 from base64 import b64decode
 import sys
@@ -400,23 +399,23 @@ while True:
       break
   time.sleep(5)
 '''
-        self.cluster.string_up(code_that_waits_for_the_image, '/home/hadoop/wait_for_image.py')
-        self.cluster.ssh(
-            'python3 /home/hadoop/wait_for_image.py {repo} {tag} {region}'.format(
-                repo=self.ecr_client.local_name(),
-                tag=self.image_tag,
-                region=self.cluster_config['emr_region']
-            )
+    self.cluster.string_up(code_that_waits_for_the_image, '/home/hadoop/wait_for_image.py')
+    self.cluster.ssh(
+        'python3 /home/hadoop/wait_for_image.py {repo} {tag} {region}'.format(
+            repo=self.ecr_client.local_name(),
+            tag=self.image_tag,
+            region=self.cluster_config['emr_region']
         )
-        self.cluster.ssh(
-            'docker pull {foreign_repo}:{tag}'.format(
-                foreign_repo=self.ecr_client.foreign_name(),
-                tag=self.image_tag
-            )
+    )
+    self.cluster.ssh(
+        'docker pull {foreign_repo}:{tag}'.format(
+            foreign_repo=self.ecr_client.foreign_name(),
+            tag=self.image_tag
         )
+    )
 
-    def extract_volumes(self):
-        self.cluster.ssh('''
+  def extract_volumes(self):
+    self.cluster.ssh('''
     cd
     IMAGE={foreign_repo}:{tag}
     docker create $IMAGE
@@ -425,29 +424,29 @@ while True:
     ./setup.sh $ID
     docker rm $ID
     '''.format(
-            foreign_repo=self.ecr_client.foreign_name(),
-            tag=self.image_tag
-        )
-        )
+        foreign_repo=self.ecr_client.foreign_name(),
+        tag=self.image_tag
+    )
+    )
 
-    def config_and_prepare_native(self, s3_data_dir,
-                                  kite_instance_name,
-                                  emr_instance_count,
-                                  num_cores_per_executor,
-                                  executor_memory,
-                                  kite_master_memory_mb):
-        hdfs_path = 'hdfs://$HOSTNAME:8020/user/$USER/lynxkite/'
-        if s3_data_dir:
-            data_dir_config = '''
+  def config_and_prepare_native(self, s3_data_dir,
+                                kite_instance_name,
+                                emr_instance_count,
+                                num_cores_per_executor,
+                                executor_memory,
+                                kite_master_memory_mb):
+    hdfs_path = 'hdfs://$HOSTNAME:8020/user/$USER/lynxkite/'
+    if s3_data_dir:
+      data_dir_config = '''
         export KITE_DATA_DIR={}
         export KITE_EPHEMERAL_DATA_DIR={}
       '''.format(s3_data_dir, hdfs_path)
-        else:
-            data_dir_config = '''
+    else:
+      data_dir_config = '''
         export KITE_DATA_DIR={}
       '''.format(hdfs_path)
-        progname = os.path.basename(sys.argv[0])
-        self.cluster.ssh('''
+    progname = os.path.basename(sys.argv[0])
+    self.cluster.ssh('''
       cd /home/hadoop
       echo 'Setting up environment variables.'
       # Removes the given and following lines so config/central does not grow constantly.
@@ -477,21 +476,21 @@ EOF
       sudo mkdir -p /tasks_data
       sudo chmod a+rwx /tasks_data
     '''.format(
-            num_cores_per_executor=num_cores_per_executor,
-            kite_master_memory_mb=kite_master_memory_mb,
-            executor_memory=executor_memory,
-            progname=progname,
-            kite_instance_name=kite_instance_name,
-            num_executors=emr_instance_count - 1,
-            data_dir_config=data_dir_config))
+        num_cores_per_executor=num_cores_per_executor,
+        kite_master_memory_mb=kite_master_memory_mb,
+        executor_memory=executor_memory,
+        progname=progname,
+        kite_instance_name=kite_instance_name,
+        num_executors=emr_instance_count - 1,
+        data_dir_config=data_dir_config))
 
-        # HOSTNAME will not be correct inside the container, so we resolve it outside.
-        self.cluster.ssh('''
+    # HOSTNAME will not be correct inside the container, so we resolve it outside.
+    self.cluster.ssh('''
           sed -i "s/[$]HOSTNAME/${HOSTNAME}/g" /home/hadoop/config/central
         ''')
 
-    def config_aws_s3_native(self):
-        self.cluster.ssh('''
+  def config_aws_s3_native(self):
+    self.cluster.ssh('''
       cd /home/hadoop
       echo 'Setting s3 prefix.'
       mv config/prefix_definitions.txt config/prefix_definitions.bak
@@ -510,56 +509,55 @@ EOF
       echo "      - /usr/share/aws:/usr/share/aws:ro" >> release-volumes.yml
     ''')
 
-
-        #  This is needed because of a Spark 2 - EMR - YARN - jersey conflict
-        #  Disables timeline service in yarn.
-        #  https://issues.apache.org/jira/browse/SPARK-15343
-        self.cluster.ssh('''
+    #  This is needed because of a Spark 2 - EMR - YARN - jersey conflict
+    #  Disables timeline service in yarn.
+    #  https://issues.apache.org/jira/browse/SPARK-15343
+    self.cluster.ssh('''
       cd /home/hadoop/spark/conf
       cat >spark-defaults.conf <<'EOF'
 spark.hadoop.yarn.timeline-service.enabled false
 EOF
     ''')
 
-    def hive_patch(self):
-        # Configure Hive with Spark:
-        # execution engine = mr
-        self.cluster.ssh('''
+  def hive_patch(self):
+    # Configure Hive with Spark:
+    # execution engine = mr
+    self.cluster.ssh('''
       cp /etc/hive/conf/hive-site.xml /home/hadoop/spark/conf/
       cd /home/hadoop/spark/conf/
       sed -i -e 's#<value>tez</value>#<value>mr</value>#g' hive-site.xml
     ''')
 
-    def set_environment_variables(self, variables_dict):
-        setting_variables_list = ['export {variable}={value}'.format(
-            variable=self.safe_value(variable), value=self.safe_value(value))
-            for variable, value in variables_dict.items()]
-        setting_variables_string = '\n'.join([''] + setting_variables_list)
-        self.cluster.ssh('echo "{}" >> ~/.bashrc'.format(setting_variables_string))
+  def set_environment_variables(self, variables_dict):
+    setting_variables_list = ['export {variable}={value}'.format(
+        variable=self.safe_value(variable), value=self.safe_value(value))
+        for variable, value in variables_dict.items()]
+    setting_variables_string = '\n'.join([''] + setting_variables_list)
+    self.cluster.ssh('echo "{}" >> ~/.bashrc'.format(setting_variables_string))
 
-    def safe_value(self, value):
-        from shlex import quote
-        # quote can not seem to handle None value.
-        return quote(value) if value else ''
+  def safe_value(self, value):
+    from shlex import quote
+    # quote can not seem to handle None value.
+    return quote(value) if value else ''
 
-    def copy_environment_variables(self, variables):
-        variables_dict = {var: os.environ.get(var) for var in variables}
-        self.set_environment_variables(variables_dict)
+  def copy_environment_variables(self, variables):
+    variables_dict = {var: os.environ.get(var) for var in variables}
+    self.set_environment_variables(variables_dict)
 
-    def start_monitoring_on_extra_nodes_native(self, keyfile):
-        cluster_keyfile = 'cluster_key.pem'
-        cluster_keypath = '/home/hadoop/.ssh/' + cluster_keyfile
-        self.cluster.rsync_up(src=keyfile, dst=cluster_keypath)
-        ssh_options = '''-o UserKnownHostsFile=/dev/null \
+  def start_monitoring_on_extra_nodes_native(self, keyfile):
+    cluster_keyfile = 'cluster_key.pem'
+    cluster_keypath = '/home/hadoop/.ssh/' + cluster_keyfile
+    self.cluster.rsync_up(src=keyfile, dst=cluster_keypath)
+    ssh_options = '''-o UserKnownHostsFile=/dev/null \
       -o CheckHostIP=no \
       -o StrictHostKeyChecking=no \
       -i /home/hadoop/.ssh/{keyfile}'''.format(keyfile=cluster_keyfile)
 
-        self.cluster.ssh('''
+    self.cluster.ssh('''
       yarn node -list -all | grep RUNNING | cut -d':' -f 1 > nodes.txt
       ''')
 
-        self.cluster.ssh('''
+    self.cluster.ssh('''
       for node in `cat nodes.txt`; do
         scp {options} \
           /home/hadoop/other_nodes.tgz \
@@ -568,34 +566,34 @@ EOF
         ssh {options} hadoop@${{node}} "sh -c 'nohup ./run.sh >run.stdout 2> run.stderr &'"
       done'''.format(options=ssh_options))
 
-        # We no longer need the key file on the master
-        self.cluster.ssh('shred -u {key}'.format(key=cluster_keypath))
+    # We no longer need the key file on the master
+    self.cluster.ssh('shred -u {key}'.format(key=cluster_keypath))
 
-    def start_docker_image(self):
-        self.cluster.ssh_nohup('''
+  def start_docker_image(self):
+    self.cluster.ssh_nohup('''
       IMG=`docker images | grep -v REPOSITORY | head -n 1 | awk '{print $1 ":" $2}'`
       /home/hadoop/run_docker_release.sh $IMG
       ''')
 
-    def install_and_setup_jupyter(self):
-        self.cluster.ssh('''
+  def install_and_setup_jupyter(self):
+    self.cluster.ssh('''
       sudo pip-3.6 install --upgrade jupyter sklearn matplotlib croniter
       sudo pip-3.6 install --upgrade pandas seaborn statsmodels
     ''')
-        self.cluster.ssh_nohup('''
+    self.cluster.ssh_nohup('''
       mkdir -p /home/hadoop/notebooks
       source /home/hadoop/config/central
       cd /home/hadoop/notebooks
       PYTHONPATH=/home/hadoop/remote_api/python jupyter-notebook --NotebookApp.token='' --port=2202
       ''')
 
-    ###
-    ### test runner methods ###
-    ###
+  ###
+  ### test runner methods ###
+  ###
 
-    def start_tests_native(self, jdbc_url, task_module, task, dataset):
-        '''Start running the tests in the background.'''
-        self.cluster.ssh_nohup('''
+  def start_tests_native(self, jdbc_url, task_module, task, dataset):
+    '''Start running the tests in the background.'''
+    self.cluster.ssh_nohup('''
         source /mnt/lynx/config/central
         echo 'cleaning up previous test data'
         cd /mnt/lynx
@@ -604,42 +602,42 @@ EOF
         supervisorctl restart lynxkite
         JDBC_URL='{jdbc_url}' DATASET={dataset}
     '''.format(
-            jdbc_url=jdbc_url,
-            dataset=dataset,
-        ))
+        jdbc_url=jdbc_url,
+        dataset=dataset,
+    ))
 
-    def upload_perf_logs_to_gcloud(self, cluster_name):
-        print('Uploading performance logs to gcloud.')
-        instance_name = 'emr-' + cluster_name
-        self.cluster.ssh('''
+  def upload_perf_logs_to_gcloud(self, cluster_name):
+    print('Uploading performance logs to gcloud.')
+    instance_name = 'emr-' + cluster_name
+    self.cluster.ssh('''
       cd /mnt/lynx
       tools/multi_upload.sh 0 apps/lynxkite/logs {i}
     '''.format(i=instance_name))
 
-    ###
-    ### cleanup methods ###
-    ###
+  ###
+  ### cleanup methods ###
+  ###
 
-    def download_logs_native(self, log_dir):
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
-        self.cluster.rsync_down('/mnt/lynx/logs/', log_dir)
-        self.cluster.rsync_down('/mnt/lynx/apps/lynxkite/logs/', log_dir + '/lynxkite-logs/')
+  def download_logs_native(self, log_dir):
+    if not os.path.exists(log_dir):
+      os.makedirs(log_dir)
+    self.cluster.rsync_down('/mnt/lynx/logs/', log_dir)
+    self.cluster.rsync_down('/mnt/lynx/apps/lynxkite/logs/', log_dir + '/lynxkite-logs/')
 
-    def shut_down_instances(self):
-        if self.prompt_delete():
-            print('Shutting down instances.')
-            self.cluster.turn_termination_protection_off()
-            for instance in self.instances:
-                instance.terminate()
+  def shut_down_instances(self):
+    if self.prompt_delete():
+      print('Shutting down instances.')
+      self.cluster.turn_termination_protection_off()
+      for instance in self.instances:
+        instance.terminate()
 
-    def prompt_delete(self):
-        if self.cluster_config['rm']:
-            return True
-        print('Terminate instances? [y/N] ', end='')
-        choice = input().lower()
-        if choice == 'y':
-            return True
-        else:
-            print('''Please don't forget to terminate the instances!''')
-            return False
+  def prompt_delete(self):
+    if self.cluster_config['rm']:
+      return True
+    print('Terminate instances? [y/N] ', end='')
+    choice = input().lower()
+    if choice == 'y':
+      return True
+    else:
+      print('''Please don't forget to terminate the instances!''')
+      return False
