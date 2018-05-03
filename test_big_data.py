@@ -91,7 +91,7 @@ def main(args):
   ecosystem = Ecosystem(args)
   ecosystem.launch_cluster()
   ecosystem.start()
-  ecosystem.run_tests(test_config)
+#  ecosystem.run_tests(test_config)
   ecosystem.cleanup()
 
 

@@ -7,11 +7,11 @@ import boto3
 import botocore
 import subprocess
 import sys
-import tempfile
 import time
 import urllib
 import json
-
+from base64 import b64decode
+import tempfile
 
 def call_cmd(cmd_list, input=None, print_output=True, assert_successful=True):
   '''
@@ -531,6 +531,16 @@ EOF
             'hadoop@' + self.master_dns() + ':' + src,
             dst
         ])
+  def string_up(self, str, dst):
+    '''Create a file on the cluster that contains the string str'''
+    temp = tempfile.NamedTemporaryFile()
+    try:
+      temp.write(str.encode('utf-8'))
+      temp.flush()
+      self.rsync_up(temp.name, dst)
+    finally:
+      temp.close()
+
 
   def turn_termination_protection_off(self):
     self.emr_client.set_termination_protection(
@@ -553,3 +563,39 @@ EOF
     while self.desc()['Cluster']['MasterPublicDnsName'] == old_dns:
       time.sleep(15)
     print('Dns updated successfully.')
+
+
+class ECRLib:
+  def __init__(self, region='us-east-1'):
+    self.ecr_client = boto3.client('ecr', region_name=region)
+    self.region = region
+    self.image_name = 'lynx/ecosystem-docker-release'
+    self.authorization_data = self.login_and_get_auth_info()
+
+  def get_endpoint(self):
+    return self.authorization_data['proxyEndpoint']
+
+  def tag_exists_in_repo(self, tag):
+    images = self.ecr_client.list_images(repositoryName=self.image_name)['imageIds']
+    tags = [x['imageTag'] for x in images]
+    return tag in tags
+
+  def local_name(self):
+      return self.image_name
+
+  def foreign_name(self):
+      num_of_chars_to_drop = len('https://')
+      return self.get_endpoint()[num_of_chars_to_drop:] + '/' + self.local_name()
+
+  def login_and_get_auth_info(self):
+      auth = self.ecr_client.get_authorization_token()['authorizationData'][0]
+      username_plus_password = auth['authorizationToken']
+      username, password = b64decode(username_plus_password).decode().split(':')
+      cmd = ['docker', 'login', '-u', username, '-p', password, auth['proxyEndpoint']]
+      subprocess.check_call(cmd)
+      return auth
+
+  def logout(self):
+      cmd = ['docker', 'logout', self.get_endpoint()]
+      subprocess.check_call(cmd)
+
