@@ -18,7 +18,7 @@ class TestDagCreation(unittest.TestCase):
     age = select_age(eg)
     age1 = age.sql('select age + 1 as age1 from t').output(name='age1')
     age2 = age.sql('select age + 2 as age2 from t').output(name='age2')
-    return lynx.kite.Workspace(name='test', output_boxes=[age.output(name='age'), age1, age2])
+    return lynx.kite.Workspace(name='test', terminal_boxes=[age.output(name='age'), age1, age2])
 
   def test_minimal_dag_on_full_graph(self):
     g = {
@@ -91,7 +91,7 @@ class TestDagCreation(unittest.TestCase):
     for box in main_workspace.output_boxes():
       ep = lynx.kite.BoxPath(box)
       parents[str(ep.to_dict())] = [bp.to_dict() for bp in ep.parents()]
-    for ep in main_workspace.side_effects().boxes_to_trigger:
+    for ep in main_workspace.side_effect_paths():
       parents[str(ep.to_dict())] = [bp.to_dict() for bp in ep.parents()]
 
     expected = {
@@ -145,7 +145,7 @@ class TestDagCreation(unittest.TestCase):
                 'params': {'sql': 'select * from input'},
                 'nested_in': 'forker', },
     }
-    for ep in main_workspace.side_effects().boxes_to_trigger:
+    for ep in main_workspace.side_effect_paths():
       expected = expected_ntp_of_side_effects[ep.to_dict()['params']['path']]
       self.assertEqual(ep.non_trivial_parent_of_endpoint().to_dict(), expected)
 

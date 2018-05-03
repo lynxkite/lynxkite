@@ -130,11 +130,11 @@ class LynxKite:
   multiple LynxKite instances from the same session. If no arguments to the constructor are
   provided, then a connection is created using the following environment variables:
   ``LYNXKITE_ADDRESS``, ``LYNXKITE_USERNAME``, ``LYNXKITE_PASSWORD``,
-  ``LYNXKITE_PUBLIC_SSL_CERT``, ``LYNXKITE_OAUTH_TOKEN``.
+  ``LYNXKITE_PUBLIC_SSL_CERT``, ``LYNXKITE_OAUTH_TOKEN``, ``LYNXKITE_SIGNED_TOKEN``.
   '''
 
   def __init__(self, username: str = None, password: str = None, address: str = None,
-               certfile: str = None, oauth_token: str = None,
+               certfile: str = None, oauth_token: str = None, signed_token: str = None,
                box_catalog: BoxCatalog = None) -> None:
     '''Creates a connection object.'''
     # Authentication and querying environment variables is deferred until the
@@ -144,10 +144,14 @@ class LynxKite:
     self._password = password
     self._certfile = certfile
     self._oauth_token = oauth_token
+    self._signed_token = signed_token
     self._session = None
     self._pid = None
     self._operation_names: List[str] = None
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
+
+  def home(self) -> str:
+    return f'Users/{self.username()}/'
 
   def operation_names(self) -> List[str]:
     if not self._operation_names:
@@ -200,7 +204,10 @@ class LynxKite:
     return self._address or os.environ['LYNXKITE_ADDRESS']
 
   def username(self) -> str:
-    return self._username or os.environ.get('LYNXKITE_USERNAME')
+    username = self._username or os.environ.get('LYNXKITE_USERNAME')
+    if not username and self.signed_token():
+      return self.signed_token().split('|')[0]
+    return username
 
   def password(self) -> str:
     return self._password or os.environ.get('LYNXKITE_PASSWORD')
@@ -210,6 +217,9 @@ class LynxKite:
 
   def oauth_token(self) -> str:
     return self._oauth_token or os.environ.get('LYNXKITE_OAUTH_TOKEN')
+
+  def signed_token(self) -> str:
+    return self._signed_token or os.environ.get('LYNXKITE_SIGNED_TOKEN')
 
   def _login(self):
     if self.password():
@@ -224,6 +234,11 @@ class LynxKite:
       r = self._request(
           '/googleLogin',
           dict(id_token=self.oauth_token()))
+      r.raise_for_status()
+    elif self.signed_token():
+      r = self._request(
+          '/signedUsernameLogin',
+          dict(token=self.signed_token()))
       r.raise_for_status()
     else:
       raise Exception('No login credentials provided.')
@@ -380,9 +395,7 @@ class LynxKite:
     # TODO: clean up saved workspaces if save_under_root is not set.
 
   def get_state_id(self, state: 'State') -> str:
-    sc = SideEffectCollector()
-    sc.boxes_to_build.append(state.box)
-    ws = Workspace('Anonymous', [], side_effects=sc)
+    ws = Workspace('Anonymous', [state.box])
     workspace_outputs = self.fetch_workspace_output_states(ws)
     box_id = ws.id_of(state.box)
     plug = state.output_plug_name
@@ -480,8 +493,8 @@ class LynxKite:
       else:
         outputs = []
       return Workspace(name=real_name,
-                       output_boxes=outputs,
-                       side_effects=se_collector,
+                       terminal_boxes=outputs + se_collector.top_level_side_effects,
+                       side_effect_paths=list(se_collector.all_triggerables()),
                        input_boxes=inputs,
                        ws_parameters=parameters)
     return ws_decorator
@@ -630,9 +643,7 @@ class State:
     full_path = folder + '/' + name
     box = self.computeInputs()
     lk = self.box.lk
-    sc = SideEffectCollector()
-    sc.boxes_to_build.append(box)
-    ws = Workspace(name, [], side_effects=sc)
+    ws = Workspace(name, [box])
     lk.save_workspace_recursively(ws, folder)
     lk.trigger_box(full_path, 'box_0')
     lk.remove_name(folder, force=True)
@@ -885,18 +896,18 @@ class BoxPath:
     self.base = base
     self.stack = stack
 
+  def __str__(self) -> str:
+    return ' -> '.join([b.name() for b in cast(List[Box], self.stack) + [cast(Box, self.base)]])
+
   def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
     return BoxPath(self.base, [box] + self.stack)
-
-  def atomic_box(self) -> AtomicBox:
-    return self.base
 
   def custom_box_stack(self) -> List[CustomBox]:
     return self.stack
 
   def parent(self, input_name) -> 'BoxPath':
     parent_state = self.base.inputs[input_name]
-    return _atomic_source_of_state(self.custom_box_stack(), parent_state)
+    return _atomic_source_of_state(self.stack, parent_state)
 
   def parents(self) -> List['BoxPath']:
     box = self.base
@@ -997,35 +1008,26 @@ class FakeBoxPathForInputParent(BoxPath):
 
 class SideEffectCollector:
   def __init__(self):
-    self.boxes_to_build: List[Box] = []
-    self.boxes_to_trigger: List[BoxPath] = []
-
-  def _add_atomic_box(self, box: AtomicBox) -> None:
-    self.boxes_to_trigger.append(BoxPath(box))
-
-  def _add_custom_box(self, box: CustomBox) -> None:
-    '''Add a custom box to the collector.
-
-    Copy all the boxes to trigger from the added custom box to this collector,
-    prefixed with the box.
-    '''
-    other_se_collector = box.workspace.side_effects()
-    for btt in other_se_collector.boxes_to_trigger:
-      self.boxes_to_trigger.append(btt.add_box_as_prefix(box))
+    self.top_level_side_effects: List[Box] = []
 
   def add_box(self, box: Box) -> None:
-    self.boxes_to_build.append(box)
+    self.top_level_side_effects.append(box)
+
+  def all_triggerables(self) -> Iterable[BoxPath]:
+    for box in self.top_level_side_effects:
+      yield from self._all_triggerables_in_box(box)
+
+  @staticmethod
+  def _all_triggerables_in_box(box):
     if isinstance(box, AtomicBox):
-      self._add_atomic_box(box)
+      yield BoxPath(box)
     elif isinstance(box, CustomBox):
-      self._add_custom_box(box)
-    else:
-      raise Exception(f'Unknown box type: {type(box)}')
+      for triggerable in box.workspace.side_effect_paths():
+        yield triggerable.add_box_as_prefix(box)
 
   def __str__(self):
-    btb = 'To build ==> ' + str([b.name() for b in self.boxes_to_build])
-    btt = ' To trigger ==> ' + str([[b.name() for b in btt.box_stack]
-                                    for btt in self.boxes_to_trigger])
+    btb = 'To build ==> ' + str([b.name() for b in self.top_level_side_effects])
+    btt = ' To trigger ==> ' + str([btt for btt in self.all_triggerables()])
     return btb + btt
 
 
@@ -1033,8 +1035,8 @@ class Workspace:
   '''Immutable class representing a LynxKite workspace.'''
 
   def __init__(self, name: str,
-               output_boxes: List[AtomicBox],
-               side_effects: SideEffectCollector = SideEffectCollector(),
+               terminal_boxes: List[Box],
+               side_effect_paths: List[BoxPath] = [],
                input_boxes: List[AtomicBox] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
     self._name = name or 'Anonymous'
@@ -1043,13 +1045,13 @@ class Workspace:
     self._next_id = 0
     assert all(b.operation == 'input' for b in input_boxes), 'Non-input box in input_boxes'
     self._inputs = [inp.parameters['name'] for inp in input_boxes]
-    assert all(b.operation == 'output' for b in output_boxes), 'Non-output box in output_boxes'
-    self._outputs = [outp.parameters['name'] for outp in output_boxes]
+    self._output_boxes = [box for box in terminal_boxes
+                          if isinstance(box, AtomicBox) and box.operation == 'output']
+    self._outputs = [outp.parameters['name'] for outp in self._output_boxes]
     self._ws_parameters = ws_parameters
-    self._side_effects = side_effects
+    self._side_effect_paths = side_effect_paths
     self._input_boxes = input_boxes
-    self._output_boxes = output_boxes
-    self._terminal_boxes = cast(List[Box], output_boxes) + side_effects.boxes_to_build
+    self._terminal_boxes = terminal_boxes
     self._bc = self._terminal_boxes[0].bc
     self._lk = self._terminal_boxes[0].lk
     for box in _reverse_bfs_on_boxes(self._terminal_boxes):
@@ -1101,8 +1103,8 @@ class Workspace:
   def name(self) -> str:
     return self._name
 
-  def side_effects(self) -> SideEffectCollector:
-    return self._side_effects
+  def side_effect_paths(self) -> List[BoxPath]:
+    return self._side_effect_paths
 
   def has_date_parameter(self) -> bool:
     return 'date' in [p.name for p in self._ws_parameters]
@@ -1114,12 +1116,6 @@ class Workspace:
     inputs = dict(zip(self.inputs(), args))
     return _new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
 
-  def triggerable_boxes(self) -> List[Box]:
-    # TODO: replace it with real list of triggerables, collected in the
-    # side effect collector of the workspace.
-    return [outp for outp in self._terminal_boxes
-            if isinstance(outp, AtomicBox) and outp.operation == 'output']
-
   def automation_endpoints(self) -> List[Endpoint]:
     '''Returns the endpoints, relevant in automation.
 
@@ -1128,7 +1124,7 @@ class Workspace:
     '''
     inputs = [Endpoint(BoxPath(inp)) for inp in self._input_boxes]
     outputs = [Endpoint(BoxPath(outp)) for outp in self._output_boxes]
-    side_effects = [Endpoint(se) for se in self._side_effects.boxes_to_trigger]
+    side_effects = [Endpoint(se) for se in self._side_effect_paths]
     return inputs + outputs + side_effects
 
   def automation_dependencies(self) -> Dict[Endpoint, Set[Endpoint]]:
@@ -1183,7 +1179,7 @@ class Workspace:
     '''
     temporary_folder = _random_ws_folder()
     self.save(temporary_folder)
-    for btt in self._side_effects.boxes_to_trigger:
+    for btt in self._side_effect_paths:
       self.trigger_saved(btt, temporary_folder)
 
 
@@ -1400,7 +1396,7 @@ class WorkspaceSequenceInstance:
     # We assume that the same box ids will be generated every time
     # we regenerate this workspace.
     ws = self.wrapper_ws()
-    for btt in ws.side_effects().boxes_to_trigger:
+    for btt in ws.side_effect_paths():
       ws.trigger_saved(btt, saved_under_folder)
 
 
@@ -1507,8 +1503,9 @@ def _asobject(dic):
   return types.SimpleNamespace(**dic)
 
 
-class PizzaKite(LynxKite):
+class PizzaBox(LynxKite):
 
   def __init__(self):
-    super().__init__(address='https://pizzakite.lynxanalytics.com/')
-    assert self.oauth_token(), 'Please set LYNXKITE_OAUTH_TOKEN.'
+    super().__init__(address='https://pizzabox.lynxanalytics.com/')
+    assert self.oauth_token() or self.signed_token(), \
+        'Please set LYNXKITE_OAUTH_TOKEN or LYNXKITE_SIGNED_TOKEN.'

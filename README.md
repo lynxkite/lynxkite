@@ -51,7 +51,7 @@ Install Inkscape:
 
 Install Puppeteer 0.13 or newer.
 
-    sudo npm install -g puppeteer
+    npm install -g puppeteer
     # Make sure everyone can execute Chromium.
     sudo chmod -R o=u /usr/lib/node_modules/puppeteer/.local-chromium/
     sudo chmod -R o-w /usr/lib/node_modules/puppeteer/.local-chromium/
