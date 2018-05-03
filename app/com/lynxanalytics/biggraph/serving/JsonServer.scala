@@ -509,6 +509,7 @@ object ProductionJsonServer extends JsonServer {
   val userController = new UserController(BigGraphProductionEnvironment)
   val passwordLogin = userController.passwordLogin
   val googleLogin = userController.googleLogin
+  val signedUsernameLogin = userController.signedUsernameLogin
   val logout = userController.logout
   def getUsers = jsonGet(userController.getUsers)
   def changeUserPassword = jsonPost(userController.changeUserPassword, logRequest = false)

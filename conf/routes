@@ -73,6 +73,7 @@ POST /forceLogRotate   com.lynxanalytics.biggraph.serving.ProductionJsonServer.f
 
 POST /passwordLogin    com.lynxanalytics.biggraph.serving.ProductionJsonServer.passwordLogin
 POST /googleLogin      com.lynxanalytics.biggraph.serving.ProductionJsonServer.googleLogin
+POST /signedUsernameLogin com.lynxanalytics.biggraph.serving.ProductionJsonServer.signedUsernameLogin
 POST /logout           com.lynxanalytics.biggraph.serving.ProductionJsonServer.logout
 
 GET /sparkHealthCheck  com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkHealthCheck

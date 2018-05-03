@@ -38,7 +38,7 @@ if branch in protected_branches:
 name_status = check_output('git diff --name-status --staged'.split())
 name_status = name_status.split('\n') if name_status else []
 
-files = [line.split()[1] for line in name_status if line.split()[0] != "D"]
+files = [line.split()[-1] for line in name_status if line.split()[0] != "D"]
 
 diff = check_output('git diff --staged'.split())
 new_lines = [l for l in diff.split('\n') if l.startswith('+')]
