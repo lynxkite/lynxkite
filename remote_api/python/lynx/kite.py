@@ -1087,6 +1087,9 @@ class Workspace:
   def output_boxes(self) -> List[AtomicBox]:
     return self._output_boxes
 
+  def all_boxes(self) -> List[Box]:
+    return list(self._all_boxes)
+
   def name(self) -> str:
     return self._name
 
@@ -1338,6 +1341,14 @@ class WorkspaceSequence:
     ''' Dict of input recipes, the keys are names.'''
     return self._input_recipes
 
+  def ws(self) -> Workspace:
+    ''' Returns the wrapped workspace.'''
+    return self._ws
+
+  def params(self) -> Dict[str, Any]:
+    ''' Returns the provided workspace parameters.'''
+    return self._params
+
   def ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
     ``date`` parameter of this method as a value to pass to the workspace. '''
@@ -1439,11 +1450,14 @@ class WorkspaceSequenceInstance:
               path=self._wss.input_sequences()[input_name].snapshot_name(
                   self._date))
           for input_name in self._wss.input_names()]
-      ws_as_box = (
-          self._wss._ws(*inputs, **self._wss._params, date=self._date) if self._wss._ws.has_date_parameter()
-          else self._wss._ws(*inputs, **self._wss._params))
+      ws = self._wss.ws()
+      params = self._wss.params()
+      if ws.has_date_parameter():
+        ws_as_box = ws(*inputs, **params, date=self._date)
+      else:
+        ws_as_box = ws(*inputs, **params)
       ws_as_box.register(se_collector)
-      for output in self._wss._ws.outputs():
+      for output in ws.outputs():
         out_path = self.snapshot_path_for_output(output)
         ws_as_box[output].saveToSnapshot(path=out_path).register(se_collector)
 
@@ -1487,7 +1501,10 @@ class WorkspaceSequenceInstance:
   def trigger(self, box_path: BoxPath) -> None:
     '''``box_path`` is relative to the original workspace'''
     wrapper_ws = self.wrapper_ws()
-    wrapped_ws_as_box = [bp.stack[0] for bp in wrapper_ws.side_effect_paths() if bp.stack][0]
+    for box in wrapper_ws.all_boxes():
+      if isinstance(box, CustomBox) and box.workspace == self._wss.ws():
+        wrapped_ws_as_box = box
+        break
     full_box_path = box_path.add_box_as_prefix(wrapped_ws_as_box)
     wrapper_ws.trigger_saved(full_box_path,
                              self.wrapper_folder_name())
