@@ -158,9 +158,15 @@ object Operation {
       def assertNotSegmentation = FEStatus.assert(
         !project.isSegmentation,
         "This operation is not available for segmentations.")
-      def assertSegmentation = FEStatus.assert(
-        project.isSegmentation,
-        "This operation is only available for segmentations.")
+      def assertSegmentation = {
+        def errorMsg = if (project.segmentationNames.nonEmpty) {
+          val names = project.segmentationNames.map(name => s"'$name'").mkString(", ")
+          s"This operation is only available for segmentations. Please pick from ${names}."
+        } else {
+          s"This operation is only available for segmentations, and the current input project state has none."
+        }
+        FEStatus.assert(project.isSegmentation, errorMsg)
+      }
 
       protected def segmentationsRecursively(
         editor: ProjectEditor, prefix: String = ""): Seq[String] = {
