@@ -1,8 +1,30 @@
 import unittest
-import lynx.kite
-import json
-from collections import Counter
 import time
+from datetime import datetime, timedelta
+import lynx.kite
+
+
+def _box_path_to_str(box_path):
+  box = box_path.base
+  op = box.operation
+  p = box.parameters
+  if op in ['sql1', 'sql2']:
+    return f'sql {p["sql"]}'
+  elif op == 'saveToSnapshot':
+    return f'snapshot {p["path"]}'
+  elif op in ['input', 'output']:
+    return f'{op} {p["name"]}'
+  else:
+    raise NotImplementedError(f'No str conversion for {op}')
+
+
+def _task_to_str(task):
+  if isinstance(task, lynx.kite.BoxTask):
+    return _box_path_to_str(task.box_path)
+  elif isinstance(task, lynx.kite.SaveWorkspace):
+    return 'save workspace'
+  else:
+    raise NotImplementedError(f'No str conversion for task {type(task)}')
 
 
 class TestDagCreation(unittest.TestCase):
@@ -36,6 +58,10 @@ class TestDagCreation(unittest.TestCase):
     min_dag = lynx.kite._minimal_dag(g)
     self.assertEqual(min_dag, expected)
 
+    expected_order = [4, 3, 2, 1]
+    actual_order = [n for n in min_dag]
+    self.assertEqual(actual_order, expected_order)
+
   def test_minimal_dag_on_two_paths(self):
     g = {
         1: {2, 3},
@@ -45,6 +71,10 @@ class TestDagCreation(unittest.TestCase):
     }
     min_dag = lynx.kite._minimal_dag(g)
     self.assertEqual(min_dag, g)
+
+    order = [n for n in min_dag]
+    self.assertEqual(order[0], 4)
+    self.assertEqual(order[-1], 1)
 
   def create_complex_test_workspace(self):
     # Builds the workspace specified here:
@@ -84,70 +114,57 @@ class TestDagCreation(unittest.TestCase):
 
     return main_workspace
 
+  test_date = datetime(2018, 1, 2)
+
+  def complex_workspace_sequence(self):
+    ws = self.create_complex_test_workspace()
+    lk = ws.lk()
+    lk.remove_name('eq_table_seq', force=True)
+    tss = lynx.kite.TableSnapshotSequence('eq_table_seq', '0 0 * * *')
+    lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, self.test_date)
+    input_recipe = lynx.kite.TableSnapshotRecipe(tss)
+    day_before = self.test_date - timedelta(days=1)
+    return lynx.kite.WorkspaceSequence(ws, schedule='0 0 * * *', start_date=day_before,
+                                       lk_root='ws_seqence_to_dag', input_recipes=[input_recipe] * 3,
+                                       params={}, dfs_root='')
+
   def test_atomic_parents(self):
     # test parent of terminal boxes
     main_workspace = self.create_complex_test_workspace()
     parents = {}
     for box in main_workspace.output_boxes():
       ep = lynx.kite.BoxPath(box)
-      parents[str(ep.to_dict())] = [bp.to_dict() for bp in ep.parents()]
+      parents[_box_path_to_str(ep)] = [_box_path_to_str(bp) for bp in ep.parents()]
     for ep in main_workspace.side_effect_paths():
-      parents[str(ep.to_dict())] = [bp.to_dict() for bp in ep.parents()]
+      parents[_box_path_to_str(ep)] = [_box_path_to_str(bp) for bp in ep.parents()]
 
     expected = {
-        "{'operation': 'output', 'params': {'name': 'o1'}, 'nested_in': None}":
-        [{'operation': 'output',
-          'params': {'name': 'out1_comb'},
-          'nested_in': 'combiner'}],
-        "{'operation': 'output', 'params': {'name': 'o2'}, 'nested_in': None}":
-        [{'operation': 'output',
-          'params': {'name': 'out2_comb'},
-          'nested_in': 'combiner'}],
-        "{'operation': 'output', 'params': {'name': 'o3'}, 'nested_in': None}":
-        [{'operation': 'output',
-          'params': {'name': 'out_triv'},
-          'nested_in': 'trivial'}],
-        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB1'}, 'nested_in': 'snapshotter'}":
-        [{'operation': 'input',
-          'params': {'name': 't2_snap'},
-          'nested_in': 'snapshotter'}],
-        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}":
-        [{'operation': 'output',
-          'params': {'name': 'fork2'},
-          'nested_in': 'forker'}]}
+        'output o1': ['output out1_comb'],
+        'output o2': ['output out2_comb'],
+        'output o3': ['output out_triv'],
+        'snapshot SB1': ['input t2_snap'],
+        'snapshot SB2': ['output fork2'],
+    }
 
     self.assertEqual(parents, expected)
 
   def test_non_trivial_atomic_parents(self):
     # test non-trivial parents of terminal boxes
     main_workspace = self.create_complex_test_workspace()
-    expected_ntp_of_outputs = {
-        'o1': {'operation': 'sql1',
-               'params': {'sql': 'select * from input'},
-               'nested_in': 'combiner', },
-        'o2': {'operation': 'sql2',
-               'params': {'sql': 'select * from one cross join two'},
-               'nested_in': 'combiner', },
-        'o3': {'operation': 'sql1',
-               'params': {'sql': 'select * from vertices'},
-               'nested_in': 'trivial', },
-    }
+    actual = dict()
     for box in main_workspace.output_boxes():
       ep = lynx.kite.BoxPath(box)
-      expected = expected_ntp_of_outputs[ep.to_dict()['params']['name']]
-      self.assertEqual(ep.non_trivial_parent_of_endpoint().to_dict(), expected)
-
-    expected_ntp_of_side_effects = {
-        'SB1': {'operation': 'input',
-                'params': {'name': 'i2'},
-                'nested_in': None, },
-        'SB2': {'operation': 'sql1',
-                'params': {'sql': 'select * from input'},
-                'nested_in': 'forker', },
-    }
+      actual[_box_path_to_str(ep)] = _box_path_to_str(ep.non_trivial_parent_of_endpoint())
     for ep in main_workspace.side_effect_paths():
-      expected = expected_ntp_of_side_effects[ep.to_dict()['params']['path']]
-      self.assertEqual(ep.non_trivial_parent_of_endpoint().to_dict(), expected)
+      actual[_box_path_to_str(ep)] = _box_path_to_str(ep.non_trivial_parent_of_endpoint())
+    expected = {
+        'output o1': 'sql select * from input',
+        'output o2': 'sql select * from one cross join two',
+        'output o3': 'sql select * from vertices',
+        'snapshot SB1': 'input i2',
+        'snapshot SB2': 'sql select * from input',
+    }
+    self.assertEqual(actual, expected)
 
   def test_upstream_of_one_endpoint(self):
     # test full traversal of one endpoint
@@ -163,36 +180,42 @@ class TestDagCreation(unittest.TestCase):
     expected = {'operation': 'fake input parent', 'params': {'name': 'i1'}, 'nested_in': None}
     self.assertEqual(last.to_dict(), expected)
 
-  def test_endpoint_dependencies(self):
-    main_workspace = self.create_complex_test_workspace()
-    raw_dep = main_workspace.automation_dependencies()
-    dependencies = {str(ep.to_dict()): set() for ep in raw_dep}
-    for ep, deps in raw_dep.items():
-      for dep in deps:
-        dependencies[str(ep.to_dict())].add(str(dep.to_dict()))
-    expected_dependencies = {
-        "{'operation': 'output', 'params': {'name': 'o1'}, 'nested_in': None}":
-        {
-            "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}",
-            "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}"
-        },
-        "{'operation': 'output', 'params': {'name': 'o2'}, 'nested_in': None}":
-        {
-            "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}",
-            "{'operation': 'output', 'params': {'name': 'o1'}, 'nested_in': None}",
-            "{'operation': 'input', 'params': {'name': 'i3'}, 'nested_in': None}",
-            "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}"
-        },
-        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB1'}, 'nested_in': 'snapshotter'}":
-        {
-            "{'operation': 'input', 'params': {'name': 'i2'}, 'nested_in': None}"
-        },
-        "{'operation': 'saveToSnapshot', 'params': {'path': 'SB2'}, 'nested_in': 'snapshotter'}":
-        {
-            "{'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}"
-        },
+  def test_wss_box_dependencies(self):
+    self.maxDiff = None
+    wss = self.complex_workspace_sequence()
+    dag = {task: set() for task in wss._automation_tasks()
+           if not isinstance(task, lynx.kite.SaveWorkspace)}
+    wss._add_box_based_dependencies(dag)
+    dependencies = {_task_to_str(ep): sorted([_task_to_str(dep) for dep in deps])
+                    for ep, deps in dag.items()}
+    expected = {
+        'input i1': [],
+        'input i2': [],
+        'input i3': [],
+        'output o1': ['input i1', 'snapshot SB2'],
+        'output o2': ['input i1', 'input i3', 'output o1', 'snapshot SB2'],
+        'snapshot SB1': ['input i2'],
+        'snapshot SB2': ['input i1'],
+        'output o3': [],
     }
-    self.assertEqual(expected_dependencies, dependencies)
+    self.assertEqual(dependencies, expected)
+
+  def test_wss_to_dag(self):
+    dag = self.complex_workspace_sequence().to_dag()
+    dependencies = {_task_to_str(ep): sorted([_task_to_str(dep) for dep in deps])
+                    for ep, deps in dag.items()}
+    expected = {
+        'input i1': [],
+        'input i2': [],
+        'input i3': [],
+        'snapshot SB2': ['input i1', 'save workspace'],
+        'output o1': ['snapshot SB2'],
+        'snapshot SB1': ['input i2', 'save workspace'],
+        'output o2': ['input i3', 'output o1'],
+        'save workspace': [],
+        'output o3': ['save workspace'],
+    }
+    self.assertEqual(dependencies, expected)
 
   def test_box_path_hash(self):
     lk = lynx.kite.LynxKite()
@@ -247,8 +270,32 @@ class TestDagCreation(unittest.TestCase):
       result = reducer(*[layers[2 * depth - 1][j] for j in range(1, 10)])
       return dict(final=result)
 
-    big_workspace.save('big folder')
+    wss = lynx.kite.WorkspaceSequence(big_workspace, schedule='0 0 * * *',
+                                      start_date=datetime(2018, 1, 1),
+                                      lk_root='big folder', input_recipes=[],
+                                      params={}, dfs_root='')
     start_at = time.time()
-    dep = big_workspace.automation_dependencies()
+    wss.to_dag()
     elapsed = time.time() - start_at
     print(f'Dependency computation ran in {elapsed}s')
+
+  def test_wss_to_dag_order(self):
+    dag = self.complex_workspace_sequence().to_dag()
+    order = [t for t in dag]
+    for i, task in enumerate(order):
+      for previous in order[:i]:
+        self.assertFalse(task in dag[previous])
+
+  def test_wss_dag_is_runnable(self):
+    wss = self.complex_workspace_sequence()
+    dag = wss.to_dag()
+    lk = wss._lk
+    for t in dag:
+      t.run(self.test_date)
+    for o in wss.output_sequences().values():
+      self.assertTrue(lynx.kite.TableSnapshotRecipe(o).is_ready(lk, self.test_date))
+    # is everything idempotent apart from triggerables?
+    lk.remove_name('SB1')
+    lk.remove_name('SB2')
+    for t in dag:
+      t.run(self.test_date)
