@@ -159,11 +159,16 @@ object Operation {
         !project.isSegmentation,
         "This operation is not available for segmentations.")
       def assertSegmentation = {
+        val baseMsg = "This operation is only available for segmentations."
         def errorMsg = if (project.segmentationNames.nonEmpty) {
           val names = project.segmentationNames.map(name => s"'$name'").mkString(", ")
-          s"This operation is only available for segmentations. Please pick from ${names}."
+          if (project.segmentationNames.size > 1) {
+            s"${baseMsg} Please pick from ${names}."
+          } else {
+            s"${baseMsg} Please select ${names}."
+          }
         } else {
-          s"This operation is only available for segmentations, and the current input project state has none."
+          s"${baseMsg} The current input project state has none."
         }
         FEStatus.assert(project.isSegmentation, errorMsg)
       }
