@@ -7,9 +7,9 @@ from ruamel.yaml import YAML
 yaml = YAML()
 
 
-def get_project_scalars(lk, outputs, box_id, box_output_id):
+def get_project_scalars(lk, outputs, box_id, box_output_id, project_path=""):
     state = outputs[box_id, box_output_id].stateId
-    project = lk.get_project(state)
+    project = lk.get_project(state, project_path)
     return {s.title: lk.get_scalar(s.id) for s in project.scalars}
 
 
@@ -56,6 +56,17 @@ class TestTutorial2(unittest.TestCase):
         self.assertEqual(scalars['!vertex_count'].double, 402)
         self.assertEqual(scalars['!edge_count'].double, 3098)
 
+    def test_find_infocom_communities_1(self):
+        scalars = get_project_scalars(
+            self.lk,
+            self.outputs,
+            'Find-infocom-communities_1',
+            'project',
+            '.communities')
+        self.assertEqual(scalars['!nonEmpty'].double, 37)
+        self.assertEqual(scalars['!belongsToEdges'].double, 500)
+        self.assertEqual(scalars['!coverage'].double, 349)
+
     def test_graph_visualization_6(self):
         scalars = get_project_scalars(
             self.lk,
@@ -84,8 +95,3 @@ class TestTutorial2(unittest.TestCase):
                           ['Vagyim', '2.29865'],
                           ['Janos', '2.27615']
                           ])
-
-    @classmethod
-    def tearDownClass(cls):
-        # Should the uploaded files be removed after testing?
-        pass
