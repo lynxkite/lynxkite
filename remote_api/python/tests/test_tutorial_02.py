@@ -27,8 +27,7 @@ class TestTutorial2(unittest.TestCase):
         with open(os.path.join(data_path, 'beno_facebook_vertices.csv')) as vertices_file, \
                 open(os.path.join(data_path, 'beno_facebook_edges.csv')) as edges_file:
             vertices_box = next(
-                x for x in ws_yaml if x[
-                    'id'] == 'Import-CSV_1')
+                x for x in ws_yaml if x['id'] == 'Import-CSV_1')
             vertices_box['parameters'][
                 'filename'] = cls.lk.upload(vertices_file)
             edges_box = next(x for x in ws_yaml if x['id'] == 'Import-CSV_2')
