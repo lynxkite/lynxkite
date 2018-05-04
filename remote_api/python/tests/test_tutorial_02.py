@@ -29,9 +29,10 @@ class TestTutorial2(unittest.TestCase):
             vertices_box = next(
                 x for x in ws_yaml if x['id'] == 'Import-CSV_1')
             vertices_box['parameters'][
-                'filename'] = cls.lk.upload(vertices_file)
+                'filename'] = cls.lk.upload(vertices_file.read())
             edges_box = next(x for x in ws_yaml if x['id'] == 'Import-CSV_2')
-            edges_box['parameters']['filename'] = cls.lk.upload(edges_file)
+            edges_box['parameters'][
+                'filename'] = cls.lk.upload(edges_file.read())
 
         boxes = cls.lk.import_box(ws_yaml, 'Import-CSV_1')
         boxes = cls.lk.import_box(boxes, 'Import-CSV_2')
