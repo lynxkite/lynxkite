@@ -24,8 +24,8 @@ class TestTutorial2(unittest.TestCase):
             ws_yaml = yaml.load(yaml_file)
 
         cls.lk = lynx.kite.LynxKite()
-        with open(os.path.join(data_path, 'beno_facebook_vertices.csv')) as vertices_file, \
-                open(os.path.join(data_path, 'beno_facebook_edges.csv')) as edges_file:
+        with open(os.path.join(data_path, 'beno_facebook_vertices.csv'), 'rb') as vertices_file, \
+                open(os.path.join(data_path, 'beno_facebook_edges.csv'), 'rb') as edges_file:
             vertices_box = next(
                 x for x in ws_yaml if x['id'] == 'Import-CSV_1')
             vertices_box['parameters'][
