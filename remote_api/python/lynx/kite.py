@@ -1376,8 +1376,8 @@ class WorkspaceSequence:
     # One NTAP (non-trivial atomic parent) can belong to multiple endpoints
     task_to_ntap = {task: task.box_path.non_trivial_parent_of_endpoint() for task in box_tasks}
     ntap_to_tasks: Dict[BoxPath, Set[Task]] = defaultdict(set)
-    for task in box_tasks:
-      ntap_to_tasks[task_to_ntap[task]].add(task)
+    for task, ntap in task_to_ntap.items():
+      ntap_to_tasks[ntap].add(task)
     for task in box_tasks:
       to_process = deque(task_to_ntap[task].parents())
       visited: Set[BoxPath] = set()
