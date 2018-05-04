@@ -30,7 +30,7 @@ class TestWorkspaceSequence(unittest.TestCase):
         lk_root='ws_test_seq/',
         dfs_root='',
         input_recipes=[input_recipe])
-    wss_instance = wss.ws_for_date(lk, test_date)
+    wss_instance = wss.ws_for_date(test_date)
     wss_instance.run()
     for output_sequence in wss.output_sequences().values():
       self.assertTrue(lynx.kite.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
@@ -42,7 +42,7 @@ class TestWorkspaceSequence(unittest.TestCase):
     self.assertEqual(table_raw.data[0][0].string, '2018-01-02 00:00:00')
     early_date = datetime(2017, 12, 31)
     with self.assertRaises(Exception) as context:
-      early_instance = wss.ws_for_date(lk, early_date)
+      early_instance = wss.ws_for_date(early_date)
     self.assertTrue('preceeds start date' in str(context.exception))
 
   def test_multiple_save(self):
@@ -67,7 +67,7 @@ class TestWorkspaceSequence(unittest.TestCase):
         lk_root='eg_cnt',
         dfs_root='',
         input_recipes=[input_recipe])
-    wss_instance = wss.ws_for_date(lk, test_date)
+    wss_instance = wss.ws_for_date(test_date)
     wss_instance.save()
     with self.assertRaises(Exception) as context:
       wss_instance.save()
@@ -98,7 +98,7 @@ class TestWorkspaceSequence(unittest.TestCase):
     summa_as_input.set_tss(wss.output_sequences()['summa'])
 
     def run_ws(test_date, summa):
-      wss_instance = wss.ws_for_date(lk, test_date)
+      wss_instance = wss.ws_for_date(test_date)
       wss_instance.run()
       for output_sequence in wss.output_sequences().values():
         self.assertTrue(lynx.kite.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
@@ -135,7 +135,7 @@ class TestWorkspaceSequence(unittest.TestCase):
         input_recipes=[])
 
     def run_ws(test_date):
-      wss_instance = wss.ws_for_date(lk, test_date)
+      wss_instance = wss.ws_for_date(test_date)
       wss_instance.run()
       for output_sequence in wss.output_sequences().values():
         self.assertTrue(lynx.kite.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
