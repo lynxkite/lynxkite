@@ -36,8 +36,8 @@ import requests
 from croniter import croniter
 
 
-if sys.version_info.major < 3:
-  raise Exception('At least Python version 3 is needed!')
+if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 6):
+  raise Exception('At least Python version 3.6 is needed!')
 
 
 def _timestamp_is_valid(dt: datetime.datetime, cron_str: str) -> bool:
