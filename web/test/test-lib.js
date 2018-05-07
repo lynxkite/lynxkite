@@ -1426,6 +1426,15 @@ testLib = {
     element(by.id('close-modal-button')).click();
   },
 
+  pythonPopup: function() {
+    element(by.id('save-boxes-as-python')).click();
+  },
+
+  expectPythonCode: function(expectedCode) {
+    let pythonCode = $('#python-code').getText();
+    expect(pythonCode).toEqual(expectedCode);
+  },
+
   setEnablePopups: function(enable) {
     browser.executeScript(
       'angular.element(document.body).injector()' +
