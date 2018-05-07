@@ -66,9 +66,12 @@ if [ "$(echo ${derby_jar} | wc -w | tr -d ' ')" != "1" ]; then
   exit 1
 fi
 
+KITE_HTTP_ADDRESS=${KITE_HTTP_ADDRESS:-127.0.0.1}
+
 addJPropIfNonEmpty lynxkite.derby_jar ${derby_jar}
 addJPropIfNonEmpty java.security.policy ${conf_dir}/security.policy
 addJPropIfNonEmpty http.port "${KITE_HTTP_PORT}"
+addJPropIfNonEmpty http.address "${KITE_HTTP_ADDRESS}"
 addJPropIfNonEmpty https.port "${KITE_HTTPS_PORT}"
 addJPropIfNonEmpty https.keyStore "${KITE_HTTPS_KEYSTORE}"
 addJPropIfNonEmpty https.keyStorePassword "${KITE_HTTPS_KEYSTORE_PWD}"

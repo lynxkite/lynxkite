@@ -80,6 +80,11 @@ export KITE_MASTER_MEMORY_MB=1024
 # Specify the port for the LynxKite HTTP server to listen on. Must be >=1000.
 export KITE_HTTP_PORT=2200
 
+# By default, LynxKite can only be accessed from localhost for security reasons. (That is,
+# address 127.0.0.1). Uncomment the following line if LynxKite should be accessible
+# from other IP addresses as well.
+# export KITE_HTTP_ADDRESS=0.0.0.0
+
 # Specify the HTTP port for the watchdog. If this is set, the startup script will start a watchdog
 # as well which will automatically restart the LynxKite server if it detects any problem.
 # export KITE_WATCHDOG_PORT=2202
