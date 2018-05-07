@@ -8,7 +8,7 @@ angular.module('biggraph')
   'workspaceDrawingBoard',
   function(
     environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope, $q,
-    $location, util, longPoll) {
+    $location, util, longPoll, pythonCodeGenerator) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -508,6 +508,17 @@ angular.module('biggraph')
         scope.deleteSelectedBoxes = function() {
           this.deleteBoxes(this.selectedBoxIds);
           this.selectedBoxIds = [];
+        };
+
+        scope.saveBoxesAsPython = function() {
+          if (this.selectedBoxIds.length === 0) { // Nothing is selected, use all boxes
+            const boxIds = this.workspace.boxes.map(b => b.instance.id);
+            // TODO: add parameter to signal whether decorator code is needed
+            pythonCodeGenerator.saveAsPython(this.workspace, boxIds);
+          } else {
+            pythonCodeGenerator.saveAsPython(this.workspace, this.selectedBoxIds);
+          }
+
         };
 
         scope.diveUp = function() {

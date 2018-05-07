@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Users can generate Python API code from a whole workspace or from selected boxes. 
+
 ### 2.3.0
 
  - Upgraded to _Apache Spark 2.3.0_.
