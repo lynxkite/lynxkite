@@ -28,6 +28,14 @@
     <i class="fa fa-superpowers"></i>
   </button>
   <button class="btn btn-default"
+       id="save-boxes-as-python"
+       ng-click="saveBoxesAsPython()"
+       ng-disabled="workspace.error"
+       drop-tooltip="Save&nbsp;as Python code"
+       drop-tooltip-placement="bottom">
+    <i class="fa fa-code"></i>
+  </button>
+  <button class="btn btn-default"
        id="delete-selected-boxes"
        ng-click="deleteSelectedBoxes()"
        ng-disabled="selectedBoxIds.length === 0 || workspace.error"
