@@ -146,7 +146,16 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($modal) {
       const pp = parametricParameters();
       const args = [i, p, pp].filter(x => x);
       const code = `${box.id} = lk.${box.pythonOp}(${args.join(', ')})`;
-      return code;
+      const importBoxNames = [
+        'importCSV', 'importJSON', 'importFromHive',
+        'importParquet', 'importORC', 'importJDBC'];
+      if (!importBoxNames.includes(box.pythonOp)) {
+        return code;
+      } else { // Add comment about import operations
+        const explanation = '# Import boxes have to be handled separately\n';
+        const commented = '# ' + code.replace(/\n/g,'\n# ');
+        return explanation + commented;
+      }
     }
 
     // Custom boxes are not supported
