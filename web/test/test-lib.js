@@ -20,6 +20,10 @@ function textOf(element) {
   return element.getAttribute('textContent').then(s => s.trim());
 }
 
+// Workaround for flaky typing in frontend tests
+function safeSendKeys(input, text) {
+  text.split('').forEach((c) => input.sendKeys(c));
+}
 
 function Entity(side, kind, name) {
   this.side = side;
@@ -263,9 +267,14 @@ Workspace.prototype = {
   addWorkspaceParameter: function(name, kind, defaultValue) {
     var boxEditor = this.openBoxEditor('anchor');
     boxEditor.element.$('#add-parameter').click();
-    boxEditor.element.$('#-id').sendKeys(name);
-    boxEditor.element.$('#' + name + '-type').sendKeys(kind);
-    boxEditor.element.$('#' + name + '-default').sendKeys(defaultValue);
+    const keys = name.split('');
+    let prefix = '';
+    for (let k of keys) {
+      boxEditor.element.$('#' + prefix + '-id').sendKeys(k);
+      prefix += k;
+    }
+    safeSendKeys(boxEditor.element.$('#' + name + '-type'), kind);
+    safeSendKeys(boxEditor.element.$('#' + name + '-default'), defaultValue);
     boxEditor.close();
   },
 
