@@ -6,60 +6,70 @@ from ruamel.yaml import YAML
 
 yaml = YAML()
 
-
-def get_project_scalars(lk, outputs, box_id, box_output_id, project_path=""):
-    state = outputs[box_id, box_output_id].stateId
-    project = lk.get_project(state, project_path)
-    return {s.title: lk.get_scalar(s.id) for s in project.scalars}
+DATA_DIR_PATH = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), 'data')
 
 
-class TestTutorial2(unittest.TestCase):
+class TutorialTestCase(unittest.TestCase):
 
     @classmethod
-    def setUpClass(cls):
-        data_path = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            'data')
-        with open(os.path.join(data_path, 'tutorial-02-test.yaml')) as yaml_file:
+    def init_outputs(cls, yaml_workspace, input_data_filenames):
+        """Import YAML workspace and input data, and fetch states.
+
+        Assumption 1: the input data files are in CSV format.
+
+        Assumption 2: YAML workspace contains import-CSV-boxes with IDs
+        'Import-CSV_1'...'Import-CSV_n' and the input data files should be
+        imported in the same order.
+        """
+        with open(os.path.join(DATA_DIR_PATH, yaml_workspace)) as yaml_file:
             ws_yaml = yaml.load(yaml_file)
 
         cls.lk = lynx.kite.LynxKite()
-        with open(os.path.join(data_path, 'beno_facebook_vertices.csv'), 'rb') as vertices_file, \
-                open(os.path.join(data_path, 'beno_facebook_edges.csv'), 'rb') as edges_file:
-            vertices_box = next(
-                x for x in ws_yaml if x['id'] == 'Import-CSV_1')
-            vertices_box['parameters'][
-                'filename'] = cls.lk.upload(vertices_file.read())
-            edges_box = next(x for x in ws_yaml if x['id'] == 'Import-CSV_2')
-            edges_box['parameters'][
-                'filename'] = cls.lk.upload(edges_file.read())
 
-        boxes = cls.lk.import_box(ws_yaml, 'Import-CSV_1')
-        boxes = cls.lk.import_box(boxes, 'Import-CSV_2')
+        boxes = ws_yaml
+        for i, data_filename in enumerate(input_data_filenames, 1):
+            data_path = os.path.join(DATA_DIR_PATH, data_filename)
+            with open(data_path, 'rb') as data_file:
+                csv_box = next(x for x in boxes
+                               if x['id'] == 'Import-CSV_{}'.format(i))
+                csv_box['parameters'][
+                    'filename'] = cls.lk.upload(data_file.read())
+                boxes = cls.lk.import_box(boxes, 'Import-CSV_{}'.format(i))
+
         cls.outputs = cls.lk.fetch_states(boxes)
 
+    @classmethod
+    def get_project_scalars(cls, box_id, box_output_id, project_path=""):
+        state = cls.outputs[box_id, box_output_id].stateId
+        project = cls.lk.get_project(state, project_path)
+        return {s.title: cls.lk.get_scalar(s.id) for s in project.scalars}
+
+
+class TestTutorial2(TutorialTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.init_outputs(
+            'tutorial-02-test.yaml',
+            ('beno_facebook_vertices.csv', 'beno_facebook_edges.csv'))
+
     def test_graph_visualization_1(self):
-        scalars = get_project_scalars(
-            self.lk,
-            self.outputs,
+        scalars = self.get_project_scalars(
             'Graph-visualization_1',
             'visualization')
         self.assertEqual(scalars['!vertex_count'].double, 403)
         self.assertEqual(scalars['!edge_count'].double, 3500)
 
     def test_graph_visualization_2(self):
-        scalars = get_project_scalars(
-            self.lk,
-            self.outputs,
+        scalars = self.get_project_scalars(
             'Graph-visualization_2',
             'visualization')
         self.assertEqual(scalars['!vertex_count'].double, 402)
         self.assertEqual(scalars['!edge_count'].double, 3098)
 
     def test_find_infocom_communities_1(self):
-        scalars = get_project_scalars(
-            self.lk,
-            self.outputs,
+        scalars = self.get_project_scalars(
             'Find-infocom-communities_1',
             'project',
             '.communities')
@@ -68,9 +78,7 @@ class TestTutorial2(unittest.TestCase):
         self.assertEqual(scalars['!coverage'].double, 349)
 
     def test_graph_visualization_6(self):
-        scalars = get_project_scalars(
-            self.lk,
-            self.outputs,
+        scalars = self.get_project_scalars(
             'Graph-visualization_6',
             'visualization')
         self.assertEqual(scalars['!vertex_count'].double, 403)
