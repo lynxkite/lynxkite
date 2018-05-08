@@ -2,7 +2,8 @@ import unittest
 import os
 import lynx.kite
 from ruamel.yaml import YAML
-
+import csv
+import itertools
 
 yaml = YAML()
 
@@ -103,3 +104,100 @@ class TestTutorial2(TutorialTestCase):
                           ['Vagyim', '2.29865'],
                           ['Janos', '2.27615']
                           ])
+
+
+class TestTutorial3(TutorialTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.init_outputs(
+            'tutorial-03-test.yaml',
+            ('03_Airlines_Vertex.csv', '03_Airlines_Edge.csv'))
+        cls.DATA_SQL_1_3 = [['3621', 'Americas'],
+                            ['3320', 'South-Asia/East-Africa'],
+                            ['3585', 'Americas'],
+                            ['193', 'Americas'],
+                            ['507', 'Americas'],
+                            ['3645', 'Americas'],
+                            ['2276', 'China/East-Asia'],
+                            ['3386', 'China/East-Asia'],
+                            ['3199', 'China/East-Asia'],
+                            ['3369', 'China/East-Asia']]
+        cls.DATA_SQL_1_4 = [['1824', '3550'],
+                            ['3992', '3077'],
+                            ['2082', '2170'],
+                            ['3861', '3670'],
+                            ['1107', '340'],
+                            ['2372', '3388'],
+                            ['3395', '6392'],
+                            ['146', '580'],
+                            ['3878', '1852'],
+                            ['3520', '3793']]
+
+    def test_convert_vertex_attributes_to_position_2(self):
+        scalars = self.get_project_scalars(
+            'Convert-vertex-attributes-to-position_2',
+            'project')
+        self.assertEqual(scalars['!vertex_count'].double, 8107)
+
+    def test_convert_vertex_attributes_to_position_1(self):
+        scalars = self.get_project_scalars(
+            'Convert-vertex-attributes-to-position_1',
+            'project')
+        self.assertEqual(scalars['!vertex_count'].double, 8107)
+        self.assertEqual(scalars['!edge_count'].double, 67202)
+
+    def test_convert_vertex_attributes_to_position_3(self):
+        scalars = self.get_project_scalars(
+            'Convert-vertex-attributes-to-position_3',
+            'project')
+        self.assertEqual(scalars['!vertex_count'].double, 262)
+        self.assertEqual(scalars['!edge_count'].double, 7743)
+
+    def test_find_modular_clustering_1(self):
+        scalars = self.get_project_scalars(
+            'Find-modular-clustering_1',
+            'project',
+            '.modular_clusters')
+        self.assertEqual(scalars['!coverage'].double, 262)
+        self.assertEqual(scalars['!nonEmpty'].double, 4)
+        self.assertEqual(scalars['!vertex_count'].double, 4)
+        self.assertAlmostEqual(scalars['modularity'].double, 0.54, places=2)
+
+    def test_sql_1_3(self):
+        output = self.outputs['SQL1_3', 'table']
+        table = self.lk.get_table_data(output.stateId)
+        self.assertEqual(
+            [c.name for c in table.header],
+            ['airportID', 'segment_name'])
+        self.assertEqual([[f.string for f in row] for row in table.data][0:10],
+                         self.DATA_SQL_1_3)
+
+    def test_sql_1_4(self):
+        output = self.outputs['SQL1_4', 'table']
+        table = self.lk.get_table_data(output.stateId)
+        self.assertEqual(
+            [c.name for c in table.header],
+            ['dst_airportID_most_common', 'src_airportID_most_common'])
+        self.assertEqual([[f.string for f in row] for row in table.data][0:10],
+                         self.DATA_SQL_1_4)
+
+    def test_export_to_csv_1(self):
+        export = self.lk.export_box(self.outputs, 'Export-to-CSV_1')
+        data = self.lk.download_file(export.parameters.path)
+        csv_reader = csv.reader(data.decode().split('\n'))
+        self.assertEqual(
+            next(csv_reader),
+            ['airportID', 'segment_name'])
+        self.assertEqual(list(itertools.islice(csv_reader, 10)),
+                         self.DATA_SQL_1_3)
+
+    def test_export_to_csv_2(self):
+        export = self.lk.export_box(self.outputs, 'Export-to-CSV_2')
+        data = self.lk.download_file(export.parameters.path)
+        csv_reader = csv.reader(data.decode().split('\n'))
+        self.assertEqual(
+            next(csv_reader),
+            ['dst_airportID_most_common', 'src_airportID_most_common'])
+        self.assertEqual(list(itertools.islice(csv_reader, 10)),
+                         self.DATA_SQL_1_4)
