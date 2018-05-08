@@ -25,6 +25,11 @@ function safeSendKeys(input, text) {
   text.split('').forEach((c) => input.sendKeys(c));
 }
 
+function safeSelectAndSendKeys(input, text) {
+  input.sendKeys(testLib.selectAllKey);
+  safeSendKeys(input, text);
+}
+
 function Entity(side, kind, name) {
   this.side = side;
   this.kind = kind;
@@ -169,7 +174,7 @@ Workspace.prototype = {
 
   openOperation: function(name) {
     this.selector.element(by.id('operation-search')).click();
-    this.selector.element(by.id('filter')).sendKeys(name, K.ENTER);
+    safeSendKeys(this.selector.element(by.id('filter')), name + K.ENTER);
     return this.selector.$$('operation-selector-entry').get(0);
   },
 
@@ -376,7 +381,7 @@ Workspace.prototype = {
 
   saveWorkspaceAs: function(newName) {
     this.main.$('#save-workspace-as-starter-button').click();
-    this.main.$('#save-workspace-as-input input').sendKeys(testLib.selectAllKey + newName);
+    safeSelectAndSendKeys(this.main.$('#save-workspace-as-input input'), newName);
     this.main.$('#save-workspace-as-input #ok').click();
   },
 
@@ -588,7 +593,7 @@ TableState.prototype = {
 
   setRowCount: function(num) {
     var input = this.control.$('#sample-rows');
-    input.sendKeys(testLib.selectAllKey + num.toString());
+    safeSelectAndSendKeys(input, num.toString());
   },
 
   clickShowSample: function() {
@@ -668,7 +673,7 @@ Side.prototype = {
 
   openOperation: function(name) {
     this.toolbox.element(by.id('operation-search')).click();
-    this.toolbox.element(by.id('filter')).sendKeys(name, K.ENTER);
+    safeSendKeys(this.toolbox.element(by.id('filter')), name, K.ENTER);
   },
 
   closeOperation: function() {
@@ -692,7 +697,7 @@ Side.prototype = {
   },
 
   populateOperationInput: function(parameterId, param) {
-    this.toolbox.element(by.id(parameterId)).sendKeys(testLib.selectAllKey + param);
+    safeSelectAndSendKeys(this.toolbox.element(by.id(parameterId)), param);
   },
 
   expectOperationScalar: function(name, text) {
@@ -739,7 +744,7 @@ Side.prototype = {
 
   saveProjectAs: function(newName) {
     this.side.element(by.id('save-as-starter-button')).click();
-    this.side.element(by.id('save-as-input')).sendKeys(testLib.selectAllKey + newName);
+    safeSelectAndSendKeys(this.side.element(by.id('save-as-input')), newName);
     this.side.element(by.id('save-as-button')).click();
   },
 
@@ -830,7 +835,7 @@ TableBrowser.prototype = {
 
   searchTable: function(searchText) {
     var searchBox = this.root.$('#search-for-tables');
-    searchBox.sendKeys(searchText);
+    safeSendKeys(searchBox, searchText);
   },
 
   expectDragText: function(li, expected) {
@@ -848,8 +853,7 @@ TableBrowser.prototype = {
   },
 
   enterSearchQuery: function(query) {
-    element(by.id('table-browser-search-box'))
-        .sendKeys(testLib.selectAllKey + query);
+    safeSelectAndSendKeys(element(by.id('table-browser-search-box')), query);
   },
 
 };
@@ -1021,7 +1025,7 @@ Selector.prototype = {
 
   openNewWorkspace: function(name) {
     element(by.id('new-workspace')).click();
-    element(by.id('new-workspace-name')).sendKeys(name);
+    safeSendKeys(element(by.id('new-workspace-name')), name);
     $('#new-workspace button[type=submit]').click();
     this.hideFloatingElements();
   },
@@ -1038,13 +1042,13 @@ Selector.prototype = {
   },
 
   importLocalCSVFile: function(tableName, localCsvFile, csvColumns, columnsToImport, view, limit) {
-    this.root.$('import-wizard #table-name input').sendKeys(tableName);
+    safeSendKeys(this.root.$('import-wizard #table-name input'), tableName);
     if (columnsToImport) {
-      this.root.$('import-wizard #columns-to-import input').sendKeys(columnsToImport);
+      safeSendKeys(this.root.$('import-wizard #columns-to-import input'), columnsToImport);
     }
     this.root.$('#datatype select option[value="csv"]').click();
     if (csvColumns) {
-      this.root.$('import-wizard #csv-column-names input').sendKeys(csvColumns);
+      safeSendKeys(this.root.$('import-wizard #csv-column-names input'), csvColumns);
     }
     var csvFileParameter = $('#csv-filename file-parameter');
     testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
@@ -1052,17 +1056,17 @@ Selector.prototype = {
       this.root.$('import-wizard #as-view input').click();
     }
     if (limit) {
-      this.root.$('import-wizard #limit input').sendKeys(limit.toString());
+      safeSendKeys(this.root.$('import-wizard #limit input'), limit.toString());
     }
     this.clickAndWaitForCsvImport();
   },
 
   importJDBC: function(tableName, jdbcUrl, jdbcTable, jdbcKeyColumn, view) {
-    this.root.$('import-wizard #table-name input').sendKeys(tableName);
+    safeSendKeys(this.root.$('import-wizard #table-name input'), tableName);
     this.root.$('#datatype select option[value="jdbc"]').click();
-    this.root.$('#jdbc-url input').sendKeys(jdbcUrl);
-    this.root.$('#jdbc-table input').sendKeys(jdbcTable);
-    this.root.$('#jdbc-key-column input').sendKeys(jdbcKeyColumn);
+    safeSendKeys(this.root.$('#jdbc-url input'), jdbcUrl);
+    safeSendKeys(this.root.$('#jdbc-table input'), jdbcTable);
+    safeSendKeys(this.root.$('#jdbc-key-column input'), jdbcKeyColumn);
     if (view) {
       this.root.$('import-wizard #as-view input').click();
     }
@@ -1071,7 +1075,7 @@ Selector.prototype = {
 
   newDirectory: function(name) {
     element(by.id('new-directory')).click();
-    element(by.id('new-directory-name')).sendKeys(name);
+    safeSendKeys(element(by.id('new-directory-name')), name);
     $('#new-directory button[type=submit]').click();
   },
 
@@ -1155,7 +1159,7 @@ Selector.prototype = {
   },
 
   enterSearchQuery: function(query) {
-    element(by.id('search-box')).sendKeys(testLib.selectAllKey + query);
+    safeSelectAndSendKeys(element(by.id('search-box')), query);
   },
 
   clearSearchQuery: function() {
@@ -1196,14 +1200,14 @@ Selector.prototype = {
   saveGlobalSqlToTable: function(name) {
     element(by.id('save-results-opener')).click();
     this.root.$('#exportFormat option[value="table"]').click();
-    this.root.$('#exportKiteTable').sendKeys(name);
+    safeSendKeys(this.root.$('#exportKiteTable'), name);
     element(by.id('save-results')).click();
   },
 
   saveGlobalSqlToView: function(name) {
     element(by.id('save-results-opener')).click();
     this.root.$('#exportFormat option[value="view"]').click();
-    this.root.$('#exportKiteTable').sendKeys(name);
+    safeSendKeys(this.root.$('#exportKiteTable'), name);
     element(by.id('save-results')).click();
   },
 };
@@ -1354,7 +1358,7 @@ testLib = {
               e.$('a#' + value[i]).click();
             }
           } else {
-            e.sendKeys(testLib.selectAllKey + value);
+            safeSelectAndSendKeys(e, value);
           }
         });
   },
@@ -1462,6 +1466,8 @@ testLib = {
         input.style.opacity = 1;
       },
       input.getWebElement());
+    // Special parameter?
+    // Does not work with safeSendKeys.
     input.sendKeys(fileName);
   },
 
@@ -1553,7 +1559,7 @@ testLib = {
   submitInlineInput: function(element, text) {
     var inputBox = element.$('input');
     var okButton = element.$('#ok');
-    inputBox.sendKeys(text);
+    safeSendKeys(inputBox, text);
     okButton.click();
   },
 
