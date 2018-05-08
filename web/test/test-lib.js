@@ -22,12 +22,14 @@ function textOf(element) {
 
 // Workaround for flaky typing in frontend tests
 function safeSendKeys(input, text) {
-  text.split('').forEach((c) => input.sendKeys(c));
+  let result;
+  text.split('').forEach((c) => result = input.sendKeys(c));
+  return result;
 }
 
 function safeSelectAndSendKeys(input, text) {
   input.sendKeys(testLib.selectAllKey);
-  safeSendKeys(input, text);
+  return safeSendKeys(input, text);
 }
 
 function Entity(side, kind, name) {
@@ -72,7 +74,7 @@ Entity.prototype = {
   setFilter: function(filterValue) {
     var filterBox = this.popup().$('#filter');
     filterBox.clear();
-    filterBox.sendKeys(filterValue).submit();
+    safeSendKeys(filterBox, filterValue).submit();
     this.popoff();
   },
 
@@ -1107,7 +1109,7 @@ Selector.prototype = {
   renameWorkspace: function(name, newName) {
     var workspace = this.workspace(name);
     testLib.menuClick(workspace, 'rename');
-    workspace.element(by.id('renameBox')).sendKeys(testLib.selectAllKey, newName).submit();
+    safeSelectAndSendKeys(workspace.element(by.id('renameBox')), newName).submit();
   },
 
   deleteWorkspace: function(name) {

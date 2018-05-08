@@ -7,15 +7,15 @@ module.exports = function(fw) {
     'empty test-example workspace',
     'test unexpected parameters',
     function() {
-      lib.workspace.addBox({id: 'ex', name: 'Create example graph', x: 100, y: 100});
+      lib.workspace.addBox({id: 'ex', name: 'Create example graph', x: 100, y: 0});
       lib.workspace.addBox({
         id: 'attr', name: 'Add constant vertex attribute',
         params: {name: 'x'},
-        x: 100, y: 200, after: 'ex'});
+        x: 100, y: 100, after: 'ex'});
       lib.workspace.addBox({
         id: 'agg', name: 'Aggregate on neighbors',
         params: {'aggregate_x': ['average', 'count']},
-        x: 100, y: 300, after: 'attr'});
+        x: 100, y: 200, after: 'attr'});
       var attr = lib.workspace.openBoxEditor('attr');
       var agg = lib.workspace.openBoxEditor('agg');
       var output = lib.workspace.getOutputPlug('agg');
