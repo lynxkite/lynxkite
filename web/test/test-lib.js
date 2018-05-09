@@ -1165,7 +1165,7 @@ Selector.prototype = {
   },
 
   clearSearchQuery: function() {
-    element(by.id('search-box')).sendKeys(testLib.selectAllKey + K.BACK_SPACE);
+    safeSelectAndSendKeys(element(by.id('search-box')), K.BACK_SPACE);
   },
 
   globalSqlEditor: function() {
