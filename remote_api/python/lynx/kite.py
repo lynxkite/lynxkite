@@ -1241,20 +1241,9 @@ class Task:
 
   def id(self):
     '''
-    ID to by Airflow PythonOperator as `task_id`. This ID will be displayed
-    on the Airflow UI.
+    Human-readable ID of the task.
     '''
     raise NotImplementedError()
-
-  def __call__(self, ds, execution_date, **kwargs):
-    '''
-    This signature is needed by the Airflow PythonOperator.
-
-    Will be called by the Airflow scheduler which provides a
-    date stamp (`ds`), an execution date (`execution_date`) and possible
-    further keyword arguments. We just use the `execution_date` parameter.
-    '''
-    self.run(execution_date)
 
 
 class BoxTask(Task):
@@ -1310,11 +1299,9 @@ class Triggerable(BoxTask):
     wss_instance.trigger(self.box_path)
 
   def id(self):
-    '''
-    It needs to be unique in a DAG, so it is not enough to use the `box_path`.
-    After custom box ids are implemented, we can use them to make it simpler.
-    '''
     box = self.box_path.base
+    # It needs to be unique in a DAG, so it is not enough to use the `box_path`.
+    # After custom box ids are implemented, we can use them to make it simpler.
     # TODO: remove this code and use custom box ids or make this code cover
     # all scenarios.
     param = ''
@@ -1341,7 +1328,7 @@ class SaveWorkspace(Task):
     ws_for_date.save()
 
   def id(self):
-    return 'Save_workspace'
+    return 'save_workspace'
 
 
 class WorkspaceSequence:
@@ -1457,6 +1444,12 @@ class WorkspaceSequence:
     return _minimal_dag(dag)
 
   def to_airflow_DAG(self, dag_id):
+    '''
+    Creates an Airflow dag from the workspace sequence.
+
+    It can be used in Airflow dag definition files to automate the workspace
+    sequence. Airflow task dependencies are defined based on the output of `to_dag`.
+    '''
     from airflow import DAG
     from airflow.operators.python_operator import PythonOperator
 
@@ -1478,7 +1471,7 @@ class WorkspaceSequence:
           op=PythonOperator(
               task_id=t.id(),
               provide_context=True,
-              python_callable=t,
+              python_callable=lambda ds, execution_date, **kwargs: t.run(execution_date),
               dag=airflow_dag))
     # Defining dependencies between operators.
     for t in task_dag:
