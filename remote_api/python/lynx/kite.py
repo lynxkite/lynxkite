@@ -1456,7 +1456,7 @@ class WorkspaceSequence:
     self._add_save_workspace_deps(dag)
     return _minimal_dag(dag)
 
-  def to_airflow_dag(self, dag_id):
+  def to_airflow_DAG(self, dag_id):
     from airflow import DAG
     from airflow.operators.python_operator import PythonOperator
 
