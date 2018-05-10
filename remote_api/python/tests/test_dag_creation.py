@@ -290,10 +290,10 @@ class TestDagCreation(unittest.TestCase):
     dag = self.complex_workspace_sequence().to_dag()
     task_ids = set([t.id() for t in dag])
     expected = set([
-        'input[i1]', 'input[i3]', 'Save workspace', 'input[i2]',
-        'trigger[snapshotter->saveToSnapshot(SB2)]',
-        'trigger[snapshotter->saveToSnapshot(SB1)]',
-        'output[o3]', 'output[o1]', 'output[o2]'])
+        'input_i1', 'input_i3', 'Save_workspace', 'input_i2',
+        'snapshotter--saveToSnapshot_SB2',
+        'snapshotter--saveToSnapshot_SB1',
+        'output_o3', 'output_o1', 'output_o2'])
     self.assertEqual(task_ids, expected)
 
   def test_wss_dag_is_runnable(self):

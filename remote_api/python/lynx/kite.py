@@ -881,7 +881,7 @@ class BoxPath:
     self.stack = stack
 
   def __str__(self) -> str:
-    return '->'.join([b.name() for b in cast(List[Box], self.stack) + [cast(Box, self.base)]])
+    return '--'.join([b.name() for b in cast(List[Box], self.stack) + [cast(Box, self.base)]])
 
   def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
     return BoxPath(self.base, [box] + self.stack)
@@ -1246,6 +1246,16 @@ class Task:
     '''
     raise NotImplementedError()
 
+  def __call__(self, ds, execution_date, **kwargs):
+    '''
+    This signature is needed by the Airflow PythonOperator.
+
+    Will be called by the Airflow scheduler which provides a
+    date stamp (`ds`), an execution date (`execution_date`) and possible
+    further keyword arguments. We just use the `execution_date` parameter.
+    '''
+    self.run(execution_date)
+
 
 class BoxTask(Task):
   '''
@@ -1274,7 +1284,7 @@ class Input(BoxTask):
 
   def id(self):
     name = self.box_path.base.parameters['name']
-    return f'input[{name}]'
+    return f'input_{name}'
 
 
 class Output(BoxTask):
@@ -1288,7 +1298,7 @@ class Output(BoxTask):
 
   def id(self):
     name = self.box_path.base.parameters['name']
-    return f'output[{name}]'
+    return f'output_{name}'
 
 
 class Triggerable(BoxTask):
@@ -1316,7 +1326,7 @@ class Triggerable(BoxTask):
       param = escape(box.parameters['table'])
     elif 'table' in box.parametric_parameters:
       param = escape(box.parametric_parameters['table'])
-    return f'trigger[{self.box_path}({param})]'
+    return f'{self.box_path}_{param}'
 
 
 class SaveWorkspace(Task):
@@ -1331,7 +1341,7 @@ class SaveWorkspace(Task):
     ws_for_date.save()
 
   def id(self):
-    return 'Save workspace'
+    return 'Save_workspace'
 
 
 class WorkspaceSequence:
@@ -1445,6 +1455,36 @@ class WorkspaceSequence:
     self._add_box_based_dependencies(dag)
     self._add_save_workspace_deps(dag)
     return _minimal_dag(dag)
+
+  def to_airflow_dag(self, dag_id):
+    from airflow import DAG
+    from airflow.operators.python_operator import PythonOperator
+
+    default_args = {
+        'owner': 'airflow',
+        'depends_on_past': False,
+        'start_date': self._start_date,
+    }
+    airflow_dag = DAG(
+        dag_id,
+        default_args=default_args,
+        schedule_interval=self._schedule)
+    task_dag = self.to_dag()
+    task_info = {}
+    # Creating Airflow operators for tasks.
+    for t in task_dag:
+      task_info[t] = dict(
+          id=t.id(),
+          op=PythonOperator(
+              task_id=t.id(),
+              provide_context=True,
+              python_callable=t,
+              dag=airflow_dag))
+    # Defining dependencies between operators.
+    for t in task_dag:
+      for dep in task_dag[t]:
+        task_info[t]['op'].set_upstream(task_info[dep]['op'])
+    return airflow_dag
 
 
 class WorkspaceSequenceInstance:
