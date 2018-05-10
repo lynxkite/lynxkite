@@ -290,7 +290,7 @@ class TestDagCreation(unittest.TestCase):
     dag = self.complex_workspace_sequence().to_dag()
     task_ids = set([t.id() for t in dag])
     expected = set([
-        'input_i1', 'input_i3', 'Save_workspace', 'input_i2',
+        'input_i1', 'input_i3', 'save_workspace', 'input_i2',
         'snapshotter--saveToSnapshot_SB2',
         'snapshotter--saveToSnapshot_SB1',
         'output_o3', 'output_o1', 'output_o2'])
