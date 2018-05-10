@@ -290,8 +290,11 @@ class TestDagCreation(unittest.TestCase):
     wss = self.complex_workspace_sequence()
     dag = wss.to_dag()
     lk = wss._lk
+    lk.remove_name('SB1')
+    lk.remove_name('SB2')
     for t in dag:
       t.run(self.test_date)
+    print([t.id() for t in dag])
     for o in wss.output_sequences().values():
       self.assertTrue(lynx.kite.TableSnapshotRecipe(o).is_ready(lk, self.test_date))
     # is everything idempotent apart from triggerables?

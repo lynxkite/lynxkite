@@ -881,7 +881,7 @@ class BoxPath:
     self.stack = stack
 
   def __str__(self) -> str:
-    return ' -> '.join([b.name() for b in cast(List[Box], self.stack) + [cast(Box, self.base)]])
+    return '->'.join([b.name() for b in cast(List[Box], self.stack) + [cast(Box, self.base)]])
 
   def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
     return BoxPath(self.base, [box] + self.stack)
@@ -1239,6 +1239,13 @@ class Task:
     '''
     raise NotImplementedError()
 
+  def id(self):
+    '''
+    ID to by Airflow PythonOperator as `task_id`. This ID will be displayed
+    on the Airflow UI.
+    '''
+    raise NotImplementedError()
+
 
 class BoxTask(Task):
   '''
@@ -1265,6 +1272,10 @@ class Input(BoxTask):
     name = self.box_path.base.parameters['name']
     wss_instance.run_input(name)
 
+  def id(self):
+    name = self.box_path.base.parameters['name']
+    return f'input[{name}]'
+
 
 class Output(BoxTask):
   '''
@@ -1275,6 +1286,10 @@ class Output(BoxTask):
     name = self.box_path.base.parameters['name']
     wss_instance.run_output(name)
 
+  def id(self):
+    name = self.box_path.base.parameters['name']
+    return f'output[{name}]'
+
 
 class Triggerable(BoxTask):
   '''
@@ -1284,10 +1299,13 @@ class Triggerable(BoxTask):
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
     wss_instance.trigger(self.box_path)
 
+  def id(self):
+    return f'trigger[{self.box_path}]'
+
 
 class SaveWorkspace(Task):
   '''
-  A task to save the worspace.
+  A task to save the workspace.
   '''
 
   def run(self, date: datetime.datetime) -> None:
@@ -1295,6 +1313,9 @@ class SaveWorkspace(Task):
     name = ws_for_date.full_name()
     self._wss.lk().remove_name(name, force=True)
     ws_for_date.save()
+
+  def id(self):
+    return 'Save workspace'
 
 
 class WorkspaceSequence:
