@@ -286,6 +286,16 @@ class TestDagCreation(unittest.TestCase):
       for previous in order[:i]:
         self.assertFalse(task in dag[previous])
 
+  def test_dag_task_ids(self):
+    dag = self.complex_workspace_sequence().to_dag()
+    task_ids = set([t.id() for t in dag])
+    expected = set([
+        'input[i1]', 'input[i3]', 'Save workspace', 'input[i2]',
+        'trigger[snapshotter->saveToSnapshot(SB2)]',
+        'trigger[snapshotter->saveToSnapshot(SB1)]',
+        'output[o3]', 'output[o1]', 'output[o2]'])
+    self.assertEqual(task_ids, expected)
+
   def test_wss_dag_is_runnable(self):
     wss = self.complex_workspace_sequence()
     dag = wss.to_dag()
@@ -294,7 +304,6 @@ class TestDagCreation(unittest.TestCase):
     lk.remove_name('SB2')
     for t in dag:
       t.run(self.test_date)
-    print([t.id() for t in dag])
     for o in wss.output_sequences().values():
       self.assertTrue(lynx.kite.TableSnapshotRecipe(o).is_ready(lk, self.test_date))
     # is everything idempotent apart from triggerables?
