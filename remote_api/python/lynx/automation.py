@@ -326,7 +326,7 @@ class WorkspaceSequence:
     self._add_save_workspace_deps(dag)
     return _minimal_dag(dag)
 
-  def to_airflow_DAG(self, dag_id: str) -> airflow.DAG:
+  def to_airflow_DAG(self, dag_id: str) -> DAG:
     '''
     Creates an Airflow dag from the workspace sequence.
 
