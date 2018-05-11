@@ -122,7 +122,7 @@ class Task:
     '''
     raise NotImplementedError()
 
-  def id(self):
+  def id(self) -> str:
     '''
     Human-readable ID of the task.
     '''
@@ -154,7 +154,7 @@ class Input(BoxTask):
     name = self.box_path.base.parameters['name']
     wss_instance.run_input(name)
 
-  def id(self):
+  def id(self) -> str:
     name = self.box_path.base.parameters['name']
     return f'input_{name}'
 
@@ -168,7 +168,7 @@ class Output(BoxTask):
     name = self.box_path.base.parameters['name']
     wss_instance.run_output(name)
 
-  def id(self):
+  def id(self) -> str:
     name = self.box_path.base.parameters['name']
     return f'output_{name}'
 
@@ -181,7 +181,7 @@ class Triggerable(BoxTask):
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
     wss_instance.trigger(self.box_path)
 
-  def id(self):
+  def id(self) -> str:
     box = self.box_path.base
     # It needs to be unique in a DAG, so it is not enough to use the `box_path`.
     # After custom box ids are implemented, we can use them to make it simpler.
@@ -210,7 +210,7 @@ class SaveWorkspace(Task):
     self._wss.lk().remove_name(name, force=True)
     ws_for_date.save()
 
-  def id(self):
+  def id(self) -> str:
     return 'save_workspace'
 
 
@@ -326,7 +326,7 @@ class WorkspaceSequence:
     self._add_save_workspace_deps(dag)
     return _minimal_dag(dag)
 
-  def to_airflow_DAG(self, dag_id):
+  def to_airflow_DAG(self, dag_id: str) -> airflow.DAG:
     '''
     Creates an Airflow dag from the workspace sequence.
 
