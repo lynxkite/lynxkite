@@ -27,6 +27,45 @@ def _task_to_str(task):
     raise NotImplementedError(f'No str conversion for task {type(task)}')
 
 
+def create_complex_test_workspace():
+  # Builds the workspace specified here:
+  # https://docs.google.com/drawings/d/1YVGTdgrcjGuI-Z-jON7I3B6U3zOaFVUiT5lPnk2I7Kc/
+  lk = lynx.kite.LynxKite()
+
+  @lk.workspace()
+  def forker(table):
+    result = table.sql('select * from input')
+    return dict(fork1=result, fork2=result)
+
+  @lk.workspace_with_side_effects()
+  def snapshotter(se_collector, t1_snap, t2_snap):
+    t2_snap.saveToSnapshot(path='SB1').register(se_collector)
+    tmp = forker(t1_snap)
+    tmp['fork2'].saveToSnapshot(path='SB2').register(se_collector)
+    return dict(out_snap=tmp['fork1'])
+
+  @lk.workspace()
+  def trivial():
+    result = lk.createExampleGraph().sql('select * from vertices')
+    return dict(out_triv=result)
+
+  @lk.workspace()
+  def combiner(t1_comb, t2_comb):
+    tmp = t1_comb.sql('select * from input')
+    tmp2 = lk.sql('select * from one cross join two', tmp, t2_comb)
+    return dict(out1_comb=tmp, out2_comb=tmp2)
+
+  @lk.workspace_with_side_effects()
+  def main_workspace(se_collector, i1, i2, i3):
+    tmp = snapshotter(i1, i2)
+    tmp.register(se_collector)
+    internal = i3.sql('select * from input')
+    last = combiner(tmp, internal)
+    return dict(o1=last['out1_comb'], o2=last['out2_comb'], o3=trivial())
+
+  return main_workspace
+
+
 class TestDagCreation(unittest.TestCase):
 
   def get_test_workspace(self):
@@ -76,48 +115,10 @@ class TestDagCreation(unittest.TestCase):
     self.assertEqual(order[0], 4)
     self.assertEqual(order[-1], 1)
 
-  def create_complex_test_workspace(self):
-    # Builds the workspace specified here:
-    # https://docs.google.com/drawings/d/1YVGTdgrcjGuI-Z-jON7I3B6U3zOaFVUiT5lPnk2I7Kc/
-    lk = lynx.kite.LynxKite()
-
-    @lk.workspace()
-    def forker(table):
-      result = table.sql('select * from input')
-      return dict(fork1=result, fork2=result)
-
-    @lk.workspace_with_side_effects()
-    def snapshotter(se_collector, t1_snap, t2_snap):
-      t2_snap.saveToSnapshot(path='SB1').register(se_collector)
-      tmp = forker(t1_snap)
-      tmp['fork2'].saveToSnapshot(path='SB2').register(se_collector)
-      return dict(out_snap=tmp['fork1'])
-
-    @lk.workspace()
-    def trivial():
-      result = lk.createExampleGraph().sql('select * from vertices')
-      return dict(out_triv=result)
-
-    @lk.workspace()
-    def combiner(t1_comb, t2_comb):
-      tmp = t1_comb.sql('select * from input')
-      tmp2 = lk.sql('select * from one cross join two', tmp, t2_comb)
-      return dict(out1_comb=tmp, out2_comb=tmp2)
-
-    @lk.workspace_with_side_effects()
-    def main_workspace(se_collector, i1, i2, i3):
-      tmp = snapshotter(i1, i2)
-      tmp.register(se_collector)
-      internal = i3.sql('select * from input')
-      last = combiner(tmp, internal)
-      return dict(o1=last['out1_comb'], o2=last['out2_comb'], o3=trivial())
-
-    return main_workspace
-
   test_date = datetime(2018, 1, 2)
 
   def complex_workspace_sequence(self):
-    ws = self.create_complex_test_workspace()
+    ws = create_complex_test_workspace()
     lk = ws.lk()
     lk.remove_name('eq_table_seq', force=True)
     tss = lynx.kite.TableSnapshotSequence('eq_table_seq', '0 0 * * *')
@@ -130,7 +131,7 @@ class TestDagCreation(unittest.TestCase):
 
   def test_atomic_parents(self):
     # test parent of terminal boxes
-    main_workspace = self.create_complex_test_workspace()
+    main_workspace = create_complex_test_workspace()
     parents = {}
     for box in main_workspace.output_boxes():
       ep = lynx.kite.BoxPath(box)
@@ -150,7 +151,7 @@ class TestDagCreation(unittest.TestCase):
 
   def test_non_trivial_atomic_parents(self):
     # test non-trivial parents of terminal boxes
-    main_workspace = self.create_complex_test_workspace()
+    main_workspace = create_complex_test_workspace()
     actual = dict()
     for box in main_workspace.output_boxes():
       ep = lynx.kite.BoxPath(box)
@@ -168,7 +169,7 @@ class TestDagCreation(unittest.TestCase):
 
   def test_upstream_of_one_endpoint(self):
     # test full traversal of one endpoint
-    main_workspace = self.create_complex_test_workspace()
+    main_workspace = create_complex_test_workspace()
     start = lynx.kite.BoxPath(
         [box for box in main_workspace.output_boxes()
          if box.parameters['name'] == 'o1'][0])
@@ -286,16 +287,28 @@ class TestDagCreation(unittest.TestCase):
       for previous in order[:i]:
         self.assertFalse(task in dag[previous])
 
+  def test_dag_task_ids(self):
+    dag = self.complex_workspace_sequence().to_dag()
+    task_ids = set([t.id() for t in dag])
+    expected = set([
+        'input_i1', 'input_i3', 'save_workspace', 'input_i2',
+        'snapshotter--saveToSnapshot_SB2',
+        'snapshotter--saveToSnapshot_SB1',
+        'output_o3', 'output_o1', 'output_o2'])
+    self.assertEqual(task_ids, expected)
+
   def test_wss_dag_is_runnable(self):
     wss = self.complex_workspace_sequence()
     dag = wss.to_dag()
     lk = wss._lk
+    lk.remove_name('SB1', force=True)
+    lk.remove_name('SB2', force=True)
     for t in dag:
       t.run(self.test_date)
     for o in wss.output_sequences().values():
       self.assertTrue(lynx.kite.TableSnapshotRecipe(o).is_ready(lk, self.test_date))
     # is everything idempotent apart from triggerables?
-    lk.remove_name('SB1')
-    lk.remove_name('SB2')
+    lk.remove_name('SB1', force=True)
+    lk.remove_name('SB2', force=True)
     for t in dag:
       t.run(self.test_date)
