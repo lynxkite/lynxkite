@@ -5,6 +5,15 @@ import warnings
 from test_dag_creation import create_complex_test_workspace
 
 
+def deps_of_airflow_dag(airflow_dag):
+  deps = {}
+  for task in airflow_dag.tasks:
+    deps[task.task_id] = dict(
+        upstream={t.task_id for t in task.upstream_list},
+        downstream={t.task_id for t in task.downstream_list})
+  return deps
+
+
 class TestAirflowDagGeneration(unittest.TestCase):
 
   def test_trivial_dag(self):
@@ -28,18 +37,14 @@ class TestAirflowDagGeneration(unittest.TestCase):
     self.assertEqual(trivial_eg_dag.schedule_interval, '* * * * *')
     self.assertEqual(trivial_eg_dag.dag_id, 'trivial_eg_dag')
     self.assertEqual(trivial_eg_dag.owner, 'airflow')
-    deps = {}
-    for task in trivial_eg_dag.tasks:
-      deps[task.task_id] = dict(
-          upstream=[t.task_id for t in task.upstream_list],
-          downstream=[t.task_id for t in task.downstream_list])
+    deps = deps_of_airflow_dag(trivial_eg_dag)
     expected = {
         'save_workspace': {
-            'upstream': [],
-            'downstream': ['output_result']},
+            'upstream': set(),
+            'downstream': {'output_result'}},
         'output_result': {
-            'upstream': ['save_workspace'],
-            'downstream': []}
+            'upstream': {'save_workspace'},
+            'downstream': set()}
     }
     self.assertEqual(deps, expected)
 
@@ -59,40 +64,38 @@ class TestAirflowDagGeneration(unittest.TestCase):
     self.assertEqual(complex_dag.schedule_interval, '0 3 * * *')
     self.assertEqual(complex_dag.dag_id, 'complex_dag')
     self.assertEqual(complex_dag.owner, 'airflow')
-    deps = {}
-    for task in complex_dag.tasks:
-      deps[task.task_id] = dict(
-          upstream=[t.task_id for t in task.upstream_list],
-          downstream=[t.task_id for t in task.downstream_list])
+    deps = deps_of_airflow_dag(complex_dag)
+    # Airflow stores the "direct" dependencies (aka minimal dag edges)
+    # in `task.downstream_list` and `task.upstream_list`
     expected = {
         'input_i3': {
-            'upstream': [],
-            'downstream': ['output_o2']},
+            'upstream': set(),
+            'downstream': {'output_o2'}},
         'input_i2': {
-            'upstream': [],
-            'downstream': ['snapshotter--saveToSnapshot_SB1']},
+            'upstream': set(),
+            'downstream': {'snapshotter--saveToSnapshot_SB1'}},
         'save_workspace': {
-            'upstream': [],
-            'downstream': [
+            'upstream': set(),
+            'downstream': {
                 'snapshotter--saveToSnapshot_SB2',
                 'output_o3',
-                'snapshotter--saveToSnapshot_SB1']},
+                'snapshotter--saveToSnapshot_SB1'}},
         'input_i1': {
-            'upstream': [],
-            'downstream': ['snapshotter--saveToSnapshot_SB2']},
+            'upstream': set(),
+            'downstream': {'snapshotter--saveToSnapshot_SB2'}},
         'snapshotter--saveToSnapshot_SB2': {
-            'upstream': ['save_workspace', 'input_i1'],
-            'downstream': ['output_o1']},
+            'upstream': {'save_workspace', 'input_i1'},
+            'downstream': {'output_o1'}},
         'output_o3': {
-            'upstream': ['save_workspace'],
-            'downstream': []},
+            'upstream': {'save_workspace'},
+            'downstream': set()},
         'snapshotter--saveToSnapshot_SB1': {
-            'upstream': ['input_i2', 'save_workspace'],
-            'downstream': []},
+            'upstream': {'input_i2', 'save_workspace'},
+            'downstream': set()},
         'output_o1': {
-            'upstream': ['snapshotter--saveToSnapshot_SB2'],
-            'downstream': ['output_o2']},
+            'upstream': {'snapshotter--saveToSnapshot_SB2'},
+            'downstream': {'output_o2'}},
         'output_o2': {
-            'upstream': ['input_i3', 'output_o1'],
-            'downstream': []}}
+            'upstream': {'input_i3', 'output_o1'},
+            'downstream': set()}}
     self.assertEqual(deps, expected)
