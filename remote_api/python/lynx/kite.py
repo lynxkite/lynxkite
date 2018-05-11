@@ -881,7 +881,7 @@ class BoxPath:
     self.stack = stack
 
   def __str__(self) -> str:
-    return ' -> '.join([b.name() for b in cast(List[Box], self.stack) + [cast(Box, self.base)]])
+    return '--'.join([b.name() for b in cast(List[Box], self.stack) + [cast(Box, self.base)]])
 
   def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
     return BoxPath(self.base, [box] + self.stack)
@@ -1239,6 +1239,12 @@ class Task:
     '''
     raise NotImplementedError()
 
+  def id(self):
+    '''
+    Human-readable ID of the task.
+    '''
+    raise NotImplementedError()
+
 
 class BoxTask(Task):
   '''
@@ -1265,6 +1271,10 @@ class Input(BoxTask):
     name = self.box_path.base.parameters['name']
     wss_instance.run_input(name)
 
+  def id(self):
+    name = self.box_path.base.parameters['name']
+    return f'input_{name}'
+
 
 class Output(BoxTask):
   '''
@@ -1275,6 +1285,10 @@ class Output(BoxTask):
     name = self.box_path.base.parameters['name']
     wss_instance.run_output(name)
 
+  def id(self):
+    name = self.box_path.base.parameters['name']
+    return f'output_{name}'
+
 
 class Triggerable(BoxTask):
   '''
@@ -1284,10 +1298,27 @@ class Triggerable(BoxTask):
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
     wss_instance.trigger(self.box_path)
 
+  def id(self):
+    box = self.box_path.base
+    # It needs to be unique in a DAG, so it is not enough to use the `box_path`.
+    # After custom box ids are implemented, we can use them to make it simpler.
+    # TODO: remove this code and use custom box ids or make this code cover
+    # all scenarios.
+    param = ''
+    if 'path' in box.parameters:
+      param = escape(box.parameters['path'])
+    elif 'path' in box.parametric_parameters:
+      param = escape(box.parametric_parameters['path'])
+    elif 'table' in box.parameters:
+      param = escape(box.parameters['table'])
+    elif 'table' in box.parametric_parameters:
+      param = escape(box.parametric_parameters['table'])
+    return f'{self.box_path}_{param}'
+
 
 class SaveWorkspace(Task):
   '''
-  A task to save the worspace.
+  A task to save the workspace.
   '''
 
   def run(self, date: datetime.datetime) -> None:
@@ -1295,6 +1326,9 @@ class SaveWorkspace(Task):
     name = ws_for_date.full_name()
     self._wss.lk().remove_name(name, force=True)
     ws_for_date.save()
+
+  def id(self):
+    return 'save_workspace'
 
 
 class WorkspaceSequence:
@@ -1408,6 +1442,42 @@ class WorkspaceSequence:
     self._add_box_based_dependencies(dag)
     self._add_save_workspace_deps(dag)
     return _minimal_dag(dag)
+
+  def to_airflow_DAG(self, dag_id):
+    '''
+    Creates an Airflow dag from the workspace sequence.
+
+    It can be used in Airflow dag definition files to automate the workspace
+    sequence. Airflow task dependencies are defined based on the output of `to_dag`.
+    '''
+    from airflow import DAG
+    from airflow.operators.python_operator import PythonOperator
+
+    default_args = {
+        'owner': 'airflow',
+        'depends_on_past': False,
+        'start_date': self._start_date,
+    }
+    airflow_dag = DAG(
+        dag_id,
+        default_args=default_args,
+        schedule_interval=self._schedule)
+    task_dag = self.to_dag()
+    task_info = {}
+    # Creating Airflow operators for tasks.
+    for t in task_dag:
+      task_info[t] = dict(
+          id=t.id(),
+          op=PythonOperator(
+              task_id=t.id(),
+              provide_context=True,
+              python_callable=lambda ds, execution_date, **kwargs: t.run(execution_date),
+              dag=airflow_dag))
+    # Defining dependencies between operators.
+    for t in task_dag:
+      for dep in task_dag[t]:
+        task_info[t]['op'].set_upstream(task_info[dep]['op'])
+    return airflow_dag
 
 
 class WorkspaceSequenceInstance:
