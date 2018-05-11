@@ -1,7 +1,28 @@
-from kite import LynxKite, State, CustomBox, BoxPath, Workspace, TableSnapshotSequence
-from kite import _normalize_path, _step_back, _timestamp_is_valid, _topological_sort
+'''The automation related part of the Python API.
+
+Example usage (the code must be in the dags folder of Airflow)::
+
+    lk = lynx.kite.LynxKite()
+    @lk.workspace()
+    def trivial():
+      return dict(result=lk.createExampleGraph().sql('select name, age from vertices'))
+    wss = lynx.kite.WorkspaceSequence(
+        ws=trivial,
+        schedule='* * * * *',
+        start_date=datetime(2018, 5, 10),
+        params={},
+        lk_root='airflow_test',
+        dfs_root='',
+        input_recipes=[])
+    eg_dag = wss.to_airflow_DAG('eg_dag')
+'''
+
+from lynx.kite import LynxKite, State, CustomBox, BoxPath, Workspace, TableSnapshotSequence
+from lynx.kite import _normalize_path, _step_back, _timestamp_is_valid, _topological_sort, escape
 from collections import deque, defaultdict, OrderedDict
 import datetime
+from airflow import DAG
+from airflow.operators.python_operator import PythonOperator
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar, cast)
 
@@ -312,8 +333,6 @@ class WorkspaceSequence:
     It can be used in Airflow dag definition files to automate the workspace
     sequence. Airflow task dependencies are defined based on the output of `to_dag`.
     '''
-    from airflow import DAG
-    from airflow.operators.python_operator import PythonOperator
 
     default_args = {
         'owner': 'airflow',
