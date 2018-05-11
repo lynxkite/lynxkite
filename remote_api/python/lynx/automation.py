@@ -6,7 +6,7 @@ Example usage (the code must be in the dags folder of Airflow)::
     @lk.workspace()
     def trivial():
       return dict(result=lk.createExampleGraph().sql('select name, age from vertices'))
-    wss = lynx.kite.WorkspaceSequence(
+    wss = lynx.automation.WorkspaceSequence(
         ws=trivial,
         schedule='* * * * *',
         start_date=datetime(2018, 5, 10),
