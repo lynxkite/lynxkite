@@ -23,8 +23,20 @@ from collections import deque, defaultdict, OrderedDict
 import datetime
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.sensors import BaseSensorOperator
+
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar, cast)
+
+
+class InputSensor(BaseSensorOperator):
+  def __init__(self, lk, input_recipe, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.lk = lk
+    self.input_recipe = input_recipe
+
+  def poke(self, context):
+    return self.input_recipe.is_ready(self.lk, context['execution_date'])
 
 
 class InputRecipe:
@@ -42,6 +54,9 @@ class InputRecipe:
 
   def validate(self, date: datetime.datetime) -> None:
     raise NotImplementedError()
+
+  def airflow_sensor(self, lk: LynxKite) -> InputSensor:
+    return InputSensor(lk, self)
 
 
 class TableSnapshotRecipe(InputRecipe):
@@ -155,8 +170,10 @@ class Input(BoxTask):
     wss_instance.run_input(name)
 
   def id(self) -> str:
-    name = self.box_path.base.parameters['name']
-    return f'input_{name}'
+    return f'input_{self.name()}'
+
+  def name(self) -> str:
+    return self.box_path.base.parameters['name']
 
 
 class Output(BoxTask):
@@ -345,19 +362,25 @@ class WorkspaceSequence:
         schedule_interval=self._schedule)
     task_dag = self.to_dag()
     task_info = {}
+    input_task_operators = {}
     # Creating Airflow operators for tasks.
     for t in task_dag:
-      task_info[t] = dict(
-          id=t.id(),
-          op=PythonOperator(
-              task_id=t.id(),
-              provide_context=True,
-              python_callable=lambda ds, execution_date, **kwargs: t.run(execution_date),
-              dag=airflow_dag))
+      python_op = PythonOperator(
+          task_id=t.id(),
+          provide_context=True,
+          python_callable=lambda ds, execution_date, **kwargs: t.run(execution_date),
+          dag=airflow_dag)
+      task_info[t] = dict(id=t.id(), op=python_op)
+      if isinstance(t, Input):
+        input_task_operators[t.name()] = python_op
     # Defining dependencies between operators.
     for t in task_dag:
       for dep in task_dag[t]:
         task_info[t]['op'].set_upstream(task_info[dep]['op'])
+    # Adding sensor tasks for inputs
+    for input_name, recipe in self.input_recipes().items():
+      sensor_op = recipe.airflow_sensor(self.lk())
+      input_task_operators[input_name].set_upstream(sensor_op)
     return airflow_dag
 
 
