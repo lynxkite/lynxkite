@@ -2,6 +2,7 @@ import unittest
 import time
 from datetime import datetime, timedelta
 import lynx.kite
+import lynx.automation
 
 
 def _box_path_to_str(box_path):
@@ -19,9 +20,9 @@ def _box_path_to_str(box_path):
 
 
 def _task_to_str(task):
-  if isinstance(task, lynx.kite.BoxTask):
+  if isinstance(task, lynx.automation.BoxTask):
     return _box_path_to_str(task.box_path)
-  elif isinstance(task, lynx.kite.SaveWorkspace):
+  elif isinstance(task, lynx.automation.SaveWorkspace):
     return 'save workspace'
   else:
     raise NotImplementedError(f'No str conversion for task {type(task)}')
@@ -94,7 +95,7 @@ class TestDagCreation(unittest.TestCase):
         3: {4},
         4: set(),
     }
-    min_dag = lynx.kite._minimal_dag(g)
+    min_dag = lynx.automation._minimal_dag(g)
     self.assertEqual(min_dag, expected)
 
     expected_order = [4, 3, 2, 1]
@@ -108,7 +109,7 @@ class TestDagCreation(unittest.TestCase):
         3: {4},
         4: set(),
     }
-    min_dag = lynx.kite._minimal_dag(g)
+    min_dag = lynx.automation._minimal_dag(g)
     self.assertEqual(min_dag, g)
 
     order = [n for n in min_dag]
@@ -123,11 +124,11 @@ class TestDagCreation(unittest.TestCase):
     lk.remove_name('eq_table_seq', force=True)
     tss = lynx.kite.TableSnapshotSequence('eq_table_seq', '0 0 * * *')
     lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, self.test_date)
-    input_recipe = lynx.kite.TableSnapshotRecipe(tss)
+    input_recipe = lynx.automation.TableSnapshotRecipe(tss)
     day_before = self.test_date - timedelta(days=1)
-    return lynx.kite.WorkspaceSequence(ws, schedule='0 0 * * *', start_date=day_before,
-                                       lk_root='ws_seqence_to_dag', input_recipes=[input_recipe] * 3,
-                                       params={}, dfs_root='')
+    return lynx.automation.WorkspaceSequence(ws, schedule='0 0 * * *', start_date=day_before,
+                                             lk_root='ws_seqence_to_dag', input_recipes=[input_recipe] * 3,
+                                             params={}, dfs_root='')
 
   def test_atomic_parents(self):
     # test parent of terminal boxes
@@ -185,7 +186,7 @@ class TestDagCreation(unittest.TestCase):
     self.maxDiff = None
     wss = self.complex_workspace_sequence()
     dag = {task: set() for task in wss._automation_tasks()
-           if not isinstance(task, lynx.kite.SaveWorkspace)}
+           if not isinstance(task, lynx.automation.SaveWorkspace)}
     wss._add_box_based_dependencies(dag)
     dependencies = {_task_to_str(ep): sorted([_task_to_str(dep) for dep in deps])
                     for ep, deps in dag.items()}
@@ -271,10 +272,10 @@ class TestDagCreation(unittest.TestCase):
       result = reducer(*[layers[2 * depth - 1][j] for j in range(1, 10)])
       return dict(final=result)
 
-    wss = lynx.kite.WorkspaceSequence(big_workspace, schedule='0 0 * * *',
-                                      start_date=datetime(2018, 1, 1),
-                                      lk_root='big folder', input_recipes=[],
-                                      params={}, dfs_root='')
+    wss = lynx.automation.WorkspaceSequence(big_workspace, schedule='0 0 * * *',
+                                            start_date=datetime(2018, 1, 1),
+                                            lk_root='big folder', input_recipes=[],
+                                            params={}, dfs_root='')
     start_at = time.time()
     wss.to_dag()
     elapsed = time.time() - start_at
@@ -306,7 +307,7 @@ class TestDagCreation(unittest.TestCase):
     for t in dag:
       t.run(self.test_date)
     for o in wss.output_sequences().values():
-      self.assertTrue(lynx.kite.TableSnapshotRecipe(o).is_ready(lk, self.test_date))
+      self.assertTrue(lynx.automation.TableSnapshotRecipe(o).is_ready(lk, self.test_date))
     # is everything idempotent apart from triggerables?
     lk.remove_name('SB1', force=True)
     lk.remove_name('SB2', force=True)
