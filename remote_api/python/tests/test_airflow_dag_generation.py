@@ -1,6 +1,7 @@
 import unittest
 from datetime import datetime, timedelta
 import lynx.kite
+import lynx.automation
 import warnings
 from test_dag_creation import create_complex_test_workspace
 
@@ -25,7 +26,7 @@ class TestAirflowDagGeneration(unittest.TestCase):
     def trivial():
       return dict(result=lk.createExampleGraph().sql('select name, age from vertices'))
 
-    wss = lynx.kite.WorkspaceSequence(
+    wss = lynx.automation.WorkspaceSequence(
         ws=trivial,
         schedule='* * * * *',
         start_date=datetime(2018, 5, 10),
@@ -53,7 +54,7 @@ class TestAirflowDagGeneration(unittest.TestCase):
     # We suppress deprecation warnings coming from Airflow
     warnings.simplefilter("ignore")
     lk = lynx.kite.LynxKite()
-    wss = lynx.kite.WorkspaceSequence(
+    wss = lynx.automation.WorkspaceSequence(
         ws=create_complex_test_workspace(),
         schedule='0 3 * * *',
         start_date=datetime(2018, 5, 11),

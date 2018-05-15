@@ -1,6 +1,7 @@
 import unittest
 import lynx.kite
 from lynx.kite import pp, text
+import lynx.automation
 from datetime import datetime
 
 
@@ -20,8 +21,8 @@ class TestWorkspaceSequence(unittest.TestCase):
     test_date = datetime(2018, 1, 2)
     tss = lynx.kite.TableSnapshotSequence('eg_table_seq', '0 0 * * *')
     lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, test_date)
-    input_recipe = lynx.kite.TableSnapshotRecipe(tss)
-    wss = lynx.kite.WorkspaceSequence(
+    input_recipe = lynx.automation.TableSnapshotRecipe(tss)
+    wss = lynx.automation.WorkspaceSequence(
         ws=builder,
         schedule='0 0 * * *',
         start_date=datetime(2018, 1, 1),
@@ -33,7 +34,7 @@ class TestWorkspaceSequence(unittest.TestCase):
     wss_instance = wss.ws_for_date(test_date)
     wss_instance.run()
     for output_sequence in wss.output_sequences().values():
-      self.assertTrue(lynx.kite.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
+      self.assertTrue(lynx.automation.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
     cnt_result_tss = wss.output_sequences()['cnt']
     table_raw = cnt_result_tss.read_interval(lk, test_date, test_date).get_table_data()
     self.assertEqual(table_raw.data[0][0].string, '4')
@@ -58,8 +59,8 @@ class TestWorkspaceSequence(unittest.TestCase):
     test_date = datetime(2018, 1, 2)
     tss = lynx.kite.TableSnapshotSequence('eg_cnt_seq', '0 0 * * *')
     lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, test_date)
-    input_recipe = lynx.kite.TableSnapshotRecipe(tss)
-    wss = lynx.kite.WorkspaceSequence(
+    input_recipe = lynx.automation.TableSnapshotRecipe(tss)
+    wss = lynx.automation.WorkspaceSequence(
         ws=builder,
         schedule='0 0 * * *',
         start_date=datetime(2018, 1, 1),
@@ -84,10 +85,10 @@ class TestWorkspaceSequence(unittest.TestCase):
       return dict(summa=o)
 
     initial_state = lk.createExampleGraph().sql('select count(1) as summa from vertices')
-    summa_as_input = lynx.kite.TableSnapshotRecipe(None, delta=1)
-    summa_with_default = lynx.kite.RecipeWithDefault(
+    summa_as_input = lynx.automation.TableSnapshotRecipe(None, delta=1)
+    summa_with_default = lynx.automation.RecipeWithDefault(
         summa_as_input, datetime(2018, 1, 1), initial_state)
-    wss = lynx.kite.WorkspaceSequence(
+    wss = lynx.automation.WorkspaceSequence(
         ws=builder,
         schedule='0 0 * * *',
         start_date=datetime(2018, 1, 1),
@@ -101,7 +102,8 @@ class TestWorkspaceSequence(unittest.TestCase):
       wss_instance = wss.ws_for_date(test_date)
       wss_instance.run()
       for output_sequence in wss.output_sequences().values():
-        self.assertTrue(lynx.kite.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
+        self.assertTrue(lynx.automation.TableSnapshotRecipe(
+            output_sequence).is_ready(lk, test_date))
       summa_result_tss = wss.output_sequences()['summa']
       table_raw = summa_result_tss.read_interval(lk, test_date, test_date).get_table_data()
       self.assertEqual(table_raw.data[0][0].string, str(summa))
@@ -125,7 +127,7 @@ class TestWorkspaceSequence(unittest.TestCase):
          .register(sec))
       return dict(avg=o)
 
-    wss = lynx.kite.WorkspaceSequence(
+    wss = lynx.automation.WorkspaceSequence(
         ws=builder,
         schedule='0 0 * * *',
         start_date=datetime(2018, 4, 5),
@@ -138,7 +140,8 @@ class TestWorkspaceSequence(unittest.TestCase):
       wss_instance = wss.ws_for_date(test_date)
       wss_instance.run()
       for output_sequence in wss.output_sequences().values():
-        self.assertTrue(lynx.kite.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
+        self.assertTrue(lynx.automation.TableSnapshotRecipe(
+            output_sequence).is_ready(lk, test_date))
       avg_result_tss = wss.output_sequences()['avg']
       table_raw = avg_result_tss.read_interval(lk, test_date, test_date).get_table_data()
       self.assertEqual(table_raw.data[0][0].string, '22.7')
