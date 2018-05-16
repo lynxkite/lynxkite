@@ -153,8 +153,7 @@ class LynxKite:
     self._signed_token = signed_token
     self._session = None
     self._pid = None
-    self._operation_names:
-      List[str] = None
+    self._operation_names: List[str] = None
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
   def home(self) -> str:
@@ -368,8 +367,7 @@ class LynxKite:
       ws_root = _random_ws_folder()
     else:
       ws_root = save_under_root
-    needed_ws:
-      Set[Workspace] = set()
+    needed_ws: Set[Workspace] = set()
     ws_queue = deque([ws])
     while len(ws_queue):
       nws = ws_queue.pop()
@@ -682,12 +680,9 @@ class Box:
     self.bc = box_catalog
     self.lk = lk
     self.inputs = inputs
-    self.parameters:
-      Dict[str, str] = {}
-    self.parametric_parameters:
-      Dict[str, str] = {}
-    self.outputs:
-      Set[str] = set()
+    self.parameters: Dict[str, str] = {}
+    self.parametric_parameters: Dict[str, str] = {}
+    self.outputs: Set[str] = set()
     # We separate normal and parametric parameters here.
     # Parametric parameters can be specified as `name=PP('parametric value')`
     for key, value in parameters.items():
@@ -1002,8 +997,7 @@ class FakeBoxPathForInputParent(BoxPath):
 class SideEffectCollector:
 
   def __init__(self):
-    self.top_level_side_effects:
-      List[Box] = []
+    self.top_level_side_effects: List[Box] = []
 
   def add_box(self, box: Box) -> None:
     self.top_level_side_effects.append(box)
@@ -1035,10 +1029,8 @@ class Workspace:
                input_boxes: List[AtomicBox] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
     self._name = name or 'Anonymous'
-    self._all_boxes:
-      Set[Box] = set()
-    self._box_ids:
-      Dict[Box, str] = dict()
+    self._all_boxes: Set[Box] = set()
+    self._box_ids: Dict[Box, str] = dict()
     self._next_id = 0
     assert all(b.operation == 'input' for b in input_boxes), 'Non-input box in input_boxes'
     self._inputs = [inp.parameters['name'] for inp in input_boxes]
@@ -1064,8 +1056,7 @@ class Workspace:
 
   def _box_to_trigger_to_box_ids(self, box_to_trigger: BoxPath) -> List[str]:
     '''Converts a BoxPath object to the list of corresponding box ids in this Workspace.'''
-    box_ids:
-      List[str] = []
+    box_ids: List[str] = []
     outer_ws = self
     for box in box_to_trigger.stack:
       box_ids.append(outer_ws.id_of(box))
@@ -1168,8 +1159,7 @@ def _layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
   ox = 150
   oy = 150
 
-  dependencies:
-    Dict[str, Set[str]] = {box['id']: set() for box in boxes}
+  dependencies: Dict[str, Set[str]] = {box['id']: set() for box in boxes}
   level = {}
   for box in boxes:
     current_box = box['id']
