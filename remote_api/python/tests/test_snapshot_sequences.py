@@ -1,6 +1,6 @@
 import unittest
 import json
-from datetime import datetime, timedelta, tzinfo
+from datetime import datetime, timedelta, timezone, tzinfo
 import lynx.kite
 
 ANCHOR_EXAMPLE_AND_SQL = '''
@@ -104,7 +104,11 @@ class TestSnapshotSequence(unittest.TestCase):
 
     class UTCPlus2Hours(tzinfo):
       def utcoffset(self, dt):
-        return timedelta(hours=2)
+        return timedelta(hours=2) + self.dst(dt)
+
+      def dst(self, dt):
+        return timedelta(hours=0)
+
     fd = datetime(2010, 1, 1, 2, 0, tzinfo=UTCPlus2Hours())
     td = datetime(2011, 1, 1, 2, 0, tzinfo=UTCPlus2Hours())
     snapshots = tss.snapshots(fd, td)
