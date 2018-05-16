@@ -55,8 +55,17 @@ class InputRecipe:
   def validate(self, date: datetime.datetime) -> None:
     raise NotImplementedError()
 
-  def airflow_sensor(self, lk: LynxKite) -> InputSensor:
-    return InputSensor(lk, self)
+  def airflow_sensor(self, lk: LynxKite, task_id: str, dag: DAG) -> InputSensor:
+    # TODO: decide what is a good place to configure poke_interval/timeout
+    # Do we want to set this parameter differently for different recipes?
+    return InputSensor(
+        lk=lk,
+        input_recipe=self,
+        task_id=task_id,
+        dag=dag,
+        poke_interval=60,
+        timeout=60 * 60 * 12,
+        soft_fail=False)
 
 
 class TableSnapshotRecipe(InputRecipe):
@@ -379,7 +388,11 @@ class WorkspaceSequence:
         task_info[t]['op'].set_upstream(task_info[dep]['op'])
     # Adding sensor tasks for inputs
     for input_name, recipe in self.input_recipes().items():
-      sensor_op = recipe.airflow_sensor(self.lk())
+      sensor_task_id = f'input_sensor_{input_name}'
+      sensor_op = recipe.airflow_sensor(
+          lk=self.lk(),
+          task_id=sensor_task_id,
+          dag=airflow_dag)
       input_task_operators[input_name].set_upstream(sensor_op)
     return airflow_dag
 
