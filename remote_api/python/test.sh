@@ -11,5 +11,5 @@ else
 fi
 
 cd $(dirname $0)
-python3 -m mypy lynx --ignore-missing-import
-python3 -m unittest discover tests $@
+python3.6 -m mypy lynx --ignore-missing-import
+python3.6 -m unittest discover tests $@
