@@ -377,7 +377,7 @@ class WorkspaceSequence:
       python_op = PythonOperator(
           task_id=t.id(),
           provide_context=True,
-          python_callable=lambda ds, execution_date, **kwargs: t.run(execution_date),
+          python_callable=lambda ds, execution_date, t=t, **kwargs: t.run(execution_date),
           dag=airflow_dag)
       task_info[t] = dict(id=t.id(), op=python_op)
       if isinstance(t, Input):
