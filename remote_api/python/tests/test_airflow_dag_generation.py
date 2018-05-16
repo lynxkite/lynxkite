@@ -102,3 +102,47 @@ class TestAirflowDagGeneration(unittest.TestCase):
             'upstream': {'input_i3', 'output_o1'},
             'downstream': set()}}
     self.assertEqual(deps, expected)
+
+  def test_sensors(self):
+    # We suppress deprecation warnings coming from Airflow
+    warnings.simplefilter("ignore")
+    lk = lynx.kite.LynxKite()
+    tss1 = lynx.kite.TableSnapshotSequence('input_recipe_1', '0 3 * * *')
+    input_recipe1 = lynx.automation.TableSnapshotRecipe(tss1)
+    tss2 = lynx.kite.TableSnapshotSequence('input_recipe_2', '0 3 * * *')
+    input_recipe2 = lynx.automation.TableSnapshotRecipe(tss2)
+    tss3 = lynx.kite.TableSnapshotSequence('input_recipe_3', '0 3 * * *')
+    input_recipe3 = lynx.automation.TableSnapshotRecipe(tss3)
+
+    wss = lynx.automation.WorkspaceSequence(
+        ws=create_complex_test_workspace(),
+        schedule='0 3 * * *',
+        start_date=datetime(2018, 5, 11),
+        params={},
+        lk_root='sensor_dependency_test',
+        dfs_root='',
+        input_recipes=[input_recipe1, input_recipe2, input_recipe3])
+    sensor_dag = wss.to_airflow_DAG('sensor_dag')
+
+    deps = deps_of_airflow_dag(sensor_dag)
+    input_deps = {k: v for k, v in deps.items() if 'input' in k or 'sensor' in k}
+    expected = {
+        'input_i3': {
+            'upstream': {'input_sensor_i3'},
+            'downstream': {'output_o2'}},
+        'input_i1': {
+            'upstream': {'input_sensor_i1'},
+            'downstream': {'snapshotter--saveToSnapshot_SB2'}},
+        'input_i2': {
+            'upstream': {'input_sensor_i2'},
+            'downstream': {'snapshotter--saveToSnapshot_SB1'}},
+        'input_sensor_i1': {
+            'upstream': set(),
+            'downstream': {'input_i1'}},
+        'input_sensor_i2': {
+            'upstream': set(),
+            'downstream': {'input_i2'}},
+        'input_sensor_i3': {
+            'upstream': set(),
+            'downstream': {'input_i3'}}}
+    self.assertEqual(input_deps, expected)
