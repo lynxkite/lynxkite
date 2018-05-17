@@ -373,7 +373,6 @@ class WorkspaceSequence:
         # Adding sensor task for input
         sensor_task_id = f'input_sensor_{t.name()}'
         sensor_op = InputSensor(
-            lk=self.lk(),
             input_task=t,
             task_id=sensor_task_id,
             dag=airflow_dag,
