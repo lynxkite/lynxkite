@@ -50,7 +50,7 @@ class TestAirflowDagGeneration(unittest.TestCase):
     }
     self.assertEqual(deps, expected)
 
-  def test_compex_dag(self):
+  def test_complex_dag(self):
     # We suppress deprecation warnings coming from Airflow
     warnings.simplefilter("ignore")
     lk = lynx.kite.LynxKite()
@@ -71,78 +71,43 @@ class TestAirflowDagGeneration(unittest.TestCase):
     # Airflow stores the "direct" dependencies (aka minimal dag edges)
     # in `task.downstream_list` and `task.upstream_list`
     expected = {
-        'input_i3': {
+        'input_i1': {
+            'upstream': {'input_sensor_i1'},
+            'downstream': {'snapshotter--saveToSnapshot_SB2'}},
+        'input_sensor_i1': {
             'upstream': set(),
-            'downstream': {'output_o2'}},
-        'input_i2': {
-            'upstream': set(),
-            'downstream': {'snapshotter--saveToSnapshot_SB1'}},
+            'downstream': {'input_i1'}},
         'save_workspace': {
             'upstream': set(),
             'downstream': {
+                'snapshotter--saveToSnapshot_SB1',
                 'snapshotter--saveToSnapshot_SB2',
-                'output_o3',
-                'snapshotter--saveToSnapshot_SB1'}},
-        'input_i1': {
+                'output_o3'}},
+        'input_i3': {
+            'upstream': {'input_sensor_i3'},
+            'downstream': {'output_o2'}},
+        'input_sensor_i3': {
             'upstream': set(),
-            'downstream': {'snapshotter--saveToSnapshot_SB2'}},
+            'downstream': {'input_i3'}},
+        'input_i2': {
+            'upstream': {'input_sensor_i2'},
+            'downstream': {'snapshotter--saveToSnapshot_SB1'}},
+        'input_sensor_i2': {
+            'upstream': set(),
+            'downstream': {'input_i2'}},
         'snapshotter--saveToSnapshot_SB2': {
-            'upstream': {'save_workspace', 'input_i1'},
+            'upstream': {'input_i1', 'save_workspace'},
             'downstream': {'output_o1'}},
-        'output_o3': {
-            'upstream': {'save_workspace'},
-            'downstream': set()},
         'snapshotter--saveToSnapshot_SB1': {
             'upstream': {'input_i2', 'save_workspace'},
+            'downstream': set()},
+        'output_o3': {
+            'upstream': {'save_workspace'},
             'downstream': set()},
         'output_o1': {
             'upstream': {'snapshotter--saveToSnapshot_SB2'},
             'downstream': {'output_o2'}},
         'output_o2': {
-            'upstream': {'input_i3', 'output_o1'},
+            'upstream': {'output_o1', 'input_i3'},
             'downstream': set()}}
     self.assertEqual(deps, expected)
-
-  def test_sensors(self):
-    # We suppress deprecation warnings coming from Airflow
-    warnings.simplefilter("ignore")
-    lk = lynx.kite.LynxKite()
-    tss1 = lynx.kite.TableSnapshotSequence('input_recipe_1', '0 3 * * *')
-    input_recipe1 = lynx.automation.TableSnapshotRecipe(tss1)
-    tss2 = lynx.kite.TableSnapshotSequence('input_recipe_2', '0 3 * * *')
-    input_recipe2 = lynx.automation.TableSnapshotRecipe(tss2)
-    tss3 = lynx.kite.TableSnapshotSequence('input_recipe_3', '0 3 * * *')
-    input_recipe3 = lynx.automation.TableSnapshotRecipe(tss3)
-
-    wss = lynx.automation.WorkspaceSequence(
-        ws=create_complex_test_workspace(),
-        schedule='0 3 * * *',
-        start_date=datetime(2018, 5, 11),
-        params={},
-        lk_root='sensor_dependency_test',
-        dfs_root='',
-        input_recipes=[input_recipe1, input_recipe2, input_recipe3])
-    sensor_dag = wss.to_airflow_DAG('sensor_dag')
-
-    deps = deps_of_airflow_dag(sensor_dag)
-    input_deps = {k: v for k, v in deps.items() if 'input' in k or 'sensor' in k}
-    expected = {
-        'input_i3': {
-            'upstream': {'input_sensor_i3'},
-            'downstream': {'output_o2'}},
-        'input_i1': {
-            'upstream': {'input_sensor_i1'},
-            'downstream': {'snapshotter--saveToSnapshot_SB2'}},
-        'input_i2': {
-            'upstream': {'input_sensor_i2'},
-            'downstream': {'snapshotter--saveToSnapshot_SB1'}},
-        'input_sensor_i1': {
-            'upstream': set(),
-            'downstream': {'input_i1'}},
-        'input_sensor_i2': {
-            'upstream': set(),
-            'downstream': {'input_i2'}},
-        'input_sensor_i3': {
-            'upstream': set(),
-            'downstream': {'input_i3'}}}
-    self.assertEqual(input_deps, expected)
