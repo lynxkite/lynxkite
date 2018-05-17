@@ -418,21 +418,25 @@ object ScalaUtilities {
   // Whether a Scala expression contains a given identifier. All back quoted identifiers are found.
   // Implementation for simple identifiers is not guaranteed to be 100% correct.
   def containsIdentifier(expr: String, identifier: String): Boolean = {
-    val escapedIdent = identifier.replace("$", "\\$")
     // The algorithm finds every identifier within back quotes.
     if (expr.contains("`" + identifier + "`")) {
       true
-    } else {
+    } else if (identifier.matches(simpleIdent)) {
+      val escapedIdent = identifier.replace("$", "\\$")
+      val e = " " + expr + " "
       // Try to match simple identifiers if they are not between quotes nor substrings of the actual
-      // identifier. The rule is quite crude, both false positives and negatives are possible.
-      if (identifier.matches(simpleIdent) && (" " + expr + " ").matches(
-        s"(?s).*[^$simpleVariableChar$quoteChar]$escapedIdent[^$simpleVariableChar$quoteChar].*")) {
+      // identifier and variable names within string interpolations.
+      // The rule is quite crude, both false positives and negatives are possible.
+      if (e.matches(s"(?s).*[^$simpleVariableChar$quoteChar]$escapedIdent[^$simpleVariableChar$quoteChar].*") ||
+        e.matches(s"(?s).*s[$quoteChar][^$quoteChar]*$escapedIdent[^$quoteChar]*[$quoteChar].*")) {
         assert(!reservedWords.contains(identifier), s"Cannot use Scala reserved word $identifier " +
           s"as a variable identifier. Please use backticks: `$identifier`.")
         true
       } else {
         false
       }
+    } else {
+      false
     }
   }
 }
