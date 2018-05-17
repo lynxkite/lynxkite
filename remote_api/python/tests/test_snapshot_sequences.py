@@ -120,6 +120,5 @@ class TestSnapshotSequence(unittest.TestCase):
     fd = datetime(2010, 1, 1, 3, 0, tzinfo=UTCPlus3Hours())
     td = datetime(2011, 1, 1, 3, 0, tzinfo=UTCPlus3Hours())
     snapshots = tss.snapshots(fd, td)
-    self.assertEqual(len(snapshots), 2)
-    self.assertEqual('test_snapshot_sequence/5/2010-01-01 00:00:00+00:00', snapshots[0])
-    self.assertEqual('test_snapshot_sequence/5/2011-01-01 00:00:00+00:00', snapshots[1])
+    self.assertEqual(len(snapshots), 1)
+    self.assertEqual('test_snapshot_sequence/5/2010-12-31 21:00:00+00:00', snapshots[0])
