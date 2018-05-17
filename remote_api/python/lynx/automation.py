@@ -30,13 +30,12 @@ from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewT
 
 
 class InputSensor(BaseSensorOperator):
-  def __init__(self, lk, input_recipe, *args, **kwargs):
+  def __init__(self, input_task, *args, **kwargs):
     super().__init__(*args, **kwargs)
-    self.lk = lk
-    self.input_recipe = input_recipe
+    self.input_task = input_task
 
   def poke(self, context):
-    return self.input_recipe.is_ready(self.lk, context['execution_date'])
+    return self.input_task.is_ready(context['execution_date'])
 
 
 class InputRecipe:
@@ -54,18 +53,6 @@ class InputRecipe:
 
   def validate(self, date: datetime.datetime) -> None:
     raise NotImplementedError()
-
-  def airflow_sensor(self, lk: LynxKite, task_id: str, dag: DAG) -> InputSensor:
-    # TODO: decide what is a good place to configure poke_interval/timeout
-    # Do we want to set this parameter differently for different recipes?
-    return InputSensor(
-        lk=lk,
-        input_recipe=self,
-        task_id=task_id,
-        dag=dag,
-        poke_interval=60,
-        timeout=60 * 60 * 12,
-        soft_fail=False)
 
 
 class TableSnapshotRecipe(InputRecipe):
@@ -183,6 +170,9 @@ class Input(BoxTask):
 
   def name(self) -> str:
     return self.box_path.base.parameters['name']
+
+  def is_ready(self, date):
+    return self._wss.input_recipes()[self.name()].is_ready(self._lk, date)
 
 
 class Output(BoxTask):
@@ -371,7 +361,6 @@ class WorkspaceSequence:
         schedule_interval=self._schedule)
     task_dag = self.to_dag()
     task_info = {}
-    input_task_operators = {}
     # Creating Airflow operators for tasks.
     for t in task_dag:
       python_op = PythonOperator(
@@ -381,19 +370,21 @@ class WorkspaceSequence:
           dag=airflow_dag)
       task_info[t] = dict(id=t.id(), op=python_op)
       if isinstance(t, Input):
-        input_task_operators[t.name()] = python_op
+        # Adding sensor task for input
+        sensor_task_id = f'input_sensor_{t.name()}'
+        sensor_op = InputSensor(
+            lk=self.lk(),
+            input_task=t,
+            task_id=sensor_task_id,
+            dag=airflow_dag,
+            poke_interval=60,
+            timeout=60 * 60 * 12,
+            soft_fail=False)
+        task_info[t]['op'].set_upstream(sensor_op)
     # Defining dependencies between operators.
     for t in task_dag:
       for dep in task_dag[t]:
         task_info[t]['op'].set_upstream(task_info[dep]['op'])
-    # Adding sensor tasks for inputs
-    for input_name, recipe in self.input_recipes().items():
-      sensor_task_id = f'input_sensor_{input_name}'
-      sensor_op = recipe.airflow_sensor(
-          lk=self.lk(),
-          task_id=sensor_task_id,
-          dag=airflow_dag)
-      input_task_operators[input_name].set_upstream(sensor_op)
     return airflow_dag
 
 
