@@ -162,8 +162,7 @@ class Input(BoxTask):
   '''
 
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
-    name = self.box_path.base.parameters['name']
-    wss_instance.run_input(name)
+    wss_instance.run_input(self.name())
 
   def id(self) -> str:
     return f'input_{self.name()}'
@@ -180,13 +179,14 @@ class Output(BoxTask):
   A task associated with an output box.
   '''
 
+  def name(self) -> str:
+    return self.box_path.base.parameters['name']
+
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
-    name = self.box_path.base.parameters['name']
-    wss_instance.run_output(name)
+    wss_instance.run_output(self.name())
 
   def id(self) -> str:
-    name = self.box_path.base.parameters['name']
-    return f'output_{name}'
+    return f'output_{self.name()}'
 
 
 class Triggerable(BoxTask):
