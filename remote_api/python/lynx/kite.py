@@ -544,7 +544,8 @@ class TableSnapshotSequence:
 
   def snapshot_name(self, date: datetime.datetime) -> str:
     local_timezone = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
-    utc_date = date.replace(tzinfo=local_timezone).astimezone(datetime.timezone.utc)
+    timezone_aware_date = date if date.tzinfo is not None else date.replace(tzinfo=local_timezone)
+    utc_date = timezone_aware_date.astimezone(datetime.timezone.utc)
     return self._location + '/' + str(utc_date)
 
   def snapshots(self, from_date: datetime.datetime, to_date: datetime.datetime) -> List[str]:
