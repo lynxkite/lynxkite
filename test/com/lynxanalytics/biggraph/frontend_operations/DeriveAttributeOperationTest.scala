@@ -37,6 +37,17 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     assert(attr.rdd.collect.toMap == Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0, 3 -> 0.0))
   }
 
+  test("Derive vertex attribute - string interpolation") {
+    val project = box("Create example graph")
+      .box(
+        "Derive vertex attribute",
+        Map("output" -> "output", "expr" -> "s\"hi $name\""))
+      .project
+    val attr = project.vertexAttributes("output").runtimeSafeCast[String]
+    assert(attr.rdd.collect.toMap == Map(
+      0 -> "hi Adam", 1 -> "hi Eve", 2 -> "hi Bob", 3 -> "hi Isolated Joe"))
+  }
+
   test("Derive vertex attribute - uppercase attribute") {
     val project = box("Create example graph")
       .box(
@@ -152,19 +163,6 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     assert(attr.rdd.collect.toMap == Map(0 -> 3.0, 1 -> 3.0, 2 -> 2.0))
   }
 
-  ignore("Wrong type") {
-    val e = intercept[org.apache.spark.SparkException] {
-      val project = box("Create example graph")
-        .box(
-          "Derive vertex attribute",
-          Map("output" -> "output", "expr" -> "'hello'"))
-        .project
-      project.vertexAttributes("output").runtimeSafeCast[Double].rdd.collect
-    }
-    assert(e.getCause.getMessage ==
-      "assertion failed: JavaScript('hello') with values: {} did not return a number: NaN")
-  }
-
   test("ScalaUtilities finds identifiers") {
     assert(true == ScalaUtilities.containsIdentifier("`age`", "age"))
     assert(true == ScalaUtilities.containsIdentifier("`123 weird id #?!`", "123 weird id #?!"))
@@ -182,6 +180,7 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     assert(false == ScalaUtilities.containsIdentifier("nam", "name"))
     assert(false == ScalaUtilities.containsIdentifier("ame", "name"))
     assert(false == ScalaUtilities.containsIdentifier("\"name\"", "name"))
+    assert(true == ScalaUtilities.containsIdentifier("\" name \"", "name"))
     assert(false == ScalaUtilities.containsIdentifier("'name", "name"))
   }
 
