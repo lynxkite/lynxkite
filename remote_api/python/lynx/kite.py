@@ -36,7 +36,7 @@ import re
 import itertools
 from collections import deque, defaultdict, OrderedDict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
-                    TypeVar, cast)
+                    TypeVar, cast, Optional)
 
 import requests
 from croniter import croniter
@@ -153,7 +153,7 @@ class LynxKite:
     self._signed_token = signed_token
     self._session = None
     self._pid = None
-    self._operation_names: List[str] = None
+    self._operation_names: List[str] = []
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
   def home(self) -> str:
@@ -209,22 +209,24 @@ class LynxKite:
   def address(self) -> str:
     return self._address or os.environ['LYNXKITE_ADDRESS']
 
-  def username(self) -> str:
+  def username(self) -> Optional[str]:
     username = self._username or os.environ.get('LYNXKITE_USERNAME')
-    if not username and self.signed_token():
-      return self.signed_token().split('|')[0]
+    if not username:
+      signed_token = self.signed_token()
+      if signed_token:
+        return signed_token.split('|')[0]
     return username
 
-  def password(self) -> str:
+  def password(self) -> Optional[str]:
     return self._password or os.environ.get('LYNXKITE_PASSWORD')
 
-  def certfile(self) -> str:
+  def certfile(self) -> Optional[str]:
     return self._certfile or os.environ.get('LYNXKITE_PUBLIC_SSL_CERT')
 
-  def oauth_token(self) -> str:
+  def oauth_token(self) -> Optional[str]:
     return self._oauth_token or os.environ.get('LYNXKITE_OAUTH_TOKEN')
 
-  def signed_token(self) -> str:
+  def signed_token(self) -> Optional[str]:
     return self._signed_token or os.environ.get('LYNXKITE_SIGNED_TOKEN')
 
   def _login(self):
