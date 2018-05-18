@@ -323,4 +323,16 @@ object ScalaScript {
       executionContext.shutdownNow()
     }
   }
+
+  def findVariables(code: String): Set[String] = {
+    import scala.reflect.internal.util.ScriptSourceFile
+    import scala.reflect.internal.util.NoFile
+    val script = ScriptSourceFile(NoFile, code.toArray)
+    val global = engine.global
+    val ast = new global.syntaxAnalyzer.OutlineParser(script).parse()
+    ast.collect({ case tree: global.syntaxAnalyzer.global.Ident => tree })
+      .filter(i => i.isTerm)
+      .map(_.toString)
+      .toSet
+  }
 }
