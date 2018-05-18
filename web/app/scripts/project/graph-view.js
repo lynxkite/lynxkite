@@ -1178,6 +1178,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         const e = vertices.edges[j];
         if (edgesOf[e.src.id] === undefined) { edgesOf[e.src.id] = []; }
         edgesOf[e.src.id].push(e.dst);
+        if (edgesOf[e.dst.id] === undefined) { edgesOf[e.dst.id] = []; }
+        edgesOf[e.dst.id].push(e.src);
       }
     }
     for (let i = 0; i < vertices.vs.length; ++i) {
