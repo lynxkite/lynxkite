@@ -161,6 +161,11 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
     assert(ot3.payloadType =:= typeOf[Double])
   }
 
+  test("collect variables") {
+    val vars = ScalaScript.findVariables("Some(a)")
+    assert(vars == Set("<empty>", "scala", "Some", "a"))
+  }
+
   test("Recover after compiler gets confused") {
     // See #7227
     intercept[javax.script.ScriptException] {
