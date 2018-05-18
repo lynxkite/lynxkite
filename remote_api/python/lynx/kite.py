@@ -209,12 +209,12 @@ class LynxKite:
   def address(self) -> str:
     return self._address or os.environ['LYNXKITE_ADDRESS']
 
-  def username(self) -> Optional[str]:
+  def username(self) -> str:
     username = self._username or os.environ.get('LYNXKITE_USERNAME')
     if not username:
       signed_token = self.signed_token()
-      if signed_token:
-        return signed_token.split('|')[0]
+      assert signed_token, 'Can not determine username. Either set username or signed token.'
+      return signed_token.split('|')[0]
     return username
 
   def password(self) -> Optional[str]:
