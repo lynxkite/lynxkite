@@ -77,16 +77,16 @@ class TableSnapshotRecipe(InputRecipe):
 
   def is_ready(self, lk: LynxKite, date: datetime.datetime) -> bool:
     self.validate(date)
-    tss = cast(TableSnapshotSequence, self.tss)
-    adjusted_date = _step_back(tss.cron_str, date, self.delta)
-    r = lk.get_directory_entry(tss.snapshot_name(adjusted_date))
+    assert self.tss
+    adjusted_date = _step_back(self.tss.cron_str, date, self.delta)
+    r = lk.get_directory_entry(self.tss.snapshot_name(adjusted_date))
     return r.exists and r.isSnapshot
 
   def build_boxes(self, lk: LynxKite, date: datetime.datetime) -> State:
     self.validate(date)
-    tss = cast(TableSnapshotSequence, self.tss)
-    adjusted_date = _step_back(tss.cron_str, date, self.delta)
-    return tss.read_interval(lk, adjusted_date, adjusted_date)
+    assert self.tss
+    adjusted_date = _step_back(self.tss.cron_str, date, self.delta)
+    return self.tss.read_interval(lk, adjusted_date, adjusted_date)
 
 
 class RecipeWithDefault(InputRecipe):
