@@ -163,33 +163,6 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     assert(attr.rdd.collect.toMap == Map(0 -> 3.0, 1 -> 3.0, 2 -> 2.0))
   }
 
-  test("ScalaUtilities finds identifiers") {
-    assert(true == ScalaUtilities.containsIdentifier("`age`", "age"))
-    assert(true == ScalaUtilities.containsIdentifier("`123 weird id #?!`", "123 weird id #?!"))
-    assert(true == ScalaUtilities.containsIdentifier("age", "age"))
-    assert(true == ScalaUtilities.containsIdentifier(" age ", "age"))
-    assert(true == ScalaUtilities.containsIdentifier("src$age", "src$age"))
-    assert(true == ScalaUtilities.containsIdentifier("age - name", "age"))
-    assert(true == ScalaUtilities.containsIdentifier("age_v2", "age_v2"))
-    assert(true == ScalaUtilities.containsIdentifier("age.toString", "age"))
-    assert(true == ScalaUtilities.containsIdentifier("age\n1.0", "age"))
-    assert(true == ScalaUtilities.containsIdentifier("Name", "Name"))
-
-    assert(false == ScalaUtilities.containsIdentifier("name", "nam"))
-    assert(false == ScalaUtilities.containsIdentifier("name", "ame"))
-    assert(false == ScalaUtilities.containsIdentifier("nam", "name"))
-    assert(false == ScalaUtilities.containsIdentifier("ame", "name"))
-    assert(false == ScalaUtilities.containsIdentifier("\"name\"", "name"))
-    assert(true == ScalaUtilities.containsIdentifier("\" name \"", "name"))
-    assert(false == ScalaUtilities.containsIdentifier("'name", "name"))
-  }
-
-  test("ScalaUtilities error on reserved Scala keyword") {
-    intercept[AssertionError] {
-      ScalaUtilities.containsIdentifier("if (type == \"abc\") 1 else 0", "type")
-    }
-  }
-
   test("Derive vertex attribute with substring conflict (#1676)") {
     val project = box("Create example graph")
       .box("Rename vertex attributes", Map("change_income" -> "nam"))
