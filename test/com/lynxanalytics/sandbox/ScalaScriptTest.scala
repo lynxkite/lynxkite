@@ -162,8 +162,26 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
   }
 
   test("collect variables") {
-    val vars = ScalaScript.findVariables("Some(a)")
-    assert(vars == Set("<empty>", "scala", "Some", "a"))
+    assert(ScalaScript.findVariables("Some(a)") == Set("<empty>", "scala", "Some", "a"))
+
+    assert(ScalaScript.findVariables("`age`").contains("age"))
+    assert(ScalaScript.findVariables("`123 weird id #?!`").contains("123 weird id #?!"))
+    assert(ScalaScript.findVariables("age").contains("age"))
+    assert(ScalaScript.findVariables(" age ").contains("age"))
+    assert(ScalaScript.findVariables("src$age").contains("src$age"))
+    assert(ScalaScript.findVariables("age - name").contains("age"))
+    assert(ScalaScript.findVariables("age_v2").contains("age_v2"))
+    assert(ScalaScript.findVariables("age.toString").contains("age"))
+    assert(ScalaScript.findVariables("age\n1.0").contains("age"))
+    assert(ScalaScript.findVariables("Name").contains("Name"))
+
+    assert(!ScalaScript.findVariables("name").contains("nam"))
+    assert(!ScalaScript.findVariables("name").contains("ame"))
+    assert(!ScalaScript.findVariables("nam").contains("name"))
+    assert(!ScalaScript.findVariables("ame").contains("name"))
+    assert(!ScalaScript.findVariables("\"name\"").contains("name"))
+    assert(!ScalaScript.findVariables("\" name \"").contains("name"))
+    assert(!ScalaScript.findVariables("'name").contains("name"))
   }
 
   test("Recover after compiler gets confused") {
