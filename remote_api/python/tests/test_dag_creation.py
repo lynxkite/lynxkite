@@ -120,7 +120,7 @@ class TestDagCreation(unittest.TestCase):
 
   def complex_workspace_sequence(self):
     ws = create_complex_test_workspace()
-    lk = ws.lk()
+    lk = ws.lk
     lk.remove_name('eq_table_seq', force=True)
     tss = lynx.kite.TableSnapshotSequence('eq_table_seq', '0 0 * * *')
     lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, self.test_date)
@@ -134,7 +134,7 @@ class TestDagCreation(unittest.TestCase):
     # test parent of terminal boxes
     main_workspace = create_complex_test_workspace()
     parents = {}
-    for box in main_workspace.output_boxes():
+    for box in main_workspace.output_boxes:
       ep = lynx.kite.BoxPath(box)
       parents[_box_path_to_str(ep)] = [_box_path_to_str(bp) for bp in ep.parents()]
     for ep in main_workspace.side_effect_paths():
@@ -154,7 +154,7 @@ class TestDagCreation(unittest.TestCase):
     # test non-trivial parents of terminal boxes
     main_workspace = create_complex_test_workspace()
     actual = dict()
-    for box in main_workspace.output_boxes():
+    for box in main_workspace.output_boxes:
       ep = lynx.kite.BoxPath(box)
       actual[_box_path_to_str(ep)] = _box_path_to_str(ep.non_trivial_parent_of_endpoint())
     for ep in main_workspace.side_effect_paths():
@@ -172,7 +172,7 @@ class TestDagCreation(unittest.TestCase):
     # test full traversal of one endpoint
     main_workspace = create_complex_test_workspace()
     start = lynx.kite.BoxPath(
-        [box for box in main_workspace.output_boxes()
+        [box for box in main_workspace.output_boxes
          if box.parameters['name'] == 'o1'][0])
     up = start.parents()
     last = start
@@ -301,12 +301,12 @@ class TestDagCreation(unittest.TestCase):
   def test_wss_dag_is_runnable(self):
     wss = self.complex_workspace_sequence()
     dag = wss.to_dag()
-    lk = wss._lk
+    lk = wss.lk
     lk.remove_name('SB1', force=True)
     lk.remove_name('SB2', force=True)
     for t in dag:
       t.run(self.test_date)
-    for o in wss.output_sequences().values():
+    for o in wss.output_sequences.values():
       self.assertTrue(lynx.automation.TableSnapshotRecipe(o).is_ready(lk, self.test_date))
     # is everything idempotent apart from triggerables?
     lk.remove_name('SB1', force=True)
