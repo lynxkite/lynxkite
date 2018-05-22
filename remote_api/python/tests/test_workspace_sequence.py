@@ -33,12 +33,12 @@ class TestWorkspaceSequence(unittest.TestCase):
         input_recipes=[input_recipe])
     wss_instance = wss.ws_for_date(test_date)
     wss_instance.run()
-    for output_sequence in wss.output_sequences().values():
+    for output_sequence in wss.output_sequences.values():
       self.assertTrue(lynx.automation.TableSnapshotRecipe(output_sequence).is_ready(lk, test_date))
-    cnt_result_tss = wss.output_sequences()['cnt']
+    cnt_result_tss = wss.output_sequences['cnt']
     table_raw = cnt_result_tss.read_interval(lk, test_date, test_date).get_table_data()
     self.assertEqual(table_raw.data[0][0].string, '4')
-    d_result_tss = wss.output_sequences()['d']
+    d_result_tss = wss.output_sequences['d']
     table_raw = d_result_tss.read_interval(lk, test_date, test_date).get_table_data()
     self.assertEqual(table_raw.data[0][0].string, '2018-01-02 00:00:00')
     early_date = datetime(2017, 12, 31)
@@ -96,15 +96,15 @@ class TestWorkspaceSequence(unittest.TestCase):
         lk_root='ws_test_seq_2',
         dfs_root='',
         input_recipes=[summa_with_default])
-    summa_as_input.set_tss(wss.output_sequences()['summa'])
+    summa_as_input.set_tss(wss.output_sequences['summa'])
 
     def run_ws(test_date, summa):
       wss_instance = wss.ws_for_date(test_date)
       wss_instance.run()
-      for output_sequence in wss.output_sequences().values():
+      for output_sequence in wss.output_sequences.values():
         self.assertTrue(lynx.automation.TableSnapshotRecipe(
             output_sequence).is_ready(lk, test_date))
-      summa_result_tss = wss.output_sequences()['summa']
+      summa_result_tss = wss.output_sequences['summa']
       table_raw = summa_result_tss.read_interval(lk, test_date, test_date).get_table_data()
       self.assertEqual(table_raw.data[0][0].string, str(summa))
 
@@ -139,10 +139,10 @@ class TestWorkspaceSequence(unittest.TestCase):
     def run_ws(test_date):
       wss_instance = wss.ws_for_date(test_date)
       wss_instance.run()
-      for output_sequence in wss.output_sequences().values():
+      for output_sequence in wss.output_sequences.values():
         self.assertTrue(lynx.automation.TableSnapshotRecipe(
             output_sequence).is_ready(lk, test_date))
-      avg_result_tss = wss.output_sequences()['avg']
+      avg_result_tss = wss.output_sequences['avg']
       table_raw = avg_result_tss.read_interval(lk, test_date, test_date).get_table_data()
       self.assertEqual(table_raw.data[0][0].string, '22.7')
       entries = lk.list_dir('wsi_snapshots')
