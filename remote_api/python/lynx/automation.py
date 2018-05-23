@@ -254,11 +254,11 @@ class WorkspaceSequence:
     self.input_sequences: Dict[str, TableSnapshotSequence] = {}
     for inp in self.input_names:
       location = _normalize_path(self.lk_root + '/input-snapshots/' + inp)
-      self.input_sequences[inp] = TableSnapshotSequence(location, self._schedule, self.lk)
+      self.input_sequences[inp] = TableSnapshotSequence(self.lk, location, self._schedule)
     self.output_sequences: Dict[str, TableSnapshotSequence] = {}
     for output in self.ws.outputs:
       location = _normalize_path(self.lk_root + '/output-snapshots/' + output)
-      self.output_sequences[output] = TableSnapshotSequence(location, self._schedule, self.lk)
+      self.output_sequences[output] = TableSnapshotSequence(self.lk, location, self._schedule)
 
   def ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
