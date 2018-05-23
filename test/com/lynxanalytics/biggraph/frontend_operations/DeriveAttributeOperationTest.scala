@@ -37,6 +37,17 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
     assert(attr.rdd.collect.toMap == Map(0 -> 0.0, 1 -> 0.0, 2 -> 0.0, 3 -> 0.0))
   }
 
+  test("Derive vertex attribute - string interpolation") {
+    val project = box("Create example graph")
+      .box(
+        "Derive vertex attribute",
+        Map("output" -> "output", "expr" -> "s\"hi $name\""))
+      .project
+    val attr = project.vertexAttributes("output").runtimeSafeCast[String]
+    assert(attr.rdd.collect.toMap == Map(
+      0 -> "hi Adam", 1 -> "hi Eve", 2 -> "hi Bob", 3 -> "hi Isolated Joe"))
+  }
+
   test("Derive vertex attribute - uppercase attribute") {
     val project = box("Create example graph")
       .box(
@@ -150,45 +161,6 @@ class DeriveAttributeOperationTest extends OperationsTestBase {
       .project
     val attr = project.vertexAttributes("output").runtimeSafeCast[Double]
     assert(attr.rdd.collect.toMap == Map(0 -> 3.0, 1 -> 3.0, 2 -> 2.0))
-  }
-
-  ignore("Wrong type") {
-    val e = intercept[org.apache.spark.SparkException] {
-      val project = box("Create example graph")
-        .box(
-          "Derive vertex attribute",
-          Map("output" -> "output", "expr" -> "'hello'"))
-        .project
-      project.vertexAttributes("output").runtimeSafeCast[Double].rdd.collect
-    }
-    assert(e.getCause.getMessage ==
-      "assertion failed: JavaScript('hello') with values: {} did not return a number: NaN")
-  }
-
-  test("ScalaUtilities finds identifiers") {
-    assert(true == ScalaUtilities.containsIdentifier("`age`", "age"))
-    assert(true == ScalaUtilities.containsIdentifier("`123 weird id #?!`", "123 weird id #?!"))
-    assert(true == ScalaUtilities.containsIdentifier("age", "age"))
-    assert(true == ScalaUtilities.containsIdentifier(" age ", "age"))
-    assert(true == ScalaUtilities.containsIdentifier("src$age", "src$age"))
-    assert(true == ScalaUtilities.containsIdentifier("age - name", "age"))
-    assert(true == ScalaUtilities.containsIdentifier("age_v2", "age_v2"))
-    assert(true == ScalaUtilities.containsIdentifier("age.toString", "age"))
-    assert(true == ScalaUtilities.containsIdentifier("age\n1.0", "age"))
-    assert(true == ScalaUtilities.containsIdentifier("Name", "Name"))
-
-    assert(false == ScalaUtilities.containsIdentifier("name", "nam"))
-    assert(false == ScalaUtilities.containsIdentifier("name", "ame"))
-    assert(false == ScalaUtilities.containsIdentifier("nam", "name"))
-    assert(false == ScalaUtilities.containsIdentifier("ame", "name"))
-    assert(false == ScalaUtilities.containsIdentifier("\"name\"", "name"))
-    assert(false == ScalaUtilities.containsIdentifier("'name", "name"))
-  }
-
-  test("ScalaUtilities error on reserved Scala keyword") {
-    intercept[AssertionError] {
-      ScalaUtilities.containsIdentifier("if (type == \"abc\") 1 else 0", "type")
-    }
   }
 
   test("Derive vertex attribute with substring conflict (#1676)") {

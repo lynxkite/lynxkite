@@ -23,8 +23,19 @@ from collections import deque, defaultdict, OrderedDict
 import datetime
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.sensors import BaseSensorOperator
+
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar, cast)
+
+
+class InputSensor(BaseSensorOperator):
+  def __init__(self, input_task, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.input_task = input_task
+
+  def poke(self, context):
+    return self.input_task.is_ready(context['execution_date'])
 
 
 class InputRecipe:
@@ -66,12 +77,14 @@ class TableSnapshotRecipe(InputRecipe):
 
   def is_ready(self, lk: LynxKite, date: datetime.datetime) -> bool:
     self.validate(date)
+    assert self.tss
     adjusted_date = _step_back(self.tss.cron_str, date, self.delta)
     r = lk.get_directory_entry(self.tss.snapshot_name(adjusted_date))
     return r.exists and r.isSnapshot
 
   def build_boxes(self, lk: LynxKite, date: datetime.datetime) -> State:
     self.validate(date)
+    assert self.tss
     adjusted_date = _step_back(self.tss.cron_str, date, self.delta)
     return self.tss.read_interval(lk, adjusted_date, adjusted_date)
 
@@ -111,7 +124,7 @@ class Task:
 
   def __init__(self, wss: 'WorkspaceSequence') -> None:
     self._wss = wss
-    self._lk = wss.lk()
+    self._lk = wss.lk
 
   def _ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     return self._wss.ws_for_date(date)
@@ -151,12 +164,16 @@ class Input(BoxTask):
   '''
 
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
-    name = self.box_path.base.parameters['name']
-    wss_instance.run_input(name)
+    wss_instance.run_input(self.name())
 
   def id(self) -> str:
-    name = self.box_path.base.parameters['name']
-    return f'input_{name}'
+    return f'input_{self.name()}'
+
+  def name(self) -> str:
+    return self.box_path.base.parameters['name']
+
+  def is_ready(self, date):
+    return self._wss.input_recipes()[self.name()].is_ready(self._lk, date)
 
 
 class Output(BoxTask):
@@ -164,13 +181,14 @@ class Output(BoxTask):
   A task associated with an output box.
   '''
 
+  def name(self) -> str:
+    return self.box_path.base.parameters['name']
+
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
-    name = self.box_path.base.parameters['name']
-    wss_instance.run_output(name)
+    wss_instance.run_output(self.name())
 
   def id(self) -> str:
-    name = self.box_path.base.parameters['name']
-    return f'output_{name}'
+    return f'output_{self.name()}'
 
 
 class Triggerable(BoxTask):
@@ -207,7 +225,7 @@ class SaveWorkspace(Task):
   def run(self, date: datetime.datetime) -> None:
     ws_for_date = self._ws_for_date(date)
     name = ws_for_date.full_name()
-    self._wss.lk().remove_name(name, force=True)
+    self._wss.lk.remove_name(name, force=True)
     ws_for_date.save()
 
   def id(self) -> str:
@@ -224,47 +242,23 @@ class WorkspaceSequence:
   def __init__(self, ws: Workspace, schedule: str, start_date: datetime.datetime,
                params: Dict[str, Any], lk_root: str, dfs_root: str,
                input_recipes: List[InputRecipe]) -> None:
-    self._ws = ws
-    self._lk = self._ws.lk()
+    self.ws = ws
+    self.lk = self.ws.lk
     self._schedule = schedule
     self._start_date = start_date
-    self._params = params
-    self._lk_root = lk_root
+    self.params = params
+    self.lk_root = lk_root
     self._dfs_root = dfs_root
-    self._input_names = self._ws.inputs()  # For the order of the inputs
-    self._input_recipes = dict(zip(self._input_names, input_recipes))
-    self._input_sequences: Dict[str, TableSnapshotSequence] = {}
-    for inp in self._input_names:
-      location = _normalize_path(self._lk_root + '/input-snapshots/' + inp)
-      self._input_sequences[inp] = TableSnapshotSequence(location, self._schedule)
-    self._output_sequences: Dict[str, TableSnapshotSequence] = {}
-    for output in self._ws.outputs():
-      location = _normalize_path(self._lk_root + '/output-snapshots/' + output)
-      self._output_sequences[output] = TableSnapshotSequence(location, self._schedule)
-
-  def output_sequences(self) -> Dict[str, TableSnapshotSequence]:
-    '''Returns the output sequences of the workspace sequence as a dict.'''
-    return self._output_sequences
-
-  def input_sequences(self) -> Dict[str, TableSnapshotSequence]:
-    '''Returns the input sequences of the workspace sequence as a dict.'''
-    return self._input_sequences
-
-  def input_names(self):
-    ''' The sorted list of the input names of the wrapped workspace.'''
-    return self._input_names
-
-  def input_recipes(self):
-    ''' Dict of input recipes, the keys are names.'''
-    return self._input_recipes
-
-  def ws(self) -> Workspace:
-    ''' Returns the wrapped workspace.'''
-    return self._ws
-
-  def params(self) -> Dict[str, Any]:
-    ''' Returns the provided workspace parameters.'''
-    return self._params
+    self.input_names = self.ws.inputs  # For the order of the inputs
+    self.input_recipes = dict(zip(self.input_names, input_recipes))
+    self.input_sequences: Dict[str, TableSnapshotSequence] = {}
+    for inp in self.input_names:
+      location = _normalize_path(self.lk_root + '/input-snapshots/' + inp)
+      self.input_sequences[inp] = TableSnapshotSequence(location, self._schedule)
+    self.output_sequences: Dict[str, TableSnapshotSequence] = {}
+    for output in self.ws.outputs:
+      location = _normalize_path(self.lk_root + '/output-snapshots/' + output)
+      self.output_sequences[output] = TableSnapshotSequence(location, self._schedule)
 
   def ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
@@ -274,16 +268,10 @@ class WorkspaceSequence:
         date, self._schedule), "{} is not valid according to {}".format(date, self._schedule)
     return WorkspaceSequenceInstance(self, date)
 
-  def lk_root(self) -> str:
-    return self._lk_root
-
-  def lk(self) -> LynxKite:
-    return self._lk
-
   def _automation_tasks(self) -> List[Task]:
-    inputs: List[Task] = [Input(self, BoxPath(inp)) for inp in self._ws.input_boxes()]
-    outputs: List[Task] = [Output(self, BoxPath(outp)) for outp in self._ws.output_boxes()]
-    side_effects: List[Task] = [Triggerable(self, se) for se in self._ws.side_effect_paths()]
+    inputs: List[Task] = [Input(self, BoxPath(inp)) for inp in self.ws.input_boxes]
+    outputs: List[Task] = [Output(self, BoxPath(outp)) for outp in self.ws.output_boxes]
+    side_effects: List[Task] = [Triggerable(self, se) for se in self.ws.side_effect_paths()]
     save_ws: List[Task] = [SaveWorkspace(self)]
     return inputs + outputs + side_effects + save_ws
 
@@ -347,13 +335,23 @@ class WorkspaceSequence:
     task_info = {}
     # Creating Airflow operators for tasks.
     for t in task_dag:
-      task_info[t] = dict(
-          id=t.id(),
-          op=PythonOperator(
-              task_id=t.id(),
-              provide_context=True,
-              python_callable=lambda ds, execution_date, **kwargs: t.run(execution_date),
-              dag=airflow_dag))
+      python_op = PythonOperator(
+          task_id=t.id(),
+          provide_context=True,
+          python_callable=lambda ds, execution_date, t=t, **kwargs: t.run(execution_date),
+          dag=airflow_dag)
+      task_info[t] = dict(id=t.id(), op=python_op)
+      if isinstance(t, Input):
+        # Adding sensor task for input
+        sensor_task_id = f'input_sensor_{t.name()}'
+        sensor_op = InputSensor(
+            input_task=t,
+            task_id=sensor_task_id,
+            dag=airflow_dag,
+            poke_interval=60,
+            timeout=60 * 60 * 12,
+            soft_fail=False)
+        task_info[t]['op'].set_upstream(sensor_op)
     # Defining dependencies between operators.
     for t in task_dag:
       for dep in task_dag[t]:
@@ -365,11 +363,11 @@ class WorkspaceSequenceInstance:
 
   def __init__(self, wss: WorkspaceSequence, date: datetime.datetime) -> None:
     self._wss = wss
-    self._lk = self._wss.lk()
+    self._lk = self._wss.lk
     self._date = date
 
   def base_folder_name(self):
-    return _normalize_path(f'{self._wss.lk_root()}/workspaces/{self._date}')
+    return _normalize_path(f'{self._wss.lk_root}/workspaces/{self._date}')
 
   def folder_of_input_workspaces(self):
     return f'{self.base_folder_name()}/inputs'
@@ -386,10 +384,10 @@ class WorkspaceSequenceInstance:
     return r.exists and r.isWorkspace
 
   def snapshot_path_for_output(self, output: str) -> str:
-    return self._wss.output_sequences()[output].snapshot_name(self._date)
+    return self._wss.output_sequences[output].snapshot_name(self._date)
 
   def snapshot_path_for_input(self, name: str) -> str:
-    return self._wss.input_sequences()[name].snapshot_name(self._date)
+    return self._wss.input_sequences[name].snapshot_name(self._date)
 
   def wrapper_ws(self) -> Workspace:
     lk = self._lk
@@ -398,17 +396,17 @@ class WorkspaceSequenceInstance:
     def ws_instance(se_collector):
       inputs = [
           self._lk.importSnapshot(
-              path=self._wss.input_sequences()[input_name].snapshot_name(
+              path=self._wss.input_sequences[input_name].snapshot_name(
                   self._date))
-          for input_name in self._wss.input_names()]
-      ws = self._wss.ws()
-      params = self._wss.params()
+          for input_name in self._wss.input_names]
+      ws = self._wss.ws
+      params = self._wss.params
       if ws.has_date_parameter():
         ws_as_box = ws(*inputs, **params, date=self._date)
       else:
         ws_as_box = ws(*inputs, **params)
       ws_as_box.register(se_collector)
-      for output in ws.outputs():
+      for output in ws.outputs:
         out_path = self.snapshot_path_for_output(output)
         ws_as_box[output].saveToSnapshot(path=out_path).register(se_collector)
 
@@ -424,7 +422,7 @@ class WorkspaceSequenceInstance:
 
     @lk.workspace_with_side_effects(name=input_name)
     def input_ws(se_collector):
-      input_state = self._wss.input_recipes()[input_name].build_boxes(self._lk, self._date)
+      input_state = self._wss.input_recipes[input_name].build_boxes(self._lk, self._date)
       path = self.snapshot_path_for_input(input_name)
       input_state.saveToSnapshot(path=path).register(se_collector)
 
@@ -435,7 +433,7 @@ class WorkspaceSequenceInstance:
     input_ws.trigger_all_side_effects()
 
   def run_all_inputs(self) -> None:
-    for input_name in self._wss.input_names():
+    for input_name in self._wss.input_names:
       self.run_input(input_name)
 
   def run_output(self, name: str) -> None:
@@ -452,8 +450,8 @@ class WorkspaceSequenceInstance:
   def trigger(self, box_path: BoxPath) -> None:
     '''``box_path`` is relative to the original workspace'''
     wrapper_ws = self.wrapper_ws()
-    for box in wrapper_ws.all_boxes():
-      if isinstance(box, CustomBox) and box.workspace == self._wss.ws():
+    for box in wrapper_ws.all_boxes:
+      if isinstance(box, CustomBox) and box.workspace == self._wss.ws:
         wrapped_ws_as_box = box
         break
     full_box_path = box_path.add_box_as_prefix(wrapped_ws_as_box)
