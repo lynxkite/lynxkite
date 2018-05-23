@@ -86,7 +86,7 @@ class TableSnapshotRecipe(InputRecipe):
     self.validate(date)
     assert self.tss
     adjusted_date = _step_back(self.tss.cron_str, date, self.delta)
-    return self.tss.read_interval(lk, adjusted_date, adjusted_date)
+    return self.tss.read_interval(adjusted_date, adjusted_date)
 
 
 class RecipeWithDefault(InputRecipe):
@@ -254,11 +254,11 @@ class WorkspaceSequence:
     self.input_sequences: Dict[str, TableSnapshotSequence] = {}
     for inp in self.input_names:
       location = _normalize_path(self.lk_root + '/input-snapshots/' + inp)
-      self.input_sequences[inp] = TableSnapshotSequence(location, self._schedule)
+      self.input_sequences[inp] = TableSnapshotSequence(location, self._schedule, self.lk)
     self.output_sequences: Dict[str, TableSnapshotSequence] = {}
     for output in self.ws.outputs:
       location = _normalize_path(self.lk_root + '/output-snapshots/' + output)
-      self.output_sequences[output] = TableSnapshotSequence(location, self._schedule)
+      self.output_sequences[output] = TableSnapshotSequence(location, self._schedule, self.lk)
 
   def ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
