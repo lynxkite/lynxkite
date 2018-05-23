@@ -93,3 +93,13 @@ class TestSnapshotSequence(unittest.TestCase):
 
     tss = lynx.kite.TableSnapshotSequence(lk, 'test_snapshot_sequence/4', '0 0 1 * *')
     self.assertRaises(AssertionError, tss.save_to_sequence, state, datetime(2015, 6, 15, 0, 0))
+
+  def test_with_project(self):
+    lk = lynx.kite.LynxKite()
+    lk.remove_name('project_seq', force=True)
+    snapshot_seq = lynx.kite.SnapshotSequence(lk, 'project_seq', '0 0 * * *')
+    d = datetime(2018, 1, 2)
+    lk.createExampleGraph().save_to_sequence(snapshot_seq, d)
+    eg = snapshot_seq.read_date(d)
+    vertex_count = eg.sql('select count(*) from vertices').get_table_data().data[0][0].string
+    self.assertEqual(vertex_count, '4')
