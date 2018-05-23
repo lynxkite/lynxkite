@@ -12,9 +12,9 @@ class TestInputRecipe(unittest.TestCase):
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)
     date = datetime(2018, 1, 9, 0, 0)
     lk.remove_name(tss.snapshot_name(date), force=True)
-    self.assertEqual(input_recipe.is_ready(lk, date), False)
+    self.assertEqual(input_recipe.is_ready(date), False)
     lk.createExampleGraph().sql('select name, age from vertices').save_to_sequence(tss, date)
-    self.assertEqual(input_recipe.is_ready(lk, date), True)
+    self.assertEqual(input_recipe.is_ready(date), True)
 
   def test_snapshot_input_recipe_build_boxes(self):
     lk = lynx.kite.LynxKite()
@@ -23,6 +23,6 @@ class TestInputRecipe(unittest.TestCase):
     date = datetime(2018, 1, 10, 0, 0)
     lk.remove_name(tss.snapshot_name(date), force=True)
     lk.createExampleGraph().sql('select age from vertices').save_to_sequence(tss, date)
-    input_boxes = input_recipe.build_boxes(lk, date)
+    input_boxes = input_recipe.build_boxes(date)
     table = input_boxes.sql('select sum(age) as sum_age from input').get_table_data()
     self.assertEqual(table.data[0][0].string, '90.8')

@@ -544,7 +544,7 @@ class SnapshotSequence:
   def __init__(self, location: str, cron_str: str, lk: LynxKite) -> None:
     self._location = location
     self.cron_str = cron_str
-    self._lk = lk
+    self.lk = lk
 
   def snapshot_name(self, date: datetime.datetime) -> str:
     # TODO: make it timezone independent
@@ -563,14 +563,14 @@ class SnapshotSequence:
 
   def read_date(self, date: datetime.datetime) -> 'Box':
     path = self.snapshots(date, date)[0]
-    return self._lk.importSnapshot(path=path)
+    return self.lk.importSnapshot(path=path)
 
   def save_to_sequence(self, state_id: str, dt: datetime.datetime) -> None:
     ''' Saves a state of id ``state_id`` as a member of the sequence.'''
     # Assert that dt is valid according to the cron_str format.
     assert _timestamp_is_valid(dt, self.cron_str), "Datetime %s does not match cron format %s." % (
         dt, self.cron_str)
-    self._lk.save_snapshot(self.snapshot_name(dt), state_id)
+    self.lk.save_snapshot(self.snapshot_name(dt), state_id)
 
 
 class TableSnapshotSequence(SnapshotSequence):
@@ -580,7 +580,7 @@ class TableSnapshotSequence(SnapshotSequence):
   def read_interval(self, from_date: datetime.datetime,
                     to_date: datetime.datetime) -> 'State':
     paths = ','.join(self.snapshots(from_date, to_date))
-    return self._lk.importUnionOfTableSnapshots(paths=paths)
+    return self.lk.importUnionOfTableSnapshots(paths=paths)
 
 
 class State:
