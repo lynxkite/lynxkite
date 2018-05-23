@@ -45,10 +45,10 @@ class InputRecipe:
   loads the input into a workspace.
   '''
 
-  def is_ready(self, lk: LynxKite, date: datetime.datetime) -> bool:
+  def is_ready(self, date: datetime.datetime) -> bool:
     raise NotImplementedError()
 
-  def build_boxes(self, lk: LynxKite, date: datetime.datetime) -> State:
+  def build_boxes(self, date: datetime.datetime) -> State:
     raise NotImplementedError()
 
   def validate(self, date: datetime.datetime) -> None:
@@ -75,18 +75,18 @@ class TableSnapshotRecipe(InputRecipe):
     assert _timestamp_is_valid(
         date, self.tss.cron_str), '{} does not match {}.'.format(date, self.tss.cron_str)
 
-  def is_ready(self, lk: LynxKite, date: datetime.datetime) -> bool:
+  def is_ready(self, date: datetime.datetime) -> bool:
     self.validate(date)
     assert self.tss
     adjusted_date = _step_back(self.tss.cron_str, date, self.delta)
-    r = lk.get_directory_entry(self.tss.snapshot_name(adjusted_date))
+    r = self.tss.lk.get_directory_entry(self.tss.snapshot_name(adjusted_date))
     return r.exists and r.isSnapshot
 
-  def build_boxes(self, lk: LynxKite, date: datetime.datetime) -> State:
+  def build_boxes(self, date: datetime.datetime) -> State:
     self.validate(date)
     assert self.tss
     adjusted_date = _step_back(self.tss.cron_str, date, self.delta)
-    return self.tss.read_interval(lk, adjusted_date, adjusted_date)
+    return self.tss.read_interval(adjusted_date, adjusted_date)
 
 
 class RecipeWithDefault(InputRecipe):
@@ -105,16 +105,16 @@ class RecipeWithDefault(InputRecipe):
     if date != self.default_date:
       self.src_recipe.validate(date)
 
-  def is_ready(self, lk: LynxKite, date: datetime.datetime) -> bool:
+  def is_ready(self, date: datetime.datetime) -> bool:
     self.validate(date)
-    return date == self.default_date or self.src_recipe.is_ready(lk, date)
+    return date == self.default_date or self.src_recipe.is_ready(date)
 
-  def build_boxes(self, lk: LynxKite, date: datetime.datetime) -> State:
+  def build_boxes(self, date: datetime.datetime) -> State:
     self.validate(date)
     if date == self.default_date:
       return self.default_state
     else:
-      return self.src_recipe.build_boxes(lk, date)
+      return self.src_recipe.build_boxes(date)
 
 
 class Task:
@@ -254,11 +254,11 @@ class WorkspaceSequence:
     self.input_sequences: Dict[str, TableSnapshotSequence] = {}
     for inp in self.input_names:
       location = _normalize_path(self.lk_root + '/input-snapshots/' + inp)
-      self.input_sequences[inp] = TableSnapshotSequence(location, self._schedule)
+      self.input_sequences[inp] = TableSnapshotSequence(self.lk, location, self._schedule)
     self.output_sequences: Dict[str, TableSnapshotSequence] = {}
     for output in self.ws.outputs:
       location = _normalize_path(self.lk_root + '/output-snapshots/' + output)
-      self.output_sequences[output] = TableSnapshotSequence(location, self._schedule)
+      self.output_sequences[output] = TableSnapshotSequence(self.lk, location, self._schedule)
 
   def ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
@@ -422,7 +422,7 @@ class WorkspaceSequenceInstance:
 
     @lk.workspace_with_side_effects(name=input_name)
     def input_ws(se_collector):
-      input_state = self._wss.input_recipes[input_name].build_boxes(self._lk, self._date)
+      input_state = self._wss.input_recipes[input_name].build_boxes(self._date)
       path = self.snapshot_path_for_input(input_name)
       input_state.saveToSnapshot(path=path).register(se_collector)
 
