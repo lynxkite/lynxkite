@@ -36,7 +36,7 @@ import re
 import itertools
 from collections import deque, defaultdict, OrderedDict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
-                    TypeVar, cast)
+                    TypeVar, cast, Optional)
 
 import requests
 from croniter import croniter
@@ -153,7 +153,7 @@ class LynxKite:
     self._signed_token = signed_token
     self._session = None
     self._pid = None
-    self._operation_names: List[str] = None
+    self._operation_names: List[str] = []
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
   def home(self) -> str:
@@ -211,20 +211,22 @@ class LynxKite:
 
   def username(self) -> str:
     username = self._username or os.environ.get('LYNXKITE_USERNAME')
-    if not username and self.signed_token():
-      return self.signed_token().split('|')[0]
+    if not username:
+      signed_token = self.signed_token()
+      assert signed_token, 'Can not determine username. Either set username or signed token.'
+      return signed_token.split('|')[0]
     return username
 
-  def password(self) -> str:
+  def password(self) -> Optional[str]:
     return self._password or os.environ.get('LYNXKITE_PASSWORD')
 
-  def certfile(self) -> str:
+  def certfile(self) -> Optional[str]:
     return self._certfile or os.environ.get('LYNXKITE_PUBLIC_SSL_CERT')
 
-  def oauth_token(self) -> str:
+  def oauth_token(self) -> Optional[str]:
     return self._oauth_token or os.environ.get('LYNXKITE_OAUTH_TOKEN')
 
-  def signed_token(self) -> str:
+  def signed_token(self) -> Optional[str]:
     return self._signed_token or os.environ.get('LYNXKITE_SIGNED_TOKEN')
 
   def _login(self):
@@ -376,21 +378,21 @@ class LynxKite:
           needed_ws.add(rws)
           ws_queue.append(rws)
     # Check name duplication in required workspaces
-    names = list(rws.name() for rws in needed_ws)
-    if len(needed_ws) != len(set(rws.name() for rws in needed_ws)):
+    names = list(rws.name for rws in needed_ws)
+    if len(needed_ws) != len(set(rws.name for rws in needed_ws)):
       duplicates = [k for k, v in Counter(names).items() if v > 1]
       raise Exception(f'Duplicate custom box name(s): {duplicates}')
     for rws in needed_ws:
-      self.save_workspace(ws_root + '/' + rws.name(), _layout(rws.to_json(ws_root)))
+      self.save_workspace(ws_root + '/' + rws.name, _layout(rws.to_json(ws_root)))
     if save_under_root is not None:
       # Check if the "main" ws name conflicts with one of the custom box names
-      if ws.name() in names:
-        raise Exception(f'Duplicate name: {ws.name()}')
+      if ws.name in names:
+        raise Exception(f'Duplicate name: {ws.name}')
       self.save_workspace(
-          save_under_root + '/' + ws.name(), _layout(ws.to_json(save_under_root)))
+          save_under_root + '/' + ws.name, _layout(ws.to_json(save_under_root)))
     # If saved, we return the full name of the main workspace also.
     return (ws_root,
-            _normalize_path(save_under_root + '/' + ws.name())
+            _normalize_path(save_under_root + '/' + ws.name)
             if (save_under_root is not None) else '')
 
   def fetch_workspace_output_states(self, ws: 'Workspace',
@@ -777,8 +779,8 @@ class CustomBox(Box):
                inputs: Dict[str, State], parameters: Dict[str, Any]) -> None:
     super().__init__(box_catalog, lk, inputs, parameters)
     self.workspace = workspace
-    self.outputs = set(workspace.outputs())
-    exp_inputs = set(workspace.inputs())
+    self.outputs = set(workspace.outputs)
+    exp_inputs = set(workspace.inputs)
     got_inputs = inputs.keys()
     assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
         got_inputs, exp_inputs)
@@ -787,7 +789,7 @@ class CustomBox(Box):
     return _normalize_path(workspace_root + '/' + self.name())
 
   def name(self):
-    return self.workspace.name()
+    return self.workspace.name
 
   def __str__(self) -> str:
     return "Custom box {} with parameters {} and inputs {}".format(
@@ -839,7 +841,7 @@ def _new_box(bc: BoxCatalog, lk: LynxKite, operation: Union[str, 'Workspace'],
     else:
       return AtomicBox(bc, lk, operation, inputs, parameters)
   else:
-    outputs = operation.outputs()
+    outputs = operation.outputs
     if len(outputs) == 1:
       return SingleOutputCustomBox(bc, lk, operation, inputs, parameters, outputs[0])
     else:
@@ -871,7 +873,7 @@ def _atomic_source_of_state(box_list, state) -> 'BoxPath':
   if isinstance(source_box, AtomicBox):
     return BoxPath(source_box, box_list)
   else:  # we need the proper output box of the custom box
-    output_box = [box for box in source_box.workspace.output_boxes()
+    output_box = [box for box in source_box.workspace.output_boxes
                   if box.parameters['name'] == state.output_plug_name][0]
     return BoxPath(output_box, box_list + [source_box])
 
@@ -1029,26 +1031,26 @@ class Workspace:
                side_effect_paths: List[BoxPath] = [],
                input_boxes: List[AtomicBox] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
-    self._name = name or 'Anonymous'
-    self._all_boxes: Set[Box] = set()
+    self.name = name or 'Anonymous'
+    self.lk = terminal_boxes[0].lk
+    self.all_boxes: Set[Box] = set()
+    self.input_boxes = input_boxes
     self._box_ids: Dict[Box, str] = dict()
     self._next_id = 0
     assert all(b.operation == 'input' for b in input_boxes), 'Non-input box in input_boxes'
-    self._inputs = [inp.parameters['name'] for inp in input_boxes]
-    self._output_boxes = [box for box in terminal_boxes
-                          if isinstance(box, AtomicBox) and box.operation == 'output']
-    self._outputs = [outp.parameters['name'] for outp in self._output_boxes]
+    self.inputs = [inp.parameters['name'] for inp in input_boxes]
+    self.output_boxes = [box for box in terminal_boxes
+                         if isinstance(box, AtomicBox) and box.operation == 'output']
+    self.outputs = [outp.parameters['name'] for outp in self.output_boxes]
     self._ws_parameters = ws_parameters
     self._side_effect_paths = side_effect_paths
-    self._input_boxes = input_boxes
     self._terminal_boxes = terminal_boxes
     self._bc = self._terminal_boxes[0].bc
-    self._lk = self._terminal_boxes[0].lk
     for box in _reverse_bfs_on_boxes(self._terminal_boxes):
       self._add_box(box)
 
   def _add_box(self, box):
-    self._all_boxes.add(box)
+    self.all_boxes.add(box)
     self._box_ids[box] = "box_{}".format(self._next_id)
     self._next_id += 1
 
@@ -1070,7 +1072,7 @@ class Workspace:
 
   def to_json(self, workspace_root: str) -> List[SerializedBox]:
     non_anchor_boxes = [
-        box.to_json(self.id_of, workspace_root) for box in self._all_boxes]
+        box.to_json(self.id_of, workspace_root) for box in self.all_boxes]
     # We use ws_parameters to customize _anchor_box.
     ab = copy.deepcopy(_anchor_box)
     ab['parameters'] = dict(parameters=self._ws_parameters_to_str())
@@ -1078,29 +1080,8 @@ class Workspace:
 
   def required_workspaces(self) -> List['Workspace']:
     return [
-        box.workspace for box in self._all_boxes
+        box.workspace for box in self.all_boxes
         if isinstance(box, CustomBox)]
-
-  def lk(self) -> LynxKite:
-    return self._lk
-
-  def inputs(self) -> List[str]:
-    return list(self._inputs)
-
-  def input_boxes(self) -> List[AtomicBox]:
-    return self._input_boxes
-
-  def outputs(self) -> List[str]:
-    return list(self._outputs)
-
-  def output_boxes(self) -> List[AtomicBox]:
-    return self._output_boxes
-
-  def all_boxes(self) -> List[Box]:
-    return list(self._all_boxes)
-
-  def name(self) -> str:
-    return self._name
 
   def side_effect_paths(self) -> List[BoxPath]:
     return self._side_effect_paths
@@ -1112,17 +1093,17 @@ class Workspace:
     return [self.id_of(box) for box in self._terminal_boxes]
 
   def __call__(self, *args, **kwargs) -> Box:
-    inputs = dict(zip(self.inputs(), args))
-    return _new_box(self._bc, self._lk, self, inputs=inputs, parameters=kwargs)
+    inputs = dict(zip(self.inputs, args))
+    return _new_box(self._bc, self.lk, self, inputs=inputs, parameters=kwargs)
 
   def _trigger_box(self, box_to_trigger: BoxPath, full_path: str):
-    lk = self._lk
+    lk = self.lk
     box_ids = self._box_to_trigger_to_box_ids(box_to_trigger)
     # The last id is a "normal" box id, the rest are the custom box stack.
     lk.trigger_box(full_path, box_ids[-1], box_ids[:-1])
 
   def save(self, saved_under_folder: str) -> Tuple[str, str]:
-    lk = self._lk
+    lk = self.lk
     return lk.save_workspace_recursively(self, saved_under_folder)
 
   def trigger_saved(self, box_to_trigger: BoxPath, saved_under_folder: str):
@@ -1130,7 +1111,7 @@ class Workspace:
 
     Assumes the workspace is saved under `saved_under_root`.
     '''
-    full_path = _normalize_path(saved_under_folder + '/' + self._name)
+    full_path = _normalize_path(saved_under_folder + '/' + self.name)
     self._trigger_box(box_to_trigger, full_path)
 
   def trigger(self, box_to_trigger: BoxPath):
