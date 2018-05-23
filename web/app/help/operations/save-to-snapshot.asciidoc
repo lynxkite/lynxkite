@@ -1,6 +1,9 @@
 ### Save to snapshot
 
-Saves the input to a snapshot.
+Saves the input to a snapshot. The location of the snapshot has to be specified as
+a full path.
+
+include::{g}[tag=full-lk-path]
 
 ====
 [[path]] Path::
