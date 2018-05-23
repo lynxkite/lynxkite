@@ -19,6 +19,9 @@ snapshot will be saved outside of the workspace, in the directory tree. Snapshot
 the workspaces from which they were saved. Use them to share final results, or record intermediate
 results for comparison.
 
+To save a snapshot you have to specify the full path of the snapshot.
+include::../operations/glossary.asciidoc[tag=full-lk-path]
+
 Snapshots can be loaded back into a workspace with an <<Import snapshot>> box.
 
 

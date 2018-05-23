@@ -251,3 +251,9 @@ will be re-executed each time its output is used. Persistence can improve perfor
 disk space.
 ====
 end::sql-box[]
+
+tag::full-lk-path[]
+A full path in the LynxKite directory system has the following form:
+`top_folder/subfolder_1/subfolder_2/.../subfolder_n/name` +
+Keep in mind that there is no leading slash at the beginning of the path.
+end::full-lk-path[]
