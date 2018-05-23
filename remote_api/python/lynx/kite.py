@@ -541,10 +541,10 @@ class SnapshotSequence:
     cron_str: the Cron format defining the valid timestamps and frequency.
     lk: LynxKite connection object.'''
 
-  def __init__(self, location: str, cron_str: str, lk: LynxKite) -> None:
+  def __init__(self, lk: LynxKite, location: str, cron_str: str) -> None:
+    self.lk = lk
     self._location = location
     self.cron_str = cron_str
-    self.lk = lk
 
   def snapshot_name(self, date: datetime.datetime) -> str:
     # TODO: make it timezone independent
