@@ -533,16 +533,18 @@ class LynxKite:
         dict(workspace=dict(top=workspace_name, customBoxStack=custom_box_stack), box=box_id))
 
 
-class TableSnapshotSequence:
-  '''A snapshot sequence representing a list of table type snapshots in LynxKite.
+class SnapshotSequence:
+  '''A snapshot sequence representing a list of snapshots in LynxKite.
 
   Attributes:
     location: the LynxKite root directory this snapshot sequence is stored under.
-    cron_str: the Cron format defining the valid timestamps and frequency.'''
+    cron_str: the Cron format defining the valid timestamps and frequency.
+    lk: LynxKite connection object.'''
 
-  def __init__(self, location: str, cron_str: str) -> None:
+  def __init__(self, location: str, cron_str: str, lk: LynxKite) -> None:
     self._location = location
     self.cron_str = cron_str
+    self._lk = lk
 
   def snapshot_name(self, date: datetime.datetime) -> str:
     # TODO: make it timezone independent
@@ -559,20 +561,26 @@ class TableSnapshotSequence:
       t.append(self.snapshot_name(dt))
     return t
 
-  def read_interval(self, lk: LynxKite, from_date: datetime.datetime,
-                    to_date: datetime.datetime) -> 'State':
-    paths = ','.join(self.snapshots(from_date, to_date))
-    return lk.importUnionOfTableSnapshots(paths=paths)
-
-  def read_date(self, lk: LynxKite, date: datetime.datetime) -> 'Box':
+  def read_date(self, date: datetime.datetime) -> 'Box':
     path = self.snapshots(date, date)[0]
-    return lk.importSnapshot(path=path)
+    return self._lk.importSnapshot(path=path)
 
-  def save_to_sequence(self, lk: LynxKite, table_state: str, dt: datetime.datetime) -> None:
+  def save_to_sequence(self, state_id: str, dt: datetime.datetime) -> None:
+    ''' Saves a state of id ``state_id`` as a member of the sequence.'''
     # Assert that dt is valid according to the cron_str format.
     assert _timestamp_is_valid(dt, self.cron_str), "Datetime %s does not match cron format %s." % (
         dt, self.cron_str)
-    lk.save_snapshot(self.snapshot_name(dt), table_state)
+    self._lk.save_snapshot(self.snapshot_name(dt), state_id)
+
+
+class TableSnapshotSequence(SnapshotSequence):
+  ''' A special snapshot sequence where all members are of type table. This makes possible
+  reading the union of the snapshots for a given interval.'''
+
+  def read_interval(self, from_date: datetime.datetime,
+                    to_date: datetime.datetime) -> 'State':
+    paths = ','.join(self.snapshots(from_date, to_date))
+    return self._lk.importUnionOfTableSnapshots(paths=paths)
 
 
 class State:
@@ -667,7 +675,7 @@ class State:
     the date of the snapshot.'''
     lk = self.box.lk
     state_id = lk.get_state_id(self)
-    tss.save_to_sequence(lk, state_id, date)
+    tss.save_to_sequence(state_id, date)
 
 
 class Box:
