@@ -423,6 +423,7 @@ while True:
     docker cp ${{ID}}:/lynxkite/setup.sh .
     ./setup.sh $ID
     docker rm $ID
+    ./service_explorer.sh
     '''.format(
         foreign_repo=self.ecr_client.foreign_name(),
         tag=self.image_tag
