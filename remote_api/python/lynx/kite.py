@@ -547,8 +547,10 @@ class SnapshotSequence:
     self.cron_str = cron_str
 
   def snapshot_name(self, date: datetime.datetime) -> str:
-    # TODO: make it timezone independent
-    return self._location + '/' + str(date)
+    local_timezone = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
+    timezone_aware_date = date if date.tzinfo is not None else date.replace(tzinfo=local_timezone)
+    utc_date = timezone_aware_date.astimezone(datetime.timezone.utc)
+    return self._location + '/' + str(utc_date)
 
   def snapshots(self, from_date: datetime.datetime, to_date: datetime.datetime) -> List[str]:
     # We want to include the from_date if it matches the cron format.
@@ -1004,6 +1006,7 @@ class FakeBoxPathForInputParent(BoxPath):
 
 
 class SideEffectCollector:
+
   def __init__(self):
     self.top_level_side_effects: List[Box] = []
 
