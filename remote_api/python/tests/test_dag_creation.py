@@ -122,7 +122,7 @@ class TestDagCreation(unittest.TestCase):
     ws = create_complex_test_workspace()
     lk = ws.lk
     lk.remove_name('eq_table_seq', force=True)
-    tss = lynx.kite.TableSnapshotSequence('eq_table_seq', '0 0 * * *')
+    tss = lynx.kite.TableSnapshotSequence(lk, 'eq_table_seq', '0 0 * * *')
     lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, self.test_date)
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)
     day_before = self.test_date - timedelta(days=1)
@@ -307,7 +307,7 @@ class TestDagCreation(unittest.TestCase):
     for t in dag:
       t.run(self.test_date)
     for o in wss.output_sequences.values():
-      self.assertTrue(lynx.automation.TableSnapshotRecipe(o).is_ready(lk, self.test_date))
+      self.assertTrue(lynx.automation.TableSnapshotRecipe(o).is_ready(self.test_date))
     # is everything idempotent apart from triggerables?
     lk.remove_name('SB1', force=True)
     lk.remove_name('SB2', force=True)
