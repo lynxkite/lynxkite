@@ -15,10 +15,10 @@ global_settings {
 
 camera {
   orthographic
-  location  <-1, -6, 4>
+  location  <4, -4, 4>
   up z
   sky z
-  look_at   <0, 0, 1>
+  look_at   <0, 0, 0>
   right x*(image_width/image_height)
   angle 30
 }
@@ -41,13 +41,14 @@ plane {
 }
 
 #include "shapes.inc"
+#include "textures.inc"
 
 #macro Color(C)
 texture {
+  Chrome_Metal
   pigment { color C }
   finish {
     diffuse 1
   }
 }
 #end
-

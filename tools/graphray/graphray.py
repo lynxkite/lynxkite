@@ -11,19 +11,49 @@ import subprocess
 
 def povray(output_file, graph, width, height, shadow_pass):
   vs, es = graph
-  vertices = '\n'.join(
-      f'sphere {{ <{v.x}, {v.y}, {v.r}>, {v.r} Color(rgb <{v.color}>) }}'
-      for v in vs.to_records())
+  vs = vs.fillna(0)
+  if 'shape' not in vs:
+    vs['shape'] = 'sphere'
+  if 'color' not in vs:
+    vs['color'] = '1,1,1'
+  if 'highlight' not in vs:
+    vs['highlight'] = 0
+  if 'r' not in vs:
+    vs['r'] = 0.1
+
+  def vertex(v, ignore_highlight=False):
+    if v['highlight'] and not ignore_highlight:
+      return f'''
+union {{
+  object {{ disc {{ <{v.x}, {v.y}, 0>, z, {v.r * 3}, {v.r * 2} }} Color(rgb(<1,0.5,0.5>)) }}
+  {vertex(v, True)}
+}}'''
+    elif v['shape'] == 'guy':
+      return f'''
+union {{
+  object {{
+    sphere {{ <{v.x}, {v.y}, {v.r * 2}>, {v.r} Color(rgb <{v.color}>) }}
+    Color(rgb <{v.color}>)
+  }}
+  object {{
+    Round_Cone(<{v.x}, {v.y}, 0>, {v.r}, <{v.x}, {v.y}, {v.r * 2}>, {v.r * 0.5}, {v.r * 0.1}, 0)
+    Color(rgb <1,1,0>)
+  }}
+}}'''
+    else:
+      return f'sphere {{ <{v.x}, {v.y}, {v.r}>, {v.r} Color(rgb <{v.color}>) }}'
 
   def edge(src, dst):
     return f'''
 cylinder {{ <{src.x}, {src.y}, {src.r}>, <{dst.x}, {dst.y}, {dst.r}>, {0.05 * (src.r + dst.r)} }}
     '''.strip()
+
+  vertices = '\n'.join(vertex(v) for v in vs.to_records())
   edges = '\n'.join(edge(vs.loc[e.src], vs.loc[e.dst]) for e in es.to_records())
   with open('tmp.pov', 'w') as f:
     f.write(f'''
 #version 3.7;
-#include "{os.path.dirname(__file__)}/scene.pov"
+#include "{os.path.dirname(__file__) or '.'}/scene.pov"
 
 Center_Object(
   union {{
@@ -52,11 +82,12 @@ Center_Object(
 
 def layout(graph):
   vs, es = graph
-  graph = nx.Graph()
-  graph.add_edges_from(zip(es.src, es.dst))
-  pos = nx.kamada_kawai_layout(graph)
-  vs['x'] = [pos[v][0] for v in vs.index]
-  vs['y'] = [pos[v][1] for v in vs.index]
+  if 'x' not in vs:
+    graph = nx.Graph()
+    graph.add_edges_from(zip(es.src, es.dst))
+    pos = nx.kamada_kawai_layout(graph)
+    vs['x'] = [pos[v][0] for v in vs.index]
+    vs['y'] = [pos[v][1] for v in vs.index]
 
 
 def compose(output_file, graph, width, height):
@@ -90,7 +121,7 @@ def demo_graph():
   return vs, es
 
 
-def render(vs, es, width=600, height=600):
+def render(vs, es, width=1600, height=1000):
   '''Renders a graph and displays it in the notebook.'''
   compose('graph.png', (vs, es), width, height)
   from IPython.display import Image
@@ -98,7 +129,7 @@ def render(vs, es, width=600, height=600):
 
 
 def main():
-  compose('graph.png', demo_graph())
+  compose('graph.png', demo_graph(), 1600, 1000)
 
 
 if __name__ == '__main__':
