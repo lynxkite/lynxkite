@@ -73,7 +73,7 @@ class TestSnapshotSequence(unittest.TestCase):
     self.assertEqual(len(snapshots), 18)
     self.assertEqual('test_snapshot_sequence/2/2015-05-01 00:00:00+00:00', snapshots[0])
     self.assertEqual('test_snapshot_sequence/2/2016-10-01 00:00:00+00:00', snapshots[17])
-    self.assertEqual(72.0, self._table_count(tss.read_interval(lk, fd, td)))
+    self.assertEqual(72.0, self._table_count(tss.read_interval(fd, td)))
 
     tss = lynx.kite.TableSnapshotSequence(lk, 'test_snapshot_sequence/3', '0 0 * * *')
     self._save_snapshots(tss,
