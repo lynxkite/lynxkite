@@ -60,7 +60,7 @@ class TestSnapshotSequence(unittest.TestCase):
     self.assertEqual(len(snapshots), 2)
     self.assertEqual('test_snapshot_sequence/1/2010-01-01 00:00:00+00:00', snapshots[0])
     self.assertEqual('test_snapshot_sequence/1/2011-01-01 00:00:00+00:00', snapshots[1])
-    self.assertEqual(8.0, self._table_count(tss.read_interval(lk, fd, td)))
+    self.assertEqual(8.0, self._table_count(tss.read_interval(fd, td)))
 
     tss = lynx.kite.TableSnapshotSequence(lk, 'test_snapshot_sequence/2', '0 0 1 * *')
     self._save_snapshots(tss,
@@ -100,9 +100,9 @@ class TestSnapshotSequence(unittest.TestCase):
     lk = lynx.kite.LynxKite()
     state = self._get_state(lk)
 
-    tss = lynx.kite.TableSnapshotSequence('test_snapshot_sequence/5', '0 0 1 1 *')
+    tss = lynx.kite.TableSnapshotSequence(lk, 'test_snapshot_sequence/5', '0 0 1 1 *')
     self._save_snapshots(
-        lk, tss, [
+        tss, [
             datetime(
                 y, 1, 1, 0, 0, tzinfo=timezone.utc) for y in [
                 2010, 2011, 2012]], state)
