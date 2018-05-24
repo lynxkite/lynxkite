@@ -1,6 +1,7 @@
 import unittest
 import json
 from datetime import datetime, timedelta, timezone, tzinfo
+import dateutil.parser
 import lynx.kite
 
 ANCHOR_EXAMPLE_AND_SQL = '''
@@ -119,3 +120,24 @@ class TestSnapshotSequence(unittest.TestCase):
     snapshots = tss.snapshots(fd, td)
     self.assertEqual(len(snapshots), 1)
     self.assertEqual('test_snapshot_sequence/5/2010-12-31 21:00:00+00:00', snapshots[0])
+
+  def test_utc_snapshot_names(self):
+    lk = lynx.kite.LynxKite()
+
+    def name_to_local_time(name):
+      dt = name.split('/')[-1]
+      utc = dateutil.parser.parse(dt)
+      local_timezone = datetime.now(timezone.utc).astimezone().tzinfo
+      local_time = utc.astimezone(local_timezone)
+      return local_time.strftime("%Y-%m-%d %H:%M")
+
+    tss = lynx.kite.TableSnapshotSequence(lk, 'test_snapshot_sequence/6', '30 1 * * *')
+    fd = datetime(2018, 1, 1, 0, 0)
+    td = datetime(2018, 2, 1, 0, 0)
+    snapshots = tss.snapshots(fd, td)
+    local_names = [name_to_local_time(name) for name in snapshots]
+    self.assertEqual(len(snapshots), 31)
+    self.assertEqual(local_names[0], '2018-01-01 01:30')
+    self.assertEqual(local_names[1], '2018-01-02 01:30')
+    self.assertEqual(local_names[2], '2018-01-03 01:30')
+    self.assertEqual(local_names[30], '2018-01-31 01:30')
