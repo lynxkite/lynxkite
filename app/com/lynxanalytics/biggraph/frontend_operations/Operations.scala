@@ -393,46 +393,15 @@ abstract class ProjectOperations(env: SparkFreeEnvironment) extends OperationReg
 }
 
 object ScalaUtilities {
-  // "Letters" as defined in the Scala spec:
-  // https://www.scala-lang.org/files/archive/spec/2.11/01-lexical-syntax.html
-  val letters = "\\p{Ll}\\p{Lu}\\p{Lt}\\p{Lo}\\p{Nl}$_"
-  val simpleVariableChar = "0-9" + letters
-  val quoteChar = "\"'"
-  val simpleIdent = s"[$letters][$simpleVariableChar]*"
-  // From https://www.scala-lang.org/files/archive/spec/2.11/01-lexical-syntax.html#identifiers.
-  val reservedWords = Set("abstract", "case", "catch", "class", "def", "do", "else", "extends",
-    "false", "final", "finally", "for", "forSome", "if", "implicit", "import", "lazy", "macro",
-    "match", "new", "null", "object", "override", "package", "private", "protected", "return",
-    "sealed", "super", "this", "throw", "trait", "try", "true", "type", "val", "var", "while",
-    "with", "yield")
+  import com.lynxanalytics.sandbox.ScalaScript
 
   def collectIdentifiers[T <: MetaGraphEntity](
     holder: StateMapHolder[T],
     expr: String,
     prefix: String = ""): IndexedSeq[(String, T)] = {
+    var vars = ScalaScript.findVariables(expr)
     holder.filter {
-      case (name, _) => containsIdentifier(expr, prefix + name)
+      case (name, _) => vars.contains(prefix + name)
     }.toIndexedSeq
-  }
-
-  // Whether a Scala expression contains a given identifier. All back quoted identifiers are found.
-  // Implementation for simple identifiers is not guaranteed to be 100% correct.
-  def containsIdentifier(expr: String, identifier: String): Boolean = {
-    val escapedIdent = identifier.replace("$", "\\$")
-    // The algorithm finds every identifier within back quotes.
-    if (expr.contains("`" + identifier + "`")) {
-      true
-    } else {
-      // Try to match simple identifiers if they are not between quotes nor substrings of the actual
-      // identifier. The rule is quite crude, both false positives and negatives are possible.
-      if (identifier.matches(simpleIdent) && (" " + expr + " ").matches(
-        s"(?s).*[^$simpleVariableChar$quoteChar]$escapedIdent[^$simpleVariableChar$quoteChar].*")) {
-        assert(!reservedWords.contains(identifier), s"Cannot use Scala reserved word $identifier " +
-          s"as a variable identifier. Please use backticks: `$identifier`.")
-        true
-      } else {
-        false
-      }
-    }
   }
 }

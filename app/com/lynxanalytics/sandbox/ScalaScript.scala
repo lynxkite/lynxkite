@@ -323,4 +323,18 @@ object ScalaScript {
       executionContext.shutdownNow()
     }
   }
+
+  def findVariables(code: String): Set[String] = {
+    import scala.reflect.internal.util.ScriptSourceFile
+    import scala.reflect.internal.util.NoFile
+    withContextClassLoader {
+      val script = ScriptSourceFile(NoFile, code.toArray)
+      val global = engine.global
+      val ast = new global.syntaxAnalyzer.SourceFileParser(script).parse()
+      ast.collect({ case tree: global.syntaxAnalyzer.global.Ident => tree })
+        .filter(i => i.isTerm)
+        .map { case i => if (i.isBackquoted) i.name.decodedName.toString else i.toString }
+        .toSet
+    }
+  }
 }
