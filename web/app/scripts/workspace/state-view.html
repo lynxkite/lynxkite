@@ -49,6 +49,13 @@
       ng-click="setInstrument($index, 'Graph visualization')">
       Visualize
     </button>
+    <button
+      id="graphray-button"
+      ng-show="state.kind === 'visualization'"
+      class="btn btn-default"
+      ng-click="graphray()">
+      Render
+    </button>
   </div>
 
   <div class="container-fluid">

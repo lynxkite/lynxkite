@@ -69,6 +69,10 @@ angular.module('biggraph')
             id: stateId,
           }, postOpts).then(success, error);
         };
+
+        scope.graphray = function() {
+          scope.$broadcast('graphray');
+        };
       },
     };
   });

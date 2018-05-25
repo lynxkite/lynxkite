@@ -15,7 +15,7 @@ global_settings {
 
 camera {
   orthographic
-  location  <4, -4, 4>
+  location  <0, -6, 4>
   up z
   sky z
   look_at   <0, 0, 0>
