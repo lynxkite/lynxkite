@@ -33,6 +33,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       util.deepWatch(scope, 'graph.left.edgeAttrs', scope.updateGraph);
       util.deepWatch(scope, 'graph.right.edgeAttrs', scope.updateGraph);
       scope.$on('$destroy', function() { scope.gv.clear(); });
+      scope.$on('graphray', function() { scope.gv.graphray(); });
       handleResizeEvents(scope);
     },
   };
@@ -189,6 +190,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   GraphView.prototype.clear = function() {
     svg.removeClass(this.svg, 'loading');
     svg.removeClass(this.svg, 'fade-non-opaque');
+    svg.removeClass(this.svg, 'graphray');
     this.root.empty();
     for (let i = 0; i < this.unregistration.length; ++i) {
       this.unregistration[i]();
@@ -221,6 +223,50 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       {'class': 'error-message', x: x, y: y + 30, 'text-anchor': 'middle'});
     errorMessage.text(view.$error);
     this.root.append(errorMessage);
+  };
+
+  GraphView.prototype.graphray = function() {
+    this.clear();
+    svg.addClass(this.svg, 'graphray');
+    const image = svg.create('image');
+    function round(x) {
+      return Math.round(x * 100) / 100;
+    }
+    const scale = 0.008;
+    const v0 = this.vertices[0];
+    const vertices = v0.vs.map(v => {
+      const c = tinycolor(v.color).toRgb();
+      return {
+        x: round(scale * v.x * v0.offsetter.zoom),
+        y: round(scale * -v.y * v0.offsetter.zoom),
+        r: round(scale * v.r * v0.offsetter.thickness),
+        color: `${round(c.r / 255)}, ${round(c.g / 255)}, ${round(c.b / 255)}`,
+        shape: {
+          male: 'guy',
+          female: 'guy',
+          circle: 'sphere',
+          square: 'cube',
+          hexagon: 'cylinder',
+          pentagon: 'sphere',
+          star: 'sphere',
+          triangle: 'sphere',
+        }[v.icon[0].id],
+        highlight: v.dom[0].classList.contains('center') ? 1 : 0,
+      };
+    });
+    const vids = v0.vs.map(v => v.id);
+    const edges = v0.edges.map(e => ({
+      src: vids.indexOf(e.src.id),
+      dst: vids.indexOf(e.dst.id) }));
+    const config = {
+      width: this.svg.width(),
+      height: this.svg.height(),
+      vs: vertices,
+      es: edges,
+    };
+    const href = '/ajax/graphray?q=' + JSON.stringify(config);
+    image[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
+    this.root.append(image);
   };
 
   const graphToSVGRatio = 0.8;  // Leave some margin.

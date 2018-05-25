@@ -31,15 +31,24 @@ union {{
     elif v['shape'] == 'guy':
       return f'''
 union {{
-  object {{
-    sphere {{ <{v.x}, {v.y}, {v.r * 2}>, {v.r} Color(rgb <{v.color}>) }}
-    Color(rgb <{v.color}>)
-  }}
-  object {{
-    Round_Cone(<{v.x}, {v.y}, 0>, {v.r}, <{v.x}, {v.y}, {v.r * 2}>, {v.r * 0.5}, {v.r * 0.1}, 0)
-    Color(rgb <1,1,0>)
-  }}
+  sphere {{ <{v.x}, {v.y}, {v.r * 2}>, {v.r} Color(rgb <{v.color}>) }}
+  Round_Cone(<{v.x}, {v.y}, 0>, {v.r}, <{v.x}, {v.y}, {v.r * 2}>, {v.r * 0.5}, {v.r * 0.1}, 0)
+  Color(rgb <{v.color}>)
 }}'''
+    elif v['shape'] == 'cube':
+      return f'''
+object {{
+  Round_Box(<{v.x - v.r}, {v.y - v.r}, 0>, <{v.x + v.r}, {v.y + v.r}, {v.r * 2}>, {v.r * 0.1}, 0)
+  Color(rgb <{v.color}>)
+}}
+'''
+    elif v['shape'] == 'cylinder':
+      return f'''
+object {{
+  Round_Cylinder(<{v.x}, {v.y}, 0>, <{v.x}, {v.y}, {v.r * 2}>, {v.r}, {v.r * 0.1}, 0)
+  Color(rgb <{v.color}>)
+}}
+'''
     else:
       return f'sphere {{ <{v.x}, {v.y}, {v.r}>, {v.r} Color(rgb <{v.color}>) }}'
 
@@ -49,7 +58,7 @@ cylinder {{ <{src.x}, {src.y}, {src.r}>, <{dst.x}, {dst.y}, {dst.r}>, {0.05 * (s
     '''.strip()
 
   vertices = '\n'.join(vertex(v) for v in vs.to_records())
-  edges = '\n'.join(edge(vs.loc[e.src], vs.loc[e.dst]) for e in es.to_records())
+  edges = '\n'.join(edge(vs.loc[e.src], vs.loc[e.dst]) for e in es.to_records() if e.src != e.dst)
   with open('tmp.pov', 'w') as f:
     f.write(f'''
 #version 3.7;
@@ -129,7 +138,11 @@ def render(vs, es, width=1600, height=1000):
 
 
 def main():
-  compose('graph.png', demo_graph(), 1600, 1000)
+  import json
+  import sys
+  config = json.load(sys.stdin)
+  graph = pd.DataFrame(config['vs']), pd.DataFrame(config['es'])
+  compose('/tmp/graph.png', graph, config['width'], config['height'])
 
 
 if __name__ == '__main__':

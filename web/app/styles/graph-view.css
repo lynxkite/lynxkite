@@ -16,6 +16,9 @@ svg.graph-view.loading {
   background-size: 40px 40px !important;
   animation: progress-bar-stripes 2s linear infinite;
 }
+svg.graph-view.graphray {
+  background: white !important;
+}
 
 #svg-icons {
   /* Used as a source of icons. Must be loaded and laid out, but not visible. */

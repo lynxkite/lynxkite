@@ -557,6 +557,15 @@ object ProductionJsonServer extends JsonServer {
   def getBackupSettings = jsonGet(copyController.getBackupSettings)
   def backup = jsonGet(copyController.backup)
 
+  def graphray = mvc.Action { request =>
+    import scala.sys.process._
+    import java.nio.file._
+    val config = new java.io.ByteArrayInputStream(request.queryString("q").head.getBytes)
+    ("python3 -m graphray" #< config).!
+    val image = Files.readAllBytes(Paths.get("/tmp/graph.png"))
+    Ok(image).as("image/png")
+  }
+
   Ammonite.maybeStart()
   implicit val metaManager = workspaceController.metaManager
 }
