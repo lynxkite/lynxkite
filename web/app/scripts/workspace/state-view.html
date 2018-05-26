@@ -52,9 +52,11 @@
     <button
       id="graphray-button"
       ng-show="state.kind === 'visualization'"
-      class="btn btn-default"
-      ng-click="graphray()">
-      Render
+      class="btn btn-default btn-image"
+      ng-click="graphray()"
+      drop-tooltip="Render ray-traced image"
+      drop-tooltip-placement="bottom">
+      <img src="/images/render50.png">
     </button>
   </div>
 

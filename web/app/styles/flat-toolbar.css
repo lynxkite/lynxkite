@@ -48,3 +48,7 @@
 .flat-toolbar .user-menu .btn {
   height: 100%;
 }
+
+.flat-toolbar .btn-image:hover {
+  filter: brightness(120%);
+}
