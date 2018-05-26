@@ -14,6 +14,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       element = angular.element(element);
       scope.gv = new GraphView(scope, element);
       scope.updateGraph = function() {
+        delete scope.graphray;
         if (scope.graph.view === undefined ||
           !scope.graph.view.$resolved ||
           !scope.gv.iconsLoaded()) {
@@ -33,7 +34,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       util.deepWatch(scope, 'graph.left.edgeAttrs', scope.updateGraph);
       util.deepWatch(scope, 'graph.right.edgeAttrs', scope.updateGraph);
       scope.$on('$destroy', function() { scope.gv.clear(); });
-      scope.$on('graphray', function(e, opts) { scope.gv.graphray(opts); });
+      scope.$on('graphray', function() { scope.gv.graphray({ quality: 2 }); });
+      scope.finalRender = function() { scope.gv.graphray({ quality: 9 }); };
+      element.find('#graphray-container img').bind('load', function() {
+        element.find('#graphray-container').removeClass('graphray-progress');
+      });
       handleResizeEvents(scope);
     },
   };
@@ -228,7 +233,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   GraphView.prototype.graphray = function(opts) {
     this.clear();
     svg.addClass(this.svg, 'graphray');
-    const image = svg.create('image');
+    this.rootElement.find('#graphray-container').addClass('graphray-progress');
     function round(x) {
       return Math.round(x * 100) / 100;
     }
@@ -266,8 +271,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       quality: opts.quality,
     };
     const href = '/ajax/graphray?q=' + JSON.stringify(config);
-    image[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
-    this.root.append(image);
+    this.scope.graphray = href;
   };
 
   const graphToSVGRatio = 0.8;  // Leave some margin.

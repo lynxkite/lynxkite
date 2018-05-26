@@ -70,8 +70,8 @@ angular.module('biggraph')
           }, postOpts).then(success, error);
         };
 
-        scope.graphray = function(quality) {
-          scope.$broadcast('graphray', { quality: quality });
+        scope.graphray = function() {
+          scope.$broadcast('graphray');
         };
       },
     };

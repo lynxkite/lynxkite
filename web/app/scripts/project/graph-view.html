@@ -1,4 +1,4 @@
-<div>
+<div style="height: 100%">
   <style type="text/css">
     /*  The marker references cannot be in a separate file.
      *  https://bugzilla.mozilla.org/show_bug.cgi?id=309612
@@ -17,5 +17,15 @@
     version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
   <!-- TODO: This could be shared across graph-view instances. -->
   <div id="svg-icons" ng-include="'/icons.svg'" onload="updateGraph()"></div>
-  <graph-view-sidebar map-filters="mapFilters" graph="graph"></graph-view-sidebar>
+  <graph-view-sidebar map-filters="mapFilters" graph="graph" ng-hide="graphray">
+  </graph-view-sidebar>
+  <div style="height: 100%" ng-show="graphray">
+    <div class="flat-toolbar">
+      <button class="btn btn-default" ng-click="finalRender()">Render in high quality</button>
+      <button class="btn btn-default" ng-click="updateGraph()">Back to 2D view</button>
+    </div>
+    <div id="graphray-container" style="height: 100%">
+      <img ng-src="{{ graphray }}">
+    </div>
+  </div>
 </div>
