@@ -49,11 +49,21 @@
       ng-click="setInstrument($index, 'Graph visualization')">
       Visualize
     </button>
+
     <button
       id="graphray-button"
       ng-show="state.kind === 'visualization'"
       class="btn btn-default btn-image"
-      ng-click="graphray()"
+      ng-click="graphray(2)"
+      drop-tooltip="Draft render"
+      drop-tooltip-placement="bottom">
+      <img src="/images/render50fast.png">
+    </button>
+    <button
+      id="graphray-button"
+      ng-show="state.kind === 'visualization'"
+      class="btn btn-default btn-image"
+      ng-click="graphray(9)"
       drop-tooltip="Render ray-traced image"
       drop-tooltip-placement="bottom">
       <img src="/images/render50.png">

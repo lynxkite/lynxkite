@@ -9,7 +9,7 @@ import PIL.ImageOps
 import subprocess
 
 
-def povray(output_file, graph, width, height, shadow_pass):
+def povray(output_file, graph, width, height, quality, shadow_pass):
   vs, es = graph
   vs = vs.fillna(0)
   if 'shape' not in vs:
@@ -75,8 +75,9 @@ Center_Object(
   p = subprocess.run([
       'povray',
       '+A0.05',  # Anti-aliasing.
-      f'+W{width}',  # Width.
-      f'+H{height}',  # Height.
+      f'+Q{quality}',
+      f'+W{width}',
+      f'+H{height}',
       '+UA',  # Output alpha.
       '-D',  # No display.
       '+Itmp.pov',
@@ -99,10 +100,10 @@ def layout(graph):
     vs['y'] = [pos[v][1] for v in vs.index]
 
 
-def compose(output_file, graph, width, height):
+def compose(output_file, graph, width, height, quality):
   layout(graph)
-  povray('obj.png', graph, width, height, shadow_pass=0)
-  povray('shadow.png', graph, width, height, shadow_pass=1)
+  povray('obj.png', graph, width, height, quality, shadow_pass=0)
+  povray('shadow.png', graph, width, height, quality, shadow_pass=1)
   obj = PIL.Image.open('obj.png')
   shadow = PIL.Image.open('shadow.png').convert('L')
   # Make shadow render a bit brighter so that unshadowed parts are perfectly white.
@@ -130,9 +131,9 @@ def demo_graph():
   return vs, es
 
 
-def render(vs, es, width=1600, height=1000):
+def render(vs, es, width=1600, height=1000, quality=9):
   '''Renders a graph and displays it in the notebook.'''
-  compose('graph.png', (vs, es), width, height)
+  compose('graph.png', (vs, es), width, height, quality)
   from IPython.display import Image
   return Image(filename='graph.png')
 
@@ -142,7 +143,7 @@ def main():
   import sys
   config = json.load(sys.stdin)
   graph = pd.DataFrame(config['vs']), pd.DataFrame(config['es'])
-  compose('/tmp/graph.png', graph, config['width'], config['height'])
+  compose('/tmp/graph.png', graph, config['width'], config['height'], config['quality'])
 
 
 if __name__ == '__main__':

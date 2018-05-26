@@ -33,7 +33,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       util.deepWatch(scope, 'graph.left.edgeAttrs', scope.updateGraph);
       util.deepWatch(scope, 'graph.right.edgeAttrs', scope.updateGraph);
       scope.$on('$destroy', function() { scope.gv.clear(); });
-      scope.$on('graphray', function() { scope.gv.graphray(); });
+      scope.$on('graphray', function(e, opts) { scope.gv.graphray(opts); });
       handleResizeEvents(scope);
     },
   };
@@ -225,7 +225,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.root.append(errorMessage);
   };
 
-  GraphView.prototype.graphray = function() {
+  GraphView.prototype.graphray = function(opts) {
     this.clear();
     svg.addClass(this.svg, 'graphray');
     const image = svg.create('image');
@@ -263,6 +263,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       height: this.svg.height(),
       vs: vertices,
       es: edges,
+      quality: opts.quality,
     };
     const href = '/ajax/graphray?q=' + JSON.stringify(config);
     image[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', href);
