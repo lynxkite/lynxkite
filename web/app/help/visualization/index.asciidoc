@@ -32,3 +32,5 @@ include::concrete-vertices.asciidoc[]
 include::bucketed-view.asciidoc[]
 
 include::color-customization.asciidoc[]
+
+include::ray-tracing.asciidoc[]

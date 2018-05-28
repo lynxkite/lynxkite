@@ -1,0 +1,22 @@
+## Ray tracing
+
+LynxKite has an experimental feature for generating ray-traced graph visualizations. These
+visualizations can make simple graphs get a more striking look in presentations and marketing
+materials.
+
+Click +++<img src="/images/render50.png">+++ to get a relatively quick draft render. If you are
+satisfied with the layout, click _"Render in high quality"_ to get the final render. Right-click the
+final image to save it locally.
+
+Ray tracing currently supports the following visualization features:
+
+ - Vertex colors.
+ - Vertex sizes.
+ - Highlighting of center vertex.
+ - Vertex shapes are translated to simpler 3D shapes.
+ - The relative layout and scaling will be reproduced exactly. Only the camera positioning is
+   different.
+
+The rendered image is generated to match the width and height of the popup. Make the popup smaller
+for faster render times, or larger for higher resolution. The generated picture has a transparent
+background.

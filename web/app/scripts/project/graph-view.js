@@ -249,6 +249,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         shape: {
           male: 'guy',
           female: 'guy',
+          person: 'guy',
           circle: 'sphere',
           square: 'cube',
           hexagon: 'cylinder',
