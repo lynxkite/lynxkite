@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 '''
 Renders graphs with POV-Ray. Can be used either in a notebook through the render() function
-or from the command line by piping in JSON and piping out PNG.
+or from the command line by sending in JSON on stdin and getting the PNG data on stdout.
 '''
 import networkx as nx
 import os
