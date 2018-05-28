@@ -1,7 +1,7 @@
 ## Ray tracing
 
-LynxKite has an experimental feature for generating ray-traced graph visualizations. These
-visualizations can make simple graphs get a more striking look in presentations and marketing
+LynxKite has an experimental feature for generating ray traced graph visualizations. These
+visualizations can give simple graphs a more striking look in presentations and marketing
 materials.
 
 Click +++<img src="/images/render50.png">+++ to get a relatively quick draft render. If you are
