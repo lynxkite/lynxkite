@@ -5,4 +5,9 @@ setup(
     version='1.0',
     py_modules=['graphray'],
     package_data={'graphray': ['scene.pov']},
+    install_requires=[
+        'pandas',
+        'Pillow',
+        'networkx',
+    ],
 )
