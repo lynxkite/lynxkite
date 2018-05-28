@@ -561,9 +561,9 @@ object ProductionJsonServer extends JsonServer {
     import scala.sys.process._
     import java.nio.file._
     val config = new java.io.ByteArrayInputStream(request.queryString("q").head.getBytes)
-    ("python3 -m graphray" #< config).!
-    val image = Files.readAllBytes(Paths.get("/tmp/graph.png"))
-    Ok(image).as("image/png")
+    val image = new java.io.ByteArrayOutputStream()
+    ("python3 -m graphray" #< config #> image).!
+    Ok(image.toByteArray).as("image/png")
   }
 
   Ammonite.maybeStart()

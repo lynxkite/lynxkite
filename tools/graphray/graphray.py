@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-'''Renders graphs with POV-Ray.'''
+'''
+Renders graphs with POV-Ray. Can be used either in a notebook through the render() function
+or from the command line by piping in JSON and piping out PNG.
+'''
 import networkx as nx
 import os
 import pandas as pd
@@ -7,6 +10,7 @@ import PIL.Image
 import PIL.ImageChops
 import PIL.ImageOps
 import subprocess
+import tempfile
 
 
 def povray(output_file, graph, width, height, quality, shadow_pass):
@@ -87,7 +91,6 @@ Center_Object(
   if p.returncode:
     print(p.stderr.decode('utf8'))
   p.check_returncode()
-  os.remove('tmp.pov')
 
 
 def layout(graph):
@@ -100,23 +103,25 @@ def layout(graph):
     vs['y'] = [pos[v][1] for v in vs.index]
 
 
-def compose(output_file, graph, width, height, quality):
+def compose(graph, width, height, quality):
   layout(graph)
-  povray('obj.png', graph, width, height, quality, shadow_pass=0)
-  povray('shadow.png', graph, width, height, quality, shadow_pass=1)
-  obj = PIL.Image.open('obj.png')
-  shadow = PIL.Image.open('shadow.png').convert('L')
-  # Make shadow render a bit brighter so that unshadowed parts are perfectly white.
-  shadow = shadow.point(lambda x: 1.1 * x)
-  # Turn grayscale shadow into full black with alpha.
-  unshadow = PIL.ImageChops.invert(shadow)
-  black = unshadow.copy()
-  black.paste(0, (0, 0) + black.size)
-  shadow = PIL.Image.merge('RGBA', (black, black, black, unshadow))
-  # Composite alpha shadow under the object.
-  PIL.Image.alpha_composite(shadow, obj).save(output_file, 'png')
-  os.remove('obj.png')
-  os.remove('shadow.png')
+  with tempfile.TemporaryDirectory() as d:
+    os.chdir(d)
+    povray('obj.png', graph, width, height, quality, shadow_pass=0)
+    povray('shadow.png', graph, width, height, quality, shadow_pass=1)
+    obj = PIL.Image.open('obj.png')
+    shadow = PIL.Image.open('shadow.png').convert('L')
+    # Make shadow render a bit brighter so that unshadowed parts are perfectly white.
+    shadow = shadow.point(lambda x: 1.1 * x)
+    # Turn grayscale shadow into full black with alpha.
+    unshadow = PIL.ImageChops.invert(shadow)
+    black = unshadow.copy()
+    black.paste(0, (0, 0) + black.size)
+    shadow = PIL.Image.merge('RGBA', (black, black, black, unshadow))
+    # Composite alpha shadow under the object.
+    PIL.Image.alpha_composite(shadow, obj).save('graph.png', 'png')
+    with open('graph.png', 'rb') as f:
+      return f.read()
 
 
 def demo_graph():
@@ -133,9 +138,9 @@ def demo_graph():
 
 def render(vs, es, width=1600, height=1000, quality=9):
   '''Renders a graph and displays it in the notebook.'''
-  compose('graph.png', (vs, es), width, height, quality)
+  data = compose((vs, es), width, height, quality)
   from IPython.display import Image
-  return Image(filename='graph.png')
+  return Image(data=data)
 
 
 def main():
@@ -143,7 +148,8 @@ def main():
   import sys
   config = json.load(sys.stdin)
   graph = pd.DataFrame(config['vs']), pd.DataFrame(config['es'])
-  compose('/tmp/graph.png', graph, config['width'], config['height'], config['quality'])
+  data = compose(graph, config['width'], config['height'], config['quality'])
+  sys.stdout.buffer.write(data)
 
 
 if __name__ == '__main__':
