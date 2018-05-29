@@ -237,7 +237,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     function round(x) {
       return Math.round(x * 100) / 100;
     }
-    const scale = 0.008;
+    const scale = 4 / this.svg.width();
     const v0 = this.vertices[0];
     const vertices = v0.vs.map(v => {
       const c = tinycolor(v.color).toRgb();
