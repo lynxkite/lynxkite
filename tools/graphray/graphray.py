@@ -106,22 +106,26 @@ def layout(graph):
 def compose(graph, width, height, quality):
   layout(graph)
   with tempfile.TemporaryDirectory() as d:
+    olddir = os.getcwd()
     os.chdir(d)
-    povray('obj.png', graph, width, height, quality, shadow_pass=0)
-    povray('shadow.png', graph, width, height, quality, shadow_pass=1)
-    obj = PIL.Image.open('obj.png')
-    shadow = PIL.Image.open('shadow.png').convert('L')
-    # Make shadow render a bit brighter so that unshadowed parts are perfectly white.
-    shadow = shadow.point(lambda x: 1.1 * x)
-    # Turn grayscale shadow into full black with alpha.
-    unshadow = PIL.ImageChops.invert(shadow)
-    black = unshadow.copy()
-    black.paste(0, (0, 0) + black.size)
-    shadow = PIL.Image.merge('RGBA', (black, black, black, unshadow))
-    # Composite alpha shadow under the object.
-    PIL.Image.alpha_composite(shadow, obj).save('graph.png', 'png')
-    with open('graph.png', 'rb') as f:
-      return f.read()
+    try:
+      povray('obj.png', graph, width, height, quality, shadow_pass=0)
+      povray('shadow.png', graph, width, height, quality, shadow_pass=1)
+      obj = PIL.Image.open('obj.png')
+      shadow = PIL.Image.open('shadow.png').convert('L')
+      # Make shadow render a bit brighter so that unshadowed parts are perfectly white.
+      shadow = shadow.point(lambda x: 1.1 * x)
+      # Turn grayscale shadow into full black with alpha.
+      unshadow = PIL.ImageChops.invert(shadow)
+      black = unshadow.copy()
+      black.paste(0, (0, 0) + black.size)
+      shadow = PIL.Image.merge('RGBA', (black, black, black, unshadow))
+      # Composite alpha shadow under the object.
+      PIL.Image.alpha_composite(shadow, obj).save('graph.png', 'png')
+      with open('graph.png', 'rb') as f:
+        return f.read()
+    finally:
+      os.chdir(olddir)
 
 
 def demo_graph():
