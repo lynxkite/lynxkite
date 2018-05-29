@@ -34,19 +34,18 @@ abstract class JsonServer extends mvc.Controller {
     }
   }
 
+  def getUser(request: mvc.Request[_], withAuth: Boolean = productionMode): Option[User] = {
+    if (withAuth) userController.get(request)
+    else Some(User.fake)
+  }
+
   def asyncAction[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
     block: (User, mvc.Request[A]) => Future[mvc.Result]): mvc.Action[A] = {
-    if (withAuth) {
-      // TODO: Redirect HTTP to HTTPS. (#1400)
-      mvc.Action.async(parser) { request =>
-        userController.get(request) match {
-          case Some(user) => block(user, request)
-          case None => Future.successful(Unauthorized)
-        }
+    mvc.Action.async(parser) { request =>
+      getUser(request, withAuth) match {
+        case Some(user) => block(user, request)
+        case None => Future.successful(Unauthorized)
       }
-    } else {
-      // No authentication in development mode.
-      mvc.Action.async(parser) { request => block(User.fake, request) }
     }
   }
 
@@ -558,12 +557,16 @@ object ProductionJsonServer extends JsonServer {
   def backup = jsonGet(copyController.backup)
 
   def graphray = mvc.Action { request =>
-    import scala.sys.process._
-    import java.nio.file._
-    val config = new java.io.ByteArrayInputStream(request.queryString("q").head.getBytes)
-    val image = new java.io.ByteArrayOutputStream()
-    ("python3 -m graphray" #< config #> image).!
-    Ok(image.toByteArray).as("image/png")
+    getUser(request) match {
+      case None => Unauthorized
+      case Some(user) =>
+        log.info(s"$user GET ${request.path}")
+        import scala.sys.process._
+        val config = new java.io.ByteArrayInputStream(request.queryString("q").head.getBytes)
+        val image = new java.io.ByteArrayOutputStream()
+        ("python3 -m graphray" #< config #> image).!
+        Ok(image.toByteArray).as("image/png")
+    }
   }
 
   Ammonite.maybeStart()
