@@ -13,7 +13,7 @@ class TestEscapingStrings(unittest.TestCase):
     lk = lynx.kite.LynxKite()
     with open(self.name_of_test_data()) as f:
       csv_path = lk.upload(f.read().strip())
-    return lk.importCSV(filename=csv_path, columns='test_name,raw_value')
+    return lk.importCSVNow(filename=csv_path, columns='test_name,raw_value')
 
   def test_escaped_query(self):
     lk = lynx.kite.LynxKite()

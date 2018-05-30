@@ -162,7 +162,10 @@ class LynxKite:
   def operation_names(self) -> List[str]:
     if not self._operation_names:
       self._operation_names = self.box_catalog().box_names()
-    return self._operation_names
+    import_operations = [
+        'importCSVNow', 'importJSONNow', 'importFromHiveNow',
+        'importParquetNow', 'importORCNow', 'importJDBCNow']
+    return self._operation_names + import_operations
 
   def box_catalog(self) -> BoxCatalog:
     if not self._box_catalog:
@@ -180,16 +183,20 @@ class LynxKite:
   def __getattr__(self, name) -> Callable:
 
     def f(*args, **kwargs):
-      inputs = dict(zip(self.box_catalog().inputs(name), args))
-      box = _new_box(self.box_catalog(), self, name, inputs=inputs, parameters=kwargs)
-      # If it is an import box, we trigger the import here.
-      import_box_names = ['importCSV', 'importJSON', 'importFromHive',
-                          'importParquet', 'importORC', 'importJDBC']
+      import_box_names = ['importCSVNow', 'importJSONNow', 'importFromHiveNow',
+                          'importParquetNow', 'importORCNow', 'importJDBCNow']
       if name in import_box_names:
+        real_name = name[:-3]
+        inputs = dict(zip(self.box_catalog().inputs(real_name), args))
+        box = _new_box(self.box_catalog(), self, real_name, inputs=inputs, parameters=kwargs)
+        # If it is an import box, we trigger the import here.
         box_json = box.to_json(id_resolver=lambda _: 'untriggered_import_box', workspace_root='')
         import_result = self._send('/ajax/importBox', {'box': box_json})
         box.parameters['imported_table'] = import_result.guid
         box.parameters['last_settings'] = import_result.parameterSettings
+      else:
+        inputs = dict(zip(self.box_catalog().inputs(name), args))
+        box = _new_box(self.box_catalog(), self, name, inputs=inputs, parameters=kwargs)
       return box
 
     if not name in self.operation_names():

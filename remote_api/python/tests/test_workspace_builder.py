@@ -156,7 +156,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_builder_import(self):
     lk = lynx.kite.LynxKite()
     csv_path = lk.upload('a,b,c\n1,2,3\n4,5,6\n')
-    table = lk.importCSV(filename=csv_path).sql('select * from input').get_table_data()
+    table = lk.importCSVNow(filename=csv_path).sql('select * from input').get_table_data()
     self.assertEqual([[f.string for f in row]
                       for row in table.data], [['1', '2', '3'], ['4', '5', '6']])
 
@@ -224,5 +224,5 @@ class TestWorkspaceBuilder(unittest.TestCase):
     self.assertTrue('triggered save to snasphot' in {e.name for e in entries})
     parquet = eg.exportToParquet(path='DATA$/triggered/parquet')
     parquet.trigger()
-    data = lk.importParquet(filename='DATA$/triggered/parquet').get_table_data().data
+    data = lk.importParquetNow(filename='DATA$/triggered/parquet').get_table_data().data
     self.assertEqual([row[0].string for row in data], ['Adam', 'Eve', 'Bob', 'Isolated Joe'])
