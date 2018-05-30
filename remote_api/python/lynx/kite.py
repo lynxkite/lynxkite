@@ -639,7 +639,8 @@ class State:
   def run_export(self) -> str:
     '''Triggers the export if this state is an ``exportResult``.
 
-    Returns the prefixed path of the exported file.
+    Returns the prefixed path of the exported file. This method is deprecated,
+    only used in tests, where we need the export path.
     '''
     lk = self.box.lk
     state_id = lk.get_state_id(self)
@@ -656,15 +657,7 @@ class State:
 
     Uses a temporary folder to save a temporary workspace for this computation.
     '''
-    folder = _random_ws_folder()
-    name = 'tmp_ws_name'
-    full_path = folder + '/' + name
-    box = self.computeInputs()
-    lk = self.box.lk
-    ws = Workspace(name, [box])
-    lk.save_workspace_recursively(ws, folder)
-    lk.trigger_box(full_path, 'box_0')
-    lk.remove_name(folder, force=True)
+    self.computeInputs().trigger()
 
   def save_snapshot(self, path: str) -> None:
     '''Save this state as a snapshot under path.'''
@@ -735,6 +728,20 @@ class Box:
     if index not in self.outputs:
       raise KeyError(index)
     return State(self, index)
+
+  def trigger(self) -> None:
+    '''Triggers this box.
+
+    Can be used on triggerable boxes like `saveToSnapshot` and export boxes.
+    '''
+    folder = _random_ws_folder()
+    name = 'tmp_ws_name'
+    full_path = folder + '/' + name
+    ws = Workspace(name, [self])
+    ws.save(folder)
+    lk = self.lk
+    lk.trigger_box(full_path, 'box_0')
+    lk.remove_name(folder, force=True)
 
 
 class AtomicBox(Box):
