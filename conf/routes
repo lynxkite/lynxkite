@@ -83,6 +83,7 @@ POST /ajax/copyEphemeral com.lynxanalytics.biggraph.serving.ProductionJsonServer
 GET /ajax/getBackupSettings com.lynxanalytics.biggraph.serving.ProductionJsonServer.getBackupSettings
 GET /ajax/backup com.lynxanalytics.biggraph.serving.ProductionJsonServer.backup
 GET /ajax/graphray com.lynxanalytics.biggraph.serving.ProductionJsonServer.graphray
+POST /ajax/graphray com.lynxanalytics.biggraph.serving.ProductionJsonServer.graphray
 
 POST /remote/getDirectoryEntry com.lynxanalytics.biggraph.serving.RemoteAPIServer.getDirectoryEntry
 POST /remote/getPrefixedPath com.lynxanalytics.biggraph.serving.RemoteAPIServer.getPrefixedPath
