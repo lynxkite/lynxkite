@@ -154,6 +154,9 @@ class LynxKite:
     self._session = None
     self._pid = None
     self._operation_names: List[str] = []
+    self._import_box_names: List[str] = [
+        'importCSV', 'importJDBC', 'importJSON',
+        'importORC', 'importParquet', 'importFromHive']
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
   def home(self) -> str:
@@ -161,8 +164,12 @@ class LynxKite:
 
   def operation_names(self) -> List[str]:
     if not self._operation_names:
-      self._operation_names = self.box_catalog().box_names()
+      box_names = self.box_catalog().box_names()
+      self._operation_names = box_names + self.import_operation_names()
     return self._operation_names
+
+  def import_operation_names(self) -> List[str]:
+    return [name + 'Now' for name in self._import_box_names]
 
   def box_catalog(self) -> BoxCatalog:
     if not self._box_catalog:
@@ -179,17 +186,23 @@ class LynxKite:
 
   def __getattr__(self, name) -> Callable:
 
+    def add_box_with_inputs(box_name, args, kwargs):
+      inputs = dict(zip(self.box_catalog().inputs(box_name), args))
+      box = _new_box(self.box_catalog(), self, box_name, inputs=inputs, parameters=kwargs)
+      return box
+
     def f(*args, **kwargs):
-      inputs = dict(zip(self.box_catalog().inputs(name), args))
-      box = _new_box(self.box_catalog(), self, name, inputs=inputs, parameters=kwargs)
-      # If it is an import box, we trigger the import here.
-      import_box_names = ['importCSV', 'importJSON', 'importFromHive',
-                          'importParquet', 'importORC', 'importJDBC']
-      if name in import_box_names:
+      if name in self.import_operation_names():
+        real_name = name[:-len('Now')]
+        box = add_box_with_inputs(real_name, args, kwargs)
+        # If it is an import operation, we trigger the import here,
+        # and return the modified (real) import box.
         box_json = box.to_json(id_resolver=lambda _: 'untriggered_import_box', workspace_root='')
         import_result = self._send('/ajax/importBox', {'box': box_json})
         box.parameters['imported_table'] = import_result.guid
         box.parameters['last_settings'] = import_result.parameterSettings
+      else:
+        box = add_box_with_inputs(name, args, kwargs)
       return box
 
     if not name in self.operation_names():
@@ -639,7 +652,8 @@ class State:
   def run_export(self) -> str:
     '''Triggers the export if this state is an ``exportResult``.
 
-    Returns the prefixed path of the exported file.
+    Returns the prefixed path of the exported file. This method is deprecated,
+    only used in tests, where we need the export path.
     '''
     lk = self.box.lk
     state_id = lk.get_state_id(self)
@@ -656,15 +670,7 @@ class State:
 
     Uses a temporary folder to save a temporary workspace for this computation.
     '''
-    folder = _random_ws_folder()
-    name = 'tmp_ws_name'
-    full_path = folder + '/' + name
-    box = self.computeInputs()
-    lk = self.box.lk
-    ws = Workspace(name, [box])
-    lk.save_workspace_recursively(ws, folder)
-    lk.trigger_box(full_path, 'box_0')
-    lk.remove_name(folder, force=True)
+    self.computeInputs().trigger()
 
   def save_snapshot(self, path: str) -> None:
     '''Save this state as a snapshot under path.'''
@@ -735,6 +741,22 @@ class Box:
     if index not in self.outputs:
       raise KeyError(index)
     return State(self, index)
+
+  def trigger(self) -> None:
+    '''Triggers this box.
+
+    Can be used on triggerable boxes like `saveToSnapshot` and export boxes.
+    '''
+    folder = _random_ws_folder()
+    name = 'tmp_ws_name'
+    full_path = folder + '/' + name
+    ws = Workspace(name, [self])
+    ws.save(folder)
+    # Because of the logic in the Workspace constructor, it's always
+    # guaranteed, that when we create a workspace from one terminal box,
+    # then the id of this box will be 'box_0'.
+    self.lk.trigger_box(full_path, 'box_0')
+    self.lk.remove_name(folder, force=True)
 
 
 class AtomicBox(Box):

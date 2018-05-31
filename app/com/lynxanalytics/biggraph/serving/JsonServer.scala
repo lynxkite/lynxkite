@@ -13,11 +13,15 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_api.BuiltIns
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
-import com.lynxanalytics.biggraph.graph_util.{ Timestamp, LoggedEnvironment, KiteInstanceInfo, HadoopFile }
+import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
 import com.lynxanalytics.biggraph.serving
 import org.apache.spark.sql.types.{ StructField, StructType }
+import play.api.mvc.AnyContent
+import play.api.mvc.Request
+
+import scala.collection.mutable
 
 abstract class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
@@ -556,16 +560,30 @@ object ProductionJsonServer extends JsonServer {
   def getBackupSettings = jsonGet(copyController.getBackupSettings)
   def backup = jsonGet(copyController.backup)
 
-  def graphray = mvc.Action { request =>
+  val graphrayCache = mutable.WeakHashMap[Int, Array[Byte]]()
+  def graphray = mvc.Action { request: Request[AnyContent] =>
     getUser(request) match {
       case None => Unauthorized
       case Some(user) =>
         log.info(s"$user GET ${request.path}")
-        import scala.sys.process._
-        val config = new java.io.ByteArrayInputStream(request.queryString("q").head.getBytes)
-        val image = new java.io.ByteArrayOutputStream()
-        ("python3 -m graphray" #< config #> image).!
-        Ok(image.toByteArray).as("image/png")
+        if (request.method == "POST") {
+          import scala.sys.process._
+          import java.nio.file._
+          val config = new java.io.ByteArrayInputStream(request.body.asJson.get.toString().getBytes)
+          val hash = config.hashCode()
+          if (!graphrayCache.contains(hash)) {
+            val image = new java.io.ByteArrayOutputStream()
+            ("python3 -m graphray" #< config #> image).!
+            graphrayCache(hash) = image.toByteArray
+          }
+          Ok(hash.toString)
+        } else {
+          val hash = request.queryString("q").head.toInt
+          graphrayCache.get(hash) match {
+            case Some(image) => Ok(image).as("image/png")
+            case None => NotFound("Image not rendered. Post config first.")
+          }
+        }
     }
   }
 

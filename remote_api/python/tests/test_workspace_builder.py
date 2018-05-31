@@ -156,7 +156,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_builder_import(self):
     lk = lynx.kite.LynxKite()
     csv_path = lk.upload('a,b,c\n1,2,3\n4,5,6\n')
-    table = lk.importCSV(filename=csv_path).sql('select * from input').get_table_data()
+    table = lk.importCSVNow(filename=csv_path).sql('select * from input').get_table_data()
     self.assertEqual([[f.string for f in row]
                       for row in table.data], [['1', '2', '3'], ['4', '5', '6']])
 
@@ -176,7 +176,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     name_and_age = (lk.createExampleGraph()
                     .sql('select name, age from vertices where age < 30')
                     .exportToJSON(path=path))
-    name_and_age.run_export()
+    name_and_age.trigger()
     data = lk.download_file(path)
     self.assertEqual(
         data, b'{"name":"Adam","age":20.3}\n{"name":"Eve","age":18.2}\n{"name":"Isolated Joe","age":2.0}\n')
@@ -194,8 +194,8 @@ class TestWorkspaceBuilder(unittest.TestCase):
     names = (lk.createExampleGraph()
              .sql('select name from vertices')
              .exportToCSV(path=path))
-    with self.assertRaises(AssertionError) as cm:
-      names.run_export()
+    with self.assertRaises(lynx.kite.LynxException) as cm:
+      names.trigger()
     self.assertTrue('Unknown prefix symbol: WRONG_PREFIX$' in str(cm.exception))
 
   def test_missing_function(self):
@@ -213,3 +213,16 @@ class TestWorkspaceBuilder(unittest.TestCase):
     eg.save_snapshot('names_income_gender_snapshot')
     entries = lk.list_dir('')
     self.assertTrue('names_income_gender_snapshot' in {e.name for e in entries})
+
+  def test_triggerable_boxes(self):
+    lk = lynx.kite.LynxKite()
+    eg = lk.createExampleGraph().sql('select name from vertices')
+    snapshot = eg.saveToSnapshot(path='triggered save to snasphot')
+    lk.remove_name('triggered save to snasphot', force=True)
+    snapshot.trigger()
+    entries = lk.list_dir('')
+    self.assertTrue('triggered save to snasphot' in {e.name for e in entries})
+    parquet = eg.exportToParquet(path='DATA$/triggered/parquet')
+    parquet.trigger()
+    data = lk.importParquetNow(filename='DATA$/triggered/parquet').get_table_data().data
+    self.assertEqual([row[0].string for row in data], ['Adam', 'Eve', 'Bob', 'Isolated Joe'])
