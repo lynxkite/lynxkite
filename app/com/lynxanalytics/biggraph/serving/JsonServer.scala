@@ -31,10 +31,10 @@ abstract class JsonServer extends mvc.Controller {
   def userController: UserController
 
   def action[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
-    block: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
+    handler: (User, mvc.Request[A]) => mvc.Result): mvc.Action[A] = {
 
     asyncAction(parser, withAuth) { (user, request) =>
-      Future(block(user, request))
+      Future(handler(user, request))
     }
   }
 
@@ -44,10 +44,10 @@ abstract class JsonServer extends mvc.Controller {
   }
 
   def asyncAction[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
-    block: (User, mvc.Request[A]) => Future[mvc.Result]): mvc.Action[A] = {
+    handler: (User, mvc.Request[A]) => Future[mvc.Result]): mvc.Action[A] = {
     mvc.Action.async(parser) { request =>
       getUser(request, withAuth) match {
-        case Some(user) => block(user, request)
+        case Some(user) => handler(user, request)
         case None => Future.successful(Unauthorized)
       }
     }
