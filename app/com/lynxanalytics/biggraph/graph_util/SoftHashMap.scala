@@ -5,6 +5,8 @@ import scala.collection.mutable.HashMap
 
 class SoftHashMap[Key, Value <: AnyRef] {
   private val cache = HashMap[Key, SoftReference[Value]]()
+  def get(key: Key): Option[Value] = cache.get(key).flatMap(_.get)
+
   def getOrElseUpdate(key: Key, op: => Value): Value = {
     val option: Option[Value] = cache.get(key).flatMap(_.get)
     option match {

@@ -13,6 +13,7 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_api.BuiltIns
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
+import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
 import com.lynxanalytics.biggraph.protection.Limitations
 import com.lynxanalytics.biggraph.model
@@ -560,7 +561,7 @@ object ProductionJsonServer extends JsonServer {
   def getBackupSettings = jsonGet(copyController.getBackupSettings)
   def backup = jsonGet(copyController.backup)
 
-  val graphrayCache = mutable.WeakHashMap[Int, Array[Byte]]()
+  val graphrayCache = new SoftHashMap[Int, Array[Byte]]()
   def graphray = mvc.Action { request: Request[AnyContent] =>
     getUser(request) match {
       case None => Unauthorized
@@ -571,11 +572,11 @@ object ProductionJsonServer extends JsonServer {
           import java.nio.file._
           val config = new java.io.ByteArrayInputStream(request.body.asJson.get.toString().getBytes)
           val hash = config.hashCode()
-          if (!graphrayCache.contains(hash)) {
+          graphrayCache.getOrElseUpdate(hash, {
             val image = new java.io.ByteArrayOutputStream()
             ("python3 -m graphray" #< config #> image).!
-            graphrayCache(hash) = image.toByteArray
-          }
+            image.toByteArray
+          })
           Ok(hash.toString)
         } else {
           val hash = request.queryString("q").head.toInt
