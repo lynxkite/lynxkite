@@ -195,19 +195,23 @@ class LynxKite:
 
   def __getattr__(self, name) -> Callable:
 
+    def add_box_with_inputs(box_name, args, kwargs):
+      inputs = dict(zip(self.box_catalog().inputs(box_name), args))
+      box = _new_box(self.box_catalog(), self, box_name, inputs=inputs, parameters=kwargs)
+      return box
+
     def f(*args, **kwargs):
       if name in self.import_operation_names():
         real_name = name[:-3]
-        inputs = dict(zip(self.box_catalog().inputs(real_name), args))
-        box = _new_box(self.box_catalog(), self, real_name, inputs=inputs, parameters=kwargs)
-        # If it is an import box, we trigger the import here.
+        box = add_box_with_inputs(real_name, args, kwargs)
+        # If it is an import operation, we trigger the import here,
+        # and return the modified (real) import box.
         box_json = box.to_json(id_resolver=lambda _: 'untriggered_import_box', workspace_root='')
         import_result = self._send('/ajax/importBox', {'box': box_json})
         box.parameters['imported_table'] = import_result.guid
         box.parameters['last_settings'] = import_result.parameterSettings
       else:
-        inputs = dict(zip(self.box_catalog().inputs(name), args))
-        box = _new_box(self.box_catalog(), self, name, inputs=inputs, parameters=kwargs)
+        box = add_box_with_inputs(name, args, kwargs)
       return box
 
     if not name in self.operation_names():
