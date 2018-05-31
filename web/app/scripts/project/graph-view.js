@@ -271,8 +271,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       es: edges,
       quality: opts.quality,
     };
-    const href = '/ajax/graphray?q=' + JSON.stringify(config);
-    this.scope.graphray = href;
+    let that = this;
+    util.post('/ajax/graphray', JSON.stringify(config))
+      .then(function(hash) {
+        const href = '/ajax/graphray?q=' + hash;
+        that.scope.graphray = href;
+      });
   };
 
   const graphToSVGRatio = 0.8;  // Leave some margin.
