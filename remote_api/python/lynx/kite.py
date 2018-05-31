@@ -746,9 +746,11 @@ class Box:
     full_path = folder + '/' + name
     ws = Workspace(name, [self])
     ws.save(folder)
-    lk = self.lk
-    lk.trigger_box(full_path, 'box_0')
-    lk.remove_name(folder, force=True)
+    # Because of the logic in the Workspace constructor, it's always
+    # guaranteed, that when we create a workspace from one terminal box,
+    # then the id of this box will be 'box_0'.
+    self.lk.trigger_box(full_path, 'box_0')
+    self.lk.remove_name(folder, force=True)
 
 
 class AtomicBox(Box):
