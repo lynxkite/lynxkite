@@ -154,6 +154,7 @@ class LynxKite:
     self._session = None
     self._pid = None
     self._operation_names: List[str] = []
+    self._import_operation_names: List[str] = []
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
   def home(self) -> str:
@@ -161,11 +162,23 @@ class LynxKite:
 
   def operation_names(self) -> List[str]:
     if not self._operation_names:
-      self._operation_names = self.box_catalog().box_names()
-    import_operations = [
-        'importCSVNow', 'importJSONNow', 'importFromHiveNow',
-        'importParquetNow', 'importORCNow', 'importJDBCNow']
-    return self._operation_names + import_operations
+      box_names = self.box_catalog().box_names()
+      # importSnapshot and importUnionOfTableSnapshots works differently
+      # (they don't have a "run import" function), so they are excluded
+      import_box_names = [
+          name for name in box_names
+          if 'import' in name and not 'Snapshot' in name]
+      self._import_operation_names = [
+          name + 'Now' for name in import_box_names]
+      self._operation_names = box_names + self._import_operation_names
+    return self._operation_names
+
+  def import_operation_names(self) -> List[str]:
+    if not self._import_operation_names:
+      # There is a side effect: the generation of
+      # import operation names
+      self.operation_names()
+    return self._import_operation_names
 
   def box_catalog(self) -> BoxCatalog:
     if not self._box_catalog:
@@ -183,9 +196,7 @@ class LynxKite:
   def __getattr__(self, name) -> Callable:
 
     def f(*args, **kwargs):
-      import_box_names = ['importCSVNow', 'importJSONNow', 'importFromHiveNow',
-                          'importParquetNow', 'importORCNow', 'importJDBCNow']
-      if name in import_box_names:
+      if name in self.import_operation_names():
         real_name = name[:-3]
         inputs = dict(zip(self.box_catalog().inputs(real_name), args))
         box = _new_box(self.box_catalog(), self, real_name, inputs=inputs, parameters=kwargs)
