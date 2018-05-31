@@ -23,8 +23,8 @@ class TestWorkspaceWithSideEffects(unittest.TestCase):
     eg_exports.save('side effect example folder')
     for btt in eg_exports.side_effect_paths():
       eg_exports.trigger_saved(btt, 'side effect example folder')
-    i1 = lk.importCSV(filename='DATA$/side effect exports/a')
-    i2 = lk.importCSV(filename='DATA$/side effect exports/b')
+    i1 = lk.importCSVNow(filename='DATA$/side effect exports/a')
+    i2 = lk.importCSVNow(filename='DATA$/side effect exports/b')
     self.assertEqual(i1.get_table_data().data[0][0].string, 'Isolated Joe')
     self.assertEqual(i2.get_table_data().data[0][0].string, 'Bob')
 
