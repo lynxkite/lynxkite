@@ -157,6 +157,9 @@ class LynxKite:
     self._import_box_names: List[str] = [
         'importCSV', 'importJDBC', 'importJSON',
         'importORC', 'importParquet', 'importFromHive']
+    self._export_box_names: List[str] = [
+        'exportToCSV', 'exportToJSON', 'exportToParquet',
+        'exportToJDBC', 'exportToORC']
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
   def home(self) -> str:
@@ -170,6 +173,9 @@ class LynxKite:
 
   def import_operation_names(self) -> List[str]:
     return [name + 'Now' for name in self._import_box_names]
+
+  def export_operation_names(self) -> List[str]:
+    return [name + 'Now' for name in self._export_box_names]
 
   def box_catalog(self) -> BoxCatalog:
     if not self._box_catalog:
@@ -609,18 +615,35 @@ class State:
     self.output_plug_name = output_plug_name
     self.box = box
 
+  def operation_names(self):
+    return self.box.bc.box_names() + self.box.lk.export_operation_names()
+
   def __getattr__(self, name: str) -> Callable:
 
     def f(**kwargs):
-      inputs = self.box.bc.inputs(name)
-      # This chaining syntax only allowed for boxes with exactly one input.
-      assert len(inputs) > 0, '{} does not have an input'.format(name)
-      assert len(inputs) < 2, '{} has more than one input'.format(name)
-      [input_name] = inputs
-      return _new_box(
-          self.box.bc, self.box.lk, name, inputs={input_name: self}, parameters=kwargs)
+      if name in self.box.lk.export_operation_names():
+        export_box = _new_box(
+            self.box.bc,
+            self.box.lk,
+            name[:-len('Now')],
+            inputs={'table': self},
+            parameters=kwargs)
+        export_box.trigger()
+        # Should we return the export box?
+      else:
+        inputs = self.box.bc.inputs(name)
+        # This chaining syntax only allowed for boxes with exactly one input.
+        assert len(inputs) > 0, '{} does not have an input'.format(name)
+        assert len(inputs) < 2, '{} has more than one input'.format(name)
+        [input_name] = inputs
+        return _new_box(
+            self.box.bc,
+            self.box.lk,
+            name,
+            inputs={input_name: self},
+            parameters=kwargs)
 
-    if not name in self.box.bc.box_names():
+    if not name in self.operation_names():
       raise AttributeError('{} is not defined on {}'.format(name, self))
     return f
 

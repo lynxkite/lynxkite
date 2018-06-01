@@ -226,3 +226,10 @@ class TestWorkspaceBuilder(unittest.TestCase):
     parquet.trigger()
     data = lk.importParquetNow(filename='DATA$/triggered/parquet').get_table_data().data
     self.assertEqual([row[0].string for row in data], ['Adam', 'Eve', 'Bob', 'Isolated Joe'])
+
+  def test_export_shorthand(self):
+    lk = lynx.kite.LynxKite()
+    eg = lk.createExampleGraph().sql('select name from vertices where income > 0')
+    eg.exportToParquetNow(path='DATA$/triggered/now/parquet')
+    data = lk.importParquetNow(filename='DATA$/triggered/now/parquet').get_table_data().data
+    self.assertEqual([row[0].string for row in data], ['Adam', 'Bob'])
