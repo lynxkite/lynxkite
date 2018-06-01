@@ -230,6 +230,11 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_export_shorthand(self):
     lk = lynx.kite.LynxKite()
     eg = lk.createExampleGraph().sql('select name from vertices where income > 0')
-    eg.exportToParquetNow(path='DATA$/triggered/now/parquet')
-    data = lk.importParquetNow(filename='DATA$/triggered/now/parquet').get_table_data().data
+    # state.exportNow
+    eg.exportToParquetNow(path='DATA$/triggered/now/parquet1')
+    data = lk.importParquetNow(filename='DATA$/triggered/now/parquet1').get_table_data().data
+    self.assertEqual([row[0].string for row in data], ['Adam', 'Bob'])
+    # lk.exportNow(state)
+    lk.exportToParquetNow(eg, path='DATA$/triggered/now/parquet2')
+    data = lk.importParquetNow(filename='DATA$/triggered/now/parquet2').get_table_data().data
     self.assertEqual([row[0].string for row in data], ['Adam', 'Bob'])
