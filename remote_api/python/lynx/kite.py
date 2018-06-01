@@ -172,9 +172,13 @@ class LynxKite:
     return self._operation_names
 
   def import_operation_names(self) -> List[str]:
+    '''When we use an import operation instead of an import box,
+    "run import" will be triggered automatically.'''
     return [name + 'Now' for name in self._import_box_names]
 
   def export_operation_names(self) -> List[str]:
+    '''When we use an export operation instead of an export box,
+    the export will be triggered automatically. '''
     return [name + 'Now' for name in self._export_box_names]
 
   def box_catalog(self) -> BoxCatalog:
@@ -622,17 +626,12 @@ class State:
 
     def f(**kwargs):
       if name in self.box.lk.export_operation_names():
-        export_box = _new_box(
-            self.box.bc,
-            self.box.lk,
-            name[:-len('Now')],
-            inputs={'table': self},
-            parameters=kwargs)
+        export_box = getattr(self, name[:-len('Now')])(**kwargs)
         export_box.trigger()
-        # Should we return the export box?
+        return export_box
       else:
         inputs = self.box.bc.inputs(name)
-        # This chaining syntax only allowed for boxes with exactly one input.
+        # This chaining syntax is only allowed for boxes with exactly one input.
         assert len(inputs) > 0, '{} does not have an input'.format(name)
         assert len(inputs) < 2, '{} has more than one input'.format(name)
         [input_name] = inputs
@@ -648,7 +647,7 @@ class State:
     return f
 
   def __dir__(self) -> Iterable[str]:
-    return itertools.chain(super().__dir__(), self.box.bc.box_names())
+    return itertools.chain(super().__dir__(), self.operation_names())
 
   def __str__(self) -> str:
     return "Output {} of box {}".format(self.output_plug_name, self.box)
