@@ -168,7 +168,7 @@ class LynxKite:
   def operation_names(self) -> List[str]:
     if not self._operation_names:
       box_names = self.box_catalog().box_names()
-      self._operation_names = box_names + self.import_operation_names()
+      self._operation_names = box_names + self.import_operation_names() + self.export_operation_names()
     return self._operation_names
 
   def import_operation_names(self) -> List[str]:
@@ -211,6 +211,10 @@ class LynxKite:
         import_result = self._send('/ajax/importBox', {'box': box_json})
         box.parameters['imported_table'] = import_result.guid
         box.parameters['last_settings'] = import_result.parameterSettings
+      elif name in self.export_operation_names():
+        # If it is an export operation, we trigger the export here.
+        box = getattr(self, name[:-len('Now')])(*args, **kwargs)
+        box.trigger()
       else:
         box = add_box_with_inputs(name, args, kwargs)
       return box
