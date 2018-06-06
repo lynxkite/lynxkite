@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 2.4.0
+
  - Users can generate Python API code from a whole workspace or from selected boxes.
  - Ray tracing graph visualization for striking presentations.
 
