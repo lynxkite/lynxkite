@@ -173,7 +173,7 @@ class Input(BoxTask):
     return self.box_path.base.parameters['name']
 
   def is_ready(self, date):
-    return self._wss.input_recipes()[self.name()].is_ready(self._lk, date)
+    return self._wss.input_recipes[self.name()].is_ready(date)
 
 
 class Output(BoxTask):
