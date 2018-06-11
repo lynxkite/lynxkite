@@ -35,6 +35,8 @@ $(pip): python_requirements.txt
 	tools/with_lk.sh remote_api/python/test.sh && touch $@
 .build/mobile-prepaid-scv-test-passed: $(shell $(find) remote_api/python mobile-prepaid-scv) .build/backend-done $(pip)
 	tools/with_lk.sh mobile-prepaid-scv/unit_test.sh && touch $@
+.build/happiness-index-test-passed: $(shell $(find) remote_api/python happiness-index) .build/backend-done $(pip)
+	tools/with_lk.sh happiness-index/unit_test.sh && touch $@
 .build/documentation-done-${VERSION}: $(shell $(find) ecosystem/documentation remote_api/python) python_requirements.txt
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
@@ -70,8 +72,10 @@ frontend-test: .build/frontend-test-passed
 remote_api-test: .build/remote_api-python-test-passed
 .PHONY: mobile-prepaid-scv-test
 mobile-prepaid-scv-test: .build/mobile-prepaid-scv-test-passed
+.PHONY: happiness-index-test
+happiness-index-test: .build/happiness-index-test-passed
 .PHONY: ecosystem-test
-ecosystem-test: remote_api-test mobile-prepaid-scv-test
+ecosystem-test: remote_api-test mobile-prepaid-scv-test happiness-index-test
 .PHONY: shell_ui-test
 shell_ui-test: .build/shell_ui-test-passed
 .PHONY: test
