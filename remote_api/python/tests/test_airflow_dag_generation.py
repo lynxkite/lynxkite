@@ -111,3 +111,25 @@ class TestAirflowDagGeneration(unittest.TestCase):
             'upstream': {'output_o1', 'input_i3'},
             'downstream': set()}}
     self.assertEqual(deps, expected)
+
+  def test_input_sensors(self):
+    # We suppress deprecation warnings coming from Airflow
+    warnings.simplefilter("ignore")
+    lk = lynx.kite.LynxKite()
+    tss = lynx.kite.TableSnapshotSequence(lk, 'eq_table_seq', '0 3 * * *')
+    lk.remove_name(tss.snapshot_name(datetime(2018, 5, 11, 3, 0)), force=True)
+    lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, datetime(2018, 5, 11, 3, 0))
+    input_recipe = lynx.automation.TableSnapshotRecipe(tss)
+    wss = lynx.automation.WorkspaceSequence(
+        ws=create_complex_test_workspace(),
+        schedule='0 3 * * *',
+        start_date=datetime(2018, 5, 11),
+        params={},
+        lk_root='airflow_sensor_test',
+        dfs_root='',
+        input_recipes=[input_recipe] * 3)
+    complex_dag = wss.to_airflow_DAG('complex_dag')
+    sensor_tasks = [t for t in complex_dag.tasks if 'sensor' in t.task_id]
+    for s in sensor_tasks:
+      self.assertFalse(s.poke(dict(execution_date=datetime(2018, 5, 10, 3, 0))))
+      self.assertTrue(s.poke(dict(execution_date=datetime(2018, 5, 11, 3, 0))))
