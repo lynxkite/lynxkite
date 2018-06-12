@@ -1,4 +1,5 @@
 #!/bin/bash -xue
+# Sets LK environment variables usually needed to run ecosystem tests using the Python API.
 
 if [ -n "${HTTPS_PORT:-}" ]; then
   export LYNXKITE_ADDRESS="https://localhost:$HTTPS_PORT/"
