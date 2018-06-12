@@ -1,4 +1,4 @@
-#!/bin/sh -xue
+#!/bin/bash -xue
 
 if [ -n "${HTTPS_PORT:-}" ]; then
   export LYNXKITE_ADDRESS="https://localhost:$HTTPS_PORT/"
