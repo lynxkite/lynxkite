@@ -33,7 +33,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
         }
         for (i = 0; i < scope.boxCatalog.boxes.length; ++i) {
           var box = scope.boxCatalog.boxes[i];
-          if (!(box.categoryId in categoryMap)) {
+          if (!(box.categoryId in categoryMap) || box.operationId.indexOf('tmp_workspaces') >= 0) {
             continue;
           }
           categoryMap[box.categoryId].ops.push(box);
