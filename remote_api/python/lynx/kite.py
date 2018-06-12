@@ -508,21 +508,23 @@ class LynxKite:
   def _workspace(self,
                  name: str = None,
                  parameters: List[WorkspaceParameter] = [],
+                 inputs: List[str] = None,
                  with_side_effects: bool = False
                  ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
     se_collector = SideEffectCollector()
 
     def ws_decorator(builder_fn):
       real_name = builder_fn.__name__ if not name else name
+      if not inputs:
+        if with_side_effects:
+          inputs = list(inspect.signature(builder_fn).parameters.keys())[1:]
+        else:
+          inputs = inspect.signature(builder_fn).parameters.keys()
+      input_boxes = [self.input(name=name) for name in inputs]
       if with_side_effects:
-        names = list(inspect.signature(builder_fn).parameters.keys())[1:]
+        results = builder_fn(se_collector, *input_boxes)
       else:
-        names = inspect.signature(builder_fn).parameters.keys()
-      inputs = [self.input(name=name) for name in names]
-      if with_side_effects:
-        results = builder_fn(se_collector, *inputs)
-      else:
-        results = builder_fn(*inputs)
+        results = builder_fn(*input_boxes)
       if results:
         outputs = [state.output(name=name) for name, state in results.items()]
       else:
@@ -530,19 +532,21 @@ class LynxKite:
       return Workspace(name=real_name,
                        terminal_boxes=outputs + se_collector.top_level_side_effects,
                        side_effect_paths=list(se_collector.all_triggerables()),
-                       input_boxes=inputs,
+                       input_boxes=input_boxes,
                        ws_parameters=parameters)
     return ws_decorator
 
   def workspace(self,
                 name: str = None,
-                parameters: List[WorkspaceParameter] = []
+                parameters: List[WorkspaceParameter] = [],
+                inputs: List[str] = None,
                 ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
     return self._workspace(name, parameters, with_side_effects=False)
 
   def workspace_with_side_effects(self,
                                   name: str = None,
                                   parameters: List[WorkspaceParameter] = []
+                                  inputs: List[str] = None,
                                   ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
     return self._workspace(name, parameters, with_side_effects=True)
 
