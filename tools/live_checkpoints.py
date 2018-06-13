@@ -15,7 +15,7 @@ def parse_tree(filename):
         pass  # LynxKite also ignores corrupt lines.
       if action == 'Put':
         db[key] = value
-      elif action == 'Delete':
+      elif action == 'Delete' and key in db:
         del db[key]
       elif action == 'DeletePrefix':
         db = {k: v for (k, v) in db.items() if not k.startswith(key)}
