@@ -515,12 +515,13 @@ class LynxKite:
 
     def ws_decorator(builder_fn):
       real_name = builder_fn.__name__ if not name else name
-      if not inputs:
-        if with_side_effects:
-          inputs = list(inspect.signature(builder_fn).parameters.keys())[1:]
-        else:
-          inputs = inspect.signature(builder_fn).parameters.keys()
-      input_boxes = [self.input(name=name) for name in inputs]
+      if inputs:
+        names = inputs
+      elif with_side_effects:
+        names = list(inspect.signature(builder_fn).parameters.keys())[1:]
+      else:
+        names = inspect.signature(builder_fn).parameters.keys()
+      input_boxes = [self.input(name=name) for name in names]
       if with_side_effects:
         results = builder_fn(se_collector, *input_boxes)
       else:
@@ -545,7 +546,7 @@ class LynxKite:
 
   def workspace_with_side_effects(self,
                                   name: str = None,
-                                  parameters: List[WorkspaceParameter] = []
+                                  parameters: List[WorkspaceParameter] = [],
                                   inputs: List[str] = None,
                                   ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
     return self._workspace(name, parameters, with_side_effects=True)
