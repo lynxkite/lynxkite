@@ -268,7 +268,7 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 
   private def listFolder(user: serving.User, path: String): Seq[String] = {
     val entry = DirectoryEntry.fromName(path)
-    val customBoxes = if (entry.exists) {
+    if (entry.exists) {
       entry.asDirectory
         .listObjectsRecursively
         .filter(_.readAllowedFrom(user))
@@ -277,7 +277,6 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
     } else {
       Seq()
     }
-    return customBoxes
   }
 
   def operationIds(user: serving.User, path: String) = {
