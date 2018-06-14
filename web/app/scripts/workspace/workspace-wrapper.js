@@ -48,7 +48,7 @@ angular.module('biggraph')
 
     _updateBoxCatalog: function() {
       var that = this;
-      var request = util.nocache('/ajax/boxCatalog');
+      var request = util.nocache('/ajax/boxCatalog', {path: this.name});
       angular.merge(that.boxCatalog, request);
       return request.then(function(bc) {
         angular.merge(that.boxCatalog, request);
