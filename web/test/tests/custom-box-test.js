@@ -16,7 +16,7 @@ module.exports = function(fw) {
     'empty splash',
     'custom box created',
     function() {
-      lib.splash.openNewWorkspace('test-custom-box');
+      lib.splash.openNewWorkspace('custom_boxes/test-custom-box');
       lib.workspace.addWorkspaceParameter('prname', 'text', 'default_pr');
       lib.workspace.addBox({
         id: 'in', name: 'Input', x: 100, y: 0, params: { name: 'in' } });
@@ -44,7 +44,7 @@ module.exports = function(fw) {
       lib.workspace.addBox({
         id: 'eg', name: 'Create example graph', x: 100, y: 100 });
       lib.workspace.addBox({
-        id: 'cb', name: 'test-custom-box', x: 100, y: 200 });
+        id: 'cb', name: 'custom_boxes/test-custom-box', x: 100, y: 200 });
       lib.workspace.connectBoxes('eg', 'project', 'cb', 'in');
     },
     function() {});
@@ -150,7 +150,7 @@ module.exports = function(fw) {
     'empty splash',
     'save as custom box with mixed outputs',
     function() {
-      lib.splash.openNewWorkspace('test-custom-box');
+      lib.splash.openNewWorkspace('custom_boxes/test-custom-box');
       lib.workspace.addBox({
         id: 'eg', name: 'Create example graph', x: 0, y: 200 });
       lib.workspace.addBox({
@@ -172,34 +172,37 @@ module.exports = function(fw) {
     'empty splash',
     'browse-custom-box',
     function() {
-      lib.splash.newDirectory('browse-custom-box-dir');
+      lib.splash.newDirectory('browse-custom-box-dir/custom_boxes');
+      lib.splash.popDirectory();
       lib.splash.popDirectory();
       lib.splash.openNewWorkspace('browse-custom-box-ws');
+
 
       lib.workspace.addBox({
         id: 'eg1', name: 'Create example graph', x: 0, y: 200 });
       lib.workspace.selectBoxes(['eg1']);
       $('#save-selection-as-custom-box').click();
       lib.submitInlineInput($('#save-selection-as-custom-box-input'),
-        'my-custom-box-to-browse-1');
+        'custom_boxes/my-custom-box-to-browse-1');
 
       lib.workspace.addBox({
         id: 'eg2', name: 'Create example graph', x: 0, y: 400 });
       lib.workspace.selectBoxes(['eg2']);
       $('#save-selection-as-custom-box').click();
       lib.submitInlineInput($('#save-selection-as-custom-box-input'),
-        'browse-custom-box-dir/my-custom-box-to-browse-2');
+        'browse-custom-box-dir/custom_boxes/my-custom-box-to-browse-2');
 
       // Check top level elements.
       var root = lib.workspace.getCustomBoxBrowserTree();
-      var dir = root.$('#browse-custom-box-dir');
+      var dir = root.$('#custom_boxes');
       lib.expectElement(dir);
-      lib.expectElement(root.$('#my-custom-box-to-browse-1'));
+      lib.expectNotElement(root.$('#my-custom-box-to-browse-1'));
 
       // Test that the custom box in the dir is only present after click.
       lib.expectNotElement(dir.$('#my-custom-box-to-browse-2'));
       dir.click();
-      lib.expectElement(dir.$('#my-custom-box-to-browse-2'));
+      lib.expectElement(dir.$('#my-custom-box-to-browse-1'));
+      lib.expectNotElement(dir.$('#my-custom-box-to-browse-2'));
     },
     function() {});
 };
