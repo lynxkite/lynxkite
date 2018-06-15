@@ -411,13 +411,9 @@ angular.module('biggraph')
       that.loadWorkspace(util.post('/ajax/redoWorkspace', that.ref()));
     },
 
-    customBoxDefaultName: function() {
-      const path = this.name;
-      return path.substr(0,path.lastIndexOf('/')) + '/custom_boxes/nameOfCustomBox';
-    },
-
     startCustomBoxSavingAs: function() {
-      this.saveCustomBoxAsName = this.customBoxDefaultName();
+      const path = this.name;
+      this.saveCustomBoxAsName = path.substr(0,path.lastIndexOf('/')) + '/custom_boxes/nameOfCustomBox';
     },
 
     saveAsCustomBox: function(ids, name, description) {
