@@ -266,12 +266,25 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
 
   def atomicOperationIds = atomicOperations.keys.toSeq.sorted
 
-  def operationIds(user: serving.User) = {
-    val customBoxes = DirectoryEntry.fromName("").asDirectory
-      .listObjectsRecursively
-      .filter(_.readAllowedFrom(user))
-      .collect { case wsf: WorkspaceFrame => wsf }
-      .map(_.path.toString).toSet
+  private def listFolder(user: serving.User, path: String): Seq[String] = {
+    val entry = DirectoryEntry.fromName(path)
+    if (entry.exists) {
+      entry.asDirectory
+        .listObjectsRecursively
+        .filter(_.readAllowedFrom(user))
+        .collect { case wsf: WorkspaceFrame => wsf }
+        .map(_.path.toString)
+    } else {
+      Seq()
+    }
+  }
+
+  def operationIds(user: serving.User, path: String) = {
+    val pathParts = path.split("/").init
+    val possibleCustomBoxPaths = Range(1, pathParts.length + 1)
+      .map(pathParts.slice(0, _))
+      .map(_.mkString("/") + "/custom_boxes") ++ List("custom_boxes") ++ List("built-ins")
+    val customBoxes = possibleCustomBoxPaths.map(listFolder(user, _)).flatten.toSet
     val atomicBoxes = atomicOperations.keySet
     (atomicBoxes ++ customBoxes).toSeq.sorted
   }
