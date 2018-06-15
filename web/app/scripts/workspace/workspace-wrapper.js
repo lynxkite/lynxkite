@@ -35,6 +35,7 @@ angular.module('biggraph')
     // request:
     this.backendRequest = undefined;
     this.backendState = undefined;
+    this.saveCustomBoxAsName = undefined;
   }
 
   WorkspaceWrapper.prototype = {
@@ -48,7 +49,7 @@ angular.module('biggraph')
 
     _updateBoxCatalog: function() {
       var that = this;
-      var request = util.nocache('/ajax/boxCatalog');
+      var request = util.nocache('/ajax/boxCatalog', {path: this.name});
       angular.merge(that.boxCatalog, request);
       return request.then(function(bc) {
         angular.merge(that.boxCatalog, request);
@@ -408,6 +409,11 @@ angular.module('biggraph')
       if (!this.canRedo()) { return; }
       var that = this;
       that.loadWorkspace(util.post('/ajax/redoWorkspace', that.ref()));
+    },
+
+    startCustomBoxSavingAs: function() {
+      const path = this.name;
+      this.saveCustomBoxAsName = path.substr(0,path.lastIndexOf('/')) + '/custom_boxes/nameOfCustomBox';
     },
 
     saveAsCustomBox: function(ids, name, description) {

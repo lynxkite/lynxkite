@@ -17,6 +17,8 @@ available.
 Creates a custom box of the selected boxes. Only available if at least one box is selected. The custom
 box will be saved under the specified full path.
 include::../operations/glossary.asciidoc[tag=full-lk-path]
+The list of custom boxes, shown on the UI, is limited to special directories `built-ins`,
+`custom_boxes`, `a/custom_boxes`, `a/b/custom_boxes`,... when we edit the workspace `a/b/.../workspace_name`.
 
 +++<label class="btn btn-default"><i class="fa fa-code"></i></label>+++ Save as Python code::
 Generates Python API code for the selected boxes. If nothing is selected,
