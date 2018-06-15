@@ -35,6 +35,7 @@ angular.module('biggraph')
     // request:
     this.backendRequest = undefined;
     this.backendState = undefined;
+    this.saveCustomBoxAsName = undefined;
   }
 
   WorkspaceWrapper.prototype = {
@@ -408,6 +409,15 @@ angular.module('biggraph')
       if (!this.canRedo()) { return; }
       var that = this;
       that.loadWorkspace(util.post('/ajax/redoWorkspace', that.ref()));
+    },
+
+    customBoxDefaultName: function() {
+      const path = this.name;
+      return path.substr(0,path.lastIndexOf('/')) + '/custom_boxes/nameOfCustomBox';
+    },
+
+    startCustomBoxSavingAs: function() {
+      this.saveCustomBoxAsName = this.customBoxDefaultName();
     },
 
     saveAsCustomBox: function(ids, name, description) {
