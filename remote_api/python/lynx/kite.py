@@ -549,7 +549,7 @@ class LynxKite:
                                   parameters: List[WorkspaceParameter] = [],
                                   inputs: List[str] = None,
                                   ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
-    return self._workspace(name, parameters, with_side_effects=True)
+    return self._workspace(name, parameters, inputs, with_side_effects=True)
 
   def trigger_box(self,
                   workspace_name: str,
