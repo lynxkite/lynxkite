@@ -1211,7 +1211,10 @@ class DirectoryEntry(val path: SymbolPath)(
   }
 
   def asNewSnapshotFrame(calculatedState: BoxOutputState): SnapshotFrame = {
-    assert(!exists, s"Entry '$path' already exists")
+    // Existing snapshots can be overwritten. Required for automation.
+    assert(
+      !exists || isInstanceOf[SnapshotFrame],
+      s"Entry '$path' already exists and it is not a snapshot.")
     val snapshot = new SnapshotFrame(path)
     snapshot.initialize(calculatedState)
     snapshot
