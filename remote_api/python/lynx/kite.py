@@ -542,7 +542,7 @@ class LynxKite:
                 parameters: List[WorkspaceParameter] = [],
                 inputs: List[str] = None,
                 ) -> Callable[[Callable[..., Dict[str, 'State']]], 'Workspace']:
-    return self._workspace(name, parameters, with_side_effects=False)
+    return self._workspace(name, parameters, inputs, with_side_effects=False)
 
   def workspace_with_side_effects(self,
                                   name: str = None,
