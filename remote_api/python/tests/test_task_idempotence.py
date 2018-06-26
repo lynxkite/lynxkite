@@ -1,4 +1,6 @@
 import unittest
+import os
+import shutil
 from datetime import datetime, timedelta
 import lynx.kite as kite
 import lynx.automation as aut
@@ -63,3 +65,32 @@ class TestTaskIdempotence(unittest.TestCase):
     output = list(wss.output_sequences.values())[0].read_date(test_date)
     first_cell = output.get_table_data().data[0][0].double
     self.assertAlmostEqual(first_cell, 2)
+
+  @unittest.skip('Export to CSV is not idempotent yet')
+  def test_export(self):
+    prefixed_path = 'DATA$/tmp/test-export-csv'
+    # resolved starts with file:
+    resolved_path = lk.get_prefixed_path(prefixed_path).resolved[5:]
+    shutil.rmtree(resolved_path, ignore_errors=True)
+
+    @lk.workspace_with_side_effects()
+    def exporter(sec, state):
+      state.exportToCSV(path=prefixed_path).register(sec)
+      return {'state': state}
+
+    dag = aut.WorkspaceSequence(exporter, schedule='0 0 * * *', start_date=day_before,
+                                lk_root='export_idempotence', input_recipes=[TestRecipe()],
+                                params={}, dfs_root='').to_dag()
+    lk.remove_name('export_idempotence/input-snapshots', force=True)
+    for t in dag:
+      t.run(test_date)
+    creation_time = os.path.getmtime(resolved_path)
+    for t in dag:
+      t.run(test_date)
+    self.assertEqual(os.path.getmtime(resolved_path), creation_time)
+
+    # removing the input forces the recipe to create a different input on next run
+    lk.remove_name('export_idempotence/input-snapshots', force=True)
+    for t in dag:
+      t.run(test_date)
+    self.assertLess(creation_time, os.path.getmtime(resolved_path))
