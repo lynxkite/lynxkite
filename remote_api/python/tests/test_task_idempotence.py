@@ -16,27 +16,30 @@ class TestRecipe(aut.InputRecipe):
 
   def build_boxes(self, date):
     self.called += 1
-    return lk.createExampleGraph()
+    return lk.createExampleGraph().sql(f'select {self.called} as num from vertices')
 
   def validate(self, date):
     pass
 
 
+@lk.workspace()
+def identity(state):
+  return {'state': state}
+
+
+test_date = datetime(2018, 6, 26)
+day_before = test_date - timedelta(days=1)
+
+
 class TestTaskIdempotence(unittest.TestCase):
 
   def test_input_recipe(self):
-    @lk.workspace()
-    def identity(state):
-      return {'state': state}
-
-    test_date = datetime(2018, 6, 26)
-    day_before = test_date - timedelta(days=1)
     recipe = TestRecipe()
-    wss = aut.WorkspaceSequence(identity, schedule='0 0 * * *', start_date=day_before,
+    dag = aut.WorkspaceSequence(identity, schedule='0 0 * * *', start_date=day_before,
                                 lk_root='input_idempotence', input_recipes=[recipe],
-                                params={}, dfs_root='')
-    dag = wss.to_dag()
+                                params={}, dfs_root='').to_dag()
     input_task = [t for t in dag if isinstance(t, aut.Input)][0]
+    lk.remove_name('input_idempotence/input-snapshots', force=True)
     input_task.run(test_date)
     self.assertEqual(recipe.called, 1)
     input_task.run(test_date)
@@ -44,3 +47,19 @@ class TestTaskIdempotence(unittest.TestCase):
     lk.remove_name('input_idempotence/input-snapshots', force=True)
     input_task.run(test_date)
     self.assertEqual(recipe.called, 2)
+
+  def test_output(self):
+    wss = aut.WorkspaceSequence(identity, schedule='0 0 * * *', start_date=day_before,
+                                lk_root='output_idempotence', input_recipes=[TestRecipe()],
+                                params={}, dfs_root='')
+    dag = wss.to_dag()
+    lk.remove_name('output_idempotence/input-snapshots', force=True)
+    for t in dag:
+      t.run(test_date)
+    lk.remove_name('output_idempotence/input-snapshots', force=True)
+    for t in dag:
+      t.run(test_date)
+
+    output = list(wss.output_sequences.values())[0].read_date(test_date)
+    first_cell = output.get_table_data().data[0][0].double
+    self.assertAlmostEqual(first_cell, 2)
