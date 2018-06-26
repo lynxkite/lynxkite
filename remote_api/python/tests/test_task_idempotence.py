@@ -69,8 +69,7 @@ class TestTaskIdempotence(unittest.TestCase):
   @unittest.skip('Export to CSV is not idempotent yet')
   def test_export(self):
     prefixed_path = 'DATA$/tmp/test-export-csv'
-    # resolved starts with file:
-    resolved_path = lk.get_prefixed_path(prefixed_path).resolved[5:]
+    resolved_path = lk.get_prefixed_path(prefixed_path).resolved[len('file:'):]
     shutil.rmtree(resolved_path, ignore_errors=True)
 
     @lk.workspace_with_side_effects()
