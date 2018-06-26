@@ -164,7 +164,9 @@ class Input(BoxTask):
   '''
 
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
-    wss_instance.run_input(self.name())
+    path = wss_instance.snapshot_path_for_input(self.name())
+    if not self._wss.lk.get_directory_entry(path).exists:
+      wss_instance.run_input(self.name())
 
   def id(self) -> str:
     return f'input_{self.name()}'
