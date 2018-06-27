@@ -9,6 +9,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - The list of custom boxes, shown on the UI, is limited to special directories
    `built-ins`, `custom_boxes`, `a/custom_boxes`, `a/b/custom_boxes`,... when
    we edit the workspace `a/b/.../workspace_name`.
+ - Snapshots are automatically overwritten on save.
+ - Input recipes doesn't trigger on rerun only if the snapshot produced by a previous run
+   is manually deleted.
 
 ### 2.4.0
 
