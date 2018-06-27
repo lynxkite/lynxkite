@@ -10,7 +10,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    `built-ins`, `custom_boxes`, `a/custom_boxes`, `a/b/custom_boxes`,... when
    we edit the workspace `a/b/.../workspace_name`.
  - Snapshots are automatically overwritten on save.
- - Input recipes doesn't trigger on rerun only if the snapshot produced by a previous run
+ - Input recipes don't trigger on rerun only if the snapshot produced by a previous run
    is manually deleted.
 
 ### 2.4.0
