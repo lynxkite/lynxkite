@@ -308,8 +308,6 @@ class TestDagCreation(unittest.TestCase):
       t.run(self.test_date)
     for o in wss.output_sequences.values():
       self.assertTrue(lynx.automation.TableSnapshotRecipe(o).is_ready(self.test_date))
-    # is everything idempotent apart from triggerables?
-    lk.remove_name('SB1', force=True)
-    lk.remove_name('SB2', force=True)
+    # is everything idempotent?
     for t in dag:
       t.run(self.test_date)
