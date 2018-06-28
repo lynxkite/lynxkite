@@ -143,7 +143,7 @@ object SQLHelper {
   def assertTableHasCorrectSchema(table: Table, correctSchema: types.StructType): Unit = {
     assert(
       stripAllMetadata(table.schema) == stripAllMetadata(correctSchema),
-      s"Schema mismatch for $table." +
-        s"${table.schema.treeString} vs ${correctSchema.treeString}")
+      s"Schema mismatch for $table.\n" +
+        s"${table.schema.treeString}\n vs\n\n ${correctSchema.treeString}")
   }
 }
