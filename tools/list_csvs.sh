@@ -2,7 +2,7 @@
 # Heuristically lists the csv files along with one line (hopefully the header)
 # I used it on trinity, like this:
 #
-# ./list_csvs.sh /user/kite hadoop_cmd_files.txt
+# ./list_csvs.sh /user/kite > hadoop_cmd_files.txt
 #
 # The contents of hadoop_cmd_files.txt should be something like this (filename, followed by header
 # in the next line):
