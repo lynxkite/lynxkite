@@ -128,8 +128,15 @@ object SQLHelper {
 
   // Remove comments. We use them during optimization, but they break deserialization.
   // Also make every column nullable.
-  def stripped(schema: types.StructType): types.StructType =
+  def stripComment(schema: types.StructType): types.StructType =
     types.StructType(makeNullable(schema).map(f => f.copy(
       metadata = new MetadataBuilder()
         .withMetadata(f.metadata).remove("comment").build())))
+
+  // Remove all metadata. Used for excluding the metadata when asserting that the schema of
+  // a dataframe is what we think. To see why we need to exclude the metadata check:
+  // https://github.com/biggraph/biggraph/issues/7427
+  def stripAllMetadata(schema: types.StructType): types.StructType =
+    types.StructType(makeNullable(schema).map(f => f.copy(
+      metadata = new MetadataBuilder().build())))
 }

@@ -81,7 +81,7 @@ object ExecuteSQL extends OpFromJson {
     val minimizedProtoTables = ProtoTable.minimize(plan, protoTables)
     val tables = minimizedProtoTables.mapValues(protoTable => protoTable.toTable)
     try {
-      ExecuteSQL.run(sqlQuery, SQLHelper.stripped(plan.schema), tables)
+      ExecuteSQL.run(sqlQuery, SQLHelper.stripComment(plan.schema), tables)
     } catch {
       // The exception is thrown on the plan.schema call
       case a: UnresolvedException[_] =>
