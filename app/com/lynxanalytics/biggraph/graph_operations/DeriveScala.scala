@@ -39,12 +39,11 @@ object DeriveScala extends OpFromJson {
     implicit
     manager: MetaGraphManager): Attribute[_] = {
 
-    val paramTypes = (
-      attributes.map { case (k, v) => k -> v.typeTag } ++
-      scalars.map { case (k, v) => k -> v.typeTag }).toMap[String, TypeTag[_]]
+    val attributeParamTypes = attributes.map { case (k, v) => k -> v.typeTag }.toMap[String, TypeTag[_]]
+    val scalarParamTypes = scalars.map { case (k, v) => k -> v.typeTag }.toMap[String, TypeTag[_]]
 
     val t = ScalaScript.compileAndGetType(
-      exprString, paramTypes, paramsToOption = !onlyOnDefinedAttrs).payloadType
+      exprString, scalarParamTypes, attributeParamTypes, paramsToOption = !onlyOnDefinedAttrs).payloadType
     val tt = SerializableType(t).typeTag
 
     derive(
@@ -191,9 +190,10 @@ case class DeriveScala[T: TypeTag] private[graph_operations] (
 
     val scalarValues = inputs.scalars.map { _.value }.toArray
     val allNames = (attrParams.map(_._1) ++ scalarParams.map(_._1)).toSeq
-    val paramTypes = (attrParams ++ scalarParams).toMap[String, TypeTag[_]]
+    val mandatoryParamTypes = scalarParams.toMap[String, TypeTag[_]]
+    val optionalParamTypes = attrParams.toMap[String, TypeTag[_]]
 
-    val t = ScalaScript.compileAndGetType(expr, paramTypes, paramsToOption = !onlyOnDefinedAttrs)
+    val t = ScalaScript.compileAndGetType(expr, mandatoryParamTypes, optionalParamTypes, paramsToOption = !onlyOnDefinedAttrs)
     assert(
       t.payloadType =:= tt.tpe, // PayloadType should always match T.
       s"Scala script returns wrong type: expected ${tt.tpe} but got ${t.payloadType} instead.")
@@ -201,7 +201,7 @@ case class DeriveScala[T: TypeTag] private[graph_operations] (
     val returnsOptionType = t.isOptionType
     val derived = joined.mapPartitions({ it =>
       val evaluator = ScalaScript.compileAndGetEvaluator(
-        expr, paramTypes, paramsToOption = !onlyOnDefinedAttrs)
+        expr, mandatoryParamTypes, optionalParamTypes, paramsToOption = !onlyOnDefinedAttrs)
       it.flatMap {
         case (key, values) =>
           val namedValues = allNames.zip(values ++ scalarValues).toMap

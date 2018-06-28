@@ -263,4 +263,15 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
     assert(e.getCause.getMessage.contains(
       """access denied ("java.util.PropertyPermission" "user.dir" "read")"""))
   }
+
+  test("example graph - scalar inputs with not only on defined attrs") {
+    val expr = "income.map(_ + greeting.length())"
+    val g = ExampleGraph()().result
+    val derived = DeriveScala.derive[Double](
+      expr,
+      Seq("income" -> g.income.entity),
+      Seq("greeting" -> g.scalars("greeting")),
+      onlyOnDefinedAttrs = false)
+    assert(derived.rdd.collect.toSet == Set((0, 1016.0), (2, 2016.0)))
+  }
 }
