@@ -41,9 +41,14 @@ object DeriveScala extends OpFromJson {
 
     val attributeParamTypes = attributes.map { case (k, v) => k -> v.typeTag }.toMap[String, TypeTag[_]]
     val scalarParamTypes = scalars.map { case (k, v) => k -> v.typeTag }.toMap[String, TypeTag[_]]
+    val (mandatoryParamTypes, optionalParamTypes) = if (onlyOnDefinedAttrs) {
+      (scalarParamTypes ++ attributeParamTypes, Map[String, TypeTag[_]]())
+    } else {
+      (scalarParamTypes, attributeParamTypes)
+    }
 
     val t = ScalaScript.compileAndGetType(
-      exprString, scalarParamTypes, attributeParamTypes, paramsToOption = !onlyOnDefinedAttrs).payloadType
+      exprString, mandatoryParamTypes, optionalParamTypes).payloadType
     val tt = SerializableType(t).typeTag
 
     derive(
@@ -190,18 +195,20 @@ case class DeriveScala[T: TypeTag] private[graph_operations] (
 
     val scalarValues = inputs.scalars.map { _.value }.toArray
     val allNames = (attrParams.map(_._1) ++ scalarParams.map(_._1)).toSeq
-    val mandatoryParamTypes = scalarParams.toMap[String, TypeTag[_]]
-    val optionalParamTypes = attrParams.toMap[String, TypeTag[_]]
+    val (mandatoryParamTypes, optionalParamTypes) = if (onlyOnDefinedAttrs) {
+      (scalarParams.toMap[String, TypeTag[_]] ++ attrParams.toMap[String, TypeTag[_]], Map[String, TypeTag[_]]())
+    } else {
+      (scalarParams.toMap[String, TypeTag[_]], attrParams.toMap[String, TypeTag[_]])
+    }
 
-    val t = ScalaScript.compileAndGetType(expr, mandatoryParamTypes, optionalParamTypes, paramsToOption = !onlyOnDefinedAttrs)
+    val t = ScalaScript.compileAndGetType(expr, mandatoryParamTypes, optionalParamTypes)
     assert(
       t.payloadType =:= tt.tpe, // PayloadType should always match T.
       s"Scala script returns wrong type: expected ${tt.tpe} but got ${t.payloadType} instead.")
 
     val returnsOptionType = t.isOptionType
     val derived = joined.mapPartitions({ it =>
-      val evaluator = ScalaScript.compileAndGetEvaluator(
-        expr, mandatoryParamTypes, optionalParamTypes, paramsToOption = !onlyOnDefinedAttrs)
+      val evaluator = ScalaScript.compileAndGetEvaluator(expr, mandatoryParamTypes, optionalParamTypes)
       it.flatMap {
         case (key, values) =>
           val namedValues = allNames.zip(values ++ scalarValues).toMap

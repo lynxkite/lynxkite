@@ -21,8 +21,7 @@ object DeriveScalaScalar extends OpFromJson {
     namedScalars: Seq[(String, Scalar[_])])(implicit manager: MetaGraphManager): Scalar[_] = {
 
     val paramTypesMap = namedScalars.map { case (k, v) => k -> v.typeTag }.toMap[String, TypeTag[_]]
-    val t = ScalaScript.compileAndGetType(
-      exprString, paramTypesMap, Map(), paramsToOption = false).returnType
+    val t = ScalaScript.compileAndGetType(exprString, paramTypesMap).returnType
 
     val tt = SerializableType(t).typeTag
     derive(exprString, namedScalars)(tt, manager)
@@ -77,12 +76,12 @@ case class DeriveScalaScalar[T: TypeTag](
     val scalarValues = inputs.scalars.map(_.value)
     val paramTypes = scalarParams.toMap[String, TypeTag[_]]
 
-    val t = ScalaScript.compileAndGetType(expr, paramTypes, Map(), paramsToOption = false)
+    val t = ScalaScript.compileAndGetType(expr, paramTypes)
     assert(
       t.returnType =:= tt.tpe,
       s"Scala script returns wrong type: expected ${tt.tpe} but got ${t.returnType} instead.")
 
-    val evaluator = ScalaScript.compileAndGetEvaluator(expr, paramTypes, Map(), paramsToOption = false)
+    val evaluator = ScalaScript.compileAndGetEvaluator(expr, paramTypes)
     val namedValues = scalarParams.map(_._1).zip(scalarValues).toMap
     val result = evaluator.evaluate(namedValues)
     assert(Option(result).nonEmpty, s"Scala script $expr returned null.")
