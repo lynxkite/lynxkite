@@ -198,8 +198,12 @@ object ScalaScript {
   private val codeReturnTypeCache = new SoftHashMap[UUID, ScalaType]()
 
   def compileAndGetType(
-    code: String, paramTypes: Map[String, TypeTag[_]], paramsToOption: Boolean): ScalaType = {
-    val funcCode = evalFuncString(code, convert(paramTypes, paramsToOption))
+    code: String,
+    mandatoryParamTypes: Map[String, TypeTag[_]],
+    optionalParamTypes: Map[String, TypeTag[_]],
+    paramsToOption: Boolean): ScalaType = {
+    val funcCode =
+      evalFuncString(code, mandatoryParamTypes ++ convert(optionalParamTypes, paramsToOption))
     val id = UUID.nameUUIDFromBytes(funcCode.getBytes())
     codeReturnTypeCache.syncGetOrElseUpdate(id, ScalaType(inferType(funcCode)))
   }
@@ -271,11 +275,12 @@ object ScalaScript {
 
   def compileAndGetEvaluator(
     code: String,
-    paramTypes: Map[String, TypeTag[_]],
+    mandatoryParamTypes: Map[String, TypeTag[_]],
+    optionalParamTypes: Map[String, TypeTag[_]],
     paramsToOption: Boolean): Evaluator = synchronized {
     // Parameters are back quoted and taken out from the Map. The input argument is one Map to
     // make the calling of the compiled function easier (otherwise we had varying number of args).
-    val convertedParamTypes = convert(paramTypes, paramsToOption)
+    val convertedParamTypes = mandatoryParamTypes ++ convert(optionalParamTypes, paramsToOption)
     val paramsString = convertedParamTypes.map {
       case (k, t) => s"""val `$k` = params("$k").asInstanceOf[${t.tpe}]"""
     }.mkString("\n")
