@@ -806,9 +806,7 @@ class OutputBuilder(val instance: MetaGraphOperationInstance) {
 
   def apply(table: Table, df: spark.sql.DataFrame): Unit = {
     import com.lynxanalytics.biggraph.spark_util.SQLHelper
-    assert(
-      SQLHelper.stripAllMetadata(table.schema) == SQLHelper.stripAllMetadata(df.schema),
-      s"Output schema mismatch. Declared: ${table.schema} Output: ${df.schema}")
+    SQLHelper.assertTableHasCorrectSchema(table, df.schema)
     addData(new TableData(table, df))
   }
 
