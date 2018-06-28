@@ -7,6 +7,7 @@ import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 import com.lynxanalytics.biggraph.controllers._
+import com.lynxanalytics.biggraph.spark_util.SQLHelper
 
 class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   implicit lazy val manager = env.metaGraphManager
@@ -191,8 +192,8 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     override def getOutputs() = {
       val paths = params("paths").split(",")
       val tables = paths.map { path => DirectoryEntry.fromName(path).asSnapshotFrame.getState().table }
-      val schema = tables.head.schema
-      tables.foreach { table => assert(table.schema == schema) }
+      val schema = SQLHelper.stripAllMetadata(tables.head.schema)
+      tables.foreach { table => assert(SQLHelper.stripAllMetadata(table.schema) == schema) }
       val protoTables = tables.zipWithIndex.map { case (table, i) => i.toString -> ProtoTable(table) }.toMap
       val sql = (0 until protoTables.size).map { i => s"select * from `$i`" }.mkString(" union all ")
       val result = graph_operations.ExecuteSQL.run(sql, protoTables)
