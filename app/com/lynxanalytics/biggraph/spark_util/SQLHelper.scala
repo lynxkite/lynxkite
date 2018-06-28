@@ -139,4 +139,11 @@ object SQLHelper {
   def stripAllMetadata(schema: types.StructType): types.StructType =
     types.StructType(makeNullable(schema).map(f => f.copy(
       metadata = new MetadataBuilder().build())))
+
+  def assertTableHasCorrectSchema(table: Table, correctSchema: types.StructType): Unit = {
+    assert(
+      stripAllMetadata(table.schema) == stripAllMetadata(correctSchema),
+      s"Schema mismatch for $table." +
+        s"${table.schema.treeString} vs ${correctSchema.treeString}")
+  }
 }
