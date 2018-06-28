@@ -193,7 +193,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val paths = params("paths").split(",")
       val tables = paths.map { path => DirectoryEntry.fromName(path).asSnapshotFrame.getState().table }
       val schema = SQLHelper.stripAllMetadata(tables.head.schema)
-      tables.foreach { table => assert(SQLHelper.stripAllMetadata(table.schema) == schema) }
+      tables.foreach { table => SQLHelper.assertTableHasCorrectSchema(table, schema) }
       val protoTables = tables.zipWithIndex.map { case (table, i) => i.toString -> ProtoTable(table) }.toMap
       val sql = (0 until protoTables.size).map { i => s"select * from `$i`" }.mkString(" union all ")
       val result = graph_operations.ExecuteSQL.run(sql, protoTables)

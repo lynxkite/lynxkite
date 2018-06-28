@@ -228,10 +228,7 @@ class TableIO(entity: Table, context: IOContext) extends EntityIO(entity, contex
     log.info(s"PERF Loading table $entity from disk")
     val parquet = context.sparkSession.read.parquet(path.forReading.resolvedName)
     val df = columnsFromParquet(parquet)
-    assert(
-      SQLHelper.stripAllMetadata(df.schema) == SQLHelper.stripAllMetadata(entity.schema),
-      s"Schema mismatch on read for $entity." +
-        s"${df.schema.treeString} vs ${entity.schema.treeString}")
+    SQLHelper.assertTableHasCorrectSchema(entity, df.schema)
     log.info(s"PERF Loaded table $entity from disk")
     new TableData(entity, df)
   }
