@@ -169,16 +169,6 @@ object ScalaScript {
     }
   }
 
-  // Helper function to convert param types to Option types.
-  private def convert(
-    paramTypes: Map[String, TypeTag[_]], paramsToOption: Boolean): Map[String, TypeTag[_]] = {
-    if (paramsToOption) {
-      paramTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) }
-    } else {
-      paramTypes
-    }
-  }
-
   // A wrapper class representing the type signature of a Scala expression.
   import scala.language.existentials
   case class ScalaType(funcType: TypeTag[_]) {
@@ -200,10 +190,10 @@ object ScalaScript {
   def compileAndGetType(
     code: String,
     mandatoryParamTypes: Map[String, TypeTag[_]],
-    optionalParamTypes: Map[String, TypeTag[_]],
-    paramsToOption: Boolean): ScalaType = {
-    val funcCode =
-      evalFuncString(code, mandatoryParamTypes ++ convert(optionalParamTypes, paramsToOption))
+    optionalParamTypes: Map[String, TypeTag[_]] = Map()): ScalaType = {
+    val funcCode = evalFuncString(
+      code,
+      mandatoryParamTypes ++ optionalParamTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) })
     val id = UUID.nameUUIDFromBytes(funcCode.getBytes())
     codeReturnTypeCache.syncGetOrElseUpdate(id, ScalaType(inferType(funcCode)))
   }
@@ -276,11 +266,11 @@ object ScalaScript {
   def compileAndGetEvaluator(
     code: String,
     mandatoryParamTypes: Map[String, TypeTag[_]],
-    optionalParamTypes: Map[String, TypeTag[_]],
-    paramsToOption: Boolean): Evaluator = synchronized {
+    optionalParamTypes: Map[String, TypeTag[_]] = Map()): Evaluator = synchronized {
     // Parameters are back quoted and taken out from the Map. The input argument is one Map to
     // make the calling of the compiled function easier (otherwise we had varying number of args).
-    val convertedParamTypes = mandatoryParamTypes ++ convert(optionalParamTypes, paramsToOption)
+    val convertedParamTypes = mandatoryParamTypes ++
+      optionalParamTypes.mapValues { case v => TypeTagUtil.optionTypeTag(v) }
     val paramsString = convertedParamTypes.map {
       case (k, t) => s"""val `$k` = params("$k").asInstanceOf[${t.tpe}]"""
     }.mkString("\n")
