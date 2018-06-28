@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -ue
 # Heuristically lists the csv files along with one line (hopefully the header)
 # I used it on trinity, like this:
 #
@@ -18,7 +18,6 @@
 # ...
 
 ROOT=$1
-OUTFILE=$2
 
 header_to_skip() {
     for v in "total" "Found"; do
@@ -30,7 +29,7 @@ header_to_skip() {
 }
 
 directory_to_skip() {
-    for v in "operations" "entities" "partitioned" "scalars" "scalars.json" "tables" '..\Nimisha\LynxKite' '.staging' '.sparkStaging' '.Trash' 'exports' ; do
+    for v in "operations" "entities" "partitioned" "scalars" "scalars.json" "tables"  '.staging' '.sparkStaging' '.Trash' 'exports' ; do
         if [ "$v" == "$1" ]; then
             return 0;
         fi
@@ -45,11 +44,11 @@ LSCOMMAND="hadoop fs -ls"
 process_one_file() {
     if $(echo $1 | grep -q csv)  ; then
         echo "Processing: $1" 1>&2
-        echo $1 >> $OUTFILE
+        echo $1
         if (echo $1 | grep -q "[.]gz$"); then
-            hadoop fs -cat $1 | gunzip | tr '\r' '\n' | head -n1 >> $OUTFILE
+            hadoop fs -cat $1 | gunzip | tr '\r' '\n' | head -n1
         else
-            hadoop fs -cat $1          | tr '\r' '\n' | head -n1 >> $OUTFILE
+            hadoop fs -cat $1          | tr '\r' '\n' | head -n1
         fi
     fi
 }
