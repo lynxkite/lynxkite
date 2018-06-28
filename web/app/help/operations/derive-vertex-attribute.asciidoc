@@ -32,7 +32,7 @@ The new attribute will be created under this name.
 [[defined_attrs]] Only run on defined attributes::
 - `true`: The new attribute will only be defined on vertices for which all the attributes used in the
   expression are defined.
-- `false`: The new attribute is defined on all edges. In this case the Scala expression does not
+- `false`: The new attribute is defined on all vertices. In this case the Scala expression does not
   pass the attributes using their original types, but wraps them into `Option`s. E.g. if you have
   an attribute `income: Double` you would see it as `income: Option[Double]` making
   `income.getOrElse(0.0)` a valid expression.
