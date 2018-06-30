@@ -25,6 +25,7 @@ Example usage of builder API::
     lk.createExampleGraph().sql('select * from scalars').df()
 '''
 import copy
+import functools
 import json
 import os
 import random
@@ -102,6 +103,97 @@ class WorkspaceParameter:
 def text(name: str, default: str = '') -> WorkspaceParameter:
   '''Helper function to make it easy to define a text kind ws parameter.'''
   return WorkspaceParameter(name, 'text', default_value=default)
+
+
+def timestamp():
+  global _last_timestamp
+  t = datetime.datetime.now()
+  if t == _last_timestamp:
+    t += datetime.timedelta(microseconds=1)
+  _last_timestamp = t
+  return t.isoformat()
+
+
+_last_timestamp = None
+
+
+def workspace(parameters: Union[Callable, List[WorkspaceParameter]]):
+  '''Allows using the decorated function as a LynxKite workspace.
+  Calling the function will be equivalent to placing a custom box with its contents.
+
+  Example use::
+
+    @workspace
+    def my_func(input1, other_arg1):
+      return input1.sql1(sql=f'select {other_arg1} from vertices')
+
+    df = my_func(lk.createExampleGraph(), 'name').df()
+
+  To make a multi-output box, return a dictionary instead of a state.
+
+  my_func() can have any number of positional or keyword arguments. The arguments carrying states
+  will be turned into the inputs of the custom box.
+
+  Use @workspace(parameters=[...]) to take workspace parameters. These can be passed to the custom
+  box by calling the wrapped function with extra keyword arguments.
+  '''
+  def wrapper(fn: Callable):
+    @functools.wraps(fn)
+    def wrapped(*args, **kwargs):
+      # Separate workspace parameters from the normal Python parameters.
+      ws_params = {p.name: kwargs[p.name] for p in parameters}
+      for k in ws_params:
+        del kwargs[k]
+
+      # Replace states with input boxes.
+      input_states = []
+      input_boxes = []
+
+      def wrap(state, name):
+        b = state.box.lk.input(name=name)
+        input_states.append(state)
+        input_boxes.append(b)
+        return b
+      signature = inspect.signature(fn)
+      bound = signature.bind(*args, **kwargs)
+      for k, v in bound.arguments.items():
+        p = signature.parameters[k]
+        if p.kind == inspect.Parameter.VAR_POSITIONAL:  # This is *args.
+          v = list(v)  # It's a tuple normally. But we want to mutate it.
+          for i, value in enumerate(v):
+            if isinstance(value, State):
+              v[i] = wrap(value, f'{k}_{i + 1}')
+          bound.arguments[k] = v
+        elif p.kind == inspect.Parameter.VAR_KEYWORD:  # This is **kwargs.
+          for name, value in v.items():
+            if isinstance(value, State):
+              v[name] = wrap(value, f'{k}_{name}')
+        else:  # Normal positional or keyword argument.
+          if isinstance(v, State):
+            bound.arguments[k] = wrap(v, k)
+
+      # Build the workspace.
+      returned = fn(*bound.args, **bound.kwargs)
+      if isinstance(returned, State):
+        outputs = [returned.output(name='output')]
+      else:
+        outputs = [state.output(name=name) for name, state in returned.items()]
+      ws = Workspace(
+          name=f'{fn.__name__}_{timestamp()}',
+          terminal_boxes=outputs,
+          input_boxes=input_boxes,
+          ws_parameters=parameters)
+
+      # Return the workspace instance.
+      return ws(*input_states, **ws_params)
+    return wrapped
+
+  # Allow using the decorator as either @workspace or @workspace(parameters=...).
+  if callable(parameters):
+    fn = parameters
+    return workspace([])(fn)
+  else:
+    return wrapper
 
 
 class BoxCatalog:
