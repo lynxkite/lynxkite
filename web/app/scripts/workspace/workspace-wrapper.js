@@ -580,6 +580,8 @@ angular.module('biggraph')
             workspace: { boxes: boxes },
           });
         }).then(function success() {
+          // We need to save the workspace, before we can update the box catalog,
+          // to have the newly created custom box in the list.
           return util.post('/ajax/setWorkspace', {
             reference: that.ref(),
             workspace: that.state });
