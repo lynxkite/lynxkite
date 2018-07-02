@@ -34,6 +34,8 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
         'name': ['Adam', 'Eve', 'Isolated Joe', 'Bob'],
         'age': [20.3, 18.2, 2, 50.3]})
     pd.testing.assert_frame_equal(result.df(), expected, check_like=True)
+    self.assertEqual(ages.name(), 'select - box_1')
+    self.assertEqual(names.name(), 'select - box_2')
 
   def test_input_naming(self):
     lk = lynx.kite.LynxKite()
@@ -45,7 +47,10 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
     eg = lk.createExampleGraph()
     result = f(eg, eg, eg, k=eg, l=eg, m=eg)
     self.assertEqual(list(result.inputs.keys()), ['i', 'j_1', 'j_2', 'k', 'l_l', 'l_m'])
-    self.assertEqual(result.name().split('_')[0], 'f')
+    # The workspace name is only finalized upon save.
+    self.assertEqual(result.name(), 'f{unique_id}')
+    result.sql('select * from vertices').df()
+    self.assertEqual(result.name(), 'f - box_1')
 
   def test_varargs(self):
     lk = lynx.kite.LynxKite()
