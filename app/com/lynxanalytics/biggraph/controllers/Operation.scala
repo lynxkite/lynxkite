@@ -279,14 +279,20 @@ abstract class OperationRepository(env: SparkFreeEnvironment) {
     }
   }
 
-  def operationIds(user: serving.User, path: String) = {
+  private def operationIsWorkspace(user: serving.User, opId: String): Boolean = {
+    val entry = DirectoryEntry.fromName(opId)
+    entry.exists && entry.isWorkspace && entry.readAllowedFrom(user)
+  }
+
+  def operationIds(user: serving.User, path: String, myOperationIds: List[String]) = {
     val pathParts = path.split("/").init
     val possibleCustomBoxPaths = Range(1, pathParts.length + 1)
       .map(pathParts.slice(0, _))
       .map(_.mkString("/") + "/custom_boxes") ++ List("custom_boxes") ++ List("built-ins")
     val customBoxes = possibleCustomBoxPaths.map(listFolder(user, _)).flatten.toSet
+    val myCustomBoxes = myOperationIds.filter(operationIsWorkspace(user, _))
     val atomicBoxes = atomicOperations.keySet
-    (atomicBoxes ++ customBoxes).toSeq.sorted
+    (atomicBoxes ++ customBoxes ++ myCustomBoxes).toSeq.sorted
   }
 
   private val customBoxesCategory = Operation.Category(
