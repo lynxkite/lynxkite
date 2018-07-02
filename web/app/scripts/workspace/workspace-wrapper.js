@@ -580,7 +580,10 @@ angular.module('biggraph')
             workspace: { boxes: boxes },
           });
         }).then(function success() {
-          that.saveWorkspace();
+          return util.post('/ajax/setWorkspace', {
+            reference: that.ref(),
+            workspace: that.state });
+        }).then(function success() {
           return that._updateBoxCatalog();
         }).then(function success() {
           that.saveWorkspace();
