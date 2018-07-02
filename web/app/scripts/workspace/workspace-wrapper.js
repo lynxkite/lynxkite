@@ -413,12 +413,8 @@ angular.module('biggraph')
 
     startCustomBoxSavingAs: function() {
       const path = this.name;
-      const offeredPath = path.substr(0,path.lastIndexOf('/')) + '/custom_boxes/nameOfCustomBox';
-      if (offeredPath[0] === '/') {
-        this.saveCustomBoxAsName = offeredPath.substr(1,offeredPath.length);
-      } else {
-        this.saveCustomBoxAsName = offeredPath;
-      }
+      this.saveCustomBoxAsName =
+        path.substr(0,path.lastIndexOf('/') + 1) + 'custom_boxes/nameOfCustomBox';
     },
 
     saveAsCustomBox: function(ids, name, description) {
@@ -584,6 +580,7 @@ angular.module('biggraph')
             workspace: { boxes: boxes },
           });
         }).then(function success() {
+          that.saveWorkspace();
           return that._updateBoxCatalog();
         }).then(function success() {
           that.saveWorkspace();
