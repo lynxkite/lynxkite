@@ -34,8 +34,26 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
         'name': ['Adam', 'Eve', 'Isolated Joe', 'Bob'],
         'age': [20.3, 18.2, 2, 50.3]})
     pd.testing.assert_frame_equal(result.df(), expected, check_like=True)
-    self.assertEqual(ages.name(), 'select - box_1')
-    self.assertEqual(names.name(), 'select - box_2')
+    self.assertEqual(ages.workspace.name, 'select - box_1')
+    self.assertEqual(names.workspace.name, 'select - box_2')
+
+  def test_recursive_instances(self):
+    lk = lynx.kite.LynxKite()
+
+    @workspace(parameters=[text('p')])
+    def f(x):
+      return x.sql1(sql=pp('select $p from vertices'))
+
+    @workspace(parameters=[text('p')])
+    def g(x):
+      return f(x, p=pp('$p'))
+
+    eg = lk.createExampleGraph()
+    result = g(eg, p='name')
+    expected = pd.DataFrame({'name': ['Adam', 'Eve', 'Bob', 'Isolated Joe']})
+    pd.testing.assert_frame_equal(result.df(), expected, check_like=True)
+    self.assertEqual(result.workspace.name, 'g - box_0')
+    self.assertEqual(result.workspace.custom_boxes()[0].workspace.name, 'f - box_0 - box_1')
 
   def test_input_naming(self):
     lk = lynx.kite.LynxKite()
