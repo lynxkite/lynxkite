@@ -105,7 +105,7 @@ def text(name: str, default: str = '') -> WorkspaceParameter:
   return WorkspaceParameter(name, 'text', default_value=default)
 
 
-def custom_box(fn):
+def custom_box(fn: Callable):
   '''Allows using the decorated function as a LynxKite workspace.
   Calling the function will be equivalent to placing a custom box with its contents.
 
@@ -122,7 +122,7 @@ def custom_box(fn):
   my_func() can have any number of positional or keyword arguments. The arguments carrying states
   will be turned into the inputs of the custom box.
 
-  Use @ws_param to take workspace parameters::
+  Use @ws_params to take workspace parameters::
 
     @ws_params('p1', 'p2')
     @custom_box
@@ -132,9 +132,9 @@ def custom_box(fn):
     my_func(lk.createExampleGraph(), p1='age', p2='name')
   '''
   @functools.wraps(fn)
-  def wrapper(*args, **kwargs):
+  def wrapper(*args, _ws_params: List[WorkspaceParameter] = [], **kwargs):
     # Separate workspace parameters from the normal Python parameters.
-    ws_params = {p.name: kwargs[p.name] for p in wrapper.ws_params}
+    ws_params = {p.name: kwargs[p.name] for p in _ws_params}
     for k in ws_params:
       del kwargs[k]
 
@@ -175,21 +175,23 @@ def custom_box(fn):
         name=f'{fn.__name__}{{unique_id}}',
         terminal_boxes=outputs,
         input_boxes=input_boxes,
-        ws_parameters=wrapper.ws_params)
+        ws_parameters=_ws_params)
 
     # Return the custom box.
     return ws(*input_states, **ws_params)
-  wrapper.ws_params = []
   return wrapper
 
 
-def ws_params(*params: List[str]):
+def ws_params(*params: str):
   '''Adds workspace parameters to the wrapped custom box. See @custom_box.'''
-  def wrapper(fn):
-    assert hasattr(fn, 'ws_params'), f'{fn} is not a custom box.'
-    fn.ws_params.extend(text(p) for p in params)
-    return fn
-  return wrapper
+  texts = [text(p) for p in params]
+
+  def decorator(fn: Callable):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+      return fn(*args, _ws_params=texts, **kwargs)
+    return wrapper
+  return decorator
 
 
 class BoxCatalog:
