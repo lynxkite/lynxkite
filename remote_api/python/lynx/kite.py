@@ -105,13 +105,13 @@ def text(name: str, default: str = '') -> WorkspaceParameter:
   return WorkspaceParameter(name, 'text', default_value=default)
 
 
-def workspace(parameters: Union[Callable, List[WorkspaceParameter]]):
+def custom_box(fn):
   '''Allows using the decorated function as a LynxKite workspace.
   Calling the function will be equivalent to placing a custom box with its contents.
 
   Example use::
 
-    @workspace
+    @custom_box
     def my_func(input1, other_arg1):
       return input1.sql1(sql=f'select {other_arg1} from vertices')
 
@@ -122,66 +122,74 @@ def workspace(parameters: Union[Callable, List[WorkspaceParameter]]):
   my_func() can have any number of positional or keyword arguments. The arguments carrying states
   will be turned into the inputs of the custom box.
 
-  Use @workspace(parameters=[...]) to take workspace parameters. These can be passed to the custom
-  box by calling the wrapped function with extra keyword arguments.
+  Use @ws_param to take workspace parameters::
+
+    @ws_params('p1', 'p2')
+    @custom_box
+    def my_func(input1):
+      return input1.sql1(sql=pp('select $p1, $p2 from vertices'))
+
+    my_func(lk.createExampleGraph(), p1='age', p2='name')
   '''
-  def wrapper(fn: Callable):
-    @functools.wraps(fn)
-    def wrapped(*args, **kwargs):
-      # Separate workspace parameters from the normal Python parameters.
-      ws_params = {p.name: kwargs[p.name] for p in parameters}
-      for k in ws_params:
-        del kwargs[k]
+  @functools.wraps(fn)
+  def wrapper(*args, **kwargs):
+    # Separate workspace parameters from the normal Python parameters.
+    ws_params = {p.name: kwargs[p.name] for p in wrapper.ws_params}
+    for k in ws_params:
+      del kwargs[k]
 
-      # Replace states with input boxes.
-      input_states = []
-      input_boxes = []
+    # Replace states with input boxes.
+    input_states = []
+    input_boxes = []
 
-      def wrap(state, name):
-        b = state.box.lk.input(name=name)
-        input_states.append(state)
-        input_boxes.append(b)
-        return b
-      signature = inspect.signature(fn)
-      bound = signature.bind(*args, **kwargs)
-      for k, v in bound.arguments.items():
-        p = signature.parameters[k]
-        if p.kind == inspect.Parameter.VAR_POSITIONAL:  # This is *args.
-          v = list(v)  # It's a tuple normally. But we want to mutate it.
-          for i, value in enumerate(v):
-            if isinstance(value, State):
-              v[i] = wrap(value, f'{k}_{i + 1}')
-          bound.arguments[k] = v
-        elif p.kind == inspect.Parameter.VAR_KEYWORD:  # This is **kwargs.
-          for name, value in v.items():
-            if isinstance(value, State):
-              v[name] = wrap(value, f'{k}_{name}')
-        else:  # Normal positional or keyword argument.
-          if isinstance(v, State):
-            bound.arguments[k] = wrap(v, k)
+    def wrap(state, name):
+      b = state.box.lk.input(name=name)
+      input_states.append(state)
+      input_boxes.append(b)
+      return b
+    signature = inspect.signature(fn)
+    bound = signature.bind(*args, **kwargs)
+    for k, v in bound.arguments.items():
+      p = signature.parameters[k]
+      if p.kind == inspect.Parameter.VAR_POSITIONAL:  # This is *args.
+        v = list(v)  # It's a tuple normally. But we want to mutate it.
+        for i, value in enumerate(v):
+          if isinstance(value, State):
+            v[i] = wrap(value, f'{k}_{i + 1}')
+        bound.arguments[k] = v
+      elif p.kind == inspect.Parameter.VAR_KEYWORD:  # This is **kwargs.
+        for name, value in v.items():
+          if isinstance(value, State):
+            v[name] = wrap(value, f'{k}_{name}')
+      else:  # Normal positional or keyword argument.
+        if isinstance(v, State):
+          bound.arguments[k] = wrap(v, k)
 
-      # Build the workspace.
-      returned = fn(*bound.args, **bound.kwargs)
-      if isinstance(returned, State):
-        outputs = [returned.output(name='output')]
-      else:
-        outputs = [state.output(name=name) for name, state in returned.items()]
-      ws = Workspace(
-          name=f'{fn.__name__}{{unique_id}}',
-          terminal_boxes=outputs,
-          input_boxes=input_boxes,
-          ws_parameters=parameters)
+    # Build the workspace.
+    returned = fn(*bound.args, **bound.kwargs)
+    if isinstance(returned, State):
+      outputs = [returned.output(name='output')]
+    else:
+      outputs = [state.output(name=name) for name, state in returned.items()]
+    ws = Workspace(
+        name=f'{fn.__name__}{{unique_id}}',
+        terminal_boxes=outputs,
+        input_boxes=input_boxes,
+        ws_parameters=wrapper.ws_params)
 
-      # Return the workspace instance.
-      return ws(*input_states, **ws_params)
-    return wrapped
+    # Return the custom box.
+    return ws(*input_states, **ws_params)
+  wrapper.ws_params = []
+  return wrapper
 
-  # Allow using the decorator as either @workspace or @workspace(parameters=...).
-  if callable(parameters):
-    fn = parameters
-    return workspace([])(fn)
-  else:
-    return wrapper
+
+def ws_params(*params: List[str]):
+  '''Adds workspace parameters to the wrapped custom box. See @custom_box.'''
+  def wrapper(fn):
+    assert hasattr(fn, 'ws_params'), f'{fn} is not a custom box.'
+    fn.ws_params.extend(text(p) for p in params)
+    return fn
+  return wrapper
 
 
 class BoxCatalog:
