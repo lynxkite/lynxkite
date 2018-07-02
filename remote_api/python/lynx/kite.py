@@ -105,18 +105,6 @@ def text(name: str, default: str = '') -> WorkspaceParameter:
   return WorkspaceParameter(name, 'text', default_value=default)
 
 
-def timestamp():
-  global _last_timestamp
-  t = datetime.datetime.now()
-  if t == _last_timestamp:
-    t += datetime.timedelta(microseconds=1)
-  _last_timestamp = t
-  return t.isoformat()
-
-
-_last_timestamp = None
-
-
 def workspace(parameters: Union[Callable, List[WorkspaceParameter]]):
   '''Allows using the decorated function as a LynxKite workspace.
   Calling the function will be equivalent to placing a custom box with its contents.
@@ -179,7 +167,7 @@ def workspace(parameters: Union[Callable, List[WorkspaceParameter]]):
       else:
         outputs = [state.output(name=name) for name, state in returned.items()]
       ws = Workspace(
-          name=f'{fn.__name__}_{timestamp()}',
+          name=f'{fn.__name__}{{unique_id}}',
           terminal_boxes=outputs,
           input_boxes=input_boxes,
           ws_parameters=parameters)
@@ -488,14 +476,19 @@ class LynxKite:
       ws_root = _random_ws_folder()
     else:
       ws_root = save_under_root
+
     needed_ws: Set[Workspace] = set()
-    ws_queue = deque([ws])
-    while len(ws_queue):
-      nws = ws_queue.pop()
-      for rws in nws.required_workspaces():
-        if rws not in needed_ws:
-          needed_ws.add(rws)
-          ws_queue.append(rws)
+
+    def get_workspaces(ws: Workspace, unique_prefix: str = ''):
+      yield ws
+      for box in ws.custom_boxes():
+        if box.workspace in needed_ws:
+          continue
+        box_path = f'{unique_prefix} - {ws.id_of(box)}'
+        box.workspace.name = box.workspace.name.format(unique_id=box_path)
+        yield from get_workspaces(box.workspace, box_path)
+
+    needed_ws.update(get_workspaces(ws))
     # Check name duplication in required workspaces
     names = list(rws.name for rws in needed_ws)
     if len(needed_ws) != len(set(rws.name for rws in needed_ws)):
@@ -1184,7 +1177,7 @@ class Workspace:
                side_effect_paths: List[BoxPath] = [],
                input_boxes: List[AtomicBox] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
-    self.name = name or 'Anonymous'
+    self.name = name
     self.lk = terminal_boxes[0].lk
     self.all_boxes: Set[Box] = set()
     self.input_boxes = input_boxes
@@ -1231,9 +1224,9 @@ class Workspace:
     ab['parameters'] = dict(parameters=self._ws_parameters_to_str())
     return [ab] + non_anchor_boxes
 
-  def required_workspaces(self) -> List['Workspace']:
+  def custom_boxes(self) -> List[CustomBox]:
     return [
-        box.workspace for box in self.all_boxes
+        box for box in self.all_boxes
         if isinstance(box, CustomBox)]
 
   def side_effect_paths(self) -> List[BoxPath]:
