@@ -1,7 +1,7 @@
 import pandas as pd
 import unittest
 import lynx.kite
-from lynx.kite import pp, text, workspace
+from lynx.kite import pp, ws_params, custom_box
 
 
 class TestLazyWorkspaceDecorator(unittest.TestCase):
@@ -9,7 +9,7 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
   def test_simplest(self):
     lk = lynx.kite.LynxKite()
 
-    @workspace
+    @custom_box
     def select(x, column):
       return x.sql1(sql=f'select id, {column} from vertices')
 
@@ -22,7 +22,7 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
   def test_multiple_instances(self):
     lk = lynx.kite.LynxKite()
 
-    @workspace
+    @custom_box
     def select(x, column):
       return x.sql1(sql=f'select id, {column} from vertices')
 
@@ -40,11 +40,13 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
   def test_recursive_instances(self):
     lk = lynx.kite.LynxKite()
 
-    @workspace(parameters=[text('p')])
+    @ws_params('p')
+    @custom_box
     def f(x):
       return x.sql1(sql=pp('select $p from vertices'))
 
-    @workspace(parameters=[text('p')])
+    @ws_params('p')
+    @custom_box
     def g(x):
       return f(x, p=pp('$p'))
 
@@ -58,7 +60,7 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
   def test_input_naming(self):
     lk = lynx.kite.LynxKite()
 
-    @workspace
+    @custom_box
     def f(i, *j, k, **l):
       return i
 
@@ -73,7 +75,7 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
   def test_varargs(self):
     lk = lynx.kite.LynxKite()
 
-    @workspace
+    @custom_box
     def f1(i, *inputs):
       return inputs[i]
 
@@ -83,7 +85,7 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
     expected = pd.DataFrame({'name': ['Adam', 'Eve', 'Bob', 'Isolated Joe']})
     pd.testing.assert_frame_equal(result.df(), expected, check_like=True)
 
-    @workspace
+    @custom_box
     def f2(i, **inputs):
       return inputs[i]
 
@@ -92,10 +94,11 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
     result = f2('b', a=empty, b=eg).sql('select name from vertices')
     pd.testing.assert_frame_equal(result.df(), expected, check_like=True)
 
-  def test_ws_param(self):
+  def test_ws_params(self):
     lk = lynx.kite.LynxKite()
 
-    @workspace(parameters=[text('name')])
+    @ws_params('name')
+    @custom_box
     def f(t):
       return t.sql1(sql=pp('select age from vertices where name == "$name"'))
 
@@ -107,7 +110,7 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
   def test_multi_output(self):
     lk = lynx.kite.LynxKite()
 
-    @workspace
+    @custom_box
     def f(t):
       return dict(
           age=t.sql1(sql='select age from vertices limit 1'),
