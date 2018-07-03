@@ -490,12 +490,12 @@ class LynxKite:
     needed_ws: Set[Workspace] = set()
 
     def get_workspaces(ws: Workspace, unique_prefix: str = ''):
-      yield ws
       for box in ws.custom_boxes():
         if box.workspace in needed_ws:
           continue
         box_path = f'{unique_prefix} - {ws.id_of(box)}'
         box.workspace.name = box.workspace.name.format(unique_id=box_path)
+        yield box.workspace
         yield from get_workspaces(box.workspace, box_path)
 
     needed_ws.update(get_workspaces(ws))
