@@ -588,7 +588,7 @@ angular.module('biggraph')
         }).then(function success() {
           return that._updateBoxCatalog();
         }).then(function success() {
-          that.saveWorkspace();
+          that.loadWorkspace();
         }, function error() {
           that.loadWorkspace();
         }),
