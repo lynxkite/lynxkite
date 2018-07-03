@@ -141,12 +141,22 @@ def custom_box(fn: Callable):
     # Replace states with input boxes.
     input_states = []
     input_boxes = []
+    # Replace SideEffectCollector with a lower-level SideEffectCollector.
+    inner_se = SideEffectCollector()
+    outer_se: List[SideEffectCollector] = []  # List for easy access from nested function.
 
-    def wrap(state, name):
-      b = state.box.lk.input(name=name)
-      input_states.append(state)
-      input_boxes.append(b)
-      return b
+    def map_param(name, value):
+      if isinstance(value, State):
+        b = value.box.lk.input(name=name)
+        input_states.append(value)
+        input_boxes.append(b)
+        return b
+      elif isinstance(value, SideEffectCollector):
+        assert not outer_se, 'Multiple SideEffectCollectors provided.'
+        outer_se.append(value)
+        return inner_se
+      else:
+        return value
     signature = inspect.signature(fn)
     bound = signature.bind(*args, **kwargs)
     for k, v in bound.arguments.items():
@@ -154,31 +164,34 @@ def custom_box(fn: Callable):
       if p.kind == inspect.Parameter.VAR_POSITIONAL:  # This is *args.
         v = list(v)  # It's a tuple normally. But we want to mutate it.
         for i, value in enumerate(v):
-          if isinstance(value, State):
-            v[i] = wrap(value, f'{k}_{i + 1}')
+          v[i] = map_param(f'{k}_{i + 1}', value)
         bound.arguments[k] = v
       elif p.kind == inspect.Parameter.VAR_KEYWORD:  # This is **kwargs.
         for name, value in v.items():
-          if isinstance(value, State):
-            v[name] = wrap(value, f'{k}_{name}')
+          v[name] = map_param(f'{k}_{name}', value)
       else:  # Normal positional or keyword argument.
-        if isinstance(v, State):
-          bound.arguments[k] = wrap(v, k)
+        bound.arguments[k] = map_param(k, v)
 
     # Build the workspace.
     returned = fn(*bound.args, **bound.kwargs)
     if isinstance(returned, State):
       outputs = [returned.output(name='output')]
+    elif returned is None:
+      outputs = []
     else:
       outputs = [state.output(name=name) for name, state in returned.items()]
     ws = Workspace(
         name=f'{fn.__name__}{{unique_id}}',
-        terminal_boxes=outputs,
+        terminal_boxes=outputs + inner_se.top_level_side_effects,
+        side_effect_paths=list(inner_se.all_triggerables()),
         input_boxes=input_boxes,
         ws_parameters=_ws_params)
 
     # Return the custom box.
-    return ws(*input_states, **ws_params)
+    result = ws(*input_states, **ws_params)
+    if outer_se:
+      result.register(outer_se[0])
+    return result
   return wrapper
 
 

@@ -120,3 +120,19 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
     result = f(eg)
     pd.testing.assert_frame_equal(result['age'].df(), pd.DataFrame({'age': [20.3]}))
     pd.testing.assert_frame_equal(result['name'].df(), pd.DataFrame({'name': ['Adam']}))
+
+  def test_sideeffects(self):
+    lk = lynx.kite.LynxKite()
+
+    @custom_box
+    def save(t, sec):
+      t.saveToSnapshot(path='sideeffect/saved').register(sec)
+
+    @lk.workspace_with_side_effects()
+    def save_eg(sec):
+      eg = lk.createExampleGraph()
+      save(eg, sec)
+
+    lk.remove_name('sideeffect', force=True)
+    save_eg.trigger_all_side_effects()
+    self.assertEqual([e.name for e in lk.list_dir('sideeffect')], ['sideeffect/saved'])
