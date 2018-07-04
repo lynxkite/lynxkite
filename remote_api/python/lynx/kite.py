@@ -197,7 +197,12 @@ class LynxKite:
   def __getattr__(self, name) -> Callable:
 
     def add_box_with_inputs(box_name, args, kwargs):
-      inputs = dict(zip(self.box_catalog().inputs(box_name), args))
+      input_names = self.box_catalog().inputs(box_name)
+      assert len(input_names) == len(args), \
+          f'{box_name!r} received {len(args)} inputs (expected {len(input_names)})'
+      inputs = dict(zip(input_names, args))
+      for k, v in inputs.items():
+        assert isinstance(v, State), f'Input {k!r} of {box_name!r} is not a State: {v!r}'
       box = _new_box(self.box_catalog(), self, box_name, inputs=inputs, parameters=kwargs)
       return box
 
