@@ -324,10 +324,10 @@ class WorkspaceSequence:
     sequence. Airflow task dependencies are defined based on the output of `to_dag`.
     '''
 
-    assert not 'start_date' in task_default_args, 'You cannot override start_date'
-    assert not 'owner' in task_default_args, 'You cannot override owner'
-    assert not 'schedule_interval' in dag_args, 'You cannot override schedule_interval'
-    assert not 'default_args' in dag_args, 'Use task_default_args instead'
+    assert not 'start_date' in task_default_args, 'You cannot override start_date.'
+    assert not 'owner' in task_default_args, 'You cannot override owner.'
+    assert not 'schedule_interval' in dag_args, 'You cannot override schedule_interval.'
+    assert not 'default_args' in dag_args, 'Use task_default_args instead.'
 
     base_default_args = {
         'owner': 'airflow',
