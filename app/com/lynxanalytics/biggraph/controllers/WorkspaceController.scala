@@ -286,8 +286,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     // We need the custom boxes of the current workspace, if the call comes
     // from the UI.
     val customBoxOperationIds = if (!request.path.isEmpty()) {
-      val myWorkspace = getWorkspace(user, WorkspaceReference(request.path, List()))
-      myWorkspace.workspace.boxes.map(_.operationId).filter(operationIsWorkspace(user, _))
+      val ref = ResolvedWorkspaceReference(user, WorkspaceReference(request.path, List()))
+      ref.ws.boxes.map(_.operationId).filter(operationIsWorkspace(user, _))
     } else {
       List()
     }
