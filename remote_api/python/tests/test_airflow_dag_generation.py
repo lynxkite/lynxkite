@@ -140,7 +140,7 @@ class TestAirflowDagGeneration(unittest.TestCase):
     lk = lynx.kite.LynxKite()
     wss = lynx.automation.WorkspaceSequence(
         ws=create_complex_test_workspace(),
-        schedule='0 3 * * *',
+        schedule='30 5 * * *',
         start_date=datetime(2018, 5, 11),
         params={},
         lk_root='airflow_dag_parameter_test',
@@ -158,3 +158,17 @@ class TestAirflowDagGeneration(unittest.TestCase):
           'bad_parametrized_dag',
           default_args=dict(start_date=datetime(2018, 6, 11, 0, 0)))
     self.assertTrue('You cannot override start_date' in str(context.exception))
+    param_dag_good2 = wss.to_airflow_DAG(
+        'parametrized_dag2',
+        max_active_runs=16,
+        concurrency=48,
+        default_args=dict(depends_on_past=True))
+    self.assertEqual(param_dag_good2.max_active_runs, 16)
+    self.assertEqual(param_dag_good2.concurrency, 48)
+    self.assertEqual(param_dag_good2.default_args['depends_on_past'], True)
+    self.assertEqual(param_dag_good2.schedule_interval, '30 5 * * *')
+    with self.assertRaises(Exception) as context:
+      param_dag_bad2 = wss.to_airflow_DAG(
+          'bad_parametrized_dag2',
+          schedule_interval='0 0 1 * *')
+    self.assertTrue('You cannot override schedule_interval' in str(context.exception))
