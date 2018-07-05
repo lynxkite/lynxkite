@@ -889,16 +889,10 @@ class Box:
 
     Can be used on triggerable boxes like `saveToSnapshot` and export boxes.
     '''
-    folder = _random_ws_folder()
-    name = 'tmp_ws_name'
-    full_path = folder + '/' + name
-    ws = Workspace(name, [self])
-    ws.save(folder)
-    # Because of the logic in the Workspace constructor, it's always
-    # guaranteed, that when we create a workspace from one terminal box,
-    # then the id of this box will be 'box_0'.
-    self.lk.trigger_box(full_path, 'box_0')
-    self.lk.remove_name(folder, force=True)
+    sec = SideEffectCollector()
+    self.register(sec)
+    ws = Workspace('Anonymous', [self], side_effect_paths=list(sec.all_triggerables()))
+    ws.trigger_all_side_effects()
 
 
 class AtomicBox(Box):
