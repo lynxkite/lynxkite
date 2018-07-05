@@ -148,7 +148,7 @@ class TestAirflowDagGeneration(unittest.TestCase):
         input_recipes=[])
     param_dag_good = wss.to_airflow_DAG(
         'parametrized_dag',
-        default_args=dict(depends_on_past=True))
+        task_default_args=dict(depends_on_past=True))
     self.assertEqual(param_dag_good.default_args,
                      dict(owner='airflow',
                           start_date=datetime(2018, 5, 11, 0, 0),
@@ -156,13 +156,12 @@ class TestAirflowDagGeneration(unittest.TestCase):
     with self.assertRaises(Exception) as context:
       param_dag_bad = wss.to_airflow_DAG(
           'bad_parametrized_dag',
-          default_args=dict(start_date=datetime(2018, 6, 11, 0, 0)))
+          task_default_args=dict(start_date=datetime(2018, 6, 11, 0, 0)))
     self.assertTrue('You cannot override start_date' in str(context.exception))
     param_dag_good2 = wss.to_airflow_DAG(
         'parametrized_dag2',
-        max_active_runs=16,
-        concurrency=48,
-        default_args=dict(depends_on_past=True))
+        dag_args=dict(max_active_runs=16, concurrency=48),
+        task_default_args=dict(depends_on_past=True))
     self.assertEqual(param_dag_good2.max_active_runs, 16)
     self.assertEqual(param_dag_good2.concurrency, 48)
     self.assertEqual(param_dag_good2.default_args['depends_on_past'], True)
@@ -170,5 +169,5 @@ class TestAirflowDagGeneration(unittest.TestCase):
     with self.assertRaises(Exception) as context:
       param_dag_bad2 = wss.to_airflow_DAG(
           'bad_parametrized_dag2',
-          schedule_interval='0 0 1 * *')
+          dag_args=dict(schedule_interval='0 0 1 * *'))
     self.assertTrue('You cannot override schedule_interval' in str(context.exception))
