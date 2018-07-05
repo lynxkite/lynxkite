@@ -141,11 +141,12 @@ def custom_box(fn: Callable):
 
     my_func(lk.createExampleGraph(), p1='age', p2='name')
 
-  To define a custom box with side-effects, annotate your first argument as a SideEffectCollector.
-  This argument will be supplied automatically when the function is called::
+  To define a custom box with side-effects, take an argument with a default value of
+  SideEffectCollector(). A fresh SideEffectCollector() will be created each time the function is
+  called. ::
 
     @custom_box
-    def my_func(sec: SideEffectCollector, input1):
+    def my_func(input1, sec=SideEffectCollector()):
       input1.saveAsSnapshot('x').register(sec)
 
     my_func(lk.createExampleGraph()).trigger()
@@ -157,7 +158,6 @@ def custom_box(fn: Callable):
     for k in ws_params:
       del kwargs[k]
 
-    sec = SideEffectCollector()
     # Replace states with input boxes.
     input_states = []
     input_boxes = []
@@ -171,9 +171,12 @@ def custom_box(fn: Callable):
       else:
         return value
     signature = inspect.signature(fn)
-    params = list(signature.parameters.values())
-    if params and params[0].annotation is SideEffectCollector:
-      args = (sec,) + args
+    sec = SideEffectCollector()
+    secs = [p.name for p in signature.parameters.values()
+            if type(p.default) is SideEffectCollector]
+    assert len(secs) <= 1, f'More than one SideEffectCollector parameters found for {fn}'
+    if secs:
+      kwargs[secs[0]] = sec
     bound = signature.bind(*args, **kwargs)
     for k, v in bound.arguments.items():
       p = signature.parameters[k]
