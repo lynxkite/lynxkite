@@ -175,10 +175,9 @@ def custom_box(fn: Callable):
     secs = [p.name for p in signature.parameters.values()
             if type(p.default) is SideEffectCollector]
     assert len(secs) <= 1, f'More than one SideEffectCollector parameters found for {fn}'
-    if secs:
-      kwargs[secs[0]] = sec
     bound = signature.bind(*args, **kwargs)
     for k, v in bound.arguments.items():
+      assert k not in secs, f'Explicitly set SideEffectCollector parameter for {fn}'
       p = signature.parameters[k]
       if p.kind == inspect.Parameter.VAR_POSITIONAL:  # This is *args.
         v = list(v)  # It's a tuple normally. But we want to mutate it.
@@ -190,6 +189,8 @@ def custom_box(fn: Callable):
           v[name] = map_param(f'{k}_{name}', value)
       else:  # Normal positional or keyword argument.
         bound.arguments[k] = map_param(k, v)
+    if secs:
+      kwargs[secs[0]] = sec
 
     # Build the workspace.
     outputs = _to_outputs(fn(*bound.args, **bound.kwargs))
@@ -1202,6 +1203,7 @@ class Workspace:
                input_boxes: List[AtomicBox] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
     self.name = name
+    assert terminal_boxes, 'A workspace must contain at least one box'
     self.lk = terminal_boxes[0].lk
     self.all_boxes: Set[Box] = set()
     self.input_boxes = input_boxes
