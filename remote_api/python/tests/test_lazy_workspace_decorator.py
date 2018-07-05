@@ -128,6 +128,10 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
     def save(sec: lynx.kite.SideEffectCollector, t):
       t.saveToSnapshot(path='sideeffect/saved').register(sec)
 
+    lk.remove_name('sideeffect', force=True)
+    save(lk.createExampleGraph()).trigger()
+    self.assertEqual([e.name for e in lk.list_dir('sideeffect')], ['sideeffect/saved'])
+
     @lk.workspace_with_side_effects()
     def save_eg(sec):
       eg = lk.createExampleGraph()
