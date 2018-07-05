@@ -173,6 +173,8 @@ angular.module('biggraph')
             }
           },
           function onError(error) {
+            /* eslint-disable no-console */
+            console.error('Failed to load workspace.', error);
             that.error = util.responseToErrorMessage(error);
           });
     },
