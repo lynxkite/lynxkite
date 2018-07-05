@@ -574,6 +574,7 @@ angular.module('biggraph')
         return box.id === 'anchor' || !ids.includes(box.id);
       });
       this.state.boxes.push(customBox);
+      delete this._boxCatalogMap;  // Force a catalog refresh.
       var that = this;
       return {
         customBox: customBox,
@@ -585,15 +586,7 @@ angular.module('biggraph')
             workspace: { boxes: boxes },
           });
         }).then(function success() {
-          // We need to save the workspace, before we can update the box catalog,
-          // to have the newly created custom box in the list.
-          return util.post('/ajax/setWorkspace', {
-            reference: that.ref(),
-            workspace: that.state });
-        }).then(function success() {
-          return that._updateBoxCatalog();
-        }).then(function success() {
-          that.loadWorkspace();
+          that.saveWorkspace();
         }, function error() {
           that.loadWorkspace();
         }),
