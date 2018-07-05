@@ -190,7 +190,7 @@ def custom_box(fn: Callable):
       else:  # Normal positional or keyword argument.
         bound.arguments[k] = map_param(k, v)
     if secs:
-      kwargs[secs[0]] = sec
+      bound.arguments[secs[0]] = sec
 
     # Build the workspace.
     outputs = _to_outputs(fn(*bound.args, **bound.kwargs))
