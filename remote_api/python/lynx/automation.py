@@ -338,7 +338,9 @@ class WorkspaceSequence:
         return {**base_default_args, **default_args}
 
     def set_dag_args(**kwargs):
-      return dict(schedule_interval=self._schedule)
+      assert not 'schedule_interval' in kwargs, 'You cannot override schedule_interval'
+      dag_args = {k: v for k, v in kwargs.items() if k != 'default_args'}
+      return dict(schedule_interval=self._schedule, **dag_args)
 
     default_args = set_default_args(**kwargs)
     dag_args = set_dag_args(**kwargs)
