@@ -105,6 +105,16 @@ def text(name: str, default: str = '') -> WorkspaceParameter:
   return WorkspaceParameter(name, 'text', default_value=default)
 
 
+def _to_outputs(returned):
+  '''Turns the return value of a workspace builder function into a list of output boxes.'''
+  if isinstance(returned, State):
+    return [returned.output(name='output')]
+  elif returned is None:
+    return []
+  else:
+    return [state.output(name=name) for name, state in returned.items()]
+
+
 def custom_box(fn: Callable):
   '''Allows using the decorated function as a LynxKite workspace.
   Calling the function will be equivalent to placing a custom box with its contents.
@@ -179,13 +189,7 @@ def custom_box(fn: Callable):
         bound.arguments[k] = map_param(k, v)
 
     # Build the workspace.
-    returned = fn(*bound.args, **bound.kwargs)
-    if isinstance(returned, State):
-      outputs = [returned.output(name='output')]
-    elif returned is None:
-      outputs = []
-    else:
-      outputs = [state.output(name=name) for name, state in returned.items()]
+    outputs = _to_outputs(fn(*bound.args, **bound.kwargs))
     ws = Workspace(
         name=f'{fn.__name__}{{unique_id}}',
         terminal_boxes=outputs + sec.top_level_side_effects,
@@ -637,10 +641,7 @@ class LynxKite:
         results = builder_fn(se_collector, *input_boxes)
       else:
         results = builder_fn(*input_boxes)
-      if results:
-        outputs = [state.output(name=name) for name, state in results.items()]
-      else:
-        outputs = []
+      outputs = _to_outputs(results)
       return Workspace(name=real_name,
                        terminal_boxes=outputs + se_collector.top_level_side_effects,
                        side_effect_paths=list(se_collector.all_triggerables()),

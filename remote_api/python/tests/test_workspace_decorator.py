@@ -31,9 +31,8 @@ class TestWorkspaceDecorator(unittest.TestCase):
 
     @lk.workspace(parameters=[text('a'), text('b'), text('c')])
     def add_ws():
-      o = (lk.createVertices(size='5')
-             .deriveScalar(output='total', expr=pp('${a.toInt+b.toInt+c.toInt}')))
-      return dict(sc=o)
+      return (lk.createVertices(size='5')
+              .deriveScalar(output='total', expr=pp('${a.toInt+b.toInt+c.toInt}')))
 
     project = add_ws(a='2', b='3', c='4').get_project()
     scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
