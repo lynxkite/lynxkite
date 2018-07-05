@@ -130,6 +130,15 @@ def custom_box(fn: Callable):
       return input1.sql1(sql=pp('select $p1, $p2 from vertices'))
 
     my_func(lk.createExampleGraph(), p1='age', p2='name')
+
+  To define a custom box with side-effects, annotate your first argument as a SideEffectCollector.
+  This argument will be supplied automatically when the function is called::
+
+    @custom_box
+    def my_func(sec: SideEffectCollector, input1):
+      input1.saveAsSnapshot('x').register(sec)
+
+    my_func(lk.createExampleGraph()).trigger()
   '''
   @functools.wraps(fn)
   def wrapper(*args, _ws_params: List[WorkspaceParameter] = [], **kwargs):
@@ -138,12 +147,10 @@ def custom_box(fn: Callable):
     for k in ws_params:
       del kwargs[k]
 
+    sec = SideEffectCollector()
     # Replace states with input boxes.
     input_states = []
     input_boxes = []
-    # Replace SideEffectCollector with a lower-level SideEffectCollector.
-    inner_se = SideEffectCollector()
-    outer_se: List[SideEffectCollector] = []  # List for easy access from nested function.
 
     def map_param(name, value):
       if isinstance(value, State):
@@ -151,13 +158,12 @@ def custom_box(fn: Callable):
         input_states.append(value)
         input_boxes.append(b)
         return b
-      elif isinstance(value, SideEffectCollector):
-        assert not outer_se, 'Multiple SideEffectCollectors provided.'
-        outer_se.append(value)
-        return inner_se
       else:
         return value
     signature = inspect.signature(fn)
+    params = list(signature.parameters.values())
+    if params and params[0].annotation is SideEffectCollector:
+      args = (sec,) + args
     bound = signature.bind(*args, **kwargs)
     for k, v in bound.arguments.items():
       p = signature.parameters[k]
@@ -182,16 +188,13 @@ def custom_box(fn: Callable):
       outputs = [state.output(name=name) for name, state in returned.items()]
     ws = Workspace(
         name=f'{fn.__name__}{{unique_id}}',
-        terminal_boxes=outputs + inner_se.top_level_side_effects,
-        side_effect_paths=list(inner_se.all_triggerables()),
+        terminal_boxes=outputs + sec.top_level_side_effects,
+        side_effect_paths=list(sec.all_triggerables()),
         input_boxes=input_boxes,
         ws_parameters=_ws_params)
 
     # Return the custom box.
-    result = ws(*input_states, **ws_params)
-    if outer_se:
-      result.register(outer_se[0])
-    return result
+    return ws(*input_states, **ws_params)
   return wrapper
 
 
