@@ -6,6 +6,7 @@ env:
   es6: true
 rules:
   brace-style: [error, 1tbs, { allowSingleLine: true }]
+  comma-spacing: [error]
   curly: [error]
   dot-location: [error, property]
   eol-last: [error]

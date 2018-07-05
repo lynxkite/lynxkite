@@ -277,9 +277,23 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     getWorkspace(user, request)
   }
 
+  private def operationIsWorkspace(user: serving.User, opId: String): Boolean = {
+    val entry = DirectoryEntry.fromName(opId)
+    entry.exists && entry.isWorkspace && entry.readAllowedFrom(user)
+  }
+
   def boxCatalog(user: serving.User, request: BoxCatalogRequest): BoxCatalogResponse = {
+    // We need the custom boxes of the current workspace, if the call comes
+    // from the UI.
+    val customBoxOperationIds = if (!request.path.isEmpty()) {
+      val ref = ResolvedWorkspaceReference(user, WorkspaceReference(request.path, List()))
+      ref.ws.boxes.map(_.operationId).filter(operationIsWorkspace(user, _))
+    } else {
+      List()
+    }
     BoxCatalogResponse(
-      ops.operationIds(user, request.path).toList.map(ops.getBoxMetadata(_)),
+      ops.operationsRelevantToWorkspace(
+        user, request.path, customBoxOperationIds).toList.map(ops.getBoxMetadata(_)),
       ops.getCategories(user))
   }
 
