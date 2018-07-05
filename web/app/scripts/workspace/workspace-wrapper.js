@@ -414,7 +414,7 @@ angular.module('biggraph')
     startCustomBoxSavingAs: function() {
       const path = this.name;
       this.saveCustomBoxAsName =
-        path.substr(0,path.lastIndexOf('/') + 1) + 'custom_boxes/nameOfCustomBox';
+        path.substr(0, path.lastIndexOf('/') + 1) + 'custom_boxes/nameOfCustomBox';
     },
 
     saveAsCustomBox: function(ids, name, description) {
