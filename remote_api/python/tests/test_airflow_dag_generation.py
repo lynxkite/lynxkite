@@ -133,3 +133,41 @@ class TestAirflowDagGeneration(unittest.TestCase):
     for s in sensor_tasks:
       self.assertFalse(s.poke(dict(execution_date=datetime(2018, 5, 10, 3, 0))))
       self.assertTrue(s.poke(dict(execution_date=datetime(2018, 5, 11, 3, 0))))
+
+  def test_airflow_dag_parameters(self):
+    # We suppress deprecation warnings coming from Airflow
+    warnings.simplefilter("ignore")
+    lk = lynx.kite.LynxKite()
+    wss = lynx.automation.WorkspaceSequence(
+        ws=create_complex_test_workspace(),
+        schedule='30 5 * * *',
+        start_date=datetime(2018, 5, 11),
+        params={},
+        lk_root='airflow_dag_parameter_test',
+        dfs_root='',
+        input_recipes=[])
+    param_dag_good = wss.to_airflow_DAG(
+        'parametrized_dag',
+        task_default_args=dict(depends_on_past=True))
+    self.assertEqual(param_dag_good.default_args,
+                     dict(owner='airflow',
+                          start_date=datetime(2018, 5, 11, 0, 0),
+                          depends_on_past=True))
+    with self.assertRaises(Exception) as context:
+      param_dag_bad = wss.to_airflow_DAG(
+          'bad_parametrized_dag',
+          task_default_args=dict(start_date=datetime(2018, 6, 11, 0, 0)))
+    self.assertTrue('You cannot override start_date' in str(context.exception))
+    param_dag_good2 = wss.to_airflow_DAG(
+        'parametrized_dag2',
+        dag_args=dict(max_active_runs=16, concurrency=48),
+        task_default_args=dict(depends_on_past=True))
+    self.assertEqual(param_dag_good2.max_active_runs, 16)
+    self.assertEqual(param_dag_good2.concurrency, 48)
+    self.assertEqual(param_dag_good2.default_args['depends_on_past'], True)
+    self.assertEqual(param_dag_good2.schedule_interval, '30 5 * * *')
+    with self.assertRaises(Exception) as context:
+      param_dag_bad2 = wss.to_airflow_DAG(
+          'bad_parametrized_dag2',
+          dag_args=dict(schedule_interval='0 0 1 * *'))
+    self.assertTrue('You cannot override schedule_interval' in str(context.exception))
