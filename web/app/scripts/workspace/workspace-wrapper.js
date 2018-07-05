@@ -157,14 +157,17 @@ angular.module('biggraph')
     _requestInvalidated: false,
     loadWorkspace: function(workspaceStateRequest) {
       var that = this;
-      if (!this._boxCatalogMap) { // Need to load catalog first.
-        this._updateBoxCatalog().then(function() { that.loadWorkspace(workspaceStateRequest); });
-        return;
-      }
       var request = workspaceStateRequest || util.nocache('/ajax/getWorkspace', this.ref());
       this._lastLoadRequest = request;
       this._requestInvalidated = false;
       request
+        .then(function ensureBoxCatalog(response) {
+          if (!that._boxCatalogMap) { // Need to load catalog before processing the response.
+            return that._updateBoxCatalog().then(function() { return response; });
+          } else {
+            return response;
+          }
+        })
         .then(
           function onSuccess(response) {
             that.loaded = true;
@@ -173,6 +176,8 @@ angular.module('biggraph')
             }
           },
           function onError(error) {
+            /* eslint-disable no-console */
+            console.error('Failed to load workspace.', error);
             that.error = util.responseToErrorMessage(error);
           });
     },
@@ -413,7 +418,8 @@ angular.module('biggraph')
 
     startCustomBoxSavingAs: function() {
       const path = this.name;
-      this.saveCustomBoxAsName = path.substr(0,path.lastIndexOf('/')) + '/custom_boxes/nameOfCustomBox';
+      this.saveCustomBoxAsName =
+        path.substr(0, path.lastIndexOf('/') + 1) + 'custom_boxes/nameOfCustomBox';
     },
 
     saveAsCustomBox: function(ids, name, description) {
@@ -568,6 +574,7 @@ angular.module('biggraph')
         return box.id === 'anchor' || !ids.includes(box.id);
       });
       this.state.boxes.push(customBox);
+      delete this._boxCatalogMap;  // Force a catalog refresh.
       var that = this;
       return {
         customBox: customBox,
@@ -578,8 +585,6 @@ angular.module('biggraph')
             reference: { top: name, customBoxStack: [] },
             workspace: { boxes: boxes },
           });
-        }).then(function success() {
-          return that._updateBoxCatalog();
         }).then(function success() {
           that.saveWorkspace();
         }, function error() {
