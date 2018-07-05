@@ -36,7 +36,7 @@ import re
 import itertools
 from collections import deque, defaultdict, OrderedDict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
-                    TypeVar, cast, Optional)
+                    TypeVar, cast, Optional, Collection)
 
 import requests
 from croniter import croniter
@@ -129,6 +129,17 @@ class BoxCatalog:
 SerializedBox = NewType('SerializedBox', Dict[str, Any])
 
 
+def _to_input_map(
+        name: str, input_names: Collection[str], input_values: Collection) -> Dict[str, 'State']:
+  '''Makes a dictionary from the input names and values with a bunch of asserts.'''
+  assert len(input_names) == len(input_values), \
+      f'{name!r} received {len(input_values)} inputs (expected {len(input_names)})'
+  inputs = dict(zip(input_names, input_values))
+  for k, v in inputs.items():
+    assert isinstance(v, State), f'Input {k!r} of {name!r} is not a State: {v!r}'
+  return inputs
+
+
 class LynxKite:
   '''A connection to a LynxKite instance.
 
@@ -197,7 +208,7 @@ class LynxKite:
   def __getattr__(self, name) -> Callable:
 
     def add_box_with_inputs(box_name, args, kwargs):
-      inputs = dict(zip(self.box_catalog().inputs(box_name), args))
+      inputs = _to_input_map(box_name, self.box_catalog().inputs(box_name), args)
       box = _new_box(self.box_catalog(), self, box_name, inputs=inputs, parameters=kwargs)
       return box
 
@@ -229,7 +240,7 @@ class LynxKite:
     assert num_inputs > 0, 'SQL needs at least one input.'
     assert num_inputs < 11, 'SQL can have at most ten inputs.'
     name = 'sql{}'.format(num_inputs)
-    inputs = dict(zip(self.box_catalog().inputs(name), args))
+    inputs = _to_input_map(name, self.box_catalog().inputs(name), args)
     kwargs['sql'] = sql
     return _new_box(self.box_catalog(), self, name, inputs=inputs, parameters=kwargs)
 
@@ -1154,7 +1165,7 @@ class Workspace:
     return [self.id_of(box) for box in self._terminal_boxes]
 
   def __call__(self, *args, **kwargs) -> Box:
-    inputs = dict(zip(self.inputs, args))
+    inputs = _to_input_map(self.name, self.inputs, args)
     return _new_box(self._bc, self.lk, self, inputs=inputs, parameters=kwargs)
 
   def _trigger_box(self, box_to_trigger: BoxPath, full_path: str):

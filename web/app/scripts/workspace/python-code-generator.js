@@ -153,7 +153,7 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($modal) {
         return code;
       } else { // Add comment about import operations
         const explanation = '# Import boxes have to be handled separately\n';
-        const commented = '# ' + code.replace(/\n/g,'\n# ');
+        const commented = '# ' + code.replace(/\n/g, '\n# ');
         return explanation + commented;
       }
     }
