@@ -157,14 +157,17 @@ angular.module('biggraph')
     _requestInvalidated: false,
     loadWorkspace: function(workspaceStateRequest) {
       var that = this;
-      if (!this._boxCatalogMap) { // Need to load catalog first.
-        this._updateBoxCatalog().then(function() { that.loadWorkspace(workspaceStateRequest); });
-        return;
-      }
       var request = workspaceStateRequest || util.nocache('/ajax/getWorkspace', this.ref());
       this._lastLoadRequest = request;
       this._requestInvalidated = false;
       request
+        .then(function ensureBoxCatalog(response) {
+          if (!that._boxCatalogMap) { // Need to load catalog before processing the response.
+            return that._updateBoxCatalog().then(function() { return response; });
+          } else {
+            return response;
+          }
+        })
         .then(
           function onSuccess(response) {
             that.loaded = true;
