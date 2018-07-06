@@ -97,7 +97,7 @@ module.exports = function(fw) {
         'expr': 'age_prediction.toInt.toString'
       });
       lib.workspace.closeLastPopup();
-      var ap = lib.workspace.openStateView('derive0','project');
+      var ap = lib.workspace.openStateView('derive0', 'project');
       var attr = ap.left.vertexAttribute('age_prediction_string');
       expect(attr.getHistogramValues()).toEqual([
         { title: '25', size: 100, value: 1 },

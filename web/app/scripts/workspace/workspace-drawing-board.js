@@ -523,6 +523,7 @@ angular.module('biggraph')
 
         scope.diveUp = function() {
           var boxSettings = scope.workspace.customBoxStack.pop();
+          delete scope.workspace._boxCatalogMap; // Force a catalog refresh.
           scope.workspace.loadWorkspace();
           scope.popups = [];
           scope.selectedBoxIds = [boxSettings.id];
@@ -539,6 +540,7 @@ angular.module('biggraph')
               y: workspaceY,
               zoom: workspaceZoom}};
           scope.workspace.customBoxStack.push(boxSettings);
+          delete scope.workspace._boxCatalogMap; // Force a catalog refresh.
           scope.workspace.loadWorkspace();
           scope.popups = [];
           scope.selectedBoxIds = [];

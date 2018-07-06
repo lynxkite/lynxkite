@@ -163,10 +163,14 @@ case class AggregateAttributeToScalar[From, Intermediate, To](
     implicit val ftt = inputs.attr.data.typeTag
     implicit val fct = inputs.attr.data.classTag
     implicit val ict = RuntimeSafeCastable.classTagFromTypeTag(aggregator.intermediateTypeTag(ftt))
-    // Pretend it's all on a single vertex.
-    val aggregated = aggregator
-      .aggregateRDD(attr.map { case (k, v) => (0, v) }, attr.partitioner.get)
-    output(o.aggregated, aggregated.first._2)
+    if (attr.isEmpty) {
+      output(o.aggregated, aggregator.finalize(aggregator.zero))
+    } else {
+      // Pretend it's all on a single vertex.
+      val aggregated = aggregator
+        .aggregateRDD(attr.map { case (k, v) => (0, v) }, attr.partitioner.get)
+      output(o.aggregated, aggregated.first._2)
+    }
   }
 }
 
