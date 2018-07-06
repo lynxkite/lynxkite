@@ -1,7 +1,7 @@
 import pandas as pd
 import unittest
 import lynx.kite
-from lynx.kite import pp, ws_params, custom_box
+from lynx.kite import pp, ws_params, subworkspace
 
 
 class TestLazyWorkspaceDecorator(unittest.TestCase):
@@ -9,7 +9,7 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
   def test_simplest(self):
     lk = lynx.kite.LynxKite()
 
-    @custom_box
+    @subworkspace
     def select(x, column):
       return x.sql1(sql=f'select id, {column} from vertices')
 
@@ -22,7 +22,7 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
   def test_multiple_instances(self):
     lk = lynx.kite.LynxKite()
 
-    @custom_box
+    @subworkspace
     def select(x, column):
       return x.sql1(sql=f'select id, {column} from vertices')
 
@@ -41,12 +41,12 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
     lk = lynx.kite.LynxKite()
 
     @ws_params('p')
-    @custom_box
+    @subworkspace
     def f(x):
       return x.sql1(sql=pp('select $p from vertices'))
 
     @ws_params('p')
-    @custom_box
+    @subworkspace
     def g(x):
       return f(x, p=pp('$p'))
 
@@ -60,7 +60,7 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
   def test_input_naming(self):
     lk = lynx.kite.LynxKite()
 
-    @custom_box
+    @subworkspace
     def f(i, *j, k, **l):
       return i
 
@@ -75,7 +75,7 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
   def test_varargs(self):
     lk = lynx.kite.LynxKite()
 
-    @custom_box
+    @subworkspace
     def f1(i, *inputs):
       return inputs[i]
 
@@ -85,7 +85,7 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
     expected = pd.DataFrame({'name': ['Adam', 'Eve', 'Bob', 'Isolated Joe']})
     pd.testing.assert_frame_equal(result.df(), expected, check_like=True)
 
-    @custom_box
+    @subworkspace
     def f2(i, **inputs):
       return inputs[i]
 
@@ -98,7 +98,7 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
     lk = lynx.kite.LynxKite()
 
     @ws_params('name')
-    @custom_box
+    @subworkspace
     def f(t):
       return t.sql1(sql=pp('select age from vertices where name == "$name"'))
 
@@ -110,7 +110,7 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
   def test_multi_output(self):
     lk = lynx.kite.LynxKite()
 
-    @custom_box
+    @subworkspace
     def f(t):
       return dict(
           age=t.sql1(sql='select age from vertices limit 1'),
@@ -124,7 +124,7 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
   def test_sideeffects(self):
     lk = lynx.kite.LynxKite()
 
-    @custom_box
+    @subworkspace
     def save(t, sec=lynx.kite.SideEffectCollector()):
       t.saveToSnapshot(path='sideeffect/saved').register(sec)
 

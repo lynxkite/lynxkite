@@ -115,13 +115,12 @@ def _to_outputs(returned):
     return [state.output(name=name) for name, state in returned.items()]
 
 
-def custom_box(fn: Callable):
-  '''Allows using the decorated function as a LynxKite workspace.
-  Calling the function will be equivalent to placing a custom box with its contents.
+def subworkspace(fn: Callable):
+  '''Allows using the decorated function as a LynxKite custom box.
 
   Example use::
 
-    @custom_box
+    @subworkspace
     def my_func(input1, other_arg1):
       return input1.sql1(sql=f'select {other_arg1} from vertices')
 
@@ -129,13 +128,13 @@ def custom_box(fn: Callable):
 
   To make a multi-output box, return a dictionary instead of a state.
 
-  my_func() can have any number of positional or keyword arguments. The arguments carrying states
-  will be turned into the inputs of the custom box.
+  ``my_func()`` can have any number of positional or keyword arguments. The arguments carrying
+  states will be turned into the inputs of the custom box.
 
-  Use @ws_params to take workspace parameters::
+  Use ``@ws_params`` to take workspace parameters::
 
     @ws_params('p1', 'p2')
-    @custom_box
+    @subworkspace
     def my_func(input1):
       return input1.sql1(sql=pp('select $p1, $p2 from vertices'))
 
@@ -145,7 +144,7 @@ def custom_box(fn: Callable):
   SideEffectCollector(). A fresh SideEffectCollector() will be created each time the function is
   called. ::
 
-    @custom_box
+    @subworkspace
     def my_func(input1, sec=SideEffectCollector()):
       input1.saveAsSnapshot('x').register(sec)
 
@@ -207,7 +206,7 @@ def custom_box(fn: Callable):
 
 
 def ws_params(*params: str):
-  '''Adds workspace parameters to the wrapped custom box. See @custom_box.'''
+  '''Adds workspace parameters to the wrapped subworkspace. See ``@subworkspace``.'''
   texts = [text(p) for p in params]
 
   def decorator(fn: Callable):
