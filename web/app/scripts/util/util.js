@@ -236,8 +236,11 @@ angular.module('biggraph')
         return resp.data;
       } else if (resp.status === 0) {
         return 'The server (' + window.location.hostname + ') cannot be reached.';
+      } else if (resp.config) {
+        return resp.config.url + ' ' + (resp.statusText || 'failed');
+      } else {
+        return resp.statusText || 'failed';
       }
-      return resp.config.url + ' ' + (resp.statusText || 'failed');
     },
 
     scopeTitle: function(scope, titleExpr) {

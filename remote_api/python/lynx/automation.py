@@ -316,7 +316,7 @@ class WorkspaceSequence:
     self._add_save_workspace_deps(dag)
     return _minimal_dag(dag)
 
-  def to_airflow_DAG(self, dag_id: str) -> DAG:
+  def to_airflow_DAG(self, dag_id: str, dag_args={}, task_default_args={}) -> DAG:
     '''
     Creates an Airflow dag from the workspace sequence.
 
@@ -324,15 +324,22 @@ class WorkspaceSequence:
     sequence. Airflow task dependencies are defined based on the output of `to_dag`.
     '''
 
-    default_args = {
+    assert not 'start_date' in task_default_args, 'You cannot override start_date.'
+    assert not 'owner' in task_default_args, 'You cannot override owner.'
+    assert not 'schedule_interval' in dag_args, 'You cannot override schedule_interval.'
+    assert not 'default_args' in dag_args, 'Use task_default_args instead.'
+
+    base_default_args = {
         'owner': 'airflow',
-        'depends_on_past': False,
         'start_date': self._start_date,
     }
+
+    dag_parameters = dict(schedule_interval=self._schedule, **dag_args)
+    task_default_parameters = {**base_default_args, **task_default_args}
     airflow_dag = DAG(
         dag_id,
-        default_args=default_args,
-        schedule_interval=self._schedule)
+        default_args=task_default_parameters,
+        **dag_parameters)
     task_dag = self.to_dag()
     task_info = {}
     # Creating Airflow operators for tasks.

@@ -93,4 +93,12 @@ class AggregateTest extends FunSuite with TestGraphOp {
     })
     assert(devWeight == 1.2909944487358056)
   }
+  test("count - empty rdd") {
+    val g = CreateVertexSet(0).result
+    val res = {
+      val op = AggregateAttributeToScalar(Aggregator.Count[Long]())
+      op(op.attr, g.ordinal).result.aggregated.value
+    }
+    assert(res == 0.0)
+  }
 }
