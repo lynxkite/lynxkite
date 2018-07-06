@@ -152,10 +152,14 @@ def subworkspace(fn: Callable):
   '''
   @functools.wraps(fn)
   def wrapper(*args, _ws_params: List[WorkspaceParameter] = [], **kwargs):
+    signature = inspect.signature(fn)
     # Separate workspace parameters from the normal Python parameters.
     ws_params = {p.name: kwargs[p.name] for p in _ws_params}
     for k in ws_params:
-      del kwargs[k]
+      if k in signature.parameters:
+        kwargs[k] = pp('$' + k)
+      else:
+        del kwargs[k]
 
     # Replace states with input boxes.
     input_states = []
@@ -169,7 +173,6 @@ def subworkspace(fn: Callable):
         return b
       else:
         return value
-    signature = inspect.signature(fn)
     sec = SideEffectCollector()
     secs = [p.name for p in signature.parameters.values()
             if type(p.default) is SideEffectCollector]
@@ -206,7 +209,26 @@ def subworkspace(fn: Callable):
 
 
 def ws_params(*params: str):
-  '''Adds workspace parameters to the wrapped subworkspace. See ``@subworkspace``.'''
+  '''Adds workspace parameters to the wrapped subworkspace.
+
+  Example use::
+
+    @ws_params('p1', 'p2')
+    @subworkspace
+    def my_func(input1):
+      return input1.sql1(sql=pp('select $p1, $p2 from vertices'))
+
+    my_func(lk.createExampleGraph(), p1='age', p2='name')
+
+  Often you just want to pass your workspace parameter along unchanged. You could just write
+  ``box(param=pp('$ws_param'))``. But if you take a keyword argument with the same name as a
+  workspace parameter, this is even easier::
+
+    @ws_params('p1')
+    @subworkspace
+    def my_func(input1, p1):
+      return input1.sql1(sql=p1)  # Equivalent to sql=pp('$p1').
+  '''
   texts = [text(p) for p in params]
 
   def decorator(fn: Callable):
