@@ -33,7 +33,7 @@ case class GetPlotOutputRequest(id: String)
 case class GetPlotOutputResponse(json: FEScalar)
 case class GetVisualizationOutputRequest(id: String)
 case class CreateWorkspaceRequest(name: String)
-case class BoxCatalogRequest(path: String)
+case class BoxCatalogRequest(ref: WorkspaceReference)
 case class BoxCatalogResponse(boxes: List[BoxMetadata], categories: List[FEOperationCategory])
 case class CreateSnapshotRequest(name: String, id: String)
 case class GetExportResultRequest(stateId: String)
@@ -285,15 +285,17 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def boxCatalog(user: serving.User, request: BoxCatalogRequest): BoxCatalogResponse = {
     // We need the custom boxes of the current workspace, if the call comes
     // from the UI.
-    val customBoxOperationIds = if (!request.path.isEmpty()) {
-      val ref = ResolvedWorkspaceReference(user, WorkspaceReference(request.path, List()))
+    val customBoxOperationIds = if (!request.ref.top.isEmpty()) {
+      val ref = ResolvedWorkspaceReference(
+        user,
+        WorkspaceReference(request.ref.top, request.ref.customBoxStack))
       ref.ws.boxes.map(_.operationId).filter(operationIsWorkspace(user, _))
     } else {
       List()
     }
     BoxCatalogResponse(
       ops.operationsRelevantToWorkspace(
-        user, request.path, customBoxOperationIds).toList.map(ops.getBoxMetadata(_)),
+        user, request.ref.top, customBoxOperationIds).toList.map(ops.getBoxMetadata(_)),
       ops.getCategories(user))
   }
 

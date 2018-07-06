@@ -194,7 +194,7 @@ class LynxKite:
 
   def box_catalog(self) -> BoxCatalog:
     if not self._box_catalog:
-      bc = self._ask('/ajax/boxCatalog', dict(path='')).boxes
+      bc = self._ask('/ajax/boxCatalog', dict(top='', customBoxStack=[])).boxes
       boxes = {}
       for box in bc:
         if box.categoryId != 'Custom boxes':
