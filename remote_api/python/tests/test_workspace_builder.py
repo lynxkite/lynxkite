@@ -63,7 +63,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
   def test_save_under_root(self):
     lk = lynx.kite.LynxKite()
     state = lk.createExampleGraph().sql('select name from vertices')
-    ws = lynx.kite.Workspace('eg_names', [state])
+    ws = lynx.kite.Workspace([state], name='eg_names')
     lk.remove_name('save_it_under_this_folder/eg_names', force=True)
     lk.fetch_workspace_output_states(ws, 'save_it_under_this_folder')
     entries = lk.list_dir('save_it_under_this_folder')
@@ -73,7 +73,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     lk = lynx.kite.LynxKite()
     eg = lk.createExampleGraph()
     lk.remove_name('just the eg', force=True)
-    ws = lynx.kite.Workspace('just the eg', [eg])
+    ws = lynx.kite.Workspace([eg], name='just the eg')
     # Saving to the "root" directory
     lk.save_workspace_recursively(ws, '')
     entries = lk.list_dir('')
@@ -92,7 +92,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     lk = lynx.kite.LynxKite()
     state = lk.createExampleGraph().sql(
         pp('select name from `vertices` where age = $ap')).output(name='table')
-    ws = lynx.kite.Workspace('ws params', [state], ws_parameters=[text('ap', '18.2')])
+    ws = lynx.kite.Workspace([state], name='ws params', ws_parameters=[text('ap', '18.2')])
     return ws
 
   def test_parametric_parameters_with_defaults(self):
@@ -122,7 +122,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
            .saveToSnapshot(path='this_is_my_snapshot'))
     lk.remove_name('trigger-folder', force=True)
     lk.remove_name('this_is_my_snapshot', force=True)
-    ws = lynx.kite.Workspace('trigger-test', [box], side_effect_paths=[lynx.kite.BoxPath(box)])
+    ws = lynx.kite.Workspace([box], name='trigger-test', side_effect_paths=[lynx.kite.BoxPath(box)])
     lk.save_workspace_recursively(ws, 'trigger-folder')
     # The boxId of the "Save to snapshot box" is box_0
     lk.trigger_box('trigger-folder/trigger-test', 'box_0')
@@ -137,11 +137,11 @@ class TestWorkspaceBuilder(unittest.TestCase):
     lk.remove_name('names_snapshot', force=True)
     lk.remove_name('ages_snapshot', force=True)
     lk.remove_name('trigger-folder', force=True)
-    ws = lynx.kite.Workspace('multi-trigger-test', [b1, b2],
+    ws = lynx.kite.Workspace([b1, b2], name='multi-trigger-test',
                              side_effect_paths=[lynx.kite.BoxPath(b1), lynx.kite.BoxPath(b2)])
     lk.fetch_workspace_output_states(ws, 'trigger-folder')
     for box_id in [box['id']
-                   for box in ws.to_json('trigger-folder/')
+                   for box in ws.to_json('trigger-folder/', ws.name)
                    if box['operationId'] == 'Save to snapshot']:
       lk.trigger_box('trigger-folder/multi-trigger-test', box_id)
     entries = lk.list_dir('')

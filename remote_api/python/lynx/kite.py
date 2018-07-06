@@ -197,7 +197,6 @@ def subworkspace(fn: Callable):
     # Build the workspace.
     outputs = _to_outputs(fn(*bound.args, **bound.kwargs))
     ws = Workspace(
-        name=f'{fn.__name__}{{unique_id}}',
         terminal_boxes=outputs + sec.top_level_side_effects,
         side_effect_paths=list(sec.all_triggerables()),
         input_boxes=input_boxes,
@@ -342,7 +341,8 @@ class LynxKite:
         box = add_box_with_inputs(real_name, args, kwargs)
         # If it is an import operation, we trigger the import here,
         # and return the modified (real) import box.
-        box_json = box.to_json(id_resolver=lambda _: 'untriggered_import_box', workspace_root='')
+        box_json = box.to_json(
+            id_resolver=lambda _: 'untriggered_import_box', workspace_root='', workspace_path='')
         import_result = self._send('/ajax/importBox', {'box': box_json})
         box.parameters['imported_table'] = import_result.guid
         box.parameters['last_settings'] = import_result.parameterSettings
@@ -532,31 +532,33 @@ class LynxKite:
     else:
       ws_root = save_under_root
 
-    needed_ws: Set[Workspace] = set()
+    needed_ws: Set[Tuple[str, Workspace]] = set()
 
-    def get_workspaces(ws: Workspace, unique_prefix: str = ''):
+    def get_subworkspaces(ws: Workspace, path: str = ws.name):
       for box in ws.custom_boxes():
         if box.workspace in needed_ws:
           continue
-        box_path = f'{unique_prefix} - {ws.id_of(box)}'
-        box.workspace.name = box.workspace.name.format(unique_id=box_path)
-        yield box.workspace
-        yield from get_workspaces(box.workspace, box_path)
+        if box.workspace.name == 'Anonymous':
+          box_path = f'{path}_subs/{ws.id_of(box)}'
+        else:
+          box_path = box.workspace.name
+        yield box_path, box.workspace
+        yield from get_subworkspaces(box.workspace, box_path)
 
-    needed_ws.update(get_workspaces(ws))
+    needed_ws.update(get_subworkspaces(ws))
     # Check name duplication in required workspaces
-    names = list(rws.name for rws in needed_ws)
-    if len(needed_ws) != len(set(rws.name for rws in needed_ws)):
+    names = list(name for (name, rws) in needed_ws)
+    if len(names) != len(set(names)):
       duplicates = [k for k, v in Counter(names).items() if v > 1]
       raise Exception(f'Duplicate custom box name(s): {duplicates}')
-    for rws in needed_ws:
-      self.save_workspace(ws_root + '/' + rws.name, _layout(rws.to_json(ws_root)))
+    for name, rws in needed_ws:
+      self.save_workspace(ws_root + '/' + name, _layout(rws.to_json(ws_root, name)))
     if save_under_root is not None:
       # Check if the "main" ws name conflicts with one of the custom box names
       if ws.name in names:
         raise Exception(f'Duplicate name: {ws.name}')
       self.save_workspace(
-          save_under_root + '/' + ws.name, _layout(ws.to_json(save_under_root)))
+          save_under_root + '/' + ws.name, _layout(ws.to_json(save_under_root, ws.name)))
     # If saved, we return the full name of the main workspace also.
     return (ws_root,
             _normalize_path(save_under_root + '/' + ws.name)
@@ -566,11 +568,11 @@ class LynxKite:
                                     save_under_root: str = None,
                                     ) -> Dict[Tuple[str, str], types.SimpleNamespace]:
     ws_root, _ = self.save_workspace_recursively(ws, save_under_root)
-    return self.fetch_states(ws.to_json(ws_root))
+    return self.fetch_states(ws.to_json(ws_root, ws.name))
     # TODO: clean up saved workspaces if save_under_root is not set.
 
   def get_state_id(self, state: 'State') -> str:
-    ws = Workspace('Anonymous', [state.box])
+    ws = Workspace([state.box])
     workspace_outputs = self.fetch_workspace_output_states(ws)
     box_id = ws.id_of(state.box)
     plug = state.output_plug_name
@@ -876,7 +878,7 @@ class Box:
       else:
         self.parameters[key] = str(value)
 
-  def _operationId(self, workspace_root: str) -> str:
+  def _operation_id(self, workspace_root: str, workspace_path: str) -> str:
     '''The id that we send to the backend to identify a box.'''
     raise NotImplementedError()
 
@@ -884,7 +886,9 @@ class Box:
     '''Either the name in the box catalog or the name under which the box is saved.'''
     raise NotImplementedError()
 
-  def to_json(self, id_resolver: Callable[['Box'], str], workspace_root: str) -> SerializedBox:
+  def to_json(
+          self, id_resolver: Callable[['Box'], str], workspace_root: str,
+          workspace_path: str) -> SerializedBox:
     '''Creates the json representation of a box in a workspace.
 
     The inputs have to be connected, and all the attributes have to be
@@ -893,10 +897,10 @@ class Box:
     def input_state(state):
       return {'boxId': id_resolver(state.box), 'id': state.output_plug_name}
 
-    operationId = self._operationId(workspace_root)
+    operation_id = self._operation_id(workspace_root, workspace_path + '_subs/' + id_resolver(self))
     return SerializedBox({
         'id': id_resolver(self),
-        'operationId': operationId,
+        'operationId': operation_id,
         'parameters': self.parameters,
         'x': 0, 'y': 0,
         'inputs': {plug: input_state(state) for plug, state in self.inputs.items()},
@@ -917,7 +921,7 @@ class Box:
     '''
     sec = SideEffectCollector()
     self.register(sec)
-    ws = Workspace('Anonymous', [self], side_effect_paths=list(sec.all_triggerables()))
+    ws = Workspace([self], side_effect_paths=list(sec.all_triggerables()))
     ws.trigger_all_side_effects()
 
 
@@ -937,7 +941,7 @@ class AtomicBox(Box):
     assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
         got_inputs, exp_inputs)
 
-  def _operationId(self, workspace_root):
+  def _operation_id(self, workspace_root, workspace_path):
     return self.bc.operation_id(self.operation)
 
   def name(self):
@@ -977,8 +981,11 @@ class CustomBox(Box):
     assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
         got_inputs, exp_inputs)
 
-  def _operationId(self, workspace_root):
-    return _normalize_path(workspace_root + '/' + self.name())
+  def _operation_id(self, workspace_root: str, workspace_path: str):
+    if self.workspace.name == 'Anonymous':
+      return _normalize_path(workspace_root + '/' + workspace_path)
+    else:
+      return _normalize_path(workspace_root + '/' + self.workspace.name)
 
   def name(self):
     return self.workspace.name
@@ -1218,8 +1225,9 @@ class SideEffectCollector:
 class Workspace:
   '''Immutable class representing a LynxKite workspace.'''
 
-  def __init__(self, name: str,
-               terminal_boxes: List[Box],
+  def __init__(self,
+               terminal_boxes: List[Box] = [],
+               name: str = 'Anonymous',
                side_effect_paths: List[BoxPath] = [],
                input_boxes: List[AtomicBox] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
@@ -1263,9 +1271,9 @@ class Workspace:
   def _ws_parameters_to_str(self):
     return json.dumps([param.to_json() for param in self._ws_parameters])
 
-  def to_json(self, workspace_root: str) -> List[SerializedBox]:
+  def to_json(self, workspace_root: str, workspace_path: str) -> List[SerializedBox]:
     non_anchor_boxes = [
-        box.to_json(self.id_of, workspace_root) for box in self.all_boxes]
+        box.to_json(self.id_of, workspace_root, workspace_path) for box in self.all_boxes]
     # We use ws_parameters to customize _anchor_box.
     ab = copy.deepcopy(_anchor_box)
     ab['parameters'] = dict(parameters=self._ws_parameters_to_str())
