@@ -134,11 +134,11 @@ def subworkspace(fn: Callable):
   Use ``@ws_param`` to take workspace parameters.
 
   To define a custom box with side-effects, take an argument with a default value of
-  SideEffectCollector(). A fresh SideEffectCollector() will be created each time the function is
+  SideEffectCollector.AUTO. A fresh SideEffectCollector() will be provided each time the function is
   called. ::
 
     @subworkspace
-    def my_func(input1, sec=SideEffectCollector()):
+    def my_func(input1, sec=SideEffectCollector.AUTO):
       input1.saveAsSnapshot('x').register(sec)
 
     my_func(lk.createExampleGraph()).trigger()
@@ -168,7 +168,7 @@ def subworkspace(fn: Callable):
         return value
     sec = SideEffectCollector()
     secs = [p.name for p in signature.parameters.values()
-            if type(p.default) is SideEffectCollector]
+            if p.default is SideEffectCollector.AUTO]
     assert len(secs) <= 1, f'More than one SideEffectCollector parameters found for {fn}'
     bound = signature.bind(*args, **kwargs)
     for k, v in bound.arguments.items():
@@ -1190,6 +1190,8 @@ class FakeBoxPathForInputParent(BoxPath):
 
 class SideEffectCollector:
 
+  AUTO: 'SideEffectCollector'  # For @subworkspace.
+
   def __init__(self):
     self.top_level_side_effects: List[Box] = []
 
@@ -1212,6 +1214,9 @@ class SideEffectCollector:
     btb = 'To build ==> ' + str([b.name() for b in self.top_level_side_effects])
     btt = ' To trigger ==> ' + str([btt for btt in self.all_triggerables()])
     return btb + btt
+
+
+SideEffectCollector.AUTO = SideEffectCollector()
 
 
 class Workspace:

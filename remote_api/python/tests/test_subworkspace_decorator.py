@@ -131,7 +131,7 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
     lk = lynx.kite.LynxKite()
 
     @subworkspace
-    def save(t, sec=lynx.kite.SideEffectCollector()):
+    def save(t, sec=lynx.kite.SideEffectCollector.AUTO):
       t.saveToSnapshot(path='sideeffect/saved').register(sec)
 
     lk.remove_name('sideeffect', force=True)
