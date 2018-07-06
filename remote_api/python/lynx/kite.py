@@ -1308,7 +1308,7 @@ class Workspace:
     return [self.id_of(box) for box in self._terminal_boxes]
 
   def __call__(self, *args, **kwargs) -> Box:
-    inputs = _to_input_map(self.name, self.inputs, args)
+    inputs = _to_input_map(self.safename(), self.inputs, args)
     return _new_box(self._bc, self.lk, self, inputs=inputs, parameters=kwargs)
 
   def _trigger_box(self, box_to_trigger: BoxPath, full_path: str):
