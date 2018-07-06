@@ -523,15 +523,15 @@ class LynxKite:
       ws_root = _random_ws_folder()
     else:
       ws_root = save_under_root
-
+    main_name = ws.safename()
     needed_ws: Set[Tuple[str, Workspace]] = set()
 
-    def collect_subworkspaces(ws: Workspace, path: str = ws.name):
+    def collect_subworkspaces(ws: Workspace, path: str = main_name):
       for box in ws.custom_boxes():
-        if box.workspace.name == 'Anonymous':
-          box_path = f'{path}_subs/{ws.id_of(box)}'
-        else:
+        if box.workspace.name:
           box_path = box.workspace.name
+        else:
+          box_path = f'{path}_subs/{ws.id_of(box)}'
         if (box_path, box.workspace) in needed_ws:
           continue
         needed_ws.add((box_path, box.workspace))
@@ -547,20 +547,20 @@ class LynxKite:
       self.save_workspace(ws_root + '/' + name, _layout(rws.to_json(ws_root, name)))
     if save_under_root is not None:
       # Check if the "main" ws name conflicts with one of the custom box names
-      if ws.name in names:
-        raise Exception(f'Duplicate name: {ws.name}')
+      if main_name in names:
+        raise Exception(f'Duplicate name: {main_name}')
       self.save_workspace(
-          save_under_root + '/' + ws.name, _layout(ws.to_json(save_under_root, ws.name)))
+          save_under_root + '/' + main_name, _layout(ws.to_json(save_under_root, main_name)))
     # If saved, we return the full name of the main workspace also.
     return (ws_root,
-            _normalize_path(save_under_root + '/' + ws.name)
+            _normalize_path(save_under_root + '/' + main_name)
             if (save_under_root is not None) else '')
 
   def fetch_workspace_output_states(self, ws: 'Workspace',
                                     save_under_root: str = None,
                                     ) -> Dict[Tuple[str, str], types.SimpleNamespace]:
     ws_root, _ = self.save_workspace_recursively(ws, save_under_root)
-    return self.fetch_states(ws.to_json(ws_root, ws.name))
+    return self.fetch_states(ws.to_json(ws_root, ws.safename()))
     # TODO: clean up saved workspaces if save_under_root is not set.
 
   def get_state_id(self, state: 'State') -> str:
@@ -975,10 +975,10 @@ class CustomBox(Box):
         got_inputs, exp_inputs)
 
   def _operation_id(self, workspace_root: str, subworkspace_path: str):
-    if self.workspace.name == 'Anonymous':
-      return _normalize_path(workspace_root + '/' + subworkspace_path)
-    else:
+    if self.workspace.name:
       return _normalize_path(workspace_root + '/' + self.workspace.name)
+    else:
+      return _normalize_path(workspace_root + '/' + subworkspace_path)
 
   def name(self):
     return self.workspace.name
@@ -1225,7 +1225,7 @@ class Workspace:
 
   def __init__(self,
                terminal_boxes: List[Box] = [],
-               name: str = 'Anonymous',
+               name: str = None,
                side_effect_paths: List[BoxPath] = [],
                input_boxes: List[AtomicBox] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
@@ -1247,6 +1247,9 @@ class Workspace:
     self._bc = self._terminal_boxes[0].bc
     for box in _reverse_bfs_on_boxes(self._terminal_boxes):
       self._add_box(box)
+
+  def safename(self) -> str:
+    return self.name or 'Anonymous'
 
   def _add_box(self, box):
     self.all_boxes.add(box)
@@ -1310,7 +1313,7 @@ class Workspace:
 
     Assumes the workspace is saved under `saved_under_root`.
     '''
-    full_path = _normalize_path(saved_under_folder + '/' + self.name)
+    full_path = _normalize_path(saved_under_folder + '/' + self.safename())
     self._trigger_box(box_to_trigger, full_path)
 
   def trigger(self, box_to_trigger: BoxPath):
