@@ -526,20 +526,20 @@ class LynxKite:
 
     needed_ws: Set[Tuple[str, Workspace]] = set()
 
-    def get_subworkspaces(ws: Workspace, path: str = ws.name):
+    def collect_subworkspaces(ws: Workspace, path: str = ws.name):
       for box in ws.custom_boxes():
-        if box.workspace in needed_ws:
-          continue
         if box.workspace.name == 'Anonymous':
           box_path = f'{path}_subs/{ws.id_of(box)}'
         else:
           box_path = box.workspace.name
-        yield box_path, box.workspace
-        yield from get_subworkspaces(box.workspace, box_path)
+        if (box_path, box.workspace) in needed_ws:
+          continue
+        needed_ws.add((box_path, box.workspace))
+        collect_subworkspaces(box.workspace, box_path)
 
-    needed_ws.update(get_subworkspaces(ws))
+    collect_subworkspaces(ws)
     # Check name duplication in required workspaces
-    names = list(name for (name, rws) in needed_ws)
+    names = [name for (name, rws) in needed_ws]
     if len(names) != len(set(names)):
       duplicates = [k for k, v in Counter(names).items() if v > 1]
       raise Exception(f'Duplicate custom box name(s): {duplicates}')
