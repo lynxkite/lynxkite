@@ -1,7 +1,7 @@
 import pandas as pd
 import unittest
 import lynx.kite
-from lynx.kite import pp, ws_params, subworkspace
+from lynx.kite import pp, ws_param, subworkspace
 
 
 class TestLazyWorkspaceDecorator(unittest.TestCase):
@@ -38,12 +38,12 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
   def test_recursive_instances(self):
     lk = lynx.kite.LynxKite()
 
-    @ws_params('p')
+    @ws_param('p')
     @subworkspace
     def f(x):
       return x.sql1(sql=pp('select $p from vertices'))
 
-    @ws_params('p')
+    @ws_param('p')
     @subworkspace
     def g(x):
       return f(x, p=pp('$p'))
@@ -89,10 +89,24 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
   def test_ws_params(self):
     lk = lynx.kite.LynxKite()
 
-    @ws_params('name')
+    @ws_param('name')
     @subworkspace
     def f(t):
       return t.sql1(sql=pp('select age from vertices where name == "$name"'))
+
+    eg = lk.createExampleGraph()
+    result = f(eg, name='Bob')
+    expected = pd.DataFrame({'age': [50.3]})
+    pd.testing.assert_frame_equal(result.df(), expected, check_like=True)
+
+  def test_ws_multiple_params_with_defaults(self):
+    lk = lynx.kite.LynxKite()
+
+    @ws_param('name')
+    @ws_param('column', default='age')
+    @subworkspace
+    def f(t):
+      return t.sql1(sql=pp('select $column from vertices where name == "$name"'))
 
     eg = lk.createExampleGraph()
     result = f(eg, name='Bob')
@@ -136,12 +150,12 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
   def test_easy_ws_params(self):
     lk = lynx.kite.LynxKite()
 
-    @ws_params('query')
+    @ws_param('query')
     @subworkspace
     def f(t, query):
       return t.sql1(sql=query)
 
-    @ws_params('column')
+    @ws_param('column')
     @subworkspace
     def g(t):
       return f(t, query=pp('select $column from vertices limit 1'))
