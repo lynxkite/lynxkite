@@ -131,14 +131,7 @@ def subworkspace(fn: Callable):
   ``my_func()`` can have any number of positional or keyword arguments. The arguments carrying
   states will be turned into the inputs of the custom box.
 
-  Use ``@ws_params`` to take workspace parameters::
-
-    @ws_params('p1', 'p2')
-    @subworkspace
-    def my_func(input1):
-      return input1.sql1(sql=pp('select $p1, $p2 from vertices'))
-
-    my_func(lk.createExampleGraph(), p1='age', p2='name')
+  Use ``@ws_param`` to take workspace parameters.
 
   To define a custom box with side-effects, take an argument with a default value of
   SideEffectCollector(). A fresh SideEffectCollector() will be created each time the function is
@@ -154,12 +147,12 @@ def subworkspace(fn: Callable):
   def wrapper(*args, _ws_params: List[WorkspaceParameter] = [], **kwargs):
     signature = inspect.signature(fn)
     # Separate workspace parameters from the normal Python parameters.
-    ws_params = {p.name: kwargs[p.name] for p in _ws_params}
-    for k in ws_params:
-      if k in signature.parameters:
-        kwargs[k] = pp('$' + k)
-      else:
-        del kwargs[k]
+    ws_param_bindings = {wp.name: kwargs[wp.name] for wp in _ws_params if wp.name in kwargs}
+    for wp in _ws_params:
+      if wp.name in signature.parameters:
+        kwargs[wp.name] = pp('$' + wp.name)
+      elif wp.name in kwargs:
+        del kwargs[wp.name]
 
     # Replace states with input boxes.
     input_states = []
@@ -203,16 +196,17 @@ def subworkspace(fn: Callable):
         ws_parameters=_ws_params)
 
     # Return the custom box.
-    return ws(*input_states, **ws_params)
+    return ws(*input_states, **ws_param_bindings)
   return wrapper
 
 
-def ws_params(*params: str):
-  '''Adds workspace parameters to the wrapped subworkspace.
+def ws_param(name: str, default: str='', description: str=''):
+  '''Adds a workspace parameter to the wrapped subworkspace.
 
   Example use::
 
-    @ws_params('p1', 'p2')
+    @ws_param('p1')
+    @ws_param('p2', default='x', description='The second column.')
     @subworkspace
     def my_func(input1):
       return input1.sql1(sql=pp('select $p1, $p2 from vertices'))
@@ -228,12 +222,10 @@ def ws_params(*params: str):
     def my_func(input1, p1):
       return input1.sql1(sql=p1)  # Equivalent to sql=pp('$p1').
   '''
-  texts = [text(p) for p in params]
-
   def decorator(fn: Callable):
     @functools.wraps(fn)
-    def wrapper(*args, **kwargs):
-      return fn(*args, _ws_params=texts, **kwargs)
+    def wrapper(*args, _ws_params=[], **kwargs):
+      return fn(*args, _ws_params=_ws_params + [text(name, default=default)], **kwargs)
     return wrapper
   return decorator
 
