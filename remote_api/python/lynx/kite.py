@@ -334,7 +334,7 @@ class LynxKite:
         # If it is an import operation, we trigger the import here,
         # and return the modified (real) import box.
         box_json = box.to_json(
-            id_resolver=lambda _: 'untriggered_import_box', workspace_root='', workspace_path='')
+            id_resolver=lambda _: 'untriggered_import_box', workspace_root='', subworkspace_path='')
         import_result = self._send('/ajax/importBox', {'box': box_json})
         box.parameters['imported_table'] = import_result.guid
         box.parameters['last_settings'] = import_result.parameterSettings
@@ -870,7 +870,7 @@ class Box:
       else:
         self.parameters[key] = str(value)
 
-  def _operation_id(self, workspace_root: str, workspace_path: str) -> str:
+  def _operation_id(self, workspace_root: str, subworkspace_path: str) -> str:
     '''The id that we send to the backend to identify a box.'''
     raise NotImplementedError()
 
@@ -880,7 +880,7 @@ class Box:
 
   def to_json(
           self, id_resolver: Callable[['Box'], str], workspace_root: str,
-          workspace_path: str) -> SerializedBox:
+          subworkspace_path: str) -> SerializedBox:
     '''Creates the json representation of a box in a workspace.
 
     The inputs have to be connected, and all the attributes have to be
@@ -889,7 +889,8 @@ class Box:
     def input_state(state):
       return {'boxId': id_resolver(state.box), 'id': state.output_plug_name}
 
-    operation_id = self._operation_id(workspace_root, workspace_path + '_subs/' + id_resolver(self))
+    operation_id = self._operation_id(
+        workspace_root, subworkspace_path + '_subs/' + id_resolver(self))
     return SerializedBox({
         'id': id_resolver(self),
         'operationId': operation_id,
@@ -933,7 +934,7 @@ class AtomicBox(Box):
     assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
         got_inputs, exp_inputs)
 
-  def _operation_id(self, workspace_root, workspace_path):
+  def _operation_id(self, workspace_root, subworkspace_path):
     return self.bc.operation_id(self.operation)
 
   def name(self):
@@ -973,9 +974,9 @@ class CustomBox(Box):
     assert got_inputs == exp_inputs, 'Got box inputs: {}. Expected: {}'.format(
         got_inputs, exp_inputs)
 
-  def _operation_id(self, workspace_root: str, workspace_path: str):
+  def _operation_id(self, workspace_root: str, subworkspace_path: str):
     if self.workspace.name == 'Anonymous':
-      return _normalize_path(workspace_root + '/' + workspace_path)
+      return _normalize_path(workspace_root + '/' + subworkspace_path)
     else:
       return _normalize_path(workspace_root + '/' + self.workspace.name)
 
@@ -1268,9 +1269,9 @@ class Workspace:
   def _ws_parameters_to_str(self):
     return json.dumps([param.to_json() for param in self._ws_parameters])
 
-  def to_json(self, workspace_root: str, workspace_path: str) -> List[SerializedBox]:
+  def to_json(self, workspace_root: str, subworkspace_path: str) -> List[SerializedBox]:
     non_anchor_boxes = [
-        box.to_json(self.id_of, workspace_root, workspace_path) for box in self.all_boxes]
+        box.to_json(self.id_of, workspace_root, subworkspace_path) for box in self.all_boxes]
     # We use ws_parameters to customize _anchor_box.
     ab = copy.deepcopy(_anchor_box)
     ab['parameters'] = dict(parameters=self._ws_parameters_to_str())
