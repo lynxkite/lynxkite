@@ -140,3 +140,20 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
     lk.remove_name('sideeffect', force=True)
     save_eg.trigger_all_side_effects()
     self.assertEqual([e.name for e in lk.list_dir('sideeffect')], ['sideeffect/saved'])
+
+  def test_easy_ws_params(self):
+    lk = lynx.kite.LynxKite()
+
+    @ws_params('query')
+    @subworkspace
+    def f(t, query):
+      return t.sql1(sql=query)
+
+    @ws_params('column')
+    @subworkspace
+    def g(t):
+      return f(t, query=pp('select $column from vertices limit 1'))
+
+    eg = lk.createExampleGraph()
+    result = g(eg, column='name')
+    pd.testing.assert_frame_equal(result.df(), pd.DataFrame({'name': ['Adam']}))
