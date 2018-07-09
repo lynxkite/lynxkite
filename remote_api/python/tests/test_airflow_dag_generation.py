@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import lynx.kite
 import lynx.automation
 import warnings
-from test_dag_creation import create_complex_test_workspace
+from test_dag_creation import create_complex_test_workspace, create_complex_test_wss
 
 
 def deps_of_airflow_dag(airflow_dag):
@@ -171,3 +171,14 @@ class TestAirflowDagGeneration(unittest.TestCase):
           'bad_parametrized_dag2',
           dag_args=dict(schedule_interval='0 0 1 * *'))
     self.assertTrue('You cannot override schedule_interval' in str(context.exception))
+
+  def test_generated_airflow_task_ids(self):
+    # We suppress deprecation warnings coming from Airflow
+    warnings.simplefilter("ignore")
+    lk = lynx.kite.LynxKite()
+    wss = create_complex_test_wss()
+    self.assertEqual(set(wss.to_airflow_DAG('task_id_dag').task_ids),
+                     {'input_i1', 'input_sensor_i1', 'save_workspace', 'input_i3',
+                      'input_sensor_i3', 'input_i2', 'input_sensor_i2',
+                      'snapshotter--saveToSnapshot_SB2', 'output_o3',
+                      'snapshotter--saveToSnapshot_SB1', 'output_o1', 'output_o2'})
