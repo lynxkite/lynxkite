@@ -330,6 +330,7 @@ class WorkspaceSequence:
       return id[:218] + hashlib.md5(id[218:].encode('utf-8')).hexdigest()
 
     def airflow_allowed_id(raw_id: str) -> str:
+      # See: https://github.com/apache/incubator-airflow/blob/master/airflow/utils/helpers.py#L51
       allowed_char_id = re.sub(r'[^0-9a-zA-Z\-\.]', '_', raw_id)
       if len(allowed_char_id) > 250:
         return hash_end(allowed_char_id)
