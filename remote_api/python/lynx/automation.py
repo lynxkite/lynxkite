@@ -327,7 +327,7 @@ class WorkspaceSequence:
     '''
 
     def hash_end(id: str) -> str:
-      return id[:240] + hashlib.md5(id[240:].encode('utf-8')).hexdigest()[:10]
+      return id[:218] + hashlib.md5(id[218:].encode('utf-8')).hexdigest()
 
     def airflow_allowed_id(raw_id: str) -> str:
       allowed_char_id = re.sub(r'[^0-9a-zA-Z\-\.]', '_', raw_id)
