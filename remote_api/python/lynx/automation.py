@@ -331,11 +331,10 @@ class WorkspaceSequence:
 
     def airflow_allowed_id(raw_id: str) -> str:
       allowed_char_id = re.sub(r'[^0-9a-zA-Z\-\.]', '_', raw_id)
-      proper_id = allowed_char_id
-      if len(proper_id) > 250:
-        return hash_end(proper_id)
+      if len(allowed_char_id) > 250:
+        return hash_end(allowed_char_id)
       else:
-        return proper_id
+        return allowed_char_id
 
     assert not 'start_date' in task_default_args, 'You cannot override start_date.'
     assert not 'owner' in task_default_args, 'You cannot override owner.'
