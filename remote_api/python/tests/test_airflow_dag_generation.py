@@ -221,8 +221,8 @@ class TestAirflowDagGeneration(unittest.TestCase):
     task_ids = wss3.to_airflow_DAG('task_id_dag').task_ids
     self.assertEqual(len(task_ids), 4)  # output, save, 2 exports
     export_task_ids = [tid for tid in task_ids if 'export' in tid]
-    self.assertEqual(export_task_ids[0][:240], export_task_ids[1][:240])
-    self.assertNotEqual(export_task_ids[0][240:], export_task_ids[1][240:])
+    self.assertEqual(export_task_ids[0][:218], export_task_ids[1][:218])
+    self.assertNotEqual(export_task_ids[0][218:], export_task_ids[1][218:])
 
     for task_id in task_ids:
       self.assertTrue(len(task_id) <= 250)
