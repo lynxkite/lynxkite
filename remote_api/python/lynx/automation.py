@@ -21,6 +21,8 @@ from lynx.kite import LynxKite, State, CustomBox, BoxPath, Workspace, TableSnaps
 from lynx.kite import _normalize_path, _step_back, _timestamp_is_valid, _topological_sort, escape
 from collections import deque, defaultdict, OrderedDict
 import datetime
+import re
+import hashlib
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.sensors import BaseSensorOperator
@@ -324,6 +326,17 @@ class WorkspaceSequence:
     sequence. Airflow task dependencies are defined based on the output of `to_dag`.
     '''
 
+    def hash_end(id: str) -> str:
+      return id[:240] + hashlib.md5(id[240:].encode('utf-8')).hexdigest()[:10]
+
+    def airflow_allowed_id(raw_id: str) -> str:
+      allowed_char_id = re.sub(r'[^0-9a-zA-Z\-\.]', '_', raw_id)
+      proper_id = allowed_char_id
+      if len(proper_id) > 250:
+        return hash_end(proper_id)
+      else:
+        return proper_id
+
     assert not 'start_date' in task_default_args, 'You cannot override start_date.'
     assert not 'owner' in task_default_args, 'You cannot override owner.'
     assert not 'schedule_interval' in dag_args, 'You cannot override schedule_interval.'
@@ -345,7 +358,7 @@ class WorkspaceSequence:
     # Creating Airflow operators for tasks.
     for t in task_dag:
       python_op = PythonOperator(
-          task_id=t.id(),
+          task_id=airflow_allowed_id(t.id()),
           provide_context=True,
           python_callable=lambda ds, execution_date, t=t, **kwargs: t.run(execution_date),
           dag=airflow_dag)
