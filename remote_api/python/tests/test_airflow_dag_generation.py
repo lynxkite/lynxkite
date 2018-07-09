@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 import lynx.kite
 import lynx.automation
 import warnings
-from test_dag_creation import create_complex_test_workspace, create_complex_test_wss
+from test_dag_creation import create_complex_test_workspace, create_test_wss
+from test_dag_creation import create_test_workspace_with_ugly_ids
 
 
 def deps_of_airflow_dag(airflow_dag):
@@ -176,9 +177,24 @@ class TestAirflowDagGeneration(unittest.TestCase):
     # We suppress deprecation warnings coming from Airflow
     warnings.simplefilter("ignore")
     lk = lynx.kite.LynxKite()
-    wss = create_complex_test_wss()
+
+    # Original test wss
+    wss = create_test_wss(create_complex_test_workspace())
     self.assertEqual(set(wss.to_airflow_DAG('task_id_dag').task_ids),
                      {'input_i1', 'input_sensor_i1', 'save_workspace', 'input_i3',
                       'input_sensor_i3', 'input_i2', 'input_sensor_i2',
                       'snapshotter--saveToSnapshot_SB2', 'output_o3',
                       'snapshotter--saveToSnapshot_SB1', 'output_o1', 'output_o2'})
+
+    # RAIN wss
+    wss2 = create_test_wss(create_test_workspace_with_ugly_ids())
+    self.assertEqual(set(wss2.to_airflow_DAG('task_id_dag').task_ids),
+                     {'input_site', 'input_oss_user_average30',
+                      'output_active_cells', 'output_available_cells',
+                      'input_sensor_site', 'save_workspace',
+                      'input_sensor_oss_user_average30',
+                      'where_to_sell--exportToCSV_ROOT__rain_CELL_AVAILABILITY_LISTS____date.replace___-_________.split________0__v1.0CELL_COUNT_SUFFIX',
+                      'where_to_sell--exportToCSV_ROOT__rain_CELL_AVAILABILITY_LISTS____date.replace___-_________.split________0__v1.0',
+                      'input_oss_combined30', 'input_sensor_oss_combined30'})
+
+    # Test wss with long id

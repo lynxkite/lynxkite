@@ -67,15 +67,80 @@ def create_complex_test_workspace():
   return main_workspace
 
 
-def create_complex_test_wss():
+def create_test_wss(ws):
   return lynx.automation.WorkspaceSequence(
-      ws=create_complex_test_workspace(),
+      ws=ws,
       schedule='0 0 * * *',
       start_date=datetime(2018, 7, 1),
       params={},
       lk_root='airflow_test_wss',
       dfs_root='',
       input_recipes=[])
+
+
+def create_test_workspace_with_ugly_ids():
+  ''' Mock workspace from RAIN project. '''
+
+  def _export_path() -> str:
+    base_dir = 'rain/CELL_AVAILABILITY_LISTS/'
+    active_suffix = 'CELL_COUNT_SUFFIX'
+    model_v = '1.0'
+    scala = 'date.replace("-", "").split(" ")(0)'
+    return {
+        'available_cells': f'ROOT$${base_dir}/${{{scala}}}v{model_v}',
+        'active_cells': f'ROOT$${base_dir}/${{{scala}}}v{model_v}{active_suffix}',
+    }
+
+  lk = lynx.kite.LynxKite()
+
+  @lk.workspace()
+  def site_availability(oss_combined30, oss_user_average30, site):
+    daily_usage = lk.sql('''
+      select * from one left join two on one.site_id = two.site_id
+    ''', oss_combined30, oss_user_average30)
+
+    usage_ratios = daily_usage.sql('''
+      select * from input where rain_rtth_down_day > 0
+    ''')
+
+    cellsite_criteria = lk.sql('''
+      select * from one left join two on one.site_id = two.id cross join three
+    ''', daily_usage, site, usage_ratios)
+
+    available_cells = cellsite_criteria.sql('''select * from input''', persist='yes')
+
+    active_cells = oss_combined30.sql(
+        'select site_id, count(distinct cell_id) as cell_count from input group by site_id',
+        persist='yes')
+
+    return {
+        'available_cells': available_cells,
+        'active_cells': active_cells,
+    }
+
+  @lk.workspace_with_side_effects(parameters=[lynx.kite.text('date')])
+  def where_to_sell(sec, oss_combined, oss_user_average, site):
+    sa = site_availability(oss_combined, oss_user_average, site)
+    available_cells = sa['available_cells']
+    active_cells = sa['active_cells']
+    paths = _export_path()
+    available_cells.exportToCSV(path=lynx.kite.pp(paths['available_cells'])).register(sec)
+    active_cells.exportToCSV(path=lynx.kite.pp(paths['active_cells'])).register(sec)
+    return {
+        'available_cells': available_cells,
+        'active_cells': active_cells,
+    }
+
+  @lk.workspace_with_side_effects(parameters=[lynx.kite.text('date')])
+  def rain(sec, oss_combined30, oss_user_average30, site):
+    wts = where_to_sell(oss_combined30, oss_user_average30, site, date=lynx.kite.pp('${date}'))
+    wts.register(sec)
+    return {
+        'available_cells': wts['available_cells'],
+        'active_cells': wts['active_cells'],
+    }
+
+  return rain
 
 
 class TestDagCreation(unittest.TestCase):
