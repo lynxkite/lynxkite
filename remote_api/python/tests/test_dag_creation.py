@@ -67,6 +67,17 @@ def create_complex_test_workspace():
   return main_workspace
 
 
+def create_complex_test_wss():
+  return lynx.automation.WorkspaceSequence(
+      ws=create_complex_test_workspace(),
+      schedule='0 0 * * *',
+      start_date=datetime(2018, 7, 1),
+      params={},
+      lk_root='airflow_test_wss',
+      dfs_root='',
+      input_recipes=[])
+
+
 class TestDagCreation(unittest.TestCase):
 
   def get_test_workspace(self):
