@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 import lynx.kite
 import lynx.automation
 import warnings
+import random
+import re
 from test_dag_creation import create_complex_test_workspace, create_test_wss
 from test_dag_creation import create_test_workspace_with_ugly_ids
 
@@ -187,8 +189,10 @@ class TestAirflowDagGeneration(unittest.TestCase):
                       'snapshotter--saveToSnapshot_SB1', 'output_o1', 'output_o2'})
 
     # RAIN wss
+    # TODO :rewrite this after we implemented nice task ids
     wss2 = create_test_wss(create_test_workspace_with_ugly_ids())
-    self.assertEqual(set(wss2.to_airflow_DAG('task_id_dag').task_ids),
+    task_ids = wss2.to_airflow_DAG('task_id_dag').task_ids
+    self.assertEqual(set(task_ids),
                      {'input_site', 'input_oss_user_average30',
                       'output_active_cells', 'output_available_cells',
                       'input_sensor_site', 'save_workspace',
@@ -196,5 +200,30 @@ class TestAirflowDagGeneration(unittest.TestCase):
                       'where_to_sell--exportToCSV_ROOT__rain_CELL_AVAILABILITY_LISTS____date.replace___-_________.split________0__v1.0CELL_COUNT_SUFFIX',
                       'where_to_sell--exportToCSV_ROOT__rain_CELL_AVAILABILITY_LISTS____date.replace___-_________.split________0__v1.0',
                       'input_oss_combined30', 'input_sensor_oss_combined30'})
+    for task_id in task_ids:
+      self.assertTrue(len(task_id) <= 250)
+      self.assertIsNone(re.search(r'[^0-9a-zA-Z\-\.\_]', task_id))
 
     # Test wss with long id
+    # random string from 'X', 'Y' and 'Z' with length 300
+    table_param = ''.join(random.choices('XYZ', k=300))
+    table_param2 = table_param[:299]
+
+    @lk.workspace_with_side_effects(parameters=[lynx.kite.text('date')])
+    def export_eg(se_collector):
+      exp = lk.createExampleGraph().exportToParquet(table=lynx.kite.pp(f'${{{table_param}}}'))
+      exp.register(se_collector)
+      exp2 = lk.createExampleGraph().exportToParquet(table=lynx.kite.pp(f'${{{table_param2}}}'))
+      exp2.register(se_collector)
+      return dict(g=lk.createExampleGraph())
+
+    wss3 = create_test_wss(export_eg)
+    task_ids = wss3.to_airflow_DAG('task_id_dag').task_ids
+    self.assertEqual(len(task_ids), 4)  # output, save, 2 exports
+    export_task_ids = [tid for tid in task_ids if 'export' in tid]
+    self.assertEqual(export_task_ids[0][:240], export_task_ids[1][:240])
+    self.assertNotEqual(export_task_ids[0][240:], export_task_ids[1][240:])
+
+    for task_id in task_ids:
+      self.assertTrue(len(task_id) <= 250)
+      self.assertIsNone(re.search(r'[^0-9a-zA-Z\-\.\_]', task_id))
