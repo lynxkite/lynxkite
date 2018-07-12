@@ -72,9 +72,7 @@ def create_test_wss(ws):
       ws=ws,
       schedule='0 0 * * *',
       start_date=datetime(2018, 7, 1),
-      params={},
       lk_root='airflow_test_wss',
-      dfs_root='',
       input_recipes=[])
 
 
@@ -203,8 +201,7 @@ class TestDagCreation(unittest.TestCase):
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)
     day_before = self.test_date - timedelta(days=1)
     return lynx.automation.WorkspaceSequence(ws, schedule='0 0 * * *', start_date=day_before,
-                                             lk_root='ws_seqence_to_dag', input_recipes=[input_recipe] * 3,
-                                             params={}, dfs_root='')
+                                             lk_root='ws_seqence_to_dag', input_recipes=[input_recipe] * 3)
 
   def test_atomic_parents(self):
     # test parent of terminal boxes
@@ -350,8 +347,7 @@ class TestDagCreation(unittest.TestCase):
 
     wss = lynx.automation.WorkspaceSequence(big_workspace, schedule='0 0 * * *',
                                             start_date=datetime(2018, 1, 1),
-                                            lk_root='big folder', input_recipes=[],
-                                            params={}, dfs_root='')
+                                            lk_root='big folder', input_recipes=[])
     start_at = time.time()
     wss.to_dag()
     elapsed = time.time() - start_at
