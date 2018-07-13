@@ -10,9 +10,7 @@ Example usage (the code must be in the dags folder of Airflow)::
         ws=trivial,
         schedule='* * * * *',
         start_date=datetime(2018, 5, 10),
-        params={},
         lk_root='airflow_test',
-        dfs_root='',
         input_recipes=[])
     eg_dag = wss.to_airflow_DAG('eg_dag')
 '''
@@ -243,16 +241,15 @@ class WorkspaceSequence:
   timestamps, wrapped in a workspace which can get inputs, and saves outputs.
   '''
 
-  def __init__(self, ws: Workspace, schedule: str, start_date: datetime.datetime,
-               params: Dict[str, Any], lk_root: str, dfs_root: str,
-               input_recipes: List[InputRecipe]) -> None:
+  def __init__(self, ws: Workspace, schedule: str,
+               start_date: datetime.datetime, lk_root: str,
+               input_recipes: List[InputRecipe], params: Dict[str, Any]={}) -> None:
     self.ws = ws
     self.lk = self.ws.lk
     self._schedule = schedule
     self._start_date = start_date
     self.params = params
     self.lk_root = lk_root
-    self._dfs_root = dfs_root
     self.input_names = self.ws.inputs  # For the order of the inputs
     self.input_recipes = dict(zip(self.input_names, input_recipes))
     self.input_sequences: Dict[str, TableSnapshotSequence] = {}
@@ -463,7 +460,7 @@ class WorkspaceSequenceInstance:
     self._lk.remove_name(path, force=True)
     ws = self.wrapper_ws()
     for box_path in ws.side_effect_paths():
-      if box_path.base.parameters['path'] == path:
+      if 'path' in box_path.base.parameters and box_path.base.parameters['path'] == path:
         ws.trigger_saved(box_path, self.wrapper_folder_name())
         break
     else:
