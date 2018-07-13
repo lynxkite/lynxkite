@@ -460,7 +460,7 @@ class WorkspaceSequenceInstance:
     self._lk.remove_name(path, force=True)
     ws = self.wrapper_ws()
     for box_path in ws.side_effect_paths():
-      if box_path.base.parameters['path'] == path:
+      if 'path' in box_path.base.parameters and box_path.base.parameters['path'] == path:
         ws.trigger_saved(box_path, self.wrapper_folder_name())
         break
     else:
