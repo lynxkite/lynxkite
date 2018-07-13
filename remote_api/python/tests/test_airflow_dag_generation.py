@@ -33,9 +33,7 @@ class TestAirflowDagGeneration(unittest.TestCase):
         ws=trivial,
         schedule='* * * * *',
         start_date=datetime(2018, 5, 10),
-        params={},
         lk_root='generated_airflow_dag_test',
-        dfs_root='',
         input_recipes=[])
     trivial_eg_dag = wss.to_airflow_DAG('trivial_eg_dag')
     self.assertEqual(trivial_eg_dag.schedule_interval, '* * * * *')
@@ -61,9 +59,7 @@ class TestAirflowDagGeneration(unittest.TestCase):
         ws=create_complex_test_workspace(),
         schedule='0 3 * * *',
         start_date=datetime(2018, 5, 11),
-        params={},
         lk_root='generated_airflow_dag_test',
-        dfs_root='',
         input_recipes=[])
     complex_dag = wss.to_airflow_DAG('complex_dag')
     self.assertEqual(complex_dag.schedule_interval, '0 3 * * *')
@@ -127,9 +123,7 @@ class TestAirflowDagGeneration(unittest.TestCase):
         ws=create_complex_test_workspace(),
         schedule='0 3 * * *',
         start_date=datetime(2018, 5, 11),
-        params={},
         lk_root='airflow_sensor_test',
-        dfs_root='',
         input_recipes=[input_recipe] * 3)
     complex_dag = wss.to_airflow_DAG('complex_dag')
     sensor_tasks = [t for t in complex_dag.tasks if 'sensor' in t.task_id]
@@ -145,9 +139,7 @@ class TestAirflowDagGeneration(unittest.TestCase):
         ws=create_complex_test_workspace(),
         schedule='30 5 * * *',
         start_date=datetime(2018, 5, 11),
-        params={},
         lk_root='airflow_dag_parameter_test',
-        dfs_root='',
         input_recipes=[])
     param_dag_good = wss.to_airflow_DAG(
         'parametrized_dag',

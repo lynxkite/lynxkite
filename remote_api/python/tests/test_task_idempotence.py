@@ -38,8 +38,7 @@ class TestTaskIdempotence(unittest.TestCase):
   def test_input_recipe(self):
     recipe = TestRecipe()
     dag = aut.WorkspaceSequence(identity, schedule='0 0 * * *', start_date=day_before,
-                                lk_root='input_idempotence', input_recipes=[recipe],
-                                params={}, dfs_root='').to_dag()
+                                lk_root='input_idempotence', input_recipes=[recipe]).to_dag()
     input_task = [t for t in dag if isinstance(t, aut.Input)][0]
     lk.remove_name('input_idempotence/input-snapshots', force=True)
     input_task.run(test_date)
@@ -52,8 +51,7 @@ class TestTaskIdempotence(unittest.TestCase):
 
   def test_output(self):
     wss = aut.WorkspaceSequence(identity, schedule='0 0 * * *', start_date=day_before,
-                                lk_root='output_idempotence', input_recipes=[TestRecipe()],
-                                params={}, dfs_root='')
+                                lk_root='output_idempotence', input_recipes=[TestRecipe()])
     dag = wss.to_dag()
     lk.remove_name('output_idempotence/input-snapshots', force=True)
     for t in dag:
@@ -78,8 +76,7 @@ class TestTaskIdempotence(unittest.TestCase):
       return {'state': state}
 
     dag = aut.WorkspaceSequence(exporter, schedule='0 0 * * *', start_date=day_before,
-                                lk_root='export_idempotence', input_recipes=[TestRecipe()],
-                                params={}, dfs_root='').to_dag()
+                                lk_root='export_idempotence', input_recipes=[TestRecipe()]).to_dag()
     lk.remove_name('export_idempotence/input-snapshots', force=True)
     for t in dag:
       t.run(test_date)
