@@ -868,13 +868,15 @@ class Box:
   '''
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite,
-               inputs: Dict[str, State], parameters: Dict[str, Any]) -> None:
+               inputs: Dict[str, State], parameters: Dict[str, Any],
+               manual_box_id: str = None) -> None:
     self.bc = box_catalog
     self.lk = lk
     self.inputs = inputs
     self.parameters: Dict[str, str] = {}
     self.parametric_parameters: Dict[str, str] = {}
     self.outputs: Set[str] = set()
+    self.manual_box_id = manual_box_id
     # We separate normal and parametric parameters here.
     # Parametric parameters can be specified as `name=PP('parametric value')`
     for key, value in parameters.items():
@@ -885,6 +887,11 @@ class Box:
 
   def _operation_id(self, workspace_root: str, subworkspace_path: str) -> str:
     '''The id that we send to the backend to identify a box.'''
+    raise NotImplementedError()
+
+  def box_id_base(self) -> str:
+    '''The base of the box_id, which is used when we save a workspace,
+    containing this box.'''
     raise NotImplementedError()
 
   def name(self) -> str:
@@ -938,8 +945,9 @@ class AtomicBox(Box):
   '''
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, operation: str,
-               inputs: Dict[str, State], parameters: Dict[str, Any]) -> None:
-    super().__init__(box_catalog, lk, inputs, parameters)
+               inputs: Dict[str, State], parameters: Dict[str, Any],
+               manual_box_id: str = None) -> None:
+    super().__init__(box_catalog, lk, inputs, parameters, manual_box_id)
     self.operation = operation
     self.outputs = set(self.bc.outputs(operation))
     exp_inputs = set(self.bc.inputs(operation))
@@ -949,6 +957,12 @@ class AtomicBox(Box):
 
   def _operation_id(self, workspace_root, subworkspace_path):
     return self.bc.operation_id(self.operation)
+
+  def box_id_base(self) -> str:
+    if self.manual_box_id:
+      return self.manual_box_id
+    else:
+      return self.operation
 
   def name(self):
     return self.operation
@@ -967,8 +981,9 @@ class SingleOutputAtomicBox(AtomicBox, State):
   '''
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, operation: str,
-               inputs: Dict[str, State], parameters: Dict[str, Any], output_name: str) -> None:
-    AtomicBox.__init__(self, box_catalog, lk, operation, inputs, parameters)
+               inputs: Dict[str, State], parameters: Dict[str, Any], output_name: str,
+               manual_box_id: str = None) -> None:
+    AtomicBox.__init__(self, box_catalog, lk, operation, inputs, parameters, manual_box_id)
     State.__init__(self, self, output_name)
 
 
@@ -978,8 +993,9 @@ class CustomBox(Box):
   '''
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, workspace: 'Workspace',
-               inputs: Dict[str, State], parameters: Dict[str, Any]) -> None:
-    super().__init__(box_catalog, lk, inputs, parameters)
+               inputs: Dict[str, State], parameters: Dict[str, Any],
+               manual_box_id: str = None) -> None:
+    super().__init__(box_catalog, lk, inputs, parameters, manual_box_id)
     self.workspace = workspace
     self.outputs = set(workspace.outputs)
     exp_inputs = set(workspace.inputs)
@@ -993,7 +1009,14 @@ class CustomBox(Box):
     else:
       return _normalize_path(workspace_root + '/' + subworkspace_path)
 
+  def box_id_base(self) -> str:
+    if self.manual_box_id:
+      return self.manual_box_id
+    else:
+      return self.name()
+
   def name(self):
+    # TODO: Can it be empty string?
     return self.workspace.name
 
   def __str__(self) -> str:
@@ -1010,8 +1033,9 @@ class SingleOutputCustomBox(CustomBox, State):
   '''
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, workspace: 'Workspace',
-               inputs: Dict[str, State], parameters: Dict[str, Any], output_name: str) -> None:
-    CustomBox.__init__(self, box_catalog, lk, workspace, inputs, parameters)
+               inputs: Dict[str, State], parameters: Dict[str, Any], output_name: str,
+               manual_box_id: str = None) -> None:
+    CustomBox.__init__(self, box_catalog, lk, workspace, inputs, parameters, manual_box_id)
     State.__init__(self, self, output_name)
 
 
@@ -1266,7 +1290,7 @@ class Workspace:
 
   def _add_box(self, box):
     self.all_boxes.add(box)
-    self._box_ids[box] = "box_{}".format(self._next_id)
+    self._box_ids[box] = "{}_{}".format(box.box_id_base(), self._next_id)
     self._next_id += 1
 
   def id_of(self, box: Box) -> str:

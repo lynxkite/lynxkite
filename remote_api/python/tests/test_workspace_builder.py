@@ -124,8 +124,8 @@ class TestWorkspaceBuilder(unittest.TestCase):
     lk.remove_name('this_is_my_snapshot', force=True)
     ws = lynx.kite.Workspace([box], name='trigger-test', side_effect_paths=[lynx.kite.BoxPath(box)])
     lk.save_workspace_recursively(ws, 'trigger-folder')
-    # The boxId of the "Save to snapshot box" is box_0
-    lk.trigger_box('trigger-folder/trigger-test', 'box_0')
+    # The boxId of the "Save to snapshot box" is saveToSnapshot_0
+    lk.trigger_box('trigger-folder/trigger-test', 'saveToSnapshot_0')
     entries = lk.list_dir('')
     self.assertTrue('this_is_my_snapshot' in {e.name for e in entries})
 
