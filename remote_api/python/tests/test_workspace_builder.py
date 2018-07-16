@@ -122,12 +122,25 @@ class TestWorkspaceBuilder(unittest.TestCase):
            .saveToSnapshot(path='this_is_my_snapshot'))
     lk.remove_name('trigger-folder', force=True)
     lk.remove_name('this_is_my_snapshot', force=True)
-    ws = lynx.kite.Workspace([box], name='trigger-test', side_effect_paths=[lynx.kite.BoxPath(box)])
+    ws = lynx.kite.Workspace([box], name='trigger-test')
     lk.save_workspace_recursively(ws, 'trigger-folder')
     # The boxId of the "Save to snapshot box" is saveToSnapshot_0
     lk.trigger_box('trigger-folder/trigger-test', 'saveToSnapshot_0')
     entries = lk.list_dir('')
     self.assertTrue('this_is_my_snapshot' in {e.name for e in entries})
+
+  def test_trigger_box_with_manual_box_id(self):
+    lk = lynx.kite.LynxKite()
+    box = (lk.createExampleGraph()
+           .sql('select name from vertices')
+           .saveToSnapshot(path='this_is_my_snapshot2', _id='sts_to_trigger'))
+    lk.remove_name('trigger-folder2', force=True)
+    lk.remove_name('this_is_my_snapshot2', force=True)
+    ws = lynx.kite.Workspace([box], name='trigger-test2')
+    lk.save_workspace_recursively(ws, 'trigger-folder2')
+    lk.trigger_box('trigger-folder2/trigger-test2', 'sts_to_trigger_0')
+    entries = lk.list_dir('')
+    self.assertTrue('this_is_my_snapshot2' in {e.name for e in entries})
 
   def test_trigger_box_with_multiple_snapshot_boxes(self):
     lk = lynx.kite.LynxKite()
