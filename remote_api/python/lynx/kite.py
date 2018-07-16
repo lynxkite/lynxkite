@@ -337,7 +337,14 @@ class LynxKite:
 
     def add_box_with_inputs(box_name, args, kwargs):
       inputs = _to_input_map(box_name, self.box_catalog().inputs(box_name), args)
-      box = _new_box(self.box_catalog(), self, box_name, inputs=inputs, parameters=kwargs)
+      manual_box_id = kwargs.pop('_id', None)
+      box = _new_box(
+          self.box_catalog(),
+          self,
+          box_name,
+          inputs=inputs,
+          parameters=kwargs,
+          manual_box_id=manual_box_id)
       return box
 
     def f(*args, **kwargs):
@@ -788,12 +795,14 @@ class State:
         assert len(inputs) > 0, '{} does not have an input'.format(name)
         assert len(inputs) < 2, '{} has more than one input'.format(name)
         [input_name] = inputs
+        manual_box_id = kwargs.pop('_id', None)
         return _new_box(
             self.box.bc,
             self.box.lk,
             name,
             inputs={input_name: self},
-            parameters=kwargs)
+            parameters=kwargs,
+            manual_box_id=manual_box_id)
 
     if not name in self.operation_names():
       raise AttributeError('{} is not defined on {}'.format(name, self))
@@ -1062,19 +1071,20 @@ _anchor_box = SerializedBox({
 
 
 def _new_box(bc: BoxCatalog, lk: LynxKite, operation: Union[str, 'Workspace'],
-             inputs: Dict[str, State], parameters: Dict[str, Any]) -> Box:
+             inputs: Dict[str, State], parameters: Dict[str, Any],
+             manual_box_id: str = None) -> Box:
   if isinstance(operation, str):
     outputs = bc.outputs(operation)
     if len(outputs) == 1:
-      return SingleOutputAtomicBox(bc, lk, operation, inputs, parameters, outputs[0])
+      return SingleOutputAtomicBox(bc, lk, operation, inputs, parameters, outputs[0], manual_box_id)
     else:
-      return AtomicBox(bc, lk, operation, inputs, parameters)
+      return AtomicBox(bc, lk, operation, inputs, parameters, manual_box_id)
   else:
     outputs = operation.outputs
     if len(outputs) == 1:
-      return SingleOutputCustomBox(bc, lk, operation, inputs, parameters, outputs[0])
+      return SingleOutputCustomBox(bc, lk, operation, inputs, parameters, outputs[0], manual_box_id)
     else:
-      return CustomBox(bc, lk, operation, inputs, parameters)
+      return CustomBox(bc, lk, operation, inputs, parameters, manual_box_id)
 
 
 def _reverse_bfs_on_boxes(roots: List[Box], list_roots: bool = True) -> Iterator[Box]:
@@ -1333,7 +1343,14 @@ class Workspace:
 
   def __call__(self, *args, **kwargs) -> Box:
     inputs = _to_input_map(self.safename(), self.inputs, args)
-    return _new_box(self._bc, self.lk, self, inputs=inputs, parameters=kwargs)
+    manual_box_id = kwargs.pop('_id', None)
+    return _new_box(
+        self._bc,
+        self.lk,
+        self,
+        inputs=inputs,
+        parameters=kwargs,
+        manual_box_id=manual_box_id)
 
   def _trigger_box(self, box_to_trigger: BoxPath, full_path: str):
     lk = self.lk
