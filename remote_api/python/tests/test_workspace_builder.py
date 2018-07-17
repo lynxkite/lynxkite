@@ -147,9 +147,14 @@ class TestWorkspaceBuilder(unittest.TestCase):
     lk = lynx.kite.LynxKite()
     box1 = lk.createExampleGraph(_id='duplicate_id')
     box2 = lk.createExampleGraph(_id='duplicate_id')
-    with self.assertRaises(AssertionError) as cm:
+    with self.assertRaises(Exception) as cm:
       ws = lynx.kite.Workspace([box1, box2], name='id-conflict-test')
-    self.assertTrue('Duplicate manual box id.' in str(cm.exception))
+    self.assertTrue('Duplicate box id(s): [\'duplicate_id\']' in str(cm.exception))
+    sql_box = lk.createExampleGraph().sql('select * from vertices')
+    conflicting_box = lk.createExampleGraph(_id='sql1_0')
+    with self.assertRaises(Exception) as cm:
+      ws = lynx.kite.Workspace([sql_box, conflicting_box], name='id-conflict-test2')
+    self.assertTrue('Duplicate box id(s): [\'sql1_0\']' in str(cm.exception))
 
   def test_manual_box_ids_of_custom_boxes(self):
     lk = lynx.kite.LynxKite()
