@@ -170,6 +170,7 @@ def subworkspace(fn: Callable):
     secs = [p.name for p in signature.parameters.values()
             if p.default is SideEffectCollector.AUTO]
     assert len(secs) <= 1, f'More than one SideEffectCollector parameters found for {fn}'
+    manual_box_id = kwargs.pop('_id', None)
     bound = signature.bind(*args, **kwargs)
     for k, v in bound.arguments.items():
       assert k not in secs, f'Explicitly set SideEffectCollector parameter for {fn}'
@@ -197,7 +198,7 @@ def subworkspace(fn: Callable):
         custom_box_id_base=fn.__name__)
 
     # Return the custom box.
-    return ws(*input_states, **ws_param_bindings)
+    return ws(*input_states, _id=manual_box_id, **ws_param_bindings)
   return wrapper
 
 

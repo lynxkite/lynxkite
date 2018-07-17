@@ -1,6 +1,7 @@
 import unittest
 import lynx.kite
 import json
+from lynx.kite import subworkspace
 
 
 class TestWorkspaceBuilder(unittest.TestCase):
@@ -149,6 +150,32 @@ class TestWorkspaceBuilder(unittest.TestCase):
     with self.assertRaises(AssertionError) as cm:
       ws = lynx.kite.Workspace([box1, box2], name='id-conflict-test')
     self.assertTrue('Duplicate manual box id.' in str(cm.exception))
+
+  def test_manual_box_ids_of_custom_boxes(self):
+    lk = lynx.kite.LynxKite()
+
+    @lk.workspace()
+    def random_graph():
+      return dict(g=lk.createVertices().createRandomEdges())
+
+    box1 = random_graph(_id='rnd_g1')
+    box2 = random_graph(_id='rnd_g2')
+    ws = lynx.kite.Workspace([box1, box2], name='custom-box-manual-ids')
+    self.assertEqual(
+        {box['id'] for box in ws.to_json(
+            workspace_root='manual_ids_folder',
+            subworkspace_path='')}, {'anchor', 'rnd_g1', 'rnd_g2'})
+
+    @subworkspace
+    def page_rank(g):
+      return g.computePageRank()
+
+    box3 = page_rank(box1, _id='page_rank')
+    ws2 = lynx.kite.Workspace([box3], name='subworkspace-manual-ids')
+    self.assertEqual(
+        {box['id'] for box in ws2.to_json(
+            workspace_root='manual_ids_folder',
+            subworkspace_path='')}, {'anchor', 'page_rank', 'rnd_g1'})
 
   def test_trigger_box_with_multiple_snapshot_boxes(self):
     lk = lynx.kite.LynxKite()
