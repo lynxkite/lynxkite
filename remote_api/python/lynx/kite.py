@@ -337,14 +337,12 @@ class LynxKite:
 
     def add_box_with_inputs(box_name, args, kwargs):
       inputs = _to_input_map(box_name, self.box_catalog().inputs(box_name), args)
-      manual_box_id = kwargs.pop('_id', None)
       box = _new_box(
           self.box_catalog(),
           self,
           box_name,
           inputs=inputs,
-          parameters=kwargs,
-          manual_box_id=manual_box_id)
+          parameters=kwargs)
       return box
 
     def f(*args, **kwargs):
@@ -795,14 +793,12 @@ class State:
         assert len(inputs) > 0, '{} does not have an input'.format(name)
         assert len(inputs) < 2, '{} has more than one input'.format(name)
         [input_name] = inputs
-        manual_box_id = kwargs.pop('_id', None)
         return _new_box(
             self.box.bc,
             self.box.lk,
             name,
             inputs={input_name: self},
-            parameters=kwargs,
-            manual_box_id=manual_box_id)
+            parameters=kwargs)
 
     if not name in self.operation_names():
       raise AttributeError('{} is not defined on {}'.format(name, self))
@@ -968,10 +964,7 @@ class AtomicBox(Box):
     return self.bc.operation_id(self.operation)
 
   def box_id_base(self) -> str:
-    if self.manual_box_id:
-      return self.manual_box_id
-    else:
-      return self.operation
+    return self.name()
 
   def name(self):
     return self.operation
@@ -1025,7 +1018,6 @@ class CustomBox(Box):
       return self.name()
 
   def name(self):
-    # TODO: Can it be empty string?
     return self.workspace.name
 
   def __str__(self) -> str:
@@ -1071,8 +1063,8 @@ _anchor_box = SerializedBox({
 
 
 def _new_box(bc: BoxCatalog, lk: LynxKite, operation: Union[str, 'Workspace'],
-             inputs: Dict[str, State], parameters: Dict[str, Any],
-             manual_box_id: str = None) -> Box:
+             inputs: Dict[str, State], parameters: Dict[str, Any]) -> Box:
+  manual_box_id = parameters.pop('_id', None)
   if isinstance(operation, str):
     outputs = bc.outputs(operation)
     if len(outputs) == 1:
@@ -1282,7 +1274,7 @@ class Workspace:
     self.all_boxes: Set[Box] = set()
     self.input_boxes = input_boxes
     self._box_ids: Dict[Box, str] = dict()
-    self._next_id = 0
+    self._next_ids: Dict[str, int] = defaultdict(int)  # Zero, by default.
     assert all(b.operation == 'input' for b in input_boxes), 'Non-input box in input_boxes'
     self.inputs = [inp.parameters['name'] for inp in input_boxes]
     self.output_boxes = [box for box in terminal_boxes
@@ -1300,8 +1292,15 @@ class Workspace:
 
   def _add_box(self, box):
     self.all_boxes.add(box)
-    self._box_ids[box] = "{}_{}".format(box.box_id_base(), self._next_id)
-    self._next_id += 1
+    if box.manual_box_id:
+      assert self._next_ids[box.manual_box_id] == 0, 'Duplicate manual box id.'
+      self._box_ids[box] = box.manual_box_id
+      self._next_ids[box.manual_box_id] += 1
+    else:
+      self._box_ids[box] = "{}_{}".format(
+          box.box_id_base(),
+          self._next_ids[box.box_id_base()])
+      self._next_ids[box.box_id_base()] += 1
 
   def id_of(self, box: Box) -> str:
     return self._box_ids[box]
@@ -1343,14 +1342,12 @@ class Workspace:
 
   def __call__(self, *args, **kwargs) -> Box:
     inputs = _to_input_map(self.safename(), self.inputs, args)
-    manual_box_id = kwargs.pop('_id', None)
     return _new_box(
         self._bc,
         self.lk,
         self,
         inputs=inputs,
-        parameters=kwargs,
-        manual_box_id=manual_box_id)
+        parameters=kwargs)
 
   def _trigger_box(self, box_to_trigger: BoxPath, full_path: str):
     lk = self.lk

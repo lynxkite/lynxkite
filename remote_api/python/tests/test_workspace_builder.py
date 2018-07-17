@@ -138,9 +138,17 @@ class TestWorkspaceBuilder(unittest.TestCase):
     lk.remove_name('this_is_my_snapshot2', force=True)
     ws = lynx.kite.Workspace([box], name='trigger-test2')
     lk.save_workspace_recursively(ws, 'trigger-folder2')
-    lk.trigger_box('trigger-folder2/trigger-test2', 'sts_to_trigger_0')
+    lk.trigger_box('trigger-folder2/trigger-test2', 'sts_to_trigger')
     entries = lk.list_dir('')
     self.assertTrue('this_is_my_snapshot2' in {e.name for e in entries})
+
+  def test_conflicting_manual_box_ids(self):
+    lk = lynx.kite.LynxKite()
+    box1 = lk.createExampleGraph(_id='duplicate_id')
+    box2 = lk.createExampleGraph(_id='duplicate_id')
+    with self.assertRaises(AssertionError) as cm:
+      ws = lynx.kite.Workspace([box1, box2], name='id-conflict-test')
+    self.assertTrue('Duplicate manual box id.' in str(cm.exception))
 
   def test_trigger_box_with_multiple_snapshot_boxes(self):
     lk = lynx.kite.LynxKite()
