@@ -1360,9 +1360,10 @@ class Workspace:
     # The last id is a "normal" box id, the rest are the custom box stack.
     lk.trigger_box(full_path, box_ids[-1], box_ids[:-1])
 
-  def save(self, saved_under_folder: str) -> Tuple[str, str]:
+  def save(self, saved_under_folder: str) -> str:
     lk = self.lk
-    return lk.save_workspace_recursively(self, saved_under_folder)
+    _, full_path = lk.save_workspace_recursively(self, saved_under_folder)
+    return full_path
 
   def trigger_saved(self, box_to_trigger: BoxPath, saved_under_folder: str):
     ''' Triggers one side effect.
@@ -1378,7 +1379,7 @@ class Workspace:
     Assumes the workspace is not saved, so saves it under a random folder.
     '''
     random_folder = _random_ws_folder()
-    _, full_path = self.save(random_folder)
+    full_path = self.save(random_folder)
     self._trigger_box(box_to_trigger, full_path)
 
   def trigger_all_side_effects(self):
