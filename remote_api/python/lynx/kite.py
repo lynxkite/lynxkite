@@ -193,7 +193,8 @@ def subworkspace(fn: Callable):
         terminal_boxes=outputs + sec.top_level_side_effects,
         side_effect_paths=list(sec.all_triggerables()),
         input_boxes=input_boxes,
-        ws_parameters=_ws_params)
+        ws_parameters=_ws_params,
+        custom_box_id_base=fn.__name__)
 
     # Return the custom box.
     return ws(*input_states, **ws_param_bindings)
@@ -582,7 +583,7 @@ class LynxKite:
     # TODO: clean up saved workspaces if save_under_root is not set.
 
   def get_state_id(self, state: 'State') -> str:
-    ws = Workspace([state.box])
+    ws = Workspace(terminal_boxes=[state.box], name='Anonymous')
     workspace_outputs = self.fetch_workspace_output_states(ws)
     box_id = ws.id_of(state.box)
     plug = state.output_plug_name
@@ -939,7 +940,10 @@ class Box:
     '''
     sec = SideEffectCollector()
     self.register(sec)
-    ws = Workspace([self], side_effect_paths=list(sec.all_triggerables()))
+    ws = Workspace(
+        terminal_boxes=[self],
+        side_effect_paths=list(sec.all_triggerables()),
+        name='Anonymous')
     ws.trigger_all_side_effects()
 
 
@@ -1011,11 +1015,8 @@ class CustomBox(Box):
     else:
       return _normalize_path(workspace_root + '/' + subworkspace_path)
 
-  def box_id_base(self) -> str:
-    if self.manual_box_id:
-      return self.manual_box_id
-    else:
-      return self.name()
+  def box_id_base(self):
+    return self.workspace.custom_box_id_base
 
   def name(self):
     return self.workspace.name
@@ -1264,11 +1265,14 @@ class Workspace:
 
   def __init__(self,
                terminal_boxes: List[Box] = [],
-               name: str = None,
+               name: Optional[str] = None,
+               custom_box_id_base: Optional[str] = None,
                side_effect_paths: List[BoxPath] = [],
                input_boxes: List[AtomicBox] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
     self.name = name
+    assert any([name, custom_box_id_base]), 'Either "name" or "custom_box_id_base" has to be set.'
+    self.custom_box_id_base = custom_box_id_base or name
     assert terminal_boxes, 'A workspace must contain at least one box'
     self.lk = terminal_boxes[0].lk
     self.all_boxes: Set[Box] = set()
