@@ -1121,6 +1121,16 @@ class BoxPath:
   def __str__(self) -> str:
     return '--'.join([b.name() for b in cast(List[Box], self.stack) + [cast(Box, self.base)]])
 
+  def as_string_id(self) -> str:
+    '''Can be used in automation, to generate unique idsself.
+
+    stack[0] supposed to be a "wrapper" workspace.
+    '''
+    boxes = self.stack
+    box_ids = [box.workspace.id_of(boxes[i + 1]) for i, box in enumerate(boxes[:-1])]
+    box_ids.append(boxes[-1].workspace.id_of(self.base))
+    return '_'.join(box_ids)
+
   def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
     return BoxPath(self.base, [box] + self.stack)
 
