@@ -19,6 +19,7 @@ from lynx.kite import LynxKite, State, CustomBox, BoxPath, Workspace, TableSnaps
 from lynx.kite import _normalize_path, _step_back, _timestamp_is_valid, _topological_sort, escape
 from collections import deque, defaultdict, OrderedDict
 import datetime
+import croniter
 import re
 import hashlib
 from airflow import DAG
@@ -202,21 +203,12 @@ class Triggerable(BoxTask):
     wss_instance.trigger(self.box_path)
 
   def id(self) -> str:
-    box = self.box_path.base
-    # It needs to be unique in a DAG, so it is not enough to use the `box_path`.
-    # After custom box ids are implemented, we can use them to make it simpler.
-    # TODO: remove this code and use custom box ids or make this code cover
-    # all scenarios.
-    param = ''
-    if 'path' in box.parameters:
-      param = escape(box.parameters['path'])
-    elif 'path' in box.parametric_parameters:
-      param = escape(box.parametric_parameters['path'])
-    elif 'table' in box.parameters:
-      param = escape(box.parameters['table'])
-    elif 'table' in box.parametric_parameters:
-      param = escape(box.parametric_parameters['table'])
-    return f'{self.box_path}_{param}'
+    # We create a wrapper instance using the first valid date after
+    # start_date, to be able to generate box id for the "most outer" box.
+    c_iter = croniter.croniter(self._wss._schedule, self._wss._start_date)
+    valid_date = c_iter.get_next(datetime.datetime)
+    wsi = self._wss.ws_for_date(valid_date)
+    return wsi.box_path_as_string_id(self.box_path)
 
 
 class SaveWorkspace(Task):
@@ -466,15 +458,22 @@ class WorkspaceSequenceInstance:
     else:
       raise Exception(f'No output with name {name}')
 
-  def trigger(self, box_path: BoxPath) -> None:
+  def full_box_path(self, wrapper_ws: Workspace, box_path: BoxPath) -> BoxPath:
     '''``box_path`` is relative to the original workspace'''
-    wrapper_ws = self.wrapper_ws()
     for box in wrapper_ws.all_boxes:
       if isinstance(box, CustomBox) and box.workspace == self._wss.ws:
         wrapped_ws_as_box = box
         break
-    full_box_path = box_path.add_box_as_prefix(wrapped_ws_as_box)
-    wrapper_ws.trigger_saved(full_box_path,
+    return box_path.add_box_as_prefix(wrapped_ws_as_box)
+
+  def box_path_as_string_id(self, box_path: BoxPath):
+    full_box_path = self.full_box_path(self.wrapper_ws(), box_path)
+    return full_box_path.as_string_id()
+
+  def trigger(self, box_path: BoxPath) -> None:
+    '''``box_path`` is relative to the original workspace'''
+    wrapper_ws = self.wrapper_ws()
+    wrapper_ws.trigger_saved(self.full_box_path(wrapper_ws, box_path),
                              self.wrapper_folder_name())
 
   def run(self) -> None:
