@@ -339,12 +339,7 @@ class LynxKite:
 
     def add_box_with_inputs(box_name, args, kwargs):
       inputs = _to_input_map(box_name, self.box_catalog().inputs(box_name), args)
-      box = _new_box(
-          self.box_catalog(),
-          self,
-          box_name,
-          inputs=inputs,
-          parameters=kwargs)
+      box = _new_box(self.box_catalog(), self, box_name, inputs=inputs, parameters=kwargs)
       return box
 
     def f(*args, **kwargs):
@@ -969,7 +964,7 @@ class AtomicBox(Box):
     return self.bc.operation_id(self.operation)
 
   def box_id_base(self) -> str:
-    return self.name()
+    return self.operation
 
   def name(self):
     return self.operation
@@ -1291,6 +1286,11 @@ class Workspace:
     self._bc = self._terminal_boxes[0].bc
     for box in _reverse_bfs_on_boxes(self._terminal_boxes):
       self._add_box(box)
+    # Check uniqueness of box ids
+    box_ids = list(self._box_ids.values())
+    if len(box_ids) != len(set(box_ids)):
+      duplicates = [k for k, v in Counter(box_ids).items() if v > 1]
+      raise Exception(f'Duplicate box id(s): {duplicates}')
 
   def safename(self) -> str:
     return self.name or 'Anonymous'
@@ -1298,9 +1298,7 @@ class Workspace:
   def _add_box(self, box):
     self.all_boxes.add(box)
     if box.manual_box_id:
-      assert self._next_ids[box.manual_box_id] == 0, 'Duplicate manual box id.'
       self._box_ids[box] = box.manual_box_id
-      self._next_ids[box.manual_box_id] += 1
     else:
       self._box_ids[box] = "{}_{}".format(
           box.box_id_base(),
@@ -1347,12 +1345,7 @@ class Workspace:
 
   def __call__(self, *args, **kwargs) -> Box:
     inputs = _to_input_map(self.safename(), self.inputs, args)
-    return _new_box(
-        self._bc,
-        self.lk,
-        self,
-        inputs=inputs,
-        parameters=kwargs)
+    return _new_box(self._bc, self.lk, self, inputs=inputs, parameters=kwargs)
 
   def _trigger_box(self, box_to_trigger: BoxPath, full_path: str):
     lk = self.lk
