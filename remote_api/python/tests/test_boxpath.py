@@ -23,4 +23,5 @@ class TestBoxPath(unittest.TestCase):
 
     paths = set(str(p) for p in main().workspace.side_effect_paths())
     self.assertEqual(paths, set([
-        'export_eg--export_csv--exportToCSV']))
+        'export_eg_?/export_csv_0/exportToCSV_0',
+        'export_eg_?/export_csv_1/exportToCSV_0']))
