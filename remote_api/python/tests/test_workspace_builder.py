@@ -1,6 +1,7 @@
 import unittest
 import lynx.kite
 import json
+from lynx.kite import subworkspace
 
 
 class TestWorkspaceBuilder(unittest.TestCase):
@@ -122,12 +123,64 @@ class TestWorkspaceBuilder(unittest.TestCase):
            .saveToSnapshot(path='this_is_my_snapshot'))
     lk.remove_name('trigger-folder', force=True)
     lk.remove_name('this_is_my_snapshot', force=True)
-    ws = lynx.kite.Workspace([box], name='trigger-test', side_effect_paths=[lynx.kite.BoxPath(box)])
+    ws = lynx.kite.Workspace([box], name='trigger-test')
     lk.save_workspace_recursively(ws, 'trigger-folder')
-    # The boxId of the "Save to snapshot box" is box_0
-    lk.trigger_box('trigger-folder/trigger-test', 'box_0')
+    # The boxId of the "Save to snapshot box" is saveToSnapshot_0
+    lk.trigger_box('trigger-folder/trigger-test', 'saveToSnapshot_0')
     entries = lk.list_dir('')
     self.assertTrue('this_is_my_snapshot' in {e.name for e in entries})
+
+  def test_trigger_box_with_manual_box_id(self):
+    lk = lynx.kite.LynxKite()
+    box = (lk.createExampleGraph()
+           .sql('select name from vertices')
+           .saveToSnapshot(path='this_is_my_snapshot2', _id='sts_to_trigger'))
+    lk.remove_name('trigger-folder2', force=True)
+    lk.remove_name('this_is_my_snapshot2', force=True)
+    ws = lynx.kite.Workspace([box], name='trigger-test2')
+    lk.save_workspace_recursively(ws, 'trigger-folder2')
+    lk.trigger_box('trigger-folder2/trigger-test2', 'sts_to_trigger')
+    entries = lk.list_dir('')
+    self.assertTrue('this_is_my_snapshot2' in {e.name for e in entries})
+
+  def test_conflicting_manual_box_ids(self):
+    lk = lynx.kite.LynxKite()
+    box1 = lk.createExampleGraph(_id='duplicate_id')
+    box2 = lk.createExampleGraph(_id='duplicate_id')
+    with self.assertRaises(Exception) as cm:
+      ws = lynx.kite.Workspace([box1, box2], name='id-conflict-test')
+    self.assertTrue('Duplicate box id(s): [\'duplicate_id\']' in str(cm.exception))
+    sql_box = lk.createExampleGraph().sql('select * from vertices')
+    conflicting_box = lk.createExampleGraph(_id='sql1_0')
+    with self.assertRaises(Exception) as cm:
+      ws = lynx.kite.Workspace([sql_box, conflicting_box], name='id-conflict-test2')
+    self.assertTrue('Duplicate box id(s): [\'sql1_0\']' in str(cm.exception))
+
+  def test_manual_box_ids_of_custom_boxes(self):
+    lk = lynx.kite.LynxKite()
+
+    @lk.workspace()
+    def random_graph():
+      return dict(g=lk.createVertices().createRandomEdges())
+
+    box1 = random_graph(_id='rnd_g1')
+    box2 = random_graph(_id='rnd_g2')
+    ws = lynx.kite.Workspace([box1, box2], name='custom-box-manual-ids')
+    self.assertEqual(
+        {box['id'] for box in ws.to_json(
+            workspace_root='manual_ids_folder',
+            subworkspace_path='')}, {'anchor', 'rnd_g1', 'rnd_g2'})
+
+    @subworkspace
+    def page_rank(g):
+      return g.computePageRank()
+
+    box3 = page_rank(box1, _id='page_rank')
+    ws2 = lynx.kite.Workspace([box3], name='subworkspace-manual-ids')
+    self.assertEqual(
+        {box['id'] for box in ws2.to_json(
+            workspace_root='manual_ids_folder',
+            subworkspace_path='')}, {'anchor', 'page_rank', 'rnd_g1'})
 
   def test_trigger_box_with_multiple_snapshot_boxes(self):
     lk = lynx.kite.LynxKite()
