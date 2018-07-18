@@ -202,7 +202,7 @@ class Triggerable(BoxTask):
     wss_instance.trigger(self.box_path)
 
   def id(self) -> str:
-    return self.box_path.to_string_id(self._wss.ws)
+    return 'trigger_' + self.box_path.to_string_id(self._wss.ws)
 
 
 class SaveWorkspace(Task):
