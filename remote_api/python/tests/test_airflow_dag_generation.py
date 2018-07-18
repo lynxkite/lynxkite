@@ -72,15 +72,15 @@ class TestAirflowDagGeneration(unittest.TestCase):
     expected = {
         'input_i1': {
             'upstream': {'input_sensor_i1'},
-            'downstream': {'snapshotter_0_saveToSnapshot_1'}},
+            'downstream': {'trigger_snapshotter_0_saveToSnapshot_1'}},
         'input_sensor_i1': {
             'upstream': set(),
             'downstream': {'input_i1'}},
         'save_workspace': {
             'upstream': set(),
             'downstream': {
-                'snapshotter_0_saveToSnapshot_0',
-                'snapshotter_0_saveToSnapshot_1',
+                'trigger_snapshotter_0_saveToSnapshot_0',
+                'trigger_snapshotter_0_saveToSnapshot_1',
                 'output_o3'}},
         'input_i3': {
             'upstream': {'input_sensor_i3'},
@@ -90,21 +90,21 @@ class TestAirflowDagGeneration(unittest.TestCase):
             'downstream': {'input_i3'}},
         'input_i2': {
             'upstream': {'input_sensor_i2'},
-            'downstream': {'snapshotter_0_saveToSnapshot_0'}},
+            'downstream': {'trigger_snapshotter_0_saveToSnapshot_0'}},
         'input_sensor_i2': {
             'upstream': set(),
             'downstream': {'input_i2'}},
-        'snapshotter_0_saveToSnapshot_1': {
+        'trigger_snapshotter_0_saveToSnapshot_1': {
             'upstream': {'input_i1', 'save_workspace'},
             'downstream': {'output_o1'}},
-        'snapshotter_0_saveToSnapshot_0': {
+        'trigger_snapshotter_0_saveToSnapshot_0': {
             'upstream': {'input_i2', 'save_workspace'},
             'downstream': set()},
         'output_o3': {
             'upstream': {'save_workspace'},
             'downstream': set()},
         'output_o1': {
-            'upstream': {'snapshotter_0_saveToSnapshot_1'},
+            'upstream': {'trigger_snapshotter_0_saveToSnapshot_1'},
             'downstream': {'output_o2'}},
         'output_o2': {
             'upstream': {'output_o1', 'input_i3'},
@@ -177,8 +177,8 @@ class TestAirflowDagGeneration(unittest.TestCase):
     self.assertEqual(set(wss.to_airflow_DAG('task_id_dag').task_ids),
                      {'input_i1', 'input_sensor_i1', 'save_workspace', 'input_i3',
                       'input_sensor_i3', 'input_i2', 'input_sensor_i2',
-                      'snapshotter_0_saveToSnapshot_1', 'output_o3',
-                      'snapshotter_0_saveToSnapshot_0', 'output_o1', 'output_o2'})
+                      'trigger_snapshotter_0_saveToSnapshot_1', 'output_o3',
+                      'trigger_snapshotter_0_saveToSnapshot_0', 'output_o1', 'output_o2'})
 
     # RAIN wss
     # TODO :rewrite this after we implemented nice task ids
@@ -189,8 +189,8 @@ class TestAirflowDagGeneration(unittest.TestCase):
                       'output_active_cells', 'output_available_cells',
                       'input_sensor_site', 'save_workspace',
                       'input_sensor_oss_user_average30',
-                      'where_to_sell_0_exportToCSV_0',
-                      'where_to_sell_0_exportToCSV_1',
+                      'trigger_where_to_sell_0_exportToCSV_0',
+                      'trigger_where_to_sell_0_exportToCSV_1',
                       'input_oss_combined30', 'input_sensor_oss_combined30'})
     for task_id in task_ids:
       self.assertTrue(len(task_id) <= 250)
