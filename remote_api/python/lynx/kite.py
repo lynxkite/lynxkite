@@ -1119,13 +1119,18 @@ class BoxPath:
     self.stack = stack
 
   def __str__(self) -> str:
-    '''Can be used in automation, to generate unique ids.
+    return '--'.join([b.name() for b in cast(List[Box], self.stack) + [cast(Box, self.base)]])
 
-    stack[0] supposed to be a "wrapper" workspace.
+  def to_string_id(self, outer_ws) -> str:
+    '''Can be used in automation, to generate unique task ids.
+
+    stack[0] supposed to be in outer_ws workspace.
     '''
-    boxes = self.stack
-    box_ids = [box.workspace.id_of(boxes[i + 1]) for i, box in enumerate(boxes[:-1])]
-    box_ids.append(boxes[-1].workspace.id_of(self.base))
+    workspaces = [outer_ws] + [cb.workspace for cb in self.stack]
+    box_ids = []
+    for i, box in enumerate(self.stack):
+      box_ids.append(workspaces[i].id_of(box))
+    box_ids.append(workspaces[-1].id_of(self.base))
     return '/'.join(box_ids)
 
   def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
