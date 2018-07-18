@@ -1119,7 +1119,7 @@ class BoxPath:
     self.stack = stack
 
   def __str__(self) -> str:
-    return '--'.join(b.name() for b in self.box_stack())
+    return '--'.join(b.name() or b.box_id_base() for b in self.box_stack())
 
   def box_stack(self) -> Sequence[Box]:
     # We can only add self.base to a covariant (and immutable) view of our stack.
