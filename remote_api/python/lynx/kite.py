@@ -1119,7 +1119,10 @@ class BoxPath:
     self.stack = stack
 
   def __str__(self) -> str:
-    return '--'.join(b.name() or b.box_id_base() for b in self.box_stack())
+    workspaces = [cb.workspace for cb in self.stack]
+    first = self.stack[0].box_id_base() + '_?'  # Don't know the id without the containing ws.
+    rest = [ws.id_of(box) for ws, box in zip(workspaces, self.box_stack()[1:])]
+    return '/'.join([first] + rest)
 
   def box_stack(self) -> Sequence[Box]:
     # We can only add self.base to a covariant (and immutable) view of our stack.
