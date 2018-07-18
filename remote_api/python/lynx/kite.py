@@ -37,7 +37,7 @@ import re
 import itertools
 from collections import deque, defaultdict, OrderedDict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
-                    TypeVar, cast, Optional, Collection, Sequence)
+                    TypeVar, Optional, Collection, Sequence)
 
 import requests
 from croniter import croniter
