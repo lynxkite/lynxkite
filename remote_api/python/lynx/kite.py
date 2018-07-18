@@ -37,7 +37,7 @@ import re
 import itertools
 from collections import deque, defaultdict, OrderedDict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
-                    TypeVar, cast, Optional, Collection)
+                    TypeVar, cast, Optional, Collection, Sequence)
 
 import requests
 from croniter import croniter
@@ -1119,19 +1119,20 @@ class BoxPath:
     self.stack = stack
 
   def __str__(self) -> str:
-    return '--'.join([b.name() for b in cast(List[Box], self.stack) + [cast(Box, self.base)]])
+    return '--'.join(b.name() for b in self.box_stack())
+
+  def box_stack(self) -> Sequence[Box]:
+    # We can only add self.base to a covariant (and immutable) view of our stack.
+    stack: Sequence[Box] = self.stack
+    return list(stack) + [self.base]
 
   def to_string_id(self, outer_ws) -> str:
     '''Can be used in automation, to generate unique task ids.
 
-    stack[0] supposed to be in outer_ws workspace.
+    stack[0] is supposed to be in the outer_ws workspace.
     '''
     workspaces = [outer_ws] + [cb.workspace for cb in self.stack]
-    box_ids = []
-    for i, box in enumerate(self.stack):
-      box_ids.append(workspaces[i].id_of(box))
-    box_ids.append(workspaces[-1].id_of(self.base))
-    return '/'.join(box_ids)
+    return '/'.join(ws.id_of(box) for ws, box in zip(workspaces, self.box_stack()))
 
   def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
     return BoxPath(self.base, [box] + self.stack)
