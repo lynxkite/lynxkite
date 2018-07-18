@@ -19,7 +19,6 @@ from lynx.kite import LynxKite, State, CustomBox, BoxPath, Workspace, TableSnaps
 from lynx.kite import _normalize_path, _step_back, _timestamp_is_valid, _topological_sort, escape
 from collections import deque, defaultdict, OrderedDict
 import datetime
-import croniter
 import re
 import hashlib
 from airflow import DAG
@@ -453,18 +452,15 @@ class WorkspaceSequenceInstance:
     else:
       raise Exception(f'No output with name {name}')
 
-  def full_box_path(self, wrapper_ws: Workspace, box_path: BoxPath) -> BoxPath:
+  def trigger(self, box_path: BoxPath) -> None:
     '''``box_path`` is relative to the original workspace'''
+    wrapper_ws = self.wrapper_ws()
     for box in wrapper_ws.all_boxes:
       if isinstance(box, CustomBox) and box.workspace == self._wss.ws:
         wrapped_ws_as_box = box
         break
-    return box_path.add_box_as_prefix(wrapped_ws_as_box)
-
-  def trigger(self, box_path: BoxPath) -> None:
-    '''``box_path`` is relative to the original workspace'''
-    wrapper_ws = self.wrapper_ws()
-    wrapper_ws.trigger_saved(self.full_box_path(wrapper_ws, box_path),
+    full_box_path = box_path.add_box_as_prefix(wrapped_ws_as_box)
+    wrapper_ws.trigger_saved(full_box_path,
                              self.wrapper_folder_name())
 
   def run(self) -> None:
