@@ -170,6 +170,7 @@ def subworkspace(fn: Callable):
     secs = [p.name for p in signature.parameters.values()
             if p.default is SideEffectCollector.AUTO]
     assert len(secs) <= 1, f'More than one SideEffectCollector parameters found for {fn}'
+    manual_box_id = kwargs.pop('_id', None)
     bound = signature.bind(*args, **kwargs)
     for k, v in bound.arguments.items():
       assert k not in secs, f'Explicitly set SideEffectCollector parameter for {fn}'
@@ -193,10 +194,11 @@ def subworkspace(fn: Callable):
         terminal_boxes=outputs + sec.top_level_side_effects,
         side_effect_paths=list(sec.all_triggerables()),
         input_boxes=input_boxes,
-        ws_parameters=_ws_params)
+        ws_parameters=_ws_params,
+        custom_box_id_base=fn.__name__)
 
     # Return the custom box.
-    return ws(*input_states, **ws_param_bindings)
+    return ws(*input_states, _id=manual_box_id, **ws_param_bindings)
   return wrapper
 
 
@@ -577,7 +579,7 @@ class LynxKite:
     # TODO: clean up saved workspaces if save_under_root is not set.
 
   def get_state_id(self, state: 'State') -> str:
-    ws = Workspace([state.box])
+    ws = Workspace(terminal_boxes=[state.box], name='Anonymous')
     workspace_outputs = self.fetch_workspace_output_states(ws)
     box_id = ws.id_of(state.box)
     plug = state.output_plug_name
@@ -868,13 +870,15 @@ class Box:
   '''
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite,
-               inputs: Dict[str, State], parameters: Dict[str, Any]) -> None:
+               inputs: Dict[str, State], parameters: Dict[str, Any],
+               manual_box_id: str = None) -> None:
     self.bc = box_catalog
     self.lk = lk
     self.inputs = inputs
     self.parameters: Dict[str, str] = {}
     self.parametric_parameters: Dict[str, str] = {}
     self.outputs: Set[str] = set()
+    self.manual_box_id = manual_box_id
     # We separate normal and parametric parameters here.
     # Parametric parameters can be specified as `name=PP('parametric value')`
     for key, value in parameters.items():
@@ -885,6 +889,11 @@ class Box:
 
   def _operation_id(self, workspace_root: str, subworkspace_path: str) -> str:
     '''The id that we send to the backend to identify a box.'''
+    raise NotImplementedError()
+
+  def box_id_base(self) -> str:
+    '''The base of the box_id, which is used when we save a workspace,
+    containing this box.'''
     raise NotImplementedError()
 
   def name(self) -> str:
@@ -927,7 +936,10 @@ class Box:
     '''
     sec = SideEffectCollector()
     self.register(sec)
-    ws = Workspace([self], side_effect_paths=list(sec.all_triggerables()))
+    ws = Workspace(
+        terminal_boxes=[self],
+        side_effect_paths=list(sec.all_triggerables()),
+        name='Anonymous')
     ws.trigger_all_side_effects()
 
 
@@ -938,8 +950,9 @@ class AtomicBox(Box):
   '''
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, operation: str,
-               inputs: Dict[str, State], parameters: Dict[str, Any]) -> None:
-    super().__init__(box_catalog, lk, inputs, parameters)
+               inputs: Dict[str, State], parameters: Dict[str, Any],
+               manual_box_id: str = None) -> None:
+    super().__init__(box_catalog, lk, inputs, parameters, manual_box_id)
     self.operation = operation
     self.outputs = set(self.bc.outputs(operation))
     exp_inputs = set(self.bc.inputs(operation))
@@ -949,6 +962,9 @@ class AtomicBox(Box):
 
   def _operation_id(self, workspace_root, subworkspace_path):
     return self.bc.operation_id(self.operation)
+
+  def box_id_base(self) -> str:
+    return self.operation
 
   def name(self):
     return self.operation
@@ -967,8 +983,9 @@ class SingleOutputAtomicBox(AtomicBox, State):
   '''
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, operation: str,
-               inputs: Dict[str, State], parameters: Dict[str, Any], output_name: str) -> None:
-    AtomicBox.__init__(self, box_catalog, lk, operation, inputs, parameters)
+               inputs: Dict[str, State], parameters: Dict[str, Any], output_name: str,
+               manual_box_id: str = None) -> None:
+    AtomicBox.__init__(self, box_catalog, lk, operation, inputs, parameters, manual_box_id)
     State.__init__(self, self, output_name)
 
 
@@ -978,8 +995,9 @@ class CustomBox(Box):
   '''
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, workspace: 'Workspace',
-               inputs: Dict[str, State], parameters: Dict[str, Any]) -> None:
-    super().__init__(box_catalog, lk, inputs, parameters)
+               inputs: Dict[str, State], parameters: Dict[str, Any],
+               manual_box_id: str = None) -> None:
+    super().__init__(box_catalog, lk, inputs, parameters, manual_box_id)
     self.workspace = workspace
     self.outputs = set(workspace.outputs)
     exp_inputs = set(workspace.inputs)
@@ -992,6 +1010,9 @@ class CustomBox(Box):
       return _normalize_path(workspace_root + '/' + self.workspace.name)
     else:
       return _normalize_path(workspace_root + '/' + subworkspace_path)
+
+  def box_id_base(self):
+    return self.workspace.custom_box_id_base
 
   def name(self):
     return self.workspace.name
@@ -1010,8 +1031,9 @@ class SingleOutputCustomBox(CustomBox, State):
   '''
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite, workspace: 'Workspace',
-               inputs: Dict[str, State], parameters: Dict[str, Any], output_name: str) -> None:
-    CustomBox.__init__(self, box_catalog, lk, workspace, inputs, parameters)
+               inputs: Dict[str, State], parameters: Dict[str, Any], output_name: str,
+               manual_box_id: str = None) -> None:
+    CustomBox.__init__(self, box_catalog, lk, workspace, inputs, parameters, manual_box_id)
     State.__init__(self, self, output_name)
 
 
@@ -1039,18 +1061,19 @@ _anchor_box = SerializedBox({
 
 def _new_box(bc: BoxCatalog, lk: LynxKite, operation: Union[str, 'Workspace'],
              inputs: Dict[str, State], parameters: Dict[str, Any]) -> Box:
+  manual_box_id = parameters.pop('_id', None)
   if isinstance(operation, str):
     outputs = bc.outputs(operation)
     if len(outputs) == 1:
-      return SingleOutputAtomicBox(bc, lk, operation, inputs, parameters, outputs[0])
+      return SingleOutputAtomicBox(bc, lk, operation, inputs, parameters, outputs[0], manual_box_id)
     else:
-      return AtomicBox(bc, lk, operation, inputs, parameters)
+      return AtomicBox(bc, lk, operation, inputs, parameters, manual_box_id)
   else:
     outputs = operation.outputs
     if len(outputs) == 1:
-      return SingleOutputCustomBox(bc, lk, operation, inputs, parameters, outputs[0])
+      return SingleOutputCustomBox(bc, lk, operation, inputs, parameters, outputs[0], manual_box_id)
     else:
-      return CustomBox(bc, lk, operation, inputs, parameters)
+      return CustomBox(bc, lk, operation, inputs, parameters, manual_box_id)
 
 
 def _reverse_bfs_on_boxes(roots: List[Box], list_roots: bool = True) -> Iterator[Box]:
@@ -1238,17 +1261,20 @@ class Workspace:
 
   def __init__(self,
                terminal_boxes: List[Box] = [],
-               name: str = None,
+               name: Optional[str] = None,
+               custom_box_id_base: Optional[str] = None,
                side_effect_paths: List[BoxPath] = [],
                input_boxes: List[AtomicBox] = [],
                ws_parameters: List[WorkspaceParameter] = []) -> None:
     self.name = name
+    assert any([name, custom_box_id_base]), 'Either "name" or "custom_box_id_base" has to be set.'
+    self.custom_box_id_base = custom_box_id_base or name
     assert terminal_boxes, 'A workspace must contain at least one box'
     self.lk = terminal_boxes[0].lk
     self.all_boxes: Set[Box] = set()
     self.input_boxes = input_boxes
     self._box_ids: Dict[Box, str] = dict()
-    self._next_id = 0
+    self._next_ids: Dict[str, int] = defaultdict(int)  # Zero, by default.
     assert all(b.operation == 'input' for b in input_boxes), 'Non-input box in input_boxes'
     self.inputs = [inp.parameters['name'] for inp in input_boxes]
     self.output_boxes = [box for box in terminal_boxes
@@ -1260,14 +1286,24 @@ class Workspace:
     self._bc = self._terminal_boxes[0].bc
     for box in _reverse_bfs_on_boxes(self._terminal_boxes):
       self._add_box(box)
+    # Check uniqueness of box ids
+    box_ids = list(self._box_ids.values())
+    if len(box_ids) != len(set(box_ids)):
+      duplicates = [k for k, v in Counter(box_ids).items() if v > 1]
+      raise Exception(f'Duplicate box id(s): {duplicates}')
 
   def safename(self) -> str:
     return self.name or 'Anonymous'
 
   def _add_box(self, box):
     self.all_boxes.add(box)
-    self._box_ids[box] = "box_{}".format(self._next_id)
-    self._next_id += 1
+    if box.manual_box_id:
+      self._box_ids[box] = box.manual_box_id
+    else:
+      self._box_ids[box] = "{}_{}".format(
+          box.box_id_base(),
+          self._next_ids[box.box_id_base()])
+      self._next_ids[box.box_id_base()] += 1
 
   def id_of(self, box: Box) -> str:
     return self._box_ids[box]
