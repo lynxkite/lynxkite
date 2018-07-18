@@ -203,11 +203,7 @@ class Triggerable(BoxTask):
     wss_instance.trigger(self.box_path)
 
   def id(self) -> str:
-    # We create a wrapper instance using the first valid date after
-    # start_date, to be able to generate box id for the "most outer" box.
-    c_iter = croniter.croniter(self._wss._schedule, self._wss._start_date)
-    valid_date = c_iter.get_next(datetime.datetime)
-    wsi = self._wss.ws_for_date(valid_date)
+    wsi = self._wss.wsi_template()
     return wsi.box_path_as_string_id(self.box_path)
 
 
@@ -260,6 +256,13 @@ class WorkspaceSequence:
     assert _timestamp_is_valid(
         date, self._schedule), "{} is not valid according to {}".format(date, self._schedule)
     return WorkspaceSequenceInstance(self, date)
+
+  def wsi_template(self) -> 'WorkspaceSequenceInstance':
+    # We create a wrapper instance using the first valid date after
+    # start_date, to be able to generate box id for the "most outer" box.
+    c_iter = croniter.croniter(self._schedule, self._start_date)
+    valid_date = c_iter.get_next(datetime.datetime)
+    return self.ws_for_date(valid_date)
 
   def _automation_tasks(self) -> List[Task]:
     inputs: List[Task] = [Input(self, BoxPath(inp)) for inp in self.ws.input_boxes]
@@ -466,9 +469,9 @@ class WorkspaceSequenceInstance:
         break
     return box_path.add_box_as_prefix(wrapped_ws_as_box)
 
-  def box_path_as_string_id(self, box_path: BoxPath):
+  def box_path_as_string_id(self, box_path: BoxPath) -> str:
     full_box_path = self.full_box_path(self.wrapper_ws(), box_path)
-    return full_box_path.as_string_id()
+    return str(full_box_path)
 
   def trigger(self, box_path: BoxPath) -> None:
     '''``box_path`` is relative to the original workspace'''
