@@ -37,7 +37,7 @@ import re
 import itertools
 from collections import deque, defaultdict, OrderedDict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
-                    TypeVar, Optional, Collection, Sequence)
+                    TypeVar, Optional, Collection)
 
 import requests
 from croniter import croniter
@@ -1124,10 +1124,10 @@ class BoxPath:
     rest = [ws.id_of(box) for ws, box in zip(workspaces, self.box_stack()[1:])]
     return '/'.join([first] + rest)
 
-  def box_stack(self) -> Sequence[Box]:
-    # We can only add self.base to a covariant (and immutable) view of our stack.
-    stack: Sequence[Box] = self.stack
-    return list(stack) + [self.base]
+  def box_stack(self) -> List[Box]:
+    # Create a new, generic list that we can append the AtomicBox to.
+    stack: List[Box] = list(self.stack)
+    return stack + [self.base]
 
   def to_string_id(self, outer_ws) -> str:
     '''Can be used in automation, to generate unique task ids.
