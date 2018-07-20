@@ -45,8 +45,8 @@ export KITE_HTTPS_KEYSTORE_PWD=keystore-password
 EOF
 
 # Start backend.
-KITE_SITE_CONFIG="conf/kiterc_template" \
-KITE_SITE_CONFIG_OVERRIDES="$TMP/overrides" stage/bin/biggraph start
+KITE_SITE_CONFIG="$(dirname $0)/../conf/kiterc_template" \
+KITE_SITE_CONFIG_OVERRIDES="$TMP/overrides" $(dirname $0)/../stage/bin/biggraph start
 KITE_PID=`cat ${PID_FILE}`
 function kill_backend {
   echo "Shutting down server on port $HTTP_PORT"
