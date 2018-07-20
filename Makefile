@@ -42,15 +42,15 @@ $(pip): python_requirements.txt
 .build/documentation-done-${VERSION}: $(shell $(find) ecosystem/documentation remote_api/python) python_requirements.txt
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
-		$(shell $(find) ecosystem/native remote_api ) \
+		$(shell $(find) ecosystem/native remote_api ecosystem/docker/base) \
 		.build/backend-done .build/documentation-done-${VERSION}
 	ecosystem/native/tools/build-monitoring.sh && \
 	ecosystem/native/bundle.sh && touch $@
 .build/ecosystem-docker-base-done: \
-		.build/ecosystem-done $(shell $(find) ecosystem/docker/base)
+		$(shell $(find) ecosystem/docker/base)
 	ecosystem/docker/base/build.sh $(VERSION) && touch $@
 .build/ecosystem-docker-release-done: \
-		.build/ecosystem-docker-base-done $(shell $(find) ecosystem/docker)
+		.build/ecosystem-done .build/ecosystem-docker-base-done $(shell $(find) ecosystem/docker)
 	ecosystem/docker/release/build.sh $(VERSION) && touch $@
 .build/shell_ui-test-passed: $(shell $(find) shell_ui)
 	shell_ui/test.sh && touch $@
