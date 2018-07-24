@@ -101,7 +101,7 @@ Execute `run.sh`. This will build the frontend and the backend if necessary and 
  after.
 
 You can run `make backend-test` to run the backend test, or you can start `sbt` and run
-`test-only **SomethingTest` to run just one test.
+`test-only *SomethingTest` to run just one test.
 
 ## Frontend development
 
