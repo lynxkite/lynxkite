@@ -23,7 +23,8 @@ clean:
 $(pip): python_requirements.txt
 	pip3 install --user -r python_requirements.txt && touch $@
 .build/backend-done: \
-	$(shell $(find) app project lib conf built-ins) tools/call_spark_submit.sh build.sbt README.md .build/gulp-done
+	$(shell $(find) app project lib conf built-ins) tools/call_spark_submit.sh build.sbt README.md \
+	.build/gulp-done
 	./tools/install_spark.sh && sbt stage < /dev/null && touch $@
 .build/backend-test-passed: $(shell $(find) app test project conf) build.sbt
 	./tools/install_spark.sh && ./.test_backend.sh && touch $@
@@ -33,13 +34,22 @@ $(pip): python_requirements.txt
 	./.test_frontend.sh && touch $@
 .build/remote_api-python-test-passed: $(shell $(find) remote_api/python) .build/backend-done $(pip)
 	tools/with_lk.sh remote_api/python/test.sh && touch $@
-.build/mobile-prepaid-scv-test-passed: $(shell $(find) remote_api/python mobile-prepaid-scv) .build/backend-done $(pip)
+.build/mobile-prepaid-scv-test-passed: \
+	$(shell $(find) remote_api/python mobile-prepaid-scv) .build/backend-done $(pip)
 	tools/with_lk.sh mobile-prepaid-scv/unit_test.sh && touch $@
 .build/happiness-index-test-mock-data: $(shell $(find) happiness-index/test-data)
 	happiness-index/test-data/create_mock_data.sh && touch $@
-.build/happiness-index-test-passed: $(shell $(find) remote_api/python happiness-index) .build/backend-done $(pip) .build/happiness-index-test-mock-data
+.build/happiness-index-test-passed: \
+	$(shell $(find) remote_api/python happiness-index) .build/backend-done $(pip) \
+	.build/happiness-index-test-mock-data
 	tools/with_lk.sh happiness-index/unit_test.sh && touch $@
-.build/documentation-done-${VERSION}: $(shell $(find) ecosystem/documentation remote_api/python) python_requirements.txt
+.build/happiness-index-integration-test-passed: \
+	.build/happiness-index-test-passed \
+	.build/shell_ui-test-passed \
+	.build/backend-done $(pip)
+	happiness-index/integration-test/test.sh && touch $@
+.build/documentation-done-${VERSION}: \
+	$(shell $(find) ecosystem/documentation remote_api/python) python_requirements.txt
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
 		$(shell $(find) ecosystem/native remote_api ecosystem/docker/base) \
@@ -76,6 +86,8 @@ remote_api-test: .build/remote_api-python-test-passed
 mobile-prepaid-scv-test: .build/mobile-prepaid-scv-test-passed
 .PHONY: happiness-index-test
 happiness-index-test: .build/happiness-index-test-passed
+.PHONY: happiness-index-integration-test
+happiness-index-integration-test: .build/happiness-index-integration-test-passed
 .PHONY: ecosystem-test
 ecosystem-test: remote_api-test mobile-prepaid-scv-test happiness-index-test
 .PHONY: shell_ui-test
