@@ -560,7 +560,7 @@ class LynxKite:
       raise Exception(f'Duplicate custom box name(s): {duplicates}')
     # Check if the "main" ws name conflicts with one of the custom box names
     if main_name in names:
-      raise Exception(f'Duplicate main workspace name: {main_name}')
+      raise Exception(f'Duplicate name: {main_name}')
 
     for name, rws in needed_ws:
       self.save_workspace(ws_root + '/' + name, _layout(rws.to_json(ws_root, name)))
