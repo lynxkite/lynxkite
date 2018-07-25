@@ -522,6 +522,11 @@ class LynxKite:
       name = 'remote-api-upload'  # A hash will be added anyway.
     return self._post('/ajax/upload', files=dict(file=(name, data))).text
 
+  def uploadCSVNow(self, data: bytes, name: str = None):
+    '''Uploads CSV data and returns a table state.'''
+    filename = self.upload(data, name)
+    return self.importCSVNow(filename=filename)
+
   def clean_file_system(self) -> None:
     """Deletes the data files which are not referenced anymore."""
     self._send('/remote/cleanFileSystem')
@@ -818,6 +823,10 @@ class State:
     header = [c.name for c in table.header]
     data = [[getattr(c, 'double', c.string) if c.defined else None for c in r] for r in table.data]
     return pandas.DataFrame(data, columns=header)
+
+  def columns(self):
+    '''Returns a list of columns if this state is a table.'''
+    return list(self.df(0).columns)
 
   def get_table_data(self, limit: int = -1) -> types.SimpleNamespace:
     '''Returns the "raw" table data if this state is a table.'''
@@ -1345,6 +1354,9 @@ class Workspace:
     ab = copy.deepcopy(_anchor_box)
     ab['parameters'] = dict(parameters=self._ws_parameters_to_str())
     return [ab] + non_anchor_boxes
+
+  def __str__(self):
+    return json.dumps(self.to_json('', 'main'), indent=2)
 
   def custom_boxes(self) -> List[CustomBox]:
     return [
