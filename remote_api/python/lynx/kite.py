@@ -558,18 +558,19 @@ class LynxKite:
     if len(names) != len(set(names)):
       duplicates = [k for k, v in Counter(names).items() if v > 1]
       raise Exception(f'Duplicate custom box name(s): {duplicates}')
+    # Check if the "main" ws name conflicts with one of the custom box names
+    if main_name in names:
+      raise Exception(f'Duplicate main workspace name: {main_name}')
+
     for name, rws in needed_ws:
       self.save_workspace(ws_root + '/' + name, _layout(rws.to_json(ws_root, name)))
-    if save_under_root is not None:
-      # Check if the "main" ws name conflicts with one of the custom box names
-      if main_name in names:
-        raise Exception(f'Duplicate name: {main_name}')
-      self.save_workspace(
-          save_under_root + '/' + main_name, _layout(ws.to_json(save_under_root, main_name)))
-    # If saved, we return the full name of the main workspace also.
+
+    self.save_workspace(
+        ws_root + '/' + main_name, _layout(ws.to_json(ws_root, main_name)))
+
+    # We return the root directory and full name of the saved main workspace
     return (ws_root,
-            _normalize_path(save_under_root + '/' + main_name)
-            if (save_under_root is not None) else '')
+            _normalize_path(ws_root + '/' + main_name))
 
   def fetch_workspace_output_states(self, ws: 'Workspace',
                                     save_under_root: str = None,
