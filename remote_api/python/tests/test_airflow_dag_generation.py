@@ -72,15 +72,15 @@ class TestAirflowDagGeneration(unittest.TestCase):
     expected = {
         'input_i1': {
             'upstream': {'input_sensor_i1'},
-            'downstream': {'snapshotter--saveToSnapshot_SB2'}},
+            'downstream': {'trigger_snapshotter_0_saveToSnapshot_1'}},
         'input_sensor_i1': {
             'upstream': set(),
             'downstream': {'input_i1'}},
         'save_workspace': {
             'upstream': set(),
             'downstream': {
-                'snapshotter--saveToSnapshot_SB1',
-                'snapshotter--saveToSnapshot_SB2',
+                'trigger_snapshotter_0_saveToSnapshot_0',
+                'trigger_snapshotter_0_saveToSnapshot_1',
                 'output_o3'}},
         'input_i3': {
             'upstream': {'input_sensor_i3'},
@@ -90,21 +90,21 @@ class TestAirflowDagGeneration(unittest.TestCase):
             'downstream': {'input_i3'}},
         'input_i2': {
             'upstream': {'input_sensor_i2'},
-            'downstream': {'snapshotter--saveToSnapshot_SB1'}},
+            'downstream': {'trigger_snapshotter_0_saveToSnapshot_0'}},
         'input_sensor_i2': {
             'upstream': set(),
             'downstream': {'input_i2'}},
-        'snapshotter--saveToSnapshot_SB2': {
+        'trigger_snapshotter_0_saveToSnapshot_1': {
             'upstream': {'input_i1', 'save_workspace'},
             'downstream': {'output_o1'}},
-        'snapshotter--saveToSnapshot_SB1': {
+        'trigger_snapshotter_0_saveToSnapshot_0': {
             'upstream': {'input_i2', 'save_workspace'},
             'downstream': set()},
         'output_o3': {
             'upstream': {'save_workspace'},
             'downstream': set()},
         'output_o1': {
-            'upstream': {'snapshotter--saveToSnapshot_SB2'},
+            'upstream': {'trigger_snapshotter_0_saveToSnapshot_1'},
             'downstream': {'output_o2'}},
         'output_o2': {
             'upstream': {'output_o1', 'input_i3'},
@@ -177,8 +177,8 @@ class TestAirflowDagGeneration(unittest.TestCase):
     self.assertEqual(set(wss.to_airflow_DAG('task_id_dag').task_ids),
                      {'input_i1', 'input_sensor_i1', 'save_workspace', 'input_i3',
                       'input_sensor_i3', 'input_i2', 'input_sensor_i2',
-                      'snapshotter--saveToSnapshot_SB2', 'output_o3',
-                      'snapshotter--saveToSnapshot_SB1', 'output_o1', 'output_o2'})
+                      'trigger_snapshotter_0_saveToSnapshot_1', 'output_o3',
+                      'trigger_snapshotter_0_saveToSnapshot_0', 'output_o1', 'output_o2'})
 
     # RAIN wss
     # TODO :rewrite this after we implemented nice task ids
@@ -189,8 +189,8 @@ class TestAirflowDagGeneration(unittest.TestCase):
                       'output_active_cells', 'output_available_cells',
                       'input_sensor_site', 'save_workspace',
                       'input_sensor_oss_user_average30',
-                      'where_to_sell--exportToCSV_ROOT__rain_CELL_AVAILABILITY_LISTS____date.replace___-_________.split________0__v1.0CELL_COUNT_SUFFIX',
-                      'where_to_sell--exportToCSV_ROOT__rain_CELL_AVAILABILITY_LISTS____date.replace___-_________.split________0__v1.0',
+                      'trigger_where_to_sell_0_exportToCSV_0',
+                      'trigger_where_to_sell_0_exportToCSV_1',
                       'input_oss_combined30', 'input_sensor_oss_combined30'})
     for task_id in task_ids:
       self.assertTrue(len(task_id) <= 250)
@@ -203,16 +203,18 @@ class TestAirflowDagGeneration(unittest.TestCase):
 
     @lk.workspace_with_side_effects(parameters=[lynx.kite.text('date')])
     def export_eg(se_collector):
-      exp = lk.createExampleGraph().exportToParquet(table=lynx.kite.pp(f'${{{table_param}}}'))
+      exp = lk.createExampleGraph().exportToParquet(
+          table=lynx.kite.pp(f'${{{table_param}}}'), _id=table_param)
       exp.register(se_collector)
-      exp2 = lk.createExampleGraph().exportToParquet(table=lynx.kite.pp(f'${{{table_param2}}}'))
+      exp2 = lk.createExampleGraph().exportToParquet(
+          table=lynx.kite.pp(f'${{{table_param2}}}'), _id=table_param2)
       exp2.register(se_collector)
       return dict(g=lk.createExampleGraph())
 
     wss3 = create_test_wss(export_eg)
     task_ids = wss3.to_airflow_DAG('task_id_dag').task_ids
     self.assertEqual(len(task_ids), 4)  # output, save, 2 exports
-    export_task_ids = [tid for tid in task_ids if 'export' in tid]
+    export_task_ids = [tid for tid in task_ids if (not 'save' in tid) and (not 'output' in tid)]
     self.assertEqual(export_task_ids[0][:218], export_task_ids[1][:218])
     self.assertNotEqual(export_task_ids[0][218:], export_task_ids[1][218:])
 

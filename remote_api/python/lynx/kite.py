@@ -37,7 +37,7 @@ import re
 import itertools
 from collections import deque, defaultdict, OrderedDict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
-                    TypeVar, cast, Optional, Collection)
+                    TypeVar, Optional, Collection)
 
 import requests
 from croniter import croniter
@@ -522,6 +522,11 @@ class LynxKite:
       name = 'remote-api-upload'  # A hash will be added anyway.
     return self._post('/ajax/upload', files=dict(file=(name, data))).text
 
+  def uploadCSVNow(self, data: bytes, name: str = None):
+    '''Uploads CSV data and returns a table state.'''
+    filename = self.upload(data, name)
+    return self.importCSVNow(filename=filename)
+
   def clean_file_system(self) -> None:
     """Deletes the data files which are not referenced anymore."""
     self._send('/remote/cleanFileSystem')
@@ -558,18 +563,19 @@ class LynxKite:
     if len(names) != len(set(names)):
       duplicates = [k for k, v in Counter(names).items() if v > 1]
       raise Exception(f'Duplicate custom box name(s): {duplicates}')
+    # Check if the "main" ws name conflicts with one of the custom box names
+    if main_name in names:
+      raise Exception(f'Duplicate name: {main_name}')
+
     for name, rws in needed_ws:
       self.save_workspace(ws_root + '/' + name, _layout(rws.to_json(ws_root, name)))
-    if save_under_root is not None:
-      # Check if the "main" ws name conflicts with one of the custom box names
-      if main_name in names:
-        raise Exception(f'Duplicate name: {main_name}')
-      self.save_workspace(
-          save_under_root + '/' + main_name, _layout(ws.to_json(save_under_root, main_name)))
-    # If saved, we return the full name of the main workspace also.
+
+    self.save_workspace(
+        ws_root + '/' + main_name, _layout(ws.to_json(ws_root, main_name)))
+
+    # We return the root directory and full name of the saved main workspace
     return (ws_root,
-            _normalize_path(save_under_root + '/' + main_name)
-            if (save_under_root is not None) else '')
+            _normalize_path(ws_root + '/' + main_name))
 
   def fetch_workspace_output_states(self, ws: 'Workspace',
                                     save_under_root: str = None,
@@ -817,6 +823,10 @@ class State:
     header = [c.name for c in table.header]
     data = [[getattr(c, 'double', c.string) if c.defined else None for c in r] for r in table.data]
     return pandas.DataFrame(data, columns=header)
+
+  def columns(self):
+    '''Returns a list of columns if this state is a table.'''
+    return list(self.df(0).columns)
 
   def get_table_data(self, limit: int = -1) -> types.SimpleNamespace:
     '''Returns the "raw" table data if this state is a table.'''
@@ -1119,7 +1129,23 @@ class BoxPath:
     self.stack = stack
 
   def __str__(self) -> str:
-    return '--'.join([b.name() for b in cast(List[Box], self.stack) + [cast(Box, self.base)]])
+    workspaces = [cb.workspace for cb in self.stack]
+    first = self.stack[0].box_id_base() + '_?'  # Don't know the id without the containing ws.
+    rest = [ws.id_of(box) for ws, box in zip(workspaces, self.box_stack()[1:])]
+    return '/'.join([first] + rest)
+
+  def box_stack(self) -> List[Box]:
+    # Create a new, generic list that we can append the AtomicBox to.
+    stack: List[Box] = list(self.stack)
+    return stack + [self.base]
+
+  def to_string_id(self, outer_ws) -> str:
+    '''Can be used in automation, to generate unique task ids.
+
+    stack[0] is supposed to be in the outer_ws workspace.
+    '''
+    workspaces = [outer_ws] + [cb.workspace for cb in self.stack]
+    return '/'.join(ws.id_of(box) for ws, box in zip(workspaces, self.box_stack()))
 
   def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
     return BoxPath(self.base, [box] + self.stack)
@@ -1328,6 +1354,9 @@ class Workspace:
     ab = copy.deepcopy(_anchor_box)
     ab['parameters'] = dict(parameters=self._ws_parameters_to_str())
     return [ab] + non_anchor_boxes
+
+  def __str__(self):
+    return json.dumps(self.to_json('', 'main'), indent=2)
 
   def custom_boxes(self) -> List[CustomBox]:
     return [
