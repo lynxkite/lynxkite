@@ -202,21 +202,7 @@ class Triggerable(BoxTask):
     wss_instance.trigger(self.box_path)
 
   def id(self) -> str:
-    box = self.box_path.base
-    # It needs to be unique in a DAG, so it is not enough to use the `box_path`.
-    # After custom box ids are implemented, we can use them to make it simpler.
-    # TODO: remove this code and use custom box ids or make this code cover
-    # all scenarios.
-    param = ''
-    if 'path' in box.parameters:
-      param = escape(box.parameters['path'])
-    elif 'path' in box.parametric_parameters:
-      param = escape(box.parametric_parameters['path'])
-    elif 'table' in box.parameters:
-      param = escape(box.parameters['table'])
-    elif 'table' in box.parametric_parameters:
-      param = escape(box.parametric_parameters['table'])
-    return f'{self.box_path}_{param}'
+    return 'trigger_' + self.box_path.to_string_id(self._wss.ws)
 
 
 class SaveWorkspace(Task):

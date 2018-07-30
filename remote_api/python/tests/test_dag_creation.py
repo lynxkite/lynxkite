@@ -365,8 +365,8 @@ class TestDagCreation(unittest.TestCase):
     task_ids = set([t.id() for t in dag])
     expected = set([
         'input_i1', 'input_i3', 'save_workspace', 'input_i2',
-        'snapshotter--saveToSnapshot_SB2',
-        'snapshotter--saveToSnapshot_SB1',
+        'trigger_snapshotter_0/saveToSnapshot_1',
+        'trigger_snapshotter_0/saveToSnapshot_0',
         'output_o3', 'output_o1', 'output_o2'])
     self.assertEqual(task_ids, expected)
 
