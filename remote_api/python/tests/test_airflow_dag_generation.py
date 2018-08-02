@@ -223,7 +223,7 @@ class TestAirflowDagGeneration(unittest.TestCase):
       self.assertIsNone(re.search(r'[^0-9a-zA-Z\-\.\_]', task_id))
 
   def test_copy_for_airflow_clear_task(self):
-    ''' Aiflow may call copy/deepcopy on lk or on a box. '''
+    ''' Airflow may call copy/deepcopy on lk or on a box. '''
     lk = lynx.kite.LynxKite()
     box = lk.createExampleGraph()
     import copy
