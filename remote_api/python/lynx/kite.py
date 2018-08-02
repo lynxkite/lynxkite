@@ -361,7 +361,7 @@ class LynxKite:
         box = add_box_with_inputs(name, args, kwargs)
       return box
 
-    if name == '__setstate__':  # To avoid infinite recursion in copy/deepcopy
+    if name.startswith('_'):  # To avoid infinite recursion in copy/deepcopy
       raise AttributeError()
     elif not name in self.operation_names():
       raise AttributeError('{} is not defined'.format(name))
@@ -805,7 +805,7 @@ class State:
             inputs={input_name: self},
             parameters=kwargs)
 
-    if name == '__setstate__':  # To avoid infinite recursion in copy/deepcopy
+    if name.startswith('_'):  # To avoid infinite recursion in copy/deepcopy
       raise AttributeError()
     elif not name in self.operation_names():
       raise AttributeError('{} is not defined on {}'.format(name, self))
