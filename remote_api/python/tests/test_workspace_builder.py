@@ -203,7 +203,23 @@ class TestWorkspaceBuilder(unittest.TestCase):
 
   def test_trigger_state(self):
     lk = lynx.kite.LynxKite()
-    lk.createExampleGraph().sql('select name from vertices').compute()
+    eg = lk.createExampleGraph()
+    eg.sql('select name from vertices').compute()
+    # TODO: Test this, using progress report.
+    visualization = '''{"left":{"projectPath":"","graphMode":"sampled",
+    "display":"svg","filters":{"vertex":{},"edge":{}},
+    "bucketCount":4,"preciseBucketSizes":false,
+    "relativeEdgeDensity":false,"axisOptions":
+    {"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"label":"age"},"animate":
+    {"enabled":false,"style":"expand","labelAttraction":0},
+    "centers":["auto"],"customVisualizationFilters":false,
+    "sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},
+    "bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":
+    {"vertex":{},"edge":{}},
+    "sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand",
+    "labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false}}
+    '''
+    eg.graphVisualization(state=visualization).compute()
     # TODO: Test this, using progress report.
 
   def test_builder_import(self):
