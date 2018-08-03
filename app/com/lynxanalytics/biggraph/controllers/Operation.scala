@@ -399,6 +399,10 @@ abstract class SmartOperation(context: Operation.Context) extends SimpleOperatio
     context.inputs(input).project.offspringEditor(segPath.tail)
   }
 
+  protected def visualizationInput(input: String): ProjectEditor = {
+    context.inputs(input).visualization.project
+  }
+
   protected def tableInput(input: String): Table = {
     context.inputs(input).table
   }
@@ -669,8 +673,10 @@ abstract class TriggerableOperation(override val context: Operation.Context) ext
         List(tableInput(inputName).gUID)
       case BoxOutputKind.ExportResult =>
         List(exportResultInput(inputName).gUID)
+      case BoxOutputKind.Visualization =>
+        visualizationInput(inputName).allEntityGUIDs
       case _ => throw new AssertionError(
-        s"Cannot use '${input.kind}' as input. Only 'table', 'project' and 'exportResult' kinds are supported.")
+        s"Cannot use '${input.kind}' as input.")
     }
   }
 }
