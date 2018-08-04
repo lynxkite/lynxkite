@@ -221,3 +221,17 @@ class TestAirflowDagGeneration(unittest.TestCase):
     for task_id in task_ids:
       self.assertTrue(len(task_id) <= 250)
       self.assertIsNone(re.search(r'[^0-9a-zA-Z\-\.\_]', task_id))
+
+  def test_copy_for_airflow_clear_task(self):
+    ''' Airflow may call copy/deepcopy on lk or on a box. '''
+    lk = lynx.kite.LynxKite()
+    box = lk.createExampleGraph()
+    import copy
+    lk2 = copy.copy(lk)
+    self.assertEqual(len(lk._box_catalog.box_names()), len(lk2._box_catalog.box_names()))
+    lk3 = copy.deepcopy(lk)
+    self.assertEqual(len(lk._box_catalog.box_names()), len(lk3._box_catalog.box_names()))
+    box2 = copy.copy(box)
+    self.assertEqual(box.outputs, box2.outputs)
+    box3 = copy.deepcopy(box)
+    self.assertEqual(box.outputs, box3.outputs)
