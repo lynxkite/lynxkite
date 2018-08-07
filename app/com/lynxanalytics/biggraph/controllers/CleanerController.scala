@@ -58,8 +58,8 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       snapshotEntities),
     CleanerMethod(
       "notSnapshotOrWorkspaceEntities",
-      "Entities which do not exist in a snapshopt or workspace",
-      "",
+      "Entities which do not exist in a snapshot or workspace",
+      "Entities which are not referenced via a snapshot or as an output of a box in a top level workspace.",
       (user: serving.User) => snapshotEntities(user) ++ workspaceEntities(user)))
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
