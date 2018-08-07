@@ -104,7 +104,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     }
   }
 
-  private def uuidsFromStates(states: Iterable[BoxOutputState]): Set[String] = {
+  private def guidsFromStates(states: Iterable[BoxOutputState]): Set[String] = {
     states.flatMap {
       case t if t.isTable => Some(t.table.gUID)
       case p if p.isProject => p.project.allEntityGUIDs
@@ -113,16 +113,24 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
   }
 
   private def snapshotEntities(user: serving.User): Set[String] = {
-    val states = DirectoryEntry.rootDirectory.listObjectsRecursively.filter(_.isSnapshot).map(_.asSnapshotFrame.getState)
-    uuidsFromStates(states)
+    val snapshotStates = DirectoryEntry
+      .rootDirectory
+      .listObjectsRecursively
+      .filter(_.isSnapshot)
+      .map(_.asSnapshotFrame.getState)
+    guidsFromStates(snapshotStates)
   }
 
   private def workspaceEntities(user: serving.User): Set[String] = {
-    val workspaces = DirectoryEntry.rootDirectory.listObjectsRecursively.filter(_.isWorkspace).map(_.asWorkspaceFrame.workspace)
-    val states = workspaces.flatMap {
+    val workspaces = DirectoryEntry
+      .rootDirectory
+      .listObjectsRecursively
+      .filter(_.isWorkspace)
+      .map(_.asWorkspaceFrame.workspace)
+    val wsStates = workspaces.flatMap {
       ws => WorkspaceExecutionContext(ws, user, ops, Map()).allStates.values
     }
-    uuidsFromStates(states)
+    guidsFromStates(wsStates)
   }
 
   private def allObjects(implicit manager: MetaGraphManager): Seq[ObjectFrame] = {
