@@ -51,12 +51,11 @@ class CleanerController(environment: BigGraphEnvironment) {
 
   private val methods = List(
     CleanerMethod(
-      "notMetaGraphContents",
-      "Entities which do not exist in the meta-graph",
-      "Truly orphan entities. Cached entities can get orphaned e.g. when the kite meta directory" +
-        " is deleted or during a Kite version upgrade. Deleting these should not have any side" +
-        " effects.",
-      metaGraphContents))
+      "notSnapshotEntities",
+      "Entities which do not exist in a snapshopt",
+      "Entities which are not saved via either a table snapshot, or as a vetrex set, edge bundle, " +
+      "vertex or edge attribute or scalar of a project or its segmentation.",
+      snapshotEntities))
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
@@ -100,8 +99,14 @@ class CleanerController(environment: BigGraphEnvironment) {
     }
   }
 
-  private def metaGraphContents(): Set[String] = {
-    allFilesFromSourceOperation(environment.metaGraphManager.getOperationInstances())
+  private def snapshotEntities(): Set[String] = {
+    val snapshots = DirectoryEntry.rootDirectory.listObjectsRecursively.filter(_.isSnapshot).map(_.asSnapshotFrame)
+    val uuids = snapshots.map(_.getState).flatMap {
+      case t if t.isTable => Some(t.table.gUID)
+      case p if p.isProject => p.project.allEntityGUIDs
+      case _ => None
+    }
+    uuids.map(_.toString).toSet
   }
 
   private def allObjects(implicit manager: MetaGraphManager): Seq[ObjectFrame] = {
