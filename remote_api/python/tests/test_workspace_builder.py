@@ -230,20 +230,25 @@ class TestWorkspaceBuilder(unittest.TestCase):
 
     # Visualization
     # Here we just test that we can call compute on a visualization
-    visualization = '''{"left":{"projectPath":"","graphMode":"sampled",
-    "display":"svg","filters":{"vertex":{},"edge":{}},
-    "bucketCount":4,"preciseBucketSizes":false,
-    "relativeEdgeDensity":false,"axisOptions":
-    {"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"label":"age"},"animate":
-    {"enabled":false,"style":"expand","labelAttraction":0},
-    "centers":["auto"],"customVisualizationFilters":false,
-    "sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},
-    "bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":
-    {"vertex":{},"edge":{}},
-    "sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand",
-    "labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false}}
-    '''
-    lk.createExampleGraph().graphVisualization(state=visualization).compute()
+    visualization = '''{
+    "left":{"projectPath":"","graphMode":"sampled","display":"svg",
+    "filters":{"vertex":{},"edge":{}},
+    "bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,
+    "axisOptions":{"vertex":{},"edge":{}},
+    "sampleRadius":1,"attributeTitles":{"label":"centrality"},
+    "animate":{"enabled":false,"style":"expand","labelAttraction":0},
+    "centers":["auto"],"customVisualizationFilters":false,"sliderPos":50},
+    "right":{"display":"svg","filters":{"vertex":{},"edge":{}},
+    "bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,
+    "axisOptions":{"vertex":{},"edge":{}},
+    "sampleRadius":1,"attributeTitles":{},
+    "animate":{"enabled":false,"style":"expand","labelAttraction":0},
+    "centers":["auto"],"customVisualizationFilters":false}}'''
+    g = lk.createVertices().createRandomEdges(seed=seed).computeCentrality()
+    v = g.graphVisualization(state=visualization)
+    self.assertTrue(num_not_yet_started(g) > 0)
+    v.compute()
+    self.assertEqual(num_not_yet_started(g), 0)
 
     # Plot
     state = g.sql1().customPlot()
