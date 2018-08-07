@@ -33,7 +33,7 @@ case class CleanerMethod(
     id: String,
     name: String,
     desc: String,
-    filesToKeep: () => Set[String])
+    filesToKeep: (serving.User) => Set[String])
 
 case class MoveToTrashRequest(method: String)
 
@@ -46,7 +46,7 @@ case class AllFiles(
   lazy val all = partitioned ++ entities ++ operations ++ scalars
 }
 
-class CleanerController(environment: BigGraphEnvironment) {
+class CleanerController(environment: BigGraphEnvironment, ops: OperationRepository) {
   implicit val manager = environment.metaGraphManager
 
   private val methods = List(
@@ -54,8 +54,13 @@ class CleanerController(environment: BigGraphEnvironment) {
       "notSnapshotEntities",
       "Entities which do not exist in a snapshopt",
       "Entities which are not saved via either a table snapshot, or as a vetrex set, edge bundle, " +
-      "vertex or edge attribute or scalar of a project or its segmentation.",
-      snapshotEntities))
+        "vertex or edge attribute or scalar of a project or its segmentation.",
+      snapshotEntities),
+    CleanerMethod(
+      "notSnapshotOrWorkspaceEntities",
+      "Entities which do not exist in a snapshopt or workspace",
+      "",
+      (user: serving.User) => snapshotEntities(user) ++ workspaceEntities(user)))
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
@@ -71,7 +76,7 @@ class CleanerController(environment: BigGraphEnvironment) {
         fileCount = trashFiles.all.size,
         totalSize = trashFiles.all.map(_._2).sum),
       methods.map { m =>
-        getDataFilesStats(m.id, m.name, m.desc, m.filesToKeep(), files)
+        getDataFilesStats(m.id, m.name, m.desc, m.filesToKeep(user), files)
       })
   }
 
@@ -99,14 +104,25 @@ class CleanerController(environment: BigGraphEnvironment) {
     }
   }
 
-  private def snapshotEntities(): Set[String] = {
-    val snapshots = DirectoryEntry.rootDirectory.listObjectsRecursively.filter(_.isSnapshot).map(_.asSnapshotFrame)
-    val uuids = snapshots.map(_.getState).flatMap {
+  private def uuidsFromStates(states: Iterable[BoxOutputState]): Set[String] = {
+    states.flatMap {
       case t if t.isTable => Some(t.table.gUID)
       case p if p.isProject => p.project.allEntityGUIDs
       case _ => None
+    }.map(_.toString).toSet
+  }
+
+  private def snapshotEntities(user: serving.User): Set[String] = {
+    val states = DirectoryEntry.rootDirectory.listObjectsRecursively.filter(_.isSnapshot).map(_.asSnapshotFrame.getState)
+    uuidsFromStates(states)
+  }
+
+  private def workspaceEntities(user: serving.User): Set[String] = {
+    val workspaces = DirectoryEntry.rootDirectory.listObjectsRecursively.filter(_.isWorkspace).map(_.asWorkspaceFrame.workspace)
+    val states = workspaces.flatMap {
+      ws => WorkspaceExecutionContext(ws, user, ops, Map()).allStates.values
     }
-    uuids.map(_.toString).toSet
+    uuidsFromStates(states)
   }
 
   private def allObjects(implicit manager: MetaGraphManager): Seq[ObjectFrame] = {
@@ -158,7 +174,7 @@ class CleanerController(environment: BigGraphEnvironment) {
       s"Unknown data file trashing method: ${req.method}")
     log.info(s"${user.email} attempting to move data files to trash using '${req.method}'.")
     val files = getAllFiles(trash = false)
-    val filesToKeep = methods.find(m => m.id == req.method).get.filesToKeep()
+    val filesToKeep = methods.find(m => m.id == req.method).get.filesToKeep(user)
     moveToTrash(io.PartitionedDir, files.partitioned.keys.toSet -- filesToKeep)
     moveToTrash(io.EntitiesDir, files.entities.keys.toSet -- filesToKeep)
     moveToTrash(io.OperationsDir, files.operations.keys.toSet -- filesToKeep)
