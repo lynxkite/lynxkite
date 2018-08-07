@@ -840,6 +840,13 @@ class State:
     '''Returns the project metadata if this state is a project.'''
     return self.box.lk.get_project(self.box.lk.get_state_id(self))
 
+  def get_progress(self):
+    '''Returns progress info about the state.'''
+    lk = self.box.lk
+    state_id = lk.get_state_id(self)
+    progress = lk._ask('/ajax/long-poll', dict(syncedUntil=0, stateIds=[state_id]))
+    return progress.progress.__dict__[state_id]
+
   def run_export(self) -> str:
     '''Triggers the export if this state is an ``exportResult``.
 
