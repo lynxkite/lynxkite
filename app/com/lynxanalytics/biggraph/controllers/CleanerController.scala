@@ -33,7 +33,7 @@ case class CleanerMethod(
     id: String,
     name: String,
     desc: String,
-    filesToKeep: (serving.User) => Set[String])
+    filesToKeep: () => Set[String])
 
 case class MoveToTrashRequest(method: String)
 
@@ -51,6 +51,13 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
 
   private val methods = List(
     CleanerMethod(
+      "notMetaGraphContents",
+      "Entities which do not exist in the meta-graph",
+      "Truly orphan entities. Cached entities can get orphaned e.g. when the kite meta directory" +
+        " is deleted or during a Kite version upgrade. Deleting these should not have any side" +
+        " effects.",
+      metaGraphContents),
+    CleanerMethod(
       "notSnapshotEntities",
       "Entities which do not exist in a snapshopt",
       "Entities which are not saved via either a table snapshot, or as a vetrex set, edge bundle, " +
@@ -60,7 +67,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       "notSnapshotOrWorkspaceEntities",
       "Entities which do not exist in a snapshot or workspace",
       "Entities which are not referenced via a snapshot or as an output of a box in a top level workspace.",
-      (user: serving.User) => snapshotEntities(user) ++ workspaceEntities(user)))
+      () => snapshotEntities() ++ workspaceEntities()))
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
@@ -76,7 +83,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
         fileCount = trashFiles.all.size,
         totalSize = trashFiles.all.map(_._2).sum),
       methods.map { m =>
-        getDataFilesStats(m.id, m.name, m.desc, m.filesToKeep(user), files)
+        getDataFilesStats(m.id, m.name, m.desc, m.filesToKeep(), files)
       })
   }
 
@@ -108,11 +115,14 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     states.flatMap {
       case t if t.isTable => Some(t.table.gUID)
       case p if p.isProject => p.project.allEntityGUIDs
+      case p if p.isPlot => Some(p.plot.gUID)
+      case v if v.isVisualization => v.visualization.project.allEntityGUIDs
+      case e if e.isExportResult => Some(e.exportResult.gUID)
       case _ => None
     }.map(_.toString).toSet
   }
 
-  private def snapshotEntities(user: serving.User): Set[String] = {
+  private def snapshotEntities(): Set[String] = {
     val snapshotStates = DirectoryEntry
       .rootDirectory
       .listObjectsRecursively
@@ -121,16 +131,21 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     guidsFromStates(snapshotStates)
   }
 
-  private def workspaceEntities(user: serving.User): Set[String] = {
+  private def workspaceEntities(): Set[String] = {
     val workspaces = DirectoryEntry
       .rootDirectory
       .listObjectsRecursively
       .filter(_.isWorkspace)
       .map(_.asWorkspaceFrame.workspace)
     val wsStates = workspaces.flatMap {
-      ws => WorkspaceExecutionContext(ws, user, ops, Map()).allStates.values
+      // We assert the user to have admin rights at every entry point.
+      ws => WorkspaceExecutionContext(ws, serving.User.fake, ops, Map()).allStates.values
     }
     guidsFromStates(wsStates)
+  }
+
+  private def metaGraphContents(): Set[String] = {
+    allFilesFromSourceOperation(environment.metaGraphManager.getOperationInstances())
   }
 
   private def allObjects(implicit manager: MetaGraphManager): Seq[ObjectFrame] = {
@@ -182,7 +197,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       s"Unknown data file trashing method: ${req.method}")
     log.info(s"${user.email} attempting to move data files to trash using '${req.method}'.")
     val files = getAllFiles(trash = false)
-    val filesToKeep = methods.find(m => m.id == req.method).get.filesToKeep(user)
+    val filesToKeep = methods.find(m => m.id == req.method).get.filesToKeep()
     moveToTrash(io.PartitionedDir, files.partitioned.keys.toSet -- filesToKeep)
     moveToTrash(io.EntitiesDir, files.entities.keys.toSet -- filesToKeep)
     moveToTrash(io.OperationsDir, files.operations.keys.toSet -- filesToKeep)
