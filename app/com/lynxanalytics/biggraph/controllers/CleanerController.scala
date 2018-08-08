@@ -60,13 +60,14 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     CleanerMethod(
       "notSnapshotEntities",
       "Entities which do not exist in a snapshopt",
-      "Entities which are not saved via either a table snapshot, or as a vetrex set, edge bundle, " +
-        "vertex or edge attribute or scalar of a project or its segmentation.",
+      "Entities which are not saved via either a table snapshot, or as a vetrex set, " +
+        "edge bundle, vertex or edge attribute or scalar of a project or its segmentation.",
       snapshotEntities),
     CleanerMethod(
       "notSnapshotOrWorkspaceEntities",
       "Entities which do not exist in a snapshot or workspace",
-      "Entities which are not referenced via a snapshot or as an output of a box in a top level workspace.",
+      "Entities which are not referenced via a snapshot or as an output of a box in " +
+        "a top level workspace.",
       () => snapshotEntities() ++ workspaceEntities()))
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
@@ -111,15 +112,24 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     }
   }
 
+  private def heavyOpOutputSourceEntities(entity: MetaGraphEntity): Set[MetaGraphEntity] = {
+    if (entity.source.operation.isHeavy) {
+      Set(entity)
+    } else {
+      entity.source.inputs.all.values.flatMap(e => heavyOpOutputSourceEntities(e)).toSet
+    }
+  }
+
   private def guidsFromStates(states: Iterable[BoxOutputState]): Set[String] = {
-    states.flatMap {
-      case t if t.isTable => Some(t.table.gUID)
-      case p if p.isProject => p.project.allEntityGUIDs
-      case p if p.isPlot => Some(p.plot.gUID)
-      case v if v.isVisualization => v.visualization.project.allEntityGUIDs
-      case e if e.isExportResult => Some(e.exportResult.gUID)
+    val entities = states.flatMap {
+      case t if t.isTable => Some(t.table)
+      case p if p.isProject => p.project.viewer.allEntities
+      case p if p.isPlot => Some(p.plot)
+      case v if v.isVisualization => v.visualization.project.viewer.allEntities
+      case e if e.isExportResult => Some(e.exportResult)
       case _ => None
-    }.map(_.toString).toSet
+    }
+    entities.flatMap(e => heavyOpOutputSourceEntities(e)).map(_.gUID.toString).toSet
   }
 
   private def snapshotEntities(): Set[String] = {
