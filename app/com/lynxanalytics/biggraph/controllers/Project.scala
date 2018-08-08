@@ -300,18 +300,20 @@ sealed trait ProjectViewer {
     protoTable
   }
 
-  def allEntityGUIDs: List[java.util.UUID] = {
+  def allEntityGUIDs: List[java.util.UUID] = allEntities.map(_.gUID)
+
+  def allEntities: List[MetaGraphEntity] = {
     List() ++
-      Option(vertexSet).map(_.gUID) ++
-      Option(edgeBundle).map(_.gUID) ++
-      scalars.map { case (_, a) => a.gUID }.toList ++
-      vertexAttributes.map { case (_, a) => a.gUID }.toList ++
-      edgeAttributes.map { case (_, a) => a.gUID }.toList ++
-      segmentationMap.values.flatMap(s => allEntityGUIDsForSegment(s))
+      Option(vertexSet) ++
+      Option(edgeBundle) ++
+      scalars.map { case (_, s) => s }.toList ++
+      vertexAttributes.map { case (_, a) => a }.toList ++
+      edgeAttributes.map { case (_, a) => a }.toList ++
+      segmentationMap.values.flatMap(s => allEntitiesForSegment(s))
   }
 
-  private def allEntityGUIDsForSegment(segment: SegmentationViewer): List[java.util.UUID] = {
-    segment.allEntityGUIDs ++ Option(segment.belongsTo).map(_.gUID)
+  private def allEntitiesForSegment(segment: SegmentationViewer): List[MetaGraphEntity] = {
+    segment.allEntities ++ Option(segment.belongsTo)
   }
 }
 
