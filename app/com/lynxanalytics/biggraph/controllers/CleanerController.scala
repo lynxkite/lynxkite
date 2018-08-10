@@ -235,6 +235,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     moveToTrash(io.EntitiesDir, files.entities.keys.toSet -- filesToKeep)
     moveToTrash(io.OperationsDir, files.operations.keys.toSet -- filesToKeep)
     moveToTrash(io.ScalarsDir, files.scalars.keys.toSet -- filesToKeep)
+    moveToTrash(io.TablesDir, files.tables.keys.toSet -- filesToKeep)
   }
 
   private def moveToTrash(dir: String, files: Set[String]): Unit = {
@@ -254,6 +255,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     deleteTrashFilesInDir(io.EntitiesDir)
     deleteTrashFilesInDir(io.OperationsDir)
     deleteTrashFilesInDir(io.ScalarsDir)
+    deleteTrashFilesInDir(io.TablesDir)
   }
 
   private def deleteTrashFilesInDir(dir: String): Unit = {
