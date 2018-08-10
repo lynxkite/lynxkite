@@ -41,9 +41,10 @@ case class AllFiles(
     partitioned: Map[String, Long],
     entities: Map[String, Long],
     operations: Map[String, Long],
-    scalars: Map[String, Long]) {
+    scalars: Map[String, Long],
+    tables: Map[String, Long]) {
 
-  lazy val all = partitioned ++ entities ++ operations ++ scalars
+  lazy val all = partitioned ++ entities ++ operations ++ scalars ++ tables
 }
 
 class CleanerController(environment: BigGraphEnvironment, ops: OperationRepository) {
@@ -64,6 +65,12 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
         "edge bundle, vertex or edge attribute or scalar of a project or its segmentation.",
       snapshotEntities),
     CleanerMethod(
+      "notSnapshotOrImportBoxEntities",
+      "Entities which do not exist in a snapshot or outputted by an import box",
+      "Entities which are not referenced via a snapshot or as an output of an import box in " +
+        "a top level workspace.",
+      () => snapshotEntities() ++ importBoxEntities()),
+    CleanerMethod(
       "notSnapshotOrWorkspaceEntities",
       "Entities which do not exist in a snapshot or workspace",
       "Entities which are not referenced via a snapshot or as an output of a box in " +
@@ -74,7 +81,6 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
     val files = getAllFiles(trash = false)
     val trashFiles = getAllFiles(trash = true)
-
     DataFilesStatus(
       HadoopFile.defaultFs.getStatus().getRemaining(),
       DataFilesStats(
@@ -93,7 +99,8 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       getAllFilesInDir(io.PartitionedDir, trash),
       getAllFilesInDir(io.EntitiesDir, trash),
       getAllFilesInDir(io.OperationsDir, trash),
-      getAllFilesInDir(io.ScalarsDir, trash))
+      getAllFilesInDir(io.ScalarsDir, trash),
+      getAllFilesInDir(io.TablesDir, trash))
   }
 
   // Return all files and dirs and their respective sizes in bytes in a
@@ -112,15 +119,26 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     }
   }
 
-  private def heavyOpOutputSourceEntities(entity: MetaGraphEntity): Set[MetaGraphEntity] = {
-    if (entity.source.operation.isHeavy) {
-      Set(entity)
-    } else {
-      entity.source.inputs.all.values.flatMap(e => heavyOpOutputSourceEntities(e)).toSet
-    }
+  private def heavyOpOutputSourceGUIDs(
+    entities: Iterable[MetaGraphEntity],
+    expanded: HashSet[String],
+    keep: (MetaGraphEntity) => Boolean): Set[String] = {
+    entities.flatMap { entity =>
+      val gUID = entity.gUID.toString
+      if (!expanded.contains(gUID)) {
+        expanded.add(gUID)
+        if (entity.source.operation.isHeavy) {
+          if (keep(entity)) Some(gUID) else None
+        } else {
+          heavyOpOutputSourceGUIDs(entity.source.inputs.all.values, expanded, keep).toSet
+        }
+      } else { None } // Avoid expanding the same entity multiple times.
+    }.toSet
   }
 
-  private def guidsFromStates(states: Iterable[BoxOutputState]): Set[String] = {
+  private def guidsFromStates(
+    states: Iterable[BoxOutputState],
+    keep: (MetaGraphEntity) => Boolean): Set[String] = {
     val entities = states.flatMap {
       case t if t.isTable => Some(t.table)
       case p if p.isProject => p.project.viewer.allEntities
@@ -129,7 +147,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       case e if e.isExportResult => Some(e.exportResult)
       case _ => None
     }
-    entities.flatMap(e => heavyOpOutputSourceEntities(e)).map(_.gUID.toString).toSet
+    heavyOpOutputSourceGUIDs(entities, HashSet(), keep)
   }
 
   private def snapshotEntities(): Set[String] = {
@@ -138,10 +156,10 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       .listObjectsRecursively
       .filter(_.isSnapshot)
       .map(_.asSnapshotFrame.getState)
-    guidsFromStates(snapshotStates)
+    guidsFromStates(snapshotStates, (_) => true)
   }
 
-  private def workspaceEntities(): Set[String] = {
+  private def entitiesFromWorkspaces(keep: (MetaGraphEntity) => Boolean): Set[String] = {
     val workspaces = DirectoryEntry
       .rootDirectory
       .listObjectsRecursively
@@ -151,8 +169,13 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       // We assert the user to have admin rights at every entry point.
       ws => WorkspaceExecutionContext(ws, serving.User.fake, ops, Map()).allStates.values
     }
-    guidsFromStates(wsStates)
+    guidsFromStates(wsStates, keep)
   }
+
+  private def workspaceEntities() = entitiesFromWorkspaces((_) => true)
+
+  private def importBoxEntities() = entitiesFromWorkspaces((e: MetaGraphEntity) =>
+    e.source.operation.isInstanceOf[com.lynxanalytics.biggraph.graph_operations.ImportDataFrame])
 
   private def metaGraphContents(): Set[String] = {
     allFilesFromSourceOperation(environment.metaGraphManager.getOperationInstances())
