@@ -121,25 +121,22 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
 
   private def heavyOpOutputSourceGUIDs(
     entities: Iterable[MetaGraphEntity],
-    expanded: HashSet[String],
-    keep: (MetaGraphEntity) => Boolean): Set[String] = {
+    expanded: HashSet[String]): Set[String] = {
     entities.flatMap { entity =>
       val gUID = entity.gUID.toString
       if (!expanded.contains(gUID)) {
         expanded.add(gUID)
         if (entity.source.operation.isHeavy) {
-          if (keep(entity)) Some(gUID) else None
+          Some(gUID)
         } else {
-          heavyOpOutputSourceGUIDs(entity.source.inputs.all.values, expanded, keep).toSet
+          heavyOpOutputSourceGUIDs(entity.source.inputs.all.values, expanded).toSet
         }
       } else { None } // Avoid expanding the same entity multiple times.
     }.toSet
   }
 
-  private def guidsFromStates(
-    states: Iterable[BoxOutputState],
-    keep: (MetaGraphEntity) => Boolean): Set[String] = {
-    val entities = states.flatMap {
+  private def entitiesFromStates(states: Iterable[BoxOutputState]): Iterable[MetaGraphEntity] = {
+    states.flatMap {
       case t if t.isTable => Some(t.table)
       case p if p.isProject => p.project.viewer.allEntities
       case p if p.isPlot => Some(p.plot)
@@ -147,7 +144,6 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       case e if e.isExportResult => Some(e.exportResult)
       case _ => None
     }
-    heavyOpOutputSourceGUIDs(entities, HashSet(), keep)
   }
 
   private def snapshotEntities(): Set[String] = {
@@ -156,26 +152,30 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       .listObjectsRecursively
       .filter(_.isSnapshot)
       .map(_.asSnapshotFrame.getState)
-    guidsFromStates(snapshotStates, (_) => true)
+    heavyOpOutputSourceGUIDs(entitiesFromStates(snapshotStates), HashSet())
   }
 
-  private def entitiesFromWorkspaces(keep: (MetaGraphEntity) => Boolean): Set[String] = {
+  private def entitiesFromWorkspaces(): Iterable[MetaGraphEntity] = {
     val workspaces = DirectoryEntry
       .rootDirectory
       .listObjectsRecursively
       .filter(_.isWorkspace)
       .map(_.asWorkspaceFrame.workspace)
-    val wsStates = workspaces.flatMap {
+    entitiesFromStates(workspaces.flatMap {
       // We assert the user to have admin rights at every entry point.
       ws => WorkspaceExecutionContext(ws, serving.User.fake, ops, Map()).allStates.values
-    }
-    guidsFromStates(wsStates, keep)
+    })
   }
 
-  private def workspaceEntities() = entitiesFromWorkspaces((_) => true)
+  private def workspaceEntities() = {
+    heavyOpOutputSourceGUIDs(entitiesFromWorkspaces, HashSet())
+  }
 
-  private def importBoxEntities() = entitiesFromWorkspaces((e: MetaGraphEntity) =>
-    e.source.operation.isInstanceOf[com.lynxanalytics.biggraph.graph_operations.ImportDataFrame])
+  private def importBoxEntities() = {
+    entitiesFromWorkspaces.filter { e =>
+      e.source.operation.isInstanceOf[com.lynxanalytics.biggraph.graph_operations.ImportDataFrame]
+    }.map(_.gUID.toString)
+  }
 
   private def metaGraphContents(): Set[String] = {
     allFilesFromSourceOperation(environment.metaGraphManager.getOperationInstances())
