@@ -533,6 +533,18 @@ class LynxKite:
     """Deletes the data files which are not referenced anymore."""
     self._send('/remote/cleanFileSystem')
 
+  def get_data_files_status(self):
+    '''Removes an object named ``name``.'''
+    return self._send('/remote/getDataFilesStatus')
+
+  def move_to_cleaner_trash(self, method: str):
+    '''Removes an object named ``name``.'''
+    return self._send('/remote/moveToCleanerTrash', dict(method=method))
+
+  def empty_cleaner_trash(self):
+    '''Removes an object named ``name``.'''
+    return self._send('/remote/emptyCleanerTrash')
+
   def fetch_states(self, boxes: List[SerializedBox],
                    parameters: Dict = dict()) -> Dict[Tuple[str, str], types.SimpleNamespace]:
     res = self._send(
@@ -727,10 +739,11 @@ class SnapshotSequence:
     cron_str: the Cron format defining the valid timestamps and frequency.
     lk: LynxKite connection object.'''
 
-  def __init__(self, lk: LynxKite, location: str, cron_str: str) -> None:
+  def __init__(self, lk: LynxKite, location: str, cron_str: str, retention: int = None) -> None:
     self.lk = lk
     self._location = location
     self.cron_str = cron_str
+    self._retention = retention
 
   def snapshot_name(self, date: datetime.datetime) -> str:
     local_timezone = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
@@ -759,6 +772,11 @@ class SnapshotSequence:
     assert _timestamp_is_valid(dt, self.cron_str), "Datetime %s does not match cron format %s." % (
         dt, self.cron_str)
     self.lk.save_snapshot(self.snapshot_name(dt), state_id)
+
+  def delete_expired(self) -> None:
+    if self._retention:
+      for d in self.lk.list_dir(self._location):
+        print(d)
 
 
 class TableSnapshotSequence(SnapshotSequence):
