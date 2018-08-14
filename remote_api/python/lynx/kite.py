@@ -510,7 +510,7 @@ class LynxKite:
     self._send('/remote/changeACL',
                dict(project=file, readACL=readACL, writeACL=writeACL))
 
-  def list_dir(self, dir: str = '') -> List[str]:
+  def list_dir(self, dir: str = '') -> List[types.SimpleNamespace]:
     '''List the objects in a directory.'''
 
     return self._send('/remote/list', dict(path=dir)).entries
@@ -739,7 +739,8 @@ class SnapshotSequence:
     cron_str: the Cron format defining the valid timestamps and frequency.
     lk: LynxKite connection object.'''
 
-  def __init__(self, lk: LynxKite, location: str, cron_str: str, retention: int = None) -> None:
+  def __init__(self, lk: LynxKite, location: str, cron_str: str,
+               retention: datetime.timedelta = None) -> None:
     self.lk = lk
     self._location = location
     self.cron_str = cron_str
@@ -775,8 +776,12 @@ class SnapshotSequence:
 
   def delete_expired(self) -> None:
     if self._retention:
-      for d in self.lk.list_dir(self._location):
-        print(d)
+      threshold = self.snapshot_name(
+          datetime.datetime.now().replace(
+              second=0, microsecond=0) - self._retention)
+      for entry in self.lk.list_dir(self._location):
+        if (entry.name < threshold):
+          self.lk.remove_name(entry.name)
 
 
 class TableSnapshotSequence(SnapshotSequence):
