@@ -6,4 +6,10 @@ source $BASEDIR/tools/lk_config.sh
 
 cd $(dirname $0)
 python3 -m mypy lynx --ignore-missing-import
-python3 -m unittest discover tests $@
+
+if [ -n "${1-}" ]
+  then
+    python3 -m unittest tests/$1
+  else
+    python3 -m unittest discover tests $@
+fi

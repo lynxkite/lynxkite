@@ -144,11 +144,10 @@ class TestSnapshotSequence(unittest.TestCase):
 
   def test_delete_expired(self):
     lk = lynx.kite.LynxKite()
-
     tss = lynx.kite.TableSnapshotSequence(
-        lk, 'test_snapshot_sequence/7', '30 1 * * *', retention=10)
-    fd = datetime(2018, 1, 1, 0, 0)
-    td = datetime(2018, 2, 1, 0, 0)
-    snapshots = tss.snapshots(fd, td)
-    self.assertEqual(len(snapshots), 31)
-    self.assertEqual(snapshots[0], '2018-01-01 01:30')
+        lk, 'test_snapshot_sequence/7', '30 1 * * *', timedelta(days=10))
+    state = lk.get_state_id(lk.createExampleGraph().sql('select * from vertices'))
+    tss.save_to_sequence(state, datetime(2018, 1, 1, 1, 30))
+    self.assertEqual(1, len(lk.list_dir('test_snapshot_sequence/7')))
+    tss.delete_expired()
+    self.assertEqual(0, len(lk.list_dir('test_snapshot_sequence/7')))
