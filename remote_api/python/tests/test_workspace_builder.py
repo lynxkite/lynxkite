@@ -1,6 +1,7 @@
 import unittest
 import lynx.kite
 import json
+import time
 from lynx.kite import subworkspace
 
 
@@ -201,10 +202,59 @@ class TestWorkspaceBuilder(unittest.TestCase):
     self.assertTrue('names_snapshot' in {e.name for e in entries})
     self.assertTrue('ages_snapshot' in {e.name for e in entries})
 
-  def test_trigger_state(self):
+  def test_compute_state(self):
+    def num_computed(state):
+      return state.get_progress().computed
+
+    def num_not_yet_started(state):
+      return state.get_progress().notYetStarted
+
     lk = lynx.kite.LynxKite()
-    lk.createExampleGraph().sql('select name from vertices').compute()
-    # TODO: Test this, using progress report.
+
+    # To be able to run the test manually and repeatedly,
+    # we use a timestamp based seed.
+    seed = str(int(round(time.time() * 1000)))[-8:]
+
+    # Graph
+    g = lk.createVertices().createRandomEdges(seed=seed).computePageRank()
+    self.assertTrue(num_not_yet_started(g) > 0)
+    g.compute()
+    self.assertEqual(num_not_yet_started(g), 0)
+
+    # Table
+    g = lk.createVertices().createRandomEdges(seed=seed).computeDegree()
+    state = g.sql('select degree from vertices')
+    self.assertEqual(num_computed(state), 0)
+    state.compute()
+    self.assertEqual(num_computed(state), 1)
+
+    # Visualization
+    # Here we just test that we can call compute on a visualization
+    visualization = '''{
+    "left":{"projectPath":"","graphMode":"sampled","display":"svg",
+    "filters":{"vertex":{},"edge":{}},
+    "bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,
+    "axisOptions":{"vertex":{},"edge":{}},
+    "sampleRadius":1,"attributeTitles":{"label":"centrality"},
+    "animate":{"enabled":false,"style":"expand","labelAttraction":0},
+    "centers":["auto"],"customVisualizationFilters":false,"sliderPos":50},
+    "right":{"display":"svg","filters":{"vertex":{},"edge":{}},
+    "bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,
+    "axisOptions":{"vertex":{},"edge":{}},
+    "sampleRadius":1,"attributeTitles":{},
+    "animate":{"enabled":false,"style":"expand","labelAttraction":0},
+    "centers":["auto"],"customVisualizationFilters":false}}'''
+    g = lk.createVertices().createRandomEdges(seed=seed).computeCentrality()
+    v = g.graphVisualization(state=visualization)
+    self.assertTrue(num_not_yet_started(g) > 0)
+    v.compute()
+    self.assertEqual(num_not_yet_started(g), 0)
+
+    # Plot
+    state = g.sql1().customPlot()
+    self.assertEqual(num_computed(state), 0)
+    state.compute()
+    self.assertEqual(num_computed(state), 1)
 
   def test_builder_import(self):
     lk = lynx.kite.LynxKite()
