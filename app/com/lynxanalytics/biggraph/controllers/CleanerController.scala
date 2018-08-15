@@ -41,12 +41,13 @@ case class AllFiles(
     partitioned: Map[String, Long],
     entities: Map[String, Long],
     operations: Map[String, Long],
-    scalars: Map[String, Long]) {
+    scalars: Map[String, Long],
+    tables: Map[String, Long]) {
 
-  lazy val all = partitioned ++ entities ++ operations ++ scalars
+  lazy val all = partitioned ++ entities ++ operations ++ scalars ++ tables
 }
 
-class CleanerController(environment: BigGraphEnvironment) {
+class CleanerController(environment: BigGraphEnvironment, ops: OperationRepository) {
   implicit val manager = environment.metaGraphManager
 
   private val methods = List(
@@ -56,13 +57,30 @@ class CleanerController(environment: BigGraphEnvironment) {
       "Truly orphan entities. Cached entities can get orphaned e.g. when the kite meta directory" +
         " is deleted or during a Kite version upgrade. Deleting these should not have any side" +
         " effects.",
-      metaGraphContents))
+      metaGraphContents),
+    CleanerMethod(
+      "notSnapshotEntities",
+      "Entities which do not exist in a snapshopt",
+      "Entities which are not saved via either a table snapshot, or as a vetrex set, " +
+        "edge bundle, vertex or edge attribute or scalar of a project or its segmentation.",
+      snapshotEntities),
+    CleanerMethod(
+      "notSnapshotOrImportBoxEntities",
+      "Entities which do not exist in a snapshot or outputted by an import box",
+      "Entities which are not referenced via a snapshot or as an output of an import box in " +
+        "a top level workspace.",
+      () => snapshotEntities() ++ importBoxEntities()),
+    CleanerMethod(
+      "notSnapshotOrWorkspaceEntities",
+      "Entities which do not exist in a snapshot or workspace",
+      "Entities which are not referenced via a snapshot or as an output of a box in " +
+        "a top level workspace.",
+      () => snapshotEntities() ++ workspaceEntities()))
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
     val files = getAllFiles(trash = false)
     val trashFiles = getAllFiles(trash = true)
-
     DataFilesStatus(
       HadoopFile.defaultFs.getStatus().getRemaining(),
       DataFilesStats(
@@ -81,7 +99,8 @@ class CleanerController(environment: BigGraphEnvironment) {
       getAllFilesInDir(io.PartitionedDir, trash),
       getAllFilesInDir(io.EntitiesDir, trash),
       getAllFilesInDir(io.OperationsDir, trash),
-      getAllFilesInDir(io.ScalarsDir, trash))
+      getAllFilesInDir(io.ScalarsDir, trash),
+      getAllFilesInDir(io.TablesDir, trash))
   }
 
   // Return all files and dirs and their respective sizes in bytes in a
@@ -98,6 +117,64 @@ class CleanerController(environment: BigGraphEnvironment) {
         baseName -> (hadoopFileDir / baseName).getContentSummary.getSpaceConsumed
       }.toMap
     }
+  }
+
+  private def heavyOpOutputSourceGUIDs(
+    entities: Iterable[MetaGraphEntity],
+    expanded: HashSet[String]): Set[String] = {
+    entities.flatMap { entity =>
+      val gUID = entity.gUID.toString
+      if (!expanded.contains(gUID)) {
+        expanded.add(gUID)
+        if (entity.source.operation.isHeavy) {
+          Some(gUID)
+        } else {
+          heavyOpOutputSourceGUIDs(entity.source.inputs.all.values, expanded).toSet
+        }
+      } else { None } // Avoid expanding the same entity multiple times.
+    }.toSet
+  }
+
+  private def entitiesFromStates(states: Iterable[BoxOutputState]): Iterable[MetaGraphEntity] = {
+    states.flatMap {
+      case t if t.isTable => Some(t.table)
+      case p if p.isProject => p.project.viewer.allEntities
+      case p if p.isPlot => Some(p.plot)
+      case v if v.isVisualization => v.visualization.project.viewer.allEntities
+      case e if e.isExportResult => Some(e.exportResult)
+      case _ => None
+    }
+  }
+
+  private def snapshotEntities(): Set[String] = {
+    val snapshotStates = DirectoryEntry
+      .rootDirectory
+      .listObjectsRecursively
+      .filter(_.isSnapshot)
+      .map(_.asSnapshotFrame.getState)
+    heavyOpOutputSourceGUIDs(entitiesFromStates(snapshotStates), HashSet())
+  }
+
+  private def entitiesFromWorkspaces(): Iterable[MetaGraphEntity] = {
+    val workspaces = DirectoryEntry
+      .rootDirectory
+      .listObjectsRecursively
+      .filter(_.isWorkspace)
+      .map(_.asWorkspaceFrame.workspace)
+    entitiesFromStates(workspaces.flatMap {
+      // We assert the user to have admin rights at every entry point.
+      ws => WorkspaceExecutionContext(ws, serving.User.fake, ops, Map()).allStates.values
+    })
+  }
+
+  private def workspaceEntities() = {
+    heavyOpOutputSourceGUIDs(entitiesFromWorkspaces, HashSet())
+  }
+
+  private def importBoxEntities() = {
+    entitiesFromWorkspaces.filter { e =>
+      e.source.operation.isInstanceOf[com.lynxanalytics.biggraph.graph_operations.ImportDataFrame]
+    }.map(_.gUID.toString)
   }
 
   private def metaGraphContents(): Set[String] = {
@@ -158,6 +235,7 @@ class CleanerController(environment: BigGraphEnvironment) {
     moveToTrash(io.EntitiesDir, files.entities.keys.toSet -- filesToKeep)
     moveToTrash(io.OperationsDir, files.operations.keys.toSet -- filesToKeep)
     moveToTrash(io.ScalarsDir, files.scalars.keys.toSet -- filesToKeep)
+    moveToTrash(io.TablesDir, files.tables.keys.toSet -- filesToKeep)
   }
 
   private def moveToTrash(dir: String, files: Set[String]): Unit = {
@@ -177,6 +255,7 @@ class CleanerController(environment: BigGraphEnvironment) {
     deleteTrashFilesInDir(io.EntitiesDir)
     deleteTrashFilesInDir(io.OperationsDir)
     deleteTrashFilesInDir(io.ScalarsDir)
+    deleteTrashFilesInDir(io.TablesDir)
   }
 
   private def deleteTrashFilesInDir(dir: String): Unit = {
