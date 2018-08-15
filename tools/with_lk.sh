@@ -28,7 +28,7 @@ cat > "$KITE_USERS_FILE" <<EOF
   "isAdmin" : false
 } ]
 EOF
-KITE_DEPLOYMENT_CONFIG_DIR="test"
+KITE_DEPLOYMENT_CONFIG_DIR="$(dirname $0)/../test"
 export HTTP_PORT=$[ 9100 + RANDOM % 100 ]
 export HTTPS_PORT=$[ 9200 + RANDOM % 100 ]
 PID_FILE=${TMP}/pid
