@@ -540,7 +540,8 @@ class LynxKite:
     return self._send('/remote/getDataFilesStatus')
 
   def move_to_cleaner_trash(self, method: str):
-    '''Moves LynxKite data files specified by the cleaning ``method`` into the cleaner trash.'''
+    '''Moves LynxKite data files specified by the cleaning ``method`` into the cleaner trash.
+    The possible values of ``method`` are defined in the result of get_data_files_status.'''
     return self._send('/remote/moveToCleanerTrash', dict(method=method))
 
   def empty_cleaner_trash(self):
