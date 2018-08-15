@@ -511,7 +511,8 @@ class LynxKite:
                dict(project=file, readACL=readACL, writeACL=writeACL))
 
   def list_dir(self, dir: str = '') -> List[types.SimpleNamespace]:
-    '''List the objects in a directory.'''
+    '''List the objects in a directory, with their names, types, notes,
+    and other optional data about projects.'''
 
     return self._send('/remote/list', dict(path=dir)).entries
 
@@ -534,15 +535,16 @@ class LynxKite:
     self._send('/remote/cleanFileSystem')
 
   def get_data_files_status(self):
-    '''Removes an object named ``name``.'''
+    '''Returns the amount of space used by LynxKite data, various cleaning methods
+    and the amount of space they can free up.'''
     return self._send('/remote/getDataFilesStatus')
 
   def move_to_cleaner_trash(self, method: str):
-    '''Removes an object named ``name``.'''
+    '''Moves LynxKite data files specified by the cleaning ``method`` into the cleaner trash.'''
     return self._send('/remote/moveToCleanerTrash', dict(method=method))
 
   def empty_cleaner_trash(self):
-    '''Removes an object named ``name``.'''
+    '''Empties the cleaner trash.'''
     return self._send('/remote/emptyCleanerTrash')
 
   def fetch_states(self, boxes: List[SerializedBox],
@@ -737,6 +739,7 @@ class SnapshotSequence:
   Attributes:
     location: the LynxKite root directory this snapshot sequence is stored under.
     cron_str: the Cron format defining the valid timestamps and frequency.
+    retention: the time delta after which snapshots can be cleaned up.
     lk: LynxKite connection object.'''
 
   def __init__(self, lk: LynxKite, location: str, cron_str: str,
