@@ -63,7 +63,7 @@ $(pip): python_requirements.txt
 		.build/ecosystem-done .build/ecosystem-docker-base-done $(shell $(find) ecosystem/docker)
 	ecosystem/docker/release/build.sh $(VERSION) && touch $@
 .build/shell_ui-test-passed: $(shell $(find) shell_ui)
-	shell_ui/generate_data_and_test.sh && touch $@
+	shell_ui/test.sh && touch $@
 
 # Short aliases for command-line use.
 .PHONY: backend
