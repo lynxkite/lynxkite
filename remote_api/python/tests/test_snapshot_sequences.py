@@ -141,3 +141,13 @@ class TestSnapshotSequence(unittest.TestCase):
     self.assertEqual(local_names[1], '2018-01-02 01:30')
     self.assertEqual(local_names[2], '2018-01-03 01:30')
     self.assertEqual(local_names[30], '2018-01-31 01:30')
+
+  def test_delete_expired(self):
+    lk = lynx.kite.LynxKite()
+    tss = lynx.kite.TableSnapshotSequence(
+        lk, 'test_snapshot_sequence/7', '30 1 * * *', timedelta(days=10))
+    state = lk.get_state_id(lk.createExampleGraph().sql('select * from vertices'))
+    tss.save_to_sequence(state, datetime(2018, 1, 1, 1, 30))
+    self.assertEqual(1, len(lk.list_dir('test_snapshot_sequence/7')))
+    tss.delete_expired()
+    self.assertEqual(0, len(lk.list_dir('test_snapshot_sequence/7')))
