@@ -847,6 +847,10 @@ class State:
   def sql(self, sql: str, **kwargs) -> 'SingleOutputAtomicBox':
     return self.sql1(sql=sql, **kwargs)
 
+  def persist(self) -> 'SingleOutputAtomicBox':
+    '''Same as ``x.sql('select * from input', persist='yes')``.'''
+    return self.sql('select * from input', persist='yes')
+
   def df(self, limit: int = -1):
     '''Returns a Pandas DataFrame if this state is a table.'''
     import pandas
