@@ -768,8 +768,7 @@ class SnapshotSequence:
     return t
 
   def read_date(self, date: datetime.datetime) -> 'Box':
-    x = self.snapshots(date, date)
-    path = x[0]
+    path = self.snapshots(date, date)[0]
     return self.lk.importSnapshot(path=path)
 
   def save_to_sequence(self, state_id: str, dt: datetime.datetime) -> None:
