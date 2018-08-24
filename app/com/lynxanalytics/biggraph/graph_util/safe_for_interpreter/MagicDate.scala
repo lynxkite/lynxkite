@@ -9,9 +9,10 @@ import scala.language.implicitConversions
 object MagicDate {
   val ymd = "yyyy-MM-dd"
   val hms = "HH:mm:ss"
+  val fullDate = s"$ymd $hms"
 
   implicit def stringToDate(original: String): DateTime = {
-    original.toDateTime(ymd)
+    original.toDateTime(fullDate)
   }
   implicit class MagicString(date: DateTime) {
     def format(str: String): String = {
@@ -19,7 +20,7 @@ object MagicDate {
     }
 
     def oracle(): String = {
-      val dt = format(s"$ymd $hms")
+      val dt = format(fullDate)
       s"to_timestamp('$dt', 'YYYY-MM-DD HH24:MI:SS')'"
     }
 
@@ -29,9 +30,9 @@ object MagicDate {
     }
 
     def db2(): String = {
-      val dt = format(s"$ymd $hms")
+      val dt = format(fullDate)
       s"TIMESTAMP('$dt')"
     }
   }
-  implicit class MagicDatetime(datetime: String) extends MagicString(datetime.toDateTime(ymd))
+  implicit class MagicDatetime(datetime: String) extends MagicString(datetime.toDateTime(fullDate))
 }
