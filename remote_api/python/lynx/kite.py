@@ -854,9 +854,21 @@ class State:
   def df(self, limit: int = -1):
     '''Returns a Pandas DataFrame if this state is a table.'''
     import pandas
+
+    def get(v, t):
+      if not v.defined:
+        return None
+      if hasattr(v, 'double'):
+        return v.double
+      elif t == 'java.math.BigDecimal':
+        return float(v.string)
+      else:
+        return v.string
+
     table = self.get_table_data(limit)
     header = [c.name for c in table.header]
-    data = [[getattr(c, 'double', c.string) if c.defined else None for c in r] for r in table.data]
+    types = [c.dataType for c in table.header]
+    data = [[get(c, t) for (c, t) in zip(r, types)] for r in table.data]
     return pandas.DataFrame(data, columns=header)
 
   def columns(self):
