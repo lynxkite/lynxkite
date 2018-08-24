@@ -101,6 +101,9 @@ object ScalaScript {
 
   private var engine: IMain = null
 
+  val dateMagicImports = """import com.lynxanalytics.biggraph.graph_util.safe_for_interpreter.MagicDate._
+                           |import com.github.nscala_time.time.Imports._""".stripMargin
+
   private val runCache = new SoftHashMap[String, String]()
   def run(
     code: String,
@@ -111,6 +114,7 @@ object ScalaScript {
       case (k, v) => s"""val $k: String = "${StringEscapeUtils.escapeJava(v)}" """
     }.mkString("\n")
     val fullCode = s"""
+    $dateMagicImports
     $binds
     val result = {
       $code
@@ -213,9 +217,6 @@ object ScalaScript {
       result.asInstanceOf[TypeTag[_]] // We cannot use asInstanceOf within the SecurityManager.
     }
   }
-
-  val dateMagicImports = """import com.lynxanalytics.biggraph.graph_util.safe_for_interpreter.MagicDate._
-                           |import com.github.nscala_time.time.Imports._""".stripMargin
 
   // Both type inference and evaluation should use this function.
   private def evalFuncString(
