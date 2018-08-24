@@ -84,7 +84,7 @@ class ScalaScriptSecurityManager extends SecurityManager {
   override def checkPackageAccess(s: String): Unit = {
     super.checkPackageAccess(s) // This must be the first thing to do!
     if (shouldCheck.value &&
-      (s.contains("com.lynxanalytics.biggraph") ||
+      ((s.contains("com.lynxanalytics.biggraph") && !s.endsWith("safe_for_interpreter")) ||
         s.contains("org.apache.spark"))) {
       throw new java.security.AccessControlException(s"Illegal package access: $s")
     }
@@ -214,6 +214,9 @@ object ScalaScript {
     }
   }
 
+  val dateMagicImports = """import com.lynxanalytics.biggraph.graph_util.safe_for_interpreter.MagicDate._
+                           |import com.github.nscala_time.time.Imports._""".stripMargin
+
   // Both type inference and evaluation should use this function.
   private def evalFuncString(
     code: String,
@@ -222,6 +225,7 @@ object ScalaScript {
       case (k, v) => s"`$k`: ${v.tpe}"
     }.mkString(", ")
     s"""
+    $dateMagicImports
     def eval($paramString) = {
       $code
     }

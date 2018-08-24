@@ -192,4 +192,10 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
     ScalaScript.run("val a = 1; a")
   }
 
+  test("MagicDate works") {
+    ScalaScript.compileAndGetEvaluator(
+      """
+        |"2017-03-02".plus(1.year).db2()
+      """.stripMargin, Map()).evaluate(Map())
+  }
 }
