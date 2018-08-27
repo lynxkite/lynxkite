@@ -14,7 +14,7 @@ class MagicDateTest extends FunSuite {
 
   test("MagicDate works with JodaTime arithmetic") {
     import com.github.nscala_time.time.Imports._
-    assert((d.plus(1.year)).db2() == s"TIMESTAMP('2018-02-03 $hms')")
+    assert(d.plus(1.year).db2() == s"TIMESTAMP('2018-02-03 $hms')")
   }
 
 }
