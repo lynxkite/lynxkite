@@ -66,5 +66,10 @@
   "scripts": {
     "test": "gulp test --no-color",
     "eslint": "node_modules/eslint/bin/eslint.js"
+  },
+  "eslintConfig": {
+    "rules": {
+      "no-var": 0
+    }
   }
 }
