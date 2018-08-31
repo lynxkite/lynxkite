@@ -1,14 +1,14 @@
 'use strict';
 
 
-var lib = require('../test-lib.js');
+const lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   fw.transitionTest(
     'test-example workspace with example graph',
     'example graph with filters set',
     function() {
-      var state = lib.workspace.openStateView('eg0', 'project');
+      const state = lib.workspace.openStateView('eg0', 'project');
       state.left.vertexAttribute('name').setFilter('Adam,Eve,Bob');
       state.left.vertexAttribute('age').setFilter('<40');
       state.left.edgeAttribute('weight').setFilter('!1');
@@ -36,7 +36,7 @@ module.exports = function(fw) {
       lib.workspace.openStateView('filter0', 'project');
     },
     function() {
-      var state = lib.workspace.getStateView('filter0', 'project');
+      const state = lib.workspace.getStateView('filter0', 'project');
       expect(state.left.vertexCount()).toEqual(2);
       expect(state.left.edgeCount()).toEqual(1);
     });

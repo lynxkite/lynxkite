@@ -15,23 +15,23 @@ angular.module('biggraph')
         element.on('focusout', function() { scope.onBlur(); });
 
         function onBlurNow() {
-          var box = scope.workspace.boxMap[scope.boxId];
-          var changed = false;
+          const box = scope.workspace.boxMap[scope.boxId];
+          let changed = false;
           if (box.instance.operationId !== scope.metadata.operationId) {
             changed = true;
             box.instance.operationId = scope.metadata.operationId;
           }
           if (box.instance.id !== scope.metadata.id) {
             changed = true;
-            var newId = scope.metadata.id;
+            const newId = scope.metadata.id;
             box.id = newId;
             box.instance.id = newId;
             // Update connections.
-            for (var i = 0; i < box.outputs.length; ++i) {
-              var src = box.outputs[i];
-              var dsts = src.getAttachedPlugs();
-              for (var j = 0; j < dsts.length; ++j) {
-                var dst = dsts[j];
+            for (let i = 0; i < box.outputs.length; ++i) {
+              const src = box.outputs[i];
+              const dsts = src.getAttachedPlugs();
+              for (let j = 0; j < dsts.length; ++j) {
+                const dst = dsts[j];
                 dst.boxInstance.inputs[dst.id] = { boxId: newId, id: src.id };
               }
             }
@@ -55,7 +55,7 @@ angular.module('biggraph')
         };
 
         scope.$watch('boxId', function() {
-          var box = scope.workspace.boxMap[scope.boxId];
+          const box = scope.workspace.boxMap[scope.boxId];
           if (!box) { return; }
           scope.metadata = {
             id: box.instance.id,

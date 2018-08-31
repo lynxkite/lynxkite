@@ -20,7 +20,7 @@ angular
     }
     // One-page routing for PDF generation.
     if (location.pathname.indexOf('/pdf-') === 0) {
-      var page = location.pathname.replace('/pdf-', '');
+      const page = location.pathname.replace('/pdf-', '');
       $routeProvider.otherwise(docTemplate(page));
       return;
     }
@@ -67,8 +67,8 @@ angular
       });
 
     // Register routing for documentation pages.
-    var docs = ['admin-manual', 'help'];
-    for (var i = 0; i < docs.length; ++i) {
+    const docs = ['admin-manual', 'help'];
+    for (let i = 0; i < docs.length; ++i) {
       $routeProvider.when('/' + docs[i], docTemplate(docs[i]));
     }
   })
@@ -98,9 +98,9 @@ angular
   .filter('selectFields', function() {
     return function(input) {
       if (input === undefined) { return input; }
-      for (var i = 0; i < input.length; ++i) {
+      for (let i = 0; i < input.length; ++i) {
         input[i].$selection = '';
-        for (var j = 1; j < arguments.length; ++j) {
+        for (let j = 1; j < arguments.length; ++j) {
           input[i].$selection += input[i][arguments[j]];
           input[i].$selection += '\n';
         }
@@ -116,10 +116,11 @@ angular
   .filter('decimal', function() {
     return function(x) {
       if (x === undefined) { return x; }
-      var str = x.toString();
-      var l = str.length;
-      var result = '';
-      for (var i = 0; i < l - 3; i += 3) {
+      const str = x.toString();
+      const l = str.length;
+      let result = '';
+      let i;
+      for (i = 0; i < l - 3; i += 3) {
         result = ',' + str.substr(l - i - 3, 3) + result;
       }
       result = str.substr(0, l - i) + result;

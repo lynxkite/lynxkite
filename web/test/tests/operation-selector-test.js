@@ -1,6 +1,6 @@
 'use strict';
 
-var lib = require('../test-lib.js');
+const lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   fw.statePreservingTest(
@@ -9,7 +9,7 @@ module.exports = function(fw) {
     function() {
       lib.workspace.addBoxFromSelector('Create example graph');
       lib.workspace.expectNumBoxes(2); // With anchor box
-      var K = protractor.Key;
+      const K = protractor.Key;
       browser.actions()
         .sendKeys(K.ESCAPE + K.DELETE)
         .perform();

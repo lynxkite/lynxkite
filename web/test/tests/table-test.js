@@ -2,8 +2,8 @@
 
 
 module.exports = function(fw) {
-  var lib = require('../test-lib.js');
-  var path = require('path');
+  const lib = require('../test-lib.js');
+  const path = require('path');
 
   fw.transitionTest(
     'empty test-example workspace',
@@ -13,8 +13,8 @@ module.exports = function(fw) {
         id: 'ib0',
         name: 'Import CSV',
         x: 100, y: 100 });
-      var boxEditor = lib.workspace.openBoxEditor('ib0');
-      var importPath = path.resolve(__dirname, 'data/import_csv_test.csv');
+      const boxEditor = lib.workspace.openBoxEditor('ib0');
+      const importPath = path.resolve(__dirname, 'data/import_csv_test.csv');
       boxEditor.populateOperation({
         'filename': importPath,
         'columns': 'name,age'
@@ -30,8 +30,8 @@ module.exports = function(fw) {
     'small CSV file imported as table',
     'table state view opened',
     function() {
-      var tableState = lib.workspace.openStateView('ib0', 'table');
-      var table = tableState.table;
+      const tableState = lib.workspace.openStateView('ib0', 'table');
+      const table = tableState.table;
       table.expectRowCountIs(3);
       table.expectColumnNamesAre(['name', 'age']);
       table.expectColumnTypesAre(['String', 'String']);
@@ -49,8 +49,8 @@ module.exports = function(fw) {
         id: 'ib1',
         name: 'Import CSV',
         x: 400, y: 100 });
-      var boxEditor = lib.workspace.openBoxEditor('ib1');
-      var importPath = path.resolve(__dirname, 'data/import_large_csv_test.csv');
+      const boxEditor = lib.workspace.openBoxEditor('ib1');
+      const importPath = path.resolve(__dirname, 'data/import_large_csv_test.csv');
       boxEditor.populateOperation({
         'filename': importPath,
         'infer': 'yes'
@@ -66,8 +66,8 @@ module.exports = function(fw) {
     'large CSV file imported as table',
     'Sorting and Show more rows are working on table state view',
     function() {
-      var state = lib.workspace.openStateView('ib1', 'table');
-      var table = state.table;
+      const state = lib.workspace.openStateView('ib1', 'table');
+      const table = state.table;
       table.expectRowCountIs(10);
       table.expectColumnNamesAre([
         'country', 'country_code', 'population', 'area', 'currency']);
@@ -110,7 +110,7 @@ module.exports = function(fw) {
     'Table described in global SQL box',
     'CSV file imported as table with limit',
     function() {
-      var importPath = path.resolve(__dirname, 'data/import_csv_test.csv');
+      const importPath = path.resolve(__dirname, 'data/import_csv_test.csv');
       lib.splash.startTableImport();
       lib.splash.importLocalCSVFile(tableName, importPath, 'name,age', 'name', false, '2');
       lib.confirmSweetAlert('Entry already exists');
@@ -179,7 +179,7 @@ module.exports = function(fw) {
     'empty splash',
     'CSV file imported as table with header',
     function() {
-      var importPath = path.resolve(__dirname, 'data/import_csv_test_hdr.csv');
+      const importPath = path.resolve(__dirname, 'data/import_csv_test_hdr.csv');
       lib.splash.startTableImport();
       lib.splash.importLocalCSVFile(tableName, importPath, '', '');
       // Check if table was created:
@@ -198,10 +198,10 @@ module.exports = function(fw) {
     }
   );
 
-  var jdbcImportPath = path.resolve(__dirname, 'data/import_jdbc_test.sqlite');
-  var jdbcImportPath2 = path.resolve(__dirname, 'data/import_jdbc_test2.sqlite');
-  var jdbcUrl = 'jdbc:sqlite:' + jdbcImportPath;
-  var jdbcUrl2 = 'jdbc:sqlite:' + jdbcImportPath2;
+  const jdbcImportPath = path.resolve(__dirname, 'data/import_jdbc_test.sqlite');
+  const jdbcImportPath2 = path.resolve(__dirname, 'data/import_jdbc_test2.sqlite');
+  const jdbcUrl = 'jdbc:sqlite:' + jdbcImportPath;
+  const jdbcUrl2 = 'jdbc:sqlite:' + jdbcImportPath2;
 
   fw.transitionTest(
     'empty splash',
@@ -225,7 +225,7 @@ module.exports = function(fw) {
     function() {
       lib.splash.editTable('jdbc imported');
       expect(element(by.model('tableName')).getAttribute('value')).toEqual('jdbc imported');
-      var jdbcInput = element(by.css('#jdbc-url input'));
+      const jdbcInput = element(by.css('#jdbc-url input'));
       expect(jdbcInput.getAttribute('value')).toEqual(jdbcUrl);
       jdbcInput.sendKeys(lib.selectAllKey + jdbcUrl2);
       element(by.id('import-jdbc-button')).click();
@@ -240,4 +240,3 @@ module.exports = function(fw) {
     });
 */
 };
-

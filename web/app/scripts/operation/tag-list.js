@@ -22,13 +22,13 @@ angular.module('biggraph').directive('tagList', function(util) {
         scope.onBlur();
       };
       function getTags() {
-        var tagsById = {};
-        for (var i = 0; i < scope.options.length; ++i) {
+        const tagsById = {};
+        for (let i = 0; i < scope.options.length; ++i) {
           tagsById[scope.options[i].id] = scope.options[i];
         }
-        var tags = [];
-        for (i = 0; i < scope.model.length; ++i) {
-          var id = scope.model[i];
+        const tags = [];
+        for (let i = 0; i < scope.model.length; ++i) {
+          const id = scope.model[i];
           if (tagsById[id] !== undefined) {
             tags.push(tagsById[id]);
           } else {

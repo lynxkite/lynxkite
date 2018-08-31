@@ -13,8 +13,8 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
     link: function(scope, element) {
       /* global Drop */
       // Angular element for easier access of popup elements.
-      var dropElement = element.children('.menu');
-      var drop = new Drop({
+      const dropElement = element.children('.menu');
+      let drop = new Drop({
         target: element.children('.token')[0],
         content: element.children('.menu')[0],
         openOn: 'click',
@@ -76,8 +76,8 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       };
 
       scope.getFilter = function() {
-        var filters = scope.side.state.filters;
-        var title = scope.entity.title;
+        const filters = scope.side.state.filters;
+        const title = scope.entity.title;
         if (scope.isVertexAttribute()) { return filters.vertex[title]; }
         if (scope.isEdgeAttribute()) { return filters.edge[title]; }
         if (scope.isSegmentation()) {
@@ -104,7 +104,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
         return false;
       };
 
-      var forceHistogram = false;
+      let forceHistogram = false;
       scope.showHistogram = function() {
         forceHistogram = true;
         updateHistogram();
@@ -113,7 +113,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
         if (!scope.menu.open) { return; }
         if (!scope.histogram && !scope.entity.computeProgress && !forceHistogram) { return; }
         if (!scope.entity.canBucket) { return; }
-        var q = {
+        const q = {
           attributeId: scope.entity.id,
           vertexFilters: scope.side.nonEmptyVertexFilters(),
           edgeFilters: scope.side.nonEmptyEdgeFilters(),
@@ -132,12 +132,12 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       }
 
       function updateHistogramTSV() {
-        var histogram = scope.histogram;
+        const histogram = scope.histogram;
         if (!histogram || !histogram.$resolved) {
           scope.tsv = '';
           return;
         }
-        var tsv = '';
+        let tsv = '';
         // Header.
         if (histogram.labelType === 'between') {
           tsv += 'From\tTo\tCount\n';
@@ -145,7 +145,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
           tsv += 'Value\tCount\n';
         }
         // Data.
-        for (var i = 0; i < histogram.sizes.length; ++i) {
+        for (let i = 0; i < histogram.sizes.length; ++i) {
           if (histogram.labelType === 'between') {
             tsv += histogram.labels[i] + '\t' + histogram.labels[i + 1];
           } else {
@@ -169,9 +169,9 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       };
 
       function vertexAttributeVisualizations() {
-        var e = scope.entity;
-        var state = scope.side.state;
-        var vs = [];
+        const e = scope.entity;
+        const state = scope.side.state;
+        const vs = [];
         if (state.graphMode === 'bucketed') {
           if (e.canBucket) {
             vs.push('X');
@@ -179,7 +179,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
           }
         } else if (state.graphMode === 'sampled' && state.display === 'svg') {
           vs.push('Label');
-          var hasLabel = state.attributeTitles.label !== undefined;
+          const hasLabel = state.attributeTitles.label !== undefined;
           if (e.typeName === 'Double') {
             vs.push('Size');
             vs.push('Color');
@@ -207,9 +207,9 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       }
 
       function edgeAttributeVisualizations() {
-        var e = scope.entity;
-        var state = scope.side.state;
-        var vs = [];
+        const e = scope.entity;
+        const state = scope.side.state;
+        const vs = [];
         if (state.graphMode === 'bucketed') {
           if (e.typeName === 'Double') {
             vs.push('Width');

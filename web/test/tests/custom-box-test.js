@@ -1,11 +1,11 @@
 'use strict';
 
-var lib = require('../test-lib.js');
+const lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   function setParametric(boxId, param, value) {
-    var editor = lib.workspace.openBoxEditor(boxId);
-    var params = {};
+    const editor = lib.workspace.openBoxEditor(boxId);
+    const params = {};
     params[param] = value;
     editor.populateOperation(params);
     editor.parametricSwitch(param).click();
@@ -53,7 +53,7 @@ module.exports = function(fw) {
     'custom box placed',
     'check custom box output',
     function() {
-      var state = lib.workspace.openStateView('cb', 'out');
+      const state = lib.workspace.openStateView('cb', 'out');
       expect(state.left.vertexCount()).toEqual(4);
       expect(state.left.edgeCount()).toEqual(4);
       expect(state.left.vertexAttribute('default_pr').isPresent()).toBe(true);
@@ -66,7 +66,7 @@ module.exports = function(fw) {
     'custom box with parameter set',
     function() {
       lib.workspace.editBox('cb', { prname: 'custom_pr' });
-      var state = lib.workspace.openStateView('cb', 'out');
+      const state = lib.workspace.openStateView('cb', 'out');
       expect(state.left.vertexAttribute('default_pr').isPresent()).toBe(false);
       expect(state.left.vertexAttribute('custom_pr').isPresent()).toBe(true);
       state.close();
@@ -79,13 +79,13 @@ module.exports = function(fw) {
     function() {
       lib.workspace.selectBox('cb');
       $('#dive-down').click();
-      var state = lib.workspace.openStateView('cc', 'project');
+      let state = lib.workspace.openStateView('cc', 'project');
       expect(state.left.vertexAttribute('custom_pr').isPresent()).toBe(true);
       expect(state.left.vertexAttribute('clustering_coefficient').isPresent()).toBe(true);
       state.close();
 
       // Make a change.
-      var cc = lib.workspace.openBoxEditor('cc');
+      const cc = lib.workspace.openBoxEditor('cc');
       cc.populateOperation({ name: 'clustco' });
       cc.close();
       state = lib.workspace.openStateView('cc', 'project');
@@ -122,7 +122,7 @@ module.exports = function(fw) {
       setParametric('pr3', 'name', '${prname}_3');
 
       function checkOutput() {
-        var state = lib.workspace.openStateView('pr3', 'project');
+        const state = lib.workspace.openStateView('pr3', 'project');
         expect(state.left.vertexAttribute('default_pr_1').isPresent()).toBe(true);
         expect(state.left.vertexAttribute('default_pr_2').isPresent()).toBe(true);
         expect(state.left.vertexAttribute('default_pr_3').isPresent()).toBe(true);
@@ -193,8 +193,8 @@ module.exports = function(fw) {
         'browse-custom-box-dir/custom_boxes/my-custom-box-to-browse-2');
 
       // Check top level elements.
-      var root = lib.workspace.getCustomBoxBrowserTree();
-      var dir = root.$('#custom_boxes');
+      const root = lib.workspace.getCustomBoxBrowserTree();
+      const dir = root.$('#custom_boxes');
       lib.expectElement(dir);
       lib.expectNotElement(root.$('#my-custom-box-to-browse-1'));
 

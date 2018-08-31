@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('biggraph').factory('SelectionModel', function() {
-  var SelectionModel = function() {
+  const SelectionModel = function() {
     this.startX = undefined;
     this.startY = undefined;
     this.endX = undefined;

@@ -1,13 +1,13 @@
 'use strict';
 
 
-var request = require('request');
-var fs = require('fs');
+const request = require('request');
+const fs = require('fs');
 
 // Forward declarations.
-var testLib;
+let testLib;
 
-var K = protractor.Key;  // Short alias.
+const K = protractor.Key;  // Short alias.
 
 
 // Mirrors the "id" filter.
@@ -72,7 +72,7 @@ Entity.prototype = {
   },
 
   setFilter: function(filterValue) {
-    var filterBox = this.popup().$('#filter');
+    const filterBox = this.popup().$('#filter');
     filterBox.clear();
     safeSendKeys(filterBox, filterValue).submit();
     this.popoff();
@@ -80,8 +80,8 @@ Entity.prototype = {
 
   getHistogramValues: function(precise) {
     precise = precise || false;
-    var popup = this.popup();
-    var histogram = popup.$('histogram');
+    const popup = this.popup();
+    const histogram = popup.$('histogram');
     // The histogram will be automatically displayed if the attribute is already computed.
     // Click the menu item otherwise.
     histogram.isDisplayed().then(displayed => {
@@ -92,11 +92,11 @@ Entity.prototype = {
       popup.$('#precise-histogram-calculation').click();
     }
     function allFrom(td) {
-      var toolTip = td.getAttribute('drop-tooltip');
-      var style = td.$('.bar').getAttribute('style');
+      const toolTip = td.getAttribute('drop-tooltip');
+      const style = td.$('.bar').getAttribute('style');
       return protractor.promise.all([toolTip, style]).then(function(results) {
-        var toolTipMatch = results[0].match(/^(.*): (\d+)$/);
-        var styleMatch = results[1].match(/^height: (\d+)%;$/);
+        const toolTipMatch = results[0].match(/^(.*): (\d+)$/);
+        const styleMatch = results[1].match(/^height: (\d+)%;$/);
         return {
           title: toolTipMatch[1],
           size: parseInt(styleMatch[1]),
@@ -104,22 +104,22 @@ Entity.prototype = {
         };
       });
     }
-    var tds = histogram.$$('.bar-container');
-    var res = tds.then(function(tds) {
-      var res = [];
-      for (var i = 0; i < tds.length; i++) {
+    const tds = histogram.$$('.bar-container');
+    const res = tds.then(function(tds) {
+      const res = [];
+      for (let i = 0; i < tds.length; i++) {
         res.push(allFrom(tds[i]));
       }
       return protractor.promise.all(res);
     });
 
-    var total = histogram.$('#histogram-total');
+    const total = histogram.$('#histogram-total');
     protractor.promise.all([total.getText(), res]).then(function(results) {
-      var totalValue = results[0].match(/histogram total: ([0-9,]+)/)[1];
-      var values = results[1];
-      var total = parseInt(totalValue.replace(/,/g, ''));
-      var sum = 0;
-      for (var j = 0; j < values.length; j++) {
+      const totalValue = results[0].match(/histogram total: ([0-9,]+)/)[1];
+      const values = results[1];
+      const total = parseInt(totalValue.replace(/,/g, ''));
+      let sum = 0;
+      for (let j = 0; j < values.length; j++) {
         sum += values[j].value;
       }
       expect(total).toEqual(sum);
@@ -202,10 +202,10 @@ Workspace.prototype = {
   },
 
   addBox: function(boxData) {
-    var id = boxData.id;
-    var after = boxData.after;
-    var inputs = boxData.inputs;
-    var params = boxData.params;
+    const id = boxData.id;
+    const after = boxData.after;
+    const inputs = boxData.inputs;
+    const params = boxData.params;
     browser.waitForAngular();
     browser.executeScript(`
         $(document.querySelector('#workspace-drawing-board')).scope().workspace.addBox(
@@ -217,8 +217,8 @@ Workspace.prototype = {
       this.connectBoxes(after, 'project', id, 'project');
     }
     if (inputs) {
-      for (var i = 0; i < inputs.length; ++i) {
-        var input = inputs[i];
+      for (let i = 0; i < inputs.length; ++i) {
+        const input = inputs[i];
         this.connectBoxes(input.boxId, input.srcPlugId, id, input.dstPlugId);
       }
     }
@@ -232,7 +232,7 @@ Workspace.prototype = {
     // Unselect all.
     $$('g.box.selected').click();
     // Select given boxes.
-    for (var i = 0; i < boxIds.length; ++i) {
+    for (let i = 0; i < boxIds.length; ++i) {
       this.clickBox(boxIds[i]);
     }
     browser.actions().keyUp(CTRL).perform();
@@ -266,13 +266,13 @@ Workspace.prototype = {
   },
 
   editBox: function(boxId, params) {
-    var boxEditor = this.openBoxEditor(boxId);
+    const boxEditor = this.openBoxEditor(boxId);
     boxEditor.populateOperation(params);
     boxEditor.close();
   },
 
   addWorkspaceParameter: function(name, kind, defaultValue) {
-    var boxEditor = this.openBoxEditor('anchor');
+    const boxEditor = this.openBoxEditor('anchor');
     boxEditor.element.$('#add-parameter').click();
     const keys = name.split('');
     let prefix = '';
@@ -328,42 +328,42 @@ Workspace.prototype = {
   },
 
   getBoxEditor: function(boxId) {
-    var popup = this.board.$('.popup#' + boxId);
+    const popup = this.board.$('.popup#' + boxId);
     return new BoxEditor(popup);
   },
 
   openBoxEditor: function(boxId) {
     this.clickBox(boxId);
-    var editor = this.getBoxEditor(boxId);
+    const editor = this.getBoxEditor(boxId);
     testLib.expectElement(editor.popup);
     return editor;
   },
 
   openStateView: function(boxId, plugId) {
-    var popup = this.board.$('.popup#' + boxId + '_' + plugId);
+    const popup = this.board.$('.popup#' + boxId + '_' + plugId);
     testLib.expectNotElement(popup); // If it is already open, use getStateView() instead.
     this.toggleStateView(boxId, plugId);
     return new State(popup);
   },
 
   getStateView: function(boxId, plugId) {
-    var popup = this.board.$('.popup#' + boxId + '_' + plugId);
+    const popup = this.board.$('.popup#' + boxId + '_' + plugId);
     return new State(popup);
   },
 
   getVisualizationEditor(boxId) {
-    var editor = this.getBoxEditor(boxId);
+    const editor = this.getBoxEditor(boxId);
     return new State(editor.popup);
   },
 
   expectConnected: function(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
-    var arrow = this.board.$(`path#${srcBoxId}-${srcPlugId}-${dstBoxId}-${dstPlugId}`);
+    const arrow = this.board.$(`path#${srcBoxId}-${srcPlugId}-${dstBoxId}-${dstPlugId}`);
     expect(arrow.isPresent()).toBe(true);
   },
 
   connectBoxes: function(srcBoxId, srcPlugId, dstBoxId, dstPlugId) {
-    var src = this.getOutputPlug(srcBoxId, srcPlugId);
-    var dst = this.getInputPlug(dstBoxId, dstPlugId);
+    const src = this.getOutputPlug(srcBoxId, srcPlugId);
+    const dst = this.getInputPlug(dstBoxId, dstPlugId);
     expect(src.isDisplayed()).toBe(true);
     expect(dst.isDisplayed()).toBe(true);
     browser.actions()
@@ -405,7 +405,7 @@ PopupBase.prototype = {
   },
 
   moveTo: function(x, y) {
-    var head = this.popup.$('div.popup-head');
+    const head = this.popup.$('div.popup-head');
     browser.actions()
         .mouseDown(head)
         // Absolute positioning of mouse. If we don't specify the first
@@ -445,19 +445,19 @@ BoxEditor.prototype = {
 
   populateOperation: function(params) {
     params = params || {};
-    for (var key in params) {
+    for (const key in params) {
       testLib.setParameter(this.operationParameter(key), params[key]);
     }
     $('#workspace-name').click(); // Make sure the parameters are not focused.
   },
 
   expectParameter: function(paramName, expectedValue) {
-    var param = this.element.$('div#' + paramName + ' input');
+    const param = this.element.$('div#' + paramName + ' input');
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
   expectSelectParameter: function(paramName, expectedValue) {
-    var param = this.element.$('div#' + paramName + ' select');
+    const param = this.element.$('div#' + paramName + ' select');
     expect(param.getAttribute('value')).toBe(expectedValue);
   },
 
@@ -483,11 +483,11 @@ State.prototype = {
   __proto__: PopupBase.prototype,  // inherit PopupBase's methods
 
   setInstrument: function(index, name, params) {
-    var state = this.popup.$(`#state-${index}`);
+    const state = this.popup.$(`#state-${index}`);
     state.$(`#instrument-with-${name}`).click();
     params = params || {};
-    for (var key in params) {
-      var param = state.$(`operation-parameters #${key} .operation-attribute-entry`);
+    for (const key in params) {
+      const param = state.$(`operation-parameters #${key} .operation-attribute-entry`);
       testLib.setParameter(param, params[key]);
     }
     $('#workspace-name').click(); // Make sure the parameters are not focused.
@@ -575,7 +575,7 @@ TableState.prototype = {
   },
 
   firstRow: function() {
-    var row = this.sample.$$('tbody tr').get(0);
+    const row = this.sample.$$('tbody tr').get(0);
     return this.getRowAsArray(row);
   },
 
@@ -584,22 +584,22 @@ TableState.prototype = {
   },
 
   clickColumn(columnId) { // for sorting
-    var header = this.sample.$$('thead tr th#' + columnId);
+    const header = this.sample.$$('thead tr th#' + columnId);
     header.click();
   },
 
   clickShowMoreRows: function() {
-    var button = this.control.$('#more-rows-button');
+    const button = this.control.$('#more-rows-button');
     button.click();
   },
 
   setRowCount: function(num) {
-    var input = this.control.$('#sample-rows');
+    const input = this.control.$('#sample-rows');
     safeSelectAndSendKeys(input, num.toString());
   },
 
   clickShowSample: function() {
-    var button = this.control.$('#get-sample-button');
+    const button = this.control.$('#get-sample-button');
     button.click();
   },
 
@@ -633,7 +633,7 @@ Side.prototype = {
   },
 
   getValue: function(id) {
-    var asStr = this.side.$('value#' + id + ' span.value').getText();
+    const asStr = this.side.$('value#' + id + ' span.value').getText();
     return asStr.then(function(asS) { return parseInt(asS); });
   },
 
@@ -703,8 +703,8 @@ Side.prototype = {
   },
 
   expectOperationScalar: function(name, text) {
-    var cssSelector = 'value[ref="scalars[\'' + name + '\']"';
-    var valueElement = this.toolbox.$(cssSelector);
+    const cssSelector = 'value[ref="scalars[\'' + name + '\']"';
+    const valueElement = this.toolbox.$(cssSelector);
     expect(valueElement.getText()).toBe(text);
   },
 
@@ -726,9 +726,9 @@ Side.prototype = {
 
   setSampleRadius: function(radius) {
     this.side.$('#setting-sample-radius').click();
-    var slider = $('#sample-radius-slider');
+    const slider = $('#sample-radius-slider');
     slider.getAttribute('value').then(function(value) {
-      var diff = radius - value;
+      let diff = radius - value;
       while (diff > 0) {
         slider.sendKeys(K.RIGHT);
         diff -= 1;
@@ -767,7 +767,7 @@ Side.prototype = {
   },
 
   expectSqlResult: function(names, types, rows) {
-    var res = this.side.$('#sql-result');
+    const res = this.side.$('#sql-result');
     expect(res.$$('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(names);
     expect(res.$$('thead tr th span.sql-type').map(e => e.getText())).toEqual(types);
     expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
@@ -778,8 +778,8 @@ Side.prototype = {
   },
 
   clickSqlSort(colId) {
-    var res = this.side.$('#sql-result');
-    var header = res.$$('thead tr th').get(colId);
+    const res = this.side.$('#sql-result');
+    const header = res.$$('thead tr th').get(colId);
     header.click();
   },
 
@@ -803,9 +803,9 @@ TableBrowser.prototype = {
   },
 
   getNode: function(posList) {
-    var pos = posList[0];
-    var node = this.root.$$('#table-browser-tree > ul > li').get(pos);
-    for (var i = 1; i < posList.length; ++i) {
+    let pos = posList[0];
+    let node = this.root.$$('#table-browser-tree > ul > li').get(pos);
+    for (let i = 1; i < posList.length; ++i) {
       pos = posList[i];
       node = node.$$(node.locator().value + ' > ul > li').get(pos);
     }
@@ -813,7 +813,7 @@ TableBrowser.prototype = {
   },
 
   expectNode: function(posList, expectedName, expectedDragText) {
-    var li = this.getNode(posList);
+    const li = this.getNode(posList);
     expect(li.getText()).toBe(expectedName);
     if (expectedDragText) {
       this.expectDragText(li, expectedDragText);
@@ -821,22 +821,22 @@ TableBrowser.prototype = {
   },
 
   toggleNode: function(posList) {
-    var li = this.getNode(posList);
+    const li = this.getNode(posList);
     li.$(li.locator().value + ' > span').click();
   },
 
   getColumn: function(tablePos, columnPos) {
-    var tableLi = this.getTable(tablePos);
+    const tableLi = this.getTable(tablePos);
     return tableLi.$$('ul > li').get(columnPos + 1);
   },
 
   expectColumn: function(tablePos, columnPos, name) {
-    var columnLi = this.getColumn(tablePos, columnPos);
+    const columnLi = this.getColumn(tablePos, columnPos);
     expect(columnLi.getText()).toBe(name);
   },
 
   searchTable: function(searchText) {
-    var searchBox = this.root.$('#search-for-tables');
+    const searchBox = this.root.$('#search-for-tables');
     safeSendKeys(searchBox, searchText);
   },
 
@@ -845,7 +845,7 @@ TableBrowser.prototype = {
     // because of:
     // https://github.com/angular/protractor/issues/583
     // Just doing a simple check for now.
-    var span = li.$(li.locator().value +
+    const span = li.$(li.locator().value +
         ' > span > table-browser-entry > span');
     expect(span.evaluate('draggableText')).toBe(expected);
   },
@@ -875,7 +875,7 @@ VisualizationState.prototype = {
   },
 
   asTSV: function() {
-    var copyButton = $('.graph-sidebar [data-clipboard-text');
+    const copyButton = $('.graph-sidebar [data-clipboard-text');
     // It would be too complicated to test actual copy & paste. We just trust Clipboard.js instead.
     return copyButton.getAttribute('data-clipboard-text');
   },
@@ -893,16 +893,16 @@ VisualizationState.prototype = {
 
       // Vertices as simple objects.
       function vertexData(svg) {
-        var vertices = svg.querySelectorAll('g.vertex');
-        var result = [];
-        for (var i = 0; i < vertices.length; ++i) {
-          var v = vertices[i];
-          var touch = v.querySelector('circle.touch');
-          var x = touch.getAttribute('cx');
-          var y = touch.getAttribute('cy');
-          var icon = v.querySelector('path.icon');
-          var label = v.querySelector('text');
-          var image = v.querySelector('image');
+        const vertices = svg.querySelectorAll('g.vertex');
+        const result = [];
+        for (let i = 0; i < vertices.length; ++i) {
+          const v = vertices[i];
+          const touch = v.querySelector('circle.touch');
+          const x = touch.getAttribute('cx');
+          const y = touch.getAttribute('cy');
+          const icon = v.querySelector('path.icon');
+          const label = v.querySelector('text');
+          const image = v.querySelector('image');
           result.push({
             pos: { x: parseFloat(x), y: parseFloat(y), string: x + ' ' + y },
             label: label.innerHTML,
@@ -922,23 +922,23 @@ VisualizationState.prototype = {
       // Edges as simple objects.
       function edgeData(svg, vertices) {
         // Build an index by position, so edges can be resolved to vertices.
-        var i, byPosition = {};
+        let i, byPosition = {};
         for (i = 0; i < vertices.length; ++i) {
           byPosition[vertices[i].pos.string] = i;
         }
 
         // Collect edges.
-        var result = [];
-        var edges = svg.querySelectorAll('g.edge');
+        const result = [];
+        const edges = svg.querySelectorAll('g.edge');
         function arcStart(d) {
           return d.match(/M (.*? .*?) /)[1];
         }
         for (i = 0; i < edges.length; ++i) {
-          var e = edges[i];
-          var first = e.querySelector('path.first');
-          var second = e.querySelector('path.second');
-          var srcPos = arcStart(first.getAttribute('d'));
-          var dstPos = arcStart(second.getAttribute('d'));
+          const e = edges[i];
+          const first = e.querySelector('path.first');
+          const second = e.querySelector('path.second');
+          const srcPos = arcStart(first.getAttribute('d'));
+          const dstPos = arcStart(second.getAttribute('d'));
           result.push({
             src: byPosition[srcPos],
             dst: byPosition[dstPos],
@@ -953,9 +953,9 @@ VisualizationState.prototype = {
         return result;
       }
 
-      var svg = document.querySelector('svg.graph-view');
-      var vertices = vertexData(svg);
-      var edges = edgeData(svg, vertices);
+      const svg = document.querySelector('svg.graph-view');
+      const vertices = vertexData(svg);
+      const edges = edgeData(svg, vertices);
       return { vertices: vertices, edges: edges };
     });
   },
@@ -1019,7 +1019,7 @@ Selector.prototype = {
 
   // Verifies that a computed table exists by the name 'name' and contains 'n' rows.
   expectTableWithNumRows: function(name, n) {
-    var table = this.table(name);
+    const table = this.table(name);
     // Look up the number of rows shown inside a <value>
     // element.
     return expect(table.$('value').getText()).toEqual(n.toString());
@@ -1037,7 +1037,7 @@ Selector.prototype = {
   },
 
   clickAndWaitForCsvImport: function() {
-    var importCsvButton = element(by.id('import-csv-button'));
+    const importCsvButton = element(by.id('import-csv-button'));
     // Wait for the upload to finish.
     testLib.waitUntilClickable(importCsvButton);
     importCsvButton.click();
@@ -1052,7 +1052,7 @@ Selector.prototype = {
     if (csvColumns) {
       safeSendKeys(this.root.$('import-wizard #csv-column-names input'), csvColumns);
     }
-    var csvFileParameter = $('#csv-filename file-parameter');
+    const csvFileParameter = $('#csv-filename file-parameter');
     testLib.uploadIntoFileParameter(csvFileParameter, localCsvFile);
     if (view) {
       this.root.$('import-wizard #as-view input').click();
@@ -1107,7 +1107,7 @@ Selector.prototype = {
   },
 
   renameWorkspace: function(name, newName) {
-    var workspace = this.workspace(name);
+    const workspace = this.workspace(name);
     testLib.menuClick(workspace, 'rename');
     safeSelectAndSendKeys(workspace.element(by.id('renameBox')), newName).submit();
   },
@@ -1187,7 +1187,7 @@ Selector.prototype = {
 
 
   expectGlobalSqlResult: function(names, types, rows) {
-    var res = element(by.id('sql-result'));
+    const res = element(by.id('sql-result'));
     expect(res.$$('thead tr th span.sql-column-name').map(e => e.getText())).toEqual(names);
     expect(res.$$('thead tr th span.sql-type').map(e => e.getText())).toEqual(types);
     expect(res.$$('tbody tr').map(e => e.$$('td').map(e => e.getText()))).toEqual(rows);
@@ -1214,24 +1214,24 @@ Selector.prototype = {
   },
 };
 
-var splash = new Selector(element(by.id('splash')));
+const splash = new Selector(element(by.id('splash')));
 
 function randomPattern () {
   /* eslint-disable no-bitwise */
-  var crypto = require('crypto');
-  var buf = crypto.randomBytes(16);
-  var sixteenLetters = 'abcdefghijklmnop';
-  var r = '';
-  for (var i = 0; i < buf.length; i++) {
-    var v = buf[i];
-    var lo = (v & 0xf);
-    var hi = (v >> 4);
+  const crypto = require('crypto');
+  const buf = crypto.randomBytes(16);
+  const sixteenLetters = 'abcdefghijklmnop';
+  let r = '';
+  for (let i = 0; i < buf.length; i++) {
+    const v = buf[i];
+    const lo = (v & 0xf);
+    const hi = (v >> 4);
     r += sixteenLetters[lo] + sixteenLetters[hi];
   }
   return r;
 }
 
-var lastDownloadList;
+let lastDownloadList;
 
 function getSelectAllKey() {
   if (isMacOS()) {
@@ -1261,7 +1261,7 @@ testLib = {
   // Deletes all projects and directories.
   discardAll: function() {
     function discard(defer) {
-      var req = request.defaults({ jar: true });
+      const req = request.defaults({ jar: true });
       req.post(
         browser.baseUrl + 'ajax/discardAllReallyIMeanIt',
         { json: { fake: 1 } },
@@ -1278,12 +1278,12 @@ testLib = {
 
   authenticateAndPost: function(username, password, method, func) {
     function sendRequest() {
-      var defer = protractor.promise.defer();
+      const defer = protractor.promise.defer();
       if (!process.env.HTTPS_PORT) {
         return func(defer);
       }
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-      var req = request.defaults({ jar: true });
+      const req = request.defaults({ jar: true });
       req.post(
         browser.baseUrl + 'passwordLogin',
         { json: {
@@ -1313,8 +1313,8 @@ testLib = {
   },
 
   sendKeysToACE: function(e, keys) {
-    var aceContent = e.$('div.ace_content');
-    var aceInput = e.$('textarea.ace_text-input');
+    const aceContent = e.$('div.ace_content');
+    const aceInput = e.$('textarea.ace_text-input');
     // The double click on the text area focuses it properly.
     browser.actions().doubleClick(aceContent).perform();
     aceInput.sendKeys(testLib.selectAllKey + keys);
@@ -1329,8 +1329,8 @@ testLib = {
           } else if (kind === 'file') {
             testLib.uploadIntoFileParameter(e, value);
           } else if (kind === 'tag-list') {
-            var values = value.split(',');
-            for (var i = 0; i < values.length; ++i) {
+            const values = value.split(',');
+            for (let i = 0; i < values.length; ++i) {
               e.$('.dropdown-toggle').click();
               e.$('.dropdown-menu #' + values[i]).click();
             }
@@ -1338,13 +1338,13 @@ testLib = {
             // You can specify a CSV file to be uploaded, or the name of an existing table.
             if (value.indexOf('.csv') !== -1) { // CSV file.
               e.element(by.id('import-new-table-button')).click();
-              var s = new Selector(e.element(by.id('import-wizard')));
+              const s = new Selector(e.element(by.id('import-wizard')));
               s.importLocalCSVFile('test-table', value);
             } else { // Table name.
               // Table name options look like 'name of table (date of table creation)'.
               // The date is unpredictable, but we are going to match to the ' (' part
               // to minimize the chance of mathcing an other table.
-              var optionLabelPattern = value + ' (';
+              const optionLabelPattern = value + ' (';
               e.element(by.cssContainingText('option', optionLabelPattern)).click();
             }
           } else if (kind === 'choice') {
@@ -1432,7 +1432,7 @@ testLib = {
   },
 
   expectModal: function(title) {
-    var t = $('.modal-title');
+    const t = $('.modal-title');
     testLib.expectElement(t);
     expect(t.getText()).toEqual(title);
   },
@@ -1458,7 +1458,7 @@ testLib = {
   },
 
   uploadIntoFileParameter: function(fileParameterElement, fileName) {
-    var input = fileParameterElement.element(by.id('file'));
+    const input = fileParameterElement.element(by.id('file'));
     // Need to unhide flowjs's secret file uploader.
     browser.executeScript(
       function(input) {
@@ -1474,7 +1474,7 @@ testLib = {
   },
 
   loadImportedTable: function() {
-    var loadButton = $('#imported_table button');
+    const loadButton = $('#imported_table button');
     loadButton.click();
   },
 
@@ -1489,11 +1489,11 @@ testLib = {
   // Pattern match is needed as chrome first creates some weird temp file.
   waitForNewDownload: function(regex) {
     return testLib.wait(function() {
-      var newList = fs.readdirSync(testLib.protractorDownloads).filter(function(fn) {
+      const newList = fs.readdirSync(testLib.protractorDownloads).filter(function(fn) {
         return fn.match(regex);
       });
       // this will be undefined if no new element was found.
-      var result = newList.filter(function(f) { return lastDownloadList.indexOf(f) < 0; })[0];
+      const result = newList.filter(function(f) { return lastDownloadList.indexOf(f) < 0; })[0];
       if (result) {
         lastDownloadList = undefined;
         return testLib.protractorDownloads + '/' + result;
@@ -1529,7 +1529,7 @@ testLib = {
   },
 
   menuClick: function(entry, action) {
-    var menu = entry.$('.dropdown');
+    const menu = entry.$('.dropdown');
     menu.$('a.dropdown-toggle').click();
     menu.element(by.id('menu-' + action)).click();
   },
@@ -1547,7 +1547,7 @@ testLib = {
 
   confirmSweetAlert: function(expectedMessage) {
     // SweetAlert is not an Angular library. We need to wait until it pops in and out.
-    var EC = protractor.ExpectedConditions;
+    const EC = protractor.ExpectedConditions;
     testLib.wait(EC.visibilityOf($('.sweet-alert.showSweetAlert.visible')));
     expect($('.sweet-alert h2').getText()).toBe(expectedMessage);
     $('.sweet-alert button.confirm').click();
@@ -1559,8 +1559,8 @@ testLib = {
   },
 
   submitInlineInput: function(element, text) {
-    var inputBox = element.$('input');
-    var okButton = element.$('#ok');
+    const inputBox = element.$('input');
+    const okButton = element.$('#ok');
     safeSendKeys(inputBox, text);
     okButton.click();
   },
@@ -1578,10 +1578,10 @@ testLib = {
             if (expected === null) {
               return actual === null;
             } else if (typeof expected === 'object') {
-              var keys = Object.keys(expected);
-              for (var i = 0; i < keys.length; ++i) {
-                var av = actual[keys[i]];
-                var ev = expected[keys[i]];
+              const keys = Object.keys(expected);
+              for (let i = 0; i < keys.length; ++i) {
+                const av = actual[keys[i]];
+                const ev = expected[keys[i]];
                 if (!match(av, ev)) {
                   return false;
                 }
@@ -1599,7 +1599,7 @@ testLib = {
           if (actual.length !== expected.length) {
             return { pass: false };
           }
-          for (var i = 0; i < actual.length; ++i) {
+          for (let i = 0; i < actual.length; ++i) {
             if (!match(actual[i], expected[i])) {
               return { pass: false };
             }

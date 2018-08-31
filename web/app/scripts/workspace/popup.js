@@ -14,7 +14,7 @@ angular.module('biggraph')
       },
       link: function(scope, element) {
         scope.popupModel.element = element;
-        var observer = new MutationObserver(function() {
+        const observer = new MutationObserver(function() {
           scope.$apply(function() {
             scope.popupModel.updateSize();
           });

@@ -1,6 +1,6 @@
 'use strict';
 
-var lib = require('../test-lib.js');
+const lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   fw.transitionTest(
@@ -10,7 +10,7 @@ module.exports = function(fw) {
       lib.workspace.addBox({
         id: 'sql', name: 'SQL1', x: 100, y: 200 });
       lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
-      var table = lib.workspace.openStateView('sql', 'table').table;
+      const table = lib.workspace.openStateView('sql', 'table').table;
       table.expect(
         ['age', 'gender', 'id', 'income', 'location', 'name'],
         ['Double', 'String', 'Long', 'Double', '(Double, Double)', 'String'],
@@ -171,7 +171,7 @@ module.exports = function(fw) {
         id: 'sql', name: 'SQL1', x: 100, y: 400 });
       lib.workspace.connectBoxes('copy', 'project', 'sql', 'input');
       lib.workspace.openStateView('sql', 'table');
-      var table = runSQL(
+      const table = runSQL(
         'select sum(base_random / segment_random) as sum from `self_as_segmentation.belongs_to`');
       table.expect(['sum'], ['Double'], [['100']]);
     }, function() {});
@@ -184,8 +184,8 @@ module.exports = function(fw) {
         id: 'sql', name: 'SQL1', x: 100, y: 200 });
       lib.workspace.connectBoxes('eg0', 'project', 'sql', 'input');
     }, function() {
-      var se = lib.workspace.openBoxEditor('sql');
-      var tableBrowser = se.getTableBrowser();
+      const se = lib.workspace.openBoxEditor('sql');
+      const tableBrowser = se.getTableBrowser();
       tableBrowser.toggle();
       tableBrowser.expectNode([0], 'edge_attributes', '`edge_attributes`');
       tableBrowser.expectNode([1], 'edges', '`edges`');
@@ -219,8 +219,8 @@ module.exports = function(fw) {
       lib.workspace.connectBoxes('eg0', 'project', 'sql', 'one');
       lib.workspace.connectBoxes('eg1', 'project', 'sql', 'two');
     }, function() {
-      var se = lib.workspace.openBoxEditor('sql');
-      var tableBrowser = se.getTableBrowser();
+      const se = lib.workspace.openBoxEditor('sql');
+      const tableBrowser = se.getTableBrowser();
       tableBrowser.toggle();
       tableBrowser.expectNode([0], 'one.edge_attributes', '`one.edge_attributes`');
       tableBrowser.expectNode([1], 'one.edges', '`one.edges`');
@@ -250,7 +250,7 @@ module.exports = function(fw) {
       // And go.
       lib.startDownloadWatch();
       left.executeSqlSaving();
-      var downloadedFileName = lib.waitForNewDownload(/\.csv$/);
+      const downloadedFileName = lib.waitForNewDownload(/\.csv$/);
       lib.expectFileContents(
         downloadedFileName,
         'name,age,income\n' +
@@ -323,13 +323,13 @@ module.exports = function(fw) {
         'select name, age, gender, income from vertices');
       left.startSqlSaving();
       left.side.$('#exportFormat option[value="parquet"]').click();
-      var fileName = 'UPLOAD$/example.' + process.pid + '.parquet';
+      const fileName = 'UPLOAD$/example.' + process.pid + '.parquet';
       left.side.$('#export-parquet-path').sendKeys(fileName);
       left.executeSqlSaving();
 
       left.runOperation('Discard vertices');
       left.openOperation('Import vertices');
-      var tableKind = left.operationParameter(left.toolbox, 'table');
+      const tableKind = left.operationParameter(left.toolbox, 'table');
       tableKind.element(by.id('import-new-table-button')).click();
       tableKind.$('#table-name input').sendKeys('example reloaded as parquet');
       tableKind.element(by.cssContainingText('#datatype option', 'Parquet files')).click();
@@ -348,7 +348,7 @@ module.exports = function(fw) {
     'test-example project with 100 vertices',
     function() {
       left.runOperation('Create vertices', { size: '100'});
-      var maxRows = left.side.element(by.css('#max-rows'));
+      const maxRows = left.side.element(by.css('#max-rows'));
 
       maxRows.clear().sendKeys('1000');
       left.side.element(by.id('run-sql-button')).click();
@@ -361,7 +361,7 @@ module.exports = function(fw) {
       expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(17);
 
       // Test "Show more" button.
-      var showMore = left.side.element(by.css('#show-more'));
+      const showMore = left.side.element(by.css('#show-more'));
       showMore.click();
       expect(left.side.all(by.css('#sql-result table tbody tr')).count()).toEqual(27);
       showMore.click();
@@ -442,10 +442,10 @@ module.exports = function(fw) {
       right.side.element(by.id('global-sql-box')).click();
     },
     function() {
-      var K = protractor.Key;
+      const K = protractor.Key;
 
       // Test synchronized sql box
-      var editor = right.sqlEditor();
+      const editor = right.sqlEditor();
       lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);
       expect(lib.getACEText(editor)).toBe('3');
       lib.sendKeysToACE(editor, [K.chord(K.CONTROL, K.ARROW_UP)]);

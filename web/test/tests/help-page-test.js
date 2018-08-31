@@ -1,6 +1,6 @@
 'use strict';
 
-var K = protractor.Key;  // Short alias.
+const K = protractor.Key;  // Short alias.
 
 function checkExactlyOneCurrent() {
   // There is only one highlighted item:
@@ -10,7 +10,7 @@ function checkExactlyOneCurrent() {
 function checkCurrentHighlight(expectedPos) {
   checkExactlyOneCurrent();
   // Check correct item:
-  var cssQuery = 'span.find-highlight.find-highlight-current.find-highlight-' + expectedPos;
+  const cssQuery = 'span.find-highlight.find-highlight-current.find-highlight-' + expectedPos;
   expect(element(by.css(cssQuery)).isDisplayed()).toBe(true);
 }
 
@@ -20,7 +20,7 @@ module.exports = function(fw) {
     'search box in help',
     function() {
       browser.get('#/help');
-      var field = element(by.id('find-in-page-text'));
+      const field = element(by.id('find-in-page-text'));
       expect(field.isDisplayed()).toBe(true);
       // Search for the phrase "user".
       field.click();

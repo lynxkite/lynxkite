@@ -15,31 +15,31 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
       function updateTSV() {
         // Generate the TSV representation.
         scope.tsv = '';
-        var gv = scope.graph.view;
+        const gv = scope.graph.view;
         if (!gv || !gv.$resolved || gv.$error) {
           return;
         }
-        var sides = [];
-        var left = scope.graph.left;
-        var right = scope.graph.right;
+        const sides = [];
+        const left = scope.graph.left;
+        const right = scope.graph.right;
         if (left && left.graphMode) { sides.push(left); }
         if (right && right.graphMode) { sides.push(right); }
-        for (var i = 0; i < sides.length; ++i) {
+        for (let i = 0; i < sides.length; ++i) {
           scope.tsv += vertexSetToTSV(i, gv.vertexSets[i], sides[i]);
         }
-        for (i = 0; i < gv.edgeBundles.length; ++i) {
+        for (let i = 0; i < gv.edgeBundles.length; ++i) {
           scope.tsv += edgeBundleToTSV(gv.edgeBundles[i], sides);
         }
       }
 
       function vertexSetToTSV(index, vs, side) {
-        var i, j, v;
-        var name = graphName(index);
-        var tsv = '\n';
+        let i, j, v;
+        const name = graphName(index);
+        let tsv = '\n';
         if (vs.mode === 'sampled') {
           tsv += 'Vertices of ' + name + ':\n';
           tsv += 'id';
-          var attrs = [];
+          const attrs = [];
           // Turn the object into an array;
           angular.forEach(side.vertexAttrs, function(attr) { if (attr) { attrs.push(attr); } });
           for (i = 0; i < attrs.length; ++i) {
@@ -55,12 +55,12 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
             tsv += '\n';
           }
         } else {
-          var xAxis = side.xAttribute || {};
-          var yAxis = side.yAttribute || {};
-          var xDescription = xAxis.title + ' (horizontal';
+          const xAxis = side.xAttribute || {};
+          const yAxis = side.yAttribute || {};
+          let xDescription = xAxis.title + ' (horizontal';
           if (vs.xLabelType === 'between') { xDescription += ', lower bounds'; }
           xDescription += ')';
-          var yDescription = yAxis.title + ' (vertical';
+          let yDescription = yAxis.title + ' (vertical';
           if (vs.yLabelType === 'between') { yDescription += ', lower bounds'; }
           yDescription += ')';
           tsv += 'Buckets of ' + name;
@@ -73,13 +73,13 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
           } else {
             tsv += ':\n';
           }
-          var byBucket = {};
+          const byBucket = {};
           for (i = 0; i < vs.vertices.length; ++i) {
             v = vs.vertices[i];
             byBucket[v.x + ', ' + v.y] = v;
           }
-          var xl = vs.xLabelType === 'between' ? vs.xLabels.length - 1 : vs.xLabels.length;
-          var yl = vs.yLabelType === 'between' ? vs.yLabels.length - 1 : vs.yLabels.length;
+          const xl = vs.xLabelType === 'between' ? vs.xLabels.length - 1 : vs.xLabels.length;
+          const yl = vs.yLabelType === 'between' ? vs.yLabels.length - 1 : vs.yLabels.length;
           for (j = 0; j < vs.xLabels.length; ++j) {
             // X-axis header.
             tsv += '\t' + vs.xLabels[j];
@@ -97,12 +97,12 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
       }
 
       function edgeBundleToTSV(eb, sides) {
-        var i, j;
-        var tsv = '\n';
+        let i, j;
+        let tsv = '\n';
         tsv += 'Edges from ' + graphName(eb.srcIdx);
         tsv += ' to ' + graphName(eb.dstIdx) + ':\n';
         tsv += 'src\tdst\tsize';
-        var attrs = [];
+        const attrs = [];
         if (eb.srcIdx === eb.dstIdx && sides[eb.srcIdx]) {
           // Turn the object into an array;
           angular.forEach(
@@ -113,7 +113,7 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
         }
         tsv += '\n';
         for (i = 0; i < eb.edges.length; ++i) {
-          var e = eb.edges[i];
+          const e = eb.edges[i];
           tsv += e.a + '\t' + e.b + '\t' + e.size;
           for (j = 0; j < attrs.length; ++j) {
             tsv += '\t' + e.attrs[attrs[j].id + ':' + attrs[j].aggregator].string;
@@ -128,13 +128,13 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
       }
 
       function updateFilters() {
-        var svg = element.parent().find('svg.graph-view');
-        var filter = '';
+        const svg = element.parent().find('svg.graph-view');
+        let filter = '';
         if (scope.filters.inverted) {
           filter += 'invert(100%) hue-rotate(180deg) ';
         }
         // To improve performance and compatibility, filters that do nothing are omitted.
-        var no = noFilters();
+        const no = noFilters();
         if (scope.filters.contrast !== no.contrast) {
           filter += 'contrast(' + scope.filters.contrast + '%) ';
         }
@@ -163,11 +163,11 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
         scope.mapFilters = baseMapFilters();
       };
       scope.resetFilters();
-      var loadedFilters = window.localStorage.getItem('graph-filters');
+      const loadedFilters = window.localStorage.getItem('graph-filters');
       if (loadedFilters) {
         angular.extend(scope.filters, JSON.parse(loadedFilters));
       }
-      var loadedMapFilters = window.localStorage.getItem('map-filters');
+      const loadedMapFilters = window.localStorage.getItem('map-filters');
       if (loadedMapFilters) {
         angular.extend(scope.mapFilters, JSON.parse(loadedMapFilters));
       }
@@ -176,8 +176,8 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
 
       // Whether there is a side with a map view.
       scope.mapViewEnabled = function() {
-        var sides = [scope.graph.left, scope.graph.right];
-        for (var i = 0; i < sides.length; ++i) {
+        const sides = [scope.graph.left, scope.graph.right];
+        for (let i = 0; i < sides.length; ++i) {
           if (sides[i] && sides[i].vertexAttrs && sides[i].vertexAttrs.geo) {
             return true;
           }

@@ -36,7 +36,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
 
         // Load persisted sql history
         this.loadGlobalHistory = function() {
-          var history;
+          let history;
           try {
             history = angular.fromJson(window.localStorage.getItem('sqlHistory'));
             if (!Array.isArray(history)) {
@@ -63,7 +63,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
           // Insert current query into our local subset of history
           this.history.unshift(this.history[0]);
           // Insert current query into a copy of global history
-          var history = this.loadGlobalHistory();
+          const history = this.loadGlobalHistory();
           history.unshift(this.history[0]);
           while (history.length > maxLength) {
             history.pop();
@@ -122,8 +122,8 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
       };
 
       scope.sortKey = function(a) {
-        var col = scope.sort.column;
-        var dv = a[col];
+        const col = scope.sort.column;
+        const dv = a[col];
         return dv && dv.defined && (dv.double !== undefined ? dv.double : dv.string);
       };
 
@@ -158,8 +158,8 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
           }
         } else {
           if (typeof scope.project !== 'undefined') {
-            var proj = scope.project;
-            var lastSepIndex = proj.lastIndexOf('/');
+            const proj = scope.project;
+            const lastSepIndex = proj.lastIndexOf('/');
             return proj.substring(0, lastSepIndex + 1);
           } else {
             return '';
@@ -188,7 +188,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
 
       scope.export = function(options) {
         options = options || { overwrite: false };
-        var req = {
+        const req = {
           dfSpec: {
             isGlobal: scope.isGlobal,
             directory: scope.directory,
@@ -199,8 +199,8 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
         };
 
         scope.inProgress += 1;
-        var result;
-        var postOpts = { reportErrors: false };
+        let result;
+        const postOpts = { reportErrors: false };
         if (scope.exportFormat === 'csv') {
           req.path = scope.exportPath;
           req.delimiter = scope.exportDelimiter;

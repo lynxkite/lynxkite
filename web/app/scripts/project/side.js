@@ -56,9 +56,9 @@ angular.module('biggraph')
       console.error('Unexpected section:', section);
     };
     Side.prototype.showSection = function(section, show) {
-      var key = 'section-visibility: ' + section;
+      const key = 'section-visibility: ' + section;
       if (show === undefined) {
-        var saved = localStorage.getItem(key);
+        const saved = localStorage.getItem(key);
         return saved === null ? true : saved === 'true';
       } else {
         localStorage.setItem(key, show);
@@ -66,8 +66,8 @@ angular.module('biggraph')
     };
 
     Side.prototype.activeSides = function() {
-      var active = [];
-      for (var i = 0 ; i < this.sides.length; ++i) {
+      const active = [];
+      for (let i = 0 ; i < this.sides.length; ++i) {
         if (this.sides[i].state.projectPath !== undefined) {
           active.push(this.sides[i]);
         }
@@ -81,7 +81,7 @@ angular.module('biggraph')
     // sense in forks of the original project and center list is replaced with the request used
     // to get this center list (as long as the current center list came from a getCenters request).
     Side.prototype.getBackendJson = function() {
-      var backendState = angular.copy(this.state);
+      const backendState = angular.copy(this.state);
       delete backendState.projectName;
       if (this.state.centers === this.state.lastCentersResponse) {
         delete backendState.centers;
@@ -115,8 +115,8 @@ angular.module('biggraph')
 
 
     Side.prototype.updateViewData = function() {
-      var vd = this.viewData || {};
-      var noCenters = (this.state.centers === undefined) || (this.state.centers.length === 0);
+      const vd = this.viewData || {};
+      const noCenters = (this.state.centers === undefined) || (this.state.centers.length === 0);
       if (!this.loaded() || !this.state.graphMode ||
           (this.state.graphMode === 'sampled' && noCenters)) {
         this.viewData = undefined;
@@ -136,7 +136,7 @@ angular.module('biggraph')
       vd.preciseBucketSizes = this.state.preciseBucketSizes;
       vd.relativeEdgeDensity = this.state.relativeEdgeDensity;
 
-      var at = this.state.attributeTitles;
+      const at = this.state.attributeTitles;
 
       // "state" uses attribute names, while "viewData" uses attribute UUIDs.
       vd.xAttribute = this.resolveVertexAttribute(at.x);
@@ -158,9 +158,9 @@ angular.module('biggraph')
       vd.vertexAttrs.geo = this.resolveVertexAttribute(at['geo coordinates']);
 
       vd.edgeAttrs = {};
-      var aggregated = function(attr, aggregator) {
+      const aggregated = function(attr, aggregator) {
         if (attr) {
-          var aggrAttr = angular.copy(attr);
+          const aggrAttr = angular.copy(attr);
           aggrAttr.aggregator = aggregator;
           return aggrAttr;
         }
@@ -174,7 +174,7 @@ angular.module('biggraph')
         vd.edgeAttrs.edgeLabel = aggregated(
           this.resolveEdgeAttribute(this.state.attributeTitles['edge label']),
           'set');
-        var edgeColorAttr = this.resolveEdgeAttribute(this.state.attributeTitles['edge color']);
+        const edgeColorAttr = this.resolveEdgeAttribute(this.state.attributeTitles['edge color']);
         if (edgeColorAttr !== undefined) {
           vd.edgeAttrs.edgeColor =
             (edgeColorAttr.typeName === 'Double') ?
@@ -190,7 +190,7 @@ angular.module('biggraph')
       };
 
       vd.centers = this.state.centers || [];
-      var that = this;
+      const that = this;
       vd.hasCenter = function(id) { return that.state.centers.indexOf(id) !== -1; };
       vd.setCenter = function(id) { that.state.centers = [id]; };
       vd.addCenter = function(id) { that.state.centers = that.state.centers.concat([id]); };
@@ -248,7 +248,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.axisOptions = function(type, attr) {
-      var defaultAxisOptions = {
+      const defaultAxisOptions = {
         logarithmic: false,
       };
       return this.state.axisOptions[type][attr] || defaultAxisOptions;
@@ -263,14 +263,14 @@ angular.module('biggraph')
     };
 
     Side.prototype.resolveCenterRequestParams = function(params) {
-      var resolvedParams = angular.copy(params);
+      const resolvedParams = angular.copy(params);
       resolvedParams.filters = this.resolveVertexFilters(params.filters);
       resolvedParams.vertexSetId = this.project.vertexSet;
       return resolvedParams;
     };
     Side.prototype.sendCenterRequest = function(params) {
-      var that = this;
-      var resolvedParams = this.resolveCenterRequestParams(params);
+      const that = this;
+      const resolvedParams = this.resolveCenterRequestParams(params);
       this.centerRequest = getCenter(resolvedParams);
       this.centerRequest.then(
         function(centers) {
@@ -284,14 +284,14 @@ angular.module('biggraph')
       if (this.state.projectPath === undefined) {
         return undefined;
       }
-      var path = util.projectPath(this.state.projectPath);
+      const path = util.projectPath(this.state.projectPath);
       return path[path.length - 1];
     };
     Side.prototype.parentProjects = function() {
       if (this.state.projectPath === undefined) {
         return undefined;
       }
-      var path = util.projectPath(this.state.projectPath);
+      const path = util.projectPath(this.state.projectPath);
       return path.slice(0, -1);  // Discard own name.
     };
     Side.prototype.isSegmentation = function() {
@@ -312,7 +312,7 @@ angular.module('biggraph')
       // this.pendingProject and only copy into this.project on completion.
       this.pendingProject = undefined;
       if (this.state.projectPath !== undefined) {
-        var that = this;
+        const that = this;
         that.pendingProject = this.load();
         return that.pendingProject.finally(
           function onFailure() {
@@ -378,9 +378,9 @@ angular.module('biggraph')
     };
 
     Side.prototype.filterApplied = function(settings, value) {
-      var that = this;
-      var applied = [];
-      for (var i = 0; i < settings.length; ++i) {
+      const that = this;
+      const applied = [];
+      for (let i = 0; i < settings.length; ++i) {
         if (that.state.attributeTitles[settings[i]] === value) {
           applied.push(settings[i]);
         }
@@ -430,7 +430,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.saveAs = function(newName) {
-      var that = this;
+      const that = this;
       util.post('/ajax/forkEntry',
         {
           from: this.state.projectName,
@@ -441,7 +441,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.saveNotes = function() {
-      var that = this;
+      const that = this;
       this.savingNotes = true;
       this.applyOp('Change-project-notes', { notes: this.project.notes })
         .then(function() {
@@ -462,11 +462,11 @@ angular.module('biggraph')
     Side.prototype.discard = function(kind, name) {
       // if the other side is the segmentation to be discarded, close it
       if (kind === 'segmentation') {
-        for (var i = 0; i < this.sides.length; ++i) {
-          var side = this.sides[i];
+        for (let i = 0; i < this.sides.length; ++i) {
+          const side = this.sides[i];
           if (side === this) { continue; }
-          for (var j = 0; j < this.project.segmentations.length; ++j) {
-            var seg = this.project.segmentations[j];
+          for (let j = 0; j < this.project.segmentations.length; ++j) {
+            const seg = this.project.segmentations[j];
             if (seg.name === name) {
               if (side.project && seg.fullName === side.project.name) {
                 side.close();
@@ -491,8 +491,8 @@ angular.module('biggraph')
       return this.nonEmptyFilterNames(this.state.filters.edge);
     };
     Side.prototype.nonEmptyFilterNames = function(filters) {
-      var res = [];
-      for (var attr in filters) {
+      const res = [];
+      for (const attr in filters) {
         if (filters[attr] !== '') {
           res.push({
             attributeName: attr,
@@ -503,7 +503,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.resolveVertexFilters = function(filters) {
-      var that = this;
+      const that = this;
       return filters.map(function(f) {
         return {
           attributeId: that.resolveVertexAttribute(f.attributeName).id,
@@ -515,7 +515,7 @@ angular.module('biggraph')
       return this.resolveVertexFilters(this.nonEmptyVertexFilterNames());
     };
     Side.prototype.resolveEdgeFilters = function(filters) {
-      var that = this;
+      const that = this;
       return filters.map(function(f) {
         return {
           attributeId: that.resolveEdgeAttribute(f.attributeName).id,
@@ -532,13 +532,13 @@ angular.module('biggraph')
               this.nonEmptyVertexFilterNames().length !== 0);
     };
     Side.prototype.applyFiltersEnabled = function() {
-      var that = this;
+      const that = this;
       return this.nonEmptyVertexFilterNames().every(
         function(filter) { return !that.isInternalVertexFilter(filter.attributeName); });
     };
 
     Side.prototype.applyFilters = function() {
-      var that = this;
+      const that = this;
       util.post('/ajax/filterProject',
         {
           project: this.state.projectName,
@@ -553,9 +553,9 @@ angular.module('biggraph')
       this.state.filters = { edge: {}, vertex: {} };
     };
     Side.prototype.filterSummary = function() {
-      var that = this;
-      var NBSP = '\u00a0';
-      var res = [];
+      const that = this;
+      const NBSP = '\u00a0';
+      const res = [];
       function addNonEmpty(value, key) {
         if (value) {
           res.push(' ' + key + NBSP + value);
@@ -563,7 +563,7 @@ angular.module('biggraph')
       }
       function addProblematic(value, key) {
         if (that.isInternalVertexFilter(key)) {
-          var note = ' Cannot' + NBSP + 'apply' + NBSP + key + NBSP + 'here';
+          const note = ' Cannot' + NBSP + 'apply' + NBSP + key + NBSP + 'here';
           res.push(note);
         }
       }
@@ -579,9 +579,9 @@ angular.module('biggraph')
         }));
     };
     Side.prototype.resolveVertexAttribute = function(title) {
-      var filterableAttributes = this.filterableVertexAttributes();
-      for (var attrIdx = 0; attrIdx < filterableAttributes.length; attrIdx++) {
-        var attr = filterableAttributes[attrIdx];
+      const filterableAttributes = this.filterableVertexAttributes();
+      for (let attrIdx = 0; attrIdx < filterableAttributes.length; attrIdx++) {
+        const attr = filterableAttributes[attrIdx];
         if (attr.title === title) {
           return attr;
         }
@@ -590,8 +590,8 @@ angular.module('biggraph')
     };
 
     Side.prototype.resolveEdgeAttribute = function(title) {
-      for (var attrIdx = 0; attrIdx < this.project.edgeAttributes.length; attrIdx++) {
-        var attr = this.project.edgeAttributes[attrIdx];
+      for (let attrIdx = 0; attrIdx < this.project.edgeAttributes.length; attrIdx++) {
+        const attr = this.project.edgeAttributes[attrIdx];
         if (attr.title === title) {
           return attr;
         }
@@ -600,7 +600,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.swapWithSide = function(otherSide) {
-      var tmp;
+      let tmp;
 
       tmp = this.project; this.project = otherSide.project; otherSide.project = tmp;
       tmp = this.state; this.state = otherSide.state; otherSide.state = tmp;
@@ -625,8 +625,8 @@ angular.module('biggraph')
     // Abandon outstanding scalar requests.
     Side.prototype.abandonScalars = function() {
       if (this.scalars !== undefined) {
-        var scalars = Object.keys(this.scalars);
-        for (var i = 0; i < scalars.length; ++i) {
+        const scalars = Object.keys(this.scalars);
+        for (let i = 0; i < scalars.length; ++i) {
           this.scalars[scalars[i]].$abandon();
         }
       }
@@ -636,9 +636,9 @@ angular.module('biggraph')
       if (!this.loaded()) { return; }
       this.abandonScalars();
       this.scalars = {};
-      var scalars = this.project.scalars;
-      for (var i = 0; i < scalars.length; ++i) {
-        var scalar = scalars[i];
+      const scalars = this.project.scalars;
+      for (let i = 0; i < scalars.length; ++i) {
+        const scalar = scalars[i];
         this.scalars[scalar.title] = util.lazyFetchScalarValue(
           scalar,
           true);
@@ -649,7 +649,7 @@ angular.module('biggraph')
       return parent.getBelongsTo(this) !== undefined;
     };
     Side.prototype.getBelongsTo = function(segmentation) {
-      var entry = this.getSegmentationEntry(segmentation);
+      const entry = this.getSegmentationEntry(segmentation);
       if (entry) {
         return entry.belongsTo;
       }
@@ -658,8 +658,8 @@ angular.module('biggraph')
     Side.prototype.getSegmentationEntry = function(segmentation) {
       if (!this.loaded()) { return undefined; }
       if (!segmentation.project || !segmentation.project.$resolved) { return undefined; }
-      for (var i = 0; i < this.project.segmentations.length; ++i) {
-        var seg = this.project.segmentations[i];
+      for (let i = 0; i < this.project.segmentations.length; ++i) {
+        const seg = this.project.segmentations[i];
         if (segmentation.project.name === seg.fullName) {
           return seg;
         }
@@ -667,8 +667,8 @@ angular.module('biggraph')
       return undefined;
     };
     Side.prototype.getParentSide = function() {
-      for (var i = 0; i < this.sides.length; ++i) {
-        var side = this.sides[i];
+      for (let i = 0; i < this.sides.length; ++i) {
+        const side = this.sides[i];
         if (side === this) { continue; }
         if (side.getSegmentationEntry(this)) {
           return side;
@@ -677,8 +677,8 @@ angular.module('biggraph')
       return undefined;
     };
     Side.prototype.getSegmentationSide = function() {
-      for (var i = 0; i < this.sides.length; ++i) {
-        var side = this.sides[i];
+      for (let i = 0; i < this.sides.length; ++i) {
+        const side = this.sides[i];
         if (side === this) { continue; }
         if (side.isSegmentationOf(this)) {
           return side;
@@ -697,9 +697,10 @@ angular.module('biggraph')
     // Removes entries from state which depend on nonexistent attributes
     Side.prototype.cleanState = function() {
       if (!this.loaded()) { return; }
-      var vTitles = this.filterableVertexAttributes().map(function(a) { return a.title; });
-      var eTitles = this.project.edgeAttributes.map(function(a) { return a.title; });
-      for (var attr in this.state.filters.edge) {
+      const vTitles = this.filterableVertexAttributes().map(function(a) { return a.title; });
+      const eTitles = this.project.edgeAttributes.map(function(a) { return a.title; });
+      let attr;
+      for (attr in this.state.filters.edge) {
         if (eTitles.indexOf(attr) === -1) {
           delete this.state.filters.edge[attr];
         }
@@ -719,7 +720,7 @@ angular.module('biggraph')
           delete this.state.axisOptions.edge[attr];
         }
       }
-      var allTitles = eTitles.concat(vTitles);
+      const allTitles = eTitles.concat(vTitles);
       for (attr in this.state.attributeTitles) {
         if (allTitles.indexOf(this.state.attributeTitles[attr]) === -1) {
           delete this.state.attributeTitles[attr];

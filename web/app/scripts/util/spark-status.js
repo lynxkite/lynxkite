@@ -16,13 +16,13 @@ angular.module('biggraph')
       };
 
       scope.stages = function(status) {
-        for (var i = 0; i < status.activeStages.length; ++i) {
+        for (let i = 0; i < status.activeStages.length; ++i) {
           status.activeStages[i].active = true;
         }
         return status.activeStages.concat(status.pastStages);
       };
 
-      var hashColors = {}; // Cache for this surprisingly costly method.
+      const hashColors = {}; // Cache for this surprisingly costly method.
       scope.hashToColor = function(active, hash) {
         hash = Math.abs(hash);
         if (!(hash in hashColors)) {
@@ -39,11 +39,11 @@ angular.module('biggraph')
       };
 
       scope.message = function(status) {
-        var last = 0;
-        for (var i = 0; i < status.activeStages.length; ++i) {
-          var stage = status.activeStages[i];
+        let last = 0;
+        for (let i = 0; i < status.activeStages.length; ++i) {
+          const stage = status.activeStages[i];
           // Correct against client/server clock offset using status.received.
-          var t = Date.now() - stage.lastTaskTime + status.timestamp - status.received;
+          const t = Date.now() - stage.lastTaskTime + status.timestamp - status.received;
           if (t > last) {
             last = t;
           }
@@ -59,8 +59,8 @@ angular.module('biggraph')
       };
 
       scope.stagesTooltip = function() {
-        var status = scope.status;
-        var tooltip = 'Spark stages';
+        const status = scope.status;
+        let tooltip = 'Spark stages';
         if (status.activeExecutorNum !== undefined && status.configedExecutorNum !== undefined) {
           tooltip = tooltip + ' (' + status.activeExecutorNum + ' out of ' +
             status.configedExecutorNum + ' executors running)';

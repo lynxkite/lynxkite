@@ -16,7 +16,7 @@ angular.module('biggraph').directive('tableKind', function(util) {
       scope.importBox = function() {
         scope.disabled = true;
         scope.error = undefined;
-        var box = angular.copy(scope.box.instance);
+        const box = angular.copy(scope.box.instance);
         box.parameters = scope.params;
         util.post('/ajax/importBox', {
           box: box,

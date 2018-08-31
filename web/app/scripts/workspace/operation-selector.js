@@ -24,15 +24,15 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
         scope.categories = scope.boxCatalog.categories;
         scope.boxes = [];
 
-        var categoryMap = {};
-        var i;
+        const categoryMap = {};
+        let i;
         for (i = 0; i < scope.categories.length; ++i) {
-          var cat = scope.categories[i];
+          const cat = scope.categories[i];
           cat.ops = [];
           categoryMap[cat.title] = cat;
         }
         for (i = 0; i < scope.boxCatalog.boxes.length; ++i) {
-          var box = scope.boxCatalog.boxes[i];
+          const box = scope.boxCatalog.boxes[i];
           if (!(box.categoryId in categoryMap)) {
             continue;
           }
@@ -43,7 +43,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
 
       scope.filterKey = function(e) {
         if (!scope.searching || scope.op) { return; }
-        var operations = elem.find('.operation');
+        const operations = elem.find('.operation');
         if (e.keyCode === 38) { // UP
           e.preventDefault();
           scope.searchSelection -= 1;
@@ -63,7 +63,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
           scope.searching = undefined;
           scope.op = undefined;
         } else if (e.keyCode === 13) { //ENTER
-          var selectedBox = scope.filterAndSort(
+          const selectedBox = scope.filterAndSort(
             scope.boxes, scope.opFilter)[scope.searchSelection];
           $rootScope.$broadcast('create box under mouse', selectedBox.operationId);
         }
@@ -99,7 +99,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
         if (opFilter) {
           /* global Fuse */
           // Case insensitive by default.
-          var options = {
+          const options = {
             shouldSort: true,
             threshold: 0.4,
             location: 0,
@@ -108,7 +108,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
             minMatchCharLength: 1,
             keys: [ 'operationId' ]
           };
-          var fuse = new Fuse(boxes, options);
+          const fuse = new Fuse(boxes, options);
           return fuse.search(opFilter);
         } else {
           return boxes;

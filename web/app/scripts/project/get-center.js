@@ -3,9 +3,9 @@
 
 angular.module('biggraph').factory('getCenter', function(util) {
   function getCenter(resolvedParams) {
-    var offset = resolvedParams.offset || 0; // Default value.
+    let offset = resolvedParams.offset || 0; // Default value.
     delete resolvedParams.offset; // This parameter is just for getCenter.
-    var count = resolvedParams.count;
+    const count = resolvedParams.count;
 
     if (offset) {
       // Round up to multiples of 100.
@@ -13,10 +13,10 @@ angular.module('biggraph').factory('getCenter', function(util) {
     }
 
     // We rely on the browser's cache to avoid re-sending requests for pagination.
-    var req = util.get('/ajax/center', resolvedParams);
-    var promise = req.then(
+    const req = util.get('/ajax/center', resolvedParams);
+    const promise = req.then(
       function(result) {
-        var centers = result.centers;
+        let centers = result.centers;
         offset = offset % centers.length;
         if (centers.length <= count) {
           // Use them all.

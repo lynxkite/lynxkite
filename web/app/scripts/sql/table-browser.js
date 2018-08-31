@@ -67,8 +67,8 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
           // Get path relative to the path of the treenode's
           // root node.
           getRelativePath: function() {
-            var browseRootPath = scope.node.absolutePath;
-            var offset = 0;
+            const browseRootPath = scope.node.absolutePath;
+            let offset = 0;
             if (browseRootPath.length > 0) {
               offset = browseRootPath.length + 1;
             }
@@ -101,8 +101,8 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
             if (!this.list) {
               return '';
             }
-            var result = '';
-            for (var i = 0; i < this.list.length; ++i) {
+            let result = '';
+            for (let i = 0; i < this.list.length; ++i) {
               if (result !== '') {
                 result += ',\n';
               }
@@ -116,8 +116,8 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
           // searchQuery is optional and used for searching for
           // a subset of directories.
           fetchList: function(searchQuery) {
-            var that = this;
-            var promise;
+            const that = this;
+            let promise;
             if (scope.box) {
               promise = util.nocache(
                 '/ajax/getTableBrowserNodesForBox', {
@@ -136,9 +136,9 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
                 });
             }
             promise.then(function(result) {
-              var srcList = result.list || [];
+              const srcList = result.list || [];
               that.list = [];
-              for (var i = 0; i < srcList.length; ++i) {
+              for (let i = 0; i < srcList.length; ++i) {
                 that.list[i] = createNode(
                   that,
                   srcList[i].name,

@@ -38,19 +38,19 @@ angular.module('biggraph')
         // the difference.
         scope.computeSizeDiff = function() {
           scope.updatePlotSpec();
-          var computeSpec = angular.copy(scope.embedSpec);
+          const computeSpec = angular.copy(scope.embedSpec);
           // Desired plot size
           computeSpec.spec.width = scope.getPlotWidth();
           computeSpec.spec.height = scope.getPlotHeight();
-          var plotElement = element.find('#hidden-plot-div')[0];
+          const plotElement = element.find('#hidden-plot-div')[0];
           /* global vg */
           vg.embed(plotElement, computeSpec, function() {
-            var svg = element.find('#hidden-plot-div .vega svg')[0];
-            var w = svg.attributes['width'].value;
-            var h = svg.attributes['height'].value;
+            const svg = element.find('#hidden-plot-div .vega svg')[0];
+            const w = svg.attributes['width'].value;
+            const h = svg.attributes['height'].value;
             // The assumption is that the difference is constant, not linear.
-            var diffX = scope.getPlotWidth() - w;
-            var diffY = scope.getPlotHeight() - h;
+            const diffX = scope.getPlotWidth() - w;
+            const diffY = scope.getPlotHeight() - h;
             scope.$apply(function () {
               scope.diffX = diffX < 0 ? diffX : 0;
               scope.diffY = diffY < 0 ? diffY : 0;
@@ -64,7 +64,7 @@ angular.module('biggraph')
           if (scope.diffX !== undefined && scope.diffY !== undefined) {
             scope.embedSpec.spec.width = scope.getPlotWidth() + scope.diffX;
             scope.embedSpec.spec.height = scope.getPlotHeight() + scope.diffY;
-            var plotElement = element.find('#plot-div')[0];
+            const plotElement = element.find('#plot-div')[0];
             /* global vg */
             vg.embed(plotElement, scope.embedSpec, function() {});
           }

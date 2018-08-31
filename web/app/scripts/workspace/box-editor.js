@@ -37,11 +37,11 @@ angular.module('biggraph')
             scope.boxMeta = undefined;
             return;
           }
-          var box = scope.workspace.getBox(boxId);
+          const box = scope.workspace.getBox(boxId);
           // Checking currentRequest makes sure that the response
           // to the result of the latest getOperationMetaRequest
           // will be passed to scope.newOpSelected().
-          var currentRequest;
+          let currentRequest;
           scope.lastRequest = currentRequest = util
             .nocache(
               '/ajax/getOperationMeta', {
@@ -73,7 +73,7 @@ angular.module('biggraph')
           if (box1.outputs.length !== box2.outputs.length) {
             return true;
           }
-          for (var i = 0; i < box1.outputs.length; ++i) {
+          for (let i = 0; i < box1.outputs.length; ++i) {
             if (box1.outputs[i].stateId !== box2.outputs[i].stateId) {
               return true;
             }
@@ -109,9 +109,9 @@ angular.module('biggraph')
 
         function onBlurNow() {
           if (scope.box) {
-            var minimized = angular.copy(scope.parameters);
-            for (var i = 0; i < scope.boxMeta.parameters.length; ++i) {
-              var param = scope.boxMeta.parameters[i];
+            const minimized = angular.copy(scope.parameters);
+            for (let i = 0; i < scope.boxMeta.parameters.length; ++i) {
+              const param = scope.boxMeta.parameters[i];
               if (minimized[param.id] === param.defaultValue) {
                 // Do not record parameter values that match the default.
                 delete minimized[param.id];
@@ -143,8 +143,8 @@ angular.module('biggraph')
           if (!scope.boxMeta) {
             return false;
           }
-          for (var k = 0; k < scope.boxMeta.parameters.length; ++k) {
-            var p = scope.boxMeta.parameters[k];
+          for (let k = 0; k < scope.boxMeta.parameters.length; ++k) {
+            const p = scope.boxMeta.parameters[k];
             if (p.kind === 'code' && p.payload.enableTableBrowser === true) {
               return true;
             }

@@ -10,7 +10,7 @@ angular.module('biggraph').factory('PlugWrapper', function() {
   function PlugWrapper(workspace, id, index, direction, box) {
     this.workspace = workspace;
     this.rx = direction === 'outputs' ? box.width : 0;
-    var count = box.metadata[direction].length || 1;
+    const count = box.metadata[direction].length || 1;
     this.ry = box.height - 20 * (count - index);
     this.box = box;
     this.boxId = box.instance.id;
@@ -48,16 +48,16 @@ angular.module('biggraph').factory('PlugWrapper', function() {
     },
 
     getAttachedPlugs: function() {
-      var conn;
+      let conn;
       if (this.direction === 'inputs') {
         conn = this.boxInstance.inputs[this.id];
         return conn ? [this.workspace.getOutputPlug(conn.boxId, conn.id)] : [];
       } else {
-        var dsts = [];
-        for (var i = 0; i < this.workspace.boxes.length; ++i) {
-          var box = this.workspace.boxes[i];
-          for (var j = 0; j < box.inputs.length; ++j) {
-            var input = box.inputs[j];
+        const dsts = [];
+        for (let i = 0; i < this.workspace.boxes.length; ++i) {
+          const box = this.workspace.boxes[i];
+          for (let j = 0; j < box.inputs.length; ++j) {
+            const input = box.inputs[j];
             conn = box.instance.inputs[input.id];
             if (conn && conn.boxId === this.boxId && conn.id === this.id) {
               dsts.push(input);

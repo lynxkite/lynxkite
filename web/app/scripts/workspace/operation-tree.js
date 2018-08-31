@@ -18,14 +18,14 @@ angular.module('biggraph').directive('operationTree', function() {
       };
 
       // Create a tree from the path fragments of the operations.
-      for (var idx in scope.ops) {
-        var operation = scope.ops[idx];
-        var opPathParts = operation.operationId.split('/');
-        var currentNode = scope.node;
+      for (let idx in scope.ops) {
+        const operation = scope.ops[idx];
+        const opPathParts = operation.operationId.split('/');
+        let currentNode = scope.node;
 
         // Iterate until one before the last part, and create non-leaf nodes.
-        for (var i = 0; i < opPathParts.length - 1; i++) {
-          var opPathPart = opPathParts[i];
+        for (let i = 0; i < opPathParts.length - 1; i++) {
+          const opPathPart = opPathParts[i];
           // Create a node for the dir if not exists.
           if (!(opPathPart in currentNode.dirs)) {
             currentNode.dirs[opPathPart] = {
@@ -41,7 +41,7 @@ angular.module('biggraph').directive('operationTree', function() {
         }
 
         // The last part becomes a leaf-node (it's the operation).
-        var opBaseName = opPathParts[opPathParts.length - 1];
+        const opBaseName = opPathParts[opPathParts.length - 1];
         currentNode.ops[opBaseName] = {
           op: operation,
           baseName: opBaseName,

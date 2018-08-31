@@ -1,7 +1,7 @@
 'use strict';
 
 
-var lib = require('../test-lib.js');
+const lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   fw.transitionTest(

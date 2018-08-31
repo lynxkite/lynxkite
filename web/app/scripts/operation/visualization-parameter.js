@@ -23,8 +23,8 @@ angular.module('biggraph')
           scope.left.stateId = scope.projectStateId;
           scope.right.stateId = scope.projectStateId;
           scope.applyVisualizationData();
-          var leftPromise = scope.left.reload();
-          var rightPromise = scope.right.reload();
+          const leftPromise = scope.left.reload();
+          const rightPromise = scope.right.reload();
           if (leftPromise) {
             leftPromise.then(function() { scope.left.onProjectLoaded(); });
           }
@@ -34,7 +34,7 @@ angular.module('biggraph')
         });
 
         scope.applyVisualizationData = function() {
-          var state = {
+          let state = {
             left: undefined,
             right: undefined,
           };

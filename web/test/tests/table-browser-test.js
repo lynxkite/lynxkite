@@ -1,6 +1,6 @@
 'use strict';
 
-var lib = require('../test-lib.js');
+const lib = require('../test-lib.js');
 
 module.exports = function(fw) {
 
@@ -11,7 +11,7 @@ module.exports = function(fw) {
       lib.splash.newDirectory('plum');
       lib.splash.popDirectory();
       lib.splash.openGlobalSqlBox();
-      var tableBrowser = lib.splash.tableBrowser;
+      const tableBrowser = lib.splash.tableBrowser;
       tableBrowser.expectNode([0], 'plum', '`plum`');
       tableBrowser.expectNode([1], 'This is a snapshot!', '`This is a snapshot!`');
       tableBrowser.toggleNode([1]);
@@ -33,7 +33,7 @@ module.exports = function(fw) {
       lib.splash.popDirectory();
       lib.splash.popDirectory();
       lib.splash.openGlobalSqlBox();
-      var tableBrowser = lib.splash.tableBrowser;
+      const tableBrowser = lib.splash.tableBrowser;
       tableBrowser.expectNode([0], 'dir.v01', '`dir.v01`');
       tableBrowser.toggleNode([0]);
       tableBrowser.expectNode([0, 0], 'inner', '`dir.v01/inner`');

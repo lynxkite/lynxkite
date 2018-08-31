@@ -48,14 +48,14 @@ angular.module('biggraph')
     },
 
     _updateBoxCatalog: function() {
-      var that = this;
-      var request = util.nocache('/ajax/boxCatalog', {ref: this.ref()});
+      const that = this;
+      const request = util.nocache('/ajax/boxCatalog', {ref: this.ref()});
       angular.merge(that.boxCatalog, request);
       return request.then(function(bc) {
         angular.merge(that.boxCatalog, request);
         that._boxCatalogMap = {};
-        for (var i = 0; i < bc.boxes.length; ++i) {
-          var boxMeta = bc.boxes[i];
+        for (let i = 0; i < bc.boxes.length; ++i) {
+          const boxMeta = bc.boxes[i];
           that._boxCatalogMap[boxMeta.operationId] = boxMeta;
         }
       });
@@ -64,13 +64,13 @@ angular.module('biggraph')
     _buildBoxes: function() {
       this.boxes = [];
       this.boxMap = {};
-      for (var i = 0; i < this.state.boxes.length; ++i) {
+      for (let i = 0; i < this.state.boxes.length; ++i) {
         this._addBoxWrapper(this.state.boxes[i], { isDirty: false });
       }
     },
 
     _addBoxWrapper: function(rawBox, opts) {
-      var meta = this._boxCatalogMap[rawBox.operationId] || {
+      const meta = this._boxCatalogMap[rawBox.operationId] || {
         // Defaults for unknown operations.
         categoryId: '',
         icon: '/images/icons/black_question_mark_ornament.png',
@@ -80,19 +80,20 @@ angular.module('biggraph')
         outputs: [],
         description: '',
       };
-      var box = new BoxWrapper(this, meta, rawBox, opts);
+      const box = new BoxWrapper(this, meta, rawBox, opts);
       this.boxes.push(box);
       this.boxMap[rawBox.id] = box;
     },
 
     _lookupArrowEndpoint: function(box, direction, id) {
-      var list = box[direction];
-      for (var i = 0; i < list.length; ++i) {
+      const list = box[direction];
+      let i;
+      for (i = 0; i < list.length; ++i) {
         if (list[i].id === id) {
           return list[i];
         }
       }
-      var plug = new PlugWrapper(this, id, i, direction, box);
+      const plug = new PlugWrapper(this, id, i, direction, box);
       plug.progress = 'missing';
       list.push(plug);
       return plug;
@@ -111,17 +112,17 @@ angular.module('biggraph')
 
     _buildArrows: function() {
       this.arrows = [];
-      for (var i = 0; i < this.boxes.length; ++i) {
-        var dst = this.boxes[i];
-        var inputs = dst.instance.inputs;
-        for (var inputName in inputs) {
+      for (let i = 0; i < this.boxes.length; ++i) {
+        const dst = this.boxes[i];
+        const inputs = dst.instance.inputs;
+        for (let inputName in inputs) {
           if (inputs.hasOwnProperty(inputName)) {
-            var input = inputs[inputName];
-            var src = this.boxMap[input.boxId];
+            const input = inputs[inputName];
+            const src = this.boxMap[input.boxId];
             if (src) {
-              var srcPlug = this._lookupArrowEndpoint(
+              const srcPlug = this._lookupArrowEndpoint(
                 src, 'outputs', input.id);
-              var dstPlug = this._lookupArrowEndpoint(
+              const dstPlug = this._lookupArrowEndpoint(
                 dst, 'inputs', inputName);
               this.arrows.push(this._createArrow(
                 srcPlug, dstPlug));
@@ -156,8 +157,8 @@ angular.module('biggraph')
     _lastLoadRequest: undefined,
     _requestInvalidated: false,
     loadWorkspace: function(workspaceStateRequest) {
-      var that = this;
-      var request = workspaceStateRequest || util.nocache('/ajax/getWorkspace', this.ref());
+      const that = this;
+      const request = workspaceStateRequest || util.nocache('/ajax/getWorkspace', this.ref());
       this._lastLoadRequest = request;
       this._requestInvalidated = false;
       request
@@ -183,16 +184,16 @@ angular.module('biggraph')
     },
 
     saveWorkspace: function() {
-      var that = this;
+      const that = this;
       that.loadWorkspace(
         util.post('/ajax/setAndGetWorkspace', { reference: that.ref(), workspace: that.state }));
     },
 
     getUniqueId: function(operationId) {
-      var usedIds = this.state.boxes.map(function(box) {
+      const usedIds = this.state.boxes.map(function(box) {
         return box.id;
       });
-      var cnt = 1;
+      let cnt = 1;
       while (usedIds.includes(operationId.replace(/ /g, '-') + '_' + cnt)) {
         cnt += 1;
       }
@@ -202,9 +203,9 @@ angular.module('biggraph')
     _addBox: function(operationId, x, y, opts) {
       opts = opts || {};
       // opts.boxId should be used for test-purposes only
-      var boxId = opts.boxId || this.getUniqueId(operationId);
+      const boxId = opts.boxId || this.getUniqueId(operationId);
       // Create a box backend data structure, an unwrapped box:
-      var box = {
+      const box = {
         id: boxId,
         operationId: operationId,
         x: x,
@@ -220,7 +221,7 @@ angular.module('biggraph')
 
     addBox: function(operationId, event, opts) {
       opts = opts || {};
-      var box = this._addBox(
+      const box = this._addBox(
           operationId,
           event.logicalX,
           event.logicalY,
@@ -236,8 +237,8 @@ angular.module('biggraph')
         return box.id !== boxId;
       });
       this.state.boxes.map(function(box) {
-        var inputs = box.inputs;
-        for (var inputName in inputs) {
+        const inputs = box.inputs;
+        for (let inputName in inputs) {
           if (inputs[inputName].boxId === boxId) {
             delete box.inputs[inputName];
           }
@@ -247,7 +248,7 @@ angular.module('biggraph')
     },
 
     deleteBoxes: function(boxIds) {
-      for (var i = 0; i < boxIds.length; i += 1) {
+      for (let i = 0; i < boxIds.length; i += 1) {
         if (boxIds[i] !== 'anchor') {
           this._deleteBox(boxIds[i]);
         }
@@ -260,11 +261,11 @@ angular.module('biggraph')
       if (plug1.direction === plug2.direction) {
         return false;
       }
-      var plugs = {};
+      const plugs = {};
       plugs[plug1.direction] = plug1;
       plugs[plug2.direction] = plug2;
-      var src = plugs.outputs;
-      var dst = plugs.inputs;
+      const src = plugs.outputs;
+      const dst = plugs.inputs;
 
       // Mutate raw workflow:
       dst.boxInstance.inputs[dst.id] = {
@@ -280,15 +281,15 @@ angular.module('biggraph')
     },
 
     _assignStateInfoToPlugs: function(stateInfo) {
-      var knownStateIds = [];
+      const knownStateIds = [];
       this.stateId2Plug = {};
-      for (var i = 0; i < stateInfo.length; i++) {
-        var item = stateInfo[i];
-        var boxOutput = item.boxOutput;
-        var stateId = item.stateId;
+      for (let i = 0; i < stateInfo.length; i++) {
+        const item = stateInfo[i];
+        const boxOutput = item.boxOutput;
+        const stateId = item.stateId;
         knownStateIds.push(stateId);
-        var box = this.boxMap[boxOutput.boxId];
-        var plug = box.outputMap[boxOutput.id];
+        const box = this.boxMap[boxOutput.boxId];
+        const plug = box.outputMap[boxOutput.id];
         plug.stateId = stateId;
         plug.setHealth(item.success);
         plug.kind = item.kind;
@@ -298,8 +299,8 @@ angular.module('biggraph')
     },
 
     _assignSummaryInfoToBoxes: function(summaries) {
-      for (var i = 0; i < this.boxes.length; i++) {
-        var box = this.boxes[i];
+      for (let i = 0; i < this.boxes.length; i++) {
+        const box = this.boxes[i];
         box.summary = summaries[box.instance.id];
         if (!box.summary) {
           box.summary = box.metadata.operationId;
@@ -308,12 +309,12 @@ angular.module('biggraph')
     },
 
     updateProgress: function(progressMap) {
-      for (var stateId in progressMap) {
+      for (let stateId in progressMap) {
         if (progressMap.hasOwnProperty(stateId)) {
-          var progress = progressMap[stateId];
+          const progress = progressMap[stateId];
           // failed states has 'undefined' as progress
           if (progress) {
-            var plug = this.stateId2Plug[stateId];
+            const plug = this.stateId2Plug[stateId];
             if (plug) {
               plug.updateProgress(progress);
             }
@@ -323,9 +324,9 @@ angular.module('biggraph')
     },
 
     clearProgress: function() {
-      for (var i = 0; i < this.boxes.length; i++) {
-        var box = this.boxes[i];
-        for (var j = 0; j < box.outputs.length; j++) {
+      for (let i = 0; i < this.boxes.length; i++) {
+        const box = this.boxes[i];
+        for (let j = 0; j < box.outputs.length; j++) {
           box.outputs[j].clearProgress();
         }
       }
@@ -337,7 +338,7 @@ angular.module('biggraph')
     },
 
     updateBox: function(id, plainParamValues, parametricParamValues) {
-      var box = this.boxMap[id].instance;
+      const box = this.boxMap[id].instance;
       if (!angular.equals(plainParamValues, box.parameters) ||
           !angular.equals(parametricParamValues, box.parametricParameters)) {
         this._setBoxParams(id, plainParamValues, parametricParamValues);
@@ -346,18 +347,19 @@ angular.module('biggraph')
     },
 
     pasteFromData: function(boxes, currentPosition) {
-      var minX = Infinity;
-      var minY = Infinity;
-      for (var i = 0; i < boxes.length; ++i) {
-        var box = boxes[i];
+      let minX = Infinity;
+      let minY = Infinity;
+      let box;
+      for (let i = 0; i < boxes.length; ++i) {
+        box = boxes[i];
         if (box.x < minX) { minX = box.x; }
         if (box.y < minY) { minY = box.y; }
       }
-      var mapping = {};
-      var newBoxes = [];
-      for (i = 0; i < boxes.length; ++i) {
+      const mapping = {};
+      const newBoxes = [];
+      for (let i = 0; i < boxes.length; ++i) {
         box = boxes[i];
-        var createdBox = this._addBox(
+        const createdBox = this._addBox(
           box.operationId,
           currentPosition.x + box.x - minX,
           currentPosition.y + box.y - minY);
@@ -366,16 +368,16 @@ angular.module('biggraph')
         mapping[box.id] = createdBox;
         newBoxes.push(createdBox);
       }
-      for (i = 0; i < boxes.length; ++i) {
-        var oldBox = boxes[i];
-        var newBox = mapping[oldBox.id];
-        for (var key in oldBox.inputs) {
+      for (let i = 0; i < boxes.length; ++i) {
+        const oldBox = boxes[i];
+        const newBox = mapping[oldBox.id];
+        for (let key in oldBox.inputs) {
           if (!oldBox.inputs.hasOwnProperty(key)) {
             break;
           }
-          var oldInputId = oldBox.inputs[key].boxId;
+          const oldInputId = oldBox.inputs[key].boxId;
           if (mapping.hasOwnProperty(oldInputId)) {
-            var newInput = mapping[oldInputId];
+            const newInput = mapping[oldInputId];
             newBox.inputs[key] = { boxId: newInput.id, id: oldBox.inputs[key].id };
           }
         }
@@ -385,7 +387,7 @@ angular.module('biggraph')
     },
 
     saveIfBoxesDirty: function() {
-      for (var i = 0; i < this.boxes.length; i++) {
+      for (let i = 0; i < this.boxes.length; i++) {
         if (this.boxes[i].isDirty) {
           this.saveWorkspace();
           break;
@@ -406,13 +408,13 @@ angular.module('biggraph')
 
     undo: function() {
       if (!this.canUndo()) { return; }
-      var that = this;
+      const that = this;
       that.loadWorkspace(util.post('/ajax/undoWorkspace', that.ref()));
     },
 
     redo: function() {
       if (!this.canRedo()) { return; }
-      var that = this;
+      const that = this;
       that.loadWorkspace(util.post('/ajax/redoWorkspace', that.ref()));
     },
 
@@ -423,10 +425,10 @@ angular.module('biggraph')
     },
 
     saveAsCustomBox: function(ids, name, description) {
-      var i, j, box, input;
-      var workspaceParameters =
+      let i, j, box, input;
+      const workspaceParameters =
         JSON.parse(this.boxMap['anchor'].instance.parameters.parameters || '[]');
-      var boxes = [{
+      const boxes = [{
         id: 'anchor',
         operationId: 'Anchor',
         x: 0,
@@ -439,17 +441,17 @@ angular.module('biggraph')
         },
         parametricParameters: {},
       }];
-      var inputNameCounts = {};
-      var outputNameCounts = {};
-      var SEPARATOR = ', ';
-      var PADDING_X = 200;
-      var PADDING_Y = 150;
-      var inputBoxY = PADDING_Y;
-      var outputBoxY = PADDING_Y;
-      var internallyUsedOutputs = {};
-      var externallyUsedOutputCounts = {};
+      const inputNameCounts = {};
+      const outputNameCounts = {};
+      const SEPARATOR = ', ';
+      const PADDING_X = 200;
+      const PADDING_Y = 150;
+      let inputBoxY = PADDING_Y;
+      let outputBoxY = PADDING_Y;
+      const internallyUsedOutputs = {};
+      const externallyUsedOutputCounts = {};
       // This custom box will replace the selected boxes.
-      var customBox = {
+      const customBox = {
         id: this.getUniqueId(name),
         operationId: name,
         x: 0,
@@ -460,12 +462,12 @@ angular.module('biggraph')
       };
       // Pass all workspace parameters through.
       for (i = 0; i < workspaceParameters; ++i) {
-        var param = workspaceParameters[i].id;
+        const param = workspaceParameters[i].id;
         customBox.parametricParameters[param] = '$' + param;
       }
-      var minX = Infinity;
-      var minY = Infinity;
-      var maxX = -Infinity;
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
       for (i = 0; i < ids.length; ++i) {
         box = this.boxMap[ids[i]];
         // Place the custom box in the average position of the selected boxes.
@@ -478,13 +480,13 @@ angular.module('biggraph')
       // Record used outputs.
       for (i = 0; i < this.boxes.length; ++i) {
         box = this.boxes[i];
-        var inputs = Object.keys(box.instance.inputs);
+        const inputs = Object.keys(box.instance.inputs);
         for (j = 0; j < inputs.length; ++j) {
           input = box.instance.inputs[inputs[j]];
           if (input.boxId) {
             /* eslint-disable no-console */
             console.assert(!input.boxId.includes(SEPARATOR) && !input.id.includes(SEPARATOR));
-            var key = input.boxId + SEPARATOR + input.id;
+            const key = input.boxId + SEPARATOR + input.id;
             externallyUsedOutputCounts[key] = (externallyUsedOutputCounts[key] || 0) + 1;
           }
         }
@@ -497,12 +499,12 @@ angular.module('biggraph')
         console.assert(box.instance.id.indexOf('output-') !== 0);
         if (ids[i] === 'anchor') { continue; }  // Ignore anchor.
         // Copy this box to the new workspace.
-        var instance = angular.copy(box.instance);
+        const instance = angular.copy(box.instance);
         boxes.push(instance);
         instance.x += PADDING_X - minX;
         instance.y += PADDING_Y / 2 - minY;
         for (j = 0; j < box.inputs.length; ++j) {
-          var inputName = box.metadata.inputs[j];
+          const inputName = box.metadata.inputs[j];
           input = box.instance.inputs[inputName];
           // Record internally used output.
           if (input.boxId) {
@@ -513,8 +515,8 @@ angular.module('biggraph')
           }
           // Create input box if necessary.
           if (!ids.includes(input.boxId)) {
-            var inputBoxName = inputName;
-            var inputNameCount = inputNameCounts[inputName] || 0;
+            let inputBoxName = inputName;
+            let inputNameCount = inputNameCounts[inputName] || 0;
             if (inputNameCount > 0) {
               inputBoxName += ' ' + (inputNameCount + 1);
             }
@@ -540,11 +542,11 @@ angular.module('biggraph')
       for (i = 0; i < ids.length; ++i) {
         box = this.boxMap[ids[i]];
         for (j = 0; j < box.metadata.outputs.length; ++j) {
-          var outputName = box.metadata.outputs[j];
+          const outputName = box.metadata.outputs[j];
           if (!internallyUsedOutputs[box.instance.id + SEPARATOR + outputName] ||
               externallyUsedOutputCounts[box.instance.id + SEPARATOR + outputName] > 0) {
-            var outputBoxName = outputName;
-            var outputNameCount = outputNameCounts[outputName] || 0;
+            let outputBoxName = outputName;
+            const outputNameCount = outputNameCounts[outputName] || 0;
             if (outputNameCount > 0) {
               outputBoxName += ' ' + (outputNameCount + 1);
             }
@@ -560,8 +562,8 @@ angular.module('biggraph')
             });
             outputBoxY += PADDING_Y;
             // Update non-selected output connections.
-            for (var k = 0; k < this.arrows.length; ++k) {
-              var arrow = this.arrows[k];
+            for (let k = 0; k < this.arrows.length; ++k) {
+              const arrow = this.arrows[k];
               if (arrow.src.boxId === box.instance.id && arrow.src.id === outputName) {
                 arrow.dst.box.instance.inputs[arrow.dst.id] =
                   { boxId: customBox.id, id: outputBoxName };
@@ -575,7 +577,7 @@ angular.module('biggraph')
       });
       this.state.boxes.push(customBox);
       delete this._boxCatalogMap;  // Force a catalog refresh.
-      var that = this;
+      const that = this;
       return {
         customBox: customBox,
         promise: util.post('/ajax/createWorkspace', {

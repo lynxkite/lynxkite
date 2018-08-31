@@ -37,8 +37,8 @@ angular.module('biggraph').directive('operationParameters', function(util) {
 
       scope.listParameters = {};
       util.deepWatch(scope, '[parameters, meta]', function() {
-        for (var i = 0; i < scope.meta.parameters.length; ++i) {
-          var param = scope.meta.parameters[i];
+        for (let i = 0; i < scope.meta.parameters.length; ++i) {
+          const param = scope.meta.parameters[i];
           // Fill in default values.
           if (param.id in scope.parameters || param.id in scope.parametricParameters) {
             // Explicitly set.
@@ -52,7 +52,7 @@ angular.module('biggraph').directive('operationParameters', function(util) {
 
           // Translate between arrays and comma-separated strings for multiselects.
           if (param.options.length > 0 && param.multipleChoice) {
-            var flat = scope.parameters[param.id];
+            const flat = scope.parameters[param.id];
             if (flat !== undefined && flat.length > 0) {
               scope.listParameters[param.id] = flat.split(',');
             } else {
@@ -62,14 +62,14 @@ angular.module('biggraph').directive('operationParameters', function(util) {
         }
 
         // Find unexpected parameters.
-        var paramIds = Object.keys(scope.parameters);
+        const paramIds = Object.keys(scope.parameters);
         paramIds.sort();
         scope.unexpectedParameters = scope.unexpectedParameters || [];
         scope.unexpectedParameters.length = 0;
-        for (i = 0; i < paramIds.length; ++i) {
-          var paramId = paramIds[i];
-          var expected = false;
-          for (var j = 0; j < scope.meta.parameters.length; ++j) {
+        for (let i = 0; i < paramIds.length; ++i) {
+          const paramId = paramIds[i];
+          let expected = false;
+          for (let j = 0; j < scope.meta.parameters.length; ++j) {
             if (scope.meta.parameters[j].id === paramId) {
               expected = true;
               break;
@@ -82,8 +82,8 @@ angular.module('biggraph').directive('operationParameters', function(util) {
       });
 
       util.deepWatch(scope, 'listParameters', function(listParameters) {
-        for (var i = 0; i < scope.meta.parameters.length; ++i) {
-          var param = scope.meta.parameters[i];
+        for (let i = 0; i < scope.meta.parameters.length; ++i) {
+          const param = scope.meta.parameters[i];
           if (param.options.length > 0 && param.multipleChoice) {
             scope.parameters[param.id] = (listParameters[param.id] || []).join(',');
           }

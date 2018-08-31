@@ -8,11 +8,11 @@
 'use strict';
 
 // Port for LynxKite.
-var LynxKitePort = 2200;
+const LynxKitePort = 2200;
 // Port for the development proxy.
-var ProxyPort = 9090;
-var LynxKiteURL;
-var ProxyURL;
+const ProxyPort = 9090;
+let LynxKiteURL;
+let ProxyURL;
 if (process.env.HTTPS_PORT) {
   LynxKiteURL = 'https://localhost:' + process.env.HTTPS_PORT;
   ProxyURL = 'https://localhost:' + ProxyPort;
@@ -22,28 +22,28 @@ if (process.env.HTTPS_PORT) {
 }
 
 // The tools directory.
-var tools = '../tools';
+const tools = '../tools';
 
-var browserSync = require('browser-sync').create();
-var spawn = require('child_process').spawn;
-var del = require('del');
-var glob = require('glob');
-var gulp = require('gulp');
-var runSequence = require('run-sequence');
-var fs = require('fs');
-var httpProxy = require('http-proxy');
-var lazypipe = require('lazypipe');
-var merge = require('merge-stream');
-var $ = require('gulp-load-plugins')();
+const browserSync = require('browser-sync').create();
+const spawn = require('child_process').spawn;
+const del = require('del');
+const glob = require('glob');
+const gulp = require('gulp');
+const runSequence = require('run-sequence');
+const fs = require('fs');
+const httpProxy = require('http-proxy');
+const lazypipe = require('lazypipe');
+const merge = require('merge-stream');
+const $ = require('gulp-load-plugins')();
 
 // Builds HTML files from AsciiDoctor documentation.
 gulp.task('asciidoctor', function () {
   // eslint-disable camelcase
-  var docs = ['admin-manual', 'help'];
-  var streams = [];
-  for (var i = 0; i < docs.length; ++i) {
-    var doc = docs[i];
-    var stream = gulp.src('app/' + doc + '/index.asciidoc')
+  const docs = ['admin-manual', 'help'];
+  const streams = [];
+  for (let i = 0; i < docs.length; ++i) {
+    const doc = docs[i];
+    const stream = gulp.src('app/' + doc + '/index.asciidoc')
       .pipe($.asciidoctor({
         base_dir: 'app/' + doc,
         safe: 'safe',
@@ -59,8 +59,8 @@ gulp.task('asciidoctor', function () {
 
 // Preprocesses HTML files.
 gulp.task('html', ['css', 'js'], function () {
-  var css = gulp.src('.tmp/**/*.css', { read: false });
-  var js = gulp.src('.tmp/**/*.js').pipe($.angularFilesort());
+  const css = gulp.src('.tmp/**/*.css', { read: false });
+  const js = gulp.src('.tmp/**/*.js').pipe($.angularFilesort());
   return gulp.src('app/index.html')
     .pipe($.inject(css, { ignorePath: '.tmp' }))
     .pipe($.inject(js, { ignorePath: '.tmp' }))
@@ -72,27 +72,27 @@ gulp.task('html', ['css', 'js'], function () {
 // All the other tasks create intermediate outputs in .tmp. This task takes files from app and .tmp,
 // optimizes them, and saves them in dist.
 gulp.task('dist', ['asciidoctor', 'genTemplates', 'html'], function () {
-  var beforeConcat = lazypipe().pipe($.sourcemaps.init, { loadMaps: true });
-  var dynamicFiles = gulp.src('.tmp/**/*.html')
+  const beforeConcat = lazypipe().pipe($.sourcemaps.init, { loadMaps: true });
+  const dynamicFiles = gulp.src('.tmp/**/*.html')
     .pipe($.useref({}, beforeConcat))
     .pipe($.if('*.js', $.uglifyEs.default()))
     .pipe($.if(['**/*', '!**/*.html'], $.rev()))
     .pipe($.revReplace())
     .pipe($.size({ showFiles: true, gzip: true }))
     .pipe($.sourcemaps.write('maps'));
-  var staticFiles = gulp.src([
+  const staticFiles = gulp.src([
     'app/*.{png,svg}',
     'app/images/**',
     'app/**/*.html', '!app/index.html',
   ], { base: 'app' });
   // Move fonts to where the relative URLs will find them.
-  var bootstrapFonts = gulp.src([
+  const bootstrapFonts = gulp.src([
     'node_modules/bootstrap/dist/fonts/*',
   ], { base: 'node_modules/bootstrap/dist' });
-  var fontAwesomeFonts = gulp.src([
+  const fontAwesomeFonts = gulp.src([
     'node_modules/font-awesome/fonts/*',
   ], {base: 'node_modules/font-awesome'});
-  var typefaces = gulp.src([
+  const typefaces = gulp.src([
     'node_modules/typeface-exo-2/files/*',
   ], {base: 'node_modules/typeface-exo-2'});
   return merge(
@@ -154,7 +154,7 @@ gulp.task('genTemplates', function(done) {
 gulp.task('serve', ['quick'], function() {
   // This is more complicated than it could be due to an issue:
   // https://github.com/BrowserSync/browser-sync/issues/933
-  var proxy = httpProxy.createProxyServer();
+  const proxy = httpProxy.createProxyServer();
   proxy.on('error', function(err, req, res) {
     // Lot of ECONNRESET when live-reloading for some reason. Ignore them.
     res.end();
@@ -186,10 +186,10 @@ gulp.task('serve', ['quick'], function() {
   gulp.watch('app/**/*.asciidoc', ['asciidoctor', 'genTemplates']);
 });
 
-var protractorDir = 'node_modules/protractor/';
+const protractorDir = 'node_modules/protractor/';
 // Checks for webdriver updates.
 gulp.task('webdriver-update', function(done) {
-  var protractorConfig = require('./test/protractor.conf.js').config;
+  const protractorConfig = require('./test/protractor.conf.js').config;
   fs.access('test/' + protractorConfig.chromeDriver, (err) => {
     if (err) {
       spawn(
@@ -204,7 +204,7 @@ gulp.task('webdriver-update', function(done) {
 // Runs Protractor against a given port.
 function runProtractor(url, done) {
   glob(protractorDir + 'selenium/selenium-server-standalone-*.jar', function(err, jars) {
-    var jar = jars[jars.length - 1]; // Take the latest version.
+    const jar = jars[jars.length - 1]; // Take the latest version.
     spawn(
       protractorDir + 'bin/protractor', [
         'test/protractor.conf.js',

@@ -2,11 +2,11 @@
 'use strict';
 
 /* eslint-disable no-unused-vars */
-var COMMON_UTIL = {
+const COMMON_UTIL = {
   minmax: function(xs) {
-    var Inf = parseFloat('Infinity');
-    var min = Inf, max = -Inf;
-    for (var i = 0; i < xs.length; ++i) {
+    const Inf = parseFloat('Infinity');
+    let min = Inf, max = -Inf;
+    for (let i = 0; i < xs.length; ++i) {
       if (xs[i] < min) { min = xs[i]; }
       if (xs[i] > max) { max = xs[i]; }
     }
@@ -35,8 +35,8 @@ var COMMON_UTIL = {
   // Java's hash function in JS.
   hashCode: function(text) {
     /* eslint-disable no-bitwise */
-    var hash = 0;
-    for (var i = 0; i < text.length; ++i) {
+    let hash = 0;
+    for (let i = 0; i < text.length; ++i) {
       hash = hash * 31 + text.charCodeAt(i);
       hash |= 0; // Trim to 32 bits.
     }
