@@ -12,8 +12,8 @@
 
 angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
   function getComment(metadata, instance) {
-    var md = window.markdownit();
-    var comment;
+    const md = window.markdownit();
+    let comment;
     if (metadata.operationId === 'Comment') {
       comment = instance.parameters.comment;
     } else if (metadata.operationId === 'Anchor') {
@@ -35,12 +35,12 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
     this.height = 100;
     this.comment = getComment(metadata, instance);
 
-    var i;
+    let i;
     for (i = 0; i < metadata.inputs.length; ++i) {
       this.inputs.push(new PlugWrapper(workspace, metadata.inputs[i], i, 'inputs', this));
     }
     for (i = 0; i < metadata.outputs.length; ++i) {
-      var plug = new PlugWrapper(workspace, metadata.outputs[i], i, 'outputs', this);
+      const plug = new PlugWrapper(workspace, metadata.outputs[i], i, 'outputs', this);
       this.outputs.push(plug);
       this.outputMap[plug.id] = plug;
     }
@@ -53,10 +53,10 @@ angular.module('biggraph').factory('BoxWrapper', function(PlugWrapper) {
       return 'translate(' + this.instance.x + ', ' + this.instance.y + ')';
     },
     onMouseMove: function(event) {
-      var newX = event.logicalX + this.xOffset;
-      var newY = event.logicalY + this.yOffset;
+      let newX = event.logicalX + this.xOffset;
+      let newY = event.logicalY + this.yOffset;
       if (event.shiftKey) {
-        var G = 50; // Snap grid size.
+        const G = 50; // Snap grid size.
         newX = G * Math.round(newX / G);
         newY = G * Math.round(newY / G);
       }

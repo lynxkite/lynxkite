@@ -1,6 +1,6 @@
 'use strict';
 
-var lib = require('../test-lib.js');
+const lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   fw.transitionTest(
@@ -16,7 +16,7 @@ module.exports = function(fw) {
     'test-example workspace with example graph',
     'has the proper vertex count',
     function() {
-      var state = lib.workspace.openStateView('eg0', 'project');
+      const state = lib.workspace.openStateView('eg0', 'project');
       expect(state.left.vertexCount()).toEqual(4);
       expect(state.left.edgeCount()).toEqual(4);
       expect(state.left.attributeCount()).toEqual(8);
@@ -47,7 +47,7 @@ module.exports = function(fw) {
     'test-example workspace with reverse edges',
     'has the proper vertex count',
     function() {
-      var state = lib.workspace.openStateView(
+      const state = lib.workspace.openStateView(
           'reversed-edges', 'project');
       expect(state.left.vertexCount()).toEqual(4);
       expect(state.left.edgeCount()).toEqual(8);

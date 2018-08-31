@@ -34,12 +34,12 @@ angular.module('biggraph')
 
         scope.applyVisualizationData = function() {
           if (scope.visualization.$resolved) {
-            var state = scope.visualization;
+            const state = scope.visualization;
             scope.left.updateFromBackendJson(state.left);
             scope.right.updateFromBackendJson(state.right);
-            var leftPromise = scope.left.reload();
-            var rightPromise = scope.right.reload();
-            var pendingReloads = [];
+            const leftPromise = scope.left.reload();
+            const rightPromise = scope.right.reload();
+            const pendingReloads = [];
             // Collect project load promises into a list and handle side completion events:
             if (leftPromise) {
               pendingReloads.push(leftPromise);
@@ -62,8 +62,8 @@ angular.module('biggraph')
         };
 
         function getLeftToRightBundle() {
-          var left = scope.left;
-          var right = scope.right;
+          const left = scope.left;
+          const right = scope.right;
           if (!left.loaded() || !right.loaded()) { return undefined; }
           // If it is a segmentation, use "belongsTo" as the connecting path.
           if (right.isSegmentationOf(left)) {
@@ -77,8 +77,8 @@ angular.module('biggraph')
         }
 
         function getRightToLeftBundle() {
-          var left = scope.left;
-          var right = scope.right;
+          const left = scope.left;
+          const right = scope.right;
           if (!left.loaded() || !right.loaded()) { return undefined; }
           // If it is the same project on both sides, use its internal edges.
           if (left.project.name === right.project.name) {

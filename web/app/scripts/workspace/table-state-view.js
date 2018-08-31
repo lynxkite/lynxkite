@@ -62,8 +62,8 @@ angular.module('biggraph')
         };
 
         scope.sortKey = function(a) {
-          var col = scope.sort.column;
-          var dv = a[col];
+          const col = scope.sort.column;
+          const dv = a[col];
           return dv && dv.defined && (dv.double !== undefined ? dv.double : dv.string);
         };
       },

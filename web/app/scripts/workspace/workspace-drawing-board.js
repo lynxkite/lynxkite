@@ -49,15 +49,15 @@ angular.module('biggraph')
             window.localStorage.setItem('drag_mode', dragMode);
           });
 
-        var workspaceDrag = false;
-        var selectBoxes = false;
-        var workspaceX = 0;
-        var workspaceY = 0;
-        var workspaceZoom = 0;
-        var mouseX = 300;
-        var mouseY = 300;
-        var svgElement = element.find('svg');
-        var svgOffset = svgElement.offset();
+        let workspaceDrag = false;
+        let selectBoxes = false;
+        let workspaceX = 0;
+        let workspaceY = 0;
+        let workspaceZoom = 0;
+        let mouseX = 300;
+        let mouseY = 300;
+        const svgElement = element.find('svg');
+        let svgOffset = svgElement.offset();
         function zoomToScale(z) { return Math.exp(z * 0.001); }
         function addLogicalMousePosition(event) {
           // event.offsetX/Y are distorted when the mouse is
@@ -66,14 +66,14 @@ angular.module('biggraph')
           event.workspaceX = event.pageX - svgOffset.left;
           event.workspaceY = event.pageY - svgOffset.top;
           // Add location according to pan and zoom:
-          var logical = scope.pageToLogical({ x: event.pageX, y: event.pageY });
+          const logical = scope.pageToLogical({ x: event.pageX, y: event.pageY });
           event.logicalX = logical.x;
           event.logicalY = logical.y;
           return event;
         }
 
         scope.pageToLogical = function(pos) {
-          var z = zoomToScale(workspaceZoom);
+          const z = zoomToScale(workspaceZoom);
           return {
             x: (pos.x - svgOffset.left - workspaceX) / z,
             y: (pos.y - svgOffset.top - workspaceY) / z,
@@ -81,7 +81,7 @@ angular.module('biggraph')
         };
 
         scope.logicalToPage = function(pos) {
-          var z = zoomToScale(workspaceZoom);
+          const z = zoomToScale(workspaceZoom);
           return {
             x: pos.x * z + workspaceX + svgOffset.left,
             y: pos.y * z + workspaceY + svgOffset.top,
@@ -89,7 +89,7 @@ angular.module('biggraph')
         };
 
         function actualDragMode(event) {
-          var dragMode = (window.localStorage.getItem('drag_mode') || 'pan');
+          const dragMode = (window.localStorage.getItem('drag_mode') || 'pan');
           // Shift chooses the opposite mode.
           if (dragMode === 'select') {
             return event.shiftKey ? 'pan' : 'select';
@@ -112,7 +112,7 @@ angular.module('biggraph')
           mouseX = event.workspaceX;
           mouseY = event.workspaceY;
 
-          var leftButton = event.buttons & 1;
+          const leftButton = event.buttons & 1;
           // Protractor omits button data from simulated mouse events.
           if (leftButton || environment.protractor) {
             scope.mouseLogical = {
@@ -120,7 +120,7 @@ angular.module('biggraph')
               y: event.logicalY,
             };
             if (scope.movedBoxes) {
-              for (var i = 0; i < scope.movedBoxes.length; i++) {
+              for (let i = 0; i < scope.movedBoxes.length; i++) {
                 scope.movedBoxes[i].onMouseMove(event);
               }
               if (scope.movedBoxes.length === 1) {
@@ -140,21 +140,21 @@ angular.module('biggraph')
           function filterOpen(plugs) {
             return plugs.filter(function(plug) { return plug.getAttachedPlugs().length === 0; });
           }
-          var allOutputs = flatten(scope.workspace.boxes.map(function(box) { return box.outputs; }));
-          var allInputs = flatten(scope.workspace.boxes.map(function(box) { return box.inputs; }));
+          const allOutputs = flatten(scope.workspace.boxes.map(function(box) { return box.outputs; }));
+          const allInputs = flatten(scope.workspace.boxes.map(function(box) { return box.inputs; }));
           autoConnectPlugs(moving.inputs, allOutputs);
           autoConnectPlugs(filterOpen(moving.outputs), filterOpen(allInputs));
         }
 
         function autoConnectPlugs(srcPlugs, dstPlugs) {
-          var hookDistance = 20;
-          for (var i = 0; i < srcPlugs.length; ++i) {
-            var src = srcPlugs[i];
-            for (var j = 0; j < dstPlugs.length; ++j) {
-              var dst = dstPlugs[j];
-              var dx = src.cx() - dst.cx();
-              var dy = src.cy() - dst.cy();
-              var dist = Math.sqrt(dx * dx + dy * dy);
+          const hookDistance = 20;
+          for (let i = 0; i < srcPlugs.length; ++i) {
+            const src = srcPlugs[i];
+            for (let j = 0; j < dstPlugs.length; ++j) {
+              const dst = dstPlugs[j];
+              const dx = src.cx() - dst.cx();
+              const dy = src.cy() - dst.cy();
+              const dist = Math.sqrt(dx * dx + dy * dy);
               if (dist < hookDistance) {
                 scope.workspace.addArrow(src, dst, { willSaveLater: true });
               }
@@ -164,7 +164,7 @@ angular.module('biggraph')
 
         scope.onMouseDownOnBox = function(box, event) {
           event.stopPropagation();
-          var leftClick = event.button === 0;
+          const leftClick = event.button === 0;
           if (!leftClick) {
             return;
           }
@@ -180,7 +180,7 @@ angular.module('biggraph')
             scope.movedBoxes = [box];
             scope.movedBoxes[0].onMouseDown(event);
           } else if (event.ctrlKey) {
-            var selectedIndex = scope.selectedBoxIds.indexOf(box.instance.id);
+            const selectedIndex = scope.selectedBoxIds.indexOf(box.instance.id);
             scope.selectedBoxIds.splice(selectedIndex, 1);
             scope.movedBoxes[0].onMouseDown(event);
           } else {
@@ -193,26 +193,26 @@ angular.module('biggraph')
 
         function placePopup(event) {
           // Avoid the event position, stay on the screen, and try to be close to the event.
-          var w = 500;
-          var h = 500;
-          var eventX = event.pageX - w / 2;
-          var eventY = event.pageY - h / 2;
-          var minX = 0;
-          var minY = svgOffset.top;  // Do not overlap toolbar.
-          var maxX = svgElement.width() - w - 35;  // Do not overlap toolbox.
-          var maxY = svgElement.height() - h;
+          const w = 500;
+          const h = 500;
+          const eventX = event.pageX - w / 2;
+          const eventY = event.pageY - h / 2;
+          const minX = 0;
+          const minY = svgOffset.top;  // Do not overlap toolbar.
+          const maxX = svgElement.width() - w - 35;  // Do not overlap toolbox.
+          const maxY = svgElement.height() - h;
 
           function len(x, y) { return Math.sqrt(x * x + y * y); }
           function rectangleOverlapArea(left1, top1, width1, height1, left2, top2, width2, height2) {
-            var right1 = left1 + width1;
-            var bottom1 = top1 + height1;
-            var right2 = left2 + width2;
-            var bottom2 = top2 + height2;
+            const right1 = left1 + width1;
+            const bottom1 = top1 + height1;
+            const right2 = left2 + width2;
+            const bottom2 = top2 + height2;
             // Comute intersection:
-            var left = Math.max(left1, left2);
-            var top = Math.max(top1, top2);
-            var right = Math.min(right1, right2);
-            var bottom = Math.min(bottom1, bottom2);
+            const left = Math.max(left1, left2);
+            const top = Math.max(top1, top2);
+            const right = Math.min(right1, right2);
+            const bottom = Math.min(bottom1, bottom2);
             if (left > right || top > bottom) {
               return 0;
             } else {
@@ -220,8 +220,8 @@ angular.module('biggraph')
             }
           }
           function overlap(x, y) {
-            var total = 0;
-            for (var i = 0; i < scope.popups.length; ++i) {
+            let total = 0;
+            for (let i = 0; i < scope.popups.length; ++i) {
               total += rectangleOverlapArea(
                   scope.popups[i].x, scope.popups[i].y, scope.popups[i].width, scope.popups[i].height,
                   x, y, w, h);
@@ -235,7 +235,7 @@ angular.module('biggraph')
             };
           }
           function isScoreBetterThan(current, best) {
-            var minDist = Math.sqrt(w * w + h * h) / 2;
+            const minDist = Math.sqrt(w * w + h * h) / 2;
             if (best.distance < minDist && current.distance > best.distance) {
               return true;
             }
@@ -251,12 +251,12 @@ angular.module('biggraph')
             }
           }
 
-          var bestX = (minX + maxX) / 2;
-          var bestY = (minY + maxY) / 2;
-          var bestScore = score(bestX, bestY);
-          for (var x = minX; x <= maxX; x += (maxX - minX) / 10) {
-            for (var y = minY; y <= maxY; y += (maxY - minY) / 20) {
-              var currentScore = score(x, y);
+          let bestX = (minX + maxX) / 2;
+          let bestY = (minY + maxY) / 2;
+          let bestScore = score(bestX, bestY);
+          for (let x = minX; x <= maxX; x += (maxX - minX) / 10) {
+            for (let y = minY; y <= maxY; y += (maxY - minY) / 20) {
+              const currentScore = score(x, y);
               if (isScoreBetterThan(currentScore, bestScore)) {
                 bestX = x;
                 bestY = y;
@@ -276,12 +276,12 @@ angular.module('biggraph')
           if (box.isDirty || scope.pulledPlug || scope.selection.isActive()) {
             return;
           }
-          var leftButton = event.button === 0;
+          const leftButton = event.button === 0;
           if (!leftButton || event.ctrlKey || event.shiftKey) {
             return;
           }
-          var pos = placePopup(event);
-          var model = new PopupModel(
+          const pos = placePopup(event);
+          const model = new PopupModel(
             box.instance.id,
             box.instance.operationId,
             {
@@ -297,7 +297,7 @@ angular.module('biggraph')
         };
 
         scope.closePopup = function(id) {
-          for (var i = 0; i < scope.popups.length; ++i) {
+          for (let i = 0; i < scope.popups.length; ++i) {
             if (scope.popups[i].id === id) {
               scope.popups.splice(i, 1);
               return true;
@@ -311,14 +311,14 @@ angular.module('biggraph')
         };
 
         scope.onClickOnPlug = function(plug, event) {
-          var leftButton = event.button === 0;
+          const leftButton = event.button === 0;
           if (!leftButton || event.ctrlKey || event.shiftKey) {
             return;
           }
           event.stopPropagation();
           if (plug.direction === 'outputs') {
-            var pos = placePopup(event);
-            var model = new PopupModel(
+            const pos = placePopup(event);
+            const model = new PopupModel(
               plug.boxId + '_' + plug.id,
               plug.boxInstance.operationId + ' ➡ ' + plug.id,
               {
@@ -344,7 +344,7 @@ angular.module('biggraph')
         scope.onMouseUpOnPlug = function(plug, event) {
           event.stopPropagation();
           if (scope.pulledPlug) {
-            var otherPlug = scope.pulledPlug;
+            const otherPlug = scope.pulledPlug;
             scope.pulledPlug = undefined;
             scope.workspace.addArrow(otherPlug, plug);
           }
@@ -367,8 +367,8 @@ angular.module('biggraph')
         function wrapCallback(callback) {
           return function(event) { scope.$apply(function () { callback(event); }); };
         }
-        var wrappedOnMouseMove = wrapCallback(scope.onMouseMove);
-        var wrappedOnMouseUp = wrapCallback(scope.onMouseUp);
+        const wrappedOnMouseMove = wrapCallback(scope.onMouseMove);
+        const wrappedOnMouseUp = wrapCallback(scope.onMouseUp);
 
         scope.startMovingPopup = function(popup) {
           scope.movedPopup = popup;
@@ -385,7 +385,7 @@ angular.module('biggraph')
 
         scope.onMouseDown = function(event) {
           addDragListeners();
-          var dragMode = actualDragMode(event);
+          const dragMode = actualDragMode(event);
           event.preventDefault();
           addLogicalMousePosition(event);
           if (dragMode === 'pan') {
@@ -401,7 +401,7 @@ angular.module('biggraph')
         };
 
         scope.workspaceTransform = function() {
-          var z = zoomToScale(workspaceZoom);
+          const z = zoomToScale(workspaceZoom);
           return 'translate(' + workspaceX + ', ' + workspaceY + ') scale(' + z + ')';
         };
 
@@ -409,7 +409,7 @@ angular.module('biggraph')
           if (!scope.workspace) {
             return undefined;
           }
-          var boxes = scope.workspace.boxes.slice();
+          const boxes = scope.workspace.boxes.slice();
           boxes.sort(function(a, b) { return a.instance.y < b.instance.y ? -1 : 1; });
           return boxes;
         };
@@ -419,10 +419,10 @@ angular.module('biggraph')
         };
 
         scope.selectBoxesInSelection = function() {
-          var boxes = scope.workspace.boxes;
+          const boxes = scope.workspace.boxes;
           this.selectedBoxIds = [];
-          for (var i = 0; i < boxes.length; i++) {
-            var box = boxes[i];
+          for (let i = 0; i < boxes.length; i++) {
+            const box = boxes[i];
             if (this.selection.inSelection(box)) {
               this.selectedBoxIds.push(box.instance.id);
             }
@@ -453,7 +453,7 @@ angular.module('biggraph')
           if (inputBoxFocused() || window.getSelection().toString()) {
             return;
           }
-          var data = jsyaml.safeDump(
+          const data = jsyaml.safeDump(
             scope.selectedBoxes().map(function(box) { return box.instance; }),
             { noCompatMode: true });
           e.clipboardData.setData('text/plain', data);
@@ -464,21 +464,23 @@ angular.module('biggraph')
           if (inputBoxFocused()) {
             return;
           }
-          var data = e.clipboardData.getData('Text');
+          const data = e.clipboardData.getData('Text');
+          let boxes, message;
           try {
-            var boxes = jsyaml.safeLoad(data);
+            boxes = jsyaml.safeLoad(data);
           } catch (err) {
-            var jData = { clipboard: data };
-            var message = 'Cannot create boxes from clipboard. (Not in JSON format)';
+            const jData = { clipboard: data };
+            message = 'Cannot create boxes from clipboard. (Not in JSON format)';
             util.error(message, jData);
             /* eslint-disable no-console */
             console.error(message, err);
             return;
           }
+          let added;
           try {
-            var added = scope.workspace.pasteFromData(boxes, getMouseLogical(-50, -50));
+            added = scope.workspace.pasteFromData(boxes, getMouseLogical(-50, -50));
           } catch (err) {
-            var someJson = { clipboard: data };
+            const someJson = { clipboard: data };
             message = 'Cannot parse boxes from clipboard';
             util.error(message, someJson);
             /* eslint-disable no-console */
@@ -488,16 +490,16 @@ angular.module('biggraph')
           scope.selectedBoxIds = added.map(function(box) { return box.id; });
         };
 
-        var wrappedCopyBoxes = wrapCallback(scope.copyBoxes);
-        var wrappedPasteBoxes = wrapCallback(scope.pasteBoxes);
+        const wrappedCopyBoxes = wrapCallback(scope.copyBoxes);
+        const wrappedPasteBoxes = wrapCallback(scope.pasteBoxes);
 
         window.addEventListener('copy', wrappedCopyBoxes);
         window.addEventListener('paste', wrappedPasteBoxes);
 
         scope.deleteBoxes = function(boxIds) {
-          var popups = scope.popups.slice();
+          const popups = scope.popups.slice();
           popups.forEach(function(popup) {
-            var boxId = popup.content.boxId;
+            const boxId = popup.content.boxId;
             if (boxIds.includes(boxId) && boxId !== 'anchor') {
               scope.closePopup(popup.id);
             }
@@ -522,7 +524,7 @@ angular.module('biggraph')
         };
 
         scope.diveUp = function() {
-          var boxSettings = scope.workspace.customBoxStack.pop();
+          const boxSettings = scope.workspace.customBoxStack.pop();
           delete scope.workspace._boxCatalogMap; // Force a catalog refresh.
           scope.workspace.loadWorkspace();
           scope.popups = [];
@@ -533,7 +535,7 @@ angular.module('biggraph')
         };
 
         scope.diveDown = function() {
-          var boxSettings = {
+          const boxSettings = {
             id: scope.selectedBoxIds[0],
             viewSettings: {
               x: workspaceX,
@@ -550,12 +552,12 @@ angular.module('biggraph')
         };
 
         scope.saveSelectionAsCustomBox = function(name, success, error) {
-          var b = scope.workspace.saveAsCustomBox(
+          const b = scope.workspace.saveAsCustomBox(
               scope.selectedBoxIds, name, 'Created from ' + scope.workspaceName);
           scope.selectedBoxIds = [b.customBox.id];
           b.promise.then(success, error);
         };
-        var hk = hotkeys.bindTo(scope);
+        const hk = hotkeys.bindTo(scope);
         hk.add({
           // Only here for the tooltip.
           combo: 'mod+c', description: 'Copy boxes', callback: function() {} });
@@ -600,20 +602,20 @@ angular.module('biggraph')
 
         element.find('svg').on('wheel', function(event) {
           event.preventDefault();
-          var delta = event.originalEvent.deltaY;
+          let delta = event.originalEvent.deltaY;
           if (/Firefox/.test(window.navigator.userAgent)) {
             // Every browser sets different deltas for the same amount of scrolling.
             // It is tiny on Firefox. We need to boost it.
             delta *= 20;
           }
           scope.$apply(function() {
-            var z1 = zoomToScale(workspaceZoom);
+            const z1 = zoomToScale(workspaceZoom);
             workspaceZoom -= delta;
             // Enforce a maximal zoom where the icons are not yet pixelated.
             workspaceZoom = Math.min(workspaceZoom, 1000 * Math.log(4 / 3));
             // Enforce a minimal zoom where boxes are still visible.
             workspaceZoom = Math.max(workspaceZoom, 1000 * Math.log(1 / 50));
-            var z2 = zoomToScale(workspaceZoom);
+            const z2 = zoomToScale(workspaceZoom);
             // Maintain screen-coordinates of logical point under the mouse.
             workspaceX = mouseX - (mouseX - workspaceX) * z2 / z1;
             workspaceY = mouseY - (mouseY - workspaceY) * z2 / z1;
@@ -627,7 +629,7 @@ angular.module('biggraph')
           // Then we never need to worry about sizes.
           event.logicalX -= 50;
           event.logicalY -= 50;
-          var box = scope.workspace.addBox(op.operationId, event, { willSaveLater: true });
+          const box = scope.workspace.addBox(op.operationId, event, { willSaveLater: true });
           scope.onMouseDownOnBox(scope.workspace.getBox(box.id), event);
         };
 
@@ -639,8 +641,8 @@ angular.module('biggraph')
           addLogicalMousePosition(event);
           event.logicalX -= 50;
           event.logicalY -= 50;
-          var file = event.dataTransfer.files[0];
-          var op = 'Import CSV';
+          const file = event.dataTransfer.files[0];
+          let op = 'Import CSV';
           if (file.name.match(/\.json$/i)) {
             op = 'Import JSON';
           } else if (file.name.match(/\.parquet$/i)) {
@@ -648,7 +650,7 @@ angular.module('biggraph')
           } else if (file.name.match(/\.orc$/i)) {
             op = 'Import ORC';
           }
-          var box = scope.workspace.addBox(op, event, { willSaveLater: true });
+          const box = scope.workspace.addBox(op, event, { willSaveLater: true });
           if (op === 'Import CSV') {
             box.parameters.infer = 'yes';
           }
@@ -668,8 +670,8 @@ angular.module('biggraph')
         });
 
         function uploadFile(file) {
-          var defer = $q.defer();
-          var xhr = new XMLHttpRequest();
+          const defer = $q.defer();
+          const xhr = new XMLHttpRequest();
           xhr.open('POST', '/ajax/upload');
           xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {  // DONE
@@ -683,7 +685,7 @@ angular.module('biggraph')
               });
             }
           };
-          var fd = new FormData();
+          const fd = new FormData();
           fd.append('file', file);
           xhr.send(fd);
           return defer.promise;
@@ -702,17 +704,17 @@ angular.module('biggraph')
         // get applied to the grayscale icon images. This function builds the mapping.
         function makeFilters() {
           // Brand colors.
-          var colors = [
+          const colors = [
             ['blue', '#39bcf3'],
             ['green', '#6fdb11'],
             ['orange', '#ff8800'],
             ['purple', '#bf45e8'],
           ];
-          var filters = {};
-          for (var i = 0; i < colors.length; ++i) {
-            var name = colors[i][0];
+          const filters = {};
+          for (let i = 0; i < colors.length; ++i) {
+            const name = colors[i][0];
             /* global tinycolor */
-            var c = tinycolor(colors[i][1]).toRgb();
+            const c = tinycolor(colors[i][1]).toRgb();
             filters[name] = (
                 (c.r / 255 / 2.3 + ' ').repeat(3) + '0 0 ' +
                 (c.g / 255 / 2.3 + ' ').repeat(3) + '0 0 ' +
@@ -730,7 +732,7 @@ angular.module('biggraph')
 
         scope.getDirectoryPart = function(path) {
           if (path === undefined) { return undefined; }
-          var dir = path.split('/').slice(0, -1);
+          const dir = path.split('/').slice(0, -1);
           return dir.length === 0 ? '' : dir.join('/') + '/';
         };
 
@@ -751,12 +753,12 @@ angular.module('biggraph')
         // This is separate from scope.addOperation because we don't have a mouse event here,
         // which makes using the onMouseDown function pretty difficult.
         function addAndSelectBox(id, pos, options) {
-          var box = scope.workspace.addBox(id, { logicalX: pos.x, logicalY: pos.y }, options);
+          const box = scope.workspace.addBox(id, { logicalX: pos.x, logicalY: pos.y }, options);
           scope.selectedBoxIds = [box.id];
         }
 
         function getMouseLogical(offx, offy) {
-          var z = zoomToScale(workspaceZoom);
+          const z = zoomToScale(workspaceZoom);
           return { x: (mouseX - workspaceX) / z + offx, y: (mouseY - workspaceY) / z + offy };
         }
 

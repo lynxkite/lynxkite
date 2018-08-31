@@ -14,8 +14,8 @@ angular.module('biggraph').directive('modelParameter', function(util) {
       scope.activeModel = undefined;
       // Feature name to attribute name. Matching names are added by default.
       scope.binding = {};
-      for (var j = 0; j < scope.param.payload.attrs.length; ++j) {
-        var id = scope.param.payload.attrs[j].id;
+      for (let j = 0; j < scope.param.payload.attrs.length; ++j) {
+        const id = scope.param.payload.attrs[j].id;
         scope.binding[id] = id;
       }
       scope.getParamsWithMatchingType = function(type) {
@@ -27,10 +27,10 @@ angular.module('biggraph').directive('modelParameter', function(util) {
       // React to external changes to model.
       util.deepWatch(scope, 'modelJson', function(modelJson) {
         if (modelJson) {
-          var modelParams = JSON.parse(modelJson);
-          var models = scope.param.payload.models;
+          const modelParams = JSON.parse(modelJson);
+          const models = scope.param.payload.models;
           scope.activeModel = undefined;
-          for (var i = 0; i < models.length; ++i) {
+          for (let i = 0; i < models.length; ++i) {
             if (models[i].name === modelParams.modelName) {
               scope.activeModel = models[i];
             }
@@ -38,8 +38,8 @@ angular.module('biggraph').directive('modelParameter', function(util) {
           if (!scope.activeModel) {
             throw new Error('Could not find model "' + modelParams.modelName + '"');
           }
-          for (i = 0; i < scope.activeModel.featureNames.length; ++i) {
-            var feature = scope.activeModel.featureNames[i];
+          for (let i = 0; i < scope.activeModel.featureNames.length; ++i) {
+            const feature = scope.activeModel.featureNames[i];
             scope.binding[feature] = modelParams.features[i];
           }
         }
@@ -49,11 +49,11 @@ angular.module('biggraph').directive('modelParameter', function(util) {
       util.deepWatch(scope, 'binding', updateModel);
 
       function updateModel() {
-        var modelParams = {};
+        const modelParams = {};
         if (scope.activeModel) {
-          var featureList = [];
-          for (var i = 0; i < scope.activeModel.featureNames.length; ++i) {
-            var feature = scope.activeModel.featureNames[i];
+          const featureList = [];
+          for (let i = 0; i < scope.activeModel.featureNames.length; ++i) {
+            const feature = scope.activeModel.featureNames[i];
             featureList.push(scope.binding[feature]);
           }
           modelParams.modelName = scope.activeModel.name;

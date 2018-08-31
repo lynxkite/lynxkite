@@ -14,8 +14,8 @@ angular.module('biggraph')
       dropTooltipEnable: '=',
     },
     link: function(scope, element) {
-      var drop;
-      var defaultPosition = 'bottom center';
+      let drop;
+      const defaultPosition = 'bottom center';
       scope.createDrop = function() {
         /* global Drop */
         return new Drop({
@@ -39,7 +39,7 @@ angular.module('biggraph')
         if (!dropTooltipConfig.enabled) {
           return;
         }
-        var enabled = scope.dropTooltipEnable ||
+        const enabled = scope.dropTooltipEnable ||
           scope.dropTooltipEnable === undefined;
         if (!enabled || !scope.dropTooltip) {
           if (drop) {

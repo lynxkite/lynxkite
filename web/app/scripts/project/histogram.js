@@ -9,17 +9,17 @@ angular.module('biggraph').directive('histogram', function($timeout, util) {
     templateUrl: 'scripts/project/histogram.html',
     link: function(scope) {
       function maxSize() {
-        var max = 1;
-        for (var i = 0; i < scope.model.sizes.length; ++i) {
-          var s = scope.model.sizes[i];
+        let max = 1;
+        for (let i = 0; i < scope.model.sizes.length; ++i) {
+          const s = scope.model.sizes[i];
           if (s > max) { max = s; }
         }
         return max;
       }
 
       function total() {
-        var t = 0;
-        for (var i = 0; i < scope.model.sizes.length; ++i) {
+        let t = 0;
+        for (let i = 0; i < scope.model.sizes.length; ++i) {
           t += scope.model.sizes[i];
         }
         return t;
@@ -34,7 +34,7 @@ angular.module('biggraph').directive('histogram', function($timeout, util) {
         scope.loading = scope.model && !scope.model.$resolved;
         if (!scope.loading) { return; }
         scope.model.sizes = [];
-        for (var i = 0; i < 20; ++i) {
+        for (let i = 0; i < 20; ++i) {
           scope.model.sizes.push(Math.random());
         }
         scope.max = 1;
@@ -46,7 +46,7 @@ angular.module('biggraph').directive('histogram', function($timeout, util) {
       scope.$watch('model.$resolved', update);
 
       function update() {
-        var model = scope.model;
+        const model = scope.model;
         if (!model) { return; }
         if (!model.$resolved) {
           startLoading();
@@ -57,8 +57,8 @@ angular.module('biggraph').directive('histogram', function($timeout, util) {
         scope.total = total();
         scope.origMax = scope.max;
         if (model.labelType === 'between') {
-          var histoLabels = [];
-          for (var j = 1; j < model.labels.length; ++j) {
+          const histoLabels = [];
+          for (let j = 1; j < model.labels.length; ++j) {
             histoLabels[j - 1] = model.labels[j - 1] + '-' + model.labels[j];
           }
           scope.histoLabels = histoLabels;

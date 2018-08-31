@@ -12,7 +12,7 @@ angular.module('biggraph')
       return util.nocache('/ajax/enterDemoMode', {fake: 0});
     }
     $scope.switchMode = function() {
-      var request = $scope.status.demoMode ? exitReq() : enterReq();
+      const request = $scope.status.demoMode ? exitReq() : enterReq();
       request.then(function () {
         $scope.status = util.nocache('/ajax/demoModeStatus', {fake: 0});
       });

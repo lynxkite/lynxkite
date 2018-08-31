@@ -11,7 +11,7 @@ angular.module('biggraph').factory('loadGraph', function (util) {
     this.left = angular.copy(left, this.left);
     this.right = angular.copy(right, this.right);
 
-    var sides = [];
+    const sides = [];
     if (left && left.graphMode && left.vertexSet !== undefined) {
       sides.push(left);
     }
@@ -21,12 +21,12 @@ angular.module('biggraph').factory('loadGraph', function (util) {
     if (sides.length === 0) {  // Nothing to draw.
       return;
     }
-    var q = { vertexSets: [], edgeBundles: [] };
-    for (var i = 0; i < sides.length; ++i) {
-      var viewData = sides[i];
+    const q = { vertexSets: [], edgeBundles: [] };
+    for (let i = 0; i < sides.length; ++i) {
+      const viewData = sides[i];
       if (viewData.edgeBundle !== undefined) {
-        var edgeAttrs = [];
-        for (var eIndex in viewData.edgeAttrs) {
+        const edgeAttrs = [];
+        for (const eIndex in viewData.edgeAttrs) {
           if (viewData.edgeAttrs[eIndex]) {
             edgeAttrs.push({
               attributeId: viewData.edgeAttrs[eIndex].id,
@@ -49,15 +49,15 @@ angular.module('biggraph').factory('loadGraph', function (util) {
           maxSize: (viewData.display === '3d') ? 1000000 : 10000,
         });
       }
-      var vertexAttrs = [];
-      for (var index in viewData.vertexAttrs) {
+      const vertexAttrs = [];
+      for (const index in viewData.vertexAttrs) {
         if (viewData.vertexAttrs[index]) {
           vertexAttrs.push(viewData.vertexAttrs[index].id);
         }
       }
       vertexAttrs.sort();
-      var xAttr = (viewData.xAttribute) ? viewData.xAttribute.id : '';
-      var yAttr = (viewData.yAttribute) ? viewData.yAttribute.id : '';
+      const xAttr = (viewData.xAttribute) ? viewData.xAttribute.id : '';
+      const yAttr = (viewData.yAttribute) ? viewData.yAttribute.id : '';
 
       q.vertexSets.push({
         vertexSetId: viewData.vertexSet.id,

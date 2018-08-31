@@ -6,13 +6,13 @@ angular.module('biggraph')
   this.protractor = false; // If we want to handle tests specially somewhere.
 })
 .factory('util', function utilFactory($location, $window, $http, $rootScope, $modal, $q) {
-  var siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+  const siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
   // DataManager computation status codes. Keep these in sync
   // with EntityProgressManager.computeProgress
-  var COMPUTE_PROGRESS_ERROR = -1.0;
-  var COMPUTE_PROGRESS_NOT_STARTED = 0.0;
-  var COMPUTE_PROGRESS_IN_PROGRESS = 0.5;
-  var COMPUTE_PROGRESS_COMPLETED = 1.0;
+  const COMPUTE_PROGRESS_ERROR = -1.0;
+  const COMPUTE_PROGRESS_NOT_STARTED = 0.0;
+  const COMPUTE_PROGRESS_IN_PROGRESS = 0.5;
+  const COMPUTE_PROGRESS_COMPLETED = 1.0;
 
   // A request queue with a limit on the number of parallel requests.
   function RequestQueue(maxParallel) {
@@ -22,13 +22,13 @@ angular.module('biggraph')
   RequestQueue.prototype = {
     // Adds a request to the queue, sending it immediately if possible.
     request: function(config) {
-      var req;
+      let req;
       if (this.queue.length < this.maxParallel) {
         req = sendRequest(config);
       } else {
-        var queuing = $q.defer();
+        const queuing = $q.defer();
         req = queuing.promise.then(function() {
-          var next = sendRequest(config);
+          const next = sendRequest(config);
           req.$abandon = function() {
             next.$abandon();  // Abandoning should now cancel the request.
           };
@@ -40,7 +40,7 @@ angular.module('biggraph')
           queuing.reject({ config: config, statusText: 'Abandoned.' });
         };
       }
-      var that = this;
+      const that = this;
       req.finally(function() { that.finished(req); });
       this.queue.push(req);
       return req;
@@ -48,12 +48,12 @@ angular.module('biggraph')
 
     // A request has finished. Send more requests if available.
     finished: function(request) {
-      var q = this.queue;
-      for (var i = 0; i < q.length; ++i) {
+      const q = this.queue;
+      for (let i = 0; i < q.length; ++i) {
         if (q[i] === request) {
           q.splice(i, 1);
           if (i < this.maxParallel && q.length >= this.maxParallel) {
-            var next = q[this.maxParallel - 1];
+            const next = q[this.maxParallel - 1];
             next.$execute();
           }
           return;
@@ -67,9 +67,9 @@ angular.module('biggraph')
 
   // Sends an HTTP request immediately.
   function sendRequest(config) {
-    var canceler = $q.defer();
-    var fullConfig = angular.extend({ timeout: canceler.promise }, config);
-    var req = $http(fullConfig);
+    const canceler = $q.defer();
+    const fullConfig = angular.extend({ timeout: canceler.promise }, config);
+    const req = $http(fullConfig);
     req.$config = fullConfig;  // For debugging.
     req.$abandon = function() { canceler.resolve(); };
     return req;
@@ -77,7 +77,7 @@ angular.module('biggraph')
 
   // Sends an HTTP GET, possibly queuing the request.
   function getRequest(config) {
-    var SLOW_REQUESTS = [
+    const SLOW_REQUESTS = [
       '/ajax/complexView',
       '/ajax/histo',
       '/ajax/scalarValue',
@@ -93,8 +93,8 @@ angular.module('biggraph')
     // For this reason we queue slow requests in the browser. With the number
     // of parallel slow requests limited, we expect to have enough connections
     // left for the fast requests.
-    for (var i = 0; i < SLOW_REQUESTS.length; ++i) {
-      var pattern = SLOW_REQUESTS[i];
+    for (let i = 0; i < SLOW_REQUESTS.length; ++i) {
+      const pattern = SLOW_REQUESTS[i];
       if (config.url.indexOf(pattern) !== -1) {
         return util.slowQueue.request(config);
       }
@@ -107,9 +107,9 @@ angular.module('biggraph')
   function getResource(url, params, config) {
     // Create full $http request config.
     if (params === undefined) { params = { fake: 1 }; }
-    var fullConfig = angular.extend({ method: 'GET', url: url, params: { q: params } }, config);
+    const fullConfig = angular.extend({ method: 'GET', url: url, params: { q: params } }, config);
     // Send request.
-    var req = getRequest(fullConfig);
+    const req = getRequest(fullConfig);
     // Return Resource.
     return toResource(req);
   }
@@ -119,7 +119,7 @@ angular.module('biggraph')
   // It can be abandoned with $abandon(). $status is a Boolean promise of the success state.
   // $config describes the original request config.
   function toResource(promise) {
-    var resource = promise.then(
+    const resource = promise.then(
       function onSuccess(response) {
         angular.extend(resource, response.data);
         resource.$resolved = true;
@@ -149,9 +149,9 @@ angular.module('biggraph')
     return resource;
   }
 
-  var scalarCache = {}; // Need to return the same object every time to avoid digest hell.
+  const scalarCache = {}; // Need to return the same object every time to avoid digest hell.
 
-  var util = {
+  const util = {
     // This function is for code clarity, so we don't have a mysterious "true" argument.
     deepWatch: function(scope, expr, fun) {
       return scope.$watch(expr, fun, true);
@@ -180,7 +180,7 @@ angular.module('biggraph')
     // Json POST with simple error handling.
     post: function(url, params, options) {
       options = options || { reportErrors: true };
-      var req = $http.post(url, params);
+      let req = $http.post(url, params);
       if (options.reportErrors) {
         req = req.catch(function(failure) {
           util.ajaxError(failure);
@@ -196,7 +196,7 @@ angular.module('biggraph')
       if (typeof x !== 'number') { return x; }
       if (isNaN(x)) { return x; }
       /* eslint-disable no-constant-condition */
-      for (var i = 0; true; ++i) {
+      for (let i = 0; true; ++i) {
         if (x < 1000 || i === siSymbols.length - 1) {
           return x + siSymbols[i];
         }
@@ -315,7 +315,7 @@ angular.module('biggraph')
       fetchNotReady  // Send backend request if scalar computation is in progress on not started.
       ) {
 
-      var scalarValue = {
+      const scalarValue = {
         value: undefined,
         $abandon: function() {
           if (scalarValue.value && scalarValue.value.$abandon) {
@@ -325,7 +325,7 @@ angular.module('biggraph')
       };  // result to return
 
       // This function can be exposed to the UI as 'click here to retry'.
-      var retryFunction = function() {
+      const retryFunction = function() {
         fetchScalarAndConstructValue();
       };
 
@@ -378,7 +378,7 @@ angular.module('biggraph')
       }
       // Fetches a new value for the scalar.
       function fetchScalarAndConstructValue() {
-        var res = util.get('/ajax/scalarValue', {
+        const res = util.get('/ajax/scalarValue', {
           scalarId: scalar.id,
         });
         scalarValue.value = res;

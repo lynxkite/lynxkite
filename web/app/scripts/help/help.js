@@ -17,12 +17,12 @@ angular.module('biggraph').directive('helpId',
         }
         element.addClass('help');
         documentation('help').then(function(helpContent) {
-          var id = scope.helpId.toLowerCase();
+          const id = scope.helpId.toLowerCase();
           if (!id || isUserWorkflowId(id)) {
             element.empty();
             return;
           }
-          var content = helpContent.find('#' + id).first();
+          let content = helpContent.find('#' + id).first();
           if (content.length === 0 && !id.includes('-apply_to')) {
             /* eslint-disable no-console */
             console.warn('Could not find help ID', id);
@@ -41,8 +41,8 @@ angular.module('biggraph').directive('helpId',
             });
             // Collapse sections marked with ====.
             content.find('.exampleblock').each(function (index, exampleBlock) {
-              var exampleBlockElement = angular.element(exampleBlock);
-              var readMoreElement = angular.element('<a class="read-more">read more</a>');
+              const exampleBlockElement = angular.element(exampleBlock);
+              const readMoreElement = angular.element('<a class="read-more">read more</a>');
               readMoreElement.click(expander(readMoreElement, exampleBlockElement));
               exampleBlockElement.before(readMoreElement);
               exampleBlockElement.hide();
@@ -81,8 +81,8 @@ angular.module('biggraph')
       },
       templateUrl: 'scripts/help/help-popup.html',
       link: function(scope, element) {
-        var button = element.find('#help-button')[0];
-        var popup = element.find('#help-popup');
+        const button = element.find('#help-button')[0];
+        const popup = element.find('#help-popup');
         if (!scope.helpId && scope.fallbackText) {
           popup.append(scope.fallbackText);
         }
@@ -90,7 +90,7 @@ angular.module('biggraph')
           return !popup.text();
         };
         /* global Drop */
-        var drop = new Drop({
+        const drop = new Drop({
           target: button,
           content: popup[0],
           position: 'bottom center',

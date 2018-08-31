@@ -22,10 +22,10 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   }
 
   PopupModel.prototype.updateSize = function() {
-    var popupElement = this.element.find('.popup-content')[0];
+    const popupElement = this.element.find('.popup-content')[0];
     // Save width and height of the popup. Remove 'px' from the end.
     this.width = parseInt(popupElement.style.width.slice(0, -2));
-    var newHeight = parseInt(popupElement.style.height.slice(0, -2));
+    const newHeight = parseInt(popupElement.style.height.slice(0, -2));
     if (newHeight) {
       this.height = newHeight;
       // max-height limits the initial automatic sizing. We unset it so manual sizing is unlimited.
@@ -34,7 +34,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   };
 
   PopupModel.prototype.onMouseDown = function(event) {
-    var leftButton = event.buttons & 1;
+    const leftButton = event.buttons & 1;
     // Protractor omits button data from simulated mouse events.
     if (leftButton) {
       this.owner.startMovingPopup(this);
@@ -44,7 +44,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   };
 
   PopupModel.prototype.onMouseMove = function(event) {
-    var leftButton = event.buttons & 1;
+    const leftButton = event.buttons & 1;
     // Protractor omits button data from simulated mouse events.
     if (leftButton || environment.protractor) {
       // Only move the popup if we are in the 'moving mode' (i.e. movedPopup is defined).
@@ -56,12 +56,12 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   };
 
   PopupModel.prototype.isOpen = function() {
-    var that = this;
+    const that = this;
     return this.owner.popups.find(function(p) { return p.id === that.id; }) !== undefined;
   };
 
   PopupModel.prototype.close = function() {
-    var that = this;
+    const that = this;
     this.owner.popups = this.owner.popups.filter(function(p) { return p.id !== that.id; });
   };
 
@@ -80,7 +80,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   };
 
   PopupModel.prototype.bringToFront = function(event) {
-    var leftButton = event.buttons & 1;
+    const leftButton = event.buttons & 1;
     // Protractor omits button data from simulated mouse events.
     if (leftButton || environment.protractor) {
       this.close();
@@ -99,14 +99,14 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
 
   // Computes the triangle for the popup trail as a string.
   PopupModel.prototype.trail = function(pageToLogical, logicalToPage, workspace) {
-    // "L" variables are in logical coordinates, P variables are in page coordinates.
-    var anchor = this.contentObject(workspace);
+    // "L" constiables are in logical coordinates, P constiables are in page coordinates.
+    const anchor = this.contentObject(workspace);
     if (!anchor) { return; }
-    var anchorL = {
+    const anchorL = {
       x: anchor.cx(),
       y: anchor.cy() };
-    var anchorP = logicalToPage(anchorL);
-    var attachP = {
+    const anchorP = logicalToPage(anchorL);
+    const attachP = {
       x: this.x + this.width / 2,
       y: this.y + 20 };
     // We want an isosceles triangle with a fixed width at the attachment point. Like this:
@@ -118,23 +118,23 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     //      \ /
     //       + Anchor
     //
-    var HALF_WIDTH = 10;
-    var dx = attachP.x - anchorP.x;
-    var dy = attachP.y - anchorP.y;
-    var d = Math.sqrt(dx * dx + dy * dy);
+    const HALF_WIDTH = 10;
+    const dx = attachP.x - anchorP.x;
+    const dy = attachP.y - anchorP.y;
+    const d = Math.sqrt(dx * dx + dy * dy);
     // Normalized direction.
     if (d === 0) { return; }
-    var nx = dx / d;
-    var ny = dy / d;
+    const nx = dx / d;
+    const ny = dy / d;
     // Orthogonal points A and B.
-    var aP = {
+    const aP = {
       x: attachP.x + ny * HALF_WIDTH,
       y: attachP.y - nx * HALF_WIDTH };
-    var aL = pageToLogical(aP);
-    var bP = {
+    const aL = pageToLogical(aP);
+    const bP = {
       x: attachP.x - ny * HALF_WIDTH,
       y: attachP.y + nx * HALF_WIDTH };
-    var bL = pageToLogical(bP);
+    const bL = pageToLogical(bP);
     return anchorL.x + ',' + anchorL.y + ' ' + aL.x + ',' + aL.y + ' ' + bL.x + ',' + bL.y;
   };
 

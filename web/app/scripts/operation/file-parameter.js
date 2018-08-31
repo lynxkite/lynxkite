@@ -14,7 +14,7 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
     },
     templateUrl: 'scripts/operation/file-parameter.html',
     link: function(scope, element) {
-      var input = angular.element(element).find('input[type="file"]');
+      const input = angular.element(element).find('input[type="file"]');
       scope.dialog = function() {
         $timeout(function() { input.click(); });
       };
@@ -22,13 +22,13 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
       scope.progress = 0;
       input.bind('change', function() {
         scope.$apply(function() {
-          var file = input[0].files[0];
+          const file = input[0].files[0];
           input.val(null);  // Unset the selection, so the same file can be picked again.
           scope.fileUploadCount = scope.fileUploadCount || 0;
           scope.fileUploadCount += 1;
           scope.uploading = true;
           scope.progress = 0;
-          var xhr = new XMLHttpRequest();
+          const xhr = new XMLHttpRequest();
           xhr.open('POST', '/ajax/upload');
           xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {  // DONE
@@ -47,12 +47,12 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
           xhr.upload.addEventListener('progress', function(e) {
             if (e.lengthComputable) {
               scope.$apply(function() {
-                var percentage = Math.round((e.loaded * 100) / e.total);
+                const percentage = Math.round((e.loaded * 100) / e.total);
                 scope.progress = percentage;
               });
             }
           });
-          var fd = new FormData();
+          const fd = new FormData();
           fd.append('file', file);
           xhr.send(fd);
         });

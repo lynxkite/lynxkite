@@ -2,8 +2,8 @@
 
 
 module.exports = function(fw) {
-  var lib = require('../test-lib.js');
-  var path = require('path');
+  const lib = require('../test-lib.js');
+  const path = require('path');
 
   fw.transitionTest(
     'empty test-example workspace',
@@ -13,8 +13,8 @@ module.exports = function(fw) {
         id: 'ib0',
         name: 'Import CSV',
         x: 100, y: 100 });
-      var boxEditor = lib.workspace.openBoxEditor('ib0');
-      var importPath = path.resolve(__dirname, 'data/regression_data.csv');
+      const boxEditor = lib.workspace.openBoxEditor('ib0');
+      const importPath = path.resolve(__dirname, 'data/regression_data.csv');
       boxEditor.populateOperation({
         'filename': importPath
       });
@@ -27,7 +27,7 @@ module.exports = function(fw) {
       lib.workspace.connectBoxes('ib0', 'table', 'utv', 'table');
     },
     function() {
-      var state = lib.workspace.openStateView('utv', 'project');
+      const state = lib.workspace.openStateView('utv', 'project');
       expect(state.left.vertexCount()).toEqual(5);
       lib.workspace.closeLastPopup();
     }
@@ -57,11 +57,11 @@ module.exports = function(fw) {
         'features': ['yob']
       });
       lib.workspace.closeLastPopup();
-      var state = lib.workspace.openStateView('train0', 'project');
+      const state = lib.workspace.openStateView('train0', 'project');
       expect(state.left.scalarValue('age_from_yob').getText())
        .toBe('Linear regression model predicting age');
-      var model = state.left.scalar('age_from_yob');
-      var p = model.popup();
+      const model = state.left.scalar('age_from_yob');
+      const p = model.popup();
       expect(p.$('#model-method').getText()).toBe('Linear regression');
       expect(p.$('#model-label').getText()).toBe('age');
       expect(p.$('#model-features').getText()).toBe('yob');
@@ -97,8 +97,8 @@ module.exports = function(fw) {
         'expr': 'age_prediction.toInt.toString'
       });
       lib.workspace.closeLastPopup();
-      var ap = lib.workspace.openStateView('derive0', 'project');
-      var attr = ap.left.vertexAttribute('age_prediction_string');
+      const ap = lib.workspace.openStateView('derive0', 'project');
+      const attr = ap.left.vertexAttribute('age_prediction_string');
       expect(attr.getHistogramValues()).toEqual([
         { title: '25', size: 100, value: 1 },
         { title: '35', size: 100, value: 1 },

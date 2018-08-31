@@ -2,7 +2,7 @@
 'use strict';
 
 angular.module('biggraph').factory('documentation', function($http) {
-  var cache = {};
+  const cache = {};
   function documentation(name) {
     if (cache[name] === undefined) {
       cache[name] = load(name);
@@ -11,10 +11,10 @@ angular.module('biggraph').factory('documentation', function($http) {
   }
 
   function load(name) {
-    var html = $http.get('/' + name + '.html', { cache: true });
-    var dom = html.then(function success(response) {
+    const html = $http.get('/' + name + '.html', { cache: true });
+    const dom = html.then(function success(response) {
       /* global $ */
-      var dom = $($.parseHTML(
+      const dom = $($.parseHTML(
             '<div id="help-container"><div id="whole-help">' + response.data + '</div></div>'));
 
       // Move TOC outside and spruce it up.
@@ -25,19 +25,19 @@ angular.module('biggraph').factory('documentation', function($http) {
         dom.prepend(div);
       });
       // Move heading IDs to sectionbody divs.
-      var sectSelector = 'div.sect1,div.sect2,div.sect3,div.sect4,div.sect5,div.sect6';
+      const sectSelector = 'div.sect1,div.sect2,div.sect3,div.sect4,div.sect5,div.sect6';
       dom.find(sectSelector).each(function(i, div) {
         div = angular.element(div);
-        var heading = div.children('[id]').first();
+        const heading = div.children('[id]').first();
         div.attr('id', heading.attr('id'));
         heading.attr('id', '');
       });
       // Move anchor IDs inside <dt> to the next <dd>.
       dom.find('dt > a[id]').each(function(i, a) {
         a = angular.element(a);
-        var dd = a.parent().next('dd');
-        var section = a.closest(sectSelector);
-        var id = section.attr('id') + '-' + a.attr('id');
+        const dd = a.parent().next('dd');
+        const section = a.closest(sectSelector);
+        const id = section.attr('id') + '-' + a.attr('id');
         dd.attr('id', id);
         a.attr('id', '');
       });
@@ -45,7 +45,7 @@ angular.module('biggraph').factory('documentation', function($http) {
       if (location.pathname.indexOf('/pdf-') !== 0) {
         dom.find('a[href]').each(function(i, a) {
           a = angular.element(a);
-          var href = a.attr('href');
+          const href = a.attr('href');
           if (href[0] === '#') {
             a.attr('href', '#/' + name + href);
           }

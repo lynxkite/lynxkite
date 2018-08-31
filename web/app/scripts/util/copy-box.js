@@ -8,7 +8,7 @@ angular.module('biggraph').directive('copyBox', function(util) {
     templateUrl: 'scripts/util/copy-box.html',
     link: function(scope, element) {
       /* global Clipboard */
-      var client = new Clipboard(element.find('.clicky')[0]);
+      const client = new Clipboard(element.find('.clicky')[0]);
       client.on('error', function(event) {
         /* eslint-disable no-console */
         console.log('Copy to clipboard is disabled:', event);

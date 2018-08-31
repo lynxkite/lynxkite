@@ -15,18 +15,18 @@ angular.module('biggraph')
       link: function(scope) {
         scope.instruments = [];
         scope.$watch('plug.stateId', update);
-        var lastJson;
+        let lastJson;
 
         function update() {
           if (scope.instruments.length > 0) {
-            var query = {
+            const query = {
               workspace: scope.workspace.ref(),
               inputStateId: scope.plug.stateId,
               instruments: scope.instruments };
-            var json = JSON.stringify(query);
+            const json = JSON.stringify(query);
             if (json !== lastJson) {
               scope.result = util.get('/ajax/getInstrumentedState', query);
-              var currentRequest = scope.result;
+              const currentRequest = scope.result;
               currentRequest.then(function(res) {
                 if (scope.result === currentRequest) { // It is not an abandoned request.
                   scope.lastState = res.states[res.states.length - 1];
@@ -63,7 +63,7 @@ angular.module('biggraph')
         };
 
         scope.createSnapshot = function(stateId, saveAsName, success, error) {
-          var postOpts = { reportErrors: false };
+          const postOpts = { reportErrors: false };
           util.post('/ajax/createSnapshot', {
             name: saveAsName,
             id: stateId,

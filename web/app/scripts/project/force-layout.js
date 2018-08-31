@@ -2,8 +2,8 @@
 'use strict';
 
 /* eslint-disable no-unused-vars */
-var FORCE_LAYOUT = (function() {
-  var lib = {};
+const FORCE_LAYOUT = (function() {
+  const lib = {};
   // Options:
   //   attraction:      force/distance ratio along edges
   //   repulsion:       force absolute value between all vertices
@@ -17,14 +17,14 @@ var FORCE_LAYOUT = (function() {
     this.opts = opts;
   };
   lib.Engine.prototype.step = function(vertices) {
-    var changed = this.calculate(vertices);
+    const changed = this.calculate(vertices);
     this.apply(vertices);
     return changed;
   };
   lib.Engine.prototype.calculate = function(vertices) {
-    var a, b, dx, dy, i, j, v;
-    var maxDist = 0;  // Max. distance from center along one coordinate.
-    var edgeCount = (vertices.edges || []).length;
+    let a, b, dx, dy, i, j, v;
+    let maxDist = 0;  // Max. distance from center along one coordinate.
+    const edgeCount = (vertices.edges || []).length;
     if (vertices.vs.length <= 1) {
       if (vertices.vs.length === 1 && !vertices.vs[0].positioned) {
         vertices.vs[0].x = 0;
@@ -49,7 +49,7 @@ var FORCE_LAYOUT = (function() {
     }
     if (vertices.edges !== undefined) {
       for (i = 0; i < vertices.edges.length; ++i) {
-        var e = vertices.edges[i];
+        const e = vertices.edges[i];
         if (e.size === 0) { continue; }
         a = e.src;
         b = e.dst;
@@ -77,10 +77,10 @@ var FORCE_LAYOUT = (function() {
           dx = Math.random();
           dy = Math.random();
         }
-        var dxp = Math.abs(Math.pow(dx, this.opts.repulsionPower));
-        var dyp = Math.abs(Math.pow(dy, this.opts.repulsionPower));
-        var dp = Math.max(1, dxp, dyp);
-        var repulsion = this.opts.repulsion;
+        const dxp = Math.abs(Math.pow(dx, this.opts.repulsionPower));
+        const dyp = Math.abs(Math.pow(dy, this.opts.repulsionPower));
+        const dp = Math.max(1, dxp, dyp);
+        let repulsion = this.opts.repulsion;
         if (a.text !== undefined && b.text !== undefined && a.text === b.text) {
           // Apply reduced repulsion between vertices that have the same label.
           // This causes the vertices to cluster a bit by label.
@@ -95,7 +95,7 @@ var FORCE_LAYOUT = (function() {
         b.y -= repulsion * dy / dp / b.forceMass;
       }
     }
-    var totalChange = 0;
+    let totalChange = 0;
     for (i = 0; i < vertices.vs.length; ++i) {
       v = vertices.vs[i];
       if (v.held || v.frozen || v.positioned) {
@@ -103,7 +103,7 @@ var FORCE_LAYOUT = (function() {
         v.x = v.forceOX;
         v.y = v.forceOY;
       }
-      var oox = v.forceOX, ooy = v.forceOY;
+      const oox = v.forceOX, ooy = v.forceOY;
       v.forceOX = v.x; v.forceOY = v.y;
       v.x += (1 - this.opts.drag) * (v.forceOX - oox);
       v.y += (1 - this.opts.drag) * (v.forceOY - ooy);
@@ -113,15 +113,15 @@ var FORCE_LAYOUT = (function() {
   };
 
   lib.Engine.prototype.apply = function(vertices) {
-    for (var i = 0; i < vertices.vs.length; ++i) {
-      var v = vertices.vs[i];
+    for (let i = 0; i < vertices.vs.length; ++i) {
+      const v = vertices.vs[i];
       v.moveTo(v.x, v.y);
     }
   };
 
   // Runs the simulation until it stabilizes or the timeout is hit.
   lib.Engine.prototype.initForSeconds = function(vertices, seconds) {
-    var t0 = Date.now();
+    const t0 = Date.now();
     /* eslint-disable no-empty */
     while (this.calculate(vertices) && Date.now() - t0 <= seconds * 1000) {}
     this.apply(vertices);

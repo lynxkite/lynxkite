@@ -1,6 +1,6 @@
 'use strict';
 
-var lib = require('../test-lib.js');
+const lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   fw.transitionTest(
@@ -16,12 +16,12 @@ module.exports = function(fw) {
         params: { name: 'page_rank_incoming', direction: 'incoming edges', iterations: '1' } });
     },
     function() {
-      var state = lib.workspace.openStateView('pr2', 'project');
+      const state = lib.workspace.openStateView('pr2', 'project');
       expect(
         state.left.vertexAttribute('page_rank_incoming').getHistogramValues()).not.toEqual(
         state.left.vertexAttribute('page_rank_default').getHistogramValues());
       state.close();
-      var boxEditor = lib.workspace.openBoxEditor('pr1');
+      let boxEditor = lib.workspace.openBoxEditor('pr1');
       boxEditor.expectSelectParameter('direction', 'string:outgoing edges');
       boxEditor.close();
       boxEditor = lib.workspace.openBoxEditor('pr2');
@@ -35,7 +35,7 @@ module.exports = function(fw) {
     function() {
       lib.workspace.editBox('pr1', {direction: 'all edges'});  // change direction
       lib.workspace.editBox('pr2', {direction: 'all edges'});  // change direction
-      var boxEditor = lib.workspace.openBoxEditor('pr1');
+      let boxEditor = lib.workspace.openBoxEditor('pr1');
       boxEditor.expectSelectParameter('direction', 'string:all edges');
       boxEditor.close();
       boxEditor = lib.workspace.openBoxEditor('pr2');

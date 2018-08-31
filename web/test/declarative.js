@@ -2,12 +2,12 @@
 /* eslint-disable no-console */
 
 function UIDescription() {
-  var states = {};
-  var statePreservingTests = {};
-  var soloMode = false;
-  var verboseMode = true;
+  const states = {};
+  const statePreservingTests = {};
+  let soloMode = false;
+  let verboseMode = true;
 
-  var mocks = require('./mocks.js');
+  const mocks = require('./mocks.js');
   mocks.addTo(browser);
   browser.driver.manage().window().setSize(1100, 800);
 
@@ -24,7 +24,7 @@ function UIDescription() {
       if (solo) {
         soloMode = true;
       }
-      var testingDone = false;
+      let testingDone = false;
 
       function runStatePreservingTest(currentTest) {
         if (soloMode && !currentTest.solo) {
@@ -43,8 +43,8 @@ function UIDescription() {
         mustBeReached: function() {
           if (!soloMode) { return true; }
           if (solo) { return true; }
-          var tests = statePreservingTests[stateName] || [];
-          for (var j = 0; j < tests.length; ++j) {
+          const tests = statePreservingTests[stateName] || [];
+          for (let j = 0; j < tests.length; ++j) {
             if (tests[j].solo) { return true; }
           }
           return false;
@@ -60,8 +60,8 @@ function UIDescription() {
               checks();
             });
             if (!testingDone) {
-              var tests = statePreservingTests[stateName] || [];
-              for (var i = 0; i < tests.length; i++) {
+              const tests = statePreservingTests[stateName] || [];
+              for (let i = 0; i < tests.length; i++) {
                 runStatePreservingTest(tests[i]);
               }
               testingDone = true;
@@ -87,15 +87,15 @@ function UIDescription() {
     },
 
     runAll: function() {
-      var stateNames = Object.keys(states);
+      const stateNames = Object.keys(states);
       // We will enumerate all states we want to visit here.
-      var statesToReach = [];
+      const statesToReach = [];
       // We put here all states that we visit inevitably, that is parents of states in
       // statesToReach.
-      var statesAutomaticallyReached = {};
+      const statesAutomaticallyReached = {};
       function markParentsAutomaticallyReached(stateName) {
-        var state = states[stateName];
-        var parent = state.parent;
+        const state = states[stateName];
+        const parent = state.parent;
         if (parent !== undefined) {
           if (!statesAutomaticallyReached[parent]) {
             statesAutomaticallyReached[parent] = true;
@@ -104,10 +104,10 @@ function UIDescription() {
         }
       }
 
-      var i, stateName;
+      let i, stateName;
       for (i = 0; i < stateNames.length; i++) {
         stateName = stateNames[i];
-        var state = states[stateName];
+        const state = states[stateName];
         if (state.mustBeReached()) {
           statesToReach.push(stateName);
           markParentsAutomaticallyReached(stateName);
@@ -124,16 +124,16 @@ function UIDescription() {
     cleanup: function() {
       describe('Cleanup', function() {
         it('temporary files', function() {
-          var lib = require('./test-lib.js');
-          var fs = require('fs');
-          var pattern = lib.theRandomPattern;
+          const lib = require('./test-lib.js');
+          const fs = require('fs');
+          const pattern = lib.theRandomPattern;
 
-          var downloads = lib.protractorDownloads;
-          var files = fs.readdirSync(downloads);
-          for (var i = 0; i < files.length; i++) {
-            var f = files[i];
+          const downloads = lib.protractorDownloads;
+          const files = fs.readdirSync(downloads);
+          for (let i = 0; i < files.length; i++) {
+            const f = files[i];
             if (f.indexOf(pattern) > -1) {
-              var full = downloads + '/' + f;
+              const full = downloads + '/' + f;
               console.log('Deleting: ' + full);
               fs.unlinkSync(full);
             }
@@ -150,33 +150,33 @@ function UIDescription() {
   };
 }
 
-var fs = require('fs');
+const fs = require('fs');
 function testsFrom(testsDir) {
-  var fw = new UIDescription();
-  var testFiles = fs.readdirSync(__dirname + '/' + testsDir);
-  for (var i = 0; i < testFiles.length; ++i) {
+  const fw = new UIDescription();
+  const testFiles = fs.readdirSync(__dirname + '/' + testsDir);
+  for (let i = 0; i < testFiles.length; ++i) {
     if (testFiles[i].slice(-3) === '.js') {
       require('./' + testsDir + '/' + testFiles[i])(fw);
     }
   }
   return fw;
 }
-var authFw = testsFrom('auth-tests');
-var authlessFw = testsFrom('tests');
+const authFw = testsFrom('auth-tests');
+const authlessFw = testsFrom('tests');
 // Set 'solo' modes.
 // Authentication tests are unaffected by authless 'solo' labels, because
 // all the authless tests depend on the login performed by the auth tests.
 authFw.setSolo(authFw.isSolo());
 authlessFw.setSolo(authFw.isSolo() || authlessFw.isSolo());
 
-var startDate = (new Date()).toString();
-var screenshots = [];
-var screenshotDir = '/tmp/';
-var userVisiblePrefix = screenshotDir;
+const startDate = (new Date()).toString();
+const screenshots = [];
+let screenshotDir = '/tmp/';
+let userVisiblePrefix = screenshotDir;
 try {
-  var userContentDir = process.env.HOME + '/userContent';
+  const userContentDir = process.env.HOME + '/userContent';
   // This throws an exception if the fs entry does not exist at all.
-  var stats = fs.lstatSync(userContentDir);
+  const stats = fs.lstatSync(userContentDir);
   if (stats.isDirectory()) {
     screenshotDir = userContentDir + '/';
     userVisiblePrefix = 'http://jenkins/userContent/';
@@ -186,19 +186,19 @@ try {
 }
 
 // Makes a screenshot if an expectation fails.
-var originalAddExpectationResult = jasmine.Spec.prototype.addExpectationResult;
+const originalAddExpectationResult = jasmine.Spec.prototype.addExpectationResult;
 jasmine.Spec.prototype.addExpectationResult = function() {
   if (!arguments[0]) {
-    var that = this;
+    const that = this;
     browser.takeScreenshot().then(function(png) {
-      var failureIdx = that.failedExpectations || 0;
+      const failureIdx = that.failedExpectations || 0;
       that.failedExpectations = failureIdx + 1;
-      var filename = (
+      const filename = (
         ('protractor-' + startDate + '-' + that.getFullName() + '-' + failureIdx + '.png')
         .replace(/[^a-z0-9.-]/gi, '_')
         .toLowerCase());
       screenshots.push(userVisiblePrefix + filename);
-      var stream = fs.createWriteStream(screenshotDir + filename);
+      const stream = fs.createWriteStream(screenshotDir + filename);
       stream.write(new Buffer(png, 'base64'));
       stream.end();
     });
@@ -220,7 +220,7 @@ describe('The test framework ', function() {
   it('now prints all screenshots', function() {
     if (screenshots.length > 0) {
       console.log('\nError screenshots:');
-      for (var i = 0; i < screenshots.length; ++i) {
+      for (let i = 0; i < screenshots.length; ++i) {
         console.log(screenshots[i]);
       }
     }

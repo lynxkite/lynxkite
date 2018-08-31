@@ -1,6 +1,6 @@
 'use strict';
 
-var lib = require('../test-lib.js');
+const lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   fw.transitionTest(
@@ -16,9 +16,9 @@ module.exports = function(fw) {
         id: 'agg', name: 'Aggregate on neighbors',
         params: {'aggregate_x': ['average', 'count']},
         x: 100, y: 200, after: 'attr'});
-      var attr = lib.workspace.openBoxEditor('attr');
-      var agg = lib.workspace.openBoxEditor('agg');
-      var output = lib.workspace.getOutputPlug('agg');
+      const attr = lib.workspace.openBoxEditor('attr');
+      const agg = lib.workspace.openBoxEditor('agg');
+      const output = lib.workspace.getOutputPlug('agg');
       // Original setup.
       lib.expectElement(agg.operationParameter('aggregate_x'));
       lib.expectNotElement(agg.operationParameter('aggregate_y'));

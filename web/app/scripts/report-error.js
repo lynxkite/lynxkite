@@ -5,9 +5,9 @@ angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $modal
   $scope.message = alert.message || '';
   $scope.details = alert.details ? JSON.stringify(alert.details, null, '  ') : undefined;
 
-  var support = 'x+170265586669389@mail.asana.com'; // "Support requests" project in Asana.
-  var time = alert.time || (new Date().toString());
-  var body = $scope.message;
+  const support = 'x+170265586669389@mail.asana.com'; // "Support requests" project in Asana.
+  const time = alert.time || (new Date().toString());
+  let body = $scope.message;
   if ($scope.details) {
     body += '\n\nExtra info:';
     body += '\n\n' + $scope.details;

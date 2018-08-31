@@ -1,10 +1,10 @@
 'use strict';
 
-var lib = require('../test-lib.js');
+const lib = require('../test-lib.js');
 
 module.exports = function(fw) {
-  var undo = $('#undo');
-  var redo = $('#redo');
+  const undo = $('#undo');
+  const redo = $('#redo');
   fw.transitionTest(
     'delete boxes',
     'delete undone',

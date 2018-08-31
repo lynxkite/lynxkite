@@ -13,7 +13,7 @@ angular.module('biggraph').directive('renderer', function($timeout) {
       // Wait for layout.
       $timeout(function() {
         // Create the canvas.
-        var three = THREE.Bootstrap({
+        const three = THREE.Bootstrap({
           element: element[0],
           plugins: ['core', 'controls', 'cursor'],
           controls: {
@@ -48,13 +48,13 @@ angular.module('biggraph').directive('renderer', function($timeout) {
           three.scene = new THREE.Scene();
           three.camera.position.set(10, 5, 120);
 
-          var hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
+          const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
           hemiLight.position.set(0, 500, 0);
           three.scene.add(hemiLight);
-          var dirLight = new THREE.DirectionalLight(0xffffff, 1);
+          const dirLight = new THREE.DirectionalLight(0xffffff, 1);
           dirLight.position.set(-1, 1.75, 1);
           three.scene.add(dirLight);
-          var dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+          const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
           dirLight2.position.set(-2, -1.75, -1);
           three.scene.add(dirLight2);
         }
@@ -63,26 +63,26 @@ angular.module('biggraph').directive('renderer', function($timeout) {
         function plot(edges, layout3D) {
           clear();
           // Geometry generation. 8 points and 12 triangles are generated for each edge.
-          var n = edges.length;
+          const n = edges.length;
           /* globals Float32Array, Uint32Array */
           // Position of this point.
-          var ps = new Float32Array(n * 8 * 3 * 3);
+          const ps = new Float32Array(n * 8 * 3 * 3);
           // Index array.
-          var is = new Uint32Array(n * 12 * 3);
-          for (var i = 0; i < n; ++i) {
+          const is = new Uint32Array(n * 12 * 3);
+          for (let i = 0; i < n; ++i) {
             if (edges[i].a === edges[i].b) { continue; }  // TODO: Display loop edges?
-            var src = layout3D[edges[i].a];
-            var dst = layout3D[edges[i].b];
+            const src = layout3D[edges[i].a];
+            const dst = layout3D[edges[i].b];
             // The more edges we have, the thinner we make them.
-            var w = Math.min(0.4, edges[i].size * 100 / n);
+            const w = Math.min(0.4, edges[i].size * 100 / n);
             addRod(ps, is, i, src, dst, w);
           }
 
-          var geom = new THREE.BufferGeometry();
+          const geom = new THREE.BufferGeometry();
           geom.addAttribute('index', new THREE.BufferAttribute(is, 1));
           geom.addAttribute('position', new THREE.BufferAttribute(ps, 3));
           geom.computeVertexNormals();
-          var mat = new THREE.MeshPhongMaterial({
+          const mat = new THREE.MeshPhongMaterial({
             color: 0x807050,
             specular: 0xffffff,
             shading: THREE.FlatShading,
@@ -91,17 +91,17 @@ angular.module('biggraph').directive('renderer', function($timeout) {
         }
 
         function addRod(ps, is, i, a, b, w) {
-          var j = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
-          var ortho = orthogonals(j);
-          var h = ortho[0], v = ortho[1];
+          const j = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
+          const ortho = orthogonals(j);
+          const h = ortho[0], v = ortho[1];
           h.x *= w; h.y *= w; h.z *= w;
           v.x *= w; v.y *= w; v.z *= w;
-          var pp = i * 8 * 3;
+          const pp = i * 8 * 3;
           // Normals are stored per-vertex. Because each vertex is used in 3 faces, they would need
           // to have 3 different normals. So we create 3 copies of each vertex, and use different
           // copies for each face.
-          for (var d = 0; d < 3; ++d) {
-            var r = pp + 8 * d;
+          for (let d = 0; d < 3; ++d) {
+            const r = pp + 8 * d;
             addPoint(ps, r + 0, { x: a.x + h.x, y: a.y + h.y, z: a.z + h.z });
             addPoint(ps, r + 1, { x: a.x - h.x, y: a.y - h.y, z: a.z - h.z });
             addPoint(ps, r + 2, { x: a.x + v.x, y: a.y + v.y, z: a.z + v.z });
@@ -112,7 +112,7 @@ angular.module('biggraph').directive('renderer', function($timeout) {
             addPoint(ps, r + 7, { x: b.x - v.x, y: b.y - v.y, z: b.z - v.z });
           }
           // r1, r2, r3 are the 3 copies of the vertices. Each index is used once from each copy.
-          var ii = i * 6, r1 = pp, r2 = pp + 8, r3 = pp + 16;
+          const ii = i * 6, r1 = pp, r2 = pp + 8, r3 = pp + 16;
           addQuad(is, ii + 0, r1 + 0, r1 + 3, r1 + 1, r1 + 2);
           addQuad(is, ii + 1, r2 + 0, r2 + 2, r1 + 6, r1 + 4);
           addQuad(is, ii + 2, r3 + 0, r2 + 4, r1 + 7, r2 + 3);
@@ -122,8 +122,8 @@ angular.module('biggraph').directive('renderer', function($timeout) {
         }
 
         function orthogonals(j) {
-          var h = { x: j.y * j.z, y: -0.5 * j.x * j.z, z: -0.5 * j.x * j.y };
-          var v = {
+          const h = { x: j.y * j.z, y: -0.5 * j.x * j.z, z: -0.5 * j.x * j.y };
+          const v = {
             x: j.y * h.z - j.z * h.y,
             y: j.z * h.x - j.x * h.z,
             z: j.x * h.y - j.y * h.x };
@@ -131,7 +131,7 @@ angular.module('biggraph').directive('renderer', function($timeout) {
         }
 
         function normalized(j) {
-          var d = Math.sqrt(j.x * j.x + j.y * j.y + j.z * j.z);
+          const d = Math.sqrt(j.x * j.x + j.y * j.y + j.z * j.z);
           return { x: j.x / d, y: j.y / d, z: j.z / d };
         }
 

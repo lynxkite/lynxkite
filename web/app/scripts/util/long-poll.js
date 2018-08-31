@@ -5,7 +5,7 @@
 
 angular.module('biggraph')
 .service('longPoll', function($timeout, util, $rootScope) {
-  var that = this;
+  const that = this;
 
   // Contents of the last update.
   that.lastUpdate = {
@@ -27,11 +27,11 @@ angular.module('biggraph')
   that._stateIds = [];
   that._interrupt = function() {}; // Sends a new request immedately.
   function load() {
-    var req = util.nocache('/ajax/long-poll', {
+    const req = util.nocache('/ajax/long-poll', {
       syncedUntil: that.lastUpdate.sparkStatus.timestamp,
       stateIds: that._stateIds,
     });
-    var interrupt = new Promise(function(resolve) {
+    const interrupt = new Promise(function(resolve) {
       that._interrupt = function() {
         req.$abandon();
         resolve(that.lastUpdate);

@@ -2,9 +2,9 @@
 
 
 module.exports = function(fw) {
-  var lib = require('../test-lib.js');
-  var path = require('path');
-  var fs = require('fs');
+  const lib = require('../test-lib.js');
+  const path = require('path');
+  const fs = require('fs');
 
   fw.transitionTest(
     'empty test-example workspace',
@@ -14,8 +14,8 @@ module.exports = function(fw) {
         id: 'ib0',
         name: 'Import CSV',
         x: 100, y: 100 });
-      var boxEditor = lib.workspace.openBoxEditor('ib0');
-      var importPath = path.resolve(__dirname, 'data/plot_data.csv');
+      const boxEditor = lib.workspace.openBoxEditor('ib0');
+      const importPath = path.resolve(__dirname, 'data/plot_data.csv');
       boxEditor.populateOperation({
         'filename': importPath,
         'columns': 'product,cnt'
@@ -36,14 +36,14 @@ module.exports = function(fw) {
         name: 'Custom plot',
         x: 200, y: 200 });
       lib.workspace.connectBoxes('ib0', 'table', 'plot1', 'table');
-      var plotCode = fs.readFileSync(__dirname + '/data/plot_code.scala', 'utf8');
-      var boxEditor = lib.workspace.openBoxEditor('plot1');
+      const plotCode = fs.readFileSync(__dirname + '/data/plot_code.scala', 'utf8');
+      const boxEditor = lib.workspace.openBoxEditor('plot1');
       boxEditor.populateOperation({
         'plot_code': plotCode,
       });
       boxEditor.close();
-      var plotState = lib.workspace.openStateView('plot1', 'plot');
-      var plot = plotState.plot;
+      const plotState = lib.workspace.openStateView('plot1', 'plot');
+      const plot = plotState.plot;
       plot.expectBarHeightsToBe(['97', '191', '149', '316']);
     },
     function() {
@@ -51,4 +51,3 @@ module.exports = function(fw) {
   );
 
 };
-

@@ -1,6 +1,6 @@
 'use strict';
 
-var lib = require('../test-lib.js');
+const lib = require('../test-lib.js');
 
 function tableIsGood(t) {
   t.expect(
@@ -18,7 +18,7 @@ module.exports = function(fw) {
     'visualize with instrument',
     function() {
       lib.addConcurMatcher();
-      var popup = lib.workspace.openStateView('eg0', 'project');
+      const popup = lib.workspace.openStateView('eg0', 'project');
       popup.setInstrument(0, 'visualize', {});
       popup.left.vertexAttribute('name').visualizeAs('label');
       popup.visualization.graphData().then(function(graph) {
@@ -35,7 +35,7 @@ module.exports = function(fw) {
     'test-example workspace with example graph',
     'sql and plot with instrument',
     function() {
-      var popup = lib.workspace.openStateView('eg0', 'project');
+      const popup = lib.workspace.openStateView('eg0', 'project');
       popup.setInstrument(0, 'sql');
       tableIsGood(popup.table);
       popup.setInstrument(1, 'sql', {

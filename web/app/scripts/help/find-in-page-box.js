@@ -9,9 +9,9 @@ angular.module('biggraph').directive('findInPageBox', function() {
       /* globals document, $ */
       // The position of the found result which is focused.
       // (Orange color, scrolled into view.)
-      var focusedResultPos = 0;
+      let focusedResultPos = 0;
       // Number of results found.
-      var numMatches = 0;
+      let numMatches = 0;
 
       // Gets the list of searchable text nodes from the document.
       function getTextNodes(node, list) {
@@ -24,7 +24,7 @@ angular.module('biggraph').directive('findInPageBox', function() {
           node.tagName !== 'find-in-page-box') {
           // Take only element nodes that have children.
           // Ignore script node, style nodes and search box.
-          for (var i = 0; i < node.childNodes.length; i++) {
+          for (let i = 0; i < node.childNodes.length; i++) {
             getTextNodes(node.childNodes[i], list);
           }
         }
@@ -44,11 +44,11 @@ angular.module('biggraph').directive('findInPageBox', function() {
       function getMatchPositions(txt, pattern) {
         pattern = normalizeString(pattern);
         txt = normalizeString(txt);
-        var startPos = 0;
-        var list = [];
+        let startPos = 0;
+        const list = [];
         /* eslint-disable no-constant-condition */
         while (true) {
-          var pos = txt.indexOf(pattern, startPos);
+          const pos = txt.indexOf(pattern, startPos);
           if (pos < 0) {
             break;
           }
@@ -59,10 +59,10 @@ angular.module('biggraph').directive('findInPageBox', function() {
       }
 
       function wrapTextNodeInHighlightElem(node, selectionId) {
-        var highlightElem = document.createElement('span');
+        const highlightElem = document.createElement('span');
         highlightElem.className =
           'find-highlight find-highlight-' + selectionId;
-        var nodeClone = node.cloneNode(true);
+        const nodeClone = node.cloneNode(true);
         highlightElem.appendChild(nodeClone);
         node.parentNode.replaceChild(highlightElem, node);
       }
@@ -74,12 +74,12 @@ angular.module('biggraph').directive('findInPageBox', function() {
       function highlightSection(node, start, length, selectionId) {
         // We break the text of node into 3 parts:
         // before selection, selection, after selection
-        var part23 = node.splitText(start);
+        const part23 = node.splitText(start);
         // At this point it's true that:
         //   node === beforeSelection
         //   part23 === selection + afterSelection
-        var part3 = part23.splitText(length);
-        var part2 = part23;
+        const part3 = part23.splitText(length);
+        const part2 = part23;
         // At this point it's true that:
         //   part2 === selection
         //   part3 === afterSelection
@@ -93,26 +93,26 @@ angular.module('biggraph').directive('findInPageBox', function() {
       // node.
       function higlightMatches(txtNodes, matchList, patternLength) {
         // Position at the text node at the beginning of the processed node.
-        var pos = 0;
+        let pos = 0;
         // Index to matchList.
-        var matchPos = 0;
+        let matchPos = 0;
         // If a matching pattern has started at the end of the previous
         // node, then this stores the number of remaining characters.
         // Zero otherwise.
-        var partialMatchRemaining = 0;
+        let partialMatchRemaining = 0;
 
-        for (var i = 0; i < txtNodes.length; ++i) {
-          var node = txtNodes[i];
+        for (let i = 0; i < txtNodes.length; ++i) {
+          let node = txtNodes[i];
           // If the current match started in the previous node:
           if (partialMatchRemaining > 0) {
-            var takeLen1 = Math.min(partialMatchRemaining, node.length);
+            const takeLen1 = Math.min(partialMatchRemaining, node.length);
             node = highlightSection(node, 0, takeLen1, matchPos - 1);
             partialMatchRemaining = partialMatchRemaining - takeLen1;
           }
           // Process matches in the current node:
           while (matchPos < matchList.length && matchList[matchPos] < pos + node.length) {
-            var startPos = matchList[matchPos] - pos;
-            var len = Math.min(patternLength, node.length - startPos);
+            const startPos = matchList[matchPos] - pos;
+            const len = Math.min(patternLength, node.length - startPos);
             node = highlightSection(node, matchList[matchPos] - pos, len, matchPos);
             partialMatchRemaining = patternLength - len;
 
@@ -126,30 +126,30 @@ angular.module('biggraph').directive('findInPageBox', function() {
 
       // Highlight all occurrances of pattern in node.
       function highlight(node, pattern) {
-        var textNodes = [];
+        const textNodes = [];
         getTextNodes(node, textNodes);
-        var txt = getText(textNodes);
-        var matchList = getMatchPositions(txt, pattern);
+        const txt = getText(textNodes);
+        const matchList = getMatchPositions(txt, pattern);
         higlightMatches(textNodes, matchList, pattern.length);
         return matchList.length;
       }
 
       function unhighlight() {
         return $('span.find-highlight').each(function () {
-          var parent = this.parentNode;
+          const parent = this.parentNode;
           parent.replaceChild(this.firstChild, this);
           parent.normalize();
         }).end();
       }
 
       function focusResult(pos) {
-        var next = $('span.find-highlight-' + pos);
+        const next = $('span.find-highlight-' + pos);
         next.addClass('find-highlight-current');
         next[0].scrollIntoView({});
       }
 
       function unFocusResult(pos) {
-        var current = $('span.find-highlight-' + pos);
+        const current = $('span.find-highlight-' + pos);
         $(current).removeClass('find-highlight-current');
       }
 

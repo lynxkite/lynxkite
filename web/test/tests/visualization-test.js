@@ -1,7 +1,7 @@
 'use strict';
 
-var fs = require('fs');
-var lib = require('../test-lib.js');
+const fs = require('fs');
+const lib = require('../test-lib.js');
 
 module.exports = function(fw) {
   // Moves all positions horizontally so that the x coordinate of the leftmost
@@ -9,12 +9,12 @@ module.exports = function(fw) {
   // Shifts in the x coordinate can happen when a second visualization is added, or due to
   // scrollbars.
   function normalized(positions) {
-    var i, minx;
+    let i, minx;
     for (i = 1; i < positions.length; ++i) {
-      var p = positions[i];
+      const p = positions[i];
       minx = (minx === undefined || p.x < minx) ? p.x : minx;
     }
-    var result = [];
+    const result = [];
     for (i = 0; i < positions.length; ++i) {
       result.push({ x: positions[i].x - minx, y: positions[i].y });
     }
@@ -22,8 +22,8 @@ module.exports = function(fw) {
   }
 
   function positions(graph) {
-    var pos = [];
-    for (var i = 0; i < graph.vertices.length; ++i) {
+    const pos = [];
+    for (let i = 0; i < graph.vertices.length; ++i) {
       pos.push(graph.vertices[i].pos);
     }
     return normalized(pos);
@@ -33,21 +33,21 @@ module.exports = function(fw) {
   // have to match on `precision` digits. For default we use 8 digits.
   function checkGraphPositions(saved, graph, precision) {
     precision = precision || 8;
-    for (var i = 0; i < saved.length; ++i) {
+    for (let i = 0; i < saved.length; ++i) {
       expect(saved[i].x).toBeCloseTo(graph[i].x, precision);
       expect(saved[i].y).toBeCloseTo(graph[i].y, precision);
     }
   }
-  var visualization = lib.workspace.getStateView('vz0', 'visualization').visualization;
+  const visualization = lib.workspace.getStateView('vz0', 'visualization').visualization;
 
-  var editor = lib.workspace.getVisualizationEditor('vz0');
-  var name = editor.left.vertexAttribute('name');
-  var gender = editor.left.vertexAttribute('gender');
-  var income = editor.left.vertexAttribute('income');
-  var age = editor.left.vertexAttribute('age');
-  var location = editor.left.vertexAttribute('location');
-  var weight = editor.left.edgeAttribute('weight');
-  var comment = editor.left.edgeAttribute('comment');
+  const editor = lib.workspace.getVisualizationEditor('vz0');
+  const name = editor.left.vertexAttribute('name');
+  const gender = editor.left.vertexAttribute('gender');
+  const income = editor.left.vertexAttribute('income');
+  const age = editor.left.vertexAttribute('age');
+  const location = editor.left.vertexAttribute('location');
+  const weight = editor.left.edgeAttribute('weight');
+  const comment = editor.left.edgeAttribute('comment');
 
   fw.transitionTest(
     'test-example workspace with example graph',
@@ -83,16 +83,16 @@ module.exports = function(fw) {
       lib.addConcurMatcher();
       //editor.left.toggleSampledVisualization();
 
-      var expectedEdges = [
+      const expectedEdges = [
         { src: 0, dst: 1 },
         { src: 1, dst: 0 },
         { src: 2, dst: 0 },
         { src: 2, dst: 1 },
       ];
-      var savedPositions;
-      var DEFAULT = 'rgb(57, 188, 243)';  // Brand color.
-      var BLUE = 'rgb(54, 54, 161)';
-      var RED = 'rgb(161, 54, 54)';
+      let savedPositions;
+      const DEFAULT = 'rgb(57, 188, 243)';  // Brand color.
+      const BLUE = 'rgb(54, 54, 161)';
+      const RED = 'rgb(161, 54, 54)';
       // No attributes visualized.
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
@@ -285,9 +285,9 @@ module.exports = function(fw) {
       lib.addConcurMatcher();
       name.visualizeAs('label');
       age.visualizeAs('slider');
-      var RED = 'rgb(161, 54, 54)';
-      var YELLOW = 'rgb(184, 184, 46)';
-      var GREEN = 'rgb(54, 161, 54)';
+      const RED = 'rgb(161, 54, 54)';
+      const YELLOW = 'rgb(184, 184, 46)';
+      const GREEN = 'rgb(54, 161, 54)';
       visualization.graphData().then(function(graph) {
         expect(graph.vertices).toConcur([
           { label: 'Adam', color: GREEN },
@@ -295,8 +295,8 @@ module.exports = function(fw) {
           { label: 'Bob', color: RED },
         ]);
       });
-      var slider = age.slider();
-      var K = protractor.Key;
+      const slider = age.slider();
+      const K = protractor.Key;
 
       slider.sendKeys(K.HOME);
       visualization.graphData().then(function(graph) {
@@ -402,7 +402,7 @@ module.exports = function(fw) {
     function() {
       lib.addConcurMatcher();
       name.visualizeAs('label');
-      var leftPositions;
+      let leftPositions;
       visualization.graphData().then(function(graph) {
         leftPositions = positions(graph);
         expect(graph.vertices.length).toBe(3);
@@ -416,10 +416,10 @@ module.exports = function(fw) {
         function matchPos(a, b) {
           return a.x.toFixed(3) === b.x.toFixed(3) && a.y.toFixed(3) === b.y.toFixed(3);
         }
-        var pos = positions(graph);
-        for (var i = 0; i < leftPositions.length; ++i) {
-          var found = false;
-          for (var j = 0; j < pos.length; ++j) {
+        const pos = positions(graph);
+        for (let i = 0; i < leftPositions.length; ++i) {
+          let found = false;
+          for (let j = 0; j < pos.length; ++j) {
             if (matchPos(pos[j], leftPositions[i])) {
               found = true;
               break;
@@ -448,7 +448,7 @@ module.exports = function(fw) {
         ]);
       });
       // Check TSV of this complex visualization.
-      var expectedTSV = fs.readFileSync(__dirname + '/data/visualization-tsv-data.txt', 'utf8');
+      const expectedTSV = fs.readFileSync(__dirname + '/data/visualization-tsv-data.txt', 'utf8');
       expect(visualization.asTSV()).toEqual(expectedTSV);
     },
     function() {});
@@ -487,11 +487,11 @@ module.exports = function(fw) {
       lib.navigateToProject('test-example'); // Restore state.
     });
 
-  var saveVisualizationOpen = lib.left.side.$('#setting-save-visualization');
-  var saveVisualizationEntry = $('#save-visualization-name');
-  var centersToken = lib.left.side.$('#setting-centers');
-  var pickButton = $('#pick-and-next-button');
-  var centerCount = $('#pick-center-count');
+  const saveVisualizationOpen = lib.left.side.$('#setting-save-visualization');
+  const saveVisualizationEntry = $('#save-visualization-name');
+  const centersToken = lib.left.side.$('#setting-centers');
+  const pickButton = $('#pick-and-next-button');
+  const centerCount = $('#pick-center-count');
 
   fw.transitionTest(
     'test-example project with example graph',

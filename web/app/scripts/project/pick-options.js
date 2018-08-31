@@ -69,7 +69,7 @@ angular.module('biggraph').directive('pickOptions', function() {
 
       scope.updateFromLastCentersRequest = function() {
         // pickOptions is stored in "side" to survive even when the picker is recreated.
-        var lastCentersRequest = scope.side.state.lastCentersRequest;
+        const lastCentersRequest = scope.side.state.lastCentersRequest;
         if (lastCentersRequest) {
           if (lastCentersRequest.filters) {
             scope.filters = lastCentersRequest.filters;
@@ -86,7 +86,7 @@ angular.module('biggraph').directive('pickOptions', function() {
 
       function centerRequestParams() {
         if (scope.side.state.customVisualizationFilters) {
-          var filters = scope.filters.filter(function (filter) {
+          const filters = scope.filters.filter(function (filter) {
             return filter.attributeName !== '';
           });
           return {
@@ -100,7 +100,7 @@ angular.module('biggraph').directive('pickOptions', function() {
       }
 
       scope.unchanged = function() {
-        var resolvedParams = scope.side.resolveCenterRequestParams(centerRequestParams());
+        const resolvedParams = scope.side.resolveCenterRequestParams(centerRequestParams());
         return angular.equals(scope.side.pickOptions.lastCenterRequestParameters, resolvedParams);
       };
 
@@ -129,9 +129,9 @@ angular.module('biggraph').directive('pickOptions', function() {
       };
 
       scope.requestNewCenters = function() {
-        var unchanged = scope.unchanged();
-        var params = centerRequestParams();
-        var offset = 0;
+        const unchanged = scope.unchanged();
+        const params = centerRequestParams();
+        let offset = 0;
         // Compute offset.
         if (scope.pickByOffsetWasEdited()) {  // "Pick by offset"
           offset = parseInt(scope.editedOffset) || 0;
@@ -183,7 +183,7 @@ angular.module('biggraph').directive('pickOptions', function() {
         scope.updateFromLastCentersRequest();
       });
       scope.$watch('side.state.graphMode', function() {
-        var state = scope.side.state;
+        const state = scope.side.state;
         if (state.graphMode === 'sampled' && state.centers === undefined) {
           scope.requestNewCenters();
         }

@@ -2,8 +2,8 @@
 
 
 module.exports = function(fw) {
-  var lib = require('../test-lib.js');
-  var path = require('path');
+  const lib = require('../test-lib.js');
+  const path = require('path');
 
   fw.transitionTest(
     'empty test-example workspace',
@@ -13,8 +13,8 @@ module.exports = function(fw) {
         id: 'ib0',
         name: 'Import CSV',
         x: 100, y: 100 });
-      var boxEditor = lib.workspace.openBoxEditor('ib0');
-      var importPath = path.resolve(__dirname, 'data/upload_test.csv');
+      const boxEditor = lib.workspace.openBoxEditor('ib0');
+      const importPath = path.resolve(__dirname, 'data/upload_test.csv');
       boxEditor.populateOperation({
         'filename': importPath
       });
@@ -22,8 +22,8 @@ module.exports = function(fw) {
       boxEditor.close();
     },
     function() {
-      var tableState = lib.workspace.openStateView('ib0', 'table');
-      var table = tableState.table;
+      const tableState = lib.workspace.openStateView('ib0', 'table');
+      const table = tableState.table;
       table.expectRowCountIs(4);
       table.expectColumnNamesAre(['name']);
       table.expectColumnTypesAre(['String']);

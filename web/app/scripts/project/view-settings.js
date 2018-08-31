@@ -3,14 +3,14 @@
 
 angular.module('biggraph').factory('ViewSettings', function() {
   return function(scope, element) {
-    var that = this;
+    const that = this;
     this.drops = {};
     element.find('.token').each(function(i, e) {
       if (!e.id) { return; }
-      var menu = element.find('#menu-' + e.id);
+      const menu = element.find('#menu-' + e.id);
       if (!menu.length) { return; }
       /* global Drop */
-      var drop = new Drop({
+      const drop = new Drop({
         target: e,
         content: menu[0],
         openOn: 'click',
@@ -27,7 +27,7 @@ angular.module('biggraph').factory('ViewSettings', function() {
     this.getDrop = function(e) {
       e = e.currentTarget;
       // Try to find a parent that is a drop-down menu. Give up after 20 steps.
-      for (var i = 0; i < 20; ++i) {
+      for (let i = 0; i < 20; ++i) {
         if (this.drops[e.id] !== undefined) {
           return this.drops[e.id];
         }
@@ -36,7 +36,7 @@ angular.module('biggraph').factory('ViewSettings', function() {
     };
 
     scope.$on('$destroy', function() {
-      for (var item in that.drops) {
+      for (const item in that.drops) {
         if (that.drops.hasOwnProperty(item)) {
           that.drops[item].destroy();
         }

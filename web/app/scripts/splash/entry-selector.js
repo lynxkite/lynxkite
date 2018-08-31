@@ -19,7 +19,7 @@ angular.module('biggraph').directive('entrySelector',
         scope.newDirectory = defaultSettings();
         scope.path = scope.path || window.sessionStorage.getItem('last_selector_path') ||
           window.localStorage.getItem('last_selector_path') || '';
-        var hk = hotkeys.bindTo(scope);
+        const hk = hotkeys.bindTo(scope);
         hk.add({
           combo: 'c', description: 'Create new workspace',
           callback: function(e) { e.preventDefault(); scope.newWorkspace = { expanded: true }; },
@@ -80,8 +80,8 @@ angular.module('biggraph').directive('entrySelector',
           if (!resolved || scope.data.$error) { return; }
           scope.vertexCounts = {};
           scope.edgeCounts = {};
-          for (var i = 0; i < scope.data.objects.length; ++i) {
-            var p = scope.data.objects[i];
+          for (let i = 0; i < scope.data.objects.length; ++i) {
+            const p = scope.data.objects[i];
             scope.vertexCounts[p.name] = util.lazyFetchScalarValue(
               p.vertexCount,
               false);
@@ -93,8 +93,8 @@ angular.module('biggraph').directive('entrySelector',
 
         function abandonScalars() {
           if (scope.data && scope.data.$resolved && !scope.data.$error) {
-            for (var i = 0; i < scope.data.objects.length; ++i) {
-              var p = scope.data.objects[i];
+            for (let i = 0; i < scope.data.objects.length; ++i) {
+              const p = scope.data.objects[i];
               scope.vertexCounts[p.name].$abandon();
               scope.edgeCounts[p.name].$abandon();
             }
@@ -106,7 +106,7 @@ angular.module('biggraph').directive('entrySelector',
 
         scope.createWorkspace = function() {
           scope.newWorkspace.sending = true;
-          var name = scope.newWorkspace.name;
+          let name = scope.newWorkspace.name;
           if (scope.path) {
             name = scope.path + '/' + name;
           }
@@ -122,7 +122,7 @@ angular.module('biggraph').directive('entrySelector',
 
         scope.createDirectory = function() {
           scope.newDirectory.sending = true;
-          var name = scope.newDirectory.name;
+          let name = scope.newDirectory.name;
           if (scope.path) {
             name = scope.path + '/' + name;
           }
@@ -140,11 +140,11 @@ angular.module('biggraph').directive('entrySelector',
         };
 
         scope.baseName = function(p) {
-          var lastSlash = p.lastIndexOf('/');
+          const lastSlash = p.lastIndexOf('/');
           return p.slice(lastSlash + 1);
         };
         scope.dirName = function(p) {
-          var lastSlash = p.lastIndexOf('/');
+          const lastSlash = p.lastIndexOf('/');
           return p.slice(0, lastSlash + 1);
         };
         scope.pathInside = function(p) {
@@ -166,8 +166,8 @@ angular.module('biggraph').directive('entrySelector',
           if (event.originalEvent.alreadyHandled) { return; }
           // Ignore clicks on errored tables.
           if (t.error) { return; }
-          var tableNameParts = t.name.split('/');
-          var tableName = tableNameParts[tableNameParts.length - 1];
+          const tableNameParts = t.name.split('/');
+          const tableName = tableNameParts[tableNameParts.length - 1];
           scope.showSQL = true;
           $timeout(
             function() {
@@ -220,7 +220,7 @@ angular.module('biggraph').directive('entrySelector',
             }).then(scope.reload);
           },
           discard: function(kind, p) {
-            var trashDir = 'Trash';
+            let trashDir = 'Trash';
             if (util.globals.hasAuth) {
               // Per-user trash.
               trashDir = util.user.home + '/Trash';
