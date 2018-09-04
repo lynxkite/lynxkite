@@ -14,7 +14,7 @@ class TestMagicDateIntegration(unittest.TestCase):
 
     @lk.workspace(name='ot', parameters=[lynx.kite.text('date')])
     def trivial():
-      return dict(result=lk.createExampleGraph().sql(lynx.kite.pp('select "${date.db2()}"')))
+      return dict(result=lk.createExampleGraph().sql(lynx.kite.pp('select "${date.db2}"')))
     start_date = datetime(2018, 7, 8, 1, 2)
     wss = lynx.automation.WorkspaceSequence(
         ws=trivial,
