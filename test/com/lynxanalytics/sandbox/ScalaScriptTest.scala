@@ -199,7 +199,7 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
     DateTimeZone.setProvider(new UTCProvider())
     ScalaScript.compileAndGetEvaluator(
       """
-        |"2017-03-02 00:00:00".plus(1.year).db2()
+        |"2017-03-02 00:00:00".plus(1.year).db2
       """.stripMargin, Map()).evaluate(Map())
   }
 }
