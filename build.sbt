@@ -83,7 +83,8 @@ libraryDependencies ++= Seq(
   "org.geotools" % "gt-epsg-hsql" % "2.5.6",
   // Plot drawing
   "org.vegas-viz" %% "vegas" % "0.3.9",
-  "org.vegas-viz" %% "vegas-spark" % "0.3.9")
+  "org.vegas-viz" %% "vegas-spark" % "0.3.9",
+  "com.github.nscala-time" %% "nscala-time" % "2.20.0")
 
 // We put the local Spark installation on the classpath for compilation and testing instead of using
 // it from Maven. The version on Maven pulls in an unpredictable (old) version of Hadoop.

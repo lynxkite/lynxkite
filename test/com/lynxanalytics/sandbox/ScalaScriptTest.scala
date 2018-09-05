@@ -5,6 +5,8 @@ import java.security.AccessControlException
 
 import com.lynxanalytics.biggraph.graph_api.TestGraphOp
 import com.lynxanalytics.biggraph.graph_operations.ImportDataFrameTest
+import org.joda.time.DateTimeZone
+import org.joda.time.tz.UTCProvider
 
 import scala.reflect.runtime.universe._
 
@@ -192,4 +194,12 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
     ScalaScript.run("val a = 1; a")
   }
 
+  test("MagicDate works") {
+    // https://github.com/dlew/joda-time-android/issues/148
+    DateTimeZone.setProvider(new UTCProvider())
+    ScalaScript.compileAndGetEvaluator(
+      """
+        |"2017-03-02 00:00:00".plus(1.year).db2
+      """.stripMargin, Map()).evaluate(Map())
+  }
 }
