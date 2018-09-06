@@ -26,6 +26,7 @@ rules:
   space-infix-ops: [error]
   arrow-spacing: [error, {before: true, after: true}]
   no-var: [error]
+  no-undef: [error]
 parserOptions:
   ecmaVersion: 6
 globals:
