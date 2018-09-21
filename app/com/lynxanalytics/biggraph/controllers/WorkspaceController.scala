@@ -158,7 +158,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     calculatedStates.synchronized {
       calculatedStates.get(stateId)
     } match {
-      case None => throw new AssertionError(s"BoxOutputState state identified by $stateId not found")
+      case None => BoxOutputState("error", None, FEStatus(false))
       case Some(state: BoxOutputState) => state
     }
   }
