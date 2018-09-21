@@ -159,8 +159,8 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       calculatedStates.get(stateId)
     } match {
       case None =>
-        log.warn(s"Unknown BoxOutputState: $stateId")
-        BoxOutputState("error", None, FEStatus(false))
+        val msg = s"Unknown BoxOutputState: $stateId"
+        BoxOutputState("error", None, FEStatus(false, disabledReason = msg))
       case Some(state: BoxOutputState) => state
     }
   }
