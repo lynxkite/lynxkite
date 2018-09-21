@@ -158,7 +158,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     calculatedStates.synchronized {
       calculatedStates.get(stateId)
     } match {
-      case None => BoxOutputState("error", None, FEStatus(false))
+      case None =>
+        log.warn(s"Unknown BoxOutputState: $stateId")
+        BoxOutputState("error", None, FEStatus(false))
       case Some(state: BoxOutputState) => state
     }
   }
