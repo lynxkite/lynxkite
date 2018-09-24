@@ -61,3 +61,12 @@ class TestSQLShorthand(unittest.TestCase):
         ['Bob', 50.3],
         ['Eve', 18.2],
     ], columns=['name', 'age'])))
+
+  def test_kwarg_inputs(self):
+    lk = lynx.kite.LynxKite()
+    eg = lk.createExampleGraph()
+    df = lk.sql(
+        'select count(*) as cnt from `a.vertices` join `b.vertices` using (name)',
+        a=eg, b=eg, persist='yes').df()
+    import pandas as pd
+    self.assertTrue(df.equals(pd.DataFrame({'cnt': [4.0]})))
