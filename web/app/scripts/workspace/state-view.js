@@ -47,11 +47,11 @@ angular.module('biggraph')
           return scope.workspace.name + '-' + scope.plugId;
         };
 
-        scope.setInstrument = function(index, operationId) {
+        scope.setInstrument = function(index, operationId, parameters) {
           scope.instruments.splice(index);
           scope.instruments.push({
             operationId: operationId,
-            parameters: {},
+            parameters: parameters || {},
             parametricParameters: {},
           });
           update();

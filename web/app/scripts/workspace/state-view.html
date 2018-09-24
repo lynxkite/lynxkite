@@ -30,7 +30,7 @@
       ng-show="state.kind === 'table' || state.kind === 'project'"
       ng-class="{ active: instruments[$index].operationId === 'SQL1' }"
       class="btn btn-default"
-      ng-click="setInstrument($index, 'SQL1')">
+      ng-click="setInstrument($index, 'SQL1', {persist: 'no'})">
       SQL
     </button>
     <button
