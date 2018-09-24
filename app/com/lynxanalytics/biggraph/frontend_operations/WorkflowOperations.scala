@@ -454,7 +454,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     registerOp(name, defaultIcon, category, inputs, List("table"), new TableOutputOperation(_) {
       override val params = new ParameterHolder(context) // No "apply_to" parameters.
       params += Param("summary", "Summary", defaultValue = "SQL")
-      params += Code("sql", "SQL", defaultValue = s"select * from `$defaultTableName`", language = "sql",
+      params += Code("sql", "SQL", defaultValue = s"select * from `$defaultTableName` limit 10", language = "sql",
         enableTableBrowser = true)
       params += Choice("persist", "Persist result", options = FEOption.yesno)
       override def summary = params("summary")
