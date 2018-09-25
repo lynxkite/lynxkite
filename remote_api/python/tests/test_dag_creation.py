@@ -53,7 +53,7 @@ def create_complex_test_workspace():
   @lk.workspace()
   def combiner(t1_comb, t2_comb):
     tmp = t1_comb.sql('select * from input')
-    tmp2 = lk.sql('select * from one cross join two', tmp, t2_comb)
+    tmp2 = lk.sql('select one.* from one cross join two', tmp, t2_comb)
     return dict(out1_comb=tmp, out2_comb=tmp2)
 
   @lk.workspace_with_side_effects()
@@ -234,7 +234,7 @@ class TestDagCreation(unittest.TestCase):
       actual[_box_path_to_str(ep)] = _box_path_to_str(ep.non_trivial_parent_of_endpoint())
     expected = {
         'output o1': 'sql select * from input',
-        'output o2': 'sql select * from one cross join two',
+        'output o2': 'sql select one.* from one cross join two',
         'output o3': 'sql select * from vertices',
         'snapshot SB1': 'input i2',
         'snapshot SB2': 'sql select * from input',
