@@ -70,3 +70,19 @@ class TestSQLShorthand(unittest.TestCase):
         a=eg, b=eg, persist='yes').df()
     import pandas as pd
     self.assertTrue(df.equals(pd.DataFrame({'cnt': [4.0]})))
+
+  def test_mixed_inputs(self):
+    lk = lynx.kite.LynxKite()
+    eg = lk.createExampleGraph()
+    df = lk.sql(
+        'select count(*) as cnt from `one.vertices` join `b.vertices` using (name)',
+        eg, b=eg, persist='yes').df()
+    import pandas as pd
+    self.assertTrue(df.equals(pd.DataFrame({'cnt': [4.0]})))
+
+  def test_named_single_input(self):
+    lk = lynx.kite.LynxKite()
+    df = lk.createExampleGraph().sql('select * from vertices').sql(
+        'select count(*) as cnt from x', input_names='x').df()
+    import pandas as pd
+    self.assertTrue(df.equals(pd.DataFrame({'cnt': [4.0]})))
