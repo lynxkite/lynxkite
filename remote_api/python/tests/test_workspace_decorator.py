@@ -10,7 +10,7 @@ class TestWorkspaceDecorator(unittest.TestCase):
 
     @lk.workspace()
     def join_ws(x, y):
-      return dict(xjoin=lk.sql('select * from one cross join two', x, y))
+      return dict(xjoin=lk.sql('select * from x cross join y', x=x, y=y))
 
     eg = lk.createExampleGraph()
     names = eg.sql('select name from vertices')
@@ -76,7 +76,7 @@ class TestWorkspaceDecorator(unittest.TestCase):
 
     n1 = factory(lk, 100)()
     n2 = factory(lk, 1000)()
-    res = lk.sql('select * from one cross join two', n1, n2)
+    res = lk.sql('select * from n1 cross join n2', n1=n1, n2=n2)
 
     ws = lynx.kite.Workspace([res], name='Wrapper')
     with self.assertRaises(Exception) as cm:
