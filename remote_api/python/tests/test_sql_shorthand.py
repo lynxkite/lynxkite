@@ -38,7 +38,9 @@ class TestSQLShorthand(unittest.TestCase):
   def test_table_to_pandas(self):
     import pandas as pd
     lk = lynx.kite.LynxKite()
-    df = lk.createExampleGraph().sql('select name, age from vertices order by name').df()
+    df = lk.createExampleGraph().sql(
+        'select name, age from vertices order by name',
+        persist='no').df()
     self.assertTrue(df.equals(pd.DataFrame([
         ['Adam', 20.3],
         ['Bob', 50.3],
@@ -55,7 +57,9 @@ class TestSQLShorthand(unittest.TestCase):
     eg_table = lk.createExampleGraph().sql('select * from vertices').get_table_data(limit=8)
     self.assertEqual(len(eg_table.data), 4)
     import pandas as pd
-    df = lk.createExampleGraph().sql('select name, age from vertices order by name').df(limit=3)
+    df = lk.createExampleGraph().sql(
+        'select name, age from vertices order by name',
+        persist='no').df(limit=3)
     self.assertTrue(df.equals(pd.DataFrame([
         ['Adam', 20.3],
         ['Bob', 50.3],
