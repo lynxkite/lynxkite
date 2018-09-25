@@ -31,5 +31,5 @@ class TestEscapingStrings(unittest.TestCase):
     result_query = ' union all '.join(query)
 
     original = self.import_test_data().df()
-    escaped = lk.createExampleGraph().sql(result_query).df()
+    escaped = lk.createExampleGraph().sql(result_query, persist='no').df()
     self.assertTrue(original.equals(escaped))
