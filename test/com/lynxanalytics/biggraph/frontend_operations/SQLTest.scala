@@ -235,7 +235,7 @@ class SQLTest extends OperationsTestBase {
         "prefix" -> "edge",
         "direction" -> "all edges",
         "aggregate_weight" -> "set"))
-      .box("SQL1", Map("sql" -> "select edge_weight_set from vertices"))
+      .box("SQL1", Map("sql" -> "select edge_weight_set from vertices", "persist" -> "no"))
       .table
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(table.schema.map(_.name) == Seq("edge_weight_set"))
