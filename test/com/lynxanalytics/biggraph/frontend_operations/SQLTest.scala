@@ -406,6 +406,14 @@ class SQLTest extends OperationsTestBase {
         Seq("Isolated Joe", Seq(-33.8674869, 151.2069902))))
   }
 
+  test("inputs can be given custom names") {
+    val eg = box("Create example graph")
+    val t = box("SQL2", Map(
+      "sql" -> "select count(*) as cnt from `a.vertices` join `b.vertices` using (name)",
+      "input_names" -> "a, b"), Seq(eg, eg)).table
+    assert(t.df.collect.toSeq.map(toSeq) == Seq(Seq(4)))
+  }
+
   SQLTestCases.list.foreach(query => test(query._1) {
     val one = box("Create example graph")
     val two = box("Create example graph")
