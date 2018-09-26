@@ -98,7 +98,7 @@
     ng-repeat="object in data.objects"
     id="{{ object.objectType }}-{{ pathInside(object.name) | id }}"
     class="entry {{ object.objectType }}-entry"
-    ng-class="{ 'disabled': object.objectType == 'snapshot' }"
+    ng-class="{ 'disabled': object.objectType == 'snapshot' && object.icon =='project', 'viewer':  object.objectType == 'snapshot' && object.icon =='table'}"
     href
     ng-click="objectClick($event, object)"
     ng-class="{ error: object.error }">
@@ -132,13 +132,12 @@
       </span>
       {{object.notes}}
     </div>
-    <div ng-if="opened[object.name]">
+    <div ng-if="opened[object.name] && object.icon == 'table'">
       <snapshot-viewer
         path="{{object.name}}"
-        type="{{object.icon}}" 
-        ng-click="$event.stopPropagation()"></snapshot-viewer>
-    </div>
-      </div>
+        type="{{object.icon}}"
+        ng-click="$event.stopPropagation()">
+      </snapshot-viewer>
     </div>
   </div>
 </div>
