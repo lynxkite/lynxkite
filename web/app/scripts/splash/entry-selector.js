@@ -59,6 +59,7 @@ angular.module('biggraph').directive('entrySelector',
         scope.util = util;
         scope.reload = function() {
           abandonScalars();
+          scope.opened = {}; // Snapshot viewers are closed by default.
           if (!scope.searchQuery) {
             scope.data = util.nocache('/ajax/entryList', { path: scope.path });
           } else {
