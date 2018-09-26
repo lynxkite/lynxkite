@@ -35,6 +35,7 @@ import datetime
 import inspect
 import re
 import itertools
+import uuid
 from collections import deque, defaultdict, OrderedDict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar, Optional, Collection)
@@ -946,6 +947,23 @@ class State:
     lk = self.box.lk
     state_id = lk.get_state_id(self)
     tss.save_to_sequence(state_id, date)
+
+  def apply(self, fn: Callable[[str, str], Any],
+            sec: 'SideEffectCollector') -> 'SingleOutputAtomicBox':
+    '''Exports the state, applies "fn", and imports the results of that.'''
+    guid = str(uuid.uuid4())
+    inpath = f'DATA$/external-processing/{guid}'
+    export = self.exportToParquet(path=inpath)
+    external = self.externalComputation(label=fn.__name__)
+
+    def then():
+      ip = self.box.lk.get_prefixed_path(inpath).resolved
+      outpath = f'DATA$/tables/{external.guid()}'
+      op = self.box.lk.get_prefixed_path(outpath).resolved
+      fn(ip, op)
+    export.register(sec)
+    export.then = then
+    return external
 
 
 class Box:
