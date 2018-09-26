@@ -645,9 +645,14 @@ class LynxKite:
   def get_table_data(self, state: str, limit: int = -1) -> types.SimpleNamespace:
     return self._ask('/ajax/getTableOutput', dict(id=state, sampleRows=limit))
 
-  def get_workspace(self, path: str) -> List[types.SimpleNamespace]:
-    response = self._ask('/ajax/getWorkspace', dict(top=path, customBoxStack=[]))
-    return response.workspace.boxes
+  def get_table_guid(self, state: str) -> types.SimpleNamespace:
+    return self._ask('/ajax/getTableOutputGUID', dict(id=state))
+
+  def get_workspace(self, path: str, stack: List[str] = []) -> types.SimpleNamespace:
+    return self._ask('/ajax/getWorkspace', dict(top=path, customBoxStack=stack))
+
+  def get_workspace_boxes(self, path: str, stack: List[str] = []) -> List[types.SimpleNamespace]:
+    return self.get_workspace(path, stack).workspace.boxes
 
   # TODO: deprecate?
   def import_box(self, boxes: List[SerializedBox], box_id: str) -> List[SerializedBox]:
@@ -950,19 +955,30 @@ class State:
 
   def apply(self, fn: Callable[[str, str], Any],
             sec: 'SideEffectCollector') -> 'SingleOutputAtomicBox':
-    '''Exports the state, applies "fn", and imports the results of that.'''
+    '''Exports the state, applies "fn", and returns the results of that as a State.'''
     guid = str(uuid.uuid4())
     inpath = f'DATA$/external-processing/{guid}'
     export = self.exportToParquet(path=inpath)
     external = self.externalComputation(label=fn.__name__)
 
-    def then():
+    def then(ws: str, box: str, stack: List[str]):
+      outputs = self.box.lk.get_workspace(ws, stack).outputs
+      state = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in outputs}[box, 'table']
+      guids = self.box.lk.get_table_guid(state)
       ip = self.box.lk.get_prefixed_path(inpath).resolved
-      outpath = f'DATA$/tables/{external.guid()}'
+      outpath = f'DATA$/tables/{guids.guid}'
       op = self.box.lk.get_prefixed_path(outpath).resolved
       fn(ip, op)
+      # TODO: Replace with nice solution.
+      opdir = self.box.lk.get_prefixed_path(f'DATA$/operations/{guids.op}').resolved
+      opdir = opdir.replace('file:', '')
+      os.makedirs(opdir, exist_ok=True)
+      with open(opdir + '/_SUCCESS', 'w'):
+        pass
+
     export.register(sec)
-    export.then = then
+    external.register(sec)
+    external.then = then
     return external
 
 
@@ -982,7 +998,7 @@ class Box:
     self.parametric_parameters: Dict[str, str] = {}
     self.outputs: Set[str] = set()
     self.manual_box_id = manual_box_id
-    self.then: Callable[[], Any] = None
+    self.then: Callable[[str, str, List[str]], Any] = None
     # We separate normal and parametric parameters here.
     # Parametric parameters can be specified as `name=PP('parametric value')`
     for key, value in parameters.items():
@@ -1046,9 +1062,9 @@ class Box:
         name='Anonymous')
     ws.trigger_all_side_effects()
 
-  def after_trigger(self) -> None:
+  def after_trigger(self, ws: str, box: str, stack: List[str]) -> None:
     if self.then:
-      self.then()
+      self.then(ws, box, stack)
 
 
 class AtomicBox(Box):
@@ -1498,7 +1514,7 @@ class Workspace:
     box_ids = self._box_to_trigger_to_box_ids(box_to_trigger)
     # The last id is a "normal" box id, the rest are the custom box stack.
     lk.trigger_box(full_path, box_ids[-1], box_ids[:-1])
-    box_to_trigger.base.after_trigger()
+    box_to_trigger.base.after_trigger(full_path, box_ids[-1], box_ids[:-1])
 
   def save(self, saved_under_folder: str) -> str:
     lk = self.lk

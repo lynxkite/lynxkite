@@ -21,6 +21,7 @@ case class ExternalComputation(label: String) extends TypedMetaGraphOp[Input, Ou
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("label" -> label)
+  override val isHeavy = true
 
   def execute(
     inputDatas: DataSet,

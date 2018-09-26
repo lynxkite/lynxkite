@@ -92,9 +92,10 @@ class DataManager(
     // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
     // the entity in this session, so we need this assertion.
     assert(!isEntityInProgressOrComputed(eio.entity), s"${eio} is new")
-    (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
+    val op = entity.source.operation
+    (op.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
-      eio.mayHaveExisted &&
+      (eio.mayHaveExisted || op.isInstanceOf[graph_operations.ExternalComputation]) &&
       // Slow check for _SUCCESS file.
       eio.exists
   }
