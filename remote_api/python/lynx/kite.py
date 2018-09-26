@@ -1006,7 +1006,7 @@ class Box:
         'inputs': {plug: input_state(state) for plug, state in self.inputs.items()},
         'parametricParameters': self.parametric_parameters})
 
-  def register(self, side_effect_collector):
+  def register(self, side_effect_collector: 'SideEffectCollector'):
     side_effect_collector.add_box(self)
 
   def __getitem__(self, index: str) -> State:
@@ -1287,6 +1287,25 @@ class BoxPath:
   def __eq__(self, other):
     return self.base == other.base and self.stack == other.stack
 
+  @staticmethod
+  def dependencies(bps: Collection['BoxPath']) -> Dict['BoxPath', Set['BoxPath']]:
+    # One NTAP (non-trivial atomic parent) can belong to multiple endpoints
+    bp_to_ntap = {bp: bp.non_trivial_parent_of_endpoint() for bp in bps}
+    ntap_to_bps: Dict[BoxPath, Set[BoxPath]] = defaultdict(set)
+    dag: Dict[BoxPath, Set[BoxPath]] = {bp: set() for bp in bps}
+    for bp, ntap in bp_to_ntap.items():
+      ntap_to_bps[ntap].add(bp)
+    for this in bps:
+      to_process = deque(bp_to_ntap[this].parents())
+      visited: Set[BoxPath] = set()
+      while to_process:
+        box_path = to_process.pop()
+        visited.add(box_path)
+        if box_path in ntap_to_bps:
+          dag[this].update(ntap_to_bps[box_path])
+        to_process.extend([bp for bp in box_path.parents() if not bp in visited])
+    return dag
+
 
 class FakeBoxPathForInputParent(BoxPath):
   '''For top level inputs we create a fake parent. With this, we can unify the
@@ -1486,8 +1505,25 @@ class Workspace:
     '''
     temporary_folder = _random_ws_folder()
     self.save(temporary_folder)
-    for btt in self._side_effect_paths:
+    for btt in serialize_deps(BoxPath.dependencies(self._side_effect_paths)):
       self.trigger_saved(btt, temporary_folder)
+
+
+def serialize_deps(deps: Dict[Any, Set[Any]]) -> List[Any]:
+  '''Returns the keys of ``deps`` in an execution order that respects the dependencies.'''
+  deps = {k: set(v) for (k, v) in deps.items()}  # Create a copy.
+  ordering = []
+  while deps:
+    for k, v in deps.items():
+      if not v:
+        ordering.append(k)
+        del deps[k]
+        for v in deps.values():
+          v.discard(k)
+        break
+    else:
+      raise Exception(f'No ordering possible: {deps}')
+  return ordering
 
 
 def _layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
