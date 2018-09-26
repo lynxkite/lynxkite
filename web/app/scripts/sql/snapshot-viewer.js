@@ -37,7 +37,6 @@ angular.module('biggraph')
         const req = scope.result;
 
         req.then(function(res) {
-          console.log(res);
           scope.data = res;
           scope.stateId = scope.data.outputs[0].stateId;
         });
