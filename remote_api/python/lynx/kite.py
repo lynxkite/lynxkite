@@ -964,6 +964,7 @@ class Box:
     self.parametric_parameters: Dict[str, str] = {}
     self.outputs: Set[str] = set()
     self.manual_box_id = manual_box_id
+    self.then: Callable[[], Any] = None
     # We separate normal and parametric parameters here.
     # Parametric parameters can be specified as `name=PP('parametric value')`
     for key, value in parameters.items():
@@ -1026,6 +1027,10 @@ class Box:
         side_effect_paths=list(sec.all_triggerables()),
         name='Anonymous')
     ws.trigger_all_side_effects()
+
+  def after_trigger(self) -> None:
+    if self.then:
+      self.then()
 
 
 class AtomicBox(Box):
@@ -1475,6 +1480,7 @@ class Workspace:
     box_ids = self._box_to_trigger_to_box_ids(box_to_trigger)
     # The last id is a "normal" box id, the rest are the custom box stack.
     lk.trigger_box(full_path, box_ids[-1], box_ids[:-1])
+    box_to_trigger.base.after_trigger()
 
   def save(self, saved_under_folder: str) -> str:
     lk = self.lk
