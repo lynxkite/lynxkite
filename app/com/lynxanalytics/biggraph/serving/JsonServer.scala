@@ -301,6 +301,7 @@ object FrontendJson {
   implicit val rGetTableOutputRequest = json.Json.reads[GetTableOutputRequest]
   implicit val wTableColumn = json.Json.writes[TableColumn]
   implicit val wGetTableOutputResponse = json.Json.writes[GetTableOutputResponse]
+  implicit val wGetTableOutputGUIDResponse = json.Json.writes[GetTableOutputGUIDResponse]
   implicit val rGetPlotOutputRequest = json.Json.reads[GetPlotOutputRequest]
   implicit val wGetPlotOutputResponse = json.Json.writes[GetPlotOutputResponse]
   implicit val rGetVisualizationOutputRequest = json.Json.reads[GetVisualizationOutputRequest]
@@ -447,6 +448,7 @@ object ProductionJsonServer extends JsonServer {
   import UIStatusSerialization.fTwoSidedUIStatus
   def getVisualizationOutput = jsonGet(workspaceController.getVisualizationOutput)
   def getExportResultOutput = jsonGet(workspaceController.getExportResultOutput)
+  def getTableOutputGUID = jsonGet(workspaceController.getTableOutput)
   def getInstrumentedState = jsonGet(workspaceController.getInstrumentedState)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment, workspaceController.ops)
@@ -472,7 +474,7 @@ object ProductionJsonServer extends JsonServer {
   def getTableOutputData(user: serving.User, request: GetTableOutputRequest): Future[GetTableOutputResponse] = {
     implicit val metaManager = workspaceController.metaManager
     val table = workspaceController.getOutput(user, request.id).table
-    sqlController.getTableSample(table, request.sampleRows)
+    sqlController.getTableSample(table, request.sampleRows.get)
   }
   def getTableBrowserNodesForBox = jsonGet(getTableBrowserNodesForBoxData)
   def getTableBrowserNodesForBoxData(
@@ -502,7 +504,7 @@ object ProductionJsonServer extends JsonServer {
   def triggerBox = jsonFuturePost(triggerBoxExec)
   def triggerBoxExec(
     user: serving.User, request: GetOperationMetaRequest): Future[Unit] = {
-    workspaceController.getOperation(user, request).asInstanceOf[TriggerableOperation]
+    workspaceController.getOperation(user, request).asInstanceOf[Triggerable]
       .trigger(workspaceController, drawingController)
   }
 

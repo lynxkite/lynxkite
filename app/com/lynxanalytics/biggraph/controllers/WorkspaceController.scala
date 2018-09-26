@@ -26,9 +26,10 @@ case class SetWorkspaceRequest(reference: WorkspaceReference, workspace: Workspa
 case class GetOperationMetaRequest(workspace: WorkspaceReference, box: String)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
 case class GetProjectOutputRequest(id: String, path: String)
-case class GetTableOutputRequest(id: String, sampleRows: Int)
+case class GetTableOutputRequest(id: String, sampleRows: Option[Int])
 case class TableColumn(name: String, dataType: String)
 case class GetTableOutputResponse(header: List[TableColumn], data: List[List[DynamicValue]])
+case class GetTableOutputGUIDResponse(guid: String, op: String)
 case class GetPlotOutputRequest(id: String)
 case class GetPlotOutputResponse(json: FEScalar)
 case class GetVisualizationOutputRequest(id: String)
@@ -200,6 +201,12 @@ class WorkspaceController(env: SparkFreeEnvironment) {
         val parameters = (state.state.get \ "parameters").as[Map[String, String]]
         GetExportResultResponse(parameters, feScalar)
     }
+  }
+
+  def getTableOutput(
+    user: serving.User, request: GetTableOutputRequest): GetTableOutputGUIDResponse = {
+    val state = getOutput(user, request.id)
+    GetTableOutputGUIDResponse(state.table.gUID.toString, state.table.source.gUID.toString)
   }
 
   def getProgress(user: serving.User, stateIds: Seq[String]): Map[String, Option[Progress]] = {
