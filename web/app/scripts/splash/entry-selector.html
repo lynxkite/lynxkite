@@ -133,7 +133,10 @@
       {{object.notes}}
     </div>
     <div ng-if="opened[object.name]">
-      <snapshot-viewer path={{object.name}} ng-click="$event.stopPropagation()"></snapshot-viewer>
+      <snapshot-viewer
+        path="{{object.name}}"
+        type="{{object.icon}}" 
+        ng-click="$event.stopPropagation()"></snapshot-viewer>
     </div>
       </div>
     </div>
