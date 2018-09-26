@@ -6,11 +6,7 @@ angular.module('biggraph')
   .directive('snapshotViewer', function(util) {
     return {
       restrict: 'E',
-      template: `<table-state-view ng-if="stateId && type==='table'" state-id="stateId">
-                 </table-state-view>
-                 <div ng-if="stateId && type==='project'">
-                   Only table snapshots can be browsed here.
-                 </div>`,
+      templateUrl: 'scripts/sql/snapshot-viewer.html',
       scope: {
         path: '@',
         type: '@',
