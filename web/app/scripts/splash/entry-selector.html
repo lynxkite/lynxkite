@@ -132,5 +132,10 @@
       </span>
       {{object.notes}}
     </div>
+    <div ng-if="opened[object.name]">
+      <snapshot-viewer path={{object.name}} ng-click="$event.stopPropagation()"></snapshot-viewer>
+    </div>
+      </div>
+    </div>
   </div>
 </div>
