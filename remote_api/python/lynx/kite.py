@@ -998,7 +998,7 @@ class Box:
     self.parametric_parameters: Dict[str, str] = {}
     self.outputs: Set[str] = set()
     self.manual_box_id = manual_box_id
-    self.then: Callable[[str, str, List[str]], Any] = None
+    self.then: Optional[Callable[[str, str, List[str]], Any]] = None
     # We separate normal and parametric parameters here.
     # Parametric parameters can be specified as `name=PP('parametric value')`
     for key, value in parameters.items():
