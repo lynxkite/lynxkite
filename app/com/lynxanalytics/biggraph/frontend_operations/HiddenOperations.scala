@@ -79,7 +79,7 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       override def summary = params("label")
       def enabled = FEStatus.enabled
       override def getOutputs() = {
-        val snapshotName = params("snapshot_prefix") + tableInput("table").gUID.toString
+        val snapshotName = params("snapshot_prefix") + exportResultInput("table").gUID.toString
         val snapshot = DirectoryEntry.fromName(snapshotName).asSnapshotFrame
         makeOutput(snapshot.getState.table)
       }

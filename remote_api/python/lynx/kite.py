@@ -644,9 +644,6 @@ class LynxKite:
   def get_table_data(self, state: str, limit: int = -1) -> types.SimpleNamespace:
     return self._ask('/ajax/getTableOutput', dict(id=state, sampleRows=limit))
 
-  def get_table_guid(self, state: str) -> str:
-    return self._ask('/ajax/getTableOutputGUID', dict(id=state)).guid
-
   def get_workspace(self, path: str, stack: List[str] = []) -> types.SimpleNamespace:
     return self._ask('/ajax/getWorkspace', dict(top=path, customBoxStack=stack))
 
@@ -959,7 +956,7 @@ class State:
     inpath = f'DATA$/external-processing/input-{fnhash}'
     export = self.exportToParquet(path=inpath)
     snapshot_prefix = f'tmp_workspaces/tmp_snapshots/external-{fnhash}-'
-    external = self.externalComputation(label=fn.__name__, snapshot_prefix=snapshot_prefix)
+    external = export.externalComputation(label=fn.__name__, snapshot_prefix=snapshot_prefix)
 
     def then(wsname: str, box: str, stack: List[str]):
       lk = self.box.lk
@@ -974,7 +971,7 @@ class State:
       input_table = boxes[box].inputs.table
       states = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in resp.outputs}
       input_state = states[input_table.boxId, input_table.id]
-      input_guid = lk.get_table_guid(input_state)
+      input_guid = lk.get_export_result(input_state).result.id
       lk.importParquetNow(filename=outpath).save_snapshot(snapshot_prefix + input_guid)
 
     export.register(sec)
