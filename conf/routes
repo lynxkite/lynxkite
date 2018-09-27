@@ -22,7 +22,6 @@ POST /ajax/redoWorkspace           com.lynxanalytics.biggraph.serving.Production
 POST /ajax/createSnapshot          com.lynxanalytics.biggraph.serving.ProductionJsonServer.createSnapshot
 GET  /ajax/getProjectOutput        com.lynxanalytics.biggraph.serving.ProductionJsonServer.getProjectOutput
 GET  /ajax/getTableOutput          com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableOutput
-GET  /ajax/getTableOutputGUID      com.lynxanalytics.biggraph.serving.ProductionJsonServer.getTableOutputGUID
 GET  /ajax/getPlotOutput           com.lynxanalytics.biggraph.serving.ProductionJsonServer.getPlotOutput
 GET  /ajax/getVisualizationOutput  com.lynxanalytics.biggraph.serving.ProductionJsonServer.getVisualizationOutput
 GET  /ajax/getOperationMeta        com.lynxanalytics.biggraph.serving.ProductionJsonServer.getOperationMeta

@@ -301,7 +301,6 @@ object FrontendJson {
   implicit val rGetTableOutputRequest = json.Json.reads[GetTableOutputRequest]
   implicit val wTableColumn = json.Json.writes[TableColumn]
   implicit val wGetTableOutputResponse = json.Json.writes[GetTableOutputResponse]
-  implicit val wGetTableOutputGUIDResponse = json.Json.writes[GetTableOutputGUIDResponse]
   implicit val rGetPlotOutputRequest = json.Json.reads[GetPlotOutputRequest]
   implicit val wGetPlotOutputResponse = json.Json.writes[GetPlotOutputResponse]
   implicit val rGetVisualizationOutputRequest = json.Json.reads[GetVisualizationOutputRequest]
@@ -448,7 +447,6 @@ object ProductionJsonServer extends JsonServer {
   import UIStatusSerialization.fTwoSidedUIStatus
   def getVisualizationOutput = jsonGet(workspaceController.getVisualizationOutput)
   def getExportResultOutput = jsonGet(workspaceController.getExportResultOutput)
-  def getTableOutputGUID = jsonGet(workspaceController.getTableOutput)
   def getInstrumentedState = jsonGet(workspaceController.getInstrumentedState)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment, workspaceController.ops)
