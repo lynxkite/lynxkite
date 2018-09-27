@@ -41,10 +41,15 @@ angular.module('biggraph')
         scope.popupModel.width = 500;
         scope.popupModel.height = 500;
         scope.popupModel.maxHeight = 500;
+        scope.workspace = {};
+        scope.workspace.name = 'fake-workspace';
 
         req.then(function(res) {
           scope.data = res;
           scope.stateId = scope.data.outputs[0].stateId;
+          scope.plug = {};
+          scope.plug.stateId = scope.stateId;
+          scope.plug.kind = scope.type;
         });
 
 

@@ -1,18 +1,6 @@
-<project-state-view
-  state-id="stateId"
-  ng-if="stateId && type==='project'">
-</project-state-view>
-<table-state-view
-  state-id="stateId"
-  ng-if="stateId && type==='table'">
-</table-state-view>
-<plot-state-view
-  state-id="stateId"
+<state-view
+  ng-if="stateId"
+  plug="plug"
   popup-model="popupModel"
-  ng-if="stateId && type==='plot'">
-</plot-state-view>
-<visualization-state-view
-  state-id="stateId"
-  popup-model="popupModel"
-  ng-if="stateId && type==='visualization'">
-</visualization-state-view>
+  workspace="workspace">
+</state-id>
