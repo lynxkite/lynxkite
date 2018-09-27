@@ -754,12 +754,12 @@ class LynxKite:
         '/ajax/triggerBox',
         dict(workspace=dict(top=workspace_name, customBoxStack=custom_box_stack), box=box_id))
 
-  def from_pandas_dataframe(self, df, include_index=True):
+  def from_df(self, df, index=True):
     """Converts a pandas dataframe to a LynxKite table.
 
     Set `include_index` to False if you don't want to include the index.
     """
-    return self.uploadCSVNow(df.to_csv(index=include_index))
+    return self.uploadCSVNow(df.to_csv(index=index))
 
 
 class SnapshotSequence:
