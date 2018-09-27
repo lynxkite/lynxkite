@@ -132,7 +132,9 @@
       </span>
       {{object.notes}}
     </div>
-    <div ng-if="opened[object.name] && object.icon == 'table'" style="display:inline-block;">
+    <div
+      ng-if="opened[object.name] && !['exportResult', 'error'].includes(object.icon)" 
+      style="display:inline-block;">
       <snapshot-viewer
         path="{{object.name}}"
         type="{{object.icon}}"

@@ -36,10 +36,17 @@ angular.module('biggraph')
           });
         const req = scope.result;
 
+        // Fake context for general state viewer
+        scope.popupModel = {};
+        scope.popupModel.width = 500;
+        scope.popupModel.height = 500;
+        scope.popupModel.maxHeight = 500;
+
         req.then(function(res) {
           scope.data = res;
           scope.stateId = scope.data.outputs[0].stateId;
         });
+
 
 
       },
