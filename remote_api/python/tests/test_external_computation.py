@@ -12,7 +12,8 @@ class TestExternalComputation(unittest.TestCase):
 
     def title_names(inpath, outpath):
       df = pd.read_parquet(inpath.replace('file:', ''))
-      df['name'] = np.where(df.gender == 'Female', 'Ms ' + df.name, 'Mr ' + df.name)
+      df['titled_name'] = np.where(df.gender == 'Female', 'Ms ' + df.name, 'Mr ' + df.name)
+      df = df[['titled_name', 'gender']]
       op = outpath.replace('file:', '')
       os.makedirs(op, exist_ok=True)
       df.to_parquet(op + '/part-00000.gzip.parquet', engine='fastparquet', compression='GZIP')
@@ -31,4 +32,4 @@ class TestExternalComputation(unittest.TestCase):
         ['Ms Eve', 'Female'],
         ['Mr Bob', 'Male'],
         ['Mr Isolated Joe', 'Male'],
-    ], columns=['name', 'gender'])))
+    ], columns=['titled_name', 'gender'])))
