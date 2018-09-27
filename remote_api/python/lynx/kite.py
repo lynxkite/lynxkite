@@ -35,7 +35,6 @@ import datetime
 import inspect
 import re
 import itertools
-import uuid
 from collections import deque, defaultdict, OrderedDict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar, Optional, Collection)
@@ -645,8 +644,8 @@ class LynxKite:
   def get_table_data(self, state: str, limit: int = -1) -> types.SimpleNamespace:
     return self._ask('/ajax/getTableOutput', dict(id=state, sampleRows=limit))
 
-  def get_table_guid(self, state: str) -> types.SimpleNamespace:
-    return self._ask('/ajax/getTableOutputGUID', dict(id=state))
+  def get_table_guid(self, state: str) -> str:
+    return self._ask('/ajax/getTableOutputGUID', dict(id=state)).guid
 
   def get_workspace(self, path: str, stack: List[str] = []) -> types.SimpleNamespace:
     return self._ask('/ajax/getWorkspace', dict(top=path, customBoxStack=stack))
@@ -956,25 +955,27 @@ class State:
   def apply(self, fn: Callable[[str, str], Any],
             sec: 'SideEffectCollector') -> 'SingleOutputAtomicBox':
     '''Exports the state, applies "fn", and returns the results of that as a State.'''
-    guid = str(uuid.uuid4())
-    inpath = f'DATA$/external-processing/{guid}'
+    fnhash = hash(fn)
+    inpath = f'DATA$/external-processing/input-{fnhash}'
     export = self.exportToParquet(path=inpath)
-    external = self.externalComputation(label=fn.__name__)
+    snapshot_prefix = f'tmp_workspaces/tmp_snapshots/external-{fnhash}-'
+    external = self.externalComputation(label=fn.__name__, snapshot_prefix=snapshot_prefix)
 
-    def then(ws: str, box: str, stack: List[str]):
-      outputs = self.box.lk.get_workspace(ws, stack).outputs
-      state = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in outputs}[box, 'table']
-      guids = self.box.lk.get_table_guid(state)
-      ip = self.box.lk.get_prefixed_path(inpath).resolved
-      outpath = f'DATA$/tables/{guids.guid}'
-      op = self.box.lk.get_prefixed_path(outpath).resolved
+    def then(wsname: str, box: str, stack: List[str]):
+      lk = self.box.lk
+      # Run function.
+      ip = lk.get_prefixed_path(inpath).resolved
+      outpath = f'DATA$/external-processing/output-{fnhash}'
+      op = lk.get_prefixed_path(outpath).resolved
       fn(ip, op)
-      # TODO: Replace with nice solution.
-      opdir = self.box.lk.get_prefixed_path(f'DATA$/operations/{guids.op}').resolved
-      opdir = opdir.replace('file:', '')
-      os.makedirs(opdir, exist_ok=True)
-      with open(opdir + '/_SUCCESS', 'w'):
-        pass
+      # Import results.
+      resp = lk.get_workspace(wsname, stack)
+      boxes = {b.id: b for b in resp.workspace.boxes}
+      input_table = boxes[box].inputs.table
+      states = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in resp.outputs}
+      input_state = states[input_table.boxId, input_table.id]
+      input_guid = lk.get_table_guid(input_state)
+      lk.importParquetNow(filename=outpath).save_snapshot(snapshot_prefix + input_guid)
 
     export.register(sec)
     external.register(sec)
