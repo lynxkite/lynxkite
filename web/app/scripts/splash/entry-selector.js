@@ -190,6 +190,10 @@ angular.module('biggraph').directive('entrySelector',
         };
 
         scope.snapshotClick = function(event, p) {
+          // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
+          if (event.originalEvent.alreadyHandled) { return; }
+          // Ignore clicks on errored entries.
+          if (p.error) { return; }
           scope.opened[p.name] = !scope.opened[p.name];
         };
 
