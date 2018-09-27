@@ -72,18 +72,16 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     }
   })
 
-  register("External computation", List("table"), List("table"))(
+  register("External computation", List("table"), List("table"), "superpowers")(
     new TableOutputOperation(_) with Triggerable {
       params += Param("label", "Label")
+      params += Param("snapshot_prefix", "Snapshot prefix")
       override def summary = params("label")
       def enabled = FEStatus.enabled
       override def getOutputs() = {
-        params.validate()
-        val result = {
-          val o = graph_operations.ExternalComputation(params("label"))
-          o(o.t, tableInput("table")).result
-        }
-        makeOutput(result.t)
+        val snapshotName = params("snapshot_prefix") + tableInput("table").gUID.toString
+        val snapshot = DirectoryEntry.fromName(snapshotName).asSnapshotFrame
+        makeOutput(snapshot.getState.table)
       }
       override def trigger(wc: WorkspaceController, gdc: GraphDrawingController) =
         concurrent.Future.successful({})
