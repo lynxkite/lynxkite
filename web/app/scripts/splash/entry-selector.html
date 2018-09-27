@@ -132,7 +132,7 @@
       </span>
       {{object.notes}}
     </div>
-    <div ng-if="opened[object.name] && object.icon == 'table'">
+    <div ng-if="opened[object.name] && object.icon == 'table'" style="display:inline-block;">
       <snapshot-viewer
         path="{{object.name}}"
         type="{{object.icon}}"
