@@ -98,7 +98,7 @@
     ng-repeat="object in data.objects"
     id="{{ object.objectType }}-{{ pathInside(object.name) | id }}"
     class="entry {{ object.objectType }}-entry"
-    ng-class="{ 'disabled': object.objectType == 'snapshot' && object.icon =='project', 'viewer':  object.objectType == 'snapshot' && object.icon =='table'}"
+    ng-class="{'viewer':  object.objectType == 'snapshot'}"
     href
     ng-click="objectClick($event, object)"
     ng-class="{ error: object.error }">
