@@ -1,7 +1,7 @@
 <div
   ng-repeat="state in result.states track by $index"
   id="state-{{ $index }}"
-  ng-if="workspace.name !=='fake-workspace'">
+  ng-if="workspace">
   <div id="state-toolbar" class="flat-toolbar" ng-if="state.stateId">
     <button
       class="btn btn-default" id="save-as-snapshot-button"

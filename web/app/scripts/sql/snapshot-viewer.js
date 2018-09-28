@@ -33,27 +33,18 @@ angular.module('biggraph')
                 parametricParameters: {}}
             ]},
             parameters: {},
+          }).then(function(res) {
+            scope.data = res;
+            scope.stateId = scope.data.outputs[0].stateId;
+            // Fake context for general state viewer
+            scope.popupModel = {};
+            scope.popupModel.width = 500;
+            scope.popupModel.height = 500;
+            scope.popupModel.maxHeight = 500;
+            scope.plug = {};
+            scope.plug.stateId = scope.stateId;
+            scope.plug.kind = scope.type;
           });
-        const req = scope.result;
-
-        // Fake context for general state viewer
-        scope.popupModel = {};
-        scope.popupModel.width = 500;
-        scope.popupModel.height = 500;
-        scope.popupModel.maxHeight = 500;
-        scope.workspace = {};
-        scope.workspace.name = 'fake-workspace';
-
-        req.then(function(res) {
-          scope.data = res;
-          scope.stateId = scope.data.outputs[0].stateId;
-          scope.plug = {};
-          scope.plug.stateId = scope.stateId;
-          scope.plug.kind = scope.type;
-        });
-
-
-
       },
     };
   });
