@@ -41,6 +41,7 @@ from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewT
 
 import requests
 from croniter import croniter
+from tempfile import NamedTemporaryFile
 
 
 if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 6):
@@ -551,6 +552,11 @@ class LynxKite:
     filename = self.upload(data, name)
     return self.importCSVNow(filename=filename)
 
+  def uploadParquetNow(self, data: bytes, name: str = None):
+    '''Uploads Parquet file and returns a table state.'''
+    filename = self.upload(data, name)
+    return self.importParquetNow(filename=filename)
+
   def clean_file_system(self) -> None:
     """Deletes the data files which are not referenced anymore."""
     self._send('/remote/cleanFileSystem')
@@ -757,9 +763,27 @@ class LynxKite:
   def from_df(self, df, index=True):
     """Converts a pandas dataframe to a LynxKite table.
 
-    Set `include_index` to False if you don't want to include the index.
+    Set `index` to False if you don't want to include the index.
+    Warning: the `index` setting feature only works with pandas>=0.24.0
     """
-    return self.uploadCSVNow(df.to_csv(index=index))
+    import pandas
+    pandas_version = pandas.__version__
+    major, minor, _ = map(int, pandas_version.split('.'))
+    false_index_not_supported = major == 0 and minor < 24
+    if false_index_not_supported:
+      kwargs = {}
+      if index == False:
+        import warnings
+        from textwrap import dedent
+        msg = dedent(f'''\
+          The setting index=False in from_df function is only supported with pandas>=0.24.0.
+          Your pandas version is {pandas_version} so the index parameter is reset to True.''')
+        warnings.warn(msg)
+    else:
+      kwargs = {'index': index}
+    with NamedTemporaryFile() as f:
+      df.to_parquet(f.name, **kwargs)
+      return self.uploadParquetNow(f.read())
 
 
 class SnapshotSequence:
