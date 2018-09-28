@@ -3,7 +3,7 @@
 // Viewer of a table snapshot in the entry selector.
 
 angular.module('biggraph')
-  .directive('snapshotViewer', function(util) {
+  .directive('snapshotViewer', function(util, $window) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/sql/snapshot-viewer.html',
@@ -11,7 +11,14 @@ angular.module('biggraph')
         path: '@',
         type: '@',
       },
-      link: function(scope, element) {
+      link: function(scope) {
+        function getWidth() {
+          /* global $ */
+          return $('.entry-list').innerWidth();
+        }
+        function setWidth() {
+          scope.popupModel.width = getWidth() - 70;
+        }
         scope.result = util.post( // dummy workspace to create a state
           '/ajax/runWorkspace',
           {workspace: {
@@ -38,13 +45,13 @@ angular.module('biggraph')
             scope.stateId = scope.data.outputs[0].stateId;
             // Fake context for general state viewer
             scope.popupModel = {};
-            scope.popupModel.width = element.parent().parent()[0].offsetWidth - 70;
-            console.log(element.parent().parent(), scope.popupModel.width);
+            setWidth();
             scope.popupModel.height = 500;
             scope.popupModel.maxHeight = 500;
             scope.plug = {};
             scope.plug.stateId = scope.stateId;
             scope.plug.kind = scope.type;
+            angular.element($window).on('resize', function() {scope.$apply(setWidth());});
           });
       },
     };
