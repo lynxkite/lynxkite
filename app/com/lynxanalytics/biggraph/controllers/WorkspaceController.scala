@@ -26,7 +26,7 @@ case class SetWorkspaceRequest(reference: WorkspaceReference, workspace: Workspa
 case class GetOperationMetaRequest(workspace: WorkspaceReference, box: String)
 case class Progress(computed: Int, inProgress: Int, notYetStarted: Int, failed: Int)
 case class GetProjectOutputRequest(id: String, path: String)
-case class GetTableOutputRequest(id: String, sampleRows: Option[Int])
+case class GetTableOutputRequest(id: String, sampleRows: Int)
 case class TableColumn(name: String, dataType: String)
 case class GetTableOutputResponse(header: List[TableColumn], data: List[List[DynamicValue]])
 case class GetPlotOutputRequest(id: String)
@@ -158,7 +158,9 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     calculatedStates.synchronized {
       calculatedStates.get(stateId)
     } match {
-      case None => throw new AssertionError(s"BoxOutputState state identified by $stateId not found")
+      case None =>
+        val msg = s"Unknown BoxOutputState: $stateId"
+        BoxOutputState("error", None, FEStatus(false, disabledReason = msg))
       case Some(state: BoxOutputState) => state
     }
   }

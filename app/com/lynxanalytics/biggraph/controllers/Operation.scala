@@ -658,16 +658,12 @@ abstract class ExportOperationToFile(context: Operation.Context)
     ("format" -> format, "path" -> generatePathIfNeeded(params("path")))
 }
 
-trait Triggerable {
-  // Triggers the side effects of this operation.
-  def trigger(wc: WorkspaceController, gdc: GraphDrawingController): scala.concurrent.Future[Unit]
-}
-
 // A special operation with side effects and no outputs.
-abstract class TriggerableOperation(override val context: Operation.Context)
-  extends SmartOperation(context) with Triggerable {
+abstract class TriggerableOperation(override val context: Operation.Context) extends SmartOperation(context) {
   def apply: Unit = ???
   def enabled = FEStatus.enabled
+  // Triggers the side effects of this operation.
+  def trigger(wc: WorkspaceController, gdc: GraphDrawingController): scala.concurrent.Future[Unit]
 
   override def getOutputs(): Map[BoxOutput, BoxOutputState] = {
     params.validate()

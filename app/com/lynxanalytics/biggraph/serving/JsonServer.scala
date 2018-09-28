@@ -472,7 +472,7 @@ object ProductionJsonServer extends JsonServer {
   def getTableOutputData(user: serving.User, request: GetTableOutputRequest): Future[GetTableOutputResponse] = {
     implicit val metaManager = workspaceController.metaManager
     val table = workspaceController.getOutput(user, request.id).table
-    sqlController.getTableSample(table, request.sampleRows.get)
+    sqlController.getTableSample(table, request.sampleRows)
   }
   def getTableBrowserNodesForBox = jsonGet(getTableBrowserNodesForBoxData)
   def getTableBrowserNodesForBoxData(
@@ -502,7 +502,7 @@ object ProductionJsonServer extends JsonServer {
   def triggerBox = jsonFuturePost(triggerBoxExec)
   def triggerBoxExec(
     user: serving.User, request: GetOperationMetaRequest): Future[Unit] = {
-    workspaceController.getOperation(user, request).asInstanceOf[Triggerable]
+    workspaceController.getOperation(user, request).asInstanceOf[TriggerableOperation]
       .trigger(workspaceController, drawingController)
   }
 
