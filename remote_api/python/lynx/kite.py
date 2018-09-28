@@ -38,7 +38,7 @@ import itertools
 from collections import deque, defaultdict, OrderedDict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar, Optional, Collection)
-
+import uuid
 import requests
 from croniter import croniter
 
@@ -949,35 +949,152 @@ class State:
     state_id = lk.get_state_id(self)
     tss.save_to_sequence(state_id, date)
 
-  def apply(self, fn: Callable[[str, str], Any],
-            sec: 'SideEffectCollector') -> 'SingleOutputAtomicBox':
-    '''Exports the state, applies "fn", and returns the results of that as a State.'''
-    fnhash = hash(fn)
-    inpath = f'DATA$/external-processing/input-{fnhash}'
-    export = self.exportToParquet(path=inpath)
-    snapshot_prefix = f'tmp_workspaces/tmp_snapshots/external-{fnhash}-'
-    external = export.externalComputation(label=fn.__name__, snapshot_prefix=snapshot_prefix)
 
-    def then(wsname: str, box: str, stack: List[str]):
-      lk = self.box.lk
-      # Run function.
-      ip = lk.get_prefixed_path(inpath).resolved
-      outpath = f'DATA$/external-processing/output-{fnhash}'
-      op = lk.get_prefixed_path(outpath).resolved
-      fn(ip, op)
+def external(fn: Callable):
+  '''Decorator for executing computation outside of LynxKite in a LynxKite workflow.
+
+  Returns a custom box that internally exports the input tables and runs the external computation on
+  them when it is triggered. The output of this custom box is the result of the external
+  computation as a LynxKite table.
+
+  Example::
+
+    @external
+    def titled_names(table, default):
+      df = table.pandas()
+      df['gender'] = df.gender.fillna(default)
+      df['titled'] = np.where(df.gender == 'Female', 'Ms ' + df.name, 'Mr ' + df.name)
+      return df
+
+    t = titled_names(lk.createExampleGraph(), 'Female')
+    t.trigger() # Causes the function to run.
+    print(t.df())
+
+  Table state parameters of the function call are exported into a Parquet file. You can read them
+  manually, or via the methods of the ``InputTable`` objects that are passed to your function in
+  their place:
+
+  - ``filename`` is the Hadoop path for the file. (I.e. ``file:/something`` or
+    ``hdfs:///something``.)
+  - ``pandas()`` loads the Parquet file into a Pandas DataFrame.
+  - ``spark()`` loads the Parquet file into a PySpark DataFrame.
+
+  Your function can return one of the following types:
+
+  - ``pandas.DataFrame`` to be written to a Parquet file and imported in LynxKite.
+  - ``spark.DataFrame`` to be written to a Parquet file and imported in LynxKite.
+  '''
+  unique = str(uuid.uuid4())
+
+  @functools.wraps(fn)
+  @subworkspace
+  def wrapper(*args, sec=SideEffectCollector.AUTO, **kwargs):
+    inputs = []
+    exports = []
+
+    def map_param(value):
+      if isinstance(value, State):
+        inputs.append(value)
+        fn = f'DATA$/external-processing/input-{unique}-{len(exports) + 1}'
+        exports.append(value.exportToParquet(path=fn))
+        return InputTable(value.box.lk.get_prefixed_path(fn).resolved)
+      else:
+        return value
+
+    signature = inspect.signature(fn)
+    bound = signature.bind(*args, **kwargs)
+    for k, v in bound.arguments.items():
+      p = signature.parameters[k]
+      if p.kind == inspect.Parameter.VAR_POSITIONAL:  # This is *args.
+        v = list(v)  # It's a tuple normally. But we want to mutate it.
+        for i, value in enumerate(v):
+          v[i] = map_param(value)
+        bound.arguments[k] = v
+      elif p.kind == inspect.Parameter.VAR_KEYWORD:  # This is **kwargs.
+        for name, value in v.items():
+          v[name] = map_param(value)
+      else:  # Normal positional or keyword argument.
+        bound.arguments[k] = map_param(v)
+    assert inputs, 'Please pass in at least one LynxKite state input.'
+    lk = inputs[0].box.lk
+
+    def trigger(wsname: str, box: str, stack: List[str]):
+      res = fn(*bound.args, **bound.kwargs)
+      # TODO: Delete exported files.
+      output_lk = f'DATA$/external-processing/output-{unique}'
+      output_path = lk.get_prefixed_path(output_lk).resolved
+      if _is_spark_dataframe(res):
+        _save_spark_dataframe(res, output_path)
+      elif _is_pandas_dataframe(res):
+        _save_pandas_dataframe(res, output_path)
+      else:
+        raise Exception(
+            f'The return value from {fn.__name__} is not a supported object. Got: {res!r}')
       # Import results.
       resp = lk.get_workspace(wsname, stack)
       boxes = {b.id: b for b in resp.workspace.boxes}
-      input_table = boxes[box].inputs.table
+      input_tables = [getattr(boxes[box].inputs, str(i + 1)) for i in range(len(inputs))]
       states = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in resp.outputs}
-      input_state = states[input_table.boxId, input_table.id]
-      input_guid = lk.get_export_result(input_state).result.id
-      lk.importParquetNow(filename=outpath).save_snapshot(snapshot_prefix + input_guid)
+      input_states = [states[t.boxId, t.id] for t in input_tables]
+      input_guids = [lk.get_export_result(s).result.id for s in input_states]
+      snapshot_name = snapshot_prefix + '-'.join(input_guids)
+      lk.importParquetNow(filename=output_lk).save_snapshot(snapshot_name)
+      # TODO: Delete imported file.
 
-    export.register(sec)
+    snapshot_prefix = f'tmp_workspaces/tmp_snapshots/external-{unique}-'
+    external = ExternalComputationBox(
+        lk.box_catalog(), lk, exports,
+        {'label': fn.__name__ + '()', 'snapshot_prefix': snapshot_prefix},
+        trigger)
+
+    for export in exports:
+      export.register(sec)
     external.register(sec)
-    external.then = then
     return external
+  return wrapper
+
+
+class InputTable:
+  '''Input tables for external computations (``@external``) are translated to these objects.'''
+
+  def __init__(self, filename) -> None:
+    self.filename = filename
+
+  def pandas(self) -> None:
+    import pandas as pd
+    return pd.read_parquet(self.filename.replace('file:', ''))
+
+  def spark(self) -> None:
+    import spark
+    return spark.read.parquet(self.filename)
+
+
+def _is_spark_dataframe(x):
+  try:
+    import spark
+  except ImportError:
+    return False  # It cannot be a Spark DataFrame if we don't even have Spark.
+  return isinstance(x, spark.DataFrame)
+
+
+def _save_spark_dataframe(df, path):
+  df.write.parquet(path)
+
+
+def _is_pandas_dataframe(x):
+  try:
+    import pandas as pd
+  except ImportError:
+    return False  # It cannot be a Pandas DataFrame if we don't even have Pandas.
+  return isinstance(x, pd.DataFrame)
+
+
+def _save_pandas_dataframe(df, path):
+  if path.startswith('file:'):
+    path = path.replace('file:', '')
+    os.makedirs(path, exist_ok=True)
+    path = path + '/part-0'
+  df.to_parquet(path)
 
 
 class Box:
@@ -996,7 +1113,6 @@ class Box:
     self.parametric_parameters: Dict[str, str] = {}
     self.outputs: Set[str] = set()
     self.manual_box_id = manual_box_id
-    self.then: Optional[Callable[[str, str, List[str]], Any]] = None
     # We separate normal and parametric parameters here.
     # Parametric parameters can be specified as `name=PP('parametric value')`
     for key, value in parameters.items():
@@ -1060,9 +1176,9 @@ class Box:
         name='Anonymous')
     ws.trigger_all_side_effects()
 
-  def after_trigger(self, ws: str, box: str, stack: List[str]) -> None:
-    if self.then:
-      self.then(ws, box, stack)
+  def _trigger_in_ws(self, ws: str, box: str, stack: List[str]) -> None:
+    '''Used for triggering this box anywhere in a saved workspace.'''
+    self.lk.trigger_box(ws, box, stack)
 
 
 class AtomicBox(Box):
@@ -1109,6 +1225,23 @@ class SingleOutputAtomicBox(AtomicBox, State):
                manual_box_id: str = None) -> None:
     AtomicBox.__init__(self, box_catalog, lk, operation, inputs, parameters, manual_box_id)
     State.__init__(self, self, output_name)
+
+
+class ExternalComputationBox(SingleOutputAtomicBox):
+  '''
+  A box that runs external computation when triggered. Use it via ``@external``.
+  '''
+
+  def __init__(self, box_catalog: BoxCatalog, lk: LynxKite,
+               inputs: List[State], parameters: Dict[str, Any],
+               fn: Callable[[str, str, List[str]], Any], manual_box_id: str = None) -> None:
+    SingleOutputAtomicBox.__init__(
+        self, box_catalog, lk, f'externalComputation{len(inputs)}',
+        {str(i + 1): inputs[i] for i in range(len(inputs))}, parameters, 'table', manual_box_id)
+    self.fn = fn
+
+  def _trigger_in_ws(self, ws: str, box: str, stack: List[str]) -> None:
+    self.fn(ws, box, stack)
 
 
 class CustomBox(Box):
@@ -1511,8 +1644,7 @@ class Workspace:
     lk = self.lk
     box_ids = self._box_to_trigger_to_box_ids(box_to_trigger)
     # The last id is a "normal" box id, the rest are the custom box stack.
-    lk.trigger_box(full_path, box_ids[-1], box_ids[:-1])
-    box_to_trigger.base.after_trigger(full_path, box_ids[-1], box_ids[:-1])
+    box_to_trigger.base._trigger_in_ws(full_path, box_ids[-1], box_ids[:-1])
 
   def save(self, saved_under_folder: str) -> str:
     lk = self.lk

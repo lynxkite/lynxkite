@@ -72,18 +72,24 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     }
   })
 
-  register("External computation", List("table"), List("table"), "superpowers")(
-    new TableOutputOperation(_) with Triggerable {
-      params += Param("label", "Label")
-      params += Param("snapshot_prefix", "Snapshot prefix")
-      override def summary = params("label")
-      def enabled = FEStatus.enabled
-      override def getOutputs() = {
-        val snapshotName = params("snapshot_prefix") + exportResultInput("table").gUID.toString
-        val snapshot = DirectoryEntry.fromName(snapshotName).asSnapshotFrame
-        makeOutput(snapshot.getState.table)
-      }
-      override def trigger(wc: WorkspaceController, gdc: GraphDrawingController) =
-        concurrent.Future.successful({})
-    })
+  for (i <- 1 to 10) {
+    register(
+      s"External computation $i",
+      (1 to i).map(_.toString).toList,
+      List("table"),
+      "superpowers")(new TableOutputOperation(_) {
+        params += Param("label", "Label")
+        params += Param("snapshot_prefix", "Snapshot prefix")
+        override def summary = params("label")
+        def enabled = FEStatus.enabled
+        override def getOutputs() = {
+          // Make sure the snapshot name depends on all the input GUIDs.
+          val snapshotName =
+            params("snapshot_prefix") +
+              (1 to i).map(j => exportResultInput(j.toString).gUID.toString).mkString("-")
+          val snapshot = DirectoryEntry.fromName(snapshotName).asSnapshotFrame
+          makeOutput(snapshot.getState.table)
+        }
+      })
+  }
 }
