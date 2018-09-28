@@ -24,3 +24,4 @@ prettytable==0.7.2
 pillow
 mypy
 ruamel.yaml>=0.15
+pyarrow

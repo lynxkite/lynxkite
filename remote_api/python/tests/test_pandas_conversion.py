@@ -36,15 +36,11 @@ class TestPandasConversion(unittest.TestCase):
     self.assert_best_sauce_for_df(dummy_df, 'french fries', 'samurai sauce')
 
   def test_pandas_dataframe_to_lk_table(self):
-    table = lk.from_df(dummy_df, include_index=False)
-    table2 = lk.from_df(dummy_df, include_index=True)
+    table = lk.from_df(dummy_df, index=False)
+    table2 = lk.from_df(dummy_df, index=True)
     self.assert_best_sauce_for_table(table, 'hot dog', 'ketchup with vinegar')
     self.assert_best_sauce_for_table(table2, 'hot dog', 'ketchup with vinegar')
 
   def test_lk_table_to_dataframe(self):
     df = dummy_table.df()
     self.assert_best_sauce_for_df(df, 'fish and chips', 'tartar sauce')
-
-  def test_df_to_table_to_df(self):
-    df = lk.from_df(dummy_df, include_index=False).df()
-    self.assertEqual(df.to_csv(), dummy_df.to_csv())
