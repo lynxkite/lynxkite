@@ -7,6 +7,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### master
 
  - Inputs for SQL boxes can be given custom names.
+ - Snapshot content can be viewed inside the workspace browser.
 
 ### 2.4.1
 
