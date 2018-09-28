@@ -5,3 +5,6 @@ Snapshots are saved box output states from workspaces. Once a snapshot is saved 
 box output can, such as a <<Project state, project>> or a <<Table state, table>>.
 
 Snapshots can be loaded back into a workspace with an <<Import snapshot>> box.
+
+Snapshot content can be viewed inside the workspace browser. Click on the snapshot
+entry to open/close the snapshot viewer.

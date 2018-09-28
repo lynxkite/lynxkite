@@ -98,7 +98,7 @@
     ng-repeat="object in data.objects"
     id="{{ object.objectType }}-{{ pathInside(object.name) | id }}"
     class="entry {{ object.objectType }}-entry"
-    ng-class="{ 'disabled': object.objectType == 'snapshot' }"
+    ng-class="{'viewer':  object.objectType == 'snapshot'}"
     href
     ng-click="objectClick($event, object)"
     ng-class="{ error: object.error }">
@@ -131,6 +131,15 @@
         <value ref="vertexCounts[object.name]"></value> rows.
       </span>
       {{object.notes}}
+    </div>
+    <div
+      ng-if="opened[object.name] && !['exportResult', 'error'].includes(object.icon)" 
+      style="display:inline-block;">
+      <snapshot-viewer
+        path="{{object.name}}"
+        type="{{object.icon}}"
+        ng-click="$event.stopPropagation()">
+      </snapshot-viewer>
     </div>
   </div>
 </div>

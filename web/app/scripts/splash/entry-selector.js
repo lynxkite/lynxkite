@@ -15,6 +15,7 @@ angular.module('biggraph').directive('entrySelector',
         function defaultSettings() {
           return { privacy: 'public-read' };
         }
+        scope.opened = {};
         scope.newWorkspace = {};
         scope.newDirectory = defaultSettings();
         scope.path = scope.path || window.sessionStorage.getItem('last_selector_path') ||
@@ -58,6 +59,7 @@ angular.module('biggraph').directive('entrySelector',
         scope.util = util;
         scope.reload = function() {
           abandonScalars();
+          scope.opened = {}; // Snapshot viewers are closed by default.
           if (!scope.searchQuery) {
             scope.data = util.nocache('/ajax/entryList', { path: scope.path });
           } else {
@@ -158,6 +160,7 @@ angular.module('biggraph').directive('entrySelector',
         scope.objectClick = function(event, o) {
           if (scope.isWorkspace(o)) { scope.workspaceClick(event, o); }
           if (scope.isTable(o) || scope.isView(o)) { scope.tableClick(event, o); }
+          if (scope.isSnapshot(o)) { scope.snapshotClick(event, o); }
           return;
         };
 
@@ -184,6 +187,14 @@ angular.module('biggraph').directive('entrySelector',
           // Ignore clicks on errored entries.
           if (p.error) { return; }
           scope.name = p.name;
+        };
+
+        scope.snapshotClick = function(event, p) {
+          // The rename/discard/etc menu is inside the clickable div. Ignore clicks on the menu.
+          if (event.originalEvent.alreadyHandled) { return; }
+          // Ignore clicks on errored entries.
+          if (p.error) { return; }
+          scope.opened[p.name] = !scope.opened[p.name];
         };
 
         scope.enterDirectory = function(event, d) {
@@ -245,6 +256,9 @@ angular.module('biggraph').directive('entrySelector',
         };
         scope.isView = function(object) {
           return object.objectType === 'view';
+        };
+        scope.isSnapshot = function(object) {
+          return object.objectType === 'snapshot';
         };
 
         scope.importTable = {};
