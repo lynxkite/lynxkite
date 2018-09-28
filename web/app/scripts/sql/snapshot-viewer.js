@@ -1,6 +1,6 @@
 'use strict';
 
-// Viewer of a table snapshot in the entry selector.
+// Viewer of a snapshot in the entry selector.
 
 angular.module('biggraph')
   .directive('snapshotViewer', function(util, $window) {
