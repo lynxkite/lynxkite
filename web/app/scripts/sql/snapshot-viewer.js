@@ -11,7 +11,7 @@ angular.module('biggraph')
         path: '@',
         type: '@',
       },
-      link: function(scope) {
+      link: function(scope, element) {
         scope.result = util.post( // dummy workspace to create a state
           '/ajax/runWorkspace',
           {workspace: {
@@ -38,7 +38,8 @@ angular.module('biggraph')
             scope.stateId = scope.data.outputs[0].stateId;
             // Fake context for general state viewer
             scope.popupModel = {};
-            scope.popupModel.width = 500;
+            scope.popupModel.width = element.parent().parent()[0].offsetWidth - 70;
+            console.log(element.parent().parent(), scope.popupModel.width);
             scope.popupModel.height = 500;
             scope.popupModel.maxHeight = 500;
             scope.plug = {};
