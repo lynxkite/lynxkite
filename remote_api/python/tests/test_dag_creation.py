@@ -53,7 +53,7 @@ def create_complex_test_workspace():
   @lk.workspace()
   def combiner(t1_comb, t2_comb):
     tmp = t1_comb.sql('select * from input')
-    tmp2 = lk.sql('select * from one cross join two', tmp, t2_comb)
+    tmp2 = lk.sql('select x.* from x cross join y', x=tmp, y=t2_comb)
     return dict(out1_comb=tmp, out2_comb=tmp2)
 
   @lk.workspace_with_side_effects()
@@ -102,8 +102,8 @@ def create_test_workspace_with_ugly_ids():
     ''')
 
     cellsite_criteria = lk.sql('''
-      select * from one left join two on one.site_id = two.id cross join three
-    ''', daily_usage, site, usage_ratios)
+      select * from usage left join site on usage.site_id = site.id cross join ratios
+    ''', usage=daily_usage, site=site, ratios=usage_ratios)
 
     available_cells = cellsite_criteria.sql('''select * from input''', persist='yes')
 
@@ -234,7 +234,7 @@ class TestDagCreation(unittest.TestCase):
       actual[_box_path_to_str(ep)] = _box_path_to_str(ep.non_trivial_parent_of_endpoint())
     expected = {
         'output o1': 'sql select * from input',
-        'output o2': 'sql select * from one cross join two',
+        'output o2': 'sql select x.* from x cross join y',
         'output o3': 'sql select * from vertices',
         'snapshot SB1': 'input i2',
         'snapshot SB2': 'sql select * from input',

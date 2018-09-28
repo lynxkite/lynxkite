@@ -389,7 +389,7 @@ boxes:
   operationId: SQL1
   parameters:
     sql: |-
-      select degrees, count(degrees)-0.01 as Vertices
+      select degrees, count(degrees)-double(0.01) as Vertices
       from
       (select adegree as degrees
       from vertices
@@ -417,7 +417,7 @@ boxes:
   operationId: SQL1
   parameters:
     sql: |-
-      select size as SizeOfComponent, count(size)-0.01 as NumberOfComponents
+      select size as SizeOfComponent, count(size)-double(0.01) as NumberOfComponents
       from
       (select max(size) as size from `connected_components.vertices` group by id)
       group by size

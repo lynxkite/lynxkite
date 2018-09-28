@@ -124,13 +124,13 @@ class SQLTest extends OperationsTestBase {
     val two = box("Create example graph")
     val three = box("Create example graph")
     val table = box("SQL3", Map("sql" -> """
-      select one.edge_comment, two.name, three.name
+      select one.edge_comment, two.name as src_name, three.name as dst_name
       from `one.edges` as one
       join `two.vertices` as two
       join `three.vertices` as three
       where one.src_name = two.name and one.dst_name = three.name
       """), Seq(one, two, three)).table
-    assert(table.schema.map(_.name) == Seq("edge_comment", "name", "name"))
+    assert(table.schema.map(_.name) == Seq("edge_comment", "src_name", "dst_name"))
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(data == Seq(
       Seq("Bob envies Adam", "Bob", "Adam"),
@@ -235,7 +235,7 @@ class SQLTest extends OperationsTestBase {
         "prefix" -> "edge",
         "direction" -> "all edges",
         "aggregate_weight" -> "set"))
-      .box("SQL1", Map("sql" -> "select edge_weight_set from vertices"))
+      .box("SQL1", Map("sql" -> "select edge_weight_set from vertices", "persist" -> "no"))
       .table
     val data = table.df.collect.toSeq.map(row => toSeq(row))
     assert(table.schema.map(_.name) == Seq("edge_weight_set"))
@@ -404,6 +404,14 @@ class SQLTest extends OperationsTestBase {
         Seq("Eve", Seq(47.5269674, 19.0323968)),
         Seq("Bob", Seq(1.352083, 103.819836)),
         Seq("Isolated Joe", Seq(-33.8674869, 151.2069902))))
+  }
+
+  test("inputs can be given custom names") {
+    val eg = box("Create example graph")
+    val t = box("SQL2", Map(
+      "sql" -> "select count(*) as cnt from `a.vertices` join `b.vertices` using (name)",
+      "input_names" -> "a, b"), Seq(eg, eg)).table
+    assert(t.df.collect.toSeq.map(toSeq) == Seq(Seq(4)))
   }
 
   SQLTestCases.list.foreach(query => test(query._1) {

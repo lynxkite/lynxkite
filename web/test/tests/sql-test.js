@@ -23,7 +23,7 @@ module.exports = function(fw) {
     }, function() {});
 
   function runSQL(query) {
-    lib.workspace.editBox('sql', { sql: query });
+    lib.workspace.editBox('sql', { sql: query, persist: 'no' });
     return lib.workspace.getStateView('sql', 'table').table;
   }
 

@@ -368,14 +368,35 @@ class LynxKite:
     return f
 
   def sql(self, sql: str, *args, **kwargs) -> 'Box':
-    '''Shorthand for sql1, sql2, ..., sql10 boxes'''
-    num_inputs = len(args)
+    '''Shorthand for sql1, sql2, ..., sql10 boxes.
+
+    Use with positional arguments to go with the default naming, like::
+
+      lk.sql('select name from one join two', state1, state2)
+
+    Or pass the states in keyword arguments to use custom input names::
+
+      lk.sql('select count(*) from people', people=state1)
+
+    In either case you can pass in extra keyword arguments which will be passed on to the SQL boxes.
+    '''
+    input_states = list(args)
+    input_names = []
+    # Move named inputs from kwargs to input_states.
+    for k, v in list(kwargs.items()):
+      if isinstance(v, State):
+        input_states.append(v)
+        input_names.append(k)
+        del kwargs[k]
+    num_inputs = len(input_states)
     assert num_inputs > 0, 'SQL needs at least one input.'
     assert num_inputs < 11, 'SQL can have at most ten inputs.'
-    name = 'sql{}'.format(num_inputs)
-    inputs = _to_input_map(name, self.box_catalog().inputs(name), args)
+    box_name = 'sql{}'.format(num_inputs)
+    inputs = _to_input_map(box_name, self.box_catalog().inputs(box_name), input_states)
     kwargs['sql'] = sql
-    return _new_box(self.box_catalog(), self, name, inputs=inputs, parameters=kwargs)
+    # Use default names for unnamed inputs, custom names for the named ones.
+    kwargs['input_names'] = ', '.join(self.box_catalog().inputs(box_name)[:len(args)] + input_names)
+    return _new_box(self.box_catalog(), self, box_name, inputs=inputs, parameters=kwargs)
 
   def address(self) -> str:
     return self._address or os.environ['LYNXKITE_ADDRESS']

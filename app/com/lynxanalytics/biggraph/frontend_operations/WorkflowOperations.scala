@@ -454,20 +454,29 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     registerOp(name, defaultIcon, category, inputs, List("table"), new TableOutputOperation(_) {
       override val params = new ParameterHolder(context) // No "apply_to" parameters.
       params += Param("summary", "Summary", defaultValue = "SQL")
-      params += Code("sql", "SQL", defaultValue = s"select * from `$defaultTableName`", language = "sql",
-        enableTableBrowser = true)
-      params += Choice("persist", "Persist result", options = FEOption.noyes)
+      params += Param("input_names", "Input names", defaultValue = inputs.mkString(", "))
+      params += Code("sql", "SQL", defaultValue = s"select * from `$defaultTableName` limit 10",
+        language = "sql", enableTableBrowser = true)
+      params += Choice("persist", "Persist result", options = FEOption.yesno)
       override def summary = params("summary")
       def enabled = FEStatus.enabled
       def defaultTableName = {
-        val tableNames = this.getInputTables().keySet.toList.sorted
-        Seq("vertices", "input", "one", "one.vertices").find(tableNames.contains(_))
+        val tableNames = this.getInputTables(inputNames).keySet.toList.sorted
+        Seq("vertices", inputNames.head, inputNames.head + ".vertices")
+          .find(tableNames.contains(_))
           .getOrElse(tableNames.head)
+      }
+      lazy val inputNames = {
+        val names = params("input_names").split(",", -1).map(_.trim)
+        assert(
+          names.length == inputs.length,
+          s"Mismatched input name list: ${params("input_names")}")
+        names
       }
       override def getOutputs() = {
         params.validate()
         val sql = params("sql")
-        val protoTables = this.getInputTables()
+        val protoTables = this.getInputTables(inputNames)
         val result = graph_operations.ExecuteSQL.run(sql, protoTables)
         if (params("persist") == "yes") makeOutput(result.saved)
         else makeOutput(result)
