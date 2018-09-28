@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Inputs for SQL boxes can be given custom names.
+
 ### 2.4.1
 
  - The list of custom boxes, shown on the UI, is limited to special directories

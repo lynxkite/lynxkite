@@ -24,12 +24,13 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
 
     @subworkspace
     def select(x, column):
-      return x.sql1(sql=f'select id, {column} from vertices')
+      return x.sql1(sql=f'select id, {column} from vertices', persist='no')
 
     eg = lk.createExampleGraph()
     names = select(eg, 'name')
     ages = select(eg, 'age')
-    result = lk.sql('select name, age from one join two where one.id = two.id', ages, names, ages)
+    result = lk.sql('select name, age from one join two where one.id = two.id', ages, names, ages,
+                    persist='no')
     expected = pd.DataFrame({
         'name': ['Adam', 'Eve', 'Isolated Joe', 'Bob'],
         'age': [20.3, 18.2, 2, 50.3]})

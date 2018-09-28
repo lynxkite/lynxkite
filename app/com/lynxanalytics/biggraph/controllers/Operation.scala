@@ -191,9 +191,12 @@ object Operation {
     }
     implicit class OperationInputTables(operation: Operation) {
       // Returns all tables output by all inputs of this operation.
-      def getInputTables()(implicit metaManager: MetaGraphManager): Map[String, ProtoTable] = {
-        val inputs = operation.context.inputs
-        // TODO: Clean this hack up once we have a standard way of handling N-input boxes.
+      def getInputTables(inputNames: Seq[String] = null)(implicit metaManager: MetaGraphManager): Map[String, ProtoTable] = {
+        val inputs =
+          if (inputNames == null) operation.context.inputs
+          else operation.context.inputs.zip(inputNames).map {
+            case ((oldName, state), newName) => (newName, state)
+          }
         val bindInputName = inputs.size > 1 // Whether to bind input names to avoid collisions.
         inputs.flatMap {
           case (inputName, state) if state.isTable => Seq(inputName -> ProtoTable(state.table))

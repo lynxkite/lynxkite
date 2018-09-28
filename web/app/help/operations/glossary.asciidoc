@@ -242,6 +242,12 @@ button.
 This summary will be displayed below the box in the workspace. Distinguishing SQL boxes this way
 can make the workspace easier to understand.
 
+[[input_names]] Input names::
+Comma-separated list of names used to refer to the inputs of the box.
++
+For example, you can set it to `accounts` (for a single-input SQL box) and then write `select
+count(*) from accounts` as the query.
+
 [[sql]] SQL query::
 The query. Press Ctrl-Enter to save your changes while staying in the editor.
 
