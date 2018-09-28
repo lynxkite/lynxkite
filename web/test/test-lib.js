@@ -1250,6 +1250,11 @@ testLib = {
   selectAllKey: getSelectAllKey(),
   protractorDownloads: '/tmp/protractorDownloads.' + process.pid,
 
+  viewerState: function(name) {
+    const container = $(`snapshot-viewer[path="${name}"]`);
+    return new State(container);
+  },
+
   expectElement: function(e) {
     expect(e.isDisplayed()).toBe(true);
   },

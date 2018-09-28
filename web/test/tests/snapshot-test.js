@@ -38,4 +38,17 @@ module.exports = function(fw) {
       state.close();
     });
 
+  fw.transitionTest(
+    'snapshot created',
+    'snapshot can be viewed in workspace browser',
+    function() {
+      lib.splash.snapshot(snapshotName).click();
+    },
+    function() {
+      const state = lib.viewerState(snapshotName);
+      expect(state.left.vertexCount()).toEqual(4);
+      expect(state.left.edgeCount()).toEqual(4);
+      expect(state.left.attributeCount()).toEqual(8);
+    });
+
 };

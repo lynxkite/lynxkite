@@ -95,8 +95,7 @@
   cursor: pointer;
 }
 
-.entry-list .disabled {
-  color: darkgrey !important;
+.entry-list .viewer {
+  color: black !important;
   background: transparent !important;
 }
-
