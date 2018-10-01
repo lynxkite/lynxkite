@@ -138,7 +138,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
       Param("output", "Save as"),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
-      Code("expr", "Value", defaultValue = "", language = "javascript"),
+      Code("expr", "Value", defaultValue = "", language = "scala"),
       Choice("persist", "Persist result", options = FEOption.bools)) // Default is true.
     def enabled = project.hasVertexSet
     override def summary = {
