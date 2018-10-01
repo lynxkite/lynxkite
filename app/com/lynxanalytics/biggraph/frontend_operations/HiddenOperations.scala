@@ -78,9 +78,7 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       (1 to i).map(_.toString).toList,
       List("table"),
       "superpowers")(new TableOutputOperation(_) {
-        params += Param("label", "Label")
         params += Param("snapshot_prefix", "Snapshot prefix")
-        override def summary = params("label")
         def enabled = FEStatus.enabled
         override def getOutputs() = {
           // Make sure the snapshot name depends on all the input GUIDs.

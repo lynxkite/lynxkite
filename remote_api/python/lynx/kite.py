@@ -145,7 +145,7 @@ def subworkspace(fn: Callable):
   '''
   @functools.wraps(fn)
   def wrapper(*args, _ws_params: List[WorkspaceParameter] = [], **kwargs):
-    signature = inspect.signature(fn)
+    signature = inspect.signature(fn, follow_wrapped=False)
     # Separate workspace parameters from the normal Python parameters.
     ws_param_bindings = {wp.name: kwargs[wp.name] for wp in _ws_params if wp.name in kwargs}
     for wp in _ws_params:
@@ -986,8 +986,8 @@ def external(fn: Callable):
   '''
   unique = str(uuid.uuid4())
 
-  @functools.wraps(fn)
   @subworkspace
+  @functools.wraps(fn)
   def wrapper(*args, sec=SideEffectCollector.AUTO, **kwargs):
     inputs = []
     exports = []
@@ -1044,7 +1044,7 @@ def external(fn: Callable):
     snapshot_prefix = f'tmp_workspaces/tmp_snapshots/external-{unique}-'
     external = ExternalComputationBox(
         lk.box_catalog(), lk, exports,
-        {'label': fn.__name__ + '()', 'snapshot_prefix': snapshot_prefix},
+        {'snapshot_prefix': snapshot_prefix},
         trigger)
 
     for export in exports:
@@ -1590,10 +1590,10 @@ class Workspace:
     if box.manual_box_id:
       self._box_ids[box] = box.manual_box_id
     else:
-      self._box_ids[box] = "{}_{}".format(
-          box.box_id_base(),
-          self._next_ids[box.box_id_base()])
-      self._next_ids[box.box_id_base()] += 1
+      base = box.box_id_base()
+      index = self._next_ids[base]
+      self._box_ids[box] = f'{base}(#{index})'
+      self._next_ids[base] += 1
 
   def id_of(self, box: Box) -> str:
     return self._box_ids[box]

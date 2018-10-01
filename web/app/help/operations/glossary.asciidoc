@@ -269,9 +269,6 @@ This box represents computation outside of LynxKite. See the `@external` decorat
 API.
 
 ====
-[[label]] Label::
-How to label the box on the LynxKite UI. This will be the name of the Python function.
-
 [[snapshot_prefix]] Snapshot prefix::
 The external computation will save the results as a snapshot. This is the prefix of the name of that
 snapshot.
