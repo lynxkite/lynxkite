@@ -1027,6 +1027,9 @@ def external(fn: Callable):
         _save_spark_dataframe(res, output_path)
       elif _is_pandas_dataframe(res):
         _save_pandas_dataframe(res, output_path)
+      elif isinstance(res, str):
+        assert '$' in res, f'The output path has must be a LynxKite prefixed path. Got: {res!r}'
+        output_lk = res
       else:
         raise Exception(
             f'The return value from {fn.__name__} is not a supported object. Got: {res!r}')

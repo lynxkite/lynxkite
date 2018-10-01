@@ -45,3 +45,29 @@ class TestExternalComputation(unittest.TestCase):
     t.trigger()
     self.assertTrue(t.sql('select * from input').df().equals(
         pd.DataFrame({'gender': ['Female', 'Male'], 'count': [1.0, 3.0]})))
+
+  def test_filename(self):
+    lk = lynx.kite.LynxKite()
+
+    @lynx.kite.external
+    def title_names(table):
+      df = table.pandas()
+      df['titled_name'] = np.where(df.gender == 'Female', 'Ms ' + df.name, 'Mr ' + df.name)
+      path_lk = 'DATA$/test/external-computation'
+      path = lk.get_prefixed_path(path_lk).resolved.replace('file:', '')
+      print(path)
+      os.makedirs(path, exist_ok=True)
+      path = path + '/part-0'
+      df.to_parquet(path)
+      return path_lk
+
+    eg = lk.createExampleGraph().sql('select name, gender from vertices')
+    t = title_names(eg)
+    t.trigger()
+    self.assertTrue(t.sql('select titled_name from input').df().equals(
+        pd.DataFrame({'titled_name': [
+            'Mr Adam',
+            'Ms Eve',
+            'Mr Bob',
+            'Mr Isolated Joe',
+        ]})))
