@@ -7,7 +7,7 @@ import unittest
 
 class TestExternalComputation(unittest.TestCase):
 
-  def test_external_computation(self):
+  def test_pandas(self):
     lk = lynx.kite.LynxKite()
 
     @lynx.kite.external
@@ -26,3 +26,22 @@ class TestExternalComputation(unittest.TestCase):
             'Mr Bob',
             'Mr Isolated Joe',
         ]})))
+
+  def test_pyspark(self):
+    lk = lynx.kite.LynxKite()
+    try:
+      from pyspark.sql import SparkSession
+    except ImportError:
+      return  # Optional test. "pip install pyspark" if you want to run it.
+    spark = SparkSession.builder.appName('test').getOrCreate()
+
+    @lynx.kite.external
+    def stats(table):
+      df = table.spark(spark)
+      return df.groupBy('gender').count()
+
+    eg = lk.createExampleGraph().sql('select * from vertices')
+    t = stats(eg)
+    t.trigger()
+    self.assertTrue(t.sql('select * from input').df().equals(
+        pd.DataFrame({'gender': ['Female', 'Male'], 'count': [1.0, 3.0]})))

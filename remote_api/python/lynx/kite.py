@@ -1064,17 +1064,17 @@ class InputTable:
     import pandas as pd
     return pd.read_parquet(self.filename.replace('file:', ''))
 
-  def spark(self) -> None:
-    import spark
+  def spark(self, spark) -> None:
+    '''Takes a SparkSession as the argument and returns the table as a Spark DataFrame.'''
     return spark.read.parquet(self.filename)
 
 
 def _is_spark_dataframe(x):
   try:
-    import spark
+    from pyspark.sql.dataframe import DataFrame
   except ImportError:
     return False  # It cannot be a Spark DataFrame if we don't even have Spark.
-  return isinstance(x, spark.DataFrame)
+  return isinstance(x, DataFrame)
 
 
 def _save_spark_dataframe(df, path):
