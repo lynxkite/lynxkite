@@ -167,7 +167,7 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
   register("Derive scalar")(new ProjectTransformation(_) {
     params ++= List(
       Param("output", "Save as"),
-      Code("expr", "Value", defaultValue = "", language = "javascript"))
+      Code("expr", "Value", defaultValue = "", language = "scala"))
     def enabled = FEStatus.enabled
     override def summary = {
       val name = params("output")
