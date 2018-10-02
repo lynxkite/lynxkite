@@ -1600,7 +1600,7 @@ class Workspace:
     else:
       base = box.box_id_base()
       index = self._next_ids[base]
-      self._box_ids[box] = f'{base}(#{index})'
+      self._box_ids[box] = f'{base}_{index}'
       self._next_ids[base] += 1
 
   def id_of(self, box: Box) -> str:
