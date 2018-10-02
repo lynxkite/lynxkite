@@ -1003,60 +1003,16 @@ def external(fn: Callable):
     def create_exports(name, value):
       if isinstance(value, State):
         exports.append(value.exportToParquet())
-      return value
 
     signature = inspect.signature(fn, follow_wrapped=False)
     bound = signature.bind(*args, **kwargs)
-    bound = map_args(signature, bound, create_exports)
+    map_args(signature, bound, create_exports)
     assert exports, 'Please pass in at least one LynxKite state input.'
     lk = exports[0].box.lk
-
-    def trigger(wsname: str, box: str, stack: List[str]):
-      # Find inputs.
-      resp = lk.get_workspace(wsname, stack)
-      boxes = {b.id: b for b in resp.workspace.boxes}
-      input_tables = [getattr(boxes[box].inputs, str(i + 1)) for i in range(len(exports))]
-      states = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in resp.outputs}
-      input_states = [states[t.boxId, t.id] for t in input_tables]
-      export_results = [lk.get_export_result(s) for s in input_states]
-      input_table_args = [
-          InputTable(lk.get_prefixed_path(e.parameters.path).resolved) for e in export_results]
-
-      def next_input_table(name, value):
-        if isinstance(value, State):
-          return input_table_args.pop(0)
-        else:
-          return value
-
-      bi = map_args(signature, bound, next_input_table)
-
-      # Run external function.
-      res = fn(*bi.args, **bi.kwargs)
-      # TODO: Delete exported files.
-      # Import results.
-      output_lk = f'DATA$/external-processing/output-{unique}'
-      if _is_spark_dataframe(res):
-        output_path = lk.get_prefixed_path(output_lk).resolved
-        _save_spark_dataframe(res, output_path)
-      elif _is_pandas_dataframe(res):
-        output_path = lk.get_prefixed_path(output_lk).resolved
-        _save_pandas_dataframe(res, output_path)
-      elif isinstance(res, str):
-        assert '$' in res, f'The output path has must be a LynxKite prefixed path. Got: {res!r}'
-        output_lk = res
-      else:
-        raise Exception(
-            f'The return value from {fn.__name__} is not a supported object. Got: {res!r}')
-
-      snapshot_name = snapshot_prefix + '-'.join(exp.result.id for exp in export_results)
-      lk.importParquetNow(filename=output_lk).save_snapshot(snapshot_name)
-      # TODO: Delete imported file.
-
-    snapshot_prefix = f'tmp_workspaces/tmp_snapshots/external-{unique}-'
     external = ExternalComputationBox(
         lk.box_catalog(), lk, exports,
-        {'snapshot_prefix': snapshot_prefix},
-        trigger)
+        {'snapshot_prefix': f'tmp_workspaces/tmp_snapshots/external-{unique}-'},
+        fn, bound)
 
     for export in exports:
       export.register(sec)
@@ -1245,14 +1201,55 @@ class ExternalComputationBox(SingleOutputAtomicBox):
 
   def __init__(self, box_catalog: BoxCatalog, lk: LynxKite,
                inputs: List[State], parameters: Dict[str, Any],
-               fn: Callable[[str, str, List[str]], Any], manual_box_id: str = None) -> None:
+               fn: Callable, args: inspect.BoundArguments, manual_box_id: str = None) -> None:
     SingleOutputAtomicBox.__init__(
         self, box_catalog, lk, f'externalComputation{len(inputs)}',
         {str(i + 1): inputs[i] for i in range(len(inputs))}, parameters, 'table', manual_box_id)
     self.fn = fn
+    self.args = args
 
-  def _trigger_in_ws(self, ws: str, box: str, stack: List[str]) -> None:
-    self.fn(ws, box, stack)
+  def _trigger_in_ws(self, wsname: str, box: str, stack: List[str]) -> None:
+    lk = self.lk
+
+    # Find inputs.
+    resp = lk.get_workspace(wsname, stack)
+    boxes = {b.id: b for b in resp.workspace.boxes}
+    input_tables = [getattr(boxes[box].inputs, str(i + 1)) for i in range(len(self.inputs))]
+    states = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in resp.outputs}
+    input_states = [states[t.boxId, t.id] for t in input_tables]
+    export_results = [lk.get_export_result(s) for s in input_states]
+    snapshot_prefix = self.parameters['snapshot_prefix']
+    snapshot_guids = '-'.join(exp.result.id for exp in export_results)
+
+    def next_input_table(name, value):
+      if isinstance(value, State):
+        path = export_results.pop(0).parameters.path
+        return InputTable(lk.get_prefixed_path(path).resolved)
+      else:
+        return value
+
+    signature = inspect.signature(self.fn, follow_wrapped=False)
+    bound = map_args(signature, self.args, next_input_table)
+    # Run external function.
+    res = self.fn(*bound.args, **bound.kwargs)
+    # TODO: Delete exported files.
+    # Import results.
+    output_lk = f'DATA$/external-processing/output-{snapshot_guids}'
+    if _is_spark_dataframe(res):
+      output_path = lk.get_prefixed_path(output_lk).resolved
+      _save_spark_dataframe(res, output_path)
+    elif _is_pandas_dataframe(res):
+      output_path = lk.get_prefixed_path(output_lk).resolved
+      _save_pandas_dataframe(res, output_path)
+    elif isinstance(res, str):
+      assert '$' in res, f'The output path has must be a LynxKite prefixed path. Got: {res!r}'
+      output_lk = res
+    else:
+      raise Exception(
+          f'The return value from {self.fn.__name__}() is not a supported object. Got: {res!r}')
+
+    lk.importParquetNow(filename=output_lk).save_snapshot(snapshot_prefix + snapshot_guids)
+    # TODO: Delete imported file.
 
 
 class CustomBox(Box):
