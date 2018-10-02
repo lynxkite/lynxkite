@@ -38,7 +38,6 @@ import itertools
 from collections import deque, defaultdict, OrderedDict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar, Optional, Collection)
-import uuid
 import requests
 from croniter import croniter
 
@@ -993,7 +992,6 @@ def external(fn: Callable):
   - ``pandas.DataFrame`` to be written to a Parquet file and imported in LynxKite.
   - ``spark.DataFrame`` to be written to a Parquet file and imported in LynxKite.
   '''
-  unique = str(uuid.uuid4())
 
   @subworkspace
   @functools.wraps(fn)
@@ -1011,7 +1009,7 @@ def external(fn: Callable):
     lk = exports[0].box.lk
     external = ExternalComputationBox(
         lk.box_catalog(), lk, exports,
-        {'snapshot_prefix': f'tmp_workspaces/tmp_snapshots/external-{unique}-'},
+        {'snapshot_prefix': f'tmp_workspaces/tmp_snapshots/external-{id(fn)}-'},
         fn, bound)
 
     for export in exports:
@@ -1234,7 +1232,7 @@ class ExternalComputationBox(SingleOutputAtomicBox):
     res = self.fn(*bound.args, **bound.kwargs)
     # TODO: Delete exported files.
     # Import results.
-    output_lk = f'DATA$/external-processing/output-{snapshot_guids}'
+    output_lk = f'DATA$/external-processing/output-{id(self.fn)}-{snapshot_guids}'
     if _is_spark_dataframe(res):
       output_path = lk.get_prefixed_path(output_lk).resolved
       _save_spark_dataframe(res, output_path)
