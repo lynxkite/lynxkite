@@ -115,6 +115,25 @@ def _to_outputs(returned):
     return [state.output(name=name) for name, state in returned.items()]
 
 
+def map_args(
+        signature: inspect.Signature, bound: inspect.BoundArguments,
+        map_fn: Callable[[str, Any], Any]) -> inspect.BoundArguments:
+  bound = signature.bind(*bound.args, **bound.kwargs)
+  for k, v in bound.arguments.items():
+    p = signature.parameters[k]
+    if p.kind == inspect.Parameter.VAR_POSITIONAL:  # This is *args.
+      v = list(v)  # It's a tuple normally. But we want to mutate it.
+      for i, value in enumerate(v):
+        v[i] = map_fn(f'{k}_{i + 1}', value)
+      bound.arguments[k] = v
+    elif p.kind == inspect.Parameter.VAR_KEYWORD:  # This is **kwargs.
+      for name, value in v.items():
+        v[name] = map_fn(f'{k}_{name}', value)
+    else:  # Normal positional or keyword argument.
+      bound.arguments[k] = map_fn(k, v)
+  return bound
+
+
 def subworkspace(fn: Callable):
   '''Allows using the decorated function as a LynxKite custom box.
 
@@ -172,19 +191,9 @@ def subworkspace(fn: Callable):
     assert len(secs) <= 1, f'More than one SideEffectCollector parameters found for {fn}'
     manual_box_id = kwargs.pop('_id', None)
     bound = signature.bind(*args, **kwargs)
-    for k, v in bound.arguments.items():
+    for k in bound.arguments:
       assert k not in secs, f'Explicitly set SideEffectCollector parameter for {fn}'
-      p = signature.parameters[k]
-      if p.kind == inspect.Parameter.VAR_POSITIONAL:  # This is *args.
-        v = list(v)  # It's a tuple normally. But we want to mutate it.
-        for i, value in enumerate(v):
-          v[i] = map_param(f'{k}_{i + 1}', value)
-        bound.arguments[k] = v
-      elif p.kind == inspect.Parameter.VAR_KEYWORD:  # This is **kwargs.
-        for name, value in v.items():
-          v[name] = map_param(f'{k}_{name}', value)
-      else:  # Normal positional or keyword argument.
-        bound.arguments[k] = map_param(k, v)
+    bound = map_args(signature, bound, map_param)
     if secs:
       bound.arguments[secs[0]] = sec
 
@@ -989,43 +998,48 @@ def external(fn: Callable):
   @subworkspace
   @functools.wraps(fn)
   def wrapper(*args, sec=SideEffectCollector.AUTO, **kwargs):
-    inputs = []
     exports = []
 
-    def map_param(value):
+    def create_exports(name, value):
       if isinstance(value, State):
-        inputs.append(value)
-        fn = f'DATA$/external-processing/input-{unique}-{len(exports) + 1}'
-        exports.append(value.exportToParquet(path=fn))
-        return InputTable(value.box.lk.get_prefixed_path(fn).resolved)
-      else:
-        return value
+        exports.append(value.exportToParquet())
+      return value
 
-    signature = inspect.signature(fn)
+    signature = inspect.signature(fn, follow_wrapped=False)
     bound = signature.bind(*args, **kwargs)
-    for k, v in bound.arguments.items():
-      p = signature.parameters[k]
-      if p.kind == inspect.Parameter.VAR_POSITIONAL:  # This is *args.
-        v = list(v)  # It's a tuple normally. But we want to mutate it.
-        for i, value in enumerate(v):
-          v[i] = map_param(value)
-        bound.arguments[k] = v
-      elif p.kind == inspect.Parameter.VAR_KEYWORD:  # This is **kwargs.
-        for name, value in v.items():
-          v[name] = map_param(value)
-      else:  # Normal positional or keyword argument.
-        bound.arguments[k] = map_param(v)
-    assert inputs, 'Please pass in at least one LynxKite state input.'
-    lk = inputs[0].box.lk
+    bound = map_args(signature, bound, create_exports)
+    assert exports, 'Please pass in at least one LynxKite state input.'
+    lk = exports[0].box.lk
 
     def trigger(wsname: str, box: str, stack: List[str]):
-      res = fn(*bound.args, **bound.kwargs)
+      # Find inputs.
+      resp = lk.get_workspace(wsname, stack)
+      boxes = {b.id: b for b in resp.workspace.boxes}
+      input_tables = [getattr(boxes[box].inputs, str(i + 1)) for i in range(len(exports))]
+      states = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in resp.outputs}
+      input_states = [states[t.boxId, t.id] for t in input_tables]
+      export_results = [lk.get_export_result(s) for s in input_states]
+      input_table_args = [
+          InputTable(lk.get_prefixed_path(e.parameters.path).resolved) for e in export_results]
+
+      def next_input_table(name, value):
+        if isinstance(value, State):
+          return input_table_args.pop(0)
+        else:
+          return value
+
+      bi = map_args(signature, bound, next_input_table)
+
+      # Run external function.
+      res = fn(*bi.args, **bi.kwargs)
       # TODO: Delete exported files.
+      # Import results.
       output_lk = f'DATA$/external-processing/output-{unique}'
-      output_path = lk.get_prefixed_path(output_lk).resolved
       if _is_spark_dataframe(res):
+        output_path = lk.get_prefixed_path(output_lk).resolved
         _save_spark_dataframe(res, output_path)
       elif _is_pandas_dataframe(res):
+        output_path = lk.get_prefixed_path(output_lk).resolved
         _save_pandas_dataframe(res, output_path)
       elif isinstance(res, str):
         assert '$' in res, f'The output path has must be a LynxKite prefixed path. Got: {res!r}'
@@ -1033,14 +1047,8 @@ def external(fn: Callable):
       else:
         raise Exception(
             f'The return value from {fn.__name__} is not a supported object. Got: {res!r}')
-      # Import results.
-      resp = lk.get_workspace(wsname, stack)
-      boxes = {b.id: b for b in resp.workspace.boxes}
-      input_tables = [getattr(boxes[box].inputs, str(i + 1)) for i in range(len(inputs))]
-      states = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in resp.outputs}
-      input_states = [states[t.boxId, t.id] for t in input_tables]
-      input_guids = [lk.get_export_result(s).result.id for s in input_states]
-      snapshot_name = snapshot_prefix + '-'.join(input_guids)
+
+      snapshot_name = snapshot_prefix + '-'.join(exp.result.id for exp in export_results)
       lk.importParquetNow(filename=output_lk).save_snapshot(snapshot_name)
       # TODO: Delete imported file.
 

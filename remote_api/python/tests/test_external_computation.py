@@ -32,7 +32,8 @@ class TestExternalComputation(unittest.TestCase):
     try:
       from pyspark.sql import SparkSession
     except ImportError:
-      return  # Optional test. "pip install pyspark" if you want to run it.
+      print('Skipping PySpark test. "pip install pyspark" if you want to run it.')
+      return
     spark = SparkSession.builder.appName('test').getOrCreate()
 
     @lynx.kite.external
@@ -55,7 +56,6 @@ class TestExternalComputation(unittest.TestCase):
       df['titled_name'] = np.where(df.gender == 'Female', 'Ms ' + df.name, 'Mr ' + df.name)
       path_lk = 'DATA$/test/external-computation'
       path = lk.get_prefixed_path(path_lk).resolved.replace('file:', '')
-      print(path)
       os.makedirs(path, exist_ok=True)
       path = path + '/part-0'
       df.to_parquet(path)
