@@ -60,7 +60,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       metaGraphContents),
     CleanerMethod(
       "notSnapshotEntities",
-      "Entities which do not exist in a snapshopt",
+      "Entities which do not exist in a snapshot",
       "Entities which are not saved via either a table snapshot, or as a vetrex set, " +
         "edge bundle, vertex or edge attribute or scalar of a project or its segmentation.",
       snapshotEntities),

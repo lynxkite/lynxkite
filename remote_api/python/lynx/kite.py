@@ -564,16 +564,16 @@ class LynxKite:
   def get_data_files_status(self):
     '''Returns the amount of space used by LynxKite data, various cleaning methods
     and the amount of space they can free up.'''
-    return self._send('/remote/getDataFilesStatus')
+    return self._ask('/ajax/getDataFilesStatus')
 
   def move_to_cleaner_trash(self, method: str):
     '''Moves LynxKite data files specified by the cleaning ``method`` into the cleaner trash.
     The possible values of ``method`` are defined in the result of get_data_files_status.'''
-    return self._send('/remote/moveToCleanerTrash', dict(method=method))
+    return self._send('/ajax/moveToCleanerTrash', dict(method=method))
 
   def empty_cleaner_trash(self):
     '''Empties the cleaner trash.'''
-    return self._send('/remote/emptyCleanerTrash')
+    return self._send('/ajax/emptyCleanerTrash')
 
   def fetch_states(self, boxes: List[SerializedBox],
                    parameters: Dict = dict()) -> Dict[Tuple[str, str], types.SimpleNamespace]:
