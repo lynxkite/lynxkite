@@ -291,26 +291,6 @@ include::expose-internal-edge-id.asciidoc[]
 
 include::expose-internal-vertex-id.asciidoc[]
 
-include::external-computation-1.asciidoc[]
-
-include::external-computation-10.asciidoc[]
-
-include::external-computation-2.asciidoc[]
-
-include::external-computation-3.asciidoc[]
-
-include::external-computation-4.asciidoc[]
-
-include::external-computation-5.asciidoc[]
-
-include::external-computation-6.asciidoc[]
-
-include::external-computation-7.asciidoc[]
-
-include::external-computation-8.asciidoc[]
-
-include::external-computation-9.asciidoc[]
-
 include::fill-edge-attributes-with-constant-default-values.asciidoc[]
 
 include::fill-vertex-attributes-with-constant-default-values.asciidoc[]
