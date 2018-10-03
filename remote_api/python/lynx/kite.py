@@ -117,6 +117,7 @@ def _to_outputs(returned):
 def map_args(
         signature: inspect.Signature, bound: inspect.BoundArguments,
         map_fn: Callable[[str, Any], Any]) -> inspect.BoundArguments:
+  # Create a copy so we don't modify the original.
   bound = signature.bind(*bound.args, **bound.kwargs)
   for k, v in bound.arguments.items():
     p = signature.parameters[k]
@@ -958,6 +959,13 @@ class State:
     tss.save_to_sequence(state_id, date)
 
 
+class Placeholder:
+  '''Universal placeholder. Use it whenever you need to hold a place.'''
+
+  def __init__(self, value=None) -> None:
+    self.value = value
+
+
 def external(fn: Callable):
   '''Decorator for executing computation outside of LynxKite in a LynxKite workflow.
 
@@ -991,6 +999,7 @@ def external(fn: Callable):
 
   - ``pandas.DataFrame`` to be written to a Parquet file and imported in LynxKite.
   - ``spark.DataFrame`` to be written to a Parquet file and imported in LynxKite.
+  - A string that is the LynxKite prefixed path to a Parquet file that is your output.
   '''
 
   @subworkspace
@@ -998,13 +1007,16 @@ def external(fn: Callable):
   def wrapper(*args, sec=SideEffectCollector.AUTO, **kwargs):
     exports = []
 
-    def create_exports(name, value):
+    def add_placeholder(name, value):
       if isinstance(value, State):
         exports.append(value.exportToParquet())
+        return Placeholder(len(exports) - 1)  # The corresponding input index.
+      else:
+        return value
 
     signature = inspect.signature(fn, follow_wrapped=False)
     bound = signature.bind(*args, **kwargs)
-    map_args(signature, bound, create_exports)
+    bound = map_args(signature, bound, add_placeholder)
     assert exports, 'Please pass in at least one LynxKite state input.'
     lk = exports[0].box.lk
     external = ExternalComputationBox(
@@ -1219,15 +1231,15 @@ class ExternalComputationBox(SingleOutputAtomicBox):
     snapshot_prefix = self.parameters['snapshot_prefix']
     snapshot_guids = '-'.join(exp.result.id for exp in export_results)
 
-    def next_input_table(name, value):
-      if isinstance(value, State):
-        path = export_results.pop(0).parameters.path
+    def get_input_table(name, value):
+      if isinstance(value, Placeholder):
+        path = export_results[value.value].parameters.path
         return InputTable(lk.get_prefixed_path(path).resolved)
       else:
         return value
 
     signature = inspect.signature(self.fn, follow_wrapped=False)
-    bound = map_args(signature, self.args, next_input_table)
+    bound = map_args(signature, self.args, get_input_table)
     # Run external function.
     res = self.fn(*bound.args, **bound.kwargs)
     # TODO: Delete exported files.
