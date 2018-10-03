@@ -1393,9 +1393,12 @@ class BoxPath:
 
   def __str__(self) -> str:
     workspaces = [cb.workspace for cb in self.stack]
-    first = self.stack[0].box_id_base() + '_?'  # Don't know the id without the containing ws.
-    rest = [ws.id_of(box) for ws, box in zip(workspaces, self.box_stack()[1:])]
-    return '/'.join([first] + rest)
+    if self.stack:
+      first = self.stack[0].box_id_base() + '_?'  # Don't know the id without the containing ws.
+      rest = [ws.id_of(box) for ws, box in zip(workspaces, self.box_stack()[1:])]
+      return '/'.join([first] + rest)
+    else:
+      return self.base.box_id_base() + '_?'
 
   def box_stack(self) -> List[Box]:
     # Create a new, generic list that we can append the AtomicBox to.
@@ -1424,41 +1427,31 @@ class BoxPath:
     box = self.base
     if box.inputs:  # normal box with inputs
       return [self.parent(inp) for inp in box.inputs.keys()]
-    elif box.operation == 'input':  # input box
-      if not self.stack:  # top level input box
-        return [FakeBoxPathForInputParent(box.parameters['name'])]
-      else:  # input box of a nested custom box
-        containing_custom_box = self.stack[-1]
-        input_name = box.parameters['name']
-        source_state = containing_custom_box.inputs[input_name]
-        return [_atomic_source_of_state(self.stack[:-1], source_state)]
+    elif box.operation == 'input' and self.stack:  # input box
+      containing_custom_box = self.stack[-1]
+      input_name = box.parameters['name']
+      source_state = containing_custom_box.inputs[input_name]
+      return [_atomic_source_of_state(self.stack[:-1], source_state)]
     else:  # no parents
       return []
 
-  def non_trivial_parent_of_endpoint(self) -> 'BoxPath':
-    '''Computes the first  non-trivial atomic upstream BoxPath for this BoxPath.
+  def dependency_representative(self) -> 'BoxPath':
+    '''Returns the path of the box that should be used in dependency calculations.
 
-    It can only be used on "endpoints" (triggerables with no output or top level inputs).
-    The first non-trivial upstream box is either a top-level input box, or
-    a box which computes something (so not an input box or an output box).
-    For top level inputs it is a fake box path, to unify the handling of endpoints.
+    For most boxes (like SQL1) this is themselves. For some boxes (like Compute Inputs) this is
+    their input.
     '''
-    def trivial(box_path) -> bool:
-      if isinstance(box_path, FakeBoxPathForInputParent):
-        return False
-      box = box_path.base
-      return box.operation == 'output' or (box.operation == 'input' and box_path.stack)
-
     box = self.base
-    parents = self.parents()
-    assert len(parents) == 1, 'More than one parent.'
-    parent = self.parents()[0]
-    while trivial(parent):
-      parents = parent.parents()
-      assert len(parents) == 1, 'More than one parent.'
-      parent = parents[0]
-
-    return parent
+    if any([box.operation == 'output',
+            box.operation == 'input' and self.stack,
+            box.operation == 'computeInputs',
+            box.operation == 'saveToSnapshot',
+            box.operation in box.lk._export_box_names]):
+      parents = self.parents()
+      assert len(parents) == 1, f'Cannot follow parent chain for {box}'
+      return parents[0].dependency_representative()
+    else:
+      return self
 
   def to_dict(self):
     '''Returns a (human readable) dict representation of this object.'''
@@ -1477,60 +1470,27 @@ class BoxPath:
 
   @staticmethod
   def dependencies(bps: Collection['BoxPath']) -> Dict['BoxPath', Set['BoxPath']]:
-    # One NTAP (non-trivial atomic parent) can belong to multiple endpoints
-    bp_to_ntap = {bp: bp.non_trivial_parent_of_endpoint() for bp in bps}
-    ntap_to_bps: Dict[BoxPath, Set[BoxPath]] = defaultdict(set)
+    '''Returns the dependencies between the given boxes.'''
+    bp_to_rep = {bp: bp.dependency_representative() for bp in bps}
+    rep_to_bps: Dict[BoxPath, Set[BoxPath]] = defaultdict(set)
     dag: Dict[BoxPath, Set[BoxPath]] = {bp: set() for bp in bps}
-    for bp, ntap in bp_to_ntap.items():
-      ntap_to_bps[ntap].add(bp)
-    for this in bps:
-      to_process = deque(bp_to_ntap[this].parents())
+    for bp, rep in bp_to_rep.items():
+      rep_to_bps[rep].add(bp)
+    for bp in bps:
+      # Find dependencies of "bp" by searching the nodes upstream from its representative for
+      # representatives of other boxes in "bps".
+      rep = bp_to_rep[bp]
+      if bp is not rep and rep in bps:
+        dag[bp].add(rep)  # Our representative is in "bps". Depend on it.
+      to_process = deque(rep.parents())
       visited: Set[BoxPath] = set()
       while to_process:
         box_path = to_process.pop()
         visited.add(box_path)
-        if box_path in ntap_to_bps:
-          dag[this].update(ntap_to_bps[box_path])
-        to_process.extend([bp for bp in box_path.parents() if not bp in visited])
+        if box_path in rep_to_bps:
+          dag[bp].update(rep_to_bps[box_path])
+        to_process.extend(p for p in box_path.parents() if p not in visited)
     return dag
-
-
-class FakeBoxPathForInputParent(BoxPath):
-  '''For top level inputs we create a fake parent. With this, we can unify the
-  dependency computation of endpoints.
-  '''
-
-  def __init__(self, input_name: str) -> None:
-    self.stack = []
-    self.name = input_name
-
-  @property
-  def base(self):
-    raise Exception('This is just a input parent fake box.')
-
-  def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
-    raise Exception('This is just a input parent fake box.')
-
-  def parent(self, input_name: str) -> 'BoxPath':
-    raise Exception('This is just a input parent fake box.')
-
-  def parents(self) -> List['BoxPath']:
-    return []
-
-  def non_trivial_parent_of_endpoint(self) -> 'BoxPath':
-    raise Exception('This is just a input parent fake box.')
-
-  def to_dict(self):
-    return dict(
-        operation='fake input parent',
-        params=dict(name=self.name),
-        nested_in=None)
-
-  def __hash__(self):
-    return hash(f'fake input box {self.name}')
-
-  def __eq__(self, other):
-    return isinstance(other, FakeBoxPathForInputParent) and self.name == other.name
 
 
 class SideEffectCollector:
