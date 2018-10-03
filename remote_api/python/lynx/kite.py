@@ -1134,6 +1134,7 @@ class Box:
 
   def register(self, side_effect_collector: 'SideEffectCollector'):
     side_effect_collector.add_box(self)
+    return self
 
   def __getitem__(self, index: str) -> State:
     if index not in self.outputs:
