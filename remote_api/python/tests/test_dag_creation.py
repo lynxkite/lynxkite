@@ -223,15 +223,14 @@ class TestDagCreation(unittest.TestCase):
 
     self.assertEqual(parents, expected)
 
-  def test_non_trivial_atomic_parents(self):
-    # test non-trivial parents of terminal boxes
+  def test_dependency_representatives(self):
     main_workspace = create_complex_test_workspace()
     actual = dict()
     for box in main_workspace.output_boxes:
       ep = lynx.kite.BoxPath(box)
-      actual[_box_path_to_str(ep)] = _box_path_to_str(ep.non_trivial_parent_of_endpoint())
+      actual[_box_path_to_str(ep)] = _box_path_to_str(ep.dependency_representative())
     for ep in main_workspace.side_effect_paths():
-      actual[_box_path_to_str(ep)] = _box_path_to_str(ep.non_trivial_parent_of_endpoint())
+      actual[_box_path_to_str(ep)] = _box_path_to_str(ep.dependency_representative())
     expected = {
         'output o1': 'sql select * from input',
         'output o2': 'sql select * from one cross join two',
@@ -252,7 +251,7 @@ class TestDagCreation(unittest.TestCase):
     while len(up) > 0:
       last = up[0]
       up = up[0].parents()
-    expected = {'operation': 'fake input parent', 'params': {'name': 'i1'}, 'nested_in': None}
+    expected = {'operation': 'input', 'params': {'name': 'i1'}, 'nested_in': None}
     self.assertEqual(last.to_dict(), expected)
 
   def test_wss_box_dependencies(self):
@@ -273,7 +272,7 @@ class TestDagCreation(unittest.TestCase):
         'snapshot SB2': ['input i1'],
         'output o3': [],
     }
-    self.assertEqual(dependencies, expected)
+    self.assertEqual(expected, dependencies)
 
   def test_wss_to_dag(self):
     dag = self.complex_workspace_sequence().to_dag()
@@ -290,7 +289,7 @@ class TestDagCreation(unittest.TestCase):
         'save workspace': [],
         'output o3': ['save workspace'],
     }
-    self.assertEqual(dependencies, expected)
+    self.assertEqual(expected, dependencies)
 
   def test_box_path_hash(self):
     lk = lynx.kite.LynxKite()
