@@ -122,6 +122,12 @@ class DataManager(
     entityCache(entity.gUID) = data
   }
 
+  def clear() = synchronized {
+    instanceOutputCache.clear()
+    entityCache.clear()
+    sparkCachedEntities.clear()
+  }
+
   private val asyncJobs = new ControlledFutures()(executionContext)
 
   // Runs something on the DataManager threadpool.
