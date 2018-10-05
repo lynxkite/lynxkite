@@ -1436,8 +1436,19 @@ class BoxPath:
   def dependency_representative(self) -> 'BoxPath':
     '''Returns the path of the box that should be used in dependency calculations.
 
-    For most boxes (like SQL1) this is themselves. For some boxes (like Compute Inputs) this is
-    their input.
+    For most boxes (like SQL1) this is themselves. Some boxes (like Compute inputs) have no outputs
+    or rarely have boxes consuming their outputs. For these boxes we use their inputs for the
+    purposes of dependency calculations. A full example:
+
+      [Create example graph] -> [Compute inputs]
+        |
+        v
+      [SQL1]                 -> [Compute inputs]
+
+    Only the Compute boxes are triggerable here, but there is no explicit dependency between them.
+    You could trigger the second Compute box even if the first Compute box did not exist. But we
+    want to order the Compute boxes in the intuitive way: as if the second one depended on the
+    first. So we use their inputs as their representatives in the dependency calculation.
     '''
     box = self.base
     if any([box.operation == 'output',
