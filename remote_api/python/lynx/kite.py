@@ -1396,12 +1396,12 @@ class BoxPath:
     workspaces = [cb.workspace for cb in self.stack]
     if self.stack:
       first = self.stack[0].box_id_base() + '_?'  # Don't know the id without the containing ws.
-      rest = [ws.id_of(box) for ws, box in zip(workspaces, self.box_stack()[1:])]
+      rest = [ws.id_of(box) for ws, box in zip(workspaces, self.stack_and_base()[1:])]
       return '/'.join([first] + rest)
     else:
       return self.base.box_id_base() + '_?'
 
-  def box_stack(self) -> List[Box]:
+  def stack_and_base(self) -> List[Box]:
     # Create a new, generic list that we can append the AtomicBox to.
     stack: List[Box] = list(self.stack)
     return stack + [self.base]
@@ -1412,13 +1412,10 @@ class BoxPath:
     stack[0] is supposed to be in the outer_ws workspace.
     '''
     workspaces = [outer_ws] + [cb.workspace for cb in self.stack]
-    return '/'.join(ws.id_of(box) for ws, box in zip(workspaces, self.box_stack()))
+    return '/'.join(ws.id_of(box) for ws, box in zip(workspaces, self.stack_and_base()))
 
   def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
     return BoxPath(self.base, [box] + self.stack)
-
-  def custom_box_stack(self) -> List[CustomBox]:
-    return self.stack
 
   def parent(self, input_name: str) -> 'BoxPath':
     parent_state = self.base.inputs[input_name]
