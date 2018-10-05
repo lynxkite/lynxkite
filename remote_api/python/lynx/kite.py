@@ -1490,6 +1490,8 @@ class BoxPath:
       # representatives of other boxes in "bps".
       rep = bp_to_rep[bp]
       if bp is not rep and rep in bps:
+        assert bp_to_rep[rep] == rep, \
+            f'If {rep} is the representative of {bp} it must also be its own representative.'
         dag[bp].add(rep)  # Our representative is in "bps". Depend on it.
       to_process = deque(rep.parents())
       visited: Set[BoxPath] = set()
