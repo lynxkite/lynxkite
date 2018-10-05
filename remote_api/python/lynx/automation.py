@@ -264,21 +264,9 @@ class WorkspaceSequence:
 
   @staticmethod
   def _add_box_based_dependencies(dag: Dict[Task, Set[Task]]) -> None:
-    box_tasks = [task for task in dag if isinstance(task, BoxTask)]
-    # One NTAP (non-trivial atomic parent) can belong to multiple endpoints
-    task_to_ntap = {task: task.box_path.non_trivial_parent_of_endpoint() for task in box_tasks}
-    ntap_to_tasks: Dict[BoxPath, Set[Task]] = defaultdict(set)
-    for task, ntap in task_to_ntap.items():
-      ntap_to_tasks[ntap].add(task)
-    for task in box_tasks:
-      to_process = deque(task_to_ntap[task].parents())
-      visited: Set[BoxPath] = set()
-      while to_process:
-        box_path = to_process.pop()
-        visited.add(box_path)
-        if box_path in ntap_to_tasks.keys():
-          dag[task].update(ntap_to_tasks[box_path])
-        to_process.extend([bp for bp in box_path.parents() if not bp in visited])
+    bp_to_task = {task.box_path: task for task in dag if isinstance(task, BoxTask)}
+    for bp, deps in BoxPath.dependencies(bp_to_task.keys()).items():
+      dag[bp_to_task[bp]].update(bp_to_task[p] for p in deps)
 
   @staticmethod
   def _add_save_workspace_deps(dag: Dict[Task, Set[Task]]) -> None:

@@ -263,3 +263,14 @@ A full path in the LynxKite directory system has the following form:
 `top_folder/subfolder_1/subfolder_2/.../subfolder_n/name` +
 Keep in mind that there is no leading slash at the beginning of the path.
 end::full-lk-path[]
+
+tag::external-computation-box[]
+This box represents computation outside of LynxKite. See the `@external` decorator in the Python
+API.
+
+====
+[[snapshot_prefix]] Snapshot prefix::
+The external computation will save the results as a snapshot. This is the prefix of the name of that
+snapshot.
+====
+end::external-computation-box[]

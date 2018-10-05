@@ -38,7 +38,6 @@ import itertools
 from collections import deque, defaultdict, OrderedDict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar, Optional, Collection)
-
 import requests
 from croniter import croniter
 from tempfile import NamedTemporaryFile
@@ -116,6 +115,26 @@ def _to_outputs(returned):
     return [state.output(name=name) for name, state in returned.items()]
 
 
+def map_args(
+        signature: inspect.Signature, bound: inspect.BoundArguments,
+        map_fn: Callable[[str, Any], Any]) -> inspect.BoundArguments:
+  # Create a copy so we don't modify the original.
+  bound = signature.bind(*bound.args, **bound.kwargs)
+  for k, v in bound.arguments.items():
+    p = signature.parameters[k]
+    if p.kind == inspect.Parameter.VAR_POSITIONAL:  # This is *args.
+      v = list(v)  # It's a tuple normally. But we want to mutate it.
+      for i, value in enumerate(v):
+        v[i] = map_fn(f'{k}_{i + 1}', value)
+      bound.arguments[k] = v
+    elif p.kind == inspect.Parameter.VAR_KEYWORD:  # This is **kwargs.
+      for name, value in v.items():
+        v[name] = map_fn(f'{k}_{name}', value)
+    else:  # Normal positional or keyword argument.
+      bound.arguments[k] = map_fn(k, v)
+  return bound
+
+
 def subworkspace(fn: Callable):
   '''Allows using the decorated function as a LynxKite custom box.
 
@@ -146,7 +165,7 @@ def subworkspace(fn: Callable):
   '''
   @functools.wraps(fn)
   def wrapper(*args, _ws_params: List[WorkspaceParameter] = [], **kwargs):
-    signature = inspect.signature(fn)
+    signature = inspect.signature(fn, follow_wrapped=False)
     # Separate workspace parameters from the normal Python parameters.
     ws_param_bindings = {wp.name: kwargs[wp.name] for wp in _ws_params if wp.name in kwargs}
     for wp in _ws_params:
@@ -173,19 +192,9 @@ def subworkspace(fn: Callable):
     assert len(secs) <= 1, f'More than one SideEffectCollector parameters found for {fn}'
     manual_box_id = kwargs.pop('_id', None)
     bound = signature.bind(*args, **kwargs)
-    for k, v in bound.arguments.items():
+    for k in bound.arguments:
       assert k not in secs, f'Explicitly set SideEffectCollector parameter for {fn}'
-      p = signature.parameters[k]
-      if p.kind == inspect.Parameter.VAR_POSITIONAL:  # This is *args.
-        v = list(v)  # It's a tuple normally. But we want to mutate it.
-        for i, value in enumerate(v):
-          v[i] = map_param(f'{k}_{i + 1}', value)
-        bound.arguments[k] = v
-      elif p.kind == inspect.Parameter.VAR_KEYWORD:  # This is **kwargs.
-        for name, value in v.items():
-          v[name] = map_param(f'{k}_{name}', value)
-      else:  # Normal positional or keyword argument.
-        bound.arguments[k] = map_param(k, v)
+    bound = map_args(signature, bound, map_param)
     if secs:
       bound.arguments[secs[0]] = sec
 
@@ -650,9 +659,11 @@ class LynxKite:
   def get_table_data(self, state: str, limit: int = -1) -> types.SimpleNamespace:
     return self._ask('/ajax/getTableOutput', dict(id=state, sampleRows=limit))
 
-  def get_workspace(self, path: str) -> List[types.SimpleNamespace]:
-    response = self._ask('/ajax/getWorkspace', dict(top=path, customBoxStack=[]))
-    return response.workspace.boxes
+  def get_workspace(self, path: str, stack: List[str] = []) -> types.SimpleNamespace:
+    return self._ask('/ajax/getWorkspace', dict(top=path, customBoxStack=stack))
+
+  def get_workspace_boxes(self, path: str, stack: List[str] = []) -> List[types.SimpleNamespace]:
+    return self.get_workspace(path, stack).workspace.boxes
 
   # TODO: deprecate?
   def import_box(self, boxes: List[SerializedBox], box_id: str) -> List[SerializedBox]:
@@ -979,6 +990,121 @@ class State:
     tss.save_to_sequence(state_id, date)
 
 
+class Placeholder:
+  '''Universal placeholder. Use it whenever you need to hold a place.'''
+
+  def __init__(self, value=None) -> None:
+    self.value = value
+
+
+def external(fn: Callable):
+  '''Decorator for executing computation outside of LynxKite in a LynxKite workflow.
+
+  Returns a custom box that internally exports the input tables and runs the external computation on
+  them when it is triggered. The output of this custom box is the result of the external
+  computation as a LynxKite table.
+
+  Example::
+
+    @external
+    def titled_names(table, default):
+      df = table.pandas()
+      df['gender'] = df.gender.fillna(default)
+      df['titled'] = np.where(df.gender == 'Female', 'Ms ' + df.name, 'Mr ' + df.name)
+      return df
+
+    t = titled_names(lk.createExampleGraph(), 'Female')
+    t.trigger() # Causes the function to run.
+    print(t.df())
+
+  Table state parameters of the function call are exported into a Parquet file. You can read them
+  manually, or via the methods of the ``InputTable`` objects that are passed to your function in
+  their place:
+
+  - ``filename`` is the Hadoop path for the file. (I.e. ``file:/something`` or
+    ``hdfs:///something``.)
+  - ``pandas()`` loads the Parquet file into a Pandas DataFrame.
+  - ``spark()`` loads the Parquet file into a PySpark DataFrame.
+
+  Your function can return one of the following types:
+
+  - ``pandas.DataFrame`` to be written to a Parquet file and imported in LynxKite.
+  - ``spark.DataFrame`` to be written to a Parquet file and imported in LynxKite.
+  - A string that is the LynxKite prefixed path to a Parquet file that is your output.
+  '''
+
+  @subworkspace
+  @functools.wraps(fn)
+  def wrapper(*args, sec=SideEffectCollector.AUTO, **kwargs):
+    exports = []
+
+    def add_placeholder(name, value):
+      if isinstance(value, State):
+        exports.append(value.exportToParquet())
+        return Placeholder(len(exports) - 1)  # The corresponding input index.
+      else:
+        return value
+
+    signature = inspect.signature(fn, follow_wrapped=False)
+    bound = signature.bind(*args, **kwargs)
+    bound = map_args(signature, bound, add_placeholder)
+    assert exports, 'Please pass in at least one LynxKite state input.'
+    lk = exports[0].box.lk
+    external = ExternalComputationBox(
+        lk.box_catalog(), lk, exports,
+        {'snapshot_prefix': f'tmp_workspaces/tmp_snapshots/external-{id(fn)}-'},
+        fn, bound)
+
+    for export in exports:
+      export.register(sec)
+    external.register(sec)
+    return external
+  return wrapper
+
+
+class InputTable:
+  '''Input tables for external computations (``@external``) are translated to these objects.'''
+
+  def __init__(self, filename) -> None:
+    self.filename = filename
+
+  def pandas(self) -> None:
+    import pandas as pd
+    return pd.read_parquet(self.filename.replace('file:', ''))
+
+  def spark(self, spark) -> None:
+    '''Takes a SparkSession as the argument and returns the table as a Spark DataFrame.'''
+    return spark.read.parquet(self.filename)
+
+
+def _is_spark_dataframe(x):
+  try:
+    from pyspark.sql.dataframe import DataFrame
+  except ImportError:
+    return False  # It cannot be a Spark DataFrame if we don't even have Spark.
+  return isinstance(x, DataFrame)
+
+
+def _save_spark_dataframe(df, path):
+  df.write.parquet(path)
+
+
+def _is_pandas_dataframe(x):
+  try:
+    import pandas as pd
+  except ImportError:
+    return False  # It cannot be a Pandas DataFrame if we don't even have Pandas.
+  return isinstance(x, pd.DataFrame)
+
+
+def _save_pandas_dataframe(df, path):
+  if path.startswith('file:'):
+    path = path.replace('file:', '')
+    os.makedirs(path, exist_ok=True)
+    path = path + '/part-0'
+  df.to_parquet(path)
+
+
 class Box:
   '''Represents a box in a workspace segment.
 
@@ -1037,8 +1163,9 @@ class Box:
         'inputs': {plug: input_state(state) for plug, state in self.inputs.items()},
         'parametricParameters': self.parametric_parameters})
 
-  def register(self, side_effect_collector):
+  def register(self, side_effect_collector: 'SideEffectCollector'):
     side_effect_collector.add_box(self)
+    return self
 
   def __getitem__(self, index: str) -> State:
     if index not in self.outputs:
@@ -1057,6 +1184,10 @@ class Box:
         side_effect_paths=list(sec.all_triggerables()),
         name='Anonymous')
     ws.trigger_all_side_effects()
+
+  def _trigger_in_ws(self, ws: str, box: str, stack: List[str]) -> None:
+    '''Used for triggering this box anywhere in a saved workspace.'''
+    self.lk.trigger_box(ws, box, stack)
 
 
 class AtomicBox(Box):
@@ -1103,6 +1234,64 @@ class SingleOutputAtomicBox(AtomicBox, State):
                manual_box_id: str = None) -> None:
     AtomicBox.__init__(self, box_catalog, lk, operation, inputs, parameters, manual_box_id)
     State.__init__(self, self, output_name)
+
+
+class ExternalComputationBox(SingleOutputAtomicBox):
+  '''
+  A box that runs external computation when triggered. Use it via ``@external``.
+  '''
+
+  def __init__(self, box_catalog: BoxCatalog, lk: LynxKite,
+               inputs: List[State], parameters: Dict[str, Any],
+               fn: Callable, args: inspect.BoundArguments, manual_box_id: str = None) -> None:
+    SingleOutputAtomicBox.__init__(
+        self, box_catalog, lk, f'externalComputation{len(inputs)}',
+        {str(i + 1): inputs[i] for i in range(len(inputs))}, parameters, 'table', manual_box_id)
+    self.fn = fn
+    self.args = args
+
+  def _trigger_in_ws(self, wsname: str, box: str, stack: List[str]) -> None:
+    lk = self.lk
+
+    # Find inputs.
+    resp = lk.get_workspace(wsname, stack)
+    boxes = {b.id: b for b in resp.workspace.boxes}
+    input_tables = [getattr(boxes[box].inputs, str(i + 1)) for i in range(len(self.inputs))]
+    states = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in resp.outputs}
+    input_states = [states[t.boxId, t.id] for t in input_tables]
+    export_results = [lk.get_export_result(s) for s in input_states]
+    snapshot_prefix = self.parameters['snapshot_prefix']
+    snapshot_guids = '-'.join(exp.result.id for exp in export_results)
+
+    def get_input_table(name, value):
+      if isinstance(value, Placeholder):
+        path = export_results[value.value].parameters.path
+        return InputTable(lk.get_prefixed_path(path).resolved)
+      else:
+        return value
+
+    signature = inspect.signature(self.fn, follow_wrapped=False)
+    bound = map_args(signature, self.args, get_input_table)
+    # Run external function.
+    res = self.fn(*bound.args, **bound.kwargs)
+    # TODO: Delete exported files.
+    # Import results.
+    output_lk = f'DATA$/external-processing/output-{id(self.fn)}-{snapshot_guids}'
+    if _is_spark_dataframe(res):
+      output_path = lk.get_prefixed_path(output_lk).resolved
+      _save_spark_dataframe(res, output_path)
+    elif _is_pandas_dataframe(res):
+      output_path = lk.get_prefixed_path(output_lk).resolved
+      _save_pandas_dataframe(res, output_path)
+    elif isinstance(res, str):
+      assert '$' in res, f'The output path has must be a LynxKite prefixed path. Got: {res!r}'
+      output_lk = res
+    else:
+      raise Exception(
+          f'The return value from {self.fn.__name__}() is not a supported object. Got: {res!r}')
+
+    lk.importParquetNow(filename=output_lk).save_snapshot(snapshot_prefix + snapshot_guids)
+    # TODO: Delete imported file.
 
 
 class CustomBox(Box):
@@ -1236,11 +1425,14 @@ class BoxPath:
 
   def __str__(self) -> str:
     workspaces = [cb.workspace for cb in self.stack]
-    first = self.stack[0].box_id_base() + '_?'  # Don't know the id without the containing ws.
-    rest = [ws.id_of(box) for ws, box in zip(workspaces, self.box_stack()[1:])]
-    return '/'.join([first] + rest)
+    if self.stack:
+      first = self.stack[0].box_id_base() + '_?'  # Don't know the id without the containing ws.
+      rest = [ws.id_of(box) for ws, box in zip(workspaces, self.stack_and_base()[1:])]
+      return '/'.join([first] + rest)
+    else:
+      return self.base.box_id_base() + '_?'
 
-  def box_stack(self) -> List[Box]:
+  def stack_and_base(self) -> List[Box]:
     # Create a new, generic list that we can append the AtomicBox to.
     stack: List[Box] = list(self.stack)
     return stack + [self.base]
@@ -1251,13 +1443,10 @@ class BoxPath:
     stack[0] is supposed to be in the outer_ws workspace.
     '''
     workspaces = [outer_ws] + [cb.workspace for cb in self.stack]
-    return '/'.join(ws.id_of(box) for ws, box in zip(workspaces, self.box_stack()))
+    return '/'.join(ws.id_of(box) for ws, box in zip(workspaces, self.stack_and_base()))
 
   def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
     return BoxPath(self.base, [box] + self.stack)
-
-  def custom_box_stack(self) -> List[CustomBox]:
-    return self.stack
 
   def parent(self, input_name: str) -> 'BoxPath':
     parent_state = self.base.inputs[input_name]
@@ -1267,41 +1456,42 @@ class BoxPath:
     box = self.base
     if box.inputs:  # normal box with inputs
       return [self.parent(inp) for inp in box.inputs.keys()]
-    elif box.operation == 'input':  # input box
-      if not self.stack:  # top level input box
-        return [FakeBoxPathForInputParent(box.parameters['name'])]
-      else:  # input box of a nested custom box
-        containing_custom_box = self.stack[-1]
-        input_name = box.parameters['name']
-        source_state = containing_custom_box.inputs[input_name]
-        return [_atomic_source_of_state(self.stack[:-1], source_state)]
+    elif box.operation == 'input' and self.stack:  # input box
+      containing_custom_box = self.stack[-1]
+      input_name = box.parameters['name']
+      source_state = containing_custom_box.inputs[input_name]
+      return [_atomic_source_of_state(self.stack[:-1], source_state)]
     else:  # no parents
       return []
 
-  def non_trivial_parent_of_endpoint(self) -> 'BoxPath':
-    '''Computes the first  non-trivial atomic upstream BoxPath for this BoxPath.
+  def dependency_representative(self) -> 'BoxPath':
+    '''Returns the path of the box that should be used in dependency calculations.
 
-    It can only be used on "endpoints" (triggerables with no output or top level inputs).
-    The first non-trivial upstream box is either a top-level input box, or
-    a box which computes something (so not an input box or an output box).
-    For top level inputs it is a fake box path, to unify the handling of endpoints.
+    For most boxes (like SQL1) this is themselves. Some boxes (like Compute inputs) have no outputs
+    or rarely have boxes consuming their outputs. For these boxes we use their inputs for the
+    purposes of dependency calculations. A full example:
+
+      [Create example graph] -> [Compute inputs]
+        |
+        v
+      [SQL1]                 -> [Compute inputs]
+
+    Only the Compute boxes are triggerable here, but there is no explicit dependency between them.
+    You could trigger the second Compute box even if the first Compute box did not exist. But we
+    want to order the Compute boxes in the intuitive way: as if the second one depended on the
+    first. So we use their inputs as their representatives in the dependency calculation.
     '''
-    def trivial(box_path) -> bool:
-      if isinstance(box_path, FakeBoxPathForInputParent):
-        return False
-      box = box_path.base
-      return box.operation == 'output' or (box.operation == 'input' and box_path.stack)
-
     box = self.base
-    parents = self.parents()
-    assert len(parents) == 1, 'More than one parent.'
-    parent = self.parents()[0]
-    while trivial(parent):
-      parents = parent.parents()
-      assert len(parents) == 1, 'More than one parent.'
-      parent = parents[0]
-
-    return parent
+    if any([box.operation == 'output',
+            box.operation == 'input' and self.stack,
+            box.operation == 'computeInputs',
+            box.operation == 'saveToSnapshot',
+            box.operation in box.lk._export_box_names]):
+      parents = self.parents()
+      assert len(parents) == 1, f'Cannot follow parent chain for {box}'
+      return parents[0].dependency_representative()
+    else:
+      return self
 
   def to_dict(self):
     '''Returns a (human readable) dict representation of this object.'''
@@ -1318,43 +1508,31 @@ class BoxPath:
   def __eq__(self, other):
     return self.base == other.base and self.stack == other.stack
 
-
-class FakeBoxPathForInputParent(BoxPath):
-  '''For top level inputs we create a fake parent. With this, we can unify the
-  dependency computation of endpoints.
-  '''
-
-  def __init__(self, input_name: str) -> None:
-    self.stack = []
-    self.name = input_name
-
-  @property
-  def base(self):
-    raise Exception('This is just a input parent fake box.')
-
-  def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
-    raise Exception('This is just a input parent fake box.')
-
-  def parent(self, input_name: str) -> 'BoxPath':
-    raise Exception('This is just a input parent fake box.')
-
-  def parents(self) -> List['BoxPath']:
-    return []
-
-  def non_trivial_parent_of_endpoint(self) -> 'BoxPath':
-    raise Exception('This is just a input parent fake box.')
-
-  def to_dict(self):
-    return dict(
-        operation='fake input parent',
-        params=dict(name=self.name),
-        nested_in=None)
-
-  def __hash__(self):
-    return hash(f'fake input box {self.name}')
-
-  def __eq__(self, other):
-    return isinstance(other, FakeBoxPathForInputParent) and self.name == other.name
+  @staticmethod
+  def dependencies(bps: Collection['BoxPath']) -> Dict['BoxPath', Set['BoxPath']]:
+    '''Returns the dependencies between the given boxes.'''
+    bp_to_rep = {bp: bp.dependency_representative() for bp in bps}
+    rep_to_bps: Dict[BoxPath, Set[BoxPath]] = defaultdict(set)
+    dag: Dict[BoxPath, Set[BoxPath]] = {bp: set() for bp in bps}
+    for bp, rep in bp_to_rep.items():
+      rep_to_bps[rep].add(bp)
+    for bp in bps:
+      # Find dependencies of "bp" by searching the nodes upstream from its representative for
+      # representatives of other boxes in "bps".
+      rep = bp_to_rep[bp]
+      if bp is not rep and rep in bps:
+        assert bp_to_rep[rep] == rep, \
+            f'If {rep} is the representative of {bp} it must also be its own representative.'
+        dag[bp].add(rep)  # Our representative is in "bps". Depend on it.
+      to_process = deque(rep.parents())
+      visited: Set[BoxPath] = set()
+      while to_process:
+        box_path = to_process.pop()
+        visited.add(box_path)
+        if box_path in rep_to_bps:
+          dag[bp].update(rep_to_bps[box_path])
+        to_process.extend(p for p in box_path.parents() if p not in visited)
+    return dag
 
 
 class SideEffectCollector:
@@ -1432,10 +1610,10 @@ class Workspace:
     if box.manual_box_id:
       self._box_ids[box] = box.manual_box_id
     else:
-      self._box_ids[box] = "{}_{}".format(
-          box.box_id_base(),
-          self._next_ids[box.box_id_base()])
-      self._next_ids[box.box_id_base()] += 1
+      base = box.box_id_base()
+      index = self._next_ids[base]
+      self._box_ids[box] = f'{base}_{index}'
+      self._next_ids[base] += 1
 
   def id_of(self, box: Box) -> str:
     return self._box_ids[box]
@@ -1486,7 +1664,7 @@ class Workspace:
     lk = self.lk
     box_ids = self._box_to_trigger_to_box_ids(box_to_trigger)
     # The last id is a "normal" box id, the rest are the custom box stack.
-    lk.trigger_box(full_path, box_ids[-1], box_ids[:-1])
+    box_to_trigger.base._trigger_in_ws(full_path, box_ids[-1], box_ids[:-1])
 
   def save(self, saved_under_folder: str) -> str:
     lk = self.lk
@@ -1517,8 +1695,25 @@ class Workspace:
     '''
     temporary_folder = _random_ws_folder()
     self.save(temporary_folder)
-    for btt in self._side_effect_paths:
+    for btt in serialize_deps(BoxPath.dependencies(self._side_effect_paths)):
       self.trigger_saved(btt, temporary_folder)
+
+
+def serialize_deps(deps: Dict[Any, Set[Any]]) -> List[Any]:
+  '''Returns the keys of ``deps`` in an execution order that respects the dependencies.'''
+  deps = {k: set(v) for (k, v) in deps.items()}  # Create a copy.
+  ordering = []
+  while deps:
+    for k, v in deps.items():
+      if not v:
+        ordering.append(k)
+        del deps[k]
+        for v in deps.values():
+          v.discard(k)
+        break
+    else:
+      raise Exception(f'No ordering possible: {deps}')
+  return ordering
 
 
 def _layout(boxes: List[SerializedBox]) -> List[SerializedBox]:
