@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 2.5.0
+
  - Cleaner works again! Just pick _"Cleaner"_ from the user menu as an administrator and click
    buttons to free up space.
  - Inputs for SQL boxes can be given custom names.
