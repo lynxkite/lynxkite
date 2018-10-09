@@ -1086,7 +1086,6 @@ class InputTable:
 
   def lk(self) -> State:
     '''Returns a LynxKite State.'''
-    print(self._lk, self.lk_path, self.full_path)
     return self._lk.importParquetNow(filename=self.lk_path)
 
 
