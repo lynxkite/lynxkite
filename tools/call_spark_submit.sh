@@ -83,6 +83,10 @@ addJPropIfNonEmpty http.netty.maxInitialLineLength 10000
 addJPropIfNonEmpty jdk.tls.ephemeralDHKeySize 2048
 addJPropIfNonEmpty file.encoding 'UTF-8'
 
+if [ -n "EXTRA_DRIVER_OPTIONS" ]; then
+  addJava " $EXTRA_DRIVER_OPTIONS"
+fi
+
 mode=${residual_args[0]}
 
 if [ "$mode" == "batch" ]; then
