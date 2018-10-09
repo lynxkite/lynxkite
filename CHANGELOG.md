@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - The Python API now allows running external computations using the `@external` decorator.
+
 ### 2.5.0
 
  - Cleaner works again! Just pick _"Cleaner"_ from the user menu as an administrator and click
