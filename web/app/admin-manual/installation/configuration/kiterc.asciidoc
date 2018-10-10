@@ -256,3 +256,12 @@ with `tools/monitoring/restart_monitoring_master.sh`.
 # export GRAPHITE_MONITORING_HOST=$(hostname)
 # export GRAPHITE_MONITORING_PORT=9109
 ```
+
+Specify any command line arguments for the jvm that runs the LynxKite driver.
+(e.g., EXTRA_DRIVER_OPTIONS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=50000'
+will run a local LynxKite in a such a mode that you can attach to it with a debugger.)
+Another use case is to change the default 1024k stacksize for the jvm threads like
+this: EXTRA_DRIVER_OPTIONS='-Xss2M'
+```
+# export EXTRA_DRIVER_OPTIONS=
+```
