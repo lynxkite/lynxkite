@@ -84,7 +84,7 @@ class ScalaScriptSecurityManager extends SecurityManager {
   override def checkPackageAccess(s: String): Unit = {
     super.checkPackageAccess(s) // This must be the first thing to do!
     if (shouldCheck.value &&
-      ((s.contains("com.lynxanalytics.biggraph") && !s.endsWith("safe_for_interpreter")) ||
+      (s.contains("com.lynxanalytics.biggraph") ||
         s.contains("org.apache.spark"))) {
       throw new java.security.AccessControlException(s"Illegal package access: $s")
     }
@@ -101,9 +101,6 @@ object ScalaScript {
 
   private var engine: IMain = null
 
-  val dateMagicImports = """import com.lynxanalytics.biggraph.graph_util.safe_for_interpreter.MagicDate._
-                           |import com.github.nscala_time.time.Imports._""".stripMargin
-
   private val runCache = new SoftHashMap[String, String]()
   def run(
     code: String,
@@ -114,7 +111,6 @@ object ScalaScript {
       case (k, v) => s"""val $k: String = "${StringEscapeUtils.escapeJava(v)}" """
     }.mkString("\n")
     val fullCode = s"""
-    $dateMagicImports
     $binds
     val result = {
       $code
@@ -226,7 +222,6 @@ object ScalaScript {
       case (k, v) => s"`$k`: ${v.tpe}"
     }.mkString(", ")
     s"""
-    $dateMagicImports
     def eval($paramString) = {
       $code
     }

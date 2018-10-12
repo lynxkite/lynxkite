@@ -143,11 +143,11 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
         g.vertices,
         onlyOnDefinedAttrs = false)
     }
-    assert(e.getMessage.contains(
-      """error: value * is not a member of Option[Double]
+    assert(e.getMessage ==
+      """<console>:18: error: value * is not a member of Option[Double]
              income * 10.0
                     ^
-"""))
+""")
   }
 
   test("example graph - all vertices: two attributes") {
@@ -170,13 +170,13 @@ class DeriveScalaTest extends FunSuite with TestGraphOp {
         g.vertices,
         onlyOnDefinedAttrs = false)
     }
-    assert(e.getMessage.contains(
-      """error: type mismatch;
+    assert(e.getMessage ==
+      """<console>:18: error: type mismatch;
  found   : Option[Double]
  required: String
              income + age
                       ^
-"""))
+""")
   }
 
   def checkScala(expr: String, name: String, attr: Attribute[_], result: Set[(Int, String)]) = {
