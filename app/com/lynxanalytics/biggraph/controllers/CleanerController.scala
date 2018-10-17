@@ -236,6 +236,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     moveToTrash(io.OperationsDir, files.operations.keys.toSet -- filesToKeep)
     moveToTrash(io.ScalarsDir, files.scalars.keys.toSet -- filesToKeep)
     moveToTrash(io.TablesDir, files.tables.keys.toSet -- filesToKeep)
+    environment.dataManager.clear()
   }
 
   private def moveToTrash(dir: String, files: Set[String]): Unit = {

@@ -71,4 +71,23 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       project.newEdgeAttribute("name", mg.eName)
     }
   })
+
+  for (i <- 1 to 10) {
+    register(
+      s"External computation $i",
+      (1 to i).map(_.toString).toList,
+      List("table"),
+      "superpowers")(new TableOutputOperation(_) {
+        params += Param("snapshot_prefix", "Snapshot prefix")
+        def enabled = FEStatus.enabled
+        override def getOutputs() = {
+          // Make sure the snapshot name depends on all the input GUIDs.
+          val snapshotName =
+            params("snapshot_prefix") +
+              (1 to i).map(j => exportResultInput(j.toString).gUID.toString).mkString("-")
+          val snapshot = DirectoryEntry.fromName(snapshotName).asSnapshotFrame
+          makeOutput(snapshot.getState.table)
+        }
+      })
+  }
 }
