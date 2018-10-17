@@ -693,6 +693,7 @@ abstract class TriggerableOperation(override val context: Operation.Context) ext
 class CustomBoxOperation(
     workspace: Workspace, override val context: Operation.Context) extends SmartOperation(context) {
   override val params = new ParameterHolder(context) // No automatically generated parameters.
+  override def summary = context.meta.operationId.split("/", -1).last
   params ++= {
     val custom = workspace.parametersMeta
     val tables = context.inputs.values.collect { case i if i.isTable => i.table }

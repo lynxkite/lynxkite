@@ -1,0 +1,3 @@
+### External computation 10
+
+include::{g}[tag=external-computation-box]
