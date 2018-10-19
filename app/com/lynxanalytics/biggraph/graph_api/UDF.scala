@@ -12,7 +12,7 @@ object UDF {
 
   // Returns the geodetic distance between two lat/long coordinates in meters.
   def geodistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double = {
-    import com.vividsolutions.jts.geom._
+    import org.locationtech.jts.geom._
     import org.geotools.geometry.jts._
     import org.geotools.referencing._
     val gc = new GeodeticCalculator(UDF.crs)

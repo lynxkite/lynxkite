@@ -79,7 +79,7 @@ case class SegmentByGeographicalProximity(
       .sortUnique(partitioner)
       .persist(spark.storage.StorageLevel.DISK_ONLY)
 
-    val factory = new com.vividsolutions.jts.geom.GeometryFactory()
+    val factory = new org.locationtech.jts.geom.GeometryFactory()
     val links = inputs.coordinates.rdd.mapValues {
       case (lat, lon) => getSegmentIdForPosition(lat, lon, geometries, factory)
     }.flatMapValues(sids => sids)
@@ -97,14 +97,14 @@ case class SegmentByGeographicalProximity(
     lat: Double,
     lon: Double,
     geometries: Seq[(Long, AnyRef /* Geometry */ , Vector[Option[String]])],
-    factory: com.vividsolutions.jts.geom.GeometryFactory): Iterable[ID] = {
+    factory: org.locationtech.jts.geom.GeometryFactory): Iterable[ID] = {
     geometries
       .filter {
         case (_, geometry, _) =>
           geometry match {
             // The actual classes and ways to check differ for implementations.
-            case g: com.vividsolutions.jts.geom.Geometry => g.isWithinDistance(
-              factory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lon, lat)), distance)
+            case g: org.locationtech.jts.geom.Geometry => g.isWithinDistance(
+              factory.createPoint(new org.locationtech.jts.geom.Coordinate(lon, lat)), distance)
             case _ =>
               assert(ignoreUnsupportedShapes, "Unknown shape type found in Shapefile.")
               false
