@@ -64,7 +64,7 @@ case class LookupRegion(
           Option(feature.getAttribute(attribute)).map(_.toString()))).filter(_._3.nonEmpty).map { case (b, g, a) => (b, g, a.get) }.toVector
     sf.close()
 
-    val factory = new com.vividsolutions.jts.geom.GeometryFactory()
+    val factory = new org.locationtech.jts.geom.GeometryFactory()
     output(o.attribute, inputs.coordinates.rdd.flatMapValues {
       case (lat, lon) => regionAttributeMapping
         .find {
@@ -75,8 +75,8 @@ case class LookupRegion(
               // are probably not the complete list.
               case g: org.opengis.geometry.Geometry =>
                 g.contains(new org.geotools.geometry.DirectPosition2D(lon, lat))
-              case g: com.vividsolutions.jts.geom.Geometry =>
-                g.contains(factory.createPoint(new com.vividsolutions.jts.geom.Coordinate(lon, lat)))
+              case g: org.locationtech.jts.geom.Geometry =>
+                g.contains(factory.createPoint(new org.locationtech.jts.geom.Coordinate(lon, lat)))
               case _ =>
                 assert(ignoreUnsupportedShapes, "Unknown shape type found in Shapefile.")
                 false
