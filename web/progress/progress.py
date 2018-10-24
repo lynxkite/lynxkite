@@ -46,7 +46,7 @@ for n in tree.getroot().iter():
 with open('progress-before-cut.svg', 'wb') as f:
   f.write(etree.tostring(tree, pretty_print=True))
 
-durs = ['2.5s', '3s', '2.2s', '2s']
+durs = ['2.0s', '2.4s', '2.5s', '3.0s']
 colors = ['00273e', '39bcf3', '39bcf3', '39bcf3']
 tree = etree.parse('progress-after-cut.svg')
 for n in list(tree.getroot().iter()):
@@ -66,7 +66,7 @@ for n in list(tree.getroot().iter()):
     anim.set('from', f'0 {shift} 0')
     anim.set('to', f'-360 {shift} 0')
     anim.set('dur', durs.pop(0))
-    anim.set('keySplines', '0.5 0.1 0.5 0.9')
+    anim.set('keySplines', '0.5 0.05 0.5 0.95')
     anim.set('keyTimes', '0;1')
     anim.set('calcMode', 'spline')
     anim.set('repeatCount', 'indefinite')

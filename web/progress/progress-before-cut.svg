@@ -11,11 +11,11 @@
     </rdf:RDF>
   </metadata>
   <circle cx="100" cy="0" id="disc1" style="fill:#000000;fill-opacity:0.5;stroke:none;stroke-width:3.63403392" r="49.879963"/>
-  <circle style="fill:#ffffff;fill-opacity:0.5;stroke:none;stroke-width:4.02668285" id="clip1" transform="matrix(1.001489126438501, 0.004111389882614461, -0.0052111254486531255, 0.965864921297386, 12.11256095985874, -8.355254700511423)" cy="0" cx="100" r="56.208199"/>
+  <circle style="fill:#ffffff;fill-opacity:0.5;stroke:none;stroke-width:4.02668285" id="clip1" transform="matrix(1.0014891264385013, 0.004111389882614461, -0.005211125448653153, 0.965864921297386, 12.112560959858754, -8.355254700511438)" cy="0" cx="100" r="56.208199"/>
   <circle style="fill:#39bcf3;fill-opacity:1;stroke:none;stroke-width:1.93273854;opacity:0.5" id="disc2" cy="0" cx="200" r="98.69677"/>
-  <circle cx="200" cy="0" transform="matrix(0.9985520920299304, -0.011171162917132604, -0.006123173468734644, 0.9074937022904552, -23.243925602888112, -7.416414381258178)" id="clip2" style="fill:#ffffff;fill-opacity:0.5;stroke:none;stroke-width:1.95266545" r="113.6379"/>
+  <circle cx="200" cy="0" transform="matrix(0.9985520920299304, -0.011171162917132604, -0.006123173468734644, 0.9074937022904552, -23.243925602888112, -7.416414381258193)" id="clip2" style="fill:#ffffff;fill-opacity:0.5;stroke:none;stroke-width:1.95266545" r="113.6379"/>
   <circle style="fill:#000000;fill-opacity:0.5;stroke:none;stroke-width:4.09004402" id="disc3" cy="0" cx="300" r="45.098854"/>
-  <circle cx="300" cy="0" transform="matrix(1.0001295775677932, 0.00043570948282197625, 0.006200361735994309, 1.1083861655832505, 4.97408921381718, 12.169177211844076)" id="clip3" style="fill:#ffffff;fill-opacity:0.5;stroke:none;stroke-width:4.47214842" r="47.873085"/>
+  <circle cx="300" cy="0" transform="matrix(1.0001295775677932, 0.0004357094828219832, 0.006200361735994309, 1.1083861655832505, 4.974089213817194, 12.169177211844072)" id="clip3" style="fill:#ffffff;fill-opacity:0.5;stroke:none;stroke-width:4.47214842" r="47.873085"/>
   <circle style="fill:#000000;fill-opacity:0.5;stroke:none;stroke-width:1.46890008" id="disc4" cy="0" cx="400" r="113.12061"/>
-  <circle cx="400" cy="0" transform="matrix(1.0005769040039092, 0.0031371487506109963, 0.028421952118511867, 1.0852653254221396, -4.947368837858363, 10.556013834543919)" id="clip4" style="fill:#ffffff;fill-opacity:0.5;stroke:none;stroke-width:1.51352882" r="113.54774"/>
+  <circle cx="400" cy="0" transform="matrix(1.000576904003909, 0.0031371487506109963, 0.028421952118511812, 1.0852653254221396, -4.947368837858363, 10.556013834543933)" id="clip4" style="fill:#ffffff;fill-opacity:0.5;stroke:none;stroke-width:1.51352882" r="113.54774"/>
 </svg>
