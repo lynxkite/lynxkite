@@ -256,3 +256,9 @@ with `tools/monitoring/restart_monitoring_master.sh`.
 # export GRAPHITE_MONITORING_HOST=$(hostname)
 # export GRAPHITE_MONITORING_PORT=9109
 ```
+
+Set thread stack size for executor threads. By default, jvm will assign 1 megabyte for each thread,
+but that is too low for some rdd dependencies.
+```
+# export EXECUTOR_THREAD_STACK_SIZE=2M
+```
