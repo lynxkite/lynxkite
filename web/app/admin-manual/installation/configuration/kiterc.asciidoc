@@ -258,7 +258,8 @@ with `tools/monitoring/restart_monitoring_master.sh`.
 ```
 
 Set thread stack size for executor threads. By default, jvm will assign 1 megabyte for each thread,
-but that is too low for some rdd dependencies.
+but that is too low for some rdd dependencies. The suffixes M and k can be used to specify megabytes
+or kilobytes respectively; e.g., 1M or 1500k.
 ```
 # export EXECUTOR_THREAD_STACK_SIZE=2M
 ```
