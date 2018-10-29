@@ -796,6 +796,9 @@ class LynxKite:
       df.to_parquet(f.name, **kwargs)
       return self.uploadParquetNow(f.read())
 
+  def set_executors(self, count):
+    self._send('/remote/setExecutors', {'count': count})
+
 
 class SnapshotSequence:
   '''A snapshot sequence representing a list of snapshots in LynxKite.
