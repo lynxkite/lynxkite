@@ -28,6 +28,11 @@
   .graph-sidebar, .spark-status {
     display: none;
   }
+
+  /* Undo "max-width: 100% !important" in Bootstrap. */
+  img {
+    max-width: initial !important;
+  }
 }
 
 .tooltip {
