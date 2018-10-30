@@ -566,7 +566,7 @@ class LynxKite:
     filename = self.upload(data, name)
     return self.importParquetNow(filename=filename)
 
-  def clean_file_system(self) -> None:
+  def clean_file_system(self):
     """Deletes the data files which are not referenced anymore."""
     return self._send('/remote/cleanFileSystem')
 
