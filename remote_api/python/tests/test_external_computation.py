@@ -82,7 +82,6 @@ class TestExternalComputation(unittest.TestCase):
     eg = lk.createExampleGraph()
     t = join(eg.sql('select age from vertices'), eg.sql('select name from vertices'))
     t.trigger()
-    print(t.df())
     self.assertTrue(t.sql('select age, name from input').df().equals(
         pd.DataFrame({
             'age': [20.3, 18.2, 50.3, 2.0], 'name': ['Adam', 'Eve', 'Bob', 'Isolated Joe']})))
@@ -130,3 +129,23 @@ class TestExternalComputation(unittest.TestCase):
         'compute_?/join_0/exportToParquet_1',
         'compute_?/join_0/externalComputation2_0',
     ], [str(bp) for bp in lynx.kite.serialize_deps(deps)])
+
+  def test_lk(self):
+    lk = lynx.kite.LynxKite()
+
+    @lynx.kite.external
+    def title_names(table):
+      return table.lk().sql('''
+          select concat(case when gender = "Female" then "Ms " else "Mr " end, name) as titled_name
+          from input''')
+
+    eg = lk.createExampleGraph().sql('select name, gender from vertices')
+    t = title_names(eg)
+    t.trigger()
+    self.assertTrue(t.sql('select titled_name from input').df().equals(
+        pd.DataFrame({'titled_name': [
+            'Mr Adam',
+            'Ms Eve',
+            'Mr Bob',
+            'Mr Isolated Joe',
+        ]})))
