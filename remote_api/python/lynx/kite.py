@@ -212,7 +212,7 @@ def subworkspace(fn: Callable):
   return wrapper
 
 
-def ws_param(name: str, default: str='', description: str=''):
+def ws_param(name: str, default: str = '', description: str = ''):
   '''Adds a workspace parameter to the wrapped subworkspace.
 
   Example use::
@@ -1025,12 +1025,17 @@ def external(fn: Callable):
     ``hdfs:///something``.)
   - ``pandas()`` loads the Parquet file into a Pandas DataFrame.
   - ``spark()`` loads the Parquet file into a PySpark DataFrame.
+  - ``lk()`` loads the Parquet file into a LynxKite state.
 
   Your function can return one of the following types:
 
   - ``pandas.DataFrame`` to be written to a Parquet file and imported in LynxKite.
   - ``spark.DataFrame`` to be written to a Parquet file and imported in LynxKite.
   - A string that is the LynxKite prefixed path to a Parquet file that is your output.
+  - A LynxKite table state to be written to a Parquet file and imported in LynxKite.
+
+  Why use LynxKite states in external computations? This allows the use of LynxKite as in a notebook
+  environment. You can access the actual data and write code that is conditional on the data.
   '''
 
   @subworkspace
@@ -1065,16 +1070,23 @@ def external(fn: Callable):
 class InputTable:
   '''Input tables for external computations (``@external``) are translated to these objects.'''
 
-  def __init__(self, filename) -> None:
-    self.filename = filename
+  def __init__(self, lk, lk_path, full_path) -> None:
+    self._lk = lk
+    self.lk_path = lk_path
+    self.full_path = full_path
 
-  def pandas(self) -> None:
+  def pandas(self):
+    '''Returns a Pandas DataFrame.'''
     import pandas as pd
-    return pd.read_parquet(self.filename.replace('file:', ''))
+    return pd.read_parquet(self.full_path.replace('file:', ''))
 
-  def spark(self, spark) -> None:
+  def spark(self, spark):
     '''Takes a SparkSession as the argument and returns the table as a Spark DataFrame.'''
-    return spark.read.parquet(self.filename)
+    return spark.read.parquet(self.full_path)
+
+  def lk(self) -> State:
+    '''Returns a LynxKite State.'''
+    return self._lk.importParquetNow(filename=self.lk_path)
 
 
 def _is_spark_dataframe(x):
@@ -1266,7 +1278,7 @@ class ExternalComputationBox(SingleOutputAtomicBox):
     def get_input_table(name, value):
       if isinstance(value, Placeholder):
         path = export_results[value.value].parameters.path
-        return InputTable(lk.get_prefixed_path(path).resolved)
+        return InputTable(lk, path, lk.get_prefixed_path(path).resolved)
       else:
         return value
 
@@ -1280,18 +1292,24 @@ class ExternalComputationBox(SingleOutputAtomicBox):
     if _is_spark_dataframe(res):
       output_path = lk.get_prefixed_path(output_lk).resolved
       _save_spark_dataframe(res, output_path)
+      state = lk.importParquetNow(filename=output_lk)
+      # TODO: Delete imported file.
     elif _is_pandas_dataframe(res):
       output_path = lk.get_prefixed_path(output_lk).resolved
       _save_pandas_dataframe(res, output_path)
+      state = lk.importParquetNow(filename=output_lk)
+      # TODO: Delete imported file.
+    elif isinstance(res, State):
+      state = res
     elif isinstance(res, str):
       assert '$' in res, f'The output path has must be a LynxKite prefixed path. Got: {res!r}'
-      output_lk = res
+      state = lk.importParquetNow(filename=res)
+      # TODO: Delete imported file.
     else:
       raise Exception(
           f'The return value from {self.fn.__name__}() is not a supported object. Got: {res!r}')
 
-    lk.importParquetNow(filename=output_lk).save_snapshot(snapshot_prefix + snapshot_guids)
-    # TODO: Delete imported file.
+    state.save_snapshot(snapshot_prefix + snapshot_guids)
 
 
 class CustomBox(Box):

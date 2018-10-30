@@ -338,8 +338,8 @@ class SQLTest extends OperationsTestBase {
       .box("Derive vertex attribute", Map("output" -> "lon", "expr" -> "location._2"))
       .box("SQL1", Map("sql" -> "select geodistance(src_lat, src_lon, dst_lat, dst_lon) from edges")).table
     assert(t.df.collect.toSeq.map(row => toSeq(row)) == Seq(
-      Seq(7023993.307994277), // New York / Budapest ~7k kilometers.
-      Seq(7023993.307994277),
+      Seq(7023993.307994274), // New York / Budapest ~7k kilometers.
+      Seq(7023993.307994274),
       Seq(1.5340398666732997E7), // New York / Singapore ~15k kilometers.
       Seq(9507129.781908857))) // Budapest / Singapore ~ 9.5k kilometers.
   }

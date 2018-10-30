@@ -79,12 +79,12 @@ libraryDependencies ++= Seq(
   "org.eclipse.jetty" % "jetty-servlet" % "8.1.19.v20160209",
   // The Google Cloud Storage connector for Spark and Hive
   "com.google.cloud.bigdataoss" % "gcs-connector" % "1.6.1-hadoop2",
-  "org.geotools" % "gt-shapefile" % "16.1",
-  "org.geotools" % "gt-epsg-hsql" % "2.5.6",
+  "org.geotools" % "gt-shapefile" % "20.0",
+  "org.geotools" % "gt-epsg-hsql" % "20.0",
+  "org.locationtech.jts" % "jts" % "1.16.0",
   // Plot drawing
   "org.vegas-viz" %% "vegas" % "0.3.9",
-  "org.vegas-viz" %% "vegas-spark" % "0.3.9",
-  "com.github.nscala-time" %% "nscala-time" % "2.20.0")
+  "org.vegas-viz" %% "vegas-spark" % "0.3.9")
 
 // We put the local Spark installation on the classpath for compilation and testing instead of using
 // it from Maven. The version on Maven pulls in an unpredictable (old) version of Hadoop.
