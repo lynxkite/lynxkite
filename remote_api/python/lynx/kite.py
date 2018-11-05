@@ -534,11 +534,11 @@ class LynxKite:
 
   def remove_name(self, name: str, force: bool = False):
     '''Removes an object named ``name``.'''
-    self._send('/remote/removeName', dict(name=name, force=force))
+    return self._send('/remote/removeName', dict(name=name, force=force))
 
   def change_acl(self, file: str, readACL: str, writeACL: str):
     '''Sets the read and write access control list for a path in LynxKite.'''
-    self._send('/remote/changeACL',
+    return self._send('/remote/changeACL',
                dict(project=file, readACL=readACL, writeACL=writeACL))
 
   def list_dir(self, dir: str = '') -> List[types.SimpleNamespace]:
@@ -566,9 +566,9 @@ class LynxKite:
     filename = self.upload(data, name)
     return self.importParquetNow(filename=filename)
 
-  def clean_file_system(self) -> None:
+  def clean_file_system(self):
     """Deletes the data files which are not referenced anymore."""
-    self._send('/remote/cleanFileSystem')
+    return self._send('/remote/cleanFileSystem')
 
   def get_data_files_status(self):
     '''Returns the amount of space used by LynxKite data, various cleaning methods
@@ -795,6 +795,9 @@ class LynxKite:
     with NamedTemporaryFile() as f:
       df.to_parquet(f.name, **kwargs)
       return self.uploadParquetNow(f.read())
+
+  def set_executors(self, count):
+    return self._send('/remote/setExecutors', {'count': count})
 
 
 class SnapshotSequence:
