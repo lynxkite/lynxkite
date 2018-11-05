@@ -41,6 +41,7 @@ object RemoteAPIProtocol {
       exists: Boolean, resolved: String)
   case class ListElement(name: String, checkpoint: String, objectType: String)
   case class ListResult(entries: List[ListElement])
+  case class SetExecutorsRequest(count: Int)
 
   import WorkspaceJsonFormatters._
   implicit val wParquetMetadataResponse = json.Json.writes[ParquetMetadataResponse]
@@ -55,7 +56,7 @@ object RemoteAPIProtocol {
   implicit val wPrefixedPathResponse = json.Json.writes[PrefixedPathResult]
   implicit val wListElement = json.Json.writes[ListElement]
   implicit val wListResult = json.Json.writes[ListResult]
-
+  implicit val rSetExecutorsRequest = json.Json.reads[SetExecutorsRequest]
 }
 
 object RemoteAPIServer extends JsonServer {
@@ -70,6 +71,7 @@ object RemoteAPIServer extends JsonServer {
   def changeACL = jsonPost(c.changeACL)
   def list = jsonPost(c.list)
   def cleanFileSystem = jsonPost(c.cleanFileSystem)
+  def setExecutors = jsonPost(c.setExecutors)
 }
 
 class RemoteAPIController(env: BigGraphEnvironment) {
@@ -191,5 +193,11 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val cleanerController = ProductionJsonServer.cleanerController
     cleanerController.moveAllToCleanerTrash(user)
     cleanerController.emptyCleanerTrash(user, request)
+  }
+
+  def setExecutors(user: User, request: SetExecutorsRequest) = {
+    assert(user.isAdmin, "Only administrator users can set the number of executors.")
+    env.sparkContext.requestTotalExecutors(
+      request.count, localityAwareTasks = 0, hostToLocalTaskCount = Map.empty)
   }
 }
