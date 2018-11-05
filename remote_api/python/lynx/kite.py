@@ -539,7 +539,7 @@ class LynxKite:
   def change_acl(self, file: str, readACL: str, writeACL: str):
     '''Sets the read and write access control list for a path in LynxKite.'''
     return self._send('/remote/changeACL',
-               dict(project=file, readACL=readACL, writeACL=writeACL))
+                      dict(project=file, readACL=readACL, writeACL=writeACL))
 
   def list_dir(self, dir: str = '') -> List[types.SimpleNamespace]:
     '''List the objects in a directory, with their names, types, notes,
