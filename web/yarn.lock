@@ -119,9 +119,9 @@ angular-cookies@1.6.4:
   version "1.6.4"
   resolved "https://registry.yarnpkg.com/angular-cookies/-/angular-cookies-1.6.4.tgz#c28f3f6aac7a9826c1e45f1d6807240036e5b26d"
 
-angular-hotkeys@chieffancypants/angular-hotkeys#1.5.0:
-  version "1.5.0"
-  resolved "https://codeload.github.com/chieffancypants/angular-hotkeys/tar.gz/df32c2562879d726f5813047809db81e5847ed91"
+angular-hotkeys@1.6.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/angular-hotkeys/-/angular-hotkeys-1.6.0.tgz#59682e29a3dbbad9d975b579715308c361d249d6"
 
 angular-mocks@1.6.4:
   version "1.6.4"
@@ -3799,9 +3799,9 @@ nan@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/nan/-/nan-1.0.0.tgz#ae24f8850818d662fcab5acf7f3b95bfaa2ccf38"
 
-natives@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/natives/-/natives-1.1.0.tgz#e9ff841418a6b2ec7a495e939984f78f163e6e31"
+natives@^1.1.0, natives@^1.1.6:
+  version "1.1.6"
+  resolved "https://registry.yarnpkg.com/natives/-/natives-1.1.6.tgz#a603b4a498ab77173612b9ea1acdec4d980f00bb"
 
 natural-compare@^1.4.0:
   version "1.4.0"
@@ -5492,13 +5492,13 @@ then-request@^2.0.1:
     promise "^7.1.1"
     qs "^6.1.0"
 
+three@0.98.0:
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/three/-/three-0.98.0.tgz#11d4e3cca4b5d099c7de0ea5afa153b5d20cda84"
+
 three@>=0.58.10:
   version "0.82.0"
   resolved "https://registry.yarnpkg.com/three/-/three-0.82.0.tgz#03670b7c7f1b73910a8d2cf059c3dd12e7d96dff"
-
-threejs@jiyinyiyong/three.js#0.82.0:
-  version "0.82.0"
-  resolved "https://codeload.github.com/jiyinyiyong/three.js/tar.gz/921ac8f19191511d16390150641b7ce17cdc2457"
 
 threestrap@unconed/threestrap#0.0.10:
   version "0.0.10"
