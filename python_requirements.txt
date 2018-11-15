@@ -16,7 +16,7 @@ autopep8
 awscli
 boto3
 pandas
-Sphinx
+Sphinx==1.8.2
 sphinx-rtd-theme
 pytest
 selenium
