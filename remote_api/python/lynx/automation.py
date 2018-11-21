@@ -229,7 +229,8 @@ class WorkspaceSequence:
 
   def __init__(self, ws: Workspace, schedule: str,
                start_date: datetime.datetime, lk_root: str,
-               input_recipes: List[InputRecipe], params: Dict[str, Any]={}) -> None:
+               input_recipes: List[InputRecipe], params: Dict[str, Any]={},
+               retention_deltas: Dict[str, datetime.timedelta]={}) -> None:
     self.ws = ws
     self.lk = self.ws.lk
     self._schedule = schedule
@@ -243,9 +244,15 @@ class WorkspaceSequence:
       location = _normalize_path(self.lk_root + '/input-snapshots/' + inp)
       self.input_sequences[inp] = TableSnapshotSequence(self.lk, location, self._schedule)
     self.output_sequences: Dict[str, TableSnapshotSequence] = {}
+    for name in retention_deltas.keys():
+      assert name in self.ws.outputs, "{} is not a valid output name".format(name)
     for output in self.ws.outputs:
       location = _normalize_path(self.lk_root + '/output-snapshots/' + output)
-      self.output_sequences[output] = TableSnapshotSequence(self.lk, location, self._schedule)
+      self.output_sequences[output] = TableSnapshotSequence(
+          self.lk,
+          location,
+          self._schedule,
+          retention=retention_deltas.get(output))
 
   def ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
@@ -436,6 +443,7 @@ class WorkspaceSequenceInstance:
     for box_path in ws.side_effect_paths():
       if 'path' in box_path.base.parameters and box_path.base.parameters['path'] == path:
         ws.trigger_saved(box_path, self.wrapper_folder_name())
+        self._wss.output_sequences[name].delete_expired()
         break
     else:
       raise Exception(f'No output with name {name}')
