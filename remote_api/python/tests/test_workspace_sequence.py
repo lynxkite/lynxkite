@@ -2,7 +2,8 @@ import unittest
 import lynx.kite
 from lynx.kite import pp, text
 import lynx.automation
-from datetime import datetime
+from datetime import datetime, timedelta
+import mock
 
 
 class TestWorkspaceSequence(unittest.TestCase):
@@ -143,3 +144,27 @@ class TestWorkspaceSequence(unittest.TestCase):
     run_ws(datetime(2018, 4, 5))
     run_ws(datetime(2018, 4, 6))
     run_ws(datetime(2018, 4, 7))
+
+  def test_output_retention(self):
+    lk = lynx.kite.LynxKite()
+    lk.remove_name('wss_retention', force=True)
+    lk.remove_name('wss_retention_seq', force=True)
+
+    @lk.workspace(name='counter')
+    def builder(table):
+      o1 = table.sql('select count(*) as cnt from input')
+      return dict(cnt=o1)
+
+    test_date = datetime(2018, 1, 2)
+    tss = lynx.kite.TableSnapshotSequence(lk, 'wss_retention_seq', '0 0 * * *')
+    lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, test_date)
+    input_recipe = lynx.automation.TableSnapshotRecipe(tss)
+    wss = lynx.automation.WorkspaceSequence(
+        ws=builder,
+        schedule='0 0 * * *',
+        start_date=datetime(2018, 1, 1),
+        lk_root='wss_retention',
+        input_recipes=[input_recipe],
+        retention_deltas=dict(cnt=timedelta(days=5)))
+    wss_instance = wss.ws_for_date(test_date)
+    wss_instance.run()
