@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 2.6.0
+
  - Fixed an issue where "Derived" operations could not be run in non-local mode.
  - The Python API now allows running external computations using the `@external` decorator.
  - Upgraded to Apache Spark 2.3.2.
