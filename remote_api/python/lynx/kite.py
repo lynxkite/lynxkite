@@ -852,7 +852,7 @@ class SnapshotSequence:
     if self._retention:
       threshold = self.snapshot_name(_now().replace(second=0, microsecond=0) - self._retention)
       for entry in self.lk.list_dir(self._location):
-        if (entry.name < threshold):
+        if entry.name < threshold:
           self.lk.remove_name(entry.name)
 
 
