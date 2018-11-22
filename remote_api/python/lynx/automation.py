@@ -188,6 +188,7 @@ class Output(BoxTask):
 
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
     wss_instance.run_output(self.name())
+    wss_instance.delete_expired_output(self.name())
 
   def id(self) -> str:
     return f'output_{self.name()}'
@@ -245,7 +246,7 @@ class WorkspaceSequence:
       self.input_sequences[inp] = TableSnapshotSequence(self.lk, location, self._schedule)
     self.output_sequences: Dict[str, TableSnapshotSequence] = {}
     for name in retention_deltas.keys():
-      assert name in self.ws.outputs, "{} is not a valid output name".format(name)
+      assert name in self.ws.outputs, f'{name} is not a valid output name'
     for output in self.ws.outputs:
       location = _normalize_path(self.lk_root + '/output-snapshots/' + output)
       self.output_sequences[output] = TableSnapshotSequence(
@@ -257,9 +258,9 @@ class WorkspaceSequence:
   def ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
     ``date`` parameter of this method as a value to pass to the workspace. '''
-    assert date >= self._start_date, "{} preceeds start date = {}".format(date, self._start_date)
+    assert date >= self._start_date, f'{date} preceeds start date = {self._start_date}'
     assert _timestamp_is_valid(
-        date, self._schedule), "{} is not valid according to {}".format(date, self._schedule)
+        date, self._schedule), f'{date} is not valid according to {self._schedule}'
     return WorkspaceSequenceInstance(self, date)
 
   def _automation_tasks(self) -> List[Task]:
@@ -447,6 +448,10 @@ class WorkspaceSequenceInstance:
         break
     else:
       raise Exception(f'No output with name {name}')
+
+  def delete_expired_output(self, name: str) -> None:
+    assert name in self._wss.output_sequences.keys(), f'No output with name {name}'
+    self._wss.output_sequences[name].delete_expired()
 
   def trigger(self, box_path: BoxPath) -> None:
     '''``box_path`` is relative to the original workspace'''
