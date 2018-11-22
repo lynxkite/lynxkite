@@ -149,5 +149,5 @@ class TestSnapshotSequence(unittest.TestCase):
     state = lk.get_state_id(lk.createExampleGraph().sql('select * from vertices'))
     tss.save_to_sequence(state, datetime(2018, 1, 1, 1, 30))
     self.assertEqual(1, len(lk.list_dir('test_snapshot_sequence/7')))
-    tss.delete_expired()
+    tss.delete_expired(datetime(2018, 2, 1, 1, 30))
     self.assertEqual(0, len(lk.list_dir('test_snapshot_sequence/7')))
