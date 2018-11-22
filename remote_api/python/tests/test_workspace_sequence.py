@@ -145,8 +145,7 @@ class TestWorkspaceSequence(unittest.TestCase):
     run_ws(datetime(2018, 4, 6))
     run_ws(datetime(2018, 4, 7))
 
-  @mock.patch('lynx.kite._now', return_value=datetime(2018, 1, 10))
-  def test_output_retention(self, mock_now):
+  def test_output_retention(self):
     lk = lynx.kite.LynxKite()
     lk.remove_name('wss_retention', force=True)
     lk.remove_name('wss_retention_seq', force=True)

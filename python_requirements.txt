@@ -25,4 +25,3 @@ pillow
 mypy
 ruamel.yaml>=0.15
 pyarrow
-mock

@@ -70,10 +70,6 @@ def _normalize_path(path: str) -> str:
   return re.sub('/+', '/', path).strip('/')
 
 
-def _now() -> datetime.datetime:
-  return datetime.datetime.now()
-
-
 def escape(s: str) -> str:
   '''Sanitizes a string for injecting into a generated SQL query.'''
   return s.replace('\\', '\\\\').replace('"', '\\"').replace("'", "\\'")
@@ -848,9 +844,14 @@ class SnapshotSequence:
         dt, self.cron_str)
     self.lk.save_snapshot(self.snapshot_name(dt), state_id)
 
-  def delete_expired(self) -> None:
+  def delete_expired(self, execution_date: datetime.datetime) -> None:
+    '''Deletes snapshots that are older than `execution_date - retention`.'''
     if self._retention:
-      threshold = self.snapshot_name(_now().replace(second=0, microsecond=0) - self._retention)
+      threshold = self.snapshot_name(
+          execution_date.replace(
+              second=0,
+              microsecond=0) -
+          self._retention)
       for entry in self.lk.list_dir(self._location):
         if entry.name < threshold:
           self.lk.remove_name(entry.name)

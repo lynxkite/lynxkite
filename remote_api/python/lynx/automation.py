@@ -450,7 +450,7 @@ class WorkspaceSequenceInstance:
 
   def delete_expired_output(self, name: str) -> None:
     assert name in self._wss.output_sequences.keys(), f'No output with name {name}'
-    self._wss.output_sequences[name].delete_expired()
+    self._wss.output_sequences[name].delete_expired(self._date)
 
   def trigger(self, box_path: BoxPath) -> None:
     '''``box_path`` is relative to the original workspace'''
