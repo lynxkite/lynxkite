@@ -145,7 +145,8 @@ class TestWorkspaceSequence(unittest.TestCase):
     run_ws(datetime(2018, 4, 6))
     run_ws(datetime(2018, 4, 7))
 
-  def test_output_retention(self):
+  @mock.patch('lynx.kite._now', return_value=datetime(2018, 1, 10))
+  def test_output_retention(self, mock_now):
     lk = lynx.kite.LynxKite()
     lk.remove_name('wss_retention', force=True)
     lk.remove_name('wss_retention_seq', force=True)
@@ -155,9 +156,10 @@ class TestWorkspaceSequence(unittest.TestCase):
       o1 = table.sql('select count(*) as cnt from input')
       return dict(cnt=o1)
 
-    test_date = datetime(2018, 1, 2)
+    test_days = [datetime(2018, 1, 1) + timedelta(days=x) for x in range(0, 10)]
     tss = lynx.kite.TableSnapshotSequence(lk, 'wss_retention_seq', '0 0 * * *')
-    lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, test_date)
+    for day in test_days:
+      lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, day)
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)
     wss = lynx.automation.WorkspaceSequence(
         ws=builder,
@@ -165,6 +167,10 @@ class TestWorkspaceSequence(unittest.TestCase):
         start_date=datetime(2018, 1, 1),
         lk_root='wss_retention',
         input_recipes=[input_recipe],
-        retention_deltas=dict(cnt=timedelta(days=5)))
-    wss_instance = wss.ws_for_date(test_date)
-    wss_instance.run()
+        retention_deltas=dict(cnt=timedelta(days=3)))
+    for day in test_days:
+      for t in wss.to_dag():
+        t.run(day)
+    snapshots_not_deleted = [
+        s.name for s in lk.list_dir(wss.output_sequences['cnt']._location)]
+    self.assertEqual(len(snapshots_not_deleted), 4)  # 1 + retention days
