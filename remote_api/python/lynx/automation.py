@@ -444,7 +444,6 @@ class WorkspaceSequenceInstance:
     for box_path in ws.side_effect_paths():
       if 'path' in box_path.base.parameters and box_path.base.parameters['path'] == path:
         ws.trigger_saved(box_path, self.wrapper_folder_name())
-        self._wss.output_sequences[name].delete_expired()
         break
     else:
       raise Exception(f'No output with name {name}')
