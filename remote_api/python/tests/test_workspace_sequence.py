@@ -171,6 +171,7 @@ class TestWorkspaceSequence(unittest.TestCase):
         lk_root='wss_retention',
         input_recipes=[input_recipe],
         retention_deltas=dict(cnt=timedelta(days=3)))
+    # In the end, we have 1 + retention days snapshots.
     expected_sn_count = [1, 2, 3, 4, 4, 4, 4, 4, 4, 4]
     for i, day in enumerate(test_days):
       wss.run_dag_tasks(day)
