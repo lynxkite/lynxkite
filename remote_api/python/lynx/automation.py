@@ -231,7 +231,8 @@ class WorkspaceSequence:
   def __init__(self, ws: Workspace, schedule: str,
                start_date: datetime.datetime, lk_root: str,
                input_recipes: List[InputRecipe], params: Dict[str, Any]={},
-               retention_deltas: Dict[str, datetime.timedelta]={}) -> None:
+               retention_deltas: Dict[str, datetime.timedelta]={},
+               default_retention: datetime.timedelta=None) -> None:
     self.ws = ws
     self.lk = self.ws.lk
     self._schedule = schedule
@@ -239,6 +240,7 @@ class WorkspaceSequence:
     self.params = params
     self.lk_root = lk_root
     self.input_names = self.ws.inputs  # For the order of the inputs
+    self.default_retention = default_retention
     self.input_recipes = dict(zip(self.input_names, input_recipes))
     self.input_sequences: Dict[str, TableSnapshotSequence] = {}
     for inp in self.input_names:
@@ -253,7 +255,7 @@ class WorkspaceSequence:
           self.lk,
           location,
           self._schedule,
-          retention=retention_deltas.get(output))
+          retention=retention_deltas.get(output, self.default_retention))
 
   def ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
