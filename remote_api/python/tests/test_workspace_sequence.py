@@ -168,8 +168,7 @@ class TestWorkspaceSequence(unittest.TestCase):
         input_recipes=[input_recipe],
         retention_deltas=dict(cnt=timedelta(days=3)))
     for day in test_days:
-      for t in wss.to_dag():
-        t.run(day)
+      wss.run_dag_tasks(day)
     snapshots_not_deleted = [
         s.name for s in lk.list_dir(wss.output_sequences['cnt']._location)]
     self.assertEqual(len(snapshots_not_deleted), 4)  # 1 + retention days
