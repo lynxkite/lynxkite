@@ -299,6 +299,16 @@ class WorkspaceSequence:
     self._add_save_workspace_deps(dag)
     return _minimal_dag(dag)
 
+  def run_dag_tasks(self, date: datetime.datetime) -> None:
+    '''
+    Runs all the tasks in the generated task DAG for the given execution date,
+    in the DAG order.
+
+    Can be used to test, what happens when the wss is automated.
+    '''
+    for t in self.to_dag():
+      t.run(date)
+
   def to_airflow_DAG(self, dag_id: str, dag_args={}, task_default_args={}) -> DAG:
     '''
     Creates an Airflow dag from the workspace sequence.
