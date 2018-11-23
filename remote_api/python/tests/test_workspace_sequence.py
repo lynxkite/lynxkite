@@ -146,6 +146,10 @@ class TestWorkspaceSequence(unittest.TestCase):
     run_ws(datetime(2018, 4, 7))
 
   def test_output_retention(self):
+    def not_deleted():
+      return len([s.name
+                  for s in lk.list_dir(wss.output_sequences['cnt']._location)])
+
     lk = lynx.kite.LynxKite()
     lk.remove_name('wss_retention', force=True)
     lk.remove_name('wss_retention_seq', force=True)
@@ -167,8 +171,7 @@ class TestWorkspaceSequence(unittest.TestCase):
         lk_root='wss_retention',
         input_recipes=[input_recipe],
         retention_deltas=dict(cnt=timedelta(days=3)))
-    for day in test_days:
+    expected_sn_count = [1, 2, 3, 4, 4, 4, 4, 4, 4, 4]
+    for i, day in enumerate(test_days):
       wss.run_dag_tasks(day)
-    snapshots_not_deleted = [
-        s.name for s in lk.list_dir(wss.output_sequences['cnt']._location)]
-    self.assertEqual(len(snapshots_not_deleted), 4)  # 1 + retention days
+      self.assertEqual(not_deleted(), expected_sn_count[i])
