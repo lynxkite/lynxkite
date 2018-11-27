@@ -108,10 +108,10 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
 
   private def oldEnough(dir: org.apache.hadoop.fs.FileStatus, currentTime: Long): Boolean = {
     val doNotCleanPeriod = LoggedEnvironment
-      .envOrElse("KITE_DO_NOT_CLEAN_PERIOD", "0").toLong
+      .envOrElse("KITE_CLEANER_MIN_AGE_DAYS", "0").toDouble
     val doNotCleanPeriodInMillis = doNotCleanPeriod * 86400000 // One day in milliseconds.
-    val lastModificationTime = dir.getModificationTime()
-    currentTime - lastModificationTime >= doNotCleanPeriodInMillis
+    val lastModificationTimeMillis = dir.getModificationTime()
+    currentTime - lastModificationTimeMillis >= doNotCleanPeriodInMillis
   }
 
   // Return all files and dirs and their respective sizes in bytes in a
