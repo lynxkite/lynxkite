@@ -42,9 +42,10 @@ case class AllFiles(
     entities: Map[String, Long],
     operations: Map[String, Long],
     scalars: Map[String, Long],
-    tables: Map[String, Long]) {
+    tables: Map[String, Long],
+    broadcasts: Map[String, Long]) {
 
-  lazy val all = partitioned ++ entities ++ operations ++ scalars ++ tables
+  lazy val all = partitioned ++ entities ++ operations ++ scalars ++ tables ++ broadcasts
 }
 
 class CleanerController(environment: BigGraphEnvironment, ops: OperationRepository) {
@@ -100,7 +101,8 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       getAllFilesInDir(io.EntitiesDir, trash),
       getAllFilesInDir(io.OperationsDir, trash),
       getAllFilesInDir(io.ScalarsDir, trash),
-      getAllFilesInDir(io.TablesDir, trash))
+      getAllFilesInDir(io.TablesDir, trash),
+      getAllFilesInDir(io.BroadcastsDir, trash))
   }
 
   // Return all files and dirs and their respective sizes in bytes in a
@@ -236,6 +238,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     moveToTrash(io.OperationsDir, files.operations.keys.toSet -- filesToKeep)
     moveToTrash(io.ScalarsDir, files.scalars.keys.toSet -- filesToKeep)
     moveToTrash(io.TablesDir, files.tables.keys.toSet -- filesToKeep)
+    moveToTrash(io.BroadcastsDir, files.broadcasts.keys.toSet -- filesToKeep)
     environment.dataManager.clear()
   }
 
@@ -257,6 +260,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     deleteTrashFilesInDir(io.OperationsDir)
     deleteTrashFilesInDir(io.ScalarsDir)
     deleteTrashFilesInDir(io.TablesDir)
+    deleteTrashFilesInDir(io.BroadcastsDir)
   }
 
   private def deleteTrashFilesInDir(dir: String): Unit = {
