@@ -274,5 +274,5 @@ or kilobytes respectively; e.g., 1M or 1500k.
 Specify the length of the protected time period in days, while the cleaner does not
 delete data files. It can be integer or double value.
 ```
-# export KITE_DO_NOT_CLEAN_PERIOD=14
+# export KITE_CLEANER_MIN_AGE_DAYS=14
 ```
