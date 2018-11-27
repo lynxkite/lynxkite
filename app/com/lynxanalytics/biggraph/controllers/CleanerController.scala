@@ -11,6 +11,7 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.Queue
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving
@@ -105,15 +106,26 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       getAllFilesInDir(io.BroadcastsDir, trash))
   }
 
+  private def oldEnough(dir: org.apache.hadoop.fs.FileStatus, currentTime: Long): Boolean = {
+    val doNotCleanPeriod = LoggedEnvironment
+      .envOrElse("KITE_DO_NOT_CLEAN_PERIOD", "14").toLong
+    val doNotCleanPeriodInMillis = doNotCleanPeriod * 86400000 // One day in milliseconds.
+    val lastModificationTime = dir.getModificationTime()
+    currentTime - lastModificationTime > doNotCleanPeriodInMillis
+  }
+
   // Return all files and dirs and their respective sizes in bytes in a
   // certain directory. Directories in trash are included iff the trash param is true.
   private def getAllFilesInDir(dir: String, trash: Boolean): Map[String, Long] = {
+    val currentTime = System.currentTimeMillis
     val hadoopFileDir = environment.dataManager.writablePath / dir
     if (!hadoopFileDir.exists) {
       Map[String, Long]()
     } else {
       hadoopFileDir.listStatus.filter {
         subDir => (subDir.getPath().toString contains io.DeletedSfx) == trash
+      }.filter {
+        subDir => oldEnough(subDir, currentTime)
       }.map { subDir =>
         val baseName = subDir.getPath().getName()
         baseName -> (hadoopFileDir / baseName).getContentSummary.getSpaceConsumed
