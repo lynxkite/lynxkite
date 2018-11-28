@@ -3,7 +3,9 @@
   <h1>Cleaner</h1>
   <display-error caption="Failed to load data file status." request="fileStatus"></display-error>
   <form ng-show="!fileStatus.$error" ng-disabled="inProgress">
-    Free space: <value ref="asScalar(fileStatus.freeSpace)"></value>
+    Free space: <value ref="asScalar(fileStatus.freeSpace)"></value><br>
+    Only data files, older than <value ref="asScalar(fileStatus.cleanerMinAgeDays)"></value> 
+    day(s) are counted and will be cleaned.
     <table class="table table-striped">
       <tr><th>Method</th><th>Number of entities</th><th>Total size on disk</th><th/></tr>
       <tr>
