@@ -25,6 +25,7 @@ case class DataFilesStats(
     totalSize: Long)
 
 case class DataFilesStatus(
+    cleanerMinAgeDays: Double,
     freeSpace: Long,
     total: DataFilesStats,
     trash: DataFilesStats,
@@ -79,11 +80,14 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
         "a top level workspace.",
       () => snapshotEntities() ++ workspaceEntities()))
 
+  val cleanerMinAgeDays = LoggedEnvironment.envOrElse("KITE_CLEANER_MIN_AGE_DAYS", "0").toDouble
+
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
     val files = getAllFiles(trash = false)
     val trashFiles = getAllFiles(trash = true)
     DataFilesStatus(
+      cleanerMinAgeDays,
       HadoopFile.defaultFs.getStatus().getRemaining(),
       DataFilesStats(
         fileCount = files.all.size,
@@ -107,9 +111,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
   }
 
   private def oldEnough(dir: org.apache.hadoop.fs.FileStatus, currentTime: Long): Boolean = {
-    val doNotCleanPeriod = LoggedEnvironment
-      .envOrElse("KITE_CLEANER_MIN_AGE_DAYS", "0").toDouble
-    val doNotCleanPeriodInMillis = doNotCleanPeriod * 86400000 // One day in milliseconds.
+    val doNotCleanPeriodInMillis = cleanerMinAgeDays * 86400000 // One day in milliseconds.
     val lastModificationTimeMillis = dir.getModificationTime()
     currentTime - lastModificationTimeMillis >= doNotCleanPeriodInMillis
   }
