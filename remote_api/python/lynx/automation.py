@@ -221,6 +221,19 @@ class SaveWorkspace(Task):
     return 'save_workspace'
 
 
+class RunCleaner(Task):
+  '''
+  A task to run the cleaner, after the pipeline is completed.
+  '''
+
+  def run(self, date: datetime.datetime) -> None:
+    self._wss.lk.move_to_cleaner_trash('notSnapshotEntities')
+    self._wss.lk.empty_cleaner_trash()
+
+  def id(self) -> str:
+    return 'run_cleaner'
+
+
 class WorkspaceSequence:
   '''Represents a workspace sequence.
 
@@ -287,6 +300,16 @@ class WorkspaceSequence:
       if task != save_ws and not isinstance(task, Input):
         deps.add(save_ws)
 
+  @staticmethod
+  def _add_run_cleaner_deps(dag: Dict[Task, Set[Task]]) -> None:
+    run_cleaner_tasks = [task for task in dag if isinstance(task, RunCleaner)]
+    assert len(run_cleaner_tasks) == 1, 'Only one RunCleaner task is expected'
+    run_cleaner = run_cleaner_tasks[0]
+    dag[run_cleaner] = set()
+    for task in dag:
+      if task != run_cleaner:
+        dag[run_cleaner].add(task)
+
   def to_dag(self) -> Dict[Task, Set[Task]]:
     '''
     Returns an ordered dict of the tasks and their dependencies to run this workspace
@@ -297,6 +320,7 @@ class WorkspaceSequence:
     dag: Dict[Task, Set[Task]] = {task: set() for task in tasks}
     self._add_box_based_dependencies(dag)
     self._add_save_workspace_deps(dag)
+    self._add_run_cleaner_deps(dag)
     return _minimal_dag(dag)
 
   def run_dag_tasks(self, date: datetime.datetime) -> None:
