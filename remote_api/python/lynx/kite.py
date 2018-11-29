@@ -852,7 +852,8 @@ class SnapshotSequence:
     if state is not None:
       self.lk.save_snapshot(self._snapshot_name(date), self.lk.get_state_id(state))
 
-  def list_dates(self, from_date: datetime.datetime, to_date: datetime.datetime) -> List[str]:
+  def list_dates(self, from_date: datetime.datetime,
+                 to_date: datetime.datetime) -> List[datetime.datetime]:
     # We want to include the from_date if it matches the cron format.
     i = croniter(self.cron_str, from_date - datetime.timedelta(seconds=1))
     dates = []
