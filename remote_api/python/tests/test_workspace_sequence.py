@@ -3,7 +3,6 @@ import lynx.kite
 from lynx.kite import pp, text
 import lynx.automation
 from datetime import datetime, timedelta
-import mock
 
 
 class TestWorkspaceSequence(unittest.TestCase):
