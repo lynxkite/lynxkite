@@ -283,7 +283,8 @@ class WorkspaceSequence:
     outputs: List[Task] = [Output(self, BoxPath(outp)) for outp in self.ws.output_boxes]
     side_effects: List[Task] = [Triggerable(self, se) for se in self.ws.side_effect_paths()]
     save_ws: List[Task] = [SaveWorkspace(self)]
-    return inputs + outputs + side_effects + save_ws
+    run_cleaner: List[Task] = [RunCleaner(self)]
+    return inputs + outputs + side_effects + save_ws + run_cleaner
 
   @staticmethod
   def _add_box_based_dependencies(dag: Dict[Task, Set[Task]]) -> None:
@@ -294,7 +295,8 @@ class WorkspaceSequence:
   @staticmethod
   def _add_save_workspace_deps(dag: Dict[Task, Set[Task]]) -> None:
     save_ws_tasks = [task for task in dag if isinstance(task, SaveWorkspace)]
-    assert len(save_ws_tasks) == 1, 'Only one SaveWorkspace task is expected'
+    num_tasks = len(save_ws_tasks)
+    assert num_tasks == 1, f'Only one SaveWorkspace task is expected, but found {num_tasks}'
     save_ws = save_ws_tasks[0]
     for task, deps in dag.items():
       if task != save_ws and not isinstance(task, Input):
@@ -303,7 +305,8 @@ class WorkspaceSequence:
   @staticmethod
   def _add_run_cleaner_deps(dag: Dict[Task, Set[Task]]) -> None:
     run_cleaner_tasks = [task for task in dag if isinstance(task, RunCleaner)]
-    assert len(run_cleaner_tasks) == 1, 'Only one RunCleaner task is expected'
+    num_tasks = len(run_cleaner_tasks)
+    assert num_tasks == 1, f'Only one RunCleaner task is expected, but found {num_tasks}'
     run_cleaner = run_cleaner_tasks[0]
     dag[run_cleaner] = set()
     for task in dag:
