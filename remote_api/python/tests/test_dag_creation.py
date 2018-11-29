@@ -24,6 +24,8 @@ def _task_to_str(task):
     return _box_path_to_str(task.box_path)
   elif isinstance(task, lynx.automation.SaveWorkspace):
     return 'save workspace'
+  elif isinstance(task, lynx.automation.RunCleaner):
+    return 'run cleaner'
   else:
     raise NotImplementedError(f'No str conversion for task {type(task)}')
 
@@ -271,6 +273,7 @@ class TestDagCreation(unittest.TestCase):
         'snapshot SB1': ['input i2'],
         'snapshot SB2': ['input i1'],
         'output o3': [],
+        'run cleaner': [],
     }
     self.assertEqual(expected, dependencies)
 
@@ -288,6 +291,7 @@ class TestDagCreation(unittest.TestCase):
         'output o2': ['input i3', 'output o1'],
         'save workspace': [],
         'output o3': ['save workspace'],
+        'run cleaner': ['output o2', 'output o3', 'snapshot SB1'],
     }
     self.assertEqual(expected, dependencies)
 
@@ -366,7 +370,7 @@ class TestDagCreation(unittest.TestCase):
         'input_i1', 'input_i3', 'save_workspace', 'input_i2',
         'trigger_snapshotter_0/saveToSnapshot_1',
         'trigger_snapshotter_0/saveToSnapshot_0',
-        'output_o3', 'output_o1', 'output_o2'])
+        'output_o3', 'output_o1', 'output_o2', 'run_cleaner'])
     self.assertEqual(task_ids, expected)
 
   def test_wss_dag_is_runnable(self):

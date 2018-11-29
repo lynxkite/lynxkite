@@ -270,3 +270,9 @@ or kilobytes respectively; e.g., 1M or 1500k.
 ```
 # export EXECUTOR_THREAD_STACK_SIZE=2M
 ```
+
+Specify the length of the protected time period in days, while the cleaner does not
+delete data files. It can be integer or double value.
+```
+# export KITE_CLEANER_MIN_AGE_DAYS=14
+```

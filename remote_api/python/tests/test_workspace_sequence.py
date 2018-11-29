@@ -2,7 +2,8 @@ import unittest
 import lynx.kite
 from lynx.kite import pp, text
 import lynx.automation
-from datetime import datetime
+from datetime import datetime, timedelta
+import mock
 
 
 class TestWorkspaceSequence(unittest.TestCase):
@@ -143,3 +144,35 @@ class TestWorkspaceSequence(unittest.TestCase):
     run_ws(datetime(2018, 4, 5))
     run_ws(datetime(2018, 4, 6))
     run_ws(datetime(2018, 4, 7))
+
+  def test_output_retention(self):
+    def not_deleted():
+      return len([s.name
+                  for s in lk.list_dir(wss.output_sequences['cnt']._location)])
+
+    lk = lynx.kite.LynxKite()
+    lk.remove_name('wss_retention', force=True)
+    lk.remove_name('wss_retention_seq', force=True)
+
+    @lk.workspace(name='counter')
+    def builder(table):
+      o1 = table.sql('select count(*) as cnt from input')
+      return dict(cnt=o1)
+
+    test_days = [datetime(2018, 1, 1) + timedelta(days=x) for x in range(0, 10)]
+    tss = lynx.kite.TableSnapshotSequence(lk, 'wss_retention_seq', '0 0 * * *')
+    for day in test_days:
+      lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, day)
+    input_recipe = lynx.automation.TableSnapshotRecipe(tss)
+    wss = lynx.automation.WorkspaceSequence(
+        ws=builder,
+        schedule='0 0 * * *',
+        start_date=datetime(2018, 1, 1),
+        lk_root='wss_retention',
+        input_recipes=[input_recipe],
+        retention_deltas=dict(cnt=timedelta(days=3)))
+    # In the end, we have 1 + retention days snapshots.
+    expected_sn_count = [1, 2, 3, 4, 4, 4, 4, 4, 4, 4]
+    for i, day in enumerate(test_days):
+      wss.run_dag_tasks(day)
+      self.assertEqual(not_deleted(), expected_sn_count[i])
