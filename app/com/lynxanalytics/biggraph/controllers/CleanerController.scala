@@ -11,6 +11,7 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.Queue
 
 import com.lynxanalytics.biggraph.BigGraphEnvironment
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving
@@ -24,6 +25,7 @@ case class DataFilesStats(
     totalSize: Long)
 
 case class DataFilesStatus(
+    cleanerMinAgeDays: Double,
     freeSpace: Long,
     total: DataFilesStats,
     trash: DataFilesStats,
@@ -42,9 +44,10 @@ case class AllFiles(
     entities: Map[String, Long],
     operations: Map[String, Long],
     scalars: Map[String, Long],
-    tables: Map[String, Long]) {
+    tables: Map[String, Long],
+    broadcasts: Map[String, Long]) {
 
-  lazy val all = partitioned ++ entities ++ operations ++ scalars ++ tables
+  lazy val all = partitioned ++ entities ++ operations ++ scalars ++ tables ++ broadcasts
 }
 
 class CleanerController(environment: BigGraphEnvironment, ops: OperationRepository) {
@@ -77,11 +80,14 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
         "a top level workspace.",
       () => snapshotEntities() ++ workspaceEntities()))
 
+  val cleanerMinAgeDays = LoggedEnvironment.envOrElse("KITE_CLEANER_MIN_AGE_DAYS", "0").toDouble
+
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
     val files = getAllFiles(trash = false)
     val trashFiles = getAllFiles(trash = true)
     DataFilesStatus(
+      cleanerMinAgeDays,
       HadoopFile.defaultFs.getStatus().getRemaining(),
       DataFilesStats(
         fileCount = files.all.size,
@@ -100,18 +106,28 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       getAllFilesInDir(io.EntitiesDir, trash),
       getAllFilesInDir(io.OperationsDir, trash),
       getAllFilesInDir(io.ScalarsDir, trash),
-      getAllFilesInDir(io.TablesDir, trash))
+      getAllFilesInDir(io.TablesDir, trash),
+      getAllFilesInDir(io.BroadcastsDir, trash))
+  }
+
+  private def oldEnough(dir: org.apache.hadoop.fs.FileStatus, currentTime: Long): Boolean = {
+    val doNotCleanPeriodInMillis = cleanerMinAgeDays * 86400000 // One day in milliseconds.
+    val lastModificationTimeMillis = dir.getModificationTime()
+    currentTime - lastModificationTimeMillis >= doNotCleanPeriodInMillis
   }
 
   // Return all files and dirs and their respective sizes in bytes in a
   // certain directory. Directories in trash are included iff the trash param is true.
   private def getAllFilesInDir(dir: String, trash: Boolean): Map[String, Long] = {
+    val currentTime = System.currentTimeMillis
     val hadoopFileDir = environment.dataManager.writablePath / dir
     if (!hadoopFileDir.exists) {
       Map[String, Long]()
     } else {
       hadoopFileDir.listStatus.filter {
         subDir => (subDir.getPath().toString contains io.DeletedSfx) == trash
+      }.filter {
+        subDir => oldEnough(subDir, currentTime)
       }.map { subDir =>
         val baseName = subDir.getPath().getName()
         baseName -> (hadoopFileDir / baseName).getContentSummary.getSpaceConsumed
@@ -236,6 +252,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     moveToTrash(io.OperationsDir, files.operations.keys.toSet -- filesToKeep)
     moveToTrash(io.ScalarsDir, files.scalars.keys.toSet -- filesToKeep)
     moveToTrash(io.TablesDir, files.tables.keys.toSet -- filesToKeep)
+    moveToTrash(io.BroadcastsDir, files.broadcasts.keys.toSet -- filesToKeep)
     environment.dataManager.clear()
   }
 
@@ -257,6 +274,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     deleteTrashFilesInDir(io.OperationsDir)
     deleteTrashFilesInDir(io.ScalarsDir)
     deleteTrashFilesInDir(io.TablesDir)
+    deleteTrashFilesInDir(io.BroadcastsDir)
   }
 
   private def deleteTrashFilesInDir(dir: String): Unit = {

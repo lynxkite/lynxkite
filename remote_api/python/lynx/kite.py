@@ -903,13 +903,16 @@ class SnapshotSequence:
         dt, self.cron_str)
     self.lk.save_snapshot(self._snapshot_name(dt), state_id)
 
-  def delete_expired(self) -> None:
+  def delete_expired(self, execution_date: datetime.datetime) -> None:
+    '''Deletes snapshots that are older than `execution_date - retention`.'''
     if self._retention:
       threshold = self._snapshot_name(
-          datetime.datetime.now().replace(
-              second=0, microsecond=0) - self._retention)
+          execution_date.replace(
+              second=0,
+              microsecond=0) -
+          self._retention)
       for entry in self.lk.list_dir(self._location):
-        if (entry.name < threshold):
+        if entry.name < threshold:
           self.lk.remove_name(entry.name)
 
 

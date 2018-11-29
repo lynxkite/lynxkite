@@ -187,6 +187,7 @@ class Output(BoxTask):
 
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
     wss_instance.run_output(self.name())
+    wss_instance.delete_expired_output(self.name())
 
   def id(self) -> str:
     return f'output_{self.name()}'
@@ -219,6 +220,19 @@ class SaveWorkspace(Task):
     return 'save_workspace'
 
 
+class RunCleaner(Task):
+  '''
+  A task to run the cleaner, after the pipeline is completed.
+  '''
+
+  def run(self, date: datetime.datetime) -> None:
+    self._wss.lk.move_to_cleaner_trash('notSnapshotEntities')
+    self._wss.lk.empty_cleaner_trash()
+
+  def id(self) -> str:
+    return 'run_cleaner'
+
+
 class WorkspaceSequence:
   '''Represents a workspace sequence.
 
@@ -228,7 +242,9 @@ class WorkspaceSequence:
 
   def __init__(self, ws: Workspace, schedule: str,
                start_date: datetime.datetime, lk_root: str,
-               input_recipes: List[InputRecipe], params: Dict[str, Any]={}) -> None:
+               input_recipes: List[InputRecipe], params: Dict[str, Any]={},
+               retention_deltas: Dict[str, datetime.timedelta]={},
+               default_retention: datetime.timedelta=None) -> None:
     self.ws = ws
     self.lk = self.ws.lk
     self._schedule = schedule
@@ -236,22 +252,29 @@ class WorkspaceSequence:
     self.params = params
     self.lk_root = lk_root
     self.input_names = self.ws.inputs  # For the order of the inputs
+    self.default_retention = default_retention
     self.input_recipes = dict(zip(self.input_names, input_recipes))
     self.input_sequences: Dict[str, TableSnapshotSequence] = {}
     for inp in self.input_names:
       location = _normalize_path(self.lk_root + '/input-snapshots/' + inp)
       self.input_sequences[inp] = TableSnapshotSequence(self.lk, location, self._schedule)
     self.output_sequences: Dict[str, TableSnapshotSequence] = {}
+    for name in retention_deltas.keys():
+      assert name in self.ws.outputs, f'{name} is not a valid output name'
     for output in self.ws.outputs:
       location = _normalize_path(self.lk_root + '/output-snapshots/' + output)
-      self.output_sequences[output] = TableSnapshotSequence(self.lk, location, self._schedule)
+      self.output_sequences[output] = TableSnapshotSequence(
+          self.lk,
+          location,
+          self._schedule,
+          retention=retention_deltas.get(output, self.default_retention))
 
   def ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
     ``date`` parameter of this method as a value to pass to the workspace. '''
-    assert date >= self._start_date, "{} preceeds start date = {}".format(date, self._start_date)
+    assert date >= self._start_date, f'{date} preceeds start date = {self._start_date}'
     assert _timestamp_is_valid(
-        date, self._schedule), "{} is not valid according to {}".format(date, self._schedule)
+        date, self._schedule), f'{date} is not valid according to {self._schedule}'
     return WorkspaceSequenceInstance(self, date)
 
   def _automation_tasks(self) -> List[Task]:
@@ -259,7 +282,8 @@ class WorkspaceSequence:
     outputs: List[Task] = [Output(self, BoxPath(outp)) for outp in self.ws.output_boxes]
     side_effects: List[Task] = [Triggerable(self, se) for se in self.ws.side_effect_paths()]
     save_ws: List[Task] = [SaveWorkspace(self)]
-    return inputs + outputs + side_effects + save_ws
+    run_cleaner: List[Task] = [RunCleaner(self)]
+    return inputs + outputs + side_effects + save_ws + run_cleaner
 
   @staticmethod
   def _add_box_based_dependencies(dag: Dict[Task, Set[Task]]) -> None:
@@ -270,11 +294,23 @@ class WorkspaceSequence:
   @staticmethod
   def _add_save_workspace_deps(dag: Dict[Task, Set[Task]]) -> None:
     save_ws_tasks = [task for task in dag if isinstance(task, SaveWorkspace)]
-    assert len(save_ws_tasks) == 1, 'Only one SaveWorkspace task is expected'
+    num_tasks = len(save_ws_tasks)
+    assert num_tasks == 1, f'Only one SaveWorkspace task is expected, but found {num_tasks}'
     save_ws = save_ws_tasks[0]
     for task, deps in dag.items():
       if task != save_ws and not isinstance(task, Input):
         deps.add(save_ws)
+
+  @staticmethod
+  def _add_run_cleaner_deps(dag: Dict[Task, Set[Task]]) -> None:
+    run_cleaner_tasks = [task for task in dag if isinstance(task, RunCleaner)]
+    num_tasks = len(run_cleaner_tasks)
+    assert num_tasks == 1, f'Only one RunCleaner task is expected, but found {num_tasks}'
+    run_cleaner = run_cleaner_tasks[0]
+    dag[run_cleaner] = set()
+    for task in dag:
+      if task != run_cleaner:
+        dag[run_cleaner].add(task)
 
   def to_dag(self) -> Dict[Task, Set[Task]]:
     '''
@@ -286,7 +322,18 @@ class WorkspaceSequence:
     dag: Dict[Task, Set[Task]] = {task: set() for task in tasks}
     self._add_box_based_dependencies(dag)
     self._add_save_workspace_deps(dag)
+    self._add_run_cleaner_deps(dag)
     return _minimal_dag(dag)
+
+  def run_dag_tasks(self, date: datetime.datetime) -> None:
+    '''
+    Runs all the tasks in the generated task DAG for the given execution date,
+    in the DAG order.
+
+    Can be used to test, what happens when the wss is automated.
+    '''
+    for t in self.to_dag():
+      t.run(date)
 
   def to_airflow_DAG(self, dag_id: str, dag_args={}, task_default_args={}) -> DAG:
     '''
@@ -435,6 +482,9 @@ class WorkspaceSequenceInstance:
         break
     else:
       raise Exception(f'No output with name {name}')
+
+  def delete_expired_output(self, name: str) -> None:
+    self._wss.output_sequences[name].delete_expired(self._date)
 
   def trigger(self, box_path: BoxPath) -> None:
     '''``box_path`` is relative to the original workspace'''
