@@ -47,6 +47,9 @@ class TestAirflowDagGeneration(unittest.TestCase):
             'downstream': {'output_result'}},
         'output_result': {
             'upstream': {'save_workspace'},
+            'downstream': {'run_cleaner'}},
+        'run_cleaner': {
+            'upstream': {'output_result'},
             'downstream': set()}
     }
     self.assertEqual(deps, expected)
@@ -99,15 +102,21 @@ class TestAirflowDagGeneration(unittest.TestCase):
             'downstream': {'output_o1'}},
         'trigger_snapshotter_0_saveToSnapshot_0': {
             'upstream': {'input_i2', 'save_workspace'},
-            'downstream': set()},
+            'downstream': {'run_cleaner'}},
         'output_o3': {
             'upstream': {'save_workspace'},
-            'downstream': set()},
+            'downstream': {'run_cleaner'}},
         'output_o1': {
             'upstream': {'trigger_snapshotter_0_saveToSnapshot_1'},
             'downstream': {'output_o2'}},
         'output_o2': {
             'upstream': {'output_o1', 'input_i3'},
+            'downstream': {'run_cleaner'}},
+        'run_cleaner': {
+            'upstream': {
+                'output_o3',
+                'output_o2',
+                'trigger_snapshotter_0_saveToSnapshot_0'},
             'downstream': set()}}
     self.assertEqual(deps, expected)
 
@@ -178,7 +187,8 @@ class TestAirflowDagGeneration(unittest.TestCase):
                      {'input_i1', 'input_sensor_i1', 'save_workspace', 'input_i3',
                       'input_sensor_i3', 'input_i2', 'input_sensor_i2',
                       'trigger_snapshotter_0_saveToSnapshot_1', 'output_o3',
-                      'trigger_snapshotter_0_saveToSnapshot_0', 'output_o1', 'output_o2'})
+                      'trigger_snapshotter_0_saveToSnapshot_0', 'output_o1',
+                      'output_o2', 'run_cleaner'})
 
     # RAIN wss
     # TODO :rewrite this after we implemented nice task ids
@@ -191,7 +201,8 @@ class TestAirflowDagGeneration(unittest.TestCase):
                       'input_sensor_oss_user_average30',
                       'trigger_where_to_sell_0_exportToCSV_0',
                       'trigger_where_to_sell_0_exportToCSV_1',
-                      'input_oss_combined30', 'input_sensor_oss_combined30'})
+                      'input_oss_combined30', 'input_sensor_oss_combined30',
+                      'run_cleaner'})
     for task_id in task_ids:
       self.assertTrue(len(task_id) <= 250)
       self.assertIsNone(re.search(r'[^0-9a-zA-Z\-\.\_]', task_id))
@@ -213,7 +224,7 @@ class TestAirflowDagGeneration(unittest.TestCase):
 
     wss3 = create_test_wss(export_eg)
     task_ids = wss3.to_airflow_DAG('task_id_dag').task_ids
-    self.assertEqual(len(task_ids), 4)  # output, save, 2 exports
+    self.assertEqual(len(task_ids), 5)  # output, save, 2 exports, cleaner
     export_task_ids = [tid for tid in task_ids if (not 'save' in tid) and (not 'output' in tid)]
     self.assertEqual(export_task_ids[0][:218], export_task_ids[1][:218])
     self.assertNotEqual(export_task_ids[0][218:], export_task_ids[1][218:])
