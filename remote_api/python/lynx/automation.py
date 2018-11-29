@@ -79,8 +79,7 @@ class TableSnapshotRecipe(InputRecipe):
     self.validate(date)
     assert self.tss
     adjusted_date = _step_back(self.tss.cron_str, date, self.delta)
-    r = self.tss.lk.get_directory_entry(self.tss.snapshot_name(adjusted_date))
-    return r.exists and r.isSnapshot
+    return self.tss.is_ready(adjusted_date)
 
   def build_boxes(self, date: datetime.datetime) -> State:
     self.validate(date)
@@ -377,21 +376,18 @@ class WorkspaceSequenceInstance:
     return r.exists and r.isWorkspace
 
   def snapshot_path_for_output(self, output: str) -> str:
-    return self._wss.output_sequences[output].snapshot_name(self._date)
+    return self._wss.output_sequences[output]._snapshot_name(self._date)
 
   def snapshot_path_for_input(self, name: str) -> str:
-    return self._wss.input_sequences[name].snapshot_name(self._date)
+    return self._wss.input_sequences[name]._snapshot_name(self._date)
 
   def wrapper_ws(self) -> Workspace:
     lk = self._lk
 
     @lk.workspace_with_side_effects(name='main')
     def ws_instance(se_collector):
-      inputs = [
-          self._lk.importSnapshot(
-              path=self._wss.input_sequences[input_name].snapshot_name(
-                  self._date))
-          for input_name in self._wss.input_names]
+      inputs = [self._wss.input_sequences[input_name].read_date(self._date)
+                for input_name in self._wss.input_names]
       ws = self._wss.ws
       params = self._wss.params
       if ws.has_date_parameter():
