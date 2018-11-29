@@ -116,7 +116,7 @@ class TestAirflowDagGeneration(unittest.TestCase):
     warnings.simplefilter("ignore")
     lk = lynx.kite.LynxKite()
     tss = lynx.kite.TableSnapshotSequence(lk, 'eq_table_seq', '0 3 * * *')
-    lk.remove_name(tss.snapshot_name(datetime(2018, 5, 11, 3, 0)), force=True)
+    tss.remove_date(datetime(2018, 5, 11, 3, 0))
     lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, datetime(2018, 5, 11, 3, 0))
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)
     wss = lynx.automation.WorkspaceSequence(

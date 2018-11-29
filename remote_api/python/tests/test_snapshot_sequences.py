@@ -57,7 +57,7 @@ class TestSnapshotSequence(unittest.TestCase):
 
     fd = datetime(2010, 1, 1, 0, 0, tzinfo=timezone.utc)
     td = datetime(2011, 1, 1, 0, 0, tzinfo=timezone.utc)
-    snapshots = tss.snapshots(fd, td)
+    snapshots = tss._snapshots(fd, td)
     self.assertEqual(len(snapshots), 2)
     self.assertEqual('test_snapshot_sequence/1/2010-01-01 00:00:00+00:00', snapshots[0])
     self.assertEqual('test_snapshot_sequence/1/2011-01-01 00:00:00+00:00', snapshots[1])
@@ -70,7 +70,7 @@ class TestSnapshotSequence(unittest.TestCase):
 
     fd = datetime(2015, 5, 1, 0, 0, tzinfo=timezone.utc)
     td = datetime(2016, 10, 1, 0, 0, tzinfo=timezone.utc)
-    snapshots = tss.snapshots(fd, td)
+    snapshots = tss._snapshots(fd, td)
     self.assertEqual(len(snapshots), 18)
     self.assertEqual('test_snapshot_sequence/2/2015-05-01 00:00:00+00:00', snapshots[0])
     self.assertEqual('test_snapshot_sequence/2/2016-10-01 00:00:00+00:00', snapshots[17])
@@ -83,7 +83,7 @@ class TestSnapshotSequence(unittest.TestCase):
 
     fd = datetime(2017, 3, 15, 0, 0, tzinfo=timezone.utc)
     td = datetime(2017, 4, 15, 0, 0, tzinfo=timezone.utc)
-    snapshots = tss.snapshots(fd, td)
+    snapshots = tss._snapshots(fd, td)
     self.assertEqual(len(snapshots), 32)
     self.assertEqual('test_snapshot_sequence/3/2017-03-15 00:00:00+00:00', snapshots[0])
     self.assertEqual('test_snapshot_sequence/3/2017-04-15 00:00:00+00:00', snapshots[31])
@@ -117,7 +117,7 @@ class TestSnapshotSequence(unittest.TestCase):
 
     fd = datetime(2010, 1, 1, 3, 0, tzinfo=UTCPlus3Hours())
     td = datetime(2011, 1, 1, 3, 0, tzinfo=UTCPlus3Hours())
-    snapshots = tss.snapshots(fd, td)
+    snapshots = tss._snapshots(fd, td)
     self.assertEqual(len(snapshots), 1)
     self.assertEqual('test_snapshot_sequence/5/2010-12-31 21:00:00+00:00', snapshots[0])
 
@@ -134,7 +134,7 @@ class TestSnapshotSequence(unittest.TestCase):
     tss = lynx.kite.TableSnapshotSequence(lk, 'test_snapshot_sequence/6', '30 1 * * *')
     fd = datetime(2018, 1, 1, 0, 0)
     td = datetime(2018, 2, 1, 0, 0)
-    snapshots = tss.snapshots(fd, td)
+    snapshots = tss._snapshots(fd, td)
     local_names = [name_to_local_time(name) for name in snapshots]
     self.assertEqual(len(snapshots), 31)
     self.assertEqual(local_names[0], '2018-01-01 01:30')
@@ -151,3 +151,27 @@ class TestSnapshotSequence(unittest.TestCase):
     self.assertEqual(1, len(lk.list_dir('test_snapshot_sequence/7')))
     tss.delete_expired()
     self.assertEqual(0, len(lk.list_dir('test_snapshot_sequence/7')))
+
+  def test_lazy_tss(self):
+    lk = lynx.kite.LynxKite()
+    date_format = '%Y-%m-%d'
+
+    class LazyTableSnapshotSequence(lynx.kite.TableSnapshotSequence):
+      def is_ready(self, date):
+        return True
+
+      def create_state_if_available(self, date):
+        return lk.createExampleGraph().sql(f'select "{date: {date_format}}" as queried')
+
+    date1 = datetime(5799, 11, 28)
+    date2 = datetime(5799, 11, 29)
+
+    lazy_tss = LazyTableSnapshotSequence(lk, 'test_lazy_snapshot_sequence', '0 0 * * *')
+    queried = lazy_tss.read_date(date1)
+    query_date = queried.get_table_data().data[0][0].string
+    self.assertEqual(query_date, f'{date1: {date_format}}')
+    # Should be able to handle that date1 is already done.
+    queried_interval = lazy_tss.read_interval(date1, date2)
+    query_dates = {i[0].string for i in queried_interval.get_table_data().data}
+    expected = {f'{d: {date_format}}' for d in (date1, date2)}
+    self.assertSetEqual(query_dates, expected)

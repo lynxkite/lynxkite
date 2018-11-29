@@ -816,37 +816,96 @@ class SnapshotSequence:
     self.cron_str = cron_str
     self._retention = retention
 
-  def snapshot_name(self, date: datetime.datetime) -> str:
+  def _snapshot_name(self, date: datetime.datetime) -> str:
     local_timezone = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
     timezone_aware_date = date if date.tzinfo is not None else date.replace(tzinfo=local_timezone)
     utc_date = timezone_aware_date.astimezone(datetime.timezone.utc)
     return self._location + '/' + str(utc_date)
 
-  def snapshots(self, from_date: datetime.datetime, to_date: datetime.datetime) -> List[str]:
+  def __is_ready(self, date: datetime.datetime) -> bool:
+    entry = self.lk.get_directory_entry(self._snapshot_name(date))
+    return entry.exists and entry.isSnapshot
+
+  def is_ready(self, date: datetime.datetime) -> bool:
+    return self.__is_ready(date)
+
+  def is_prepared(self, date: datetime.datetime) -> bool:
+    """Checks if the snapshot is already exist.
+
+    A snapshot can be ready (i.e. the is_ready(date) returns True) but still not prepared.
+    An example for this is if we want to lazily create the snapshots. In this case the
+    `is_ready()` method should be overwritten to check if everything is ready to create the
+    snapshot while the `is_prepared()` method checks if the snapshot was already created.
+    """
+    return self.__is_ready(date)
+
+  def create_state_if_available(self, date: datetime.datetime) -> Union['State', None]:
+    """A fallback if the snapshot is not there yet when a client is asking for it.
+
+    Overwrite this method to return a `State` for the snapshot (or None if you can not) if you
+    want to provide such a fallback option. The returned `State` will be saved as a snapshot.
+    """
+    pass
+
+  def _create_snapshot_if_available(self, date: datetime.datetime) -> None:
+    state = self.create_state_if_available(date)
+    if state is not None:
+      self.lk.save_snapshot(self._snapshot_name(date), self.lk.get_state_id(state))
+
+  def list_dates(self, from_date: datetime.datetime, to_date: datetime.datetime) -> List[str]:
     # We want to include the from_date if it matches the cron format.
     i = croniter(self.cron_str, from_date - datetime.timedelta(seconds=1))
-    t = []
+    dates = []
     while True:
       dt = i.get_next(datetime.datetime)
       if dt > to_date:
         break
-      t.append(self.snapshot_name(dt))
+      dates.append(dt)
+    return dates
+
+  def _prepare(self, date: datetime.datetime) -> None:
+    if not self.is_prepared(date):
+      self._create_snapshot_if_available(date)
+
+  def _snapshots(self, from_date: datetime.datetime, to_date: datetime.datetime) -> List[str]:
+    # We want to include the from_date if it matches the cron format.
+    t = []
+    for dt in self.list_dates(from_date, to_date):
+      t.append(self._snapshot_name(dt))
     return t
 
-  def read_date(self, date: datetime.datetime) -> 'Box':
-    path = self.snapshots(date, date)[0]
+  def read_prepared_date(self, date: datetime.datetime) -> 'Box':
+    """Returns the `State` of the snapshot for the given date. Assumes that the snapshot is ready.
+
+    Overwrite this method to handle the case when the snapshot couldn't be prepared. E.g.
+
+        def read_prepared_date(self, date):
+          if not self.is_prepared(date):
+            return self.create_empty_table()
+          else:
+            return super().read_prepared_date(date)
+    """
+    path = self._snapshot_name(date)
     return self.lk.importSnapshot(path=path)
+
+  def read_date(self, date: datetime.datetime) -> 'Box':
+    self._prepare(date)
+    return self.read_prepared_date(date)
+
+  def remove_date(self, date: datetime.datetime) -> None:
+    path = self._snapshots(date, date)[0]
+    self.lk.remove_name(path, force=True)
 
   def save_to_sequence(self, state_id: str, dt: datetime.datetime) -> None:
     ''' Saves a state of id ``state_id`` as a member of the sequence.'''
     # Assert that dt is valid according to the cron_str format.
     assert _timestamp_is_valid(dt, self.cron_str), "Datetime %s does not match cron format %s." % (
         dt, self.cron_str)
-    self.lk.save_snapshot(self.snapshot_name(dt), state_id)
+    self.lk.save_snapshot(self._snapshot_name(dt), state_id)
 
   def delete_expired(self) -> None:
     if self._retention:
-      threshold = self.snapshot_name(
+      threshold = self._snapshot_name(
           datetime.datetime.now().replace(
               second=0, microsecond=0) - self._retention)
       for entry in self.lk.list_dir(self._location):
@@ -858,10 +917,27 @@ class TableSnapshotSequence(SnapshotSequence):
   ''' A special snapshot sequence where all members are of type table. This makes possible
   reading the union of the snapshots for a given interval.'''
 
+  def _prepare_dates(self, dates: List[datetime.datetime]) -> None:
+    for dt in dates:
+      self._prepare(dt)
+
+  def read_prepared_dates(self, dates: List[datetime.datetime]) -> 'State':
+    """Returns the union of snapshots for the given dates. Assumes that the snapshots are ready.
+
+    Overwrite this method to handle the case when some of the snapshots couldn't be prepared. E.g.
+
+        def read_prepared_dates(self, dates):
+          prepared_dates = [dt for dt in dates if self.is_prepared(dt)]
+          return super().read_prepared_dates(prepared_dates)
+    """
+    paths = ','.join([self._snapshot_name(dt) for dt in dates])
+    return self.lk.importUnionOfTableSnapshots(paths=paths)
+
   def read_interval(self, from_date: datetime.datetime,
                     to_date: datetime.datetime) -> 'State':
-    paths = ','.join(self.snapshots(from_date, to_date))
-    return self.lk.importUnionOfTableSnapshots(paths=paths)
+    dates = self.list_dates(from_date, to_date)
+    self._prepare_dates(dates)
+    return self.read_prepared_dates(dates)
 
 
 class State:
