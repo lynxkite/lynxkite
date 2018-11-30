@@ -157,9 +157,6 @@ class TestSnapshotSequence(unittest.TestCase):
     date_format = '%Y-%m-%d'
 
     class LazyTableSnapshotSequence(lynx.kite.TableSnapshotSequence):
-      def is_ready(self, date):
-        return True
-
       def create_state_if_available(self, date):
         return lk.createExampleGraph().sql(f'select "{date: {date_format}}" as queried')
 
