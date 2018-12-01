@@ -163,8 +163,8 @@ class Input(BoxTask):
   '''
 
   def _run_on_instance(self, wss_instance: 'WorkspaceSequenceInstance') -> None:
-    path = wss_instance.snapshot_path_for_input(self.name())
-    if not self._wss.lk.get_directory_entry(path).exists:
+    input_tss = wss_instance._wss.input_sequences[self.name()]
+    if not input_tss._snapshot_exists(wss_instance._date):
       wss_instance.run_input(self.name())
 
   def id(self) -> str:
@@ -464,7 +464,7 @@ class WorkspaceSequenceInstance:
 
     path = f'{self.folder_of_input_workspaces()}/{input_name}'
     lk.remove_name(_normalize_path(path), force=True)
-    lk.remove_name(self.snapshot_path_for_input(input_name), force=True)
+    self._wss.input_sequences[input_name].remove_date(self._date)
     input_ws.save(self.folder_of_input_workspaces())
     input_ws.trigger_all_side_effects()
 

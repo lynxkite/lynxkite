@@ -158,10 +158,12 @@ class TestSnapshotSequence(unittest.TestCase):
 
     class LazyTableSnapshotSequence(lynx.kite.TableSnapshotSequence):
       def create_state_if_available(self, date):
-        return lk.createExampleGraph().sql(f'select "{date: {date_format}}" as queried')
+        if date < datetime(5800, 1, 1):
+          return lk.createExampleGraph().sql(f'select "{date: {date_format}}" as queried')
 
     date1 = datetime(5799, 11, 28)
     date2 = datetime(5799, 11, 29)
+    date_to_fail = datetime(6000, 1, 1)
 
     lazy_tss = LazyTableSnapshotSequence(lk, 'test_lazy_snapshot_sequence', '0 0 * * *')
     queried = lazy_tss.read_date(date1)
@@ -172,3 +174,9 @@ class TestSnapshotSequence(unittest.TestCase):
     query_dates = {i[0].string for i in queried_interval.get_table_data().data}
     expected = {f'{d: {date_format}}' for d in (date1, date2)}
     self.assertSetEqual(query_dates, expected)
+
+    # If we don't provide a state for the given date then it should fail.
+    with self.assertRaises(AssertionError) as exc:
+      data = lazy_tss.read_date(date_to_fail).get_table_data()
+    error_msg = exc.exception.args[0]
+    self.assertIn('does not exist', error_msg)
