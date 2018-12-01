@@ -834,20 +834,17 @@ class SnapshotSequence:
     """
     pass
 
-  def _create_snapshot_if_available(self, date: datetime.datetime) -> None:
-    state = self.create_state_if_available(date)
-    if state is not None:
-      self.lk.save_snapshot(self._snapshot_name(date), self.lk.get_state_id(state))
-
-  def try_to_create_snapshot_if_not_exist(self, date: datetime.datetime) -> None:
+  def _try_to_create_snapshot_if_not_exist(self, date: datetime.datetime) -> None:
     if not self._snapshot_exists(date):
-      self._create_snapshot_if_available(date)
+      state = self.create_state_if_available(date)
+      if state is not None:
+        self.lk.save_snapshot(self._snapshot_name(date), self.lk.get_state_id(state))
 
   def is_ready(self, date: datetime.datetime) -> bool:
     """Checks if the snapshot is already create. If not, it tries to create it and chekcs if it was
     successful.
     """
-    self.try_to_create_snapshot_if_not_exist(date)
+    self._try_to_create_snapshot_if_not_exist(date)
     return self._snapshot_exists(date)
 
   def list_dates(self, from_date: datetime.datetime,
@@ -870,12 +867,12 @@ class SnapshotSequence:
     return t
 
   def read_date(self, date: datetime.datetime) -> 'Box':
-    self.try_to_create_snapshot_if_not_exist(date)
+    self._try_to_create_snapshot_if_not_exist(date)
     path = self._snapshot_name(date)
     return self.lk.importSnapshot(path=path)
 
   def remove_date(self, date: datetime.datetime) -> None:
-    path = self._snapshots(date, date)[0]
+    path = self._snapshot_name(date)
     self.lk.remove_name(path, force=True)
 
   def save_to_sequence(self, state_id: str, dt: datetime.datetime) -> None:
@@ -906,7 +903,7 @@ class TableSnapshotSequence(SnapshotSequence):
                     to_date: datetime.datetime) -> 'State':
     dates = self.list_dates(from_date, to_date)
     for dt in dates:
-      self.try_to_create_snapshot_if_not_exist(dt)
+      self._try_to_create_snapshot_if_not_exist(dt)
     paths = ','.join([self._snapshot_name(dt) for dt in dates])
     return self.lk.importUnionOfTableSnapshots(paths=paths)
 
