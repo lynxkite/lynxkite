@@ -171,8 +171,8 @@ class TestSnapshotSequence(unittest.TestCase):
     self.assertEqual(query_date, f'{date1: {date_format}}')
     # Should be able to handle that date1 is already done.
     queried_interval = lazy_tss.read_interval(date1, date2)
-    query_dates = {i[0].string for i in queried_interval.get_table_data().data}
-    expected = {f'{d: {date_format}}' for d in (date1, date2)}
+    query_dates = sorted([i[0].string for i in queried_interval.get_table_data().data])
+    expected = [f'{d: {date_format}}' for d in (date1, date2)]
     self.assertSetEqual(query_dates, expected)
 
     # If we don't provide a state for the given date then it should fail.
