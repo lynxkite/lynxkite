@@ -922,7 +922,7 @@ class TableSnapshotSequence(SnapshotSequence):
     """Returns the union of all snapshots between `from_date` and `to_date`.
 
     If some dates does not exist then it tries to create them on the fly. If it doesn't work
-    the this call will fail.
+    then this call will fail.
     """
     dates = self.list_dates(from_date, to_date)
     for dt in dates:
