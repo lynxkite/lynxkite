@@ -852,7 +852,7 @@ class SnapshotSequence:
     """Lists all dates matching the cron format `self.cron_str` between `from_date` and
     `to_date`.
 
-    End points `from_date` and `to_date` included).
+    (End points `from_date` and `to_date` included).
     """
     i = croniter(self.cron_str, from_date - datetime.timedelta(seconds=1))
     dates = []
