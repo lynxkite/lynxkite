@@ -841,7 +841,7 @@ class SnapshotSequence:
         self.lk.save_snapshot(self._snapshot_name(date), self.lk.get_state_id(state))
 
   def is_ready(self, date: datetime.datetime) -> bool:
-    """Checks if the snapshot is already create. If not, it tries to create it and chekcs if it was
+    """Checks if the snapshot is already created. If not, it tries to create it and checks if it was
     successful.
     """
     self._try_to_create_snapshot_if_not_exist(date)
@@ -849,7 +849,11 @@ class SnapshotSequence:
 
   def list_dates(self, from_date: datetime.datetime,
                  to_date: datetime.datetime) -> List[datetime.datetime]:
-    # We want to include the from_date if it matches the cron format.
+    """Lists all dates matching the cron format `self.cron_str` between `from_date` and
+    `to_date`.
+
+    End points `from_date` and `to_date` included).
+    """
     i = croniter(self.cron_str, from_date - datetime.timedelta(seconds=1))
     dates = []
     while True:
@@ -860,18 +864,32 @@ class SnapshotSequence:
     return dates
 
   def _snapshots(self, from_date: datetime.datetime, to_date: datetime.datetime) -> List[str]:
-    # We want to include the from_date if it matches the cron format.
+    """Lists the name of all the snapshots whose date is between `from_date` and `to_date`.
+
+    Snapshots corresponding `from_date` and `to_date` (if they match the cron format
+    `self.cron_str`) are also listed.
+    Also lists snapshots which might not yet exist.
+    """
     t = []
     for dt in self.list_dates(from_date, to_date):
       t.append(self._snapshot_name(dt))
     return t
 
   def read_date(self, date: datetime.datetime) -> 'Box':
+    """Returns an importSnapshot box with the corresponding snapshot.
+
+    If the snapshot is not created yet then it first tries to create it. If that doesn't work
+    then the importSnapshot box will output an error.
+    """
     self._try_to_create_snapshot_if_not_exist(date)
     path = self._snapshot_name(date)
     return self.lk.importSnapshot(path=path)
 
   def remove_date(self, date: datetime.datetime) -> None:
+    """Removes the snapshot corresponding to `date` if it exists.
+
+    Does nothing if the snapshot doesn't exist.
+    """
     path = self._snapshot_name(date)
     self.lk.remove_name(path, force=True)
 
@@ -901,6 +919,11 @@ class TableSnapshotSequence(SnapshotSequence):
 
   def read_interval(self, from_date: datetime.datetime,
                     to_date: datetime.datetime) -> 'State':
+    """Returns the union of all snapshots between `from_date` and `to_date`.
+
+    If some dates does not exist then it tries to create them on the fly. If it doesn't work
+    the this call will fail.
+    """
     dates = self.list_dates(from_date, to_date)
     for dt in dates:
       self._try_to_create_snapshot_if_not_exist(dt)
