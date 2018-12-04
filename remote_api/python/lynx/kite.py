@@ -826,7 +826,7 @@ class SnapshotSequence:
     entry = self.lk.get_directory_entry(self._snapshot_name(date))
     return entry.exists and entry.isSnapshot
 
-  def create_state_if_available(self, date: datetime.datetime) -> Union['State', None]:
+  def create_state_if_available(self, date: datetime.datetime) -> Optional['State']:
     """A fallback if the snapshot is not there yet when a client is asking for it.
 
     Overwrite this method to return a `State` for the snapshot (or None if you can not) if you
