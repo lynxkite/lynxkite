@@ -173,10 +173,11 @@ class TestSnapshotSequence(unittest.TestCase):
     queried_interval = lazy_tss.read_interval(date1, date2)
     query_dates = sorted([i[0].string for i in queried_interval.get_table_data().data])
     expected = [f'{d: {date_format}}' for d in (date1, date2)]
-    self.assertSetEqual(query_dates, expected)
+    self.assertListEqual(query_dates, expected)
 
-    # If we don't provide a state for the given date then it should fail.
+    # If we don't provide a state for the given date then it should return a box with error.
+    non_existing_snapshot = lazy_tss.read_date(date_to_fail)
     with self.assertRaises(AssertionError) as exc:
-      data = lazy_tss.read_date(date_to_fail).get_table_data()
+      data = non_existing_snapshot.get_table_data()
     error_msg = exc.exception.args[0]
     self.assertIn('does not exist', error_msg)
