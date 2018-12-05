@@ -918,11 +918,11 @@ class TableSnapshotSequence(SnapshotSequence):
   reading the union of the snapshots for a given interval.'''
 
   def read_interval(self, from_date: datetime.datetime,
-                    to_date: datetime.datetime) -> 'State':
+                    to_date: datetime.datetime) -> 'Box':
     """Returns the union of all snapshots between `from_date` and `to_date`.
 
     If some dates does not exist then it tries to create them on the fly. If it doesn't work
-    then this call will fail.
+    then the returned box will output an error.
     """
     dates = self.list_dates(from_date, to_date)
     for dt in dates:
