@@ -731,16 +731,16 @@ class LynxKite:
         names = list(inspect.signature(builder_fn).parameters.keys())[1:]
       else:
         names = inspect.signature(builder_fn).parameters.keys()
-      input_boxes = [self.input(name=name) for name in names]
+      input_boxes = {name: self.input(name=name) for name in names}
       if with_side_effects:
-        results = builder_fn(se_collector, *input_boxes)
+        results = builder_fn(se_collector, **input_boxes)
       else:
-        results = builder_fn(*input_boxes)
+        results = builder_fn(**input_boxes)
       outputs = _to_outputs(results)
       return Workspace(name=real_name,
                        terminal_boxes=outputs + se_collector.top_level_side_effects,
                        side_effect_paths=list(se_collector.all_triggerables()),
-                       input_boxes=input_boxes,
+                       input_boxes=input_boxes.values(),
                        ws_parameters=parameters)
     return ws_decorator
 
