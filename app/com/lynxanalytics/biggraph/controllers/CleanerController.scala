@@ -143,7 +143,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       if (!expanded.contains(gUID)) {
         expanded.add(gUID)
         if (entity.source.operation.isHeavy) {
-          Some(gUID)
+          Set(gUID, entity.source.gUID.toString)
         } else {
           heavyOpOutputSourceGUIDs(entity.source.inputs.all.values, expanded).toSet
         }
