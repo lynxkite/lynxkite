@@ -91,6 +91,15 @@ class TestCleaner(unittest.TestCase):
     lk.empty_cleaner_trash()
     self.check('After running "empty cleaner"', {'trash_cnt': '-'})
 
+  def test_imported_table_is_working_after_cleaning(self):
+    lk = self.lk
+    table = lk.uploadCSVNow('id,sum\n1,400\n2,550')
+    lk.move_to_cleaner_trash('notSnapshotOrImportBoxEntities')
+    lk.empty_cleaner_trash()
+    data = [[x.string for x in row] for row in table.get_table_data().data]
+    expected = [['1', '400'], ['2', '550']]
+    self.assertEqual(data, expected)
+
   def test_not_snapshot_or_workspace_entities(self):
     lk = self.lk
     self.data_status = None
