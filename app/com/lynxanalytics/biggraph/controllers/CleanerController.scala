@@ -187,10 +187,14 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     heavyOpOutputSourceGUIDs(entitiesFromWorkspaces, HashSet())
   }
 
-  private def importBoxEntities() = {
+  private def entitiesFromImportBoxes() = {
     entitiesFromWorkspaces.filter { e =>
       e.source.operation.isInstanceOf[com.lynxanalytics.biggraph.graph_operations.ImportDataFrame]
-    }.map(_.gUID.toString)
+    }
+  }
+
+  private def importBoxEntities() = {
+    heavyOpOutputSourceGUIDs(entitiesFromImportBoxes, HashSet())
   }
 
   private def metaGraphContents(): Set[String] = {
