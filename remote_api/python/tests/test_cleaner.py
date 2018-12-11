@@ -66,6 +66,18 @@ class TestCleaner(unittest.TestCase):
     lk.empty_cleaner_trash()
     self.check('After running "empty cleaner"', {'trash_cnt': '-'})
 
+  def test_snapshot_is_working_after_cleaning(self):
+    lk = self.lk
+    lk.remove_name('saved_snapshot_cln', force=True)
+    table = lk.uploadCSVNow('id,amount\n1,100\n2,320')
+    table.save_snapshot('saved_snapshot_cln')
+    lk.move_to_cleaner_trash('notSnapshotEntities')
+    lk.empty_cleaner_trash()
+    table = lk.importSnapshot(path='saved_snapshot_cln').get_table_data()
+    data = [[x.string for x in row] for row in table.data]
+    expected = [['1', '100'], ['2', '320']]
+    self.assertEqual(data, expected)
+
   def test_import_output_cleaning(self):
     lk = self.lk
     self.data_status = None
