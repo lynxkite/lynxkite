@@ -29,6 +29,7 @@ class SingleDataRoot(repositoryPath: HadoopFile) extends DataRoot {
   // Preload directories we are sure are needed (to avoid post-initialization slowness).
   filesInTopDir(ScalarsDir)
   filesInTopDir(EntitiesDir)
+  filesInTopDir(TablesDir)
   filesInTopDir(PartitionedDir)
   filesInTopDir(OperationsDir)
 
