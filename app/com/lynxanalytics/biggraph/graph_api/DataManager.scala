@@ -126,6 +126,7 @@ class DataManager(
     instanceOutputCache.clear()
     entityCache.clear()
     sparkCachedEntities.clear()
+    dataRoot.clear()
   }
 
   private val asyncJobs = new ControlledFutures()(executionContext)
