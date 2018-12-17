@@ -11,6 +11,7 @@ trait DataRoot {
   def forReading(path: Seq[String]): HadoopFile
   def forWriting(path: Seq[String]): HadoopFile
   def list(path: Seq[String]): Seq[HadoopFile]
+  def clear()
 }
 case class HadoopFileLike(root: DataRoot, path: Seq[String]) {
   def /(p: String) = HadoopFileLike(root, path :+ p)
@@ -46,6 +47,11 @@ class SingleDataRoot(repositoryPath: HadoopFile) extends DataRoot {
     }
   }
 
+  // To force the re-read of top-level directories after a cleaner run.
+  def clear() = {
+    contents.clear()
+  }
+
   def forReading(path: Seq[String]) = forWriting(path)
   def forWriting(path: Seq[String]) = repositoryPath / path.mkString("/")
   def list(path: Seq[String]) = forReading(path).list
@@ -58,4 +64,8 @@ class CombinedRoot(a: SingleDataRoot, b: SingleDataRoot) extends DataRoot {
     if ((a / path).exists || !(b / path).exists) a.forReading(path) else b.forReading(path)
   def forWriting(path: Seq[String]) = a.forWriting(path)
   def list(path: Seq[String]) = (a / path).list ++ (b / path).list
+  def clear() = {
+    a.clear()
+    b.clear()
+  }
 }
