@@ -27,11 +27,15 @@ class SingleDataRoot(repositoryPath: HadoopFile) extends DataRoot {
   val contents = collection.mutable.Map[String, Set[String]]()
 
   // Preload directories we are sure are needed (to avoid post-initialization slowness).
-  filesInTopDir(ScalarsDir)
-  filesInTopDir(EntitiesDir)
-  filesInTopDir(TablesDir)
-  filesInTopDir(PartitionedDir)
-  filesInTopDir(OperationsDir)
+  refresh()
+
+  def refresh() = {
+    filesInTopDir(ScalarsDir)
+    filesInTopDir(EntitiesDir)
+    filesInTopDir(TablesDir)
+    filesInTopDir(PartitionedDir)
+    filesInTopDir(OperationsDir)
+  }
 
   def filesInTopDir(topDirName: String): Set[String] = {
     contents.getOrElseUpdate(
@@ -40,6 +44,7 @@ class SingleDataRoot(repositoryPath: HadoopFile) extends DataRoot {
         .map(_.path.getName)
         .toSet)
   }
+
   def mayHaveExisted(path: Seq[String]) = {
     if (path.size < 2) true // Being incorrectly true is okay.
     else synchronized {
@@ -51,6 +56,7 @@ class SingleDataRoot(repositoryPath: HadoopFile) extends DataRoot {
   // To force the re-read of top-level directories after a cleaner run.
   def clear() = {
     contents.clear()
+    refresh()
   }
 
   def forReading(path: Seq[String]) = forWriting(path)
