@@ -64,6 +64,7 @@ class ScalaScriptSecurityManager extends SecurityManager {
             if (!(p.getActions == "read" && calledByClassLoader)) {
               super.checkPermission(permission)
             }
+          case _: java.lang.reflect.ReflectPermission =>
           case _ =>
             super.checkPermission(permission)
         }
