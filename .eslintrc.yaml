@@ -28,7 +28,7 @@ rules:
   no-var: [error]
   no-undef: [error]
 parserOptions:
-  ecmaVersion: 6
+  ecmaVersion: 2018
 globals:
   # "false" means overwriting is disallowed.
   angular: false
