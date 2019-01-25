@@ -2,6 +2,8 @@ import unittest
 import lynx.kite
 from lynx.kite import pp, text
 import lynx.automation
+from lynx.automation import _aware_to_iso_str
+from lynx.automation import Schedule, utc_dt
 from datetime import datetime, timedelta
 
 
@@ -18,14 +20,14 @@ class TestWorkspaceSequence(unittest.TestCase):
       o2 = table.sql(pp('select "${date}" as d from input'))
       return dict(cnt=o1, d=o2)
 
-    test_date = datetime(2018, 1, 2)
-    tss = lynx.automation.TableSnapshotSequence(lk, 'eg_table_seq', '0 0 * * *')
+    test_date = utc_dt(2018, 1, 2)
+    schedule = Schedule(utc_dt(2018, 1, 1), '0 0 * * *')
+    tss = lynx.automation.TableSnapshotSequence(lk, 'eg_table_seq', schedule)
     lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, test_date)
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)
     wss = lynx.automation.WorkspaceSequence(
         ws=builder,
-        schedule='0 0 * * *',
-        start_date=datetime(2018, 1, 1),
+        schedule=schedule,
         # Test if trailing slash is duplicated or not.
         lk_root='ws_test_seq/',
         input_recipes=[input_recipe])
@@ -38,8 +40,8 @@ class TestWorkspaceSequence(unittest.TestCase):
     self.assertEqual(table_raw.data[0][0].string, '4')
     d_result_tss = wss.output_sequences['d']
     table_raw = d_result_tss.read_interval(test_date, test_date).get_table_data()
-    self.assertEqual(table_raw.data[0][0].string, '2018-01-02 00:00:00')
-    early_date = datetime(2017, 12, 31)
+    self.assertEqual(table_raw.data[0][0].string, '2018-01-02T00:00:00+00:00')
+    early_date = utc_dt(2017, 12, 31)
     with self.assertRaises(Exception) as context:
       early_instance = wss.ws_for_date(early_date)
     self.assertTrue('preceeds start date' in str(context.exception))
@@ -54,14 +56,14 @@ class TestWorkspaceSequence(unittest.TestCase):
       o1 = table.sql('select count(*) as cnt from input')
       return dict(cnt=o1)
 
-    test_date = datetime(2018, 1, 2)
-    tss = lynx.automation.TableSnapshotSequence(lk, 'eg_cnt_seq', '0 0 * * *')
+    test_date = utc_dt(2018, 1, 2)
+    schedule = Schedule(utc_dt(2018, 1, 1), '0 0 * * *')
+    tss = lynx.automation.TableSnapshotSequence(lk, 'eg_cnt_seq', schedule)
     lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, test_date)
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)
     wss = lynx.automation.WorkspaceSequence(
         ws=builder,
-        schedule='0 0 * * *',
-        start_date=datetime(2018, 1, 1),
+        schedule=schedule,
         lk_root='eg_cnt',
         input_recipes=[input_recipe])
     wss_instance = wss.ws_for_date(test_date)
@@ -83,11 +85,11 @@ class TestWorkspaceSequence(unittest.TestCase):
     initial_state = lk.createExampleGraph().sql('select count(1) as summa from vertices')
     summa_as_input = lynx.automation.TableSnapshotRecipe(None, delta=1)
     summa_with_default = lynx.automation.RecipeWithDefault(
-        summa_as_input, datetime(2018, 1, 1), initial_state)
+        summa_as_input, utc_dt(2018, 1, 1), initial_state)
+    schedule = Schedule(utc_dt(2018, 1, 1), '0 0 * * *')
     wss = lynx.automation.WorkspaceSequence(
         ws=builder,
-        schedule='0 0 * * *',
-        start_date=datetime(2018, 1, 1),
+        schedule=schedule,
         lk_root='ws_test_seq_2',
         input_recipes=[summa_with_default])
     summa_as_input.set_tss(wss.output_sequences['summa'])
@@ -102,10 +104,10 @@ class TestWorkspaceSequence(unittest.TestCase):
       table_raw = summa_result_tss.read_interval(test_date, test_date).get_table_data()
       self.assertEqual(table_raw.data[0][0].string, str(summa))
 
-    run_ws(datetime(2018, 1, 1), '8')
-    run_ws(datetime(2018, 1, 2), '16')
-    run_ws(datetime(2018, 1, 3), '32')
-    run_ws(datetime(2018, 1, 4), '64')
+    run_ws(utc_dt(2018, 1, 1), '8')
+    run_ws(utc_dt(2018, 1, 2), '16')
+    run_ws(utc_dt(2018, 1, 3), '32')
+    run_ws(utc_dt(2018, 1, 4), '64')
 
   def test_side_effects_in_sequence(self):
     lk = lynx.kite.LynxKite()
@@ -121,10 +123,10 @@ class TestWorkspaceSequence(unittest.TestCase):
          .register(sec))
       return dict(avg=o)
 
+    schedule = Schedule(utc_dt(2018, 4, 5), '0 0 * * *')
     wss = lynx.automation.WorkspaceSequence(
         ws=builder,
-        schedule='0 0 * * *',
-        start_date=datetime(2018, 4, 5),
+        schedule=schedule,
         lk_root='ws_test_seq_3',
         input_recipes=[])
 
@@ -138,11 +140,11 @@ class TestWorkspaceSequence(unittest.TestCase):
       table_raw = avg_result_tss.read_interval(test_date, test_date).get_table_data()
       self.assertEqual(table_raw.data[0][0].string, '22.7')
       entries = lk.list_dir('wsi_snapshots')
-      self.assertTrue(f'wsi_snapshots/{test_date}' in [e.name for e in entries])
+      self.assertTrue(f'wsi_snapshots/{_aware_to_iso_str(test_date)}' in [e.name for e in entries])
 
-    run_ws(datetime(2018, 4, 5))
-    run_ws(datetime(2018, 4, 6))
-    run_ws(datetime(2018, 4, 7))
+    run_ws(utc_dt(2018, 4, 5))
+    run_ws(utc_dt(2018, 4, 6))
+    run_ws(utc_dt(2018, 4, 7))
 
   def test_output_retention(self):
     def not_deleted():
@@ -158,15 +160,15 @@ class TestWorkspaceSequence(unittest.TestCase):
       o1 = table.sql('select count(*) as cnt from input')
       return dict(cnt=o1)
 
-    test_days = [datetime(2018, 1, 1) + timedelta(days=x) for x in range(0, 10)]
-    tss = lynx.automation.TableSnapshotSequence(lk, 'wss_retention_seq', '0 0 * * *')
+    test_days = [utc_dt(2018, 1, 1) + timedelta(days=x) for x in range(0, 10)]
+    schedule = Schedule(utc_dt(2018, 1, 1), '0 0 * * *')
+    tss = lynx.automation.TableSnapshotSequence(lk, 'wss_retention_seq', schedule)
     for day in test_days:
       lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, day)
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)
     wss = lynx.automation.WorkspaceSequence(
         ws=builder,
-        schedule='0 0 * * *',
-        start_date=datetime(2018, 1, 1),
+        schedule=schedule,
         lk_root='wss_retention',
         input_recipes=[input_recipe],
         retention_deltas=dict(cnt=timedelta(days=3)))

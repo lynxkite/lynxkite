@@ -2,6 +2,7 @@ import unittest
 from datetime import datetime, timedelta
 import lynx.kite
 import lynx.automation
+from lynx.automation import Schedule, utc_dt
 import warnings
 import random
 import re
@@ -31,13 +32,12 @@ class TestAirflowDagGeneration(unittest.TestCase):
 
     wss = lynx.automation.WorkspaceSequence(
         ws=trivial,
-        schedule='* * * * *',
-        start_date=datetime(2018, 5, 10),
+        schedule=Schedule(utc_dt(2018, 5, 10), '* * * * *'),
         lk_root='generated_airflow_dag_test',
         input_recipes=[])
     trivial_eg_dag = wss.to_airflow_DAG('trivial_eg_dag')
     self.assertEqual(trivial_eg_dag.schedule_interval, '* * * * *')
-    self.assertEqual(trivial_eg_dag.default_args['start_date'], datetime(2018, 5, 10))
+    self.assertEqual(trivial_eg_dag.default_args['start_date'], utc_dt(2018, 5, 10))
     self.assertEqual(trivial_eg_dag.dag_id, 'trivial_eg_dag')
     self.assertEqual(trivial_eg_dag.owner, 'airflow')
     deps = deps_of_airflow_dag(trivial_eg_dag)
@@ -60,13 +60,12 @@ class TestAirflowDagGeneration(unittest.TestCase):
     lk = lynx.kite.LynxKite()
     wss = lynx.automation.WorkspaceSequence(
         ws=create_complex_test_workspace(),
-        schedule='0 3 * * *',
-        start_date=datetime(2018, 5, 11),
+        schedule=Schedule(utc_dt(2018, 5, 11), '0 3 * * *'),
         lk_root='generated_airflow_dag_test',
         input_recipes=[])
     complex_dag = wss.to_airflow_DAG('complex_dag')
     self.assertEqual(complex_dag.schedule_interval, '0 3 * * *')
-    self.assertEqual(complex_dag.default_args['start_date'], datetime(2018, 5, 11))
+    self.assertEqual(complex_dag.default_args['start_date'], utc_dt(2018, 5, 11))
     self.assertEqual(complex_dag.dag_id, 'complex_dag')
     self.assertEqual(complex_dag.owner, 'airflow')
     deps = deps_of_airflow_dag(complex_dag)
@@ -124,21 +123,25 @@ class TestAirflowDagGeneration(unittest.TestCase):
     # We suppress deprecation warnings coming from Airflow
     warnings.simplefilter("ignore")
     lk = lynx.kite.LynxKite()
-    tss = lynx.automation.TableSnapshotSequence(lk, 'eq_table_seq', '0 3 * * *')
-    tss.remove_date(datetime(2018, 5, 11, 3, 0))
-    lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, datetime(2018, 5, 11, 3, 0))
+    tss = lynx.automation.TableSnapshotSequence(
+        lk,
+        'eq_table_seq',
+        Schedule(utc_dt(2018, 5, 11), '0 3 * * *'))
+    tss.remove_date(utc_dt(2018, 5, 11, 3, 0))
+    lk.createExampleGraph().sql('select * from vertices').save_to_sequence(
+        tss,
+        utc_dt(2018, 5, 11, 3, 0))
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)
     wss = lynx.automation.WorkspaceSequence(
         ws=create_complex_test_workspace(),
-        schedule='0 3 * * *',
-        start_date=datetime(2018, 5, 11),
+        schedule=Schedule(utc_dt(2018, 5, 11), '0 3 * * *'),
         lk_root='airflow_sensor_test',
         input_recipes=[input_recipe] * 3)
     complex_dag = wss.to_airflow_DAG('complex_dag')
     sensor_tasks = [t for t in complex_dag.tasks if 'sensor' in t.task_id]
     for s in sensor_tasks:
-      self.assertFalse(s.poke(dict(execution_date=datetime(2018, 5, 10, 3, 0))))
-      self.assertTrue(s.poke(dict(execution_date=datetime(2018, 5, 11, 3, 0))))
+      self.assertTrue(s.poke(dict(execution_date=utc_dt(2018, 5, 11, 3, 0))))
+      self.assertFalse(s.poke(dict(execution_date=utc_dt(2018, 5, 12, 3, 0))))
 
   def test_airflow_dag_parameters(self):
     # We suppress deprecation warnings coming from Airflow
@@ -146,8 +149,7 @@ class TestAirflowDagGeneration(unittest.TestCase):
     lk = lynx.kite.LynxKite()
     wss = lynx.automation.WorkspaceSequence(
         ws=create_complex_test_workspace(),
-        schedule='30 5 * * *',
-        start_date=datetime(2018, 5, 11),
+        schedule=Schedule(utc_dt(2018, 5, 11), '30 5 * * *'),
         lk_root='airflow_dag_parameter_test',
         input_recipes=[])
     param_dag_good = wss.to_airflow_DAG(
@@ -155,7 +157,7 @@ class TestAirflowDagGeneration(unittest.TestCase):
         task_default_args=dict(depends_on_past=True))
     self.assertEqual(param_dag_good.default_args,
                      dict(owner='airflow',
-                          start_date=datetime(2018, 5, 11, 0, 0),
+                          start_date=utc_dt(2018, 5, 11, 0, 0),
                           depends_on_past=True))
     with self.assertRaises(Exception) as context:
       param_dag_bad = wss.to_airflow_DAG(

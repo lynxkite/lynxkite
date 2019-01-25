@@ -1,9 +1,10 @@
 import unittest
 import json
-from datetime import datetime, timedelta, timezone, tzinfo
+from datetime import datetime, timedelta, tzinfo
 import dateutil.parser
 import lynx.kite
-from lynx.automation import _utc_to_local
+from lynx.automation import utc_dt, Schedule
+import pendulum
 
 ANCHOR_EXAMPLE_AND_SQL = '''
   [{
@@ -52,102 +53,84 @@ class TestSnapshotSequence(unittest.TestCase):
     lk = lynx.kite.LynxKite()
     state = self._get_state(lk)
 
-    tss = lynx.automation.TableSnapshotSequence(lk, 'test_snapshot_sequence/1', '0 0 1 1 *')
-    self._save_snapshots(tss, [datetime(y, 1, 1, 0, 0, tzinfo=timezone.utc) for y in [
+    schedule = Schedule(utc_dt(2010, 1, 1), '0 0 1 1 *')
+    tss = lynx.automation.TableSnapshotSequence(lk, 'test_snapshot_sequence/1', schedule)
+    self._save_snapshots(tss, [utc_dt(y, 1, 1, 0, 0) for y in [
         2010, 2011, 2012]], state)
 
-    fd = datetime(2010, 1, 1, 0, 0, tzinfo=timezone.utc)
-    td = datetime(2011, 1, 1, 0, 0, tzinfo=timezone.utc)
+    fd = utc_dt(2010, 1, 1, 0, 0)
+    td = utc_dt(2011, 1, 1, 0, 0)
     snapshots = tss._snapshots(fd, td)
     self.assertEqual(len(snapshots), 2)
-    self.assertEqual('test_snapshot_sequence/1/2010-01-01 00:00:00+00:00', snapshots[0])
-    self.assertEqual('test_snapshot_sequence/1/2011-01-01 00:00:00+00:00', snapshots[1])
+    self.assertEqual('test_snapshot_sequence/1/2010-01-01T00:00:00+00:00', snapshots[0])
+    self.assertEqual('test_snapshot_sequence/1/2011-01-01T00:00:00+00:00', snapshots[1])
     self.assertEqual(8.0, self._table_count(tss.read_interval(fd, td)))
 
-    tss = lynx.automation.TableSnapshotSequence(lk, 'test_snapshot_sequence/2', '0 0 1 * *')
+    schedule = Schedule(utc_dt(2010, 1, 1), '0 0 1 * *')
+    tss = lynx.automation.TableSnapshotSequence(lk, 'test_snapshot_sequence/2', schedule)
     self._save_snapshots(tss,
-                         [datetime(2015, m, 1, 0, 0, tzinfo=timezone.utc) for m in range(1, 13)] +
-                         [datetime(2016, m, 1, 0, 0, tzinfo=timezone.utc) for m in range(1, 13)], state)
+                         [utc_dt(2015, m, 1, 0, 0) for m in range(1, 13)] +
+                         [utc_dt(2016, m, 1, 0, 0) for m in range(1, 13)], state)
 
-    fd = datetime(2015, 5, 1, 0, 0, tzinfo=timezone.utc)
-    td = datetime(2016, 10, 1, 0, 0, tzinfo=timezone.utc)
+    fd = utc_dt(2015, 5, 1, 0, 0)
+    td = utc_dt(2016, 10, 1, 0, 0)
     snapshots = tss._snapshots(fd, td)
     self.assertEqual(len(snapshots), 18)
-    self.assertEqual('test_snapshot_sequence/2/2015-05-01 00:00:00+00:00', snapshots[0])
-    self.assertEqual('test_snapshot_sequence/2/2016-10-01 00:00:00+00:00', snapshots[17])
+    self.assertEqual('test_snapshot_sequence/2/2015-05-01T00:00:00+00:00', snapshots[0])
+    self.assertEqual('test_snapshot_sequence/2/2016-10-01T00:00:00+00:00', snapshots[17])
     self.assertEqual(72.0, self._table_count(tss.read_interval(fd, td)))
 
-    tss = lynx.automation.TableSnapshotSequence(lk, 'test_snapshot_sequence/3', '0 0 * * *')
+    schedule = Schedule(utc_dt(2010, 1, 1), '0 0 * * *')
+    tss = lynx.automation.TableSnapshotSequence(lk, 'test_snapshot_sequence/3', schedule)
     self._save_snapshots(tss,
-                         [datetime(2017, 3, d, 0, 0, tzinfo=timezone.utc) for d in range(1, 32)] +
-                         [datetime(2017, 4, d, 0, 0, tzinfo=timezone.utc) for d in range(1, 31)], state)
+                         [utc_dt(2017, 3, d, 0, 0) for d in range(1, 32)] +
+                         [utc_dt(2017, 4, d, 0, 0) for d in range(1, 31)], state)
 
-    fd = datetime(2017, 3, 15, 0, 0, tzinfo=timezone.utc)
-    td = datetime(2017, 4, 15, 0, 0, tzinfo=timezone.utc)
+    fd = utc_dt(2017, 3, 15, 0, 0)
+    td = utc_dt(2017, 4, 15, 0, 0)
     snapshots = tss._snapshots(fd, td)
     self.assertEqual(len(snapshots), 32)
-    self.assertEqual('test_snapshot_sequence/3/2017-03-15 00:00:00+00:00', snapshots[0])
-    self.assertEqual('test_snapshot_sequence/3/2017-04-15 00:00:00+00:00', snapshots[31])
+    self.assertEqual('test_snapshot_sequence/3/2017-03-15T00:00:00+00:00', snapshots[0])
+    self.assertEqual('test_snapshot_sequence/3/2017-04-15T00:00:00+00:00', snapshots[31])
     self.assertEqual(128.0, self._table_count(tss.read_interval(fd, td)))
 
   def test_invalid_save_to_sequence(self):
     lk = lynx.kite.LynxKite()
     state = self._get_state(lk)
 
-    tss = lynx.automation.TableSnapshotSequence(lk, 'test_snapshot_sequence/4', '0 0 1 * *')
+    schedule = Schedule(utc_dt(2010, 1, 1), '0 0 1 * *')
+    tss = lynx.automation.TableSnapshotSequence(lk, 'test_snapshot_sequence/4', schedule)
     self.assertRaises(AssertionError, tss.save_to_sequence, state,
-                      datetime(2015, 6, 15, 0, 0, tzinfo=timezone.utc))
-
-  def test_different_timezone(self):
-    lk = lynx.kite.LynxKite()
-    state = self._get_state(lk)
-
-    tss = lynx.automation.TableSnapshotSequence(lk, 'test_snapshot_sequence/5', '0 0 1 1 *')
-    self._save_snapshots(
-        tss, [
-            datetime(
-                y, 1, 1, 0, 0, tzinfo=timezone.utc) for y in [
-                2010, 2011, 2012]], state)
-
-    class UTCPlus3Hours(tzinfo):
-      def utcoffset(self, dt):
-        return timedelta(hours=3) + self.dst(dt)
-
-      def dst(self, dt):
-        return timedelta(hours=0)
-
-    fd = datetime(2010, 1, 1, 3, 0, tzinfo=UTCPlus3Hours())
-    td = datetime(2011, 1, 1, 3, 0, tzinfo=UTCPlus3Hours())
-    snapshots = tss._snapshots(fd, td)
-    self.assertEqual(len(snapshots), 1)
-    self.assertEqual('test_snapshot_sequence/5/2010-12-31 21:00:00+00:00', snapshots[0])
+                      utc_dt(2015, 6, 15, 0, 0))
 
   def test_utc_snapshot_names(self):
     lk = lynx.kite.LynxKite()
 
-    def name_to_local_time(name):
-      dt = name.split('/')[-1]
-      return _utc_to_local(dt)
+    def name_to_time(name):
+      return name.split('/')[-1]
 
-    tss = lynx.automation.TableSnapshotSequence(lk, 'test_snapshot_sequence/6', '30 1 * * *')
-    fd = datetime(2018, 1, 1, 0, 0)
-    td = datetime(2018, 2, 1, 0, 0)
+    budapest = pendulum.timezone('Europe/Budapest')
+    schedule = Schedule(pendulum.create(2010, 1, 1, tz=budapest), '30 1 * * *')
+    tss = lynx.automation.TableSnapshotSequence(lk, 'test_snapshot_sequence/6', schedule)
+    fd = utc_dt(2018, 1, 1, 0, 0)
+    td = utc_dt(2018, 2, 1, 0, 0)
     snapshots = tss._snapshots(fd, td)
-    local_names = [name_to_local_time(name) for name in snapshots]
+    local_names = [name_to_time(name) for name in snapshots]
     self.assertEqual(len(snapshots), 31)
-    self.assertEqual(local_names[0], '2018-01-01 01:30')
-    self.assertEqual(local_names[1], '2018-01-02 01:30')
-    self.assertEqual(local_names[2], '2018-01-03 01:30')
-    self.assertEqual(local_names[30], '2018-01-31 01:30')
+    self.assertEqual(local_names[0], '2018-01-01T00:30:00+00:00')
+    self.assertEqual(local_names[1], '2018-01-02T00:30:00+00:00')
+    self.assertEqual(local_names[2], '2018-01-03T00:30:00+00:00')
+    self.assertEqual(local_names[30], '2018-01-31T00:30:00+00:00')
 
   def test_delete_expired(self):
     lk = lynx.kite.LynxKite()
+    schedule = Schedule(utc_dt(2010, 1, 1), '30 1 * * *')
     tss = lynx.automation.TableSnapshotSequence(
-        lk, 'test_snapshot_sequence/7', '30 1 * * *', timedelta(days=10))
+        lk, 'test_snapshot_sequence/7', schedule, timedelta(days=10))
     state = lk.get_state_id(lk.createExampleGraph().sql('select * from vertices'))
-    tss.save_to_sequence(state, datetime(2018, 1, 1, 1, 30))
+    tss.save_to_sequence(state, utc_dt(2018, 1, 1, 1, 30))
     self.assertEqual(1, len(lk.list_dir('test_snapshot_sequence/7')))
-    tss.delete_expired(datetime(2018, 2, 1, 1, 30))
+    tss.delete_expired(utc_dt(2018, 2, 1, 1, 30))
     self.assertEqual(0, len(lk.list_dir('test_snapshot_sequence/7')))
 
   def test_lazy_tss(self):
@@ -156,14 +139,15 @@ class TestSnapshotSequence(unittest.TestCase):
 
     class LazyTableSnapshotSequence(lynx.automation.TableSnapshotSequence):
       def create_state_if_available(self, date):
-        if date < datetime(5800, 1, 1):
+        if date < utc_dt(5800, 1, 1):
           return lk.createExampleGraph().sql(f'select "{date: {date_format}}" as queried')
 
-    date1 = datetime(5799, 11, 28)
-    date2 = datetime(5799, 11, 29)
-    date_to_fail = datetime(6000, 1, 1)
+    date1 = utc_dt(5799, 11, 28)
+    date2 = utc_dt(5799, 11, 29)
+    date_to_fail = utc_dt(6000, 1, 1)
 
-    lazy_tss = LazyTableSnapshotSequence(lk, 'test_lazy_snapshot_sequence', '0 0 * * *')
+    schedule = Schedule(utc_dt(2010, 1, 1), '0 0 * * *')
+    lazy_tss = LazyTableSnapshotSequence(lk, 'test_lazy_snapshot_sequence', schedule)
     queried = lazy_tss.read_date(date1)
     query_date = queried.get_table_data().data[0][0].string
     self.assertEqual(query_date, f'{date1: {date_format}}')
@@ -179,3 +163,13 @@ class TestSnapshotSequence(unittest.TestCase):
       data = non_existing_snapshot.get_table_data()
     error_msg = exc.exception.args[0]
     self.assertIn('does not exist', error_msg)
+
+  def test_using_non_utc_date(self):
+    lk = lynx.kite.LynxKite()
+    budapest = pendulum.timezone('Europe/Budapest')
+    schedule = Schedule(utc_dt(2010, 1, 1), '30 1 * * *')
+    tss = lynx.automation.TableSnapshotSequence(lk, 'test_snapshot_sequence/8', schedule)
+    state = lk.get_state_id(lk.createExampleGraph().sql('select age from vertices'))
+    tss.save_to_sequence(state, utc_dt(2018, 1, 1, 1, 30))
+    data = tss.read_date(pendulum.create(2018, 1, 1, 2, 30, tz=budapest)).get_table_data().data
+    self.assertEqual([[x.string for x in row][0] for row in data], ['20.3', '18.2', '50.3', '2'])

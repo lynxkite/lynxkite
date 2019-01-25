@@ -8,8 +8,7 @@ Example usage (the code must be in the dags folder of Airflow)::
       return dict(result=lk.createExampleGraph().sql('select name, age from vertices'))
     wss = lynx.automation.WorkspaceSequence(
         ws=trivial,
-        schedule='* * * * *',
-        start_date=datetime(2018, 5, 10),
+        schedule=Schedule(pendulum.create(2018, 5, 10, tz=UTC), '* * * * *'),
         lk_root='airflow_test',
         input_recipes=[])
     eg_dag = wss.to_airflow_DAG('eg_dag')
@@ -20,43 +19,107 @@ from lynx.kite import _normalize_path, _topological_sort, escape
 from collections import deque, defaultdict, OrderedDict
 import datetime
 import dateutil.parser
-from croniter import croniter
 import re
 import hashlib
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.sensors import BaseSensorOperator
+import pendulum
 
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar, cast, Optional)
 
 
-def _timestamp_is_valid(dt: datetime.datetime, cron_str: str) -> bool:
-  '''Checks whether ``dt`` is valid according to cron_str.'''
-  i = croniter(cron_str, dt - datetime.timedelta(seconds=1))
-  return i.get_next(datetime.datetime) == dt
+UTC = pendulum.timezone('UTC')
 
 
-def _to_utc(date: datetime.datetime) -> datetime.datetime:
-  local_timezone = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
-  timezone_aware_date = date if date.tzinfo is not None else date.replace(tzinfo=local_timezone)
-  utc_date = timezone_aware_date.astimezone(datetime.timezone.utc)
-  return utc_date
+def utc_dt(*args, **kwargs) -> pendulum.Pendulum:
+  '''Helper function for creating Pendulum UTC datetimes.'''
+  return pendulum.create(*args, **kwargs, tz=UTC)
 
 
-def _utc_to_local(date: str) -> str:
-  utc = dateutil.parser.parse(date)
-  local_timezone = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
-  local_time = utc.astimezone(local_timezone)
-  return local_time.strftime("%Y-%m-%d %H:%M")
+def _assert_is_aware(dt: datetime.datetime):
+  '''A datetime object is timezone aware, if it has a tzinfo. In the API we
+  require to use Pendulum datetimes.
+
+  For example:
+
+      paris = pendulum.timezone('Europe/Paris')
+      dt = pendulum.create(2019, 1, 18, tz=paris)
+  '''
+  info = '''You have to use pendulum to create datetimes. E.g. pendulum.create(2019, 1, 18)'''
+  assert isinstance(dt, pendulum.Pendulum), info
 
 
-def _step_back(cron_str: str, date: datetime.datetime, delta: int) -> datetime.datetime:
-  cron = croniter(cron_str, date)
-  start_date = date
-  for _ in range(delta):
-    start_date = cron.get_prev(datetime.datetime)
-  return start_date
+def _assert_is_utc(dt: pendulum.Pendulum):
+  '''Checks if dt is a Pendulum UTC datetime.'''
+  _assert_is_aware(dt)
+  assert dt.utc, 'Timezone is not UTC.'
+  # We need this second assert to filter out Lisbon winter time
+  assert dt.timezone_name == 'UTC', 'Timezone is not UTC.'
+
+
+def _to_pendulum_utc(dt: datetime.datetime) -> pendulum.Pendulum:
+  pdt = pendulum.instance(dt)
+  # First we test Airflow, whether it still returns UTC dates
+  assert pdt.utc, 'Timezone is not UTC.'
+  # We need this second instance to make sure that
+  # the name of the timezone is "UTC"
+  return pendulum.create(pdt.year, pdt.month, pdt.day, pdt.hour, pdt.minute, pdt.second)
+
+
+def _aware_to_iso_str(dt: pendulum.Pendulum) -> str:
+  '''Standard string representation of aware dt.'''
+  _assert_is_aware(dt)
+  return dt.to_iso8601_string()
+
+
+class Schedule:
+  '''Used to define timezone aware schedulings.
+
+  For detailed information, see:
+  https://docs.google.com/document/d/14OOGqBEnVeoZAPGmtd0VhX55qHUVAH1-46UfEACauHE
+  '''
+
+  def __init__(self, start_date: pendulum.Pendulum, cron_str: str) -> None:
+    _assert_is_aware(start_date)
+    self.start_date = start_date
+    self.cron_str = cron_str
+    # We just use this dag to generate date lists, according to the schedule.
+    self.dag = DAG(
+        dag_id='to_generate_dates',
+        start_date=self.start_date,
+        schedule_interval=self.cron_str)
+
+  def assert_utc_dt_is_valid(self, utc_date: pendulum.Pendulum):
+    '''Does not raise exception iff utc_date is compatible with cron_str
+    and utc_date >= start_date.
+    '''
+    _assert_is_utc(utc_date)
+    assert utc_date >= self.start_date, f'{utc_date} preceeds start date = {self.start_date}'
+    dates = self.utc_dates(utc_date, utc_date)
+    assert len(dates) == 1, f'Datetime {utc_date} is not valid with this Schedule: {self}.'
+
+  def utc_dates(self,
+                utc_start_date: datetime.datetime,
+                utc_end_date: datetime.datetime) -> List[datetime.datetime]:
+    _assert_is_utc(utc_start_date)
+    _assert_is_utc(utc_end_date)
+    return [_to_pendulum_utc(d) for d in self.dag.get_run_dates(utc_start_date, utc_end_date)]
+
+  def step_back(self, utc_date: datetime.datetime, delta: int) -> datetime.datetime:
+    _assert_is_utc(utc_date)
+    start_date = utc_date
+    for _ in range(delta):
+      start_date = self.dag.previous_schedule(start_date)
+    return _to_pendulum_utc(start_date)
+
+  def next_date(self, utc_date: datetime.datetime) -> datetime.datetime:
+    _assert_is_utc(utc_date)
+    return _to_pendulum_utc(self.dag.following_schedule(utc_date))
+
+  def __str__(self):
+    return f'<start= {self.start_date} cron= {self.cron_str} ({self.start_date.tzinfo})>'
 
 
 class InputSensor(BaseSensorOperator):
@@ -65,7 +128,7 @@ class InputSensor(BaseSensorOperator):
     self.input_task = input_task
 
   def poke(self, context):
-    return self.input_task.is_ready(context['execution_date'])
+    return self.input_task.is_ready(_to_pendulum_utc(context['execution_date']))
 
 
 class InputRecipe:
@@ -90,21 +153,23 @@ class SnapshotSequence:
 
   Attributes:
     location: the LynxKite root directory this snapshot sequence is stored under.
-    cron_str: the Cron format defining the valid timestamps and frequency.
+    schedule: a Schedule object, defining the valid timestamps and frequency.
     retention: the time delta after which snapshots can be cleaned up.
     lk: LynxKite connection object.'''
 
-  def __init__(self, lk: LynxKite, location: str, cron_str: str,
+  def __init__(self, lk: LynxKite, location: str, schedule: Schedule,
                retention: datetime.timedelta = None) -> None:
     self.lk = lk
     self._location = location
-    self.cron_str = cron_str
+    self._schedule = schedule
     self._retention = retention
 
   def _snapshot_name(self, date: datetime.datetime) -> str:
-    return self._location + '/' + str(_to_utc(date))
+    _assert_is_utc(date)
+    return self._location + '/' + _aware_to_iso_str(date)
 
   def _snapshot_exists(self, date: datetime.datetime) -> bool:
+    _assert_is_utc(date)
     entry = self.lk.get_directory_entry(self._snapshot_name(date))
     return entry.exists and entry.isSnapshot
 
@@ -117,6 +182,7 @@ class SnapshotSequence:
     pass
 
   def _try_to_create_snapshot_if_not_exist(self, date: datetime.datetime) -> None:
+    _assert_is_utc(date)
     if not self._snapshot_exists(date):
       state = self.create_state_if_available(date)
       if state is not None:
@@ -126,6 +192,8 @@ class SnapshotSequence:
     """Checks if the snapshot is already created. If not, it tries to create it and checks if it was
     successful.
     """
+    _assert_is_aware(date)
+    date = UTC.convert(date)
     self._try_to_create_snapshot_if_not_exist(date)
     return self._snapshot_exists(date)
 
@@ -136,22 +204,21 @@ class SnapshotSequence:
 
     (End points `from_date` and `to_date` included).
     """
-    i = croniter(self.cron_str, from_date - datetime.timedelta(seconds=1))
-    dates = []
-    while True:
-      dt = i.get_next(datetime.datetime)
-      if dt > to_date:
-        break
-      dates.append(dt)
-    return dates
+    _assert_is_aware(from_date)
+    from_date = UTC.convert(from_date)
+    _assert_is_aware(to_date)
+    to_date = UTC.convert(to_date)
+    return self._schedule.utc_dates(from_date, to_date)
 
   def _snapshots(self, from_date: datetime.datetime, to_date: datetime.datetime) -> List[str]:
     """Lists the name of all the snapshots whose date is between `from_date` and `to_date`.
 
     Snapshots corresponding `from_date` and `to_date` (if they match the cron format
-    `self.cron_str`) are also listed.
+    `self._schedule.cron_str`) are also listed.
     Also lists snapshots which might not yet exist.
     """
+    _assert_is_utc(from_date)
+    _assert_is_utc(to_date)
     t = []
     for dt in self.list_dates(from_date, to_date):
       t.append(self._snapshot_name(dt))
@@ -163,6 +230,8 @@ class SnapshotSequence:
     If the snapshot is not created yet then it first tries to create it. If that doesn't work
     then the importSnapshot box will output an error.
     """
+    _assert_is_aware(date)
+    date = UTC.convert(date)
     self._try_to_create_snapshot_if_not_exist(date)
     path = self._snapshot_name(date)
     return self.lk.importSnapshot(path=path)
@@ -172,18 +241,22 @@ class SnapshotSequence:
 
     Does nothing if the snapshot doesn't exist.
     """
+    _assert_is_aware(date)
+    date = UTC.convert(date)
     path = self._snapshot_name(date)
     self.lk.remove_name(path, force=True)
 
-  def save_to_sequence(self, state_id: str, dt: datetime.datetime) -> None:
+  def save_to_sequence(self, state_id: str, date: datetime.datetime) -> None:
     ''' Saves a state of id ``state_id`` as a member of the sequence.'''
     # Assert that dt is valid according to the cron_str format.
-    assert _timestamp_is_valid(dt, self.cron_str), "Datetime %s does not match cron format %s." % (
-        dt, self.cron_str)
-    self.lk.save_snapshot(self._snapshot_name(dt), state_id)
+    _assert_is_aware(date)
+    date = UTC.convert(date)
+    self._schedule.assert_utc_dt_is_valid(date)
+    self.lk.save_snapshot(self._snapshot_name(date), state_id)
 
   def delete_expired(self, execution_date: datetime.datetime) -> None:
     '''Deletes snapshots that are older than `execution_date - retention`.'''
+    _assert_is_utc(execution_date)
     if self._retention:
       threshold = self._snapshot_name(
           execution_date.replace(
@@ -206,6 +279,10 @@ class TableSnapshotSequence(SnapshotSequence):
     If some dates does not exist then it tries to create them on the fly. If it doesn't work
     then the returned box will output an error.
     """
+    _assert_is_aware(from_date)
+    from_date = UTC.convert(from_date)
+    _assert_is_aware(to_date)
+    to_date = UTC.convert(to_date)
     dates = self.list_dates(from_date, to_date)
     for dt in dates:
       self._try_to_create_snapshot_if_not_exist(dt)
@@ -229,20 +306,22 @@ class TableSnapshotRecipe(InputRecipe):
     self.tss = tss
 
   def validate(self, date: datetime.datetime) -> None:
+    _assert_is_utc(date)
     assert self.tss, 'TableSnapshotSequence needs to be set.'
-    assert _timestamp_is_valid(
-        date, self.tss.cron_str), '{} does not match {}.'.format(date, self.tss.cron_str)
+    self.tss._schedule.assert_utc_dt_is_valid(date)
 
   def is_ready(self, date: datetime.datetime) -> bool:
+    _assert_is_utc(date)
     self.validate(date)
     assert self.tss
-    adjusted_date = _step_back(self.tss.cron_str, date, self.delta)
+    adjusted_date = self.tss._schedule.step_back(date, self.delta)
     return self.tss.is_ready(adjusted_date)
 
   def build_boxes(self, date: datetime.datetime) -> State:
+    _assert_is_utc(date)
     self.validate(date)
     assert self.tss
-    adjusted_date = _step_back(self.tss.cron_str, date, self.delta)
+    adjusted_date = self.tss._schedule.step_back(date, self.delta)
     return self.tss.read_interval(adjusted_date, adjusted_date)
 
 
@@ -254,19 +333,23 @@ class RecipeWithDefault(InputRecipe):
 
   def __init__(self, src_recipe: InputRecipe, default_date: datetime.datetime,
                default_state: State) -> None:
+    _assert_is_utc(default_date)
     self.src_recipe = src_recipe
     self.default_date = default_date
     self.default_state = default_state
 
   def validate(self, date: datetime.datetime) -> None:
+    _assert_is_utc(date)
     if date != self.default_date:
       self.src_recipe.validate(date)
 
   def is_ready(self, date: datetime.datetime) -> bool:
+    _assert_is_utc(date)
     self.validate(date)
     return date == self.default_date or self.src_recipe.is_ready(date)
 
   def build_boxes(self, date: datetime.datetime) -> State:
+    _assert_is_utc(date)
     self.validate(date)
     if date == self.default_date:
       return self.default_state
@@ -284,6 +367,7 @@ class Task:
     self._lk = wss.lk
 
   def _ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
+    _assert_is_utc(date)
     return self._wss.ws_for_date(date)
 
   def run(self, date: datetime.datetime) -> None:
@@ -312,6 +396,7 @@ class BoxTask(Task):
     raise NotImplementedError()
 
   def run(self, date: datetime.datetime) -> None:
+    _assert_is_utc(date)
     self._run_on_instance(self._ws_for_date(date))
 
 
@@ -332,6 +417,7 @@ class Input(BoxTask):
     return self.box_path.base.parameters['name']
 
   def is_ready(self, date):
+    _assert_is_utc(date)
     return self._wss.input_recipes[self.name()].is_ready(date)
 
 
@@ -369,6 +455,7 @@ class SaveWorkspace(Task):
   '''
 
   def run(self, date: datetime.datetime) -> None:
+    _assert_is_utc(date)
     ws_for_date = self._ws_for_date(date)
     name = ws_for_date.full_name()
     self._wss.lk.remove_name(name, force=True)
@@ -384,6 +471,7 @@ class RunCleaner(Task):
   '''
 
   def run(self, date: datetime.datetime) -> None:
+    _assert_is_utc(date)
     self._wss.lk.move_to_cleaner_trash('notSnapshotEntities')
     self._wss.lk.empty_cleaner_trash()
 
@@ -398,15 +486,13 @@ class WorkspaceSequence:
   timestamps, wrapped in a workspace which can get inputs, and saves outputs.
   '''
 
-  def __init__(self, ws: Workspace, schedule: str,
-               start_date: datetime.datetime, lk_root: str,
+  def __init__(self, ws: Workspace, schedule: Schedule, lk_root: str,
                input_recipes: List[InputRecipe], params: Dict[str, Any]={},
                retention_deltas: Dict[str, datetime.timedelta]={},
                default_retention: datetime.timedelta=None) -> None:
     self.ws = ws
     self.lk = self.ws.lk
     self._schedule = schedule
-    self._start_date = start_date
     self.params = params
     self.lk_root = lk_root
     self.input_names = self.ws.inputs  # For the order of the inputs
@@ -430,9 +516,8 @@ class WorkspaceSequence:
   def ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
     ``date`` parameter of this method as a value to pass to the workspace. '''
-    assert date >= self._start_date, f'{date} preceeds start date = {self._start_date}'
-    assert _timestamp_is_valid(
-        date, self._schedule), f'{date} is not valid according to {self._schedule}'
+    _assert_is_utc(date)
+    self._schedule.assert_utc_dt_is_valid(date)
     return WorkspaceSequenceInstance(self, date)
 
   def _automation_tasks(self) -> List[Task]:
@@ -490,6 +575,7 @@ class WorkspaceSequence:
 
     Can be used to test, what happens when the wss is automated.
     '''
+    _assert_is_utc(date)
     for t in self.to_dag():
       t.run(date)
 
@@ -519,10 +605,10 @@ class WorkspaceSequence:
 
     base_default_args = {
         'owner': 'airflow',
-        'start_date': self._start_date,
+        'start_date': self._schedule.start_date,
     }
 
-    dag_parameters = dict(schedule_interval=self._schedule, **dag_args)
+    dag_parameters = dict(schedule_interval=self._schedule.cron_str, **dag_args)
     task_default_parameters = {**base_default_args, **task_default_args}
     airflow_dag = DAG(
         dag_id,
@@ -535,7 +621,8 @@ class WorkspaceSequence:
       python_op = PythonOperator(
           task_id=airflow_allowed_id(t.id()),
           provide_context=True,
-          python_callable=lambda ds, execution_date, t=t, **kwargs: t.run(execution_date),
+          python_callable=lambda ds, execution_date, t=t, **kwargs: t.run(
+              _to_pendulum_utc(execution_date)),
           dag=airflow_dag)
       task_info[t] = dict(id=t.id(), op=python_op)
       if isinstance(t, Input):
@@ -559,12 +646,13 @@ class WorkspaceSequence:
 class WorkspaceSequenceInstance:
 
   def __init__(self, wss: WorkspaceSequence, date: datetime.datetime) -> None:
+    _assert_is_utc(date)
     self._wss = wss
     self._lk = self._wss.lk
     self._date = date
 
   def base_folder_name(self):
-    return _normalize_path(f'{self._wss.lk_root}/workspaces/{_to_utc(self._date)}')
+    return _normalize_path(f'{self._wss.lk_root}/workspaces/{_aware_to_iso_str(self._date)}')
 
   def folder_of_input_workspaces(self):
     return f'{self.base_folder_name()}/inputs'
@@ -596,7 +684,8 @@ class WorkspaceSequenceInstance:
       ws = self._wss.ws
       params = self._wss.params
       if ws.has_date_parameter():
-        ws_as_box = ws(*inputs, **params, date=self._date)
+        # The date parameter will be passed as an ISO-standard UTC string.
+        ws_as_box = ws(*inputs, **params, date=_aware_to_iso_str(self._date))
       else:
         ws_as_box = ws(*inputs, **params)
       ws_as_box.register(se_collector)
