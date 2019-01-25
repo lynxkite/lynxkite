@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Scheduling of snapshot sequences and workspace sequences is timezone aware
+   in Python API.
+
 ### 2.6.0
 
  - Fixed an issue where "Derived" operations could not be run in non-local mode.

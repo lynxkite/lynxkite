@@ -3,6 +3,7 @@ import time
 from datetime import datetime, timedelta
 import lynx.kite
 import lynx.automation
+from lynx.automation import Schedule, utc_dt
 
 
 def _box_path_to_str(box_path):
@@ -70,10 +71,10 @@ def create_complex_test_workspace():
 
 
 def create_test_wss(ws):
+  schedule = Schedule(utc_dt(2018, 7, 1), '0 0 * * *')
   return lynx.automation.WorkspaceSequence(
       ws=ws,
-      schedule='0 0 * * *',
-      start_date=datetime(2018, 7, 1),
+      schedule=schedule,
       lk_root='airflow_test_wss',
       input_recipes=[])
 
@@ -192,17 +193,24 @@ class TestDagCreation(unittest.TestCase):
     self.assertEqual(order[0], 4)
     self.assertEqual(order[-1], 1)
 
-  test_date = datetime(2018, 1, 2)
+  test_date = utc_dt(2018, 1, 2)
+  utc_test_date = utc_dt(2018, 1, 2)
 
   def complex_workspace_sequence(self):
     ws = create_complex_test_workspace()
     lk = ws.lk
     lk.remove_name('eq_table_seq', force=True)
-    tss = lynx.automation.TableSnapshotSequence(lk, 'eq_table_seq', '0 0 * * *')
-    lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, self.test_date)
+    tss = lynx.automation.TableSnapshotSequence(
+        lk,
+        'eq_table_seq',
+        Schedule(self.test_date, '0 0 * * *'))
+    lk.createExampleGraph().sql('select * from vertices').save_to_sequence(
+        tss,
+        self.utc_test_date)
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)
     day_before = self.test_date - timedelta(days=1)
-    return lynx.automation.WorkspaceSequence(ws, schedule='0 0 * * *', start_date=day_before,
+    schedule = Schedule(day_before, '0 0 * * *')
+    return lynx.automation.WorkspaceSequence(ws, schedule=schedule,
                                              lk_root='ws_seqence_to_dag', input_recipes=[input_recipe] * 3)
 
   def test_atomic_parents(self):
@@ -348,8 +356,8 @@ class TestDagCreation(unittest.TestCase):
       result = reducer(*[layers[2 * depth - 1][j] for j in range(1, 10)])
       return dict(final=result)
 
-    wss = lynx.automation.WorkspaceSequence(big_workspace, schedule='0 0 * * *',
-                                            start_date=datetime(2018, 1, 1),
+    schedule = Schedule(utc_dt(2018, 1, 1), '0 0 * * *')
+    wss = lynx.automation.WorkspaceSequence(big_workspace, schedule=schedule,
                                             lk_root='big folder', input_recipes=[])
     start_at = time.time()
     wss.to_dag()
@@ -380,9 +388,9 @@ class TestDagCreation(unittest.TestCase):
     lk.remove_name('SB1', force=True)
     lk.remove_name('SB2', force=True)
     for t in dag:
-      t.run(self.test_date)
+      t.run(self.utc_test_date)
     for o in wss.output_sequences.values():
-      self.assertTrue(lynx.automation.TableSnapshotRecipe(o).is_ready(self.test_date))
+      self.assertTrue(lynx.automation.TableSnapshotRecipe(o).is_ready(self.utc_test_date))
     # is everything idempotent?
     for t in dag:
-      t.run(self.test_date)
+      t.run(self.utc_test_date)
