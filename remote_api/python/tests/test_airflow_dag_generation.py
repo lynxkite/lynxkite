@@ -124,7 +124,7 @@ class TestAirflowDagGeneration(unittest.TestCase):
     # We suppress deprecation warnings coming from Airflow
     warnings.simplefilter("ignore")
     lk = lynx.kite.LynxKite()
-    tss = lynx.kite.TableSnapshotSequence(lk, 'eq_table_seq', '0 3 * * *')
+    tss = lynx.automation.TableSnapshotSequence(lk, 'eq_table_seq', '0 3 * * *')
     tss.remove_date(datetime(2018, 5, 11, 3, 0))
     lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, datetime(2018, 5, 11, 3, 0))
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)

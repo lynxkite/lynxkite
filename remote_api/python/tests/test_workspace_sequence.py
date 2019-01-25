@@ -19,7 +19,7 @@ class TestWorkspaceSequence(unittest.TestCase):
       return dict(cnt=o1, d=o2)
 
     test_date = datetime(2018, 1, 2)
-    tss = lynx.kite.TableSnapshotSequence(lk, 'eg_table_seq', '0 0 * * *')
+    tss = lynx.automation.TableSnapshotSequence(lk, 'eg_table_seq', '0 0 * * *')
     lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, test_date)
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)
     wss = lynx.automation.WorkspaceSequence(
@@ -55,7 +55,7 @@ class TestWorkspaceSequence(unittest.TestCase):
       return dict(cnt=o1)
 
     test_date = datetime(2018, 1, 2)
-    tss = lynx.kite.TableSnapshotSequence(lk, 'eg_cnt_seq', '0 0 * * *')
+    tss = lynx.automation.TableSnapshotSequence(lk, 'eg_cnt_seq', '0 0 * * *')
     lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, test_date)
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)
     wss = lynx.automation.WorkspaceSequence(
@@ -159,7 +159,7 @@ class TestWorkspaceSequence(unittest.TestCase):
       return dict(cnt=o1)
 
     test_days = [datetime(2018, 1, 1) + timedelta(days=x) for x in range(0, 10)]
-    tss = lynx.kite.TableSnapshotSequence(lk, 'wss_retention_seq', '0 0 * * *')
+    tss = lynx.automation.TableSnapshotSequence(lk, 'wss_retention_seq', '0 0 * * *')
     for day in test_days:
       lk.createExampleGraph().sql('select * from vertices').save_to_sequence(tss, day)
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)
