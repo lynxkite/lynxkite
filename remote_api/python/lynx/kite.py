@@ -39,26 +39,11 @@ from collections import deque, defaultdict, OrderedDict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar, Optional, Collection)
 import requests
-from croniter import croniter
 from tempfile import NamedTemporaryFile
 
 
 if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 6):
   raise Exception('At least Python version 3.6 is needed!')
-
-
-def _timestamp_is_valid(dt: datetime.datetime, cron_str: str) -> bool:
-  '''Checks whether ``dt`` is valid according to cron_str.'''
-  i = croniter(cron_str, dt - datetime.timedelta(seconds=1))
-  return i.get_next(datetime.datetime) == dt
-
-
-def _step_back(cron_str: str, date: datetime.datetime, delta: int) -> datetime.datetime:
-  cron = croniter(cron_str, date)
-  start_date = date
-  for _ in range(delta):
-    start_date = cron.get_prev(datetime.datetime)
-  return start_date
 
 
 def _random_ws_folder() -> str:
@@ -800,137 +785,6 @@ class LynxKite:
     return self._send('/remote/setExecutors', {'count': count})
 
 
-class SnapshotSequence:
-  '''A snapshot sequence representing a list of snapshots in LynxKite.
-
-  Attributes:
-    location: the LynxKite root directory this snapshot sequence is stored under.
-    cron_str: the Cron format defining the valid timestamps and frequency.
-    retention: the time delta after which snapshots can be cleaned up.
-    lk: LynxKite connection object.'''
-
-  def __init__(self, lk: LynxKite, location: str, cron_str: str,
-               retention: datetime.timedelta = None) -> None:
-    self.lk = lk
-    self._location = location
-    self.cron_str = cron_str
-    self._retention = retention
-
-  def _snapshot_name(self, date: datetime.datetime) -> str:
-    local_timezone = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
-    timezone_aware_date = date if date.tzinfo is not None else date.replace(tzinfo=local_timezone)
-    utc_date = timezone_aware_date.astimezone(datetime.timezone.utc)
-    return self._location + '/' + str(utc_date)
-
-  def _snapshot_exists(self, date: datetime.datetime) -> bool:
-    entry = self.lk.get_directory_entry(self._snapshot_name(date))
-    return entry.exists and entry.isSnapshot
-
-  def create_state_if_available(self, date: datetime.datetime) -> Optional['State']:
-    """A fallback if the snapshot is not there yet when a client is asking for it.
-
-    Overwrite this method to return a `State` for the snapshot (or None if you can not) if you
-    want to provide such a fallback option. The returned `State` will be saved as a snapshot.
-    """
-    pass
-
-  def _try_to_create_snapshot_if_not_exist(self, date: datetime.datetime) -> None:
-    if not self._snapshot_exists(date):
-      state = self.create_state_if_available(date)
-      if state is not None:
-        self.lk.save_snapshot(self._snapshot_name(date), self.lk.get_state_id(state))
-
-  def is_ready(self, date: datetime.datetime) -> bool:
-    """Checks if the snapshot is already created. If not, it tries to create it and checks if it was
-    successful.
-    """
-    self._try_to_create_snapshot_if_not_exist(date)
-    return self._snapshot_exists(date)
-
-  def list_dates(self, from_date: datetime.datetime,
-                 to_date: datetime.datetime) -> List[datetime.datetime]:
-    """Lists all dates matching the cron format `self.cron_str` between `from_date` and
-    `to_date`.
-
-    (End points `from_date` and `to_date` included).
-    """
-    i = croniter(self.cron_str, from_date - datetime.timedelta(seconds=1))
-    dates = []
-    while True:
-      dt = i.get_next(datetime.datetime)
-      if dt > to_date:
-        break
-      dates.append(dt)
-    return dates
-
-  def _snapshots(self, from_date: datetime.datetime, to_date: datetime.datetime) -> List[str]:
-    """Lists the name of all the snapshots whose date is between `from_date` and `to_date`.
-
-    Snapshots corresponding `from_date` and `to_date` (if they match the cron format
-    `self.cron_str`) are also listed.
-    Also lists snapshots which might not yet exist.
-    """
-    t = []
-    for dt in self.list_dates(from_date, to_date):
-      t.append(self._snapshot_name(dt))
-    return t
-
-  def read_date(self, date: datetime.datetime) -> 'Box':
-    """Returns an importSnapshot box with the corresponding snapshot.
-
-    If the snapshot is not created yet then it first tries to create it. If that doesn't work
-    then the importSnapshot box will output an error.
-    """
-    self._try_to_create_snapshot_if_not_exist(date)
-    path = self._snapshot_name(date)
-    return self.lk.importSnapshot(path=path)
-
-  def remove_date(self, date: datetime.datetime) -> None:
-    """Removes the snapshot corresponding to `date` if it exists.
-
-    Does nothing if the snapshot doesn't exist.
-    """
-    path = self._snapshot_name(date)
-    self.lk.remove_name(path, force=True)
-
-  def save_to_sequence(self, state_id: str, dt: datetime.datetime) -> None:
-    ''' Saves a state of id ``state_id`` as a member of the sequence.'''
-    # Assert that dt is valid according to the cron_str format.
-    assert _timestamp_is_valid(dt, self.cron_str), "Datetime %s does not match cron format %s." % (
-        dt, self.cron_str)
-    self.lk.save_snapshot(self._snapshot_name(dt), state_id)
-
-  def delete_expired(self, execution_date: datetime.datetime) -> None:
-    '''Deletes snapshots that are older than `execution_date - retention`.'''
-    if self._retention:
-      threshold = self._snapshot_name(
-          execution_date.replace(
-              second=0,
-              microsecond=0) -
-          self._retention)
-      for entry in self.lk.list_dir(self._location):
-        if entry.name < threshold:
-          self.lk.remove_name(entry.name)
-
-
-class TableSnapshotSequence(SnapshotSequence):
-  ''' A special snapshot sequence where all members are of type table. This makes possible
-  reading the union of the snapshots for a given interval.'''
-
-  def read_interval(self, from_date: datetime.datetime,
-                    to_date: datetime.datetime) -> 'Box':
-    """Returns the union of all snapshots between `from_date` and `to_date`.
-
-    If some dates does not exist then it tries to create them on the fly. If it doesn't work
-    then the returned box will output an error.
-    """
-    dates = self.list_dates(from_date, to_date)
-    for dt in dates:
-      self._try_to_create_snapshot_if_not_exist(dt)
-    paths = ','.join([self._snapshot_name(dt) for dt in dates])
-    return self.lk.importUnionOfTableSnapshots(paths=paths)
-
-
 class State:
   '''Represents a named output plug of a box.
 
@@ -1052,7 +906,8 @@ class State:
     state_id = lk.get_state_id(self)
     lk.save_snapshot(path, state_id)
 
-  def save_to_sequence(self, tss: TableSnapshotSequence, date: datetime.datetime) -> None:
+  # Type annotation for tss removed because of cross-import problem
+  def save_to_sequence(self, tss, date: datetime.datetime) -> None:
     '''Save this state to the ``tss`` TableSnapshotSequence with ``date`` as
     the date of the snapshot.'''
     lk = self.box.lk

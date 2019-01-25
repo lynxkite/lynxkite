@@ -8,7 +8,7 @@ class TestInputRecipe(unittest.TestCase):
 
   def test_snapshot_is_ready(self):
     lk = lynx.kite.LynxKite()
-    tss = lynx.kite.TableSnapshotSequence(lk, 'test_input_recipe', '0 0 * * *')
+    tss = lynx.automation.TableSnapshotSequence(lk, 'test_input_recipe', '0 0 * * *')
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)
     date = datetime(2018, 1, 9, 0, 0)
     tss.remove_date(date)
@@ -18,7 +18,7 @@ class TestInputRecipe(unittest.TestCase):
 
   def test_snapshot_input_recipe_build_boxes(self):
     lk = lynx.kite.LynxKite()
-    tss = lynx.kite.TableSnapshotSequence(lk, 'test_input_recipe_boxes', '0 0 * * *')
+    tss = lynx.automation.TableSnapshotSequence(lk, 'test_input_recipe_boxes', '0 0 * * *')
     input_recipe = lynx.automation.TableSnapshotRecipe(tss)
     date = datetime(2018, 1, 10, 0, 0)
     tss.remove_date(date)

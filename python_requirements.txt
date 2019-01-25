@@ -6,7 +6,7 @@ PyYAML
 requests
 
 # Dependencies for the ecosystem
-apache-airflow[mysql]==1.9.0
+apache-airflow[mysql]==1.10.1
 mysqlclient
 prometheus_client
 sqlalchemy
