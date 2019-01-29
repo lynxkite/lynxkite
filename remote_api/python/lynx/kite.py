@@ -906,7 +906,6 @@ class State:
     state_id = lk.get_state_id(self)
     lk.save_snapshot(path, state_id)
 
-  # Type annotation for tss removed because of cross-import problem
   def save_to_sequence(self, tss, date: datetime.datetime) -> None:
     '''Save this state to the ``tss`` TableSnapshotSequence with ``date`` as
     the date of the snapshot.'''

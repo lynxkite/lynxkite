@@ -6,13 +6,15 @@ from lynx.automation import Schedule
 from lynx.automation import UTC, utc_dt
 from datetime import datetime, timezone
 import pendulum
+import contextlib
 
 
 class TestSchedule(unittest.TestCase):
 
-  def _assertExceptionMsg(self, f, exception_msg):
+  @contextlib.contextmanager
+  def _assertExceptionMsg(self, exception_msg):
     with self.assertRaises(AssertionError) as exc:
-      f()
+      yield
     error_msg = exc.exception.args[0]
     self.assertIn(exception_msg, error_msg)
 
@@ -20,15 +22,13 @@ class TestSchedule(unittest.TestCase):
     dt = datetime(2019, 1, 18)
     singapore = pendulum.timezone('Asia/Singapore')
     aware_dt = pendulum.create(2019, 1, 18, tz=singapore)
-    self._assertExceptionMsg(
-        lambda: _assert_is_aware(dt),
-        'You have to use pendulum to create datetimes.')
+    with self._assertExceptionMsg('You have to use pendulum to create datetimes.'):
+      _assert_is_aware(dt)
     _assert_is_aware(aware_dt)
 
   def test_unaware_dt_not_allowed(self):
-    self._assertExceptionMsg(
-        lambda: lynx.automation.Schedule(datetime(2019, 1, 16), '0 0 * * *'),
-        'You have to use pendulum to create datetimes.')
+    with self._assertExceptionMsg('You have to use pendulum to create datetimes.'):
+      lynx.automation.Schedule(datetime(2019, 1, 16), '0 0 * * *')
 
   def test_aware_dt_is_allowed(self):
     dt = pendulum.create(2019, 1, 16, tz=pendulum.timezone('Asia/Singapore'))
@@ -49,9 +49,8 @@ class TestSchedule(unittest.TestCase):
     self.assertEqual(_aware_to_iso_str(dt_budapest1), '2018-03-25T01:00:00+01:00')
     self.assertEqual(_aware_to_iso_str(dt_budapest2), '2018-03-25T04:00:00+02:00')
     self.assertEqual(_aware_to_iso_str(dt_utc), '2019-01-16T00:00:00+00:00')
-    self._assertExceptionMsg(
-        lambda: _aware_to_iso_str(dt_naive),
-        'You have to use pendulum to create datetimes.')
+    with self._assertExceptionMsg('You have to use pendulum to create datetimes.'):
+      _aware_to_iso_str(dt_naive)
     self.assertEqual(_aware_to_iso_str(dt_lisbon), '2019-01-16T00:00:00+00:00')
     self.assertEqual(_aware_to_iso_str(dt_lisbon_summer), '2019-04-16T00:00:00+01:00')
 
@@ -64,12 +63,14 @@ class TestSchedule(unittest.TestCase):
     dt4 = pendulum.create(2019, 1, 16, tz=lisbon)
     dt5 = pendulum.create(2019, 4, 16, tz=lisbon)
     _assert_is_utc(dt1)
-    self._assertExceptionMsg(lambda: _assert_is_utc(dt2), 'Timezone is not UTC')
-    self._assertExceptionMsg(
-        lambda: _assert_is_utc(dt3),
-        'You have to use pendulum to create datetimes.')
-    self._assertExceptionMsg(lambda: _assert_is_utc(dt4), 'Timezone is not UTC')
-    self._assertExceptionMsg(lambda: _assert_is_utc(dt5), 'Timezone is not UTC')
+    with self._assertExceptionMsg('Timezone is not UTC'):
+      _assert_is_utc(dt2)
+    with self._assertExceptionMsg('You have to use pendulum to create datetimes.'):
+      _assert_is_utc(dt3)
+    with self._assertExceptionMsg('Timezone is not UTC'):
+      _assert_is_utc(dt4)
+    with self._assertExceptionMsg('Timezone is not UTC'):
+      _assert_is_utc(dt5)
 
   def test_lisbon_vs_utc(self):
     lisbon = pendulum.timezone('Europe/Lisbon')
@@ -120,13 +121,12 @@ class TestSchedule(unittest.TestCase):
     test_date = utc_dt(2019, 1, 20, 5, 0)
     schedule.assert_utc_dt_is_valid(utc_dt(2019, 1, 20, 5, 0))
     # Before start date
-    self._assertExceptionMsg(
-        lambda: schedule.assert_utc_dt_is_valid(utc_dt(2019, 1, 15, 5, 0)),
-        '2019-01-15T05:00:00+00:00 preceeds start date = 2019-01-16T00:00:00+00:00')
+    with self._assertExceptionMsg('2019-01-15T05:00:00+00:00 preceeds start date = 2019-01-16T00:00:00+00:00'):
+      schedule.assert_utc_dt_is_valid(utc_dt(2019, 1, 15, 5, 0))
+
     # Non-compatible with cron string
-    self._assertExceptionMsg(
-        lambda: schedule.assert_utc_dt_is_valid(utc_dt(2019, 1, 21, 4, 0)),
-        'is not valid with this Schedule')
+    with self._assertExceptionMsg('is not valid with this Schedule'):
+      schedule.assert_utc_dt_is_valid(utc_dt(2019, 1, 21, 4, 0))
 
   def test_schedule_utc_dates(self):
     schedule = Schedule(utc_dt(2019, 1, 1, 2, 0), '0 2 * * *')
