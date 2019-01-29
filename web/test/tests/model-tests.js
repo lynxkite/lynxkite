@@ -59,7 +59,7 @@ module.exports = function(fw) {
       lib.workspace.closeLastPopup();
       const state = lib.workspace.openStateView('train0', 'project');
       expect(state.left.scalarValue('age_from_yob').getText())
-       .toBe('Linear regression model predicting age');
+        .toBe('Linear regression model predicting age');
       const model = state.left.scalar('age_from_yob');
       const p = model.popup();
       expect(p.$('#model-method').getText()).toBe('Linear regression');

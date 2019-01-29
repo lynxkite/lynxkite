@@ -116,10 +116,10 @@ angular.module('biggraph').directive('entrySelector',
             {
               name: name,
             }).then(function() {
-              scope.name = name;
-            }).finally(function() {
-              scope.newWorkspace.sending = false;
-            });
+            scope.name = name;
+          }).finally(function() {
+            scope.newWorkspace.sending = false;
+          });
         };
 
         scope.createDirectory = function() {
@@ -133,12 +133,12 @@ angular.module('biggraph').directive('entrySelector',
               name: name,
               privacy: scope.newDirectory.privacy,
             }).then(function() {
-              scope.path = name;
-              scope.searchQuery = '';
-              scope.newDirectory = defaultSettings();
-            }).finally(function() {
-              scope.newDirectory.sending = false;
-            });
+            scope.path = name;
+            scope.searchQuery = '';
+            scope.newDirectory = defaultSettings();
+          }).finally(function() {
+            scope.newDirectory.sending = false;
+          });
         };
 
         scope.baseName = function(p) {
@@ -222,7 +222,7 @@ angular.module('biggraph').directive('entrySelector',
           rename: function(kind, oldName, newName) {
             if (oldName === newName) { return; }
             util.post('/ajax/renameEntry',
-                { from: oldName, to: newName, overwrite: false }).then(scope.reload);
+              { from: oldName, to: newName, overwrite: false }).then(scope.reload);
           },
           duplicate: function(kind, p) {
             util.post('/ajax/forkEntry', {
@@ -242,7 +242,7 @@ angular.module('biggraph').directive('entrySelector',
             } else {
               // Not in Trash. Move to Trash.
               util.post('/ajax/renameEntry',
-                  { from: p, to: trashDir + '/' + p, overwrite: true }).then(scope.reload);
+                { from: p, to: trashDir + '/' + p, overwrite: true }).then(scope.reload);
             }
           },
           renameMenuItemLabel: 'Rename or move...'

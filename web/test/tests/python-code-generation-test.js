@@ -35,13 +35,13 @@ order by ordinal` });
     });
 
   fw.transitionTest(
-      'boxes placed',
-      'code generated without selecting anything',
-      function() {
-        lib.pythonPopup();
-      },
-      function() {
-        let expectedCode = `cv = lk.createVertices(size='20')
+    'boxes placed',
+    'code generated without selecting anything',
+    function() {
+      lib.pythonPopup();
+    },
+    function() {
+      let expectedCode = `cv = lk.createVertices(size='20')
 ce = lk.createRandomEdges(cv, degree='4')
 cd = lk.computeDegree(ce)
 cpr = lk.computePageRank(ce)
@@ -50,20 +50,20 @@ sql = lk.sql2(fba, cpr, sql='''select ov.ordinal, ov.degree, tv.page_rank
 from \`one.vertices\` as ov inner join \`two.vertices\` as tv
 on ov.ordinal = tv.ordinal
 order by ordinal''')`;
-        lib.expectPythonCode(expectedCode);
-      });
+      lib.expectPythonCode(expectedCode);
+    });
 
   fw.transitionTest(
-      'boxes placed',
-      'code generated from selected boxes',
-      function() {
-        lib.workspace.selectBoxes(['ce', 'cpr', 'cd']);
-        lib.pythonPopup();
-      },
-      function() {
-        let expectedCode = `ce = lk.createRandomEdges(input_project_for_ce, degree='4')
+    'boxes placed',
+    'code generated from selected boxes',
+    function() {
+      lib.workspace.selectBoxes(['ce', 'cpr', 'cd']);
+      lib.pythonPopup();
+    },
+    function() {
+      let expectedCode = `ce = lk.createRandomEdges(input_project_for_ce, degree='4')
 cpr = lk.computePageRank(ce)
 cd = lk.computeDegree(ce)`;
-        lib.expectPythonCode(expectedCode);
-      });
+      lib.expectPythonCode(expectedCode);
+    });
 };

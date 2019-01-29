@@ -23,14 +23,14 @@ const FORCE_LAYOUT = (function() {
   };
   lib.Engine.prototype.calculate = function(vertices) {
     let a, b, dx, dy, i, j, v;
-    let maxDist = 0;  // Max. distance from center along one coordinate.
+    let maxDist = 0; // Max. distance from center along one coordinate.
     const edgeCount = (vertices.edges || []).length;
     if (vertices.vs.length <= 1) {
       if (vertices.vs.length === 1 && !vertices.vs[0].positioned) {
         vertices.vs[0].x = 0;
         vertices.vs[0].y = 0;
       }
-      return false;  // No need for further iterations.
+      return false; // No need for further iterations.
     }
     for (i = 0; i < vertices.vs.length; ++i) {
       v = vertices.vs[i];

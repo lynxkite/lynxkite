@@ -8,7 +8,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
     scope: {
       directory: '=',
       projectState: '=',
-      box: '=',  // Set box for table browser in the workspace.
+      box: '=', // Set box for table browser in the workspace.
       editor: '=',
     },
     templateUrl: 'scripts/sql/table-browser.html',
@@ -17,22 +17,22 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
       // browser is operating. (Same as the path of the SQL box.)
       if (scope.box) {
         scope.node = createNode(
-            undefined,
-            '',
-            '',
-            'directory');
+          undefined,
+          '',
+          '',
+          'directory');
       } else if (scope.projectState) {
         scope.node = createNode(
-            undefined,
-            '',
-            scope.projectState.projectName,
-            'project');
+          undefined,
+          '',
+          scope.projectState.projectName,
+          'project');
       } else {
         scope.node = createNode(
-            undefined,
-            '',
-            scope.directory,
-            'directory');
+          undefined,
+          '',
+          scope.directory,
+          'directory');
       }
       // Trigger loading it's children and open it.
       scope.node.toggle();
@@ -43,11 +43,11 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
       // Creates and returns a JS object representing a node in
       // the treeview.
       function createNode(
-          parentNode,
-          name,
-          absolutePath,
-          objectType,
-          columnType) {
+        parentNode,
+        name,
+        absolutePath,
+        objectType,
+        columnType) {
         return {
           name: name,
           parentNode: parentNode,
@@ -58,7 +58,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
           // User-visible text:
           uiText: name +
               (objectType === 'column' ?
-                  ' (' + columnType + ')' : ''),
+                ' (' + columnType + ')' : ''),
           // Open/close status of node in the tree.
           isOpen: false,
           // List of children nodes.
@@ -89,7 +89,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
           getDraggableText: function(fullyQualifyNames) {
             if (this.objectType === 'column') {
               return this.getSQLColumnName(fullyQualifyNames);
-            } else {  /* if (this.objectType === 'table' ||
+            } else { /* if (this.objectType === 'table' ||
                 this.objectType === 'view') { */
               return '`' + this.getRelativePath() + '`';
             }
@@ -155,7 +155,7 @@ angular.module('biggraph').directive('tableBrowser', function(util) {
           // the first time, the children are also fetched.
           toggle: function() {
             if (this.objectType === 'column') {
-              return;  // no toggling for columns
+              return; // no toggling for columns
             }
             if (this.isOpen) {
               this.isOpen = false;

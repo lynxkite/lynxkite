@@ -133,7 +133,7 @@ angular.module('biggraph').directive('pickOptions', function() {
         const params = centerRequestParams();
         let offset = 0;
         // Compute offset.
-        if (scope.pickByOffsetWasEdited()) {  // "Pick by offset"
+        if (scope.pickByOffsetWasEdited()) { // "Pick by offset"
           offset = parseInt(scope.editedOffset) || 0;
         } else if (unchanged) { // "Next"
           offset = scope.side.pickOptions.offset + params.count;
