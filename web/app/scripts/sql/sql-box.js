@@ -24,7 +24,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
       }
       scope.isGlobal = !scope.side;
       scope.sql = scope.isGlobal ? 'select * from `directory/snapshot.vertices`' :
-       'select * from vertices';
+        'select * from vertices';
 
       function SqlHistory(maxLength) {
         // This is a helper class for storing sql query history in localStorage.

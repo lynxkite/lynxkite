@@ -52,7 +52,7 @@ angular.module('biggraph').directive('histogram', function($timeout, util) {
           startLoading();
           return;
         }
-        scope.highlighted = undefined;  // Index of highlighted bar.
+        scope.highlighted = undefined; // Index of highlighted bar.
         scope.max = maxSize();
         scope.total = total();
         scope.origMax = scope.max;

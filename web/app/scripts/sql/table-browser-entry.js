@@ -16,8 +16,8 @@ angular.module('biggraph').directive('tableBrowserEntry', function() {
     link: function(scope, element) {
       element.bind('dragstart', function(event) {
         event.originalEvent.dataTransfer.setData(
-            'text',
-            scope.draggableText);
+          'text',
+          scope.draggableText);
       });
     }
   };

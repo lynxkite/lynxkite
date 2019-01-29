@@ -1,6 +1,6 @@
 'use strict';
 
-const K = protractor.Key;  // Short alias.
+const K = protractor.Key; // Short alias.
 
 function checkExactlyOneCurrent() {
   // There is only one highlighted item:

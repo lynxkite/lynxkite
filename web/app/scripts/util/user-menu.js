@@ -5,8 +5,8 @@ angular.module('biggraph').directive('userMenu', function($window, util) {
   return {
     restrict: 'E',
     scope: {
-      info: '=',  // Debug data to post with "send feedback".
-      direction: '@',  // Class selector for the dropup menu: "dropup" or "dropdown".
+      info: '=', // Debug data to post with "send feedback".
+      direction: '@', // Class selector for the dropup menu: "dropup" or "dropdown".
     },
     templateUrl: 'scripts/util/user-menu.html',
     link: function(scope) {

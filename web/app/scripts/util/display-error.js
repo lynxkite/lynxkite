@@ -8,9 +8,9 @@ angular.module('biggraph')
       restrict: 'E',
       templateUrl: 'scripts/util/display-error.html',
       scope: {
-        caption: '@',  // Caption to display on the UI.
-        request: '=',  // The request which may result in an error. Takes precedence over 'error'.
-        error: '=',    // The error variable to bind and display. Use only if 'request' is not available.
+        caption: '@', // Caption to display on the UI.
+        request: '=', // The request which may result in an error. Takes precedence over 'error'.
+        error: '=', // The error variable to bind and display. Use only if 'request' is not available.
       },
       link: function(scope) {
         scope.message = function() {
