@@ -7,6 +7,7 @@ requests
 
 # Dependencies for the ecosystem
 apache-airflow[mysql]==1.10.1
+pendulum==1.4.4
 mysqlclient
 prometheus_client
 sqlalchemy
