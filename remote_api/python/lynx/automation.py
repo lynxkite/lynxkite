@@ -77,6 +77,11 @@ def _aware_to_iso_str(dt: pendulum.Pendulum) -> str:
 class Schedule:
   '''Used to define timezone aware schedulings.
 
+  For example:
+
+      paris = pendulum.timezone('Europe/Paris')
+      schedule = Schedule(pendulum.create(2019, 1, 23, tz=paris), '0 4 * * *')
+
   For detailed information, see:
   https://docs.google.com/document/d/14OOGqBEnVeoZAPGmtd0VhX55qHUVAH1-46UfEACauHE
   '''
@@ -103,11 +108,20 @@ class Schedule:
   def utc_dates(self,
                 utc_start_date: datetime.datetime,
                 utc_end_date: datetime.datetime) -> List[datetime.datetime]:
+    '''Returns the list of pendulum datetimes, which are valid dates according
+    to the cron string of the schedule, and are between utc_start_date and
+    utc_end_date. The start date and the end date are also included, if they match
+    the cron string.
+    '''
     _assert_is_utc(utc_start_date)
     _assert_is_utc(utc_end_date)
     return [_to_pendulum_utc(d) for d in self.dag.get_run_dates(utc_start_date, utc_end_date)]
 
   def step_back(self, utc_date: datetime.datetime, delta: int) -> datetime.datetime:
+    '''Steps back delta times from utc_date on valid schedule dates.
+
+    If delta == 1, it returns the previous schedule date before utc_date.
+    '''
     _assert_is_utc(utc_date)
     start_date = utc_date
     for _ in range(delta):
@@ -115,6 +129,7 @@ class Schedule:
     return _to_pendulum_utc(start_date)
 
   def next_date(self, utc_date: datetime.datetime) -> datetime.datetime:
+    '''The first valid schedule date after utc_date.'''
     _assert_is_utc(utc_date)
     return _to_pendulum_utc(self.dag.following_schedule(utc_date))
 
