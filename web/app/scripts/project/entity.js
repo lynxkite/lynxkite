@@ -92,7 +92,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
 
       if (scope.isAttribute()) {
         axisOptions.bind(
-            scope, scope.side, scope.attributeKind(), scope.entity.title, 'axisOptions');
+          scope, scope.side, scope.attributeKind(), scope.entity.title, 'axisOptions');
       }
       scope.showLogCheckbox = function() {
         if (!scope.entity.isNumeric) { return false; }

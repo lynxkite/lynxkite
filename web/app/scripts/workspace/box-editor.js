@@ -19,14 +19,14 @@ angular.module('biggraph')
         // then we can put a timestamp in workspace and watch that
         // instead of workspace.backendState.
         util.deepWatch(
-            scope,
-            '[workspace.backendState, boxId]',
-            function() {
-              if (!scope.boxId) {
-                return;
-              }
-              scope.loadBoxMeta(scope.boxId);
-            });
+          scope,
+          '[workspace.backendState, boxId]',
+          function() {
+            if (!scope.boxId) {
+              return;
+            }
+            scope.loadBoxMeta(scope.boxId);
+          });
 
         scope.loadBoxMeta = function(boxId) {
           if (!scope.workspace) {
@@ -118,9 +118,9 @@ angular.module('biggraph')
               }
             }
             scope.workspace.updateBox(
-                scope.boxId,
-                minimized,
-                scope.parametricParameters);
+              scope.boxId,
+              minimized,
+              scope.parametricParameters);
           }
         }
 
