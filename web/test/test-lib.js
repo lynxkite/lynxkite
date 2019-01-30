@@ -7,7 +7,7 @@ const fs = require('fs');
 // Forward declarations.
 let testLib;
 
-const K = protractor.Key;  // Short alias.
+const K = protractor.Key; // Short alias.
 
 
 // Mirrors the "id" filter.
@@ -367,10 +367,10 @@ Workspace.prototype = {
     expect(src.isDisplayed()).toBe(true);
     expect(dst.isDisplayed()).toBe(true);
     browser.actions()
-        .mouseDown(src)
-        .mouseMove(dst)
-        .mouseUp()
-        .perform();
+      .mouseDown(src)
+      .mouseMove(dst)
+      .mouseUp()
+      .perform();
     this.expectConnected(srcBoxId, srcPlugId, dstBoxId, dstPlugId);
   },
 
@@ -407,14 +407,14 @@ PopupBase.prototype = {
   moveTo: function(x, y) {
     const head = this.popup.$('div.popup-head');
     browser.actions()
-        .mouseDown(head)
-        // Absolute positioning of mouse. If we don't specify the first
-        // argument then this becomes a relative move. If the first argument
-        // is this.board, then protractor scrolls the element of this.board
-        // to the top of the page, even though scrolling is not enabled.
-        .mouseMove($('body'), {x: x, y: y})
-        .mouseUp(head)
-        .perform();
+      .mouseDown(head)
+    // Absolute positioning of mouse. If we don't specify the first
+    // argument then this becomes a relative move. If the first argument
+    // is this.board, then protractor scrolls the element of this.board
+    // to the top of the page, even though scrolling is not enabled.
+      .mouseMove($('body'), {x: x, y: y})
+      .mouseUp(head)
+      .perform();
   },
 };
 
@@ -424,7 +424,7 @@ function BoxEditor(popup) {
 }
 
 BoxEditor.prototype = {
-  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
+  __proto__: PopupBase.prototype, // inherit PopupBase's methods
 
   operationId: function() {
     return this.popup.$('.popup-head').getText();
@@ -432,7 +432,7 @@ BoxEditor.prototype = {
 
   operationParameter: function(param) {
     return this.element.$(
-        'operation-parameters #' + param + ' .operation-attribute-entry');
+      'operation-parameters #' + param + ' .operation-attribute-entry');
   },
 
   parametricSwitch: function(param) {
@@ -480,7 +480,7 @@ function State(popup) {
 }
 
 State.prototype = {
-  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
+  __proto__: PopupBase.prototype, // inherit PopupBase's methods
 
   setInstrument: function(index, name, params) {
     const state = this.popup.$(`#state-${index}`);
@@ -504,7 +504,7 @@ function PlotState(popup) {
 }
 
 PlotState.prototype = {
-  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
+  __proto__: PopupBase.prototype, // inherit PopupBase's methods
 
   barHeights: function() {
     return this.canvas.$$('g.mark-rect.marks rect').map(e => e.getAttribute('height'));
@@ -530,7 +530,7 @@ function TableState(popup) {
 }
 
 TableState.prototype = {
-  __proto__: PopupBase.prototype,  // inherit PopupBase's methods
+  __proto__: PopupBase.prototype, // inherit PopupBase's methods
 
   expect: function(names, types, rows) {
     this.expectColumnNamesAre(names);
@@ -1297,7 +1297,7 @@ testLib = {
           'method': method
         }}, (error, message) => {
           if (error || message.statusCode >= 400) {
-            defer.reject(new Error(error));  // TODO: include message?
+            defer.reject(new Error(error)); // TODO: include message?
           } else {
             func(defer);
           }
@@ -1328,46 +1328,46 @@ testLib = {
   setParameter: function(e, value) {
     // Special parameter types need different handling.
     e.evaluate('(param.multipleChoice ? "multi-" : "") + param.kind').then(
-        function(kind) {
-          if (kind === 'code') {
-            testLib.sendKeysToACE(e, testLib.selectAllKey + value);
-          } else if (kind === 'file') {
-            testLib.uploadIntoFileParameter(e, value);
-          } else if (kind === 'tag-list') {
-            const values = value.split(',');
-            for (let i = 0; i < values.length; ++i) {
-              e.$('.dropdown-toggle').click();
-              e.$('.dropdown-menu #' + values[i]).click();
-            }
-          } else if (kind === 'table') {
-            // You can specify a CSV file to be uploaded, or the name of an existing table.
-            if (value.indexOf('.csv') !== -1) { // CSV file.
-              e.element(by.id('import-new-table-button')).click();
-              const s = new Selector(e.element(by.id('import-wizard')));
-              s.importLocalCSVFile('test-table', value);
-            } else { // Table name.
-              // Table name options look like 'name of table (date of table creation)'.
-              // The date is unpredictable, but we are going to match to the ' (' part
-              // to minimize the chance of mathcing an other table.
-              const optionLabelPattern = value + ' (';
-              e.element(by.cssContainingText('option', optionLabelPattern)).click();
-            }
-          } else if (kind === 'choice') {
-            e.$('option[label="' + value + '"]').click();
-          } else if (kind === 'multi-choice') {
-            e.$$('option:checked').click();
-            for (let i = 0; i < value.length; ++i) {
-              e.$('option[label="' + value[i] + '"]').click();
-            }
-          } else if (kind === 'multi-tag-list') {
-            for (let i = 0; i < value.length; ++i) {
-              e.$('.glyphicon-plus').click();
-              e.$('a#' + value[i]).click();
-            }
-          } else {
-            safeSelectAndSendKeys(e, value);
+      function(kind) {
+        if (kind === 'code') {
+          testLib.sendKeysToACE(e, testLib.selectAllKey + value);
+        } else if (kind === 'file') {
+          testLib.uploadIntoFileParameter(e, value);
+        } else if (kind === 'tag-list') {
+          const values = value.split(',');
+          for (let i = 0; i < values.length; ++i) {
+            e.$('.dropdown-toggle').click();
+            e.$('.dropdown-menu #' + values[i]).click();
           }
-        });
+        } else if (kind === 'table') {
+          // You can specify a CSV file to be uploaded, or the name of an existing table.
+          if (value.indexOf('.csv') !== -1) { // CSV file.
+            e.element(by.id('import-new-table-button')).click();
+            const s = new Selector(e.element(by.id('import-wizard')));
+            s.importLocalCSVFile('test-table', value);
+          } else { // Table name.
+            // Table name options look like 'name of table (date of table creation)'.
+            // The date is unpredictable, but we are going to match to the ' (' part
+            // to minimize the chance of mathcing an other table.
+            const optionLabelPattern = value + ' (';
+            e.element(by.cssContainingText('option', optionLabelPattern)).click();
+          }
+        } else if (kind === 'choice') {
+          e.$('option[label="' + value + '"]').click();
+        } else if (kind === 'multi-choice') {
+          e.$$('option:checked').click();
+          for (let i = 0; i < value.length; ++i) {
+            e.$('option[label="' + value[i] + '"]').click();
+          }
+        } else if (kind === 'multi-tag-list') {
+          for (let i = 0; i < value.length; ++i) {
+            e.$('.glyphicon-plus').click();
+            e.$('a#' + value[i]).click();
+          }
+        } else {
+          safeSelectAndSendKeys(e, value);
+        }
+      });
   },
 
   // Expects a window.confirm call from the client code and overrides the user
@@ -1384,7 +1384,7 @@ testLib = {
     // window object from inside the browser, if at all ppossible.
     // 3. Use a mockable Angular module for window.confirm from our app.
     browser.executeScript(
-        'window.confirm0 = window.confirm;' +
+      'window.confirm0 = window.confirm;' +
         'window.confirm = function() {' +
         '  window.confirm = window.confirm0;' +
         '  return ' + responseValue + ';' +
