@@ -39,20 +39,20 @@ angular.module('biggraph')
                 inputs: {},
                 parametricParameters: {}}
             ]},
-            parameters: {},
+          parameters: {},
           }).then(function(res) {
-            scope.data = res;
-            scope.stateId = scope.data.outputs[0].stateId;
-            // Fake context for general state viewer
-            scope.popupModel = {};
-            setWidth();
-            scope.popupModel.height = 500;
-            scope.popupModel.maxHeight = 500;
-            scope.plug = {};
-            scope.plug.stateId = scope.stateId;
-            scope.plug.kind = scope.type;
-            angular.element($window).on('resize', function() {scope.$apply(setWidth());});
-          });
+          scope.data = res;
+          scope.stateId = scope.data.outputs[0].stateId;
+          // Fake context for general state viewer
+          scope.popupModel = {};
+          setWidth();
+          scope.popupModel.height = 500;
+          scope.popupModel.maxHeight = 500;
+          scope.plug = {};
+          scope.plug.stateId = scope.stateId;
+          scope.plug.kind = scope.type;
+          angular.element($window).on('resize', function() {scope.$apply(setWidth());});
+        });
       },
     };
   });

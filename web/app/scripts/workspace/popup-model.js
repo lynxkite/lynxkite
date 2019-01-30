@@ -18,7 +18,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     this.maxHeight = height;
     this.owner = owner;
     this.element = undefined;
-    this.meta = false;  // Whether the metadata editor is active.
+    this.meta = false; // Whether the metadata editor is active.
   }
 
   PopupModel.prototype.updateSize = function() {

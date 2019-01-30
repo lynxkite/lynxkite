@@ -70,7 +70,7 @@ angular.module('biggraph').directive('renderer', function($timeout) {
           // Index array.
           const is = new Uint32Array(n * 12 * 3);
           for (let i = 0; i < n; ++i) {
-            if (edges[i].a === edges[i].b) { continue; }  // TODO: Display loop edges?
+            if (edges[i].a === edges[i].b) { continue; } // TODO: Display loop edges?
             const src = layout3D[edges[i].a];
             const dst = layout3D[edges[i].b];
             // The more edges we have, the thinner we make them.

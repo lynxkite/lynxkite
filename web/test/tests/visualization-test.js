@@ -67,11 +67,11 @@ module.exports = function(fw) {
         after: 'sg0',
       });
       lib.workspace
-          .openBoxEditor('vz0')
-          .moveTo(800, 90);
+        .openBoxEditor('vz0')
+        .moveTo(800, 90);
       lib.workspace
-          .openStateView('vz0', 'visualization')
-          .moveTo(270, 90);
+        .openStateView('vz0', 'visualization')
+        .moveTo(270, 90);
     },
     function() {
     });
@@ -90,7 +90,7 @@ module.exports = function(fw) {
         { src: 2, dst: 1 },
       ];
       let savedPositions;
-      const DEFAULT = 'rgb(57, 188, 243)';  // Brand color.
+      const DEFAULT = 'rgb(57, 188, 243)'; // Brand color.
       const BLUE = 'rgb(54, 54, 161)';
       const RED = 'rgb(161, 54, 54)';
       // No attributes visualized.

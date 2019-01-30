@@ -17,7 +17,7 @@ angular.module('biggraph').factory('axisOptions', function axisOptionsFactory(ut
         scope[variable] = ao;
       });
       util.deepWatch(scope, variable, function(ao, before) {
-        if (angular.equals(ao, before)) { return; }  // It's just watcher registration.
+        if (angular.equals(ao, before)) { return; } // It's just watcher registration.
         setAxisOptions(ao);
       });
     },

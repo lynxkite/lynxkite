@@ -14,15 +14,15 @@ angular.module('biggraph')
       $scope.statusMessage = '';
       $scope.metadataVersion = util.nocache('/ajax/backup');
       $scope.metadataVersion.then(
-      function() { // success
-        $scope.inProgress = false;
-        $scope.statusMessage = 'Data backup is completed.';
-        $scope.success = true;
-      }, function(reason) { // failure
-        $scope.inProgress = false;
-        $scope.statusMessage = 'Data backup failed. Error: ' + reason.statusText;
-        $scope.success = false;
-      });
+        function() { // success
+          $scope.inProgress = false;
+          $scope.statusMessage = 'Data backup is completed.';
+          $scope.success = true;
+        }, function(reason) { // failure
+          $scope.inProgress = false;
+          $scope.statusMessage = 'Data backup failed. Error: ' + reason.statusText;
+          $scope.success = false;
+        });
     };
 
     $scope.isDisabled = function() {

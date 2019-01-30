@@ -198,9 +198,9 @@ module.exports = function(fw) {
       tableBrowser.toggleFullyQualify();
       tableBrowser.expectNode([3, 1], 'age (Double)', '`vertices`.`age`');
       tableBrowser.expectNode(
-          [3, 0],
-          '*ALL*',
-          '`vertices`.`age`,\n' +
+        [3, 0],
+        '*ALL*',
+        '`vertices`.`age`,\n' +
               '`vertices`.`gender`,\n' +
               '`vertices`.`id`,\n' +
               '`vertices`.`income`,\n' +
