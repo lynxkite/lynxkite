@@ -98,7 +98,7 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($modal) {
 
       function quoteParamValue(value) {
         function addSlashes(str) {
-          return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
+          return (str + '').replace(/[\\"']/g, '\\$&').replace(/\0/g, '\\0');
         }
 
         if (/\n/g.test(value)) {
@@ -190,7 +190,7 @@ angular.module('biggraph').factory('pythonCodeGenerator', function($modal) {
       templateUrl: 'scripts/python-code.html',
       controller: 'PythonCodeCtrl',
       resolve: { code: function() { return pythonCode; } },
-      animation: false,  // Protractor does not like the animation.
+      animation: false, // Protractor does not like the animation.
       size: 'lg',
     }).result.then(function() {}, function() {});
 

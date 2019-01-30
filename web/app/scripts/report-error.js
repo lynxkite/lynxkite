@@ -20,7 +20,7 @@ angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $modal
     'mailto:' + support +
     '?subject=' + encodeURIComponent('⚠ ' + $scope.message.substr(0, 60)) +
     '&body=' + encodeURIComponent(body)
-    );
+  );
 
   $scope.close = function() {
     $modalInstance.dismiss('close');

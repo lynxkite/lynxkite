@@ -178,7 +178,7 @@ angular.module('biggraph')
         if (edgeColorAttr !== undefined) {
           vd.edgeAttrs.edgeColor =
             (edgeColorAttr.typeName === 'Double') ?
-            aggregated(edgeColorAttr, 'sum') : aggregated(edgeColorAttr, 'set');
+              aggregated(edgeColorAttr, 'sum') : aggregated(edgeColorAttr, 'set');
         }
       }
 
@@ -292,7 +292,7 @@ angular.module('biggraph')
         return undefined;
       }
       const path = util.projectPath(this.state.projectPath);
-      return path.slice(0, -1);  // Discard own name.
+      return path.slice(0, -1); // Discard own name.
     };
     Side.prototype.isSegmentation = function() {
       return this.parentProjects().length !== 0;
@@ -343,7 +343,7 @@ angular.module('biggraph')
 
     Side.prototype.reportLoadingError = function() {
       return util.reportRequestError(
-          this.project, 'Could not load project: ' + this.state.projectPath);
+        this.project, 'Could not load project: ' + this.state.projectPath);
     };
 
     Side.prototype.toggleAttributeTitle = function(setting, value) {
@@ -436,8 +436,8 @@ angular.module('biggraph')
           from: this.state.projectName,
           to: newName,
         }).then(function() {
-          that.state.projectName = newName;
-        });
+        that.state.projectName = newName;
+      });
     };
 
     Side.prototype.saveNotes = function() {
@@ -545,9 +545,9 @@ angular.module('biggraph')
           edgeFilters: this.nonEmptyEdgeFilterNames(),
           vertexFilters: this.nonEmptyVertexFilterNames(),
         }).then(function() {
-          that.clearFilters();
-          that.reload();
-        });
+        that.clearFilters();
+        that.reload();
+      });
     };
     Side.prototype.clearFilters = function() {
       this.state.filters = { edge: {}, vertex: {} };

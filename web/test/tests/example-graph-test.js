@@ -48,7 +48,7 @@ module.exports = function(fw) {
     'has the proper vertex count',
     function() {
       const state = lib.workspace.openStateView(
-          'reversed-edges', 'project');
+        'reversed-edges', 'project');
       expect(state.left.vertexCount()).toEqual(4);
       expect(state.left.edgeCount()).toEqual(8);
       expect(state.left.attributeCount()).toEqual(8);
@@ -63,11 +63,11 @@ module.exports = function(fw) {
       let outPlugReversedEdges = lib.workspace.getOutputPlug('reversed-edges');
       let outPlugSecondEG = lib.workspace.getOutputPlug('eg1');
       expect(outPlugFirstEG.getAttribute('class').then(cls =>
-            cls.indexOf('plug-progress-unknown') === -1)).toBeTruthy();
+        cls.indexOf('plug-progress-unknown') === -1)).toBeTruthy();
       expect(outPlugReversedEdges.getAttribute('class').then(cls =>
-            cls.indexOf('plug-progress-unknown') === -1)).toBeTruthy();
+        cls.indexOf('plug-progress-unknown') === -1)).toBeTruthy();
       expect(outPlugSecondEG.getAttribute('class').then(cls =>
-            cls.indexOf('plug-progress-unknown') === -1)).toBeTruthy();
+        cls.indexOf('plug-progress-unknown') === -1)).toBeTruthy();
     });
 
 };

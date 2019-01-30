@@ -18,7 +18,7 @@ angular.module('biggraph').factory('loadGraph', function (util) {
     if (right && right.graphMode && right.vertexSet !== undefined) {
       sides.push(right);
     }
-    if (sides.length === 0) {  // Nothing to draw.
+    if (sides.length === 0) { // Nothing to draw.
       return;
     }
     const q = { vertexSets: [], edgeBundles: [] };
@@ -115,7 +115,7 @@ angular.module('biggraph').factory('loadGraph', function (util) {
     }
 
     if (!angular.equals(this.request, q)) {
-      this.request = angular.copy(q);  // Store request without any references to living objects.
+      this.request = angular.copy(q); // Store request without any references to living objects.
       this.view = util.get('/ajax/complexView', this.request);
     }
   };

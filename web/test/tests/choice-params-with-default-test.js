@@ -33,8 +33,8 @@ module.exports = function(fw) {
     'test pagerank default choice values',
     'test pagerank default choice values edit workspace',
     function() {
-      lib.workspace.editBox('pr1', {direction: 'all edges'});  // change direction
-      lib.workspace.editBox('pr2', {direction: 'all edges'});  // change direction
+      lib.workspace.editBox('pr1', {direction: 'all edges'}); // change direction
+      lib.workspace.editBox('pr2', {direction: 'all edges'}); // change direction
       let boxEditor = lib.workspace.openBoxEditor('pr1');
       boxEditor.expectSelectParameter('direction', 'string:all edges');
       boxEditor.close();

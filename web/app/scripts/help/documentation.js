@@ -15,7 +15,7 @@ angular.module('biggraph').factory('documentation', function($http) {
     const dom = html.then(function success(response) {
       /* global $ */
       const dom = $($.parseHTML(
-            '<div id="help-container"><div id="whole-help">' + response.data + '</div></div>'));
+        '<div id="help-container"><div id="whole-help">' + response.data + '</div></div>'));
 
       // Move TOC outside and spruce it up.
       dom.find('#toc').each(function(i, div) {

@@ -23,7 +23,7 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
       input.bind('change', function() {
         scope.$apply(function() {
           const file = input[0].files[0];
-          input.val(null);  // Unset the selection, so the same file can be picked again.
+          input.val(null); // Unset the selection, so the same file can be picked again.
           scope.fileUploadCount = scope.fileUploadCount || 0;
           scope.fileUploadCount += 1;
           scope.uploading = true;
@@ -31,9 +31,9 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
           const xhr = new XMLHttpRequest();
           xhr.open('POST', '/ajax/upload');
           xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {  // DONE
+            if (xhr.readyState === 4) { // DONE
               scope.$apply(function() {
-                if (xhr.status === 200) {  // SUCCESS
+                if (xhr.status === 200) { // SUCCESS
                   scope.filename = xhr.responseText;
                   scope.onBlur();
                 } else {

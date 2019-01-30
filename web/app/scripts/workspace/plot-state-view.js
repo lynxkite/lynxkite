@@ -91,12 +91,12 @@ angular.module('biggraph')
           'popupModel.width', 'popupModel.height',
           'plotJSON.value.string',
           'diffX', 'diffY'],
-          function() {
-            if (scope.plotJSON && scope.plotJSON.value && scope.plotJSON.value.string) {
-              scope.embedPlot();
-            }
+        function() {
+          if (scope.plotJSON && scope.plotJSON.value && scope.plotJSON.value.string) {
+            scope.embedPlot();
           }
-         );
+        }
+        );
 
         scope.$watch('embedSpec.spec.description', function(title) {
           // Refresh title after embedding the plot
