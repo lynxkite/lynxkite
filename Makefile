@@ -16,7 +16,7 @@ all: backend
 clean:
 	git clean -f -X -d --exclude="!.idea/"
 
-.build/gulp-done: $(shell $(find) web/app) web/gulpfile.js web/package.json
+.build/gulp-done: $(shell $(find) web/app) web/gulpfile.js web/package.json .eslintrc.yaml
 	cd web && LC_ALL=C yarn --frozen-lockfile && gulp && cd - && touch $@
 .build/documentation-verified: $(shell $(find) app) .build/gulp-done
 	./tools/check_documentation.sh && touch $@
@@ -62,7 +62,7 @@ $(pip): python_requirements.txt
 .build/ecosystem-docker-release-done: \
 		.build/ecosystem-done .build/ecosystem-docker-base-done $(shell $(find) ecosystem/docker)
 	ecosystem/docker/release/build.sh $(VERSION) && touch $@
-.build/shell_ui-test-passed: $(shell $(find) shell_ui)
+.build/shell_ui-test-passed: $(shell $(find) shell_ui) .eslintrc.yaml
 	shell_ui/test.sh && touch $@
 
 # Short aliases for command-line use.
