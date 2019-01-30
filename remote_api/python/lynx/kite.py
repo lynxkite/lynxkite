@@ -597,20 +597,9 @@ class LynxKite:
     else:
       ws_root = save_under_root
     main_name = ws.safename()
-    needed_ws: Set[Tuple[str, Workspace]] = set()
+    needed_custom_boxes = self.recursively_collect_customboxes(ws, main_name)
+    needed_ws = {(path, box.workspace) for path, box in needed_custom_boxes}
 
-    def collect_subworkspaces(ws: Workspace, path: str = main_name):
-      for box in ws.custom_boxes():
-        if box.workspace.name:
-          box_path = box.workspace.name
-        else:
-          box_path = f'{path}_subs/{ws.id_of(box)}'
-        if (box_path, box.workspace) in needed_ws:
-          continue
-        needed_ws.add((box_path, box.workspace))
-        collect_subworkspaces(box.workspace, box_path)
-
-    collect_subworkspaces(ws)
     # Check name duplication in required workspaces
     names = [name for (name, rws) in needed_ws]
     if len(names) != len(set(names)):
@@ -629,6 +618,22 @@ class LynxKite:
     # We return the root directory and full name of the saved main workspace
     return (ws_root,
             _normalize_path(ws_root + '/' + main_name))
+
+  def recursively_collect_customboxes(
+          self, ws: 'Workspace', path=None) -> Set[Tuple[str, 'CustomBox']]:
+    if path is None:
+      path = ws.safename()
+    collected: Set[Tuple[str, CustomBox]] = set()
+    for box in ws.custom_boxes():
+      if box.workspace.name:
+        box_path = box.workspace.name
+      else:
+        box_path = f'{path}_subs/{ws.id_of(box)}'
+      if (box_path, box.workspace) in collected:
+        continue
+      collected.add((box_path, box))
+      collected.update(self.recursively_collect_customboxes(box.workspace, box_path))
+    return collected
 
   def fetch_workspace_output_states(self, ws: 'Workspace',
                                     save_under_root: str = None,
@@ -1734,6 +1739,11 @@ class Workspace:
     return [
         box for box in self.all_boxes
         if isinstance(box, CustomBox)]
+
+  def recursively_find_custom_boxes_by_name(self, name):
+    custom_boxes = self.lk.recursively_collect_customboxes(self)
+    by_name = [box for _, box in custom_boxes if box.workspace.custom_box_id_base == name]
+    return by_name
 
   def side_effect_paths(self) -> List[BoxPath]:
     return self._side_effect_paths
