@@ -15,12 +15,12 @@ function UIDescription() {
     isSolo: () => soloMode,
     setSolo: (s) => { soloMode = s; },
     transitionTest: function(
-      previousStateName,  // Name of the state on which this transition should be applied.
-      stateName,  // Name of the target state of this transition.
-      transitionFunction,  // JS function that goes to this state from prev state.
-      checks,  // Tests confirming we are indeed in this state. Should be very fast stuff only,
-               // like looking at the DOM.
-      solo) {  // Set to true if you want to run only this test.
+      previousStateName, // Name of the state on which this transition should be applied.
+      stateName, // Name of the target state of this transition.
+      transitionFunction, // JS function that goes to this state from prev state.
+      checks, // Tests confirming we are indeed in this state. Should be very fast stuff only,
+      // like looking at the DOM.
+      solo) { // Set to true if you want to run only this test.
       if (solo) {
         soloMode = true;
       }
@@ -195,8 +195,8 @@ jasmine.Spec.prototype.addExpectationResult = function() {
       that.failedExpectations = failureIdx + 1;
       const filename = (
         ('protractor-' + startDate + '-' + that.getFullName() + '-' + failureIdx + '.png')
-        .replace(/[^a-z0-9.-]/gi, '_')
-        .toLowerCase());
+          .replace(/[^a-z0-9.-]/gi, '_')
+          .toLowerCase());
       screenshots.push(userVisiblePrefix + filename);
       const stream = fs.createWriteStream(screenshotDir + filename);
       stream.write(new Buffer(png, 'base64'));
