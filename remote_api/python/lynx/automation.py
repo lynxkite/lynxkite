@@ -54,8 +54,6 @@ def _assert_is_aware(dt: datetime.datetime):
 def _assert_is_utc(dt: pendulum.Pendulum):
   '''Checks if dt is a Pendulum UTC datetime.'''
   _assert_is_aware(dt)
-  assert dt.utc, 'Timezone is not UTC.'
-  # We need this second assert to filter out Lisbon winter time
   assert dt.timezone_name == 'UTC', 'Timezone is not UTC.'
 
 
