@@ -6,8 +6,8 @@ angular.module('biggraph').directive('inlineLoading', function(util) {
   return {
     restrict: 'E',
     scope: {
-      ref: '=',  // The resource we are loading.
-      details: '=',  // Additional information for the error report.
+      ref: '=', // The resource we are loading.
+      details: '=', // Additional information for the error report.
     },
     templateUrl: 'scripts/util/inline-loading.html',
     link: function(scope) {

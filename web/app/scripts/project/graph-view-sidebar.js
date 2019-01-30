@@ -5,7 +5,7 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
   return {
     restrict: 'E',
     scope: {
-      graph: '=',      // The graph to visualize.
+      graph: '=', // The graph to visualize.
       mapFilters: '=', // (Output) Filter settings for the map tiles.
     },
     templateUrl: 'scripts/project/graph-view-sidebar.html',
@@ -86,7 +86,7 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
           }
           tsv += '\n';
           for (j = 0; j < vs.yLabels.length; ++j) {
-            tsv += vs.yLabels[j];  // Y-axis header.
+            tsv += vs.yLabels[j]; // Y-axis header.
             for (i = 0; j < yl && i < xl; ++i) {
               tsv += '\t' + byBucket[i + ', ' + j].size;
             }
@@ -106,7 +106,7 @@ angular.module('biggraph').directive('graphViewSidebar', function (util) {
         if (eb.srcIdx === eb.dstIdx && sides[eb.srcIdx]) {
           // Turn the object into an array;
           angular.forEach(
-              sides[eb.srcIdx].edgeAttrs, function(attr) { if (attr) { attrs.push(attr); } });
+            sides[eb.srcIdx].edgeAttrs, function(attr) { if (attr) { attrs.push(attr); } });
         }
         for (i = 0; i < attrs.length; ++i) {
           tsv += '\t' + attrs[i].title;

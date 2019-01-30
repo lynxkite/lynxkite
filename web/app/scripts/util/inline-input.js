@@ -21,7 +21,7 @@ angular.module('biggraph').directive('inlineInput', function(util) {
           success: scope.close,
           error: function(error) {
             scope.enabled = true;
-            util.ajaxError(error);  // We could do fancy inline error reporting one day.
+            util.ajaxError(error); // We could do fancy inline error reporting one day.
           },
         });
       };

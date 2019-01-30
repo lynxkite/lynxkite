@@ -32,7 +32,7 @@ angular.module('biggraph').directive('aclSettings', function(util) {
 
       scope.changed = function() {
         return (
-            scope.entity.readACL !== scope.readACL ||
+          scope.entity.readACL !== scope.readACL ||
             scope.entity.writeACL !== scope.writeACL);
       };
     },

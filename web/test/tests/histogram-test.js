@@ -150,9 +150,9 @@ module.exports = function(fw) {
         after: 'create-vertices', params: { name: 'c' } });
       const state = lib.workspace.openStateView('add-attr', 'project');
       expect(state.left.vertexAttribute('c').getHistogramValues(true))
-          .toEqual([
-              { title: '1.00-1.00', size: 100, value: 123456 },
-          ]);
+        .toEqual([
+          { title: '1.00-1.00', size: 100, value: 123456 },
+        ]);
     },
     function() {});
 
