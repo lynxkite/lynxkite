@@ -49,21 +49,6 @@ class TestRecursivelyFindCustomBoxesByName(unittest.TestCase):
       uncomputed_found = is_uncomputed(ws())
     return ws
 
-  def test_each_nested_ws_is_different(self):
-    """Checks that the computation of a nested_ws doesn't have any effect on the
-    next nested_ws.
-    """
-    ws1 = self.new_nested_ws()
-    ws2 = self.new_nested_ws()
-    state1 = ws1()
-    state2 = ws2()
-    for s in [state1, state2]:
-      progress = s.get_progress()
-      self.assertEqual(progress.notYetStarted, 1)
-    state1.compute()
-    self.assertEqual(state1.get_progress().computed, 1)
-    self.assertEqual(state2.get_progress().notYetStarted, 1)
-
   def test_find_nested(self):
     for i in range(3, 0, -1):
       nested_ws = self.new_nested_ws()
