@@ -16,19 +16,18 @@ def create_nested_workspace(seed):
     return start.sql('select 1 as level from vertices')
 
   @subworkspace
-  def level2(g):
-    return g.sql('select 2 as level from input')
+  def level2():
+    l1 = level1()
+    return l1.sql('select 2 as level from input')
 
   @subworkspace
-  def level3(g):
-    return g.sql('select 3 as level from input')
+  def level3():
+    l2 = level2()
+    return l2.sql('select 3 as level from input')
 
   @lk.workspace()
   def nested_ws():
-    l1 = level1()
-    l2 = level2(l1)
-    l3 = level3(l2)
-    return l3
+    return level3()
   return nested_ws
 
 
@@ -52,7 +51,7 @@ class TestRecursivelyFindCustomBoxesByName(unittest.TestCase):
   def test_find_nested(self):
     for i in range(3, 0, -1):
       nested_ws = self.new_nested_ws()
-      self.assertTrue(is_uncomputed(nested_ws()))
       table = nested_ws.recursively_find_custom_boxes_by_name(f'level{i}')[0]
+      self.assertTrue(is_uncomputed(table))
       level = table.get_table_data().data[0][0].double
       self.assertEqual(level, i)
