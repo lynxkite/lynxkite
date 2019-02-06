@@ -1204,6 +1204,7 @@ class Box:
     self.bc = box_catalog
     self.lk = lk
     self.inputs = inputs
+    self.all_parameters = parameters
     self.parameters: Dict[str, str] = {}
     self.parametric_parameters: Dict[str, str] = {}
     self.outputs: Set[str] = set()
@@ -1275,6 +1276,12 @@ class Box:
   def _trigger_in_ws(self, ws: str, box: str, stack: List[str]) -> None:
     '''Used for triggering this box anywhere in a saved workspace.'''
     self.lk.trigger_box(ws, box, stack)
+
+  def is_input(self):
+    return isinstance(self, AtomicBox) and self.operation == 'input'
+
+  def is_output(self):
+    return isinstance(self, AtomicBox) and self.operation == 'output'
 
 
 class AtomicBox(Box):
@@ -1421,6 +1428,42 @@ class CustomBox(Box):
         self.parameters,
         self.inputs)
 
+  def find_nested_custombox(self, custom_box_id):
+    return self._find_nested_custombox(custom_box_id, BoxPath(self))
+
+  def _find_nested_custombox(self, custom_box_id, current_boxpath) -> List['BoxPath']:
+    found = []
+    current_base = current_boxpath.base
+    for box in current_base.workspace.custom_boxes():
+      # import pdb; pdb.set_trace()
+      box_path = current_boxpath.add_box_as_base(box)
+      if box.box_id_base() == custom_box_id:
+        found.append(box_path)
+      found.extend(self._find_nested_custombox(custom_box_id, box_path))
+    return found
+
+  def truncate(self, custom_box_id):
+    box_paths = self.find_nested_custombox(custom_box_id)
+    assert len(box_paths) > 0, f'Didnt find any custom box named {custom_box_id}..'
+    assert len(box_paths) < 2, f'Found more than one custom box with named {custom_box_id}.'
+    box_path = box_paths[0]
+    last_box = box_path.base
+    for box in reversed(box_path.stack):
+      last_box = box._truncate(last_box)
+    return last_box
+
+  def _truncate(self, cb):
+    new_terminal_boxes = [cb.output(name=o) for o in cb.outputs]
+    new_ws = Workspace(
+        terminal_boxes=new_terminal_boxes,
+        name=self.workspace.name,
+        custom_box_id_base=self.workspace.custom_box_id_base,
+        side_effect_paths=self.workspace._side_effect_paths,
+        input_boxes=self.workspace.input_boxes,
+        ws_parameters=self.workspace._ws_parameters)
+    input_list = [self.inputs[i] for i in self.workspace.inputs]
+    return new_ws(*input_list, **self.all_parameters)
+
 
 class SingleOutputCustomBox(CustomBox, State):
   '''
@@ -1512,7 +1555,7 @@ class BoxPath:
   custom box ``stack[i]`` and  ``base`` is a box contained by ``stack[-1]``.
   '''
 
-  def __init__(self, base: AtomicBox, stack: List[CustomBox] = []) -> None:
+  def __init__(self, base: Box, stack: List[CustomBox] = []) -> None:
     self.base = base
     self.stack = stack
 
@@ -1541,6 +1584,11 @@ class BoxPath:
   def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
     return BoxPath(self.base, [box] + self.stack)
 
+  def add_box_as_base(self, new_base):
+    assert isinstance(self.base, CustomBox), 'Can only dive into a custom box.'
+    # assert new_base in self.base.workspace.all_boxes, f'{new_base} is not a box in {self.base}.'
+    return BoxPath(new_base, self.stack + [self.base])
+
   def parent(self, input_name: str) -> 'BoxPath':
     parent_state = self.base.inputs[input_name]
     return _atomic_source_of_state(self.stack, parent_state)
@@ -1549,7 +1597,7 @@ class BoxPath:
     box = self.base
     if box.inputs:  # normal box with inputs
       return [self.parent(inp) for inp in box.inputs.keys()]
-    elif box.operation == 'input' and self.stack:  # input box
+    elif box.is_input() and self.stack:  # input box
       containing_custom_box = self.stack[-1]
       input_name = box.parameters['name']
       source_state = containing_custom_box.inputs[input_name]
@@ -1575,11 +1623,11 @@ class BoxPath:
     first. So we use their inputs as their representatives in the dependency calculation.
     '''
     box = self.base
-    if any([box.operation == 'output',
-            box.operation == 'input' and self.stack,
-            box.operation == 'computeInputs',
-            box.operation == 'saveToSnapshot',
-            box.operation in box.lk._export_box_names]):
+    if any([box.is_output(),
+            box.is_input() and self.stack,
+            isinstance(box, AtomicBox) and box.operation == 'computeInputs',
+            isinstance(box, AtomicBox) and box.operation == 'saveToSnapshot',
+            isinstance(box, AtomicBox) and box.operation in box.lk._export_box_names]):
       parents = self.parents()
       assert len(parents) == 1, f'Cannot follow parent chain for {box}'
       return parents[0].dependency_representative()
@@ -1589,7 +1637,8 @@ class BoxPath:
   def to_dict(self):
     '''Returns a (human readable) dict representation of this object.'''
     parent = None
-    op = self.base.operation
+    base = self.base
+    op = base.operation if isinstance(base, AtomicBox) else base.box_id_base()
     op_param = self.base.parameters
     if self.stack:
       parent = self.stack[-1].name()
@@ -1678,10 +1727,10 @@ class Workspace:
     self.input_boxes = input_boxes
     self._box_ids: Dict[Box, str] = dict()
     self._next_ids: Dict[str, int] = defaultdict(int)  # Zero, by default.
-    assert all(b.operation == 'input' for b in input_boxes), 'Non-input box in input_boxes'
+    assert all(b.is_input() for b in input_boxes), 'Non-input box in input_boxes'
     self.inputs = [inp.parameters['name'] for inp in input_boxes]
     self.output_boxes = [box for box in terminal_boxes
-                         if isinstance(box, AtomicBox) and box.operation == 'output']
+                         if isinstance(box, AtomicBox) and box.is_output()]
     self.outputs = [outp.parameters['name'] for outp in self.output_boxes]
     self._ws_parameters = ws_parameters
     self._side_effect_paths = side_effect_paths
