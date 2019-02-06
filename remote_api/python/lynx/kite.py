@@ -1586,7 +1586,7 @@ class BoxPath:
 
   def add_box_as_base(self, new_base):
     assert isinstance(self.base, CustomBox), 'Can only dive into a custom box.'
-    # assert new_base in self.base.workspace.all_boxes, f'{new_base} is not a box in {self.base}.'
+    assert new_base in self.base.workspace.all_boxes, f'{new_base} is not a box in {self.base}.'
     return BoxPath(new_base, self.stack + [self.base])
 
   def parent(self, input_name: str) -> 'BoxPath':
