@@ -1428,31 +1428,11 @@ class CustomBox(Box):
         self.parameters,
         self.inputs)
 
-  def find_nested_custombox(self, custom_box_id):
-    return self._find_nested_custombox(custom_box_id, BoxPath(self))
-
-  def _find_nested_custombox(self, custom_box_id, current_boxpath) -> List['BoxPath']:
-    found = []
-    current_base = current_boxpath.base
-    for box in current_base.workspace.custom_boxes():
-      box_path = current_boxpath.add_box_as_base(box)
-      if box.box_id_base() == custom_box_id:
-        found.append(box_path)
-      found.extend(self._find_nested_custombox(custom_box_id, box_path))
-    return found
-
-  def truncate(self, custom_box_id):
-    box_paths = self.find_nested_custombox(custom_box_id)
-    assert len(box_paths) > 0, f'Didnt find any custom box named {custom_box_id}..'
-    assert len(box_paths) < 2, f'Found more than one custom box with named {custom_box_id}.'
-    box_path = box_paths[0]
-    last_box = box_path.base
-    for box in reversed(box_path.stack):
-      last_box = box._truncate(last_box)
-    return last_box
-
-  def _truncate(self, cb):
-    new_terminal_boxes = [cb.output(name=o) for o in cb.outputs]
+  def snatch(self, box):
+    """Takes a box in the custom box and returns the part of the custom box
+    till that box.
+    """
+    new_terminal_boxes = [box.output(name=o) for o in box.outputs]
     new_ws = Workspace(
         terminal_boxes=new_terminal_boxes,
         name=self.workspace.name,
@@ -1587,6 +1567,13 @@ class BoxPath:
     assert isinstance(self.base, CustomBox), 'Can only dive into a custom box.'
     assert new_base in self.base.workspace.all_boxes, f'{new_base} is not a box in {self.base}.'
     return BoxPath(new_base, self.stack + [self.base])
+
+  def snatch(self):
+    """Returns a box that encapsulates calculations represented by the BoxPath."""
+    last_box = self.base
+    for box in reversed(self.stack):
+      last_box = box.snatch(last_box)
+    return last_box
 
   def parent(self, input_name: str) -> 'BoxPath':
     parent_state = self.base.inputs[input_name]
@@ -1787,6 +1774,28 @@ class Workspace:
     return [
         box for box in self.all_boxes
         if isinstance(box, CustomBox)]
+
+  def find(self, box_id_base):
+    found = self.find_all(box_id_base)
+    assert len(found) > 0, f'Found no box with box_id_base: {box_id_base}.'
+    return found[0]
+
+  def find_all(self, box_id_base):
+    found = []
+    for box in self.all_boxes:
+      found.extend(self._find_all(box_id_base, BoxPath(box)))
+    return found
+
+  def _find_all(self, box_id_base, current_boxpath):
+    found = []
+    current_base = current_boxpath.base
+    if current_base.box_id_base() == box_id_base:
+      found.append(current_boxpath)
+    if isinstance(current_base, CustomBox):
+      for box in current_base.workspace.all_boxes:
+        box_path = current_boxpath.add_box_as_base(box)
+        found.extend(self._find_all(box_id_base, box_path))
+    return found
 
   def side_effect_paths(self) -> List[BoxPath]:
     return self._side_effect_paths

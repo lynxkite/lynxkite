@@ -2,10 +2,12 @@ import unittest
 from lynx.kite import LynxKite, SideEffectCollector, subworkspace
 
 
+lk = LynxKite()
+
+
 class TestBoxPath(unittest.TestCase):
 
   def test_boxpath(self):
-    lk = LynxKite()
 
     @subworkspace
     def export_csv(t, path, sec=SideEffectCollector.AUTO):
@@ -25,3 +27,25 @@ class TestBoxPath(unittest.TestCase):
     self.assertEqual(paths, set([
         'export_eg_?/export_csv_0/exportToCSV_0',
         'export_eg_?/export_csv_1/exportToCSV_0']))
+
+  def test_snatch(self):
+
+    def create_nested_workspace():
+      @subworkspace
+      def identity(x):
+        return x
+
+      @subworkspace
+      def inside(x):
+        return identity(x)
+
+      @lk.workspace()
+      def outside():
+        return inside(lk.createExampleGraph())
+
+      return outside
+
+    nested_ws = create_nested_workspace()
+    t = nested_ws.find('identity').snatch()
+    data = t.sql('select * from vertices').get_table_data().data
+    self.assertEqual(len(data), 4)
