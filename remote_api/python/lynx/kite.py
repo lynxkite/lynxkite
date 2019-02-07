@@ -1435,7 +1435,6 @@ class CustomBox(Box):
     found = []
     current_base = current_boxpath.base
     for box in current_base.workspace.custom_boxes():
-      # import pdb; pdb.set_trace()
       box_path = current_boxpath.add_box_as_base(box)
       if box.box_id_base() == custom_box_id:
         found.append(box_path)
