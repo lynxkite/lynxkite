@@ -453,6 +453,12 @@ class WorkspaceSequenceInstance:
     ws = self.wrapper_ws()
     self._lk.save_workspace_recursively(ws, self.wrapper_folder_name())
 
+  def find(self, box_id_base) -> BoxPath:
+    return self.wrapper_ws().find(box_id_base)
+
+  def find_all(self, box_id_base) -> List[BoxPath]:
+    return self.wrapper_ws().find_all(box_id_base)
+
   def run_input(self, input_name: str) -> None:
     lk = self._lk
 
