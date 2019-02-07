@@ -1788,11 +1788,6 @@ class Workspace:
         box for box in self.all_boxes
         if isinstance(box, CustomBox)]
 
-  def recursively_find_custom_boxes_by_name(self, name):
-    custom_boxes = self.lk.recursively_collect_customboxes(self)
-    by_name = [box for _, box in custom_boxes if box.workspace.custom_box_id_base == name]
-    return by_name
-
   def side_effect_paths(self) -> List[BoxPath]:
     return self._side_effect_paths
 
