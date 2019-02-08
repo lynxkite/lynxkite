@@ -1776,11 +1776,14 @@ class Workspace:
         if isinstance(box, CustomBox)]
 
   def find(self, box_id_base: str) -> BoxPath:
-    """Returns the BoxPath for the first box nested in the workspace whose box_id_base
+    """Returns the BoxPath for the box nested in the workspace whose box_id_base
     is the given string.
+
+    Raises an error if there is not exactly one such a box.
     """
     found = self.find_all(box_id_base)
     assert len(found) > 0, f'Found no box with box_id_base: {box_id_base}.'
+    assert len(found) < 2, f'Found more than one box with box_id_base: {box_id_base}.'
     return found[0]
 
   def find_all(self, box_id_base: str) -> List[BoxPath]:
