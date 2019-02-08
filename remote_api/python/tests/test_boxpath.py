@@ -48,7 +48,7 @@ class TestBoxPath(unittest.TestCase):
       return richest_man
 
     nested_ws = create_nested_workspace()
-    sql1s = [box_path.base for box_path in nested_ws.find_all('sql1')]
+    sql1s = [box_path.base for box_path in nested_ws.find_all('sql')]
     summaries = sorted([box.parameters['summary'] for box in sql1s])
     self.assertListEqual(summaries, ['Men', 'People', 'Richest'])
 

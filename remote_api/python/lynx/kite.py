@@ -1795,10 +1795,17 @@ class Workspace:
       found.extend(self._find_all(box_id_base, BoxPath(box)))
     return found
 
-  def _find_all(self, box_id_base, current_boxpath):
+  def _find_all(self, box_id_base: str, current_boxpath: BoxPath) -> List[BoxPath]:
+
+    def good_box(box):
+      if box_id_base == 'sql':
+        return box.box_id_base() in [f'sql{i+1}' for i in range(10)]
+      else:
+        return box.box_id_base() == box_id_base
+
     found = []
     current_base = current_boxpath.base
-    if current_base.box_id_base() == box_id_base:
+    if good_box(current_base):
       found.append(current_boxpath)
     if isinstance(current_base, CustomBox):
       for box in current_base.workspace.all_boxes:
