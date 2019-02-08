@@ -454,8 +454,10 @@ class WorkspaceSequenceInstance:
     self._lk.save_workspace_recursively(ws, self.wrapper_folder_name())
 
   def find(self, box_id_base: str) -> BoxPath:
-    """Returns the BoxPath for the first box nested in the wrapper workspace whose box_id_base
+    """Returns the BoxPath for the box nested in the wrapper workspace whose box_id_base
     is the given string.
+
+    Raises an error if there is not exactly one such a box.
     """
     return self.wrapper_ws().find(box_id_base)
 
