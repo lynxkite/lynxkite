@@ -620,9 +620,7 @@ class LynxKite:
             _normalize_path(ws_root + '/' + main_name))
 
   def recursively_collect_customboxes(
-          self, ws: 'Workspace', path=None) -> Set[Tuple[str, 'CustomBox']]:
-    if path is None:
-      path = ws.safename()
+          self, ws: 'Workspace', path) -> Set[Tuple[str, 'CustomBox']]:
     collected: Set[Tuple[str, CustomBox]] = set()
     for box in ws.custom_boxes():
       if box.workspace.name:
@@ -1570,7 +1568,9 @@ class BoxPath:
     return BoxPath(new_base, self.stack + [self.base])
 
   def snatch(self) -> Box:
-    """Returns a box that is equivalent to self.base and is accessible from outside."""
+    """Returns a box that is accessible from outside and whose output is the same as the that of the
+    box referred by this BoxPath.
+    """
     last_box = self.base
     for box in reversed(self.stack):
       last_box = box.snatch(last_box)
@@ -1776,7 +1776,7 @@ class Workspace:
         if isinstance(box, CustomBox)]
 
   def find(self, box_id_base: str) -> BoxPath:
-    """Returns a BoxPath for a box nested in the workspace whose box_id_base
+    """Returns the BoxPath for the first box nested in the workspace whose box_id_base
     is the given string.
     """
     found = self.find_all(box_id_base)
