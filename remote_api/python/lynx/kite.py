@@ -1427,8 +1427,8 @@ class CustomBox(Box):
         self.inputs)
 
   def snatch(self, box: Box) -> Box:
-    """Takes a box that is inside the custom box and returns an equivalent box that is
-    accessible from outside.
+    """Takes a box that is inside the workspace referred to by this custom box and
+    returns an equivalent box that is accessible from outside.
     """
     new_terminal_boxes = [box[o].output(name=o) for o in box.outputs]
     new_ws = Workspace(
