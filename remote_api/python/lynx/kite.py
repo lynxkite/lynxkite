@@ -1277,11 +1277,9 @@ class Box:
     '''Used for triggering this box anywhere in a saved workspace.'''
     self.lk.trigger_box(ws, box, stack)
 
-  def is_input(self):
-    return isinstance(self, AtomicBox) and self.operation == 'input'
-
-  def is_output(self):
-    return isinstance(self, AtomicBox) and self.operation == 'output'
+  def is_box(self, operation: str) -> bool:
+    '''Checks if the box is the `operation` box.'''
+    return isinstance(self, AtomicBox) and self.operation == operation
 
 
 class AtomicBox(Box):
@@ -1428,11 +1426,11 @@ class CustomBox(Box):
         self.parameters,
         self.inputs)
 
-  def snatch(self, box):
-    """Takes a box in the custom box and returns the part of the custom box
-    till that box.
+  def snatch(self, box: Box) -> Box:
+    """Takes a box that is inside the custom box and returns an equivalent box that is
+    accessible from outside.
     """
-    new_terminal_boxes = [box.output(name=o) for o in box.outputs]
+    new_terminal_boxes = [box[o].output(name=o) for o in box.outputs]
     new_ws = Workspace(
         terminal_boxes=new_terminal_boxes,
         name=self.workspace.name,
@@ -1563,13 +1561,16 @@ class BoxPath:
   def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
     return BoxPath(self.base, [box] + self.stack)
 
-  def add_box_as_base(self, new_base):
+  def add_box_as_base(self, new_base: Box) -> 'BoxPath':
+    """Takes a box inside the current base as the new base and puts the current base
+    on the top of the stack.
+    """
     assert isinstance(self.base, CustomBox), 'Can only dive into a custom box.'
     assert new_base in self.base.workspace.all_boxes, f'{new_base} is not a box in {self.base}.'
     return BoxPath(new_base, self.stack + [self.base])
 
-  def snatch(self):
-    """Returns a box that encapsulates calculations represented by the BoxPath."""
+  def snatch(self) -> Box:
+    """Returns a box that is equivalent to self.base and is accessible from outside."""
     last_box = self.base
     for box in reversed(self.stack):
       last_box = box.snatch(last_box)
@@ -1583,7 +1584,7 @@ class BoxPath:
     box = self.base
     if box.inputs:  # normal box with inputs
       return [self.parent(inp) for inp in box.inputs.keys()]
-    elif box.is_input() and self.stack:  # input box
+    elif box.is_box('input') and self.stack:  # input box
       containing_custom_box = self.stack[-1]
       input_name = box.parameters['name']
       source_state = containing_custom_box.inputs[input_name]
@@ -1609,10 +1610,10 @@ class BoxPath:
     first. So we use their inputs as their representatives in the dependency calculation.
     '''
     box = self.base
-    if any([box.is_output(),
-            box.is_input() and self.stack,
-            isinstance(box, AtomicBox) and box.operation == 'computeInputs',
-            isinstance(box, AtomicBox) and box.operation == 'saveToSnapshot',
+    if any([box.is_box('output'),
+            box.is_box('input') and self.stack,
+            box.is_box('computeInputs'),
+            box.is_box('saveToSnapshot'),
             isinstance(box, AtomicBox) and box.operation in box.lk._export_box_names]):
       parents = self.parents()
       assert len(parents) == 1, f'Cannot follow parent chain for {box}'
@@ -1713,10 +1714,9 @@ class Workspace:
     self.input_boxes = input_boxes
     self._box_ids: Dict[Box, str] = dict()
     self._next_ids: Dict[str, int] = defaultdict(int)  # Zero, by default.
-    assert all(b.is_input() for b in input_boxes), 'Non-input box in input_boxes'
+    assert all(b.is_box('input') for b in input_boxes), 'Non-input box in input_boxes'
     self.inputs = [inp.parameters['name'] for inp in input_boxes]
-    self.output_boxes = [box for box in terminal_boxes
-                         if isinstance(box, AtomicBox) and box.is_output()]
+    self.output_boxes = [box for box in terminal_boxes if box.is_box('output')]
     self.outputs = [outp.parameters['name'] for outp in self.output_boxes]
     self._ws_parameters = ws_parameters
     self._side_effect_paths = side_effect_paths
@@ -1775,13 +1775,19 @@ class Workspace:
         box for box in self.all_boxes
         if isinstance(box, CustomBox)]
 
-  def find(self, box_id_base):
+  def find(self, box_id_base: str) -> BoxPath:
+    """Returns a BoxPath for a box nested in the workspace whose box_id_base
+    is the given string.
+    """
     found = self.find_all(box_id_base)
     assert len(found) > 0, f'Found no box with box_id_base: {box_id_base}.'
     return found[0]
 
-  def find_all(self, box_id_base):
-    found = []
+  def find_all(self, box_id_base: str) -> List[BoxPath]:
+    """Returns the BoxPaths for all boxes nested in the workspace whose
+    box_id_base is the given string.
+    """
+    found: List[BoxPath] = []
     for box in self.all_boxes:
       found.extend(self._find_all(box_id_base, BoxPath(box)))
     return found
