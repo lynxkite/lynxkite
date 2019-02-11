@@ -140,7 +140,7 @@ class DataManager(
   }
 
   // Asserts that this thread is not in the process of executing an operation.
-  private def assertNotInOperation(msg: String): Unit = {
+  private def assertNotInOperation(msg: => String): Unit = {
     for (op <- executingOperation.get) {
       throw new AssertionError(s"$op $msg")
     }
