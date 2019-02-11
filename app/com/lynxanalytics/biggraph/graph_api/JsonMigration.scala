@@ -50,6 +50,7 @@ object JsonMigration {
       className(graph_operations.DoubleEQ) -> 1,
       className(graph_operations.DoubleGE) -> 1,
       className(graph_operations.DoubleGT) -> 1,
+      className(graph_operations.ExecuteSQL) -> 1,
       className(graph_operations.EnhancedExampleGraph) -> 1)
       .withDefaultValue(0),
     Map(
@@ -59,6 +60,7 @@ object JsonMigration {
       (className(graph_operations.DoubleEQ), 0) -> identity,
       (className(graph_operations.DoubleGE), 0) -> identity,
       (className(graph_operations.DoubleGT), 0) -> identity,
+      (className(graph_operations.ExecuteSQL), 0) -> identity,
       (className(graph_operations.EnhancedExampleGraph), 0) -> identity))
 }
 import JsonMigration._
