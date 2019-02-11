@@ -102,7 +102,7 @@ case class ExecuteSQL(
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(outputSchema)(instance)
   override def toJson = Json.obj(
     "sqlQuery" -> sqlQuery,
-    "inputTables" -> inputTables,
+    "inputTables" -> inputTables.toList.sorted,
     "outputSchema" -> outputSchema.prettyJson)
 
   def execute(
