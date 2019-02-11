@@ -60,7 +60,7 @@ object ExecuteSQL extends OpFromJson {
   def fromJson(j: JsValue) = {
     new ExecuteSQL(
       (j \ "sqlQuery").as[String],
-      (j \ "inputTables").as[Set[String]],
+      (j \ "inputTables").as[scala.collection.immutable.HashSet[String]],
       types.DataType.fromJson((j \ "outputSchema").as[String])
         .asInstanceOf[types.StructType])
   }
@@ -68,7 +68,8 @@ object ExecuteSQL extends OpFromJson {
   private def run(sqlQuery: String, outputSchema: StructType,
     tables: Map[String, Table])(implicit m: MetaGraphManager): Table = {
     import Scripting._
-    val op = ExecuteSQL(sqlQuery, tables.keySet, outputSchema)
+    val tablesSet = scala.collection.immutable.HashSet() ++ tables.keySet.toList
+    val op = ExecuteSQL(sqlQuery, tablesSet, outputSchema)
     op.tables.foldLeft(InstanceBuilder(op)) {
       case (builder, template) => builder(template, tables(template.name.name))
     }.result.t
@@ -94,7 +95,7 @@ object ExecuteSQL extends OpFromJson {
 import ExecuteSQL._
 case class ExecuteSQL(
     sqlQuery: String,
-    inputTables: Set[String],
+    inputTables: scala.collection.immutable.HashSet[String],
     outputSchema: types.StructType) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = false
   @transient override lazy val inputs = new Input(inputTables)
