@@ -8,6 +8,8 @@ import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import org.neo4j.spark._
 
 class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   implicit lazy val manager = env.metaGraphManager
@@ -133,6 +135,35 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             s"Invalid connection property definition: ${params("connection_properties")}")
           e.take(eq) -> e.drop(eq + 1)
         }.toMap)
+    }
+  })
+
+  register("Import Neo4j")(new ImportOperation(_) {
+    params ++= List(
+      new DummyParam("last_settings", areSettingsStaleReplyMessage()),
+      Param("url", "Neo4j URL"),
+      Param("imported_columns", "Columns to import"),
+      Param("limit", "Limit"),
+      Code("sql", "SQL", language = "sql"),
+      NonNegInt("num_partitions", "Number of partitions", default = 0),
+      Param("partition_predicates", "Partition predicates"),
+      Param("connection_properties", "Connection properties"),
+      Param("cypher", "CYPHER"),
+      ImportedTableParam("imported_table", "Table GUID"))
+
+    def getRawDataFrame(context: spark.sql.SQLContext) = {
+      val url = params("url")
+      val user = params("user")
+      val password = params("password")
+      val neo4jconf: Neo4jConfig = new Neo4jConfig(
+        uri=new URI(uri),
+        user="neo4j",
+        password=Some(password),
+        encrypted = true
+      )
+
+      val neo = Neo4j(context.sparkContext, neo4jconf)
+      neo.cypher(params("cypher")).loadDataFrame
     }
   })
 

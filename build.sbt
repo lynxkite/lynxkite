@@ -61,6 +61,8 @@ libraryDependencies ++= Seq(
   "mysql" % "mysql-connector-java" % "5.1.34",
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
   "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
+  // Neo4j driver.
+  "neo4j-contrib" % "neo4j-spark-connector" % "2.1.0-M4",
   // Groovy is used for workflows and the batch API.
   "org.kohsuke" % "groovy-sandbox" % "1.10",
   "com.lihaoyi" % "ammonite-sshd" % "1.0.3" cross CrossVersion.full excludeAll(
