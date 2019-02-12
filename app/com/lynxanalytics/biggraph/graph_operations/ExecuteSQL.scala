@@ -48,7 +48,7 @@ object ExecuteSQL extends OpFromJson {
     analyzer.execute(parsedPlan)
   }
 
-  class Input(inputTables: Set[String]) extends MagicInputSignature {
+  class Input(inputTables: List[String]) extends MagicInputSignature {
     val tables = inputTables.map(name => table(Symbol(name)))
   }
   class Output(schema: types.StructType)(
@@ -60,7 +60,7 @@ object ExecuteSQL extends OpFromJson {
   def fromJson(j: JsValue) = {
     new ExecuteSQL(
       (j \ "sqlQuery").as[String],
-      (j \ "inputTables").as[scala.collection.immutable.HashSet[String]],
+      (j \ "inputTables").as[List[String]],
       types.DataType.fromJson((j \ "outputSchema").as[String])
         .asInstanceOf[types.StructType])
   }
@@ -68,8 +68,7 @@ object ExecuteSQL extends OpFromJson {
   private def run(sqlQuery: String, outputSchema: StructType,
     tables: Map[String, Table])(implicit m: MetaGraphManager): Table = {
     import Scripting._
-    val tablesSet = scala.collection.immutable.HashSet() ++ tables.keySet.toList
-    val op = ExecuteSQL(sqlQuery, tablesSet, outputSchema)
+    val op = ExecuteSQL(sqlQuery, tables.keySet.toList, outputSchema)
     op.tables.foldLeft(InstanceBuilder(op)) {
       case (builder, template) => builder(template, tables(template.name.name))
     }.result.t
@@ -95,14 +94,14 @@ object ExecuteSQL extends OpFromJson {
 import ExecuteSQL._
 case class ExecuteSQL(
     sqlQuery: String,
-    inputTables: scala.collection.immutable.HashSet[String],
+    inputTables: List[String],
     outputSchema: types.StructType) extends TypedMetaGraphOp[Input, Output] {
   override val isHeavy = false
   @transient override lazy val inputs = new Input(inputTables)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(outputSchema)(instance)
   override def toJson = Json.obj(
     "sqlQuery" -> sqlQuery,
-    "inputTables" -> inputTables.toList.sorted,
+    "inputTables" -> inputTables,
     "outputSchema" -> outputSchema.prettyJson)
 
   def execute(
@@ -113,7 +112,7 @@ case class ExecuteSQL(
     implicit val id = inputDatas
     val sqlContext = rc.dataManager.masterSQLContext // TODO: Use a newSQLContext() instead.
     val dfs = inputs.tables.map { t => t.name.name -> t.df }
-    val df = DataManager.sql(sqlContext, sqlQuery, dfs.toList)
+    val df = DataManager.sql(sqlContext, sqlQuery, dfs)
     output(o.t, df)
   }
 }
