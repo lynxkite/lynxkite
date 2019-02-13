@@ -664,7 +664,6 @@ class WorkspaceSequenceInstance:
     self._wss = wss
     self._lk = self._wss.lk
     self._date = date
-    self.local_tz = wss.local_tz
 
   def base_folder_name(self):
     return _normalize_path(f'{self._wss.lk_root}/workspaces/{_aware_to_iso_str(self._date)}')
@@ -703,7 +702,7 @@ class WorkspaceSequenceInstance:
         # The date parameter will be passed as an ISO-standard UTC string.
         ws_date_params['date'] = _aware_to_iso_str(self._date)
       if ws.has_local_date_parameter():
-        local_date = self.local_tz.convert(self._date)
+        local_date = self._wss.local_tz.convert(self._date)
         ws_date_params['local_date'] = _aware_to_iso_str(local_date)
       ws_as_box = ws(*inputs, **params, **ws_date_params)
       ws_as_box.register(se_collector)
