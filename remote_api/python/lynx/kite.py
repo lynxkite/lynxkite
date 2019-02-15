@@ -1673,6 +1673,9 @@ class Workspace:
   def has_date_parameter(self) -> bool:
     return 'date' in [p.name for p in self._ws_parameters]
 
+  def has_local_date_parameter(self) -> bool:
+    return 'local_date' in [p.name for p in self._ws_parameters]
+
   def terminal_box_ids(self) -> List[str]:
     return [self.id_of(box) for box in self._terminal_boxes]
 
