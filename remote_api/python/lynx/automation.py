@@ -506,6 +506,7 @@ class WorkspaceSequence:
     self.ws = ws
     self.lk = self.ws.lk
     self._schedule = schedule
+    self.local_tz = schedule.start_date.tz
     self.params = params
     self.lk_root = lk_root
     self.input_names = self.ws.inputs  # For the order of the inputs
@@ -696,11 +697,14 @@ class WorkspaceSequenceInstance:
                 for input_name in self._wss.input_names]
       ws = self._wss.ws
       params = self._wss.params
+      ws_date_params = {}
       if ws.has_date_parameter():
         # The date parameter will be passed as an ISO-standard UTC string.
-        ws_as_box = ws(*inputs, **params, date=_aware_to_iso_str(self._date))
-      else:
-        ws_as_box = ws(*inputs, **params)
+        ws_date_params['date'] = _aware_to_iso_str(self._date)
+      if ws.has_local_date_parameter():
+        local_date = self._wss.local_tz.convert(self._date)
+        ws_date_params['local_date'] = _aware_to_iso_str(local_date)
+      ws_as_box = ws(*inputs, **params, **ws_date_params)
       ws_as_box.register(se_collector)
       for output in ws.outputs:
         out_path = self.snapshot_path_for_output(output)
