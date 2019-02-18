@@ -528,13 +528,20 @@ class WorkspaceSequence:
           retention=retention_deltas.get(output, self.default_retention))
 
   def wssi_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
-    '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
-    ``date`` parameter of this method as a value to pass to the workspace. '''
+    '''Returns the WorkspaceSequenceInstance for the given date.
+
+    The WorkspaceSequenceInstance is used to save and run the Workspace with its inputs
+    for the given date.'''
     _assert_is_utc(date)
     self._schedule.assert_utc_dt_is_valid(date)
     return WorkspaceSequenceInstance(self, date)
 
   def ws_for_date(self, date: datetime.datetime) -> 'Workspace':
+    '''Returns the wrapper Workspace of the WorkspaceSequenceInstance for the given date.
+
+    If the wrapped ws has a ``date`` workspace parameter, then we will use the
+    ``date`` parameter of this method as a value to pass to the workspace.
+    '''
     _assert_is_aware(date)
     date = UTC.convert(date)
     wssi = self.wssi_for_date(date)
