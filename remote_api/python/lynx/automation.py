@@ -736,13 +736,16 @@ class WorkspaceSequenceInstance:
 
     Raises an error if there is not exactly one such a box.
     """
-    return self.wrapper_ws().find(box_id_base)
+    self_as_box = self.wrapper_ws()()
+    return self.wrapper_ws().find(box_id_base).add_box_as_prefix(self_as_box)
 
   def find_all(self, box_id_base: str) -> List[BoxPath]:
     """Returns the BoxPaths for all boxes nested in the wrapper workspace whose
     box_id_base is the given string.
     """
-    return self.wrapper_ws().find_all(box_id_base)
+    self_as_box = self.wrapper_ws()()
+    box_paths = self.wrapper_ws().find_all(box_id_base)
+    return [bp.add_box_as_prefix(self_as_box) for bp in box_paths]
 
   def run_input(self, input_name: str) -> None:
     lk = self._lk
