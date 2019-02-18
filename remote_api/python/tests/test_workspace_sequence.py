@@ -31,7 +31,7 @@ class TestWorkspaceSequence(unittest.TestCase):
         # Test if trailing slash is duplicated or not.
         lk_root='ws_test_seq/',
         input_recipes=[input_recipe])
-    wss_instance = wss.ws_for_date(test_date)
+    wss_instance = wss.wssi_for_date(test_date)
     wss_instance.run()
     for output_sequence in wss.output_sequences.values():
       self.assertTrue(lynx.automation.TableSnapshotRecipe(output_sequence).is_ready(test_date))
@@ -43,7 +43,7 @@ class TestWorkspaceSequence(unittest.TestCase):
     self.assertEqual(table_raw.data[0][0].string, '2018-01-02T00:00:00+00:00')
     early_date = utc_dt(2017, 12, 31)
     with self.assertRaises(Exception) as context:
-      early_instance = wss.ws_for_date(early_date)
+      early_instance = wss.wssi_for_date(early_date)
     self.assertTrue('preceeds start date' in str(context.exception))
 
   def test_multiple_save(self):
@@ -66,7 +66,7 @@ class TestWorkspaceSequence(unittest.TestCase):
         schedule=schedule,
         lk_root='eg_cnt',
         input_recipes=[input_recipe])
-    wss_instance = wss.ws_for_date(test_date)
+    wss_instance = wss.wssi_for_date(test_date)
     wss_instance.save()
     with self.assertRaises(Exception) as context:
       wss_instance.save()
@@ -95,7 +95,7 @@ class TestWorkspaceSequence(unittest.TestCase):
     summa_as_input.set_tss(wss.output_sequences['summa'])
 
     def run_ws(test_date, summa):
-      wss_instance = wss.ws_for_date(test_date)
+      wss_instance = wss.wssi_for_date(test_date)
       wss_instance.run()
       for output_sequence in wss.output_sequences.values():
         self.assertTrue(lynx.automation.TableSnapshotRecipe(
@@ -131,7 +131,7 @@ class TestWorkspaceSequence(unittest.TestCase):
         input_recipes=[])
 
     def run_ws(test_date):
-      wss_instance = wss.ws_for_date(test_date)
+      wss_instance = wss.wssi_for_date(test_date)
       wss_instance.run()
       for output_sequence in wss.output_sequences.values():
         self.assertTrue(lynx.automation.TableSnapshotRecipe(
