@@ -379,9 +379,9 @@ class Task:
     self._wss = wss
     self._lk = wss.lk
 
-  def _ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
+  def _wssi_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     _assert_is_utc(date)
-    return self._wss.ws_for_date(date)
+    return self._wss.wssi_for_date(date)
 
   def run(self, date: datetime.datetime) -> None:
     '''
@@ -410,7 +410,7 @@ class BoxTask(Task):
 
   def run(self, date: datetime.datetime) -> None:
     _assert_is_utc(date)
-    self._run_on_instance(self._ws_for_date(date))
+    self._run_on_instance(self._wssi_for_date(date))
 
 
 class Input(BoxTask):
@@ -469,10 +469,10 @@ class SaveWorkspace(Task):
 
   def run(self, date: datetime.datetime) -> None:
     _assert_is_utc(date)
-    ws_for_date = self._ws_for_date(date)
-    name = ws_for_date.full_name()
+    wssi_for_date = self._wssi_for_date(date)
+    name = wssi_for_date.full_name()
     self._wss.lk.remove_name(name, force=True)
-    ws_for_date.save()
+    wssi_for_date.save()
 
   def id(self) -> str:
     return 'save_workspace'
@@ -527,12 +527,18 @@ class WorkspaceSequence:
           self._schedule,
           retention=retention_deltas.get(output, self.default_retention))
 
-  def ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
+  def wssi_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
     ``date`` parameter of this method as a value to pass to the workspace. '''
     _assert_is_utc(date)
     self._schedule.assert_utc_dt_is_valid(date)
     return WorkspaceSequenceInstance(self, date)
+
+  def ws_for_date(self, date: datetime.datetime) -> 'Workspace':
+    _assert_is_aware(date)
+    date = UTC.convert(date)
+    wssi = self.wssi_for_date(date)
+    return wssi.wrapper_ws()
 
   def _automation_tasks(self) -> List[Task]:
     inputs: List[Task] = [Input(self, BoxPath(inp)) for inp in self.ws.input_boxes]
