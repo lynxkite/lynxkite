@@ -129,7 +129,6 @@ object Neo4jUtil {
 
   /**
    * Construct a DataFrame representing the Neo4j entity specified by `node` or `relationship`
-   *  TODO: Document special properties (ID)
    *
    * @param context        SQLcontext
    * @param node           Node label corresponding to an existing label in Neo4j database
@@ -149,7 +148,8 @@ object Neo4jUtil {
     limit: String,
     numPartitions: Int): DataFrame = {
 
-    assert(node != "" || relationship != "")
+    assert(node != "" || relationship != "", "Must specify node Label or relationship type")
+    assert(node == "" || relationship == "", "Cannot define both relationship type and node label")
 
     val neo = Neo4j(context.sparkContext)
 
