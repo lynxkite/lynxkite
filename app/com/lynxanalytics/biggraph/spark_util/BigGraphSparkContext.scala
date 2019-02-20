@@ -433,7 +433,7 @@ object BigGraphSparkContext {
       // Neo4j
       .set(
         "spark.neo4j.bolt.url",
-        LoggedEnvironment.envOrElse("NEO4J_URL", "bolt://localhost:7687"))
+        LoggedEnvironment.envOrElse("NEO4J_URI", "bolt://localhost:7687"))
       .set(
         "spark.neo4j.bolt.password",
         LoggedEnvironment.envOrElse("NEO4J_PASSWORD", "", true))
