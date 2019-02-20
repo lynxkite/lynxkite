@@ -5,7 +5,7 @@ import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
-import com.lynxanalytics.biggraph.graph_util.JDBCUtil
+import com.lynxanalytics.biggraph.graph_util.{ JDBCUtil, Neo4jUtil }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
@@ -141,29 +141,24 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   register("Import Neo4j")(new ImportOperation(_) {
     params ++= List(
       new DummyParam("last_settings", areSettingsStaleReplyMessage()),
-      Param("url", "Neo4j URL"),
+      Param("node_label", "Node Label"),
+      Param("relationship_type", "Relationship type"),
+      NonNegInt("num_partitions", "Number of partitions", default = 0),
+      Choice("infer", "Infer types", options = FEOption.noyes),
+      Code("sql", "SQL", language = "sql"),
       Param("imported_columns", "Columns to import"),
       Param("limit", "Limit"),
-      Code("sql", "SQL", language = "sql"),
-      NonNegInt("num_partitions", "Number of partitions", default = 0),
-      Param("partition_predicates", "Partition predicates"),
-      Param("connection_properties", "Connection properties"),
-      Param("cypher", "CYPHER"),
       ImportedTableParam("imported_table", "Table GUID"))
 
     def getRawDataFrame(context: spark.sql.SQLContext) = {
-      val url = params("url")
-      val user = params("user")
-      val password = params("password")
-      val neo4jconf: Neo4jConfig = new Neo4jConfig(
-        uri=new URI(uri),
-        user="neo4j",
-        password=Some(password),
-        encrypted = true
-      )
-
-      val neo = Neo4j(context.sparkContext, neo4jconf)
-      neo.cypher(params("cypher")).loadDataFrame
+      Neo4jUtil.read(
+        context,
+        params("node_label"),
+        params("relationship_type"),
+        splitParam("imported_columns").toSet,
+        params("infer") == "yes",
+        params("limit"),
+        params("num_partitions").toInt)
     }
   })
 
