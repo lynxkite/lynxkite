@@ -117,6 +117,17 @@ object SQLHelper {
     dataFrame.rdd.map(processDataFrameRow(tupleColumnIdList))
   }
 
+  // Set containsNull to true for array element types.
+  // This property is not stored in Parquet.
+  def setContainsNull(elementType: types.DataType): types.DataType = {
+    elementType match {
+      case t: types.ArrayType => t.copy(
+        elementType = setContainsNull(t.elementType),
+        containsNull = true)
+      case _ => elementType
+    }
+  }
+
   // Make every column nullable. Nullability is not stored in Parquet.
   def makeNullable(schema: types.StructType): types.StructType =
     types.StructType(schema.map(f => f.dataType match {
@@ -125,7 +136,7 @@ object SQLHelper {
         dataType = makeNullable(s))
       case s: types.ArrayType => f.copy(
         nullable = true,
-        dataType = types.ArrayType(s.elementType, containsNull = true))
+        dataType = setContainsNull(s))
       case _ => f.copy(nullable = true)
     }))
 

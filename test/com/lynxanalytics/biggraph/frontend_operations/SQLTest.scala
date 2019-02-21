@@ -419,6 +419,19 @@ class SQLTest extends OperationsTestBase {
         Seq(Seq(50.3, 2.0))))
   }
 
+  test("nested array columns can be persisted") {
+    val t = box("Create example graph")
+      .box("Compute degree", Map())
+      .box("Merge vertices by attribute", Map("key" -> "degree", "aggregate_age" -> "vector"))
+      .box("Add constant vertex attribute", Map("name" -> "c"))
+      .box("Merge vertices by attribute", Map("key" -> "c", "aggregate_age_vector" -> "vector"))
+      .box("SQL1", Map("sql" -> "select * from vertices", "persist" -> "yes"))
+      .box("SQL1", Map("sql" -> "select age_vector_vector, c from input"))
+      .table
+    assert(t.df.collect.toSeq.map(
+      row => toSeq(row)) == Seq(Seq(Seq(Seq(20.3, 18.2), Seq(50.3, 2.0)), 1)))
+  }
+
   test("inputs can be given custom names") {
     val eg = box("Create example graph")
     val t = box("SQL2", Map(
