@@ -64,7 +64,7 @@ libraryDependencies ++= Seq(
   // Neo4j driver & testing
   "neo4j-contrib" % "neo4j-spark-connector" % "2.1.0-M4",
   "org.neo4j.test" % "neo4j-harness" % "3.5.1" % "test",
-  "com.sun.jersey" % "jersey-core" % "1.19.4", // Required to create Neo4j test server
+  "com.sun.jersey" % "jersey-core" % "1.19.4" % "test", // Required to create Neo4j test server
   // Groovy is used for workflows and the batch API.
   "org.kohsuke" % "groovy-sandbox" % "1.10",
   "com.lihaoyi" % "ammonite-sshd" % "1.0.3" cross CrossVersion.full excludeAll(
@@ -104,7 +104,8 @@ dependencyClasspath in Test ++= sparkJars(sparkVersion.value)
 
 resolvers ++= Seq(
   "Twitter Repository" at "https://maven.twttr.com",
-  "Geospatial Foundation Repository" at "https://download.osgeo.org/webdav/geotools/")
+  "Geospatial Foundation Repository" at "https://download.osgeo.org/webdav/geotools/",
+  "Spark Packages Repo" at "http://dl.bintray.com/spark-packages/maven")
 
 // Runs "stage", then creates the "stage/version" file.
 def myStage = Command.command("stage") { state =>
