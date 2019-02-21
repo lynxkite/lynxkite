@@ -123,6 +123,9 @@ object SQLHelper {
       case s: types.StructType => f.copy(
         nullable = true,
         dataType = makeNullable(s))
+      case s: types.ArrayType => f.copy(
+        nullable = true,
+        dataType = types.ArrayType(s.elementType, containsNull = true))
       case _ => f.copy(nullable = true)
     }))
 
