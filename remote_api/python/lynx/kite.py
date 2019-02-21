@@ -582,20 +582,9 @@ class LynxKite:
     else:
       ws_root = save_under_root
     main_name = ws.safename()
-    needed_ws: Set[Tuple[str, Workspace]] = set()
+    needed_custom_boxes = self.recursively_collect_customboxes(ws, main_name)
+    needed_ws = {(path, box.workspace) for path, box in needed_custom_boxes}
 
-    def collect_subworkspaces(ws: Workspace, path: str = main_name):
-      for box in ws.custom_boxes():
-        if box.workspace.name:
-          box_path = box.workspace.name
-        else:
-          box_path = f'{path}_subs/{ws.id_of(box)}'
-        if (box_path, box.workspace) in needed_ws:
-          continue
-        needed_ws.add((box_path, box.workspace))
-        collect_subworkspaces(box.workspace, box_path)
-
-    collect_subworkspaces(ws)
     # Check name duplication in required workspaces
     names = [name for (name, rws) in needed_ws]
     if len(names) != len(set(names)):
@@ -614,6 +603,20 @@ class LynxKite:
     # We return the root directory and full name of the saved main workspace
     return (ws_root,
             _normalize_path(ws_root + '/' + main_name))
+
+  def recursively_collect_customboxes(
+          self, ws: 'Workspace', path) -> Set[Tuple[str, 'CustomBox']]:
+    collected: Set[Tuple[str, CustomBox]] = set()
+    for box in ws.custom_boxes():
+      if box.workspace.name:
+        box_path = box.workspace.name
+      else:
+        box_path = f'{path}_subs/{ws.id_of(box)}'
+      if (box_path, box.workspace) in collected:
+        continue
+      collected.add((box_path, box))
+      collected.update(self.recursively_collect_customboxes(box.workspace, box_path))
+    return collected
 
   def fetch_workspace_output_states(self, ws: 'Workspace',
                                     save_under_root: str = None,
@@ -1053,6 +1056,7 @@ class Box:
     self.bc = box_catalog
     self.lk = lk
     self.inputs = inputs
+    self.all_parameters = parameters
     self.parameters: Dict[str, str] = {}
     self.parametric_parameters: Dict[str, str] = {}
     self.outputs: Set[str] = set()
@@ -1124,6 +1128,10 @@ class Box:
   def _trigger_in_ws(self, ws: str, box: str, stack: List[str]) -> None:
     '''Used for triggering this box anywhere in a saved workspace.'''
     self.lk.trigger_box(ws, box, stack)
+
+  def is_box(self, operation: str) -> bool:
+    '''Checks if the box is the `operation` box.'''
+    return isinstance(self, AtomicBox) and self.operation == operation
 
 
 class AtomicBox(Box):
@@ -1270,6 +1278,21 @@ class CustomBox(Box):
         self.parameters,
         self.inputs)
 
+  def snatch(self, box: Box) -> Box:
+    """Takes a box that is inside the workspace referred to by this custom box and
+    returns an equivalent box that is accessible from outside.
+    """
+    new_terminal_boxes = [box[o].output(name=o) for o in box.outputs]
+    new_ws = Workspace(
+        terminal_boxes=new_terminal_boxes,
+        name=self.workspace.name,
+        custom_box_id_base=self.workspace.custom_box_id_base,
+        side_effect_paths=self.workspace._side_effect_paths,
+        input_boxes=self.workspace.input_boxes,
+        ws_parameters=self.workspace._ws_parameters)
+    input_list = [self.inputs[i] for i in self.workspace.inputs]
+    return new_ws(*input_list, **self.all_parameters)
+
 
 class SingleOutputCustomBox(CustomBox, State):
   '''
@@ -1361,7 +1384,7 @@ class BoxPath:
   custom box ``stack[i]`` and  ``base`` is a box contained by ``stack[-1]``.
   '''
 
-  def __init__(self, base: AtomicBox, stack: List[CustomBox] = []) -> None:
+  def __init__(self, base: Box, stack: List[CustomBox] = []) -> None:
     self.base = base
     self.stack = stack
 
@@ -1390,6 +1413,23 @@ class BoxPath:
   def add_box_as_prefix(self, box: CustomBox) -> 'BoxPath':
     return BoxPath(self.base, [box] + self.stack)
 
+  def add_box_as_base(self, new_base: Box) -> 'BoxPath':
+    """Takes a box inside the current base as the new base and puts the current base
+    on the top of the stack.
+    """
+    assert isinstance(self.base, CustomBox), 'Can only dive into a custom box.'
+    assert new_base in self.base.workspace.all_boxes, f'{new_base} is not a box in {self.base}.'
+    return BoxPath(new_base, self.stack + [self.base])
+
+  def snatch(self) -> Box:
+    """Returns a box that is accessible from outside and whose output is the same as the that of the
+    box referred by this BoxPath.
+    """
+    last_box = self.base
+    for box in reversed(self.stack):
+      last_box = box.snatch(last_box)
+    return last_box
+
   def parent(self, input_name: str) -> 'BoxPath':
     parent_state = self.base.inputs[input_name]
     return _atomic_source_of_state(self.stack, parent_state)
@@ -1398,7 +1438,7 @@ class BoxPath:
     box = self.base
     if box.inputs:  # normal box with inputs
       return [self.parent(inp) for inp in box.inputs.keys()]
-    elif box.operation == 'input' and self.stack:  # input box
+    elif box.is_box('input') and self.stack:  # input box
       containing_custom_box = self.stack[-1]
       input_name = box.parameters['name']
       source_state = containing_custom_box.inputs[input_name]
@@ -1424,11 +1464,11 @@ class BoxPath:
     first. So we use their inputs as their representatives in the dependency calculation.
     '''
     box = self.base
-    if any([box.operation == 'output',
-            box.operation == 'input' and self.stack,
-            box.operation == 'computeInputs',
-            box.operation == 'saveToSnapshot',
-            box.operation in box.lk._export_box_names]):
+    if any([box.is_box('output'),
+            box.is_box('input') and self.stack,
+            box.is_box('computeInputs'),
+            box.is_box('saveToSnapshot'),
+            isinstance(box, AtomicBox) and box.operation in box.lk._export_box_names]):
       parents = self.parents()
       assert len(parents) == 1, f'Cannot follow parent chain for {box}'
       return parents[0].dependency_representative()
@@ -1438,7 +1478,8 @@ class BoxPath:
   def to_dict(self):
     '''Returns a (human readable) dict representation of this object.'''
     parent = None
-    op = self.base.operation
+    base = self.base
+    op = base.operation if isinstance(base, AtomicBox) else base.box_id_base()
     op_param = self.base.parameters
     if self.stack:
       parent = self.stack[-1].name()
@@ -1527,10 +1568,9 @@ class Workspace:
     self.input_boxes = input_boxes
     self._box_ids: Dict[Box, str] = dict()
     self._next_ids: Dict[str, int] = defaultdict(int)  # Zero, by default.
-    assert all(b.operation == 'input' for b in input_boxes), 'Non-input box in input_boxes'
+    assert all(b.is_box('input') for b in input_boxes), 'Non-input box in input_boxes'
     self.inputs = [inp.parameters['name'] for inp in input_boxes]
-    self.output_boxes = [box for box in terminal_boxes
-                         if isinstance(box, AtomicBox) and box.operation == 'output']
+    self.output_boxes = [box for box in terminal_boxes if box.is_box('output')]
     self.outputs = [outp.parameters['name'] for outp in self.output_boxes]
     self._ws_parameters = ws_parameters
     self._side_effect_paths = side_effect_paths
@@ -1589,11 +1629,52 @@ class Workspace:
         box for box in self.all_boxes
         if isinstance(box, CustomBox)]
 
+  def find(self, box_id_base: str) -> BoxPath:
+    """Returns the BoxPath for the box nested in the workspace whose box_id_base
+    is the given string.
+
+    Raises an error if there is not exactly one such a box.
+    """
+    found = self.find_all(box_id_base)
+    assert len(found) > 0, f'Found no box with box_id_base: {box_id_base}.'
+    assert len(found) < 2, f'Found more than one box with box_id_base: {box_id_base}.'
+    return found[0]
+
+  def find_all(self, box_id_base: str) -> List[BoxPath]:
+    """Returns the BoxPaths for all boxes nested in the workspace whose
+    box_id_base is the given string.
+    """
+    found: List[BoxPath] = []
+    for box in self.all_boxes:
+      found.extend(self._find_all(box_id_base, BoxPath(box)))
+    return found
+
+  def _find_all(self, box_id_base: str, current_boxpath: BoxPath) -> List[BoxPath]:
+
+    def good_box(box):
+      if box_id_base == 'sql':
+        return box.box_id_base() in [f'sql{i+1}' for i in range(10)]
+      else:
+        return box.box_id_base() == box_id_base
+
+    found = []
+    current_base = current_boxpath.base
+    if good_box(current_base):
+      found.append(current_boxpath)
+    if isinstance(current_base, CustomBox):
+      for box in current_base.workspace.all_boxes:
+        box_path = current_boxpath.add_box_as_base(box)
+        found.extend(self._find_all(box_id_base, box_path))
+    return found
+
   def side_effect_paths(self) -> List[BoxPath]:
     return self._side_effect_paths
 
   def has_date_parameter(self) -> bool:
     return 'date' in [p.name for p in self._ws_parameters]
+
+  def has_local_date_parameter(self) -> bool:
+    return 'local_date' in [p.name for p in self._ws_parameters]
 
   def terminal_box_ids(self) -> List[str]:
     return [self.id_of(box) for box in self._terminal_boxes]

@@ -323,7 +323,11 @@ class KiteMonitorThread(
     val mxbean = java.lang.management.ManagementFactory.getThreadMXBean
     val threadInfos = mxbean.getThreadInfo(mxbean.getAllThreadIds, /* max lines of stack trace per thread: */ 1000)
     threadInfos.flatMap { info =>
-      s"\n\n${info.getThreadName} (${info.getThreadState}):" +:
+      val lockInfo =
+        if (info.getThreadState() == Thread.State.BLOCKED)
+          s"waiting on lock held by ${info.getLockOwnerName}"
+        else ""
+      s"\n\n${info.getThreadName} ${lockInfo} (${info.getThreadState}):" +:
         info.getStackTrace.map(line => s"\n  at $line")
     }.mkString
   }

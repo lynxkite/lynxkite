@@ -379,9 +379,9 @@ class Task:
     self._wss = wss
     self._lk = wss.lk
 
-  def _ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
+  def _wssi_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
     _assert_is_utc(date)
-    return self._wss.ws_for_date(date)
+    return self._wss.wssi_for_date(date)
 
   def run(self, date: datetime.datetime) -> None:
     '''
@@ -410,7 +410,7 @@ class BoxTask(Task):
 
   def run(self, date: datetime.datetime) -> None:
     _assert_is_utc(date)
-    self._run_on_instance(self._ws_for_date(date))
+    self._run_on_instance(self._wssi_for_date(date))
 
 
 class Input(BoxTask):
@@ -469,10 +469,10 @@ class SaveWorkspace(Task):
 
   def run(self, date: datetime.datetime) -> None:
     _assert_is_utc(date)
-    ws_for_date = self._ws_for_date(date)
-    name = ws_for_date.full_name()
+    wssi_for_date = self._wssi_for_date(date)
+    name = wssi_for_date.full_name()
     self._wss.lk.remove_name(name, force=True)
-    ws_for_date.save()
+    wssi_for_date.save()
 
   def id(self) -> str:
     return 'save_workspace'
@@ -506,6 +506,7 @@ class WorkspaceSequence:
     self.ws = ws
     self.lk = self.ws.lk
     self._schedule = schedule
+    self.local_tz = schedule.start_date.tz
     self.params = params
     self.lk_root = lk_root
     self.input_names = self.ws.inputs  # For the order of the inputs
@@ -526,12 +527,25 @@ class WorkspaceSequence:
           self._schedule,
           retention=retention_deltas.get(output, self.default_retention))
 
-  def ws_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
-    '''If the wrapped ws has a ``date`` workspace parameter, then we will use the
-    ``date`` parameter of this method as a value to pass to the workspace. '''
+  def wssi_for_date(self, date: datetime.datetime) -> 'WorkspaceSequenceInstance':
+    '''Returns the WorkspaceSequenceInstance for the given date.
+
+    The WorkspaceSequenceInstance is used to save and run the Workspace with its inputs
+    for the given date.'''
     _assert_is_utc(date)
     self._schedule.assert_utc_dt_is_valid(date)
     return WorkspaceSequenceInstance(self, date)
+
+  def ws_for_date(self, date: datetime.datetime) -> 'Workspace':
+    '''Returns the wrapper Workspace of the WorkspaceSequenceInstance for the given date.
+
+    If the wrapped ws has a ``date`` workspace parameter, then we will use the
+    ``date`` parameter of this method as a value to pass to the workspace.
+    '''
+    _assert_is_aware(date)
+    date = UTC.convert(date)
+    wssi = self.wssi_for_date(date)
+    return wssi.wrapper_ws()
 
   def _automation_tasks(self) -> List[Task]:
     inputs: List[Task] = [Input(self, BoxPath(inp)) for inp in self.ws.input_boxes]
@@ -696,11 +710,14 @@ class WorkspaceSequenceInstance:
                 for input_name in self._wss.input_names]
       ws = self._wss.ws
       params = self._wss.params
+      ws_date_params = {}
       if ws.has_date_parameter():
         # The date parameter will be passed as an ISO-standard UTC string.
-        ws_as_box = ws(*inputs, **params, date=_aware_to_iso_str(self._date))
-      else:
-        ws_as_box = ws(*inputs, **params)
+        ws_date_params['date'] = _aware_to_iso_str(self._date)
+      if ws.has_local_date_parameter():
+        local_date = self._wss.local_tz.convert(self._date)
+        ws_date_params['local_date'] = _aware_to_iso_str(local_date)
+      ws_as_box = ws(*inputs, **params, **ws_date_params)
       ws_as_box.register(se_collector)
       for output in ws.outputs:
         out_path = self.snapshot_path_for_output(output)
@@ -712,6 +729,23 @@ class WorkspaceSequenceInstance:
     assert not self.is_saved(), 'WorkspaceSequenceInstance is already saved.'
     ws = self.wrapper_ws()
     self._lk.save_workspace_recursively(ws, self.wrapper_folder_name())
+
+  def find(self, box_id_base: str) -> BoxPath:
+    """Returns the BoxPath for the box nested in the wrapper workspace whose box_id_base
+    is the given string.
+
+    Raises an error if there is not exactly one such a box.
+    """
+    self_as_box = self.wrapper_ws()()
+    return self.wrapper_ws().find(box_id_base).add_box_as_prefix(self_as_box)
+
+  def find_all(self, box_id_base: str) -> List[BoxPath]:
+    """Returns the BoxPaths for all boxes nested in the wrapper workspace whose
+    box_id_base is the given string.
+    """
+    self_as_box = self.wrapper_ws()()
+    box_paths = self.wrapper_ws().find_all(box_id_base)
+    return [bp.add_box_as_prefix(self_as_box) for bp in box_paths]
 
   def run_input(self, input_name: str) -> None:
     lk = self._lk
