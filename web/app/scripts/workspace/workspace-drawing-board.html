@@ -208,7 +208,10 @@
           {{box.summary}}
         </text>
 
-        <foreignObject x="80" y="35" width="120" height="30" ng-if="box.comment" style="overflow: visible">
+        <foreignObject
+          x="80" y="35" width="400" height="1000"
+          ng-if="box.comment"
+          style = "pointer-events: none; opacity:0.95">
           <body xmlns="http://www.w3.org/1999/xhtml">
             <span class="workspace-comment" trusted-html="box.comment"></span>
           </body>
