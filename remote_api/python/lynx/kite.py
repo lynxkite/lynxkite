@@ -40,6 +40,7 @@ from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewT
                     TypeVar, Optional, Collection)
 import requests
 from tempfile import NamedTemporaryFile
+import textwrap
 
 
 if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 6):
@@ -58,6 +59,11 @@ def _normalize_path(path: str) -> str:
 def escape(s: str) -> str:
   '''Sanitizes a string for injecting into a generated SQL query.'''
   return s.replace('\\', '\\\\').replace('"', '\\"').replace("'", "\\'")
+
+
+def dedent(s: str) -> str:
+  '''Format sql queries to look nicer on the UI.'''
+  return textwrap.dedent(s.lstrip('\n'))
 
 
 class ParametricParameter:
@@ -388,7 +394,7 @@ class LynxKite:
     assert num_inputs < 11, 'SQL can have at most ten inputs.'
     box_name = 'sql{}'.format(num_inputs)
     inputs = _to_input_map(box_name, self.box_catalog().inputs(box_name), input_states)
-    kwargs['sql'] = sql
+    kwargs['sql'] = dedent(sql)
     # Use default names for unnamed inputs, custom names for the named ones.
     kwargs['input_names'] = ', '.join(self.box_catalog().inputs(box_name)[:len(args)] + input_names)
     return _new_box(self.box_catalog(), self, box_name, inputs=inputs, parameters=kwargs)
@@ -835,7 +841,7 @@ class State:
     return "Output {} of box {}".format(self.output_plug_name, self.box)
 
   def sql(self, sql: str, **kwargs) -> 'SingleOutputAtomicBox':
-    return self.sql1(sql=sql, **kwargs)
+    return self.sql1(sql=dedent(sql), **kwargs)
 
   def persist(self) -> 'SingleOutputAtomicBox':
     '''Same as ``x.sql('select * from input', persist='yes')``.'''
