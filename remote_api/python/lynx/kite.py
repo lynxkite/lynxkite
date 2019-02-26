@@ -56,14 +56,18 @@ def _normalize_path(path: str) -> str:
   return re.sub('/+', '/', path).strip('/')
 
 
-def escape(s: str) -> str:
+def escape(s: Union[str, 'ParametricParameter']) -> Union[str, 'ParametricParameter']:
   '''Sanitizes a string for injecting into a generated SQL query.'''
-  return s.replace('\\', '\\\\').replace('"', '\\"').replace("'", "\\'")
+  sql = str(s)
+  escaped = sql.replace('\\', '\\\\').replace('"', '\\"').replace("'", "\\'")
+  return ParametricParameter(escaped) if isinstance(s, ParametricParameter) else escaped
 
 
-def dedent(s: str) -> str:
+def dedent(s: Union[str, 'ParametricParameter']) -> Union[str, 'ParametricParameter']:
   '''Format sql queries to look nicer on the UI.'''
-  return textwrap.dedent(s.lstrip('\n'))
+  sql = str(s)
+  nicer_sql = textwrap.dedent(sql.lstrip('\n'))
+  return ParametricParameter(nicer_sql) if isinstance(s, ParametricParameter) else nicer_sql
 
 
 class ParametricParameter:
