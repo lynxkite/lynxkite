@@ -10,29 +10,32 @@ object Neo4jUtil {
   /**
    * Interface to a cypher query. Provides methods for easing the partitioning and the automatic
    * import of properties for unknown entities
-   *
-   * @param label Label to identify the Cypher entity (either a node label or a relationship type)
-   * @param properties Properties to import
-   * @param infer Whether to try to automatically infer data types. If false, all columns will be
-   *              imported as Strings. It is recommended to set this to false, as cypher types do
-   *              not integrate very well with Spark (Eg. Cypher datetimes not supported at all)
    */
-  abstract class CypherQuery(
-      neo: Neo4j,
-      val label: String,
-      properties: Set[String],
-      infer: Boolean) {
+  trait CypherQuery {
 
-    /** Build the cypher query to obtain the desired data from Neo4j */
-    def buildQuery(): String
+    /** Connector to the Neo4j database */
+    val neo: Neo4j
 
-    lazy val keys: Set[String] = if (properties.isEmpty) getKeys() else properties
+    /**
+     * Whether to try to automatically infer data types. If false, all columns will be
+     * imported as Strings. It is recommended to set this to false, as cypher types do
+     * not integrate very well with Spark (Eg. Cypher datetimes not supported at all)
+     */
+    val infer: Boolean
+
+    /** Properties to import */
+    val properties: Set[String]
 
     /**
      * Cypher query to automatically obtain all the properties to import. It should
      * return a comma separated list of property names
      */
     val keysQuery: String
+
+    /** Cypher query to count the existing number of entities (rows) of type `label` */
+    val countQuery: String
+
+    lazy val keys: Set[String] = if (properties.isEmpty) getKeys() else properties
 
     /** Executes `keysQuery`  and obtains the result */
     // TODO: Probably this would be faster/cleaner using the java driver directly
@@ -45,9 +48,6 @@ object Neo4jUtil {
       if (result.isNullAt(0)) Set.empty else result.getString(0).split(",").toSet
     }
 
-    /** Cypher query to count the existing number of entities (rows) of type `label` */
-    val countQuery: String
-
     /** Executes `countQuery`  and obtains the result*/
     // TODO: Probably this would be faster/cleaner using the java driver directly
     def count(): Int = neo
@@ -56,6 +56,9 @@ object Neo4jUtil {
       .first()
       .get(0)
       .asInstanceOf[scala.Long].toInt
+
+    /** Build the cypher query to obtain the desired data from Neo4j */
+    def buildQuery(): String
 
     /**
      * Transforms a query to support being loaded in batches, and so taking advantage of
@@ -74,22 +77,22 @@ object Neo4jUtil {
      * If `infer` is false adds a `toString` cast for each property before importing from Neo4j,
      * otherwise tries to import all the properties with their type from Neo4j.
      */
-    def strCast(property: String): String = if (!infer) s"toString($property)" else s"$property"
+    def maybeStrCast(property: String): String = if (!infer) s"toString($property)" else s"$property"
   }
 
   case class NodeQuery(
       neo: Neo4j,
-      override val label: String,
+      label: String,
       properties: Set[String],
       infer: Boolean)
-    extends cypherQuery(neo, label, properties, infer) {
+    extends CypherQuery {
 
     override def buildQuery(): String = {
       val keysString = keys.filter(!_.endsWith("$"))
         .map {
-          k => s"${strCast("n." + k)} as $k"
+          k => s"${maybeStrCast("n." + k)} as $k"
         }
-        .+(s"${strCast("id(n)")} as id$$")
+        .+(s"${maybeStrCast("id(n)")} as id$$")
         .mkString(",")
       batched(s"MATCH (n:$label) RETURN $keysString")
     }
@@ -102,10 +105,10 @@ object Neo4jUtil {
 
   case class RelQuery(
       neo: Neo4j,
-      override val label: String,
+      label: String,
       properties: Set[String],
       infer: Boolean)
-    extends cypherQuery(neo, label, properties, infer) {
+    extends CypherQuery {
 
     override def buildQuery(): String = {
       // Transform properties starting with 'source_' or 'target_' to 'source.' or
@@ -113,12 +116,12 @@ object Neo4jUtil {
       val keysString = keys.filter(!_.endsWith("$"))
         .map { k =>
           if (k.startsWith("source_") || k.startsWith("target_"))
-            s"${strCast(k.replace('_', '.'))} as $k"
+            s"${maybeStrCast(k.replace('_', '.'))} as $k"
           else
-            s"${strCast("r." + k)} as $k"
+            s"${maybeStrCast("r." + k)} as $k"
         }
-        .+(s"${strCast("id(source)")} as source_id$$")
-        .+(s"${strCast("id(target)")} as target_id$$")
+        .+(s"${maybeStrCast("id(source)")} as source_id$$")
+        .+(s"${maybeStrCast("id(target)")} as target_id$$")
         .mkString(",")
       batched(s"MATCH (source)-[r:$label]->(target) RETURN $keysString")
     }
@@ -155,9 +158,9 @@ object Neo4jUtil {
 
     val neo = Neo4j(context.sparkContext)
 
-    val query: cypherQuery =
-      if (node != "") nodeQuery(neo, node, properties, infer)
-      else relQuery(neo, relationship, properties, infer)
+    val query: CypherQuery =
+      if (node != "") NodeQuery(neo, node, properties, infer)
+      else RelQuery(neo, relationship, properties, infer)
 
     // Get partitioning attributes
     val nRows = if (limit.isEmpty) query.count() else limit.toInt
