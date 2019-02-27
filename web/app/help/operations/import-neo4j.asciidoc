@@ -15,7 +15,7 @@ changes to take effect.
 [[node_label]] Node Label::
 The label of the node that you want to import from Neo4j. The node will be imported as a table, with
 each property as a column. You can specify the properties to import using the `Columns to import`
-parameter. The id ( id() function of Neo4j) of the node will be automaticly included
+parameter. The id ( `id()` function of Neo4j) of the node will be automatically included
 in the import as the special variable `id$`.
 Only one of node label or relationship type can be specified.
 
@@ -23,16 +23,16 @@ Only one of node label or relationship type can be specified.
 The type of the relationship that you want to import from Neo4j. The relationship will be imported
 as a table, with each property as a column. You can specify the properties to import using the
 `Columns to import` parameter.
-If you want to import properties from the source or the destination(target) nodes you can do it
-by adding the prefix `source_` or `target_` to the property. The id ( id() function of Neo4j) of
-both the source and the destination nodes, will be automaticly included in the import as the special
+If you want to import properties from the source or the destination (target) nodes you can do it
+by adding the prefix `source_` or `target_` to the property. The id ( `id()` function of Neo4j) of
+both the source and the destination nodes, will be automatically included in the import as the special
 variables `source_id$` and `target_id$`.
 Only one of node label or relationship type can be specified.
 
 [[num_partitions]] Number of partitions::
 LynxKite will perform this many queries in parallel to get the data. Leave at zero to let
 LynxKite automatically decide. Set a specific value if you want to control the level of
-parallelism
+parallelism.
 
 [[infer]] Infer types::
 Automatically tries to cast data types from Neo4j. For example a column full of numbers will become a

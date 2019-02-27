@@ -108,6 +108,8 @@ object Neo4jUtil {
     extends cypherQuery(neo, label, properties, infer) {
 
     override def buildQuery(): String = {
+      // Transform properties starting with 'source_' or 'target_' to 'source.' or
+      // 'target.' to allow users to select properties from source or target nodes
       val keysString = keys.filter(!_.endsWith("$"))
         .map { k =>
           if (k.startsWith("source_") || k.startsWith("target_"))
@@ -148,7 +150,7 @@ object Neo4jUtil {
     limit: String,
     numPartitions: Int): DataFrame = {
 
-    assert(node != "" || relationship != "", "Must specify node Label or relationship type")
+    assert(node != "" || relationship != "", "Must specify node label or relationship type")
     assert(node == "" || relationship == "", "Cannot define both relationship type and node label")
 
     val neo = Neo4j(context.sparkContext)
