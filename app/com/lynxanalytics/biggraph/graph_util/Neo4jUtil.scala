@@ -17,7 +17,7 @@ object Neo4jUtil {
    *              imported as Strings. It is recommended to set this to false, as cypher types do
    *              not integrate very well with Spark (Eg. Cypher datetimes not supported at all)
    */
-  abstract class cypherQuery(
+  abstract class CypherQuery(
       neo: Neo4j,
       val label: String,
       properties: Set[String],
@@ -77,7 +77,7 @@ object Neo4jUtil {
     def strCast(property: String): String = if (!infer) s"toString($property)" else s"$property"
   }
 
-  case class nodeQuery(
+  case class NodeQuery(
       neo: Neo4j,
       override val label: String,
       properties: Set[String],
@@ -100,7 +100,7 @@ object Neo4jUtil {
       "RETURN reduce(s = HEAD(k), p IN TAIL(k)| p + ',' + s) LIMIT 1"
   }
 
-  case class relQuery(
+  case class RelQuery(
       neo: Neo4j,
       override val label: String,
       properties: Set[String],
