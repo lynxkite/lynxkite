@@ -1,7 +1,7 @@
 package com.lynxanalytics.biggraph.graph_util
 
 import com.lynxanalytics.biggraph.TestSparkContext
-import com.lynxanalytics.biggraph.graph_util.Neo4jUtil.{ cypherQuery, nodeQuery, relQuery }
+import com.lynxanalytics.biggraph.graph_util.Neo4jUtil.{ CypherQuery, NodeQuery, RelQuery }
 import org.neo4j.harness.{ ServerControls, TestServerBuilders }
 import org.neo4j.spark.Neo4j
 import org.scalatest.{ BeforeAndAfterAll, FunSuite }
@@ -34,7 +34,7 @@ class Neo4jUtilTest extends FunSuite with BeforeAndAfterAll with TestSparkContex
   test("CypherQuery getKeys: Node with properties") {
     val neo = Neo4j(sparkContext)
     server.graph.execute("CREATE (p: PROPS {id:1, p1:'v1', p2: false})")
-    val query: cypherQuery = nodeQuery(neo, "PROPS", Set.empty, false)
+    val query: CypherQuery = NodeQuery(neo, "PROPS", Set.empty, false)
 
     assert(query.getKeys() == Set("id", "p1", "p2"))
   }
@@ -42,7 +42,7 @@ class Neo4jUtilTest extends FunSuite with BeforeAndAfterAll with TestSparkContex
   test("CypherQuery getKeys: Node with no properties") {
     val neo = Neo4j(sparkContext)
     server.graph.execute("CREATE (p: NOPROPS)")
-    val query: cypherQuery = nodeQuery(neo, "NOPROPS", Set.empty, false)
+    val query: CypherQuery = NodeQuery(neo, "NOPROPS", Set.empty, false)
 
     assert(query.keys == Set.empty)
   }
@@ -50,7 +50,7 @@ class Neo4jUtilTest extends FunSuite with BeforeAndAfterAll with TestSparkContex
   test("CypherQuery getKeys: Relationship with properties") {
     val neo = Neo4j(sparkContext)
     server.graph.execute("CREATE ()-[:PROPS {id:1}]->()")
-    val query: cypherQuery = relQuery(neo, "PROPS", Set.empty, false)
+    val query: CypherQuery = RelQuery(neo, "PROPS", Set.empty, false)
 
     assert(query.getKeys() == Set("id"))
   }
@@ -58,21 +58,21 @@ class Neo4jUtilTest extends FunSuite with BeforeAndAfterAll with TestSparkContex
   test("CypherQuery getKeys: Relationship with no properties") {
     val neo = Neo4j(sparkContext)
     server.graph.execute("CREATE ()-[:NOPROPS]->()")
-    val query: cypherQuery = relQuery(neo, "NOPROPS", Set.empty, false)
+    val query: CypherQuery = RelQuery(neo, "NOPROPS", Set.empty, false)
 
     assert(query.getKeys() == Set.empty)
   }
 
   test("CypherQuery count: Node ") {
     val neo = Neo4j(sparkContext)
-    val query: cypherQuery = nodeQuery(neo, "Person", Set.empty, false)
+    val query: CypherQuery = NodeQuery(neo, "Person", Set.empty, false)
 
     assert(query.count() == 100)
   }
 
   test("CypherQuery count: Relationship ") {
     val neo = Neo4j(sparkContext)
-    val query: cypherQuery = relQuery(neo, "KNOWS", Set.empty, false)
+    val query: CypherQuery = RelQuery(neo, "KNOWS", Set.empty, false)
 
     assert(query.count() == 200)
   }
