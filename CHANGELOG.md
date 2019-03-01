@@ -9,8 +9,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
  - Scheduling of snapshot sequences and workspace sequences is timezone aware
    in Python API.
 
- - Added basic integration with Neo4j through an `import box` operation. Allows to 
-   import data from either `Node` or `Relationship` objects from Neo4j.
+ - Added basic integration with Neo4j through an `import box` operation. Allows 
+   importing data from either `Node` or `Relationship` objects from Neo4j.
 
 ### 2.6.0
 
