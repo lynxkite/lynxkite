@@ -5,9 +5,11 @@ import com.lynxanalytics.biggraph.SparkFreeEnvironment
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util
-import com.lynxanalytics.biggraph.graph_util.JDBCUtil
+import com.lynxanalytics.biggraph.graph_util.{ JDBCUtil, Neo4jUtil }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import org.neo4j.spark._
 
 class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   implicit lazy val manager = env.metaGraphManager
@@ -133,6 +135,30 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
             s"Invalid connection property definition: ${params("connection_properties")}")
           e.take(eq) -> e.drop(eq + 1)
         }.toMap)
+    }
+  })
+
+  register("Import Neo4j")(new ImportOperation(_) {
+    params ++= List(
+      new DummyParam("last_settings", areSettingsStaleReplyMessage()),
+      Param("node_label", "Node Label"),
+      Param("relationship_type", "Relationship type"),
+      NonNegInt("num_partitions", "Number of partitions", default = 0),
+      Choice("infer", "Infer types", options = FEOption.noyes),
+      Code("sql", "SQL", language = "sql"),
+      Param("imported_columns", "Columns to import"),
+      Param("limit", "Limit"),
+      ImportedTableParam("imported_table", "Table GUID"))
+
+    def getRawDataFrame(context: spark.sql.SQLContext) = {
+      Neo4jUtil.read(
+        context,
+        params("node_label"),
+        params("relationship_type"),
+        splitParam("imported_columns").toSet,
+        params("infer") == "yes",
+        params("limit"),
+        params("num_partitions").toInt)
     }
   })
 
