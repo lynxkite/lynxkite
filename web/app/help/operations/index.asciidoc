@@ -343,6 +343,8 @@ include::import-jdbc.asciidoc[]
 
 include::import-json.asciidoc[]
 
+include::import-neo4j.asciidoc[]
+
 include::import-orc.asciidoc[]
 
 include::import-parquet.asciidoc[]
