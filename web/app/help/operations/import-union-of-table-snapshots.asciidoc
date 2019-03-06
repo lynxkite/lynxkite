@@ -1,7 +1,9 @@
 ### Import union of table snapshots
 
-Makes the union of a set of previously saved table snapshots accessible from the workspace
+Makes the union of a list of previously saved table snapshots accessible from the workspace
 as a single table.
+
+The union works as the UNION ALL command in SQL and does not remove duplicates.
 
 ====
 [[paths]] Paths::
@@ -9,6 +11,6 @@ The comma separated set of full paths to the snapshots in LynxKite's virtual fil
 
  - Each path has to refer to a table snapshot.
  - The tables have to have the same schema.
- - The output table will union the input tables in the same order as defined here. 
+ - The output table will union the input tables in the same order as defined here.
 
 ====
