@@ -686,7 +686,7 @@ class LynxKite:
                  box_id: str) -> types.SimpleNamespace:
     '''Equivalent to triggering the export. Returns the exportResult output.'''
     output = outputs[box_id, 'exported']
-    assert output.kind == f'exportResult', 'Output is {output.kind}, not "exportResult"'
+    assert output.kind == 'exportResult', f'Output is {output.kind}, not "exportResult"'
     _assert_lk_success(output, box_id, 'exported')
     export = self.get_export_result(output.stateId)
     if export.result.computeProgress != 1:
