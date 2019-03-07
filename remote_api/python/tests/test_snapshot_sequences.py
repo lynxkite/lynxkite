@@ -159,7 +159,7 @@ class TestSnapshotSequence(unittest.TestCase):
 
     # If we don't provide a state for the given date then it should return a box with error.
     non_existing_snapshot = lazy_tss.read_date(date_to_fail)
-    with self.assertRaises(AssertionError) as exc:
+    with self.assertRaises(lynx.kite.LynxException) as exc:
       data = non_existing_snapshot.get_table_data()
     error_msg = exc.exception.args[0]
     self.assertIn('does not exist', error_msg)
