@@ -56,6 +56,13 @@ def _normalize_path(path: str) -> str:
   return re.sub('/+', '/', path).strip('/')
 
 
+def _assert_lk_success(output, box_id, plug):
+  '''Asserts that the output is enabled and raises a LynxException otherwise.'''
+  if not output.success.enabled:
+    msg = f'Output `{plug}` of `{box_id}` has failed: {output.success.disabledReason}'
+    raise LynxException(msg)
+
+
 def escape(s: Union[str, 'ParametricParameter']) -> Union[str, 'ParametricParameter']:
   '''Sanitizes a string for injecting into a generated SQL query.'''
   sql = str(s)
@@ -641,8 +648,7 @@ class LynxKite:
     box_id = ws.id_of(state.box)
     plug = state.output_plug_name
     output = workspace_outputs[box_id, plug]
-    assert output.success.enabled, 'Output `{}` of `{}` has failed: {}'.format(
-        plug, box_id, output.success.disabledReason)
+    _assert_lk_success(output, box_id, plug)
     return output.stateId
 
   def get_scalar(self, guid: str) -> types.SimpleNamespace:
@@ -680,8 +686,8 @@ class LynxKite:
                  box_id: str) -> types.SimpleNamespace:
     '''Equivalent to triggering the export. Returns the exportResult output.'''
     output = outputs[box_id, 'exported']
-    assert output.kind == 'exportResult', 'Output is {}, not "exportResult"'.format(output.kind)
-    assert output.success.enabled, 'Output has failed: {}'.format(output.success.disabledReason)
+    assert output.kind == 'exportResult', f'Output is {output.kind}, not "exportResult"'
+    _assert_lk_success(output, box_id, 'exported')
     export = self.get_export_result(output.stateId)
     if export.result.computeProgress != 1:
       scalar = self.get_scalar(export.result.id)
