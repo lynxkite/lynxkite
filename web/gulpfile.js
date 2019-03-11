@@ -24,12 +24,12 @@ if (process.env.HTTPS_PORT) {
 // The tools directory.
 const tools = '../tools';
 
+const asciidoctorJS = require('asciidoctor.js')();
 const browserSync = require('browser-sync').create();
 const spawn = require('child_process').spawn;
 const del = require('del');
 const glob = require('glob');
 const gulp = require('gulp');
-const runSequence = require('run-sequence');
 const fs = require('fs');
 const httpProxy = require('http-proxy');
 const lazypipe = require('lazypipe');
@@ -37,28 +37,35 @@ const merge = require('merge-stream');
 const $ = require('gulp-load-plugins')();
 
 // Builds HTML files from AsciiDoctor documentation.
-gulp.task('asciidoctor', function () {
-  // eslint-disable camelcase
-  const docs = ['admin-manual', 'help'];
-  const streams = [];
-  for (let i = 0; i < docs.length; ++i) {
-    const doc = docs[i];
-    const stream = gulp.src('app/' + doc + '/index.asciidoc')
-      .pipe($.asciidoctor({
-        base_dir: 'app/' + doc,
-        safe: 'safe',
-        header_footer: false,
-      }))
-      .pipe($.rename(doc + '.html'));
-    streams.push(stream);
+gulp.task(function asciidoctor(done) {
+  for (let doc of ['admin-manual', 'help']) {
+    asciidoctorJS.convertFile('app/' + doc + '/index.asciidoc', {
+      base_dir: 'app/' + doc,
+      safe: 'safe',
+      header_footer: false,
+    });
   }
-  return merge(streams)
-    .pipe(gulp.dest('.tmp'))
+  done();
+});
+
+// Preprocesses CSS files.
+gulp.task(function css() {
+  return gulp.src('app/styles/*.css')
+    .pipe($.autoprefixer())
+    .pipe(gulp.dest('.tmp/styles'))
+    .pipe(browserSync.stream());
+});
+
+// Preprocesses JavaScript files.
+gulp.task(function js() {
+  return gulp.src('app/scripts/**/*.js')
+    .pipe($.ngAnnotate())
+    .pipe(gulp.dest('.tmp/scripts'))
     .pipe(browserSync.stream());
 });
 
 // Preprocesses HTML files.
-gulp.task('html', ['css', 'js'], function () {
+gulp.task('html', gulp.series('css', 'js', function html() {
   const css = gulp.src('.tmp/**/*.css', { read: false });
   const js = gulp.src('.tmp/**/*.js').pipe($.angularFilesort());
   return gulp.src('app/index.html')
@@ -66,12 +73,17 @@ gulp.task('html', ['css', 'js'], function () {
     .pipe($.inject(js, { ignorePath: '.tmp' }))
     .pipe(gulp.dest('.tmp'))
     .pipe(browserSync.stream());
+}));
+
+// Generates template files from AsciiDoc.
+gulp.task(function genTemplates(done) {
+  spawn(tools + '/gen_templates.py', { stdio: 'inherit' }).once('close', done);
 });
 
 // Performs the final slow steps for creating the ultimate files that are included in LynxKite.
 // All the other tasks create intermediate outputs in .tmp. This task takes files from app and .tmp,
 // optimizes them, and saves them in dist.
-gulp.task('dist', ['asciidoctor', 'genTemplates', 'html'], function () {
+gulp.task('dist', gulp.series('asciidoctor', 'genTemplates', 'html', function dist() {
   const beforeConcat = lazypipe().pipe($.sourcemaps.init, { loadMaps: true });
   const dynamicFiles = gulp.src('.tmp/**/*.html')
     .pipe($.useref({}, beforeConcat))
@@ -99,26 +111,10 @@ gulp.task('dist', ['asciidoctor', 'genTemplates', 'html'], function () {
     merge(dynamicFiles, staticFiles, bootstrapFonts, fontAwesomeFonts)
       .pipe(gulp.dest('dist')),
     typefaces.pipe(gulp.dest('dist/styles')));
-});
-
-// Preprocesses CSS files.
-gulp.task('css', function () {
-  return gulp.src('app/styles/*.css')
-    .pipe($.autoprefixer())
-    .pipe(gulp.dest('.tmp/styles'))
-    .pipe(browserSync.stream());
-});
-
-// Preprocesses JavaScript files.
-gulp.task('js', function () {
-  return gulp.src('app/scripts/**/*.js')
-    .pipe($.ngAnnotate())
-    .pipe(gulp.dest('.tmp/scripts'))
-    .pipe(browserSync.stream());
-});
+}));
 
 // Lints JavaScript files.
-gulp.task('eslint', function() {
+gulp.task(function eslint() {
   return gulp.src(['app/scripts/**/*.js', 'gulpfile.js', 'test/**/*.js'])
     .pipe($.eslint())
     .pipe($.eslint.format())
@@ -133,17 +129,15 @@ gulp.task('clean:tmp', function() {
   return del('.tmp');
 });
 
-// Generates template files from AsciiDoc.
-gulp.task('genTemplates', function(done) {
-  spawn(tools + '/gen_templates.py', { stdio: 'inherit' }).once('close', done);
-});
+// A quicker build that populates .tmp.
+gulp.task('quick', gulp.series('eslint', 'html', 'asciidoctor'));
 
 // Starts a development proxy.
 // It connects to a real LynxKite server and forwards the AJAX requests to LynxKite. But it
 // overlays the frontend files in .tmp, and watches the source files. Whenever you edit a source
 // file, the right build task is run, and the browser automatically reloads the page. The proxy then
 // serves the modified files. Very good for development.
-gulp.task('serve', ['quick'], function() {
+gulp.task('serve', gulp.series('quick', function serve() {
   // This is more complicated than it could be due to an issue:
   // https://github.com/BrowserSync/browser-sync/issues/933
   const proxy = httpProxy.createProxyServer();
@@ -172,11 +166,11 @@ gulp.task('serve', ['quick'], function() {
         proxy.web(req, res, { target: LynxKiteURL });
       });
   });
-  gulp.watch('app/styles/*.{,s}css', ['css']);
-  gulp.watch('app/scripts/**/*.js', ['eslint', 'js']);
-  gulp.watch('app/**/*.html', ['html']);
-  gulp.watch('app/**/*.asciidoc', ['asciidoctor', 'genTemplates']);
-});
+  gulp.watch('app/styles/*.css', gulp.series('css'));
+  gulp.watch('app/scripts/**/*.js', gulp.series('eslint', 'js'));
+  gulp.watch('app/**/*.html', gulp.series('html'));
+  gulp.watch('app/**/*.asciidoc', gulp.series('asciidoctor', 'genTemplates'));
+}));
 
 const protractorDir = 'node_modules/protractor/';
 // Checks for webdriver updates.
@@ -207,22 +201,17 @@ function runProtractor(url, done) {
 }
 
 // Runs the Protractor tests against LynxKite.
-gulp.task('test', ['webdriver-update'], function(done) {
+gulp.task('test', gulp.series('webdriver-update', function test(done) {
   runProtractor(LynxKiteURL, done);
-});
+}));
 
 // Runs the Protractor tests against a development proxy. (You have to start the proxy first.)
-gulp.task('test:serve', ['webdriver-update'], function(done) {
+gulp.task('test:serve', gulp.series('webdriver-update', function testServe(done) {
   runProtractor(ProxyURL, done);
-});
+}));
 
 // The default task when you just run "gulp".
-gulp.task('default', function(callback) {
-  runSequence(
-    ['eslint', 'clean:tmp', 'clean:dist'],
-    ['dist'],
-    callback);
-});
-
-// A quicker build that populates .tmp.
-gulp.task('quick', ['eslint', 'html', 'asciidoctor']);
+gulp.task('default',
+  gulp.series(
+    gulp.parallel('eslint', 'clean:tmp', 'clean:dist'),
+    'dist'));
