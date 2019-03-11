@@ -9,59 +9,48 @@ angular.module('biggraph').directive('renderer', function($timeout) {
       // Position the renderer as set by our creator.
       element.width(scope.width);
       element.css({ left: scope.left });
+      let disposed;
 
       // Wait for layout.
       $timeout(function() {
         // Create the canvas.
-        const three = THREE.Bootstrap({
-          element: element[0],
-          plugins: ['core', 'controls', 'cursor'],
-          controls: {
-            klass: THREE.OrbitControls,
-          },
-          camera: { fov: 50 },
-          renderer: {
-            parameters: {
-              alpha: true,
-              antialias: true,
-            },
-          },
-        });
+        const W = element.width();
+        const H = element.height();
+        const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 10000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 2.0;
+        camera.position.set(10, 5, 120);
+        controls.update();
+        renderer.setSize(W, H);
+        element.append(renderer.domElement);
 
         // Stop auto-rotate on mousedown.
-        three.element.addEventListener('mousedown', function() {
-          three.controls.autoRotate = false;
+        element.mousedown(function() {
+          controls.autoRotate = false;
         });
 
         // Clean up when the directive is destroyed.
         scope.$on('$destroy', function() {
-          if (three) {
-            three.destroy();
-          }
+          renderer.dispose();
+          disposed = true;
         });
 
         // Set basic scene.
-        function clear() {
-          three.controls.autoRotate = true;
-          three.controls.autoRotateSpeed = 2.0;
-
-          three.scene = new THREE.Scene();
-          three.camera.position.set(10, 5, 120);
-
+        function buildScene(edges, layout3D) {
+          const scene = new THREE.Scene();
           const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
           hemiLight.position.set(0, 500, 0);
-          three.scene.add(hemiLight);
+          scene.add(hemiLight);
           const dirLight = new THREE.DirectionalLight(0xffffff, 1);
           dirLight.position.set(-1, 1.75, 1);
-          three.scene.add(dirLight);
+          scene.add(dirLight);
           const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
           dirLight2.position.set(-2, -1.75, -1);
-          three.scene.add(dirLight2);
-        }
+          scene.add(dirLight2);
 
-        // Build the scene from the given edges.
-        function plot(edges, layout3D) {
-          clear();
+          // Build the scene from the given edges.
           // Geometry generation. 8 points and 12 triangles are generated for each edge.
           const n = edges.length;
           /* globals Float32Array, Uint32Array */
@@ -70,7 +59,7 @@ angular.module('biggraph').directive('renderer', function($timeout) {
           // Index array.
           const is = new Uint32Array(n * 12 * 3);
           for (let i = 0; i < n; ++i) {
-            if (edges[i].a === edges[i].b) { continue; } // TODO: Display loop edges?
+            if (edges[i].a === edges[i].b) { continue; }
             const src = layout3D[edges[i].a];
             const dst = layout3D[edges[i].b];
             // The more edges we have, the thinner we make them.
@@ -79,15 +68,16 @@ angular.module('biggraph').directive('renderer', function($timeout) {
           }
 
           const geom = new THREE.BufferGeometry();
-          geom.addAttribute('index', new THREE.BufferAttribute(is, 1));
+          geom.setIndex(new THREE.BufferAttribute(is, 1));
           geom.addAttribute('position', new THREE.BufferAttribute(ps, 3));
           geom.computeVertexNormals();
           const mat = new THREE.MeshPhongMaterial({
             color: 0x807050,
             specular: 0xffffff,
-            shading: THREE.FlatShading,
+            flatShading: true,
           });
-          three.scene.add(new THREE.Mesh(geom, mat));
+          scene.add(new THREE.Mesh(geom, mat));
+          return scene;
         }
 
         function addRod(ps, is, i, a, b, w) {
@@ -150,7 +140,15 @@ angular.module('biggraph').directive('renderer', function($timeout) {
           is[6 * i + 5] = p4;
         }
 
-        plot(scope.edges, scope.layout3D);
+        function animate() {
+          if (disposed) { return; }
+          requestAnimationFrame(animate);
+          controls.update();
+          renderer.render(scene, camera);
+        }
+
+        const scene = buildScene(scope.edges, scope.layout3D);
+        animate();
       });
     },
   };

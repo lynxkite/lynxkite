@@ -30,6 +30,7 @@ const spawn = require('child_process').spawn;
 const del = require('del');
 const glob = require('glob');
 const gulp = require('gulp');
+const http = require('https');
 const fs = require('fs');
 const httpProxy = require('http-proxy');
 const lazypipe = require('lazypipe');
@@ -56,13 +57,30 @@ gulp.task(function css() {
     .pipe(browserSync.stream());
 });
 
+function getOrbitalControls(done) {
+  // OrbitalControls.js is maintained as an example in Three.js but not included in the NPM release.
+  // There are various packaged versions but they have their own problems.
+  const dstFile = '.tmp/scripts/OrbitalControls.js';
+  if (fs.existsSync(dstFile)) {
+    done();
+  } else {
+    const file = fs.createWriteStream(dstFile);
+    const url =
+      'https://raw.githubusercontent.com/mrdoob/three.js/r102/examples/js/controls/OrbitControls.js';
+    http.get(url, response => {
+      response.pipe(file);
+      done();
+    });
+  }
+}
+
 // Preprocesses JavaScript files.
-gulp.task(function js() {
+gulp.task('js', gulp.series(getOrbitalControls, function js() {
   return gulp.src('app/scripts/**/*.js')
     .pipe($.ngAnnotate())
     .pipe(gulp.dest('.tmp/scripts'))
     .pipe(browserSync.stream());
-});
+}));
 
 // Preprocesses HTML files.
 gulp.task('html', gulp.series('css', 'js', function html() {
