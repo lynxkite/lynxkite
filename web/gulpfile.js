@@ -101,16 +101,8 @@ gulp.task('dist', ['asciidoctor', 'genTemplates', 'html'], function () {
     typefaces.pipe(gulp.dest('dist/styles')));
 });
 
-// Compiles SCSS files into CSS.
-gulp.task('sass', function () {
-  return gulp.src('app/styles/*.scss')
-    .pipe($.sass().on('error', $.sass.logError))
-    .pipe(gulp.dest('.tmp/styles'))
-    .pipe(browserSync.stream());
-});
-
 // Preprocesses CSS files.
-gulp.task('css', ['sass'], function () {
+gulp.task('css', function () {
   return gulp.src('app/styles/*.css')
     .pipe($.autoprefixer())
     .pipe(gulp.dest('.tmp/styles'))

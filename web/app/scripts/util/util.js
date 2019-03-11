@@ -420,23 +420,10 @@ angular.module('biggraph')
       },
 
       slowQueue: new RequestQueue(2),
-
-      showOverwriteDialog: function(confirmCallback) {
-        window.sweetAlert({
-          title: 'Entry already exists',
-          text: 'Do you want to overwrite it?',
-          type: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#DD6B55',
-          cancelButtonText: 'No',
-          confirmButtonText: 'Yes',
-        },
-        confirmCallback);
-      }
     };
 
-    util.warning = function(title, text, confirmCallback) {
-      window.sweetAlert({
+    util.warning = function(title, text) {
+      return window.sweetAlert({
         title: title,
         text: text,
         type: 'warning',
@@ -444,8 +431,7 @@ angular.module('biggraph')
         confirmButtonColor: '#DD6B55',
         cancelButtonText: 'No',
         confirmButtonText: 'Yes',
-      },
-      confirmCallback);
+      });
     };
 
     util.globals = util.get('/ajax/getGlobalSettings');
