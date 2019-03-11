@@ -158,7 +158,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       }
       lastRightClickTime = now;
     });
-    this.renderers = []; // 3D renderers.
   }
 
   GraphView.prototype.iconsLoaded = function() {
@@ -204,11 +203,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.svgMouseDownListeners = [];
     this.svgMouseWheelListeners = [];
     this.svgDoubleClickListeners = [];
-    for (let i = 0; i < this.renderers.length; ++i) {
-      this.renderers[i].scope().$destroy();
-      this.renderers[i].remove();
-    }
-    this.renderers = [];
   };
 
   GraphView.prototype.loading = function() {
@@ -412,9 +406,13 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           scope.layout3D = e.layout3D;
           scope.width = 2 * halfColumnWidth;
           scope.left = idx * 2 * halfColumnWidth;
+          const oldRenderers = this.rootElement.children('renderer');
+          if (oldRenderers.length > 0) {
+            oldRenderers.scope().$destroy();
+            oldRenderers.remove();
+          }
           const r = $compile('<renderer></renderer>')(scope);
           this.svg.after(r);
-          this.renderers.push(r);
           continue;
         }
         if (this.vertices[sideIndices[idx]].mode === 'sampled' && e.edges.length >= 5) {
