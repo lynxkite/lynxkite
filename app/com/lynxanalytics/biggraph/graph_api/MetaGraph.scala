@@ -174,6 +174,10 @@ case class Table(
     schema: spark.sql.types.StructType)
   extends MetaGraphEntity {
   assert(name != null, s"name is null for $this")
+  val columnNames = schema.map(x => x.name)
+  assert(
+    columnNames.toSet.size == columnNames.size,
+    s"column names have to be unique, but found $columnNames")
 }
 
 case class InputSignature(
