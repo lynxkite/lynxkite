@@ -5,7 +5,7 @@ angular.module('biggraph')
   .service('environment', function() {
     this.protractor = false; // If we want to handle tests specially somewhere.
   })
-  .factory('util', function utilFactory($location, $window, $http, $rootScope, $modal, $q) {
+  .factory('util', function utilFactory($location, $window, $http, $rootScope, $uibModal, $q) {
     const siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
     // DataManager computation status codes. Keep these in sync
     // with EntityProgressManager.computeProgress
@@ -271,7 +271,7 @@ angular.module('biggraph')
       },
 
       reportError: function(alert) {
-        $modal.open({
+        $uibModal.open({
           templateUrl: 'scripts/report-error.html',
           controller: 'ReportErrorCtrl',
           resolve: { alert: function() { return alert; } },
