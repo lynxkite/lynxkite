@@ -69,9 +69,9 @@
     <input class="form-control" id="search-box" placeholder="Search" ng-model="searchQuery">
   </div>
 
-  <progressbar ng-if="!data.$resolved" value="100" class="progress-striped active">
+  <uib-progressbar ng-if="!data.$resolved" value="100" class="progress-striped active">
     Loading...
-  </progressbar>
+  </uib-progressbar>
 
   <display-error caption="Could not load directory listing." request="data"></display-error>
 

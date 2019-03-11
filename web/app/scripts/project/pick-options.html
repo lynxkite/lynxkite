@@ -16,13 +16,13 @@
         <label class="btn btn-default"
                id="custom-filters-toggle-off-button"
                ng-model="side.state.customVisualizationFilters"
-               btn-radio="false">
+               uib-btn-radio="false">
           Use project attribute filters
         </label>
         <label class="btn btn-default"
                id="custom-filters-toggle-on-button"
                ng-model="side.state.customVisualizationFilters"
-               btn-radio="true">
+               uib-btn-radio="true">
           Use custom restrictions
         </label>
       </div>
@@ -43,7 +43,7 @@
           id="center-restriction-{{ $index }}-spec"
           class="btn btn-default"
           ng-model="filter.valueSpec">
-        <button class="btn btn-default" ng-click="removeFilter($index)" tooltip="Remove restriction">
+        <button class="btn btn-default" ng-click="removeFilter($index)" drop-tooltip="Remove restriction">
           <span class="glyphicon glyphicon-remove"></span>
         </button>
       </div>
