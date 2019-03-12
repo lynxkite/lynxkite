@@ -64,6 +64,7 @@ function getOrbitalControls(done) {
   if (fs.existsSync(dstFile)) {
     done();
   } else {
+    fs.mkdirSync('.tmp/scripts', { recursive: true });
     const file = fs.createWriteStream(dstFile);
     const url =
       'https://raw.githubusercontent.com/mrdoob/three.js/r102/examples/js/controls/OrbitControls.js';
