@@ -15,6 +15,6 @@ You can use <<copy-vertex-attributes-from-segmentation>> and
 
 *Parameters*
 
-[[prefix]] Attribute name prefix::
+[p-prefix]#Attribute name prefix#::
 A prefix for the new attribute names. Leave empty for no prefix.
 ====

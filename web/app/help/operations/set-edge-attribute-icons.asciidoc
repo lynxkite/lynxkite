@@ -7,10 +7,10 @@ The icons are a subset of the Unicode characters in the "emoji" range, as provid
 https://www.google.com/get/noto/help/emoji/[Google Noto Font].
 
 ====
-[[title]] Attributes::
+[p-title]#Attributes#::
 Edge attributes of the project.
 
-[[title2]] Icon names::
+[p-title2]#Icon names#::
 Leave empty to _remove_ the icon for the corresponding attribute
 or add one of the supported icon names, such as `snowman_without_snow`.
 ====

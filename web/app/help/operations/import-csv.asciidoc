@@ -5,49 +5,49 @@ is on a separate line and fields of the record are simply separated with a comma
 CSV does not store data types, so all fields become strings when importing from this format.
 
 ====
-[[filename]] File::
+[p-filename]#File#::
 Upload a file by clicking the
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-cloud-upload"></i></label>+++ button
 or specify a path explicitly. Wildcard (`+foo/*.csv+`) and glob (`+foo/{bar,baz}.csv+`) patterns are
 accepted. See <<prefixed-paths>> for more details on specifying paths.
 
-[[columns]] Columns in file::
+[p-columns]#Columns in file#::
 The names of all the columns in the file, as a comma-separated list. If empty, the column names will
 be read from the file. (Use this if the file has a header.)
 
-[[delimiter]] Delimiter::
+[p-delimiter]#Delimiter#::
 The delimiter separating the fields in each line.
 
-[[quote]] Quote character::
+[p-quote]#Quote character#::
 The character used for escaping quoted values where the delimiter can be part of the value.
 
-[[escape]] Escape character::
+[p-escape]#Escape character#::
 The character used for escaping quotes inside an already quoted value.
 
-[[null_value]] Null value::
+[p-null_value]#Null value#::
 The string representation of a `null` value in the CSV file. For example if set to `undefined`,
 every `undefined` value in the CSV file will be converted to Scala `null`-s.
 By default this is an empty string, so empty strings are converted to `null`-s upon import.
 
-[[date_format]] Date format::
+[p-date_format]#Date format#::
 The string that indicates a date format. Custom date formats follow the formats at
 https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html[java.text.SimpleDateFormat].
 
-[[timestamp_format]] Timestamp format::
+[p-timestamp_format]#Timestamp format#::
 The string that indicates a timestamp format. Custom date formats follow the formats at
 https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html[java.text.SimpleDateFormat].
 
-[[ignore_leading_white_space]] Ignore leading white space::
+[p-ignore_leading_white_space]#Ignore leading white space#::
 A flag indicating whether or not leading whitespaces from values being read should be skipped.
 
-[[ignore_trailing_white_space]] Ignore trailing white space::
+[p-ignore_trailing_white_space]#Ignore trailing white space#::
 A flag indicating whether or not trailing whitespaces from values being read should be skipped.
 
-[[comment]] Comment character::
+[p-comment]#Comment character#::
 Every line beginning with this character is skipped, if set. For example if the comment character is
 `#` the following line is ignored in the CSV file: `# This is a comment.`
 
-[[error_handling]] Error handling::
+[p-error_handling]#Error handling#::
 What should happen if a line has more or less fields than the number of columns?
 +
 **Fail on any malformed line** will cause the import to fail if there is such a line.
@@ -58,7 +58,7 @@ defined column list can result in an empty table.
 **Salvage malformed lines: truncate or fill with nulls** will still import the problematic lines,
 dropping some data or inserting undefined values.
 
-[[infer]] Infer types::
+[p-infer]#Infer types#::
 Automatically detects data types in the CSV. For example a column full of numbers will become a
 `Double`. If disabled, all columns are imported as ``String``s.
 

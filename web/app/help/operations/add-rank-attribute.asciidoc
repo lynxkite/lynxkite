@@ -9,13 +9,13 @@ This operation makes it easy to find the top (or bottom) N vertices by an attrib
 First, create the ranking attribute. Then filter by this attribute.
 
 ====
-[[rankattr]] Rank attribute name::
+[p-rankattr]#Rank attribute name#::
 The new attribute will be created under this name.
 
-[[keyattr]] Key attribute name::
+[p-keyattr]#Key attribute name#::
 The attribute to rank by.
 
-[[order]] Order::
+[p-order]#Order#::
 With _ascending_ ordering rank 0 belongs to the vertex with the minimal key attribute value or
 the vertex that is at the beginning of the alphabet.
 With _descending_ ordering rank 0 belongs to the vertex with the maximal key attribute value or

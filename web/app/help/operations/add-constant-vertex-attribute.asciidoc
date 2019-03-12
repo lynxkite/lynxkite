@@ -12,12 +12,12 @@ the vertex attribute will tell which graph the vertex originally belonged to.
 
 *Parameters*
 
-[[name]] Attribute name::
+[p-name]#Attribute name#::
 The new attribute will be created under this name.
 
-[[value]] Value::
+[p-value]#Value#::
 The attribute value. Should be a number if _Type_ is set to `Double`.
 
-[[type]] Type::
+[p-type]#Type#::
 The operation can create either `Double` (numeric) or `String` typed attributes.
 ====

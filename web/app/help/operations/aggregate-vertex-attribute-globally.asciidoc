@@ -4,7 +4,7 @@ Aggregates vertex attributes across the entire graph into one scalar for each at
 For example you could use it to calculate the average age across an entire dataset of people.
 
 ====
-[[prefix]] Generated name prefix::
+[p-prefix]#Generated name prefix#::
 Save the aggregated values with this prefix.
 
 include::{g}[tag=global-aggregators]
