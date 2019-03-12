@@ -3,9 +3,9 @@
 Derives a new column on a table input via an SQL expression. Outputs a table.
 
 ====
-[[name]] Name::
+[p-name]#Name#::
 The name of the new column.
 
-[[value]] Value::
+[p-value]#Value#::
 The SQL expression to define the new column.
 ====

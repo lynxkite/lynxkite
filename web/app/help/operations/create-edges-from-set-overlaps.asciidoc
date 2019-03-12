@@ -12,6 +12,6 @@ the communities by looking at how many vertices of the base project they have in
 
 *Parameters*
 
-[[minoverlap]] Minimal overlap for connecting two segments::
+[p-minoverlap]#Minimal overlap for connecting two segments#::
 Two segments will be connected if they have at least this many members in common.
 ====

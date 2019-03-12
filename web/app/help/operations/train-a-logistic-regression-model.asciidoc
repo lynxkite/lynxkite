@@ -11,17 +11,17 @@ independent variables by estimating probabilities using a logistic function.
 
 The current implementation of logistic regression only supports binary classes.
 ====
-[[name]] Model name::
+[p-name]#Model name#::
 The model will be stored as a scalar using this name.
 
-[[label]] Label attribute::
+[p-label]#Label attribute#::
 The vertex attribute for which the model is trained to classify. The attribute should
 be binary label of either 0.0 or 1.0.
 
-[[features]] Feature attributes::
+[p-features]#Feature attributes#::
 Attributes to be used as inputs for the training algorithm.
 
-[[max_iter]] Maximum iterations::
+[p-max_iter]#Maximum iterations#::
 The maximum number of iterations (>=0).
 
 ====

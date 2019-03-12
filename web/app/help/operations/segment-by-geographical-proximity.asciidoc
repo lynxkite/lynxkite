@@ -16,22 +16,22 @@ http://wiki.openstreetmap.org/wiki/Shapefiles[OpenStreetMap].
 
 *Parameters*
 
-[[name]] Name::
+[p-name]#Name#::
 The name of the new geographical segmentation.
 
-[[position]] Position::
+[p-position]#Position#::
 The (latitude, longitude) location tuple.
 
-[[shapefile]] Shapefile::
+[p-shapefile]#Shapefile#::
 The https://en.wikipedia.org/wiki/Shapefile[Shapefile] used for the lookup. The list is created from
 the files in the `KITE_META/resources/shapefiles` directory. A Shapefile consist of a `.shp`, `.shx`
 and `.dbf` file of the same name.
 
-[[distance]] Distance::
+[p-distance]#Distance#::
 Vertices are connected to geographical segments if within this distance. The distance has to use 
 the same metric and coordinate reference system as the features within the Shapefile.
 
-[[ignoreUnsupportedShapes]]: Ignore unsupported shape types::
+[p-ignoreUnsupportedShapes]#Ignore unsupported shape types#::
 If set `true`, silently ignores unknown shape types potentially contained by the Shapefile.
 Otherwise throws an error.
 ====

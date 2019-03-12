@@ -32,14 +32,13 @@ angular.module('biggraph').factory('documentation', function($http) {
         div.attr('id', heading.attr('id'));
         heading.attr('id', '');
       });
-      // Move anchor IDs inside <dt> to the next <dd>.
-      dom.find('dt > a[id]').each(function(i, a) {
-        a = angular.element(a);
-        const dd = a.parent().next('dd');
-        const section = a.closest(sectSelector);
-        const id = section.attr('id') + '-' + a.attr('id');
+      // Move parameter IDs from <dt> to the next <dd>.
+      dom.find('dt > span[class]').each(function(i, span) {
+        span = angular.element(span);
+        const dd = span.parent().next('dd');
+        const section = span.closest(sectSelector);
+        const id = section.attr('id') + '-' + span.attr('class').replace('p-', '');
         dd.attr('id', id);
-        a.attr('id', '');
       });
       // Make cross-references relative to #/name. (Except in PDF mode.)
       if (location.pathname.indexOf('/pdf-') !== 0) {

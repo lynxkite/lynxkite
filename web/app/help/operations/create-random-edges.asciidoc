@@ -7,11 +7,11 @@ For example, you can create a random graph by first applying operation <<Create 
 and then creating the random edges.
 
 ====
-[[degree]] Average degree::
+[p-degree]#Average degree#::
 The degree of a vertex will be chosen uniformly between 0 and 2 &times; this number.
 This results in generating _number of vertices &times; average degree_ edges.
 
-[[seed]] Seed::
+[p-seed]#Seed#::
 The random seed.
 +
 include::{g}[tag=random-seed]

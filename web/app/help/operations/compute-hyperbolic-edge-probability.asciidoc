@@ -11,11 +11,11 @@ Vertices must have two _Double_ vertex attributes to be
 used as radial and angular coordinates.
 
 ====
-[[radial]] Radial::
+[p-radial]#Radial#::
 The vertex attribute to be used as radial coordinates.
 Should not contain negative values.
 
-[[angular]] Angular::
+[p-angular]#Angular#::
 The vertex attribute to be used as angular coordinates.
 Values should be 0 - 2 * Pi.
 ====

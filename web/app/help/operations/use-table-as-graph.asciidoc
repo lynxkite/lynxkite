@@ -15,6 +15,6 @@ as a graph. Note that this graph will never have zero-degree vertices.
 ====
 include::{g}[tag=table-import]
 
-[[src]] Source ID column:: The table column that contains the edge source ID.
-[[dst]] Destination ID column:: The table column that contains the edge destination ID.
+[p-src]#Source ID column#:: The table column that contains the edge source ID.
+[p-dst]#Destination ID column#:: The table column that contains the edge destination ID.
 ====
