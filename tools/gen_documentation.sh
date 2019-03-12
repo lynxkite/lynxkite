@@ -15,7 +15,7 @@ fi
 
 echo 'Starting LynxKite...'
 cd "$(dirname $0)/../web"
-gulp serve &
+npx gulp serve &
 LYNXKITE_PID=$!
 cd -
 function kill_grunt {
