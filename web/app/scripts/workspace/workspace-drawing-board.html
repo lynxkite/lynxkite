@@ -17,8 +17,8 @@
   <inline-input
        id="save-selection-as-custom-box-input"
        input="workspace.saveCustomBoxAsName"
-       open="saveSelectionAsCustomBoxInputOpen"
-       onsubmit="saveSelectionAsCustomBox(input, success, error)"></inline-input>
+       open="saveSelectionAsCustomBoxInputOpen && selectedBoxIds.length > 0 && !workspace.error"
+       onsubmit="saveSelectionAsCustomBox(input, done)"></inline-input>
   <button class="btn btn-default"
        id="save-selection-as-custom-box"
        ng-click="saveSelectionAsCustomBoxInputOpen = true; workspace.startCustomBoxSavingAs()"
@@ -99,7 +99,7 @@
        id="save-workspace-as-input"
        input="workspace.saveAsName"
        open="workspace.showSaveAs"
-       onsubmit="workspace.maybeSaveAs()"></inline-input>
+       onsubmit="workspace.maybeSaveAs(input, done)"></inline-input>
   <button class="btn btn-default"
           id="save-workspace-as-starter-button"
           ng-click="workspace.startSavingAs()"
