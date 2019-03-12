@@ -17,7 +17,7 @@ clean:
 	git clean -f -X -d --exclude="!.idea/"
 
 .build/gulp-done: $(shell $(find) web/app) web/gulpfile.js web/package.json .eslintrc.yaml
-	cd web && LC_ALL=C yarn --frozen-lockfile && gulp && cd - && touch $@
+	cd web && LC_ALL=C yarn --frozen-lockfile && npx gulp && cd - && touch $@
 .build/documentation-verified: $(shell $(find) app) .build/gulp-done
 	./tools/check_documentation.sh && touch $@
 $(pip): python_requirements.txt
