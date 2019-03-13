@@ -45,7 +45,10 @@ case class UIStatus(
     // so that we can redo the getCenter request.
     lastCentersRequest: Option[UICenterRequest],
     customVisualizationFilters: Option[Boolean],
-    sliderPos: Option[Double])
+    sliderPos: Option[Double],
+    vertexColorMap: Option[String],
+    labelColorMap: Option[String],
+    edgeColorMap: Option[String])
 object UIStatus {
   val default = UIStatus(
     projectPath = None,
@@ -61,7 +64,10 @@ object UIStatus {
     centers = Some(Seq("auto")),
     lastCentersRequest = None,
     customVisualizationFilters = Some(false),
-    sliderPos = None)
+    sliderPos = None,
+    vertexColorMap = Some("Viridis"),
+    labelColorMap = Some("Viridis"),
+    edgeColorMap = Some("Viridis"))
 }
 
 case class TwoSidedUIStatus(
