@@ -135,6 +135,9 @@ angular.module('biggraph')
       vd.bucketCount = this.state.bucketCount;
       vd.preciseBucketSizes = this.state.preciseBucketSizes;
       vd.relativeEdgeDensity = this.state.relativeEdgeDensity;
+      vd.vertexColorMap = this.state.vertexColorMap;
+      vd.labelColorMap = this.state.labelColorMap;
+      vd.edgeColorMap = this.state.edgeColorMap;
 
       const at = this.state.attributeTitles;
 

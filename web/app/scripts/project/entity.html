@@ -105,6 +105,16 @@
          id="visualize-as-{{ vis | id }}"> {{ vis }} </div>
   </div>
 
+  <div ng-show="colorMapKind()" class="visualization-menu"
+    style="max-height: 300px; overflow: hidden auto;">
+    <div class="de-emph"> Using color map... </div>
+    <div class="menu-item"
+         ng-repeat="cm in availableColorMaps"
+         ng-class="{ active: side.state[colorMapKind()] == cm }"
+         ng-click="side.state[colorMapKind()] = cm"
+         id="color-map-{{ cm }}"> {{ cm }} </div>
+  </div>
+
   <input ng-show="side.state.attributeTitles.slider === title()"
          id="slider"
          type="range"

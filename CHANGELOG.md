@@ -8,9 +8,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
  - Scheduling of snapshot sequences and workspace sequences is timezone aware
    in Python API.
-
  - Added basic integration with Neo4j through an `import box` operation. Allows 
    importing data from either `Node` or `Relationship` objects from Neo4j.
+ - 28 different color maps are now available for vertex and edge coloring, including Viridis.
 
 ### 2.6.0
 

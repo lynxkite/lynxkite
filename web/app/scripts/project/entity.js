@@ -2,6 +2,7 @@
 'use strict';
 
 angular.module('biggraph').directive('entity', function($timeout, axisOptions, util) {
+  /* globals chroma */
   return {
     restrict: 'E',
     scope: {
@@ -166,6 +167,24 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       };
       scope.availableVisualizationsLowerCase = function() {
         return scope.availableVisualizations().map(function(x) { return x.toLowerCase(); });
+      };
+
+      const qualitativeColorMaps =
+        ['Set2', 'Accent', 'Set1', 'Set3', 'Dark2', 'Paired', 'Pastel2', 'Pastel1'];
+      scope.availableColorMaps = Object.keys(chroma.brewer)
+        .filter(k => k[0] === k[0].toUpperCase() && !qualitativeColorMaps.includes(k))
+        .sort();
+      scope.colorMapKind = function() {
+        const state = scope.side.state;
+        if (scope.kind === 'vertex-attribute' && state.attributeTitles.color) {
+          return 'vertexColorMap';
+        }
+        if (scope.kind === 'edge-attribute' && state.attributeTitles['edge color']) {
+          return 'edgeColorMap';
+        }
+        if (scope.kind === 'vertex-attribute' && state.attributeTitles['label color']) {
+          return 'labelColorMap';
+        }
       };
 
       function vertexAttributeVisualizations() {
