@@ -120,11 +120,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.unregistration = []; // Cleanup functions to be called before building a new graph.
     this.rootElement = element;
     this.svg = element.find('svg.graph-view');
-    this.svg.append([
-      svg.marker('arrow'),
-      svg.marker('arrow-highlight-in'),
-      svg.marker('arrow-highlight-out'),
-    ]);
     this.root = svg.create('g', {'class': 'root'});
     this.svg.append(this.root);
     // Top-level mouse/touch listeners.
@@ -1711,14 +1706,16 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.dst = dst;
     this.w = w;
     this.first = svg.create('path', { 'class': 'first' });
+    this.arrow = svg.create('path', { 'class': 'edge-arrow' });
     this.second = svg.create('path', { 'class': 'second' });
     if (color) {
       this.first.attr({ style: 'stroke: ' + color });
+      this.arrow.attr({ style: 'fill: ' + color });
       this.second.attr({ style: 'stroke: ' + color });
     }
     const fontSize = 15;
     this.label = svg.create('text', { 'font-size': fontSize + 'px' }).text(label || '');
-    this.dom = svg.group([this.second, this.first, this.label], {'class': 'edge'});
+    this.dom = svg.group([this.arrow, this.second, this.first, this.label], {'class': 'edge'});
     const that = this;
     src.addMoveListener(function() { that.reposition(); });
     dst.addMoveListener(function() { that.reposition(); });
@@ -1784,15 +1781,15 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.setVisible(
       src.offsetter.side === dst.offsetter.side || (isInside(src) && isInside(dst)));
     const avgZoom = 0.5 * (src.offsetter.thickness + dst.offsetter.thickness);
-    const arrows = svg.arrows(src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom);
-    this.first[0].setAttribute('d', arrows[0]);
-    this.first[0].setAttribute('stroke-width', avgZoom * this.w);
-    this.second[0].setAttribute('d', arrows[1]);
-    this.second[0].setAttribute('stroke-width', avgZoom * this.w);
+    const strokeWidth = avgZoom * this.w;
+    const arrows =
+      svg.arrows(src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom, strokeWidth);
+    this.first.attr({ d: arrows[0], 'stroke-width': strokeWidth });
+    this.arrow.attr({ d: arrows[1] });
+    this.second.attr({ d: arrows[2], 'stroke-width': strokeWidth });
     const arcParams = svg.arcParams(
       src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom);
-    this.label[0].setAttribute('x', arcParams.x);
-    this.label[0].setAttribute('y', arcParams.y);
+    this.label.attr({ x: arcParams.x, y: arcParams.y });
   };
 
   return directive;
