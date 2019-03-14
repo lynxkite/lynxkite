@@ -100,7 +100,7 @@
     <div class="de-emph"> Visualize as... </div>
     <div class="menu-item"
          ng-repeat="vis in availableVisualizations()"
-         ng-class="{ active: side.filterApplied([vis.toLowerCase()], title()).length }"
+         ng-class="{ active: isFilter(vis.toLowerCase()) }"
          ng-click="side.toggleAttributeTitle(vis.toLowerCase(), title())"
          id="visualize-as-{{ vis | id }}"> {{ vis }} </div>
   </div>
