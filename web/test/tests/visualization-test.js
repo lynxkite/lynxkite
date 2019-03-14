@@ -91,8 +91,8 @@ module.exports = function(fw) {
       ];
       let savedPositions;
       const DEFAULT = 'rgb(57, 188, 243)'; // Brand color.
-      const BLUE = 'rgb(54, 54, 161)';
-      const RED = 'rgb(161, 54, 54)';
+      const LOW = 'rgb(68, 1, 84)';
+      const HIGH = 'rgb(254, 232, 37)';
       // No attributes visualized.
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
@@ -135,9 +135,9 @@ module.exports = function(fw) {
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
-          { color: BLUE },
+          { color: LOW },
           { color: DEFAULT },
-          { color: RED },
+          { color: HIGH },
         ]);
         checkGraphPositions(positions(graph), savedPositions);
       });
@@ -179,9 +179,9 @@ module.exports = function(fw) {
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.vertices).toConcur([
-          { labelColor: 'rgb(68, 54, 161)' },
-          { labelColor: BLUE },
-          { labelColor: RED },
+          { labelColor: 'rgb(70, 21, 102)' },
+          { labelColor: LOW },
+          { labelColor: HIGH },
         ]);
         checkGraphPositions(positions(graph), savedPositions);
       });
@@ -231,10 +231,10 @@ module.exports = function(fw) {
       visualization.graphData().then(function(graph) {
         expect(graph.edges).toConcur(expectedEdges);
         expect(graph.edges).toConcur([
-          { color: BLUE },
-          { color: 'rgb(125, 54, 161)' },
-          { color: 'rgb(161, 54, 125)' },
-          { color: RED },
+          { color: LOW },
+          { color: 'rgb(54, 93, 141)' },
+          { color: 'rgb(57, 173, 122)' },
+          { color: HIGH },
         ]);
         checkGraphPositions(positions(graph), savedPositions);
       });
