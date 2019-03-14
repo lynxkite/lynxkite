@@ -175,16 +175,19 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
         .filter(k => k[0] === k[0].toUpperCase() && !qualitativeColorMaps.includes(k))
         .sort();
       scope.colorMapKind = function() {
-        const state = scope.side.state;
-        if (scope.kind === 'vertex-attribute' && state.attributeTitles.color) {
+        if (scope.kind === 'vertex-attribute' && scope.isFilter('color')) {
           return 'vertexColorMap';
         }
-        if (scope.kind === 'edge-attribute' && state.attributeTitles['edge color']) {
+        if (scope.kind === 'edge-attribute' && scope.isFilter('edge color')) {
           return 'edgeColorMap';
         }
-        if (scope.kind === 'vertex-attribute' && state.attributeTitles['label color']) {
+        if (scope.kind === 'vertex-attribute' && scope.isFilter('label color')) {
           return 'labelColorMap';
         }
+      };
+
+      scope.isFilter = function (kind) {
+        return scope.side.filterApplied([kind], scope.title()).length > 0;
       };
 
       function vertexAttributeVisualizations() {
