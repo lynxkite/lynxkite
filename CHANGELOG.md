@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 2.6.1
+
  - Scheduling of snapshot sequences and workspace sequences is timezone aware
    in Python API.
 
