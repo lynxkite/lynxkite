@@ -300,7 +300,8 @@ class LynxKite:
     self._operation_names: List[str] = []
     self._import_box_names: List[str] = [
         'importCSV', 'importJDBC', 'importJSON',
-        'importORC', 'importParquet', 'importFromHive']
+        'importORC', 'importParquet', 'importFromHive',
+        'importNeo4j']
     self._export_box_names: List[str] = [
         'exportToCSV', 'exportToJSON', 'exportToParquet',
         'exportToJDBC', 'exportToORC']
