@@ -44,15 +44,11 @@ object DynamicValue {
       val tuple = value.asInstanceOf[(Double, Double)]
       DynamicValue(string = value.toString, x = Some(tuple._1), y = Some(tuple._2))
     }
-    else if (typeOf[T] <:< typeOf[Seq[Any]]) value => {
-      val seq = value.asInstanceOf[Seq[Any]]
-      DynamicValue(string = seq.mkString(", "))
-    }
-    else if (typeOf[T] <:< typeOf[Set[_]]) value => {
-      val set = value.asInstanceOf[Set[Any]]
-      DynamicValue(string = set.toSeq.map(_.toString).sorted.mkString(", "))
-    }
-    else if (typeOf[T] =:= typeOf[model.Model]) value => {
+    else if (typeOf[T] <:< typeOf[Seq[_]]) {
+      seqConverter(TypeTagUtil.typeArgs(typeTag[T]).head).asInstanceOf[T => DynamicValue]
+    } else if (typeOf[T] <:< typeOf[Set[_]]) {
+      setConverter(TypeTagUtil.typeArgs(typeTag[T]).head).asInstanceOf[T => DynamicValue]
+    } else if (typeOf[T] =:= typeOf[model.Model]) value => {
       val m = value.asInstanceOf[model.Model]
       if (m.labelName.isDefined) {
         DynamicValue(string = s"${m.method} model predicting ${m.labelName.get}")
@@ -69,9 +65,20 @@ object DynamicValue {
     else value =>
       DynamicValue(string = value.toString)
   }
+
   def convert[T: TypeTag](value: T): DynamicValue = {
     val c = converter[T]
     c(value)
+  }
+
+  def seqConverter[T](tt: TypeTag[_]): (Seq[T] => DynamicValue) = {
+    val innerConverter = converter(tt.asInstanceOf[TypeTag[T]])
+    seq => DynamicValue(string = seq.map(e => innerConverter(e).string).mkString(", "))
+  }
+
+  def setConverter[T](tt: TypeTag[_]): (Set[T] => DynamicValue) = {
+    val innerConverter = converter(tt.asInstanceOf[TypeTag[T]])
+    set => DynamicValue(string = set.toSeq.map(e => innerConverter(e).string).sorted.mkString(", "))
   }
 }
 

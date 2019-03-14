@@ -593,6 +593,11 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
   };
 
+  const numberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 5 });
+  function humanize(x) {
+    return numberFormat.format(x);
+  }
+
   Vertices.prototype.setupColorMap = function(
     siblings, colorMeta, legendTitle, mapName, colorKey) {
     let resultMap;
@@ -604,8 +609,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         resultMap = doubleColorMap(values, mapName);
         const bounds = common.minmax(values);
         const legendMap = {};
-        legendMap['min: ' + bounds.min] = resultMap[bounds.min];
-        legendMap['max: ' + bounds.max] = resultMap[bounds.max];
+        legendMap['min: ' + humanize(bounds.min)] = resultMap[bounds.min];
+        legendMap['max: ' + humanize(bounds.max)] = resultMap[bounds.max];
         // only shows the min max values
         this.addColorLegend(legendMap, fullLegendTitle);
       } else if (colorMeta.typeName === 'String') {
