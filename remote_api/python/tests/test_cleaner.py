@@ -22,6 +22,7 @@ def count_diff(before, after):
 class TestCleaner(unittest.TestCase):
   data_status = None
   lk = lynx.kite.LynxKite()
+  lk.set_cleaner_min_age(days=0)
 
   def check(self, msg, expected=None):
     '''The exact number of files and entities are not always predictable, so
