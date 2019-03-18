@@ -101,9 +101,9 @@ The columns to import. Leave empty to import all columns.
 Number of rows to import at the most. Leave empty to import all rows.
 
 [[sql]] SQL::
-Spark SQL query to apply to the data after importing it. The imported "raw" table
-can be referred as `this` in the query:
-`SELECT <columns> FROM this WHERE <condition> ...`.
+Spark SQL query to execute before writing the imported data to storage. The input table
+can be referred to as `this` in the query. For example:
+`SELECT * FROM this WHERE date = '2019-01-01'`
 
 [[imported_table]] Table GUID::
 Click this button to actually kick off the import. You can click it again later to repeat the
