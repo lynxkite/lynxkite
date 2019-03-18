@@ -39,6 +39,8 @@ case class CleanerMethod(
 
 case class MoveToTrashRequest(method: String)
 
+case class SetCleanerMinAgeRequest(days: Double)
+
 case class AllFiles(
     partitioned: Map[String, Long],
     entities: Map[String, Long],
@@ -80,7 +82,14 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
         "a top level workspace.",
       () => snapshotEntities() ++ workspaceEntities()))
 
-  val cleanerMinAgeDays = LoggedEnvironment.envOrElse("KITE_CLEANER_MIN_AGE_DAYS", "0").toDouble
+  private var _minAgeDays = LoggedEnvironment.envOrElse("KITE_CLEANER_MIN_AGE_DAYS", "7").toDouble
+
+  def cleanerMinAgeDays = _minAgeDays
+
+  def setCleanerMinAge(user: serving.User, req: SetCleanerMinAgeRequest) = {
+    assert(user.isAdmin, "Only administrators can delete trash files.")
+    _minAgeDays = req.days
+  }
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
     assert(user.isAdmin, "Only administrator users can use the cleaner.")
