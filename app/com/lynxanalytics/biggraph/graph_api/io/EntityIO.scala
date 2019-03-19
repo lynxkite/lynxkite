@@ -374,7 +374,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](
   private val partitionedPath = context.partitionedPath(entity)
   private val metaFile = partitionedPath / io.Metadata
 
-  private def targetDir(numPartitions: Int) =
+  protected def targetDir(numPartitions: Int) =
     context.partitionedPath(entity, numPartitions).forWriting
 
   private def computeAvailablePartitions = {
@@ -399,7 +399,7 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](
 
   protected def legacyLoadRDD(path: HadoopFile): SortedRDD[Long, T]
 
-  private def bestPartitionedSource(
+  protected def bestPartitionedSource(
     entityLocation: EntityLocationSnapshot,
     desiredPartitionNumber: Int) = {
     assert(
@@ -420,20 +420,33 @@ abstract class PartitionedDataIO[T, DT <: EntityRDDData[T]](
       repartitionFromLegacyRDD(entityLocation, partitioner)
   }
 
+  // Copies and repartitions Hadoop file src to dst
+  // and returns the number of lines written.
+  protected def copyAndRepartition(
+    src: HadoopFile,
+    dst: HadoopFile,
+    partitioner: spark.Partitioner): Long = {
+    if (src.exists) {
+      val oldRDD = src.loadEntityRawRDD(sc)
+      val newRDD = oldRDD.sort(partitioner)
+      dst.saveEntityRawRDD(newRDD)
+    } else {
+      0L
+    }
+  }
+
   // Returns the file and the serialization format.
-  private def repartitionFromPartitionedRDD(
+  protected def repartitionFromPartitionedRDD(
     entityLocation: EntityLocationSnapshot,
     partitioner: spark.Partitioner): (HadoopFile, String) = {
     val pn = partitioner.numPartitions
-    val from = bestPartitionedSource(entityLocation, pn)
-    val oldRDD = from.loadEntityRawRDD(sc)
-    val newRDD = oldRDD.sort(partitioner)
-    val newFile = targetDir(pn)
-    val lines = newFile.saveEntityRawRDD(newRDD)
+    val src = bestPartitionedSource(entityLocation, pn)
+    val dst = targetDir(pn)
+    val lines = copyAndRepartition(src, dst, partitioner)
     assert(
       entityLocation.numVertices == lines,
       s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
-    (newFile, entityLocation.serialization)
+    (dst, entityLocation.serialization)
   }
 
   // Returns the file and the serialization format.
@@ -561,6 +574,23 @@ class HybridBundleIO(entity: HybridBundle, context: IOContext)
         smallKeysRDD.asSortedRDD(partitioner),
         largeKeysSet),
       Some(count))
+  }
+
+  override protected def repartitionFromPartitionedRDD(
+    entityLocation: EntityLocationSnapshot,
+    partitioner: spark.Partitioner): (HadoopFile, String) = {
+    val pn = partitioner.numPartitions
+    val src = bestPartitionedSource(entityLocation, pn)
+    val dst = targetDir(pn)
+    val l1 = copyAndRepartition(src / "small_keys_rdd", dst / "small_keys_rdd", partitioner)
+    val l2 = copyAndRepartition(src / "large_keys_rdd", dst / "large_keys_rdd", partitioner)
+    // For some reason, write() does not include the line in "larges"
+    copyAndRepartition(src / "larges", dst / "larges", new spark.HashPartitioner(1))
+    val lines = l1 + l2
+    assert(
+      entityLocation.numVertices == lines,
+      s"Unexpected row count (${entityLocation.numVertices} != $lines) for $entity")
+    (dst, entityLocation.serialization)
   }
 
   override def write(data: EntityData, dir: HadoopFile): (Long, String) = {
