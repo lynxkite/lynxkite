@@ -82,13 +82,11 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
         "a top level workspace.",
       () => snapshotEntities() ++ workspaceEntities()))
 
-  private var _minAgeDays = LoggedEnvironment.envOrElse("KITE_CLEANER_MIN_AGE_DAYS", "7").toDouble
-
-  def cleanerMinAgeDays = _minAgeDays
+  private var cleanerMinAgeDays = LoggedEnvironment.envOrElse("KITE_CLEANER_MIN_AGE_DAYS", "7").toDouble
 
   def setCleanerMinAge(user: serving.User, req: SetCleanerMinAgeRequest) = {
     assert(user.isAdmin, "Only administrators can change the protection period.")
-    _minAgeDays = req.days
+    cleanerMinAgeDays = req.days
   }
 
   def getDataFilesStatus(user: serving.User, req: serving.Empty): DataFilesStatus = {
