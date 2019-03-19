@@ -171,6 +171,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
 
       const qualitativeColorMaps =
         ['Set2', 'Accent', 'Set1', 'Set3', 'Dark2', 'Paired', 'Pastel2', 'Pastel1'];
+      // We only offer the sequential and divergent color maps for numerical attributes.
       scope.availableColorMaps = Object.keys(chroma.brewer)
         .filter(k => k[0] === k[0].toUpperCase() && !qualitativeColorMaps.includes(k))
         .sort();
