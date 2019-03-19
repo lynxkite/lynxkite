@@ -8,7 +8,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
  - You can change the length of the protection period for the newly created data files
    through the Python API. Data files not older than this protection period are not deleted
-   by the cleaner. (`Lynxkite.set_cleaner_min_age(days)`)
+   by the cleaner. (`LynxKite.set_cleaner_min_age(days)`)
 
 ### 2.6.1
 
