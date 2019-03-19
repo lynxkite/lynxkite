@@ -87,7 +87,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
   def cleanerMinAgeDays = _minAgeDays
 
   def setCleanerMinAge(user: serving.User, req: SetCleanerMinAgeRequest) = {
-    assert(user.isAdmin, "Only administrators can delete trash files.")
+    assert(user.isAdmin, "Only administrators can change the protection period.")
     _minAgeDays = req.days
   }
 
