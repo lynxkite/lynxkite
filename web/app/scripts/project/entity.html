@@ -106,13 +106,18 @@
   </div>
 
   <div ng-show="colorMapKind()" class="visualization-menu"
-    style="max-height: 300px; overflow: hidden auto;">
+    style="max-height: 200px; overflow: hidden auto;">
     <div class="de-emph"> Using color map... </div>
     <div class="menu-item"
          ng-repeat="cm in availableColorMaps"
          ng-class="{ active: side.state[colorMapKind()] == cm }"
          ng-click="side.state[colorMapKind()] = cm"
-         id="color-map-{{ cm }}"> {{ cm }} </div>
+         id="color-map-{{ cm }}"> {{ cm }}
+      <span
+        style="width: 100px; height: 10px; border: 1px solid black; display: inline-block;"
+        ng-style="{ background: 'linear-gradient(to left, {{ chroma.brewer[cm].join(',') }})' }">
+      </span>
+    </div>
   </div>
 
   <input ng-show="side.state.attributeTitles.slider === title()"

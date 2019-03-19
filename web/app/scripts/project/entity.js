@@ -169,6 +169,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
         return scope.availableVisualizations().map(function(x) { return x.toLowerCase(); });
       };
 
+      scope.chroma = chroma;
       const qualitativeColorMaps =
         ['Set2', 'Accent', 'Set1', 'Set3', 'Dark2', 'Paired', 'Pastel2', 'Pastel1'];
       // We only offer the sequential and divergent color maps for numerical attributes.
