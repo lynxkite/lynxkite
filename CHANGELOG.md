@@ -6,7 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - 28 different color maps are now available for vertex and edge coloring,
+ - 50+ different color maps are now available for vertex and edge coloring,
    defaulting to Viridis for new visualization boxes.
 
 ### 2.6.1
