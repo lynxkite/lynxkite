@@ -169,13 +169,21 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
         return scope.availableVisualizations().map(function(x) { return x.toLowerCase(); });
       };
 
-      scope.chroma = chroma;
+      scope.colors = function(cm) {
+        if (cm.includes(' 🗘')) {
+          return chroma.brewer[cm.replace(' 🗘', '')];
+        } else {
+          return chroma.brewer[cm].slice().reverse();
+        }
+      };
       const qualitativeColorMaps =
         ['Set2', 'Accent', 'Set1', 'Set3', 'Dark2', 'Paired', 'Pastel2', 'Pastel1'];
       // We only offer the sequential and divergent color maps for numerical attributes.
       scope.availableColorMaps = Object.keys(chroma.brewer)
-        .filter(k => k[0] === k[0].toUpperCase() && !qualitativeColorMaps.includes(k))
-        .sort();
+        .filter(k => k[0] === k[0].toUpperCase() && !qualitativeColorMaps.includes(k));
+      // Also offer reversed versions.
+      scope.availableColorMaps.push(...scope.availableColorMaps.map(cm => cm + ' 🗘'));
+      scope.availableColorMaps.sort();
       scope.colorMapKind = function() {
         if (scope.kind === 'vertex-attribute' && scope.isFilter('color')) {
           return 'vertexColorMap';

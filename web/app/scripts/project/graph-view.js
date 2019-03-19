@@ -475,13 +475,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       bounds.min = Math.min(bounds.min, -bounds.max);
       bounds.span = bounds.max - bounds.min;
     }
+    const reversed = mapName && mapName.includes(' 🗘');
     const scale = mapName
-      ? chroma.scale(mapName)
+      ? chroma.scale(mapName.replace(' 🗘', ''))
       // LynxKite classic.
       : chroma.scale(['hsl(240,50%,42%)', 'hsl(360,50%,42%)']).mode('hsl');
     const colorMap = {};
-    for (let i = 0; i < values.length; ++i) {
-      colorMap[values[i]] = scale(0.5 + common.normalize(values[i], bounds));
+    for (let v of values) {
+      colorMap[v] = scale(0.5 + common.normalize(v, bounds) * (reversed ? -1 : 1));
     }
     return colorMap;
   }
