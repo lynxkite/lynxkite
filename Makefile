@@ -53,7 +53,7 @@ $(pip): python_requirements.txt
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
 		$(shell $(find) ecosystem/native remote_api ecosystem/docker/base) \
-		.build/backend-done .build/documentation-done-${VERSION}
+		.build/backend-done .build/documentation-done-${VERSION} python_requirements.txt
 	ecosystem/native/tools/build-monitoring.sh && \
 	ecosystem/native/bundle.sh && touch $@
 .build/ecosystem-docker-base-done: \
