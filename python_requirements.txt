@@ -11,6 +11,7 @@ pendulum==1.4.4
 mysqlclient
 prometheus_client
 sqlalchemy
+jupyterlab
 
 # Dependencies for developing and testing
 autopep8
