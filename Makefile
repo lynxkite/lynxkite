@@ -49,11 +49,11 @@ $(pip): python_requirements.txt
 	.build/backend-done $(pip)
 	happiness-index/integration-test/test.sh && touch $@
 .build/documentation-done-${VERSION}: \
-	$(shell $(find) ecosystem/documentation remote_api/python) python_requirements.txt
+	$(shell $(find) ecosystem/documentation remote_api/python) $(pip)
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
 		$(shell $(find) ecosystem/native remote_api ecosystem/docker/base) \
-		.build/backend-done .build/documentation-done-${VERSION} python_requirements.txt
+		.build/backend-done .build/documentation-done-${VERSION} $(pip)
 	ecosystem/native/tools/build-monitoring.sh && \
 	ecosystem/native/bundle.sh && touch $@
 .build/ecosystem-docker-base-done: \
