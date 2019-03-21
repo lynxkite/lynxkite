@@ -63,8 +63,6 @@ object PrefixRepositoryImpl {
   private def hasScheme(filename: String): Boolean = {
     schemePattern.findPrefixMatchOf(filename).nonEmpty
   }
-  private def fullyQualify(path: String): String =
-    HadoopFile.defaultFs.makeQualified(new hadoop.fs.Path(path)).toString
   private def prefixSymbolSyntaxIsOK(prefixSymbol: String): Boolean = {
     prefixSymbol match {
       case symbolicPrefixPattern(_, rest) => rest.isEmpty
@@ -101,23 +99,17 @@ object PrefixRepositoryImpl {
 
 }
 
-class PrefixRepositoryImpl(inputLines: List[String]) {
+class PrefixRepositoryImpl(inputLines: List[String], allowNonPrefixedPaths: Boolean) {
   import PrefixRepositoryImpl._
 
   private val pathResolutions = scala.collection.mutable.Map[String, String]()
   private val prefixACLs = new PrefixACLs
 
   parseKeysAndValues(parseInput(inputLines))
-  prefixACLs.checkSanity(pathResolutions.keys.toSeq)
-
-  private def getBestCandidate(path: String): Option[(String, String)] = {
-    val candidates = pathResolutions.filter { x => path.startsWith(x._2) }
-    if (candidates.isEmpty) {
-      None
-    } else {
-      Some(candidates.maxBy(_._2.length))
-    }
+  if (allowNonPrefixedPaths) {
+    pathResolutions("") = ""
   }
+  prefixACLs.checkSanity(pathResolutions.keys.toSeq)
 
   def getWriteACL(prefix: String): String = {
     prefixACLs.getWriteACL(prefix)
@@ -127,26 +119,17 @@ class PrefixRepositoryImpl(inputLines: List[String]) {
     prefixACLs.getReadACL(prefix)
   }
 
-  private def tryToSplitBasedOnTheAvailablePrefixes(path: String): (String, String) =
-    getBestCandidate(path)
-      .map {
-        case (prefixSym, resolution) =>
-          (prefixSym, path.drop(resolution.length))
-      }
-      .getOrElse(throw new AssertionError(
-        s"Cannot find a prefix notation for path $path. " +
-          "See KITE_ADDITIONAL_PREFIX_DEFINITIONS in .kiterc for a possible solution"))
-
-  def splitSymbolicPattern(str: String, legacyMode: Boolean): (String, String) = {
+  def splitSymbolicPattern(str: String): (String, String) = {
     str match {
       case symbolicPrefixPattern(prefixSymbol, relativePath) =>
         (prefixSymbol, relativePath)
-      case _ if legacyMode =>
-        if (hasScheme(str)) tryToSplitBasedOnTheAvailablePrefixes(str)
-        else tryToSplitBasedOnTheAvailablePrefixes(fullyQualify(str))
       case _ =>
-        throw new AssertionError(
-          s"File name specification ${str} should start with a registered prefix (XYZ$$)")
+        if (allowNonPrefixedPaths) {
+          ("", str)
+        } else {
+          throw new AssertionError(
+            s"File name specification ${str} should start with a registered prefix (XYZ$$)")
+        }
     }
   }
 
@@ -194,16 +177,18 @@ class PrefixRepositoryImpl(inputLines: List[String]) {
 object PrefixRepository {
   val prefixRepository = {
     val prefixDefinitionFile = LoggedEnvironment.envOrElse("KITE_PREFIX_DEFINITIONS", "")
+    val nonPrefixedPathsAreAllowed =
+      LoggedEnvironment.envOrElse("ALLOW_NON_PREFIXED_PATHS", "false").toBoolean
     if (prefixDefinitionFile.nonEmpty)
-      new PrefixRepositoryImpl(Source.fromFile(prefixDefinitionFile).getLines.toList)
+      new PrefixRepositoryImpl(Source.fromFile(prefixDefinitionFile).getLines.toList, nonPrefixedPathsAreAllowed)
     else
-      new PrefixRepositoryImpl(List())
+      new PrefixRepositoryImpl(List(), nonPrefixedPathsAreAllowed)
   }
 
   def getPrefixInfo(prefixSymbol: String) =
     prefixRepository.getPrefixInfo(prefixSymbol)
-  def splitSymbolicPattern(str: String, legacyMode: Boolean) =
-    prefixRepository.splitSymbolicPattern(str, legacyMode)
+  def splitSymbolicPattern(str: String) =
+    prefixRepository.splitSymbolicPattern(str)
   def dropResolutions() =
     prefixRepository.dropResolutions()
   def registerPrefix(prefixSymbol: String, prefixResolution: String) =
