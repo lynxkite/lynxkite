@@ -297,7 +297,7 @@ class HadoopFileTest extends FunSuite {
         |PATH2_READ_ACL="*@lynx1"
         |PATH2_WRITE_ACL="*@lynx2"
       """.stripMargin.split("\n").toList
-    val prefixRepo = new PrefixRepositoryImpl(input)
+    val prefixRepo = new PrefixRepositoryImpl(input, false)
 
     // No settings: default
     assert(prefixRepo.getReadACL("PATH1$") == "*")
@@ -315,7 +315,7 @@ class HadoopFileTest extends FunSuite {
         |PATH_READ_ACL="*@lynx"
       """.stripMargin.split("\n").toList
     intercept[Throwable] {
-      new PrefixRepositoryImpl(input)
+      new PrefixRepositoryImpl(input, false)
     }
   }
 
@@ -327,144 +327,8 @@ class HadoopFileTest extends FunSuite {
         |PATH_WRITE_ACL="*@lynx"
       """.stripMargin.split("\n").toList
     intercept[Throwable] {
-      new PrefixRepositoryImpl(input)
+      new PrefixRepositoryImpl(input, false)
     }
-  }
-
-  test("Legacy mode works") {
-    def f(savedPath: String, expected: String): Unit = {
-      if (expected == "ASSERT") {
-        intercept[java.lang.AssertionError] {
-          HadoopFile(savedPath, true)
-        }
-      } else {
-        val v = HadoopFile(savedPath, true)
-        assert(v.symbolicName == expected)
-      }
-    }
-    PrefixRepository.dropResolutions()
-    f("s3n://testkey:secret@data", "ASSERT")
-    f("s3n://testkey:secret@data/uploads/file1", "ASSERT")
-    f("s3n://testkey:secret@data/uploads/file2", "ASSERT")
-    f("s3n://testkey:secret@data/uploads/subdir/file3", "ASSERT")
-    f("s3n://testkey:secret@data/another/subdir/file3", "ASSERT")
-    f("hdfs:/data", "ASSERT")
-    f("hdfs:/data/uploads/file1", "ASSERT")
-    f("hdfs:/data/uploads/file2", "ASSERT")
-    f("hdfs:/data/uploads/subdir/file3", "ASSERT")
-    f("hdfs:/data/another/subdir/file3", "ASSERT")
-    f("file:/home/user/kite_data", "ASSERT")
-    f("file:/home/user/kite_data/uploads/file1", "ASSERT")
-    f("file:/home/user/kite_data/uploads/file2", "ASSERT")
-    f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
-    f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
-
-    // key mismatch
-    PrefixRepository.registerPrefix("TEST_S3N_BAD$", "s3n://badkey:badpwd@")
-    f("s3n://testkey:secret@data", "ASSERT")
-    f("s3n://testkey:secret@data/uploads/file1", "ASSERT")
-    f("s3n://testkey:secret@data/uploads/file2", "ASSERT")
-    f("s3n://testkey:secret@data/uploads/subdir/file3", "ASSERT")
-    f("s3n://testkey:secret@data/another/subdir/file3", "ASSERT")
-    f("hdfs:/data", "ASSERT")
-    f("hdfs:/data/uploads/file1", "ASSERT")
-    f("hdfs:/data/uploads/file2", "ASSERT")
-    f("hdfs:/data/uploads/subdir/file3", "ASSERT")
-    f("hdfs:/data/another/subdir/file3", "ASSERT")
-    f("file:/home/user/kite_data", "ASSERT")
-    f("file:/home/user/kite_data/uploads/file1", "ASSERT")
-    f("file:/home/user/kite_data/uploads/file2", "ASSERT")
-    f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
-    f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
-
-    PrefixRepository.registerPrefix("TEST_S3N$", "s3n://testkey:secret@")
-    f("s3n://testkey:secret@data", "TEST_S3N$data")
-    f("s3n://testkey:secret@data/uploads/file1", "TEST_S3N$data/uploads/file1")
-    f("s3n://testkey:secret@data/uploads/file2", "TEST_S3N$data/uploads/file2")
-    f("s3n://testkey:secret@data/uploads/subdir/file3", "TEST_S3N$data/uploads/subdir/file3")
-    f("s3n://testkey:secret@data/another/subdir/file3", "TEST_S3N$data/another/subdir/file3")
-    f("hdfs:/data", "ASSERT")
-    f("hdfs:/data/uploads/file1", "ASSERT")
-    f("hdfs:/data/uploads/file2", "ASSERT")
-    f("hdfs:/data/uploads/subdir/file3", "ASSERT")
-    f("hdfs:/data/another/subdir/file3", "ASSERT")
-    f("file:/home/user/kite_data", "ASSERT")
-    f("file:/home/user/kite_data/uploads/file1", "ASSERT")
-    f("file:/home/user/kite_data/uploads/file2", "ASSERT")
-    f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
-    f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
-
-    PrefixRepository.registerPrefix("TEST_SCHEME_ADDITION$", "file:/varr/")
-    f("/varr/alma", "TEST_SCHEME_ADDITION$alma")
-
-    PrefixRepository.registerPrefix("TEST_S3N_DATA$", "TEST_S3N$/data")
-    f("s3n://testkey:secret@data", "TEST_S3N_DATA$")
-    f("s3n://testkey:secret@data/uploads/file1", "TEST_S3N_DATA$/uploads/file1")
-    f("s3n://testkey:secret@data/uploads/file2", "TEST_S3N_DATA$/uploads/file2")
-    f("s3n://testkey:secret@data/uploads/subdir/file3", "TEST_S3N_DATA$/uploads/subdir/file3")
-    f("s3n://testkey:secret@data/another/subdir/file3", "TEST_S3N_DATA$/another/subdir/file3")
-    f("hdfs:/data", "ASSERT")
-    f("hdfs:/data/uploads/file1", "ASSERT")
-    f("hdfs:/data/uploads/file2", "ASSERT")
-    f("hdfs:/data/uploads/subdir/file3", "ASSERT")
-    f("hdfs:/data/another/subdir/file3", "ASSERT")
-    f("file:/home/user/kite_data", "ASSERT")
-    f("file:/home/user/kite_data/uploads/file1", "ASSERT")
-    f("file:/home/user/kite_data/uploads/file2", "ASSERT")
-    f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
-    f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
-
-    PrefixRepository.registerPrefix("UPLOAD$", "TEST_S3N_DATA$/uploads")
-    f("s3n://testkey:secret@data", "TEST_S3N_DATA$")
-    f("s3n://testkey:secret@data/uploads/file1", "UPLOAD$/file1")
-    f("s3n://testkey:secret@data/uploads/file2", "UPLOAD$/file2")
-    f("s3n://testkey:secret@data/uploads/subdir/file3", "UPLOAD$/subdir/file3")
-    f("s3n://testkey:secret@data/another/subdir/file3", "TEST_S3N_DATA$/another/subdir/file3")
-    f("hdfs:/data", "ASSERT")
-    f("hdfs:/data/uploads/file1", "ASSERT")
-    f("hdfs:/data/uploads/file2", "ASSERT")
-    f("hdfs:/data/uploads/subdir/file3", "ASSERT")
-    f("hdfs:/data/another/subdir/file3", "ASSERT")
-    f("file:/home/user/kite_data", "ASSERT")
-    f("file:/home/user/kite_data/uploads/file1", "ASSERT")
-    f("file:/home/user/kite_data/uploads/file2", "ASSERT")
-    f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
-    f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
-
-    PrefixRepository.registerPrefix("HDFS$", "hdfs:/data")
-    f("s3n://testkey:secret@data", "TEST_S3N_DATA$")
-    f("s3n://testkey:secret@data/uploads/file1", "UPLOAD$/file1")
-    f("s3n://testkey:secret@data/uploads/file2", "UPLOAD$/file2")
-    f("s3n://testkey:secret@data/uploads/subdir/file3", "UPLOAD$/subdir/file3")
-    f("s3n://testkey:secret@data/another/subdir/file3", "TEST_S3N_DATA$/another/subdir/file3")
-    f("hdfs:/data", "HDFS$")
-    f("hdfs:/data/uploads/file1", "HDFS$/uploads/file1")
-    f("hdfs:/data/uploads/file2", "HDFS$/uploads/file2")
-    f("hdfs:/data/uploads/subdir/file3", "HDFS$/uploads/subdir/file3")
-    f("hdfs:/data/another/subdir/file3", "HDFS$/another/subdir/file3")
-    f("file:/home/user/kite_data", "ASSERT")
-    f("file:/home/user/kite_data/uploads/file1", "ASSERT")
-    f("file:/home/user/kite_data/uploads/file2", "ASSERT")
-    f("file:/home/user/kite_data/uploads/subdir/file3", "ASSERT")
-    f("file:/home/user/kite_data/another/subdir/file3", "ASSERT")
-
-    PrefixRepository.registerPrefix("EMPTY$", "")
-    f("s3n://testkey:secret@data", "TEST_S3N_DATA$")
-    f("s3n://testkey:secret@data/uploads/file1", "UPLOAD$/file1")
-    f("s3n://testkey:secret@data/uploads/file2", "UPLOAD$/file2")
-    f("s3n://testkey:secret@data/uploads/subdir/file3", "UPLOAD$/subdir/file3")
-    f("s3n://testkey:secret@data/another/subdir/file3", "TEST_S3N_DATA$/another/subdir/file3")
-
-    f("hdfs:/data", "HDFS$")
-    f("hdfs:/data/uploads/file1", "HDFS$/uploads/file1")
-    f("hdfs:/data/uploads/file2", "HDFS$/uploads/file2")
-    f("hdfs:/data/another/subdir/file3", "HDFS$/another/subdir/file3")
-
-    f("file:/home/user/kite_data", "EMPTY$file:/home/user/kite_data")
-    f("file:/home/user/kite_data/uploads/file1", "EMPTY$file:/home/user/kite_data/uploads/file1")
-    f("file:/home/user/kite_data/uploads/file2", "EMPTY$file:/home/user/kite_data/uploads/file2")
-    f("file:/home/user/kite_data/uploads/subdir/file3", "EMPTY$file:/home/user/kite_data/uploads/subdir/file3")
-    f("file:/home/user/kite_data/another/subdir/file3", "EMPTY$file:/home/user/kite_data/another/subdir/file3")
   }
 
   test("ReadAsString test") {

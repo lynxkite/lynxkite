@@ -25,9 +25,8 @@ object HadoopFile {
 
   def apply(
     str: String,
-    legacyMode: Boolean = false,
     parentLazyFS: Option[LazySharedFileSystem] = None): HadoopFile = {
-    val (prefixSymbol, relativePath) = PrefixRepository.splitSymbolicPattern(str, legacyMode)
+    val (prefixSymbol, relativePath) = PrefixRepository.splitSymbolicPattern(str)
     val prefixResolution = PrefixRepository.getPrefixInfo(prefixSymbol)
     val normalizedFullPath = PathNormalizer.normalize(prefixResolution + relativePath)
     assert(
