@@ -168,6 +168,8 @@ case class Scalar[T: TypeTag](
   val typeTag = implicitly[TypeTag[T]]
 }
 
+class DuplicateColumnException(message: String) extends Exception(message) {}
+
 case class Table(
     source: MetaGraphOperationInstance,
     name: Symbol,
@@ -178,9 +180,9 @@ case class Table(
   val duplicates =
     columnNames.groupBy(identity).collect { case (x, List(_, _, _*)) => x }
   val msg = duplicates.mkString(", ")
-  assert(
-    duplicates.size == 0,
-    s"duplicate column name(s) found: $msg")
+  if (duplicates.size > 0) {
+    throw new DuplicateColumnException(s"duplicate column name(s) found: $msg")
+  }
 }
 
 case class InputSignature(
