@@ -175,9 +175,12 @@ case class Table(
   extends MetaGraphEntity {
   assert(name != null, s"name is null for $this")
   val columnNames = schema.map(x => x.name)
+  val duplicates =
+    columnNames.groupBy(identity).collect { case (x, List(_, _, _*)) => x }
+  val msg = duplicates.mkString(", ")
   assert(
-    columnNames.toSet.size == columnNames.size,
-    s"column names have to be unique, but found $columnNames")
+    duplicates.size == 0,
+    s"duplicate column name(s) found: $msg")
 }
 
 case class InputSignature(
