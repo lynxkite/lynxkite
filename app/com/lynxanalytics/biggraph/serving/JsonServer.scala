@@ -356,6 +356,7 @@ object FrontendJson {
   implicit val rDownloadLogFileRequest = json.Json.reads[DownloadLogFileRequest]
 
   implicit val rMoveToTrashRequest = json.Json.reads[MoveToTrashRequest]
+  implicit val rSetCleanerMinAgeRequest = json.Json.reads[SetCleanerMinAgeRequest]
   implicit val wDataFilesStats = json.Json.writes[DataFilesStats]
   implicit val wDataFilesStatus = json.Json.writes[DataFilesStatus]
 
@@ -527,6 +528,7 @@ object ProductionJsonServer extends JsonServer {
   def getDataFilesStatus = jsonGet(cleanerController.getDataFilesStatus)
   def moveToCleanerTrash = jsonPost(cleanerController.moveToCleanerTrash)
   def emptyCleanerTrash = jsonPost(cleanerController.emptyCleanerTrash)
+  def setCleanerMinAge = jsonPost(cleanerController.setCleanerMinAge)
 
   val logController = new LogController()
   def getLogFiles = jsonGet(logController.getLogFiles)

@@ -2,7 +2,9 @@ package com.lynxanalytics.biggraph.graph_api.io
 
 import com.lynxanalytics.biggraph.TestUtils
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_operations.{ EnhancedExampleGraph, ExampleGraph }
+import com.lynxanalytics.biggraph.graph_operations.EnhancedExampleGraph
+import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
+import com.lynxanalytics.biggraph.graph_operations.HybridEdgeBundle
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, PrefixRepository }
 import org.scalatest.FunSuite
 
@@ -287,6 +289,21 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
 
     assert(exampleGraph.executionCounter == 0)
     dataManager.waitAllFutures()
+  }
+
+  test("HybridBundleIO repartition works") {
+    TestUtils.withRestoreGlobals(verticesPerPartition = 1, tolerance = 1.0) {
+      import Scripting._
+      implicit val metaManager = cleanMetaManager
+      implicit val dataManager = cleanDataManager
+      val exampleGraph = ExampleGraph()
+      val result = exampleGraph.result
+      val op = HybridEdgeBundle()
+      val edges = exampleGraph.outputs.edgeBundles('edges)
+      val w = op(op.es, edges).result.sb
+      dataManager.get(w)
+      dataManager.waitAllFutures()
+    }
   }
 
 }

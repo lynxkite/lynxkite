@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - You can change the length of the protection period for the newly created data files
+   through the Python API. Data files not older than this protection period are not deleted
+   by the cleaner. (`LynxKite.set_cleaner_min_age(days)`)
  - Ecosystem docker image now includes JupyterLab.
 
 ### 2.6.1
