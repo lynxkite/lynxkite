@@ -307,7 +307,8 @@ class LynxKite:
     self._operation_names: List[str] = []
     self._import_box_names: List[str] = [
         'importCSV', 'importJDBC', 'importJSON',
-        'importORC', 'importParquet', 'importFromHive']
+        'importORC', 'importParquet', 'importFromHive',
+        'importNeo4j']
     self._export_box_names: List[str] = [
         'exportToCSV', 'exportToJSON', 'exportToParquet',
         'exportToJDBC', 'exportToORC']
@@ -585,6 +586,9 @@ class LynxKite:
   def empty_cleaner_trash(self):
     '''Empties the cleaner trash.'''
     return self._send('/ajax/emptyCleanerTrash')
+
+  def set_cleaner_min_age(self, days: float):
+    return self._send('/ajax/setCleanerMinAge', dict(days=days))
 
   def fetch_states(self, boxes: List[SerializedBox],
                    parameters: Dict = dict()) -> Dict[Tuple[str, str], types.SimpleNamespace]:
