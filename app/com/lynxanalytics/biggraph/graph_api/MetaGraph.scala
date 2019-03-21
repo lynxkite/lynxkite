@@ -178,7 +178,7 @@ case class Table(
   assert(name != null, s"name is null for $this")
   val columnNames = schema.map(x => x.name)
   val duplicates =
-    columnNames.groupBy(identity).collect { case (x, List(_, _, _*)) => x }
+    columnNames.groupBy(identity).map { case (x, gr) => (x, gr.size) }.filter(_._2 > 1).keys
   val msg = duplicates.mkString(", ")
   if (duplicates.size > 0) {
     throw new DuplicateColumnException(s"duplicate column name(s) found: $msg")
