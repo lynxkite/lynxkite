@@ -340,4 +340,11 @@ class HadoopFileTest extends FunSuite {
       + "And bathed every veyne in swich licour,\n"
       + "Of which vertu engendred is the flour;\n")
   }
+
+  test("We can allow absolute paths") {
+    val p = new PrefixRepositoryImpl(List(), true)
+    p.registerPrefix("HOME$", "file://home/user")
+    assert(Tuple2("HOME$", "/dir") == p.splitSymbolicPattern("HOME$/dir"))
+    assert(Tuple2("", "file://home/another") == p.splitSymbolicPattern("file:/home/another"))
+  }
 }
