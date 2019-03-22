@@ -168,7 +168,7 @@ case class Scalar[T: TypeTag](
   val typeTag = implicitly[TypeTag[T]]
 }
 
-class DuplicateColumnException(message: String) extends Exception(message) {}
+class DuplicateColumnException(message: String) extends AssertionError(message) {}
 
 case class Table(
     source: MetaGraphOperationInstance,
@@ -181,7 +181,7 @@ case class Table(
     columnNames.groupBy(identity).map { case (x, gr) => (x, gr.size) }.filter(_._2 > 1).keys
   val msg = duplicates.mkString(", ")
   if (duplicates.size > 0) {
-    throw new DuplicateColumnException(s"duplicate column name(s) found: $msg")
+    throw new DuplicateColumnException(s"Duplicate column name(s) found: $msg.")
   }
 }
 
