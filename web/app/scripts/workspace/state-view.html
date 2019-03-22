@@ -5,7 +5,7 @@
   <div id="state-toolbar" class="flat-toolbar" ng-if="state.stateId">
     <button
       class="btn btn-default" id="save-as-snapshot-button"
-      ng-click="snapshotNameOpen = true"
+      ng-click="root.snapshotNameOpen = true; snapshotName = getDefaultSnapshotName()"
       drop-tooltip="Click to snapshot state as {{saveAsName}}"
       drop-tooltip-placement="bottom">
       <i class="glyphicon glyphicon-camera"></i>
@@ -13,10 +13,9 @@
     <inline-input
       id="save-as-snapshot-box"
       placeholder="Snapshot name..."
-      ng-init="snapshotName = getDefaultSnapshotName()"
       input="snapshotName"
-      onsubmit="createSnapshot(state.stateId, input, success, error)"
-      open="snapshotNameOpen"></inline-input>
+      onsubmit="createSnapshot(state.stateId, input, done)"
+      open="root.snapshotNameOpen"></inline-input>
 
     <!-- TODO: Build instrument toolbar dynamically, allow any operation. -->
     <button
@@ -104,6 +103,6 @@
   caption="Failed to generate output state."
   error="lastState.error">
 </display-error>
-<progressbar
+<uib-progressbar
   ng-if="lastState.stateId === undefined" value="100" class="progress-striped active">
-</progressbar>
+</uib-progressbar>

@@ -1,13 +1,10 @@
 .inline-input {
   padding: 0;
   height: 34px;  /* Match the Bootstrap buttons. */
-  transition: width 0.5s;
-  overflow: hidden;
   white-space: nowrap;
-  width: 224px;
 }
 .inline-input.closed {
-  width: 0;
+  display: none;
 }
 
 .inline-input form {

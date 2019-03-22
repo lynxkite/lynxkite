@@ -4,30 +4,30 @@
     <div class="filters">
       <div><label><input type="checkbox" ng-model="filters.inverted"> inverted</label></div>
       <div>
-        <i tooltip="Brightness" tooltip-placement="right" class="glyphicon glyphicon-certificate"></i>
+        <i drop-tooltip="Brightness" drop-tooltip-position="left middle" class="glyphicon glyphicon-certificate"></i>
         <input type="range" max="200" step="1" ng-model="filters.brightness">
       </div>
       <div>
-        <i tooltip="Contrast" tooltip-placement="right" class="glyphicon glyphicon-adjust"></i>
+        <i drop-tooltip="Contrast" drop-tooltip-position="left middle" class="glyphicon glyphicon-adjust"></i>
         <input type="range" max="200" step="1" ng-model="filters.contrast">
       </div>
       <div>
-        <i tooltip="Saturation" tooltip-placement="right" class="glyphicon glyphicon-tint"></i>
+        <i drop-tooltip="Saturation" drop-tooltip-position="left middle" class="glyphicon glyphicon-tint"></i>
         <input type="range" max="200" step="1" ng-model="filters.saturation">
       </div>
     </div>
     <div class="filters" ng-show="mapViewEnabled()">
       Map colors
       <div>
-        <i tooltip="Map Brightness" tooltip-placement="right" class="glyphicon glyphicon-certificate"></i>
+        <i drop-tooltip="Map Brightness" drop-tooltip-position="left middle" class="glyphicon glyphicon-certificate"></i>
         <input type="range" min="-100" max="100" step="1" ng-model="mapFilters.brightness">
       </div>
       <div>
-        <i tooltip="Map Gamma" tooltip-placement="right" class="glyphicon glyphicon-adjust"></i>
+        <i drop-tooltip="Map Gamma" drop-tooltip-position="left middle" class="glyphicon glyphicon-adjust"></i>
         <input type="range" min="-100" max="100" step="1" ng-model="mapFilters.gamma">
       </div>
       <div>
-        <i tooltip="Map Saturation" tooltip-placement="right" class="glyphicon glyphicon-tint"></i>
+        <i drop-tooltip="Map Saturation" drop-tooltip-position="left middle" class="glyphicon glyphicon-tint"></i>
         <input type="range" min="-100" max="100" step="1" ng-model="mapFilters.saturation">
       </div>
     </div>

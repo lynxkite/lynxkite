@@ -1,8 +1,3 @@
-.split-screen > .ui-layout-container:first-child,
-.ui-splitbar {
-  overflow: hidden;
-}
-
 svg.graph-view {
   position: absolute;
   width: 100%;

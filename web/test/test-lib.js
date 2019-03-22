@@ -387,13 +387,6 @@ Workspace.prototype = {
     this.main.$('#save-workspace-as-input #ok').click();
   },
 
-  resetSaveWorkspaceAsButton: function() {
-    // This is needed until https://github.com/biggraph/biggraph/issues/6840
-    // resolved.
-    this.main.$('#save-workspace-as-starter-button').click();
-    this.main.$('#save-workspace-as-input #close').click();
-  },
-
 };
 
 function PopupBase() {
@@ -1566,7 +1559,7 @@ testLib = {
   submitInlineInput: function(element, text) {
     const inputBox = element.$('input');
     const okButton = element.$('#ok');
-    safeSendKeys(inputBox, text);
+    safeSelectAndSendKeys(inputBox, text);
     okButton.click();
   },
 

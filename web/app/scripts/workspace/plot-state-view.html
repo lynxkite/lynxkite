@@ -7,7 +7,7 @@
     <div id="plot-div"> </div>
   </div>
   <display-error caption="Cannot create plot." request="plotJSON.value"></display-error>
-  <progressbar ng-if="!plotJSON.value.$resolved" value="100" class="progress-striped active">
+  <uib-progressbar ng-if="!plotJSON.value.$resolved" value="100" class="progress-striped active">
     Computing plot...
-  </progressbar>
+  </uib-progressbar>
 </div>

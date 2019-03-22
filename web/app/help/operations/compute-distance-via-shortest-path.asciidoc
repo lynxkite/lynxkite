@@ -24,22 +24,22 @@ cheaper way than the starting cost, then the assigned cost of that city will be
 the cheaper cost.
 
 ====
-[[name]] Attribute name::
+[p-name]#Attribute name#::
 The new attribute will be created under this name.
 
-[[edge_distance]] Edge distance attribute::
+[p-edge_distance]#Edge distance attribute#::
 The attribute containing the distances corresponding to edges. (Cost in the above example.)
 
 Negative values are allowed but there must be no loops where the sum of
 distances is negative.
 
-[[starting_distance]] Starting distance attribute::
+[p-starting_distance]#Starting distance attribute#::
 A numeric attribute that specifies the initial distances of the vertices that we
 consider already reachable before starting this operation. (In the above example,
 specify this for the elements of the starting set, and leave this undefined for
 the rest of the vertices.)
 
-[[iterations]] Maximum number of iterations::
+[p-iterations]#Maximum number of iterations#::
 The maximum number of edges considered for a shortest-distance path.
 
 ====

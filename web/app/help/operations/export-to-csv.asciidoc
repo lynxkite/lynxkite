@@ -5,48 +5,48 @@ is on a separate line and fields of the record are simply separated with a comma
 CSV does not store data types, so all fields become strings when importing from this format.
 
 ====
-[[path]] Path::
+[p-path]#Path#::
 The distributed file-system path of the output file. It defaults to `<auto>`, in which case the
 path is auto generated from the parameters and the type of export (e.g. `Export to CSV`).
 This means that the same export operation with the same parameters always generates the same path.
 
-[[delimiter]] Delimiter::
+[p-delimiter]#Delimiter#::
 The delimiter separating the fields in each line.
 
-[[quote]] Quote::
+[p-quote]#Quote#::
 The character used for quoting strings that contain the delimiter. If the string also contains the
 quote character, it will be escaped with a backslash (`{backslash}`).
 
-[[quote_all]] Quote all strings::
+[p-quote_all]#Quote all strings#::
 Quotes all string values if set. Only quotes in the necessary cases otherwise. 
 
-[[header]] Include header::
+[p-header]#Include header#::
 Whether or not to include the header in the CSV file. If the data is exported as multiple CSV files
 the header will be included in each of them. When such a data set is directly downloaded, the header
 will appear multiple times in the resulting file.
 
-[[escape]] Escape character::
+[p-escape]#Escape character#::
 The character used for escaping quotes inside an already quoted value.
 
-[[null_value]] Null value::
+[p-null_value]#Null value#::
 The string representation of a `null` value. This is how `null`-s are going to be written in
 the CSV file.
 
-[[date_format]] Date format::
+[p-date_format]#Date format#::
 The string that indicates a date format. Custom date formats follow the formats at
 https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html[java.text.SimpleDateFormat].
 
-[[timestamp_format]] Timestamp format::
+[p-timestamp_format]#Timestamp format#::
 The string that indicates a timestamp format. Custom date formats follow the formats at
 https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html[java.text.SimpleDateFormat].
 
-[[drop_leading_white_space]] Drop leading white space::
+[p-drop_leading_white_space]#Drop leading white space#::
 A flag indicating whether or not leading whitespaces from values being written should be skipped.
 
-[[drop_trailing_white_space]] Drop trailing white space::
+[p-drop_trailing_white_space]#Drop trailing white space#::
 A flag indicating whether or not trailing whitespaces from values being written should be skipped.
 
-[[version]] Version::
+[p-version]#Version#::
 Version is the version number of the result of the export operation. It is a non negative integer.
 LynxKite treats export operations as other operations: it remembers the result (which in this case
 is the knowledge that the export was successfully done) and won't repeat the calculation. However,

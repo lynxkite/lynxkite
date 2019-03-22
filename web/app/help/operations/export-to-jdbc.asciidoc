@@ -4,14 +4,14 @@ JDBC is used to connect to relational databases such as MySQL. See <<jdbc-detail
 required for connecting to a database.
 
 ====
-[[url]] JDBC URL::
+[p-url]#JDBC URL#::
 The connection URL for the database. This typically includes the username and password. The exact
 syntax entirely depends on the database type. Please consult the documentation of the database.
 
-[[table]] Table::
+[p-table]#Table#::
 The name of the database table to export to.
 
-[[mode]] Mode::
+[p-mode]#Mode#::
 Describes whether LynxKite should expect a table to already exist and how to handle this case.
 +
 **The table must not exist** means the table will be created and it is an error if it already
@@ -23,7 +23,7 @@ it already exists. Use this mode with great care.
 **Insert into an existing table** requires the
 table to already exist and it will add the exported data at the end of the existing table.
 
-[[version]] Version::
+[p-version]#Version#::
 Version is the version number of the result of the export operation. It is a non negative integer.
 LynxKite treats export operations as other operations: it remembers the result (which in this case
 is the knowledge that the export was successfully done) and won't repeat the calculation. However,

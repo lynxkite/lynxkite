@@ -14,12 +14,12 @@ If a given edge was multiplied by n times, the n new edges will have n different
 index attribute values running from 0 to n-1.
 
 ====
-[[rep]] Repetition attribute::
+[p-rep]#Repetition attribute#::
 A Double edge attribute that specifies how many copies of the edge should
 exist after the operation.
 (The Double value is rounded to the nearest integer, so 1.8 will mean 2 copies.)
 
-[[idx]] Index attribute name::
+[p-idx]#Index attribute name#::
 The name of the attribute that will contain unique identifiers for the otherwise
 identical copies of the edge.
 ====
