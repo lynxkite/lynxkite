@@ -3,6 +3,6 @@
 Makes a previously saved snapshot accessible from the workspace.
 
 ====
-[[path]] Path::
+[p-path]#Path#::
 The full path to the snapshot in LynxKite's virtual filesystem.
 ====

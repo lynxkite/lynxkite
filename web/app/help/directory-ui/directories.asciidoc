@@ -18,6 +18,6 @@ Click +++<span class="icon glyphicon glyphicon-plus"></span>+++ _New folder_
 to create a new folder inside the current folder.
 
 Access the dropdown menu for a folder in the workspace browser
-(+++<a href class="btn-dropdown dropdown-toggle" dropdown-toggle><span class="caret"></span></a>+++)
+(+++<a href class="btn-dropdown dropdown-toggle"><span class="caret"></span></a>+++)
 to discard, duplicate, or rename the folder. The rename command also makes it possible to move the
 folder to a different path.

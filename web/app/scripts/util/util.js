@@ -5,7 +5,7 @@ angular.module('biggraph')
   .service('environment', function() {
     this.protractor = false; // If we want to handle tests specially somewhere.
   })
-  .factory('util', function utilFactory($location, $window, $http, $rootScope, $modal, $q) {
+  .factory('util', function utilFactory($location, $window, $http, $rootScope, $uibModal, $q) {
     const siSymbols = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
     // DataManager computation status codes. Keep these in sync
     // with EntityProgressManager.computeProgress
@@ -271,7 +271,7 @@ angular.module('biggraph')
       },
 
       reportError: function(alert) {
-        $modal.open({
+        $uibModal.open({
           templateUrl: 'scripts/report-error.html',
           controller: 'ReportErrorCtrl',
           resolve: { alert: function() { return alert; } },
@@ -420,23 +420,10 @@ angular.module('biggraph')
       },
 
       slowQueue: new RequestQueue(2),
-
-      showOverwriteDialog: function(confirmCallback) {
-        window.sweetAlert({
-          title: 'Entry already exists',
-          text: 'Do you want to overwrite it?',
-          type: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#DD6B55',
-          cancelButtonText: 'No',
-          confirmButtonText: 'Yes',
-        },
-        confirmCallback);
-      }
     };
 
-    util.warning = function(title, text, confirmCallback) {
-      window.sweetAlert({
+    util.warning = function(title, text) {
+      return window.sweetAlert({
         title: title,
         text: text,
         type: 'warning',
@@ -444,8 +431,7 @@ angular.module('biggraph')
         confirmButtonColor: '#DD6B55',
         cancelButtonText: 'No',
         confirmButtonText: 'Yes',
-      },
-      confirmCallback);
+      });
     };
 
     util.globals = util.get('/ajax/getGlobalSettings');

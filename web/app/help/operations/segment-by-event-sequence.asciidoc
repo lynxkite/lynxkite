@@ -8,16 +8,16 @@ This operation runs on a segmentation which contains events as vertices, and it 
 over a graph containing people as vertices.
 
 ====
-[[name]] segmentation name::
+[p-name]#segmentation name#::
 The new segmentation will be saved under this name.
 
-[[time_attr]] Time attribute::
+[p-time_attr]#Time attribute#::
 The `Double` attribute corresponding the time of events.
 
-[[location]] Location::
+[p-location]#Location#::
 A segmentation over events or an attribute corresponding to the location of events.
 
-[[algorithm]] Algorithm::
+[p-algorithm]#Algorithm#::
 * *Take continuous event sequences*:
 Merges subsequent events of the same location, and then takes all the continuous event sequences
 of length _Time window length_, with maximal timespan of _Time window length_. For each of these
@@ -28,13 +28,13 @@ are defined by _Time window step_ and bucketing starts from 0.0 time.
 Takes all event sequences that are no longer than _Time window length_ and then creates a segment
 for each subsequence with _Sequence length_.
 
-[[sequence_length]] Sequence length::
+[p-sequence_length]#Sequence length#::
 Number of events in each segment.
 
-[[time_window_step]] Time window step::
+[p-time_window_step]#Time window step#::
 Bucket size used for discretizing events.
 
-[[time_window_length]] Time window length::
+[p-time_window_length]#Time window length#::
 Maximum time difference between first and last event in a segment.
 
 ====

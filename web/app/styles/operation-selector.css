@@ -53,25 +53,32 @@
 
 .operation-selector .box .clicky:hover { color: black !important; }
 
-@mixin make-color($name, $base) {
-  .operation-selector {
-    .category.#{$name} { color: $base; }
-    .category.active.#{$name} { background: $base; color: black; }
-    .box.#{$name} h1 { background: $base; }
-    .box.#{$name} .clicky:hover { background: $base; }
-    .box.#{$name} .ok-button:focus,
-    .box.#{$name} .ok-button:hover, { background: $base }
-    .box.#{$name} .operation:hover { color: $base; }
-    .box.#{$name} .clicky { color: $base; }
-    .box.#{$name} .dropdown-toggle { color: $base; }
-  }
+:root {
+  --lynx-blue: #39bcf3;
+  --lynx-green: #6fdb11;
+  --lynx-purple: #bf45e8;
+  --lynx-orange: #ff8800;
 }
 
-@include make-color("blue", #39bcf3); /* Brand color. */
-@include make-color("green", #6fdb11); /* Brand color. */
-@include make-color("purple", #bf45e8); /* Brand color. */
-@include make-color("orange", #ff8800); /* Brand color. */
+.operation-selector .category.blue { color: var(--lynx-blue); }
+.operation-selector .category.active.blue { background: var(--lynx-blue); color: black; }
+.operation-selector .box.blue h1 { background: var(--lynx-blue); }
+.operation-selector .box.blue .operation:hover { color: var(--lynx-blue); }
 
+.operation-selector .category.green { color: var(--lynx-green); }
+.operation-selector .category.active.green { background: var(--lynx-green); color: black; }
+.operation-selector .box.green h1 { background: var(--lynx-green); }
+.operation-selector .box.green .operation:hover { color: var(--lynx-green); }
+
+.operation-selector .category.purple { color: var(--lynx-purple); }
+.operation-selector .category.active.purple { background: var(--lynx-purple); color: black; }
+.operation-selector .box.purple h1 { background: var(--lynx-purple); }
+.operation-selector .box.purple .operation:hover { color: var(--lynx-purple); }
+
+.operation-selector .category.orange { color: var(--lynx-orange); }
+.operation-selector .category.active.orange { background: var(--lynx-orange); color: black; }
+.operation-selector .box.orange h1 { background: var(--lynx-orange); }
+.operation-selector .box.orange .operation:hover { color: var(--lynx-orange); }
 
 operation-selector-entry div {
   cursor: pointer;

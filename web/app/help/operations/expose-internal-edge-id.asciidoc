@@ -4,6 +4,6 @@ Exposes the internal edge ID as an attribute. Useful if you want to identify edg
 an exported dataset.
 
 ====
-[[name]] Attribute name::
+[p-name]#Attribute name#::
 The ID attribute will be saved under this name.
 ====

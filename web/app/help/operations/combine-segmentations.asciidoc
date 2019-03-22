@@ -17,9 +17,9 @@ then the combined segmentation will have four segments:
       _"women younger than 20"_, _"women older than 20"_ }
 
 ====
-[[name]] New segmentation name::
+[p-name]#New segmentation name#::
 The new segmentation will be saved under this name.
 
-[[segmentations]] Segmentations::
+[p-segmentations]#Segmentations#::
 The segmentations to combine. Select two or more.
 ====

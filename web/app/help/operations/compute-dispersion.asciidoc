@@ -16,6 +16,6 @@ embeddedness of the edge with the formula recommended in the cited article.
 (_disp(u,v)^0.61^/(emb(u,v)+5)_) It does not necessarily fall in the _(0,1)_ range.
 
 ====
-[[name]] Attribute name::
+[p-name]#Attribute name#::
 The new edge attribute will be created under this name.
 ====

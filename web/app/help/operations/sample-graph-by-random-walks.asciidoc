@@ -27,27 +27,27 @@ _max_, _min_, or _most_common_ - there is only one vertex in the filtered graph)
 `first_reached` or `first_traversed` values than the value of the derived scalar.
 
 ====
-[[startpoints]] Number of start points::
+[p-startpoints]#Number of start points#::
 The number of times a new start point is selected.
 
-[[walksfromonepoint]] Number of walks from each start point::
+[p-walksfromonepoint]#Number of walks from each start point#::
 The number of times the random walk restarts from the same start point before selecting a new start
 point.
 
-[[walkabortionprobability]] Walk abortion probability::
+[p-walkabortionprobability]#Walk abortion probability#::
 The probability of aborting a walk instead of moving along an edge. Therefore the length of the
 parts of the walk between two abortions follows a geometric distribution with parameter _Walk
 abortion probability_.
 
-[[vertexattrname]] Save vertex indices as::
+[p-vertexattrname]#Save vertex indices as#::
 The name of the attribute which shows which step reached the given vertex first. It is not defined
 on vertices that were never reached.
 
-[[edgeattrname]] Save edge indices as::
+[p-edgeattrname]#Save edge indices as#::
 The name of the attribute which shows which step traversed the given edge first. It is not defined
 on edges that were never traversed.
 
-[[seed]] Seed::
+[p-seed]#Seed#::
 The random seed.
 +
 include::{g}[tag=random-seed]

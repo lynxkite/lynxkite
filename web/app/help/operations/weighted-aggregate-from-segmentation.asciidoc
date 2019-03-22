@@ -5,10 +5,10 @@ For example, it can calculate an average over the cliques a person belongs to, w
 the size of the cliques.
 
 ====
-[[prefix]] Generated name prefix::
+[p-prefix]#Generated name prefix#::
 Save the aggregated attributes with this prefix.
 
-[[weight]] Weight::
+[p-weight]#Weight#::
 The `Double` attribute to use as weight.
 
 include::{g}[tag=local-aggregators]

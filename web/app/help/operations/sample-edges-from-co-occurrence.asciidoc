@@ -12,11 +12,11 @@ including parallel edges.
 --
 
 ====
-[[probability]] Vertex pair selection probability::
+[p-probability]#Vertex pair selection probability#::
 The probability of choosing a vertex pair. The expected value of the number of
 created vertices will be _probability * number of edges without parallel edges_.
 
-[[seed]] Random seed::
+[p-seed]#Random seed#::
 The random seed.
 +
 include::{g}[tag=random-seed]
