@@ -20,26 +20,26 @@ calculation.
 
 *Parameters*
 
-[[leftname]] First ID attribute::
+[p-leftname]#First ID attribute#::
 Two identifying attributes have to be selected.
 
-[[rightname]] Second ID attribute::
+[p-rightname]#Second ID attribute#::
 Two identifying attributes have to be selected.
 
-[[weights]] Edge weights::
+[p-weights]#Edge weights#::
 What `Double` edge attribute to use as edge weight. The edge weights are also considered when
 calculating the similarity between two vertices.
 
-[[mo]] Minimum overlap::
+[p-mo]#Minimum overlap#::
 The number of common neighbors two vertices must have to be considered for matching.
 It must be at least 1. (If two vertices have no common neighbors their similarity would be zero
 anyway.)
 
-[[ms]] Minimum similarity::
+[p-ms]#Minimum similarity#::
 The similarity threshold below which two vertices will not be considered a match even if there are
 no better matches for them. Similarity is normalized to [0, 1].
 
-[[extra]] Fingerprinting algorithm additional parameters::
+[p-extra]#Fingerprinting algorithm additional parameters#::
 You can use this box to further tweak how the fingerprinting operation works. Consult with a Lynx
 expert if you think you need this.
 ====

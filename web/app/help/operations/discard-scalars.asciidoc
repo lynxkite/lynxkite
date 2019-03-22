@@ -3,6 +3,6 @@
 Throws away scalar values.
 
 ====
-[[name]] Name::
+[p-name]#Name#::
 The scalars to discard.
 ====

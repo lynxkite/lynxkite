@@ -1,7 +1,7 @@
 // The modal dialog for generated Python code
 'use strict';
 
-angular.module('biggraph').controller('PythonCodeCtrl', function($scope, $modalInstance, code) {
+angular.module('biggraph').controller('PythonCodeCtrl', function($scope, $uibModalInstance, code) {
   $scope.code = code;
 
   $scope.selectAll = function() {
@@ -11,6 +11,6 @@ angular.module('biggraph').controller('PythonCodeCtrl', function($scope, $modalI
   };
 
   $scope.close = function() {
-    $modalInstance.dismiss('close');
+    $uibModalInstance.dismiss('close');
   };
 });

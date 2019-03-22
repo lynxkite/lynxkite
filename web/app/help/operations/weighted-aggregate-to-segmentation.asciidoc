@@ -4,7 +4,7 @@ Aggregates vertex attributes across all the vertices that belong to a segment.
 For example, it can calculate the average age per kilogram of each clique.
 
 ====
-[[weight]] Weight::
+[p-weight]#Weight#::
 The `Double` attribute to use as weight.
 
 include::{g}[tag=local-aggregators]

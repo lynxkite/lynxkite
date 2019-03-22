@@ -7,14 +7,14 @@ The attribute is partitioned, so every instance is copied to either the training
 
 *Parameters*
 
-[[source]] Source attribute::
+[p-source]#Source attribute#::
 The attribute you want to create train and test sets from.
 
-[[test_set_ratio]] Test set ratio::
+[p-test_set_ratio]#Test set ratio#::
 A test set is a random sample of the vertices. This parameter gives the size of the test set
 as a fraction of the total vertex count.
 
-[[seed]] Random seed for test selection::
+[p-seed]#Random seed for test selection#::
 Random seed.
 +
 include::{g}[tag=random-seed]

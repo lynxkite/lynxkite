@@ -6,7 +6,7 @@ going from B to A.
 
 ====
 
-[[key]] Merge by::
+[p-key]#Merge by#::
 The edge attribute on which the merging will be based.
 
 include::glossary.asciidoc[tag=local-aggregators]

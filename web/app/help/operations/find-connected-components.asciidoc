@@ -6,10 +6,10 @@ Connected components are maximal vertex sets where a path exists between each pa
 
 
 ====
-[[name]] Segmentation name::
+[p-name]#Segmentation name#::
 The new segmentation will be saved under this name.
 
-[[directions]] Edge direction::
+[p-directions]#Edge direction#::
 Ignore directions:::
 The algorithm adds reversed edges before calculating the components.
 Require both directions:::

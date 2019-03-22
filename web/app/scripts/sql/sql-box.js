@@ -227,9 +227,8 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
 
         result.catch(function exportErrorHandler(error) {
           if (error.data === 'file-already-exists-confirm-overwrite') {
-            util.showOverwriteDialog(function() {
-              scope.export({ overwrite: true });
-            });
+            util.warning('Entry already exists', 'Do you want to overwrite it?').then(() =>
+              scope.export({ overwrite: true }));
           } else {
             util.ajaxError(error);
           }

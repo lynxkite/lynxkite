@@ -10,7 +10,7 @@
   <span ng-show="side.state.display === 'svg'">
     <div class="token"
          id="setting-animate"
-         tooltip="Animation {{ side.state.animate.enabled ? 'enabled' : 'disabled' }}"
+         drop-tooltip="Animation {{ side.state.animate.enabled ? 'enabled' : 'disabled' }}"
          ng-class="{ default: !side.state.animate.enabled }">
       <span class="title">
         <i class="glyphicon glyphicon-play" ng-show="side.state.animate.enabled"></i>
@@ -44,7 +44,7 @@
     <div class="token"
          id="setting-layout"
          ng-class="{ default: side.state.animate.style === 'expand' }"
-         tooltip="
+         drop-tooltip="
          {{
          side.state.animate.style === 'expand' ?
          'Try to expand the graph as much as possible.' :

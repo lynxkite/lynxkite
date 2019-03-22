@@ -11,7 +11,7 @@ are most useful when the graph to be mapped follows a power-law degree distribut
 and has high clustering.
 
 ====
-[[seed]] Seed::
+[p-seed]#Seed#::
 The random seed.
 +
 include::{g}[tag=random-seed]

@@ -26,10 +26,10 @@ In case you do not want to define the expression for every input, you can return
 created from the above types. E.g. `if (income > 1000) Some(age) else None`.
 
 ====
-[[output]] Save as::
+[p-output]#Save as#::
 The new attribute will be created under this name.
 
-[[defined_attrs]] Only run on defined attributes::
+[p-defined_attrs]#Only run on defined attributes#::
 - `true`: The new attribute will only be defined on edges for which all the attributes used in the
   expression are defined.
 - `false`: The new attribute is defined on all edges. In this case the Scala expression does not
@@ -37,10 +37,10 @@ The new attribute will be created under this name.
   an attribute `income: Double` you would see it as `income: Option[Double]` making
   `income.getOrElse(0.0)` a valid expression.
 
-[[expr]] Value::
+[p-expr]#Value#::
 The Scala expression. You can enter multiple lines in the editor.
 
-[[persist]] Persist result::
+[p-persist]#Persist result#::
 If enabled, the output attribute will be saved to disk once it is calculated. If disabled, the
 attribute will be re-computed each time its output is used. Persistence can improve performance
 at the cost of disk space.
