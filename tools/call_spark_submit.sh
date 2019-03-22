@@ -90,11 +90,6 @@ fi
 
 mode=${residual_args[0]}
 
-if [ "$mode" == "batch" ]; then
-  # We set up log config to use Play's stupid non-default log config file location.
-  addJPropIfNonEmpty logback.configurationFile "${conf_dir}/logger.xml"
-  addJPropIfNonEmpty application.home "${stage_dir}"
-fi
 
 # -mem flag overrides KITE_MASTER_MEMORY_MB and we use 1024 if neither is set.
 final_app_mem=${app_mem:-${KITE_MASTER_MEMORY_MB:-1024}}
@@ -194,11 +189,9 @@ if [ -n "${KITE_EXTRA_JARS}" ]; then
     fi
 fi
 
-if [ "${mode}" == "batch" ]; then
-  className="com.lynxanalytics.biggraph.BatchMain"
-else
-  className="play.core.server.NettyServer"
-fi
+
+className="play.core.server.NettyServer"
+
 
 if [[ $SPARK_MASTER  == local* ]]; then
   final_java_opts="${final_java_opts} -Xss${EXECUTOR_THREAD_STACK_SIZE}"
@@ -322,9 +315,6 @@ case $mode in
   interactive)
     exec "${command[@]}"
   ;;
-  batch)
-    exec "${command[@]}"
-  ;;
   start)
     startKite
     startWatchdog
@@ -347,7 +337,7 @@ case $mode in
     uploadLogs
   ;;
   *)
-    >&2 echo "Usage: $0 interactive|start|stop|restart|batch|uploadLogs"
+    >&2 echo "Usage: $0 interactive|start|stop|restart|uploadLogs"
     exit 1
   ;;
 esac
