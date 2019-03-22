@@ -345,6 +345,6 @@ class HadoopFileTest extends FunSuite {
     val p = new PrefixRepositoryImpl(List(), true)
     p.registerPrefix("HOME$", "file://home/user")
     assert(Tuple2("HOME$", "/dir") == p.splitSymbolicPattern("HOME$/dir"))
-    assert(Tuple2("", "file://home/another") == p.splitSymbolicPattern("file:/home/another"))
+    assert(Tuple2("", "file:/home/another") == p.splitSymbolicPattern("file:/home/another"))
   }
 }
