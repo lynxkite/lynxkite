@@ -5,7 +5,7 @@ data types. Each line of the file in this format stores one record encoded as a
 https://en.wikipedia.org/wiki/JSON[JSON] object.
 
 ====
-[[filename]] File::
+[p-filename]#File#::
 Upload a file by clicking the
 +++<label class="btn btn-default"><i class="glyphicon glyphicon-cloud-upload"></i></label>+++ button
 or specify a path explicitly. Wildcard (`+foo/*.json+`) and glob (`+foo/{bar,baz}.json+`) patterns

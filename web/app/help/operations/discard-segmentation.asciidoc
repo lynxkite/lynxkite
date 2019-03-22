@@ -3,6 +3,6 @@
 Throws away a segmentation value.
 
 ====
-[[name]] Name::
+[p-name]#Name#::
 The segmentation to discard.
 ====

@@ -6,6 +6,6 @@ The attributes will be converted in-place. If you want to keep the original attr
 well, make a copy first!
 
 ====
-[[attr]] Vertex attribute::
+[p-attr]#Vertex attribute#::
 The attributes to be converted.
 ====

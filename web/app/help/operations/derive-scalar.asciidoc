@@ -8,9 +8,9 @@ For example you could derive a new scalar as `something_sum / something_count` t
 of something.
 
 ====
-[[output]] Save as::
+[p-output]#Save as#::
 The new scalar will be created under this name.
 
-[[expr]] Value::
+[p-expr]#Value#::
 The Scala expression. You can enter multiple lines in the editor.
 ====

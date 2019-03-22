@@ -10,13 +10,13 @@ will result in each neighboring vertex being taken into account once.
 For example, it can calculate the average age per kilogram of the friends of each person.
 
 ====
-[[prefix]] Generated name prefix::
+[p-prefix]#Generated name prefix#::
 Save the aggregated attributes with this prefix.
 
-[[weight]] Weight::
+[p-weight]#Weight#::
 The `Double` attribute to use as weight.
 
-[[direction]] Aggregate on::
+[p-direction]#Aggregate on#::
  - `incoming edges`: Aggregate across the edges coming in to each vertex.
  - `outgoing edges`: Aggregate across the edges going out of each vertex.
  - `all edges`: Aggregate across all the edges going in or out of each vertex.

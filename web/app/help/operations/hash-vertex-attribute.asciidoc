@@ -22,9 +22,9 @@ up in the graph. He can also apply hashing to the phone numbers of all the knigh
 table and see which knight has Guinevere been making calls to.
 
 ====
-[[attr]] Vertex attribute::
+[p-attr]#Vertex attribute#::
 The attribute(s) which will be hashed.
 
-[[salt]] Salt::
+[p-salt]#Salt#::
 The value of the salt.
 ====

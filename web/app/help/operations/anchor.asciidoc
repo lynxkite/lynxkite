@@ -5,10 +5,10 @@ allows you to control workspace-wide settings as parameters on this box. It can 
 your workspace with a high-level description.
 
 ====
-[[description]] Description::
+[p-description]#Description#::
 An overall description of the purpose of this workspace.
 
-[[parameters]] Parameters::
+[p-parameters]#Parameters#::
 Workspaces containing output boxes can be used as custom boxes in other workspaces. Here you can
 define what parameters the custom box created from this workspace shall have.
 +

@@ -3,6 +3,6 @@
 Creates a copy of a scalar.
 
 ====
-[[from]] Old name:: The scalar to copy.
-[[to]] New name:: The name of the copy.
+[p-from]#Old name#:: The scalar to copy.
+[p-to]#New name#:: The name of the copy.
 ====

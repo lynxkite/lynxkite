@@ -6,7 +6,7 @@ as a single table.
 The union works as the UNION ALL command in SQL and does not remove duplicates.
 
 ====
-[[paths]] Paths::
+[p-paths]#Paths#::
 The comma separated set of full paths to the snapshots in LynxKite's virtual filesystem.
 
  - Each path has to refer to a table snapshot.

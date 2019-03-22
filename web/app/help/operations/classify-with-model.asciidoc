@@ -5,10 +5,10 @@ with nominal outputs, an additional probability is created to represent the corr
 outcome probability.
 
 ====
-[[name]] Classification vertex attribute name::
+[p-name]#Classification vertex attribute name#::
 The new attribute of the classification will be created under this name.
 
-[[model]] Name and parameters of the model::
+[p-model]#Name and parameters of the model#::
 The model used for the classifications and a mapping from vertex attributes to the model's
 features.
 +

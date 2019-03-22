@@ -6,9 +6,9 @@ Segments are created from the values in all of the vector attributes. A vertex i
 to every segment corresponding to the elements in the vector.
 
 ====
-[[name]] Segmentation name::
+[p-name]#Segmentation name#::
 The new segmentation will be saved under this name.
 
-[[attr]] Attribute::
+[p-attr]#Attribute#::
 The vector attribute to segment by.
 ====

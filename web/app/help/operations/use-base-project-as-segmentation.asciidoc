@@ -13,6 +13,6 @@ the <<Grow segmentation>> operation to add the necessary segmentation links. Fin
 the selected group.
 
 ====
-[[name]] Segmentation name::
-The name assigned to the new segmentation. It defaults to the projects name.
+[p-name]#Segmentation name#::
+The name assigned to the new segmentation. It defaults to the project's name.
 ====

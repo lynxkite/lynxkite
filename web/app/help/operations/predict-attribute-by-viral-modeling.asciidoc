@@ -15,38 +15,38 @@ rise with the number of iterations.
 // TODO: Present or link to example.
 
 ====
-[[prefix]] Generated name prefix::
+[p-prefix]#Generated name prefix#::
 All the outputs from the operation will have this prefix.
 // TODO: List and explain the generated outputs.
 
-[[target]] Target attribute::
+[p-target]#Target attribute#::
 The attribute you want to predict.
 
-[[test_set_ratio]] Test set ratio::
+[p-test_set_ratio]#Test set ratio#::
 A test set is a random sample of the vertices. This parameter gives the size of the test set
 as a fraction of the total vertex count.
 +
 The error of the predictions is calculated on the test set. The attribute values in the test
 set are not used for making predictions.
 
-[[seed]] Random seed for test set selection::
+[p-seed]#Random seed for test set selection#::
 Random seed.
 +
 include::{g}[tag=random-seed]
 
-[[max_deviation]] Maximal segment deviation::
+[p-max_deviation]#Maximal segment deviation#::
 Segments where the standard deviation of the attribute value over its members is higher than
 this parameter will not be used for prediction.
 
-[[min_num_defined]] Minimum number of defined attributes in a segment::
+[p-min_num_defined]#Minimum number of defined attributes in a segment#::
 Segments where the number of vertices upon which the attribute is defined is less than this
 parameter will not be used for prediction.
 
-[[min_ratio_defined]] Minimal ratio of defined attributes in a segment::
+[p-min_ratio_defined]#Minimal ratio of defined attributes in a segment#::
 Segments where the fraction of vertices upon which the attribute is defined is less than this
 parameter will not be used for prediction.
 
-[[iterations]] Iterations::
+[p-iterations]#Iterations#::
 The number of iterations to perform. Each iteration builds upon the predictions of the previous
 iteration, so the coverage and error is expected to rise with the number of iterations.
 ====

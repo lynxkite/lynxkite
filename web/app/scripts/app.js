@@ -6,7 +6,6 @@ angular
     'ngRoute',
     'ui.ace',
     'ui.bootstrap',
-    'ui.layout',
     'cfp.hotkeys',
   ])
 

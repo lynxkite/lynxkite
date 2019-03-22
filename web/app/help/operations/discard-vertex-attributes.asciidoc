@@ -3,6 +3,6 @@
 Throws away vertex attributes.
 
 ====
-[[name]] Name::
+[p-name]#Name#::
 The vertex attributes to discard.
 ====
