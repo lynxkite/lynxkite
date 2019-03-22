@@ -589,8 +589,9 @@ angular.module('biggraph')
             });
           }).then(function success() {
             that.saveWorkspace();
-          }, function error() {
+          }, function error(err) {
             that.loadWorkspace();
+            throw err;
           }),
         };
       },
@@ -600,16 +601,18 @@ angular.module('biggraph')
         this.saveAsName = this.name;
       },
 
-      maybeSaveAs: function() {
-      // We only need to do an actual action if the user has changed the name.
-        if (this.saveAsName !== this.name) {
-          this.saveAs(this.saveAsName);
+      maybeSaveAs: function(name, done) {
+        // We only need to do an actual action if the user has changed the name.
+        if (name !== this.name) {
+          this.saveAs(name).finally(done).then(() => this.showSaveAs = false);
+        } else {
+          done();
+          this.showSaveAs = false;
         }
-        this.showSaveAs = false;
       },
 
       saveAs: function(newName) {
-        util.post('/ajax/forkEntry',
+        return util.post('/ajax/forkEntry',
           {
             from: this.name,
             to: newName,

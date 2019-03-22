@@ -11,7 +11,7 @@ tell the original edges from the new edges after the operation. Edges where this
 are original edges; edges where this attribute is 1 are new edges.
 
 ====
-[[distattr]] Distinguishing edge attribute::
+[p-distattr]#Distinguishing edge attribute#::
 The name of the distinguishing edge attribute; leave it empty if the attribute should not be created.
 
 ====

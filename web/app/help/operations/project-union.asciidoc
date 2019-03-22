@@ -25,7 +25,7 @@ similarity.
 
 *Parameters*
 
-[[id_attr]] ID attribute name::
+[p-id_attr]#ID attribute name#::
 The internal vertex IDs change after the union. The old ID attributes are preserved, but no
 longer reflect the internal IDs. The new internal IDs will be exposed through a new attribute.
 This parameter sets the name of this new attribute.

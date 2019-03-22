@@ -6,6 +6,6 @@ a full path.
 include::{g}[tag=full-lk-path]
 
 ====
-[[path]] Path::
+[p-path]#Path#::
 The full path of the target snapshot in the LynxKite directory system.
 ====

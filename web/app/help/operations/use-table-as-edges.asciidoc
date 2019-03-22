@@ -14,12 +14,12 @@ operation and then use this operation to add the edges.
 
 include::{g}[tag=table-import]
 
-[[attr]] Vertex ID attribute::
+[p-attr]#Vertex ID attribute#::
 The IDs that are used in the file when defining the edges.
 
-[[src]] Source ID column::
+[p-src]#Source ID column#::
 The table column that specifies the source of the edge.
 
-[[dst]] Destination ID column::
+[p-dst]#Destination ID column#::
 The table column that specifies the destination of the edge.
 ====

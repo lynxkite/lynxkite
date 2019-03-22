@@ -96,6 +96,6 @@ http://nbviewer.jupyter.org/github/aishfenton/Vegas/blob/v0.3.9/notebooks/jupyte
 collection of examples].
 
 ====
-[[plot_code]] Plot code::
+[p-plot_code]#Plot code#::
 Scala code for defining the plot.
 ====

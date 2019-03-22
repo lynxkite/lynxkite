@@ -17,14 +17,14 @@ set can be used to evaluate the accuracy of the model's predictions. You can do 
 <<derive-vertex-attribute, deriving>> a new vertex attribute that is undefined for the test set
 and using this restricted attribute as the basis of the prediction.
 
-[[label]] Attribute to predict::
+[p-label]#Attribute to predict#::
 The partially defined attribute that you want to predict.
 
-[[features]] Predictors::
+[p-features]#Predictors#::
 The attributes that will be used as the input of the predictions. Predictions will be
 generated for vertices where all of the predictors are defined.
 
-[[method]] Method::
+[p-method]#Method#::
 +
  - **Linear regression** with no regularization.
  - **Ridge regression** (also known as Tikhonov regularization) with L2-regularization.

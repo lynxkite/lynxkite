@@ -1,0 +1,495 @@
+/* Generated with Sass from drop-themes.scss.
+ * It is committed to the repo to keep the build simpler. */
+
+.drop-element, .drop-element:after, .drop-element:before, .drop-element *, .drop-element *:after, .drop-element *:before {
+  box-sizing: border-box; }
+
+.drop-element {
+  position: absolute;
+  display: none; }
+  .drop-element.drop-open {
+    display: block; }
+
+.drop-element.drop-theme-tooltip {
+  max-width: 100%;
+  max-height: 100%; }
+  .drop-element.drop-theme-tooltip .drop-content {
+    border-radius: 5px;
+    position: relative;
+    font-family: inherit;
+    background: black;
+    color: white;
+    padding: 1em;
+    font-size: 1.1em;
+    line-height: 1.5em; }
+    .drop-element.drop-theme-tooltip .drop-content:before {
+      content: "";
+      display: block;
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-color: transparent;
+      border-width: 4px;
+      border-style: solid; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-bottom.drop-element-attached-center .drop-content {
+    margin-bottom: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-bottom.drop-element-attached-center .drop-content:before {
+      top: 100%;
+      left: 50%;
+      margin-left: -4px;
+      border-top-color: black;
+      border-bottom: 0; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-top.drop-element-attached-center .drop-content {
+    margin-top: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-top.drop-element-attached-center .drop-content:before {
+      bottom: 100%;
+      left: 50%;
+      margin-left: -4px;
+      border-bottom-color: black;
+      border-top: 0; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-right.drop-element-attached-middle .drop-content {
+    margin-right: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-right.drop-element-attached-middle .drop-content:before {
+      left: 100%;
+      top: 50%;
+      margin-top: -4px;
+      border-left-color: black;
+      border-right: 0; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-left.drop-element-attached-middle .drop-content {
+    margin-left: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-left.drop-element-attached-middle .drop-content:before {
+      right: 100%;
+      top: 50%;
+      margin-top: -4px;
+      border-right-color: black;
+      border-left: 0; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-left.drop-target-attached-center .drop-content {
+    left: -8px; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-right.drop-target-attached-center .drop-content {
+    left: 8px; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-top.drop-element-attached-left.drop-target-attached-middle .drop-content {
+    margin-top: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-top.drop-element-attached-left.drop-target-attached-middle .drop-content:before {
+      bottom: 100%;
+      left: 4px;
+      border-bottom-color: black;
+      border-top: 0; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-top.drop-element-attached-right.drop-target-attached-middle .drop-content {
+    margin-top: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-top.drop-element-attached-right.drop-target-attached-middle .drop-content:before {
+      bottom: 100%;
+      right: 4px;
+      border-bottom-color: black;
+      border-top: 0; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-middle .drop-content {
+    margin-bottom: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-middle .drop-content:before {
+      top: 100%;
+      left: 4px;
+      border-top-color: black;
+      border-bottom: 0; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-middle .drop-content {
+    margin-bottom: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-middle .drop-content:before {
+      top: 100%;
+      right: 4px;
+      border-top-color: black;
+      border-bottom: 0; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-top.drop-element-attached-left.drop-target-attached-bottom .drop-content {
+    margin-top: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-top.drop-element-attached-left.drop-target-attached-bottom .drop-content:before {
+      bottom: 100%;
+      left: 4px;
+      border-bottom-color: black;
+      border-top: 0; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-top.drop-element-attached-right.drop-target-attached-bottom .drop-content {
+    margin-top: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-top.drop-element-attached-right.drop-target-attached-bottom .drop-content:before {
+      bottom: 100%;
+      right: 4px;
+      border-bottom-color: black;
+      border-top: 0; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-top .drop-content {
+    margin-bottom: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-top .drop-content:before {
+      top: 100%;
+      left: 4px;
+      border-top-color: black;
+      border-bottom: 0; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-top .drop-content {
+    margin-bottom: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-top .drop-content:before {
+      top: 100%;
+      right: 4px;
+      border-top-color: black;
+      border-bottom: 0; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-top.drop-element-attached-right.drop-target-attached-left .drop-content {
+    margin-right: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-top.drop-element-attached-right.drop-target-attached-left .drop-content:before {
+      top: 4px;
+      left: 100%;
+      border-left-color: black;
+      border-right: 0; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-top.drop-element-attached-left.drop-target-attached-right .drop-content {
+    margin-left: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-top.drop-element-attached-left.drop-target-attached-right .drop-content:before {
+      top: 4px;
+      right: 100%;
+      border-right-color: black;
+      border-left: 0; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-left .drop-content {
+    margin-right: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-left .drop-content:before {
+      bottom: 4px;
+      left: 100%;
+      border-left-color: black;
+      border-right: 0; }
+  .drop-element.drop-theme-tooltip.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-right .drop-content {
+    margin-left: 4px; }
+    .drop-element.drop-theme-tooltip.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-right .drop-content:before {
+      bottom: 4px;
+      right: 100%;
+      border-right-color: black;
+      border-left: 0; }
+
+.drop-element.drop-theme-tooltip {
+  z-index: 1000;
+  max-width: 30vw; }
+
+.drop-element.drop-theme-tooltip .drop-content {
+  padding: 4px 8px;
+  font-size: 12px; }
+
+.drop-element.drop-theme-help-popup {
+  max-width: 100%;
+  max-height: 100%; }
+  .drop-element.drop-theme-help-popup .drop-content {
+    border-radius: 5px;
+    position: relative;
+    font-family: inherit;
+    background: white;
+    color: black;
+    padding: 1em;
+    font-size: 1.1em;
+    line-height: 1.5em;
+    transform: translateZ(0);
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.2)); }
+    .drop-element.drop-theme-help-popup .drop-content:before {
+      content: "";
+      display: block;
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-color: transparent;
+      border-width: 10px;
+      border-style: solid; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-bottom.drop-element-attached-center .drop-content {
+    margin-bottom: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-bottom.drop-element-attached-center .drop-content:before {
+      top: 100%;
+      left: 50%;
+      margin-left: -10px;
+      border-top-color: white;
+      border-bottom: 0; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-top.drop-element-attached-center .drop-content {
+    margin-top: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-top.drop-element-attached-center .drop-content:before {
+      bottom: 100%;
+      left: 50%;
+      margin-left: -10px;
+      border-bottom-color: white;
+      border-top: 0; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-right.drop-element-attached-middle .drop-content {
+    margin-right: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-right.drop-element-attached-middle .drop-content:before {
+      left: 100%;
+      top: 50%;
+      margin-top: -10px;
+      border-left-color: white;
+      border-right: 0; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-left.drop-element-attached-middle .drop-content {
+    margin-left: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-left.drop-element-attached-middle .drop-content:before {
+      right: 100%;
+      top: 50%;
+      margin-top: -10px;
+      border-right-color: white;
+      border-left: 0; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-left.drop-target-attached-center .drop-content {
+    left: -20px; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-right.drop-target-attached-center .drop-content {
+    left: 20px; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-top.drop-element-attached-left.drop-target-attached-middle .drop-content {
+    margin-top: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-top.drop-element-attached-left.drop-target-attached-middle .drop-content:before {
+      bottom: 100%;
+      left: 10px;
+      border-bottom-color: white;
+      border-top: 0; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-top.drop-element-attached-right.drop-target-attached-middle .drop-content {
+    margin-top: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-top.drop-element-attached-right.drop-target-attached-middle .drop-content:before {
+      bottom: 100%;
+      right: 10px;
+      border-bottom-color: white;
+      border-top: 0; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-middle .drop-content {
+    margin-bottom: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-middle .drop-content:before {
+      top: 100%;
+      left: 10px;
+      border-top-color: white;
+      border-bottom: 0; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-middle .drop-content {
+    margin-bottom: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-middle .drop-content:before {
+      top: 100%;
+      right: 10px;
+      border-top-color: white;
+      border-bottom: 0; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-top.drop-element-attached-left.drop-target-attached-bottom .drop-content {
+    margin-top: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-top.drop-element-attached-left.drop-target-attached-bottom .drop-content:before {
+      bottom: 100%;
+      left: 10px;
+      border-bottom-color: white;
+      border-top: 0; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-top.drop-element-attached-right.drop-target-attached-bottom .drop-content {
+    margin-top: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-top.drop-element-attached-right.drop-target-attached-bottom .drop-content:before {
+      bottom: 100%;
+      right: 10px;
+      border-bottom-color: white;
+      border-top: 0; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-top .drop-content {
+    margin-bottom: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-top .drop-content:before {
+      top: 100%;
+      left: 10px;
+      border-top-color: white;
+      border-bottom: 0; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-top .drop-content {
+    margin-bottom: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-top .drop-content:before {
+      top: 100%;
+      right: 10px;
+      border-top-color: white;
+      border-bottom: 0; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-top.drop-element-attached-right.drop-target-attached-left .drop-content {
+    margin-right: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-top.drop-element-attached-right.drop-target-attached-left .drop-content:before {
+      top: 10px;
+      left: 100%;
+      border-left-color: white;
+      border-right: 0; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-top.drop-element-attached-left.drop-target-attached-right .drop-content {
+    margin-left: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-top.drop-element-attached-left.drop-target-attached-right .drop-content:before {
+      top: 10px;
+      right: 100%;
+      border-right-color: white;
+      border-left: 0; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-left .drop-content {
+    margin-right: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-left .drop-content:before {
+      bottom: 10px;
+      left: 100%;
+      border-left-color: white;
+      border-right: 0; }
+  .drop-element.drop-theme-help-popup.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-right .drop-content {
+    margin-left: 10px; }
+    .drop-element.drop-theme-help-popup.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-right .drop-content:before {
+      bottom: 10px;
+      right: 100%;
+      border-right-color: white;
+      border-left: 0; }
+
+.drop-element.drop-theme-help-popup {
+  z-index: 1000;
+  max-width: 30%; }
+
+.drop-element.drop-theme-help-popup .drop-content > div {
+  max-height: 80vh;
+  overflow-y: auto;
+  /* Clip and display scrollbars when necessary. */ }
+
+.drop-element, .drop-element:after, .drop-element:before, .drop-element *, .drop-element *:after, .drop-element *:before {
+  box-sizing: border-box; }
+
+.drop-element {
+  position: absolute;
+  display: none; }
+  .drop-element.drop-open {
+    display: block; }
+
+.drop-element.drop-theme-menu {
+  max-width: 100%;
+  max-height: 100%; }
+  .drop-element.drop-theme-menu .drop-content {
+    border-radius: 5px;
+    position: relative;
+    font-family: inherit;
+    background: white;
+    color: black;
+    padding: 1em;
+    font-size: 1.1em;
+    line-height: 1.5em;
+    transform: translateZ(0);
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.2)); }
+    .drop-element.drop-theme-menu .drop-content:before {
+      content: "";
+      display: block;
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-color: transparent;
+      border-width: 10px;
+      border-style: solid; }
+  .drop-element.drop-theme-menu.drop-element-attached-bottom.drop-element-attached-center .drop-content {
+    margin-bottom: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-bottom.drop-element-attached-center .drop-content:before {
+      top: 100%;
+      left: 50%;
+      margin-left: -10px;
+      border-top-color: white;
+      border-bottom: 0; }
+  .drop-element.drop-theme-menu.drop-element-attached-top.drop-element-attached-center .drop-content {
+    margin-top: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-top.drop-element-attached-center .drop-content:before {
+      bottom: 100%;
+      left: 50%;
+      margin-left: -10px;
+      border-bottom-color: white;
+      border-top: 0; }
+  .drop-element.drop-theme-menu.drop-element-attached-right.drop-element-attached-middle .drop-content {
+    margin-right: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-right.drop-element-attached-middle .drop-content:before {
+      left: 100%;
+      top: 50%;
+      margin-top: -10px;
+      border-left-color: white;
+      border-right: 0; }
+  .drop-element.drop-theme-menu.drop-element-attached-left.drop-element-attached-middle .drop-content {
+    margin-left: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-left.drop-element-attached-middle .drop-content:before {
+      right: 100%;
+      top: 50%;
+      margin-top: -10px;
+      border-right-color: white;
+      border-left: 0; }
+  .drop-element.drop-theme-menu.drop-element-attached-left.drop-target-attached-center .drop-content {
+    left: -20px; }
+  .drop-element.drop-theme-menu.drop-element-attached-right.drop-target-attached-center .drop-content {
+    left: 20px; }
+  .drop-element.drop-theme-menu.drop-element-attached-top.drop-element-attached-left.drop-target-attached-middle .drop-content {
+    margin-top: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-top.drop-element-attached-left.drop-target-attached-middle .drop-content:before {
+      bottom: 100%;
+      left: 10px;
+      border-bottom-color: white;
+      border-top: 0; }
+  .drop-element.drop-theme-menu.drop-element-attached-top.drop-element-attached-right.drop-target-attached-middle .drop-content {
+    margin-top: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-top.drop-element-attached-right.drop-target-attached-middle .drop-content:before {
+      bottom: 100%;
+      right: 10px;
+      border-bottom-color: white;
+      border-top: 0; }
+  .drop-element.drop-theme-menu.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-middle .drop-content {
+    margin-bottom: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-middle .drop-content:before {
+      top: 100%;
+      left: 10px;
+      border-top-color: white;
+      border-bottom: 0; }
+  .drop-element.drop-theme-menu.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-middle .drop-content {
+    margin-bottom: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-middle .drop-content:before {
+      top: 100%;
+      right: 10px;
+      border-top-color: white;
+      border-bottom: 0; }
+  .drop-element.drop-theme-menu.drop-element-attached-top.drop-element-attached-left.drop-target-attached-bottom .drop-content {
+    margin-top: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-top.drop-element-attached-left.drop-target-attached-bottom .drop-content:before {
+      bottom: 100%;
+      left: 10px;
+      border-bottom-color: white;
+      border-top: 0; }
+  .drop-element.drop-theme-menu.drop-element-attached-top.drop-element-attached-right.drop-target-attached-bottom .drop-content {
+    margin-top: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-top.drop-element-attached-right.drop-target-attached-bottom .drop-content:before {
+      bottom: 100%;
+      right: 10px;
+      border-bottom-color: white;
+      border-top: 0; }
+  .drop-element.drop-theme-menu.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-top .drop-content {
+    margin-bottom: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-top .drop-content:before {
+      top: 100%;
+      left: 10px;
+      border-top-color: white;
+      border-bottom: 0; }
+  .drop-element.drop-theme-menu.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-top .drop-content {
+    margin-bottom: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-top .drop-content:before {
+      top: 100%;
+      right: 10px;
+      border-top-color: white;
+      border-bottom: 0; }
+  .drop-element.drop-theme-menu.drop-element-attached-top.drop-element-attached-right.drop-target-attached-left .drop-content {
+    margin-right: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-top.drop-element-attached-right.drop-target-attached-left .drop-content:before {
+      top: 10px;
+      left: 100%;
+      border-left-color: white;
+      border-right: 0; }
+  .drop-element.drop-theme-menu.drop-element-attached-top.drop-element-attached-left.drop-target-attached-right .drop-content {
+    margin-left: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-top.drop-element-attached-left.drop-target-attached-right .drop-content:before {
+      top: 10px;
+      right: 100%;
+      border-right-color: white;
+      border-left: 0; }
+  .drop-element.drop-theme-menu.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-left .drop-content {
+    margin-right: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-left .drop-content:before {
+      bottom: 10px;
+      left: 100%;
+      border-left-color: white;
+      border-right: 0; }
+  .drop-element.drop-theme-menu.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-right .drop-content {
+    margin-left: 10px; }
+    .drop-element.drop-theme-menu.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-right .drop-content:before {
+      bottom: 10px;
+      right: 100%;
+      border-right-color: white;
+      border-left: 0; }
+
+.drop-element.drop-theme-menu {
+  z-index: 1000; }
+
+.drop-element.drop-theme-menu .drop-content {
+  padding: 4px 8px;
+  /* Display gap even when the arrow is missing.
+   * https://github.com/HubSpot/drop/issues/118 */
+  margin-top: 10px;
+  margin-bottom: 10px; }
+
+.drop-element.drop-theme-menu .drop-content .menu-item {
+  padding: 0 8px;
+  margin: 0 -8px;
+  cursor: pointer;
+  user-select: none; }
+  .drop-element.drop-theme-menu .drop-content .menu-item.default {
+    background: #f5f5f5;
+    color: #444; }
+  .drop-element.drop-theme-menu .drop-content .menu-item:hover {
+    background: #286090 !important;
+    color: white !important; }
+  .drop-element.drop-theme-menu .drop-content .menu-item.active::before {
+    content: '•'; }
+
+/* Make sure the hidden triangle for pinned dropdowns does not block clicks. */
+.drop-element.drop-theme-menu.drop-pinned .drop-content:before {
+  display: none; }

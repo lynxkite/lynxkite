@@ -551,11 +551,13 @@ angular.module('biggraph')
             workspaceZoom = 0;
           };
 
-          scope.saveSelectionAsCustomBox = function(name, success, error) {
+          scope.saveSelectionAsCustomBox = function(name, done) {
             const b = scope.workspace.saveAsCustomBox(
               scope.selectedBoxIds, name, 'Created from ' + scope.workspaceName);
-            scope.selectedBoxIds = [b.customBox.id];
-            b.promise.then(success, error);
+            b.promise.finally(done).then(() => {
+              scope.selectedBoxIds = [b.customBox.id];
+              scope.saveSelectionAsCustomBoxInputOpen = false;
+            });
           };
           const hk = hotkeys.bindTo(scope);
           hk.add({

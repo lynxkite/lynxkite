@@ -8,13 +8,13 @@ a dataset. It often makes data easy to explore and visualize.
 https://en.wikipedia.org/wiki/Principal_component_analysis[Principal Component Analysis]
 
 ====
-[[output_name1]] First dimension name::
+[p-output_name1]#First dimension name#::
 The first dimension will be stored as a Double attribute using this name.
 
-[[output_name2]] Second dimension name::
+[p-output_name2]#Second dimension name#::
 The second dimension will be stored as a Double attribute using this name.
 
-[[features]] Feature attributes::
+[p-features]#Feature attributes#::
 Attributes to be used as inputs for the dimension reduction. 
 
 ====

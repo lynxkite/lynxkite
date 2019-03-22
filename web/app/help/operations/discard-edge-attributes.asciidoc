@@ -3,6 +3,6 @@
 Throws away edge attributes.
 
 ====
-[[name]] Name::
+[p-name]#Name#::
 The attributes to discard.
 ====

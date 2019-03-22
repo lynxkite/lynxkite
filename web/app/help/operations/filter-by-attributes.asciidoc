@@ -12,23 +12,23 @@ age is more than ten.
 
 The filtering syntax depends on the type of the attribute in most cases.
 
-[[ref1]] Match all filter::
+[p-ref1]#Match all filter#::
 For every attribute type `*` matches all defined values. This is useful for discarding
 vertices/edges where a specific attribute is undefined.
 
-[[ref2]] Comma separated list::
+[p-ref2]#Comma separated list#::
 This filter is a comma-separated list of values you want to match. It can be used for
 `String`, `Double`, and `Long` types. For example `medium,high` would be a String filter
 to match these two values only, e.g., it would exclude `low` values. Another example is `19,20,30`.
 
-[[ref3]] Comparison filters::
+[p-ref3]#Comparison filters#::
 These filters are available for `String`, `Double`, and `Long` types.
 You can specify bounds, with the `<`, `>`, `&lt;=`, `>=` operators;
 furthermore, `=` and `==` are also accepted as operators, providing exact matching.
 For example `>=12.5` will match values no less than 12.5. Another example is `&lt;=apple`: this matches
 the word `apple` itself plus those words that come before `apple` in a lexicographic ordering.
 
-[[ref4]] Interval filters::
+[p-ref4]#Interval filters#::
 For `String`, `Double`, and `Long` types you can specify intervals with brackets.
 The parenthesis (`( )`) denotes an exclusive boundary
 and the square bracket (`[ ]`) denotes an inclusive boundary. The lower and upper boundaries can be
@@ -38,7 +38,7 @@ For example, `[0,10)` will match _x_ if 0 &le; _x_ < 10. Another example is
 assuming that the filtered attribute is question is a string representing a date in the given format (`YYYY-MM-DD`).
 
 
-[[ref5]] Regex filters::
+[p-ref5]#Regex filters#::
 For `String` attributes, regex filters can also be applied. The following tips and examples
 can be useful:
 * `regex(xyz)` for finding strings that contain `xyz`.
@@ -51,13 +51,13 @@ can be useful:
 * Regex is case sensitive.
 * For a more detailed explanation see https://en.wikipedia.org/wiki/Regular_expression
 
-[[ref6]] Pairwise interval filters::
+[p-ref6]#Pairwise interval filters#::
 For the `(Double, Double)` type, you can use interval filters to filter the first and second
 coordinates. List the intervals for the first and second coordinates separated with a comma.
 Intervals can be specified with brackets, just like for the simple interval filters.
 For example `[0,2), [3,4]` will match (x, y) if 0 &le; x < 2 and 3 &le; y &le; 4.
 
-[[ref7]] All and exists filters::
+[p-ref7]#All and exists filters#::
 These filters can be used for attributes whose type is `Vector`.
 The filter `all(...)` will match the `Vector` only when the internal filter matches all elements of the
 `Vector`. You can also use `forall` and `Ɐ` as synonyms. For example `all(<0)` for a `Vector[Double]` will
@@ -70,7 +70,7 @@ For example `any(male)` for a `Vector[String]` will match when the Vector contai
 `male`.  (This would not include empty vectors, but would include those where all elements are
 `male`.)
 
-[[ref8]] Negation filter::
+[p-ref8]#Negation filter#::
 Any filter can be prefixed with `!` to negate it. For example `!medium` will exclude
 `medium` values. Another typical usecase for this is specifying `!` (a single exclamation mark
 character) as the filter for a String attribute. This is interpreted as non-empty, so it will
@@ -78,7 +78,7 @@ restrict to those vertices/edges where the String attribute is defined and its v
 string. Remember, all filters work on defined values only, so `!*` will not match any
 vertices/edges.
 
-[[ref9]] Quoted strings::
+[p-ref9]#Quoted strings#::
 If you need a string filter that contains a character with a special meaning (e.g., `>`), use double quotes around
 the string. E.g., `>"=apple"` matches exactly those strings that are lexicographically greater than
 the string `=apple`. All characters but quote (`"`) and backslash (`\`) retain their

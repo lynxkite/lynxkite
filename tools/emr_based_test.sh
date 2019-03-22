@@ -192,7 +192,7 @@ ENDSSH
     sleep 15
 
     pushd web
-    PORT=4044 gulp test || echo "Frontend tests failed."
+    PORT=4044 npx gulp test || echo "Frontend tests failed."
     popd
 
     pkill -TERM -P ${CONNECTION_PID}

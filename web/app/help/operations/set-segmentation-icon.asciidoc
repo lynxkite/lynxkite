@@ -9,9 +9,9 @@ https://www.google.com/get/noto/help/emoji/[Google Noto Font].
 This operation is more easily accessed from the segmentation's dropdown menu in the project view.
 
 ====
-[[name]] Segmentation::
+[p-name]#Segmentation#::
 The segmentation to highlight.
 
-[[icon]] Icon::
+[p-icon]#Icon#::
 One of the supported icon names, such as `snowman_without_snow`. Leave empty to _remove_ the icon.
 ====

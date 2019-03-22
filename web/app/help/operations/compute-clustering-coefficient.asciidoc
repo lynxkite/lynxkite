@@ -9,6 +9,6 @@ highly interconnected, 0.0 means there are no edges between the
 neighbors of the vertex.
 
 ====
-[[name]] Attribute name::
+[p-name]#Attribute name#::
 The new attribute will be created under this name.
 ====
