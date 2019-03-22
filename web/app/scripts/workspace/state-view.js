@@ -14,6 +14,7 @@ angular.module('biggraph')
       },
       link: function(scope) {
         scope.instruments = [];
+        scope.root = { snapshotNameOpen: false }; // Dealing with ng-if scopes.
         scope.$watch('plug.stateId', update);
         let lastJson;
 
@@ -62,12 +63,11 @@ angular.module('biggraph')
           update();
         };
 
-        scope.createSnapshot = function(stateId, saveAsName, success, error) {
-          const postOpts = { reportErrors: false };
+        scope.createSnapshot = function(stateId, saveAsName, done) {
           util.post('/ajax/createSnapshot', {
             name: saveAsName,
             id: stateId,
-          }, postOpts).then(success, error);
+          }).finally(done).then(() => scope.root.snapshotNameOpen = false);
         };
 
         scope.graphray = function() {

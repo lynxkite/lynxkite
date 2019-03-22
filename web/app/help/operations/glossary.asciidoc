@@ -13,35 +13,35 @@ See <<jdbc-details>> for more details.
 end::database-access[]
 
 tag::database-import[]
-[[db]] Database::
+[p-db]#Database#::
 include::glossary.asciidoc[tag=database-access]
 
-[[table]] Table or view::
+[p-table]#Table or view#::
 Table to import from. This can be anything that can be put into the `SELECT * FROM table`
 statement.
 
-[[columns]] Columns::
+[p-columns]#Columns#::
 The comma-separated list of columns to import.
 
-[[key]] Key column::
+[p-key]#Key column#::
 This numerical column is used to partition the SQL query. The range from `min(key)` to `max(key)`
 will be split into a sub-range for each Spark worker, so they can each query a part of the data in
 parallel.
 end::database-import[]
 
 tag::database-export[]
-[[db]] Database::
+[p-db]#Database#::
 The database to write to.
 +
 include::{g}[tag=database-access]
 
-[[table]] Table::
+[p-table]#Table#::
 The table to create in the database.
 
-[[attrs]] Attributes::
+[p-attrs]#Attributes#::
 Attributes to export.
 
-[[delete]] Overwrite table if it exists::
+[p-delete]#Overwrite table if it exists#::
 If disabled, the operation will fail if the target table already existis.
 If enabled, all data in the table will be deleted before inserting the new data. Be careful!
 end::database-export[]
@@ -58,13 +58,13 @@ There are two ways to access the exported data:
 end::file-export[]
 
 tag::csv-import[]
-[[files]] Files::
+[p-files]#Files#::
 Upload a file using the button on the right, or specify the path to an existing file set.
 Wildcard (`+foo/*.csv+`) and glob (`+foo/{bar,baz}.csv+`) patterns are accepted.
 +
 The file must be specified as a <<prefixed-paths, prefixed path>>, such as `+MY_ROOT$dir/*.csv+`.
 
-[[header]] Header::
+[p-header]#Header#::
 The list of column names. This parameter serves two purposes:
 +
  - Each column specified will be imported as an attribute.
@@ -72,40 +72,40 @@ The list of column names. This parameter serves two purposes:
 +
 When left as `<read first line>`, the header is read automatically from the file.
 
-[[delimiter]] Delimiter::
+[p-delimiter]#Delimiter#::
 The column delimiter in the CSV. Typical values are `,` (comma), `;` (semicolon), `\t` (tab).
 
-[[omitted]] (optional) Comma separated list of columns to omit::
+[p-omitted]#(optional) Comma separated list of columns to omit#::
 If you don't want to read all columns of your CSV, list here the name of columns you don't need.
 
-[[filter]] (optional) Filtering expression::
+[p-filter]#(optional) Filtering expression#::
 A JavaScript expression can be provided here to restrict the import to lines that match a
 condition. For example `id != ''` would ignore lines where the `id` column is empty.
 
-[[allow_corrupt_lines]] Tolerate ill-formed lines::
+[p-allow_corrupt_lines]#Tolerate ill-formed lines#::
 When set to `no`, the import process will stop with an error as soon as it encounters
 a line that does not match the header. When set to `yes`, erroneous lines will be
 silently skipped.
 end::csv-import[]
 
 tag::table-import[]
-[[table]] Table::
+[p-table]#Table#::
 The table to import from.
 end::table-import[]
 
 tag::import-box[]
-[[imported_columns]] Columns to import::
+[p-imported_columns]#Columns to import#::
 The columns to import. Leave empty to import all columns.
 
-[[limit]] Limit::
+[p-limit]#Limit#::
 Number of rows to import at the most. Leave empty to import all rows.
 
-[[sql]] SQL::
+[p-sql]#SQL#::
 Spark SQL query to execute before writing the imported data to storage. The input table
 can be referred to as `this` in the query. For example:
 `SELECT * FROM this WHERE date = '2019-01-01'`
 
-[[imported_table]] Table GUID::
+[p-imported_table]#Table GUID#::
 Click this button to actually kick off the import. You can click it again later to repeat the
 import. (Useful if the source data has changed.)
 end::import-box[]
@@ -127,13 +127,13 @@ Generates a new random Double attribute with the specified distribution, which c
 a Standard Uniform distribution where values fall between 0 and 1.
 
 ====
-[[name]] Attribute name::
+[p-name]#Attribute name#::
 The new attribute will be created under this name.
 
-[[dist]] Distribution::
+[p-dist]#Distribution#::
 The desired random distribution.
 
-[[seed]] Seed::
+[p-seed]#Seed#::
 The random seed.
 +
 include::{g}[tag=random-seed]
@@ -238,20 +238,20 @@ You can browse the list of available tables and columns by clicking on the
 button.
 
 ====
-[[summary]] Summary::
+[p-summary]#Summary#::
 This summary will be displayed below the box in the workspace. Distinguishing SQL boxes this way
 can make the workspace easier to understand.
 
-[[input_names]] Input names::
+[p-input_names]#Input names#::
 Comma-separated list of names used to refer to the inputs of the box.
 +
 For example, you can set it to `accounts` (for a single-input SQL box) and then write `select
 count(*) from accounts` as the query.
 
-[[sql]] SQL query::
+[p-sql]#SQL query#::
 The query. Press Ctrl-Enter to save your changes while staying in the editor.
 
-[[persist]] Persist result::
+[p-persist]#Persist result#::
 If enabled, the output table will be saved to disk once it is calculated. If disabled, the query
 will be re-executed each time its output is used. Persistence can improve performance at the cost of
 disk space.
@@ -269,7 +269,7 @@ This box represents computation outside of LynxKite. See the `@external` decorat
 API.
 
 ====
-[[snapshot_prefix]] Snapshot prefix::
+[p-snapshot_prefix]#Snapshot prefix#::
 The external computation will save the results as a snapshot. This is the prefix of the name of that
 snapshot.
 ====

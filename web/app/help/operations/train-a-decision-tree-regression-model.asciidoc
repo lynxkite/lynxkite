@@ -16,29 +16,29 @@ difference is that these buckets ("classes") are invented by the algorithm durin
 the training in order to minimize the variance.
 
 ====
-[[name]] Model name::
+[p-name]#Model name#::
 The model will be stored as a scalar using this name.
 
-[[label]] Label attribute::
+[p-label]#Label attribute#::
 The vertex attribute the model is trained to predict.
 
-[[features]] Feature attributes::
+[p-features]#Feature attributes#::
 The attributes the model learns to use for making predictions.
 
-[[maxbins]] Maximum number of bins::
+[p-maxbins]#Maximum number of bins#::
 Number of bins used when discretizing continuous features.
 
-[[maxdepth]] Maximum depth::
+[p-maxdepth]#Maximum depth#::
 Maximum depth of the tree.
 
-[[mininfogain]] Minimum information gain::
+[p-mininfogain]#Minimum information gain#::
 Minimum information gain for a split to be considered as a tree node.
 
-[[minInstancesPerNode]] Minimum instances per node::
+[p-minInstancesPerNode]#Minimum instances per node#::
 For a node to be split further, the split must improve at least this much
 (in terms of information gain).
 
-[[seed]] Seed::
+[p-seed]#Seed#::
 We maximize the information gain only among a subset of the possible splits.
 This random seed is used for selecting the set of splits we consider at a node.
 ====

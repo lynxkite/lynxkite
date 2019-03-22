@@ -19,7 +19,7 @@ represents the number of phone numbers merged into one vertex.
 
 *Parameters*
 
-[[key]] Match by::
+[p-key]#Match by#::
 If a set of vertices have the same value for the selected attribute, they will all be merged
 into a single vertex.
 

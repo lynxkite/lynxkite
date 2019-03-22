@@ -8,6 +8,6 @@ https://en.wikipedia.org/wiki/Markdown#Example[Markdown] can be used to present 
 embed links and images.
 
 ====
-[[comment]] Comment::
+[p-comment]#Comment#::
 Markdown text to be displayed in the workspace.
 ====

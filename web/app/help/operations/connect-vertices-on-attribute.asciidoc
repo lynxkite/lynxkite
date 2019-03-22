@@ -9,9 +9,9 @@ For example, if you connect nodes based on the "name" attribute, then everyone c
 Smith" will be connected to all the other "John Smiths".
 
 ====
-[[fromattr]] Source attribute::
+[p-fromattr]#Source attribute#::
 An A{to}B edge is generated when this attribute on A matches the destination attribute on B.
 
-[[toattr]] Destination attribute::
+[p-toattr]#Destination attribute#::
 An A{to}B edge is generated when the source attribute on A matches this attribute on B.
 ====

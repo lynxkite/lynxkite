@@ -10,6 +10,6 @@ This operation can be used together with <<Use base project as segmentation>> to
 segmentation of neighborhoods.
 
 ====
-[[direction]] Direction::
+[p-direction]#Direction#::
 Adds the neighbors to the segments using this direction.
 ====

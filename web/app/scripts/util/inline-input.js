@@ -2,7 +2,7 @@
 // Can be used to provide a name when forking, for example.
 'use strict';
 
-angular.module('biggraph').directive('inlineInput', function(util) {
+angular.module('biggraph').directive('inlineInput', function() {
   return {
     restrict: 'E',
     scope: {
@@ -18,11 +18,7 @@ angular.module('biggraph').directive('inlineInput', function(util) {
         scope.enabled = false;
         scope.onsubmit({
           input: scope.input || '',
-          success: scope.close,
-          error: function(error) {
-            scope.enabled = true;
-            util.ajaxError(error); // We could do fancy inline error reporting one day.
-          },
+          done: () => scope.enabled = true,
         });
       };
 

@@ -5,10 +5,12 @@
   left: 25%;
   width: 50%;
   text-align: center;
+  pointer-events: none; /* Do not block interactions under this div. */
 }
 
 .top-alert-wrapper {
   margin: 20px 0;
+  pointer-events: none; /* Do not block interactions under this div. */
 }
 
 .top-alert {
@@ -19,6 +21,7 @@
   color: #9b2016; /* Brand color. */
   box-shadow: 0 5px 50px 0 rgba(0, 0, 0, 0.3);
   border-radius: 5px;
+  pointer-events: auto; /* Allow interactions on the actual alerts. */
 }
 
 .top-alert-body {

@@ -1,7 +1,7 @@
 // The modal dialog for error reporting.
 'use strict';
 
-angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $modalInstance, alert) {
+angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $uibModalInstance, alert) {
   $scope.message = alert.message || '';
   $scope.details = alert.details ? JSON.stringify(alert.details, null, '  ') : undefined;
 
@@ -23,6 +23,6 @@ angular.module('biggraph').controller('ReportErrorCtrl', function($scope, $modal
   );
 
   $scope.close = function() {
-    $modalInstance.dismiss('close');
+    $uibModalInstance.dismiss('close');
   };
 });

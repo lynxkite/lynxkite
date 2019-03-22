@@ -5,6 +5,6 @@ by operations that generate new vertex sets. (In most cases this is already avai
 But you can regenerate it with this operation if necessary.
 
 ====
-[[name]] Attribute name::
+[p-name]#Attribute name#::
 The ID attribute will be saved under this name.
 ====

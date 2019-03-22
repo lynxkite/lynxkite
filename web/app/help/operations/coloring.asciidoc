@@ -8,6 +8,6 @@ and asynchronously request them.
 https://en.wikipedia.org/wiki/Graph_coloring
 
 ====
-[[name]] Attribute name::
+[p-name]#Attribute name#::
 The new attribute will be created under this name.
 ====

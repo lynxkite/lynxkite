@@ -28,15 +28,15 @@ original edges in the target graph are dropped, and the source edges (along with
 their attributes) will take their place.
 
 ====
-[[attrs]] Attributes::
+[p-attrs]#Attributes#::
 Attributes that should be joined to the project. They overwrite attributes in the
 target project which have identical names.
 
-[[segs]] Segmentations::
+[p-segs]#Segmentations#::
 Segmentations to join to the project. They overwrite segmentations in the target
 side of the project which have identical names.
 
-[[edge]] Copy edges::
+[p-edge]#Copy edges#::
 When set, the edges of the source project (and their attributes) will replace
 the edges of the target project.
 

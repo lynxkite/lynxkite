@@ -10,20 +10,20 @@ to the cluster with the nearest mean, serving as a prototype of the cluster.
 
 For best results it may be necessary to scale the features before training the model.
 ====
-[[name]] Model name::
+[p-name]#Model name#::
 The model will be stored as a scalar using this name.
 
-[[features]] Feature attributes::
+[p-features]#Feature attributes#::
 Attributes to be used as inputs for the training algorithm. The trained model
 will have a list of features with the same names and semantics.
 
-[[k]] K clusters::
+[p-k]#K clusters#::
 The number of clusters to be created.
 
-[[max_iter]] Maximum iterations::
+[p-max_iter]#Maximum iterations#::
 The maximum number of iterations (>=0).
 
-[[seed]] Seed::
+[p-seed]#Seed#::
 The random seed.
 
 ====

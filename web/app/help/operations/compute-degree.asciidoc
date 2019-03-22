@@ -9,10 +9,10 @@ the vertex and the neighboring vertex); whereas choosing one of the 'neighbors' 
 will result in each neighboring vertex counted once.
 
 ====
-[[name]] Attribute name::
+[p-name]#Attribute name#::
 The new attribute will be created under this name.
 
-[[direction]] Count::
+[p-direction]#Count#::
  - `incoming edges`: Count the edges coming in to each vertex.
  - `outgoing edges`: Count the edges going out of each vertex.
  - `all edges`: Count all the edges going in or out of each vertex.

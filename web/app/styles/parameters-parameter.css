@@ -1,0 +1,12 @@
+parameters-parameter.operation-attribute-entry .table-condensed td {
+  padding: 0;
+}
+parameters-parameter.operation-attribute-entry .table-condensed .form-control {
+  padding: 6px;
+  border-radius: 0;
+  border-right: 0;
+  -webkit-appearance: none;
+}
+parameters-parameter.operation-attribute-entry button {
+  border-radius: 0;
+}

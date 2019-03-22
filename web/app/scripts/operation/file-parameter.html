@@ -5,13 +5,13 @@
         ng-hide="uploading"
         class="form-control"
         ng-model="filename">
-      <progressbar ng-show="uploading" value="progress">
+      <uib-progressbar ng-show="uploading" value="progress">
         {{progress}}%
-      </progressbar>
+      </uib-progressbar>
     </td>
     <td>
       <span class="clicky glyphicon glyphicon-cloud-upload"
-        tooltip="Upload" ng-click="dialog()"></span>
+        drop-tooltip="Upload" ng-click="dialog()"></span>
     </td>
   </tr>
 </table>

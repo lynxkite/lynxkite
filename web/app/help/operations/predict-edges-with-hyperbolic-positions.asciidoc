@@ -9,28 +9,28 @@ Vertices must have two _Double_ vertex attributes to be
 used as radial and angular coordinates.
 
 ====
-[[size]] Number of predictions::
+[p-size]#Number of predictions#::
 The number of edges to generate.
 The total number will be _2 * size_ because every
 edge is added in two directions.
 
-[[externaldegree]] External degree::
+[p-externaldegree]#External degree#::
 The number of edges a vertex creates from itself
  upon addition to the growth simulation graph.
 
-[[internaldegree]] Internal degree::
+[p-internaldegree]#Internal degree#::
 The average number of edges created between older vertices whenever 
 a new vertex is added to the growth simulation graph.
 
-[[exponent]] Exponent::
+[p-exponent]#Exponent#::
 The exponent of the power-law degree distribution. 
 Values can be 0.5 - 1, endpoints excluded.
 
-[[radial]] Radial::
+[p-radial]#Radial#::
 The vertex attribute to be used as radial coordinates.
 Should not contain negative values.
 
-[[angular]] Angular::
+[p-angular]#Angular#::
 The vertex attribute to be used as angular coordinates.
 Values should be 0 - 2 * Pi.
 ====
