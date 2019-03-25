@@ -277,8 +277,6 @@ delete data files. It can be integer or double value.
 # export KITE_CLEANER_MIN_AGE_DAYS=14
 ```
 
-===========================================================
-
 The ecosystem docker image comes with JupyterLab, which can be used to run
 LK Python API code. The default port of JupyterLab is 8888, but it can be changed.
 ```
@@ -287,7 +285,7 @@ LK Python API code. The default port of JupyterLab is 8888, but it can be change
 
 JupyterLab is set up to use password authentication. The default password is
 `LynxKite&JupyterLab`. Only the hashed version of the password is stored in
-the configuration. To create a new password and get the hashed version 
+the configuration. To create a new password and get the hashed version
 of it, use the following line in a Python notebook:
 `from notebook.auth import passwd;passwd()`.
 ```
