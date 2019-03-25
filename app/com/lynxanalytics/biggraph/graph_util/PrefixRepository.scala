@@ -178,7 +178,7 @@ object PrefixRepository {
   val prefixRepository = {
     val prefixDefinitionFile = LoggedEnvironment.envOrElse("KITE_PREFIX_DEFINITIONS", "")
     val nonPrefixedPathsAreAllowed =
-      LoggedEnvironment.envOrElse("ALLOW_NON_PREFIXED_PATHS", "false").toBoolean
+      LoggedEnvironment.envOrElse("KITE_ALLOW_NON_PREFIXED_PATHS", "false").toBoolean
     if (prefixDefinitionFile.nonEmpty)
       new PrefixRepositoryImpl(Source.fromFile(prefixDefinitionFile).getLines.toList, nonPrefixedPathsAreAllowed)
     else
