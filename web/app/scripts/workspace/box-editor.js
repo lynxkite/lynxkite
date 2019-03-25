@@ -51,6 +51,7 @@ angular.module('biggraph')
             .then(
               function success(boxMeta) {
                 if (scope.lastRequest === currentRequest) {
+                  scope.box = undefined; // Avoid saving current contents.
                   scope.newOpSelected(box, boxMeta);
                 }
               },
