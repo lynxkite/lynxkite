@@ -168,12 +168,21 @@ case class Scalar[T: TypeTag](
   val typeTag = implicitly[TypeTag[T]]
 }
 
+class DuplicateColumnException(message: String) extends AssertionError(message) {}
+
 case class Table(
     source: MetaGraphOperationInstance,
     name: Symbol,
     schema: spark.sql.types.StructType)
   extends MetaGraphEntity {
   assert(name != null, s"name is null for $this")
+  val columnNames = schema.map(x => x.name)
+  val duplicates =
+    columnNames.groupBy(identity).map { case (x, gr) => (x, gr.size) }.filter(_._2 > 1).keys
+  val msg = duplicates.mkString(", ")
+  if (duplicates.size > 0) {
+    throw new DuplicateColumnException(s"Duplicate column name(s) found: $msg.")
+  }
 }
 
 case class InputSignature(
