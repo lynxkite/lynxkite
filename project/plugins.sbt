@@ -12,3 +12,6 @@ addSbtPlugin("org.scalariform" % "sbt-scalariform" % "1.8.0")
 
 // Package dependencies. Run "dependencyList" or "dependencyGraph" to access the data.
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.8.2")
+
+// Adds the "dumpLicenseReport" command.
+addSbtPlugin("com.typesafe.sbt" % "sbt-license-report" % "1.2.0")
