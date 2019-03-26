@@ -64,6 +64,12 @@ $(pip): python_requirements.txt
 	ecosystem/docker/release/build.sh $(VERSION) && touch $@
 .build/shell_ui-test-passed: $(shell $(find) shell_ui) .eslintrc.yaml
 	shell_ui/test.sh && touch $@
+scala-dependency-licenses.md: build.sbt
+	./tools/install_spark.sh && sbt dumpLicenseReport && cp target/license-reports/biggraph-licenses.md $@
+javascript-dependency-licenses.txt: web/package.json
+	cd web && LC_ALL=C yarn licenses generate-disclaimer > ../$@
+javascript-dependency-licenses.md: web/package.json
+	cd web && LC_ALL=C yarn licenses list | egrep '^└─|^├─|^│  └─|^│  ├─|^   └─|^   ├─' > ../$@
 
 # Short aliases for command-line use.
 .PHONY: backend
@@ -97,3 +103,5 @@ test: backend-test frontend-test ecosystem-test
 .PHONY: big-data-test
 big-data-test: .build/ecosystem-done
 	./test_big_data.py --test_set_size ${TEST_SET_SIZE} --rm
+.PHONY: licenses
+licenses: scala-dependency-licenses.md javascript-dependency-licenses.txt javascript-dependency-licenses.md
