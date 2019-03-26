@@ -2,6 +2,7 @@
 'use strict';
 
 angular.module('biggraph').directive('entity', function($timeout, axisOptions, util) {
+  /* globals chroma */
   return {
     restrict: 'E',
     scope: {
@@ -166,6 +167,37 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       };
       scope.availableVisualizationsLowerCase = function() {
         return scope.availableVisualizations().map(function(x) { return x.toLowerCase(); });
+      };
+
+      scope.colors = function(cm) {
+        if (cm.includes(' 🗘')) {
+          return chroma.brewer[cm.replace(' 🗘', '')];
+        } else {
+          return chroma.brewer[cm].slice().reverse();
+        }
+      };
+      const qualitativeColorMaps =
+        ['Set2', 'Accent', 'Set1', 'Set3', 'Dark2', 'Paired', 'Pastel2', 'Pastel1'];
+      // We only offer the sequential and divergent color maps for numerical attributes.
+      scope.availableColorMaps = Object.keys(chroma.brewer)
+        .filter(k => k[0] === k[0].toUpperCase() && !qualitativeColorMaps.includes(k));
+      // Also offer reversed versions.
+      scope.availableColorMaps.push(...scope.availableColorMaps.map(cm => cm + ' 🗘'));
+      scope.availableColorMaps.sort();
+      scope.colorMapKind = function() {
+        if (scope.kind === 'vertex-attribute' && scope.isFilter('color')) {
+          return 'vertexColorMap';
+        }
+        if (scope.kind === 'edge-attribute' && scope.isFilter('edge color')) {
+          return 'edgeColorMap';
+        }
+        if (scope.kind === 'vertex-attribute' && scope.isFilter('label color')) {
+          return 'labelColorMap';
+        }
+      };
+
+      scope.isFilter = function (kind) {
+        return scope.side.filterApplied([kind], scope.title()).length > 0;
       };
 
       function vertexAttributeVisualizations() {

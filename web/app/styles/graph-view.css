@@ -45,10 +45,11 @@ svg .edge {
 svg .edge.invisible-edge {
  opacity: 0;
 }
-svg #arrow {
+svg .edge .edge-arrow {
+  stroke: none;
   fill: #0089c4; /* Brand color. */
 }
-svg #arrow-highlight-out {
+svg .edge.highlight-out .edge-arrow {
   fill: white;
 }
 svg .edge.highlight-out {
@@ -57,7 +58,7 @@ svg .edge.highlight-out {
 svg .edge.highlight-out text {
   fill: #39bcf3; /* Brand color. */
 }
-svg #arrow-highlight-in {
+svg .edge.highlight-in .edge-arrow {
   fill: #39bcf3; /* Brand color. */
 }
 svg .edge.highlight-in {

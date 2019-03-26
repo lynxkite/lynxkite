@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - 50+ different color maps are now available for vertex and edge coloring,
+   defaulting to Viridis for new visualization boxes.
+
 ### 2.6.2
 
  - Bugfixes for ecosystem Docker image and LynxKite.
@@ -18,9 +21,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
  - Scheduling of snapshot sequences and workspace sequences is timezone aware
    in Python API.
-
- - Added basic integration with Neo4j through an `import box` operation. Allows
-   importing data from either `Node` or `Relationship` objects from Neo4j.
+ - Added basic integration with Neo4j through the _Import Neo4j_ operation. Allows
+   importing data from either _Node_ or _Relationship_ objects from Neo4j.
 
 ### 2.6.0
 

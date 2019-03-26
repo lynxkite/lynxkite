@@ -126,3 +126,20 @@ the attribute value. Coloring is available for `String` and `Double` attributes.
 
 Width::
 The width of edge will be set based on this attribute. Only available for numeric attributes.
+
+#### Color maps
+
+When an attribute is visualized as _Vertex color_, _Label color_, or _Edge color_, you can also
+choose a color map in the same menu. LynxKite offers a wide choice of sequential and divergent
+color maps. Divergent color maps will have their neutral color assigned to zero values, while
+sequential color maps simply span from the minimal value to the maximal.
+
+Lightness is an important property of color maps. A good color map is as linear as possible in
+lightness charts. For more discussion see Matplotlib's
+https://matplotlib.org/users/colormaps.html[Choosing Colormaps] article.
+
+Lightness charts for the available color maps:
+
+image::images/sequential-colormaps.png[Sequential colormaps]
+
+image::images/divergent-colormaps.png[Divergent colormaps]

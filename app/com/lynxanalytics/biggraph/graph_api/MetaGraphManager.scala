@@ -217,6 +217,7 @@ class MetaGraphManager(val repositoryPath: String) {
             s" Recreated operation reports: $found")
         internalApply(inst)
       } catch {
+        case e: DuplicateColumnException => log.info(s"Could not load file $file: $e")
         case e: Throwable => throw new Exception(s"Failed to load $file.", e)
       }
     }

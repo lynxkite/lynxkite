@@ -2,7 +2,7 @@
 'use strict';
 
 angular.module('biggraph').directive('graphView', function(util, $compile, $timeout) {
-  /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT, tinycolor */
+  /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT, tinycolor, chroma */
   const svg = SVG_UTIL;
   const common = COMMON_UTIL;
   const directive = {
@@ -27,12 +27,14 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       };
       scope.$watch('graph.view', scope.updateGraph);
       scope.$watch('graph.view.$resolved', scope.updateGraph);
-      // An attribute change can happen without a graph data change. Watch them separately.
+      // Some changes can happen without a graph data change. Watch them separately.
       // (When switching from "color" to "slider", for example.)
-      util.deepWatch(scope, 'graph.left.vertexAttrs', scope.updateGraph);
-      util.deepWatch(scope, 'graph.right.vertexAttrs', scope.updateGraph);
-      util.deepWatch(scope, 'graph.left.edgeAttrs', scope.updateGraph);
-      util.deepWatch(scope, 'graph.right.edgeAttrs', scope.updateGraph);
+      for (let side of ['graph.left', 'graph.right']) {
+        for (let p of [
+          'vertexAttrs', 'edgeAttrs', 'vertexColorMap', 'labelColorMap', 'edgeColorMap']) {
+          util.deepWatch(scope, side + '.' + p, scope.updateGraph);
+        }
+      }
       scope.$on('$destroy', function() { scope.gv.clear(); });
       scope.$on('graphray', function() { scope.gv.graphray({ quality: 2 }); });
       scope.finalRender = function() { scope.gv.graphray({ quality: 9 }); };
@@ -118,11 +120,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.unregistration = []; // Cleanup functions to be called before building a new graph.
     this.rootElement = element;
     this.svg = element.find('svg.graph-view');
-    this.svg.append([
-      svg.marker('arrow'),
-      svg.marker('arrow-highlight-in'),
-      svg.marker('arrow-highlight-out'),
-    ]);
     this.root = svg.create('g', {'class': 'root'});
     this.svg.append(this.root);
     // Top-level mouse/touch listeners.
@@ -468,12 +465,21 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     return vs.filter(v => v.attrs[attr].defined).map(v => v.attrs[attr][type]);
   }
 
-  function doubleColorMap(values) {
+  function doubleColorMap(values, mapName) {
     const bounds = common.minmax(values);
+    const divergingScales =
+      ['Spectral', 'RdYlGn', 'RdBu', 'PiYG', 'PRGn', 'RdYlBu', 'BrBG', 'RdGy', 'PuOr'];
+    if (divergingScales.includes(mapName)) {
+      // For these scales we force the zero to be in the middle.
+      bounds.max = Math.max(bounds.max, -bounds.min);
+      bounds.min = Math.min(bounds.min, -bounds.max);
+      bounds.span = bounds.max - bounds.min;
+    }
+    const reversed = mapName && mapName.includes(' 🗘');
+    const scale = chroma.scale((mapName || 'LynxKite Classic').replace(' 🗘', ''));
     const colorMap = {};
-    for (let i = 0; i < values.length; ++i) {
-      const h = 300 + common.normalize(values[i], bounds) * 120;
-      colorMap[values[i]] = 'hsl(' + h + ',50%,42%)';
+    for (let v of values) {
+      colorMap[v] = scale(0.5 + common.normalize(v, bounds) * (reversed ? -1 : 1));
     }
     return colorMap;
   }
@@ -575,24 +581,34 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   Vertices.prototype.addColorLegend = function(colorMap, title) {
     this.addLegendLine(title);
     for (let attr in colorMap) {
-      const l = this.addLegendLine(attr || 'undefined', 10);
-      l.attr('style', 'fill: ' + colorMap[attr] || UNCOLORED);
+      const l = this.addLegendLine(attr || 'undefined', 20);
+      const x = parseInt(l.attr('x'));
+      const y = parseInt(l.attr('y'));
+      const square = svg.create('rect', {
+        x: x - 15, y: y - 7, width: 12, height: 12,
+        fill: colorMap[attr] || UNCOLORED, rx: 2 });
+      this.gv.legend.append(square);
     }
   };
 
+  const numberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 5 });
+  function humanize(x) {
+    return numberFormat.format(x);
+  }
+
   Vertices.prototype.setupColorMap = function(
-    siblings, colorMeta, legendTitle, colorKey) {
+    siblings, colorMeta, legendTitle, mapName, colorKey) {
     let resultMap;
     if (colorMeta) {
       colorKey = (colorKey === undefined) ? colorMeta.id : colorKey;
       const fullLegendTitle = legendTitle + ': ' + colorMeta.title;
       if (colorMeta.typeName === 'Double') {
         const values = mapByAttr(siblings, colorKey, 'double');
-        resultMap = doubleColorMap(values);
+        resultMap = doubleColorMap(values, mapName);
         const bounds = common.minmax(values);
         const legendMap = {};
-        legendMap['min: ' + bounds.min] = resultMap[bounds.min];
-        legendMap['max: ' + bounds.max] = resultMap[bounds.max];
+        legendMap['min: ' + humanize(bounds.min)] = resultMap[bounds.min];
+        legendMap['max: ' + humanize(bounds.max)] = resultMap[bounds.max];
         // only shows the min max values
         this.addColorLegend(legendMap, fullLegendTitle);
       } else if (colorMeta.typeName === 'String') {
@@ -644,11 +660,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
 
     const colorAttr = (side.vertexAttrs.color) ? side.vertexAttrs.color.id : undefined;
-    const colorMap = vertices.setupColorMap(data.vertices, side.vertexAttrs.color, 'Vertex Color');
+    const colorMap = vertices.setupColorMap(
+      data.vertices, side.vertexAttrs.color, 'Vertex Color', side.vertexColorMap);
 
     const labelColorAttr = (side.vertexAttrs.labelColor) ? side.vertexAttrs.labelColor.id : undefined;
     const labelColorMap = vertices.setupColorMap(
-      data.vertices, side.vertexAttrs.labelColor, 'Label Color');
+      data.vertices, side.vertexAttrs.labelColor, 'Label Color', side.labelColorMap);
 
     const opacityAttr = (side.vertexAttrs.opacity) ? side.vertexAttrs.opacity.id : undefined;
     let opacityMax = 1;
@@ -1457,7 +1474,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       widthKey = attrKey(side.edgeAttrs.width);
       colorKey = attrKey(side.edgeAttrs.edgeColor);
       colorMap = srcs.setupColorMap(
-        edges, side.edgeAttrs.edgeColor, 'Edge Color', colorKey);
+        edges, side.edgeAttrs.edgeColor, 'Edge Color', side.edgeColorMap, colorKey);
       labelKey = attrKey(side.edgeAttrs.edgeLabel);
     }
 
@@ -1692,14 +1709,16 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.dst = dst;
     this.w = w;
     this.first = svg.create('path', { 'class': 'first' });
+    this.arrow = svg.create('path', { 'class': 'edge-arrow' });
     this.second = svg.create('path', { 'class': 'second' });
     if (color) {
       this.first.attr({ style: 'stroke: ' + color });
+      this.arrow.attr({ style: 'fill: ' + color });
       this.second.attr({ style: 'stroke: ' + color });
     }
     const fontSize = 15;
     this.label = svg.create('text', { 'font-size': fontSize + 'px' }).text(label || '');
-    this.dom = svg.group([this.second, this.first, this.label], {'class': 'edge'});
+    this.dom = svg.group([this.arrow, this.second, this.first, this.label], {'class': 'edge'});
     const that = this;
     src.addMoveListener(function() { that.reposition(); });
     dst.addMoveListener(function() { that.reposition(); });
@@ -1765,15 +1784,15 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.setVisible(
       src.offsetter.side === dst.offsetter.side || (isInside(src) && isInside(dst)));
     const avgZoom = 0.5 * (src.offsetter.thickness + dst.offsetter.thickness);
-    const arrows = svg.arrows(src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom);
-    this.first[0].setAttribute('d', arrows[0]);
-    this.first[0].setAttribute('stroke-width', avgZoom * this.w);
-    this.second[0].setAttribute('d', arrows[1]);
-    this.second[0].setAttribute('stroke-width', avgZoom * this.w);
+    const strokeWidth = avgZoom * this.w;
+    const arrows =
+      svg.arrows(src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom, strokeWidth);
+    this.first.attr({ d: arrows[0], 'stroke-width': strokeWidth });
+    this.arrow.attr({ d: arrows[1] });
+    this.second.attr({ d: arrows[2], 'stroke-width': strokeWidth });
     const arcParams = svg.arcParams(
       src.screenX(), src.screenY(), dst.screenX(), dst.screenY(), avgZoom);
-    this.label[0].setAttribute('x', arcParams.x);
-    this.label[0].setAttribute('y', arcParams.y);
+    this.label.attr({ x: arcParams.x, y: arcParams.y });
   };
 
   return directive;
