@@ -44,9 +44,9 @@ export KITE_PREFIX_DEFINITIONS=
 # prefixes set up in a prefix definition file. This behavior can be changed by
 # setting KITE_ALLOW_NON_PREFIXED_PATHS to true: then it becomes possible to
 # specify any valid paths such as file:/home/user/kite_data/dir/data.csv
-# or s3n://awskey:awspassword@somedir/somefile. This setting is definitely
-# not recommended in production!
-
+# or s3n://awskey:awspassword@somedir/somefile. Be careful: all LynxKite users will
+# be able to read and write local and cluster files with the credentials of the LynxKite process.
+# Only allow this in restricted environments.
 export KITE_ALLOW_NON_PREFIXED_PATHS=false
 
 # Specify the PID file for LynxKite servers.
