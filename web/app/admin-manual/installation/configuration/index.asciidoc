@@ -7,6 +7,4 @@ variable is disabled by default in the shipped corresponding template file.
 
 include::kiterc.asciidoc[]
 
-include::emr.asciidoc[]
-
 include::prefix_definitions.asciidoc[]
