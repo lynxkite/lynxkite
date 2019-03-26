@@ -16,6 +16,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
    through the Python API. Data files not older than this protection period are not deleted
    by the cleaner. (`LynxKite.set_cleaner_min_age(days)`)
  - Ecosystem docker image now includes JupyterLab.
+ - LynxKite can be set up to allow normal file access (that is, circumvent its prefix
+   mechanism).
 
 ### 2.6.1
 
