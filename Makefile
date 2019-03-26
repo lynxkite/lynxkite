@@ -24,7 +24,7 @@ $(pip): python_requirements.txt
 	AIRFLOW_GPL_UNIDECODE=yes pip3 install --user -r python_requirements.txt && touch $@
 .build/backend-done: \
 	$(shell $(find) app project lib conf built-ins) tools/call_spark_submit.sh build.sbt README.md \
-	.build/gulp-done
+	.build/gulp-done licenses
 	./tools/install_spark.sh && sbt stage < /dev/null && touch $@
 .build/backend-test-passed: $(shell $(find) app test project conf) build.sbt
 	./tools/install_spark.sh && ./.test_backend.sh && touch $@
