@@ -100,9 +100,24 @@
     <div class="de-emph"> Visualize as... </div>
     <div class="menu-item"
          ng-repeat="vis in availableVisualizations()"
-         ng-class="{ active: side.filterApplied([vis.toLowerCase()], title()).length }"
+         ng-class="{ active: isFilter(vis.toLowerCase()) }"
          ng-click="side.toggleAttributeTitle(vis.toLowerCase(), title())"
          id="visualize-as-{{ vis | id }}"> {{ vis }} </div>
+  </div>
+
+  <div ng-show="colorMapKind()" class="visualization-menu"
+    style="max-height: 200px; overflow: hidden auto;">
+    <div class="de-emph"> Using color map... </div>
+    <div class="menu-item"
+         ng-repeat="cm in availableColorMaps"
+         ng-class="{ active: side.state[colorMapKind()] == cm }"
+         ng-click="side.state[colorMapKind()] = cm"
+         id="color-map-{{ cm }}"> {{ cm }}
+      <span
+        style="width: 100px; height: 10px; border: 1px solid black; display: inline-block;"
+        ng-style="{ background: 'linear-gradient(to left, {{ colors(cm).join(',') }})' }">
+      </span>
+    </div>
   </div>
 
   <input ng-show="side.state.attributeTitles.slider === title()"

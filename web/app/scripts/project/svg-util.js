@@ -50,12 +50,30 @@ const SVG_UTIL = {
     }
   },
 
-  arrows: function(ax, ay, bx, by, zoom) {
+  direction: function(ax, ay, bx, by) {
+    const dx = bx - ax;
+    const dy = by - ay;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d === 0) {
+      return { x: 0, y: 1 };
+    } else {
+      return { x: dx / d, y: dy / d };
+    }
+  },
+
+  arrows: function(ax, ay, bx, by, zoom, width) {
     const a = SVG_UTIL.arcParams(ax, ay, bx, by, zoom);
     const arcPfx = ' A ' + a.r + ' ' + a.r + ' 0 0 ';
     const arcSfx = a.x + ' ' + a.y + ' ';
+    const d = SVG_UTIL.direction(ax, ay, bx, by);
+    d.x *= width;
+    d.y *= width;
+    const left = (a.x + d.y - d.x) + ' ' + (a.y - d.x - d.y);
+    const right = (a.x - d.y - d.x) + ' ' + (a.y + d.x - d.y);
+    const tip = (a.x + d.x) + ' ' + (a.y + d.y);
     return [
       'M ' + ax + ' ' + ay + arcPfx + '0 ' + arcSfx,
+      'M ' + tip + ' L ' + left + ' L ' + right + ' z',
       'M ' + bx + ' ' + by + arcPfx + '1 ' + arcSfx
     ];
   },
@@ -64,16 +82,6 @@ const SVG_UTIL = {
     const g = SVG_UTIL.create('g', attrs);
     g.append(l);
     return g;
-  },
-
-  marker: function(id) {
-    const m = SVG_UTIL.create('marker');
-    m.attr({'id': id, 'orient': 'auto'});
-    m[0].setAttributeNS(null, 'viewBox', '-3 -5 7 10');
-    const p = SVG_UTIL.create('path');
-    p.attr({'d': 'M -3 -5 l 10 5 l -10 5 z'});
-    m.append(p);
-    return m;
   },
 
   create: function(tag, attrs) {
