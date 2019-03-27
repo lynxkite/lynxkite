@@ -34,7 +34,8 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Param("timestamp_format", "Timestamp format", defaultValue = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"),
       Choice("drop_leading_white_space", "Drop leading white space", FEOption.noyes),
       Choice("drop_trailing_white_space", "Drop trailing white space", FEOption.noyes),
-      NonNegInt("version", "Version", default = 0))
+      NonNegInt("version", "Version", default = 0),
+      Choice("overwrite", "Allow overwriting exported file", FEOption.noyes))
 
     def exportResult() = {
       val header = if (params("header") == "yes") true else false
@@ -54,7 +55,8 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         timestampFormat = params("timestamp_format"),
         dropLeadingWhiteSpace = dropLeadingWhiteSpace,
         dropTrailingWhiteSpace = dropTrailingWhiteSpace,
-        version = params("version").toInt)
+        version = params("version").toInt,
+        overwrite = params("overwrite"))
       op(op.t, table).result.exportResult
     }
   })
@@ -97,7 +99,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val path = generatePathIfNeeded(params("path"))
       def exportResult = {
         val op = graph_operations.ExportTableToStructuredFile(
-          path, format, params("version").toInt)
+          path, format, params("version").toInt, params("overwrite"))
         op(op.t, table).result.exportResult
       }
     })
@@ -117,4 +119,3 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 }
-
