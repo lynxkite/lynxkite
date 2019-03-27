@@ -94,7 +94,8 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       lazy val format = fileFormat
       params ++= List(
         Param("path", "Path", defaultValue = "<auto>"),
-        NonNegInt("version", "Version", default = 0))
+        NonNegInt("version", "Version", default = 0),
+        Choice("overwrite", "Allow overwriting exported file", FEOption.noyes))
 
       val path = generatePathIfNeeded(params("path"))
       def exportResult = {
