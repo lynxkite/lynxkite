@@ -47,7 +47,7 @@ class ExportBoxTest extends OperationsTestBase {
     val exportResult = importTestFile.box("Export to CSV", Map("path" -> path)).exportResult
     dataManager.get(exportResult)
     val exportResult2 = importTestFile.box(
-      "Export to CSV", Map("path" -> path, "version" -> "2", "overwrite" -> "yes")).exportResult
+      "Export to CSV", Map("path" -> path, "version" -> "2", "save_mode" -> "overwrite")).exportResult
     dataManager.get(exportResult2)
     val importedAgain = importBox("Import CSV", Map(
       "filename" -> path,
