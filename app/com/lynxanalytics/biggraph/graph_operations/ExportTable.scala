@@ -71,7 +71,7 @@ case class ExportTableToCSV(path: String, header: Boolean,
   override def toJson = Json.obj(
     "path" -> path, "header" -> header,
     "delimiter" -> delimiter, "quote" -> quote,
-    "version" -> version, "overwrite" -> overwrite) ++
+    "version" -> version) ++
     ExportTableToCSV.quoteAllParameter.toJson(quoteAll) ++
     ExportTableToCSV.escapeParameter.toJson(escape) ++
     ExportTableToCSV.nullValueParameter.toJson(nullValue) ++
