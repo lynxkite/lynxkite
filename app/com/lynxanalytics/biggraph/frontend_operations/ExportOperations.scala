@@ -35,7 +35,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("drop_leading_white_space", "Drop leading white space", FEOption.noyes),
       Choice("drop_trailing_white_space", "Drop trailing white space", FEOption.noyes),
       NonNegInt("version", "Version", default = 0),
-      Choice("overwrite", "Allow overwriting exported file", FEOption.noyes))
+      Choice("overwrite", "Allow overwrite", FEOption.noyes))
 
     def exportResult() = {
       val header = if (params("header") == "yes") true else false
@@ -95,7 +95,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       params ++= List(
         Param("path", "Path", defaultValue = "<auto>"),
         NonNegInt("version", "Version", default = 0),
-        Choice("overwrite", "Allow overwriting exported file", FEOption.noyes))
+        Choice("overwrite", "Allow overwrite", FEOption.noyes))
 
       val path = generatePathIfNeeded(params("path"))
       def exportResult = {

@@ -15,4 +15,7 @@ is the knowledge that the export was successfully done) and won't repeat the cal
 there might be a need to export an already exported table with the same set of parameters (e.g. the
 exported file is lost). In this case you need to change the version number, making that parameters
 are not the same as in the previous export.
+
+[p-overwrite]#Allow overwrite#::
+If it is set to "yes", the export operation ovewrites already existing paths.
 ====
