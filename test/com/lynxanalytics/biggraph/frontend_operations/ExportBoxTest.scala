@@ -33,8 +33,8 @@ class ExportBoxTest extends OperationsTestBase {
     val importedAgain = importBox("Import CSV", Map(
       "filename" -> path,
       "columns" -> "",
-      "infer" -> "no")).
-      box("Use table as vertices").project
+      "infer" -> "no"))
+      .box("Use table as vertices").project
     checkResult(importedAgain)
 
     exportTarget.delete()
