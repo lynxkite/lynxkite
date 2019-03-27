@@ -288,14 +288,25 @@ class TestWorkspaceBuilder(unittest.TestCase):
     lk = lynx.kite.LynxKite()
     path = 'DATA$/export_tests/to_overwrite'
     eg = lk.createExampleGraph().sql('select name, income from vertices')
-    eg_export = eg.exportToJSON(path=path)
+    eg_export = eg.exportToJSON(path=path, save_mode="overwrite")
     eg_export.trigger()
-    eg_export2 = eg.exportToJSON(path=path, version="2", overwrite="yes")
+    eg_export2 = eg.exportToJSON(path=path, version="2", save_mode="overwrite")
     eg_export2.trigger()
     data = lk.download_file(path)
     self.assertEqual(
         data,
         b'{"name":"Adam","income":1000.0}\n{"name":"Eve"}\n{"name":"Bob","income":2000.0}\n{"name":"Isolated Joe"}\n')
+
+  def test_export_with_append(self):
+    lk = lynx.kite.LynxKite()
+    path = 'DATA$/export_tests/to_append'
+    eg = lk.createExampleGraph().sql('select name from vertices limit 1')
+    eg_export = eg.exportToJSON(path=path)
+    eg_export.trigger()
+    eg_export2 = eg.exportToJSON(path=path, version="2", save_mode="append")
+    eg_export2.trigger()
+    data = lk.download_file(path)
+    self.assertEqual(data, b'{"name":"Adam"}\n{"name":"Adam"}\n')
 
   def test_builder_export_idempotent(self):
     lk = lynx.kite.LynxKite()

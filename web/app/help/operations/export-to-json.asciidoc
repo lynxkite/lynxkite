@@ -18,6 +18,7 @@ there might be a need to export an already exported table with the same set of p
 exported file is lost). In this case you need to change the version number, making that parameters
 are not the same as in the previous export.
 
-[p-overwrite]#Allow overwrite#::
-If it is set to "yes", the export operation ovewrites already existing paths.
+[p-save_mode]#Save mode#::
+The following modes can be used: "error if exists", "overwrite", "append", "ignore". In
+the last case already existing data will not be modified.
 ====

@@ -63,6 +63,7 @@ object FEOption {
   val boolsDefaultFalse = list("false", "true")
   val noyes = list("no", "yes")
   val yesno = list("yes", "no")
+  val saveMode = list("error if exists", "overwrite", "append", "ignore")
   val unset = special("!unset")
   val noWeight = special("!no weight")
   val unitDistances = special("!unit distances")

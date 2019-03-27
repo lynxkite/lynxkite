@@ -35,7 +35,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       Choice("drop_leading_white_space", "Drop leading white space", FEOption.noyes),
       Choice("drop_trailing_white_space", "Drop trailing white space", FEOption.noyes),
       NonNegInt("version", "Version", default = 0),
-      Choice("overwrite", "Allow overwrite", FEOption.noyes))
+      Choice("save_mode", "Save mode", FEOption.saveMode))
 
     def exportResult() = {
       val header = if (params("header") == "yes") true else false
@@ -56,7 +56,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         dropLeadingWhiteSpace = dropLeadingWhiteSpace,
         dropTrailingWhiteSpace = dropTrailingWhiteSpace,
         version = params("version").toInt,
-        overwrite = params("overwrite"))
+        saveMode = params("save_mode"))
       op(op.t, table).result.exportResult
     }
   })
@@ -95,12 +95,12 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       params ++= List(
         Param("path", "Path", defaultValue = "<auto>"),
         NonNegInt("version", "Version", default = 0),
-        Choice("overwrite", "Allow overwrite", FEOption.noyes))
+        Choice("save_mode", "Save mode", FEOption.saveMode))
 
       val path = generatePathIfNeeded(params("path"))
       def exportResult = {
         val op = graph_operations.ExportTableToStructuredFile(
-          path, format, params("version").toInt, params("overwrite"))
+          path, format, params("version").toInt, params("save_mode"))
         op(op.t, table).result.exportResult
       }
     })
