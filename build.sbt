@@ -65,8 +65,6 @@ libraryDependencies ++= Seq(
   "neo4j-contrib" % "neo4j-spark-connector" % "2.1.0-M4",
   "org.neo4j.test" % "neo4j-harness" % "3.5.1" % "test",
   "com.sun.jersey" % "jersey-core" % "1.19.4" % "test", // Required to create Neo4j test server
-  // Groovy is used for workflows and the batch API.
-  "org.kohsuke" % "groovy-sandbox" % "1.10",
   "com.lihaoyi" % "ammonite-sshd" % "1.0.3" cross CrossVersion.full excludeAll(
     ExclusionRule(organization="org.specs2", name="specs2_2.11")),
   // Required because of Ammonite using a different scalaz version than the Play framework
