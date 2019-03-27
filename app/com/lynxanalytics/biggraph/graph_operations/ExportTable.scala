@@ -100,16 +100,20 @@ case class ExportTableToCSV(path: String, header: Boolean,
 }
 
 object ExportTableToStructuredFile extends OpFromJson {
+  val overwriteParameter = NewParameter("overwrite", "no")
   def fromJson(j: JsValue) = ExportTableToStructuredFile(
     (j \ "path").as[String], (j \ "format").as[String],
-    (j \ "version").as[Int], (j \ "overwrite").as[String])
+    (j \ "version").as[Int], overwriteParameter.fromJson(j))
 }
 
 case class ExportTableToStructuredFile(path: String, format: String, version: Int, overwrite: String)
   extends ExportTable {
 
   override def toJson = Json.obj(
-    "path" -> path, "format" -> format, "version" -> version, "overwrite" -> overwrite)
+    "path" -> path,
+    "format" -> format,
+    "version" -> version) ++
+    ExportTableToStructuredFile.overwriteParameter.toJson(overwrite)
 
   def exportDataFrame(df: spark.sql.DataFrame) = {
     val file = HadoopFile(path)
