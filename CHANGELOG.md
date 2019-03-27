@@ -4,6 +4,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 # Changes
 
+ - Files can be overwritten by export operations.
+
 ### master
 
  - 50+ different color maps are now available for vertex and edge coloring,
