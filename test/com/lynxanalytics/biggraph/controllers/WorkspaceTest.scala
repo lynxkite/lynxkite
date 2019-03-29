@@ -101,6 +101,31 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       project: Input project of box pr1 is not connected.""")
   }
 
+  test("long errors") {
+    val input1 = Box("input1", "Input", Map(), 0, 20, Map())
+    val copy1 = Box("copy1", "Copy scalar from other project", Map(), 0, 50, Map(
+      "project" -> input1.output("input"), "scalar" -> input1.output("input")))
+    val copy2 = copy1.copy(id = "copy2", inputs = Map(
+      "project" -> copy1.output("project"), "scalar" -> copy1.output("project")))
+    val copy3 = copy2.copy(id = "copy3", inputs = Map(
+      "project" -> copy2.output("project"), "scalar" -> copy2.output("project")))
+    val ws = Workspace.from(input1, copy1, copy2, copy3)
+    val allStates = context(ws).allStates
+    val p = allStates(copy3.output("project"))
+    val ex = intercept[AssertionError] { p.project }
+    assert(ex.getMessage == """Inputs project, scalar of box copy3 have errors:
+  project: Inputs project, scalar of box copy2 have errors:
+    project: Inputs project, scalar of box copy1 have errors:
+      project: scala.NotImplementedError: an implementation is missing
+      scalar: scala.NotImplementedError: an implementation is missing
+    scalar: Inputs project, scalar of box copy1 have errors:
+      project: scala.NotImplementedError: an implementation is missing
+      scalar: scala.NotImplementedError: an implementation is missing
+...
+      project: scala.NotImplementedError: an implementation is missing
+      scalar: scala.NotImplementedError: an implementation is missing""")
+  }
+
   test("getProjectOutput") {
     using("test-workspace") {
       val eg = Box("eg", "Create example graph", Map(), 0, 0, Map())
