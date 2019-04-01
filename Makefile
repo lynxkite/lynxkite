@@ -67,7 +67,7 @@ $(pip): python_requirements.txt
 	shell_ui/test.sh && touch $@
 .build/wide-audience-done: \
 		.build/ecosystem-done $(shell $(find) docker/lynxkite/local)
-	docker/lynxkite/local/build.sh ${EVAL_VERSION_STRING} && touch $@
+	docker/lynxkite/local/build.sh "${EVAL_VERSION_STRING}" && touch $@
 scala-dependency-licenses.md: build.sbt
 	./tools/install_spark.sh && sbt dumpLicenseReport && cp target/license-reports/biggraph-licenses.md $@
 javascript-dependency-licenses.txt: web/package.json
