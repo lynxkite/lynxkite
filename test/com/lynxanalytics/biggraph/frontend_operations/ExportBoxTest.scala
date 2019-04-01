@@ -33,6 +33,25 @@ class ExportBoxTest extends OperationsTestBase {
     val importedAgain = importBox("Import CSV", Map(
       "filename" -> path,
       "columns" -> "",
+      "infer" -> "no"))
+      .box("Use table as vertices").project
+    checkResult(importedAgain)
+
+    exportTarget.delete()
+  }
+
+  test("Export to CSV with overwrite") {
+    val path = "EXPORTTEST$/tmp/exportedCSV2"
+    val exportTarget = HadoopFile(path)
+    exportTarget.deleteIfExists()
+    val exportResult = importTestFile.box("Export to CSV", Map("path" -> path)).exportResult
+    dataManager.get(exportResult)
+    val exportResult2 = importTestFile.box(
+      "Export to CSV", Map("path" -> path, "version" -> "2", "save_mode" -> "overwrite")).exportResult
+    dataManager.get(exportResult2)
+    val importedAgain = importBox("Import CSV", Map(
+      "filename" -> path,
+      "columns" -> "",
       "infer" -> "no")).
       box("Use table as vertices").project
     checkResult(importedAgain)

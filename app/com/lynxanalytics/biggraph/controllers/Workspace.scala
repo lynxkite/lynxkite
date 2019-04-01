@@ -237,14 +237,10 @@ case class Box(
     }
   }
 
-  // Returns an exception that includes the stack traces of the listed exceptions and adds none of
-  // its own.
-  private def exceptionBundle(msg: String, es: List[Throwable]): Throwable = {
-    val b = new Exception(msg)
+  // Returns an exception with no stack trace of it's own that is entirely caused by another.
+  private def causedException(msg: String, e: Option[Throwable]): Throwable = {
+    val b = new Exception(msg, e.orNull)
     b.setStackTrace(Array())
-    for (e <- es) {
-      b.addSuppressed(e)
-    }
     b
   }
 
@@ -253,15 +249,20 @@ case class Box(
     if (inputErrors.isEmpty) None
     else {
       val order = meta.inputs.filter(inputErrors.contains(_))
-      val details = order.map {
+      val details = order.flatMap { id =>
         // Include the input errors in our output error, indented two spaces deeper.
-        id => s"  $id: ${inputErrors(id).success.disabledReason.replace("\n", "\n  ")}"
-      }.mkString("\n")
+        s"  $id: ${inputErrors(id).success.disabledReason.replace("\n", "\n  ")}".split("\n", -1)
+      }
+      // Limit the error message to 10 lines. Keep the last 2, as they are usually the real cause,
+      // and keep as much as fits in the limit from the beginning to show the direction.
+      val abridged = (if (details.length <= 10) details else {
+        details.init.take(7) ++ Seq("...") ++ details.takeRight(2)
+      }).mkString("\n")
       val list = order.mkString(", ")
       val msg =
-        if (inputErrors.size == 1) s"Input $list of box $id has an error:\n$details"
-        else s"Inputs $list of box $id have errors:\n$details"
-      Some(exceptionBundle(msg, order.flatMap(inputErrors(_).success.exception)))
+        if (inputErrors.size == 1) s"Input $list of box $id has an error:\n$abridged"
+        else s"Inputs $list of box $id have errors:\n$abridged"
+      Some(causedException(msg, order.flatMap(inputErrors(_).success.exception).headOption))
     }
   }
 }

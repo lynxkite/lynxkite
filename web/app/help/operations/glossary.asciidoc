@@ -274,3 +274,9 @@ The external computation will save the results as a snapshot. This is the prefix
 snapshot.
 ====
 end::external-computation-box[]
+
+tag::save-mode-options[]
+[p-save_mode]#Save mode#::
+The following modes can be used: "error if exists", "overwrite", "append", "ignore". In
+the last case already existing data will not be modified.
+end::save-mode-options[]
