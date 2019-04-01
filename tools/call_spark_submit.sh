@@ -182,7 +182,7 @@ fi
 
 FULL_CLASSPATH=${app_classpath}
 if [ -n "${KITE_EXTRA_JARS}" ]; then
-    EXPANDED_EXTRA_JARS=$(python -c \
+    EXPANDED_EXTRA_JARS=$(python3 -c \
         "import glob; print(':'.join(sum([glob.glob(p) for p in '${KITE_EXTRA_JARS}'.split(':')], [])))")
     if [ -n "$EXPANDED_EXTRA_JARS" ]; then
       FULL_CLASSPATH=${FULL_CLASSPATH}:${EXPANDED_EXTRA_JARS}

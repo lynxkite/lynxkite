@@ -64,6 +64,9 @@ $(pip): python_requirements.txt
 	ecosystem/docker/release/build.sh $(VERSION) && touch $@
 .build/shell_ui-test-passed: $(shell $(find) shell_ui) .eslintrc.yaml
 	shell_ui/test.sh && touch $@
+.build/wide-audience-done: \
+		.build/backend-done $(shell $(find) wide-audience)
+	wide-audience/build.sh && touch $@
 
 # Short aliases for command-line use.
 .PHONY: backend
@@ -94,6 +97,8 @@ ecosystem-test: remote_api-test mobile-prepaid-scv-test happiness-index-test
 shell_ui-test: .build/shell_ui-test-passed
 .PHONY: test
 test: backend-test frontend-test ecosystem-test
+.PHONY: wide-audience
+wide-audience: .build/wide-audience-done
 .PHONY: big-data-test
 big-data-test: .build/ecosystem-done
 	./test_big_data.py --test_set_size ${TEST_SET_SIZE} --rm
