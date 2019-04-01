@@ -24,7 +24,7 @@ $(pip): python_requirements.txt
 	AIRFLOW_GPL_UNIDECODE=yes pip3 install --user -r python_requirements.txt && touch $@
 .build/backend-done: \
 	$(shell $(find) app project lib conf built-ins) tools/call_spark_submit.sh build.sbt README.md \
-	.build/gulp-done
+	.build/gulp-done licenses
 	./tools/install_spark.sh && sbt stage < /dev/null && touch $@
 .build/backend-test-passed: $(shell $(find) app test project conf) build.sbt
 	./tools/install_spark.sh && ./.test_backend.sh && touch $@
@@ -67,6 +67,12 @@ $(pip): python_requirements.txt
 .build/wide-audience-done: \
 		.build/backend-done $(shell $(find) wide-audience)
 	wide-audience/build.sh && touch $@
+scala-dependency-licenses.md: build.sbt
+	./tools/install_spark.sh && sbt dumpLicenseReport && cp target/license-reports/biggraph-licenses.md $@
+javascript-dependency-licenses.txt: web/package.json
+	cd web && LC_ALL=C yarn licenses generate-disclaimer > ../$@
+javascript-dependency-licenses.md: web/package.json
+	cd web && LC_ALL=C yarn licenses list | egrep '^└─|^├─|^│  └─|^│  ├─|^   └─|^   ├─' > ../$@
 
 # Short aliases for command-line use.
 .PHONY: backend
@@ -102,3 +108,5 @@ wide-audience: .build/wide-audience-done
 .PHONY: big-data-test
 big-data-test: .build/ecosystem-done
 	./test_big_data.py --test_set_size ${TEST_SET_SIZE} --rm
+.PHONY: licenses
+licenses: scala-dependency-licenses.md javascript-dependency-licenses.txt javascript-dependency-licenses.md

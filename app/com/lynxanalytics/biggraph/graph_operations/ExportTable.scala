@@ -3,6 +3,7 @@ package com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import org.apache.spark
+import org.apache.spark.sql.SaveMode
 
 object ExportTable {
   class Input extends MagicInputSignature {
@@ -13,6 +14,14 @@ object ExportTable {
       instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
     val exportResult = scalar[String]
+  }
+
+  def toSaveMode(saveMode: String) = saveMode match {
+    case "error if exists" => SaveMode.ErrorIfExists
+    case "overwrite" => SaveMode.Overwrite
+    case "append" => SaveMode.Append
+    case "ignore" => SaveMode.Ignore
+    case _ => throw new AssertionError(s"Invalid save mode: $saveMode")
   }
 }
 
@@ -46,6 +55,7 @@ object ExportTableToCSV extends OpFromJson {
   val timestampFormatParameter = NewParameter("timestampFormat", "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
   val dropLeadingWhiteSpaceParameter = NewParameter("dropLeadingWhiteSpace", false)
   val dropTrailingWhiteSpaceParameter = NewParameter("dropTrailingWhiteSpace", false)
+  val saveModeParameter = NewParameter("save_mode", "error if exists")
   def fromJson(j: JsValue) = ExportTableToCSV(
     (j \ "path").as[String], (j \ "header").as[Boolean],
     (j \ "delimiter").as[String], (j \ "quote").as[String],
@@ -56,14 +66,15 @@ object ExportTableToCSV extends OpFromJson {
     timestampFormatParameter.fromJson(j),
     dropLeadingWhiteSpaceParameter.fromJson(j),
     dropTrailingWhiteSpaceParameter.fromJson(j),
-    (j \ "version").as[Int])
+    (j \ "version").as[Int],
+    saveModeParameter.fromJson(j))
 }
 
 case class ExportTableToCSV(path: String, header: Boolean,
     delimiter: String, quote: String, quoteAll: Boolean,
     escape: String, nullValue: String, dateFormat: String, timestampFormat: String,
     dropLeadingWhiteSpace: Boolean, dropTrailingWhiteSpace: Boolean,
-    version: Int)
+    version: Int, saveMode: String)
   extends ExportTable {
   override def toJson = Json.obj(
     "path" -> path, "header" -> header,
@@ -75,7 +86,8 @@ case class ExportTableToCSV(path: String, header: Boolean,
     ExportTableToCSV.dateFormatParameter.toJson(dateFormat) ++
     ExportTableToCSV.timestampFormatParameter.toJson(timestampFormat) ++
     ExportTableToCSV.dropLeadingWhiteSpaceParameter.toJson(dropLeadingWhiteSpace) ++
-    ExportTableToCSV.dropTrailingWhiteSpaceParameter.toJson(dropTrailingWhiteSpace)
+    ExportTableToCSV.dropTrailingWhiteSpaceParameter.toJson(dropTrailingWhiteSpace) ++
+    ExportTableToCSV.saveModeParameter.toJson(saveMode)
 
   def exportDataFrame(df: spark.sql.DataFrame) = {
     val file = HadoopFile(path)
@@ -90,25 +102,31 @@ case class ExportTableToCSV(path: String, header: Boolean,
       "ignoreLeadingWhiteSpace" -> (if (dropLeadingWhiteSpace) "true" else "false"),
       "ignoreTrailingWhiteSpaces" -> (if (dropTrailingWhiteSpace) "true" else "false"),
       "header" -> (if (header) "true" else "false"))
-    df.write.format("csv").options(options).save(file.resolvedName)
+    val mode = toSaveMode(saveMode)
+    df.write.mode(mode).format("csv").options(options).save(file.resolvedName)
   }
 }
 
 object ExportTableToStructuredFile extends OpFromJson {
+  val saveModeParameter = NewParameter("save_mode", "error if exists")
   def fromJson(j: JsValue) = ExportTableToStructuredFile(
     (j \ "path").as[String], (j \ "format").as[String],
-    (j \ "version").as[Int])
+    (j \ "version").as[Int], saveModeParameter.fromJson(j))
 }
 
-case class ExportTableToStructuredFile(path: String, format: String, version: Int)
+case class ExportTableToStructuredFile(path: String, format: String, version: Int, saveMode: String)
   extends ExportTable {
 
   override def toJson = Json.obj(
-    "path" -> path, "format" -> format, "version" -> version)
+    "path" -> path,
+    "format" -> format,
+    "version" -> version) ++
+    ExportTableToStructuredFile.saveModeParameter.toJson(saveMode)
 
   def exportDataFrame(df: spark.sql.DataFrame) = {
     val file = HadoopFile(path)
-    df.write.format(format).save(file.resolvedName)
+    val mode = toSaveMode(saveMode)
+    df.write.mode(mode).format(format).save(file.resolvedName)
   }
 }
 
