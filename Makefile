@@ -2,6 +2,7 @@
 #   make ecosystem-docker-release VERSION=2.0.0
 export VERSION=snapshot
 export TEST_SET_SIZE=medium
+export EVAL_VERSION_STRING=""
 
 find = git ls-files --others --exclude-standard --cached
 pip = .build/pip3-packages-installed
@@ -65,8 +66,8 @@ $(pip): python_requirements.txt
 .build/shell_ui-test-passed: $(shell $(find) shell_ui) .eslintrc.yaml
 	shell_ui/test.sh && touch $@
 .build/wide-audience-done: \
-		.build/backend-done $(shell $(find) wide-audience)
-	wide-audience/build.sh && touch $@
+		.build/ecosystem-done $(shell $(find) docker/lynxkite/local)
+	docker/lynxkite/local/build.sh ${EVAL_VERSION_STRING} && touch $@
 scala-dependency-licenses.md: build.sbt
 	./tools/install_spark.sh && sbt dumpLicenseReport && cp target/license-reports/biggraph-licenses.md $@
 javascript-dependency-licenses.txt: web/package.json
