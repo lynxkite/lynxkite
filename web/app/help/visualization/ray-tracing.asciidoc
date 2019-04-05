@@ -4,7 +4,7 @@ LynxKite has an experimental feature for generating ray traced graph visualizati
 visualizations can give simple graphs a more striking look in presentations and marketing
 materials.
 
-Click +++<img src="/images/render50.png">+++ to get a relatively quick draft render. If you are
+Click +++<img src="images/render50.png">+++ to get a relatively quick draft render. If you are
 satisfied with the layout, click _"Render in high quality"_ to get the final render. Right-click the
 final image to save it locally.
 
