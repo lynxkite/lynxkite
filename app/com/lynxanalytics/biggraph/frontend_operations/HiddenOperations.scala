@@ -52,7 +52,7 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       }
     })
 
-  registerProjectCreatingOp("Use metagraph as graph")(new ProjectTransformation(_) {
+  registerProjectCreatingOp("Use metagraph as graph")(new ProjectOutputOperation(_) {
     params +=
       Param("timestamp", "Current timestamp", defaultValue = graph_util.Timestamp.toString)
     def enabled =
