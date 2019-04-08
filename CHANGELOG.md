@@ -6,6 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Removed jars with gpl licenses.
  - 50+ different color maps are now available for vertex and edge coloring,
    defaulting to Viridis for new visualization boxes.
  - Files can be overwritten by export operations.

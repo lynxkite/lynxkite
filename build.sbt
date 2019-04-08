@@ -58,7 +58,6 @@ libraryDependencies ++= Seq(
   // used by Spark.
   "com.clearspring.analytics" % "stream" % "2.7.0",
   // JDBC drivers.
-  "mysql" % "mysql-connector-java" % "5.1.34",
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
   "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
   // Neo4j driver & testing
@@ -69,8 +68,6 @@ libraryDependencies ++= Seq(
     ExclusionRule(organization="org.specs2", name="specs2_2.11")),
   // Required because of Ammonite using a different scalaz version than the Play framework
   "org.specs2" %% "specs2-junit" % "3.7",
-  // Hive import seems to need this.
-  "com.hadoop.gplcompression" % "hadoop-lzo" % "0.4.17",
   // For SPARK-10306.
   "org.scala-lang" % "scala-library" % "2.11.8",
   // Fast linear algebra.
