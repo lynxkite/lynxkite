@@ -165,13 +165,14 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val conf = new Configuration()
     val inputPath = new Path(input)
     val inputFileStatus = inputPath.getFileSystem(conf).getFileStatus(inputPath)
-    val footers = ParquetFileReader.readFooters(conf, inputFileStatus, false)
-
-    ParquetMetadataResponse(
-      footers.asScala.flatMap { f =>
-        val blocks = f.getParquetMetadata().getBlocks().asScala
-        blocks.map(_.getRowCount())
-      }.sum)
+    val inputFile = org.apache.parquet.hadoop.util.HadoopInputFile.fromStatus(inputFileStatus, conf)
+    val reader = ParquetFileReader.open(inputFile)
+    try {
+      val blocks = reader.getFooter.getBlocks.asScala
+      ParquetMetadataResponse(rowCount = blocks.map(_.getRowCount).sum)
+    } finally {
+      reader.close()
+    }
   }
 
   def changeACL(user: User, request: ACLSettingsRequest) = {

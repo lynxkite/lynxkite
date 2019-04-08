@@ -33,6 +33,7 @@ class DeadClass12
 class DeadClass13
 class DeadClass14
 class DeadClass15
+class DeadClass16
 
 class BigGraphKryoRegistrator extends KryoRegistrator {
 
@@ -280,7 +281,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[com.lynxanalytics.biggraph.graph_operations.ProbabilityOrdering])
     kryo.register(Class.forName("[Lorg.apache.spark.sql.types.Metadata;"))
     kryo.register(classOf[org.apache.spark.ml.tree.CategoricalSplit])
-    kryo.register(classOf[org.apache.spark.sql.execution.datasources.FileFormatWriter$WriteTaskResult])
+    kryo.register(classOf[DeadClass16])
     kryo.register(classOf[org.apache.spark.ml.tree.TreeEnsembleParams$$anonfun$6])
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.ExecutedWriteSummary])
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.BasicWriteTaskStats])
