@@ -63,7 +63,7 @@ case class KMeansClusteringModelTrainer(
       .setFeaturesCol("features")
       .setPredictionCol("classification")
     val model = kmeans.fit(inputDF)
-    val cost = model.computeCost(inputDF)
+    val cost = model.summary.trainingCost
     val file = Model.newModelFile
     model.save(file.resolvedName)
     output(o.model, Model(
