@@ -8,17 +8,7 @@ variables::
     LYNXKITE_PASSWORD=my_password
     LYNXKITE_PUBLIC_SSL_CERT=/tmp/lynxkite.crt
 
-Example usage, when workspace is copied from the UI::
-
-    import lynx.kite
-    lk = lynx.kite.LynxKite()
-    outputs = lk.fetch_states(json.loads(WORKSPACE_COPIED_FROM_UI))
-    state = outputs['Create-example-graph_1', 'project'].stateId
-    project = lk.get_project(state)
-    scalars = {s.title: lk.get_scalar(s.id) for s in project.scalars}
-    print(scalars['!vertex_count'].double)
-
-Example usage of builder API::
+Example usage::
 
     import lynx.kite
     lk = lynx.kite.LynxKite()
@@ -1471,7 +1461,7 @@ class BoxPath:
 
     For most boxes (like SQL1) this is themselves. Some boxes (like Compute inputs) have no outputs
     or rarely have boxes consuming their outputs. For these boxes we use their inputs for the
-    purposes of dependency calculations. A full example:
+    purposes of dependency calculations. A full example::
 
       [Create example graph] -> [Compute inputs]
         |
