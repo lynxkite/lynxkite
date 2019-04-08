@@ -37,7 +37,7 @@ $(pip): python_requirements.txt
 .build/mobile-prepaid-scv-test-passed: \
 	$(shell $(find) remote_api/python mobile-prepaid-scv) .build/backend-done $(pip)
 	tools/with_lk.sh mobile-prepaid-scv/unit_test.sh && touch $@
-.build/happiness-index-test-mock-data: $(shell $(find) happiness-index/test-data)
+.build/happiness-index-test-mock-data: $(shell $(find) happiness-index/{old,new}_methodology/test-data)
 	happiness-index/create_mock_data.sh && touch $@
 .build/happiness-index-test-passed: \
 	$(shell $(find) remote_api/python happiness-index) .build/backend-done $(pip) \
