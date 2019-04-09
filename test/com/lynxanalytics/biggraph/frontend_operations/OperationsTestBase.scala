@@ -23,16 +23,14 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       operationId: String,
       parameters: Map[String, String],
       parametricParameters: Map[String, String],
-      inputs: Seq[TestBox]) {
+      inputMap: Map[String, TestBox]) {
 
     private def projectRec(boxes: scala.collection.mutable.ListBuffer[Box]): String = {
-      val inputNames = inputs.map(
-        input => input.projectRec(boxes))
+      val inputBoxNames = inputMap.mapValues(
+        box => (box.projectRec(boxes), box)).view.force
       val name = s"${operationId} ${boxes.length}"
-      val inputIds = meta.inputs
-      assert(inputNames.size == inputIds.size, s"for $name")
-      val inputBoxOutputs = inputIds.zip(inputNames).zip(inputs).map {
-        case ((inputId, inputName), inputBox) =>
+      val inputBoxOutputs = inputBoxNames.map {
+        case (inputId, (inputName, inputBox)) =>
           val outputs = inputBox.meta.outputs
           assert(outputs.size == 1, s"for $inputName outputs.")
           inputId -> BoxOutput(inputName, outputs.head)
@@ -79,7 +77,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
 
     def changeParameterSettings(changedParameters: Map[String, String]): TestBox = {
       val newParameters = parameters ++ changedParameters
-      TestBox(operationId, newParameters, parametricParameters, inputs)
+      TestBox(operationId, newParameters, parametricParameters, inputMap)
     }
 
     def box(
@@ -87,7 +85,9 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
       parameters: Map[String, String] = Map(),
       otherInputs: Seq[TestBox] = Seq(),
       parametricParameters: Map[String, String] = Map()): TestBox = {
-      TestBox(operationId, parameters, parametricParameters, this +: otherInputs)
+      val meta = ops.getBoxMetadata(operationId)
+      TestBox(
+        operationId, parameters, parametricParameters, meta.inputs.zip(this +: otherInputs).toMap)
     }
   }
 
@@ -95,8 +95,15 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
     operationId: String,
     parameters: Map[String, String] = Map(),
     inputs: Seq[TestBox] = Seq(),
-    parametricParameters: Map[String, String] = Map()): TestBox = {
-    TestBox(operationId, parameters, parametricParameters, inputs)
+    parametricParameters: Map[String, String] = Map(),
+    inputMap: Map[String, TestBox] = Map()): TestBox = {
+    assert(inputs.isEmpty || inputMap.isEmpty)
+    TestBox(
+      operationId, parameters, parametricParameters,
+      if (inputs.isEmpty) inputMap else {
+        val meta = ops.getBoxMetadata(operationId)
+        meta.inputs.zip(inputs).toMap
+      })
   }
 
   def importBox(

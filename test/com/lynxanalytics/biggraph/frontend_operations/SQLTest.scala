@@ -139,6 +139,16 @@ class SQLTest extends OperationsTestBase {
       Seq("Bob loves Eve", "Bob", "Eve")))
   }
 
+  test("the order of the input mapping does not matter") {
+    val eg = box("Create example graph")
+    val one = eg.box("SQL1", Map("sql" -> "select 'one' as table"))
+    val two = eg.box("SQL1", Map("sql" -> "select 'two' as table"))
+    val table = box(
+      "SQL2", Map("sql" -> "select * from one"),
+      inputMap = collection.immutable.ListMap("two" -> two, "one" -> one)).table
+    assert(table.df.head.get(0) == "one")
+  }
+
   test("union") {
     val one = box("Create example graph")
     val two = box("Create example graph")
