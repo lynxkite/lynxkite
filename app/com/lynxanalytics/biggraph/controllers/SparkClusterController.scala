@@ -232,12 +232,7 @@ class KiteMonitorThread(
   private def logSparkClusterInfo(): Unit = {
     val sc = environment.sparkContext
 
-    // No way to find cores per executor programmatically. SPARK-2095
-    // But NUM_CORES_PER_EXECUTOR is now always required when starting Kite and we launch Spark
-    // in a way that this is probably mostly reliable.
-    val numCoresPerExecutor =
-      LoggedEnvironment.envOrNone("NUM_CORES_PER_EXECUTOR").get.toInt
-    val totalCores = listener.numExecutors.getOrElse(1) * numCoresPerExecutor
+    val totalCores = sc.defaultParallelism
     val cacheMemory = sc.getExecutorMemoryStatus.values.map(_._1).sum
     val conf = sc.getConf
     // Unfortunately the defaults are hard-coded in Spark and not available.
