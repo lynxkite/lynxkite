@@ -45,7 +45,4 @@ However its efficiency breaks down after 32 GB. Therefore a JVM with 40GB RAM is
 than a JVM with 32 GB RAM. For that reason it is not recommended to set the `EXECUTOR_MEMORY` above
 32 GB. It makes more sense to create multiple executors with less amount of RAM per executor.
 
-This https://blogs.oracle.com/jrockit/entry/understanding_compressed_refer[article] explains the
-issue in detail.
-
 

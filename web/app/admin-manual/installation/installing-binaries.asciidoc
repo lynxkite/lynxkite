@@ -1,15 +1,11 @@
 [[installing-binaries]]
 ## Installing the LynxKite binaries
 
-The LynxKite archive contains the following:
+The LynxKite archive file is *kite_<version_number>.tar*. Unpack this file to any
+convenient directory with the command  `tar xf kite_<version_number>.tar`. This
+creates a directory *kite_<version_number>*. Make sure that you do this unpacking
+on the target Lunux platform. Unpacking on Windows then copying is known to cause problems.
 
-- *kite_<version_number>*: This directory contains the LynxKite binary and libraries.
-- *run-kite-<version_number>.sh*: This is a symlink for starting the program.
-- *spark-<version_number>*: This directory contains the version of Apache Spark used by LynxKite.
+LynxKite needs a copy of a pre-build Apache Spark in the home directory. You can use
+the command `tools/install_spark.sh` to download and install it.
 
-Simply uncompress the archive to a directory. Make sure to unpack the archive on the target
-Linux platform. Unpacking on Windows then copying is known to cause problems.
-
-Optionally you can also download the pre-built Apache Spark from the
-http://spark.apache.org/downloads.html/[Spark webpage] after determining the right Spark version
-from the `conf/SPARK_VERSION` file and the version of Hadoop.
