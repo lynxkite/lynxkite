@@ -115,7 +115,7 @@ For a YARN setup, this options is mandatory.
 ```
 
 Specify the number of cores per executor LynxKite should use. For local mode, you
-can set it to `*` to use as man cores as available.
+can set it to `*` to use as many cores as available.
 ```
 export NUM_CORES_PER_EXECUTOR=4
 ```
