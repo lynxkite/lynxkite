@@ -41,9 +41,8 @@ There are two ways for scheduling/hosting the Spark executors.
 Apache Spark includes the Hadoop client libraries. This gives LynxKite the capability to access
 file systems supported by Hadoop, such as HDFS, S3, and GCS. Data files can be imported from
 and exported to these file systems. JDBC is used to import from and export to SQL databases.
-Note that license issues prevent us from including the necessary Java library file in the
-distribution: you should obtain this file (`mysql.mysql-connector-java-5.1.34.jar`) and copy
-it into the directory specified by the `EXTRA_JARS` (As explained in <<kiterc-file>>.)
+JDBC drivers for some popular database vendors are included. To add more JDBC drivers, copy
+them into the directory specified by EXTRA_JARS. (As explained in <<kiterc-file>>.)
 
 LynxKite needs some storage space on a filesystem to store internal graph data. This filesystem has
 to be accessible by all workers. Because of this requirement, in most cases this needs to be a
