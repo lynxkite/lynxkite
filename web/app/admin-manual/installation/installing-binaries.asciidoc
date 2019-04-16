@@ -6,6 +6,6 @@ convenient directory with the command  `tar xf kite_<version_number>.tar`. This
 creates a directory *kite_<version_number>*. Make sure that you do this unpacking
 on the target Lunux platform. Unpacking on Windows then copying is known to cause problems.
 
-LynxKite needs a copy of a pre-build Apache Spark in the home directory. You can use
+LynxKite needs a copy of a pre-built Apache Spark in the home directory. You can use
 the command `tools/install_spark.sh` to download and install it.
 

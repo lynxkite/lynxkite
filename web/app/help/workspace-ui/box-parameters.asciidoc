@@ -36,9 +36,9 @@ for `$date`, importing the same files as before.
 One benefit of this is that you can change the date in a single place (on the anchor box) instead of
 having to update multiple boxes when the time comes.
 
-Another benefit is that if your workspace is used as a custom box in another workspace, the
-workspace parameters are specified by the user. Parametric parameters allow you to pass these
-user-specified parameters on to boxes in the workspace.
+Another benefit is that if your workspace is used as a <<custom-boxes, custom box>> in another
+workspace, the workspace parameters are specified by the user. Parametric parameters allow you to
+pass these user-specified parameters on to boxes in the workspace.
 
 Even complex parameters, like a list of vertex attributes, can be toggled to become parametric. In
 this case the original input field is replaced by a simple text field.
