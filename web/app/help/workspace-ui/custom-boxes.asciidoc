@@ -1,0 +1,60 @@
+## Custom boxes
+
+It is easy to extend LynxKite with custom boxes that are specific to a project or organization.
+Wrapping logical parts of your workspaces in custom boxes makes the workspace easier to understand
+and avoids repetition.
+
+A custom box is simply another workspace. If you place a workspace in the `X/Y/custom_boxes`
+directory, you will be able to use it as a custom box in any workspaces under `X/Y`. If you
+place a workspace in the top-level `custom_boxes` directory, any workspace in this LynxKite instance
+will be able to use it. This system of scoping makes it possible to organize project-specific or
+universally useful custom boxes.
+
+If you place a workspace in `custom_boxes`, it will appear in the box catalog under the
+_"Custom boxes"_ category, and in the box search. You can place it in a workspace.
+
+A usual workspace used this way will result in a custom box that has no inputs and outputs.
+That is not very useful! To fix that, just add <<input>> and <<output>> boxes to the workspace
+of the custom box.
+
+It is inconvenient to work with <<input>> boxes, because their output is missing. It will be
+filled in when the custom box is used in another workspace. But when you're editing the workspace
+of the custom box directly, there is nothing coming in yet. There are two solutions to this:
+
+- Place your custom box in a workspace. Select it and dive into the custom box with the
++++<label class="btn btn-default"><i class="fa fa-level-down"></i></label>+++ button.
+Now you will see and edit the workspace of the custom box in the context of the parent workspace.
+The input box will have a valid output.
++
+Any changes you make will affect all instances of the custom box.
+
+- It is often the case that your workspace grows and you reach a point where you want to extract
+part of it into a custom box. Do not create a workspace in `custom_boxes` manually in this case.
+It is simpler to use the +++<label class="btn btn-default"><i class="fa fa-superpowers"></i></label>+++
+_Save selection as custom box_ button instead.
++
+The workspaces of custom boxes created this way will automatically have the input and output boxes
+set up.
+
+### Custom box parameters
+
+Your custom box now has inputs and outputs and can provide useful functionality. Custom boxes can
+also take parameters. This is configured through the <<anchor>> box of the workspace of the custom
+box.
+
+You can set the name, type, and default value of the parameters. The following parameter types are
+supported:
+
+- **Text:** Anything that the user can type. It could be a string or a number. This will appear as
+  a plain input box in the custom box's parameters popup.
+- **Boolean:** Will appear as a true/false dropdown selection in the box parameters popup.
+- **Code:** Will appear as a multi-line code editor to the user.
+- **Vertex attribute, edge attribute, segmentation, scalar, column:** These types allow the user to
+  select an attribute, segmentation, scalar, or column of the input via a dropdown list. If the
+  custom box has multiple inputs, the options belonging to all the inputs will be offered in the
+  list.
+
+To make use of the custom box's parameters in the workspace of the custom box, you need to access
+them from <<parametric-parameters>>. Regardless of their type, all the parameters are seen as
+Strings from the Scala code of the parametric parameters. Use `.toInt`, `.toDouble`, `.toBoolean`
+on them if you need to do more than simple string substitution.
