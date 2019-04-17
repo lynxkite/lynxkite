@@ -83,6 +83,7 @@ addJPropIfNonEmpty pidfile.path "/dev/null"
 addJPropIfNonEmpty http.netty.maxInitialLineLength 10000
 addJPropIfNonEmpty jdk.tls.ephemeralDHKeySize 2048
 addJPropIfNonEmpty file.encoding 'UTF-8'
+addJPropIfNonEmpty parsers.text.maxLength '2MB'
 
 if [ -n "EXTRA_DRIVER_OPTIONS" ]; then
   addJava " $EXTRA_DRIVER_OPTIONS"
