@@ -54,8 +54,8 @@ module.exports = function(fw) {
       lib.workspace.addBox({id: 'ex', name: 'Create example graph', x: 100, y: 100});
       lib.workspace.addBox({
         id: 'discard', name: 'Discard vertex attributes', x: 100, y: 200, after: 'ex'});
-      const box = lib.workspace.openBoxEditor('discard');
-      const state = lib.workspace.openStateView('discard', 'project');
+      const box = lib.workspace.openBoxEditor('discard').moveTo(500, 100);
+      const state = lib.workspace.openStateView('discard', 'project').moveTo(500, 400);
       function attrs() {
         return state.left.side.$$('entity[kind="vertex-attribute"]').map(e => e.getText());
       }
