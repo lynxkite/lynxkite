@@ -52,7 +52,7 @@ object DataForDecisionTreeTests {
     featureNames = List("temperature", "rain"),
     stringAttrs = Seq(Map(0 -> "medium", 1 -> "high", 2 -> "high", 3 -> "low", 4 -> "low", 5 -> "medium")),
     doubleAttrs = Seq(Map(0 -> 0.0, 1 -> 1.0, 2 -> 0.0, 3 -> 0.0, 4 -> 1.0, 5 -> 1.0)),
-    probability = Map(0 -> 1, 1 -> 1, 2 -> 1, 3 -> 0.6667, 4 -> 1, 5 -> 1),
+    probability = Map(0 -> 1, 1 -> 1, 2 -> 0.75, 3 -> 0.75, 4 -> 1, 5 -> 1),
     vertexNumber = 6)
   val testDataForRegression = GraphData(
     labelName = "length of the walk",
