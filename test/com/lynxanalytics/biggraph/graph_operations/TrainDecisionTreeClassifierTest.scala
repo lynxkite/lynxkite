@@ -73,13 +73,10 @@ END AS length of the walk""")
     assert(m.value.method == "Decision tree classification")
     assert(m.value.featureNames.sorted == List("rain", "temperature"))
     val s = m.value.statistics.get
-    assert(s == """DecisionTreeClassificationModel of depth 3 with 7 nodes
+    assert(s == """DecisionTreeClassificationModel of depth 2 with 5 nodes
   If (rain <= 0.5)
    If (temperature in {0.0,1.0})
-    If (temperature in {0.0})
-     Predict: 1.0
-    Else (temperature not in {0.0})
-     Predict: 1.0
+    Predict: 1.0
    Else (temperature not in {0.0,1.0})
     Predict: 2.0
   Else (rain > 0.5)
@@ -91,12 +88,7 @@ Support: [0.375, 0.375, 0.25]""")
  WHEN rain <= 0.5 THEN
   CASE
    WHEN temperature IN ('high', 'low') THEN
-    CASE
-     WHEN temperature IN ('high') THEN
-      'y'
-     ELSE
-      'y'
-    END
+    'y'
    ELSE
     'z'
   END

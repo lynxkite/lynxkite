@@ -227,15 +227,6 @@ class ImportBoxTest extends OperationsTestBase {
       "imported_columns" -> "id,colname with space,a")))
   }
 
-  test("import from SQLite (non conventional key column name - single quote)") {
-    createSqliteNonConventionalTable()
-    checkSqliteNonConventionalTable(importBox("Import JDBC", Map(
-      "jdbc_url" -> sqliteURL,
-      "jdbc_table" -> "'name with space' t",
-      "key_column" -> "t.'colname with space'",
-      "imported_columns" -> "id,colname with space,a")))
-  }
-
   test("import from SQLite (aliased native sql - no keyColumn)") {
     createSqliteNonConventionalTable()
     checkSqliteNonConventionalTable(importBox("Import JDBC", Map(
@@ -249,7 +240,7 @@ class ImportBoxTest extends OperationsTestBase {
     checkSqliteNonConventionalTable(importBox("Import JDBC", Map(
       "jdbc_url" -> sqliteURL,
       "jdbc_table" -> "(SELECT * FROM 'name with space') t",
-      "key_column" -> "t.'colname with space'",
+      "key_column" -> "\"colname with space\"",
       "imported_columns" -> "id,colname with space,a")))
   }
 
