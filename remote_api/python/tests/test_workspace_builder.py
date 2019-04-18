@@ -271,7 +271,7 @@ class TestWorkspaceBuilder(unittest.TestCase):
     path = eg_table.run_export()
     data = lk.download_file(path)
     self.assertEqual(
-        data, b'name,age,income\nAdam,20.3,1000.0\nEve,18.2,\nBob,50.3,2000.0\nIsolated Joe,2.0,\n')
+        data, b'name,age,income\nAdam,20.3,1000.0\nEve,18.2,""\nBob,50.3,2000.0\nIsolated Joe,2.0,""\n')
 
   def test_builder_export_json_with_path_parameter(self):
     lk = lynx.kite.LynxKite()
