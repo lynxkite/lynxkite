@@ -19,11 +19,10 @@ class TestWorkspaceDecorator(unittest.TestCase):
     values = [(row[0].string, row[1].string) for row in table.data]
     self.assertEqual(len(values), 16)
     expected_result = [
-        ('Adam', '20.3'), ('Adam', '18.2'), ('Adam', '50.3'), ('Adam', '2'),
-        ('Eve', '20.3'), ('Eve', '18.2'), ('Eve', '50.3'), ('Eve', '2'),
-        ('Bob', '20.3'), ('Bob', '18.2'), ('Bob', '50.3'), ('Bob', '2'),
-        ('Isolated Joe', '20.3'), ('Isolated Joe', '18.2'),
-        ('Isolated Joe', '50.3'), ('Isolated Joe', '2')]
+        ('Adam', '20.3'), ('Eve', '20.3'), ('Bob', '20.3'), ('Isolated Joe', '20.3'),
+        ('Adam', '18.2'), ('Eve', '18.2'), ('Bob', '18.2'), ('Isolated Joe', '18.2'),
+        ('Adam', '50.3'), ('Eve', '50.3'), ('Bob', '50.3'), ('Isolated Joe', '50.3'),
+        ('Adam', '2'), ('Eve', '2'), ('Bob', '2'), ('Isolated Joe', '2')]
     self.assertEqual(values, expected_result)
 
   def test_ws_decorator_with_ws_parameters(self):
