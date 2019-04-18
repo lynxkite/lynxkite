@@ -408,6 +408,7 @@ PopupBase.prototype = {
       .mouseMove($('body'), {x: x, y: y})
       .mouseUp(head)
       .perform();
+    return this;
   },
 };
 
@@ -1348,10 +1349,16 @@ testLib = {
         } else if (kind === 'choice') {
           e.$('option[label="' + value + '"]').click();
         } else if (kind === 'multi-choice') {
-          e.$$('option:checked').click();
-          for (let i = 0; i < value.length; ++i) {
-            e.$('option[label="' + value[i] + '"]').click();
-          }
+          // The mouse events through Protractor give different results than the real
+          // mouse clicks. Keyboard selection is not flexible enough.
+          // (https://bugs.chromium.org/p/chromium/issues/detail?id=125585)
+          // So we select the requested items by injecting this script.
+          browser.executeScript(`
+            for (let opt of arguments[0].querySelectorAll('option')) {
+              opt.selected = arguments[1].includes(opt.label);
+            }
+            arguments[0].dispatchEvent(new Event('change'));
+            `, e, value);
         } else if (kind === 'multi-tag-list') {
           for (let i = 0; i < value.length; ++i) {
             e.$('.glyphicon-plus').click();
