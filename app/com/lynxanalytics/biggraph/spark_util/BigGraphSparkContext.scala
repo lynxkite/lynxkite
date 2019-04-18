@@ -287,6 +287,7 @@ class BigGraphKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[org.apache.spark.sql.execution.datasources.BasicWriteTaskStats])
     kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LogisticAggregator"))
     kryo.register(Class.forName("org.apache.spark.ml.optim.aggregator.LeastSquaresAggregator"))
+    kryo.register(classOf[org.apache.spark.sql.execution.datasources.WriteTaskResult])
 
     // Add new stuff just above this line! Thanks.
     // Adding Foo$mcXXX$sp? It is a type specialization. Register the decoded type instead!
