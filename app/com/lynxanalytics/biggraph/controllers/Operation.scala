@@ -191,11 +191,11 @@ object Operation {
     }
     implicit class OperationInputTables(operation: Operation) {
       // Returns all tables output by all inputs of this operation.
-      def getInputTables(inputNames: Seq[String] = null)(implicit metaManager: MetaGraphManager): Map[String, ProtoTable] = {
+      def getInputTables(renaming: Map[String, String] = null)(implicit metaManager: MetaGraphManager): Map[String, ProtoTable] = {
         val inputs =
-          if (inputNames == null) operation.context.inputs
-          else operation.context.inputs.zip(inputNames).map {
-            case ((oldName, state), newName) => (newName, state)
+          if (renaming == null) operation.context.inputs
+          else operation.context.inputs.map {
+            case (oldName, state) => (renaming(oldName), state)
           }
         val bindInputName = inputs.size > 1 // Whether to bind input names to avoid collisions.
         inputs.flatMap {

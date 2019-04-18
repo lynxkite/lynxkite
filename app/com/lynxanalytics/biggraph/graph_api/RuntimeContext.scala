@@ -25,6 +25,5 @@ case class RuntimeContext(
   // The number of currently available executors.
   val numExecutors = (sparkContext.statusTracker.getExecutorInfos.size - 1) max 1
   // The optimal number of sample partitions is the number of tasks can be done in parallel.
-  val numSamplePartitions =
-    numExecutors * util.Properties.envOrElse("NUM_CORES_PER_EXECUTOR", "1").toInt
+  val numSamplePartitions = sparkContext.defaultParallelism
 }

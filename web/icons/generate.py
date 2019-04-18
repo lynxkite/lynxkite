@@ -120,6 +120,7 @@ def main():
   render('snowflake-o')
   render('cogs')
   render('user-circle-o')
+  render('ankh')
 
 
 if __name__ == '__main__':

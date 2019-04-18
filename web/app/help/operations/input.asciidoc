@@ -7,6 +7,8 @@ When the inputs are connected, those input states will appear on the outputs of 
 
 Input boxes without a name are ignored. Each input box must have a different name.
 
+See the section on <<custom-boxes>> on how to use this box.
+
 ====
 [p-name]#Name#::
 The name of the input, when the workspace is used as a custom box.

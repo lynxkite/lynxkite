@@ -142,22 +142,17 @@ def dirContents(baseDir: File, dirs: String*) = {
   }
 }
 
-mappings in Universal ++= dirContents(baseDirectory.value, "tools")
-
-mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts")
-
-mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts", "big_data_tests")
-
-mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts", "gen_test_data")
-
 mappings in Universal ++= dirContents(baseDirectory.value, "tools", "monitoring")
-
 mappings in Universal ++= dirContents(baseDirectory.value, "tools", "monitoring", "dashboards")
-
-mappings in Universal ++= dirContents(baseDirectory.value, "kitescripts", "spark_tests")
-
-mappings in Universal ++= dirContents(baseDirectory.value, "tools", "performance_collection")
-
-mappings in Universal ++= dirContents(baseDirectory.value, "tools", "api", "python", "lynx")
-
+mappings in Universal ++= dirContents(baseDirectory.value, "tools", "graphray")
 mappings in Universal ++= dirContents(baseDirectory.value, "built-ins")
+mappings in Universal ++= Seq(
+  file("tools/rmoperation.py") -> "tools/rmoperation.py",
+  file("tools/kite_meta_hdfs_backup.sh") -> "tools/kite_meta_hdfs_backup.sh",
+  file("tools/install_spark.sh") -> "tools/install_spark.sh")
+
+
+
+mappings in Universal ~= {
+  _.filterNot { case (_, relPath) => relPath == "README.md"}
+}

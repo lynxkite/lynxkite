@@ -30,9 +30,10 @@ configuration provided by Hadoop may be suboptimal.
 
 ### Running LynxKite
 
-LynxKite can be started with its runner script (e.g., `run-kite-stable.sh`). You can use the
-`start` / `stop` / `restart` commands if you want to run it as a daemon. Or, you can use the
-interactive command which starts up the program tied to your current shell session, so its output
+LynxKite can be started with the `biggraph` command in the `bin` directory of the LynxKite installation.
+For example: `kite_2.6.2/bin/biggraph start`. Use the
+`start` / `stop` / `restart` options if you want to run it as a daemon. Or, you can use the
+`interactive` command option, which starts up the program tied to your current shell session, so its output
 will appear in the shell and pressing Ctrl-C or closing the shell session will terminate the
 program.
 
@@ -161,10 +162,13 @@ Please consult with the owner of the cluster to give you read access for all the
 
 #### Known issues
 
-.If in the imported table the values of some columns become all nulls.
+With some Hive configurations, LynxKite cannot import tables due to a missing jar file. We cannot
+distribute that jar file (com.hadoop.gplcompression.hadoop-lzo-0.4.17.jar) due to licensing reasons.
+You should download it yourself and put it in the directory specified by `KITE_EXTRA_JARS` (see <<kiterc-file>>).
+
+Sometimes the values in an imported table all become nulls. This is a case-sensitivity issue.
 Hive is case insensitive when it comes to table names and column names. Because of this, Hive
-Metastore stores the column names in all lower case.
-But Parquet files and ORC are case preserving.
+Metastore stores the column names in all lower case. But Parquet files and ORC are case preserving.
 This can result in a situation where a column name is stored in all lower-case in Hive Metastore
 but the same column name in the underlying files is stored using upper-case letters. Spark imports
 data directly from the underlying files but uses the column names stored in Hive Metastore to look
