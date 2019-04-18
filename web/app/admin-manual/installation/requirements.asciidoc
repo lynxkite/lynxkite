@@ -2,7 +2,7 @@
 
 ### Java version
 
-You need Java 7 or higher on the system.
+You need Java 8 or higher on the system.
 
 ### Write permission
 
@@ -44,8 +44,5 @@ The Java Virtual Machine can be configured to use practically any amount of RAM 
 However its efficiency breaks down after 32 GB. Therefore a JVM with 40GB RAM is actually worse
 than a JVM with 32 GB RAM. For that reason it is not recommended to set the `EXECUTOR_MEMORY` above
 32 GB. It makes more sense to create multiple executors with less amount of RAM per executor.
-
-This https://blogs.oracle.com/jrockit/entry/understanding_compressed_refer[article] explains the
-issue in detail.
 
 

@@ -461,10 +461,13 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       override def summary = params("summary")
       def enabled = FEStatus.enabled
       def defaultTableName = {
-        val tableNames = this.getInputTables(inputNames).keySet.toList.sorted
+        val tableNames = this.getInputTables(renaming).keySet.toList.sorted
         Seq("vertices", inputNames.head, inputNames.head + ".vertices")
           .find(tableNames.contains(_))
           .getOrElse(tableNames.head)
+      }
+      lazy val renaming: Map[String, String] = {
+        inputs.zip(inputNames).toMap
       }
       lazy val inputNames = {
         val names = params("input_names").split(",", -1).map(_.trim)
@@ -476,7 +479,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       override def getOutputs() = {
         params.validate()
         val sql = params("sql")
-        val protoTables = this.getInputTables(inputNames)
+        val protoTables = this.getInputTables(renaming)
         val result = graph_operations.ExecuteSQL.run(sql, protoTables)
         if (params("persist") == "yes") makeOutput(result.saved)
         else makeOutput(result)

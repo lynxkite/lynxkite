@@ -61,9 +61,9 @@ $(pip): python_requirements.txt
 	ecosystem/docker/release/build.sh $(VERSION) && touch $@
 .build/shell_ui-test-passed: $(shell $(find) shell_ui) .eslintrc.yaml
 	shell_ui/test.sh && touch $@
-.build/wide-audience-done: \
+.build/evaluation-release-done: \
 		.build/backend-done $(shell $(find) docker/lynxkite/local)
-	docker/lynxkite/local/build.sh "${VERSION}" && touch $@
+	docker/lynxkite/local/evaluation_release.sh "${VERSION}" && touch $@
 scala-dependency-licenses.md: build.sbt
 	./tools/install_spark.sh && sbt dumpLicenseReport && cp target/license-reports/biggraph-licenses.md $@
 javascript-dependency-licenses.txt: web/package.json
@@ -100,8 +100,8 @@ ecosystem-test: remote_api-test mobile-prepaid-scv-test happiness-index-test
 shell_ui-test: .build/shell_ui-test-passed
 .PHONY: test
 test: backend-test frontend-test ecosystem-test
-.PHONY: wide-audience
-wide-audience: .build/wide-audience-done
+.PHONY: evaluation-release
+evaluation-release: .build/evaluation-release-done
 .PHONY: big-data-test
 big-data-test: .build/ecosystem-done
 	./test_big_data.py --test_set_size ${TEST_SET_SIZE} --rm

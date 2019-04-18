@@ -67,13 +67,27 @@ case class MetaGraph(timestamp: String, env: Option[SparkFreeEnvironment])
     val es = ops.flatMap {
       // For each operation we create an edge from each input and to each output.
       case (guid, inst) =>
-        val inputs = inst.inputs.all.map {
+        val inputEdges = inst.inputs.all.map {
           case (i, e) => (Edge(vsByGUID(e.gUID.toString), vsByGUID(guid.toString)), "Input", i.name)
         }
-        val outputs = inst.outputs.all.map {
+        val outputs = inst.outputs
+        val outputEdges = outputs.all.map {
           case (o, e) => (Edge(vsByGUID(guid.toString), vsByGUID(e.gUID.toString)), "Output", o.name)
         }
-        inputs ++ outputs
+        val edgeRelations = outputs.edgeBundles.values.flatMap {
+          edge =>
+            val s = (Edge(vsByGUID(edge.gUID.toString), vsByGUID(edge.srcVertexSet.gUID.toString)), "Source VertexSet", "")
+            val d = (Edge(vsByGUID(edge.gUID.toString), vsByGUID(edge.dstVertexSet.gUID.toString)), "Destination VertexSet", "")
+            val i = (Edge(vsByGUID(edge.gUID.toString), vsByGUID(edge.idSet.gUID.toString)), "ID VertexSet", "")
+            List(s, d, i)
+        }
+        val attributeRelations = outputs.attributes.values.map {
+          attribute => (Edge(vsByGUID(attribute.gUID.toString), vsByGUID(attribute.vertexSet.gUID.toString)), "Attribute of", "")
+        }
+        val hybridRelations = outputs.hybridBundles.values.map {
+          hybrid => (Edge(vsByGUID(hybrid.gUID.toString), vsByGUID(hybrid.srcToDstEdgeBundle.gUID.toString)), "Hybrid view of", "")
+        }
+        inputEdges ++ outputEdges ++ edgeRelations ++ attributeRelations
     }
     val esNumbered = (0L until es.size).zip(es)
     val esRDD = {

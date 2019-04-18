@@ -350,13 +350,7 @@ object BigGraphSparkContext {
       // they exactly know the number of hosts and fail if they can't
       // reliably count them. Here we are just going to do a
       // best-effort hack.
-      val numExecutors = LoggedEnvironment
-        .envOrElse("NUM_EXECUTORS", "1")
-        .toInt
-      val numCoresPerExecutor = LoggedEnvironment
-        .envOrElse("NUM_CORES_PER_EXECUTOR", "4")
-        .toInt
-      val dummyRddSize = numExecutors * numCoresPerExecutor * 10
+      val dummyRddSize = sc.defaultParallelism * 10
       sc.parallelize(1 to dummyRddSize, dummyRddSize)
         .foreach(_ => SetupMetricsSingleton.dummy)
     }

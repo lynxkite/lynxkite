@@ -6,6 +6,8 @@ will have one output for each output box.
 
 Output boxes without a name are ignored. Each output box must have a different name.
 
+See the section on <<custom-boxes>> on how to use this box.
+
 ====
 [p-name]#Name#::
 The name of the output, when the workspace is used as a custom box.

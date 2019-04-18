@@ -11,6 +11,8 @@ already installed binaries.
 You can download the Spark version matching your Hadoop setup from the
 https://spark.apache.org/downloads.html[Spark webpage]. Your Lynx contact can tell you which
 version you need, or you can find it in the file `kite_x.y.z/conf/SPARK_VERSION`.
+Another option is to run `kite_x.y.z/tools/install_spark.sh`: this script will set up
+the proper kite version.
 
 ## Create backups
 
@@ -36,14 +38,13 @@ update the configuration via the following steps:
 
 ## Stop currently running LynxKite version
 
-Use the command `./run-kite-x.y.z.sh stop` where `x.y.z` is the version of your _original_ LynxKite.
+Use the command `kite-x.y.z/bin/biggraph stop` where `x.y.z` is the version of your _original_ LynxKite.
 
 ## Run the new version of LynxKite
 
-Start the new version of LynxKite with `./run-kite-x.y.z.sh start`, where `x.y.z` is the version
-of your _new_ LynxKite, i.e. the new runner script unpacked at the beginning of this upgrade. Note
-that the migration can take several minutes when the upgraded LynxKite is started for the first
-time.
+Start the new version of LynxKite with `kite-x.y.z/bin/biggraph start`, where `x.y.z` is the version
+of your _new_ LynxKite. Note that the migration can take several minutes when the upgraded
+LynxKite is started for the first time.
 
 ## Restore original LynxKite
 
