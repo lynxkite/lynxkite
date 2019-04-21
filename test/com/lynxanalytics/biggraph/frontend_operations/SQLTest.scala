@@ -219,20 +219,6 @@ class SQLTest extends OperationsTestBase {
     }
   }
 
-  test("duplicate column names") {
-    intercept[AssertionError] {
-      val table = box("Create example graph")
-        .box("SQL1", Map(
-          "sql" -> "select * from vertices a cross join vertices b",
-          "persist" -> "no"))
-        .table
-    } match {
-      case a: AssertionError =>
-        assert(a.getMessage.contains(
-          "Duplicate column name(s) found: name, location, age, id, income, gender"))
-    }
-  }
-
   test("alias") {
     val table = runQueryOnExampleGraph("select v.age from vertices v")
     assert(table.schema.map(_.name) == Seq("age"))
