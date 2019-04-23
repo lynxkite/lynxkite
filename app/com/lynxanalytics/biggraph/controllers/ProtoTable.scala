@@ -59,7 +59,7 @@ object ProtoTable {
     plan: LogicalPlan,
     protoTables: Map[String, ProtoTable]): Map[String, ProtoTable] = {
     // Match tables to ProtoTables based on the comment added in ProtoTable.relation
-    val protoStrings = plan.collectLeaves().flatMap(_.output.map(_.metadata.getString("comment")))
+    val protoStrings = getLeaves(plan).flatMap(_.output.map(_.metadata.getString("comment")))
     val fields = getRequiredFields(plan).map(f => (f.name, f.metadata))
     val selectedTables = protoTables.filter(k => protoStrings.contains(k._2.toString)).mapValues {
       f =>
@@ -73,12 +73,22 @@ object ProtoTable {
     selectedTables
   }
 
+  private def getLeaves(plan: LogicalPlan): Seq[LogicalPlan] = {
+    plan match {
+      case l: LeafNode =>
+        Seq(l)
+      case l: LogicalPlan =>
+        l.children.flatMap(getLeaves) ++ l.subqueries.flatMap(getLeaves)
+    }
+  }
+
   private def getRequiredFields(plan: LogicalPlan): Seq[NamedExpression] =
     plan match {
       case l: LeafNode =>
         Seq()
       case l: LogicalPlan =>
-        l.references.toSeq ++ l.children.flatMap(getRequiredFields)
+        (l.references.toSeq ++ l.children.flatMap(getRequiredFields)
+          ++ l.subqueries.flatMap(getRequiredFields))
     }
 }
 
