@@ -27,9 +27,9 @@
   </div>
   <div class="popup-content"
     ng-style="{
-        'width': popupModel.width + 'px',
-        'height': popupModel.height + 'px',
-        'max-height': popupModel.maxHeight + 'px',
+        width: popupModel.width,
+        height: popupModel.height,
+        maxHeight: popupModel.maxHeight,
     }">
     <box-editor ng-if="popupModel.content.type === 'box' && !popupModel.meta"
         workspace="workspace"
