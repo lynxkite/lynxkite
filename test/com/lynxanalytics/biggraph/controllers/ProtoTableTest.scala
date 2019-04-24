@@ -27,7 +27,7 @@ object SQLTestCases {
       Map("one" -> Set("age", "gender"))),
     ("select sum(cnt) as cnt from (select count(age) as cnt from one union all select count(income) as cnt from two)",
       Map("one" -> Set("age"), "two" -> Set("income"))),
-    ("select age from `one` where income in (select income from `two`)",
+    ("select age from one where income in (select income from two)",
       Map("one" -> Set("age", "income"), "two" -> Set("income"))))
 }
 
