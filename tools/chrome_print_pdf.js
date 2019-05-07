@@ -9,7 +9,7 @@ const puppeteer = require('puppeteer');
 const html_name = process.argv[2];
 const pdf_name = process.argv[3];
 
-puppeteer.launch({headless: true})
+puppeteer.launch({headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox']})
   .then((browser) =>
     browser.newPage().then((page) =>
       page.goto(html_name, {waitUntil: 'networkidle0'})
