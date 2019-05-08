@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Upgraded to Spark 2.4.3.
+
 ### 2.7.0
 
  - Removed jars with gpl licenses.
