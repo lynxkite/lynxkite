@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 2.8.0
+
  - Upgraded to Spark 2.4.3.
 
 ### 2.7.0
