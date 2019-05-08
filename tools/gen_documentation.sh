@@ -17,7 +17,8 @@ echo 'Starting LynxKite...'
 cd "$(dirname $0)/../web"
 npx gulp serve &
 LYNXKITE_PID=$!
-cd -
+cd ..
+npm install puppeteer
 function kill_grunt {
   echo 'Shutting down LynxKite...'
   kill $LYNXKITE_PID
