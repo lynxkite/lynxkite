@@ -28,7 +28,7 @@ generated for vertices where all of the predictors are defined.
 +
  - **Linear regression** with no regularization.
  - **Ridge regression** (also known as Tikhonov regularization) with L2-regularization.
- - **Lasso** with L2-regularization.
+ - **Lasso** with L1-regularization.
  - **Logistic regression** for binary classification. (The predicted attribute must be 0 or 1.)
  - **Naive Bayes** classifier with multinomial event model.
  - **Decision tree** with maximum depth 5 and 32 bins for all features.
