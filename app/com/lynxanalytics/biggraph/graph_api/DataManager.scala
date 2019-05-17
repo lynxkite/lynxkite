@@ -5,17 +5,19 @@
 
 package com.lynxanalytics.biggraph.graph_api
 
+import java.util
 import java.util.UUID
 
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
+
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
+import com.lynxanalytics.biggraph.{bigGraphLogger => log}
 import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_operations
@@ -24,6 +26,7 @@ import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
+import scala.collection.mutable.HashSet
 
 trait EntityProgressManager {
   case class ScalarComputationState[T](
@@ -53,6 +56,7 @@ class DataManager(
     new ThreadLocal[Option[MetaGraphOperationInstance]] { override def initialValue() = None }
   private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
+  private val onDiskCache: HashSet[String] = HashSet()
   private val sparkCachedEntities = mutable.Set[UUID]()
   lazy val masterSQLContext = {
     val sqlContext = sparkSession.sqlContext
@@ -125,6 +129,7 @@ class DataManager(
   def clear() = synchronized {
     instanceOutputCache.clear()
     entityCache.clear()
+    onDiskCache.clear()
     sparkCachedEntities.clear()
     dataRoot.clear()
   }
@@ -264,18 +269,59 @@ class DataManager(
     instanceOutputCache(gUID)
   }
 
-  override def computeProgress(entity: MetaGraphEntity): Double = synchronized {
-    val guid = entity.gUID
-    // It would be great if we could be more granular, but for now we just return 0.5 if the
-    // computation is running.
-    if (entityCache.contains(guid)) {
-      entityCache(guid).value match {
-        case None => 0.5
-        case Some(Failure(_)) => -1.0
-        case Some(Success(_)) => 1.0
+  val computeProgressHack = LoggedEnvironment.envOrElse("COMPUTE_PROGRESS_HACK", "-1.0").toDouble
+  val computeProgressHackAlgo = LoggedEnvironment.envOrElse("COMPUTE_PROGRESS_ALGO", "1").toInt
+
+  private def computeProgressHackFunction1(entity: MetaGraphEntity): Double = {
+      val guid = entity.gUID
+      // It would be great if we could be more granular, but for now we just return 0.5 if the
+      // computation is running.
+      if (entityCache.contains(guid)) {
+        entityCache(guid).value match {
+          case None => 0.5
+          case Some(Failure(_)) => -1.0
+          case Some(Success(_)) => 1.0
+        }
+      } else {
+        if (!entity.isInstanceOf[Scalar[_]] && computeProgressHack >= 0.0) computeProgressHack
+        else {
+          if (hasEntityOnDisk(entity)) 1.0
+          else 0.0
+        }
       }
-    } else if (hasEntityOnDisk(entity)) 1.0
-    else 0.0
+  }
+
+  private def computeProgressHackFunction2(entity: MetaGraphEntity): Double = {
+      val guid = entity.gUID
+      // It would be great if we could be more granular, but for now we just return 0.5 if the
+      // computation is running.
+      if (entityCache.contains(guid)) {
+        entityCache(guid).value match {
+          case None => 0.5
+          case Some(Failure(_)) => -1.0
+          case Some(Success(_)) => 1.0
+        }
+      } else {
+        val str = guid.toString
+        if (onDiskCache.contains(str)) return 1.0
+        else {
+          if (hasEntityOnDisk(entity)) {
+            onDiskCache += str
+            1.0
+          }
+          else 0.0
+        }
+      }
+  }
+
+
+  override def computeProgress(entity: MetaGraphEntity): Double = synchronized {
+    if (computeProgressHackAlgo == 1) {
+      computeProgressHackFunction1(entity)
+    }
+    else {
+      computeProgressHackFunction2(entity)
+    }
   }
 
   override def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T] = synchronized {
