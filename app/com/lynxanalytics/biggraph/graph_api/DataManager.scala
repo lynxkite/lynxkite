@@ -17,7 +17,7 @@ import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
-import com.lynxanalytics.biggraph.{bigGraphLogger => log}
+import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_operations
@@ -273,53 +273,51 @@ class DataManager(
   val computeProgressHackAlgo = LoggedEnvironment.envOrElse("COMPUTE_PROGRESS_ALGO", "1").toInt
 
   private def computeProgressHackFunction1(entity: MetaGraphEntity): Double = {
-      val guid = entity.gUID
-      // It would be great if we could be more granular, but for now we just return 0.5 if the
-      // computation is running.
-      if (entityCache.contains(guid)) {
-        entityCache(guid).value match {
-          case None => 0.5
-          case Some(Failure(_)) => -1.0
-          case Some(Success(_)) => 1.0
-        }
-      } else {
-        if (!entity.isInstanceOf[Scalar[_]] && computeProgressHack >= 0.0) computeProgressHack
-        else {
-          if (hasEntityOnDisk(entity)) 1.0
-          else 0.0
-        }
+    val guid = entity.gUID
+    // It would be great if we could be more granular, but for now we just return 0.5 if the
+    // computation is running.
+    if (entityCache.contains(guid)) {
+      entityCache(guid).value match {
+        case None => 0.5
+        case Some(Failure(_)) => -1.0
+        case Some(Success(_)) => 1.0
       }
+    } else {
+      if (!entity.isInstanceOf[Scalar[_]] && computeProgressHack >= 0.0) computeProgressHack
+      else {
+        if (hasEntityOnDisk(entity)) 1.0
+        else 0.0
+      }
+    }
   }
 
   private def computeProgressHackFunction2(entity: MetaGraphEntity): Double = {
-      val guid = entity.gUID
-      // It would be great if we could be more granular, but for now we just return 0.5 if the
-      // computation is running.
-      if (entityCache.contains(guid)) {
-        entityCache(guid).value match {
-          case None => 0.5
-          case Some(Failure(_)) => -1.0
-          case Some(Success(_)) => 1.0
-        }
-      } else {
-        val str = guid.toString
-        if (onDiskCache.contains(str)) return 1.0
-        else {
-          if (hasEntityOnDisk(entity)) {
-            onDiskCache += str
-            1.0
-          }
-          else 0.0
-        }
+    val guid = entity.gUID
+    // It would be great if we could be more granular, but for now we just return 0.5 if the
+    // computation is running.
+    if (entityCache.contains(guid)) {
+      entityCache(guid).value match {
+        case None => 0.5
+        case Some(Failure(_)) => -1.0
+        case Some(Success(_)) => 1.0
       }
+    } else {
+      val str = guid.toString
+      if (onDiskCache.contains(str)) {
+        return 1.0
+      } else {
+        if (hasEntityOnDisk(entity)) {
+          onDiskCache += str
+          1.0
+        } else 0.0
+      }
+    }
   }
-
 
   override def computeProgress(entity: MetaGraphEntity): Double = synchronized {
     if (computeProgressHackAlgo == 1) {
       computeProgressHackFunction1(entity)
-    }
-    else {
+    } else {
       computeProgressHackFunction2(entity)
     }
   }
