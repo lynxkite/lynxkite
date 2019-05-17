@@ -133,7 +133,14 @@ class HadoopFile private (
   def open() = fs.open(path)
   // The caller is responsible for calling close().
   def create() = fs.create(path)
-  def exists() = fs.exists(path)
+  def exists() = {
+    val time = System.currentTimeMillis
+    val e = fs.exists(path)
+    val elapsed = System.currentTimeMillis - time
+    val msg = s"Exists check for $path took $elapsed ms result: $e"
+    log.info(msg)
+    e
+  }
   private def reader() = new BufferedReader(new InputStreamReader(open, "utf-8"))
   def readAsString() = {
     val r = reader()
