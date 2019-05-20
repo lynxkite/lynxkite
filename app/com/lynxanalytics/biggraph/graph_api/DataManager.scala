@@ -26,7 +26,9 @@ import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
+
 import scala.collection.mutable.HashSet
+import scala.concurrent.{ Await, Future }
 
 trait EntityProgressManager {
   case class ScalarComputationState[T](
@@ -56,7 +58,6 @@ class DataManager(
     new ThreadLocal[Option[MetaGraphOperationInstance]] { override def initialValue() = None }
   private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
   private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
-  private val onDiskCache: HashSet[String] = HashSet()
   private val sparkCachedEntities = mutable.Set[UUID]()
   lazy val masterSQLContext = {
     val sqlContext = sparkSession.sqlContext
@@ -129,8 +130,8 @@ class DataManager(
   def clear() = synchronized {
     instanceOutputCache.clear()
     entityCache.clear()
-    onDiskCache.clear()
     sparkCachedEntities.clear()
+    entitiesOnDiskCache.clear()
     dataRoot.clear()
   }
 
@@ -271,28 +272,65 @@ class DataManager(
 
   val computeProgressHack = LoggedEnvironment.envOrElse("COMPUTE_PROGRESS_HACK", "-1.0").toDouble
   val computeProgressHackAlgo = LoggedEnvironment.envOrElse("COMPUTE_PROGRESS_ALGO", "1").toInt
+  val computeProgressHadoopTimeoutMs = LoggedEnvironment.envOrElse("COMPUTE_PROGRESS_HADOOP_TIMEOUT_MS", "2000").toLong
+
+  case class EntityOnDiskInfo(exists: Boolean, f: Option[Future[Boolean]], stamp: Long)
+  private val entitiesOnDiskCache = TrieMap[UUID, EntityOnDiskInfo]()
 
   private def computeProgressHackFunction1(entity: MetaGraphEntity): Double = {
-    val guid = entity.gUID
-    // It would be great if we could be more granular, but for now we just return 0.5 if the
-    // computation is running.
-    if (entityCache.contains(guid)) {
-      entityCache(guid).value match {
-        case None => 0.5
-        case Some(Failure(_)) => -1.0
-        case Some(Success(_)) => 1.0
-      }
-    } else {
-      if (!entity.isInstanceOf[Scalar[_]] && computeProgressHack >= 0.0) computeProgressHack
-      else {
-        if (hasEntityOnDisk(entity)) 1.0
-        else 0.0
-      }
+    if (!entity.isInstanceOf[Scalar[_]] && computeProgressHack >= 0.0) computeProgressHack
+    else {
+      if (hasEntityOnDisk(entity)) 1.0
+      else 0.0
+    }
+  }
+
+  private def asyncHasEntityOnDisk(entity: MetaGraphEntity) = {
+    Future { hasEntityOnDisk(entity) }
+  }
+
+  private def registerAsyncGetInfoAboutEntityOnDisk(entity: MetaGraphEntity): Unit = {
+    val fn = asyncHasEntityOnDisk(entity)
+    entitiesOnDiskCache(entity.gUID) = EntityOnDiskInfo(false, Some(fn), 0)
+    fn.onComplete {
+      case Success(exists) =>
+        entitiesOnDiskCache.synchronized {
+          if (exists) {
+            entitiesOnDiskCache(entity.gUID) = EntityOnDiskInfo(true, None, 0)
+          } else {
+            entitiesOnDiskCache(entity.gUID) = EntityOnDiskInfo(false, None, System.currentTimeMillis())
+          }
+        }
+      case Failure(t) =>
+        log.info(s"Async job failed: $t")
+        entitiesOnDiskCache.synchronized {
+          entitiesOnDiskCache.remove(entity.gUID)
+        }
     }
   }
 
   private def computeProgressHackFunction2(entity: MetaGraphEntity): Double = {
     val guid = entity.gUID
+    entitiesOnDiskCache.synchronized {
+      if (entitiesOnDiskCache.contains(guid)) {
+        val r = entitiesOnDiskCache(guid)
+        if (r.exists) {
+          1.0
+        } else {
+          if (r.stamp + computeProgressHadoopTimeoutMs < System.currentTimeMillis()) {
+            registerAsyncGetInfoAboutEntityOnDisk(entity)
+          }
+          0.0
+        }
+      } else {
+        registerAsyncGetInfoAboutEntityOnDisk(entity)
+        0.0
+      }
+    }
+  }
+
+  override def computeProgress(entity: MetaGraphEntity): Double = synchronized {
+    val guid = entity.gUID
     // It would be great if we could be more granular, but for now we just return 0.5 if the
     // computation is running.
     if (entityCache.contains(guid)) {
@@ -302,23 +340,11 @@ class DataManager(
         case Some(Success(_)) => 1.0
       }
     } else {
-      val str = guid.toString
-      if (onDiskCache.contains(str)) {
-        return 1.0
+      if (computeProgressHackAlgo == 1) {
+        computeProgressHackFunction1(entity)
       } else {
-        if (hasEntityOnDisk(entity)) {
-          onDiskCache += str
-          1.0
-        } else 0.0
+        computeProgressHackFunction2(entity)
       }
-    }
-  }
-
-  override def computeProgress(entity: MetaGraphEntity): Double = synchronized {
-    if (computeProgressHackAlgo == 1) {
-      computeProgressHackFunction1(entity)
-    } else {
-      computeProgressHackFunction2(entity)
     }
   }
 
@@ -414,6 +440,8 @@ class DataManager(
   def waitAllFutures(): Unit = {
     SafeFuture.sequence(entityCache.values.toSeq).awaitReady(Duration.Inf)
     asyncJobs.waitAllFutures()
+    val s = entitiesOnDiskCache.values.map(_.f).filter(_.isDefined).map(_.get)
+    Await.ready(Future.sequence(s), Duration.Inf)
   }
 
   def get(vertexSet: VertexSet): VertexSetData = {
