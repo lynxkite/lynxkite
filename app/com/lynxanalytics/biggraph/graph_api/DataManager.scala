@@ -270,35 +270,23 @@ class DataManager(
     instanceOutputCache(gUID)
   }
 
-  val computeProgressHack = LoggedEnvironment.envOrElse("COMPUTE_PROGRESS_HACK", "-1.0").toDouble
-  val computeProgressHackAlgo = LoggedEnvironment.envOrElse("COMPUTE_PROGRESS_ALGO", "1").toInt
-  val computeProgressHadoopTimeoutMs = LoggedEnvironment.envOrElse("COMPUTE_PROGRESS_HADOOP_TIMEOUT_MS", "2000").toLong
+  val FileExists = 0
+  val FileDoesNotExist = 1
+  val FileExistenceIsBeingChecked = 2
 
-  case class EntityOnDiskInfo(exists: Boolean, f: Option[Future[Boolean]], stamp: Long)
-  private val entitiesOnDiskCache = TrieMap[UUID, EntityOnDiskInfo]()
-
-  private def computeProgressHackFunction1(entity: MetaGraphEntity): Double = {
-    if (!entity.isInstanceOf[Scalar[_]] && computeProgressHack >= 0.0) computeProgressHack
-    else {
-      if (hasEntityOnDisk(entity)) 1.0
-      else 0.0
-    }
-  }
-
-  private def asyncHasEntityOnDisk(entity: MetaGraphEntity) = {
-    Future { hasEntityOnDisk(entity) }
-  }
+  private val entitiesOnDiskCache = TrieMap[UUID, Int]()
 
   private def registerAsyncGetInfoAboutEntityOnDisk(entity: MetaGraphEntity): Unit = {
-    val fn = asyncHasEntityOnDisk(entity)
-    entitiesOnDiskCache(entity.gUID) = EntityOnDiskInfo(false, Some(fn), 0)
+    val fn = SafeFuture { hasEntityOnDisk(entity) }
+    entitiesOnDiskCache(entity.gUID) = FileExistenceIsBeingChecked
+    asyncJobs.registerFuture(fn)
     fn.onComplete {
       case Success(exists) =>
         entitiesOnDiskCache.synchronized {
           if (exists) {
-            entitiesOnDiskCache(entity.gUID) = EntityOnDiskInfo(true, None, 0)
+            entitiesOnDiskCache(entity.gUID) = FileExists
           } else {
-            entitiesOnDiskCache(entity.gUID) = EntityOnDiskInfo(false, None, System.currentTimeMillis())
+            entitiesOnDiskCache(entity.gUID) = FileDoesNotExist
           }
         }
       case Failure(t) =>
@@ -309,18 +297,19 @@ class DataManager(
     }
   }
 
-  private def computeProgressHackFunction2(entity: MetaGraphEntity): Double = {
+  private def asyncHasEntityOnDisk(entity: MetaGraphEntity): Double = {
     val guid = entity.gUID
     entitiesOnDiskCache.synchronized {
       if (entitiesOnDiskCache.contains(guid)) {
-        val r = entitiesOnDiskCache(guid)
-        if (r.exists) {
-          1.0
-        } else {
-          if (r.stamp + computeProgressHadoopTimeoutMs < System.currentTimeMillis()) {
-            registerAsyncGetInfoAboutEntityOnDisk(entity)
-          }
-          0.0
+        val status = entitiesOnDiskCache(guid)
+        status match {
+          case FileDoesNotExist => 0.0
+          case FileExistenceIsBeingChecked => 0.0
+          case FileExists => 1.0
+          case _ =>
+            entitiesOnDiskCache.remove(guid)
+            log.warn(s"Impossible file check status: $status for $entity, removing.")
+            0.0
         }
       } else {
         registerAsyncGetInfoAboutEntityOnDisk(entity)
@@ -340,11 +329,7 @@ class DataManager(
         case Some(Success(_)) => 1.0
       }
     } else {
-      if (computeProgressHackAlgo == 1) {
-        computeProgressHackFunction1(entity)
-      } else {
-        computeProgressHackFunction2(entity)
-      }
+      asyncHasEntityOnDisk(entity)
     }
   }
 
@@ -440,8 +425,6 @@ class DataManager(
   def waitAllFutures(): Unit = {
     SafeFuture.sequence(entityCache.values.toSeq).awaitReady(Duration.Inf)
     asyncJobs.waitAllFutures()
-    val s = entitiesOnDiskCache.values.map(_.f).filter(_.isDefined).map(_.get)
-    Await.ready(Future.sequence(s), Duration.Inf)
   }
 
   def get(vertexSet: VertexSet): VertexSetData = {
