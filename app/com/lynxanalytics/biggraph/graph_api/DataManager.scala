@@ -51,6 +51,7 @@ class DataManager(
   private var executingOperation =
     new ThreadLocal[Option[MetaGraphOperationInstance]] { override def initialValue() = None }
   private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
+  private val entitiesOnDiskCache = TrieMap[UUID, Boolean]()
   private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
   lazy val masterSQLContext = {
@@ -86,16 +87,42 @@ class DataManager(
     ephemeralPath.getOrElse(repositoryPath)
   }
 
-  private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean = {
+  private def eioExists(entity: MetaGraphEntity): Boolean = {
+    entitiesOnDiskCache.synchronized {
+      if (entitiesOnDiskCache.contains(entity.gUID)) {
+        entitiesOnDiskCache(entity.gUID)
+      } else {
+        val eio = entityIO(entity)
+        val fn = SafeFuture { eio.exists }
+        entitiesOnDiskCache(entity.gUID) = false
+        asyncJobs.registerFuture(fn)
+        fn.onComplete {
+          case Success(exists) =>
+            entitiesOnDiskCache.synchronized {
+              entitiesOnDiskCache(entity.gUID) = exists
+            }
+          case Failure(_) =>
+            entitiesOnDiskCache.synchronized {
+              entitiesOnDiskCache.remove(entity.gUID)
+            }
+        }
+        if (computationAllowed && false) false
+        else fn.awaitResult(Duration.Inf)
+      }
+    }
+  }
+
+  private def canLoadEntityFromDisk(entity: MetaGraphEntity): Boolean = {
     val eio = entityIO(entity)
     // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
     // the entity in this session, so we need this assertion.
     assert(!isEntityInProgressOrComputed(eio.entity), s"${eio} is new")
+
     (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
       eio.mayHaveExisted &&
       // Slow check for _SUCCESS file.
-      eio.exists
+      eioExists(entity)
   }
   private def isEntityInProgressOrComputed(
     entity: MetaGraphEntity): Boolean = {
@@ -264,53 +291,6 @@ class DataManager(
     instanceOutputCache(gUID)
   }
 
-  private val FileExists = 0
-  private val FileDoesNotExist = 1
-  private val FileExistenceIsBeingChecked = 2
-
-  private val entitiesOnDiskCache = TrieMap[UUID, Int]()
-
-  private def registerAsyncGetInfoAboutEntityOnDisk(entity: MetaGraphEntity): Unit = {
-    val fn = SafeFuture { hasEntityOnDisk(entity) }
-    entitiesOnDiskCache(entity.gUID) = FileExistenceIsBeingChecked
-    asyncJobs.registerFuture(fn)
-    fn.onComplete {
-      case Success(exists) =>
-        entitiesOnDiskCache.synchronized {
-          if (exists) {
-            entitiesOnDiskCache(entity.gUID) = FileExists
-          } else {
-            entitiesOnDiskCache(entity.gUID) = FileDoesNotExist
-          }
-        }
-      case Failure(t) =>
-        entitiesOnDiskCache.synchronized {
-          entitiesOnDiskCache.remove(entity.gUID)
-        }
-    }
-  }
-
-  private def asyncHasEntityOnDisk(entity: MetaGraphEntity): Double = {
-    val guid = entity.gUID
-    entitiesOnDiskCache.synchronized {
-      if (entitiesOnDiskCache.contains(guid)) {
-        val status = entitiesOnDiskCache(guid)
-        status match {
-          case FileDoesNotExist => 0.0
-          case FileExistenceIsBeingChecked => 0.0
-          case FileExists => 1.0
-          case _ =>
-            entitiesOnDiskCache.remove(guid)
-            log.warn(s"Impossible file check status: $status for $entity, removing.")
-            0.0
-        }
-      } else {
-        registerAsyncGetInfoAboutEntityOnDisk(entity)
-        0.0
-      }
-    }
-  }
-
   override def computeProgress(entity: MetaGraphEntity): Double = synchronized {
     val guid = entity.gUID
     // It would be great if we could be more granular, but for now we just return 0.5 if the
@@ -322,7 +302,8 @@ class DataManager(
         case Some(Success(_)) => 1.0
       }
     } else {
-      asyncHasEntityOnDisk(entity)
+      if (canLoadEntityFromDisk(entity)) 1.0
+      else 0.0
     }
   }
 
@@ -341,7 +322,7 @@ class DataManager(
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!isEntityInProgressOrComputed(entity)) {
-      if (hasEntityOnDisk(entity)) {
+      if (canLoadEntityFromDisk(entity)) {
         // If on disk already, we just load it.
         set(entity, load(entity))
       } else {
