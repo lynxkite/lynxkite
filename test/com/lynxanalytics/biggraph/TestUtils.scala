@@ -1,11 +1,12 @@
 package com.lynxanalytics.biggraph
 
 import java.io.File
+
+import com.lynxanalytics.biggraph.graph_api.{ DataManager, MetaGraphEntity }
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, PrefixRepository, Timestamp }
 import org.apache.spark
 import org.scalatest.Tag
-
 import spark_util.BigGraphSparkContext
 
 import scala.util.Random
@@ -48,6 +49,11 @@ object TestUtils {
     name
   }
 
+  def computeProgress(dataManager: DataManager, entity: MetaGraphEntity): Double = {
+    dataManager.computeProgress(entity)
+    Thread.sleep(2000L)
+    dataManager.computeProgress(entity)
+  }
 }
 
 trait TestTempDir {
