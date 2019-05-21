@@ -284,7 +284,6 @@ class DataManager(
           }
         }
       case Failure(t) =>
-        log.info(s"Async job failed: $t")
         entitiesOnDiskCache.synchronized {
           entitiesOnDiskCache.remove(entity.gUID)
         }
