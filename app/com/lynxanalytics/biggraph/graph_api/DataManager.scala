@@ -5,7 +5,6 @@
 
 package com.lynxanalytics.biggraph.graph_api
 
-import java.util
 import java.util.UUID
 
 import org.apache.spark
@@ -20,15 +19,10 @@ import scala.util.Success
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
-import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
-import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
-
-import scala.collection.mutable.HashSet
-import scala.concurrent.{ Await, Future }
 
 trait EntityProgressManager {
   case class ScalarComputationState[T](
@@ -270,9 +264,9 @@ class DataManager(
     instanceOutputCache(gUID)
   }
 
-  val FileExists = 0
-  val FileDoesNotExist = 1
-  val FileExistenceIsBeingChecked = 2
+  private val FileExists = 0
+  private val FileDoesNotExist = 1
+  private val FileExistenceIsBeingChecked = 2
 
   private val entitiesOnDiskCache = TrieMap[UUID, Int]()
 
