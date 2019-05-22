@@ -88,14 +88,8 @@ class DataManager(
     ephemeralPath.getOrElse(repositoryPath)
   }
 
-  private val EntityIsOnDisk = SafeFuture {
-    true
-  }
-  private val EntityIsNotOnDisk = SafeFuture {
-    false
-  }
-  asyncJobs.registerFuture(EntityIsOnDisk)
-  asyncJobs.registerFuture(EntityIsNotOnDisk)
+  private val EntityIsOnDisk = asyncJobs.register { true }
+  private val EntityIsNotOnDisk = asyncJobs.register { false }
 
   private def canLoadEntityFromDiskInner(entity: MetaGraphEntity): Boolean = {
     val eio = entityIO(entity)
@@ -113,7 +107,7 @@ class DataManager(
   private def canLoadEntityFromDisk(entity: MetaGraphEntity): SafeFuture[Boolean] = {
     entitiesOnDiskCache.synchronized {
       entitiesOnDiskCache.getOrElseUpdate(entity.gUID, {
-        val f = SafeFuture {
+        asyncJobs.register {
           val exists = canLoadEntityFromDiskInner(entity)
           entitiesOnDiskCache.synchronized {
             if (exists) entitiesOnDiskCache(entity.gUID) = EntityIsOnDisk
@@ -121,8 +115,6 @@ class DataManager(
           }
           exists
         }
-        asyncJobs.registerFuture(f)
-        f
       })
     }
   }
