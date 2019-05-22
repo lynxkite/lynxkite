@@ -34,12 +34,9 @@ $(pip): python_requirements.txt
 	./.test_frontend.sh && touch $@
 .build/remote_api-python-test-passed: $(shell $(find) remote_api/python) .build/backend-done $(pip)
 	tools/with_lk.sh remote_api/python/test.sh && touch $@
-.build/mobile-prepaid-scv-test-passed: \
-	$(shell $(find) remote_api/python mobile-prepaid-scv) .build/backend-done $(pip)
-	tools/with_lk.sh mobile-prepaid-scv/unit_test.sh && touch $@
-.build/happiness-index-test-passed: \
-	$(shell $(find) remote_api/python happiness-index) .build/backend-done $(pip)
-	tools/with_lk.sh happiness-index/unit_test.sh && touch $@
+.build/standard-pipelines-test-passed: \
+	$(shell $(find) remote_api/python standard-pipelines) .build/backend-done $(pip)
+	tools/with_lk.sh standard-pipelines/unit_test.sh && touch $@
 .build/happiness-index-integration-test-passed: \
 	.build/happiness-index-test-passed \
 	.build/shell_ui-test-passed \
@@ -88,14 +85,12 @@ backend-test: .build/backend-test-passed
 frontend-test: .build/frontend-test-passed
 .PHONY: remote_api-test
 remote_api-test: .build/remote_api-python-test-passed
-.PHONY: mobile-prepaid-scv-test
-mobile-prepaid-scv-test: .build/mobile-prepaid-scv-test-passed
-.PHONY: happiness-index-test
-happiness-index-test: .build/happiness-index-test-passed
+.PHONY: standard-pipelines-test
+standard-pipelines-test: .build/standard-pipelines-test-passed
 .PHONY: happiness-index-integration-test
 happiness-index-integration-test: .build/happiness-index-integration-test-passed
 .PHONY: ecosystem-test
-ecosystem-test: remote_api-test mobile-prepaid-scv-test happiness-index-test
+ecosystem-test: remote_api-test standard-pipelines-test
 .PHONY: shell_ui-test
 shell_ui-test: .build/shell_ui-test-passed
 .PHONY: test
