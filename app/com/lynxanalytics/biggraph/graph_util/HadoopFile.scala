@@ -14,7 +14,6 @@ import com.lynxanalytics.biggraph.spark_util._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.rdd.RDD
 import scala.reflect.runtime.universe._
-import scala.util.Random
 
 object HadoopFile {
 
@@ -134,17 +133,7 @@ class HadoopFile private (
   def open() = fs.open(path)
   // The caller is responsible for calling close().
   def create() = fs.create(path)
-  val rnd = new Random(1000L)
-  def exists() = {
-    val time = System.currentTimeMillis
-    val e = fs.exists(path)
-    val elapsed = System.currentTimeMillis - time
-    val msg = s"Exists check for $path took $elapsed ms result: $e"
-    log.info(msg)
-    //    val w = rnd.nextInt(10000)
-    //    Thread.sleep(w.toLong)
-    e
-  }
+  def exists() = fs.exists(path)
   private def reader() = new BufferedReader(new InputStreamReader(open, "utf-8"))
   def readAsString() = {
     val r = reader()
