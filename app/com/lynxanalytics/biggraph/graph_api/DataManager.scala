@@ -87,28 +87,9 @@ class DataManager(
     ephemeralPath.getOrElse(repositoryPath)
   }
 
-  private def eioExists(entity: MetaGraphEntity): Boolean = {
+  private def cachedEIOExists(entity: MetaGraphEntity): Boolean = {
     entitiesOnDiskCache.synchronized {
-      if (entitiesOnDiskCache.contains(entity.gUID)) {
-        entitiesOnDiskCache(entity.gUID)
-      } else {
-        val eio = entityIO(entity)
-        val fn = SafeFuture { eio.exists }
-        entitiesOnDiskCache(entity.gUID) = false
-        asyncJobs.registerFuture(fn)
-        fn.onComplete {
-          case Success(exists) =>
-            entitiesOnDiskCache.synchronized {
-              entitiesOnDiskCache(entity.gUID) = exists
-            }
-          case Failure(_) =>
-            entitiesOnDiskCache.synchronized {
-              entitiesOnDiskCache.remove(entity.gUID)
-            }
-        }
-        if (computationAllowed && false) false
-        else fn.awaitResult(Duration.Inf)
-      }
+      entitiesOnDiskCache.getOrElseUpdate(entity.gUID, { entityIO(entity).exists })
     }
   }
 
@@ -122,7 +103,7 @@ class DataManager(
       // Fast check for directory.
       eio.mayHaveExisted &&
       // Slow check for _SUCCESS file.
-      eioExists(entity)
+      cachedEIOExists(entity)
   }
   private def isEntityInProgressOrComputed(
     entity: MetaGraphEntity): Boolean = {
