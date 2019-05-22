@@ -100,14 +100,14 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val e = intercept[Exception] {
       dataManager.get(imported.ids)
     }
-    assert(-1.0 == dataManager.computeProgress(imported.ids))
+    assert(-1.0 == dataManager.computeProgressTest(imported.ids))
     // Create the file.
     testfile.createFromStrings("a,b\n3,4\n")
     // The result can be accessed now.
     assert(dataManager.get(imported.columns("a").entity).rdd.values.collect.toSeq == Seq("3"))
     // The compute progress of ids is also updated.
     dataManager.get(imported.ids)
-    assert(1.0 == dataManager.computeProgress(imported.ids))
+    assert(1.0 == dataManager.computeProgressTest(imported.ids))
   }
 
   test("Ephemeral repo can read main repo") {
@@ -125,8 +125,8 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
         sparkSession, dataManager1.repositoryPath,
         ephemeralPath = Some(tmpDM.repositoryPath))
     }
-    assert(dataManager2.computeProgress(names) == 1.0)
-    assert(dataManager2.computeProgress(greeting) == 1.0)
+    assert(dataManager2.computeProgressTest(names) == 1.0)
+    assert(dataManager2.computeProgressTest(greeting) == 1.0)
   }
 
   test("Ephemeral repo writes to ephemeral directory") {
@@ -145,11 +145,11 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val data1: AttributeData[String] = dataManager1.get(names)
     val scalarData1: ScalarData[String] = dataManager1.get(greeting)
     val dataManagerMain = new DataManager(sparkSession, dataManager1.repositoryPath)
-    assert(dataManagerMain.computeProgress(names) == 0.0)
-    assert(dataManagerMain.computeProgress(greeting) == 0.0)
+    assert(dataManagerMain.computeProgressTest(names) == 0.0)
+    assert(dataManagerMain.computeProgressTest(greeting) == 0.0)
     val dataManagerEphemeral = new DataManager(sparkSession, dataManager1.ephemeralPath.get)
-    assert(dataManagerEphemeral.computeProgress(names) == 1.0)
-    assert(dataManagerEphemeral.computeProgress(greeting) == 1.0)
+    assert(dataManagerEphemeral.computeProgressTest(names) == 1.0)
+    assert(dataManagerEphemeral.computeProgressTest(greeting) == 1.0)
   }
 
   /*

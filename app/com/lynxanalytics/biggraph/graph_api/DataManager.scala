@@ -48,10 +48,11 @@ class DataManager(
     ThreadUtil.limitedExecutionContext(
       "DataManager",
       maxParallelism = LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
+  private val asyncJobs = new ControlledFutures()(executionContext)
   private var executingOperation =
     new ThreadLocal[Option[MetaGraphOperationInstance]] { override def initialValue() = None }
   private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
-  private val entitiesOnDiskCache = TrieMap[UUID, Boolean]()
+  private val entitiesOnDiskCache = TrieMap[UUID, SafeFuture[Boolean]]()
   private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
   lazy val masterSQLContext = {
@@ -87,13 +88,16 @@ class DataManager(
     ephemeralPath.getOrElse(repositoryPath)
   }
 
-  private def cachedEIOExists(entity: MetaGraphEntity): Boolean = {
-    entitiesOnDiskCache.synchronized {
-      entitiesOnDiskCache.getOrElseUpdate(entity.gUID, { entityIO(entity).exists })
-    }
+  private val EntityIsOnDisk = SafeFuture {
+    true
   }
+  private val EntityIsNotOnDisk = SafeFuture {
+    false
+  }
+  asyncJobs.registerFuture(EntityIsOnDisk)
+  asyncJobs.registerFuture(EntityIsNotOnDisk)
 
-  private def canLoadEntityFromDisk(entity: MetaGraphEntity): Boolean = {
+  private def canLoadEntityFromDiskInner(entity: MetaGraphEntity): Boolean = {
     val eio = entityIO(entity)
     // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
     // the entity in this session, so we need this assertion.
@@ -103,8 +107,26 @@ class DataManager(
       // Fast check for directory.
       eio.mayHaveExisted &&
       // Slow check for _SUCCESS file.
-      cachedEIOExists(entity)
+      eio.exists
   }
+
+  private def canLoadEntityFromDisk(entity: MetaGraphEntity): SafeFuture[Boolean] = {
+    entitiesOnDiskCache.synchronized {
+      entitiesOnDiskCache.getOrElseUpdate(entity.gUID, {
+        val f = SafeFuture {
+          val exists = canLoadEntityFromDiskInner(entity)
+          entitiesOnDiskCache.synchronized {
+            if (exists) entitiesOnDiskCache(entity.gUID) = EntityIsOnDisk
+            else entitiesOnDiskCache(entity.gUID) = EntityIsNotOnDisk
+          }
+          exists
+        }
+        asyncJobs.registerFuture(f)
+        f
+      })
+    }
+  }
+
   private def isEntityInProgressOrComputed(
     entity: MetaGraphEntity): Boolean = {
 
@@ -136,8 +158,6 @@ class DataManager(
     entitiesOnDiskCache.clear()
     dataRoot.clear()
   }
-
-  private val asyncJobs = new ControlledFutures()(executionContext)
 
   // Runs something on the DataManager threadpool.
   // Use this to run Spark operations from HTTP handlers. (SPARK-12964)
@@ -283,9 +303,15 @@ class DataManager(
         case Some(Success(_)) => 1.0
       }
     } else {
-      if (canLoadEntityFromDisk(entity)) 1.0
+      if (canLoadEntityFromDisk(entity) eq EntityIsOnDisk) 1.0
       else 0.0
     }
+  }
+
+  def computeProgressTest(entity: MetaGraphEntity): Double = {
+    computeProgress(entity)
+    waitAllFutures()
+    computeProgress(entity)
   }
 
   override def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T] = synchronized {
@@ -303,7 +329,7 @@ class DataManager(
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!isEntityInProgressOrComputed(entity)) {
-      if (canLoadEntityFromDisk(entity)) {
+      if (canLoadEntityFromDisk(entity).awaitResult(Duration.Inf)) {
         // If on disk already, we just load it.
         set(entity, load(entity))
       } else {
