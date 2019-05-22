@@ -59,9 +59,6 @@ class SafeFuture[+T] private (val future: Future[T]) {
   def onFailure[U](pf: PartialFunction[Throwable, U])(implicit ec: ExecutionContext) =
     future.onFailure(pf)
 
-  def onComplete[U](f: Try[T] => U)(implicit executor: ExecutionContext) =
-    future.onComplete(f)
-
   def foreach[U](f: T => U)(implicit ec: ExecutionContext) =
     future.foreach(f)
 
