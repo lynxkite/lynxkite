@@ -310,12 +310,6 @@ class DataManager(
     }
   }
 
-  def computeProgressTest(entity: MetaGraphEntity): Double = {
-    computeProgress(entity)
-    waitAllFutures()
-    computeProgress(entity)
-  }
-
   override def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T] = synchronized {
     val progress = computeProgress(entity)
     ScalarComputationState(
