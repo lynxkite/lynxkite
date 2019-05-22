@@ -88,10 +88,18 @@ class DataManager(
     ephemeralPath.getOrElse(repositoryPath)
   }
 
-  private val EntityIsOnDisk = asyncJobs.register { true }
-  private val EntityIsNotOnDisk = asyncJobs.register { false }
+  private def entityCanBeOnDisk(entity: MetaGraphEntity): Boolean = {
+    val eio = entityIO(entity)
+    // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
+    // the entity in this session, so we need this assertion.
+    assert(!isEntityInProgressOrComputed(eio.entity), s"${eio} is new")
 
-  private def canLoadEntityFromDiskInner(entity: MetaGraphEntity): Boolean = {
+    (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
+      // Fast check for directory.
+      eio.mayHaveExisted
+  }
+
+  private def possiblyVerySlowCheckIfEntityCanBeLoadedFromDisk(entity: MetaGraphEntity): Boolean = {
     val eio = entityIO(entity)
     // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
     // the entity in this session, so we need this assertion.
@@ -102,16 +110,16 @@ class DataManager(
       eio.mayHaveExisted &&
       // Slow check for _SUCCESS file.
       eio.exists
+
   }
 
   private def canLoadEntityFromDisk(entity: MetaGraphEntity): SafeFuture[Boolean] = {
     entitiesOnDiskCache.synchronized {
       entitiesOnDiskCache.getOrElseUpdate(entity.gUID, {
         asyncJobs.register {
-          val exists = canLoadEntityFromDiskInner(entity)
+          val exists = possiblyVerySlowCheckIfEntityCanBeLoadedFromDisk(entity)
           entitiesOnDiskCache.synchronized {
-            if (exists) entitiesOnDiskCache(entity.gUID) = EntityIsOnDisk
-            else entitiesOnDiskCache(entity.gUID) = EntityIsNotOnDisk
+            entitiesOnDiskCache(entity.gUID) = SafeFuture.successful { exists }
           }
           exists
         }
@@ -295,8 +303,10 @@ class DataManager(
         case Some(Success(_)) => 1.0
       }
     } else {
-      if (canLoadEntityFromDisk(entity) eq EntityIsOnDisk) 1.0
-      else 0.0
+      canLoadEntityFromDisk(entity).value match {
+        case Some(util.Success(true)) => 1.0
+        case _ => 0.0
+      }
     }
   }
 
