@@ -37,11 +37,6 @@ $(pip): python_requirements.txt
 .build/standard-pipelines-test-passed: \
 	$(shell $(find) remote_api/python standard-pipelines) .build/backend-done $(pip)
 	tools/with_lk.sh standard-pipelines/unit_test.sh && touch $@
-.build/happiness-index-integration-test-passed: \
-	.build/happiness-index-test-passed \
-	.build/shell_ui-test-passed \
-	.build/backend-done $(pip)
-	happiness-index/integration-test/test.sh && touch $@
 .build/documentation-done-${VERSION}: \
 	$(shell $(find) ecosystem/documentation remote_api/python) $(pip)
 	ecosystem/documentation/build.sh native && touch $@
@@ -87,8 +82,6 @@ frontend-test: .build/frontend-test-passed
 remote_api-test: .build/remote_api-python-test-passed
 .PHONY: standard-pipelines-test
 standard-pipelines-test: .build/standard-pipelines-test-passed
-.PHONY: happiness-index-integration-test
-happiness-index-integration-test: .build/happiness-index-integration-test-passed
 .PHONY: ecosystem-test
 ecosystem-test: remote_api-test standard-pipelines-test
 .PHONY: shell_ui-test
