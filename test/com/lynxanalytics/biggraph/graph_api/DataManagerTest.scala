@@ -11,10 +11,6 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
 class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataManager {
 
-  //  def computeProgress(dataManager: DataManager, entity: MetaGraphEntity) = {
-  //    TestUtils.computeProgress(dataManager, entity)
-  //  }
-
   test("We can obtain a simple new graph") {
     val metaManager = cleanMetaManager
     val dataManager = cleanDataManager
