@@ -18,11 +18,9 @@ import scala.util.Success
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
-import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
-import com.lynxanalytics.biggraph.spark_util.HybridRDD
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 trait EntityProgressManager {
@@ -49,9 +47,11 @@ class DataManager(
     ThreadUtil.limitedExecutionContext(
       "DataManager",
       maxParallelism = LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
+  private val asyncJobs = new ControlledFutures()(executionContext)
   private var executingOperation =
     new ThreadLocal[Option[MetaGraphOperationInstance]] { override def initialValue() = None }
   private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
+  private val entitiesOnDiskCache = TrieMap[UUID, SafeFuture[Boolean]]()
   private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
   lazy val masterSQLContext = {
@@ -87,7 +87,7 @@ class DataManager(
     ephemeralPath.getOrElse(repositoryPath)
   }
 
-  private def hasEntityOnDisk(entity: MetaGraphEntity): Boolean = {
+  private def possiblyVerySlowCheckIfEntityCanBeLoadedFromDisk(entity: MetaGraphEntity): Boolean = {
     val eio = entityIO(entity)
     // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
     // the entity in this session, so we need this assertion.
@@ -98,6 +98,15 @@ class DataManager(
       // Slow check for _SUCCESS file.
       eio.exists
   }
+
+  private def canLoadEntityFromDisk(entity: MetaGraphEntity): SafeFuture[Boolean] = {
+    entitiesOnDiskCache.synchronized {
+      entitiesOnDiskCache.getOrElseUpdate(
+        entity.gUID,
+        asyncJobs.register { possiblyVerySlowCheckIfEntityCanBeLoadedFromDisk(entity) })
+    }
+  }
+
   private def isEntityInProgressOrComputed(
     entity: MetaGraphEntity): Boolean = {
 
@@ -126,10 +135,9 @@ class DataManager(
     instanceOutputCache.clear()
     entityCache.clear()
     sparkCachedEntities.clear()
+    entitiesOnDiskCache.clear()
     dataRoot.clear()
   }
-
-  private val asyncJobs = new ControlledFutures()(executionContext)
 
   // Runs something on the DataManager threadpool.
   // Use this to run Spark operations from HTTP handlers. (SPARK-12964)
@@ -274,8 +282,12 @@ class DataManager(
         case Some(Failure(_)) => -1.0
         case Some(Success(_)) => 1.0
       }
-    } else if (hasEntityOnDisk(entity)) 1.0
-    else 0.0
+    } else {
+      canLoadEntityFromDisk(entity).value match {
+        case Some(util.Success(true)) => 1.0
+        case _ => 0.0
+      }
+    }
   }
 
   override def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T] = synchronized {
@@ -293,7 +305,7 @@ class DataManager(
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!isEntityInProgressOrComputed(entity)) {
-      if (hasEntityOnDisk(entity)) {
+      if (canLoadEntityFromDisk(entity).awaitResult(Duration.Inf)) {
         // If on disk already, we just load it.
         set(entity, load(entity))
       } else {

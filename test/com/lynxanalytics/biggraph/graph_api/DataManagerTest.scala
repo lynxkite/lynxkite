@@ -3,12 +3,18 @@ package com.lynxanalytics.biggraph.graph_api
 import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.TestUtils
+import com.lynxanalytics.biggraph.TestUtils.computeProgress
 import com.lynxanalytics.biggraph.controllers
 import com.lynxanalytics.biggraph.graph_operations
 import com.lynxanalytics.biggraph.graph_operations.ExampleGraph
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 
 class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataManager {
+
+  //  def computeProgress(dataManager: DataManager, entity: MetaGraphEntity) = {
+  //    TestUtils.computeProgress(dataManager, entity)
+  //  }
+
   test("We can obtain a simple new graph") {
     val metaManager = cleanMetaManager
     val dataManager = cleanDataManager
@@ -100,14 +106,14 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val e = intercept[Exception] {
       dataManager.get(imported.ids)
     }
-    assert(-1.0 == dataManager.computeProgress(imported.ids))
+    assert(-1.0 == computeProgress(dataManager, imported.ids))
     // Create the file.
     testfile.createFromStrings("a,b\n3,4\n")
     // The result can be accessed now.
     assert(dataManager.get(imported.columns("a").entity).rdd.values.collect.toSeq == Seq("3"))
     // The compute progress of ids is also updated.
     dataManager.get(imported.ids)
-    assert(1.0 == dataManager.computeProgress(imported.ids))
+    assert(1.0 == computeProgress(dataManager, imported.ids))
   }
 
   test("Ephemeral repo can read main repo") {
@@ -125,8 +131,8 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
         sparkSession, dataManager1.repositoryPath,
         ephemeralPath = Some(tmpDM.repositoryPath))
     }
-    assert(dataManager2.computeProgress(names) == 1.0)
-    assert(dataManager2.computeProgress(greeting) == 1.0)
+    assert(computeProgress(dataManager2, names) == 1.0)
+    assert(computeProgress(dataManager2, greeting) == 1.0)
   }
 
   test("Ephemeral repo writes to ephemeral directory") {
@@ -145,11 +151,11 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     val data1: AttributeData[String] = dataManager1.get(names)
     val scalarData1: ScalarData[String] = dataManager1.get(greeting)
     val dataManagerMain = new DataManager(sparkSession, dataManager1.repositoryPath)
-    assert(dataManagerMain.computeProgress(names) == 0.0)
-    assert(dataManagerMain.computeProgress(greeting) == 0.0)
+    assert(computeProgress(dataManagerMain, names) == 0.0)
+    assert(computeProgress(dataManagerMain, greeting) == 0.0)
     val dataManagerEphemeral = new DataManager(sparkSession, dataManager1.ephemeralPath.get)
-    assert(dataManagerEphemeral.computeProgress(names) == 1.0)
-    assert(dataManagerEphemeral.computeProgress(greeting) == 1.0)
+    assert(computeProgress(dataManagerEphemeral, names) == 1.0)
+    assert(computeProgress(dataManagerEphemeral, greeting) == 1.0)
   }
 
   /*
