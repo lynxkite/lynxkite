@@ -97,20 +97,13 @@ class DataManager(
       eio.mayHaveExisted &&
       // Slow check for _SUCCESS file.
       eio.exists
-
   }
 
   private def canLoadEntityFromDisk(entity: MetaGraphEntity): SafeFuture[Boolean] = {
     entitiesOnDiskCache.synchronized {
-      entitiesOnDiskCache.getOrElseUpdate(entity.gUID, {
-        asyncJobs.register {
-          val exists = possiblyVerySlowCheckIfEntityCanBeLoadedFromDisk(entity)
-          entitiesOnDiskCache.synchronized {
-            entitiesOnDiskCache(entity.gUID) = SafeFuture.successful { exists }
-          }
-          exists
-        }
-      })
+      entitiesOnDiskCache.getOrElseUpdate(
+        entity.gUID,
+        asyncJobs.register { possiblyVerySlowCheckIfEntityCanBeLoadedFromDisk(entity) })
     }
   }
 
