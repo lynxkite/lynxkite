@@ -9,7 +9,6 @@ import java.util.UUID
 
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
-
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
@@ -88,23 +87,11 @@ class DataManager(
     ephemeralPath.getOrElse(repositoryPath)
   }
 
-  private def entityCanBeOnDisk(entity: MetaGraphEntity): Boolean = {
-    val eio = entityIO(entity)
-    // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
-    // the entity in this session, so we need this assertion.
-    assert(!isEntityInProgressOrComputed(eio.entity), s"${eio} is new")
-
-    (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
-      // Fast check for directory.
-      eio.mayHaveExisted
-  }
-
   private def possiblyVerySlowCheckIfEntityCanBeLoadedFromDisk(entity: MetaGraphEntity): Boolean = {
     val eio = entityIO(entity)
     // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
     // the entity in this session, so we need this assertion.
     assert(!isEntityInProgressOrComputed(eio.entity), s"${eio} is new")
-
     (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
       eio.mayHaveExisted &&
