@@ -3,6 +3,7 @@
 *.pyc
 __pycache__
 .mypy_cache
+*.egg-info
 
 # sbt specific
 .cache

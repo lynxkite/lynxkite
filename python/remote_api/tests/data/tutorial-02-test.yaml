@@ -1,0 +1,281 @@
+- id: anchor
+  operationId: Anchor
+  parameters: {}
+  x: 0
+  y: 0
+  inputs: {}
+  parametricParameters: {}
+- id: Import-CSV_1
+  operationId: Import CSV
+  parameters:
+    infer: yes
+    filename: UPLOAD$/405d2ef0a41cdcb39f608e33089a5951.beno_facebook_vertices.csv
+    imported_table: 8a78c222-ce48-3a90-b130-17e3d4ec1be8
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "yes",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/405d2ef0a41cdcb39f608e33089a5951.beno_facebook_vertices.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  x: 151.25964047055527
+  y: 50.385840478640105
+  inputs: {}
+  parametricParameters: {}
+- id: Import-CSV_2
+  operationId: Import CSV
+  parameters:
+    infer: yes
+    filename: UPLOAD$/c050d4869200f6cff9978eedda1385e6.beno_facebook_edges.csv
+    imported_table: ba1088a5-7572-3403-8b1c-44958428d623
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "yes",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/c050d4869200f6cff9978eedda1385e6.beno_facebook_edges.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+  x: 152.28442868191928
+  y: 161.56748439895108
+  inputs: {}
+  parametricParameters: {}
+- id: Use-table-as-vertices_1
+  operationId: Use table as vertices
+  parameters: {}
+  x: 355.84491390126436
+  y: 50.928338779282925
+  inputs:
+    table:
+      boxId: Import-CSV_1
+      id: table
+  parametricParameters: {}
+- id: Use-table-as-edges_1
+  operationId: Use table as edges
+  parameters:
+    apply_to_project: ''
+    attr: id
+    src: src_id
+    dst: dst_id
+  x: 518.2412207023372
+  y: 157.93931171028248
+  inputs:
+    project:
+      boxId: Use-table-as-vertices_1
+      id: project
+    table:
+      boxId: Import-CSV_2
+      id: table
+  parametricParameters: {}
+- id: Combine-segmentations_1
+  operationId: Combine segmentations
+  parameters: {}
+  x: 369.50844105685974
+  y: -120.78523475161155
+  inputs:
+    project:
+      boxId: Use-table-as-vertices_1
+      id: project
+  parametricParameters: {}
+- id: Graph-visualization_1
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"color":"sex","icon":"sex","label":"firstname"},"animate":{"enabled":false,"style":"neutral","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false}}
+  x: 840.4605406446535
+  y: -133.8868082888801
+  inputs:
+    project:
+      boxId: Compute-degree_1
+      id: project
+  parametricParameters: {}
+- id: Compute-degree_1
+  operationId: Compute degree
+  parameters:
+    direction: all neighbors
+  x: 604.3856335049434
+  y: -132.85658499785558
+  inputs:
+    project:
+      boxId: Use-table-as-edges_1
+      id: project
+  parametricParameters: {}
+- id: Filter-by-attributes_2
+  operationId: Filter by attributes
+  parameters:
+    filterva_degree: <200
+  x: 742.4824610311675
+  y: 19.47319496108497
+  inputs:
+    project:
+      boxId: Compute-degree_1
+      id: project
+  parametricParameters: {}
+- id: Graph-visualization_4
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"degree":">40"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"x":"degree","y":"sex","icon":"sex","color":"sex","label":"firstname","size":"degree"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false}}
+  x: 1016.1731151035356
+  y: 148.76654068861978
+  inputs:
+    project:
+      boxId: Filter-by-attributes_2
+      id: project
+  parametricParameters: {}
+- id: Graph-visualization_2
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"3d","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":10,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false}}
+  x: 1002.4103761477372
+  y: -41.789156962922405
+  inputs:
+    project:
+      boxId: Filter-by-attributes_2
+      id: project
+  parametricParameters: {}
+- id: Graph-visualization_3
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"bucketed","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"x":"degree","y":"sex"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false,"sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false}}
+  x: 1161.1058164755648
+  y: 47.326111077005166
+  inputs:
+    project:
+      boxId: Filter-by-attributes_2
+      id: project
+  parametricParameters: {}
+- id: Find-infocom-communities_1
+  operationId: Find infocom communities
+  parameters:
+    bothdir: 'false'
+    min_cliques: '4'
+  x: 1019.807868776781
+  y: 283.8849419461258
+  inputs:
+    project:
+      boxId: Filter-by-attributes_2
+      id: project
+  parametricParameters: {}
+- id: Graph-visualization_5
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"degree":">40"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"color":"sex","icon":"sex","label":"firstname","size":"degree"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"sliderPos":50},"right":{"display":"svg","filters":{"vertex":{"size":">10"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"label":"size"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"projectPath":".communities","sliderPos":50,"graphMode":"sampled"}}
+  x: 1235.6284601562647
+  y: 282.56452852787146
+  inputs:
+    project:
+      boxId: Find-infocom-communities_1
+      id: project
+  parametricParameters: {}
+- id: Compute-dispersion_2
+  operationId: Compute dispersion
+  parameters: {}
+  x: 631.8187085236025
+  y: 322.39557932295605
+  inputs:
+    project:
+      boxId: Use-table-as-edges_1
+      id: project
+  parametricParameters: {}
+- id: Graph-visualization_6
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{"normalized_dispersion":">1"}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"icon":"sex","color":"sex","edge
+      label":"normalized_dispersion","label":"firstname"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false}}
+  x: 1021.0812023673805
+  y: 413.6220726392017
+  inputs:
+    project:
+      boxId: Compute-dispersion_2
+      id: project
+  parametricParameters: {}
+- id: Add-reversed-edges_1
+  operationId: Add reversed edges
+  parameters: {}
+  x: 760.1603737049552
+  y: 514.2012467318962
+  inputs:
+    project:
+      boxId: Compute-dispersion_2
+      id: project
+  parametricParameters: {}
+- id: Compute-PageRank_1
+  operationId: Compute PageRank
+  parameters:
+    direction: incoming edges
+  x: 1021.3272648174443
+  y: 566.2921612842996
+  inputs:
+    project:
+      boxId: Add-reversed-edges_1
+      id: project
+  parametricParameters: {}
+- id: Graph-visualization_7
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"page_rank":">3"},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"size":"page_rank","label":"page_rank","icon":"sex","color":"sex"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false}}
+  x: 1240.106738716309
+  y: 498.7796376310369
+  inputs:
+    project:
+      boxId: Compute-PageRank_1
+      id: project
+  parametricParameters: {}
+- id: SQL1_1
+  operationId: SQL1
+  parameters:
+    sql: 'select firstname, page_rank from vertices order by page_rank desc'
+    persist: no
+  x: 1245.7769890764594
+  y: 641.3166649088024
+  inputs:
+    input:
+      boxId: Compute-PageRank_1
+      id: project
+  parametricParameters: {}
+- id: Comment_1
+  operationId: Comment
+  parameters:
+    comment: Filter out Beno
+  x: 574.1165053501155
+  y: 8.06308073066441
+  inputs: {}
+  parametricParameters: {}
+- id: Comment_2
+  operationId: Comment
+  parameters:
+    comment: Find Beno's wife
+  x: 406.1521259123914
+  y: 338.3836907031721
+  inputs: {}
+  parametricParameters: {}
+
