@@ -4,6 +4,9 @@
 -e ./python/remote_api
 -e ./python/automation
 
+# Dependencies of HI pipeline
+PyYAML
+
 # Dependencies for the ecosystem
 mysqlclient
 prometheus_client
@@ -25,3 +28,4 @@ prettytable==0.7.2
 pillow
 mypy
 pyarrow
+croniter
