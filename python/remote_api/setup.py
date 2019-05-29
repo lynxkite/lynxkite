@@ -5,13 +5,13 @@ setup(
     version='2.10.0',
     install_requires=[
         'requests',
+        'pandas',
     ],
     extras_require={
         'dev': [
             'pytest',
             'ruamel.yaml>=0.15',
-            'numpy',
-            'pandas',
+            'mypy',
         ]
     },
     python_requires='>=3.6',
