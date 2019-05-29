@@ -15,13 +15,12 @@ jupyterlab
 
 # Dependencies for developing and testing
 -e ./python/remote_api[dev]
--e ./python/automation[dev]
+Sphinx==1.8.2
+-e ./sphinx_theme
 autopep8
 awscli
 boto3
 pandas
-Sphinx==1.8.2
-sphinx-rtd-theme
 pytest
 selenium
 prettytable==0.7.2

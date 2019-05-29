@@ -1,4 +1,4 @@
-from setuptools import find_packages, setup
+from setuptools import find_namespace_packages, setup
 
 setup(
     name='lynxkite-python-api',
@@ -15,7 +15,7 @@ setup(
         ]
     },
     python_requires='>=3.6',
-    packages=find_packages('src'),
+    packages=find_namespace_packages('src'),
     package_dir={'': 'src'},
     author='Lynx Analytics',
     author_email='lynxkite@lynxanalytics.com',
