@@ -130,7 +130,7 @@ package `xvfb`.)
 ## Ecosystem development
 
 You can run `make ecosystem-test` to run all tests, or run
-`{chronomaster,remote_api/python}/test.sh *something*` to run tests from just one file.
+`{chronomaster,python/remote_api}/test.sh *something*` to run tests from just one file.
 
 
 ## Big Data tests

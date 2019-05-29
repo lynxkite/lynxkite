@@ -41,10 +41,10 @@ $(pip): python_requirements.txt
 	$(shell $(find) python/remote_api python/automation standard-pipelines) .build/backend-done $(pip)
 	tools/with_lk.sh standard-pipelines/unit_test.sh && touch $@
 .build/documentation-done-${VERSION}: \
-	$(shell $(find) ecosystem/documentation remote_api/python) $(pip)
+	$(shell $(find) ecosystem/documentation python/remote_api python/automation) $(pip)
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
-		$(shell $(find) ecosystem/native remote_api ecosystem/docker/base) \
+		$(shell $(find) ecosystem/native python/remote_api python/automation ecosystem/docker/base) \
 		.build/backend-done .build/documentation-done-${VERSION} $(pip)
 	ecosystem/native/tools/build-monitoring.sh && \
 	ecosystem/native/bundle.sh && touch $@
