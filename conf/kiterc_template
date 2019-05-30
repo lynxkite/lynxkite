@@ -187,6 +187,15 @@ export KITE_EXTRA_JARS=
 # export KERBEROS_PRINCIPAL=
 # export KERBEROS_KEYTAB=
 
+# The setting KITE_MAX_ALLOWED_FILESYSTEM_LIFESPAN_MS forces LynxKite to create a
+# new Hadoop Filesystem object every time KITE_MAX_ALLOWED_FILESYSTEM_LIFESPAN_MS milliseconds
+# have passed. This mechanism prevents certain errors related to hadoop delegation token expiration.
+# A good value for this is half the time specified in the system's
+# dfs.namenode.delegation.token.renew-interval setting. That defaults to 1 day, so our default is 12 hours.
+# See this explanation (https://blog.cloudera.com/blog/2017/12/hadoop-delegation-tokens-explained)
+# for details.
+# export KITE_MAX_ALLOWED_FILESYSTEM_LIFESPAN_MS = $((1000*60*60*12))
+
 # Uncomment the below lines to export LynxKite's Spark metrics into
 # a Graphite-compatible monitoring system. You can use this together
 # with tools/monitoring/restart_monitoring_master.sh.
