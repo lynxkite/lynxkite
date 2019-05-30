@@ -30,7 +30,6 @@ class HadoopFileSystemCache(val maxAllowedFileSystemLifeSpanMs: Long) {
   def fs(owner: HadoopFile): org.apache.hadoop.fs.FileSystem = {
     val key = Key(owner.uri.getScheme, owner.uri.getAuthority)
     fileSystemCache.synchronized {
-      println(s"key: $key")
       var current = fileSystemCache(key)
       if (current.expired()) {
         if (current.initialized()) {
