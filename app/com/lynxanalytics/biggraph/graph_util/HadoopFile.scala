@@ -15,6 +15,37 @@ import com.lynxanalytics.biggraph.spark_util.Implicits._
 import org.apache.spark.rdd.RDD
 import scala.reflect.runtime.universe._
 
+class HadoopFileSystemCache(val maxAllowedFileSystemLifeSpanMs: Long) {
+
+  case class FileSystemWithExpiry(fileSystem: org.apache.hadoop.fs.FileSystem, expiry: Long) {
+    def expired() = expiry < System.currentTimeMillis()
+    def initialized() = fileSystem != null
+  }
+
+  case class Key(scheme: String, authority: String)
+
+  private val fileSystemCache =
+    new scala.collection.mutable.HashMap[Key, FileSystemWithExpiry]().withDefaultValue(FileSystemWithExpiry(null, 0))
+
+  def fs(owner: HadoopFile): org.apache.hadoop.fs.FileSystem = {
+    val key = Key(owner.uri.getScheme, owner.uri.getAuthority)
+    fileSystemCache.synchronized {
+      println(s"key: $key")
+      var current = fileSystemCache(key)
+      if (current.expired()) {
+        if (current.initialized()) {
+          current.fileSystem.close()
+        }
+        val fileSys = hadoop.fs.FileSystem.get(owner.uri, owner.hadoopConfiguration)
+        val expires = System.currentTimeMillis() + maxAllowedFileSystemLifeSpanMs
+        current = FileSystemWithExpiry(fileSys, expires)
+        fileSystemCache(key) = current
+      }
+      current.fileSystem
+    }
+  }
+}
+
 object HadoopFile {
 
   private def hasDangerousEnd(str: String) =
@@ -42,27 +73,11 @@ object HadoopFile {
   private val s3nWithCredentialsPattern = "(s3[na]?)://(.+):(.+)@(.+)".r
   private val s3nNoCredentialsPattern = "(s3[na]?)://(.+)".r
 
-  case class FileSystemWithExpiry(fileSystem: org.apache.hadoop.fs.FileSystem, expiry: Long) {
-    def expired() = expiry < System.currentTimeMillis()
-    def initialized() = fileSystem != null
-  }
-  private var cachedFileSystemWithExpiry = FileSystemWithExpiry(null, 0L)
-  private val maxAllowedFileSystemLifeSpanMs =
-    LoggedEnvironment.envOrElse("KITE_MAX_ALLOWED_FILESYSTEM_LIFESPAN_MS", (1000L * 3600 * 12).toString).toLong
+  private val cache = new HadoopFileSystemCache(
+    LoggedEnvironment.envOrElse("KITE_MAX_ALLOWED_FILESYSTEM_LIFESPAN_MS", (1000L * 3600 * 12).toString).toLong)
 
-  def getFreshFileSystem(owner: HadoopFile): FileSystemWithExpiry = {
-    cachedFileSystemWithExpiry.synchronized {
-      if (cachedFileSystemWithExpiry.expired()) {
-        if (cachedFileSystemWithExpiry.initialized()) {
-          cachedFileSystemWithExpiry.fileSystem.close()
-        }
-        owner.hadoopConfiguration().set(s"fs.${owner.uri.getScheme}.impl.disable.cache", "true")
-        val fileSys = hadoop.fs.FileSystem.get(owner.uri, owner.hadoopConfiguration)
-        val expires = System.currentTimeMillis() + maxAllowedFileSystemLifeSpanMs
-        cachedFileSystemWithExpiry = FileSystemWithExpiry(fileSys, expires)
-      }
-      cachedFileSystemWithExpiry
-    }
+  def fs(hadoopFile: HadoopFile) = {
+    cache.fs(hadoopFile)
   }
 }
 
@@ -95,6 +110,7 @@ class HadoopFile private (
 
   def hadoopConfiguration(): hadoop.conf.Configuration = {
     val conf = SparkHadoopUtil.get.conf
+    conf.set(s"fs.${uri.getScheme}.impl.disable.cache", "true")
     if (hasCredentials) {
       scheme match {
         case "s3n" =>
@@ -137,14 +153,7 @@ class HadoopFile private (
     new HadoopFile(prefixSymbol, computeRelativePathFromHadoopOutput(hadoopOutput))
   }
 
-  private var fileSystemWithExpiry = HadoopFile.FileSystemWithExpiry(null, 0L)
-
-  def fs() = {
-    if (fileSystemWithExpiry.expired()) {
-      fileSystemWithExpiry = HadoopFile.getFreshFileSystem(this)
-    }
-    fileSystemWithExpiry.fileSystem
-  }
+  def fs = HadoopFile.fs(this)
   @transient lazy val uri = path.toUri
   @transient lazy val path = new hadoop.fs.Path(resolvedNameWithNoCredentials)
   // The caller is responsible for calling close().
