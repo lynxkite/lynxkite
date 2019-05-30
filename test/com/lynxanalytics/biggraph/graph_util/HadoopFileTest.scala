@@ -7,6 +7,32 @@ class HadoopFileTest extends FunSuite {
   val prefixPath = getClass.getResource("/graph_util/hadoop_tests").toString
   PrefixRepository.registerPrefix("HADOOPTEST$", prefixPath)
 
+  test("Test Hadoop file system cache") {
+    val p = "FILESYSTEMCACHEEMPTY$"
+    PrefixRepository.registerPrefix(p, "")
+    val testCache = new HadoopFileSystemCache(1000L)
+
+    val local = testCache.fs(HadoopFile(s"${p}file:/tmp1/home"))
+    val hdfs1 = testCache.fs(HadoopFile(s"${p}hdfs://localhost:9000/user/kite"))
+    val hdfs2 = testCache.fs(HadoopFile(s"${p}hdfs://localhost:9000/user/lynx"))
+    val s3 = testCache.fs(HadoopFile(s"${p}s3://key:pwd@localhost:8000/data"))
+
+    assert(local != null)
+    assert(hdfs1 != null)
+    assert(hdfs2 != null)
+    assert(s3 != null)
+
+    assert(!(local eq hdfs1))
+    assert(!(local eq s3))
+    assert(!(hdfs1 eq s3))
+    assert(hdfs1 eq hdfs2)
+
+    Thread.sleep(1500L)
+    val hdfs3 = testCache.fs(HadoopFile(s"${p}hdfs://localhost:9000/user/lynx"))
+    assert(hdfs3 != null)
+    assert(!(hdfs1 eq hdfs3))
+  }
+
   test("Test basic PrefixRepository asserts") {
     PrefixRepository.registerPrefix("BABABA$", "x:mamam")
     intercept[java.lang.AssertionError] {
