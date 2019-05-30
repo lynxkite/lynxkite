@@ -38,7 +38,7 @@ object ExecuteSQL extends OpFromJson {
     val catalog = new SessionCatalog(new InMemoryCatalog, functionRegistry, sqlConf)
     catalog.createDatabase(
       CatalogDatabase(
-        name = "default", description = "", locationUri = new java.net.URI("loc"),
+        name = "default", description = "", locationUri = new java.net.URI("file:///tmp/lynxkite-executesql-db"),
         properties = Map.empty),
       ignoreIfExists = false)
     for ((name, table) <- protoTables) {
