@@ -24,8 +24,7 @@ object HadoopFile {
     str.nonEmpty && !str.startsWith("/")
 
   def apply(
-    str: String,
-    parentLazyFS: Option[LazySharedFileSystem] = None): HadoopFile = {
+    str: String): HadoopFile = {
     val (prefixSymbol, relativePath) = PrefixRepository.splitSymbolicPattern(str)
     val prefixResolution = PrefixRepository.getPrefixInfo(prefixSymbol)
     val normalizedFullPath = PathNormalizer.normalize(prefixResolution + relativePath)
@@ -36,24 +35,40 @@ object HadoopFile {
     assert(
       !hasDangerousEnd(prefixResolution) || !hasDangerousStart(relativePath),
       s"The path following $prefixSymbol has to start with a slash (/)")
-    new HadoopFile(prefixSymbol, normalizedRelativePath, parentLazyFS)
+    new HadoopFile(prefixSymbol, normalizedRelativePath)
   }
 
   lazy val defaultFs = hadoop.fs.FileSystem.get(SparkHadoopUtil.get.conf)
   private val s3nWithCredentialsPattern = "(s3[na]?)://(.+):(.+)@(.+)".r
   private val s3nNoCredentialsPattern = "(s3[na]?)://(.+)".r
 
-  // We want to avoid creating a FileSystem object for each HadoopFile. But we also don't want to
-  // create the FileSystem object unnecessarily. Both desires are fulfilled by LazySharedFileSystem.
-  class LazySharedFileSystem(f: HadoopFile) extends Serializable {
-    @transient lazy val get = hadoop.fs.FileSystem.get(f.uri, f.hadoopConfiguration)
+  case class FileSystemWithExpiry(fileSystem: org.apache.hadoop.fs.FileSystem, expiry: Long) {
+    def expired() = expiry < System.currentTimeMillis()
+    def initialized() = fileSystem != null
+  }
+  private var cachedFileSystemWithExpiry = FileSystemWithExpiry(null, 0L)
+  private val maxAllowedFileSystemLifeSpanMs =
+    LoggedEnvironment.envOrElse("KITE_MAX_ALLOWED_FILESYSTEM_LIFESPAN_MS", (1000L * 3600 * 12).toString).toLong
+
+  def getFreshFileSystem(owner: HadoopFile): FileSystemWithExpiry = {
+    cachedFileSystemWithExpiry.synchronized {
+      if (cachedFileSystemWithExpiry.expired()) {
+        if (cachedFileSystemWithExpiry.initialized()) {
+          cachedFileSystemWithExpiry.fileSystem.close()
+        }
+        owner.hadoopConfiguration().set(s"fs.${owner.uri.getScheme}.impl.disable.cache", "true")
+        val fileSys = hadoop.fs.FileSystem.get(owner.uri, owner.hadoopConfiguration)
+        val expires = System.currentTimeMillis() + maxAllowedFileSystemLifeSpanMs
+        cachedFileSystemWithExpiry = FileSystemWithExpiry(fileSys, expires)
+      }
+      cachedFileSystemWithExpiry
+    }
   }
 }
 
 class HadoopFile private (
     val prefixSymbol: String,
-    val normalizedRelativePath: String,
-    parentLazyFS: Option[HadoopFile.LazySharedFileSystem]) extends Serializable with AccessControl {
+    val normalizedRelativePath: String) extends Serializable with AccessControl {
 
   override def equals(o: Any) = o match {
     case o: HadoopFile =>
@@ -119,13 +134,17 @@ class HadoopFile private (
   // This function processes the paths returned by hadoop 'ls' (= the globStatus command)
   // after we called globStatus with this hadoop file.
   def hadoopFileForGlobOutput(hadoopOutput: String): HadoopFile = {
-    new HadoopFile(prefixSymbol, computeRelativePathFromHadoopOutput(hadoopOutput), lazyFSOpt)
+    new HadoopFile(prefixSymbol, computeRelativePathFromHadoopOutput(hadoopOutput))
   }
 
-  val lazyFSOpt =
-    if (resolvedName.isEmpty) None // We cannot have a FileSystem because we don't have a path.
-    else parentLazyFS.orElse(Some(new HadoopFile.LazySharedFileSystem(this)))
-  def fs = lazyFSOpt.get.get
+  private var fileSystemWithExpiry = HadoopFile.FileSystemWithExpiry(null, 0L)
+
+  def fs() = {
+    if (fileSystemWithExpiry.expired()) {
+      fileSystemWithExpiry = HadoopFile.getFreshFileSystem(this)
+    }
+    fileSystemWithExpiry.fileSystem
+  }
   @transient lazy val uri = path.toUri
   @transient lazy val path = new hadoop.fs.Path(resolvedNameWithNoCredentials)
   // The caller is responsible for calling close().
@@ -294,7 +313,7 @@ class HadoopFile private (
   }
 
   def +(suffix: String): HadoopFile = {
-    HadoopFile(symbolicName + suffix, parentLazyFS = lazyFSOpt)
+    HadoopFile(symbolicName + suffix)
   }
 
   def /(path_element: String): HadoopFile = {
