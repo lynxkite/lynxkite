@@ -21,6 +21,16 @@ class SQLTest extends OperationsTestBase {
   private def runQueryOnExampleGraph(sql: String) = {
     box("Create example graph").box("SQL1", Map("sql" -> sql)).table
   }
+  test("java_method is disabled") {
+    val c = "java.net.InetAddress"
+    val m = "getLocalHost"
+    intercept[Throwable] {
+      runQueryOnExampleGraph(s"select java_method('$c', '$m') from vertices").df.collect()
+    }
+    intercept[Throwable] {
+      runQueryOnExampleGraph(s"select java_method() from vertices").df.collect()
+    }
+  }
 
   test("vertices table") {
     val table = runQueryOnExampleGraph("select * from vertices order by id")
