@@ -36,9 +36,11 @@ object ExecuteSQL extends OpFromJson {
     val reg = UDFHelper.udfRegistration(functionRegistry)
     UDF.register(reg)
     val catalog = new SessionCatalog(new InMemoryCatalog, functionRegistry, sqlConf)
+    val locationPath = "file:" + System.getProperty("java.io.tmpdir") + "/lynxkite-executesql-db"
     catalog.createDatabase(
       CatalogDatabase(
-        name = "default", description = "", locationUri = new java.net.URI("loc"),
+        name = "default", description = "",
+        locationUri = new java.net.URI(locationPath),
         properties = Map.empty),
       ignoreIfExists = false)
     for ((name, table) <- protoTables) {
