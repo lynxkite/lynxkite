@@ -1,0 +1,417 @@
+- id: anchor
+  operationId: Anchor
+  parameters: {}
+  x: 167.77367870608572
+  y: 234.65656335945823
+  inputs: {}
+  parametricParameters: {}
+- id: Use-table-as-vertices_1
+  operationId: Use table as vertices
+  parameters: {}
+  x: 464.0624375539492
+  y: 432.5959798278748
+  inputs:
+    table:
+      boxId: Import-CSV_1
+      id: table
+  parametricParameters: {}
+- id: Use-table-as-edges_1
+  operationId: Use table as edges
+  parameters:
+    apply_to_project: ''
+    attr: airportID
+    src: src_airportID
+    dst: dst_airportID
+  x: 479.6211969189475
+  y: 655.7735018376236
+  inputs:
+    project:
+      boxId: Use-table-as-vertices_1
+      id: project
+    table:
+      boxId: Import-CSV_2
+      id: table
+  parametricParameters: {}
+- id: Convert-vertex-attributes-to-position_1
+  operationId: Convert vertex attributes to position
+  parameters:
+    apply_to_project: ''
+    output: position
+    x: lat
+    y: longitude
+  x: 648.0189556961745
+  y: 559.8912893305912
+  inputs:
+    project:
+      boxId: Use-table-as-edges_1
+      id: project
+  parametricParameters: {}
+- id: Graph-visualization_1
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"country":""},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
+      coordinates":"position","color":"tz"},"animate":{"enabled":false,"style":"neutral","labelAttraction":0},"centers":["-1043529022585172972","3050499495486820679","3109578815047735667","6235849354771437286","7230660567613051159","9168898043221642357"],"customVisualizationFilters":false,"sliderPos":50,"lastCentersRequest":{"count":6,"filters":[{"attributeName":"country","valueSpec":"Singapore","$$hashKey":"object:32712"}]},"lastCentersResponse":["-1043529022585172972","3050499495486820679","3109578815047735667","6235849354771437286","7230660567613051159","9168898043221642357"]},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false}}
+  x: 958.9049417444368
+  y: 560.3482738013375
+  inputs:
+    project:
+      boxId: Convert-vertex-attributes-to-position_1
+      id: project
+  parametricParameters: {}
+- id: SQL1_1
+  operationId: SQL1
+  parameters: {}
+  x: 314.3869193972425
+  y: 307.63789435729757
+  inputs:
+    input:
+      boxId: Import-CSV_1
+      id: table
+  parametricParameters: {}
+- id: Convert-vertex-attributes-to-position_2
+  operationId: Convert vertex attributes to position
+  parameters:
+    x: lat
+    y: longitude
+  x: 719.5
+  y: 431.8995334147175
+  inputs:
+    project:
+      boxId: Use-table-as-vertices_1
+      id: project
+  parametricParameters: {}
+- id: SQL1_2
+  operationId: SQL1
+  parameters: {}
+  x: 325.48811713937346
+  y: 554.8897171122596
+  inputs:
+    input:
+      boxId: Import-CSV_2
+      id: table
+  parametricParameters: {}
+- id: Graph-visualization_2
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
+      coordinates":"position","label":"country","color":"country"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["-9219028570788062561","-9217114591627048578","-9216140793692027317","-9215797548495664847","-9214123632236685465"],"customVisualizationFilters":false,"sliderPos":50,"lastCentersRequest":{"count":5,"filters":[]},"lastCentersResponse":["-9219028570788062561","-9217114591627048578","-9216140793692027317","-9215797548495664847","-9214123632236685465"]},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false}}
+  x: 941.2042099061963
+  y: 432.316665649414
+  inputs:
+    project:
+      boxId: Convert-vertex-attributes-to-position_2
+      id: project
+  parametricParameters: {}
+- id: Merge-parallel-edges_1
+  operationId: Merge parallel edges
+  parameters:
+    aggregate_dst_airportID: most_common
+    aggregate_equipment: set
+    aggregate_airlineID: 'set,count_distinct'
+    aggregate_airline: 'set,count_distinct'
+    aggregate_src_airportID: most_common
+    aggregate_src_code: most_common
+    aggregate_dst_code: most_common
+  x: 652.9647239391028
+  y: 742.2341643484789
+  inputs:
+    project:
+      boxId: Convert-vertex-attributes-to-position_1
+      id: project
+  parametricParameters: {}
+- id: Filter-by-attributes_1
+  operationId: Filter by attributes
+  parameters:
+    filterea_airlineID_count_distinct: '>1'
+  x: 809.2969147331922
+  y: 652.3271681701466
+  inputs:
+    project:
+      boxId: Merge-parallel-edges_1
+      id: project
+  parametricParameters: {}
+- id: Compute-degree_1
+  operationId: Compute degree
+  parameters:
+    direction: all neighbors
+  x: 984.7717283706693
+  y: 733.335420296229
+  inputs:
+    project:
+      boxId: Filter-by-attributes_1
+      id: project
+  parametricParameters: {}
+- id: Filter-by-attributes_2
+  operationId: Filter by attributes
+  parameters:
+    filterva_degree: '>15'
+  x: 1140.2974779273727
+  y: 652.6527052994032
+  inputs:
+    project:
+      boxId: Compute-degree_1
+      id: project
+  parametricParameters: {}
+- id: Convert-vertex-attributes-to-position_3
+  operationId: Convert vertex attributes to position
+  parameters:
+    apply_to_project: ''
+    output: position
+    x: lat
+    y: longitude
+  x: 1169.680831214823
+  y: 479.13614417532506
+  inputs:
+    project:
+      boxId: Filter-by-attributes_2
+      id: project
+  parametricParameters: {}
+- id: Graph-visualization_3
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{"country":""},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":4,"attributeTitles":{"geo
+      coordinates":"position","color":"tz"},"animate":{"enabled":false,"style":"neutral","labelAttraction":0},"centers":["-1043529022585172972","3050499495486820679","3109578815047735667","6235849354771437286","7230660567613051159","9168898043221642357"],"customVisualizationFilters":false,"sliderPos":50,"lastCentersRequest":{"count":6,"filters":[{"attributeName":"country","valueSpec":"Singapore","$$hashKey":"object:32712"}]},"lastCentersResponse":["-1043529022585172972","3050499495486820679","3109578815047735667","6235849354771437286","7230660567613051159","9168898043221642357"]},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false}}
+  x: 1313.2134338895012
+  y: 363.57558945252407
+  inputs:
+    project:
+      boxId: Convert-vertex-attributes-to-position_3
+      id: project
+  parametricParameters: {}
+- id: Import-CSV_1
+  operationId: Import CSV
+  parameters:
+    infer: yes
+    imported_table: 7146b5bf-0b22-3485-b394-892bf7d11b4f
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "yes",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/f8316e7e19fd285cc78a8a47150e5d78.airline_vertices.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+    filename: UPLOAD$/f8316e7e19fd285cc78a8a47150e5d78.airline_vertices.csv
+  x: 241.25608940960717
+  y: 433.19410770980693
+  inputs: {}
+  parametricParameters: {}
+- id: Import-CSV_2
+  operationId: Import CSV
+  parameters:
+    infer: yes
+    imported_table: 8aeb96c6-9ff1-310d-93d2-8182d1d8c661
+    last_settings: |-
+      {
+        "sql" : "",
+        "infer" : "yes",
+        "timestamp_format" : "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "quote" : "\"",
+        "imported_columns" : "",
+        "null_value" : "",
+        "escape" : "\\",
+        "columns" : "",
+        "filename" : "UPLOAD$/4ac3667c91f13ce7dd162f5a98a8c8de.airline_edges.csv",
+        "comment" : "",
+        "ignore_trailing_white_space" : "no",
+        "ignore_leading_white_space" : "no",
+        "date_format" : "yyyy-MM-dd",
+        "error_handling" : "FAILFAST",
+        "limit" : "",
+        "delimiter" : ","
+      }
+    filename: UPLOAD$/4ac3667c91f13ce7dd162f5a98a8c8de.airline_edges.csv
+  x: 239.96250148768198
+  y: 687.7043141011314
+  inputs: {}
+  parametricParameters: {}
+- id: Find-connected-components_1
+  operationId: Find connected components
+  parameters: {}
+  x: 1339.6667786510368
+  y: 603.0572331789774
+  inputs:
+    project:
+      boxId: Convert-vertex-attributes-to-position_3
+      id: project
+  parametricParameters: {}
+- id: Find-modular-clustering_1
+  operationId: Find modular clustering
+  parameters:
+    weights: airlineID_count_distinct
+  x: 1472.7056290966239
+  y: 480.4923237068167
+  inputs:
+    project:
+      boxId: Find-connected-components_1
+      id: project
+  parametricParameters: {}
+- id: Graph-visualization_4
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
+      coordinates":"position","color":"tz"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"sliderPos":50,"lastCentersRequest":{"count":1,"filters":[],"offset":2},"lastCentersResponse":["-9099749512137670460"]},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"label":"size"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"projectPath":".modular_clusters","sliderPos":50,"graphMode":"sampled"}}
+  x: 1611.6219032125398
+  y: 363.5924179797992
+  inputs:
+    project:
+      boxId: Find-modular-clustering_1
+      id: project
+  parametricParameters: {}
+- id: Aggregate-to-segmentation_1
+  operationId: Aggregate to segmentation
+  parameters:
+    apply_to_project: .modular_clusters
+    aggregate_daylightSavingsTime: 'most_common,set'
+    aggregate_tz: 'average,set'
+    aggregate_tz_name: most_common
+  x: 1618.7849304514223
+  y: 600.0883102040235
+  inputs:
+    project:
+      boxId: Find-modular-clustering_1
+      id: project
+  parametricParameters: {}
+- id: Graph-visualization_5
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
+      coordinates":"position","color":"tz"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"color":"tz_average","label":"segment_name"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"projectPath":".modular_clusters","sliderPos":50,"graphMode":"sampled"}}
+  x: 1862.5687645860778
+  y: 597.5235243646347
+  inputs:
+    project:
+      boxId: Derive-vertex-attribute_1
+      id: project
+  parametricParameters: {}
+- id: Derive-vertex-attribute_1
+  operationId: Derive vertex attribute
+  parameters:
+    expr: |
+      if (tz_name_most_common == "America/New_York") {
+        "Americas"
+      } else if (tz_name_most_common == "Asia/Calcutta") {
+        "South-Asia/East-Africa"
+      } else if (tz_name_most_common == "Asia/Chongqing") {
+        "China/East-Asia"
+      } else {
+        "Europe/West-Africa"
+      }
+    apply_to_project: .modular_clusters
+    output: segment_name
+  x: 1740.947032451802
+  y: 735.7820985821559
+  inputs:
+    project:
+      boxId: Aggregate-to-segmentation_1
+      id: project
+  parametricParameters: {}
+- id: Graph-visualization_6
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
+      coordinates":"position","color":"tz"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"color":"tz_average","label":"tz_name_most_common"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"projectPath":".modular_clusters","sliderPos":50,"graphMode":"sampled"}}
+  x: 1730.1145673717633
+  y: 473.67440905318387
+  inputs:
+    project:
+      boxId: Aggregate-to-segmentation_1
+      id: project
+  parametricParameters: {}
+- id: Aggregate-from-segmentation_1
+  operationId: Aggregate from segmentation
+  parameters:
+    apply_to_project: .modular_clusters
+    aggregate_segment_name: most_common
+  x: 1892.1878455412382
+  y: 873.2615738907056
+  inputs:
+    project:
+      boxId: Derive-vertex-attribute_1
+      id: project
+  parametricParameters: {}
+- id: Graph-visualization_7
+  operationId: Graph visualization
+  parameters:
+    state: >-
+      {"left":{"projectPath":"","graphMode":"sampled","display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{"geo
+      coordinates":"position","color":"segment_name"},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["*"],"customVisualizationFilters":false,"sliderPos":50},"right":{"display":"svg","filters":{"vertex":{},"edge":{}},"bucketCount":4,"preciseBucketSizes":false,"relativeEdgeDensity":false,"axisOptions":{"vertex":{},"edge":{}},"sampleRadius":1,"attributeTitles":{},"animate":{"enabled":false,"style":"expand","labelAttraction":0},"centers":["auto"],"customVisualizationFilters":false}}
+  x: 2198.040701938418
+  y: 656.1638003896435
+  inputs:
+    project:
+      boxId: Rename-vertex-attributes_1
+      id: project
+  parametricParameters: {}
+- id: Rename-vertex-attributes_1
+  operationId: Rename vertex attributes
+  parameters:
+    change_modular_clusters_segment_name_most_common: segment_name
+  x: 2034.7298567491962
+  y: 771.2144522304629
+  inputs:
+    project:
+      boxId: Aggregate-from-segmentation_1
+      id: project
+  parametricParameters: {}
+- id: SQL1_3
+  operationId: SQL1
+  parameters:
+    sql: 'select `airportID`, `segment_name` from `vertices`'
+  x: 2263.397698676726
+  y: 770.2684029858457
+  inputs:
+    input:
+      boxId: Rename-vertex-attributes_1
+      id: project
+  parametricParameters: {}
+- id: Export-to-CSV_1
+  operationId: Export to CSV
+  parameters: {}
+  x: 2484.47891756313
+  y: 770.2684029858457
+  inputs:
+    table:
+      boxId: SQL1_3
+      id: table
+  parametricParameters: {}
+- id: SQL1_4
+  operationId: SQL1
+  parameters:
+    sql: >-
+      select `dst_airportID_most_common`, `src_airportID_most_common` from
+      `edge_attributes`
+  x: 2209.6211859746286
+  y: 893.7552099314037
+  inputs:
+    input:
+      boxId: Rename-vertex-attributes_1
+      id: project
+  parametricParameters: {}
+- id: Export-to-CSV_2
+  operationId: Export to CSV
+  parameters: {}
+  x: 2434.685850246372
+  y: 893.7552099314039
+  inputs:
+    table:
+      boxId: SQL1_4
+      id: table
+  parametricParameters: {}

@@ -32,16 +32,19 @@ $(pip): python_requirements.txt
 		$(shell $(find) web/test) build.sbt .build/backend-done \
 		.build/documentation-verified .build/gulp-done
 	./.test_frontend.sh && touch $@
-.build/remote_api-python-test-passed: $(shell $(find) remote_api/python) .build/backend-done $(pip)
-	tools/with_lk.sh remote_api/python/test.sh && touch $@
+.build/remote_api-python-test-passed: $(shell $(find) python/remote_api) .build/backend-done $(pip)
+	tools/with_lk.sh python/remote_api/test.sh && touch $@
+.build/automation-python-test-passed: $(shell $(find) python/remote_api python/automation) \
+		.build/backend-done $(pip)
+	tools/with_lk.sh python/automation/test.sh && touch $@
 .build/standard-pipelines-test-passed: \
-	$(shell $(find) remote_api/python standard-pipelines) .build/backend-done $(pip)
+	$(shell $(find) python/remote_api python/automation standard-pipelines) .build/backend-done $(pip)
 	tools/with_lk.sh standard-pipelines/unit_test.sh && touch $@
 .build/documentation-done-${VERSION}: \
-	$(shell $(find) ecosystem/documentation remote_api/python) $(pip)
+	$(shell $(find) ecosystem/documentation python/remote_api python/automation) $(pip)
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
-		$(shell $(find) ecosystem/native remote_api ecosystem/docker/base) \
+		$(shell $(find) ecosystem/native python/remote_api python/automation ecosystem/docker/base) \
 		.build/backend-done .build/documentation-done-${VERSION} $(pip)
 	ecosystem/native/tools/build-monitoring.sh && \
 	ecosystem/native/bundle.sh && touch $@
@@ -80,10 +83,12 @@ backend-test: .build/backend-test-passed
 frontend-test: .build/frontend-test-passed
 .PHONY: remote_api-test
 remote_api-test: .build/remote_api-python-test-passed
+.PHONY: automation-test
+automation-test: .build/automation-python-test-passed
 .PHONY: standard-pipelines-test
 standard-pipelines-test: .build/standard-pipelines-test-passed
 .PHONY: ecosystem-test
-ecosystem-test: remote_api-test standard-pipelines-test
+ecosystem-test: remote_api-test automation-test standard-pipelines-test
 .PHONY: shell_ui-test
 shell_ui-test: .build/shell_ui-test-passed
 .PHONY: test
