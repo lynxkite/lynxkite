@@ -507,7 +507,11 @@ object DataManager {
       df.createOrReplaceTempView(s"`$name`")
     }
     log.info(s"Executing query: $query")
-    ctx.sql(query)
+    val df = ctx.sql(query)
+    for ((name, _) <- dfs) {
+      ctx.dropTempTable(name)
+    }
+    df
   }
   lazy val hiveConfigured = (getClass.getResource("/hive-site.xml") != null)
 }
