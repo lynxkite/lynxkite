@@ -22,13 +22,29 @@ class HadoopFileSystemCache(val maxAllowedFileSystemLifeSpanMs: Long) {
     def initialized() = fileSystem != null
   }
 
-  case class Key(scheme: String, authority: String)
+  case class Key(scheme: String, authority: String, id: String, secret: String)
+
+  def extractKey(hadoopFile: HadoopFile): Key = {
+    val conf = hadoopFile.hadoopConfiguration()
+    val scheme = hadoopFile.uri.getScheme
+    val auth = hadoopFile.uri.getAuthority
+    val (id, secret) = scheme match {
+      case "s3n" =>
+        (conf.get("fs.s3n.awsAccessKeyId", ""), conf.get("fs.s3n.awsSecretAccessKey", ""))
+      case "s3" =>
+        (conf.get("fs.s3.awsAccessKeyId", ""), conf.get("fs.s3.awsSecretAccessKey", ""))
+      case "s3a" =>
+        (conf.get("fs.s3a.access.key", ""), conf.get("fs.s3a.secret.key", ""))
+      case _ => ("", "")
+    }
+    Key(scheme, auth, id, secret)
+  }
 
   private val fileSystemCache =
     new scala.collection.mutable.HashMap[Key, FileSystemWithExpiry]().withDefaultValue(FileSystemWithExpiry(null, 0))
 
   def fs(owner: HadoopFile): org.apache.hadoop.fs.FileSystem = {
-    val key = Key(owner.uri.getScheme, owner.uri.getAuthority)
+    val key = extractKey(owner)
     fileSystemCache.synchronized {
       var current = fileSystemCache(key)
       if (current.expired()) {
@@ -109,7 +125,6 @@ class HadoopFile private (
 
   def hadoopConfiguration(): hadoop.conf.Configuration = {
     val conf = SparkHadoopUtil.get.conf
-    conf.set(s"fs.${uri.getScheme}.impl.disable.cache", "true")
     if (hasCredentials) {
       scheme match {
         case "s3n" =>
