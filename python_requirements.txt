@@ -3,6 +3,7 @@
 # Packages developed by Lynx
 -e ./python/remote_api
 -e ./python/automation
+-e ./standard-pipelines/impact-analysis
 
 # Dependencies of HI pipeline
 PyYAML
