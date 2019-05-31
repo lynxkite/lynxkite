@@ -1,29 +1,22 @@
 # Several tools depend on the format of this file, so do not change it!
 
-# Dependencies for the Remote API
-croniter
-PyYAML
-requests
+# Packages developed by Lynx
+-e ./python/remote_api
+-e ./python/automation
 
-# Dependencies for the ecosystem
-apache-airflow[mysql]==1.10.1
-pendulum==1.4.4
-mysqlclient
-prometheus_client
-sqlalchemy
-jupyterlab
+# Dependencies of HI pipeline
+PyYAML
 
 # Dependencies for developing and testing
+-e ./python/remote_api[dev]
+-e ./python/automation[dev]
+Sphinx==1.8.2
+-e ./sphinx_theme
 autopep8
 awscli
 boto3
-pandas
-Sphinx==1.8.2
-sphinx-rtd-theme
-pytest
 selenium
 prettytable==0.7.2
 pillow
-mypy
-ruamel.yaml>=0.15
 pyarrow
+croniter
