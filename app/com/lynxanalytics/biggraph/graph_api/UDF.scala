@@ -76,10 +76,16 @@ object UDF {
     }
   }
 
+  def java_method(): String = {
+    throw new AssertionError("java_method is not supported")
+    "Never returned"
+  }
+
   def register(reg: UDFRegistration): Unit = {
     reg.register("geodistance", geodistance _)
     reg.register("hash", hash _)
     reg.register("most_common", new MostCommon)
     reg.register("string_intersect", string_intersect _)
+    reg.register("java_method", java_method _)
   }
 }
