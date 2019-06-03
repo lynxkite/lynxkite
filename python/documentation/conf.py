@@ -4,7 +4,7 @@ import sys
 from sphinx_lynx_theme import *
 project = 'LynxKite Python API'
 
-with open('../../../CHANGELOG.md') as f:
+with open('../../CHANGELOG.md') as f:
   changelog = f.read()
 version = re.search(r'^### (\d+\.\S*)', changelog, re.MULTILINE).group(1)
 release = version
