@@ -19,7 +19,6 @@ class HadoopFileSystemCache(val maxAllowedFileSystemLifeSpanMs: Long) {
 
   case class FileSystemWithExpiry(fileSystem: org.apache.hadoop.fs.FileSystem, expiry: Long) {
     def expired() = expiry < System.currentTimeMillis()
-    def initialized() = fileSystem != null
   }
 
   case class Key(scheme: String, authority: String, id: String, secret: String)
@@ -48,9 +47,6 @@ class HadoopFileSystemCache(val maxAllowedFileSystemLifeSpanMs: Long) {
     fileSystemCache.synchronized {
       var current = fileSystemCache(key)
       if (current.expired()) {
-        if (current.initialized()) {
-          current.fileSystem.close()
-        }
         val fileSys = hadoop.fs.FileSystem.get(owner.uri, owner.hadoopConfiguration)
         val expires = System.currentTimeMillis() + maxAllowedFileSystemLifeSpanMs
         current = FileSystemWithExpiry(fileSys, expires)
@@ -125,6 +121,7 @@ class HadoopFile private (
 
   def hadoopConfiguration(): hadoop.conf.Configuration = {
     val conf = SparkHadoopUtil.get.conf
+    conf.set(s"fs.${uri.getScheme}.impl.disable.cache", "true")
     if (hasCredentials) {
       scheme match {
         case "s3n" =>
