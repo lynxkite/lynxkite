@@ -23,7 +23,7 @@ def get_index(**kwargs):
                          shell=True,
                          stdout=subprocess.PIPE)
   for line in cmd.stdout:
-    nums.append(int(re.search('\d+', line.decode('ascii').strip()).group(0)))
+    nums.append(int(re.search(r'\d+', line.decode('ascii').strip()).group(0)))
   with open(filename('index', kwargs['execution_date']), 'w') as f:
     f.write('supporters,amount\n')
     f.write(f'{nums[0]},{nums[1]}')
@@ -36,7 +36,7 @@ def get_google(**kwargs):
                          shell=True,
                          stdout=subprocess.PIPE)
   for line in cmd.stdout:
-    nums.append(float(re.search('\d+.\d+', line.decode('ascii').strip()).group(0)))
+    nums.append(float(re.search(r'\d+.\d+', line.decode('ascii').strip()).group(0)))
   with open(filename('google', kwargs['execution_date']), 'w') as f:
     f.write('price\n')
     f.write(f'{nums[0]}')
