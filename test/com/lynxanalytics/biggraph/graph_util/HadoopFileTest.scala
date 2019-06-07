@@ -14,9 +14,9 @@ class HadoopFileTest extends FunSuite {
 
     val local = testCache.fs(HadoopFile(s"${p}file:/tmp1/home"))
     val hdfs1 = testCache.fs(HadoopFile(s"${p}hdfs://localhost:9000/user/kite"))
-    val hdfs2 = testCache.fs(HadoopFile(s"${p}hdfs://localhost:9000/user/lynx"))
+    val hdfs2 = testCache.fs(HadoopFile(s"${p}HDFS://localhost:9000/user/lynx"))
     val s3_1 = testCache.fs(HadoopFile(s"${p}s3://key:pwd@localhost:8000/data"))
-    val s3_2 = testCache.fs(HadoopFile(s"${p}s3://key2:pwd@localhost:8000/data"))
+    val s3_2 = testCache.fs(HadoopFile(s"${p}s3://lynx-network-test"))
 
     assert(local != null)
     assert(hdfs1 != null)
