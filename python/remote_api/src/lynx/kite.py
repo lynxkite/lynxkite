@@ -206,10 +206,12 @@ def subworkspace(fn: Callable = None, name: str = None):
       # Return the custom box.
       return ws(*input_states, _id=manual_box_id, **ws_param_bindings)
 
-    wrapper.has_sideeffect = bool(secs)
+    # TODO: remove type ignore after https://github.com/python/mypy/issues/2087 is resolved
+    wrapper.has_sideeffect = bool(secs)  # type: ignore
     return wrapper
 
   if name is None:
+    assert fn is not None
     return decorator(fn)
   else:
     return decorator
