@@ -21,29 +21,17 @@ class HadoopFileSystemCache(val maxAllowedFileSystemLifeSpanMs: Long) {
     def expired() = expiry < System.currentTimeMillis()
   }
 
-  case class Key(scheme: String, authority: String, id: String, secret: String)
-
-  def extractKey(hadoopFile: HadoopFile): Key = {
-    val conf = hadoopFile.hadoopConfiguration()
-    val scheme = hadoopFile.uri.getScheme
-    val auth = hadoopFile.uri.getAuthority
-    val (id, secret) = scheme match {
-      case "s3n" =>
-        (conf.get("fs.s3n.awsAccessKeyId", ""), conf.get("fs.s3n.awsSecretAccessKey", ""))
-      case "s3" =>
-        (conf.get("fs.s3.awsAccessKeyId", ""), conf.get("fs.s3.awsSecretAccessKey", ""))
-      case "s3a" =>
-        (conf.get("fs.s3a.access.key", ""), conf.get("fs.s3a.secret.key", ""))
-      case _ => ("", "")
-    }
-    Key(scheme, auth, id, secret)
-  }
+  case class Key(scheme: String, authority: String)
 
   private val fileSystemCache =
     new scala.collection.mutable.HashMap[Key, FileSystemWithExpiry]().withDefaultValue(FileSystemWithExpiry(null, 0))
 
   def fs(owner: HadoopFile): org.apache.hadoop.fs.FileSystem = {
-    val key = extractKey(owner)
+    def normalize(s: String) = {
+      if (s != null) s.toLowerCase
+      else ""
+    }
+    val key = Key(normalize(owner.uri.getScheme), normalize(owner.uri.getAuthority))
     fileSystemCache.synchronized {
       var current = fileSystemCache(key)
       if (current.expired()) {
