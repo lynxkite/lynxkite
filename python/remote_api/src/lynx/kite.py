@@ -127,7 +127,7 @@ def map_args(
   return bound
 
 
-def subworkspace(fn: Callable = None, name: str = None):
+def subworkspace(fn: Callable):
   '''Allows using the decorated function as a LynxKite custom box.
 
   Example use::
@@ -155,66 +155,79 @@ def subworkspace(fn: Callable = None, name: str = None):
 
     my_func(lk.createExampleGraph()).trigger()
   '''
-  def decorator(fn: Callable):
+  signature = inspect.signature(fn, follow_wrapped=False)
+  secs = [p.name for p in signature.parameters.values()
+          if p.default is SideEffectCollector.AUTO]
+  assert len(secs) <= 1, f'More than one SideEffectCollector parameters found for {fn}'
+
+  @functools.wraps(fn)
+  def wrapper(*args, _ws_params: List[WorkspaceParameter] = [], _ws_name: str = None, **kwargs):
+    # create a new signature on every call since we will bind different arguments per call
     signature = inspect.signature(fn, follow_wrapped=False)
-    secs = [p.name for p in signature.parameters.values()
-            if p.default is SideEffectCollector.AUTO]
-    assert len(secs) <= 1, f'More than one SideEffectCollector parameters found for {fn}'
+    # Separate workspace parameters from the normal Python parameters.
+    ws_param_bindings = {wp.name: kwargs[wp.name] for wp in _ws_params if wp.name in kwargs}
+    for wp in _ws_params:
+      if wp.name in signature.parameters:
+        kwargs[wp.name] = pp('$' + wp.name)
+      elif wp.name in kwargs:
+        del kwargs[wp.name]
 
+    # Replace states with input boxes.
+    input_states = []
+    input_boxes = []
+
+    def map_param(name, value):
+      if isinstance(value, State):
+        b = value.box.lk.input(name=name)
+        input_states.append(value)
+        input_boxes.append(b)
+        return b
+      else:
+        return value
+    manual_box_id = kwargs.pop('_id', None)
+    bound = signature.bind(*args, **kwargs)
+    for k in bound.arguments:
+      assert k not in secs, f'Explicitly set SideEffectCollector parameter for {fn}'
+    bound = map_args(signature, bound, map_param)
+    sec = SideEffectCollector()
+    if secs:
+      bound.arguments[secs[0]] = sec
+
+    # Build the workspace.
+    outputs = _to_outputs(fn(*bound.args, **bound.kwargs))
+    ws = Workspace(
+        terminal_boxes=outputs + sec.top_level_side_effects,
+        side_effect_paths=list(sec.all_triggerables()),
+        input_boxes=input_boxes,
+        ws_parameters=_ws_params,
+        custom_box_id_base=_ws_name if _ws_name is not None else fn.__name__)
+
+    # Return the custom box.
+    return ws(*input_states, _id=manual_box_id, **ws_param_bindings)
+
+  # TODO: remove type ignore after https://github.com/python/mypy/issues/2087 is resolved
+  wrapper.has_sideeffect = bool(secs)  # type: ignore
+  return wrapper
+
+
+def ws_name(name: str):
+  '''Specifies the name of the wrapped subworkspace.
+
+  Exmaple use::
+
+    @ws_name('My nice workspace')
+    @subworkspace
+    def my_func(input1):
+      return input1.sql1(sql='select * from vertices')
+
+    my_func(lk.createExampleGraph())
+  '''
+  def decorator(fn: Callable):
     @functools.wraps(fn)
-    def wrapper(*args, _ws_params: List[WorkspaceParameter] = [], **kwargs):
-      # create a new signature on every call since we will bind different arguments per call
-      signature = inspect.signature(fn, follow_wrapped=False)
-      # Separate workspace parameters from the normal Python parameters.
-      ws_param_bindings = {wp.name: kwargs[wp.name] for wp in _ws_params if wp.name in kwargs}
-      for wp in _ws_params:
-        if wp.name in signature.parameters:
-          kwargs[wp.name] = pp('$' + wp.name)
-        elif wp.name in kwargs:
-          del kwargs[wp.name]
-
-      # Replace states with input boxes.
-      input_states = []
-      input_boxes = []
-
-      def map_param(name, value):
-        if isinstance(value, State):
-          b = value.box.lk.input(name=name)
-          input_states.append(value)
-          input_boxes.append(b)
-          return b
-        else:
-          return value
-      manual_box_id = kwargs.pop('_id', None)
-      bound = signature.bind(*args, **kwargs)
-      for k in bound.arguments:
-        assert k not in secs, f'Explicitly set SideEffectCollector parameter for {fn}'
-      bound = map_args(signature, bound, map_param)
-      sec = SideEffectCollector()
-      if secs:
-        bound.arguments[secs[0]] = sec
-
-      # Build the workspace.
-      outputs = _to_outputs(fn(*bound.args, **bound.kwargs))
-      ws = Workspace(
-          terminal_boxes=outputs + sec.top_level_side_effects,
-          side_effect_paths=list(sec.all_triggerables()),
-          input_boxes=input_boxes,
-          ws_parameters=_ws_params,
-          custom_box_id_base=name if name is not None else fn.__name__)
-
-      # Return the custom box.
-      return ws(*input_states, _id=manual_box_id, **ws_param_bindings)
-
-    # TODO: remove type ignore after https://github.com/python/mypy/issues/2087 is resolved
-    wrapper.has_sideeffect = bool(secs)  # type: ignore
+    def wrapper(*args, **kwargs):
+      return fn(*args, _ws_name=name, **kwargs)
     return wrapper
-
-  if name is None:
-    assert fn is not None
-    return decorator(fn)
-  else:
-    return decorator
+  return decorator
 
 
 def ws_param(name: str, default: str = '', description: str = ''):
