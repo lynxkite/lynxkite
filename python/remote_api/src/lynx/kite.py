@@ -127,7 +127,7 @@ def map_args(
   return bound
 
 
-def subworkspace(fn: Callable):
+def subworkspace(fn: Callable = None, name: str = None):
   '''Allows using the decorated function as a LynxKite custom box.
 
   Example use::
@@ -155,53 +155,64 @@ def subworkspace(fn: Callable):
 
     my_func(lk.createExampleGraph()).trigger()
   '''
-  @functools.wraps(fn)
-  def wrapper(*args, _ws_params: List[WorkspaceParameter] = [], **kwargs):
+  def decorator(fn: Callable):
     signature = inspect.signature(fn, follow_wrapped=False)
-    # Separate workspace parameters from the normal Python parameters.
-    ws_param_bindings = {wp.name: kwargs[wp.name] for wp in _ws_params if wp.name in kwargs}
-    for wp in _ws_params:
-      if wp.name in signature.parameters:
-        kwargs[wp.name] = pp('$' + wp.name)
-      elif wp.name in kwargs:
-        del kwargs[wp.name]
-
-    # Replace states with input boxes.
-    input_states = []
-    input_boxes = []
-
-    def map_param(name, value):
-      if isinstance(value, State):
-        b = value.box.lk.input(name=name)
-        input_states.append(value)
-        input_boxes.append(b)
-        return b
-      else:
-        return value
-    sec = SideEffectCollector()
     secs = [p.name for p in signature.parameters.values()
             if p.default is SideEffectCollector.AUTO]
     assert len(secs) <= 1, f'More than one SideEffectCollector parameters found for {fn}'
-    manual_box_id = kwargs.pop('_id', None)
-    bound = signature.bind(*args, **kwargs)
-    for k in bound.arguments:
-      assert k not in secs, f'Explicitly set SideEffectCollector parameter for {fn}'
-    bound = map_args(signature, bound, map_param)
-    if secs:
-      bound.arguments[secs[0]] = sec
 
-    # Build the workspace.
-    outputs = _to_outputs(fn(*bound.args, **bound.kwargs))
-    ws = Workspace(
-        terminal_boxes=outputs + sec.top_level_side_effects,
-        side_effect_paths=list(sec.all_triggerables()),
-        input_boxes=input_boxes,
-        ws_parameters=_ws_params,
-        custom_box_id_base=fn.__name__)
+    @functools.wraps(fn)
+    def wrapper(*args, _ws_params: List[WorkspaceParameter] = [], **kwargs):
+      # create a new signature on every call since we will bind different arguments per call
+      signature = inspect.signature(fn, follow_wrapped=False)
+      # Separate workspace parameters from the normal Python parameters.
+      ws_param_bindings = {wp.name: kwargs[wp.name] for wp in _ws_params if wp.name in kwargs}
+      for wp in _ws_params:
+        if wp.name in signature.parameters:
+          kwargs[wp.name] = pp('$' + wp.name)
+        elif wp.name in kwargs:
+          del kwargs[wp.name]
 
-    # Return the custom box.
-    return ws(*input_states, _id=manual_box_id, **ws_param_bindings)
-  return wrapper
+      # Replace states with input boxes.
+      input_states = []
+      input_boxes = []
+
+      def map_param(name, value):
+        if isinstance(value, State):
+          b = value.box.lk.input(name=name)
+          input_states.append(value)
+          input_boxes.append(b)
+          return b
+        else:
+          return value
+      manual_box_id = kwargs.pop('_id', None)
+      bound = signature.bind(*args, **kwargs)
+      for k in bound.arguments:
+        assert k not in secs, f'Explicitly set SideEffectCollector parameter for {fn}'
+      bound = map_args(signature, bound, map_param)
+      sec = SideEffectCollector()
+      if secs:
+        bound.arguments[secs[0]] = sec
+
+      # Build the workspace.
+      outputs = _to_outputs(fn(*bound.args, **bound.kwargs))
+      ws = Workspace(
+          terminal_boxes=outputs + sec.top_level_side_effects,
+          side_effect_paths=list(sec.all_triggerables()),
+          input_boxes=input_boxes,
+          ws_parameters=_ws_params,
+          custom_box_id_base=name if name is not None else fn.__name__)
+
+      # Return the custom box.
+      return ws(*input_states, _id=manual_box_id, **ws_param_bindings)
+
+    wrapper.has_sideeffect = bool(secs)
+    return wrapper
+
+  if name is None:
+    return decorator(fn)
+  else:
+    return decorator
 
 
 def ws_param(name: str, default: str = '', description: str = ''):
@@ -366,7 +377,7 @@ class LynxKite:
 
     if name.startswith('_'):  # To avoid infinite recursion in copy/deepcopy
       raise AttributeError()
-    elif not name in self.operation_names():
+    elif name not in self.operation_names():
       raise AttributeError('{} is not defined'.format(name))
     return f
 
@@ -834,7 +845,7 @@ class State:
 
     if name.startswith('_'):  # To avoid infinite recursion in copy/deepcopy
       raise AttributeError()
-    elif not name in self.operation_names():
+    elif name not in self.operation_names():
       raise AttributeError('{} is not defined on {}'.format(name, self))
     return f
 
@@ -1694,7 +1705,6 @@ class Workspace:
     return _new_box(self._bc, self.lk, self, inputs=inputs, parameters=kwargs)
 
   def _trigger_box(self, box_to_trigger: BoxPath, full_path: str):
-    lk = self.lk
     box_ids = self._box_to_trigger_to_box_ids(box_to_trigger)
     # The last id is a "normal" box id, the rest are the custom box stack.
     box_to_trigger.base._trigger_in_ws(full_path, box_ids[-1], box_ids[:-1])
