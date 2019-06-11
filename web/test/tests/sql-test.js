@@ -189,16 +189,20 @@ module.exports = function(fw) {
       tableBrowser.toggle();
       tableBrowser.expectNode([0], 'edge_attributes', '`edge_attributes`');
       tableBrowser.expectNode([1], 'edges', '`edges`');
-      tableBrowser.expectNode([2], 'scalars', '`scalars`');
-      tableBrowser.expectNode([3], 'vertices', '`vertices`');
-      tableBrowser.toggleNode([3]);
-      tableBrowser.expectNode([3, 0], '*ALL*');
-      tableBrowser.expectNode([3, 1], 'age (Double)', '`age`');
+      tableBrowser.expectNode([2], 'input.edge_attributes', '`input.edge_attributes`');
+      tableBrowser.expectNode([3], 'input.edges', '`input.edges`');
+      tableBrowser.expectNode([4], 'input.scalars', '`input.scalars`');
+      tableBrowser.expectNode([5], 'input.vertices', '`input.vertices`');
+      tableBrowser.expectNode([6], 'scalars', '`scalars`');
+      tableBrowser.expectNode([7], 'vertices', '`vertices`');
+      tableBrowser.toggleNode([7]);
+      tableBrowser.expectNode([7, 0], '*ALL*');
+      tableBrowser.expectNode([7, 1], 'age (Double)', '`age`');
 
       tableBrowser.toggleFullyQualify();
-      tableBrowser.expectNode([3, 1], 'age (Double)', '`vertices`.`age`');
+      tableBrowser.expectNode([7, 1], 'age (Double)', '`vertices`.`age`');
       tableBrowser.expectNode(
-        [3, 0],
+        [7, 0],
         '*ALL*',
         '`vertices`.`age`,\n' +
               '`vertices`.`gender`,\n' +
