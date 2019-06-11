@@ -210,7 +210,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.clear();
     const x = this.svg.width() / 2, y = this.svg.height() / 2;
     const text = svg.create('text', {'class': 'clicky error', x: x, y: y, 'text-anchor': 'middle'});
-    text.text('Failed to generate visualization. Click to report problem.');
+    text.text('Failed to generate visualization. Click to see error details.');
     text.click(function() {
       util.reportRequestError(view, 'Graph visualization failed.');
     });
