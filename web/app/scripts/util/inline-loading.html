@@ -4,11 +4,11 @@
 </span>
 <span ng-if="ref.$error && ref.$statusCode >= 500"
   class="value-error"
-  drop-tooltip="Click to report error"
+  drop-tooltip="Click to see error details"
   ng-click="util.stopEventPropagation($event); reportError();">&times;</span>
 <span ng-if="ref === undefined"
   class="value-error"
-  drop-tooltip="Click to report error"
+  drop-tooltip="Click to see error details"
   ng-click="util.stopEventPropagation($event); reportError();">&times;</span>
 <span ng-if="ref.retryFunction && !ref.displayComputeButton"
   class="value-retry"
