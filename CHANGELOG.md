@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - For consistency, project tables such as `vertices` and `edges` can be accessed as
+   `input.vertices` and `input.edges` now.
+
 ### 2.8.0
 
  - Upgraded to Spark 2.4.3.

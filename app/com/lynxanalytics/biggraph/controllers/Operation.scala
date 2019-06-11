@@ -197,13 +197,12 @@ object Operation {
           else operation.context.inputs.map {
             case (oldName, state) => (renaming(oldName), state)
           }
-        val bindInputName = inputs.size > 1 // Whether to bind input names to avoid collisions.
         inputs.flatMap {
           case (inputName, state) if state.isTable => Seq(inputName -> ProtoTable(state.table))
-          case (inputName, state) if state.isProject => state.project.viewer.getProtoTables.map {
+          case (inputName, state) if state.isProject => state.project.viewer.getProtoTables.flatMap {
             case (tableName, proto) =>
-              val prefix = if (bindInputName) s"$inputName." else ""
-              s"$prefix$tableName" -> proto
+              val prefixes = Seq(s"$inputName.") ++ (if (inputs.size == 1) Seq("") else Seq())
+              prefixes.map(prefix => s"$prefix$tableName" -> proto)
           }
         }
       }
