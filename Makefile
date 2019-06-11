@@ -44,16 +44,14 @@ $(pip): python_requirements.txt
 	$(shell $(find) ecosystem/documentation python/remote_api python/automation) $(pip)
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
-		$(shell $(find) ecosystem/native python/remote_api python/automation ecosystem/docker/base) \
+		$(shell $(find) ecosystem/native python/remote_api python/automation) \
 		.build/backend-done .build/documentation-done-${VERSION} $(pip)
 	ecosystem/native/tools/build-monitoring.sh && \
 	ecosystem/native/bundle.sh && touch $@
-.build/ecosystem-docker-base-done: \
-		$(shell $(find) ecosystem/docker/base)
-	ecosystem/docker/base/build.sh $(VERSION) && touch $@
 .build/ecosystem-docker-release-done: \
-		.build/ecosystem-done .build/ecosystem-docker-base-done $(shell $(find) ecosystem/docker)
-	ecosystem/docker/release/build.sh $(VERSION) && touch $@
+		.build/ecosystem-done \
+		$(shell $(find) ecosystem/docker)
+	ecosystem/docker/build.sh $(VERSION) && touch $@
 .build/shell_ui-test-passed: $(shell $(find) shell_ui) .eslintrc.yaml
 	shell_ui/test.sh && touch $@
 .build/evaluation-release-done: \
@@ -73,8 +71,6 @@ backend: .build/backend-done
 frontend: .build/gulp-done
 .PHONY: ecosystem
 ecosystem: .build/ecosystem-done
-.PHONY: ecosystem-docker-base
-ecosystem-docker-base: .build/ecosystem-docker-base-done
 .PHONY: ecosystem-docker-release
 ecosystem-docker-release: .build/ecosystem-docker-release-done
 .PHONY: backend-test
