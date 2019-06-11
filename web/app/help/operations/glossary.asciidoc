@@ -233,6 +233,9 @@ Examples:
 
 Backticks (`{backtick}`) are used for escaping table and column names with special characters.
 
+For single-input SQL boxes the `edges`, `vertices`, etc. tables can be accessed with or without the
+input name prefix.
+
 You can browse the list of available tables and columns by clicking on the
 +++<label class="btn btn-primary">Tables ⏵</label>+++
 button.
