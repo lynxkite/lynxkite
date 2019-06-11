@@ -213,7 +213,7 @@ def subworkspace(fn: Callable):
 def ws_name(name: str):
   '''Specifies the name of the wrapped subworkspace.
 
-  Exmaple use::
+  Example use::
 
     @ws_name('My nice workspace')
     @subworkspace
