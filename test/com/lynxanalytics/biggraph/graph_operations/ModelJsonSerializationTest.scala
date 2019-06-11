@@ -65,4 +65,20 @@ class ModelJsonSerializationTest extends ModelTestBase {
     val m2 = Model.fromJson(out)
     assert(m2 == m1)
   }
+
+  test("Model json serialization works when labelType is None") {
+    val m1 = Model(
+      "one",
+      "two",
+      Some("three"),
+      None,
+      Some(Map(1.0 -> "a")),
+      List[String]("four", "five"),
+      Some(List(SerializableType.double)),
+      Some(Map(0 -> Map("1" -> 2.0))),
+      None)
+    val out = m1.toJson
+    val m2 = Model.fromJson(out)
+    assert(m2 == m1)
+  }
 }
