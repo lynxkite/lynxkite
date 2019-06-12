@@ -134,7 +134,7 @@
     </div>
     <div
       ng-if="opened[object.name] && !['exportResult', 'error'].includes(object.icon)" 
-      style="display:inline-block;">
+      style="overflow: auto;">
       <snapshot-viewer
         path="{{object.name}}"
         type="{{object.icon}}"
