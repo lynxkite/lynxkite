@@ -202,7 +202,7 @@ object Model extends FromJson[Model] {
       (j \ "method").as[String],
       (j \ "symbolicPath").as[String],
       (j \ "labelName").asOpt[String],
-      (j \ "labelType").asOpt[JsValue].map(json => SerializableType.fromJson(json)),
+      (j \ "labelType").asOpt[JsValue].filter(_ != json.JsNull).map(json => SerializableType.fromJson(json)),
       (j \ "labelReverseMapping").asOpt[Map[String, String]].map(_.map { case (k, v) => k.toDouble -> v }),
       (j \ "featureNames").as[List[String]],
       (j \ "featureTypes").asOpt[List[JsValue]].map(_.map(json => SerializableType.fromJson(json))),
