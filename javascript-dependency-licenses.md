@@ -538,7 +538,7 @@
 │  ├─ jasmine-core@2.8.0
 │  ├─ jasmine@2.8.0
 │  ├─ jasminewd2@2.2.0
-│  ├─ jquery@3.3.1
+│  ├─ jquery@3.4.1
 │  ├─ js-tokens@4.0.0
 │  ├─ js-yaml@3.12.2
 │  ├─ jsbn@0.1.1
