@@ -1,6 +1,7 @@
 # Several tools depend on the format of this file, so do not change it!
 
 # Packages developed by Lynx
+-e ./python/versioning
 -e ./python/remote_api
 -e ./python/automation
 -e ./standard-pipelines/impact-analysis
