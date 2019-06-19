@@ -9,7 +9,6 @@
 PyYAML
 
 # Dependencies for developing and testing
-mypy
 -e ./python/remote_api[dev]
 -e ./python/automation[dev]
 Sphinx==1.8.2
