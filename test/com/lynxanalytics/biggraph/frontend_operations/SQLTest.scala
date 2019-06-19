@@ -239,6 +239,11 @@ class SQLTest extends OperationsTestBase {
     assert(table.schema.map(_.name) == Seq("age"))
   }
 
+  test("prefixed table name even with one input") {
+    val table = runQueryOnExampleGraph("select age from `input.vertices`")
+    assert(table.schema.map(_.name) == Seq("age"))
+  }
+
   test("no edge attributes") {
     val noEdges = box("Create example graph")
       .box("Discard edge attributes", Map("name" -> "comment,weight"))
