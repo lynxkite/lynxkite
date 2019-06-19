@@ -48,6 +48,11 @@ class DataManager(
       "DataManager",
       maxParallelism = LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
   private val asyncJobs = new ControlledFutures()(executionContext)
+  val hadoopCheckExecutionContext =
+    ThreadUtil.limitedExecutionContext(
+      "DataManager(Hadoop)",
+      maxParallelism = LoggedEnvironment.envOrElse("KITE_HADOOP_PARALLELISM", "5").toInt)
+  private val hadoopAsyncJobs = new ControlledFutures()(hadoopCheckExecutionContext)
   private var executingOperation =
     new ThreadLocal[Option[MetaGraphOperationInstance]] { override def initialValue() = None }
   private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
@@ -87,23 +92,21 @@ class DataManager(
     ephemeralPath.getOrElse(repositoryPath)
   }
 
-  private def possiblyVerySlowCheckIfEntityCanBeLoadedFromDisk(entity: MetaGraphEntity): Boolean = {
+  private def maybeEntityCanBeLoadedFromDisk(entity: MetaGraphEntity): Boolean = {
     val eio = entityIO(entity)
     // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
     // the entity in this session, so we need this assertion.
     assert(!isEntityInProgressOrComputed(eio.entity), s"${eio} is new")
     (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
-      eio.mayHaveExisted &&
-      // Slow check for _SUCCESS file.
-      eio.exists
+      eio.mayHaveExisted
   }
 
   private def canLoadEntityFromDisk(entity: MetaGraphEntity): SafeFuture[Boolean] = {
     entitiesOnDiskCache.synchronized {
       entitiesOnDiskCache.getOrElseUpdate(
         entity.gUID,
-        asyncJobs.register { possiblyVerySlowCheckIfEntityCanBeLoadedFromDisk(entity) })
+        hadoopAsyncJobs.register { entityIO(entity).exists })
     }
   }
 
@@ -283,9 +286,13 @@ class DataManager(
         case Some(Success(_)) => 1.0
       }
     } else {
-      canLoadEntityFromDisk(entity).value match {
-        case Some(util.Success(true)) => 1.0
-        case _ => 0.0
+      if (!maybeEntityCanBeLoadedFromDisk(entity)) {
+        0.0
+      } else {
+        canLoadEntityFromDisk(entity).value match {
+          case Some(util.Success(true)) => 1.0
+          case _ => 0.0
+        }
       }
     }
   }
@@ -305,7 +312,7 @@ class DataManager(
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!isEntityInProgressOrComputed(entity)) {
-      if (canLoadEntityFromDisk(entity).awaitResult(Duration.Inf)) {
+      if (maybeEntityCanBeLoadedFromDisk(entity) && canLoadEntityFromDisk(entity).awaitResult(Duration.Inf)) {
         // If on disk already, we just load it.
         set(entity, load(entity))
       } else {
@@ -382,6 +389,7 @@ class DataManager(
   def waitAllFutures(): Unit = {
     SafeFuture.sequence(entityCache.values.toSeq).awaitReady(Duration.Inf)
     asyncJobs.waitAllFutures()
+    hadoopAsyncJobs.waitAllFutures()
   }
 
   def get(vertexSet: VertexSet): VertexSetData = {
