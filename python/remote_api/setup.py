@@ -1,9 +1,9 @@
 from setuptools import find_namespace_packages, setup
-from lynx.versioning import version
+from lynx_versioning import version
 
 setup(
     name='lynxkite-python-api',
-    version=version(__file__),
+    version=version(),
     install_requires=[
         'requests',
         'pandas',
