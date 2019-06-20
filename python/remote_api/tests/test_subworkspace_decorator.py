@@ -1,7 +1,7 @@
 import pandas as pd
 import unittest
 import lynx.kite
-from lynx.kite import pp, ws_param, subworkspace
+from lynx.kite import pp, ws_param, subworkspace, ws_name
 
 
 class TestLazyWorkspaceDecorator(unittest.TestCase):
@@ -113,6 +113,18 @@ class TestLazyWorkspaceDecorator(unittest.TestCase):
     result = f(eg, name='Bob')
     expected = pd.DataFrame({'age': [50.3]})
     pd.testing.assert_frame_equal(result.df(), expected, check_like=True)
+
+  def test_ws_name(self):
+    lk = lynx.kite.LynxKite()
+
+    @ws_name('name')
+    @subworkspace
+    def f(t):
+      return t
+
+    eg = lk.createExampleGraph()
+    result = f(eg)
+    self.assertEqual(result.box_id_base(), 'name')
 
   def test_multi_output(self):
     lk = lynx.kite.LynxKite()
