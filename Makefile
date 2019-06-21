@@ -51,7 +51,7 @@ $(pip): python_requirements.txt
 		.build/versioning-installed \
 		.build/backend-done .build/documentation-done-${VERSION} $(pip)
 	ecosystem/native/tools/build-monitoring.sh && \
-	ecosystem/native/bundle.sh && touch $@
+	ecosystem/native/bundle.sh $(VERSION) && touch $@
 .build/ecosystem-docker-release-done: \
 		.build/ecosystem-done \
 		$(shell $(find) ecosystem/docker)
