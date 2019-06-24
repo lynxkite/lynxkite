@@ -33,6 +33,21 @@ case class StageInfo(
     var lastTaskTime: Long = 0, // Timestamp of last task completion.
     var failed: Boolean = false)
 
+object ThreadDumper {
+  def get(): String = {
+    val mxbean = java.lang.management.ManagementFactory.getThreadMXBean
+    val threadInfos = mxbean.getThreadInfo(mxbean.getAllThreadIds, /* max lines of stack trace per thread: */ 1000)
+    threadInfos.flatMap { info =>
+      val lockInfo =
+        if (info.getThreadState() == Thread.State.BLOCKED)
+          s"waiting on lock held by ${info.getLockOwnerName}"
+        else ""
+      s"\n\n${info.getThreadName} ${lockInfo} (${info.getThreadState}):" +:
+        info.getStackTrace.map(line => s"\n  at $line")
+    }.mkString
+  }
+}
+
 // This listener is used for long polling on /ajax/spark-status.
 // The response is delayed until there is an update.
 class KiteListener(sc: spark.SparkContext) extends spark.scheduler.SparkListener {
@@ -290,7 +305,7 @@ class KiteMonitorThread(
               concurrent.duration.Duration(coreTimeoutMillis, "millisecond"))
           } catch {
             case e: java.util.concurrent.TimeoutException =>
-              log.error("Kite core test timed out. Thread dump:\n" + threadDump())
+              log.error("Kite core test timed out. Thread dump:\n" + ThreadDumper.get())
               false
             case e: Throwable =>
               log.error("Error while testing kite core", e)
@@ -312,19 +327,6 @@ class KiteMonitorThread(
       val untilNextCheck = 0L max (nextCheck - System.currentTimeMillis)
       Thread.sleep(untilNextCheck)
     }
-  }
-
-  def threadDump(): String = {
-    val mxbean = java.lang.management.ManagementFactory.getThreadMXBean
-    val threadInfos = mxbean.getThreadInfo(mxbean.getAllThreadIds, /* max lines of stack trace per thread: */ 1000)
-    threadInfos.flatMap { info =>
-      val lockInfo =
-        if (info.getThreadState() == Thread.State.BLOCKED)
-          s"waiting on lock held by ${info.getLockOwnerName}"
-        else ""
-      s"\n\n${info.getThreadName} ${lockInfo} (${info.getThreadState}):" +:
-        info.getStackTrace.map(line => s"\n  at $line")
-    }.mkString
   }
 
   setDaemon(true)
