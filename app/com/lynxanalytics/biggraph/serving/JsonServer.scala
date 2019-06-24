@@ -11,7 +11,6 @@ import scala.concurrent.Future
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
-import com.lynxanalytics.biggraph.graph_api.BuiltIns
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
@@ -21,8 +20,8 @@ import com.lynxanalytics.biggraph.serving
 import org.apache.spark.sql.types.{ StructField, StructType }
 import play.api.mvc.AnyContent
 import play.api.mvc.Request
-
-import scala.collection.mutable
+import play.api.mvc.ResponseHeader
+import play.api.libs.iteratee.Enumerator
 
 abstract class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
@@ -492,6 +491,17 @@ object ProductionJsonServer extends JsonServer {
     // Docker or Supervisor or a while loop is expected to start us up again after we exit.
     System.exit(1)
   }
+
+  def getThreadDump = {
+    action(parse.anyContent) { (user, request) =>
+      assert(user.isAdmin, "Thread dump is restricted to administrator users.")
+      log.info(s"GET ${request.path}")
+      val header = ResponseHeader(OK)
+      val output = ThreadDumper.get().getBytes("utf-8")
+      mvc.Result(header, Enumerator(output))
+    }
+  }
+
   def sparkHealthCheck = healthCheck(sparkClusterController.checkSparkOperational)
 
   val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)
