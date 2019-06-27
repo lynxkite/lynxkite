@@ -6,7 +6,8 @@ import shutil
 
 class TestDownload(unittest.TestCase):
   lk = lynx.kite.LynxKite()
-  num_vertices = 200100
+  num_vertices = 200100  # We will have two partitions, assuming
+  # KITE_VERTICES_PER_PARTITION is the default 200000
   rnd = os.urandom(16).hex()
   export_path = 'DATA$/' + str(rnd)
 
