@@ -23,6 +23,11 @@ object ExportTable {
     case "ignore" => SaveMode.Ignore
     case _ => throw new AssertionError(s"Invalid save mode: $saveMode")
   }
+
+  def singlePartition(df: spark.sql.DataFrame): spark.sql.DataFrame = {
+    if (df.rdd.getNumPartitions == 1) df
+    else df.repartition(1)
+  }
 }
 
 import ExportTable._
@@ -103,7 +108,7 @@ case class ExportTableToCSV(path: String, header: Boolean,
       "ignoreTrailingWhiteSpaces" -> (if (dropTrailingWhiteSpace) "true" else "false"),
       "header" -> (if (header) "true" else "false"))
     val mode = toSaveMode(saveMode)
-    df.write.mode(mode).format("csv").options(options).save(file.resolvedName)
+    singlePartition(df).write.mode(mode).format("csv").options(options).save(file.resolvedName)
   }
 }
 
@@ -126,7 +131,7 @@ case class ExportTableToStructuredFile(path: String, format: String, version: In
   def exportDataFrame(df: spark.sql.DataFrame) = {
     val file = HadoopFile(path)
     val mode = toSaveMode(saveMode)
-    df.write.mode(mode).format(format).save(file.resolvedName)
+    singlePartition(df).write.mode(mode).format(format).save(file.resolvedName)
   }
 }
 
