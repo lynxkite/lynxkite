@@ -31,14 +31,18 @@ from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewT
 import requests
 from tempfile import NamedTemporaryFile
 import textwrap
-
+import shutil
 
 if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 6):
   raise Exception('At least Python version 3.6 is needed!')
 
 
+def random_filename() -> str:
+  return ''.join(random.choices('0123456789ABCDEF', k=16))
+
+
 def _random_ws_folder() -> str:
-  return 'tmp_workspaces/{}'.format(''.join(random.choices('0123456789ABCDEF', k=16)))
+  return 'tmp_workspaces/{}'.format(random_filename())
 
 
 def _normalize_path(path: str) -> str:
@@ -1076,8 +1080,14 @@ def _is_spark_dataframe(x):
   return isinstance(x, DataFrame)
 
 
-def _save_spark_dataframe(df, path):
+def _save_spark_dataframe(df, path) -> str:
+  p = df.rdd.getNumPartitions()
+  if p != 1:
+    df = df.repartition(1)
   df.write.parquet(path)
+  parquet_files = [f for f in os.listdir(path) if f.startswith('part-')]
+  assert len(parquet_files) == 1, f'Only one parquet file is expected here: {parquet_files}'
+  return path + '/' + parquet_files[0]
 
 
 def _is_pandas_dataframe(x):
@@ -1088,12 +1098,11 @@ def _is_pandas_dataframe(x):
   return isinstance(x, pd.DataFrame)
 
 
-def _save_pandas_dataframe(df, path):
+def _save_pandas_dataframe(df, path) -> str:
   if path.startswith('file:'):
     path = path.replace('file:', '')
-    os.makedirs(path, exist_ok=True)
-    path = path + '/part-0'
   df.to_parquet(path)
+  return path
 
 
 class Box:
@@ -1232,6 +1241,26 @@ class SingleOutputAtomicBox(AtomicBox, State):
     State.__init__(self, self, output_name)
 
 
+class ParquetHandler:
+  '''
+
+  '''
+
+  def __init__(self, lk):
+    self.lk = lk
+
+  def upload(self, df_saver, df):
+    try:
+      tmpdir = '/tmp/' + random_filename()
+      tmppath = tmpdir + '/parquet'
+      os.makedirs(tmpdir, exist_ok=True)
+      parquet_file = df_saver(df, tmppath)
+      with open(parquet_file, "rb") as fin:
+        return self.lk.uploadParquetNow(fin.read())
+    finally:
+      shutil.rmtree(tmpdir, ignore_errors=True)
+
+
 class ExternalComputationBox(SingleOutputAtomicBox):
   '''
   A box that runs external computation when triggered. Use it via ``@external``.
@@ -1273,16 +1302,11 @@ class ExternalComputationBox(SingleOutputAtomicBox):
     # TODO: Delete exported files.
     # Import results.
     output_lk = f'DATA$/external-processing/output-{id(self.fn)}-{snapshot_guids}'
+    parquet_uploader = ParquetHandler(self.lk)
     if _is_spark_dataframe(res):
-      output_path = lk.get_prefixed_path(output_lk).resolved
-      _save_spark_dataframe(res, output_path)
-      state = lk.importParquetNow(filename=output_lk)
-      # TODO: Delete imported file.
+      state = parquet_uploader.upload(_save_spark_dataframe, res)
     elif _is_pandas_dataframe(res):
-      output_path = lk.get_prefixed_path(output_lk).resolved
-      _save_pandas_dataframe(res, output_path)
-      state = lk.importParquetNow(filename=output_lk)
-      # TODO: Delete imported file.
+      state = parquet_uploader.upload(_save_pandas_dataframe, res)
     elif isinstance(res, State):
       state = res
     elif isinstance(res, str):
