@@ -1053,6 +1053,7 @@ class InputTable:
         tmp.flush()
         return pd.read_parquet(tmppath)
     finally:
+
       os.remove(tmppath)
 
   def pandas(self):
@@ -1241,24 +1242,53 @@ class SingleOutputAtomicBox(AtomicBox, State):
     State.__init__(self, self, output_name)
 
 
-class ParquetHandler:
+class ParquetDeliveryBase:
   '''
-
+    Class to send some dataframe to LynxKite in Parquet format
   '''
 
   def __init__(self, lk):
     self.lk = lk
 
-  def upload(self, df_saver, df):
+  def save_dataframe_to_file(self, df, target) -> str:
+    '''
+    Saves the dataframe as a single parquet file in target.
+    (This can be a directory or a single file)
+    Returns the actual path of the binary that was written
+    '''
+    raise NotImplementedError('Must be implemented in the subclass')
+
+  def upload(self, df):
     try:
       tmpdir = '/tmp/' + random_filename()
       tmppath = tmpdir + '/parquet'
       os.makedirs(tmpdir, exist_ok=True)
-      parquet_file = df_saver(df, tmppath)
+      parquet_file = self.save_dataframe_to_file(df, tmppath)
       with open(parquet_file, "rb") as fin:
         return self.lk.uploadParquetNow(fin.read())
     finally:
       shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+class PandasDelivery(ParquetDeliveryBase):
+
+  def save_dataframe_to_file(self, df, path) -> str:
+    if path.startswith('file:'):
+      path = path.replace('file:', '')
+    df.to_parquet(path)
+    return path
+
+
+class SparkDelivery(ParquetDeliveryBase):
+
+  def save_dataframe_to_file(self, df, target_dir) -> str:
+    p = df.rdd.getNumPartitions()
+    if p != 1:
+      df = df.repartition(1)
+    df.write.parquet(target_dir)
+    parquet_files = [f for f in os.listdir(target_dir) if f.startswith('part-')]
+    assert len(parquet_files) == 1, f'Only one parquet file is expected here: {parquet_files}'
+    return target_dir + '/' + parquet_files[0]
 
 
 class ExternalComputationBox(SingleOutputAtomicBox):
@@ -1302,11 +1332,13 @@ class ExternalComputationBox(SingleOutputAtomicBox):
     # TODO: Delete exported files.
     # Import results.
     output_lk = f'DATA$/external-processing/output-{id(self.fn)}-{snapshot_guids}'
-    parquet_uploader = ParquetHandler(self.lk)
+#    parquet_uploader = ParquetHandler(self.lk)
     if _is_spark_dataframe(res):
-      state = parquet_uploader.upload(_save_spark_dataframe, res)
+      state = SparkDelivery(self.lk).upload(res)
+#      state = parquet_uploader.upload(_save_spark_dataframe, res)
     elif _is_pandas_dataframe(res):
-      state = parquet_uploader.upload(_save_pandas_dataframe, res)
+      state = PandasDelivery(self.lk).upload(res)
+#      state = parquet_uploader.upload(_save_pandas_dataframe, res)
     elif isinstance(res, State):
       state = res
     elif isinstance(res, str):
