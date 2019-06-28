@@ -1038,10 +1038,26 @@ class InputTable:
     self.lk_path = lk_path
     self.full_path = full_path
 
+  def _pandas_via_lk_download(self):
+    import tempfile
+    import pandas as pd
+    fd, tmppath = tempfile.mkstemp()
+    try:
+      with os.fdopen(fd, "wb") as tmp:
+        data = bytes(self._lk.download_file(self.lk_path))
+        tmp.write(data)
+        tmp.flush()
+        return pd.read_parquet(tmppath)
+    finally:
+      os.remove(tmppath)
+
   def pandas(self):
     '''Returns a Pandas DataFrame.'''
     import pandas as pd
-    return pd.read_parquet(self.full_path.replace('file:', ''))
+    if self.full_path.startswith('file'):
+      return pd.read_parquet(self.full_path.replace('file:', ''))
+    else:
+      return self._pandas_via_lk_download()
 
   def spark(self, spark):
     '''Takes a SparkSession as the argument and returns the table as a Spark DataFrame.'''
