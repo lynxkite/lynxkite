@@ -16,20 +16,12 @@ class TestExternalComputation(unittest.TestCase):
       df['titled_name'] = np.where(df.gender == 'Female', 'Ms ' + df.name, 'Mr ' + df.name)
       return df
 
-    @lynx.kite.external
-    def title_names_with_download(table):
-      df = table._pandas_via_lk_download()
-      df['titled_name'] = np.where(df.gender == 'Female', 'Ms ' + df.name, 'Mr ' + df.name)
-      return df
-
     eg = lk.createExampleGraph().sql('select name, gender from vertices')
 
-    t1 = title_names(eg)
-    t2 = title_names_with_download(eg)
+    t = title_names(eg)
 
-    for t in [t1, t2]:
-      t.trigger()
-      self.assertTrue(t.sql('select titled_name from input').df().equals(
+    t.trigger()
+    self.assertTrue(t.sql('select titled_name from input').df().equals(
           pd.DataFrame({'titled_name': [
               'Mr Adam',
               'Ms Eve',
