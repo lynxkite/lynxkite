@@ -1055,7 +1055,6 @@ class DataFrameRetriever:
 
     def delete_tempfile():
       if (os.path.exists(tmppath)):
-        print(f'Deleting {tmppath}')
         os.remove(tmppath)
 
     try:
