@@ -1034,39 +1034,145 @@ def external(fn: Callable):
   return wrapper
 
 
-class InputTable:
-  '''Input tables for external computations (``@external``) are translated to these objects.'''
+class ParquetDeliveryBase:
+  '''
+    Class to send some dataframe to LynxKite in Parquet format
+  '''
 
-  def __init__(self, lk, lk_path, full_path) -> None:
-    self._lk = lk
-    self.lk_path = lk_path
-    self.full_path = full_path
+  def __init__(self, lk):
+    self.lk = lk
 
-  def _pandas_via_lk_download(self):
+  def save_dataframe_to_file(self, df, target) -> str:
+    '''
+    Saves the dataframe as a single parquet file in target.
+    (This can be a directory or a single file)
+    Returns the actual path of the binary that was written
+    '''
+    raise NotImplementedError('Must be implemented in the subclass')
+
+  def import_dataframe_from_file(self, path):
+    raise NotImplementedError('Must be implemented in the subclass')
+
+  def upload(self, df):
+    try:
+      tmpdir = '/tmp/' + random_filename()
+      tmppath = tmpdir + '/parquet'
+      os.makedirs(tmpdir, exist_ok=True)
+      parquet_file = self.save_dataframe_to_file(df, tmppath)
+      with open(parquet_file, "rb") as fin:
+        return self.lk.uploadParquetNow(fin.read())
+    finally:
+      shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+  def download(self, lk_path, cleanup_functions):
     import tempfile
     import pandas as pd
     fd, tmppath = tempfile.mkstemp()
+
+    def cleanup():
+      os.remove(tmppath)
+    cleanup_functions.append(cleanup)
+
+    with os.fdopen(fd, "wb") as tmp:
+      data = bytes(self.lk.download_file(lk_path))
+      tmp.write(data)
+      tmp.flush()
+      return pd.read_parquet(tmppath)
+
+
+class PandasDelivery(ParquetDeliveryBase):
+
+  def save_dataframe_to_file(self, df, path) -> str:
+    if path.startswith('file:'):
+      path = path.replace('file:', '')
+    df.to_parquet(path)
+    return path
+
+  def import_dataframe_from_file(self, path):
+    import pandas as pd
+    return pd.read_parquet(path)
+
+class SparkDelivery(ParquetDeliveryBase):
+
+  def __init__(self, lk, spark=None):
+    self.lk = lk
+    self.spark = spark
+
+  def save_dataframe_to_file(self, df, target_dir) -> str:
+    p = df.rdd.getNumPartitions()
+    if p != 1:
+      df = df.repartition(1)
+    df.write.parquet(target_dir)
+    parquet_files = [f for f in os.listdir(target_dir) if f.startswith('part-')]
+    assert len(parquet_files) == 1, f'Only one parquet file is expected here: {parquet_files}'
+    return target_dir + '/' + parquet_files[0]
+
+  def import_dataframe_from_file(self, path):
+    return self.spark.read.parquet(path)
+
+
+class DataFrameRetriever:
+  '''Base class for getting a Parquet file from LynxKite and reading it as some dataframe.'''
+  def __init__(self, lk):
+    self.lk = lk
+    self.cleanup_functions = []
+
+  def read_dataframe_from_local_file(self, path, *args):
+    '''Subclasses should override this function: they should parse the local file path and
+    return the appropriate (pandas, spark, etc.) dataframe'''
+    raise NotImplementedError()
+
+  def read(self, lk_path, *args):
+    import tempfile
+    fd, tmppath = tempfile.mkstemp()
+
+    def delete_tempfile():
+      os.remove(tmppath)
+
     try:
       with os.fdopen(fd, "wb") as tmp:
-        data = bytes(self._lk.download_file(self.lk_path))
+        data = bytes(self.lk.download_file(lk_path))
         tmp.write(data)
         tmp.flush()
-        return pd.read_parquet(tmppath)
+        return self.read_dataframe_from_local_file(tmppath, *args)
     finally:
+      # We cannot just delete tmpfile here, because spark is lazy: it needs
+      # until after we return from here. We postpone deletion until
+      # the external function has exited.
+      self.cleanup_functions.append(delete_tempfile)
 
-      os.remove(tmppath)
+  def cleanup(self):
+    for c in self.cleanup_functions:
+      c()
+
+class PandasDataFrameRetriever(DataFrameRetriever):
+
+  def read_dataframe_from_local_file(self, path, *args):
+    import pandas
+    return pandas.read_parquet(path)
+
+class SparkDataFrameRetriever(DataFrameRetriever):
+  def read_dataframe_from_local_file(self, path, spark):
+    return spark.read.parquet(path)
+
+
+class InputTable:
+  '''Input tables for external computations (``@external``) are translated to these objects.'''
+
+  def __init__(self, lk, lk_path, full_path, df_retrievers) -> None:
+    self._lk = lk
+    self.lk_path = lk_path
+    self.full_path = full_path
+    self.df_retrievers = df_retrievers
 
   def pandas(self):
     '''Returns a Pandas DataFrame.'''
-    import pandas as pd
-    if self.full_path.startswith('file'):
-      return pd.read_parquet(self.full_path.replace('file:', ''))
-    else:
-      return self._pandas_via_lk_download()
+    return self.df_retrievers['pandas'].read(self.lk_path)
 
   def spark(self, spark):
     '''Takes a SparkSession as the argument and returns the table as a Spark DataFrame.'''
-    return spark.read.parquet(self.full_path)
+    return self.df_retrievers['spark'].read(self.lk_path, spark)
 
   def lk(self) -> State:
     '''Returns a LynxKite State.'''
@@ -1242,53 +1348,6 @@ class SingleOutputAtomicBox(AtomicBox, State):
     State.__init__(self, self, output_name)
 
 
-class ParquetDeliveryBase:
-  '''
-    Class to send some dataframe to LynxKite in Parquet format
-  '''
-
-  def __init__(self, lk):
-    self.lk = lk
-
-  def save_dataframe_to_file(self, df, target) -> str:
-    '''
-    Saves the dataframe as a single parquet file in target.
-    (This can be a directory or a single file)
-    Returns the actual path of the binary that was written
-    '''
-    raise NotImplementedError('Must be implemented in the subclass')
-
-  def upload(self, df):
-    try:
-      tmpdir = '/tmp/' + random_filename()
-      tmppath = tmpdir + '/parquet'
-      os.makedirs(tmpdir, exist_ok=True)
-      parquet_file = self.save_dataframe_to_file(df, tmppath)
-      with open(parquet_file, "rb") as fin:
-        return self.lk.uploadParquetNow(fin.read())
-    finally:
-      shutil.rmtree(tmpdir, ignore_errors=True)
-
-
-class PandasDelivery(ParquetDeliveryBase):
-
-  def save_dataframe_to_file(self, df, path) -> str:
-    if path.startswith('file:'):
-      path = path.replace('file:', '')
-    df.to_parquet(path)
-    return path
-
-
-class SparkDelivery(ParquetDeliveryBase):
-
-  def save_dataframe_to_file(self, df, target_dir) -> str:
-    p = df.rdd.getNumPartitions()
-    if p != 1:
-      df = df.repartition(1)
-    df.write.parquet(target_dir)
-    parquet_files = [f for f in os.listdir(target_dir) if f.startswith('part-')]
-    assert len(parquet_files) == 1, f'Only one parquet file is expected here: {parquet_files}'
-    return target_dir + '/' + parquet_files[0]
 
 
 class ExternalComputationBox(SingleOutputAtomicBox):
@@ -1308,6 +1367,11 @@ class ExternalComputationBox(SingleOutputAtomicBox):
   def _trigger_in_ws(self, wsname: str, box: str, stack: List[str]) -> None:
     lk = self.lk
 
+    dataframe_retrievers = {
+      'spark' : SparkDataFrameRetriever(self.lk),
+      'pandas' : PandasDataFrameRetriever(self.lk)
+    }
+
     # Find inputs.
     resp = lk.get_workspace(wsname, stack)
     boxes = {b.id: b for b in resp.workspace.boxes}
@@ -1321,7 +1385,7 @@ class ExternalComputationBox(SingleOutputAtomicBox):
     def get_input_table(name, value):
       if isinstance(value, Placeholder):
         path = export_results[value.value].parameters.path
-        return InputTable(lk, path, lk.get_prefixed_path(path).resolved)
+        return InputTable(lk, path, lk.get_prefixed_path(path).resolved, dataframe_retrievers)
       else:
         return value
 
@@ -1350,6 +1414,8 @@ class ExternalComputationBox(SingleOutputAtomicBox):
           f'The return value from {self.fn.__name__}() is not a supported object. Got: {res!r}')
 
     state.save_snapshot(snapshot_prefix + snapshot_guids)
+    for reader in dataframe_retrievers.values():
+      reader.cleanup()
 
 
 class CustomBox(Box):
