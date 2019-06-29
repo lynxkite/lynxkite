@@ -17,17 +17,15 @@ class TestExternalComputation(unittest.TestCase):
       return df
 
     eg = lk.createExampleGraph().sql('select name, gender from vertices')
-
     t = title_names(eg)
-
     t.trigger()
     self.assertTrue(t.sql('select titled_name from input').df().equals(
-          pd.DataFrame({'titled_name': [
-              'Mr Adam',
-              'Ms Eve',
-              'Mr Bob',
-              'Mr Isolated Joe',
-          ]})))
+        pd.DataFrame({'titled_name': [
+            'Mr Adam',
+            'Ms Eve',
+            'Mr Bob',
+            'Mr Isolated Joe',
+        ]})))
 
   def test_pyspark(self):
     lk = lynx.kite.LynxKite()
