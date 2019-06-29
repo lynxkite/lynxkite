@@ -1034,86 +1034,12 @@ def external(fn: Callable):
   return wrapper
 
 
-class ParquetDeliveryBase:
-  '''
-    Class to send some dataframe to LynxKite in Parquet format
-  '''
-
-  def __init__(self, lk):
-    self.lk = lk
-
-  def save_dataframe_to_file(self, df, target) -> str:
-    '''
-    Saves the dataframe as a single parquet file in target.
-    (This can be a directory or a single file)
-    Returns the actual path of the binary that was written
-    '''
-    raise NotImplementedError('Must be implemented in the subclass')
-
-  def import_dataframe_from_file(self, path):
-    raise NotImplementedError('Must be implemented in the subclass')
-
-  def upload(self, df):
-    try:
-      tmpdir = '/tmp/' + random_filename()
-      tmppath = tmpdir + '/parquet'
-      os.makedirs(tmpdir, exist_ok=True)
-      parquet_file = self.save_dataframe_to_file(df, tmppath)
-      with open(parquet_file, "rb") as fin:
-        return self.lk.uploadParquetNow(fin.read())
-    finally:
-      shutil.rmtree(tmpdir, ignore_errors=True)
-
-
-  def download(self, lk_path, cleanup_functions):
-    import tempfile
-    import pandas as pd
-    fd, tmppath = tempfile.mkstemp()
-
-    def cleanup():
-      os.remove(tmppath)
-    cleanup_functions.append(cleanup)
-
-    with os.fdopen(fd, "wb") as tmp:
-      data = bytes(self.lk.download_file(lk_path))
-      tmp.write(data)
-      tmp.flush()
-      return pd.read_parquet(tmppath)
-
-
-class PandasDelivery(ParquetDeliveryBase):
-
-  def save_dataframe_to_file(self, df, path) -> str:
-    if path.startswith('file:'):
-      path = path.replace('file:', '')
-    df.to_parquet(path)
-    return path
-
-  def import_dataframe_from_file(self, path):
-    import pandas as pd
-    return pd.read_parquet(path)
-
-class SparkDelivery(ParquetDeliveryBase):
-
-  def __init__(self, lk, spark=None):
-    self.lk = lk
-    self.spark = spark
-
-  def save_dataframe_to_file(self, df, target_dir) -> str:
-    p = df.rdd.getNumPartitions()
-    if p != 1:
-      df = df.repartition(1)
-    df.write.parquet(target_dir)
-    parquet_files = [f for f in os.listdir(target_dir) if f.startswith('part-')]
-    assert len(parquet_files) == 1, f'Only one parquet file is expected here: {parquet_files}'
-    return target_dir + '/' + parquet_files[0]
-
-  def import_dataframe_from_file(self, path):
-    return self.spark.read.parquet(path)
-
 
 class DataFrameRetriever:
-  '''Base class for getting a Parquet file from LynxKite and reading it as some dataframe.'''
+  '''Base class for getting a Parquet file from LynxKite and reading it as some dataframe.
+  We do this by downloading the Parquet file from LynxKite to a local file and then
+  parse it into a dataframe.
+  '''
   def __init__(self, lk):
     self.lk = lk
     self.cleanup_functions = []
@@ -1139,7 +1065,7 @@ class DataFrameRetriever:
     finally:
       # We cannot just delete tmpfile here, because spark is lazy: it needs
       # until after we return from here. We postpone deletion until
-      # the external function has exited.
+      # as late as possible.
       self.cleanup_functions.append(delete_tempfile)
 
   def cleanup(self):
@@ -1187,30 +1113,12 @@ def _is_spark_dataframe(x):
   return isinstance(x, DataFrame)
 
 
-def _save_spark_dataframe(df, path) -> str:
-  p = df.rdd.getNumPartitions()
-  if p != 1:
-    df = df.repartition(1)
-  df.write.parquet(path)
-  parquet_files = [f for f in os.listdir(path) if f.startswith('part-')]
-  assert len(parquet_files) == 1, f'Only one parquet file is expected here: {parquet_files}'
-  return path + '/' + parquet_files[0]
-
-
 def _is_pandas_dataframe(x):
   try:
     import pandas as pd
   except ImportError:
     return False  # It cannot be a Pandas DataFrame if we don't even have Pandas.
   return isinstance(x, pd.DataFrame)
-
-
-def _save_pandas_dataframe(df, path) -> str:
-  if path.startswith('file:'):
-    path = path.replace('file:', '')
-  df.to_parquet(path)
-  return path
-
 
 class Box:
   '''Represents a box in a workspace segment.
@@ -1348,7 +1256,56 @@ class SingleOutputAtomicBox(AtomicBox, State):
     State.__init__(self, self, output_name)
 
 
+class DataFrameSender:
+  '''
+    Class to send some dataframe to LynxKite in Parquet format.
+    We do this by saving the dataframe to a local Parquet file
+    and then upload it to LynxKite.
+  '''
 
+  def __init__(self, lk):
+    self.lk = lk
+
+  def save_dataframe_to_local_file(self, df, target) -> str:
+    '''
+    Saves the dataframe as a single Parquet file in target.
+    This can be a directory or a single file.
+    Returns the actual path of the binary that was written.
+    '''
+    raise NotImplementedError('Must be implemented in the subclass')
+
+  def send(self, df):
+    '''Sends the local Parquet file to LynxKite'''
+    try:
+      tmpdir = '/tmp/' + random_filename()
+      tmppath = tmpdir + '/parquet'
+      os.makedirs(tmpdir, exist_ok=True)
+      parquet_file = self.save_dataframe_to_local_file(df, tmppath)
+      with open(parquet_file, "rb") as fin:
+        return self.lk.uploadParquetNow(fin.read())
+    finally:
+      shutil.rmtree(tmpdir, ignore_errors=True)
+
+class PandasDataFrameSender(DataFrameSender):
+
+  def save_dataframe_to_local_file(self, df, path) -> str:
+    df.to_parquet(path)
+    return path
+
+class SparkDataFrameSender(DataFrameSender):
+
+  def __init__(self, lk, spark=None):
+    self.lk = lk
+    self.spark = spark
+
+  def save_dataframe_to_local_file(self, df, target_dir) -> str:
+    p = df.rdd.getNumPartitions()
+    if p != 1:
+      df = df.repartition(1)
+    df.write.parquet(target_dir)
+    parquet_files = [f for f in os.listdir(target_dir) if f.startswith('part-')]
+    assert len(parquet_files) == 1, f'Only one parquet file is expected here: {parquet_files}'
+    return target_dir + '/' + parquet_files[0]
 
 class ExternalComputationBox(SingleOutputAtomicBox):
   '''
@@ -1395,14 +1352,10 @@ class ExternalComputationBox(SingleOutputAtomicBox):
     res = self.fn(*bound.args, **bound.kwargs)
     # TODO: Delete exported files.
     # Import results.
-    output_lk = f'DATA$/external-processing/output-{id(self.fn)}-{snapshot_guids}'
-#    parquet_uploader = ParquetHandler(self.lk)
     if _is_spark_dataframe(res):
-      state = SparkDelivery(self.lk).upload(res)
-#      state = parquet_uploader.upload(_save_spark_dataframe, res)
+      state = SparkDataFrameSender(self.lk).send(res)
     elif _is_pandas_dataframe(res):
-      state = PandasDelivery(self.lk).upload(res)
-#      state = parquet_uploader.upload(_save_pandas_dataframe, res)
+      state = PandasDataFrameSender(self.lk).send(res)
     elif isinstance(res, State):
       state = res
     elif isinstance(res, str):
