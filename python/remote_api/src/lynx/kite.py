@@ -1295,10 +1295,6 @@ class PandasDataFrameSender(DataFrameSender):
 
 class SparkDataFrameSender(DataFrameSender):
 
-  def __init__(self, lk, spark=None):
-    self.lk = lk
-    self.spark = spark
-
   def save_dataframe_to_local_file(self, df, target_dir) -> str:
     p = df.rdd.getNumPartitions()
     if p != 1:
