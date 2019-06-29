@@ -1046,7 +1046,7 @@ class DataFrameRetriever:
 
   def read_dataframe_from_local_file(self, path, *args):
     '''Subclasses should override this function: they should parse the local file path and
-    return the appropriate (pandas, spark, etc.) dataframe'''
+    return the appropriate (pandas, spark, etc.) dataframe.'''
     raise NotImplementedError()
 
   def read(self, lk_path, *args):
@@ -1054,7 +1054,9 @@ class DataFrameRetriever:
     fd, tmppath = tempfile.mkstemp()
 
     def delete_tempfile():
-      os.remove(tmppath)
+      if (os.path.exists(tmppath)):
+        print(f'Deleting {tmppath}')
+        os.remove(tmppath)
 
     try:
       with os.fdopen(fd, "wb") as tmp:
@@ -1064,7 +1066,7 @@ class DataFrameRetriever:
         return self.read_dataframe_from_local_file(tmppath, *args)
     finally:
       # We cannot just delete tmpfile here, because spark is lazy: it needs
-      # until after we return from here. We postpone deletion until
+      # the file until way after we return from here. We postpone deletion until
       # as late as possible.
       self.cleanup_functions.append(delete_tempfile)
 
@@ -1329,46 +1331,48 @@ class ExternalComputationBox(SingleOutputAtomicBox):
       'pandas' : PandasDataFrameRetriever(self.lk)
     }
 
-    # Find inputs.
-    resp = lk.get_workspace(wsname, stack)
-    boxes = {b.id: b for b in resp.workspace.boxes}
-    input_tables = [getattr(boxes[box].inputs, str(i + 1)) for i in range(len(self.inputs))]
-    states = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in resp.outputs}
-    input_states = [states[t.boxId, t.id] for t in input_tables]
-    export_results = [lk.get_export_result(s) for s in input_states]
-    snapshot_prefix = self.parameters['snapshot_prefix']
-    snapshot_guids = '-'.join(exp.result.id for exp in export_results)
+    try:
+      # Find inputs.
+      resp = lk.get_workspace(wsname, stack)
+      boxes = {b.id: b for b in resp.workspace.boxes}
+      input_tables = [getattr(boxes[box].inputs, str(i + 1)) for i in range(len(self.inputs))]
+      states = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in resp.outputs}
+      input_states = [states[t.boxId, t.id] for t in input_tables]
+      export_results = [lk.get_export_result(s) for s in input_states]
+      snapshot_prefix = self.parameters['snapshot_prefix']
+      snapshot_guids = '-'.join(exp.result.id for exp in export_results)
 
-    def get_input_table(name, value):
-      if isinstance(value, Placeholder):
-        path = export_results[value.value].parameters.path
-        return InputTable(lk, path, lk.get_prefixed_path(path).resolved, dataframe_retrievers)
+      def get_input_table(name, value):
+        if isinstance(value, Placeholder):
+          path = export_results[value.value].parameters.path
+          return InputTable(lk, path, lk.get_prefixed_path(path).resolved, dataframe_retrievers)
+        else:
+          return value
+
+      signature = inspect.signature(self.fn, follow_wrapped=False)
+      bound = map_args(signature, self.args, get_input_table)
+      # Run external function.
+      res = self.fn(*bound.args, **bound.kwargs)
+      # Import results.
+      if _is_spark_dataframe(res):
+        state = SparkDataFrameSender(self.lk).send(res)
+      elif _is_pandas_dataframe(res):
+        state = PandasDataFrameSender(self.lk).send(res)
+      elif isinstance(res, State):
+        state = res
+      elif isinstance(res, str):
+        assert '$' in res, f'The output path has must be a LynxKite prefixed path. Got: {res!r}'
+        state = lk.importParquetNow(filename=res)
+        # TODO: Delete imported file.
       else:
-        return value
+        raise Exception(
+            f'The return value from {self.fn.__name__}() is not a supported object. Got: {res!r}')
 
-    signature = inspect.signature(self.fn, follow_wrapped=False)
-    bound = map_args(signature, self.args, get_input_table)
-    # Run external function.
-    res = self.fn(*bound.args, **bound.kwargs)
-    # TODO: Delete exported files.
-    # Import results.
-    if _is_spark_dataframe(res):
-      state = SparkDataFrameSender(self.lk).send(res)
-    elif _is_pandas_dataframe(res):
-      state = PandasDataFrameSender(self.lk).send(res)
-    elif isinstance(res, State):
-      state = res
-    elif isinstance(res, str):
-      assert '$' in res, f'The output path has must be a LynxKite prefixed path. Got: {res!r}'
-      state = lk.importParquetNow(filename=res)
-      # TODO: Delete imported file.
-    else:
-      raise Exception(
-          f'The return value from {self.fn.__name__}() is not a supported object. Got: {res!r}')
+      state.save_snapshot(snapshot_prefix + snapshot_guids)
 
-    state.save_snapshot(snapshot_prefix + snapshot_guids)
-    for reader in dataframe_retrievers.values():
-      reader.cleanup()
+    finally:
+      for reader in dataframe_retrievers.values():
+        reader.cleanup()
 
 
 class CustomBox(Box):
