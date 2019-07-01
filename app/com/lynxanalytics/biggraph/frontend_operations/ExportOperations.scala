@@ -58,7 +58,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         dropTrailingWhiteSpace = dropTrailingWhiteSpace,
         version = params("version").toInt,
         saveMode = params("save_mode"),
-        forDownload = params("for_download") == "true")
+        forDownload = params("for_download") == "yes")
       op(op.t, table).result.exportResult
     }
   })
