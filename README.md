@@ -35,7 +35,7 @@ For various tools you will require Python and AWS CLI. To install dependencies p
 Before running the above command you may also need to install the following packages:
 
     sudo apt-get install libmysqlclient-dev
-    sudo apt-get install python3-dev
+    sudo apt-get install python3.x-dev --upgrade 
     
 and make sure setuptools is upgraded to the latest version (which includes compatible package `find_namespace_packages`) 
     
