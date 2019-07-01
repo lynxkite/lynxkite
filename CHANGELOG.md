@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Remote API bugfixes
+
 ### 2.8.1
 
  - For consistency, project tables such as `vertices` and `edges` can be accessed as
