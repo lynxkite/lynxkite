@@ -1254,8 +1254,7 @@ class SingleOutputAtomicBox(AtomicBox, State):
 
 
 class DataFrameSender:
-  '''
-    Class to send some dataframe to LynxKite in Parquet format.
+  '''Class to send some dataframe to LynxKite in Parquet format.
     We do this by saving the dataframe to a local Parquet file
     and then upload it to LynxKite.
   '''
@@ -1264,8 +1263,7 @@ class DataFrameSender:
     self.lk = lk
 
   def save_dataframe_to_local_file(self, df, tmpdir) -> str:
-    '''
-    Saves the dataframe as a single Parquet file in tmpdir
+    '''Saves the dataframe as a single Parquet file in tmpdir
     Returns the actual path of the binary that was written.
     '''
     raise NotImplementedError('Must be implemented in the subclass')
