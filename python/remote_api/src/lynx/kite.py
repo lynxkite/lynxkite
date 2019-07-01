@@ -1008,7 +1008,7 @@ def external(fn: Callable):
 
     def add_placeholder(name, value):
       if isinstance(value, State):
-        exports.append(value.exportToParquet())
+        exports.append(value.exportToParquet(forDownload="yes"))
         return Placeholder(len(exports) - 1)  # The corresponding input index.
       else:
         return value
