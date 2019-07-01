@@ -1040,22 +1040,23 @@ class DataFrameRetriever:
   parse it into a dataframe.
   '''
 
-  def __init__(self, lk):
+  def __init__(self, lk, lk_path, tmpfile_list):
     self.lk = lk
-    self.tmp_files = []
+    self.lk_path = lk_path
+    self.tmpfile_list = tmpfile_list
 
   def read_dataframe_from_local_file(self, path, *args):
     '''Subclasses should override this function: they should parse the local file path and
     return the appropriate (pandas, spark, etc.) dataframe.'''
     raise NotImplementedError()
 
-  def read(self, lk_path, *args):
+  def read(self, *args):
     import tempfile
     fd, tmppath = tempfile.mkstemp()
 
     try:
       with os.fdopen(fd, "wb") as tmp:
-        data = bytes(self.lk.download_file(lk_path))
+        data = bytes(self.lk.download_file(self.lk_path))
         tmp.write(data)
         tmp.flush()
         return self.read_dataframe_from_local_file(tmppath, *args)
@@ -1063,13 +1064,7 @@ class DataFrameRetriever:
       # We cannot just delete tmpfile here, because spark is lazy: it needs
       # the file until way after we return from here. We postpone deletion until
       # as late as possible.
-      self.tmp_files.append(tmppath)
-
-  def cleanup(self):
-    for tmppath in self.tmp_files:
-      if (os.path.exists(tmppath)):
-        os.remove(tmppath)
-
+      self.tmpfile_list.append(tmppath)
 
 class PandasDataFrameRetriever(DataFrameRetriever):
 
@@ -1086,19 +1081,19 @@ class SparkDataFrameRetriever(DataFrameRetriever):
 class InputTable:
   '''Input tables for external computations (``@external``) are translated to these objects.'''
 
-  def __init__(self, lk, lk_path, full_path, df_retrievers) -> None:
+  def __init__(self, lk, lk_path, full_path, tmpfile_list) -> None:
     self._lk = lk
     self.lk_path = lk_path
     self.full_path = full_path
-    self.df_retrievers = df_retrievers
+    self.tmpfile_list = tmpfile_list
 
   def pandas(self):
     '''Returns a Pandas DataFrame.'''
-    return self.df_retrievers['pandas'].read(self.lk_path)
+    return PandasDataFrameRetriever(self._lk, self.lk_path, self.tmpfile_list).read()
 
   def spark(self, spark):
     '''Takes a SparkSession as the argument and returns the table as a Spark DataFrame.'''
-    return self.df_retrievers['spark'].read(self.lk_path, spark)
+    return SparkDataFrameRetriever(self._lk, self.lk_path, self.tmpfile_list).read(spark)
 
   def lk(self) -> State:
     '''Returns a LynxKite State.'''
@@ -1267,10 +1262,9 @@ class DataFrameSender:
   def __init__(self, lk):
     self.lk = lk
 
-  def save_dataframe_to_local_file(self, df, target) -> str:
+  def save_dataframe_to_local_file(self, df, tmpdir) -> str:
     '''
-    Saves the dataframe as a single Parquet file in target.
-    This can be a directory or a single file.
+    Saves the dataframe as a single Parquet file in tmpdir
     Returns the actual path of the binary that was written.
     '''
     raise NotImplementedError('Must be implemented in the subclass')
@@ -1324,10 +1318,7 @@ class ExternalComputationBox(SingleOutputAtomicBox):
   def _trigger_in_ws(self, wsname: str, box: str, stack: List[str]) -> None:
     lk = self.lk
 
-    dataframe_retrievers = {
-        'spark': SparkDataFrameRetriever(self.lk),
-        'pandas': PandasDataFrameRetriever(self.lk)
-    }
+    tmpfile_list: List[str] = []
 
     try:
       # Find inputs.
@@ -1343,7 +1334,7 @@ class ExternalComputationBox(SingleOutputAtomicBox):
       def get_input_table(name, value):
         if isinstance(value, Placeholder):
           path = export_results[value.value].parameters.path
-          return InputTable(lk, path, lk.get_prefixed_path(path).resolved, dataframe_retrievers)
+          return InputTable(lk, path, lk.get_prefixed_path(path).resolved, tmpfile_list)
         else:
           return value
 
@@ -1369,8 +1360,10 @@ class ExternalComputationBox(SingleOutputAtomicBox):
       state.save_snapshot(snapshot_prefix + snapshot_guids)
 
     finally:
-      for reader in dataframe_retrievers.values():
-        reader.cleanup()
+      for tmppath in tmpfile_list:
+        if (os.path.exists(tmppath)):
+          print("Removing", tmppath)
+          os.remove(tmppath)
 
 
 class CustomBox(Box):
