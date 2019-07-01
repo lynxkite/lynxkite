@@ -1042,7 +1042,7 @@ class DataFrameRetriever:
 
   def __init__(self, lk):
     self.lk = lk
-    self.cleanup_functions = []
+    self.tmp_files = []
 
   def read_dataframe_from_local_file(self, path, *args):
     '''Subclasses should override this function: they should parse the local file path and
@@ -1052,10 +1052,6 @@ class DataFrameRetriever:
   def read(self, lk_path, *args):
     import tempfile
     fd, tmppath = tempfile.mkstemp()
-
-    def delete_tempfile():
-      if (os.path.exists(tmppath)):
-        os.remove(tmppath)
 
     try:
       with os.fdopen(fd, "wb") as tmp:
@@ -1067,11 +1063,12 @@ class DataFrameRetriever:
       # We cannot just delete tmpfile here, because spark is lazy: it needs
       # the file until way after we return from here. We postpone deletion until
       # as late as possible.
-      self.cleanup_functions.append(delete_tempfile)
+      self.tmp_files.append(tmppath)
 
   def cleanup(self):
-    for c in self.cleanup_functions:
-      c()
+    for tmppath in self.tmp_files:
+      if (os.path.exists(tmppath)):
+        os.remove(tmppath)
 
 
 class PandasDataFrameRetriever(DataFrameRetriever):
