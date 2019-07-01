@@ -1066,6 +1066,7 @@ class DataFrameRetriever:
       # as late as possible.
       self.tmpfile_list.append(tmppath)
 
+
 class PandasDataFrameRetriever(DataFrameRetriever):
 
   def read_dataframe_from_local_file(self, path, *args):
@@ -1362,7 +1363,6 @@ class ExternalComputationBox(SingleOutputAtomicBox):
     finally:
       for tmppath in tmpfile_list:
         if (os.path.exists(tmppath)):
-          print("Removing", tmppath)
           os.remove(tmppath)
 
 
