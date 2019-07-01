@@ -1034,12 +1034,12 @@ def external(fn: Callable):
   return wrapper
 
 
-
 class DataFrameRetriever:
   '''Base class for getting a Parquet file from LynxKite and reading it as some dataframe.
   We do this by downloading the Parquet file from LynxKite to a local file and then
   parse it into a dataframe.
   '''
+
   def __init__(self, lk):
     self.lk = lk
     self.cleanup_functions = []
@@ -1073,11 +1073,13 @@ class DataFrameRetriever:
     for c in self.cleanup_functions:
       c()
 
+
 class PandasDataFrameRetriever(DataFrameRetriever):
 
   def read_dataframe_from_local_file(self, path, *args):
     import pandas
     return pandas.read_parquet(path)
+
 
 class SparkDataFrameRetriever(DataFrameRetriever):
   def read_dataframe_from_local_file(self, path, spark):
@@ -1120,6 +1122,7 @@ def _is_pandas_dataframe(x):
   except ImportError:
     return False  # It cannot be a Pandas DataFrame if we don't even have Pandas.
   return isinstance(x, pd.DataFrame)
+
 
 class Box:
   '''Represents a box in a workspace segment.
@@ -1287,11 +1290,13 @@ class DataFrameSender:
     finally:
       shutil.rmtree(tmpdir, ignore_errors=True)
 
+
 class PandasDataFrameSender(DataFrameSender):
 
   def save_dataframe_to_local_file(self, df, path) -> str:
     df.to_parquet(path)
     return path
+
 
 class SparkDataFrameSender(DataFrameSender):
 
@@ -1303,6 +1308,7 @@ class SparkDataFrameSender(DataFrameSender):
     parquet_files = [f for f in os.listdir(target_dir) if f.startswith('part-')]
     assert len(parquet_files) == 1, f'Only one parquet file is expected here: {parquet_files}'
     return target_dir + '/' + parquet_files[0]
+
 
 class ExternalComputationBox(SingleOutputAtomicBox):
   '''
@@ -1322,8 +1328,8 @@ class ExternalComputationBox(SingleOutputAtomicBox):
     lk = self.lk
 
     dataframe_retrievers = {
-      'spark' : SparkDataFrameRetriever(self.lk),
-      'pandas' : PandasDataFrameRetriever(self.lk)
+        'spark': SparkDataFrameRetriever(self.lk),
+        'pandas': PandasDataFrameRetriever(self.lk)
     }
 
     try:
