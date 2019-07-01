@@ -86,6 +86,7 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
             params("snapshot_prefix") +
               (1 to i).map(j => exportResultInput(j.toString).gUID.toString).mkString("-")
           val snapshot = DirectoryEntry.fromName(snapshotName).asSnapshotFrame
+          println(s"$params")
           makeOutput(snapshot.getState.table)
         }
       })
