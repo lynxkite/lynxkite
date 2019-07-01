@@ -31,14 +31,18 @@ from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewT
 import requests
 from tempfile import NamedTemporaryFile
 import textwrap
-
+import shutil
 
 if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 6):
   raise Exception('At least Python version 3.6 is needed!')
 
 
+def random_filename() -> str:
+  return ''.join(random.choices('0123456789ABCDEF', k=16))
+
+
 def _random_ws_folder() -> str:
-  return 'tmp_workspaces/{}'.format(''.join(random.choices('0123456789ABCDEF', k=16)))
+  return 'tmp_workspaces/{}'.format(random_filename())
 
 
 def _normalize_path(path: str) -> str:
@@ -1030,22 +1034,67 @@ def external(fn: Callable):
   return wrapper
 
 
+class DataFrameRetriever:
+  '''Base class for getting a Parquet file from LynxKite and reading it as some dataframe.
+  We do this by downloading the Parquet file from LynxKite to a local file and then
+  parse it into a dataframe.
+  '''
+
+  def __init__(self, lk, lk_path, tmpfile_list):
+    self.lk = lk
+    self.lk_path = lk_path
+    self.tmpfile_list = tmpfile_list
+
+  def read_dataframe_from_local_file(self, path, *args):
+    '''Subclasses should override this function: they should parse the local file path and
+    return the appropriate (pandas, spark, etc.) dataframe.'''
+    raise NotImplementedError()
+
+  def read(self, *args):
+    import tempfile
+    fd, tmppath = tempfile.mkstemp()
+
+    try:
+      with os.fdopen(fd, "wb") as tmp:
+        data = bytes(self.lk.download_file(self.lk_path))
+        tmp.write(data)
+        tmp.flush()
+        return self.read_dataframe_from_local_file(tmppath, *args)
+    finally:
+      # We cannot just delete tmpfile here, because spark is lazy: it needs
+      # the file until way after we return from here. We postpone deletion until
+      # as late as possible.
+      self.tmpfile_list.append(tmppath)
+
+
+class PandasDataFrameRetriever(DataFrameRetriever):
+
+  def read_dataframe_from_local_file(self, path, *args):
+    import pandas
+    return pandas.read_parquet(path)
+
+
+class SparkDataFrameRetriever(DataFrameRetriever):
+  def read_dataframe_from_local_file(self, path, spark):
+    return spark.read.parquet(path)
+
+
 class InputTable:
   '''Input tables for external computations (``@external``) are translated to these objects.'''
 
-  def __init__(self, lk, lk_path, full_path) -> None:
+  def __init__(self, lk, lk_path, full_path, tmpfile_list) -> None:
     self._lk = lk
     self.lk_path = lk_path
     self.full_path = full_path
+    self.tmpfile_list = tmpfile_list
 
   def pandas(self):
     '''Returns a Pandas DataFrame.'''
-    import pandas as pd
-    return pd.read_parquet(self.full_path.replace('file:', ''))
+    return PandasDataFrameRetriever(self._lk, self.lk_path, self.tmpfile_list).read()
 
   def spark(self, spark):
     '''Takes a SparkSession as the argument and returns the table as a Spark DataFrame.'''
-    return spark.read.parquet(self.full_path)
+    return SparkDataFrameRetriever(self._lk, self.lk_path, self.tmpfile_list).read(spark)
 
   def lk(self) -> State:
     '''Returns a LynxKite State.'''
@@ -1060,24 +1109,12 @@ def _is_spark_dataframe(x):
   return isinstance(x, DataFrame)
 
 
-def _save_spark_dataframe(df, path):
-  df.write.parquet(path)
-
-
 def _is_pandas_dataframe(x):
   try:
     import pandas as pd
   except ImportError:
     return False  # It cannot be a Pandas DataFrame if we don't even have Pandas.
   return isinstance(x, pd.DataFrame)
-
-
-def _save_pandas_dataframe(df, path):
-  if path.startswith('file:'):
-    path = path.replace('file:', '')
-    os.makedirs(path, exist_ok=True)
-    path = path + '/part-0'
-  df.to_parquet(path)
 
 
 class Box:
@@ -1216,6 +1253,53 @@ class SingleOutputAtomicBox(AtomicBox, State):
     State.__init__(self, self, output_name)
 
 
+class DataFrameSender:
+  '''Class to send some dataframe to LynxKite in Parquet format.
+    We do this by saving the dataframe to a local Parquet file
+    and then upload it to LynxKite.
+  '''
+
+  def __init__(self, lk):
+    self.lk = lk
+
+  def save_dataframe_to_local_file(self, df, tmpdir) -> str:
+    '''Saves the dataframe as a single Parquet file in tmpdir
+    Returns the actual path of the binary that was written.
+    '''
+    raise NotImplementedError('Must be implemented in the subclass')
+
+  def send(self, df):
+    '''Sends the local Parquet file to LynxKite'''
+    try:
+      tmpdir = '/tmp/' + random_filename()
+      tmppath = tmpdir + '/parquet'
+      os.makedirs(tmpdir, exist_ok=True)
+      parquet_file = self.save_dataframe_to_local_file(df, tmppath)
+      with open(parquet_file, "rb") as fin:
+        return self.lk.uploadParquetNow(fin.read())
+    finally:
+      shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+class PandasDataFrameSender(DataFrameSender):
+
+  def save_dataframe_to_local_file(self, df, path) -> str:
+    df.to_parquet(path)
+    return path
+
+
+class SparkDataFrameSender(DataFrameSender):
+
+  def save_dataframe_to_local_file(self, df, target_dir) -> str:
+    p = df.rdd.getNumPartitions()
+    if p != 1:
+      df = df.repartition(1)
+    df.write.parquet(target_dir)
+    parquet_files = [f for f in os.listdir(target_dir) if f.startswith('part-')]
+    assert len(parquet_files) == 1, f'Only one parquet file is expected here: {parquet_files}'
+    return target_dir + '/' + parquet_files[0]
+
+
 class ExternalComputationBox(SingleOutputAtomicBox):
   '''
   A box that runs external computation when triggered. Use it via ``@external``.
@@ -1233,51 +1317,51 @@ class ExternalComputationBox(SingleOutputAtomicBox):
   def _trigger_in_ws(self, wsname: str, box: str, stack: List[str]) -> None:
     lk = self.lk
 
-    # Find inputs.
-    resp = lk.get_workspace(wsname, stack)
-    boxes = {b.id: b for b in resp.workspace.boxes}
-    input_tables = [getattr(boxes[box].inputs, str(i + 1)) for i in range(len(self.inputs))]
-    states = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in resp.outputs}
-    input_states = [states[t.boxId, t.id] for t in input_tables]
-    export_results = [lk.get_export_result(s) for s in input_states]
-    snapshot_prefix = self.parameters['snapshot_prefix']
-    snapshot_guids = '-'.join(exp.result.id for exp in export_results)
+    tmpfile_list: List[str] = []
 
-    def get_input_table(name, value):
-      if isinstance(value, Placeholder):
-        path = export_results[value.value].parameters.path
-        return InputTable(lk, path, lk.get_prefixed_path(path).resolved)
+    try:
+      # Find inputs.
+      resp = lk.get_workspace(wsname, stack)
+      boxes = {b.id: b for b in resp.workspace.boxes}
+      input_tables = [getattr(boxes[box].inputs, str(i + 1)) for i in range(len(self.inputs))]
+      states = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in resp.outputs}
+      input_states = [states[t.boxId, t.id] for t in input_tables]
+      export_results = [lk.get_export_result(s) for s in input_states]
+      snapshot_prefix = self.parameters['snapshot_prefix']
+      snapshot_guids = '-'.join(exp.result.id for exp in export_results)
+
+      def get_input_table(name, value):
+        if isinstance(value, Placeholder):
+          path = export_results[value.value].parameters.path
+          return InputTable(lk, path, lk.get_prefixed_path(path).resolved, tmpfile_list)
+        else:
+          return value
+
+      signature = inspect.signature(self.fn, follow_wrapped=False)
+      bound = map_args(signature, self.args, get_input_table)
+      # Run external function.
+      res = self.fn(*bound.args, **bound.kwargs)
+      # Import results.
+      if _is_spark_dataframe(res):
+        state = SparkDataFrameSender(self.lk).send(res)
+      elif _is_pandas_dataframe(res):
+        state = PandasDataFrameSender(self.lk).send(res)
+      elif isinstance(res, State):
+        state = res
+      elif isinstance(res, str):
+        assert '$' in res, f'The output path has must be a LynxKite prefixed path. Got: {res!r}'
+        state = lk.importParquetNow(filename=res)
+        # TODO: Delete imported file.
       else:
-        return value
+        raise Exception(
+            f'The return value from {self.fn.__name__}() is not a supported object. Got: {res!r}')
 
-    signature = inspect.signature(self.fn, follow_wrapped=False)
-    bound = map_args(signature, self.args, get_input_table)
-    # Run external function.
-    res = self.fn(*bound.args, **bound.kwargs)
-    # TODO: Delete exported files.
-    # Import results.
-    output_lk = f'DATA$/external-processing/output-{id(self.fn)}-{snapshot_guids}'
-    if _is_spark_dataframe(res):
-      output_path = lk.get_prefixed_path(output_lk).resolved
-      _save_spark_dataframe(res, output_path)
-      state = lk.importParquetNow(filename=output_lk)
-      # TODO: Delete imported file.
-    elif _is_pandas_dataframe(res):
-      output_path = lk.get_prefixed_path(output_lk).resolved
-      _save_pandas_dataframe(res, output_path)
-      state = lk.importParquetNow(filename=output_lk)
-      # TODO: Delete imported file.
-    elif isinstance(res, State):
-      state = res
-    elif isinstance(res, str):
-      assert '$' in res, f'The output path has must be a LynxKite prefixed path. Got: {res!r}'
-      state = lk.importParquetNow(filename=res)
-      # TODO: Delete imported file.
-    else:
-      raise Exception(
-          f'The return value from {self.fn.__name__}() is not a supported object. Got: {res!r}')
+      state.save_snapshot(snapshot_prefix + snapshot_guids)
 
-    state.save_snapshot(snapshot_prefix + snapshot_guids)
+    finally:
+      for tmppath in tmpfile_list:
+        if (os.path.exists(tmppath)):
+          os.remove(tmppath)
 
 
 class CustomBox(Box):
