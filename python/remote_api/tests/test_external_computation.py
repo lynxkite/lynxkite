@@ -45,8 +45,10 @@ class TestExternalComputation(unittest.TestCase):
     eg = lk.createExampleGraph().sql('select * from vertices')
     t = stats(eg)
     t.trigger()
-    self.assertTrue(t.sql('select * from input').df().equals(
-        pd.DataFrame({'gender': ['Female', 'Male'], 'count': [1.0, 3.0]})))
+    # Column order can be different
+    actual = t.sql('select * from input').df().sort_index(axis=1)
+    expected = pd.DataFrame({'gender': ['Female', 'Male'], 'count': [1.0, 3.0]}).sort_index(axis=1)
+    self.assertTrue(actual.equals(expected))
 
   def test_filename(self):
     lk = lynx.kite.LynxKite()
