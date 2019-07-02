@@ -3,6 +3,7 @@ import numpy as np
 import os
 import pandas as pd
 import unittest
+import shutil
 
 
 class TestExternalComputation(unittest.TestCase):
@@ -54,11 +55,14 @@ class TestExternalComputation(unittest.TestCase):
     def title_names(table):
       df = table.pandas()
       df['titled_name'] = np.where(df.gender == 'Female', 'Ms ' + df.name, 'Mr ' + df.name)
-      path_lk = 'DATA$/test/external-computation'
-      path = lk.get_prefixed_path(path_lk).resolved.replace('file:', '')
-      os.makedirs(path, exist_ok=True)
-      path = path + '/part-0'
-      df.to_parquet(path)
+      tmpdir = '/tmp/' + lynx.kite.random_filename()
+      tmppath = tmpdir + '/parquet'
+      os.makedirs(tmpdir, exist_ok=True)
+      df.to_parquet(tmppath)
+      with open(tmppath, 'rb') as f:
+        # We need to return a prefixed path, which can be accessed by LynxKite
+        path_lk = lk.upload(f.read())
+      shutil.rmtree(tmpdir, ignore_errors=True)
       return path_lk
 
     eg = lk.createExampleGraph().sql('select name, gender from vertices')
