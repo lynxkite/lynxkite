@@ -1,6 +1,6 @@
 #!/bin/bash +xue
 #
-# Copy the file lynx_versioning.py to beside all setup.py files
+# Create s symbolic link to lynx_versioning.py to beside all setup.py files
 # in our repository.
 
 ROOT=`git rev-parse --show-toplevel`
