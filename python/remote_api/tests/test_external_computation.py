@@ -3,6 +3,7 @@ import numpy as np
 import os
 import pandas as pd
 import unittest
+import tempfile
 
 
 class TestExternalComputation(unittest.TestCase):
@@ -149,3 +150,37 @@ class TestExternalComputation(unittest.TestCase):
             'Mr Bob',
             'Mr Isolated Joe',
         ]})))
+
+
+class TestTmpFilesHandling(unittest.TestCase):
+  # tempfile.tempdir returns the name of the firectory used for temporary files.
+  tmp_dir = tempfile.gettempdir()
+
+  def num_tmp_files(self):
+    return len(os.listdir(self.tmp_dir))
+
+  def test_tempfile_cleanup(self):
+    '''Checks that the temp files are cleaned up even if an error occurred during the
+    external computation.
+    '''
+    lk = lynx.kite.LynxKite()
+
+    @lynx.kite.external
+    def create_tmp_files(table, orig_num_tmp_files):
+      df = table.pandas()
+      # Make sure that we have really created a temp file for downloading table.
+      self.assertEqual(self.num_tmp_files(), orig_num_tmp_files + 1,
+                       'The external box should have created one temp file.')
+      raise FailedExternal("I'm throwing an error")
+      return df
+
+    eg = lk.createExampleGraph().sql('select name, gender from vertices')
+    orig_num_tmp_files = self.num_tmp_files()
+    t = create_tmp_files(eg, orig_num_tmp_files)
+    with self.assertRaises(FailedExternal):
+      t.trigger()
+    self.assertEqual(self.num_tmp_files(), orig_num_tmp_files)
+
+
+class FailedExternal(Exception):
+  pass

@@ -30,7 +30,6 @@ from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewT
                     TypeVar, Optional, Collection)
 import requests
 from tempfile import NamedTemporaryFile, TemporaryDirectory, mkstemp
-from contextlib import contextmanager
 import textwrap
 import shutil
 
