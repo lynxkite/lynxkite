@@ -3,12 +3,17 @@
 # Copy the file lynx_versioning.py to beside all setup.py files
 # in our repository.
 
-cd `git rev-parse --show-toplevel`
+ROOT=`git rev-parse --show-toplevel`
+cd $ROOT
 
 SRC=python/versioning/lynx_versioning.py
 git ls-files | grep "/setup[.]py" | while read f; do
-    DST=`dirname $f`/lynx_versioning.py
-    echo "# GENERATED FILE, DO NOT EDIT!!!" > $DST
-    cat $SRC >> $DST
+    DST=`dirname $f`
+    pushd $DST > /dev/null
+    if [[ ! -L lynx_versioning.py ]]; then
+        RELATIVE=`python3 -c "d='$DST'; n = len(d.split('/')); print ('../'*n + '$SRC')"`
+        ln -s  $RELATIVE lynx_versioning.py
+    fi
+    popd > /dev/null
 done
 
