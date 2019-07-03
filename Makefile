@@ -21,7 +21,7 @@ clean:
 .build/documentation-verified: $(shell $(find) app) .build/gulp-done
 	./tools/check_documentation.sh && touch $@
 $(pip): python_requirements.txt
-	AIRFLOW_GPL_UNIDECODE=yes pip3 install --user -r python_requirements.txt && touch $@
+	AIRFLOW_GPL_UNIDECODE=yes pip install --user -r python_requirements.txt && touch $@
 .build/backend-done: \
 	$(shell $(find) app project lib conf built-ins) tools/call_spark_submit.sh build.sbt README.md \
 	.build/gulp-done licenses
