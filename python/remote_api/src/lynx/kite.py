@@ -1034,7 +1034,7 @@ def external(fn: Callable):
   return wrapper
 
 
-class DownloadableLKTable:
+class _DownloadableLKTable:
   def __init__(self, lk, lk_path, tmp_file):
     self.lk = lk
     self.lk_path = lk_path
@@ -1055,12 +1055,12 @@ class DownloadableLKTable:
     self.tmp_file.close()
 
 
-class LKTableContext:
+class _LKTableContext:
   '''A context manager for downloading LK tables to temporary local files.
 
   Example usage:
 
-     with LKTableContext(lk) as ctx:
+     with _LKTableContext(lk) as ctx:
        t = ctx.table(lk_path)
        local_path = t.download()
        # Do some stuff with the local file while it is available.
@@ -1074,7 +1074,7 @@ class LKTableContext:
 
   def table(self, lk_path):
     f = NamedTemporaryFile()
-    table = DownloadableLKTable(self.lk, lk_path, f)
+    table = _DownloadableLKTable(self.lk, lk_path, f)
     self.lk_tables.append(table)
     return table
 
@@ -1089,7 +1089,7 @@ class LKTableContext:
 class InputTable:
   '''Input tables for external computations (``@external``) are translated to these objects.'''
 
-  def __init__(self, lk, lk_table: DownloadableLKTable) -> None:
+  def __init__(self, lk, lk_table: _DownloadableLKTable) -> None:
     self._lk = lk
     self.lk_table = lk_table
 
@@ -1323,7 +1323,7 @@ class ExternalComputationBox(SingleOutputAtomicBox):
 
     tmpfile_list: List[str] = []
 
-    with LKTableContext(lk) as ctx:
+    with _LKTableContext(lk) as ctx:
       # Find inputs.
       resp = lk.get_workspace(wsname, stack)
       boxes = {b.id: b for b in resp.workspace.boxes}
