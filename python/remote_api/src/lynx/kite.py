@@ -30,6 +30,7 @@ from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewT
                     TypeVar, Optional, Collection)
 import requests
 from tempfile import NamedTemporaryFile, TemporaryDirectory, mkstemp
+from contextlib import contextmanager
 import textwrap
 import shutil
 
@@ -1034,69 +1035,79 @@ def external(fn: Callable):
   return wrapper
 
 
-class DataFrameRetriever:
-  '''Base class for getting a Parquet file from LynxKite and reading it as some dataframe.
-  We do this by downloading the Parquet file from LynxKite to a local file and then
-  parse it into a dataframe.
-  '''
-
-  def __init__(self, lk, lk_path, tmpfile_list):
+class DownloadableLKTable:
+  def __init__(self, lk, lk_path, tmp_file):
     self.lk = lk
     self.lk_path = lk_path
-    self.tmpfile_list = tmpfile_list
+    self.tmp_file = tmp_file
+    self._is_downloaded = False
 
-  def read_dataframe_from_local_file(self, path, *args):
-    '''Subclasses should override this function: they should parse the local file path and
-    return the appropriate (pandas, spark, etc.) dataframe.'''
-    raise NotImplementedError()
+  def download(self):
+    if not self._is_downloaded:
+      self._download()
+    return self.tmp_file.name
 
-  def read(self, *args):
-    fd, tmppath = mkstemp()
+  def _download(self):
+    data = bytes(self.lk.download_file(self.lk_path))
+    self.tmp_file.write(data)
+    self.tmp_file.flush()
 
-    try:
-      with os.fdopen(fd, "wb") as tmp:
-        data = bytes(self.lk.download_file(self.lk_path))
-        tmp.write(data)
-        tmp.flush()
-        return self.read_dataframe_from_local_file(tmppath, *args)
-    finally:
-      # We cannot just delete tmpfile here, because spark is lazy: it needs
-      # the file until way after we return from here. We postpone deletion until
-      # as late as possible.
-      self.tmpfile_list.append(tmppath)
+  def close(self):
+    self.tmp_file.close()
 
 
-class PandasDataFrameRetriever(DataFrameRetriever):
+class LKTableContext:
+  '''A context manager for downloading LK tables to temporary local files.
 
-  def read_dataframe_from_local_file(self, path, *args):
-    import pandas
-    return pandas.read_parquet(path)
+  Example usage:
 
+     with LKTableContext(lk) as ctx:
+       t = ctx.table(lk_path)
+       local_path = t.download()
+       # Do some stuff with the local file while it is available.
+       ...
+     # After exiting the context the local file is closed and deleted.
+  '''
 
-class SparkDataFrameRetriever(DataFrameRetriever):
-  def read_dataframe_from_local_file(self, path, spark):
-    return spark.read.parquet(path)
+  def __init__(self, lk):
+    self.lk = lk
+    self.lk_tables = []
+
+  def table(self, lk_path):
+    f = NamedTemporaryFile()
+    table = DownloadableLKTable(self.lk, lk_path, f)
+    self.lk_tables.append(table)
+    return table
+
+  def __enter__(self):
+    return self
+
+  def __exit__(self, type, value, traceback):
+    for t in self.lk_tables:
+      t.close()
 
 
 class InputTable:
   '''Input tables for external computations (``@external``) are translated to these objects.'''
 
-  def __init__(self, lk, lk_path, tmpfile_list) -> None:
+  def __init__(self, lk, lk_table: DownloadableLKTable) -> None:
     self._lk = lk
-    self.lk_path = lk_path
-    self.tmpfile_list = tmpfile_list
+    self.lk_table = lk_table
 
   def pandas(self):
     '''Returns a Pandas DataFrame.'''
-    return PandasDataFrameRetriever(self._lk, self.lk_path, self.tmpfile_list).read()
+    import pandas
+    downloaded = self.lk_table.download()
+    return pandas.read_parquet(downloaded)
 
   def spark(self, spark):
     '''Takes a SparkSession as the argument and returns the table as a Spark DataFrame.'''
-    return SparkDataFrameRetriever(self._lk, self.lk_path, self.tmpfile_list).read(spark)
+    downloaded = self.lk_table.download()
+    return spark.read.parquet(downloaded)
 
   def lk(self) -> State:
     '''Returns a LynxKite State.'''
-    return self._lk.importParquetNow(filename=self.lk_path)
+    return self._lk.importParquetNow(filename=self.lk_table.lk_path)
 
 
 def _is_spark_dataframe(x):
@@ -1313,7 +1324,7 @@ class ExternalComputationBox(SingleOutputAtomicBox):
 
     tmpfile_list: List[str] = []
 
-    try:
+    with LKTableContext(lk) as ctx:
       # Find inputs.
       resp = lk.get_workspace(wsname, stack)
       boxes = {b.id: b for b in resp.workspace.boxes}
@@ -1327,7 +1338,7 @@ class ExternalComputationBox(SingleOutputAtomicBox):
       def get_input_table(name, value):
         if isinstance(value, Placeholder):
           path = export_results[value.value].parameters.path
-          return InputTable(lk, path, tmpfile_list)
+          return InputTable(lk, ctx.table(path))
         else:
           return value
 
@@ -1351,11 +1362,6 @@ class ExternalComputationBox(SingleOutputAtomicBox):
             f'The return value from {self.fn.__name__}() is not a supported object. Got: {res!r}')
 
       state.save_snapshot(snapshot_prefix + snapshot_guids)
-
-    finally:
-      for tmppath in tmpfile_list:
-        if (os.path.exists(tmppath)):
-          os.remove(tmppath)
 
 
 class CustomBox(Box):
