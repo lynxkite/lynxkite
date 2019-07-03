@@ -29,7 +29,7 @@ from collections import deque, defaultdict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar, Optional, Collection)
 import requests
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory, mkstemp
 import textwrap
 import shutil
 
@@ -1051,8 +1051,7 @@ class DataFrameRetriever:
     raise NotImplementedError()
 
   def read(self, *args):
-    import tempfile
-    fd, tmppath = tempfile.mkstemp()
+    fd, tmppath = mkstemp()
 
     try:
       with os.fdopen(fd, "wb") as tmp:
@@ -1082,10 +1081,9 @@ class SparkDataFrameRetriever(DataFrameRetriever):
 class InputTable:
   '''Input tables for external computations (``@external``) are translated to these objects.'''
 
-  def __init__(self, lk, lk_path, full_path, tmpfile_list) -> None:
+  def __init__(self, lk, lk_path, tmpfile_list) -> None:
     self._lk = lk
     self.lk_path = lk_path
-    self.full_path = full_path
     self.tmpfile_list = tmpfile_list
 
   def pandas(self):
@@ -1262,7 +1260,7 @@ class DataFrameSender:
   def __init__(self, lk):
     self.lk = lk
 
-  def save_dataframe_to_local_file(self, df, tmpdir) -> str:
+  def save_dataframe_to_local_file(self, df, tmp_dir) -> str:
     '''Saves the dataframe as a single Parquet file in tmpdir
     Returns the actual path of the binary that was written.
     '''
@@ -1270,15 +1268,11 @@ class DataFrameSender:
 
   def send(self, df):
     '''Sends the local Parquet file to LynxKite'''
-    try:
-      tmpdir = '/tmp/' + random_filename()
-      tmppath = tmpdir + '/parquet'
-      os.makedirs(tmpdir, exist_ok=True)
-      parquet_file = self.save_dataframe_to_local_file(df, tmppath)
+    with TemporaryDirectory() as tmp_dir:
+      tmp_path = tmp_dir + '/parquet'
+      parquet_file = self.save_dataframe_to_local_file(df, tmp_path)
       with open(parquet_file, "rb") as fin:
         return self.lk.uploadParquetNow(fin.read())
-    finally:
-      shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 class PandasDataFrameSender(DataFrameSender):
@@ -1333,7 +1327,7 @@ class ExternalComputationBox(SingleOutputAtomicBox):
       def get_input_table(name, value):
         if isinstance(value, Placeholder):
           path = export_results[value.value].parameters.path
-          return InputTable(lk, path, lk.get_prefixed_path(path).resolved, tmpfile_list)
+          return InputTable(lk, path, tmpfile_list)
         else:
           return value
 
