@@ -153,7 +153,7 @@ class TestExternalComputation(unittest.TestCase):
 
 
 class TestTmpFilesHandling(unittest.TestCase):
-  # tempfile.tempdir returns the name of the firectory used for temporary files.
+  # tempfile.gettempdir returns the name of the directory used for temporary files.
   tmp_dir = tempfile.gettempdir()
 
   def num_tmp_files(self):
