@@ -28,6 +28,17 @@ class TestExternalComputation(unittest.TestCase):
             'Mr Isolated Joe',
         ]})))
 
+  def test_big_dataframes(self):
+    lk = lynx.kite.LynxKite()
+
+    @lynx.kite.external
+    def receive_and_send(table):
+      return table.pandas()
+
+    v = lk.createVertices(size=200100).sql('select * from `vertices`')
+    t = receive_and_send(v)
+    t.trigger()
+
   def test_pyspark(self):
     lk = lynx.kite.LynxKite()
     try:
