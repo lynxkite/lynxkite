@@ -3,7 +3,7 @@ import numpy as np
 import os
 import pandas as pd
 import unittest
-import shutil
+import tempfile
 
 
 class TestExternalComputation(unittest.TestCase):
@@ -57,14 +57,9 @@ class TestExternalComputation(unittest.TestCase):
     def title_names(table):
       df = table.pandas()
       df['titled_name'] = np.where(df.gender == 'Female', 'Ms ' + df.name, 'Mr ' + df.name)
-      tmpdir = '/tmp/' + lynx.kite.random_filename()
-      tmppath = tmpdir + '/parquet'
-      os.makedirs(tmpdir, exist_ok=True)
-      df.to_parquet(tmppath)
-      with open(tmppath, 'rb') as f:
-        # We need to return a prefixed path, which can be accessed by LynxKite
-        path_lk = lk.upload(f.read())
-      shutil.rmtree(tmpdir, ignore_errors=True)
+      with tempfile.NamedTemporaryFile() as f:
+        df.to_parquet(f.name)
+        path_lk = lk.upload(f.file.read())
       return path_lk
 
     eg = lk.createExampleGraph().sql('select name, gender from vertices')
