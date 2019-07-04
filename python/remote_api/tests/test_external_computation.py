@@ -1,6 +1,7 @@
 import lynx.kite
 import numpy as np
 import os
+import shutil
 import pandas as pd
 import unittest
 import tempfile
@@ -153,8 +154,12 @@ class TestExternalComputation(unittest.TestCase):
 
 
 class TestTmpFilesHandling(unittest.TestCase):
-  # tempfile.gettempdir returns the name of the directory used for temporary files.
-  tmp_dir = tempfile.gettempdir()
+  # On Jenkins all jobs are using the same /tmp folder so we are setting the tmp dir used by the
+  # tempfile module to be a separate folder.
+  tmp_dir = tempfile.gettempdir() + '/external_tests'
+  shutil.rmtree(tmp_dir, ignore_errors=True)
+  os.makedirs(tmp_dir)
+  tempfile.tempdir = tmp_dir
 
   def num_tmp_files(self):
     return len(os.listdir(self.tmp_dir))
