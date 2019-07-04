@@ -1,6 +1,7 @@
 import lynx.kite
 import numpy as np
 import os
+import shutil
 import pandas as pd
 import unittest
 import tempfile
@@ -161,3 +162,40 @@ class TestExternalComputation(unittest.TestCase):
             'Mr Bob',
             'Mr Isolated Joe',
         ]})))
+
+
+class TestTmpFilesHandling(unittest.TestCase):
+  # On Jenkins all jobs are using the same /tmp folder so we are setting the tmp dir used by the
+  # tempfile module to be a separate folder.
+  tmp_dir = tempfile.gettempdir() + '/external_tests'
+  shutil.rmtree(tmp_dir, ignore_errors=True)
+  os.makedirs(tmp_dir)
+  tempfile.tempdir = tmp_dir
+
+  def num_tmp_files(self):
+    return len(os.listdir(self.tmp_dir))
+
+  def test_tempfile_cleanup(self):
+    '''Checks that the temp files are cleaned up even if an error occurred during the
+    external computation.
+    '''
+    lk = lynx.kite.LynxKite()
+
+    @lynx.kite.external
+    def create_tmp_files(table):
+      df = table.pandas()
+      # Make sure that we have really created a temp file for downloading table.
+      self.assertEqual(self.num_tmp_files(), 1,
+                       'The external box should have created one temp file.')
+      raise FailedExternal("I'm throwing an error")
+      return df
+
+    eg = lk.createExampleGraph().sql('select name, gender from vertices')
+    t = create_tmp_files(eg)
+    with self.assertRaises(FailedExternal):
+      t.trigger()
+    self.assertEqual(self.num_tmp_files(), 0)
+
+
+class FailedExternal(Exception):
+  pass
