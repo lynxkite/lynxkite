@@ -23,30 +23,36 @@ sqlContext = SQLContext(sc)
 
 def _subtract_one_month(date):
     '''
-    E.g. '2019-07-02' -> '2019-06-02'
+    E.g. '2019-07-02' -> '2019-06-02'.
     '''
     curr_month_date = datetime.strptime(date, '%Y-%m-%d')
     prev_month_date = curr_month_date - relativedelta(months=1)
     return prev_month_date.strftime('%Y-%m-%d')
 
-
-def _get_json(start_date, end_date):
+def _get_rates_from_exchangeratesapi(start_date, end_date):
     '''
-    Given a start and end date, returns the json response from exchangeratesapi.io.
-    Base currency is EUR. Date format is a string such as '2019-07-01'
+    Given a start and end date, returns the rates data from exchangeratesapi.io.
+    Base currency is EUR.
+    Inputted date format is '%Y-%m-%d'.
     '''
-    json_response = requests.get(
-                'https://api.exchangeratesapi.io/history?start_at=' +
-                start_date +
-                '&end_at=' +
-                end_date +
-                '&base=' +
-                'EUR'
-                ).json()
+    response = requests.get(f'https://api.exchangeratesapi.io/history?start_at={start_date}&end_at={end_date}&base=EUR')
+    rates = response.json()['rates']
 
-    return json_response
+    return rates
 
-def check_data_availability(**kwargs):
+def _first_and_last_workdays_of_month(date):
+    '''
+    Returns a tuple of the first and last business days of the inputted month.
+    Inputted date format is '%Y-%m-%d'.
+    '''
+    first_day_of_month = f'{date[:-2]}01' # E.g. 2019-07-04 -> 2019-07-01
+
+    first_workday = pd.date_range(first_day_of_month, periods=1, freq='BMS')[0].strftime('%Y-%m-%d')
+    last_workday = pd.date_range(first_day_of_month, periods=1, freq='BM')[0].strftime('%Y-%m-%d')
+
+    return first_workday, last_workday
+
+def check_data_availability(**context):
     '''
     If data is available for the last business day of the previous month,
     then we can assume data is available for every desired day of that month.
@@ -54,24 +60,17 @@ def check_data_availability(**kwargs):
     If available, returns True.
     If unavailable, returns False.
     '''
-    date = kwargs.get('templates_dict').get('date') # Get date stamp from templates_dict
+    date = context.get('templates_dict').get('date') # Get date stamp from templates_dict
 
     date = _subtract_one_month(date) # Go back a month
 
-    date_as_datetime = datetime.strptime(date, '%Y-%m-%d')
+    _, last_business_day = _first_and_last_workdays_of_month(date)
 
-    # Find the first and last days of the previous month (possibly non-business days)
-    start_date = date_as_datetime.replace(day=1)
-    end_day = monthrange(date_as_datetime.year, date_as_datetime.month)[1] # Last day of the month
-    end_date = date_as_datetime.replace(day=end_day)
+    last_business_day_rates = _get_rates_from_exchangeratesapi(start_date=last_business_day, end_date=last_business_day)
 
-    last_business_day = pd.date_range(start_date, end_date, freq='BM')[0].strftime('%Y-%m-%d')
+    return bool(last_business_day_rates) # False if empty
 
-    last_business_day_json = _get_json(start_date=last_business_day, end_date=last_business_day)
-
-    return bool(last_business_day_json['rates']) # False if empty
-
-def make_month_df(**kwargs):
+def make_month_df(**context):
     '''
     Returns a Spark dataframe of FX data for the full month of
     the given date.
@@ -79,19 +78,16 @@ def make_month_df(**kwargs):
     [day, currency1_to_eur_rate, eur_to_currency1_rate, ...,
     currencyn_to_eur_rate,eur_to_currencyn_rate]
     '''
-    date = kwargs.get('templates_dict').get('date') # Get date stamp from templates_dict
+
+    date = context['ds'] # Get date stamp from context
 
     date = _subtract_one_month(date) # Go back a month
-    date_as_datetime = datetime.strptime(date, '%Y-%m-%d')
 
-    # Find the first and last days of the month
-    start_date = date_as_datetime.replace(day=1).strftime('%Y-%m-%d')
-    end_day = monthrange(date_as_datetime.year, date_as_datetime.month)[1]
-    end_date = date_as_datetime.replace(day=end_day).strftime('%Y-%m-%d')
+    # Find the first and last workdays of the month
+    start_date, end_date = _first_and_last_workdays_of_month(date)
 
-    full_month_json = _get_json(start_date=start_date, end_date=end_date) # API call
-
-    full_month_rates = full_month_json['rates']
+    # Get the dictionary of exchange rates
+    full_month_rates = _get_rates_from_exchangeratesapi(start_date=start_date, end_date=end_date)
 
     # Create a Spark dataframe from the full_month_rates dictionary
     row_list = [{**{'day': datetime.strptime(date, '%Y-%m-%d').day}, **rates} for date, rates in full_month_rates.items()]
@@ -99,21 +95,19 @@ def make_month_df(**kwargs):
     df = sqlContext.read.json(row_json)
 
     # Rename columns
-    column_name_mapping = {'day': 'day', **{curr: 'eur_to_' + curr.lower() + '_rate' for curr in df.columns if curr!='day'}}
-    new_names = [column_name_mapping[col] for col in df.columns]
+    column_name_mapping = {'day': 'day', **{curr: f'eur_to_{curr.lower()}_rate' for curr in df.columns if curr!='day'}}
+    new_names = [column_name_mapping[colname] for colname in df.columns]
     df = df.toDF(*new_names)
 
     # Rearrange 'day' to first column and sort by 'day'
-    df = df.select(['day']+[col for col in df.columns if col!='day']).orderBy('day')
-
-    def _col_partner(colname):
-        '''E.g. 'usd_to_eur_rate' -> 'eur_to_usd_rate'''
-        word_list = colname.split('_')
-        return word_list[2] + '_to_' + word_list[0] + '_rate'
+    df = df.select(['day']+[colname for colname in df.columns if colname!='day']).orderBy('day')
 
     # Add columns for inverted currency pair rates
     for colname in df.columns[1:]:
-        df = df.withColumn(_col_partner(colname=colname), F.round(1/(F.col(colname)), 4))
+        words_in_colname = colname.split('_')
+        inverted_colname = f'{words_in_colname[2]}_to_{words_in_colname[0]}_rate' # E.g. 'usd_to_eur_rate' -> 'eur_to_usd_rate
+
+        df = df.withColumn(inverted_colname, F.round(1/(F.col(colname)), 4))
 
     base_pair_cols = [colname for colname in df.columns if colname[:3]=='eur']
     inverted_pair_cols = [colname for colname in df.columns if colname[7:10]=='eur']
@@ -123,41 +117,35 @@ def make_month_df(**kwargs):
 
     return month_df
 
-def make_min_max_parquet(**kwargs):
+def make_min_max_parquet(**context):
     '''
     Creates and saves a parquet file containing the timestamp of the month
     and the lowest and highest 'to EUR' rate in that month for each currency.
     '''
-    date = kwargs.get('templates_dict').get('date') # Get date stamp from templates_dict
-    year_month = date[:-3] # We just want the month and year
+    date = context['ds'] # Get date stamp from context
+    year_month = date[:-3] # We just need the month and year
 
     # month_df is passed in by make_month_df()
-    month_df = kwargs['task_instance'].xcom_pull(task_ids='make_month_df_operator')
-
+    month_df = context['task_instance'].xcom_pull(task_ids='make_month_df_operator')
 
     colnames = [colname for colname in month_df.columns if colname[7:10]=='eur']
 
-    # Find the minimum and maximum of each column
-    summary_df = month_df.select(colnames).describe().where(F.col('summary').isin(['min','max']))
-    min_row, max_row = summary_df.select(summary_df.columns[1:]).take(2)
+    # Compute min and max of each column in colnames, and join them into one dataframe
+    min_df = month_df.agg({colname: 'min' for colname in colnames})
+    max_df = month_df.agg({colname: 'max' for colname in colnames})
+    min_max_df = min_df.crossJoin(max_df)
 
-    # Make the rows into dictionaries to turn them into columns in a Spark dataframe
-    min_row_dict = {key+'_min': val for key, val in min_row.asDict().items()}
-    max_row_dict = {key+'_max': val for key, val in max_row.asDict().items()}
-    timestamp_dict = {'timestamp': year_month}
+    # Add a 'timestamp' column to min_max_df, indicating the year and month
+    timestamp_df = sqlContext.createDataFrame([[year_month]],['timestamp'])
+    min_max_df = min_max_df.crossJoin(timestamp_df)
 
-    row_list = [{**timestamp_dict, **min_row_dict, **max_row_dict}]
-    json = sc.parallelize(row_list)
-    min_max_df = sqlContext.read.json(json)
-
-    # Move the timestamp column to be on the left
-    min_max_df = min_max_df.select(['timestamp']+[col for col in min_max_df.columns if col!='timestamp'])
+    # Put timestamp column on the left
+    min_max_df = min_max_df.select(['timestamp']+[colname for colname in min_max_df.columns if colname!='timestamp'])
 
     # Save to a parquet file
-    filename = 'DATA/min_max_prices_'+year_month+'.parquet'
+    filename = f'DATA/min_max_prices_{year_month}.parquet'
     min_max_df.write.mode('overwrite').parquet(filename)
-    print('Successfully saved file as ' + filename)
-    return None
+    print(f'Successfully saved file as {filename}')
 
 def _max_profit_from_col(year_month, month_df, colname):
     '''
@@ -168,7 +156,7 @@ def _max_profit_from_col(year_month, month_df, colname):
     days_as_list = month_df.select('day').rdd.map(lambda row : row[0]).collect()
     col_as_list = month_df.select(colname).rdd.map(lambda row : row[0]).collect()
 
-    # Find the days to buy and sell on which yield the largets profit
+    # Find the days to buy and sell on which yield the largest profit
     day_price_tups = list(zip(days_as_list, col_as_list))
     profit_dict = {(buy[0], sell[0]): sell[1]-buy[1] for buy, sell in it.combinations(day_price_tups, 2)}
 
@@ -185,17 +173,17 @@ def _max_profit_from_col(year_month, month_df, colname):
 
     return {'currency': colname[7:10], 'buy_date': buy_date, 'sell_date': sell_date}
 
-def make_max_profit_parquet(month_df, **kwargs):
+def make_max_profit_parquet(**context):
     '''
     Creates and saves a parquet file containing the best dates to buy and sell
     currencies in order to maximize profit for that month.
     Calls _max_profit_from_col().
     '''
-    date = kwargs.get('templates_dict').get('date')
+    date = context['ds'] # Get date stamp from context
     year_month = date[:-3] # We just want the month and year
 
     # month_df is passed in by make_month_df(), fetch using xcom_pull
-    month_df = kwargs['task_instance'].xcom_pull(task_ids='make_month_df_operator')
+    month_df = context['task_instance'].xcom_pull(task_ids='make_month_df_operator')
 
     base_pair_cols = [colname for colname in month_df.columns if colname[:3]=='eur']
 
@@ -210,7 +198,6 @@ def make_max_profit_parquet(month_df, **kwargs):
     max_profit_df = max_profit_df.select(['currency']+[col for col in max_profit_df.columns if col!='currency'])
 
     # Save to a parquet file
-    filename = 'DATA/max_profit_'+year_month+'.parquet'
+    filename = f'DATA/max_profit_{year_month}.parquet'
     max_profit_df.write.mode('overwrite').parquet(filename)
-    print('Successfully saved file as ' + filename)
-    return None
+    print(f'Successfully saved file as {filename}')

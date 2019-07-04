@@ -37,21 +37,18 @@ make_month_df_operator = PythonOperator(
     task_id='make_month_df',
     python_callable=fx.make_month_df,
     provide_context=True,
-    templates_dict={'date': '{{ ds }}'},
     dag=dag)
 
 make_min_max_parquet_operator = PythonOperator(
     task_id='make_min_max_parquet',
     python_callable=fx.make_min_max_parquet,
     provide_context=True,
-    templates_dict={'date': '{{ ds }}'},
     dag=dag)
 
 make_max_profit_parquet_operator = PythonOperator(
     task_id='make_max_profit_parquet',
     python_callable=fx.make_max_profit_parquet,
     provide_context=True,
-    templates_dict={'date': '{{ ds }}'},
     dag=dag)
 
 wait_for_data_availability_sensor >> make_month_df_operator
