@@ -171,20 +171,19 @@ class TestTmpFilesHandling(unittest.TestCase):
     lk = lynx.kite.LynxKite()
 
     @lynx.kite.external
-    def create_tmp_files(table, orig_num_tmp_files):
+    def create_tmp_files(table):
       df = table.pandas()
       # Make sure that we have really created a temp file for downloading table.
-      self.assertEqual(self.num_tmp_files(), orig_num_tmp_files + 1,
+      self.assertEqual(self.num_tmp_files(), 1,
                        'The external box should have created one temp file.')
       raise FailedExternal("I'm throwing an error")
       return df
 
     eg = lk.createExampleGraph().sql('select name, gender from vertices')
-    orig_num_tmp_files = self.num_tmp_files()
-    t = create_tmp_files(eg, orig_num_tmp_files)
+    t = create_tmp_files(eg)
     with self.assertRaises(FailedExternal):
       t.trigger()
-    self.assertEqual(self.num_tmp_files(), orig_num_tmp_files)
+    self.assertEqual(self.num_tmp_files(), 0)
 
 
 class FailedExternal(Exception):
