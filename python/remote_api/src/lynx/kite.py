@@ -1108,9 +1108,9 @@ class InputTable:
     '''Returns a LynxKite State.'''
     return self._lk.importParquetNow(filename=self.lk_table.lk_path)
 
-  def save_as_csv(self, local_path) -> None:
+  def save_as_csv(self, local_path, header=True) -> None:
     '''Converts the input table into a local CSV file.'''
-    self.pandas().to_csv(local_path, index=False)
+    self.pandas().to_csv(local_path, header=header, index=False)
 
 
 def _is_spark_dataframe(x):
