@@ -163,6 +163,22 @@ class TestExternalComputation(unittest.TestCase):
             'Mr Isolated Joe',
         ]})))
 
+  def test_save_as_csv(self):
+    lk = lynx.kite.LynxKite()
+
+    @lynx.kite.external
+    def females(table):
+      local_path = '/tmp/external-box-csv-test.csv'
+      table.save_as_csv(local_path)
+      df = pd.read_csv(local_path)
+      return df[df['gender'] == 'Female']['name'].to_frame()
+
+    eg = lk.createExampleGraph().sql('select name, gender from vertices')
+    t = females(eg)
+    t.trigger()
+    result = t.sql('select * from input').get_table_data().data[0][0].string
+    self.assertEqual(result, 'Eve')
+
 
 class TestTmpFilesHandling(unittest.TestCase):
   # On Jenkins all jobs are using the same /tmp folder so we are setting the tmp dir used by the
