@@ -165,19 +165,30 @@ class TestExternalComputation(unittest.TestCase):
 
   def test_save_as_csv(self):
     lk = lynx.kite.LynxKite()
+    local_path = '/tmp/external-box-csv-test.csv'
+    local_path_no_header = '/tmp/external-box-csv-test-2.csv'
 
     @lynx.kite.external
     def females(table):
-      local_path = '/tmp/external-box-csv-test.csv'
       table.save_as_csv(local_path)
       df = pd.read_csv(local_path)
       return df[df['gender'] == 'Female']['name'].to_frame()
+
+    @lynx.kite.external
+    def no_header(table):
+      table.save_as_csv(local_path_no_header, header=False)
+      return table.pandas()
 
     eg = lk.createExampleGraph().sql('select name, gender from vertices')
     t = females(eg)
     t.trigger()
     result = t.sql('select * from input').get_table_data().data[0][0].string
     self.assertEqual(result, 'Eve')
+    t2 = no_header(eg)
+    t2.trigger()
+    expected = 'Adam,Male\nEve,Female\nBob,Male\nIsolated Joe,Male\n'
+    with open(local_path_no_header, 'r') as f:
+      self.assertEqual(f.read(), expected)
 
 
 class TestTmpFilesHandling(unittest.TestCase):
