@@ -52,7 +52,7 @@ def _first_and_last_workdays_of_month(date):
 
     return first_workday, last_workday
 
-def check_data_availability(**context):
+def check_data_availability(**kwargs):
     '''
     If data is available for the last business day of the previous month,
     then we can assume data is available for every desired day of that month.
@@ -60,17 +60,16 @@ def check_data_availability(**context):
     If available, returns True.
     If unavailable, returns False.
     '''
-    date = context.get('templates_dict').get('date') # Get date stamp from templates_dict
-
-    date = _subtract_one_month(date) # Go back a month
+    date = kwargs['ds']
+    date = _subtract_one_month(date)
 
     _, last_business_day = _first_and_last_workdays_of_month(date)
 
     last_business_day_rates = _get_rates_from_exchangeratesapi(start_date=last_business_day, end_date=last_business_day)
 
-    return bool(last_business_day_rates) # False if empty
+    return bool(last_business_day_rates)
 
-def make_month_df(**context):
+def make_month_df(**kwargs):
     '''
     Returns a Spark dataframe of FX data for the full month of
     the given date.
@@ -78,10 +77,9 @@ def make_month_df(**context):
     [day, currency1_to_eur_rate, eur_to_currency1_rate, ...,
     currencyn_to_eur_rate,eur_to_currencyn_rate]
     '''
-
-    date = context['ds'] # Get date stamp from context
-
-    date = _subtract_one_month(date) # Go back a month
+    date = kwargs['ds'] # Get date stamp from context
+    date = _subtract_one_month(date)
+    year_month = date[:-3]
 
     # Find the first and last workdays of the month
     start_date, end_date = _first_and_last_workdays_of_month(date)
@@ -106,7 +104,6 @@ def make_month_df(**context):
     for colname in df.columns[1:]:
         words_in_colname = colname.split('_')
         inverted_colname = f'{words_in_colname[2]}_to_{words_in_colname[0]}_rate' # E.g. 'usd_to_eur_rate' -> 'eur_to_usd_rate
-
         df = df.withColumn(inverted_colname, F.round(1/(F.col(colname)), 4))
 
     base_pair_cols = [colname for colname in df.columns if colname[:3]=='eur']
@@ -115,18 +112,20 @@ def make_month_df(**context):
     # Rearrange so that inverted pairs precede their counterparts
     month_df = df.select(['day']+[item for sublist in zip(inverted_pair_cols, base_pair_cols) for item in sublist])
 
-    return month_df
+    # Save to a parquet file
+    filename = f'monthly_data/{year_month}/month_df.parquet'
+    month_df.write.mode('overwrite').parquet(filename)
 
-def make_min_max_parquet(**context):
+def make_min_max_parquet(**kwargs):
     '''
     Creates and saves a parquet file containing the timestamp of the month
     and the lowest and highest 'to EUR' rate in that month for each currency.
     '''
-    date = context['ds'] # Get date stamp from context
-    year_month = date[:-3] # We just need the month and year
+    date = kwargs['ds'] # Get date stamp from context
+    date = _subtract_one_month(date)
+    year_month = date[:-3]
 
-    # month_df is passed in by make_month_df()
-    month_df = context['task_instance'].xcom_pull(task_ids='make_month_df_operator')
+    month_df = spark.read.parquet(f'monthly_data/{year_month}/month_df.parquet')
 
     colnames = [colname for colname in month_df.columns if colname[7:10]=='eur']
 
@@ -134,6 +133,12 @@ def make_min_max_parquet(**context):
     min_df = month_df.agg({colname: 'min' for colname in colnames})
     max_df = month_df.agg({colname: 'max' for colname in colnames})
     min_max_df = min_df.crossJoin(max_df)
+
+    # Rename columns from 'min(colname)' and 'max(colname)' to 'colname_min' and 'colname_max'
+    column_name_mapping = {**{colname: f'{colname[4:-1]}_min' for colname in min_max_df.columns if colname.startswith('min')},
+                           **{colname: f'{colname[4:-1]}_max' for colname in min_max_df.columns if colname.startswith('max')}}
+    new_names = [column_name_mapping[colname] for colname in min_max_df.columns]
+    min_max_df = min_max_df.toDF(*new_names)
 
     # Add a 'timestamp' column to min_max_df, indicating the year and month
     timestamp_df = sqlContext.createDataFrame([[year_month]],['timestamp'])
@@ -143,9 +148,8 @@ def make_min_max_parquet(**context):
     min_max_df = min_max_df.select(['timestamp']+[colname for colname in min_max_df.columns if colname!='timestamp'])
 
     # Save to a parquet file
-    filename = f'DATA/min_max_prices_{year_month}.parquet'
+    filename = f'monthly_data/{year_month}/min_max_prices.parquet'
     min_max_df.write.mode('overwrite').parquet(filename)
-    print(f'Successfully saved file as {filename}')
 
 def _max_profit_from_col(year_month, month_df, colname):
     '''
@@ -168,22 +172,22 @@ def _max_profit_from_col(year_month, month_df, colname):
     else:
         buy_day, sell_day = best_buy_sell_tup
 
-        buy_date = year_month + '-' + str(buy_day)
-        sell_date = year_month + '-' + str(sell_day)
+    buy_date = f'{year_month}-{str(buy_day)}'
+    sell_date = f'{year_month}-{str(sell_day)}'
 
     return {'currency': colname[7:10], 'buy_date': buy_date, 'sell_date': sell_date}
 
-def make_max_profit_parquet(**context):
+def make_max_profit_parquet(**kwargs):
     '''
     Creates and saves a parquet file containing the best dates to buy and sell
     currencies in order to maximize profit for that month.
     Calls _max_profit_from_col().
     '''
-    date = context['ds'] # Get date stamp from context
-    year_month = date[:-3] # We just want the month and year
+    date = kwargs['ds'] # Get date stamp from context
+    date = _subtract_one_month(date)
+    year_month = date[:-3]
 
-    # month_df is passed in by make_month_df(), fetch using xcom_pull
-    month_df = context['task_instance'].xcom_pull(task_ids='make_month_df_operator')
+    month_df = spark.read.parquet(f'monthly_data/{year_month}/month_df.parquet')
 
     base_pair_cols = [colname for colname in month_df.columns if colname[:3]=='eur']
 
@@ -198,6 +202,5 @@ def make_max_profit_parquet(**context):
     max_profit_df = max_profit_df.select(['currency']+[col for col in max_profit_df.columns if col!='currency'])
 
     # Save to a parquet file
-    filename = f'DATA/max_profit_{year_month}.parquet'
+    filename = f'monthly_data/{year_month}/max_profit.parquet'
     max_profit_df.write.mode('overwrite').parquet(filename)
-    print(f'Successfully saved file as {filename}')

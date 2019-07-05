@@ -8,14 +8,14 @@ import fx_functions as fx
 
 
 default_args = {
-    'start_date': datetime(2019, 7, 2),
-    'retries': 2,
+    'start_date': datetime(2019, 7, 1),
+    'retries': 31,
     'retry_delay': timedelta(days=1),}
 
 dag = DAG(
     dag_id='fx_dag',
     default_args=default_args,
-    schedule_interval='@once')
+    schedule_interval='@monthly')
 
 class data_availability_sensor(BaseSensorOperator):
     '''
@@ -26,12 +26,11 @@ class data_availability_sensor(BaseSensorOperator):
         super(data_availability_sensor, self).__init__(*args, **kwargs)
     def poke(self, context):
         print('Poking {}'.__str__())
-        return fx.check_data_availability(context)
+        return fx.check_data_availability(**context)
 
 wait_for_data_availability_sensor = data_availability_sensor(
     task_id='wait_for_data_availability',
     dag=dag)
-
 
 make_month_df_operator = PythonOperator(
     task_id='make_month_df',
