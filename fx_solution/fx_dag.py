@@ -25,8 +25,7 @@ class data_availability_sensor(BaseSensorOperator):
     def __init__(self, *args, **kwargs):
         super(data_availability_sensor, self).__init__(*args, **kwargs)
     def poke(self, context):
-        print('Poking {}'.__str__())
-        return fx.check_data_availability(**context)
+        return fx.check_data_availability(date=context['ds'])
 
 wait_for_data_availability_sensor = data_availability_sensor(
     task_id='wait_for_data_availability',
@@ -35,19 +34,22 @@ wait_for_data_availability_sensor = data_availability_sensor(
 make_month_df_operator = PythonOperator(
     task_id='make_month_df',
     python_callable=fx.make_month_df,
-    provide_context=True,
+    provide_context=False,
+    op_kwargs={'date': '{{ ds }}'},
     dag=dag)
 
 make_min_max_parquet_operator = PythonOperator(
     task_id='make_min_max_parquet',
     python_callable=fx.make_min_max_parquet,
-    provide_context=True,
+    provide_context=False,
+    op_kwargs={'date': '{{ ds }}'},
     dag=dag)
 
 make_max_profit_parquet_operator = PythonOperator(
     task_id='make_max_profit_parquet',
     python_callable=fx.make_max_profit_parquet,
-    provide_context=True,
+    provide_context=False,
+    op_kwargs={'date': '{{ ds }}'},
     dag=dag)
 
 wait_for_data_availability_sensor >> make_month_df_operator

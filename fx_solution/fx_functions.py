@@ -8,6 +8,7 @@ from calendar import monthrange
 
 from pyspark import SparkContext
 from pyspark.sql import SparkSession, SQLContext, Row
+from pyspark.sql.types import StructType, StructField, StringType
 
 import pyspark.sql.functions as F
 
@@ -52,7 +53,7 @@ def _first_and_last_workdays_of_month(date):
 
     return first_workday, last_workday
 
-def check_data_availability(**kwargs):
+def check_data_availability(date):
     '''
     If data is available for the last business day of the previous month,
     then we can assume data is available for every desired day of that month.
@@ -60,7 +61,6 @@ def check_data_availability(**kwargs):
     If available, returns True.
     If unavailable, returns False.
     '''
-    date = kwargs['ds']
     date = _subtract_one_month(date)
 
     _, last_business_day = _first_and_last_workdays_of_month(date)
@@ -69,7 +69,7 @@ def check_data_availability(**kwargs):
 
     return bool(last_business_day_rates)
 
-def make_month_df(**kwargs):
+def make_month_df(date):
     '''
     Returns a Spark dataframe of FX data for the full month of
     the given date.
@@ -77,7 +77,6 @@ def make_month_df(**kwargs):
     [day, currency1_to_eur_rate, eur_to_currency1_rate, ...,
     currencyn_to_eur_rate,eur_to_currencyn_rate]
     '''
-    date = kwargs['ds'] # Get date stamp from context
     date = _subtract_one_month(date)
     year_month = date[:-3]
 
@@ -97,11 +96,8 @@ def make_month_df(**kwargs):
     new_names = [column_name_mapping[colname] for colname in df.columns]
     df = df.toDF(*new_names)
 
-    # Rearrange 'day' to first column and sort by 'day'
-    df = df.select(['day']+[colname for colname in df.columns if colname!='day']).orderBy('day')
-
     # Add columns for inverted currency pair rates
-    for colname in df.columns[1:]:
+    for colname in [col for col in df.columns if col!='day']:
         words_in_colname = colname.split('_')
         inverted_colname = f'{words_in_colname[2]}_to_{words_in_colname[0]}_rate' # E.g. 'usd_to_eur_rate' -> 'eur_to_usd_rate
         df = df.withColumn(inverted_colname, F.round(1/(F.col(colname)), 4))
@@ -109,19 +105,18 @@ def make_month_df(**kwargs):
     base_pair_cols = [colname for colname in df.columns if colname[:3]=='eur']
     inverted_pair_cols = [colname for colname in df.columns if colname[7:10]=='eur']
 
-    # Rearrange so that inverted pairs precede their counterparts
-    month_df = df.select(['day']+[item for sublist in zip(inverted_pair_cols, base_pair_cols) for item in sublist])
+    # Rearrange so that inverted pairs precede their counterparts, and order by 'day'
+    month_df = df.select(['day']+[item for sublist in zip(inverted_pair_cols, base_pair_cols) for item in sublist]).orderBy('day')
 
     # Save to a parquet file
     filename = f'monthly_data/{year_month}/month_df.parquet'
     month_df.write.mode('overwrite').parquet(filename)
 
-def make_min_max_parquet(**kwargs):
+def make_min_max_parquet(date):
     '''
     Creates and saves a parquet file containing the timestamp of the month
     and the lowest and highest 'to EUR' rate in that month for each currency.
     '''
-    date = kwargs['ds'] # Get date stamp from context
     date = _subtract_one_month(date)
     year_month = date[:-3]
 
@@ -151,55 +146,62 @@ def make_min_max_parquet(**kwargs):
     filename = f'monthly_data/{year_month}/min_max_prices.parquet'
     min_max_df.write.mode('overwrite').parquet(filename)
 
-def _max_profit_from_col(year_month, month_df, colname):
+def _find_best_buy_sell_profit_tup(day_rate_tups):
     '''
-    A helper function that finds the buy and sell dates yielding the maximum
-    possible profit in a given currency and month.
-    Used in make_max_profit_parquet().
+    Given a list of tuples containing day number and exchange rate,
+    returns a tuple containing the most profitable day to buy, sell,
+    and the associated profit
     '''
-    days_as_list = month_df.select('day').rdd.map(lambda row : row[0]).collect()
-    col_as_list = month_df.select(colname).rdd.map(lambda row : row[0]).collect()
+    # Make a dictionary of buy and sell days to their associated profit
+    profit_dict = {(buy[0], sell[0]): sell[1]-buy[1] for buy, sell in it.combinations(day_rate_tups, 2)}
 
-    # Find the days to buy and sell on which yield the largest profit
-    day_price_tups = list(zip(days_as_list, col_as_list))
-    profit_dict = {(buy[0], sell[0]): sell[1]-buy[1] for buy, sell in it.combinations(day_price_tups, 2)}
-
-    best_buy_sell_tup = max(profit_dict, key=profit_dict.get)
+    best_buy_sell_tup = max(profit_dict, key=profit_dict.get) # (buy, sell) pair that yields the maximum profit
     max_profit = profit_dict[best_buy_sell_tup]
 
-    if max_profit <= 0: # If positive profit is impossible (i.e. rate only decreases)
-        buy_day, sell_day = None, None
-    else:
-        buy_day, sell_day = best_buy_sell_tup
+    return best_buy_sell_tup + (max_profit,)
 
-    buy_date = f'{year_month}-{str(buy_day)}'
-    sell_date = f'{year_month}-{str(sell_day)}'
-
-    return {'currency': colname[7:10], 'buy_date': buy_date, 'sell_date': sell_date}
-
-def make_max_profit_parquet(**kwargs):
+def make_max_profit_parquet(date):
     '''
     Creates and saves a parquet file containing the best dates to buy and sell
     currencies in order to maximize profit for that month.
-    Calls _max_profit_from_col().
     '''
-    date = kwargs['ds'] # Get date stamp from context
     date = _subtract_one_month(date)
     year_month = date[:-3]
 
     month_df = spark.read.parquet(f'monthly_data/{year_month}/month_df.parquet')
 
+    # Initialize a dataframe
+    schema = StructType(
+                [StructField('currency', StringType(), False),
+                 StructField('buy_date', StringType(), True),
+                 StructField('sell_date', StringType(), True),
+                 StructField('profit', StringType(), True)])
+    max_profit_df = sqlContext.createDataFrame(sc.emptyRDD(), schema)
+
     base_pair_cols = [colname for colname in month_df.columns if colname[:3]=='eur']
+    for colname in base_pair_cols:
 
-    df = month_df.select(['day'] + base_pair_cols)
+        # Make list of tuples of the day number and exchange rate
+        day_rate_tups = month_df.rdd.map(lambda x: (x['day'], x[colname])).collect()
 
-    row_list = [Row(**_max_profit_from_col(year_month=year_month, month_df=df, colname=pair_col))
-                for pair_col in base_pair_cols]
+        currency = colname[7:10]
+        buy_day, sell_day, profit = _find_best_buy_sell_profit_tup(day_rate_tups)
 
-    max_profit_df = spark.createDataFrame(row_list)
+        new_row = spark.createDataFrame([(currency, buy_day, sell_day, profit)])
 
-    # Move the currency column to be on the left
-    max_profit_df = max_profit_df.select(['currency']+[col for col in max_profit_df.columns if col!='currency'])
+        max_profit_df = max_profit_df.union(new_row)
+
+    # Define a udf to prepend the the year and month to the day
+    day_to_date_udf = F.udf(lambda day: f'{year_month}-{day}' if day != None else None, StringType())
+
+    # For transactions yielding no profit, change the buy and sell dates to None
+    # Otherwise, apply day_to_date_udf()
+    max_profit_df = max_profit_df\
+                    .withColumn('buy_date', F.when(F.col('profit') <= 0.0, None)\
+                    .otherwise(day_to_date_udf(max_profit_df['buy_date'])))\
+                    .withColumn('sell_date', F.when(F.col('profit') <= 0.0, None)\
+                    .otherwise(day_to_date_udf(max_profit_df['sell_date'])))\
+                    .drop('profit')
 
     # Save to a parquet file
     filename = f'monthly_data/{year_month}/max_profit.parquet'
