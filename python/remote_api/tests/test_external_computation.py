@@ -170,14 +170,15 @@ class TestExternalComputation(unittest.TestCase):
 
     @lynx.kite.external
     def females(table):
-      table.save_as_csv(local_path)
+      table.pandas().to_csv(local_path, index=False)
       df = pd.read_csv(local_path)
       return df[df['gender'] == 'Female']['name'].to_frame()
 
     @lynx.kite.external
     def no_header(table):
-      table.save_as_csv(local_path_no_header, header=False)
-      return table.pandas()
+      df = table.pandas()
+      df[df['gender'] != 'Male'].to_csv(local_path_no_header, header=False, index=False)
+      return df
 
     eg = lk.createExampleGraph().sql('select name, gender from vertices')
     t = females(eg)
@@ -186,9 +187,12 @@ class TestExternalComputation(unittest.TestCase):
     self.assertEqual(result, 'Eve')
     t2 = no_header(eg)
     t2.trigger()
-    expected = 'Adam,Male\nEve,Female\nBob,Male\nIsolated Joe,Male\n'
     with open(local_path_no_header, 'r') as f:
-      self.assertEqual(f.read(), expected)
+      self.assertEqual(f.read(), 'Eve,Female\n')
+    # pandas.to_csv is idempotent
+    t2.trigger()
+    with open(local_path_no_header, 'r') as f:
+      self.assertEqual(f.read(), 'Eve,Female\n')
 
 
 class TestTmpFilesHandling(unittest.TestCase):
