@@ -37,6 +37,9 @@ $(pip): python_requirements.txt
 .build/automation-python-test-passed: $(shell $(find) python/remote_api python/automation) \
 		.build/backend-done $(pip)
 	tools/with_lk.sh python/automation/test.sh && touch $@
+.build/versioning-installed: \
+	python/versioning/lynx_versioning.py
+	tools/distribute_lynx_versioning.sh && touch $@
 .build/standard-pipelines-test-passed: \
 	$(shell $(find) python/remote_api python/automation standard-pipelines) .build/backend-done $(pip)
 	tools/with_lk.sh standard-pipelines/unit_test.sh && touch $@
@@ -45,9 +48,10 @@ $(pip): python_requirements.txt
 	ecosystem/documentation/build.sh native && touch $@
 .build/ecosystem-done: \
 		$(shell $(find) ecosystem/native python/remote_api python/automation) \
+		.build/versioning-installed \
 		.build/backend-done .build/documentation-done-${VERSION} $(pip)
 	ecosystem/native/tools/build-monitoring.sh && \
-	ecosystem/native/bundle.sh && touch $@
+	ecosystem/native/bundle.sh $(VERSION) && touch $@
 .build/ecosystem-docker-release-done: \
 		.build/ecosystem-done \
 		$(shell $(find) ecosystem/docker)
