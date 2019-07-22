@@ -58,6 +58,8 @@ $(pip): python_requirements.txt
 	ecosystem/docker/build.sh $(VERSION) && touch $@
 .build/shell_ui-test-passed: $(shell $(find) shell_ui) .eslintrc.yaml
 	shell_ui/test.sh && touch $@
+.build/impact-analyzer-dashboard-test-passed: $(shell $(find) impact-analyzer-dashboard)
+	impact-analyzer-dashboard/unit_tests.sh && touch $@
 .build/evaluation-release-done: \
 		.build/backend-done $(shell $(find) docker/lynxkite/local)
 	docker/lynxkite/local/evaluation_release.sh "${VERSION}" && touch $@
@@ -91,6 +93,8 @@ standard-pipelines-test: .build/standard-pipelines-test-passed
 ecosystem-test: remote_api-test automation-test standard-pipelines-test
 .PHONY: shell_ui-test
 shell_ui-test: .build/shell_ui-test-passed
+.PHONY: impact-analyzer-dashboard-test
+impact-analyzer-dashboard-test: .build/impact-analyzer-dashboard-test-passed
 .PHONY: test
 test: backend-test frontend-test ecosystem-test
 .PHONY: evaluation-release
