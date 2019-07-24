@@ -48,10 +48,10 @@ if bad_lines:
   for l in bad_lines:
     warn('  ' + l)
 
-non_makefiles = [fn for fn in files if not fn.endswith('Makefile')]
-if len(non_makefiles) > 0:
-  non_makefile_diff = check_output('git diff --staged'.split() + non_makefiles)
-  bad_lines = [l for l in non_makefile_diff.split('\n') if l.startswith('+') and '\t' in l]
+non_tabfiles = [fn for fn in files if not fn.endswith('Makefile') and not fn.endswith('.go')]
+if len(non_tabfiles) > 0:
+  non_tabfile_diff = check_output('git diff --staged'.split() + non_tabfiles)
+  bad_lines = [l for l in non_tabfile_diff.split('\n') if l.startswith('+') and '\t' in l]
   if bad_lines:
     warn('TAB found in your diff:')
     for l in bad_lines:
@@ -81,6 +81,17 @@ if pythons:
   different = [f[0] for f in zip(pythons, before, after) if f[1] != f[2]]
   if len(different) > 0:
     warn('Files altered by autopep8, please restage.')
+    warn('Altered files:')
+    warn(', '.join(different))
+
+gos = [fn for fn in files if fn.endswith('.go')]
+if gos:
+  before = get_hashes(gos)
+  subprocess.call(['go', 'fmt'] + gos)
+  after = get_hashes(gos)
+  different = [f[0] for f in zip(gos, before, after) if f[1] != f[2]]
+  if len(different) > 0:
+    warn('Files altered by go fmt, please restage.')
     warn('Altered files:')
     warn(', '.join(different))
 
