@@ -48,15 +48,6 @@ if bad_lines:
   for l in bad_lines:
     warn('  ' + l)
 
-non_tabfiles = [fn for fn in files if not fn.endswith('Makefile') and not fn.endswith('.go')]
-if len(non_tabfiles) > 0:
-  non_tabfile_diff = check_output('git diff --staged'.split() + non_tabfiles)
-  bad_lines = [l for l in non_tabfile_diff.split('\n') if l.startswith('+') and '\t' in l]
-  if bad_lines:
-    warn('TAB found in your diff:')
-    for l in bad_lines:
-      warn('  ' + l)
-
 for proj in ['web', 'shell_ui']:
   prefix = proj + '/'
   javascripts = [fn for fn in files if fn.startswith(prefix) and fn.endswith('.js')]
