@@ -64,27 +64,22 @@ for proj in ['web', 'shell_ui']:
       warn('Altered files:')
       warn(', '.join(different))
 
-pythons = [fn for fn in files if fn.endswith('.py')]
-if pythons:
-  before = get_hashes(pythons)
-  subprocess.call(['autopep8', '-ia'] + pythons)
-  after = get_hashes(pythons)
-  different = [f[0] for f in zip(pythons, before, after) if f[1] != f[2]]
-  if len(different) > 0:
-    warn('Files altered by autopep8, please restage.')
-    warn('Altered files:')
-    warn(', '.join(different))
 
-gos = [fn for fn in files if fn.endswith('.go')]
-if gos:
-  before = get_hashes(gos)
-  subprocess.call(['go', 'fmt'] + gos)
-  after = get_hashes(gos)
-  different = [f[0] for f in zip(gos, before, after) if f[1] != f[2]]
-  if len(different) > 0:
-    warn('Files altered by go fmt, please restage.')
-    warn('Altered files:')
-    warn(', '.join(different))
+def linter(extension, command):
+  matched = [fn for fn in files if fn.endswith(extension)]
+  if matched:
+    before = get_hashes(matched)
+    subprocess.call(command + matched)
+    after = get_hashes(matched)
+    different = [f[0] for f in zip(matched, before, after) if f[1] != f[2]]
+    if len(different) > 0:
+      warn(f'Files altered by { " ".join(command) }, please restage.')
+      warn('Altered files:')
+      warn(', '.join(different))
+
+
+linter('.py', ['autopep8', '-ia'])
+linter('.go', ['go', 'fmt'])
 
 if warned:
   sys.exit(1)
