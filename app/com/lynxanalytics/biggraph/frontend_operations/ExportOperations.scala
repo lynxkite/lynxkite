@@ -105,10 +105,13 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
         case "Drop the table if it already exists" => "overwrite"
         case "Insert into an existing table" => "append"
       }
+      val partitions =
+        if (params("partition_by").isEmpty) Array[String]()
+        else params("partition_by").split(",")
       val op = graph_operations.ExportTableToHive(
         params("table"),
         mode,
-        params("partition_by").split(","))
+        partitions.toList)
       op(op.t, table).result.exportResult
     }
   })
