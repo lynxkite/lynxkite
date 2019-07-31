@@ -156,3 +156,24 @@ case class ExportTableToJdbc(jdbcUrl: String, table: String, mode: String)
     df.write.mode(mode).jdbc(jdbcUrl, table, new java.util.Properties)
   }
 }
+
+object ExportTableToHive extends OpFromJson {
+  def fromJson(j: JsValue) = ExportTableToHive(
+    (j \ "table").as[String], (j \ "mode").as[String], (j \ "partitionBy").as[Seq[String]])
+}
+
+case class ExportTableToHive(table: String, mode: String, partitionBy: Seq[String])
+  extends ExportTable {
+
+  override def toJson = Json.obj("table" -> table, "mode" -> mode, "partitionBy" -> partitionBy.sorted)
+
+  def exportDataFrame(df: spark.sql.DataFrame) = {
+    if (partitionBy.isEmpty) {
+      df.write.mode(mode).saveAsTable(table)
+    } else {
+      assert(mode != "overwrite", "overwrite mode cannot be used with partition columns")
+      df.write.mode(mode).partitionBy(partitionBy: _*).saveAsTable(table)
+    }
+  }
+}
+
