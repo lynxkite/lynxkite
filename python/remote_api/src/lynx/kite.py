@@ -33,6 +33,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory, mkstemp
 import textwrap
 import shutil
 
+
 if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 6):
   raise Exception('At least Python version 3.6 is needed!')
 
@@ -964,6 +965,13 @@ class Placeholder:
     self.value = value
 
 
+def _fn_id(fn: Callable):
+  '''Creates a string id for a function which only depends on the fully qualified name of the callable.
+  This can be used as a replacement for BoxPath (unique box identity) in case of external boxes.
+  '''
+  return f'{fn.__module__}_{fn.__qualname__}'.replace('.', '_')
+
+
 def external(fn: Callable):
   '''Decorator for executing computation outside of LynxKite in a LynxKite workflow.
 
@@ -1024,7 +1032,7 @@ def external(fn: Callable):
     lk = exports[0].box.lk
     external = ExternalComputationBox(
         lk.box_catalog(), lk, exports,
-        {'snapshot_prefix': f'tmp_workspaces/tmp_snapshots/external-{id(fn)}-'},
+        {'snapshot_prefix': f'tmp_workspaces/tmp_snapshots/external-{_fn_id(fn)}-'},
         fn, bound)
 
     for export in exports:
