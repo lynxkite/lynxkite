@@ -163,6 +163,29 @@ class TestExternalComputation(unittest.TestCase):
             'Mr Isolated Joe',
         ]})))
 
+  def test_generated_snapshot_prefix(self):
+    def factory():
+      @lynx.kite.external
+      def some_computation(table):
+        return table.lk()
+
+      return some_computation
+
+    lk = lynx.kite.LynxKite()
+    tmp_dir = 'tmp_workspaces/tmp_snapshots'
+    eg = lk.createExampleGraph().sql('select * from vertices')
+    lk.remove_name(tmp_dir, force=True)
+    f = factory()
+    t = f(eg)
+    t.trigger()
+    first_entry_list = [e.name for e in lk.list_dir(tmp_dir)]
+    f = factory()
+    t = f(eg)
+    t.trigger()
+    # Second time we should get the same snapshot
+    second_entry_list = [e.name for e in lk.list_dir(tmp_dir)]
+    self.assertEqual(first_entry_list, second_entry_list)
+
 
 class TestTmpFilesHandling(unittest.TestCase):
   # On Jenkins all jobs are using the same /tmp folder so we are setting the tmp dir used by the
