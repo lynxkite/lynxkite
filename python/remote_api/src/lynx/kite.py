@@ -972,6 +972,15 @@ def _fn_id(fn: Callable):
   return f'{fn.__module__}_{fn.__qualname__}'.replace('.', '_')
 
 
+def _is_lambda(f: Callable):
+  def LAMBDA(): return 0
+  return isinstance(f, type(LAMBDA)) and f.__name__ == LAMBDA.__name__
+
+
+def _is_instance_method(f: Callable):
+  return inspect.ismethod(f)
+
+
 def external(fn: Callable):
   '''Decorator for executing computation outside of LynxKite in a LynxKite workflow.
 
@@ -1012,6 +1021,9 @@ def external(fn: Callable):
   Why use LynxKite states in external computations? This allows the use of LynxKite as in a notebook
   environment. You can access the actual data and write code that is conditional on the data.
   '''
+
+  assert not _is_lambda(fn), 'You cannot use lambda functions for external computation.'
+  assert not _is_instance_method(fn), 'You cannot use instance methods for external computation.'
 
   @subworkspace
   @functools.wraps(fn)

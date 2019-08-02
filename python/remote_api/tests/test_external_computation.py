@@ -186,6 +186,25 @@ class TestExternalComputation(unittest.TestCase):
     second_entry_list = [e.name for e in lk.list_dir(tmp_dir)]
     self.assertEqual(first_entry_list, second_entry_list)
 
+  def test_external_box_callable_edge_cases(self):
+    lk = lynx.kite.LynxKite()
+    with self.assertRaises(Exception) as context:
+      f = lynx.kite.external(lambda x: 1)
+      self.assertTrue(
+          'You cannot use lambda functions for external computation.' in str(
+              cm.exception))
+
+    class A:
+      def g(x):
+        return 1
+
+    o = A()
+    with self.assertRaises(Exception) as context:
+      f = lynx.kite.external(o.g)
+      self.assertTrue(
+          'You cannot use instance methods for external computation.' in str(
+              cm.exception))
+
 
 class TestTmpFilesHandling(unittest.TestCase):
   # On Jenkins all jobs are using the same /tmp folder so we are setting the tmp dir used by the
