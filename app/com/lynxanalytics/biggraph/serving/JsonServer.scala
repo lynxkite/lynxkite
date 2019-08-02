@@ -579,7 +579,7 @@ object ProductionJsonServer extends JsonServer {
     getUser(request) match {
       case None => Unauthorized
       case Some(user) =>
-        log.info(s"$user GET ${request.path}")
+        log.info(s"$user ${request.method} ${request.path}")
         if (request.method == "POST") {
           import scala.sys.process._
           import java.nio.file._
