@@ -1,12 +1,8 @@
-### Export to JDBC
+### Export to Hive
 
-JDBC is used to connect to relational databases such as MySQL. See <<jdbc-details>> for setup steps
-required for connecting to a database.
+Export a table directly to https://hive.apache.org/[Apache Hive].
 
 ====
-[p-url]#JDBC URL#::
-The connection URL for the database. This typically includes the username and password. The exact
-syntax entirely depends on the database type. Please consult the documentation of the database.
 
 [p-table]#Table#::
 The name of the database table to export to.
@@ -18,9 +14,16 @@ Describes whether LynxKite should expect a table to already exist and how to han
 exists.
 +
 **Drop the table if it already exists** means the table will be deleted and re-created if
-it already exists. Use this mode with great care.
+it already exists. Use this mode with great care. This method cannot be used if you specify
+any fields to partition by, the reason being that the underlying Spark library will delete
+all other partitions in the table in this case.
+
 +
 **Insert into an existing table** requires the
 table to already exist and it will add the exported data at the end of the existing table.
+
+[p-partition_by]#Partition by#::
+The list of column names (if any) which you wish the table to be partitioned by. This cannot
+be used in conjunction with the "Drop the table if it already exists" mode.
 
 ====
