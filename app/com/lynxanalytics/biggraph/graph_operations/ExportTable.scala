@@ -165,7 +165,7 @@ object ExportTableToHive extends OpFromJson {
 case class ExportTableToHive(table: String, mode: String, partitionBy: Seq[String])
   extends ExportTable {
 
-  override def toJson = Json.obj("table" -> table, "mode" -> mode, "partitionBy" -> partitionBy.sorted)
+  override def toJson = Json.obj("table" -> table, "mode" -> mode, "partitionBy" -> partitionBy)
 
   def exportDataFrame(df: spark.sql.DataFrame) = {
     if (partitionBy.isEmpty) {
