@@ -332,7 +332,7 @@ class LynxKite:
         'importNeo4j']
     self._export_box_names: List[str] = [
         'exportToCSV', 'exportToJSON', 'exportToParquet',
-        'exportToJDBC', 'exportToORC']
+        'exportToJDBC', 'exportToORC', 'exportToHive']
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
   def home(self) -> str:

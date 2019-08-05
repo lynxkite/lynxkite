@@ -87,6 +87,35 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
     }
   })
 
+  register("Export to Hive")(new ExportOperation(_) {
+    lazy val format = "hive"
+    params ++= List(
+      Param("table", "Table"),
+      Choice("mode", "Mode", FEOption.list(
+        "The table must not exist",
+        "Drop the table if it already exists",
+        "Insert into an existing table")),
+      Choice("partition_by", "Partition by",
+        FEOption.list(table.schema.map(_.name).toList),
+        multipleChoice = true))
+
+    def exportResult() = {
+      val mode = params("mode") match {
+        case "The table must not exist" => "error"
+        case "Drop the table if it already exists" => "overwrite"
+        case "Insert into an existing table" => "append"
+      }
+      val partitions =
+        if (params("partition_by").isEmpty) Array[String]()
+        else params("partition_by").split(",")
+      val op = graph_operations.ExportTableToHive(
+        params("table"),
+        mode,
+        partitions.toList)
+      op(op.t, table).result.exportResult
+    }
+  })
+
   registerExportToStructuredFile("Export to JSON")("json")
   registerExportToStructuredFile("Export to Parquet")("parquet")
   registerExportToStructuredFile("Export to ORC")("orc")
