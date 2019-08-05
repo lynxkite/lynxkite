@@ -11,7 +11,7 @@ angular.module('biggraph').factory('documentation', function($http) {
   }
 
   function load(name) {
-    const html = $http.get('/' + name + '/index.html', { cache: true });
+    const html = $http.get(name + '/index.html', { cache: true });
     const dom = html.then(function success(response) {
       /* global $ */
       const dom = $($.parseHTML(
@@ -21,7 +21,7 @@ angular.module('biggraph').factory('documentation', function($http) {
       dom.find('#toc').each(function(i, div) {
         div = angular.element(div);
         div.prepend('<find-in-page-box></find-in-page-box>');
-        div.prepend('<img src="/images/logo.png" id="lynxkite-logo">');
+        div.prepend('<img src="images/logo.png" id="lynxkite-logo">');
         dom.prepend(div);
       });
       // Move heading IDs to sectionbody divs.

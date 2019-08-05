@@ -10,7 +10,7 @@ corner. The anchor can be used to explain the overall purpose of the workspace. 
 description, an image and set parameters (more details: <<Parametric parameters>>). The URL to an
 image is useful when you want to reuse the workflow as a custom box in another workspace: in that
 case the image will serve as the custom box's icon. Preferably this should be a link to a local
-image, like `/images/icons/anchor.png`.
+image, like `images/icons/anchor.png`.
 
 You can add a box to the workspace by dragging an operation from <<The operation toolbox>>. Clicking
 on the box opens its <<Box parameters popup>>, which allows you to set the parameters.
