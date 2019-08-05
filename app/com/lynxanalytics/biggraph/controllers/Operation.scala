@@ -234,7 +234,7 @@ trait OperationRegistry {
     categories(category.title) = category
     operations(id) = BoxMetadata(
       category.title,
-      s"/images/icons/$icon.png",
+      s"images/icons/$icon.png",
       category.color,
       id,
       inputs,
