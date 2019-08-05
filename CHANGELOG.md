@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 2.8.3
+
  - Added new operation: _Export to Hive_.
 
 ### 2.8.2
