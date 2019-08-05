@@ -11,6 +11,9 @@ class TestHive(unittest.TestCase):
           table='out',
           mode='Drop the table if it already exists',
           partition_by="name,gender")
+    print('hello')
+    print(str(context.exception))
+    print('over')
     self.assertTrue(
         'overwrite mode cannot be used with partition columns' in str(
             context.exception))
