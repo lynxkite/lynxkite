@@ -87,6 +87,7 @@ angular.module('biggraph')
         '/ajax/center',
         '/ajax/getDataFilesStatus',
         '/ajax/model',
+        '/ajax/getTableOutput',
       ];
       // Some requests may trigger substantial calculation on the backend. If we
       // make many slow requests in parallel we can easily exhaust the browser's
