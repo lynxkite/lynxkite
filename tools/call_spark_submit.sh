@@ -66,7 +66,8 @@ if [ "$(echo ${derby_jar} | wc -w | tr -d ' ')" != "1" ]; then
   exit 1
 fi
 
-EXECUTOR_THREAD_STACK_SIZE=${EXECUTOR_THREAD_STACK_SIZE:-2M}
+EXECUTOR_THREAD_STACK_SIZE=${EXECUTOR_THREAD_STACK_SIZE:-3M}
+DRIVER_THREAD_STACK_SIZE=${DRIVER_THREAD_STACK_SIZE:-2M}
 KITE_HTTP_ADDRESS=${KITE_HTTP_ADDRESS:-127.0.0.1}
 
 addJPropIfNonEmpty lynxkite.derby_jar ${derby_jar}
@@ -194,9 +195,8 @@ fi
 className="play.core.server.NettyServer"
 
 
-if [[ $SPARK_MASTER  == local* ]]; then
-  final_java_opts="${final_java_opts} -Xss${EXECUTOR_THREAD_STACK_SIZE}"
-else
+final_java_opts="${final_java_opts} -Xss${DRIVER_THREAD_STACK_SIZE}"
+if [[ ! $SPARK_MASTER  == local* ]]; then
   EXTRA_OPTIONS="$EXTRA_OPTIONS --conf spark.executor.extraJavaOptions=-Xss${EXECUTOR_THREAD_STACK_SIZE}"
 fi
 
