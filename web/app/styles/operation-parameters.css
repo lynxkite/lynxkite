@@ -49,7 +49,6 @@ table-kind import-wizard form {
 
 .operation-parameter-input {
   position: relative; /* For good placement of the parametric toggle. */
-  padding-right: 20px;
 }
 
 .left-aligned-dummy {
@@ -71,6 +70,6 @@ table-kind import-wizard form {
   color: darkred;
 }
 
-#box-editor label {
-  margin-bottom: 0;
+.parameter-code {
+  padding: 0 5px;
 }
