@@ -208,7 +208,7 @@ angular.module('biggraph')
               const bottom1 = top1 + height1;
               const right2 = left2 + width2;
               const bottom2 = top2 + height2;
-              // Comute intersection:
+              // Compute intersection:
               const left = Math.max(left1, left2);
               const top = Math.max(top1, top2);
               const right = Math.min(right1, right2);
@@ -222,8 +222,9 @@ angular.module('biggraph')
             function overlap(x, y) {
               let total = 0;
               for (let i = 0; i < scope.popups.length; ++i) {
+                const pi = scope.popups[i];
                 total += rectangleOverlapArea(
-                  scope.popups[i].x, scope.popups[i].y, scope.popups[i].width, scope.popups[i].height,
+                  pi.x, pi.y, pi.width, pi.height || pi.maxHeight,
                   x, y, w, h);
               }
               return total;
