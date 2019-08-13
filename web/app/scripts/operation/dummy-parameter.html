@@ -12,6 +12,7 @@
   <help-popup href="{{htmlId + '-' + 'title'}}"></help-popup>
 </div>
 <div ng-class="{
+      'col-sm-8': !isVisualizationParam(param),
       'operation-parameter-input': true,
     }"
     id="{{param.id}}">

@@ -16,7 +16,7 @@
   No parameters
 </p>
 <div class="{{ halfSize ? 'operation-params-size-half' : '' }}">
-  <form ng-if="boxMeta.parameters" ng-submit="onBlur()">
+  <form ng-if="boxMeta.parameters" class="form-horizontal" ng-submit="onBlur()">
     <operation-parameters
         box="box"
         meta="boxMeta"
