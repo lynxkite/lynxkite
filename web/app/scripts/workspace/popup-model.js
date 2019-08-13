@@ -1,5 +1,7 @@
 'use strict';
 
+const lastPositions = {}; // Keyed by ID so we can reopen the popups in their last locations.
+
 angular.module('biggraph').factory('PopupModel', function(environment) {
   // Creates a new popup model data structure.
   // id: Unique key.
@@ -19,14 +21,11 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     this.owner = owner;
     this.element = undefined;
     this.meta = false; // Whether the metadata editor is active.
-    if (this.owner.workspace) {
-      const co = this.contentObject(this.owner.workspace);
-      if (co && co.lastPopupPlacement) {
-        this.x = co.lastPopupPlacement.x;
-        this.y = co.lastPopupPlacement.y;
-        this.width = co.lastPopupPlacement.width;
-        this.height = co.lastPopupPlacement.height;
-      }
+    if (lastPositions[id]) {
+      this.x = lastPositions[id].x;
+      this.y = lastPositions[id].y;
+      this.width = lastPositions[id].width;
+      this.height = lastPositions[id].height;
     }
   }
 
@@ -72,10 +71,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   PopupModel.prototype.close = function() {
     const that = this;
     this.owner.popups = this.owner.popups.filter(function(p) { return p.id !== that.id; });
-    if (this.owner.workspace) {
-      const co = this.contentObject(this.owner.workspace);
-      co.lastPopupPlacement = { x: this.x, y: this.y, width: this.width, height: this.height };
-    }
+    lastPositions[this.id] = { x: this.x, y: this.y, width: this.width, height: this.height };
   };
 
   PopupModel.prototype.open = function() {
