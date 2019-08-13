@@ -273,6 +273,16 @@ angular.module('biggraph')
             };
           }
 
+          function getPopup(event, id, title, content) {
+            for (let p of scope.popups) {
+              if (p.id === id) {
+                return p;
+              }
+            }
+            const pos = placePopup(event);
+            return new PopupModel(id, title, content, pos.x, pos.y, pos.width, pos.height, scope);
+          }
+
           scope.onMouseUpOnBox = function(box, event) {
             if (box.isDirty || scope.pulledPlug || scope.selection.isActive()) {
               return;
@@ -281,19 +291,14 @@ angular.module('biggraph')
             if (!leftButton || event.ctrlKey || event.shiftKey) {
               return;
             }
-            const pos = placePopup(event);
-            const model = new PopupModel(
+            const model = getPopup(
+              event,
               box.instance.id,
               box.instance.operationId,
               {
                 type: 'box',
                 boxId: box.instance.id,
-              },
-              pos.x,
-              pos.y,
-              pos.width,
-              pos.height,
-              scope);
+              });
             model.toggle();
           };
 
@@ -318,20 +323,15 @@ angular.module('biggraph')
             }
             event.stopPropagation();
             if (plug.direction === 'outputs') {
-              const pos = placePopup(event);
-              const model = new PopupModel(
+              const model = getPopup(
+                event,
                 plug.boxId + '_' + plug.id,
                 plug.boxInstance.operationId + ' ➡ ' + plug.id,
                 {
                   type: 'plug',
                   boxId: plug.boxId,
                   plugId: plug.id,
-                },
-                pos.x,
-                pos.y,
-                pos.width,
-                pos.height,
-                scope);
+                });
               model.toggle();
             }
           };

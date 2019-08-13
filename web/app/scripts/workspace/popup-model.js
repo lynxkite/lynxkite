@@ -19,6 +19,15 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     this.owner = owner;
     this.element = undefined;
     this.meta = false; // Whether the metadata editor is active.
+    if (this.owner.workspace) {
+      const co = this.contentObject(this.owner.workspace);
+      if (co && co.lastPopupPlacement) {
+        this.x = co.lastPopupPlacement.x;
+        this.y = co.lastPopupPlacement.y;
+        this.width = co.lastPopupPlacement.width;
+        this.height = co.lastPopupPlacement.height;
+      }
+    }
   }
 
   PopupModel.prototype.updateSize = function() {
@@ -63,6 +72,10 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
   PopupModel.prototype.close = function() {
     const that = this;
     this.owner.popups = this.owner.popups.filter(function(p) { return p.id !== that.id; });
+    if (this.owner.workspace) {
+      const co = this.contentObject(this.owner.workspace);
+      co.lastPopupPlacement = { x: this.x, y: this.y, width: this.width, height: this.height };
+    }
   };
 
   PopupModel.prototype.open = function() {
