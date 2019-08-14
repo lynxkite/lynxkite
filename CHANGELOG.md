@@ -6,6 +6,9 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Popup box improvements: Parameters are full-width. Popups avoid overlapping. Popups reopen
+   at previous position with previous dimensions.
+
 ### 2.8.3
 
  - Added new operation: _Export to Hive_.
