@@ -455,16 +455,21 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
       override val params = new ParameterHolder(context) // No "apply_to" parameters.
       params += Param("summary", "Summary", defaultValue = "SQL")
       params += Param("input_names", "Input names", defaultValue = inputs.mkString(", "))
-      params += Code("sql", "SQL", defaultValue = s"select * from `$defaultTableName` limit 10",
+      params += Code("sql", "SQL", defaultValue = s"select * from $defaultTableName limit 10\n",
         language = "sql", enableTableBrowser = true)
       params += Choice("persist", "Persist result", options = FEOption.yesno)
       override def summary = params("summary")
       def enabled = FEStatus.enabled
       def defaultTableName = {
         val tableNames = this.getInputTables(renaming).keySet.toList.sorted
-        Seq("vertices", inputNames.head, inputNames.head + ".vertices")
+        val name = Seq("vertices", inputNames.head, inputNames.head + ".vertices")
           .find(tableNames.contains(_))
           .getOrElse(tableNames.head)
+        val simple = "[a-zA-Z0-9]*".r
+        name match {
+          case simple() => name
+          case _ => s"`$name`"
+        }
       }
       lazy val renaming: Map[String, String] = {
         inputs.zip(inputNames).toMap
