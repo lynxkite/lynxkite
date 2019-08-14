@@ -1,6 +1,5 @@
-<!-- This has to be inside a <form class="form-horizontal">. -->
 <div class="form-group" ng-repeat="param in meta.parameters">
-  <label for="{{param.id}}" class="col-sm-4 control-label"
+  <label for="{{param.id}}" class="control-label"
       ng-if="!isVisualizationParam(param) && param.kind !== 'dummy'">
     {{param.title}}
     <help-popup href="{{meta.htmlId + '-' + param.id}}"></help-popup>
@@ -11,9 +10,7 @@
     html-id="meta.htmlId">
   </dummy-parameter>
   <div ng-class="{
-        'col-sm-8': !isVisualizationParam(param) && param.kind !== 'code',
         'operation-parameter-input': true,
-        ['parameter-' + param.kind]: true,
       }"
       id="{{param.id}}">
     <div
@@ -127,10 +124,10 @@
   <help-popup href="unexpected-parameters"></help-popup>
 </div>
 <div class="form-group" ng-repeat="paramId in unexpectedParameters">
-  <label for="{{ paramId }}" class="col-sm-4 control-label unexpected-parameter">
+  <label for="{{ paramId }}" class="control-label unexpected-parameter">
     {{ paramId }}
   </label>
-  <div class="col-sm-8 operation-parameter-input" id="{{ paramId }}">
+  <div class="operation-parameter-input" id="{{ paramId }}">
     <div>
       <input
           class="form-control operation-attribute-entry unexpected-parameter"
