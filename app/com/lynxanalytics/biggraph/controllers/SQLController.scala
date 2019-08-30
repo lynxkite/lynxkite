@@ -47,7 +47,7 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
     "Exactly one of directory and project should be defined")
   def createDataFrame(user: User, context: SQLContext)(
     implicit
-    sparkDomain: SparkDomain, metaManager: MetaGraphManager): DataFrame = {
+    dm: DataManager, sd: SparkDomain, mm: MetaGraphManager): DataFrame = {
     if (project.isDefined) ??? // TODO: Delete this method.
     else globalSQL(user, context)
   }
@@ -61,8 +61,8 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
   // Creates a DataFrame from a global level SQL query.
   private def globalSQL(user: serving.User, context: SQLContext)(
     implicit
-    sparkDomain: SparkDomain, metaManager: MetaGraphManager): spark.sql.DataFrame =
-    metaManager.synchronized {
+    dm: DataManager, sd: SparkDomain, mm: MetaGraphManager): spark.sql.DataFrame =
+    mm.synchronized {
       assert(
         project.isEmpty,
         "The project field in the DataFrameSpec must be empty for global SQL queries.")
@@ -87,18 +87,16 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
           (name, protoTable)
       }
       val result = ExecuteSQL.run(sql, protoTables)
-      import Scripting._
-      result.df
+      SQLController.getDF(result)
     }
 
   private def queryTables(
     sql: String,
     tables: Iterable[(String, Table)])(
     implicit
-    sparkDomain: SparkDomain, metaManager: MetaGraphManager): spark.sql.DataFrame = {
-    import Scripting._
-    val dfs = tables.map { case (name, table) => name -> table.df }
-    SparkDomain.sql(sparkDomain.newSQLContext, sql, dfs.toList)
+    dm: DataManager, sd: SparkDomain, mm: MetaGraphManager): spark.sql.DataFrame = {
+    val dfs = tables.map { case (name, table) => name -> SQLController.getDF(table) }
+    SparkDomain.sql(sd.newSQLContext, sql, dfs.toList)
   }
 }
 case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)
@@ -347,8 +345,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val columns = table.schema.toList.map { field =>
       field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
     }
-    import Scripting._
-    val df = table.df
+    val df = SQLController.getDF(table)
     val header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) }
     val rdd = SQLHelper.toSeqRDD(df)
     val local = if (sampleRows < 0) rdd.collect else rdd.take(sampleRows)
@@ -464,4 +461,11 @@ object SQLController {
     (entry, split.tail)
   }
 
+  def getDF(t: Table)(implicit sd: SparkDomain, dm: DataManager): DataFrame = {
+    implicit val ec = sd.executionContext
+    dm.compute(t)
+      .flatMap(_ => sd.getFuture(t).as[TableData])
+      .awaitResult(concurrent.duration.Duration.Inf)
+      .df
+  }
 }

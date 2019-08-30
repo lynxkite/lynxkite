@@ -21,9 +21,9 @@ import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 class ScalaDomain extends Domain {
-  private val entityCache = TrieMap[UUID, SafeFuture[Any]]()
+  private val entityCache = TrieMap[UUID, Any]()
 
-  private def set(entity: MetaGraphEntity, data: SafeFuture[Any]) = synchronized {
+  private def set(entity: MetaGraphEntity, data: Any): Unit = synchronized {
     entityCache(entity.gUID) = data
   }
   override def has(e: MetaGraphEntity): Boolean = synchronized {
@@ -38,14 +38,27 @@ class ScalaDomain extends Domain {
   }
   override def canCompute(e: MetaGraphEntity): Boolean = false
 
-  override def getProgress(entity: MetaGraphEntity): Double = synchronized {
-    val guid = entity.gUID
-    if (entityCache.contains(guid)) {
-      entityCache(guid).value match {
-        case None => 0.5
-        case Some(Failure(_)) => -1.0
-        case Some(Success(_)) => 1.0
-      }
-    } else 0.0
+  override def getProgress(e: MetaGraphEntity): Double = synchronized {
+    if (entityCache.contains(e.gUID)) 1 else 0
   }
+
+  def get(e: VertexSet) = synchronized { entityCache(e.gUID).asInstanceOf[Set[ID]] }
+  def get(e: EdgeBundle) = synchronized { entityCache(e.gUID).asInstanceOf[Map[ID, Edge]] }
+  def get[T](e: Attribute[T]) = synchronized { entityCache(e.gUID).asInstanceOf[Map[ID, T]] }
+
+  override def relocate(e: MetaGraphEntity, source: Domain) = {
+    source match {
+      case source: SparkDomain =>
+        implicit val ec = source.executionContext
+        val future = source.getFuture(e).map {
+          case v: VertexSetData => v.rdd.keys.collect.toSet
+          case e: EdgeBundleData => e.rdd.collect.toMap
+          case a: AttributeData[_] => a.rdd.collect.toMap
+          case s: ScalarData[_] => s.value
+          case _ => throw new AssertionError(s"Cannot fetch $e from $source")
+        }
+        future.map(set(e, _))
+    }
+  }
+
 }

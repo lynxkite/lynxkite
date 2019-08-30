@@ -66,6 +66,8 @@ class SafeFuture[+T] private (val future: Future[T]) {
 
   def get = value.get.get
 
+  def as[T] = this.asInstanceOf[SafeFuture[T]]
+
   def isCompleted = future.isCompleted
 
   def zip[U](other: SafeFuture[U]): SafeFuture[(T, U)] =

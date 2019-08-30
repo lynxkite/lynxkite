@@ -48,6 +48,10 @@ trait Domain {
   def cache(e: MetaGraphEntity): Unit
   def get[T](e: Scalar[T]): SafeFuture[T]
   def canCompute(e: MetaGraphEntity): Boolean
+  // Moves an entity from another Domain to this one.
+  // This is a method on the destination so that the methods for modifying internal
+  // data structures can remain private.
+  def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit]
 }
 
 // Manages data computation across domains.
@@ -101,7 +105,7 @@ class DataManager(
       } else {
         val other = bestSource(e)
         ensure(e, other)
-        relocate(e, other, d)
+        d.relocate(e, other)
       }
     } else SafeFuture.successful(())
   }
@@ -112,10 +116,6 @@ class DataManager(
         ensure(input, d)
       }
     }.map(_ => ())
-  }
-
-  private def relocate(e: MetaGraphEntity, d1: Domain, d2: Domain): SafeFuture[Unit] = {
-    SafeFuture.successful(())
   }
 
   def cache(entity: MetaGraphEntity): Unit = {

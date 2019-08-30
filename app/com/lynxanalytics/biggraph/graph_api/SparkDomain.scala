@@ -105,9 +105,11 @@ class SparkDomain(
   private def load(entity: MetaGraphEntity): SafeFuture[EntityData] = {
     val eio = entityIO(entity)
     log.info(s"PERF Found entity $entity on disk")
-    val vsOpt: Option[VertexSet] = eio.correspondingVertexSet
-    val baseFuture = vsOpt.map(vs => getFuture(vs).map(x => Some(x))).getOrElse(SafeFuture.successful(None))
-    baseFuture.map(bf => eio.read(bf))
+    val baseOptFuture: Option[SafeFuture[VertexSetData]] =
+      eio.correspondingVertexSet.map(vs => getFuture(vs).map(_.asInstanceOf[VertexSetData]))
+    val baseFutureOpt: SafeFuture[Option[VertexSetData]] =
+      baseOptFuture.map(f => f.map(Some(_))).getOrElse(SafeFuture.successful(None))
+    baseFutureOpt.map(bf => eio.read(bf))
   }
 
   private def set(entity: MetaGraphEntity, data: SafeFuture[EntityData]) = synchronized {
@@ -124,11 +126,7 @@ class SparkDomain(
 
   // Runs something on the SparkDomain threadpool.
   // Use this to run Spark operations from HTTP handlers. (SPARK-12964)
-  def async[T](fn: => T): concurrent.Future[T] = {
-    SafeFuture {
-      fn
-    }.future
-  }
+  def async[T](fn: => T): concurrent.Future[T] = SafeFuture(fn).future
 
   // Asserts that this thread is not in the process of executing an operation.
   private def assertNotInOperation(msg: => String): Unit = {
@@ -313,47 +311,8 @@ class SparkDomain(
         canLoadEntityFromDisk(entity).awaitResult(Duration.Inf))
   }
 
-  def getFuture(vertexSet: VertexSet): SafeFuture[VertexSetData] = {
-    loadOrExecuteIfNecessary(vertexSet)
-    entityCache(vertexSet.gUID).map(_.asInstanceOf[VertexSetData])
-  }
-
-  def getFuture(edgeBundle: EdgeBundle): SafeFuture[EdgeBundleData] = {
-    loadOrExecuteIfNecessary(edgeBundle)
-    entityCache(edgeBundle.gUID).map(_.asInstanceOf[EdgeBundleData])
-  }
-
-  def getFuture(hybridBundle: HybridBundle): SafeFuture[HybridBundleData] = {
-    loadOrExecuteIfNecessary(hybridBundle)
-    entityCache(hybridBundle.gUID).map(_.asInstanceOf[HybridBundleData])
-  }
-
-  def getFuture[T](attribute: Attribute[T]): SafeFuture[AttributeData[T]] = {
-    loadOrExecuteIfNecessary(attribute)
-    implicit val tagForT = attribute.typeTag
-    entityCache(attribute.gUID).map(_.asInstanceOf[AttributeData[_]].runtimeSafeCast[T])
-  }
-
-  def getFuture[T](scalar: Scalar[T]): SafeFuture[ScalarData[T]] = {
-    loadOrExecuteIfNecessary(scalar)
-    implicit val tagForT = scalar.typeTag
-    entityCache(scalar.gUID).map(_.asInstanceOf[ScalarData[_]].runtimeSafeCast[T])
-  }
-
-  def getFuture(table: Table): SafeFuture[TableData] = {
-    loadOrExecuteIfNecessary(table)
-    entityCache(table.gUID).map(_.asInstanceOf[TableData])
-  }
-
-  def getFuture(entity: MetaGraphEntity): SafeFuture[EntityData] = {
-    entity match {
-      case vs: VertexSet => getFuture(vs)
-      case eb: EdgeBundle => getFuture(eb)
-      case hb: HybridBundle => getFuture(hb)
-      case va: Attribute[_] => getFuture(va)
-      case sc: Scalar[_] => getFuture(sc)
-      case tb: Table => getFuture(tb)
-    }
+  def getFuture(e: MetaGraphEntity): SafeFuture[EntityData] = {
+    entityCache(e.gUID)
   }
 
   def waitAllFutures(): Unit = {
@@ -362,33 +321,20 @@ class SparkDomain(
     hadoopAsyncJobs.waitAllFutures()
   }
 
-  def get(vertexSet: VertexSet): VertexSetData = {
-    getFuture(vertexSet).awaitResult(Duration.Inf)
+  def await(e: MetaGraphEntity): EntityData = {
+    getFuture(e).awaitResult(Duration.Inf)
   }
-  def get(edgeBundle: EdgeBundle): EdgeBundleData = {
-    getFuture(edgeBundle).awaitResult(Duration.Inf)
-  }
-  def get(hybridBundle: HybridBundle): HybridBundleData = {
-    getFuture(hybridBundle).awaitResult(Duration.Inf)
-  }
-  def get[T](attribute: Attribute[T]): AttributeData[T] = {
-    getFuture(attribute).awaitResult(Duration.Inf)
-  }
+
   override def get[T](scalar: Scalar[T]): SafeFuture[T] = {
-    getFuture(scalar).map(_.value)
-  }
-  def get(table: Table): TableData = {
-    getFuture(table).awaitResult(Duration.Inf)
-  }
-  def get(entity: MetaGraphEntity): EntityData = {
-    getFuture(entity).awaitResult(Duration.Inf)
+    implicit val tt = scalar.typeTag
+    entityCache(scalar.gUID).map(_.asInstanceOf[ScalarData[_]].runtimeSafeCast[T].value)
   }
 
   private def coLocatedFuture[T: ClassTag](
     dataFuture: SafeFuture[EntityRDDData[T]],
     idSet: VertexSet): SafeFuture[(UniqueSortedRDD[Long, T], Option[Long])] = {
 
-    dataFuture.zip(getFuture(idSet)).map {
+    dataFuture.zip(getFuture(idSet).as[VertexSetData]).map {
       case (data, idSetData) =>
         (enforceCoLocationWithIdSet(data, idSetData), data.count)
     }
@@ -414,14 +360,16 @@ class SparkDomain(
     synchronized {
       if (!sparkCachedEntities.contains(entity.gUID)) {
         entityCache(entity.gUID) = entity match {
-          case vs: VertexSet => getFuture(vs).map(_.cached)
+          case vs: VertexSet => getFuture(vs).as[VertexSetData].map(_.cached)
           case eb: EdgeBundle =>
-            coLocatedFuture(getFuture(eb), eb.idSet)
+            coLocatedFuture(getFuture(eb).as[EdgeBundleData], eb.idSet)
               .map { case (rdd, count) => new EdgeBundleData(eb, rdd, count) }
-          case heb: HybridBundle => getFuture(heb).map(_.cached)
+          case heb: HybridBundle => getFuture(heb).as[HybridBundleData].map(_.cached)
           case va: Attribute[_] =>
-            coLocatedFuture(getFuture(va), va.vertexSet)(va.classTag)
-              .map { case (rdd, count) => new AttributeData(va, rdd, count) }
+            def cached[T](va: Attribute[T]) =
+              coLocatedFuture(getFuture(va).as[AttributeData[T]], va.vertexSet)(va.classTag)
+                .map { case (rdd, count) => new AttributeData[T](va, rdd, count) }
+            cached(va)
           case sc: Scalar[_] => getFuture(sc)
           case tb: Table => getFuture(tb)
         }
@@ -454,6 +402,39 @@ class SparkDomain(
     val sqlContext = masterSQLContext.newSession()
     UDF.register(sqlContext.udf)
     sqlContext
+  }
+
+  override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = synchronized {
+    source match {
+      case source: ScalaDomain =>
+        import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
+        import com.lynxanalytics.biggraph.spark_util.Implicits._
+        def parallelize[T: reflect.ClassTag](s: Seq[(ID, T)]): UniqueSortedRDD[ID, T] = {
+          val rc = runtimeContext
+          rc.sparkContext.parallelize(s).sortUnique(rc.partitionerForNRows(s.size))
+        }
+        val future = SafeFuture[EntityData] {
+          e match {
+            case e: VertexSet => new VertexSetData(
+              e, parallelize(source.get(e).toSeq.map((_, ()))), count = Some(source.get(e).size))
+            case e: EdgeBundle =>
+              new EdgeBundleData(
+                e, parallelize(source.get(e).toSeq), count = Some(source.get(e).size))
+            case e: Attribute[_] => {
+              def attr[T: reflect.ClassTag](e: Attribute[T]) = new AttributeData[T](
+                e, parallelize(source.get(e).toSeq), count = Some(source.get(e).size))
+              attr(e)(e.classTag)
+            }
+            case e: Scalar[_] => {
+              def scalar[T](e: Scalar[T]) = new ScalarData[T](e, source.get(e).get)
+              scalar(e)
+            }
+            case _ => throw new AssertionError(s"Cannot fetch $e from $source")
+          }
+        }
+        set(e, future)
+        future.map(_ => ())
+    }
   }
 }
 

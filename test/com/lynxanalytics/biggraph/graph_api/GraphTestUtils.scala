@@ -55,6 +55,40 @@ trait TestDataManager extends TestTempDir with TestSparkContext {
     val dataDir = cleanDataManagerDir()
     new DataManager(sparkSession, dataDir)
   }
+
+  implicit def getData(entity: EntityContainer[VertexSet])(
+    implicit
+    sd: SparkDomain): VertexSetData =
+    sd.get(entity.entity)
+  implicit def getData(entity: EntityContainer[EdgeBundle])(
+    implicit
+    sd: SparkDomain): EdgeBundleData =
+    sd.get(entity.entity)
+  implicit def getData[T](entity: EntityContainer[Attribute[T]])(
+    implicit
+    sd: SparkDomain): AttributeData[T] =
+    sd.get(entity.entity)
+  implicit def getData(entity: EntityContainer[Table])(
+    implicit
+    sd: SparkDomain): TableData =
+    sd.get(entity.entity)
+
+  implicit def getData(entity: VertexSet)(
+    implicit
+    sd: SparkDomain): VertexSetData =
+    sd.get(entity)
+  implicit def getData(entity: EdgeBundle)(
+    implicit
+    sd: SparkDomain): EdgeBundleData =
+    sd.get(entity)
+  implicit def getData[T](entity: Attribute[T])(
+    implicit
+    sd: SparkDomain): AttributeData[T] =
+    sd.get(entity)
+  implicit def getData(entity: Table)(
+    implicit
+    sd: SparkDomain): TableData =
+    sd.get(entity)
 }
 
 // A TestDataManager that has an ephemeral path, too.
