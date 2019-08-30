@@ -64,47 +64,14 @@ object Scripting {
     manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] =
     builder.toInstance(manager)
 
-  implicit def getData(entity: EntityContainer[VertexSet])(
-    implicit
-    sd: SparkDomain): VertexSetData =
-    sd.get(entity.entity)
-  implicit def getData(entity: EntityContainer[EdgeBundle])(
-    implicit
-    sd: SparkDomain): EdgeBundleData =
-    sd.get(entity.entity)
-  implicit def getData[T](entity: EntityContainer[Attribute[T]])(
-    implicit
-    sd: SparkDomain): AttributeData[T] =
-    sd.get(entity.entity)
   implicit def getData[T](entity: EntityContainer[Scalar[T]])(
     implicit
     dataManager: DataManager): ScalarData[T] =
     new ScalarData(entity.entity, dataManager.get(entity.entity))
-  implicit def getData(entity: EntityContainer[Table])(
-    implicit
-    sd: SparkDomain): TableData =
-    sd.get(entity.entity)
-
-  implicit def getData(entity: VertexSet)(
-    implicit
-    sd: SparkDomain): VertexSetData =
-    sd.get(entity)
-  implicit def getData(entity: EdgeBundle)(
-    implicit
-    sd: SparkDomain): EdgeBundleData =
-    sd.get(entity)
-  implicit def getData[T](entity: Attribute[T])(
-    implicit
-    sd: SparkDomain): AttributeData[T] =
-    sd.get(entity)
   implicit def getData[T](entity: Scalar[T])(
     implicit
     dataManager: DataManager): ScalarData[T] =
     new ScalarData(entity, dataManager.get(entity))
-  implicit def getData(entity: Table)(
-    implicit
-    sd: SparkDomain): TableData =
-    sd.get(entity)
 
   implicit def toInput[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     op: TypedMetaGraphOp[IS, OMDS]): IS = op.inputs
