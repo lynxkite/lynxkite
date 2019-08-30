@@ -72,7 +72,7 @@ case class ClassifyWithModel[T](
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = labelType.classTag
-    val sqlContext = rc.dataManager.newSQLContext()
+    val sqlContext = rc.sparkDomain.newSQLContext()
     import sqlContext.implicits._
 
     val modelValue = inputs.model.value

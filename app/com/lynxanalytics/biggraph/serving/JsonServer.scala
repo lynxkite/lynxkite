@@ -379,7 +379,7 @@ object ProductionJsonServer extends JsonServer {
       try {
         val size = upload.ref.file.length
         log.info(s"upload: $user ${upload.filename} ($size bytes)")
-        val dataRepo = BigGraphProductionEnvironment.dataManager.repositoryPath
+        val dataRepo = BigGraphProductionEnvironment.sparkDomain.repositoryPath
         val baseName = upload.filename.replace(" ", "_")
         val tmpName = s"$baseName.$Timestamp"
         val tmpFile = dataRepo / "tmp" / tmpName

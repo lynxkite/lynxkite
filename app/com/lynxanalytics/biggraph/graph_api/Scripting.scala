@@ -66,45 +66,45 @@ object Scripting {
 
   implicit def getData(entity: EntityContainer[VertexSet])(
     implicit
-    dataManager: DataManager): VertexSetData =
-    dataManager.get(entity.entity)
+    sd: SparkDomain): VertexSetData =
+    sd.get(entity.entity)
   implicit def getData(entity: EntityContainer[EdgeBundle])(
     implicit
-    dataManager: DataManager): EdgeBundleData =
-    dataManager.get(entity.entity)
+    sd: SparkDomain): EdgeBundleData =
+    sd.get(entity.entity)
   implicit def getData[T](entity: EntityContainer[Attribute[T]])(
     implicit
-    dataManager: DataManager): AttributeData[T] =
-    dataManager.get(entity.entity)
+    sd: SparkDomain): AttributeData[T] =
+    sd.get(entity.entity)
   implicit def getData[T](entity: EntityContainer[Scalar[T]])(
     implicit
     dataManager: DataManager): ScalarData[T] =
-    dataManager.get(entity.entity)
+    new ScalarData(entity.entity, dataManager.get(entity.entity))
   implicit def getData(entity: EntityContainer[Table])(
     implicit
-    dataManager: DataManager): TableData =
-    dataManager.get(entity.entity)
+    sd: SparkDomain): TableData =
+    sd.get(entity.entity)
 
   implicit def getData(entity: VertexSet)(
     implicit
-    dataManager: DataManager): VertexSetData =
-    dataManager.get(entity)
+    sd: SparkDomain): VertexSetData =
+    sd.get(entity)
   implicit def getData(entity: EdgeBundle)(
     implicit
-    dataManager: DataManager): EdgeBundleData =
-    dataManager.get(entity)
+    sd: SparkDomain): EdgeBundleData =
+    sd.get(entity)
   implicit def getData[T](entity: Attribute[T])(
     implicit
-    dataManager: DataManager): AttributeData[T] =
-    dataManager.get(entity)
+    sd: SparkDomain): AttributeData[T] =
+    sd.get(entity)
   implicit def getData[T](entity: Scalar[T])(
     implicit
     dataManager: DataManager): ScalarData[T] =
-    dataManager.get(entity)
+    new ScalarData(entity, dataManager.get(entity))
   implicit def getData(entity: Table)(
     implicit
-    dataManager: DataManager): TableData =
-    dataManager.get(entity)
+    sd: SparkDomain): TableData =
+    sd.get(entity)
 
   implicit def toInput[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     op: TypedMetaGraphOp[IS, OMDS]): IS = op.inputs

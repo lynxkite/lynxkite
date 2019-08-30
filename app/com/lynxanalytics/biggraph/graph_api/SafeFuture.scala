@@ -16,7 +16,7 @@ object SafeFuture {
 
   def successful[T](value: T) = new SafeFuture(Future.successful(value))
 
-  def sequence[T](s: Seq[SafeFuture[T]])(implicit ec: ExecutionContext) =
+  def sequence[T](s: Iterable[SafeFuture[T]])(implicit ec: ExecutionContext) =
     new SafeFuture(Future.sequence(s.map(_.future)))
 
   private case class Wrapper(t: Throwable) extends Exception(t)
@@ -63,6 +63,8 @@ class SafeFuture[+T] private (val future: Future[T]) {
     future.foreach(f)
 
   def value = future.value
+
+  def get = value.get.get
 
   def isCompleted = future.isCompleted
 

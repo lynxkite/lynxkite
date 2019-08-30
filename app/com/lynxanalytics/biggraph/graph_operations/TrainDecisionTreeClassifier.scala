@@ -81,7 +81,7 @@ case class TrainDecisionTreeClassifier[T: TypeTag](
     output: OutputBuilder,
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val sqlContext = rc.dataManager.newSQLContext()
+    val sqlContext = rc.sparkDomain.newSQLContext()
     import sqlContext.implicits._
 
     val (labelRDD, labelMapping) = Model.toDoubleRDD(inputs.label.data)
