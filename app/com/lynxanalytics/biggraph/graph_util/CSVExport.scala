@@ -33,7 +33,7 @@ object CSVData {
 object CSVExport {
   def exportVertexAttributes(
     vertexSet: VertexSet,
-    attributes: Map[String, Attribute[_]])(implicit dataManager: DataManager): CSVData = {
+    attributes: Map[String, Attribute[_]])(implicit sd: SparkDomain): CSVData = {
     assert(attributes.size > 0, "At least one attribute must be selected for export.")
     for ((name, attr) <- attributes) {
       assert(attr.vertexSet == vertexSet, s"Incorrect vertex set for attribute $name.")
@@ -47,7 +47,7 @@ object CSVExport {
 
   def exportEdgeAttributes(
     edgeBundle: EdgeBundle,
-    attributes: Seq[(String, Attribute[_])])(implicit dataManager: DataManager): CSVData = {
+    attributes: Seq[(String, Attribute[_])])(implicit sd: SparkDomain): CSVData = {
 
     for ((name, attr) <- attributes) {
       assert(
@@ -71,12 +71,12 @@ object CSVExport {
 
   private def attachAttributeData(
     base: UniqueSortedRDD[ID, Seq[String]],
-    attributes: Seq[Attribute[_]])(implicit dataManager: DataManager) = {
+    attributes: Seq[Attribute[_]])(implicit sd: SparkDomain) = {
     addRDDs(base, attributes.map(stringRDDFromAttribute(_)))
   }
 
   private def stringRDDFromAttribute[T: ClassTag](
-    attribute: Attribute[T])(implicit dataManager: DataManager): UniqueSortedRDD[ID, String] = {
+    attribute: Attribute[T])(implicit dm: SparkDomain): UniqueSortedRDD[ID, String] = {
     implicit val tagForT = attribute.typeTag
     val op = toCSVStringOperation[T]
     attribute.rdd.mapValues(op)

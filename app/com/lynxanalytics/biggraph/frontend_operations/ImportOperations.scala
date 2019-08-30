@@ -199,7 +199,7 @@ class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       ImportedTableParam("imported_table", "Table GUID"))
     def getRawDataFrame(context: spark.sql.SQLContext) = {
       assert(
-        DataManager.hiveConfigured,
+        SparkDomain.hiveConfigured,
         "Hive is not configured for this LynxKite instance. Contact your system administrator.")
       context.table(params("hive_table"))
     }

@@ -39,7 +39,7 @@ class ImportDataFrame private (
 
   for (df <- inputFrame) {
     // If the DataFrame is backed by LynxKite operations, we need to trigger these now. Triggering
-    // them inside execute() could lead to DataManager thread exhaustion. #5580
+    // them inside execute() could lead to SparkDomain thread exhaustion. #5580
     df.rdd
   }
 

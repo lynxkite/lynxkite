@@ -64,7 +64,7 @@ case class TrainDecisionTreeRegressor(
     output: OutputBuilder,
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val sqlContext = rc.dataManager.newSQLContext()
+    val sqlContext = rc.sparkDomain.newSQLContext()
     import sqlContext.implicits._
 
     val featuresRddArray = inputs.features.toArray.map(_.rdd)

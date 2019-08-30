@@ -47,7 +47,7 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
     "Exactly one of directory and project should be defined")
   def createDataFrame(user: User, context: SQLContext)(
     implicit
-    dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
+    sparkDomain: SparkDomain, metaManager: MetaGraphManager): DataFrame = {
     if (project.isDefined) ??? // TODO: Delete this method.
     else globalSQL(user, context)
   }
@@ -61,7 +61,7 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
   // Creates a DataFrame from a global level SQL query.
   private def globalSQL(user: serving.User, context: SQLContext)(
     implicit
-    dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame =
+    sparkDomain: SparkDomain, metaManager: MetaGraphManager): spark.sql.DataFrame =
     metaManager.synchronized {
       assert(
         project.isEmpty,
@@ -95,10 +95,10 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
     sql: String,
     tables: Iterable[(String, Table)])(
     implicit
-    dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame = {
+    sparkDomain: SparkDomain, metaManager: MetaGraphManager): spark.sql.DataFrame = {
     import Scripting._
     val dfs = tables.map { case (name, table) => name -> table.df }
-    DataManager.sql(dataManager.newSQLContext, sql, dfs.toList)
+    SparkDomain.sql(sparkDomain.newSQLContext, sql, dfs.toList)
   }
 }
 case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)
@@ -171,6 +171,7 @@ case class TableBrowserNodeForBoxRequest(
 class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager: DataManager = env.dataManager
+  implicit val sparkDomain = env.sparkDomain
   // We don't want to block the HTTP threads -- we want to return Futures instead. But the DataFrame
   // API is not Future-based, so we need to block some threads. This also avoids #2906.
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
@@ -183,7 +184,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val parameterSettings = op.settingsString()
     val df = op.getDataFrame(SQLController.defaultContext(user))
     val table = ImportDataFrame.run(df)
-    dataManager.getFuture(table) // Start importing in the background.
+    dataManager.compute(table) // Start importing in the background.
     val guid = table.gUID.toString
     ImportBoxResponse(guid, parameterSettings)
   }
@@ -405,7 +406,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     options: Map[String, String] = Map(),
     stripHeaders: Boolean = false): SQLExportToFileResult = {
     val file = if (path == "<download>") {
-      dataManager.repositoryPath / "exports" / Timestamp.toString + "." + format
+      env.sparkDomain.repositoryPath / "exports" / Timestamp.toString + "." + format
     } else {
       HadoopFile(path)
     }
@@ -446,8 +447,8 @@ object SQLController {
   }
 
   // Every query runs in its own SQLContext for isolation.
-  def defaultContext(user: User)(implicit dataManager: DataManager): SQLContext = {
-    dataManager.newSQLContext()
+  def defaultContext(user: User)(implicit sparkDomain: SparkDomain): SQLContext = {
+    sparkDomain.newSQLContext()
   }
 
   // Splits a table path into a snapshot entry and an internal table path.

@@ -48,7 +48,7 @@ case class KMeansClusteringModelTrainer(
     output: OutputBuilder,
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val sqlContext = rc.dataManager.newSQLContext()
+    val sqlContext = rc.sparkDomain.newSQLContext()
 
     val featuresArray = inputs.features.map(_.rdd).toArray
     val inputDF = Model.toDF(sqlContext, inputs.vertices.rdd, featuresArray)

@@ -82,7 +82,7 @@ class OperationLogger(
     val outputsFuture = SafeFuture.sequence(outputInfoList)
     controlledFutures.registerFuture {
       outputsFuture.map {
-        outputs => dump(outputs)
+        outputs => dump(outputs.toSeq)
       }
     }
   }

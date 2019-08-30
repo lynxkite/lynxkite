@@ -1,7 +1,6 @@
-// The DataManager can get the EntityDatas (RDDs/scalar values) for a MetaGraphEntity.
+// The SparkDomain can run operations on Spark and give access to their outputs.
 //
-// It will either load the data from disk, or run the required operations
-// (and then save the data) when RDDs are requested.
+// It also manages loading the data from disk and saving the data when RDDs are requested.
 
 package com.lynxanalytics.biggraph.graph_api
 
@@ -23,34 +22,18 @@ import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
-trait EntityProgressManager {
-  case class ScalarComputationState[T](
-      computeProgress: Double,
-      value: Option[T],
-      error: Option[Throwable])
-  // Returns an indication of whether the entity has already been computed.
-  // 0 means it is not computed.
-  // 1 means it is computed.
-  // Anything in between indicates that the computation is in progress.
-  // -1.0 indicates that an error has occurred during computation.
-  // These constants need to be kept in sync with the ones in:
-  // /web/app/script/util.js
-  def computeProgress(entity: MetaGraphEntity): Double
-  def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
-}
-
-class DataManager(
+class SparkDomain(
     val sparkSession: spark.sql.SparkSession,
     val repositoryPath: HadoopFile,
-    val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
+    val ephemeralPath: Option[HadoopFile] = None) extends Domain {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
-      "DataManager",
+      "SparkDomain",
       maxParallelism = LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
   private val asyncJobs = new ControlledFutures()(executionContext)
   val hadoopCheckExecutionContext =
     ThreadUtil.limitedExecutionContext(
-      "DataManager(Hadoop)",
+      "SparkDomain(Hadoop)",
       maxParallelism = LoggedEnvironment.envOrElse("KITE_HADOOP_PARALLELISM", "5").toInt)
   private val hadoopAsyncJobs = new ControlledFutures()(hadoopCheckExecutionContext)
   private var executingOperation =
@@ -64,9 +47,6 @@ class DataManager(
     UDF.register(sqlContext.udf)
     sqlContext
   }
-
-  // This can be switched to false to enter "demo mode" where no new calculations are allowed.
-  var computationAllowed = true
 
   def entityIO(entity: MetaGraphEntity): io.EntityIO = {
     val context = io.IOContext(dataRoot, sparkSession)
@@ -142,7 +122,7 @@ class DataManager(
     dataRoot.clear()
   }
 
-  // Runs something on the DataManager threadpool.
+  // Runs something on the SparkDomain threadpool.
   // Use this to run Spark operations from HTTP handlers. (SPARK-12964)
   def async[T](fn: => T): concurrent.Future[T] = {
     SafeFuture {
@@ -160,22 +140,16 @@ class DataManager(
   private def execute(
     instance: MetaGraphOperationInstance,
     logger: OperationLogger): SafeFuture[Map[UUID, EntityData]] = {
-    val inputs = instance.inputs
-    val futureInputs = SafeFuture.sequence(
-      inputs.all.toSeq.map {
-        case (name, entity) =>
-          getFuture(entity).map {
-            data =>
-              logger.addInput(name.toString, data)
-              (name, data)
-          }
-      })
-    futureInputs.map { inputs =>
+    val inputs = instance.inputs.all.map {
+      case (name, entity) =>
+        name -> entityCache(entity.gUID).get
+    }
+    SafeFuture {
       if (instance.operation.isHeavy) {
         log.info(s"PERF HEAVY Starting to compute heavy operation instance $instance")
         logger.startTimer()
       }
-      val inputDatas = DataSet(inputs.toMap)
+      val inputDatas = DataSet(inputs)
       for (scalar <- instance.outputs.scalars.values) {
         log.info(s"PERF Computing scalar $scalar")
       }
@@ -275,7 +249,7 @@ class DataManager(
     instanceOutputCache(gUID)
   }
 
-  override def computeProgress(entity: MetaGraphEntity): Double = synchronized {
+  def getProgress(entity: MetaGraphEntity): Double = synchronized {
     val guid = entity.gUID
     // It would be great if we could be more granular, but for now we just return 0.5 if the
     // computation is running.
@@ -297,26 +271,12 @@ class DataManager(
     }
   }
 
-  override def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T] = synchronized {
-    val progress = computeProgress(entity)
-    ScalarComputationState(
-      progress,
-      if (progress == 1.0) Some(get(entity).value) else None,
-      if (progress == -1.0) {
-        entityCache(entity.gUID).value match {
-          case Some(Failure(throwable)) => Some(throwable)
-          case _ => None
-        }
-      } else None)
-  }
-
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!isEntityInProgressOrComputed(entity)) {
       if (maybeEntityCanBeLoadedFromDisk(entity) && canLoadEntityFromDisk(entity).awaitResult(Duration.Inf)) {
         // If on disk already, we just load it.
         set(entity, load(entity))
       } else {
-        assert(computationAllowed, "DEMO MODE, you cannot start new computations")
         assertNotInOperation(s"has triggered the computation of $entity. #5580")
         // Otherwise we schedule execution of its operation.
         val instance = entity.source
@@ -341,6 +301,16 @@ class DataManager(
 
       }
     }
+  }
+
+  override def canCompute(e: MetaGraphEntity): Boolean = {
+    e.source.isInstanceOf[TypedMetaGraphOp[_, _]]
+  }
+  override def compute(e: MetaGraphEntity): SafeFuture[Unit] = getFuture(e).map(_ => ())
+  override def has(entity: MetaGraphEntity): Boolean = {
+    isEntityInProgressOrComputed(entity) ||
+      (maybeEntityCanBeLoadedFromDisk(entity) &&
+        canLoadEntityFromDisk(entity).awaitResult(Duration.Inf))
   }
 
   def getFuture(vertexSet: VertexSet): SafeFuture[VertexSetData] = {
@@ -404,8 +374,8 @@ class DataManager(
   def get[T](attribute: Attribute[T]): AttributeData[T] = {
     getFuture(attribute).awaitResult(Duration.Inf)
   }
-  def get[T](scalar: Scalar[T]): ScalarData[T] = {
-    getFuture(scalar).awaitResult(Duration.Inf)
+  override def get[T](scalar: Scalar[T]): SafeFuture[T] = {
+    getFuture(scalar).map(_.value)
   }
   def get(table: Table): TableData = {
     getFuture(table).awaitResult(Duration.Inf)
@@ -441,24 +411,21 @@ class DataManager(
     }.asUniqueSortedRDD
   }
   def cache(entity: MetaGraphEntity): Unit = {
-    // We do not cache anything in demo mode.
-    if (computationAllowed) {
-      synchronized {
-        if (!sparkCachedEntities.contains(entity.gUID)) {
-          entityCache(entity.gUID) = entity match {
-            case vs: VertexSet => getFuture(vs).map(_.cached)
-            case eb: EdgeBundle =>
-              coLocatedFuture(getFuture(eb), eb.idSet)
-                .map { case (rdd, count) => new EdgeBundleData(eb, rdd, count) }
-            case heb: HybridBundle => getFuture(heb).map(_.cached)
-            case va: Attribute[_] =>
-              coLocatedFuture(getFuture(va), va.vertexSet)(va.classTag)
-                .map { case (rdd, count) => new AttributeData(va, rdd, count) }
-            case sc: Scalar[_] => getFuture(sc)
-            case tb: Table => getFuture(tb)
-          }
-          sparkCachedEntities.add(entity.gUID)
+    synchronized {
+      if (!sparkCachedEntities.contains(entity.gUID)) {
+        entityCache(entity.gUID) = entity match {
+          case vs: VertexSet => getFuture(vs).map(_.cached)
+          case eb: EdgeBundle =>
+            coLocatedFuture(getFuture(eb), eb.idSet)
+              .map { case (rdd, count) => new EdgeBundleData(eb, rdd, count) }
+          case heb: HybridBundle => getFuture(heb).map(_.cached)
+          case va: Attribute[_] =>
+            coLocatedFuture(getFuture(va), va.vertexSet)(va.classTag)
+              .map { case (rdd, count) => new AttributeData(va, rdd, count) }
+          case sc: Scalar[_] => getFuture(sc)
+          case tb: Table => getFuture(tb)
         }
+        sparkCachedEntities.add(entity.gUID)
       }
     }
   }
@@ -480,7 +447,7 @@ class DataManager(
       sqlContext = masterSQLContext,
       ioContext = io.IOContext(dataRoot, sparkSession),
       broadcastDirectory = broadcastDirectory,
-      dataManager = this)
+      sparkDomain = this)
   }
 
   def newSQLContext(): SQLContext = {
@@ -488,19 +455,9 @@ class DataManager(
     UDF.register(sqlContext.udf)
     sqlContext
   }
-
-  // Returns a SafeFuture which computes the data for all entities sequentially.
-  // This means, that the computation for one entity gets triggered only after the computation for
-  // the previous one is completed, but dependencies of these entities are still computed
-  // (if needed) with the usual Spark/LynxKite caching and parallelism mechanisms.
-  def computeSequentially(entities: List[MetaGraphEntity]): SafeFuture[Unit] = {
-    entities.foldLeft(SafeFuture(()))((f: SafeFuture[Unit], e: MetaGraphEntity) => {
-      f.flatMap(_ => getFuture(e)).map(_ => ())
-    })
-  }
 }
 
-object DataManager {
+object SparkDomain {
   // This has to be synchronized; see
   // https://app.asana.com/0/153258440689361/354006072569798
   // In a nutshell: we can now call this function from different threads with
