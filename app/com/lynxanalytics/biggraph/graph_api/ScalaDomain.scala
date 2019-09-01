@@ -4,21 +4,7 @@ package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
 
-import org.apache.spark
-import org.apache.spark.sql.SQLContext
 import scala.collection.concurrent.TrieMap
-import scala.collection.mutable
-import scala.concurrent.duration.Duration
-import scala.reflect.ClassTag
-import scala.util.Failure
-import scala.util.Success
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.graph_api.io.DataRoot
-import com.lynxanalytics.biggraph.graph_api.io.EntityIO
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_util.ControlledFutures
-import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
-import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 class ScalaDomain extends Domain {
   private val entityCache = TrieMap[UUID, Any]()
