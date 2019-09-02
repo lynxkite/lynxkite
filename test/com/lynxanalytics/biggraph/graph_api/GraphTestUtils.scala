@@ -169,7 +169,7 @@ object SmallTestGraph extends OpFromJson {
   }
 }
 case class SmallTestGraph(edgeLists: Map[Int, Seq[Int]], numPartitions: Int = 1)
-  extends TypedMetaGraphOp[NoInput, SmallTestGraph.Output] {
+  extends SparkOperation[NoInput, SmallTestGraph.Output] {
   import SmallTestGraph._
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
@@ -222,7 +222,7 @@ object AddEdgeBundle extends OpFromJson {
   }
 }
 case class AddEdgeBundle(edgeList: Seq[(Int, Int)])
-  extends TypedMetaGraphOp[AddEdgeBundle.Input, AddEdgeBundle.Output] {
+  extends SparkOperation[AddEdgeBundle.Input, AddEdgeBundle.Output] {
   import AddEdgeBundle._
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -252,7 +252,7 @@ object SegmentedTestGraph extends OpFromJson {
     SegmentedTestGraph((j \ "edgeLists").as[Seq[Seq[Int]]].map(s => s.tail -> s.head))
 }
 case class SegmentedTestGraph(edgeLists: Seq[(Seq[Int], Int)])
-  extends TypedMetaGraphOp[NoInput, SegmentedTestGraph.Output] {
+  extends SparkOperation[NoInput, SegmentedTestGraph.Output] {
   import SegmentedTestGraph._
   @transient override lazy val inputs = new NoInput
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
@@ -291,7 +291,7 @@ object AddWeightedEdges extends OpFromJson {
     AddWeightedEdges((j \ "edges").as[Seq[Seq[ID]]].map(ab => ab(0) -> ab(1)), (j \ "weight").as[Double])
 }
 case class AddWeightedEdges(edges: Seq[(ID, ID)], weight: Double)
-  extends TypedMetaGraphOp[AddWeightedEdges.Input, AddWeightedEdges.Output] {
+  extends SparkOperation[AddWeightedEdges.Input, AddWeightedEdges.Output] {
   import AddWeightedEdges._
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -334,7 +334,7 @@ object AddVertexAttribute extends OpFromJson {
   }
 }
 case class AddVertexAttribute[T](values: Map[Int, T])(implicit st: SerializableType[T])
-  extends TypedMetaGraphOp[AddVertexAttribute.Input, AddVertexAttribute.Output[T]] {
+  extends SparkOperation[AddVertexAttribute.Input, AddVertexAttribute.Output[T]] {
   import AddVertexAttribute._
 
   @transient override lazy val inputs = new Input

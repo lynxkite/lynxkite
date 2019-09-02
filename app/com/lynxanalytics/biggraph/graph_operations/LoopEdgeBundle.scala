@@ -19,7 +19,7 @@ object LoopEdgeBundle extends OpFromJson {
   def fromJson(j: JsValue) = LoopEdgeBundle()
 }
 import LoopEdgeBundle._
-case class LoopEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
+case class LoopEdgeBundle() extends SparkOperation[Input, Output] {
   override val isHeavy = false
   @transient override lazy val inputs = new Input()
 

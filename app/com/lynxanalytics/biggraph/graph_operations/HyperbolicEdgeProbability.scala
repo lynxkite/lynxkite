@@ -29,7 +29,7 @@ object HyperbolicEdgeProbability extends OpFromJson {
 
 }
 import HyperbolicEdgeProbability._
-case class HyperbolicEdgeProbability() extends TypedMetaGraphOp[Input, Output] {
+case class HyperbolicEdgeProbability() extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 

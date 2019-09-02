@@ -27,7 +27,7 @@ object Modularity extends OpFromJson {
   def fromJson(j: JsValue) = Modularity()
 }
 import Modularity._
-case class Modularity() extends TypedMetaGraphOp[Input, Output] {
+case class Modularity() extends SparkOperation[Input, Output] {
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 

@@ -15,7 +15,7 @@ object EdgeGraph extends OpFromJson {
   def fromJson(j: JsValue) = EdgeGraph()
 }
 import EdgeGraph._
-case class EdgeGraph() extends TypedMetaGraphOp[GraphInput, Output] {
+case class EdgeGraph() extends SparkOperation[GraphInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 

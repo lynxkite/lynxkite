@@ -77,7 +77,7 @@ class SparkDomain(
     // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
     // the entity in this session, so we need this assertion.
     assert(!isEntityInProgressOrComputed(eio.entity), s"${eio} is new")
-    (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
+    (sparkOp(entity.source).isHeavy || entity.isInstanceOf[Scalar[_]]) &&
       // Fast check for directory.
       eio.mayHaveExisted
   }
@@ -135,6 +135,28 @@ class SparkDomain(
     }
   }
 
+  private def sparkOp[I <: InputSignatureProvider, O <: MetaDataSetProvider](
+    instance: MetaGraphOperationInstance): SparkOperation[I, O] =
+    sparkOp(instance.asInstanceOf[TypedOperationInstance[I, O]])
+
+  private def sparkOp[I <: InputSignatureProvider, O <: MetaDataSetProvider](
+    instance: TypedOperationInstance[I, O]): SparkOperation[I, O] = {
+    instance.operation.asInstanceOf[SparkOperation[I, O]]
+  }
+
+  private def run[I <: InputSignatureProvider, O <: MetaDataSetProvider](
+    instance: MetaGraphOperationInstance,
+    inputDatas: DataSet): Map[UUID, EntityData] =
+    run(instance.asInstanceOf[TypedOperationInstance[I, O]], inputDatas)
+
+  private def run[I <: InputSignatureProvider, O <: MetaDataSetProvider](
+    instance: TypedOperationInstance[I, O],
+    inputDatas: DataSet): Map[UUID, EntityData] = {
+    val outputBuilder = new OutputBuilder(instance)
+    sparkOp(instance).execute(inputDatas, instance.result, outputBuilder, runtimeContext)
+    outputBuilder.dataMap.toMap
+  }
+
   private def execute(
     instance: MetaGraphOperationInstance,
     logger: OperationLogger): SafeFuture[Map[UUID, EntityData]] = {
@@ -143,7 +165,7 @@ class SparkDomain(
         name -> entityCache(entity.gUID).get
     }
     SafeFuture {
-      if (instance.operation.isHeavy) {
+      if (sparkOp(instance).isHeavy) {
         log.info(s"PERF HEAVY Starting to compute heavy operation instance $instance")
         logger.startTimer()
       }
@@ -153,14 +175,14 @@ class SparkDomain(
       }
       val outputDatas = concurrent.blocking {
         executingOperation.set(Some(instance))
-        try instance.run(inputDatas, runtimeContext)
+        try run(instance, inputDatas)
         finally executingOperation.set(None)
       }
       validateOutput(instance, outputDatas)
       concurrent.blocking {
-        if (instance.operation.isHeavy) {
+        if (sparkOp(instance).isHeavy) {
           saveOutputs(instance, outputDatas.values)
-        } else if (!instance.operation.neverSerialize) {
+        } else if (!sparkOp(instance).neverSerialize) {
           // We still save all scalars even for non-heavy operations,
           // unless they are explicitly say 'never serialize'.
           // This can happen asynchronously though.
@@ -172,7 +194,7 @@ class SparkDomain(
       for (scalar <- instance.outputs.scalars.values) {
         log.info(s"PERF Computed scalar $scalar")
       }
-      if (instance.operation.isHeavy) {
+      if (sparkOp(instance).isHeavy) {
         log.info(s"PERF HEAVY Finished computing heavy operation instance $instance")
         logger.stopTimer()
       }
@@ -228,7 +250,7 @@ class SparkDomain(
     if (!instanceOutputCache.contains(gUID)) {
       instanceOutputCache(gUID) = {
         val output = execute(instance, logger)
-        if (instance.operation.isHeavy) {
+        if (sparkOp(instance).isHeavy) {
           // For heavy operations we want to avoid caching the RDDs. The RDD data will be reloaded
           // from disk anyway to break the lineage. These RDDs need to be GC'd to clean up the
           // shuffle files on the executors. See #2098.
@@ -286,7 +308,7 @@ class SparkDomain(
           set(
             output,
             // And the entity will have to wait until its full completion (including saves).
-            if (instance.operation.isHeavy && !output.isInstanceOf[Scalar[_]]) {
+            if (sparkOp(instance).isHeavy && !output.isInstanceOf[Scalar[_]]) {
               val futureEntityData = instanceFuture.flatMap(_ => load(output))
               logger.addOutput(futureEntityData)
               futureEntityData
@@ -302,9 +324,12 @@ class SparkDomain(
   }
 
   override def canCompute(e: MetaGraphEntity): Boolean = {
-    e.source.isInstanceOf[TypedMetaGraphOp[_, _]]
+    e.source.operation.isInstanceOf[SparkOperation[_, _]]
   }
-  override def compute(e: MetaGraphEntity): SafeFuture[Unit] = getFuture(e).map(_ => ())
+  override def compute(e: MetaGraphEntity): SafeFuture[Unit] = {
+    loadOrExecuteIfNecessary(e)
+    getFuture(e).map(_ => ())
+  }
   override def has(entity: MetaGraphEntity): Boolean = {
     isEntityInProgressOrComputed(entity) ||
       (maybeEntityCanBeLoadedFromDisk(entity) &&
@@ -460,4 +485,165 @@ object SparkDomain {
     df
   }
   lazy val hiveConfigured = (getClass.getResource("/hive-site.xml") != null)
+}
+
+trait SparkOperation[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider] extends TypedMetaGraphOp[IS, OMDS] {
+  // An operation is heavy if it is faster to load its results than it is to recalculate them.
+  // Heavy operation outputs are written out and loaded back on completion.
+  val isHeavy: Boolean = false
+  val neverSerialize: Boolean = false
+  assert(!isHeavy || !neverSerialize, "$this cannot be heavy and never serialize at the same time")
+  // If a heavy operation hasCustomSaving, it can just write out some or all of its outputs
+  // instead of putting them in the OutputBuilder in execute().
+  val hasCustomSaving: Boolean = false
+  assert(!hasCustomSaving || isHeavy, "$this cannot have custom saving if it is not heavy.")
+  def execute(
+    inputDatas: DataSet,
+    outputMeta: OMDS,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit
+}
+
+sealed trait EntityData {
+  val entity: MetaGraphEntity
+  def gUID = entity.gUID
+}
+sealed trait EntityRDDData[T] extends EntityData {
+  val rdd: spark.rdd.RDD[(ID, T)]
+  val count: Option[Long]
+  def cached: EntityRDDData[T]
+  rdd.setName("RDD[%d]/%d of %s GUID[%s]".format(rdd.id, rdd.partitions.size, entity, gUID))
+}
+class VertexSetData(
+    val entity: VertexSet,
+    val rdd: VertexSetRDD,
+    val count: Option[Long] = None) extends EntityRDDData[Unit] {
+  val vertexSet = entity
+  def cached = new VertexSetData(entity, rdd.copyWithAncestorsCached, count)
+}
+
+class EdgeBundleData(
+    val entity: EdgeBundle,
+    val rdd: EdgeBundleRDD,
+    val count: Option[Long] = None) extends EntityRDDData[Edge] {
+  val edgeBundle = entity
+  def cached = new EdgeBundleData(entity, rdd.copyWithAncestorsCached, count)
+}
+
+class HybridBundleData(
+    val entity: HybridBundle,
+    val rdd: HybridBundleRDD,
+    val count: Option[Long] = None) extends EntityRDDData[ID] {
+  val hybridBundle = entity
+  def cached = new HybridBundleData(entity, rdd.persist(spark.storage.StorageLevel.MEMORY_ONLY), count)
+}
+
+class AttributeData[T](
+    val entity: Attribute[T],
+    val rdd: AttributeRDD[T],
+    val count: Option[Long] = None)
+  extends EntityRDDData[T] with RuntimeSafeCastable[T, AttributeData] {
+  val attribute = entity
+  val typeTag = attribute.typeTag
+  def cached = new AttributeData[T](entity, rdd.copyWithAncestorsCached, count)
+}
+
+class ScalarData[T](
+    val entity: Scalar[T],
+    val value: T)
+  extends EntityData with RuntimeSafeCastable[T, ScalarData] {
+  val scalar = entity
+  val typeTag = scalar.typeTag
+}
+
+class TableData(
+    val entity: Table,
+    val df: spark.sql.DataFrame)
+  extends EntityData {
+  val table = entity
+}
+
+// A bundle of data types.
+case class DataSet(
+    vertexSets: Map[Symbol, VertexSetData] = Map(),
+    edgeBundles: Map[Symbol, EdgeBundleData] = Map(),
+    hybridBundles: Map[Symbol, HybridBundleData] = Map(),
+    attributes: Map[Symbol, AttributeData[_]] = Map(),
+    scalars: Map[Symbol, ScalarData[_]] = Map(),
+    tables: Map[Symbol, TableData] = Map()) {
+  def metaDataSet = MetaDataSet(
+    vertexSets.mapValues(_.vertexSet),
+    edgeBundles.mapValues(_.edgeBundle),
+    hybridBundles.mapValues(_.hybridBundle),
+    attributes.mapValues(_.attribute),
+    scalars.mapValues(_.scalar),
+    tables.mapValues(_.table))
+
+  def all: Map[Symbol, EntityData] =
+    vertexSets ++ edgeBundles ++ hybridBundles ++ attributes ++ scalars ++ tables
+}
+
+object DataSet {
+  def apply(all: Map[Symbol, EntityData]): DataSet = {
+    DataSet(
+      vertexSets = all.collect { case (k, v: VertexSetData) => (k, v) },
+      edgeBundles = all.collect { case (k, v: EdgeBundleData) => (k, v) },
+      hybridBundles = all.collect { case (k, v: HybridBundleData) => (k, v) },
+      attributes = all.collect { case (k, v: AttributeData[_]) => (k, v) }.toMap,
+      scalars = all.collect { case (k, v: ScalarData[_]) => (k, v) }.toMap,
+      tables = all.collect { case (k, v: TableData) => (k, v) })
+  }
+}
+
+class OutputBuilder(val instance: MetaGraphOperationInstance) {
+  val outputMeta: MetaDataSet = instance.outputs
+
+  def addData(data: EntityData): Unit = {
+    val gUID = data.gUID
+    val entity = data.entity
+    // Check that it's indeed a known output.
+    assert(
+      outputMeta.all(entity.name).gUID == entity.gUID,
+      s"$entity is not an output of $instance")
+    internalDataMap(gUID) = data
+  }
+
+  def apply(vertexSet: VertexSet, rdd: VertexSetRDD): Unit = {
+    addData(new VertexSetData(vertexSet, rdd))
+  }
+
+  def apply(edgeBundle: EdgeBundle, rdd: EdgeBundleRDD): Unit = {
+    addData(new EdgeBundleData(edgeBundle, rdd))
+    if (edgeBundle.autogenerateIdSet) {
+      addData(new VertexSetData(edgeBundle.idSet, rdd.mapValues(_ => ())))
+    }
+  }
+
+  def apply(hybridBundle: HybridBundle, rdd: HybridBundleRDD): Unit = {
+    addData(new HybridBundleData(hybridBundle, rdd))
+  }
+
+  def apply[T](attribute: Attribute[T], rdd: AttributeRDD[T]): Unit = {
+    addData(new AttributeData(attribute, rdd))
+  }
+
+  def apply[T](scalar: Scalar[T], value: T): Unit = {
+    addData(new ScalarData(scalar, value))
+  }
+
+  def apply(table: Table, df: spark.sql.DataFrame): Unit = {
+    import com.lynxanalytics.biggraph.spark_util.SQLHelper
+    SQLHelper.assertTableHasCorrectSchema(table, df.schema)
+    addData(new TableData(table, df))
+  }
+
+  def dataMap() = {
+    if (!instance.operation.asInstanceOf[SparkOperation[_, _]].hasCustomSaving) {
+      val missing = outputMeta.all.values.filter(x => !internalDataMap.contains(x.gUID))
+      assert(missing.isEmpty, s"Output data missing for: $missing")
+    }
+    internalDataMap
+  }
+
+  private val internalDataMap = mutable.Map[UUID, EntityData]()
 }

@@ -23,7 +23,7 @@ object SplitVertices extends OpFromJson {
   def fromJson(j: JsValue) = SplitVertices()
 }
 import SplitVertices._
-case class SplitVertices() extends TypedMetaGraphOp[VertexAttributeInput[Long], Output] {
+case class SplitVertices() extends SparkOperation[VertexAttributeInput[Long], Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new VertexAttributeInput[Long]
   def outputMeta(instance: MetaGraphOperationInstance) = {

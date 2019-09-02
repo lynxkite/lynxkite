@@ -42,7 +42,7 @@ object ScalarsToTable extends OpFromJson {
   }
 }
 import ScalarsToTable._
-case class ScalarsToTable(schema: types.StructType) extends TypedMetaGraphOp[Input, Output] {
+case class ScalarsToTable(schema: types.StructType) extends SparkOperation[Input, Output] {
   override val isHeavy = false // A goal here is quick access to a project as a DataFrame.
   @transient override lazy val inputs = {
     new Input(schema.map {

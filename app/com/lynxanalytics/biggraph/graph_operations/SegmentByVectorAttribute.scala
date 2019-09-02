@@ -32,7 +32,7 @@ object SegmentByVectorAttribute extends OpFromJson {
 import SegmentByVectorAttribute._
 import SerializableType.Implicits._
 case class SegmentByVectorAttribute[T: SerializableType]()
-  extends TypedMetaGraphOp[Input[T], Output[T]] {
+  extends SparkOperation[Input[T], Output[T]] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input[T]()
   def outputMeta(instance: MetaGraphOperationInstance) =

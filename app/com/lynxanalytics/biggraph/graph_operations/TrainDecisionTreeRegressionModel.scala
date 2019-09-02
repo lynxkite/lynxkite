@@ -39,7 +39,7 @@ case class TrainDecisionTreeRegressor(
     maxDepth: Int,
     minInfoGain: Double,
     minInstancesPerNode: Int,
-    seed: Int) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
+    seed: Int) extends SparkOperation[Input, Output] with ModelMeta {
   val isClassification = false
   val isBinary = false
   def featureTypes = (0 until featureNames.size).map(_ => SerializableType.double).toList

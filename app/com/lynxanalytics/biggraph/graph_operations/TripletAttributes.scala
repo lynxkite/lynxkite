@@ -28,7 +28,7 @@ object TripletMapping extends OpFromJson {
 }
 // A negative sampleSize means no sampling.
 case class TripletMapping(sampleSize: Int = -1)
-  extends TypedMetaGraphOp[TripletMapping.Input, TripletMapping.Output] {
+  extends SparkOperation[TripletMapping.Input, TripletMapping.Output] {
   import TripletMapping._
   override val isHeavy = true
   @transient override lazy val inputs = new Input
@@ -108,7 +108,7 @@ object EdgeAndNeighborMapping extends OpFromJson {
 }
 // A negative sampleSize means no sampling.
 case class EdgeAndNeighborMapping(sampleSize: Int = -1)
-  extends TypedMetaGraphOp[EdgeAndNeighborMapping.Input, EdgeAndNeighborMapping.Output] {
+  extends SparkOperation[EdgeAndNeighborMapping.Input, EdgeAndNeighborMapping.Output] {
   import EdgeAndNeighborMapping._
   override val isHeavy = true
   @transient override lazy val inputs = new Input
@@ -197,7 +197,7 @@ object VertexToEdgeAttribute extends OpFromJson {
   def fromJson(j: JsValue) = VertexToEdgeAttribute()
 }
 case class VertexToEdgeAttribute[T]()
-  extends TypedMetaGraphOp[VertexToEdgeAttribute.Input[T], VertexToEdgeAttribute.Output[T]] {
+  extends SparkOperation[VertexToEdgeAttribute.Input[T], VertexToEdgeAttribute.Output[T]] {
   import VertexToEdgeAttribute._
   override val isHeavy = true
   @transient override lazy val inputs = new Input[T]
@@ -247,7 +247,7 @@ case class EdgesForVerticesFromEdgesAndNeighbors(
     srcIdSet: Set[ID],
     dstIdSet: Option[Set[ID]], // Filter the edges by dst too if set.
     maxNumEdges: Int)
-  extends TypedMetaGraphOp[EdgesForVerticesFromEdgesAndNeighbors.Input, EdgesForVerticesFromEdgesAndNeighbors.Output] {
+  extends SparkOperation[EdgesForVerticesFromEdgesAndNeighbors.Input, EdgesForVerticesFromEdgesAndNeighbors.Output] {
   import EdgesForVerticesFromEdgesAndNeighbors._
   @transient override lazy val inputs = new Input()
 

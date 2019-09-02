@@ -22,7 +22,7 @@ object MetaGraph extends OpFromJson {
 }
 import MetaGraph._
 case class MetaGraph(timestamp: String, env: Option[SparkFreeEnvironment])
-  extends TypedMetaGraphOp[NoInput, Output] {
+  extends SparkOperation[NoInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)

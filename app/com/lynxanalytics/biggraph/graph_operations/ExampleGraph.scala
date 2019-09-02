@@ -28,7 +28,7 @@ object ExampleGraph extends OpFromJson {
   def fromJson(j: JsValue) = ExampleGraph()
 }
 import ExampleGraph._
-case class ExampleGraph() extends TypedMetaGraphOp[NoInput, Output] {
+case class ExampleGraph() extends SparkOperation[NoInput, Output] {
   @transient var executionCounter = 0
 
   override val isHeavy = true

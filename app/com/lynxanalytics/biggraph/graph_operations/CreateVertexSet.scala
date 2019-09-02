@@ -12,7 +12,7 @@ object CreateVertexSet extends OpFromJson {
   def fromJson(j: JsValue) = CreateVertexSet((j \ "size").as[Long])
 }
 import CreateVertexSet._
-case class CreateVertexSet(size: Long) extends TypedMetaGraphOp[NoInput, Output] {
+case class CreateVertexSet(size: Long) extends SparkOperation[NoInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new NoInput
 

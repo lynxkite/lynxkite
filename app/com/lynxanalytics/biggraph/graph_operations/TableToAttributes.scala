@@ -71,7 +71,7 @@ object TableToAttributes extends OpFromJson {
   }
 }
 import TableToAttributes._
-case class TableToAttributes() extends TypedMetaGraphOp[Input, Output] {
+case class TableToAttributes() extends SparkOperation[Input, Output] {
   override val isHeavy = true
   override val hasCustomSaving = true // Single-pass import.
   @transient override lazy val inputs = new Input()

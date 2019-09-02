@@ -12,7 +12,7 @@ object CreateScalar {
   }
 }
 import CreateScalar._
-abstract class CreateScalar[T] extends TypedMetaGraphOp[NoInput, Output[T]] {
+abstract class CreateScalar[T] extends SparkOperation[NoInput, Output[T]] {
   def tt: TypeTag[T]
   val value: T
   @transient override lazy val inputs = new NoInput()

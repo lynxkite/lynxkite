@@ -28,7 +28,7 @@ case class KMeansClusteringModelTrainer(
     k: Int,
     maxIter: Int,
     seed: Long,
-    featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
+    featureNames: List[String]) extends SparkOperation[Input, Output] with ModelMeta {
   val isClassification = true
   val isBinary = false
   def featureTypes = (0 until featureNames.size).map(_ => SerializableType.double).toList

@@ -35,7 +35,7 @@ private[graph_operations] case class NeighborHLLs(
 }
 
 import ApproxEmbeddedness._
-case class ApproxEmbeddedness(bits: Int) extends TypedMetaGraphOp[GraphInput, Output] {
+case class ApproxEmbeddedness(bits: Int) extends SparkOperation[GraphInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

@@ -198,7 +198,7 @@ object OpTriggeringTestOperation extends OpFromJson {
   }
 }
 case class OpTriggeringTestOperation()
-  extends TypedMetaGraphOp[graph_operations.NoInput, OpTriggeringTestOperation.Output] {
+  extends SparkOperation[graph_operations.NoInput, OpTriggeringTestOperation.Output] {
   var sideChannelVS: VertexSet = null
   @transient override lazy val inputs = new graph_operations.NoInput
   def outputMeta(instance: MetaGraphOperationInstance) =

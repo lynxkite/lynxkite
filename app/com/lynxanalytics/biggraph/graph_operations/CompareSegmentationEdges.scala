@@ -41,7 +41,7 @@ object CompareSegmentationEdges extends OpFromJson {
 }
 import CompareSegmentationEdges._
 case class CompareSegmentationEdges()
-  extends TypedMetaGraphOp[Input, Output] {
+  extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 
