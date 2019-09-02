@@ -5,6 +5,7 @@ import org.scalatest.FunSuite
 import play.api.libs.json
 import com.lynxanalytics.biggraph._
 import com.lynxanalytics.biggraph.graph_api.BuiltIns
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
   val controller = new WorkspaceController(this)
@@ -68,7 +69,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     val ws = Workspace.from(eg, merge)
     val project = context(ws).allStates(merge.output("project")).project
     import graph_api.Scripting._
-    assert(project.scalars("!vertex_count_delta").value == -2)
+    assert(project.scalars("!vertex_count_delta") == -2)
   }
 
   test("validation") {

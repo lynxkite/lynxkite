@@ -105,4 +105,6 @@ class DataManager(
   def cache(entity: MetaGraphEntity): Unit = {
     bestSource(entity).cache(entity)
   }
+
+  def waitAllFutures(): Unit = ()
 }

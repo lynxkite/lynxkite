@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.controllers.{ ProjectEditor, RootProjectEditor }
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_util
 import org.scalatest._
 import org.neo4j.harness.{ ServerControls, TestServerBuilders }

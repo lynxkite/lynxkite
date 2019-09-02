@@ -4,6 +4,7 @@ import org.apache.spark
 import org.scalatest
 import scala.util.Random
 import scala.reflect.runtime.universe._
+import scala.language.implicitConversions
 
 import com.lynxanalytics.biggraph.{ TestUtils, TestTempDir, TestSparkContext }
 
@@ -39,6 +40,48 @@ object GraphTestUtils {
         .sorted
     }
   }
+
+  implicit def getVertexSetDataEC(e: EntityContainer[VertexSet])(
+    implicit
+    dm: DataManager, sd: SparkDomain): VertexSetData = {
+    dm.compute(e.entity).map(_ => sd.await(e)).asInstanceOf[VertexSetData]
+  }
+  implicit def getEdgeBundleDataEC(entity: EntityContainer[EdgeBundle])(
+    implicit
+    dm: DataManager, sd: SparkDomain): EdgeBundleData = {
+    dm.compute(e.entity).map(_ => sd.await(e)).asInstanceOf[EdgeBundleData]
+  }
+  implicit def getAttributeDataEC[T](entity: EntityContainer[Attribute[T]])(
+    implicit
+    dm: DataManager, sd: SparkDomain): AttributeData[T] = {
+    dm.compute(e.entity).map(_ => sd.await(e)).asInstanceOf[AttributeData[T]]
+  }
+  implicit def getTableDataEC(entity: EntityContainer[Table])(
+    implicit
+    dm: DataManager, sd: SparkDomain): TableData = {
+    dm.compute(e.entity).map(_ => sd.await(e)).asInstanceOf[TableData]
+  }
+
+  implicit def getVertexSetData(entity: VertexSet)(
+    implicit
+    dm: DataManager, sd: SparkDomain): VertexSetData = {
+    dm.compute(e).map(_ => sd.await(e)).asInstanceOf[VertexSetData]
+  }
+  implicit def getEdgeBundleData(entity: EdgeBundle)(
+    implicit
+    dm: DataManager, sd: SparkDomain): EdgeBundleData = {
+    dm.compute(e).map(_ => sd.await(e)).asInstanceOf[EdgeBundleData]
+  }
+  implicit def getAttributeData[T](entity: Attribute[T])(
+    implicit
+    dm: DataManager, sd: SparkDomain): AttributeData[T] = {
+    dm.compute(e).map(_ => sd.await(e)).asInstanceOf[AttributeData[T]]
+  }
+  implicit def getTableData(entity: Table)(
+    implicit
+    dm: DataManager, sd: SparkDomain): TableData = {
+    dm.compute(e).map(_ => sd.await(e)).asInstanceOf[TableData]
+  }
 }
 
 trait TestMetaGraphManager extends TestTempDir {
@@ -51,44 +94,11 @@ trait TestMetaGraphManager extends TestTempDir {
 }
 
 trait TestDataManager extends TestTempDir with TestSparkContext {
-  def cleanDataManager: DataManager = {
+  def cleanSparkDomain: SparkDomain = {
     val dataDir = cleanDataManagerDir()
-    new DataManager(sparkSession, dataDir)
+    new SparkDomain(sparkSession, dataDir)
   }
-
-  implicit def getData(entity: EntityContainer[VertexSet])(
-    implicit
-    sd: SparkDomain): VertexSetData =
-    sd.get(entity.entity)
-  implicit def getData(entity: EntityContainer[EdgeBundle])(
-    implicit
-    sd: SparkDomain): EdgeBundleData =
-    sd.get(entity.entity)
-  implicit def getData[T](entity: EntityContainer[Attribute[T]])(
-    implicit
-    sd: SparkDomain): AttributeData[T] =
-    sd.get(entity.entity)
-  implicit def getData(entity: EntityContainer[Table])(
-    implicit
-    sd: SparkDomain): TableData =
-    sd.get(entity.entity)
-
-  implicit def getData(entity: VertexSet)(
-    implicit
-    sd: SparkDomain): VertexSetData =
-    sd.get(entity)
-  implicit def getData(entity: EdgeBundle)(
-    implicit
-    sd: SparkDomain): EdgeBundleData =
-    sd.get(entity)
-  implicit def getData[T](entity: Attribute[T])(
-    implicit
-    sd: SparkDomain): AttributeData[T] =
-    sd.get(entity)
-  implicit def getData(entity: Table)(
-    implicit
-    sd: SparkDomain): TableData =
-    sd.get(entity)
+  def cleanDataManager: DataManager = new DataManager(Seq(new ScalaDomain, cleanSparkDomain))
 }
 
 // A TestDataManager that has an ephemeral path, too.
@@ -101,7 +111,9 @@ trait TestDataManagerEphemeral extends TestTempDir with TestSparkContext {
     val permanentDir = cleanDataManagerDir()
     val ephemeralDir = cleanDataManagerDir()
     prepareDataRepos(permanentDir, ephemeralDir)
-    new DataManager(sparkSession, permanentDir, Some(ephemeralDir))
+    new DataManager(Seq(
+      new ScalaDomain,
+      new SparkDomain(sparkSession, permanentDir, Some(ephemeralDir))))
   }
 }
 
@@ -113,6 +125,7 @@ trait TestGraphOp extends TestMetaGraphManager with TestDataManager with BigGrap
   }
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManager
+  implicit val sparkDomain = dataManager.domains(1).asInstanceOf[SparkDomain]
   PrefixRepository.registerPrefix(standardDataPrefix, dataManager.repositoryPath.symbolicName)
   registerStandardPrefixes()
 }
@@ -121,6 +134,7 @@ trait TestGraphOpEphemeral extends TestMetaGraphManager with TestDataManagerEphe
   PrefixRepository.dropResolutions()
   implicit val metaGraphManager = cleanMetaManager
   implicit val dataManager = cleanDataManagerEphemeral
+  implicit val sparkDomain = dataManager.domains(1).asInstanceOf[SparkDomain]
   PrefixRepository.registerPrefix(standardDataPrefix, dataManager.writablePath.symbolicName)
   registerStandardPrefixes()
 }

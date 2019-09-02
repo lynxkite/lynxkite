@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class AddConstantAttributeTest extends FunSuite with TestGraphOp {
   test("triangle vertex attribute") {

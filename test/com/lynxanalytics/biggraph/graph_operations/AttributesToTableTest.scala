@@ -9,6 +9,7 @@ import scala.reflect.runtime.universe.typeTag
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 
 class AttributesToTableTest extends FunSuite with TestGraphOp {
