@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class AggregateEdgeAttributeToVerticesOperationTest extends OperationsTestBase {
   test("Aggregate edge attribute to vertices, all directions") {

@@ -1,8 +1,9 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.controllers.SQLTestCases
-import com.lynxanalytics.biggraph.graph_api.{ DataManager, ThreadUtil }
+import com.lynxanalytics.biggraph.graph_api.{ DataManager, SparkDomain, ThreadUtil }
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import org.apache.spark
 import org.apache.spark.sql.types._
@@ -293,12 +294,12 @@ class SQLTest extends OperationsTestBase {
     // begin to use each other's data frames.
     val resultPoolForEachWorker = Array.fill(numWorkers)(new java.util.concurrent.atomic.AtomicInteger(0))
 
-    val sqlCtx = dataManager.newSQLContext
+    val sqlCtx = sparkDomain.newSQLContext
     for (workerId <- (0 until numWorkers)) {
       val df = List((tableName, getTinyDfWithConstantValue(sqlCtx, workerId)))
       sqlTestingThreads.register {
         val resultThatIsSupposedToBeEqualToWorkerId =
-          DataManager.sql(sqlCtx, s"select AVG($columnName) from $tableName", df)
+          SparkDomain.sql(sqlCtx, s"select AVG($columnName) from $tableName", df)
             .collect().toList.take(1).head.getDouble(0)
         val idx = resultThatIsSupposedToBeEqualToWorkerId.toInt
         // We could say assert(workerId == resultThatIsSupposedToBeEqualToWorkerId) here,

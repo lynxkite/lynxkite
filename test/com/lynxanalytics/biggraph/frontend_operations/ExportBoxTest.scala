@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
@@ -73,7 +74,7 @@ class ExportBoxTest extends OperationsTestBase {
 
   test("Export to JDBC") {
     val sqliteURL =
-      s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
+      s"jdbc:sqlite:${sparkDomain.repositoryPath.resolvedNameWithNoCredentials}/test-db"
     // Seems like this part is needed for registering the jdbc driver.
     val connection = graph_util.JDBCUtil.getConnection(sqliteURL)
     connection.close()
