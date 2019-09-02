@@ -29,7 +29,7 @@ object JoinAttributes extends OpFromJson {
 }
 import JoinAttributes._
 case class JoinAttributes[A, B]()
-  extends TypedMetaGraphOp[Input[A, B], Output[A, B]] {
+  extends SparkOperation[Input[A, B], Output[A, B]] {
   @transient override lazy val inputs = new Input[A, B]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 

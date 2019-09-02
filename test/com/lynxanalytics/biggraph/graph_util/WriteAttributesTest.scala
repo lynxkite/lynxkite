@@ -21,7 +21,7 @@ object CreateTestAttributes extends OpFromJson {
 }
 
 case class CreateTestAttributes(val attrNames: Seq[String], data: Seq[Seq[String]])
-  extends TypedMetaGraphOp[NoInput, CreateTestAttributes.Output] {
+  extends SparkOperation[NoInput, CreateTestAttributes.Output] {
 
   import CreateTestAttributes._
   override val isHeavy = true

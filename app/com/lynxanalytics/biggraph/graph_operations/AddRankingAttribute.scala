@@ -37,7 +37,7 @@ object AddRankingAttribute extends OpFromJson {
 }
 import AddRankingAttribute._
 case class AddRankingAttribute[T: SerializableType](
-    ascending: Boolean) extends TypedMetaGraphOp[Input[T], Output] {
+    ascending: Boolean) extends SparkOperation[Input[T], Output] {
   @transient override lazy val inputs = new Input[T]()
   override def toJson = Json.obj(
     "ascending" -> ascending,

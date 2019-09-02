@@ -27,7 +27,7 @@ import PageRank._
 case class PageRank(
     dampingFactor: Double,
     iterations: Int)
-  extends TypedMetaGraphOp[Input, Output] {
+  extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 

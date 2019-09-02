@@ -28,7 +28,7 @@ import RegressionModelTrainer._
 case class RegressionModelTrainer(
     method: String,
     labelName: String,
-    featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
+    featureNames: List[String]) extends SparkOperation[Input, Output] with ModelMeta {
   val isClassification = false
   val isBinary = false
   def featureTypes = (0 until featureNames.size).map(_ => SerializableType.double).toList

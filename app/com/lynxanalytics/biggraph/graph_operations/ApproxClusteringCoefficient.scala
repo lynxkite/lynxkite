@@ -17,7 +17,7 @@ object ApproxClusteringCoefficient extends OpFromJson {
   def fromJson(j: JsValue) = ApproxClusteringCoefficient((j \ "bits").as[Int])
 }
 import ApproxClusteringCoefficient._
-case class ApproxClusteringCoefficient(bits: Int) extends TypedMetaGraphOp[GraphInput, Output] {
+case class ApproxClusteringCoefficient(bits: Int) extends SparkOperation[GraphInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

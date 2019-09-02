@@ -100,7 +100,7 @@ object VertexAttributeToString extends OpFromJson {
   def fromJson(j: JsValue) = VertexAttributeToString()
 }
 case class VertexAttributeToString[T]()
-  extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeToString.Output[T]] {
+  extends SparkOperation[VertexAttributeInput[T], VertexAttributeToString.Output[T]] {
   import VertexAttributeToString._
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, inputs)
@@ -134,7 +134,7 @@ object VertexAttributeToDouble extends OpFromJson {
   def fromJson(j: JsValue) = VertexAttributeToDouble()
 }
 case class VertexAttributeToDouble()
-  extends TypedMetaGraphOp[VertexAttributeInput[String], VertexAttributeToDouble.Output] {
+  extends SparkOperation[VertexAttributeInput[String], VertexAttributeToDouble.Output] {
   import VertexAttributeToDouble._
   @transient override lazy val inputs = new VertexAttributeInput[String]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -168,7 +168,7 @@ object LongAttributeToDouble extends OpFromJson {
   def fromJson(j: JsValue) = LongAttributeToDouble()
 }
 case class LongAttributeToDouble()
-  extends TypedMetaGraphOp[VertexAttributeInput[Long], LongAttributeToDouble.Output] {
+  extends SparkOperation[VertexAttributeInput[Long], LongAttributeToDouble.Output] {
   import LongAttributeToDouble._
   @transient override lazy val inputs = new VertexAttributeInput[Long]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -201,7 +201,7 @@ object DoubleAttributeToLong extends OpFromJson {
   def fromJson(j: JsValue) = DoubleAttributeToLong()
 }
 case class DoubleAttributeToLong()
-  extends TypedMetaGraphOp[VertexAttributeInput[Double], DoubleAttributeToLong.Output] {
+  extends SparkOperation[VertexAttributeInput[Double], DoubleAttributeToLong.Output] {
   import DoubleAttributeToLong._
   @transient override lazy val inputs = new VertexAttributeInput[Double]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -234,7 +234,7 @@ object IntAttributeToLong extends OpFromJson {
   def fromJson(j: JsValue) = IntAttributeToLong()
 }
 case class IntAttributeToLong()
-  extends TypedMetaGraphOp[VertexAttributeInput[Int], IntAttributeToLong.Output] {
+  extends SparkOperation[VertexAttributeInput[Int], IntAttributeToLong.Output] {
   import IntAttributeToLong._
   @transient override lazy val inputs = new VertexAttributeInput[Int]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -267,7 +267,7 @@ object IntAttributeToDouble extends OpFromJson {
   def fromJson(j: JsValue) = IntAttributeToDouble()
 }
 case class IntAttributeToDouble()
-  extends TypedMetaGraphOp[VertexAttributeInput[Int], IntAttributeToDouble.Output] {
+  extends SparkOperation[VertexAttributeInput[Int], IntAttributeToDouble.Output] {
   import IntAttributeToDouble._
   @transient override lazy val inputs = new VertexAttributeInput[Int]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -300,7 +300,7 @@ object VertexAttributeToDynamicValue extends OpFromJson {
   def fromJson(j: JsValue) = VertexAttributeToDynamicValue()
 }
 case class VertexAttributeToDynamicValue[T]()
-  extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeToDynamicValue.Output[T]] {
+  extends SparkOperation[VertexAttributeInput[T], VertexAttributeToDynamicValue.Output[T]] {
   import VertexAttributeToDynamicValue._
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, inputs)
@@ -328,7 +328,7 @@ object AttributeCast {
   }
 }
 abstract class AttributeCast[From, To]()
-  extends TypedMetaGraphOp[VertexAttributeInput[From], AttributeCast.Output[From, To]] {
+  extends SparkOperation[VertexAttributeInput[From], AttributeCast.Output[From, To]] {
   import AttributeCast._
   @transient override lazy val inputs = new VertexAttributeInput[From]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[From, To]()(tt, instance, inputs)

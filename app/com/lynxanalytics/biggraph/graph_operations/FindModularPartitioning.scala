@@ -26,7 +26,7 @@ object FindModularPartitioning extends OpFromJson {
   def fromJson(j: JsValue) = FindModularPartitioning()
 }
 import FindModularPartitioning._
-case class FindModularPartitioning() extends TypedMetaGraphOp[Input, Output] {
+case class FindModularPartitioning() extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

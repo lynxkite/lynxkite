@@ -59,7 +59,7 @@ class OperationLogger(
     stopTime = System.currentTimeMillis()
   }
   def addInput(name: String, input: EntityData): Unit = inputInfoList.synchronized {
-    if (instance.operation.isHeavy) input match {
+    if (instance.operation.asInstanceOf[SparkOperation[_, _]].isHeavy) input match {
       case rddData: EntityRDDData[_] =>
         inputInfoList +=
           InputInfo(

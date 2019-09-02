@@ -35,7 +35,7 @@ object PulledOverVertexAttribute extends OpFromJson {
   def fromJson(j: JsValue) = PulledOverVertexAttribute()
 }
 case class PulledOverVertexAttribute[T]()
-  extends TypedMetaGraphOp[PulledOverVertexAttribute.Input[T], PulledOverVertexAttribute.Output[T]] {
+  extends SparkOperation[PulledOverVertexAttribute.Input[T], PulledOverVertexAttribute.Output[T]] {
   import PulledOverVertexAttribute._
   override val isHeavy = true
   @transient override lazy val inputs = new Input[T]()

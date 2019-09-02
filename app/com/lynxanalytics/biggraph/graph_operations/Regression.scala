@@ -25,7 +25,7 @@ object Regression extends OpFromJson {
   def fromJson(j: JsValue) = Regression((j \ "method").as[String], (j \ "numFeatures").as[Int])
 }
 import Regression._
-case class Regression(method: String, numFeatures: Int) extends TypedMetaGraphOp[Input, Output] {
+case class Regression(method: String, numFeatures: Int) extends SparkOperation[Input, Output] {
   @transient override lazy val inputs = new Input(numFeatures)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("method" -> method, "numFeatures" -> numFeatures)

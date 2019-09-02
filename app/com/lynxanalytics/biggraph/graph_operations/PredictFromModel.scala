@@ -22,7 +22,7 @@ object PredictFromModel extends OpFromJson {
 }
 import PredictFromModel._
 case class PredictFromModel(numFeatures: Int)
-  extends TypedMetaGraphOp[Input, Output] {
+  extends SparkOperation[Input, Output] {
   @transient override lazy val inputs = new Input(numFeatures)
   override val isHeavy = true
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

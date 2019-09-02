@@ -35,7 +35,7 @@ import com.lynxanalytics.biggraph.graph_operations.LookupRegion._
 case class LookupRegion(
     shapefile: String,
     attribute: String,
-    ignoreUnsupportedShapes: Boolean) extends TypedMetaGraphOp[Input, Output] {
+    ignoreUnsupportedShapes: Boolean) extends SparkOperation[Input, Output] {
   override val isHeavy = true
 
   @transient override lazy val inputs = new Input()

@@ -18,7 +18,7 @@ object EdgeBundleAsAttribute extends OpFromJson {
   def fromJson(j: JsValue) = EdgeBundleAsAttribute()
 }
 import EdgeBundleAsAttribute._
-case class EdgeBundleAsAttribute() extends TypedMetaGraphOp[Input, Output] {
+case class EdgeBundleAsAttribute() extends SparkOperation[Input, Output] {
 
   @transient override lazy val inputs = new Input()
 

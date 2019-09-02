@@ -18,7 +18,7 @@ object FakePull extends OpFromJson {
   }
   def fromJson(j: play.api.libs.json.JsValue) = FakePull()
 }
-case class FakePull() extends TypedMetaGraphOp[FakePull.Input, FakePull.Output] {
+case class FakePull() extends SparkOperation[FakePull.Input, FakePull.Output] {
   import FakePull._
   @transient override lazy val inputs = new Input()
 

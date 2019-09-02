@@ -39,7 +39,7 @@ object HyperBallCentrality extends OpFromJson {
 }
 import HyperBallCentrality._
 case class HyperBallCentrality(maxDiameter: Int, algorithm: String, bits: Int)
-  extends TypedMetaGraphOp[Input, Output] {
+  extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 

@@ -23,7 +23,7 @@ object ValidateOperationsTest {
   object Source extends OpFromJson {
     def fromJson(j: JsValue) = Source((j \ "seed").as[Int])
   }
-  case class Source(seed: Int) extends TypedMetaGraphOp[NoInput, Output] {
+  case class Source(seed: Int) extends SparkOperation[NoInput, Output] {
     @transient override lazy val inputs = new NoInput
     def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
     override def toJson = Json.obj("seed" -> seed)
@@ -36,7 +36,7 @@ object ValidateOperationsTest {
   object TestOperation extends OpFromJson {
     def fromJson(j: JsValue) = TestOperation()
   }
-  case class TestOperation() extends TypedMetaGraphOp[Input, Output] {
+  case class TestOperation() extends SparkOperation[Input, Output] {
     @transient override lazy val inputs = new Input
     def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
     def execute(

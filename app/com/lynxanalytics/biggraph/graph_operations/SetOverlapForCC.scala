@@ -25,7 +25,7 @@ object SetOverlapForCC {
   }
 }
 import SetOverlapForCC._
-abstract class SetOverlapForCC extends TypedMetaGraphOp[Input, Output] {
+abstract class SetOverlapForCC extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 

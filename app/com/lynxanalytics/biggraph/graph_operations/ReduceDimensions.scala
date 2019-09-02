@@ -26,7 +26,7 @@ object ReduceDimensions extends OpFromJson {
 }
 
 case class ReduceDimensions(numFeatures: Int)
-  extends TypedMetaGraphOp[ReduceDimensions.Input, ReduceDimensions.Output] {
+  extends SparkOperation[ReduceDimensions.Input, ReduceDimensions.Output] {
   import ReduceDimensions._
   @transient override lazy val inputs = new Input(numFeatures)
   def outputMeta(instance: MetaGraphOperationInstance) = {

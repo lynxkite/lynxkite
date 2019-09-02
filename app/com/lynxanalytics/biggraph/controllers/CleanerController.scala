@@ -149,7 +149,8 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       val gUID = entity.gUID.toString
       if (!expanded.contains(gUID)) {
         expanded.add(gUID)
-        if (entity.source.operation.isHeavy) {
+        val op = entity.source.operation
+        if (op.isInstanceOf[SparkOperation[_, _]] && op.asInstanceOf[SparkOperation[_, _]].isHeavy) {
           Set(gUID, entity.source.gUID.toString)
         } else {
           heavyOpOutputSourceGUIDs(entity.source.inputs.all.values, expanded).toSet

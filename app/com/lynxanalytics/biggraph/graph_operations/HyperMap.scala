@@ -31,7 +31,7 @@ object HyperMap extends OpFromJson {
     (j \ "seed").as[Long])
 }
 import HyperMap._
-case class HyperMap(seed: Long) extends TypedMetaGraphOp[Input, Output] {
+case class HyperMap(seed: Long) extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 

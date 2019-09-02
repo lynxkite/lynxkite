@@ -37,7 +37,7 @@ object HyperbolicPrediction extends OpFromJson {
 }
 import HyperbolicPrediction._
 case class HyperbolicPrediction(size: Int, externalDegree: Double, internalDegree: Double,
-    exponent: Double) extends TypedMetaGraphOp[Input, Output] {
+    exponent: Double) extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 

@@ -97,7 +97,7 @@ import ExecuteSQL._
 case class ExecuteSQL(
     sqlQuery: String,
     inputTables: List[String],
-    outputSchema: types.StructType) extends TypedMetaGraphOp[Input, Output] {
+    outputSchema: types.StructType) extends SparkOperation[Input, Output] {
   override val isHeavy = false
   @transient override lazy val inputs = new Input(inputTables)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(outputSchema)(instance)

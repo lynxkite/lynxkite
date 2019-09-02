@@ -52,7 +52,7 @@ case class TrainDecisionTreeClassifier[T: TypeTag](
     maxDepth: Int,
     minInfoGain: Double,
     minInstancesPerNode: Int,
-    seed: Int) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
+    seed: Int) extends SparkOperation[Input, Output] with ModelMeta {
   val isClassification = true
   val isBinary = false
   override val generatesProbability = true

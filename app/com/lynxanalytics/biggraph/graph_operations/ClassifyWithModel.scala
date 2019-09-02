@@ -50,7 +50,7 @@ import ClassifyWithModel._
 case class ClassifyWithModel[T](
     labelType: SerializableType[T],
     featureTypes: List[SerializableType[_]])
-  extends TypedMetaGraphOp[Input, Output[T]] {
+  extends SparkOperation[Input, Output[T]] {
   @transient override lazy val inputs = new Input(featureTypes)
   override val isHeavy = true
   def outputMeta(instance: MetaGraphOperationInstance) =

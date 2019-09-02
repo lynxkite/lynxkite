@@ -48,7 +48,7 @@ object HashVertexAttribute extends OpFromJson {
 }
 import HashVertexAttribute._
 case class HashVertexAttribute(salt: String)
-  extends TypedMetaGraphOp[Input, Output] {
+  extends SparkOperation[Input, Output] {
   assertSecret(salt)
   override val isHeavy = true
   @transient override lazy val inputs = new Input()

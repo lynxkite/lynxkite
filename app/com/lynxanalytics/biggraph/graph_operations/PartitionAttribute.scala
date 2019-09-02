@@ -22,7 +22,7 @@ object PartitionAttribute extends OpFromJson {
   def fromJson(j: JsValue) = PartitionAttribute()
 }
 import PartitionAttribute._
-case class PartitionAttribute[T]() extends TypedMetaGraphOp[Input[T], Output[T]] {
+case class PartitionAttribute[T]() extends SparkOperation[Input[T], Output[T]] {
   @transient override lazy val inputs = new Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, inputs)
