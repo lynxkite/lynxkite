@@ -72,20 +72,24 @@ class SparkDomain(
     ephemeralPath.getOrElse(repositoryPath)
   }
 
-  private def maybeEntityCanBeLoadedFromDisk(entity: MetaGraphEntity): Boolean = {
-    val eio = entityIO(entity)
-    // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
-    // the entity in this session, so we need this assertion.
-    assert(!isEntityInProgressOrComputed(eio.entity), s"${eio} is new")
-    eio.mayHaveExisted
-  }
-
   private def canLoadEntityFromDisk(entity: MetaGraphEntity): SafeFuture[Boolean] = {
-    entitiesOnDiskCache.synchronized {
+    if (isEntityInProgressOrComputed(entity) || !entityIO(entity).mayHaveExisted) {
+      SafeFuture.successful(false)
+    } else entitiesOnDiskCache.synchronized {
       entitiesOnDiskCache.getOrElseUpdate(
         entity.gUID,
         hadoopAsyncJobs.register { entityIO(entity).exists })
     }
+  }
+
+  private def isEntityComputed(
+    entity: MetaGraphEntity): Boolean = {
+    entityCache.contains(entity.gUID) &&
+      (entityCache(entity.gUID).value match {
+        case None => false // in progress
+        case Some(Failure(_)) => false
+        case Some(Success(_)) => true // computed
+      })
   }
 
   private def isEntityInProgressOrComputed(
@@ -278,20 +282,16 @@ class SparkDomain(
         case Some(Success(_)) => 1.0
       }
     } else {
-      if (!maybeEntityCanBeLoadedFromDisk(entity)) {
-        0.0
-      } else {
-        canLoadEntityFromDisk(entity).value match {
-          case Some(util.Success(true)) => 1.0
-          case _ => 0.0
-        }
+      canLoadEntityFromDisk(entity).value match {
+        case Some(util.Success(true)) => 1.0
+        case _ => 0.0
       }
     }
   }
 
   private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
     if (!isEntityInProgressOrComputed(entity)) {
-      if (maybeEntityCanBeLoadedFromDisk(entity) && canLoadEntityFromDisk(entity).awaitResult(Duration.Inf)) {
+      if (canLoadEntityFromDisk(entity).awaitResult(Duration.Inf)) {
         // If on disk already, we just load it.
         set(entity, load(entity))
       } else {
@@ -328,10 +328,8 @@ class SparkDomain(
     loadOrExecuteIfNecessary(e)
     getFuture(e).map(_ => ())
   }
-  override def has(entity: MetaGraphEntity): Boolean = {
-    isEntityInProgressOrComputed(entity) ||
-      (maybeEntityCanBeLoadedFromDisk(entity) &&
-        canLoadEntityFromDisk(entity).awaitResult(Duration.Inf))
+  override def has(entity: MetaGraphEntity): Boolean = synchronized {
+    isEntityComputed(entity) || canLoadEntityFromDisk(entity).awaitResult(Duration.Inf)
   }
 
   def getFuture(e: MetaGraphEntity): SafeFuture[EntityData] = {

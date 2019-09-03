@@ -96,11 +96,10 @@ class DataManager(
   }
 
   private def ensureInputs(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
-    SafeFuture.sequence {
+    SafeFuture.sequence(
       e.source.inputs.all.values.map { input =>
         ensure(input, d)
-      }
-    }.map(_ => ())
+      }).map(_ => ())
   }
 
   def cache(entity: MetaGraphEntity): Unit = {
