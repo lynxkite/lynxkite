@@ -59,14 +59,14 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     val operation = EnhancedExampleGraph()
     val vertices = operation().result.vertices
     val weight = operation().result.weight
-    val repo = cleanDataManager.repositoryPath
+    val repo = cleanSparkDomain.repositoryPath
     for (p <- partitions) {
-      val dataManager = new DataManager(sparkSession, repo)
+      val dataManager = new DataManager(Seq(new ScalaDomain, new SparkDomain(sparkSession, repo)))
       TestUtils.withRestoreGlobals(
         tolerance = 1.0,
         verticesPerPartition = numVerticesInExampleGraph / p) {
-        dataManager.get(vertices)
-        dataManager.get(weight) // This line invokes both EdgeBundle and Attribute[double] loads
+        dataManager.compute(vertices)
+        dataManager.compute(weight) // This line invokes both EdgeBundle and Attribute[double] loads
         dataManager.waitAllFutures()
       }
     }
@@ -153,10 +153,11 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     TestUtils.withRestoreGlobals(
       tolerance = tolerance,
       verticesPerPartition = numVerticesInExampleGraph / numPartitions) {
-      val dataManager = new DataManager(sparkSession, repo)
-      val data = dataManager.get(mpfs.vertices)
-      assert(data.rdd.collect.toSeq.sorted == (0 until numVerticesInExampleGraph).map(_ -> (())))
-      dataManager.waitAllFutures()
+      implicit val sd = new SparkDomain(sparkSession, repo)
+      implicit val dm = new DataManager(Seq(new ScalaDomain, sd))
+      import GraphTestUtils._
+      assert(mpfs.vertices.rdd.collect.toSeq.sorted == (0 until numVerticesInExampleGraph).map(_ -> (())))
+      dm.waitAllFutures()
     }
     val executionCounter = mpfs.operation.executionCounter
   }
@@ -265,30 +266,32 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
 
   test("We can read a previously serialized example graph") {
     import Scripting._
+    import GraphTestUtils._
     implicit val metaManager = cleanMetaManager
-    val repo = cleanDataManager.repositoryPath
+    val repo = cleanSparkDomain.repositoryPath
     copyDirContents(HadoopFile(resourcePrefix) / "example_graph_kite_data", repo)
-    val dataManager = new DataManager(sparkSession, repo)
+    implicit val sd = new SparkDomain(sparkSession, repo)
+    implicit val dm = new DataManager(Seq(new ScalaDomain, sd))
     val exampleGraph = ExampleGraph()
     val result = exampleGraph.result
 
-    val age = dataManager.get(result.age).rdd.collect().toMap
+    val age = result.age.rdd.collect().toMap
     assert(age(3L) == 2.0)
-    val location = dataManager.get(result.location).rdd.collect().toMap
+    val location = result.location.rdd.collect().toMap
     assert(location(3L) == (-33.8674869, 151.2069902))
-    val gender = dataManager.get(result.gender).rdd.collect().toMap
+    val gender = result.gender.rdd.collect().toMap
     assert(gender(3L) == "Male")
-    val income = dataManager.get(result.income).rdd.collect().toMap
+    val income = result.income.rdd.collect().toMap
     assert(income(0L) == 1000.0)
-    val name = dataManager.get(result.name).rdd.collect().toMap
+    val name = result.name.rdd.collect().toMap
     assert(name(3L) == "Isolated Joe")
-    val weight = dataManager.get(result.weight).rdd.collect().toMap
+    val weight = result.weight.rdd.collect().toMap
     assert(weight(3L) == 4.0)
-    val comment = dataManager.get(result.comment).rdd.collect().toMap
+    val comment = result.comment.rdd.collect().toMap
     assert(comment(3L) == "Bob loves Eve")
 
     assert(exampleGraph.executionCounter == 0)
-    dataManager.waitAllFutures()
+    dm.waitAllFutures()
   }
 
   test("HybridBundleIO repartition works") {
@@ -301,7 +304,7 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
       val op = HybridEdgeBundle()
       val edges = exampleGraph.outputs.edgeBundles('edges)
       val w = op(op.es, edges).result.sb
-      dataManager.get(w)
+      dataManager.compute(w.entity)
       dataManager.waitAllFutures()
     }
   }

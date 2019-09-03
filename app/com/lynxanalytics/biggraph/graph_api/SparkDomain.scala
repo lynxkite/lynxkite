@@ -77,9 +77,7 @@ class SparkDomain(
     // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
     // the entity in this session, so we need this assertion.
     assert(!isEntityInProgressOrComputed(eio.entity), s"${eio} is new")
-    (sparkOp(entity.source).isHeavy || entity.isInstanceOf[Scalar[_]]) &&
-      // Fast check for directory.
-      eio.mayHaveExisted
+    eio.mayHaveExisted
   }
 
   private def canLoadEntityFromDisk(entity: MetaGraphEntity): SafeFuture[Boolean] = {
@@ -346,9 +344,8 @@ class SparkDomain(
     hadoopAsyncJobs.waitAllFutures()
   }
 
-  def await(e: MetaGraphEntity): EntityData = {
-    getFuture(e).awaitResult(Duration.Inf)
-  }
+  // Convenience for awaiting something in this execution context.
+  def await[T](f: SafeFuture[T]): T = f.awaitResult(Duration.Inf)
 
   override def get[T](scalar: Scalar[T]): SafeFuture[T] = {
     implicit val tt = scalar.typeTag
