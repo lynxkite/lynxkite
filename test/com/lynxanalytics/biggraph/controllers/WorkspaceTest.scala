@@ -68,8 +68,7 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
       Map("project" -> eg.output("project")))
     val ws = Workspace.from(eg, merge)
     val project = context(ws).allStates(merge.output("project")).project
-    import graph_api.Scripting._
-    assert(project.scalars("!vertex_count_delta") == -2)
+    assert(dataManager.get(project.scalars("!vertex_count_delta")) == -2)
   }
 
   test("validation") {

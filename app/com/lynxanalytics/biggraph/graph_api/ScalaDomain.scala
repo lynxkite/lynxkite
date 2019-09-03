@@ -15,14 +15,27 @@ class ScalaDomain extends Domain {
   override def has(e: MetaGraphEntity): Boolean = synchronized {
     entityCache.contains(e.gUID)
   }
-  override def compute(e: MetaGraphEntity): SafeFuture[Unit] = SafeFuture.successful(())
+  override def compute(e: MetaGraphEntity): SafeFuture[Unit] = SafeFuture.successful {
+    val instance = e.source
+    val op = instance.operation.asInstanceOf[ScalaOperation[_, _]]
+    val outputs = collection.mutable.Map[Symbol, Any]()
+    val inputs = instance.inputs.all.mapValues(e => entityCache(e.gUID))
+    op.execute(inputs, outputs)
+    synchronized {
+      for ((symbol, e) <- instance.outputs.all) {
+        entityCache(e.gUID) = outputs(symbol)
+      }
+    }
+  }
   override def cache(e: MetaGraphEntity): Unit = ()
   override def get[T](e: Scalar[T]): SafeFuture[T] = synchronized {
     SafeFuture.successful {
       entityCache(e.gUID).asInstanceOf[T]
     }
   }
-  override def canCompute(e: MetaGraphEntity): Boolean = false
+  override def canCompute(e: MetaGraphEntity): Boolean = {
+    e.source.operation.isInstanceOf[ScalaOperation[_, _]]
+  }
 
   override def getProgress(e: MetaGraphEntity): Double = synchronized {
     if (entityCache.contains(e.gUID)) 1 else 0
@@ -47,4 +60,9 @@ class ScalaDomain extends Domain {
     }
   }
 
+}
+
+trait ScalaOperation[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider]
+  extends TypedMetaGraphOp[IS, OMDS] {
+  def execute(input: Map[Symbol, Any], output: collection.mutable.Map[Symbol, Any]): Unit
 }

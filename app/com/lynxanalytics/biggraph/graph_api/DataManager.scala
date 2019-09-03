@@ -75,7 +75,7 @@ class DataManager(
   }
 
   def get[T](scalar: Scalar[T]): T = {
-    getFuture(scalar).awaitResult(concurrent.duration.Duration.Inf)
+    await(getFuture(scalar))
   }
 
   private def ensure(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
@@ -83,13 +83,14 @@ class DataManager(
       SafeFuture.successful(())
     } else if (computationAllowed) {
       if (d.canCompute(e)) {
-        ensureInputs(e, d).map { _ =>
+        ensureInputs(e, d).flatMap { _ =>
           d.compute(e)
         }
       } else {
         val other = bestSource(e)
-        ensure(e, other)
-        d.relocate(e, other)
+        ensure(e, other).flatMap { _ =>
+          d.relocate(e, other)
+        }
       }
     } else SafeFuture.successful(())
   }
@@ -107,4 +108,7 @@ class DataManager(
   }
 
   def waitAllFutures(): Unit = ()
+
+  // Convenience for awaiting something in this execution context.
+  def await[T](f: SafeFuture[T]): T = f.awaitResult(concurrent.duration.Duration.Inf)
 }
