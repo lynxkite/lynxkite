@@ -22,6 +22,13 @@ class ScalaDomain extends Domain {
     val inputs = instance.inputs.all.mapValues(e => entityCache(e.gUID))
     op.execute(inputs, outputs)
     synchronized {
+      for ((symbol, data) <- outputs) {
+        for (e <- instance.outputs.edgeBundles.get(symbol)) {
+          if (e.autogenerateIdSet) {
+            outputs(e.idSet.name) = data.asInstanceOf[Map[ID, Edge]].keySet
+          }
+        }
+      }
       for ((symbol, e) <- instance.outputs.all) {
         entityCache(e.gUID) = outputs(symbol)
       }
