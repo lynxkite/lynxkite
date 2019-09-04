@@ -15,6 +15,7 @@ object SafeFuture {
     new SafeFuture(unwrapException(Future { wrapException(func) }))
 
   def successful[T](value: T) = new SafeFuture(Future.successful(value))
+  def failed[T](exception: Throwable) = new SafeFuture(Future.failed[T](exception))
 
   def sequence[T](s: Iterable[SafeFuture[T]])(implicit ec: ExecutionContext) =
     new SafeFuture(Future.sequence(s.map(_.future)))

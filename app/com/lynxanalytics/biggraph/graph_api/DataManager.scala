@@ -78,28 +78,50 @@ class DataManager(
     await(getFuture(scalar))
   }
 
-  private def ensure(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
-    if (d.has(e)) {
-      SafeFuture.successful(())
-    } else if (computationAllowed) {
-      if (d.canCompute(e)) {
-        ensureInputs(e, d).flatMap { _ =>
-          d.compute(e)
-        }
-      } else {
-        val other = bestSource(e)
-        ensure(e, other).flatMap { _ =>
-          d.relocate(e, other)
-        }
-      }
-    } else SafeFuture.successful(())
+  // Stuff that needs to be relocated before an entity.
+  private def dependencies(e: MetaGraphEntity): Iterable[MetaGraphEntity] = {
+    e match {
+      case e: Attribute[_] => Some(e.vertexSet)
+      case _ => None
+    }
   }
 
-  private def ensureInputs(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
-    SafeFuture.sequence(
-      e.source.inputs.all.values.map { input =>
-        ensure(input, d)
-      }).map(_ => ())
+  private def ensure(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
+    val futures = collection.mutable.Map[(java.util.UUID, Domain), SafeFuture[Unit]]()
+
+    def ensureEntity(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
+      if (futures.contains((e.gUID, d))) {
+        futures((e.gUID, d))
+      } else {
+        val f = if (d.has(e)) {
+          SafeFuture.successful(())
+        } else if (computationAllowed) {
+          if (d.canCompute(e)) {
+            ensureInputs(e, d).flatMap { _ =>
+              d.compute(e)
+            }
+          } else {
+            val other = bestSource(e)
+            ensureEntity(e, other).flatMap { _ =>
+              SafeFuture.sequence(dependencies(e).map(d.relocate(_, other)))
+            }.flatMap { _ =>
+              d.relocate(e, other)
+            }
+          }
+        } else SafeFuture.failed(new AssertionError("Computation is disabled"))
+        futures((e.gUID, d)) = f
+        f
+      }
+    }
+
+    def ensureInputs(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
+      SafeFuture.sequence(
+        e.source.inputs.all.values.map { input =>
+          ensureEntity(input, d)
+        }).map(_ => ())
+    }
+
+    ensureEntity(e, d)
   }
 
   def cache(entity: MetaGraphEntity): Unit = {

@@ -431,7 +431,6 @@ class SparkDomain(
         import com.lynxanalytics.biggraph.spark_util.Implicits._
         def parallelize[T: reflect.ClassTag](s: Seq[(ID, T)]): UniqueSortedRDD[ID, T] = {
           val rc = runtimeContext
-          println(s"for $e, new partitioner")
           rc.sparkContext.parallelize(s).sortUnique(rc.partitionerForNRows(s.size))
         }
         val future: SafeFuture[EntityData] = e match {
@@ -443,11 +442,8 @@ class SparkDomain(
             def attr[T: reflect.ClassTag](e: Attribute[T]) = {
               val rc = runtimeContext
               val seq = source.get(e).toSeq
-              // If a location has an attribute, it must have the corresponding vertex set too.
-              relocate(e.vertexSet, source)
               entityCache(e.vertexSet.gUID).map { vs =>
                 val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
-                println(s"for $e, $partitioner")
                 val rdd = rc.sparkContext.parallelize(seq).sortUnique(partitioner)
                 new AttributeData[T](e, rdd, count = Some(seq.size))
               }
