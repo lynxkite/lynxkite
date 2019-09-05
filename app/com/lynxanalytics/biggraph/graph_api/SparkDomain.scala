@@ -158,17 +158,18 @@ class SparkDomain(
       }
       validateOutput(instance, output)
       // Reloading attributes needs us to have reloaded the vertex sets already. Hence the sort.
-      for (o <- output.values.toSeq.sortBy(o => if (o.isInstanceOf[VertexSetData]) 1 else 2)) {
+      val outputMeta = instance.outputs.all.values
+      for (o <- outputMeta.toSeq.sortBy(o => if (o.isInstanceOf[VertexSet]) 1 else 2)) {
         val data = if (sparkOp.isHeavy) {
-          saveToDisk(o)
-          val loaded = load(o.entity)
-          logger.addOutput(loaded)
+          if (!sparkOp.hasCustomSaving) saveToDisk(output(o.gUID))
+          val loaded = load(o)
+          if (!o.isInstanceOf[Scalar[_]]) logger.addOutput(loaded)
           loaded
         } else {
-          if (!sparkOp.neverSerialize && o.isInstanceOf[ScalarData[_]]) {
-            saveToDisk(o)
+          if (!sparkOp.neverSerialize && o.isInstanceOf[Scalar[_]]) {
+            saveToDisk(output(o.gUID))
           }
-          o
+          output(o.gUID)
         }
         set(data.entity, data)
       }
@@ -335,14 +336,12 @@ class SparkDomain(
               new AttributeData[T](e, rdd, count = Some(seq.size))
             }
             SafeFuture(attr(e)(e.classTag))
-          case e: Scalar[_] => source.get(e).map { s =>
-            new ScalarData(e, s)
-            //def scalar[T](e: Scalar[T]) = new ScalarData[T](e, source.get(e).get)
-            //scalar(e)
-          }
+          case e: Scalar[_] => source.get(e).map(new ScalarData(e, _))
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }
-        for (data <- future) set(e, data)
+        for (data <- future) {
+          set(e, data)
+        }
         future.map(_ => ())
     }
   }
