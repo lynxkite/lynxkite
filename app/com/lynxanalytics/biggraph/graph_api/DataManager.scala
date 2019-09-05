@@ -24,6 +24,7 @@ trait EntityProgressManager {
 
 // Represents a data locality, such as "Spark" or "Scala" or "single-node server".
 trait Domain {
+  override def toString = this.getClass.getSimpleName // Looks better in debug prints.
   def has(e: MetaGraphEntity): Boolean
   def compute(op: MetaGraphOperationInstance): SafeFuture[Unit]
   // A hint that this entity is likely to be used repeatedly.
@@ -80,44 +81,40 @@ class DataManager(
 
   private def relocate(e: MetaGraphEntity, src: Domain, dst: Domain): SafeFuture[Unit] = {
     e match {
-      case e: Attribute[_] => dst.relocate(e.vertexSet, src).flatMap(_ => dst.relocate(e, src))
+      case e: Attribute[_] => ensure(e.vertexSet, dst).flatMap(_ => dst.relocate(e, src))
+      case e: EdgeBundle => ensure(e.idSet, dst).flatMap(_ => dst.relocate(e, src))
       case _ => dst.relocate(e, src)
     }
   }
 
-  private def ensure(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
-
-    def ensureEntity(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
-      if (futures.contains((e.gUID, d))) {
-        futures((e.gUID, d))
-      } else {
-        val other = bestSource(e)
-        val f = if (d.has(e)) { // We have it. Great.
-          SafeFuture.successful(())
-        } else if (other.has(e)) { // Someone else has it. Relocate.
-          relocate(e, other, d)
-        } else if (d.canCompute(e.source)) { // Nobody has it, but we can compute. Compute.
-          val f = ensureInputs(e, d).flatMap(_ => d.compute(e.source))
-          for (o <- e.source.outputs.all.values) {
-            futures((o.gUID, d)) = f
-          }
-          f
-        } else { // Someone else has to compute it. Then we relocate.
-          ensureEntity(e, other).flatMap(_ => relocate(e, other, d))
+  def ensure(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
+    if (futures.contains((e.gUID, d))) {
+      futures((e.gUID, d))
+    } else {
+      val other = bestSource(e)
+      val f = if (d.has(e)) { // We have it. Great.
+        SafeFuture.successful(())
+      } else if (other.has(e)) { // Someone else has it. Relocate.
+        relocate(e, other, d)
+      } else if (d.canCompute(e.source)) { // Nobody has it, but we can compute. Compute.
+        val f = ensureInputs(e, d).flatMap(_ => d.compute(e.source))
+        for (o <- e.source.outputs.all.values) {
+          futures((o.gUID, d)) = f
         }
-        futures((e.gUID, d)) = f
         f
+      } else { // Someone else has to compute it. Then we relocate.
+        ensure(e, other).flatMap(_ => relocate(e, other, d))
       }
+      futures((e.gUID, d)) = f
+      f
     }
+  }
 
-    def ensureInputs(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
-      SafeFuture.sequence(
-        e.source.inputs.all.values.map { input =>
-          ensureEntity(input, d)
-        }).map(_ => ())
-    }
-
-    ensureEntity(e, d)
+  private def ensureInputs(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
+    SafeFuture.sequence(
+      e.source.inputs.all.values.map { input =>
+        ensure(input, d)
+      }).map(_ => ())
   }
 
   def cache(entity: MetaGraphEntity): Unit = {
