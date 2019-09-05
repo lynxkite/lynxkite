@@ -44,10 +44,6 @@ class ScalaDomain extends Domain {
     e.source.operation.isInstanceOf[ScalaOperation[_, _]]
   }
 
-  override def getProgress(e: MetaGraphEntity): Double = synchronized {
-    if (entityCache.contains(e.gUID)) 1 else 0
-  }
-
   def get(e: VertexSet) = synchronized { entityCache(e.gUID).asInstanceOf[Set[ID]] }
   def get(e: EdgeBundle) = synchronized { entityCache(e.gUID).asInstanceOf[Map[ID, Edge]] }
   def get[T](e: Attribute[T]) = synchronized { entityCache(e.gUID).asInstanceOf[Map[ID, T]] }
@@ -56,13 +52,13 @@ class ScalaDomain extends Domain {
     source match {
       case source: SparkDomain =>
         implicit val ec = source.executionContext
-        val future = source.getFuture(e).map {
+        val future = SafeFuture(source.getData(e) match {
           case v: VertexSetData => v.rdd.keys.collect.toSet
           case e: EdgeBundleData => e.rdd.collect.toMap
           case a: AttributeData[_] => a.rdd.collect.toMap
           case s: ScalarData[_] => s.value
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
-        }
+        })
         future.map(set(e, _))
     }
   }

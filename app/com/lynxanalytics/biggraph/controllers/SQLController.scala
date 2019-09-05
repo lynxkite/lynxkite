@@ -464,7 +464,7 @@ object SQLController {
   def getDF(t: Table)(implicit sd: SparkDomain, dm: DataManager): DataFrame = {
     implicit val ec = sd.executionContext
     dm.compute(t)
-      .flatMap(_ => sd.getFuture(t).as[TableData])
+      .map(_ => sd.getData(t).asInstanceOf[TableData])
       .awaitResult(concurrent.duration.Duration.Inf)
       .df
   }

@@ -44,7 +44,7 @@ object GraphTestUtils {
     implicit
     dm: DataManager, sd: SparkDomain): EntityData = {
     implicit val ec = dm.executionContext
-    sd.await(dm.compute(e).flatMap(_ => sd.getFuture(e)))
+    dm.await(dm.compute(e).map(_ => sd.getData(e)))
   }
 
   implicit def getVertexSetDataEC(e: EntityContainer[VertexSet])(
