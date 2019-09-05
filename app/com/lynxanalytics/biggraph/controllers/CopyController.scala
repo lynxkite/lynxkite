@@ -46,8 +46,8 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
     import java.text.SimpleDateFormat
     val ts = new SimpleDateFormat("YYYYMMddHHmmss").format(Calendar.getInstance().getTime())
 
-    val dm = environment.sparkDomain
-    val dst = dm.repositoryPath + "metadata_backup/" + ts + "/"
+    val dm = environment.dataManager
+    val dst = environment.sparkDomain.repositoryPath + "metadata_backup/" + ts + "/"
     dm.synchronized {
       dm.waitAllFutures()
       sparkClusterController.setForceReportHealthy(true)
@@ -107,7 +107,7 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
 
   def copyEphemeral(user: serving.User, req: serving.Empty): Unit = {
     assert(user.isAdmin, "Only admins can do backup.")
-    val dm = environment.sparkDomain
+    val dm = environment.dataManager
     dm.waitAllFutures()
     dm.synchronized {
       dm.waitAllFutures() // We don't want other operations to be running during s3copy.

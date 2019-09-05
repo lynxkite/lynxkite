@@ -25,8 +25,6 @@ trait EntityProgressManager {
 // Represents a data locality, such as "Spark" or "Scala" or "single-node server".
 trait Domain {
   def has(e: MetaGraphEntity): Boolean
-  // Returns the progress (0 - 1) or throws Exception if something is wrong.
-  def getProgress(e: MetaGraphEntity): Double
   def compute(e: MetaGraphEntity): SafeFuture[Unit]
   // A hint that this entity is likely to be used repeatedly.
   def cache(e: MetaGraphEntity): Unit
