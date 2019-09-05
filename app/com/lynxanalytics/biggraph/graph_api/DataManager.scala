@@ -25,11 +25,11 @@ trait EntityProgressManager {
 // Represents a data locality, such as "Spark" or "Scala" or "single-node server".
 trait Domain {
   def has(e: MetaGraphEntity): Boolean
-  def compute(e: MetaGraphEntity): SafeFuture[Unit]
+  def compute(op: MetaGraphOperationInstance): SafeFuture[Unit]
   // A hint that this entity is likely to be used repeatedly.
   def cache(e: MetaGraphEntity): Unit
   def get[T](e: Scalar[T]): SafeFuture[T]
-  def canCompute(e: MetaGraphEntity): Boolean
+  def canCompute(op: MetaGraphOperationInstance): Boolean
   // Moves an entity from another Domain to this one.
   // This is a method on the destination so that the methods for modifying internal
   // data structures can remain private.
@@ -44,6 +44,8 @@ class DataManager(
     ThreadUtil.limitedExecutionContext(
       "DataManager",
       maxParallelism = LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
+  private val futures =
+    collection.concurrent.TrieMap[(java.util.UUID, Domain), SafeFuture[Unit]]()
 
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
@@ -59,15 +61,15 @@ class DataManager(
   private def bestSource(e: MetaGraphEntity): Domain = {
     domains.find(_.has(e)) match {
       case Some(d) => d
-      case None => domains.find(_.canCompute(e)).get
+      case None => domains.find(_.canCompute(e.source)).get
     }
   }
 
-  def compute(entity: MetaGraphEntity): SafeFuture[Unit] = {
+  def compute(entity: MetaGraphEntity): SafeFuture[Unit] = synchronized {
     ensure(entity, bestSource(entity))
   }
 
-  def getFuture[T](scalar: Scalar[T]): SafeFuture[T] = {
+  def getFuture[T](scalar: Scalar[T]): SafeFuture[T] = synchronized {
     val d = bestSource(scalar)
     ensure(scalar, d).flatMap(_ => d.get(scalar))
   }
@@ -76,37 +78,33 @@ class DataManager(
     await(getFuture(scalar))
   }
 
-  // Stuff that needs to be relocated before an entity.
-  private def dependencies(e: MetaGraphEntity): Iterable[MetaGraphEntity] = {
+  private def relocate(e: MetaGraphEntity, src: Domain, dst: Domain): SafeFuture[Unit] = {
     e match {
-      case e: Attribute[_] => Some(e.vertexSet)
-      case _ => None
+      case e: Attribute[_] => dst.relocate(e.vertexSet, src).flatMap(_ => dst.relocate(e, src))
+      case _ => dst.relocate(e, src)
     }
   }
 
-  private def ensure(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
-    val futures = collection.mutable.Map[(java.util.UUID, Domain), SafeFuture[Unit]]()
+  private def ensure(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
 
     def ensureEntity(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
       if (futures.contains((e.gUID, d))) {
         futures((e.gUID, d))
       } else {
-        val f = if (d.has(e)) {
+        val other = bestSource(e)
+        val f = if (d.has(e)) { // We have it. Great.
           SafeFuture.successful(())
-        } else if (computationAllowed) {
-          if (d.canCompute(e)) {
-            ensureInputs(e, d).flatMap { _ =>
-              d.compute(e)
-            }
-          } else {
-            val other = bestSource(e)
-            ensureEntity(e, other).flatMap { _ =>
-              SafeFuture.sequence(dependencies(e).map(d.relocate(_, other)))
-            }.flatMap { _ =>
-              d.relocate(e, other)
-            }
+        } else if (other.has(e)) { // Someone else has it. Relocate.
+          relocate(e, other, d)
+        } else if (d.canCompute(e.source)) { // Nobody has it, but we can compute. Compute.
+          val f = ensureInputs(e, d).flatMap(_ => d.compute(e.source))
+          for (o <- e.source.outputs.all.values) {
+            futures((o.gUID, d)) = f
           }
-        } else SafeFuture.failed(new AssertionError("Computation is disabled"))
+          f
+        } else { // Someone else has to compute it. Then we relocate.
+          ensureEntity(e, other).flatMap(_ => relocate(e, other, d))
+        }
         futures((e.gUID, d)) = f
         f
       }
