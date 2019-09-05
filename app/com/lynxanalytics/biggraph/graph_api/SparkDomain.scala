@@ -324,25 +324,28 @@ class SparkDomain(
         val future: SafeFuture[EntityData] = e match {
           case e: VertexSet => SafeFuture(new VertexSetData(
             e, parallelize(source.get(e).toSeq.map((_, ()))), count = Some(source.get(e).size)))
-          case e: EdgeBundle => SafeFuture(new EdgeBundleData(
-            e, parallelize(source.get(e).toSeq), count = Some(source.get(e).size)))
+          case e: EdgeBundle => SafeFuture {
+            val seq = source.get(e).toSeq
+            val vs = getData(e.idSet)
+            val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
+            val rdd = runtimeContext.sparkContext.parallelize(seq).sortUnique(partitioner)
+            new EdgeBundleData(e, rdd, count = Some(seq.size))
+          }
           case e: Attribute[_] =>
             def attr[T: reflect.ClassTag](e: Attribute[T]) = {
-              val rc = runtimeContext
               val seq = source.get(e).toSeq
               val vs = getData(e.vertexSet)
               val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
-              val rdd = rc.sparkContext.parallelize(seq).sortUnique(partitioner)
+              val rdd = runtimeContext.sparkContext.parallelize(seq).sortUnique(partitioner)
               new AttributeData[T](e, rdd, count = Some(seq.size))
             }
             SafeFuture(attr(e)(e.classTag))
           case e: Scalar[_] => source.get(e).map(new ScalarData(e, _))
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }
-        for (data <- future) {
+        future.map { data =>
           set(e, data)
         }
-        future.map(_ => ())
     }
   }
 }
