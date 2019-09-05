@@ -3,10 +3,15 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
-
 import scala.collection.concurrent.TrieMap
+import com.lynxanalytics.biggraph.graph_util
 
 class ScalaDomain extends Domain {
+  implicit val executionContext =
+    ThreadUtil.limitedExecutionContext(
+      "ScalaDomain",
+      maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
+
   private val entityCache = TrieMap[UUID, Any]()
 
   private def set(entity: MetaGraphEntity, data: Any): Unit = synchronized {
@@ -15,11 +20,12 @@ class ScalaDomain extends Domain {
   override def has(e: MetaGraphEntity): Boolean = synchronized {
     entityCache.contains(e.gUID)
   }
-  override def compute(e: MetaGraphEntity): SafeFuture[Unit] = SafeFuture.successful {
-    val instance = e.source
+  override def compute(instance: MetaGraphOperationInstance) = SafeFuture[Unit] {
     val op = instance.operation.asInstanceOf[ScalaOperation[_, _]]
     val outputs = collection.mutable.Map[Symbol, Any]()
-    val inputs = instance.inputs.all.mapValues(e => entityCache(e.gUID))
+    val inputs = synchronized {
+      instance.inputs.all.mapValues(e => entityCache(e.gUID))
+    }
     op.execute(inputs, outputs)
     synchronized {
       for ((symbol, data) <- outputs) {
@@ -40,8 +46,8 @@ class ScalaDomain extends Domain {
       entityCache(e.gUID).asInstanceOf[T]
     }
   }
-  override def canCompute(e: MetaGraphEntity): Boolean = {
-    e.source.operation.isInstanceOf[ScalaOperation[_, _]]
+  override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
+    instance.operation.isInstanceOf[ScalaOperation[_, _]]
   }
 
   def get(e: VertexSet) = synchronized { entityCache(e.gUID).asInstanceOf[Set[ID]] }
@@ -51,7 +57,6 @@ class ScalaDomain extends Domain {
   override def relocate(e: MetaGraphEntity, source: Domain) = {
     source match {
       case source: SparkDomain =>
-        implicit val ec = source.executionContext
         val future = SafeFuture(source.getData(e) match {
           case v: VertexSetData => v.rdd.keys.collect.toSet
           case e: EdgeBundleData => e.rdd.collect.toMap

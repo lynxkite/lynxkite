@@ -133,7 +133,7 @@ class SparkDomain(
     outputBuilder.dataMap.toMap
   }
 
-  private def execute(instance: MetaGraphOperationInstance): Map[UUID, EntityData] = {
+  private def execute(instance: MetaGraphOperationInstance): Unit = {
     val logger = new OperationLogger(instance, executionContext)
     val inputs = instance.inputs.all.map {
       case (name, entity) => name -> getData(entity)
@@ -148,37 +148,42 @@ class SparkDomain(
     for (scalar <- instance.outputs.scalars.values) {
       log.info(s"PERF Computing scalar $scalar")
     }
-    val outputDatas = {
-      executingOperation.set(Some(instance))
-      try run(instance, inputDatas)
-      finally executingOperation.set(None)
-    }.mapValues {
-      case data =>
-        if (sparkOp.isHeavy) {
-          saveToDisk(data)
-          val loaded = load(data.entity)
+
+    // Keeping the original RDDs in this shorter scope allows the later GC to clean them up.
+    {
+      val output = {
+        executingOperation.set(Some(instance))
+        try run(instance, inputDatas)
+        finally executingOperation.set(None)
+      }
+      validateOutput(instance, output)
+      // Reloading attributes needs us to have reloaded the vertex sets already. Hence the sort.
+      for (o <- output.values.toSeq.sortBy(o => if (o.isInstanceOf[VertexSetData]) 1 else 2)) {
+        val data = if (sparkOp.isHeavy) {
+          saveToDisk(o)
+          val loaded = load(o.entity)
           logger.addOutput(loaded)
           loaded
         } else {
-          if (!sparkOp.neverSerialize && data.isInstanceOf[ScalarData[_]]) {
-            saveToDisk(data)
+          if (!sparkOp.neverSerialize && o.isInstanceOf[ScalarData[_]]) {
+            saveToDisk(o)
           }
-          data
+          o
         }
+        set(data.entity, data)
+      }
     }
-    validateOutput(instance, outputDatas)
     markOperationComplete(instance)
-    // A GC is helpful here to avoid filling up the disk on the executors. (#2098)
-    if (sparkOp.isHeavy) System.gc()
     for (scalar <- instance.outputs.scalars.values) {
       log.info(s"PERF Computed scalar $scalar")
     }
     if (sparkOp.isHeavy) {
+      // A GC is helpful here to avoid filling up the disk on the executors. (#2098)
+      System.gc()
       log.info(s"PERF HEAVY Finished computing heavy operation instance $instance")
       logger.stopTimer()
     }
     logger.write()
-    outputDatas
   }
 
   // Mark the operation as complete. Entities may not be loaded from incomplete operations.
@@ -214,23 +219,13 @@ class SparkDomain(
     }
   }
 
-  override def compute(entity: MetaGraphEntity): SafeFuture[Unit] = {
-    assert(!isEntityComputed(entity), s"Entity already computed: $entity")
-    assertNotInOperation(s"has triggered the computation of $entity. #5580")
-    // Otherwise we schedule execution of its operation.
-    SafeFuture[Unit] {
-      val instance = entity.source
-      val outputs = execute(instance)
-      synchronized {
-        for (o <- instance.outputs.all.values) {
-          set(o, outputs(o.gUID))
-        }
-      }
-    }
+  override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {
+    assertNotInOperation(s"has triggered the computation of $instance. #5580")
+    SafeFuture[Unit](execute(instance))
   }
 
-  override def canCompute(e: MetaGraphEntity): Boolean = {
-    e.source.operation.isInstanceOf[SparkOperation[_, _]]
+  override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
+    instance.operation.isInstanceOf[SparkOperation[_, _]]
   }
   override def has(entity: MetaGraphEntity): Boolean = synchronized {
     isEntityComputed(entity) || canLoadEntityFromDisk(entity)
