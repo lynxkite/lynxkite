@@ -10,6 +10,7 @@ class ScalaDomain extends Domain {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "ScalaDomain",
+      // TODO: Rename config setting.
       maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
 
   private val entityCache = TrieMap[UUID, Any]()
