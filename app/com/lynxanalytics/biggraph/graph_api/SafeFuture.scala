@@ -71,8 +71,8 @@ class SafeFuture[+T] private (val future: Future[T], val dependencies: Seq[SafeF
 
   def isCompleted = future.isCompleted
 
-  def allDependencies: Set[SafeFuture[_]] = {
-    val visited = collection.mutable.Set[SafeFuture[_]]()
+  def dependencySet: Set[SafeFuture[_]] = {
+    val visited = collection.mutable.Set[SafeFuture[_]](this)
     val queue = collection.mutable.ListBuffer[SafeFuture[_]](this)
     for (f <- queue) {
       val next = f.dependencies.toSet.diff(visited)
