@@ -4,7 +4,6 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
-import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import play.api.libs.json
 import scala.concurrent.ExecutionContextExecutorService
 
