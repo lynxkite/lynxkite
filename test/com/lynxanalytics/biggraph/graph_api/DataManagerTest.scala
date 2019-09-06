@@ -61,7 +61,7 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
     // Create the file.
     testfile.createFromStrings("a,b\n3,4\n")
     // The result can be accessed now.
-    assert(GraphTestUtils.get(imported.columns("a").entity).values.toSeq == Seq(3))
+    assert(GraphTestUtils.get(imported.columns("a").entity).values.toSeq == Seq("3"))
     // The compute progress of ids is also updated.
     GraphTestUtils.get(imported.ids)
     assert(1.0 == computeProgress(dataManager, imported.ids))
