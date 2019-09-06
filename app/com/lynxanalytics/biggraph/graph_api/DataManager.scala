@@ -132,7 +132,8 @@ class DataManager(
   }
 
   def cache(entity: MetaGraphEntity): Unit = {
-    bestSource(entity).cache(entity)
+    val d = bestSource(entity)
+    ensure(entity, d).map(_ => d.cache(entity))
   }
 
   def waitAllFutures(): Unit = ()
