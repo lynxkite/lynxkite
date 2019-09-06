@@ -266,6 +266,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     moveToTrash(io.TablesDir, files.tables.keys.toSet -- filesToKeep)
     moveToTrash(io.BroadcastsDir, files.broadcasts.keys.toSet -- filesToKeep)
     environment.sparkDomain.clear()
+    environment.dataManager.clear()
   }
 
   private def moveToTrash(dir: String, files: Set[String]): Unit = {

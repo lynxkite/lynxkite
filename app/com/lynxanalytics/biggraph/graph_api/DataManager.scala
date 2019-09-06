@@ -57,10 +57,14 @@ class DataManager(
   }
 
   override def computeProgress(entity: MetaGraphEntity): Double = {
+    val d = bestSource(entity)
+    if (d.has(entity)) {
+      futures((entity.gUID, d)) = SafeFuture.successful(())
+    }
     futures.get((entity.gUID, bestSource(entity))) match {
       case None => 0.0
       case Some(s) =>
-        val deps = s.allDependencies
+        val deps = s.dependencySet
         if (findFailure(deps).isDefined) -1.0
         else deps.filter(_.isCompleted).size.toDouble / deps.size.toDouble
     }
@@ -69,7 +73,7 @@ class DataManager(
   override def getComputedScalarValue[T](e: Scalar[T]): ScalarComputationState[T] = {
     computeProgress(e) match {
       case 1.0 => ScalarComputationState(1, Some(get(e)), None)
-      case -1.0 => ScalarComputationState(-1, None, findFailure(getFuture(e).allDependencies))
+      case -1.0 => ScalarComputationState(-1, None, findFailure(getFuture(e).dependencySet))
       case x => ScalarComputationState(x, None, None)
     }
   }
@@ -137,7 +141,15 @@ class DataManager(
     ensure(entity, d).map(_ => d.cache(entity))
   }
 
-  def waitAllFutures(): Unit = ()
+  def waitAllFutures(): Unit = synchronized {
+    for (f <- futures.values) {
+      await(f)
+    }
+  }
+
+  def clear(): Unit = synchronized {
+    futures.clear()
+  }
 
   // Convenience for awaiting something in this execution context.
   def await[T](f: SafeFuture[T]): T = f.awaitResult(concurrent.duration.Duration.Inf)
