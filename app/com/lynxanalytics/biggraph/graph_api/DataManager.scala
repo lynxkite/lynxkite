@@ -142,9 +142,7 @@ class DataManager(
   }
 
   def waitAllFutures(): Unit = {
-    for (f <- futures.values) {
-      await(f)
-    }
+    SafeFuture.sequence(futures.values).awaitReady(concurrent.duration.Duration.Inf)
   }
 
   def clear(): Unit = synchronized {
