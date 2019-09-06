@@ -107,7 +107,8 @@ class DataManager(
   }
 
   def ensure(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
-    if (futures.contains((e.gUID, d))) {
+    val f = futures.get((e.gUID, d))
+    if (f.isDefined && !f.get.hasFailed) {
       futures((e.gUID, d))
     } else {
       val other = bestSource(e)
