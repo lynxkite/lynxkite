@@ -44,6 +44,7 @@ class DataManager(
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "DataManager",
+      // TODO: Rename config setting.
       maxParallelism = LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
   private val futures =
     collection.concurrent.TrieMap[(java.util.UUID, Domain), SafeFuture[Unit]]()
