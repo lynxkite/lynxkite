@@ -47,7 +47,6 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
       val d = (dstDir / name).path
       srcDir.fs.copyFromLocalFile( /* delSrc = */ false, /* overwrite = */ true, s, d)
     }
-
   }
 
   val numVerticesInExampleGraph = 8
@@ -61,13 +60,14 @@ class EntityIOTest extends FunSuite with TestMetaGraphManager with TestDataManag
     val weight = operation().result.weight
     val repo = cleanSparkDomain.repositoryPath
     for (p <- partitions) {
-      val dataManager = new DataManager(Seq(new ScalaDomain, new SparkDomain(sparkSession, repo)))
+      implicit val sd = new SparkDomain(sparkSession, repo)
+      implicit val dm = new DataManager(Seq(new ScalaDomain, sd))
       TestUtils.withRestoreGlobals(
         tolerance = 1.0,
         verticesPerPartition = numVerticesInExampleGraph / p) {
-        dataManager.compute(vertices)
-        dataManager.compute(weight) // This line invokes both EdgeBundle and Attribute[double] loads
-        dataManager.waitAllFutures()
+        GraphTestUtils.computeAndGet(vertices)
+        GraphTestUtils.computeAndGet(weight) // This invokes both EdgeBundle and Attribute loads.
+        dm.waitAllFutures()
       }
     }
   }

@@ -141,7 +141,7 @@ class DataManager(
     ensure(entity, d).map(_ => d.cache(entity))
   }
 
-  def waitAllFutures(): Unit = synchronized {
+  def waitAllFutures(): Unit = {
     for (f <- futures.values) {
       await(f)
     }

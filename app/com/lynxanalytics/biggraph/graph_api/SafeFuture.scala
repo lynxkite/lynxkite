@@ -71,6 +71,7 @@ class SafeFuture[+T] private (val future: Future[T], val dependencies: Seq[SafeF
 
   def isCompleted = future.isCompleted
 
+  // Returns the set of futures leading up to and including this future.
   def dependencySet: Set[SafeFuture[_]] = {
     val visited = collection.mutable.Set[SafeFuture[_]](this)
     val queue = collection.mutable.ListBuffer[SafeFuture[_]](this)
