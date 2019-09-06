@@ -63,13 +63,20 @@ class SafeFuture[+T] private (val future: Future[T], val dependencies: Seq[SafeF
   def foreach[U](f: T => U)(implicit ec: ExecutionContext) =
     future.foreach(f)
 
-  def value = future.value
+  def value: Option[Try[T]] = future.value
 
   def get = value.get.get
 
   def as[T] = this.asInstanceOf[SafeFuture[T]]
 
   def isCompleted = future.isCompleted
+
+  def hasFailed: Boolean = {
+    value match {
+      case None => false
+      case Some(x: Try[T]) => x.isFailure
+    }
+  }
 
   // Returns the set of futures leading up to and including this future.
   def dependencySet: Set[SafeFuture[_]] = {

@@ -27,47 +27,43 @@ class DataManagerTest extends FunSuite with TestMetaGraphManager with TestDataMa
       Map(0 -> "Adam loves Eve", 1 -> "Eve loves Adam", 2 -> "Bob envies Adam", 3 -> "Bob loves Eve"))
     assert(dataManager.get(instance.outputs.scalars('greeting)) == "Hello world! 😀 ")
   }
-  /*
+
   test("We can compute a graph whose meta was loaded from disk") {
     val mmDir = cleanMetaManagerDir
     val metaManager = MetaRepositoryManager(mmDir)
-    val dataManager = cleanDataManager
+    implicit val dataManager = cleanDataManager
     val operation = ExampleGraph()
     val instance = metaManager.apply(operation)
     val ageGUID = instance.outputs.attributes('age).gUID
-    val reloadedMetaManager = MetaRepositoryManager(mmDir)
+    implicit val reloadedMetaManager = MetaRepositoryManager(mmDir)
     val reloadedAge = reloadedMetaManager.attribute(ageGUID).runtimeSafeCast[Double]
-    assert(TestUtils.RDDToSortedString(dataManager.get(reloadedAge).rdd) ==
-      "(0,20.3)\n" +
-      "(1,18.2)\n" +
-      "(2,50.3)\n" +
-      "(3,2.0)")
+    assert(GraphTestUtils.get(reloadedAge) == Map(0 -> 20.3, 1 -> 18.2, 2 -> 50.3, 3 -> 2.0))
   }
 
   test("Failed operation can be retried") {
     implicit val metaManager = cleanMetaManager
-    val dataManager = cleanDataManager
+    val sparkDomain = cleanSparkDomain
+    implicit val dataManager = new DataManager(Seq(new ScalaDomain, sparkDomain))
     import Scripting._
 
     val testfile = HadoopFile(myTempDirPrefix) / "test.csv"
     // Create the file so the schema can be read from it.
     testfile.createFromStrings("a,b\n1,2\n")
-    val imported = TestGraph.loadCSV(testfile.resolvedName)(metaManager, dataManager)
+    val imported = TestGraph.loadCSV(testfile.resolvedName)(metaManager, sparkDomain)
 
     // Delete file, so that the actual computation fails.
     testfile.delete()
     // The file does not exist, so the import fails.
     val e = intercept[Exception] {
-      dataManager.get(imported.ids)
+      GraphTestUtils.get(imported.ids)
     }
     assert(-1.0 == computeProgress(dataManager, imported.ids))
     // Create the file.
     testfile.createFromStrings("a,b\n3,4\n")
     // The result can be accessed now.
-    assert(dataManager.get(imported.columns("a").entity).rdd.values.collect.toSeq == Seq("3"))
+    assert(GraphTestUtils.get(imported.columns("a").entity).values.toSeq == Seq(3))
     // The compute progress of ids is also updated.
-    dataManager.get(imported.ids)
+    GraphTestUtils.get(imported.ids)
     assert(1.0 == computeProgress(dataManager, imported.ids))
   }
-  */
 }
