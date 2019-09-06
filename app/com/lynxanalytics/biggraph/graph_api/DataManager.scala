@@ -51,12 +51,26 @@ class DataManager(
   // This can be switched to false to enter "demo mode" where no new calculations are allowed.
   var computationAllowed = true
 
-  override def computeProgress(entity: MetaGraphEntity): Double = {
-    1
+  private def findFailure(fs: Iterable[SafeFuture[_]]): Option[Throwable] = {
+    fs.map(_.value).collectFirst { case Some(util.Failure(t)) => t }
   }
 
-  override def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T] = {
-    ScalarComputationState(1, None, None)
+  override def computeProgress(entity: MetaGraphEntity): Double = {
+    futures.get((entity.gUID, bestSource(entity))) match {
+      case None => 0.0
+      case Some(s) =>
+        val deps = s.allDependencies
+        if (findFailure(deps).isDefined) -1.0
+        else deps.filter(_.isCompleted).size.toDouble / deps.size.toDouble
+    }
+  }
+
+  override def getComputedScalarValue[T](e: Scalar[T]): ScalarComputationState[T] = {
+    computeProgress(e) match {
+      case 1.0 => ScalarComputationState(1, Some(get(e)), None)
+      case -1.0 => ScalarComputationState(-1, None, findFailure(getFuture(e).allDependencies))
+      case x => ScalarComputationState(x, None, None)
+    }
   }
 
   private def bestSource(e: MetaGraphEntity): Domain = {

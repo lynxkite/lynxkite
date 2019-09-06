@@ -42,9 +42,7 @@ class ScalaDomain extends Domain {
   }
   override def cache(e: MetaGraphEntity): Unit = ()
   override def get[T](e: Scalar[T]): SafeFuture[T] = synchronized {
-    SafeFuture.successful {
-      entityCache(e.gUID).asInstanceOf[T]
-    }
+    SafeFuture.successful(entityCache(e.gUID).asInstanceOf[T])
   }
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
     instance.operation.isInstanceOf[ScalaOperation[_, _]]

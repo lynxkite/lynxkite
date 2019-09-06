@@ -18,7 +18,6 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
@@ -241,8 +240,8 @@ class SparkDomain(
   // Convenience for awaiting something in this execution context.
   def await[T](f: SafeFuture[T]): T = f.awaitResult(Duration.Inf)
 
-  override def get[T](scalar: Scalar[T]) = SafeFuture {
-    getData(scalar).asInstanceOf[ScalarData[T]].value
+  override def get[T](scalar: Scalar[T]) = {
+    SafeFuture.successful(getData(scalar).asInstanceOf[ScalarData[T]].value)
   }
 
   private def enforceCoLocationWithIdSet[T: ClassTag](
