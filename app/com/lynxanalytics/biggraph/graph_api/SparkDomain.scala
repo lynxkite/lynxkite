@@ -340,7 +340,8 @@ class SparkDomain(
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }
         future.map { data =>
-          set(e, data)
+          saveToDisk(data)
+          set(e, load(e))
         }
     }
   }
