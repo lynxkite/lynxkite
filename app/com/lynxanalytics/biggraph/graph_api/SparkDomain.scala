@@ -28,11 +28,7 @@ class SparkDomain(
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "SparkDomain",
-      maxParallelism = LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
-  val hadoopCheckExecutionContext =
-    ThreadUtil.limitedExecutionContext(
-      "SparkDomain(Hadoop)",
-      maxParallelism = LoggedEnvironment.envOrElse("KITE_HADOOP_PARALLELISM", "5").toInt)
+      maxParallelism = LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
   private var executingOperation =
     new ThreadLocal[Option[MetaGraphOperationInstance]] { override def initialValue() = None }
   private val entitiesOnDiskCache = TrieMap[UUID, Boolean]()
