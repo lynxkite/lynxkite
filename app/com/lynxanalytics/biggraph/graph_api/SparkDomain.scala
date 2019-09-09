@@ -29,8 +29,6 @@ class SparkDomain(
     ThreadUtil.limitedExecutionContext(
       "SparkDomain",
       maxParallelism = LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
-  private var executingOperation =
-    new ThreadLocal[Option[MetaGraphOperationInstance]] { override def initialValue() = None }
   private val entitiesOnDiskCache = TrieMap[UUID, Boolean]()
   private val entityCache = TrieMap[UUID, EntityData]()
   private val sparkCachedEntities = mutable.Set[UUID]()
@@ -95,13 +93,6 @@ class SparkDomain(
   // Use this to run Spark operations from HTTP handlers. (SPARK-12964)
   def async[T](fn: => T): concurrent.Future[T] = SafeFuture(fn).future
 
-  // Asserts that this thread is not in the process of executing an operation.
-  private def assertNotInOperation(msg: => String): Unit = {
-    for (op <- executingOperation.get) {
-      throw new AssertionError(s"$op $msg")
-    }
-  }
-
   private def asSparkOp[I <: InputSignatureProvider, O <: MetaDataSetProvider](
     instance: MetaGraphOperationInstance): SparkOperation[I, O] =
     asSparkOp(instance.asInstanceOf[TypedOperationInstance[I, O]])
@@ -142,11 +133,7 @@ class SparkDomain(
 
     // Keeping the original RDDs in this shorter scope allows the later GC to clean them up.
     {
-      val output = {
-        executingOperation.set(Some(instance))
-        try run(instance, inputDatas)
-        finally executingOperation.set(None)
-      }
+      val output = run(instance, inputDatas)
       validateOutput(instance, output)
       // Reloading attributes needs us to have reloaded the vertex sets already. Hence the sort.
       val outputMeta = instance.outputs.all.values
@@ -212,9 +199,8 @@ class SparkDomain(
     }
   }
 
-  override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {
-    assertNotInOperation(s"has triggered the computation of $instance. #5580")
-    SafeFuture[Unit](execute(instance))
+  override def compute(instance: MetaGraphOperationInstance) = SafeFuture[Unit] {
+    execute(instance)
   }
 
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
