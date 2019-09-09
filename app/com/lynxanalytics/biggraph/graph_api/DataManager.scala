@@ -49,9 +49,6 @@ class DataManager(
   private val futures =
     collection.concurrent.TrieMap[(java.util.UUID, Domain), SafeFuture[Unit]]()
 
-  // This can be switched to false to enter "demo mode" where no new calculations are allowed.
-  var computationAllowed = true
-
   private def findFailure(fs: Iterable[SafeFuture[_]]): Option[Throwable] = {
     fs.map(_.value).collectFirst { case Some(util.Failure(t)) => t }
   }
