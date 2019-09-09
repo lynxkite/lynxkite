@@ -49,10 +49,6 @@ POST /ajax/exportSQLQueryToJdbc    com.lynxanalytics.biggraph.serving.Production
 
 POST /ajax/importBox         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importBox
 
-GET  /ajax/demoModeStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.demoModeStatus
-GET  /ajax/enterDemoMode     com.lynxanalytics.biggraph.serving.ProductionJsonServer.enterDemoMode
-GET  /ajax/exitDemoMode      com.lynxanalytics.biggraph.serving.ProductionJsonServer.exitDemoMode
-
 GET  /ajax/getUsers            com.lynxanalytics.biggraph.serving.ProductionJsonServer.getUsers
 POST /ajax/changeUserPassword  com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeUserPassword
 POST /ajax/changeUser          com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeUser

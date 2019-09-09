@@ -337,8 +337,6 @@ object FrontendJson {
   implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
   implicit val wImportBoxResponse = json.Json.writes[ImportBoxResponse]
 
-  implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
-
   implicit val rChangeUserPasswordRequest = json.Json.reads[ChangeUserPasswordRequest]
   implicit val rChangeUserRequest = json.Json.reads[ChangeUserRequest]
   implicit val rDeleteUserRequest = json.Json.reads[DeleteUserRequest]
@@ -516,11 +514,6 @@ object ProductionJsonServer extends JsonServer {
     workspaceController.getOperation(user, request).asInstanceOf[TriggerableOperation]
       .trigger(workspaceController, drawingController)
   }
-
-  val demoModeController = new DemoModeController(BigGraphProductionEnvironment)
-  def demoModeStatus = jsonGet(demoModeController.demoModeStatus)
-  def enterDemoMode = jsonGet(demoModeController.enterDemoMode)
-  def exitDemoMode = jsonGet(demoModeController.exitDemoMode)
 
   val userController = new UserController(BigGraphProductionEnvironment)
   val passwordLogin = userController.passwordLogin
