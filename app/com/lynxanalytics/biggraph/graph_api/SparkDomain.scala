@@ -69,16 +69,12 @@ class SparkDomain(
   }
 
   private def canLoadEntityFromDisk(entity: MetaGraphEntity): Boolean = {
-    if (isEntityComputed(entity) || !entityIO(entity).mayHaveExisted) {
-      false
-    } else entitiesOnDiskCache.synchronized {
-      entitiesOnDiskCache.getOrElseUpdate(
-        entity.gUID,
-        entityIO(entity).exists)
-    }
+    assert(!entityCache.contains(entity.gUID), s"We already have $entity.")
+    entityIO(entity).mayHaveExisted &&
+      entitiesOnDiskCache.synchronized {
+        entitiesOnDiskCache.getOrElseUpdate(entity.gUID, entityIO(entity).exists)
+      }
   }
-
-  private def isEntityComputed(entity: MetaGraphEntity): Boolean = entityCache.contains(entity.gUID)
 
   private def load(entity: MetaGraphEntity): EntityData = {
     val eio = entityIO(entity)
@@ -165,7 +161,8 @@ class SparkDomain(
           if (!o.isInstanceOf[Scalar[_]]) logger.addOutput(loaded)
           loaded
         } else {
-          if (!sparkOp.neverSerialize && o.isInstanceOf[Scalar[_]]) {
+          // Serialize scalars even for non-heavy ops.
+          if (o.isInstanceOf[Scalar[_]]) {
             saveToDisk(output(o.gUID))
           }
           output(o.gUID)
@@ -228,7 +225,7 @@ class SparkDomain(
     instance.operation.isInstanceOf[SparkOperation[_, _]]
   }
   override def has(entity: MetaGraphEntity): Boolean = synchronized {
-    isEntityComputed(entity) || canLoadEntityFromDisk(entity)
+    entityCache.contains(entity.gUID) || canLoadEntityFromDisk(entity)
   }
 
   def getData(e: MetaGraphEntity): EntityData = {
@@ -377,8 +374,6 @@ trait SparkOperation[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider] 
   // An operation is heavy if it is faster to load its results than it is to recalculate them.
   // Heavy operation outputs are written out and loaded back on completion.
   val isHeavy: Boolean = false
-  val neverSerialize: Boolean = false
-  assert(!isHeavy || !neverSerialize, "$this cannot be heavy and never serialize at the same time")
   // If a heavy operation hasCustomSaving, it can just write out some or all of its outputs
   // instead of putting them in the OutputBuilder in execute().
   val hasCustomSaving: Boolean = false
