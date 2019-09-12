@@ -10,7 +10,7 @@ import lynx.kite
 
 
 @lynx.kite.external
-def _dapcstp(vertices, edges):
+def _steiner(vertices, edges):
   v = vertices.pandas().sort_values(by='ranking')
   e = edges.pandas()
   with grpc.insecure_channel("localhost:5656") as channel:
@@ -62,14 +62,14 @@ def _join_result(lk, problem, solution):
   return profit
 
 
-def dapcstp(lk, vertices, edges):
+def optimize(lk, vertices, edges):
   problem = lk.useTableAsEdges(vertices, edges, attr='id', src='src', dst='dst')\
       .addRankAttribute(keyattr='id')\
       .convertEdgeAttributeToDouble(attr='cost')\
       .convertVertexAttributeToDouble(attr='cost,prize')
   d_vertices = problem.sql('select * from vertices')
   d_edges = problem.sql('select * from edges')
-  d = _dapcstp(d_vertices, d_edges)
+  d = _steiner(d_vertices, d_edges)
   d.trigger()
 
   solution = d.useTableAsGraph(src='src', dst='dst')
