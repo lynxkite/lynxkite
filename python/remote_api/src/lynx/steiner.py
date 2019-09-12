@@ -68,18 +68,30 @@ def get_grpc_address(lk):
   return re.search(r'https?://([a-zA-Z\.]*)', lk_address).groups()[0] + ":5656"
 
 
-def optimize(lk, vertices, edges):
-  problem = lk.useTableAsEdges(vertices, edges, attr='id', src='src', dst='dst')\
-      .addRankAttribute(keyattr='id')\
-      .convertEdgeAttributeToDouble(attr='cost')\
-      .convertVertexAttributeToDouble(attr='cost,prize')
-  d_vertices = problem.sql('select * from vertices')
-  d_edges = problem.sql('select * from edges')
+def optimize(fiber_graph):
+  lk = fiber_graph.lk
+  d_vertices = fiber_graph.sql('select * from vertices')
+  d_edges = fiber_graph.sql('select * from edges')
 
   grpc_address = get_grpc_address(lk)
   d = _steiner(grpc_address, d_vertices, d_edges)
   d.trigger()
 
   solution = d.useTableAsGraph(src='src', dst='dst')
-  result = _join_result(lk, problem, solution)
+  result = _join_result(lk, fiber_graph, solution)
   return result
+
+
+def _upload(lk, filename):
+  with open(filename, 'rt') as f:
+    return lk.importCSVNow(filename=lk.upload(f), infer="no")
+
+
+def fiber_graph(lk, vertex_path, edge_path):
+  vertices = _upload(lk, vertex_path).useTableAsVertices()
+  edges = _upload(lk, edge_path)
+  problem = lk.useTableAsEdges(vertices, edges, attr='id', src='src', dst='dst')\
+      .addRankAttribute(keyattr='id')\
+      .convertEdgeAttributeToDouble(attr='cost')\
+      .convertVertexAttributeToDouble(attr='cost,prize')
+  return problem
