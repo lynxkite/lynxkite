@@ -7,6 +7,8 @@ setup(
     install_requires=[
         'requests',
         'pandas',
+        'grpcio-tools',
+        'pyarrow',
     ],
     extras_require={
         'dev': [
