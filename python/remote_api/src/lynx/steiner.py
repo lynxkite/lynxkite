@@ -7,13 +7,14 @@ from lynx.proto import dapcstp_pb2 as pb
 from lynx.proto import dapcstp_pb2_grpc
 
 import lynx.kite
+import re
 
 
 @lynx.kite.external
-def _steiner(vertices, edges):
+def _steiner(address, vertices, edges):
   v = vertices.pandas().sort_values(by='ranking')
   e = edges.pandas()
-  with grpc.insecure_channel("localhost:5656") as channel:
+  with grpc.insecure_channel(address) as channel:
     stub = dapcstp_pb2_grpc.FiberOptimizerStub(channel)
     assert list(v.ranking) == [float(i) for i in range(v.shape[0])]
     g = pb.Graph()
@@ -62,6 +63,11 @@ def _join_result(lk, problem, solution):
   return profit
 
 
+def get_grpc_address(lk):
+  lk_address = lk.address()
+  return re.search(r'https?://([a-zA-Z\.]*)', lk_address).groups()[0] + ":5656"
+
+
 def optimize(lk, vertices, edges):
   problem = lk.useTableAsEdges(vertices, edges, attr='id', src='src', dst='dst')\
       .addRankAttribute(keyattr='id')\
@@ -69,7 +75,9 @@ def optimize(lk, vertices, edges):
       .convertVertexAttributeToDouble(attr='cost,prize')
   d_vertices = problem.sql('select * from vertices')
   d_edges = problem.sql('select * from edges')
-  d = _steiner(d_vertices, d_edges)
+
+  grpc_address = get_grpc_address(lk)
+  d = _steiner(grpc_address, d_vertices, d_edges)
   d.trigger()
 
   solution = d.useTableAsGraph(src='src', dst='dst')
