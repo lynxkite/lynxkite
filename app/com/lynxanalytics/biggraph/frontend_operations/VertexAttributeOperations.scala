@@ -174,7 +174,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register(
     "Fill vertex attributes with constant default values")(new ProjectTransformation(_) {
-      params += new DummyParam("text", "Attributes:", "Default values:")
+      params += new DummyParam("text", "The default values for each attribute:")
       params ++= project.vertexAttrList.map {
         attr => Param(s"fill_${attr.id}", attr.id)
       }

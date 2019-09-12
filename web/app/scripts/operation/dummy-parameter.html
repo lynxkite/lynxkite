@@ -1,25 +1,4 @@
-<div
-  class="col-sm-12 left-aligned-dummy"
-  ng-if="!param.payload.title2">
+<p>
   {{param.title}}
   <help-popup href="{{htmlId + '-' + 'title'}}"></help-popup>
-</div>
-<div
-  id="{{param.id + '-title'}}"
-  class="col-sm-4 right-aligned-dummy"
-  ng-if="param.payload.title2">
-  {{param.title}}
-  <help-popup href="{{htmlId + '-' + 'title'}}"></help-popup>
-</div>
-<div ng-class="{
-      'operation-parameter-input': true,
-    }"
-    id="{{param.id}}">
-  <div
-    id="title2"
-    class="left-aligned-dummy"
-    ng-if="param.payload.title2">
-    {{param.payload.title2}}
-    <help-popup href="{{htmlId + '-' + 'title2'}}"></help-popup>
-  </div>
-</div>
+</p>
