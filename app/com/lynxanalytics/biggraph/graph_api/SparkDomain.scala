@@ -87,10 +87,6 @@ class SparkDomain(
     dataRoot.clear()
   }
 
-  // Runs something on the SparkDomain threadpool.
-  // Use this to run Spark operations from HTTP handlers. (SPARK-12964)
-  def async[T](fn: => T): concurrent.Future[T] = SafeFuture(fn).future
-
   private def asSparkOp[I <: InputSignatureProvider, O <: MetaDataSetProvider](
     instance: MetaGraphOperationInstance): SparkOperation[I, O] =
     asSparkOp(instance.asInstanceOf[TypedOperationInstance[I, O]])
