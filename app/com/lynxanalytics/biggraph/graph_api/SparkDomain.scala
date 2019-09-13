@@ -65,9 +65,7 @@ class SparkDomain(
   private def canLoadEntityFromDisk(entity: MetaGraphEntity): Boolean = {
     assert(!entityCache.contains(entity.gUID), s"We already have $entity.")
     entityIO(entity).mayHaveExisted &&
-      entitiesOnDiskCache.synchronized {
-        entitiesOnDiskCache.getOrElseUpdate(entity.gUID, entityIO(entity).exists)
-      }
+      entitiesOnDiskCache.getOrElseUpdate(entity.gUID, entityIO(entity).exists)
   }
 
   private def load(entity: MetaGraphEntity): EntityData = {
@@ -140,9 +138,13 @@ class SparkDomain(
       for (o <- outputMeta.toSeq.sortBy(o => if (o.isInstanceOf[VertexSet]) 1 else 2)) {
         val data = if (sparkOp.isHeavy) {
           if (!sparkOp.hasCustomSaving) saveToDisk(output(o.gUID))
-          val loaded = load(o)
-          if (!o.isInstanceOf[Scalar[_]]) logger.addOutput(loaded)
-          loaded
+          if (o.isInstanceOf[Scalar[_]]) {
+            output(o.gUID) // No need to reload scalars, they are not lazy like RDDs.
+          } else {
+            val loaded = load(o)
+            logger.addOutput(loaded)
+            loaded
+          }
         } else {
           // Serialize scalars even for non-heavy ops.
           if (o.isInstanceOf[Scalar[_]]) {
@@ -271,6 +273,7 @@ class SparkDomain(
     assert(doesNotExist, s"Cannot delete directory of entity $entity")
     log.info(s"Saving entity $entity ...")
     eio.write(data)
+    entitiesOnDiskCache(entity.gUID) = true
     log.info(s"Entity $entity saved.")
   }
 
