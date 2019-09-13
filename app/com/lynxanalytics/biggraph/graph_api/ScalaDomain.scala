@@ -48,11 +48,12 @@ class ScalaDomain extends Domain {
     instance.operation.isInstanceOf[ScalaOperation[_, _]]
   }
 
-  def get(e: VertexSet) = synchronized { entityCache(e.gUID).asInstanceOf[Set[ID]] }
-  def get(e: EdgeBundle) = synchronized { entityCache(e.gUID).asInstanceOf[Map[ID, Edge]] }
-  def get[T](e: Attribute[T]) = synchronized { entityCache(e.gUID).asInstanceOf[Map[ID, T]] }
+  // Only use these for relocation.
+  private[graph_api] def get(e: VertexSet) = synchronized { entityCache(e.gUID).asInstanceOf[Set[ID]] }
+  private[graph_api] def get(e: EdgeBundle) = synchronized { entityCache(e.gUID).asInstanceOf[Map[ID, Edge]] }
+  private[graph_api] def get[T](e: Attribute[T]) = synchronized { entityCache(e.gUID).asInstanceOf[Map[ID, T]] }
 
-  override def relocate(e: MetaGraphEntity, source: Domain) = {
+  override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     source match {
       case source: SparkDomain =>
         val future = SafeFuture(source.getData(e) match {
