@@ -69,6 +69,7 @@ def get_grpc_address(lk):
 
 
 def optimize(fiber_graph):
+  '''Calculates an approximate solution for the steiner tree problem.'''
   lk = fiber_graph.lk
   d_vertices = fiber_graph.sql('select * from vertices')
   d_edges = fiber_graph.sql('select * from edges')
@@ -88,6 +89,18 @@ def _upload(lk, filename):
 
 
 def fiber_graph(lk, vertex_path, edge_path):
+  '''Constructs a LynxKite graph in the appropriate format for `optimize`.
+  The files are expected to be in the following formats:
+
+  vertices.csv:
+  id,cost,prize
+  0,10,0
+  1,0,5
+
+  edge.csv:
+  src,dst,cost
+  0,1,1
+  '''
   vertices = _upload(lk, vertex_path).useTableAsVertices()
   edges = _upload(lk, edge_path)
   problem = lk.useTableAsEdges(vertices, edges, attr='id', src='src', dst='dst')\
