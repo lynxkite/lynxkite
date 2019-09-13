@@ -73,7 +73,9 @@ class SparkDomain(
     log.info(s"PERF Found entity $entity on disk")
     // For edge bundles and attributes we need to load the base vertex set first
     val baseOpt = eio.correspondingVertexSet.map(vs => getData(vs).asInstanceOf[VertexSetData])
-    eio.read(baseOpt)
+    val data = eio.read(baseOpt)
+    set(entity, data)
+    data
   }
 
   private def set(entity: MetaGraphEntity, data: EntityData) = synchronized {
@@ -322,7 +324,6 @@ class SparkDomain(
         }
         future.map { data =>
           saveToDisk(data)
-          set(e, load(e))
         }
     }
   }
