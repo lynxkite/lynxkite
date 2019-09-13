@@ -57,12 +57,15 @@ class DataManager(
     if (d.has(entity)) {
       futures((entity.gUID, d)) = SafeFuture.successful(())
     }
-    futures.get((entity.gUID, bestSource(entity))) match {
+    futures.get((entity.gUID, d)) match {
       case None => 0.0
       case Some(s) =>
-        val deps = s.dependencySet
-        if (findFailure(deps).isDefined) -1.0
-        else deps.filter(_.isCompleted).size.toDouble / deps.size.toDouble
+        if (s.hasFailed) -1.0
+        else {
+          val deps = s.dependencySet
+          if (findFailure(deps).isDefined) -1.0
+          else 1.0 / (1.0 + deps.size - deps.filter(_.isCompleted).size)
+        }
     }
   }
 
