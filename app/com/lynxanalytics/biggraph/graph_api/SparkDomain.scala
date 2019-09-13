@@ -109,7 +109,7 @@ class SparkDomain(
     outputBuilder.dataMap.toMap
   }
 
-  private def execute(instance: MetaGraphOperationInstance): Unit = {
+  private def computeNow(instance: MetaGraphOperationInstance): Unit = {
     val logger = new OperationLogger(instance, executionContext)
     val inputs = instance.inputs.all.map {
       case (name, entity) => name -> getData(entity)
@@ -197,8 +197,8 @@ class SparkDomain(
     }
   }
 
-  override def compute(instance: MetaGraphOperationInstance) = SafeFuture[Unit] {
-    execute(instance)
+  override def compute(instance: MetaGraphOperationInstance) = {
+    SafeFuture[Unit](computeNow(instance))
   }
 
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
