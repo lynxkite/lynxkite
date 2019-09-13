@@ -107,25 +107,36 @@ class DataManager(
 
   def ensure(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
     val f = futures.get((e.gUID, d))
-    if (f.isDefined && !f.get.hasFailed) {
-      futures((e.gUID, d))
-    } else {
-      val other = bestSource(e)
-      val f = if (d.has(e)) { // We have it. Great.
-        SafeFuture.successful(())
-      } else if (other.has(e)) { // Someone else has it. Relocate.
-        relocate(e, other, d)
-      } else if (d.canCompute(e.source)) { // Nobody has it, but we can compute. Compute.
-        val f = ensureInputs(e, d).flatMap(_ => d.compute(e.source))
-        for (o <- e.source.outputs.all.values) {
-          futures((o.gUID, d)) = f
+    if (f.isDefined) {
+      if (f.get.hasFailed) { // Retry.
+        futures((e.gUID, d)) = makeFuture(e, d)
+      } else if (f.get.isCompleted) {
+        if (d.has(e)) {
+          futures((e.gUID, d)) = SafeFuture.successful(()) // Cut future chain.
+        } else { // Domain has dropped it since then.
+          futures((e.gUID, d)) = makeFuture(e, d)
         }
-        f
-      } else { // Someone else has to compute it. Then we relocate.
-        ensure(e, other).flatMap(_ => relocate(e, other, d))
+      } // Otherwise the computation is in progress and the existing future is good.
+    } else {
+      futures((e.gUID, d)) = makeFuture(e, d)
+    }
+    futures((e.gUID, d))
+  }
+
+  private def makeFuture(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
+    val other = bestSource(e)
+    if (d.has(e)) { // We have it. Great.
+      SafeFuture.successful(())
+    } else if (other.has(e)) { // Someone else has it. Relocate.
+      relocate(e, other, d)
+    } else if (d.canCompute(e.source)) { // Nobody has it, but we can compute. Compute.
+      val f = ensureInputs(e, d).flatMap(_ => d.compute(e.source))
+      for (o <- e.source.outputs.all.values) {
+        futures((o.gUID, d)) = f
       }
-      futures((e.gUID, d)) = f
       f
+    } else { // Someone else has to compute it. Then we relocate.
+      ensure(e, other).flatMap(_ => relocate(e, other, d))
     }
   }
 
