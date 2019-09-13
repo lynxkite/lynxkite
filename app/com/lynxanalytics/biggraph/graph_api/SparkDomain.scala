@@ -220,7 +220,7 @@ class SparkDomain(
   def await[T](f: SafeFuture[T]): T = f.awaitResult(Duration.Inf)
 
   override def get[T](scalar: Scalar[T]) = {
-    SafeFuture.successful(getData(scalar).asInstanceOf[ScalarData[T]].value)
+    SafeFuture(getData(scalar).asInstanceOf[ScalarData[T]].value)
   }
 
   private def enforceCoLocationWithIdSet[T: ClassTag](
