@@ -46,19 +46,20 @@ class DataManager(
       "DataManager",
       maxParallelism = LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
   private val futures =
-    collection.concurrent.TrieMap[(java.util.UUID, Domain), SafeFuture[Unit]]()
+    collection.mutable.Map[(java.util.UUID, Domain), SafeFuture[Unit]]()
 
   private def findFailure(fs: Iterable[SafeFuture[_]]): Option[Throwable] = {
     fs.map(_.value).collectFirst { case Some(util.Failure(t)) => t }
   }
 
-  override def computeProgress(entity: MetaGraphEntity): Double = {
+  override def computeProgress(entity: MetaGraphEntity): Double = synchronized {
     val d = bestSource(entity)
-    if (d.has(entity)) {
-      futures((entity.gUID, d)) = SafeFuture.successful(())
-    }
     futures.get((entity.gUID, d)) match {
-      case None => 0.0
+      case None =>
+        if (d.has(entity)) {
+          futures((entity.gUID, d)) = SafeFuture.successful(())
+          1.0
+        } else 0.0
       case Some(s) =>
         if (s.hasFailed) -1.0
         else {
@@ -123,7 +124,7 @@ class DataManager(
     futures((e.gUID, d))
   }
 
-  private def makeFuture(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
+  private def makeFuture(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
     val other = bestSource(e)
     if (d.has(e)) { // We have it. Great.
       SafeFuture.successful(())
@@ -152,7 +153,7 @@ class DataManager(
     ensure(entity, d).map(_ => d.cache(entity))
   }
 
-  def waitAllFutures(): Unit = {
+  def waitAllFutures(): Unit = synchronized {
     SafeFuture.sequence(futures.values).awaitReady(concurrent.duration.Duration.Inf)
   }
 
