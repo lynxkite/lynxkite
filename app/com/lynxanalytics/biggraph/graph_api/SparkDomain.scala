@@ -110,7 +110,7 @@ class SparkDomain(
     outputBuilder.dataMap.toMap
   }
 
-  private def computeNow(instance: MetaGraphOperationInstance): Unit = synchronized {
+  private def computeNow(instance: MetaGraphOperationInstance): Unit = {
     val logger = new OperationLogger(instance, executionContext)
     val inputs = instance.inputs.all.map {
       case (name, entity) => name -> getData(entity)
@@ -134,10 +134,11 @@ class SparkDomain(
       val outputMeta = instance.outputs.all.values
       for (o <- outputMeta.toSeq.sortBy(o => if (o.isInstanceOf[VertexSet]) 1 else 2)) {
         val data = if (sparkOp.isHeavy) {
-          if (sparkOp.hasCustomSaving) {
+          if (sparkOp.hasCustomSaving) synchronized {
             // Just need to remember it's already saved.
             entitiesOnDiskCache(o.gUID) = true
-          } else if (o.isInstanceOf[Scalar[_]]) {
+          }
+          else if (o.isInstanceOf[Scalar[_]]) {
             // Save asynchronously, but we can use the value immediately.
             SafeFuture(saveToDisk(output(o.gUID)))
             set(o, output(o.gUID))
@@ -175,7 +176,7 @@ class SparkDomain(
 
   private def validateOutput(
     instance: MetaGraphOperationInstance,
-    output: Map[UUID, EntityData]): Unit = synchronized {
+    output: Map[UUID, EntityData]): Unit = {
     // Make sure attributes re-use the partitioners from their vertex sets.
     // An identity check is used to catch the case where the same number of partitions is used
     // accidentally (as is often the case in tests), but the code does not guarantee this.
@@ -189,9 +190,10 @@ class SparkDomain(
       // The vertex set must either be loaded, or in the output.
       val vsd = output.get(vs.gUID) match {
         case Some(vsd) => vsd.asInstanceOf[VertexSetData]
-        case None =>
+        case None => synchronized {
           assert(entityCache.contains(vs.gUID), s"$vs, vertex set of $entity, not known")
           entityCache(vs.gUID).asInstanceOf[VertexSetData]
+        }
       }
       assert(
         vsd.rdd.partitioner.get eq entityd.rdd.partitioner.get,
@@ -210,10 +212,11 @@ class SparkDomain(
     entityCache.contains(entity.gUID) || canLoadEntityFromDisk(entity)
   }
 
-  def getData(e: MetaGraphEntity): EntityData = synchronized {
-    if (entityCache.contains(e.gUID)) entityCache(e.gUID)
-    else if (canLoadEntityFromDisk(e)) load(e)
-    else throw new AssertionError(s"Entity is not available in Spark domain: $e")
+  def getData(e: MetaGraphEntity): EntityData = {
+    synchronized { entityCache.get(e.gUID) }.getOrElse {
+      assert(canLoadEntityFromDisk(e), s"Entity is not available in Spark domain: $e")
+      load(e)
+    }
   }
 
   // Convenience for awaiting something in this execution context.
@@ -264,14 +267,16 @@ class SparkDomain(
     }
   }
 
-  private def saveToDisk(data: EntityData): Unit = synchronized {
+  private def saveToDisk(data: EntityData): Unit = {
     val entity = data.entity
     val eio = entityIO(entity)
     val doesNotExist = eio.delete()
     assert(doesNotExist, s"Cannot delete directory of entity $entity")
     log.info(s"Saving entity $entity ...")
     eio.write(data)
-    entitiesOnDiskCache(entity.gUID) = true
+    synchronized {
+      entitiesOnDiskCache(entity.gUID) = true
+    }
     log.info(s"Entity $entity saved.")
   }
 
@@ -291,7 +296,7 @@ class SparkDomain(
     sqlContext
   }
 
-  override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = synchronized {
+  override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     source match {
       case source: ScalaDomain =>
         import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
