@@ -136,18 +136,19 @@ class SparkDomain(
       for (o <- outputMeta.toSeq.sortBy(o => if (o.isInstanceOf[VertexSet]) 1 else 2)) {
         val data = if (sparkOp.isHeavy) {
           if (sparkOp.hasCustomSaving) {
+            // Just need to remember it's already saved.
             entitiesOnDiskCache(o.gUID) = true
-          } else {
-            saveToDisk(output(o.gUID))
-          }
-          // We can store scalars in entityCache. Other outputs we will load back when needed.
-          if (o.isInstanceOf[Scalar[_]]) {
+          } else if (o.isInstanceOf[Scalar[_]]) {
+            // Save asynchronously, but we can use the value immediately.
+            SafeFuture(saveToDisk(output(o.gUID)))
             set(o, output(o.gUID))
+          } else {
+            // Save synchronously, and we will load it back when accessed.
+            saveToDisk(output(o.gUID))
           }
         } else {
-          // Serialize scalars even for non-heavy ops.
           if (o.isInstanceOf[Scalar[_]]) {
-            saveToDisk(output(o.gUID))
+            SafeFuture(saveToDisk(output(o.gUID)))
           }
           set(o, output(o.gUID))
         }
