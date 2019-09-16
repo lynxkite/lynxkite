@@ -64,14 +64,12 @@ object Scripting {
     manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] =
     builder.toInstance(manager)
 
-  implicit def getData[T](entity: EntityContainer[Scalar[T]])(
-    implicit
-    dataManager: DataManager): ScalarData[T] =
-    new ScalarData(entity.entity, dataManager.get(entity.entity))
-  implicit def getData[T](entity: Scalar[T])(
-    implicit
-    dataManager: DataManager): ScalarData[T] =
-    new ScalarData(entity, dataManager.get(entity))
+  implicit class EasyScalarContainer[T](self: EntityContainer[Scalar[T]])(implicit dm: DataManager) {
+    def value = dm.get(self.entity)
+  }
+  implicit class EasyScalar[T](self: Scalar[T])(implicit dm: DataManager) {
+    def value = dm.get(self)
+  }
 
   implicit def toInput[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     op: TypedMetaGraphOp[IS, OMDS]): IS = op.inputs
