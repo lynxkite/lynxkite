@@ -52,14 +52,15 @@ class DataManager(
     fs.map(_.value).collectFirst { case Some(util.Failure(t)) => t }
   }
 
-  override def computeProgress(entity: MetaGraphEntity): Double = synchronized {
+  override def computeProgress(entity: MetaGraphEntity): Double = {
     val d = bestSource(entity)
-    futures.get((entity.gUID, d)) match {
+    synchronized { futures.get((entity.gUID, d)) } match {
       case None =>
-        if (d.has(entity)) {
+        if (d.has(entity)) synchronized {
           futures((entity.gUID, d)) = SafeFuture.successful(())
           1.0
-        } else 0.0
+        }
+        else 0.0
       case Some(s) =>
         if (s.hasFailed) -1.0
         else {
@@ -79,10 +80,9 @@ class DataManager(
   }
 
   private def bestSource(e: MetaGraphEntity): Domain = {
-    domains.find(_.has(e)) match {
-      case Some(d) => d
-      case None => domains.find(_.canCompute(e.source)).get
-    }
+    synchronized { domains.find(d => futures.get((e.gUID, d)).filterNot(_.hasFailed).isDefined) }
+      .orElse(domains.find(_.has(e)))
+      .orElse(domains.find(_.canCompute(e.source))).get
   }
 
   def compute(entity: MetaGraphEntity): SafeFuture[Unit] = synchronized {
