@@ -64,8 +64,8 @@ class SparkDomain(
 
   private def canLoadEntityFromDisk(entity: MetaGraphEntity): Boolean = {
     assert(!entityCache.contains(entity.gUID), s"We already have $entity.")
-    entityIO(entity).mayHaveExisted &&
-      entitiesOnDiskCache.getOrElseUpdate(entity.gUID, entityIO(entity).exists)
+    entitiesOnDiskCache.getOrElseUpdate(
+      entity.gUID, entityIO(entity).mayHaveExisted && entityIO(entity).exists)
   }
 
   private def load(entity: MetaGraphEntity): EntityData = {
@@ -135,22 +135,22 @@ class SparkDomain(
       val outputMeta = instance.outputs.all.values
       for (o <- outputMeta.toSeq.sortBy(o => if (o.isInstanceOf[VertexSet]) 1 else 2)) {
         val data = if (sparkOp.isHeavy) {
-          if (!sparkOp.hasCustomSaving) saveToDisk(output(o.gUID))
-          if (o.isInstanceOf[Scalar[_]]) {
-            output(o.gUID) // No need to reload scalars, they are not lazy like RDDs.
+          if (sparkOp.hasCustomSaving) {
+            entitiesOnDiskCache(o.gUID) = true
           } else {
-            val loaded = load(o)
-            logger.addOutput(loaded)
-            loaded
+            saveToDisk(output(o.gUID))
+          }
+          // We can store scalars in entityCache. Other outputs we will load back when needed.
+          if (o.isInstanceOf[Scalar[_]]) {
+            set(o, output(o.gUID))
           }
         } else {
           // Serialize scalars even for non-heavy ops.
           if (o.isInstanceOf[Scalar[_]]) {
             saveToDisk(output(o.gUID))
           }
-          output(o.gUID)
+          set(o, output(o.gUID))
         }
-        set(data.entity, data)
       }
     }
     markOperationComplete(instance)
