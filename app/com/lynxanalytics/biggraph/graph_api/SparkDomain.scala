@@ -8,7 +8,6 @@ import java.util.UUID
 
 import org.apache.spark
 import org.apache.spark.sql.SQLContext
-import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
@@ -29,8 +28,8 @@ class SparkDomain(
     ThreadUtil.limitedExecutionContext(
       "SparkDomain",
       maxParallelism = LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
-  private val entitiesOnDiskCache = TrieMap[UUID, Boolean]()
-  private val entityCache = TrieMap[UUID, EntityData]()
+  private val entitiesOnDiskCache = collection.mutable.Map[UUID, Boolean]()
+  private val entityCache = collection.mutable.Map[UUID, EntityData]()
   private val sparkCachedEntities = mutable.Set[UUID]()
   lazy val masterSQLContext = {
     val sqlContext = sparkSession.sqlContext
@@ -62,7 +61,7 @@ class SparkDomain(
     ephemeralPath.getOrElse(repositoryPath)
   }
 
-  private def canLoadEntityFromDisk(entity: MetaGraphEntity): Boolean = {
+  private def canLoadEntityFromDisk(entity: MetaGraphEntity): Boolean = synchronized {
     assert(!entityCache.contains(entity.gUID), s"We already have $entity.")
     entitiesOnDiskCache.getOrElseUpdate(
       entity.gUID, entityIO(entity).mayHaveExisted && entityIO(entity).exists)
@@ -111,7 +110,7 @@ class SparkDomain(
     outputBuilder.dataMap.toMap
   }
 
-  private def computeNow(instance: MetaGraphOperationInstance): Unit = {
+  private def computeNow(instance: MetaGraphOperationInstance): Unit = synchronized {
     val logger = new OperationLogger(instance, executionContext)
     val inputs = instance.inputs.all.map {
       case (name, entity) => name -> getData(entity)
@@ -176,7 +175,7 @@ class SparkDomain(
 
   private def validateOutput(
     instance: MetaGraphOperationInstance,
-    output: Map[UUID, EntityData]): Unit = {
+    output: Map[UUID, EntityData]): Unit = synchronized {
     // Make sure attributes re-use the partitioners from their vertex sets.
     // An identity check is used to catch the case where the same number of partitions is used
     // accidentally (as is often the case in tests), but the code does not guarantee this.
@@ -211,7 +210,7 @@ class SparkDomain(
     entityCache.contains(entity.gUID) || canLoadEntityFromDisk(entity)
   }
 
-  def getData(e: MetaGraphEntity): EntityData = {
+  def getData(e: MetaGraphEntity): EntityData = synchronized {
     if (entityCache.contains(e.gUID)) entityCache(e.gUID)
     else if (canLoadEntityFromDisk(e)) load(e)
     else throw new AssertionError(s"Entity is not available in Spark domain: $e")
@@ -265,7 +264,7 @@ class SparkDomain(
     }
   }
 
-  private def saveToDisk(data: EntityData): Unit = {
+  private def saveToDisk(data: EntityData): Unit = synchronized {
     val entity = data.entity
     val eio = entityIO(entity)
     val doesNotExist = eio.delete()
