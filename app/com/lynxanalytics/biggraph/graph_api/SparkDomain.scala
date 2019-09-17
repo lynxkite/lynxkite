@@ -67,7 +67,7 @@ class SparkDomain(
       entity.gUID, entityIO(entity).mayHaveExisted && entityIO(entity).exists)
   }
 
-  private def load(entity: MetaGraphEntity): EntityData = {
+  private def load(entity: MetaGraphEntity): EntityData = synchronized {
     val eio = entityIO(entity)
     log.info(s"PERF Found entity $entity on disk")
     // For edge bundles and attributes we need to load the base vertex set first
