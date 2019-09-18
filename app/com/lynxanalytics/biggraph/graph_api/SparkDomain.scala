@@ -30,6 +30,7 @@ class SparkDomain(
       maxParallelism = LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
   private val entitiesOnDiskCache = collection.mutable.Map[UUID, Boolean]()
   private val entityCache = collection.mutable.Map[UUID, EntityData]()
+  private val ongoingLoads = collection.mutable.Map[UUID, concurrent.Promise[Unit]]()
   private val sparkCachedEntities = mutable.Set[UUID]()
   lazy val masterSQLContext = {
     val sqlContext = sparkSession.sqlContext
@@ -67,14 +68,34 @@ class SparkDomain(
       entity.gUID, entityIO(entity).mayHaveExisted && entityIO(entity).exists)
   }
 
-  private def load(entity: MetaGraphEntity): EntityData = synchronized {
-    val eio = entityIO(entity)
-    log.info(s"PERF Found entity $entity on disk")
-    // For edge bundles and attributes we need to load the base vertex set first
-    val baseOpt = eio.correspondingVertexSet.map(vs => getData(vs).asInstanceOf[VertexSetData])
-    val data = eio.read(baseOpt)
-    set(entity, data)
-    data
+  private def load(entity: MetaGraphEntity): EntityData = {
+    val (ongoing, promise) = ongoingLoads.synchronized {
+      ongoingLoads.get(entity.gUID) match {
+        case Some(p) => (true, p)
+        case None =>
+          val p = concurrent.Promise[Unit]()
+          ongoingLoads(entity.gUID) = p
+          (false, p)
+      }
+    }
+    if (ongoing) {
+      // Another thread is loading it already. Just wait for the result.
+      concurrent.Await.result(promise.future, Duration.Inf)
+      synchronized { entityCache(entity.gUID) }
+    } else {
+      // We have to load it.
+      val eio = entityIO(entity)
+      log.info(s"PERF Found entity $entity on disk")
+      // For edge bundles and attributes we need to load the base vertex set first
+      val baseOpt = eio.correspondingVertexSet.map(vs => getData(vs).asInstanceOf[VertexSetData])
+      val data = eio.read(baseOpt)
+      set(entity, data)
+      ongoingLoads.synchronized {
+        ongoingLoads -= entity.gUID
+      }
+      promise.success(())
+      data
+    }
   }
 
   private def set(entity: MetaGraphEntity, data: EntityData) = synchronized {
