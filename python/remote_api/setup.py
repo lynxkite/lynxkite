@@ -2,7 +2,7 @@ from setuptools import find_namespace_packages, setup
 from lynx_versioning import version
 
 setup(
-    name='lynxkite-python-api',
+    name='lynxkite-fiber-python-api',
     version=version(),
     install_requires=[
         'requests',
