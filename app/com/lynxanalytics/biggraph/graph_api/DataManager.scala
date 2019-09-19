@@ -153,8 +153,8 @@ class DataManager(
     ensure(entity, d).map(_ => d.cache(entity))
   }
 
-  def waitAllFutures(): Unit = synchronized {
-    SafeFuture.sequence(futures.values).awaitReady(concurrent.duration.Duration.Inf)
+  def waitAllFutures(): Unit = {
+    await(synchronized { SafeFuture.sequence(futures.values) })
   }
 
   def clear(): Unit = synchronized {
