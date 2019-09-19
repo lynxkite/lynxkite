@@ -262,7 +262,7 @@ class SparkDomain(
   }
 
   def getData(e: MetaGraphEntity): EntityData = {
-    getOrElseUpdate(e, load(e))
+    getOrElseUpdateData(e, load(e))
   }
 
   // Convenience for awaiting something in this execution context.
