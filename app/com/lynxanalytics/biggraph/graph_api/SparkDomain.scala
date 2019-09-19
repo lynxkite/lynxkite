@@ -34,7 +34,7 @@ class SparkDomain(
     sqlContext
   }
   // Access to the following collections must always be synchronized on SparkDomain.
-  // But do not hold the locks for long.
+  // But do not hold the locks for long. Don't call potentially slow methods, like getData().
   private val entitiesOnDiskCache = collection.mutable.Map[UUID, Boolean]()
   private val entityCache = collection.mutable.Map[UUID, EntityData]()
   private val sparkCachedEntities = mutable.Set[UUID]()
@@ -237,9 +237,9 @@ class SparkDomain(
 
   private def enforceCoLocationWithIdSet[T: ClassTag](
     entity: MetaGraphEntity,
-    idSet: VertexSet): (UniqueSortedRDD[Long, T], Option[Long]) = {
-    val data = getData(entity).asInstanceOf[EntityRDDData[T]]
-    val parent = getData(idSet).asInstanceOf[VertexSetData]
+    idSet: VertexSet): (UniqueSortedRDD[Long, T], Option[Long]) = synchronized {
+    val data = entityCache(entity.gUID).asInstanceOf[EntityRDDData[T]]
+    val parent = entityCache(idSet.gUID).asInstanceOf[VertexSetData]
     val vsRDD = parent.rdd.copyWithAncestorsCached
     // Enforcing colocation:
     val rawRDD = data.rdd
@@ -253,26 +253,25 @@ class SparkDomain(
       (it1, it2) => it2
     }.asUniqueSortedRDD, data.count)
   }
-  def cache(entity: MetaGraphEntity): Unit = {
-    synchronized {
-      if (!sparkCachedEntities.contains(entity.gUID)) {
-        entityCache(entity.gUID) = entity match {
-          case vs: VertexSet => getData(vs).asInstanceOf[VertexSetData].cached
-          case eb: EdgeBundle =>
-            val (rdd, count) = enforceCoLocationWithIdSet[Edge](eb, eb.idSet)
-            new EdgeBundleData(eb, rdd, count)
-          case heb: HybridBundle => getData(heb).asInstanceOf[HybridBundleData].cached
-          case va: Attribute[_] =>
-            def cached[T](va: Attribute[T]) = {
-              val (rdd, count) = enforceCoLocationWithIdSet(va, va.vertexSet)(va.classTag)
-              new AttributeData[T](va, rdd, count)
-            }
-            cached(va)
-          case sc: Scalar[_] => getData(sc)
-          case tb: Table => getData(tb)
-        }
-        sparkCachedEntities.add(entity.gUID)
+  def cache(entity: MetaGraphEntity): Unit = synchronized {
+    assert(entityCache.contains(entity.gUID), s"Cannot cache unloaded entity: $entity")
+    if (!sparkCachedEntities.contains(entity.gUID)) {
+      entityCache(entity.gUID) = entity match {
+        case vs: VertexSet => entityCache(vs.gUID).asInstanceOf[VertexSetData].cached
+        case eb: EdgeBundle =>
+          val (rdd, count) = enforceCoLocationWithIdSet[Edge](eb, eb.idSet)
+          new EdgeBundleData(eb, rdd, count)
+        case heb: HybridBundle => entityCache(heb.gUID).asInstanceOf[HybridBundleData].cached
+        case va: Attribute[_] =>
+          def cached[T](va: Attribute[T]) = {
+            val (rdd, count) = enforceCoLocationWithIdSet(va, va.vertexSet)(va.classTag)
+            new AttributeData[T](va, rdd, count)
+          }
+          cached(va)
+        case sc: Scalar[_] => entityCache(sc.gUID)
+        case tb: Table => entityCache(tb.gUID)
       }
+      sparkCachedEntities.add(entity.gUID)
     }
   }
 
