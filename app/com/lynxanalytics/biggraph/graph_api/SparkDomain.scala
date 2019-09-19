@@ -67,19 +67,6 @@ class SparkDomain(
       entity.gUID, entityIO(entity).mayHaveExisted && entityIO(entity).exists)
   }
 
-  private val loading = new NotParallel[UUID]
-  private def load(entity: MetaGraphEntity): EntityData = {
-    loading(entity.gUID) {
-      val eio = entityIO(entity)
-      log.info(s"PERF Found entity $entity on disk")
-      // For edge bundles and attributes we need to load the base vertex set first
-      val baseOpt = eio.correspondingVertexSet.map(vs => getData(vs).asInstanceOf[VertexSetData])
-      val data = eio.read(baseOpt)
-      set(entity, data)
-    }
-    synchronized { entityCache(entity.gUID) }
-  }
-
   private def set(entity: MetaGraphEntity, data: EntityData) = synchronized {
     entityCache(entity.gUID) = data
   }
@@ -215,10 +202,27 @@ class SparkDomain(
     entityCache.contains(entity.gUID) || canLoadEntityFromDisk(entity)
   }
 
+  private val loading = new NotParallel[UUID]
   def getData(e: MetaGraphEntity): EntityData = {
-    synchronized { entityCache.get(e.gUID) }.getOrElse {
-      assert(canLoadEntityFromDisk(e), s"Entity is not available in Spark domain: $e")
-      load(e)
+    // We need to hold the lock from checking entityCache to placing the promise in NotParallel.
+    // That is the reason for the peculiar organization of this code.
+    synchronized {
+      entityCache.get(e.gUID).toLeft(loading.promise(e.gUID))
+    } match {
+      case Left(ed) => ed
+      case Right(load) =>
+        load.fulfill(work = {
+          assert(canLoadEntityFromDisk(e), s"Entity is not available in Spark domain: $e")
+          val eio = entityIO(e)
+          log.info(s"PERF Found entity $e on disk")
+          // For edge bundles and attributes we need to load the base vertex set first
+          val baseOpt = eio.correspondingVertexSet.map(vs => getData(vs).asInstanceOf[VertexSetData])
+          val data = eio.read(baseOpt)
+          set(e, data)
+          data
+        }, otherwise = {
+          synchronized { entityCache(e.gUID) }
+        })
     }
   }
 
