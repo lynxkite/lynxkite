@@ -38,7 +38,7 @@ class SparkDomain(
   private val entitiesOnDiskCache = collection.mutable.Map[UUID, Boolean]()
   private val entityCache = collection.mutable.Map[UUID, EntityData]()
   private val sparkCachedEntities = mutable.Set[UUID]()
-  private val loadingPromises = collection.mutable.Map[UUID, concurrent.Promise[Unit]]()
+  private val entityPromises = collection.mutable.Map[UUID, concurrent.Promise[Unit]]()
 
   def entityIO(entity: MetaGraphEntity): io.EntityIO = {
     val context = io.IOContext(dataRoot, sparkSession)
@@ -70,8 +70,50 @@ class SparkDomain(
       entity.gUID, entityIO(entity).mayHaveExisted && entityIO(entity).exists)
   }
 
+  private def load(entity: MetaGraphEntity): EntityData = synchronized {
+    val eio = entityIO(entity)
+    log.info(s"PERF Found entity $entity on disk")
+    // For edge bundles and attributes we need to load the base vertex set first
+    val baseOpt = eio.correspondingVertexSet.map(vs => getData(vs).asInstanceOf[VertexSetData])
+    eio.read(baseOpt)
+  }
+
   private def set(entity: MetaGraphEntity, data: EntityData) = synchronized {
+    assert(!entityPromises.contains(entity.gUID), s"Trying to set an entity that has a promise: $entity")
     entityCache(entity.gUID) = data
+  }
+
+  private def getOrElseUpdateData(entity: MetaGraphEntity, fn: => EntityData): EntityData = {
+    // We need to hold the lock from checking entityCache to placing the promise in entityPromises.
+    // That is the reason for the peculiar organization of this code.
+    synchronized {
+      entityCache.get(entity.gUID).toLeft {
+        entityPromises.get(entity.gUID) match {
+          case Some(p) => (p, false)
+          case None =>
+            val p = concurrent.Promise[Unit]()
+            entityPromises(entity.gUID) = p
+            (p, true)
+        }
+      }
+    } match {
+      case Left(ed) => ed
+      case Right((promise, true)) =>
+        val result = util.Try {
+          val data = fn
+          synchronized {
+            entityPromises -= entity.gUID
+            set(entity, data)
+          }
+          data
+        }
+        // Makes the Await throw the same exception if an exception was thrown here.
+        promise.complete(result.map(_ => ()))
+        result.get
+      case Right((promise, false)) =>
+        concurrent.Await.result(promise.future, concurrent.duration.Duration.Inf)
+        synchronized { entityCache(entity.gUID) }
+    }
   }
 
   def clear() = synchronized {
@@ -206,38 +248,7 @@ class SparkDomain(
   }
 
   def getData(e: MetaGraphEntity): EntityData = {
-    // We need to hold the lock from checking entityCache to placing the promise in loadingPromises.
-    // That is the reason for the peculiar organization of this code.
-    synchronized {
-      entityCache.get(e.gUID).toLeft {
-        loadingPromises.get(e.gUID) match {
-          case Some(p) => (p, false)
-          case None =>
-            val p = concurrent.Promise[Unit]()
-            loadingPromises(e.gUID) = p
-            (p, true)
-        }
-      }
-    } match {
-      case Left(ed) => ed
-      case Right((promise, true)) =>
-        val result = util.Try {
-          assert(canLoadEntityFromDisk(e), s"Entity is not available in Spark domain: $e")
-          val eio = entityIO(e)
-          log.info(s"PERF Found entity $e on disk")
-          // For edge bundles and attributes we need to load the base vertex set first
-          val baseOpt = eio.correspondingVertexSet.map(vs => getData(vs).asInstanceOf[VertexSetData])
-          val data = eio.read(baseOpt)
-          set(e, data)
-          data
-        }
-        synchronized { loadingPromises -= e.gUID }
-        promise.complete(result.map(_ => ()))
-        result.get
-      case Right((promise, false)) =>
-        concurrent.Await.result(promise.future, concurrent.duration.Duration.Inf)
-        synchronized { entityCache(e.gUID) }
-    }
+    getOrElseUpdate(e, load(e))
   }
 
   // Convenience for awaiting something in this execution context.
