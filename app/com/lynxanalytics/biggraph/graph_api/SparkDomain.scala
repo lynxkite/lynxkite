@@ -28,14 +28,16 @@ class SparkDomain(
     ThreadUtil.limitedExecutionContext(
       "SparkDomain",
       maxParallelism = LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
-  private val entitiesOnDiskCache = collection.mutable.Map[UUID, Boolean]()
-  private val entityCache = collection.mutable.Map[UUID, EntityData]()
-  private val sparkCachedEntities = mutable.Set[UUID]()
   lazy val masterSQLContext = {
     val sqlContext = sparkSession.sqlContext
     UDF.register(sqlContext.udf)
     sqlContext
   }
+  // Access to the following collections must always be synchronized on SparkDomain.
+  // But do not hold the locks for long.
+  private val entitiesOnDiskCache = collection.mutable.Map[UUID, Boolean]()
+  private val entityCache = collection.mutable.Map[UUID, EntityData]()
+  private val sparkCachedEntities = mutable.Set[UUID]()
 
   def entityIO(entity: MetaGraphEntity): io.EntityIO = {
     val context = io.IOContext(dataRoot, sparkSession)
