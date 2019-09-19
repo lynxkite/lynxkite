@@ -5,24 +5,29 @@ package com.lynxanalytics.biggraph.graph_api
 
 class NotParallel[T] {
   private val promises = collection.mutable.Map[T, concurrent.Promise[Unit]]()
-  def apply(key: T)(fn: => Unit): Unit = {
-    val (ongoing, promise) = synchronized {
-      promises.get(key) match {
-        case Some(p) => (true, p)
-        case None =>
-          val p = concurrent.Promise[Unit]()
-          promises(key) = p
-          (false, p)
+
+  class NotParallelPromise(key: T, promise: concurrent.Promise[Unit], shouldRun: Boolean) {
+    def fulfill[U](work: => U, otherwise: => U): U = {
+      if (shouldRun) {
+        val result = util.Try(work)
+        NotParallel.this.synchronized { promises -= key }
+        promise.complete(result.map(_ => ()))
+        result.get
+      } else {
+        // Another thread is doing it already. Just wait for the result.
+        concurrent.Await.result(promise.future, concurrent.duration.Duration.Inf)
+        otherwise
       }
     }
-    if (ongoing) {
-      // Another thread is doing it already. Just wait for the result.
-      concurrent.Await.result(promise.future, concurrent.duration.Duration.Inf)
-    } else {
-      // We have to do it.
-      fn
-      synchronized { promises -= key }
-      promise.success(())
+  }
+
+  def promise(key: T): NotParallelPromise = synchronized {
+    promises.get(key) match {
+      case Some(p) => new NotParallelPromise(key, p, shouldRun = false)
+      case None =>
+        val p = concurrent.Promise[Unit]()
+        promises(key) = p
+        new NotParallelPromise(key, p, shouldRun = true)
     }
   }
 }
