@@ -38,6 +38,7 @@ class SparkDomain(
   private val entitiesOnDiskCache = collection.mutable.Map[UUID, Boolean]()
   private val entityCache = collection.mutable.Map[UUID, EntityData]()
   private val sparkCachedEntities = mutable.Set[UUID]()
+  private val loadingPromises = collection.mutable.Map[UUID, concurrent.Promise[Unit]]()
 
   def entityIO(entity: MetaGraphEntity): io.EntityIO = {
     val context = io.IOContext(dataRoot, sparkSession)
@@ -204,16 +205,23 @@ class SparkDomain(
     entityCache.contains(entity.gUID) || canLoadEntityFromDisk(entity)
   }
 
-  private val loading = new NotParallel[UUID]
   def getData(e: MetaGraphEntity): EntityData = {
-    // We need to hold the lock from checking entityCache to placing the promise in NotParallel.
+    // We need to hold the lock from checking entityCache to placing the promise in loadingPromises.
     // That is the reason for the peculiar organization of this code.
     synchronized {
-      entityCache.get(e.gUID).toLeft(loading.promise(e.gUID))
+      entityCache.get(e.gUID).toLeft {
+        loadingPromises.get(e.gUID) match {
+          case Some(p) => (p, false)
+          case None =>
+            val p = concurrent.Promise[Unit]()
+            loadingPromises(e.gUID) = p
+            (p, true)
+        }
+      }
     } match {
       case Left(ed) => ed
-      case Right(load) =>
-        load.fulfill(work = {
+      case Right((promise, true)) =>
+        val result = util.Try {
           assert(canLoadEntityFromDisk(e), s"Entity is not available in Spark domain: $e")
           val eio = entityIO(e)
           log.info(s"PERF Found entity $e on disk")
@@ -222,9 +230,13 @@ class SparkDomain(
           val data = eio.read(baseOpt)
           set(e, data)
           data
-        }, otherwise = {
-          synchronized { entityCache(e.gUID) }
-        })
+        }
+        synchronized { loadingPromises -= e.gUID }
+        promise.complete(result.map(_ => ()))
+        result.get
+      case Right((promise, false)) =>
+        concurrent.Await.result(promise.future, concurrent.duration.Duration.Inf)
+        synchronized { entityCache(e.gUID) }
     }
   }
 
