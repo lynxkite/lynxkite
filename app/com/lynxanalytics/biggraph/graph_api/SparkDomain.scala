@@ -70,7 +70,8 @@ class SparkDomain(
       entity.gUID, entityIO(entity).mayHaveExisted && entityIO(entity).exists)
   }
 
-  private def load(entity: MetaGraphEntity): EntityData = synchronized {
+  private def load(entity: MetaGraphEntity): EntityData = {
+    assert(canLoadEntityFromDisk(entity), s"Entity is not available in Spark domain: $entity")
     val eio = entityIO(entity)
     log.info(s"PERF Found entity $entity on disk")
     // For edge bundles and attributes we need to load the base vertex set first
@@ -80,6 +81,7 @@ class SparkDomain(
 
   private def set(entity: MetaGraphEntity, data: EntityData) = synchronized {
     assert(!entityPromises.contains(entity.gUID), s"Trying to set an entity that has a promise: $entity")
+    assert(!entityCache.contains(entity.gUID), s"Trying to set an already loaded entity: $entity")
     entityCache(entity.gUID) = data
   }
 
@@ -99,6 +101,18 @@ class SparkDomain(
     } match {
       case Left(ed) => ed
       case Right((promise, true)) =>
+        // Why is the below code not simpler? (Like "val result = Try(fn)".)
+        // 1. set() has to go before promise.complete() because the thread waiting on the promise
+        //    expects to see the data in entityCache.
+        // 2. set() needs the actual data. We can either access that outside of the Try as
+        //    result.get or inside.
+        // 3. Outside of Try and before promise.complete() we cannot use result.get because it may
+        //    throw an exception and then promise.complete() would be never called.
+        //    So set() must go inside the Try.
+        // 4. We want to assert there is no current promise in set().
+        //    So entityPromises -= entity.gUID must go before set().
+        // 5. These two need to be in a synchronized block otherwise we could be caught with
+        //    no promise and no entityCache.
         val result = util.Try {
           val data = fn
           synchronized {
