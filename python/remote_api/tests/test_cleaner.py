@@ -92,6 +92,7 @@ class TestCleaner(unittest.TestCase):
     self.data_status = None
     self.check('Import output cleaning')
     table = lk.uploadCSVNow('x,y\n1,11\n2,22')
+    table.df()
     self.check('Table uploaded', {'total_cnt': '+'})
     lk.move_to_cleaner_trash('notSnapshotOrImportBoxEntities')
     self.check('After moving to cleaner', {
