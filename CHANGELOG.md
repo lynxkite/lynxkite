@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 2.8.4
+
  - Popup box improvements: Parameters are full-width. Popups avoid overlapping. Popups reopen
    at previous position with previous dimensions.
 
