@@ -98,12 +98,13 @@ class DataManager(
     await(getFuture(scalar))
   }
 
-  private def relocate(e: MetaGraphEntity, src: Domain, dst: Domain): SafeFuture[Unit] = {
-    e match {
-      case e: Attribute[_] => ensure(e.vertexSet, dst).flatMap(_ => dst.relocate(e, src))
-      case e: EdgeBundle => ensure(e.idSet, dst).flatMap(_ => dst.relocate(e, src))
-      case _ => dst.relocate(e, src)
+  private def ensureThenRelocate(e: MetaGraphEntity, src: Domain, dst: Domain): SafeFuture[Unit] = {
+    val f = e match {
+      case e: Attribute[_] => ensureAll(Seq(e, e.vertexSet), src)
+      case e: EdgeBundle => ensureAll(Seq(e, e.idSet), src)
+      case _ => ensure(e, src)
     }
+    f.flatMap(_ => dst.relocate(e, src))
   }
 
   def ensure(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
@@ -129,7 +130,7 @@ class DataManager(
     if (d.has(e)) { // We have it. Great.
       SafeFuture.successful(())
     } else if (other.has(e)) { // Someone else has it. Relocate.
-      relocate(e, other, d)
+      ensureThenRelocate(e, other, d)
     } else if (d.canCompute(e.source)) { // Nobody has it, but we can compute. Compute.
       val f = ensureInputs(e, d).flatMap(_ => d.compute(e.source))
       for (o <- e.source.outputs.all.values) {
@@ -137,15 +138,16 @@ class DataManager(
       }
       f
     } else { // Someone else has to compute it. Then we relocate.
-      ensure(e, other).flatMap(_ => relocate(e, other, d))
+      ensureThenRelocate(e, other, d)
     }
   }
 
   private def ensureInputs(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
-    SafeFuture.sequence(
-      e.source.inputs.all.values.map { input =>
-        ensure(input, d)
-      }).map(_ => ())
+    ensureAll(e.source.inputs.all.values, d)
+  }
+
+  private def ensureAll(entities: Iterable[MetaGraphEntity], d: Domain): SafeFuture[Unit] = {
+    SafeFuture.sequence(entities.map(ensure(_, d))).map(_ => ())
   }
 
   def cache(entity: MetaGraphEntity): Unit = {
