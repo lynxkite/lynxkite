@@ -154,7 +154,8 @@ class DataManager(
   }
 
   def waitAllFutures(): Unit = {
-    await(synchronized { SafeFuture.sequence(futures.values) })
+    val f = synchronized { SafeFuture.sequence(futures.values) }
+    f.awaitReady(concurrent.duration.Duration.Inf)
   }
 
   def clear(): Unit = synchronized {
