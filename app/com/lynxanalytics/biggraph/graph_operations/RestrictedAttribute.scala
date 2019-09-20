@@ -25,7 +25,7 @@ object RestrictAttributeToIds extends OpFromJson {
 }
 import RestrictAttributeToIds._
 case class RestrictAttributeToIds[T](vertexIdSet: Set[ID])
-  extends TypedMetaGraphOp[Input[T], Output[T]] {
+  extends SparkOperation[Input[T], Output[T]] {
   @transient override lazy val inputs = new Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) =

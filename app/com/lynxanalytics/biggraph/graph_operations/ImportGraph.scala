@@ -164,7 +164,7 @@ object ImportVertexList extends OpFromJson {
 }
 @deprecated("Replaced by table-based importing.", "1.7.0")
 class ImportVertexList(val input: RowInput) extends ImportCommon
-  with TypedMetaGraphOp[NoInput, ImportVertexList.Output] with Serializable {
+  with SparkOperation[NoInput, ImportVertexList.Output] with Serializable {
   override def equals(o: Any) =
     o.isInstanceOf[ImportVertexList] && o.asInstanceOf[ImportVertexList].input == input
   import ImportVertexList._
@@ -227,7 +227,7 @@ object ImportEdgeList extends OpFromJson {
 @deprecated("Replaced by table-based importing.", "1.7.0")
 class ImportEdgeList(val input: RowInput, val src: String, val dst: String)
   extends ImportEdges
-  with TypedMetaGraphOp[NoInput, ImportEdgeList.Output] with Serializable {
+  with SparkOperation[NoInput, ImportEdgeList.Output] with Serializable {
   override def equals(o: Any) = {
     o.isInstanceOf[ImportEdgeList] && {
       val other = o.asInstanceOf[ImportEdgeList]
@@ -304,7 +304,7 @@ object ImportEdgeListForExistingVertexSet extends OpFromJson {
 @deprecated("Replaced by table-based importing.", "1.7.0")
 class ImportEdgeListForExistingVertexSet(val input: RowInput, val src: String, val dst: String)
   extends ImportEdges
-  with TypedMetaGraphOp[ImportEdgeListForExistingVertexSet.Input, ImportEdgeListForExistingVertexSet.Output]
+  with SparkOperation[ImportEdgeListForExistingVertexSet.Input, ImportEdgeListForExistingVertexSet.Output]
   with Serializable {
   override def equals(o: Any) = {
     o.isInstanceOf[ImportEdgeListForExistingVertexSet] && {
@@ -361,7 +361,7 @@ object ImportAttributesForExistingVertexSet extends OpFromJson {
 @deprecated("Replaced by table-based importing.", "1.7.0")
 class ImportAttributesForExistingVertexSet(val input: RowInput, val idField: String)
   extends ImportCommon
-  with TypedMetaGraphOp[ImportAttributesForExistingVertexSet.Input, ImportAttributesForExistingVertexSet.Output]
+  with SparkOperation[ImportAttributesForExistingVertexSet.Input, ImportAttributesForExistingVertexSet.Output]
   with Serializable {
   override def equals(o: Any) = {
     o.isInstanceOf[ImportAttributesForExistingVertexSet] && {

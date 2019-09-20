@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class MergeVerticesByAttributeOperationTest extends OperationsTestBase {
   test("Merge vertices by attribute") {

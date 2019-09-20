@@ -22,7 +22,7 @@ object ScalarLongDifference extends OpFromJson {
   }
 }
 case class ScalarLongDifference()
-  extends TypedMetaGraphOp[ScalarLongDifference.Input, ScalarLongDifference.Output] {
+  extends SparkOperation[ScalarLongDifference.Input, ScalarLongDifference.Output] {
   import ScalarLongDifference._
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)

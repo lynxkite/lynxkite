@@ -23,7 +23,7 @@ object SaveTable extends OpFromJson {
 }
 
 import SaveTable._
-case class SaveTable() extends TypedMetaGraphOp[Input, Output] {
+case class SaveTable() extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

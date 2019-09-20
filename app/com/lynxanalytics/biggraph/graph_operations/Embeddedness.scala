@@ -12,7 +12,7 @@ object Embeddedness extends OpFromJson {
   def fromJson(j: JsValue) = Embeddedness()
 }
 import Embeddedness._
-case class Embeddedness() extends TypedMetaGraphOp[GraphInput, Output] {
+case class Embeddedness() extends SparkOperation[GraphInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

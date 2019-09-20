@@ -127,7 +127,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
   // certain directory. Directories in trash are included iff the trash param is true.
   private def getAllFilesInDir(dir: String, trash: Boolean): Map[String, Long] = {
     val currentTime = System.currentTimeMillis
-    val hadoopFileDir = environment.dataManager.writablePath / dir
+    val hadoopFileDir = environment.sparkDomain.writablePath / dir
     if (!hadoopFileDir.exists) {
       Map[String, Long]()
     } else {
@@ -149,7 +149,8 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       val gUID = entity.gUID.toString
       if (!expanded.contains(gUID)) {
         expanded.add(gUID)
-        if (entity.source.operation.isHeavy) {
+        val op = entity.source.operation
+        if (op.isInstanceOf[SparkOperation[_, _]] && op.asInstanceOf[SparkOperation[_, _]].isHeavy) {
           Set(gUID, entity.source.gUID.toString)
         } else {
           heavyOpOutputSourceGUIDs(entity.source.inputs.all.values, expanded).toSet
@@ -264,11 +265,12 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     moveToTrash(io.ScalarsDir, files.scalars.keys.toSet -- filesToKeep)
     moveToTrash(io.TablesDir, files.tables.keys.toSet -- filesToKeep)
     moveToTrash(io.BroadcastsDir, files.broadcasts.keys.toSet -- filesToKeep)
+    environment.sparkDomain.clear()
     environment.dataManager.clear()
   }
 
   private def moveToTrash(dir: String, files: Set[String]): Unit = {
-    val hadoopFileDir = environment.dataManager.writablePath / dir
+    val hadoopFileDir = environment.sparkDomain.writablePath / dir
     if (hadoopFileDir.exists()) {
       for (file <- files) {
         (hadoopFileDir / file).renameTo(hadoopFileDir / (file + io.DeletedSfx))
@@ -289,7 +291,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
   }
 
   private def deleteTrashFilesInDir(dir: String): Unit = {
-    val hadoopFileDir = environment.dataManager.writablePath / dir
+    val hadoopFileDir = environment.sparkDomain.writablePath / dir
     if (hadoopFileDir.exists()) {
       hadoopFileDir.listStatus.filter {
         subDir => subDir.getPath().toString contains io.DeletedSfx

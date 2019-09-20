@@ -37,6 +37,7 @@ trait BigGraphEnvironment extends SparkFreeEnvironment {
   val sparkContext: spark.SparkContext
   def metaGraphManager: graph_api.MetaGraphManager
   def dataManager: graph_api.DataManager
+  def sparkDomain: graph_api.SparkDomain
   def entityProgressManager = dataManager
 }
 
@@ -50,16 +51,17 @@ object BigGraphEnvironmentImpl {
     // in parallel, hence the juggling with futures.
     val metaGraphManagerFuture = Future(createMetaGraphManager(repositoryDirs))
     val sparkSessionFuture = Future(sparkSessionProvider.createSparkSession)
-    val dataManagerFuture = sparkSessionFuture.map(
-      sparkSession => createDataManager(sparkSession, repositoryDirs))
+    val sparkDomainFuture = sparkSessionFuture.map(
+      sparkSession => createSparkDomain(sparkSession, repositoryDirs))
     val envFuture = for {
       sparkSession <- sparkSessionFuture
       metaGraphManager <- metaGraphManagerFuture
-      dataManager <- dataManagerFuture
+      sparkDomain <- sparkDomainFuture
     } yield new BigGraphEnvironmentImpl(
       sparkSession,
       metaGraphManager,
-      dataManager)
+      sparkDomain,
+      new graph_api.DataManager(Seq(new graph_api.ScalaDomain, sparkDomain)))
     Await.result(envFuture, Duration.Inf)
   }
 
@@ -70,9 +72,9 @@ object BigGraphEnvironmentImpl {
     res
   }
 
-  def createDataManager(sparkSession: spark.sql.SparkSession, repositoryDirs: RepositoryDirs) = {
+  def createSparkDomain(sparkSession: spark.sql.SparkSession, repositoryDirs: RepositoryDirs) = {
     bigGraphLogger.info("Initializing data manager...")
-    val res = new graph_api.DataManager(
+    val res = new graph_api.SparkDomain(
       sparkSession, repositoryDirs.dataDir, repositoryDirs.ephemeralDataDir)
     bigGraphLogger.info("Data manager initialized.")
     res
@@ -83,6 +85,7 @@ object BigGraphEnvironmentImpl {
 case class BigGraphEnvironmentImpl(
     sparkSession: spark.sql.SparkSession,
     metaGraphManager: graph_api.MetaGraphManager,
+    sparkDomain: graph_api.SparkDomain,
     dataManager: graph_api.DataManager) extends BigGraphEnvironment {
   val sparkContext = sparkSession.sparkContext
 }

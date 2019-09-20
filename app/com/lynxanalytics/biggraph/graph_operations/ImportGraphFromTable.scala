@@ -96,7 +96,7 @@ object ImportEdgesForExistingVertices extends OpFromJson {
 }
 import ImportEdgesForExistingVertices._
 case class ImportEdgesForExistingVertices[A: SerializableType, B: SerializableType]()
-  extends TypedMetaGraphOp[Input[A, B], Output] {
+  extends SparkOperation[Input[A, B], Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input[A, B]()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

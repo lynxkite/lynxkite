@@ -38,7 +38,7 @@ object ConcatenateBundlesMulti extends OpFromJson {
   def fromJson(j: JsValue) = ConcatenateBundlesMulti()
 }
 import ConcatenateBundlesMulti._
-case class ConcatenateBundlesMulti() extends TypedMetaGraphOp[Input, Output] {
+case class ConcatenateBundlesMulti() extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 

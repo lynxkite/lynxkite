@@ -31,7 +31,7 @@ object ExportTable {
 }
 
 import ExportTable._
-abstract class ExportTable extends TypedMetaGraphOp[Input, Output] {
+abstract class ExportTable extends SparkOperation[Input, Output] {
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
@@ -42,7 +42,7 @@ abstract class ExportTable extends TypedMetaGraphOp[Input, Output] {
     output: OutputBuilder,
     rc: RuntimeContext): Unit = {
     implicit val ds = inputDatas
-    implicit val dataManager = rc.dataManager
+    implicit val sd = rc.sparkDomain
     val df = inputs.t.df
     exportDataFrame(df)
     val exportResult = "Export done."

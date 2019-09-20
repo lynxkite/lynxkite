@@ -64,47 +64,12 @@ object Scripting {
     manager: MetaGraphManager): TypedOperationInstance[IS, OMDS] =
     builder.toInstance(manager)
 
-  implicit def getData(entity: EntityContainer[VertexSet])(
-    implicit
-    dataManager: DataManager): VertexSetData =
-    dataManager.get(entity.entity)
-  implicit def getData(entity: EntityContainer[EdgeBundle])(
-    implicit
-    dataManager: DataManager): EdgeBundleData =
-    dataManager.get(entity.entity)
-  implicit def getData[T](entity: EntityContainer[Attribute[T]])(
-    implicit
-    dataManager: DataManager): AttributeData[T] =
-    dataManager.get(entity.entity)
-  implicit def getData[T](entity: EntityContainer[Scalar[T]])(
-    implicit
-    dataManager: DataManager): ScalarData[T] =
-    dataManager.get(entity.entity)
-  implicit def getData(entity: EntityContainer[Table])(
-    implicit
-    dataManager: DataManager): TableData =
-    dataManager.get(entity.entity)
-
-  implicit def getData(entity: VertexSet)(
-    implicit
-    dataManager: DataManager): VertexSetData =
-    dataManager.get(entity)
-  implicit def getData(entity: EdgeBundle)(
-    implicit
-    dataManager: DataManager): EdgeBundleData =
-    dataManager.get(entity)
-  implicit def getData[T](entity: Attribute[T])(
-    implicit
-    dataManager: DataManager): AttributeData[T] =
-    dataManager.get(entity)
-  implicit def getData[T](entity: Scalar[T])(
-    implicit
-    dataManager: DataManager): ScalarData[T] =
-    dataManager.get(entity)
-  implicit def getData(entity: Table)(
-    implicit
-    dataManager: DataManager): TableData =
-    dataManager.get(entity)
+  implicit class EasyScalarContainer[T](self: EntityContainer[Scalar[T]])(implicit dm: DataManager) {
+    def value = dm.get(self.entity)
+  }
+  implicit class EasyScalar[T](self: Scalar[T])(implicit dm: DataManager) {
+    def value = dm.get(self)
+  }
 
   implicit def toInput[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider](
     op: TypedMetaGraphOp[IS, OMDS]): IS = op.inputs

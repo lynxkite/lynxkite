@@ -18,7 +18,7 @@ object CreateRole extends OpFromJson {
   def fromJson(j: JsValue) = CreateRole((j \ "ratio").as[Double], (j \ "seed").as[Int])
 }
 import CreateRole._
-case class CreateRole(ratio: Double, seed: Int) extends TypedMetaGraphOp[Input, Output] {
+case class CreateRole(ratio: Double, seed: Int) extends SparkOperation[Input, Output] {
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

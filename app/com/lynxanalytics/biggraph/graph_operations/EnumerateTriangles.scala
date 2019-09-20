@@ -14,7 +14,7 @@ object EnumerateTriangles extends OpFromJson {
     (j \ "needsBothDirections").as[Boolean])
 }
 case class EnumerateTriangles(needsBothDirections: Boolean = false)
-  extends TypedMetaGraphOp[GraphInput, Segmentation] {
+  extends SparkOperation[GraphInput, Segmentation] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 

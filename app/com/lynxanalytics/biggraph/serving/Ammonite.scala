@@ -11,8 +11,6 @@ import org.apache.sshd.server.session.ServerSession
 
 object Ammonite {
   val env = BigGraphProductionEnvironment
-  implicit val metaGraphManager = env.metaGraphManager
-  implicit val dataManager = env.dataManager
 
   // Starting Ammonite if requested.
   val help = org.apache.commons.lang.StringEscapeUtils.escapeJava(
@@ -62,9 +60,9 @@ println("${help}")
         Bind("server", this),
         Bind("fakeAdmin", User("ammonite-ssh", isAdmin = true)),
         Bind("sc", env.sparkContext),
-        Bind("metaManager", metaGraphManager),
-        Bind("dataManager", dataManager),
-        Bind("sql", dataManager.masterSQLContext)))
+        Bind("metaManager", env.metaGraphManager),
+        Bind("dataManager", env.dataManager),
+        Bind("sql", env.sparkDomain.masterSQLContext)))
   }
 
   def maybeStart() = {

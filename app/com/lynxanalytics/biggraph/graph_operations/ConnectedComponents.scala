@@ -17,7 +17,7 @@ object ConnectedComponents extends OpFromJson {
   def fromJson(j: JsValue) = ConnectedComponents((j \ "maxEdgesProcessedLocally").as[Int])
 }
 case class ConnectedComponents(maxEdgesProcessedLocally: Int = 20000000)
-  extends TypedMetaGraphOp[GraphInput, Segmentation] {
+  extends SparkOperation[GraphInput, Segmentation] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 

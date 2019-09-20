@@ -20,7 +20,7 @@ object IdAsAttribute extends OpFromJson {
   def fromJson(j: JsValue) = IdAsAttribute()
 }
 import IdAsAttribute._
-case class IdAsAttribute() extends TypedMetaGraphOp[Input, Output] {
+case class IdAsAttribute() extends SparkOperation[Input, Output] {
 
   @transient override lazy val inputs = new Input
 

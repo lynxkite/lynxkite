@@ -1,27 +1,10 @@
-// The DataManager can get the EntityDatas (RDDs/scalar values) for a MetaGraphEntity.
-//
-// It will either load the data from disk, or run the required operations
-// (and then save the data) when RDDs are requested.
+// The DataManager triggers the execution of computation for a MetaGraphEntity.
+// It can schedule the execution on one of the domains it controls.
+// It can return values for Scalars and information about execution status.
 
 package com.lynxanalytics.biggraph.graph_api
 
-import java.util.UUID
-
-import org.apache.spark
-import org.apache.spark.sql.SQLContext
-import scala.collection.concurrent.TrieMap
-import scala.collection.mutable
-import scala.concurrent.duration.Duration
-import scala.reflect.ClassTag
-import scala.util.Failure
-import scala.util.Success
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import com.lynxanalytics.biggraph.graph_api.io.DataRoot
-import com.lynxanalytics.biggraph.graph_api.io.EntityIO
-import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
-import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
 
 trait EntityProgressManager {
   case class ScalarComputationState[T](
@@ -39,487 +22,149 @@ trait EntityProgressManager {
   def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T]
 }
 
+// Represents a data locality, such as "Spark" or "Scala" or "single-node server".
+trait Domain {
+  override def toString = this.getClass.getSimpleName // Looks better in debug prints.
+  def has(e: MetaGraphEntity): Boolean
+  def compute(op: MetaGraphOperationInstance): SafeFuture[Unit]
+  // A hint that this entity is likely to be used repeatedly.
+  def cache(e: MetaGraphEntity): Unit
+  def get[T](e: Scalar[T]): SafeFuture[T]
+  def canCompute(op: MetaGraphOperationInstance): Boolean
+  // Moves an entity from another Domain to this one.
+  // This is a method on the destination so that the methods for modifying internal
+  // data structures can remain private.
+  def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit]
+}
+
+// Manages data computation across domains.
 class DataManager(
-    val sparkSession: spark.sql.SparkSession,
-    val repositoryPath: HadoopFile,
-    val ephemeralPath: Option[HadoopFile] = None) extends EntityProgressManager {
+    // The domains are in order of preference.
+    val domains: Seq[Domain]) extends EntityProgressManager {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "DataManager",
-      maxParallelism = LoggedEnvironment.envOrElse("KITE_SPARK_PARALLELISM", "5").toInt)
-  private val asyncJobs = new ControlledFutures()(executionContext)
-  val hadoopCheckExecutionContext =
-    ThreadUtil.limitedExecutionContext(
-      "DataManager(Hadoop)",
-      maxParallelism = LoggedEnvironment.envOrElse("KITE_HADOOP_PARALLELISM", "5").toInt)
-  private val hadoopAsyncJobs = new ControlledFutures()(hadoopCheckExecutionContext)
-  private var executingOperation =
-    new ThreadLocal[Option[MetaGraphOperationInstance]] { override def initialValue() = None }
-  private val instanceOutputCache = TrieMap[UUID, SafeFuture[Map[UUID, EntityData]]]()
-  private val entitiesOnDiskCache = TrieMap[UUID, SafeFuture[Boolean]]()
-  private val entityCache = TrieMap[UUID, SafeFuture[EntityData]]()
-  private val sparkCachedEntities = mutable.Set[UUID]()
-  lazy val masterSQLContext = {
-    val sqlContext = sparkSession.sqlContext
-    UDF.register(sqlContext.udf)
-    sqlContext
+      maxParallelism = LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
+  private val futures =
+    collection.mutable.Map[(java.util.UUID, Domain), SafeFuture[Unit]]()
+
+  private def findFailure(fs: Iterable[SafeFuture[_]]): Option[Throwable] = {
+    fs.map(_.value).collectFirst { case Some(util.Failure(t)) => t }
   }
 
-  // This can be switched to false to enter "demo mode" where no new calculations are allowed.
-  var computationAllowed = true
-
-  def entityIO(entity: MetaGraphEntity): io.EntityIO = {
-    val context = io.IOContext(dataRoot, sparkSession)
-    entity match {
-      case vs: VertexSet => new io.VertexSetIO(vs, context)
-      case eb: EdgeBundle => new io.EdgeBundleIO(eb, context)
-      case eb: HybridBundle => new io.HybridBundleIO(eb, context)
-      case va: Attribute[_] => new io.AttributeIO(va, context)
-      case sc: Scalar[_] => new io.ScalarIO(sc, context)
-      case tb: Table => new io.TableIO(tb, context)
-    }
-  }
-
-  private val dataRoot: DataRoot = {
-    val mainRoot = new io.SingleDataRoot(repositoryPath)
-    ephemeralPath.map { ephemeralPath =>
-      val ephemeralRoot = new io.SingleDataRoot(ephemeralPath)
-      new io.CombinedRoot(ephemeralRoot, mainRoot)
-    }.getOrElse(mainRoot)
-  }
-
-  val writablePath: HadoopFile = {
-    ephemeralPath.getOrElse(repositoryPath)
-  }
-
-  private def maybeEntityCanBeLoadedFromDisk(entity: MetaGraphEntity): Boolean = {
-    val eio = entityIO(entity)
-    // eio.mayHaveExisted is only necessary condition of exist on disk if we haven't calculated
-    // the entity in this session, so we need this assertion.
-    assert(!isEntityInProgressOrComputed(eio.entity), s"${eio} is new")
-    (entity.source.operation.isHeavy || entity.isInstanceOf[Scalar[_]]) &&
-      // Fast check for directory.
-      eio.mayHaveExisted
-  }
-
-  private def canLoadEntityFromDisk(entity: MetaGraphEntity): SafeFuture[Boolean] = {
-    entitiesOnDiskCache.synchronized {
-      entitiesOnDiskCache.getOrElseUpdate(
-        entity.gUID,
-        hadoopAsyncJobs.register { entityIO(entity).exists })
-    }
-  }
-
-  private def isEntityInProgressOrComputed(
-    entity: MetaGraphEntity): Boolean = {
-
-    entityCache.contains(entity.gUID) &&
-      (entityCache(entity.gUID).value match {
-        case None => true // in progress
-        case Some(Failure(_)) => false
-        case Some(Success(_)) => true // computed
-      })
-  }
-
-  // For edge bundles and attributes we need to load the base vertex set first
-  private def load(entity: MetaGraphEntity): SafeFuture[EntityData] = {
-    val eio = entityIO(entity)
-    log.info(s"PERF Found entity $entity on disk")
-    val vsOpt: Option[VertexSet] = eio.correspondingVertexSet
-    val baseFuture = vsOpt.map(vs => getFuture(vs).map(x => Some(x))).getOrElse(SafeFuture.successful(None))
-    baseFuture.map(bf => eio.read(bf))
-  }
-
-  private def set(entity: MetaGraphEntity, data: SafeFuture[EntityData]) = synchronized {
-    entityCache(entity.gUID) = data
-  }
-
-  def clear() = synchronized {
-    instanceOutputCache.clear()
-    entityCache.clear()
-    sparkCachedEntities.clear()
-    entitiesOnDiskCache.clear()
-    dataRoot.clear()
-  }
-
-  // Runs something on the DataManager threadpool.
-  // Use this to run Spark operations from HTTP handlers. (SPARK-12964)
-  def async[T](fn: => T): concurrent.Future[T] = {
-    SafeFuture {
-      fn
-    }.future
-  }
-
-  // Asserts that this thread is not in the process of executing an operation.
-  private def assertNotInOperation(msg: => String): Unit = {
-    for (op <- executingOperation.get) {
-      throw new AssertionError(s"$op $msg")
-    }
-  }
-
-  private def execute(
-    instance: MetaGraphOperationInstance,
-    logger: OperationLogger): SafeFuture[Map[UUID, EntityData]] = {
-    val inputs = instance.inputs
-    val futureInputs = SafeFuture.sequence(
-      inputs.all.toSeq.map {
-        case (name, entity) =>
-          getFuture(entity).map {
-            data =>
-              logger.addInput(name.toString, data)
-              (name, data)
-          }
-      })
-    futureInputs.map { inputs =>
-      if (instance.operation.isHeavy) {
-        log.info(s"PERF HEAVY Starting to compute heavy operation instance $instance")
-        logger.startTimer()
-      }
-      val inputDatas = DataSet(inputs.toMap)
-      for (scalar <- instance.outputs.scalars.values) {
-        log.info(s"PERF Computing scalar $scalar")
-      }
-      val outputDatas = concurrent.blocking {
-        executingOperation.set(Some(instance))
-        try instance.run(inputDatas, runtimeContext)
-        finally executingOperation.set(None)
-      }
-      validateOutput(instance, outputDatas)
-      concurrent.blocking {
-        if (instance.operation.isHeavy) {
-          saveOutputs(instance, outputDatas.values)
-        } else if (!instance.operation.neverSerialize) {
-          // We still save all scalars even for non-heavy operations,
-          // unless they are explicitly say 'never serialize'.
-          // This can happen asynchronously though.
-          asyncJobs.register {
-            saveOutputs(instance, outputDatas.values.collect { case o: ScalarData[_] => o })
-          }
+  override def computeProgress(entity: MetaGraphEntity): Double = {
+    val d = bestSource(entity)
+    synchronized { futures.get((entity.gUID, d)) } match {
+      case None =>
+        if (d.has(entity)) synchronized {
+          futures((entity.gUID, d)) = SafeFuture.successful(())
+          1.0
         }
-      }
-      for (scalar <- instance.outputs.scalars.values) {
-        log.info(s"PERF Computed scalar $scalar")
-      }
-      if (instance.operation.isHeavy) {
-        log.info(s"PERF HEAVY Finished computing heavy operation instance $instance")
-        logger.stopTimer()
-      }
-      outputDatas
+        else 0.0
+      case Some(s) =>
+        if (s.hasFailed) -1.0
+        else {
+          val deps = s.dependencySet
+          if (findFailure(deps).isDefined) -1.0
+          else 1.0 / (1.0 + deps.size - deps.filter(_.isCompleted).size)
+        }
     }
   }
 
-  private def saveOutputs(
-    instance: MetaGraphOperationInstance,
-    outputs: Iterable[EntityData]): Unit = {
-    for (output <- outputs) {
-      saveToDisk(output)
-    }
-    // Mark the operation as complete. Entities may not be loaded from incomplete operations.
-    // The reason for this is that an operation may give different results if the number of
-    // partitions is different. So for consistency, all outputs must be from the same run.
-    (EntityIO.operationPath(dataRoot, instance) / io.Success).forWriting.createFromStrings("")
-  }
-
-  private def validateOutput(
-    instance: MetaGraphOperationInstance,
-    output: Map[UUID, EntityData]): Unit = {
-    // Make sure attributes re-use the partitioners from their vertex sets.
-    // An identity check is used to catch the case where the same number of partitions is used
-    // accidentally (as is often the case in tests), but the code does not guarantee this.
-    val attributes = output.values.collect { case x: AttributeData[_] => x }
-    val edgeBundles = output.values.collect { case x: EdgeBundleData => x }
-    val dataAndVs =
-      attributes.map(x => x -> x.entity.vertexSet) ++
-        edgeBundles.map(x => x -> x.entity.idSet)
-    for ((entityd, vs) <- dataAndVs) {
-      val entity = entityd.entity
-      // The vertex set must either be loaded, or in the output.
-      val vsd = output.get(vs.gUID) match {
-        case Some(vsd) => vsd.asInstanceOf[VertexSetData]
-        case None =>
-          assert(entityCache.contains(vs.gUID), s"$vs, vertex set of $entity, not known")
-          assert(entityCache(vs.gUID).value.nonEmpty, s"$vs, vertex set of $entity, not loaded")
-          assert(entityCache(vs.gUID).value.get.isSuccess, s"$vs, vertex set of $entity, failed")
-          entityCache(vs.gUID).value.get.get.asInstanceOf[VertexSetData]
-      }
-      assert(
-        vsd.rdd.partitioner.get eq entityd.rdd.partitioner.get,
-        s"The partitioner of $entity does not match the partitioner of $vs.")
+  override def getComputedScalarValue[T](e: Scalar[T]): ScalarComputationState[T] = {
+    computeProgress(e) match {
+      case 1.0 => ScalarComputationState(1, Some(get(e)), None)
+      case -1.0 => ScalarComputationState(-1, None, findFailure(getFuture(e).dependencySet))
+      case x => ScalarComputationState(x, None, None)
     }
   }
 
-  private def getInstanceFuture(
-    instance: MetaGraphOperationInstance,
-    logger: OperationLogger): SafeFuture[Map[UUID, EntityData]] = synchronized {
-
-    val gUID = instance.gUID
-    if (!instanceOutputCache.contains(gUID)) {
-      instanceOutputCache(gUID) = {
-        val output = execute(instance, logger)
-        if (instance.operation.isHeavy) {
-          // For heavy operations we want to avoid caching the RDDs. The RDD data will be reloaded
-          // from disk anyway to break the lineage. These RDDs need to be GC'd to clean up the
-          // shuffle files on the executors. See #2098.
-          val nonRDD = output.map {
-            _.filterNot { case (guid, entityData) => entityData.isInstanceOf[EntityRDDData[_]] }
-          }
-          // A GC is helpful here to avoid filling up the disk on the executors. See comment above.
-          nonRDD.foreach { _ => System.gc() }
-          nonRDD
-        } else output
-      }
-      instanceOutputCache(gUID).onFailure {
-        case _ => synchronized { instanceOutputCache.remove(gUID) }
-      }
-    }
-    instanceOutputCache(gUID)
+  private def bestSource(e: MetaGraphEntity): Domain = {
+    synchronized { domains.find(d => futures.get((e.gUID, d)).filterNot(_.hasFailed).isDefined) }
+      .orElse(domains.find(_.has(e)))
+      .orElse(domains.find(_.canCompute(e.source))).get
   }
 
-  override def computeProgress(entity: MetaGraphEntity): Double = synchronized {
-    val guid = entity.gUID
-    // It would be great if we could be more granular, but for now we just return 0.5 if the
-    // computation is running.
-    if (entityCache.contains(guid)) {
-      entityCache(guid).value match {
-        case None => 0.5
-        case Some(Failure(_)) => -1.0
-        case Some(Success(_)) => 1.0
-      }
+  def compute(entity: MetaGraphEntity): SafeFuture[Unit] = synchronized {
+    ensure(entity, bestSource(entity))
+  }
+
+  def getFuture[T](scalar: Scalar[T]): SafeFuture[T] = synchronized {
+    val d = bestSource(scalar)
+    ensure(scalar, d).flatMap(_ => d.get(scalar))
+  }
+
+  def get[T](scalar: Scalar[T]): T = {
+    await(getFuture(scalar))
+  }
+
+  private def ensureThenRelocate(e: MetaGraphEntity, src: Domain, dst: Domain): SafeFuture[Unit] = {
+    val f = e match {
+      // The base vertex set must be present for edges and attributes before we can relocate them.
+      case e: Attribute[_] => combineFutures(Seq(ensure(e, src), ensure(e.vertexSet, dst)))
+      case e: EdgeBundle => combineFutures(Seq(ensure(e, src), ensure(e.idSet, dst)))
+      case _ => ensure(e, src)
+    }
+    f.flatMap(_ => dst.relocate(e, src))
+  }
+
+  def ensure(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
+    val f = futures.get((e.gUID, d))
+    if (f.isDefined) {
+      if (f.get.hasFailed) { // Retry.
+        futures((e.gUID, d)) = makeFuture(e, d)
+      } else if (f.get.isCompleted) {
+        if (d.has(e)) {
+          futures((e.gUID, d)) = SafeFuture.successful(()) // Cut future chain.
+        } else { // Domain has dropped it since then.
+          futures((e.gUID, d)) = makeFuture(e, d)
+        }
+      } // Otherwise the computation is in progress and the existing future is good.
     } else {
-      if (!maybeEntityCanBeLoadedFromDisk(entity)) {
-        0.0
-      } else {
-        canLoadEntityFromDisk(entity).value match {
-          case Some(util.Success(true)) => 1.0
-          case _ => 0.0
-        }
+      futures((e.gUID, d)) = makeFuture(e, d)
+    }
+    futures((e.gUID, d))
+  }
+
+  private def makeFuture(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
+    val other = bestSource(e)
+    if (d.has(e)) { // We have it. Great.
+      SafeFuture.successful(())
+    } else if (other.has(e)) { // Someone else has it. Relocate.
+      ensureThenRelocate(e, other, d)
+    } else if (d.canCompute(e.source)) { // Nobody has it, but we can compute. Compute.
+      val f = ensureInputs(e, d).flatMap(_ => d.compute(e.source))
+      for (o <- e.source.outputs.all.values) {
+        futures((o.gUID, d)) = f
       }
+      f
+    } else { // Someone else has to compute it. Then we relocate.
+      ensureThenRelocate(e, other, d)
     }
   }
 
-  override def getComputedScalarValue[T](entity: Scalar[T]): ScalarComputationState[T] = synchronized {
-    val progress = computeProgress(entity)
-    ScalarComputationState(
-      progress,
-      if (progress == 1.0) Some(get(entity).value) else None,
-      if (progress == -1.0) {
-        entityCache(entity.gUID).value match {
-          case Some(Failure(throwable)) => Some(throwable)
-          case _ => None
-        }
-      } else None)
+  private def ensureInputs(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
+    combineFutures(e.source.inputs.all.values.map(ensure(_, d)))
   }
 
-  private def loadOrExecuteIfNecessary(entity: MetaGraphEntity): Unit = synchronized {
-    if (!isEntityInProgressOrComputed(entity)) {
-      if (maybeEntityCanBeLoadedFromDisk(entity) && canLoadEntityFromDisk(entity).awaitResult(Duration.Inf)) {
-        // If on disk already, we just load it.
-        set(entity, load(entity))
-      } else {
-        assert(computationAllowed, "DEMO MODE, you cannot start new computations")
-        assertNotInOperation(s"has triggered the computation of $entity. #5580")
-        // Otherwise we schedule execution of its operation.
-        val instance = entity.source
-
-        val logger = new OperationLogger(instance, executionContext)
-        val instanceFuture = getInstanceFuture(instance, logger)
-
-        for (output <- instance.outputs.all.values) {
-          set(
-            output,
-            // And the entity will have to wait until its full completion (including saves).
-            if (instance.operation.isHeavy && !output.isInstanceOf[Scalar[_]]) {
-              val futureEntityData = instanceFuture.flatMap(_ => load(output))
-              logger.addOutput(futureEntityData)
-              futureEntityData
-            } else {
-              instanceFuture.map(_(output.gUID))
-            })
-        }
-
-        logger.logWhenReady(asyncJobs)
-
-      }
-    }
+  private def combineFutures(fs: Iterable[SafeFuture[Unit]]): SafeFuture[Unit] = {
+    SafeFuture.sequence(fs).map(_ => ())
   }
 
-  def getFuture(vertexSet: VertexSet): SafeFuture[VertexSetData] = {
-    loadOrExecuteIfNecessary(vertexSet)
-    entityCache(vertexSet.gUID).map(_.asInstanceOf[VertexSetData])
-  }
-
-  def getFuture(edgeBundle: EdgeBundle): SafeFuture[EdgeBundleData] = {
-    loadOrExecuteIfNecessary(edgeBundle)
-    entityCache(edgeBundle.gUID).map(_.asInstanceOf[EdgeBundleData])
-  }
-
-  def getFuture(hybridBundle: HybridBundle): SafeFuture[HybridBundleData] = {
-    loadOrExecuteIfNecessary(hybridBundle)
-    entityCache(hybridBundle.gUID).map(_.asInstanceOf[HybridBundleData])
-  }
-
-  def getFuture[T](attribute: Attribute[T]): SafeFuture[AttributeData[T]] = {
-    loadOrExecuteIfNecessary(attribute)
-    implicit val tagForT = attribute.typeTag
-    entityCache(attribute.gUID).map(_.asInstanceOf[AttributeData[_]].runtimeSafeCast[T])
-  }
-
-  def getFuture[T](scalar: Scalar[T]): SafeFuture[ScalarData[T]] = {
-    loadOrExecuteIfNecessary(scalar)
-    implicit val tagForT = scalar.typeTag
-    entityCache(scalar.gUID).map(_.asInstanceOf[ScalarData[_]].runtimeSafeCast[T])
-  }
-
-  def getFuture(table: Table): SafeFuture[TableData] = {
-    loadOrExecuteIfNecessary(table)
-    entityCache(table.gUID).map(_.asInstanceOf[TableData])
-  }
-
-  def getFuture(entity: MetaGraphEntity): SafeFuture[EntityData] = {
-    entity match {
-      case vs: VertexSet => getFuture(vs)
-      case eb: EdgeBundle => getFuture(eb)
-      case hb: HybridBundle => getFuture(hb)
-      case va: Attribute[_] => getFuture(va)
-      case sc: Scalar[_] => getFuture(sc)
-      case tb: Table => getFuture(tb)
-    }
+  def cache(entity: MetaGraphEntity): Unit = {
+    val d = bestSource(entity)
+    ensure(entity, d).map(_ => d.cache(entity))
   }
 
   def waitAllFutures(): Unit = {
-    SafeFuture.sequence(entityCache.values.toSeq).awaitReady(Duration.Inf)
-    asyncJobs.waitAllFutures()
-    hadoopAsyncJobs.waitAllFutures()
+    val f = synchronized { SafeFuture.sequence(futures.values) }
+    f.awaitReady(concurrent.duration.Duration.Inf)
   }
 
-  def get(vertexSet: VertexSet): VertexSetData = {
-    getFuture(vertexSet).awaitResult(Duration.Inf)
-  }
-  def get(edgeBundle: EdgeBundle): EdgeBundleData = {
-    getFuture(edgeBundle).awaitResult(Duration.Inf)
-  }
-  def get(hybridBundle: HybridBundle): HybridBundleData = {
-    getFuture(hybridBundle).awaitResult(Duration.Inf)
-  }
-  def get[T](attribute: Attribute[T]): AttributeData[T] = {
-    getFuture(attribute).awaitResult(Duration.Inf)
-  }
-  def get[T](scalar: Scalar[T]): ScalarData[T] = {
-    getFuture(scalar).awaitResult(Duration.Inf)
-  }
-  def get(table: Table): TableData = {
-    getFuture(table).awaitResult(Duration.Inf)
-  }
-  def get(entity: MetaGraphEntity): EntityData = {
-    getFuture(entity).awaitResult(Duration.Inf)
+  def clear(): Unit = synchronized {
+    futures.clear()
   }
 
-  private def coLocatedFuture[T: ClassTag](
-    dataFuture: SafeFuture[EntityRDDData[T]],
-    idSet: VertexSet): SafeFuture[(UniqueSortedRDD[Long, T], Option[Long])] = {
-
-    dataFuture.zip(getFuture(idSet)).map {
-      case (data, idSetData) =>
-        (enforceCoLocationWithIdSet(data, idSetData), data.count)
-    }
-  }
-  private def enforceCoLocationWithIdSet[T: ClassTag](
-    rawEntityData: EntityRDDData[T],
-    parent: VertexSetData): UniqueSortedRDD[Long, T] = {
-
-    val vsRDD = parent.rdd.copyWithAncestorsCached
-    // Enforcing colocation:
-    val rawRDD = rawEntityData.rdd
-    assert(
-      vsRDD.partitions.size == rawRDD.partitions.size,
-      s"$vsRDD and $rawRDD should have the same number of partitions, " +
-        s"but ${vsRDD.partitions.size} != ${rawRDD.partitions.size}\n" +
-        s"${vsRDD.toDebugString}\n${rawRDD.toDebugString}")
-    import com.lynxanalytics.biggraph.spark_util.Implicits.PairRDDUtils
-    vsRDD.zipPartitions(rawRDD, preservesPartitioning = true) {
-      (it1, it2) => it2
-    }.asUniqueSortedRDD
-  }
-  def cache(entity: MetaGraphEntity): Unit = {
-    // We do not cache anything in demo mode.
-    if (computationAllowed) {
-      synchronized {
-        if (!sparkCachedEntities.contains(entity.gUID)) {
-          entityCache(entity.gUID) = entity match {
-            case vs: VertexSet => getFuture(vs).map(_.cached)
-            case eb: EdgeBundle =>
-              coLocatedFuture(getFuture(eb), eb.idSet)
-                .map { case (rdd, count) => new EdgeBundleData(eb, rdd, count) }
-            case heb: HybridBundle => getFuture(heb).map(_.cached)
-            case va: Attribute[_] =>
-              coLocatedFuture(getFuture(va), va.vertexSet)(va.classTag)
-                .map { case (rdd, count) => new AttributeData(va, rdd, count) }
-            case sc: Scalar[_] => getFuture(sc)
-            case tb: Table => getFuture(tb)
-          }
-          sparkCachedEntities.add(entity.gUID)
-        }
-      }
-    }
-  }
-
-  private def saveToDisk(data: EntityData): Unit = {
-    val entity = data.entity
-    val eio = entityIO(entity)
-    val doesNotExist = eio.delete()
-    assert(doesNotExist, s"Cannot delete directory of entity $entity")
-    log.info(s"Saving entity $entity ...")
-    eio.write(data)
-    log.info(s"Entity $entity saved.")
-  }
-
-  def runtimeContext = {
-    val broadcastDirectory = ephemeralPath.getOrElse(repositoryPath) / io.BroadcastsDir
-    RuntimeContext(
-      sparkContext = sparkSession.sparkContext,
-      sqlContext = masterSQLContext,
-      ioContext = io.IOContext(dataRoot, sparkSession),
-      broadcastDirectory = broadcastDirectory,
-      dataManager = this)
-  }
-
-  def newSQLContext(): SQLContext = {
-    val sqlContext = masterSQLContext.newSession()
-    UDF.register(sqlContext.udf)
-    sqlContext
-  }
-
-  // Returns a SafeFuture which computes the data for all entities sequentially.
-  // This means, that the computation for one entity gets triggered only after the computation for
-  // the previous one is completed, but dependencies of these entities are still computed
-  // (if needed) with the usual Spark/LynxKite caching and parallelism mechanisms.
-  def computeSequentially(entities: List[MetaGraphEntity]): SafeFuture[Unit] = {
-    entities.foldLeft(SafeFuture(()))((f: SafeFuture[Unit], e: MetaGraphEntity) => {
-      f.flatMap(_ => getFuture(e)).map(_ => ())
-    })
-  }
-}
-
-object DataManager {
-  // This has to be synchronized; see
-  // https://app.asana.com/0/153258440689361/354006072569798
-  // In a nutshell: we can now call this function from different threads with
-  // the same SQLContext, and name collisions (same name - different DataFrame)
-  // are thus now possible.
-  def sql(
-    ctx: SQLContext,
-    query: String,
-    dfs: List[(String, spark.sql.DataFrame)]): spark.sql.DataFrame = synchronized {
-    for ((name, df) <- dfs) {
-      assert(df.sqlContext == ctx, "DataFrame from foreign SQLContext.")
-      df.createOrReplaceTempView(s"`$name`")
-    }
-    log.info(s"Executing query: $query")
-    val df = ctx.sql(query)
-    for ((name, _) <- dfs) {
-      ctx.dropTempTable(name)
-    }
-    df
-  }
-  lazy val hiveConfigured = (getClass.getResource("/hive-site.xml") != null)
+  // Convenience for awaiting something in this execution context.
+  def await[T](f: SafeFuture[T]): T = f.awaitResult(concurrent.duration.Duration.Inf)
 }

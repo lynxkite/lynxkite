@@ -12,7 +12,7 @@ object MakeEdgeBundleSymmetric extends OpFromJson {
   def fromJson(j: JsValue) = MakeEdgeBundleSymmetric()
 }
 import MakeEdgeBundleSymmetric._
-case class MakeEdgeBundleSymmetric() extends TypedMetaGraphOp[GraphInput, Output] {
+case class MakeEdgeBundleSymmetric() extends SparkOperation[GraphInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 

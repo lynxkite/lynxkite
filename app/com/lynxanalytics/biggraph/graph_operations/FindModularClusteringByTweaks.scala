@@ -518,7 +518,7 @@ object FindModularClusteringByTweaks extends OpFromJson {
 import FindModularClusteringByTweaks._
 case class FindModularClusteringByTweaks(
     maxIterations: Int,
-    minIncrementPerIteration: Double) extends TypedMetaGraphOp[Input, Output] {
+    minIncrementPerIteration: Double) extends SparkOperation[Input, Output] {
 
   override val isHeavy = true
   @transient override lazy val inputs = new Input

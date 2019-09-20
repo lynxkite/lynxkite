@@ -17,7 +17,7 @@ object CorrelateAttributes extends OpFromJson {
   def fromJson(j: JsValue) = CorrelateAttributes()
 }
 import CorrelateAttributes._
-case class CorrelateAttributes() extends TypedMetaGraphOp[Input, Output] {
+case class CorrelateAttributes() extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 
