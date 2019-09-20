@@ -100,8 +100,9 @@ class DataManager(
 
   private def ensureThenRelocate(e: MetaGraphEntity, src: Domain, dst: Domain): SafeFuture[Unit] = {
     val f = e match {
-      case e: Attribute[_] => ensureAll(Seq(e, e.vertexSet), src)
-      case e: EdgeBundle => ensureAll(Seq(e, e.idSet), src)
+      // The base vertex set must be present for edges and attributes before we can relocate them.
+      case e: Attribute[_] => combineFutures(Seq(ensure(e, src), ensure(e.vertexSet, dst)))
+      case e: EdgeBundle => combineFutures(Seq(ensure(e, src), ensure(e.idSet, dst)))
       case _ => ensure(e, src)
     }
     f.flatMap(_ => dst.relocate(e, src))
@@ -143,11 +144,11 @@ class DataManager(
   }
 
   private def ensureInputs(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
-    ensureAll(e.source.inputs.all.values, d)
+    combineFutures(e.source.inputs.all.values.map(ensure(_, d)))
   }
 
-  private def ensureAll(entities: Iterable[MetaGraphEntity], d: Domain): SafeFuture[Unit] = {
-    SafeFuture.sequence(entities.map(ensure(_, d))).map(_ => ())
+  private def combineFutures(fs: Iterable[SafeFuture[Unit]]): SafeFuture[Unit] = {
+    SafeFuture.sequence(fs).map(_ => ())
   }
 
   def cache(entity: MetaGraphEntity): Unit = {
