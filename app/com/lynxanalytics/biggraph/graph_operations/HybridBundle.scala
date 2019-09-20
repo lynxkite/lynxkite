@@ -32,7 +32,7 @@ object HybridEdgeBundle extends OpFromJson {
 }
 // Creates the src->dst HybridBundle mapping from an EdgeBundle.
 import HybridEdgeBundle._
-case class HybridEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
+case class HybridEdgeBundle() extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

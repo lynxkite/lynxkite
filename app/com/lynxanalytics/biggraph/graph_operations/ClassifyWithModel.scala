@@ -50,7 +50,7 @@ import ClassifyWithModel._
 case class ClassifyWithModel[T](
     labelType: SerializableType[T],
     featureTypes: List[SerializableType[_]])
-  extends TypedMetaGraphOp[Input, Output[T]] {
+  extends SparkOperation[Input, Output[T]] {
   @transient override lazy val inputs = new Input(featureTypes)
   override val isHeavy = true
   def outputMeta(instance: MetaGraphOperationInstance) =
@@ -72,7 +72,7 @@ case class ClassifyWithModel[T](
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
     implicit val ct = labelType.classTag
-    val sqlContext = rc.dataManager.newSQLContext()
+    val sqlContext = rc.sparkDomain.newSQLContext()
     import sqlContext.implicits._
 
     val modelValue = inputs.model.value

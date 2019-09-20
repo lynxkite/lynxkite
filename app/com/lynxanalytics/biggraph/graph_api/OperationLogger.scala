@@ -4,7 +4,6 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import com.lynxanalytics.biggraph.graph_util.KiteInstanceInfo
-import com.lynxanalytics.biggraph.graph_util.ControlledFutures
 import play.api.libs.json
 import scala.concurrent.ExecutionContextExecutorService
 
@@ -17,7 +16,7 @@ class OperationLogger(
   case class OutputInfo(name: String, gUID: String, partitions: Int, count: Option[Long])
   case class InputInfo(name: String, gUID: String, partitions: Int, count: Option[Long])
 
-  private val outputInfoList = scala.collection.mutable.Queue[SafeFuture[OutputInfo]]()
+  private val outputInfoList = scala.collection.mutable.Queue[OutputInfo]()
   private val inputInfoList = scala.collection.mutable.Queue[InputInfo]()
   private var startTime = -1L
   private var stopTime = -1L
@@ -28,25 +27,22 @@ class OperationLogger(
     stopTime - startTime
   }
 
-  def addOutput(output: SafeFuture[EntityData]): Unit = {
-    outputInfoList += output.map {
-      o =>
-        o match {
-          case rddData: EntityRDDData[_] =>
-            OutputInfo(
-              rddData.entity.name.name,
-              rddData.entity.gUID.toString,
-              rddData.rdd.partitions.size,
-              rddData.count)
-          case table: TableData =>
-            OutputInfo(
-              table.entity.name.name,
-              table.entity.gUID.toString,
-              -1,
-              None)
-          case _ => throw new AssertionError(s"Cannot add output: $output")
-        }
-    }
+  def addOutput(output: EntityData): Unit = {
+    outputInfoList += (output match {
+      case rddData: EntityRDDData[_] =>
+        OutputInfo(
+          rddData.entity.name.name,
+          rddData.entity.gUID.toString,
+          rddData.rdd.partitions.size,
+          rddData.count)
+      case table: TableData =>
+        OutputInfo(
+          table.entity.name.name,
+          table.entity.gUID.toString,
+          -1,
+          None)
+      case _ => throw new AssertionError(s"Cannot add output: $output")
+    })
   }
 
   def startTimer(): Unit = {
@@ -59,7 +55,7 @@ class OperationLogger(
     stopTime = System.currentTimeMillis()
   }
   def addInput(name: String, input: EntityData): Unit = inputInfoList.synchronized {
-    if (instance.operation.isHeavy) input match {
+    if (instance.operation.asInstanceOf[SparkOperation[_, _]].isHeavy) input match {
       case rddData: EntityRDDData[_] =>
         inputInfoList +=
           InputInfo(
@@ -78,16 +74,8 @@ class OperationLogger(
     }
   }
 
-  def logWhenReady(controlledFutures: ControlledFutures): Unit = {
-    val outputsFuture = SafeFuture.sequence(outputInfoList)
-    controlledFutures.registerFuture {
-      outputsFuture.map {
-        outputs => dump(outputs)
-      }
-    }
-  }
-
-  private def dump(outputs: Seq[OutputInfo]): Unit = {
+  def write(): Unit = {
+    val outputs = outputInfoList.toSeq
     if (outputs.nonEmpty) {
       try {
         implicit val formatInput = json.Json.format[InputInfo]

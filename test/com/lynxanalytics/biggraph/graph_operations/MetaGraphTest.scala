@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class MetaGraphTest extends FunSuite with TestGraphOp {
   test("metagraph gives the right vertices") {

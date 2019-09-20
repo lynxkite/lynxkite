@@ -135,8 +135,8 @@ class RemoteAPIController(env: BigGraphEnvironment) {
 
   def getComplexView(user: User, request: FEGraphRequest): Future[FEGraphResponse] = {
     val drawing = graphDrawingController
-    import dataManager.executionContext
-    Future(drawing.getComplexView(user, request))
+    val ec = env.sparkDomain.executionContext // TODO: Revise when we have single-node drawing.
+    Future(drawing.getComplexView(user, request))(ec)
   }
 
   private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {

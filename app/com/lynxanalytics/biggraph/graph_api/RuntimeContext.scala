@@ -18,7 +18,7 @@ case class RuntimeContext(
     sqlContext: spark.sql.SQLContext,
     ioContext: io.IOContext,
     broadcastDirectory: HadoopFile,
-    dataManager: DataManager) {
+    sparkDomain: SparkDomain) {
   def partitionerForNRows(n: Long) = RuntimeContext.partitionerForNRows(n)
   def onePartitionPartitioner = RuntimeContext.onePartitionPartitioner
 

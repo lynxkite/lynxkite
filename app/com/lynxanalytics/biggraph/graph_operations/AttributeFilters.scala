@@ -22,7 +22,7 @@ object VertexAttributeFilter extends OpFromJson {
   }
 }
 case class VertexAttributeFilter[T](filter: Filter[T])
-  extends TypedMetaGraphOp[VertexAttributeInput[T], VertexAttributeFilter.Output[T]] {
+  extends SparkOperation[VertexAttributeInput[T], VertexAttributeFilter.Output[T]] {
   import VertexAttributeFilter._
 
   @transient override lazy val inputs = new VertexAttributeInput[T]

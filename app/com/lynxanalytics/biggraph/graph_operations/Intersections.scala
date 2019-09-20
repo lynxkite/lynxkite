@@ -26,7 +26,7 @@ object VertexSetIntersection extends OpFromJson {
     (j \ "heavy").as[Boolean])
 }
 case class VertexSetIntersection(numVertexSets: Int, heavy: Boolean = false)
-  extends TypedMetaGraphOp[VertexSetIntersection.Input, VertexSetIntersection.Output] {
+  extends SparkOperation[VertexSetIntersection.Input, VertexSetIntersection.Output] {
 
   import VertexSetIntersection._
 

@@ -21,7 +21,7 @@ object GrowSegmentation extends OpFromJson {
   def fromJson(j: JsValue) = GrowSegmentation()
 }
 import GrowSegmentation._
-case class GrowSegmentation() extends TypedMetaGraphOp[Input, Output] {
+case class GrowSegmentation() extends SparkOperation[Input, Output] {
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

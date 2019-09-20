@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 
 object FakePull extends OpFromJson {
@@ -18,7 +19,7 @@ object FakePull extends OpFromJson {
   }
   def fromJson(j: play.api.libs.json.JsValue) = FakePull()
 }
-case class FakePull() extends TypedMetaGraphOp[FakePull.Input, FakePull.Output] {
+case class FakePull() extends SparkOperation[FakePull.Input, FakePull.Output] {
   import FakePull._
   @transient override lazy val inputs = new Input()
 

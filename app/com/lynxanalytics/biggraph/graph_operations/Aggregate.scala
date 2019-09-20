@@ -33,7 +33,7 @@ object AggregateByEdgeBundle extends OpFromJson {
     AggregateByEdgeBundle(TypedJson.read[LocalAggregator[_, _]](j \ "aggregator"))
 }
 case class AggregateByEdgeBundle[From, To](aggregator: LocalAggregator[From, To])
-  extends TypedMetaGraphOp[AggregateByEdgeBundle.Input[From], AggregateByEdgeBundle.Output[From, To]] {
+  extends SparkOperation[AggregateByEdgeBundle.Input[From], AggregateByEdgeBundle.Output[From, To]] {
   import AggregateByEdgeBundle._
   override val isHeavy = true
   @transient override lazy val inputs = new Input[From]
@@ -90,7 +90,7 @@ object AggregateFromEdges extends OpFromJson {
     AggregateFromEdges(TypedJson.read[LocalAggregator[_, _]](j \ "aggregator"))
 }
 case class AggregateFromEdges[From, To](aggregator: LocalAggregator[From, To])
-  extends TypedMetaGraphOp[AggregateFromEdges.Input[From], AggregateFromEdges.Output[From, To]] {
+  extends SparkOperation[AggregateFromEdges.Input[From], AggregateFromEdges.Output[From, To]] {
   import AggregateFromEdges._
   override val isHeavy = true
   @transient override lazy val inputs = new Input[From]
@@ -142,7 +142,7 @@ object AggregateAttributeToScalar extends OpFromJson {
 }
 case class AggregateAttributeToScalar[From, Intermediate, To](
     aggregator: Aggregator[From, Intermediate, To])
-  extends TypedMetaGraphOp[VertexAttributeInput[From], AggregateAttributeToScalar.Output[To]] {
+  extends SparkOperation[VertexAttributeInput[From], AggregateAttributeToScalar.Output[To]] {
   import AggregateAttributeToScalar._
   override val isHeavy = true
   @transient override lazy val inputs = new VertexAttributeInput[From]

@@ -52,7 +52,7 @@ import DeriveScalaScalar._
 case class DeriveScalaScalar[T: TypeTag](
     expr: String,
     scalarParams: Seq[(String, TypeTag[_])])
-  extends TypedMetaGraphOp[Input, Output[T]] {
+  extends SparkOperation[Input, Output[T]] {
 
   def tt = typeTag[T]
   def st = SerializableType(tt)

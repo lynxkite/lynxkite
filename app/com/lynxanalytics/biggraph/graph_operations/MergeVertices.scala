@@ -25,7 +25,7 @@ object MergeVertices extends OpFromJson {
   def fromJson(j: JsValue) = MergeVertices()
 }
 import MergeVertices._
-case class MergeVertices[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], Output] {
+case class MergeVertices[T]() extends SparkOperation[VertexAttributeInput[T], Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = {

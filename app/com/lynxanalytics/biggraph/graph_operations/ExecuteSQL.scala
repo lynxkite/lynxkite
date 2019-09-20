@@ -97,7 +97,7 @@ import ExecuteSQL._
 case class ExecuteSQL(
     sqlQuery: String,
     inputTables: List[String],
-    outputSchema: types.StructType) extends TypedMetaGraphOp[Input, Output] {
+    outputSchema: types.StructType) extends SparkOperation[Input, Output] {
   override val isHeavy = false
   @transient override lazy val inputs = new Input(inputTables)
   def outputMeta(instance: MetaGraphOperationInstance) = new Output(outputSchema)(instance)
@@ -112,9 +112,9 @@ case class ExecuteSQL(
     output: OutputBuilder,
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val sqlContext = rc.dataManager.masterSQLContext // TODO: Use a newSQLContext() instead.
+    val sqlContext = rc.sparkDomain.masterSQLContext // TODO: Use a newSQLContext() instead.
     val dfs = inputs.tables.map { t => t.name.name -> t.df }
-    val df = DataManager.sql(sqlContext, sqlQuery, dfs)
+    val df = SparkDomain.sql(sqlContext, sqlQuery, dfs)
     output(o.t, df)
   }
 }

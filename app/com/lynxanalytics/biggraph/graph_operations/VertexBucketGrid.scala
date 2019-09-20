@@ -39,7 +39,7 @@ case class VertexBucketGrid[S, T](
     // elements in buckets. A negative value turns sampling off and all the
     // data points will be used.
     sampleSize: Int)
-  extends TypedMetaGraphOp[Input[S, T], Output[S, T]] {
+  extends SparkOperation[Input[S, T], Output[S, T]] {
 
   @transient override lazy val inputs = new Input[S, T](
     xBucketer.nonEmpty, yBucketer.nonEmpty)

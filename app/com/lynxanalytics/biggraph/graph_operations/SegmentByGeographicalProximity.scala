@@ -44,7 +44,7 @@ case class SegmentByGeographicalProximity(
     shapefile: String,
     distance: Double,
     attrNames: Seq[String],
-    ignoreUnsupportedShapes: Boolean) extends TypedMetaGraphOp[Input, Output] {
+    ignoreUnsupportedShapes: Boolean) extends SparkOperation[Input, Output] {
   override val isHeavy = true
 
   @transient override lazy val inputs = new Input(attrNames)

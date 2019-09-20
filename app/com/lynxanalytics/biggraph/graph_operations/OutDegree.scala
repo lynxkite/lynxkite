@@ -19,7 +19,7 @@ object OutDegree extends OpFromJson {
   def fromJson(j: JsValue) = OutDegree()
 }
 import OutDegree._
-case class OutDegree() extends TypedMetaGraphOp[Input, Output] {
+case class OutDegree() extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

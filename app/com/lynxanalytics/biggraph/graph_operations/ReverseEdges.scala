@@ -29,7 +29,7 @@ object ReverseEdges extends OpFromJson {
   def fromJson(j: JsValue) = ReverseEdges()
 }
 import ReverseEdges._
-case class ReverseEdges() extends TypedMetaGraphOp[Input, Output] {
+case class ReverseEdges() extends SparkOperation[Input, Output] {
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

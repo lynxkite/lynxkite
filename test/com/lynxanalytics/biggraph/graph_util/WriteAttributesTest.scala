@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_api.TestGraphOp
 import com.lynxanalytics.biggraph.spark_util.Implicits._
 import com.lynxanalytics.biggraph.graph_operations.NoInput
@@ -21,7 +22,7 @@ object CreateTestAttributes extends OpFromJson {
 }
 
 case class CreateTestAttributes(val attrNames: Seq[String], data: Seq[Seq[String]])
-  extends TypedMetaGraphOp[NoInput, CreateTestAttributes.Output] {
+  extends SparkOperation[NoInput, CreateTestAttributes.Output] {
 
   import CreateTestAttributes._
   override val isHeavy = true

@@ -64,7 +64,7 @@ object EnhancedExampleGraph extends OpFromJson {
 
 }
 import EnhancedExampleGraph._
-case class EnhancedExampleGraph() extends TypedMetaGraphOp[Input, Output] {
+case class EnhancedExampleGraph() extends SparkOperation[Input, Output] {
   @transient var executionCounter = 0
 
   override val isHeavy = true

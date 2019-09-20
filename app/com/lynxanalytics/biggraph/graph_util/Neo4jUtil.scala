@@ -179,7 +179,7 @@ object Neo4jUtil {
       .rows(nRows)
       .loadRowRdd
 
-    // We need this, as neo4j spark connector constructs it's own SQLcontext. Otherwise Datamanager
+    // We need this, as neo4j spark connector constructs it's own SQLcontext. Otherwise SparkDomain
     // will report that the DataFrame belongs to another context when we try to query it
     context.createDataFrame(rdd, rdd.first().schema)
   }

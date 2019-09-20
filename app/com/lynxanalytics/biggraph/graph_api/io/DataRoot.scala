@@ -1,4 +1,4 @@
-// The DataRoot is a directory where the DataManager stores data files.
+// The DataRoot is a directory where the SparkDomain stores data files.
 
 package com.lynxanalytics.biggraph.graph_api.io
 
