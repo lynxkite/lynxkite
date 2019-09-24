@@ -7,7 +7,7 @@
 # This runs two tests: compute_embeddedness and centrality, plus all other tests that these two depend on.
 # The two input files specify the vertices and the edges. These must be in Parquet format.
 #
-# This run:
+# This command:
 #
 #   ./big_data_tests.py --vertex_file  'DATA$/exports/graph_10_vertices' --edge_file 'DATA$/exports/graph_10_edges'
 #
