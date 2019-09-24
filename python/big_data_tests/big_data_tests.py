@@ -1,3 +1,22 @@
+#!/usr/bin/env python3
+#
+# This script runs big data tests. Example usage:
+#
+#   ./big_data_tests.py --test compute_embeddedness,centrality --vertex_file  'DATA$/exports/graph_10_vertices' --edge_file 'DATA$/exports/graph_10_edges'
+#
+# This runs two tests: compute_embeddedness and centrality, plus all other tests that these two depend on.
+# The two input files specify the vertices and the edges. These must be in Parquet format.
+#
+# This run:
+#
+#   ./big_data_tests.py --vertex_file  'DATA$/exports/graph_10_vertices' --edge_file 'DATA$/exports/graph_10_edges'
+#
+# will run all the tests.
+#
+# You can add more tests at the end of this file; use the @bdtest directive.
+#
+#
+
 import lynx.kite
 import sys
 import copy
