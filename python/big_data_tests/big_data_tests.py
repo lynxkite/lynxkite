@@ -171,8 +171,6 @@ def weighted_aggregate_to_segmentation(lk, *inputs):
                                             weight='rnd_std_uniform', aggregate_rnd_std_normal='weighted_sum')
 
 
-#register_test(['segment_by_interval'], weighted_aggregate_to_segmentation)
-
 register_test(['segment_by_interval'], weighted_aggregate_to_segmentation)
 
 main()
