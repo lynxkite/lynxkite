@@ -9,10 +9,12 @@ import time
 GLOBAL_TESTS = {}
 
 
-def register_test(input_names, code):
-  test_name = code.__name__
-  assert(not test_name in GLOBAL_TESTS)
-  GLOBAL_TESTS[test_name] = (input_names, code)
+def bdtest(input_names):
+  'Decorator function for tests; see the usage later in the file'
+  def inner(code):
+    test_name = code.__name__
+    GLOBAL_TESTS[test_name] = (input_names, code)
+  return inner
 
 
 def choose_one_that_can_run(tests, outputs):
@@ -58,33 +60,25 @@ def main():
 # TESTS
 
 
-def vertices(lk, *inputs):
-  assert(len(inputs) == 0)
+@bdtest([])
+def vertices(lk):
   return lk.importParquetNow(filename='DATA$/exports/graph_10_vertices').useTableAsVertices()
 
 
-def edges(lk, *inputs):
-  assert(len(inputs) == 0)
+@bdtest([])
+def edges(lk):
   return lk.importParquetNow(filename='DATA$/exports/graph_10_edges').sql('select * from input')
 
 
-def graph(lk, *inputs):
-  assert(len(inputs) == 2)
-  vertices = inputs[0]
-  edges = inputs[1]
+@bdtest(['vertices', 'edges'])
+def graph(lk, vertices, edges):
   return lk.useTableAsEdges(vertices, edges, attr='id', src='src_id', dst='dst_id')
 
 
-register_test([], vertices)
-register_test([], edges)
-register_test(['vertices', 'edges'], graph)
-
-
-def random_attributes(lk, *inputs):
-  assert(len(inputs) == 1)
+@bdtest(['graph'])
+def random_attributes(lk, r):
   seed = 12341
   dists = {'rnd_std_uniform': 'Standard Uniform', 'rnd_std_normal': 'Standard Normal'}
-  r = inputs[0]
   for attr_name in dists:
     r = lk.addRandomVertexAttribute(r, name=attr_name,
                                     dist=dists[attr_name], seed=str(seed))
@@ -95,53 +89,35 @@ def random_attributes(lk, *inputs):
   return r
 
 
-register_test(['graph'], random_attributes)
+@bdtest(['graph'])
+def degree(lk, r):
+  return lk.computeDegree(r, direction='all edges', name='degree')
 
 
-def degree(lk, *inputs):
-  assert(len(inputs) == 1)
-  return lk.computeDegree(inputs[0], direction='all edges', name='degree')
-
-
-register_test(['graph'], degree)
-
-
-def centrality(lk, *inputs):
-  assert(len(inputs) == 1)
-  return lk.computeCentrality(inputs[0], algorithm='Harmonic', bits='4',
+@bdtest(['graph'])
+def centrality(lk, r):
+  return lk.computeCentrality(r, algorithm='Harmonic', bits='4',
                               maxDiameter='5', name='centrality')
 
 
-register_test(['degree'], centrality)
+@bdtest(['graph'])
+def approximate_clustering_coefficient(lk, r):
+  return lk.approximateClusteringCoefficient(r, name='clustering_coefficient', bits='8')
 
 
-def approximate_clustering_coefficient(lk, *inputs):
-  assert(len(inputs) == 1)
-  return lk.approximateClusteringCoefficient(inputs[0], name='clustering_coefficient', bits='8')
+@bdtest(['graph'])
+def clustering_coefficient(lk, r):
+  return lk.approximateClusteringCoefficient(r, name='clustering_coefficient')
 
 
-register_test(['graph'], approximate_clustering_coefficient)
+@bdtest(['graph'])
+def compute_embeddedness(lk, r):
+  return lk.computeEmbeddedness(r, name='embeddedness')
 
 
-def clustering_coefficient(lk, *inputs):
-  assert(len(inputs) == 1)
-  return lk.approximateClusteringCoefficient(inputs[0], name='clustering_coefficient')
-
-
-register_test(['graph'], clustering_coefficient)
-
-
-def compute_embeddedness(lk, *inputs):
-  assert(len(inputs) == 1)
-  return lk.computeEmbeddedness(inputs[0], name='embeddedness')
-
-
-register_test(['graph'], compute_embeddedness)
-
-
-def segment_by_interval(lk, *inputs):
-  assert(len(inputs) == 1)
-  r = lk.addRandomVertexAttribute(inputs[0], name='rnd_std_normal2',
+@bdtest(['random_attributes'])
+def segment_by_interval(lk, r):
+  r = lk.addRandomVertexAttribute(r, name='rnd_std_normal2',
                                   dist='Standard Normal', seed='31415')
   r = lk.renameVertexAttributes(r, change_rnd_std_normal2='i_begin')
   r = lk.deriveVertexAttribute(r, output='i_end', expr='i_begin + Math.abs(rnd_std_normal)')
@@ -153,24 +129,16 @@ def segment_by_interval(lk, *inputs):
   return r
 
 
-register_test(['random_attributes'], segment_by_interval)
-
-
-def weighted_aggregate_from_segmentation(lk, *inputs):
-  assert(len(inputs) == 1)
-  return lk.weightedAggregateFromSegmentation(inputs[0], apply_to_project='.seg_interval',
+@bdtest(['segment_by_interval'])
+def weighted_aggregate_from_segmentation(lk, r):
+  return lk.weightedAggregateFromSegmentation(r, apply_to_project='.seg_interval',
                                               weight='size', prefix='', aggregate_top='weighted_sum')
 
 
-register_test(['segment_by_interval'], weighted_aggregate_from_segmentation)
-
-
-def weighted_aggregate_to_segmentation(lk, *inputs):
-  assert(len(inputs) == 1)
-  return lk.weightedAggregateToSegmentation(inputs[0], apply_to_project='.seg_interval',
+@bdtest(['segment_by_interval'])
+def weighted_aggregate_to_segmentation(lk, r):
+  return lk.weightedAggregateToSegmentation(r, apply_to_project='.seg_interval',
                                             weight='rnd_std_uniform', aggregate_rnd_std_normal='weighted_sum')
 
-
-register_test(['segment_by_interval'], weighted_aggregate_to_segmentation)
 
 main()
