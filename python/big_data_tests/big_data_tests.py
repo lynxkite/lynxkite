@@ -212,4 +212,25 @@ def weighted_aggregate_to_segmentation(lk, r):
                                             weight='rnd_std_uniform', aggregate_rnd_std_normal='weighted_sum')
 
 
+@bdtest(['random_attributes'])
+def segmentations(lk, r):
+  r = lk.segmentByDoubleAttribute(r, attr='rnd_std_normal',
+                                  interval_size='0.01', name='seg', overlap='no')
+  r = lk.segmentByDoubleAttribute(r, attr='rnd_std_normal',
+                                  interval_size='0.01', name='seg_overlap', overlap='yes')
+  r = lk.deriveVertexAttribute(r, output='x', expr='"%.7f".format(rnd_std_uniform)')
+  r = lk.segmentByStringAttribute(r, attr='x', name='seg_string')
+  return r
+
+
+@bdtest(['segmentations'])
+def combine_segmentations(lk, r):
+  return lk.combineSegmentations(r, name='seg_combined', segmentations='seg,seg_overlap,seg_string')
+
+
+@bdtest(['graph'])
+def find_connected_components(lk, r):
+  return lk.findConnectedComponents(r, name='connected_components', directions='ignore directions')
+
+
 main()
