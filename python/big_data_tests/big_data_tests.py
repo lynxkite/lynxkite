@@ -2,9 +2,28 @@ import lynx.kite
 import sys
 import copy
 import time
-
+import argparse
+from functools import reduce
 
 # DRIVER
+
+PARSER = argparse.ArgumentParser()
+PARSER.add_argument('--tests', type=str, default='all',
+                    help='Comma separated list of the tests to run. The default "all" means run all.')
+PARSER.add_argument('--vertex_file', type=str, required=True,
+                    help='LynxKite-type (prefixed) path to the Parquet file specifying the vertices, e.g., DATA$/exports/testgraph_vertices')
+
+PARSER.add_argument('--edge_file', type=str, required=True,
+                    help='LynxKite-type (prefixed) path to the Parquet file specifying the edges, e.g., DATA$/exports/testgraph_edges')
+
+PARSER.add_argument('--src', type=str, default='src_id',
+                    help='The name of the src column in the edges file')
+
+PARSER.add_argument('--dst', type=str, default='dst_id',
+                    help='The name of the dst column in the edges file')
+
+
+ARGS = PARSER.parse_args()
 
 GLOBAL_TESTS = {}
 
@@ -48,13 +67,45 @@ def run_tests(lk, tests, outputs, dry_run):
     del tests[test_name]
 
 
+def all_input_names(tests):
+  w = [v[0] for v in tests.values()]
+  return reduce(lambda x, y: x + y, w)
+
+
+def get_a_test_that_can_be_removed(tests, tests_that_must_run):
+  input_names = all_input_names(tests)
+  for t in tests:
+    if not t in input_names and not t in tests_that_must_run:
+      return t
+  return None
+
+
+def get_only_necessary_tests(all_tests, tests_that_must_run):
+  tests = copy.deepcopy(all_tests)
+  while True:
+    w = get_a_test_that_can_be_removed(tests, tests_that_must_run)
+    if not w:
+      return tests
+    del tests[w]
+
+
 def main():
-  lk = lynx.kite.LynxKite(address="http://localhost:2200")
+  lk = lynx.kite.LynxKite()
   dummy_tests = copy.deepcopy(GLOBAL_TESTS)
   dummy_outputs = {}
   run_tests(lk, dummy_tests, dummy_outputs, dry_run=True)
   outputs = {}
-  run_tests(lk, GLOBAL_TESTS, outputs, dry_run=False)
+  if ARGS.tests == 'all':
+    run_tests(lk, GLOBAL_TESTS, outputs, dry_run=False)
+  else:
+    tests_to_run = ARGS.tests.split(',')
+    for t in tests_to_run:
+      if t not in GLOBAL_TESTS:
+        print(f'Unknown test name: {t}', file=sys.stderr)
+        print(f'Possible values: {list(GLOBAL_TESTS.keys())}')
+        sys.exit(1)
+    necessary_tests = get_only_necessary_tests(GLOBAL_TESTS, tests_to_run)
+    run_tests(lk, necessary_tests, outputs, dry_run=False)
 
 
 # TESTS
@@ -62,17 +113,17 @@ def main():
 
 @bdtest([])
 def vertices(lk):
-  return lk.importParquetNow(filename='DATA$/exports/graph_10_vertices').useTableAsVertices()
+  return lk.importParquetNow(filename=ARGS.vertex_file).useTableAsVertices()
 
 
 @bdtest([])
 def edges(lk):
-  return lk.importParquetNow(filename='DATA$/exports/graph_10_edges').sql('select * from input')
+  return lk.importParquetNow(filename=ARGS.edge_file).sql('select * from input')
 
 
 @bdtest(['vertices', 'edges'])
 def graph(lk, vertices, edges):
-  return lk.useTableAsEdges(vertices, edges, attr='id', src='src_id', dst='dst_id')
+  return lk.useTableAsEdges(vertices, edges, attr='id', src=ARGS.src, dst=ARGS.dst)
 
 
 @bdtest(['graph'])
@@ -86,6 +137,9 @@ def random_attributes(lk, r):
     r = lk.addRandomEdgeAttribute(r, name=attr_name,
                                   dist=dists[attr_name], seed=str(seed))
     seed += 1
+
+    r = lk.addRandomVertexAttribute(r, name='rnd_std_normal2',
+                                    dist='Standard Normal', seed=str(seed))
   return r
 
 
@@ -117,8 +171,6 @@ def compute_embeddedness(lk, r):
 
 @bdtest(['random_attributes'])
 def segment_by_interval(lk, r):
-  r = lk.addRandomVertexAttribute(r, name='rnd_std_normal2',
-                                  dist='Standard Normal', seed='31415')
   r = lk.renameVertexAttributes(r, change_rnd_std_normal2='i_begin')
   r = lk.deriveVertexAttribute(r, output='i_end', expr='i_begin + Math.abs(rnd_std_normal)')
   r = lk.segmentByInterval(r, begin_attr='i_begin', end_attr='i_end',
