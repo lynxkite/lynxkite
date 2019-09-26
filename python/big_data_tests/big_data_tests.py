@@ -46,7 +46,7 @@ def get_args():
 ARGS = get_args()
 TESTS = {}
 LK = lynx.kite.LynxKite()
-COMPUTE_RESULT = namedtuple('COMPUTE_RESULT', ['lk_state', 'time', 'test_name'])
+COMPUTE_RESULT = namedtuple('COMPUTE_RESULT', ['lk_state', 'time_taken', 'test_name'])
 
 
 def bdtest():
@@ -64,17 +64,17 @@ def compute(test):
   input_names, op = TESTS[test]
   inputs = [compute(inp_name).lk_state for inp_name in input_names]
   start = time.monotonic()
-  state = op(*inputs)
-  state.compute()
+  lk_state = op(*inputs)
+  lk_state.compute()
   time_taken = time.monotonic() - start
-  return COMPUTE_RESULT(state, time_taken, test)
+  return COMPUTE_RESULT(lk_state=lk_state, time_taken=time_taken, test_name=test)
 
 
 def main():
   tests_to_run = ARGS.tests.split(',') if ARGS.tests != 'all' else list(TESTS.keys())
   assert(all([t in TESTS for t in tests_to_run]))
   for result in [compute(t) for t in tests_to_run]:
-    print(f'Computing {result.test_name} took {result.time} seconds')
+    print(f'Computing {result.test_name} took {result.time_taken} seconds')
 
 
 # TESTS
