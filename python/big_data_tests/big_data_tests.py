@@ -19,218 +19,175 @@
 
 import lynx.kite
 import sys
-import copy
 import time
 import argparse
-from functools import reduce
+from inspect import signature
+from functools import lru_cache
 
 # DRIVER
 
-PARSER = argparse.ArgumentParser()
-PARSER.add_argument('--tests', type=str, default='all',
-                    help='Comma separated list of the tests to run. The default "all" means run all.')
-PARSER.add_argument('--vertex_file', type=str, required=True,
-                    help='LynxKite-type (prefixed) path to the Parquet file specifying the vertices, e.g., DATA$/exports/testgraph_vertices')
 
-PARSER.add_argument('--edge_file', type=str, required=True,
-                    help='LynxKite-type (prefixed) path to the Parquet file specifying the edges, e.g., DATA$/exports/testgraph_edges')
+def get_args():
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--tests', type=str, default='all',
+                      help='Comma separated list of the tests to run. The default "all" means run all.')
+  parser.add_argument('--vertex_file', type=str, required=True,
+                      help='LynxKite-type (prefixed) path to the Parquet file specifying the vertices, e.g., DATA$/exports/testgraph_vertices')
 
-PARSER.add_argument('--src', type=str, default='src_id',
-                    help='The name of the src column in the edges file')
+  parser.add_argument('--edge_file', type=str, required=True,
+                      help='LynxKite-type (prefixed) path to the Parquet file specifying the edges, e.g., DATA$/exports/testgraph_edges')
 
-PARSER.add_argument('--dst', type=str, default='dst_id',
-                    help='The name of the dst column in the edges file')
+  parser.add_argument('--src', type=str, default='src_id',
+                      help='The name of the src column in the edges file')
+
+  parser.add_argument('--dst', type=str, default='dst_id',
+                      help='The name of the dst column in the edges file')
+  return parser.parse_args()
 
 
-ARGS = PARSER.parse_args()
-
+ARGS = get_args()
 GLOBAL_TESTS = {}
+LK = lynx.kite.LynxKite()
 
 
-def bdtest(input_names):
-  'Decorator function for tests; see the usage later in the file'
-  def inner(code):
-    test_name = code.__name__
-    GLOBAL_TESTS[test_name] = (input_names, code)
+def bdtest():
+  '''Decorator function for tests; see the usage later in the file'''
+  def inner(op):
+    sig = str(signature(op)).replace(' ', '')
+    input_names = [] if sig == '()' else sig[1:-1].split(',')
+    assert(all([i in GLOBAL_TESTS for i in input_names]))
+    test_name = op.__name__
+    GLOBAL_TESTS[test_name] = (input_names, op)
   return inner
 
 
-def choose_one_that_can_run(tests, outputs):
-  for t in tests:
-    input_names = tests[t][0]
-    if all([i in outputs for i in input_names]):
-      return t
-  return None
-
-
-def run_tests(lk, tests, outputs, dry_run):
-  while len(tests) > 0:
-    test_name = choose_one_that_can_run(tests, outputs)
-    if not test_name:
-      print("I can't run these tests:", file=sys.stderr)
-      for t in tests:
-        missing = list(filter(lambda n: n not in outputs, tests[t][0]))
-        print(f'test: {t} -  missing inputs: {missing}', file=sys.stderr)
-      sys.exit(1)
-    input_names, code = tests[test_name]
-    inputs = [outputs[i] for i in input_names]
-    if not dry_run:
-      start = time.monotonic()
-      result = code(lk, *inputs)
-      result.compute()
-      end = time.monotonic()
-      print(f'Computing {test_name} took {end-start} seconds')
-    else:
-      result = 'dummy'
-    outputs[test_name] = result
-    del tests[test_name]
-
-
-def all_input_names(tests):
-  w = [v[0] for v in tests.values()]
-  return reduce(lambda x, y: x + y, w)
-
-
-def get_a_test_that_can_be_removed(tests, tests_that_must_run):
-  input_names = all_input_names(tests)
-  for t in tests:
-    if not t in input_names and not t in tests_that_must_run:
-      return t
-  return None
-
-
-def get_only_necessary_tests(all_tests, tests_that_must_run):
-  tests = copy.deepcopy(all_tests)
-  while True:
-    w = get_a_test_that_can_be_removed(tests, tests_that_must_run)
-    if not w:
-      return tests
-    del tests[w]
+@lru_cache(maxsize=None)
+def compute(test):
+  input_names, op = GLOBAL_TESTS[test]
+  inputs = [compute(inp_name) for inp_name in input_names]
+  start = time.monotonic()
+  value = op(*inputs)
+  value.compute()
+  end = time.monotonic()
+  print(f'Computing {test} took {end-start} seconds')
+  return value
 
 
 def main():
-  lk = lynx.kite.LynxKite()
-  dummy_tests = copy.deepcopy(GLOBAL_TESTS)
-  dummy_outputs = {}
-  run_tests(lk, dummy_tests, dummy_outputs, dry_run=True)
-  outputs = {}
-  if ARGS.tests == 'all':
-    run_tests(lk, GLOBAL_TESTS, outputs, dry_run=False)
-  else:
-    tests_to_run = ARGS.tests.split(',')
-    for t in tests_to_run:
-      if t not in GLOBAL_TESTS:
-        print(f'Unknown test name: {t}', file=sys.stderr)
-        print(f'Possible values: {list(GLOBAL_TESTS.keys())}')
-        sys.exit(1)
-    necessary_tests = get_only_necessary_tests(GLOBAL_TESTS, tests_to_run)
-    run_tests(lk, necessary_tests, outputs, dry_run=False)
+  tests_to_run = ARGS.tests.split(',') if ARGS.tests != 'all' else list(GLOBAL_TESTS.keys())
+  [compute(t) for t in tests_to_run]
 
 
 # TESTS
+# Make sure that each input parameter name is the same as the function name
+# that generated that input.
 
 
-@bdtest([])
-def vertices(lk):
-  return lk.importParquetNow(filename=ARGS.vertex_file).useTableAsVertices()
+@bdtest()
+def vertices():
+  return LK.importParquetNow(filename=ARGS.vertex_file).useTableAsVertices()
 
 
-@bdtest([])
-def edges(lk):
-  return lk.importParquetNow(filename=ARGS.edge_file).sql('select * from input')
+@bdtest()
+def edges():
+  return LK.importParquetNow(filename=ARGS.edge_file).sql('select * from input')
 
 
-@bdtest(['vertices', 'edges'])
-def graph(lk, vertices, edges):
-  return lk.useTableAsEdges(vertices, edges, attr='id', src=ARGS.src, dst=ARGS.dst)
+@bdtest()
+def graph(vertices, edges):
+  return LK.useTableAsEdges(vertices, edges, attr='id', src=ARGS.src, dst=ARGS.dst)
 
 
-@bdtest(['graph'])
-def random_attributes(lk, r):
+@bdtest()
+def random_attributes(graph):
   seed = 12341
   dists = {'rnd_std_uniform': 'Standard Uniform', 'rnd_std_normal': 'Standard Normal'}
   for attr_name in dists:
-    r = lk.addRandomVertexAttribute(r, name=attr_name,
-                                    dist=dists[attr_name], seed=str(seed))
+    graph = LK.addRandomVertexAttribute(graph, name=attr_name,
+                                        dist=dists[attr_name], seed=str(seed))
     seed += 1
-    r = lk.addRandomEdgeAttribute(r, name=attr_name,
-                                  dist=dists[attr_name], seed=str(seed))
+    graph = LK.addRandomEdgeAttribute(graph, name=attr_name,
+                                      dist=dists[attr_name], seed=str(seed))
     seed += 1
 
-    r = lk.addRandomVertexAttribute(r, name='rnd_std_normal2',
-                                    dist='Standard Normal', seed=str(seed))
-  return r
+    graph = LK.addRandomVertexAttribute(graph, name='rnd_std_normal2',
+                                        dist='Standard Normal', seed=str(seed))
+  return graph
 
 
-@bdtest(['graph'])
-def degree(lk, r):
-  return lk.computeDegree(r, direction='all edges', name='degree')
+@bdtest()
+def degree(graph):
+  return LK.computeDegree(graph, direction='all edges', name='degree')
 
 
-@bdtest(['graph'])
-def centrality(lk, r):
-  return lk.computeCentrality(r, algorithm='Harmonic', bits='4',
+@bdtest()
+def centrality(graph):
+  return LK.computeCentrality(graph, algorithm='Harmonic', bits='4',
                               maxDiameter='5', name='centrality')
 
 
-@bdtest(['graph'])
-def approximate_clustering_coefficient(lk, r):
-  return lk.approximateClusteringCoefficient(r, name='clustering_coefficient', bits='8')
+@bdtest()
+def approximate_clustering_coefficient(graph):
+  return LK.approximateClusteringCoefficient(graph, name='clustering_coefficient', bits='8')
 
 
-@bdtest(['graph'])
-def clustering_coefficient(lk, r):
-  return lk.approximateClusteringCoefficient(r, name='clustering_coefficient')
+@bdtest()
+def clustering_coefficient(graph):
+  return LK.approximateClusteringCoefficient(graph, name='clustering_coefficient')
 
 
-@bdtest(['graph'])
-def compute_embeddedness(lk, r):
-  return lk.computeEmbeddedness(r, name='embeddedness')
+@bdtest()
+def compute_embeddedness(graph):
+  return LK.computeEmbeddedness(graph, name='embeddedness')
 
 
-@bdtest(['random_attributes'])
-def segment_by_interval(lk, r):
-  r = lk.renameVertexAttributes(r, change_rnd_std_normal2='i_begin')
-  r = lk.deriveVertexAttribute(r, output='i_end', expr='i_begin + Math.abs(rnd_std_normal)')
-  r = lk.segmentByInterval(r, begin_attr='i_begin', end_attr='i_end',
+@bdtest()
+def segment_by_interval(random_attributes):
+  r = random_attributes
+  r = LK.renameVertexAttributes(r, change_rnd_std_normal2='i_begin')
+  r = LK.deriveVertexAttribute(r, output='i_end', expr='i_begin + Math.abs(rnd_std_normal)')
+  r = LK.segmentByInterval(r, begin_attr='i_begin', end_attr='i_end',
                            interval_size='0.01', name='seg_interval', overlap='no')
-  r = lk.segmentByInterval(r, begin_attr='i_begin', end_attr='i_end',
+  r = LK.segmentByInterval(r, begin_attr='i_begin', end_attr='i_end',
                            interval_size='0.01', name='seg_interval_overlap', overlap='yes')
 
   return r
 
 
-@bdtest(['segment_by_interval'])
-def weighted_aggregate_from_segmentation(lk, r):
-  return lk.weightedAggregateFromSegmentation(r, apply_to_project='.seg_interval',
+@bdtest()
+def weighted_aggregate_from_segmentation(segment_by_interval):
+  return LK.weightedAggregateFromSegmentation(segment_by_interval, apply_to_project='.seg_interval',
                                               weight='size', prefix='', aggregate_top='weighted_sum')
 
 
-@bdtest(['segment_by_interval'])
-def weighted_aggregate_to_segmentation(lk, r):
-  return lk.weightedAggregateToSegmentation(r, apply_to_project='.seg_interval',
+@bdtest()
+def weighted_aggregate_to_segmentation(segment_by_interval):
+  return LK.weightedAggregateToSegmentation(segment_by_interval, apply_to_project='.seg_interval',
                                             weight='rnd_std_uniform', aggregate_rnd_std_normal='weighted_sum')
 
 
-@bdtest(['random_attributes'])
-def segmentations(lk, r):
-  r = lk.segmentByDoubleAttribute(r, attr='rnd_std_normal',
+@bdtest()
+def segmentations(random_attributes):
+  r = random_attributes
+  r = LK.segmentByDoubleAttribute(r, attr='rnd_std_normal',
                                   interval_size='0.01', name='seg', overlap='no')
-  r = lk.segmentByDoubleAttribute(r, attr='rnd_std_normal',
+  r = LK.segmentByDoubleAttribute(r, attr='rnd_std_normal',
                                   interval_size='0.01', name='seg_overlap', overlap='yes')
-  r = lk.deriveVertexAttribute(r, output='x', expr='"%.7f".format(rnd_std_uniform)')
-  r = lk.segmentByStringAttribute(r, attr='x', name='seg_string')
+  r = LK.deriveVertexAttribute(r, output='x', expr='"%.7f".format(rnd_std_uniform)')
+  r = LK.segmentByStringAttribute(r, attr='x', name='seg_string')
   return r
 
 
-@bdtest(['segmentations'])
-def combine_segmentations(lk, r):
-  return lk.combineSegmentations(r, name='seg_combined', segmentations='seg,seg_overlap,seg_string')
+@bdtest()
+def combine_segmentations(segmentations):
+  return LK.combineSegmentations(segmentations, name='seg_combined',
+                                 segmentations='seg,seg_overlap,seg_string')
 
 
-@bdtest(['graph'])
-def find_connected_components(lk, r):
-  return lk.findConnectedComponents(r, name='connected_components', directions='ignore directions')
+@bdtest()
+def find_connected_components(graph):
+  return LK.findConnectedComponents(
+      graph, name='connected_components', directions='ignore directions')
 
 
 main()
