@@ -22,6 +22,7 @@ import time
 import argparse
 from inspect import signature
 from functools import lru_cache
+from collections import namedtuple
 
 
 def get_args():
@@ -43,8 +44,9 @@ def get_args():
 
 
 ARGS = get_args()
-GLOBAL_TESTS = {}
+TESTS = {}
 LK = lynx.kite.LynxKite()
+COMPUTE_RESULT = namedtuple('COMPUTE_RESULT', ['lk_state', 'time', 'test_name'])
 
 
 def bdtest():
@@ -52,27 +54,27 @@ def bdtest():
   def inner(op):
     sig = str(signature(op)).replace(' ', '')
     input_names = [] if sig == '()' else sig[1:-1].split(',')
-    assert(all([i in GLOBAL_TESTS for i in input_names]))
-    test_name = op.__name__
-    GLOBAL_TESTS[test_name] = (input_names, op)
+    assert(all([i in TESTS for i in input_names]))
+    TESTS[op.__name__] = (input_names, op)
   return inner
 
 
 @lru_cache(maxsize=None)
 def compute(test):
-  input_names, op = GLOBAL_TESTS[test]
-  inputs = [compute(inp_name) for inp_name in input_names]
+  input_names, op = TESTS[test]
+  inputs = [compute(inp_name).lk_state for inp_name in input_names]
   start = time.monotonic()
-  value = op(*inputs)
-  value.compute()
-  end = time.monotonic()
-  print(f'Computing {test} took {end-start} seconds')
-  return value
+  state = op(*inputs)
+  state.compute()
+  time_taken = time.monotonic() - start
+  return COMPUTE_RESULT(state, time_taken, test)
 
 
 def main():
-  tests_to_run = ARGS.tests.split(',') if ARGS.tests != 'all' else list(GLOBAL_TESTS.keys())
-  [compute(t) for t in tests_to_run]
+  tests_to_run = ARGS.tests.split(',') if ARGS.tests != 'all' else list(TESTS.keys())
+  assert(all([t in TESTS for t in tests_to_run]))
+  for result in [compute(t) for t in tests_to_run]:
+    print(f'Computing {result.test_name} took {result.time} seconds')
 
 
 # TESTS
