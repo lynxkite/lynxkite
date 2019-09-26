@@ -52,8 +52,7 @@ COMPUTE_RESULT = namedtuple('COMPUTE_RESULT', ['lk_state', 'time_taken', 'test_n
 def bdtest():
   '''Decorator function for tests; see the usage later in the file'''
   def inner(op):
-    sig = str(signature(op)).replace(' ', '')
-    input_names = [] if sig == '()' else sig[1:-1].split(',')
+    input_names = list(signature(op).parameters.keys())
     assert(all([i in TESTS for i in input_names]))
     TESTS[op.__name__] = (input_names, op)
   return inner
