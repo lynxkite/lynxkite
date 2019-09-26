@@ -107,8 +107,8 @@ def random_attributes(graph):
                                       dist=dists[attr_name], seed=str(seed))
     seed += 1
 
-    graph = LK.addRandomVertexAttribute(graph, name='rnd_std_normal2',
-                                        dist='Standard Normal', seed=str(seed))
+  graph = LK.addRandomVertexAttribute(graph, name='rnd_std_normal2',
+                                      dist='Standard Normal', seed=str(seed))
   return graph
 
 
