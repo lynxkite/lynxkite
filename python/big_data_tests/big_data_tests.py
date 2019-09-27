@@ -40,6 +40,9 @@ def get_args():
 
   parser.add_argument('--dst', type=str, default='dst_id',
                       help='The name of the dst column in the edges file')
+
+  parser.add_argument('--vertex_size', type=int, default=5000,
+                      help='The vertex size for tests that want to start with "Create Vertrices"')
   return parser.parse_args()
 
 
@@ -188,6 +191,183 @@ def combine_segmentations(segmentations):
 def find_connected_components(graph):
   return LK.findConnectedComponents(
       graph, name='connected_components', directions='ignore directions')
+
+
+@bdtest()
+def filter_high_degree_vertices(degree):
+  return LK.filterByAttributes(degree, filterva_degree='<5000')
+
+
+@bdtest()
+def filter_high_degree_vertices_1000(degree):
+  return LK.filterByAttributes(degree, filterva_degree='<1000')
+
+
+@bdtest()
+def find_maximal_cliques(filter_high_degree_vertices):
+  return LK.findMaximalCliques(filter_high_degree_vertices, bothdir='true',
+                               name='maximal_cliques', min='3')
+
+
+@bdtest()
+def create_edges_from_cooccurrence(find_maximal_cliques):
+  edgeless = LK.discardEdges(find_maximal_cliques)
+  return LK.createEdgesFromCooccurrence(edgeless, apply_to_project='.maximal_cliques')
+
+
+@bdtest()
+def create_edges_from_cooccurrence(find_maximal_cliques):
+  edgeless = LK.discardEdges(find_maximal_cliques)
+  return LK.createEdgesFromCooccurrence(edgeless, apply_to_project='.maximal_cliques')
+
+
+@bdtest()
+def self_segmentation(random_attributes):
+  edgeless = LK.discardEdges(random_attributes)
+  s = LK.useBaseProjectAsSegmentation(edgeless, name='segmentation')
+  return s
+
+
+@bdtest()
+def define_segmentation_link_from_matching_attributes(self_segmentation):
+  s = self_segmentation
+  s = LK.deriveVertexAttribute(s, output='src', expr='Math.floor(ordinal/3.0).toString')
+  s = LK.deriveVertexAttribute(s, apply_to_project='.segmentation',
+                               output='dst', expr='Math.floor(ordinal/5.0).toString')
+  s = LK.defineSegmentationLinksFromMatchingAttributes(s, apply_to_project='.segmentation',
+                                                       base_id_attr='src', seg_id_attr='dst')
+
+  return s.sql('select * from `segmentation.belongs_to`')
+
+
+@bdtest()
+def find_triangles(filter_high_degree_vertices_1000):
+  return LK.findTriangles(filter_high_degree_vertices_1000, bothdir='false', name='triangles')
+
+
+@bdtest()
+def find_infocom_communities(find_maximal_cliques):
+  return LK.findInfocomCommunities(find_maximal_cliques,
+                                   cliques_name='maximal_cliques',
+                                   communities_name='communities',
+                                   bothdir='false',
+                                   min_cliques='3',
+                                   adjacency_threshold='0.6')
+
+
+@bdtest()
+def merge_parallel_edges_by_attribute(random_attributes):
+  g = LK.deriveEdgeAttribute(
+      random_attributes,
+      output='label',
+      expr='Math.floor(rnd_std_uniform*2)')
+  return LK.mergeParallelEdgesByAttribute(g, key='label', aggregate_label='average')
+
+
+@bdtest()
+def random_attributes_with_constants(random_attributes):
+  g = LK.addConstantVertexAttribute(random_attributes, name='one', value='1.0', type='Double')
+  g = LK.aggregateVertexAttributeGlobally(g, prefix='', aggregate_one='sum')
+  return LK.renameScalar(g, before='one_sum', after='number_of_vertices')
+
+
+@bdtest()
+def merge_vertices_by_attribute(random_attributes_with_constants):
+  g = LK.deriveVertexAttribute(random_attributes_with_constants, output='label',
+                               expr='Math.floor(rnd_std_uniform*number_of_vertices*0.01)')
+  return LK.mergeVerticesByAttribute(g, key='label', aggregate_rnd_std_normal='average')
+
+
+@bdtest()
+def even_distribution():
+  a = ARGS.vertex_size
+  b = a // 10
+  g = LK.createVertices(size=a)
+  g = LK.addRandomVertexAttribute(
+      g,
+      name='rnd_std_uniform',
+      dist='Standard Uniform',
+      seed='4242567')
+  g = LK.addRandomVertexAttribute(g, name='rnd_std_normal', dist='Standard Normal', seed='4242568')
+  g = LK.deriveVertexAttribute(g, output='label', expr=f'Math.floor(rnd_std_uniform*{b})')
+  g = LK.deriveVertexAttribute(g, output='label2', expr=f'Math.floor(rnd_std_normal)')
+  return g
+
+
+@bdtest()
+def merge_vertices_by_attribute_even(even_distribution):
+  return LK.mergeVerticesByAttribute(
+      even_distribution, key='label', aggregate_rnd_std_uniform='average')
+
+
+@bdtest()
+def merge_vertices_by_attribute_longtail(even_distribution):
+  return LK.mergeVerticesByAttribute(even_distribution, key='label2',
+                                     aggregate_rnd_std_uniform='average,most_common')
+
+
+@bdtest()
+def find_modular_clustering(filter_high_degree_vertices):
+  return LK.findModularClustering(filter_high_degree_vertices, name='modular_clusters', weights='!no weight',
+                                  max_iterations='30', min_increment_per_iteration='0.001')
+
+
+@bdtest()
+def compute_pagerank(random_attributes):
+  g = random_attributes
+  g = LK.computePageRank(
+      g,
+      name='page_rank_no_weights',
+      weights='!no weight',
+      iterations='5',
+      damping='0.85')
+  g = LK.computePageRank(
+      g,
+      name='page_rank_weights',
+      weights='rnd_std_uniform',
+      iterations='5',
+      damping='0.85')
+  return g
+
+
+@bdtest()
+def create_snowball_sample(graph):
+  return LK.createSnowballSample(graph, attrName='distance_from_start_point',
+                                 ratio='0.0001', radius='1', seed='123454321')
+
+
+@bdtest()
+def replace_edges_with_triadic_closure(filter_high_degree_vertices_1000):
+  g = LK.filterByAttributes(filter_high_degree_vertices_1000, filterva_degree='<100')
+  g = LK.addRandomEdgeAttribute(g, name='attr', dist='Standard Uniform', seed='1234321')
+  return LK.replaceEdgesWithTriadicClosure(g)
+
+
+@bdtest()
+def project_union(graph):
+  return LK.projectUnion(graph, graph)
+
+
+@bdtest()
+def weighted_aggregate_edge_attribute_to_vertices(random_attributes):
+  return LK.weightedAggregateEdgeAttributeToVertices(random_attributes, prefix='',
+                                                     weight='rnd_std_uniform',
+                                                     direction='all edges',
+                                                     aggregate_rnd_std_normal='weighted_average')
+
+
+@bdtest()
+def weighted_aggregate_on_neighbors(random_attributes):
+  return LK.weightedAggregateOnNeighbors(random_attributes, prefix='',
+                                         weight='rnd_std_uniform',
+                                         direction='all edges',
+                                         aggregate_rnd_std_normal='weighted_average')
+
+
+@bdtest()
+def scala(random_attributes):
+  return LK.deriveEdgeAttribute(random_attributes, output='x',
+                                expr='rnd_std_uniform*rnd_std_uniform')
 
 
 main()
