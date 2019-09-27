@@ -62,17 +62,18 @@ def bdtest():
 def compute(test):
   input_names, op = TESTS[test]
   inputs = [compute(inp_name).lk_state for inp_name in input_names]
+  print(f'Running {test}', file=sys.stderr)
   start = time.monotonic()
   lk_state = op(*inputs)
   lk_state.compute()
   time_taken = time.monotonic() - start
-  print(f'Finished {test} ({time_taken} seconds)', file=sys.stderr)
   return COMPUTE_RESULT(lk_state=lk_state, time_taken=time_taken, test_name=test)
 
 
 def main():
   tests_to_run = ARGS.tests.split(',') if ARGS.tests != 'all' else list(TESTS.keys())
-  assert(all([t in TESTS for t in tests_to_run]))
+  unknown = [t for t in tests_to_run if t not in TESTS.keys()]
+  assert len(unknown) == 0, f'Unknown test(s): {unknown}\nAvaliable: {TESTS.keys()}'
   for result in [compute(t) for t in tests_to_run]:
     print(f'Computing {result.test_name} took {result.time_taken} seconds')
 
