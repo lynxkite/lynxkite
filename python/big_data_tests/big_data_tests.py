@@ -66,6 +66,7 @@ def compute(test):
   lk_state = op(*inputs)
   lk_state.compute()
   time_taken = time.monotonic() - start
+  print(f'Finished {test} ({time_taken} seconds)', file=sys.stderr)
   return COMPUTE_RESULT(lk_state=lk_state, time_taken=time_taken, test_name=test)
 
 
