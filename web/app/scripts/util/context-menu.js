@@ -8,6 +8,7 @@ angular.module('biggraph').directive('contextMenu', function($timeout) {
     scope: { model: '=' },
     templateUrl: 'scripts/util/context-menu.html',
     link: function(scope, element) {
+      scope.isEmpty = function(o) { return !o || angular.equals(o, {}); };
       scope.$watch('model.enabled', function(enabled) {
         if (enabled) {
           // Whenever the menu opens we set focus on it. We need this so we can close it on blur
