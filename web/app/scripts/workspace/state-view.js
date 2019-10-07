@@ -73,6 +73,19 @@ angular.module('biggraph')
         scope.graphray = function() {
           scope.$broadcast('graphray');
         };
+
+        scope.visualizationChanged = function(state) {
+          const n = scope.instruments.length;
+          if (n === 0) {
+            scope.workspace.updateBox(scope.plug.boxId, { state }, {});
+          } else if (scope.instruments[n - 1].operationId === 'Graph visualization') {
+            scope.setInstrument(n - 1, 'Graph visualization', { state });
+          } else {
+            /* eslint-disable no-console */
+            console.error(
+              'visualizationChanged called for unexpected instrument:', scope.instruments[n - 1]);
+          }
+        };
       },
     };
   });
