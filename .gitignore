@@ -4,6 +4,7 @@
 __pycache__
 .mypy_cache
 *.egg-info
+*.exe
 
 # sbt specific
 .cache
