@@ -61,7 +61,7 @@ object BigGraphEnvironmentImpl {
       sparkSession,
       metaGraphManager,
       sparkDomain,
-      new graph_api.DataManager(Seq(new graph_api.ScalaDomain, sparkDomain)))
+      new graph_api.DataManager(Seq(new graph_api.SphynxMemory, new graph_api.ScalaDomain, sparkDomain)))
     Await.result(envFuture, Duration.Inf)
   }
 

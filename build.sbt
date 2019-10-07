@@ -83,7 +83,13 @@ libraryDependencies ++= Seq(
   "org.locationtech.jts" % "jts" % "1.16.0",
   // Plot drawing
   "org.vegas-viz" %% "vegas" % "0.3.9",
-  "org.vegas-viz" %% "vegas-spark" % "0.3.9")
+  "org.vegas-viz" %% "vegas-spark" % "0.3.9",
+  // Generate java from proto files. Used by Sphynx.
+  "io.grpc" % "grpc-protobuf" % "1.24.0",
+  "io.grpc" % "grpc-stub" % "1.24.0",
+  "io.grpc" % "grpc-netty" % "1.24.0",
+  "com.google.protobuf" % "protobuf-java" % "3.9.2"
+)
 
 // We put the local Spark installation on the classpath for compilation and testing instead of using
 // it from Maven. The version on Maven pulls in an unpredictable (old) version of Hadoop.
