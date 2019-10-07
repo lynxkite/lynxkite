@@ -96,6 +96,7 @@ angular.module('biggraph')
       if (!backendState) {
         return;
       }
+      backendState = angular.copy(backendState);
       backendState.projectName = this.state.projectName;
       this.state = backendState;
       if (this.state.graphMode && this.state.centers === undefined) {

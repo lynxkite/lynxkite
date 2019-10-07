@@ -4,4 +4,10 @@
   left="left.viewData" right="right.viewData"
   left-to-right-bundle="leftToRightBundle" right-to-left-bundle="rightToLeftBundle"
   context-menu="contextMenu"></project-graph>
+<button ng-show="inPopup() && changed" class="apply-visualization-changes" drop-tooltip="
+  You have made temporary changes to this visualization.<br>
+  Click to persist these changes in the visualization box."
+  ng-click="saveChanges()">
+  <i class="fa fa-check"></i> Apply
+</button>
 <context-menu model="contextMenu"></context-menu>
