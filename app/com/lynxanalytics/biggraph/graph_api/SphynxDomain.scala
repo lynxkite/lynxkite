@@ -26,7 +26,7 @@ class SphynxMemory() extends Domain {
 
   override def get[T](scalar: Scalar[T]): SafeFuture[T] = {
     val e = new Exception("Sphynx is lazy now, won't get you any scalars.")
-    return SafeFuture.failed(e)
+    ???
   }
 
   override def cache(e: MetaGraphEntity): Unit = {
