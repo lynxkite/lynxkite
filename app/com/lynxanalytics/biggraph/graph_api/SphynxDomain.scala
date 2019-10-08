@@ -29,7 +29,8 @@ class SphynxMemory() extends Domain {
     ???
   }
 
-  override def cache(e: MetaGraphEntity): Unit = ???
+  override def cache(e: MetaGraphEntity): Unit = {
+    ???
   }
 
   override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {

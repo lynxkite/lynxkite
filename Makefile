@@ -22,8 +22,8 @@ clean:
 	./tools/check_documentation.sh && touch $@
 $(pip): python_requirements.txt
 	AIRFLOW_GPL_UNIDECODE=yes pip install --user -r python_requirements.txt && touch $@
-.build/sphynx-prep-done: $(shell $(find) sphynx) tools/sphynx_preparation.sh
-	tools/sphynx_preparation.sh && touch $@
+.build/sphynx-prep-done: $(shell $(find) sphynx)
+	sphynx/build.sh && touch $@
 .build/backend-done: \
 	$(shell $(find) app project lib conf built-ins sphynx) tools/call_spark_submit.sh \
 	build.sbt README.md .build/gulp-done licenses .build/sphynx-prep-done
