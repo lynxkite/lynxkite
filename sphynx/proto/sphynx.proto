@@ -13,6 +13,5 @@ message CanComputeReply {
 }
 
 service Sphynx {
-  rpc CanCompute (CanComputeRequest) returns (CanComputeReply) {
-  }
+  rpc CanCompute (CanComputeRequest) returns (CanComputeReply);
 }
