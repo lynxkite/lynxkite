@@ -15,7 +15,7 @@ class SphynxMemory() extends Domain {
   }
 
   override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {
-    return SafeFuture({})
+    ???
   }
 
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
@@ -29,11 +29,11 @@ class SphynxMemory() extends Domain {
     ???
   }
 
-  override def cache(e: MetaGraphEntity): Unit = {
+  override def cache(e: MetaGraphEntity): Unit = ???
   }
 
   override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
-    return SafeFuture({})
+    ???
   }
 
 }
