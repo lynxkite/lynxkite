@@ -7,9 +7,18 @@ cd $(dirname $0)
 REPO=$(realpath .)
 PROTO_SOURCE_DIR="proto"
 PROTO_SOURCE_FILE="sphynx.proto"
-GRPC_JAVA_VERSION="1.24.0"
+
+# Get protobuf compiler.
+if ! type "protoc" > /dev/null; then
+  PROTOC_VERSION="3.10.0"
+  PROTOC_ZIP="protoc-$PROTOC_VERSION-linux-x86_64.zip"
+  wget -nc https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/$PROTOC_ZIP
+  unzip -n $PROTOC_ZIP bin/protoc -d protoc
+fi
+PATH="${REPO}/protoc/bin:${PATH}"
 
 # Generate the gRPC Java interfaces.
+GRPC_JAVA_VERSION="1.24.0"
 GRPC_JAVA=protoc-gen-grpc-java-$GRPC_JAVA_VERSION-linux-x86_32.exe
 wget -nc https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/$GRPC_JAVA_VERSION/$GRPC_JAVA
 chmod +x $REPO/$GRPC_JAVA

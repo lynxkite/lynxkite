@@ -1,1 +1,3 @@
 proto/sphynx.pb.go
+protoc/*
+*.zip

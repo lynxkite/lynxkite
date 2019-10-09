@@ -28,7 +28,8 @@ $(pip): python_requirements.txt
 	$(shell $(find) app project lib conf built-ins sphynx) tools/call_spark_submit.sh \
 	build.sbt README.md .build/gulp-done licenses .build/sphynx-prep-done
 	./tools/install_spark.sh && sbt stage < /dev/null && touch $@
-.build/backend-test-passed: $(shell $(find) app test project conf) build.sbt
+.build/backend-test-passed: $(shell $(find) app test project conf) build.sbt \
+	.build/sphynx-prep-done
 	./tools/install_spark.sh && ./.test_backend.sh && touch $@
 .build/frontend-test-passed: \
 		$(shell $(find) web/test) build.sbt .build/backend-done \
