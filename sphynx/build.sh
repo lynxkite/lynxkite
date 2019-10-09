@@ -19,7 +19,7 @@ PATH="${REPO}/protoc/bin:${PATH}"
 
 # Generate the gRPC Java interfaces.
 GRPC_JAVA_VERSION="1.24.0"
-GRPC_JAVA=protoc-gen-grpc-java-$GRPC_JAVA_VERSION-linux-x86_32.exe
+GRPC_JAVA=protoc-gen-grpc-java-$GRPC_JAVA_VERSION-linux-x86_64.exe
 wget -nc https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/$GRPC_JAVA_VERSION/$GRPC_JAVA
 chmod +x $REPO/$GRPC_JAVA
 protoc --plugin=protoc-gen-grpc-java=$REPO/$GRPC_JAVA --grpc-java_out=../app \
