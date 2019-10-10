@@ -2,13 +2,13 @@ package com.lynxanalytics.biggraph.graph_api
 
 import com.lynxanalytics.biggraph.graph_util
 
-class SphynxMemory() extends Domain {
+class SphynxMemory(host: String, port: Int) extends Domain {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "SphynxDomain",
       maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
 
-  val client = SphynxClient("localhost", 50051)
+  val client = new SphynxClient(host, port)
 
   override def has(entity: MetaGraphEntity): Boolean = {
     return false
