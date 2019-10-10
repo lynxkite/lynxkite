@@ -7,6 +7,7 @@ import scala.concurrent.duration.Duration
 
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.PrefixRepository
+import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 
 trait SparkSessionProvider {
   def createSparkSession: spark.sql.SparkSession
@@ -53,15 +54,27 @@ object BigGraphEnvironmentImpl {
     val sparkSessionFuture = Future(sparkSessionProvider.createSparkSession)
     val sparkDomainFuture = sparkSessionFuture.map(
       sparkSession => createSparkDomain(sparkSession, repositoryDirs))
+    val sphynxHost = LoggedEnvironment.envOrNone("SPHYNX_HOST")
+    val sphynxPort = LoggedEnvironment.envOrNone("SPHYNX_PORT")
     val envFuture = for {
       sparkSession <- sparkSessionFuture
       metaGraphManager <- metaGraphManagerFuture
       sparkDomain <- sparkDomainFuture
-    } yield new BigGraphEnvironmentImpl(
-      sparkSession,
-      metaGraphManager,
-      sparkDomain,
-      new graph_api.DataManager(Seq(new graph_api.SphynxMemory, new graph_api.ScalaDomain, sparkDomain)))
+    } yield {
+      val domains = {
+        (sphynxHost, sphynxPort) match {
+          case (Some(host), Some(port)) => {
+            Seq(new graph_api.SphynxMemory(host, port.toInt), new graph_api.ScalaDomain, sparkDomain)
+          }
+          case _ => Seq(new graph_api.ScalaDomain, sparkDomain)
+        }
+      }
+      new BigGraphEnvironmentImpl(
+        sparkSession,
+        metaGraphManager,
+        sparkDomain,
+        new graph_api.DataManager(domains))
+    }
     Await.result(envFuture, Duration.Inf)
   }
 
@@ -79,7 +92,6 @@ object BigGraphEnvironmentImpl {
     bigGraphLogger.info("Data manager initialized.")
     res
   }
-
 }
 
 case class BigGraphEnvironmentImpl(
