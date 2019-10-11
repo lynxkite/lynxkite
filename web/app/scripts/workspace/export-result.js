@@ -27,7 +27,8 @@ angular.module('biggraph')
             scope.status.value.displayComputeButton = true;
             scope.parameters = exportResultOutput.parameters;
             // Only exported files can be downloaded, JDBC exports not.
-            scope.downloadable = (scope.parameters.format !== 'jdbc') ? true : false;
+            //
+            scope.downloadable = (scope.parameters.format !== 'jdbc' && scope.parameters.for_download === 'yes') ? true : false;
           });
         });
 

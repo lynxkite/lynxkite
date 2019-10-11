@@ -27,7 +27,7 @@ case class ComputeVertexNeighborhood(
     radius: Int,
     // Maximal number of vertices to return. If the specified neighborhood is larger then this, then
     // the output will be empty set to signal this outcome.
-    maxCount: Int) extends TypedMetaGraphOp[Input, Output] {
+    maxCount: Int) extends SparkOperation[Input, Output] {
 
   @transient override lazy val inputs = new Input
 

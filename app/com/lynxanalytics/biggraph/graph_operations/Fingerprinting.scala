@@ -51,7 +51,7 @@ case class Fingerprinting(
     minimumSimilarity: Double,
     weightingMode: String = "InverseInDegree",
     multiNeighborsPreference: Double = 0.0)
-  extends TypedMetaGraphOp[Fingerprinting.Input, Fingerprinting.Output] {
+  extends SparkOperation[Fingerprinting.Input, Fingerprinting.Output] {
   import Fingerprinting._
   override val isHeavy = true
   @transient override lazy val inputs = new Input
@@ -266,7 +266,7 @@ object FingerprintingCandidates extends OpFromJson {
   def fromJson(j: JsValue) = FingerprintingCandidates()
 }
 case class FingerprintingCandidates()
-  extends TypedMetaGraphOp[FingerprintingCandidates.Input, FingerprintingCandidates.Output] {
+  extends SparkOperation[FingerprintingCandidates.Input, FingerprintingCandidates.Output] {
   import FingerprintingCandidates._
   override val isHeavy = true
   @transient override lazy val inputs = new Input
@@ -330,7 +330,7 @@ object FingerprintingCandidatesFromCommonNeighbors extends OpFromJson {
   def fromJson(j: JsValue) = FingerprintingCandidatesFromCommonNeighbors()
 }
 case class FingerprintingCandidatesFromCommonNeighbors()
-  extends TypedMetaGraphOp[FingerprintingCandidatesFromCommonNeighbors.Input, FingerprintingCandidatesFromCommonNeighbors.Output] {
+  extends SparkOperation[FingerprintingCandidatesFromCommonNeighbors.Input, FingerprintingCandidatesFromCommonNeighbors.Output] {
   import FingerprintingCandidatesFromCommonNeighbors._
   override val isHeavy = true
   @transient override lazy val inputs = new Input

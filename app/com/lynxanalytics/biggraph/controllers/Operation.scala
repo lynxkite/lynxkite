@@ -234,7 +234,7 @@ trait OperationRegistry {
     categories(category.title) = category
     operations(id) = BoxMetadata(
       category.title,
-      s"/images/icons/$icon.png",
+      s"images/icons/$icon.png",
       category.color,
       id,
       inputs,
@@ -587,7 +587,7 @@ abstract class ImportOperation(context: Operation.Context) extends TableOutputOp
     }
     val limited = if (limit.isEmpty) partial else partial.limit(limit.toInt)
     val queried = if (query.isEmpty) limited else {
-      DataManager.sql(context, query, List("this" -> limited))
+      SparkDomain.sql(context, query, List("this" -> limited))
     }
     queried
   }

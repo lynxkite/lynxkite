@@ -17,10 +17,8 @@ module.exports = function(fw) {
       });
       lib.workspace.clickBox('rename-vertex-attrs');
     }, function() {
-      lib.expectHasText($('#text-title'), 'Attributes:');
+      lib.expectHasText($('#text-title'), 'The new names for each attribute:');
       lib.expectElement($('#text-title #help-button'));
-      lib.expectHasText($('#text #title2'), 'Rename to:');
-      lib.expectElement($('#text #title2 #help-button', ''));
     }
   );
   fw.transitionTest(
@@ -37,10 +35,8 @@ module.exports = function(fw) {
       });
       lib.workspace.clickBox('rename-edge-attrs');
     }, function() {
-      lib.expectHasText($('#text-title'), 'Attributes:');
+      lib.expectHasText($('#text-title'), 'The new names for each attribute:');
       lib.expectElement($('#text-title #help-button'));
-      lib.expectHasText($('#text #title2'), 'Rename to:');
-      lib.expectElement($('#text #title2 #help-button'));
     }
   );
 };

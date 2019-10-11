@@ -279,6 +279,8 @@ include::discard-vertex-attributes.asciidoc[]
 
 include::export-to-csv.asciidoc[]
 
+include::export-to-hive.asciidoc[]
+
 include::export-to-jdbc.asciidoc[]
 
 include::export-to-json.asciidoc[]

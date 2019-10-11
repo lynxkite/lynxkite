@@ -27,11 +27,13 @@ trait ModelImplementation {
   // A transformation of dataframe with the model.
   def transformDF(data: spark.sql.DataFrame): spark.sql.DataFrame
   def details: String
+  // Override this if SQL can be generated for the model.
   def toSQL(
     labelName: Option[String],
     featureNames: List[String],
     featureReverseMappings: Option[Map[Int, Map[Double, String]]],
-    labelReverseMapping: Option[Map[Double, String]]): String = ""
+    labelReverseMapping: Option[Map[Double, String]]): String =
+    "Sorry, SQL generation is not supported for this model type."
 }
 
 // Helper classes to provide a common abstraction for various types of models.

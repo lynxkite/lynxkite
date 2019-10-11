@@ -15,7 +15,7 @@ object RemoveNonSymmetricEdges extends OpFromJson {
   def fromJson(j: JsValue) = RemoveNonSymmetricEdges()
 }
 import RemoveNonSymmetricEdges._
-case class RemoveNonSymmetricEdges() extends TypedMetaGraphOp[GraphInput, Output] {
+case class RemoveNonSymmetricEdges() extends SparkOperation[GraphInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 

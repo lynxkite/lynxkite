@@ -31,7 +31,7 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
   }
 
   test("Scala DataFrame bindings work with runVegas") {
-    val df = ImportDataFrameTest.jdbcDF(dataManager)
+    val df = ImportDataFrameTest.jdbcDF(sparkDomain)
     val code = """
     Vegas("My plot test")
       .withData(table)
@@ -48,7 +48,7 @@ class ScalaScriptTest extends FunSuite with TestGraphOp {
   }
 
   test("Scala multiline string works in plot code") {
-    val df = ImportDataFrameTest.jdbcDF(dataManager)
+    val df = ImportDataFrameTest.jdbcDF(sparkDomain)
     val filterRule = """datum.b > 20 &&
     datum.b < 60"""
     val code = s"""

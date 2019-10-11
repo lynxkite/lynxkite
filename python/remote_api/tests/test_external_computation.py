@@ -1,8 +1,10 @@
 import lynx.kite
 import numpy as np
 import os
+import shutil
 import pandas as pd
 import unittest
+import tempfile
 
 
 class TestExternalComputation(unittest.TestCase):
@@ -27,6 +29,17 @@ class TestExternalComputation(unittest.TestCase):
             'Mr Isolated Joe',
         ]})))
 
+  def test_big_dataframes(self):
+    lk = lynx.kite.LynxKite()
+
+    @lynx.kite.external
+    def receive_and_send(table):
+      return table.pandas()
+
+    v = lk.createVertices(size=200100).sql('select * from `vertices`')
+    t = receive_and_send(v)
+    t.trigger()
+
   def test_pyspark(self):
     lk = lynx.kite.LynxKite()
     try:
@@ -44,8 +57,10 @@ class TestExternalComputation(unittest.TestCase):
     eg = lk.createExampleGraph().sql('select * from vertices')
     t = stats(eg)
     t.trigger()
-    self.assertTrue(t.sql('select * from input').df().equals(
-        pd.DataFrame({'gender': ['Female', 'Male'], 'count': [1.0, 3.0]})))
+    # Column order can be different
+    actual = t.sql('select * from input').df().sort_index(axis=1)
+    expected = pd.DataFrame({'gender': ['Female', 'Male'], 'count': [1.0, 3.0]}).sort_index(axis=1)
+    self.assertTrue(actual.equals(expected))
 
   def test_filename(self):
     lk = lynx.kite.LynxKite()
@@ -54,11 +69,9 @@ class TestExternalComputation(unittest.TestCase):
     def title_names(table):
       df = table.pandas()
       df['titled_name'] = np.where(df.gender == 'Female', 'Ms ' + df.name, 'Mr ' + df.name)
-      path_lk = 'DATA$/test/external-computation'
-      path = lk.get_prefixed_path(path_lk).resolved.replace('file:', '')
-      os.makedirs(path, exist_ok=True)
-      path = path + '/part-0'
-      df.to_parquet(path)
+      with tempfile.NamedTemporaryFile() as f:
+        df.to_parquet(f.name)
+        path_lk = lk.upload(f.file.read())
       return path_lk
 
     eg = lk.createExampleGraph().sql('select name, gender from vertices')
@@ -149,3 +162,82 @@ class TestExternalComputation(unittest.TestCase):
             'Mr Bob',
             'Mr Isolated Joe',
         ]})))
+
+  def test_generated_snapshot_prefix(self):
+    def factory():
+      @lynx.kite.external
+      def some_computation(table):
+        return table.lk()
+
+      return some_computation
+
+    lk = lynx.kite.LynxKite()
+    tmp_dir = 'tmp_workspaces/tmp_snapshots'
+    eg = lk.createExampleGraph().sql('select * from vertices')
+    lk.remove_name(tmp_dir, force=True)
+    f = factory()
+    t = f(eg)
+    t.trigger()
+    first_entry_list = [e.name for e in lk.list_dir(tmp_dir)]
+    f = factory()
+    t = f(eg)
+    t.trigger()
+    # Second time we should get the same snapshot
+    second_entry_list = [e.name for e in lk.list_dir(tmp_dir)]
+    self.assertEqual(first_entry_list, second_entry_list)
+
+  def test_external_box_callable_edge_cases(self):
+    lk = lynx.kite.LynxKite()
+    with self.assertRaises(Exception) as context:
+      f = lynx.kite.external(lambda x: 1)
+      self.assertTrue(
+          'You cannot use lambda functions for external computation.' in str(
+              cm.exception))
+
+    class A:
+      def g(x):
+        return 1
+
+    o = A()
+    with self.assertRaises(Exception) as context:
+      f = lynx.kite.external(o.g)
+      self.assertTrue(
+          'You cannot use instance methods for external computation.' in str(
+              cm.exception))
+
+
+class TestTmpFilesHandling(unittest.TestCase):
+  # On Jenkins all jobs are using the same /tmp folder so we are setting the tmp dir used by the
+  # tempfile module to be a separate folder.
+  tmp_dir = tempfile.gettempdir() + '/external_tests'
+  shutil.rmtree(tmp_dir, ignore_errors=True)
+  os.makedirs(tmp_dir)
+  tempfile.tempdir = tmp_dir
+
+  def num_tmp_files(self):
+    return len(os.listdir(self.tmp_dir))
+
+  def test_tempfile_cleanup(self):
+    '''Checks that the temp files are cleaned up even if an error occurred during the
+    external computation.
+    '''
+    lk = lynx.kite.LynxKite()
+
+    @lynx.kite.external
+    def create_tmp_files(table):
+      df = table.pandas()
+      # Make sure that we have really created a temp file for downloading table.
+      self.assertEqual(self.num_tmp_files(), 1,
+                       'The external box should have created one temp file.')
+      raise FailedExternal("I'm throwing an error")
+      return df
+
+    eg = lk.createExampleGraph().sql('select name, gender from vertices')
+    t = create_tmp_files(eg)
+    with self.assertRaises(FailedExternal):
+      t.trigger()
+    self.assertEqual(self.num_tmp_files(), 0)
+
+
+class FailedExternal(Exception):
+  pass

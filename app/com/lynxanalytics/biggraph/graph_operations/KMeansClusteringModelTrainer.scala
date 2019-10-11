@@ -28,7 +28,7 @@ case class KMeansClusteringModelTrainer(
     k: Int,
     maxIter: Int,
     seed: Long,
-    featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
+    featureNames: List[String]) extends SparkOperation[Input, Output] with ModelMeta {
   val isClassification = true
   val isBinary = false
   def featureTypes = (0 until featureNames.size).map(_ => SerializableType.double).toList
@@ -48,7 +48,7 @@ case class KMeansClusteringModelTrainer(
     output: OutputBuilder,
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val sqlContext = rc.dataManager.newSQLContext()
+    val sqlContext = rc.sparkDomain.newSQLContext()
 
     val featuresArray = inputs.features.map(_.rdd).toArray
     val inputDF = Model.toDF(sqlContext, inputs.vertices.rdd, featuresArray)

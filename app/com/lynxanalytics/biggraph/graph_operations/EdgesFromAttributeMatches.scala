@@ -14,7 +14,7 @@ object EdgesFromAttributeMatches extends OpFromJson {
   }
   def fromJson(j: JsValue) = EdgesFromAttributeMatches()
 }
-case class EdgesFromAttributeMatches[T]() extends TypedMetaGraphOp[VertexAttributeInput[T], EdgesFromAttributeMatches.Output[T]] {
+case class EdgesFromAttributeMatches[T]() extends SparkOperation[VertexAttributeInput[T], EdgesFromAttributeMatches.Output[T]] {
   import EdgesFromAttributeMatches._
   override val isHeavy = true
   @transient override lazy val inputs = new VertexAttributeInput[T]
@@ -53,7 +53,7 @@ object EdgesFromBipartiteAttributeMatches extends OpFromJson {
   def fromJson(j: JsValue) = EdgesFromBipartiteAttributeMatches()
 }
 case class EdgesFromBipartiteAttributeMatches[T]()
-  extends TypedMetaGraphOp[EdgesFromBipartiteAttributeMatches.Input[T], EdgesFromBipartiteAttributeMatches.Output[T]] {
+  extends SparkOperation[EdgesFromBipartiteAttributeMatches.Input[T], EdgesFromBipartiteAttributeMatches.Output[T]] {
   import EdgesFromBipartiteAttributeMatches._
   override val isHeavy = true
   @transient override lazy val inputs = new Input[T]
@@ -106,7 +106,7 @@ object EdgesFromUniqueBipartiteAttributeMatches extends OpFromJson {
     EdgesFromUniqueBipartiteAttributeMatches()
 }
 case class EdgesFromUniqueBipartiteAttributeMatches()
-  extends TypedMetaGraphOp[EdgesFromUniqueBipartiteAttributeMatches.Input, EdgesFromUniqueBipartiteAttributeMatches.Output] {
+  extends SparkOperation[EdgesFromUniqueBipartiteAttributeMatches.Input, EdgesFromUniqueBipartiteAttributeMatches.Output] {
   import EdgesFromUniqueBipartiteAttributeMatches._
 
   override val isHeavy = true
@@ -162,7 +162,7 @@ object EdgesFromLookupAttributeMatches extends OpFromJson {
     EdgesFromLookupAttributeMatches()
 }
 case class EdgesFromLookupAttributeMatches()
-  extends TypedMetaGraphOp[EdgesFromLookupAttributeMatches.Input, EdgesFromLookupAttributeMatches.Output] {
+  extends SparkOperation[EdgesFromLookupAttributeMatches.Input, EdgesFromLookupAttributeMatches.Output] {
   import EdgesFromLookupAttributeMatches._
 
   override val isHeavy = true

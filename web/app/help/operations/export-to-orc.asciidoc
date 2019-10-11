@@ -16,5 +16,11 @@ there might be a need to export an already exported table with the same set of p
 exported file is lost). In this case you need to change the version number, making that parameters
 are not the same as in the previous export.
 
+[p-for_download]#Export for download#::
+Set this to "true" if the purpose of this export is file download: in this case LynxKite will
+repartition the data into one single file, which will be downloaded. The default "no" will
+result in no such repartition: this performs much better when other, partition-aware tools
+are used to import the exported data.
+
 include::{g}[tag=save-mode-options]
 ====

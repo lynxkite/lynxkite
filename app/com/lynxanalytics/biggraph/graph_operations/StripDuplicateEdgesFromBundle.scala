@@ -13,7 +13,7 @@ object StripDuplicateEdgesFromBundle extends OpFromJson {
   def fromJson(j: JsValue) = StripDuplicateEdgesFromBundle()
 }
 import StripDuplicateEdgesFromBundle._
-case class StripDuplicateEdgesFromBundle() extends TypedMetaGraphOp[GraphInput, Output] {
+case class StripDuplicateEdgesFromBundle() extends SparkOperation[GraphInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 

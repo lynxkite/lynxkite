@@ -143,7 +143,7 @@ case class DeriveScala[T: TypeTag] private[graph_operations] (
     scalarParams: Seq[(String, TypeTag[_])] = Seq(), // Input scalars to substitute.
     onlyOnDefinedAttrs: Boolean = true,
     persist: Boolean = true)
-  extends TypedMetaGraphOp[Input, Output[T]] {
+  extends SparkOperation[Input, Output[T]] {
 
   def tt = typeTag[T]
   def st = SerializableType(tt)

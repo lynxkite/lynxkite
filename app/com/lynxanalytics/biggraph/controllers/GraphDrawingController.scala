@@ -187,7 +187,7 @@ case class CenterResponse(
 class GraphDrawingController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
-  import dataManager.executionContext
+  implicit val ec = env.sparkDomain.executionContext // TODO: Revise for single-node.
 
   def getVertexDiagram(user: User, request: VertexDiagramSpec): VertexDiagramResponse = {
     request.mode match {
@@ -309,7 +309,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
 
     val diagramMeta = getDiagramFromBucketedAttributes(
       vertexSet, filtered, xBucketedAttr, yBucketedAttr, request.sampleSize)
-    val diagram = dataManager.get(diagramMeta).value
+    val diagram = dataManager.get(diagramMeta)
 
     val xBucketer = xBucketedAttr.bucketer
     val yBucketer = yBucketedAttr.bucketer
@@ -672,7 +672,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     }
     dataManager
       .getFuture(sampled)
-      .map(s => CenterResponse(s.value.map(_.toString)))
+      .map(s => CenterResponse(s.map(_.toString)))
       .future
   }
 
@@ -700,32 +700,36 @@ class GraphDrawingController(env: BigGraphEnvironment) {
         HistogramResponse(
           bucketedAttr.bucketer.labelType,
           bucketedAttr.bucketer.bucketLabels,
-          (0 until bucketedAttr.bucketer.numBuckets).map(c.value.getOrElse(_, 0L))))
+          (0 until bucketedAttr.bucketer.numBuckets).map(c.getOrElse(_, 0L))))
       .future
   }
 
   def getScalarValue(user: User, request: ScalarValueRequest): Future[DynamicValue] = {
-    val scalar = metaManager.scalar(request.scalarId.asUUID)
+    getDynamicValue(metaManager.scalar(request.scalarId.asUUID))
+  }
+
+  private def getDynamicValue[T](scalar: Scalar[T]): Future[DynamicValue] = {
+    implicit val tt = scalar.typeTag
     dataManager
       .getFuture(scalar)
-      .map(dynamicValue(_)).future
+      .map(DynamicValue.convert(_)).future
   }
 
   def getModel(user: User, request: ScalarValueRequest): Future[model.FEModel] = {
     val m = metaManager.scalar(request.scalarId.asUUID).runtimeSafeCast[model.Model]
     dataManager
       .getFuture(m)
-      .map(scalar => model.Model.toFE(scalar.value, dataManager.runtimeContext.sparkContext))
+      .map(scalar => model.Model.toFE(scalar, env.sparkDomain.runtimeContext.sparkContext))
       .future
   }
 
   def getComputeBoxResult(gUIDs: List[java.util.UUID]): scala.concurrent.Future[Unit] = {
     val entities = gUIDs.map { guid => metaManager.entity(guid) }
-    dataManager.computeSequentially(entities).future
-  }
-
-  private def dynamicValue[T](scalar: ScalarData[T]) = {
-    implicit val tt = scalar.typeTag
-    graph_operations.DynamicValue.convert(scalar.value)
+    // We trigger the computation of entities one after the other.
+    // This can avoid overloading Spark, leaves us with more completed work if
+    // everything crashes, and looks better on the UI.
+    entities.foldLeft(SafeFuture(()))((f: SafeFuture[Unit], e: MetaGraphEntity) => {
+      f.flatMap(_ => dataManager.compute(e)).map(_ => ())
+    }).future
   }
 }

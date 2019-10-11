@@ -6,6 +6,23 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Click a vertex in a visualization to open a context menu for interactive graph navigation.
+
+### 2.8.4
+
+ - Popup box improvements: Parameters are full-width. Popups avoid overlapping. Popups reopen
+   at previous position with previous dimensions.
+
+### 2.8.3
+
+ - Added new operation: _Export to Hive_.
+
+### 2.8.2
+
+ - Remote API bugfixes
+
+### 2.8.1
+
  - For consistency, project tables such as `vertices` and `edges` can be accessed as
    `input.vertices` and `input.edges` now.
  - Bugfixes for HDFS use under Kerberos, and minor fixes and improvements in LynxKite.

@@ -28,7 +28,7 @@ import RegressionModelTrainer._
 case class RegressionModelTrainer(
     method: String,
     labelName: String,
-    featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
+    featureNames: List[String]) extends SparkOperation[Input, Output] with ModelMeta {
   val isClassification = false
   val isBinary = false
   def featureTypes = (0 until featureNames.size).map(_ => SerializableType.double).toList
@@ -47,7 +47,7 @@ case class RegressionModelTrainer(
     output: OutputBuilder,
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val sqlContext = rc.dataManager.newSQLContext()
+    val sqlContext = rc.sparkDomain.newSQLContext()
     import sqlContext.implicits._
 
     val rddArray = inputs.features.toArray.map(_.rdd)

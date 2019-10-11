@@ -25,7 +25,7 @@ object VertexSetUnion extends OpFromJson {
   def fromJson(j: JsValue) = VertexSetUnion((j \ "numVertexSets").as[Int])
 }
 case class VertexSetUnion(numVertexSets: Int)
-  extends TypedMetaGraphOp[VertexSetUnion.Input, VertexSetUnion.Output] {
+  extends SparkOperation[VertexSetUnion.Input, VertexSetUnion.Output] {
   import VertexSetUnion._
 
   override val isHeavy = true
@@ -91,7 +91,7 @@ object EdgeBundleUnion extends OpFromJson {
   def fromJson(j: JsValue) = EdgeBundleUnion((j \ "numEdgeBundles").as[Int])
 }
 case class EdgeBundleUnion(numEdgeBundles: Int)
-  extends TypedMetaGraphOp[EdgeBundleUnion.Input, EdgeBundleUnion.Output] {
+  extends SparkOperation[EdgeBundleUnion.Input, EdgeBundleUnion.Output] {
   import EdgeBundleUnion._
 
   override val isHeavy = true

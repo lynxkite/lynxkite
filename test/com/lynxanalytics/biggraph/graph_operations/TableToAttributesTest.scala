@@ -8,11 +8,12 @@ import scala.reflect.runtime.universe.typeTag
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 
 class TableToAttributesTest extends FunSuite with TestGraphOp {
   test("dataframe import using JDBC works") {
-    val df = ImportDataFrameTest.jdbcDF(dataManager)
+    val df = ImportDataFrameTest.jdbcDF(sparkDomain)
     val t = ImportDataFrame.run(df)
     val data = TableToAttributes.run(t)
 

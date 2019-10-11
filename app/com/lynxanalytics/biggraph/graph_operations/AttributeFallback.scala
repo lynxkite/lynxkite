@@ -16,7 +16,7 @@ object AttributeFallback extends OpFromJson {
   def fromJson(j: JsValue) = AttributeFallback()
 }
 import AttributeFallback._
-case class AttributeFallback[T]() extends TypedMetaGraphOp[Input[T], Output[T]] {
+case class AttributeFallback[T]() extends SparkOperation[Input[T], Output[T]] {
   @transient override lazy val inputs = new Input[T]
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output[T]()(instance, inputs)

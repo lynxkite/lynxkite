@@ -5,6 +5,7 @@ package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class AuxiliaryOperationTest extends OperationsTestBase {
 

@@ -27,7 +27,7 @@ object CountVertices extends OpFromJson {
   def fromJson(j: JsValue) = CountVertices()
 }
 case class CountVertices()
-  extends TypedMetaGraphOp[CountVertices.Input, CountVertices.Output] {
+  extends SparkOperation[CountVertices.Input, CountVertices.Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new CountVertices.Input()
 
@@ -60,7 +60,7 @@ object CountEdges extends OpFromJson {
   def apply() = new CountEdges
 }
 @deprecated("Use Count.run(eb) instead.", "1.7.0")
-class CountEdges extends TypedMetaGraphOp[CountEdges.Input, CountEdges.Output] with Serializable {
+class CountEdges extends SparkOperation[CountEdges.Input, CountEdges.Output] with Serializable {
   override def equals(o: Any) = o.isInstanceOf[CountEdges]
   import CountEdges._
   override val isHeavy = true
@@ -91,7 +91,7 @@ object CountAttributes extends OpFromJson {
   def fromJson(j: JsValue) = CountAttributes()
 }
 case class CountAttributes[T]()
-  extends TypedMetaGraphOp[CountAttributes.Input[T], CountAttributes.Output] {
+  extends SparkOperation[CountAttributes.Input[T], CountAttributes.Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new CountAttributes.Input[T]
 
@@ -124,7 +124,7 @@ object ComputeMinMaxMinPositive {
   }
 }
 abstract class ComputeMinMaxMinPositive[T: Numeric]
-  extends TypedMetaGraphOp[ComputeMinMaxMinPositive.Input[T], ComputeMinMaxMinPositive.Output[T]] {
+  extends SparkOperation[ComputeMinMaxMinPositive.Input[T], ComputeMinMaxMinPositive.Output[T]] {
   override val isHeavy = true
   @transient override lazy val inputs = new ComputeMinMaxMinPositive.Input[T]
   private lazy val num = implicitly[Numeric[T]]
@@ -196,7 +196,7 @@ object ComputeMinMaxDouble extends OpFromJson {
 }
 @deprecated("Use ComputeMinMaxMinPositive instead.", since = "1.6.0")
 class ComputeMinMaxDouble
-  extends TypedMetaGraphOp[ComputeMinMaxDouble.Input, ComputeMinMaxDouble.Output]
+  extends SparkOperation[ComputeMinMaxDouble.Input, ComputeMinMaxDouble.Output]
   with Serializable {
   override def equals(o: Any) = o.isInstanceOf[ComputeMinMaxDouble]
   @transient override lazy val inputs = new ComputeMinMaxDouble.Input
@@ -235,7 +235,7 @@ object ComputeTopValues extends OpFromJson {
     ComputeTopValues((j \ "numTopValues").as[Int], (j \ "sampleSize").as[Int])
 }
 case class ComputeTopValues[T](numTopValues: Int, sampleSize: Int = -1)
-  extends TypedMetaGraphOp[ComputeTopValues.Input[T], ComputeTopValues.Output[T]] {
+  extends SparkOperation[ComputeTopValues.Input[T], ComputeTopValues.Output[T]] {
   override val isHeavy = true
   override def toJson =
     Json.obj("numTopValues" -> numTopValues, "sampleSize" -> sampleSize)
@@ -285,7 +285,7 @@ object Coverage extends OpFromJson {
   }
 }
 case class Coverage()
-  extends TypedMetaGraphOp[Coverage.Input, Coverage.Output] {
+  extends SparkOperation[Coverage.Input, Coverage.Output] {
   import Coverage._
   override val isHeavy = true
   @transient override lazy val inputs = new Input()

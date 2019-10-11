@@ -35,7 +35,12 @@ For various tools you will require Python and AWS CLI. To install dependencies p
 Before running the above command you may also need to install the following packages:
 
     sudo apt-get install libmysqlclient-dev
-    sudo apt-get install python3-dev
+    sudo apt-get install python3.x-dev --upgrade 
+    
+and make sure setuptools is upgraded to the latest version (which includes compatible package `find_namespace_packages`) 
+    
+    sudo pip3 install setuptools --upgrade
+
 
 Spark does a reverse DNS lookup for 0.0.0.0 on startup. At least on Ubuntu 14.04 this is equivalent
 to running `avahi-resolve-address 0.0.0.0` and takes 5 seconds. If you want to avoid this delay on

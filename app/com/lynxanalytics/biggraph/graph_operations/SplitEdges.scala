@@ -27,7 +27,7 @@ object SplitEdges extends OpFromJson {
   def fromJson(j: JsValue) = SplitEdges()
 }
 import SplitEdges._
-case class SplitEdges() extends TypedMetaGraphOp[Input, Output] {
+case class SplitEdges() extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

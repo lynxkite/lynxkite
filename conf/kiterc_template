@@ -207,10 +207,16 @@ export KITE_EXTRA_JARS=
 # will run a local LynxKite in a such a mode that you can attach to it with a debugger.)
 # export EXTRA_DRIVER_OPTIONS=
 
-# Set thread stack size for executor threads. By default, jvm will assign 1 megabyte for each thread,
+# Set thread stack size for thread in the executor process. By default, jvm will assign
+# 1 megabyte for each thread, but that is too low for some rdd dependencies.
+# The suffixes M and k can be used to specify megabytes or kilobytes respectively; e.g., 1M or 1500k.
+# This setting does not have an effect in local mode.
+# export EXECUTOR_THREAD_STACK_SIZE=3M
+
+# Set thread stack size for driver threads. By default, jvm will assign 1 megabyte for each thread,
 # but that is too low for some rdd dependencies. The suffixes M and k can be used to specify megabytes
 # or kilobytes respectively; e.g., 1M or 1500k.
-# export EXECUTOR_THREAD_STACK_SIZE=2M
+# export DRIVER_THREAD_STACK_SIZE=2M
 
 # Specify the length of the protected time period in days, while the cleaner does not
 # delete data files. It can be integer or double value.

@@ -123,7 +123,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
 
   def importSeq[T <: Product: reflect.runtime.universe.TypeTag](
     columns: Seq[String], rows: Seq[T]): TestBox = {
-    val sql = dataManager.newSQLContext
+    val sql = sparkDomain.newSQLContext
     val df = sql.createDataFrame(rows).toDF(columns: _*)
     val table = graph_operations.ImportDataFrame.run(df)
     // Abuse CSV import to load arbitrary table.

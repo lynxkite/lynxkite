@@ -19,7 +19,7 @@ object EmptyEdgeBundle extends OpFromJson {
   def fromJson(j: JsValue) = EmptyEdgeBundle()
 }
 import EmptyEdgeBundle._
-case class EmptyEdgeBundle() extends TypedMetaGraphOp[Input, Output] {
+case class EmptyEdgeBundle() extends SparkOperation[Input, Output] {
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

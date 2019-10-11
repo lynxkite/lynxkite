@@ -15,7 +15,7 @@ object SampleVertices extends OpFromJson {
   def fromJson(j: JsValue) = SampleVertices((j \ "n").as[Int])
 }
 import SampleVertices._
-case class SampleVertices(n: Int) extends TypedMetaGraphOp[Input, Output] {
+case class SampleVertices(n: Int) extends SparkOperation[Input, Output] {
   @transient override lazy val inputs = new Input()
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)

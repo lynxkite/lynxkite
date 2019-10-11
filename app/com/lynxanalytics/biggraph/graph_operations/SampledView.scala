@@ -20,7 +20,7 @@ object SampledView extends OpFromJson {
 }
 import SampledView._
 case class SampledView(
-    idSet: Set[ID]) extends TypedMetaGraphOp[Input, Output] {
+    idSet: Set[ID]) extends SparkOperation[Input, Output] {
 
   @transient override lazy val inputs = new Input
 

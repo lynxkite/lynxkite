@@ -208,7 +208,7 @@ angular.module('biggraph')
               const bottom1 = top1 + height1;
               const right2 = left2 + width2;
               const bottom2 = top2 + height2;
-              // Comute intersection:
+              // Compute intersection:
               const left = Math.max(left1, left2);
               const top = Math.max(top1, top2);
               const right = Math.min(right1, right2);
@@ -222,8 +222,9 @@ angular.module('biggraph')
             function overlap(x, y) {
               let total = 0;
               for (let i = 0; i < scope.popups.length; ++i) {
+                const pi = scope.popups[i];
                 total += rectangleOverlapArea(
-                  scope.popups[i].x, scope.popups[i].y, scope.popups[i].width, scope.popups[i].height,
+                  pi.x, pi.y, pi.width, pi.height || pi.maxHeight,
                   x, y, w, h);
               }
               return total;
@@ -272,6 +273,16 @@ angular.module('biggraph')
             };
           }
 
+          function getPopup(event, id, title, content) {
+            for (let p of scope.popups) {
+              if (p.id === id) {
+                return p;
+              }
+            }
+            const pos = placePopup(event);
+            return new PopupModel(id, title, content, pos.x, pos.y, pos.width, pos.height, scope);
+          }
+
           scope.onMouseUpOnBox = function(box, event) {
             if (box.isDirty || scope.pulledPlug || scope.selection.isActive()) {
               return;
@@ -280,19 +291,14 @@ angular.module('biggraph')
             if (!leftButton || event.ctrlKey || event.shiftKey) {
               return;
             }
-            const pos = placePopup(event);
-            const model = new PopupModel(
+            const model = getPopup(
+              event,
               box.instance.id,
               box.instance.operationId,
               {
                 type: 'box',
                 boxId: box.instance.id,
-              },
-              pos.x,
-              pos.y,
-              pos.width,
-              pos.height,
-              scope);
+              });
             model.toggle();
           };
 
@@ -317,20 +323,15 @@ angular.module('biggraph')
             }
             event.stopPropagation();
             if (plug.direction === 'outputs') {
-              const pos = placePopup(event);
-              const model = new PopupModel(
+              const model = getPopup(
+                event,
                 plug.boxId + '_' + plug.id,
                 plug.boxInstance.operationId + ' ➡ ' + plug.id,
                 {
                   type: 'plug',
                   boxId: plug.boxId,
                   plugId: plug.id,
-                },
-                pos.x,
-                pos.y,
-                pos.width,
-                pos.height,
-                scope);
+                });
               model.toggle();
             }
           };
@@ -674,7 +675,7 @@ angular.module('biggraph')
           function uploadFile(file) {
             const defer = $q.defer();
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/ajax/upload');
+            xhr.open('POST', 'ajax/upload');
             xhr.onreadystatechange = function() {
               if (xhr.readyState === 4) { // DONE
                 scope.$apply(function() {

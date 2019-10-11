@@ -15,7 +15,7 @@ object CollectAttribute extends OpFromJson {
 }
 import CollectAttribute._
 case class CollectAttribute[T](
-    idSet: Set[ID]) extends TypedMetaGraphOp[VertexAttributeInput[T], Output[T]] {
+    idSet: Set[ID]) extends SparkOperation[VertexAttributeInput[T], Output[T]] {
   @transient override lazy val inputs = new VertexAttributeInput[T]
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   override def toJson = Json.obj("idSet" -> idSet)

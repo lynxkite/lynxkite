@@ -15,7 +15,7 @@ object FindMaxCliques extends OpFromJson {
 }
 case class FindMaxCliques(
     minCliqueSize: Int,
-    needsBothDirections: Boolean = false) extends TypedMetaGraphOp[GraphInput, Segmentation] {
+    needsBothDirections: Boolean = false) extends SparkOperation[GraphInput, Segmentation] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 

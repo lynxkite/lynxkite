@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.frontend_operations
 
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.controllers._
 
@@ -100,7 +101,7 @@ class ImportBoxTest extends OperationsTestBase {
       "Stale settings error should list the stale parameters and their original value.")
   }
 
-  val sqliteURL = s"jdbc:sqlite:${dataManager.repositoryPath.resolvedNameWithNoCredentials}/test-db"
+  val sqliteURL = s"jdbc:sqlite:${sparkDomain.repositoryPath.resolvedNameWithNoCredentials}/test-db"
 
   def createSqliteSubscribers() = {
     val connection = graph_util.JDBCUtil.getConnection(sqliteURL)

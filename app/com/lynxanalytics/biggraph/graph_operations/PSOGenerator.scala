@@ -45,7 +45,7 @@ object PSOGenerator extends OpFromJson {
 }
 import PSOGenerator._
 case class PSOGenerator(externalDegree: Double, internalDegree: Double,
-    exponent: Double, seed: Long) extends TypedMetaGraphOp[Input, Output] {
+    exponent: Double, seed: Long) extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 

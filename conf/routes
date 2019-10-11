@@ -1,6 +1,7 @@
 GET  /ajax/long-poll com.lynxanalytics.biggraph.serving.ProductionJsonServer.longPoll
 POST /ajax/spark-cancel-jobs com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkCancelJobs
 POST /ajax/restartApplication com.lynxanalytics.biggraph.serving.ProductionJsonServer.restartApplication
+GET  /getThreadDump com.lynxanalytics.biggraph.serving.ProductionJsonServer.getThreadDump
 POST /ajax/jsError     com.lynxanalytics.biggraph.serving.ProductionJsonServer.jsError
 
 POST /ajax/createDirectory         com.lynxanalytics.biggraph.serving.ProductionJsonServer.createDirectory
@@ -48,10 +49,6 @@ POST /ajax/exportSQLQueryToJdbc    com.lynxanalytics.biggraph.serving.Production
 
 POST /ajax/importBox         com.lynxanalytics.biggraph.serving.ProductionJsonServer.importBox
 
-GET  /ajax/demoModeStatus    com.lynxanalytics.biggraph.serving.ProductionJsonServer.demoModeStatus
-GET  /ajax/enterDemoMode     com.lynxanalytics.biggraph.serving.ProductionJsonServer.enterDemoMode
-GET  /ajax/exitDemoMode      com.lynxanalytics.biggraph.serving.ProductionJsonServer.exitDemoMode
-
 GET  /ajax/getUsers            com.lynxanalytics.biggraph.serving.ProductionJsonServer.getUsers
 POST /ajax/changeUserPassword  com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeUserPassword
 POST /ajax/changeUser          com.lynxanalytics.biggraph.serving.ProductionJsonServer.changeUser
@@ -75,6 +72,7 @@ POST /forceLogRotate   com.lynxanalytics.biggraph.serving.ProductionJsonServer.f
 POST /passwordLogin    com.lynxanalytics.biggraph.serving.ProductionJsonServer.passwordLogin
 POST /googleLogin      com.lynxanalytics.biggraph.serving.ProductionJsonServer.googleLogin
 POST /signedUsernameLogin com.lynxanalytics.biggraph.serving.ProductionJsonServer.signedUsernameLogin
+GET  /signedUsernameLogin com.lynxanalytics.biggraph.serving.ProductionJsonServer.signedUsernameLogin
 POST /logout           com.lynxanalytics.biggraph.serving.ProductionJsonServer.logout
 
 GET /sparkHealthCheck  com.lynxanalytics.biggraph.serving.ProductionJsonServer.sparkHealthCheck

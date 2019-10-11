@@ -21,7 +21,7 @@ object Coloring extends OpFromJson {
 }
 import Coloring._
 case class Coloring()
-  extends TypedMetaGraphOp[Input, Output] {
+  extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 

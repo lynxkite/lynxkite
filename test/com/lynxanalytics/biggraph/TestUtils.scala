@@ -50,7 +50,6 @@ object TestUtils {
   }
 
   def computeProgress(dataManager: DataManager, entity: MetaGraphEntity): Double = {
-    dataManager.computeProgress(entity)
     dataManager.waitAllFutures()
     dataManager.computeProgress(entity)
   }
