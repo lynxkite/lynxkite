@@ -239,7 +239,7 @@ angular.module('biggraph').directive('sqlBox', function($rootScope, $window, $q,
           if (result && result.download) {
             // Fire off the download.
             $window.location =
-              '/downloadFile?q=' + encodeURIComponent(JSON.stringify(result.download));
+              'downloadFile?q=' + encodeURIComponent(JSON.stringify(result.download));
           }
           if (scope.exportFormat === 'table' || scope.exportFormat === 'view') {
             $rootScope.$broadcast('new table or view', scope);
