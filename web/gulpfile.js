@@ -91,6 +91,7 @@ gulp.task('html', gulp.series('css', 'js', function html() {
     .pipe($.inject(css, { ignorePath: '.tmp' }))
     .pipe($.inject(js, { ignorePath: '.tmp' }))
     .pipe(gulp.dest('.tmp'))
+    .pipe($.touchCmd())
     .pipe(browserSync.stream());
 }));
 
