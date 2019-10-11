@@ -385,6 +385,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         sideIndices.push(i);
       }
     }
+    // Drop 3D views. We will either create new ones or go with 2D.
+    const oldRenderers = this.rootElement.children('renderer');
+    if (oldRenderers.length > 0) {
+      oldRenderers.scope().$destroy();
+      oldRenderers.remove();
+    }
     let side;
     for (let i = 0; i < data.edgeBundles.length; ++i) {
       const e = data.edgeBundles[i];
@@ -403,11 +409,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           scope.layout3D = e.layout3D;
           scope.width = 2 * halfColumnWidth;
           scope.left = idx * 2 * halfColumnWidth;
-          const oldRenderers = this.rootElement.children('renderer');
-          if (oldRenderers.length > 0) {
-            oldRenderers.scope().$destroy();
-            oldRenderers.remove();
-          }
           const r = $compile('<renderer></renderer>')(scope);
           this.svg.after(r);
           continue;
