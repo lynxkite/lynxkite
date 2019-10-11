@@ -36,7 +36,6 @@ go get -u github.com/golang/protobuf/protoc-gen-go
 PATH=$GOPATH/bin:$PATH protoc $PROTO_SOURCE_DIR/$PROTO_SOURCE_FILE --go_out=plugins=grpc,import_path=$PROTO_SOURCE_DIR:.
 
 # Compile Sphynx server.
-SERVER=$GOPATH/bin/server
 cd $GOPATH/src/$GO_PKG
 go fmt $GO_PKG/server
 go get -v $GO_PKG/server
