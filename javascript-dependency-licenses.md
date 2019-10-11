@@ -446,6 +446,7 @@
 │  ├─ gulp-rev-replace@0.4.4
 │  ├─ gulp-rev@9.0.0
 │  ├─ gulp-size@3.0.0
+│  ├─ gulp-touch-cmd@0.0.1
 │  ├─ gulp-uglify-es@1.0.4
 │  ├─ gulp-useref@3.1.6
 │  ├─ gulp@4.0.0
