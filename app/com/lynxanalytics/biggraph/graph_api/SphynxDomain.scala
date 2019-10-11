@@ -3,10 +3,6 @@ package com.lynxanalytics.biggraph.graph_api
 import com.lynxanalytics.biggraph.graph_util
 
 class SphynxMemory(host: String, port: Int) extends Domain {
-  implicit val executionContext =
-    ThreadUtil.limitedExecutionContext(
-      "SphynxDomain",
-      maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
 
   val client = new SphynxClient(host, port)
 
@@ -25,7 +21,6 @@ class SphynxMemory(host: String, port: Int) extends Domain {
   }
 
   override def get[T](scalar: Scalar[T]): SafeFuture[T] = {
-    val e = new Exception("Sphynx is lazy now, won't get you any scalars.")
     ???
   }
 
