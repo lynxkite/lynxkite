@@ -2588,6 +2588,14 @@ gulp-sourcemaps@2.6.5:
     strip-bom-string "1.X"
     through2 "2.X"
 
+gulp-touch-cmd@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/gulp-touch-cmd/-/gulp-touch-cmd-0.0.1.tgz#73aebd040f5cbfbf567a06e3fdb7976ef0fb88cc"
+  integrity sha1-c669BA9cv79Wegbj/beXbvD7iMw=
+  dependencies:
+    graceful-fs "^4.1.2"
+    through2 "^2.0.3"
+
 gulp-uglify-es@1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/gulp-uglify-es/-/gulp-uglify-es-1.0.4.tgz#59ee0d5ea98c1e09c6eaa58c8b018a6ad33f48d4"
