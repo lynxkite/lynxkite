@@ -27,7 +27,7 @@ object FastRandomEdgeBundle extends OpFromJson {
 }
 import FastRandomEdgeBundle._
 case class FastRandomEdgeBundle(seed: Int, averageDegree: Double)
-  extends TypedMetaGraphOp[Input, Output] {
+  extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 

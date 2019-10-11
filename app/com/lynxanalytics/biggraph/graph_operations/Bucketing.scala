@@ -39,7 +39,7 @@ object StringBucketing extends OpFromJson {
   def fromJson(j: JsValue) = StringBucketing()
 }
 case class StringBucketing()
-  extends TypedMetaGraphOp[VertexAttributeInput[String], StringBucketing.Output] {
+  extends SparkOperation[VertexAttributeInput[String], StringBucketing.Output] {
   import StringBucketing._
   override val isHeavy = true
   @transient override lazy val inputs = new VertexAttributeInput[String]
@@ -83,7 +83,7 @@ object DoubleBucketing extends OpFromJson {
     DoubleBucketing((j \ "bucketWidth").as[Double], (j \ "overlap").as[Boolean])
 }
 case class DoubleBucketing(bucketWidth: Double, overlap: Boolean)
-  extends TypedMetaGraphOp[DoubleBucketing.Input, DoubleBucketing.Output] {
+  extends SparkOperation[DoubleBucketing.Input, DoubleBucketing.Output] {
   import DoubleBucketing._
   override val isHeavy = true
   @transient override lazy val inputs = new DoubleBucketing.Input
@@ -140,7 +140,7 @@ object IntervalBucketing extends OpFromJson {
     IntervalBucketing((j \ "bucketWidth").as[Double], (j \ "overlap").as[Boolean])
 }
 case class IntervalBucketing(bucketWidth: Double, overlap: Boolean)
-  extends TypedMetaGraphOp[IntervalBucketing.Input, IntervalBucketing.Output] {
+  extends SparkOperation[IntervalBucketing.Input, IntervalBucketing.Output] {
   import IntervalBucketing._
   override val isHeavy = true
   @transient override lazy val inputs = new IntervalBucketing.Input

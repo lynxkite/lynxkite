@@ -74,7 +74,7 @@ object ClusteringCoefficient extends OpFromJson {
   def fromJson(j: JsValue) = ClusteringCoefficient()
 }
 import ClusteringCoefficient._
-case class ClusteringCoefficient() extends TypedMetaGraphOp[GraphInput, Output] {
+case class ClusteringCoefficient() extends SparkOperation[GraphInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
 

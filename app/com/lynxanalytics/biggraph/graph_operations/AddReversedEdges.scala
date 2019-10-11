@@ -31,7 +31,7 @@ object AddReversedEdges extends OpFromJson {
     addIsNewAttrParameter.fromJson(j))
 }
 import AddReversedEdges._
-case class AddReversedEdges(addIsNewAttr: Boolean = false) extends TypedMetaGraphOp[Input, Output] {
+case class AddReversedEdges(addIsNewAttr: Boolean = false) extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 

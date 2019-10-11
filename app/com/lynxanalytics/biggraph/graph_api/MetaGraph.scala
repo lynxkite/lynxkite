@@ -487,16 +487,6 @@ object MetaGraphOp {
   val UTF8 = java.nio.charset.Charset.forName("UTF-8")
 }
 trait MetaGraphOp extends Serializable with ToJson {
-  // An operation is heavy if it is faster to load its results than it is to recalculate them.
-  // Heavy operation outputs are written out and loaded back on completion.
-  val isHeavy: Boolean = false
-  val neverSerialize: Boolean = false
-  assert(!isHeavy || !neverSerialize, "$this cannot be heavy and never serialize at the same time")
-  // If a heavy operation hasCustomSaving, it can just write out some or all of its outputs
-  // instead of putting them in the OutputBuilder in execute().
-  val hasCustomSaving: Boolean = false
-  assert(!hasCustomSaving || isHeavy, "$this cannot have custom saving if it is not heavy.")
-
   def inputSig: InputSignature
   def outputMeta(instance: MetaGraphOperationInstance): MetaDataSetProvider
 
@@ -525,12 +515,6 @@ trait TypedMetaGraphOp[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider
   def inputs: IS = ???
   def inputSig: InputSignature = inputs.inputSignature
   def outputMeta(instance: MetaGraphOperationInstance): OMDS
-
-  def execute(
-    inputDatas: DataSet,
-    outputMeta: OMDS,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit
 }
 
 /*
@@ -560,8 +544,6 @@ trait MetaGraphOperationInstance {
   val outputs: MetaDataSet
 
   def entities: MetaDataSet = inputs ++ outputs
-
-  def run(inputDatas: DataSet, runtimeContext: RuntimeContext): Map[UUID, EntityData]
 
   override def toString = s"$gUID ($operation)"
   lazy val toStringStruct: StringStruct = {
@@ -603,71 +585,7 @@ case class TypedOperationInstance[IS <: InputSignatureProvider, OMDS <: MetaData
     inputs: MetaDataSet) extends MetaGraphOperationInstance {
   val result: OMDS = operation.outputMeta(this)
   val outputs: MetaDataSet = result.metaDataSet
-  def run(inputDatas: DataSet, runtimeContext: RuntimeContext): Map[UUID, EntityData] = {
-    val outputBuilder = new OutputBuilder(this)
-    operation.execute(inputDatas, result, outputBuilder, runtimeContext)
-    outputBuilder.dataMap.toMap
-  }
   override lazy val hashCode = gUID.hashCode
-}
-
-sealed trait EntityData {
-  val entity: MetaGraphEntity
-  def gUID = entity.gUID
-}
-sealed trait EntityRDDData[T] extends EntityData {
-  val rdd: spark.rdd.RDD[(ID, T)]
-  val count: Option[Long]
-  def cached: EntityRDDData[T]
-  rdd.setName("RDD[%d]/%d of %s GUID[%s]".format(rdd.id, rdd.partitions.size, entity, gUID))
-}
-class VertexSetData(
-    val entity: VertexSet,
-    val rdd: VertexSetRDD,
-    val count: Option[Long] = None) extends EntityRDDData[Unit] {
-  val vertexSet = entity
-  def cached = new VertexSetData(entity, rdd.copyWithAncestorsCached, count)
-}
-
-class EdgeBundleData(
-    val entity: EdgeBundle,
-    val rdd: EdgeBundleRDD,
-    val count: Option[Long] = None) extends EntityRDDData[Edge] {
-  val edgeBundle = entity
-  def cached = new EdgeBundleData(entity, rdd.copyWithAncestorsCached, count)
-}
-
-class HybridBundleData(
-    val entity: HybridBundle,
-    val rdd: HybridBundleRDD,
-    val count: Option[Long] = None) extends EntityRDDData[ID] {
-  val hybridBundle = entity
-  def cached = new HybridBundleData(entity, rdd.persist(spark.storage.StorageLevel.MEMORY_ONLY), count)
-}
-
-class AttributeData[T](
-    val entity: Attribute[T],
-    val rdd: AttributeRDD[T],
-    val count: Option[Long] = None)
-  extends EntityRDDData[T] with RuntimeSafeCastable[T, AttributeData] {
-  val attribute = entity
-  val typeTag = attribute.typeTag
-  def cached = new AttributeData[T](entity, rdd.copyWithAncestorsCached, count)
-}
-
-class ScalarData[T](
-    val entity: Scalar[T],
-    val value: T)
-  extends EntityData with RuntimeSafeCastable[T, ScalarData] {
-  val scalar = entity
-  val typeTag = scalar.typeTag
-}
-
-class TableData(
-    val entity: Table,
-    val df: spark.sql.DataFrame)
-  extends EntityData {
-  val table = entity
 }
 
 // A bundle of metadata types.
@@ -734,89 +652,4 @@ object MetaDataSet {
       scalars = all.collect { case (k, v: Scalar[_]) => (k, v) }.toMap,
       tables = all.collect { case (k, v: Table) => (k, v) })
   }
-}
-
-// A bundle of data types.
-case class DataSet(
-    vertexSets: Map[Symbol, VertexSetData] = Map(),
-    edgeBundles: Map[Symbol, EdgeBundleData] = Map(),
-    hybridBundles: Map[Symbol, HybridBundleData] = Map(),
-    attributes: Map[Symbol, AttributeData[_]] = Map(),
-    scalars: Map[Symbol, ScalarData[_]] = Map(),
-    tables: Map[Symbol, TableData] = Map()) {
-  def metaDataSet = MetaDataSet(
-    vertexSets.mapValues(_.vertexSet),
-    edgeBundles.mapValues(_.edgeBundle),
-    hybridBundles.mapValues(_.hybridBundle),
-    attributes.mapValues(_.attribute),
-    scalars.mapValues(_.scalar),
-    tables.mapValues(_.table))
-
-  def all: Map[Symbol, EntityData] =
-    vertexSets ++ edgeBundles ++ hybridBundles ++ attributes ++ scalars ++ tables
-}
-
-object DataSet {
-  def apply(all: Map[Symbol, EntityData]): DataSet = {
-    DataSet(
-      vertexSets = all.collect { case (k, v: VertexSetData) => (k, v) },
-      edgeBundles = all.collect { case (k, v: EdgeBundleData) => (k, v) },
-      hybridBundles = all.collect { case (k, v: HybridBundleData) => (k, v) },
-      attributes = all.collect { case (k, v: AttributeData[_]) => (k, v) }.toMap,
-      scalars = all.collect { case (k, v: ScalarData[_]) => (k, v) }.toMap,
-      tables = all.collect { case (k, v: TableData) => (k, v) })
-  }
-}
-
-class OutputBuilder(val instance: MetaGraphOperationInstance) {
-  val outputMeta: MetaDataSet = instance.outputs
-
-  def addData(data: EntityData): Unit = {
-    val gUID = data.gUID
-    val entity = data.entity
-    // Check that it's indeed a known output.
-    assert(
-      outputMeta.all(entity.name).gUID == entity.gUID,
-      s"$entity is not an output of $instance")
-    internalDataMap(gUID) = data
-  }
-
-  def apply(vertexSet: VertexSet, rdd: VertexSetRDD): Unit = {
-    addData(new VertexSetData(vertexSet, rdd))
-  }
-
-  def apply(edgeBundle: EdgeBundle, rdd: EdgeBundleRDD): Unit = {
-    addData(new EdgeBundleData(edgeBundle, rdd))
-    if (edgeBundle.autogenerateIdSet) {
-      addData(new VertexSetData(edgeBundle.idSet, rdd.mapValues(_ => ())))
-    }
-  }
-
-  def apply(hybridBundle: HybridBundle, rdd: HybridBundleRDD): Unit = {
-    addData(new HybridBundleData(hybridBundle, rdd))
-  }
-
-  def apply[T](attribute: Attribute[T], rdd: AttributeRDD[T]): Unit = {
-    addData(new AttributeData(attribute, rdd))
-  }
-
-  def apply[T](scalar: Scalar[T], value: T): Unit = {
-    addData(new ScalarData(scalar, value))
-  }
-
-  def apply(table: Table, df: spark.sql.DataFrame): Unit = {
-    import com.lynxanalytics.biggraph.spark_util.SQLHelper
-    SQLHelper.assertTableHasCorrectSchema(table, df.schema)
-    addData(new TableData(table, df))
-  }
-
-  def dataMap() = {
-    if (!instance.operation.hasCustomSaving) {
-      val missing = outputMeta.all.values.filter(x => !internalDataMap.contains(x.gUID))
-      assert(missing.isEmpty, s"Output data missing for: $missing")
-    }
-    internalDataMap
-  }
-
-  private val internalDataMap = mutable.Map[UUID, EntityData]()
 }

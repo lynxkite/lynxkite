@@ -22,7 +22,7 @@ object SetOverlap extends OpFromJson {
   def fromJson(j: JsValue) = SetOverlap((j \ "minOverlap").as[Int])
 }
 import SetOverlap._
-case class SetOverlap(minOverlap: Int) extends TypedMetaGraphOp[Input, Output] {
+case class SetOverlap(minOverlap: Int) extends SparkOperation[Input, Output] {
   // Set-valued attributes are represented as sorted Array[ID].
   type Set = Array[ID]
   // When dealing with multiple sets, they are identified by their VertexIds.

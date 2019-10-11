@@ -12,12 +12,13 @@ import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 object SafeFuture {
   def apply[T](func: => T)(implicit ec: ExecutionContext) =
-    new SafeFuture(unwrapException(Future { wrapException(func) }))
+    new SafeFuture(unwrapException(Future { wrapException(func) }), Seq())
 
-  def successful[T](value: T) = new SafeFuture(Future.successful(value))
+  def successful[T](value: T) = new SafeFuture(Future.successful(value), Seq())
+  def failed[T](exception: Throwable) = new SafeFuture(Future.failed[T](exception), Seq())
 
-  def sequence[T](s: Seq[SafeFuture[T]])(implicit ec: ExecutionContext) =
-    new SafeFuture(Future.sequence(s.map(_.future)))
+  def sequence[T](s: Iterable[SafeFuture[T]])(implicit ec: ExecutionContext) =
+    new SafeFuture(Future.sequence(s.map(_.future)), s.toSeq)
 
   private case class Wrapper(t: Throwable) extends Exception(t)
 
@@ -42,15 +43,15 @@ object SafeFuture {
     p.future
   }
 }
-class SafeFuture[+T] private (val future: Future[T]) {
+class SafeFuture[+T] private (val future: Future[T], val dependencies: Seq[SafeFuture[_]]) {
   def map[U](func: T => U)(implicit ec: ExecutionContext) =
-    new SafeFuture(SafeFuture.unwrapException(future.map(SafeFuture.wrapException(func))))
+    new SafeFuture(SafeFuture.unwrapException(future.map(SafeFuture.wrapException(func))), Seq(this))
 
   def flatMap[U](func: T => SafeFuture[U])(implicit ec: ExecutionContext) =
-    new SafeFuture(future.flatMap(t => func(t).future))
+    new SafeFuture(future.flatMap(t => func(t).future), Seq(this))
 
   def andThen[U](pf: PartialFunction[Try[T], U])(implicit ec: ExecutionContext) =
-    new SafeFuture(future.andThen(pf))
+    new SafeFuture(future.andThen(pf), Seq(this))
 
   def awaitResult(atMost: duration.Duration) = Await.result(future, atMost)
   def awaitReady(atMost: duration.Duration): Unit = Await.ready(future, atMost)
@@ -62,10 +63,30 @@ class SafeFuture[+T] private (val future: Future[T]) {
   def foreach[U](f: T => U)(implicit ec: ExecutionContext) =
     future.foreach(f)
 
-  def value = future.value
+  def value: Option[Try[T]] = future.value
+
+  def get = value.get.get
+
+  def as[T] = this.asInstanceOf[SafeFuture[T]]
 
   def isCompleted = future.isCompleted
 
-  def zip[U](other: SafeFuture[U]): SafeFuture[(T, U)] =
-    new SafeFuture(future.zip(other.future))
+  def hasFailed: Boolean = {
+    value match {
+      case None => false
+      case Some(x: Try[T]) => x.isFailure
+    }
+  }
+
+  // Returns the set of futures leading up to and including this future.
+  def dependencySet: Set[SafeFuture[_]] = {
+    val visited = collection.mutable.Set[SafeFuture[_]](this)
+    val queue = collection.mutable.ListBuffer[SafeFuture[_]](this)
+    for (f <- queue) {
+      val next = f.dependencies.toSet.diff(visited)
+      queue ++= next
+      visited ++= next
+    }
+    visited.toSet
+  }
 }

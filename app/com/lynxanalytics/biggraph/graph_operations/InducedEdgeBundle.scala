@@ -75,7 +75,7 @@ case class InducedRDD[T: ClassTag](rdd: RDD[T], partitioner: Partitioner) {
 
 import InducedEdgeBundle._
 case class InducedEdgeBundle(induceSrc: Boolean = true, induceDst: Boolean = true)
-  extends TypedMetaGraphOp[Input, Output] {
+  extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input(induceSrc, induceDst)
 

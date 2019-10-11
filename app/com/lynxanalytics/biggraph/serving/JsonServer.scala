@@ -11,7 +11,6 @@ import scala.concurrent.Future
 import com.lynxanalytics.biggraph.BigGraphProductionEnvironment
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.controllers._
-import com.lynxanalytics.biggraph.graph_api.BuiltIns
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.SoftHashMap
 import com.lynxanalytics.biggraph.graph_util.{ HadoopFile, KiteInstanceInfo, LoggedEnvironment, Timestamp }
@@ -21,8 +20,8 @@ import com.lynxanalytics.biggraph.serving
 import org.apache.spark.sql.types.{ StructField, StructType }
 import play.api.mvc.AnyContent
 import play.api.mvc.Request
-
-import scala.collection.mutable
+import play.api.mvc.ResponseHeader
+import play.api.libs.iteratee.Enumerator
 
 abstract class JsonServer extends mvc.Controller {
   def testMode = play.api.Play.maybeApplication == None
@@ -338,8 +337,6 @@ object FrontendJson {
   implicit val wSQLExportToFileResult = json.Json.writes[SQLExportToFileResult]
   implicit val wImportBoxResponse = json.Json.writes[ImportBoxResponse]
 
-  implicit val wDemoModeStatusResponse = json.Json.writes[DemoModeStatusResponse]
-
   implicit val rChangeUserPasswordRequest = json.Json.reads[ChangeUserPasswordRequest]
   implicit val rChangeUserRequest = json.Json.reads[ChangeUserRequest]
   implicit val rDeleteUserRequest = json.Json.reads[DeleteUserRequest]
@@ -380,7 +377,7 @@ object ProductionJsonServer extends JsonServer {
       try {
         val size = upload.ref.file.length
         log.info(s"upload: $user ${upload.filename} ($size bytes)")
-        val dataRepo = BigGraphProductionEnvironment.dataManager.repositoryPath
+        val dataRepo = BigGraphProductionEnvironment.sparkDomain.repositoryPath
         val baseName = upload.filename.replace(" ", "_")
         val tmpName = s"$baseName.$Timestamp"
         val tmpFile = dataRepo / "tmp" / tmpName
@@ -492,6 +489,17 @@ object ProductionJsonServer extends JsonServer {
     // Docker or Supervisor or a while loop is expected to start us up again after we exit.
     System.exit(1)
   }
+
+  def getThreadDump = {
+    action(parse.anyContent) { (user, request) =>
+      assert(user.isAdmin, "Thread dump is restricted to administrator users.")
+      log.info(s"GET ${request.path}")
+      val header = ResponseHeader(OK)
+      val output = ThreadDumper.get().getBytes("utf-8")
+      mvc.Result(header, Enumerator(output))
+    }
+  }
+
   def sparkHealthCheck = healthCheck(sparkClusterController.checkSparkOperational)
 
   val drawingController = new GraphDrawingController(BigGraphProductionEnvironment)
@@ -506,11 +514,6 @@ object ProductionJsonServer extends JsonServer {
     workspaceController.getOperation(user, request).asInstanceOf[TriggerableOperation]
       .trigger(workspaceController, drawingController)
   }
-
-  val demoModeController = new DemoModeController(BigGraphProductionEnvironment)
-  def demoModeStatus = jsonGet(demoModeController.demoModeStatus)
-  def enterDemoMode = jsonGet(demoModeController.enterDemoMode)
-  def exitDemoMode = jsonGet(demoModeController.exitDemoMode)
 
   val userController = new UserController(BigGraphProductionEnvironment)
   val passwordLogin = userController.passwordLogin
@@ -569,7 +572,7 @@ object ProductionJsonServer extends JsonServer {
     getUser(request) match {
       case None => Unauthorized
       case Some(user) =>
-        log.info(s"$user GET ${request.path}")
+        log.info(s"$user ${request.method} ${request.path}")
         if (request.method == "POST") {
           import scala.sys.process._
           import java.nio.file._

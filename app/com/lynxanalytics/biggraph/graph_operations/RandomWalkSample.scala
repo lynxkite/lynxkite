@@ -42,7 +42,7 @@ object RandomWalkSample extends OpFromJson {
 import RandomWalkSample._
 case class RandomWalkSample(numOfStartPoints: Int, numOfWalksFromOnePoint: Int,
     walkAbortionProbability: Double, seed: Int)
-  extends TypedMetaGraphOp[Input, Output] {
+  extends SparkOperation[Input, Output] {
   assert(
     walkAbortionProbability < 1.0,
     "The probability of aborting a walk at RandomWalkSample must be smaller than 1.0")

@@ -32,7 +32,7 @@ object CombineSegmentations extends OpFromJson {
 }
 import CombineSegmentations._
 case class CombineSegmentations()
-  extends TypedMetaGraphOp[Input, Output] {
+  extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

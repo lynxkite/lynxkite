@@ -14,3 +14,9 @@ See <<yarn-memory-limit>> for the fix.
 This can be due to many reasons such as various logs, Spark shuffle files, the LynxKite data files
 etc. See <<configure-directories>> for more details and fixes.
 
+### LynxKite UI becomes very slow and unresponsive.
+
+This can be happen due to a huge set of possible reasons. Logged in administrator users can get a thread dump
+that reflects LynxKite's internal state via the url ``<LynxKiteUrl>/getThreadDump`.
+(E.g., `http://localhost:2200/getThreadDump`). This will come in handy when debugging the issue.
+

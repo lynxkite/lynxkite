@@ -228,7 +228,7 @@ private object CreateSomeGraph extends OpFromJson {
   }
 }
 private case class CreateSomeGraph(arg: String = "not set")
-  extends TypedMetaGraphOp[CreateSomeGraph.Input, CreateSomeGraph.Output] {
+  extends SparkOperation[CreateSomeGraph.Input, CreateSomeGraph.Output] {
   import CreateSomeGraph._
 
   @transient override lazy val inputs = new Input()
@@ -259,7 +259,7 @@ private object FromVertexAttr extends OpFromJson {
   def fromJson(j: play.api.libs.json.JsValue) = FromVertexAttr()
 }
 private case class FromVertexAttr()
-  extends TypedMetaGraphOp[FromVertexAttr.Input, FromVertexAttr.Output] {
+  extends SparkOperation[FromVertexAttr.Input, FromVertexAttr.Output] {
   import FromVertexAttr._
 
   @transient override lazy val inputs = new Input()

@@ -26,7 +26,7 @@ object ReduceDimensions extends OpFromJson {
 }
 
 case class ReduceDimensions(numFeatures: Int)
-  extends TypedMetaGraphOp[ReduceDimensions.Input, ReduceDimensions.Output] {
+  extends SparkOperation[ReduceDimensions.Input, ReduceDimensions.Output] {
   import ReduceDimensions._
   @transient override lazy val inputs = new Input(numFeatures)
   def outputMeta(instance: MetaGraphOperationInstance) = {
@@ -40,7 +40,7 @@ case class ReduceDimensions(numFeatures: Int)
     output: OutputBuilder,
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val sqlContext = rc.dataManager.newSQLContext()
+    val sqlContext = rc.sparkDomain.newSQLContext()
     import sqlContext.implicits._
 
     val rddArray = inputs.features.toArray.map { v => v.rdd }

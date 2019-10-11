@@ -32,8 +32,8 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
 
   def getBackupSettings(user: serving.User, req: serving.Empty): BackupSettings = {
     assert(user.isAdmin, "Only admins can do backup.")
-    val dataDirPath = environment.dataManager.repositoryPath.resolvedName
-    val ephemeralDataDirPath = environment.dataManager.ephemeralPath.map(_.resolvedName)
+    val dataDirPath = environment.sparkDomain.repositoryPath.resolvedName
+    val ephemeralDataDirPath = environment.sparkDomain.ephemeralPath.map(_.resolvedName)
     BackupSettings(
       dataDir = dataDirPath,
       ephemeralDataDir = ephemeralDataDirPath,
@@ -47,7 +47,7 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
     val ts = new SimpleDateFormat("YYYYMMddHHmmss").format(Calendar.getInstance().getTime())
 
     val dm = environment.dataManager
-    val dst = dm.repositoryPath + "metadata_backup/" + ts + "/"
+    val dst = environment.sparkDomain.repositoryPath + "metadata_backup/" + ts + "/"
     dm.synchronized {
       dm.waitAllFutures()
       sparkClusterController.setForceReportHealthy(true)
@@ -76,7 +76,7 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
   }
 
   private def copyEphemeralNoSync(): Unit = {
-    val dm = environment.dataManager
+    val dm = environment.sparkDomain
     for (ephemeralPath <- dm.ephemeralPath) {
       log.info(s"Listing contents of $ephemeralPath...")
       val srcFiles = lsRec(ephemeralPath)
@@ -111,7 +111,7 @@ class CopyController(environment: BigGraphEnvironment, sparkClusterController: S
     dm.waitAllFutures()
     dm.synchronized {
       dm.waitAllFutures() // We don't want other operations to be running during s3copy.
-      // Health checks would fail anyways because we are locking too long on dataManager here.
+      // Health checks would fail anyways because we are locking too long on sparkDomain here.
       // So we turn them off temporarily.
       sparkClusterController.setForceReportHealthy(true)
       try {

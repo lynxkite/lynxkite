@@ -70,7 +70,7 @@ import LogisticRegressionModelTrainer._
 case class LogisticRegressionModelTrainer(
     maxIter: Int,
     labelName: String,
-    featureNames: List[String]) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
+    featureNames: List[String]) extends SparkOperation[Input, Output] with ModelMeta {
   val isClassification = true
   override val isBinary = true
   override val generatesProbability = true
@@ -90,7 +90,7 @@ case class LogisticRegressionModelTrainer(
     output: OutputBuilder,
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val sqlContext = rc.dataManager.newSQLContext()
+    val sqlContext = rc.sparkDomain.newSQLContext()
     import sqlContext.implicits._
 
     val rddArray = inputs.features.toArray.map(_.rdd)

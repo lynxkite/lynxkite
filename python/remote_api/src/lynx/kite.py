@@ -29,16 +29,21 @@ from collections import deque, defaultdict, Counter
 from typing import (Dict, List, Union, Callable, Any, Tuple, Iterable, Set, NewType, Iterator,
                     TypeVar, Optional, Collection)
 import requests
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory, mkstemp
 import textwrap
+import shutil
 
 
 if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 6):
   raise Exception('At least Python version 3.6 is needed!')
 
 
+def random_filename() -> str:
+  return ''.join(random.choices('0123456789ABCDEF', k=16))
+
+
 def _random_ws_folder() -> str:
-  return 'tmp_workspaces/{}'.format(''.join(random.choices('0123456789ABCDEF', k=16)))
+  return 'tmp_workspaces/{}'.format(random_filename())
 
 
 def _normalize_path(path: str) -> str:
@@ -155,8 +160,14 @@ def subworkspace(fn: Callable):
 
     my_func(lk.createExampleGraph()).trigger()
   '''
+  signature = inspect.signature(fn, follow_wrapped=False)
+  secs = [p.name for p in signature.parameters.values()
+          if p.default is SideEffectCollector.AUTO]
+  assert len(secs) <= 1, f'More than one SideEffectCollector parameters found for {fn}'
+
   @functools.wraps(fn)
-  def wrapper(*args, _ws_params: List[WorkspaceParameter] = [], **kwargs):
+  def wrapper(*args, _ws_params: List[WorkspaceParameter] = [], _ws_name: str = None, **kwargs):
+    # create a new signature on every call since we will bind different arguments per call
     signature = inspect.signature(fn, follow_wrapped=False)
     # Separate workspace parameters from the normal Python parameters.
     ws_param_bindings = {wp.name: kwargs[wp.name] for wp in _ws_params if wp.name in kwargs}
@@ -178,15 +189,12 @@ def subworkspace(fn: Callable):
         return b
       else:
         return value
-    sec = SideEffectCollector()
-    secs = [p.name for p in signature.parameters.values()
-            if p.default is SideEffectCollector.AUTO]
-    assert len(secs) <= 1, f'More than one SideEffectCollector parameters found for {fn}'
     manual_box_id = kwargs.pop('_id', None)
     bound = signature.bind(*args, **kwargs)
     for k in bound.arguments:
       assert k not in secs, f'Explicitly set SideEffectCollector parameter for {fn}'
     bound = map_args(signature, bound, map_param)
+    sec = SideEffectCollector()
     if secs:
       bound.arguments[secs[0]] = sec
 
@@ -197,11 +205,34 @@ def subworkspace(fn: Callable):
         side_effect_paths=list(sec.all_triggerables()),
         input_boxes=input_boxes,
         ws_parameters=_ws_params,
-        custom_box_id_base=fn.__name__)
+        custom_box_id_base=_ws_name if _ws_name is not None else fn.__name__)
 
     # Return the custom box.
     return ws(*input_states, _id=manual_box_id, **ws_param_bindings)
+
+  # TODO: remove type ignore after https://github.com/python/mypy/issues/2087 is resolved
+  wrapper.has_sideeffect = bool(secs)  # type: ignore
   return wrapper
+
+
+def ws_name(name: str):
+  '''Specifies the name of the wrapped subworkspace.
+
+  Example use::
+
+    @ws_name('My nice workspace')
+    @subworkspace
+    def my_func(input1):
+      return input1.sql1(sql='select * from vertices')
+
+    my_func(lk.createExampleGraph())
+  '''
+  def decorator(fn: Callable):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+      return fn(*args, _ws_name=name, **kwargs)
+    return wrapper
+  return decorator
 
 
 def ws_param(name: str, default: str = '', description: str = ''):
@@ -301,7 +332,7 @@ class LynxKite:
         'importNeo4j']
     self._export_box_names: List[str] = [
         'exportToCSV', 'exportToJSON', 'exportToParquet',
-        'exportToJDBC', 'exportToORC']
+        'exportToJDBC', 'exportToORC', 'exportToHive']
     self._box_catalog = box_catalog  # TODO: create standard offline box catalog
 
   def home(self) -> str:
@@ -366,7 +397,7 @@ class LynxKite:
 
     if name.startswith('_'):  # To avoid infinite recursion in copy/deepcopy
       raise AttributeError()
-    elif not name in self.operation_names():
+    elif name not in self.operation_names():
       raise AttributeError('{} is not defined'.format(name))
     return f
 
@@ -834,7 +865,7 @@ class State:
 
     if name.startswith('_'):  # To avoid infinite recursion in copy/deepcopy
       raise AttributeError()
-    elif not name in self.operation_names():
+    elif name not in self.operation_names():
       raise AttributeError('{} is not defined on {}'.format(name, self))
     return f
 
@@ -934,6 +965,22 @@ class Placeholder:
     self.value = value
 
 
+def _fn_id(fn: Callable):
+  '''Creates a string id for a function which only depends on the fully qualified name of the callable.
+  This can be used as a replacement for BoxPath (unique box identity) in case of external boxes.
+  '''
+  return f'{fn.__module__}_{fn.__qualname__}'.replace('.', '_')
+
+
+def _is_lambda(f: Callable):
+  def LAMBDA(): return 0
+  return isinstance(f, type(LAMBDA)) and f.__name__ == LAMBDA.__name__
+
+
+def _is_instance_method(f: Callable):
+  return inspect.ismethod(f)
+
+
 def external(fn: Callable):
   '''Decorator for executing computation outside of LynxKite in a LynxKite workflow.
 
@@ -975,6 +1022,9 @@ def external(fn: Callable):
   environment. You can access the actual data and write code that is conditional on the data.
   '''
 
+  assert not _is_lambda(fn), 'You cannot use lambda functions for external computation.'
+  assert not _is_instance_method(fn), 'You cannot use instance methods for external computation.'
+
   @subworkspace
   @functools.wraps(fn)
   def wrapper(*args, sec=SideEffectCollector.AUTO, **kwargs):
@@ -982,7 +1032,7 @@ def external(fn: Callable):
 
     def add_placeholder(name, value):
       if isinstance(value, State):
-        exports.append(value.exportToParquet())
+        exports.append(value.exportToParquet(for_download="yes"))
         return Placeholder(len(exports) - 1)  # The corresponding input index.
       else:
         return value
@@ -994,7 +1044,7 @@ def external(fn: Callable):
     lk = exports[0].box.lk
     external = ExternalComputationBox(
         lk.box_catalog(), lk, exports,
-        {'snapshot_prefix': f'tmp_workspaces/tmp_snapshots/external-{id(fn)}-'},
+        {'snapshot_prefix': f'tmp_workspaces/tmp_snapshots/external-{_fn_id(fn)}-'},
         fn, bound)
 
     for export in exports:
@@ -1004,26 +1054,79 @@ def external(fn: Callable):
   return wrapper
 
 
+class _DownloadableLKTable:
+  def __init__(self, lk, lk_path, tmp_file):
+    self.lk = lk
+    self.lk_path = lk_path
+    self.tmp_file = tmp_file
+    self._is_downloaded = False
+
+  def download(self):
+    if not self._is_downloaded:
+      self._download()
+    return self.tmp_file.name
+
+  def _download(self):
+    data = bytes(self.lk.download_file(self.lk_path))
+    self.tmp_file.write(data)
+    self.tmp_file.flush()
+
+  def close(self):
+    self.tmp_file.close()
+
+
+class _LKTableContext:
+  '''A context manager for downloading LK tables to temporary local files.
+
+  Example usage:
+
+     with _LKTableContext(lk) as ctx:
+       t = ctx.table(lk_path)
+       local_path = t.download()
+       # Do some stuff with the local file while it is available.
+       ...
+     # After exiting the context the local file is closed and deleted.
+  '''
+
+  def __init__(self, lk):
+    self.lk = lk
+    self.lk_tables = []
+
+  def table(self, lk_path):
+    f = NamedTemporaryFile()
+    table = _DownloadableLKTable(self.lk, lk_path, f)
+    self.lk_tables.append(table)
+    return table
+
+  def __enter__(self):
+    return self
+
+  def __exit__(self, type, value, traceback):
+    for t in self.lk_tables:
+      t.close()
+
+
 class InputTable:
   '''Input tables for external computations (``@external``) are translated to these objects.'''
 
-  def __init__(self, lk, lk_path, full_path) -> None:
+  def __init__(self, lk, lk_table: _DownloadableLKTable) -> None:
     self._lk = lk
-    self.lk_path = lk_path
-    self.full_path = full_path
+    self.lk_table = lk_table
 
   def pandas(self):
     '''Returns a Pandas DataFrame.'''
-    import pandas as pd
-    return pd.read_parquet(self.full_path.replace('file:', ''))
+    import pandas
+    downloaded = self.lk_table.download()
+    return pandas.read_parquet(downloaded)
 
   def spark(self, spark):
     '''Takes a SparkSession as the argument and returns the table as a Spark DataFrame.'''
-    return spark.read.parquet(self.full_path)
+    downloaded = self.lk_table.download()
+    return spark.read.parquet(downloaded)
 
   def lk(self) -> State:
     '''Returns a LynxKite State.'''
-    return self._lk.importParquetNow(filename=self.lk_path)
+    return self._lk.importParquetNow(filename=self.lk_table.lk_path)
 
 
 def _is_spark_dataframe(x):
@@ -1034,24 +1137,12 @@ def _is_spark_dataframe(x):
   return isinstance(x, DataFrame)
 
 
-def _save_spark_dataframe(df, path):
-  df.write.parquet(path)
-
-
 def _is_pandas_dataframe(x):
   try:
     import pandas as pd
   except ImportError:
     return False  # It cannot be a Pandas DataFrame if we don't even have Pandas.
   return isinstance(x, pd.DataFrame)
-
-
-def _save_pandas_dataframe(df, path):
-  if path.startswith('file:'):
-    path = path.replace('file:', '')
-    os.makedirs(path, exist_ok=True)
-    path = path + '/part-0'
-  df.to_parquet(path)
 
 
 class Box:
@@ -1190,6 +1281,49 @@ class SingleOutputAtomicBox(AtomicBox, State):
     State.__init__(self, self, output_name)
 
 
+class DataFrameSender:
+  '''Class to send some dataframe to LynxKite in Parquet format.
+    We do this by saving the dataframe to a local Parquet file
+    and then upload it to LynxKite.
+  '''
+
+  def __init__(self, lk):
+    self.lk = lk
+
+  def save_dataframe_to_local_file(self, df, tmp_dir) -> str:
+    '''Saves the dataframe as a single Parquet file in tmpdir
+    Returns the actual path of the binary that was written.
+    '''
+    raise NotImplementedError('Must be implemented in the subclass')
+
+  def send(self, df):
+    '''Sends the local Parquet file to LynxKite'''
+    with TemporaryDirectory() as tmp_dir:
+      tmp_path = tmp_dir + '/parquet'
+      parquet_file = self.save_dataframe_to_local_file(df, tmp_path)
+      with open(parquet_file, "rb") as fin:
+        return self.lk.uploadParquetNow(fin.read())
+
+
+class PandasDataFrameSender(DataFrameSender):
+
+  def save_dataframe_to_local_file(self, df, path) -> str:
+    df.to_parquet(path)
+    return path
+
+
+class SparkDataFrameSender(DataFrameSender):
+
+  def save_dataframe_to_local_file(self, df, target_dir) -> str:
+    p = df.rdd.getNumPartitions()
+    if p != 1:
+      df = df.repartition(1)
+    df.write.parquet(target_dir)
+    parquet_files = [f for f in os.listdir(target_dir) if f.startswith('part-')]
+    assert len(parquet_files) == 1, f'Only one parquet file is expected here: {parquet_files}'
+    return target_dir + '/' + parquet_files[0]
+
+
 class ExternalComputationBox(SingleOutputAtomicBox):
   '''
   A box that runs external computation when triggered. Use it via ``@external``.
@@ -1207,51 +1341,46 @@ class ExternalComputationBox(SingleOutputAtomicBox):
   def _trigger_in_ws(self, wsname: str, box: str, stack: List[str]) -> None:
     lk = self.lk
 
-    # Find inputs.
-    resp = lk.get_workspace(wsname, stack)
-    boxes = {b.id: b for b in resp.workspace.boxes}
-    input_tables = [getattr(boxes[box].inputs, str(i + 1)) for i in range(len(self.inputs))]
-    states = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in resp.outputs}
-    input_states = [states[t.boxId, t.id] for t in input_tables]
-    export_results = [lk.get_export_result(s) for s in input_states]
-    snapshot_prefix = self.parameters['snapshot_prefix']
-    snapshot_guids = '-'.join(exp.result.id for exp in export_results)
+    tmpfile_list: List[str] = []
 
-    def get_input_table(name, value):
-      if isinstance(value, Placeholder):
-        path = export_results[value.value].parameters.path
-        return InputTable(lk, path, lk.get_prefixed_path(path).resolved)
+    with _LKTableContext(lk) as ctx:
+      # Find inputs.
+      resp = lk.get_workspace(wsname, stack)
+      boxes = {b.id: b for b in resp.workspace.boxes}
+      input_tables = [getattr(boxes[box].inputs, str(i + 1)) for i in range(len(self.inputs))]
+      states = {(o.boxOutput.boxId, o.boxOutput.id): o.stateId for o in resp.outputs}
+      input_states = [states[t.boxId, t.id] for t in input_tables]
+      export_results = [lk.get_export_result(s) for s in input_states]
+      snapshot_prefix = self.parameters['snapshot_prefix']
+      snapshot_guids = '-'.join(exp.result.id for exp in export_results)
+
+      def get_input_table(name, value):
+        if isinstance(value, Placeholder):
+          path = export_results[value.value].parameters.path
+          return InputTable(lk, ctx.table(path))
+        else:
+          return value
+
+      signature = inspect.signature(self.fn, follow_wrapped=False)
+      bound = map_args(signature, self.args, get_input_table)
+      # Run external function.
+      res = self.fn(*bound.args, **bound.kwargs)
+      # Import results.
+      if _is_spark_dataframe(res):
+        state = SparkDataFrameSender(self.lk).send(res)
+      elif _is_pandas_dataframe(res):
+        state = PandasDataFrameSender(self.lk).send(res)
+      elif isinstance(res, State):
+        state = res
+      elif isinstance(res, str):
+        assert '$' in res, f'The output path has must be a LynxKite prefixed path. Got: {res!r}'
+        state = lk.importParquetNow(filename=res)
+        # TODO: Delete imported file.
       else:
-        return value
+        raise Exception(
+            f'The return value from {self.fn.__name__}() is not a supported object. Got: {res!r}')
 
-    signature = inspect.signature(self.fn, follow_wrapped=False)
-    bound = map_args(signature, self.args, get_input_table)
-    # Run external function.
-    res = self.fn(*bound.args, **bound.kwargs)
-    # TODO: Delete exported files.
-    # Import results.
-    output_lk = f'DATA$/external-processing/output-{id(self.fn)}-{snapshot_guids}'
-    if _is_spark_dataframe(res):
-      output_path = lk.get_prefixed_path(output_lk).resolved
-      _save_spark_dataframe(res, output_path)
-      state = lk.importParquetNow(filename=output_lk)
-      # TODO: Delete imported file.
-    elif _is_pandas_dataframe(res):
-      output_path = lk.get_prefixed_path(output_lk).resolved
-      _save_pandas_dataframe(res, output_path)
-      state = lk.importParquetNow(filename=output_lk)
-      # TODO: Delete imported file.
-    elif isinstance(res, State):
-      state = res
-    elif isinstance(res, str):
-      assert '$' in res, f'The output path has must be a LynxKite prefixed path. Got: {res!r}'
-      state = lk.importParquetNow(filename=res)
-      # TODO: Delete imported file.
-    else:
-      raise Exception(
-          f'The return value from {self.fn.__name__}() is not a supported object. Got: {res!r}')
-
-    state.save_snapshot(snapshot_prefix + snapshot_guids)
+      state.save_snapshot(snapshot_prefix + snapshot_guids)
 
 
 class CustomBox(Box):
@@ -1694,7 +1823,6 @@ class Workspace:
     return _new_box(self._bc, self.lk, self, inputs=inputs, parameters=kwargs)
 
   def _trigger_box(self, box_to_trigger: BoxPath, full_path: str):
-    lk = self.lk
     box_ids = self._box_to_trigger_to_box_ids(box_to_trigger)
     # The last id is a "normal" box id, the rest are the custom box stack.
     box_to_trigger.base._trigger_in_ws(full_path, box_ids[-1], box_ids[:-1])

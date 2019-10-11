@@ -140,7 +140,7 @@ class EdgeAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperatio
 
   register(
     "Fill edge attributes with constant default values")(new ProjectTransformation(_) {
-      params += new DummyParam("text", "Attributes:", "Default values:")
+      params += new DummyParam("text", "The default values for each attribute:")
       params ++= project.edgeAttrList.map {
         attr => Param(s"fill_${attr.id}", attr.id)
       }

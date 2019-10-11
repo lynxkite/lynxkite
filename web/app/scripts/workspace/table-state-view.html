@@ -17,7 +17,13 @@
         </button>
       </span>
     </div>
-    <span id="table-sample-spinner" class="glyphicon glyphicon-cog" ng-show="!table.$resolved"></span>
+    <div id="spinner-container">
+      <span
+        id="table-sample-spinner"
+        class="glyphicon glyphicon-cog"
+        ng-show="!table.$resolved">
+      </span>
+    </div>
   </div>
 
   <display-error caption="Failed to load table." request="table"></display-error>

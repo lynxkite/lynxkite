@@ -27,7 +27,8 @@ sudo docker run -it -p 2200:2200  --mount type=bind,source=/home/user/biggraph,t
 Inside the container, install some required tools:
 
 ```
-apt install sudo, wget, nano
+apt-get update
+apt-get install sudo, wget, nano
 ```
 
 Create a user (e.g., `c-user`) under which we will compile and run LynxKite inside the container.

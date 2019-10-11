@@ -3,9 +3,6 @@
 Changes the name of vertex attributes.
 
 ====
-[p-title]#Attributes#::
-Vertex attributes of the project.
-
-[p-title2]#Rename to#:: The new name. If it is empty,
-the attribute will be discarded.
+[p-title]#The new names for each attribute#::
+If the new name is empty, the attribute will be discarded.
 ====

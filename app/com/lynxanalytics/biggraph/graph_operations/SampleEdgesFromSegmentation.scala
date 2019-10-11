@@ -36,7 +36,7 @@ object SampleEdgesFromSegmentation extends OpFromJson {
 }
 import SampleEdgesFromSegmentation._
 case class SampleEdgesFromSegmentation(prob: Double, seed: Long)
-  extends TypedMetaGraphOp[Input, Output] {
+  extends SparkOperation[Input, Output] {
 
   override val isHeavy = true
   @transient override lazy val inputs = new Input

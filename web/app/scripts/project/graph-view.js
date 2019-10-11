@@ -81,9 +81,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     element.screenY = function() {
       return element.y * that.zoom + that.yOff;
     };
-    element.activateMenu = function(menuData) {
-      that.menu.x = element.screenX();
-      that.menu.y = element.screenY();
+    element.activateMenu = function(menuData, x, y) {
+      that.menu.x = x;
+      that.menu.y = y;
       that.menu.data = menuData;
       that.menu.enabled = true;
     };
@@ -898,7 +898,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
               id: id,
               actions: actions,
               attributes: attributes,
-            });
+            }, evStart.pageX, evStart.pageY);
           });
         }
       });
@@ -920,7 +920,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
   GraphView.prototype.bucketedVertexMouseBindings = function(vertices, vertex) {
     const scope = this.scope;
-    vertex.dom.click(function() {
+    vertex.dom.click(function(event) {
       scope.$apply(function() {
         const actions = [];
         const side = vertices.side;
@@ -954,7 +954,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         if (actions.length > 0) {
           vertex.activateMenu({
             actions: actions,
-          });
+          }, event.pageX, event.pageY);
         }
       });
     });

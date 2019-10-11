@@ -47,7 +47,7 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
     "Exactly one of directory and project should be defined")
   def createDataFrame(user: User, context: SQLContext)(
     implicit
-    dataManager: DataManager, metaManager: MetaGraphManager): DataFrame = {
+    dm: DataManager, sd: SparkDomain, mm: MetaGraphManager): DataFrame = {
     if (project.isDefined) ??? // TODO: Delete this method.
     else globalSQL(user, context)
   }
@@ -61,8 +61,8 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
   // Creates a DataFrame from a global level SQL query.
   private def globalSQL(user: serving.User, context: SQLContext)(
     implicit
-    dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame =
-    metaManager.synchronized {
+    dm: DataManager, sd: SparkDomain, mm: MetaGraphManager): spark.sql.DataFrame =
+    mm.synchronized {
       assert(
         project.isEmpty,
         "The project field in the DataFrameSpec must be empty for global SQL queries.")
@@ -87,18 +87,16 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
           (name, protoTable)
       }
       val result = ExecuteSQL.run(sql, protoTables)
-      import Scripting._
-      result.df
+      SQLController.getDF(result)
     }
 
   private def queryTables(
     sql: String,
     tables: Iterable[(String, Table)])(
     implicit
-    dataManager: DataManager, metaManager: MetaGraphManager): spark.sql.DataFrame = {
-    import Scripting._
-    val dfs = tables.map { case (name, table) => name -> table.df }
-    DataManager.sql(dataManager.newSQLContext, sql, dfs.toList)
+    dm: DataManager, sd: SparkDomain, mm: MetaGraphManager): spark.sql.DataFrame = {
+    val dfs = tables.map { case (name, table) => name -> SQLController.getDF(table) }
+    SparkDomain.sql(sd.newSQLContext, sql, dfs.toList)
   }
 }
 case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)
@@ -171,6 +169,7 @@ case class TableBrowserNodeForBoxRequest(
 class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager: DataManager = env.dataManager
+  implicit val sparkDomain = env.sparkDomain
   // We don't want to block the HTTP threads -- we want to return Futures instead. But the DataFrame
   // API is not Future-based, so we need to block some threads. This also avoids #2906.
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
@@ -183,7 +182,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val parameterSettings = op.settingsString()
     val df = op.getDataFrame(SQLController.defaultContext(user))
     val table = ImportDataFrame.run(df)
-    dataManager.getFuture(table) // Start importing in the background.
+    dataManager.compute(table) // Start importing in the background.
     val guid = table.gUID.toString
     ImportBoxResponse(guid, parameterSettings)
   }
@@ -346,8 +345,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val columns = table.schema.toList.map { field =>
       field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
     }
-    import Scripting._
-    val df = table.df
+    val df = SQLController.getDF(table)
     val header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) }
     val rdd = SQLHelper.toSeqRDD(df)
     val local = if (sampleRows < 0) rdd.collect else rdd.take(sampleRows)
@@ -405,7 +403,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     options: Map[String, String] = Map(),
     stripHeaders: Boolean = false): SQLExportToFileResult = {
     val file = if (path == "<download>") {
-      dataManager.repositoryPath / "exports" / Timestamp.toString + "." + format
+      env.sparkDomain.repositoryPath / "exports" / Timestamp.toString + "." + format
     } else {
       HadoopFile(path)
     }
@@ -446,8 +444,8 @@ object SQLController {
   }
 
   // Every query runs in its own SQLContext for isolation.
-  def defaultContext(user: User)(implicit dataManager: DataManager): SQLContext = {
-    dataManager.newSQLContext()
+  def defaultContext(user: User)(implicit sparkDomain: SparkDomain): SQLContext = {
+    sparkDomain.newSQLContext()
   }
 
   // Splits a table path into a snapshot entry and an internal table path.
@@ -463,4 +461,11 @@ object SQLController {
     (entry, split.tail)
   }
 
+  def getDF(t: Table)(implicit sd: SparkDomain, dm: DataManager): DataFrame = {
+    implicit val ec = sd.executionContext
+    dm.compute(t)
+      .map(_ => sd.getData(t).asInstanceOf[TableData])
+      .awaitResult(concurrent.duration.Duration.Inf)
+      .df
+  }
 }

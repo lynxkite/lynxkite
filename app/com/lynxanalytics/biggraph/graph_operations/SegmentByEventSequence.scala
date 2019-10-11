@@ -138,7 +138,7 @@ case class SegmentByEventSequence(
     sequenceLength: Int,
     timeWindowStep: Double,
     timeWindowLength: Double)
-  extends TypedMetaGraphOp[Input, Output] {
+  extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 

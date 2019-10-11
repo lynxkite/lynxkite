@@ -67,6 +67,9 @@ angular.module('biggraph')
 
     // Sends an HTTP request immediately.
     function sendRequest(config) {
+      if (config.url.startsWith('/')) {
+        config.url = config.url.slice(1); // Use relative URLs.
+      }
       const canceler = $q.defer();
       const fullConfig = angular.extend({ timeout: canceler.promise }, config);
       const req = $http(fullConfig);
@@ -84,6 +87,7 @@ angular.module('biggraph')
         '/ajax/center',
         '/ajax/getDataFilesStatus',
         '/ajax/model',
+        '/ajax/getTableOutput',
       ];
       // Some requests may trigger substantial calculation on the backend. If we
       // make many slow requests in parallel we can easily exhaust the browser's
@@ -180,6 +184,9 @@ angular.module('biggraph')
       // Json POST with simple error handling.
       post: function(url, params, options) {
         options = options || { reportErrors: true };
+        if (url.startsWith('/')) {
+          url = url.slice(1); // Use relative URLs.
+        }
         let req = $http.post(url, params);
         if (options.reportErrors) {
           req = req.catch(function(failure) {

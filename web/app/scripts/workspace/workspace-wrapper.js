@@ -73,7 +73,7 @@ angular.module('biggraph')
         const meta = this._boxCatalogMap[rawBox.operationId] || {
         // Defaults for unknown operations.
           categoryId: '',
-          icon: '/images/icons/black_question_mark_ornament.png',
+          icon: 'images/icons/black_question_mark_ornament.png',
           color: 'natural',
           operationId: rawBox.operationId,
           inputs: [],

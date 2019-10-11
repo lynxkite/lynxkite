@@ -28,7 +28,7 @@ object IndexPairCounter extends OpFromJson {
   def fromJson(j: JsValue) = IndexPairCounter()
 }
 import IndexPairCounter._
-case class IndexPairCounter() extends TypedMetaGraphOp[Input, Output] {
+case class IndexPairCounter() extends SparkOperation[Input, Output] {
   @transient override lazy val inputs = new Input
 
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

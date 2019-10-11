@@ -27,7 +27,7 @@ object Indexer extends OpFromJson {
 }
 import Indexer._
 case class Indexer[T](bucketer: Bucketer[T])
-  extends TypedMetaGraphOp[Input[T], Output[T]] {
+  extends SparkOperation[Input[T], Output[T]] {
 
   @transient override lazy val inputs = new Input[T]
 

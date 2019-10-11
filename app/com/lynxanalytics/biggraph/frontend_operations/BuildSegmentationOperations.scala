@@ -435,7 +435,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       val attrName = params("attr")
       val overlap = params("overlap") == "yes"
       val name = params("name")
-      s"Segmentation by $attrName" + (if (overlap) " with overlap" else "") + ": $name"
+      s"Segmentation by $attrName" + (if (overlap) " with overlap" else "") + s": $name"
     }
 
     def apply() = {
@@ -466,7 +466,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
     override def summary = {
       val attrName = params("attr")
       val name = params("name")
-      s"Segmentation by $attrName" + ": $name"
+      s"Segmentation by $attrName: $name"
     }
 
     def apply() = {
@@ -575,7 +575,7 @@ class BuildSegmentationOperations(env: SparkFreeEnvironment) extends ProjectOper
       val endAttrName = params("end_attr")
       val overlap = params("overlap") == "yes"
       val name = params("name")
-      s"Interval segmentation by $beginAttrName and $endAttrName" + (if (overlap) " with overlap" else "") + ": $name"
+      s"Interval segmentation by $beginAttrName and $endAttrName" + (if (overlap) " with overlap" else "") + s": $name"
     }
 
     def apply() = {

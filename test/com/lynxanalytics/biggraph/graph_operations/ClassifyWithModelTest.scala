@@ -2,6 +2,7 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class ClassifyWithModelTest extends ModelTestBase {
   test("test the k-means clustering model on larger data set with 20 attributes") {

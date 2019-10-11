@@ -6,6 +6,7 @@ import scala.language.implicitConversions
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 
 class ConcatenateBundlesMultiTest extends FunSuite with TestGraphOp {
   def concatEdges(abSeq: Seq[(Int, Int)], bcSeq: Seq[(Int, Int)]): Seq[(Int, Int)] = {

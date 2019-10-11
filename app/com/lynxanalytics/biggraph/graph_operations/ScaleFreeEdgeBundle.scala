@@ -35,7 +35,7 @@ object ScaleFreeEdgeBundle extends OpFromJson {
 }
 import ScaleFreeEdgeBundle._
 case class ScaleFreeEdgeBundle(iterations: Int, seed: Long, perIterationMultiplier: Double)
-  extends TypedMetaGraphOp[Input, Output] {
+  extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input
 

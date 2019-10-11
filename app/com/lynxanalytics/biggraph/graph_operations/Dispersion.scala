@@ -46,7 +46,7 @@ object Dispersion extends OpFromJson {
   def fromJson(j: JsValue) = Dispersion()
 }
 import Dispersion._
-case class Dispersion() extends TypedMetaGraphOp[GraphInput, Output] {
+case class Dispersion() extends SparkOperation[GraphInput, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new GraphInput
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

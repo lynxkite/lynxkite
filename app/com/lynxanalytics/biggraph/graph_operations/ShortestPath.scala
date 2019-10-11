@@ -19,7 +19,7 @@ object ShortestPath extends OpFromJson {
 }
 import ShortestPath._
 case class ShortestPath(maxIterations: Double)
-  extends TypedMetaGraphOp[Input, Output] {
+  extends SparkOperation[Input, Output] {
   override val isHeavy = true
   @transient override lazy val inputs = new Input()
 

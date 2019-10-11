@@ -49,6 +49,11 @@ input.form-control#sample-rows {
   top: 10px;
 }
 
+#spinner-container {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
 #table-sample-error {
   color: darkred;
   margin-top: 10px;

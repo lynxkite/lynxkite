@@ -8,11 +8,12 @@ import scala.reflect.runtime.universe.typeTag
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_api.Scripting._
+import com.lynxanalytics.biggraph.graph_api.GraphTestUtils._
 import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 
 object ImportDataFrameTest {
-  def jdbcDF(dm: DataManager): spark.sql.DataFrame = {
-    val url = s"jdbc:sqlite:${dm.repositoryPath.resolvedNameWithNoCredentials}/test-db"
+  def jdbcDF(sd: SparkDomain): spark.sql.DataFrame = {
+    val url = s"jdbc:sqlite:${sd.repositoryPath.resolvedNameWithNoCredentials}/test-db"
     val connection = JDBCUtil.getConnection(url)
     val statement = connection.createStatement()
     statement.executeUpdate("""
@@ -28,14 +29,14 @@ object ImportDataFrameTest {
     """)
     connection.close()
 
-    dm.sparkSession.read.format("jdbc")
+    sd.sparkSession.read.format("jdbc")
       .options(Map("url" -> url, "dbtable" -> "manytypes"))
       .load()
   }
 }
 class ImportDataFrameTest extends FunSuite with TestGraphOp {
   test("dataframe import using JDBC works") {
-    val df = ImportDataFrameTest.jdbcDF(dataManager)
+    val df = ImportDataFrameTest.jdbcDF(sparkDomain)
     val t = ImportDataFrame.run(df)
     assert(df.collect.toSeq == t.df.collect.toSeq)
   }

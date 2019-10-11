@@ -60,7 +60,7 @@ case class PredictViaNNOnGraphV1(
     knownLabelWeight: Double,
     seed: Int,
     gradientCheckOn: Boolean,
-    networkLayout: String) extends TypedMetaGraphOp[Input, Output] {
+    networkLayout: String) extends SparkOperation[Input, Output] {
   @transient override lazy val inputs = new Input(featureCount)
   override val isHeavy = true
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)

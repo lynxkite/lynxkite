@@ -48,15 +48,6 @@ if bad_lines:
   for l in bad_lines:
     warn('  ' + l)
 
-non_makefiles = [fn for fn in files if not fn.endswith('Makefile')]
-if len(non_makefiles) > 0:
-  non_makefile_diff = check_output('git diff --staged'.split() + non_makefiles)
-  bad_lines = [l for l in non_makefile_diff.split('\n') if l.startswith('+') and '\t' in l]
-  if bad_lines:
-    warn('TAB found in your diff:')
-    for l in bad_lines:
-      warn('  ' + l)
-
 for proj in ['web', 'shell_ui']:
   prefix = proj + '/'
   javascripts = [fn for fn in files if fn.startswith(prefix) and fn.endswith('.js')]
@@ -73,16 +64,22 @@ for proj in ['web', 'shell_ui']:
       warn('Altered files:')
       warn(', '.join(different))
 
-pythons = [fn for fn in files if fn.endswith('.py')]
-if pythons:
-  before = get_hashes(pythons)
-  subprocess.call(['autopep8', '-ia'] + pythons)
-  after = get_hashes(pythons)
-  different = [f[0] for f in zip(pythons, before, after) if f[1] != f[2]]
-  if len(different) > 0:
-    warn('Files altered by autopep8, please restage.')
-    warn('Altered files:')
-    warn(', '.join(different))
+
+def linter(extension, command):
+  matched = [fn for fn in files if fn.endswith(extension)]
+  if matched:
+    before = get_hashes(matched)
+    subprocess.call(command + matched)
+    after = get_hashes(matched)
+    different = [f[0] for f in zip(matched, before, after) if f[1] != f[2]]
+    if len(different) > 0:
+      warn(f'Files altered by { " ".join(command) }, please restage.')
+      warn('Altered files:')
+      warn(', '.join(different))
+
+
+linter('.py', ['autopep8', '-ia'])
+linter('.go', ['go', 'fmt'])
 
 if warned:
   sys.exit(1)

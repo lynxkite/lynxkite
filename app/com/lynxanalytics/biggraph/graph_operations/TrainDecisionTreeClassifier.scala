@@ -52,7 +52,7 @@ case class TrainDecisionTreeClassifier[T: TypeTag](
     maxDepth: Int,
     minInfoGain: Double,
     minInstancesPerNode: Int,
-    seed: Int) extends TypedMetaGraphOp[Input, Output] with ModelMeta {
+    seed: Int) extends SparkOperation[Input, Output] with ModelMeta {
   val isClassification = true
   val isBinary = false
   override val generatesProbability = true
@@ -81,7 +81,7 @@ case class TrainDecisionTreeClassifier[T: TypeTag](
     output: OutputBuilder,
     rc: RuntimeContext): Unit = {
     implicit val id = inputDatas
-    val sqlContext = rc.dataManager.newSQLContext()
+    val sqlContext = rc.sparkDomain.newSQLContext()
     import sqlContext.implicits._
 
     val (labelRDD, labelMapping) = Model.toDoubleRDD(inputs.label.data)

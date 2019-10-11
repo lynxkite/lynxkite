@@ -43,7 +43,7 @@ object AddConstantAttribute {
 }
 import AddConstantAttribute._
 abstract class AddConstantAttribute[T]
-  extends TypedMetaGraphOp[Input, Output[T]] {
+  extends SparkOperation[Input, Output[T]] {
 
   implicit def tt: TypeTag[T]
   val value: T
