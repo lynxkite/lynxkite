@@ -33,7 +33,7 @@ angular.module('biggraph')
         });
 
         scope.downloadLink = function () {
-          return '/downloadFile?q=' + encodeURIComponent(JSON.stringify(
+          return 'downloadFile?q=' + encodeURIComponent(JSON.stringify(
             {
               path: scope.parameters.path,
               stripHeaders: scope.parameters.header === 'yes',
