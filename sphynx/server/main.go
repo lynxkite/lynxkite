@@ -4,13 +4,10 @@ import (
 	"context"
 	"log"
 	"net"
+	"os"
 
 	pb "github.com/biggraph/biggraph/sphynx/proto"
 	"google.golang.org/grpc"
-)
-
-const (
-	port = ":50051"
 )
 
 type server struct{}
@@ -21,7 +18,8 @@ func (s *server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 }
 
 func main() {
-	lis, err := net.Listen("tcp", port)
+	port := os.Getenv("SPHYNX_PORT")
+	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
