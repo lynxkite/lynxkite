@@ -92,6 +92,7 @@ object BigGraphEnvironmentImpl {
     bigGraphLogger.info("Data manager initialized.")
     res
   }
+
 }
 
 case class BigGraphEnvironmentImpl(

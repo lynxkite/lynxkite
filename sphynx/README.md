@@ -1,16 +1,15 @@
-Sphynx is an gRPC server. LynxKite can connect to it and ask it to do some work.
+Sphynx is a gRPC server. LynxKite can connect to it and ask it to do some work.
 The idea is that Sphynx performs operations on graphs that fits into the memory,
 so there's no need to do slow distributed computations.
 
 To build it, run `./build.sh`.
 
-To run it, run `SPHYNX_PORT=<port> go/bin/server`.
+If you start LynxKite with `run.sh` or `stage/bin/biggraph`, it will start Sphynx as well.
+The port it's running on is defined in the environment variable `SPHYNX_PORT`, you can set
+it in the kiterc file. If you want to run it alone, run `SPHYNX_PORT=<port> go/bin/server`.
 
-The port it's running on is defined in the environment variable `SPHYNX_PORT`.
-(You can set it in the kiterc file.)
-
-`grpc_cli` is a useful method to get information about a running gRPC server.
+`grpc_cli` is a useful tool to get information about a running gRPC server.
 After [installation](https://github.com/grpc/grpc/blob/master/BUILDING.md),
 you can send RPCs to the server from the command line:
 
-grpc_cli call localhost:50051 CanCompute "operation: 'ProveRiemannHypothesis'" --protofiles=sphynx.proto
+`grpc_cli call localhost:50051 CanCompute "operation: 'ProveRiemannHypothesis'" --protofiles=sphynx.proto`
