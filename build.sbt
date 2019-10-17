@@ -155,7 +155,8 @@ mappings in Universal ++= dirContents(baseDirectory.value, "built-ins")
 mappings in Universal ++= Seq(
   file("tools/rmoperation.py") -> "tools/rmoperation.py",
   file("tools/kite_meta_hdfs_backup.sh") -> "tools/kite_meta_hdfs_backup.sh",
-  file("tools/install_spark.sh") -> "tools/install_spark.sh")
+  file("tools/install_spark.sh") -> "tools/install_spark.sh",
+  file("sphynx/go/bin/server") -> "sphynx/go/bin/server")
 
 
 

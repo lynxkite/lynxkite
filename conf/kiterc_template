@@ -236,3 +236,4 @@ export KITE_EXTRA_JARS=
 # Specify where Sphynx (the single-node server) is running. If unset, no Sphynx server is assumed.
 # export SPHYNX_HOST
 # export SPHYNX_PORT
+export SPHYNX_PID_FILE=$HOME/sphynx.pid

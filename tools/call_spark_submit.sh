@@ -313,12 +313,13 @@ uploadLogs () {
 }
 
 stopSphynx () {
-  kill -9 $SPHYNX_PID
+  stopByPIDFile "$SPHYNX_PID_FILE" "Sphynx"
 }
 
 startSphynx () {
-  sphynx/go/bin/server &
+  $stage_dir/sphynx/go/bin/server &
   SPHYNX_PID=$!
+  echo $SPHYNX_PID > $SPHYNX_PID_FILE
 }
 
 case $mode in
