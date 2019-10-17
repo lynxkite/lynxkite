@@ -312,26 +312,43 @@ uploadLogs () {
   fi
 }
 
+stopSphynx () {
+  kill -9 $SPHYNX_PID
+}
+
+startSphynx () {
+  sphynx/go/bin/server &
+  SPHYNX_PID=$!
+}
+
 case $mode in
   interactive)
-    exec "${command[@]}"
+    startSphynx
+    trap stopSphynx ERR EXIT
+    "${command[@]}"
   ;;
   start)
+    startSphynx
     startKite
     startWatchdog
   ;;
   stop)
     stopWatchdog
     stopKite
+    stopSphynx
   ;;
   restart)
     stopWatchdog
     stopKite
+    stopSphynx
+    startSphynx
     startKite
     startWatchdog
   ;;
   watchdog_restart)
     stopKite
+    stopSphynx
+    startSphynx
     startKite
   ;;
   uploadLogs)
