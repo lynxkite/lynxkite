@@ -20,7 +20,7 @@ func (s *server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 
 func main() {
 	port := os.Getenv("SPHYNX_PORT")
-	creds, err := credentials.NewServerTLSFromFile("sphynx/cert.pem", "sphynx/private-key.pem")
+	creds, err := credentials.NewServerTLSFromFile("sphynx/server/cert.pem", "sphynx/server/private-key.pem")
 	if err != nil {
 		log.Fatalf("failed to read credentials: %v", err)
 	}
