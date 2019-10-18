@@ -8,6 +8,7 @@ import (
 
 	pb "github.com/biggraph/biggraph/sphynx/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type server struct{}
@@ -19,11 +20,15 @@ func (s *server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 
 func main() {
 	port := os.Getenv("SPHYNX_PORT")
+	creds, err := credentials.NewServerTLSFromFile("sphynx/cert.pem", "sphynx/private-key.pem")
+	if err != nil {
+		log.Fatalf("failed to read credentials: %v", err)
+	}
+	s := grpc.NewServer(grpc.Creds(creds))
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
 	pb.RegisterSphynxServer(s, &server{})
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

@@ -2,3 +2,4 @@ proto/sphynx.pb.go
 protoc/*
 *.zip
 *.exe
+*.pem
