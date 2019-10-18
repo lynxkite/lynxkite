@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"net"
 	"os"
@@ -20,11 +21,19 @@ func (s *server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 
 func main() {
 	port := os.Getenv("SPHYNX_PORT")
-	creds, err := credentials.NewServerTLSFromFile("sphynx/server/cert.pem", "sphynx/server/private-key.pem")
-	if err != nil {
-		log.Fatalf("failed to read credentials: %v", err)
+	keydir := flag.String(
+		"keydir", "", "directory of cert.pem and private-key.pem files (for encryption)")
+	flag.Parse()
+	var s *grpc.Server
+	if *keydir != "" {
+		creds, err := credentials.NewServerTLSFromFile(*keydir+"/cert.pem", *keydir+"/private-key.pem")
+		if err != nil {
+			log.Fatalf("failed to read credentials: %v", err)
+		}
+		s = grpc.NewServer(grpc.Creds(creds))
+	} else {
+		s = grpc.NewServer()
 	}
-	s := grpc.NewServer(grpc.Creds(creds))
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

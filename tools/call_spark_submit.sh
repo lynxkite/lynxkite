@@ -317,7 +317,7 @@ stopSphynx () {
 }
 
 startSphynx () {
-  $stage_dir/sphynx/go/bin/server &
+  $stage_dir/sphynx/go/bin/server -keydir=sphynx/server &
   SPHYNX_PID=$!
   echo $SPHYNX_PID > $SPHYNX_PID_FILE
 }
