@@ -74,6 +74,7 @@ Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-handler # 4.1.38.Final | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-handler-proxy # 4.1.38.Final | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-resolver # 4.1.38.Final | <notextile></notextile>
+Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-tcnative-boringssl-static # 2.0.26.Final | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0) | io.netty # netty-transport # 4.1.38.Final | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.html) | it.unimi.dsi # fastutil # 6.5.7 | <notextile></notextile>
 Apache | [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt) | net.sourceforge.htmlunit # htmlunit # 2.13 | <notextile></notextile>

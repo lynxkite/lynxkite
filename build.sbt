@@ -88,7 +88,9 @@ libraryDependencies ++= Seq(
   "io.grpc" % "grpc-protobuf" % "1.24.0",
   "io.grpc" % "grpc-stub" % "1.24.0",
   "io.grpc" % "grpc-netty" % "1.24.0",
-  "com.google.protobuf" % "protobuf-java" % "3.9.2"
+  "com.google.protobuf" % "protobuf-java" % "3.9.2",
+  // Used for encrypted connection with Sphynx.
+  "io.netty" % "netty-tcnative-boringssl-static" % "2.0.26.Final"
 )
 
 // We put the local Spark installation on the classpath for compilation and testing instead of using
