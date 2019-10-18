@@ -46,6 +46,8 @@ angular.module('biggraph').directive('operationParameters', function(util) {
             scope.parameters[param.id] = param.defaultValue;
           } else if (param.multipleChoice) {
             scope.parameters[param.id] = '';
+          } else if (param.options.map(x => x.id).includes(param.defaultValue)) {
+            scope.parameters[param.id] = param.defaultValue;
           } else {
             scope.parameters[param.id] = param.options[0].id;
           }
