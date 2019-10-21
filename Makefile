@@ -62,7 +62,7 @@ $(pip): python_requirements.txt
 .build/shell_ui-test-passed: $(shell $(find) shell_ui) .eslintrc.yaml
 	shell_ui/test.sh && touch $@
 .build/impact-analyzer-dashboard-test-passed: $(shell $(find) impact-analyzer-dashboard)
-	impact-analyzer-dashboard/unit_tests.sh && touch $@
+	impact-analyzer-dashboard/tests.sh && touch $@
 .build/evaluation-release-done: \
 		.build/backend-done $(shell $(find) docker/lynxkite/local)
 	docker/lynxkite/local/evaluation_release.sh "${VERSION}" && touch $@

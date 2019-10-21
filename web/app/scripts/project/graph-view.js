@@ -81,9 +81,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     element.screenY = function() {
       return element.y * that.zoom + that.yOff;
     };
-    element.activateMenu = function(menuData) {
-      that.menu.x = element.screenX();
-      that.menu.y = element.screenY();
+    element.activateMenu = function(menuData, x, y) {
+      that.menu.x = x;
+      that.menu.y = y;
       that.menu.data = menuData;
       that.menu.enabled = true;
     };
@@ -385,6 +385,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         sideIndices.push(i);
       }
     }
+    // Drop 3D views. We will either create new ones or go with 2D.
+    const oldRenderers = this.rootElement.children('renderer');
+    if (oldRenderers.length > 0) {
+      oldRenderers.scope().$destroy();
+      oldRenderers.remove();
+    }
     let side;
     for (let i = 0; i < data.edgeBundles.length; ++i) {
       const e = data.edgeBundles[i];
@@ -403,11 +409,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           scope.layout3D = e.layout3D;
           scope.width = 2 * halfColumnWidth;
           scope.left = idx * 2 * halfColumnWidth;
-          const oldRenderers = this.rootElement.children('renderer');
-          if (oldRenderers.length > 0) {
-            oldRenderers.scope().$destroy();
-            oldRenderers.remove();
-          }
           const r = $compile('<renderer></renderer>')(scope);
           this.svg.after(r);
           continue;
@@ -898,7 +899,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
               id: id,
               actions: actions,
               attributes: attributes,
-            });
+            }, evStart.pageX, evStart.pageY);
           });
         }
       });
@@ -920,7 +921,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
 
   GraphView.prototype.bucketedVertexMouseBindings = function(vertices, vertex) {
     const scope = this.scope;
-    vertex.dom.click(function() {
+    vertex.dom.click(function(event) {
       scope.$apply(function() {
         const actions = [];
         const side = vertices.side;
@@ -954,7 +955,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         if (actions.length > 0) {
           vertex.activateMenu({
             actions: actions,
-          });
+          }, event.pageX, event.pageY);
         }
       });
     });
