@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Click a vertex in a visualization to open a context menu for interactive graph navigation.
+
 ### 2.8.4
 
  - Popup box improvements: Parameters are full-width. Popups avoid overlapping. Popups reopen

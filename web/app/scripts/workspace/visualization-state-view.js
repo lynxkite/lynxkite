@@ -86,6 +86,18 @@ angular.module('biggraph')
           }
           return undefined;
         }
+
+        util.deepWatch(
+          scope,
+          '[left.state, right.state]',
+          function(newVal, oldVal) {
+            if (oldVal === newVal) {
+              // This was the initial watch call.
+              return;
+            }
+            scope.left.updateViewData();
+            scope.right.updateViewData();
+          });
       },
     };
   });
