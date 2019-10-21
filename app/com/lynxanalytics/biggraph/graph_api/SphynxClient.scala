@@ -11,10 +11,10 @@ import java.io.File
 class SphynxClient(host: String, port: Int) {
 
   private val channel = {
-    val cert = LoggedEnvironment.envOrNone("SPHYNX_CERT")
-    cert match {
-      case Some(cert) => NettyChannelBuilder.forAddress(host, port)
-        .sslContext(GrpcSslContexts.forClient().trustManager(new File(cert)).build())
+    val cert_dir = LoggedEnvironment.envOrNone("SPHYNX_CERT_DIR")
+    cert_dir match {
+      case Some(cert_dir) => NettyChannelBuilder.forAddress(host, port)
+        .sslContext(GrpcSslContexts.forClient().trustManager(new File(s"$cert_dir/cert.pem")).build())
         .build();
       case None => {
         println("Using unsecure channel to communicate with Sphynx.")
