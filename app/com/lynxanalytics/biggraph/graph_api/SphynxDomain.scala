@@ -1,6 +1,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import com.lynxanalytics.biggraph.graph_util
+import play.api.libs.json.Json
 
 class SphynxMemory(host: String, port: Int) extends Domain {
 
@@ -15,7 +16,8 @@ class SphynxMemory(host: String, port: Int) extends Domain {
   }
 
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
-    val res = client.canCompute("Fake Operation Metadata in JSON")
+    val json_meta = Json.stringify(MetaGraphManager.serializeOperation(instance))
+    val res = client.canCompute(json_meta)
     println("Got a response from Sphynx!")
     return res
   }
