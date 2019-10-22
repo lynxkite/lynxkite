@@ -176,7 +176,7 @@ class MetaGraphManager(val repositoryPath: String) {
 
   private def saveInstanceToDisk(inst: MetaGraphOperationInstance): Unit = {
     log.info(s"Saving operation $inst to disk.")
-    val j = serializeOperation(inst)
+    val j = MetaGraphManager.serializeOperation(inst)
     // Validate the serialized operation by trying to reload it.
     val i = deserializeOperation(j)
     assert(
@@ -223,19 +223,6 @@ class MetaGraphManager(val repositoryPath: String) {
     log.info("Meta graph loaded from disk.")
   }
 
-  def serializeOperation(inst: MetaGraphOperationInstance): json.JsObject = {
-    try {
-      Json.obj(
-        "operation" -> inst.operation.toTypedJson,
-        "inputs" -> inst.inputs.toJson,
-        "guid" -> inst.gUID,
-        "outputs" -> inst.outputs.toJson)
-    } catch {
-      // Put details of "inst" in the exception.
-      case e: Throwable => throw new Exception(s"Error while serializing $inst:", e)
-    }
-  }
-
   private def deserializeOperation(j: json.JsValue): MetaGraphOperationInstance = {
     val op = TypedJson.read[TypedMetaGraphOp.Type](j \ "operation")
     val inputs = (j \ "inputs").as[Map[String, String]].map {
@@ -271,6 +258,19 @@ object MetaGraphManager {
     val files = opdir.listFiles.filter(_.getName.startsWith("save-")).sortBy(_.getName)
     files.iterator.map { f =>
       f -> Json.parse(FileUtils.readFileToString(f, "utf8"))
+    }
+  }
+
+  def serializeOperation(inst: MetaGraphOperationInstance): json.JsObject = {
+    try {
+      Json.obj(
+        "operation" -> inst.operation.toTypedJson,
+        "inputs" -> inst.inputs.toJson,
+        "guid" -> inst.gUID,
+        "outputs" -> inst.outputs.toJson)
+    } catch {
+      // Put details of "inst" in the exception.
+      case e: Throwable => throw new Exception(s"Error while serializing $inst:", e)
     }
   }
 

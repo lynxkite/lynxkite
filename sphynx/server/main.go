@@ -7,16 +7,41 @@ import (
 	"net"
 	"os"
 
+	"encoding/json"
 	pb "github.com/biggraph/biggraph/sphynx/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
 type server struct{}
+type guid string
+type operationDescription struct {
+	Class string
+	Data  string
+}
+type operationInstance struct {
+	GUID      guid
+	Inputs    map[string]guid
+	Outputs   map[string]guid
+	Operation operationDescription
+}
+
+func canCompute(op operationDescription) bool {
+	shortenedClass := op.Class[len("com.lynxanalytics.biggraph.graph_operations."):]
+	switch shortenedClass {
+	case "DoNothing":
+		return true
+	default:
+		return false
+	}
+}
 
 func (s *server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.CanComputeReply, error) {
-	log.Printf("Received: %v", in.Operation)
-	return &pb.CanComputeReply{CanCompute: false}, nil
+	var op_inst operationInstance
+	// log.Printf("Received: %v", in.Operation)
+	b := []byte(in.Operation)
+	json.Unmarshal(b, &op_inst)
+	return &pb.CanComputeReply{CanCompute: canCompute(op_inst.Operation)}, nil
 }
 
 func main() {
