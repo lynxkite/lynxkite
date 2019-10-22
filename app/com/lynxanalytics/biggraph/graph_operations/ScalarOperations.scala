@@ -35,3 +35,24 @@ case class ScalarLongDifference()
     output(o.difference, inputs.minuend.value - inputs.subtrahend.value)
   }
 }
+
+object GetBetter extends OpFromJson {
+  class Output(implicit instance: MetaGraphOperationInstance)
+    extends MagicOutput(instance) {
+    val result = scalar[String]
+  }
+  def fromJson(j: JsValue) = GetBetter()
+}
+import GetBetter._
+case class GetBetter()
+  extends SparkOperation[NoInput, Output] {
+  @transient override lazy val inputs = new NoInput
+  def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
+  def execute(
+    inputDatas: DataSet,
+    o: Output,
+    output: OutputBuilder,
+    rc: RuntimeContext): Unit = {
+    output(o.result, "better")
+  }
+}
