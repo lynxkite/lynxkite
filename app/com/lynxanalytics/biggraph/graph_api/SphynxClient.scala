@@ -7,6 +7,7 @@ import _root_.io.grpc.ManagedChannelBuilder
 import com.lynxanalytics.biggraph.graph_api.proto._
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import java.io.File
+import scala.reflect.runtime.universe._
 
 class SphynxClient(host: String, port: Int) {
 
@@ -30,5 +31,21 @@ class SphynxClient(host: String, port: Int) {
     val response = blockingStub.canCompute(request)
     println("CanCompute: " + response.getCanCompute)
     return response.getCanCompute
+  }
+
+  def compute(operationMetadataJSON: String) {
+    val request = SphynxOuterClass.ComputeRequest.newBuilder().setOperation(operationMetadataJSON).build()
+    val response = blockingStub.compute(request)
+    println("Compute called.")
+  }
+
+  def getScalar[T](gUID: String)(implicit tag: TypeTag[T]): T = {
+    val request = SphynxOuterClass.GetScalarRequest.newBuilder().setGuid(gUID).build()
+    val response = typeOf[T] match {
+      case t if t =:= typeOf[String] => { blockingStub.getStringScalar(request) }
+      case _ => ???
+    }
+    println("getScalar called.")
+    return response.getScalar.asInstanceOf[T]
   }
 }
