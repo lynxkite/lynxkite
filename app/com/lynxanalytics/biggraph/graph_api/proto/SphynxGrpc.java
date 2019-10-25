@@ -58,6 +58,68 @@ public final class SphynxGrpc {
     return getCanComputeMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeRequest,
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeReply> getComputeMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "Compute",
+      requestType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeRequest.class,
+      responseType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeReply.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeRequest,
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeReply> getComputeMethod() {
+    io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeReply> getComputeMethod;
+    if ((getComputeMethod = SphynxGrpc.getComputeMethod) == null) {
+      synchronized (SphynxGrpc.class) {
+        if ((getComputeMethod = SphynxGrpc.getComputeMethod) == null) {
+          SphynxGrpc.getComputeMethod = getComputeMethod =
+              io.grpc.MethodDescriptor.<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeReply>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "Compute"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeReply.getDefaultInstance()))
+              .setSchemaDescriptor(new SphynxMethodDescriptorSupplier("Compute"))
+              .build();
+        }
+      }
+    }
+    return getComputeMethod;
+  }
+
+  private static volatile io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest,
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply> getGetStringScalarMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "getStringScalar",
+      requestType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest.class,
+      responseType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest,
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply> getGetStringScalarMethod() {
+    io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply> getGetStringScalarMethod;
+    if ((getGetStringScalarMethod = SphynxGrpc.getGetStringScalarMethod) == null) {
+      synchronized (SphynxGrpc.class) {
+        if ((getGetStringScalarMethod = SphynxGrpc.getGetStringScalarMethod) == null) {
+          SphynxGrpc.getGetStringScalarMethod = getGetStringScalarMethod =
+              io.grpc.MethodDescriptor.<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "getStringScalar"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply.getDefaultInstance()))
+              .setSchemaDescriptor(new SphynxMethodDescriptorSupplier("getStringScalar"))
+              .build();
+        }
+      }
+    }
+    return getGetStringScalarMethod;
+  }
+
   /**
    * Creates a new async stub that supports all call types for the service
    */
@@ -92,6 +154,20 @@ public final class SphynxGrpc {
       asyncUnimplementedUnaryCall(getCanComputeMethod(), responseObserver);
     }
 
+    /**
+     */
+    public void compute(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeRequest request,
+        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeReply> responseObserver) {
+      asyncUnimplementedUnaryCall(getComputeMethod(), responseObserver);
+    }
+
+    /**
+     */
+    public void getStringScalar(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest request,
+        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply> responseObserver) {
+      asyncUnimplementedUnaryCall(getGetStringScalarMethod(), responseObserver);
+    }
+
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
@@ -101,6 +177,20 @@ public final class SphynxGrpc {
                 com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.CanComputeRequest,
                 com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.CanComputeReply>(
                   this, METHODID_CAN_COMPUTE)))
+          .addMethod(
+            getComputeMethod(),
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeRequest,
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeReply>(
+                  this, METHODID_COMPUTE)))
+          .addMethod(
+            getGetStringScalarMethod(),
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest,
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply>(
+                  this, METHODID_GET_STRING_SCALAR)))
           .build();
     }
   }
@@ -130,6 +220,22 @@ public final class SphynxGrpc {
       asyncUnaryCall(
           getChannel().newCall(getCanComputeMethod(), getCallOptions()), request, responseObserver);
     }
+
+    /**
+     */
+    public void compute(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeRequest request,
+        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeReply> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(getComputeMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
+    public void getStringScalar(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest request,
+        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(getGetStringScalarMethod(), getCallOptions()), request, responseObserver);
+    }
   }
 
   /**
@@ -155,6 +261,20 @@ public final class SphynxGrpc {
     public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.CanComputeReply canCompute(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.CanComputeRequest request) {
       return blockingUnaryCall(
           getChannel(), getCanComputeMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeReply compute(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeRequest request) {
+      return blockingUnaryCall(
+          getChannel(), getComputeMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply getStringScalar(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest request) {
+      return blockingUnaryCall(
+          getChannel(), getGetStringScalarMethod(), getCallOptions(), request);
     }
   }
 
@@ -183,9 +303,27 @@ public final class SphynxGrpc {
       return futureUnaryCall(
           getChannel().newCall(getCanComputeMethod(), getCallOptions()), request);
     }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeReply> compute(
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeRequest request) {
+      return futureUnaryCall(
+          getChannel().newCall(getComputeMethod(), getCallOptions()), request);
+    }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply> getStringScalar(
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest request) {
+      return futureUnaryCall(
+          getChannel().newCall(getGetStringScalarMethod(), getCallOptions()), request);
+    }
   }
 
   private static final int METHODID_CAN_COMPUTE = 0;
+  private static final int METHODID_COMPUTE = 1;
+  private static final int METHODID_GET_STRING_SCALAR = 2;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -207,6 +345,14 @@ public final class SphynxGrpc {
         case METHODID_CAN_COMPUTE:
           serviceImpl.canCompute((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.CanComputeRequest) request,
               (io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.CanComputeReply>) responseObserver);
+          break;
+        case METHODID_COMPUTE:
+          serviceImpl.compute((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeRequest) request,
+              (io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ComputeReply>) responseObserver);
+          break;
+        case METHODID_GET_STRING_SCALAR:
+          serviceImpl.getStringScalar((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest) request,
+              (io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -270,6 +416,8 @@ public final class SphynxGrpc {
           serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
               .setSchemaDescriptor(new SphynxFileDescriptorSupplier())
               .addMethod(getCanComputeMethod())
+              .addMethod(getComputeMethod())
+              .addMethod(getGetStringScalarMethod())
               .build();
         }
       }

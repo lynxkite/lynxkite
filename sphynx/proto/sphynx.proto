@@ -12,6 +12,24 @@ message CanComputeReply {
   bool canCompute = 1;
 }
 
+message ComputeRequest {
+  string operation = 1;
+}
+
+message ComputeReply {
+}
+
+message GetScalarRequest {
+  string guid = 1;
+}
+
+message GetStringScalarReply {
+  string scalar = 1;
+}
+
+
 service Sphynx {
   rpc CanCompute (CanComputeRequest) returns (CanComputeReply);
+  rpc Compute (ComputeRequest) returns (ComputeReply);
+  rpc getStringScalar (GetScalarRequest) returns (GetStringScalarReply);
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -13,7 +14,9 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-type server struct{}
+type server struct {
+	scalars map[guid]scalarValue
+}
 type guid string
 type operationDescription struct {
 	Class string
@@ -25,23 +28,65 @@ type operationInstance struct {
 	Outputs   map[string]guid
 	Operation operationDescription
 }
+type scalarValue interface{}
+
+func (s *server) getBetter(op_inst operationInstance) {
+	s.scalars[op_inst.Outputs["result"]] = "better"
+}
+
+func (s *server) compute(op_inst operationInstance) {
+	shortenedClass := shortenClassName(op_inst.Operation.Class)
+	switch shortenedClass {
+	case "GetBetter":
+		s.getBetter(op_inst)
+	default:
+		fmt.Println("Can't compute  ")
+	}
+
+}
+
+func shortenClassName(className string) string {
+	return className[len("com.lynxanalytics.biggraph.graph_operations."):]
+}
 
 func canCompute(op operationDescription) bool {
-	shortenedClass := op.Class[len("com.lynxanalytics.biggraph.graph_operations."):]
+	shortenedClass := shortenClassName(op.Class)
 	switch shortenedClass {
-	case "DoNothing":
+	case "GetBetter":
 		return true
 	default:
 		return false
 	}
 }
 
-func (s *server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.CanComputeReply, error) {
+func OperationInstanceFromJSON(op_json string) operationInstance {
 	var op_inst operationInstance
-	// log.Printf("Received: %v", in.Operation)
-	b := []byte(in.Operation)
+	b := []byte(op_json)
 	json.Unmarshal(b, &op_inst)
-	return &pb.CanComputeReply{CanCompute: canCompute(op_inst.Operation)}, nil
+	return op_inst
+}
+
+func (s *server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.CanComputeReply, error) {
+	log.Printf("Received: %v", in.Operation)
+	op_inst := OperationInstanceFromJSON(in.Operation)
+	can := canCompute(op_inst.Operation)
+	return &pb.CanComputeReply{CanCompute: can}, nil
+}
+
+func (s *server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.ComputeReply, error) {
+	op_inst := OperationInstanceFromJSON(in.Operation)
+	s.compute(op_inst)
+	return &pb.ComputeReply{}, nil
+}
+
+func (s *server) GetStringScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetStringScalarReply, error) {
+	scalar, ok := s.scalars[guid(in.Guid)].(string)
+	if ok {
+		return &pb.GetStringScalarReply{Scalar: scalar}, nil
+	} else {
+		log.Printf("%v is not of type String.", scalar)
+		return nil, nil
+	}
 }
 
 func main() {
@@ -63,7 +108,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	pb.RegisterSphynxServer(s, &server{})
+
+	pb.RegisterSphynxServer(s, &server{scalars: make(map[guid]scalarValue)})
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
