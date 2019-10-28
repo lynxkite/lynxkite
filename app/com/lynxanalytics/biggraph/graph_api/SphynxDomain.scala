@@ -17,14 +17,14 @@ class SphynxMemory(host: String, port: Int) extends Domain {
   }
 
   override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = SafeFuture[Unit] {
-    val json_meta = Json.stringify(MetaGraphManager.serializeOperation(instance))
-    val res = client.compute(json_meta)
+    val jsonMeta = Json.stringify(MetaGraphManager.serializeOperation(instance))
+    val res = client.compute(jsonMeta)
     println("Sphynx computed something!")
   }
 
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
-    val json_meta = Json.stringify(MetaGraphManager.serializeOperation(instance))
-    val res = client.canCompute(json_meta)
+    val jsonMeta = Json.stringify(MetaGraphManager.serializeOperation(instance))
+    val res = client.canCompute(jsonMeta)
     println("Got a canCompute response from Sphynx!")
     return res
   }
