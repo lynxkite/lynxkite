@@ -16,8 +16,7 @@ message ComputeRequest {
   string operation = 1;
 }
 
-message ComputeReply {
-}
+message ComputeReply {}
 
 message GetScalarRequest {
   string guid = 1;

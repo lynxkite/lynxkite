@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"net"
 	"os"
@@ -30,17 +29,17 @@ type operationInstance struct {
 }
 type scalarValue interface{}
 
-func (s *server) getBetter(op_inst operationInstance) {
-	s.scalars[op_inst.Outputs["result"]] = "better"
+func (s *server) getBetter(opInst operationInstance) {
+	s.scalars[opInst.Outputs["result"]] = "better"
 }
 
-func (s *server) compute(op_inst operationInstance) {
-	shortenedClass := shortenClassName(op_inst.Operation.Class)
+func (s *server) compute(opInst operationInstance) {
+	shortenedClass := shortenClassName(opInst.Operation.Class)
 	switch shortenedClass {
 	case "GetBetter":
-		s.getBetter(op_inst)
+		s.getBetter(opInst)
 	default:
-		fmt.Println("Can't compute  ")
+		log.Fatalf("Can't compute %v", opInst)
 	}
 
 }
@@ -60,22 +59,22 @@ func canCompute(op operationDescription) bool {
 }
 
 func OperationInstanceFromJSON(op_json string) operationInstance {
-	var op_inst operationInstance
+	var opInst operationInstance
 	b := []byte(op_json)
-	json.Unmarshal(b, &op_inst)
-	return op_inst
+	json.Unmarshal(b, &opInst)
+	return opInst
 }
 
 func (s *server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.CanComputeReply, error) {
 	log.Printf("Received: %v", in.Operation)
-	op_inst := OperationInstanceFromJSON(in.Operation)
-	can := canCompute(op_inst.Operation)
+	opInst := OperationInstanceFromJSON(in.Operation)
+	can := canCompute(opInst.Operation)
 	return &pb.CanComputeReply{CanCompute: can}, nil
 }
 
 func (s *server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.ComputeReply, error) {
-	op_inst := OperationInstanceFromJSON(in.Operation)
-	s.compute(op_inst)
+	opInst := OperationInstanceFromJSON(in.Operation)
+	s.compute(opInst)
 	return &pb.ComputeReply{}, nil
 }
 
