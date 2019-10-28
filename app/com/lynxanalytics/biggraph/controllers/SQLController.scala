@@ -88,15 +88,6 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
       val result = ExecuteSQL.run(sql, protoTables)
       SQLController.getDF(result)
     }
-
-  private def queryTables(
-    sql: String,
-    tables: Iterable[(String, Table)])(
-    implicit
-    dm: DataManager, sd: SparkDomain, mm: MetaGraphManager): spark.sql.DataFrame = {
-    val dfs = tables.map { case (name, table) => name -> SQLController.getDF(table) }
-    SparkDomain.sql(sd.newSQLContext, sql, dfs.toList)
-  }
 }
 case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)
 case class SQLColumn(name: String, dataType: String)
@@ -174,7 +165,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
 
-  import com.lynxanalytics.biggraph.serving.FrontendJson._
   def importBox(user: serving.User, box: Box, workspaceParameters: Map[String, String]) = async[ImportBoxResponse] {
     val op = ops.opForBox(
       user, box, inputs = null, workspaceParameters = workspaceParameters).asInstanceOf[ImportOperation]
@@ -332,7 +322,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
       header = columns.map { case (name, tt) => SQLColumn(name, ProjectViewer.feTypeName(tt)) },
       data = SQLHelper.toSeqRDD(df).take(request.maxRows).map {
         row =>
-          row.toSeq.toList.zip(columns).map {
+          row.toList.zip(columns).map {
             case (null, field) => DynamicValue("null", defined = false)
             case (item, (name, tt)) => DynamicValue.convert(item)(tt)
           }
@@ -350,7 +340,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val local = if (sampleRows < 0) rdd.collect else rdd.take(sampleRows)
     val data = local.map {
       row =>
-        row.toSeq.toList.zip(columns).map {
+        row.toList.zip(columns).map {
           case (null, field) => DynamicValue("null", defined = false)
           case (item, (name, tt)) => DynamicValue.convert(item)(tt)
         }
