@@ -10,6 +10,7 @@ import java.io.File
 import scala.reflect.runtime.universe._
 
 class SphynxClient(host: String, port: Int) {
+  // Exchanges messages with Sphynx.
 
   private val channel = {
     val cert_dir = LoggedEnvironment.envOrNone("SPHYNX_CERT_DIR")
@@ -39,13 +40,10 @@ class SphynxClient(host: String, port: Int) {
     println("Compute called.")
   }
 
-  def getScalar[T](gUID: String)(implicit tag: TypeTag[T]): T = {
+  def getScalar(gUID: String): String = {
     val request = SphynxOuterClass.GetScalarRequest.newBuilder().setGuid(gUID).build()
-    val response = typeOf[T] match {
-      case t if t =:= typeOf[String] => { blockingStub.getStringScalar(request) }
-      case _ => ???
-    }
-    println("getScalar called.")
-    return response.getScalar.asInstanceOf[T]
+    val response = blockingStub.getScalar(request)
+    println("GetScalar called.")
+    return response.getScalar
   }
 }

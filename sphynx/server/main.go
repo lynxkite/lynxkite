@@ -79,14 +79,13 @@ func (s *server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 	return &pb.ComputeReply{}, nil
 }
 
-func (s *server) GetStringScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetStringScalarReply, error) {
-	scalar, ok := s.scalars[guid(in.Guid)].(string)
-	if ok {
-		return &pb.GetStringScalarReply{Scalar: scalar}, nil
-	} else {
-		log.Printf("%v is not of type String.", scalar)
-		return nil, nil
+func (s *server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
+	scalar := s.scalars[guid(in.Guid)]
+	scalarJSON, err := json.Marshal(scalar)
+	if err != nil {
+		log.Fatalf("Converting scalar to json failed: %v", err)
 	}
+	return &pb.GetScalarReply{Scalar: string(scalarJSON)}, nil
 }
 
 func main() {
