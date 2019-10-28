@@ -32,6 +32,7 @@ KITE_DEPLOYMENT_CONFIG_DIR="$(dirname $0)/../test"
 export HTTP_PORT=$[ 9100 + RANDOM % 100 ]
 export HTTPS_PORT=$[ 9200 + RANDOM % 100 ]
 PID_FILE=${TMP}/pid
+SPHYNX_PID_FILE=${TMP}/sphynx_pid
 cat > "$TMP/overrides"  <<EOF
 export KITE_META_DIR="$TMP/meta"
 export KITE_DATA_DIR="file:$TMP/data"
@@ -40,6 +41,7 @@ export KITE_HTTPS_PORT=$HTTPS_PORT
 export KITE_APPLICATION_SECRET='<random>'
 export KITE_USERS_FILE=$KITE_USERS_FILE
 export KITE_PID_FILE=$PID_FILE
+export SPHYNX_PID_FILE=$SPHYNX_PID_FILE
 export KITE_HTTPS_KEYSTORE=${KITE_DEPLOYMENT_CONFIG_DIR}/localhost.self-signed.cert
 export KITE_HTTPS_KEYSTORE_PWD=keystore-password
 EOF
