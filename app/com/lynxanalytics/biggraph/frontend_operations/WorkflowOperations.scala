@@ -105,7 +105,7 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
         val edgeAttributeEditors =
           vertexAttributeEditors.map(x => FEOption(id = withEdgeMarker(x.id), title = withEdgeMarker(x.title)))
 
-        val attributeEditors = (vertexAttributeEditors ++ edgeAttributeEditors).sortBy(_.title)
+        val attributeEditors = (vertexAttributeEditors ++ edgeAttributeEditors).sortBy(_.id)
         // TODO: This should be something like an OperationParams.AttributeEditorParam
         OperationParams.SegmentationParam(param, title, attributeEditors)
       }
