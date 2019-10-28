@@ -23,7 +23,7 @@ message GetScalarRequest {
   string guid = 1;
 }
 
-message GetStringScalarReply {
+message GetScalarReply {
   string scalar = 1;
 }
 
@@ -31,5 +31,5 @@ message GetStringScalarReply {
 service Sphynx {
   rpc CanCompute (CanComputeRequest) returns (CanComputeReply);
   rpc Compute (ComputeRequest) returns (ComputeReply);
-  rpc getStringScalar (GetScalarRequest) returns (GetStringScalarReply);
+  rpc getScalar (GetScalarRequest) returns (GetScalarReply);
 }

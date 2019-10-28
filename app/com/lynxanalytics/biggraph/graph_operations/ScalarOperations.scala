@@ -45,14 +45,7 @@ object GetBetter extends OpFromJson {
 }
 import GetBetter._
 case class GetBetter()
-  extends SparkOperation[NoInput, Output] {
+  extends SphynxOperation[NoInput, Output] {
   @transient override lazy val inputs = new NoInput
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)
-  def execute(
-    inputDatas: DataSet,
-    o: Output,
-    output: OutputBuilder,
-    rc: RuntimeContext): Unit = {
-    output(o.result, "better")
-  }
 }

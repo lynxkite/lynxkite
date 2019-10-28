@@ -2617,8 +2617,8 @@ public final class SphynxOuterClass {
 
   }
 
-  public interface GetStringScalarReplyOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:sphynx.GetStringScalarReply)
+  public interface GetScalarReplyOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sphynx.GetScalarReply)
       com.google.protobuf.MessageOrBuilder {
 
     /**
@@ -2634,18 +2634,18 @@ public final class SphynxOuterClass {
         getScalarBytes();
   }
   /**
-   * Protobuf type {@code sphynx.GetStringScalarReply}
+   * Protobuf type {@code sphynx.GetScalarReply}
    */
-  public  static final class GetStringScalarReply extends
+  public  static final class GetScalarReply extends
       com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:sphynx.GetStringScalarReply)
-      GetStringScalarReplyOrBuilder {
+      // @@protoc_insertion_point(message_implements:sphynx.GetScalarReply)
+      GetScalarReplyOrBuilder {
   private static final long serialVersionUID = 0L;
-    // Use GetStringScalarReply.newBuilder() to construct.
-    private GetStringScalarReply(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+    // Use GetScalarReply.newBuilder() to construct.
+    private GetScalarReply(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
-    private GetStringScalarReply() {
+    private GetScalarReply() {
       scalar_ = "";
     }
 
@@ -2653,7 +2653,7 @@ public final class SphynxOuterClass {
     @SuppressWarnings({"unused"})
     protected java.lang.Object newInstance(
         UnusedPrivateParameter unused) {
-      return new GetStringScalarReply();
+      return new GetScalarReply();
     }
 
     @java.lang.Override
@@ -2661,7 +2661,7 @@ public final class SphynxOuterClass {
     getUnknownFields() {
       return this.unknownFields;
     }
-    private GetStringScalarReply(
+    private GetScalarReply(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -2706,15 +2706,15 @@ public final class SphynxOuterClass {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_GetStringScalarReply_descriptor;
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_GetScalarReply_descriptor;
     }
 
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_GetStringScalarReply_fieldAccessorTable
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_GetScalarReply_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply.Builder.class);
+              com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply.Builder.class);
     }
 
     public static final int SCALAR_FIELD_NUMBER = 1;
@@ -2792,10 +2792,10 @@ public final class SphynxOuterClass {
       if (obj == this) {
        return true;
       }
-      if (!(obj instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply)) {
+      if (!(obj instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply)) {
         return super.equals(obj);
       }
-      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply other = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply) obj;
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply other = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply) obj;
 
       if (!getScalar()
           .equals(other.getScalar())) return false;
@@ -2817,69 +2817,69 @@ public final class SphynxOuterClass {
       return hash;
     }
 
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply parseFrom(byte[] data)
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply parseFrom(java.io.InputStream input)
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply parseDelimitedFrom(java.io.InputStream input)
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply parseDelimitedFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -2892,7 +2892,7 @@ public final class SphynxOuterClass {
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
     }
-    public static Builder newBuilder(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply prototype) {
+    public static Builder newBuilder(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
     @java.lang.Override
@@ -2908,26 +2908,26 @@ public final class SphynxOuterClass {
       return builder;
     }
     /**
-     * Protobuf type {@code sphynx.GetStringScalarReply}
+     * Protobuf type {@code sphynx.GetScalarReply}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:sphynx.GetStringScalarReply)
-        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReplyOrBuilder {
+        // @@protoc_insertion_point(builder_implements:sphynx.GetScalarReply)
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReplyOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_GetStringScalarReply_descriptor;
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_GetScalarReply_descriptor;
       }
 
       @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_GetStringScalarReply_fieldAccessorTable
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_GetScalarReply_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply.Builder.class);
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply.Builder.class);
       }
 
-      // Construct using com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply.newBuilder()
+      // Construct using com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -2953,17 +2953,17 @@ public final class SphynxOuterClass {
       @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_GetStringScalarReply_descriptor;
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_GetScalarReply_descriptor;
       }
 
       @java.lang.Override
-      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply getDefaultInstanceForType() {
-        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply.getDefaultInstance();
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply getDefaultInstanceForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply.getDefaultInstance();
       }
 
       @java.lang.Override
-      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply build() {
-        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply result = buildPartial();
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply build() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
@@ -2971,8 +2971,8 @@ public final class SphynxOuterClass {
       }
 
       @java.lang.Override
-      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply buildPartial() {
-        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply result = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply(this);
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply buildPartial() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply result = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply(this);
         result.scalar_ = scalar_;
         onBuilt();
         return result;
@@ -3012,16 +3012,16 @@ public final class SphynxOuterClass {
       }
       @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply) {
-          return mergeFrom((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply)other);
+        if (other instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply) {
+          return mergeFrom((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply other) {
-        if (other == com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply.getDefaultInstance()) return this;
+      public Builder mergeFrom(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply other) {
+        if (other == com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply.getDefaultInstance()) return this;
         if (!other.getScalar().isEmpty()) {
           scalar_ = other.scalar_;
           onChanged();
@@ -3041,11 +3041,11 @@ public final class SphynxOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply parsedMessage = null;
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply) e.getUnfinishedMessage();
+          parsedMessage = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
@@ -3143,41 +3143,41 @@ public final class SphynxOuterClass {
       }
 
 
-      // @@protoc_insertion_point(builder_scope:sphynx.GetStringScalarReply)
+      // @@protoc_insertion_point(builder_scope:sphynx.GetScalarReply)
     }
 
-    // @@protoc_insertion_point(class_scope:sphynx.GetStringScalarReply)
-    private static final com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply DEFAULT_INSTANCE;
+    // @@protoc_insertion_point(class_scope:sphynx.GetScalarReply)
+    private static final com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply();
+      DEFAULT_INSTANCE = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply();
     }
 
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply getDefaultInstance() {
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
-    private static final com.google.protobuf.Parser<GetStringScalarReply>
-        PARSER = new com.google.protobuf.AbstractParser<GetStringScalarReply>() {
+    private static final com.google.protobuf.Parser<GetScalarReply>
+        PARSER = new com.google.protobuf.AbstractParser<GetScalarReply>() {
       @java.lang.Override
-      public GetStringScalarReply parsePartialFrom(
+      public GetScalarReply parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new GetStringScalarReply(input, extensionRegistry);
+        return new GetScalarReply(input, extensionRegistry);
       }
     };
 
-    public static com.google.protobuf.Parser<GetStringScalarReply> parser() {
+    public static com.google.protobuf.Parser<GetScalarReply> parser() {
       return PARSER;
     }
 
     @java.lang.Override
-    public com.google.protobuf.Parser<GetStringScalarReply> getParserForType() {
+    public com.google.protobuf.Parser<GetScalarReply> getParserForType() {
       return PARSER;
     }
 
     @java.lang.Override
-    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetStringScalarReply getDefaultInstanceForType() {
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -3209,10 +3209,10 @@ public final class SphynxOuterClass {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_sphynx_GetScalarRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_sphynx_GetStringScalarReply_descriptor;
+    internal_static_sphynx_GetScalarReply_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_sphynx_GetStringScalarReply_fieldAccessorTable;
+      internal_static_sphynx_GetScalarReply_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -3226,15 +3226,14 @@ public final class SphynxOuterClass {
       "est\022\021\n\toperation\030\001 \001(\t\"%\n\017CanComputeRepl" +
       "y\022\022\n\ncanCompute\030\001 \001(\010\"#\n\016ComputeRequest\022" +
       "\021\n\toperation\030\001 \001(\t\"\016\n\014ComputeReply\" \n\020Ge" +
-      "tScalarRequest\022\014\n\004guid\030\001 \001(\t\"&\n\024GetStrin" +
-      "gScalarReply\022\016\n\006scalar\030\001 \001(\t2\316\001\n\006Sphynx\022" +
-      "@\n\nCanCompute\022\031.sphynx.CanComputeRequest" +
-      "\032\027.sphynx.CanComputeReply\0227\n\007Compute\022\026.s" +
-      "phynx.ComputeRequest\032\024.sphynx.ComputeRep" +
-      "ly\022I\n\017getStringScalar\022\030.sphynx.GetScalar" +
-      "Request\032\034.sphynx.GetStringScalarReplyB,\n" +
-      "*com.lynxanalytics.biggraph.graph_api.pr" +
-      "otob\006proto3"
+      "tScalarRequest\022\014\n\004guid\030\001 \001(\t\" \n\016GetScala" +
+      "rReply\022\016\n\006scalar\030\001 \001(\t2\302\001\n\006Sphynx\022@\n\nCan" +
+      "Compute\022\031.sphynx.CanComputeRequest\032\027.sph" +
+      "ynx.CanComputeReply\0227\n\007Compute\022\026.sphynx." +
+      "ComputeRequest\032\024.sphynx.ComputeReply\022=\n\t" +
+      "getScalar\022\030.sphynx.GetScalarRequest\032\026.sp" +
+      "hynx.GetScalarReplyB,\n*com.lynxanalytics" +
+      ".biggraph.graph_api.protob\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -3270,11 +3269,11 @@ public final class SphynxOuterClass {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sphynx_GetScalarRequest_descriptor,
         new java.lang.String[] { "Guid", });
-    internal_static_sphynx_GetStringScalarReply_descriptor =
+    internal_static_sphynx_GetScalarReply_descriptor =
       getDescriptor().getMessageTypes().get(5);
-    internal_static_sphynx_GetStringScalarReply_fieldAccessorTable = new
+    internal_static_sphynx_GetScalarReply_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_sphynx_GetStringScalarReply_descriptor,
+        internal_static_sphynx_GetScalarReply_descriptor,
         new java.lang.String[] { "Scalar", });
   }
 
