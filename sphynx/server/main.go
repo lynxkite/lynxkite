@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"sync"
 
 	"encoding/json"
 	pb "github.com/biggraph/biggraph/sphynx/proto"
@@ -14,52 +13,8 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-type server struct {
-	scalars   map[guid]scalarValue
-	scalarsMu sync.Mutex
-}
-type guid string
-type operationDescription struct {
-	Class string
-	Data  string
-}
-type operationInstance struct {
-	GUID      guid
-	Inputs    map[string]guid
-	Outputs   map[string]guid
-	Operation operationDescription
-}
-type scalarValue interface{}
-
-func (s *server) getBetter(opInst operationInstance) {
-	s.scalarsMu.Lock()
-	defer s.scalarsMu.Unlock()
-	s.scalars[opInst.Outputs["result"]] = "better"
-}
-
-func (s *server) compute(opInst operationInstance) {
-	shortenedClass := shortenClassName(opInst.Operation.Class)
-	switch shortenedClass {
-	case "GetBetter":
-		s.getBetter(opInst)
-	default:
-		log.Fatalf("Can't compute %v", opInst)
-	}
-
-}
-
 func shortenClassName(className string) string {
 	return className[len("com.lynxanalytics.biggraph.graph_operations."):]
-}
-
-func canCompute(op operationDescription) bool {
-	shortenedClass := shortenClassName(op.Class)
-	switch shortenedClass {
-	case "GetBetter":
-		return true
-	default:
-		return false
-	}
 }
 
 func OperationInstanceFromJSON(op_json string) operationInstance {
@@ -72,13 +27,24 @@ func OperationInstanceFromJSON(op_json string) operationInstance {
 func (s *server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.CanComputeReply, error) {
 	log.Printf("Received: %v", in.Operation)
 	opInst := OperationInstanceFromJSON(in.Operation)
-	can := canCompute(opInst.Operation)
-	return &pb.CanComputeReply{CanCompute: can}, nil
+	shortenedClass := shortenClassName(opInst.Operation.Class)
+	switch shortenedClass {
+	case "GetBetter":
+		return &pb.CanComputeReply{CanCompute: true}, nil
+	default:
+		return &pb.CanComputeReply{CanCompute: false}, nil
+	}
 }
 
 func (s *server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.ComputeReply, error) {
 	opInst := OperationInstanceFromJSON(in.Operation)
-	s.compute(opInst)
+	shortenedClass := shortenClassName(opInst.Operation.Class)
+	switch shortenedClass {
+	case "GetBetter":
+		s.getBetter(opInst)
+	default:
+		log.Fatalf("Can't compute %v", opInst)
+	}
 	return &pb.ComputeReply{}, nil
 }
 
