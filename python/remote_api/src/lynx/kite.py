@@ -1122,7 +1122,7 @@ class InputTable:
   def spark(self, spark):
     '''Takes a SparkSession as the argument and returns the table as a Spark DataFrame.'''
     downloaded = self.lk_table.download()
-    return spark.read.parquet(downloaded)
+    return spark.read.parquet("file://" + downloaded)
 
   def lk(self) -> State:
     '''Returns a LynxKite State.'''
