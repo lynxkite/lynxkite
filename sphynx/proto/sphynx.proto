@@ -26,7 +26,6 @@ message GetScalarReply {
   string scalar = 1;
 }
 
-
 service Sphynx {
   rpc CanCompute (CanComputeRequest) returns (CanComputeReply);
   rpc Compute (ComputeRequest) returns (ComputeReply);

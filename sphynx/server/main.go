@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 
 	"encoding/json"
 	pb "github.com/biggraph/biggraph/sphynx/proto"
@@ -14,7 +15,8 @@ import (
 )
 
 type server struct {
-	scalars map[guid]scalarValue
+	scalars   map[guid]scalarValue
+	scalarsMu sync.Mutex
 }
 type guid string
 type operationDescription struct {
@@ -30,6 +32,8 @@ type operationInstance struct {
 type scalarValue interface{}
 
 func (s *server) getBetter(opInst operationInstance) {
+	s.scalarsMu.Lock()
+	defer s.scalarsMu.Unlock()
 	s.scalars[opInst.Outputs["result"]] = "better"
 }
 
