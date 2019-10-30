@@ -9,6 +9,8 @@ import com.lynxanalytics.biggraph.graph_api.proto._
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import java.io.File
 import scala.reflect.runtime.universe._
+import scala.concurrent.Promise
+import scala.util.{ Success, Failure }
 
 class SphynxClient(host: String, port: Int) {
   // Exchanges messages with Sphynx.
@@ -36,18 +38,31 @@ class SphynxClient(host: String, port: Int) {
     return response.getCanCompute
   }
 
-  def compute(operationMetadataJSON: String) {
+  def compute(operationMetadataJSON: String): Promise[Unit] = {
     val request = SphynxOuterClass.ComputeRequest.newBuilder().setOperation(operationMetadataJSON).build()
     println("Computation started.")
+    val p = Promise[Unit]()
+    var computed = false
     asyncStub.compute(request, new StreamObserver[SphynxOuterClass.ComputeReply] {
       def onNext(r: SphynxOuterClass.ComputeReply) {
-        println("Computation finished.")
+        if (computed) {
+          println(s"$operationMetadataJSON was computed twice!")
+        }
+        computed = true
       }
-      def onError(t: Throwable) {}
+      def onError(t: Throwable) {
+        p.complete(Failure(t))
+      }
       def onCompleted() {
-        return
+        if (computed) {
+          p.complete(Success(()))
+        } else {
+          val e = new Exception(f"$operationMetadataJSON was not computed.")
+          p.complete(Failure(e))
+        }
       }
     })
+    p
   }
 
   def getScalar(gUID: String): String = {
