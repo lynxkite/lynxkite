@@ -4,6 +4,7 @@ import _root_.io.grpc.netty.NettyChannelBuilder
 import _root_.io.grpc.netty.GrpcSslContexts
 import _root_.io.grpc.StatusRuntimeException
 import _root_.io.grpc.ManagedChannelBuilder
+import _root_.io.grpc.stub.StreamObserver
 import com.lynxanalytics.biggraph.graph_api.proto._
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import java.io.File
@@ -26,6 +27,7 @@ class SphynxClient(host: String, port: Int) {
   }
 
   private val blockingStub = SphynxGrpc.newBlockingStub(channel)
+  private val asyncStub = SphynxGrpc.newStub(channel)
 
   def canCompute(operationMetadataJSON: String): Boolean = {
     val request = SphynxOuterClass.CanComputeRequest.newBuilder().setOperation(operationMetadataJSON).build()
@@ -36,8 +38,16 @@ class SphynxClient(host: String, port: Int) {
 
   def compute(operationMetadataJSON: String) {
     val request = SphynxOuterClass.ComputeRequest.newBuilder().setOperation(operationMetadataJSON).build()
-    val response = blockingStub.compute(request)
-    println("Compute called.")
+    println("Computation started.")
+    asyncStub.compute(request, new StreamObserver[SphynxOuterClass.ComputeReply] {
+      def onNext(r: SphynxOuterClass.ComputeReply) {
+        println("Computation finished.")
+      }
+      def onError(t: Throwable) {}
+      def onCompleted() {
+        return
+      }
+    })
   }
 
   def getScalar(gUID: String): String = {

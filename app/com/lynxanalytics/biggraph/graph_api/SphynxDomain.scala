@@ -16,10 +16,9 @@ class SphynxMemory(host: String, port: Int) extends Domain {
     return false
   }
 
-  override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = SafeFuture[Unit] {
+  override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = SafeFuture {
     val jsonMeta = Json.stringify(MetaGraphManager.serializeOperation(instance))
-    val res = client.compute(jsonMeta)
-    println("Sphynx computed something!")
+    client.compute(jsonMeta)
   }
 
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
