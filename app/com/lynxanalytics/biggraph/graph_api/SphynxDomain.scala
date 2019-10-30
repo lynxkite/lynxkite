@@ -46,6 +46,3 @@ class SphynxMemory(host: String, port: Int) extends Domain {
   }
 
 }
-
-trait SphynxOperation[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider]
-  extends TypedMetaGraphOp[IS, OMDS] {}
