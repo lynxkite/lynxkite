@@ -40,6 +40,7 @@ EOF
 ./test_driver.sh &
 
 export KITE_SITE_CONFIG=${HERE}/kiterc
-../../stage/bin/biggraph interactive
+../../stage/bin/biggraph interactive || true
+
 
 
