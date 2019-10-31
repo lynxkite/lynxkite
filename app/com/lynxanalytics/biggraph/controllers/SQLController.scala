@@ -44,12 +44,6 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
   assert(
     directory.isDefined ^ project.isDefined,
     "Exactly one of directory and project should be defined")
-  def createDataFrame(user: User, context: SQLContext)(
-    implicit
-    dm: DataManager, sd: SparkDomain, mm: MetaGraphManager): DataFrame = {
-    if (project.isDefined) ??? // TODO: Delete this method.
-    else globalSQL(user, context)
-  }
 
   // Finds the names of tables from string
   private def findTablesFromQuery(query: String): List[String] = {
@@ -58,7 +52,7 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
   }
 
   // Creates a DataFrame from a global level SQL query.
-  private def globalSQL(user: serving.User, context: SQLContext)(
+  def globalSQL(user: serving.User)(
     implicit
     dm: DataManager, sd: SparkDomain, mm: MetaGraphManager): spark.sql.DataFrame =
     mm.synchronized {
@@ -79,7 +73,7 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
           (name, (snapshot.asSnapshotFrame.getState(), tablePath))
       }
       val protoTables = goodSnapshotStates.collect {
-        case (name, (state, tablePath)) if state.isTable => (name, ProtoTable(state.table))
+        case (name, (state, _)) if state.isTable => (name, ProtoTable(state.table))
         case (name, (state, tablePath)) if state.isProject =>
           val rootViewer = state.project.viewer
           val protoTable = rootViewer.getSingleProtoTable(tablePath.mkString("."))
@@ -314,7 +308,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
-    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext())
+    val df = request.dfSpec.globalSQL(user)
     val columns = df.schema.toList.map { field =>
       field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
     }
@@ -380,7 +374,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
 
   def exportSQLQueryToJdbc(
     user: serving.User, request: SQLExportToJdbcRequest) = async[Unit] {
-    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext())
+    val df = request.dfSpec.globalSQL(user, SQLController.defaultContext())
     df.write.mode(request.mode).jdbc(request.jdbcUrl, request.table, new java.util.Properties)
   }
 
@@ -409,7 +403,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     file: HadoopFile,
     format: String,
     options: Map[String, String] = Map()): Unit = {
-    val df = dfSpec.createDataFrame(user, SQLController.defaultContext())
+    val df = dfSpec.globalSQL(user)
     // TODO: #2889 (special characters in S3 passwords).
     file.assertWriteAllowedFrom(user)
     df.write.format(format).options(options).save(file.resolvedName)
