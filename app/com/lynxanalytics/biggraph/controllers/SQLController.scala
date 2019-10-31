@@ -433,7 +433,7 @@ object SQLController {
   }
 
   // Every query runs in its own SQLContext for isolation.
-  def defaultContext(user: User)(implicit sparkDomain: SparkDomain): SQLContext = {
+  private def defaultContext(user: User)(implicit sparkDomain: SparkDomain): SQLContext = {
     sparkDomain.newSQLContext()
   }
 
