@@ -2,7 +2,6 @@
 package com.lynxanalytics.biggraph.serving
 
 import scala.concurrent.Future
-import org.apache.spark.sql.{ DataFrame, SQLContext, SaveMode, types }
 import org.apache.parquet.hadoop.ParquetFileReader
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
@@ -16,7 +15,6 @@ import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.graph_operations.DynamicValue
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.serving.FrontendJson._
-import org.apache.spark.sql.types.StructType
 
 object RemoteAPIProtocol {
   case class ParquetMetadataResponse(rowCount: Long)
@@ -81,7 +79,6 @@ class RemoteAPIController(env: BigGraphEnvironment) {
   implicit val metaManager = env.metaGraphManager
   implicit val dataManager = env.dataManager
   val ops = new frontend_operations.Operations(env)
-  val sqlController = new SQLController(env, ops)
   val bigGraphController = new BigGraphController(env)
   val graphDrawingController = new GraphDrawingController(env)
 
@@ -137,27 +134,6 @@ class RemoteAPIController(env: BigGraphEnvironment) {
     val drawing = graphDrawingController
     val ec = env.sparkDomain.executionContext // TODO: Revise when we have single-node drawing.
     Future(drawing.getComplexView(user, request))(ec)
-  }
-
-  private def dfToTableResult(df: org.apache.spark.sql.DataFrame, limit: Int) = {
-    val schema = df.schema
-    val data = if (limit >= 0) df.take(limit) else df.collect
-    val rows = data.map { row =>
-      schema.fields.zipWithIndex.flatMap {
-        case (f, i) =>
-          if (row.isNullAt(i)) None
-          else {
-            val jsValue = f.dataType match {
-              case _: types.DoubleType => json.Json.toJson(row.getDouble(i))
-              case _: types.StringType => json.Json.toJson(row.getString(i))
-              case _: types.LongType => json.Json.toJson(row.getLong(i))
-              case _ => json.Json.toJson(row.get(i).toString)
-            }
-            Some(f.name -> jsValue)
-          }
-      }.toMap
-    }
-    TableResult(rows = rows.toList)
   }
 
   def getParquetMetadata(user: User, request: PrefixedPathRequest): ParquetMetadataResponse = {
