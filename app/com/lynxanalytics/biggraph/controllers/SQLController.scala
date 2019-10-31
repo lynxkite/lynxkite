@@ -169,7 +169,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val op = ops.opForBox(
       user, box, inputs = null, workspaceParameters = workspaceParameters).asInstanceOf[ImportOperation]
     val parameterSettings = op.settingsString()
-    val df = op.getDataFrame(SQLController.defaultContext(user))
+    val df = op.getDataFrame(SQLController.defaultContext())
     val table = ImportDataFrame.run(df)
     dataManager.compute(table) // Start importing in the background.
     val guid = table.gUID.toString
@@ -314,7 +314,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
-    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
+    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext())
     val columns = df.schema.toList.map { field =>
       field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
     }
@@ -380,7 +380,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
 
   def exportSQLQueryToJdbc(
     user: serving.User, request: SQLExportToJdbcRequest) = async[Unit] {
-    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
+    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext())
     df.write.mode(request.mode).jdbc(request.jdbcUrl, request.table, new java.util.Properties)
   }
 
@@ -409,7 +409,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     file: HadoopFile,
     format: String,
     options: Map[String, String] = Map()): Unit = {
-    val df = dfSpec.createDataFrame(user, SQLController.defaultContext(user))
+    val df = dfSpec.createDataFrame(user, SQLController.defaultContext())
     // TODO: #2889 (special characters in S3 passwords).
     file.assertWriteAllowedFrom(user)
     df.write.format(format).options(options).save(file.resolvedName)
@@ -433,7 +433,7 @@ object SQLController {
   }
 
   // Every query runs in its own SQLContext for isolation.
-  private def defaultContext(user: User)(implicit sparkDomain: SparkDomain): SQLContext = {
+  private def defaultContext()(implicit sparkDomain: SparkDomain): SQLContext = {
     sparkDomain.newSQLContext()
   }
 
