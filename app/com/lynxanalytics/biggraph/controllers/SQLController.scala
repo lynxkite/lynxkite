@@ -14,7 +14,6 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import com.lynxanalytics.biggraph.serving
-import com.lynxanalytics.biggraph.serving.User
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 import play.api.libs.json
@@ -374,7 +373,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
 
   def exportSQLQueryToJdbc(
     user: serving.User, request: SQLExportToJdbcRequest) = async[Unit] {
-    val df = request.dfSpec.globalSQL(user, SQLController.defaultContext())
+    val df = request.dfSpec.globalSQL(user)
     df.write.mode(request.mode).jdbc(request.jdbcUrl, request.table, new java.util.Properties)
   }
 
