@@ -53,6 +53,13 @@ class ScalaDomain extends Domain {
   private[graph_api] def get(e: EdgeBundle) = synchronized { entityCache(e.gUID).asInstanceOf[Map[ID, Edge]] }
   private[graph_api] def get[T](e: Attribute[T]) = synchronized { entityCache(e.gUID).asInstanceOf[Map[ID, T]] }
 
+  override def canRelocate(source: Domain): Boolean = {
+    source match {
+      case source: SparkDomain => true
+      case _ => false
+    }
+  }
+
   override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     source match {
       case source: SparkDomain =>
