@@ -100,25 +100,15 @@ class DataManager(
   }
 
   private def ensureThenRelocate(e: MetaGraphEntity, src: Domain, dst: Domain): SafeFuture[Unit] = {
+    val parents = bfs(src, dst)
+    val directSrc = parents(dst)
     val f = e match {
       // The base vertex set must be present for edges and attributes before we can relocate them.
-      case e: Attribute[_] => combineFutures(Seq(ensure(e, src), ensure(e.vertexSet, dst)))
-      case e: EdgeBundle => combineFutures(Seq(ensure(e, src), ensure(e.idSet, dst)))
-      case _ => ensure(e, src)
+      case e: Attribute[_] => combineFutures(Seq(ensure(e, directSrc), ensure(e.vertexSet, dst)))
+      case e: EdgeBundle => combineFutures(Seq(ensure(e, directSrc), ensure(e.idSet, dst)))
+      case _ => ensure(e, directSrc)
     }
     f.flatMap(_ => dst.relocate(e, src))
-  }
-
-  private def planRelocate(src: Domain, dst: Domain): collection.mutable.ArrayBuffer[(Domain, Domain)] = {
-    val parents = bfs(src, dst)
-    val plan = collection.mutable.ArrayBuffer[(Domain, Domain)]()
-    var child = dst
-    while (child != src) {
-      var parent = parents(child)
-      (parent, child) +=: plan
-      child = parent
-    }
-    plan
   }
 
   private def bfs(src: Domain, dst: Domain): collection.mutable.Map[Domain, Domain] = {
@@ -172,14 +162,7 @@ class DataManager(
       }
       f
     } else { // Someone else has to compute it. Then we relocate.
-      val plan = planRelocate(other, d)
-      plan.foldLeft(SafeFuture.successful(())) {
-        (f, step) =>
-          {
-            val (src, dst) = step
-            f map { _ => ensureThenRelocate(e, src, dst) }
-          }
-      }
+      ensureThenRelocate(e, other, d)
     }
   }
 
