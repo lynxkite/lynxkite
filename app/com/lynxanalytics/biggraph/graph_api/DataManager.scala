@@ -111,14 +111,14 @@ class DataManager(
     f.flatMap(_ => dst.relocate(e, src))
   }
 
-  private def bfs(src: Domain, dst: Domain): collection.mutable.Map[Domain, Domain] = {
+  private def bfs(src: Domain, dst: Domain): Map[Domain, Domain] = {
     val q = collection.mutable.Queue(src)
     val parents = collection.mutable.Map[Domain, Domain]()
     val seen = collection.mutable.Set(src)
     while (!q.isEmpty) {
       var s = q.dequeue()
       for (d <- domains) {
-        if (!(seen contains d) && d.canRelocate(s)) {
+        if (!seen.contains(d) && d.canRelocate(s)) {
           q.enqueue(d)
           parents(d) = s
           seen += d
