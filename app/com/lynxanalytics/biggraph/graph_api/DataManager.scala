@@ -35,6 +35,7 @@ trait Domain {
   // This is a method on the destination so that the methods for modifying internal
   // data structures can remain private.
   def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit]
+  def canRelocate(source: Domain): Boolean
 }
 
 // Manages data computation across domains.
@@ -108,6 +109,38 @@ class DataManager(
     f.flatMap(_ => dst.relocate(e, src))
   }
 
+  private def planRelocate(src: Domain, dst: Domain): collection.mutable.ArrayBuffer[(Domain, Domain)] = {
+    val parents = bfs(src, dst)
+    val plan = collection.mutable.ArrayBuffer[(Domain, Domain)]()
+    var child = dst
+    while (child != src) {
+      var parent = parents(child)
+      (parent, child) +=: plan
+      child = parent
+    }
+    plan
+  }
+
+  private def bfs(src: Domain, dst: Domain): collection.mutable.Map[Domain, Domain] = {
+    val q = collection.mutable.Queue(src)
+    val parents = collection.mutable.Map[Domain, Domain]()
+    val seen = collection.mutable.Set(src)
+    while (!q.isEmpty) {
+      var s = q.dequeue()
+      for (d <- domains) {
+        if (!(seen contains d) && d.canRelocate(s)) {
+          q.enqueue(d)
+          parents(d) = s
+          seen += d
+        }
+        if (d == dst) {
+          return parents
+        }
+      }
+    }
+    throw new Exception(f"Cannot relocate: no path was found from $src to $dst.")
+  }
+
   def ensure(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
     val f = futures.get((e.gUID, d))
     if (f.isDefined) {
@@ -139,7 +172,14 @@ class DataManager(
       }
       f
     } else { // Someone else has to compute it. Then we relocate.
-      ensureThenRelocate(e, other, d)
+      val plan = planRelocate(other, d)
+      plan.foldLeft(SafeFuture.successful(())) {
+        (f, step) =>
+          {
+            val (src, dst) = step
+            f map { _ => ensureThenRelocate(e, src, dst) }
+          }
+      }
     }
   }
 

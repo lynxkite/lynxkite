@@ -41,6 +41,10 @@ class SphynxMemory(host: String, port: Int) extends Domain {
     ???
   }
 
+  override def canRelocate(source: Domain): Boolean = {
+    false
+  }
+
   override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     ???
   }

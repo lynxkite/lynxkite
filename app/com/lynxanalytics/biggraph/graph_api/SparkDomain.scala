@@ -341,6 +341,13 @@ class SparkDomain(
     sqlContext
   }
 
+  override def canRelocate(source: Domain): Boolean = {
+    source match {
+      case source: ScalaDomain => true
+      case _ => false
+    }
+  }
+
   override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     source match {
       case source: ScalaDomain =>
