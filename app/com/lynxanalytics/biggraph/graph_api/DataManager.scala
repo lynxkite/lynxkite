@@ -124,7 +124,7 @@ class DataManager(
           seen += d
         }
         if (d == dst) {
-          return parents
+          return parents.toMap
         }
       }
     }
