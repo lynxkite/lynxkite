@@ -100,8 +100,7 @@ class DataManager(
   }
 
   private def ensureThenRelocate(e: MetaGraphEntity, src: Domain, dst: Domain): SafeFuture[Unit] = {
-    val parents = bfs(src, dst)
-    val directSrc = parents(dst)
+    val directSrc = bfs(src, dst)
     val f = e match {
       // The base vertex set must be present for edges and attributes before we can relocate them.
       case e: Attribute[_] => combineFutures(Seq(ensure(e, directSrc), ensure(e.vertexSet, dst)))
@@ -111,20 +110,20 @@ class DataManager(
     f.flatMap(_ => dst.relocate(e, src))
   }
 
-  private def bfs(src: Domain, dst: Domain): Map[Domain, Domain] = {
+  private def bfs(src: Domain, dst: Domain): Domain = {
+    // Uses bfs to determine the shortest path from src do dst and returns the
+    // last Domain before dst on that path.
     val q = collection.mutable.Queue(src)
-    val parents = collection.mutable.Map[Domain, Domain]()
     val seen = collection.mutable.Set(src)
     while (!q.isEmpty) {
       var s = q.dequeue()
       for (d <- domains) {
+        if (d == dst) {
+          return s
+        }
         if (!seen.contains(d) && d.canRelocate(s)) {
           q.enqueue(d)
-          parents(d) = s
           seen += d
-        }
-        if (d == dst) {
-          return parents.toMap
         }
       }
     }
