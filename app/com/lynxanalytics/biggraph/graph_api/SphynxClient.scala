@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.graph_api.proto._
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import java.io.File
 import scala.reflect.runtime.universe._
-import scala.concurrent.Promise
+import scala.concurrent.{ Promise, Future }
 import scala.util.{ Success, Failure }
 
 class SphynxClient(host: String, port: Int) {
@@ -34,20 +34,16 @@ class SphynxClient(host: String, port: Int) {
   def canCompute(operationMetadataJSON: String): Boolean = {
     val request = SphynxOuterClass.CanComputeRequest.newBuilder().setOperation(operationMetadataJSON).build()
     val response = blockingStub.canCompute(request)
-    println("CanCompute: " + response.getCanCompute)
     return response.getCanCompute
   }
 
-  def compute(operationMetadataJSON: String): Promise[Unit] = {
+  def compute(operationMetadataJSON: String): Future[Unit] = {
     val request = SphynxOuterClass.ComputeRequest.newBuilder().setOperation(operationMetadataJSON).build()
-    println("Computation started.")
     val p = Promise[Unit]()
     var computed = false
     asyncStub.compute(request, new StreamObserver[SphynxOuterClass.ComputeReply] {
       def onNext(r: SphynxOuterClass.ComputeReply) {
-        if (computed) {
-          println(s"$operationMetadataJSON was computed twice!")
-        }
+        assert(!computed, s"$operationMetadataJSON was computed twice!")
         computed = true
       }
       def onError(t: Throwable) {
@@ -68,7 +64,6 @@ class SphynxClient(host: String, port: Int) {
   def getScalar(gUID: String): String = {
     val request = SphynxOuterClass.GetScalarRequest.newBuilder().setGuid(gUID).build()
     val response = blockingStub.getScalar(request)
-    println("GetScalar called.")
     response.getScalar
   }
 }
