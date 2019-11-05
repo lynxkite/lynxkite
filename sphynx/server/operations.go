@@ -1,6 +1,6 @@
 package main
 
-func (s *server) getBetter(opInst operationInstance) {
+func (s *Server) getBetter(opInst OperationInstance) {
 	s.scalarsMu.Lock()
 	defer s.scalarsMu.Unlock()
 	s.scalars[opInst.Outputs["result"]] = "better"
