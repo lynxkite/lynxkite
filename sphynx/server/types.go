@@ -2,19 +2,19 @@ package main
 
 import "sync"
 
-type scalarValue interface{}
-type server struct {
-	scalars   map[guid]scalarValue
+type ScalarValue interface{}
+type Server struct {
+	scalars   map[GUID]ScalarValue
 	scalarsMu sync.Mutex
 }
-type guid string
-type operationDescription struct {
+type GUID string
+type OperationDescription struct {
 	Class string
 	Data  interface{}
 }
-type operationInstance struct {
-	GUID      guid
-	Inputs    map[string]guid
-	Outputs   map[string]guid
-	Operation operationDescription
+type OperationInstance struct {
+	GUID      GUID
+	Inputs    map[string]GUID
+	Outputs   map[string]GUID
+	Operation OperationDescription
 }
