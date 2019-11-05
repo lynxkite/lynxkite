@@ -18,8 +18,8 @@ class SphynxMemory(host: String, port: Int) extends Domain {
 
   override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {
     val jsonMeta = Json.stringify(MetaGraphManager.serializeOperation(instance))
-    val p = client.compute(jsonMeta)
-    SafeFuture(p.future)
+    val f = client.compute(jsonMeta)
+    SafeFuture(f)
   }
 
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
@@ -29,12 +29,11 @@ class SphynxMemory(host: String, port: Int) extends Domain {
     return res
   }
 
-  override def get[T](scalar: Scalar[T]): SafeFuture[T] = {
+  override def get[T](scalar: Scalar[T]) = SafeFuture[T] {
     val gUIDString = scalar.gUID.toString()
     val jsonString = client.getScalar(gUIDString)
     val format = TypeTagToFormat.typeTagToFormat(scalar.typeTag)
-    val value = format.reads(Json.parse(jsonString)).get
-    SafeFuture.successful(value)
+    format.reads(Json.parse(jsonString)).get
   }
 
   override def cache(e: MetaGraphEntity): Unit = {
