@@ -62,13 +62,13 @@ class SphynxClient(host: String, port: Int) {
         }
       }
     })
-    p
+    p.future
   }
 
   def getScalar(gUID: String): String = {
     val request = SphynxOuterClass.GetScalarRequest.newBuilder().setGuid(gUID).build()
     val response = blockingStub.getScalar(request)
     println("GetScalar called.")
-    return response.getScalar
+    response.getScalar
   }
 }
