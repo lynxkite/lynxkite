@@ -29,11 +29,9 @@ class SphynxMemory(host: String, port: Int) extends Domain {
     return res
   }
 
-  override def get[T](scalar: Scalar[T]) = SafeFuture[T] {
-    val gUIDString = scalar.gUID.toString()
-    val jsonString = client.getScalar(gUIDString)
-    val format = TypeTagToFormat.typeTagToFormat(scalar.typeTag)
-    format.reads(Json.parse(jsonString)).get
+  override def get[T](scalar: Scalar[T]): SafeFuture[T] = {
+    val f = client.getScalar(scalar)
+    SafeFuture(f)
   }
 
   override def cache(e: MetaGraphEntity): Unit = {
