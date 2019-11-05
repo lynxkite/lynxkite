@@ -1,7 +1,7 @@
 // The links at the bottom of every page, such as "logout".
 'use strict';
 
-angular.module('biggraph').directive('userMenu', function($window, util) {
+angular.module('biggraph').directive('userMenu', function($window, util, $rootScope) {
   return {
     restrict: 'E',
     scope: {
@@ -27,6 +27,10 @@ angular.module('biggraph').directive('userMenu', function($window, util) {
         util.post('/logout', {}).then(function() {
           $window.location.href = '/';
         });
+      };
+
+      scope.intro = function() {
+        $rootScope.$broadcast('start intro');
       };
     },
   };

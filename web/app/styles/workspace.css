@@ -17,6 +17,14 @@ span#workspace-name {
   font: bold 2.5em 'Exo 2'; /* Brand font. */
 }
 
+#workspace-toolbar-buttons {
+  display: inherit;
+}
+#workspace-name.introjs-showElement,
+#workspace-toolbar-buttons.introjs-showElement {
+  background: #002a4c; /* Brand color. */
+}
+
 #workspace-loading,
 #workspace-drawing-board {
   height: 100%;

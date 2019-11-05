@@ -2,7 +2,7 @@
 'use strict';
 
 angular.module('biggraph').directive('entrySelector',
-  function(util, hotkeys, $timeout, $anchorScroll) {
+  function(util, hotkeys, $timeout, $anchorScroll, ngIntroService) {
     return {
       restrict: 'E',
       scope: {
@@ -274,6 +274,55 @@ angular.module('biggraph').directive('entrySelector',
             scope.reload();
           }
         });
+
+        function showTutorial() {
+          ngIntroService.setOptions({ steps: [
+            {
+              intro: `
+              <p><b>Welcome to LynxKite!</b>
+              <p>This seems to be your first visit. I can quickly show you how to get started.
+              `,
+            }, {
+              element: '.user-menu-dropup',
+              intro: `
+              <p>If you wish to see this tutorial again, you can find it in the
+              hamburger menu.
+              `,
+            }, {
+              element: '#directory-browser',
+              intro: `
+              <p>LynxKite stores your work in a virtual file system that you can see here.
+              You can open, rename, or delete files, organize them in folders, and so on.
+
+              <p>You can have two kinds of files: <b>workspaces</b> and <b>snapshots</b>.
+              `,
+            }, {
+              element: '#new-workspace',
+              intro: `
+              <p>Click here to create a new <b>workspace</b>.
+
+              <p>A workspace is the place for stringing together steps of a data analysis pipeline.
+
+              <p><i>The tutorial will continue when you've created a workspace.</i>
+              `,
+            },
+          ] });
+
+          ngIntroService.onChange(function(e) {
+            if (e.id === 'new-workspace') {
+              localStorage.setItem('entry-selector tutorial done', 'true');
+            }
+          });
+          ngIntroService.onExit(function() {
+            localStorage.setItem('entry-selector tutorial done', 'true');
+          });
+          if (!localStorage.getItem('entry-selector tutorial done')) {
+            ngIntroService.start();
+          }
+          scope.$on('start intro', function() { ngIntroService.start(); });
+          scope.$on('$destroy', function() { ngIntroService.clear(); });
+        }
+        setTimeout(showTutorial, 1000);
       },
     };
   });

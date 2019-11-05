@@ -2,7 +2,7 @@
 // Operation can be dragged to the workspace drawing board to create boxes.
 'use strict';
 
-angular.module('biggraph').directive('operationSelector', function($timeout, $rootScope) {
+angular.module('biggraph').directive('operationSelector', function($timeout, $rootScope, ngIntroService) {
   return {
     restrict: 'E',
     scope: {
@@ -78,6 +78,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
         }
         scope.searching = undefined;
         scope.op = undefined;
+        setTimeout(showTutorial, 500);
       };
       scope.searchClicked = function() {
         if (scope.searching) {
@@ -93,6 +94,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
         scope.lastCat = scope.category;
         scope.category = undefined;
         scope.ondrag({ op: op, $event: event });
+        ngIntroService.clear();
       };
 
       scope.filterAndSort = function(boxes, opFilter) {
@@ -123,7 +125,22 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
         scope.searchSelection = 0;
         $timeout(function() { elem.find('#filter').focus(); });
       }
-    },
 
+      function showTutorial() {
+        if (localStorage.getItem('workspace-drawing-board tutorial done')) {
+          return;
+        }
+        ngIntroService.clear();
+        ngIntroService.setOptions({ steps: [
+          {
+            element: '.operation-selector .box',
+            intro: `
+            <p>Grab one of the box names with your mouse and drag it into the workspace!
+            `,
+          },
+        ], showBullets: false });
+        ngIntroService.start();
+      }
+    },
   };
 });
