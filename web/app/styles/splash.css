@@ -28,3 +28,7 @@
     font-size: 18px;
   }
 }
+
+.introjs-tooltip {
+  min-width: 300px;
+}

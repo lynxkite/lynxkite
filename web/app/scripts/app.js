@@ -7,6 +7,7 @@ angular
     'ui.ace',
     'ui.bootstrap',
     'cfp.hotkeys',
+    'angular-intro',
   ])
 
   .config(function ($routeProvider, $locationProvider) {
