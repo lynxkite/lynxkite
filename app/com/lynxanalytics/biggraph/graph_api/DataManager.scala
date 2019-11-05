@@ -128,7 +128,7 @@ class DataManager(
         }
       }
     }
-    throw new Exception(f"Cannot relocate: no path was found from $src to $dst.")
+    throw new AssertionError(f"Cannot relocate: no path was found from $src to $dst.")
   }
 
   def ensure(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
