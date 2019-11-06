@@ -2,7 +2,7 @@
 'use strict';
 
 angular.module('biggraph').directive('entrySelector',
-  function(util, hotkeys, $timeout, $anchorScroll, ngIntroService) {
+  function(util, hotkeys, $timeout, $anchorScroll) {
     return {
       restrict: 'E',
       scope: {
@@ -276,51 +276,63 @@ angular.module('biggraph').directive('entrySelector',
         });
 
         function showTutorial() {
-          ngIntroService.setOptions({ steps: [
-            {
-              intro: `
-              <p><b>Welcome to LynxKite!</b>
-              <p>This seems to be your first visit. I can quickly show you how to get started.
-              `,
-            }, {
-              element: '.user-menu-dropup',
-              intro: `
-              <p>If you wish to see this tutorial again, you can find it in the
-              hamburger menu.
-              `,
-            }, {
-              element: '#directory-browser',
-              intro: `
-              <p>LynxKite stores your work in a virtual file system that you can see here.
-              You can open, rename, or delete files, organize them in folders, and so on.
+          /* global Tour */
+          const tour = new Tour({
+            autoscroll: false,
+            framework: 'bootstrap3',
+            storage: null,
+            backdrop: true,
+            showProgressBar: false,
+            steps: [
+              {
+                orphan: true,
+                content: `
+                <p><b>Welcome to LynxKite!</b>
+                <p>This seems to be your first visit. I can quickly show you how to get started.
+                `,
+              }, {
+                placement: 'top',
+                element: '.user-menu-dropup',
+                content: `
+                <p>If you wish to see this tutorial again, you can find it in the
+                hamburger menu.
+                `,
+              }, {
+                placement: 'top',
+                element: '#directory-browser',
+                content: `
+                <p>LynxKite stores your work in a virtual file system that you can see here.
+                You can open, rename, or delete files, organize them in folders, and so on.
 
-              <p>You can have two kinds of files: <b>workspaces</b> and <b>snapshots</b>.
-              `,
-            }, {
-              element: '#new-workspace',
-              intro: `
-              <p>Click here to create a new <b>workspace</b>.
+                <p>You can have two kinds of files: <b>workspaces</b> and <b>snapshots</b>.
+                `,
+              }, {
+                placement: 'top',
+                element: '#new-workspace',
+                content: `
+                <p>Click here to create a new <b>workspace</b>.
 
-              <p>A workspace is the place for stringing together steps of a data analysis pipeline.
+                <p>A workspace is the place for stringing together steps of a data analysis pipeline.
 
-              <p><i>The tutorial will continue when you've created a workspace.</i>
-              `,
-            },
-          ] });
-
-          ngIntroService.onChange(function(e) {
-            if (e.id === 'new-workspace') {
+                <p><i>The tutorial will continue when you've created a workspace.</i>
+                `,
+              },
+            ],
+            onEnd: function() {
               localStorage.setItem('entry-selector tutorial done', 'true');
-            }
+            },
+            onShown: function() {
+              if (tour.getCurrentStepIndex() === tour.getStepCount() - 1) { // Last page.
+                localStorage.setItem('entry-selector tutorial done', 'true');
+              }
+            },
           });
-          ngIntroService.onExit(function() {
-            localStorage.setItem('entry-selector tutorial done', 'true');
-          });
+
           if (!localStorage.getItem('entry-selector tutorial done')) {
-            ngIntroService.start();
+            tour.start();
           }
-          scope.$on('start intro', function() { ngIntroService.start(); });
-          scope.$on('$destroy', function() { ngIntroService.clear(); });
+          scope.$on('start tutorial', function() { tour.start(); });
+          scope.$on('$destroy', function() { tour.end(); });
         }
         setTimeout(showTutorial, 1000);
       },

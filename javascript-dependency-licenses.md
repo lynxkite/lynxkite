@@ -12,10 +12,6 @@
 │  └─ font-awesome@4.7.0
 ├─ (WTFPL OR MIT)
 │  └─ path-is-inside@1.0.2
-├─ AGPL-3.0
-│  ├─ angular-intro.js@3.4.0
-│  ├─ intro.js@2.5.0
-│  └─ intro.js@2.9.3
 ├─ Apache-2.0
 │  ├─ aws-sign2@0.7.0
 │  ├─ browser-sync-ui@2.26.2
@@ -203,7 +199,6 @@
 │  ├─ angular-ui-ace@0.2.3
 │  ├─ angular-ui-bootstrap@2.5.6
 │  ├─ angular@1.7.7
-│  ├─ angular@1.7.8
 │  ├─ ansi-colors@1.1.0
 │  ├─ ansi-colors@3.2.4
 │  ├─ ansi-cyan@0.1.1
@@ -267,6 +262,7 @@
 │  ├─ binary-extensions@1.13.0
 │  ├─ blob@0.0.5
 │  ├─ blocking-proxy@1.0.1
+│  ├─ bootstrap-tourist@0.2.1
 │  ├─ bootstrap@3.4.1
 │  ├─ brace-expansion@1.1.11
 │  ├─ braces@1.8.5

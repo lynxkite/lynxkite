@@ -163,14 +163,6 @@ angular-hotkeys@1.7.0:
   resolved "https://registry.yarnpkg.com/angular-hotkeys/-/angular-hotkeys-1.7.0.tgz#052e6b6f44dfcd824427798b7f10e1917e8700a1"
   integrity sha1-BS5rb0TfzYJEJ3mLfxDhkX6HAKE=
 
-angular-intro.js@^3.4.0:
-  version "3.4.0"
-  resolved "https://registry.yarnpkg.com/angular-intro.js/-/angular-intro.js-3.4.0.tgz#c291dc63758cbd37c7d5e55e960dfd74ec24829c"
-  integrity sha512-N0pcumLcKdQ2oXhosdZXf3IpPUMJrq12Ez0REr/lBbS2qhmaE+L+HHZs48N0Y2MbLim2jyec3HIBr3kcQ7blfw==
-  dependencies:
-    angular "^1.4.0"
-    intro.js "~2.5.0"
-
 angular-mocks@1.7.7:
   version "1.7.7"
   resolved "https://registry.yarnpkg.com/angular-mocks/-/angular-mocks-1.7.7.tgz#227feca8a7e9cc61c4680366db024d6563d4c6eb"
@@ -200,11 +192,6 @@ angular@1.7.7:
   version "1.7.7"
   resolved "https://registry.yarnpkg.com/angular/-/angular-1.7.7.tgz#26bd87693deadcbd5944610a7a0463fc79a18803"
   integrity sha512-MH3JEGd8y/EkNCKJ8EV6Ch0j9X0rZTta/QVIDpBWaIdfh85/e5KO8+ZKgvWIb02MQuiS20pDFmMFlv4ZaLcLWg==
-
-angular@^1.4.0:
-  version "1.7.8"
-  resolved "https://registry.yarnpkg.com/angular/-/angular-1.7.8.tgz#b77ede272ce1b261e3be30c1451a0b346905a3c9"
-  integrity sha512-wtef/y4COxM7ZVhddd7JtAAhyYObq9YXKar9tsW7558BImeVYteJiTxCKeJOL45lJ/+7B4wrAC49j8gTFYEthg==
 
 ansi-colors@^1.0.1:
   version "1.1.0"
@@ -635,6 +622,11 @@ blocking-proxy@^1.0.0:
   integrity sha512-KE8NFMZr3mN2E0HcvCgRtX7DjhiIQrwle+nSVJVC/yqFb9+xznHl2ZcoBp2L9qzkI4t4cBFJ1efXF8Dwi132RA==
   dependencies:
     minimist "^1.2.0"
+
+bootstrap-tourist@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/bootstrap-tourist/-/bootstrap-tourist-0.2.1.tgz#5333dcc6054df453a4918d7ad72eaccace79c4b5"
+  integrity sha512-qIJBrS64Lj/4Cz/yWaRCrKT82R0hLkH5W3T8Kyyu1eRlEUHt4DygiJqH4YDuwc2CsTZagpikxr7sUXu1X1Cn6w==
 
 bootstrap@3.4.1:
   version "3.4.1"
@@ -2942,16 +2934,6 @@ interpret@^1.1.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/interpret/-/interpret-1.2.0.tgz#d5061a6224be58e8083985f5014d844359576296"
   integrity sha512-mT34yGKMNceBQUoVn7iCDKDntA7SC6gycMAWzGx1z/CMCTV7b2AAtXlo3nRyHZ1FelRkQbQjprHSYGwzLtkVbw==
-
-intro.js@^2.9.3:
-  version "2.9.3"
-  resolved "https://registry.yarnpkg.com/intro.js/-/intro.js-2.9.3.tgz#001d9a7bca66d8f4d2d0253c9b3345e9ae4320c3"
-  integrity sha512-hC+EXWnEuJeA3CveGMat3XHePd2iaXNFJIVfvJh2E9IzBMGLTlhWvPIVHAgKlOpO4lNayCxEqzr4N02VmHFr9Q==
-
-intro.js@~2.5.0:
-  version "2.5.0"
-  resolved "https://registry.yarnpkg.com/intro.js/-/intro.js-2.5.0.tgz#8d6d48e79b7d3f649492888be30c8528a31aa2e7"
-  integrity sha1-jW1I55t9P2SUkoiL4wyFKKMaouc=
 
 invert-kv@^1.0.0:
   version "1.0.0"
