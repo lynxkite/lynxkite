@@ -14,7 +14,8 @@ import scala.util.{ Success, Failure }
 import play.api.libs.json.Json
 
 class SingleResponseStreamObserver[T, U](val handleReply: T => U) extends StreamObserver[T] {
-  val promise = Promise[U]()
+  private val promise = Promise[U]()
+  val future = SafeFuture(promise.future)
   var responseArrived = false
   def onNext(r: T) {
     assert(!responseArrived, s"Two responses arrived, while we expected only one.")
