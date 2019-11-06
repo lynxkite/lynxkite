@@ -8,7 +8,7 @@ angular.module('biggraph')
     'workspaceDrawingBoard',
     function(
       environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope, $q,
-      $location, util, longPoll, pythonCodeGenerator, ngIntroService) {
+      $location, util, longPoll, pythonCodeGenerator) {
       return {
         restrict: 'E',
         templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -359,7 +359,7 @@ angular.module('biggraph')
             scope.selection.remove();
             if (scope.movedBoxes) {
               scope.workspace.saveIfBoxesDirty();
-              showTutorialBoxPlaced();
+              tutorialBoxPlaced();
             }
             scope.movedBoxes = undefined;
             scope.pulledPlug = undefined;
@@ -635,6 +635,7 @@ angular.module('biggraph')
             event.logicalY -= 50;
             const box = scope.workspace.addBox(op.operationId, event, { willSaveLater: true });
             scope.onMouseDownOnBox(scope.workspace.getBox(box.id), event);
+            tutorialDragStart();
           };
 
           // Insert an import box when a file is dropped on the board.
@@ -774,56 +775,87 @@ angular.module('biggraph')
             if (localStorage.getItem('workspace-drawing-board tutorial done')) {
               return;
             }
-            ngIntroService.setOptions({ steps: [
-              {
-                intro: `
-                <p>This is a LynxKite workspace.
-                `,
-              }, {
-                element: '#workspace-name',
-                intro: `
-                <p>The well-chosen name of your workspace.
-                `,
-              }, {
-                element: '#workspace-toolbar-buttons',
-                intro: `
-                <p>These buttons are pretty useful!
+            /* global Tour */
+            scope.tutorial = new Tour({
+              autoscroll: false,
+              framework: 'bootstrap3',
+              storage: null,
+              backdrop: true,
+              showProgressBar: false,
+              steps: [
+                {
+                  /*orphan: true,
+                  content: `
+                  <p>This is a LynxKite workspace.
+                  `,
+                }, {
+                  placement: 'bottom',
+                  element: '#workspace-name',
+                  content: `
+                  <p>The well-chosen name of your workspace.
+                  `,
+                }, {*/
+                  placement: 'bottom',
+                  element: '#workspace-toolbar-buttons',
+                  content: `
+                  <p>These buttons are pretty useful!
 
-                <p>Most importantly, <i class="glyphicon glyphicon-remove"></i>
-                closes the workspace and gets you back to the file browser.
-                The workspace is automatically saved.
+                  <p>Most importantly, <i class="glyphicon glyphicon-remove"></i>
+                  closes the workspace and gets you back to the file browser.
+                  The workspace is automatically saved.
 
-                <p>Don't click it just yet!
-                `,
-              }, {
-                element: '.operation-selector',
-                intro: `
-                <p>This is the most important part. Each icon here is a category
-                of boxes that you can use in your workspace.
+                  <p>Don't click it just yet!
+                  `,
+                }, {
+                  placement: 'left',
+                  element: '.operation-selector',
+                  content: `
+                  <p>This is the most important part. Each icon here is a category
+                  of boxes that you can use in your workspace.
 
-                <p>Click a category to open it. Or use <i class="glyphicon glyphicon-search"></i>
-                to search for a box by name. (Hotkey: <code>/</code>)
+                  <p>Click a category to open it. Or use <i class="glyphicon glyphicon-search"></i>
+                  to search for a box by name. (Hotkey: <code>/</code>)
 
-                <p><i>The tutorial will continue when you open a category.</i>
-                `,
+                  <p><i>The tutorial will continue when you open a category.</i>
+                  `,
+                },
+              ],
+              onEnd: function() {
+                if (scope.tutorial.getCurrentStepIndex() < scope.tutorial.getStepCount() - 1) {
+                  // Manual abort before we had reached the last step.
+                  localStorage.setItem('workspace-drawing-board tutorial done', 'true');
+                  delete scope.tutorial;
+                }
               },
-            ] });
+            });
 
-            let last;
-            ngIntroService.onChange(function(e) {
-              last = e;
-            });
-            ngIntroService.onExit(function() {
-              if (!last || !last.classList.contains('operation-selector')) { // Skip / abort.
-                console.log('Tutorial aborted at', last);
-                localStorage.setItem('workspace-drawing-board tutorial done', 'true');
-              }
-            });
-            setTimeout(function() { ngIntroService.start(); }, 500);
+            scope.$on('$destroy', function() { scope.tutorial && scope.tutorial.end(); });
+            scope.tutorial.start();
           }
 
-          function showTutorialBoxPlaced() {
-            if (localStorage.getItem('workspace-drawing-board tutorial done')) {
+          scope.tutorialCategoryOpen = function() {
+            if (!scope.tutorial) {
+              return;
+            }
+            scope.tutorial.addStep({
+              placement: 'left',
+              element: '.operation-selector .box:not(.ng-hide)',
+              content: `
+              <p>Grab one of the box names with your mouse and drag it into the workspace!
+              `,
+            });
+            // Let the category actually open before going to the new step.
+            setTimeout(function() { scope.tutorial.next(); });
+          };
+
+          function tutorialDragStart() {
+            if (scope.tutorial) {
+              scope.tutorial.end();
+            }
+          }
+
+          function tutorialBoxPlaced() {
+            if (!scope.tutorial) {
               return;
             }
             let element;
@@ -835,58 +867,68 @@ angular.module('biggraph')
             if (!element) {
               return;
             }
-            ngIntroService.setOptions({ steps: [
-              {
-                element,
-                intro: `
-                <p>Now the box is in the workspace.
+            scope.tutorial = new Tour({
+              autoscroll: false,
+              framework: 'bootstrap3',
+              storage: null,
+              backdrop: true,
+              showProgressBar: false,
+              steps: [
+                {
+                  placement: 'auto',
+                  element,
+                  content: `
+                  <p>Now the box is in the workspace.
 
-                <p>Boxes can have inputs (circles on its left side) and outputs (circles on its
-                right side).
+                  <p>Boxes can have inputs (circles on its left side) and outputs (circles on its
+                  right side).
 
-                <p>You can connect one box to another by holding and dragging the mouse from an
-                output to an input. Or if you move the boxes so that the circles touch, a connection
-                will be added between them.
+                  <p>You can connect one box to another by holding and dragging the mouse from an
+                  output to an input. Or if you move the boxes so that the circles touch, a connection
+                  will be added between them.
 
-                <p>This makes it easy to build up your pipeline!
-                `,
-              }, {
-                element,
-                intro: `
-                <p>You can click on a box to change its parameters.
+                  <p>This makes it easy to build up your pipeline!
+                  `,
+                }, {
+                  placement: 'auto',
+                  element,
+                  content: `
+                  <p>You can click on a box to change its parameters.
 
-                <p>Or you can click on an output circle to see the output state.
+                  <p>Or you can click on an output circle to see the output state.
 
-                <p>Boxes output and expect as input various states. A "project" state
-                is a rich collection of graphs and their attributes. A "table" state
-                is a traditional SQL table. There are a few other states, such as visualizations.
-                `,
-              }, {
-                element,
-                intro: `
-                <p>That's it! Drag boxes from the catalog, wire them together, set their parameters,
-                and look at their outputs.
+                  <p>Boxes output and expect as input various states. A "project" state
+                  is a rich collection of graphs and their attributes. A "table" state
+                  is a traditional SQL table. There are a few other states, such as visualizations.
+                  `,
+                }, {
+                  placement: 'auto',
+                  element,
+                  content: `
+                  <p>That's it! Drag boxes from the catalog, wire them together, set their parameters,
+                  and look at their outputs.
 
-                <p>A good box to start with is the <i>Create example graph</i> box in the
-                <i>Build graph</i> <i class="fa fa-gavel"></i> category.
+                  <p>A good box to start with is the <i>Create example graph</i> box in the
+                  <i>Build graph</i> <i class="fa fa-gavel"></i> category.
 
-                <p>If you want to learn more, be sure to follow the
-                <i class="glyphicon glyphicon-question-sign"></i> signs, skim the
-                <a href="/#/help" target="_blank">LynxKite User Guide</a>, or look up
-                some of our tutorials.
-                `,
+                  <p>If you want to learn more, be sure to follow the
+                  <i class="glyphicon glyphicon-question-sign"></i> signs, skim the
+                  <a href="/#/help" target="_blank">LynxKite User Guide</a>, or look up
+                  some of our tutorials.
+                  `,
+                },
+              ],
+              onEnd: function() {
+                localStorage.setItem('workspace-drawing-board tutorial done', 'true');
+                delete scope.tutorial;
               },
-            ] });
-
-            ngIntroService.onExit(function() {
-              localStorage.setItem('workspace-drawing-board tutorial done', 'true');
             });
-            setTimeout(function() { ngIntroService.start(); }, 500);
+
+            scope.tutorial.start();
           }
 
           showTutorial();
-          scope.$on('$destroy', function() { ngIntroService.clear(); });
-          scope.$on('start intro', function() {
+          scope.$on('start tutorial', function() {
             localStorage.removeItem('workspace-drawing-board tutorial done');
             showTutorial();
           });

@@ -29,6 +29,15 @@
   }
 }
 
-.introjs-tooltip {
+.tour-tour {
   min-width: 300px;
+}
+.tour-tour .popover-title {
+  display: none;
+}
+.tour-tour .btn.disabled {
+  pointer-events: none;
+}
+.tour-backdrop {
+  opacity: 0.3;
 }

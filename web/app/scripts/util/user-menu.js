@@ -29,8 +29,8 @@ angular.module('biggraph').directive('userMenu', function($window, util, $rootSc
         });
       };
 
-      scope.intro = function() {
-        $rootScope.$broadcast('start intro');
+      scope.tutorial = function() {
+        $rootScope.$broadcast('start tutorial');
       };
     },
   };

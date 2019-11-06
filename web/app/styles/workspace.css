@@ -20,10 +20,6 @@ span#workspace-name {
 #workspace-toolbar-buttons {
   display: inherit;
 }
-#workspace-name.introjs-showElement,
-#workspace-toolbar-buttons.introjs-showElement {
-  background: #002a4c; /* Brand color. */
-}
 
 #workspace-loading,
 #workspace-drawing-board {
