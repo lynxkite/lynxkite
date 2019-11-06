@@ -1,3 +1,5 @@
+// The SphynxDomain can connect to a Sphynx server that runs single node operations.
+
 package com.lynxanalytics.biggraph.graph_api
 
 import com.lynxanalytics.biggraph.graph_util

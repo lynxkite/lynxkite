@@ -1,5 +1,5 @@
 Sphynx is a gRPC server. LynxKite can connect to it and ask it to do some work.
-The idea is that Sphynx performs operations on graphs that fits into the memory,
+The idea is that Sphynx performs operations on graphs that fit into the memory,
 so there's no need to do slow distributed computations.
 
 To build it, run `./build.sh`.
@@ -19,3 +19,4 @@ you may generate a self-signed certificate by running `./server/generate_cert.sh
 Then you can start a new server that uses the generated private key and certificate by
 `SPHYNX_PORT=<port> go/bin/server -keydir=<directory of cert.pem and private-key.pem files>`.
 LynxKite expects a certification file at the path stored in the environment variable `$SPHYNX_CERT_DIR`.
+If there is none, then generates them automatically.
