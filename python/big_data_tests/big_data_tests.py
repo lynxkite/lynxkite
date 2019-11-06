@@ -78,7 +78,8 @@ def main():
   unknown = [t for t in tests_to_run if t not in TESTS.keys()]
   assert len(unknown) == 0, f'Unknown test(s): {unknown}\nAvaliable: {TESTS.keys()}'
   for result in [compute(t) for t in tests_to_run]:
-    print(f'Computing {result.test_name} took {result.time_taken} seconds')
+    t = "{:.2f}".format(result.time_taken)
+    print(f'Computing {result.test_name} took {t} seconds')
 
 
 # TESTS
