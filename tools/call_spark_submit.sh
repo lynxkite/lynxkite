@@ -317,11 +317,11 @@ stopSphynx () {
 }
 
 startSphynx () {
-  if [ -f "${SPHYNX_PID_FILE}" ]; then
-      >&2 echo "Sphynx is already running (or delete ${SPHYNX_PID_FILE})"
-      exit 1
-  fi
   if ! [ -z ${SPHYNX_HOST} ] && ! [ -z ${SPHYNX_PORT} ] && ! [ -z ${SPHYNX_CERT_DIR} ]; then
+    if [ -f "${SPHYNX_PID_FILE}" ]; then
+        >&2 echo "Sphynx is already running (or delete ${SPHYNX_PID_FILE})"
+        exit 1
+    fi
     if [ ! -f "${SPHYNX_CERT_DIR}/cert.pem" ]; then
       openssl req -x509 -sha256 -newkey rsa:4096 \
       -keyout "${SPHYNX_CERT_DIR}/private-key.pem" \
