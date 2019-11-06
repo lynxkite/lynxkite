@@ -18,4 +18,4 @@ If you want to use an encrypted channel between LynxKite and Sphynx,
 you may generate a self-signed certificate by running `./server/generate_cert.sh`.
 Then you can start a new server that uses the generated private key and certificate by
 `SPHYNX_PORT=<port> go/bin/server -keydir=<directory of cert.pem and private-key.pem files>`.
-LynxKite expects a certification file at the path stored in the environment variable `$SPHYNX_CERT`.
+LynxKite expects a certification file at the path stored in the environment variable `$SPHYNX_CERT_DIR`.
