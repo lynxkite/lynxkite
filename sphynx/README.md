@@ -7,7 +7,8 @@ To build it, run `./build.sh`.
 If you start LynxKite with `run.sh` or `stage/bin/biggraph`, it will start Sphynx as well.
 The port it's running on is defined in the environment variable `SPHYNX_PORT`, you can set
 it in the kiterc file. LynxKite expects a certification file at the path stored in the
-environment variable `$SPHYNX_CERT_DIR`. If there is none, then LynxKite generates them on start-up.
+environment variable `$SPHYNX_CERT_DIR`. If there is none, then the certificate is generated
+on start-up.
 
 If you want to run Sphynx alone, run
 `SPHYNX_PORT=<port> go/bin/server -keydir=<directory of cert.pem and private-key.pem files>`.
