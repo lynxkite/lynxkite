@@ -12,15 +12,16 @@ import scala.reflect.runtime.universe._
 import scala.concurrent.{ Promise, Future }
 import scala.util.{ Success, Failure }
 import play.api.libs.json.Json
+import scala.concurrent.ExecutionContext
 
-class SingleResponseStreamObserver[T, U](val handleReply: T => U) extends StreamObserver[T] {
-  private val promise = Promise[U]()
+class SingleResponseStreamObserver[T] extends StreamObserver[T] {
+  private val promise = Promise[T]()
   val future = SafeFuture(promise.future)
   var responseArrived = false
   def onNext(r: T) {
     assert(!responseArrived, s"Two responses arrived, while we expected only one.")
     responseArrived = true
-    promise.complete(Success(handleReply(r)))
+    promise.complete(Success(r))
   }
   def onError(t: Throwable) {
     promise.complete(Failure(t))
@@ -33,7 +34,7 @@ class SingleResponseStreamObserver[T, U](val handleReply: T => U) extends Stream
   }
 }
 
-class SphynxClient(host: String, port: Int) {
+class SphynxClient(host: String, port: Int)(implicit ec: ExecutionContext) {
   // Exchanges messages with Sphynx.
 
   private val channel = {
@@ -58,22 +59,19 @@ class SphynxClient(host: String, port: Int) {
     return response.getCanCompute
   }
 
-  def compute(operationMetadataJSON: String): Future[Unit] = {
+  def compute(operationMetadataJSON: String): SafeFuture[Unit] = {
     val request = SphynxOuterClass.ComputeRequest.newBuilder().setOperation(operationMetadataJSON).build()
-    val singleResponseStreamObserver = new SingleResponseStreamObserver[SphynxOuterClass.ComputeReply, Unit](_ => ())
+    val singleResponseStreamObserver = new SingleResponseStreamObserver[SphynxOuterClass.ComputeReply]
     asyncStub.compute(request, singleResponseStreamObserver)
-    singleResponseStreamObserver.promise.future
+    singleResponseStreamObserver.future.map(_ => ())
   }
 
-  def getScalar[T](scalar: Scalar[T]): Future[T] = {
+  def getScalar[T](scalar: Scalar[T]): SafeFuture[T] = {
     val gUIDString = scalar.gUID.toString()
     val request = SphynxOuterClass.GetScalarRequest.newBuilder().setGuid(gUIDString).build()
-    val singleResponseStreamObserver = new SingleResponseStreamObserver[SphynxOuterClass.GetScalarReply, T](r => {
-      val jsonString = r.getScalar
-      val format = TypeTagToFormat.typeTagToFormat(scalar.typeTag)
-      format.reads(Json.parse(jsonString)).get
-    })
+    val format = TypeTagToFormat.typeTagToFormat(scalar.typeTag)
+    val singleResponseStreamObserver = new SingleResponseStreamObserver[SphynxOuterClass.GetScalarReply]
     asyncStub.getScalar(request, singleResponseStreamObserver)
-    singleResponseStreamObserver.promise.future
+    singleResponseStreamObserver.future.map(r => format.reads(Json.parse(r.getScalar)).get)
   }
 }
