@@ -26,6 +26,10 @@ func OperationInstanceFromJSON(op_json string) OperationInstance {
 	return opInst
 }
 
+func NewServer() Server {
+	return Server{scalars: make(map[GUID]ScalarValue)}
+}
+
 func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.CanComputeReply, error) {
 	log.Printf("Received: %v", in.Operation)
 	opInst := OperationInstanceFromJSON(in.Operation)
@@ -79,7 +83,8 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	pb.RegisterSphynxServer(s, &Server{scalars: make(map[GUID]ScalarValue)})
+	sphynxServer := NewServer()
+	pb.RegisterSphynxServer(s, &sphynxServer)
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
