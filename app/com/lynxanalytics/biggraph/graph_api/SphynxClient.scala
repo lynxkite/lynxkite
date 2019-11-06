@@ -8,27 +8,17 @@ import com.lynxanalytics.biggraph.graph_api.proto._
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import java.io.File
 
-class SphynxClient(host: String, port: Int) {
+class SphynxClient(host: String, port: Int, certDir: String) {
 
-  private val channel = {
-    val cert_dir = LoggedEnvironment.envOrNone("SPHYNX_CERT_DIR")
-    cert_dir match {
-      case Some(cert_dir) => NettyChannelBuilder.forAddress(host, port)
-        .sslContext(GrpcSslContexts.forClient().trustManager(new File(s"$cert_dir/cert.pem")).build())
-        .build();
-      case None => {
-        println("Using unsecure channel to communicate with Sphynx.")
-        ManagedChannelBuilder.forAddress(host, port).usePlaintext().build
-      }
-    }
-  }
+  private val channel = NettyChannelBuilder.forAddress(host, port)
+    .sslContext(GrpcSslContexts.forClient().trustManager(new File(s"$certDir/cert.pem")).build())
+    .build();
 
   private val blockingStub = SphynxGrpc.newBlockingStub(channel)
 
   def canCompute(operationMetadataJSON: String): Boolean = {
     val request = SphynxOuterClass.CanComputeRequest.newBuilder().setOperation(operationMetadataJSON).build()
     val response = blockingStub.canCompute(request)
-    println("CanCompute: " + response.getCanCompute)
     return response.getCanCompute
   }
 }

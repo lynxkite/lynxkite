@@ -2,9 +2,9 @@ package com.lynxanalytics.biggraph.graph_api
 
 import com.lynxanalytics.biggraph.graph_util
 
-class SphynxMemory(host: String, port: Int) extends Domain {
+class SphynxMemory(host: String, port: Int, certDir: String) extends Domain {
 
-  val client = new SphynxClient(host, port)
+  val client = new SphynxClient(host, port, certDir)
 
   override def has(entity: MetaGraphEntity): Boolean = {
     return false
@@ -16,7 +16,6 @@ class SphynxMemory(host: String, port: Int) extends Domain {
 
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
     val res = client.canCompute("Fake Operation Metadata in JSON")
-    println("Got a response from Sphynx!")
     return res
   }
 
