@@ -52,8 +52,5 @@ trap stop_kite EXIT
 
 ../../tools/wait_for_port.sh $KITEPORT
 export LYNXKITE_ADDRESS=http://localhost:$KITEPORT
-./big_data_tests.py --vertex_file 'PARQUET$/local_test_vertices.parquet' --edge_file 'PARQUET$/local_test_edges.parquet' > results.txt
-
-
-
-
+./big_data_tests.py --vertex_file 'PARQUET$/local_test_vertices.parquet' \
+                    --edge_file 'PARQUET$/local_test_edges.parquet' > results.txt
