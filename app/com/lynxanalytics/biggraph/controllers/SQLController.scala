@@ -169,7 +169,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   def importBox(user: serving.User, box: Box, workspaceParameters: Map[String, String]) = async[ImportBoxResponse] {
     val op = ops.opForBox(
       user, box, inputs = null, workspaceParameters = workspaceParameters).asInstanceOf[ImportOperation]
-    println("importBox called!")
     val parameterSettings = op.settingsString()
     val df = op.getDataFrame(SQLController.defaultContext())
     val table = ImportDataFrame.run(df)
@@ -316,7 +315,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
-    println("runSQLQuery called")
     val tableContents = request.dfSpec.getTableContents(user)
     SQLQueryResult(
       header = tableContents.header.map { case (name, tt) => SQLColumn(name, ProjectViewer.feTypeName(tt)) },
@@ -324,7 +322,6 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   def getTableSample(table: Table, sampleRows: Int) = async[GetTableOutputResponse] {
-    println("getTableSample called")
     val e = TableToScalar.run(table, sampleRows).entity
     val tableContents = dataManager.get(e)
     GetTableOutputResponse(
