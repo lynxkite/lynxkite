@@ -276,8 +276,11 @@ angular.module('biggraph').directive('entrySelector',
         });
 
         function showTutorial() {
+          if (localStorage.getItem('entry-selector tutorial done')) {
+            return;
+          }
           /* global Tour */
-          const tour = new Tour({
+          scope.tutorial = new Tour({
             autoscroll: false,
             framework: 'bootstrap3',
             storage: null,
@@ -322,19 +325,20 @@ angular.module('biggraph').directive('entrySelector',
               localStorage.setItem('entry-selector tutorial done', 'true');
             },
             onShown: function() {
-              if (tour.getCurrentStepIndex() === tour.getStepCount() - 1) { // Last page.
+              if (scope.tutorial.getCurrentStepIndex() === scope.tutorial.getStepCount() - 1) {
+                // Last step reached. We're done.
                 localStorage.setItem('entry-selector tutorial done', 'true');
               }
             },
           });
-
-          if (!localStorage.getItem('entry-selector tutorial done')) {
-            tour.start();
-          }
-          scope.$on('start tutorial', function() { tour.start(); });
-          scope.$on('$destroy', function() { tour.end(); });
+          scope.tutorial.start();
         }
-        setTimeout(showTutorial, 1000);
+        showTutorial();
+        scope.$on('start tutorial', function() {
+          localStorage.removeItem('entry-selector tutorial done');
+          showTutorial();
+        });
+        scope.$on('$destroy', function() { scope.tutorial && scope.tutorial.end(); });
       },
     };
   });
