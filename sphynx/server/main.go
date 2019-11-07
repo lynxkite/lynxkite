@@ -15,15 +15,18 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func shortenClassName(className string) string {
-	return className[len("com.lynxanalytics.biggraph.graph_operations."):]
-}
-
 func OperationInstanceFromJSON(op_json string) OperationInstance {
 	var opInst OperationInstance
 	b := []byte(op_json)
 	json.Unmarshal(b, &opInst)
 	return opInst
+}
+
+func getExecutableOperation(opInst OperationInstance) (Operation, bool) {
+	className := opInst.Operation.Class
+	shortenedClass := className[len("com.lynxanalytics.biggraph.graph_operations."):]
+	op, exists := operations[shortenedClass]
+	return op, exists
 }
 
 func NewServer() Server {
@@ -33,25 +36,23 @@ func NewServer() Server {
 func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.CanComputeReply, error) {
 	log.Printf("Received: %v", in.Operation)
 	opInst := OperationInstanceFromJSON(in.Operation)
-	shortenedClass := shortenClassName(opInst.Operation.Class)
-	switch shortenedClass {
-	case "GetBetter":
+	_, exists := getExecutableOperation(opInst)
+	if exists {
 		return &pb.CanComputeReply{CanCompute: true}, nil
-	default:
+	} else {
 		return &pb.CanComputeReply{CanCompute: false}, nil
 	}
 }
 
 func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.ComputeReply, error) {
 	opInst := OperationInstanceFromJSON(in.Operation)
-	shortenedClass := shortenClassName(opInst.Operation.Class)
-	switch shortenedClass {
-	case "GetBetter":
-		s.getBetter(opInst)
-	default:
+	op, exists := getExecutableOperation(opInst)
+	if !exists {
 		return nil, status.Errorf(codes.Unimplemented, "Can't compute %v", opInst)
+	} else {
+		op.execute(s, opInst)
+		return &pb.ComputeReply{}, nil
 	}
-	return &pb.ComputeReply{}, nil
 }
 
 func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
