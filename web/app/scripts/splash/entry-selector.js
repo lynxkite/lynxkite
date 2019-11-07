@@ -293,6 +293,7 @@ angular.module('biggraph').directive('entrySelector',
                 <p><b>Welcome to LynxKite!</b>
                 <p>This seems to be your first visit. I can quickly show you how to get started.
                 `,
+                animation: false,
               }, {
                 placement: 'top',
                 element: '.user-menu-dropup',
@@ -300,6 +301,7 @@ angular.module('biggraph').directive('entrySelector',
                 <p>If you wish to see this tutorial again, you can find it in the
                 hamburger menu.
                 `,
+                animation: false,
               }, {
                 placement: 'top',
                 element: '#directory-browser',
@@ -309,6 +311,7 @@ angular.module('biggraph').directive('entrySelector',
 
                 <p>You can have two kinds of files: <b>workspaces</b> and <b>snapshots</b>.
                 `,
+                animation: false,
               }, {
                 placement: 'top',
                 element: '#new-workspace',
@@ -319,6 +322,7 @@ angular.module('biggraph').directive('entrySelector',
 
                 <p><i>The tutorial will continue when you've created a workspace.</i>
                 `,
+                animation: false,
               },
             ],
             onEnd: function() {

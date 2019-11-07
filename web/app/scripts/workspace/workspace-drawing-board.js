@@ -788,12 +788,14 @@ angular.module('biggraph')
                   content: `
                   <p>This is a LynxKite workspace.
                   `,
+                  animation: false,
                 }, {
                   placement: 'bottom',
                   element: '#workspace-name',
                   content: `
                   <p>The well-chosen name of your workspace.
                   `,
+                  animation: false,
                 }, {*/
                   placement: 'bottom',
                   element: '#workspace-toolbar-buttons',
@@ -806,6 +808,7 @@ angular.module('biggraph')
 
                   <p>Don't click it just yet!
                   `,
+                  animation: false,
                 }, {
                   placement: 'left',
                   element: '.operation-selector',
@@ -818,6 +821,7 @@ angular.module('biggraph')
 
                   <p><i>The tutorial will continue when you open a category.</i>
                   `,
+                  animation: false,
                 },
               ],
               onEnd: function() {
@@ -889,6 +893,7 @@ angular.module('biggraph')
 
                   <p>This makes it easy to build up your pipeline!
                   `,
+                  animation: false,
                 }, {
                   placement: 'auto',
                   element,
@@ -901,6 +906,7 @@ angular.module('biggraph')
                   is a rich collection of graphs and their attributes. A "table" state
                   is a traditional SQL table. There are a few other states, such as visualizations.
                   `,
+                  animation: false,
                 }, {
                   placement: 'auto',
                   element,
@@ -916,6 +922,7 @@ angular.module('biggraph')
                   <a href="/#/help" target="_blank">LynxKite User Guide</a>, or look up
                   some of our tutorials.
                   `,
+                  animation: false,
                 },
               ],
               onEnd: function() {
