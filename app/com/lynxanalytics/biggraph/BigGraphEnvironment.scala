@@ -56,15 +56,16 @@ object BigGraphEnvironmentImpl {
       sparkSession => createSparkDomain(sparkSession, repositoryDirs))
     val sphynxHost = LoggedEnvironment.envOrNone("SPHYNX_HOST")
     val sphynxPort = LoggedEnvironment.envOrNone("SPHYNX_PORT")
+    val sphynxCertDir = LoggedEnvironment.envOrNone("SPHYNX_CERT_DIR")
     val envFuture = for {
       sparkSession <- sparkSessionFuture
       metaGraphManager <- metaGraphManagerFuture
       sparkDomain <- sparkDomainFuture
     } yield {
       val domains = {
-        (sphynxHost, sphynxPort) match {
-          case (Some(host), Some(port)) => {
-            Seq(new graph_api.SphynxMemory(host, port.toInt), new graph_api.ScalaDomain, sparkDomain)
+        (sphynxHost, sphynxPort, sphynxCertDir) match {
+          case (Some(host), Some(port), Some(certDir)) => {
+            Seq(new graph_api.SphynxMemory(host, port.toInt, certDir), new graph_api.ScalaDomain, sparkDomain)
           }
           case _ => Seq(new graph_api.ScalaDomain, sparkDomain)
         }

@@ -34,21 +34,12 @@ class SingleResponseStreamObserver[T] extends StreamObserver[T] {
   }
 }
 
-class SphynxClient(host: String, port: Int)(implicit ec: ExecutionContext) {
+class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: ExecutionContext) {
   // Exchanges messages with Sphynx.
 
-  private val channel = {
-    val cert_dir = LoggedEnvironment.envOrNone("SPHYNX_CERT_DIR")
-    cert_dir match {
-      case Some(cert_dir) => NettyChannelBuilder.forAddress(host, port)
-        .sslContext(GrpcSslContexts.forClient().trustManager(new File(s"$cert_dir/cert.pem")).build())
-        .build();
-      case None => {
-        println("Using unsecure channel to communicate with Sphynx.")
-        ManagedChannelBuilder.forAddress(host, port).usePlaintext().build
-      }
-    }
-  }
+  private val channel = NettyChannelBuilder.forAddress(host, port)
+    .sslContext(GrpcSslContexts.forClient().trustManager(new File(s"$certDir/cert.pem")).build())
+    .build();
 
   private val blockingStub = SphynxGrpc.newBlockingStub(channel)
   private val asyncStub = SphynxGrpc.newStub(channel)
