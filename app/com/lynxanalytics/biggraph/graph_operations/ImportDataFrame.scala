@@ -15,7 +15,7 @@ object ImportDataFrame extends OpFromJson {
     None,
     (j \ "timestamp").as[String])
 
-  def apply(df: DataFrame) = {
+  private def apply(df: DataFrame) = {
     new ImportDataFrame(SQLHelper.stripComment(df.schema), Some(df), Timestamp.toString)
   }
 
