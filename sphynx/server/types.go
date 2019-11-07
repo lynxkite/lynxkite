@@ -5,7 +5,7 @@ import "sync"
 type ScalarValue interface{}
 type Server struct {
 	scalars map[GUID]ScalarValue
-	*sync.Mutex
+	sync.Mutex
 }
 type GUID string
 type OperationDescription struct {
