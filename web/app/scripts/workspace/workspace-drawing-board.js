@@ -784,7 +784,7 @@ angular.module('biggraph')
               showProgressBar: false,
               steps: [
                 {
-                  /*orphan: true,
+                  orphan: true,
                   content: `
                   <p>This is a LynxKite workspace.
                   `,
@@ -796,7 +796,7 @@ angular.module('biggraph')
                   <p>The well-chosen name of your workspace.
                   `,
                   animation: false,
-                }, {*/
+                }, {
                   placement: 'bottom',
                   element: '#workspace-toolbar-buttons',
                   content: `
