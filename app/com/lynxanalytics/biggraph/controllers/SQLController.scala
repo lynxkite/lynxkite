@@ -30,16 +30,16 @@ trait FrameSettings {
   def overwrite: Boolean
 }
 
-object DataFrameSpec extends FromJson[DataFrameSpec] {
+object TableSpec extends FromJson[TableSpec] {
   // Utilities for testing.
   def global(directory: String, sql: String) =
-    new DataFrameSpec(directory = Some(directory), project = None, sql = sql)
+    new TableSpec(directory = Some(directory), project = None, sql = sql)
 
   import com.lynxanalytics.biggraph.serving.FrontendJson.fDataFrameSpec
-  override def fromJson(j: JsValue): DataFrameSpec = json.Json.fromJson(j).get
+  override def fromJson(j: JsValue): TableSpec = json.Json.fromJson(j).get
 }
 
-case class DataFrameSpec(directory: Option[String], project: Option[String], sql: String) {
+case class TableSpec(directory: Option[String], project: Option[String], sql: String) {
   assert(
     directory.isDefined ^ project.isDefined,
     "Exactly one of directory and project should be defined")
@@ -82,10 +82,20 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
       SQLController.getDF(result)
     }
 
-  def globalSQL2(user: serving.User)(
+  def getTableContents(user: serving.User)(
     implicit
     dm: DataManager, mm: MetaGraphManager): TableContents = {
     val tableContentsScalar = mm.synchronized {
+      val table = getTableIfUserHasAccess(user)
+      TableToScalar.run(table).entity
+    }
+    dm.get(tableContentsScalar)
+  }
+
+  def getTableIfUserHasAccess(user: serving.User)(
+    implicit
+    dm: DataManager, mm: MetaGraphManager): Table = {
+    mm.synchronized {
       assert(
         project.isEmpty,
         "The project field in the DataFrameSpec must be empty for global SQL queries.")
@@ -109,38 +119,36 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
           val protoTable = rootViewer.getSingleProtoTable(tablePath.mkString("."))
           (name, protoTable)
       }
-      val result = ExecuteSQL.run(sql, protoTables)
-      TableToScalar.run(result).entity
+      ExecuteSQL.run(sql, protoTables)
     }
-    dm.get(tableContentsScalar)
   }
 }
-case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)
+case class SQLQueryRequest(dfSpec: TableSpec, maxRows: Int)
 case class SQLColumn(name: String, dataType: String)
 case class SQLQueryResult(header: List[SQLColumn], data: List[List[DynamicValue]])
 
 case class SQLExportToTableRequest(
-    dfSpec: DataFrameSpec,
+    dfSpec: TableSpec,
     table: String,
     privacy: String,
     overwrite: Boolean)
 case class SQLExportToCSVRequest(
-    dfSpec: DataFrameSpec,
+    dfSpec: TableSpec,
     path: String,
     header: Boolean,
     delimiter: String,
     quote: String)
 case class SQLExportToJsonRequest(
-    dfSpec: DataFrameSpec,
+    dfSpec: TableSpec,
     path: String)
 case class SQLExportToParquetRequest(
-    dfSpec: DataFrameSpec,
+    dfSpec: TableSpec,
     path: String)
 case class SQLExportToORCRequest(
-    dfSpec: DataFrameSpec,
+    dfSpec: TableSpec,
     path: String)
 case class SQLExportToJdbcRequest(
-    dfSpec: DataFrameSpec,
+    dfSpec: TableSpec,
     jdbcUrl: String,
     table: String,
     mode: String) {
@@ -194,6 +202,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   def importBox(user: serving.User, box: Box, workspaceParameters: Map[String, String]) = async[ImportBoxResponse] {
     val op = ops.opForBox(
       user, box, inputs = null, workspaceParameters = workspaceParameters).asInstanceOf[ImportOperation]
+    println("importBox called!")
     val parameterSettings = op.settingsString()
     val df = op.getDataFrame(SQLController.defaultContext())
     val table = ImportDataFrame.run(df)
@@ -340,14 +349,15 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
-    val tableContents = request.dfSpec.globalSQL2(user)
+    println("runSQLQuery called")
+    val tableContents = request.dfSpec.getTableContents(user)
     SQLQueryResult(
       header = tableContents.header.map { case (name, tt) => SQLColumn(name, ProjectViewer.feTypeName(tt)) },
       data = tableContents.data)
   }
 
-  // TODO: Remove code duplication
   def getTableSample(table: Table, sampleRows: Int) = async[GetTableOutputResponse] {
+    println("getTableSample called")
     val e = TableToScalar.run(table, sampleRows).entity
     val tableContents = dataManager.get(e)
     GetTableOutputResponse(
@@ -393,13 +403,13 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
 
   private def downloadableExportToFile(
     user: serving.User,
-    dfSpec: DataFrameSpec,
+    dfSpec: TableSpec,
     path: String,
     format: String,
     options: Map[String, String] = Map(),
     stripHeaders: Boolean = false): SQLExportToFileResult = {
     val file = if (path == "<download>") {
-      env.sparkDomain.repositoryPath / "exports" / Timestamp.toString + "." + format
+      HadoopFile("DATA$") / "exports" / Timestamp.toString + "." + format
     } else {
       HadoopFile(path)
     }
@@ -412,7 +422,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
 
   private def exportToFile(
     user: serving.User,
-    dfSpec: DataFrameSpec,
+    dfSpec: TableSpec,
     file: HadoopFile,
     format: String,
     options: Map[String, String] = Map()): Unit = {
