@@ -319,7 +319,7 @@ object FrontendJson {
   implicit val wSparkStatusResponse = json.Json.writes[SparkStatusResponse]
   implicit val wLongPollResponse = json.Json.writes[LongPollResponse]
 
-  implicit val fDataFrameSpec = json.Json.format[DataFrameSpec]
+  implicit val fDataFrameSpec = json.Json.format[TableSpec]
   implicit val rSQLTableBrowserNodeRequest = json.Json.reads[TableBrowserNodeRequest]
   implicit val rTableBrowserNodeForBoxRequest = json.Json.reads[TableBrowserNodeForBoxRequest]
   implicit val rImportBoxRequest = json.Json.reads[ImportBoxRequest]
