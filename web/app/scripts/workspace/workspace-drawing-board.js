@@ -880,7 +880,7 @@ angular.module('biggraph')
                   content: `
                   <p>Now the box is in the workspace.
 
-                  <p>Boxes can have inputs (circles on its left side) and outputs (circles on its
+                  <p>A box can have inputs (circles on its left side) and outputs (circles on its
                   right side).
 
                   <p>You can connect one box to another by holding and dragging the mouse from an
