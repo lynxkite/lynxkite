@@ -331,8 +331,6 @@ include::find-triangles.asciidoc[]
 
 include::fingerprint-based-on-attributes.asciidoc[]
 
-include::get-better.asciidoc[]
-
 include::graph-visualization.asciidoc[]
 
 include::grow-segmentation.asciidoc[]
