@@ -17,6 +17,8 @@ import com.lynxanalytics.biggraph.serving
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 import play.api.libs.json
+import com.lynxanalytics.biggraph.graph_operations.TableToScalar
+import com.lynxanalytics.biggraph.graph_operations.TableContents
 
 case class ImportBoxResponse(guid: String, parameterSettings: String)
 
@@ -30,8 +32,6 @@ trait FrameSettings {
 
 object DataFrameSpec extends FromJson[DataFrameSpec] {
   // Utilities for testing.
-  def local(project: String, sql: String) =
-    new DataFrameSpec(directory = None, project = Some(project), sql = sql)
   def global(directory: String, sql: String) =
     new DataFrameSpec(directory = Some(directory), project = None, sql = sql)
 
@@ -81,6 +81,39 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
       val result = ExecuteSQL.run(sql, protoTables)
       SQLController.getDF(result)
     }
+
+  def globalSQL2(user: serving.User)(
+    implicit
+    dm: DataManager, mm: MetaGraphManager): TableContents = {
+    val tableContentsScalar = mm.synchronized {
+      assert(
+        project.isEmpty,
+        "The project field in the DataFrameSpec must be empty for global SQL queries.")
+
+      val directoryName = directory.get
+      val directoryPrefix = if (directoryName == "") "" else directoryName + "/"
+      val givenTableNames = findTablesFromQuery(sql)
+      // Maps the relative table names used in the sql query with the global name
+      val tableNames = givenTableNames.map(name => (name, directoryPrefix + name)).toMap
+      val snapshotsAndInternalTables =
+        tableNames.mapValues(wholePath => SQLController.parseTablePath(wholePath))
+
+      val goodSnapshotStates = snapshotsAndInternalTables.collect {
+        case (name, (snapshot, tablePath)) if snapshot.isSnapshot && snapshot.readAllowedFrom(user) =>
+          (name, (snapshot.asSnapshotFrame.getState(), tablePath))
+      }
+      val protoTables = goodSnapshotStates.collect {
+        case (name, (state, _)) if state.isTable => (name, ProtoTable(state.table))
+        case (name, (state, tablePath)) if state.isProject =>
+          val rootViewer = state.project.viewer
+          val protoTable = rootViewer.getSingleProtoTable(tablePath.mkString("."))
+          (name, protoTable)
+      }
+      val result = ExecuteSQL.run(sql, protoTables)
+      TableToScalar.run(result).entity
+    }
+    dm.get(tableContentsScalar)
+  }
 }
 case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)
 case class SQLColumn(name: String, dataType: String)
@@ -307,38 +340,19 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
-    val df = request.dfSpec.globalSQL(user)
-    val columns = df.schema.toList.map { field =>
-      field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
-    }
+    val tableContents = request.dfSpec.globalSQL2(user)
     SQLQueryResult(
-      header = columns.map { case (name, tt) => SQLColumn(name, ProjectViewer.feTypeName(tt)) },
-      data = SQLHelper.toSeqRDD(df).take(request.maxRows).map {
-        row =>
-          row.toList.zip(columns).map {
-            case (null, field) => DynamicValue("null", defined = false)
-            case (item, (name, tt)) => DynamicValue.convert(item)(tt)
-          }
-      }.toList)
+      header = tableContents.header.map { case (name, tt) => SQLColumn(name, ProjectViewer.feTypeName(tt)) },
+      data = tableContents.data)
   }
 
   // TODO: Remove code duplication
   def getTableSample(table: Table, sampleRows: Int) = async[GetTableOutputResponse] {
-    val columns = table.schema.toList.map { field =>
-      field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
-    }
-    val df = SQLController.getDF(table)
-    val header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) }
-    val rdd = SQLHelper.toSeqRDD(df)
-    val local = if (sampleRows < 0) rdd.collect else rdd.take(sampleRows)
-    val data = local.map {
-      row =>
-        row.toList.zip(columns).map {
-          case (null, field) => DynamicValue("null", defined = false)
-          case (item, (name, tt)) => DynamicValue.convert(item)(tt)
-        }
-    }.toList
-    GetTableOutputResponse(header, data)
+    val e = TableToScalar.run(table, sampleRows).entity
+    val tableContents = dataManager.get(e)
+    GetTableOutputResponse(
+      header = tableContents.header.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) },
+      data = tableContents.data)
   }
 
   def exportSQLQueryToCSV(
