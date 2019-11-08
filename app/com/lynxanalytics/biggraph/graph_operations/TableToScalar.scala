@@ -2,7 +2,6 @@ package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
-import org.apache.spark.rdd.RDD
 
 import scala.reflect.runtime.universe.TypeTag
 
@@ -22,7 +21,7 @@ object TableToScalar extends OpFromJson {
     val tableContents = scalar[TableContents]
   }
 
-  def run(tab: Table, maxRows: Int = -1)(implicit m: MetaGraphManager) = {
+  def run(tab: Table, maxRows: Int)(implicit m: MetaGraphManager): Scalar[TableContents] = {
     import Scripting._
     val op = TableToScalar(maxRows)
     op(op.tab, tab).result.tableContents
