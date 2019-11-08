@@ -30,17 +30,13 @@ trait FrameSettings {
 object TableSpec extends FromJson[TableSpec] {
   // Utilities for testing.
   def global(directory: String, sql: String) =
-    new TableSpec(directory = Some(directory), project = None, sql = sql)
+    new TableSpec(directory = Some(directory), sql = sql)
 
   import com.lynxanalytics.biggraph.serving.FrontendJson.fDataFrameSpec
   override def fromJson(j: JsValue): TableSpec = json.Json.fromJson(j).get
 }
 
-case class TableSpec(directory: Option[String], project: Option[String], sql: String) {
-  assert(
-    directory.isDefined ^ project.isDefined,
-    "Exactly one of directory and project should be defined")
-
+case class TableSpec(directory: Option[String], sql: String) {
   // Finds the names of tables from string
   private def findTablesFromQuery(query: String): List[String] = {
     val split = query.split("`", -1)
@@ -51,10 +47,6 @@ case class TableSpec(directory: Option[String], project: Option[String], sql: St
     implicit
     dm: DataManager, mm: MetaGraphManager): Table = {
     mm.synchronized {
-      assert(
-        project.isEmpty,
-        "The project field in the DataFrameSpec must be empty for global SQL queries.")
-
       val directoryName = directory.get
       val directoryPrefix = if (directoryName == "") "" else directoryName + "/"
       val givenTableNames = findTablesFromQuery(sql)
