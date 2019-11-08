@@ -1,3 +1,6 @@
+// Operation to create a scalar that contains the contents (top k rows)
+// of a dataframe (table) to be used by the frontend (e.g., displaying
+// some of it.
 package com.lynxanalytics.biggraph.graph_operations
 
 import com.lynxanalytics.biggraph.graph_api._
@@ -7,7 +10,7 @@ import scala.reflect.runtime.universe.TypeTag
 
 case class TableContents(
     header: List[(String, TypeTag[Any])],
-    data: List[List[DynamicValue]])
+    rows: List[List[DynamicValue]])
 
 object TableToScalar extends OpFromJson {
   override def fromJson(j: JsValue) = new TableToScalar((j \ "maxRows").as[Int])
@@ -22,6 +25,7 @@ object TableToScalar extends OpFromJson {
   }
 
   def run(tab: Table, maxRows: Int)(implicit m: MetaGraphManager): Scalar[TableContents] = {
+    assert(maxRows >= 0, s"Negative maxRows ($maxRows) not supported")
     import Scripting._
     val op = TableToScalar(maxRows)
     op(op.tab, tab).result.tableContents
@@ -29,7 +33,7 @@ object TableToScalar extends OpFromJson {
 }
 
 import TableToScalar._
-case class TableToScalar(maxRows: Int) extends SparkOperation[Input, Output] {
+case class TableToScalar private (maxRows: Int) extends SparkOperation[Input, Output] {
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
   @transient override lazy val inputs = new Input()
   override val isHeavy: Boolean = false
@@ -46,16 +50,15 @@ case class TableToScalar(maxRows: Int) extends SparkOperation[Input, Output] {
     val header = df.schema.toList.map { field =>
       field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
     }
-    def zipper(row: Seq[Any]) = {
-      row.toList.zip(header).map {
-        case (null, _) => DynamicValue("null", defined = false)
-        case (item, (_, tt)) => DynamicValue.convert(item)(tt)
-      }
-    }
     val rdd = SQLHelper.toSeqRDD(df)
     val data =
-      if (maxRows < 0) rdd.collect().map { row => zipper(row) }
-      else rdd.take(maxRows).map { row => zipper(row) }
+      rdd.take(maxRows).map {
+        row =>
+          row.toList.zip(header).map {
+            case (null, _) => DynamicValue("null", defined = false)
+            case (item, (_, tt)) => DynamicValue.convert(item)(tt)
+          }
+      }
     output(o.tableContents, TableContents(header, data.toList))
   }
 }

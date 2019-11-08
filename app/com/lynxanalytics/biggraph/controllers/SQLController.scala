@@ -307,7 +307,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val tableContents = dataManager.get(TableToScalar.run(table, request.maxRows))
     SQLQueryResult(
       header = tableContents.header.map { case (name, tt) => SQLColumn(name, ProjectViewer.feTypeName(tt)) },
-      data = tableContents.data)
+      data = tableContents.rows)
   }
 
   def getTableSample(table: Table, sampleRows: Int) = async[GetTableOutputResponse] {
@@ -315,7 +315,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     val tableContents = dataManager.get(e)
     GetTableOutputResponse(
       header = tableContents.header.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) },
-      data = tableContents.data)
+      data = tableContents.rows)
   }
 
   def exportSQLQueryToCSV(
@@ -367,7 +367,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     options: Map[String, String] = Map(),
     stripHeaders: Boolean = false): SQLExportToFileResult = {
     val file = if (path == "<download>") {
-      s"DATA$$/exports/${Timestamp.toString}.${format}"
+      s"DATA$$/exports/$Timestamp.$format"
     } else {
       path
     }
