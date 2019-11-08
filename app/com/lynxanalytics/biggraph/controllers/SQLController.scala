@@ -6,7 +6,6 @@ import java.security.SecureRandom
 import org.apache.spark
 
 import scala.concurrent.Future
-import scala.reflect.runtime.universe.TypeTag
 import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
@@ -15,7 +14,6 @@ import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import com.lynxanalytics.biggraph.serving
-import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 import play.api.libs.json
 
@@ -49,17 +47,7 @@ case class TableSpec(directory: Option[String], project: Option[String], sql: St
     Iterator.range(start = 1, end = split.length, step = 2).map(split(_)).toList
   }
 
-  def getTableContents(user: serving.User)(
-    implicit
-    dm: DataManager, mm: MetaGraphManager): TableContents = {
-    val tableContentsScalar = mm.synchronized {
-      val table = getTableIfUserHasAccess(user)
-      TableToScalar.run(table).entity
-    }
-    dm.get(tableContentsScalar)
-  }
-
-  def getTableIfUserHasAccess(user: serving.User)(
+  def globalSQL(user: serving.User)(
     implicit
     dm: DataManager, mm: MetaGraphManager): Table = {
     mm.synchronized {
@@ -315,14 +303,15 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
-    val tableContents = request.dfSpec.getTableContents(user)
+    val table = request.dfSpec.globalSQL(user)
+    val tableContents = dataManager.get(TableToScalar.run(table, request.maxRows))
     SQLQueryResult(
       header = tableContents.header.map { case (name, tt) => SQLColumn(name, ProjectViewer.feTypeName(tt)) },
       data = tableContents.data)
   }
 
   def getTableSample(table: Table, sampleRows: Int) = async[GetTableOutputResponse] {
-    val e = TableToScalar.run(table, sampleRows).entity
+    val e = TableToScalar.run(table, sampleRows)
     val tableContents = dataManager.get(e)
     GetTableOutputResponse(
       header = tableContents.header.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) },
@@ -361,7 +350,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
 
   def exportSQLQueryToJdbc(
     user: serving.User, request: SQLExportToJdbcRequest) = async[Unit] {
-    val table = request.dfSpec.getTableIfUserHasAccess(user)
+    val table = request.dfSpec.globalSQL(user)
     val op = ExportTableToJdbc(
       request.jdbcUrl,
       request.tableName,
@@ -397,7 +386,7 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     options: Map[String, String] = Map()): Unit = {
     // TODO: #2889 (special characters in S3 passwords).
     HadoopFile(file).assertWriteAllowedFrom(user) // TODO: Do we need this?
-    val table = dfSpec.getTableIfUserHasAccess(user)
+    val table = dfSpec.globalSQL(user)
     val op = ExportTableToStructuredFile(
       file,
       format,
