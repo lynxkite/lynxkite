@@ -15,8 +15,8 @@ angular.module('biggraph')
       },
       link: function(scope) {
         scope.sides = [];
-        scope.left = new side.Side(scope.sides, 'left', undefined);
-        scope.right = new side.Side(scope.sides, 'right', undefined);
+        scope.left = new side.Side(scope.sides, 'left');
+        scope.right = new side.Side(scope.sides, 'right');
         scope.sides.push(scope.left);
         scope.sides.push(scope.right);
 
