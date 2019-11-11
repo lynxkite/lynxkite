@@ -16,7 +16,7 @@ import scala.concurrent.ExecutionContext
 
 class SingleResponseStreamObserver[T] extends StreamObserver[T] {
   private val promise = Promise[T]()
-  val future = SafeFuture(promise.future)
+  val future = SafeFuture.wrap(promise.future)
   var responseArrived = false
   def onNext(r: T) {
     assert(!responseArrived, s"Two responses arrived, while we expected only one.")

@@ -189,7 +189,7 @@ class SparkDomain(
           }
           else if (o.isInstanceOf[Scalar[_]]) {
             // Save asynchronously, but we can use the value immediately.
-            SafeFuture(saveToDisk(output(o.gUID)))
+            SafeFuture.async(saveToDisk(output(o.gUID)))
             set(o, output(o.gUID))
           } else {
             // Save synchronously, and we will load it back when accessed.
@@ -197,7 +197,7 @@ class SparkDomain(
           }
         } else {
           if (o.isInstanceOf[Scalar[_]]) {
-            SafeFuture(saveToDisk(output(o.gUID)))
+            SafeFuture.async(saveToDisk(output(o.gUID)))
           }
           set(o, output(o.gUID))
         }
@@ -251,7 +251,7 @@ class SparkDomain(
   }
 
   override def compute(instance: MetaGraphOperationInstance) = {
-    SafeFuture[Unit](computeNow(instance))
+    SafeFuture.async[Unit](computeNow(instance))
   }
 
   override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
@@ -269,7 +269,7 @@ class SparkDomain(
   def await[T](f: SafeFuture[T]): T = f.awaitResult(Duration.Inf)
 
   override def get[T](scalar: Scalar[T]) = {
-    SafeFuture(getData(scalar).asInstanceOf[ScalarData[T]].value)
+    SafeFuture.async(getData(scalar).asInstanceOf[ScalarData[T]].value)
   }
 
   private def enforceCoLocationWithIdSet[T: ClassTag](
@@ -351,15 +351,15 @@ class SparkDomain(
           rc.sparkContext.parallelize(s).sortUnique(rc.partitionerForNRows(s.size))
         }
         val future: SafeFuture[EntityData] = e match {
-          case e: VertexSet => SafeFuture(new VertexSetData(
+          case e: VertexSet => SafeFuture.async(new VertexSetData(
             e, parallelize(source.get(e).toSeq.map((_, ()))), count = Some(source.get(e).size)))
-          case e: EdgeBundle => SafeFuture {
+          case e: EdgeBundle => SafeFuture.async({
             val seq = source.get(e).toSeq
             val vs = getData(e.idSet)
             val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
             val rdd = runtimeContext.sparkContext.parallelize(seq).sortUnique(partitioner)
             new EdgeBundleData(e, rdd, count = Some(seq.size))
-          }
+          })
           case e: Attribute[_] =>
             def attr[T: reflect.ClassTag](e: Attribute[T]) = {
               val seq = source.get(e).toSeq
@@ -368,7 +368,7 @@ class SparkDomain(
               val rdd = runtimeContext.sparkContext.parallelize(seq).sortUnique(partitioner)
               new AttributeData[T](e, rdd, count = Some(seq.size))
             }
-            SafeFuture(attr(e)(e.classTag))
+            SafeFuture.async(attr(e)(e.classTag))
           case e: Scalar[_] => source.get(e).map(new ScalarData(e, _))
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }

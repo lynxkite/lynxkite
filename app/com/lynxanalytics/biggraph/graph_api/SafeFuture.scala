@@ -11,10 +11,10 @@ import scala.util._
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 
 object SafeFuture {
-  def apply[T](func: => T)(implicit ec: ExecutionContext) =
+  def async[T](func: => T)(implicit ec: ExecutionContext) =
     new SafeFuture(unwrapException(Future { wrapException(func) }), Seq())
 
-  def apply[T](f: Future[T]) = {
+  def wrap[T](f: Future[T]) = {
     new SafeFuture(f, Seq())
   }
 
