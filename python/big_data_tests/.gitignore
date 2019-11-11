@@ -1,0 +1,6 @@
+parquet/
+data/
+meta/
+kiterc
+prefix_definitions.txt
+
