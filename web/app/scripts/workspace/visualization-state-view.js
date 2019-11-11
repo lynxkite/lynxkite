@@ -10,7 +10,8 @@ angular.module('biggraph')
       scope: {
         stateId: '=',
         popupModel: '=',
-        onChange: '&',
+        editMode: '=',
+        onEdit: '&',
       },
       link: function(scope) {
         scope.sides = [];
@@ -103,12 +104,13 @@ angular.module('biggraph')
             scope.left.updateViewData();
             scope.right.updateViewData();
             scope.changed = true;
+            if (scope.editMode === 'apply-immediately') {
+              scope.applyChanges();
+            }
           });
 
-        scope.inPopup = function() { return scope.popupModel.owner; };
-
-        scope.saveChanges = function() {
-          scope.onChange({
+        scope.applyChanges = function() {
+          scope.onEdit({
             state: JSON.stringify({ left: scope.left.state, right: scope.right.state }) });
         };
       },
