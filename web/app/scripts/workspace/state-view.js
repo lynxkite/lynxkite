@@ -26,10 +26,11 @@ angular.module('biggraph')
               instruments: scope.instruments };
             const json = JSON.stringify(query);
             if (json !== lastJson) {
-              scope.result = util.get('/ajax/getInstrumentedState', query);
-              const currentRequest = scope.result;
-              currentRequest.then(function(res) {
-                if (scope.result === currentRequest) { // It is not an abandoned request.
+              const req = util.get('/ajax/getInstrumentedState', query);
+              scope.nextResult = req;
+              req.then(function(res) {
+                if (scope.nextResult === req) { // It is not an abandoned request.
+                  scope.result = req;
                   scope.lastState = res.states[res.states.length - 1];
                 }
               });
