@@ -623,6 +623,11 @@ blocking-proxy@^1.0.0:
   dependencies:
     minimist "^1.2.0"
 
+bootstrap-tourist@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/bootstrap-tourist/-/bootstrap-tourist-0.2.1.tgz#5333dcc6054df453a4918d7ad72eaccace79c4b5"
+  integrity sha512-qIJBrS64Lj/4Cz/yWaRCrKT82R0hLkH5W3T8Kyyu1eRlEUHt4DygiJqH4YDuwc2CsTZagpikxr7sUXu1X1Cn6w==
+
 bootstrap@3.4.1:
   version "3.4.1"
   resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-3.4.1.tgz#c3a347d419e289ad11f4033e3c4132b87c081d72"
@@ -2587,6 +2592,14 @@ gulp-sourcemaps@2.6.5:
     source-map "~0.6.0"
     strip-bom-string "1.X"
     through2 "2.X"
+
+gulp-touch-cmd@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/gulp-touch-cmd/-/gulp-touch-cmd-0.0.1.tgz#73aebd040f5cbfbf567a06e3fdb7976ef0fb88cc"
+  integrity sha1-c669BA9cv79Wegbj/beXbvD7iMw=
+  dependencies:
+    graceful-fs "^4.1.2"
+    through2 "^2.0.3"
 
 gulp-uglify-es@1.0.4:
   version "1.0.4"

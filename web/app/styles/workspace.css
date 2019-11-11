@@ -17,6 +17,10 @@ span#workspace-name {
   font: bold 2.5em 'Exo 2'; /* Brand font. */
 }
 
+#workspace-toolbar-buttons {
+  display: inherit;
+}
+
 #workspace-loading,
 #workspace-drawing-board {
   height: 100%;

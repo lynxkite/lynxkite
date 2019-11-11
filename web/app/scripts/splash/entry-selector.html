@@ -45,6 +45,7 @@
     <sql-box  ng-click="$event.stopPropagation()" directory="path" ng-if="showSQL"></sql-box>
   </div>
 
+  <div id="directory-browser">
   <div id="current-directory" class="path">
     <div class="description">{{ path ? 'Current folder:' : 'Root folder' }}</div>
     <span class="lead" ng-show="path">
@@ -141,5 +142,6 @@
         ng-click="$event.stopPropagation()">
       </snapshot-viewer>
     </div>
+  </div>
   </div>
 </div>

@@ -385,6 +385,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         sideIndices.push(i);
       }
     }
+    // Drop 3D views. We will either create new ones or go with 2D.
+    const oldRenderers = this.rootElement.children('renderer');
+    if (oldRenderers.length > 0) {
+      oldRenderers.scope().$destroy();
+      oldRenderers.remove();
+    }
     let side;
     for (let i = 0; i < data.edgeBundles.length; ++i) {
       const e = data.edgeBundles[i];
@@ -403,11 +409,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
           scope.layout3D = e.layout3D;
           scope.width = 2 * halfColumnWidth;
           scope.left = idx * 2 * halfColumnWidth;
-          const oldRenderers = this.rootElement.children('renderer');
-          if (oldRenderers.length > 0) {
-            oldRenderers.scope().$destroy();
-            oldRenderers.remove();
-          }
           const r = $compile('<renderer></renderer>')(scope);
           this.svg.after(r);
           continue;
@@ -582,10 +583,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.addLegendLine(title);
     for (let attr in colorMap) {
       const l = this.addLegendLine(attr || 'undefined', 20);
+      const size = 12;
       const x = parseInt(l.attr('x'));
+      const xOffset = this.leftOrRight === 'left' ? -3 - size : 3;
       const y = parseInt(l.attr('y'));
       const square = svg.create('rect', {
-        x: x - 15, y: y - 7, width: 12, height: 12,
+        x: x + xOffset, y: y - 7, width: size, height: size,
         fill: colorMap[attr] || UNCOLORED, rx: 2 });
       this.gv.legend.append(square);
     }
