@@ -35,14 +35,14 @@ def get_args():
   parser.add_argument('--edge_file', type=str, required=True,
                       help='LynxKite-type (prefixed) path to the Parquet file specifying the edges, e.g., DATA$/exports/testgraph_edges')
 
-  parser.add_argument('--src', type=str, default='src_id',
+  parser.add_argument('--src', type=str, default='src',
                       help='The name of the src column in the edges file')
 
-  parser.add_argument('--dst', type=str, default='dst_id',
+  parser.add_argument('--dst', type=str, default='dst',
                       help='The name of the dst column in the edges file')
 
-  parser.add_argument('--vertex_size', type=int, default=5000,
-                      help='The vertex size for tests that want to start with "Create Vertrices"')
+  parser.add_argument('--vertex_set_size', type=int, default=100000,
+                      help='The vertex set size for tests that want to start with "Create Vertrices"')
   return parser.parse_args()
 
 
@@ -78,7 +78,8 @@ def main():
   unknown = [t for t in tests_to_run if t not in TESTS.keys()]
   assert len(unknown) == 0, f'Unknown test(s): {unknown}\nAvaliable: {TESTS.keys()}'
   for result in [compute(t) for t in tests_to_run]:
-    print(f'Computing {result.test_name} took {result.time_taken} seconds')
+    t = "{:.2f}".format(result.time_taken)
+    print(f'Computing {result.test_name} took {result.time_taken:.2f} seconds')
 
 
 # TESTS
@@ -98,7 +99,7 @@ def edges():
 
 @bdtest()
 def graph(vertices, edges):
-  return LK.useTableAsEdges(vertices, edges, attr='id', src=ARGS.src, dst=ARGS.dst)
+  return LK.useTableAsEdges(vertices, edges, attr='vertex_id', src=ARGS.src, dst=ARGS.dst)
 
 
 @bdtest()
@@ -115,6 +116,7 @@ def random_attributes(graph):
 
   graph = LK.addRandomVertexAttribute(graph, name='rnd_std_normal2',
                                       dist='Standard Normal', seed=str(seed))
+  graph = LK.addRankAttribute(graph, rankattr='ordinal', keyattr='rnd_std_normal')
   return graph
 
 
@@ -280,7 +282,7 @@ def merge_vertices_by_attribute(random_attributes_with_constants):
 
 @bdtest()
 def even_distribution():
-  a = ARGS.vertex_size
+  a = ARGS.vertex_set_size
   b = a // 10
   g = LK.createVertices(size=a)
   g = LK.addRandomVertexAttribute(
