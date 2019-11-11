@@ -74,16 +74,23 @@ angular.module('biggraph')
           scope.$broadcast('graphray');
         };
 
-        scope.visualizationChanged = function(state) {
+        scope.visualizationEditMode = function() {
+          const n = scope.instruments.length;
+          if (n === 0) {
+            const op =
+              scope.workspace && scope.workspace.boxMap[scope.plug.boxId].metadata.operationId;
+            return op === 'Graph visualization' ? 'apply-button' : 'read-only';
+          } else {
+            const op = scope.instruments[n - 1].operationId;
+            return op === 'Graph visualization' ? 'apply-immediately' : 'read-only';
+          }
+        };
+        scope.visualizationEdited = function(state) {
           const n = scope.instruments.length;
           if (n === 0) {
             scope.workspace.updateBox(scope.plug.boxId, { state }, {});
-          } else if (scope.instruments[n - 1].operationId === 'Graph visualization') {
-            scope.setInstrument(n - 1, 'Graph visualization', { state });
           } else {
-            /* eslint-disable no-console */
-            console.error(
-              'visualizationChanged called for unexpected instrument:', scope.instruments[n - 1]);
+            scope.setInstrument(n - 1, 'Graph visualization', { state });
           }
         };
       },
