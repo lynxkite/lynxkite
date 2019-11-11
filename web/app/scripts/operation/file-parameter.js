@@ -29,7 +29,7 @@ angular.module('biggraph').directive('fileParameter', function(util, $timeout) {
           scope.uploading = true;
           scope.progress = 0;
           const xhr = new XMLHttpRequest();
-          xhr.open('POST', '/ajax/upload');
+          xhr.open('POST', 'ajax/upload');
           xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) { // DONE
               scope.$apply(function() {

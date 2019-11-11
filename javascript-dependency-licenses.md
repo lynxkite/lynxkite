@@ -262,6 +262,7 @@
 │  ├─ binary-extensions@1.13.0
 │  ├─ blob@0.0.5
 │  ├─ blocking-proxy@1.0.1
+│  ├─ bootstrap-tourist@0.2.1
 │  ├─ bootstrap@3.4.1
 │  ├─ brace-expansion@1.1.11
 │  ├─ braces@1.8.5
@@ -446,6 +447,7 @@
 │  ├─ gulp-rev-replace@0.4.4
 │  ├─ gulp-rev@9.0.0
 │  ├─ gulp-size@3.0.0
+│  ├─ gulp-touch-cmd@0.0.1
 │  ├─ gulp-uglify-es@1.0.4
 │  ├─ gulp-useref@3.1.6
 │  ├─ gulp@4.0.0
