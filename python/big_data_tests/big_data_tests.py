@@ -79,7 +79,7 @@ def main():
   assert len(unknown) == 0, f'Unknown test(s): {unknown}\nAvaliable: {TESTS.keys()}'
   for result in [compute(t) for t in tests_to_run]:
     t = "{:.2f}".format(result.time_taken)
-    print(f'Computing {result.test_name} took {t} seconds')
+    print(f'Computing {result.test_name} took {result.time_taken:.2f} seconds')
 
 
 # TESTS
