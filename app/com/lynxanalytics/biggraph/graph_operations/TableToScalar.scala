@@ -57,7 +57,7 @@ case class TableToScalar private (maxRows: Int) extends SparkOperation[Input, Ou
     }
     val rdd = SQLHelper.toSeqRDD(df)
     val data =
-      if (maxRows < 0) rdd.collect().map { row => zipper(row) }
+      if (maxRows < 0) rdd.collect().map(zipper)
       else rdd.take(maxRows).map { row => zipper(row) }
     output(o.tableContents, TableContents(header, data.toList))
   }

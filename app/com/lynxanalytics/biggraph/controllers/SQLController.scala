@@ -1,8 +1,6 @@
 // SQLController includes the request handlers for SQL in Kite.
 package com.lynxanalytics.biggraph.controllers
 
-import java.security.SecureRandom
-
 import org.apache.spark
 
 import scala.concurrent.Future
@@ -380,11 +378,11 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
     HadoopFile(file).assertWriteAllowedFrom(user) // TODO: Do we need this?
     val table = dfSpec.globalSQL(user)
     val op = ExportTableToStructuredFile(
-      file,
-      format,
-      new SecureRandom().nextInt(),
-      "error if exists",
-      true)
+      path = file,
+      format = format,
+      version = Timestamp.toLong,
+      saveMode = "error if exists",
+      forDownload = false)
     val exported = op(op.t, table).result.exportResult
     dataManager.get(exported)
   }
