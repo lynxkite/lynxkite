@@ -25,7 +25,6 @@ object TableToScalar extends OpFromJson {
   }
 
   def run(tab: Table, maxRows: Int)(implicit m: MetaGraphManager): Scalar[TableContents] = {
-    assert(maxRows >= 0, s"Negative maxRows ($maxRows) not supported")
     import Scripting._
     val op = TableToScalar(maxRows)
     op(op.tab, tab).result.tableContents
@@ -50,15 +49,16 @@ case class TableToScalar private (maxRows: Int) extends SparkOperation[Input, Ou
     val header = df.schema.toList.map { field =>
       field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
     }
+    def zipper(row: Seq[Any]) = {
+      row.toList.zip(header).map {
+        case (null, _) => DynamicValue("null", defined = false)
+        case (item, (_, tt)) => DynamicValue.convert(item)(tt)
+      }
+    }
     val rdd = SQLHelper.toSeqRDD(df)
     val data =
-      rdd.take(maxRows).map {
-        row =>
-          row.toList.zip(header).map {
-            case (null, _) => DynamicValue("null", defined = false)
-            case (item, (_, tt)) => DynamicValue.convert(item)(tt)
-          }
-      }
+      if (maxRows < 0) rdd.collect().map { row => zipper(row) }
+      else rdd.take(maxRows).map { row => zipper(row) }
     output(o.tableContents, TableContents(header, data.toList))
   }
 }
