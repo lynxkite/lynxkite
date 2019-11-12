@@ -901,7 +901,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
               id: id,
               actions: actions,
               attributes: attributes,
-            }, evStart.pageX, evStart.pageY);
+            }, evStart.clientX, evStart.clientY);
           });
         }
       });

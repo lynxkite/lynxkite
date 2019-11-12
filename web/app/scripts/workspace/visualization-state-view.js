@@ -10,6 +10,7 @@ angular.module('biggraph')
       scope: {
         stateId: '=',
         popupModel: '=',
+        editHandler: '=',
       },
       link: function(scope) {
         scope.sides = [];
@@ -27,6 +28,7 @@ angular.module('biggraph')
           });
           scope.visualization.then(
             function() {
+              scope.changed = false;
               scope.applyVisualizationData();
             }, function() {}
           );
@@ -90,14 +92,25 @@ angular.module('biggraph')
         util.deepWatch(
           scope,
           '[left.state, right.state]',
-          function(newVal, oldVal) {
-            if (oldVal === newVal) {
-              // This was the initial watch call.
+          function(newValue, oldValue) {
+            if (oldValue === newValue ||
+              !scope.changed &&
+              angular.equals(scope.left.state, scope.visualization.left) &&
+              angular.equals(scope.right.state, scope.visualization.right)) {
+              // Initial call or application of the backend response.
               return;
             }
             scope.left.updateViewData();
             scope.right.updateViewData();
+            scope.changed = true;
+            if (scope.editHandler.onEdit) {
+              scope.editHandler.onEdit(scope.stateJSON());
+            }
           });
+
+        scope.stateJSON = function() {
+          return JSON.stringify({ left: scope.left.state, right: scope.right.state });
+        };
       },
     };
   });

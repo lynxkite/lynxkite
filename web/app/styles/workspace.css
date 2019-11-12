@@ -269,3 +269,11 @@ op-editor > :first-child {
 .workspace-comment > :first-child {
   margin-top: 0;
 }
+
+.apply-visualization-changes {
+  position: absolute;
+  bottom: 13px;
+  left: 3px;
+  border: 0;
+  background: white;
+}
