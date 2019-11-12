@@ -3,9 +3,8 @@ package main
 
 import "sync"
 
-type ScalarValue interface{}
 type Server struct {
-	scalars map[GUID]ScalarValue
+	entities map[GUID]interface{}
 	sync.Mutex
 }
 type GUID string
@@ -18,4 +17,18 @@ type OperationInstance struct {
 	Inputs    map[string]GUID
 	Outputs   map[string]GUID
 	Operation OperationDescription
+}
+type EdgeBundle struct {
+	src           []int64
+	dst           []int64
+	vertexMapping []int64
+	edgeMapping   []int64
+}
+type VertexSet struct {
+	vertexMapping []int64
+}
+type Attribute struct {
+	attribute interface{} // This should be []interface{}. But []T cannot be converted
+	// into []interface{} directly. (https://golang.org/doc/faq#convert_slice_of_interface)
+	defined []bool
 }
