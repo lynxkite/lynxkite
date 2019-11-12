@@ -95,8 +95,7 @@
 <visualization-state-view
   state-id="lastState.stateId"
   popup-model="popupModel"
-  edit-mode="visualizationEditMode()"
-  on-edit="visualizationEdited(state)"
+  edit-handler="visualizationEditHandler"
   ng-if="lastState.kind === 'visualization'">
 </visualization-state-view>
 <display-error
