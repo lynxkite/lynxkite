@@ -648,7 +648,7 @@ angular.module('biggraph')
             event.logicalY -= 50;
             const file = event.dataTransfer.files[0];
             let op = 'Import CSV';
-            if (file.name.match(/\.json$/i)) {
+            if (file.name.match(/\.json$/i) || file.name.match(/\.json\.gz$/i)) {
               op = 'Import JSON';
             } else if (file.name.match(/\.parquet$/i)) {
               op = 'Import Parquet';
