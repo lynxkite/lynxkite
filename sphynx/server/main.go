@@ -34,7 +34,7 @@ func getExecutableOperation(opInst OperationInstance) (Operation, bool) {
 }
 
 func NewServer() Server {
-	return Server{scalars: make(map[GUID]ScalarValue)}
+	return Server{entities: make(map[GUID]interface{})}
 }
 
 func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.CanComputeReply, error) {
@@ -57,7 +57,7 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 
 func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
 	log.Printf("GetScalar request with GUID %v", in.Guid)
-	scalar := s.scalars[GUID(in.Guid)]
+	scalar := s.entities[GUID(in.Guid)]
 	scalarJSON, err := json.Marshal(scalar)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "Converting scalar to json failed: %v", err)

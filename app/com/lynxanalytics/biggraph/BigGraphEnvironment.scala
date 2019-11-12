@@ -65,7 +65,9 @@ object BigGraphEnvironmentImpl {
       val domains = {
         (sphynxHost, sphynxPort, sphynxCertDir) match {
           case (Some(host), Some(port), Some(certDir)) => {
-            Seq(new graph_api.SphynxMemory(host, port.toInt, certDir), new graph_api.ScalaDomain, sparkDomain)
+            Seq(
+              new graph_api.SphynxMemory(host, port.toInt, certDir),
+              new graph_api.UnorderedSphynxDisk, new graph_api.ScalaDomain, sparkDomain)
           }
           case _ => Seq(new graph_api.ScalaDomain, sparkDomain)
         }
