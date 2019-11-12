@@ -39,6 +39,7 @@ angular.module('biggraph')
             scope.result = { states: [scope.plug], metas: [] };
             scope.lastState = scope.plug;
           }
+          setVisualizationEditHandler();
         }
         scope.onBlur = function() {
           $timeout(update); // Allow for changes to propagate to local scope.
@@ -73,6 +74,27 @@ angular.module('biggraph')
         scope.graphray = function() {
           scope.$broadcast('graphray');
         };
+
+        function setVisualizationEditHandler() {
+          const n = scope.instruments.length;
+          scope.visualizationEditHandler = {};
+          if (n === 0) {
+            const op =
+              scope.workspace && scope.workspace.boxMap[scope.plug.boxId].metadata.operationId;
+            if (op === 'Graph visualization') {
+              scope.visualizationEditHandler.onSaveEdit = function(state) {
+                scope.workspace.updateBox(scope.plug.boxId, { state }, {});
+              };
+            }
+          } else {
+            const op = scope.instruments[n - 1].operationId;
+            if (op === 'Graph visualization') {
+              scope.visualizationEditHandler.onEdit = function(state) {
+                scope.setInstrument(n - 1, 'Graph visualization', { state });
+              };
+            }
+          }
+        }
       },
     };
   });

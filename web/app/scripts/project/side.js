@@ -96,6 +96,7 @@ angular.module('biggraph')
       if (!backendState) {
         return;
       }
+      backendState = angular.copy(backendState);
       backendState.projectName = this.state.projectName;
       this.state = backendState;
       if (this.state.graphMode && this.state.centers === undefined) {
@@ -196,7 +197,13 @@ angular.module('biggraph')
       const that = this;
       vd.hasCenter = function(id) { return that.state.centers.indexOf(id) !== -1; };
       vd.setCenter = function(id) { that.state.centers = [id]; };
-      vd.addCenter = function(id) { that.state.centers = that.state.centers.concat([id]); };
+      vd.addCenter = function(id) {
+        if (isNaN(parseInt(that.state.centers[0]))) {
+          that.state.centers = [id];
+        } else {
+          that.state.centers = that.state.centers.concat([id]);
+        }
+      };
       vd.removeCenter = function(id) {
         that.state.centers =
           that.state.centers.filter(function(element) { return element !== id; });
