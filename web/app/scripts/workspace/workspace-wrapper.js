@@ -505,15 +505,16 @@ angular.module('biggraph')
           for (let j = 0; j < box.inputs.length; ++j) {
             const inputName = box.metadata.inputs[j];
             const input = box.instance.inputs[inputName];
+            const inputBoxId = input && input.boxId;
             // Record internally used output.
-            if (input.boxId) {
+            if (inputBoxId) {
             /* eslint-disable no-console */
               console.assert(!input.boxId.includes(SEPARATOR) && !input.id.includes(SEPARATOR));
               externallyUsedOutputCounts[input.boxId + SEPARATOR + input.id] -= 1;
               internallyUsedOutputs[input.boxId + SEPARATOR + input.id] = true;
             }
             // Create input box if necessary.
-            if (!ids.includes(input.boxId)) {
+            if (!ids.includes(inputBoxId)) {
               let inputBoxName = inputName;
               let inputNameCount = inputNameCounts[inputName] || 0;
               if (inputNameCount > 0) {
@@ -531,7 +532,7 @@ angular.module('biggraph')
               });
               inputBoxY += PADDING_Y;
               instance.inputs[inputName] = { boxId: 'input-' + inputBoxName, id: 'input' };
-              if (input.boxId) { // Connected to a non-selected box.
+              if (inputBoxId) { // Connected to a non-selected box.
                 customBox.inputs[inputBoxName] = input;
               }
             }
