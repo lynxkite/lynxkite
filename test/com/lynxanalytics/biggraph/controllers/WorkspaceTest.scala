@@ -116,14 +116,14 @@ class WorkspaceTest extends FunSuite with graph_api.TestGraphOp {
     assert(ex.getMessage == """Inputs project, scalar of box copy3 have errors:
   project: Inputs project, scalar of box copy2 have errors:
     project: Inputs project, scalar of box copy1 have errors:
-      project: scala.NotImplementedError: an implementation is missing
-      scalar: scala.NotImplementedError: an implementation is missing
+      project: Unconnected
+      scalar: Unconnected
     scalar: Inputs project, scalar of box copy1 have errors:
-      project: scala.NotImplementedError: an implementation is missing
-      scalar: scala.NotImplementedError: an implementation is missing
+      project: Unconnected
+      scalar: Unconnected
 ...
-      project: scala.NotImplementedError: an implementation is missing
-      scalar: scala.NotImplementedError: an implementation is missing""")
+      project: Unconnected
+      scalar: Unconnected""")
   }
 
   test("getProjectOutput") {
