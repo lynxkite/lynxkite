@@ -425,7 +425,6 @@ angular.module('biggraph')
       },
 
       saveAsCustomBox: function(ids, name, description) {
-        let i, j, box, input;
         const workspaceParameters =
         JSON.parse(this.boxMap['anchor'].instance.parameters.parameters || '[]');
         const boxes = [{
@@ -461,15 +460,15 @@ angular.module('biggraph')
           parametricParameters: {},
         };
         // Pass all workspace parameters through.
-        for (i = 0; i < workspaceParameters; ++i) {
+        for (let i = 0; i < workspaceParameters; ++i) {
           const param = workspaceParameters[i].id;
           customBox.parametricParameters[param] = '$' + param;
         }
         let minX = Infinity;
         let minY = Infinity;
         let maxX = -Infinity;
-        for (i = 0; i < ids.length; ++i) {
-          box = this.boxMap[ids[i]];
+        for (let i = 0; i < ids.length; ++i) {
+          const box = this.boxMap[ids[i]];
           // Place the custom box in the average position of the selected boxes.
           customBox.x += box.instance.x / ids.length;
           customBox.y += box.instance.y / ids.length;
@@ -478,11 +477,11 @@ angular.module('biggraph')
           maxX = Math.max(maxX, box.instance.x);
         }
         // Record used outputs.
-        for (i = 0; i < this.boxes.length; ++i) {
-          box = this.boxes[i];
+        for (let i = 0; i < this.boxes.length; ++i) {
+          const box = this.boxes[i];
           const inputs = Object.keys(box.instance.inputs);
-          for (j = 0; j < inputs.length; ++j) {
-            input = box.instance.inputs[inputs[j]];
+          for (let j = 0; j < inputs.length; ++j) {
+            const input = box.instance.inputs[inputs[j]];
             if (input.boxId) {
             /* eslint-disable no-console */
               console.assert(!input.boxId.includes(SEPARATOR) && !input.id.includes(SEPARATOR));
@@ -491,8 +490,8 @@ angular.module('biggraph')
             }
           }
         }
-        for (i = 0; i < ids.length; ++i) {
-          box = this.boxMap[ids[i]];
+        for (let i = 0; i < ids.length; ++i) {
+          const box = this.boxMap[ids[i]];
           // "input-" and "output-" IDs will be used for the input and output boxes.
           /* eslint-disable no-console */
           console.assert(box.instance.id.indexOf('input-') !== 0);
@@ -503,9 +502,9 @@ angular.module('biggraph')
           boxes.push(instance);
           instance.x += PADDING_X - minX;
           instance.y += PADDING_Y / 2 - minY;
-          for (j = 0; j < box.inputs.length; ++j) {
+          for (let j = 0; j < box.inputs.length; ++j) {
             const inputName = box.metadata.inputs[j];
-            input = box.instance.inputs[inputName];
+            const input = box.instance.inputs[inputName];
             // Record internally used output.
             if (input.boxId) {
             /* eslint-disable no-console */
@@ -539,9 +538,9 @@ angular.module('biggraph')
           }
         }
         // Add output boxes as necessary.
-        for (i = 0; i < ids.length; ++i) {
-          box = this.boxMap[ids[i]];
-          for (j = 0; j < box.metadata.outputs.length; ++j) {
+        for (let i = 0; i < ids.length; ++i) {
+          const box = this.boxMap[ids[i]];
+          for (let j = 0; j < box.metadata.outputs.length; ++j) {
             const outputName = box.metadata.outputs[j];
             if (!internallyUsedOutputs[box.instance.id + SEPARATOR + outputName] ||
               externallyUsedOutputCounts[box.instance.id + SEPARATOR + outputName] > 0) {
