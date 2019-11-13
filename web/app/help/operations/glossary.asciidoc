@@ -157,6 +157,29 @@ The available aggregators are:
  ** `first` (arbitrarily picks a value)
 end::global-aggregators[]
 
+
+tag::global-weighted-aggregators[]
+The available aggregators are:
+
+ * For `Double` attributes:
+ ** `sum`
+ ** `average`
+ ** `min`
+ ** `max`
+ ** `count` (number of cases where the attribute is defined)
+ ** `first` (arbitrarily picks a value)
+ ** `std_deviation` (standard deviation)
+ ** `by_max_weight` (picks a value for which the corresponding weight value is maximal)
+ ** `by_min_weight` (picks a value for which the corresponding weight value is minimal)
+
+ * For other attributes:
+ ** `count` (number of cases where the attribute is defined)
+ ** `first` (arbitrarily picks a value)
+ ** `by_max_weight` (picks a value for which the corresponding weight value is maximal)
+ ** `by_min_weight` (picks a value for which the corresponding weight value is minimal)
+
+end::global-weighted-aggregators[]
+
 tag::local-aggregators[]
 The available aggregators are:
 
