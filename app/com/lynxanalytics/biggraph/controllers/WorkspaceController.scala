@@ -98,9 +98,19 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     val (ws, params, name) = ref.customBoxStack.foldLeft((topWorkspace, Map[String, String](), ref.top)) {
       case ((ws, params, _), boxId) =>
         val ctx = ws.context(user, ops, params)
-        val op = ctx.getOperation(boxId).asInstanceOf[CustomBoxOperation]
-        val cws = op.connectedWorkspace
-        (cws, op.getParams, op.context.box.operationId)
+        try {
+          val op = ctx.getOperation(boxId).asInstanceOf[CustomBoxOperation]
+          val cws = op.connectedWorkspace
+          (cws, op.getParams, op.context.box.operationId)
+        } catch {
+          case t: Throwable =>
+            log.error(s"Could not run box $boxId for $ref", t)
+            // We can still show the insides without connecting the inputs.
+            val box = ws.findBox(boxId)
+            val cws =
+              DirectoryEntry.fromName(box.operationId).asInstanceOf[WorkspaceFrame].workspace
+            (cws, box.parameters, box.operationId)
+        }
     }
     lazy val frame = getWorkspaceFrame(user, name)
   }
