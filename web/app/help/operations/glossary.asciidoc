@@ -189,7 +189,7 @@ The available aggregators are:
  ** `count_distinct` (the number of distinct values)
  ** `first` (arbitrarily picks a value)
  ** `max`
- ** 'median'
+ ** `median`
  ** `min`
  ** `most_common`
  ** `count_most_common` (the number of occurrences of the most common value)
