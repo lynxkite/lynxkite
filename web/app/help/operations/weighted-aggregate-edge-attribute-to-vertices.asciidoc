@@ -15,5 +15,5 @@ The `Double` attribute to use as weight.
  - `outgoing edges`: Aggregate across the edges going out of each vertex.
  - `all edges`: Aggregate across all the edges going in or out of each vertex.
 
-include::{g}[tag=local-aggregators]
+include::{g}[tag=local-weighted-aggregators]
 ====

@@ -33,5 +33,5 @@ The `Double` attribute to use as weight.
  - `symmetric neighbors`: For each vertex A, aggregate across those vertices
    that have both an outgoing edge to and an incoming edge from A.
 
-include::{g}[tag=local-aggregators]
+include::{g}[tag=local-weighted-aggregators]
 ====
