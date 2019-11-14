@@ -1,10 +1,6 @@
 'use strict';
 
 // Viewer of a project state.
-// This is like the project view of the old LynxKite UI.
-//
-// The current implementation is just a subset copy of side.js and many features are
-// missing.
 
 angular.module('biggraph')
   .directive('projectStateView', function(util, side) {
@@ -16,16 +12,17 @@ angular.module('biggraph')
       },
       link: function(scope) {
         scope.sides = [];
+        scope.left = new side.Side(scope.sides, 'left');
+        scope.left.state.projectPath = '';
+        scope.right = new side.Side(scope.sides, 'right');
+        scope.sides.push(scope.left);
+        scope.sides.push(scope.right);
 
         scope.$watch('stateId', function() {
-          scope.sides = [];
-          scope.left = new side.Side(scope.sides, 'left', scope.stateId);
-          scope.right = new side.Side(scope.sides, 'right', scope.stateId);
-          scope.sides.push(scope.left);
-          scope.sides.push(scope.right);
-
-          scope.sides[0].state.projectPath = '';
+          scope.sides[0].stateId = scope.stateId;
+          scope.sides[1].stateId = scope.stateId;
           scope.sides[0].reload();
+          scope.sides[1].reload();
         });
 
         scope.$watch(
