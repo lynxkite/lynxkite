@@ -485,7 +485,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     return colorMap;
   }
 
-  function stringColorMap(values) {
+  function stringColorMap(values, mapName) {
     const set = {};
     for (let i = 0; i < values.length; ++i) {
       set[values[i]] = 1;
@@ -494,8 +494,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     keys.sort(); // This provides some degree of stability.
     const colorMap = {};
     for (let i = 0; i < keys.length; ++i) {
-      const h = Math.floor(360 * i / keys.length);
-      colorMap[keys[i]] = 'hsl(' + h + ',50%,42%)';
+      if (mapName === 'Rainbow') { // LynxKite classic.
+        const h = Math.floor(360 * i / keys.length);
+        colorMap[keys[i]] = 'hsl(' + h + ',50%,42%)';
+      } else {
+        colorMap[keys[i]] = chroma.brewer[mapName][i % chroma.brewer[mapName].length];
+      }
     }
     // Strings that are valid CSS color names will be used as they are.
     for (let i = 0; i < keys.length; ++i) {
@@ -615,7 +619,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         // only shows the min max values
         this.addColorLegend(legendMap, fullLegendTitle);
       } else if (colorMeta.typeName === 'String') {
-        resultMap = stringColorMap(mapByAttr(siblings, colorKey, 'string'));
+        resultMap = stringColorMap(mapByAttr(siblings, colorKey, 'string'), mapName);
         this.addColorLegend(resultMap, fullLegendTitle);
       } else {
         /* eslint-disable no-console */
@@ -1568,9 +1572,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.text = text;
     const fontSize = 30 * textSize;
     this.label = svg.create('text', { 'font-size': fontSize + 'px' }).text(text || '');
-    if (labelColor !== undefined) {
-      this.label.attr({ style: 'fill: ' + labelColor });
+    if (labelColor === undefined) {
+      // Use the background color or white for default label color depending on the vertex color.
+      labelColor = chroma.contrast(this.color, 'white') > chroma.contrast(this.color, '#001b31') ?
+        'white' : '#001b31';
     }
+    this.label.attr({ style: 'fill: ' + labelColor });
     this.labelBackground = svg.create(
       'rect', {
         'class': 'label-background',
