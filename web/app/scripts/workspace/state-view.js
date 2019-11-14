@@ -13,23 +13,26 @@ angular.module('biggraph')
         popupModel: '=',
       },
       link: function(scope) {
-        scope.instruments = [];
+        const instruments = []; // Internal state.
+        scope.instruments = []; // Displayed state. Updated on backend response.
         scope.root = { snapshotNameOpen: false }; // Dealing with ng-if scopes.
         scope.$watch('plug.stateId', update);
         let lastJson;
 
         function update() {
-          if (scope.instruments.length > 0) {
+          if (instruments.length > 0) {
             const query = {
               workspace: scope.workspace.ref(),
               inputStateId: scope.plug.stateId,
-              instruments: scope.instruments };
+              instruments };
             const json = JSON.stringify(query);
             if (json !== lastJson) {
-              scope.result = util.get('/ajax/getInstrumentedState', query);
-              const currentRequest = scope.result;
-              currentRequest.then(function(res) {
-                if (scope.result === currentRequest) { // It is not an abandoned request.
+              const req = util.get('/ajax/getInstrumentedState', query);
+              scope.nextResult = req;
+              req.then(function(res) {
+                if (scope.nextResult === req) { // It is not an abandoned request.
+                  scope.result = req;
+                  scope.instruments = instruments.slice();
                   scope.lastState = res.states[res.states.length - 1];
                 }
               });
@@ -50,8 +53,8 @@ angular.module('biggraph')
         };
 
         scope.setInstrument = function(index, operationId, parameters) {
-          scope.instruments.splice(index);
-          scope.instruments.push({
+          instruments.splice(index);
+          instruments.push({
             operationId: operationId,
             parameters: parameters || {},
             parametricParameters: {},
@@ -60,7 +63,7 @@ angular.module('biggraph')
         };
 
         scope.clearInstrument = function(index) {
-          scope.instruments.splice(index);
+          instruments.splice(index);
           update();
         };
 
