@@ -171,15 +171,15 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
 
       scope.colors = function(cm) {
         if (cm.includes(' 🗘')) {
-          return chroma.brewer[cm.replace(' 🗘', '')];
+          return chroma.brewer[cm.replace(' 🗘', '')].slice().reverse();
         } else if (util.qualitativeColorMaps.includes(cm)) {
-          const cs = chroma.brewer[cm].slice().reverse();
+          const cs = chroma.brewer[cm];
           // Set up gradient to have sharp boundaries.
           return cs.map((c, i) =>
             `${c} ${Math.floor(100 * i / cs.length)}%, ${c} ${Math.floor(100 * (i + 1) / cs.length)}%`
           );
         } else {
-          return chroma.brewer[cm].slice().reverse();
+          return chroma.brewer[cm];
         }
       };
       // We only offer the sequential and divergent color maps for numerical attributes.
