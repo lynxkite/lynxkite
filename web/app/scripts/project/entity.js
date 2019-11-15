@@ -170,14 +170,14 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       };
 
       scope.colors = function(cm) {
-        if (cm.includes(' 🗘')) {
-          return chroma.brewer[cm.replace(' 🗘', '')].slice().reverse();
-        } else if (util.qualitativeColorMaps.includes(cm)) {
+        if (util.qualitativeColorMaps.includes(cm)) {
           const cs = chroma.brewer[cm];
           // Set up gradient to have sharp boundaries.
           return cs.map((c, i) =>
             `${c} ${Math.floor(100 * i / cs.length)}%, ${c} ${Math.floor(100 * (i + 1) / cs.length)}%`
           );
+        } else if (cm.includes(' 🗘')) {
+          return chroma.brewer[cm.replace(' 🗘', '')].slice().reverse();
         } else {
           return chroma.brewer[cm];
         }
