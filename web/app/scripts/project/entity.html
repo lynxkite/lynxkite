@@ -110,7 +110,7 @@
     <div class="de-emph"> Using color map... </div>
     <div class="menu-item"
          ng-repeat="cm in availableColorMaps()"
-         ng-class="{ active: side.state[colorMapKind()] == cm }"
+         ng-class="{ active: isSelectedColorMap(cm) }"
          ng-click="side.state[colorMapKind()] = cm"
          id="color-map-{{ cm }}"> {{ cm }}
       <span

@@ -172,7 +172,7 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
       scope.colors = function(cm) {
         if (cm.includes(' 🗘')) {
           return chroma.brewer[cm.replace(' 🗘', '')];
-        } else if (qualitativeColorMaps.includes(cm)) {
+        } else if (util.qualitativeColorMaps.includes(cm)) {
           const cs = chroma.brewer[cm].slice().reverse();
           // Set up gradient to have sharp boundaries.
           return cs.map((c, i) =>
@@ -182,19 +182,17 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
           return chroma.brewer[cm].slice().reverse();
         }
       };
-      const qualitativeColorMaps =
-        ['LynxKite Colors', 'Rainbow', 'Accent', 'Dark2', 'Paired', 'Pastel1', 'Pastel2', 'Set1', 'Set2', 'Set3'];
       // We only offer the sequential and divergent color maps for numerical attributes.
       scope.availableColorMaps = function() {
         if (scope.entity.typeName === 'Double') {
           const cms = Object.keys(chroma.brewer).filter(k =>
-            k[0] === k[0].toUpperCase() && !qualitativeColorMaps.includes(k));
+            k[0] === k[0].toUpperCase() && !util.qualitativeColorMaps.includes(k));
           // Also offer reversed versions.
           cms.push(...cms.map(cm => cm + ' 🗘'));
           cms.sort();
           return cms;
         } else {
-          return qualitativeColorMaps;
+          return util.qualitativeColorMaps;
         }
       };
       scope.colorMapKind = function() {
@@ -207,6 +205,27 @@ angular.module('biggraph').directive('entity', function($timeout, axisOptions, u
         if (scope.kind === 'vertex-attribute' && scope.isFilter('label color')) {
           return 'labelColorMap';
         }
+      };
+      scope.isSelectedColorMap = function(cm) {
+        let state = scope.side.state[scope.colorMapKind()];
+        // We have two defaults. If the state is undefined, this is a visualization from
+        // before color maps were added. We use the old colors. (LynxKite Classic / Rainbow)
+        // Otherwise we use the preferred color map (Viridis / LynxKite Colors) as the default
+        // if the current selection is for the wrong type.
+        if (scope.entity.typeName === 'Double') {
+          if (state === undefined) {
+            state = 'LynxKite Classic';
+          } else if (util.qualitativeColorMaps.includes(state)) {
+            state = 'Viridis';
+          }
+        } else {
+          if (state === undefined) {
+            state = 'Rainbow';
+          } else if (!util.qualitativeColorMaps.includes(state)) {
+            state = 'LynxKite Colors';
+          }
+        }
+        return state === cm;
       };
 
       scope.isFilter = function (kind) {

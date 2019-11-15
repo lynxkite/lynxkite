@@ -476,8 +476,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       bounds.min = Math.min(bounds.min, -bounds.max);
       bounds.span = bounds.max - bounds.min;
     }
-    const reversed = mapName && mapName.includes(' 🗘');
-    const scale = chroma.scale((mapName || 'LynxKite Classic').replace(' 🗘', ''));
+    mapName = mapName || 'LynxKite Classic';
+    if (util.qualitativeColorMaps.includes(mapName)) {
+      mapName = 'Viridis'; // The continuous default.
+    }
+    const reversed = mapName.includes(' 🗘');
+    const scale = chroma.scale(mapName.replace(' 🗘', ''));
     const colorMap = {};
     for (let v of values) {
       colorMap[v] = scale(0.5 + common.normalize(v, bounds) * (reversed ? -1 : 1));
@@ -493,8 +497,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     const keys = Object.keys(set);
     keys.sort(); // This provides some degree of stability.
     const colorMap = {};
+    mapName = mapName || 'Rainbow';
+    if (!util.qualitativeColorMaps.includes(mapName)) {
+      mapName = 'LynxKite Colors'; // The qualitative default.
+    }
     for (let i = 0; i < keys.length; ++i) {
-      if (mapName === 'Rainbow') { // LynxKite classic.
+      if (mapName === 'Rainbow') {
         const h = Math.floor(360 * i / keys.length);
         colorMap[keys[i]] = 'hsl(' + h + ',50%,42%)';
       } else {
