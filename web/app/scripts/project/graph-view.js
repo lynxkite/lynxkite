@@ -476,8 +476,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       bounds.min = Math.min(bounds.min, -bounds.max);
       bounds.span = bounds.max - bounds.min;
     }
-    const reversed = mapName && mapName.includes(' 🗘');
-    const scale = chroma.scale((mapName || 'LynxKite Classic').replace(' 🗘', ''));
+    mapName = mapName || 'LynxKite Classic';
+    if (util.qualitativeColorMaps.includes(mapName)) {
+      mapName = 'Viridis'; // The continuous default.
+    }
+    const reversed = mapName.includes(' 🗘');
+    const scale = chroma.scale(mapName.replace(' 🗘', ''));
     const colorMap = {};
     for (let v of values) {
       colorMap[v] = scale(0.5 + common.normalize(v, bounds) * (reversed ? -1 : 1));
@@ -485,7 +489,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     return colorMap;
   }
 
-  function stringColorMap(values) {
+  function stringColorMap(values, mapName) {
     const set = {};
     for (let i = 0; i < values.length; ++i) {
       set[values[i]] = 1;
@@ -493,9 +497,17 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     const keys = Object.keys(set);
     keys.sort(); // This provides some degree of stability.
     const colorMap = {};
+    mapName = mapName || 'Rainbow';
+    if (!util.qualitativeColorMaps.includes(mapName)) {
+      mapName = 'LynxKite Colors'; // The qualitative default.
+    }
     for (let i = 0; i < keys.length; ++i) {
-      const h = Math.floor(360 * i / keys.length);
-      colorMap[keys[i]] = 'hsl(' + h + ',50%,42%)';
+      if (mapName === 'Rainbow') {
+        const h = Math.floor(360 * i / keys.length);
+        colorMap[keys[i]] = 'hsl(' + h + ',50%,42%)';
+      } else {
+        colorMap[keys[i]] = chroma.brewer[mapName][i % chroma.brewer[mapName].length];
+      }
     }
     // Strings that are valid CSS color names will be used as they are.
     for (let i = 0; i < keys.length; ++i) {
@@ -615,7 +627,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
         // only shows the min max values
         this.addColorLegend(legendMap, fullLegendTitle);
       } else if (colorMeta.typeName === 'String') {
-        resultMap = stringColorMap(mapByAttr(siblings, colorKey, 'string'));
+        resultMap = stringColorMap(mapByAttr(siblings, colorKey, 'string'), mapName);
         this.addColorLegend(resultMap, fullLegendTitle);
       } else {
         /* eslint-disable no-console */
@@ -1568,9 +1580,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.text = text;
     const fontSize = 30 * textSize;
     this.label = svg.create('text', { 'font-size': fontSize + 'px' }).text(text || '');
-    if (labelColor !== undefined) {
-      this.label.attr({ style: 'fill: ' + labelColor });
+    if (labelColor === undefined) {
+      // Use the background color or white for default label color depending on the vertex color.
+      labelColor = chroma.contrast(this.color, 'white') > chroma.contrast(this.color, '#001b31') ?
+        'white' : '#001b31';
     }
+    this.label.attr({ style: 'fill: ' + labelColor });
     this.labelBackground = svg.create(
       'rect', {
         'class': 'label-background',
