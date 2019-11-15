@@ -146,3 +146,10 @@ angular
 chroma.brewer['LynxKite Classic'] = chroma.brewer['lynxkite classic'] = [
   '#3636a1', '#4b36a1', '#6136a1', '#7636a1', '#8c36a1', '#a136a1',
   '#a1368c', '#a13676', '#a13661', '#a1364b', '#a13636'];
+chroma.brewer['LynxKite Colors'] = chroma.brewer['lynxkite colors'] = [
+  '#39bcf3', '#ff8800', '#ae1dd6', '#004165', '#9b2016', '#69be28',
+  '#b4ffff', '#450073', '#005e00', '#ff90ff'];
+chroma.brewer['Rainbow'] = chroma.brewer['rainbow'] = [
+  'hsl(0,50%,42%)', 'hsl(30,50%,42%)', 'hsl(60,50%,42%)', 'hsl(90,50%,42%)',
+  'hsl(120,50%,42%)', 'hsl(150,50%,42%)', 'hsl(180,50%,42%)', 'hsl(210,50%,42%)',
+  'hsl(240,50%,42%)', 'hsl(270,50%,42%)', 'hsl(300,50%,42%)', 'hsl(330,50%,42%)'];
