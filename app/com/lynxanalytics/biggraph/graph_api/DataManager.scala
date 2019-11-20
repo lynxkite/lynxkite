@@ -107,7 +107,7 @@ class DataManager(
       case e: EdgeBundle => combineFutures(Seq(ensure(e, directSrc), ensure(e.idSet, dst)))
       case _ => ensure(e, directSrc)
     }
-    f.flatMap(_ => dst.relocate(e, src))
+    f.flatMap(_ => dst.relocate(e, directSrc))
   }
 
   private def bfs(src: Domain, dst: Domain): Domain = {
@@ -118,7 +118,7 @@ class DataManager(
     while (!q.isEmpty) {
       var s = q.dequeue()
       for (d <- domains) {
-        if (d == dst) {
+        if (d == dst && d.canRelocate(s)) {
           return s
         }
         if (!seen.contains(d) && d.canRelocate(s)) {
