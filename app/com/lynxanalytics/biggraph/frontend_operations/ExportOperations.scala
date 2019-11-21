@@ -132,7 +132,7 @@ class ExportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
       val path = generatePathIfNeeded(params("path"))
       def exportResult = {
         val op = graph_operations.ExportTableToStructuredFile(
-          path, format, params("version").toInt, params("save_mode"), params("for_download") == "yes")
+          path, format, params("version").toLong, params("save_mode"), params("for_download") == "yes")
         op(op.t, table).result.exportResult
       }
     })

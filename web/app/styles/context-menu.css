@@ -1,5 +1,6 @@
 .context-menu {
   position: fixed;
+  z-index: 100000;
   background: white;
   color: black;
   padding: 5px;

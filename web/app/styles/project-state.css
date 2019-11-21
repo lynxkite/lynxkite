@@ -261,7 +261,10 @@ label {
 
 .side {
   padding: 0;
-  padding-top: 10px;
+}
+.side .progress {
+  height: 3px;
+  margin-bottom: 5px;
 }
 .side .panel {
   border-top: none;

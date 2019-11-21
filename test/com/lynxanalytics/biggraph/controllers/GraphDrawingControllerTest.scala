@@ -73,10 +73,10 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
     assert(res.vertexSets(0).mode == "sampled")
     assert(res.vertexSets(0).vertices.size == 4)
     assert(res.vertexSets(0).vertices.toSet == Set(
-      FEVertex(0.0, 0, 0, id = "0", attrs = Map()),
-      FEVertex(0.0, 0, 0, id = "1", attrs = Map()),
-      FEVertex(0.0, 0, 0, id = "2", attrs = Map()),
-      FEVertex(0.0, 0, 0, id = "3", attrs = Map())))
+      FEVertex(id = "0", attrs = Map(), center = true),
+      FEVertex(id = "1", attrs = Map()),
+      FEVertex(id = "2", attrs = Map()),
+      FEVertex(id = "3", attrs = Map(), center = true)))
     assert(res.edgeBundles(0).edges.size == 4)
     assert(res.edgeBundles(0).edges.toSet == Set(
       FEEdge(0, 1, 1.0), FEEdge(1, 0, 1.0), FEEdge(2, 0, 1.0), FEEdge(2, 1, 1.0)))
@@ -106,9 +106,9 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
         edgeWeightId = incomplete)))
     val res = controller.getComplexView(user, req)
     assert(res.vertexSets(0).vertices.toSet == Set(
-      FEVertex(0.0, 0, 0, id = "0", attrs = Map()),
-      FEVertex(0.0, 0, 0, id = "1", attrs = Map()),
-      FEVertex(0.0, 0, 0, id = "2", attrs = Map())))
+      FEVertex(id = "0", attrs = Map(), center = true),
+      FEVertex(id = "1", attrs = Map()),
+      FEVertex(id = "2", attrs = Map())))
     assert(res.edgeBundles(0).edges.toSet == Set(
       FEEdge(0, 1, 1.0, Map()),
       FEEdge(1, 0, 1.0, Map()),
@@ -154,10 +154,10 @@ class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
     assert(res.vertexSets(0).mode == "sampled")
     assert(res.vertexSets(0).vertices.size == 2)
     assert(res.vertexSets(0).vertices.toSet == Set(
-      FEVertex(0.0, 0, 0, id = "0", attrs = Map(
+      FEVertex(id = "0", center = true, attrs = Map(
         age -> DynamicValue("20.3", double = Some(20.3)),
         gender -> DynamicValue("Male"))),
-      FEVertex(0.0, 0, 0, id = "1", attrs = Map(
+      FEVertex(id = "1", attrs = Map(
         age -> DynamicValue("18.2", double = Some(18.2)),
         gender -> DynamicValue("Female")))))
     assert(res.edgeBundles(0).edges.size == 1)

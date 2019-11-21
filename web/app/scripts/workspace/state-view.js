@@ -13,23 +13,26 @@ angular.module('biggraph')
         popupModel: '=',
       },
       link: function(scope) {
-        scope.instruments = [];
+        const instruments = []; // Internal state.
+        scope.instruments = []; // Displayed state. Updated on backend response.
         scope.root = { snapshotNameOpen: false }; // Dealing with ng-if scopes.
         scope.$watch('plug.stateId', update);
         let lastJson;
 
         function update() {
-          if (scope.instruments.length > 0) {
+          if (instruments.length > 0) {
             const query = {
               workspace: scope.workspace.ref(),
               inputStateId: scope.plug.stateId,
-              instruments: scope.instruments };
+              instruments };
             const json = JSON.stringify(query);
             if (json !== lastJson) {
-              scope.result = util.get('/ajax/getInstrumentedState', query);
-              const currentRequest = scope.result;
-              currentRequest.then(function(res) {
-                if (scope.result === currentRequest) { // It is not an abandoned request.
+              const req = util.get('/ajax/getInstrumentedState', query);
+              scope.nextResult = req;
+              req.then(function(res) {
+                if (scope.nextResult === req) { // It is not an abandoned request.
+                  scope.result = req;
+                  scope.instruments = instruments.slice();
                   scope.lastState = res.states[res.states.length - 1];
                 }
               });
@@ -39,6 +42,7 @@ angular.module('biggraph')
             scope.result = { states: [scope.plug], metas: [] };
             scope.lastState = scope.plug;
           }
+          setVisualizationEditHandler();
         }
         scope.onBlur = function() {
           $timeout(update); // Allow for changes to propagate to local scope.
@@ -49,8 +53,8 @@ angular.module('biggraph')
         };
 
         scope.setInstrument = function(index, operationId, parameters) {
-          scope.instruments.splice(index);
-          scope.instruments.push({
+          instruments.splice(index);
+          instruments.push({
             operationId: operationId,
             parameters: parameters || {},
             parametricParameters: {},
@@ -59,7 +63,7 @@ angular.module('biggraph')
         };
 
         scope.clearInstrument = function(index) {
-          scope.instruments.splice(index);
+          instruments.splice(index);
           update();
         };
 
@@ -73,6 +77,27 @@ angular.module('biggraph')
         scope.graphray = function() {
           scope.$broadcast('graphray');
         };
+
+        function setVisualizationEditHandler() {
+          const n = scope.instruments.length;
+          scope.visualizationEditHandler = {};
+          if (n === 0) {
+            const op =
+              scope.workspace && scope.workspace.boxMap[scope.plug.boxId].metadata.operationId;
+            if (op === 'Graph visualization') {
+              scope.visualizationEditHandler.onSaveEdit = function(state) {
+                scope.workspace.updateBox(scope.plug.boxId, { state }, {});
+              };
+            }
+          } else {
+            const op = scope.instruments[n - 1].operationId;
+            if (op === 'Graph visualization') {
+              scope.visualizationEditHandler.onEdit = function(state) {
+                scope.setInstrument(n - 1, 'Graph visualization', { state });
+              };
+            }
+          }
+        }
       },
     };
   });

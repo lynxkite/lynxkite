@@ -107,3 +107,7 @@ big-data-test: .build/ecosystem-done
 	./test_big_data.py --test_set_size ${TEST_SET_SIZE} --rm
 .PHONY: licenses
 licenses: scala-dependency-licenses.md javascript-dependency-licenses.txt javascript-dependency-licenses.md
+.PHONY: local-bd-test
+local-bd-test: .build/backend-done
+	python/big_data_tests/run_test.sh
+

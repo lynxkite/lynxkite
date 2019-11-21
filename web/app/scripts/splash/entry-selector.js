@@ -274,6 +274,75 @@ angular.module('biggraph').directive('entrySelector',
             scope.reload();
           }
         });
+
+        function showTutorial() {
+          if (localStorage.getItem('entry-selector tutorial done')) {
+            return;
+          }
+          /* global Tour */
+          scope.tutorial = new Tour({
+            autoscroll: false,
+            framework: 'bootstrap3',
+            storage: null,
+            backdrop: true,
+            showProgressBar: false,
+            steps: [
+              {
+                orphan: true,
+                content: `
+                <p><b>Welcome to LynxKite!</b>
+                <p>This seems to be your first visit. I can quickly show you how to get started.
+                `,
+                animation: false,
+              }, {
+                placement: 'top',
+                element: '.user-menu-dropup',
+                content: `
+                <p>If you wish to see this tutorial again, you can find it in the
+                hamburger menu.
+                `,
+                animation: false,
+              }, {
+                placement: 'top',
+                element: '#directory-browser',
+                content: `
+                <p>LynxKite stores your work in a virtual file system that you can see here.
+                You can open, rename, or delete files, organize them in folders, and so on.
+
+                <p>You can have two kinds of files: <b>workspaces</b> and <b>snapshots</b>.
+                `,
+                animation: false,
+              }, {
+                placement: 'top',
+                element: '#new-workspace',
+                content: `
+                <p>Click here to create a new <b>workspace</b>.
+
+                <p>A workspace is the place for stringing together steps of a data analysis pipeline.
+
+                <p><i>The tutorial will continue when you've created a workspace.</i>
+                `,
+                animation: false,
+              },
+            ],
+            onEnd: function() {
+              localStorage.setItem('entry-selector tutorial done', 'true');
+            },
+            onShown: function() {
+              if (scope.tutorial.getCurrentStepIndex() === scope.tutorial.getStepCount() - 1) {
+                // Last step reached. We're done.
+                localStorage.setItem('entry-selector tutorial done', 'true');
+              }
+            },
+          });
+          scope.tutorial.start();
+        }
+        showTutorial();
+        scope.$on('start tutorial', function() {
+          localStorage.removeItem('entry-selector tutorial done');
+          showTutorial();
+        });
+        scope.$on('$destroy', function() { scope.tutorial && scope.tutorial.end(); });
       },
     };
   });

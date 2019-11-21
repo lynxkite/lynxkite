@@ -64,7 +64,9 @@ case class FEVertex(
 
     // For sampled view:
     id: String = "",
-    attrs: Map[String, DynamicValue] = Map())
+    attrs: Map[String, DynamicValue] = Map(),
+    center: Boolean = false // Whether it's part of the centers or not.
+)
 
 case class VertexDiagramResponse(
     val diagramId: String,
@@ -256,11 +258,13 @@ class GraphDrawingController(env: BigGraphEnvironment) {
       }
     }.toMap
 
+    val centerSet = centers.toSet
     VertexDiagramResponse(
       diagramId = diagramMeta.gUID.toString,
       vertices = vertices.map(v =>
         FEVertex(
           id = v.toString,
+          center = centerSet.contains(v),
           attrs = attrs.mapValues(_.getOrElse(v, DynamicValue(defined = false))))),
       mode = "sampled")
   }

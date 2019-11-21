@@ -25,6 +25,10 @@ class WorkflowOperations(env: SparkFreeEnvironment) extends ProjectOperations(en
     new SimpleOperation(_) {
       params += Param("name", "Name")
       override def summary = s"Input ${params("name")}"
+      override def getOutputs() = {
+        // This will be replaced by a different output when inside a parent workspace.
+        throw new AssertionError("Unconnected")
+      }
     })
 
   register("Output", List("output"), List(), "black_up-pointing_triangle")(
