@@ -28,7 +28,7 @@ object ExampleGraph extends OpFromJson {
   def fromJson(j: JsValue) = ExampleGraph()
 }
 import ExampleGraph._
-case class ExampleGraph() extends ScalaOperation[NoInput, Output] {
+case class ExampleGraph() extends TypedMetaGraphOp[NoInput, Output] {
   @transient var executionCounter = 0
   @transient override lazy val inputs = new NoInput()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance)

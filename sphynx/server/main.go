@@ -7,12 +7,15 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
 
 	"encoding/json"
 	pb "github.com/biggraph/biggraph/sphynx/proto"
+	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -34,11 +37,15 @@ func getExecutableOperation(opInst OperationInstance) (Operation, bool) {
 }
 
 func NewServer() Server {
-	return Server{entities: make(map[GUID]interface{})}
+	dataDir := os.Getenv("SPHYNX_DATA_DIR")
+	unorderedDataDir := os.Getenv("UNORDERED_SPHYNX_DATA_DIR")
+	os.MkdirAll(unorderedDataDir, 0775)
+	os.MkdirAll(dataDir, 0775)
+	return Server{entities: make(map[GUID]interface{}),
+		dataDir: dataDir, unorderedDataDir: unorderedDataDir}
 }
 
 func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.CanComputeReply, error) {
-	log.Printf("Received: %v", in.Operation)
 	opInst := OperationInstanceFromJSON(in.Operation)
 	_, exists := getExecutableOperation(opInst)
 	return &pb.CanComputeReply{CanCompute: exists}, nil
@@ -63,6 +70,30 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 		return nil, status.Errorf(codes.Unknown, "Converting scalar to json failed: %v", err)
 	}
 	return &pb.GetScalarReply{Scalar: string(scalarJSON)}, nil
+}
+
+func (s *Server) ToRandomIndices(ctx context.Context, in *pb.ToRandomIndicesRequest) (*pb.ToRandomIndicesReply, error) {
+	entity := s.entities[GUID(in.Guid)]
+	switch e := entity.(type) {
+	case VertexSet:
+		vertexSet := &pb.VertexSet{}
+		for _, id := range e.vertexMapping {
+			vertexSet.Ids = append(vertexSet.Ids, id)
+			out, err := proto.Marshal(vertexSet)
+			if err != nil {
+				return nil, status.Errorf(codes.Unknown,
+					"Failed to encode vertex set: %v", err)
+			}
+			fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
+			if err := ioutil.WriteFile(fname, out, 0755); err != nil {
+				return nil, status.Errorf(codes.Unknown,
+					"Failed to write encoded vertex set: %v", err)
+			}
+		}
+		return &pb.ToRandomIndicesReply{}, nil
+	default:
+		return nil, status.Errorf(codes.Unimplemented, "Can't reindex %v to use Spark indices.", entity)
+	}
 }
 
 func main() {
