@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option java_package = "com.lynxanalytics.biggraph.graph_api.proto";
+
+package sphynx;
+
+message CanComputeRequest {
+  string operation = 1;
+}
+
+message CanComputeReply {
+  bool canCompute = 1;
+}
+
+service Sphynx {
+  rpc CanCompute (CanComputeRequest) returns (CanComputeReply);
+}

@@ -312,26 +312,56 @@ uploadLogs () {
   fi
 }
 
+stopSphynx () {
+  stopByPIDFile "$SPHYNX_PID_FILE" "Sphynx"
+}
+
+startSphynx () {
+  if ! [ -z ${SPHYNX_HOST} ] && ! [ -z ${SPHYNX_PORT} ] && ! [ -z ${SPHYNX_CERT_DIR} ]; then
+    if [ -f "${SPHYNX_PID_FILE}" ]; then
+        >&2 echo "Sphynx is already running (or delete ${SPHYNX_PID_FILE})"
+        exit 1
+    fi
+    if [ ! -f "${SPHYNX_CERT_DIR}/cert.pem" ]; then
+      openssl req -x509 -sha256 -newkey rsa:4096 \
+      -keyout "${SPHYNX_CERT_DIR}/private-key.pem" \
+      -out "${SPHYNX_CERT_DIR}/cert.pem" -days 365 -nodes \
+      -subj "/C=/ST=/L=/O=Lynx Analytics/OU=Org/CN=$SPHYNX_HOST"
+    fi
+    $stage_dir/sphynx/go/bin/server -keydir=$SPHYNX_CERT_DIR &
+    SPHYNX_PID=$!
+    echo $SPHYNX_PID > $SPHYNX_PID_FILE
+  fi
+}
+
 case $mode in
   interactive)
-    exec "${command[@]}"
+    startSphynx
+    trap stopSphynx ERR EXIT
+    "${command[@]}"
   ;;
   start)
+    startSphynx
     startKite
     startWatchdog
   ;;
   stop)
     stopWatchdog
     stopKite
+    stopSphynx
   ;;
   restart)
     stopWatchdog
     stopKite
+    stopSphynx
+    startSphynx
     startKite
     startWatchdog
   ;;
   watchdog_restart)
     stopKite
+    stopSphynx
+    startSphynx
     startKite
   ;;
   uploadLogs)
