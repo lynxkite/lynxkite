@@ -22,7 +22,7 @@ class ControlledFutures(implicit val executionContext: ExecutionContextExecutorS
   }
 
   def register[T](func: => T): SafeFuture[T] = {
-    registerFuture[T](SafeFuture { func })
+    registerFuture[T](SafeFuture.async(func))
   }
 
   def waitAllFutures() = {

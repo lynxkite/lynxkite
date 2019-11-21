@@ -181,14 +181,4 @@ class ScalarOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
       project.newScalar(params("output"), result, expr + help)
     }
   })
-
-  registerProjectCreatingOp("Get better")(new ProjectOutputOperation(_) {
-    override def summary = "Get better."
-    def enabled = FEStatus.enabled
-    params += Param("name", "Name", defaultValue = "Got")
-    def apply() = {
-      val result = graph_operations.GetBetter()().result.result
-      project.newScalar(params("name"), result)
-    }
-  })
 }
