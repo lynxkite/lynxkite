@@ -22,11 +22,14 @@ clean:
 	./tools/check_documentation.sh && touch $@
 $(pip): python_requirements.txt
 	AIRFLOW_GPL_UNIDECODE=yes pip install --user -r python_requirements.txt && touch $@
+.build/sphynx-prep-done: $(shell $(find) sphynx)
+	sphynx/build.sh && touch $@
 .build/backend-done: \
-	$(shell $(find) app project lib conf built-ins) tools/call_spark_submit.sh build.sbt README.md \
-	.build/gulp-done licenses
+	$(shell $(find) app project lib conf built-ins sphynx) tools/call_spark_submit.sh \
+	build.sbt README.md .build/gulp-done licenses .build/sphynx-prep-done
 	./tools/install_spark.sh && sbt stage < /dev/null && touch $@
-.build/backend-test-passed: $(shell $(find) app test project conf) build.sbt
+.build/backend-test-passed: $(shell $(find) app test project conf) build.sbt \
+	.build/sphynx-prep-done
 	./tools/install_spark.sh && ./.test_backend.sh && touch $@
 .build/frontend-test-passed: \
 		$(shell $(find) web/test) build.sbt .build/backend-done \

@@ -10,6 +10,7 @@ import yaml
 import argparse
 import lynx.kite
 
+
 def get_args():
   parser = argparse.ArgumentParser()
   parser.add_argument('--folder', type=str, default='Demos',
@@ -35,13 +36,15 @@ inputs: {}
 parametricParameters: {}
   ''')
 
+
 def load_ws_from_yaml_with_exactly_one_anchor(filename):
   with open(filename) as f:
     ws = yaml.safe_load(f)
     if len([x for x in ws if x['id'] == 'anchor']) != 1:
       ws = [x for x in ws if x['id'] != 'anchor']
       ws.insert(0, anchor())
-    return  ws
+    return ws
+
 
 ARGS = get_args()
 
@@ -51,4 +54,7 @@ try:
 except lynx.kite.LynxException as e:
   if not 'already exists' in e.error:
     raise
-LK.save_workspace(f'{ARGS.folder}/{ARGS.ws_name}', load_ws_from_yaml_with_exactly_one_anchor(ARGS.ws_file))
+LK.save_workspace(
+    f'{ARGS.folder}/{ARGS.ws_name}',
+    load_ws_from_yaml_with_exactly_one_anchor(
+        ARGS.ws_file))

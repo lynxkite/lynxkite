@@ -83,7 +83,15 @@ libraryDependencies ++= Seq(
   "org.locationtech.jts" % "jts" % "1.16.0",
   // Plot drawing
   "org.vegas-viz" %% "vegas" % "0.3.9",
-  "org.vegas-viz" %% "vegas-spark" % "0.3.9")
+  "org.vegas-viz" %% "vegas-spark" % "0.3.9",
+  // Generate java from proto files. Used by Sphynx.
+  "io.grpc" % "grpc-protobuf" % "1.24.0",
+  "io.grpc" % "grpc-stub" % "1.24.0",
+  "io.grpc" % "grpc-netty" % "1.24.0",
+  "com.google.protobuf" % "protobuf-java" % "3.9.2",
+  // Used for encrypted connection with Sphynx.
+  "io.netty" % "netty-tcnative-boringssl-static" % "2.0.26.Final"
+)
 
 // We put the local Spark installation on the classpath for compilation and testing instead of using
 // it from Maven. The version on Maven pulls in an unpredictable (old) version of Hadoop.
@@ -149,7 +157,8 @@ mappings in Universal ++= dirContents(baseDirectory.value, "built-ins")
 mappings in Universal ++= Seq(
   file("tools/rmoperation.py") -> "tools/rmoperation.py",
   file("tools/kite_meta_hdfs_backup.sh") -> "tools/kite_meta_hdfs_backup.sh",
-  file("tools/install_spark.sh") -> "tools/install_spark.sh")
+  file("tools/install_spark.sh") -> "tools/install_spark.sh",
+  file("sphynx/go/bin/server") -> "sphynx/go/bin/server")
 
 
 
