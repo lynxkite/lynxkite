@@ -1,3 +1,0 @@
-### Get better
-
-Test operation: creates a scalar.

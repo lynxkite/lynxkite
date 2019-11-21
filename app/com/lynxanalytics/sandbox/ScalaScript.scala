@@ -312,9 +312,7 @@ object ScalaScript {
     val ctxName = s"RestrictedScalaScript-${Timestamp.toString}"
     val executionContext = ThreadUtil.limitedExecutionContext(ctxName, 1)
     try {
-      SafeFuture {
-        func
-      }(executionContext).awaitResult(Duration(timeoutInSeconds, "second"))
+      SafeFuture.async(func)(executionContext).awaitResult(Duration(timeoutInSeconds, "second"))
     } finally {
       executionContext.shutdownNow()
     }

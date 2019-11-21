@@ -728,7 +728,7 @@ class GraphDrawingController(env: BigGraphEnvironment) {
     // We trigger the computation of entities one after the other.
     // This can avoid overloading Spark, leaves us with more completed work if
     // everything crashes, and looks better on the UI.
-    entities.foldLeft(SafeFuture(()))((f: SafeFuture[Unit], e: MetaGraphEntity) => {
+    entities.foldLeft(SafeFuture.async(()))((f: SafeFuture[Unit], e: MetaGraphEntity) => {
       f.flatMap(_ => dataManager.compute(e)).map(_ => ())
     }).future
   }

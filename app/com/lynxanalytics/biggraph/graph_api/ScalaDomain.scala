@@ -20,7 +20,7 @@ class ScalaDomain extends Domain {
   override def has(e: MetaGraphEntity): Boolean = synchronized {
     entityCache.contains(e.gUID)
   }
-  override def compute(instance: MetaGraphOperationInstance) = SafeFuture[Unit] {
+  override def compute(instance: MetaGraphOperationInstance) = SafeFuture.async[Unit]({
     val op = instance.operation.asInstanceOf[ScalaOperation[_, _]]
     val outputs = collection.mutable.Map[Symbol, Any]()
     val inputs = synchronized {
@@ -39,7 +39,7 @@ class ScalaDomain extends Domain {
         entityCache(e.gUID) = outputs(symbol)
       }
     }
-  }
+  })
   override def cache(e: MetaGraphEntity): Unit = ()
   override def get[T](e: Scalar[T]): SafeFuture[T] = synchronized {
     SafeFuture.successful(entityCache(e.gUID).asInstanceOf[T])
@@ -63,7 +63,7 @@ class ScalaDomain extends Domain {
   override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     source match {
       case source: SparkDomain =>
-        val future = SafeFuture(source.getData(e) match {
+        val future = SafeFuture.async(source.getData(e) match {
           case v: VertexSetData => v.rdd.keys.collect.toSet
           case e: EdgeBundleData => e.rdd.collect.toMap
           case a: AttributeData[_] => a.rdd.collect.toMap
