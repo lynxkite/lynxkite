@@ -4,8 +4,10 @@ package main
 import "sync"
 
 type Server struct {
-	entities map[GUID]interface{}
 	sync.Mutex
+	entities         map[GUID]interface{}
+	dataDir          string
+	unorderedDataDir string
 }
 type GUID string
 type OperationDescription struct {

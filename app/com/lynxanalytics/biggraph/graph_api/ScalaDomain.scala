@@ -2,11 +2,16 @@
 
 package com.lynxanalytics.biggraph.graph_api
 
+import java.io.FileInputStream
 import java.util.UUID
-import scala.collection.concurrent.TrieMap
-import com.lynxanalytics.biggraph.graph_util
 
-class ScalaDomain extends Domain {
+import collection.concurrent.TrieMap
+import collection.JavaConverters._
+
+import com.lynxanalytics.biggraph.graph_util
+import proto.Entities
+
+class ScalaDomain(val mixedDir: Option[String] = None) extends Domain {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "ScalaDomain",
@@ -56,6 +61,7 @@ class ScalaDomain extends Domain {
   override def canRelocate(source: Domain): Boolean = {
     source match {
       case source: SparkDomain => true
+      case source: UnorderedSphynxDisk => true
       case _ => false
     }
   }
@@ -71,6 +77,21 @@ class ScalaDomain extends Domain {
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         })
         future.map(set(e, _))
+      case source: UnorderedSphynxDisk => {
+        val future = SafeFuture.async({
+          val entityPath = s"${mixedDir.get}/${e.gUID.toString}"
+          e match {
+            case v: VertexSet => Entities.VertexSet.parseFrom(new FileInputStream(entityPath))
+              .getIdsList().asScala.toSet
+            case e: EdgeBundle => ???
+            case a: Attribute[_] => ???
+            case s: Scalar[_] => ???
+            case e: HybridBundle => ???
+            case t: Table => ???
+          }
+        })
+        future.map(set(e, _))
+      }
     }
   }
 

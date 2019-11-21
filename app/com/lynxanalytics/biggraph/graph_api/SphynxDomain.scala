@@ -49,11 +49,13 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends Domain {
 
 }
 
-class UnorderedSphynxDisk extends Domain {
+class UnorderedSphynxDisk(host: String, port: Int, certDir: String) extends Domain {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "UnorderedSphynxDisk",
       maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
+
+  val client = new SphynxClient(host, port, certDir)
 
   override def has(entity: MetaGraphEntity): Boolean = {
     return false
@@ -77,7 +79,6 @@ class UnorderedSphynxDisk extends Domain {
 
   override def canRelocate(source: Domain): Boolean = {
     source match {
-      // case source: ScalaDomain => true
       case source: SphynxMemory => true
       case _ => false
     }
@@ -86,23 +87,18 @@ class UnorderedSphynxDisk extends Domain {
   override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     source match {
       case source: ScalaDomain => {
-        val future = SafeFuture.async(e match {
-          case v: VertexSet => {
-            val entityData = source.get(v)
-            println("aaaaaaaaaaaaaaa")
-            println(entityData)
-          }
-          // case e: EdgeBundle => e.rdd.collect.toMap
-          // case a: AttributeData[_] => a.rdd.collect.toMap
-          // case s: ScalarData[_] => s.value
-          case _ => throw new AssertionError(s"Cannot fetch $e from $source")
-        })
-        future
+        ???
       }
       case source: SphynxMemory => {
-
+        e match {
+          case v: VertexSet => client.toRandomIndices(e.gUID.toString())
+          case e: EdgeBundle => ???
+          case a: Attribute[_] => ???
+          case s: Scalar[_] => ???
+          case e: HybridBundle => ???
+          case t: Table => ???
+        }
       }
-      case _ => ???
     }
   }
 }

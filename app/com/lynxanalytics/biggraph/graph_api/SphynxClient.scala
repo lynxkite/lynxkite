@@ -65,4 +65,11 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
     asyncStub.getScalar(request, singleResponseStreamObserver)
     singleResponseStreamObserver.future.map(r => format.reads(Json.parse(r.getScalar)).get)
   }
+
+  def toRandomIndices(guid: String): SafeFuture[Unit] = {
+    val request = SphynxOuterClass.ToRandomIndicesRequest.newBuilder().setGuid(guid).build()
+    val singleResponseStreamObserver = new SingleResponseStreamObserver[SphynxOuterClass.ToRandomIndicesReply]
+    asyncStub.toRandomIndices(request, singleResponseStreamObserver)
+    singleResponseStreamObserver.future.map(_ => ())
+  }
 }
