@@ -1,4 +1,4 @@
-<div class="form-group" ng-repeat="param in meta.parameters">
+<div class="form-group" ng-repeat="param in meta.parameters track by param.id">
   <label for="{{param.id}}" class="control-label"
       ng-if="!isVisualizationParam(param) && param.kind !== 'dummy'">
     {{param.title}}

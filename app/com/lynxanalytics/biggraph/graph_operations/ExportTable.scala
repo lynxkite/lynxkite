@@ -120,12 +120,12 @@ object ExportTableToStructuredFile extends OpFromJson {
   val forDownLoadParameter = NewParameter[Boolean]("for_download", false)
   def fromJson(j: JsValue) = ExportTableToStructuredFile(
     (j \ "path").as[String], (j \ "format").as[String],
-    (j \ "version").as[Int],
+    (j \ "version").as[Long],
     saveModeParameter.fromJson(j),
     forDownLoadParameter.fromJson(j))
 }
 
-case class ExportTableToStructuredFile(path: String, format: String, version: Int, saveMode: String, forDownload: Boolean)
+case class ExportTableToStructuredFile(path: String, format: String, version: Long, saveMode: String, forDownload: Boolean)
   extends ExportTable {
 
   override def toJson = Json.obj(

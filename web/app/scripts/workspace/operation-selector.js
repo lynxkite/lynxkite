@@ -7,6 +7,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
     restrict: 'E',
     scope: {
       ondrag: '&',
+      onopen: '&',
       boxCatalog: '=', // (Input.) List of available boxes.
     },
     templateUrl: 'scripts/workspace/operation-selector.html',
@@ -78,6 +79,7 @@ angular.module('biggraph').directive('operationSelector', function($timeout, $ro
         }
         scope.searching = undefined;
         scope.op = undefined;
+        scope.onopen();
       };
       scope.searchClicked = function() {
         if (scope.searching) {

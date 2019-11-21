@@ -1,10 +1,8 @@
 <div class="col-sm-{{ 12 / side.activeSides().length }} side" id="side-{{side.direction}}">
 
-  <uib-progressbar ng-if="side.project && !side.project.$resolved ||
-                      side.pendingProject && !side.pendingProject.$resolved"
+  <uib-progressbar ng-class="{ invisible: !side.pendingProject || side.pendingProject.$resolved }"
     value="100"
     class="progress-striped active">
-  Loading...
   </uib-progressbar>
 
   <div class="panel panel-danger" ng-if="side.project.$error">

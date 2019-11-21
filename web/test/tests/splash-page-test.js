@@ -10,8 +10,12 @@ module.exports = function(fw) {
     function() {
       lib.discardAll();
       browser.get('/#/');
-      browser.executeScript('window.localStorage.setItem(\'last_selector_path\',\'\');');
-      browser.executeScript('window.sessionStorage.setItem(\'last_selector_path\',\'\');');
+      browser.executeScript(`
+        window.sessionStorage.clear();
+        window.localStorage.clear();
+        window.localStorage.setItem('workspace-drawing-board tutorial done', 'true');
+        window.localStorage.setItem('entry-selector tutorial done', 'true');
+        `);
       if (fs.existsSync(lib.protractorDownloads)) {
         fs.readdirSync(lib.protractorDownloads).map(function(file) {
           fs.unlinkSync(lib.protractorDownloads + '/' + file);
