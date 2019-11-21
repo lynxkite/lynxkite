@@ -22,7 +22,7 @@ angular.module('biggraph')
         function update() {
           if (instruments.length > 0) {
             const query = {
-              workspace: scope.workspace.ref(),
+              workspace: scope.workspace && scope.workspace.ref(),
               inputStateId: scope.plug.stateId,
               instruments };
             const json = JSON.stringify(query);
@@ -49,7 +49,7 @@ angular.module('biggraph')
         };
 
         scope.getDefaultSnapshotName = function() {
-          return scope.workspace.name + '-' + scope.plugId;
+          return scope.workspace ? scope.workspace.name + '-' + scope.plugId : scope.plugId;
         };
 
         scope.setInstrument = function(index, operationId, parameters) {
