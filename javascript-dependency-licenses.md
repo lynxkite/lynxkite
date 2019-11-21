@@ -198,7 +198,7 @@
 │  ├─ angular-sanitize@1.7.7
 │  ├─ angular-ui-ace@0.2.3
 │  ├─ angular-ui-bootstrap@2.5.6
-│  ├─ angular@1.7.7
+│  ├─ angular@1.7.9
 │  ├─ ansi-colors@1.1.0
 │  ├─ ansi-colors@3.2.4
 │  ├─ ansi-cyan@0.1.1
