@@ -262,6 +262,7 @@
 │  ├─ binary-extensions@1.13.0
 │  ├─ blob@0.0.5
 │  ├─ blocking-proxy@1.0.1
+│  ├─ bootstrap-tourist@0.2.1
 │  ├─ bootstrap@3.4.1
 │  ├─ brace-expansion@1.1.11
 │  ├─ braces@1.8.5

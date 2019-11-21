@@ -8,8 +8,6 @@ import com.lynxanalytics.biggraph.graph_util
 import com.lynxanalytics.biggraph.graph_util.{ JDBCUtil, Neo4jUtil }
 import com.lynxanalytics.biggraph.controllers._
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
-import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
-import org.neo4j.spark._
 
 class ImportOperations(env: SparkFreeEnvironment) extends OperationRegistry {
   implicit lazy val manager = env.metaGraphManager
