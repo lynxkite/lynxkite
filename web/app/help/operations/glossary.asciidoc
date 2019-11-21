@@ -140,17 +140,32 @@ include::{g}[tag=random-seed]
 ====
 end::random-attribute[]
 
+tag::weighted-aggregators[]
+The available weighted aggregators are:
+
+ * For `Double` attributes:
+ ** `by_max_weight` (picks a value for which the corresponding weight value is maximal)
+ ** `by_min_weight` (picks a value for which the corresponding weight value is minimal)
+ ** `weighted_average`
+ ** `weighted_sum`
+
+ * For other attributes:
+ ** `by_max_weight` (picks a value for which the corresponding weight value is maximal)
+ ** `by_min_weight` (picks a value for which the corresponding weight value is minimal)
+
+end::weighted-aggregators[]
+
 tag::global-aggregators[]
 The available aggregators are:
 
  * For `Double` attributes:
- ** `sum`
  ** `average`
- ** `min`
- ** `max`
  ** `count` (number of cases where the attribute is defined)
  ** `first` (arbitrarily picks a value)
+ ** `max`
+ ** `min`
  ** `std_deviation` (standard deviation)
+ ** `sum`
 
  * For other attributes:
  ** `count` (number of cases where the attribute is defined)
@@ -162,34 +177,34 @@ The available aggregators are:
 
  * For `Double` attributes:
  ** `average`
- ** `count` (number of cases where the attribute is defined)
  ** `count_distinct` (the number of distinct values)
+ ** `count_most_common` (the number of occurrences of the most common value)
+ ** `count` (number of cases where the attribute is defined)
  ** `first` (arbitrarily picks a value)
  ** `max`
- ** 'median'
+ ** `median`
  ** `min`
  ** `most_common`
- ** `count_most_common` (the number of occurrences of the most common value)
  ** `set` (all the unique values, as a `Set` attribute)
  ** `std_deviation` (standard deviation)
  ** `sum`
  ** `vector` (all the values, as a `Vector` attribute)
 
  * For `String` attributes:
- ** `most_common`
- ** `count_most_common` (the number of occurrences of the most common value)
  ** `count_distinct` (the number of distinct values)
- ** `majority_50` (the value that 50% agree on, or empty string)
- ** `majority_100` (the value that 100% agree on, or empty string)
+ ** `count_most_common` (the number of occurrences of the most common value)
  ** `count` (number of cases where the attribute is defined)
- ** `vector` (all the values, as a `Vector` attribute)
+ ** `majority_100` (the value that 100% agree on, or empty string)
+ ** `majority_50` (the value that 50% agree on, or empty string)
+ ** `most_common`
  ** `set` (all the unique values, as a `Set` attribute)
+ ** `vector` (all the values, as a `Vector` attribute)
 
  * For other attributes:
- ** `most_common`
- ** `count_most_common` (the number of occurrences of the most common value)
  ** `count_distinct` (the number of distinct values)
+ ** `count_most_common` (the number of occurrences of the most common value)
  ** `count` (number of cases where the attribute is defined)
+ ** `most_common`
  ** `set` (all the unique values, as a `Set` attribute)
 end::local-aggregators[]
 

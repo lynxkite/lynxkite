@@ -4,19 +4,14 @@ package com.lynxanalytics.biggraph.controllers
 import org.apache.spark
 
 import scala.concurrent.Future
-import scala.reflect.runtime.universe.TypeTag
+import com.lynxanalytics.biggraph.graph_api.Scripting._
 import com.lynxanalytics.biggraph.BigGraphEnvironment
 import com.lynxanalytics.biggraph.graph_api._
-import com.lynxanalytics.biggraph.graph_operations.DynamicValue
-import com.lynxanalytics.biggraph.graph_operations.ExecuteSQL
-import com.lynxanalytics.biggraph.graph_operations.ImportDataFrame
+import com.lynxanalytics.biggraph.graph_operations._
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
-import com.lynxanalytics.biggraph.graph_util.JDBCUtil
 import com.lynxanalytics.biggraph.graph_util.Timestamp
 import com.lynxanalytics.biggraph.spark_util.SQLHelper
 import com.lynxanalytics.biggraph.serving
-import com.lynxanalytics.biggraph.serving.User
-import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SQLContext
 import play.api.libs.json
 
@@ -30,43 +25,26 @@ trait FrameSettings {
   def overwrite: Boolean
 }
 
-object DataFrameSpec extends FromJson[DataFrameSpec] {
+object TableSpec extends FromJson[TableSpec] {
   // Utilities for testing.
-  def local(project: String, sql: String) =
-    new DataFrameSpec(directory = None, project = Some(project), sql = sql)
   def global(directory: String, sql: String) =
-    new DataFrameSpec(directory = Some(directory), project = None, sql = sql)
+    new TableSpec(directory = Some(directory), sql = sql)
 
   import com.lynxanalytics.biggraph.serving.FrontendJson.fDataFrameSpec
-  override def fromJson(j: JsValue): DataFrameSpec = json.Json.fromJson(j).get
+  override def fromJson(j: JsValue): TableSpec = json.Json.fromJson(j).get
 }
 
-case class DataFrameSpec(directory: Option[String], project: Option[String], sql: String) {
-  assert(
-    directory.isDefined ^ project.isDefined,
-    "Exactly one of directory and project should be defined")
-  def createDataFrame(user: User, context: SQLContext)(
-    implicit
-    dm: DataManager, sd: SparkDomain, mm: MetaGraphManager): DataFrame = {
-    if (project.isDefined) ??? // TODO: Delete this method.
-    else globalSQL(user, context)
-  }
-
+case class TableSpec(directory: Option[String], sql: String) {
   // Finds the names of tables from string
   private def findTablesFromQuery(query: String): List[String] = {
     val split = query.split("`", -1)
     Iterator.range(start = 1, end = split.length, step = 2).map(split(_)).toList
   }
 
-  // Creates a DataFrame from a global level SQL query.
-  private def globalSQL(user: serving.User, context: SQLContext)(
+  def globalSQL(user: serving.User)(
     implicit
-    dm: DataManager, sd: SparkDomain, mm: MetaGraphManager): spark.sql.DataFrame =
+    dm: DataManager, mm: MetaGraphManager): Table = {
     mm.synchronized {
-      assert(
-        project.isEmpty,
-        "The project field in the DataFrameSpec must be empty for global SQL queries.")
-
       val directoryName = directory.get
       val directoryPrefix = if (directoryName == "") "" else directoryName + "/"
       val givenTableNames = findTablesFromQuery(sql)
@@ -80,53 +58,44 @@ case class DataFrameSpec(directory: Option[String], project: Option[String], sql
           (name, (snapshot.asSnapshotFrame.getState(), tablePath))
       }
       val protoTables = goodSnapshotStates.collect {
-        case (name, (state, tablePath)) if state.isTable => (name, ProtoTable(state.table))
+        case (name, (state, _)) if state.isTable => (name, ProtoTable(state.table))
         case (name, (state, tablePath)) if state.isProject =>
           val rootViewer = state.project.viewer
           val protoTable = rootViewer.getSingleProtoTable(tablePath.mkString("."))
           (name, protoTable)
       }
-      val result = ExecuteSQL.run(sql, protoTables)
-      SQLController.getDF(result)
+      ExecuteSQL.run(sql, protoTables)
     }
-
-  private def queryTables(
-    sql: String,
-    tables: Iterable[(String, Table)])(
-    implicit
-    dm: DataManager, sd: SparkDomain, mm: MetaGraphManager): spark.sql.DataFrame = {
-    val dfs = tables.map { case (name, table) => name -> SQLController.getDF(table) }
-    SparkDomain.sql(sd.newSQLContext, sql, dfs.toList)
   }
 }
-case class SQLQueryRequest(dfSpec: DataFrameSpec, maxRows: Int)
+case class SQLQueryRequest(dfSpec: TableSpec, maxRows: Int)
 case class SQLColumn(name: String, dataType: String)
 case class SQLQueryResult(header: List[SQLColumn], data: List[List[DynamicValue]])
 
 case class SQLExportToTableRequest(
-    dfSpec: DataFrameSpec,
+    dfSpec: TableSpec,
     table: String,
     privacy: String,
     overwrite: Boolean)
 case class SQLExportToCSVRequest(
-    dfSpec: DataFrameSpec,
+    dfSpec: TableSpec,
     path: String,
     header: Boolean,
     delimiter: String,
     quote: String)
 case class SQLExportToJsonRequest(
-    dfSpec: DataFrameSpec,
+    dfSpec: TableSpec,
     path: String)
 case class SQLExportToParquetRequest(
-    dfSpec: DataFrameSpec,
+    dfSpec: TableSpec,
     path: String)
 case class SQLExportToORCRequest(
-    dfSpec: DataFrameSpec,
+    dfSpec: TableSpec,
     path: String)
 case class SQLExportToJdbcRequest(
-    dfSpec: DataFrameSpec,
+    dfSpec: TableSpec,
     jdbcUrl: String,
-    table: String,
+    tableName: String,
     mode: String) {
   val validModes = Seq( // Save as the save modes accepted by DataFrameWriter.
     "error", // The table will be created and must not already exist.
@@ -175,12 +144,11 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   implicit val executionContext = ThreadUtil.limitedExecutionContext("SQLController", 100)
   def async[T](func: => T): Future[T] = Future(func)
 
-  import com.lynxanalytics.biggraph.serving.FrontendJson._
   def importBox(user: serving.User, box: Box, workspaceParameters: Map[String, String]) = async[ImportBoxResponse] {
     val op = ops.opForBox(
       user, box, inputs = null, workspaceParameters = workspaceParameters).asInstanceOf[ImportOperation]
     val parameterSettings = op.settingsString()
-    val df = op.getDataFrame(SQLController.defaultContext(user))
+    val df = op.getDataFrame(SQLController.defaultContext())
     val table = ImportDataFrame.run(df)
     dataManager.compute(table) // Start importing in the background.
     val guid = table.gUID.toString
@@ -325,38 +293,19 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
   }
 
   def runSQLQuery(user: serving.User, request: SQLQueryRequest) = async[SQLQueryResult] {
-    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
-    val columns = df.schema.toList.map { field =>
-      field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
-    }
+    val table = request.dfSpec.globalSQL(user)
+    val tableContents = dataManager.get(TableToScalar.run(table, request.maxRows))
     SQLQueryResult(
-      header = columns.map { case (name, tt) => SQLColumn(name, ProjectViewer.feTypeName(tt)) },
-      data = SQLHelper.toSeqRDD(df).take(request.maxRows).map {
-        row =>
-          row.toSeq.toList.zip(columns).map {
-            case (null, field) => DynamicValue("null", defined = false)
-            case (item, (name, tt)) => DynamicValue.convert(item)(tt)
-          }
-      }.toList)
+      header = tableContents.header.map { case (name, tt) => SQLColumn(name, ProjectViewer.feTypeName(tt)) },
+      data = tableContents.rows)
   }
 
-  // TODO: Remove code duplication
   def getTableSample(table: Table, sampleRows: Int) = async[GetTableOutputResponse] {
-    val columns = table.schema.toList.map { field =>
-      field.name -> SQLHelper.typeTagFromDataType(field.dataType).asInstanceOf[TypeTag[Any]]
-    }
-    val df = SQLController.getDF(table)
-    val header = columns.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) }
-    val rdd = SQLHelper.toSeqRDD(df)
-    val local = if (sampleRows < 0) rdd.collect else rdd.take(sampleRows)
-    val data = local.map {
-      row =>
-        row.toSeq.toList.zip(columns).map {
-          case (null, field) => DynamicValue("null", defined = false)
-          case (item, (name, tt)) => DynamicValue.convert(item)(tt)
-        }
-    }.toList
-    GetTableOutputResponse(header, data)
+    val e = TableToScalar.run(table, sampleRows)
+    val tableContents = dataManager.get(e)
+    GetTableOutputResponse(
+      header = tableContents.header.map { case (name, tt) => TableColumn(name, ProjectViewer.feTypeName(tt)) },
+      data = tableContents.rows)
   }
 
   def exportSQLQueryToCSV(
@@ -381,49 +330,61 @@ class SQLController(val env: BigGraphEnvironment, ops: OperationRepository) {
 
   def exportSQLQueryToParquet(
     user: serving.User, request: SQLExportToParquetRequest) = async[Unit] {
-    exportToFile(user, request.dfSpec, HadoopFile(request.path), "parquet")
+    exportToFile(user, request.dfSpec, request.path, "parquet")
   }
 
   def exportSQLQueryToORC(
     user: serving.User, request: SQLExportToORCRequest) = async[Unit] {
-    exportToFile(user, request.dfSpec, HadoopFile(request.path), "orc")
+    exportToFile(user, request.dfSpec, request.path, "orc")
   }
 
   def exportSQLQueryToJdbc(
     user: serving.User, request: SQLExportToJdbcRequest) = async[Unit] {
-    val df = request.dfSpec.createDataFrame(user, SQLController.defaultContext(user))
-    df.write.mode(request.mode).jdbc(request.jdbcUrl, request.table, new java.util.Properties)
+    val table = request.dfSpec.globalSQL(user)
+    val op = ExportTableToJdbc(
+      request.jdbcUrl,
+      request.tableName,
+      request.mode)
+    val exported = op(op.t, table).result.exportResult
+    dataManager.get(exported)
   }
 
   private def downloadableExportToFile(
     user: serving.User,
-    dfSpec: DataFrameSpec,
+    dfSpec: TableSpec,
     path: String,
     format: String,
     options: Map[String, String] = Map(),
     stripHeaders: Boolean = false): SQLExportToFileResult = {
     val file = if (path == "<download>") {
-      env.sparkDomain.repositoryPath / "exports" / Timestamp.toString + "." + format
+      s"DATA$$/exports/$Timestamp.$format"
     } else {
-      HadoopFile(path)
+      path
     }
     exportToFile(user, dfSpec, file, format, options)
     val download =
-      if (path == "<download>") Some(serving.DownloadFileRequest(file.symbolicName, stripHeaders))
+      if (path == "<download>") Some(serving.DownloadFileRequest(HadoopFile(file).symbolicName, stripHeaders))
       else None
     SQLExportToFileResult(download)
   }
 
   private def exportToFile(
     user: serving.User,
-    dfSpec: DataFrameSpec,
-    file: HadoopFile,
+    dfSpec: TableSpec,
+    file: String,
     format: String,
     options: Map[String, String] = Map()): Unit = {
-    val df = dfSpec.createDataFrame(user, SQLController.defaultContext(user))
     // TODO: #2889 (special characters in S3 passwords).
-    file.assertWriteAllowedFrom(user)
-    df.write.format(format).options(options).save(file.resolvedName)
+    HadoopFile(file).assertWriteAllowedFrom(user) // TODO: Do we need this?
+    val table = dfSpec.globalSQL(user)
+    val op = ExportTableToStructuredFile(
+      path = file,
+      format = format,
+      version = Timestamp.toLong,
+      saveMode = "error if exists",
+      forDownload = false)
+    val exported = op(op.t, table).result.exportResult
+    dataManager.get(exported)
   }
 }
 object SQLController {
@@ -444,7 +405,7 @@ object SQLController {
   }
 
   // Every query runs in its own SQLContext for isolation.
-  def defaultContext(user: User)(implicit sparkDomain: SparkDomain): SQLContext = {
+  private def defaultContext()(implicit sparkDomain: SparkDomain): SQLContext = {
     sparkDomain.newSQLContext()
   }
 
@@ -459,13 +420,5 @@ object SQLController {
     val entryPath = entryPathList.mkString("/")
     val entry = DirectoryEntry.fromName(entryPath)
     (entry, split.tail)
-  }
-
-  def getDF(t: Table)(implicit sd: SparkDomain, dm: DataManager): DataFrame = {
-    implicit val ec = sd.executionContext
-    dm.compute(t)
-      .map(_ => sd.getData(t).asInstanceOf[TableData])
-      .awaitResult(concurrent.duration.Duration.Inf)
-      .df
   }
 }

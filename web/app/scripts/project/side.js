@@ -11,7 +11,7 @@ angular.module('biggraph')
       return angular.copy(util.globals.defaultUIStatus);
     }
 
-    function Side(sides, direction, stateId, enableVisualizationUI) {
+    function Side(sides, direction) {
       // The list of all sides.
       this.sides = sides;
       // Left or right?
@@ -23,8 +23,6 @@ angular.module('biggraph')
       this.viewData = {};
       // The /ajax/getProjectOutput Ajax response.
       this.project = undefined;
-      this.stateId = stateId;
-      this.enableVisualizationUI = enableVisualizationUI;
     }
 
     Side.prototype.sections = ['scalar', 'vertex-attribute', 'edge-attribute', 'segmentation'];
@@ -96,6 +94,7 @@ angular.module('biggraph')
       if (!backendState) {
         return;
       }
+      backendState = angular.copy(backendState);
       backendState.projectName = this.state.projectName;
       this.state = backendState;
       if (this.state.graphMode && this.state.centers === undefined) {
@@ -196,7 +195,13 @@ angular.module('biggraph')
       const that = this;
       vd.hasCenter = function(id) { return that.state.centers.indexOf(id) !== -1; };
       vd.setCenter = function(id) { that.state.centers = [id]; };
-      vd.addCenter = function(id) { that.state.centers = that.state.centers.concat([id]); };
+      vd.addCenter = function(id) {
+        if (isNaN(parseInt(that.state.centers[0]))) {
+          that.state.centers = [id];
+        } else {
+          that.state.centers = that.state.centers.concat([id]);
+        }
+      };
       vd.removeCenter = function(id) {
         that.state.centers =
           that.state.centers.filter(function(element) { return element !== id; });
@@ -304,8 +309,6 @@ angular.module('biggraph')
       return this.parentProjects().join('.');
     };
 
-    // Side.reload makes an unconditional, uncached Ajax request.
-    // This is called when the projectPath was changed.
     Side.prototype.reload = function() {
       // We don't directly download data into this.project, so that
       // the UI can still show the previous state of the project
@@ -314,17 +317,15 @@ angular.module('biggraph')
       // loading. The solution is to first load into
       // this.pendingProject and only copy into this.project on completion.
       this.pendingProject = undefined;
-      if (this.state.projectPath !== undefined) {
+      if (this.stateId !== undefined && this.state.projectPath !== undefined) {
         const that = this;
         that.pendingProject = this.load();
-        return that.pendingProject.finally(
-          function onFailure() {
-            if (!angular.equals(that.project, that.pendingProject)) {
-              // This check is to avoid DOM-rebuild of entity
-              // drop popups.
-              that.project = that.pendingProject;
-            }
-          });
+        return that.pendingProject.finally(function () {
+          if (!angular.equals(that.project, that.pendingProject)) {
+            // This check is to avoid DOM-rebuild of entity drop popups.
+            that.project = that.pendingProject;
+          }
+        });
       } else {
         this.state = defaultSideState();
         this.project = undefined;
@@ -333,7 +334,7 @@ angular.module('biggraph')
     };
 
     Side.prototype.load = function() {
-      return util.nocache(
+      return util.get(
         '/ajax/getProjectOutput', {
           path: this.state.projectPath,
           id: this.stateId,

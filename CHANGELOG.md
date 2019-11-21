@@ -7,6 +7,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 ### master
 
  - Click a vertex in a visualization to open a context menu for interactive graph navigation.
+ - Users are welcomed by an interactive tutorial.
+ - A choice of color maps for qualitative attributes.
 
 ### 2.8.4
 

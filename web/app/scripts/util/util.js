@@ -448,5 +448,9 @@ angular.module('biggraph')
     };
     util.reloadUser();
 
+    util.qualitativeColorMaps = [
+      'LynxKite Colors', 'Accent', 'Dark2', 'Paired', 'Pastel1', 'Pastel2', 'Rainbow', 'Set1',
+      'Set2', 'Set3'];
+
     return util;
   });
