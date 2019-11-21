@@ -56,7 +56,7 @@ case class InstrumentState(
     kind: String,
     error: String)
 case class GetInstrumentedStateRequest(
-    workspace: WorkspaceReference,
+    workspace: Option[WorkspaceReference],
     inputStateId: String, // State at the start of the instrument chain.
     instruments: List[Instrument]) // Instrument chain. (N instruments.)
 case class GetInstrumentedStateResponse(
@@ -369,8 +369,10 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def getInstrumentedState(
     user: serving.User, request: GetInstrumentedStateRequest): GetInstrumentedStateResponse = {
-    val ref = ResolvedWorkspaceReference(user, request.workspace)
-    val ctx = ref.ws.context(user, ops, ref.params)
+    val ctx = if (request.workspace.isDefined) {
+      val ref = ResolvedWorkspaceReference(user, request.workspace.get)
+      ref.ws.context(user, ops, ref.params)
+    } else Workspace.from().context(user, ops, Map())
     val inputState = getOutput(user, request.inputStateId)
     var (states, opMetas) = instrumentStatesAndMetas(
       ctx, request.instruments, List(inputState), List[FEOperationMeta]())
