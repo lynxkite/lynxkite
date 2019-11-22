@@ -26,15 +26,15 @@ message GetScalarReply {
   string scalar = 1;
 }
 
-message ToRandomIndicesRequest {
+message ToSparkIdsRequest {
   string guid = 1;
 }
 
-message ToRandomIndicesReply {}
+message ToSparkIdsReply {}
 
 service Sphynx {
   rpc CanCompute (CanComputeRequest) returns (CanComputeReply);
   rpc Compute (ComputeRequest) returns (ComputeReply);
   rpc getScalar (GetScalarRequest) returns (GetScalarReply);
-  rpc ToRandomIndices (ToRandomIndicesRequest) returns (ToRandomIndicesReply);
+  rpc ToSparkIds (ToSparkIdsRequest) returns (ToSparkIdsReply);
 }

@@ -66,10 +66,10 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
     singleResponseStreamObserver.future.map(r => format.reads(Json.parse(r.getScalar)).get)
   }
 
-  def toRandomIndices(guid: String): SafeFuture[Unit] = {
-    val request = SphynxOuterClass.ToRandomIndicesRequest.newBuilder().setGuid(guid).build()
-    val singleResponseStreamObserver = new SingleResponseStreamObserver[SphynxOuterClass.ToRandomIndicesReply]
-    asyncStub.toRandomIndices(request, singleResponseStreamObserver)
+  def toSparkIds(guid: String): SafeFuture[Unit] = {
+    val request = SphynxOuterClass.ToSparkIdsRequest.newBuilder().setGuid(guid).build()
+    val singleResponseStreamObserver = new SingleResponseStreamObserver[SphynxOuterClass.ToSparkIdsReply]
+    asyncStub.toSparkIds(request, singleResponseStreamObserver)
     singleResponseStreamObserver.future.map(_ => ())
   }
 }

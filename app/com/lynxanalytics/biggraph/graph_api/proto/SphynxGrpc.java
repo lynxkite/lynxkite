@@ -120,35 +120,35 @@ public final class SphynxGrpc {
     return getGetScalarMethod;
   }
 
-  private static volatile io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest,
-      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply> getToRandomIndicesMethod;
+  private static volatile io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest,
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply> getToSparkIdsMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
-      fullMethodName = SERVICE_NAME + '/' + "ToRandomIndices",
-      requestType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest.class,
-      responseType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply.class,
+      fullMethodName = SERVICE_NAME + '/' + "ToSparkIds",
+      requestType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest.class,
+      responseType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply.class,
       methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
-  public static io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest,
-      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply> getToRandomIndicesMethod() {
-    io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply> getToRandomIndicesMethod;
-    if ((getToRandomIndicesMethod = SphynxGrpc.getToRandomIndicesMethod) == null) {
+  public static io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest,
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply> getToSparkIdsMethod() {
+    io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply> getToSparkIdsMethod;
+    if ((getToSparkIdsMethod = SphynxGrpc.getToSparkIdsMethod) == null) {
       synchronized (SphynxGrpc.class) {
-        if ((getToRandomIndicesMethod = SphynxGrpc.getToRandomIndicesMethod) == null) {
-          SphynxGrpc.getToRandomIndicesMethod = getToRandomIndicesMethod =
-              io.grpc.MethodDescriptor.<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply>newBuilder()
+        if ((getToSparkIdsMethod = SphynxGrpc.getToSparkIdsMethod) == null) {
+          SphynxGrpc.getToSparkIdsMethod = getToSparkIdsMethod =
+              io.grpc.MethodDescriptor.<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "ToRandomIndices"))
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "ToSparkIds"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest.getDefaultInstance()))
+                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply.getDefaultInstance()))
-              .setSchemaDescriptor(new SphynxMethodDescriptorSupplier("ToRandomIndices"))
+                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply.getDefaultInstance()))
+              .setSchemaDescriptor(new SphynxMethodDescriptorSupplier("ToSparkIds"))
               .build();
         }
       }
     }
-    return getToRandomIndicesMethod;
+    return getToSparkIdsMethod;
   }
 
   /**
@@ -201,9 +201,9 @@ public final class SphynxGrpc {
 
     /**
      */
-    public void toRandomIndices(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest request,
-        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply> responseObserver) {
-      asyncUnimplementedUnaryCall(getToRandomIndicesMethod(), responseObserver);
+    public void toSparkIds(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest request,
+        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply> responseObserver) {
+      asyncUnimplementedUnaryCall(getToSparkIdsMethod(), responseObserver);
     }
 
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
@@ -230,12 +230,12 @@ public final class SphynxGrpc {
                 com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply>(
                   this, METHODID_GET_SCALAR)))
           .addMethod(
-            getToRandomIndicesMethod(),
+            getToSparkIdsMethod(),
             asyncUnaryCall(
               new MethodHandlers<
-                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest,
-                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply>(
-                  this, METHODID_TO_RANDOM_INDICES)))
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest,
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply>(
+                  this, METHODID_TO_SPARK_IDS)))
           .build();
     }
   }
@@ -284,10 +284,10 @@ public final class SphynxGrpc {
 
     /**
      */
-    public void toRandomIndices(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest request,
-        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply> responseObserver) {
+    public void toSparkIds(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest request,
+        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply> responseObserver) {
       asyncUnaryCall(
-          getChannel().newCall(getToRandomIndicesMethod(), getCallOptions()), request, responseObserver);
+          getChannel().newCall(getToSparkIdsMethod(), getCallOptions()), request, responseObserver);
     }
   }
 
@@ -332,9 +332,9 @@ public final class SphynxGrpc {
 
     /**
      */
-    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply toRandomIndices(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest request) {
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply toSparkIds(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest request) {
       return blockingUnaryCall(
-          getChannel(), getToRandomIndicesMethod(), getCallOptions(), request);
+          getChannel(), getToSparkIdsMethod(), getCallOptions(), request);
     }
   }
 
@@ -382,17 +382,17 @@ public final class SphynxGrpc {
 
     /**
      */
-    public com.google.common.util.concurrent.ListenableFuture<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply> toRandomIndices(
-        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest request) {
+    public com.google.common.util.concurrent.ListenableFuture<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply> toSparkIds(
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest request) {
       return futureUnaryCall(
-          getChannel().newCall(getToRandomIndicesMethod(), getCallOptions()), request);
+          getChannel().newCall(getToSparkIdsMethod(), getCallOptions()), request);
     }
   }
 
   private static final int METHODID_CAN_COMPUTE = 0;
   private static final int METHODID_COMPUTE = 1;
   private static final int METHODID_GET_SCALAR = 2;
-  private static final int METHODID_TO_RANDOM_INDICES = 3;
+  private static final int METHODID_TO_SPARK_IDS = 3;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -423,9 +423,9 @@ public final class SphynxGrpc {
           serviceImpl.getScalar((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest) request,
               (io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply>) responseObserver);
           break;
-        case METHODID_TO_RANDOM_INDICES:
-          serviceImpl.toRandomIndices((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest) request,
-              (io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply>) responseObserver);
+        case METHODID_TO_SPARK_IDS:
+          serviceImpl.toSparkIds((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest) request,
+              (io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -491,7 +491,7 @@ public final class SphynxGrpc {
               .addMethod(getCanComputeMethod())
               .addMethod(getComputeMethod())
               .addMethod(getGetScalarMethod())
-              .addMethod(getToRandomIndicesMethod())
+              .addMethod(getToSparkIdsMethod())
               .build();
         }
       }

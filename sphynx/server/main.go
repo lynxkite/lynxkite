@@ -72,7 +72,7 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 	return &pb.GetScalarReply{Scalar: string(scalarJSON)}, nil
 }
 
-func (s *Server) ToRandomIndices(ctx context.Context, in *pb.ToRandomIndicesRequest) (*pb.ToRandomIndicesReply, error) {
+func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.ToSparkIdsReply, error) {
 	entity := s.entities[GUID(in.Guid)]
 	switch e := entity.(type) {
 	case VertexSet:
@@ -90,7 +90,7 @@ func (s *Server) ToRandomIndices(ctx context.Context, in *pb.ToRandomIndicesRequ
 					"Failed to write encoded vertex set: %v", err)
 			}
 		}
-		return &pb.ToRandomIndicesReply{}, nil
+		return &pb.ToSparkIdsReply{}, nil
 	default:
 		return nil, status.Errorf(codes.Unimplemented, "Can't reindex %v to use Spark indices.", entity)
 	}
