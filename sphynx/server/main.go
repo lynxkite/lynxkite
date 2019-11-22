@@ -1,3 +1,7 @@
+// Sphynx is a gRPC server. LynxKite can connect to it and ask it to do some work.
+// The idea is that Sphynx performs operations on graphs that fit into the memory,
+// so there's no need to do slow distributed computations.
+
 package main
 
 import (
@@ -15,9 +19,9 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func OperationInstanceFromJSON(op_json string) OperationInstance {
+func OperationInstanceFromJSON(opJSON string) OperationInstance {
 	var opInst OperationInstance
-	b := []byte(op_json)
+	b := []byte(opJSON)
 	json.Unmarshal(b, &opInst)
 	return opInst
 }
@@ -37,11 +41,7 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 	log.Printf("Received: %v", in.Operation)
 	opInst := OperationInstanceFromJSON(in.Operation)
 	_, exists := getExecutableOperation(opInst)
-	if exists {
-		return &pb.CanComputeReply{CanCompute: true}, nil
-	} else {
-		return &pb.CanComputeReply{CanCompute: false}, nil
-	}
+	return &pb.CanComputeReply{CanCompute: exists}, nil
 }
 
 func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.ComputeReply, error) {
@@ -56,6 +56,7 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 }
 
 func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
+	log.Printf("GetScalar request with GUID %v", in.Guid)
 	scalar := s.scalars[GUID(in.Guid)]
 	scalarJSON, err := json.Marshal(scalar)
 	if err != nil {
