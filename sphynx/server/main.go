@@ -76,19 +76,16 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 	entity := s.entities[GUID(in.Guid)]
 	switch e := entity.(type) {
 	case VertexSet:
-		vertexSet := &pb.VertexSet{}
-		for _, id := range e.vertexMapping {
-			vertexSet.Ids = append(vertexSet.Ids, id)
-			out, err := proto.Marshal(vertexSet)
-			if err != nil {
-				return nil, status.Errorf(codes.Unknown,
-					"Failed to encode vertex set: %v", err)
-			}
-			fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
-			if err := ioutil.WriteFile(fname, out, 0755); err != nil {
-				return nil, status.Errorf(codes.Unknown,
-					"Failed to write encoded vertex set: %v", err)
-			}
+		vertexSet := &pb.VertexSet{Ids: e.vertexMapping}
+		out, err := proto.Marshal(vertexSet)
+		if err != nil {
+			return nil, status.Errorf(codes.Unknown,
+				"Failed to encode vertex set: %v", err)
+		}
+		fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
+		if err := ioutil.WriteFile(fname, out, 0755); err != nil {
+			return nil, status.Errorf(codes.Unknown,
+				"Failed to write encoded vertex set: %v", err)
 		}
 		return &pb.ToSparkIdsReply{}, nil
 	default:
