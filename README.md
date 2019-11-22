@@ -76,6 +76,15 @@ You can find this file in the secrets repository:
 https://github.com/biggraph/secrets
 See `README.md` file in that repository on usage.
 
+For the single-node server you need to install Go:
+
+    GO_VERSION="1.13.1"
+    GO_TAR=go$GO_VERSION.linux-amd64.tar.gz
+    wget -nc https://dl.google.com/go/$GO_TAR
+    tar -C /usr/local -xzf $GO_TAR
+
+Then add it to your path by adding `PATH="/usr/local/go/bin:$PATH"` to `.bashrc`.
+
 ## Per repository setup
 
 Set up `git` pre-commit hooks:
