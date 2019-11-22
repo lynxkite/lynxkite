@@ -303,6 +303,12 @@ or kilobytes respectively; e.g., 1M or 1500k.
 # export DRIVER_THREAD_STACK_SIZE=2M
 ```
 
+Maximize the number of parallel threads. LynxKite, Spark domain and Sphynx will
+all use this parameter.
+```
+# export KITE_PARALLELISM=5
+```
+
 Specify the length of the protected time period in days, while the cleaner does not
 delete data files. It can be integer or double value.
 ```
