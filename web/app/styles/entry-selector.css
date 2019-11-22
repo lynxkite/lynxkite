@@ -95,7 +95,8 @@
   cursor: pointer;
 }
 
-.entry-list .viewer {
-  color: black !important;
-  background: transparent !important;
+.entry-list .viewer.open {
+  color: inherit;
+  background: inherit;
+  cursor: inherit;
 }
