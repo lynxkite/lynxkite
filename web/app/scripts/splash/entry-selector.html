@@ -99,10 +99,13 @@
     ng-repeat="object in data.objects"
     id="{{ object.objectType }}-{{ pathInside(object.name) | id }}"
     class="entry {{ object.objectType }}-entry"
-    ng-class="{'viewer':  object.objectType == 'snapshot'}"
+    ng-class="{
+      open: opened[object.name],
+      viewer: object.objectType == 'snapshot',
+      error: object.error,
+    }"
     href
-    ng-click="objectClick($event, object)"
-    ng-class="{ error: object.error }">
+    ng-click="objectClick($event, object)">
     <dir-entry-icon
         object-type="object.icon"
         class="icon">
@@ -122,12 +125,6 @@
 
     <display-error caption="Error loading entry." error="object.error"></display-error>
     <div ng-if="!object.error">
-      <span ng-if="isWorkspace(object)">
-<!--
-        <value ref="vertexCounts[object.name]"></value> vertices,
-        <value ref="edgeCounts[object.name]"></value> edges.
--->
-      </span>
       <span ng-if="isTable(object)">
         <value ref="vertexCounts[object.name]"></value> rows.
       </span>
