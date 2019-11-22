@@ -5,6 +5,7 @@
   width: 100%;
 }
 
+state-view .flat-toolbar,
 .popup .flat-toolbar {
   background-color: #002a4c; /* Brand color. */
 }
