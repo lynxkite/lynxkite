@@ -329,3 +329,15 @@ of it, use the following line in a Python notebook:
 ```
 # export KITE_JUPYTER_PASSWORD=sha1:ac034db1021b:e3766f479a80d520fed96fb3e64df82428f5f435
 ```
+
+Specify where Sphynx (the single-node server) is running and where the certificate can be found.
+If any of these is unset, no Sphynx server is assumed.
+```
+# export SPHYNX_HOST
+# export SPHYNX_PORT
+# export SPHYNX_CERT_DIR
+```
+Specify the PID file for Sphynx.
+```
+export SPHYNX_PID_FILE=$HOME/sphynx.pid
+```
