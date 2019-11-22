@@ -1,3 +1,5 @@
+// Implementations of Sphynx operations.
+
 package main
 
 type Operation struct {
