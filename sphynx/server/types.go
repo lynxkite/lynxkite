@@ -1,3 +1,4 @@
+// Types used by Sphynx.
 package main
 
 import "sync"
