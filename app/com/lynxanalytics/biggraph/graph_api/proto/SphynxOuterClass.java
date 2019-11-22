@@ -3183,8 +3183,8 @@ public final class SphynxOuterClass {
 
   }
 
-  public interface ToRandomIndicesRequestOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:sphynx.ToRandomIndicesRequest)
+  public interface ToSparkIdsRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sphynx.ToSparkIdsRequest)
       com.google.protobuf.MessageOrBuilder {
 
     /**
@@ -3200,18 +3200,18 @@ public final class SphynxOuterClass {
         getGuidBytes();
   }
   /**
-   * Protobuf type {@code sphynx.ToRandomIndicesRequest}
+   * Protobuf type {@code sphynx.ToSparkIdsRequest}
    */
-  public  static final class ToRandomIndicesRequest extends
+  public  static final class ToSparkIdsRequest extends
       com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:sphynx.ToRandomIndicesRequest)
-      ToRandomIndicesRequestOrBuilder {
+      // @@protoc_insertion_point(message_implements:sphynx.ToSparkIdsRequest)
+      ToSparkIdsRequestOrBuilder {
   private static final long serialVersionUID = 0L;
-    // Use ToRandomIndicesRequest.newBuilder() to construct.
-    private ToRandomIndicesRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+    // Use ToSparkIdsRequest.newBuilder() to construct.
+    private ToSparkIdsRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
-    private ToRandomIndicesRequest() {
+    private ToSparkIdsRequest() {
       guid_ = "";
     }
 
@@ -3219,7 +3219,7 @@ public final class SphynxOuterClass {
     @SuppressWarnings({"unused"})
     protected java.lang.Object newInstance(
         UnusedPrivateParameter unused) {
-      return new ToRandomIndicesRequest();
+      return new ToSparkIdsRequest();
     }
 
     @java.lang.Override
@@ -3227,7 +3227,7 @@ public final class SphynxOuterClass {
     getUnknownFields() {
       return this.unknownFields;
     }
-    private ToRandomIndicesRequest(
+    private ToSparkIdsRequest(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -3272,15 +3272,15 @@ public final class SphynxOuterClass {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToRandomIndicesRequest_descriptor;
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToSparkIdsRequest_descriptor;
     }
 
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToRandomIndicesRequest_fieldAccessorTable
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToSparkIdsRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest.Builder.class);
+              com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest.Builder.class);
     }
 
     public static final int GUID_FIELD_NUMBER = 1;
@@ -3358,10 +3358,10 @@ public final class SphynxOuterClass {
       if (obj == this) {
        return true;
       }
-      if (!(obj instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest)) {
+      if (!(obj instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest)) {
         return super.equals(obj);
       }
-      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest other = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest) obj;
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest other = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest) obj;
 
       if (!getGuid()
           .equals(other.getGuid())) return false;
@@ -3383,69 +3383,69 @@ public final class SphynxOuterClass {
       return hash;
     }
 
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest parseFrom(byte[] data)
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest parseFrom(java.io.InputStream input)
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest parseDelimitedFrom(java.io.InputStream input)
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest parseDelimitedFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -3458,7 +3458,7 @@ public final class SphynxOuterClass {
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
     }
-    public static Builder newBuilder(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest prototype) {
+    public static Builder newBuilder(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
     @java.lang.Override
@@ -3474,26 +3474,26 @@ public final class SphynxOuterClass {
       return builder;
     }
     /**
-     * Protobuf type {@code sphynx.ToRandomIndicesRequest}
+     * Protobuf type {@code sphynx.ToSparkIdsRequest}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:sphynx.ToRandomIndicesRequest)
-        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequestOrBuilder {
+        // @@protoc_insertion_point(builder_implements:sphynx.ToSparkIdsRequest)
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequestOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToRandomIndicesRequest_descriptor;
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToSparkIdsRequest_descriptor;
       }
 
       @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToRandomIndicesRequest_fieldAccessorTable
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToSparkIdsRequest_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest.Builder.class);
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest.Builder.class);
       }
 
-      // Construct using com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest.newBuilder()
+      // Construct using com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -3519,17 +3519,17 @@ public final class SphynxOuterClass {
       @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToRandomIndicesRequest_descriptor;
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToSparkIdsRequest_descriptor;
       }
 
       @java.lang.Override
-      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest getDefaultInstanceForType() {
-        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest.getDefaultInstance();
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest getDefaultInstanceForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest.getDefaultInstance();
       }
 
       @java.lang.Override
-      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest build() {
-        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest result = buildPartial();
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest build() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
@@ -3537,8 +3537,8 @@ public final class SphynxOuterClass {
       }
 
       @java.lang.Override
-      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest buildPartial() {
-        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest result = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest(this);
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest buildPartial() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest result = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest(this);
         result.guid_ = guid_;
         onBuilt();
         return result;
@@ -3578,16 +3578,16 @@ public final class SphynxOuterClass {
       }
       @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest) {
-          return mergeFrom((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest)other);
+        if (other instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest) {
+          return mergeFrom((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest other) {
-        if (other == com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest.getDefaultInstance()) return this;
+      public Builder mergeFrom(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest other) {
+        if (other == com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest.getDefaultInstance()) return this;
         if (!other.getGuid().isEmpty()) {
           guid_ = other.guid_;
           onChanged();
@@ -3607,11 +3607,11 @@ public final class SphynxOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest parsedMessage = null;
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest) e.getUnfinishedMessage();
+          parsedMessage = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
@@ -3709,70 +3709,70 @@ public final class SphynxOuterClass {
       }
 
 
-      // @@protoc_insertion_point(builder_scope:sphynx.ToRandomIndicesRequest)
+      // @@protoc_insertion_point(builder_scope:sphynx.ToSparkIdsRequest)
     }
 
-    // @@protoc_insertion_point(class_scope:sphynx.ToRandomIndicesRequest)
-    private static final com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest DEFAULT_INSTANCE;
+    // @@protoc_insertion_point(class_scope:sphynx.ToSparkIdsRequest)
+    private static final com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest();
+      DEFAULT_INSTANCE = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest();
     }
 
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest getDefaultInstance() {
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
-    private static final com.google.protobuf.Parser<ToRandomIndicesRequest>
-        PARSER = new com.google.protobuf.AbstractParser<ToRandomIndicesRequest>() {
+    private static final com.google.protobuf.Parser<ToSparkIdsRequest>
+        PARSER = new com.google.protobuf.AbstractParser<ToSparkIdsRequest>() {
       @java.lang.Override
-      public ToRandomIndicesRequest parsePartialFrom(
+      public ToSparkIdsRequest parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new ToRandomIndicesRequest(input, extensionRegistry);
+        return new ToSparkIdsRequest(input, extensionRegistry);
       }
     };
 
-    public static com.google.protobuf.Parser<ToRandomIndicesRequest> parser() {
+    public static com.google.protobuf.Parser<ToSparkIdsRequest> parser() {
       return PARSER;
     }
 
     @java.lang.Override
-    public com.google.protobuf.Parser<ToRandomIndicesRequest> getParserForType() {
+    public com.google.protobuf.Parser<ToSparkIdsRequest> getParserForType() {
       return PARSER;
     }
 
     @java.lang.Override
-    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesRequest getDefaultInstanceForType() {
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
   }
 
-  public interface ToRandomIndicesReplyOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:sphynx.ToRandomIndicesReply)
+  public interface ToSparkIdsReplyOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sphynx.ToSparkIdsReply)
       com.google.protobuf.MessageOrBuilder {
   }
   /**
-   * Protobuf type {@code sphynx.ToRandomIndicesReply}
+   * Protobuf type {@code sphynx.ToSparkIdsReply}
    */
-  public  static final class ToRandomIndicesReply extends
+  public  static final class ToSparkIdsReply extends
       com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:sphynx.ToRandomIndicesReply)
-      ToRandomIndicesReplyOrBuilder {
+      // @@protoc_insertion_point(message_implements:sphynx.ToSparkIdsReply)
+      ToSparkIdsReplyOrBuilder {
   private static final long serialVersionUID = 0L;
-    // Use ToRandomIndicesReply.newBuilder() to construct.
-    private ToRandomIndicesReply(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+    // Use ToSparkIdsReply.newBuilder() to construct.
+    private ToSparkIdsReply(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
-    private ToRandomIndicesReply() {
+    private ToSparkIdsReply() {
     }
 
     @java.lang.Override
     @SuppressWarnings({"unused"})
     protected java.lang.Object newInstance(
         UnusedPrivateParameter unused) {
-      return new ToRandomIndicesReply();
+      return new ToSparkIdsReply();
     }
 
     @java.lang.Override
@@ -3780,7 +3780,7 @@ public final class SphynxOuterClass {
     getUnknownFields() {
       return this.unknownFields;
     }
-    private ToRandomIndicesReply(
+    private ToSparkIdsReply(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -3819,15 +3819,15 @@ public final class SphynxOuterClass {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToRandomIndicesReply_descriptor;
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToSparkIdsReply_descriptor;
     }
 
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToRandomIndicesReply_fieldAccessorTable
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToSparkIdsReply_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply.Builder.class);
+              com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply.Builder.class);
     }
 
     private byte memoizedIsInitialized = -1;
@@ -3863,10 +3863,10 @@ public final class SphynxOuterClass {
       if (obj == this) {
        return true;
       }
-      if (!(obj instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply)) {
+      if (!(obj instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply)) {
         return super.equals(obj);
       }
-      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply other = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply) obj;
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply other = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply) obj;
 
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
@@ -3884,69 +3884,69 @@ public final class SphynxOuterClass {
       return hash;
     }
 
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply parseFrom(byte[] data)
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply parseFrom(java.io.InputStream input)
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply parseDelimitedFrom(java.io.InputStream input)
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply parseDelimitedFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply parseFrom(
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -3959,7 +3959,7 @@ public final class SphynxOuterClass {
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
     }
-    public static Builder newBuilder(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply prototype) {
+    public static Builder newBuilder(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
     @java.lang.Override
@@ -3975,26 +3975,26 @@ public final class SphynxOuterClass {
       return builder;
     }
     /**
-     * Protobuf type {@code sphynx.ToRandomIndicesReply}
+     * Protobuf type {@code sphynx.ToSparkIdsReply}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:sphynx.ToRandomIndicesReply)
-        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReplyOrBuilder {
+        // @@protoc_insertion_point(builder_implements:sphynx.ToSparkIdsReply)
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReplyOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToRandomIndicesReply_descriptor;
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToSparkIdsReply_descriptor;
       }
 
       @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToRandomIndicesReply_fieldAccessorTable
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToSparkIdsReply_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply.Builder.class);
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply.Builder.class);
       }
 
-      // Construct using com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply.newBuilder()
+      // Construct using com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -4018,17 +4018,17 @@ public final class SphynxOuterClass {
       @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToRandomIndicesReply_descriptor;
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ToSparkIdsReply_descriptor;
       }
 
       @java.lang.Override
-      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply getDefaultInstanceForType() {
-        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply.getDefaultInstance();
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply getDefaultInstanceForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply.getDefaultInstance();
       }
 
       @java.lang.Override
-      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply build() {
-        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply result = buildPartial();
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply build() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
@@ -4036,8 +4036,8 @@ public final class SphynxOuterClass {
       }
 
       @java.lang.Override
-      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply buildPartial() {
-        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply result = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply(this);
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply buildPartial() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply result = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply(this);
         onBuilt();
         return result;
       }
@@ -4076,16 +4076,16 @@ public final class SphynxOuterClass {
       }
       @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply) {
-          return mergeFrom((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply)other);
+        if (other instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply) {
+          return mergeFrom((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply other) {
-        if (other == com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply.getDefaultInstance()) return this;
+      public Builder mergeFrom(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply other) {
+        if (other == com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply.getDefaultInstance()) return this;
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
@@ -4101,11 +4101,11 @@ public final class SphynxOuterClass {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply parsedMessage = null;
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply) e.getUnfinishedMessage();
+          parsedMessage = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply) e.getUnfinishedMessage();
           throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
@@ -4127,41 +4127,41 @@ public final class SphynxOuterClass {
       }
 
 
-      // @@protoc_insertion_point(builder_scope:sphynx.ToRandomIndicesReply)
+      // @@protoc_insertion_point(builder_scope:sphynx.ToSparkIdsReply)
     }
 
-    // @@protoc_insertion_point(class_scope:sphynx.ToRandomIndicesReply)
-    private static final com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply DEFAULT_INSTANCE;
+    // @@protoc_insertion_point(class_scope:sphynx.ToSparkIdsReply)
+    private static final com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply();
+      DEFAULT_INSTANCE = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply();
     }
 
-    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply getDefaultInstance() {
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
-    private static final com.google.protobuf.Parser<ToRandomIndicesReply>
-        PARSER = new com.google.protobuf.AbstractParser<ToRandomIndicesReply>() {
+    private static final com.google.protobuf.Parser<ToSparkIdsReply>
+        PARSER = new com.google.protobuf.AbstractParser<ToSparkIdsReply>() {
       @java.lang.Override
-      public ToRandomIndicesReply parsePartialFrom(
+      public ToSparkIdsReply parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new ToRandomIndicesReply(input, extensionRegistry);
+        return new ToSparkIdsReply(input, extensionRegistry);
       }
     };
 
-    public static com.google.protobuf.Parser<ToRandomIndicesReply> parser() {
+    public static com.google.protobuf.Parser<ToSparkIdsReply> parser() {
       return PARSER;
     }
 
     @java.lang.Override
-    public com.google.protobuf.Parser<ToRandomIndicesReply> getParserForType() {
+    public com.google.protobuf.Parser<ToSparkIdsReply> getParserForType() {
       return PARSER;
     }
 
     @java.lang.Override
-    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToRandomIndicesReply getDefaultInstanceForType() {
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -4198,15 +4198,15 @@ public final class SphynxOuterClass {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_sphynx_GetScalarReply_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_sphynx_ToRandomIndicesRequest_descriptor;
+    internal_static_sphynx_ToSparkIdsRequest_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_sphynx_ToRandomIndicesRequest_fieldAccessorTable;
+      internal_static_sphynx_ToSparkIdsRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_sphynx_ToRandomIndicesReply_descriptor;
+    internal_static_sphynx_ToSparkIdsReply_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_sphynx_ToRandomIndicesReply_fieldAccessorTable;
+      internal_static_sphynx_ToSparkIdsReply_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -4221,17 +4221,16 @@ public final class SphynxOuterClass {
       "y\022\022\n\ncanCompute\030\001 \001(\010\"#\n\016ComputeRequest\022" +
       "\021\n\toperation\030\001 \001(\t\"\016\n\014ComputeReply\" \n\020Ge" +
       "tScalarRequest\022\014\n\004guid\030\001 \001(\t\" \n\016GetScala" +
-      "rReply\022\016\n\006scalar\030\001 \001(\t\"&\n\026ToRandomIndice" +
-      "sRequest\022\014\n\004guid\030\001 \001(\t\"\026\n\024ToRandomIndice" +
-      "sReply2\223\002\n\006Sphynx\022@\n\nCanCompute\022\031.sphynx" +
-      ".CanComputeRequest\032\027.sphynx.CanComputeRe" +
-      "ply\0227\n\007Compute\022\026.sphynx.ComputeRequest\032\024" +
-      ".sphynx.ComputeReply\022=\n\tgetScalar\022\030.sphy" +
-      "nx.GetScalarRequest\032\026.sphynx.GetScalarRe" +
-      "ply\022O\n\017ToRandomIndices\022\036.sphynx.ToRandom" +
-      "IndicesRequest\032\034.sphynx.ToRandomIndicesR" +
-      "eplyB,\n*com.lynxanalytics.biggraph.graph" +
-      "_api.protob\006proto3"
+      "rReply\022\016\n\006scalar\030\001 \001(\t\"!\n\021ToSparkIdsRequ" +
+      "est\022\014\n\004guid\030\001 \001(\t\"\021\n\017ToSparkIdsReply2\204\002\n" +
+      "\006Sphynx\022@\n\nCanCompute\022\031.sphynx.CanComput" +
+      "eRequest\032\027.sphynx.CanComputeReply\0227\n\007Com" +
+      "pute\022\026.sphynx.ComputeRequest\032\024.sphynx.Co" +
+      "mputeReply\022=\n\tgetScalar\022\030.sphynx.GetScal" +
+      "arRequest\032\026.sphynx.GetScalarReply\022@\n\nToS" +
+      "parkIds\022\031.sphynx.ToSparkIdsRequest\032\027.sph" +
+      "ynx.ToSparkIdsReplyB,\n*com.lynxanalytics" +
+      ".biggraph.graph_api.protob\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -4273,17 +4272,17 @@ public final class SphynxOuterClass {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sphynx_GetScalarReply_descriptor,
         new java.lang.String[] { "Scalar", });
-    internal_static_sphynx_ToRandomIndicesRequest_descriptor =
+    internal_static_sphynx_ToSparkIdsRequest_descriptor =
       getDescriptor().getMessageTypes().get(6);
-    internal_static_sphynx_ToRandomIndicesRequest_fieldAccessorTable = new
+    internal_static_sphynx_ToSparkIdsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_sphynx_ToRandomIndicesRequest_descriptor,
+        internal_static_sphynx_ToSparkIdsRequest_descriptor,
         new java.lang.String[] { "Guid", });
-    internal_static_sphynx_ToRandomIndicesReply_descriptor =
+    internal_static_sphynx_ToSparkIdsReply_descriptor =
       getDescriptor().getMessageTypes().get(7);
-    internal_static_sphynx_ToRandomIndicesReply_fieldAccessorTable = new
+    internal_static_sphynx_ToSparkIdsReply_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_sphynx_ToRandomIndicesReply_descriptor,
+        internal_static_sphynx_ToSparkIdsReply_descriptor,
         new java.lang.String[] { });
   }
 
