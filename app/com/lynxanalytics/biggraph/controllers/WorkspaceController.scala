@@ -369,10 +369,13 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def getInstrumentedState(
     user: serving.User, request: GetInstrumentedStateRequest): GetInstrumentedStateResponse = {
-    val ctx = if (request.workspace.isDefined) {
-      val ref = ResolvedWorkspaceReference(user, request.workspace.get)
-      ref.ws.context(user, ops, ref.params)
-    } else Workspace.from().context(user, ops, Map())
+    val ctx = request.workspace match {
+      case Some(ws) =>
+        val ref = ResolvedWorkspaceReference(user, ws)
+        ref.ws.context(user, ops, ref.params)
+      case None => // We can still execute the instrument we just won't have ws parameters.
+        Workspace.from().context(user, ops, Map())
+    }
     val inputState = getOutput(user, request.inputStateId)
     var (states, opMetas) = instrumentStatesAndMetas(
       ctx, request.instruments, List(inputState), List[FEOperationMeta]())
