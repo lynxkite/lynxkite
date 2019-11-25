@@ -6,3 +6,13 @@ option java_package = "com.lynxanalytics.biggraph.graph_api.proto";
 message VertexSet {
   repeated int64 ids = 1;
 }
+
+message Edge {
+  int64 id = 1;
+  int64 src= 2;
+  int64 dst= 3;
+}
+
+message EdgeBundle {
+  repeated Edge edges = 1;
+}

@@ -92,7 +92,7 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String) extends Doma
       case source: SphynxMemory => {
         e match {
           case v: VertexSet => client.toSparkIds(e.gUID.toString())
-          case e: EdgeBundle => ???
+          case e: EdgeBundle => client.toSparkIds(e.gUID.toString())
           case a: Attribute[_] => ???
           case s: Scalar[_] => ???
           case e: HybridBundle => ???
