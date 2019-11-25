@@ -64,6 +64,7 @@
   user-select: none;
   text-decoration: none;
 }
+.entry-list .open .entry-header,
 .entry-list .entry-header:hover,
 .entry-list .entry-header:focus {
   background: #39bcf3;
