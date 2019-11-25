@@ -3,7 +3,7 @@
 // Viewer of a state at an output of a box.
 
 angular.module('biggraph')
-  .directive('stateView', function(util, $timeout) {
+  .directive('stateView', function(util, $timeout, $rootScope) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/state-view.html',
@@ -71,7 +71,10 @@ angular.module('biggraph')
           util.post('/ajax/createSnapshot', {
             name: saveAsName,
             id: stateId,
-          }).finally(done).then(() => scope.root.snapshotNameOpen = false);
+          }).finally(done).then(() => {
+            scope.root.snapshotNameOpen = false;
+            $rootScope.$broadcast('saved snapshot', saveAsName);
+          });
         };
 
         scope.graphray = function() {

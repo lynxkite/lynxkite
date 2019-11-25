@@ -77,6 +77,7 @@ angular.module('biggraph').directive('entrySelector',
 
         scope.$watch('path', scope.reload);
         scope.$watch('searchQuery', scope.reload);
+        scope.$on('saved snapshot', scope.reload);
 
         scope.$watch('data.$resolved', function(resolved) {
           if (!resolved || scope.data.$error) { return; }
