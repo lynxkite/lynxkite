@@ -3,7 +3,7 @@
 // Viewer of a state at an output of a box.
 
 angular.module('biggraph')
-  .directive('stateView', function(util, $timeout) {
+  .directive('stateView', function(util, $timeout, $rootScope) {
     return {
       restrict: 'E',
       templateUrl: 'scripts/workspace/state-view.html',
@@ -22,7 +22,7 @@ angular.module('biggraph')
         function update() {
           if (instruments.length > 0) {
             const query = {
-              workspace: scope.workspace.ref(),
+              workspace: scope.workspace && scope.workspace.ref(),
               inputStateId: scope.plug.stateId,
               instruments };
             const json = JSON.stringify(query);
@@ -41,6 +41,8 @@ angular.module('biggraph')
           } else {
             scope.result = { states: [scope.plug], metas: [] };
             scope.lastState = scope.plug;
+            scope.instruments = [];
+            lastJson = undefined;
           }
           setVisualizationEditHandler();
         }
@@ -49,7 +51,7 @@ angular.module('biggraph')
         };
 
         scope.getDefaultSnapshotName = function() {
-          return scope.workspace.name + '-' + scope.plugId;
+          return scope.workspace ? scope.workspace.name + '-' + scope.plugId : scope.plugId;
         };
 
         scope.setInstrument = function(index, operationId, parameters) {
@@ -71,7 +73,10 @@ angular.module('biggraph')
           util.post('/ajax/createSnapshot', {
             name: saveAsName,
             id: stateId,
-          }).finally(done).then(() => scope.root.snapshotNameOpen = false);
+          }).finally(done).then(() => {
+            scope.root.snapshotNameOpen = false;
+            $rootScope.$broadcast('saved snapshot', saveAsName);
+          });
         };
 
         scope.graphray = function() {
