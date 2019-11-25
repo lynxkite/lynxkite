@@ -88,3 +88,7 @@
   background: white;
   cursor: pointer;
 }
+
+.entry-list .viewer {
+  border: 3px solid #39bcf3;
+}
