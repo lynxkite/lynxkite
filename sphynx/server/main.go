@@ -121,6 +121,44 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 				"Failed to write encoded edge bundle: %v", err)
 		}
 		return &pb.ToSparkIdsReply{}, nil
+	case StringAttribute:
+		attribute := &pb.StringAttribute{Values: make(map[int64]string)}
+		for sphynxId, def := range e.defined {
+			if def {
+				sparkId := e.vertexMapping[sphynxId]
+				attribute.Values[sparkId] = e.values[sphynxId]
+			}
+		}
+		out, err := proto.Marshal(attribute)
+		if err != nil {
+			return nil, status.Errorf(codes.Unknown,
+				"Failed to encode attribute: %v", err)
+		}
+		fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
+		if err := ioutil.WriteFile(fname, out, 0755); err != nil {
+			return nil, status.Errorf(codes.Unknown,
+				"Failed to write encoded attribute: %v", err)
+		}
+		return &pb.ToSparkIdsReply{}, nil
+	case DoubleAttribute:
+		attribute := &pb.DoubleAttribute{Values: make(map[int64]float64)}
+		for sphynxId, def := range e.defined {
+			if def {
+				sparkId := e.vertexMapping[sphynxId]
+				attribute.Values[sparkId] = e.values[sphynxId]
+			}
+		}
+		out, err := proto.Marshal(attribute)
+		if err != nil {
+			return nil, status.Errorf(codes.Unknown,
+				"Failed to encode attribute: %v", err)
+		}
+		fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
+		if err := ioutil.WriteFile(fname, out, 0755); err != nil {
+			return nil, status.Errorf(codes.Unknown,
+				"Failed to write encoded attribute: %v", err)
+		}
+		return &pb.ToSparkIdsReply{}, nil
 	default:
 		return nil, status.Errorf(codes.Unimplemented, "Can't reindex %v to use Spark IDs.", entity)
 	}

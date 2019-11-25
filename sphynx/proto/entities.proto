@@ -16,3 +16,11 @@ message Edge {
 message EdgeBundle {
   repeated Edge edges = 1;
 }
+
+message StringAttribute {
+  map<int64, string> values = 1;
+}
+
+message DoubleAttribute {
+  map<int64, double> values = 1;
+}

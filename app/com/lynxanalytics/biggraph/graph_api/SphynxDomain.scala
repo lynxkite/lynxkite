@@ -93,10 +93,8 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String) extends Doma
         e match {
           case v: VertexSet => client.toSparkIds(e.gUID.toString())
           case e: EdgeBundle => client.toSparkIds(e.gUID.toString())
-          case a: Attribute[_] => ???
-          case s: Scalar[_] => ???
-          case e: HybridBundle => ???
-          case t: Table => ???
+          case a: Attribute[_] => client.toSparkIds(e.gUID.toString())
+          case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }
       }
     }

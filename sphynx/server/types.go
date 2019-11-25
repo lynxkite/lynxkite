@@ -29,8 +29,13 @@ type EdgeBundle struct {
 type VertexSet struct {
 	vertexMapping []int64
 }
-type Attribute struct {
-	attribute interface{} // This should be []interface{}. But []T cannot be converted
-	// into []interface{} directly. (https://golang.org/doc/faq#convert_slice_of_interface)
-	defined []bool
+type DoubleAttribute struct {
+	values        []float64
+	defined       []bool
+	vertexMapping []int64
+}
+type StringAttribute struct {
+	values        []string
+	defined       []bool
+	vertexMapping []int64
 }
