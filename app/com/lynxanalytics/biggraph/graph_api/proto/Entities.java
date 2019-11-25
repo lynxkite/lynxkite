@@ -628,11 +628,1434 @@ public final class Entities {
 
   }
 
+  public interface EdgeOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:proto.Edge)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>int64 id = 1;</code>
+     * @return The id.
+     */
+    long getId();
+
+    /**
+     * <code>int64 src = 2;</code>
+     * @return The src.
+     */
+    long getSrc();
+
+    /**
+     * <code>int64 dst = 3;</code>
+     * @return The dst.
+     */
+    long getDst();
+  }
+  /**
+   * Protobuf type {@code proto.Edge}
+   */
+  public  static final class Edge extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:proto.Edge)
+      EdgeOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use Edge.newBuilder() to construct.
+    private Edge(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private Edge() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new Edge();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private Edge(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+
+              id_ = input.readInt64();
+              break;
+            }
+            case 16: {
+
+              src_ = input.readInt64();
+              break;
+            }
+            case 24: {
+
+              dst_ = input.readInt64();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.lynxanalytics.biggraph.graph_api.proto.Entities.internal_static_proto_Edge_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.lynxanalytics.biggraph.graph_api.proto.Entities.internal_static_proto_Edge_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.class, com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.Builder.class);
+    }
+
+    public static final int ID_FIELD_NUMBER = 1;
+    private long id_;
+    /**
+     * <code>int64 id = 1;</code>
+     * @return The id.
+     */
+    public long getId() {
+      return id_;
+    }
+
+    public static final int SRC_FIELD_NUMBER = 2;
+    private long src_;
+    /**
+     * <code>int64 src = 2;</code>
+     * @return The src.
+     */
+    public long getSrc() {
+      return src_;
+    }
+
+    public static final int DST_FIELD_NUMBER = 3;
+    private long dst_;
+    /**
+     * <code>int64 dst = 3;</code>
+     * @return The dst.
+     */
+    public long getDst() {
+      return dst_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (id_ != 0L) {
+        output.writeInt64(1, id_);
+      }
+      if (src_ != 0L) {
+        output.writeInt64(2, src_);
+      }
+      if (dst_ != 0L) {
+        output.writeInt64(3, dst_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (id_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(1, id_);
+      }
+      if (src_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(2, src_);
+      }
+      if (dst_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(3, dst_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge)) {
+        return super.equals(obj);
+      }
+      com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge other = (com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge) obj;
+
+      if (getId()
+          != other.getId()) return false;
+      if (getSrc()
+          != other.getSrc()) return false;
+      if (getDst()
+          != other.getDst()) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getId());
+      hash = (37 * hash) + SRC_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getSrc());
+      hash = (37 * hash) + DST_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getDst());
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code proto.Edge}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:proto.Edge)
+        com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.lynxanalytics.biggraph.graph_api.proto.Entities.internal_static_proto_Edge_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.lynxanalytics.biggraph.graph_api.proto.Entities.internal_static_proto_Edge_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.class, com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.Builder.class);
+      }
+
+      // Construct using com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        id_ = 0L;
+
+        src_ = 0L;
+
+        dst_ = 0L;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.Entities.internal_static_proto_Edge_descriptor;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge getDefaultInstanceForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge build() {
+        com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge buildPartial() {
+        com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge result = new com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge(this);
+        result.id_ = id_;
+        result.src_ = src_;
+        result.dst_ = dst_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge) {
+          return mergeFrom((com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge other) {
+        if (other == com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.getDefaultInstance()) return this;
+        if (other.getId() != 0L) {
+          setId(other.getId());
+        }
+        if (other.getSrc() != 0L) {
+          setSrc(other.getSrc());
+        }
+        if (other.getDst() != 0L) {
+          setDst(other.getDst());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private long id_ ;
+      /**
+       * <code>int64 id = 1;</code>
+       * @return The id.
+       */
+      public long getId() {
+        return id_;
+      }
+      /**
+       * <code>int64 id = 1;</code>
+       * @param value The id to set.
+       * @return This builder for chaining.
+       */
+      public Builder setId(long value) {
+        
+        id_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearId() {
+        
+        id_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private long src_ ;
+      /**
+       * <code>int64 src = 2;</code>
+       * @return The src.
+       */
+      public long getSrc() {
+        return src_;
+      }
+      /**
+       * <code>int64 src = 2;</code>
+       * @param value The src to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSrc(long value) {
+        
+        src_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 src = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSrc() {
+        
+        src_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private long dst_ ;
+      /**
+       * <code>int64 dst = 3;</code>
+       * @return The dst.
+       */
+      public long getDst() {
+        return dst_;
+      }
+      /**
+       * <code>int64 dst = 3;</code>
+       * @param value The dst to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDst(long value) {
+        
+        dst_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 dst = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDst() {
+        
+        dst_ = 0L;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:proto.Edge)
+    }
+
+    // @@protoc_insertion_point(class_scope:proto.Edge)
+    private static final com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge();
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<Edge>
+        PARSER = new com.google.protobuf.AbstractParser<Edge>() {
+      @java.lang.Override
+      public Edge parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new Edge(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<Edge> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<Edge> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface EdgeBundleOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:proto.EdgeBundle)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>repeated .proto.Edge edges = 1;</code>
+     */
+    java.util.List<com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge> 
+        getEdgesList();
+    /**
+     * <code>repeated .proto.Edge edges = 1;</code>
+     */
+    com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge getEdges(int index);
+    /**
+     * <code>repeated .proto.Edge edges = 1;</code>
+     */
+    int getEdgesCount();
+    /**
+     * <code>repeated .proto.Edge edges = 1;</code>
+     */
+    java.util.List<? extends com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeOrBuilder> 
+        getEdgesOrBuilderList();
+    /**
+     * <code>repeated .proto.Edge edges = 1;</code>
+     */
+    com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeOrBuilder getEdgesOrBuilder(
+        int index);
+  }
+  /**
+   * Protobuf type {@code proto.EdgeBundle}
+   */
+  public  static final class EdgeBundle extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:proto.EdgeBundle)
+      EdgeBundleOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use EdgeBundle.newBuilder() to construct.
+    private EdgeBundle(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private EdgeBundle() {
+      edges_ = java.util.Collections.emptyList();
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new EdgeBundle();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private EdgeBundle(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+                edges_ = new java.util.ArrayList<com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              edges_.add(
+                  input.readMessage(com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.parser(), extensionRegistry));
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000001) != 0)) {
+          edges_ = java.util.Collections.unmodifiableList(edges_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.lynxanalytics.biggraph.graph_api.proto.Entities.internal_static_proto_EdgeBundle_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.lynxanalytics.biggraph.graph_api.proto.Entities.internal_static_proto_EdgeBundle_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle.class, com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle.Builder.class);
+    }
+
+    public static final int EDGES_FIELD_NUMBER = 1;
+    private java.util.List<com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge> edges_;
+    /**
+     * <code>repeated .proto.Edge edges = 1;</code>
+     */
+    public java.util.List<com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge> getEdgesList() {
+      return edges_;
+    }
+    /**
+     * <code>repeated .proto.Edge edges = 1;</code>
+     */
+    public java.util.List<? extends com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeOrBuilder> 
+        getEdgesOrBuilderList() {
+      return edges_;
+    }
+    /**
+     * <code>repeated .proto.Edge edges = 1;</code>
+     */
+    public int getEdgesCount() {
+      return edges_.size();
+    }
+    /**
+     * <code>repeated .proto.Edge edges = 1;</code>
+     */
+    public com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge getEdges(int index) {
+      return edges_.get(index);
+    }
+    /**
+     * <code>repeated .proto.Edge edges = 1;</code>
+     */
+    public com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeOrBuilder getEdgesOrBuilder(
+        int index) {
+      return edges_.get(index);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      for (int i = 0; i < edges_.size(); i++) {
+        output.writeMessage(1, edges_.get(i));
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      for (int i = 0; i < edges_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, edges_.get(i));
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle)) {
+        return super.equals(obj);
+      }
+      com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle other = (com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle) obj;
+
+      if (!getEdgesList()
+          .equals(other.getEdgesList())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (getEdgesCount() > 0) {
+        hash = (37 * hash) + EDGES_FIELD_NUMBER;
+        hash = (53 * hash) + getEdgesList().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code proto.EdgeBundle}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:proto.EdgeBundle)
+        com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundleOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.lynxanalytics.biggraph.graph_api.proto.Entities.internal_static_proto_EdgeBundle_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.lynxanalytics.biggraph.graph_api.proto.Entities.internal_static_proto_EdgeBundle_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle.class, com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle.Builder.class);
+      }
+
+      // Construct using com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+          getEdgesFieldBuilder();
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        if (edgesBuilder_ == null) {
+          edges_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
+        } else {
+          edgesBuilder_.clear();
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.Entities.internal_static_proto_EdgeBundle_descriptor;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle getDefaultInstanceForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle build() {
+        com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle buildPartial() {
+        com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle result = new com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle(this);
+        int from_bitField0_ = bitField0_;
+        if (edgesBuilder_ == null) {
+          if (((bitField0_ & 0x00000001) != 0)) {
+            edges_ = java.util.Collections.unmodifiableList(edges_);
+            bitField0_ = (bitField0_ & ~0x00000001);
+          }
+          result.edges_ = edges_;
+        } else {
+          result.edges_ = edgesBuilder_.build();
+        }
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle) {
+          return mergeFrom((com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle other) {
+        if (other == com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle.getDefaultInstance()) return this;
+        if (edgesBuilder_ == null) {
+          if (!other.edges_.isEmpty()) {
+            if (edges_.isEmpty()) {
+              edges_ = other.edges_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+            } else {
+              ensureEdgesIsMutable();
+              edges_.addAll(other.edges_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.edges_.isEmpty()) {
+            if (edgesBuilder_.isEmpty()) {
+              edgesBuilder_.dispose();
+              edgesBuilder_ = null;
+              edges_ = other.edges_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+              edgesBuilder_ = 
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                   getEdgesFieldBuilder() : null;
+            } else {
+              edgesBuilder_.addAllMessages(other.edges_);
+            }
+          }
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private java.util.List<com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge> edges_ =
+        java.util.Collections.emptyList();
+      private void ensureEdgesIsMutable() {
+        if (!((bitField0_ & 0x00000001) != 0)) {
+          edges_ = new java.util.ArrayList<com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge>(edges_);
+          bitField0_ |= 0x00000001;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge, com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.Builder, com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeOrBuilder> edgesBuilder_;
+
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public java.util.List<com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge> getEdgesList() {
+        if (edgesBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(edges_);
+        } else {
+          return edgesBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public int getEdgesCount() {
+        if (edgesBuilder_ == null) {
+          return edges_.size();
+        } else {
+          return edgesBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge getEdges(int index) {
+        if (edgesBuilder_ == null) {
+          return edges_.get(index);
+        } else {
+          return edgesBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public Builder setEdges(
+          int index, com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge value) {
+        if (edgesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureEdgesIsMutable();
+          edges_.set(index, value);
+          onChanged();
+        } else {
+          edgesBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public Builder setEdges(
+          int index, com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.Builder builderForValue) {
+        if (edgesBuilder_ == null) {
+          ensureEdgesIsMutable();
+          edges_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          edgesBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public Builder addEdges(com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge value) {
+        if (edgesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureEdgesIsMutable();
+          edges_.add(value);
+          onChanged();
+        } else {
+          edgesBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public Builder addEdges(
+          int index, com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge value) {
+        if (edgesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureEdgesIsMutable();
+          edges_.add(index, value);
+          onChanged();
+        } else {
+          edgesBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public Builder addEdges(
+          com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.Builder builderForValue) {
+        if (edgesBuilder_ == null) {
+          ensureEdgesIsMutable();
+          edges_.add(builderForValue.build());
+          onChanged();
+        } else {
+          edgesBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public Builder addEdges(
+          int index, com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.Builder builderForValue) {
+        if (edgesBuilder_ == null) {
+          ensureEdgesIsMutable();
+          edges_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          edgesBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public Builder addAllEdges(
+          java.lang.Iterable<? extends com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge> values) {
+        if (edgesBuilder_ == null) {
+          ensureEdgesIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, edges_);
+          onChanged();
+        } else {
+          edgesBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public Builder clearEdges() {
+        if (edgesBuilder_ == null) {
+          edges_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
+          onChanged();
+        } else {
+          edgesBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public Builder removeEdges(int index) {
+        if (edgesBuilder_ == null) {
+          ensureEdgesIsMutable();
+          edges_.remove(index);
+          onChanged();
+        } else {
+          edgesBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.Builder getEdgesBuilder(
+          int index) {
+        return getEdgesFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeOrBuilder getEdgesOrBuilder(
+          int index) {
+        if (edgesBuilder_ == null) {
+          return edges_.get(index);  } else {
+          return edgesBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public java.util.List<? extends com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeOrBuilder> 
+           getEdgesOrBuilderList() {
+        if (edgesBuilder_ != null) {
+          return edgesBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(edges_);
+        }
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.Builder addEdgesBuilder() {
+        return getEdgesFieldBuilder().addBuilder(
+            com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.Builder addEdgesBuilder(
+          int index) {
+        return getEdgesFieldBuilder().addBuilder(
+            index, com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .proto.Edge edges = 1;</code>
+       */
+      public java.util.List<com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.Builder> 
+           getEdgesBuilderList() {
+        return getEdgesFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge, com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.Builder, com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeOrBuilder> 
+          getEdgesFieldBuilder() {
+        if (edgesBuilder_ == null) {
+          edgesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+              com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge, com.lynxanalytics.biggraph.graph_api.proto.Entities.Edge.Builder, com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeOrBuilder>(
+                  edges_,
+                  ((bitField0_ & 0x00000001) != 0),
+                  getParentForChildren(),
+                  isClean());
+          edges_ = null;
+        }
+        return edgesBuilder_;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:proto.EdgeBundle)
+    }
+
+    // @@protoc_insertion_point(class_scope:proto.EdgeBundle)
+    private static final com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle();
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<EdgeBundle>
+        PARSER = new com.google.protobuf.AbstractParser<EdgeBundle>() {
+      @java.lang.Override
+      public EdgeBundle parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new EdgeBundle(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<EdgeBundle> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<EdgeBundle> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.lynxanalytics.biggraph.graph_api.proto.Entities.EdgeBundle getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_proto_VertexSet_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_proto_VertexSet_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_proto_Edge_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_proto_Edge_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_proto_EdgeBundle_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_proto_EdgeBundle_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -643,8 +2066,10 @@ public final class Entities {
   static {
     java.lang.String[] descriptorData = {
       "\n\016entities.proto\022\005proto\"\030\n\tVertexSet\022\013\n\003" +
-      "ids\030\001 \003(\003B,\n*com.lynxanalytics.biggraph." +
-      "graph_api.protob\006proto3"
+      "ids\030\001 \003(\003\",\n\004Edge\022\n\n\002id\030\001 \001(\003\022\013\n\003src\030\002 \001" +
+      "(\003\022\013\n\003dst\030\003 \001(\003\"(\n\nEdgeBundle\022\032\n\005edges\030\001" +
+      " \003(\0132\013.proto.EdgeB,\n*com.lynxanalytics.b" +
+      "iggraph.graph_api.protob\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -656,6 +2081,18 @@ public final class Entities {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_proto_VertexSet_descriptor,
         new java.lang.String[] { "Ids", });
+    internal_static_proto_Edge_descriptor =
+      getDescriptor().getMessageTypes().get(1);
+    internal_static_proto_Edge_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_proto_Edge_descriptor,
+        new java.lang.String[] { "Id", "Src", "Dst", });
+    internal_static_proto_EdgeBundle_descriptor =
+      getDescriptor().getMessageTypes().get(2);
+    internal_static_proto_EdgeBundle_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_proto_EdgeBundle_descriptor,
+        new java.lang.String[] { "Edges", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

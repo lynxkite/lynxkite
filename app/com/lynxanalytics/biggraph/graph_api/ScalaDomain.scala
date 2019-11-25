@@ -80,10 +80,12 @@ class ScalaDomain(val mixedDir: Option[String] = None) extends Domain {
       case source: UnorderedSphynxDisk => {
         val future = SafeFuture.async({
           val entityPath = s"${mixedDir.get}/${e.gUID.toString}"
+          val file = new FileInputStream(entityPath)
           e match {
-            case v: VertexSet => Entities.VertexSet.parseFrom(new FileInputStream(entityPath))
+            case v: VertexSet => Entities.VertexSet.parseFrom(file)
               .getIdsList().asScala.toSet
-            case e: EdgeBundle => ???
+            case e: EdgeBundle => Entities.EdgeBundle.parseFrom(file)
+              .getEdgesList().asScala.map(e => (e.getId, Edge(e.getSrc, e.getDst))).toMap
             case a: Attribute[_] => ???
             case s: Scalar[_] => ???
             case e: HybridBundle => ???

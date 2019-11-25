@@ -3,7 +3,7 @@
 package main
 
 type Operation struct {
-	execute func(*Server, OperationInstance)
+	execute func(*Server, OperationInstance) map[string]interface{}
 }
 
 var operations = map[string]Operation{
@@ -12,30 +12,30 @@ var operations = map[string]Operation{
 }
 
 var exampleGraph = Operation{
-	execute: func(s *Server, opInst OperationInstance) {
-		s.Lock()
-		defer s.Unlock()
+	execute: func(s *Server, opInst OperationInstance) map[string]interface{} {
+		outputs := make(map[string]interface{})
+
 		vertexMapping := []int64{0, 1, 2, 3}
-		s.entities[opInst.Outputs["vertices"]] = VertexSet{vertexMapping}
-		s.entities[opInst.Outputs["edges"]] = EdgeBundle{
+		outputs["vertices"] = VertexSet{vertexMapping}
+		outputs["edges"] = EdgeBundle{
 			src:           []int64{0, 1, 2, 2},
 			dst:           []int64{1, 0, 0, 1},
 			vertexMapping: vertexMapping,
 			edgeMapping:   []int64{0, 1, 2, 3},
 		}
-		s.entities[opInst.Outputs["age"]] = Attribute{
+		outputs["age"] = Attribute{
 			attribute: []float64{20.3, 18.2, 50.3, 2.0},
 			defined:   []bool{true, true, true, true},
 		}
-		s.entities[opInst.Outputs["gender"]] = Attribute{
+		outputs["gender"] = Attribute{
 			attribute: []string{"Male", "Female", "Male", "Male"},
 			defined:   []bool{true, true, true, true},
 		}
-		s.entities[opInst.Outputs["income"]] = Attribute{
+		outputs["income"] = Attribute{
 			attribute: []float64{1000, 0, 0, 2000},
 			defined:   []bool{true, false, false, true},
 		}
-		s.entities[opInst.Outputs["location"]] = Attribute{
+		outputs["location"] = Attribute{
 			attribute: []struct {
 				x float64
 				y float64
@@ -47,15 +47,16 @@ var exampleGraph = Operation{
 			},
 			defined: []bool{true, true, true, true},
 		}
-		s.entities[opInst.Outputs["comment"]] = Attribute{
+		outputs["comment"] = Attribute{
 			attribute: []string{"Adam loves Eve", "Eve loves Adam",
 				"Bob envies Adam", "Bob loves Eve"},
 			defined: []bool{true, true, true, true},
 		}
-		s.entities[opInst.Outputs["weight"]] = Attribute{
+		outputs["weight"] = Attribute{
 			attribute: []float64{1, 2, 3, 4},
 			defined:   []bool{true, true, true, true},
 		}
-		s.entities[opInst.Outputs["greeting"]] = "Hello world! 😀 "
+		outputs["greeting"] = "Hello world! 😀 "
+		return outputs
 	},
 }

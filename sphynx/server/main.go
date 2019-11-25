@@ -57,13 +57,25 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 	if !exists {
 		return nil, status.Errorf(codes.Unimplemented, "Can't compute %v", opInst)
 	} else {
-		op.execute(s, opInst)
+		outputs := op.execute(s, opInst)
+		s.Lock()
+		defer s.Unlock()
+		for name, entity := range outputs {
+			guid := opInst.Outputs[name]
+			s.entities[guid] = entity
+			switch e := entity.(type) {
+			case EdgeBundle:
+				idSetGUID := opInst.Outputs[name+"-idSet"]
+				idSetEntity := VertexSet{e.edgeMapping}
+				s.entities[idSetGUID] = idSetEntity
+			}
+		}
 		return &pb.ComputeReply{}, nil
 	}
 }
 
 func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
-	log.Printf("GetScalar request with GUID %v", in.Guid)
+	log.Printf("Received GetScalar request with GUID %v.", in.Guid)
 	scalar := s.entities[GUID(in.Guid)]
 	scalarJSON, err := json.Marshal(scalar)
 	if err != nil {
@@ -74,6 +86,7 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 
 func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.ToSparkIdsReply, error) {
 	entity := s.entities[GUID(in.Guid)]
+	log.Printf("Reindexing %v to use spark IDs.", entity)
 	switch e := entity.(type) {
 	case VertexSet:
 		vertexSet := &pb.VertexSet{Ids: e.vertexMapping}
@@ -88,8 +101,28 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 				"Failed to write encoded vertex set: %v", err)
 		}
 		return &pb.ToSparkIdsReply{}, nil
+	case EdgeBundle:
+		edgeBundle := &pb.EdgeBundle{}
+		for sphynxId, sparkId := range e.edgeMapping {
+			edgeBundle.Edges = append(edgeBundle.Edges,
+				&pb.Edge{Id: sparkId,
+					Src: e.src[sphynxId],
+					Dst: e.dst[sphynxId],
+				})
+		}
+		out, err := proto.Marshal(edgeBundle)
+		if err != nil {
+			return nil, status.Errorf(codes.Unknown,
+				"Failed to encode edge bundle: %v", err)
+		}
+		fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
+		if err := ioutil.WriteFile(fname, out, 0755); err != nil {
+			return nil, status.Errorf(codes.Unknown,
+				"Failed to write encoded edge bundle: %v", err)
+		}
+		return &pb.ToSparkIdsReply{}, nil
 	default:
-		return nil, status.Errorf(codes.Unimplemented, "Can't reindex %v to use Spark indices.", entity)
+		return nil, status.Errorf(codes.Unimplemented, "Can't reindex %v to use Spark IDs.", entity)
 	}
 }
 
