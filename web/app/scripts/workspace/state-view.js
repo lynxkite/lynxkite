@@ -41,6 +41,8 @@ angular.module('biggraph')
           } else {
             scope.result = { states: [scope.plug], metas: [] };
             scope.lastState = scope.plug;
+            scope.instruments = [];
+            lastJson = undefined;
           }
           setVisualizationEditHandler();
         }
