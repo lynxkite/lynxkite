@@ -7,6 +7,7 @@ import java.util.UUID
 
 import collection.concurrent.TrieMap
 import collection.JavaConverters._
+import reflect.runtime.universe.typeTag
 
 import com.lynxanalytics.biggraph.graph_util
 import proto.Entities
@@ -86,10 +87,14 @@ class ScalaDomain(val mixedDir: Option[String] = None) extends Domain {
               .getIdsList().asScala.toSet
             case e: EdgeBundle => Entities.EdgeBundle.parseFrom(file)
               .getEdgesList().asScala.map(e => (e.getId, Edge(e.getSrc, e.getDst))).toMap
-            case a: Attribute[_] => ???
+            case a: Attribute[_] if a.typeTag == typeTag[String] => {
+              Entities.StringAttribute.parseFrom(file).getValuesMap().asScala.toMap
+            }
+            case a: Attribute[_] if a.typeTag == typeTag[Double] => {
+              Entities.DoubleAttribute.parseFrom(file).getValuesMap().asScala.toMap
+            }
             case s: Scalar[_] => ???
-            case e: HybridBundle => ???
-            case t: Table => ???
+            case _ => throw new AssertionError(s"Cannot fetch $e from $source")
           }
         })
         future.map(set(e, _))
