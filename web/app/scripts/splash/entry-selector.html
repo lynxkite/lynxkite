@@ -70,11 +70,11 @@
     <input class="form-control" id="search-box" placeholder="Search" ng-model="searchQuery">
   </div>
 
-  <uib-progressbar ng-if="!data.$resolved" value="100" class="progress-striped active">
+  <uib-progressbar ng-if="nextData" value="100" class="progress-striped active">
     Loading...
   </uib-progressbar>
 
-  <display-error caption="Could not load directory listing." request="data"></display-error>
+  <display-error caption="Could not load directory listing." request="nextData"></display-error>
 
   <div ng-repeat="directory in data.directories"
     id="directory-{{ pathInside(directory) | id }}"
@@ -96,7 +96,7 @@
   </div>
 
   <div
-    ng-repeat="object in data.objects"
+    ng-repeat="object in data.objects track by object.name"
     id="{{ object.objectType }}-{{ pathInside(object.name) | id }}"
     class="entry {{ object.objectType }}-entry"
     ng-class="{
