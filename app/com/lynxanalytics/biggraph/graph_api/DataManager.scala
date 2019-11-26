@@ -158,8 +158,6 @@ class DataManager(
         futures((o.gUID, d)) = f
       }
       f
-    } else if (source.has(e)) { // Someone else has it. Relocate.
-      ensureThenRelocate(e, source, d)
     } else { // Someone else has to compute it. Then we relocate.
       ensureThenRelocate(e, source, d)
     }
