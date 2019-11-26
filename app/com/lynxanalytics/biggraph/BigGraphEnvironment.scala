@@ -66,16 +66,15 @@ object BigGraphEnvironmentImpl {
         (sphynxHost, sphynxPort, sphynxCertDir) match {
           case (Some(host), Some(port), Some(certDir)) => {
             val mixedDataDir = LoggedEnvironment.envOrNone("UNORDERED_SPHYNX_DATA_DIR")
-            val scalaDomain = mixedDataDir match {
+            val unorderedSphynxDisk = mixedDataDir match {
               case None =>
                 throw new AssertionError("""UNORDERED_SPHYNX_DATA_DIR is not
                 |defined. If you don't want to start Sphynx, please unset SPHYNX_PORT.""")
-              case d => new graph_api.ScalaDomain(d)
+              case Some(d) => new graph_api.UnorderedSphynxDisk(host, port.toInt, certDir, d)
             }
             Seq(
               new graph_api.SphynxMemory(host, port.toInt, certDir),
-              new graph_api.UnorderedSphynxDisk(host, port.toInt, certDir),
-              scalaDomain, sparkDomain)
+              unorderedSphynxDisk, new graph_api.ScalaDomain, sparkDomain)
           }
           case _ => Seq(new graph_api.ScalaDomain, sparkDomain)
         }

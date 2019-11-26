@@ -87,6 +87,7 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.ToSparkIdsReply, error) {
 	entity := s.entities[GUID(in.Guid)]
 	log.Printf("Reindexing %v to use spark IDs.", entity)
+	fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
 	switch e := entity.(type) {
 	case VertexSet:
 		vertexSet := &pb.VertexSet{Ids: e.vertexMapping}
@@ -95,7 +96,6 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 			return nil, status.Errorf(codes.Unknown,
 				"Failed to encode vertex set: %v", err)
 		}
-		fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
 		if err := ioutil.WriteFile(fname, out, 0755); err != nil {
 			return nil, status.Errorf(codes.Unknown,
 				"Failed to write encoded vertex set: %v", err)
@@ -115,7 +115,6 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 			return nil, status.Errorf(codes.Unknown,
 				"Failed to encode edge bundle: %v", err)
 		}
-		fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
 		if err := ioutil.WriteFile(fname, out, 0755); err != nil {
 			return nil, status.Errorf(codes.Unknown,
 				"Failed to write encoded edge bundle: %v", err)
@@ -134,7 +133,6 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 			return nil, status.Errorf(codes.Unknown,
 				"Failed to encode attribute: %v", err)
 		}
-		fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
 		if err := ioutil.WriteFile(fname, out, 0755); err != nil {
 			return nil, status.Errorf(codes.Unknown,
 				"Failed to write encoded attribute: %v", err)
@@ -153,7 +151,6 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 			return nil, status.Errorf(codes.Unknown,
 				"Failed to encode attribute: %v", err)
 		}
-		fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
 		if err := ioutil.WriteFile(fname, out, 0755); err != nil {
 			return nil, status.Errorf(codes.Unknown,
 				"Failed to write encoded attribute: %v", err)
