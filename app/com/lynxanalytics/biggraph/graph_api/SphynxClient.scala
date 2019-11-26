@@ -52,24 +52,24 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
 
   def compute(operationMetadataJSON: String): SafeFuture[Unit] = {
     val request = SphynxOuterClass.ComputeRequest.newBuilder().setOperation(operationMetadataJSON).build()
-    val singleResponseStreamObserver = new SingleResponseStreamObserver[SphynxOuterClass.ComputeReply]
-    asyncStub.compute(request, singleResponseStreamObserver)
-    singleResponseStreamObserver.future.map(_ => ())
+    val obs = new SingleResponseStreamObserver[SphynxOuterClass.ComputeReply]
+    asyncStub.compute(request, obs)
+    obs.future.map(_ => ())
   }
 
   def getScalar[T](scalar: Scalar[T]): SafeFuture[T] = {
     val gUIDString = scalar.gUID.toString()
     val request = SphynxOuterClass.GetScalarRequest.newBuilder().setGuid(gUIDString).build()
     val format = TypeTagToFormat.typeTagToFormat(scalar.typeTag)
-    val singleResponseStreamObserver = new SingleResponseStreamObserver[SphynxOuterClass.GetScalarReply]
-    asyncStub.getScalar(request, singleResponseStreamObserver)
-    singleResponseStreamObserver.future.map(r => format.reads(Json.parse(r.getScalar)).get)
+    val obs = new SingleResponseStreamObserver[SphynxOuterClass.GetScalarReply]
+    asyncStub.getScalar(request, obs)
+    obs.future.map(r => format.reads(Json.parse(r.getScalar)).get)
   }
 
   def toSparkIds(guid: String): SafeFuture[Unit] = {
     val request = SphynxOuterClass.ToSparkIdsRequest.newBuilder().setGuid(guid).build()
-    val singleResponseStreamObserver = new SingleResponseStreamObserver[SphynxOuterClass.ToSparkIdsReply]
-    asyncStub.toSparkIds(request, singleResponseStreamObserver)
-    singleResponseStreamObserver.future.map(_ => ())
+    val obs = new SingleResponseStreamObserver[SphynxOuterClass.ToSparkIdsReply]
+    asyncStub.toSparkIds(request, obs)
+    obs.future.map(_ => ())
   }
 }
