@@ -149,19 +149,19 @@ class DataManager(
   }
 
   private def makeFuture(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = synchronized {
-    val other = bestSource(e)
+    val source = bestSource(e)
     if (d.has(e)) { // We have it. Great.
       SafeFuture.successful(())
-    } else if (other.has(e)) { // Someone else has it. Relocate.
-      ensureThenRelocate(e, other, d)
-    } else if (d.canCompute(e.source)) { // Nobody has it, but we can compute. Compute.
+    } else if (source == d) { // Nobody has it, but this domain is the best to compute it. Compute.
       val f = ensureInputs(e, d).flatMap(_ => d.compute(e.source))
       for (o <- e.source.outputs.all.values) {
         futures((o.gUID, d)) = f
       }
       f
+    } else if (source.has(e)) { // Someone else has it. Relocate.
+      ensureThenRelocate(e, source, d)
     } else { // Someone else has to compute it. Then we relocate.
-      ensureThenRelocate(e, other, d)
+      ensureThenRelocate(e, source, d)
     }
   }
 
