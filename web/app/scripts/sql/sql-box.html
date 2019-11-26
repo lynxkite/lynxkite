@@ -82,11 +82,11 @@ instead of ng-model="sql" -->
   <div ng-repeat="format in 'csv json parquet orc'.split(' ')">
     <div class="form-group" ng-show="exportFormat === format">
       <label for="exportPath" class="col-sm-4 control-label">
-        Path <help-popup href="export-{{ format }}-path"></help-popup>
+        Path <help-popup href="export-to-{{ format }}-path"></help-popup>
       </label>
       <div class="col-sm-8">
         <input
-          class="form-control" id="export-{{ format }}-path" ng-model="$parent.exportPath"
+          class="form-control" id="export-to-{{ format }}-path" ng-model="$parent.exportPath"
           placeholder="Distributed file system path">
       </div>
     </div>
@@ -94,7 +94,7 @@ instead of ng-model="sql" -->
 
   <div class="form-group" ng-show="exportFormat === 'csv'">
     <label for="exportDelimiter" class="col-sm-4 control-label">
-      Delimiter <help-popup href="export-csv-delimiter"></help-popup>
+      Delimiter <help-popup href="export-to-csv-delimiter"></help-popup>
     </label>
     <div class="col-sm-8">
       <input class="form-control" id="exportDelimiter" ng-model="exportDelimiter" value=",">
@@ -103,7 +103,7 @@ instead of ng-model="sql" -->
 
   <div class="form-group" ng-show="exportFormat === 'csv'">
     <label for="exportQuote" class="col-sm-4 control-label">
-      Quote <help-popup href="export-csv-quote"></help-popup>
+      Quote <help-popup href="export-to-csv-quote"></help-popup>
     </label>
     <div class="col-sm-8">
       <input class="form-control" id="exportQuote" ng-model="exportQuote" value="&quot;">
@@ -115,7 +115,7 @@ instead of ng-model="sql" -->
       <div class="checkbox">
         <label>
           <input type="checkbox" ng-model="exportHeader"> Include header
-          <help-popup href="export-csv-header"></help-popup>
+          <help-popup href="export-to-csv-header"></help-popup>
         </label>
       </div>
     </div>
@@ -123,7 +123,7 @@ instead of ng-model="sql" -->
 
   <div class="form-group" ng-show="exportFormat === 'jdbc'">
     <label for="exportJdbcUrl" class="col-sm-4 control-label">
-      JDBC URL <help-popup href="export-jdbc-url"></help-popup>
+      JDBC URL <help-popup href="export-to-jdbc-url"></help-popup>
     </label>
     <div class="col-sm-8">
       <input class="form-control" id="exportJdbcUrl" ng-model="exportJdbcUrl" placeholder="jdbc:...">
@@ -132,7 +132,7 @@ instead of ng-model="sql" -->
 
   <div class="form-group" ng-show="exportFormat === 'jdbc'">
     <label for="exportJdbcTable" class="col-sm-4 control-label">
-      Table <help-popup href="export-jdbc-table"></help-popup>
+      Table <help-popup href="export-to-jdbc-table"></help-popup>
     </label>
     <div class="col-sm-8">
       <input class="form-control" id="exportJdbcTable" ng-model="exportJdbcTable">
@@ -141,7 +141,7 @@ instead of ng-model="sql" -->
 
   <div class="form-group" ng-show="exportFormat === 'jdbc'">
     <label for="exportMode" class="col-sm-4 control-label">
-      <help-popup href="export-jdbc-mode"></help-popup>
+      <help-popup href="export-to-jdbc-mode"></help-popup>
     </label>
     <div class="col-sm-8">
       <select class="form-control" id="exportMode" ng-model="exportMode">
