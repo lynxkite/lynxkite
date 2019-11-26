@@ -41,35 +41,32 @@
   padding: 0 5px;
 }
 
-.entry-list .entry > .icon,
-.entry-list .entry-nohover > .icon {
+.entry-list .entry-header > .icon {
   position: absolute;
   padding: 6px;
   margin-left: -34px;
 }
 
-.entry-list .entry .open-in-new-tab-icon {
+.entry-list .entry-header .open-in-new-tab-icon {
   font-size: 60%;
   vertical-align: super;
+  color: inherit;
 }
 
-.entry-list .entry:hover .open-in-new-tab-icon,
-.entry-list .entry:focus .open-in-new-tab-icon {
-  color: white;
-}
-
-.entry-list .entry,
-.entry-list .entry-nohover {
+.entry-list .entry {
   position: relative;
-  padding-left: 40px;
   border-bottom: 1px solid whitesmoke;
+}
+.entry-list .entry-header {
+  padding-left: 40px;
   color: #004165;
   cursor: pointer;
   user-select: none;
-}
-.entry-list .entry:hover,
-.entry-list .entry:focus {
   text-decoration: none;
+}
+.entry-list .open .entry-header,
+.entry-list .entry-header:hover,
+.entry-list .entry-header:focus {
   background: #39bcf3;
   color: white;
 }
@@ -85,9 +82,6 @@
 .entry-list .entry:last-child {
   border-bottom: none;
 }
-.entry-list .entry a.open-in-new-tab-icon {
-  color: #004165;
-}
 
 .path-element:hover,
 .path-element:focus {
@@ -96,6 +90,5 @@
 }
 
 .entry-list .viewer {
-  color: black !important;
-  background: transparent !important;
+  border: 3px solid #39bcf3;
 }

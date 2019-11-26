@@ -59,11 +59,11 @@ angular.module('biggraph').directive('entrySelector',
         scope.util = util;
         scope.reload = function() {
           abandonScalars();
-          scope.opened = {}; // Snapshot viewers are closed by default.
+          let req;
           if (!scope.searchQuery) {
-            scope.data = util.nocache('/ajax/entryList', { path: scope.path });
+            req = util.nocache('/ajax/entryList', { path: scope.path });
           } else {
-            scope.data = util.nocache(
+            req = util.nocache(
               '/ajax/entrySearch',
               {
                 basePath: scope.path,
@@ -71,12 +71,20 @@ angular.module('biggraph').directive('entrySelector',
                 includeNotes: true,
               });
           }
+          scope.nextData = req;
+          req.then(res => {
+            if (req === scope.nextData) {
+              scope.data = res;
+              delete scope.nextData;
+            }
+          });
           window.sessionStorage.setItem('last_selector_path', scope.path);
           window.localStorage.setItem('last_selector_path', scope.path);
         };
 
-        scope.$watch('path', scope.reload);
-        scope.$watch('searchQuery', scope.reload);
+        scope.$watch('path', () => { scope.opened = {}; scope.reload(); });
+        scope.$watch('searchQuery', () => { scope.opened = {}; scope.reload(); });
+        scope.$on('saved snapshot', scope.reload);
 
         scope.$watch('data.$resolved', function(resolved) {
           if (!resolved || scope.data.$error) { return; }

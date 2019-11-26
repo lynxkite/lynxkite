@@ -52,6 +52,7 @@ input.form-control#sample-rows {
 #spinner-container {
   padding-top: 10px;
   padding-bottom: 10px;
+  overflow: hidden;
 }
 
 #table-sample-error {
