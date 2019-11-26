@@ -49,7 +49,7 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends Domain {
 
 }
 
-class UnorderedSphynxDisk(host: String, port: Int, certDir: String) extends Domain {
+class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir: String) extends Domain {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "UnorderedSphynxDisk",
@@ -58,7 +58,7 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String) extends Doma
   val client = new SphynxClient(host, port, certDir)
 
   override def has(entity: MetaGraphEntity): Boolean = {
-    return false
+    new java.io.File(s"${dataDir}/${entity.gUID.toString}").isFile
   }
 
   override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {

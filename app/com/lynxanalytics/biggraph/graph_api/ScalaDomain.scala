@@ -12,7 +12,7 @@ import reflect.runtime.universe.typeTag
 import com.lynxanalytics.biggraph.graph_util
 import proto.Entities
 
-class ScalaDomain(val mixedDir: Option[String] = None) extends Domain {
+class ScalaDomain extends Domain {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
       "ScalaDomain",
@@ -80,7 +80,7 @@ class ScalaDomain(val mixedDir: Option[String] = None) extends Domain {
         future.map(set(e, _))
       case source: UnorderedSphynxDisk => {
         val future = SafeFuture.async({
-          val entityPath = s"${mixedDir.get}/${e.gUID.toString}"
+          val entityPath = s"${source.dataDir}/${e.gUID.toString}"
           val file = new FileInputStream(entityPath)
           e match {
             case v: VertexSet => Entities.VertexSet.parseFrom(file)
