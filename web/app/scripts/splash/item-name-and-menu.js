@@ -31,6 +31,10 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util)
       scope.duplicate = function() {
         scope.menu.duplicate(scope.type, scope.name);
       };
+
+      /* global ClipboardJS */
+      const clippy = new ClipboardJS('#menu-copy-to-clipboard');
+      scope.$on('$destroy', () => clippy.destroy());
     },
   };
 });
