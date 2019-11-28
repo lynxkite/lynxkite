@@ -6,9 +6,17 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - Click a vertex in a visualization to open a context menu for interactive graph navigation.
+ - New multi-domain backend. This is the foundation for the high-performance Sphynx backend.
+   (But Sphynx is not included yet.)
  - Users are welcomed by an interactive tutorial.
- - A choice of color maps for qualitative attributes.
+ - A choice of color maps for visualizing qualitative attributes.
+ - Instruments (such as graph visualization and SQL) can be used on snapshots.
+ - "Go to root folder" button and "Copy path to clipboard" option in directory browser.
+ - Bug fixes and improvements, such as eliminating flicker on UI elements.
+
+### 2.8.5
+
+ - Click a vertex in a visualization to open a context menu for interactive graph navigation.
 
 ### 2.8.4
 
