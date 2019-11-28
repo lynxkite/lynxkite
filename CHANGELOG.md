@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 3.0.0
+
  - New multi-domain backend. This is the foundation for the high-performance Sphynx backend.
    (But Sphynx is not included yet.)
  - Users are welcomed by an interactive tutorial.
