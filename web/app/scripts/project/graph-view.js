@@ -1587,7 +1587,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       labelColor = chroma.contrast(this.color, 'white') > chroma.contrast(this.color, '#001b31') ?
         'white' : '#001b31';
     }
-    this.label.attr({ style: 'fill: ' + labelColor });
+    this.label.attr({ style: `fill: ${labelColor}; stroke: ${color};` });
     this.labelBackground = svg.create(
       'rect', {
         'class': 'label-background',
