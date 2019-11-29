@@ -13,6 +13,7 @@ if ! type "protoc" > /dev/null; then
   PROTOC_VERSION="3.10.0"
   PROTOC_ZIP="protoc-$PROTOC_VERSION-linux-x86_64.zip"
   wget -nc https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/$PROTOC_ZIP
+  mkdir -p protoc
   unzip -n $PROTOC_ZIP bin/protoc -d protoc
 fi
 PATH="${REPO}/protoc/bin:${PATH}"

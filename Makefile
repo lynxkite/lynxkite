@@ -110,4 +110,5 @@ licenses: scala-dependency-licenses.md javascript-dependency-licenses.txt javasc
 .PHONY: local-bd-test
 local-bd-test: .build/backend-done
 	python/big_data_tests/run_test.sh
-
+.PHONY: sphynx
+sphynx: .build/sphynx-prep-done
