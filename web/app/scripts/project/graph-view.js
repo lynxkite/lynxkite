@@ -822,6 +822,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
             const actions = [];
             const side = vertices.side;
             const id = vertex.id.toString();
+            const centers = vertices.vs.filter(v => v.data.center).map(v => v.id);
             const attributes = {};
             // Iterate through the visualization modes (e.g. label, size) to get the list of
             // attributes which are visualized.
@@ -832,23 +833,24 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
               }
             }
 
-            if (!side.hasCenter(id)) {
+            if (!vertex.data.center) {
               actions.push({
                 title: 'Add to centers',
                 callback: function() {
-                  side.addCenter(id);
+                  centers.push(vertex.id);
+                  side.setCenters(centers);
                 },
               });
             }
-            if (side.hasCenter(id)) {
+            if (vertex.data.center) {
               actions.push({
                 title: 'Remove from centers',
                 callback: function() {
-                  side.removeCenter(id);
+                  side.setCenters(centers.filter(id => id !== vertex.id));
                 },
               });
             }
-            if (!side.hasCenter(id) || (side.centers.length !== 1)) {
+            if (!vertex.data.center || (side.centers.length !== 1)) {
               actions.push({
                 title: 'Set as only center',
                 callback: function() {
