@@ -193,19 +193,8 @@ angular.module('biggraph')
 
       vd.centers = this.state.centers || [];
       const that = this;
-      vd.hasCenter = function(id) { return that.state.centers.indexOf(id) !== -1; };
       vd.setCenter = function(id) { that.state.centers = [id]; };
-      vd.addCenter = function(id) {
-        if (isNaN(parseInt(that.state.centers[0]))) {
-          that.state.centers = [id];
-        } else {
-          that.state.centers = that.state.centers.concat([id]);
-        }
-      };
-      vd.removeCenter = function(id) {
-        that.state.centers =
-          that.state.centers.filter(function(element) { return element !== id; });
-      };
+      vd.setCenters = function(ids) { that.state.centers = ids; };
       vd.sampleRadius = this.state.sampleRadius;
       vd.animate = this.state.animate;
       vd.sliderPos = this.state.sliderPos;
