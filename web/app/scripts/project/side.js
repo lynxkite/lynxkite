@@ -313,6 +313,7 @@ angular.module('biggraph')
           if (!angular.equals(that.project, that.pendingProject)) {
             // This check is to avoid DOM-rebuild of entity drop popups.
             that.project = that.pendingProject;
+            that.onProjectLoaded();
           }
         });
       } else {
