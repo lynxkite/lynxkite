@@ -257,19 +257,17 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
     log.info(s"${user.email} attempting to move data files to trash using '${req.method}'.")
     val files = getAllFiles(trash = false)
     val filesToKeep = methods.find(m => m.id == req.method).get.filesToKeep()
-    val filesToDelete = files.all.keys.toSet -- filesToKeep
-    if (filesToDelete.nonEmpty) {
-      environment.dataManager.synchronized {
-        environment.dataManager.waitAllFutures()
-        moveToTrash(io.PartitionedDir, files.partitioned.keys.toSet -- filesToKeep)
-        moveToTrash(io.EntitiesDir, files.entities.keys.toSet -- filesToKeep)
-        moveToTrash(io.OperationsDir, files.operations.keys.toSet -- filesToKeep)
-        moveToTrash(io.ScalarsDir, files.scalars.keys.toSet -- filesToKeep)
-        moveToTrash(io.TablesDir, files.tables.keys.toSet -- filesToKeep)
-        moveToTrash(io.BroadcastsDir, files.broadcasts.keys.toSet -- filesToKeep)
-        environment.sparkDomain.clear()
-        environment.dataManager.clear()
-      }
+
+    environment.dataManager.synchronized {
+      environment.dataManager.waitAllFutures()
+      moveToTrash(io.PartitionedDir, files.partitioned.keys.toSet -- filesToKeep)
+      moveToTrash(io.EntitiesDir, files.entities.keys.toSet -- filesToKeep)
+      moveToTrash(io.OperationsDir, files.operations.keys.toSet -- filesToKeep)
+      moveToTrash(io.ScalarsDir, files.scalars.keys.toSet -- filesToKeep)
+      moveToTrash(io.TablesDir, files.tables.keys.toSet -- filesToKeep)
+      moveToTrash(io.BroadcastsDir, files.broadcasts.keys.toSet -- filesToKeep)
+      environment.sparkDomain.clear()
+      environment.dataManager.clear()
     }
   }
 
