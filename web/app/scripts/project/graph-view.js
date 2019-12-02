@@ -1562,6 +1562,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     } else {
       this.highlight = tinycolor(this.color).lighten(20).toString();
     }
+    this.labelColor = labelColor;
     this.frozen = 0; // Number of reasons why this vertex should not be animated.
     this.positioned = false; // Is this vertex explicitly positioned?
     if (image) {
@@ -1571,7 +1572,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
       this.icon.scale = 2.0;
     } else {
       this.icon = vertices.getIcon(icon);
-      this.icon.attr({ style: 'fill: ' + this.color, 'class': 'icon' });
+      this.icon.attr({ 'class': 'icon' });
     }
     this.minTouchRadius = 10;
     if (r < this.minTouchRadius) {
@@ -1582,19 +1583,9 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.text = text;
     const fontSize = 30 * textSize;
     this.label = svg.create('text', { 'font-size': fontSize + 'px' }).text(text || '');
-    if (labelColor === undefined) {
-      // Use the background color or white for default label color depending on the vertex color.
-      labelColor = chroma.contrast(this.color, 'white') > chroma.contrast(this.color, '#001b31') ?
-        'white' : '#001b31';
-    }
-    this.label.attr({ style: 'fill: ' + labelColor });
-    this.labelBackground = svg.create(
-      'rect', {
-        'class': 'label-background',
-        width: 0, height: 0, rx: 2, ry: 2,
-      });
+    this.setColor(this.color);
     this.dom = svg.group(
-      [this.icon, this.touch, this.labelBackground, this.label],
+      [this.icon, this.touch, this.label],
       {'class': 'vertex' });
     this.dom.attr({ opacity: opacity });
     this.moveListeners = [];
@@ -1626,27 +1617,29 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     });
   }
 
+  Vertex.prototype.setColor = function(c) {
+    let lc = this.labelColor ||
+      // Use the background color or white for default label color depending on the vertex color.
+      (chroma.contrast(c, 'white') > chroma.contrast(c, '#001b31') ?
+        'white' : '#001b31');
+    this.icon.attr({ style: `fill: ${c};` });
+    this.label.attr({ style: `fill: ${lc}; stroke: ${c};` });
+  };
+
   Vertex.prototype.setHighlight = function(on) {
     if (on) {
       svg.addClass(this.dom, 'highlight');
-      this.icon.attr({style: 'fill: ' + this.highlight});
+      this.setColor(this.highlight);
       for (let i = 0; i < this.highlightListeners.length; ++i) {
         this.highlightListeners[i].on(this);
       }
-      // Size labelBackground here, because we may not know the label size earlier.
-      this.labelBackground.attr({
-        width: this.label[0].getBoundingClientRect().width + 4,
-        height: this.label[0].getBoundingClientRect().height,
-        style: 'fill: ' + this.highlight,
-      });
       this.reDraw();
     } else {
       svg.removeClass(this.dom, 'highlight');
-      this.icon.attr({style: 'fill: ' + this.color});
+      this.setColor(this.color);
       for (let i = 0; i < this.highlightListeners.length; ++i) {
         this.highlightListeners[i].off(this);
       }
-      this.labelBackground.attr({ style: '' });
     }
   };
 
@@ -1715,10 +1708,6 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     this.touch[0].setAttribute('cy', sy);
     this.touch[0].setAttribute('r', r);
 
-    const backgroundWidth = this.labelBackground[0].getAttribute('width');
-    const backgroundHeight = this.labelBackground[0].getAttribute('height');
-    this.labelBackground[0].setAttribute('x', sx - backgroundWidth / 2);
-    this.labelBackground[0].setAttribute('y', sy - backgroundHeight / 2);
     for (let i = 0; i < this.moveListeners.length; ++i) {
       this.moveListeners[i](this);
     }

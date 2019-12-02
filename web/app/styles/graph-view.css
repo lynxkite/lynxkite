@@ -76,6 +76,8 @@ svg .vertex text {
   text-anchor: middle;
   font-family: 'Arial Black', sans-serif;
   fill: white;
+  paint-order: stroke;
+  stroke-width: 2px;
 }
 svg .edge text {
   text-anchor: middle;
