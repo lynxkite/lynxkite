@@ -1620,8 +1620,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
   Vertex.prototype.setColor = function(c) {
     let lc = this.labelColor ||
       // Use the background color or white for default label color depending on the vertex color.
-      chroma.contrast(c, 'white') > chroma.contrast(c, '#001b31') ?
-      'white' : '#001b31';
+      (chroma.contrast(c, 'white') > chroma.contrast(c, '#001b31') ?
+        'white' : '#001b31');
     this.icon.attr({ style: `fill: ${c};` });
     this.label.attr({ style: `fill: ${lc}; stroke: ${c};` });
   };
