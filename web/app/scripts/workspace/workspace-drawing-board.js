@@ -825,7 +825,7 @@ angular.module('biggraph')
                 },
               ],
               onEnd: function() {
-                if (scope.tutorial.getCurrentStepIndex() < scope.tutorial.getStepCount() - 1) {
+                if (!scope.tutorial.toBeContinued) {
                   // Manual abort before we had reached the last step.
                   localStorage.setItem('workspace-drawing-board tutorial done', 'true');
                   delete scope.tutorial;
@@ -854,6 +854,7 @@ angular.module('biggraph')
 
           function tutorialDragStart() {
             if (scope.tutorial) {
+              scope.tutorial.toBeContinued = true;
               scope.tutorial.end();
             }
           }
