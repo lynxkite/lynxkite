@@ -161,7 +161,7 @@ angular.module('biggraph')
         const request = workspaceStateRequest || util.nocache('/ajax/getWorkspace', this.ref());
         this._lastLoadRequest = request;
         this._requestInvalidated = false;
-        request
+        return request
           .then(function ensureBoxCatalog(response) {
             if (!that._boxCatalogMap) { // Need to load catalog before processing the response.
               return that._updateBoxCatalog().then(function() { return response; });
@@ -185,7 +185,7 @@ angular.module('biggraph')
 
       saveWorkspace: function() {
         const that = this;
-        that.loadWorkspace(
+        return that.loadWorkspace(
           util.post('/ajax/setAndGetWorkspace', { reference: that.ref(), workspace: that.state }));
       },
 
@@ -389,8 +389,7 @@ angular.module('biggraph')
       saveIfBoxesDirty: function() {
         for (let i = 0; i < this.boxes.length; i++) {
           if (this.boxes[i].isDirty) {
-            this.saveWorkspace();
-            break;
+            return this.saveWorkspace();
           }
         }
       },
