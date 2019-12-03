@@ -32,7 +32,7 @@
     <td></td>
     <td>
       <div ng-if="filters.length !== 0">Attribute restrictions</div>
-      <div class="input-group" ng-repeat="filter in filters track by filter.attributeName">
+      <div class="input-group" ng-repeat="filter in filters track by $index">
         <div class="input-group-btn" uib-dropdown>
           <button
             uib-dropdown-toggle
