@@ -8,7 +8,7 @@ angular.module('biggraph')
     'workspaceDrawingBoard',
     function(
       environment, hotkeys, PopupModel, SelectionModel, WorkspaceWrapper, $rootScope, $q,
-      $location, util, longPoll, pythonCodeGenerator) {
+      $location, util, longPoll, pythonCodeGenerator, $timeout) {
       return {
         restrict: 'E',
         templateUrl: 'scripts/workspace/workspace-drawing-board.html',
@@ -358,8 +358,12 @@ angular.module('biggraph')
             removeDragListeners();
             scope.selection.remove();
             if (scope.movedBoxes) {
-              scope.workspace.saveIfBoxesDirty();
-              tutorialBoxPlaced();
+              const req = scope.workspace.saveIfBoxesDirty();
+              const placedBox = scope.movedBoxes.filter(b => b.isDirty)[0];
+              // We need to wait for the request and wait for the DOM to update.
+              // Otherwise we would be replacing the box to which the tutorial is bound.
+              // That would cause the "End Tour" button to not work properly.
+              req && req.then(() => $timeout(() => tutorialBoxPlaced(placedBox)));
             }
             scope.movedBoxes = undefined;
             scope.pulledPlug = undefined;
@@ -825,7 +829,7 @@ angular.module('biggraph')
                 },
               ],
               onEnd: function() {
-                if (scope.tutorial.getCurrentStepIndex() < scope.tutorial.getStepCount() - 1) {
+                if (!scope.tutorial.toBeContinued) {
                   // Manual abort before we had reached the last step.
                   localStorage.setItem('workspace-drawing-board tutorial done', 'true');
                   delete scope.tutorial;
@@ -833,7 +837,6 @@ angular.module('biggraph')
               },
             });
 
-            scope.$on('$destroy', function() { scope.tutorial && scope.tutorial.end(); });
             scope.tutorial.start();
           }
 
@@ -854,23 +857,16 @@ angular.module('biggraph')
 
           function tutorialDragStart() {
             if (scope.tutorial) {
+              scope.tutorial.toBeContinued = true;
               scope.tutorial.end();
             }
           }
 
-          function tutorialBoxPlaced() {
+          function tutorialBoxPlaced(box) {
             if (!scope.tutorial) {
               return;
             }
-            let element;
-            for (let box of scope.movedBoxes) {
-              if (box.isDirty) {
-                element = '#' + box.instance.id.toLowerCase();
-              }
-            }
-            if (!element) {
-              return;
-            }
+            const element = '#' + box.instance.id.toLowerCase();
             scope.tutorial = new Tour({
               autoscroll: false,
               framework: 'bootstrap3',
@@ -939,6 +935,7 @@ angular.module('biggraph')
             localStorage.removeItem('workspace-drawing-board tutorial done');
             showTutorial();
           });
+          scope.$on('$destroy', function() { scope.tutorial && scope.tutorial.end(); });
         }
       };
     });
