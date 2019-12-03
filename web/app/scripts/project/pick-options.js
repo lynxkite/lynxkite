@@ -72,7 +72,7 @@ angular.module('biggraph').directive('pickOptions', function() {
         const lastCentersRequest = scope.side.state.lastCentersRequest;
         if (lastCentersRequest) {
           if (lastCentersRequest.filters) {
-            scope.filters = lastCentersRequest.filters;
+            scope.filters = angular.copy(lastCentersRequest.filters);
           }
           if (lastCentersRequest.count) {
             scope.count = lastCentersRequest.count.toString();

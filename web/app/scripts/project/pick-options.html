@@ -32,7 +32,7 @@
     <td></td>
     <td>
       <div ng-if="filters.length !== 0">Attribute restrictions</div>
-      <div class="pick-attr-restrict btn-group pull-left" ng-repeat="filter in filters">
+      <div class="pick-attr-restrict btn-group pull-left" ng-repeat="filter in filters track by filter.attributeName">
         <select
           id="center-restriction-{{ $index }}-attribute"
           class="btn btn-default"
