@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+### 3.0.1
+
  - Minor UI fixes and graph visualization improvements.
 
 ### 3.0.0
