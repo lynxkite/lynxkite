@@ -1,6 +1,6 @@
 <table>
   <tr>
-    <td>
+    <th>
       Center count:
     </td>
     <td>
@@ -8,7 +8,7 @@
     </td>
   </tr>
   <tr>
-    <td>
+    <th>
       Center selection:
     </td>
     <td>
@@ -32,26 +32,33 @@
     <td></td>
     <td>
       <div ng-if="filters.length !== 0">Attribute restrictions</div>
-      <div class="pick-attr-restrict btn-group pull-left" ng-repeat="filter in filters track by filter.attributeName">
-        <select
-          id="center-restriction-{{ $index }}-attribute"
-          class="btn btn-default"
-          ng-model="filter.attributeName"
-          ng-options="attr.title as attr.title for attr in side.filterableVertexAttributes()">
-        </select>
+      <div class="input-group" ng-repeat="filter in filters track by filter.attributeName">
+        <div class="input-group-btn" uib-dropdown>
+          <button
+            uib-dropdown-toggle
+            id="center-restriction-{{ $index }}-attribute"
+            class="btn btn-default dropdown-toggle">
+            {{ filter.attributeName }} <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li ng-repeat="attr in side.filterableVertexAttributes()">
+              <a href ng-click="filter.attributeName = attr.title">{{ attr.title }}</a>
+            </li>
+          </ul>
+        </div>
         <input
+          class="form-control"
           id="center-restriction-{{ $index }}-spec"
-          class="btn btn-default"
           ng-model="filter.valueSpec">
-        <button class="btn btn-default" ng-click="removeFilter($index)" drop-tooltip="Remove restriction">
-          <span class="glyphicon glyphicon-remove"></span>
-        </button>
+        <span class="input-group-btn">
+          <button class="btn btn-default" ng-click="removeFilter($index)" drop-tooltip="Remove restriction">
+            <span class="glyphicon glyphicon-remove"></span>
+          </button>
+        </span>
       </div>
-      <div class="btn-group pull-left">
         <button class="btn btn-default" ng-click="addFilter()" id="add-restriction-button">
           <span class="glyphicon glyphicon-plus"></span>&nbsp;Add restriction
         </button>
-      </div>
     </td>
   </tr>
 </table>

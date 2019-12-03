@@ -281,27 +281,16 @@ label {
 .pick-buttons {
   float: right;
 }
-.pick-attr-restrict {
-  padding: 4px 0px;
-  width: 100%;
-}
-.pick-attr-restrict select {
-  width: 30%;
-  height: 34px;
-}
-.pick-attr-restrict input {
-  width: 60%;
-}
-.pick-attr-restrict button {
-  width: 10%;
-  padding: 6px 0px;
-}
 
 /* Add a bit of internal and vertical margin in the center picker. */
 pick-options table {
-  margin: 0 -10px;
   border-collapse: separate;
-  border-spacing: 10px;
+  border-spacing: 0 10px;
+  width: 100%;
+}
+pick-options th {
+  padding-right: 10px;
+  font-weight: normal;
 }
 
 /* Fit "OK" button by visualization name. */
