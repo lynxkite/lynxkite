@@ -63,9 +63,6 @@ $(pip): python_requirements.txt
 	shell_ui/test.sh && touch $@
 .build/impact-analyzer-dashboard-test-passed: $(shell $(find) impact-analyzer-dashboard)
 	impact-analyzer-dashboard/tests.sh && touch $@
-.build/evaluation-release-done: \
-		.build/backend-done $(shell $(find) docker/lynxkite/local)
-	docker/lynxkite/local/evaluation_release.sh "${VERSION}" && touch $@
 scala-dependency-licenses.md: build.sbt
 	./tools/install_spark.sh && sbt dumpLicenseReport && cp target/license-reports/biggraph-licenses.md $@
 javascript-dependency-licenses.txt: web/package.json
@@ -100,8 +97,6 @@ shell_ui-test: .build/shell_ui-test-passed
 impact-analyzer-dashboard-test: .build/impact-analyzer-dashboard-test-passed
 .PHONY: test
 test: backend-test frontend-test ecosystem-test
-.PHONY: evaluation-release
-evaluation-release: .build/evaluation-release-done
 .PHONY: big-data-test
 big-data-test: .build/ecosystem-done
 	./test_big_data.py --test_set_size ${TEST_SET_SIZE} --rm
