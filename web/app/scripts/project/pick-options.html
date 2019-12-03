@@ -51,7 +51,9 @@
           id="center-restriction-{{ $index }}-spec"
           ng-model="filter.valueSpec">
         <span class="input-group-btn">
-          <button class="btn btn-default" ng-click="removeFilter($index)" drop-tooltip="Remove restriction">
+          <button class="btn btn-default"
+            ng-click="removeFilter($index); $event.stopPropagation();"
+            drop-tooltip="Remove restriction">
             <span class="glyphicon glyphicon-remove"></span>
           </button>
         </span>
