@@ -6,6 +6,10 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - Retry backend requests on 504 Gateway Timeout errors. This allows running without timeout errors
+   even behind proxies that we cannot reconfigure, such as in client deployments or on
+   demo.lynxkite.com.
+
 ### 3.0.1
 
  - Minor UI fixes and graph visualization improvements.
