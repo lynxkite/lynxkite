@@ -1671,6 +1671,10 @@ class SideEffectCollector:
     for box in self.top_level_side_effects:
       yield from self._all_triggerables_in_box(box)
 
+  def compute(self, state, id_override=None):
+    self.add_box(state.computeInputs(_id=id_override))
+    return state
+
   @staticmethod
   def _all_triggerables_in_box(box):
     if isinstance(box, AtomicBox):
