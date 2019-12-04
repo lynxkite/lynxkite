@@ -182,6 +182,17 @@ gulp.task('serve', gulp.series('quick', function serve() {
         next();
       }, { override: true });
     bs.addMiddleware('',
+      function timeoutSim(req, res, next) {
+        if (req.url.indexOf('scalarValue') === -1 || Math.random() < 0.1) {
+          next();
+        } else {
+          setTimeout(() => {
+            res.writeHead(504);
+            res.end();
+          }, 1000);
+        }
+      }, { override: true });
+    bs.addMiddleware('',
       function proxyMiddleware(req, res) {
         proxy.web(req, res, { target: LynxKiteURL });
       });

@@ -72,7 +72,13 @@ angular.module('biggraph')
       }
       const canceler = $q.defer();
       const fullConfig = angular.extend({ timeout: canceler.promise }, config);
-      const req = $http(fullConfig);
+      const req = $http(fullConfig).catch(error => {
+        if (error.status === 504) { // Gateway timeout. Repeat the request.
+          return sendRequest(config);
+        } else {
+          return $q.reject(error);
+        }
+      });
       req.$config = fullConfig; // For debugging.
       req.$abandon = function() { canceler.resolve(); };
       return req;
