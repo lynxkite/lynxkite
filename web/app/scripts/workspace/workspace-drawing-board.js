@@ -466,11 +466,7 @@ angular.module('biggraph')
             e.preventDefault();
           };
 
-          scope.pasteBoxes = function(e) {
-            if (inputBoxFocused()) {
-              return;
-            }
-            const data = e.clipboardData.getData('Text');
+          scope.getBoxes = function(data) {
             let boxes, message;
             try {
               boxes = jsyaml.safeLoad(data);
@@ -494,6 +490,14 @@ angular.module('biggraph')
               return;
             }
             scope.selectedBoxIds = added.map(function(box) { return box.id; });
+          };
+
+          scope.pasteBoxes = function(e) {
+            if (inputBoxFocused()) {
+              return;
+            }
+            const data = e.clipboardData.getData('Text');
+            scope.getBoxes(data);
           };
 
           const wrappedCopyBoxes = wrapCallback(scope.copyBoxes);
@@ -651,6 +655,14 @@ angular.module('biggraph')
             event.logicalX -= 50;
             event.logicalY -= 50;
             const file = event.dataTransfer.files[0];
+            if (file.name.match(/\.yaml$/i)) {
+              let reader = new FileReader();
+              reader.onload = function(event) {
+                scope.getBoxes(event.target.result);
+              };
+              reader.readAsText(file);
+              return;
+            }
             let op = 'Import CSV';
             if (file.name.match(/\.json$/i) || file.name.match(/\.json\.gz$/i)) {
               op = 'Import JSON';
