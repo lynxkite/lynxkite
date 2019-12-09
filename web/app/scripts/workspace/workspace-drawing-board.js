@@ -466,7 +466,7 @@ angular.module('biggraph')
             e.preventDefault();
           };
 
-          scope.getBoxes = function(data) {
+          scope.insertBoxesFromYaml = function(data) {
             let boxes, message;
             try {
               boxes = jsyaml.safeLoad(data);
@@ -497,7 +497,7 @@ angular.module('biggraph')
               return;
             }
             const data = e.clipboardData.getData('Text');
-            scope.getBoxes(data);
+            scope.insertBoxesFromYaml(data);
           };
 
           const wrappedCopyBoxes = wrapCallback(scope.copyBoxes);
@@ -658,7 +658,7 @@ angular.module('biggraph')
             if (file.name.match(/\.yaml$/i)) {
               let reader = new FileReader();
               reader.onload = function(event) {
-                scope.getBoxes(event.target.result);
+                scope.insertBoxesFromYaml(event.target.result);
               };
               reader.readAsText(file);
               return;
