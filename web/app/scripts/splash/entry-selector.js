@@ -158,8 +158,8 @@ angular.module('biggraph').directive('entrySelector',
           return p.slice(0, lastSlash + 1);
         };
         scope.pathInside = function(p) {
-          if (scope.path) {
-            return p.slice(scope.path.length + 1);
+          if (scope.data.path) {
+            return p.slice(scope.data.path.length + 1);
           } else {
             return p;
           }
