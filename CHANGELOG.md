@@ -6,7 +6,7 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - A yaml file can be drag-and-dropped to a workspace.
+ - If you copied some boxes into a YAML file, you can now drag-and-drop this file to a workspace to insert those boxes.
 
 ### 3.0.2
 
