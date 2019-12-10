@@ -68,14 +68,14 @@
     <acl-settings reload="reload()" path="path" entity="data"></acl-settings>
   </div>
 
-  <div class="entry entry-header">
+  <uib-progressbar ng-class="{ invisible: !nextData }" style="height: 5px; margin: 0;"
+    value="100" class="progress-striped active">
+  </uib-progressbar>
+
+  <div class="entry entry-header" style="padding-bottom: 5px;">
     <span class="icon glyphicon glyphicon-search"></span>
     <input class="form-control" id="search-box" placeholder="Search" ng-model="searchQuery">
   </div>
-
-  <uib-progressbar ng-if="nextData" value="100" class="progress-striped active">
-    Loading...
-  </uib-progressbar>
 
   <display-error caption="Could not load directory listing." request="nextData"></display-error>
 
