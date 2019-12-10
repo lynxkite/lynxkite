@@ -655,7 +655,7 @@ angular.module('biggraph')
             event.logicalX -= 50;
             event.logicalY -= 50;
             const file = event.dataTransfer.files[0];
-            if (file.name.match(/\.yaml$/i)) {
+            if (file.name.match(/\.ya?ml$/i)) {
               let reader = new FileReader();
               reader.onload = function(event) {
                 scope.insertBoxesFromYaml(event.target.result);
