@@ -46,6 +46,7 @@ instances. A limitation here is that the custom boxes are not copied, so they ha
 on the target instance too.
 
 The copy-paste mechanism is implemented via serializing to YAML, a human-readable and editable
-textual format, so you can even save box sequences to text files or share them via email.
+textual format, so you can even save box sequences to text files or share them via email. Such
+a YAML-file (if it has a `.yaml` extension) can also simply be drag-and-dropped into a LynxKite workspace.
 
 Hold SHIFT while moving a box to align it to a grid.
