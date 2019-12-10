@@ -6,6 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
+ - A yaml file can be drag-and-dropped to a workspace.
+
 ### 3.0.2
 
  - Retry backend requests on 504 Gateway Timeout errors. This allows running without timeout errors
