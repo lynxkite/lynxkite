@@ -6,7 +6,8 @@ Please add changes to "master", preferably ordered by their significance. (Most 
 
 ### master
 
- - If you copied some boxes into a YAML file, you can now drag-and-drop this file to a workspace to insert those boxes.
+ - If you copied some boxes into a YAML file, you can now drag-and-drop this file
+   to a workspace to insert those boxes.
 
 ### 3.0.2
 
