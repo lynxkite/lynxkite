@@ -39,3 +39,19 @@ type StringAttribute struct {
 	defined       []bool
 	vertexMapping []int64
 }
+type Vertex struct {
+	Id int64 `parquet:"name=id, type=INT64"`
+}
+type Edge struct {
+	Id  int64 `parquet:"name=id, type=INT64"`
+	Src int64 `parquet:"name=src, type=INT64"`
+	Dst int64 `parquet:"name=dst, type=INT64"`
+}
+type SingleStringAttribute struct {
+	Id    int64  `parquet:"name=id, type=INT64"`
+	Value string `parquet:"name=value, type=UTF8"`
+}
+type SingleDoubleAttribute struct {
+	Id    int64   `parquet:"name=id, type=INT64"`
+	Value float64 `parquet:"name=value, type=DOUBLE"`
+}

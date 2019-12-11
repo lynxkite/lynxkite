@@ -1,21 +1,20 @@
 // Sphynx is a gRPC server. LynxKite can connect to it and ask it to do some work.
 // The idea is that Sphynx performs operations on graphs that fit into the memory,
 // so there's no need to do slow distributed computations.
-
 package main
 
 import (
 	"context"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
 
 	"encoding/json"
 	pb "github.com/biggraph/biggraph/sphynx/proto"
-	"github.com/golang/protobuf/proto"
+	"github.com/xitongsys/parquet-go-source/local"
+	"github.com/xitongsys/parquet-go/writer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -85,75 +84,97 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 }
 
 func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.ToSparkIdsReply, error) {
+	var numGoRoutines int64 = 4
 	entity := s.entities[GUID(in.Guid)]
 	log.Printf("Reindexing %v to use spark IDs.", entity)
 	fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
+	fw, err := local.NewLocalFileWriter(fname)
+	defer fw.Close()
+	if err != nil {
+		log.Printf("Failed to create file: %v", err)
+	}
 	switch e := entity.(type) {
 	case VertexSet:
-		vertexSet := &pb.VertexSet{Ids: e.vertexMapping}
-		out, err := proto.Marshal(vertexSet)
+		pw, err := writer.NewParquetWriter(fw, new(Vertex), numGoRoutines)
 		if err != nil {
-			return nil, status.Errorf(codes.Unknown,
-				"Failed to encode vertex set: %v", err)
+			log.Printf("Failed to create parquet writer: %v", err)
 		}
-		if err := ioutil.WriteFile(fname, out, 0755); err != nil {
+		for _, v := range e.vertexMapping {
+			if err := pw.Write(Vertex{Id: v}); err != nil {
+				return nil, status.Errorf(codes.Unknown,
+					"Failed to write parquet file: %v", err)
+			}
+		}
+		if err = pw.WriteStop(); err != nil {
 			return nil, status.Errorf(codes.Unknown,
-				"Failed to write encoded vertex set: %v", err)
+				"Parquet WriteStop error: %v", err)
 		}
 		return &pb.ToSparkIdsReply{}, nil
 	case EdgeBundle:
-		edgeBundle := &pb.EdgeBundle{}
-		for sphynxId, sparkId := range e.edgeMapping {
-			edgeBundle.Edges = append(edgeBundle.Edges,
-				&pb.Edge{Id: sparkId,
-					Src: e.src[sphynxId],
-					Dst: e.dst[sphynxId],
-				})
-		}
-		out, err := proto.Marshal(edgeBundle)
+		pw, err := writer.NewParquetWriter(fw, new(Edge), numGoRoutines)
 		if err != nil {
-			return nil, status.Errorf(codes.Unknown,
-				"Failed to encode edge bundle: %v", err)
+			log.Printf("Failed to create parquet writer: %v", err)
 		}
-		if err := ioutil.WriteFile(fname, out, 0755); err != nil {
+		for sphynxId, sparkId := range e.edgeMapping {
+			err := pw.Write(Edge{
+				Id:  sparkId,
+				Src: e.src[sphynxId],
+				Dst: e.dst[sphynxId],
+			})
+			if err != nil {
+				return nil, status.Errorf(codes.Unknown,
+					"Failed to write parquet file: %v", err)
+			}
+		}
+		if err = pw.WriteStop(); err != nil {
 			return nil, status.Errorf(codes.Unknown,
-				"Failed to write encoded edge bundle: %v", err)
+				"Parquet WriteStop error: %v", err)
 		}
 		return &pb.ToSparkIdsReply{}, nil
 	case StringAttribute:
-		attribute := &pb.StringAttribute{Values: make(map[int64]string)}
+		pw, err := writer.NewParquetWriter(fw, new(SingleStringAttribute), numGoRoutines)
+		if err != nil {
+			log.Printf("Failed to create parquet writer: %v", err)
+		}
 		for sphynxId, def := range e.defined {
 			if def {
 				sparkId := e.vertexMapping[sphynxId]
-				attribute.Values[sparkId] = e.values[sphynxId]
+				err := pw.Write(SingleStringAttribute{
+					Id:    sparkId,
+					Value: e.values[sphynxId],
+				})
+				if err != nil {
+					return nil, status.Errorf(codes.Unknown,
+						"Failed to write parquet file: %v", err)
+				}
 			}
 		}
-		out, err := proto.Marshal(attribute)
-		if err != nil {
+		if err = pw.WriteStop(); err != nil {
 			return nil, status.Errorf(codes.Unknown,
-				"Failed to encode attribute: %v", err)
-		}
-		if err := ioutil.WriteFile(fname, out, 0755); err != nil {
-			return nil, status.Errorf(codes.Unknown,
-				"Failed to write encoded attribute: %v", err)
+				"Parquet WriteStop error: %v", err)
 		}
 		return &pb.ToSparkIdsReply{}, nil
 	case DoubleAttribute:
-		attribute := &pb.DoubleAttribute{Values: make(map[int64]float64)}
+		pw, err := writer.NewParquetWriter(fw, new(SingleDoubleAttribute), numGoRoutines)
+		if err != nil {
+			log.Printf("Failed to create parquet writer: %v", err)
+		}
 		for sphynxId, def := range e.defined {
 			if def {
 				sparkId := e.vertexMapping[sphynxId]
-				attribute.Values[sparkId] = e.values[sphynxId]
+				err := pw.Write(SingleDoubleAttribute{
+					Id:    sparkId,
+					Value: e.values[sphynxId],
+				})
+				if err != nil {
+					return nil, status.Errorf(codes.Unknown,
+						"Failed to write parquet file: %v", err)
+				}
 			}
 		}
-		out, err := proto.Marshal(attribute)
-		if err != nil {
+		if err = pw.WriteStop(); err != nil {
 			return nil, status.Errorf(codes.Unknown,
-				"Failed to encode attribute: %v", err)
-		}
-		if err := ioutil.WriteFile(fname, out, 0755); err != nil {
-			return nil, status.Errorf(codes.Unknown,
-				"Failed to write encoded attribute: %v", err)
+				"Parquet WriteStop error: %v", err)
 		}
 		return &pb.ToSparkIdsReply{}, nil
 	default:
