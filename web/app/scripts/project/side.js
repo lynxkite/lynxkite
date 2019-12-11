@@ -497,25 +497,23 @@ angular.module('biggraph')
     };
 
     Side.prototype.resolveVertexFilters = function(filters) {
-      const that = this;
-      return filters.map(function(f) {
-        return {
-          attributeId: that.resolveVertexAttribute(f.attributeName).id,
+      return filters
+        .filter(f => this.resolveVertexAttribute(f.attributeName))
+        .map(f => ({
+          attributeId: this.resolveVertexAttribute(f.attributeName).id,
           valueSpec: f.valueSpec,
-        };
-      });
+        }));
     };
     Side.prototype.nonEmptyVertexFilters = function() {
       return this.resolveVertexFilters(this.nonEmptyVertexFilterNames());
     };
     Side.prototype.resolveEdgeFilters = function(filters) {
-      const that = this;
-      return filters.map(function(f) {
-        return {
-          attributeId: that.resolveEdgeAttribute(f.attributeName).id,
+      return filters
+        .filter(f => this.resolveEdgeAttribute(f.attributeName))
+        .map(f => ({
+          attributeId: this.resolveEdgeAttribute(f.attributeName).id,
           valueSpec: f.valueSpec,
-        };
-      });
+        }));
     };
     Side.prototype.nonEmptyEdgeFilters = function() {
       return this.resolveEdgeFilters(this.nonEmptyEdgeFilterNames());
