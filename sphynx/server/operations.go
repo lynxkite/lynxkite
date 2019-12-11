@@ -43,18 +43,12 @@ var exampleGraph = Operation{
 			defined:       []bool{true, false, false, true},
 			vertexMapping: vertexMapping,
 		}
-		// outputs["location"] = Attribute{
-		// 	values: []struct {
-		// 		x float64
-		// 		y float64
-		// 	}{
-		// 		{x: 40.71448, y: -74.00598},      // New York
-		// 		{x: 47.5269674, y: 19.0323968},   // Budapest
-		// 		{x: 1.352083, y: 103.819836},     // Singapore
-		// 		{x: -33.8674869, y: 151.2069902}, // Sydney
-		// 	},
-		// 	defined: []bool{true, true, true, true},
-		// }
+		outputs["location"] = DoubleTuple2Attribute{
+			values1:       []float64{40.71448, 47.5269674, 1.352083, -33.8674869},
+			values2:       []float64{-74.00598, 19.0323968, 103.819836, 151.2069902},
+			defined:       []bool{true, true, true, true},
+			vertexMapping: vertexMapping,
+		}
 		outputs["comment"] = StringAttribute{
 			values: []string{"Adam loves Eve", "Eve loves Adam",
 				"Bob envies Adam", "Bob loves Eve"},

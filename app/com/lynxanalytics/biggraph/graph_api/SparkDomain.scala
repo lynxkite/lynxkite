@@ -407,6 +407,16 @@ class SparkDomain(
             new EdgeBundleData(e, rdd.map(r =>
               (r.getAs[Long]("id"), Edge(r.getAs[Long]("src"), r.getAs[Long]("dst")))).sortUnique(runtimeContext.partitionerForNRows(size)), Some(size))
           })
+          case e: Attribute[_] if e.typeTag == typeTag[(Double, Double)] =>
+            def attr(e: Attribute[(Double, Double)]) = {
+              val vs = getData(e.vertexSet)
+              val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
+              val rdd = readRDD(e)
+              val size = rdd.count()
+              new AttributeData[(Double, Double)](e, rdd.map(r =>
+                (r.getAs[Long]("id"), (r.getAs[Double]("value1"), r.getAs[Double]("value2")))).sortUnique(partitioner), Some(size))
+            }
+            SafeFuture.async(attr(e.asInstanceOf[Attribute[(Double, Double)]]))
           case e: Attribute[_] =>
             def attr[T: reflect.ClassTag](e: Attribute[T]) = {
               val vs = getData(e.vertexSet)

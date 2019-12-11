@@ -39,6 +39,12 @@ type StringAttribute struct {
 	defined       []bool
 	vertexMapping []int64
 }
+type DoubleTuple2Attribute struct {
+	values1       []float64
+	values2       []float64
+	defined       []bool
+	vertexMapping []int64
+}
 type Vertex struct {
 	Id int64 `parquet:"name=id, type=INT64"`
 }
@@ -54,4 +60,9 @@ type SingleStringAttribute struct {
 type SingleDoubleAttribute struct {
 	Id    int64   `parquet:"name=id, type=INT64"`
 	Value float64 `parquet:"name=value, type=DOUBLE"`
+}
+type SingleDoubleTuple2Attribute struct {
+	Id     int64   `parquet:"name=id, type=INT64"`
+	Value1 float64 `parquet:"name=value1, type=DOUBLE"`
+	Value2 float64 `parquet:"name=value2, type=DOUBLE"`
 }

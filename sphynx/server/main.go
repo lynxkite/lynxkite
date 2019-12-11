@@ -177,6 +177,30 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 				"Parquet WriteStop error: %v", err)
 		}
 		return &pb.ToSparkIdsReply{}, nil
+	case DoubleTuple2Attribute:
+		pw, err := writer.NewParquetWriter(fw, new(SingleDoubleTuple2Attribute), numGoRoutines)
+		if err != nil {
+			log.Printf("Failed to create parquet writer: %v", err)
+		}
+		for sphynxId, def := range e.defined {
+			if def {
+				sparkId := e.vertexMapping[sphynxId]
+				err := pw.Write(SingleDoubleTuple2Attribute{
+					Id:     sparkId,
+					Value1: e.values1[sphynxId],
+					Value2: e.values2[sphynxId],
+				})
+				if err != nil {
+					return nil, status.Errorf(codes.Unknown,
+						"Failed to write parquet file: %v", err)
+				}
+			}
+		}
+		if err = pw.WriteStop(); err != nil {
+			return nil, status.Errorf(codes.Unknown,
+				"Parquet WriteStop error: %v", err)
+		}
+		return &pb.ToSparkIdsReply{}, nil
 	default:
 		return nil, status.Errorf(codes.Unimplemented, "Can't reindex %v to use Spark IDs.", entity)
 	}
