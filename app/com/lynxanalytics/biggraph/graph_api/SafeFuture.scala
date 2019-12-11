@@ -39,9 +39,12 @@ object SafeFuture {
   }
 
   private def unwrapException[T](f: Future[T])(implicit ec: ExecutionContext): Future[T] = {
+    val stack = new Throwable("SafeFuture creator's stack trace")
     val p = Promise[T]()
     f.onComplete {
-      case Failure(Wrapper(t)) => p.complete(Failure(t))
+      case Failure(Wrapper(t)) =>
+        t.addSuppressed(stack)
+        p.complete(Failure(t))
       case x => p.complete(x)
     }
     p.future
