@@ -21,29 +21,29 @@ type OperationInstance struct {
 	Operation OperationDescription
 }
 type EdgeBundle struct {
-	src           []int64
-	dst           []int64
-	vertexMapping []int64
-	edgeMapping   []int64
+	src         []int64
+	dst         []int64
+	edgeMapping []int64
+	vertexSet   *VertexSet
 }
 type VertexSet struct {
-	vertexMapping []int64
+	mapping []int64
 }
 type DoubleAttribute struct {
-	values        []float64
-	defined       []bool
-	vertexMapping []int64
+	values    []float64
+	defined   []bool
+	vertexSet *VertexSet
 }
 type StringAttribute struct {
-	values        []string
-	defined       []bool
-	vertexMapping []int64
+	values    []string
+	defined   []bool
+	vertexSet *VertexSet
 }
 type DoubleTuple2Attribute struct {
-	values1       []float64
-	values2       []float64
-	defined       []bool
-	vertexMapping []int64
+	values1   []float64
+	values2   []float64
+	defined   []bool
+	vertexSet *VertexSet
 }
 type Vertex struct {
 	Id int64 `parquet:"name=id, type=INT64"`
