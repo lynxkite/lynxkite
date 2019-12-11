@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 
 	"encoding/json"
 	pb "github.com/biggraph/biggraph/sphynx/proto"
@@ -59,14 +60,19 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 		outputs := op.execute(s, opInst)
 		s.Lock()
 		defer s.Unlock()
-		for name, entity := range outputs {
-			guid := opInst.Outputs[name]
-			s.entities[guid] = entity
-			switch e := entity.(type) {
-			case EdgeBundle:
-				idSetGUID := opInst.Outputs[name+"-idSet"]
-				idSetEntity := VertexSet{e.edgeMapping}
-				s.entities[idSetGUID] = idSetEntity
+		for name, guid := range opInst.Outputs {
+			if strings.HasSuffix(name, "-idSet") {
+				edgeBundleName := name[:len(name)-len("-idSet")]
+				e := outputs[edgeBundleName]
+				switch e := e.(type) {
+				case EdgeBundle:
+					idSet := VertexSet{e.edgeMapping}
+					s.entities[guid] = idSet
+				default:
+					return nil, status.Errorf(codes.Unknown, "%v is not an EdgeBundle", e)
+				}
+			} else {
+				s.entities[guid] = outputs[name]
 			}
 		}
 		return &pb.ComputeReply{}, nil
@@ -202,7 +208,8 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 		}
 		return &pb.ToSparkIdsReply{}, nil
 	default:
-		return nil, status.Errorf(codes.Unimplemented, "Can't reindex %v to use Spark IDs.", entity)
+		return nil, status.Errorf(
+			codes.Unimplemented, "Can't reindex entity %v with GUID %v to use Spark IDs.", entity, in.Guid)
 	}
 }
 
