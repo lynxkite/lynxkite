@@ -166,7 +166,9 @@ class DataManager(
   }
 
   private def ensureInputs(e: MetaGraphEntity, d: Domain): SafeFuture[Unit] = {
-    combineFutures(e.source.inputs.all.values.map(ensure(_, d)))
+    val inputs = // Treat idsets of edgebundles as inputs. #8889
+      e.source.inputs.all.values.toSet ++ e.source.inputs.edgeBundles.values.map(_.idSet).toSet
+    combineFutures(inputs.map(ensure(_, d)))
   }
 
   private def combineFutures(fs: Iterable[SafeFuture[Unit]]): SafeFuture[Unit] = {
