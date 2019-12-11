@@ -99,7 +99,7 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 		if err != nil {
 			log.Printf("Failed to create parquet writer: %v", err)
 		}
-		for _, v := range e.vertexMapping {
+		for _, v := range e.mapping {
 			if err := pw.Write(Vertex{Id: v}); err != nil {
 				return nil, status.Errorf(codes.Unknown,
 					"Failed to write parquet file: %v", err)
@@ -138,7 +138,7 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 		}
 		for sphynxId, def := range e.defined {
 			if def {
-				sparkId := e.vertexMapping[sphynxId]
+				sparkId := e.vertexSet.mapping[sphynxId]
 				err := pw.Write(SingleStringAttribute{
 					Id:    sparkId,
 					Value: e.values[sphynxId],
@@ -161,7 +161,7 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 		}
 		for sphynxId, def := range e.defined {
 			if def {
-				sparkId := e.vertexMapping[sphynxId]
+				sparkId := e.vertexSet.mapping[sphynxId]
 				err := pw.Write(SingleDoubleAttribute{
 					Id:    sparkId,
 					Value: e.values[sphynxId],
@@ -184,7 +184,7 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 		}
 		for sphynxId, def := range e.defined {
 			if def {
-				sparkId := e.vertexMapping[sphynxId]
+				sparkId := e.vertexSet.mapping[sphynxId]
 				err := pw.Write(SingleDoubleTuple2Attribute{
 					Id:     sparkId,
 					Value1: e.values1[sphynxId],
