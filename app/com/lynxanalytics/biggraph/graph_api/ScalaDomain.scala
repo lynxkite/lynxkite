@@ -62,7 +62,6 @@ class ScalaDomain extends Domain {
   override def canRelocate(source: Domain): Boolean = {
     source match {
       case source: SparkDomain => true
-      case source: UnorderedSphynxDisk => true
       case _ => false
     }
   }
@@ -78,27 +77,6 @@ class ScalaDomain extends Domain {
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         })
         future.map(set(e, _))
-      case source: UnorderedSphynxDisk => {
-        val future = SafeFuture.async({
-          val entityPath = s"${source.dataDir}/${e.gUID.toString}"
-          val file = new FileInputStream(entityPath)
-          e match {
-            case v: VertexSet => Entities.VertexSet.parseFrom(file)
-              .getIdsList().asScala.toSet
-            case e: EdgeBundle => Entities.EdgeBundle.parseFrom(file)
-              .getEdgesList().asScala.map(e => (e.getId, Edge(e.getSrc, e.getDst))).toMap
-            case a: Attribute[_] if a.typeTag == typeTag[String] => {
-              Entities.StringAttribute.parseFrom(file).getValuesMap().asScala.toMap
-            }
-            case a: Attribute[_] if a.typeTag == typeTag[Double] => {
-              Entities.DoubleAttribute.parseFrom(file).getValuesMap().asScala.toMap
-            }
-            case s: Scalar[_] => ???
-            case _ => throw new AssertionError(s"Cannot fetch $e from $source")
-          }
-        })
-        future.map(set(e, _))
-      }
     }
   }
 

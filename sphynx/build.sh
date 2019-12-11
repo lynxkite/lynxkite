@@ -35,12 +35,9 @@ export GOCACHE=$REPO/go/.cache
 # Generate the gRPC Go interfaces.
 go get -u google.golang.org/grpc
 go get -u github.com/golang/protobuf/protoc-gen-go
+go get -u github.com/xitongsys/parquet-go/writer
+go get -u github.com/xitongsys/parquet-go-source/local
 PATH=$GOPATH/bin:$PATH protoc $PROTO_SOURCE_DIR/$PROTO_SOURCE_FILE --go_out=plugins=grpc,import_path=$PROTO_SOURCE_DIR:.
-
-# Compile protobuf for graph entities
-protoc -I=$PROTO_SOURCE_DIR --java_out=../app $PROTO_SOURCE_DIR/$ENTITIES_PROTO_SOURCE_FILE
-PATH=$GOPATH/bin:$PATH protoc -I=$PROTO_SOURCE_DIR \
-  --go_out=$PROTO_SOURCE_DIR $PROTO_SOURCE_DIR/$ENTITIES_PROTO_SOURCE_FILE
 
 # Compile Sphynx server.
 cd $GOPATH/src/$GO_PKG
