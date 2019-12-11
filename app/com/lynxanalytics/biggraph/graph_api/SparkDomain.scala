@@ -85,6 +85,9 @@ class SparkDomain(
     entityCache(entity.gUID) = data
   }
 
+  // Gets the EntityData from the entityCache or produces it with "fn".
+  // Just like Map.getOrElseUpdate. The twist is that it guarantees that "fn" will not be
+  // executed more than once if called from multiple threads.
   private def getOrElseUpdateData(entity: MetaGraphEntity, fn: => EntityData): EntityData = {
     // We need to hold the lock from checking entityCache to placing the promise in entityPromises.
     // That is the reason for the peculiar organization of this code.
@@ -123,6 +126,9 @@ class SparkDomain(
         }
         // Makes the Await throw the same exception if an exception was thrown here.
         promise.complete(result.map(_ => ()))
+        if (result.isFailure) synchronized { // Allow retries by removing the promise.
+          entityPromises -= entity.gUID
+        }
         result.get
       case Right((promise, false)) =>
         concurrent.Await.result(promise.future, concurrent.duration.Duration.Inf)
