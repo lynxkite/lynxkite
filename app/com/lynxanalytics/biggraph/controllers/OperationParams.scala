@@ -225,6 +225,20 @@ object OperationParams {
     val defaultValue = ""
     def validate(value: String): Unit = {}
   }
+
+  case class WizardStepsParam(
+      id: String,
+      title: String) extends OperationParameterMeta {
+    val kind = "wizard-steps"
+    val defaultValue = "[]"
+    def validate(value: String): Unit = {
+      import WizardSteps._
+      val j = json.Json.parse(value)
+      j.as[List[WizardStep]]
+    }
+    val multipleChoice = false
+    val options = List()
+  }
 }
 
 // A special parameter payload to describe applicable models on the UI.
