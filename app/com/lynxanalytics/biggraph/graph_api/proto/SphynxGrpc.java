@@ -93,7 +93,7 @@ public final class SphynxGrpc {
       com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply> getGetScalarMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
-      fullMethodName = SERVICE_NAME + '/' + "getScalar",
+      fullMethodName = SERVICE_NAME + '/' + "GetScalar",
       requestType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest.class,
       responseType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply.class,
       methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
@@ -106,13 +106,13 @@ public final class SphynxGrpc {
           SphynxGrpc.getGetScalarMethod = getGetScalarMethod =
               io.grpc.MethodDescriptor.<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "getScalar"))
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "GetScalar"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply.getDefaultInstance()))
-              .setSchemaDescriptor(new SphynxMethodDescriptorSupplier("getScalar"))
+              .setSchemaDescriptor(new SphynxMethodDescriptorSupplier("GetScalar"))
               .build();
         }
       }
@@ -120,35 +120,35 @@ public final class SphynxGrpc {
     return getGetScalarMethod;
   }
 
-  private static volatile io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest,
-      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply> getToSparkIdsMethod;
+  private static volatile io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest,
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskReply> getWriteToUnorderedDiskMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
-      fullMethodName = SERVICE_NAME + '/' + "ToSparkIds",
-      requestType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest.class,
-      responseType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply.class,
+      fullMethodName = SERVICE_NAME + '/' + "WriteToUnorderedDisk",
+      requestType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest.class,
+      responseType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskReply.class,
       methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
-  public static io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest,
-      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply> getToSparkIdsMethod() {
-    io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply> getToSparkIdsMethod;
-    if ((getToSparkIdsMethod = SphynxGrpc.getToSparkIdsMethod) == null) {
+  public static io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest,
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskReply> getWriteToUnorderedDiskMethod() {
+    io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskReply> getWriteToUnorderedDiskMethod;
+    if ((getWriteToUnorderedDiskMethod = SphynxGrpc.getWriteToUnorderedDiskMethod) == null) {
       synchronized (SphynxGrpc.class) {
-        if ((getToSparkIdsMethod = SphynxGrpc.getToSparkIdsMethod) == null) {
-          SphynxGrpc.getToSparkIdsMethod = getToSparkIdsMethod =
-              io.grpc.MethodDescriptor.<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply>newBuilder()
+        if ((getWriteToUnorderedDiskMethod = SphynxGrpc.getWriteToUnorderedDiskMethod) == null) {
+          SphynxGrpc.getWriteToUnorderedDiskMethod = getWriteToUnorderedDiskMethod =
+              io.grpc.MethodDescriptor.<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskReply>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "ToSparkIds"))
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "WriteToUnorderedDisk"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest.getDefaultInstance()))
+                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply.getDefaultInstance()))
-              .setSchemaDescriptor(new SphynxMethodDescriptorSupplier("ToSparkIds"))
+                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskReply.getDefaultInstance()))
+              .setSchemaDescriptor(new SphynxMethodDescriptorSupplier("WriteToUnorderedDisk"))
               .build();
         }
       }
     }
-    return getToSparkIdsMethod;
+    return getWriteToUnorderedDiskMethod;
   }
 
   /**
@@ -201,9 +201,9 @@ public final class SphynxGrpc {
 
     /**
      */
-    public void toSparkIds(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest request,
-        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply> responseObserver) {
-      asyncUnimplementedUnaryCall(getToSparkIdsMethod(), responseObserver);
+    public void writeToUnorderedDisk(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest request,
+        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskReply> responseObserver) {
+      asyncUnimplementedUnaryCall(getWriteToUnorderedDiskMethod(), responseObserver);
     }
 
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
@@ -230,12 +230,12 @@ public final class SphynxGrpc {
                 com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply>(
                   this, METHODID_GET_SCALAR)))
           .addMethod(
-            getToSparkIdsMethod(),
+            getWriteToUnorderedDiskMethod(),
             asyncUnaryCall(
               new MethodHandlers<
-                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest,
-                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply>(
-                  this, METHODID_TO_SPARK_IDS)))
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest,
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskReply>(
+                  this, METHODID_WRITE_TO_UNORDERED_DISK)))
           .build();
     }
   }
@@ -284,10 +284,10 @@ public final class SphynxGrpc {
 
     /**
      */
-    public void toSparkIds(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest request,
-        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply> responseObserver) {
+    public void writeToUnorderedDisk(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest request,
+        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskReply> responseObserver) {
       asyncUnaryCall(
-          getChannel().newCall(getToSparkIdsMethod(), getCallOptions()), request, responseObserver);
+          getChannel().newCall(getWriteToUnorderedDiskMethod(), getCallOptions()), request, responseObserver);
     }
   }
 
@@ -332,9 +332,9 @@ public final class SphynxGrpc {
 
     /**
      */
-    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply toSparkIds(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest request) {
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskReply writeToUnorderedDisk(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest request) {
       return blockingUnaryCall(
-          getChannel(), getToSparkIdsMethod(), getCallOptions(), request);
+          getChannel(), getWriteToUnorderedDiskMethod(), getCallOptions(), request);
     }
   }
 
@@ -382,17 +382,17 @@ public final class SphynxGrpc {
 
     /**
      */
-    public com.google.common.util.concurrent.ListenableFuture<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply> toSparkIds(
-        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest request) {
+    public com.google.common.util.concurrent.ListenableFuture<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskReply> writeToUnorderedDisk(
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest request) {
       return futureUnaryCall(
-          getChannel().newCall(getToSparkIdsMethod(), getCallOptions()), request);
+          getChannel().newCall(getWriteToUnorderedDiskMethod(), getCallOptions()), request);
     }
   }
 
   private static final int METHODID_CAN_COMPUTE = 0;
   private static final int METHODID_COMPUTE = 1;
   private static final int METHODID_GET_SCALAR = 2;
-  private static final int METHODID_TO_SPARK_IDS = 3;
+  private static final int METHODID_WRITE_TO_UNORDERED_DISK = 3;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -423,9 +423,9 @@ public final class SphynxGrpc {
           serviceImpl.getScalar((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarRequest) request,
               (io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.GetScalarReply>) responseObserver);
           break;
-        case METHODID_TO_SPARK_IDS:
-          serviceImpl.toSparkIds((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsRequest) request,
-              (io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ToSparkIdsReply>) responseObserver);
+        case METHODID_WRITE_TO_UNORDERED_DISK:
+          serviceImpl.writeToUnorderedDisk((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest) request,
+              (io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskReply>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -491,7 +491,7 @@ public final class SphynxGrpc {
               .addMethod(getCanComputeMethod())
               .addMethod(getComputeMethod())
               .addMethod(getGetScalarMethod())
-              .addMethod(getToSparkIdsMethod())
+              .addMethod(getWriteToUnorderedDiskMethod())
               .build();
         }
       }

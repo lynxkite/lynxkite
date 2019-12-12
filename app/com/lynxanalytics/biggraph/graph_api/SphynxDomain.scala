@@ -36,7 +36,7 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends Domain {
     ???
   }
 
-  override def canRelocate(source: Domain): Boolean = {
+  override def canRelocateFrom(source: Domain): Boolean = {
     false
   }
 
@@ -67,14 +67,14 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
   }
 
   override def get[T](scalar: Scalar[T]): SafeFuture[T] = {
-    ???
+    throw new AssertionError("UnorderedSphynxDisk never contains scalars.")
   }
 
   override def cache(e: MetaGraphEntity): Unit = {
     ???
   }
 
-  override def canRelocate(source: Domain): Boolean = {
+  override def canRelocateFrom(source: Domain): Boolean = {
     source match {
       case source: SphynxMemory => true
       case _ => false
@@ -85,9 +85,9 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
     source match {
       case source: SphynxMemory => {
         e match {
-          case v: VertexSet => client.toSparkIds(e.gUID.toString())
-          case e: EdgeBundle => client.toSparkIds(e.gUID.toString())
-          case a: Attribute[_] => client.toSparkIds(e.gUID.toString())
+          case v: VertexSet => client.writeToUnorderedDisk(e)
+          case e: EdgeBundle => client.writeToUnorderedDisk(e)
+          case a: Attribute[_] => client.writeToUnorderedDisk(e)
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }
       }
