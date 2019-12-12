@@ -3,7 +3,8 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import java.util.UUID
-import scala.collection.concurrent.TrieMap
+import collection.concurrent.TrieMap
+
 import com.lynxanalytics.biggraph.graph_util
 
 class ScalaDomain extends Domain {
@@ -53,7 +54,7 @@ class ScalaDomain extends Domain {
   private[graph_api] def get(e: EdgeBundle) = synchronized { entityCache(e.gUID).asInstanceOf[Map[ID, Edge]] }
   private[graph_api] def get[T](e: Attribute[T]) = synchronized { entityCache(e.gUID).asInstanceOf[Map[ID, T]] }
 
-  override def canRelocate(source: Domain): Boolean = {
+  override def canRelocateFrom(source: Domain): Boolean = {
     source match {
       case source: SparkDomain => true
       case _ => false
@@ -61,17 +62,17 @@ class ScalaDomain extends Domain {
   }
 
   override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
-    source match {
+    val future = source match {
       case source: SparkDomain =>
-        val future = SafeFuture.async(source.getData(e) match {
+        SafeFuture.async(source.getData(e) match {
           case v: VertexSetData => v.rdd.keys.collect.toSet
           case e: EdgeBundleData => e.rdd.collect.toMap
           case a: AttributeData[_] => a.rdd.collect.toMap
           case s: ScalarData[_] => s.value
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         })
-        future.map(set(e, _))
     }
+    future.map(set(e, _))
   }
 
 }

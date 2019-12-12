@@ -8,6 +8,7 @@ REPO=$(realpath .)
 PROTO_SOURCE_DIR="proto"
 PROTO_SOURCE_FILE="sphynx.proto"
 
+
 # Get protobuf compiler.
 if ! type "protoc" > /dev/null; then
   PROTOC_VERSION="3.10.0"
@@ -34,6 +35,8 @@ export GOCACHE=$REPO/go/.cache
 # Generate the gRPC Go interfaces.
 go get -u google.golang.org/grpc
 go get -u github.com/golang/protobuf/protoc-gen-go
+go get -u github.com/xitongsys/parquet-go/writer
+go get -u github.com/xitongsys/parquet-go-source/local
 PATH=$GOPATH/bin:$PATH protoc $PROTO_SOURCE_DIR/$PROTO_SOURCE_FILE --go_out=plugins=grpc,import_path=$PROTO_SOURCE_DIR:.
 
 # Compile Sphynx server.
