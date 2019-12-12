@@ -37,10 +37,7 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends Domain {
   }
 
   override def canRelocate(source: Domain): Boolean = {
-    source match {
-      case source: UnorderedSphynxDisk => true
-      case _ => false
-    }
+    false
   }
 
   override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
@@ -86,9 +83,6 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
 
   override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     source match {
-      case source: ScalaDomain => {
-        ???
-      }
       case source: SphynxMemory => {
         e match {
           case v: VertexSet => client.toSparkIds(e.gUID.toString())

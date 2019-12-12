@@ -247,4 +247,4 @@ export SPHYNX_PID_FILE=$HOME/sphynx.pid
 # Specify the directory where Sphynx stores graph data.
 # export SPHYNX_DATA_DIR
 # Specify the directory where Sphynx stores graph data using vertex ids from the Spark world.
-# # export UNORDERED_SPHYNX_DATA_DIR
+# export UNORDERED_SPHYNX_DATA_DIR

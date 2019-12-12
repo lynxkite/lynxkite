@@ -7,7 +7,6 @@ cd $(dirname $0)
 REPO=$(realpath .)
 PROTO_SOURCE_DIR="proto"
 PROTO_SOURCE_FILE="sphynx.proto"
-ENTITIES_PROTO_SOURCE_FILE="entities.proto"
 
 
 # Get protobuf compiler.

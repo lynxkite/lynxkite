@@ -1,6 +1,7 @@
 // Sphynx is a gRPC server. LynxKite can connect to it and ask it to do some work.
 // The idea is that Sphynx performs operations on graphs that fit into the memory,
 // so there's no need to do slow distributed computations.
+
 package main
 
 import (
@@ -46,6 +47,7 @@ func NewServer() Server {
 }
 
 func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.CanComputeReply, error) {
+	log.Printf("Received: %v", in.Operation)
 	opInst := OperationInstanceFromJSON(in.Operation)
 	_, exists := getExecutableOperation(opInst)
 	return &pb.CanComputeReply{CanCompute: exists}, nil

@@ -2,15 +2,10 @@
 
 package com.lynxanalytics.biggraph.graph_api
 
-import java.io.FileInputStream
 import java.util.UUID
-
 import collection.concurrent.TrieMap
-import collection.JavaConverters._
-import reflect.runtime.universe.typeTag
 
 import com.lynxanalytics.biggraph.graph_util
-import proto.Entities
 
 class ScalaDomain extends Domain {
   implicit val executionContext =
