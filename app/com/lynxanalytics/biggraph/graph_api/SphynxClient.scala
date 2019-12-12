@@ -66,10 +66,14 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
     obs.future.map(r => format.reads(Json.parse(r.getScalar)).get)
   }
 
-  def toSparkIds(guid: String): SafeFuture[Unit] = {
-    val request = SphynxOuterClass.ToSparkIdsRequest.newBuilder().setGuid(guid).build()
-    val obs = new SingleResponseStreamObserver[SphynxOuterClass.ToSparkIdsReply]
-    asyncStub.toSparkIds(request, obs)
+  def writeToUnorderedDisk(e: MetaGraphEntity): SafeFuture[Unit] = {
+    // In SphynxMemory, vertices are indexed from 0 to n. This method asks Sphynx
+    // to reindex vertices to use Spark-side indices and write the result into
+    // a file on UnorderedSphynxDisk.
+    val guid = e.gUID.toString()
+    val request = SphynxOuterClass.WriteToUnorderedDiskRequest.newBuilder().setGuid(guid).build()
+    val obs = new SingleResponseStreamObserver[SphynxOuterClass.WriteToUnorderedDiskReply]
+    asyncStub.writeToUnorderedDisk(request, obs)
     obs.future.map(_ => ())
   }
 }

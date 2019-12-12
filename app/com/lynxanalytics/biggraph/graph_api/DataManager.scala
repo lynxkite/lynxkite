@@ -35,7 +35,7 @@ trait Domain {
   // This is a method on the destination so that the methods for modifying internal
   // data structures can remain private.
   def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit]
-  def canRelocate(source: Domain): Boolean
+  def canRelocateFrom(source: Domain): Boolean
 }
 
 // Manages data computation across domains.
@@ -118,10 +118,10 @@ class DataManager(
     while (!q.isEmpty) {
       var s = q.dequeue()
       for (d <- domains) {
-        if (d == dst && d.canRelocate(s)) {
+        if (d == dst && d.canRelocateFrom(s)) {
           return s
         }
-        if (!seen.contains(d) && d.canRelocate(s)) {
+        if (!seen.contains(d) && d.canRelocateFrom(s)) {
           q.enqueue(d)
           seen += d
         }

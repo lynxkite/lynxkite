@@ -68,8 +68,8 @@ object BigGraphEnvironmentImpl {
             val mixedDataDir = LoggedEnvironment.envOrNone("UNORDERED_SPHYNX_DATA_DIR")
             val unorderedSphynxDisk = mixedDataDir match {
               case None =>
-                throw new AssertionError("""UNORDERED_SPHYNX_DATA_DIR is not
-                |defined. If you don't want to start Sphynx, please unset SPHYNX_PORT.""")
+                throw new AssertionError(
+                  "UNORDERED_SPHYNX_DATA_DIR is not defined. If you don't want to start Sphynx, please unset SPHYNX_PORT.")
               case Some(d) => new graph_api.UnorderedSphynxDisk(host, port.toInt, certDir, d)
             }
             Seq(

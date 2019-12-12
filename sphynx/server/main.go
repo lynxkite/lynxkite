@@ -64,6 +64,9 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 		defer s.Unlock()
 		for name, guid := range opInst.Outputs {
 			if strings.HasSuffix(name, "-idSet") {
+				// Output names ending with '-idSet' are automatically generated edge bundle id sets.
+				// Sphynx operations do not know about this, so we create these id sets based on the
+				// edge bundle here.
 				edgeBundleName := name[:len(name)-len("-idSet")]
 				e := outputs[edgeBundleName]
 				switch e := e.(type) {
@@ -91,7 +94,7 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 	return &pb.GetScalarReply{Scalar: string(scalarJSON)}, nil
 }
 
-func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.ToSparkIdsReply, error) {
+func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
 	var numGoRoutines int64 = 4
 	entity := s.entities[GUID(in.Guid)]
 	log.Printf("Reindexing %v to use spark IDs.", entity)
@@ -117,7 +120,7 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 			return nil, status.Errorf(codes.Unknown,
 				"Parquet WriteStop error: %v", err)
 		}
-		return &pb.ToSparkIdsReply{}, nil
+		return &pb.WriteToUnorderedDiskReply{}, nil
 	case EdgeBundle:
 		pw, err := writer.NewParquetWriter(fw, new(Edge), numGoRoutines)
 		if err != nil {
@@ -138,7 +141,7 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 			return nil, status.Errorf(codes.Unknown,
 				"Parquet WriteStop error: %v", err)
 		}
-		return &pb.ToSparkIdsReply{}, nil
+		return &pb.WriteToUnorderedDiskReply{}, nil
 	case StringAttribute:
 		pw, err := writer.NewParquetWriter(fw, new(SingleStringAttribute), numGoRoutines)
 		if err != nil {
@@ -161,7 +164,7 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 			return nil, status.Errorf(codes.Unknown,
 				"Parquet WriteStop error: %v", err)
 		}
-		return &pb.ToSparkIdsReply{}, nil
+		return &pb.WriteToUnorderedDiskReply{}, nil
 	case DoubleAttribute:
 		pw, err := writer.NewParquetWriter(fw, new(SingleDoubleAttribute), numGoRoutines)
 		if err != nil {
@@ -184,7 +187,7 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 			return nil, status.Errorf(codes.Unknown,
 				"Parquet WriteStop error: %v", err)
 		}
-		return &pb.ToSparkIdsReply{}, nil
+		return &pb.WriteToUnorderedDiskReply{}, nil
 	case DoubleTuple2Attribute:
 		pw, err := writer.NewParquetWriter(fw, new(SingleDoubleTuple2Attribute), numGoRoutines)
 		if err != nil {
@@ -208,7 +211,7 @@ func (s *Server) ToSparkIds(ctx context.Context, in *pb.ToSparkIdsRequest) (*pb.
 			return nil, status.Errorf(codes.Unknown,
 				"Parquet WriteStop error: %v", err)
 		}
-		return &pb.ToSparkIdsReply{}, nil
+		return &pb.WriteToUnorderedDiskReply{}, nil
 	default:
 		return nil, status.Errorf(
 			codes.Unimplemented, "Can't reindex entity %v with GUID %v to use Spark IDs.", entity, in.Guid)
