@@ -36,7 +36,7 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends Domain {
     ???
   }
 
-  override def canRelocate(source: Domain): Boolean = {
+  override def canRelocateFrom(source: Domain): Boolean = {
     false
   }
 
@@ -44,4 +44,53 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends Domain {
     ???
   }
 
+}
+
+class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir: String) extends Domain {
+  implicit val executionContext =
+    ThreadUtil.limitedExecutionContext(
+      "UnorderedSphynxDisk",
+      maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
+
+  val client = new SphynxClient(host, port, certDir)
+
+  override def has(entity: MetaGraphEntity): Boolean = {
+    new java.io.File(s"${dataDir}/${entity.gUID.toString}").isFile
+  }
+
+  override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {
+    ???
+  }
+
+  override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
+    false
+  }
+
+  override def get[T](scalar: Scalar[T]): SafeFuture[T] = {
+    throw new AssertionError("UnorderedSphynxDisk never contains scalars.")
+  }
+
+  override def cache(e: MetaGraphEntity): Unit = {
+    ???
+  }
+
+  override def canRelocateFrom(source: Domain): Boolean = {
+    source match {
+      case source: SphynxMemory => true
+      case _ => false
+    }
+  }
+
+  override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
+    source match {
+      case source: SphynxMemory => {
+        e match {
+          case v: VertexSet => client.writeToUnorderedDisk(e)
+          case e: EdgeBundle => client.writeToUnorderedDisk(e)
+          case a: Attribute[_] => client.writeToUnorderedDisk(e)
+          case _ => throw new AssertionError(s"Cannot fetch $e from $source")
+        }
+      }
+    }
+  }
 }

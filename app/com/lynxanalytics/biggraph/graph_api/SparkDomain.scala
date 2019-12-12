@@ -13,6 +13,8 @@ import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
+import reflect.runtime.universe.typeTag
+import java.nio.file.Paths
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
@@ -347,15 +349,16 @@ class SparkDomain(
     sqlContext
   }
 
-  override def canRelocate(source: Domain): Boolean = {
+  override def canRelocateFrom(source: Domain): Boolean = {
     source match {
       case source: ScalaDomain => true
+      case source: UnorderedSphynxDisk => true
       case _ => false
     }
   }
 
   override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
-    source match {
+    val future: SafeFuture[EntityData] = source match {
       case source: ScalaDomain =>
         import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
         import com.lynxanalytics.biggraph.spark_util.Implicits._
@@ -363,7 +366,7 @@ class SparkDomain(
           val rc = runtimeContext
           rc.sparkContext.parallelize(s).sortUnique(rc.partitionerForNRows(s.size))
         }
-        val future: SafeFuture[EntityData] = e match {
+        e match {
           case e: VertexSet => SafeFuture.async(new VertexSetData(
             e, parallelize(source.get(e).toSeq.map((_, ()))), count = Some(source.get(e).size)))
           case e: EdgeBundle => SafeFuture.async({
@@ -385,9 +388,60 @@ class SparkDomain(
           case e: Scalar[_] => source.get(e).map(new ScalarData(e, _))
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }
-        future.map { data =>
-          saveToDisk(data)
+      case source: UnorderedSphynxDisk =>
+        {
+          import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
+          import com.lynxanalytics.biggraph.spark_util.Implicits._
+          def readRDD(e: MetaGraphEntity) = {
+            val srcEntityPath = Paths.get(s"${source.dataDir}/${e.gUID.toString}")
+            val entityPath = repositoryPath / "from_sphynx" / e.gUID.toString
+            val stream = entityPath.create()
+            try java.nio.file.Files.copy(srcEntityPath, stream)
+            finally stream.close()
+            sparkSession.read.parquet(entityPath.resolvedName).rdd
+          }
+          e match {
+            case e: VertexSet => SafeFuture.async({
+              val rdd = readRDD(e)
+              val size = rdd.count()
+              new VertexSetData(e, rdd.map(r => (r.getAs[Long]("id"), ()))
+                .sortUnique(runtimeContext.partitionerForNRows(size)), Some(size))
+            })
+            case e: EdgeBundle => SafeFuture.async({
+              val rdd = readRDD(e)
+              val size = rdd.count()
+              new EdgeBundleData(e, rdd.map(r =>
+                (r.getAs[Long]("id"), Edge(r.getAs[Long]("src"), r.getAs[Long]("dst"))))
+                .sortUnique(runtimeContext.partitionerForNRows(size)), Some(size))
+            })
+            case e: Attribute[_] if e.typeTag == typeTag[(Double, Double)] =>
+              def attr(e: Attribute[(Double, Double)]) = {
+                val vs = getData(e.vertexSet)
+                val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
+                val rdd = readRDD(e)
+                val size = rdd.count()
+                new AttributeData[(Double, Double)](e, rdd.map(r =>
+                  (r.getAs[Long]("id"), (r.getAs[Double]("value1"), r.getAs[Double]("value2"))))
+                  .sortUnique(partitioner), Some(size))
+              }
+              SafeFuture.async(attr(e.asInstanceOf[Attribute[(Double, Double)]]))
+            case e: Attribute[_] =>
+              def attr[T: reflect.ClassTag](e: Attribute[T]) = {
+                val vs = getData(e.vertexSet)
+                val partitioner = vs.asInstanceOf[VertexSetData].rdd.partitioner.get
+                val rdd = readRDD(e)
+                val size = rdd.count()
+                new AttributeData[T](e, rdd.map(r =>
+                  (r.getAs[Long]("id"), r.getAs[T]("value")))
+                  .sortUnique(partitioner), Some(size))
+              }
+              SafeFuture.async(attr(e)(e.classTag))
+            case _ => throw new AssertionError(s"Cannot fetch $e from $source")
+          }
         }
+    }
+    future.map { data =>
+      saveToDisk(data)
     }
   }
 }
