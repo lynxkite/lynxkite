@@ -13,14 +13,15 @@ import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
+import reflect.runtime.universe.typeTag
+import java.nio.file.Paths
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
 import com.lynxanalytics.biggraph.graph_util.LoggedEnvironment
 import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD
-import reflect.runtime.universe.typeTag
-import java.nio.file.Paths
+
 class SparkDomain(
     val sparkSession: spark.sql.SparkSession,
     val repositoryPath: HadoopFile,
