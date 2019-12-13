@@ -109,6 +109,8 @@ g.box .summary {
 g.box .backdrop {
   stroke-width: 5;
   stroke: white;
+  paint-order: stroke;
+  stroke-linejoin: round;
 }
 
 g.box #inputs .plug text {
