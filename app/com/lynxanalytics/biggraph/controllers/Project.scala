@@ -950,6 +950,13 @@ class WorkspaceFrame(path: SymbolPath)(
     set(rootDir / "!objectType", "workspace")
   }
 
+  override def toListElementFE()(implicit epm: EntityProgressManager) = {
+    val ot = if (workspace.isWizard) {
+      if (workspace.inProgress) "wizard-in-progress" else "wizard"
+    } else "workspace"
+    FEEntryListElement(name = name, objectType = ot, icon = ot)
+  }
+
   def nextState: Option[CheckpointObject] = nextCheckpoint.map(getCheckpointState(_))
 
   override def copy(to: DirectoryEntry): WorkspaceFrame = super.copy(to).asWorkspaceFrame

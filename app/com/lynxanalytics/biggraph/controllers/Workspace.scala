@@ -22,6 +22,9 @@ case class Workspace(
 
   def anchor = findBox("anchor")
 
+  def isWizard = anchor.parameters.getOrElse("wizard", "") == "yes"
+  def inProgress = anchor.parameters.getOrElse("in_progress", "") == "yes"
+
   def findBox(id: String): Box = {
     assert(boxMap.contains(id), s"Cannot find box: $id")
     boxMap(id)
