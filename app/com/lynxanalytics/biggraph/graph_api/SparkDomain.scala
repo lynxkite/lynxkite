@@ -357,7 +357,7 @@ class SparkDomain(
     }
   }
 
-  override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
+  override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     val future: SafeFuture[EntityData] = source match {
       case source: ScalaDomain =>
         import com.lynxanalytics.biggraph.spark_util.UniqueSortedRDD

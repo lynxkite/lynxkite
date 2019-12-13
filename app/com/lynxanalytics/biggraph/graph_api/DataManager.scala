@@ -34,7 +34,7 @@ trait Domain {
   // Moves an entity from another Domain to this one.
   // This is a method on the destination so that the methods for modifying internal
   // data structures can remain private.
-  def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit]
+  def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit]
   def canRelocateFrom(source: Domain): Boolean
 }
 
@@ -107,7 +107,7 @@ class DataManager(
       case e: EdgeBundle => combineFutures(Seq(ensure(e, directSrc), ensure(e.idSet, dst)))
       case _ => ensure(e, directSrc)
     }
-    f.flatMap(_ => dst.relocate(e, directSrc))
+    f.flatMap(_ => dst.relocateFrom(e, directSrc))
   }
 
   private def bfs(src: Domain, dst: Domain): Domain = {

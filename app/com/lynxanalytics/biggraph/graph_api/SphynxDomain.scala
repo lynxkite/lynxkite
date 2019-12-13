@@ -42,7 +42,7 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
     false
   }
 
-  override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
+  override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     ???
   }
 
@@ -78,7 +78,7 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
     }
   }
 
-  override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
+  override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     source match {
       case source: SphynxMemory => {
         e match {
