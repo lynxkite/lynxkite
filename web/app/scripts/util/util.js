@@ -458,5 +458,14 @@ angular.module('biggraph')
       'LynxKite Colors', 'Accent', 'Dark2', 'Paired', 'Pastel1', 'Pastel2', 'Rainbow', 'Set1',
       'Set2', 'Set3'];
 
+    util.baseName = function(p) {
+      const lastSlash = p.lastIndexOf('/');
+      return p.slice(lastSlash + 1);
+    };
+    util.dirName = function(p) {
+      const lastSlash = p.lastIndexOf('/');
+      return p.slice(0, lastSlash + 1);
+    };
+
     return util;
   });
