@@ -203,10 +203,7 @@
           ng-if="box.comment"
           ng-attr-href="{{ ::box.metadata.icon }}" x="25" y="25" width="50" height="50"></image>
 
-        <text x="50" y="105" class="summary backdrop" ng-if="!box.comment">
-          {{box.summary}}
-        </text>
-        <text x="50" y="105" class="summary text" ng-if="!box.comment">
+        <text x="50" y="105" class="summary text backdrop" ng-if="!box.comment">
           {{box.summary}}
         </text>
 
@@ -237,10 +234,6 @@
             </circle>
             <text
                 class="backdrop"
-                ng-class="{ lonely: box[direction].length === 1 }"
-                ng-attr-x="{{ direction === 'inputs' ? -15 : 15 }}">
-              {{ ::plug.id }}</text>
-            <text
                 ng-class="{ lonely: box[direction].length === 1 }"
                 ng-attr-x="{{ direction === 'inputs' ? -15 : 15 }}">
               {{ ::plug.id }}</text>
