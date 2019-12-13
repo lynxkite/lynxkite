@@ -6,13 +6,15 @@ import com.lynxanalytics.biggraph.graph_util
 import play.api.libs.json.Json
 import scala.reflect.runtime.universe.typeTag
 
-class SphynxMemory(host: String, port: Int, certDir: String) extends Domain {
+abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Domain {
   implicit val executionContext =
     ThreadUtil.limitedExecutionContext(
-      "SphynxMemory",
+      "SphynxDomain",
       maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
-
   val client = new SphynxClient(host, port, certDir)
+}
+
+class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomain(host, port, certDir) {
 
   override def has(entity: MetaGraphEntity): Boolean = {
     return false
@@ -46,13 +48,8 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends Domain {
 
 }
 
-class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir: String) extends Domain {
-  implicit val executionContext =
-    ThreadUtil.limitedExecutionContext(
-      "UnorderedSphynxDisk",
-      maxParallelism = graph_util.LoggedEnvironment.envOrElse("KITE_PARALLELISM", "5").toInt)
-
-  val client = new SphynxClient(host, port, certDir)
+class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir: String)
+  extends SphynxDomain(host, port, certDir) {
 
   override def has(entity: MetaGraphEntity): Boolean = {
     new java.io.File(s"${dataDir}/${entity.gUID.toString}").isFile
@@ -76,7 +73,7 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
 
   override def canRelocateFrom(source: Domain): Boolean = {
     source match {
-      case source: SphynxMemory => true
+      case _: SphynxMemory => true
       case _ => false
     }
   }
@@ -85,9 +82,9 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
     source match {
       case source: SphynxMemory => {
         e match {
-          case v: VertexSet => client.writeToUnorderedDisk(e)
+          case v: VertexSet => client.writeToUnorderedDisk(v)
           case e: EdgeBundle => client.writeToUnorderedDisk(e)
-          case a: Attribute[_] => client.writeToUnorderedDisk(e)
+          case a: Attribute[_] => client.writeToUnorderedDisk(a)
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }
       }
