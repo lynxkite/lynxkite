@@ -170,7 +170,7 @@ angular.module('biggraph').directive('entrySelector',
         scope.wizardClick = function(event, p) {
           if (event.originalEvent.alreadyHandled) { return; }
           if (p.error) { return; }
-          $location.url('/wizard/' + name);
+          $location.url('/wizard/' + p.name);
         };
 
         scope.workspaceClick = function(event, p) {
