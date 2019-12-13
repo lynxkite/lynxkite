@@ -5,10 +5,6 @@ angular.module('biggraph').directive('entrySelector',
   function(util, hotkeys, $timeout, $anchorScroll, $location) {
     return {
       restrict: 'E',
-      scope: {
-        name: '=', // Exposes the name of the selected entry.
-        path: '=?', // Starting path.
-      },
       templateUrl: 'scripts/splash/entry-selector.html',
       link: function(scope, element) {
         scope.util = util;
@@ -120,11 +116,8 @@ angular.module('biggraph').directive('entrySelector',
           if (scope.path) {
             name = scope.path + '/' + name;
           }
-          util.post('/ajax/createWorkspace',
-            {
-              name: name,
-            }).then(function() {
-            scope.name = name;
+          util.post('/ajax/createWorkspace', { name: name }).then(function() {
+            $location.url('/workspace/' + name);
           }).finally(function() {
             scope.newWorkspace.sending = false;
           });
@@ -147,22 +140,6 @@ angular.module('biggraph').directive('entrySelector',
           }).finally(function() {
             scope.newDirectory.sending = false;
           });
-        };
-
-        scope.baseName = function(p) {
-          const lastSlash = p.lastIndexOf('/');
-          return p.slice(lastSlash + 1);
-        };
-        scope.dirName = function(p) {
-          const lastSlash = p.lastIndexOf('/');
-          return p.slice(0, lastSlash + 1);
-        };
-        scope.pathInside = function(p) {
-          if (scope.path) {
-            return p.slice(scope.path.length + 1);
-          } else {
-            return p;
-          }
         };
 
         scope.objectClick = function(event, o) {
@@ -201,7 +178,7 @@ angular.module('biggraph').directive('entrySelector',
           if (event.originalEvent.alreadyHandled) { return; }
           // Ignore clicks on errored entries.
           if (p.error) { return; }
-          scope.name = p.name;
+          $location.url('/workspace/' + p.name);
         };
 
         scope.snapshotClick = function(event, p) {
@@ -231,36 +208,6 @@ angular.module('biggraph').directive('entrySelector',
 
         scope.pathElements = function() {
           return scope.path.split('/');
-        };
-
-        scope.menu = {
-          rename: function(kind, oldName, newName) {
-            if (oldName === newName) { return; }
-            util.post('/ajax/renameEntry',
-              { from: oldName, to: newName, overwrite: false }).then(scope.reload);
-          },
-          duplicate: function(kind, p) {
-            util.post('/ajax/forkEntry', {
-              from: p,
-              to: scope.dirName(p) + 'Copy of ' + scope.baseName(p)
-            }).then(scope.reload);
-          },
-          discard: function(kind, p) {
-            let trashDir = 'Trash';
-            if (util.globals.hasAuth) {
-              // Per-user trash.
-              trashDir = util.user.home + '/Trash';
-            }
-            if (p.indexOf(trashDir) === 0) {
-              // Already in Trash. Discard permanently.
-              util.post('/ajax/discardEntry', { name: p }).then(scope.reload);
-            } else {
-              // Not in Trash. Move to Trash.
-              util.post('/ajax/renameEntry',
-                { from: p, to: trashDir + '/' + p, overwrite: true }).then(scope.reload);
-            }
-          },
-          renameMenuItemLabel: 'Rename or move...'
         };
 
         scope.isWorkspace = function(object) {
