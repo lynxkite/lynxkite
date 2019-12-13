@@ -61,7 +61,7 @@ class ScalaDomain extends Domain {
     }
   }
 
-  override def relocate(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
+  override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     val future = source match {
       case source: SparkDomain =>
         SafeFuture.async(source.getData(e) match {
