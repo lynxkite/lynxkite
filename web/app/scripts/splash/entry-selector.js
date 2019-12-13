@@ -2,7 +2,7 @@
 'use strict';
 
 angular.module('biggraph').directive('entrySelector',
-  function(util, hotkeys, $timeout, $anchorScroll) {
+  function(util, hotkeys, $timeout, $anchorScroll, $location) {
     return {
       restrict: 'E',
       scope: {
@@ -167,6 +167,7 @@ angular.module('biggraph').directive('entrySelector',
 
         scope.objectClick = function(event, o) {
           if (scope.isWorkspace(o)) { scope.workspaceClick(event, o); }
+          if (scope.isWizard(o)) { scope.wizardClick(event, o); }
           if (scope.isTable(o) || scope.isView(o)) { scope.tableClick(event, o); }
           if (scope.isSnapshot(o)) { scope.snapshotClick(event, o); }
           return;
@@ -187,6 +188,12 @@ angular.module('biggraph').directive('entrySelector',
             },
             0,
             false); // Do not invoke apply as we don't change the scope.
+        };
+
+        scope.wizardClick = function(event, p) {
+          if (event.originalEvent.alreadyHandled) { return; }
+          if (p.error) { return; }
+          $location.url('/wizard/' + name);
         };
 
         scope.workspaceClick = function(event, p) {
@@ -258,6 +265,9 @@ angular.module('biggraph').directive('entrySelector',
 
         scope.isWorkspace = function(object) {
           return object.objectType === 'workspace';
+        };
+        scope.isWizard = function(object) {
+          return object.objectType.includes('wizard');
         };
         scope.isTable = function(object) {
           return object.objectType === 'table';
