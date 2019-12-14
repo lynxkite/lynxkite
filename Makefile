@@ -103,6 +103,8 @@ test: backend-test frontend-test ecosystem-test
 .PHONY: big-data-test
 big-data-test: .build/ecosystem-done
 	./test_big_data.py --test_set_size ${TEST_SET_SIZE} --rm
+.PHONY: licenses
+licenses: .build/licenses-done
 .PHONY: local-bd-test
 local-bd-test: .build/backend-done
 	python/big_data_tests/run_test.sh
