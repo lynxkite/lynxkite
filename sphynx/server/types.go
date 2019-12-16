@@ -5,7 +5,7 @@ import "sync"
 
 type Server struct {
 	sync.Mutex
-	entities         map[GUID]interface{}
+	entities         EntityMap
 	dataDir          string
 	unorderedDataDir string
 }
@@ -20,6 +20,34 @@ type OperationInstance struct {
 	Outputs   map[string]GUID
 	Operation OperationDescription
 }
+
+type EntityMap struct {
+	vertexSets             map[GUID]VertexSet
+	edgeBundles            map[GUID]EdgeBundle
+	scalars                map[GUID]Scalar
+	stringAttributes       map[GUID]StringAttribute
+	doubleAttributes       map[GUID]DoubleAttribute
+	doubleTuple2Attributes map[GUID]DoubleTuple2Attribute
+}
+
+func (em *EntityMap) get(guid GUID) interface{} {
+	var res interface{}
+	if e, ok := em.vertexSets[guid]; ok {
+		res = e
+	} else if e, ok := em.edgeBundles[guid]; ok {
+		res = e
+	} else if e, ok := em.scalars[guid]; ok {
+		res = e
+	} else if e, ok := em.stringAttributes[guid]; ok {
+		res = e
+	} else if e, ok := em.doubleAttributes[guid]; ok {
+		res = e
+	} else if e, ok := em.doubleTuple2Attributes[guid]; ok {
+		res = e
+	}
+	return res
+}
+
 type EdgeBundle struct {
 	src         []int64
 	dst         []int64
@@ -29,6 +57,7 @@ type EdgeBundle struct {
 type VertexSet struct {
 	mapping []int64
 }
+type Scalar interface{}
 type DoubleAttribute struct {
 	values    []float64
 	defined   []bool
