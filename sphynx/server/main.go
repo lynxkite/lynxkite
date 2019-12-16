@@ -239,6 +239,7 @@ func main() {
 	}
 
 	sphynxServer := NewServer()
+	sphynxServer.init_disk() // For now, we just block, until the files are checked
 	pb.RegisterSphynxServer(s, &sphynxServer)
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
