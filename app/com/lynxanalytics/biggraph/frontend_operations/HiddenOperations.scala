@@ -19,6 +19,11 @@ class HiddenOperations(env: SparkFreeEnvironment) extends ProjectOperations(env)
     params += Code("description", "Description", language = "plain_text")
     params += Param("icon", "Icon URL")
     params += ParametersParam("parameters", "Parameters")
+    params += Choice("wizard", "Wizard", options = FEOption.noyes)
+    if (params("wizard") == "yes") {
+      params += Choice("in_progress", "In progress", options = FEOption.noyes)
+      params += WizardStepsParam("steps", "Steps")
+    }
   })
 
   register("Check cliques")(new ProjectTransformation(_) with SegOp {
