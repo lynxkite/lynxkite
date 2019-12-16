@@ -26,7 +26,7 @@ $(pip): python_requirements.txt
 	sphynx/build.sh && touch $@
 .build/backend-done: \
 	$(shell $(find) app project lib conf built-ins sphynx) tools/call_spark_submit.sh \
-	build.sbt README.md .build/gulp-done licenses .build/sphynx-prep-done
+	build.sbt README.md .build/gulp-done .build/licenses-done .build/sphynx-prep-done
 	./tools/install_spark.sh && sbt stage < /dev/null && touch $@
 .build/backend-test-passed: $(shell $(find) app test project conf) build.sbt \
 	.build/sphynx-prep-done
@@ -70,6 +70,9 @@ javascript-dependency-licenses.txt: web/package.json
 javascript-dependency-licenses.md: web/package.json
 	cd web && LC_ALL=C yarn licenses list | egrep '^└─|^├─|^│  └─|^│  ├─|^   └─|^   ├─' > ../$@
 
+.build/licenses-done: scala-dependency-licenses.md javascript-dependency-licenses.txt javascript-dependency-licenses.md
+	touch $@
+
 # Short aliases for command-line use.
 .PHONY: backend
 backend: .build/backend-done
@@ -101,7 +104,7 @@ test: backend-test frontend-test ecosystem-test
 big-data-test: .build/ecosystem-done
 	./test_big_data.py --test_set_size ${TEST_SET_SIZE} --rm
 .PHONY: licenses
-licenses: scala-dependency-licenses.md javascript-dependency-licenses.txt javascript-dependency-licenses.md
+licenses: .build/licenses-done
 .PHONY: local-bd-test
 local-bd-test: .build/backend-done
 	python/big_data_tests/run_test.sh
