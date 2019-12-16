@@ -42,7 +42,14 @@ func NewServer() Server {
 	unorderedDataDir := os.Getenv("UNORDERED_SPHYNX_DATA_DIR")
 	os.MkdirAll(unorderedDataDir, 0775)
 	os.MkdirAll(dataDir, 0775)
-	return Server{entities: make(map[GUID]interface{}),
+	return Server{entities: EntityMap{
+		vertexSets:             make(map[GUID]VertexSet),
+		edgeBundles:            make(map[GUID]EdgeBundle),
+		scalars:                make(map[GUID]Scalar),
+		stringAttributes:       make(map[GUID]StringAttribute),
+		doubleAttributes:       make(map[GUID]DoubleAttribute),
+		doubleTuple2Attributes: make(map[GUID]DoubleTuple2Attribute),
+	},
 		dataDir: dataDir, unorderedDataDir: unorderedDataDir}
 }
 
@@ -59,25 +66,18 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 	if !exists {
 		return nil, status.Errorf(codes.Unimplemented, "Can't compute %v", opInst)
 	} else {
-		outputs := op.execute(s, opInst)
-		s.Lock()
-		defer s.Unlock()
+		op.execute(s, opInst)
 		for name, guid := range opInst.Outputs {
 			if strings.HasSuffix(name, "-idSet") {
 				// Output names ending with '-idSet' are automatically generated edge bundle id sets.
 				// Sphynx operations do not know about this, so we create these id sets based on the
 				// edge bundle here.
 				edgeBundleName := name[:len(name)-len("-idSet")]
-				e := outputs[edgeBundleName]
-				switch e := e.(type) {
-				case EdgeBundle:
-					idSet := VertexSet{e.edgeMapping}
-					s.entities[guid] = idSet
-				default:
-					return nil, status.Errorf(codes.Unknown, "%v is not an EdgeBundle", e)
-				}
-			} else {
-				s.entities[guid] = outputs[name]
+				s.Lock()
+				e := s.entities.edgeBundles[opInst.Outputs[edgeBundleName]]
+				idSet := VertexSet{e.edgeMapping}
+				s.entities.vertexSets[guid] = idSet
+				s.Unlock()
 			}
 		}
 		return &pb.ComputeReply{}, nil
@@ -86,7 +86,7 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 
 func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
 	log.Printf("Received GetScalar request with GUID %v.", in.Guid)
-	scalar := s.entities[GUID(in.Guid)]
+	scalar := s.entities.scalars[GUID(in.Guid)]
 	scalarJSON, err := json.Marshal(scalar)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "Converting scalar to json failed: %v", err)
@@ -96,7 +96,7 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
 	var numGoRoutines int64 = 4
-	entity := s.entities[GUID(in.Guid)]
+	entity := s.entities.get(GUID(in.Guid))
 	log.Printf("Reindexing %v to use spark IDs.", entity)
 	fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
 	fw, err := local.NewLocalFileWriter(fname)
