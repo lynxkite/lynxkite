@@ -37,6 +37,7 @@ object FEOperationParameterMeta {
     "parameters", // A whole section defining the parameters of an operation.
     "segmentation", // One of the segmentations of the current project.
     "visualization", // Describes a two-sided visualization UI state.
+    "wizard-steps",
     "trigger", // A computation triggering button.
     "dummy") // A piece of text without an input field.
 }

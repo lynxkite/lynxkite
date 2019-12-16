@@ -69,7 +69,7 @@
         guid="parameters[param.id]"
         on-blur="onBlur()"
         file-uploads="fileUploads.count"
-        workspace-reference="workspaceReference()"
+        workspace-reference="workspace.ref()"
         class="operation-attribute-entry">
       </table-kind>
       <trigger-parameter
@@ -109,6 +109,10 @@
         on-ui-state-changed="onBlur()"
         project-state-id="box.outputs[0].stateId">
       </visualization-parameter>
+      <wizard-steps-parameter
+        ng-if="param.kind === 'wizard-steps'"
+        workspace="workspace"
+        model="parameters[param.id]"></wizard-steps-parameter>
     </div>
     <i class="fa fa-dollar parametric-switch"
       drop-tooltip="Parametric: {{ isParametric(param.id) ? 'yes' : 'no' }}"
