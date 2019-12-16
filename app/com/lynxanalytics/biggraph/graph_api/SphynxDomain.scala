@@ -48,6 +48,38 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
 
 }
 
+class SphynxDisk(host: String, port: Int, certDir: String) extends SphynxDomain(host, port, certDir) {
+
+  override def has(entity: MetaGraphEntity): Boolean = {
+    return false
+  }
+
+  override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {
+    ???
+  }
+
+  override def canCompute(instance: MetaGraphOperationInstance): Boolean = {
+    false
+  }
+
+  override def get[T](scalar: Scalar[T]): SafeFuture[T] = {
+    client.getScalar(scalar)
+  }
+
+  override def cache(e: MetaGraphEntity): Unit = {
+    ???
+  }
+
+  override def canRelocateFrom(source: Domain): Boolean = {
+    false
+  }
+
+  override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
+    ???
+  }
+
+}
+
 class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir: String)
   extends SphynxDomain(host, port, certDir) {
 
