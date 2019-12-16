@@ -78,8 +78,15 @@ angular.module('biggraph').directive('entrySelector',
           window.localStorage.setItem('last_selector_path', scope.path);
         };
 
-        scope.$watch('path', () => { scope.opened = {}; scope.reload(); });
-        scope.$watch('searchQuery', () => { scope.opened = {}; scope.reload(); });
+        function basicWatch(before, after) {
+          scope.opened = {};
+          if (before !== after) {
+            scope.reload();
+          }
+        }
+        scope.$watch('path', basicWatch);
+        scope.$watch('searchQuery', basicWatch);
+        scope.reload();
         scope.$on('saved snapshot', scope.reload);
 
         scope.$watch('data.$resolved', function(resolved) {
