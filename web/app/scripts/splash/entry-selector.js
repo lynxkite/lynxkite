@@ -82,8 +82,15 @@ angular.module('biggraph').directive('entrySelector',
           window.localStorage.setItem('last_selector_path', scope.path);
         };
 
-        scope.$watch('path', () => { scope.opened = {}; scope.reload(); });
-        scope.$watch('searchQuery', () => { scope.opened = {}; scope.reload(); });
+        function basicWatch(before, after) {
+          scope.opened = {};
+          if (before !== after) {
+            scope.reload();
+          }
+        }
+        scope.$watch('path', basicWatch);
+        scope.$watch('searchQuery', basicWatch);
+        scope.reload();
         scope.$on('saved snapshot', scope.reload);
 
         scope.$watch('data.$resolved', function(resolved) {
@@ -158,8 +165,8 @@ angular.module('biggraph').directive('entrySelector',
           return p.slice(0, lastSlash + 1);
         };
         scope.pathInside = function(p) {
-          if (scope.path) {
-            return p.slice(scope.path.length + 1);
+          if (scope.data.path) {
+            return p.slice(scope.data.path.length + 1);
           } else {
             return p;
           }

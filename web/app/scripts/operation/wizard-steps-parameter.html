@@ -1,0 +1,16 @@
+<table class="table-condensed">
+  <tr><th></th><th>title</th><th>description</th><th>box</th><th>popup</th></tr>
+  <tr ng-repeat="s in steps track by $index">
+    <td style="text-align: right; font-size: 30px;">{{ $index + 1 }}</td>
+    <td><input ng-model="s.title" class="form-control" placeholder="{{ defaultTitle(s) }}"></td>
+    <td><input ng-model="s.description" class="form-control" placeholder="optional"></td>
+    <td><select ng-model="s.box" ng-options="b for b in boxes()" class="form-control"></td>
+    <td><select ng-model="s.popup" ng-options="p for p in popups(s.box)" class="form-control"></td>
+    <td class="btn-group" style="width: 130px;">
+      <button ng-click="up($index)" class="btn btn-default glyphicon glyphicon-chevron-up"></button>
+      <button ng-click="down($index)" class="btn btn-default glyphicon glyphicon-chevron-down"></button>
+      <button ng-click="discard($index)" class="btn btn-default glyphicon glyphicon-remove"></button>
+    </td>
+  </tr>
+  <tr><td><button ng-click="add()" class="btn btn-default glyphicon glyphicon-plus"></button></td></tr>
+</table>
