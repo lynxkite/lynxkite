@@ -2,11 +2,6 @@
 'use strict';
 
 angular.module('biggraph')
-  .controller('SplashCtrl', function ($scope, $location, util) {
+  .controller('SplashCtrl', function ($scope, util) {
     $scope.util = util;
-    $scope.$watch('name', function(name) {
-      if (name !== undefined) {
-        $location.url('/workspace/' + name);
-      }
-    });
   });

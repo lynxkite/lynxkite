@@ -100,15 +100,7 @@ case class FEEntryListElement(
     objectType: String,
     icon: String,
     notes: String = "",
-    vertexCount: Option[FEScalar] = None, // Whether the project has vertices defined.
-    edgeCount: Option[FEScalar] = None, // Whether the project has edges defined.
-    error: Option[String] = None) { // If set the project could not be opened.
-
-  assert(
-    objectType == "table" || objectType == "project" ||
-      objectType == "view" || objectType == "workspace" || objectType == "snapshot",
-    s"Unrecognized objectType: $objectType")
-}
+    error: Option[String] = None)
 
 case class FEProject(
     name: String,

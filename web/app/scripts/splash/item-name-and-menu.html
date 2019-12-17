@@ -1,6 +1,11 @@
 <span ng-hide="renaming">
-  {{ shortName }}
+  {{ util.baseName(object.name) }}
 </span>
+
+<a ng-if="object.objectType === 'workspace'" href="#/workspace/{{object.name}}" target="_blank"
+  ng-hide="object.error" ng-click="util.captureClick($event)" class="open-in-new-tab-icon">
+  <span class="icon glyphicon glyphicon-new-window"></span>
+</a>
 
 <form ng-submit="applyRenaming()" style="display: inline;" ng-show="renaming" ng-click="util.captureClick($event)">
   <input id="renameBox" class="form-control" style="display: inline; width: 200px;" ng-model="newName">
@@ -9,24 +14,28 @@
 <div class="btn-group pull-right" ng-click="util.captureClick($event)" uib-dropdown>
   <a href class="btn-dropdown" uib-dropdown-toggle><span class="caret"></span></a>
   <ul class="dropdown-menu">
-    <li ng-show="menu.rename">
-      <a href id="menu-rename" ng-click="toggleRenaming()">
-        <i class="glyphicon glyphicon-pencil"></i>
-        {{ menu.renameMenuItemLabel || 'Rename...' }}
+    <li ng-show="object.objectType.includes('wizard')">
+      <a href id="menu-open-workspace" ng-click="openWorkspace()">
+        <i class="glyphicon glyphicon-play"></i> Open workspace
       </a>
     </li>
-    <li ng-show="menu.discard">
+    <li>
+      <a href id="menu-rename" ng-click="toggleRenaming()">
+        <i class="glyphicon glyphicon-pencil"></i> Rename or move
+      </a>
+    </li>
+    <li>
       <a href id="menu-discard" ng-click="discard()">
         <i class="glyphicon glyphicon-trash"></i> Discard
       </a>
     </li>
-    <li ng-show="menu.duplicate">
+    <li ng-show="object.objectType !== 'directory'">
       <a href id="menu-duplicate" ng-click="duplicate()">
         <i class="glyphicon glyphicon-floppy-disk"></i> Duplicate
       </a>
     </li>
     <li>
-      <a href id="menu-copy-to-clipboard" ng-attr-data-clipboard-text="{{ name }}">
+      <a href id="menu-copy-to-clipboard" ng-attr-data-clipboard-text="{{ object.name }}">
         <i class="glyphicon glyphicon-link"></i> Copy path to clipboard
       </a>
     </li>

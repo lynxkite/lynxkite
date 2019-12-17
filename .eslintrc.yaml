@@ -16,6 +16,8 @@ rules:
   key-spacing: [error]
   linebreak-style: [error, unix]
   no-console: [warn]
+  no-debugger: [warn]
+  no-unused-vars: [warn]
   no-multi-spaces: [error]
   no-sequences: [error]
   no-trailing-spaces: [error]

@@ -1,19 +1,18 @@
 // An item name with a drop-down menu providing "rename", "discard", and "duplicate" operations.
 'use strict';
 
-angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util) {
+angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util, $location) {
   return {
     restrict: 'E',
-    scope: { menu: '=', name: '@', type: '@', shortName: '@' },
+    scope: { object: '=', reload: '&' },
     templateUrl: 'scripts/splash/item-name-and-menu.html',
     link: function(scope, element) {
       scope.util = util;
-      scope.shortName = scope.shortName || scope.name;
 
       scope.toggleRenaming = function() {
         scope.renaming = !scope.renaming;
         if (scope.renaming) {
-          scope.newName = scope.name;
+          scope.newName = scope.object.name;
           // Focus #renameBox once it has appeared.
           $timeout(function() { element.find('#renameBox').focus(); });
         }
@@ -21,15 +20,37 @@ angular.module('biggraph').directive('itemNameAndMenu', function($timeout, util)
 
       scope.applyRenaming = function() {
         scope.renaming = false;
-        scope.menu.rename(scope.type, scope.name, scope.newName);
+        if (scope.object.name === scope.newName) { return; }
+        util.post('/ajax/renameEntry',
+          { from: scope.object.name, to: scope.newName, overwrite: false }).then(scope.reload);
       };
 
       scope.discard = function() {
-        scope.menu.discard(scope.type, scope.name);
+        let trashDir = 'Trash';
+        if (util.globals.hasAuth) {
+          // Per-user trash.
+          trashDir = util.user.home + '/Trash';
+        }
+        if (scope.object.name.indexOf(trashDir) === 0) {
+          // Already in Trash. Discard permanently.
+          util.post('/ajax/discardEntry', { name: scope.object.name }).then(scope.reload);
+        } else {
+          // Not in Trash. Move to Trash.
+          util.post('/ajax/renameEntry',
+            { from: scope.object.name, to: trashDir + '/' + scope.object.name, overwrite: true })
+            .then(scope.reload);
+        }
       };
 
       scope.duplicate = function() {
-        scope.menu.duplicate(scope.type, scope.name);
+        util.post('/ajax/forkEntry', {
+          from: scope.object.name,
+          to: util.dirName(scope.object.name) + 'Copy of ' + util.baseName(scope.object.name)
+        }).then(scope.reload);
+      };
+
+      scope.openWorkspace = function() {
+        $location.url('/workspace/' + scope.object.name);
       };
 
       /* global ClipboardJS */
