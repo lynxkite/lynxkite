@@ -12,8 +12,8 @@ var operations = map[string]Operation{
 
 var exampleGraph = Operation{
 	execute: func(s *Server, opInst OperationInstance) {
-		s.Lock()
-		defer s.Unlock()
+		s.entities.Lock()
+		defer s.entities.Unlock()
 		vertexSet := VertexSet{mapping: []int64{0, 1, 2, 3}}
 		nameToGUID := opInst.Outputs
 		s.entities.vertexSets[nameToGUID["vertices"]] = vertexSet

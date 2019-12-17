@@ -73,11 +73,11 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 				// Sphynx operations do not know about this, so we create these id sets based on the
 				// edge bundle here.
 				edgeBundleName := name[:len(name)-len("-idSet")]
-				s.Lock()
+				s.entities.Lock()
 				e := s.entities.edgeBundles[opInst.Outputs[edgeBundleName]]
 				idSet := VertexSet{e.edgeMapping}
 				s.entities.vertexSets[guid] = idSet
-				s.Unlock()
+				s.entities.Unlock()
 			}
 		}
 		return &pb.ComputeReply{}, nil
@@ -86,7 +86,10 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 
 func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
 	log.Printf("Received GetScalar request with GUID %v.", in.Guid)
-	scalar := s.entities.scalars[GUID(in.Guid)]
+	em := s.entities
+	em.Lock()
+	scalar := em.scalars[GUID(in.Guid)]
+	em.Unlock()
 	scalarJSON, err := json.Marshal(scalar)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "Converting scalar to json failed: %v", err)
