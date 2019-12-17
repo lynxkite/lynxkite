@@ -80,27 +80,21 @@
   <display-error caption="Could not load directory listing." request="nextData"></display-error>
 
   <div ng-repeat="directory in data.directories"
-    id="directory-{{ pathInside(directory) | id }}"
+    id="directory-{{ util.baseName(directory) | id }}"
     class="entry entry-header directory-entry"
     href
     ng-click="enterDirectory($event, directory)">
-    <dir-entry-icon
-      object-type="'directory'"
-      class="icon">
-    </dir-entry-icon>
+    <dir-entry-icon object-type="'directory'" class="icon"></dir-entry-icon>
     <span class="lead">
       <item-name-and-menu
-        menu="menu"
-        name="{{directory}}"
-        short-name="{{pathInside(directory)}}"
-        type="directory">
-      </item-name-and-menu>
+        object="{ name: directory, objectType: 'directory' }"
+        reload="reload()"></item-name-and-menu>
     </span>
   </div>
 
   <div
     ng-repeat="object in data.objects track by object.name"
-    id="{{ object.objectType }}-{{ pathInside(object.name) | id }}"
+    id="{{ object.objectType }}-{{ util.baseName(object.name) | id }}"
     class="entry {{ object.objectType }}-entry"
     ng-class="{
       open: opened[object.name],
@@ -109,21 +103,9 @@
     href
     ng-click="objectClick($event, object)">
     <div class="entry-header">
-      <dir-entry-icon
-          object-type="object.icon"
-          class="icon">
-      </dir-entry-icon>
+      <dir-entry-icon object-type="object.icon" class="icon"></dir-entry-icon>
       <span class="lead">
-        <item-name-and-menu
-          menu="menu"
-          name="{{object.name}}"
-          short-name="{{pathInside(object.name)}}"
-          type="{{object.objectType}}">
-        </item-name-and-menu>
-        <a ng-if="isWorkspace(object)" href="#/workspace/{{object.name}}" target="_blank"
-          ng-hide="object.error" ng-click="util.captureClick($event)" class="open-in-new-tab-icon">
-          <span class="icon glyphicon glyphicon-new-window"></span>
-        </a>
+        <item-name-and-menu object="object" reload="reload()"></item-name-and-menu>
       </span>
     </div>
 

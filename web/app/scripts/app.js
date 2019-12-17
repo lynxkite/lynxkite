@@ -33,6 +33,10 @@ angular
         templateUrl: 'scripts/workspace/workspace-entry-point.html',
         controller: 'WorkspaceEntryPointCtrl',
       })
+      .when('/wizard/:name*', {
+        templateUrl: 'scripts/wizard/wizard.html',
+        controller: 'WizardCtrl',
+      })
       .when('/demo-mode', {
         templateUrl: 'scripts/demo-mode.html',
         controller: 'DemoModeCtrl',

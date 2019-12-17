@@ -1,0 +1,65 @@
+<div class="container-fluid" id="splash">
+
+  <div class="row">
+    <div class="col-sm-12" style="
+    text-align: center;
+    margin: 20px;
+    font-size: 6vw;
+    color: white;
+    ">
+      {{ util.baseName(routeParams.name) }}
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12 entry-list-wrapper">
+      <div class="entry-list">
+        <div class="entry" ng-repeat="step in steps">
+          <div class="entry-header" ng-click="$parent.expanded = $index" style="padding: 5px 40px;">
+            <span class="icon" style="
+            font-size: 30px;
+            font-weight: bold;
+            margin: -7px 0px 0px -25px;
+            padding: 0;
+            ">{{ $index + 1 }}</span>
+            <span class="lead">{{ step.title }}</span>
+          </div>
+
+          <div ng-show="$parent.expanded === $index && step.description" class="container-fluid">
+            {{ step.description }}
+          </div>
+
+          <box-editor
+            ng-show="$parent.expanded === $index"
+            ng-if="step.popup === 'parameters'"
+            workspace="workspace"
+            box-id="step.box"></box-editor>
+
+          <state-view
+            ng-if="step.popup !== 'parameters' && $parent.expanded === $index"
+            workspace="workspace"
+            plug="workspace.getOutputPlug(step.box, step.popup)"
+            popup-model="{ height: 500, maxHeight: 500, width: 500 }">
+          </state-view>
+
+        </div>
+      </div>
+      <div class="entry-list" style="background: transparent; box-shadow: none; text-align: right;">
+        <a href class="btn btn-warning btn-lg" style="color: black;" ng-href="/workspace/{{ routeParams.name }}">
+          Fine tune in workspace <i class="fa fa-chevron-right"></i></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12">
+      <user-menu info="util.globals" direction="dropup" class="user-menu-at-bottom"></user-menu>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12">
+      <p class="version">{{ util.globals.version }}</p>
+    </div>
+  </div>
+</div>
