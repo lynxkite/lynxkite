@@ -4,7 +4,6 @@ package main
 import "sync"
 
 type Server struct {
-	sync.Mutex
 	entities         EntityMap
 	dataDir          string
 	unorderedDataDir string
@@ -22,6 +21,7 @@ type OperationInstance struct {
 }
 
 type EntityMap struct {
+	sync.Mutex
 	vertexSets             map[GUID]VertexSet
 	edgeBundles            map[GUID]EdgeBundle
 	scalars                map[GUID]Scalar
@@ -31,6 +31,8 @@ type EntityMap struct {
 }
 
 func (em *EntityMap) get(guid GUID) interface{} {
+	em.Lock()
+	defer em.Unlock()
 	var res interface{}
 	if e, ok := em.vertexSets[guid]; ok {
 		res = e
