@@ -26,7 +26,7 @@ type OperationOutput struct {
 	stringAttributes       map[GUID]*StringAttribute
 	doubleAttributes       map[GUID]*DoubleAttribute
 	doubleTuple2Attributes map[GUID]*DoubleTuple2Attribute
-	scalars                map[GUID]Scalar
+	scalars                map[GUID]*Scalar
 }
 
 type EntityMap struct {
@@ -36,7 +36,7 @@ type EntityMap struct {
 	stringAttributes       map[GUID]*StringAttribute
 	doubleAttributes       map[GUID]*DoubleAttribute
 	doubleTuple2Attributes map[GUID]*DoubleTuple2Attribute
-	scalars                map[GUID]Scalar
+	scalars                map[GUID]*Scalar
 }
 
 func (em *EntityMap) get(guid GUID) interface{} {
@@ -88,6 +88,14 @@ type DoubleTuple2Attribute struct {
 	Defined       []bool
 	VertexSetGuid GUID
 }
+
+var EdgeBundleCode byte = 0
+var VertexSetCode byte = 1
+var ScalarCode byte = 2
+var DoubleAttributeCode byte = 3
+var StringAttributeCode byte = 4
+var DoubleTuple2AttributeCode byte = 5
+
 type Vertex struct {
 	Id int64 `parquet:"name=id, type=INT64"`
 }

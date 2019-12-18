@@ -56,6 +56,29 @@ func (server *Server) initDisk() error {
 	return err
 }
 
+func getConcreteTypeBasedOnFirstByte(reader *bufio.Reader) (interface{}, error) {
+	code, err := reader.ReadByte()
+	if err != nil {
+		return nil, err
+	}
+	switch code {
+	case VertexSetCode:
+		return &VertexSet{}, nil
+	case EdgeBundleCode:
+		return &EdgeBundle{}, nil
+	case ScalarCode:
+		return &Scalar{}, nil
+	case DoubleTuple2AttributeCode:
+		return &DoubleTuple2Attribute{}, nil
+	case StringAttributeCode:
+		return &StringAttribute{}, nil
+	case DoubleAttributeCode:
+		return &DoubleAttribute{}, nil
+	default:
+		return nil, status.Errorf(codes.Unknown, "Unknown EntityCode: %v", code)
+	}
+}
+
 func (server *Server) loadEntity(guid GUID) (interface{}, error) {
 	log.Printf("loadEntity: %v", guid)
 	if !hasOnDisk(guid) {
@@ -68,16 +91,15 @@ func (server *Server) loadEntity(guid GUID) (interface{}, error) {
 		return nil, err
 	}
 	defer file.Close()
-
 	reader := bufio.NewReader(file)
+	entity, err := getConcreteTypeBasedOnFirstByte(reader)
 	decoder := gob.NewDecoder(reader)
-	var entity interface{}
-	err = decoder.Decode(&entity)
+	err = decoder.Decode(entity)
 	return entity, err
 }
 
 func (server *Server) saveEntityAndThenReloadAsATest(guid GUID, entity interface{}) error {
-	log.Printf("saveEntityAndThenReloadAsATest: guid: %v", guid)
+	//	log.Printf("saveEntityAndThenReloadAsATest: guid: %v", guid)
 	err := server.saveEntity(guid, entity)
 	defer func() {
 		log.Printf("Error: %v", err)
@@ -89,9 +111,7 @@ func (server *Server) saveEntityAndThenReloadAsATest(guid GUID, entity interface
 	if err != nil {
 		return err
 	}
-	if reflect.DeepEqual(reloaded, entity) {
-		log.Printf("reloaded: [%v]", reloaded)
-		log.Printf("entity:   [%v]", entity)
+	if !reflect.DeepEqual(reloaded, entity) {
 		return status.Errorf(codes.NotFound, "Reload check failed for %v", guid)
 	}
 	return nil
@@ -110,19 +130,39 @@ func (server *Server) saveEntity(guid GUID, entity interface{}) (errStatus error
 	}
 	defer func() {
 		e := file.Close()
-		if e != nil {
-			errStatus = e
-		} else if err == nil {
-			errStatus = os.Rename(inProgressPath, realPath)
+		if e == nil {
 			if errStatus == nil {
-				registerToDisk(guid)
-				log.Printf("guid %v has bee written to %v ", guid, realPath)
+				errStatus = os.Rename(inProgressPath, realPath)
+				if errStatus == nil {
+					registerToDisk(guid)
+					//					log.Printf("guid %v has been written to %v ", guid, realPath)
+				}
 			}
 		}
 	}()
 	writer := bufio.NewWriter(file)
+	switch e := entity.(type) {
+	case *VertexSet:
+		err = writer.WriteByte(VertexSetCode)
+	case *EdgeBundle:
+		err = writer.WriteByte(EdgeBundleCode)
+	case *Scalar:
+		err = writer.WriteByte(ScalarCode)
+	case *DoubleTuple2Attribute:
+		err = writer.WriteByte(DoubleTuple2AttributeCode)
+	case *StringAttribute:
+		err = writer.WriteByte(StringAttributeCode)
+	case *DoubleAttribute:
+		err = writer.WriteByte(DoubleAttributeCode)
+	default:
+		return status.Errorf(codes.Unknown, "Unknown entity: %v, type: %T", e)
+	}
+	if err != nil {
+		return err
+	}
+
 	encoder := gob.NewEncoder(writer)
-	err = encoder.Encode(&entity)
+	err = encoder.Encode(entity)
 	if err != nil {
 		return err
 	}

@@ -30,6 +30,21 @@ message WriteToUnorderedDiskRequest {
   string guid = 1;
 }
 
+message HasOnSphynxDiskRequest {
+  string guid = 1;
+}
+
+message HasOnSphynxDiskReply {
+  bool hasOnDisk = 1;
+}
+
+message RelocateFromSphynxDiskRequest {
+  string guid = 1;
+}
+
+message RelocateFromSphynxDiskReply {}
+
+
 message WriteToUnorderedDiskReply {}
 
 service Sphynx {
@@ -37,4 +52,6 @@ service Sphynx {
   rpc Compute (ComputeRequest) returns (ComputeReply);
   rpc GetScalar (GetScalarRequest) returns (GetScalarReply);
   rpc WriteToUnorderedDisk (WriteToUnorderedDiskRequest) returns (WriteToUnorderedDiskReply);
+  rpc RelocateFromSphynxDisk(RelocateFromSphynxDiskRequest) returns (RelocateFromSphynxDiskReply);
+  rpc HasOnSphynxDisk(HasOnSphynxDiskRequest) returns (HasOnSphynxDiskReply);
 }
