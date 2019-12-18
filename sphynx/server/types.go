@@ -20,14 +20,23 @@ type OperationInstance struct {
 	Operation OperationDescription
 }
 
+type OperationOutput struct {
+	vertexSets             map[GUID]*VertexSet
+	edgeBundles            map[GUID]*EdgeBundle
+	stringAttributes       map[GUID]*StringAttribute
+	doubleAttributes       map[GUID]*DoubleAttribute
+	doubleTuple2Attributes map[GUID]*DoubleTuple2Attribute
+	scalars                map[GUID]Scalar
+}
+
 type EntityMap struct {
 	sync.Mutex
-	vertexSets             map[GUID]VertexSet
-	edgeBundles            map[GUID]EdgeBundle
+	vertexSets             map[GUID]*VertexSet
+	edgeBundles            map[GUID]*EdgeBundle
+	stringAttributes       map[GUID]*StringAttribute
+	doubleAttributes       map[GUID]*DoubleAttribute
+	doubleTuple2Attributes map[GUID]*DoubleTuple2Attribute
 	scalars                map[GUID]Scalar
-	stringAttributes       map[GUID]StringAttribute
-	doubleAttributes       map[GUID]DoubleAttribute
-	doubleTuple2Attributes map[GUID]DoubleTuple2Attribute
 }
 
 func (em *EntityMap) get(guid GUID) interface{} {
@@ -51,30 +60,33 @@ func (em *EntityMap) get(guid GUID) interface{} {
 }
 
 type EdgeBundle struct {
-	src         []int64
-	dst         []int64
-	edgeMapping []int64
-	vertexSet   *VertexSet
+	Src         []int64
+	Dst         []int64
+	EdgeMapping []int64
+	VertexSet   GUID
 }
 type VertexSet struct {
-	mapping []int64
+	Mapping []int64
 }
-type Scalar interface{}
+type Scalar struct {
+	Value interface{}
+}
+
 type DoubleAttribute struct {
-	values    []float64
-	defined   []bool
-	vertexSet *VertexSet
+	Values        []float64
+	Defined       []bool
+	VertexSetGuid GUID
 }
 type StringAttribute struct {
-	values    []string
-	defined   []bool
-	vertexSet *VertexSet
+	Values        []string
+	Defined       []bool
+	VertexSetGuid GUID
 }
 type DoubleTuple2Attribute struct {
-	values1   []float64
-	values2   []float64
-	defined   []bool
-	vertexSet *VertexSet
+	Values1       []float64
+	Values2       []float64
+	Defined       []bool
+	VertexSetGuid GUID
 }
 type Vertex struct {
 	Id int64 `parquet:"name=id, type=INT64"`

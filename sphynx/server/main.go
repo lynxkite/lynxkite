@@ -43,58 +43,120 @@ func NewServer() Server {
 	os.MkdirAll(unorderedDataDir, 0775)
 	os.MkdirAll(dataDir, 0775)
 	return Server{entities: EntityMap{
-		vertexSets:             make(map[GUID]VertexSet),
-		edgeBundles:            make(map[GUID]EdgeBundle),
+		vertexSets:             make(map[GUID]*VertexSet),
+		edgeBundles:            make(map[GUID]*EdgeBundle),
 		scalars:                make(map[GUID]Scalar),
-		stringAttributes:       make(map[GUID]StringAttribute),
-		doubleAttributes:       make(map[GUID]DoubleAttribute),
-		doubleTuple2Attributes: make(map[GUID]DoubleTuple2Attribute),
+		stringAttributes:       make(map[GUID]*StringAttribute),
+		doubleAttributes:       make(map[GUID]*DoubleAttribute),
+		doubleTuple2Attributes: make(map[GUID]*DoubleTuple2Attribute),
 	},
 		dataDir: dataDir, unorderedDataDir: unorderedDataDir}
 }
 
 func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.CanComputeReply, error) {
-	log.Printf("Received: %v", in.Operation)
+	//	log.Printf("Received: %v", in.Operation)
 	opInst := OperationInstanceFromJSON(in.Operation)
 	_, exists := getExecutableOperation(opInst)
 	return &pb.CanComputeReply{CanCompute: exists}, nil
 }
 
+func (s *Server) MergeAndSaveOutputs(output OperationOutput) error {
+	log.Printf("MergeAndSaveOutputs called")
+	s.entities.Lock()
+	defer s.entities.Unlock()
+	for guid, entity := range output.vertexSets {
+		s.entities.vertexSets[guid] = entity
+		err := s.saveEntityAndThenReloadAsATest(guid, entity)
+		if err != nil {
+			return err
+		}
+	}
+	for guid, entity := range output.doubleAttributes {
+		s.entities.doubleAttributes[guid] = entity
+		err := s.saveEntityAndThenReloadAsATest(guid, entity)
+		if err != nil {
+			return err
+		}
+	}
+	for guid, entity := range output.doubleTuple2Attributes {
+		s.entities.doubleTuple2Attributes[guid] = entity
+		err := s.saveEntityAndThenReloadAsATest(guid, entity)
+		if err != nil {
+			return err
+		}
+	}
+	for guid, entity := range output.edgeBundles {
+		s.entities.edgeBundles[guid] = entity
+		err := s.saveEntityAndThenReloadAsATest(guid, entity)
+		if err != nil {
+			return err
+		}
+	}
+	for guid, entity := range output.stringAttributes {
+		s.entities.stringAttributes[guid] = entity
+		err := s.saveEntityAndThenReloadAsATest(guid, entity)
+		if err != nil {
+			return err
+		}
+	}
+	for guid, scalar := range output.scalars {
+		s.entities.scalars[guid] = scalar
+		err := s.saveEntityAndThenReloadAsATest(guid, scalar)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.ComputeReply, error) {
+	log.Printf("Compute called")
 	opInst := OperationInstanceFromJSON(in.Operation)
 	op, exists := getExecutableOperation(opInst)
 	if !exists {
 		return nil, status.Errorf(codes.Unimplemented, "Can't compute %v", opInst)
 	} else {
-		op.execute(s, opInst)
+		outputs := op.execute(s, opInst)
 		for name, guid := range opInst.Outputs {
 			if strings.HasSuffix(name, "-idSet") {
 				// Output names ending with '-idSet' are automatically generated edge bundle id sets.
 				// Sphynx operations do not know about this, so we create these id sets based on the
 				// edge bundle here.
 				edgeBundleName := name[:len(name)-len("-idSet")]
-				s.entities.Lock()
-				e := s.entities.edgeBundles[opInst.Outputs[edgeBundleName]]
-				idSet := VertexSet{e.edgeMapping}
-				s.entities.vertexSets[guid] = idSet
-				s.entities.Unlock()
+				e := outputs.edgeBundles[opInst.Outputs[edgeBundleName]]
+				idSet := VertexSet{Mapping: e.EdgeMapping}
+				outputs.vertexSets[guid] = &idSet
 			}
+		}
+		err := s.MergeAndSaveOutputs(outputs)
+		if err != nil {
+			return nil, err
 		}
 		return &pb.ComputeReply{}, nil
 	}
 }
 
 func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
-	log.Printf("Received GetScalar request with GUID %v.", in.Guid)
+	//	log.Printf("Received GetScalar request with GUID %v.", in.Guid)
 	em := s.entities
 	em.Lock()
-	scalar := em.scalars[GUID(in.Guid)]
+	scalar := em.scalars[GUID(in.Guid)].Value
 	em.Unlock()
 	scalarJSON, err := json.Marshal(scalar)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "Converting scalar to json failed: %v", err)
 	}
 	return &pb.GetScalarReply{Scalar: string(scalarJSON)}, nil
+}
+
+func (s *Server) GetVertexSet(vsGuid GUID) (*VertexSet, error) {
+	s.entities.Lock()
+	defer s.entities.Unlock()
+	vs, exists := s.entities.vertexSets[vsGuid]
+	if !exists {
+		return nil, status.Errorf(codes.Unknown, "VertexSet guid %v is missing", vsGuid)
+	}
+	return vs, nil
 }
 
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
@@ -108,12 +170,12 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		log.Printf("Failed to create file: %v", err)
 	}
 	switch e := entity.(type) {
-	case VertexSet:
+	case *VertexSet:
 		pw, err := writer.NewParquetWriter(fw, new(Vertex), numGoRoutines)
 		if err != nil {
 			log.Printf("Failed to create parquet writer: %v", err)
 		}
-		for _, v := range e.mapping {
+		for _, v := range e.Mapping {
 			if err := pw.Write(Vertex{Id: v}); err != nil {
 				return nil, status.Errorf(codes.Unknown,
 					"Failed to write parquet file: %v", err)
@@ -124,16 +186,16 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 				"Parquet WriteStop error: %v", err)
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
-	case EdgeBundle:
+	case *EdgeBundle:
 		pw, err := writer.NewParquetWriter(fw, new(Edge), numGoRoutines)
 		if err != nil {
 			log.Printf("Failed to create parquet writer: %v", err)
 		}
-		for sphynxId, sparkId := range e.edgeMapping {
+		for sphynxId, sparkId := range e.EdgeMapping {
 			err := pw.Write(Edge{
 				Id:  sparkId,
-				Src: e.src[sphynxId],
-				Dst: e.dst[sphynxId],
+				Src: e.Src[sphynxId],
+				Dst: e.Dst[sphynxId],
 			})
 			if err != nil {
 				return nil, status.Errorf(codes.Unknown,
@@ -145,17 +207,21 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 				"Parquet WriteStop error: %v", err)
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
-	case StringAttribute:
+	case *StringAttribute:
 		pw, err := writer.NewParquetWriter(fw, new(SingleStringAttribute), numGoRoutines)
 		if err != nil {
 			log.Printf("Failed to create parquet writer: %v", err)
 		}
-		for sphynxId, def := range e.defined {
+		vs, err := s.GetVertexSet(e.VertexSetGuid)
+		if err != nil {
+			return nil, err
+		}
+		for sphynxId, def := range e.Defined {
 			if def {
-				sparkId := e.vertexSet.mapping[sphynxId]
+				sparkId := vs.Mapping[sphynxId]
 				err := pw.Write(SingleStringAttribute{
 					Id:    sparkId,
-					Value: e.values[sphynxId],
+					Value: e.Values[sphynxId],
 				})
 				if err != nil {
 					return nil, status.Errorf(codes.Unknown,
@@ -168,17 +234,21 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 				"Parquet WriteStop error: %v", err)
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
-	case DoubleAttribute:
+	case *DoubleAttribute:
 		pw, err := writer.NewParquetWriter(fw, new(SingleDoubleAttribute), numGoRoutines)
 		if err != nil {
 			log.Printf("Failed to create parquet writer: %v", err)
 		}
-		for sphynxId, def := range e.defined {
+		vs, err := s.GetVertexSet(e.VertexSetGuid)
+		if err != nil {
+			return nil, err
+		}
+		for sphynxId, def := range e.Defined {
 			if def {
-				sparkId := e.vertexSet.mapping[sphynxId]
+				sparkId := vs.Mapping[sphynxId]
 				err := pw.Write(SingleDoubleAttribute{
 					Id:    sparkId,
-					Value: e.values[sphynxId],
+					Value: e.Values[sphynxId],
 				})
 				if err != nil {
 					return nil, status.Errorf(codes.Unknown,
@@ -191,18 +261,22 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 				"Parquet WriteStop error: %v", err)
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
-	case DoubleTuple2Attribute:
+	case *DoubleTuple2Attribute:
 		pw, err := writer.NewParquetWriter(fw, new(SingleDoubleTuple2Attribute), numGoRoutines)
 		if err != nil {
 			log.Printf("Failed to create parquet writer: %v", err)
 		}
-		for sphynxId, def := range e.defined {
+		vs, err := s.GetVertexSet(e.VertexSetGuid)
+		if err != nil {
+			return nil, err
+		}
+		for sphynxId, def := range e.Defined {
 			if def {
-				sparkId := e.vertexSet.mapping[sphynxId]
+				sparkId := vs.Mapping[sphynxId]
 				err := pw.Write(SingleDoubleTuple2Attribute{
 					Id:     sparkId,
-					Value1: e.values1[sphynxId],
-					Value2: e.values2[sphynxId],
+					Value1: e.Values1[sphynxId],
+					Value2: e.Values2[sphynxId],
 				})
 				if err != nil {
 					return nil, status.Errorf(codes.Unknown,
@@ -242,7 +316,7 @@ func main() {
 	}
 
 	sphynxServer := NewServer()
-	sphynxServer.init_disk() // For now, we just block, until the files are checked
+	sphynxServer.initDisk() // For now, we just block, until the files are checked
 	pb.RegisterSphynxServer(s, &sphynxServer)
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

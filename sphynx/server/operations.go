@@ -2,64 +2,88 @@
 
 package main
 
+import "log"
+
 type Operation struct {
-	execute func(*Server, OperationInstance)
+	execute func(*Server, OperationInstance) OperationOutput
 }
 
 var operations = map[string]Operation{
 	"ExampleGraph": exampleGraph,
 }
 
+func NewOperationOutput() OperationOutput {
+	return OperationOutput{
+		vertexSets:             make(map[GUID]*VertexSet),
+		edgeBundles:            make(map[GUID]*EdgeBundle),
+		scalars:                make(map[GUID]Scalar),
+		stringAttributes:       make(map[GUID]*StringAttribute),
+		doubleAttributes:       make(map[GUID]*DoubleAttribute),
+		doubleTuple2Attributes: make(map[GUID]*DoubleTuple2Attribute),
+	}
+}
+
 var exampleGraph = Operation{
-	execute: func(s *Server, opInst OperationInstance) {
-		s.entities.Lock()
-		defer s.entities.Unlock()
-		vertexSet := VertexSet{mapping: []int64{0, 1, 2, 3}}
+	execute: func(s *Server, opInst OperationInstance) OperationOutput {
+		log.Printf("exampleGraph execute called")
+		outputs := NewOperationOutput()
+		vertexSet := VertexSet{Mapping: []int64{0, 1, 2, 3}}
 		nameToGUID := opInst.Outputs
-		s.entities.vertexSets[nameToGUID["vertices"]] = vertexSet
-		s.entities.edgeBundles[nameToGUID["edges"]] = EdgeBundle{
-			src:         []int64{0, 1, 2, 2},
-			dst:         []int64{1, 0, 0, 1},
-			vertexSet:   &vertexSet,
-			edgeMapping: []int64{0, 1, 2, 3},
+		vsGUID := nameToGUID["vertices"]
+		outputs.vertexSets[vsGUID] = &vertexSet
+		eb := &EdgeBundle{
+			Src:         []int64{0, 1, 2, 2},
+			Dst:         []int64{1, 0, 0, 1},
+			VertexSet:   vsGUID,
+			EdgeMapping: []int64{0, 1, 2, 3},
 		}
-		s.entities.stringAttributes[nameToGUID["name"]] = StringAttribute{
-			values:    []string{"Adam", "Eve", "Bob", "Isolated Joe"},
-			defined:   []bool{true, true, true, true},
-			vertexSet: &vertexSet,
+		outputs.edgeBundles[nameToGUID["edges"]] = eb
+		name := &StringAttribute{
+			Values:        []string{"Adam", "Eve", "Bob", "Isolated Joe"},
+			Defined:       []bool{true, true, true, true},
+			VertexSetGuid: vsGUID,
 		}
-		s.entities.doubleAttributes[nameToGUID["age"]] = DoubleAttribute{
-			values:    []float64{20.3, 18.2, 50.3, 2.0},
-			defined:   []bool{true, true, true, true},
-			vertexSet: &vertexSet,
+		outputs.stringAttributes[nameToGUID["name"]] = name
+		age := &DoubleAttribute{
+			Values:        []float64{20.3, 18.2, 50.3, 2.0},
+			Defined:       []bool{true, true, true, true},
+			VertexSetGuid: vsGUID,
 		}
-		s.entities.stringAttributes[nameToGUID["gender"]] = StringAttribute{
-			values:    []string{"Male", "Female", "Male", "Male"},
-			defined:   []bool{true, true, true, true},
-			vertexSet: &vertexSet,
+		outputs.doubleAttributes[nameToGUID["age"]] = age
+		gender := &StringAttribute{
+			Values:        []string{"Male", "Female", "Male", "Male"},
+			Defined:       []bool{true, true, true, true},
+			VertexSetGuid: vsGUID,
 		}
-		s.entities.doubleAttributes[nameToGUID["income"]] = DoubleAttribute{
-			values:    []float64{1000, 0, 0, 2000},
-			defined:   []bool{true, false, false, true},
-			vertexSet: &vertexSet,
+		outputs.stringAttributes[nameToGUID["gender"]] = gender
+		income := &DoubleAttribute{
+			Values:        []float64{1000, 0, 0, 2000},
+			Defined:       []bool{true, false, false, true},
+			VertexSetGuid: vsGUID,
 		}
-		s.entities.doubleTuple2Attributes[nameToGUID["location"]] = DoubleTuple2Attribute{
-			values1:   []float64{40.71448, 47.5269674, 1.352083, -33.8674869},
-			values2:   []float64{-74.00598, 19.0323968, 103.819836, 151.2069902},
-			defined:   []bool{true, true, true, true},
-			vertexSet: &vertexSet,
+		outputs.doubleAttributes[nameToGUID["income"]] = income
+		location := &DoubleTuple2Attribute{
+			Values1:       []float64{40.71448, 47.5269674, 1.352083, -33.8674869},
+			Values2:       []float64{-74.00598, 19.0323968, 103.819836, 151.2069902},
+			Defined:       []bool{true, true, true, true},
+			VertexSetGuid: vsGUID,
 		}
-		s.entities.stringAttributes[nameToGUID["comment"]] = StringAttribute{
-			values: []string{"Adam loves Eve", "Eve loves Adam",
+		outputs.doubleTuple2Attributes[nameToGUID["location"]] = location
+		comment := &StringAttribute{
+			Values: []string{"Adam loves Eve", "Eve loves Adam",
 				"Bob envies Adam", "Bob loves Eve"},
-			defined:   []bool{true, true, true, true},
-			vertexSet: &vertexSet,
+			Defined:       []bool{true, true, true, true},
+			VertexSetGuid: vsGUID,
 		}
-		s.entities.doubleAttributes[nameToGUID["weight"]] = DoubleAttribute{
-			values:    []float64{1, 2, 3, 4},
-			defined:   []bool{true, true, true, true},
-			vertexSet: &vertexSet,
+		outputs.stringAttributes[nameToGUID["comment"]] = comment
+		weight := &DoubleAttribute{
+			Values:        []float64{1, 2, 3, 4},
+			Defined:       []bool{true, true, true, true},
+			VertexSetGuid: vsGUID,
 		}
-		s.entities.scalars[nameToGUID["greeting"]] = Scalar("Hello world! 😀 ")
+		outputs.doubleAttributes[nameToGUID["weight"]] = weight
+		greeting := Scalar{Value: "Hello world! 😀 "}
+		outputs.scalars[nameToGUID["greeting"]] = greeting
+		return outputs
 	},
 }
