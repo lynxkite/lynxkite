@@ -3,7 +3,9 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import com.lynxanalytics.biggraph.graph_util
+import org.apache.calcite.rel.stream.StreamRules.DeltaUnionTransposeRule
 import play.api.libs.json.Json
+
 import scala.reflect.runtime.universe.typeTag
 
 abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Domain {
@@ -39,11 +41,17 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
   }
 
   override def canRelocateFrom(source: Domain): Boolean = {
-    false
+    source match {
+      case _: SphynxDisk => true
+      case _ => false
+    }
   }
 
   override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
-    ???
+    source match {
+      case _: SphynxDisk => client.relocateFromSphynxDisk(e)
+      case _ => ???
+    }
   }
 
 }
@@ -51,7 +59,7 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
 class SphynxDisk(host: String, port: Int, certDir: String) extends SphynxDomain(host, port, certDir) {
 
   override def has(entity: MetaGraphEntity): Boolean = {
-    return false
+    return client.hasOnSphynxDisk(entity)
   }
 
   override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {
@@ -63,7 +71,7 @@ class SphynxDisk(host: String, port: Int, certDir: String) extends SphynxDomain(
   }
 
   override def get[T](scalar: Scalar[T]): SafeFuture[T] = {
-    client.getScalar(scalar)
+    ???
   }
 
   override def cache(e: MetaGraphEntity): Unit = {
@@ -71,13 +79,12 @@ class SphynxDisk(host: String, port: Int, certDir: String) extends SphynxDomain(
   }
 
   override def canRelocateFrom(source: Domain): Boolean = {
-    false
+    return false
   }
 
   override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     ???
   }
-
 }
 
 class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir: String)

@@ -16,7 +16,7 @@ func NewOperationOutput() OperationOutput {
 	return OperationOutput{
 		vertexSets:             make(map[GUID]*VertexSet),
 		edgeBundles:            make(map[GUID]*EdgeBundle),
-		scalars:                make(map[GUID]Scalar),
+		scalars:                make(map[GUID]*Scalar),
 		stringAttributes:       make(map[GUID]*StringAttribute),
 		doubleAttributes:       make(map[GUID]*DoubleAttribute),
 		doubleTuple2Attributes: make(map[GUID]*DoubleTuple2Attribute),
@@ -83,7 +83,7 @@ var exampleGraph = Operation{
 		}
 		outputs.doubleAttributes[nameToGUID["weight"]] = weight
 		greeting := Scalar{Value: "Hello world! 😀 "}
-		outputs.scalars[nameToGUID["greeting"]] = greeting
+		outputs.scalars[nameToGUID["greeting"]] = &greeting
 		return outputs
 	},
 }

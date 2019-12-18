@@ -45,7 +45,7 @@ func NewServer() Server {
 	return Server{entities: EntityMap{
 		vertexSets:             make(map[GUID]*VertexSet),
 		edgeBundles:            make(map[GUID]*EdgeBundle),
-		scalars:                make(map[GUID]Scalar),
+		scalars:                make(map[GUID]*Scalar),
 		stringAttributes:       make(map[GUID]*StringAttribute),
 		doubleAttributes:       make(map[GUID]*DoubleAttribute),
 		doubleTuple2Attributes: make(map[GUID]*DoubleTuple2Attribute),
@@ -61,7 +61,6 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 }
 
 func (s *Server) MergeAndSaveOutputs(output OperationOutput) error {
-	log.Printf("MergeAndSaveOutputs called")
 	s.entities.Lock()
 	defer s.entities.Unlock()
 	for guid, entity := range output.vertexSets {
@@ -293,6 +292,44 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		return nil, status.Errorf(
 			codes.Unimplemented, "Can't reindex entity %v with GUID %v to use Spark IDs.", entity, in.Guid)
 	}
+}
+
+func (s *Server) HasOnSphynxDisk(ctx context.Context, in *pb.HasOnSphynxDiskRequest) (*pb.HasOnSphynxDiskReply, error) {
+	guid := in.GetGuid()
+	has := hasOnDisk(GUID(guid))
+	return &pb.HasOnSphynxDiskReply{HasOnDisk: has}, nil
+}
+
+func (s *Server) RelocateFromSphynxDisk(ctx context.Context, in *pb.RelocateFromSphynxDiskRequest) (*pb.RelocateFromSphynxDiskReply, error) {
+	guid := GUID(in.GetGuid())
+	log.Printf("RelocateFromSphynxDisk: %v", guid)
+	if !hasOnDisk(guid) {
+		return nil, status.Errorf(codes.NotFound, "Guid %v not found in sphynx disk cache", guid)
+	}
+	entity, err := s.loadEntity(guid)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("entity: %v", entity)
+	s.entities.Lock()
+	defer s.entities.Unlock()
+	switch e := entity.(type) {
+	case *VertexSet:
+		s.entities.vertexSets[guid] = e
+	case *EdgeBundle:
+		s.entities.edgeBundles[guid] = e
+	case *DoubleAttribute:
+		s.entities.doubleAttributes[guid] = e
+	case *DoubleTuple2Attribute:
+		s.entities.doubleTuple2Attributes[guid] = e
+	case *StringAttribute:
+		s.entities.stringAttributes[guid] = e
+	case *Scalar:
+		s.entities.scalars[guid] = e
+	default:
+		return nil, status.Errorf(codes.Unknown, "Unknown entity type: %T", e)
+	}
+	return &pb.RelocateFromSphynxDiskReply{}, nil
 }
 
 func main() {

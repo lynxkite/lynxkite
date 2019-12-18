@@ -72,7 +72,12 @@ object BigGraphEnvironmentImpl {
                   "UNORDERED_SPHYNX_DATA_DIR is not defined. If you don't want to start Sphynx, please unset SPHYNX_PORT.")
               case Some(d) => new graph_api.UnorderedSphynxDisk(host, port.toInt, certDir, d)
             }
+            if (LoggedEnvironment.envOrNone("SPHYNX_DATA_DIR").isEmpty) {
+              throw new AssertionError(
+                "SPHYNX_DATA_DIR is not defined. If you don't want to start Sphynx, please unset SPHYNX_PORT.")
+            }
             Seq(
+              new graph_api.SphynxDisk(host, port.toInt, certDir),
               new graph_api.SphynxMemory(host, port.toInt, certDir),
               unorderedSphynxDisk, new graph_api.ScalaDomain, sparkDomain)
           }
