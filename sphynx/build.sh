@@ -22,21 +22,21 @@ PATH="${REPO}/protoc/bin:${PATH}"
 # Generate the gRPC Java interfaces.
 GRPC_JAVA_VERSION="1.24.0"
 GRPC_JAVA=protoc-gen-grpc-java-$GRPC_JAVA_VERSION-linux-x86_64.exe
-wget -nc https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/$GRPC_JAVA_VERSION/$GRPC_JAVA
-chmod +x $REPO/$GRPC_JAVA
-protoc --plugin=protoc-gen-grpc-java=$REPO/$GRPC_JAVA --grpc-java_out=../app \
-	--proto_path=$PROTO_SOURCE_DIR $PROTO_SOURCE_FILE
-protoc -I=$PROTO_SOURCE_DIR --java_out=../app $PROTO_SOURCE_DIR/$PROTO_SOURCE_FILE
+#wget -nc https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/$GRPC_JAVA_VERSION/$GRPC_JAVA
+#chmod +x $REPO/$GRPC_JAVA
+#protoc --plugin=protoc-gen-grpc-java=$REPO/$GRPC_JAVA --grpc-java_out=../app \
+#	--proto_path=$PROTO_SOURCE_DIR $PROTO_SOURCE_FILE
+#protoc -I=$PROTO_SOURCE_DIR --java_out=../app $PROTO_SOURCE_DIR/$PROTO_SOURCE_FILE
 
 GO_PKG=github.com/biggraph/biggraph/sphynx
 export GOPATH=$REPO/go
 export GOCACHE=$REPO/go/.cache
 
 # Generate the gRPC Go interfaces.
-go get -u google.golang.org/grpc
-go get -u github.com/golang/protobuf/protoc-gen-go
-go get -u github.com/xitongsys/parquet-go/writer
-go get -u github.com/xitongsys/parquet-go-source/local
+#go get -u google.golang.org/grpc
+#go get -u github.com/golang/protobuf/protoc-gen-go
+#go get -u github.com/xitongsys/parquet-go/writer
+#go get -u github.com/xitongsys/parquet-go-source/local
 PATH=$GOPATH/bin:$PATH protoc $PROTO_SOURCE_DIR/$PROTO_SOURCE_FILE --go_out=plugins=grpc,import_path=$PROTO_SOURCE_DIR:.
 
 # Compile Sphynx server.
