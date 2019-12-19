@@ -78,21 +78,18 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 	if !exists {
 		return nil, status.Errorf(codes.Unimplemented, "Can't compute %v", opInst)
 	} else {
-		outputs := op.execute(s, opInst)
-		for name, guid := range opInst.Outputs {
+		ea := EntityAccessor{server: s, entities: &s.entities, opInst: &opInst}
+		op.execute(ea)
+		for name, _ := range opInst.Outputs {
 			if strings.HasSuffix(name, "-idSet") {
 				// Output names ending with '-idSet' are automatically generated edge bundle id sets.
 				// Sphynx operations do not know about this, so we create these id sets based on the
 				// edge bundle here.
 				edgeBundleName := name[:len(name)-len("-idSet")]
-				e := outputs.entities[opInst.Outputs[edgeBundleName]].(*EdgeBundle)
+				e := ea.getEdgeBundle(edgeBundleName)
 				idSet := VertexSet{Mapping: e.EdgeMapping}
-				outputs.addVertexSet(guid, &idSet)
+				ea.addVertexSet(name, &idSet)
 			}
-		}
-		err := s.MergeAndSaveOutputs(outputs)
-		if err != nil {
-			return nil, err
 		}
 		return &pb.ComputeReply{}, nil
 	}
