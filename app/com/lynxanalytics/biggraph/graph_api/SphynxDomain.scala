@@ -19,7 +19,7 @@ abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Do
 class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomain(host, port, certDir) {
 
   override def has(entity: MetaGraphEntity): Boolean = {
-    return false
+    client.hasInSphynxMemory(entity)
   }
 
   override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {

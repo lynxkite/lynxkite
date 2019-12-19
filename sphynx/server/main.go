@@ -175,6 +175,38 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 	return &pb.GetScalarReply{Scalar: string(scalarJSON)}, nil
 }
 
+func (s *Server) HasInSphynxMemory(ctx context.Context, in *pb.HasInSphynxMemoryRequest) (*pb.HasInSphynxMemoryReply, error) {
+	guid := GUID(in.Guid)
+	log.Printf("Received HasInSphynxMemoryRequest with GUID %v.", guid)
+	s.entities.Lock()
+	defer s.entities.Unlock()
+	_, exists := s.entities.vertexSets[guid]
+	if exists {
+		return &pb.HasInSphynxMemoryReply{HasInMemory: true}, nil
+	}
+	_, exists = s.entities.stringAttributes[guid]
+	if exists {
+		return &pb.HasInSphynxMemoryReply{HasInMemory: true}, nil
+	}
+	_, exists = s.entities.edgeBundles[guid]
+	if exists {
+		return &pb.HasInSphynxMemoryReply{HasInMemory: true}, nil
+	}
+	_, exists = s.entities.doubleTuple2Attributes[guid]
+	if exists {
+		return &pb.HasInSphynxMemoryReply{HasInMemory: true}, nil
+	}
+	_, exists = s.entities.doubleAttributes[guid]
+	if exists {
+		return &pb.HasInSphynxMemoryReply{HasInMemory: true}, nil
+	}
+	_, exists = s.entities.scalars[guid]
+	if exists {
+		return &pb.HasInSphynxMemoryReply{HasInMemory: true}, nil
+	}
+	return &pb.HasInSphynxMemoryReply{HasInMemory: false}, nil
+}
+
 func (s *Server) GetVertexSet(vsGuid GUID) (*VertexSet, error) {
 	s.entities.Lock()
 	defer s.entities.Unlock()

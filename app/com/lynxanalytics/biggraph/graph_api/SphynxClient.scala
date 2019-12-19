@@ -47,7 +47,7 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
   def canCompute(operationMetadataJSON: String): Boolean = {
     val request = SphynxOuterClass.CanComputeRequest.newBuilder().setOperation(operationMetadataJSON).build()
     val response = blockingStub.canCompute(request)
-    return response.getCanCompute
+    response.getCanCompute
   }
 
   def compute(operationMetadataJSON: String): SafeFuture[Unit] = {
@@ -80,7 +80,13 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
   def hasOnSphynxDisk(e: MetaGraphEntity): Boolean = {
     val request = SphynxOuterClass.HasOnSphynxDiskRequest.newBuilder().setGuid(e.gUID.toString).build()
     val response = blockingStub.hasOnSphynxDisk(request)
-    return response.getHasOnDisk
+    response.getHasOnDisk
+  }
+
+  def hasInSphynxMemory(e: MetaGraphEntity): Boolean = {
+    val request = SphynxOuterClass.HasInSphynxMemoryRequest.newBuilder().setGuid(e.gUID.toString).build()
+    val response = blockingStub.hasInSphynxMemory(request)
+    response.getHasInMemory
   }
 
   def relocateFromSphynxDisk(e: MetaGraphEntity): SafeFuture[Unit] = {
