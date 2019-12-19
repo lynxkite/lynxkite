@@ -61,46 +61,9 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 }
 
 func (s *Server) MergeAndSaveOutputs(output OperationOutput) error {
-	s.entities.Lock()
-	defer s.entities.Unlock()
-	for guid, entity := range output.vertexSets {
-		s.entities.vertexSets[guid] = entity
+	for guid, entity := range output.entities {
+		entity.addToEntityMap(&s.entities, guid)
 		err := s.saveEntityAndThenReloadAsATest(guid, entity)
-		if err != nil {
-			return err
-		}
-	}
-	for guid, entity := range output.doubleAttributes {
-		s.entities.doubleAttributes[guid] = entity
-		err := s.saveEntityAndThenReloadAsATest(guid, entity)
-		if err != nil {
-			return err
-		}
-	}
-	for guid, entity := range output.doubleTuple2Attributes {
-		s.entities.doubleTuple2Attributes[guid] = entity
-		err := s.saveEntityAndThenReloadAsATest(guid, entity)
-		if err != nil {
-			return err
-		}
-	}
-	for guid, entity := range output.edgeBundles {
-		s.entities.edgeBundles[guid] = entity
-		err := s.saveEntityAndThenReloadAsATest(guid, entity)
-		if err != nil {
-			return err
-		}
-	}
-	for guid, entity := range output.stringAttributes {
-		s.entities.stringAttributes[guid] = entity
-		err := s.saveEntityAndThenReloadAsATest(guid, entity)
-		if err != nil {
-			return err
-		}
-	}
-	for guid, scalar := range output.scalars {
-		s.entities.scalars[guid] = scalar
-		err := s.saveEntityAndThenReloadAsATest(guid, scalar)
 		if err != nil {
 			return err
 		}
@@ -122,9 +85,9 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 				// Sphynx operations do not know about this, so we create these id sets based on the
 				// edge bundle here.
 				edgeBundleName := name[:len(name)-len("-idSet")]
-				e := outputs.edgeBundles[opInst.Outputs[edgeBundleName]]
+				e := outputs.entities[opInst.Outputs[edgeBundleName]].(*EdgeBundle)
 				idSet := VertexSet{Mapping: e.EdgeMapping}
-				outputs.vertexSets[guid] = &idSet
+				outputs.addVertexSet(guid, &idSet)
 			}
 		}
 		err := s.MergeAndSaveOutputs(outputs)
@@ -177,34 +140,9 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 
 func (s *Server) HasInSphynxMemory(ctx context.Context, in *pb.HasInSphynxMemoryRequest) (*pb.HasInSphynxMemoryReply, error) {
 	guid := GUID(in.Guid)
-	log.Printf("Received HasInSphynxMemoryRequest with GUID %v.", guid)
-	s.entities.Lock()
-	defer s.entities.Unlock()
-	_, exists := s.entities.vertexSets[guid]
-	if exists {
-		return &pb.HasInSphynxMemoryReply{HasInMemory: true}, nil
-	}
-	_, exists = s.entities.stringAttributes[guid]
-	if exists {
-		return &pb.HasInSphynxMemoryReply{HasInMemory: true}, nil
-	}
-	_, exists = s.entities.edgeBundles[guid]
-	if exists {
-		return &pb.HasInSphynxMemoryReply{HasInMemory: true}, nil
-	}
-	_, exists = s.entities.doubleTuple2Attributes[guid]
-	if exists {
-		return &pb.HasInSphynxMemoryReply{HasInMemory: true}, nil
-	}
-	_, exists = s.entities.doubleAttributes[guid]
-	if exists {
-		return &pb.HasInSphynxMemoryReply{HasInMemory: true}, nil
-	}
-	_, exists = s.entities.scalars[guid]
-	if exists {
-		return &pb.HasInSphynxMemoryReply{HasInMemory: true}, nil
-	}
-	return &pb.HasInSphynxMemoryReply{HasInMemory: false}, nil
+	_, exists := s.entities.get(guid)
+	log.Printf("Received HasInSphynxMemoryRequest with GUID %v -> %v", guid, exists)
+	return &pb.HasInSphynxMemoryReply{HasInMemory: exists}, nil
 }
 
 func (s *Server) GetVertexSet(vsGuid GUID) (*VertexSet, error) {
@@ -219,13 +157,14 @@ func (s *Server) GetVertexSet(vsGuid GUID) (*VertexSet, error) {
 
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
 	var numGoRoutines int64 = 4
-	entity := s.entities.get(GUID(in.Guid))
+	entity, _ := s.entities.get(GUID(in.Guid))
 	log.Printf("Reindexing %v to use spark IDs.", entity)
 	fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
 	fw, err := local.NewLocalFileWriter(fname)
 	defer fw.Close()
 	if err != nil {
 		log.Printf("Failed to create file: %v", err)
+		return nil, err
 	}
 	switch e := entity.(type) {
 	case *VertexSet:
@@ -369,25 +308,7 @@ func (s *Server) RelocateFromSphynxDisk(ctx context.Context, in *pb.RelocateFrom
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("entity: %v", entity)
-	s.entities.Lock()
-	defer s.entities.Unlock()
-	switch e := entity.(type) {
-	case *VertexSet:
-		s.entities.vertexSets[guid] = e
-	case *EdgeBundle:
-		s.entities.edgeBundles[guid] = e
-	case *DoubleAttribute:
-		s.entities.doubleAttributes[guid] = e
-	case *DoubleTuple2Attribute:
-		s.entities.doubleTuple2Attributes[guid] = e
-	case *StringAttribute:
-		s.entities.stringAttributes[guid] = e
-	case *Scalar:
-		s.entities.scalars[guid] = e
-	default:
-		return nil, status.Errorf(codes.Unknown, "Unknown entity type: %T", e)
-	}
+	entity.addToEntityMap(&s.entities, guid)
 	return &pb.RelocateFromSphynxDiskReply{}, nil
 }
 
