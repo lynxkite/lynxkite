@@ -1,7 +1,9 @@
 // Types used by Sphynx.
 package main
 
-import "sync"
+import (
+	"sync"
+)
 
 type Server struct {
 	entities         EntityMap
@@ -21,12 +23,26 @@ type OperationInstance struct {
 }
 
 type OperationOutput struct {
-	vertexSets             map[GUID]*VertexSet
-	edgeBundles            map[GUID]*EdgeBundle
-	stringAttributes       map[GUID]*StringAttribute
-	doubleAttributes       map[GUID]*DoubleAttribute
-	doubleTuple2Attributes map[GUID]*DoubleTuple2Attribute
-	scalars                map[GUID]*Scalar
+	entities map[GUID]Entity
+}
+
+func (o *OperationOutput) addVertexSet(guid GUID, e *VertexSet) {
+	o.entities[guid] = e
+}
+func (o *OperationOutput) addEdgeBundle(guid GUID, e *EdgeBundle) {
+	o.entities[guid] = e
+}
+func (o *OperationOutput) addStringAttribute(guid GUID, e *StringAttribute) {
+	o.entities[guid] = e
+}
+func (o *OperationOutput) addDoubleAttribute(guid GUID, e *DoubleAttribute) {
+	o.entities[guid] = e
+}
+func (o *OperationOutput) addDoubleTuple2Attribute(guid GUID, e *DoubleTuple2Attribute) {
+	o.entities[guid] = e
+}
+func (o *OperationOutput) addScalar(guid GUID, e *Scalar) {
+	o.entities[guid] = e
 }
 
 type EntityMap struct {
@@ -39,24 +55,58 @@ type EntityMap struct {
 	scalars                map[GUID]*Scalar
 }
 
-func (em *EntityMap) get(guid GUID) interface{} {
+type Entity interface {
+	addToEntityMap(entityMap *EntityMap, guid GUID)
+}
+
+func (e *VertexSet) addToEntityMap(entityMap *EntityMap, guid GUID) {
+	entityMap.Lock()
+	entityMap.vertexSets[guid] = e
+	entityMap.Unlock()
+}
+func (e *EdgeBundle) addToEntityMap(entityMap *EntityMap, guid GUID) {
+	entityMap.Lock()
+	entityMap.edgeBundles[guid] = e
+	entityMap.Unlock()
+}
+func (e *StringAttribute) addToEntityMap(entityMap *EntityMap, guid GUID) {
+	entityMap.Lock()
+	entityMap.stringAttributes[guid] = e
+	entityMap.Unlock()
+}
+func (e *DoubleAttribute) addToEntityMap(entityMap *EntityMap, guid GUID) {
+	entityMap.Lock()
+	entityMap.doubleAttributes[guid] = e
+	entityMap.Unlock()
+}
+func (e *DoubleTuple2Attribute) addToEntityMap(entityMap *EntityMap, guid GUID) {
+	entityMap.Lock()
+	entityMap.doubleTuple2Attributes[guid] = e
+	entityMap.Unlock()
+}
+func (e *Scalar) addToEntityMap(entityMap *EntityMap, guid GUID) {
+	entityMap.Lock()
+	entityMap.scalars[guid] = e
+	entityMap.Unlock()
+}
+
+func (em *EntityMap) get(guid GUID) (Entity, bool) {
 	em.Lock()
 	defer em.Unlock()
-	var res interface{}
 	if e, ok := em.vertexSets[guid]; ok {
-		res = e
+		return e, true
 	} else if e, ok := em.edgeBundles[guid]; ok {
-		res = e
+		return e, true
 	} else if e, ok := em.scalars[guid]; ok {
-		res = e
+		return e, true
 	} else if e, ok := em.stringAttributes[guid]; ok {
-		res = e
+		return e, true
 	} else if e, ok := em.doubleAttributes[guid]; ok {
-		res = e
+		return e, true
 	} else if e, ok := em.doubleTuple2Attributes[guid]; ok {
-		res = e
+		return e, true
 	}
-	return res
+	return nil, false
 }
 
 type EdgeBundle struct {

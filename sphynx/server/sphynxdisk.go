@@ -56,7 +56,7 @@ func (server *Server) initDisk() error {
 	return err
 }
 
-func getConcreteTypeBasedOnFirstByte(reader *bufio.Reader) (interface{}, error) {
+func getConcreteTypeBasedOnFirstByte(reader *bufio.Reader) (Entity, error) {
 	code, err := reader.ReadByte()
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func getConcreteTypeBasedOnFirstByte(reader *bufio.Reader) (interface{}, error) 
 	}
 }
 
-func (server *Server) loadEntity(guid GUID) (interface{}, error) {
+func (server *Server) loadEntity(guid GUID) (Entity, error) {
 	log.Printf("loadEntity: %v", guid)
 	if !hasOnDisk(guid) {
 		return nil, status.Errorf(codes.NotFound,
