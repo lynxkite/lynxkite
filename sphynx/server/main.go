@@ -135,13 +135,40 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 	}
 }
 
-func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
-	//	log.Printf("Received GetScalar request with GUID %v.", in.Guid)
+func (s *Server) GetScalarInner(guid GUID) (*Scalar, error) {
+	// This serves for both domains SphynxMemory and SphynxDisk. If
+	// SphynxMemory has it, we return it, otherwise we retrieve it
+	// from SphynxDisk
 	em := s.entities
 	em.Lock()
-	scalar := em.scalars[GUID(in.Guid)].Value
+	scalar, exists := em.scalars[guid]
 	em.Unlock()
-	scalarJSON, err := json.Marshal(scalar)
+	if exists {
+		return scalar, nil
+	}
+	entity, err := s.loadEntity(guid)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "Entity (scalar) %v cannot be loaded: %v", guid, err)
+	}
+	switch s := entity.(type) {
+	case *Scalar:
+		em.Lock()
+		em.scalars[guid] = s
+		em.Unlock()
+		return s, nil
+	default:
+		return nil, status.Errorf(codes.NotFound, "Entity %v should be a Scalar, but it is %T", guid, s)
+	}
+}
+
+func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
+	guid := GUID(in.Guid)
+	log.Printf("Received GetScalar request with GUID %v.", guid)
+	scalar, err := s.GetScalarInner(guid)
+	if err != nil {
+		return nil, err
+	}
+	scalarJSON, err := json.Marshal(scalar.Value)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "Converting scalar to json failed: %v", err)
 	}

@@ -71,7 +71,7 @@ class SphynxDisk(host: String, port: Int, certDir: String) extends SphynxDomain(
   }
 
   override def get[T](scalar: Scalar[T]): SafeFuture[T] = {
-    ???
+    client.getScalar(scalar)
   }
 
   override def cache(e: MetaGraphEntity): Unit = {
