@@ -42,24 +42,24 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
 
   override def canRelocateFrom(source: Domain): Boolean = {
     source match {
-      case _: SphynxDisk => true
+      case _: OrderedSphynxDisk => true
       case _ => false
     }
   }
 
   override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     source match {
-      case _: SphynxDisk => client.relocateFromSphynxDisk(e)
+      case _: OrderedSphynxDisk => client.readFromOrderedSphynxDisk(e)
       case _ => ???
     }
   }
 
 }
 
-class SphynxDisk(host: String, port: Int, certDir: String) extends SphynxDomain(host, port, certDir) {
+class OrderedSphynxDisk(host: String, port: Int, certDir: String) extends SphynxDomain(host, port, certDir) {
 
   override def has(entity: MetaGraphEntity): Boolean = {
-    return client.hasOnSphynxDisk(entity)
+    return client.hasOnOrderedSphynxDisk(entity)
   }
 
   override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {
