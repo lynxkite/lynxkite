@@ -56,7 +56,7 @@ func (server *Server) initDisk() error {
 	return err
 }
 
-func getConcreteTypeBasedOnFirstByte(reader *bufio.Reader) (Entity, error) {
+func getConcreteTypeBasedOnFirstByte(reader *bufio.Reader) (EntityPtr, error) {
 	code, err := reader.ReadByte()
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func getConcreteTypeBasedOnFirstByte(reader *bufio.Reader) (Entity, error) {
 	}
 }
 
-func (server *Server) loadEntity(guid GUID) (Entity, error) {
+func (server *Server) loadEntity(guid GUID) (EntityPtr, error) {
 	log.Printf("loadEntity: %v", guid)
 	if !hasOnDisk(guid) {
 		return nil, status.Errorf(codes.NotFound,
@@ -98,7 +98,7 @@ func (server *Server) loadEntity(guid GUID) (Entity, error) {
 	return entity, err
 }
 
-func (server *Server) saveEntityAndThenReloadAsATest(guid GUID, entity interface{}) error {
+func (server *Server) saveEntityAndThenReloadAsATest(guid GUID, entity EntityPtr) error {
 	//	log.Printf("saveEntityAndThenReloadAsATest: guid: %v", guid)
 	err := server.saveEntity(guid, entity)
 	defer func() {
@@ -117,7 +117,7 @@ func (server *Server) saveEntityAndThenReloadAsATest(guid GUID, entity interface
 	return nil
 }
 
-func (server *Server) saveEntity(guid GUID, entity interface{}) (errStatus error) {
+func (server *Server) saveEntity(guid GUID, entity EntityPtr) (errStatus error) {
 	if hasOnDisk(guid) {
 		log.Printf("guid %v is already on disk", guid)
 		return nil
