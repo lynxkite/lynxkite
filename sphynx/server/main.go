@@ -301,13 +301,13 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	}
 }
 
-func (s *Server) HasOnSphynxDisk(ctx context.Context, in *pb.HasOnSphynxDiskRequest) (*pb.HasOnSphynxDiskReply, error) {
+func (s *Server) HasOnOrderedSphynxDisk(ctx context.Context, in *pb.HasOnOrderedSphynxDiskRequest) (*pb.HasOnOrderedSphynxDiskReply, error) {
 	guid := in.GetGuid()
 	has := hasOnDisk(GUID(guid))
-	return &pb.HasOnSphynxDiskReply{HasOnDisk: has}, nil
+	return &pb.HasOnOrderedSphynxDiskReply{HasOnDisk: has}, nil
 }
 
-func (s *Server) RelocateFromSphynxDisk(ctx context.Context, in *pb.RelocateFromSphynxDiskRequest) (*pb.RelocateFromSphynxDiskReply, error) {
+func (s *Server) ReadFromOrderedSphynxDisk(ctx context.Context, in *pb.ReadFromOrderedSphynxDiskRequest) (*pb.ReadFromOrderedSphynxDiskReply, error) {
 	guid := GUID(in.GetGuid())
 	//	log.Printf("RelocateFromSphynxDisk: %v", guid)
 	if !hasOnDisk(guid) {
@@ -320,7 +320,7 @@ func (s *Server) RelocateFromSphynxDisk(ctx context.Context, in *pb.RelocateFrom
 	s.Lock()
 	s.entities[guid] = entity
 	s.Unlock()
-	return &pb.RelocateFromSphynxDiskReply{}, nil
+	return &pb.ReadFromOrderedSphynxDiskReply{}, nil
 }
 
 func main() {

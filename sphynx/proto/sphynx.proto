@@ -41,19 +41,19 @@ message HasInSphynxMemoryReply {
   bool hasInMemory = 1;
 }
 
-message HasOnSphynxDiskRequest {
+message HasOnOrderedSphynxDiskRequest {
   string guid = 1;
 }
 
-message HasOnSphynxDiskReply {
+message HasOnOrderedSphynxDiskReply {
   bool hasOnDisk = 1;
 }
 
-message RelocateFromSphynxDiskRequest {
+message ReadFromOrderedSphynxDiskRequest {
   string guid = 1;
 }
 
-message RelocateFromSphynxDiskReply {}
+message ReadFromOrderedSphynxDiskReply {}
 
 
 message WriteToUnorderedDiskReply {}
@@ -63,7 +63,7 @@ service Sphynx {
   rpc Compute (ComputeRequest) returns (ComputeReply);
   rpc GetScalar (GetScalarRequest) returns (GetScalarReply);
   rpc WriteToUnorderedDisk (WriteToUnorderedDiskRequest) returns (WriteToUnorderedDiskReply);
-  rpc RelocateFromSphynxDisk(RelocateFromSphynxDiskRequest) returns (RelocateFromSphynxDiskReply);
-  rpc HasOnSphynxDisk(HasOnSphynxDiskRequest) returns (HasOnSphynxDiskReply);
+  rpc ReadFromOrderedSphynxDisk(ReadFromOrderedSphynxDiskRequest) returns (ReadFromOrderedSphynxDiskReply);
+  rpc HasOnOrderedSphynxDisk(HasOnOrderedSphynxDiskRequest) returns (HasOnOrderedSphynxDiskReply);
   rpc HasInSphynxMemory(HasInSphynxMemoryRequest) returns (HasInSphynxMemoryReply);
 }
