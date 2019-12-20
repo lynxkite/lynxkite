@@ -28,6 +28,9 @@ message GetScalarReply {
 
 message WriteToUnorderedDiskRequest {
   string guid = 1;
+  string vsguid1 = 2;
+  string vsguid2 = 3;
+
 }
 
 message HasInSphynxMemoryRequest {

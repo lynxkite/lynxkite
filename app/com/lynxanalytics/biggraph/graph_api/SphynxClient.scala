@@ -70,8 +70,22 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
     // In SphynxMemory, vertices are indexed from 0 to n. This method asks Sphynx
     // to reindex vertices to use Spark-side indices and write the result into
     // a file on UnorderedSphynxDisk.
-    val guid = e.gUID.toString()
-    val request = SphynxOuterClass.WriteToUnorderedDiskRequest.newBuilder().setGuid(guid).build()
+    val guid = e.gUID.toString
+    var vsGuid1: String = ""
+    var vsGuid2: String = ""
+
+    e match {
+      case a: Attribute[_] =>
+        vsGuid1 = a.vertexSet.gUID.toString
+      case eb: EdgeBundle =>
+        vsGuid1 = eb.srcVertexSet.gUID.toString
+        vsGuid2 = eb.dstVertexSet.gUID.toString
+      case _ =>
+    }
+    val request = SphynxOuterClass.WriteToUnorderedDiskRequest.newBuilder()
+      .setGuid(guid)
+      .setVsguid1(vsGuid1)
+      .setVsguid2(vsGuid2).build()
     val obs = new SingleResponseStreamObserver[SphynxOuterClass.WriteToUnorderedDiskReply]
     asyncStub.writeToUnorderedDisk(request, obs)
     obs.future.map(_ => ())
