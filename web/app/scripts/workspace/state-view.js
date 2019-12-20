@@ -11,7 +11,7 @@ angular.module('biggraph')
         workspace: '=',
         plug: '=',
         popupModel: '=',
-        showToolbar: '@?',
+        interactive: '@?',
       },
       link: function(scope) {
         const instruments = []; // Internal state.
@@ -88,7 +88,7 @@ angular.module('biggraph')
           const n = scope.instruments.length;
           scope.visualizationEditHandler = {};
           if (n === 0) {
-            const op =
+            const op = scope.interactive &&
               scope.workspace && scope.workspace.boxMap[scope.plug.boxId].metadata.operationId;
             if (op === 'Graph visualization') {
               scope.visualizationEditHandler.onSaveEdit = function(state) {
