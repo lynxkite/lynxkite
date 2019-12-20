@@ -21,7 +21,6 @@ func hasOnDisk(guid GUID) bool {
 	filesOnDiskMutex.Lock()
 	defer filesOnDiskMutex.Unlock()
 	_, has := filesOnDisk[guid]
-	log.Printf("hasOnDisk %v -> %v", guid, has)
 	return has
 }
 
@@ -29,7 +28,6 @@ func registerToDisk(guid GUID) {
 	filesOnDiskMutex.Lock()
 	defer filesOnDiskMutex.Unlock()
 	filesOnDisk[guid] = true
-	log.Printf("guid %v registered on disk", guid)
 }
 
 func (server *Server) initDisk() error {
@@ -99,11 +97,7 @@ func (server *Server) loadEntity(guid GUID) (EntityPtr, error) {
 }
 
 func (server *Server) saveEntityAndThenReloadAsATest(guid GUID, entity EntityPtr) error {
-	//	log.Printf("saveEntityAndThenReloadAsATest: guid: %v", guid)
 	err := server.saveEntity(guid, entity)
-	defer func() {
-		log.Printf("Error: %v", err)
-	}()
 	if err != nil {
 		return err
 	}
@@ -135,7 +129,6 @@ func (server *Server) saveEntity(guid GUID, entity EntityPtr) (errStatus error) 
 				errStatus = os.Rename(inProgressPath, realPath)
 				if errStatus == nil {
 					registerToDisk(guid)
-					//					log.Printf("guid %v has been written to %v ", guid, realPath)
 				}
 			}
 		}

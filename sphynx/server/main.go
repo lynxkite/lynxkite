@@ -49,7 +49,6 @@ func NewServer() Server {
 }
 
 func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.CanComputeReply, error) {
-	//	log.Printf("Received: %v", in.Operation)
 	opInst := OperationInstanceFromJSON(in.Operation)
 	_, exists := getExecutableOperation(opInst)
 	return &pb.CanComputeReply{CanCompute: exists}, nil
@@ -98,7 +97,6 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 		// TODO 2: Save the scalars as well when we find a way
 		// to prevent getScalar from OrderedSphynxDomain
 		for guid, entity := range ea.outputs {
-			log.Printf("guid: %v entity: %v  type: %T", guid, entity, entity)
 			switch e := entity.(type) {
 			case *Scalar:
 			default:
@@ -114,7 +112,7 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 
 func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
 	guid := GUID(in.Guid)
-	//	log.Printf("Received GetScalar request with GUID %v.", guid)
+	log.Printf("Received GetScalar request with GUID %v.", guid)
 	s.Lock()
 	entity, exists := s.entities[guid]
 	s.Unlock()
@@ -139,7 +137,6 @@ func (s *Server) HasInSphynxMemory(ctx context.Context, in *pb.HasInSphynxMemory
 	s.Lock()
 	_, exists := s.entities[guid]
 	s.Unlock()
-	//	log.Printf("Received HasInSphynxMemoryRequest with GUID %v -> %v", guid, exists)
 	return &pb.HasInSphynxMemoryReply{HasInMemory: exists}, nil
 }
 
@@ -166,9 +163,8 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	guid := GUID(in.Guid)
 	vs1 := s.getVertexSet(GUID(in.Vsguid1))
 	vs2 := s.getVertexSet(GUID(in.Vsguid2))
-	log.Printf("Call: guid: [%v] vs1: [%v] vs2: [%v]", guid, vs1, vs2)
 	entity, _ := s.entities[guid]
-	//	log.Printf("Reindexing %v to use spark IDs.", entity)
+	log.Printf("Reindexing %v to use spark IDs.", entity)
 	fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, guid)
 	fw, err := local.NewLocalFileWriter(fname)
 	defer fw.Close()
