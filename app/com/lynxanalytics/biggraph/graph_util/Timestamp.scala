@@ -14,4 +14,6 @@ object Timestamp {
   override def toString: String = {
     return "%013d".format(toLong)
   }
+  def human: String =
+    new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date)
 }
