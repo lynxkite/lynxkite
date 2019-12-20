@@ -11,6 +11,7 @@ angular.module('biggraph')
         workspace: '=',
         plug: '=',
         popupModel: '=',
+        showToolbar: '@?',
       },
       link: function(scope) {
         const instruments = []; // Internal state.

@@ -41,6 +41,7 @@
         box-id="popupModel.content.boxId">
     </box-metaeditor>
     <state-view ng-if="popupModel.content.type === 'plug'"
+        show-toolbar="true"
         workspace="workspace"
         plug="workspace.getOutputPlug(popupModel.content.boxId, popupModel.content.plugId)"
         popup-model="popupModel">
