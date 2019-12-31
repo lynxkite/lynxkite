@@ -23,11 +23,74 @@ type OperationInstance struct {
 	Operation OperationDescription
 }
 
-type OperationOutput struct {
-	outputs map[GUID]EntityPtr
+type EntityField struct {
+	fieldName string
+	data      interface{}
 }
 
 type EntityPtr interface {
+	name() string
+	fields() []EntityField
+}
+
+func (e *Scalar) name() string {
+	return "Scalar"
+}
+func (e *VertexSet) name() string {
+	return "VertexSet"
+}
+func (e *EdgeBundle) name() string {
+	return "EdgeBundle"
+}
+func (e *DoubleAttribute) name() string {
+	return "DoubleAttribute"
+}
+func (e *StringAttribute) name() string {
+	return "StringAttribute"
+}
+func (e *DoubleTuple2Attribute) name() string {
+	return "DoubleTuple2Attribute"
+}
+
+func (e *Scalar) fields() []EntityField {
+	return []EntityField{
+		EntityField{fieldName: "Value", data: &e.Value},
+	}
+}
+func (e *VertexSet) fields() []EntityField {
+	return []EntityField{
+		EntityField{fieldName: "Mapping", data: &e.Mapping},
+	}
+}
+func (e *EdgeBundle) fields() []EntityField {
+	return []EntityField{
+		EntityField{fieldName: "Src", data: &e.Src},
+		EntityField{fieldName: "Dst", data: &e.Dst},
+		EntityField{fieldName: "EdgeMapping", data: &e.EdgeMapping},
+	}
+}
+func (e *DoubleAttribute) fields() []EntityField {
+	return []EntityField{
+		EntityField{fieldName: "Values", data: &e.Values},
+		EntityField{fieldName: "Defined", data: &e.Defined},
+	}
+}
+func (e *StringAttribute) fields() []EntityField {
+	return []EntityField{
+		EntityField{fieldName: "Values", data: &e.Values},
+		EntityField{fieldName: "Defined", data: &e.Defined},
+	}
+}
+func (e *DoubleTuple2Attribute) fields() []EntityField {
+	return []EntityField{
+		EntityField{fieldName: "Values1", data: &e.Values1},
+		EntityField{fieldName: "Values2", data: &e.Values2},
+		EntityField{fieldName: "Defined", data: &e.Defined},
+	}
+}
+
+type OperationOutput struct {
+	outputs map[GUID]EntityPtr
 }
 
 func (server *Server) get(guid GUID) (EntityPtr, bool) {

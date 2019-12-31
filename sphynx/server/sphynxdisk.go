@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -16,6 +17,116 @@ import (
 var filesOnDiskMutex sync.Mutex
 var filesOnDisk = map[GUID]bool{}
 var inprogressSuffix = ".inprogress"
+
+type orderedDiskMeta struct {
+	Name string
+}
+
+func saveEntityMeta(e EntityPtr, path string) error {
+	meta := orderedDiskMeta{Name: e.name()}
+	b, err := json.Marshal(meta)
+	if err != nil {
+		return err
+	}
+	log.Printf("meta: %v  b: %v", meta, b)
+	return nil
+
+}
+
+func saveData(wg *sync.WaitGroup, echan *error, path string, i interface{}) {
+	defer wg.Done()
+	log.Printf("saveData: path: %v", path)
+	defer log.Printf("saveData: over")
+	file, err := os.Create(path)
+	if err != nil {
+		log.Printf("saveData: 1")
+		*echan = err
+		return
+	}
+	defer file.Close()
+	writer := bufio.NewWriter(file)
+	encoder := gob.NewEncoder(writer)
+	err = encoder.Encode(i)
+	if err != nil {
+		log.Printf("saveData: 2")
+		*echan = err
+		return
+	}
+	err = writer.Flush()
+	if err != nil {
+		log.Printf("saveData: 3")
+		*echan = err
+		return
+	}
+	log.Printf("saveData: 4")
+	*echan = nil
+	log.Printf("saveData: 5")
+}
+
+func performIO(fields []EntityField, dir string, fn func(*error, string, interface{})) error {
+	var wg sync.WaitGroup
+	errors := make([]error, len(fields))
+	for idx, f := range fields {
+		dataFile := fmt.Sprintf("%v/%v", dir, f.fieldName)
+		data := f.data
+		err := &errors[idx]
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			fn(err, dataFile, data)
+		}()
+	}
+	wg.Wait()
+	for _, e := range errors {
+		if e != nil {
+			return e
+		}
+	}
+	return nil
+}
+
+func fieldSaver(err *error, path string, data interface{}) {
+	file, e := os.Create(path)
+	if e != nil {
+		*err = e
+		return
+	}
+	defer file.Close()
+	writer := bufio.NewWriter(file)
+	encoder := gob.NewEncoder(writer)
+	e = encoder.Encode(data)
+	if e != nil {
+		*err = e
+		return
+	}
+	*err = writer.Flush()
+}
+
+func saveToOrderedDiskInner(e EntityPtr, path string) error {
+	name := e.name()
+	ef := EntityField{fieldName: "name", data: name}
+	fields := append(e.fields(), ef)
+	return performIO(fields, path, fieldSaver)
+}
+
+func saveToOrderedDisk(e EntityPtr, dataDir string, guid GUID) error {
+	log.Printf(" saveToOrderedDisk guid %v", guid)
+	if hasOnDisk(guid) {
+		log.Printf("guid %v is already on disk", guid)
+		return nil
+	}
+	realDir := fmt.Sprintf("%v/%v", dataDir, guid)
+	inProgressDir := fmt.Sprintf("%v%v", realDir, inprogressSuffix)
+	err := os.Mkdir(inProgressDir, 0775)
+	if err != nil {
+		return err
+	}
+	err = saveToOrderedDiskInner(e, inProgressDir)
+	if err != nil {
+		return err
+	}
+	return os.Rename(inProgressDir, realDir)
+}
 
 func hasOnDisk(guid GUID) bool {
 	filesOnDiskMutex.Lock()
