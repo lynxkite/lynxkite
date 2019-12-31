@@ -97,14 +97,18 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 		// TODO 2: Save the scalars as well when we find a way
 		// to prevent getScalar from OrderedSphynxDomain
 		for guid, entity := range ea.outputs {
-			switch e := entity.(type) {
-			case *Scalar:
-			default:
-				err := s.saveEntityAndThenReloadAsATest(guid, e)
-				if err != nil {
-					return nil, err
+
+			saveToOrderedDisk(entity, s.dataDir, guid)
+			/*
+				switch e := entity.(type) {
+				case *Scalar:
+				default:
+					err := s.saveEntityAndThenReloadAsATest(guid, e)
+					if err != nil {
+						return nil, err
+					}
 				}
-			}
+			*/
 		}
 		return &pb.ComputeReply{}, nil
 	}
