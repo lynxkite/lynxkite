@@ -6,14 +6,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
-	"net"
-	"os"
-	"strings"
-
-	"encoding/json"
 	pb "github.com/biggraph/biggraph/sphynx/proto"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/writer"
@@ -21,6 +16,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
+	"log"
+	"net"
+	"os"
+	"strings"
 )
 
 func OperationInstanceFromJSON(opJSON string) OperationInstance {
@@ -99,6 +98,8 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 		for guid, entity := range ea.outputs {
 
 			saveToOrderedDisk(entity, s.dataDir, guid)
+			a, b := loadFromOrderedDisk(s.dataDir, guid)
+			log.Printf("load: %v err: %v", a, b)
 			/*
 				switch e := entity.(type) {
 				case *Scalar:
