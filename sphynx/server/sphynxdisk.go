@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/gob"
-	"encoding/json"
 	"fmt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -17,51 +16,6 @@ import (
 var filesOnDiskMutex sync.Mutex
 var filesOnDisk = map[GUID]bool{}
 var inprogressSuffix = ".inprogress"
-
-type orderedDiskMeta struct {
-	Name string
-}
-
-func saveEntityMeta(e EntityPtr, path string) error {
-	meta := orderedDiskMeta{Name: e.name()}
-	b, err := json.Marshal(meta)
-	if err != nil {
-		return err
-	}
-	log.Printf("meta: %v  b: %v", meta, b)
-	return nil
-
-}
-
-func saveData(wg *sync.WaitGroup, echan *error, path string, i interface{}) {
-	defer wg.Done()
-	log.Printf("saveData: path: %v", path)
-	defer log.Printf("saveData: over")
-	file, err := os.Create(path)
-	if err != nil {
-		log.Printf("saveData: 1")
-		*echan = err
-		return
-	}
-	defer file.Close()
-	writer := bufio.NewWriter(file)
-	encoder := gob.NewEncoder(writer)
-	err = encoder.Encode(i)
-	if err != nil {
-		log.Printf("saveData: 2")
-		*echan = err
-		return
-	}
-	err = writer.Flush()
-	if err != nil {
-		log.Printf("saveData: 3")
-		*echan = err
-		return
-	}
-	log.Printf("saveData: 4")
-	*echan = nil
-	log.Printf("saveData: 5")
-}
 
 func performIO(fields []EntityField, dir string, fn func(*error, string, interface{})) error {
 	var wg sync.WaitGroup
@@ -102,6 +56,60 @@ func fieldSaver(err *error, path string, data interface{}) {
 	*err = writer.Flush()
 }
 
+func fieldLoader(err *error, path string, data interface{}) {
+	file, e := os.Open(path)
+	if e != nil {
+		*err = e
+		return
+	}
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	decoder := gob.NewDecoder(reader)
+	*err = decoder.Decode(data)
+}
+
+func createEntity(name string) (EntityPtr, error) {
+	switch name {
+	case "VertexSet":
+		return &VertexSet{}, nil
+	case "EdgeBundle":
+		return &EdgeBundle{}, nil
+	case "Scalar":
+		return &Scalar{}, nil
+	case "DoubleAttribute":
+		return &DoubleAttribute{}, nil
+	case "StringAttribute":
+		return &StringAttribute{}, nil
+	case "DoubleTuple2Attribute":
+		return &DoubleTuple2Attribute{}, nil
+	default:
+		return nil, fmt.Errorf("Unknown entity to load: %v", name)
+	}
+}
+
+func loadFromOrderedDisk(dataDir string, guid GUID) (EntityPtr, error) {
+	log.Printf("loadFromOrderedDisk: %v", guid)
+	if !hasOnDisk(guid) {
+		return nil, fmt.Errorf("Path is not present in disk cache: %v", guid)
+	}
+	dir := fmt.Sprintf("%v/%v", dataDir, guid)
+	var err error = nil
+	var name string
+	namePath := fmt.Sprintf("%v/%v", dir, "name")
+	fieldLoader(&err, namePath, &name)
+	if err != nil {
+		log.Printf("Err: %v", err)
+		return nil, err
+	}
+	log.Printf("Name: %v", name)
+	entity, err := createEntity(name)
+	if err != nil {
+		return nil, err
+	}
+	err = performIO(entity.fields(), dir, fieldLoader)
+	return entity, err
+}
+
 func saveToOrderedDiskInner(e EntityPtr, path string) error {
 	name := e.name()
 	ef := EntityField{fieldName: "name", data: name}
@@ -125,7 +133,12 @@ func saveToOrderedDisk(e EntityPtr, dataDir string, guid GUID) error {
 	if err != nil {
 		return err
 	}
-	return os.Rename(inProgressDir, realDir)
+	err = os.Rename(inProgressDir, realDir)
+	if err != nil {
+		return err
+	}
+	registerToDisk(guid)
+	return nil
 }
 
 func hasOnDisk(guid GUID) bool {
@@ -143,12 +156,6 @@ func registerToDisk(guid GUID) {
 
 func (server *Server) initDisk() error {
 	log.Printf("InitDisk")
-	gob.Register(VertexSet{})
-	gob.Register(DoubleAttribute{})
-	gob.Register(DoubleTuple2Attribute{})
-	gob.Register(EdgeBundle{})
-	gob.Register(StringAttribute{})
-	gob.Register(Scalar{})
 	rootDir := server.dataDir
 	filesOnDiskMutex.Lock()
 	defer filesOnDiskMutex.Unlock()
