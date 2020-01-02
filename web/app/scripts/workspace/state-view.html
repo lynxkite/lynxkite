@@ -53,7 +53,7 @@
 
     <button
       id="graphray-button"
-      ng-show="state.kind === 'visualization'"
+      ng-show="state.kind === 'visualization' && util.globals.graphrayEnabled"
       class="btn btn-default btn-image"
       ng-click="graphray()"
       drop-tooltip="Render ray-traced image"
