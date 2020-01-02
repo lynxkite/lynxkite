@@ -33,6 +33,67 @@ type EntityPtr interface {
 	fields() []EntityField
 }
 
+type AttrPair struct {
+	original AttrPtr
+	created  AttrPtr
+	copier   func(srcIdx int64, dstIdx int64)
+}
+
+type AttrPtr interface {
+	twins() AttrPair
+	entity() EntityPtr
+}
+
+func (e *DoubleAttribute) entity() EntityPtr {
+	return e
+}
+func (e *StringAttribute) entity() EntityPtr {
+	return e
+}
+func (e *DoubleTuple2Attribute) entity() EntityPtr {
+	return e
+}
+func (e *DoubleAttribute) twins() AttrPair {
+	v := make([]float64, len(e.Values))
+	d := make([]bool, len(e.Defined))
+	return AttrPair{
+		original: e,
+		created:  &DoubleAttribute{Values: v, Defined: d},
+		copier: func(srcIdx int64, dstIdx int64) {
+			d[dstIdx] = true
+			v[dstIdx] = e.Values[srcIdx]
+		},
+	}
+}
+
+func (e *DoubleTuple2Attribute) twins() AttrPair {
+	v1 := make([]float64, len(e.Values1))
+	v2 := make([]float64, len(e.Values2))
+	d := make([]bool, len(e.Defined))
+	return AttrPair{
+		original: e,
+		created:  &DoubleTuple2Attribute{Values1: v1, Values2: v2, Defined: d},
+		copier: func(srcIdx int64, dstIdx int64) {
+			d[dstIdx] = true
+			v1[dstIdx] = e.Values1[srcIdx]
+			v2[dstIdx] = e.Values2[srcIdx]
+		},
+	}
+}
+
+func (e *StringAttribute) twins() AttrPair {
+	v := make([]string, len(e.Values))
+	d := make([]bool, len(e.Defined))
+	return AttrPair{
+		original: e,
+		created:  &StringAttribute{Values: v, Defined: d},
+		copier: func(srcIdx int64, dstIdx int64) {
+			d[dstIdx] = true
+			v[dstIdx] = e.Values[srcIdx]
+		},
+	}
+}
+
 func (e *Scalar) name() string {
 	return "Scalar"
 }
@@ -75,6 +136,7 @@ func (e *DoubleAttribute) fields() []EntityField {
 		EntityField{fieldName: "Defined", data: &e.Defined},
 	}
 }
+
 func (e *StringAttribute) fields() []EntityField {
 	return []EntityField{
 		EntityField{fieldName: "Values", data: &e.Values},
@@ -125,15 +187,6 @@ type DoubleTuple2Attribute struct {
 	Values2 []float64
 	Defined []bool
 }
-
-const (
-	EdgeBundleCode            byte = iota
-	VertexSetCode             byte = iota
-	ScalarCode                byte = iota
-	DoubleAttributeCode       byte = iota
-	StringAttributeCode       byte = iota
-	DoubleTuple2AttributeCode byte = iota
-)
 
 type Vertex struct {
 	Id int64 `parquet:"name=id, type=INT64"`
