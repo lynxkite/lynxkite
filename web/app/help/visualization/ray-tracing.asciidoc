@@ -1,14 +1,18 @@
 ## Ray tracing
 
-LynxKite has an experimental feature for generating ray traced graph visualizations. These
+LynxKite has an optional feature for generating ray traced graph visualizations. These
 visualizations can give simple graphs a more striking look in presentations and marketing
 materials.
 
-Click +++<img src="images/render50.png">+++ to get a relatively quick draft render. If you are
+To enable ray tracing the administrator has to install https://www.povray.org/[POV-Ray]
+and the `graphray` Python package found in the `tools` directory of the LynxKite installation.
+
+Open a graph visualization and click +++<img src="images/render50.png">+++ to get a relatively
+quick draft render. If you are
 satisfied with the layout, click _"Render in high quality"_ to get the final render. Right-click the
 final image to save it locally.
 
-Ray tracing currently supports the following visualization features:
+Ray tracing supports the following visualization features:
 
  - Vertex colors.
  - Vertex sizes.
