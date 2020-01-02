@@ -8,11 +8,11 @@ var _ = registerOperation("PulledOverVertexAttribute.Dummy", Operation{
 		destinationVS := ea.getVertexSet("destinationVS")
 		function := ea.getEdgeBundle("function")
 		attr := ea.getAttr("originalAttr")
-		pair := attr.twins()
 		err := ea.getError()
 		if err != nil {
 			return err
 		}
+		pair := attr.twins()
 		edgeMapping := make(map[int64]int64, len(function.Src))
 		for i, _ := range function.Src {
 			edgeMapping[function.Src[i]] = function.Dst[i]
