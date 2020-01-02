@@ -1,3 +1,5 @@
+// Implements the ExampleGraph operation
+
 package main
 
 var _ = registerOperation("ExampleGraph", Operation{

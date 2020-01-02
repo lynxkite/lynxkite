@@ -53,6 +53,19 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 	return &pb.CanComputeReply{CanCompute: exists}, nil
 }
 
+// Temporary solution: Relocating to OrderedSphynxDisk is done here,
+// we simply save any output, except the scalars.
+// TODO: Saving should not be done automatically here
+// to prevent getScalar from OrderedSphynxDomain
+func saveOutputs(dataDir string, outputs map[GUID]EntityPtr) {
+	for guid, entity := range outputs {
+		err := saveToOrderedDisk(entity, dataDir, guid)
+		if err != nil {
+			log.Printf("Error while saving %v (guid: %v): %v", entity, guid, err)
+		}
+	}
+}
+
 func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.ComputeReply, error) {
 	//	log.Printf("Compute called")
 	opInst := OperationInstanceFromJSON(in.Operation)
@@ -89,28 +102,7 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 			s.entities[guid] = entity
 		}
 		s.Unlock()
-
-		// Temporary solution: Relocating to OrderedSphynxDisk is done here,
-		// we simply save any output, except the scalars.
-		// TODO 1: Saving should not be done automatically here
-		// TODO 2: Save the scalars as well when we find a way
-		// to prevent getScalar from OrderedSphynxDomain
-		for guid, entity := range ea.outputs {
-
-			saveToOrderedDisk(entity, s.dataDir, guid)
-			a, b := loadFromOrderedDisk(s.dataDir, guid)
-			log.Printf("load: %v err: %v", a, b)
-			/*
-				switch e := entity.(type) {
-				case *Scalar:
-				default:
-					err := s.saveEntityAndThenReloadAsATest(guid, e)
-					if err != nil {
-						return nil, err
-					}
-				}
-			*/
-		}
+		go saveOutputs(s.dataDir, ea.outputs)
 		return &pb.ComputeReply{}, nil
 	}
 }
@@ -314,7 +306,7 @@ func (s *Server) ReadFromOrderedSphynxDisk(ctx context.Context, in *pb.ReadFromO
 	if !hasOnDisk(guid) {
 		return nil, status.Errorf(codes.NotFound, "Guid %v not found in sphynx disk cache", guid)
 	}
-	entity, err := s.loadEntity(guid)
+	entity, err := loadFromOrderedDisk(s.dataDir, guid)
 	if err != nil {
 		return nil, err
 	}
