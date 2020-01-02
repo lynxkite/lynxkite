@@ -32,7 +32,7 @@ func OperationInstanceFromJSON(opJSON string) OperationInstance {
 func getExecutableOperation(opInst OperationInstance) (Operation, bool) {
 	className := opInst.Operation.Class
 	shortenedClass := className[len("com.lynxanalytics.biggraph.graph_operations."):]
-	op, exists := operations[shortenedClass]
+	op, exists := operationRepository[shortenedClass]
 	return op, exists
 }
 
