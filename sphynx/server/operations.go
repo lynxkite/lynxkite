@@ -7,17 +7,25 @@ import (
 )
 
 type EntityAccessor struct {
-	outputs map[GUID]EntityPtr
+	inputs  map[string]Entity
+	outputs map[GUID]Entity
 	opInst  *OperationInstance
 	server  *Server
-	err     error
 }
 
-func (ea *EntityAccessor) getError() error {
-	return ea.err
+func collectInputs(server *Server, opInst *OperationInstance) (map[string]Entity, error) {
+	inputs := make(map[string]Entity, len(opInst.Inputs))
+	for name, guid := range opInst.Inputs {
+		entity, exists := server.get(guid)
+		if !exists {
+			return nil, fmt.Errorf("Guid %v corresponding to name: '%v' was not found in cache", guid, name)
+		}
+		inputs[name] = entity
+	}
+	return inputs, nil
 }
 
-func (ea *EntityAccessor) add(name string, entity EntityPtr) error {
+func (ea *EntityAccessor) output(name string, entity Entity) error {
 	guid, exists := ea.opInst.Outputs[name]
 	if !exists {
 		return fmt.Errorf("Could not find '%v' among output names", name)
@@ -26,145 +34,38 @@ func (ea *EntityAccessor) add(name string, entity EntityPtr) error {
 	return nil
 }
 
-func getEntity(name string, server *Server, opInst *OperationInstance) (EntityPtr, error) {
-	guid, exists := opInst.Inputs[name]
-	if !exists {
-		return nil, fmt.Errorf("Could not find '%v' among input names", name)
-	}
-	entity, exists := server.get(guid)
-	if !exists {
-		return nil, fmt.Errorf("Could not find %v ('%v') among entities", guid, name)
-	}
-	return entity, nil
-}
-
-func (ea *EntityAccessor) getAttr(name string) AttrPtr {
-	if ea.err != nil {
-		return nil
-	}
-	entity, err := getEntity(name, ea.server, ea.opInst)
-	if err != nil {
-		ea.err = err
-		return nil
-	}
-	switch e := entity.(type) {
-	case *DoubleTuple2Attribute:
-		return e
-	case *DoubleAttribute:
-		return e
-	case *StringAttribute:
-		return e
-	default:
-		ea.err = fmt.Errorf("Input %v is a %T, not an Attribute", name, e)
-		return nil
-	}
-}
-
 func (ea *EntityAccessor) getVertexSet(name string) *VertexSet {
-	if ea.err != nil {
-		return nil
-	}
-	entity, err := getEntity(name, ea.server, ea.opInst)
-	if err != nil {
-		ea.err = err
-		return nil
-	}
-	switch e := entity.(type) {
-	case *VertexSet:
-		return e
-	default:
-		ea.err = fmt.Errorf("Input %v is a %T, not a VertexSet", name, e)
-		return nil
-	}
+	entity := ea.inputs[name]
+	return entity.(*VertexSet)
 }
 
 func (ea *EntityAccessor) getEdgeBundle(name string) *EdgeBundle {
-	if ea.err != nil {
-		return nil
-	}
-	entity, err := getEntity(name, ea.server, ea.opInst)
-	if err != nil {
-		ea.err = err
-		return nil
-	}
-	switch e := entity.(type) {
-	case *EdgeBundle:
-		return e
-	default:
-		ea.err = fmt.Errorf("Input %v is a %T, not an EdgeBundle", name, e)
-		return nil
-	}
+	entity := ea.inputs[name]
+	return entity.(*EdgeBundle)
 }
 func (ea *EntityAccessor) getScalar(name string) *Scalar {
-	if ea.err != nil {
-		return nil
-	}
-	entity, err := getEntity(name, ea.server, ea.opInst)
-	if err != nil {
-		ea.err = err
-		return nil
-	}
-	switch e := entity.(type) {
-	case *Scalar:
-		return e
-	default:
-		ea.err = fmt.Errorf("Input %v is a %T, not a Scalar", name, e)
-		return nil
-	}
+	entity := ea.inputs[name]
+	return entity.(*Scalar)
 }
 
 func (ea *EntityAccessor) getDoubleAttribute(name string) *DoubleAttribute {
-	if ea.err != nil {
-		return nil
-	}
-	entity, err := getEntity(name, ea.server, ea.opInst)
-	if err != nil {
-		ea.err = err
-		return nil
-	}
-	switch e := entity.(type) {
-	case *DoubleAttribute:
-		return e
-	default:
-		ea.err = fmt.Errorf("Input %v is a %T, not a DoubleAttribute", name, e)
-		return nil
-	}
+	entity := ea.inputs[name]
+	return entity.(*DoubleAttribute)
 }
 
 func (ea *EntityAccessor) getStringAttribute(name string) *StringAttribute {
-	if ea.err != nil {
-		return nil
-	}
-	entity, err := getEntity(name, ea.server, ea.opInst)
-	if err != nil {
-		ea.err = err
-		return nil
-	}
-	switch e := entity.(type) {
-	case *StringAttribute:
-		return e
-	default:
-		ea.err = fmt.Errorf("Input %v is a %T, not a StringAttribute", name, e)
-		return nil
-	}
+	entity := ea.inputs[name]
+	return entity.(*StringAttribute)
 }
 
 func (ea *EntityAccessor) getDoubleTuple2Attribute(name string) *DoubleTuple2Attribute {
-	if ea.err != nil {
-		return nil
-	}
-	entity, err := getEntity(name, ea.server, ea.opInst)
-	if err != nil {
-		ea.err = err
-		return nil
-	}
-	switch e := entity.(type) {
-	case *DoubleTuple2Attribute:
-		return e
-	default:
-		ea.err = fmt.Errorf("Input %v is a %T, not a DoubleTuple2Attribute", name, e)
-		return nil
-	}
+	entity := ea.inputs[name]
+	return entity.(*DoubleTuple2Attribute)
+}
+
+func (ea *EntityAccessor) getEntity(name string) Entity {
+	entity := ea.inputs[name]
+	return entity.(Entity)
 }
 
 type Operation struct {

@@ -42,7 +42,7 @@ func NewServer() Server {
 	os.MkdirAll(unorderedDataDir, 0775)
 	os.MkdirAll(dataDir, 0775)
 	return Server{
-		entities:         make(map[GUID]EntityPtr),
+		entities:         make(map[GUID]Entity),
 		dataDir:          dataDir,
 		unorderedDataDir: unorderedDataDir}
 }
@@ -57,7 +57,7 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 // we simply save any output, except the scalars.
 // TODO: Saving should not be done automatically here
 // to prevent getScalar from OrderedSphynxDomain
-func saveOutputs(dataDir string, outputs map[GUID]EntityPtr) {
+func saveOutputs(dataDir string, outputs map[GUID]Entity) {
 	for guid, entity := range outputs {
 		err := saveToOrderedDisk(entity, dataDir, guid)
 		if err != nil {
@@ -73,8 +73,12 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 	if !exists {
 		return nil, status.Errorf(codes.Unimplemented, "Can't compute %v", opInst)
 	} else {
-		ea := EntityAccessor{outputs: make(map[GUID]EntityPtr), opInst: &opInst, server: s}
-		err := op.execute(&ea)
+		inputs, err := collectInputs(s, &opInst)
+		if err != nil {
+			return nil, err
+		}
+		ea := EntityAccessor{inputs: inputs, outputs: make(map[GUID]Entity), opInst: &opInst, server: s}
+		err = op.execute(&ea)
 		if err != nil {
 			return nil, err
 		}
@@ -89,7 +93,7 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 				switch eb := edgeBundle.(type) {
 				case *EdgeBundle:
 					idSet := VertexSet{Mapping: eb.EdgeMapping}
-					ea.add(name, &idSet)
+					ea.output(name, &idSet)
 				default:
 					return nil,
 						fmt.Errorf("operation output (name : %v, guid: %v) is not an EdgeBundle",

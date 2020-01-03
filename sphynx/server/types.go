@@ -7,7 +7,7 @@ import (
 
 type Server struct {
 	sync.Mutex
-	entities         map[GUID]EntityPtr
+	entities         map[GUID]Entity
 	dataDir          string
 	unorderedDataDir string
 }
@@ -28,7 +28,7 @@ type EntityField struct {
 	data      interface{}
 }
 
-type EntityPtr interface {
+type Entity interface {
 	name() string
 	fields() []EntityField
 }
@@ -41,16 +41,16 @@ type AttrPair struct {
 
 type AttrPtr interface {
 	twins() AttrPair
-	entity() EntityPtr
+	entity() Entity
 }
 
-func (e *DoubleAttribute) entity() EntityPtr {
+func (e *DoubleAttribute) entity() Entity {
 	return e
 }
-func (e *StringAttribute) entity() EntityPtr {
+func (e *StringAttribute) entity() Entity {
 	return e
 }
-func (e *DoubleTuple2Attribute) entity() EntityPtr {
+func (e *DoubleTuple2Attribute) entity() Entity {
 	return e
 }
 func (e *DoubleAttribute) twins() AttrPair {
@@ -151,11 +151,7 @@ func (e *DoubleTuple2Attribute) fields() []EntityField {
 	}
 }
 
-type OperationOutput struct {
-	outputs map[GUID]EntityPtr
-}
-
-func (server *Server) get(guid GUID) (EntityPtr, bool) {
+func (server *Server) get(guid GUID) (Entity, bool) {
 	server.Lock()
 	defer server.Unlock()
 	entity, exists := server.entities[guid]
