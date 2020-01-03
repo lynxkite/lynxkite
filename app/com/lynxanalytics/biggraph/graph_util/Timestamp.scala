@@ -14,4 +14,20 @@ object Timestamp {
   override def toString: String = {
     return "%013d".format(toLong)
   }
+
+  // A guaranteed unique human-readable timestamp that can be used as a filename.
+  private var lastHuman = ""
+  private var humanCounter = 0
+  private val humanFormat = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+  def human: String = synchronized {
+    val base = humanFormat.format(new java.util.Date)
+    if (base == lastHuman) {
+      humanCounter += 1
+      s"$base ($humanCounter)"
+    } else {
+      lastHuman = base
+      humanCounter = 0
+      base
+    }
+  }
 }

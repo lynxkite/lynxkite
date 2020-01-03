@@ -313,6 +313,8 @@ object FrontendJson {
   implicit val rGetInstrumentedStateRequest = json.Json.reads[GetInstrumentedStateRequest]
   implicit val wInstrumentState = json.Json.writes[InstrumentState]
   implicit val wGetInstrumentedStateResponse = json.Json.writes[GetInstrumentedStateResponse]
+  implicit val rOpenWizardRequest = json.Json.reads[OpenWizardRequest]
+  implicit val wOpenWizardResponse = json.Json.writes[OpenWizardResponse]
 
   implicit val rLongPollRequest = json.Json.reads[LongPollRequest]
   implicit val wStageInfo = json.Json.writes[StageInfo]
@@ -446,6 +448,7 @@ object ProductionJsonServer extends JsonServer {
   def getVisualizationOutput = jsonGet(workspaceController.getVisualizationOutput)
   def getExportResultOutput = jsonGet(workspaceController.getExportResultOutput)
   def getInstrumentedState = jsonGet(workspaceController.getInstrumentedState)
+  def openWizard = jsonPost(workspaceController.openWizard)
 
   val sqlController = new SQLController(BigGraphProductionEnvironment, workspaceController.ops)
   def getTableBrowserNodes = jsonGet(sqlController.getTableBrowserNodes)

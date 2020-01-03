@@ -44,6 +44,8 @@ case class RunWorkspaceResponse(
     summaries: Map[String, String],
     progress: Map[String, Option[Progress]])
 case class ImportBoxRequest(box: Box, ref: Option[WorkspaceReference])
+case class OpenWizardRequest(name: String) // We want to open this.
+case class OpenWizardResponse(name: String) // Open this instead.
 
 // An instrument is like a box. But we do not want to place it and save it in the workspace.
 // It always has 1 input and 1 output, so the connections do not need to be expressed either.
@@ -129,6 +131,26 @@ class WorkspaceController(env: SparkFreeEnvironment) {
       ref.name, ref.ws, run.outputs, run.summaries, run.progress,
       canUndo = ref.frame.currentState.previousCheckpoint.nonEmpty,
       canRedo = ref.frame.nextCheckpoint.nonEmpty)
+  }
+
+  def openWizard(
+    user: serving.User, request: OpenWizardRequest): OpenWizardResponse = {
+    val frame = getWorkspaceFrame(user, request.name)
+    val ws = frame.workspace
+    assert(ws.isWizard, s"${request.name} is not a wizard")
+    // In-progress wizards can be opened normally. Otherwise we create an in-progress copy first.
+    if (ws.inProgress) OpenWizardResponse(request.name)
+    else metaManager.synchronized {
+      val newName = s"${user.home}/In progress wizards/${frame.path.last.name}/${Timestamp.human}"
+      assertNameNotExists(newName)
+      val newFrame = DirectoryEntry.fromName(newName)
+      newFrame.assertParentWriteAllowedFrom(user)
+      val newWorkspace = Workspace(ws.boxes.map(box =>
+        if (box.id == "anchor") box.copy(parameters = box.parameters + ("in_progress" -> "yes"))
+        else box))
+      newFrame.asNewWorkspaceFrame().setCheckpoint(newWorkspace.checkpoint())
+      OpenWizardResponse(newName)
+    }
   }
 
   def runWorkspace(

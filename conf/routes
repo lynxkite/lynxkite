@@ -30,6 +30,7 @@ GET  /ajax/boxCatalog              com.lynxanalytics.biggraph.serving.Production
 GET  /ajax/getExportResultOutput   com.lynxanalytics.biggraph.serving.ProductionJsonServer.getExportResultOutput
 GET  /ajax/getInstrumentedState    com.lynxanalytics.biggraph.serving.ProductionJsonServer.getInstrumentedState
 POST /ajax/triggerBox              com.lynxanalytics.biggraph.serving.ProductionJsonServer.triggerBox
+POST /ajax/openWizard              com.lynxanalytics.biggraph.serving.ProductionJsonServer.openWizard
 
 GET  /ajax/complexView com.lynxanalytics.biggraph.serving.ProductionJsonServer.complexView
 GET  /ajax/histo       com.lynxanalytics.biggraph.serving.ProductionJsonServer.histo
