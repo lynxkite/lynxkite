@@ -60,8 +60,8 @@ func fieldLoader(path string, data interface{}) error {
 	return decoder.Decode(data)
 }
 
-func createEntity(name string) (Entity, error) {
-	switch name {
+func createEntity(typeName string) (Entity, error) {
+	switch typeName {
 	case "VertexSet":
 		return &VertexSet{}, nil
 	case "EdgeBundle":
@@ -75,7 +75,7 @@ func createEntity(name string) (Entity, error) {
 	case "DoubleTuple2Attribute":
 		return &DoubleTuple2Attribute{}, nil
 	default:
-		return nil, fmt.Errorf("Unknown entity to load: %v", name)
+		return nil, fmt.Errorf("Unknown entity to load: %v", typeName)
 	}
 }
 
