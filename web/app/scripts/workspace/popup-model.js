@@ -151,5 +151,47 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     this.meta = !this.meta;
   };
 
+  PopupModel.prototype.canWizard = function(ws) {
+    return ws.getBox('anchor').instance.parameters.wizard === 'yes';
+  };
+
+  PopupModel.prototype.matchesStep = function(step) {
+    if (this.content.boxId === step.box) {
+      if (this.content.type === 'box' && step.popup === 'parameters') {
+        return true;
+      } else if (this.content.type === 'plug' && step.popup === this.content.plugId) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  PopupModel.prototype.inWizard = function(ws) {
+    const steps = JSON.parse(ws.getBox('anchor').instance.parameters.steps || '[]');
+    for (let s of steps) {
+      if (this.matchesStep(s)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  PopupModel.prototype.toggleWizard = function(ws) {
+    const anchor = ws.getBox('anchor').instance;
+    const steps = JSON.parse(anchor.parameters.steps || '[]');
+    for (let i = 0; i < steps.length; ++i) {
+      if (this.matchesStep(steps[i])) {
+        steps.splice(i, 1);
+        anchor.parameters.steps = JSON.stringify(steps);
+        ws.saveWorkspace();
+        return;
+      }
+    }
+    // Not found. Add it then.
+    steps.push({ box: this.content.boxId, popup: this.content.plugId || 'parameters' });
+    anchor.parameters.steps = JSON.stringify(steps);
+    ws.saveWorkspace();
+  };
+
   return PopupModel;
 });

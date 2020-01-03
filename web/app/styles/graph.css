@@ -55,6 +55,14 @@
   font-weight: bold;
 }
 
+.clicky.active {
+  color: white;
+}
+
+.clicky.active:hover {
+  background-color: black;
+}
+
 h6 {
   font-weight: bold;
 }
