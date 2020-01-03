@@ -313,9 +313,6 @@ func (s *Server) HasOnOrderedSphynxDisk(ctx context.Context, in *pb.HasOnOrdered
 
 func (s *Server) ReadFromOrderedSphynxDisk(ctx context.Context, in *pb.ReadFromOrderedSphynxDiskRequest) (*pb.ReadFromOrderedSphynxDiskReply, error) {
 	guid := GUID(in.GetGuid())
-	if !hasOnDisk(guid) {
-		return nil, status.Errorf(codes.NotFound, "Guid %v not found in sphynx disk cache", guid)
-	}
 	entity, err := loadFromOrderedDisk(s.dataDir, guid)
 	if err != nil {
 		return nil, err
