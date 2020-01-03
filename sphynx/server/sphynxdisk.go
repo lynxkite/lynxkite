@@ -6,11 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"sync"
 )
-
-var dataDir string
 
 const inprogressSuffix = ".inprogress"
 
@@ -84,7 +81,7 @@ func createEntity(name string) (Entity, error) {
 
 func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 	log.Printf("loadFromOrderedDisk: %v", guid)
-	onDisk, err := hasOnDisk(guid)
+	onDisk, err := hasOnDisk(dataDir, guid)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +91,7 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 	dir := fmt.Sprintf("%v/%v", dataDir, guid)
 
 	var name string
-	namePath := fmt.Sprintf("%v/%v", dir, "name")
+	namePath := fmt.Sprintf("%v/%v", dir, "typename")
 	err = fieldLoader(namePath, &name)
 	if err != nil {
 		log.Printf("Err: %v", err)
@@ -111,7 +108,7 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 
 func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 	log.Printf(" saveToOrderedDisk guid %v", guid)
-	onDisk, err := hasOnDisk(guid)
+	onDisk, err := hasOnDisk(dataDir, guid)
 	if err != nil {
 		return err
 	}
@@ -125,8 +122,8 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 	if err != nil {
 		return err
 	}
-	name := e.name()
-	ef := EntityField{fieldName: "name", data: name}
+	typeName := e.typeName()
+	ef := EntityField{fieldName: "typename", data: typeName}
 	fields := append(e.fields(), ef)
 	err = forEachField(fields, inProgressDir, fieldSaver)
 	if err != nil {
@@ -139,9 +136,8 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 	return nil
 }
 
-func hasOnDisk(guid GUID) (bool, error) {
+func hasOnDisk(dataDir string, guid GUID) (bool, error) {
 	filename := fmt.Sprintf("%v/%v", dataDir, guid)
-	log.Printf("guid: %v\ndataDir: %v\nfilename: %v", guid, dataDir, filename)
 	fi, err := os.Stat(filename)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -153,13 +149,4 @@ func hasOnDisk(guid GUID) (bool, error) {
 		return false, fmt.Errorf("%v should be a directory", filename)
 	}
 	return true, nil
-}
-
-func (server *Server) initDisk() {
-	p, err := filepath.Abs(server.dataDir)
-	if err != nil {
-		log.Fatalf("Could not create absolute path from %v\nerror: %v", server.dataDir, err)
-	}
-	dataDir = p
-	log.Printf("dataDir: %v", dataDir)
 }

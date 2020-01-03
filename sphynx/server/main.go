@@ -55,19 +55,22 @@ func (s *Server) CanCompute(ctx context.Context, in *pb.CanComputeRequest) (*pb.
 
 // Temporary solution: Relocating to OrderedSphynxDisk is done here,
 // we simply save any output, except the scalars.
-// TODO: Saving should not be done automatically here
-// to prevent getScalar from OrderedSphynxDomain
+// TODO 1: Saving should not be done automatically here
+// TODO 2 Scalars are not saved in order to prevent getScalar from OrderedSphynxDomain
 func saveOutputs(dataDir string, outputs map[GUID]Entity) {
 	for guid, entity := range outputs {
-		err := saveToOrderedDisk(entity, dataDir, guid)
-		if err != nil {
-			log.Printf("Error while saving %v (guid: %v): %v", entity, guid, err)
+		switch e := entity.(type) {
+		case *Scalar: // Do nothing
+		default:
+			err := saveToOrderedDisk(e, dataDir, guid)
+			if err != nil {
+				log.Printf("Error while saving %v (guid: %v): %v", e, guid, err)
+			}
 		}
 	}
 }
 
 func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.ComputeReply, error) {
-	//	log.Printf("Compute called")
 	opInst := OperationInstanceFromJSON(in.Operation)
 	op, exists := getExecutableOperation(opInst)
 	if !exists {
@@ -96,7 +99,7 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 					ea.output(name, &idSet)
 				default:
 					return nil,
-						fmt.Errorf("operation output (name : %v, guid: %v) is not an EdgeBundle",
+						fmt.Errorf("operation output (typeName : %v, guid: %v) is not an EdgeBundle",
 							edgeBundleName, edgeBundleGuid)
 				}
 			}
@@ -311,7 +314,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 
 func (s *Server) HasOnOrderedSphynxDisk(ctx context.Context, in *pb.HasOnOrderedSphynxDiskRequest) (*pb.HasOnOrderedSphynxDiskReply, error) {
 	guid := in.GetGuid()
-	has, err := hasOnDisk(GUID(guid))
+	has, err := hasOnDisk(s.dataDir, GUID(guid))
 	if err != nil {
 		return nil, err
 	}
@@ -351,7 +354,6 @@ func main() {
 	}
 
 	sphynxServer := NewServer()
-	sphynxServer.initDisk()
 	pb.RegisterSphynxServer(s, &sphynxServer)
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
