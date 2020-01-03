@@ -171,12 +171,4 @@ type Operation struct {
 	execute func(ea *EntityAccessor) error
 }
 
-var operationRepository map[string]Operation = nil
-
-func registerOperation(opName string, operation Operation) bool {
-	if operationRepository == nil {
-		operationRepository = make(map[string]Operation)
-	}
-	operationRepository[opName] = operation
-	return true
-}
+var operationRepository = map[string]Operation{}
