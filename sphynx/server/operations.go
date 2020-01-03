@@ -6,18 +6,6 @@ import (
 	"fmt"
 )
 
-type EntityAccess interface {
-	add(name string, entity EntityPtr) error
-	getVertexSet(name string) *VertexSet
-	getEdgeBundle(name string) *EdgeBundle
-	getScalar(name string) *Scalar
-	getDoubleAttribute(name string) *DoubleAttribute
-	getStringAttribute(name string) *StringAttribute
-	getDoubleTuple2Attribute(name string) *DoubleTuple2Attribute
-	getAttr(name string) AttrPtr
-	getError() error
-}
-
 type EntityAccessor struct {
 	outputs map[GUID]EntityPtr
 	opInst  *OperationInstance
