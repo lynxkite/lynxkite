@@ -134,9 +134,6 @@ func (s *Server) HasInSphynxMemory(ctx context.Context, in *pb.HasInSphynxMemory
 }
 
 func (s *Server) getVertexSet(guid GUID) *VertexSet {
-	if guid == "" {
-		return nil
-	}
 	e, ok := s.get(guid)
 	if !ok {
 		return nil
@@ -152,8 +149,7 @@ func (s *Server) getVertexSet(guid GUID) *VertexSet {
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
 	var numGoRoutines int64 = 4
 	guid := GUID(in.Guid)
-	vs1 := s.getVertexSet(GUID(in.Vsguid1))
-	vs2 := s.getVertexSet(GUID(in.Vsguid2))
+
 	entity, exists := s.get(guid)
 	if !exists {
 		return nil, fmt.Errorf("guid %v not found", guid)
@@ -184,6 +180,14 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	case *EdgeBundle:
+		vs1 := s.getVertexSet(GUID(in.Vsguid1))
+		if vs1 == nil {
+			return nil, fmt.Errorf("Vertex set %v is not present", in.Vsguid1)
+		}
+		vs2 := s.getVertexSet(GUID(in.Vsguid2))
+		if vs2 == nil {
+			return nil, fmt.Errorf("Vertex set %v is not present", in.Vsguid2)
+		}
 		pw, err := writer.NewParquetWriter(fw, new(Edge), numGoRoutines)
 		if err != nil {
 			log.Printf("Failed to create parquet writer: %v", err)
@@ -205,11 +209,14 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	case *StringAttribute:
+		vs1 := s.getVertexSet(GUID(in.Vsguid1))
+		if vs1 == nil {
+			return nil, fmt.Errorf("Vertex set %v is not present", in.Vsguid1)
+		}
 		pw, err := writer.NewParquetWriter(fw, new(SingleStringAttribute), numGoRoutines)
 		if err != nil {
 			log.Printf("Failed to create parquet writer: %v", err)
 		}
-		//		vs, err := s.GetVertexSet(e.VertexSetGuid)
 		if err != nil {
 			return nil, err
 		}
@@ -232,11 +239,14 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	case *DoubleAttribute:
+		vs1 := s.getVertexSet(GUID(in.Vsguid1))
+		if vs1 == nil {
+			return nil, fmt.Errorf("Vertex set %v is not present", in.Vsguid1)
+		}
 		pw, err := writer.NewParquetWriter(fw, new(SingleDoubleAttribute), numGoRoutines)
 		if err != nil {
 			log.Printf("Failed to create parquet writer: %v", err)
 		}
-		//		vs, err := s.GetVertexSet(e.VertexSetGuid)
 		if err != nil {
 			return nil, err
 		}
@@ -259,6 +269,10 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	case *DoubleTuple2Attribute:
+		vs1 := s.getVertexSet(GUID(in.Vsguid1))
+		if vs1 == nil {
+			return nil, fmt.Errorf("Vertex set %v is not present", in.Vsguid1)
+		}
 		pw, err := writer.NewParquetWriter(fw, new(SingleDoubleTuple2Attribute), numGoRoutines)
 		if err != nil {
 			log.Printf("Failed to create parquet writer: %v", err)
@@ -299,7 +313,6 @@ func (s *Server) HasOnOrderedSphynxDisk(ctx context.Context, in *pb.HasOnOrdered
 
 func (s *Server) ReadFromOrderedSphynxDisk(ctx context.Context, in *pb.ReadFromOrderedSphynxDiskRequest) (*pb.ReadFromOrderedSphynxDiskReply, error) {
 	guid := GUID(in.GetGuid())
-	//	log.Printf("RelocateFromSphynxDisk: %v", guid)
 	if !hasOnDisk(guid) {
 		return nil, status.Errorf(codes.NotFound, "Guid %v not found in sphynx disk cache", guid)
 	}
