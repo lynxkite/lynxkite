@@ -231,12 +231,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     const scale = 4 / this.svg.width();
     const v0 = this.vertices[0];
     const vertices = v0.vs.map(v => {
-      const [r, g, b] = chroma(v.color).rgb();
+      const rgb = chroma(v.color).rgb();
       return {
         x: round(scale * v.x * v0.offsetter.zoom),
         y: round(scale * -v.y * v0.offsetter.zoom),
         r: round(scale * v.r * v0.offsetter.thickness),
-        color: `${round(r / 255)}, ${round(g / 255)}, ${round(b / 255)}`,
+        color: `${round(rgb[0] / 255)}, ${round(rgb[1] / 255)}, ${round(rgb[2] / 255)}`,
         shape: {
           male: 'guy',
           female: 'guy',
