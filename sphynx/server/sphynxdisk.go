@@ -63,7 +63,7 @@ func fieldLoader(path string, data interface{}) error {
 	return decoder.Decode(data)
 }
 
-func createEntity(name string) (EntityPtr, error) {
+func createEntity(name string) (Entity, error) {
 	switch name {
 	case "VertexSet":
 		return &VertexSet{}, nil
@@ -82,7 +82,7 @@ func createEntity(name string) (EntityPtr, error) {
 	}
 }
 
-func loadFromOrderedDisk(dataDir string, guid GUID) (EntityPtr, error) {
+func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 	log.Printf("loadFromOrderedDisk: %v", guid)
 	onDisk, err := hasOnDisk(guid)
 	if err != nil {
@@ -109,7 +109,7 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (EntityPtr, error) {
 	return entity, err
 }
 
-func saveToOrderedDisk(e EntityPtr, dataDir string, guid GUID) error {
+func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 	log.Printf(" saveToOrderedDisk guid %v", guid)
 	onDisk, err := hasOnDisk(guid)
 	if err != nil {
