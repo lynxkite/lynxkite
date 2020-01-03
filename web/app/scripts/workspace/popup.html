@@ -24,6 +24,18 @@
         id="toggle-meta"
         drop-tooltip="{{ popupModel.meta ? 'Change&nbsp;parameters' : 'Change&nbsp;metadata' }}">
     </div>
+    <div
+        class="clicky pull-right glyphicon glyphicon-gift"
+        ng-class="{ active: popupModel.inWizard(workspace) }"
+        ng-show="popupModel.canWizard(workspace) && !popupModel.meta"
+        ng-click="popupModel.toggleWizard(workspace); event.stopPropagation();"
+        ng-mousedown="$event.stopPropagation()"
+        id="toggle-wizard"
+        drop-tooltip="{{
+          popupModel.inWizard(workspace) ?
+          'Remove&nbsp;from&nbsp;wizard' :
+          'Add&nbsp;to&nbsp;wizard' }}">
+    </div>
   </div>
   <div class="popup-content"
     ng-style="{
