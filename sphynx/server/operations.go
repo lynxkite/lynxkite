@@ -43,9 +43,7 @@ func getEntity(name string, server *Server, opInst *OperationInstance) (EntityPt
 	if !exists {
 		return nil, fmt.Errorf("Could not find '%v' among input names", name)
 	}
-	server.Lock()
-	entity, exists := server.entities[guid]
-	server.Unlock()
+	entity, exists := server.get(guid)
 	if !exists {
 		return nil, fmt.Errorf("Could not find %v ('%v') among entities", guid, name)
 	}

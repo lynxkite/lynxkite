@@ -110,9 +110,7 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.GetScalarReply, error) {
 	guid := GUID(in.Guid)
 	log.Printf("Received GetScalar request with GUID %v.", guid)
-	s.Lock()
-	entity, exists := s.entities[guid]
-	s.Unlock()
+	entity, exists := s.get(guid)
 	if !exists {
 		return nil, fmt.Errorf("guid %v is not found", guid)
 	}
@@ -131,9 +129,7 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 
 func (s *Server) HasInSphynxMemory(ctx context.Context, in *pb.HasInSphynxMemoryRequest) (*pb.HasInSphynxMemoryReply, error) {
 	guid := GUID(in.Guid)
-	s.Lock()
-	_, exists := s.entities[guid]
-	s.Unlock()
+	_, exists := s.get(guid)
 	return &pb.HasInSphynxMemoryReply{HasInMemory: exists}, nil
 }
 
@@ -141,9 +137,7 @@ func (s *Server) getVertexSet(guid GUID) *VertexSet {
 	if guid == "" {
 		return nil
 	}
-	s.Lock()
-	e, ok := s.entities[guid]
-	s.Unlock()
+	e, ok := s.get(guid)
 	if !ok {
 		return nil
 	}
@@ -160,7 +154,10 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	guid := GUID(in.Guid)
 	vs1 := s.getVertexSet(GUID(in.Vsguid1))
 	vs2 := s.getVertexSet(GUID(in.Vsguid2))
-	entity, _ := s.entities[guid]
+	entity, exists := s.get(guid)
+	if !exists {
+		return nil, fmt.Errorf("guid %v not found", guid)
+	}
 	log.Printf("Reindexing %v to use spark IDs.", entity)
 	fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, guid)
 	fw, err := local.NewLocalFileWriter(fname)
