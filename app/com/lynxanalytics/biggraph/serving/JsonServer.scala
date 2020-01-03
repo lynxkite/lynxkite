@@ -159,6 +159,7 @@ case class GlobalSettings(
     tagline: String,
     workspaceParameterKinds: List[String],
     version: String,
+    graphrayEnabled: Boolean,
     defaultUIStatus: UIStatus)
 
 object AssertLicenseNotExpired {
@@ -562,6 +563,7 @@ object ProductionJsonServer extends JsonServer {
       tagline = LoggedEnvironment.envOrElse("KITE_TAGLINE", "Graph analytics evolved"),
       workspaceParameterKinds = CustomOperationParameterMeta.validKinds,
       version = version,
+      graphrayEnabled = graphrayEnabled,
       defaultUIStatus = UIStatus.default)
   }
 
@@ -571,6 +573,14 @@ object ProductionJsonServer extends JsonServer {
   def backup = jsonGet(copyController.backup)
 
   val graphrayCache = new SoftHashMap[Int, Array[Byte]]()
+  val graphrayEnabled: Boolean = {
+    import scala.sys.process._
+    // Try rendering an empty picture to see if it works.
+    val config = new java.io.ByteArrayInputStream(
+      "{\"vs\":[],\"es\":[],\"width\":10,\"height\":10,\"quality\":2}".getBytes)
+    val output = new java.io.ByteArrayOutputStream()
+    ("python3 -m graphray" #< config #> output).! == 0
+  }
   def graphray = mvc.Action { request: Request[AnyContent] =>
     getUser(request) match {
       case None => Unauthorized

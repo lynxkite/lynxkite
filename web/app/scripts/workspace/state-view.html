@@ -5,7 +5,7 @@
     <button
       class="btn btn-default" id="save-as-snapshot-button"
       ng-click="root.snapshotNameOpen = true; snapshotName = getDefaultSnapshotName()"
-      drop-tooltip="Click to snapshot state as {{saveAsName}}"
+      drop-tooltip="Save as snapshot..."
       drop-tooltip-placement="bottom">
       <i class="glyphicon glyphicon-camera"></i>
     </button>
@@ -53,7 +53,7 @@
 
     <button
       id="graphray-button"
-      ng-show="state.kind === 'visualization'"
+      ng-show="state.kind === 'visualization' && util.globals.graphrayEnabled"
       class="btn btn-default btn-image"
       ng-click="graphray()"
       drop-tooltip="Render ray-traced image"

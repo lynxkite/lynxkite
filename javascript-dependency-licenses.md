@@ -818,7 +818,6 @@
 │  ├─ through2@3.0.1
 │  ├─ time-stamp@1.1.0
 │  ├─ tiny-emitter@2.1.0
-│  ├─ tinycolor2@1.4.1
 │  ├─ tmp@0.0.30
 │  ├─ tmp@0.0.33
 │  ├─ to-absolute-glob@2.0.2

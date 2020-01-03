@@ -26,10 +26,10 @@ angular.module('biggraph')
         scope.hashToColor = function(active, hash) {
           hash = Math.abs(hash);
           if (!(hash in hashColors)) {
-          /* global tinycolor */
+          /* global chroma */
             hashColors[hash] = {
-              true: tinycolor({ h: hash % 360, s: 1.0, l: 0.5 }).toString(),
-              false: tinycolor({ h: hash % 360, s: 1.0, l: 0.9 }).toString() };
+              true: chroma({ h: hash % 360, s: 1.0, l: 0.5 }).toString(),
+              false: chroma({ h: hash % 360, s: 1.0, l: 0.9 }).toString() };
           }
           return hashColors[hash][active];
         };
