@@ -142,7 +142,6 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     if (ws.inProgress) OpenWizardResponse(request.name)
     else metaManager.synchronized {
       val newName = s"${user.home}/In progress wizards/${frame.path.last.name}/${Timestamp.human}"
-      println(newName)
       assertNameNotExists(newName)
       val newFrame = DirectoryEntry.fromName(newName)
       newFrame.assertParentWriteAllowedFrom(user)
