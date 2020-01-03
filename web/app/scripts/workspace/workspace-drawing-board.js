@@ -734,12 +734,12 @@ angular.module('biggraph')
             const filters = {};
             for (let i = 0; i < colors.length; ++i) {
               const name = colors[i][0];
-              /* global tinycolor */
-              const c = tinycolor(colors[i][1]).toRgb();
+              /* global chroma */
+              const rgb = chroma(colors[i][1]).rgb();
               filters[name] = (
-                (c.r / 255 / 2.3 + ' ').repeat(3) + '0 0 ' +
-                (c.g / 255 / 2.3 + ' ').repeat(3) + '0 0 ' +
-                (c.b / 255 / 2.3 + ' ').repeat(3) + '0 0   0 0 0 1 0');
+                (rgb[0] / 255 / 2.3 + ' ').repeat(3) + '0 0 ' +
+                (rgb[1] / 255 / 2.3 + ' ').repeat(3) + '0 0 ' +
+                (rgb[2] / 255 / 2.3 + ' ').repeat(3) + '0 0   0 0 0 1 0');
             }
             // The "natural" filter leaves the colors alone. This is used for user-specified images.
             filters.natural = '1 0 0 0 0   0 1 0 0 0   0 0 1 0 0   0 0 0 1 0';

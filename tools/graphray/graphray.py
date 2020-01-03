@@ -95,7 +95,7 @@ Center_Object(
 
 def layout(graph):
   vs, es = graph
-  if 'x' not in vs:
+  if len(vs) and 'x' not in vs:
     graph = nx.Graph()
     graph.add_edges_from(zip(es.src, es.dst))
     pos = nx.kamada_kawai_layout(graph)

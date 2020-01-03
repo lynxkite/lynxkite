@@ -14,6 +14,7 @@ angular.module('biggraph')
         interactive: '@?',
       },
       link: function(scope) {
+        scope.util = util;
         const instruments = []; // Internal state.
         scope.instruments = []; // Displayed state. Updated on backend response.
         scope.root = { snapshotNameOpen: false }; // Dealing with ng-if scopes.

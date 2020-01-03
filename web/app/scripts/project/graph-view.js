@@ -2,7 +2,7 @@
 'use strict';
 
 angular.module('biggraph').directive('graphView', function(util, $compile, $timeout) {
-  /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT, tinycolor, chroma */
+  /* global SVG_UTIL, COMMON_UTIL, FORCE_LAYOUT, chroma */
   const svg = SVG_UTIL;
   const common = COMMON_UTIL;
   const directive = {
@@ -231,12 +231,12 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     const scale = 4 / this.svg.width();
     const v0 = this.vertices[0];
     const vertices = v0.vs.map(v => {
-      const c = tinycolor(v.color).toRgb();
+      const rgb = chroma(v.color).rgb();
       return {
         x: round(scale * v.x * v0.offsetter.zoom),
         y: round(scale * -v.y * v0.offsetter.zoom),
         r: round(scale * v.r * v0.offsetter.thickness),
-        color: `${round(c.r / 255)}, ${round(c.g / 255)}, ${round(c.b / 255)}`,
+        color: `${round(rgb[0] / 255)}, ${round(rgb[1] / 255)}, ${round(rgb[2] / 255)}`,
         shape: {
           male: 'guy',
           female: 'guy',
@@ -511,9 +511,8 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     }
     // Strings that are valid CSS color names will be used as they are.
     for (let i = 0; i < keys.length; ++i) {
-      const tiny = tinycolor(keys[i]);
-      if (tiny.isValid()) {
-        colorMap[keys[i]] = tiny.toString();
+      if (chroma.valid(keys[i])) {
+        colorMap[keys[i]] = chroma(keys[i]).toString();
       }
     }
     return colorMap;
@@ -1560,7 +1559,7 @@ angular.module('biggraph').directive('graphView', function(util, $compile, $time
     if (this.color === UNCOLORED) {
       this.highlight = 'white';
     } else {
-      this.highlight = tinycolor(this.color).lighten(20).toString();
+      this.highlight = chroma(this.color).brighten(0.75).toString();
     }
     this.labelColor = labelColor;
     this.frozen = 0; // Number of reasons why this vertex should not be animated.
