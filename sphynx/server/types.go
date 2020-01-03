@@ -29,87 +29,26 @@ type EntityField struct {
 }
 
 type Entity interface {
-	name() string
-	fields() []EntityField
+	typeName() string      // This will help deserializing a serialized entity
+	fields() []EntityField // Which fields should be serialized
 }
 
-type AttrPair struct {
-	original AttrPtr
-	created  AttrPtr
-	copier   func(srcIdx int64, dstIdx int64)
-}
-
-type AttrPtr interface {
-	twins() AttrPair
-	entity() Entity
-}
-
-func (e *DoubleAttribute) entity() Entity {
-	return e
-}
-func (e *StringAttribute) entity() Entity {
-	return e
-}
-func (e *DoubleTuple2Attribute) entity() Entity {
-	return e
-}
-func (e *DoubleAttribute) twins() AttrPair {
-	v := make([]float64, len(e.Values))
-	d := make([]bool, len(e.Defined))
-	return AttrPair{
-		original: e,
-		created:  &DoubleAttribute{Values: v, Defined: d},
-		copier: func(srcIdx int64, dstIdx int64) {
-			d[dstIdx] = true
-			v[dstIdx] = e.Values[srcIdx]
-		},
-	}
-}
-
-func (e *DoubleTuple2Attribute) twins() AttrPair {
-	v1 := make([]float64, len(e.Values1))
-	v2 := make([]float64, len(e.Values2))
-	d := make([]bool, len(e.Defined))
-	return AttrPair{
-		original: e,
-		created:  &DoubleTuple2Attribute{Values1: v1, Values2: v2, Defined: d},
-		copier: func(srcIdx int64, dstIdx int64) {
-			d[dstIdx] = true
-			v1[dstIdx] = e.Values1[srcIdx]
-			v2[dstIdx] = e.Values2[srcIdx]
-		},
-	}
-}
-
-func (e *StringAttribute) twins() AttrPair {
-	v := make([]string, len(e.Values))
-	d := make([]bool, len(e.Defined))
-	return AttrPair{
-		original: e,
-		created:  &StringAttribute{Values: v, Defined: d},
-		copier: func(srcIdx int64, dstIdx int64) {
-			d[dstIdx] = true
-			v[dstIdx] = e.Values[srcIdx]
-		},
-	}
-}
-
-func (e *Scalar) name() string {
+func (e *Scalar) typeName() string {
 	return "Scalar"
 }
-func (e *VertexSet) name() string {
+func (e *VertexSet) typeName() string {
 	return "VertexSet"
 }
-func (e *EdgeBundle) name() string {
+func (e *EdgeBundle) typeName() string {
 	return "EdgeBundle"
 }
-func (e *DoubleAttribute) name() string {
+func (e *DoubleAttribute) typeName() string {
 	return "DoubleAttribute"
 }
-func (e *StringAttribute) name() string {
+func (e *StringAttribute) typeName() string {
 	return "StringAttribute"
 }
-func (e *DoubleTuple2Attribute) name() string {
+func (e *DoubleTuple2Attribute) typeName() string {
 	return "DoubleTuple2Attribute"
 }
 
