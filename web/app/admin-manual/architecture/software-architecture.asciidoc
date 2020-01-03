@@ -73,5 +73,5 @@ responsible LynxKite frontend module.
 The 3D visualization is managed by another module and is a WebGL canvas used via the
 http://threejs.org[Three.js] general-purpose JavaScript 3D library.
 
-Minor utility libraries are also used, such as TinyColor for color manipulation.
+Minor utility libraries are also used, such as Chroma for color manipulation.
 
