@@ -307,7 +307,10 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 
 func (s *Server) HasOnOrderedSphynxDisk(ctx context.Context, in *pb.HasOnOrderedSphynxDiskRequest) (*pb.HasOnOrderedSphynxDiskReply, error) {
 	guid := in.GetGuid()
-	has := hasOnDisk(GUID(guid))
+	has, err := hasOnDisk(GUID(guid))
+	if err != nil {
+		return nil, err
+	}
 	return &pb.HasOnOrderedSphynxDiskReply{HasOnDisk: has}, nil
 }
 
@@ -344,7 +347,7 @@ func main() {
 	}
 
 	sphynxServer := NewServer()
-	sphynxServer.initDisk() // For now, we just block, until the files are checked
+	sphynxServer.initDisk()
 	pb.RegisterSphynxServer(s, &sphynxServer)
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
