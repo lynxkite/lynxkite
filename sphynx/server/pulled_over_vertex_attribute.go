@@ -16,9 +16,9 @@ func init() {
 			for i, _ := range function.Src {
 				dstIdToSrcId[function.Src[i]] = function.Dst[i]
 			}
-			srcIdToIndex := make(map[int64]int64, len(originalVS.Mapping))
+			srcIdToIndex := make(map[int64]int, len(originalVS.Mapping))
 			for i, k := range originalVS.Mapping {
-				srcIdToIndex[k] = int64(i)
+				srcIdToIndex[k] = i
 			}
 			switch attr := attributeEntity.(type) {
 			case *DoubleAttribute:
@@ -28,8 +28,8 @@ func init() {
 				}
 				for dstIdx, dstId := range destinationVS.Mapping {
 					srcId := dstIdToSrcId[dstId]
-					index := srcIdToIndex[srcId]
-					dst.Values[dstIdx] = attr.Values[index]
+					srcIdx := srcIdToIndex[srcId]
+					dst.Values[dstIdx] = attr.Values[srcIdx]
 					dst.Defined[dstIdx] = true
 				}
 				ea.output("pulledAttr", &dst)
@@ -40,8 +40,8 @@ func init() {
 				}
 				for dstIdx, dstId := range destinationVS.Mapping {
 					srcId := dstIdToSrcId[dstId]
-					index := srcIdToIndex[srcId]
-					dst.Values[dstIdx] = attr.Values[index]
+					srcIdx := srcIdToIndex[srcId]
+					dst.Values[dstIdx] = attr.Values[srcIdx]
 					dst.Defined[dstIdx] = true
 				}
 				ea.output("pulledAttr", &dst)
@@ -53,9 +53,9 @@ func init() {
 				}
 				for dstIdx, dstId := range destinationVS.Mapping {
 					srcId := dstIdToSrcId[dstId]
-					index := srcIdToIndex[srcId]
-					dst.Values1[dstIdx] = attr.Values1[index]
-					dst.Values2[dstIdx] = attr.Values2[index]
+					srcIdx := srcIdToIndex[srcId]
+					dst.Values1[dstIdx] = attr.Values1[srcIdx]
+					dst.Values2[dstIdx] = attr.Values2[srcIdx]
 					dst.Defined[dstIdx] = true
 				}
 				ea.output("pulledAttr", &dst)
