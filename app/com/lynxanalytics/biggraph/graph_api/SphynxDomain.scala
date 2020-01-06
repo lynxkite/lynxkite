@@ -148,20 +148,12 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
             }
             val schema = StructType(Seq(StructField("id", LongType, false)))
             val df = source.sparkSession.createDataFrame(rdd, schema)
-            df.show()
             df.write.parquet(middlePath.resolvedName)
             val dstPath = Paths.get(s"${dataDir}/${e.gUID.toString}")
             val files = (middlePath / "part-*").list
             val stream = new SequenceInputStream(files.view.map(_.open).iterator)
-            try {
-              Files.copy(stream, dstPath)
-            } catch {
-              case err: Throwable => println("eeeeeeeeeeeeeeeee", err)
-            } finally {
-              stream.close()
-            }
-            val df3 = source.sparkSession.read.parquet(s"${dataDir}/${e.gUID.toString}")
-            df3.show()
+            try Files.copy(stream, dstPath)
+            finally stream.close()
           }
           case _ => ???
         })
