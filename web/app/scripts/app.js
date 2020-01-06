@@ -11,11 +11,12 @@ angular
 
   .config(function ($routeProvider, $locationProvider) {
     $locationProvider.hashPrefix(''); // https://docs.angularjs.org/guide/migration#commit-aa077e8
-    function docTemplate(doc) {
-      return { template:
-        '<div class="documentation">' +
-        '<div documentation="' + doc + '" class="help"></div>' +
-        '</div>', reloadOnSearch: false };
+    function docTemplate(doc, title) {
+      return { template: `
+        <div class="documentation">
+        <div documentation="${doc}" title="${title}" class="help"></div>
+        </div>
+        `, reloadOnSearch: false };
     }
     // One-page routing for PDF generation.
     if (location.pathname.indexOf('/pdf-') === 0) {
@@ -70,9 +71,11 @@ angular
       });
 
     // Register routing for documentation pages.
-    const docs = ['admin-manual', 'help'];
-    for (let i = 0; i < docs.length; ++i) {
-      $routeProvider.when('/' + docs[i], docTemplate(docs[i]));
+    const docs = {
+      'admin-manual': 'LynxKite Admin Manual',
+      'help': 'LynxKite User Guide' };
+    for (let k in docs) {
+      $routeProvider.when('/' + k, docTemplate(k, docs[k]));
     }
   })
 
