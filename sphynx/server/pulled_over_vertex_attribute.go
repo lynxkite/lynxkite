@@ -10,7 +10,7 @@ func init() {
 			originalVS := ea.getVertexSet("originalVS")
 			destinationVS := ea.getVertexSet("destinationVS")
 			function := ea.getEdgeBundle("function")
-			attributeEntity := ea.getEntity("originalAttr")
+			attributeEntity := ea.inputs["originalAttr"]
 
 			edgeMapping := make(map[int64]int64, len(function.Src))
 			for i, _ := range function.Src {

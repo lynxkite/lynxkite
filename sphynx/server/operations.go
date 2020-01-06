@@ -35,37 +35,26 @@ func (ea *EntityAccessor) output(name string, entity Entity) error {
 }
 
 func (ea *EntityAccessor) getVertexSet(name string) *VertexSet {
-	entity := ea.inputs[name]
-	return entity.(*VertexSet)
+	return ea.inputs[name].(*VertexSet)
 }
 
 func (ea *EntityAccessor) getEdgeBundle(name string) *EdgeBundle {
-	entity := ea.inputs[name]
-	return entity.(*EdgeBundle)
+	return ea.inputs[name].(*EdgeBundle)
 }
 func (ea *EntityAccessor) getScalar(name string) *Scalar {
-	entity := ea.inputs[name]
-	return entity.(*Scalar)
+	return ea.inputs[name].(*Scalar)
 }
 
 func (ea *EntityAccessor) getDoubleAttribute(name string) *DoubleAttribute {
-	entity := ea.inputs[name]
-	return entity.(*DoubleAttribute)
+	return ea.inputs[name].(*DoubleAttribute)
 }
 
 func (ea *EntityAccessor) getStringAttribute(name string) *StringAttribute {
-	entity := ea.inputs[name]
-	return entity.(*StringAttribute)
+	return ea.inputs[name].(*StringAttribute)
 }
 
 func (ea *EntityAccessor) getDoubleTuple2Attribute(name string) *DoubleTuple2Attribute {
-	entity := ea.inputs[name]
-	return entity.(*DoubleTuple2Attribute)
-}
-
-func (ea *EntityAccessor) getEntity(name string) Entity {
-	entity := ea.inputs[name]
-	return entity.(Entity)
+	return ea.inputs[name].(*DoubleTuple2Attribute)
 }
 
 type Operation struct {
