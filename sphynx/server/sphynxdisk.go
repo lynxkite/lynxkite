@@ -34,7 +34,7 @@ func forEachField(fields []EntityField, dir string, fn func(string, interface{})
 	return nil
 }
 
-func fieldSaver(path string, data interface{}) error {
+func saveField(path string, data interface{}) error {
 	file, err := os.Create(path)
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func fieldSaver(path string, data interface{}) error {
 	return writer.Flush()
 }
 
-func fieldLoader(path string, data interface{}) error {
+func loadField(path string, data interface{}) error {
 	file, e := os.Open(path)
 	if e != nil {
 		return e
@@ -92,7 +92,7 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 
 	var name string
 	namePath := fmt.Sprintf("%v/%v", dir, "typename")
-	err = fieldLoader(namePath, &name)
+	err = loadField(namePath, &name)
 	if err != nil {
 		log.Printf("Err: %v", err)
 		return nil, err
@@ -102,7 +102,7 @@ func loadFromOrderedDisk(dataDir string, guid GUID) (Entity, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = forEachField(entity.fields(), dir, fieldLoader)
+	err = forEachField(entity.fields(), dir, loadField)
 	return entity, err
 }
 
@@ -125,7 +125,7 @@ func saveToOrderedDisk(e Entity, dataDir string, guid GUID) error {
 	typeName := e.typeName()
 	ef := EntityField{fieldName: "typename", data: typeName}
 	fields := append(e.fields(), ef)
-	err = forEachField(fields, inProgressDir, fieldSaver)
+	err = forEachField(fields, inProgressDir, saveField)
 	if err != nil {
 		return err
 	}
