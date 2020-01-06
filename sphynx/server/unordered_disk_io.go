@@ -5,6 +5,7 @@ import (
 	"fmt"
 	pb "github.com/biggraph/biggraph/sphynx/proto"
 	"github.com/xitongsys/parquet-go-source/local"
+	"github.com/xitongsys/parquet-go/reader"
 	"github.com/xitongsys/parquet-go/writer"
 	"log"
 )
@@ -154,5 +155,41 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	default:
 		return nil, fmt.Errorf("Can't reindex entity %v with GUID %v to use Spark IDs.", entity, in.Guid)
+	}
+}
+
+func (s *Server) ReadFromUnorderedDisk(
+	ctx context.Context, in *pb.ReadFromUnorderedDiskRequest) (*pb.ReadFromUnorderedDiskReply, error) {
+	var numGoRoutines int64 = 4
+	fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
+	fr, err := local.NewLocalFileReader(fname)
+	defer fr.Close()
+	if err != nil {
+		log.Printf("Failed to open file: %v", err)
+	}
+	fmt.Println(in.Type)
+	switch in.Type {
+	case "VertexSet":
+		pr, err := reader.NewParquetReader(fr, new(Vertex), numGoRoutines)
+		if err != nil {
+			log.Printf("Failed to create parquet reader: %v", err)
+		}
+		num_vs := int(pr.GetNumRows())
+		rawVertexSet := make([]Vertex, num_vs)
+		if err := pr.Read(&rawVertexSet); err != nil {
+			return nil, fmt.Errorf("Failed to read parquet file: %v", err)
+		}
+		pr.ReadStop()
+		vertexMapping := make([]int64, num_vs)
+		for _, wrappedSparkId := range rawVertexSet {
+			vertexMapping = append(vertexMapping, wrappedSparkId.Id)
+		}
+		s.Lock()
+		s.entities[GUID(in.Guid)] = &VertexSet{Mapping: vertexMapping}
+		s.Unlock()
+		fmt.Println(VertexSet{Mapping: vertexMapping})
+		return &pb.ReadFromUnorderedDiskReply{}, nil
+	default:
+		return nil, fmt.Errorf("Can't reindex entity with GUID %v to use Sphynx IDs.", in.Guid)
 	}
 }

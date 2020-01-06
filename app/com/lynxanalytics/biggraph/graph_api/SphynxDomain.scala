@@ -54,6 +54,12 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
   override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     source match {
       case _: OrderedSphynxDisk => client.readFromOrderedSphynxDisk(e)
+      case _: UnorderedSphynxDisk => {
+        e match {
+          case v: VertexSet => client.readFromUnorderedDisk(v, "VertexSet")
+          case _ => throw new AssertionError(s"Cannot fetch $e from $source")
+        }
+      }
       case _ => ???
     }
   }
@@ -140,7 +146,7 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
             val rdd = v.rdd.map {
               case (k, _) => Row(k)
             }
-            val schema = StructType(Seq(StructField("Id", LongType, false)))
+            val schema = StructType(Seq(StructField("id", LongType, false)))
             val df = source.sparkSession.createDataFrame(rdd, schema)
             df.show()
             df.write.parquet(middlePath.resolvedName)
