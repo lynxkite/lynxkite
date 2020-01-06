@@ -90,6 +90,17 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
     obs.future.map(_ => ())
   }
 
+  def readFromUnorderedDisk(e: MetaGraphEntity, entityType: String): SafeFuture[Unit] = {
+    // Asks Sphynx to read the data from UnorderedSphynxDisk and reindex the
+    // vertices to use indices from 0 to n.
+    val guid = e.gUID.toString()
+    val request = SphynxOuterClass.ReadFromUnorderedDiskRequest.newBuilder()
+      .setGuid(guid).setType(entityType).build()
+    val obs = new SingleResponseStreamObserver[SphynxOuterClass.ReadFromUnorderedDiskReply]
+    asyncStub.readFromUnorderedDisk(request, obs)
+    obs.future.map(_ => ())
+  }
+
   def hasOnOrderedSphynxDisk(e: MetaGraphEntity): Boolean = {
     val request = SphynxOuterClass.HasOnOrderedSphynxDiskRequest.newBuilder().setGuid(e.gUID.toString).build()
     val response = blockingStub.hasOnOrderedSphynxDisk(request)
