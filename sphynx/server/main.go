@@ -99,7 +99,7 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 					ea.output(name, &idSet)
 				default:
 					return nil,
-						fmt.Errorf("operation output (typeName : %v, guid: %v) is not an EdgeBundle",
+						fmt.Errorf("operation output (name : %v, guid: %v) is not an EdgeBundle",
 							edgeBundleName, edgeBundleGuid)
 				}
 			}

@@ -18,7 +18,7 @@ func collectInputs(server *Server, opInst *OperationInstance) (map[string]Entity
 	for name, guid := range opInst.Inputs {
 		entity, exists := server.get(guid)
 		if !exists {
-			return nil, fmt.Errorf("Guid %v corresponding to typeName: '%v' was not found in cache", guid, name)
+			return nil, fmt.Errorf("Guid %v corresponding to name: '%v' was not found in cache", guid, name)
 		}
 		inputs[name] = entity
 	}
