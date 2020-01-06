@@ -24,5 +24,6 @@ protoc --plugin=protoc-gen-grpc-java=$REPO/$GRPC_JAVA --grpc-java_out=../app \
 protoc -I=$PROTO_SOURCE_DIR --java_out=../app $PROTO_SOURCE_DIR/$PROTO_SOURCE_FILE
 
 # Generate the gRPC Go interfaces.
+go get github.com/golang/protobuf/protoc-gen-go
 PATH=$GOPATH/bin:$PATH protoc $PROTO_SOURCE_DIR/$PROTO_SOURCE_FILE --go_out=plugins=grpc,import_path=$PROTO_SOURCE_DIR:.
 
