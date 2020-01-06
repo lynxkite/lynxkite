@@ -171,7 +171,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	case *VertexSet:
 		pw, err := writer.NewParquetWriter(fw, new(Vertex), numGoRoutines)
 		if err != nil {
-			log.Printf("Failed to create parquet writer: %v", err)
+			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
 		}
 		for _, v := range e.Mapping {
 			if err := pw.Write(Vertex{Id: v}); err != nil {
