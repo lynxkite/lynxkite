@@ -3198,6 +3198,30 @@ public final class SphynxOuterClass {
      */
     com.google.protobuf.ByteString
         getGuidBytes();
+
+    /**
+     * <code>string vsguid1 = 2;</code>
+     * @return The vsguid1.
+     */
+    java.lang.String getVsguid1();
+    /**
+     * <code>string vsguid1 = 2;</code>
+     * @return The bytes for vsguid1.
+     */
+    com.google.protobuf.ByteString
+        getVsguid1Bytes();
+
+    /**
+     * <code>string vsguid2 = 3;</code>
+     * @return The vsguid2.
+     */
+    java.lang.String getVsguid2();
+    /**
+     * <code>string vsguid2 = 3;</code>
+     * @return The bytes for vsguid2.
+     */
+    com.google.protobuf.ByteString
+        getVsguid2Bytes();
   }
   /**
    * Protobuf type {@code sphynx.WriteToUnorderedDiskRequest}
@@ -3213,6 +3237,8 @@ public final class SphynxOuterClass {
     }
     private WriteToUnorderedDiskRequest() {
       guid_ = "";
+      vsguid1_ = "";
+      vsguid2_ = "";
     }
 
     @java.lang.Override
@@ -3249,6 +3275,18 @@ public final class SphynxOuterClass {
               java.lang.String s = input.readStringRequireUtf8();
 
               guid_ = s;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              vsguid1_ = s;
+              break;
+            }
+            case 26: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              vsguid2_ = s;
               break;
             }
             default: {
@@ -3319,6 +3357,78 @@ public final class SphynxOuterClass {
       }
     }
 
+    public static final int VSGUID1_FIELD_NUMBER = 2;
+    private volatile java.lang.Object vsguid1_;
+    /**
+     * <code>string vsguid1 = 2;</code>
+     * @return The vsguid1.
+     */
+    public java.lang.String getVsguid1() {
+      java.lang.Object ref = vsguid1_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        vsguid1_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string vsguid1 = 2;</code>
+     * @return The bytes for vsguid1.
+     */
+    public com.google.protobuf.ByteString
+        getVsguid1Bytes() {
+      java.lang.Object ref = vsguid1_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        vsguid1_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int VSGUID2_FIELD_NUMBER = 3;
+    private volatile java.lang.Object vsguid2_;
+    /**
+     * <code>string vsguid2 = 3;</code>
+     * @return The vsguid2.
+     */
+    public java.lang.String getVsguid2() {
+      java.lang.Object ref = vsguid2_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        vsguid2_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string vsguid2 = 3;</code>
+     * @return The bytes for vsguid2.
+     */
+    public com.google.protobuf.ByteString
+        getVsguid2Bytes() {
+      java.lang.Object ref = vsguid2_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        vsguid2_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -3336,6 +3446,12 @@ public final class SphynxOuterClass {
       if (!getGuidBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, guid_);
       }
+      if (!getVsguid1Bytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, vsguid1_);
+      }
+      if (!getVsguid2Bytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, vsguid2_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -3347,6 +3463,12 @@ public final class SphynxOuterClass {
       size = 0;
       if (!getGuidBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, guid_);
+      }
+      if (!getVsguid1Bytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, vsguid1_);
+      }
+      if (!getVsguid2Bytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, vsguid2_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -3365,6 +3487,10 @@ public final class SphynxOuterClass {
 
       if (!getGuid()
           .equals(other.getGuid())) return false;
+      if (!getVsguid1()
+          .equals(other.getVsguid1())) return false;
+      if (!getVsguid2()
+          .equals(other.getVsguid2())) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -3378,6 +3504,10 @@ public final class SphynxOuterClass {
       hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + GUID_FIELD_NUMBER;
       hash = (53 * hash) + getGuid().hashCode();
+      hash = (37 * hash) + VSGUID1_FIELD_NUMBER;
+      hash = (53 * hash) + getVsguid1().hashCode();
+      hash = (37 * hash) + VSGUID2_FIELD_NUMBER;
+      hash = (53 * hash) + getVsguid2().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -3513,6 +3643,10 @@ public final class SphynxOuterClass {
         super.clear();
         guid_ = "";
 
+        vsguid1_ = "";
+
+        vsguid2_ = "";
+
         return this;
       }
 
@@ -3540,6 +3674,8 @@ public final class SphynxOuterClass {
       public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest buildPartial() {
         com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest result = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest(this);
         result.guid_ = guid_;
+        result.vsguid1_ = vsguid1_;
+        result.vsguid2_ = vsguid2_;
         onBuilt();
         return result;
       }
@@ -3590,6 +3726,14 @@ public final class SphynxOuterClass {
         if (other == com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest.getDefaultInstance()) return this;
         if (!other.getGuid().isEmpty()) {
           guid_ = other.guid_;
+          onChanged();
+        }
+        if (!other.getVsguid1().isEmpty()) {
+          vsguid1_ = other.vsguid1_;
+          onChanged();
+        }
+        if (!other.getVsguid2().isEmpty()) {
+          vsguid2_ = other.vsguid2_;
           onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
@@ -3696,6 +3840,158 @@ public final class SphynxOuterClass {
         onChanged();
         return this;
       }
+
+      private java.lang.Object vsguid1_ = "";
+      /**
+       * <code>string vsguid1 = 2;</code>
+       * @return The vsguid1.
+       */
+      public java.lang.String getVsguid1() {
+        java.lang.Object ref = vsguid1_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          vsguid1_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string vsguid1 = 2;</code>
+       * @return The bytes for vsguid1.
+       */
+      public com.google.protobuf.ByteString
+          getVsguid1Bytes() {
+        java.lang.Object ref = vsguid1_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          vsguid1_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string vsguid1 = 2;</code>
+       * @param value The vsguid1 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVsguid1(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        vsguid1_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string vsguid1 = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearVsguid1() {
+        
+        vsguid1_ = getDefaultInstance().getVsguid1();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string vsguid1 = 2;</code>
+       * @param value The bytes for vsguid1 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVsguid1Bytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        vsguid1_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object vsguid2_ = "";
+      /**
+       * <code>string vsguid2 = 3;</code>
+       * @return The vsguid2.
+       */
+      public java.lang.String getVsguid2() {
+        java.lang.Object ref = vsguid2_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          vsguid2_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string vsguid2 = 3;</code>
+       * @return The bytes for vsguid2.
+       */
+      public com.google.protobuf.ByteString
+          getVsguid2Bytes() {
+        java.lang.Object ref = vsguid2_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          vsguid2_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string vsguid2 = 3;</code>
+       * @param value The vsguid2 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVsguid2(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        vsguid2_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string vsguid2 = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearVsguid2() {
+        
+        vsguid2_ = getDefaultInstance().getVsguid2();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string vsguid2 = 3;</code>
+       * @param value The bytes for vsguid2 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVsguid2Bytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        vsguid2_ = value;
+        onChanged();
+        return this;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -3744,6 +4040,3096 @@ public final class SphynxOuterClass {
 
     @java.lang.Override
     public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface HasInSphynxMemoryRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sphynx.HasInSphynxMemoryRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string guid = 1;</code>
+     * @return The guid.
+     */
+    java.lang.String getGuid();
+    /**
+     * <code>string guid = 1;</code>
+     * @return The bytes for guid.
+     */
+    com.google.protobuf.ByteString
+        getGuidBytes();
+  }
+  /**
+   * Protobuf type {@code sphynx.HasInSphynxMemoryRequest}
+   */
+  public  static final class HasInSphynxMemoryRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sphynx.HasInSphynxMemoryRequest)
+      HasInSphynxMemoryRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use HasInSphynxMemoryRequest.newBuilder() to construct.
+    private HasInSphynxMemoryRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private HasInSphynxMemoryRequest() {
+      guid_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new HasInSphynxMemoryRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private HasInSphynxMemoryRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              guid_ = s;
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasInSphynxMemoryRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasInSphynxMemoryRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest.Builder.class);
+    }
+
+    public static final int GUID_FIELD_NUMBER = 1;
+    private volatile java.lang.Object guid_;
+    /**
+     * <code>string guid = 1;</code>
+     * @return The guid.
+     */
+    public java.lang.String getGuid() {
+      java.lang.Object ref = guid_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        guid_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string guid = 1;</code>
+     * @return The bytes for guid.
+     */
+    public com.google.protobuf.ByteString
+        getGuidBytes() {
+      java.lang.Object ref = guid_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        guid_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getGuidBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, guid_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getGuidBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, guid_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest)) {
+        return super.equals(obj);
+      }
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest other = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest) obj;
+
+      if (!getGuid()
+          .equals(other.getGuid())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + GUID_FIELD_NUMBER;
+      hash = (53 * hash) + getGuid().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sphynx.HasInSphynxMemoryRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sphynx.HasInSphynxMemoryRequest)
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasInSphynxMemoryRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasInSphynxMemoryRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest.Builder.class);
+      }
+
+      // Construct using com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        guid_ = "";
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasInSphynxMemoryRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest getDefaultInstanceForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest build() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest buildPartial() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest result = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest(this);
+        result.guid_ = guid_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest) {
+          return mergeFrom((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest other) {
+        if (other == com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest.getDefaultInstance()) return this;
+        if (!other.getGuid().isEmpty()) {
+          guid_ = other.guid_;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object guid_ = "";
+      /**
+       * <code>string guid = 1;</code>
+       * @return The guid.
+       */
+      public java.lang.String getGuid() {
+        java.lang.Object ref = guid_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          guid_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string guid = 1;</code>
+       * @return The bytes for guid.
+       */
+      public com.google.protobuf.ByteString
+          getGuidBytes() {
+        java.lang.Object ref = guid_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          guid_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string guid = 1;</code>
+       * @param value The guid to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGuid(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        guid_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string guid = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearGuid() {
+        
+        guid_ = getDefaultInstance().getGuid();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string guid = 1;</code>
+       * @param value The bytes for guid to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGuidBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        guid_ = value;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sphynx.HasInSphynxMemoryRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:sphynx.HasInSphynxMemoryRequest)
+    private static final com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest();
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<HasInSphynxMemoryRequest>
+        PARSER = new com.google.protobuf.AbstractParser<HasInSphynxMemoryRequest>() {
+      @java.lang.Override
+      public HasInSphynxMemoryRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new HasInSphynxMemoryRequest(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<HasInSphynxMemoryRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<HasInSphynxMemoryRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface HasInSphynxMemoryReplyOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sphynx.HasInSphynxMemoryReply)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>bool hasInMemory = 1;</code>
+     * @return The hasInMemory.
+     */
+    boolean getHasInMemory();
+  }
+  /**
+   * Protobuf type {@code sphynx.HasInSphynxMemoryReply}
+   */
+  public  static final class HasInSphynxMemoryReply extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sphynx.HasInSphynxMemoryReply)
+      HasInSphynxMemoryReplyOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use HasInSphynxMemoryReply.newBuilder() to construct.
+    private HasInSphynxMemoryReply(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private HasInSphynxMemoryReply() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new HasInSphynxMemoryReply();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private HasInSphynxMemoryReply(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+
+              hasInMemory_ = input.readBool();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasInSphynxMemoryReply_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasInSphynxMemoryReply_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply.Builder.class);
+    }
+
+    public static final int HASINMEMORY_FIELD_NUMBER = 1;
+    private boolean hasInMemory_;
+    /**
+     * <code>bool hasInMemory = 1;</code>
+     * @return The hasInMemory.
+     */
+    public boolean getHasInMemory() {
+      return hasInMemory_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (hasInMemory_ != false) {
+        output.writeBool(1, hasInMemory_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (hasInMemory_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, hasInMemory_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply)) {
+        return super.equals(obj);
+      }
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply other = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply) obj;
+
+      if (getHasInMemory()
+          != other.getHasInMemory()) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + HASINMEMORY_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getHasInMemory());
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sphynx.HasInSphynxMemoryReply}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sphynx.HasInSphynxMemoryReply)
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReplyOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasInSphynxMemoryReply_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasInSphynxMemoryReply_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply.Builder.class);
+      }
+
+      // Construct using com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        hasInMemory_ = false;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasInSphynxMemoryReply_descriptor;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply getDefaultInstanceForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply build() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply buildPartial() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply result = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply(this);
+        result.hasInMemory_ = hasInMemory_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply) {
+          return mergeFrom((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply other) {
+        if (other == com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply.getDefaultInstance()) return this;
+        if (other.getHasInMemory() != false) {
+          setHasInMemory(other.getHasInMemory());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private boolean hasInMemory_ ;
+      /**
+       * <code>bool hasInMemory = 1;</code>
+       * @return The hasInMemory.
+       */
+      public boolean getHasInMemory() {
+        return hasInMemory_;
+      }
+      /**
+       * <code>bool hasInMemory = 1;</code>
+       * @param value The hasInMemory to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHasInMemory(boolean value) {
+        
+        hasInMemory_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool hasInMemory = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearHasInMemory() {
+        
+        hasInMemory_ = false;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sphynx.HasInSphynxMemoryReply)
+    }
+
+    // @@protoc_insertion_point(class_scope:sphynx.HasInSphynxMemoryReply)
+    private static final com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply();
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<HasInSphynxMemoryReply>
+        PARSER = new com.google.protobuf.AbstractParser<HasInSphynxMemoryReply>() {
+      @java.lang.Override
+      public HasInSphynxMemoryReply parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new HasInSphynxMemoryReply(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<HasInSphynxMemoryReply> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<HasInSphynxMemoryReply> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface HasOnOrderedSphynxDiskRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sphynx.HasOnOrderedSphynxDiskRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string guid = 1;</code>
+     * @return The guid.
+     */
+    java.lang.String getGuid();
+    /**
+     * <code>string guid = 1;</code>
+     * @return The bytes for guid.
+     */
+    com.google.protobuf.ByteString
+        getGuidBytes();
+  }
+  /**
+   * Protobuf type {@code sphynx.HasOnOrderedSphynxDiskRequest}
+   */
+  public  static final class HasOnOrderedSphynxDiskRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sphynx.HasOnOrderedSphynxDiskRequest)
+      HasOnOrderedSphynxDiskRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use HasOnOrderedSphynxDiskRequest.newBuilder() to construct.
+    private HasOnOrderedSphynxDiskRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private HasOnOrderedSphynxDiskRequest() {
+      guid_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new HasOnOrderedSphynxDiskRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private HasOnOrderedSphynxDiskRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              guid_ = s;
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasOnOrderedSphynxDiskRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasOnOrderedSphynxDiskRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest.Builder.class);
+    }
+
+    public static final int GUID_FIELD_NUMBER = 1;
+    private volatile java.lang.Object guid_;
+    /**
+     * <code>string guid = 1;</code>
+     * @return The guid.
+     */
+    public java.lang.String getGuid() {
+      java.lang.Object ref = guid_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        guid_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string guid = 1;</code>
+     * @return The bytes for guid.
+     */
+    public com.google.protobuf.ByteString
+        getGuidBytes() {
+      java.lang.Object ref = guid_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        guid_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getGuidBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, guid_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getGuidBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, guid_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest)) {
+        return super.equals(obj);
+      }
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest other = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest) obj;
+
+      if (!getGuid()
+          .equals(other.getGuid())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + GUID_FIELD_NUMBER;
+      hash = (53 * hash) + getGuid().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sphynx.HasOnOrderedSphynxDiskRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sphynx.HasOnOrderedSphynxDiskRequest)
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasOnOrderedSphynxDiskRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasOnOrderedSphynxDiskRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest.Builder.class);
+      }
+
+      // Construct using com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        guid_ = "";
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasOnOrderedSphynxDiskRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest getDefaultInstanceForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest build() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest buildPartial() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest result = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest(this);
+        result.guid_ = guid_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest) {
+          return mergeFrom((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest other) {
+        if (other == com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest.getDefaultInstance()) return this;
+        if (!other.getGuid().isEmpty()) {
+          guid_ = other.guid_;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object guid_ = "";
+      /**
+       * <code>string guid = 1;</code>
+       * @return The guid.
+       */
+      public java.lang.String getGuid() {
+        java.lang.Object ref = guid_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          guid_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string guid = 1;</code>
+       * @return The bytes for guid.
+       */
+      public com.google.protobuf.ByteString
+          getGuidBytes() {
+        java.lang.Object ref = guid_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          guid_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string guid = 1;</code>
+       * @param value The guid to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGuid(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        guid_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string guid = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearGuid() {
+        
+        guid_ = getDefaultInstance().getGuid();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string guid = 1;</code>
+       * @param value The bytes for guid to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGuidBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        guid_ = value;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sphynx.HasOnOrderedSphynxDiskRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:sphynx.HasOnOrderedSphynxDiskRequest)
+    private static final com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest();
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<HasOnOrderedSphynxDiskRequest>
+        PARSER = new com.google.protobuf.AbstractParser<HasOnOrderedSphynxDiskRequest>() {
+      @java.lang.Override
+      public HasOnOrderedSphynxDiskRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new HasOnOrderedSphynxDiskRequest(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<HasOnOrderedSphynxDiskRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<HasOnOrderedSphynxDiskRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface HasOnOrderedSphynxDiskReplyOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sphynx.HasOnOrderedSphynxDiskReply)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>bool hasOnDisk = 1;</code>
+     * @return The hasOnDisk.
+     */
+    boolean getHasOnDisk();
+  }
+  /**
+   * Protobuf type {@code sphynx.HasOnOrderedSphynxDiskReply}
+   */
+  public  static final class HasOnOrderedSphynxDiskReply extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sphynx.HasOnOrderedSphynxDiskReply)
+      HasOnOrderedSphynxDiskReplyOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use HasOnOrderedSphynxDiskReply.newBuilder() to construct.
+    private HasOnOrderedSphynxDiskReply(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private HasOnOrderedSphynxDiskReply() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new HasOnOrderedSphynxDiskReply();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private HasOnOrderedSphynxDiskReply(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+
+              hasOnDisk_ = input.readBool();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasOnOrderedSphynxDiskReply_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasOnOrderedSphynxDiskReply_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply.Builder.class);
+    }
+
+    public static final int HASONDISK_FIELD_NUMBER = 1;
+    private boolean hasOnDisk_;
+    /**
+     * <code>bool hasOnDisk = 1;</code>
+     * @return The hasOnDisk.
+     */
+    public boolean getHasOnDisk() {
+      return hasOnDisk_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (hasOnDisk_ != false) {
+        output.writeBool(1, hasOnDisk_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (hasOnDisk_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, hasOnDisk_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply)) {
+        return super.equals(obj);
+      }
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply other = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply) obj;
+
+      if (getHasOnDisk()
+          != other.getHasOnDisk()) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + HASONDISK_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getHasOnDisk());
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sphynx.HasOnOrderedSphynxDiskReply}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sphynx.HasOnOrderedSphynxDiskReply)
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReplyOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasOnOrderedSphynxDiskReply_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasOnOrderedSphynxDiskReply_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply.Builder.class);
+      }
+
+      // Construct using com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        hasOnDisk_ = false;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_HasOnOrderedSphynxDiskReply_descriptor;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply getDefaultInstanceForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply build() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply buildPartial() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply result = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply(this);
+        result.hasOnDisk_ = hasOnDisk_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply) {
+          return mergeFrom((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply other) {
+        if (other == com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply.getDefaultInstance()) return this;
+        if (other.getHasOnDisk() != false) {
+          setHasOnDisk(other.getHasOnDisk());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private boolean hasOnDisk_ ;
+      /**
+       * <code>bool hasOnDisk = 1;</code>
+       * @return The hasOnDisk.
+       */
+      public boolean getHasOnDisk() {
+        return hasOnDisk_;
+      }
+      /**
+       * <code>bool hasOnDisk = 1;</code>
+       * @param value The hasOnDisk to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHasOnDisk(boolean value) {
+        
+        hasOnDisk_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool hasOnDisk = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearHasOnDisk() {
+        
+        hasOnDisk_ = false;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sphynx.HasOnOrderedSphynxDiskReply)
+    }
+
+    // @@protoc_insertion_point(class_scope:sphynx.HasOnOrderedSphynxDiskReply)
+    private static final com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply();
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<HasOnOrderedSphynxDiskReply>
+        PARSER = new com.google.protobuf.AbstractParser<HasOnOrderedSphynxDiskReply>() {
+      @java.lang.Override
+      public HasOnOrderedSphynxDiskReply parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new HasOnOrderedSphynxDiskReply(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<HasOnOrderedSphynxDiskReply> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<HasOnOrderedSphynxDiskReply> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface ReadFromOrderedSphynxDiskRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sphynx.ReadFromOrderedSphynxDiskRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string guid = 1;</code>
+     * @return The guid.
+     */
+    java.lang.String getGuid();
+    /**
+     * <code>string guid = 1;</code>
+     * @return The bytes for guid.
+     */
+    com.google.protobuf.ByteString
+        getGuidBytes();
+  }
+  /**
+   * Protobuf type {@code sphynx.ReadFromOrderedSphynxDiskRequest}
+   */
+  public  static final class ReadFromOrderedSphynxDiskRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sphynx.ReadFromOrderedSphynxDiskRequest)
+      ReadFromOrderedSphynxDiskRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use ReadFromOrderedSphynxDiskRequest.newBuilder() to construct.
+    private ReadFromOrderedSphynxDiskRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private ReadFromOrderedSphynxDiskRequest() {
+      guid_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new ReadFromOrderedSphynxDiskRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private ReadFromOrderedSphynxDiskRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              guid_ = s;
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ReadFromOrderedSphynxDiskRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ReadFromOrderedSphynxDiskRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest.Builder.class);
+    }
+
+    public static final int GUID_FIELD_NUMBER = 1;
+    private volatile java.lang.Object guid_;
+    /**
+     * <code>string guid = 1;</code>
+     * @return The guid.
+     */
+    public java.lang.String getGuid() {
+      java.lang.Object ref = guid_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        guid_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string guid = 1;</code>
+     * @return The bytes for guid.
+     */
+    public com.google.protobuf.ByteString
+        getGuidBytes() {
+      java.lang.Object ref = guid_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        guid_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getGuidBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, guid_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getGuidBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, guid_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest)) {
+        return super.equals(obj);
+      }
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest other = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest) obj;
+
+      if (!getGuid()
+          .equals(other.getGuid())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + GUID_FIELD_NUMBER;
+      hash = (53 * hash) + getGuid().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sphynx.ReadFromOrderedSphynxDiskRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sphynx.ReadFromOrderedSphynxDiskRequest)
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ReadFromOrderedSphynxDiskRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ReadFromOrderedSphynxDiskRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest.Builder.class);
+      }
+
+      // Construct using com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        guid_ = "";
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ReadFromOrderedSphynxDiskRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest getDefaultInstanceForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest build() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest buildPartial() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest result = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest(this);
+        result.guid_ = guid_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest) {
+          return mergeFrom((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest other) {
+        if (other == com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest.getDefaultInstance()) return this;
+        if (!other.getGuid().isEmpty()) {
+          guid_ = other.guid_;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object guid_ = "";
+      /**
+       * <code>string guid = 1;</code>
+       * @return The guid.
+       */
+      public java.lang.String getGuid() {
+        java.lang.Object ref = guid_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          guid_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string guid = 1;</code>
+       * @return The bytes for guid.
+       */
+      public com.google.protobuf.ByteString
+          getGuidBytes() {
+        java.lang.Object ref = guid_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          guid_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string guid = 1;</code>
+       * @param value The guid to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGuid(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        guid_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string guid = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearGuid() {
+        
+        guid_ = getDefaultInstance().getGuid();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string guid = 1;</code>
+       * @param value The bytes for guid to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGuidBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        guid_ = value;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sphynx.ReadFromOrderedSphynxDiskRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:sphynx.ReadFromOrderedSphynxDiskRequest)
+    private static final com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest();
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<ReadFromOrderedSphynxDiskRequest>
+        PARSER = new com.google.protobuf.AbstractParser<ReadFromOrderedSphynxDiskRequest>() {
+      @java.lang.Override
+      public ReadFromOrderedSphynxDiskRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new ReadFromOrderedSphynxDiskRequest(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<ReadFromOrderedSphynxDiskRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ReadFromOrderedSphynxDiskRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface ReadFromOrderedSphynxDiskReplyOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:sphynx.ReadFromOrderedSphynxDiskReply)
+      com.google.protobuf.MessageOrBuilder {
+  }
+  /**
+   * Protobuf type {@code sphynx.ReadFromOrderedSphynxDiskReply}
+   */
+  public  static final class ReadFromOrderedSphynxDiskReply extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:sphynx.ReadFromOrderedSphynxDiskReply)
+      ReadFromOrderedSphynxDiskReplyOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use ReadFromOrderedSphynxDiskReply.newBuilder() to construct.
+    private ReadFromOrderedSphynxDiskReply(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private ReadFromOrderedSphynxDiskReply() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new ReadFromOrderedSphynxDiskReply();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private ReadFromOrderedSphynxDiskReply(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ReadFromOrderedSphynxDiskReply_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ReadFromOrderedSphynxDiskReply_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply.Builder.class);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply)) {
+        return super.equals(obj);
+      }
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply other = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply) obj;
+
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code sphynx.ReadFromOrderedSphynxDiskReply}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:sphynx.ReadFromOrderedSphynxDiskReply)
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReplyOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ReadFromOrderedSphynxDiskReply_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ReadFromOrderedSphynxDiskReply_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply.class, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply.Builder.class);
+      }
+
+      // Construct using com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.internal_static_sphynx_ReadFromOrderedSphynxDiskReply_descriptor;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply getDefaultInstanceForType() {
+        return com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply build() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply buildPartial() {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply result = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply(this);
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply) {
+          return mergeFrom((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply other) {
+        if (other == com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply.getDefaultInstance()) return this;
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:sphynx.ReadFromOrderedSphynxDiskReply)
+    }
+
+    // @@protoc_insertion_point(class_scope:sphynx.ReadFromOrderedSphynxDiskReply)
+    private static final com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply();
+    }
+
+    public static com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<ReadFromOrderedSphynxDiskReply>
+        PARSER = new com.google.protobuf.AbstractParser<ReadFromOrderedSphynxDiskReply>() {
+      @java.lang.Override
+      public ReadFromOrderedSphynxDiskReply parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new ReadFromOrderedSphynxDiskReply(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<ReadFromOrderedSphynxDiskReply> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ReadFromOrderedSphynxDiskReply> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -4203,6 +7589,36 @@ public final class SphynxOuterClass {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_sphynx_WriteToUnorderedDiskRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sphynx_HasInSphynxMemoryRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sphynx_HasInSphynxMemoryRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sphynx_HasInSphynxMemoryReply_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sphynx_HasInSphynxMemoryReply_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sphynx_HasOnOrderedSphynxDiskRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sphynx_HasOnOrderedSphynxDiskRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sphynx_HasOnOrderedSphynxDiskReply_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sphynx_HasOnOrderedSphynxDiskReply_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sphynx_ReadFromOrderedSphynxDiskRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sphynx_ReadFromOrderedSphynxDiskRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_sphynx_ReadFromOrderedSphynxDiskReply_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_sphynx_ReadFromOrderedSphynxDiskReply_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_sphynx_WriteToUnorderedDiskReply_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -4221,18 +7637,33 @@ public final class SphynxOuterClass {
       "y\022\022\n\ncanCompute\030\001 \001(\010\"#\n\016ComputeRequest\022" +
       "\021\n\toperation\030\001 \001(\t\"\016\n\014ComputeReply\" \n\020Ge" +
       "tScalarRequest\022\014\n\004guid\030\001 \001(\t\" \n\016GetScala" +
-      "rReply\022\016\n\006scalar\030\001 \001(\t\"+\n\033WriteToUnorder" +
-      "edDiskRequest\022\014\n\004guid\030\001 \001(\t\"\033\n\031WriteToUn" +
-      "orderedDiskReply2\242\002\n\006Sphynx\022@\n\nCanComput" +
-      "e\022\031.sphynx.CanComputeRequest\032\027.sphynx.Ca" +
-      "nComputeReply\0227\n\007Compute\022\026.sphynx.Comput" +
-      "eRequest\032\024.sphynx.ComputeReply\022=\n\tGetSca" +
-      "lar\022\030.sphynx.GetScalarRequest\032\026.sphynx.G" +
-      "etScalarReply\022^\n\024WriteToUnorderedDisk\022#." +
-      "sphynx.WriteToUnorderedDiskRequest\032!.sph" +
-      "ynx.WriteToUnorderedDiskReplyB,\n*com.lyn" +
-      "xanalytics.biggraph.graph_api.protob\006pro" +
-      "to3"
+      "rReply\022\016\n\006scalar\030\001 \001(\t\"M\n\033WriteToUnorder" +
+      "edDiskRequest\022\014\n\004guid\030\001 \001(\t\022\017\n\007vsguid1\030\002" +
+      " \001(\t\022\017\n\007vsguid2\030\003 \001(\t\"(\n\030HasInSphynxMemo" +
+      "ryRequest\022\014\n\004guid\030\001 \001(\t\"-\n\026HasInSphynxMe" +
+      "moryReply\022\023\n\013hasInMemory\030\001 \001(\010\"-\n\035HasOnO" +
+      "rderedSphynxDiskRequest\022\014\n\004guid\030\001 \001(\t\"0\n" +
+      "\033HasOnOrderedSphynxDiskReply\022\021\n\thasOnDis" +
+      "k\030\001 \001(\010\"0\n ReadFromOrderedSphynxDiskRequ" +
+      "est\022\014\n\004guid\030\001 \001(\t\" \n\036ReadFromOrderedSphy" +
+      "nxDiskReply\"\033\n\031WriteToUnorderedDiskReply" +
+      "2\316\004\n\006Sphynx\022@\n\nCanCompute\022\031.sphynx.CanCo" +
+      "mputeRequest\032\027.sphynx.CanComputeReply\0227\n" +
+      "\007Compute\022\026.sphynx.ComputeRequest\032\024.sphyn" +
+      "x.ComputeReply\022=\n\tGetScalar\022\030.sphynx.Get" +
+      "ScalarRequest\032\026.sphynx.GetScalarReply\022^\n" +
+      "\024WriteToUnorderedDisk\022#.sphynx.WriteToUn" +
+      "orderedDiskRequest\032!.sphynx.WriteToUnord" +
+      "eredDiskReply\022m\n\031ReadFromOrderedSphynxDi" +
+      "sk\022(.sphynx.ReadFromOrderedSphynxDiskReq" +
+      "uest\032&.sphynx.ReadFromOrderedSphynxDiskR" +
+      "eply\022d\n\026HasOnOrderedSphynxDisk\022%.sphynx." +
+      "HasOnOrderedSphynxDiskRequest\032#.sphynx.H" +
+      "asOnOrderedSphynxDiskReply\022U\n\021HasInSphyn" +
+      "xMemory\022 .sphynx.HasInSphynxMemoryReques" +
+      "t\032\036.sphynx.HasInSphynxMemoryReplyB,\n*com" +
+      ".lynxanalytics.biggraph.graph_api.protob" +
+      "\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -4279,9 +7710,45 @@ public final class SphynxOuterClass {
     internal_static_sphynx_WriteToUnorderedDiskRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sphynx_WriteToUnorderedDiskRequest_descriptor,
-        new java.lang.String[] { "Guid", });
-    internal_static_sphynx_WriteToUnorderedDiskReply_descriptor =
+        new java.lang.String[] { "Guid", "Vsguid1", "Vsguid2", });
+    internal_static_sphynx_HasInSphynxMemoryRequest_descriptor =
       getDescriptor().getMessageTypes().get(7);
+    internal_static_sphynx_HasInSphynxMemoryRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sphynx_HasInSphynxMemoryRequest_descriptor,
+        new java.lang.String[] { "Guid", });
+    internal_static_sphynx_HasInSphynxMemoryReply_descriptor =
+      getDescriptor().getMessageTypes().get(8);
+    internal_static_sphynx_HasInSphynxMemoryReply_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sphynx_HasInSphynxMemoryReply_descriptor,
+        new java.lang.String[] { "HasInMemory", });
+    internal_static_sphynx_HasOnOrderedSphynxDiskRequest_descriptor =
+      getDescriptor().getMessageTypes().get(9);
+    internal_static_sphynx_HasOnOrderedSphynxDiskRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sphynx_HasOnOrderedSphynxDiskRequest_descriptor,
+        new java.lang.String[] { "Guid", });
+    internal_static_sphynx_HasOnOrderedSphynxDiskReply_descriptor =
+      getDescriptor().getMessageTypes().get(10);
+    internal_static_sphynx_HasOnOrderedSphynxDiskReply_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sphynx_HasOnOrderedSphynxDiskReply_descriptor,
+        new java.lang.String[] { "HasOnDisk", });
+    internal_static_sphynx_ReadFromOrderedSphynxDiskRequest_descriptor =
+      getDescriptor().getMessageTypes().get(11);
+    internal_static_sphynx_ReadFromOrderedSphynxDiskRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sphynx_ReadFromOrderedSphynxDiskRequest_descriptor,
+        new java.lang.String[] { "Guid", });
+    internal_static_sphynx_ReadFromOrderedSphynxDiskReply_descriptor =
+      getDescriptor().getMessageTypes().get(12);
+    internal_static_sphynx_ReadFromOrderedSphynxDiskReply_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_sphynx_ReadFromOrderedSphynxDiskReply_descriptor,
+        new java.lang.String[] { });
+    internal_static_sphynx_WriteToUnorderedDiskReply_descriptor =
+      getDescriptor().getMessageTypes().get(13);
     internal_static_sphynx_WriteToUnorderedDiskReply_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sphynx_WriteToUnorderedDiskReply_descriptor,
