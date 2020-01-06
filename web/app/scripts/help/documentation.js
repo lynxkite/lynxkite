@@ -57,15 +57,18 @@ angular.module('biggraph').factory('documentation', function($http) {
   return documentation;
 });
 
-angular.module('biggraph').directive('documentation', function(documentation, $compile) {
+angular.module('biggraph').directive('documentation', function(documentation, $compile, $anchorScroll, util) {
   return {
-    scope: { documentation: '@' },
+    scope: { documentation: '@', title: '@' },
     link: function(scope, element) {
       documentation(scope.documentation).then(function(content) {
         element.empty();
         element.append(content);
         // Activate Angular contents.
         $compile(content)(scope.$new());
+        util.scopeTitle(scope, scope.title);
+        // Scroll to linked anchor on help page now that the DOM is in place.
+        $anchorScroll();
       });
     },
   };
