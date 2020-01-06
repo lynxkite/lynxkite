@@ -3,10 +3,7 @@
 package com.lynxanalytics.biggraph.graph_api
 
 import com.lynxanalytics.biggraph.graph_util
-import org.apache.calcite.rel.stream.StreamRules.DeltaUnionTransposeRule
 import play.api.libs.json.Json
-
-import scala.reflect.runtime.universe.typeTag
 
 abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Domain {
   implicit val executionContext =
