@@ -151,10 +151,12 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     this.meta = !this.meta;
   };
 
+  // Whether the workspace is a wizard.
   PopupModel.prototype.isWizard = function(ws) {
     return ws.getBox('anchor').instance.parameters.wizard === 'yes';
   };
 
+  // Whether this popup matches a particular step from a wizard.
   PopupModel.prototype.matchesStep = function(step) {
     if (this.content.boxId === step.box) {
       if (this.content.type === 'box' && step.popup === 'parameters') {
@@ -166,6 +168,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     return false;
   };
 
+  // Whether this popup is already listed as a wizard step in the workspace.
   PopupModel.prototype.inWizard = function(ws) {
     const steps = JSON.parse(ws.getBox('anchor').instance.parameters.steps || '[]');
     for (let s of steps) {
@@ -176,6 +179,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     return false;
   };
 
+  // Add or remove this popup from the list of wizard steps in the workspace.
   PopupModel.prototype.toggleWizard = function(ws) {
     const anchor = ws.getBox('anchor').instance;
     const steps = JSON.parse(anchor.parameters.steps || '[]');
