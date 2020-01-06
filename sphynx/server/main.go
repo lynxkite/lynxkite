@@ -13,9 +13,7 @@ import (
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/writer"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/status"
 	"log"
 	"net"
 	"os"
@@ -74,7 +72,7 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 	opInst := OperationInstanceFromJSON(in.Operation)
 	op, exists := getExecutableOperation(opInst)
 	if !exists {
-		return nil, status.Errorf(codes.Unimplemented, "Can't compute %v", opInst)
+		return nil, fmt.Errorf("Can't compute %v", opInst)
 	} else {
 		inputs, err := collectInputs(s, &opInst)
 		if err != nil {
@@ -125,7 +123,7 @@ func (s *Server) GetScalar(ctx context.Context, in *pb.GetScalarRequest) (*pb.Ge
 	case *Scalar:
 		scalarJSON, err := json.Marshal(scalar.Value)
 		if err != nil {
-			return nil, status.Errorf(codes.Unknown, "Converting scalar to json failed: %v", err)
+			return nil, fmt.Errorf("Converting scalar to json failed: %v", err)
 		}
 		return &pb.GetScalarReply{Scalar: string(scalarJSON)}, nil
 	default:
@@ -177,13 +175,11 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		}
 		for _, v := range e.Mapping {
 			if err := pw.Write(Vertex{Id: v}); err != nil {
-				return nil, status.Errorf(codes.Unknown,
-					"Failed to write parquet file: %v", err)
+				return nil, fmt.Errorf("Failed to write parquet file: %v", err)
 			}
 		}
 		if err = pw.WriteStop(); err != nil {
-			return nil, status.Errorf(codes.Unknown,
-				"Parquet WriteStop error: %v", err)
+			return nil, fmt.Errorf("Parquet WriteStop error: %v", err)
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	case *EdgeBundle:
@@ -206,13 +202,11 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 				Dst: vs2.Mapping[e.Dst[sphynxId]],
 			})
 			if err != nil {
-				return nil, status.Errorf(codes.Unknown,
-					"Failed to write parquet file: %v", err)
+				return nil, fmt.Errorf("Failed to write parquet file: %v", err)
 			}
 		}
 		if err = pw.WriteStop(); err != nil {
-			return nil, status.Errorf(codes.Unknown,
-				"Parquet WriteStop error: %v", err)
+			return nil, fmt.Errorf("Parquet WriteStop error: %v", err)
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	case *StringAttribute:
@@ -235,14 +229,12 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 					Value: e.Values[sphynxId],
 				})
 				if err != nil {
-					return nil, status.Errorf(codes.Unknown,
-						"Failed to write parquet file: %v", err)
+					return nil, fmt.Errorf("Failed to write parquet file: %v", err)
 				}
 			}
 		}
 		if err = pw.WriteStop(); err != nil {
-			return nil, status.Errorf(codes.Unknown,
-				"Parquet WriteStop error: %v", err)
+			return nil, fmt.Errorf("Parquet WriteStop error: %v", err)
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	case *DoubleAttribute:
@@ -265,14 +257,12 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 					Value: e.Values[sphynxId],
 				})
 				if err != nil {
-					return nil, status.Errorf(codes.Unknown,
-						"Failed to write parquet file: %v", err)
+					return nil, fmt.Errorf("Failed to write parquet file: %v", err)
 				}
 			}
 		}
 		if err = pw.WriteStop(); err != nil {
-			return nil, status.Errorf(codes.Unknown,
-				"Parquet WriteStop error: %v", err)
+			return nil, fmt.Errorf("Parquet WriteStop error: %v", err)
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	case *DoubleTuple2Attribute:
@@ -296,19 +286,16 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 					Value2: e.Values2[sphynxId],
 				})
 				if err != nil {
-					return nil, status.Errorf(codes.Unknown,
-						"Failed to write parquet file: %v", err)
+					return nil, fmt.Errorf("Failed to write parquet file: %v", err)
 				}
 			}
 		}
 		if err = pw.WriteStop(); err != nil {
-			return nil, status.Errorf(codes.Unknown,
-				"Parquet WriteStop error: %v", err)
+			return nil, fmt.Errorf("Parquet WriteStop error: %v", err)
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	default:
-		return nil, status.Errorf(
-			codes.Unimplemented, "Can't reindex entity %v with GUID %v to use Spark IDs.", entity, in.Guid)
+		return nil, fmt.Errorf("Can't reindex entity %v with GUID %v to use Spark IDs.", entity, in.Guid)
 	}
 }
 
