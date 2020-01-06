@@ -40,7 +40,7 @@ abstract class JsonServer extends mvc.Controller {
 
   def getUser(request: mvc.Request[_], withAuth: Boolean = productionMode): Option[User] = {
     if (withAuth) userController.get(request)
-    else Some(User.fake)
+    else Some(User.singleuser)
   }
 
   def asyncAction[A](parser: mvc.BodyParser[A], withAuth: Boolean = productionMode)(
