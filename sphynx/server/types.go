@@ -1,10 +1,13 @@
 // Types used by Sphynx.
 package main
 
-import "sync"
+import (
+	"sync"
+)
 
 type Server struct {
-	entities         EntityMap
+	sync.Mutex
+	entities         map[GUID]Entity
 	dataDir          string
 	unorderedDataDir string
 }
@@ -20,62 +23,106 @@ type OperationInstance struct {
 	Operation OperationDescription
 }
 
-type EntityMap struct {
-	sync.Mutex
-	vertexSets             map[GUID]VertexSet
-	edgeBundles            map[GUID]EdgeBundle
-	scalars                map[GUID]Scalar
-	stringAttributes       map[GUID]StringAttribute
-	doubleAttributes       map[GUID]DoubleAttribute
-	doubleTuple2Attributes map[GUID]DoubleTuple2Attribute
+type EntityField struct {
+	fieldName string
+	data      interface{}
 }
 
-func (em *EntityMap) get(guid GUID) interface{} {
-	em.Lock()
-	defer em.Unlock()
-	var res interface{}
-	if e, ok := em.vertexSets[guid]; ok {
-		res = e
-	} else if e, ok := em.edgeBundles[guid]; ok {
-		res = e
-	} else if e, ok := em.scalars[guid]; ok {
-		res = e
-	} else if e, ok := em.stringAttributes[guid]; ok {
-		res = e
-	} else if e, ok := em.doubleAttributes[guid]; ok {
-		res = e
-	} else if e, ok := em.doubleTuple2Attributes[guid]; ok {
-		res = e
+type Entity interface {
+	typeName() string      // This will help deserializing a serialized entity
+	fields() []EntityField // Which fields should be serialized
+}
+
+func (e *Scalar) typeName() string {
+	return "Scalar"
+}
+func (e *VertexSet) typeName() string {
+	return "VertexSet"
+}
+func (e *EdgeBundle) typeName() string {
+	return "EdgeBundle"
+}
+func (e *DoubleAttribute) typeName() string {
+	return "DoubleAttribute"
+}
+func (e *StringAttribute) typeName() string {
+	return "StringAttribute"
+}
+func (e *DoubleTuple2Attribute) typeName() string {
+	return "DoubleTuple2Attribute"
+}
+
+func (e *Scalar) fields() []EntityField {
+	return []EntityField{
+		EntityField{fieldName: "Value", data: &e.Value},
 	}
-	return res
+}
+func (e *VertexSet) fields() []EntityField {
+	return []EntityField{
+		EntityField{fieldName: "Mapping", data: &e.Mapping},
+	}
+}
+func (e *EdgeBundle) fields() []EntityField {
+	return []EntityField{
+		EntityField{fieldName: "Src", data: &e.Src},
+		EntityField{fieldName: "Dst", data: &e.Dst},
+		EntityField{fieldName: "EdgeMapping", data: &e.EdgeMapping},
+	}
+}
+func (e *DoubleAttribute) fields() []EntityField {
+	return []EntityField{
+		EntityField{fieldName: "Values", data: &e.Values},
+		EntityField{fieldName: "Defined", data: &e.Defined},
+	}
+}
+
+func (e *StringAttribute) fields() []EntityField {
+	return []EntityField{
+		EntityField{fieldName: "Values", data: &e.Values},
+		EntityField{fieldName: "Defined", data: &e.Defined},
+	}
+}
+func (e *DoubleTuple2Attribute) fields() []EntityField {
+	return []EntityField{
+		EntityField{fieldName: "Values1", data: &e.Values1},
+		EntityField{fieldName: "Values2", data: &e.Values2},
+		EntityField{fieldName: "Defined", data: &e.Defined},
+	}
+}
+
+func (server *Server) get(guid GUID) (Entity, bool) {
+	server.Lock()
+	defer server.Unlock()
+	entity, exists := server.entities[guid]
+	return entity, exists
 }
 
 type EdgeBundle struct {
-	src         []int64
-	dst         []int64
-	edgeMapping []int64
-	vertexSet   *VertexSet
+	Src         []int64
+	Dst         []int64
+	EdgeMapping []int64
 }
 type VertexSet struct {
-	mapping []int64
+	Mapping []int64
 }
-type Scalar interface{}
+type Scalar struct {
+	Value interface{}
+}
+
 type DoubleAttribute struct {
-	values    []float64
-	defined   []bool
-	vertexSet *VertexSet
+	Values  []float64
+	Defined []bool
 }
 type StringAttribute struct {
-	values    []string
-	defined   []bool
-	vertexSet *VertexSet
+	Values  []string
+	Defined []bool
 }
 type DoubleTuple2Attribute struct {
-	values1   []float64
-	values2   []float64
-	defined   []bool
-	vertexSet *VertexSet
+	Values1 []float64
+	Values2 []float64
+	Defined []bool
 }
+
 type Vertex struct {
 	Id int64 `parquet:"name=id, type=INT64"`
 }

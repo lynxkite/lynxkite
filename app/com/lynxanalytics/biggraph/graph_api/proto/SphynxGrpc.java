@@ -151,6 +151,99 @@ public final class SphynxGrpc {
     return getWriteToUnorderedDiskMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest,
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply> getReadFromOrderedSphynxDiskMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "ReadFromOrderedSphynxDisk",
+      requestType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest.class,
+      responseType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest,
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply> getReadFromOrderedSphynxDiskMethod() {
+    io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply> getReadFromOrderedSphynxDiskMethod;
+    if ((getReadFromOrderedSphynxDiskMethod = SphynxGrpc.getReadFromOrderedSphynxDiskMethod) == null) {
+      synchronized (SphynxGrpc.class) {
+        if ((getReadFromOrderedSphynxDiskMethod = SphynxGrpc.getReadFromOrderedSphynxDiskMethod) == null) {
+          SphynxGrpc.getReadFromOrderedSphynxDiskMethod = getReadFromOrderedSphynxDiskMethod =
+              io.grpc.MethodDescriptor.<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "ReadFromOrderedSphynxDisk"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply.getDefaultInstance()))
+              .setSchemaDescriptor(new SphynxMethodDescriptorSupplier("ReadFromOrderedSphynxDisk"))
+              .build();
+        }
+      }
+    }
+    return getReadFromOrderedSphynxDiskMethod;
+  }
+
+  private static volatile io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest,
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply> getHasOnOrderedSphynxDiskMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "HasOnOrderedSphynxDisk",
+      requestType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest.class,
+      responseType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest,
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply> getHasOnOrderedSphynxDiskMethod() {
+    io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply> getHasOnOrderedSphynxDiskMethod;
+    if ((getHasOnOrderedSphynxDiskMethod = SphynxGrpc.getHasOnOrderedSphynxDiskMethod) == null) {
+      synchronized (SphynxGrpc.class) {
+        if ((getHasOnOrderedSphynxDiskMethod = SphynxGrpc.getHasOnOrderedSphynxDiskMethod) == null) {
+          SphynxGrpc.getHasOnOrderedSphynxDiskMethod = getHasOnOrderedSphynxDiskMethod =
+              io.grpc.MethodDescriptor.<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "HasOnOrderedSphynxDisk"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply.getDefaultInstance()))
+              .setSchemaDescriptor(new SphynxMethodDescriptorSupplier("HasOnOrderedSphynxDisk"))
+              .build();
+        }
+      }
+    }
+    return getHasOnOrderedSphynxDiskMethod;
+  }
+
+  private static volatile io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest,
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply> getHasInSphynxMemoryMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "HasInSphynxMemory",
+      requestType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest.class,
+      responseType = com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest,
+      com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply> getHasInSphynxMemoryMethod() {
+    io.grpc.MethodDescriptor<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply> getHasInSphynxMemoryMethod;
+    if ((getHasInSphynxMemoryMethod = SphynxGrpc.getHasInSphynxMemoryMethod) == null) {
+      synchronized (SphynxGrpc.class) {
+        if ((getHasInSphynxMemoryMethod = SphynxGrpc.getHasInSphynxMemoryMethod) == null) {
+          SphynxGrpc.getHasInSphynxMemoryMethod = getHasInSphynxMemoryMethod =
+              io.grpc.MethodDescriptor.<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest, com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "HasInSphynxMemory"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply.getDefaultInstance()))
+              .setSchemaDescriptor(new SphynxMethodDescriptorSupplier("HasInSphynxMemory"))
+              .build();
+        }
+      }
+    }
+    return getHasInSphynxMemoryMethod;
+  }
+
   /**
    * Creates a new async stub that supports all call types for the service
    */
@@ -206,6 +299,27 @@ public final class SphynxGrpc {
       asyncUnimplementedUnaryCall(getWriteToUnorderedDiskMethod(), responseObserver);
     }
 
+    /**
+     */
+    public void readFromOrderedSphynxDisk(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest request,
+        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply> responseObserver) {
+      asyncUnimplementedUnaryCall(getReadFromOrderedSphynxDiskMethod(), responseObserver);
+    }
+
+    /**
+     */
+    public void hasOnOrderedSphynxDisk(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest request,
+        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply> responseObserver) {
+      asyncUnimplementedUnaryCall(getHasOnOrderedSphynxDiskMethod(), responseObserver);
+    }
+
+    /**
+     */
+    public void hasInSphynxMemory(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest request,
+        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply> responseObserver) {
+      asyncUnimplementedUnaryCall(getHasInSphynxMemoryMethod(), responseObserver);
+    }
+
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
@@ -236,6 +350,27 @@ public final class SphynxGrpc {
                 com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest,
                 com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskReply>(
                   this, METHODID_WRITE_TO_UNORDERED_DISK)))
+          .addMethod(
+            getReadFromOrderedSphynxDiskMethod(),
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest,
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply>(
+                  this, METHODID_READ_FROM_ORDERED_SPHYNX_DISK)))
+          .addMethod(
+            getHasOnOrderedSphynxDiskMethod(),
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest,
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply>(
+                  this, METHODID_HAS_ON_ORDERED_SPHYNX_DISK)))
+          .addMethod(
+            getHasInSphynxMemoryMethod(),
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest,
+                com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply>(
+                  this, METHODID_HAS_IN_SPHYNX_MEMORY)))
           .build();
     }
   }
@@ -289,6 +424,30 @@ public final class SphynxGrpc {
       asyncUnaryCall(
           getChannel().newCall(getWriteToUnorderedDiskMethod(), getCallOptions()), request, responseObserver);
     }
+
+    /**
+     */
+    public void readFromOrderedSphynxDisk(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest request,
+        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(getReadFromOrderedSphynxDiskMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
+    public void hasOnOrderedSphynxDisk(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest request,
+        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(getHasOnOrderedSphynxDiskMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
+    public void hasInSphynxMemory(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest request,
+        io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(getHasInSphynxMemoryMethod(), getCallOptions()), request, responseObserver);
+    }
   }
 
   /**
@@ -335,6 +494,27 @@ public final class SphynxGrpc {
     public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskReply writeToUnorderedDisk(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest request) {
       return blockingUnaryCall(
           getChannel(), getWriteToUnorderedDiskMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply readFromOrderedSphynxDisk(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest request) {
+      return blockingUnaryCall(
+          getChannel(), getReadFromOrderedSphynxDiskMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply hasOnOrderedSphynxDisk(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest request) {
+      return blockingUnaryCall(
+          getChannel(), getHasOnOrderedSphynxDiskMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply hasInSphynxMemory(com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest request) {
+      return blockingUnaryCall(
+          getChannel(), getHasInSphynxMemoryMethod(), getCallOptions(), request);
     }
   }
 
@@ -387,12 +567,39 @@ public final class SphynxGrpc {
       return futureUnaryCall(
           getChannel().newCall(getWriteToUnorderedDiskMethod(), getCallOptions()), request);
     }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply> readFromOrderedSphynxDisk(
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest request) {
+      return futureUnaryCall(
+          getChannel().newCall(getReadFromOrderedSphynxDiskMethod(), getCallOptions()), request);
+    }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply> hasOnOrderedSphynxDisk(
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest request) {
+      return futureUnaryCall(
+          getChannel().newCall(getHasOnOrderedSphynxDiskMethod(), getCallOptions()), request);
+    }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply> hasInSphynxMemory(
+        com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest request) {
+      return futureUnaryCall(
+          getChannel().newCall(getHasInSphynxMemoryMethod(), getCallOptions()), request);
+    }
   }
 
   private static final int METHODID_CAN_COMPUTE = 0;
   private static final int METHODID_COMPUTE = 1;
   private static final int METHODID_GET_SCALAR = 2;
   private static final int METHODID_WRITE_TO_UNORDERED_DISK = 3;
+  private static final int METHODID_READ_FROM_ORDERED_SPHYNX_DISK = 4;
+  private static final int METHODID_HAS_ON_ORDERED_SPHYNX_DISK = 5;
+  private static final int METHODID_HAS_IN_SPHYNX_MEMORY = 6;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -426,6 +633,18 @@ public final class SphynxGrpc {
         case METHODID_WRITE_TO_UNORDERED_DISK:
           serviceImpl.writeToUnorderedDisk((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskRequest) request,
               (io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.WriteToUnorderedDiskReply>) responseObserver);
+          break;
+        case METHODID_READ_FROM_ORDERED_SPHYNX_DISK:
+          serviceImpl.readFromOrderedSphynxDisk((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskRequest) request,
+              (io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromOrderedSphynxDiskReply>) responseObserver);
+          break;
+        case METHODID_HAS_ON_ORDERED_SPHYNX_DISK:
+          serviceImpl.hasOnOrderedSphynxDisk((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskRequest) request,
+              (io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasOnOrderedSphynxDiskReply>) responseObserver);
+          break;
+        case METHODID_HAS_IN_SPHYNX_MEMORY:
+          serviceImpl.hasInSphynxMemory((com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryRequest) request,
+              (io.grpc.stub.StreamObserver<com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.HasInSphynxMemoryReply>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -492,6 +711,9 @@ public final class SphynxGrpc {
               .addMethod(getComputeMethod())
               .addMethod(getGetScalarMethod())
               .addMethod(getWriteToUnorderedDiskMethod())
+              .addMethod(getReadFromOrderedSphynxDiskMethod())
+              .addMethod(getHasOnOrderedSphynxDiskMethod())
+              .addMethod(getHasInSphynxMemoryMethod())
               .build();
         }
       }

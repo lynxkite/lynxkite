@@ -47,7 +47,7 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
   def canCompute(operationMetadataJSON: String): Boolean = {
     val request = SphynxOuterClass.CanComputeRequest.newBuilder().setOperation(operationMetadataJSON).build()
     val response = blockingStub.canCompute(request)
-    return response.getCanCompute
+    response.getCanCompute
   }
 
   def compute(operationMetadataJSON: String): SafeFuture[Unit] = {
@@ -69,11 +69,45 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
   def writeToUnorderedDisk(e: MetaGraphEntity): SafeFuture[Unit] = {
     // In SphynxMemory, vertices are indexed from 0 to n. This method asks Sphynx
     // to reindex vertices to use Spark-side indices and write the result into
-    // a file on UnorderedSphynxDisk.
-    val guid = e.gUID.toString()
-    val request = SphynxOuterClass.WriteToUnorderedDiskRequest.newBuilder().setGuid(guid).build()
+    // a file on UnorderedSphynxDisk. For this, some entity types need extra vertex set guids
+
+    val request = e match {
+      case a: Attribute[_] =>
+        SphynxOuterClass.WriteToUnorderedDiskRequest.newBuilder()
+          .setGuid(e.gUID.toString)
+          .setVsguid1(a.vertexSet.gUID.toString).build()
+      case eb: EdgeBundle =>
+        SphynxOuterClass.WriteToUnorderedDiskRequest.newBuilder()
+          .setGuid(e.gUID.toString)
+          .setVsguid1(eb.srcVertexSet.gUID.toString)
+          .setVsguid2(eb.dstVertexSet.gUID.toString).build()
+      case _ =>
+        SphynxOuterClass.WriteToUnorderedDiskRequest.newBuilder()
+          .setGuid(e.gUID.toString).build()
+    }
     val obs = new SingleResponseStreamObserver[SphynxOuterClass.WriteToUnorderedDiskReply]
     asyncStub.writeToUnorderedDisk(request, obs)
     obs.future.map(_ => ())
   }
+
+  def hasOnOrderedSphynxDisk(e: MetaGraphEntity): Boolean = {
+    val request = SphynxOuterClass.HasOnOrderedSphynxDiskRequest.newBuilder().setGuid(e.gUID.toString).build()
+    val response = blockingStub.hasOnOrderedSphynxDisk(request)
+    response.getHasOnDisk
+  }
+
+  def hasInSphynxMemory(e: MetaGraphEntity): Boolean = {
+    val request = SphynxOuterClass.HasInSphynxMemoryRequest.newBuilder().setGuid(e.gUID.toString).build()
+    val response = blockingStub.hasInSphynxMemory(request)
+    response.getHasInMemory
+  }
+
+  def readFromOrderedSphynxDisk(e: MetaGraphEntity): SafeFuture[Unit] = {
+    val guid = e.gUID.toString()
+    val request = SphynxOuterClass.ReadFromOrderedSphynxDiskRequest.newBuilder().setGuid(guid).build()
+    val obs = new SingleResponseStreamObserver[SphynxOuterClass.ReadFromOrderedSphynxDiskReply]
+    asyncStub.readFromOrderedSphynxDisk(request, obs)
+    obs.future.map(_ => ())
+  }
+
 }

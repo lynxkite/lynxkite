@@ -2,64 +2,63 @@
 
 package main
 
+import (
+	"fmt"
+)
+
+type EntityAccessor struct {
+	inputs  map[string]Entity
+	outputs map[GUID]Entity
+	opInst  *OperationInstance
+	server  *Server
+}
+
+func collectInputs(server *Server, opInst *OperationInstance) (map[string]Entity, error) {
+	inputs := make(map[string]Entity, len(opInst.Inputs))
+	for name, guid := range opInst.Inputs {
+		entity, exists := server.get(guid)
+		if !exists {
+			return nil, fmt.Errorf("Guid %v corresponding to name: '%v' was not found in cache", guid, name)
+		}
+		inputs[name] = entity
+	}
+	return inputs, nil
+}
+
+func (ea *EntityAccessor) output(name string, entity Entity) error {
+	guid, exists := ea.opInst.Outputs[name]
+	if !exists {
+		return fmt.Errorf("Could not find '%v' among output names", name)
+	}
+	ea.outputs[guid] = entity
+	return nil
+}
+
+func (ea *EntityAccessor) getVertexSet(name string) *VertexSet {
+	return ea.inputs[name].(*VertexSet)
+}
+
+func (ea *EntityAccessor) getEdgeBundle(name string) *EdgeBundle {
+	return ea.inputs[name].(*EdgeBundle)
+}
+func (ea *EntityAccessor) getScalar(name string) *Scalar {
+	return ea.inputs[name].(*Scalar)
+}
+
+func (ea *EntityAccessor) getDoubleAttribute(name string) *DoubleAttribute {
+	return ea.inputs[name].(*DoubleAttribute)
+}
+
+func (ea *EntityAccessor) getStringAttribute(name string) *StringAttribute {
+	return ea.inputs[name].(*StringAttribute)
+}
+
+func (ea *EntityAccessor) getDoubleTuple2Attribute(name string) *DoubleTuple2Attribute {
+	return ea.inputs[name].(*DoubleTuple2Attribute)
+}
+
 type Operation struct {
-	execute func(*Server, OperationInstance)
+	execute func(ea *EntityAccessor) error
 }
 
-var operations = map[string]Operation{
-	"ExampleGraph": exampleGraph,
-}
-
-var exampleGraph = Operation{
-	execute: func(s *Server, opInst OperationInstance) {
-		s.entities.Lock()
-		defer s.entities.Unlock()
-		vertexSet := VertexSet{mapping: []int64{0, 1, 2, 3}}
-		nameToGUID := opInst.Outputs
-		s.entities.vertexSets[nameToGUID["vertices"]] = vertexSet
-		s.entities.edgeBundles[nameToGUID["edges"]] = EdgeBundle{
-			src:         []int64{0, 1, 2, 2},
-			dst:         []int64{1, 0, 0, 1},
-			vertexSet:   &vertexSet,
-			edgeMapping: []int64{0, 1, 2, 3},
-		}
-		s.entities.stringAttributes[nameToGUID["name"]] = StringAttribute{
-			values:    []string{"Adam", "Eve", "Bob", "Isolated Joe"},
-			defined:   []bool{true, true, true, true},
-			vertexSet: &vertexSet,
-		}
-		s.entities.doubleAttributes[nameToGUID["age"]] = DoubleAttribute{
-			values:    []float64{20.3, 18.2, 50.3, 2.0},
-			defined:   []bool{true, true, true, true},
-			vertexSet: &vertexSet,
-		}
-		s.entities.stringAttributes[nameToGUID["gender"]] = StringAttribute{
-			values:    []string{"Male", "Female", "Male", "Male"},
-			defined:   []bool{true, true, true, true},
-			vertexSet: &vertexSet,
-		}
-		s.entities.doubleAttributes[nameToGUID["income"]] = DoubleAttribute{
-			values:    []float64{1000, 0, 0, 2000},
-			defined:   []bool{true, false, false, true},
-			vertexSet: &vertexSet,
-		}
-		s.entities.doubleTuple2Attributes[nameToGUID["location"]] = DoubleTuple2Attribute{
-			values1:   []float64{40.71448, 47.5269674, 1.352083, -33.8674869},
-			values2:   []float64{-74.00598, 19.0323968, 103.819836, 151.2069902},
-			defined:   []bool{true, true, true, true},
-			vertexSet: &vertexSet,
-		}
-		s.entities.stringAttributes[nameToGUID["comment"]] = StringAttribute{
-			values: []string{"Adam loves Eve", "Eve loves Adam",
-				"Bob envies Adam", "Bob loves Eve"},
-			defined:   []bool{true, true, true, true},
-			vertexSet: &vertexSet,
-		}
-		s.entities.doubleAttributes[nameToGUID["weight"]] = DoubleAttribute{
-			values:    []float64{1, 2, 3, 4},
-			defined:   []bool{true, true, true, true},
-			vertexSet: &vertexSet,
-		}
-		s.entities.scalars[nameToGUID["greeting"]] = Scalar("Hello world! 😀 ")
-	},
-}
+var operationRepository = map[string]Operation{}
