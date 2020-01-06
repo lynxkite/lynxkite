@@ -27,7 +27,7 @@
     <div
         class="clicky pull-right glyphicon glyphicon-gift"
         ng-class="{ active: popupModel.inWizard(workspace) }"
-        ng-show="popupModel.canWizard(workspace) && !popupModel.meta"
+        ng-show="popupModel.isWizard(workspace) && !popupModel.meta"
         ng-click="popupModel.toggleWizard(workspace); event.stopPropagation();"
         ng-mousedown="$event.stopPropagation()"
         id="toggle-wizard"

@@ -151,7 +151,7 @@ angular.module('biggraph').factory('PopupModel', function(environment) {
     this.meta = !this.meta;
   };
 
-  PopupModel.prototype.canWizard = function(ws) {
+  PopupModel.prototype.isWizard = function(ws) {
     return ws.getBox('anchor').instance.parameters.wizard === 'yes';
   };
 
