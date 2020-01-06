@@ -24,9 +24,7 @@ $(pip): python_requirements.txt
 	AIRFLOW_GPL_UNIDECODE=yes pip install --user -r python_requirements.txt && touch $@
 .build/protoc-done: sphynx/proto/sphynx.proto
 	sphynx/proto_compile.sh && touch $@
-.build/goget-done: sphynx/goget.sh
-	sphynx/goget.sh && touch $@
-.build/sphynx-prep-done: .build/protoc-done .build/goget-done $(shell $(find) sphynx/server)
+.build/sphynx-prep-done: .build/protoc-done $(shell $(find) sphynx/server)
 	sphynx/sphynx_compile.sh && touch $@
 .build/lynxkite-done: \
 	$(shell $(find) app project lib conf built-ins) tools/call_spark_submit.sh \
