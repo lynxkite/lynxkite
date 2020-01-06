@@ -13,7 +13,7 @@ func init() {
 			attributeEntity := ea.inputs["originalAttr"]
 
 			dstIdToSrcId := make(map[int64]int64, len(function.Src))
-			for i, _ := range function.Src {
+			for i := range function.Src {
 				dstIdToSrcId[function.Src[i]] = function.Dst[i]
 			}
 			srcIdToIndex := make(map[int64]int, len(originalVS.Mapping))
