@@ -10,6 +10,8 @@ import org.apache.spark.sql.Row
 import java.nio.file.{ Paths, Files }
 import java.io.SequenceInputStream
 import scala.collection.JavaConversions.asJavaEnumeration
+import org.apache.spark.rdd.RDD
+import reflect.runtime.universe.typeTag
 
 abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Domain {
   implicit val executionContext =
@@ -54,12 +56,7 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
   override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     source match {
       case _: OrderedSphynxDisk => client.readFromOrderedSphynxDisk(e)
-      case _: UnorderedSphynxDisk => {
-        e match {
-          case v: VertexSet => client.readFromUnorderedDisk(v, "VertexSet")
-          case _ => throw new AssertionError(s"Cannot fetch $e from $source")
-        }
-      }
+      case _: UnorderedSphynxDisk => client.readFromUnorderedDisk(e)
       case _ => ???
     }
   }
@@ -141,19 +138,60 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
       case source: SparkDomain => {
         val middlePath = source.repositoryPath / "to_sphynx" / e.gUID.toString
         // TODO: check if middlePath contains something or not.
-        val future = SafeFuture.async(source.getData(e) match {
+        def writeRDD(rdd: RDD[Row], schema: StructType) = {
+          val df = source.sparkSession.createDataFrame(rdd, schema)
+          df.write.parquet(middlePath.resolvedName)
+          val dstPath = Paths.get(s"${dataDir}/${e.gUID.toString}")
+          val files = (middlePath / "part-*").list
+          val stream = new SequenceInputStream(files.view.map(_.open).iterator)
+          try Files.copy(stream, dstPath)
+          finally stream.close()
+        }
+        val future = SafeFuture.async[Unit](source.getData(e) match {
           case v: VertexSetData => {
             val rdd = v.rdd.map {
               case (k, _) => Row(k)
             }
             val schema = StructType(Seq(StructField("id", LongType, false)))
-            val df = source.sparkSession.createDataFrame(rdd, schema)
-            df.write.parquet(middlePath.resolvedName)
-            val dstPath = Paths.get(s"${dataDir}/${e.gUID.toString}")
-            val files = (middlePath / "part-*").list
-            val stream = new SequenceInputStream(files.view.map(_.open).iterator)
-            try Files.copy(stream, dstPath)
-            finally stream.close()
+            writeRDD(rdd, schema)
+          }
+          case e: EdgeBundleData => {
+            val rdd = e.rdd.map {
+              case (id, Edge(src, dst)) => Row(id, src, dst)
+            }
+            val schema = StructType(Seq(
+              StructField("id", LongType, false),
+              StructField("src", LongType, false),
+              StructField("dst", LongType, false)))
+            writeRDD(rdd, schema)
+          }
+          case a: AttributeData[_] if a.typeTag == typeTag[String] => {
+            val rdd = a.rdd.map {
+              case (id, value) => Row(id, value)
+            }
+            val schema = StructType(Seq(
+              StructField("id", LongType, false),
+              StructField("value", StringType, false)))
+            writeRDD(rdd, schema)
+          }
+          case a: AttributeData[_] if a.typeTag == typeTag[Double] => {
+            val rdd = a.rdd.map {
+              case (id, value) => Row(id, value)
+            }
+            val schema = StructType(Seq(
+              StructField("id", LongType, false),
+              StructField("value", DoubleType, false)))
+            writeRDD(rdd, schema)
+          }
+          case a: AttributeData[_] if a.typeTag == typeTag[(Double, Double)] => {
+            val rdd = a.rdd.map {
+              case (id, (value1, value2)) => Row(id, value1, value2)
+            }
+            val schema = StructType(Seq(
+              StructField("id", LongType, false),
+              StructField("value1", DoubleType, false),
+              StructField("value2", DoubleType, false)))
+            writeRDD(rdd, schema)
           }
           case _ => ???
         })

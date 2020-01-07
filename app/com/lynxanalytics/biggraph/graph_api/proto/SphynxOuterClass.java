@@ -4072,6 +4072,30 @@ public final class SphynxOuterClass {
      */
     com.google.protobuf.ByteString
         getTypeBytes();
+
+    /**
+     * <code>string vsguid1 = 3;</code>
+     * @return The vsguid1.
+     */
+    java.lang.String getVsguid1();
+    /**
+     * <code>string vsguid1 = 3;</code>
+     * @return The bytes for vsguid1.
+     */
+    com.google.protobuf.ByteString
+        getVsguid1Bytes();
+
+    /**
+     * <code>string vsguid2 = 4;</code>
+     * @return The vsguid2.
+     */
+    java.lang.String getVsguid2();
+    /**
+     * <code>string vsguid2 = 4;</code>
+     * @return The bytes for vsguid2.
+     */
+    com.google.protobuf.ByteString
+        getVsguid2Bytes();
   }
   /**
    * Protobuf type {@code sphynx.ReadFromUnorderedDiskRequest}
@@ -4088,6 +4112,8 @@ public final class SphynxOuterClass {
     private ReadFromUnorderedDiskRequest() {
       guid_ = "";
       type_ = "";
+      vsguid1_ = "";
+      vsguid2_ = "";
     }
 
     @java.lang.Override
@@ -4130,6 +4156,18 @@ public final class SphynxOuterClass {
               java.lang.String s = input.readStringRequireUtf8();
 
               type_ = s;
+              break;
+            }
+            case 26: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              vsguid1_ = s;
+              break;
+            }
+            case 34: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              vsguid2_ = s;
               break;
             }
             default: {
@@ -4236,6 +4274,78 @@ public final class SphynxOuterClass {
       }
     }
 
+    public static final int VSGUID1_FIELD_NUMBER = 3;
+    private volatile java.lang.Object vsguid1_;
+    /**
+     * <code>string vsguid1 = 3;</code>
+     * @return The vsguid1.
+     */
+    public java.lang.String getVsguid1() {
+      java.lang.Object ref = vsguid1_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        vsguid1_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string vsguid1 = 3;</code>
+     * @return The bytes for vsguid1.
+     */
+    public com.google.protobuf.ByteString
+        getVsguid1Bytes() {
+      java.lang.Object ref = vsguid1_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        vsguid1_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int VSGUID2_FIELD_NUMBER = 4;
+    private volatile java.lang.Object vsguid2_;
+    /**
+     * <code>string vsguid2 = 4;</code>
+     * @return The vsguid2.
+     */
+    public java.lang.String getVsguid2() {
+      java.lang.Object ref = vsguid2_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        vsguid2_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string vsguid2 = 4;</code>
+     * @return The bytes for vsguid2.
+     */
+    public com.google.protobuf.ByteString
+        getVsguid2Bytes() {
+      java.lang.Object ref = vsguid2_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        vsguid2_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -4256,6 +4366,12 @@ public final class SphynxOuterClass {
       if (!getTypeBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, type_);
       }
+      if (!getVsguid1Bytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, vsguid1_);
+      }
+      if (!getVsguid2Bytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, vsguid2_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -4270,6 +4386,12 @@ public final class SphynxOuterClass {
       }
       if (!getTypeBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, type_);
+      }
+      if (!getVsguid1Bytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, vsguid1_);
+      }
+      if (!getVsguid2Bytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, vsguid2_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -4290,6 +4412,10 @@ public final class SphynxOuterClass {
           .equals(other.getGuid())) return false;
       if (!getType()
           .equals(other.getType())) return false;
+      if (!getVsguid1()
+          .equals(other.getVsguid1())) return false;
+      if (!getVsguid2()
+          .equals(other.getVsguid2())) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -4305,6 +4431,10 @@ public final class SphynxOuterClass {
       hash = (53 * hash) + getGuid().hashCode();
       hash = (37 * hash) + TYPE_FIELD_NUMBER;
       hash = (53 * hash) + getType().hashCode();
+      hash = (37 * hash) + VSGUID1_FIELD_NUMBER;
+      hash = (53 * hash) + getVsguid1().hashCode();
+      hash = (37 * hash) + VSGUID2_FIELD_NUMBER;
+      hash = (53 * hash) + getVsguid2().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -4442,6 +4572,10 @@ public final class SphynxOuterClass {
 
         type_ = "";
 
+        vsguid1_ = "";
+
+        vsguid2_ = "";
+
         return this;
       }
 
@@ -4470,6 +4604,8 @@ public final class SphynxOuterClass {
         com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromUnorderedDiskRequest result = new com.lynxanalytics.biggraph.graph_api.proto.SphynxOuterClass.ReadFromUnorderedDiskRequest(this);
         result.guid_ = guid_;
         result.type_ = type_;
+        result.vsguid1_ = vsguid1_;
+        result.vsguid2_ = vsguid2_;
         onBuilt();
         return result;
       }
@@ -4524,6 +4660,14 @@ public final class SphynxOuterClass {
         }
         if (!other.getType().isEmpty()) {
           type_ = other.type_;
+          onChanged();
+        }
+        if (!other.getVsguid1().isEmpty()) {
+          vsguid1_ = other.vsguid1_;
+          onChanged();
+        }
+        if (!other.getVsguid2().isEmpty()) {
+          vsguid2_ = other.vsguid2_;
           onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
@@ -4703,6 +4847,158 @@ public final class SphynxOuterClass {
   checkByteStringIsUtf8(value);
         
         type_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object vsguid1_ = "";
+      /**
+       * <code>string vsguid1 = 3;</code>
+       * @return The vsguid1.
+       */
+      public java.lang.String getVsguid1() {
+        java.lang.Object ref = vsguid1_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          vsguid1_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string vsguid1 = 3;</code>
+       * @return The bytes for vsguid1.
+       */
+      public com.google.protobuf.ByteString
+          getVsguid1Bytes() {
+        java.lang.Object ref = vsguid1_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          vsguid1_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string vsguid1 = 3;</code>
+       * @param value The vsguid1 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVsguid1(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        vsguid1_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string vsguid1 = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearVsguid1() {
+        
+        vsguid1_ = getDefaultInstance().getVsguid1();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string vsguid1 = 3;</code>
+       * @param value The bytes for vsguid1 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVsguid1Bytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        vsguid1_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object vsguid2_ = "";
+      /**
+       * <code>string vsguid2 = 4;</code>
+       * @return The vsguid2.
+       */
+      public java.lang.String getVsguid2() {
+        java.lang.Object ref = vsguid2_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          vsguid2_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string vsguid2 = 4;</code>
+       * @return The bytes for vsguid2.
+       */
+      public com.google.protobuf.ByteString
+          getVsguid2Bytes() {
+        java.lang.Object ref = vsguid2_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          vsguid2_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string vsguid2 = 4;</code>
+       * @param value The vsguid2 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVsguid2(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        vsguid2_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string vsguid2 = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearVsguid2() {
+        
+        vsguid2_ = getDefaultInstance().getVsguid2();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string vsguid2 = 4;</code>
+       * @param value The bytes for vsguid2 to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVsguid2Bytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        vsguid2_ = value;
         onChanged();
         return this;
       }
@@ -8781,35 +9077,36 @@ public final class SphynxOuterClass {
       "tScalarRequest\022\014\n\004guid\030\001 \001(\t\" \n\016GetScala" +
       "rReply\022\016\n\006scalar\030\001 \001(\t\"M\n\033WriteToUnorder" +
       "edDiskRequest\022\014\n\004guid\030\001 \001(\t\022\017\n\007vsguid1\030\002" +
-      " \001(\t\022\017\n\007vsguid2\030\003 \001(\t\":\n\034ReadFromUnorder" +
+      " \001(\t\022\017\n\007vsguid2\030\003 \001(\t\"\\\n\034ReadFromUnorder" +
       "edDiskRequest\022\014\n\004guid\030\001 \001(\t\022\014\n\004type\030\002 \001(" +
-      "\t\"\034\n\032ReadFromUnorderedDiskReply\"(\n\030HasIn" +
-      "SphynxMemoryRequest\022\014\n\004guid\030\001 \001(\t\"-\n\026Has" +
-      "InSphynxMemoryReply\022\023\n\013hasInMemory\030\001 \001(\010" +
-      "\"-\n\035HasOnOrderedSphynxDiskRequest\022\014\n\004gui" +
-      "d\030\001 \001(\t\"0\n\033HasOnOrderedSphynxDiskReply\022\021" +
-      "\n\thasOnDisk\030\001 \001(\010\"0\n ReadFromOrderedSphy" +
-      "nxDiskRequest\022\014\n\004guid\030\001 \001(\t\" \n\036ReadFromO" +
-      "rderedSphynxDiskReply\"\033\n\031WriteToUnordere" +
-      "dDiskReply2\261\005\n\006Sphynx\022@\n\nCanCompute\022\031.sp" +
-      "hynx.CanComputeRequest\032\027.sphynx.CanCompu" +
-      "teReply\0227\n\007Compute\022\026.sphynx.ComputeReque" +
-      "st\032\024.sphynx.ComputeReply\022=\n\tGetScalar\022\030." +
-      "sphynx.GetScalarRequest\032\026.sphynx.GetScal" +
-      "arReply\022^\n\024WriteToUnorderedDisk\022#.sphynx" +
-      ".WriteToUnorderedDiskRequest\032!.sphynx.Wr" +
-      "iteToUnorderedDiskReply\022a\n\025ReadFromUnord" +
-      "eredDisk\022$.sphynx.ReadFromUnorderedDiskR" +
-      "equest\032\".sphynx.ReadFromUnorderedDiskRep" +
-      "ly\022m\n\031ReadFromOrderedSphynxDisk\022(.sphynx" +
-      ".ReadFromOrderedSphynxDiskRequest\032&.sphy" +
-      "nx.ReadFromOrderedSphynxDiskReply\022d\n\026Has" +
-      "OnOrderedSphynxDisk\022%.sphynx.HasOnOrdere" +
-      "dSphynxDiskRequest\032#.sphynx.HasOnOrdered" +
-      "SphynxDiskReply\022U\n\021HasInSphynxMemory\022 .s" +
-      "phynx.HasInSphynxMemoryRequest\032\036.sphynx." +
-      "HasInSphynxMemoryReplyB,\n*com.lynxanalyt" +
-      "ics.biggraph.graph_api.protob\006proto3"
+      "\t\022\017\n\007vsguid1\030\003 \001(\t\022\017\n\007vsguid2\030\004 \001(\t\"\034\n\032R" +
+      "eadFromUnorderedDiskReply\"(\n\030HasInSphynx" +
+      "MemoryRequest\022\014\n\004guid\030\001 \001(\t\"-\n\026HasInSphy" +
+      "nxMemoryReply\022\023\n\013hasInMemory\030\001 \001(\010\"-\n\035Ha" +
+      "sOnOrderedSphynxDiskRequest\022\014\n\004guid\030\001 \001(" +
+      "\t\"0\n\033HasOnOrderedSphynxDiskReply\022\021\n\thasO" +
+      "nDisk\030\001 \001(\010\"0\n ReadFromOrderedSphynxDisk" +
+      "Request\022\014\n\004guid\030\001 \001(\t\" \n\036ReadFromOrdered" +
+      "SphynxDiskReply\"\033\n\031WriteToUnorderedDiskR" +
+      "eply2\261\005\n\006Sphynx\022@\n\nCanCompute\022\031.sphynx.C" +
+      "anComputeRequest\032\027.sphynx.CanComputeRepl" +
+      "y\0227\n\007Compute\022\026.sphynx.ComputeRequest\032\024.s" +
+      "phynx.ComputeReply\022=\n\tGetScalar\022\030.sphynx" +
+      ".GetScalarRequest\032\026.sphynx.GetScalarRepl" +
+      "y\022^\n\024WriteToUnorderedDisk\022#.sphynx.Write" +
+      "ToUnorderedDiskRequest\032!.sphynx.WriteToU" +
+      "norderedDiskReply\022a\n\025ReadFromUnorderedDi" +
+      "sk\022$.sphynx.ReadFromUnorderedDiskRequest" +
+      "\032\".sphynx.ReadFromUnorderedDiskReply\022m\n\031" +
+      "ReadFromOrderedSphynxDisk\022(.sphynx.ReadF" +
+      "romOrderedSphynxDiskRequest\032&.sphynx.Rea" +
+      "dFromOrderedSphynxDiskReply\022d\n\026HasOnOrde" +
+      "redSphynxDisk\022%.sphynx.HasOnOrderedSphyn" +
+      "xDiskRequest\032#.sphynx.HasOnOrderedSphynx" +
+      "DiskReply\022U\n\021HasInSphynxMemory\022 .sphynx." +
+      "HasInSphynxMemoryRequest\032\036.sphynx.HasInS" +
+      "phynxMemoryReplyB,\n*com.lynxanalytics.bi" +
+      "ggraph.graph_api.protob\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -8862,7 +9159,7 @@ public final class SphynxOuterClass {
     internal_static_sphynx_ReadFromUnorderedDiskRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_sphynx_ReadFromUnorderedDiskRequest_descriptor,
-        new java.lang.String[] { "Guid", "Type", });
+        new java.lang.String[] { "Guid", "Type", "Vsguid1", "Vsguid2", });
     internal_static_sphynx_ReadFromUnorderedDiskReply_descriptor =
       getDescriptor().getMessageTypes().get(8);
     internal_static_sphynx_ReadFromUnorderedDiskReply_fieldAccessorTable = new

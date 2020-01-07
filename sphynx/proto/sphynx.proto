@@ -35,6 +35,8 @@ message WriteToUnorderedDiskRequest {
 message ReadFromUnorderedDiskRequest {
   string guid = 1;
   string type = 2;
+  string vsguid1 = 3;
+  string vsguid2 = 4;
 }
 
 message ReadFromUnorderedDiskReply {}

@@ -5,62 +5,63 @@ package main
 import "fmt"
 
 func init() {
-	operationRepository["PulledOverVertexAttribute.Dummy"] = Operation{
+	operationRepository["PulledOverVertexAttribute"] = Operation{
 		execute: func(ea *EntityAccessor) error {
-			originalVS := ea.getVertexSet("originalVS")
 			destinationVS := ea.getVertexSet("destinationVS")
 			function := ea.getEdgeBundle("function")
 			attributeEntity := ea.inputs["originalAttr"]
 
-			dstIdToSrcId := make(map[int64]int64, len(function.Src))
+			destIdToOrigId := make(map[int]int, len(function.Src))
 			for i := range function.Src {
-				dstIdToSrcId[function.Src[i]] = function.Dst[i]
+				destIdToOrigId[function.Src[i]] = function.Dst[i]
 			}
-			srcIdToIndex := make(map[int64]int, len(originalVS.Mapping))
-			for i, k := range originalVS.Mapping {
-				srcIdToIndex[k] = i
-			}
-			switch attr := attributeEntity.(type) {
+			switch origAttr := attributeEntity.(type) {
 			case *DoubleAttribute:
-				dst := DoubleAttribute{
-					make([]float64, len(destinationVS.Mapping)),
-					make([]bool, len(destinationVS.Mapping)),
+				destAttr := DoubleAttribute{
+					make([]float64, len(destinationVS.MappingToUnordered)),
+					make([]bool, len(destinationVS.MappingToUnordered)),
 				}
-				for dstIdx, dstId := range destinationVS.Mapping {
-					srcId := dstIdToSrcId[dstId]
-					srcIdx := srcIdToIndex[srcId]
-					dst.Values[dstIdx] = attr.Values[srcIdx]
-					dst.Defined[dstIdx] = true
+				for destId := range destinationVS.MappingToUnordered {
+					origId := destIdToOrigId[destId]
+					destAttr.Values[destId] = origAttr.Values[origId]
+					destAttr.Defined[destId] = true
 				}
-				ea.output("pulledAttr", &dst)
+				ea.output("pulledAttr", &destAttr)
 			case *StringAttribute:
-				dst := StringAttribute{
-					make([]string, len(destinationVS.Mapping)),
-					make([]bool, len(destinationVS.Mapping)),
+				destAttr := StringAttribute{
+					make([]string, len(destinationVS.MappingToUnordered)),
+					make([]bool, len(destinationVS.MappingToUnordered)),
 				}
-				for dstIdx, dstId := range destinationVS.Mapping {
-					srcId := dstIdToSrcId[dstId]
-					srcIdx := srcIdToIndex[srcId]
-					dst.Values[dstIdx] = attr.Values[srcIdx]
-					dst.Defined[dstIdx] = true
+				fmt.Println("destinationVS")
+				fmt.Println(destinationVS)
+				fmt.Println("function")
+				fmt.Println(function.Src)
+				fmt.Println(function.Dst)
+				fmt.Println("origAttr")
+				fmt.Println(origAttr)
+				for destId := range destinationVS.MappingToUnordered {
+					origId := destIdToOrigId[destId]
+					destAttr.Values[destId] = origAttr.Values[origId]
+					destAttr.Defined[destId] = origAttr.Defined[origId]
+					fmt.Println("destAttr")
+					fmt.Println(destAttr)
 				}
-				ea.output("pulledAttr", &dst)
+				ea.output("pulledAttr", &destAttr)
 			case *DoubleTuple2Attribute:
-				dst := DoubleTuple2Attribute{
-					make([]float64, len(destinationVS.Mapping)),
-					make([]float64, len(destinationVS.Mapping)),
-					make([]bool, len(destinationVS.Mapping)),
+				destAttr := DoubleTuple2Attribute{
+					make([]float64, len(destinationVS.MappingToUnordered)),
+					make([]float64, len(destinationVS.MappingToUnordered)),
+					make([]bool, len(destinationVS.MappingToUnordered)),
 				}
-				for dstIdx, dstId := range destinationVS.Mapping {
-					srcId := dstIdToSrcId[dstId]
-					srcIdx := srcIdToIndex[srcId]
-					dst.Values1[dstIdx] = attr.Values1[srcIdx]
-					dst.Values2[dstIdx] = attr.Values2[srcIdx]
-					dst.Defined[dstIdx] = true
+				for destId := range destinationVS.MappingToUnordered {
+					origId := destIdToOrigId[destId]
+					destAttr.Values1[destId] = origAttr.Values1[origId]
+					destAttr.Values2[destId] = origAttr.Values2[origId]
+					destAttr.Defined[destId] = true
 				}
-				ea.output("pulledAttr", &dst)
+				ea.output("pulledAttr", &destAttr)
 			default:
-				return fmt.Errorf("Not attribute type: %v", attr)
+				return fmt.Errorf("Not attribute type: %v", origAttr)
 			}
 			return nil
 		},
