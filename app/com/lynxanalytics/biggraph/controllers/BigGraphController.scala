@@ -306,7 +306,9 @@ class BigGraphController(val env: SparkFreeEnvironment) {
     val union = gotReadAccess union gotWriteAccess
     val notAllowed =
       if (p.parent.isEmpty) Set()
-      else union.map(email => serving.User(email, false)).filter(!p.parent.get.readAllowedFrom(_))
+      else union
+        .map(email => serving.User(email, false, false))
+        .filter(!p.parent.get.readAllowedFrom(_))
 
     assert(
       notAllowed.isEmpty,
