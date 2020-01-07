@@ -1,3 +1,5 @@
+// Functions to read and write Unordered Sphynx Disk.
+
 package main
 
 import (
@@ -23,8 +25,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	fw, err := local.NewLocalFileWriter(fname)
 	defer fw.Close()
 	if err != nil {
-		log.Printf("Failed to create file: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("Failed to create file: %v", err)
 	}
 	switch e := entity.(type) {
 	case *VertexSet:
@@ -52,7 +53,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		}
 		pw, err := writer.NewParquetWriter(fw, new(Edge), numGoRoutines)
 		if err != nil {
-			log.Printf("Failed to create parquet writer: %v", err)
+			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
 		}
 		for sphynxId, sparkId := range e.EdgeMapping {
 			err := pw.Write(Edge{
@@ -75,7 +76,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		}
 		pw, err := writer.NewParquetWriter(fw, new(SingleStringAttribute), numGoRoutines)
 		if err != nil {
-			log.Printf("Failed to create parquet writer: %v", err)
+			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
 		}
 		if err != nil {
 			return nil, err
@@ -103,7 +104,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		}
 		pw, err := writer.NewParquetWriter(fw, new(SingleDoubleAttribute), numGoRoutines)
 		if err != nil {
-			log.Printf("Failed to create parquet writer: %v", err)
+			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
 		}
 		if err != nil {
 			return nil, err
@@ -131,7 +132,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		}
 		pw, err := writer.NewParquetWriter(fw, new(SingleDoubleTuple2Attribute), numGoRoutines)
 		if err != nil {
-			log.Printf("Failed to create parquet writer: %v", err)
+			return nil, fmt.Errorf("Failed to create parquet writer: %v", err)
 		}
 		if err != nil {
 			return nil, err
@@ -165,13 +166,13 @@ func (s *Server) ReadFromUnorderedDisk(
 	fr, err := local.NewLocalFileReader(fname)
 	defer fr.Close()
 	if err != nil {
-		log.Printf("Failed to open file: %v", err)
+		return nil, fmt.Errorf("Failed to open file: %v", err)
 	}
 	switch in.Type {
 	case "VertexSet":
 		pr, err := reader.NewParquetReader(fr, new(Vertex), numGoRoutines)
 		if err != nil {
-			log.Printf("Failed to create parquet reader: %v", err)
+			return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 		}
 		num_vs := int(pr.GetNumRows())
 		rawVertexSet := make([]Vertex, num_vs)
@@ -204,7 +205,7 @@ func (s *Server) ReadFromUnorderedDisk(
 		}
 		pr, err := reader.NewParquetReader(fr, new(Edge), numGoRoutines)
 		if err != nil {
-			log.Printf("Failed to create parquet reader: %v", err)
+			return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 		}
 		num_es := int(pr.GetNumRows())
 		rawEdgeBundle := make([]Edge, num_es)
