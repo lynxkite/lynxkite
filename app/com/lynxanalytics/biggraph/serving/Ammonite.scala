@@ -58,7 +58,7 @@ println("${help}")
 """,
       replArgs = Seq(
         Bind("server", this),
-        Bind("fakeAdmin", User("ammonite-ssh", isAdmin = true)),
+        Bind("fakeAdmin", User("ammonite-ssh", isAdmin = true, wizardOnly = false)),
         Bind("sc", env.sparkContext),
         Bind("metaManager", env.metaGraphManager),
         Bind("dataManager", env.dataManager),
