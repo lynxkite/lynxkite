@@ -1,0 +1,35 @@
+### Compute Dapcstp
+
+Gives a solution to the asymmetric prize-collecting Steiner tree
+problem (APCSTP) with the additional contraint that the graph
+must be directed, hence the name DAPCSTP.
+
+TODO: explain this whole thing
+
+The output is an edge attribute, whose value is 1.0 for edges that are included
+in the solution and 0.0 otherwise.
+
+====
+[p-name]#Attribute name#::
+The new edge attribute will be created under this name.
+
+[p-cost]#Cost attribute#::
+This edge attribute specified here will determine the cost for including the
+given edge in the solution tree.
+
+[p-ap]#Access point attribute#::
+The vertex attribute specified here determines if the given vertex can be a
+starting point (access point) for the solution tree: non-zero valued vertices can
+be access points; zero valued vertices cannot.
+
+[p-gain]#Reward for reaching the vertex#::
+This vertex attribute specifies the reward (gain) for including the given
+vertex in the solution.
+
+[p-apcost]#Access point building cost#::
+This vertex attribute can be used to specify how much it would cost
+to turn the non-access point vertex into an access point vertex. Only non-negative
+values are taken into account here. The default is that all vertices have a zero
+building cost, so no vertices can be turned into an access point. For vertices
+that are already regular access points, this quantity is ignored.
+====
