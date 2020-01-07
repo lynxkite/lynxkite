@@ -59,7 +59,8 @@ func (e *Scalar) fields() []EntityField {
 }
 func (e *VertexSet) fields() []EntityField {
 	return []EntityField{
-		EntityField{fieldName: "Mapping", data: &e.Mapping},
+		// TODO: add the other mapping
+		EntityField{fieldName: "MappingToUnordered", data: &e.MappingToUnordered},
 	}
 }
 func (e *EdgeBundle) fields() []EntityField {
@@ -98,12 +99,13 @@ func (server *Server) get(guid GUID) (Entity, bool) {
 }
 
 type EdgeBundle struct {
-	Src         []int64
-	Dst         []int64
+	Src         []int
+	Dst         []int
 	EdgeMapping []int64
 }
 type VertexSet struct {
-	Mapping []int64
+	MappingToUnordered []int64
+	MappingToOrdered   map[int64]int
 }
 type Scalar struct {
 	Value interface{}
