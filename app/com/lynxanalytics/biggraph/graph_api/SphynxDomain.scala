@@ -130,7 +130,7 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
       case source: SphynxMemory => {
         e match {
           case v: VertexSet => client.writeToUnorderedDisk(v)
-          case e: EdgeBundle => client.writeToUnorderedDisk(e)
+          case eb: EdgeBundle => client.writeToUnorderedDisk(eb)
           case a: Attribute[_] => client.writeToUnorderedDisk(a)
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }
@@ -155,8 +155,8 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
             val schema = StructType(Seq(StructField("id", LongType, false)))
             writeRDD(rdd, schema)
           }
-          case e: EdgeBundleData => {
-            val rdd = e.rdd.map {
+          case eb: EdgeBundleData => {
+            val rdd = eb.rdd.map {
               case (id, Edge(src, dst)) => Row(id, src, dst)
             }
             val schema = StructType(Seq(
@@ -193,6 +193,7 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
               StructField("value2", DoubleType, false)))
             writeRDD(rdd, schema)
           }
+          // TODO: Relocate scalars.
           case _ => ???
         })
         future

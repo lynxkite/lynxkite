@@ -59,7 +59,7 @@ func (e *Scalar) fields() []EntityField {
 }
 func (e *VertexSet) fields() []EntityField {
 	return []EntityField{
-		// TODO: add the other mapping
+		// TODO: add the other mapping. Make sure writing out works correctly.
 		EntityField{fieldName: "MappingToUnordered", data: &e.MappingToUnordered},
 	}
 }

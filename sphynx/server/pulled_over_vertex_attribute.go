@@ -32,19 +32,10 @@ func init() {
 					make([]string, len(destinationVS.MappingToUnordered)),
 					make([]bool, len(destinationVS.MappingToUnordered)),
 				}
-				fmt.Println("destinationVS")
-				fmt.Println(destinationVS)
-				fmt.Println("function")
-				fmt.Println(function.Src)
-				fmt.Println(function.Dst)
-				fmt.Println("origAttr")
-				fmt.Println(origAttr)
 				for destId := range destinationVS.MappingToUnordered {
 					origId := destIdToOrigId[destId]
 					destAttr.Values[destId] = origAttr.Values[origId]
 					destAttr.Defined[destId] = origAttr.Defined[origId]
-					fmt.Println("destAttr")
-					fmt.Println(destAttr)
 				}
 				ea.output("pulledAttr", &destAttr)
 			case *DoubleTuple2Attribute:
