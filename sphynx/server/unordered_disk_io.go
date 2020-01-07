@@ -13,7 +13,7 @@ import (
 )
 
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
-	var numGoRoutines int64 = 4
+	const numGoRoutines int64 = 4
 	guid := GUID(in.Guid)
 
 	entity, exists := s.get(guid)
@@ -161,7 +161,7 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 
 func (s *Server) ReadFromUnorderedDisk(
 	ctx context.Context, in *pb.ReadFromUnorderedDiskRequest) (*pb.ReadFromUnorderedDiskReply, error) {
-	var numGoRoutines int64 = 4
+	const numGoRoutines int64 = 4
 	fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
 	fr, err := local.NewLocalFileReader(fname)
 	defer fr.Close()
@@ -180,12 +180,11 @@ func (s *Server) ReadFromUnorderedDisk(
 			return nil, fmt.Errorf("Failed to read parquet file: %v", err)
 		}
 		pr.ReadStop()
-		mappingToUnordered := make([]int64, 0, num_vs)
+		mappingToUnordered := make([]int64, num_vs)
 		mappingToOrdered := make(map[int64]int)
-		for i, wrappedSparkId := range rawVertexSet {
-			unorderedId := wrappedSparkId.Id
-			mappingToUnordered = append(mappingToUnordered, unorderedId)
-			mappingToOrdered[unorderedId] = i
+		for i, v := range rawVertexSet {
+			mappingToUnordered[i] = v.Id
+			mappingToOrdered[v.Id] = i
 		}
 		s.Lock()
 		s.entities[GUID(in.Guid)] = &VertexSet{
@@ -213,13 +212,13 @@ func (s *Server) ReadFromUnorderedDisk(
 			return nil, fmt.Errorf("Failed to read parquet file: %v", err)
 		}
 		pr.ReadStop()
-		edgeMapping := make([]int64, 0, num_es)
-		src := make([]int, 0, num_es)
-		dst := make([]int, 0, num_es)
-		for _, rawEdge := range rawEdgeBundle {
-			edgeMapping = append(edgeMapping, rawEdge.Id)
-			src = append(src, vs1.MappingToOrdered[rawEdge.Src])
-			dst = append(dst, vs2.MappingToOrdered[rawEdge.Dst])
+		edgeMapping := make([]int64, num_es)
+		src := make([]int, num_es)
+		dst := make([]int, num_es)
+		for i, rawEdge := range rawEdgeBundle {
+			edgeMapping[i] = rawEdge.Id
+			src[i] = vs1.MappingToOrdered[rawEdge.Src]
+			dst[i] = vs2.MappingToOrdered[rawEdge.Dst]
 		}
 		s.Lock()
 		s.entities[GUID(in.Guid)] = &EdgeBundle{
@@ -244,8 +243,8 @@ func (s *Server) ReadFromUnorderedDisk(
 			return nil, fmt.Errorf("Failed to read parquet file: %v", err)
 		}
 		pr.ReadStop()
-		values := make([]string, num_vs, num_vs)
-		defined := make([]bool, num_vs, num_vs)
+		values := make([]string, num_vs)
+		defined := make([]bool, num_vs)
 		for _, singleAttr := range rawAttribute {
 			orderedId := vs.MappingToOrdered[singleAttr.Id]
 			values[orderedId] = singleAttr.Value
@@ -273,8 +272,8 @@ func (s *Server) ReadFromUnorderedDisk(
 			return nil, fmt.Errorf("Failed to read parquet file: %v", err)
 		}
 		pr.ReadStop()
-		values := make([]float64, num_vs, num_vs)
-		defined := make([]bool, num_vs, num_vs)
+		values := make([]float64, num_vs)
+		defined := make([]bool, num_vs)
 		for _, singleAttr := range rawAttribute {
 			orderedId := vs.MappingToOrdered[singleAttr.Id]
 			values[orderedId] = singleAttr.Value
@@ -302,9 +301,9 @@ func (s *Server) ReadFromUnorderedDisk(
 			return nil, fmt.Errorf("Failed to read parquet file: %v", err)
 		}
 		pr.ReadStop()
-		values1 := make([]float64, num_vs, num_vs)
-		values2 := make([]float64, num_vs, num_vs)
-		defined := make([]bool, num_vs, num_vs)
+		values1 := make([]float64, num_vs)
+		values2 := make([]float64, num_vs)
+		defined := make([]bool, num_vs)
 		for _, singleAttr := range rawAttribute {
 			orderedId := vs.MappingToOrdered[singleAttr.Id]
 			values1[orderedId] = singleAttr.Value1

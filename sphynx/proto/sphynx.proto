@@ -71,7 +71,7 @@ service Sphynx {
   rpc Compute (ComputeRequest) returns (ComputeReply);
   rpc GetScalar (GetScalarRequest) returns (GetScalarReply);
   rpc WriteToUnorderedDisk (WriteToUnorderedDiskRequest) returns (WriteToUnorderedDiskReply);
-   rpc ReadFromUnorderedDisk (ReadFromUnorderedDiskRequest) returns (ReadFromUnorderedDiskReply);
+  rpc ReadFromUnorderedDisk (ReadFromUnorderedDiskRequest) returns (ReadFromUnorderedDiskReply);
   rpc ReadFromOrderedSphynxDisk(ReadFromOrderedSphynxDiskRequest) returns (ReadFromOrderedSphynxDiskReply);
   rpc HasOnOrderedSphynxDisk(HasOnOrderedSphynxDiskRequest) returns (HasOnOrderedSphynxDiskReply);
   rpc HasInSphynxMemory(HasInSphynxMemoryRequest) returns (HasInSphynxMemoryReply);

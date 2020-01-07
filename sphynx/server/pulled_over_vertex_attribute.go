@@ -11,9 +11,9 @@ func init() {
 			function := ea.getEdgeBundle("function")
 			attributeEntity := ea.inputs["originalAttr"]
 
-			destIdToOrigId := make(map[int]int, len(function.Src))
+			destToOrig := make(map[int]int, len(function.Src))
 			for i := range function.Src {
-				destIdToOrigId[function.Src[i]] = function.Dst[i]
+				destToOrig[function.Src[i]] = function.Dst[i]
 			}
 			switch origAttr := attributeEntity.(type) {
 			case *DoubleAttribute:
@@ -22,7 +22,7 @@ func init() {
 					make([]bool, len(destinationVS.MappingToUnordered)),
 				}
 				for destId := range destinationVS.MappingToUnordered {
-					origId := destIdToOrigId[destId]
+					origId := destToOrig[destId]
 					destAttr.Values[destId] = origAttr.Values[origId]
 					destAttr.Defined[destId] = true
 				}
@@ -33,7 +33,7 @@ func init() {
 					make([]bool, len(destinationVS.MappingToUnordered)),
 				}
 				for destId := range destinationVS.MappingToUnordered {
-					origId := destIdToOrigId[destId]
+					origId := destToOrig[destId]
 					destAttr.Values[destId] = origAttr.Values[origId]
 					destAttr.Defined[destId] = origAttr.Defined[origId]
 				}
@@ -45,7 +45,7 @@ func init() {
 					make([]bool, len(destinationVS.MappingToUnordered)),
 				}
 				for destId := range destinationVS.MappingToUnordered {
-					origId := destIdToOrigId[destId]
+					origId := destToOrig[destId]
 					destAttr.Values1[destId] = origAttr.Values1[origId]
 					destAttr.Values2[destId] = origAttr.Values2[origId]
 					destAttr.Defined[destId] = true
