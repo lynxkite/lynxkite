@@ -184,6 +184,43 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
+  register("Compute Dapcstp")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("name", "Attribute name", defaultValue = "on_the_path"),
+      Choice("cost", "Cost attribute", options = project.edgeAttrList[Double]),
+      Choice("ap", "Access point attribute", options = project.vertexAttrList[Double]),
+      Choice("gain", "Reward for reaching the vertex", options = project.vertexAttrList[Double]),
+      Choice("apcost", "Access point building cost",
+        options = FEOption.noCost +: project.vertexAttrList[Double]))
+
+    def enabled = project.hasEdgeBundle &&
+      FEStatus.assert(
+        project.vertexAttrList[Double].size >= 2,
+        "At least two Double vertex attributes are needed.") &&
+        FEStatus.assert(
+          project.edgeAttrList[Double].size >= 1,
+          "At least one edge attribute is needed.")
+    def apply() = {
+      assert(params("name").nonEmpty, "Please set an attribute name.")
+
+      val costAttr = project.edgeAttributes(params("cost")).runtimeSafeCast[Double]
+      val apAttr = project.vertexAttributes(params("ap")).runtimeSafeCast[Double]
+      val apCost =
+        if (params("apcost") == FEOption.noCost.id) {
+          project.vertexSet.const(0.0)
+        } else {
+          project.vertexAttributes(params("apcost")).runtimeSafeCast[Double]
+        }
+      val gain = project.vertexAttributes(params("gain")).runtimeSafeCast[Double]
+      val es = project.edgeBundle
+
+      val op = graph_operations.Dapcstp()
+      val result =
+        op(op.es, es)(op.cost, costAttr)(op.ap, apAttr)(op.apcost, apCost)(op.gain, gain).result
+      project.newEdgeAttribute(params("name"), result.path)
+    }
+  })
+
   register("Compute distance via shortest path")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Attribute name", defaultValue = "shortest_distance"),
