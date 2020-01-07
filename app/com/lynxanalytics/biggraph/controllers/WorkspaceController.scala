@@ -79,6 +79,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def createWorkspace(
     user: serving.User, request: CreateWorkspaceRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.name)
+    assert(!user.wizardOnly, s"User ${user.email} is restricted to using wizards.")
     val entry = DirectoryEntry.fromName(request.name)
     entry.assertParentWriteAllowedFrom(user)
     val w = entry.asNewWorkspaceFrame()
@@ -269,6 +270,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def createSnapshot(
     user: serving.User, request: CreateSnapshotRequest): Unit = {
+    assert(!user.wizardOnly, s"User ${user.email} is restricted to using wizards.")
     def calculatedState() = calculatedStates.synchronized {
       calculatedStates(request.id)
     }
@@ -417,6 +419,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def getInstrumentedState(
     user: serving.User, request: GetInstrumentedStateRequest): GetInstrumentedStateResponse = {
+    assert(!user.wizardOnly, s"User ${user.email} is restricted to using wizards.")
     val ctx = request.workspace match {
       case Some(ws) =>
         val ref = ResolvedWorkspaceReference(user, ws)
