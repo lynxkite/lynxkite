@@ -11,7 +11,7 @@ func init() {
 			apcost := ea.getDoubleAttribute("apcost")
 			ap := ea.getDoubleAttribute("ap")
 			cost := ea.getDoubleAttribute("cost")
-			fmt.Printf("gain: %v\napcost: %v\nap: %vcost: %v\n", gain, apcost, ap, cost)
+			fmt.Printf("gain: %v\napcost: %v\nap: %v\ncost: %v\n", gain, apcost, ap, cost)
 			o := &DoubleAttribute{
 				Defined: make([]bool, len(cost.Values)),
 				Values:  make([]float64, len(cost.Values)),
