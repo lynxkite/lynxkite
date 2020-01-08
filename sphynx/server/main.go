@@ -91,7 +91,6 @@ func (s *Server) Compute(ctx context.Context, in *pb.ComputeRequest) (*pb.Comput
 				edgeBundle := ea.outputs[edgeBundleGuid]
 				switch eb := edgeBundle.(type) {
 				case *EdgeBundle:
-					// TODO: Calculate the other mapping.
 					idSet := VertexSet{MappingToUnordered: eb.EdgeMapping}
 					ea.output(name, &idSet)
 				default:
