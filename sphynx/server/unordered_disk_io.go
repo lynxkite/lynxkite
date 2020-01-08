@@ -215,10 +215,12 @@ func (s *Server) ReadFromUnorderedDisk(
 		edgeMapping := make([]int64, num_es)
 		src := make([]int, num_es)
 		dst := make([]int, num_es)
+		mappingToOrdered1 := vs1.GetMappingToOrdered()
+		mappingToOrdered2 := vs2.GetMappingToOrdered()
 		for i, rawEdge := range rawEdgeBundle {
 			edgeMapping[i] = rawEdge.Id
-			src[i] = vs1.MappingToOrdered[rawEdge.Src]
-			dst[i] = vs2.MappingToOrdered[rawEdge.Dst]
+			src[i] = mappingToOrdered1[rawEdge.Src]
+			dst[i] = mappingToOrdered2[rawEdge.Dst]
 		}
 		s.Lock()
 		s.entities[GUID(in.Guid)] = &EdgeBundle{
@@ -245,8 +247,9 @@ func (s *Server) ReadFromUnorderedDisk(
 		pr.ReadStop()
 		values := make([]string, num_vs)
 		defined := make([]bool, num_vs)
+		mappingToOrdered := vs.GetMappingToOrdered()
 		for _, singleAttr := range rawAttribute {
-			orderedId := vs.MappingToOrdered[singleAttr.Id]
+			orderedId := mappingToOrdered[singleAttr.Id]
 			values[orderedId] = singleAttr.Value
 			defined[orderedId] = true
 		}
@@ -274,8 +277,9 @@ func (s *Server) ReadFromUnorderedDisk(
 		pr.ReadStop()
 		values := make([]float64, num_vs)
 		defined := make([]bool, num_vs)
+		mappingToOrdered := vs.GetMappingToOrdered()
 		for _, singleAttr := range rawAttribute {
-			orderedId := vs.MappingToOrdered[singleAttr.Id]
+			orderedId := mappingToOrdered[singleAttr.Id]
 			values[orderedId] = singleAttr.Value
 			defined[orderedId] = true
 		}
@@ -304,8 +308,9 @@ func (s *Server) ReadFromUnorderedDisk(
 		values1 := make([]float64, num_vs)
 		values2 := make([]float64, num_vs)
 		defined := make([]bool, num_vs)
+		mappingToOrdered := vs.GetMappingToOrdered()
 		for _, singleAttr := range rawAttribute {
-			orderedId := vs.MappingToOrdered[singleAttr.Id]
+			orderedId := mappingToOrdered[singleAttr.Id]
 			values1[orderedId] = singleAttr.Value1
 			values2[orderedId] = singleAttr.Value2
 			defined[orderedId] = true

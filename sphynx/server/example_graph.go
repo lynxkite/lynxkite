@@ -5,13 +5,7 @@ package main
 func init() {
 	operationRepository["ExampleGraph"] = Operation{
 		execute: func(ea *EntityAccessor) error {
-			vertexSet := VertexSet{MappingToUnordered: []int64{0, 1, 2, 3},
-				MappingToOrdered: map[int64]int{
-					0: 0,
-					1: 1,
-					2: 2,
-					3: 3,
-				}}
+			vertexSet := VertexSet{MappingToUnordered: []int64{0, 1, 2, 3}}
 			ea.output("vertices", &vertexSet)
 			eb := &EdgeBundle{
 				Src:         []int{0, 1, 2, 2},

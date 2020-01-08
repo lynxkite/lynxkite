@@ -59,7 +59,6 @@ func (e *Scalar) fields() []EntityField {
 }
 func (e *VertexSet) fields() []EntityField {
 	return []EntityField{
-		// TODO: add the other mapping. Make sure writing out works correctly.
 		EntityField{fieldName: "MappingToUnordered", data: &e.MappingToUnordered},
 	}
 }
@@ -107,6 +106,16 @@ type VertexSet struct {
 	MappingToUnordered []int64
 	MappingToOrdered   map[int64]int
 }
+
+func (vs *VertexSet) GetMappingToOrdered() map[int64]int {
+	if len(vs.MappingToOrdered) == 0 {
+		for i, j := range vs.MappingToUnordered {
+			vs.MappingToOrdered[j] = i
+		}
+	}
+	return vs.MappingToOrdered
+}
+
 type Scalar struct {
 	Value interface{}
 }
