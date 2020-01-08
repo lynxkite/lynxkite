@@ -394,10 +394,12 @@ class SparkDomain(
           import com.lynxanalytics.biggraph.spark_util.Implicits._
           def readRDD(e: MetaGraphEntity) = {
             val srcEntityPath = Paths.get(s"${source.dataDir}/${e.gUID.toString}")
-            val entityPath = repositoryPath / "from_sphynx" / e.gUID.toString
-            val stream = entityPath.create()
-            try java.nio.file.Files.copy(srcEntityPath, stream)
-            finally stream.close()
+            val entityPath = repositoryPath / "sphynx" / e.gUID.toString
+            if (!entityPath.exists()) {
+              val stream = entityPath.create()
+              try java.nio.file.Files.copy(srcEntityPath, stream)
+              finally stream.close()
+            }
             sparkSession.read.parquet(entityPath.resolvedName).rdd
           }
           e match {
