@@ -54,3 +54,14 @@ module.exports = function(fw) {
       expect(element.all(by.css('span.find-highlight')).count()).toBe(0);
     }, function() {});
 };
+
+module.exports = function(fw) {
+  fw.transitionTest(
+    undefined,
+    'scroll position in help',
+    function() {
+      browser.get('#/help#graph-visualization');
+      const help = element(by.id('whole-help'));
+      expect(help.getAttribute('scrollTop')).toBeGreaterThan(0);
+    }, function() {});
+};
