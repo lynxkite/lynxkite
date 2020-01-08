@@ -136,11 +136,12 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
         }
       }
       case source: SparkDomain => {
-        val middlePath = source.repositoryPath / "to_sphynx" / e.gUID.toString
-        // TODO: check if middlePath contains something or not.
+        val middlePath = source.repositoryPath / "sphynx" / e.gUID.toString
         def writeRDD(rdd: RDD[Row], schema: StructType) = {
-          val df = source.sparkSession.createDataFrame(rdd, schema)
-          df.write.parquet(middlePath.resolvedName)
+          if (!middlePath.exists()) {
+            val df = source.sparkSession.createDataFrame(rdd, schema)
+            df.write.parquet(middlePath.resolvedName)
+          }
           val dstPath = Paths.get(s"${dataDir}/${e.gUID.toString}")
           val files = (middlePath / "part-*").list
           val stream = new SequenceInputStream(files.view.map(_.open).iterator)
