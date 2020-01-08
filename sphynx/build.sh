@@ -1,5 +1,8 @@
 #!/bin/bash -xue
+# Generates Java and Go interfaces from proto files. These interfaces are used
+# for LynxKite-Sphynx communication.
+# Compiles Sphynx.
 
-echo 'You can also just run "make sphynx".'
-cd $(dirname $0)/..
-make sphynx
+cd $(dirname $0)
+./proto_compile.sh
+./sphynx_compile.sh
