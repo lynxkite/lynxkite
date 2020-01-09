@@ -189,7 +189,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       Param("ename", "Output edge attribute name", defaultValue = "arc"),
       Param("vname", "Output vertex attribute name", defaultValue = "node"),
       Param("pname", "The profit scalar variable", defaultValue = "profit"),
-      Choice("cost", "Cost attribute", options = project.edgeAttrList[Double]),
+      Choice("edge_cost", "Cost attribute", options = project.edgeAttrList[Double]),
       Choice("root", "Root point attribute", options = project.vertexAttrList[Double]),
       Choice("gain", "Reward for reaching the vertex", options = project.vertexAttrList[Double]))
 
@@ -205,7 +205,7 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       assert(params("vname").nonEmpty, "Please set a vertex attribute name for the result")
       assert(params("pname").nonEmpty, "Please set a name for the profit variable")
 
-      val costAttr = project.edgeAttributes(params("cost")).runtimeSafeCast[Double]
+      val costAttr = project.edgeAttributes(params("edge_cost")).runtimeSafeCast[Double]
       val rootAttr = project.vertexAttributes(params("root")).runtimeSafeCast[Double]
       val gain = project.vertexAttributes(params("gain")).runtimeSafeCast[Double]
       val es = project.edgeBundle

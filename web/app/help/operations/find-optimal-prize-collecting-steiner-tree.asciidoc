@@ -26,7 +26,7 @@ The new vertex attribute will be created under this name.
 [p-pname]#The profit scalar variable#::
 This new scalar variable will be created under this name.
 
-[p-cost]#Cost attribute#::
+[p-edge_cost]#Cost attribute#::
 This edge attribute specified here will determine the cost for including the
 given edge in the solution tree.
 
