@@ -128,5 +128,3 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
   }
 }
 
-trait SphynxOperation[IS <: InputSignatureProvider, OMDS <: MetaDataSetProvider] extends TypedMetaGraphOp[IS, OMDS] {
-}
