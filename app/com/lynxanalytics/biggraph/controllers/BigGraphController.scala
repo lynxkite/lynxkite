@@ -51,7 +51,6 @@ object FEOption {
     Option(specialId match {
       case "!unset" => ""
       case "!no weight" => "no weight"
-      case "!no cost" => "no cost"
       case "!unit distances" => "unit distances"
       case "!internal id (default)" => "internal id (default)"
       case _ => null
@@ -67,7 +66,6 @@ object FEOption {
   val saveMode = list("error if exists", "overwrite", "append", "ignore")
   val unset = special("!unset")
   val noWeight = special("!no weight")
-  val noCost = special("!no cost")
   val unitDistances = special("!unit distances")
   val internalId = special("!internal id (default)")
   val jsDataTypes = FEOption.list("Double", "String", "Vector of Doubles", "Vector of Strings")
