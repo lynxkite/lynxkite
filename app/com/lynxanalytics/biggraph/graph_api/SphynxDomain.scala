@@ -127,4 +127,3 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
     }
   }
 }
-
