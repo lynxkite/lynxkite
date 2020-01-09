@@ -24,3 +24,5 @@ croniter
 oauth2client
 google-api-python-client
 mypy
+findspark
+pyspark
