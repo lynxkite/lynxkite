@@ -1,3 +1,6 @@
+// Implements the backend for the "Find optimal prize collecting Steiner tree" operation.
+// The simpler Dapcstp name is retained here.
+
 package main
 
 import (
