@@ -1,5 +1,6 @@
-// Scala backend stub for the Dapcstp operation.
-// The actual implementation is done in the Sphynx server
+// Scala backend stub for the "Find optimal prize collecting Steiner tree" operation.
+// The actual implementation is done in the Sphynx server. I retain the
+// simpler Dapcstp name here.
 
 package com.lynxanalytics.biggraph.graph_operations
 
@@ -9,21 +10,23 @@ object Dapcstp extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, es) = graph
     val cost = edgeAttribute[Double](es)
-    val apcost = vertexAttribute[Double](vs)
-    val ap = vertexAttribute[Double](vs)
+    val root = vertexAttribute[Double](vs)
     val gain = vertexAttribute[Double](vs)
   }
   class Output(implicit
       instance: MetaGraphOperationInstance,
       inputs: Input) extends MagicOutput(instance) {
-    val path = edgeAttribute[Double](inputs.es.entity)
+    val arcs = edgeAttribute[Double](inputs.es.entity)
+    val nodes = vertexAttribute[Double](inputs.vs.entity)
+    val profit = scalar[Double]
   }
 
   def fromJson(j: JsValue) = Dapcstp()
 }
 
 import Dapcstp._
-case class Dapcstp() extends SphynxOperation[Input, Output] {
+
+case class Dapcstp() extends TypedMetaGraphOp[Input, Output] {
   @transient override lazy val inputs = new Input()
   def outputMeta(instance: MetaGraphOperationInstance) = new Output()(instance, inputs)
 }
