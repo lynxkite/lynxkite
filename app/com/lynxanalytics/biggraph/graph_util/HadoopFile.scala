@@ -156,6 +156,7 @@ class HadoopFile private (
   @transient lazy val uri = path.toUri
   @transient lazy val path = new hadoop.fs.Path(resolvedNameWithNoCredentials)
   // The caller is responsible for calling close().
+  def copyToLocalFile(dstPath: String) = fs.copyToLocalFile(false, path, new hadoop.fs.Path(dstPath), true)
   def open() = fs.open(path)
   // The caller is responsible for calling close().
   def create() = fs.create(path)
@@ -176,7 +177,7 @@ class HadoopFile private (
   private def globStatus: Array[hadoop.fs.FileStatus] =
     Option(fs.globStatus(path)).getOrElse(Array())
   def list = globStatus.map(st => hadoopFileForGlobOutput(st.getPath.toString))
-
+  def name = path.getName()
   def length = fs.getFileStatus(path).getLen
   def globLength = globStatus.map(_.getLen).sum
 
