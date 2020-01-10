@@ -98,7 +98,7 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
   extends SphynxDomain(host, port, certDir) {
 
   override def has(entity: MetaGraphEntity): Boolean = {
-    new java.io.File(s"${dataDir}/${entity.gUID.toString}").isFile
+    new java.io.File(s"${dataDir}/${entity.gUID.toString}").exists()
   }
 
   override def compute(instance: MetaGraphOperationInstance): SafeFuture[Unit] = {
@@ -142,11 +142,9 @@ class UnorderedSphynxDisk(host: String, port: Int, certDir: String, val dataDir:
             val df = source.sparkSession.createDataFrame(rdd, schema)
             df.write.parquet(middlePath.resolvedName)
           }
-          val dstPath = Paths.get(s"${dataDir}/${e.gUID.toString}")
-          val files = (middlePath / "part-*").list
-          val stream = new SequenceInputStream(files.view.map(_.open).iterator)
-          try Files.copy(stream, dstPath)
-          finally stream.close()
+          val files = (middlePath / "part-*").list.sortBy(_.symbolicName)
+          val dstDir = s"${dataDir}/${e.gUID.toString}"
+          files.foreach(f => f.copyToLocalFile(s"${dstDir}/${f.name}"))
         }
         val future = SafeFuture.async[Unit](source.getData(e) match {
           case v: VertexSetData => {
