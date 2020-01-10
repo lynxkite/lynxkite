@@ -37,6 +37,7 @@ message ReadFromUnorderedDiskRequest {
   string type = 2;
   string vsguid1 = 3;
   string vsguid2 = 4;
+  string attributeType = 5;
 }
 
 message ReadFromUnorderedDiskReply {}
