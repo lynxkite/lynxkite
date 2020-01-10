@@ -271,7 +271,7 @@ func (s *Server) ReadFromUnorderedDisk(
 				return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 			}
 			partialNumVS := int(pr.GetNumRows())
-			partialRawAttribute := make([]SingleStringAttribute, numVS)
+			partialRawAttribute := make([]SingleStringAttribute, partialNumVS)
 			numVS = numVS + partialNumVS
 			if err := pr.Read(&partialRawAttribute); err != nil {
 				return nil, fmt.Errorf("Failed to read parquet file: %v", err)
@@ -307,7 +307,7 @@ func (s *Server) ReadFromUnorderedDisk(
 				return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 			}
 			partialNumVS := int(pr.GetNumRows())
-			partialRawAttribute := make([]SingleDoubleAttribute, numVS)
+			partialRawAttribute := make([]SingleDoubleAttribute, partialNumVS)
 			numVS = numVS + partialNumVS
 			if err := pr.Read(&partialRawAttribute); err != nil {
 				return nil, fmt.Errorf("Failed to read parquet file: %v", err)
@@ -338,12 +338,12 @@ func (s *Server) ReadFromUnorderedDisk(
 		rawAttribute := make([]SingleDoubleTuple2Attribute, 0)
 		numVS := 0
 		for _, fr := range fileReaders {
-			pr, err := reader.NewParquetReader(fr, new(SingleDoubleAttribute), numGoRoutines)
+			pr, err := reader.NewParquetReader(fr, new(SingleDoubleTuple2Attribute), numGoRoutines)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
 			}
 			partialNumVS := int(pr.GetNumRows())
-			partialRawAttribute := make([]SingleDoubleTuple2Attribute, numVS)
+			partialRawAttribute := make([]SingleDoubleTuple2Attribute, partialNumVS)
 			numVS = numVS + partialNumVS
 			if err := pr.Read(&partialRawAttribute); err != nil {
 				return nil, fmt.Errorf("Failed to read parquet file: %v", err)
