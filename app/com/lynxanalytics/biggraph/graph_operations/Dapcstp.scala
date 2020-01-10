@@ -10,7 +10,7 @@ object Dapcstp extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, es) = graph
     val cost = edgeAttribute[Double](es)
-    val root = vertexAttribute[Double](vs)
+    val root_costs = vertexAttribute[Double](vs)
     val gain = vertexAttribute[Double](vs)
   }
   class Output(implicit
