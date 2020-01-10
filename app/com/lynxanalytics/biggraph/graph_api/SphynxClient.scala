@@ -94,32 +94,17 @@ class SphynxClient(host: String, port: Int, certDir: String)(implicit ec: Execut
     // Asks Sphynx to read the data from UnorderedSphynxDisk and reindex the
     // vertices to use indices from 0 to n.
     val guid = e.gUID.toString()
+    val requestBuilder = SphynxOuterClass.ReadFromUnorderedDiskRequest.newBuilder()
+      .setGuid(e.gUID.toString)
+      .setType(e.typeString)
     val request = e match {
-      case v: VertexSet =>
-        SphynxOuterClass.ReadFromUnorderedDiskRequest.newBuilder()
-          .setGuid(v.gUID.toString)
-          .setType("VertexSet").build()
-      case eb: EdgeBundle =>
-        SphynxOuterClass.ReadFromUnorderedDiskRequest.newBuilder()
-          .setGuid(eb.gUID.toString)
-          .setType("EdgeBundle")
-          .setVsguid1(eb.srcVertexSet.gUID.toString)
-          .setVsguid2(eb.dstVertexSet.gUID.toString).build()
-      case a: Attribute[_] if a.typeTag == typeTag[String] =>
-        SphynxOuterClass.ReadFromUnorderedDiskRequest.newBuilder()
-          .setGuid(e.gUID.toString)
-          .setType("StringAttribute")
-          .setVsguid1(a.vertexSet.gUID.toString).build()
-      case a: Attribute[_] if a.typeTag == typeTag[Double] =>
-        SphynxOuterClass.ReadFromUnorderedDiskRequest.newBuilder()
-          .setGuid(e.gUID.toString)
-          .setType("DoubleAttribute")
-          .setVsguid1(a.vertexSet.gUID.toString).build()
-      case a: Attribute[_] if a.typeTag == typeTag[(Double, Double)] =>
-        SphynxOuterClass.ReadFromUnorderedDiskRequest.newBuilder()
-          .setGuid(e.gUID.toString)
-          .setType("DoubleTuple2Attribute")
-          .setVsguid1(a.vertexSet.gUID.toString).build()
+      case v: VertexSet => requestBuilder.build()
+      case eb: EdgeBundle => requestBuilder
+        .setVsguid1(eb.srcVertexSet.gUID.toString)
+        .setVsguid2(eb.dstVertexSet.gUID.toString).build()
+      case a: Attribute[_] => requestBuilder
+        .setAttributeType(a.typeTag.toString)
+        .setVsguid1(a.vertexSet.gUID.toString).build()
       case _ => ???
     }
     val obs = new SingleResponseStreamObserver[SphynxOuterClass.ReadFromUnorderedDiskReply]

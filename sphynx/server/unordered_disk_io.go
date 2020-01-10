@@ -258,117 +258,123 @@ func (s *Server) ReadFromUnorderedDisk(
 		}
 		s.Unlock()
 		return &pb.ReadFromUnorderedDiskReply{}, nil
-	case "StringAttribute":
-		vs, err := s.getVertexSet(GUID(in.Vsguid1))
-		if err != nil {
-			return nil, err
-		}
-		rawAttribute := make([]SingleStringAttribute, 0)
-		numVS := 0
-		for _, fr := range fileReaders {
-			pr, err := reader.NewParquetReader(fr, new(SingleStringAttribute), numGoRoutines)
+	case "Attribute":
+		attributeType := in.AttributeType[len("TypeTag[") : len(in.AttributeType)-1]
+		switch attributeType {
+		case "String":
+			vs, err := s.getVertexSet(GUID(in.Vsguid1))
 			if err != nil {
-				return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
+				return nil, err
 			}
-			partialNumVS := int(pr.GetNumRows())
-			partialRawAttribute := make([]SingleStringAttribute, partialNumVS)
-			numVS = numVS + partialNumVS
-			if err := pr.Read(&partialRawAttribute); err != nil {
-				return nil, fmt.Errorf("Failed to read parquet file: %v", err)
+			rawAttribute := make([]SingleStringAttribute, 0)
+			numVS := 0
+			for _, fr := range fileReaders {
+				pr, err := reader.NewParquetReader(fr, new(SingleStringAttribute), numGoRoutines)
+				if err != nil {
+					return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
+				}
+				partialNumVS := int(pr.GetNumRows())
+				partialRawAttribute := make([]SingleStringAttribute, partialNumVS)
+				numVS = numVS + partialNumVS
+				if err := pr.Read(&partialRawAttribute); err != nil {
+					return nil, fmt.Errorf("Failed to read parquet file: %v", err)
+				}
+				pr.ReadStop()
+				rawAttribute = append(rawAttribute, partialRawAttribute...)
 			}
-			pr.ReadStop()
-			rawAttribute = append(rawAttribute, partialRawAttribute...)
-		}
-		values := make([]string, numVS)
-		defined := make([]bool, numVS)
-		mappingToOrdered := vs.GetMappingToOrdered()
-		for _, singleAttr := range rawAttribute {
-			orderedId := mappingToOrdered[singleAttr.Id]
-			values[orderedId] = singleAttr.Value
-			defined[orderedId] = true
-		}
-		s.Lock()
-		s.entities[GUID(in.Guid)] = &StringAttribute{
-			Values:  values,
-			Defined: defined,
-		}
-		s.Unlock()
-		return &pb.ReadFromUnorderedDiskReply{}, nil
-	case "DoubleAttribute":
-		vs, err := s.getVertexSet(GUID(in.Vsguid1))
-		if err != nil {
-			return nil, err
-		}
-		rawAttribute := make([]SingleDoubleAttribute, 0)
-		numVS := 0
-		for _, fr := range fileReaders {
-			pr, err := reader.NewParquetReader(fr, new(SingleDoubleAttribute), numGoRoutines)
+			values := make([]string, numVS)
+			defined := make([]bool, numVS)
+			mappingToOrdered := vs.GetMappingToOrdered()
+			for _, singleAttr := range rawAttribute {
+				orderedId := mappingToOrdered[singleAttr.Id]
+				values[orderedId] = singleAttr.Value
+				defined[orderedId] = true
+			}
+			s.Lock()
+			s.entities[GUID(in.Guid)] = &StringAttribute{
+				Values:  values,
+				Defined: defined,
+			}
+			s.Unlock()
+			return &pb.ReadFromUnorderedDiskReply{}, nil
+		case "Double":
+			vs, err := s.getVertexSet(GUID(in.Vsguid1))
 			if err != nil {
-				return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
+				return nil, err
 			}
-			partialNumVS := int(pr.GetNumRows())
-			partialRawAttribute := make([]SingleDoubleAttribute, partialNumVS)
-			numVS = numVS + partialNumVS
-			if err := pr.Read(&partialRawAttribute); err != nil {
-				return nil, fmt.Errorf("Failed to read parquet file: %v", err)
+			rawAttribute := make([]SingleDoubleAttribute, 0)
+			numVS := 0
+			for _, fr := range fileReaders {
+				pr, err := reader.NewParquetReader(fr, new(SingleDoubleAttribute), numGoRoutines)
+				if err != nil {
+					return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
+				}
+				partialNumVS := int(pr.GetNumRows())
+				partialRawAttribute := make([]SingleDoubleAttribute, partialNumVS)
+				numVS = numVS + partialNumVS
+				if err := pr.Read(&partialRawAttribute); err != nil {
+					return nil, fmt.Errorf("Failed to read parquet file: %v", err)
+				}
+				pr.ReadStop()
+				rawAttribute = append(rawAttribute, partialRawAttribute...)
 			}
-			pr.ReadStop()
-			rawAttribute = append(rawAttribute, partialRawAttribute...)
-		}
-		values := make([]float64, numVS)
-		defined := make([]bool, numVS)
-		mappingToOrdered := vs.GetMappingToOrdered()
-		for _, singleAttr := range rawAttribute {
-			orderedId := mappingToOrdered[singleAttr.Id]
-			values[orderedId] = singleAttr.Value
-			defined[orderedId] = true
-		}
-		s.Lock()
-		s.entities[GUID(in.Guid)] = &DoubleAttribute{
-			Values:  values,
-			Defined: defined,
-		}
-		s.Unlock()
-		return &pb.ReadFromUnorderedDiskReply{}, nil
-	case "DoubleTuple2Attribute":
-		vs, err := s.getVertexSet(GUID(in.Vsguid1))
-		if err != nil {
-			return nil, err
-		}
-		rawAttribute := make([]SingleDoubleTuple2Attribute, 0)
-		numVS := 0
-		for _, fr := range fileReaders {
-			pr, err := reader.NewParquetReader(fr, new(SingleDoubleTuple2Attribute), numGoRoutines)
+			values := make([]float64, numVS)
+			defined := make([]bool, numVS)
+			mappingToOrdered := vs.GetMappingToOrdered()
+			for _, singleAttr := range rawAttribute {
+				orderedId := mappingToOrdered[singleAttr.Id]
+				values[orderedId] = singleAttr.Value
+				defined[orderedId] = true
+			}
+			s.Lock()
+			s.entities[GUID(in.Guid)] = &DoubleAttribute{
+				Values:  values,
+				Defined: defined,
+			}
+			s.Unlock()
+			return &pb.ReadFromUnorderedDiskReply{}, nil
+		case "(Double,Double)":
+			vs, err := s.getVertexSet(GUID(in.Vsguid1))
 			if err != nil {
-				return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
+				return nil, err
 			}
-			partialNumVS := int(pr.GetNumRows())
-			partialRawAttribute := make([]SingleDoubleTuple2Attribute, partialNumVS)
-			numVS = numVS + partialNumVS
-			if err := pr.Read(&partialRawAttribute); err != nil {
-				return nil, fmt.Errorf("Failed to read parquet file: %v", err)
+			rawAttribute := make([]SingleDoubleTuple2Attribute, 0)
+			numVS := 0
+			for _, fr := range fileReaders {
+				pr, err := reader.NewParquetReader(fr, new(SingleDoubleTuple2Attribute), numGoRoutines)
+				if err != nil {
+					return nil, fmt.Errorf("Failed to create parquet reader: %v", err)
+				}
+				partialNumVS := int(pr.GetNumRows())
+				partialRawAttribute := make([]SingleDoubleTuple2Attribute, partialNumVS)
+				numVS = numVS + partialNumVS
+				if err := pr.Read(&partialRawAttribute); err != nil {
+					return nil, fmt.Errorf("Failed to read parquet file: %v", err)
+				}
+				pr.ReadStop()
+				rawAttribute = append(rawAttribute, partialRawAttribute...)
 			}
-			pr.ReadStop()
-			rawAttribute = append(rawAttribute, partialRawAttribute...)
+			values1 := make([]float64, numVS)
+			values2 := make([]float64, numVS)
+			defined := make([]bool, numVS)
+			mappingToOrdered := vs.GetMappingToOrdered()
+			for _, singleAttr := range rawAttribute {
+				orderedId := mappingToOrdered[singleAttr.Id]
+				values1[orderedId] = singleAttr.Value1
+				values2[orderedId] = singleAttr.Value2
+				defined[orderedId] = true
+			}
+			s.Lock()
+			s.entities[GUID(in.Guid)] = &DoubleTuple2Attribute{
+				Values1: values1,
+				Values2: values2,
+				Defined: defined,
+			}
+			s.Unlock()
+			return &pb.ReadFromUnorderedDiskReply{}, nil
+		default:
+			return nil, fmt.Errorf("Can't reindex attribute of type %v with GUID %v to use Sphynx IDs.", attributeType, in.Guid)
 		}
-		values1 := make([]float64, numVS)
-		values2 := make([]float64, numVS)
-		defined := make([]bool, numVS)
-		mappingToOrdered := vs.GetMappingToOrdered()
-		for _, singleAttr := range rawAttribute {
-			orderedId := mappingToOrdered[singleAttr.Id]
-			values1[orderedId] = singleAttr.Value1
-			values2[orderedId] = singleAttr.Value2
-			defined[orderedId] = true
-		}
-		s.Lock()
-		s.entities[GUID(in.Guid)] = &DoubleTuple2Attribute{
-			Values1: values1,
-			Values2: values2,
-			Defined: defined,
-		}
-		s.Unlock()
-		return &pb.ReadFromUnorderedDiskReply{}, nil
 	default:
 		return nil, fmt.Errorf("Can't reindex entity of type %v with GUID %v to use Sphynx IDs.", in.Type, in.Guid)
 	}
