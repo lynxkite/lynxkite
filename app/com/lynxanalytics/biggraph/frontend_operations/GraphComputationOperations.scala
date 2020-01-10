@@ -184,13 +184,16 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
-  register("Find optimal prize collecting Steiner tree")(new ProjectTransformation(_) {
+  register("Find Steiner tree")(new ProjectTransformation(_) {
     params ++= List(
       Param("ename", "Output edge attribute name", defaultValue = "arc"),
       Param("vname", "Output vertex attribute name", defaultValue = "node"),
       Param("pname", "The profit scalar variable", defaultValue = "profit"),
+      Param("rname", "Output vertex attribute name for the solution root points",
+        defaultValue="rootpoints"),
       Choice("edge_cost", "Cost attribute", options = project.edgeAttrList[Double]),
-      Choice("root", "Root point attribute", options = project.vertexAttrList[Double]),
+      Choice("root_costs", "Cost for using the point as root",
+        options = project.vertexAttrList[Double]),
       Choice("gain", "Reward for reaching the vertex", options = project.vertexAttrList[Double]))
 
     def enabled = project.hasEdgeBundle &&
@@ -204,14 +207,15 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
       assert(params("ename").nonEmpty, "Please set an edge attribute name for the result")
       assert(params("vname").nonEmpty, "Please set a vertex attribute name for the result")
       assert(params("pname").nonEmpty, "Please set a name for the profit variable")
+      assert(params("rname").nonEmpty, "Please set a name for the root points attribute for the result")
 
       val costAttr = project.edgeAttributes(params("edge_cost")).runtimeSafeCast[Double]
-      val rootAttr = project.vertexAttributes(params("root")).runtimeSafeCast[Double]
+      val rootCostAttr = project.vertexAttributes(params("root_costs")).runtimeSafeCast[Double]
       val gain = project.vertexAttributes(params("gain")).runtimeSafeCast[Double]
       val es = project.edgeBundle
       val op = graph_operations.Dapcstp()
       val result =
-        op(op.es, es)(op.cost, costAttr)(op.root, rootAttr)(op.gain, gain).result
+        op(op.es, es)(op.cost, costAttr)(op.root_costs, rootCostAttr)(op.gain, gain).result
       project.newEdgeAttribute(params("ename"), result.arcs)
       project.newVertexAttribute(params("vname"), result.nodes)
       project.newScalar(params("pname"), result.profit)
