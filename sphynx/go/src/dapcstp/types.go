@@ -21,18 +21,20 @@ const ValueMax = Value(math.MaxFloat64)
 
 // Graph represents the problem statement.
 type Graph struct {
-	Arcs int
-	Cost []Value
-	Src  []int
-	Dst  []int
+	// Edges
+	Arcs int     // The number of edges in the graph
+	Cost []Value // The cost for including the given edge
+	Src  []int   // The source vertex id for the edge
+	Dst  []int   // The dst vertex id for the edge
 
-	Root     int
-	Nodes    int
-	Terminal []bool
-	Prize    []Value
-	Fixed    []bool
-	Incoming [][]int
-	Outgoing [][]int
+	// Vertices
+	Root     int     // The vertex (the id) of the root of the solution tree
+	Nodes    int     // The number of vertices
+	Prize    []Value // The reward for including the given vertex in the tree.
+	Fixed    []bool  // True if the given vertex must be part of the solution
+	Terminal []bool  // The Prize is positive or Fixed is true
+	Incoming [][]int // For a given vertex, the list of incoming edge ids
+	Outgoing [][]int // For a given vertex, the list of outgoing edge ids
 }
 
 func NewSolution(g *Graph) *Solution {
