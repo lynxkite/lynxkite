@@ -135,7 +135,7 @@ class VertexAttributeOperations(env: SparkFreeEnvironment) extends ProjectOperat
 
   register("Derive vertex attribute")(new ProjectTransformation(_) {
     params ++= List(
-      Param("output", "Save as"),
+      Param("output", "Save as", defaultValue = "x"),
       Choice("defined_attrs", "Only run on defined attributes",
         options = FEOption.bools), // Default is true.
       Code("expr", "Value", defaultValue = "", language = "scala"),
