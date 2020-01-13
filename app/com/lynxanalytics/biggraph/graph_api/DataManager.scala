@@ -27,10 +27,11 @@ trait Domain {
   override def toString = this.getClass.getSimpleName // Looks better in debug prints.
   def has(e: MetaGraphEntity): Boolean
   def compute(op: MetaGraphOperationInstance): SafeFuture[Unit]
+  def canCompute(op: MetaGraphOperationInstance): Boolean
   // A hint that this entity is likely to be used repeatedly.
   def cache(e: MetaGraphEntity): Unit
   def get[T](e: Scalar[T]): SafeFuture[T]
-  def canCompute(op: MetaGraphOperationInstance): Boolean
+  def canGet[T](e: Scalar[T]): Boolean = true
   // Moves an entity from another Domain to this one.
   // This is a method on the destination so that the methods for modifying internal
   // data structures can remain private.
@@ -80,18 +81,20 @@ class DataManager(
     }
   }
 
-  private def bestSource(e: MetaGraphEntity): Domain = {
+  private def bestDomain(domains: Iterable[Domain], e: MetaGraphEntity): Domain = {
     synchronized { domains.find(d => futures.get((e.gUID, d)).filterNot(_.hasFailed).isDefined) }
       .orElse(domains.find(_.has(e)))
       .orElse(domains.find(_.canCompute(e.source))).get
   }
+
+  private def bestSource(e: MetaGraphEntity): Domain = bestDomain(domains, e)
 
   def compute(entity: MetaGraphEntity): SafeFuture[Unit] = synchronized {
     ensure(entity, bestSource(entity))
   }
 
   def getFuture[T](scalar: Scalar[T]): SafeFuture[T] = synchronized {
-    val d = bestSource(scalar)
+    val d = bestDomain(domains.filter(_.canGet(scalar)), scalar)
     ensure(scalar, d).flatMap(_ => d.get(scalar))
   }
 
