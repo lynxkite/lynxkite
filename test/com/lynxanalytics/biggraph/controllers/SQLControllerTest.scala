@@ -11,7 +11,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 class SQLControllerTest extends BigGraphControllerTestBase with OperationsTestBase {
-  override val user = serving.User.fake
+  override val user = serving.User.singleuser
   val sqlController = new SQLController(this, ops = null)
   val resourceDir = getClass.getResource("/graph_operations/ImportGraphTest").toString
   graph_util.PrefixRepository.registerPrefix("IMPORTGRAPHTEST$", resourceDir)

@@ -16,7 +16,7 @@ trait OperationsTestBase extends FunSuite with TestGraphOp {
   PrefixRepository.registerPrefix("OPERATIONSTEST$", res)
   val ops = new Operations(this)
   val sql = new SQLController(this, ops)
-  val user = serving.User.fake
+  val user = serving.User.singleuser
   BuiltIns.createBuiltIns(metaGraphManager)
 
   case class TestBox(
