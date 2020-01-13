@@ -12,6 +12,7 @@ import (
 	"github.com/xitongsys/parquet-go/writer"
 	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -25,7 +26,11 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	}
 	log.Printf("Reindexing entity with guid %v to use spark IDs.", guid)
 	// TODO: Have the same dir structure as in the other direction.
-	fname := fmt.Sprintf("%v/%v", s.unorderedDataDir, guid)
+	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, guid)
+	fmt.Println("dirName")
+	fmt.Println(dirName)
+	_ = os.Mkdir(dirName, 0775)
+	fname := fmt.Sprintf("%v/part-00000.parquet", dirName)
 	fw, err := local.NewLocalFileWriter(fname)
 	defer fw.Close()
 	if err != nil {
