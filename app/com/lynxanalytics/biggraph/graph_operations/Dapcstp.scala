@@ -9,7 +9,7 @@ import com.lynxanalytics.biggraph.graph_api._
 object Dapcstp extends OpFromJson {
   class Input extends MagicInputSignature {
     val (vs, es) = graph
-    val cost = edgeAttribute[Double](es)
+    val edge_costs = edgeAttribute[Double](es)
     val root_costs = vertexAttribute[Double](vs)
     val gain = vertexAttribute[Double](vs)
   }
@@ -18,6 +18,7 @@ object Dapcstp extends OpFromJson {
       inputs: Input) extends MagicOutput(instance) {
     val arcs = edgeAttribute[Double](inputs.es.entity)
     val nodes = vertexAttribute[Double](inputs.vs.entity)
+    val roots = vertexAttribute[Double](inputs.vs.entity)
     val profit = scalar[Double]
   }
 
