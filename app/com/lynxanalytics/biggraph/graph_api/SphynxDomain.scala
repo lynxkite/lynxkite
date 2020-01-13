@@ -208,7 +208,7 @@ class UnorderedSphynxLocalDisk(host: String, port: Int, certDir: String, val dat
       case source: UnorderedSphynxSparkDisk => {
         SafeFuture.async({
           val srcPath = source.dataDir / e.gUID.toString
-          val files = (srcPath / "part-*").list.sortBy(_.symbolicName)
+          val files = (srcPath / "part-*").list
           val dstDir = s"${dataDir}/${e.gUID.toString}"
           files.foreach(f => f.copyToLocalFile(s"${dstDir}/${f.name}"))
         })
