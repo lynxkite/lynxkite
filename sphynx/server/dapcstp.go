@@ -47,7 +47,7 @@ func graph(
 
 	for i := 0; i < origNNodes; i++ {
 		prize := 0.0
-		if gain.Defined[i] {
+		if gain.Defined[i] && gain.Values[i] > 0 {
 			prize = gain.Values[i]
 		}
 		g.Prize[i] = dapcstp.Value(prize)
@@ -60,7 +60,7 @@ func graph(
 		g.Src[i] = src
 		g.Dst[i] = dst
 		c := 0.0
-		if edgeCosts.Defined[i] {
+		if edgeCosts.Defined[i] && edgeCosts.Values[i] > 0 {
 			c = edgeCosts.Values[i]
 		}
 		g.Cost[i] = dapcstp.Value(c)

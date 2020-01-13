@@ -33,7 +33,7 @@ roots in the optimal solution.
 
 [p-edge_costs]#Cost attribute#::
 This edge attribute specified here will determine the cost for including the
-given edge in the solution.
+given edge in the solution. Negative and undefined values are treated as 0.
 
 [p-root_costs]#Cost for using the point as root#::
 The vertex attribute specified here determines the cost for allowing
@@ -42,5 +42,5 @@ Negative or undefined values mean that the vertex cannot be used as a root point
 
 [p-gain]#Reward for reaching the vertex#::
 This vertex attribute specifies the reward (gain) for including the given
-vertex in the solution.
+vertex in the solution. Negative or undefined values are treated as 0.
 ====
