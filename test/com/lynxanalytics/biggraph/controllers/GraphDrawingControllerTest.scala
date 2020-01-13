@@ -12,7 +12,7 @@ import scala.concurrent.{ Await, duration }
 
 class GraphDrawingControllerTest extends FunSuite with TestGraphOp {
   val controller = new GraphDrawingController(this)
-  val user = com.lynxanalytics.biggraph.serving.User.fake
+  val user = com.lynxanalytics.biggraph.serving.User.singleuser
 
   test("get center of ExampleGraph with no filters") {
     val g = graph_operations.ExampleGraph()().result

@@ -9,7 +9,7 @@ class RemoteAPITest extends FunSuite with TestGraphOp {
 
   test("no temp table name collision") {
     import RemoteAPIProtocol._
-    val u = User.fake
+    val u = User.singleuser
     val eg = Box("eg", "Example Graph", Map(), 0, 0, Map())
     val ws = Workspace.from(eg)
     /*
