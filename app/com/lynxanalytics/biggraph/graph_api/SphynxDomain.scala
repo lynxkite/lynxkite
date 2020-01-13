@@ -8,7 +8,7 @@ import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.Row
 import java.nio.file.{ Paths, Files }
-import java.io.SequenceInputStream
+import java.io.{ SequenceInputStream, File, FileInputStream }
 import scala.collection.JavaConversions.asJavaEnumeration
 import org.apache.spark.rdd.RDD
 import reflect.runtime.universe.typeTag
@@ -49,7 +49,7 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
   override def canRelocateFrom(source: Domain): Boolean = {
     source match {
       case _: OrderedSphynxDisk => true
-      case _: UnorderedSphynxDisk => true
+      case _: UnorderedSphynxLocalDisk => true
       case _ => false
     }
   }
@@ -57,7 +57,7 @@ class SphynxMemory(host: String, port: Int, certDir: String) extends SphynxDomai
   override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     source match {
       case _: OrderedSphynxDisk => client.readFromOrderedSphynxDisk(e)
-      case _: UnorderedSphynxDisk => client.readFromUnorderedDisk(e)
+      case _: UnorderedSphynxLocalDisk => client.readFromUnorderedDisk(e)
       case _ => ???
     }
   }
@@ -208,11 +208,9 @@ class UnorderedSphynxLocalDisk(host: String, port: Int, certDir: String, val dat
       case source: UnorderedSphynxSparkDisk => {
         SafeFuture.async({
           val srcPath = source.dataDir / e.gUID.toString
-          val dstPath = Paths.get(s"${dataDir}/${e.gUID.toString}")
-          val files = (srcPath / "part-*").list
-          val stream = new SequenceInputStream(files.view.map(_.open).iterator)
-          try Files.copy(stream, dstPath)
-          finally stream.close()
+          val files = (srcPath / "part-*").list.sortBy(_.symbolicName)
+          val dstDir = s"${dataDir}/${e.gUID.toString}"
+          files.foreach(f => f.copyToLocalFile(s"${dstDir}/${f.name}"))
         })
       }
     }
@@ -240,10 +238,11 @@ class UnorderedSphynxSparkDisk(host: String, port: Int, certDir: String, val dat
     source match {
       case source: UnorderedSphynxLocalDisk => SafeFuture.async({
         val dstPath = dataDir / e.gUID.toString
-        val srcPath = Paths.get(s"${source.dataDir}/${e.gUID.toString}")
-        val stream = dstPath.create()
-        try java.nio.file.Files.copy(srcPath, stream)
-        finally stream.close()
+        val srcDir = new File(s"${source.dataDir}/${e.gUID.toString}")
+        val srcFiles = srcDir.listFiles.filter(_.getName.startsWith("part-"))
+        val dstStream = dstPath.create()
+        try srcFiles.map(f => Files.copy(f.toPath(), dstStream))
+        finally dstStream.close()
       })
       case source: SparkDomain => relocateFromSpark(e, source)
     }
