@@ -60,6 +60,9 @@ func (e *Scalar) fields() []EntityField {
 func (e *VertexSet) fields() []EntityField {
 	return []EntityField{
 		EntityField{fieldName: "MappingToUnordered", data: &e.MappingToUnordered},
+		// MappingToOrdered is not here on purpose. This is used for writing out
+		// data to Prdered Sphynx Disk. MappingToOrdered can be generated from MappingToUnordered
+		// on demand.
 	}
 }
 func (e *EdgeBundle) fields() []EntityField {
