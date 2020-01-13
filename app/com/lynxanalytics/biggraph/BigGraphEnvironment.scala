@@ -66,20 +66,20 @@ object BigGraphEnvironmentImpl {
         (sphynxHost, sphynxPort, sphynxCertDir) match {
           case (Some(host), Some(port), Some(certDir)) => {
             val mixedDataDir = LoggedEnvironment.envOrNone("UNORDERED_SPHYNX_DATA_DIR")
-            val unorderedSphynxDisk = mixedDataDir match {
+            val unorderedSphynxLocalDisk = mixedDataDir match {
               case None =>
                 throw new AssertionError(
                   "UNORDERED_SPHYNX_DATA_DIR is not defined. If you don't want to start Sphynx, please unset SPHYNX_PORT.")
-              case Some(d) => new graph_api.UnorderedSphynxDisk(host, port.toInt, certDir, d)
+              case Some(d) => new graph_api.UnorderedSphynxLocalDisk(host, port.toInt, certDir, d)
             }
-            if (LoggedEnvironment.envOrNone("SPHYNX_DATA_DIR").isEmpty) {
-              throw new AssertionError(
-                "SPHYNX_DATA_DIR is not defined. If you don't want to start Sphynx, please unset SPHYNX_PORT.")
+            val unorderedSphynxSparkDisk = {
+              new graph_api.UnorderedSphynxSparkDisk(host, port.toInt, certDir, repositoryDirs.dataDir / "sphynx")
             }
             Seq(
               new graph_api.OrderedSphynxDisk(host, port.toInt, certDir),
               new graph_api.SphynxMemory(host, port.toInt, certDir),
-              unorderedSphynxDisk, new graph_api.ScalaDomain, sparkDomain)
+              unorderedSphynxLocalDisk, new graph_api.ScalaDomain, unorderedSphynxSparkDisk,
+              sparkDomain)
           }
           case _ => Seq(new graph_api.ScalaDomain, sparkDomain)
         }

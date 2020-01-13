@@ -12,6 +12,7 @@ import (
 	"github.com/xitongsys/parquet-go/writer"
 	"io/ioutil"
 	"log"
+	"strings"
 )
 
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
@@ -166,7 +167,6 @@ func (s *Server) ReadFromUnorderedDisk(
 	ctx context.Context, in *pb.ReadFromUnorderedDiskRequest) (*pb.ReadFromUnorderedDiskReply, error) {
 	const numGoRoutines int64 = 4
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, in.Guid)
-	fmt.Println(dirName)
 	files, err := ioutil.ReadDir(dirName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read directory: %v", err)
@@ -174,9 +174,10 @@ func (s *Server) ReadFromUnorderedDisk(
 	fileReaders := make([]source.ParquetFile, 0)
 	// TODO: get a better size for these makes.
 	for _, f := range files {
-		fname := fmt.Sprintf("%v/%v", dirName, f.Name())
-		if fname != "_SUCCESS" {
-			fr, err := local.NewLocalFileReader(fname)
+		fname := f.Name()
+		if strings.HasPrefix(fname, "part-") {
+			path := fmt.Sprintf("%v/%v", dirName, fname)
+			fr, err := local.NewLocalFileReader(path)
 			defer fr.Close()
 			if err != nil {
 				return nil, fmt.Errorf("Failed to open file: %v", err)
@@ -333,7 +334,7 @@ func (s *Server) ReadFromUnorderedDisk(
 			}
 			s.Unlock()
 			return &pb.ReadFromUnorderedDiskReply{}, nil
-		case "(Double,Double)":
+		case "(Double, Double)":
 			vs, err := s.getVertexSet(GUID(in.Vsguid1))
 			if err != nil {
 				return nil, err
