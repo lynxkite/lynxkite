@@ -19,8 +19,8 @@ func TestDacstp(t *testing.T) {
 	}
 
 	root := &DoubleAttribute{
-		Values:  []float64{1, 0, 0, 0, 0, 0},
-		Defined: []bool{true, true, true, true, true, true},
+		Values:  []float64{0, 0, 0, 0, 0, 0},
+		Defined: []bool{true, false, false, false, false, false},
 	}
 
 	gain := &DoubleAttribute{
