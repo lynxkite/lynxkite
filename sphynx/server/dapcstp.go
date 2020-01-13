@@ -158,7 +158,7 @@ func init() {
 			es := ea.getEdgeBundle("es")
 			gain := ea.getDoubleAttribute("gain")
 			rootCosts := ea.getDoubleAttribute("root_costs")
-			edgeCosts := ea.getDoubleAttribute("cost")
+			edgeCosts := ea.getDoubleAttribute("edge_costs")
 			solution, err := doDapcstp(gain, rootCosts, edgeCosts, es)
 			if err != nil {
 				return err
