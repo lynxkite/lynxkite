@@ -13,6 +13,7 @@ import scala.collection.JavaConversions.asJavaEnumeration
 import org.apache.spark.rdd.RDD
 import reflect.runtime.universe.typeTag
 import com.lynxanalytics.biggraph.graph_util.HadoopFile
+import scala.util.{ Try, Success, Failure }
 
 abstract class SphynxDomain(host: String, port: Int, certDir: String) extends Domain {
   implicit val executionContext =
@@ -178,7 +179,7 @@ class UnorderedSphynxLocalDisk(host: String, port: Int, certDir: String, val dat
   extends UnorderedSphynxDisk(host, port, certDir) {
 
   override def has(entity: MetaGraphEntity): Boolean = {
-    new java.io.File(s"${dataDir}/${entity.gUID.toString}").exists()
+    new java.io.File(s"${dataDir}/${entity.gUID.toString}/_SUCCESS").exists()
   }
 
   override def canRelocateFrom(source: Domain): Boolean = {
@@ -207,12 +208,16 @@ class UnorderedSphynxLocalDisk(host: String, port: Int, certDir: String, val dat
       case source: SparkDomain => relocateFromSpark(e, source)
       case source: UnorderedSphynxSparkDisk => {
         SafeFuture.async({
-          val srcPath = source.dataDir / e.gUID.toString
-          val files = (srcPath / "part-*").list
+          val srcDir = source.dataDir / e.gUID.toString
+          val srcFiles = (srcDir / "part-*").list
           val dstDir = s"${dataDir}/${e.gUID.toString}"
-          files.foreach(f => f.copyToLocalFile(s"${dstDir}/${f.name}"))
+          Try(srcFiles.foreach(f => f.copyToLocalFile(s"${dstDir}/${f.name}"))) match {
+            case Success(t) => (new File(s"${dstDir}/_SUCCESS")).createNewFile()
+            case Failure(err) => throw new AssertionError(s"Failed to relocate $e from $source: $err")
+          }
         })
       }
+      case _ => throw new AssertionError(s"Cannot fetch $e from $source")
     }
   }
 }
@@ -226,8 +231,8 @@ class UnorderedSphynxSparkDisk(host: String, port: Int, certDir: String, val dat
       case _ => false
     }
   }
-  override def has(entity: MetaGraphEntity): Boolean = {
-    false //TODO
+  override def has(e: MetaGraphEntity): Boolean = {
+    (dataDir / e.gUID.toString / "_SUCCESS").exists()
   }
 
   override def getGUIDPath(e: MetaGraphEntity) = {
@@ -237,12 +242,13 @@ class UnorderedSphynxSparkDisk(host: String, port: Int, certDir: String, val dat
   override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     source match {
       case source: UnorderedSphynxLocalDisk => SafeFuture.async({
-        val dstPath = dataDir / e.gUID.toString
-        val srcDir = new File(s"${source.dataDir}/${e.gUID.toString}")
+        val srcDir = new File(source.getGUIDPath(e))
+        val dstDir = dataDir / e.gUID.toString
         val srcFiles = srcDir.listFiles.filter(_.getName.startsWith("part-"))
-        val dstStream = dstPath.create()
-        try srcFiles.map(f => Files.copy(f.toPath(), dstStream))
-        finally dstStream.close()
+        Try(srcFiles.foreach(f => (dstDir / f.getName()).copyFromLocalFile(f.getPath()))) match {
+          case Success(t) => (dstDir / "_SUCCESS").create()
+          case Failure(err) => throw new AssertionError(s"Failed to relocate $e from $source: $err")
+        }
       })
       case source: SparkDomain => relocateFromSpark(e, source)
     }

@@ -157,6 +157,7 @@ class HadoopFile private (
   @transient lazy val path = new hadoop.fs.Path(resolvedNameWithNoCredentials)
   // The caller is responsible for calling close().
   def copyToLocalFile(dstPath: String) = fs.copyToLocalFile(false, path, new hadoop.fs.Path(dstPath), true)
+  def copyFromLocalFile(srcPath: String) = fs.copyFromLocalFile(new hadoop.fs.Path(srcPath), path)
   def open() = fs.open(path)
   // The caller is responsible for calling close().
   def create() = fs.create(path)
