@@ -41,3 +41,10 @@
 .tour-backdrop {
   opacity: 0.3;
 }
+
+.wizard-nav-links {
+  color: white;
+}
+.wizard-nav-links .col-sm-12 > * {
+  padding: 0 10px;
+}
