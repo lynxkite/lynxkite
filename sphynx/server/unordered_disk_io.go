@@ -25,16 +25,18 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		return nil, fmt.Errorf("guid %v not found", guid)
 	}
 	log.Printf("Reindexing entity with guid %v to use spark IDs.", guid)
-	// TODO: Have the same dir structure as in the other direction.
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, guid)
-	fmt.Println("dirName")
-	fmt.Println(dirName)
 	_ = os.Mkdir(dirName, 0775)
 	fname := fmt.Sprintf("%v/part-00000.parquet", dirName)
 	fw, err := local.NewLocalFileWriter(fname)
 	defer fw.Close()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create file: %v", err)
+	}
+	succesFile := fmt.Sprintf("%v/_SUCCESS", dirName)
+	err = ioutil.WriteFile(succesFile, nil, 0775)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to write Success File: %v", err)
 	}
 	switch e := entity.(type) {
 	case *VertexSet:
