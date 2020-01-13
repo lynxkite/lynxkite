@@ -31,7 +31,7 @@ This new scalar variable will be created under this name.
 The new vertex attribute will be created under this name, to pinpoint the tree
 roots in the optimal solution.
 
-[p-edge_cost]#Cost attribute#::
+[p-edge_costs]#Cost attribute#::
 This edge attribute specified here will determine the cost for including the
 given edge in the solution.
 
