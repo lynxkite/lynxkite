@@ -178,8 +178,7 @@ func (s *Server) ReadFromUnorderedDisk(
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read directory: %v", err)
 	}
-	fileReaders := make([]source.ParquetFile, 0)
-	// TODO: get a better size for these makes.
+	fileReaders := make([]source.ParquetFile, 0, len(files))
 	for _, f := range files {
 		fname := f.Name()
 		if strings.HasPrefix(fname, "part-") {
