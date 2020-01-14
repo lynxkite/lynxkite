@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 )
@@ -14,13 +15,13 @@ func init() {
 			if err != nil {
 				return nil
 			}
-			cmd := exec.Command("python", "node2vec.py", es, ea.NameOnDisk("pagerank"))
+			cmd := exec.Command("python", "node2vec.py", es)
 			cmd.Stderr = os.Stderr
-			cmd.Stdout = os.Stdout
-			if err = cmd.Run(); err != nil {
-				return err
+			output, err := cmd.Output()
+			if err != nil {
+				return fmt.Errorf("node2vec failed: %v", err)
 			}
-			return ea.OutputOnDisk("pagerank")
+			return ea.OutputJson(output)
 		},
 	}
 }

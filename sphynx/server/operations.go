@@ -3,6 +3,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 )
@@ -84,16 +85,29 @@ func (ea *EntityAccessor) WriteToDisk(name string) (string, error) {
 	return fmt.Sprintf("%v/%v/", ea.server.dataDir, ea.opInst.Inputs[name]), nil
 }
 
-func (ea *EntityAccessor) NameOnDisk(name string) string {
-	return fmt.Sprintf("%v/%v", ea.server.dataDir, ea.opInst.Outputs[name])
-}
-
-func (ea *EntityAccessor) OutputOnDisk(name string) error {
-	entity, err := loadFromOrderedDisk(ea.server.dataDir, ea.opInst.Outputs[name])
-	if err != nil {
-		return err
+func (ea *EntityAccessor) OutputJson(raw []byte) error {
+	type JsonEntity struct {
+		TypeName string
+		Data     json.RawMessage
 	}
-	ea.output(name, entity)
+	var outputs map[string]JsonEntity
+	if err := json.Unmarshal(raw, &outputs); err != nil {
+		return fmt.Errorf("could not parse %#v: %v", raw, err)
+	}
+	for name := range ea.opInst.Outputs {
+		o, ok := outputs[name]
+		if !ok {
+			continue
+		}
+		e, err := createEntity(o.TypeName)
+		if err != nil {
+			return fmt.Errorf("could not parse %#v: %v", raw, err)
+		}
+		if err := json.Unmarshal(o.Data, &e); err != nil {
+			return fmt.Errorf("could not parse %#v: %v", raw, err)
+		}
+		ea.output(name, e)
+	}
 	return nil
 }
 

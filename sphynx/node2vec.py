@@ -1,27 +1,24 @@
+import json
 import os
 import sys
 import pygob
 
 es = sys.argv[1]
-output = sys.argv[2]
-print('es', es)
-print('output', output)
+print('es', es, file=sys.stderr)
 
 with open(es + '/typename', 'rb') as f:
-  print('typename', pygob.load(f.read()))
+  print('typename', pygob.load(f.read()), file=sys.stderr)
 with open(es + '/Src', 'rb') as f:
-  print('src', pygob.load(f.read()))
+  print('src', pygob.load(f.read()), file=sys.stderr)
 with open(es + '/Dst', 'rb') as f:
-  print('dst', pygob.load(f.read()))
+  print('dst', pygob.load(f.read()), file=sys.stderr)
 
-os.mkdir(output)
-with open(output + '/typename', 'wb') as f:
-  f.write(pygob.dump('DoubleAttribute'))
-with open(output + '/Defined', 'wb') as f:
-  f.write(pygob.dump([True, True, True, True]))
-with open(output + '/Values', 'wb') as f:
-  f.write(pygob.dump([1.2, 1.3, 1.4, 1.5]))
-os.exit(0)
+print(json.dumps({
+  'pagerank': { 'TypeName': 'DoubleAttribute', 'Data': {
+    'Defined': [True, True, True, True],
+    'Values': [1.2, 1.3, 1.4, 1.5],
+    } } }))
+sys.exit(0)
 import os.path as osp
 
 import torch
