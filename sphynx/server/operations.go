@@ -5,7 +5,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 )
 
 type EntityAccessor struct {
@@ -59,22 +58,13 @@ func (ea *EntityAccessor) getDoubleTuple2Attribute(name string) *DoubleTuple2Att
 	return ea.inputs[name].(*DoubleTuple2Attribute)
 }
 
-func (ea *EntityAccessor) GetStringParam(name string) string {
-	v := reflect.ValueOf(ea.opInst.Operation.Data)
-	if v.Kind() != reflect.String {
-		return ""
-	} else {
-		return v.FieldByName(name).String()
-	}
-}
-
 func (ea *EntityAccessor) GetFloatParam(name string) float64 {
-	v := reflect.ValueOf(ea.opInst.Operation.Data)
-	if v.Kind() != reflect.Float64 {
+	fmt.Println(ea.opInst.Operation.Data)
+	param, ok := ea.opInst.Operation.Data[name]
+	if !ok {
 		return 0
-	} else {
-		return v.FieldByName(name).Float()
 	}
+	return param.(float64)
 }
 
 func (ea *EntityAccessor) WriteToDisk(name string) (string, error) {
