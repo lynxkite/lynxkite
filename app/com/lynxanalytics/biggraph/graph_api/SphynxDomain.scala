@@ -202,6 +202,7 @@ class UnorderedSphynxLocalDisk(host: String, port: Int, certDir: String, val dat
           case v: VertexSet => client.writeToUnorderedDisk(v)
           case eb: EdgeBundle => client.writeToUnorderedDisk(eb)
           case a: Attribute[_] => client.writeToUnorderedDisk(a)
+          case s: Scalar[_] => client.writeToUnorderedDisk(s)
           case _ => throw new AssertionError(s"Cannot fetch $e from $source")
         }
       }
@@ -242,9 +243,15 @@ class UnorderedSphynxSparkDisk(host: String, port: Int, certDir: String, val dat
   override def relocateFrom(e: MetaGraphEntity, source: Domain): SafeFuture[Unit] = {
     source match {
       case source: UnorderedSphynxLocalDisk => SafeFuture.async({
-        val srcDir = new File(source.getGUIDPath(e))
         val dstDir = dataDir / e.gUID.toString
-        val srcFiles = srcDir.listFiles.filter(_.getName.startsWith("part-"))
+        val srcFiles: Seq[File] = e match {
+          case s: Scalar[_] =>
+            Seq(new File(s"${source.getGUIDPath(s)}/serialized_data"))
+          case _ =>
+            val srcDir = new File(source.getGUIDPath(e))
+            srcDir.listFiles.filter(_.getName.startsWith("part-"))
+        }
+
         Try(srcFiles.foreach(f => (dstDir / f.getName()).copyFromLocalFile(f.getPath()))) match {
           case Success(t) => (dstDir / "_SUCCESS").create()
           case Failure(err) => throw new AssertionError(s"Failed to relocate $e from $source: $err")

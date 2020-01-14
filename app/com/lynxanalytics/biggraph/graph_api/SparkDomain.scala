@@ -15,6 +15,7 @@ import scala.util.Failure
 import scala.util.Success
 import reflect.runtime.universe.typeTag
 import java.nio.file.Paths
+import play.api.libs.json
 import com.lynxanalytics.biggraph.{ bigGraphLogger => log }
 import com.lynxanalytics.biggraph.graph_api.io.DataRoot
 import com.lynxanalytics.biggraph.graph_api.io.EntityIO
@@ -431,6 +432,18 @@ class SparkDomain(
                   .sortUnique(partitioner), Some(size))
               }
               SafeFuture.async(attr(e)(e.classTag))
+            case s: Scalar[_] =>
+              source match {
+                case source: UnorderedSphynxSparkDisk =>
+                  SafeFuture.async({
+                    val jsonString = (source.dataDir / s.gUID.toString / "serialized_data").readAsString()
+                    val format = TypeTagToFormat.typeTagToFormat(s.typeTag)
+                    val value = format.reads(json.Json.parse(jsonString)).get
+                    new ScalarData(s, value)
+                  })
+                case source: UnorderedSphynxLocalDisk => ???
+
+              }
             case _ => throw new AssertionError(s"Cannot fetch $e from $source")
           }
         }

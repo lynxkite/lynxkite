@@ -3,7 +3,9 @@
 package main
 
 import (
+	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	pb "github.com/biggraph/biggraph/sphynx/proto"
 	"github.com/xitongsys/parquet-go-source/local"
@@ -16,10 +18,13 @@ import (
 	"strings"
 )
 
+func writeSuccessFile(dirName string) {
+
+}
+
 func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorderedDiskRequest) (*pb.WriteToUnorderedDiskReply, error) {
 	const numGoRoutines int64 = 4
 	guid := GUID(in.Guid)
-
 	entity, exists := s.get(guid)
 	if !exists {
 		return nil, fmt.Errorf("guid %v not found", guid)
@@ -28,15 +33,11 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 	dirName := fmt.Sprintf("%v/%v", s.unorderedDataDir, guid)
 	_ = os.Mkdir(dirName, 0775)
 	fname := fmt.Sprintf("%v/part-00000.parquet", dirName)
+	successFile := fmt.Sprintf("%v/_SUCCESS", dirName)
 	fw, err := local.NewLocalFileWriter(fname)
 	defer fw.Close()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create file: %v", err)
-	}
-	succesFile := fmt.Sprintf("%v/_SUCCESS", dirName)
-	err = ioutil.WriteFile(succesFile, nil, 0775)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to write Success File: %v", err)
 	}
 	switch e := entity.(type) {
 	case *VertexSet:
@@ -51,6 +52,10 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		}
 		if err = pw.WriteStop(); err != nil {
 			return nil, fmt.Errorf("Parquet WriteStop error: %v", err)
+		}
+		err = ioutil.WriteFile(successFile, nil, 0775)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to write Success File: %v", err)
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	case *EdgeBundle:
@@ -78,6 +83,10 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		}
 		if err = pw.WriteStop(); err != nil {
 			return nil, fmt.Errorf("Parquet WriteStop error: %v", err)
+		}
+		err = ioutil.WriteFile(successFile, nil, 0775)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to write Success File: %v", err)
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	case *StringAttribute:
@@ -107,6 +116,10 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		if err = pw.WriteStop(); err != nil {
 			return nil, fmt.Errorf("Parquet WriteStop error: %v", err)
 		}
+		err = ioutil.WriteFile(successFile, nil, 0775)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to write Success File: %v", err)
+		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	case *DoubleAttribute:
 		vs1, err := s.getVertexSet(GUID(in.Vsguid1))
@@ -134,6 +147,10 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		}
 		if err = pw.WriteStop(); err != nil {
 			return nil, fmt.Errorf("Parquet WriteStop error: %v", err)
+		}
+		err = ioutil.WriteFile(successFile, nil, 0775)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to write Success File: %v", err)
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	case *DoubleTuple2Attribute:
@@ -163,6 +180,29 @@ func (s *Server) WriteToUnorderedDisk(ctx context.Context, in *pb.WriteToUnorder
 		}
 		if err = pw.WriteStop(); err != nil {
 			return nil, fmt.Errorf("Parquet WriteStop error: %v", err)
+		}
+		err = ioutil.WriteFile(successFile, nil, 0775)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to write Success File: %v", err)
+		}
+		return &pb.WriteToUnorderedDiskReply{}, nil
+	case *Scalar:
+		scalarJSON, err := json.Marshal(e.Value)
+		fmt.Println("scalarJSON")
+		fmt.Println(string(scalarJSON))
+		if err != nil {
+			return nil, fmt.Errorf("Converting scalar to json failed: %v", err)
+		}
+		fname := fmt.Sprintf("%v/serialized_data", dirName)
+		f, err := os.Create(fname)
+		fw := bufio.NewWriter(f)
+		if _, err := fw.WriteString(string(scalarJSON)); err != nil {
+			return nil, fmt.Errorf("Writing scalar to file failed: %v", err)
+		}
+		fw.Flush()
+		err = ioutil.WriteFile(successFile, nil, 0775)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to write Success File: %v", err)
 		}
 		return &pb.WriteToUnorderedDiskReply{}, nil
 	default:
