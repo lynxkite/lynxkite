@@ -26,4 +26,10 @@ angular.module('biggraph')
         }
       });
     });
+
+    $scope.goToWizardsInProgress = function() {
+      window.sessionStorage.setItem(
+        'last_selector_path', `Users/${util.user.email}/In progress wizards`);
+      $location.url('/');
+    };
   });

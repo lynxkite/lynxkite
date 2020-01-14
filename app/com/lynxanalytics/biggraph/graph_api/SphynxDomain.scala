@@ -79,9 +79,8 @@ class OrderedSphynxDisk(host: String, port: Int, certDir: String) extends Sphynx
     false
   }
 
-  override def get[T](scalar: Scalar[T]): SafeFuture[T] = {
-    client.getScalar(scalar)
-  }
+  override def get[T](scalar: Scalar[T]): SafeFuture[T] = ???
+  override def canGet[T](s: Scalar[T]): Boolean = false
 
   override def cache(e: MetaGraphEntity): Unit = {
     ???
@@ -107,9 +106,8 @@ abstract class UnorderedSphynxDisk(host: String, port: Int, certDir: String)
     false
   }
 
-  override def get[T](scalar: Scalar[T]): SafeFuture[T] = {
-    throw new AssertionError("UnorderedSphynxDisk never contains scalars.")
-  }
+  override def get[T](scalar: Scalar[T]): SafeFuture[T] = ???
+  override def canGet[T](s: Scalar[T]): Boolean = false
 
   override def cache(e: MetaGraphEntity): Unit = {
     ???
