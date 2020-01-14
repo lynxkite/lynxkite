@@ -79,6 +79,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
   def createWorkspace(
     user: serving.User, request: CreateWorkspaceRequest): Unit = metaManager.synchronized {
     assertNameNotExists(request.name)
+    assert(!user.wizardOnly, s"User ${user.email} is restricted to using wizards.")
     val entry = DirectoryEntry.fromName(request.name)
     entry.assertParentWriteAllowedFrom(user)
     val w = entry.asNewWorkspaceFrame()
@@ -269,6 +270,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def createSnapshot(
     user: serving.User, request: CreateSnapshotRequest): Unit = {
+    assert(!user.wizardOnly, s"User ${user.email} is restricted to using wizards.")
     def calculatedState() = calculatedStates.synchronized {
       calculatedStates(request.id)
     }
@@ -285,8 +287,34 @@ class WorkspaceController(env: SparkFreeEnvironment) {
     user: serving.User, request: SetWorkspaceRequest): Unit = metaManager.synchronized {
     val f = getWorkspaceFrame(user, ResolvedWorkspaceReference(user, request.reference).name)
     f.assertWriteAllowedFrom(user)
+    if (user.wizardOnly) assertWizardEditAllowed(user, f.workspace, request.workspace)
     val cp = request.workspace.checkpoint(previous = f.checkpoint)
     f.setCheckpoint(cp)
+  }
+
+  private def assertWizardEditAllowed(user: serving.User, ws0: Workspace, ws1: Workspace): Unit = {
+    // Wizard-only users need to be able to modify in-progress wizards through setWorkspace.
+    // But we make sure the modification is limited to the exposed parts.
+    val msg = s"User ${user.email} is restricted to using wizards."
+    assert(ws1.copy(boxes = ws0.boxes) == ws0, msg) // Only boxes have changed.
+    val stepsJson = ws0.anchor.parameters.getOrElse("steps", "[]")
+    import play.api.libs.json
+    val steps = json.Json.parse(stepsJson).as[List[json.JsObject]]
+    val editableBoxes = steps
+      .filter(j => (j \ "popup").as[String] == "parameters")
+      .map(j => (j \ "box").as[String]).toSet
+    assert(ws1.boxes.length == ws0.boxes.length, msg)
+    for (i <- ws1.boxes.indices) {
+      val b0 = ws0.boxes(i)
+      val b1 = ws1.boxes(i)
+      assert(b1.id == b0.id, msg)
+      if (editableBoxes.contains(b1.id)) {
+        // Only simple parameters have changed.
+        assert(b1.copy(parameters = b0.parameters) == b0, msg)
+      } else {
+        assert(b1 == b0, msg)
+      }
+    }
   }
 
   def setAndGetWorkspace(
@@ -391,6 +419,7 @@ class WorkspaceController(env: SparkFreeEnvironment) {
 
   def getInstrumentedState(
     user: serving.User, request: GetInstrumentedStateRequest): GetInstrumentedStateResponse = {
+    assert(!user.wizardOnly, s"User ${user.email} is restricted to using wizards.")
     val ctx = request.workspace match {
       case Some(ws) =>
         val ref = ResolvedWorkspaceReference(user, ws)

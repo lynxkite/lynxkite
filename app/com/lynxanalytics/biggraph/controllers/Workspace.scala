@@ -313,7 +313,7 @@ object VisualizationState {
 object BoxOutputState {
   // Cannot call these "apply" due to the JSON formatter macros.
   def from(project: CommonProjectState): BoxOutputState = {
-    import CheckpointRepository._ // For JSON formatters.
+    import CommonProjectState._ // For JSON formatters.
     BoxOutputState(BoxOutputKind.Project, Some(json.Json.toJson(project)))
   }
   def from(project: ProjectEditor): BoxOutputState = from(project.rootState)
@@ -342,7 +342,7 @@ object BoxOutputState {
 
   def visualization(v: VisualizationState): BoxOutputState = {
     import UIStatusSerialization.fTwoSidedUIStatus
-    import CheckpointRepository._
+    import CommonProjectState._
     BoxOutputState(
       BoxOutputKind.Visualization,
       Some(json.Json.obj(
@@ -368,7 +368,7 @@ case class BoxOutputState(
   def isVisualization = kind == BoxOutputKind.Visualization
 
   def projectState: CommonProjectState = {
-    import CheckpointRepository.fCommonProjectState
+    import CommonProjectState._
     success.check()
     assert(isProject, s"Tried to access '$kind' as 'project'.")
     state.get.as[CommonProjectState]
@@ -398,7 +398,7 @@ case class BoxOutputState(
 
   def visualization(implicit manager: graph_api.MetaGraphManager): VisualizationState = {
     import UIStatusSerialization.fTwoSidedUIStatus
-    import CheckpointRepository.fCommonProjectState
+    import CommonProjectState._
     success.check()
     assert(isVisualization, s"Tried to access '$kind' as 'visualization'.")
     val projectState = (state.get \ "project").as[CommonProjectState]

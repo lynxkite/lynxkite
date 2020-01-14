@@ -185,7 +185,7 @@ class CleanerController(environment: BigGraphEnvironment, ops: OperationReposito
       .map(_.asWorkspaceFrame.workspace)
     entitiesFromStates(workspaces.flatMap {
       // We assert the user to have admin rights at every entry point.
-      ws => WorkspaceExecutionContext(ws, serving.User.fake, ops, Map()).allStates.values
+      ws => WorkspaceExecutionContext(ws, serving.User.singleuser, ops, Map()).allStates.values
     })
   }
 
