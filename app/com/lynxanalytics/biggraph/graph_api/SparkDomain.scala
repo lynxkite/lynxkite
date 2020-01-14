@@ -10,6 +10,7 @@ import org.apache.spark
 import org.apache.spark.sql.SQLContext
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
+import scala.io.Source
 import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
@@ -433,17 +434,18 @@ class SparkDomain(
               }
               SafeFuture.async(attr(e)(e.classTag))
             case s: Scalar[_] =>
-              source match {
-                case source: UnorderedSphynxSparkDisk =>
-                  SafeFuture.async({
-                    val jsonString = (source.dataDir / s.gUID.toString / "serialized_data").readAsString()
-                    val format = TypeTagToFormat.typeTagToFormat(s.typeTag)
-                    val value = format.reads(json.Json.parse(jsonString)).get
-                    new ScalarData(s, value)
-                  })
-                case source: UnorderedSphynxLocalDisk => ???
-
-              }
+              SafeFuture.async({
+                val format = TypeTagToFormat.typeTagToFormat(s.typeTag)
+                val jsonString = source match {
+                  case source: UnorderedSphynxSparkDisk =>
+                    (source.dataDir / s.gUID.toString / "serialized_data").readAsString()
+                  case source: UnorderedSphynxLocalDisk =>
+                    val fname = s"${srcPath}/serialized_data"
+                    Source.fromFile(fname).getLines.mkString
+                }
+                val value = format.reads(json.Json.parse(jsonString)).get
+                new ScalarData(s, value)
+              })
             case _ => throw new AssertionError(s"Cannot fetch $e from $source")
           }
         }
