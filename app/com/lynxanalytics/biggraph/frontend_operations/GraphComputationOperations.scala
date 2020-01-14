@@ -184,6 +184,46 @@ class GraphComputationOperations(env: SparkFreeEnvironment) extends ProjectOpera
     }
   })
 
+  register("Find Steiner tree")(new ProjectTransformation(_) {
+    params ++= List(
+      Param("ename", "Output edge attribute name", defaultValue = "arc"),
+      Param("vname", "Output vertex attribute name", defaultValue = "node"),
+      Param("pname", "The profit scalar variable", defaultValue = "profit"),
+      Param("rname", "Output vertex attribute name for the solution root points",
+        defaultValue = "rootpoints"),
+      Choice("edge_costs", "Cost attribute", options = project.edgeAttrList[Double]),
+      Choice("root_costs", "Cost for using the point as root",
+        options = project.vertexAttrList[Double]),
+      Choice("gain", "Reward for reaching the vertex", options = project.vertexAttrList[Double]))
+
+    def enabled = project.hasEdgeBundle &&
+      FEStatus.assert(
+        project.vertexAttrList[Double].size >= 2,
+        "At least two Double vertex attributes are needed.") &&
+        FEStatus.assert(
+          project.edgeAttrList[Double].size >= 1,
+          "At least one Double edge attribute is needed.")
+    def apply() = {
+      assert(params("ename").nonEmpty, "Please set an edge attribute name for the result")
+      assert(params("vname").nonEmpty, "Please set a vertex attribute name for the result")
+      assert(params("pname").nonEmpty, "Please set a name for the profit variable")
+      assert(params("rname").nonEmpty, "Please set a name for the root points attribute for the result")
+
+      val costAttr = project.edgeAttributes(params("edge_costs")).runtimeSafeCast[Double]
+      val rootCostAttr = project.vertexAttributes(params("root_costs")).runtimeSafeCast[Double]
+      val gain = project.vertexAttributes(params("gain")).runtimeSafeCast[Double]
+      val es = project.edgeBundle
+      val op = graph_operations.Dapcstp()
+      val result =
+        op(op.es, es)(op.edge_costs, costAttr)(op.root_costs, rootCostAttr)(op.gain, gain).result
+      project.newEdgeAttribute(params("ename"), result.arcs)
+      project.newVertexAttribute(params("vname"), result.nodes)
+      project.newScalar(params("pname"), result.profit)
+      project.newVertexAttribute(params("rname"), result.roots)
+
+    }
+  })
+
   register("Compute distance via shortest path")(new ProjectTransformation(_) {
     params ++= List(
       Param("name", "Attribute name", defaultValue = "shortest_distance"),

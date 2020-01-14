@@ -1,0 +1,46 @@
+### Find Steiner tree
+
+Given a directed graph in which each vertex has two associated quantities, the "gain",
+and the "root cost", and each edge has an associated quantity, the "cost",
+this operation will yield a forest (a set of trees) that is a subgraph of the given
+graph. Furthermore, in this subgraph, the sum of the gains
+minus the sum of the (edge and root) costs approximate the maximal possible value.
+
+The operation will result in four outputs: (1) A new edge attribute, which will specify which
+edges are part of the optimal solution. Its value will be 1.0 for edges that
+are part of the optimal forest and not defined otherwise; (2) A new vertex
+attribute, which will specify which vertices are part of the optimal solution.
+Its value will be 1.0 for vertices that are part of the optimal forest and not defined otherwise.
+(3) A new scalar value that contains the net gain, that is, the total sum of the gains
+minus the total sum of the (edge and root) costs; and
+(4) A new vertex attribute that will specify the root vertices in the
+optimal solution: it will be 1.0 for the root vertices and not defined otherwise.
+====
+[p-ename]#Output edge attribute name#::
+The new edge attribute will be created under this name, to pinpoint the edges
+in the solution.
+
+[p-vname]#Output vertex attribute name#::
+The new vertex attribute will be created under this name, to pinpoint the vertices
+in the solution.
+
+[p-pname]#The profit scalar variable#::
+This new scalar variable will be created under this name.
+
+[p-rname]#Output vertex attribute name for the solution root points#::
+The new vertex attribute will be created under this name, to pinpoint the tree
+roots in the optimal solution.
+
+[p-edge_costs]#Cost attribute#::
+This edge attribute specified here will determine the cost for including the
+given edge in the solution. Negative and undefined values are treated as 0.
+
+[p-root_costs]#Cost for using the point as root#::
+The vertex attribute specified here determines the cost for allowing
+the given vertex to be a starting point (the root) of a tree in the solution forest.
+Negative or undefined values mean that the vertex cannot be used as a root point.
+
+[p-gain]#Reward for reaching the vertex#::
+This vertex attribute specifies the reward (gain) for including the given
+vertex in the solution. Negative or undefined values are treated as 0.
+====
